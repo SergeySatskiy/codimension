@@ -1,0 +1,18 @@
+There are two steps to install PyMetrics:
+
+Step 1: Untar the compressed pymetrics-xx.xx.xx.tgz tarball. 
+   It creates a subdirectory called pymetrics-xx.xx.xx where
+   xx.xx.xx is the version number. For example:
+
+	$ cd someplace
+	$ tar -xvzf pymetrics-xx.xx.xx.tar.gz
+
+	This creates the subdirectory "pymetrics-xx.xx.xx" 
+	in directory "someplace".
+
+Step 2: Use Python's standard setup.py method to install 
+        PyMetrics in the normal Python library.
+
+See README for details on running PyMetrics.
+
+That's it. Enjoy.
