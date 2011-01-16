@@ -1,0 +1,16 @@
+codimension
+-----------
+
+codimension is a graphics python two-way code editor and analyzer.
+See details at: http://satsky.spb.ru/codimension/codimensionEng.php
+                http://codimension.googlecode.com
+
+requirements
+------------
+
+Python 2.6 or higher
+PyQt4 4.7 or higher
+python-pygments-1.3.1 or higher
+
+
+
