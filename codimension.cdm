@@ -1,0 +1,20 @@
+#
+# Generated automatically.
+# Don't edit it manually unless you know what you are doing.
+#
+
+[dirs]
+dir0=./
+
+[properties]
+creationdate=2010-08-08
+author=Sergey Satskiy
+license=GPL v3
+copyright=Copyright (c) Sergey Satskiy, 2010
+description=graphics 'python' two-way code editor and analyzer<CR><LF>It's so called "mix" of approaches
+version=0.0.2
+email=sergey.satskiy@gmail.com
+uuid=f3933894-a35e-11df-bd37-001cc0b4d561
+
+
+
