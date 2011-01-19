@@ -24,8 +24,8 @@ INCLUDE=-I../thirdparty/libantlr3c-3.2 -I../thirdparty/libantlr3c-3.2/include
 all: pythonbriefLexer.h pythonbriefParser.h pythonbriefLexer.c pythonbriefParser.c pythonbrief.tokens cdmpyparser.c lexerutils.o brief_test.c
 	python setup.py build_ext --inplace
 	gcc -O2 ${FLAGS} ${INCLUDE} -c -std=gnu99 brief_test.c
-	gcc ${FLAGS} -o brief_test build/temp.linux-x86_64-2.7/pythonbriefLexer.o \
-                               build/temp.linux-x86_64-2.7/pythonbriefParser.o \
+	gcc ${FLAGS} -o brief_test build/*/pythonbriefLexer.o \
+                               build/*/pythonbriefParser.o \
                                brief_test.o lexerutils.o \
                                ../thirdparty/libantlr3c-3.2/.libs/libantlr3c.a
 
