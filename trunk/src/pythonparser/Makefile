@@ -18,10 +18,13 @@
 # $Id$
 #
 
+GENERATED_FILES=pythonbriefLexer.h pythonbriefParser.h \
+		pythonbriefLexer.c pythonbriefParser.c pythonbrief.tokens
+
 FLAGS=-ffast-math -fomit-frame-pointer
 INCLUDE=-I../thirdparty/libantlr3c-3.2 -I../thirdparty/libantlr3c-3.2/include
 
-all: pythonbriefLexer.h pythonbriefParser.h pythonbriefLexer.c pythonbriefParser.c pythonbrief.tokens cdmpyparser.c lexerutils.o brief_test.c
+all: $(GENERATED_FILES) cdmpyparser.c lexerutils.o brief_test.c
 	python setup.py build_ext --inplace
 	gcc -O2 ${FLAGS} ${INCLUDE} -c -std=gnu99 brief_test.c
 	gcc ${FLAGS} -o brief_test build/*/pythonbriefLexer.o \
@@ -29,13 +32,14 @@ all: pythonbriefLexer.h pythonbriefParser.h pythonbriefLexer.c pythonbriefParser
                                brief_test.o lexerutils.o \
                                ../thirdparty/libantlr3c-3.2/.libs/libantlr3c.a
 
-pythonbriefLexer.h pythonbriefParser.h pythonbriefLexer.c pythonbriefParser.c pythonbrief.tokens : pythonbrief.g
+$(GENERATED_FILES) : pythonbrief.g
 	CLASSPATH=/home/swift/antlr/antlrworks-1.4.jar java org.antlr.Tool pythonbrief.g
-#	CLASSPATH=/home/swift/antlr-1.3.1/antlrworks-1.3.1.jar java org.antlr.Tool pythonbrief.g
 
 lexerutils.o : lexerutils.c
 	gcc -O2 -I/usr/include/python2.6/ ${FLAGS} ${INCLUDE} -c lexerutils.c
 
-clean:
-	rm -rf *.o pythonbriefLexer.* pythonbriefParser.* pythonbrief.tokens core.* _cdmpyparser.so build/ brief_test
+cleanall: clean
+	rm -f $(GENERATED_FILES)
 
+clean:
+	rm -rf *.o core.* _cdmpyparser.so build/ brief_test
