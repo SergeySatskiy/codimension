@@ -25,6 +25,7 @@
 
 from PyQt4.QtGui        import QApplication
 from utils.pixmapcache  import PixmapCache
+from utils.csscache     import CSSCache
 
 
 class CodimensionApplication( QApplication ):
@@ -39,7 +40,9 @@ class CodimensionApplication( QApplication ):
         QApplication.setWindowIcon( PixmapCache().getIcon( 'icon.png' ) )
 
         # Avoid having rectabgular frames on the status bar
-        self.setStyleSheet( "QStatusBar::item { border: 0px solid black } " )
+        appCSS = CSSCache().getCSS( "application" )
+        if appCSS != "":
+            self.setStyleSheet( appCSS )
         return
 
 
