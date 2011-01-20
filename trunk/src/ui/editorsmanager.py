@@ -1105,6 +1105,10 @@ class EditorsManager( TabWidget ):
             if firstLine == -1 and line == -1 and pos == -1 and \
                fileName == 'help':
                 # Help widget
+                if len( self.widgets ) == 0:
+                    # It is the only welcome widget on the screen
+                    self.removeTab( 0 )
+                    self._tabBar.setTabsClosable( True )
                 shortName = self.__helpWidget.getShortName()
                 self.widgets.append( self.__helpWidget )
                 self.addTab( self.__helpWidget, getFileIcon( HTMLFileType ),
