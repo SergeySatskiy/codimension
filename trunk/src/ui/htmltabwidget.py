@@ -24,21 +24,21 @@
 
 
 import os.path
-from PyQt4.QtGui                import QTextEdit, QWidget, QHBoxLayout
+from PyQt4.QtGui                import QTextEdit, QWidget, QHBoxLayout, \
+                                       QDesktopServices
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from PyQt4.QtCore               import Qt, SIGNAL
+from PyQt4.QtWebKit             import QWebView, QWebPage
 
 
-class HTMLViewer( QTextEdit ):
-    " HTML viewer "
+class HTMLViewer( QWebView ):
+    " HTML viewer (web browser) "
 
     def __init__( self, parent = None ):
-        QTextEdit.__init__( self, parent )
-        self.setReadOnly( True )
+        QWebView.__init__( self, parent )
 
     def keyPressEvent( self, event ):
-        """ Handles the key press events """
-
+        " Handles the key press events "
         if event.key() == Qt.Key_Escape:
             self.emit( SIGNAL( 'ESCPressed' ) )
             event.accept()
@@ -76,6 +76,7 @@ class HTMLTabWidget( MainWindowTabWidgetBase, QWidget ):
     def setHTML( self, content ):
         " Sets the content from the given string "
         self.__editor.setHtml( content )
+        self.__connectPage()
         return
 
     def loadFormFile( self, path ):
@@ -83,9 +84,19 @@ class HTMLTabWidget( MainWindowTabWidgetBase, QWidget ):
         f = open( path, 'r' )
         content = f.read()
         f.close()
-        self.__editor.setHtml( content )
+        self.setHTML( content )
+        self.__connectPage()
         self.__fileName = path
         self.__shortName = os.path.basename( path )
+        return
+
+    def __connectPage( self ):
+        " Connects the current web page to the links delegate "
+        self.__editor.page().setLinkDelegationPolicy( \
+                                QWebPage.DelegateAllLinks )
+        self.connect( self.__editor,
+                      SIGNAL( 'linkClicked(const QUrl &)' ),
+                      QDesktopServices.openUrl )
         return
 
     def setFocus( self ):

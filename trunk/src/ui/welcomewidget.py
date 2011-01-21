@@ -23,7 +23,9 @@
 """ Welcome screen """
 
 
-from htmltabwidget          import HTMLTabWidget
+import os.path
+import sys
+from htmltabwidget  import HTMLTabWidget
 
 
 class WelcomeWidget( HTMLTabWidget ):
@@ -32,6 +34,10 @@ class WelcomeWidget( HTMLTabWidget ):
     def __init__( self, parent = None ):
 
         HTMLTabWidget.__init__( self, parent )
+        pixmapPath = os.path.dirname( os.path.abspath( sys.argv[0] ) ) + \
+                     os.path.sep + 'pixmaps' + os.path.sep
+        logoPath = pixmapPath + 'logo.png'
+
         self.setHTML( \
             """<body bgcolor="#ffffff">""" \
             """<p>""" \
@@ -43,7 +49,8 @@ class WelcomeWidget( HTMLTabWidget ):
             """           cellpadding="3" bgcolor="#004080">""" \
             """    <tr width="100%">""" \
             """      <td style="WIDTH: 110px">""" \
-            """      <img border="0" align="left" src="pixmaps/logo.png" """ \
+            """      <img border="0" align="left" src='file:""" + logoPath + \
+            """' """ \
             """           width="100" height="75">""" \
             """      </td>""" \
             """      <td width="100%">""" \
