@@ -437,16 +437,8 @@ class EditorsManager( TabWidget ):
         # - the changes were saved successfully
         # - there were no changes
 
-        if self.widgets[ index ].getType() == \
-            MainWindowTabWidgetBase.PlainTextEditor:
-            if not wasDiscard:
-                # Save the current cursor position
-                editor = self.widgets[ index ].getEditor()
-                line, pos = editor.getCursorPosition()
-                Settings().filePositions.updatePosition( self.widgets[ index ].getFileName(),
-                                                         line, pos,
-                                                         editor.firstVisibleLine() )
-                Settings().filePositions.save()
+        if not wasDiscard:
+            self.__updateFilePosition( index )
 
         del self.widgets[ index ]
         self.removeTab( index )
@@ -459,6 +451,21 @@ class EditorsManager( TabWidget ):
             self.findWidget.hide()
             self.replaceWidget.hide()
         self.__updateControls()
+        return
+
+    def __updateFilePosition( self, index ):
+        " Updates the file position of a file which is loaded to the given tab "
+
+        if self.widgets[ index ].getType() == \
+            MainWindowTabWidgetBase.PlainTextEditor:
+            # Save the current cursor position
+            editor = self.widgets[ index ].getEditor()
+            line, pos = editor.getCursorPosition()
+            Settings().filePositions.updatePosition( \
+                            self.widgets[ index ].getFileName(),
+                            line, pos,
+                            editor.firstVisibleLine() )
+            Settings().filePositions.save()
         return
 
     def createNavigationButtons( self ):
@@ -1000,6 +1007,9 @@ class EditorsManager( TabWidget ):
                 notSaved.append( self.widgets[ index ].getShortName() )
                 if firstIndex == -1:
                     firstIndex = index
+            else:
+                # The tab will be closed soon, so save the file position
+                self.__updateFilePosition( index )
 
         if len( notSaved ) == 0:
             return True
