@@ -87,24 +87,13 @@ def codimensionMain():
 
     logging.debug( "Starting codimension v." + __version__ )
 
-    # Process command line arguments
-    if not len( args ) in [ 0, 1 ]:
-        logging.error( "Unexpected number of arguments." )
+    try:
+        # Process command line arguments
+        projectFile = processCommandLineArgs( args )
+    except Exception, exc:
+        logging.error( str( exc ) )
         parser.print_help()
         return 1
-
-    projectFile = ""
-    if len( args ) == 1:
-        projectFile = args[ 0 ]
-        if not os.path.exists( projectFile ):
-            logging.error( "Cannot find specified project file: " + \
-                           projectFile )
-            return 1
-        if not projectFile.endswith( '.cdm' ):
-            logging.error( "Error loading project: codimension " \
-                           "project must have .cdm extension" )
-            return 1
-
 
     # Show splash screen
     splash = SplashScreen()
@@ -133,6 +122,15 @@ def codimensionMain():
     if projectFile != "":
         splash.showMessage( "Loading project..." )
         globalData.project.loadProject( projectFile )
+    elif len( args ) != 0:
+        # There are arguments and they are python files
+        # The project should not be loaded but the files should
+        # be opened
+        for fName in args:
+            mainWindow.openFile( os.path.abspath( fName ), -1 )
+        # Fake signal for triggering browsers layout
+        globalData.project.emit( SIGNAL( 'projectChanged' ),
+                                 CodimensionProject.CompleteProject )
     elif settings.projectLoaded and len( settings.recentProjects ) > 0:
         splash.showMessage( " Loading recent project..." )
         if os.path.exists( settings.recentProjects[ -1 ] ):
@@ -191,6 +189,46 @@ def setupLogging( debug ):
     # Memorize the root logging handlers
     __rootLoggingHandlers = logging.root.handlers
     return
+
+
+def processCommandLineArgs( args ):
+    " Checks what is in the command line "
+
+    # I cannot import it at the top because the fileutils want
+    # to use the pixmap cache which needs the application to be
+    # created, so the import is deferred
+    from utils.fileutils import CodimensionProjectFileType, PythonFileType, \
+                                Python3FileType, detectFileType
+
+    if len( args ) == 0:
+        return ""
+
+    # Check that all the files exist
+    fileType = PythonFileType
+    for fName in args:
+        if not os.path.exists( fName ):
+            raise Exception( "Cannot open file: " + fName )
+        if not os.path.isfile( fName ):
+            raise Exception( "The " + fName + " is not a file" )
+        fileType = detectFileType( fName )
+        if fileType not in [ PythonFileType, Python3FileType,
+                             CodimensionProjectFileType ]:
+            raise Exception( "Unexpected file type (" + \
+                             fName + ")" )
+
+    if len( args ) == 1:
+        if fileType == CodimensionProjectFileType:
+            return args[ 0 ]
+        return ""
+
+    # There are many files, check that they are python only
+    for fName in args:
+        fileType = detectFileType( fName )
+        if fileType == CodimensionProjectFileType:
+            raise Exception( "Codimension project file (" + \
+                             fName + ") must not come " \
+                             "together with python files" )
+    return ""
 
 
 def exceptionHook( excType, excValue, tracebackObj ):
