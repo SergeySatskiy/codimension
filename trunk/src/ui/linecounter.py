@@ -28,7 +28,8 @@ import os, os.path
 from PyQt4.QtCore       import Qt, SIGNAL, QTimer
 from PyQt4.QtGui        import QDialog, QTextEdit, QDialogButtonBox, \
                                QVBoxLayout, QSizePolicy, \
-                               QProgressBar, QApplication
+                               QProgressBar, QApplication, QFontMetrics, \
+                               QFont
 from fitlabel           import FitPathLabel
 from utils.linescounter import LinesCounter
 from utils.globals      import GlobalData
@@ -61,11 +62,14 @@ class LineCounterDialog( QDialog, object ):
 
         # Info label
         self.infoLabel = FitPathLabel( self )
-        #sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Preferred )
-        sizePolicy = QSizePolicy( QSizePolicy.Minimum, QSizePolicy.Preferred )
+        #sizePolicy = QSizePolicy( QSizePolicy.Expanding,
+        #                          QSizePolicy.Preferred )
+        sizePolicy = QSizePolicy( QSizePolicy.Minimum,
+                                  QSizePolicy.Preferred )
         sizePolicy.setHorizontalStretch( 0 )
         sizePolicy.setVerticalStretch( 0 )
-        sizePolicy.setHeightForWidth( self.infoLabel.sizePolicy().hasHeightForWidth() )
+        sizePolicy.setHeightForWidth( \
+                    self.infoLabel.sizePolicy().hasHeightForWidth() )
         self.infoLabel.setSizePolicy( sizePolicy )
         self.verticalLayout.addWidget( self.infoLabel )
 
@@ -76,12 +80,19 @@ class LineCounterDialog( QDialog, object ):
         self.verticalLayout.addWidget( self.progressBar )
 
         # Result window
+        font = QFont( "Monospace", 12 )
         self.resultEdit = QTextEdit( self )
         self.resultEdit.setTabChangesFocus( False )
         self.resultEdit.setAcceptRichText( False )
         self.resultEdit.setReadOnly( True )
-        self.resultEdit.setFontFamily( "Monospace" )
-        self.resultEdit.setFontPointSize( 12.0 )
+        self.resultEdit.setFont( font )
+
+        # Calculate the vertical size
+        fontMetrics = QFontMetrics( font )
+        rect = fontMetrics.boundingRect( "W" )
+        # 6 lines, 5 line spacings, 2 frames
+        self.resultEdit.setMinimumHeight( rect.height() * 6 + 4 * 5 + \
+                                          self.resultEdit.frameWidth() * 2 )
         self.verticalLayout.addWidget( self.resultEdit )
 
         # Buttons
