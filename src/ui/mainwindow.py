@@ -652,7 +652,12 @@ class CodimensionMainWindow( QMainWindow ):
         # Ask the editors manager to close all the editors
         editorsManager = self.editorsManagerWidget.editorsManager
         if editorsManager.getUnsavedCount() == 0:
-            GlobalData().project.setTabsStatus( editorsManager.getTabsStatus() )
+            project = GlobalData().project
+            if project.fileName != "":
+                project.setTabsStatus( editorsManager.getTabsStatus() )
+                self.settings.tabsStatus = []
+            else:
+                self.settings.tabsStatus = editorsManager.getTabsStatus()
 
         return editorsManager.closeEvent( event )
 

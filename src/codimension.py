@@ -131,7 +131,10 @@ def codimensionMain():
         # Fake signal for triggering browsers layout
         globalData.project.emit( SIGNAL( 'projectChanged' ),
                                  CodimensionProject.CompleteProject )
-    elif settings.projectLoaded and len( settings.recentProjects ) > 0:
+    elif settings.projectLoaded:
+        if len( settings.recentProjects ) == 0:
+            return      # Some project was loaded but now it is not available
+
         splash.showMessage( " Loading recent project..." )
         if os.path.exists( settings.recentProjects[ -1 ] ):
             globalData.project.loadProject( settings.recentProjects[ -1 ] )
@@ -143,6 +146,8 @@ def codimensionMain():
             globalData.project.emit( SIGNAL( 'projectChanged' ),
                                      CodimensionProject.CompleteProject )
     else:
+        mainWindow.editorsManagerWidget.editorsManager.restoreTabs( \
+                                                    settings.tabsStatus )
         # Fake signal for triggering browsers layout
         globalData.project.emit( SIGNAL( 'projectChanged' ),
                                  CodimensionProject.CompleteProject )
