@@ -33,6 +33,8 @@ _defaultXPos = 50
 _defaultYPos = 50
 _defaultWidth = 750
 _defaultHeight = 550
+_defaultScreenWidth = 0
+_defaultScreenHeight = 0
 _defaultXDelta = 0
 _defaultYDelta = 0
 _defaultHSplitSize = "200, 550"
@@ -105,6 +107,11 @@ class Settings( object ):
                                          _defaultXDelta )
             self.ydelta = self.__getInt( config, 'general', 'ydelta',
                                          _defaultYDelta )
+            self.screenWidth = self.__getInt( config, 'general', 'screenwidth',
+                                              _defaultScreenWidth )
+            self.screenHeight = self.__getInt( config, 'general',
+                                               'screenheight',
+                                               _defaultScreenHeight )
             self.leftBarMinimized = self.__getBool( config, 'general',
                                                     'leftBarMinimized',
                                                     False )
@@ -184,6 +191,8 @@ class Settings( object ):
             self.ypos = _defaultXPos
             self.width = _defaultWidth
             self.height = _defaultHeight
+            self.screenWidth = _defaultScreenWidth
+            self.screenHeight = _defaultScreenHeight
             self.xdelta = _defaultXDelta
             self.ydelta = _defaultYDelta
             self.leftBarMinimized = False
@@ -250,6 +259,8 @@ class Settings( object ):
                      "ypos=" + str( self.ypos ) + "\n" \
                      "width=" + str( self.width ) + "\n" \
                      "height=" + str( self.height ) + "\n" \
+                     "screenwidth=" + str( self.screenWidth ) + "\n" \
+                     "screenheight=" + str( self.screenHeight ) + "\n" \
                      "xdelta=" + str( self.xdelta ) + "\n" \
                      "ydelta=" + str( self.ydelta ) + "\n" \
                      "leftBarMinimized=" + \
