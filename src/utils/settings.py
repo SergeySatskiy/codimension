@@ -303,6 +303,11 @@ class Settings( object ):
                 self.emit( SIGNAL('recentListChanged') )
             return
 
+        def getDefaultGeometry( self ):
+            " Provides the default window size and location "
+            return _defaultXPos, _defaultYPos, \
+                   _defaultWidth, _defaultHeight
+
         @staticmethod
         def __writeHeader( fileObj ):
             " Helper to write a header with a warning "

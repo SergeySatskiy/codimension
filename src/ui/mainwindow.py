@@ -95,9 +95,19 @@ class CodimensionMainWindow( QMainWindow ):
 
         # The size restore is done twice to avoid huge flickering
         # This one is approximate, the one in the timer handler is precise
-        self.resize( self.settings.width, self.settings.height )
-        self.move( self.settings.xpos + settings.xdelta,
-                   self.settings.ypos + settings.ydelta )
+        screenSize = GlobalData().application.desktop().screenGeometry()
+        if screenSize.width() != settings.screenWidth or \
+           screenSize.height() != settings.screenHeight:
+            # The screen resolution has been changed, use the default pos
+            defXPos, defYpos, \
+            defWidth, defHeight = settings.getDefaultGeometry()
+            self.resize( defWidth, defHeight )
+            self.move( defXPos, defYpos )
+        else:
+            # No changes in the screen resolution
+            self.resize( settings.width, settings.height )
+            self.move( settings.xpos + settings.xdelta,
+                       settings.ypos + settings.ydelta )
 
         splash.showMessage( "Initializing statusbar..." )
         self.__statusBar = None
@@ -152,11 +162,29 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __restorePosition( self ):
         " Makes sure that the window frame delta is proper "
+        screenSize = GlobalData().application.desktop().screenGeometry()
+        if screenSize.width() != self.settings.screenWidth or \
+           screenSize.height() != self.settings.screenHeight:
+            # The screen resolution has been changed, save the new values
+            self.settings.screenWidth = screenSize.width()
+            self.settings.screenHeight = screenSize.height()
+            self.settings.xdelta = self.settings.xpos - self.x()
+            self.settings.ydelta = self.settings.ypos - self.y()
+            self.settings.xpos = self.x()
+            self.settings.ypos = self.y()
+
+            self.__initialisation = False
+            return
+
+
+        # Screen resolution is the same as before
         if self.settings.xpos != self.x() or \
            self.settings.ypos != self.y():
             # The saved delta is incorrect, update it
-            self.settings.xdelta = self.settings.xpos - self.x()
-            self.settings.ydelta = self.settings.ypos - self.y()
+            self.settings.xdelta = self.settings.xpos - self.x() + \
+                                   self.settings.xdelta
+            self.settings.ydelta = self.settings.ypos - self.y() + \
+                                   self.settings.ydelta
             self.settings.xpos = self.x()
             self.settings.ypos = self.y()
         self.__initialisation = False
@@ -407,8 +435,9 @@ class CodimensionMainWindow( QMainWindow ):
     def __createToolBar( self ):
         """ creates the buttons bar """
 
-        createProjectButton = QAction( PixmapCache().getIcon( 'createproject.png' ),
-                                       'Create new project', self )
+        createProjectButton = QAction( \
+                                PixmapCache().getIcon( 'createproject.png' ),
+                                'Create new project', self )
         createProjectButton.setStatusTip( "Create a new project" )
         self.connect( createProjectButton, SIGNAL( "triggered()" ),
                       self.__createNewProject )
@@ -446,17 +475,20 @@ class CodimensionMainWindow( QMainWindow ):
 
         # pylint button
         self.__existentPylintRCMenu = QMenu( self )
-        editAct = self.__existentPylintRCMenu.addAction( PixmapCache().getIcon( 'edit.png' ),
-                                                         'Edit the project pylintrc' )
+        editAct = self.__existentPylintRCMenu.addAction( \
+                                    PixmapCache().getIcon( 'edit.png' ),
+                                    'Edit the project pylintrc' )
         self.connect( editAct, SIGNAL( 'triggered()' ), self.__onEditPylintRC )
         self.__existentPylintRCMenu.addSeparator()
-        delAct = self.__existentPylintRCMenu.addAction( PixmapCache().getIcon( 'trash.png' ),
-                                                        'Delete the project pylintrc' )
+        delAct = self.__existentPylintRCMenu.addAction( \
+                                    PixmapCache().getIcon( 'trash.png' ),
+                                    'Delete the project pylintrc' )
         self.connect( delAct, SIGNAL( 'triggered()' ), self.__onDelPylintRC )
 
         self.__absentPylintRCMenu = QMenu( self )
-        genAct = self.__absentPylintRCMenu.addAction( PixmapCache().getIcon( 'generate.png' ),
-                                                      'Generate the project pylintrc' )
+        genAct = self.__absentPylintRCMenu.addAction( \
+                                    PixmapCache().getIcon( 'generate.png' ),
+                                    'Generate the project pylintrc' )
         self.connect( genAct, SIGNAL( 'triggered()' ), self.__onGenPylintRC )
 
         self.__pylintButton = QToolButton( self )
@@ -468,8 +500,9 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.__pylintButton, SIGNAL( 'clicked(bool)' ),
                       self.pylintButtonClicked )
 
-        self.linecounterButton = QAction( PixmapCache().getIcon( 'linecounter.png' ),
-                                          'Line counter', self )
+        self.linecounterButton = QAction( \
+                                    PixmapCache().getIcon( 'linecounter.png' ),
+                                    'Line counter', self )
         self.linecounterButton.setStatusTip( 'Line counter' )
         self.connect( self.linecounterButton, SIGNAL( 'triggered()' ),
                       self.linecounterButtonClicked )
@@ -625,14 +658,15 @@ class CodimensionMainWindow( QMainWindow ):
             return
 
         # Request accepted
-        GlobalData().project.createNew( dialog.projectFileName,
-                                        str( dialog.authorEdit.text() ).strip(),
-                                        str( dialog.licenseEdit.text() ).strip(),
-                                        str( dialog.copyrightEdit.text() ).strip(),
-                                        str( dialog.descriptionEdit.toPlainText() ).strip(),
-                                        str( dialog.creationDateEdit.text() ).strip(),
-                                        str( dialog.versionEdit.text() ).strip(),
-                                        str( dialog.emailEdit.text() ).strip() )
+        GlobalData().project.createNew( \
+                        dialog.projectFileName,
+                        str( dialog.authorEdit.text() ).strip(),
+                        str( dialog.licenseEdit.text() ).strip(),
+                        str( dialog.copyrightEdit.text() ).strip(),
+                        str( dialog.descriptionEdit.toPlainText() ).strip(),
+                        str( dialog.creationDateEdit.text() ).strip(),
+                        str( dialog.versionEdit.text() ).strip(),
+                        str( dialog.emailEdit.text() ).strip() )
         Settings().addRecentProject( dialog.projectFileName )
         return
 
