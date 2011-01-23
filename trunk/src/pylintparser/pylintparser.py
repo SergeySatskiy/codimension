@@ -27,6 +27,7 @@
 from subprocess import Popen, PIPE
 import sys, os, os.path, tempfile, re
 from optparse  import OptionParser
+import logging
 
 
 verbose = False
@@ -135,14 +136,14 @@ class Table( object ):
 class Similarity( object ):
     " Holds information about found similarity "
 
-    def __init__( self, section ):
+    def __init__( self, section, filesList ):
         self.files = []
         self.fragment = []
 
-        self.__parse( section )
+        self.__parse( section, filesList )
         return
 
-    def __parse( self, section ):
+    def __parse( self, section, filesList ):
         " Parses a single similarity section "
         if len( section ) < 3:
             raise Exception( "Unexpected length of a " \
@@ -151,7 +152,8 @@ class Similarity( object ):
         numberOfFiles = int( parts[ len( parts ) - 2 ] )
         index = 0
         while index < numberOfFiles:
-            self.files.append( self.__getFileInfo( section[ index + 1 ] ) )
+            self.files.append( self.__getFileInfo( section[ index + 1 ],
+                                                   filesList ) )
             index += 1
 
         self.fragment = section[ 1 + numberOfFiles : ]
@@ -162,7 +164,7 @@ class Similarity( object ):
         return
 
     @staticmethod
-    def __getFileInfo( line ):
+    def __getFileInfo( line, filesList ):
         " Extracts one file info "
         line = line.strip()
         if not line.startswith( "==" ):
@@ -190,9 +192,37 @@ class Similarity( object ):
             if os.path.exists( candidate ):
                 parts[ 0 ] = candidate
             else:
-                raise Exception( "Cannot guess file name for pylint " \
-                                 "similarity (" + parts[ 0 ] + ")" )
+                parts[ 0 ] = Similarity.__findFileName( parts[ 0 ], filesList )
         return parts
+
+    @staticmethod
+    def __findFileName( moduleName, filesList ):
+        """ Makes the last try to find the file name for similarities.
+            It looks through the list of files and tries .py and .py3
+            files. If there are more than one or many it throws
+            an exception """
+        candidates = []
+        match1 = os.path.sep + moduleName + ".py"
+        match2 = os.path.sep + moduleName + ".py3"
+        for fName in filesList:
+            if fName.endswith( match1 ):
+                candidates.append( fName )
+                continue
+            if fName.endswith( match2 ):
+                candidates.append( fName )
+
+        length = len( candidates )
+        if length == 0:
+            raise Exception( "Cannot guess file name for pylint " \
+                             "similarity (module " + moduleName + \
+                             "). No candidates found." )
+        if length > 1:
+            raise Exception( "Cannot guess file name for pylint " \
+                             "similarity (module " + moduleName + \
+                             "). There are many candidates: " + \
+                             ", ".join( candidates ) + ". You may " \
+                             "want to rename them to make names unique." )
+        return candidates[ 0 ]
 
     def __str__( self ):
         " Converts a similarity to a string "
@@ -303,11 +333,11 @@ class Pylint( object ):
 
                 # Here: beginning of a section or beginning of a similarity
                 # message
-                self.__parseCurrentSection()
+                self.__parseCurrentSection( path )
                 self.__currentSection.append( line )
 
             # Final section parsing
-            self.__parseCurrentSection()
+            self.__parseCurrentSection( path )
 
         except Exception, exc:
             if pylintrc != "" and not os.path.exists( pylintrc ):
@@ -408,7 +438,7 @@ class Pylint( object ):
 
         return self.Unknown, False
 
-    def __parseCurrentSection( self ):
+    def __parseCurrentSection( self, filesList ):
         " Parses one collected section "
 
         while len( self.__currentSection ) > 0 and \
@@ -439,7 +469,12 @@ class Pylint( object ):
         elif firstLine == 'Report':
             self.__parseReport()
         elif self.__similarRegexp.match( firstLine ):
-            self.similarities.append( Similarity( self.__currentSection ) )
+            try:
+                self.similarities.append(
+                        Similarity( self.__currentSection, filesList ) )
+            except Exception, exc:
+                logging.error( str( exc ) )
+                logging.error( "Skipping this similarity" )
         else:
             raise Exception( "unknown pylint output section: '" + \
                              firstLine + "'" )
