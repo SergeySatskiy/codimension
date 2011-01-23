@@ -639,6 +639,18 @@ class CodimensionProject( QObject ):
         for item in os.listdir( path ):
             if self.shouldExclude( item ):
                 continue
+
+            # Exclude symlinks if they point to the other project
+            # covered pieces
+            if os.path.islink( path + item ):
+                realItem = os.path.realpath( path + item )
+                if os.path.isdir( realItem ):
+                    if self.isProjectDir( realItem ):
+                        continue
+                else:
+                    if self.isProjectDir( os.path.dirname( realItem ) ):
+                        continue
+
             if os.path.isdir( path + item ):
                 self.filesList.update( [ path + item + os.path.sep ] )
                 self.__scanDir( path + item + os.path.sep )
