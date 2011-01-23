@@ -451,7 +451,7 @@ class CodimensionProject( QObject ):
                              "from here: " + configFile )
             return
 
-        # dirs part
+        # tabs part
         self.tabsStatus = self.__loadListSection( \
                 config, 'tabsstatus', 'tab' )
 

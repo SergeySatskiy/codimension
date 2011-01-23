@@ -69,8 +69,9 @@ class Settings( object ):
             # Save the config file name
             self.fullFileName = self.basedir + "settings"
 
-            # Load previous sessions files positions
+            # Load previous sessions files positions and tabs status
             self.filePositions = FilesPositions( self.basedir )
+            self.tabsStatus = self.__loadTabsStatus()
 
             self.__setDefaultValues()
 
@@ -221,6 +222,9 @@ class Settings( object ):
         def flushSettings( self ):
             """ Writes all the settings into the file """
 
+            # Save the tabs status
+            self.__saveTabsStatus()
+
             # Recent projects part
             if len( self.recentProjects ) > _maxRecentProjects:
                 self.recentProjects = \
@@ -239,12 +243,8 @@ class Settings( object ):
                 index += 1
 
             f = open( self.fullFileName, "w" )
-            f.write( "#\n" \
-                     "# Generated automatically.\n" \
-                     "# Don't edit it manually unless " \
-                     "you know what you are doing.\n" \
-                     "#\n\n" \
-                     "[general]\n" \
+            self.__writeHeader( f )
+            f.write( "[general]\n" \
                      "zoom=" + str( self.zoom ) + "\n" \
                      "xpos=" + str( self.xpos ) + "\n" \
                      "ypos=" + str( self.ypos ) + "\n" \
@@ -290,6 +290,70 @@ class Settings( object ):
                 self.recentProjects.remove( absProjectFile )
                 self.flushSettings()
                 self.emit( SIGNAL('recentListChanged') )
+            return
+
+        @staticmethod
+        def __writeHeader( fileObj ):
+            " Helper to write a header with a warning "
+            fileObj.write( "#\n" \
+                           "# Generated automatically.\n" \
+                           "# Don't edit it manually unless you " \
+                           "know what you are doing.\n" \
+                           "#\n\n" )
+            return
+
+        @staticmethod
+        def __writeList( fileObj, header, prefix, items ):
+            " Helper to write a list "
+            fileObj.write( "[" + header + "]\n" )
+            index = 0
+            for item in items:
+                fileObj.write( prefix + str( index ) + "=" + item + "\n" )
+                index += 1
+            fileObj.write( "\n" )
+            return
+
+        @staticmethod
+        def __loadListSection( config, section, listPrefix ):
+            " Loads a list off the given section from the given file "
+            items = []
+            index = 0
+            try:
+                while True:
+                    item = config.get( section,
+                                       listPrefix + str( index ) ).strip()
+                    index += 1
+                    items.append( item )
+            except:
+                pass
+            return items
+
+        def __loadTabsStatus( self ):
+            " Loads the last saved tabs statuses "
+
+            config = ConfigParser.ConfigParser()
+            try:
+                config.read( self.basedir + "tabsstatus" )
+            except:
+                config = None
+                return []
+
+            # tabs part
+            items = self.__loadListSection( config, 'tabsstatus', 'tab' )
+            config = None
+            return items
+
+        def __saveTabsStatus( self ):
+            " Saves the tabs status "
+            fName = self.basedir + "tabsstatus"
+            try:
+                f = open( fName, "w" )
+                self.__writeHeader( f )
+                self.__writeList( f, "tabsstatus", "tab", self.tabsStatus )
+                f.close()
+            except:
+                # Do nothing, it's not vital important to have this file
+                pass
             return
 
     def __init__( self ):
