@@ -43,6 +43,7 @@ from utils.pixmapcache          import PixmapCache
 from utils.globals              import GlobalData
 from utils.settings             import Settings
 from ui.pylintviewer            import PylintViewer
+from ui.pymetricsviewer         import PymetricsViewer
 import export
 
 
@@ -341,7 +342,8 @@ class TextEditor( ScintillaWrapper ):
         # Now, check if the origin pos within a target
         for item in targets:
             if originLine == item[ 0 ]:
-                if originPos >= item[ 1 ] and originPos <= item[ 1 ] + item[ 2 ]:
+                if originPos >= item[ 1 ] and \
+                   originPos <= item[ 1 ] + item[ 2 ]:
                     # This is the target to highlight - cursor within the
                     # target
                     tgtPos = self.positionFromLineIndex( item[ 0 ], item[ 1 ] )
@@ -451,6 +453,10 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.pymetricsButton = QAction( \
             PixmapCache().getIcon( 'metrics.png' ),
             'Calculate metrics', self )
+        self.pymetricsButton.setShortcut( 'Ctrl+K' )
+        self.connect( self.pymetricsButton, SIGNAL( 'triggered()' ),
+                      self.__onPymetrics )
+        self.pymetricsButton.setEnabled( False )
 
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
@@ -559,6 +565,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                 self.__fileType = detectFileType( self.__shortName )
         self.pylintButton.setEnabled( self.__fileType == PythonFileType and
                                       GlobalData().pylintAvailable )
+        self.pymetricsButton.setEnabled( self.__fileType == PythonFileType )
         return
 
     def __onPylint( self ):
@@ -570,6 +577,31 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         if self.__fileType not in [ PythonFileType, Python3FileType ]:
             return
 
+        if self.__fileName != "":
+            reportFile = self.__fileName
+        else:
+            reportFile = self.__shortName
+
+        if self.isModified() or self.__fileName == "":
+            # Need to parse the buffer
+            GlobalData().mainWindow.showPylintReport( \
+                            PylintViewer.SingleBuffer, self.__editor.text(),
+                            reportFile, self.getUUID() )
+        else:
+            # Need to parse the file
+            GlobalData().mainWindow.showPylintReport( \
+                            PylintViewer.SingleFile, self.__fileName,
+                            reportFile, self.getUUID() )
+        return
+
+    def __onPymetrics( self ):
+        " Triggers when pymetrics should be used "
+
+        if self.__fileType == UnknownFileType:
+            if self.__shortName != "":
+                self.__fileType = detectFileType( self.__shortName )
+        if self.__fileType not in [ PythonFileType, Python3FileType ]:
+            return
 
         if self.__fileName != "":
             reportFile = self.__fileName
@@ -578,18 +610,16 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         if self.isModified() or self.__fileName == "":
             # Need to parse the buffer
-            GlobalData().mainWindow.showPylintReport( PylintViewer.SingleBuffer,
-                                                      self.__editor.text(),
-                                                      reportFile,
-                                                      self.getUUID() )
+            GlobalData().mainWindow.showPymetricsReport( \
+                            PymetricsViewer.SingleBuffer, self.__editor.text(),
+                            reportFile, self.getUUID() )
         else:
             # Need to parse the file
-
-            GlobalData().mainWindow.showPylintReport( PylintViewer.SingleFile,
-                                                      self.__fileName,
-                                                      reportFile,
-                                                      self.getUUID() )
+            GlobalData().mainWindow.showPymetricsReport( \
+                            PymetricsViewer.SingleFile, self.__fileName,
+                            reportFile, self.getUUID() )
         return
+
 
     def __onExportRequest( self, act ):
         " Triggers when one of the export items is selected "

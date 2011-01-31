@@ -48,6 +48,8 @@ from viewitems          import NoItemType, DirectoryItemType, SysPathItemType, \
 from utils.fileutils    import BrokenSymlinkFileType, PythonFileType, \
                                Python3FileType, detectFileType
 from pylintviewer       import PylintViewer
+from pymetricsviewer    import PymetricsViewer
+
 
 class ProjectViewer( QWidget ):
     " project viewer widget "
@@ -164,6 +166,11 @@ class ProjectViewer( QWidget ):
                 'Run pylint for the selected item', self )
         self.connect( self.prjPylintButton, SIGNAL( "triggered()" ),
                       self.__pylintRequest )
+        self.prjPymetricsButton = QAction( \
+                PixmapCache().getIcon( 'metrics.png' ),
+                'Run pymetrics for the selected item', self )
+        self.connect( self.prjPymetricsButton, SIGNAL( 'triggered()' ),
+                      self.__pymetricsRequest )
 
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
@@ -188,6 +195,7 @@ class ProjectViewer( QWidget ):
         upperToolbar.addAction( self.prjNewDirButton )
         upperToolbar.addAction( self.prjCopyToClipboardButton )
         upperToolbar.addAction( self.prjPylintButton )
+        upperToolbar.addAction( self.prjPymetricsButton )
         upperToolbar.addWidget( spacer )
         upperToolbar.addAction( self.prjDelProjectDirButton )
 
@@ -231,7 +239,10 @@ class ProjectViewer( QWidget ):
         self.prjDirMenu = QMenu( self )
         self.prjDirPylintAct = self.prjDirMenu.addAction( \
                 PixmapCache().getIcon( 'pylint.png' ),
-                'Run pylint for the dir recursively', self.__pylintRequest )
+                'Run pylint for the directory recursively', self.__pylintRequest )
+        self.prjDirPymetricsAct = self.prjDirMenu.addAction( \
+                PixmapCache().getIcon( 'metrics.png' ),
+                'Run pymetrics for the directory recursively', self.__pymetricsRequest )
         self.prjDirMenu.addSeparator()
         self.prjDirNewDirAct = self.prjDirMenu.addAction( \
                 PixmapCache().getIcon( 'newdir.png' ),
@@ -257,6 +268,9 @@ class ProjectViewer( QWidget ):
         self.prjFilePylintAct = self.prjFileMenu.addAction( \
                 PixmapCache().getIcon( 'pylint.png' ),
                 'Run pylint for the file', self.__pylintRequest )
+        self.prjFilePymetricsAct = self.prjFileMenu.addAction( \
+                PixmapCache().getIcon( 'metrics.png' ),
+                'Run pymetrics for the file', self.__pymetricsRequest )
         self.prjFileMenu.addSeparator()
         self.prjFileCopyPathAct = self.prjFileMenu.addAction( \
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
@@ -541,6 +555,7 @@ class ProjectViewer( QWidget ):
         self.prjCopyToClipboardButton.setEnabled( False )
         self.prjDelProjectDirButton.setEnabled( False )
         self.prjPylintButton.setEnabled( False )
+        self.prjPymetricsButton.setEnabled( False )
 
         if self.__prjContextItem is None:
             return
@@ -562,6 +577,7 @@ class ProjectViewer( QWidget ):
             self.prjFindReplaceInDirButton.setEnabled( True )
             self.prjNewDirButton.setEnabled( True )
             self.prjPylintButton.setEnabled( GlobalData().pylintAvailable )
+            self.prjPymetricsButton.setEnabled( True )
 
             # if it is a top level and not the project file containing dir then
             # the del butten should be enabled
@@ -575,11 +591,7 @@ class ProjectViewer( QWidget ):
             if self.__prjContextItem.fileType in [ PythonFileType,
                                                    Python3FileType ]:
                 self.prjPylintButton.setEnabled( GlobalData().pylintAvailable )
-
-        if self.__prjContextItem.itemType == FileItemType:
-            if self.__prjContextItem.fileType in [ PythonFileType,
-                                                   Python3FileType ] and \
-               self.__prjContextItem.fileType != BrokenSymlinkFileType:
+                self.prjPymetricsButton.setEnabled( True )
                 self.prjShowParsingErrorsButton.setEnabled( \
                                 self.__prjContextItem.parsingErrors )
 
@@ -692,6 +704,10 @@ class ProjectViewer( QWidget ):
                 self.prjPylintButton.isEnabled() )
         self.prjFilePylintAct.setEnabled( \
                 self.prjPylintButton.isEnabled() )
+        self.prjDirPymetricsAct.setEnabled( \
+                self.prjPymetricsButton.isEnabled() )
+        self.prjFilePymetricsAct.setEnabled( \
+                self.prjPymetricsButton.isEnabled() )
 
         if self.__prjContextItem.itemType == FileItemType:
             self.prjFileMenu.popup( QCursor.pos() )
@@ -808,5 +824,54 @@ class ProjectViewer( QWidget ):
         GlobalData().mainWindow.showPylintReport( option,
                                                   filesToProcess,
                                                   dirName, "" )
+        return
+
+    def __pymetricsRequest( self ):
+        " Triggered when pymetrics is called for a dir or a file "
+        if self.__prjContextItem is None:
+            return
+
+        QApplication.processEvents()
+        if self.__prjContextItem.itemType == FileItemType:
+            if self.__prjContextItem.fileType not in [ PythonFileType,
+                                                       Python3FileType ]:
+                return
+
+            # This is a file request
+            fileName = self.__prjContextItem.getPath()
+            GlobalData().mainWindow.showPymetricsReport( PymetricsViewer.SingleFile,
+                                                         fileName, fileName,
+                                                         "" )
+            return
+
+        if self.__prjContextItem.itemType != DirectoryItemType:
+            return
+
+        # This a directory request
+        # The pymetrics arguments should be detected
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+        filesToProcess = []
+        dirName = self.__prjContextItem.getPath()
+        for item in GlobalData().project.filesList:
+            if item.startswith( dirName ):
+                if detectFileType( item ) in [ PythonFileType,
+                                               Python3FileType ]:
+                    filesToProcess.append( item )
+        QApplication.restoreOverrideCursor()
+        QApplication.processEvents()
+
+        if len( filesToProcess ) == 0:
+            logging.error( "No python files in the " + dirName + " directory" )
+            return
+
+        projectDirs = GlobalData().project.getProjectDirs()
+        if len( projectDirs ) == 1 and projectDirs[ 0 ] == dirName:
+            option = PymetricsViewer.ProjectFiles
+        else:
+            option = PymetricsViewer.DirectoryFiles
+
+        GlobalData().mainWindow.showPymetricsReport( option,
+                                                     filesToProcess,
+                                                     dirName, "" )
         return
 

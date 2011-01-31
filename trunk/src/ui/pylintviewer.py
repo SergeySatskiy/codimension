@@ -254,7 +254,7 @@ class PylintViewer( QWidget ):
     def __shouldShowFileName( messages ):
         " Decides if the file name column should be supressed "
         if len( messages ) == 0:
-            return True
+            return False
         firstName = messages[ 0 ].fileName
         for index in range( 1, len( messages ) ):
             if firstName != messages[ index ].fileName:

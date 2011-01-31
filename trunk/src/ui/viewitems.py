@@ -229,6 +229,7 @@ class TreeViewDirectoryItem( TreeViewItem ):
         self.icon = None
         self.populated = False
         self.lazyPopulation = True
+        self.isLink = False
         self.updateStatus()
         return
 
@@ -238,6 +239,13 @@ class TreeViewDirectoryItem( TreeViewItem ):
             self.icon = PixmapCache().getIcon( 'dirclosed.png' )
             self.populated = False
             self.lazyPopulation = True
+
+            if os.path.islink( self._dirName ):
+                self.isLink = True
+                linkTo = os.readlink( self._dirName )
+                realpath = os.path.realpath( self._dirName )
+                self.toolTip = "-> " + linkTo + "  (" + realpath + ")"
+                self.icon = PixmapCache().getIcon( 'dirlink.png' )
         else:
             self.icon = PixmapCache().getIcon( 'dirbroken.png' )
             self.populated = True
@@ -282,6 +290,20 @@ class TreeViewFileItem( TreeViewItem ):
         self.fileType = detectFileType( path )
         self.icon = getFileIcon( self.fileType )
 
+        if self.fileType == BrokenSymlinkFileType:
+            self.toolTip = "Broken symlink"
+            return
+
+        self.isLink = False
+        if os.path.islink( path ):
+            self.isLink = True
+            linkTo = os.readlink( path )
+            realpath = os.path.realpath( path )
+            self.toolTip = "-> " + linkTo + "  (" + realpath + ")"
+            self.icon = PixmapCache().getIcon( 'filelink.png' )
+            self.fileType = detectFileType( realpath )
+            return
+
         # Fine corrections for some file types
         if self.fileType in [ PythonFileType, Python3FileType ]:
             self.populated = False
@@ -291,10 +313,6 @@ class TreeViewFileItem( TreeViewItem ):
         if self.fileType == LinguistFileType:
             if path.endswith( '.ts' ):
                 self.icon = PixmapCache().getIcon( 'filelinguist.png' )
-            return
-
-        if self.fileType == BrokenSymlinkFileType:
-            self.toolTip = "Broken symlink"
             return
 
         if self.fileType == CodimensionProjectFileType:
