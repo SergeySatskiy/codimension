@@ -290,9 +290,16 @@ class PyMetrics( object ):
 
             if lineType == self.Message:
                 # In file ...ion/src/ui/viewitems.py, function TreeView....
-                parts = line.split( ',' )
-                msg = ",".join( parts[ 1: ] )
-                self.__metric.messages.append( msg.strip() )
+                # or
+                # Module class_defs.py is missing a module doc string. Detected at line 1
+                if line.startswith( 'In file ' ):
+                    parts = line.split( ',' )
+                    msg = ",".join( parts[ 1: ] )
+                    self.__metric.messages.append( msg.strip() )
+                elif line.startswith( 'Module ' ):
+                    parts = line.split()
+                    del parts[ 1 ]
+                    self.__metric.messages.append( ' '.join( parts ) )
                 continue
 
             if lineType == self.Unknown:
@@ -304,7 +311,7 @@ class PyMetrics( object ):
             self.__currentSection.append( line )
         return
 
-    def analizeBuffer( self, content ):
+    def analyzeBuffer( self, content ):
         " run pymetrics for a memory buffer "
 
         # Save the buffer to a temporary file
@@ -377,7 +384,8 @@ class PyMetrics( object ):
         if line.startswith( '***' ):
             return self.ReportEnd
 
-        if line.startswith( 'In file ' ):
+        if line.startswith( 'In file ' ) or \
+           line.startswith( 'Module ' ):
             return self.Message
 
         return self.Unknown
