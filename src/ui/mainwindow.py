@@ -52,6 +52,8 @@ from pylintviewer               import PylintViewer
 from pylintparser.pylintparser  import Pylint
 from utils.fileutils            import PythonFileType, \
                                        Python3FileType, detectFileType
+from pymetricsviewer            import PymetricsViewer
+from pymetricsparser.pymetricsparser    import PyMetrics
 
 
 class EditorsManagerWidget( QWidget ):
@@ -291,6 +293,22 @@ class CodimensionMainWindow( QMainWindow ):
         else:
             self.__onPylinTooltip( "Pylint is not available" )
 
+        # Create pymetrics viewer
+        self.__pymetricsViewer = PymetricsViewer()
+        self.__bottomSideBar.addTab( self.__pymetricsViewer,
+                                     PixmapCache().getIcon( 'metrics.png' ),
+                                     'Metrics viewer' )
+        self.connect( self.editorsManagerWidget.editorsManager,
+                      SIGNAL( 'fileUpdated' ),
+                      self.__pymetricsViewer.onFileUpdated )
+        self.connect( self.editorsManagerWidget.editorsManager,
+                      SIGNAL( 'bufferSavedAs' ),
+                      self.__pymetricsViewer.onFileUpdated )
+        self.connect( self.__pymetricsViewer,
+                      SIGNAL( 'updatePymetricsTooltip' ),
+                      self.__onPymetricsTooltip )
+        self.__onPymetricsTooltip( "No results available" )
+
         # Create splitters
         self.__horizontalSplitter = QSplitter( Qt.Horizontal )
         self.__verticalSplitter = QSplitter( Qt.Vertical )
@@ -500,6 +518,14 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.__pylintButton, SIGNAL( 'clicked(bool)' ),
                       self.pylintButtonClicked )
 
+        # pymetrics button
+        self.__pymetricsButton = QAction( \
+                                    PixmapCache().getIcon( 'metrics.png' ),
+                                    'Project metrics', self )
+        self.__pymetricsButton.setStatusTip( 'Project metrics' )
+        self.connect( self.__pymetricsButton, SIGNAL( 'triggered()' ),
+                      self.pymetricsButtonClicked )
+
         self.linecounterButton = QAction( \
                                     PixmapCache().getIcon( 'linecounter.png' ),
                                     'Line counter', self )
@@ -524,6 +550,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__toolbar.addWidget( fixedSpacer2 )
         self.__toolbar.addAction( neverUsedButton )
         self.__toolbar.addWidget( self.__pylintButton )
+        self.__toolbar.addAction( self.__pymetricsButton )
         self.__toolbar.addWidget( spacer )
         self.__toolbar.addAction( self.linecounterButton )
         self.__toolbar.addAction( aboutButton )
@@ -731,9 +758,45 @@ class CodimensionMainWindow( QMainWindow ):
         self.__bottomSideBar.raise_()
         return
 
+    def showPymetricsReport( self, reportOption, fileOrContent,
+                                   displayName, uuid ):
+        " Passes data to the pymetrics viewer "
+
+        # This is a python file, let's pylint it
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+
+        try:
+            path = os.path.dirname( os.path.abspath( sys.argv[ 0 ] ) ) + \
+                   os.path.sep + "thirdparty" + os.path.sep + "pymetrics" + \
+                   os.path.sep + "pymetrics"
+            metrics = PyMetrics( path )
+            if reportOption == PylintViewer.SingleBuffer:
+                metrics.analyzeBuffer( fileOrContent )
+            else:
+                metrics.analyzeFile( fileOrContent )
+
+        except Exception, exc:
+            QApplication.restoreOverrideCursor()
+            logging.error( str( exc ) )
+            return
+
+        QApplication.restoreOverrideCursor()
+        self.__pymetricsViewer.showReport( metrics, reportOption,
+                                           displayName, uuid )
+
+        self.__bottomSideBar.show()
+        self.__bottomSideBar.setCurrentWidget( self.__pymetricsViewer )
+        self.__bottomSideBar.raise_()
+        return
+
     def __onPylinTooltip( self, tooltip ):
         " Updates the pylint viewer tab tooltip "
         self.__bottomSideBar.setTabToolTip( 2, tooltip )
+        return
+
+    def __onPymetricsTooltip( self, tooltip ):
+        " Updates the pymetrics viewer tab tooltip "
+        self.__bottomSideBar.setTabToolTip( 3, tooltip )
         return
 
     def getWidgetByUUID( self, uuid ):
@@ -743,8 +806,9 @@ class CodimensionMainWindow( QMainWindow ):
                 return widget
         return None
 
-    def pylintButtonClicked( self, action ):
-        " Project pylint report is requested "
+    @staticmethod
+    def __buildPythonFilesList():
+        " Builds the list of python project files "
 
         QApplication.processEvents()
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
@@ -755,7 +819,12 @@ class CodimensionMainWindow( QMainWindow ):
                 filesToProcess.append( item )
         QApplication.restoreOverrideCursor()
         QApplication.processEvents()
+        return filesToProcess
 
+    def pylintButtonClicked( self, action ):
+        " Project pylint report is requested "
+
+        filesToProcess = self.__buildPythonFilesList()
         if len( filesToProcess ) == 0:
             logging.error( "No python files in the project" )
             return
@@ -763,6 +832,19 @@ class CodimensionMainWindow( QMainWindow ):
         self.showPylintReport( PylintViewer.ProjectFiles,
                                filesToProcess,
                                "", "" )
+        return
+
+    def pymetricsButtonClicked( self ):
+        " Project pymetrics report is requested "
+
+        filesToProcess = self.__buildPythonFilesList()
+        if len( filesToProcess ) == 0:
+            logging.error( "No python files in the project" )
+            return
+
+        self.showPymetricsReport( PymetricsViewer.ProjectFiles,
+                                  filesToProcess,
+                                  "", "" )
         return
 
     @staticmethod
