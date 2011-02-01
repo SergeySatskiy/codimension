@@ -801,13 +801,8 @@ class ProjectViewer( QWidget ):
         # This a directory request
         # The pylint arguments should be detected
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
-        filesToProcess = []
         dirName = self.__prjContextItem.getPath()
-        for item in GlobalData().project.filesList:
-            if item.startswith( dirName ):
-                if detectFileType( item ) in [ PythonFileType,
-                                               Python3FileType ]:
-                    filesToProcess.append( item )
+        filesToProcess = self.__getPythonFilesInDir( dirName, dirName )
         QApplication.restoreOverrideCursor()
         QApplication.processEvents()
 
@@ -839,9 +834,9 @@ class ProjectViewer( QWidget ):
 
             # This is a file request
             fileName = self.__prjContextItem.getPath()
-            GlobalData().mainWindow.showPymetricsReport( PymetricsViewer.SingleFile,
-                                                         fileName, fileName,
-                                                         "" )
+            GlobalData().mainWindow.showPymetricsReport( \
+                                        PymetricsViewer.SingleFile,
+                                        fileName, fileName, "" )
             return
 
         if self.__prjContextItem.itemType != DirectoryItemType:
@@ -850,13 +845,8 @@ class ProjectViewer( QWidget ):
         # This a directory request
         # The pymetrics arguments should be detected
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
-        filesToProcess = []
         dirName = self.__prjContextItem.getPath()
-        for item in GlobalData().project.filesList:
-            if item.startswith( dirName ):
-                if detectFileType( item ) in [ PythonFileType,
-                                               Python3FileType ]:
-                    filesToProcess.append( item )
+        filesToProcess = self.__getPythonFilesInDir( dirName, dirName )
         QApplication.restoreOverrideCursor()
         QApplication.processEvents()
 
@@ -874,4 +864,32 @@ class ProjectViewer( QWidget ):
                                                      filesToProcess,
                                                      dirName, "" )
         return
+
+    @staticmethod
+    def __getPythonFilesInDir( coveringDir, path ):
+        " Provides the list of python files in a dir respecting symlinks "
+        files = []
+        for item in os.listdir( path ):
+            candidate = path + item
+            if os.path.isdir( candidate ):
+                if os.path.islink( candidate ):
+                    realpath = os.path.realpath( candidate )
+                    if realpath.startswith( coveringDir ):
+                        continue
+                files += ProjectViewer.__getPythonFilesInDir( coveringDir,
+                                                  candidate + os.path.sep )
+            else:
+                # It's a file
+                if os.path.islink( candidate ):
+                    realpath = os.path.realpath( candidate )
+                    if realpath.startswith( coveringDir ):
+                        continue
+                    if detectFileType( realpath ) in [ PythonFileType,
+                                                       Python3FileType ]:
+                        files.append( candidate )
+                else:
+                    if detectFileType( candidate ) in [ PythonFileType,
+                                                        Python3FileType ]:
+                        files.append( candidate )
+        return files
 
