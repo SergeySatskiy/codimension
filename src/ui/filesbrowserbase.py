@@ -43,7 +43,7 @@ from utils.fileutils    import CodimensionProjectFileType, \
                                BrokenSymlinkFileType, PixmapFileType
 from itemdelegates      import NoOutlineHeightDelegate
 from parsererrors       import ParserErrorsDialog
-
+from utils.fileutils    import detectFileType
 
 
 class FilesBrowserSortFilterProxyModel( QSortFilterProxyModel ):
@@ -200,21 +200,34 @@ class FilesBrowser( QTreeView ):
         if item.itemType == FileItemType:
             if item.fileType == BrokenSymlinkFileType:
                 return
-            if item.fileType == PixmapFileType:
-                GlobalData().mainWindow.openPixmapFile( item.getPath() )
+
+            itemPath = item.getPath()
+            if not os.path.exists( itemPath ):
+                logging.error( "Cannot open " + itemPath )
                 return
-            if item.fileType == CodimensionProjectFileType:
+
+            if os.path.islink( itemPath ):
+                # Convert it to the real path and the decide what to do
+                itemPath = os.path.realpath( itemPath )
+                # The type may differ...
+                itemFileType = detectFileType( itemPath )
+            else:
+                itemFileType = item.fileType
+
+            if itemFileType == PixmapFileType:
+                GlobalData().mainWindow.openPixmapFile( itemPath )
+                return
+            if itemFileType == CodimensionProjectFileType:
                 # This not the current project. Load it if still exists.
-                if item.getPath() != GlobalData().project.fileName:
-                    if os.path.exists( item.getPath() ):
-                        GlobalData().project.loadProject( item.getPath() )
-                    else:
-                        logging.error( "The project " + \
-                                       os.path.basename( item.getPath() ) + \
-                                       " disappeared from the file system." )
+                if itemPath != GlobalData().project.fileName:
+                    GlobalData().project.loadProject( itemPath )
                 else:
-                    return  # This is the currenly loaded project
-            GlobalData().mainWindow.openFile( item.getPath(), -1 )
+                    # This is the currenly loaded project
+                    # Make it possible to look at the project file content
+                    # I trust the developer
+                    GlobalData().mainWindow.openFile( itemPath, -1 )
+                    return
+            GlobalData().mainWindow.openFile( itemPath, -1 )
             return
         if item.itemType in [ CodingItemType, ImportItemType, FunctionItemType,
                               ClassItemType, DecoratorItemType,
