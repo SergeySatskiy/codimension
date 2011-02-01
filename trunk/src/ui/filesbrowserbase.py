@@ -27,7 +27,8 @@
 import os.path, logging
 from PyQt4.QtCore       import Qt, QModelIndex, SIGNAL
 from PyQt4.QtGui        import QAbstractItemView, QApplication, \
-                               QSortFilterProxyModel, QTreeView
+                               QSortFilterProxyModel, QTreeView, \
+                               QCursor
 from utils.globals      import GlobalData
 from viewitems          import DirectoryItemType, SysPathItemType, \
                                GlobalsItemType, ImportsItemType, \
@@ -220,7 +221,13 @@ class FilesBrowser( QTreeView ):
             if itemFileType == CodimensionProjectFileType:
                 # This not the current project. Load it if still exists.
                 if itemPath != GlobalData().project.fileName:
-                    GlobalData().project.loadProject( itemPath )
+                    QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+                    try:
+                        GlobalData().project.loadProject( itemPath )
+                    except Exception, exc:
+                        logging.error( str( exc ) )
+                    QApplication.restoreOverrideCursor()
+                    return
                 else:
                     # This is the currenly loaded project
                     # Make it possible to look at the project file content
