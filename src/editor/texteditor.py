@@ -452,7 +452,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         self.pymetricsButton = QAction( \
             PixmapCache().getIcon( 'metrics.png' ),
-            'Calculate metrics', self )
+            'Calculate the file metrics (Ctrl+K)', self )
         self.pymetricsButton.setShortcut( 'Ctrl+K' )
         self.connect( self.pymetricsButton, SIGNAL( 'triggered()' ),
                       self.__onPymetrics )

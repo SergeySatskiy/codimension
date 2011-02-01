@@ -138,6 +138,11 @@ class QuickHelpWidget( HTMLTabWidget ):
           <td>Search next</td>
           <td>Shift+F3</td>
           <td>Search previous</td></tr>
+        <tr>
+          <td>Ctrl+K</td>
+          <td>Pymetrics for a file</td>
+          <td></td>
+          <td></td></tr>
     </table>
     </p>
     <p align="center">
