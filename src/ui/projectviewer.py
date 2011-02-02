@@ -200,8 +200,9 @@ class ProjectViewer( QWidget ):
         upperToolbar.addAction( self.prjDelProjectDirButton )
 
         self.connect( self.projectTreeView,
-                      SIGNAL( "clicked(const QModelIndex &)" ),
+                      SIGNAL( 'firstSelectedItem' ),
                       self.__prjSelectionChanged )
+
         self.projectTreeView.setContextMenuPolicy( Qt.CustomContextMenu )
         self.connect( self.projectTreeView,
                       SIGNAL( "customContextMenuRequested(const QPoint &)" ),
@@ -300,7 +301,7 @@ class ProjectViewer( QWidget ):
         # Tree view part
         self.filesystemView = FileSystemBrowser()
         self.connect( self.filesystemView,
-                      SIGNAL( "clicked(const QModelIndex &)" ),
+                      SIGNAL( 'firstSelectedItem' ),
                       self.__fsSelectionChanged )
         self.filesystemView.setContextMenuPolicy( Qt.CustomContextMenu )
         self.connect( self.filesystemView,
@@ -481,13 +482,19 @@ class ProjectViewer( QWidget ):
 
     def __fsSelectionChanged( self, index ):
         " Handles the changed selection in the FS browser "
-        self.__fsContextItem = self.filesystemView.model().item( index )
+        if index is None:
+            self.__fsContextItem = None
+        else:
+            self.__fsContextItem = self.filesystemView.model().item( index )
         self.__updateFSToolbarButtons()
         return
 
     def __prjSelectionChanged( self, index ):
         " Handles the changed selection in the project browser "
-        self.__prjContextItem = self.projectTreeView.model().item( index )
+        if index is None:
+            self.__prjContextItem = None
+        else:
+            self.__prjContextItem = self.projectTreeView.model().item( index )
         self.__updatePrjToolbarButtons()
         return
 

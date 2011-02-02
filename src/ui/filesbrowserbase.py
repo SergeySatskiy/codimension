@@ -285,3 +285,14 @@ class FilesBrowser( QTreeView ):
         #replaceFilesDialog.activateWindow()
         return
 
+    def selectionChanged( self, selected, deselected ):
+        " Triggered when the selection changed "
+
+        QTreeView.selectionChanged( self, selected, deselected )
+        indexesList = selected.indexes()
+        if len( indexesList ) == 0:
+            self.emit( SIGNAL( 'firstSelectedItem' ), None )
+        else:
+            self.emit( SIGNAL( 'firstSelectedItem' ), indexesList[ 0 ] )
+        return
+
