@@ -217,8 +217,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.editorsManagerWidget.gotoLineWidget.hide()
 
         # The layout is a sidebar-style one
-        self.__bottomSideBar = SideBar( SideBar.South )
-        self.__leftSideBar   = SideBar( SideBar.West )
+        self.__bottomSideBar = SideBar( SideBar.South, self )
+        self.__leftSideBar   = SideBar( SideBar.West, self )
 
         # Create tabs on bars
         self.__logViewer = LogViewer()
@@ -320,9 +320,6 @@ class CodimensionMainWindow( QMainWindow ):
         self.__verticalSplitter.addWidget( self.__bottomSideBar )
 
         self.setCentralWidget( self.__verticalSplitter )
-
-        self.__leftSideBar.setSplitter( self.__horizontalSplitter )
-        self.__bottomSideBar.setSplitter( self.__verticalSplitter )
 
         self.__leftSideBar.setSplitter( self.__horizontalSplitter )
         self.__bottomSideBar.setSplitter( self.__verticalSplitter )
