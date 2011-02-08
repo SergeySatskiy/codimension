@@ -161,24 +161,26 @@ class TextEditor( ScintillaWrapper ):
                              self.__styleNeeded )
 
         self.lexer_ = lexer.getLexerByType( fileType, fileName, self )
-        self.lexer_.setDefaultFont( QFont( "Monospace", 14 ) )
-        self.lexer_.setFont( QFont( "Monospace", 14 ) )
-        self.setLexer( self.lexer_ )
+        if self.lexer_ is not None:
+            self.lexer_.setDefaultFont( QFont( "Monospace", 14 ) )
+            self.lexer_.setFont( QFont( "Monospace", 14 ) )
+            self.setLexer( self.lexer_ )
 
-        if self.lexer_.lexer() == "container" or self.lexer_.lexer() is None:
-            self.setStyleBits( self.lexer_.styleBitsNeeded() )
-            self.connect( self, SIGNAL( "SCN_STYLENEEDED(int)" ),
-                          self.__styleNeeded )
+            if self.lexer_.lexer() == "container" or self.lexer_.lexer() is None:
+                self.setStyleBits( self.lexer_.styleBitsNeeded() )
+                self.connect( self, SIGNAL( "SCN_STYLENEEDED(int)" ),
+                              self.__styleNeeded )
+
+            # now set the lexer properties
+            self.lexer_.initProperties()
+
+            # initialize the auto indent style of the lexer
+            ais = self.lexer_.autoIndentStyle()
 
         if fileType != MakefileType:
             self.setIndentationsUseTabs( False )
             self.setIndentationWidth( 4 )
 
-        # now set the lexer properties
-        self.lexer_.initProperties()
-
-        # initialize the auto indent style of the lexer
-        ais = self.lexer_.autoIndentStyle()
         return
 
     def __styleNeeded( self, position ):
