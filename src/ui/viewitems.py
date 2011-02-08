@@ -90,6 +90,10 @@ class TreeViewItem( object ):
         self.toolTip = ""
         return
 
+    def __isRoot( self ):
+        " True if it is the root item "
+        return self.parentItem == None
+
     def appendData( self, data ):
         " Adds more data to the item "
 
@@ -129,13 +133,13 @@ class TreeViewItem( object ):
 
     def childCount( self ):
         " Provides the number of child items "
+        # Optimization against len( self.childItems )
         return self.childItemsSize
-#        return len( self.childItems )
 
     def columnCount( self ):
         " Provides the number of available data items "
+        # Optimization against len( self.itemData )
         return self.itemDataSize
-#        return len( self.itemData )
 
     def data( self, column ):
         " Provides item data "
@@ -208,6 +212,20 @@ class TreeViewItem( object ):
 
         return path
 
+    def getRowPath( self ):
+        " Provides the row path "
+        rowPath = []
+        child = self
+        current = self.parentItem
+        while not current is None:
+            for index in range( 0, len( current.childItems ) ):
+                if current.childItems[ index ] == child:
+                    rowPath = [ index ] + rowPath
+                    child = current
+                    current = child.parentItem
+                    break
+        return rowPath
+
 
 
 class TreeViewDirectoryItem( TreeViewItem ):
@@ -250,6 +268,9 @@ class TreeViewDirectoryItem( TreeViewItem ):
             self.icon = PixmapCache().getIcon( 'dirbroken.png' )
             self.populated = True
             self.lazyPopulation = False
+
+            self.childItems = []
+            self.childItemsSize = 0
         return
 
     def lessThan( self, other, column, order ):
@@ -286,22 +307,21 @@ class TreeViewFileItem( TreeViewItem ):
         TreeViewItem.__init__( self, parent, os.path.basename( path ) )
         self.itemType = FileItemType
         self.parsingErrors = False  # Used for python files only
+        self.isLink = False
 
         self.fileType = detectFileType( path )
         self.icon = getFileIcon( self.fileType )
 
         if self.fileType == BrokenSymlinkFileType:
-            self.toolTip = "Broken symlink"
+            self.isLink = True
+            self.toolTip = self.__brokenLinkTooltip( path )
             return
 
-        self.isLink = False
         if os.path.islink( path ):
             self.isLink = True
-            linkTo = os.readlink( path )
-            realpath = os.path.realpath( path )
-            self.toolTip = "-> " + linkTo + "  (" + realpath + ")"
+            self.toolTip = self.__linkTooltip( path )
             self.icon = PixmapCache().getIcon( 'filelink.png' )
-            self.fileType = detectFileType( realpath )
+            self.fileType = detectFileType( os.path.realpath( path ) )
             return
 
         # Fine corrections for some file types
@@ -350,6 +370,35 @@ class TreeViewFileItem( TreeViewItem ):
 
         return TreeViewItem.lessThan( self, other, column, order )
 
+    def updateLinkStatus( self, path ):
+        " Called to update the status to/from broken link "
+        if not self.isLink:
+            return
+
+        self.fileType = detectFileType( path )
+        self.icon = getFileIcon( self.fileType )
+        if self.fileType == BrokenSymlinkFileType:
+            self.toolTip = self.__brokenLinkTooltip( path )
+            return
+
+        self.toolTip = self.__linkTooltip( path )
+        self.icon = PixmapCache().getIcon( 'filelink.png' )
+        self.fileType = detectFileType( os.path.realpath( path ) )
+        return
+
+    @staticmethod
+    def __brokenLinkTooltip( path ):
+        " Provides the broken link tooltip "
+        linkTo = os.readlink( path )
+        realpath = os.path.realpath( path )
+        return "Broken symlink -> " + linkTo + " (" + realpath + ")"
+
+    @staticmethod
+    def __linkTooltip( path ):
+        " Provides the link tooltip "
+        linkTo = os.readlink( path )
+        realpath = os.path.realpath( path )
+        return "-> " + linkTo + "  (" + realpath + ")"
 
 
 class TreeViewGlobalsItem( TreeViewItem ):

@@ -415,19 +415,34 @@ class CodimensionProject( QObject ):
     def onFSChanged( self, items ):
         " Triggered when the watcher detects changes "
         report = "REPORT: "
+        projectItems = []
         for item in items:
             item = str( item )
+
+#            if not os.path.islink( item ):
+#                realPath = os.path.realpath( item[ 1: ] )
+#                isDir = item.endswith( os.path.sep )
+#                if isDir:
+#                    if self.isProjectDir( realPath + os.path.sep ):
+#                        item = item[ 0 ] + realPath + os.path.sep
+#                else:
+#                    if self.isProjectFile( realPath + os.path.sep ):
+#                        item = item[ 0 ] + realPath
+
+#            projectItems.append( item )
             report += " " + item
             try:
                 if item.startswith( '+' ):
                     self.filesList.update( [ item[ 1: ] ] )
                 else:
                     self.filesList.remove( item[ 1: ] )
+                projectItems.append( item )
             except:
                 print "EXCEPTION for '" + item + "'"
                 pass
         print "'" + report + "'"
         self.emit( SIGNAL( 'fsChanged' ), items )
+#        self.emit( SIGNAL( 'fsChanged' ), projectItems )
         self.__dirWatcher.debug()
         return
 
