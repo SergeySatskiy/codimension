@@ -38,6 +38,24 @@ from utils.pixmapcache          import PixmapCache
 class PixmapWidget( QScrollArea ):
     " The pixmap widget "
 
+    formatStrings = { QImage.Format_Invalid:                "invalid",
+                      QImage.Format_Mono:                   "1-bit per pixel",
+                      QImage.Format_MonoLSB:                "1-bit per pixel",
+                      QImage.Format_Indexed8:               "8-bit indexes",
+                      QImage.Format_RGB32:                  "32-bit RG",
+                      QImage.Format_ARGB32:                 "32-bit ARGB",
+                      QImage.Format_ARGB32_Premultiplied:   "32-bit ARGB",
+                      QImage.Format_RGB16:                  "16-bit RGB",
+                      QImage.Format_ARGB8565_Premultiplied: "24-bit ARGB",
+                      QImage.Format_RGB666:                 "24-bit RGB",
+                      QImage.Format_ARGB6666_Premultiplied: "24-bit ARGB",
+                      QImage.Format_RGB555:                 "16-bit RGB",
+                      QImage.Format_ARGB8555_Premultiplied: "24-bit ARGB",
+                      QImage.Format_RGB888:                 "24-bit RGB",
+                      QImage.Format_RGB444:                 "16-bit RGB",
+                      QImage.Format_ARGB4444_Premultiplied: "16-bit ARGB" }
+
+
     def __init__( self, parent = None ):
         QScrollArea.__init__( self, parent )
 
@@ -48,6 +66,9 @@ class PixmapWidget( QScrollArea ):
         self.pixmapLabel.setScaledContents( True )
 
         self.zoom = 1.0
+        self.info = ""
+        self.formatInfo = ""
+        self.fileSize = 0
 
         self.setBackgroundRole( QPalette.Dark )
         self.setWidget( self.pixmapLabel )
@@ -62,12 +83,31 @@ class PixmapWidget( QScrollArea ):
 
         self.pixmapLabel.setPixmap( QPixmap.fromImage( image ) )
         self.pixmapLabel.adjustSize()
+
+        self.fileSize = os.path.getsize( fileName )
+        if self.fileSize < 1024:
+            fileSizeString = str( self.fileSize ) + "bytes"
+        else:
+            kiloBytes = self.fileSize / 1024
+            if (self.fileSize % 1024) >= 512:
+                kiloBytes += 1
+            fileSizeString = str( kiloBytes ) + "kb"
+        self.info = str( image.width() ) + "px/" + \
+                    str( image.height() ) + "px/" + fileSizeString
+        try:
+            self.formatInfo = self.formatStrings[ image.format() ]
+        except:
+            self.formatInfo = "Unknown"
         return
 
     def setPixmap( self, pixmap ):
         " Shows the provided pixmap "
-        self.pixmapLabel.setPixmap( QPixmap.fromImage( pixmap ) )
+        pix = QPixmap.fromImage( pixmap )
+        self.pixmapLabel.setPixmap( pix )
         self.pixmapLabel.adjustSize()
+
+        self.info = str( pix.width() ) + "px/" + str( pix.height() ) + "px"
+        self.formatInfo = str( pix.depth() ) + " bpp"
         return
 
     def keyPressEvent( self, event ):
@@ -237,7 +277,7 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def getLanguage( self ):
         " Tells the content language "
-        return "N/A"
+        return self.__viewer.formatInfo
 
     def getFileName( self ):
         " Tells what file name of the widget content "
@@ -263,7 +303,7 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def getEncoding( self ):
         " Tells the content encoding "
-        return "N/A"
+        return self.__viewer.info
 
     def getShortName( self ):
         " Tells the display name "
