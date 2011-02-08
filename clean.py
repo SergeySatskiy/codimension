@@ -17,8 +17,6 @@ from optparse  import OptionParser
 
 ext = [ '.pyc', '.out', '.pyo', '.o' ]
 
-files = 0
-
 
 def mainClean():
     """ Counter main function """
@@ -39,7 +37,7 @@ def mainClean():
        not os.path.isdir( args[0] ):
         raise Exception( "A directory name is expected" )
 
-    processDir( args[0] )
+    files = processDir( args[0] )
 
     print "Project directory: " + args[0]
     print "Deleted files:    " + str( files )
@@ -50,18 +48,18 @@ def mainClean():
 def processDir( path ):
     " Recursively deletes files in the given directory "
 
-    global files
-    global totalSize
+    files = 0
 
     for item in os.listdir( path ):
         if os.path.isdir( path + '/' + item ):
-            processDir( path + '/' + item )
+            files += processDir( path + '/' + item )
             continue
         for ex in ext:
             if item.endswith( ex ):
                 files += 1
                 os.remove( path + '/' + item )
             continue
+    return files
 
 
 # The script execution entry point
