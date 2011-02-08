@@ -296,6 +296,12 @@ class ProjectViewer( QWidget ):
                 'Remove file from the disk',
                 self.__removePrj )
 
+        # Popup menu for broken symlinks
+        self.prjBrokenLinkMenu = QMenu( self )
+        self.prjBrokenLinkMenu.addAction( \
+                PixmapCache().getIcon( 'trash.png' ),
+                'Remove broken link from the disk', self.__removePrj )
+
         return
 
     def __createFilesystemPartLayout( self ):
@@ -449,6 +455,12 @@ class ProjectViewer( QWidget ):
         self.fsDirRemoveAct = self.fsDirMenu.addAction( \
                 PixmapCache().getIcon( 'trash.png' ),
                 'Remove directory from the disk recursively', self.__removeFs )
+
+        # create menu for broken symlink
+        self.fsBrokenLinkMenu = QMenu( self )
+        self.fsBrokenLinkMenu.addAction( \
+                PixmapCache().getIcon( 'trash.png' ),
+                'Remove broken link from the disk', self.__removeFs )
         return
 
     @staticmethod
@@ -663,6 +675,7 @@ class ProjectViewer( QWidget ):
             return
         if self.__fsContextItem.itemType == FileItemType:
             if self.__fsContextItem.fileType == BrokenSymlinkFileType:
+                self.fsBrokenLinkMenu.popup( QCursor.pos() )
                 return
 
         # Update the menu items status
@@ -724,6 +737,7 @@ class ProjectViewer( QWidget ):
             return
         if self.__prjContextItem.itemType == FileItemType:
             if self.__prjContextItem.fileType == BrokenSymlinkFileType:
+                self.prjBrokenLinkMenu.popup( QCursor.pos() )
                 return
 
         # Update the menu items status
