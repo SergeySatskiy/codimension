@@ -213,6 +213,9 @@ class FilesBrowser( QTreeView ):
                 # The type may differ...
                 itemFileType = detectFileType( itemPath )
             else:
+                # The intermediate directory could be a link, so use the real
+                # path
+                itemPath = os.path.realpath( itemPath )
                 itemFileType = item.fileType
 
             if itemFileType == PixmapFileType:
