@@ -286,12 +286,12 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( 'bufferSavedAs' ),
                       self.__pylintViewer.onFileUpdated )
-        self.connect( self.__pylintViewer, SIGNAL( 'updatePylinTooltip' ),
-                      self.__onPylinTooltip )
+        self.connect( self.__pylintViewer, SIGNAL( 'updatePylintTooltip' ),
+                      self.__onPylintTooltip )
         if GlobalData().pylintAvailable:
-            self.__onPylinTooltip( "No results available" )
+            self.__onPylintTooltip( "No results available" )
         else:
-            self.__onPylinTooltip( "Pylint is not available" )
+            self.__onPylintTooltip( "Pylint is not available" )
 
         # Create pymetrics viewer
         self.__pymetricsViewer = PymetricsViewer()
@@ -786,7 +786,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__bottomSideBar.raise_()
         return
 
-    def __onPylinTooltip( self, tooltip ):
+    def __onPylintTooltip( self, tooltip ):
         " Updates the pylint viewer tab tooltip "
         self.__bottomSideBar.setTabToolTip( 2, tooltip )
         return

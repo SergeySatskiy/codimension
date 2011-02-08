@@ -440,7 +440,7 @@ class PylintViewer( QWidget ):
                       self.__reportFileName
         else:
             tooltip = ""
-        self.emit( SIGNAL( 'updatePylinTooltip' ), tooltip )
+        self.emit( SIGNAL( 'updatePylintTooltip' ), tooltip )
         return
 
     def showReport( self, lint, reportOption, fileName, uuid ):
@@ -548,7 +548,7 @@ class PylintViewer( QWidget ):
         # Currently shown report is for the saved buffer
         # File name is expected being absolute
         self.__reportFileName = fileName
-        self.emit( SIGNAL( 'updatePylinTooltip' ),
+        self.emit( SIGNAL( 'updatePylintTooltip' ),
                    "Report generated for buffer saved as " + fileName )
         return
 
