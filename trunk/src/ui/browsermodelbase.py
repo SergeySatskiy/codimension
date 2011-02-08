@@ -137,6 +137,13 @@ class BrowserModelBase( QAbstractItemModel ):
             return self.createIndex( row, column, childItem )
         return QModelIndex()
 
+    def buildIndex( self, rowPath ):
+        " Builds index for the path (path is like [ 1, 2, 1, 16 ]) "
+        result = QModelIndex()
+        for row in rowPath:
+            result = self.index( row, 0, result )
+        return result
+
     def parent( self, index ):
         " Provides the index of the parent object "
 
@@ -306,6 +313,8 @@ class BrowserModelBase( QAbstractItemModel ):
 
             if repopulate:
                 self.endInsertRows()
+
+        parentItem.populated = True
         return
 
     def populateSysPathItem( self, parentItem, repopulate = False ):
@@ -325,6 +334,8 @@ class BrowserModelBase( QAbstractItemModel ):
                     self._addItem( node, parentItem )
             if repopulate:
                 self.endInsertRows()
+
+        parentItem.populated = True
         return
 
     def populateFileItem( self, parentItem, repopulate = False ):

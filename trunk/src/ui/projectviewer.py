@@ -23,13 +23,14 @@
 """ project viewer implementation """
 
 
-import os, os.path, logging
+import os, os.path, logging, shutil
 from PyQt4.QtCore       import SIGNAL, QSize, Qt
 from PyQt4.QtGui        import QWidget, QVBoxLayout, \
                                QSplitter, QToolBar, QAction, \
                                QToolButton, QHBoxLayout, \
                                QLabel, QSpacerItem, QSizePolicy, QDialog, \
-                               QMenu, QCursor, QFrame, QApplication
+                               QMenu, QCursor, QFrame, QApplication, \
+                               QMessageBox
 from utils.pixmapcache  import PixmapCache
 from utils.globals      import GlobalData
 from projectproperties  import ProjectPropertiesDialog
@@ -49,6 +50,7 @@ from utils.fileutils    import BrokenSymlinkFileType, PythonFileType, \
                                Python3FileType, detectFileType
 from pylintviewer       import PylintViewer
 from pymetricsviewer    import PymetricsViewer
+from newnesteddir       import NewProjectDirDialog
 
 
 class ProjectViewer( QWidget ):
@@ -155,7 +157,9 @@ class ProjectViewer( QWidget ):
                       self.showPrjParserError )
         self.prjNewDirButton = QAction( \
                 PixmapCache().getIcon( 'newdir.png' ),
-                'Create nested directory', self )
+                'Create sub directory', self )
+        self.connect( self.prjNewDirButton, SIGNAL( "triggered()" ),
+                      self.__createDir )
         self.prjCopyToClipboardButton = QAction( \
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
                 'Copy path to clipboard', self )
@@ -175,7 +179,7 @@ class ProjectViewer( QWidget ):
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
         self.prjDelProjectDirButton = QAction( \
-                PixmapCache().getIcon( 'trash.png' ),
+                PixmapCache().getIcon( 'removedirfromproject.png' ),
                 'Remove directory from the project', self )
         self.connect( self.prjDelProjectDirButton, SIGNAL( "triggered()" ),
                       self.removeFromProject )
@@ -240,10 +244,12 @@ class ProjectViewer( QWidget ):
         self.prjDirMenu = QMenu( self )
         self.prjDirPylintAct = self.prjDirMenu.addAction( \
                 PixmapCache().getIcon( 'pylint.png' ),
-                'Run pylint for the directory recursively', self.__pylintRequest )
+                'Run pylint for the directory recursively',
+                self.__pylintRequest )
         self.prjDirPymetricsAct = self.prjDirMenu.addAction( \
                 PixmapCache().getIcon( 'metrics.png' ),
-                'Run pymetrics for the directory recursively', self.__pymetricsRequest )
+                'Run pymetrics for the directory recursively',
+                self.__pymetricsRequest )
         self.prjDirMenu.addSeparator()
         self.prjDirNewDirAct = self.prjDirMenu.addAction( \
                 PixmapCache().getIcon( 'newdir.png' ),
@@ -261,8 +267,13 @@ class ProjectViewer( QWidget ):
                 'Copy Path to Clipboard', self.projectTreeView.copyToClipboard )
         self.prjDirMenu.addSeparator()
         self.prjDirRemoveFromProjectAct = self.prjDirMenu.addAction( \
-                PixmapCache().getIcon( 'trash.png' ),
+                PixmapCache().getIcon( 'removedirfromproject.png' ),
                 'Remove directory from the project', self.removeFromProject )
+        self.prjDirMenu.addSeparator()
+        self.prjDirRemoveFromDiskAct = self.prjDirMenu.addAction( \
+                PixmapCache().getIcon( 'trash.png' ),
+                'Remove directory from the disk recursively',
+                self.__removePrj )
 
         # popup menu for files
         self.prjFileMenu = QMenu( self )
@@ -279,6 +290,11 @@ class ProjectViewer( QWidget ):
         self.prjFileShowErrorsAct = self.prjFileMenu.addAction( \
                 PixmapCache().getIcon( 'showparsingerrors.png' ),
                 'Show Parsing Errors', self.showPrjParserError )
+        self.prjFileMenu.addSeparator()
+        self.prjFileRemoveFromDiskAct = self.prjFileMenu.addAction( \
+                PixmapCache().getIcon( 'trash.png' ),
+                'Remove file from the disk',
+                self.__removePrj )
 
         return
 
@@ -400,6 +416,10 @@ class ProjectViewer( QWidget ):
         self.fsFileShowErrorsAct = self.fsFileMenu.addAction( \
                 PixmapCache().getIcon( 'showparsingerrors.png' ),
                 'Show Parsing Errors', self.showFsParserError )
+        self.fsFileMenu.addSeparator()
+        self.fsFileRemoveAct = self.fsFileMenu.addAction( \
+                PixmapCache().getIcon( 'trash.png' ),
+                'Remove file from the disk', self.__removeFs )
 
         # create the directory menu
         self.fsDirMenu = QMenu( self )
@@ -425,17 +445,23 @@ class ProjectViewer( QWidget ):
         self.fsDirCopyPathAct = self.fsDirMenu.addAction( \
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
                 'Copy Path to Clipboard', self.filesystemView.copyToClipboard )
+        self.fsDirMenu.addSeparator()
+        self.fsDirRemoveAct = self.fsDirMenu.addAction( \
+                PixmapCache().getIcon( 'trash.png' ),
+                'Remove directory from the disk recursively', self.__removeFs )
         return
 
-    def __unloadProject( self ):
+    @staticmethod
+    def __unloadProject():
         " Unloads the project "
         # Check first if the project can be unloaded
         globalData = GlobalData()
-        editorsManager = globalData.mainWindow.editorsManagerWidget.editorsManager
+        mainWindow = globalData.mainWindow
+        editorsManager = mainWindow.editorsManagerWidget.editorsManager
         if editorsManager.closeRequest():
-            GlobalData().project.setTabsStatus( editorsManager.getTabsStatus() )
+            globalData.project.setTabsStatus( editorsManager.getTabsStatus() )
             editorsManager.closeAll()
-            GlobalData().project.unloadProject()
+            globalData.project.unloadProject()
         return
 
     def __onProjectChanged( self, what ):
@@ -659,12 +685,26 @@ class ProjectViewer( QWidget ):
                 self.fsCopyToClipboardButton.isEnabled() )
 
         if self.__fsContextItem.itemType == FileItemType:
+            if self.__fsContextItem.isLink:
+                self.fsFileRemoveAct.setText( "Remove link from the disk" )
+            else:
+                self.fsFileRemoveAct.setText( "Remove file from the disk" )
+            self.fsFileRemoveAct.setEnabled( \
+                    self.__canDeleteFile( self.__fsContextItem.getPath() ) )
             self.fsFileMenu.popup( QCursor.pos() )
         elif self.__fsContextItem.itemType == DirectoryItemType:
+            if self.__fsContextItem.isLink:
+                self.fsDirRemoveAct.setText( "Remove link from the disk" )
+            else:
+                self.fsDirRemoveAct.setText( "Remove directory from " \
+                                             "the disk recursively" )
+            self.fsDirRemoveAct.setEnabled( \
+                    self.__canDeleteDir( self.__fsContextItem.getPath() ) )
             self.fsDirMenu.popup( QCursor.pos() )
         return
 
     def __prjContextMenuRequested( self, coord ):
+        " Triggered before the project context menu is shown "
 
         index = self.projectTreeView.indexAt( coord )
         if not index.isValid():
@@ -717,8 +757,24 @@ class ProjectViewer( QWidget ):
                 self.prjPymetricsButton.isEnabled() )
 
         if self.__prjContextItem.itemType == FileItemType:
+            if self.__prjContextItem.isLink:
+                self.prjFileRemoveFromDiskAct.setText( \
+                                            "Remove link from the disk" )
+            else:
+                self.prjFileRemoveFromDiskAct.setText( \
+                                            "Remove file from the disk" )
+            self.prjFileRemoveFromDiskAct.setEnabled( \
+                    self.__canDeleteFile( self.__prjContextItem.getPath() ) )
             self.prjFileMenu.popup( QCursor.pos() )
         elif self.__prjContextItem.itemType == DirectoryItemType:
+            if self.__prjContextItem.isLink:
+                self.prjDirRemoveFromDiskAct.setText( \
+                                            "Remove link from the disk" )
+            else:
+                self.prjDirRemoveFromDiskAct.setText( "Remove directory from " \
+                                                      "the disk recursively" )
+            self.prjDirRemoveFromDiskAct.setEnabled( \
+                    self.__canDeleteDir( self.__prjContextItem.getPath() ) )
             self.prjDirMenu.popup( QCursor.pos() )
         elif self.__prjContextItem.itemType in [ CodingItemType, ImportItemType,
                                                  FunctionItemType,
@@ -735,7 +791,18 @@ class ProjectViewer( QWidget ):
         return
 
     def __createDir( self ):
+        " Triggered when a new subdir should be created "
+        if self.__prjContextItem is None:
+            return
+        if not self.__prjContextItem.itemType != DirectoryItemType:
+            return
 
+        dlg = NewProjectDirDialog( self )
+        if dlg.exec_() == QDialog.Accepted:
+            try:
+                os.mkdir( self.__prjContextItem.getPath() + dlg.getDirName() )
+            except Exception, exc:
+                logging.error( str( exc ) )
         return
 
     def showPrjParserError( self ):
@@ -899,4 +966,61 @@ class ProjectViewer( QWidget ):
                                                         Python3FileType ]:
                         files.append( candidate )
         return files
+
+    def __removePrj( self ):
+        " Remove the selected item "
+        if self.__prjContextItem is not None:
+            self.__removeItem( self.__prjContextItem.getPath() )
+        return
+
+    def __removeFs( self ):
+        " Remove the selected item "
+        if self.__fsContextItem is not None:
+            self.__removeItem( self.__fsContextItem.getPath() )
+        return
+
+    def __removeItem( self, path ):
+        " Removes a link, a file or a directory "
+        path = os.path.abspath( path )
+        if os.path.islink( path ):
+            header = "Deleting a link"
+            text = "Are you sure you want to delete the " \
+                   "symbolic link <b>" + path + "</b>?"
+        elif os.path.isdir( path ):
+            header = "Deleting a directory"
+            text = "Are you sure you want to delete the " \
+                   "directory <b>" + path + "</b> recursively?"
+        else:
+            header = "Deleting a file"
+            text = "Are you sure you want to delete the " \
+                   "file <b>" + path + "</b>?"
+
+        res = QMessageBox.warning( self, header, text,
+                                   QMessageBox.StandardButtons( \
+                                        QMessageBox.Cancel | QMessageBox.Yes ),
+                                   QMessageBox.Cancel )
+        if res == QMessageBox.Yes:
+            try:
+                if os.path.islink( path ):
+                    os.remove( path )
+                elif os.path.isdir( path ):
+                    shutil.rmtree( path )
+                else:
+                    os.remove( path )
+            except Exception, exc:
+                logging.error( str( exc ) )
+        return
+
+    @staticmethod
+    def __canDeleteFile( path ):
+        " Returns True if the file can be deleted "
+        return GlobalData().project.fileName != os.path.realpath( path )
+
+    @staticmethod
+    def __canDeleteDir( path ):
+        " Returns True if the dir can be deleted "
+        path = os.path.realpath( path )
+        if not path.endswith( os.path.sep ):
+            path += os.path.sep
+        return not GlobalData().project.fileName.startswith( path )
 
