@@ -49,6 +49,8 @@ class SideBar( QWidget ):
         self.__tabBar.setDrawBase( True )
         self.__tabBar.setShape( QTabBar.RoundedNorth )
         self.__tabBar.setFocusPolicy( Qt.NoFocus )
+        self.__tabBar.setUsesScrollButtons( True )
+        self.__tabBar.setElideMode( 1 )
         self.__stackedWidget = QStackedWidget( self )
         self.__stackedWidget.setContentsMargins( 0, 0, 0, 0 )
         self.barLayout = QBoxLayout( QBoxLayout.LeftToRight )
