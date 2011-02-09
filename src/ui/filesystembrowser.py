@@ -68,6 +68,7 @@ class FileSystemBrowser( FilesBrowser ):
         dname = self.model().item( index ).getPath()
         GlobalData().project.addTopLevelDir( dname )
         self.model().sourceModel().addTopLevelDir( dname )
+        self.layoutDisplay()
         return
 
     def reload( self ):
