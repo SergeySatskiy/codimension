@@ -40,8 +40,9 @@ class QuickHelpWidget( HTMLTabWidget ):
 
         self.setHTML( \
 """
+<html>
 <body bgcolor="#ffffff">
-<p>
+
 <table cellspacing="1" cellpadding="3" width="100%"
        align="center" bgcolor="#004080" border="0">
 <tr>
@@ -50,13 +51,15 @@ class QuickHelpWidget( HTMLTabWidget ):
            cellpadding="3" bgcolor="#004080">
     <tr width="100%">
       <td style="WIDTH: 110px">
+      <a href="http://satsky.spb.ru/codimension/codimensionEng.php">
       <img border="0" align="left" src='file:""" + logoPath + """'
            width="100" height="75">
+      </a>
       </td>
       <td width="100%">
-      <h1 align="center">
-      <font color="#ffffff">Quick Shortcuts Reference</font>
-      </h1>
+        <h1 align="center">
+          <font color="#ffffff">Quick Shortcuts Reference</font>
+        </h1>
       </td>
     </tr>
     </table>
@@ -66,7 +69,7 @@ class QuickHelpWidget( HTMLTabWidget ):
 
     <p align="center">
       <table border="1" cellspacing="0"
-             cellpadding="1" width="80%" align="center">
+             cellpadding="1" width="95%" align="center">
 
         <tr>
           <td>Ctrl+T</td>
@@ -151,12 +154,16 @@ class QuickHelpWidget( HTMLTabWidget ):
           http://satsky.spb.ru/codimension/codimensionEng.php</a> for
        more Codimension documentation.
     </p>
-    <p align="right"> Sergey Satskiy (c), 2010 &lt;sergey.satskiy@gmail.com&gt;
+    <p align="right"> Sergey Satskiy (c), 2010 - 2011
+        <a href="mailto:sergey.satskiy@gmail.com">sergey.satskiy@gmail.com</a>
     </p></td></tr>
-    <br><br>
-  <tr>
-<td >&nbsp;</td></tr></table></ P></p>
+
+<p>
+<tr>
+<td >&nbsp;</td></tr></p></table>
+
 </body>
+</html>
 """ )
 
         self.setFileName( "" )
