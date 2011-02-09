@@ -31,6 +31,8 @@ from htmltabwidget  import HTMLTabWidget
 class WelcomeWidget( HTMLTabWidget ):
     """ Welcome screen """
 
+    homePage = "http://satsky.spb.ru/codimension/codimensionEng.php"
+
     def __init__( self, parent = None ):
 
         HTMLTabWidget.__init__( self, parent )
@@ -49,9 +51,11 @@ class WelcomeWidget( HTMLTabWidget ):
             """           cellpadding="3" bgcolor="#004080">""" \
             """    <tr width="100%">""" \
             """      <td style="WIDTH: 110px">""" \
+            """      <a href='""" + self.homePage + """'>""" \
             """      <img border="0" align="left" src='file:""" + logoPath + \
             """' """ \
             """           width="100" height="75">""" \
+            """      </a>""" \
             """      </td>""" \
             """      <td width="100%">""" \
             """      <h1 align="center">""" \
@@ -75,7 +79,7 @@ class WelcomeWidget( HTMLTabWidget ):
             """        <a href="mailto:sergey.satskiy@gmail.com">""" \
             """        sergey.satskiy@gmail.com</a>""" \
             """    </p></td></tr>""" \
-            """    <br><br>""" \
+            """    <br>""" \
             """  <tr>""" \
             """<td >&nbsp;</td></tr></table></ P></p>""" \
             """</body>""" )
