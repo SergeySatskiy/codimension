@@ -43,7 +43,7 @@ class HTMLViewer( QWebView ):
             self.emit( SIGNAL( 'ESCPressed' ) )
             event.accept()
         else:
-            QTextEdit.keyPressEvent( self, event )
+            QWebView.keyPressEvent( self, event )
         return
 
 
