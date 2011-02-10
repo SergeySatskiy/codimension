@@ -294,6 +294,7 @@ class TreeViewSysPathItem( TreeViewItem ):
         self.icon = PixmapCache().getIcon( 'filepython.png' )
         self.populated = False
         self.lazyPopulation = True
+        self.isLink = False
         return
 
 

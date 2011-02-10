@@ -39,7 +39,8 @@ from viewitems          import DirectoryItemType, SysPathItemType, \
                                FileItemType, FunctionItemType, \
                                ClassItemType, DecoratorItemType, \
                                AttributeItemType, GlobalItemType, \
-                               ImportWhatItemType
+                               ImportWhatItemType, TreeViewDirectoryItem, \
+                               TreeViewFileItem
 from utils.fileutils    import CodimensionProjectFileType, \
                                BrokenSymlinkFileType, PixmapFileType
 from itemdelegates      import NoOutlineHeightDelegate
@@ -298,4 +299,151 @@ class FilesBrowser( QTreeView ):
         else:
             self.emit( SIGNAL( 'firstSelectedItem' ), indexesList[ 0 ] )
         return
+
+    def _onFSChanged( self, items ):
+        " Triggered when the project files set has been changed "
+
+        itemsToDel = []
+        itemsToAdd = []
+        for item in items:
+            item = str( item )
+            if item.startswith( '-' ):
+                itemsToDel.append( item[ 1: ] )
+            else:
+                itemsToAdd.append( item[ 1: ] )
+        itemsToDel.sort()
+        itemsToAdd.sort()
+
+        # It is important that items are deleted first and then new are added!
+        for item in itemsToDel:
+            dirname, basename = self.__splitPath( item )
+
+            # For all root items
+            for treeItem in self.model().sourceModel().rootItem.childItems:
+                self.__delFromTree( treeItem, dirname, basename )
+
+
+        for item in itemsToAdd:
+            dirname, basename = self.__splitPath( item )
+
+            # For all root items
+            for treeItem in self.model().sourceModel().rootItem.childItems:
+                self.__addToTree( treeItem, item, dirname, basename )
+
+
+        self.layoutDisplay()
+        return
+
+    def __addToTree( self, treeItem, item, dirname, basename ):
+        " Recursive function which adds an item to the displayed tree "
+
+        # treeItem is always of the directory type
+        if not treeItem.populated:
+            return
+
+        srcModel = self.model().sourceModel()
+        treePath = treeItem.getPath()
+        if treePath != "":
+            # Guard for the sys.path item
+            treePath = os.path.realpath( treePath ) + os.path.sep
+        if treePath == dirname:
+            # Need to add an item but only if there is no this item already!
+            foundInChildren = False
+            for i in treeItem.childItems:
+                if basename == i.data( 0 ):
+                    foundInChildren = True
+                    break
+
+            if not foundInChildren:
+                if item.endswith( os.path.sep ):
+                    newItem = TreeViewDirectoryItem( \
+                                treeItem, treeItem.getPath() + basename, False )
+                else:
+                    newItem = TreeViewFileItem( treeItem,
+                                                treeItem.getPath() + basename )
+                parentIndex = srcModel.buildIndex( treeItem.getRowPath() )
+                srcModel.addItem( newItem, parentIndex )
+
+        for i in treeItem.childItems:
+            if i.itemType == DirectoryItemType:
+                self.__addToTree( i, item, dirname, basename )
+            elif i.isLink:
+                # Check if it was a broken link to the newly appeared item
+                if os.path.realpath( i.getPath() ) == dirname + basename:
+                    # Update the link status
+                    i.updateLinkStatus( i.getPath() )
+                    index = srcModel.buildIndex( i.getRowPath() )
+                    srcModel.emit( SIGNAL( "dataChanged(const QModelIndex &, const QModelIndex &)" ),
+                                   index, index )
+        return
+
+
+    def __delFromTree( self, treeItem, dirname, basename ):
+        " Recursive function which deletes an item from the displayed tree "
+
+        # treeItem is always of the directory type
+        srcModel = self.model().sourceModel()
+
+        d_dirname, d_basename = self.__splitPath( treeItem.getPath() )
+        if d_dirname == dirname and d_basename == basename:
+            index = srcModel.buildIndex( treeItem.getRowPath() )
+            srcModel.beginRemoveRows( index.parent(), index.row(), index.row() )
+            treeItem.parentItem.removeChild( treeItem )
+            srcModel.endRemoveRows()
+            return
+
+        if treeItem.isLink:
+            # Link to a directory
+            if os.path.realpath( treeItem.getPath() ) == dirname + basename:
+                # Broken link now
+                treeItem.updateStatus()
+                index = srcModel.buildIndex( treeItem.getRowPath() )
+                srcModel.emit( SIGNAL( "dataChanged(const QModelIndex &, const QModelIndex &)" ),
+                               index, index )
+                return
+
+
+        # Walk the directory items
+        for i in treeItem.childItems:
+            if i.itemType == DirectoryItemType:
+                # directory
+                self.__delFromTree( i, dirname, basename )
+            else:
+                # file
+                if i.isLink:
+                    l_dirname, l_basename = self.__splitPath( i.getPath() )
+                    if dirname == l_dirname and basename == l_basename:
+                        index = srcModel.buildIndex( i.getRowPath() )
+                        srcModel.beginRemoveRows( index.parent(),
+                                                  index.row(), index.row() )
+                        i.parentItem.removeChild( i )
+                        srcModel.endRemoveRows()
+                    elif os.path.realpath( i.getPath() ) == dirname + basename:
+                        i.updateLinkStatus( i.getPath() )
+                        index = srcModel.buildIndex( i.getRowPath() )
+                        srcModel.emit( SIGNAL( "dataChanged(const QModelIndex &, const QModelIndex &)" ),
+                                       index, index )
+                else:
+                    # Regular final file
+                    if os.path.realpath( i.getPath() ) == dirname + basename:
+                        index = srcModel.buildIndex( i.getRowPath() )
+                        srcModel.beginRemoveRows( index.parent(),
+                                                  index.row(), index.row() )
+                        i.parentItem.removeChild( i )
+                        srcModel.endRemoveRows()
+
+        return
+
+    @staticmethod
+    def __splitPath( path ):
+        " Provides the dirname and the base name "
+        if path.endswith( os.path.sep ):
+            # directory
+            dirname = os.path.realpath( os.path.dirname( path[ :-1 ] ) ) + \
+                      os.path.sep
+            basename = os.path.basename( path[ :-1 ] )
+        else:
+            dirname = os.path.realpath( os.path.dirname( path ) ) + os.path.sep
+            basename = os.path.basename( path )
+        return dirname, basename
 
