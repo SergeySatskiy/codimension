@@ -275,33 +275,31 @@ class PylintViewer( QWidget ):
                       SIGNAL( "itemActivated(QTreeWidgetItem *, int)" ),
                       self.__errorActivated )
 
-        intColumn = 1
-        headerLabels = QStringList() << "Index"
-        if showFileName:
-            headerLabels << "File name"
-            intColumn = 2
-        headerLabels << "Line" << "Message ID" << "Object" << "Message"
+        headerLabels = QStringList() << "File name" << "Line" \
+                                     << "Message ID" << "Object" << "Message"
         errTable.setHeaderLabels( headerLabels )
 
-        index = 0
         for item in messages:
-            values = QStringList() << str( index )
-            if showFileName:
-                values << item.fileName
-            values << str( item.lineNumber ) << item.messageID \
-                   << item.objectName << item.message
+            values = QStringList() << item.fileName \
+                                   << str( item.lineNumber ) << item.messageID \
+                                   << item.objectName << item.message
+            errTable.addTopLevelItem( ErrorTableItem( values, 1 ) )
 
-            errTable.addTopLevelItem( ErrorTableItem( values, intColumn ) )
-            index += 1
+        # Hide the file name column if required
+        if not showFileName:
+            errTable.setColumnHidden( 0, True )
 
         # Resizing
-        errTable.setColumnHidden( 0, True )
         errTable.header().resizeSections( QHeaderView.ResizeToContents )
         errTable.header().setStretchLastSection( True )
 
         # Sort indicator
-        errTable.header().setSortIndicator( 1, Qt.AscendingOrder )
-        errTable.sortItems( 1, errTable.header().sortIndicatorOrder() )
+        if showFileName:
+            sortIndex = 0   # By file names
+        else:
+            sortIndex = 1   # By line number because this is from the same file
+        errTable.header().setSortIndicator( sortIndex, Qt.AscendingOrder )
+        errTable.sortItems( sortIndex, errTable.header().sortIndicatorOrder() )
 
         # Height
         self.__setTableHeight( errTable )
@@ -488,17 +486,10 @@ class PylintViewer( QWidget ):
     def __errorActivated( self, item, column ):
         " Handles the double click (or Enter) on the item "
 
-        # Extract the row index from the hidden column 0
-        index = int( item.text( 0 ) )
-
-        lineNumber = self.__report.errorMessages[ index ].lineNumber
-
-        if self.__reportOption == self.SingleFile:
-            fileName = self.__reportFileName
-        elif self.__reportOption == self.DirectoryFiles:
-            fileName = self.__report.errorMessages[ index ].fileName
-        elif self.__reportOption == self.ProjectFiles:
-            fileName = self.__report.errorMessages[ index ].fileName
+        lineNumber = int( item.text( 1 ) )
+        if self.__reportOption in [ self.SingleFile, self.DirectoryFiles,
+                                    self.ProjectFiles ]:
+            fileName = str( item.text( 0 ) )
         else:
             # SingleBuffer
             if self.__reportFileName != "":
