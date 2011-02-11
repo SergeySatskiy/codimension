@@ -536,9 +536,16 @@ class EditorsManager( TabWidget ):
         " Shows the navigation button menu "
 
         self.__navigationMenu.clear()
+
+        items = []
         for index in range( self.count() ):
-            act = self.__navigationMenu.addAction( self.tabIcon( index ),
-                                                   self.tabText( index ) )
+            items.append( [ self.tabIcon( index ), self.tabText( index ),
+                            index ] )
+
+        items.sort( key = lambda c: c[ 1 ] )
+        for item in items:
+            act = self.__navigationMenu.addAction( item[ 0 ], item[ 1 ] )
+            index = item[ 2 ]
             act.setData( QVariant( index ) )
             if self.currentIndex() == index:
                 font = act.font()
