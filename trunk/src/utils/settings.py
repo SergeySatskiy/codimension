@@ -74,6 +74,9 @@ class Settings( object ):
             # Load previous sessions files positions and tabs status
             self.filePositions = FilesPositions( self.basedir )
             self.tabsStatus = self.__loadTabsStatus()
+            self.findFilesWhat, \
+            self.findFilesDirs, \
+            self.findFilesMasks = self.__loadFindFilesHistory()
 
             self.__setDefaultValues()
 
@@ -233,6 +236,7 @@ class Settings( object ):
 
             # Save the tabs status
             self.__saveTabsStatus()
+            self.__saveFindFilesHistory()
 
             # Recent projects part
             if len( self.recentProjects ) > _maxRecentProjects:
@@ -366,6 +370,37 @@ class Settings( object ):
                 f = open( fName, "w" )
                 self.__writeHeader( f )
                 self.__writeList( f, "tabsstatus", "tab", self.tabsStatus )
+                f.close()
+            except:
+                # Do nothing, it's not vital important to have this file
+                pass
+            return
+
+        def __loadFindFilesHistory( self ):
+            " Loads the saved find files dialog history "
+            config = ConfigParser.ConfigParser()
+            try:
+                config.read( self.basedir + "findinfiles" )
+            except:
+                return [], [], []
+
+            what = self.__loadListSection( config, 'whathistory', 'what' )
+            dirs = self.__loadListSection( config, 'dirhistory', 'dir' )
+            mask = self.__loadListSection( config, 'maskhistory', 'mask' )
+            return what, dirs, mask
+
+        def __saveFindFilesHistory( self ):
+            " Saves the find in files dialog history "
+            fName = self.basedir + "findinfiles"
+            try:
+                f = open( fName, "w" )
+                self.__writeHeader( f )
+                self.__writeList( f, "whathistory", "what",
+                                  self.findFilesWhat )
+                self.__writeList( f, "dirhistory", "dir",
+                                  self.findFilesDirs )
+                self.__writeList( f, "maskhistory", "mask",
+                                  self.findFilesMasks )
                 f.close()
             except:
                 # Do nothing, it's not vital important to have this file
