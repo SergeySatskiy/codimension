@@ -69,6 +69,10 @@ class CodimensionProject( QObject ):
         self.replaceWhatHistory = []
         self.tabsStatus = []
 
+        self.findFilesWhat = []
+        self.findFilesDirs = []
+        self.findFilesMasks = []
+
         # Precompile the exclude filters
         self.__excludeFilter = []
         for flt in Settings().projectFilesFilters:
@@ -114,6 +118,10 @@ class CodimensionProject( QObject ):
         self.replaceHistory = []
         self.replaceWhatHistory = []
         self.tabsStatus = []
+
+        self.findFilesWhat = []
+        self.findFilesDirs = []
+        self.findFilesMasks = []
 
         # Reset the dir watchers if so
         if self.__dirWatcher is not None:
@@ -191,6 +199,7 @@ class CodimensionProject( QObject ):
         self.__safeRemove( userProjectDir + "searchhistory" )
         self.__safeRemove( userProjectDir + "topleveldirs" )
         self.__safeRemove( userProjectDir + "tabsstatus" )
+        self.__safeRemove( userProjectDir + "findinfiles" )
         return
 
     def __createProjectFile( self ):
@@ -240,6 +249,7 @@ class CodimensionProject( QObject ):
         self.__saveTopLevelDirs()
         self.__saveSearchHistory()
         self.__saveTabsStatus()
+        self.__saveFindFiles()
 
         self.__formatOK = True
         return
@@ -274,6 +284,18 @@ class CodimensionProject( QObject ):
         f = open( self.userProjectDir + "topleveldirs", "w" )
         self.__writeHeader( f )
         self.__writeList( f, "topleveldirs", "dir", self.topLevelDirs )
+        f.close()
+        return
+
+    def __saveFindFiles( self ):
+        " Helper to save the find in files history "
+        if self.fileName == "":
+            return
+        f = open( self.userProjectDir + "findinfiles", "w" )
+        self.__writeHeader( f )
+        self.__writeList( f, "whathistory", "what", self.findFilesWhat )
+        self.__writeList( f, "dirhistory", "dir", self.findFilesDirs )
+        self.__writeList( f, "maskhistory", "mask", self.findFilesMasks )
         f.close()
         return
 
@@ -383,6 +405,7 @@ class CodimensionProject( QObject ):
         self.__loadTopLevelDirs()
         self.__loadSearchHistory()
         self.__loadTabsStatus()
+        self.__loadFindFiles()
 
         # The project might have been moved...
         self.__createProjectFile()  # ~/.codimension/uuidNN/project
@@ -501,7 +524,7 @@ class CodimensionProject( QObject ):
         return
 
     def __loadSearchHistory( self ):
-        " Load the search history file content "
+        " Loads the search history file content "
         confFile = self.userProjectDir + "searchhistory"
         if not os.path.exists( confFile ):
             logging.warning( "Cannot find searchhistory project file. " \
@@ -531,6 +554,35 @@ class CodimensionProject( QObject ):
         # replace what part
         self.replaceWhatHistory = self.__loadListSection( \
                 config, 'replacewhathistory', 'replacewhat' )
+        config = None
+        return
+
+    def __loadFindFiles( self ):
+        " Loads the find in files history "
+        confFile = self.userProjectDir + "findinfiles"
+        if not os.path.exists( confFile ):
+            logging.warning( "Cannot find findinfiles project file. " \
+                             "Expected here: " + confFile )
+            self.__formatOK = False
+            return
+
+        config = ConfigParser.ConfigParser()
+        try:
+            config.read( confFile )
+        except:
+            # Bad error - cannot load project file at all
+            config = None
+            self.__formatOK = False
+            logging.warning( "Cannot read findinfiles project file " \
+                             "from here: " + confFile )
+            return
+
+        self.findFilesWhat = self.__loadListSection( \
+                config, 'whathistory', 'what' )
+        self.findFilesDirs = self.__loadListSection( \
+                config, 'dirhistory', 'dir' )
+        self.findFilesMasks = self.__loadListSection( \
+                config, 'maskhistory', 'mask' )
         config = None
         return
 
@@ -741,6 +793,14 @@ class CodimensionProject( QObject ):
         " Sets the new tabs status and save it into a file "
         self.tabsStatus = status
         self.__saveTabsStatus()
+        return
+
+    def setFindInFilesHistory( self, what, dirs, masks ):
+        " Sets the new lists and save them into a file "
+        self.findFilesWhat = what
+        self.findFilesDirs = dirs
+        self.findFilesMasks = masks
+        self.__saveFindFiles()
         return
 
     def updateProperties( self, creationDate, author,
