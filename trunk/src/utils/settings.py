@@ -77,6 +77,7 @@ class Settings( object ):
             self.findFilesWhat, \
             self.findFilesDirs, \
             self.findFilesMasks = self.__loadFindFilesHistory()
+            self.findNameHistory = self.__loadFindNameHistory()
 
             self.__setDefaultValues()
 
@@ -237,6 +238,7 @@ class Settings( object ):
             # Save the tabs status
             self.__saveTabsStatus()
             self.__saveFindFilesHistory()
+            self.__saveFindNameHistory()
 
             # Recent projects part
             if len( self.recentProjects ) > _maxRecentProjects:
@@ -389,6 +391,16 @@ class Settings( object ):
             mask = self.__loadListSection( config, 'maskhistory', 'mask' )
             return what, dirs, mask
 
+        def __loadFindNameHistory( self ):
+            " Loads the saved find name dialog history "
+            config = ConfigParser.ConfigParser()
+            try:
+                config.read( self.basedir + "findinfiles" )
+            except:
+                return []
+
+            return self.__loadListSection( config, 'findnamehistory', 'find' )
+
         def __saveFindFilesHistory( self ):
             " Saves the find in files dialog history "
             fName = self.basedir + "findinfiles"
@@ -401,6 +413,19 @@ class Settings( object ):
                                   self.findFilesDirs )
                 self.__writeList( f, "maskhistory", "mask",
                                   self.findFilesMasks )
+                f.close()
+            except:
+                # Do nothing, it's not vital important to have this file
+                pass
+            return
+
+        def __saveFindNameHistory( self ):
+            " Saves the find name dialog history "
+            fName = self.basedir + "findinfiles"
+            try:
+                f = open( fName, "w" )
+                self.__writeList( f, "findnamehistory", "find",
+                                  self.findNameHistory )
                 f.close()
             except:
                 # Do nothing, it's not vital important to have this file
