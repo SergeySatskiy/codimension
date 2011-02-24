@@ -65,6 +65,7 @@ class CodimensionProject( QObject ):
         self.briefModinfoCache = BriefModuleInfoCache()
         self.topLevelDirs = []
         self.findHistory = []
+        self.findNameHistory = []
         self.replaceHistory = []
         self.replaceWhatHistory = []
         self.tabsStatus = []
@@ -115,6 +116,7 @@ class CodimensionProject( QObject ):
         self.briefModinfoCache = BriefModuleInfoCache()
         self.topLevelDirs = []
         self.findHistory = []
+        self.findNameHistory = []
         self.replaceHistory = []
         self.replaceWhatHistory = []
         self.tabsStatus = []
@@ -274,6 +276,7 @@ class CodimensionProject( QObject ):
         self.__writeList( f, "replacewhathistory", "replacewhat",
                              self.replaceWhatHistory )
         self.__writeList( f, "replacehistory", "replace", self.replaceHistory )
+        self.__writeList( f, "findnamehistory", "find", self.findNameHistory )
         f.close()
         return
 
@@ -546,6 +549,8 @@ class CodimensionProject( QObject ):
         # find part
         self.findHistory = self.__loadListSection( \
                 config, 'findhistory', 'find' )
+        self.findNameHistory = self.__loadListSection( \
+                config, 'findnamehistory', 'find' )
 
         # replace part
         self.replaceHistory = self.__loadListSection( \
@@ -774,6 +779,12 @@ class CodimensionProject( QObject ):
             return
         self.topLevelDirs.remove( path )
         self.__saveTopLevelDirs()
+        return
+
+    def setFindNameHistory( self, history ):
+        " Sets the new find name history and saves it into a file "
+        self.findNameHistory = history
+        self.__saveSearchHistory()
         return
 
     def setFindHistory( self, history ):
