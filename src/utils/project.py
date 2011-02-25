@@ -369,8 +369,8 @@ class CodimensionProject( QObject ):
         self.email = self.__getStr( config, 'properties', 'email', '' )
         self.uuid = self.__getStr( config, 'properties', 'uuid', '' )
         if self.uuid == "":
-            logging.error( "Project file does not have UUID. " \
-                           "Re-generate it..." )
+            logging.warning( "Project file does not have UUID. " \
+                             "Re-generate it..." )
             self.uuid = str( uuid.uuid1() )
         self.userProjectDir = Settings().basedir + self.uuid + os.path.sep
         if not os.path.exists( self.userProjectDir ):
@@ -425,8 +425,8 @@ class CodimensionProject( QObject ):
         self.__updateModinfoCache()
 
         if not self.__formatOK:
-            logging.warning( "Bad project file format detected. " \
-                             "Overwriting the project files." )
+            logging.info( "Project files are broken or absent. " \
+                          "Overwriting the project files." )
             self.saveProject()
 
         # Update the recent list
@@ -479,8 +479,8 @@ class CodimensionProject( QObject ):
         " Loads the last tabs status "
         configFile = self.userProjectDir + "tabsstatus"
         if not os.path.exists( configFile ):
-            logging.warning( "Cannot find tabsstatus project file. " \
-                             "Expected here: " + configFile )
+            logging.info( "Cannot find tabsstatus project file. " \
+                          "Expected here: " + configFile )
             self.__formatOK = False
             return
 
@@ -506,8 +506,8 @@ class CodimensionProject( QObject ):
         " Loads the top level dirs "
         configFile = self.userProjectDir + "topleveldirs"
         if not os.path.exists( configFile ):
-            logging.warning( "Cannot find topleveldirs project file. " \
-                             "Expected here: " + configFile )
+            logging.info( "Cannot find topleveldirs project file. " \
+                          "Expected here: " + configFile )
             self.__formatOK = False
             return
 
@@ -533,8 +533,8 @@ class CodimensionProject( QObject ):
         " Loads the search history file content "
         confFile = self.userProjectDir + "searchhistory"
         if not os.path.exists( confFile ):
-            logging.warning( "Cannot find searchhistory project file. " \
-                             "Expected here: " + confFile )
+            logging.info( "Cannot find searchhistory project file. " \
+                          "Expected here: " + confFile )
             self.__formatOK = False
             return
 
@@ -571,8 +571,8 @@ class CodimensionProject( QObject ):
         " Loads the find in files history "
         confFile = self.userProjectDir + "findinfiles"
         if not os.path.exists( confFile ):
-            logging.warning( "Cannot find findinfiles project file. " \
-                             "Expected here: " + confFile )
+            logging.info( "Cannot find findinfiles project file. " \
+                          "Expected here: " + confFile )
             self.__formatOK = False
             return
 
