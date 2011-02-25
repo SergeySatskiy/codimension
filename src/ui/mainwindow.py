@@ -51,9 +51,15 @@ from gotolinewidget             import GotoLineWidget
 from pylintviewer               import PylintViewer
 from pylintparser.pylintparser  import Pylint
 from utils.fileutils            import PythonFileType, \
-                                       Python3FileType, detectFileType
+                                       Python3FileType, detectFileType, \
+                                       PixmapFileType, SOFileType, \
+                                       ELFFileType, PDFFileType
 from pymetricsviewer            import PymetricsViewer
 from pymetricsparser.pymetricsparser    import PyMetrics
+from findinfiles                import FindInFilesDialog
+from findinfilesviewer          import FindInFilesViewer
+from findname                   import FindNameDialog
+from findfile                   import FindFileDialog
 
 
 class EditorsManagerWidget( QWidget ):
@@ -258,7 +264,7 @@ class CodimensionMainWindow( QMainWindow ):
                       SIGNAL( 'fileUpdated' ),
                       functionsViewer.onFileUpdated )
         self.__leftSideBar.addTab( functionsViewer,
-                                   PixmapCache().getIcon( 'method.png' ),
+                                   PixmapCache().getIcon( 'fx.png' ),
                                    "Functions" )
         globalsViewer = GlobalsViewer()
         self.connect( self.editorsManagerWidget.editorsManager,
@@ -308,6 +314,12 @@ class CodimensionMainWindow( QMainWindow ):
                       SIGNAL( 'updatePymetricsTooltip' ),
                       self.__onPymetricsTooltip )
         self.__onPymetricsTooltip( "No results available" )
+
+        # Create search results viewer
+        self.__findInFilesViewer = FindInFilesViewer()
+        self.__bottomSideBar.addTab( self.__findInFilesViewer,
+                                     PixmapCache().getIcon( 'findindir.png' ),
+                                     'Search results' )
 
         # Create splitters
         self.__horizontalSplitter = QSplitter( Qt.Horizontal )
@@ -530,6 +542,30 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.linecounterButton, SIGNAL( 'triggered()' ),
                       self.linecounterButtonClicked )
 
+        self.__findInFilesButton = QAction( \
+                                    PixmapCache().getIcon( 'findindir.png' ),
+                                    'Find in project (Ctrl+Shift+F)', self )
+        self.__findInFilesButton.setShortcut( 'Ctrl+Shift+F' )
+        self.__findInFilesButton.setStatusTip( 'Find in project files' )
+        self.connect( self.__findInFilesButton, SIGNAL( 'triggered()' ),
+                      self.findInFilesClicked )
+
+        self.__findNameButton = QAction( \
+                                    PixmapCache().getIcon( 'findname.png' ),
+                                    'Find name (Alt+Shift+S)', self )
+        self.__findNameButton.setShortcut( 'Alt+Shift+S' )
+        self.__findNameButton.setStatusTip( 'Find name in the project' )
+        self.connect( self.__findNameButton, SIGNAL( 'triggered()' ),
+                      self.findNameClicked )
+
+        self.__findFileButton = QAction( \
+                                    PixmapCache().getIcon( 'findfile.png' ),
+                                    'Find project file (Alt+Shift+O)', self )
+        self.__findFileButton.setShortcut( 'Alt+Shift+O' )
+        self.__findFileButton.setStatusTip( 'Find project file' )
+        self.connect( self.__findFileButton, SIGNAL( 'triggered()' ),
+                      self.findFileClicked )
+
 
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
@@ -548,6 +584,9 @@ class CodimensionMainWindow( QMainWindow ):
         self.__toolbar.addAction( neverUsedButton )
         self.__toolbar.addWidget( self.__pylintButton )
         self.__toolbar.addAction( self.__pymetricsButton )
+        self.__toolbar.addAction( self.__findInFilesButton )
+        self.__toolbar.addAction( self.__findNameButton )
+        self.__toolbar.addAction( self.__findFileButton )
         self.__toolbar.addWidget( spacer )
         self.__toolbar.addAction( self.linecounterButton )
         self.__toolbar.addAction( aboutButton )
@@ -633,6 +672,21 @@ class CodimensionMainWindow( QMainWindow ):
         LineCounterDialog().exec_()
         return
 
+    def findInFilesClicked( self ):
+        " Triggered when the find in files button is clicked "
+
+        searchText = ""
+        editorsManager = self.editorsManagerWidget.editorsManager
+        if editorsManager.currentWidget().getType() in \
+                [ MainWindowTabWidgetBase.PlainTextEditor ]:
+            searchText = editorsManager.currentWidget().getEditor().getSearchText()
+
+        dlg = FindInFilesDialog( FindInFilesDialog.inProject, searchText )
+        dlg.exec_()
+        if len( dlg.searchResults ) != 0:
+            self.displayFindInFiles( dlg.searchRegexp, dlg.searchResults )
+        return
+
     def toStdout( self, txt ):
         " Triggered when a new message comes "
         self.showLogTab()
@@ -652,17 +706,50 @@ class CodimensionMainWindow( QMainWindow ):
         self.__bottomSideBar.raise_()
         return
 
-    def openFile( self, fileName, lineNo ):
+    def openFile( self, path, lineNo ):
         " User double clicked on a file or an item in a file "
-        #logging.debug( "Item opening requested. File: " + fileName + \
-        #               " Line: " + str( lineNo ) )
-        self.editorsManagerWidget.editorsManager.openFile( fileName, lineNo )
+        self.editorsManagerWidget.editorsManager.openFile( path, lineNo )
         return
 
-    def openPixmapFile( self, fileName ):
+    def openPixmapFile( self, path ):
         " User double clicked on a file "
-        #logging.debug( "Pixmap opening request. File: " + fileName )
-        self.editorsManagerWidget.editorsManager.openPixmapFile( fileName )
+        self.editorsManagerWidget.editorsManager.openPixmapFile( path )
+        return
+
+    def detectTypeAndOpenFile( self, path, lineNo = -1 ):
+        " Detects the file type and opens the corresponding editor / browser "
+        self.openFileByType( detectFileType( path ), path, lineNo )
+        return
+
+    def openFileByType( self, fileType, path, lineNo = -1 ):
+        " Opens editor/browser suitable for the file type "
+        path = os.path.abspath( path )
+        if not os.path.exists( path ):
+            logging.error( "Cannot open " + path )
+            return
+        if os.path.islink( path ):
+            path = os.path.realpath( path )
+            if not os.path.exists( path ):
+                logging.error( "Cannot open " + path )
+                return
+            # The type may differ...
+            fileType = detectFileType( path )
+        else:
+            # The intermediate directory could be a link, so use the real path
+            path = os.path.realpath( path )
+
+        if not os.access( path, os.R_OK ):
+            logging.error( "No read permissions to open " + path )
+            return
+
+        if fileType == PixmapFileType:
+            self.openPixmapFile( path )
+            return
+        if fileType in [ ELFFileType, SOFileType, PDFFileType ]:
+            logging.error( "Cannot open binary file for editing" )
+            return
+
+        self.openFile( path, lineNo )
         return
 
     def findWhereUsed( self, fileName, item ):
@@ -803,6 +890,13 @@ class CodimensionMainWindow( QMainWindow ):
                 return widget
         return None
 
+    def getWidgetForFileName( self, fname ):
+        " Provides the widget found by the given file name "
+        for widget in self.editorsManagerWidget.editorsManager.widgets:
+            if fname == widget.getFileName():
+                return widget
+        return None
+
     @staticmethod
     def __buildPythonFilesList():
         " Builds the list of python project files "
@@ -894,4 +988,30 @@ class CodimensionMainWindow( QMainWindow ):
                     self.__pylintButton.setMenu( self.__absentPylintRCMenu )
             break
         return
+
+    def displayFindInFiles( self, searchRegexp, searchResults ):
+        " Displays the results on a tab "
+        self.__findInFilesViewer.showReport( searchRegexp, searchResults )
+
+        self.__bottomSideBar.show()
+        self.__bottomSideBar.setCurrentWidget( self.__findInFilesViewer )
+        self.__bottomSideBar.raise_()
+        return
+
+    def findNameClicked( self ):
+        " Find name dialog should come up "
+        try:
+            FindNameDialog().exec_()
+        except Exception, exc:
+            logging.error( str( exc ) )
+        return
+
+    def findFileClicked( self ):
+        " Find file dialog should come up "
+        try:
+            FindFileDialog().exec_()
+        except Exception, exc:
+            logging.error( str( exc ) )
+        return
+
 
