@@ -254,7 +254,7 @@ class ProjectPropertiesDialog( QDialog, object ):
                     QFileDialog.Options( QFileDialog.ShowDirsOnly ) )
 
         if not dirName.isEmpty():
-            self.dirEdit.setText( os.path.normpath( dirName ) )
+            self.dirEdit.setText( os.path.normpath( str( dirName ) ) )
         return
 
     def onOKButton( self ):
