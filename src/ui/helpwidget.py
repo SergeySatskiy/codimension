@@ -99,8 +99,8 @@ class QuickHelpWidget( HTMLTabWidget ):
         <tr>
           <td>Ctrl+R</td>
           <td>Replace in the current file</td>
-          <td>Ctrl+Shift+R</td>
-          <td>Replace in files</td></tr>
+          <td>Ctrl+K</td>
+          <td>Pymetrics for a file</td></tr>
         <tr>
           <td>Ctrl++/-</td>
           <td>Zoom in/out</td>
@@ -142,10 +142,10 @@ class QuickHelpWidget( HTMLTabWidget ):
           <td>Shift+F3</td>
           <td>Search previous</td></tr>
         <tr>
-          <td>Ctrl+K</td>
-          <td>Pymetrics for a file</td>
-          <td></td>
-          <td></td></tr>
+          <td>Alt+Shift+S</td>
+          <td>Search a name</td>
+          <td>Alt+Shift+O</td>
+          <td>Search a file</td></tr>
     </table>
     </p>
     <p align="center">
