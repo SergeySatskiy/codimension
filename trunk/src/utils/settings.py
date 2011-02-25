@@ -182,8 +182,8 @@ class Settings( object ):
 
             # If format is bad then overwrite the file
             if self.formatOK == False:
-                logging.warning( "Bad format of settings detected. " \
-                                 "Overwriting the settings file." )
+                logging.info( "Bad format of settings detected. " \
+                              "Overwriting the settings file." )
                 self.flushSettings()
 
             return
