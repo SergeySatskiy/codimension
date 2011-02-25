@@ -147,9 +147,8 @@ class ProjectViewer( QWidget ):
         self.prjFindInDirButton = QAction( \
                 PixmapCache().getIcon( 'findindir.png' ),
                 'Find in highlighted directory', self )
-        self.prjFindReplaceInDirButton = QAction( \
-                PixmapCache().getIcon( 'findreplaceindir.png' ),
-                'Find & replace in highlighted directory', self )
+        self.connect( self.prjFindInDirButton, SIGNAL( "triggered()" ),
+                      self.projectTreeView.findInDirectory )
         self.prjShowParsingErrorsButton = QAction( \
                 PixmapCache().getIcon( 'showparsingerrors.png' ),
                 'Show parsing errors', self )
@@ -194,7 +193,6 @@ class ProjectViewer( QWidget ):
         upperToolbar.addAction( self.prjFindWhereUsedButton )
         upperToolbar.addAction( self.prjOpenItemButton )
         upperToolbar.addAction( self.prjFindInDirButton )
-        upperToolbar.addAction( self.prjFindReplaceInDirButton )
         upperToolbar.addAction( self.prjShowParsingErrorsButton )
         upperToolbar.addAction( self.prjNewDirButton )
         upperToolbar.addAction( self.prjCopyToClipboardButton )
@@ -258,10 +256,6 @@ class ProjectViewer( QWidget ):
         self.prjDirFindAct = self.prjDirMenu.addAction( \
                 PixmapCache().getIcon( 'findindir.png' ),
                 'Find in this directory', self.projectTreeView.findInDirectory )
-        self.prjDirReplaceAct = self.prjDirMenu.addAction( \
-                PixmapCache().getIcon( 'findreplaceindir.png' ),
-                'Find && Replace in this directory',
-                self.projectTreeView.replaceInDirectory )
         self.prjDirCopyPathAct = self.prjDirMenu.addAction( \
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
                 'Copy Path to Clipboard', self.projectTreeView.copyToClipboard )
@@ -346,11 +340,6 @@ class ProjectViewer( QWidget ):
                 'Find in highlighted directory', self )
         self.connect( self.fsFindInDirButton, SIGNAL( "triggered()" ),
                       self.filesystemView.findInDirectory )
-        self.fsFindReplaceInDirButton = QAction( \
-                PixmapCache().getIcon( 'findreplaceindir.png' ),
-                'Find & replace in highlighted directory', self )
-        self.connect( self.fsFindReplaceInDirButton, SIGNAL( "triggered()" ),
-                      self.filesystemView.replaceInDirectory )
         self.fsAddTopLevelDirButton = QAction( \
                 PixmapCache().getIcon( 'addtopleveldir.png' ),
                 'Add as a top level directory', self )
@@ -390,7 +379,6 @@ class ProjectViewer( QWidget ):
         lowerToolbar.addWidget( fixedSpacer )
         lowerToolbar.addAction( self.fsOpenItemButton )
         lowerToolbar.addAction( self.fsFindInDirButton )
-        lowerToolbar.addAction( self.fsFindReplaceInDirButton )
         lowerToolbar.addAction( self.fsAddTopLevelDirButton )
         lowerToolbar.addAction( self.fsRemoveTopLevelDirButton )
         lowerToolbar.addAction( self.fsCopyToClipboardButton )
@@ -444,10 +432,6 @@ class ProjectViewer( QWidget ):
         self.fsDirFindAct = self.fsDirMenu.addAction( \
                 PixmapCache().getIcon( 'findindir.png' ),
                 'Find in this directory', self.filesystemView.findInDirectory )
-        self.fsDirReplaceAct = self.fsDirMenu.addAction( \
-                PixmapCache().getIcon( 'findreplaceindir.png' ),
-                'Find && Replace in this directory',
-                self.filesystemView.replaceInDirectory )
         self.fsDirCopyPathAct = self.fsDirMenu.addAction( \
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
                 'Copy Path to Clipboard', self.filesystemView.copyToClipboard )
@@ -542,7 +526,6 @@ class ProjectViewer( QWidget ):
         self.fsAddDirectoryButton.setEnabled( False )
         self.fsOpenItemButton.setEnabled( False )
         self.fsFindInDirButton.setEnabled( False )
-        self.fsFindReplaceInDirButton.setEnabled( False )
         self.fsAddTopLevelDirButton.setEnabled( False )
         self.fsRemoveTopLevelDirButton.setEnabled( False )
         self.fsShowParsingErrorsButton.setEnabled( False )
@@ -565,7 +548,6 @@ class ProjectViewer( QWidget ):
         if self.__fsContextItem.itemType == DirectoryItemType:
             self.fsOpenItemButton.setEnabled( False )
             self.fsFindInDirButton.setEnabled( True )
-            self.fsFindReplaceInDirButton.setEnabled( True )
             globalData = GlobalData()
             if globalData.project.fileName != "":
                 if globalData.project.isTopLevelDir( \
@@ -594,7 +576,6 @@ class ProjectViewer( QWidget ):
         self.prjFindWhereUsedButton.setEnabled( False )
         self.prjOpenItemButton.setEnabled( False )
         self.prjFindInDirButton.setEnabled( False )
-        self.prjFindReplaceInDirButton.setEnabled( False )
         self.prjShowParsingErrorsButton.setEnabled( False )
         self.prjNewDirButton.setEnabled( False )
         self.prjCopyToClipboardButton.setEnabled( False )
@@ -619,7 +600,6 @@ class ProjectViewer( QWidget ):
         if self.__prjContextItem.itemType == DirectoryItemType:
             self.prjOpenItemButton.setEnabled( False )
             self.prjFindInDirButton.setEnabled( True )
-            self.prjFindReplaceInDirButton.setEnabled( True )
             self.prjNewDirButton.setEnabled( True )
             self.prjPylintButton.setEnabled( GlobalData().pylintAvailable )
             self.prjPymetricsButton.setEnabled( True )
@@ -692,8 +672,6 @@ class ProjectViewer( QWidget ):
                 self.fsRemoveTopLevelDirButton.isEnabled() )
         self.fsDirFindAct.setEnabled( \
                 self.fsFindInDirButton.isEnabled() )
-        self.fsDirReplaceAct.setEnabled( \
-                self.fsFindReplaceInDirButton.isEnabled() )
         self.fsDirCopyPathAct.setEnabled( \
                 self.fsCopyToClipboardButton.isEnabled() )
 
@@ -751,8 +729,6 @@ class ProjectViewer( QWidget ):
                 self.prjNewDirButton.isEnabled() )
         self.prjDirFindAct.setEnabled( \
                 self.prjFindInDirButton.isEnabled() )
-        self.prjDirReplaceAct.setEnabled( \
-                self.prjFindReplaceInDirButton.isEnabled() )
         self.prjDirCopyPathAct.setEnabled( \
                 self.prjCopyToClipboardButton.isEnabled() )
         self.prjDirRemoveFromProjectAct.setEnabled( \
