@@ -60,6 +60,7 @@ from findinfiles                import FindInFilesDialog
 from findinfilesviewer          import FindInFilesViewer
 from findname                   import FindNameDialog
 from findfile                   import FindFileDialog
+from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
 
 
 class EditorsManagerWidget( QWidget ):
