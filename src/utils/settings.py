@@ -78,6 +78,7 @@ class Settings( object ):
             self.findFilesDirs, \
             self.findFilesMasks = self.__loadFindFilesHistory()
             self.findNameHistory = self.__loadFindNameHistory()
+            self.findFileHistory = self.__loadFindFileHistory()
 
             self.__setDefaultValues()
 
@@ -239,6 +240,7 @@ class Settings( object ):
             self.__saveTabsStatus()
             self.__saveFindFilesHistory()
             self.__saveFindNameHistory()
+            self.__saveFindFileHistory()
 
             # Recent projects part
             if len( self.recentProjects ) > _maxRecentProjects:
@@ -398,8 +400,16 @@ class Settings( object ):
                 config.read( self.basedir + "findinfiles" )
             except:
                 return []
-
             return self.__loadListSection( config, 'findnamehistory', 'find' )
+
+        def __loadFindFileHistory( self ):
+            " Loads the saved find file dialog history "
+            config = ConfigParser.ConfigParser()
+            try:
+                config.read( self.basedir + "findfile" )
+            except:
+                return []
+            return self.__loadListSection( config, 'findfilehistory', 'find' )
 
         def __saveFindFilesHistory( self ):
             " Saves the find in files dialog history "
@@ -431,6 +441,19 @@ class Settings( object ):
                 # Do nothing, it's not vital important to have this file
                 pass
             return
+
+        def __saveFindFileHistory( self ):
+            " Saves the find file dialog history "
+            fName = self.basedir + "findfile"
+            try:
+                f = open( fName, "w" )
+                self.__writeList( f, 'findfilehistory', 'find',
+                                  self.findFileHistory )
+                f.close()
+            except:
+                pass
+            return
+
 
     def __init__( self ):
         if Settings.iInstance is None:
