@@ -48,7 +48,6 @@ class LineCounterDialog( QDialog, object ):
         self.__inProgress = False
         self.__createLayout()
         self.setWindowTitle( "Line counter" )
-        self.show()
         QTimer.singleShot( 0, self.__process )
         return
 
