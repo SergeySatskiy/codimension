@@ -501,7 +501,7 @@ class FindNameDialog( QDialog ):
         QApplication.restoreOverrideCursor()
 
         # Set the window title and restore the previous searches
-        windowTitle = "find name: " + str( self.__namesBrowser.getTotal() )
+        windowTitle = "Find name: " + str( self.__namesBrowser.getTotal() )
         if GlobalData().project.fileName != "":
             self.__findNameHistory = GlobalData().project.findNameHistory
             windowTitle += " names in the project"
