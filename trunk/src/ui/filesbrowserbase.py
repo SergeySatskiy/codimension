@@ -46,6 +46,7 @@ from utils.fileutils    import CodimensionProjectFileType, \
 from itemdelegates      import NoOutlineHeightDelegate
 from parsererrors       import ParserErrorsDialog
 from utils.fileutils    import detectFileType
+from findinfiles        import FindInFilesDialog
 
 
 class FilesBrowserSortFilterProxyModel( QSortFilterProxyModel ):
@@ -219,9 +220,6 @@ class FilesBrowser( QTreeView ):
                 itemPath = os.path.realpath( itemPath )
                 itemFileType = item.fileType
 
-            if itemFileType == PixmapFileType:
-                GlobalData().mainWindow.openPixmapFile( itemPath )
-                return
             if itemFileType == CodimensionProjectFileType:
                 # This not the current project. Load it if still exists.
                 if itemPath != GlobalData().project.fileName:
@@ -236,9 +234,8 @@ class FilesBrowser( QTreeView ):
                     # This is the currenly loaded project
                     # Make it possible to look at the project file content
                     # I trust the developer
-                    GlobalData().mainWindow.openFile( itemPath, -1 )
-                    return
-            GlobalData().mainWindow.openFile( itemPath, -1 )
+                    pass
+            GlobalData().mainWindow.openFileByType( itemFileType, itemPath, -1 )
             return
         if item.itemType in [ CodingItemType, ImportItemType, FunctionItemType,
                               ClassItemType, DecoratorItemType,
@@ -270,23 +267,12 @@ class FilesBrowser( QTreeView ):
         index = self.currentIndex()
         searchDir = self.model().item( index ).getPath()
 
-        #findFilesDialog = e4App().getObject("FindFilesDialog")
-        #findFilesDialog.setSearchDirectory(searchDir)
-        #findFilesDialog.show()
-        #findFilesDialog.raise_()
-        #findFilesDialog.activateWindow()
-        return
-
-    def replaceInDirectory( self ):
-        " Find & Replace in directory popup menu handler "
-        index = self.currentIndex()
-        searchDir = self.model().item( index ).getPath()
-
-        #replaceFilesDialog = e4App().getObject("ReplaceFilesDialog")
-        #replaceFilesDialog.setSearchDirectory(searchDir)
-        #replaceFilesDialog.show()
-        #replaceFilesDialog.raise_()
-        #replaceFilesDialog.activateWindow()
+        dlg = FindInFilesDialog( FindInFilesDialog.inDirectory,
+                                 "", searchDir )
+        dlg.exec_()
+        if len( dlg.searchResults ) != 0:
+            GlobalData().mainWindow.displayFindInFiles( dlg.searchRegexp,
+                                                        dlg.searchResults )
         return
 
     def selectionChanged( self, selected, deselected ):
