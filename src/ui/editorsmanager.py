@@ -197,6 +197,9 @@ class TabWidget( QTabWidget ):
     def moveTab( self, curIndex, newIndex ):
         """ Moves a tab to a new index """
 
+        if curIndex == newIndex:
+            return
+
         # step 1: save the tab data of tab to be moved
         toolTip = self.tabToolTip( curIndex )
         text = self.tabText( curIndex )
@@ -451,6 +454,7 @@ class EditorsManager( TabWidget ):
             self.findWidget.hide()
             self.replaceWidget.hide()
         self.__updateControls()
+        self.saveTabsStatus()
         return
 
     def __updateFilePosition( self, index ):
@@ -557,8 +561,13 @@ class EditorsManager( TabWidget ):
         " Handles the navigation button menu selection "
 
         index, isOK = act.data().toInt()
-        if isOK:
-            self.setCurrentIndex( index )
+        if not isOK or self.currentIndex() == index:
+            return
+
+        self.setCurrentIndex( index )
+        if index != 0:
+            self.moveTab( index, 0 )
+            self.setCurrentIndex( 0 )
         return
 
     def __currentChanged( self, index ):
@@ -636,6 +645,7 @@ class EditorsManager( TabWidget ):
             self.__updateControls()
             self.__updateStatusBar()
             newWidget.setFocus()
+            self.saveTabsStatus()
         except Exception, exc:
             logging.error( str( exc ) )
             return False
@@ -696,7 +706,7 @@ class EditorsManager( TabWidget ):
             self.__updateStatusBar()
             editor.setFocus()
             newWidget.updateStatus()
-
+            self.saveTabsStatus()
         except Exception, exc:
             logging.error( str( exc ) )
             return False
@@ -938,12 +948,13 @@ class EditorsManager( TabWidget ):
     def __modificationChanged( self, modified ):
         " Triggered when the file is changed "
         index = self.currentIndex()
+        currentWidget = self.widgets[ index ]
         if modified:
-            self.setTabText( index,
-                             self.widgets[ index ].getShortName() + ", +" )
+            self.setTabText( index, currentWidget.getShortName() + ", +" )
         else:
-            self.setTabText( index,
-                             self.widgets[ index ].getShortName() )
+            self.setTabText( index, currentWidget.getShortName() )
+        self.emit( SIGNAL( "bufferModified" ), currentWidget.getFileName(),
+                                               str( currentWidget.getUUID() ) )
         return
 
     def __onESC( self ):
@@ -1050,6 +1061,14 @@ class EditorsManager( TabWidget ):
         if len( self.widgets ) > 0:
             return self.widgets[ self.currentIndex() ]
         return self.__welcomeWidget
+
+    def saveTabsStatus( self ):
+        " Saves the tabs status to project or global settings "
+        if GlobalData().project.fileName != "":
+            GlobalData().project.setTabsStatus( self.getTabsStatus() )
+        else:
+            Settings().tabsStatus = self.getTabsStatus()
+        return
 
     def getTabsStatus( self ):
         " Provides all the tabs status and cursor positions "
@@ -1177,4 +1196,13 @@ class EditorsManager( TabWidget ):
             if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
                 item.getEditor().zoomTo( zoomValue )
         return
+
+    def getTextEditors( self ):
+        " Provides a list of the currently opened text editors "
+
+        result = []
+        for item in self.widgets:
+            if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
+                result.append( [ item.getUUID(), item.getFileName(), item ] )
+        return result
 
