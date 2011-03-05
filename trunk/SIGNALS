@@ -25,10 +25,15 @@ Settings:
 EditorsManager:
 - fileUpdated
     string -> file name
+- bufferModified
+    string -> file name
+    string -> UUID
 
 TextEditorTabWidget:
 - TextEditorZoom
     int -> new zoom factor
 
-TextEditor:
+TextEditor, PixmapTabWidget, HTMLTabWidget:
 - ESCPressed
+
+
