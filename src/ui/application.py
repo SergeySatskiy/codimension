@@ -23,6 +23,7 @@
 
 """ definition of the codimension QT based application class """
 
+from PyQt4.QtCore       import Qt, QEvent
 from PyQt4.QtGui        import QApplication
 from utils.pixmapcache  import PixmapCache
 from utils.csscache     import CSSCache
@@ -35,6 +36,8 @@ class CodimensionApplication( QApplication ):
         QApplication.__init__( self, argv )
         QApplication.setStyle( 'plastique' )
 
+        self.mainWindow = None
+
         # FIXME: the icon looks black and white by some reasons at least on
         # Windows with X server
         QApplication.setWindowIcon( PixmapCache().getIcon( 'icon.png' ) )
@@ -43,6 +46,27 @@ class CodimensionApplication( QApplication ):
         appCSS = CSSCache().getCSS( "application" )
         if appCSS != "":
             self.setStyleSheet( appCSS )
+
+        self.installEventFilter( self )
         return
 
+    def setMainWindow( self, window ):
+        " Memorizes the new window reference "
+        self.mainWindow = window
+        return
+
+    def eventFilter( self, obj, event ):
+        " Event filter to catch ESC application wide "
+        try:
+            if event.type() == QEvent.KeyPress:
+                if event.key() == Qt.Key_Escape:
+                    if self.mainWindow is not None:
+                        self.mainWindow.hideTooltips()
+        except:
+            pass
+
+        try:
+            return QApplication.eventFilter( self, obj, event )
+        except:
+            return True
 

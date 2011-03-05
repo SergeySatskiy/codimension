@@ -121,8 +121,8 @@ class Tooltip( QFrame ):
     def __onTimer( self ):
         " Triggered by the show tooltip timer "
         currentPos = QCursor.pos()
-        if abs( currentPos.x() - self.startPosition.x() ) <= 3 and \
-           abs( currentPos.y() - self.startPosition.y() ) <= 3:
+        if abs( currentPos.x() - self.startPosition.x() ) <= 2 and \
+           abs( currentPos.y() - self.startPosition.y() ) <= 2:
             # No movement since last time, show the tooltip
             self.show()
             return
@@ -130,7 +130,7 @@ class Tooltip( QFrame ):
         # There item has not been changed, but the position within it was
         # So restart the timer, but for shorter
         self.startPosition = currentPos
-        self.tooltipTimer.start( 250 )
+        self.tooltipTimer.start( 400 )
         return
 
     def startShowTimer( self ):
@@ -150,14 +150,12 @@ class Tooltip( QFrame ):
 
 
 # Global tooltip instance
-searchTooltip = Tooltip()
+searchTooltip = None
 
 def hideSearchTooltip():
-    " Hides both the standard and search tooltips "
+    " Hides the search results tooltip "
     searchTooltip.tooltipTimer.stop()
     searchTooltip.hide()
-    QToolTip.hideText()
-    QApplication.processEvents()
     return
 
 
@@ -268,6 +266,9 @@ class FindInFilesViewer( QWidget ):
 
     def __init__( self, parent = None ):
         QWidget.__init__( self, parent )
+
+        global searchTooltip
+        searchTooltip = Tooltip()
 
         self.__reportRegexp = None
         self.__reportResults = []
