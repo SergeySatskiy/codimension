@@ -156,6 +156,9 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__fileName = ""
         self.__shortName = ""
 
+        self.connect( self.__viewer, SIGNAL( 'ESCPressed' ),
+                      self.__onEsc )
+
         self.__createLayout()
         return
 
@@ -257,6 +260,11 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
     def __onZoomReset( self ):
         " Triggered on the 'zoom reset' button "
         self.__viewer.resetZoom()
+        return
+
+    def __onEsc( self ):
+        " Triggered when Esc is pressed "
+        self.emit( SIGNAL( 'ESCPressed' ) )
         return
 
 
