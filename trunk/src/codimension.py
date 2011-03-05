@@ -112,6 +112,7 @@ def codimensionMain():
 
     splash.showMessage( "Generating main window..." )
     mainWindow = CodimensionMainWindow( splash, settings )
+    codimensionApp.setMainWindow( mainWindow )
     globalData.mainWindow = mainWindow
     codimensionApp.connect( codimensionApp, SIGNAL( "lastWindowClosed()" ),
                             codimensionApp, SLOT( "quit()" ) )

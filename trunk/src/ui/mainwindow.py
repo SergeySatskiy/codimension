@@ -28,7 +28,7 @@ from PyQt4.QtGui                import QLabel, QToolBar, QWidget, QMessageBox, \
                                        QVBoxLayout, QSplitter, QDialog, \
                                        QSizePolicy, QAction, QMainWindow, \
                                        QShortcut, QFrame, QApplication, \
-                                       QCursor, QMenu, QToolButton
+                                       QCursor, QMenu, QToolButton, QToolTip
 from fitlabel                   import FitPathLabel
 from utils.globals              import GlobalData
 from utils.project              import CodimensionProject
@@ -57,7 +57,7 @@ from utils.fileutils            import PythonFileType, \
 from pymetricsviewer            import PymetricsViewer
 from pymetricsparser.pymetricsparser    import PyMetrics
 from findinfiles                import FindInFilesDialog
-from findinfilesviewer          import FindInFilesViewer
+from findinfilesviewer          import FindInFilesViewer, hideSearchTooltip
 from findname                   import FindNameDialog
 from findfile                   import FindFileDialog
 from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
@@ -1015,4 +1015,9 @@ class CodimensionMainWindow( QMainWindow ):
             logging.error( str( exc ) )
         return
 
+    def hideTooltips( self ):
+        " Hides all the tooltips "
+        QToolTip.hideText()
+        hideSearchTooltip()
+        return
 

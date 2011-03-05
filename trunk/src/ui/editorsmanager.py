@@ -631,6 +631,8 @@ class EditorsManager( TabWidget ):
                     return True
             # Not found - create a new one
             newWidget = PixmapTabWidget()
+            self.connect( newWidget, SIGNAL( 'ESCPressed' ),
+                          self.__onESC )
             newWidget.loadFromFile( fileName )
 
             if len( self.widgets ) == 0:
