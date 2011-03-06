@@ -30,12 +30,11 @@
 
 
 import logging, os.path
-from PyQt4.QtCore               import Qt, SIGNAL, QPoint, QByteArray, \
-                                       QMimeData, QVariant, QDir, QUrl
-from PyQt4.QtGui                import QTabWidget, QTabBar, QApplication, \
-                                       QDrag, QWidget, QHBoxLayout, QMenu, \
-                                       QToolButton, QShortcut, QFileDialog, \
-                                       QDialog, QMessageBox
+from PyQt4.QtCore               import Qt, SIGNAL, \
+                                       QVariant, QDir, QUrl
+from PyQt4.QtGui                import QTabWidget, QDialog, QMessageBox, \
+                                       QWidget, QHBoxLayout, QMenu, \
+                                       QToolButton, QShortcut, QFileDialog
 from utils.pixmapcache          import PixmapCache
 from welcomewidget              import WelcomeWidget
 from helpwidget                 import QuickHelpWidget
@@ -50,192 +49,16 @@ from utils.globals              import GlobalData
 from utils.settings             import Settings
 
 
-class DragAndDropTabBar( QTabBar ):
-    " QTabBar extension "
-
-    def __init__( self, parent = None ):
-
-        QTabBar.__init__( self, parent )
-        self.setTabsClosable( False )
-        self.setAcceptDrops( True )
-
-        self.__dragStartPos = QPoint()
-        return
-
-    def mousePressEvent( self, event ):
-        " Handles mouse press events "
-
-        if event.button() == Qt.LeftButton:
-            self.__dragStartPos = QPoint( event.pos() )
-            # print "Drag start memorized"
-        QTabBar.mousePressEvent( self, event )
-        return
-
-    def mouseMoveEvent( self, event ):
-        " Handles mouse move events "
-
-        # print "mouseMoveEvent"
-        if event.buttons() == Qt.MouseButtons( Qt.LeftButton ) and \
-           ( event.pos() - self.__dragStartPos ).manhattanLength() > \
-                QApplication.startDragDistance():
-            drag = QDrag( self )
-            mimeData = QMimeData()
-            index = self.tabAt( event.pos() )
-            mimeData.setText( self.tabText( index ) )
-            mimeData.setData( "action", "tab-reordering" )
-            mimeData.setData( "tabbar-id", QByteArray.number( id( self ) ) )
-            drag.setMimeData( mimeData )
-
-            # 0 means ignore => should check the cursor position
-            result = drag.exec_()
-            #print result
-        QTabBar.mouseMoveEvent( self, event )
-        return
-
-    def dragEnterEvent( self, event ):
-        " Handles the drag enter events "
-
-        # print "Drag enter event"
-        mimeData = event.mimeData()
-        formats = mimeData.formats()
-        if formats.contains( "action" ) and \
-           mimeData.data( "action" ) == "tab-reordering" and \
-           formats.contains( "tabbar-id" ) and \
-           mimeData.data( "tabbar-id" ).toLong()[ 0 ] == id( self ):
-            event.acceptProposedAction()
-        QTabBar.dragEnterEvent( self, event )
-        return
-
-    def dropEvent( self, event ):
-        " Handles the drop events "
-
-        fromIndex = self.tabAt( self.__dragStartPos )
-        toIndex = self.tabAt( event.pos() )
-        if fromIndex != toIndex:
-            self.emit( SIGNAL("tabMoveRequested(int, int)"),
-                       int(fromIndex), int(toIndex) )
-            # print "drop event. From: " + str(fromIndex) + " To: " + str(toIndex)
-            event.acceptProposedAction()
-        QTabBar.dropEvent( self, event )
-        return
 
 
-class TabWidget( QTabWidget ):
-    " Extension to QTabWidget "
-
-    def __init__( self, parent = None ):
-        QTabWidget.__init__( self, parent )
-
-        self._tabBar = DragAndDropTabBar( self )
-        self.setTabBar( self._tabBar )
-        self.connect( self._tabBar, SIGNAL( "tabMoveRequested(int, int)" ),
-                      self.moveTab )
-
-        self.__lastCurrentIndex = -1
-        self.__currentIndex = -1
-        return
-
-    def _memorizeLastIndex( self, index ):
-        " Handles the currentChanged signal "
-
-        if index == -1:
-            self.__lastCurrentIndex = -1
-        else:
-            self.__lastCurrentIndex = self.__currentIndex
-        self.__currentIndex = index
-        return
-
-    def switchTab( self ):
-        " Switches between the current and the previous current tab "
-
-        if self.__lastCurrentIndex == -1 or self.__currentIndex == -1:
-            return
-
-        self.setCurrentIndex( self.__lastCurrentIndex )
-        self.currentWidget().setFocus()
-        return
-
-    def nextTab( self ):
-        " Shows the next tab "
-
-        ind = self.currentIndex() + 1
-        if ind == self.count():
-            ind = 0
-
-        self.setCurrentIndex( ind )
-        self.currentWidget().setFocus()
-        return
-
-    def prevTab( self ):
-        " Shows the previous tab "
-
-        ind = self.currentIndex() - 1
-        if ind == -1:
-            ind = self.count() - 1
-
-        self.setCurrentIndex( ind )
-        self.currentWidget().setFocus()
-        return
-
-    def activateTab( self, index ):
-        " Activates the given tab "
-        if index >= self.tabBar().count():
-            return
-        self.setCurrentIndex( index )
-        self.currentWidget().setFocus()
-        return
-
-    def getTabIndex( self, pos ):
-        " Provides the index of a tab for the given position "
-        _tabbar = self.tabBar()
-        for index in range( _tabbar.count() ):
-            rect = _tabbar.tabRect( index )
-            if rect.contains( pos ):
-                return index
-        return -1
-
-    def moveTab( self, curIndex, newIndex ):
-        """ Moves a tab to a new index """
-
-        if curIndex == newIndex:
-            return
-
-        # step 1: save the tab data of tab to be moved
-        toolTip = self.tabToolTip( curIndex )
-        text = self.tabText( curIndex )
-        icon = self.tabIcon( curIndex )
-        whatsThis = self.tabWhatsThis( curIndex )
-        widget = self.widget( curIndex )
-        curWidget = self.currentWidget()
-
-        # step 2: move the tab
-        self.removeTab( curIndex )
-        self.insertTab( newIndex, widget, icon, text )
-
-        # step 3: set the tab data again
-        self.setTabToolTip( newIndex, toolTip )
-        self.setTabWhatsThis( newIndex, whatsThis )
-
-        # step 4: set current widget
-        self.__currentIndex = newIndex
-        self.setCurrentWidget( curWidget )
-        self.tabMoved( curIndex, newIndex )
-        self.currentWidget().setFocus()
-        return
-
-    def tabMoved( self, currentIndex, newIndex ):
-        " Should be re-implemented in the deriving class "
-        return
-
-
-
-class EditorsManager( TabWidget ):
+class EditorsManager( QTabWidget ):
     " Tab bar with editors "
 
 
     def __init__( self, parent = None ):
 
-        TabWidget.__init__( self, parent )
+        QTabWidget.__init__( self, parent )
+        self.setMovable( True )
 
         self.__mainWindow = parent
         self.__navigationMenu = None
@@ -250,7 +73,6 @@ class EditorsManager( TabWidget ):
         self.replaceWidget = None
         self.gotoWidget = None
 
-        self.widgets = []       # Widgets on displayed tabs
         self.history = []       # Global tabs history
                                 # Each history item is 4 items list:
                                 # - icon
@@ -274,7 +96,7 @@ class EditorsManager( TabWidget ):
         self.__installActions()
         self.__updateStatusBar()
 
-        self.connect( self._tabBar, SIGNAL( "tabCloseRequested(int)" ),
+        self.connect( self, SIGNAL( "tabCloseRequested(int)" ),
                       self.__onCloseRequest )
         self.connect( self, SIGNAL( "currentChanged(int)" ),
                       self.__currentChanged )
@@ -324,43 +146,48 @@ class EditorsManager( TabWidget ):
         self.gotoWidget = goto
         return
 
-    def tabMoved( self, currentIndex, newIndex ):
-        " Base class calls this method when two tabs are exchanged "
-        temp = self.widgets[ currentIndex ]
-        self.widgets[ currentIndex ] = self.widgets[ newIndex ]
-        self.widgets[ newIndex ] = temp
-        self.__updateStatusBar()
-        return
-
     def getNewName( self ):
         " Provides a dummy name for the new tab file "
         self.newIndex += 1
         return "unnamed" + str( self.newIndex ) + ".py"
 
+    def activateTab( self, index ):
+        " Activates the given tab "
+        self.setCurrentIndex( index )
+        self.currentWidget().setFocus()
+        return
+
     def __onNextTab( self ):
         " Triggers when Ctrl+PgUp is received "
-        if len( self.widgets ) != 0:
-            self.nextTab()
+        count = self.count()
+        if count > 1:
+            newIndex = self.currentIndex() + 1
+            if newIndex >= count:
+                newIndex = 0
+            self.activateTab( newIndex )
         return
 
     def __onPrevTab( self ):
         " triggers when Ctrl+PgDown is received "
-        if len( self.widgets ) != 0:
-            self.prevTab()
+        count = self.count()
+        if count > 1:
+            newIndex = self.currentIndex() - 1
+            if newIndex < 0:
+                newIndex = count - 1
+            self.activateTab( newIndex )
         return
 
     def newTabClicked( self ):
         " new tab click handler "
 
-        if len( self.widgets ) == 0:
+        if self.widget( 0 ) == self.__welcomeWidget:
             # It is the only welcome widget on the screen
             self.removeTab( 0 )
-            self._tabBar.setTabsClosable( True )
+            self.setTabsClosable( True )
 
         newWidget = TextEditorTabWidget()
         editor = newWidget.getEditor()
         newWidget.setShortName( self.getNewName() )
-        self.widgets.append( newWidget )
 
         fileType = detectFileType( newWidget.getShortName() )
 
@@ -379,7 +206,8 @@ class EditorsManager( TabWidget ):
 
         self.addTab( newWidget, getFileIcon( fileType ),
                      newWidget.getShortName() )
-        self.activateTab( len( self.widgets ) - 1 )
+        self.activateTab( self.count() - 1 )
+
         self.__updateControls()
         self.__connectEditorWidget( newWidget )
         self.__updateStatusBar()
@@ -393,11 +221,12 @@ class EditorsManager( TabWidget ):
         self.historyBackButton.setEnabled( False )
         self.historyFwdButton.setEnabled( False )
 
-        if len( self.widgets ) > 0:
+        if self.widget( 0 ) != self.__welcomeWidget:
             self.navigationButton.setEnabled( True )
 
         if len( self.history ) == 0:
             return
+
         if self.historyIndex > 0:
             self.historyBackButton.setEnabled( True )
         if self.historyIndex < len( self.history ) - 1:
@@ -406,19 +235,18 @@ class EditorsManager( TabWidget ):
 
     def __onCloseTab( self ):
         " Triggered when Ctrl+F4 is received "
-        if len( self.widgets ) == 0:
-            return
-        self.__onCloseRequest( self.currentIndex() )
+        if self.widget( 0 ) != self.__welcomeWidget:
+            self.__onCloseRequest( self.currentIndex() )
         return
 
     def __onCloseRequest( self, index ):
         " Close tab handler "
 
         wasDiscard = False
-        if self.widgets[ index ].isModified():
+        if self.widget( index ).isModified():
             # Ask the user if the changes should be discarded
             res = QMessageBox.warning( \
-                        self.widgets[ index ],
+                        self.widget( index ),
                         "Unsaved changes",
                         "<b>The document has been modified.<b>" \
                         "<p>Do you want to save changes?</p>",
@@ -443,13 +271,12 @@ class EditorsManager( TabWidget ):
         if not wasDiscard:
             self.__updateFilePosition( index )
 
-        del self.widgets[ index ]
         self.removeTab( index )
-        if len( self.widgets ) == 0:
-            self._tabBar.setTabsClosable( False )
+        if self.count() == 0:
+            self.setTabsClosable( False )
             self.addTab( self.__welcomeWidget, getFileIcon( HTMLFileType ),
                          self.__welcomeWidget.getShortName() )
-            self.activateTab( len( self.widgets ) - 1 )
+            self.__welcomeWidget.setFocus()
             self.gotoWidget.hide()
             self.findWidget.hide()
             self.replaceWidget.hide()
@@ -460,13 +287,13 @@ class EditorsManager( TabWidget ):
     def __updateFilePosition( self, index ):
         " Updates the file position of a file which is loaded to the given tab "
 
-        if self.widgets[ index ].getType() == \
+        if self.widget( index ).getType() == \
             MainWindowTabWidgetBase.PlainTextEditor:
             # Save the current cursor position
-            editor = self.widgets[ index ].getEditor()
+            editor = self.widget( index ).getEditor()
             line, pos = editor.getCursorPosition()
             Settings().filePositions.updatePosition( \
-                            self.widgets[ index ].getFileName(),
+                            self.widget( index ).getFileName(),
                             line, pos,
                             editor.firstVisibleLine() )
             Settings().filePositions.save()
@@ -564,41 +391,57 @@ class EditorsManager( TabWidget ):
         if not isOK or self.currentIndex() == index:
             return
 
-        self.setCurrentIndex( index )
         if index != 0:
-            self.moveTab( index, 0 )
-            self.setCurrentIndex( 0 )
+            # Memorize the tab attributes
+            tooltip = self.tabToolTip( index )
+            text = self.tabText( index )
+            icon = self.tabIcon( index )
+            whatsThis = self.tabWhatsThis( index )
+            widget = self.widget( index )
+
+            # Remove the tab from the old position
+            self.removeTab( index )
+
+            # Insert the tab at position 0
+            self.insertTab( 0, widget, icon, text )
+            self.setTabToolTip( 0, tooltip )
+            self.setTabWhatsThis( 0, whatsThis )
+
+        self.activateTab( 0 )
         return
 
     def __currentChanged( self, index ):
         " Handles the currentChanged signal "
-        self._memorizeLastIndex( index )
+        if index == -1:
+            return
+
         self.__updateStatusBar()
 
         self.gotoWidget.updateStatus()
         self.findWidget.updateStatus()
         self.replaceWidget.updateStatus()
+
+        self.currentWidget().setFocus()
         return
 
     def __onHelp( self ):
         " Triggered when F1 is received "
         shortName = self.__helpWidget.getShortName()
         # Check if it is already opened
-        for index in range( len( self.widgets ) ):
-            if self.widgets[ index ].getShortName() == shortName and \
-               self.widgets[ index ].getType() == \
+        for index in range( self.count() ):
+            if self.widget( index ).getShortName() == shortName and \
+               self.widget( index ).getType() == \
                     MainWindowTabWidgetBase.HTMLViewer:
                 # Found
                 self.activateTab( index )
                 return
         # Not found
-        if len( self.widgets ) == 0:
+        if self.widget( 0 ) == self.__welcomeWidget:
             # It is the only welcome widget on the screen
             self.removeTab( 0 )
-            self._tabBar.setTabsClosable( True )
-        self.widgets.append( self.__helpWidget )
+            self.setTabsClosable( True )
         self.addTab( self.__helpWidget, getFileIcon( HTMLFileType ), shortName )
-        self.activateTab( len( self.widgets ) - 1 )
+        self.activateTab( self.count() - 1 )
         return
 
     @staticmethod
@@ -624,8 +467,8 @@ class EditorsManager( TabWidget ):
 
         try:
             # Check if the file is already opened
-            for index in range( len( self.widgets ) ):
-                if self.widgets[ index ].getFileName() == fileName:
+            for index in range( self.count() ):
+                if self.widget( index ).getFileName() == fileName:
                     # Found
                     self.activateTab( index )
                     return True
@@ -635,15 +478,14 @@ class EditorsManager( TabWidget ):
                           self.__onESC )
             newWidget.loadFromFile( fileName )
 
-            if len( self.widgets ) == 0:
+            if self.widget( 0 ) == self.__welcomeWidget:
                 # It is the only welcome widget on the screen
                 self.removeTab( 0 )
-                self._tabBar.setTabsClosable( True )
+                self.setTabsClosable( True )
 
-            self.widgets.append( newWidget )
             self.addTab( newWidget, getFileIcon( PixmapFileType ),
                          newWidget.getShortName() )
-            self.activateTab( len( self.widgets ) - 1 )
+            self.activateTab( self.count() - 1 )
             self.__updateControls()
             self.__updateStatusBar()
             newWidget.setFocus()
@@ -657,12 +499,12 @@ class EditorsManager( TabWidget ):
         " Opens the required file "
         try:
             # Check if the file is already opened
-            for index in range( len( self.widgets ) ):
-                if self.widgets[ index ].getFileName() == fileName:
+            for index in range( self.count() ):
+                if self.widget( index ).getFileName() == fileName:
                     # Found
                     self.activateTab( index )
                     if lineNo > 0:
-                        self.widgets[ index ].getEditor().gotoLine( lineNo )
+                        self.widget( index ).getEditor().gotoLine( lineNo )
                     return True
             # Not found - create a new one
             newWidget = TextEditorTabWidget()
@@ -678,7 +520,8 @@ class EditorsManager( TabWidget ):
                 editor.gotoLine( lineNo )
             else:
                 # Restore the last position
-                line, pos, firstVisible = Settings().filePositions.getPosition( fileName )
+                line, pos, firstVisible = \
+                            Settings().filePositions.getPosition( fileName )
                 if line != -1:
                     editor.setCursorPosition( line, pos )
 
@@ -689,19 +532,18 @@ class EditorsManager( TabWidget ):
                     currentLine = editor.firstVisibleLine()
                     editor.scrollVertical( firstVisible - currentLine )
 
-            if len( self.widgets ) == 0:
+            if self.widget( 0 ) == self.__welcomeWidget:
                 # It is the only welcome widget on the screen
                 self.removeTab( 0 )
-                self._tabBar.setTabsClosable( True )
+                self.setTabsClosable( True )
 
             # Bind a lexer
             editor.bindLexer( newWidget.getFileName(), fileType )
 
-            self.widgets.append( newWidget )
             self.addTab( newWidget, getFileIcon( fileType ),
                          newWidget.getShortName() )
-            self.activateTab( len( self.widgets ) - 1 )
-            self.setTabToolTip( len( self.widgets ) - 1,
+            self.activateTab( self.count() - 1 )
+            self.setTabToolTip( self.count() - 1,
                                 self.getFileDocstring( fileName ) )
             self.__updateControls()
             self.__connectEditorWidget( newWidget )
@@ -746,9 +588,9 @@ class EditorsManager( TabWidget ):
 
     def __onSave( self ):
         " Triggered when Ctrl+S is received "
-        if len( self.widgets ) == 0:
+        if self.widget( 0 ) == self.__welcomeWidget:
             return True
-        currentWidget = self.widgets[ self.currentIndex() ]
+        currentWidget = self.currentWidget()
         if currentWidget.getType() != MainWindowTabWidgetBase.PlainTextEditor:
             return True
         editor = currentWidget.getEditor()
@@ -773,9 +615,9 @@ class EditorsManager( TabWidget ):
 
     def __onSaveAs( self ):
         " Triggered when Ctrl+Shift+S is received "
-        if len( self.widgets ) == 0:
+        if self.widget( 0 ) == self.__welcomeWidget:
             return True
-        currentWidget = self.widgets[ self.currentIndex() ]
+        currentWidget = self.currentWidget()
         if currentWidget.getType() != MainWindowTabWidgetBase.PlainTextEditor:
             return True
 
@@ -826,11 +668,13 @@ class EditorsManager( TabWidget ):
                                "directory " + dirName )
                 return False
 
-        if os.path.exists( fileName ) and fileName != currentWidget.getFileName():
+        if os.path.exists( fileName ) and \
+           fileName != currentWidget.getFileName():
             res = QMessageBox.warning( \
                 self, "Save File",
                 "<p>The file <b>" + fileName + "</b> already exists.</p>",
-                QMessageBox.StandardButtons( QMessageBox.Abort | QMessageBox.Save ),
+                QMessageBox.StandardButtons( QMessageBox.Abort | \
+                                             QMessageBox.Save ),
                 QMessageBox.Abort )
             if res == QMessageBox.Abort or res == QMessageBox.Cancel:
                 return False
@@ -950,7 +794,7 @@ class EditorsManager( TabWidget ):
     def __modificationChanged( self, modified ):
         " Triggered when the file is changed "
         index = self.currentIndex()
-        currentWidget = self.widgets[ index ]
+        currentWidget = self.currentWidget()
         if modified:
             self.setTabText( index, currentWidget.getShortName() + ", +" )
         else:
@@ -1009,11 +853,13 @@ class EditorsManager( TabWidget ):
         return
 
     def getUnsavedCount( self ):
-        " Provides the list of short names of what is not saved "
+        " Provides the number of buffers which were not saved "
         count = 0
-        for item in self.widgets:
-            if item.isModified():
+        index = self.count() - 1
+        while index >= 0:
+            if self.widget( index ).isModified():
                 count += 1
+            index -= 1
         return count
 
     def closeRequest( self ):
@@ -1022,9 +868,9 @@ class EditorsManager( TabWidget ):
             is activated and False is returned. """
         notSaved = []
         firstIndex = -1
-        for index in range( len( self.widgets ) ):
-            if self.widgets[ index ].isModified():
-                notSaved.append( self.widgets[ index ].getShortName() )
+        for index in range( self.count() ):
+            if self.widget( index ).isModified():
+                notSaved.append( self.widget( index ).getShortName() )
                 if firstIndex == -1:
                     firstIndex = index
             else:
@@ -1054,15 +900,9 @@ class EditorsManager( TabWidget ):
             return
 
         # It's safe to close all the tabs
-        while len( self.widgets ) > 0:
+        while self.widget( 0 ) != self.__welcomeWidget:
             self.__onCloseRequest( 0 )
         return
-
-    def currentWidget( self ):
-        " provides the current widget "
-        if len( self.widgets ) > 0:
-            return self.widgets[ self.currentIndex() ]
-        return self.__welcomeWidget
 
     def saveTabsStatus( self ):
         " Saves the tabs status to project or global settings "
@@ -1074,12 +914,16 @@ class EditorsManager( TabWidget ):
 
     def getTabsStatus( self ):
         " Provides all the tabs status and cursor positions "
-        status = []
+        if self.widget( 0 ) == self.__welcomeWidget:
+            return []
 
+        status = []
         helpShortName = self.__helpWidget.getShortName()
         curWidget = self.currentWidget()
 
-        for item in self.widgets:
+
+        for index in range( self.count() ):
+            item = self.widget( index )
             if item.getType() == MainWindowTabWidgetBase.HTMLViewer and \
                item.getShortName() == helpShortName:
                 record = "help:-1:-1:-1"
@@ -1119,8 +963,7 @@ class EditorsManager( TabWidget ):
         " Restores the tab status, i.e. load files and set cursor pos "
 
         # Force close all the tabs if any
-        while len( self.widgets ) > 0:
-            del self.widgets[ 0 ]
+        while self.count() > 0:
             self.removeTab( 0 )
 
         # Walk the status list
@@ -1143,12 +986,11 @@ class EditorsManager( TabWidget ):
             if firstLine == -1 and line == -1 and pos == -1 and \
                fileName == 'help':
                 # Help widget
-                if len( self.widgets ) == 0:
+                if self.widget( 0 ) == self.__welcomeWidget:
                     # It is the only welcome widget on the screen
                     self.removeTab( 0 )
-                    self._tabBar.setTabsClosable( True )
+                    self.setTabsClosable( True )
                 shortName = self.__helpWidget.getShortName()
-                self.widgets.append( self.__helpWidget )
                 self.addTab( self.__helpWidget, getFileIcon( HTMLFileType ),
                              shortName )
                 continue
@@ -1172,7 +1014,7 @@ class EditorsManager( TabWidget ):
 
             # A usual file
             if self.openFile( fileName, line ):
-                editor = self.widgets[ len( self.widgets ) - 1 ].getEditor()
+                editor = self.widget( self.count() - 1 ).getEditor()
                 editor.setCursorPosition( line, pos )
                 editor.setHScrollOffset( 0 ) # avoid unwanted scrolling
                 editor.ensureLineVisible( firstLine )
@@ -1180,12 +1022,14 @@ class EditorsManager( TabWidget ):
                 editor.scrollVertical( firstLine - currentLine )
 
         # Switch to the last active tab
-        if len( self.widgets ) == 0:
+        if self.count() == 0:
             # No one was restored - display the welcome widget
-            self._tabBar.setTabsClosable( False )
+            self.setTabsClosable( False )
             self.addTab( self.__welcomeWidget, getFileIcon( HTMLFileType ),
                          self.__welcomeWidget.getShortName() )
-        if activeIndex == -1 or activeIndex >= len( self.widgets ):
+        else:
+            self.setTabsClosable( True )
+        if activeIndex == -1 or activeIndex >= self.count():
             activeIndex = 0
         self.activateTab( activeIndex )
         return
@@ -1194,7 +1038,8 @@ class EditorsManager( TabWidget ):
         " Sets the zoom value for all the opened editor tabs "
         Settings().zoom = zoomValue
 
-        for item in self.widgets:
+        for index in range( self.count() ):
+            item = self.widget( index )
             if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
                 item.getEditor().zoomTo( zoomValue )
         return
@@ -1203,7 +1048,8 @@ class EditorsManager( TabWidget ):
         " Provides a list of the currently opened text editors "
 
         result = []
-        for item in self.widgets:
+        for index in range( self.count() ):
+            item = self.widget( index )
             if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
                 result.append( [ item.getUUID(), item.getFileName(), item ] )
         return result
