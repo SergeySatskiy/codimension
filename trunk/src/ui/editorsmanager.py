@@ -204,9 +204,9 @@ class EditorsManager( QTabWidget ):
         # Bind a lexer
         editor.bindLexer( newWidget.getShortName(), fileType )
 
-        self.addTab( newWidget, getFileIcon( fileType ),
-                     newWidget.getShortName() )
-        self.activateTab( self.count() - 1 )
+        self.insertTab( 0, newWidget, getFileIcon( fileType ),
+                        newWidget.getShortName() )
+        self.activateTab( 0 )
 
         self.__updateControls()
         self.__connectEditorWidget( newWidget )
