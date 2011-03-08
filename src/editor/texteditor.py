@@ -61,6 +61,9 @@ class TextEditor( ScintillaWrapper ):
         self.__initIndicators()
         self.__disableKeyBinding()
 
+        self.connect( self, SIGNAL( 'SCN_DOUBLECLICK(int,int,int)' ),
+                      self.__onDoubleClick )
+
         # Switch on the current line highlight
         self.setCurrentLineHighlight( True, QColor( 232, 232, 255 ) )
 
@@ -395,6 +398,8 @@ class TextEditor( ScintillaWrapper ):
                 # beginning of the line
                 event.setAccepted( False )
                 ScintillaWrapper.keyPressEvent( self, event )
+        elif event.key() == Qt.Key_N and Qt.ControlModifier & event.modifiers() != 0:
+            self.__onHighlight()
         else:
             ScintillaWrapper.keyPressEvent( self, event )
         return
@@ -405,6 +410,27 @@ class TextEditor( ScintillaWrapper ):
             return self.lexer_.language()
         return "Unknown"
 
+    def __onDoubleClick( self, position, line, modifier ):
+        " Triggered when the user double clicks in the editor "
+        self.highlightWord( self.selectedText() )
+        return
+
+    def highlightWord( self, text ):
+        " Highlights the given word with the searchIndicator "
+        self.clearAllIndicators( self.matchIndicator )
+        self.clearAllIndicators( self.searchIndicator )
+
+        if text == "" or text.contains( '\r' ) or text.contains( '\n' ):
+            return
+
+        self.markOccurrences( self.searchIndicator, text,
+                              False, False, False, True )
+        return
+
+    def __onHighlight( self ):
+        " Triggered when Ctrl+N is clicked "
+        self.highlightWord( self.getCurrentWord() )
+        return
 
 
 class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
