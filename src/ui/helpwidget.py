@@ -146,6 +146,11 @@ class QuickHelpWidget( HTMLTabWidget ):
           <td>Search a name</td>
           <td>Alt+Shift+O</td>
           <td>Search a file</td></tr>
+        <tr>
+          <td>Ctrl+N</td>
+          <td>Highlight the current word</td>
+          <td></td>
+          <td></td></tr>
     </table>
     </p>
     <p align="center">
