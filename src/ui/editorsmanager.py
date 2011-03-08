@@ -1054,3 +1054,23 @@ class EditorsManager( QTabWidget ):
                 result.append( [ item.getUUID(), item.getFileName(), item ] )
         return result
 
+    def getWidgetByUUID( self, uuid ):
+        " Provides the widget found by the given UUID "
+        index = self.count() - 1
+        while index >= 0:
+            widget = self.widget( index )
+            if uuid == widget.getUUID():
+                return widget
+            index -= 1
+        return None
+
+    def getWidgetForFileName( self, fname ):
+        " Provides the widget found by the given file name "
+        index = self.count() - 1
+        while index >= 0:
+            widget = self.widget( index )
+            if fname == widget.getFileName():
+                return widget
+            index -= 1
+        return None
+
