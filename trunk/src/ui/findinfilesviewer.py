@@ -39,6 +39,11 @@ from utils.fileutils    import getFileIcon, detectFileType
 cellHeight = 20     # default
 screenWidth = 600   # default
 
+# On slow network connections when XServer is used the cursor movement is
+# delivered with a considerable delay which causes improper tooltip displaying.
+# This global variable prevents improper displaying.
+inside = False
+
 class Tooltip( QFrame ):
     " Custom tooltip "
 
@@ -144,7 +149,10 @@ class Tooltip( QFrame ):
         " Shows the tooltip at the proper position "
         QToolTip.hideText()
         QApplication.processEvents()
+        if not inside:
+            return
         self.move( self.__getTooltipPos() )
+        self.raise_()
         QFrame.show( self )
         return
 
@@ -203,6 +211,9 @@ class MatchTableItem( QTreeWidgetItem ):
         if self.__tooltip == "":
             return
 
+        global inside
+        inside = True
+
         if searchTooltip.isVisible():
             hideSearchTooltip()
             self.__updateTooltipProperties()
@@ -232,6 +243,10 @@ class FindResultsTreeWidget( QTreeWidget ):
 
     def leaveEvent( self, event ):
         " Triggered when the cursor leaves the find results tree "
+        global inside
+        inside = False
+
+        QApplication.processEvents()
         hideSearchTooltip()
         QTreeWidget.leaveEvent( self, event )
         return
@@ -340,6 +355,9 @@ class FindInFilesViewer( QWidget ):
         self.connect( self.__resultsTree,
                       SIGNAL( "itemActivated(QTreeWidgetItem *, int)" ),
                       self.__resultActivated )
+        self.connect( self.__resultsTree,
+                      SIGNAL( "itemClicked(QTreeWidgetItem *, int)" ),
+                      self.__resultClicked )
         self.__resultsTree.setMouseTracking( True )
         self.connect( self.__resultsTree,
                       SIGNAL( "itemEntered(QTreeWidgetItem *, int)" ),
@@ -439,28 +457,19 @@ class FindInFilesViewer( QWidget ):
                           self.__resultsTree.onBufferModified )
         return
 
-    def __resultActivated( self, item, column ):
-        " Handles the double click (or Enter) on a match "
-        if type( item ) != MatchTableItem:
-            if item.isExpanded():
-                print "Expanding. It was : " + str( item.isExpanded() )
-#                print "item expanded"
-#                item.setExpanded( False )
-                self.__resultsTree.collapseItem( item )
-                print "Now it is : " + str( item.isExpanded() )
-            else:
-#                print "item collapsed"
-                print "Collapsing. It was : " + str( item.isExpanded() )
-#                item.setExpanded( True )
-                self.__resultsTree.expandItem( item )
-                print "Now it is : " + str( item.isExpanded() )
-            return
-
-        fileName = str( item.parent().data( 0, Qt.DisplayRole ).toString() )
-        lineNumber = int( item.data( 0, Qt.DisplayRole ).toString() )
-        GlobalData().mainWindow.openFile( fileName, lineNumber )
+    def __resultClicked( self, item, column ):
+        " Handles the single click "
         hideSearchTooltip()
         return
+
+    def __resultActivated( self, item, column ):
+        " Handles the double click (or Enter) on a match "
+        if type( item ) == MatchTableItem:
+            fileName = str( item.parent().data( 0, Qt.DisplayRole ).toString() )
+            lineNumber = int( item.data( 0, Qt.DisplayRole ).toString() )
+            GlobalData().mainWindow.openFile( fileName, lineNumber )
+            hideSearchTooltip()
+            return
 
     def __itemEntered( self, item, column ):
         " Triggered when the mouse cursor entered a row "
@@ -474,7 +483,7 @@ class FindInFilesViewer( QWidget ):
         global cellHeight
         cellHeight = self.__resultsTree.visualItemRect( item ).height()
 
-        if self.lastEntered != item:
+        if self.lastEntered != item or not inside:
             item.itemEntered()
             self.lastEntered = item
         return
