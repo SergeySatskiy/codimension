@@ -595,27 +595,54 @@ class CodimensionMainWindow( QMainWindow ):
         self.addToolBar( self.__toolbar )
         return
 
+    def __guessMaximized( self ):
+        " True if the window is maximized "
+
+        # Ugly but I don't see any better way.
+        # It is impossible to catch the case when the main window is maximized.
+        # Especially when networked XServer is used (like xming)
+        # So, make a wild guess instead and do not save the status is
+        # maximized.
+        availGeom = GlobalData().application.desktop().availableGeometry()
+        if self.width() + abs( self.settings.xdelta ) > availGeom.width() or \
+           self.height() + abs( self.settings.ydelta ) > availGeom.height():
+            return True
+        return False
 
     def resizeEvent( self, resizeEv ):
+        " Triggered when the window is resized "
+        QTimer.singleShot( 1, self.__resizeEventdelayed )
+        return
+
+    def __resizeEventdelayed( self ):
         """ Memorizes the new window size """
 
         if self.__initialisation:
             return
+        if self.__guessMaximized():
+            return
 
-        self.settings.width = resizeEv.size().width()
-        self.settings.height = resizeEv.size().height()
+        self.settings.width = self.width()
+        self.settings.height = self.height()
         self.vSplitterMoved( 0, 0 )
         self.hSplitterMoved( 0, 0 )
         return
 
     def moveEvent( self, moveEv ):
+        " Triggered when the window is moved "
+        QTimer.singleShot( 1, self.__moveEventDelayed )
+        return
+
+    def __moveEventDelayed( self ):
         """ Memorizes the new window position """
 
         if self.__initialisation:
             return
+        if self.__guessMaximized():
+            return
 
-        self.settings.xpos = moveEv.pos().x()
-        self.settings.ypos = moveEv.pos().y()
+        self.settings.xpos = self.x()
+        self.settings.ypos = self.y()
         return
 
     def onProjectChanged( self, what ):
@@ -886,17 +913,11 @@ class CodimensionMainWindow( QMainWindow ):
 
     def getWidgetByUUID( self, uuid ):
         " Provides the widget found by the given UUID "
-        for widget in self.editorsManagerWidget.editorsManager.widgets:
-            if uuid == widget.getUUID():
-                return widget
-        return None
+        return self.editorsManagerWidget.editorsManager.getWidgetByUUID( uuid )
 
     def getWidgetForFileName( self, fname ):
         " Provides the widget found by the given file name "
-        for widget in self.editorsManagerWidget.editorsManager.widgets:
-            if fname == widget.getFileName():
-                return widget
-        return None
+        return self.editorsManagerWidget.editorsManager.getWidgetForFileName( fname )
 
     @staticmethod
     def __buildPythonFilesList():
