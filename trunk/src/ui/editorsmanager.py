@@ -483,9 +483,9 @@ class EditorsManager( QTabWidget ):
                 self.removeTab( 0 )
                 self.setTabsClosable( True )
 
-            self.addTab( newWidget, getFileIcon( PixmapFileType ),
-                         newWidget.getShortName() )
-            self.activateTab( self.count() - 1 )
+            self.insertTab( 0, newWidget, getFileIcon( PixmapFileType ),
+                            newWidget.getShortName() )
+            self.activateTab( 0 )
             self.__updateControls()
             self.__updateStatusBar()
             newWidget.setFocus()
@@ -540,11 +540,10 @@ class EditorsManager( QTabWidget ):
             # Bind a lexer
             editor.bindLexer( newWidget.getFileName(), fileType )
 
-            self.addTab( newWidget, getFileIcon( fileType ),
-                         newWidget.getShortName() )
-            self.activateTab( self.count() - 1 )
-            self.setTabToolTip( self.count() - 1,
-                                self.getFileDocstring( fileName ) )
+            self.insertTab( 0, newWidget, getFileIcon( fileType ),
+                            newWidget.getShortName() )
+            self.activateTab( 0 )
+            self.setTabToolTip( 0, self.getFileDocstring( fileName ) )
             self.__updateControls()
             self.__connectEditorWidget( newWidget )
             self.__updateStatusBar()
@@ -968,7 +967,7 @@ class EditorsManager( QTabWidget ):
 
         # Walk the status list
         activeIndex = -1
-        for index in range( len( status ) ):
+        for index in range( len( status ) - 1, -1, -1 ):
             parts = status[ index ].split( ':' )
             if len( parts ) == 5:
                 activeIndex = index
@@ -1014,7 +1013,7 @@ class EditorsManager( QTabWidget ):
 
             # A usual file
             if self.openFile( fileName, line ):
-                editor = self.widget( self.count() - 1 ).getEditor()
+                editor = self.widget( 0 ).getEditor()
                 editor.setCursorPosition( line, pos )
                 editor.setHScrollOffset( 0 ) # avoid unwanted scrolling
                 editor.ensureLineVisible( firstLine )
