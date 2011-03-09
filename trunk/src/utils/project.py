@@ -75,6 +75,10 @@ class CodimensionProject( QObject ):
         self.findFilesDirs = []
         self.findFilesMasks = []
 
+        self.findClassHistory = []
+        self.findFuncHistory = []
+        self.findGlobalHistory = []
+
         # Precompile the exclude filters
         self.__excludeFilter = []
         for flt in Settings().projectFilesFilters:
@@ -126,6 +130,10 @@ class CodimensionProject( QObject ):
         self.findFilesWhat = []
         self.findFilesDirs = []
         self.findFilesMasks = []
+
+        self.findClassHistory = []
+        self.findFuncHistory = []
+        self.findGlobalHistory = []
 
         # Reset the dir watchers if so
         if self.__dirWatcher is not None:
@@ -254,6 +262,7 @@ class CodimensionProject( QObject ):
         self.__saveSearchHistory()
         self.__saveTabsStatus()
         self.__saveFindFiles()
+        self.__saveFindObjects()
 
         self.__formatOK = True
         return
@@ -302,6 +311,18 @@ class CodimensionProject( QObject ):
         self.__writeList( f, "whathistory", "what", self.findFilesWhat )
         self.__writeList( f, "dirhistory", "dir", self.findFilesDirs )
         self.__writeList( f, "maskhistory", "mask", self.findFilesMasks )
+        f.close()
+        return
+
+    def __saveFindObjects( self ):
+        " Helper to save find objects history "
+        if self.fileName == "":
+            return
+        f = open( self.userProjectDir + "findobjects", "w" )
+        self.__writeHeader( f )
+        self.__writeList( f, "classhistory", "class", self.findClassHistory )
+        self.__writeList( f, "funchistory", "func", self.findFuncHistory )
+        self.__writeList( f, "globalhistory", "global", self.findGlobalHistory )
         f.close()
         return
 
@@ -412,6 +433,7 @@ class CodimensionProject( QObject ):
         self.__loadSearchHistory()
         self.__loadTabsStatus()
         self.__loadFindFiles()
+        self.__loadFindObjects()
 
         # The project might have been moved...
         self.__createProjectFile()  # ~/.codimension/uuidNN/project
@@ -564,6 +586,35 @@ class CodimensionProject( QObject ):
         # replace what part
         self.replaceWhatHistory = self.__loadListSection( \
                 config, 'replacewhathistory', 'replacewhat' )
+        config = None
+        return
+
+    def __loadFindObjects( self ):
+        " Loads the find objects history "
+        confFile = self.userProjectDir + "findobjects"
+        if not os.path.exists( confFile ):
+            logging.info( "Cannot find findobjects project file. " \
+                          "Expected here: " + confFile )
+            self.__formatOK = False
+            return
+
+        config = ConfigParser.ConfigParser()
+        try:
+            config.read( confFile )
+        except:
+            # Bad error - cannot load project file at all
+            config = None
+            self.__formatOK = False
+            logging.warning( "Cannot read findobjects project file " \
+                             "from here: " + confFile )
+            return
+
+        self.findClassHistory = self.__loadListSection( \
+                config, 'classhistory', 'class' )
+        self.findFuncHistory = self.__loadListSection( \
+                config, 'funchistory', 'func' )
+        self.findGlobalHistory = self.__loadListSection( \
+                config, 'globalhistory', 'global' )
         config = None
         return
 
@@ -823,6 +874,24 @@ class CodimensionProject( QObject ):
         self.findFilesDirs = dirs
         self.findFilesMasks = masks
         self.__saveFindFiles()
+        return
+
+    def setFindClassHistory( self, history ):
+        " Sets the new history and saves it into a file "
+        self.findClassHistory = history
+        self.__saveFindObjects()
+        return
+
+    def setFindFuncHistory( self, history ):
+        " Sets the new history and saves it into a file "
+        self.findFuncHistory = history
+        self.__saveFindObjects()
+        return
+
+    def setFindGlobalHistory( self, history ):
+        " Sets the new history and saves it into a file "
+        self.findGlobalHistory = history
+        self.__saveFindObjects()
         return
 
     def updateProperties( self, creationDate, author,
