@@ -21,7 +21,6 @@
 #
 
 """ QComboBox extension:
-    - memorizes the entry when the focus is lost
     - allows editing
     - limits the number of saved entries
     - does not allow duplications
@@ -30,39 +29,50 @@
 """
 
 
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui  import QComboBox
 
 
 class CDMComboBox( QComboBox ):
-    " QComboBox extension for loosing a focus "
+    " QComboBox minor extension "
 
-    itemsLimit = 16
+    itemsLimit = 32
 
-    def __init__( self, parent = None ):
+    def __init__( self, insertOnEnter = True, parent = None ):
         QComboBox.__init__( self, parent )
         self.setEditable( True )
         self.setAutoCompletion( False )
         self.setDuplicatesEnabled( False )
-        self.setInsertPolicy( QComboBox.InsertAtTop )
+        self.setInsertPolicy( QComboBox.NoInsert )
+        self.insert = insertOnEnter
         return
 
-    def focusOutEvent( self, event ):
-        " Triggered when the widget lost its focus "
-
-        text = self.lineEdit().text()
-        if len( str( text ).strip() ) > 0:
+    def addItem( self, text ):
+        " Adds an item to the top "
+        text = str( text ).strip()
+        if text != "":
             if self.findText( text, Qt.MatchFixedString ) == -1:
                 self.insertItem( 0, text )
                 self.__enforceLimit()
+        self.emit( SIGNAL( 'itemAdded' ) )
         return
+
+    def getItems( self ):
+        " Provides the list of items (text only) "
+        items = []
+        for index in range( self.count() ):
+            items.append( str( self.itemText( index ) ) )
+        return items
 
     def keyReleaseEvent( self, event ):
         " Triggered when a key is released "
         QComboBox.keyReleaseEvent( self, event )
-        key = event.key()
-        if key == Qt.Key_Enter or key == Qt.Key_Return:
-            self.__enforceLimit()
+        if self.insert:
+            key = event.key()
+            if key == Qt.Key_Enter or key == Qt.Key_Return:
+                self.addItem( self.lineEdit().text() )
+                self.__enforceLimit()
+                self.emit( SIGNAL( 'enterClicked' ) )
         return
 
     def __enforceLimit( self ):

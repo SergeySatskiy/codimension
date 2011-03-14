@@ -24,12 +24,12 @@
 " Base and auxiliary classes for G/F/C browsers "
 
 
-from PyQt4.QtCore  import Qt, QModelIndex, SIGNAL
+from PyQt4.QtCore  import Qt, QModelIndex, SIGNAL, QRegExp
 from PyQt4.QtGui   import QAbstractItemView, QApplication, \
                           QSortFilterProxyModel, QTreeView
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
-from viewitems     import NoItemType, DirectoryItemType, \
+from viewitems     import DirectoryItemType, \
                           SysPathItemType, GlobalsItemType, ImportsItemType, \
                           FunctionsItemType, ClassesItemType, \
                           StaticAttributesItemType, InstanceAttributesItemType
@@ -47,6 +47,10 @@ class ObjectsBrowserSortFilterProxyModel( QSortFilterProxyModel ):
         QSortFilterProxyModel.__init__( self, parent )
         self.__sortColumn = None    # Avoid pylint complains
         self.__sortOrder = None     # Avoid pylint complains
+
+        self.__filters = []
+        self.__filtersCount = 0
+        self.__sourceModelRoot = None
         return
 
     def sort( self, column, order ):
@@ -78,18 +82,39 @@ class ObjectsBrowserSortFilterProxyModel( QSortFilterProxyModel ):
         sourceIndex = self.mapToSource( parent )
         return self.sourceModel().hasChildren( sourceIndex )
 
+    def setFilter( self, text ):
+        " Sets the new filters "
+        self.__filters = []
+        self.__filtersCount = 0
+        self.__sourceModelRoot = None
+        for part in str( text ).strip().split():
+            regexp = QRegExp( part, Qt.CaseInsensitive, QRegExp.RegExp2 )
+            self.__filters.append( regexp )
+            self.__filtersCount += 1
+        self.__sourceModelRoot = self.sourceModel().rootItem
+        return
+
     def filterAcceptsRow( self, sourceRow, sourceParent ):
         " Filters rows "
-        if not sourceParent.isValid():
-            return QSortFilterProxyModel.filterAcceptsRow( self, sourceRow,
-                                                           sourceParent )
 
-        # Filter top level items only
-        item = sourceParent.internalPointer()
-        if item.itemType == NoItemType:
-            # This is the top level item
-            return QSortFilterProxyModel.filterAcceptsRow( self, sourceRow,
-                                                           sourceParent )
+        if self.__filtersCount == 0 or self.__sourceModelRoot is None:
+            return True     # No filters
+
+        sindex = self.sourceModel().index( sourceRow, 0, sourceParent )
+        if not sindex.isValid():
+            return False
+
+        sitem = self.sourceModel().item( sindex )
+        if not sitem is None:
+            parent = sitem.parent()
+            if not parent is None:
+                if parent.parentItem is None:
+                    # Filter top level items only
+                    nameToMatch = sitem.sourceObj.name
+                    for regexp in self.__filters:
+                        if regexp.indexIn( nameToMatch ) == -1:
+                            return False
+
         # Show all the nested items
         return True
 
@@ -99,7 +124,7 @@ class ObjectsBrowser( QTreeView ):
     " Common functionality of the G/F/C browsers "
 
     def __init__( self, sourceModel, parent = None ):
-        QTreeView.__init__(self, parent)
+        QTreeView.__init__( self, parent )
 
         self.__model = sourceModel
         self.__sortModel = ObjectsBrowserSortFilterProxyModel()
@@ -144,9 +169,14 @@ class ObjectsBrowser( QTreeView ):
             self.layoutDisplay()
         return
 
-    def setFilter( self, regexp ):
+    def setFilter( self, text ):
         " Sets the new filter for items "
-        self.model().setFilterRegExp( regexp )
+
+        # Notify the filtering model of the new filters
+        self.model().setFilter( text )
+
+        # This is to trigger filtering - ugly but I don't know how else
+        self.model().setFilterRegExp( "" )
 
         # No need to resort but need to resize columns
         self.doItemsLayout()
@@ -207,7 +237,7 @@ class ObjectsBrowser( QTreeView ):
 
     def _openItem( self ):
         " Triggers when an item is clicked or double clicked "
-        item = self.model().item( self.currentIndex() )
+        item = self.model().item( self.selectedIndexes()[ 0 ] )
         self.openItem( item )
         return
 
@@ -219,7 +249,10 @@ class ObjectsBrowser( QTreeView ):
                               InstanceAttributesItemType,
                               DirectoryItemType, SysPathItemType ]:
             return
-        GlobalData().mainWindow.openFile( item.getPath(), item.data( 2 ) )
+        path = item.getPath()
+        line = item.data( 2 )
+        self.emit( SIGNAL( 'openingItem' ), path, line )
+        GlobalData().mainWindow.openFile( path, line )
         return
 
     def copyToClipboard( self ):
@@ -231,5 +264,16 @@ class ObjectsBrowser( QTreeView ):
     def onFileUpdated( self, fileName ):
         " Triggered when the file is updated "
         self.model().sourceModel().onFileUpdated( fileName )
+        return
+
+    def selectionChanged( self, selected, deselected ):
+        " Slot is called when the selection has been changed "
+        if len( selected.indexes() ) == 0:
+            self.emit( SIGNAL( "selectionChanged" ), None )
+        else:
+            # The objects browsers may have no more than one selected item
+            self.emit( SIGNAL( "selectionChanged" ),
+                       selected.indexes()[ 0 ] )
+        QTreeView.selectionChanged( self, selected, deselected )
         return
 
