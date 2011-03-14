@@ -45,4 +45,3 @@ class FunctionsBrowser( ObjectsBrowser ):
 
         return
 
-

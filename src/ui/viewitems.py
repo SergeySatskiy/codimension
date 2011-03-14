@@ -90,7 +90,7 @@ class TreeViewItem( object ):
         self.toolTip = ""
         return
 
-    def __isRoot( self ):
+    def isRoot( self ):
         " True if it is the root item "
         return self.parentItem == None
 

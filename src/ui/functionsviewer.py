@@ -22,9 +22,10 @@
 
 """ The functions viewer implementation """
 
-from PyQt4.QtCore       import Qt, SIGNAL, QSize, QRegExp
+from PyQt4.QtCore       import Qt, SIGNAL, QSize, QRect
 from PyQt4.QtGui        import QMenu, QWidget, QAction, QVBoxLayout, \
-                               QToolBar, QCursor, QLabel, QSizePolicy
+                               QToolBar, QCursor, QLabel, QSizePolicy, \
+                               QItemSelectionModel
 from combobox           import CDMComboBox
 from utils.pixmapcache  import PixmapCache
 from utils.globals      import GlobalData
@@ -69,8 +70,10 @@ class FunctionsViewer( QWidget ):
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
-        self.connect( self.funcViewer, SIGNAL( "clicked(const QModelIndex &)" ),
+        self.connect( self.funcViewer, SIGNAL( "selectionChanged" ),
                       self.__selectionChanged )
+        self.connect( self.funcViewer, SIGNAL( "openingItem" ),
+                      self.itemActivated )
 
         self.filterEdit.lineEdit().setFocus()
         self.__contextItem = None
@@ -98,7 +101,7 @@ class FunctionsViewer( QWidget ):
         self.connect( self.copyPathButton, SIGNAL( "triggered()" ),
                       self.funcViewer.copyToClipboard )
 
-        toolbar = QToolBar()
+        toolbar = QToolBar( self )
         toolbar.setMovable( False )
         toolbar.setAllowedAreas( Qt.TopToolBarArea )
         toolbar.setIconSize( QSize( 16, 16 ) )
@@ -110,15 +113,20 @@ class FunctionsViewer( QWidget ):
 
         filterLabel = QLabel( "  Filter " )
         toolbar.addWidget( filterLabel )
-        self.filterEdit = CDMComboBox()
+        self.filterEdit = CDMComboBox( True, toolbar )
         self.filterEdit.setSizePolicy( QSizePolicy.Expanding,
                                        QSizePolicy.Expanding )
-        self.filterEdit.setToolTip( "Type regular expression " \
-                                    "or text to filter" )
+        self.filterEdit.lineEdit().setToolTip( "Space separated regular expressions" )
         toolbar.addWidget( self.filterEdit )
         self.connect( self.filterEdit,
                       SIGNAL( "editTextChanged(const QString &)" ),
                       self.__filterChanged )
+        self.connect( self.filterEdit,
+                      SIGNAL( 'itemAdded' ),
+                      self.__filterItemAdded )
+        self.connect( self.filterEdit,
+                      SIGNAL( 'enterClicked' ),
+                      self.__enterInFilter )
 
         layout = QVBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0 )
@@ -131,14 +139,44 @@ class FunctionsViewer( QWidget ):
 
     def __filterChanged( self, text ):
         " Triggers when the filter text changed "
-        regexp = QRegExp( text, Qt.CaseInsensitive, QRegExp.RegExp2 )
-        self.funcViewer.setFilter( regexp )
+        self.funcViewer.setFilter( text )
         return
 
     def __selectionChanged( self, index ):
         " Handles the changed selection "
-        self.__contextItem = self.funcViewer.model().item( index )
+        if index is None:
+            self.__contextItem = None
+        else:
+            self.__contextItem = self.funcViewer.model().item( index )
+
         self.__updateButtons()
+        return
+
+    def itemActivated( self, path, line ):
+        " Handles the item activation "
+        self.filterEdit.addItem( self.filterEdit.lineEdit().text() )
+        return
+
+    def __filterItemAdded( self ):
+        " The filter item has been added "
+        project = GlobalData().project
+        if project.fileName != "":
+            project.setFindFuncHistory( self.filterEdit.getItems() )
+        return
+
+    def __enterInFilter( self ):
+        " ENTER key has been clicked in the filter "
+
+        # check if there any records displayed
+        if self.funcViewer.model().rowCount() == 0:
+            return
+
+        # Move the focus to the list and select the first row
+        self.funcViewer.clearSelection()
+        flags = QItemSelectionModel.SelectCurrent | QItemSelectionModel.Rows
+        self.funcViewer.setSelection( QRect( 0, 0, self.funcViewer.width(), 1 ),
+                                      flags )
+        self.funcViewer.setFocus()
         return
 
     def __onProjectChanged( self, what ):
@@ -148,6 +186,11 @@ class FunctionsViewer( QWidget ):
             self.__contextItem = None
             self.__updateButtons()
             self.filterEdit.clear()
+
+            project = GlobalData().project
+            if project.fileName != "":
+                self.filterEdit.addItems( project.findFuncHistory )
+
             self.filterEdit.clearEditText()
         return
 
@@ -174,7 +217,7 @@ class FunctionsViewer( QWidget ):
     def __goToDefinition( self ):
         " Jump to definition context menu handler "
         if self.__contextItem is not None:
-            self.openItem( self.__contextItem )
+            self.funcViewer.openItem( self.__contextItem )
         return
 
     def __findWhereUsed( self ):

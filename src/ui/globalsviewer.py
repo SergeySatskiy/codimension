@@ -22,9 +22,10 @@
 
 """ The globals viewer implementation """
 
-from PyQt4.QtCore       import Qt, SIGNAL, QSize, QRegExp
+from PyQt4.QtCore       import Qt, SIGNAL, QSize, QRect
 from PyQt4.QtGui        import QMenu, QWidget, QAction, QVBoxLayout, \
-                               QToolBar, QCursor, QLabel, QSizePolicy
+                               QToolBar, QCursor, QLabel, QSizePolicy, \
+                               QItemSelectionModel
 from combobox           import CDMComboBox
 from utils.pixmapcache  import PixmapCache
 from utils.globals      import GlobalData
@@ -68,9 +69,10 @@ class GlobalsViewer( QWidget ):
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
-        self.connect( self.globalsViewer,
-                      SIGNAL( "clicked(const QModelIndex &)" ),
+        self.connect( self.globalsViewer, SIGNAL( "selectionChanged" ),
                       self.__selectionChanged )
+        self.connect( self.globalsViewer, SIGNAL( "openingItem" ),
+                      self.itemActivated )
 
         self.filterEdit.lineEdit().setFocus()
         self.__contextItem = None
@@ -98,7 +100,7 @@ class GlobalsViewer( QWidget ):
         self.connect( self.copyPathButton, SIGNAL( "triggered()" ),
                       self.globalsViewer.copyToClipboard )
 
-        toolbar = QToolBar()
+        toolbar = QToolBar( self )
         toolbar.setMovable( False )
         toolbar.setAllowedAreas( Qt.TopToolBarArea )
         toolbar.setIconSize( QSize( 16, 16 ) )
@@ -110,15 +112,18 @@ class GlobalsViewer( QWidget ):
 
         filterLabel = QLabel( "  Filter " )
         toolbar.addWidget( filterLabel )
-        self.filterEdit = CDMComboBox()
+        self.filterEdit = CDMComboBox( True, toolbar )
         self.filterEdit.setSizePolicy( QSizePolicy.Expanding,
                                        QSizePolicy.Expanding )
-        self.filterEdit.setToolTip( "Type regular expression " \
-                                    "or text to filter" )
+        self.filterEdit.lineEdit().setToolTip( "Space separated regular expressions" )
         toolbar.addWidget( self.filterEdit )
         self.connect( self.filterEdit,
                       SIGNAL( "editTextChanged(const QString &)" ),
                       self.__filterChanged )
+        self.connect( self.filterEdit, SIGNAL( 'itemAdded' ),
+                      self.__filterItemAdded )
+        self.connect( self.filterEdit, SIGNAL( 'enterClicked' ),
+                      self.__enterInFilter )
 
         layout = QVBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0 )
@@ -131,14 +136,43 @@ class GlobalsViewer( QWidget ):
 
     def __filterChanged( self, text ):
         " Triggers when the filter text changed "
-        regexp = QRegExp( text, Qt.CaseInsensitive, QRegExp.RegExp2 )
-        self.globalsViewer.setFilter( regexp )
+        self.globalsViewer.setFilter( text )
         return
 
     def __selectionChanged( self, index ):
         " Handles the changed selection "
-        self.__contextItem = self.globalsViewer.model().item( index )
+        if index is None:
+            self.__contextItem = None
+        else:
+            self.__contextItem = self.globalsViewer.model().item( index )
         self.__updateButtons()
+        return
+
+    def itemActivated( self, path, line ):
+        " Handles the item activation "
+        self.filterEdit.addItem( self.filterEdit.lineEdit().text() )
+        return
+
+    def __filterItemAdded( self ):
+        " The filter item has been added "
+        project = GlobalData().project
+        if project.fileName != "":
+            project.setFindGlobalHistory( self.filterEdit.getItems() )
+        return
+
+    def __enterInFilter( self ):
+        " ENTER key has been clicked in the filter "
+
+        # check if there any records displayed
+        if self.globalsViewer.model().rowCount() == 0:
+            return
+
+        # Move the focus to the list and select the first row
+        self.globalsViewer.clearSelection()
+        flags = QItemSelectionModel.SelectCurrent | QItemSelectionModel.Rows
+        self.globalsViewer.setSelection( QRect( 0, 0, self.globalsViewer.width(), 1 ),
+                                         flags )
+        self.globalsViewer.setFocus()
         return
 
     def __onProjectChanged( self, what ):
@@ -148,6 +182,10 @@ class GlobalsViewer( QWidget ):
             self.__contextItem = None
             self.__updateButtons()
             self.filterEdit.clear()
+
+            project = GlobalData().project
+            if project.fileName != "":
+                self.filterEdit.addItems( project.findGlobalHistory )
             self.filterEdit.clearEditText()
         return
 
@@ -174,7 +212,7 @@ class GlobalsViewer( QWidget ):
     def __goToDefinition( self ):
         """ Jump to definition context menu handler """
         if self.__contextItem is not None:
-            self.openItem( self.__contextItem )
+            self.globalsViewer.openItem( self.__contextItem )
         return
 
     def __findWhereUsed( self ):
