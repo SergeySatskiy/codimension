@@ -524,7 +524,7 @@ class FindNameDialog( QDialog ):
         verticalLayout.addWidget( self.__namesBrowser )
 
         self.findCombo = QComboBox( self )
-        self.findCombo.setToolTip( "Enter regexp to search for" )
+        self.findCombo.lineEdit().setToolTip( "Regular expression to search for" )
         self.__tuneCombo( self.findCombo )
         self.connect( self.findCombo,
                       SIGNAL( "editTextChanged(const QString &)" ),

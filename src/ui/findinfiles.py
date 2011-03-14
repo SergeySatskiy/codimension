@@ -235,7 +235,7 @@ class FindInFilesDialog( QDialog, object ):
         findLabel = QLabel( self )
         findLabel.setText( "Find text:" )
         self.findCombo = QComboBox( self )
-        self.findCombo.setToolTip( "Enter regexp to search for" )
+        self.findCombo.lineEdit().setToolTip( "Regular expression to search for" )
         self.__tuneCombo( self.findCombo )
         self.connect( self.findCombo,
                       SIGNAL( 'editTextChanged(const QString &)' ),
@@ -289,7 +289,7 @@ class FindInFilesDialog( QDialog, object ):
                       self.__dirClicked )
 
         self.dirEditCombo = QComboBox( filesGroupbox )
-        self.dirEditCombo.setToolTip( "Directory to search in" )
+        self.dirEditCombo.lineEdit().setToolTip( "Directory to search in" )
         self.__tuneCombo( self.dirEditCombo )
         gridLayoutFG.addWidget( self.dirEditCombo, 2, 1 )
         self.connect( self.dirEditCombo,
@@ -306,7 +306,7 @@ class FindInFilesDialog( QDialog, object ):
         filterLabel.setText( "Files filter:" )
         gridLayoutFG.addWidget( filterLabel, 3, 0 )
         self.filterCombo = QComboBox( filesGroupbox )
-        self.filterCombo.setToolTip( "Enter the file names regular expression" )
+        self.filterCombo.lineEdit().setToolTip( "Enter the file names regular expression" )
         self.__tuneCombo( self.filterCombo )
         gridLayoutFG.addWidget( self.filterCombo, 3, 1 )
         self.connect( self.filterCombo,
