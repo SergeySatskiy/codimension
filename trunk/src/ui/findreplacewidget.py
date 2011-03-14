@@ -31,7 +31,7 @@
 
 import logging
 from PyQt4.QtGui                import QHBoxLayout, QToolButton, QLabel, \
-                                       QComboBox, QSizePolicy, QComboBox, \
+                                       QSizePolicy, QComboBox, \
                                        QGridLayout, QWidget, QCheckBox, \
                                        QShortcut
 from utils.pixmapcache          import PixmapCache
@@ -65,7 +65,7 @@ class FindReplaceBase( QWidget ):
 
         # Common graphics items
         self.closeButton = QToolButton( self )
-        self.closeButton.setToolTip( "Click to close the dialog (ESC)" )
+        self.closeButton.setToolTip( "Close the dialog (ESC)" )
         self.closeButton.setIcon( PixmapCache().getIcon( "close.png" ) )
         self.connect( self.closeButton, SIGNAL( "clicked()" ), self.hide )
 
