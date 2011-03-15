@@ -500,8 +500,8 @@ class FindFileDialog( QDialog ):
         verticalLayout.addWidget( self.__filesBrowser )
 
         self.findCombo = QComboBox( self )
-        self.findCombo.lineEdit().setToolTip( "Regular expression to search for" )
         self.__tuneCombo( self.findCombo )
+        self.findCombo.lineEdit().setToolTip( "Regular expression to search for" )
         self.connect( self.findCombo,
                       SIGNAL( "editTextChanged(const QString &)" ),
                       self.__filterChanged )
