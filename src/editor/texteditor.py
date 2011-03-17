@@ -398,7 +398,7 @@ class TextEditor( ScintillaWrapper ):
                 # beginning of the line
                 event.setAccepted( False )
                 ScintillaWrapper.keyPressEvent( self, event )
-        elif event.key() == Qt.Key_N and Qt.ControlModifier & event.modifiers() != 0:
+        elif event.key() == Qt.Key_N and Qt.ControlModifier & event.modifiers():
             self.__onHighlight()
             event.accept()
         else:
