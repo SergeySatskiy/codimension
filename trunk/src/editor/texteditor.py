@@ -401,6 +401,9 @@ class TextEditor( ScintillaWrapper ):
         elif event.key() == Qt.Key_N and Qt.ControlModifier & event.modifiers():
             self.__onHighlight()
             event.accept()
+        elif event.key() in [ Qt.Key_Left, Qt.Key_Right ] and \
+             Qt.AltModifier & event.modifiers():
+            event.accept()
         else:
             ScintillaWrapper.keyPressEvent( self, event )
         return
