@@ -90,7 +90,7 @@ class LineCounterDialog( QDialog, object ):
         fontMetrics = QFontMetrics( font )
         rect = fontMetrics.boundingRect( "W" )
         # 6 lines, 5 line spacings, 2 frames
-        self.resultEdit.setMinimumHeight( rect.height() * 6 + 4 * 5 + \
+        self.resultEdit.setMinimumHeight( rect.height() * 7 + 4 * 5 + \
                                           self.resultEdit.frameWidth() * 2 )
         self.verticalLayout.addWidget( self.resultEdit )
 
@@ -139,6 +139,7 @@ class LineCounterDialog( QDialog, object ):
                 accumulator.codeLines += current.codeLines
                 accumulator.emptyLines += current.emptyLines
                 accumulator.commentLines += current.commentLines
+                accumulator.classes += current.classes
 
             self.progressBar.setValue( index )
             index += 1
@@ -151,6 +152,7 @@ class LineCounterDialog( QDialog, object ):
         # Update text in the text window
         files = splitThousands( str( accumulator.files ) )
         filesSize = splitThousands( str( accumulator.filesSize ) )
+        classes = splitThousands( str( accumulator.classes ) )
         codeLines = splitThousands( str( accumulator.codeLines ) )
         emptyLines = splitThousands( str( accumulator.emptyLines ) )
         commentLines = splitThousands( str( accumulator.commentLines ) )
@@ -160,6 +162,7 @@ class LineCounterDialog( QDialog, object ):
         self.resultEdit.setText( \
                 "Python files in project: " + files + "\n" \
                 "Total files size:        " + filesSize + " bytes\n" \
+                "Classes:                 " + classes + "\n" \
                 "Code lines:              " + codeLines + "\n" \
                 "Empty lines:             " + emptyLines + "\n" \
                 "Comment lines:           " + commentLines + "\n" \
