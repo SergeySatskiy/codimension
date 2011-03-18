@@ -89,7 +89,7 @@ class QuickHelpWidget( HTMLTabWidget ):
         <tr>
           <td>Alt+Right</td>
           <td>Forward in history</td>
-          <td>Ctrl+PgUp or Ctrl+Tab</td>
+          <td>Ctrl+PgUp</td>
           <td>Next tab</td></tr>
         <tr>
           <td>Ctrl+F</td>
@@ -149,8 +149,8 @@ class QuickHelpWidget( HTMLTabWidget ):
         <tr>
           <td>Ctrl+N</td>
           <td>Highlight the current word</td>
-          <td></td>
-          <td></td></tr>
+          <td>Ctrl+TAB</td>
+          <td>Switching between two recent tabs</td></tr>
     </table>
     </p>
     <p align="center">
