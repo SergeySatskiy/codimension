@@ -28,6 +28,7 @@ from briefmodinfocache import BriefModuleInfoCache
 from PyQt4.QtCore      import QObject, SIGNAL
 from settings          import Settings
 from watcher           import Watcher
+from compatibility     import relpath
 
 
 
@@ -706,8 +707,7 @@ class CodimensionProject( QObject ):
             coveredDir = self.doesDirCoverProjectDir( dirPath )
 
         # Calc the relative path and insert it
-        relativePath = os.path.relpath( dirPath,
-                                        os.path.dirname( self.fileName ) )
+        relativePath = relpath( dirPath, os.path.dirname( self.fileName ) )
         if not relativePath.endswith( os.path.sep ):
             relativePath += os.path.sep
         self.__dirList.update( [ relativePath ] )
@@ -737,8 +737,7 @@ class CodimensionProject( QObject ):
 
         # Absolute path is expected
         # Calc the relative path and insert it
-        relativePath = os.path.relpath( dirPath,
-                                        os.path.dirname( self.fileName ) )
+        relativePath = relpath( dirPath, os.path.dirname( self.fileName ) )
         if not relativePath.endswith( os.path.sep ):
             relativePath += os.path.sep
 

@@ -43,6 +43,7 @@ from pixmapwidget               import PixmapTabWidget
 from utils.fileutils            import detectFileType, getFileIcon, \
                                        HTMLFileType, PythonFileType, \
                                        Python3FileType, PixmapFileType
+from utils.compatibility        import relpath
 from utils.misc                 import getNewFileTemplate
 from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
 from utils.globals              import GlobalData
@@ -1030,7 +1031,7 @@ class EditorsManager( QTabWidget ):
                     firstLine = -1
                 if GlobalData().project.isProjectFile( fileName ):
                     prjDir = os.path.dirname( GlobalData().project.fileName )
-                    relativePath = os.path.relpath( fileName, prjDir )
+                    relativePath = relpath( fileName, prjDir )
                     record = relativePath
                 else:
                     record = fileName
