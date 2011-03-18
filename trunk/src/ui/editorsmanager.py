@@ -47,6 +47,7 @@ from utils.misc                 import getNewFileTemplate
 from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
 from utils.globals              import GlobalData
 from utils.settings             import Settings
+from tabshistory                import TabsHistory
 
 
 
@@ -60,9 +61,13 @@ class EditorsManager( QTabWidget ):
         QTabWidget.__init__( self, parent )
         self.setMovable( True )
 
+        self.newIndex = -1
         self.__mainWindow = parent
         self.__navigationMenu = None
-        self.__historyMenu = None
+        self.__historyBackMenu = None
+        self.__historyFwdMenu = None
+        self.__skipHistoryUpdate = False
+        self.__doNotSaveTabs = False
         self.navigationButton = None
         self.historyBackButton = None
         self.historyFwdButton = None
@@ -73,14 +78,9 @@ class EditorsManager( QTabWidget ):
         self.replaceWidget = None
         self.gotoWidget = None
 
-        self.history = []       # Global tabs history
-                                # Each history item is 4 items list:
-                                # - icon
-                                # - file name
-                                # - display name
-                                # - line number
-        self.historyIndex = -1  # Current position in the history
-        self.newIndex = -1
+        self.history = TabsHistory( self )
+        self.connect( self.history, SIGNAL( 'historyChanged' ),
+                      self.__onHistoryChanged )
 
         self.__welcomeWidget = WelcomeWidget()
         self.addTab( self.__welcomeWidget, getFileIcon( HTMLFileType ),
@@ -196,8 +196,8 @@ class EditorsManager( QTabWidget ):
         if initialContent != "":
             editor.setText( initialContent )
             lineNo = editor.lines()
-            editor.setCursorPosition( lineNo - 1,
-                                      editor.lineLength( lineNo - 1 ) )
+            self.__restorePosition( editor, lineNo - 1,
+                                    editor.lineLength( lineNo - 1 ), -1 )
             editor.ensureLineVisible( lineNo - 1 )
             editor.setModified( False )
 
@@ -216,21 +216,15 @@ class EditorsManager( QTabWidget ):
         return
 
     def __updateControls( self ):
-        " Updates the history/navigation buttons status "
-        self.navigationButton.setEnabled( False )
-        self.historyBackButton.setEnabled( False )
-        self.historyFwdButton.setEnabled( False )
+        " Updates the navigation buttons status "
+        self.navigationButton.setEnabled( self.widget( 0 ) != \
+                                          self.__welcomeWidget )
+        return
 
-        if self.widget( 0 ) != self.__welcomeWidget:
-            self.navigationButton.setEnabled( True )
-
-        if len( self.history ) == 0:
-            return
-
-        if self.historyIndex > 0:
-            self.historyBackButton.setEnabled( True )
-        if self.historyIndex < len( self.history ) - 1:
-            self.historyFwdButton.setEnabled( True )
+    def __onHistoryChanged( self ):
+        " historyChanged signal handler "
+        self.historyBackButton.setEnabled( self.history.backAvailable() )
+        self.historyFwdButton.setEnabled( self.history.forwardAvailable() )
         return
 
     def __onCloseTab( self ):
@@ -268,10 +262,13 @@ class EditorsManager( QTabWidget ):
         # - the changes were saved successfully
         # - there were no changes
 
+        closingUUID = self.widget( index ).getUUID()
         if not wasDiscard:
             self.__updateFilePosition( index )
 
+        self.__skipHistoryUpdate = True
         self.removeTab( index )
+
         if self.count() == 0:
             self.setTabsClosable( False )
             self.addTab( self.__welcomeWidget, getFileIcon( HTMLFileType ),
@@ -280,6 +277,17 @@ class EditorsManager( QTabWidget ):
             self.gotoWidget.hide()
             self.findWidget.hide()
             self.replaceWidget.hide()
+            self.history.clear()
+        else:
+            # Need to identify a tab for displaying
+            self.history.tabClosed( closingUUID )
+            if self.history.getCurrentIndex() == -1:
+                # There is nothing in the history yet
+                self.history.addCurrent()
+            else:
+                self.__activateHistoryTab()
+
+        self.__skipHistoryUpdate = False
         self.__updateControls()
         self.saveTabsStatus()
         return
@@ -332,10 +340,16 @@ class EditorsManager( QTabWidget ):
         self.setCornerWidget( rightCornerWidget, Qt.TopRightCorner )
 
 
-        self.__historyMenu = QMenu( self )
-        self.connect( self.__historyMenu, SIGNAL( "aboutToShow()" ),
-                      self.__showHistoryMenu )
-        self.connect( self.__historyMenu, SIGNAL( "triggered(QAction*)" ),
+        self.__historyBackMenu = QMenu( self )
+        self.connect( self.__historyBackMenu, SIGNAL( "aboutToShow()" ),
+                      self.__showHistoryBackMenu )
+        self.connect( self.__historyBackMenu, SIGNAL( "triggered(QAction*)" ),
+                      self.__historyMenuTriggered )
+
+        self.__historyFwdMenu = QMenu( self )
+        self.connect( self.__historyFwdMenu, SIGNAL( "aboutToShow()" ),
+                      self.__showHistoryFwdMenu )
+        self.connect( self.__historyFwdMenu, SIGNAL( "triggered(QAction*)" ),
                       self.__historyMenuTriggered )
 
         leftCornerWidget = QWidget( self )
@@ -345,22 +359,27 @@ class EditorsManager( QTabWidget ):
         self.historyBackButton = QToolButton( self )
         self.historyBackButton.setIcon( \
                 PixmapCache().getIcon( "1leftarrow.png" ) )
-        self.historyBackButton.setToolTip( "Back" )
+        self.historyBackButton.setToolTip( "Back (Alt+Left)" )
         self.historyBackButton.setShortcut( "Alt+Left" )
         self.historyBackButton.setPopupMode( QToolButton.DelayedPopup )
-        self.historyBackButton.setMenu( self.__historyMenu )
+        self.historyBackButton.setMenu( self.__historyBackMenu )
         self.historyBackButton.setEnabled( False )
+        self.connect( self.historyBackButton, SIGNAL( 'clicked()' ),
+                      self.historyBackClicked )
         leftCornerWidgetLayout.addWidget( self.historyBackButton )
         self.historyFwdButton = QToolButton( self )
         self.historyFwdButton.setIcon( \
                 PixmapCache().getIcon( "1rightarrow.png" ) )
-        self.historyFwdButton.setToolTip( "Forward" )
+        self.historyFwdButton.setToolTip( "Forward (Alt+Right)" )
         self.historyFwdButton.setShortcut( "Alt+Right" )
+        self.historyFwdButton.setPopupMode( QToolButton.DelayedPopup )
+        self.historyFwdButton.setMenu( self.__historyFwdMenu )
         self.historyFwdButton.setEnabled( False )
+        self.connect( self.historyFwdButton, SIGNAL( 'clicked()' ),
+                      self.historyForwardClicked )
         leftCornerWidgetLayout.addWidget( self.historyFwdButton )
 
         self.setCornerWidget( leftCornerWidget, Qt.TopLeftCorner )
-
         return
 
     def __showNavigationMenu( self ):
@@ -422,6 +441,11 @@ class EditorsManager( QTabWidget ):
         self.replaceWidget.updateStatus()
 
         self.currentWidget().setFocus()
+
+        # Update history
+        if not self.__skipHistoryUpdate:
+            self.history.updateForCurrentIndex()
+            self.history.addCurrent()
         return
 
     def __onHelp( self ):
@@ -502,9 +526,12 @@ class EditorsManager( QTabWidget ):
             for index in range( self.count() ):
                 if self.widget( index ).getFileName() == fileName:
                     # Found
+                    currentActive = self.currentIndex() == index
                     self.activateTab( index )
                     if lineNo > 0:
                         self.widget( index ).getEditor().gotoLine( lineNo )
+                    if currentActive:
+                        self.history.addCurrent()
                     return True
             # Not found - create a new one
             newWidget = TextEditorTabWidget()
@@ -523,14 +550,7 @@ class EditorsManager( QTabWidget ):
                 line, pos, firstVisible = \
                             Settings().filePositions.getPosition( fileName )
                 if line != -1:
-                    editor.setCursorPosition( line, pos )
-
-                    # By some reasons Scintilla scrolls horizontally, so
-                    # get it back
-                    editor.setHScrollOffset( 0 )
-                    editor.ensureLineVisible( firstVisible )
-                    currentLine = editor.firstVisibleLine()
-                    editor.scrollVertical( firstVisible - currentLine )
+                    self.__restorePosition( editor, line, pos, firstVisible )
 
             if self.widget( 0 ) == self.__welcomeWidget:
                 # It is the only welcome widget on the screen
@@ -750,25 +770,84 @@ class EditorsManager( QTabWidget ):
         self.findWidget.onPrev()
         return
 
-    def __showHistoryMenu( self ):
+    def __addHistoryMenuItem( self, menu, index, currentHistoryIndex ):
+        " Prepares the history menu item "
+        entry = self.history.getEntry( index )
+        text = entry.displayName
+        if entry.tabType in [ MainWindowTabWidgetBase.PlainTextEditor ]:
+            text += ", " + str( entry.line + 1 ) + ":" + str( entry.pos + 1 )
+        act = menu.addAction( entry.icon, text )
+        act.setData( QVariant( index ) )
+        if index == currentHistoryIndex:
+            font = act.font()
+            font.setBold( True )
+            act.setFont( font )
+        return
+
+    def __showHistoryBackMenu( self ):
         " Shows the history button menu "
-        self.__historyMenu.clear()
-        for index in range( len( self.history ) ):
-            act = self.__historyMenu.addAction( self.history[ index ][ 0 ],
-                                                self.history[ index ][ 2 ] )
-            act.setData( QVariant( index ) )
-            if index == self.currentHistoryIndex:
-                font = act.font()
-                font.setBold( True )
-                act.setFont( font )
+        self.history.updateForCurrentIndex()
+        self.__historyBackMenu.clear()
+        currentIndex = self.history.getCurrentIndex()
+
+        index = 0
+        while index <= currentIndex:
+            self.__addHistoryMenuItem( self.__historyBackMenu,
+                                       index, currentIndex )
+            index += 1
+        return
+
+    def __showHistoryFwdMenu( self ):
+        " Shows the history button menu "
+        self.history.updateForCurrentIndex()
+        self.__historyFwdMenu.clear()
+        currentIndex = self.history.getCurrentIndex()
+        maxIndex = self.history.getSize() - 1
+
+        index = currentIndex
+        while index <= maxIndex:
+            self.__addHistoryMenuItem( self.__historyFwdMenu,
+                                       index, currentIndex )
+            index += 1
+        return
+
+    def __activateHistoryTab( self ):
+        " Activates the tab advised by the current history entry "
+        self.__skipHistoryUpdate = True
+        entry = self.history.getCurrentEntry()
+        index = self.getIndexByUUID( entry.uuid )
+        widget = self.getWidgetByUUID( entry.uuid )
+        self.activateTab( index )
+        if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
+            # Need to jump to the memorized position
+            editor = widget.getEditor()
+            self.__restorePosition( editor, entry.line, entry.pos,
+                                    entry.firstVisible )
+        self.__skipHistoryUpdate = False
+        return
+
+    def historyForwardClicked( self ):
+        " Back in history clicked "
+        self.history.updateForCurrentIndex()
+        if self.history.stepForward():
+            self.__activateHistoryTab()
+        return
+
+    def historyBackClicked( self ):
+        " Forward in history clicked "
+        self.history.updateForCurrentIndex()
+        if self.history.stepBack():
+            self.__activateHistoryTab()
         return
 
     def __historyMenuTriggered( self, act ):
         " Handles the history menu selection "
-
         index, isOK = act.data().toInt()
         if isOK:
-            pass
+            if index != self.history.getCurrentIndex():
+                self.history.updateForCurrentIndex()
+                self.history.setCurrentIndex( index )
+                self.__activateHistoryTab()
         return
 
     def __connectEditorWidget( self, editorWidget ):
@@ -899,12 +978,17 @@ class EditorsManager( QTabWidget ):
             return
 
         # It's safe to close all the tabs
+        self.__doNotSaveTabs = True
         while self.widget( 0 ) != self.__welcomeWidget:
             self.__onCloseRequest( 0 )
+        self.__doNotSaveTabs = False
         return
 
     def saveTabsStatus( self ):
         " Saves the tabs status to project or global settings "
+        if self.__doNotSaveTabs:
+            return
+
         if GlobalData().project.fileName != "":
             GlobalData().project.setTabsStatus( self.getTabsStatus() )
         else:
@@ -961,6 +1045,8 @@ class EditorsManager( QTabWidget ):
     def restoreTabs( self, status ):
         " Restores the tab status, i.e. load files and set cursor pos "
 
+        self.history.clear()
+
         # Force close all the tabs if any
         while self.count() > 0:
             self.removeTab( 0 )
@@ -1013,12 +1099,8 @@ class EditorsManager( QTabWidget ):
 
             # A usual file
             if self.openFile( fileName, line ):
-                editor = self.widget( 0 ).getEditor()
-                editor.setCursorPosition( line, pos )
-                editor.setHScrollOffset( 0 ) # avoid unwanted scrolling
-                editor.ensureLineVisible( firstLine )
-                currentLine = editor.firstVisibleLine()
-                editor.scrollVertical( firstLine - currentLine )
+                self.__restorePosition( self.widget( 0 ).getEditor(),
+                                        line, pos, firstLine )
 
         # Switch to the last active tab
         if self.count() == 0:
@@ -1026,11 +1108,31 @@ class EditorsManager( QTabWidget ):
             self.setTabsClosable( False )
             self.addTab( self.__welcomeWidget, getFileIcon( HTMLFileType ),
                          self.__welcomeWidget.getShortName() )
-        else:
-            self.setTabsClosable( True )
+            activeIndex = 0
+            self.activateTab( activeIndex )
+            self.history.clear()
+            return
+
+        # There are restored tabs
+        self.setTabsClosable( True )
         if activeIndex == -1 or activeIndex >= self.count():
             activeIndex = 0
         self.activateTab( activeIndex )
+        self.history.clear()
+        self.history.addCurrent()
+        return
+
+    @staticmethod
+    def __restorePosition( editor, line, pos, firstVisible ):
+        """ Set the cursor to the required position and
+            makes sure a certain line is visible if given """
+        editor.setCursorPosition( line, pos )
+        editor.setHScrollOffset( 0 ) # avoid unwanted scrolling
+
+        if firstVisible != -1:
+            editor.ensureLineVisible( firstVisible )
+            currentLine = editor.firstVisibleLine()
+            editor.scrollVertical( firstVisible - currentLine )
         return
 
     def __onZoom( self, zoomValue ):
@@ -1062,6 +1164,16 @@ class EditorsManager( QTabWidget ):
                 return widget
             index -= 1
         return None
+
+    def getIndexByUUID( self, uuid ):
+        " Provides the tab index for the given uuid "
+        index = self.count() - 1
+        while index >= 0:
+            widget = self.widget( index )
+            if uuid == widget.getUUID():
+                return index
+            index -= 1
+        return -1
 
     def getWidgetForFileName( self, fname ):
         " Provides the widget found by the given file name "
