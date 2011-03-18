@@ -43,6 +43,7 @@ class LinesCounter:
         self.codeLines = 0      # Number of non-empty non-comment lines
         self.emptyLines = 0     # Number of empty lines
         self.commentLines = 0   # Number of lines which start from the hash sign
+        self.classes = 0        # Number of classes
         return
 
     def __processFile( self, path ):
@@ -57,6 +58,8 @@ class LinesCounter:
             if line.startswith( '#' ):
                 self.commentLines += 1
                 continue
+            if line.startswith( 'class ' ):
+                self.classes += 1
             self.codeLines += 1
         afile.close()
         return
@@ -132,6 +135,7 @@ if __name__ == "__main__":
     print "Lines info for " + args[0] + ":"
     print "Files analysed:    " + str( counter.files )
     print "Total size:        " + str( counter.filesSize ) + " bytes\n"
+    print "Classes:           " + str( counter.classes )
     print "Code lines:        " + str( counter.codeLines )
     print "Comment lines:     " + str( counter.commentLines )
     print "Empty lines:       " + str( counter.emptyLines )
