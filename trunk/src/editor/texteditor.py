@@ -515,14 +515,14 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             PixmapCache().getIcon( 'undo.png' ), 'Undo (Ctrl+Z)', self )
         self.__undoButton.setShortcut( 'Ctrl+Z' )
         self.connect( self.__undoButton, SIGNAL( 'triggered()' ),
-                      self.__editor.undo )
+                      self.__onUndo )
         self.__undoButton.setEnabled( False )
 
         self.__redoButton = QAction( \
             PixmapCache().getIcon( 'redo.png' ), 'Redo (Ctrl+Shift+Z)', self )
         self.__redoButton.setShortcut( 'Ctrl+Shift+Z' )
         self.connect( self.__redoButton, SIGNAL( 'triggered()' ),
-                      self.__editor.redo )
+                      self.__onRedo )
         self.__redoButton.setEnabled( False )
 
         removeTrailingSpacesButton = QAction( \
@@ -772,10 +772,24 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         " triggered when the print preview button is pressed "
         pass
 
-    def __modificationChanged( self, modified ):
+    def __modificationChanged( self, modified = False ):
         " Triggered when the content is changed "
         self.__undoButton.setEnabled( self.__editor.isUndoAvailable() )
         self.__redoButton.setEnabled( self.__editor.isRedoAvailable() )
+        return
+
+    def __onRedo( self ):
+        " Triggered when redo button is clicked "
+        if self.__editor.isRedoAvailable():
+            self.__editor.redo()
+            self.__modificationChanged()
+        return
+
+    def __onUndo( self ):
+        " Triggered when undo button is clicked "
+        if self.__editor.isUndoAvailable():
+            self.__editor.undo()
+            self.__modificationChanged()
         return
 
     def __onRemoveTrailingWS( self ):
