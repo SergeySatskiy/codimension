@@ -37,7 +37,7 @@ from itemdelegates                      import NoOutlineHeightDelegate
 from pymetricsparser.pymetricsparser    import BasicMetrics
 from pythonparser.cdmbriefparser        import getBriefModuleInfoFromFile, \
                                                getBriefModuleInfoFromMemory
-
+from utils.misc                         import splitThousands
 
 
 class McCabeTableItem( QTreeWidgetItem ):
@@ -316,6 +316,17 @@ class PymetricsViewer( QWidget ):
         self.__reportFileName = fileName
         self.__reportOption = reportOption
 
+        if len( metrics.report ) > 1:
+            accumulatedBasic = self.__accumulateBasicMetrics()
+            accItem = QTreeWidgetItem( QStringList() << "Cumulative basic metrics" )
+            self.__totalResultsTree.addTopLevelItem( accItem )
+            for key in accumulatedBasic:
+                bmItem = QStringList() \
+                            << BasicMetrics.metricsOfInterest[ key ] \
+                            << splitThousands( str( accumulatedBasic[ key ] ) )
+                basicMetric = QTreeWidgetItem( bmItem )
+                accItem.addChild( basicMetric )
+
         # Add the complete information
         for fileName in metrics.report:
             if reportOption == self.SingleBuffer:
@@ -398,6 +409,20 @@ class PymetricsViewer( QWidget ):
         # It helps, but why do I have flickering?
         QApplication.processEvents()
         return
+
+    def __accumulateBasicMetrics( self ):
+        " Accumulates basic metrics for all the processed files "
+        basic = {}
+        for fileName in self.__report.report:
+            singleBasic = self.__report.report[ fileName ].basicMetrics.metrics
+            for key in singleBasic:
+                if not key.startswith( 'num' ):
+                    continue
+                if key in basic:
+                    basic[ key ] += int( singleBasic[ key ] )
+                else:
+                    basic[ key ] = int( singleBasic[ key ] )
+        return basic
 
     def __mcCabeActivated( self, item, column ):
         " Handles the double click (or Enter) on the mccabe table item "
