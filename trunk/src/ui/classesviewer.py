@@ -185,7 +185,13 @@ class ClassesViewer( QWidget ):
 
             project = GlobalData().project
             if project.fileName != "":
+                self.disconnect( self.filterEdit,
+                                 SIGNAL( "editTextChanged(const QString &)" ),
+                                 self.__filterChanged )
                 self.filterEdit.addItems( project.findClassHistory )
+                self.connect( self.filterEdit,
+                              SIGNAL( "editTextChanged(const QString &)" ),
+                              self.__filterChanged )
             self.filterEdit.clearEditText()
         return
 
