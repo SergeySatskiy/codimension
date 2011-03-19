@@ -23,7 +23,6 @@
 " ItemDelegate which helps changing the standard row height "
 
 
-from PyQt4.QtCore       import QSize
 from PyQt4.QtGui        import QItemDelegate, QStyledItemDelegate, \
                                QStyleOptionViewItem, QStyle
 
@@ -34,15 +33,13 @@ class ChangingHeightItemDelegate( QItemDelegate ):
     def __init__( self, delta ):
         QItemDelegate.__init__( self )
         self.delta = delta
-        self.lastHeight = 0
         return
 
     def sizeHint( self, option, index ):
         " Returns the size hint in which the only height matters "
-
         origSize = QItemDelegate.sizeHint( self, option, index )
-        self.lastHeight = origSize.height() + self.delta
-        return QSize( origSize.width(), self.lastHeight )
+        origSize.setHeight( origSize.height() + self.delta )
+        return origSize
 
 
 class NoOutlineDelegate( QStyledItemDelegate ):
@@ -54,7 +51,6 @@ class NoOutlineDelegate( QStyledItemDelegate ):
 
     def paint( self, painter, option, index ):
         " Hides the dotted outline "
-
         itemOption = QStyleOptionViewItem( option )
         if itemOption.state & QStyle.State_HasFocus != 0:
             itemOption.state = itemOption.state & ~QStyle.State_HasFocus
@@ -67,13 +63,11 @@ class NoOutlineHeightDelegate( QStyledItemDelegate ):
 
     def __init__( self, delta ):
         self.delta = delta
-        self.lastHeight = 0
         QStyledItemDelegate.__init__( self )
         return
 
     def paint( self, painter, option, index ):
         " Hides the dotted outline "
-
         itemOption = QStyleOptionViewItem( option )
         if itemOption.state & QStyle.State_HasFocus != 0:
             itemOption.state = itemOption.state & ~QStyle.State_HasFocus
@@ -82,8 +76,7 @@ class NoOutlineHeightDelegate( QStyledItemDelegate ):
 
     def sizeHint( self, option, index ):
         " Returns the size hint in which the only height matters "
-
         origSize = QStyledItemDelegate.sizeHint( self, option, index )
-        self.lastHeight = origSize.height() + self.delta
-        return QSize( origSize.width(), self.lastHeight )
+        origSize.setHeight( origSize.height() + self.delta )
+        return origSize
 
