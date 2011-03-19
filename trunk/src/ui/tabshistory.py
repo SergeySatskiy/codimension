@@ -241,9 +241,10 @@ class TabsHistory( QObject ):
         if index < 0 or index >= len( self.__history ):
             raise Exception( "Invalid history index to set (" + \
                              str( index ) + ")" )
-        self.__index = index
-        self.__tabsSequence.append( index )
-        self.emit( SIGNAL( 'historyChanged' ) )
+        if self.__index != index:
+            self.__index = index
+            self.__tabsSequence.append( index )
+            self.emit( SIGNAL( 'historyChanged' ) )
         return
 
     def getCurrentEntry( self ):
