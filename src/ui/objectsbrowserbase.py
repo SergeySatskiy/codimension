@@ -63,10 +63,10 @@ class ObjectsBrowserSortFilterProxyModel( QSortFilterProxyModel ):
     def lessThan( self, left, right ):
         " Sorts the displayed items "
         lhs = left.model() and left.model().item( left ) or None
-        rhs = right.model() and right.model().item( right ) or None
-
-        if lhs and rhs:
-            return lhs.lessThan( rhs, self.__sortColumn, self.__sortOrder )
+        if lhs:
+            rhs = right.model() and right.model().item( right ) or None
+            if rhs:
+                return lhs.lessThan( rhs, self.__sortColumn, self.__sortOrder )
         return False
 
     def item( self, index ):
@@ -159,6 +159,13 @@ class ObjectsBrowser( QTreeView ):
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
+        return
+
+    def updateCounter( self, parent = None, start = 0, end = 0 ):
+        " Updates the header with the info of currently visible and total items "
+        text = "Name (" + str( self.model().rowCount() ) + " of " + \
+                          str( self.__model.totalRowCount() ) + ")"
+        self.__model.updateRootData( 0, text )
         return
 
     def __onProjectChanged( self, what ):
