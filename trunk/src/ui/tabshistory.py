@@ -169,12 +169,22 @@ class TabsHistory( QObject ):
         return
 
     def testAdjacent( self, index ):
-        " tests if an adjacent history item is the same the given "
+        " tests if an adjacent history item is the same as the given "
         if index > 0:
             if self.__history[ index ] == self.__history[ index - 1 ]:
                 return True
         if index < len( self.__history ) - 1:
             if self.__history[ index ] == self.__history[ index + 1 ]:
+                return True
+        return False
+
+    def testAdjacentSeq( self, index ):
+        " tests if an adjacent seq item is the same as the given "
+        if index > 0:
+            if self.__tabsSequence[ index ] == self.__tabsSequence[ index - 1 ]:
+                return True
+        if index < len( self.__tabsSequence ) - 1:
+            if self.__tabsSequence[ index ] == self.__tabsSequence[ index + 1 ]:
                 return True
         return False
 
@@ -212,6 +222,13 @@ class TabsHistory( QObject ):
                 for item in removedIndexes:
                     if item < oldIndex:
                         self.__tabsSequence[ seqIndex ] -= 1
+            seqIndex -= 1
+
+        # Remove adjacent same entries in the tabs sequence
+        seqIndex = len( self.__tabsSequence ) - 1
+        while seqIndex >= 0:
+            if self.testAdjacentSeq( index ):
+                del self.__tabsSequence[ index ]
             seqIndex -= 1
 
         if oldCurrentIndex in removedIndexes:
@@ -268,6 +285,16 @@ class TabsHistory( QObject ):
         if self.__index >= len( self.__history ) - 1:
             return False
         self.__index += 1
+        self.__tabsSequence.append( self.__index )
+        self.emit( SIGNAL( 'historyChanged' ) )
+        return True
+
+    def flip( self ):
+        " Flips between last two history steps "
+        if len( self.__history ) < 1:
+            return False
+        lastSeqIndex = len( self.__tabsSequence ) - 1
+        self.__index = self.__tabsSequence[ lastSeqIndex - 1 ]
         self.__tabsSequence.append( self.__index )
         self.emit( SIGNAL( 'historyChanged' ) )
         return True
