@@ -93,82 +93,77 @@ _fileTypes = { \
 }
 
 
+_extType = { \
+    'py'    :   PythonFileType,
+    'pyw'   :   PythonFileType,
+    'ptl'   :   PythonFileType,
+    'pyc'   :   PythonCompiledFileType,
+    'py3'   :   Python3FileType,
+    'pyw3'  :   Python3FileType,
+    'rb'    :   RubyFileType,
+    'ui'    :   DesignerFileType,
+    'ts'    :   LinguistFileType,
+    'qm'    :   LinguistFileType,
+    'qrc'   :   QTResourceFileType,
+    'cdm'   :   CodimensionProjectFileType,
+    'idl'   :   IDLFileType,
+    'svg'   :   SVGFileType,
+    'd'     :   DFileType,
+    'di'    :   DFileType,
+    'c'     :   CFileType,
+    'cpp'   :   CPPFileType,
+    'cxx'   :   CPPFileType,
+    'hpp'   :   CPPHeaderFileType,
+    'hxx'   :   CPPHeaderFileType,
+    'pdf'   :   PDFFileType,
+    'htm'   :   HTMLFileType,
+    'html'  :   HTMLFileType,
+    'css'   :   CSSFileType,
+    'xml'   :   XMLFileType,
+    'so'    :   SOFileType
+}
+
 
 def detectFileType( path ):
     " Detects file type - must work for both existed and not existed files "
 
-    absPath = os.path.abspath( str( path ) )
-    if os.path.islink( absPath ):
-        if not os.path.exists( absPath ):
+    if os.path.islink( path ):
+        if not os.path.exists( path ):
             return BrokenSymlinkFileType
 
     # Must work for not existed files, e.g. new file request will also use it
     #    if not os.path.exists( absPath ):
     #        raise Exception( "Cannot find file: " + path )
 
-    if path.lower().endswith( '.ui.h' ):
-        fileExtension = 'ui.h'
-    else:
-        fileExtension = os.path.splitext( path )[ 1 ].lower()[ 1: ]
+    parts = os.path.splitext( path )
+    fileExtension = parts[ len( parts ) - 1 ].lower()[ 1: ]
 
-    if fileExtension in [ 'py', 'pyw', 'ptl' ]:
-        return PythonFileType
-    if fileExtension == 'pyc':
-        return PythonCompiledFileType
-    if fileExtension in [ 'py3', 'pyw3' ]:
-        return Python3FileType
-    if fileExtension == 'rb':
-        return RubyFileType
-    if fileExtension == 'ui':
-        return DesignerFileType
-    if fileExtension == 'ui.h':
-        return DesignerHeaderFileType
-    if fileExtension in [ 'ts', 'qm' ]:
-        return LinguistFileType
-    if fileExtension == 'qrc':
-        return QTResourceFileType
-    if fileExtension == 'cdm':
-        return CodimensionProjectFileType
-    if fileExtension == 'idl':
-        return IDLFileType
+    try:
+        return _extType[ fileExtension ]
+    except:
+        pass
+
+    if fileExtension == 'h':
+        if path.lower().endswith( '.ui.h' ):
+            return DesignerHeaderFileType
+        return CHeaderFileType
     if fileExtension in QImageReader.supportedImageFormats():
         return PixmapFileType
-    if fileExtension == 'svg':
-        return SVGFileType
-    if fileExtension in [ 'd', 'di' ]:
-        return DFileType
-    if fileExtension == 'c':
-        return CFileType
-    if fileExtension == 'h':
-        return CHeaderFileType
-    if fileExtension in [ 'cpp', 'cxx' ]:
-        return CPPFileType
-    if fileExtension in [ 'hpp', 'hxx' ]:
-        return CPPHeaderFileType
-    if fileExtension == 'pdf':
-        return PDFFileType
-    if fileExtension in [ 'htm', 'html' ]:
-        return HTMLFileType
-    if fileExtension == 'css':
-        return CSSFileType
-    if fileExtension == 'xml':
-        return XMLFileType
-    if fileExtension == 'so':
-        return SOFileType
 
-    if 'makefile' in path.lower():
+    if path.lower().endswith( 'makefile' ):
         return MakefileType
 
-    if os.path.exists( path ):
-        if GlobalData().fileAvailable:
-            try:
-                output = os.popen( 'file -b ' + path ).read().lower()
-                if 'elf ' in output and 'executable' in output:
+    if GlobalData().fileAvailable:
+        try:
+            # It is safe to do it even for a not existing file
+            output = os.popen( 'file -b ' + path ).read().lower()
+            if 'elf ' in output:
+                if 'executable' in output:
                     return ELFFileType
-                if 'elf ' in output and 'shared object' in output:
+                if 'shared object' in output:
                     return SOFileType
-            except:
-                pass
+        except:
+            pass
 
     return UnknownFileType
 
