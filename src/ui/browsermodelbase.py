@@ -158,6 +158,10 @@ class BrowserModelBase( QAbstractItemModel ):
 
         return self.createIndex( parentItem.row(), 0, parentItem )
 
+    def totalRowCount( self ):
+        " Provides the total number of rows "
+        return self.rootItem.childCount()
+
     def rowCount( self, parent = QModelIndex() ):
         " Provides the number of rows "
 
