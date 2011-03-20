@@ -227,8 +227,8 @@ class TabsHistory( QObject ):
         # Remove adjacent same entries in the tabs sequence
         seqIndex = len( self.__tabsSequence ) - 1
         while seqIndex >= 0:
-            if self.testAdjacentSeq( index ):
-                del self.__tabsSequence[ index ]
+            if self.testAdjacentSeq( seqIndex ):
+                del self.__tabsSequence[ seqIndex ]
             seqIndex -= 1
 
         if oldCurrentIndex in removedIndexes:
