@@ -126,9 +126,9 @@ class EditorsManager( QTabWidget ):
         nextTabAction = QShortcut( 'Ctrl+PgUp', self )
         self.connect( nextTabAction, SIGNAL( 'activated()' ),
                       self.__onNextTab )
-        nextTabActionSyn = QShortcut( 'Ctrl+Tab', self )
-        self.connect( nextTabActionSyn, SIGNAL( 'activated()' ),
-                      self.__onNextTab )
+        flipTabAction = QShortcut( 'Ctrl+Tab', self )
+        self.connect( flipTabAction, SIGNAL( 'activated()' ),
+                      self.__onFlipTab )
         prevTabAction = QShortcut( 'Ctrl+PgDown', self )
         self.connect( prevTabAction, SIGNAL( 'activated()' ),
                       self.__onPrevTab )
@@ -838,6 +838,13 @@ class EditorsManager( QTabWidget ):
         " Forward in history clicked "
         self.history.updateForCurrentIndex()
         if self.history.stepBack():
+            self.__activateHistoryTab()
+        return
+
+    def __onFlipTab( self ):
+        " Flip between last two tabs "
+        self.history.updateForCurrentIndex()
+        if self.history.flip():
             self.__activateHistoryTab()
         return
 
