@@ -148,6 +148,13 @@ class TreeViewItem( object ):
         except IndexError:
             return ""
 
+    def setData( self, column, value ):
+        " Sets the new data "
+        try:
+            self.itemData[ column ] = value
+        except:
+            return
+
     def parent( self ):
         " Provides the reference to the parent item "
         return self.parentItem

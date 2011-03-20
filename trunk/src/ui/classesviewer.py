@@ -137,6 +137,7 @@ class ClassesViewer( QWidget ):
     def __filterChanged( self, text ):
         " Triggers when the filter text changed "
         self.clViewer.setFilter( text )
+        self.clViewer.updateCounter()
         return
 
     def __selectionChanged( self, index ):

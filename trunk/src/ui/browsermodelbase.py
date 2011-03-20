@@ -71,6 +71,11 @@ class BrowserModelBase( QAbstractItemModel ):
             return parent.internalPointer().columnCount()
         return self.rootItem.columnCount()
 
+    def updateRootData( self, column, value ):
+        " Updates the root entry, i.e. header "
+        self.rootItem.setData( column, value )
+        return
+
     def data( self, index, role ):
         " Provides data of an item "
         if not index.isValid():

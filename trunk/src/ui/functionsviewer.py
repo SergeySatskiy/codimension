@@ -140,6 +140,7 @@ class FunctionsViewer( QWidget ):
     def __filterChanged( self, text ):
         " Triggers when the filter text changed "
         self.funcViewer.setFilter( text )
+        self.funcViewer.updateCounter()
         return
 
     def __selectionChanged( self, index ):

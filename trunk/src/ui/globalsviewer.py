@@ -137,6 +137,7 @@ class GlobalsViewer( QWidget ):
     def __filterChanged( self, text ):
         " Triggers when the filter text changed "
         self.globalsViewer.setFilter( text )
+        self.globalsViewer.updateCounter()
         return
 
     def __selectionChanged( self, index ):
