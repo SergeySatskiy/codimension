@@ -33,12 +33,14 @@ class ChangingHeightItemDelegate( QItemDelegate ):
     def __init__( self, delta ):
         QItemDelegate.__init__( self )
         self.delta = delta
+        self.lastHeight = 0
         return
 
     def sizeHint( self, option, index ):
         " Returns the size hint in which the only height matters "
         origSize = QItemDelegate.sizeHint( self, option, index )
-        origSize.setHeight( origSize.height() + self.delta )
+        self.lastHeight = origSize.height() + self.delta
+        origSize.setHeight( self.lastHeight )
         return origSize
 
 
@@ -62,8 +64,9 @@ class NoOutlineHeightDelegate( QStyledItemDelegate ):
     " Changes the raw height and removes the dotted cells outline "
 
     def __init__( self, delta ):
-        self.delta = delta
         QStyledItemDelegate.__init__( self )
+        self.delta = delta
+        self.lastHeight = 0
         return
 
     def paint( self, painter, option, index ):
@@ -77,6 +80,7 @@ class NoOutlineHeightDelegate( QStyledItemDelegate ):
     def sizeHint( self, option, index ):
         " Returns the size hint in which the only height matters "
         origSize = QStyledItemDelegate.sizeHint( self, option, index )
-        origSize.setHeight( origSize.height() + self.delta )
+        self.lastHeight = origSize.height() + self.delta
+        origSize.setHeight( self.lastHeight )
         return origSize
 
