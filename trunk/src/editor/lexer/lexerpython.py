@@ -118,3 +118,14 @@ class LexerPython( QsciLexerPython, Lexer ):
                           QsciLexerPython.TripleSingleQuotedString,
                           QsciLexerPython.UnclosedString ]
 
+    def keywords( self, setNumber ):
+        " Adds True and False into the list of keywords "
+        standardSet = QsciLexerPython.keywords( self, setNumber )
+        if standardSet is None:
+            return standardSet
+
+        standardSetAsString = str( standardSet )
+        if "True" not in standardSetAsString:
+            return standardSetAsString + " True False"
+        return standardSet
+
