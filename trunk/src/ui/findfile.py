@@ -452,6 +452,10 @@ class FilesBrowser( QTreeView ):
         " Provides the total number of items "
         return self.model().sourceModel().count
 
+    def getVisible( self ):
+        " Provides the number of currently visible items "
+        return self.model().rowCount()
+
     def setFilter( self, text ):
         " Called when the filter has been changed "
         # Notify the filtering model of the new filters
@@ -470,6 +474,7 @@ class FindFileDialog( QDialog ):
 
         self.__filesBrowser = None
         self.findCombo = None
+        self.__projectLoaded = GlobalData().project.fileName != ""
 
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         self.__createLayout()
@@ -477,16 +482,30 @@ class FindFileDialog( QDialog ):
         QApplication.restoreOverrideCursor()
 
         # Set the window title and restore the previous searches
-        windowTitle = "Find file: " + str( self.__filesBrowser.getTotal() )
-        if GlobalData().project.fileName != "":
+        if self.__projectLoaded:
             self.__findFileHistory = GlobalData().project.findFileHistory
-            windowTitle += " files in the project"
         else:
             self.__findFileHistory = Settings().findFileHistory
-            windowTitle += " opened files"
         self.findCombo.addItems( self.__findFileHistory )
         self.findCombo.setEditText( "" )
-        self.setWindowTitle( windowTitle )
+
+        self.connect( self.findCombo,
+                      SIGNAL( "editTextChanged(const QString &)" ),
+                      self.__filterChanged )
+
+        self.__updateTitle()
+        return
+
+    def __updateTitle( self ):
+        " Updates the window title "
+        title = "Find file in the "
+        if self.__projectLoaded:
+            title += "project: "
+        else:
+            title += "opened files: "
+        title += str( self.__filesBrowser.getVisible() ) + " of " + \
+                 str( self.__filesBrowser.getTotal() )
+        self.setWindowTitle( title )
         return
 
     def __createLayout( self ):
@@ -502,9 +521,6 @@ class FindFileDialog( QDialog ):
         self.findCombo = QComboBox( self )
         self.__tuneCombo( self.findCombo )
         self.findCombo.lineEdit().setToolTip( "Regular expression to search for" )
-        self.connect( self.findCombo,
-                      SIGNAL( "editTextChanged(const QString &)" ),
-                      self.__filterChanged )
         verticalLayout.addWidget( self.findCombo )
         return
 
@@ -526,6 +542,7 @@ class FindFileDialog( QDialog ):
     def __filterChanged( self, text ):
         " Triggers when the filter text changed "
         self.__filesBrowser.setFilter( text )
+        self.__updateTitle()
         return
 
     def onClose( self ):
