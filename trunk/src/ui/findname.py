@@ -476,6 +476,10 @@ class NamesBrowser( QTreeView ):
         " Provides the total number of items "
         return self.model().sourceModel().count
 
+    def getVisible( self ):
+        " Provides the number of visible items "
+        return self.model().rowCount()
+
     def setFilter( self, text ):
         " Called when the filter has been changed "
         # Notify the filtering model of the new filters
@@ -486,14 +490,16 @@ class NamesBrowser( QTreeView ):
         return
 
 
+
 class FindNameDialog( QDialog ):
     " Find name dialog implementation "
 
-    def __init__( self, parent = None ):
+    def __init__( self, what = "", parent = None ):
         QDialog.__init__( self, parent )
 
         self.__namesBrowser = None
         self.findCombo = None
+        self.__projectLoaded = GlobalData().project.fileName != ""
 
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         self.__createLayout()
@@ -501,16 +507,30 @@ class FindNameDialog( QDialog ):
         QApplication.restoreOverrideCursor()
 
         # Set the window title and restore the previous searches
-        windowTitle = "Find name: " + str( self.__namesBrowser.getTotal() )
-        if GlobalData().project.fileName != "":
+        if self.__projectLoaded:
             self.__findNameHistory = GlobalData().project.findNameHistory
-            windowTitle += " names in the project"
         else:
             self.__findNameHistory = Settings().findNameHistory
-            windowTitle += " names in the opened files"
         self.findCombo.addItems( self.__findNameHistory )
-        self.findCombo.setEditText( "" )
-        self.setWindowTitle( windowTitle )
+        self.findCombo.setEditText( what )
+
+        self.connect( self.findCombo,
+                      SIGNAL( "editTextChanged(const QString &)" ),
+                      self.__filterChanged )
+
+        self.__updateTitle()
+        return
+
+    def __updateTitle( self ):
+        " Updates the window title "
+        title = "Find name in the "
+        if self.__projectLoaded:
+            title += "project: "
+        else:
+            title += "opened files: "
+        title += str( self.__namesBrowser.getVisible() ) + " of " + \
+                 str( self.__namesBrowser.getTotal() )
+        self.setWindowTitle( title )
         return
 
     def __createLayout( self ):
@@ -526,9 +546,6 @@ class FindNameDialog( QDialog ):
         self.findCombo = QComboBox( self )
         self.__tuneCombo( self.findCombo )
         self.findCombo.lineEdit().setToolTip( "Regular expression to search for" )
-        self.connect( self.findCombo,
-                      SIGNAL( "editTextChanged(const QString &)" ),
-                      self.__filterChanged )
         verticalLayout.addWidget( self.findCombo )
         return
 
@@ -550,6 +567,7 @@ class FindNameDialog( QDialog ):
     def __filterChanged( self, text ):
         " Triggers when the filter text changed "
         self.__namesBrowser.setFilter( text )
+        self.__updateTitle()
         return
 
     def onClose( self ):
