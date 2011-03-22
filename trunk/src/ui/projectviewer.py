@@ -249,6 +249,13 @@ class ProjectViewer( QWidget ):
                 'Run pymetrics for the directory recursively',
                 self.__pymetricsRequest )
         self.prjDirMenu.addSeparator()
+        self.prjDirImportDgmAct = self.prjDirMenu.addAction( \
+                PixmapCache().getIcon( 'importsdiagram.png' ),
+                "Imports diagram", self.__onImportDiagram )
+        self.prjDirImportDgmTunedAct = self.prjDirMenu.addAction( \
+                PixmapCache().getIcon( 'detailsdlg.png' ),
+                'Fine tuned imports diagram', self.__onImportDgmTuned )
+        self.prjDirMenu.addSeparator()
         self.prjDirNewDirAct = self.prjDirMenu.addAction( \
                 PixmapCache().getIcon( 'newdir.png' ),
                 'Create nested directory', self.__createDir )
@@ -277,6 +284,13 @@ class ProjectViewer( QWidget ):
         self.prjFilePymetricsAct = self.prjFileMenu.addAction( \
                 PixmapCache().getIcon( 'metrics.png' ),
                 'Run pymetrics for the file', self.__pymetricsRequest )
+        self.prjFileMenu.addSeparator()
+        self.prjFileImportDgmAct = self.prjFileMenu.addAction( \
+                PixmapCache().getIcon( 'importsdiagram.png' ),
+                "Imports diagram", self.__onImportDiagram )
+        self.prjFileImportDgmTunedAct = self.prjFileMenu.addAction( \
+                PixmapCache().getIcon( 'detailsdlg.png' ),
+                'Fine tuned imports diagram', self.__onImportDgmTuned )
         self.prjFileMenu.addSeparator()
         self.prjFileCopyPathAct = self.prjFileMenu.addAction( \
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
@@ -746,6 +760,21 @@ class ProjectViewer( QWidget ):
         self.prjFilePymetricsAct.setEnabled( \
                 self.prjPymetricsButton.isEnabled() )
 
+        # Imports diagram menu
+        enabled = False
+        if self.__prjContextItem.itemType == DirectoryItemType:
+            enabled = True
+        if self.__prjContextItem.itemType == FileItemType:
+            if self.__prjContextItem.fileType in [ PythonFileType,
+                                                   Python3FileType ]:
+                enabled = True
+        if not GlobalData().graphvizAvailable:
+            enabled = False
+        self.prjFileImportDgmAct.setEnabled( enabled )
+        self.prjFileImportDgmTunedAct.setEnabled( enabled )
+        self.prjDirImportDgmAct.setEnabled( enabled )
+        self.prjDirImportDgmTunedAct.setEnabled( enabled )
+
         if self.__prjContextItem.itemType == FileItemType:
             if self.__prjContextItem.isLink:
                 self.prjFileRemoveFromDiskAct.setText( \
@@ -1013,4 +1042,14 @@ class ProjectViewer( QWidget ):
         if not path.endswith( os.path.sep ):
             path += os.path.sep
         return not GlobalData().project.fileName.startswith( path )
+
+    def __onImportDiagram( self ):
+        if self.__prjContextItem is None:
+            return
+        pass
+
+    def __onImportDgmTuned( self ):
+        if self.__prjContextItem is None:
+            return
+        pass
 
