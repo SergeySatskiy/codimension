@@ -61,6 +61,7 @@ from findinfilesviewer          import FindInFilesViewer, hideSearchTooltip
 from findname                   import FindNameDialog
 from findfile                   import FindFileDialog
 from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
+from diagram.importsdgm         import ImportsDiagramDialog
 
 
 class EditorsManagerWidget( QWidget ):
@@ -281,6 +282,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__bottomSideBar.addTab( todoViewer,
                                      PixmapCache().getIcon( 'todo.png' ),
                                      'Todo viewer' )
+        self.__bottomSideBar.setTabEnabled( 1, False )
 
         # Create pylint viewer
         self.__pylintViewer = PylintViewer()
@@ -475,6 +477,7 @@ class CodimensionMainWindow( QMainWindow ):
         printButton.setStatusTip( 'Print the current editor content' )
         self.connect( printButton, SIGNAL( 'triggered()' ),
                       self.notImplementedYet )
+        printButton.setEnabled( False )
 
         aboutButton = QAction( PixmapCache().getIcon( 'about.png' ),
                                'About (Ctrl+B)', self )
@@ -483,23 +486,40 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( aboutButton, SIGNAL( 'triggered()' ),
                       self.aboutButtonClicked )
 
+        # Imports diagram button and its menu
+        importsMenu = QMenu( self )
+        importsDlgAct = importsMenu.addAction( \
+                                PixmapCache().getIcon( 'detailsdlg.png' ),
+                                'Fine tuned imports diagram' )
+        self.connect( importsDlgAct, SIGNAL( 'triggered()' ),
+                      self.__onImportDgmTuned )
+        self.importsDiagramButton = QToolButton( self )
+        self.importsDiagramButton.setIcon( PixmapCache().getIcon( 'importsdiagram.png' ) )
+        self.importsDiagramButton.setToolTip( 'Generate imports diagram' )
+        self.importsDiagramButton.setPopupMode( QToolButton.DelayedPopup )
+        self.importsDiagramButton.setMenu( importsMenu )
+        self.importsDiagramButton.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.importsDiagramButton, SIGNAL( 'clicked(bool)' ),
+                      self.__onImportDgm )
+
         packageDiagramButton = QAction( \
                 PixmapCache().getIcon( 'packagediagram.png' ),
                 'Generate package diagram', self )
-        importsDiagramButton = QAction( \
-                PixmapCache().getIcon( 'importsdiagram.png' ),
-                'Generate imports diagram', self )
+        packageDiagramButton.setEnabled( False )
         applicationDiagramButton = QAction( \
                 PixmapCache().getIcon( 'applicationdiagram.png' ),
                 'Generate application diagram', self )
+        applicationDiagramButton.setEnabled( False )
         doxygenButton = QAction( \
                 PixmapCache().getIcon( 'doxygen.png' ),
                 'Generate doxygen documentation', self )
+        doxygenButton.setEnabled( False )
         fixedSpacer2 = QWidget()
         fixedSpacer2.setFixedWidth( 5 )
         neverUsedButton = QAction( \
                 PixmapCache().getIcon( 'neverused.png' ),
                 'Analysis for never used variables, functions, classes', self )
+        neverUsedButton.setEnabled( False )
 
         # pylint button
         self.__existentPylintRCMenu = QMenu( self )
@@ -578,7 +598,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__toolbar.addAction( createProjectButton )
         self.__toolbar.addAction( printButton )
         self.__toolbar.addAction( packageDiagramButton )
-        self.__toolbar.addAction( importsDiagramButton )
+        self.__toolbar.addWidget( self.importsDiagramButton )
         self.__toolbar.addAction( applicationDiagramButton )
         self.__toolbar.addAction( doxygenButton )
         self.__toolbar.addWidget( fixedSpacer2 )
@@ -681,6 +701,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.linecounterButton.setEnabled( projectLoaded )
         self.__pylintButton.setEnabled( projectLoaded and \
                                         GlobalData().pylintAvailable )
+        self.importsDiagramButton.setEnabled( GlobalData().graphvizAvailable )
         return
 
     def aboutButtonClicked( self ):
@@ -1040,5 +1061,17 @@ class CodimensionMainWindow( QMainWindow ):
         " Hides all the tooltips "
         QToolTip.hideText()
         hideSearchTooltip()
+        return
+
+    def __onImportDgmTuned( self ):
+        " Runs the settings dialog first "
+        dlg = ImportsDiagramDialog( ImportsDiagramDialog.ProjectFiles )
+        if dlg.exec_() == QDialog.Accepted:
+            # Should proceed with the diagram generation
+            pass
+        return
+
+    def __onImportDgm( self, action ):
+        " Runs the generation process "
         return
 

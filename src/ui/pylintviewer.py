@@ -25,7 +25,7 @@
 import os.path, logging
 from PyQt4.QtCore               import Qt, SIGNAL, QSize, \
                                        QStringList
-from PyQt4.QtGui                import QFont, QColor, QToolBar, QColor, \
+from PyQt4.QtGui                import QFont, QColor, QToolBar, \
                                        QHBoxLayout, QWidget, QAction, \
                                        QSizePolicy, QPalette, \
                                        QVBoxLayout, QLabel, \

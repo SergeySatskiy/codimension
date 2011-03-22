@@ -44,6 +44,7 @@ from utils.globals              import GlobalData
 from utils.settings             import Settings
 from ui.pylintviewer            import PylintViewer
 from ui.pymetricsviewer         import PymetricsViewer
+from diagram.importsdgm         import ImportsDiagramDialog
 import export
 
 
@@ -490,6 +491,23 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                       self.__onPymetrics )
         self.pymetricsButton.setEnabled( False )
 
+        # Imports diagram and its menu
+        importsMenu = QMenu( self )
+        importsDlgAct = importsMenu.addAction( \
+                                PixmapCache().getIcon( 'detailsdlg.png' ),
+                                'Fine tuned imports diagram' )
+        self.connect( importsDlgAct, SIGNAL( 'triggered()' ),
+                      self.__onImportDgmTuned )
+        self.importsDiagramButton = QToolButton( self )
+        self.importsDiagramButton.setIcon( PixmapCache().getIcon( 'importsdiagram.png' ) )
+        self.importsDiagramButton.setToolTip( 'Generate imports diagram' )
+        self.importsDiagramButton.setPopupMode( QToolButton.DelayedPopup )
+        self.importsDiagramButton.setMenu( importsMenu )
+        self.importsDiagramButton.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.importsDiagramButton, SIGNAL( 'clicked(bool)' ),
+                      self.__onImportDgm )
+        self.importsDiagramButton.setEnabled( False )
+
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
 
@@ -569,6 +587,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.addAction( printButton )
         toolbar.addAction( self.pylintButton )
         toolbar.addAction( self.pymetricsButton )
+        toolbar.addWidget( self.importsDiagramButton )
         toolbar.addAction( self.__undoButton )
         toolbar.addAction( self.__redoButton )
         toolbar.addWidget( spacer )
@@ -598,6 +617,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.pylintButton.setEnabled( self.__fileType == PythonFileType and
                                       GlobalData().pylintAvailable )
         self.pymetricsButton.setEnabled( self.__fileType == PythonFileType )
+        self.importsDiagramButton.setEnabled( self.__fileType == PythonFileType and
+                                              GlobalData().graphvizAvailable )
         return
 
     def __onPylint( self ):
@@ -806,6 +827,23 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Overridden setFocus "
         self.__editor.setFocus()
         return
+
+    def __onImportDgmTuned( self ):
+        " Runs the settings dialog first "
+        if self.__editor.isModified():
+            option = ImportsDiagramDialog.SingleBuffer
+        else:
+            option = ImportsDiagramDialog.SingleFile
+        dlg = ImportsDiagramDialog( option, self.getFileName() )
+        if dlg.exec_() == QDialog.Accepted:
+            # Should proceed with the diagram generation
+            pass
+        return
+
+    def __onImportDgm( self, action ):
+        " Runs the generation process "
+        return
+
 
 
     # Mandatory interface part is below
