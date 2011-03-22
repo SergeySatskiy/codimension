@@ -51,6 +51,7 @@ from utils.fileutils    import BrokenSymlinkFileType, PythonFileType, \
 from pylintviewer       import PylintViewer
 from pymetricsviewer    import PymetricsViewer
 from newnesteddir       import NewProjectDirDialog
+from diagram.importsdgm import ImportsDiagramDialog
 
 
 class ProjectViewer( QWidget ):
@@ -1043,13 +1044,61 @@ class ProjectViewer( QWidget ):
             path += os.path.sep
         return not GlobalData().project.fileName.startswith( path )
 
+    @staticmethod
+    def __areTherePythonFiles( path ):
+        " Tests if a directory has at least one python file "
+        for item in os.listdir( path ):
+            if os.path.isdir( path + item ):
+                if ProjectViewer.__areTherePythonFiles( path + item + os.path.sep ):
+                    return True
+                continue
+            if detectFileType( item ) in [ PythonFileType,
+                                           Python3FileType ]:
+                return True
+        return False
+
     def __onImportDiagram( self ):
+        " Triggered when an import diagram is requested "
         if self.__prjContextItem is None:
             return
-        pass
+
+        if self.__prjContextItem.itemType == DirectoryItemType:
+            # Check first if there are python files in it
+            if not self.__areTherePythonFiles( self.__prjContextItem.getPath() ):
+                logging.warning( "There are no python files in " + \
+                                 self.__prjContextItem.getPath() )
+                return
+        return
+
 
     def __onImportDgmTuned( self ):
+        " Triggered when a tuned import diagram is requested "
         if self.__prjContextItem is None:
             return
+
+        if self.__prjContextItem.itemType == DirectoryItemType:
+            # Check first if there are python files in it
+            if not self.__areTherePythonFiles( self.__prjContextItem.getPath() ):
+                logging.warning( "There are no python files in " + \
+                                 self.__prjContextItem.getPath() )
+                return
+
+        if self.__prjContextItem.itemType == DirectoryItemType:
+            projectDirs = GlobalData().project.getProjectDirs()
+            if len( projectDirs ) == 1 and \
+               projectDirs[ 0 ] == self.__prjContextItem.getPath():
+                dlg = ImportsDiagramDialog( ImportsDiagramDialog.ProjectFiles )
+            else:
+                dlg = ImportsDiagramDialog( ImportsDiagramDialog.DirectoryFiles,
+                                            self.__prjContextItem.getPath() )
+        else:
+            dlg = ImportsDiagramDialog( ImportsDiagramDialog.SingleFile,
+                                        self.__prjContextItem.getPath() )
+
+        if dlg.exec_() == QDialog.Accepted:
+            # Should proceed with the diagram generation
+            pass
+
+
         pass
 
