@@ -886,6 +886,13 @@ class CodimensionMainWindow( QMainWindow ):
         self.__pylintViewer.showReport( lint, reportOption,
                                         displayName, uuid )
 
+        if self.__bottomSideBar.height() == 0:
+            # It was hidden completely, so need to move the slider
+            splitterSizes = Settings().vSplitterSizes
+            splitterSizes[ 0 ] -= 200
+            splitterSizes[ 1 ] += 200
+            self.__verticalSplitter.setSizes( splitterSizes )
+
         self.__bottomSideBar.show()
         self.__bottomSideBar.setCurrentWidget( self.__pylintViewer )
         self.__bottomSideBar.raise_()

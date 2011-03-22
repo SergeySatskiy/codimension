@@ -88,6 +88,8 @@ class SideBar( QWidget ):
 
     def shrink( self ):
         """ Shrink the sidebar """
+        if self.__minimized:
+            return
 
         self.__minimized = True
         self.__bigSize = self.size()
@@ -109,6 +111,8 @@ class SideBar( QWidget ):
 
     def expand( self ):
         """ Expand the sidebar """
+        if not self.__minimized:
+            return
 
         self.__minimized = False
         self.__stackedWidget.show()
