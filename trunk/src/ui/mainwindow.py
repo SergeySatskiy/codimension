@@ -840,6 +840,8 @@ class CodimensionMainWindow( QMainWindow ):
     def closeEvent( self, event ):
         " Triggered when the IDE is closed "
         # Save the side bars status
+        self.settings.vSplitterSizes = list( self.__verticalSplitter.sizes() )
+        self.settings.hSplitterSizes = list( self.__horizontalSplitter.sizes() )
         self.settings.bottomBarMinimized = self.__bottomSideBar.isMinimized()
         self.settings.leftBarMinimized = self.__leftSideBar.isMinimized()
 
@@ -923,6 +925,13 @@ class CodimensionMainWindow( QMainWindow ):
         QApplication.restoreOverrideCursor()
         self.__pymetricsViewer.showReport( metrics, reportOption,
                                            displayName, uuid )
+
+        if self.__bottomSideBar.height() == 0:
+            # It was hidden completely, so need to move the slider
+            splitterSizes = Settings().vSplitterSizes
+            splitterSizes[ 0 ] -= 200
+            splitterSizes[ 1 ] += 200
+            self.__verticalSplitter.setSizes( splitterSizes )
 
         self.__bottomSideBar.show()
         self.__bottomSideBar.setCurrentWidget( self.__pymetricsViewer )
@@ -1042,6 +1051,13 @@ class CodimensionMainWindow( QMainWindow ):
     def displayFindInFiles( self, searchRegexp, searchResults ):
         " Displays the results on a tab "
         self.__findInFilesViewer.showReport( searchRegexp, searchResults )
+
+        if self.__bottomSideBar.height() == 0:
+            # It was hidden completely, so need to move the slider
+            splitterSizes = Settings().vSplitterSizes
+            splitterSizes[ 0 ] -= 200
+            splitterSizes[ 1 ] += 200
+            self.__verticalSplitter.setSizes( splitterSizes )
 
         self.__bottomSideBar.show()
         self.__bottomSideBar.setCurrentWidget( self.__findInFilesViewer )
