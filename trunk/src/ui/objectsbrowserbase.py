@@ -174,6 +174,7 @@ class ObjectsBrowser( QTreeView ):
         if what == CodimensionProject.CompleteProject:
             self.__model.reset()
             self.layoutDisplay()
+            self.updateCounter()
         return
 
     def setFilter( self, text ):
