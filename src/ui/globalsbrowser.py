@@ -31,6 +31,7 @@
 from utils.pixmapcache     import PixmapCache
 from globalsbrowsermodel   import GlobalsBrowserModel
 from objectsbrowserbase    import ObjectsBrowser
+from PyQt4.QtCore          import SIGNAL
 
 
 class GlobalsBrowser( ObjectsBrowser ):
@@ -38,10 +39,13 @@ class GlobalsBrowser( ObjectsBrowser ):
 
     def __init__( self, parent = None ):
 
-        ObjectsBrowser.__init__( self, GlobalsBrowserModel(), parent )
+        sourceModel = GlobalsBrowserModel()
+        ObjectsBrowser.__init__( self, sourceModel, parent )
 
         self.setWindowTitle( 'Globals browser' )
         self.setWindowIcon( PixmapCache().getIcon( 'icon.png' ) )
 
+        self.connect( sourceModel, SIGNAL( 'modelReset()' ),
+                      self.updateCounter )
         return
 
