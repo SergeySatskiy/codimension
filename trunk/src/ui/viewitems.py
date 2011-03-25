@@ -348,14 +348,15 @@ class TreeViewFileItem( TreeViewItem ):
             try:
                 creationDate, author, lic, \
                 copy_right, description, \
-                version, email = getProjectProperties( path )
+                version, email, uuid = getProjectProperties( path )
                 self.toolTip = "Version: " + version + "\n" \
                                "Description: " + description + "\n" \
                                "Author: " + author + "\n" \
                                "e-mail: " + email + "\n" \
                                "Copyright: " + copy_right + "\n" \
                                "License: " + lic + "\n" \
-                               "Creation date: " + creationDate
+                               "Creation date: " + creationDate + "\n" \
+                               "UUID: " + uuid
             except:
                 # cannot get project properties
                 self.toolTip = 'Broken project file'

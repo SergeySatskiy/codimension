@@ -69,14 +69,15 @@ class RecentProjectViewItem( QTreeWidgetItem ):
             try:
                 creationDate, author, lic, \
                 copy_right, description, \
-                version, email = getProjectProperties( fileName )
+                version, email, uuid = getProjectProperties( fileName )
                 propertiesToolTip = "Version: " + version + "\n" \
                                     "Description: " + description + "\n" \
                                     "Author: " + author + "\n" \
                                     "e-mail: " + email + "\n" \
                                     "Copyright: " + copy_right + "\n" \
                                     "License: " + lic + "\n" \
-                                    "Creation date: " + creationDate
+                                    "Creation date: " + creationDate + "\n" \
+                                    "UUID: " + uuid
                 self.setToolTip( 1, propertiesToolTip )
                 self.setText( 0, "" )
                 if fileName == GlobalData().project.fileName:
