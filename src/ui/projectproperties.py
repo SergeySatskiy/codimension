@@ -82,7 +82,7 @@ class ProjectPropertiesDialog( QDialog, object ):
             # project file
             creationDate, author, lic, \
             copy_right, description, \
-            version, email = getProjectProperties( project )
+            version, email, uuid = getProjectProperties( project )
 
             self.nameEdit.setText( os.path.basename( project ) )
             self.dirEdit.setText( os.path.dirname( project ) )
@@ -93,6 +93,7 @@ class ProjectPropertiesDialog( QDialog, object ):
             self.copyrightEdit.setText( copy_right )
             self.descriptionEdit.setText( description )
             self.creationDateEdit.setText( creationDate )
+            self.uuidEdit.setText( uuid )
             self.disableEditing()
 
         else:
@@ -108,6 +109,7 @@ class ProjectPropertiesDialog( QDialog, object ):
             self.copyrightEdit.setText( project.copyright )
             self.descriptionEdit.setText( project.description )
             self.creationDateEdit.setText( project.creationDate )
+            self.uuidEdit.setText( str( project.uuid ) )
             self.setReadOnly()
             self.versionEdit.setFocus()
 
@@ -197,6 +199,16 @@ class ProjectPropertiesDialog( QDialog, object ):
         self.creationDateEdit.setFocusPolicy( Qt.NoFocus )
         self.creationDateEdit.setDisabled( True )
         self.gridLayout.addWidget( self.creationDateEdit, 8, 1, 1, 1 )
+
+        # Project UUID
+        uuidLabel = QLabel( self )
+        uuidLabel.setText( "UUID:" )
+        self.gridLayout.addWidget( uuidLabel, 9, 0, 1, 1 )
+        self.uuidEdit = QLineEdit( self )
+        self.uuidEdit.setReadOnly( True )
+        self.uuidEdit.setFocusPolicy( Qt.NoFocus )
+        self.uuidEdit.setDisabled( True )
+        self.gridLayout.addWidget( self.uuidEdit, 9, 1, 1, 1 )
 
         self.verticalLayout.addLayout( self.gridLayout )
 
@@ -370,5 +382,6 @@ class ProjectPropertiesDialog( QDialog, object ):
         self.copyrightEdit.setDisabled( True )
         self.descriptionEdit.setDisabled( True )
         self.creationDateEdit.setDisabled( True )
+        self.uuidEdit.setDisabled( True )
         return
 

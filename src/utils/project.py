@@ -953,8 +953,9 @@ def getProjectProperties( projectFile ):
                              'description' ).replace( '<CR><LF>', '\n' )
     version = readValue( config, 'properties', 'version' )
     email = readValue( config, 'properties', 'email' )
+    uuid = readValue( config, 'properties', 'uuid' )
 
     config = None
 
-    return creationDate, author, lic, copy_right, description, version, email
+    return creationDate, author, lic, copy_right, description, version, email, uuid
 
