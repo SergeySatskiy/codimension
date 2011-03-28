@@ -1,16 +1,33 @@
-codimension
------------
+CODIMENSION
 
 codimension is a graphics python two-way code editor and analyzer.
 See details at: http://satsky.spb.ru/codimension/codimensionEng.php
                 http://codimension.googlecode.com
 
-requirements
-------------
 
-Python 2.6 or higher
-PyQt4 4.7 or higher
-python-pygments-1.3.1 or higher
+REQUIREMENTS
+
+* Python 2.6 or higher
+
+* PyQt4 4.7 or higher
+    Ubuntu: python-qt4
+
+* QScintilla for Python 2.4.4 or higher
+    Ubuntu: python-qscintilla2
+
+* python-pygments-1.3.1 or higher
 
 
 
+OTHER DEPENDENCIES
+
+(although not required, software that enhances Codimension functionality)
+
+* Pylint 0.21.1 or higher
+    Ubuntu: pylint
+
+* Doxygen 1.7.1 or higher
+    Ubuntu: doxygen
+
+* Graphviz 2.26.3 or higher
+    Ubuntu: graphviz
