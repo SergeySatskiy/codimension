@@ -43,7 +43,7 @@ _defaultFilesFilters = [ "\.svn", "\.cvs", ".*\~$",
                          ".*\.pyc$", ".*\.swp$", ".*\.pyo$" ]
 _defaultProjectLoaded = False
 _defaultZoom = 0
-_defaultEditorFont = ""
+_defaultSkin = "default"
 
 
 class Settings( object ):
@@ -126,6 +126,8 @@ class Settings( object ):
             self.projectLoaded = self.__getBool( config, 'general',
                                                  'projectLoaded',
                                                  _defaultProjectLoaded )
+            self.skinName = self.__getStr( config, 'general',
+                                           'skin', _defaultSkin )
 
             asString = self.__getStr( config, 'general', 'hSplitterSizes',
                                       _defaultHSplitSize ).split( ',' )
@@ -200,6 +202,7 @@ class Settings( object ):
             self.screenHeight = _defaultScreenHeight
             self.xdelta = _defaultXDelta
             self.ydelta = _defaultYDelta
+            self.skinName = _defaultSkin
             self.leftBarMinimized = False
             self.bottomBarMinimized = False
             self.hSplitterSizes = [ 200, 550 ]
@@ -271,6 +274,7 @@ class Settings( object ):
                      "screenheight=" + str( self.screenHeight ) + "\n" \
                      "xdelta=" + str( self.xdelta ) + "\n" \
                      "ydelta=" + str( self.ydelta ) + "\n" \
+                     "skin=" + self.skinName + "\n" \
                      "leftBarMinimized=" + \
                         str( int( self.leftBarMinimized ) ) + "\n" \
                      "bottomBarMinimized=" + \
