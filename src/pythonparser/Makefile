@@ -18,6 +18,8 @@
 # $Id$
 #
 
+.PHONY: all gen clean cleanall
+
 GENERATED_FILES=pythonbriefLexer.h pythonbriefParser.h \
 		pythonbriefLexer.c pythonbriefParser.c pythonbrief.tokens
 
@@ -32,14 +34,14 @@ all: $(GENERATED_FILES) cdmpyparser.c lexerutils.o brief_test.c
                                brief_test.o lexerutils.o \
                                ../thirdparty/libantlr3c-3.2/.libs/libantlr3c.a
 
-$(GENERATED_FILES) : pythonbrief.g
+gen: pythonbrief.g
 	CLASSPATH=/home/swift/antlr/antlrworks-1.4.jar java org.antlr.Tool pythonbrief.g
 
-lexerutils.o : lexerutils.c
+lexerutils.o: lexerutils.c
 	gcc -O2 -I/usr/include/python2.6/ ${FLAGS} ${INCLUDE} -c lexerutils.c
-
-cleanall: clean
-	rm -f $(GENERATED_FILES)
 
 clean:
 	rm -rf *.o core.* _cdmpyparser.so build/ brief_test
+
+cleanall: clean
+	rm -f $(GENERATED_FILES)
