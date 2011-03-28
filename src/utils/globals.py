@@ -37,6 +37,7 @@ class GlobalData( object ):
             self.application = None
             self.splash = None
             self.mainWindow = None
+            self.skin = None
             self.screenWidth = 0
             self.screenHeight = 0
             self.version = "unknown"
