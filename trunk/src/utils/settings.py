@@ -48,14 +48,14 @@ _defaultSkin = "default"
 # Editor settings available via the user interface
 _defaultVerticalEdge = True
 _defaultShowSpaces = True
-_defaultShowEdge = True
 _defaultLineWrap = False
 _defaultShowEOL = False
 _defaultShowBraceMatch = True
 _defaultAutoIndent = False
 _defaultBackspaceUnindent = True
 _defaultTabIndents = True
-_defaultIndentationGuides = True
+_defaultIndentationGuides = False
+_defaultCurrentLineVisible = True
 
 
 
@@ -145,8 +145,6 @@ class Settings( object ):
                                                 'verticalEdge', _defaultVerticalEdge )
             self.showSpaces = self.__getBool( config, 'general',
                                               'showSpaces', _defaultShowSpaces )
-            self.showEdge = self.__getBool( config, 'general',
-                                            'showEdge', _defaultShowEdge )
             self.lineWrap = self.__getBool( config, 'general',
                                             'lineWrap', _defaultLineWrap )
             self.showEOL = self.__getBool( config, 'general',
@@ -161,6 +159,8 @@ class Settings( object ):
                                               'tabIndents', _defaultTabIndents )
             self.indentationGuides = self.__getBool( config, 'general',
                                                      'indentationGuides', _defaultIndentationGuides )
+            self.currentLineVisible = self.__getBool( config, 'general',
+                                                      'currentLineVisible', _defaultCurrentLineVisible )
 
             asString = self.__getStr( config, 'general', 'hSplitterSizes',
                                       _defaultHSplitSize ).split( ',' )
@@ -239,7 +239,6 @@ class Settings( object ):
 
             self.verticalEdge = _defaultVerticalEdge
             self.showSpaces = _defaultShowSpaces
-            self.showEdge = _defaultShowEdge
             self.lineWrap = _defaultLineWrap
             self.showEOL = _defaultShowEOL
             self.showBraceMatch = _defaultShowBraceMatch
@@ -247,6 +246,7 @@ class Settings( object ):
             self.backspaceUnindent = _defaultBackspaceUnindent
             self.tabIndents = _defaultTabIndents
             self.indentationGuides = _defaultIndentationGuides
+            self.currentLineVisible = _defaultCurrentLineVisible
 
             self.leftBarMinimized = False
             self.bottomBarMinimized = False
@@ -322,7 +322,6 @@ class Settings( object ):
                      "skin=" + self.skinName + "\n" \
                      "verticalEdge=" + str( self.verticalEdge ) + "\n" \
                      "showSpaces=" + str( self.showSpaces ) + "\n" \
-                     "showEdge=" + str( self.showEdge ) + "\n" \
                      "lineWrap=" + str( self.lineWrap ) + "\n" \
                      "showEOL=" + str( self.showEOL ) + "\n" \
                      "showBraceMatch=" + str( self.showBraceMatch ) + "\n" \
@@ -330,6 +329,7 @@ class Settings( object ):
                      "backspaceUnindent=" + str( self.backspaceUnindent ) + "\n" \
                      "tabIndents=" + str( self.tabIndents ) + "\n" \
                      "indentationGuides=" + str( self.indentationGuides ) + "\n" \
+                     "currentLineVisible=" + str( self.currentLineVisible ) + "\n" \
                      "leftBarMinimized=" + \
                         str( int( self.leftBarMinimized ) ) + "\n" \
                      "bottomBarMinimized=" + \
