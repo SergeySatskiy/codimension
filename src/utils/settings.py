@@ -45,6 +45,19 @@ _defaultProjectLoaded = False
 _defaultZoom = 0
 _defaultSkin = "default"
 
+# Editor settings available via the user interface
+_defaultVerticalEdge = True
+_defaultShowSpaces = True
+_defaultShowEdge = True
+_defaultLineWrap = False
+_defaultShowEOL = False
+_defaultShowBraceMatch = True
+_defaultAutoIndent = False
+_defaultBackspaceUnindent = True
+_defaultTabIndents = True
+_defaultIndentationGuides = True
+
+
 
 class Settings( object ):
     """
@@ -128,6 +141,26 @@ class Settings( object ):
                                                  _defaultProjectLoaded )
             self.skinName = self.__getStr( config, 'general',
                                            'skin', _defaultSkin )
+            self.verticalEdge = self.__getBool( config, 'general',
+                                                'verticalEdge', _defaultVerticalEdge )
+            self.showSpaces = self.__getBool( config, 'general',
+                                              'showSpaces', _defaultShowSpaces )
+            self.showEdge = self.__getBool( config, 'general',
+                                            'showEdge', _defaultShowEdge )
+            self.lineWrap = self.__getBool( config, 'general',
+                                            'lineWrap', _defaultLineWrap )
+            self.showEOL = self.__getBool( config, 'general',
+                                           'showEOL', _defaultShowEOL )
+            self.showBraceMatch = self.__getBool( config, 'general',
+                                                  'showBraceMatch', _defaultShowBraceMatch )
+            self.autoIndent = self.__getBool( config, 'general',
+                                              'autoIndent', _defaultAutoIndent )
+            self.backspaceUnindent = self.__getBool( config, 'general',
+                                                     'backspaceUnindent', _defaultBackspaceUnindent )
+            self.tabIndents = self.__getBool( config, 'general',
+                                              'tabIndents', _defaultTabIndents )
+            self.indentationGuides = self.__getBool( config, 'general',
+                                                     'indentationGuides', _defaultIndentationGuides )
 
             asString = self.__getStr( config, 'general', 'hSplitterSizes',
                                       _defaultHSplitSize ).split( ',' )
@@ -203,6 +236,18 @@ class Settings( object ):
             self.xdelta = _defaultXDelta
             self.ydelta = _defaultYDelta
             self.skinName = _defaultSkin
+
+            self.verticalEdge = _defaultVerticalEdge
+            self.showSpaces = _defaultShowSpaces
+            self.showEdge = _defaultShowEdge
+            self.lineWrap = _defaultLineWrap
+            self.showEOL = _defaultShowEOL
+            self.showBraceMatch = _defaultShowBraceMatch
+            self.autoIndent = _defaultAutoIndent
+            self.backspaceUnindent = _defaultBackspaceUnindent
+            self.tabIndents = _defaultTabIndents
+            self.indentationGuides = _defaultIndentationGuides
+
             self.leftBarMinimized = False
             self.bottomBarMinimized = False
             self.hSplitterSizes = [ 200, 550 ]
@@ -275,6 +320,16 @@ class Settings( object ):
                      "xdelta=" + str( self.xdelta ) + "\n" \
                      "ydelta=" + str( self.ydelta ) + "\n" \
                      "skin=" + self.skinName + "\n" \
+                     "verticalEdge=" + str( self.verticalEdge ) + "\n" \
+                     "showSpaces=" + str( self.showSpaces ) + "\n" \
+                     "showEdge=" + str( self.showEdge ) + "\n" \
+                     "lineWrap=" + str( self.lineWrap ) + "\n" \
+                     "showEOL=" + str( self.showEOL ) + "\n" \
+                     "showBraceMatch=" + str( self.showBraceMatch ) + "\n" \
+                     "autoIndent=" + str( self.autoIndent ) + "\n" \
+                     "backspaceUnindent=" + str( self.backspaceUnindent ) + "\n" \
+                     "tabIndents=" + str( self.tabIndents ) + "\n" \
+                     "indentationGuides=" + str( self.indentationGuides ) + "\n" \
                      "leftBarMinimized=" + \
                         str( int( self.leftBarMinimized ) ) + "\n" \
                      "bottomBarMinimized=" + \
