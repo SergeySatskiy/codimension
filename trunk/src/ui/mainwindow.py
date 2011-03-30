@@ -103,6 +103,10 @@ class CodimensionMainWindow( QMainWindow ):
         self.settings = settings
         self.__initialisation = True
 
+        # This prevents context menu on the main window toolbar.
+        # I don't really know why but it is what I need
+        self.setContextMenuPolicy( Qt.NoContextMenu )
+
         # The size restore is done twice to avoid huge flickering
         # This one is approximate, the one in the timer handler is precise
         screenSize = GlobalData().application.desktop().screenGeometry()
