@@ -152,24 +152,37 @@ __lexers = { PythonFileType             : LexerPython(),
              SVGFileType                : LexerXML(),
              CodimensionProjectFileType : LexerProperties() }
 
+_skin = None
+
 def getLexerByType( fileType, fileName, parent = None ):
     " Provides the lexer for the given file type "
     try:
         return __lexers[ fileType ]
     except:
-        return __getPygmentsLexerByFileName( parent, fileName )
+        lexer = __getPygmentsLexerByFileName( parent, fileName )
+        if lexer is not None:
+            updateLexerStyle( lexer, _skin.getLexerStyles( "Guessed" ).styles )
+        return lexer
+
+def updateLexerStyle( lexer, styles ):
+    " Updates a single lexer styles "
+    for style in styles:
+        lexer.setColor( style.color, style.index )
+        lexer.setPaper( style.paper, style.index )
+        lexer.setEolFill( style.eolFill, style.index )
+        lexer.setFont( style.font, style.index )
+    return
 
 def updateLexersStyles( skin ):
     " updates the lexers styles in accordance with the given skin "
+    global _skin
+    _skin = skin
     for key in __lexers:
         lexer = __lexers[ key ]
         lexerStyles = skin.getLexerStyles( lexer.language() )
-        for style in lexerStyles.styles:
-            lexer.setColor( style.color, style.index )
-            lexer.setPaper( style.paper, style.index )
-            lexer.setEolFill( style.eolFill, style.index )
-            lexer.setFont( style.font, style.index )
+        updateLexerStyle( lexer, lexerStyles.styles )
     return
+
 
 
 def getLexerByTypeObsolete( fileType, fileName, parent = None ):
