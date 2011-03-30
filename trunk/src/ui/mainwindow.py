@@ -22,8 +22,8 @@
 
 """ codimension main window """
 
-import os, os.path, sys, logging
-from PyQt4.QtCore               import SIGNAL, Qt, QSize, QTimer
+import os, os.path, sys, logging, ConfigParser
+from PyQt4.QtCore               import SIGNAL, Qt, QSize, QTimer, QDir, QVariant
 from PyQt4.QtGui                import QLabel, QToolBar, QWidget, QMessageBox, \
                                        QVBoxLayout, QSplitter, QDialog, \
                                        QSizePolicy, QAction, QMainWindow, \
@@ -629,6 +629,17 @@ class CodimensionMainWindow( QMainWindow ):
         currentLineVisibleAct.setCheckable( True )
         currentLineVisibleAct.setChecked( self.settings.currentLineVisible )
         self.connect( currentLineVisibleAct, SIGNAL( 'changed()' ), self.__currentLineVisibleChanged )
+        editorSettingsMenu.addSeparator()
+        themesMenu = editorSettingsMenu.addMenu( "Themes" )
+        availableThemes = self.__buildThemesList()
+        for theme in availableThemes:
+            themeAct = themesMenu.addAction( theme[ 1 ] )
+            themeAct.setData( QVariant( theme[ 0 ] ) )
+            if theme[ 0 ] == Settings().skinName:
+                font = themeAct.font()
+                font.setBold( True )
+                themeAct.setFont( font )
+        self.connect( themesMenu, SIGNAL( "triggered(QAction*)" ), self.__onTheme )
 
         editorSettingsButton = QToolButton( self )
         editorSettingsButton.setIcon( PixmapCache().getIcon( 'editorsettings.png' ) )
@@ -1199,4 +1210,72 @@ class CodimensionMainWindow( QMainWindow ):
         self.settings.currentLineVisible = not self.settings.currentLineVisible
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
         return
+
+    @staticmethod
+    def __buildThemesList():
+        " Builds a list of themes - system wide and the user local "
+
+        result = []
+        localSkinsDir = os.path.normpath( str( QDir.homePath() ) ) + \
+                        os.path.sep + ".codimension" + os.path.sep + "skins" + \
+                        os.path.sep
+        for item in os.listdir( localSkinsDir ):
+            if os.path.isdir( localSkinsDir + item ):
+                # Seems to be a skin dir
+                if not os.path.exists( localSkinsDir + item + os.path.sep + "application.css" ) or \
+                   not os.path.exists( localSkinsDir + item + os.path.sep + "general" ) or \
+                   not os.path.exists( localSkinsDir + item + os.path.sep + "lexers" ):
+                    continue
+                # Get the theme display name from the general file
+                config = ConfigParser.ConfigParser()
+                try:
+                    config.read( [ localSkinsDir + item + os.path.sep + "general" ] )
+                    displayName = config.get( 'general', 'name' )
+                except:
+                    continue
+
+                result.append( [ item, displayName ] )
+
+        # Add the installed names unless the same dirs have been already copied
+        # to the user local dir
+        srcDir = os.path.dirname( os.path.abspath( sys.argv[0] ) )
+        skinsDir = srcDir + os.path.sep + "skins" + os.path.sep
+        for item in os.listdir( skinsDir ):
+            if os.path.isdir( skinsDir + item ):
+                # Seems to be a skin dir
+                if not os.path.exists( skinsDir + item + os.path.sep + "application.css" ) or \
+                   not os.path.exists( skinsDir + item + os.path.sep + "general" ) or \
+                   not os.path.exists( skinsDir + item + os.path.sep + "lexers" ):
+                    continue
+                # Check if this name alrady added
+                found = False
+                for theme in result:
+                    if theme[ 0 ] == item:
+                        found = True
+                        break
+                if found:
+                    continue
+
+                # Get the theme display name from the general file
+                config = ConfigParser.ConfigParser()
+                try:
+                    config.read( [ skinsDir + item + os.path.sep + "general" ] )
+                    displayName = config.get( 'general', 'name' )
+                except:
+                    continue
+
+                result.append( [ item, displayName ] )
+
+        return result
+
+    def __onTheme( self, act ):
+        " Triggers when a theme is selected "
+        skinSubdir = str( act.data().toString() )
+        if Settings().skinName == skinSubdir:
+            return
+
+        logging.info( "Please restart codimension to apply the new theme" )
+        Settings().skinName = skinSubdir
+        return
+
 
