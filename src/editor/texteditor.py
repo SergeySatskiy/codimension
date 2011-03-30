@@ -65,18 +65,65 @@ class TextEditor( ScintillaWrapper ):
         self.connect( self, SIGNAL( 'SCN_DOUBLECLICK(int,int,int)' ),
                       self.__onDoubleClick )
 
-        # Switch on the current line highlight
-        self.setCurrentLineHighlight( True, QColor( 232, 232, 255 ) )
+        skin = GlobalData().skin
 
         self.encoding = 'utf-8'     # default
         self.lexer_ = None
 
-        self.setWhitespaceVisibility( QsciScintilla.WsVisible )
-        self.monospacedStyles( QFont( "Monospace", 14 ) )
+        self.setPaper( skin.nolexerPaper )
+        self.setColor( skin.nolexerColor )
+        self.monospacedStyles( skin.nolexerFont )
+
         self.setAttribute( Qt.WA_DeleteOnClose )
         self.setAttribute( Qt.WA_KeyCompression )
         self.setUtf8( True )
         self.setFocusPolicy( Qt.StrongFocus )
+        self.setIndentationWidth( 4 )
+        self.setTabWidth( 4 )
+        self.setEdgeColumn( 80 )
+
+        self.setMatchedBraceBackgroundColor( skin.matchedBracePaper )
+        self.setMatchedBraceForegroundColor( skin.matchedBraceColor )
+        self.setUnmatchedBraceBackgroundColor( skin.unmatchedBracePaper )
+        self.setUnmatchedBraceForegroundColor( skin.unmatchedBraceColor )
+        self.setIndentationGuidesBackgroundColor( skin.indentGuidePaper )
+        self.setIndentationGuidesForegroundColor( skin.indentGuideColor )
+
+        self.updateSettings()
+        return
+
+    def updateSettings( self ):
+        " Updates the editor settings "
+        settings = Settings()
+
+        if settings.verticalEdge:
+            self.setEdgeMode( QsciScintilla.EdgeLine )
+            self.setEdgeColor( GlobalData().skin.edgeColor )
+        else:
+            self.setEdgeMode( QsciScintilla.EdgeNone )
+
+        if settings.showSpaces:
+            self.setWhitespaceVisibility( QsciScintilla.WsVisible )
+        else:
+            self.setWhitespaceVisibility( QsciScintilla.WsInvisible )
+
+        if settings.lineWrap:
+            self.setWrapMode( QsciScintilla.WrapWord )
+        else:
+            self.setWrapMode( QsciScintilla.WrapNone )
+
+        if settings.showBraceMatch:
+            self.setBraceMatching( QsciScintilla.StrictBraceMatch )
+        else:
+            self.setBraceMatching( QsciScintilla.NoBraceMatch )
+
+        self.setEolVisibility( settings.showEOL )
+        self.setAutoIndent( settings.autoIndent )
+        self.setBackspaceUnindents( settings.backspaceUnindent )
+        self.setTabIndents( settings.tabIndents )
+        self.setIndentationGuides( settings.indentationGuides )
+        self.setCurrentLineHighlight( settings.currentLineVisible,
+                                      GlobalData().skin.currentLinePaper )
         return
 
     def __initMargins( self ):
@@ -91,14 +138,14 @@ class TextEditor( ScintillaWrapper ):
             self.setMarginWidth( margin, 0 )
             self.setMarginSensitivity( margin, False )
 
-        self.setMarginsBackgroundColor( QColor( 228, 228, 228 ) )
-        self.setMarginsForegroundColor( QColor( 128, 128, 128 ) )
+        skin = GlobalData().skin
+        self.setMarginsBackgroundColor( skin.marginPaper )
+        self.setMarginsForegroundColor( skin.marginColor )
 
         # Set margin 0 for line numbers
-        marginsFont = QFont( "Sans Serif", 12 )
-        self.setMarginsFont( marginsFont )
+        self.setMarginsFont( skin.lineNumFont )
         self.setMarginLineNumbers( 0, True )
-        fontMetrics = QFontMetrics( marginsFont )
+        fontMetrics = QFontMetrics( skin.lineNumFont )
         self.setMarginWidth( 0, fontMetrics.width( ' 8888' ) )
 
         # Setup bookmark margin
@@ -107,40 +154,42 @@ class TextEditor( ScintillaWrapper ):
         # Setup folding margin
         self.setMarginWidth( 2, 16 )
         self.setFolding( QsciScintilla.PlainFoldStyle, 2 )
-        self.setFoldMarginColors( QColor( 230, 230, 230 ),
-                                  QColor( 255, 255, 255 ) )
+        self.setFoldMarginColors( skin.foldingColor,
+                                  skin.foldingPaper )
         return
 
     def __initIndicators( self ):
         " Initialises indicators "
+        skin = GlobalData().skin
+
         # Search indicator
         self.SendScintilla( self.SCI_INDICSETSTYLE, self.searchIndicator,
                             self.INDIC_ROUNDBOX )
         self.SendScintilla( self.SCI_INDICSETALPHA, self.searchIndicator,
-                            100 )
+                            skin.searchMarkAlpha )
         self.SendScintilla( self.SCI_INDICSETUNDER, self.searchIndicator,
                             True )
         self.SendScintilla( self.SCI_INDICSETFORE, self.searchIndicator,
-                            QColor( 0, 255, 0 ) )
+                            skin.searchMarkColor )
 
         self.SendScintilla( self.SCI_INDICSETSTYLE, self.matchIndicator,
                             self.INDIC_ROUNDBOX )
         self.SendScintilla( self.SCI_INDICSETALPHA, self.matchIndicator,
-                            100 )
+                            skin.matchMarkAlpha )
         self.SendScintilla( self.SCI_INDICSETUNDER, self.matchIndicator,
                             True )
         self.SendScintilla( self.SCI_INDICSETFORE, self.matchIndicator,
-                            QColor( 0, 0, 255 ) )
+                            skin.matchMarkColor )
 
         # Spelling indicator
         self.SendScintilla( self.SCI_INDICSETSTYLE, self.spellingIndicator,
                             self.INDIC_SQUIGGLE )
         self.SendScintilla( self.SCI_INDICSETALPHA, self.spellingIndicator,
-                            100 )
+                            skin.spellingMarkAlpha )
         self.SendScintilla( self.SCI_INDICSETUNDER, self.spellingIndicator,
                             True )
         self.SendScintilla( self.SCI_INDICSETFORE, self.spellingIndicator,
-                            QColor( 139, 0, 0 ) )
+                            skin.spellingMarkColor )
         return
 
     def __disableKeyBinding( self ):
@@ -166,8 +215,9 @@ class TextEditor( ScintillaWrapper ):
 
         self.lexer_ = lexer.getLexerByType( fileType, fileName, self )
         if self.lexer_ is not None:
-            self.lexer_.setDefaultFont( QFont( "Monospace", 14 ) )
-            self.lexer_.setFont( QFont( "Monospace", 14 ) )
+            self.lexer_.setDefaultPaper( GlobalData().skin.nolexerPaper )
+            self.lexer_.setDefaultColor( GlobalData().skin.nolexerColor )
+            self.lexer_.setDefaultFont( GlobalData().skin.nolexerFont )
             self.setLexer( self.lexer_ )
 
             if self.lexer_.lexer() == "container" or self.lexer_.lexer() is None:
@@ -181,10 +231,7 @@ class TextEditor( ScintillaWrapper ):
             # initialize the auto indent style of the lexer
             ais = self.lexer_.autoIndentStyle()
 
-        if fileType != MakefileType:
-            self.setIndentationsUseTabs( False )
-            self.setIndentationWidth( 4 )
-
+        self.setIndentationsUseTabs( fileType == MakefileType )
         return
 
     def __styleNeeded( self, position ):

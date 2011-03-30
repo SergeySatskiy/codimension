@@ -587,6 +587,57 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.__findFileButton, SIGNAL( 'triggered()' ),
                       self.findFileClicked )
 
+        # Editor settings button
+        editorSettingsMenu = QMenu( self )
+        verticalEdgeAct = editorSettingsMenu.addAction( 'Show vertical edge' )
+        verticalEdgeAct.setCheckable( True )
+        verticalEdgeAct.setChecked( self.settings.verticalEdge )
+        self.connect( verticalEdgeAct, SIGNAL( 'changed()' ), self.__verticalEdgeChanged )
+        showSpacesAct = editorSettingsMenu.addAction( 'Show whitespaces' )
+        showSpacesAct.setCheckable( True )
+        showSpacesAct.setChecked( self.settings.showSpaces )
+        self.connect( showSpacesAct, SIGNAL( 'changed()' ), self.__showSpacesChanged )
+        lineWrapAct = editorSettingsMenu.addAction( 'Wrap long lines' )
+        lineWrapAct.setCheckable( True )
+        lineWrapAct.setChecked( self.settings.lineWrap )
+        self.connect( lineWrapAct, SIGNAL( 'changed()' ), self.__lineWrapChanged )
+        showEOLAct = editorSettingsMenu.addAction( 'Show EOL' )
+        showEOLAct.setCheckable( True )
+        showEOLAct.setChecked( self.settings.showEOL )
+        self.connect( showEOLAct, SIGNAL( 'changed()' ), self.__showEOLChanged )
+        showBraceMatchAct = editorSettingsMenu.addAction( 'Show brace matching' )
+        showBraceMatchAct.setCheckable( True )
+        showBraceMatchAct.setChecked( self.settings.showBraceMatch )
+        self.connect( showBraceMatchAct, SIGNAL( 'changed()' ), self.__showBraceMatchChanged )
+        autoIndentAct = editorSettingsMenu.addAction( 'Auto indent' )
+        autoIndentAct.setCheckable( True )
+        autoIndentAct.setChecked( self.settings.autoIndent )
+        self.connect( autoIndentAct, SIGNAL( 'changed()' ), self.__autoIndentChanged )
+        backspaceUnindentAct = editorSettingsMenu.addAction( 'Backspace unindent' )
+        backspaceUnindentAct.setCheckable( True )
+        backspaceUnindentAct.setChecked( self.settings.backspaceUnindent )
+        self.connect( backspaceUnindentAct, SIGNAL( 'changed()' ), self.__backspaceUnindentChanged )
+        tabIndentsAct = editorSettingsMenu.addAction( 'TAB indents' )
+        tabIndentsAct.setCheckable( True )
+        tabIndentsAct.setChecked( self.settings.tabIndents )
+        self.connect( tabIndentsAct, SIGNAL( 'changed()' ), self.__tabIndentsChanged )
+        indentationGuidesAct = editorSettingsMenu.addAction( 'Show indentation guides' )
+        indentationGuidesAct.setCheckable( True )
+        indentationGuidesAct.setChecked( self.settings.indentationGuides )
+        self.connect( indentationGuidesAct, SIGNAL( 'changed()' ), self.__indentationGuidesChanged )
+        currentLineVisibleAct = editorSettingsMenu.addAction( 'Highlight current line' )
+        currentLineVisibleAct.setCheckable( True )
+        currentLineVisibleAct.setChecked( self.settings.currentLineVisible )
+        self.connect( currentLineVisibleAct, SIGNAL( 'changed()' ), self.__currentLineVisibleChanged )
+
+        editorSettingsButton = QToolButton( self )
+        editorSettingsButton.setIcon( PixmapCache().getIcon( 'editorsettings.png' ) )
+        editorSettingsButton.setToolTip( 'Text editor settings' )
+        editorSettingsButton.setPopupMode( QToolButton.InstantPopup  )
+        editorSettingsButton.setMenu( editorSettingsMenu )
+        editorSettingsButton.setFocusPolicy( Qt.NoFocus )
+
+
 
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
@@ -609,6 +660,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__toolbar.addAction( self.__findNameButton )
         self.__toolbar.addAction( self.__findFileButton )
         self.__toolbar.addWidget( spacer )
+        self.__toolbar.addWidget( editorSettingsButton )
         self.__toolbar.addAction( self.linecounterButton )
         self.__toolbar.addAction( aboutButton )
 
@@ -1096,5 +1148,55 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onImportDgm( self, action ):
         " Runs the generation process "
+        return
+
+    def __verticalEdgeChanged( self ):
+        self.settings.verticalEdge = not self.settings.verticalEdge
+        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        return
+
+    def __showSpacesChanged( self ):
+        self.settings.showSpaces = not self.settings.showSpaces
+        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        return
+
+    def __lineWrapChanged( self ):
+        self.settings.lineWrap = not self.settings.lineWrap
+        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        return
+
+    def __showEOLChanged( self ):
+        self.settings.showEOL = not self.settings.showEOL
+        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        return
+
+    def __showBraceMatchChanged( self ):
+        self.settings.showBraceMatch = not self.settings.showBraceMatch
+        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        return
+
+    def __autoIndentChanged( self ):
+        self.settings.autoIndent = not self.settings.autoIndent
+        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        return
+
+    def __backspaceUnindentChanged( self ):
+        self.settings.backspaceUnindent = not self.settings.backspaceUnindent
+        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        return
+
+    def __tabIndentsChanged( self ):
+        self.settings.tabIndents = not self.settings.tabIndents
+        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        return
+
+    def __indentationGuidesChanged( self ):
+        self.settings.indentationGuides = not self.settings.indentationGuides
+        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        return
+
+    def __currentLineVisibleChanged( self ):
+        self.settings.currentLineVisible = not self.settings.currentLineVisible
+        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
         return
 

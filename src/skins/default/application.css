@@ -41,5 +41,26 @@ QToolTip
 QTreeView
 {
     alternate-background-color: #eef0f1;
+    background-color: #ffffe6;
+}
+
+QLineEdit
+{
+    background-color: #ffffe6;
+}
+
+QComboBox
+{
+    background-color: #ffffe6;
+}
+
+QTextEdit
+{
+    background-color: #ffffe6;
+}
+
+QListView
+{
+    background-color: #ffffe6;
 }
 

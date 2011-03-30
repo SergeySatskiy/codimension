@@ -1,13 +1,3 @@
-The directory holds a set of .css files.
-The .css files can be put in subdirectories
-Each file holds a style sheet for a certain form.
-
-The actual css must follow to what is supported by QT.
-There are a few extensions though:
-- // started lines are considered as remarks. The '//' symbol must be at
-  the beginning of the line.
-- INCLUDE <path to a file> is supported. INCLUDE must start at 0 position
-
-The extensions are processed first and then an assembled text is passed to
-the application.
-
+This directory is likely obsolete.
+The application.css is now skinnable so it was moved to the skins directory.
+The CSS cache class is left for a while and could be removed later.

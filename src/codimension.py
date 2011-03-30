@@ -27,10 +27,10 @@ It performs necessery initialization and starts the Qt main loop.
 
 __version__ = "0.0.2"
 
-import sys, os.path, traceback, logging
+import sys, os.path, traceback, logging, shutil
 from PyQt4        import QtGui
 from optparse     import OptionParser
-from PyQt4.QtCore import SIGNAL, SLOT, QTimer
+from PyQt4.QtCore import SIGNAL, SLOT, QTimer, QDir
 
 # Make it possible to import from the subdirectories
 srcDir = os.path.dirname( os.path.abspath( sys.argv[0] ) )
@@ -43,6 +43,7 @@ from ui.application         import CodimensionApplication
 from ui.splashscreen        import SplashScreen
 from utils.pixmapcache      import PixmapCache
 from utils.project          import CodimensionProject
+from utils.skin             import Skin
 
 
 # Saving the root logging handlers
@@ -81,6 +82,16 @@ def codimensionMain():
     # Create pixmap cache singleton
     pixmapCache = PixmapCache()
 
+    # Loading settings - they have to be loaded before the application is
+    # created. This is because the skin name is saved there.
+    settings = Settings()
+    copySkin()
+
+    # Load the skin
+    globalData.skin = Skin()
+    globalData.skin.load( settings.basedir + "skins" + \
+                          os.path.sep + settings.skinName )
+
     # Create QT application
     codimensionApp = CodimensionApplication( sys.argv )
     globalData.application = codimensionApp
@@ -99,13 +110,14 @@ def codimensionMain():
     splash = SplashScreen()
     globalData.splash = splash
 
-    # Load settings
-    splash.showMessage( "Loading settings..." )
-    settings = Settings()
-
     screenSize = codimensionApp.desktop().screenGeometry()
     globalData.screenWidth = screenSize.width()
     globalData.screenHeight = screenSize.height()
+
+
+    splash.showMessage( "Applying skin to lexers..." )
+    from editor.lexer import updateLexersStyles
+    updateLexersStyles( globalData.skin )
 
     splash.showMessage( "Importing packages..." )
     from ui.mainwindow import CodimensionMainWindow
@@ -235,6 +247,53 @@ def processCommandLineArgs( args ):
                              fName + ") must not come " \
                              "together with python files" )
     return ""
+
+
+def copySkin():
+    " Tests if the configured skin is in place. Copies the default if not. "
+    localSkinDir = os.path.normpath( str( QDir.homePath() ) ) + \
+                   os.path.sep + ".codimension" + os.path.sep + "skins" + \
+                   os.path.sep + Settings().skinName
+    if os.path.exists( localSkinDir ) and os.path.isdir( localSkinDir ):
+        # That's just fine
+        return
+
+    # The configured skin has not been found in the user directory,
+    # try to find it in the codimension installation and copy it to the
+    # user local dir
+    skinDir = srcDir + os.path.sep + "skins" + os.path.sep + Settings().skinName
+    if os.path.exists( skinDir ) and os.path.isdir( skinDir ):
+        # OK, copy it for the user
+        try:
+            shutil.copytree( skinDir, localSkinDir )
+        except Exception, exc:
+            logging.error( "Could not create the user skin directory. " \
+                           "Continue without a skin." )
+            logging.error( str( exc ) )
+        return
+
+    # The configured skin dir has not been found anywhere.
+    # Try to get back to default.
+    logging.warning( "The configured skin '" + Settings().skinName + \
+                     "' has not been found neither in the codimension " \
+                     "installation nor in the user local tree. " \
+                     "Trying to fallback to the 'default' skin." )
+
+    Settings().skinName = 'default'
+    if os.path.exists( skinDir ) and os.path.isdir( skinDir ):
+        # OK, copy it for the user
+        try:
+            shutil.copytree( skinDir, localSkinDir )
+        except Exception, exc:
+            logging.error( "Could not create the user skin directory. " \
+                           "Continue without a skin." )
+            logging.error( str( exc ) )
+        return
+
+    # No bloody good - there will be no skin
+    logging.error( "Cannot find the 'default' skin. " \
+                   "Please check codimension installation." )
+    return
 
 
 def exceptionHook( excType, excValue, tracebackObj ):

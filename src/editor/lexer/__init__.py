@@ -121,8 +121,58 @@ def getSupportedLanguages():
 
     return supportedLanguages
 
+from lexerpython import LexerPython
+from lexerruby import LexerRuby
+from lexerd import LexerD
+from lexerhtml import LexerHTML
+from lexercss import LexerCSS
+from lexeridl import LexerIDL
+from lexermakefile import LexerMakefile
+from lexercpp import LexerCPP
+from lexerxml import LexerXML
+from lexerproperties import LexerProperties
+
+__lexers = { PythonFileType             : LexerPython(),
+             Python3FileType            : LexerPython(),
+             RubyFileType               : LexerRuby(),
+             DFileType                  : LexerD(),
+             HTMLFileType               : LexerHTML(),
+             CSSFileType                : LexerCSS(),
+             IDLFileType                : LexerIDL(),
+             MakefileType               : LexerMakefile(),
+             CFileType                  : LexerCPP( None, 0 ),
+             CHeaderFileType            : LexerCPP( None, 0 ),
+             CPPFileType                : LexerCPP( None, 0 ),
+             CPPHeaderFileType          : LexerCPP( None, 0 ),
+             DesignerHeaderFileType     : LexerCPP( None, 0 ),
+             DesignerFileType           : LexerXML(),
+             XMLFileType                : LexerXML(),
+             LinguistFileType           : LexerXML(),
+             QTResourceFileType         : LexerXML(),
+             SVGFileType                : LexerXML(),
+             CodimensionProjectFileType : LexerProperties() }
 
 def getLexerByType( fileType, fileName, parent = None ):
+    " Provides the lexer for the given file type "
+    try:
+        return __lexers[ fileType ]
+    except:
+        return __getPygmentsLexerByFileName( parent, fileName )
+
+def updateLexersStyles( skin ):
+    " updates the lexers styles in accordance with the given skin "
+    for key in __lexers:
+        lexer = __lexers[ key ]
+        lexerStyles = skin.getLexerStyles( lexer.language() )
+        for style in lexerStyles.styles:
+            lexer.setColor( style.color, style.index )
+            lexer.setPaper( style.paper, style.index )
+            lexer.setEolFill( style.eolFill, style.index )
+            lexer.setFont( style.font, style.index )
+    return
+
+
+def getLexerByTypeObsolete( fileType, fileName, parent = None ):
     " Provides the lexer for the given file type "
 
     if fileType in [ PythonFileType, Python3FileType ]:
@@ -162,6 +212,8 @@ def getLexerByType( fileType, fileName, parent = None ):
 
     # FIXME: I guess fileName is not what the pygments lexer expects
     return __getPygmentsLexerByFileName( parent, fileName )
+
+
 
 
 def getLexer( language, parent = None, pyname = "" ):

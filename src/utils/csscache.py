@@ -27,6 +27,47 @@ import os.path, sys
 from optparse  import OptionParser
 
 
+def parseSingleCSS( path, content ):
+    """ Recursive function to get a single CSS content
+        with removed comment lines and resolved INCLUDEs """
+
+    f = open( path )
+    for line in f:
+        if line.strip().startswith( '//' ):
+            continue
+        if line.strip().upper().startswith( 'INCLUDE' ):
+            parts = line.strip().split()
+            if len( parts ) != 2:
+                raise Exception( "Unexpected line format: '" + line + \
+                                 "' in file '" + path + "'" )
+
+            fileName = parts[1].strip()
+            if os.path.isabs( fileName ):
+                # absolute path
+                if not os.path.exists( fileName ):
+                    raise Exception( "INCLUDE file '" + fileName + \
+                                     "' in '" + path + \
+                                     "' has not been found" )
+                parseSingleCSS( fileName, content )
+                continue
+
+            # relative path
+            includedFileName = os.path.dirname( path ) + os.path.sep + fileName
+            includedFileName = os.path.normpath( includedFileName )
+            if not os.path.exists( includedFileName ):
+                raise Exception( "INCLUDE file '" + fileName + "' (" + \
+                                 includedFileName + ") in '" + path + \
+                                 "' has not been found" )
+            parseSingleCSS( includedFileName, content )
+            continue
+        # Some line
+        if len( line.strip() ) > 0:
+            content.append( line )
+
+    f.close()
+    return
+
+
 class CSSCache( object ):
     """
     Implementation idea is taken from here:
@@ -68,48 +109,8 @@ class CSSCache( object ):
             " Provides the resolved CSS content "
 
             content = []
-            self.__parseSingleCSS( path, content )
+            parseSingleCSS( path, content )
             return "".join( content )
-
-        def __parseSingleCSS( self, path, content ):
-            """ Recursive function to get a single CSS content
-                with removed comment lines and resolved INCLUDEs """
-
-            f = open( path )
-            for line in f:
-                if line.strip().startswith( '//' ):
-                    continue
-                if line.strip().upper().startswith( 'INCLUDE' ):
-                    parts = line.strip().split()
-                    if len( parts ) != 2:
-                        raise Exception( "Unexpected line format: '" + line + \
-                                         "' in file '" + path + "'" )
-
-                    fileName = parts[1].strip()
-                    if fileName.startswith( '/' ):
-                        # absolute path
-                        if not os.path.exists( fileName ):
-                            raise Exception( "INCLUDE file '" + fileName + \
-                                             "' in '" + path + \
-                                             "' has not been found" )
-                        self.__parseSingleCSS( fileName, content )
-                        continue
-
-                    # relative path
-                    includedFileName = os.path.dirname( path ) + '/' + fileName
-                    includedFileName = os.path.normpath( includedFileName )
-                    if not os.path.exists( includedFileName ):
-                        raise Exception( "INCLUDE file '" + fileName + "' (" + \
-                                         includedFileName + ") in '" + path + \
-                                         "' has not been found" )
-                    self.__parseSingleCSS( includedFileName, content )
-                    continue
-                # Some line
-                if len( line.strip() ) > 0:
-                    content.append( line )
-
-            f.close()
-            return
 
     def __init__( self ):
         if CSSCache._iInstance is None:
