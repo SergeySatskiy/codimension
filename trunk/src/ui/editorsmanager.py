@@ -1155,13 +1155,20 @@ class EditorsManager( QTabWidget ):
 
     def getTextEditors( self ):
         " Provides a list of the currently opened text editors "
-
         result = []
         for index in range( self.count() ):
             item = self.widget( index )
             if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
                 result.append( [ item.getUUID(), item.getFileName(), item ] )
         return result
+
+    def updateEditorsSettings( self ):
+        " makes all the text editors updating settings "
+        for index in range( self.count() ):
+            item = self.widget( index )
+            if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
+                item.getEditor().updateSettings()
+        return
 
     def getWidgetByUUID( self, uuid ):
         " Provides the widget found by the given UUID "
