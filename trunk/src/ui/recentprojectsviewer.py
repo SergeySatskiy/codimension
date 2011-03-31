@@ -51,6 +51,7 @@ class RecentProjectViewItem( QTreeWidgetItem ):
                 QStringList() << "" << projectName + "   " << fileName )
 
         self.__isValid = True
+        self.__isCurrent = False
         self.updateTooltip()
         return
 
@@ -100,6 +101,7 @@ class RecentProjectViewItem( QTreeWidgetItem ):
     def __markCurrent( self ):
         """ Mark the current project with an icon """
         self.setIcon( 0, PixmapCache().getIcon( 'currentproject.png' ) )
+        self.__isCurrent = True
         return
 
     def getFilename( self ):
@@ -109,6 +111,11 @@ class RecentProjectViewItem( QTreeWidgetItem ):
     def isValid( self ):
         """ True if the project is valid """
         return self.__isValid
+
+    def isCurrent( self ):
+        " True if the project is current "
+        return self.__isCurrent
+
 
 
 class RecentFileViewItem( QTreeWidgetItem ):
@@ -170,8 +177,13 @@ class RecentProjectsViewer( QWidget ):
     def __init__( self, parent = None ):
         QWidget.__init__( self, parent )
 
+        self.__projectContextItem = None
+        self.__fileContextItem = None
+
         upper = self.__createRecentFilesLayout()
         lower = self.__createRecentProjectsLayout()
+        self.__createProjectPopupMenu()
+        self.__createFilePopupMenu()
 
         layout = QVBoxLayout()
         layout.setContentsMargins( 1, 1, 1, 1 )
@@ -182,35 +194,56 @@ class RecentProjectsViewer( QWidget ):
         layout.addWidget( splitter )
         self.setLayout( layout )
 
-        # create the context menu
-        self.__menu = QMenu( self.projectsView )
-        self.__loadMenuItem = self.__menu.addAction( \
+        self.__populateProjects()
+        self.__populateFiles()
+        self.__updateProjectToolbarButtons()
+        self.__updateFileToolbarButtons()
+        return
+
+    def __createFilePopupMenu( self ):
+        " create the recent files popup menu "
+        self.__fileMenu = QMenu( self.recentFilesView )
+        self.__openMenuItem = self.__fileMenu.addAction( \
+                                PixmapCache().getIcon( 'load.png' ),
+                                'Open', self.__openFile )
+        self.__fileMenu.addSeparator()
+        self.__delFileMenuItem = self.__fileMenu.addAction( \
+                                PixmapCache().getIcon( 'trash.png' ),
+                                'Delete from recent',
+                                self.__deleteFile )
+        self.recentFilesView.setContextMenuPolicy( Qt.CustomContextMenu )
+        self.connect( self.recentFilesView,
+                      SIGNAL( "customContextMenuRequested(const QPoint &)" ),
+                      self.__handleShowFileContextMenu )
+        return
+
+
+    def __createProjectPopupMenu( self ):
+        " Creates the recent project popup menu "
+        self.__projectMenu = QMenu( self.projectsView )
+        self.__prjLoadMenuItem = self.__projectMenu.addAction( \
                                 PixmapCache().getIcon( 'load.png' ),
                                 'Load',
                                 self.__loadProject )
-        self.__menu.addSeparator()
-        self.__propsMenuItem = self.__menu.addAction( \
+        self.__projectMenu.addSeparator()
+        self.__propsMenuItem = self.__projectMenu.addAction( \
                                 PixmapCache().getIcon( 'smalli.png' ),
                                 'Properties',
                                 self.__viewProperties )
-        self.__menu.addSeparator()
-        self.__delMenuItem = self.__menu.addAction( \
+        self.__projectMenu.addSeparator()
+        self.__delPrjMenuItem = self.__projectMenu.addAction( \
                                 PixmapCache().getIcon( 'trash.png' ),
                                 'Delete from recent',
                                 self.__deleteProject )
         self.projectsView.setContextMenuPolicy( Qt.CustomContextMenu )
         self.connect( self.projectsView,
                       SIGNAL( "customContextMenuRequested(const QPoint &)" ),
-                      self.__handleShowContextMenu )
+                      self.__handleShowPrjContextMenu )
 
         self.connect( Settings().iInstance, SIGNAL( 'recentListChanged' ),
-                      self.__populate )
+                      self.__populateProjects )
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
                       self.__projectChanged )
-
-        self.__contextItem = None
-        self.__populate()
-        self.__updateToolbarButtons()
         return
 
     def __createRecentFilesLayout( self ):
@@ -332,7 +365,7 @@ class RecentProjectsViewer( QWidget ):
                       self.__projectActivated )
         self.connect( self.projectsView,
                       SIGNAL( "itemSelectionChanged()" ),
-                      self.__selectionChanged )
+                      self.__projectSelectionChanged )
 
         recentProjectsLayout = QVBoxLayout()
         recentProjectsLayout.setContentsMargins( 0, 0, 0, 0 )
@@ -346,7 +379,7 @@ class RecentProjectsViewer( QWidget ):
         lowerContainer.setLayout( recentProjectsLayout )
         return lowerContainer
 
-    def __selectionChanged( self ):
+    def __projectSelectionChanged( self ):
         " Handles the changed selection "
 
         selected = list( self.projectsView.selectedItems() )
@@ -355,25 +388,23 @@ class RecentProjectsViewer( QWidget ):
                              "be selectable. Please contact developers." )
 
         if len( selected ) == 0:
-            self.__contextItem = None
+            self.__projectContextItem = None
         else:
-            self.__contextItem = selected[ 0 ]
-        self.__updateToolbarButtons()
+            self.__projectContextItem = selected[ 0 ]
+        self.__updateProjectToolbarButtons()
         return
 
-    def __updateToolbarButtons( self ):
-        " Updates the toolbar buttons depending on the __contextItem "
+    def __updateProjectToolbarButtons( self ):
+        " Updates the toolbar buttons depending on the __projectContextItem "
 
-        if self.__contextItem == None:
+        if self.__projectContextItem == None:
             self.loadButton.setEnabled( False )
             self.propertiesButton.setEnabled( False )
             self.trashButton.setEnabled( False )
         else:
-            enabled = self.__contextItem.isValid()
+            enabled = self.__projectContextItem.isValid()
             self.propertiesButton.setEnabled( enabled )
-            if enabled and \
-               self.__contextItem.getFilename() != \
-                    GlobalData().project.fileName:
+            if enabled and not self.__projectContextItem.isCurrent():
                 self.loadButton.setEnabled( True )
                 self.trashButton.setEnabled( True )
             else:
@@ -381,58 +412,81 @@ class RecentProjectsViewer( QWidget ):
                 self.trashButton.setEnabled( False )
         return
 
-    def __handleShowContextMenu( self, coord ):
-        " Show the context menu "
-
-        self.__contextItem = self.projectsView.itemAt( coord )
-        if self.__contextItem is None:
-            return
-
-        enabled = self.__contextItem.isValid()
-        self.__propsMenuItem.setEnabled( enabled )
-        self.__delMenuItem.setEnabled( True )
-        if enabled and \
-           self.__contextItem.getFilename() != GlobalData().project.fileName:
-            self.__loadMenuItem.setEnabled( True )
-        else:
-            self.__loadMenuItem.setEnabled( False )
-
-        self.__menu.popup( QCursor.pos() )
+    def __updateFileToolbarButtons( self ):
+        " Updates the toolbar buttons depending on the __fileContextItem "
+        enabled = self.__fileContextItem is not None
+        self.openFileButton.setEnabled( enabled )
+        self.trashFileButton.setEnabled( enabled )
         return
 
-    def __sort( self ):
-        """ Sort the items """
+    def __handleShowPrjContextMenu( self, coord ):
+        " Show the context menu "
+
+        self.__projectContextItem = self.projectsView.itemAt( coord )
+        if self.__projectContextItem is None:
+            return
+
+        enabled = self.__projectContextItem.isValid()
+        self.__propsMenuItem.setEnabled( enabled )
+        self.__delPrjMenuItem.setEnabled( not self.__projectContextItem.isCurrent() )
+        if enabled and \
+           self.__projectContextItem.getFilename() != GlobalData().project.fileName:
+            self.__prjLoadMenuItem.setEnabled( True )
+        else:
+            self.__prjLoadMenuItem.setEnabled( False )
+
+        self.__projectMenu.popup( QCursor.pos() )
+        return
+
+    def __sortProjects( self ):
+        """ Sort the project items """
 
         self.projectsView.sortItems( \
                 self.projectsView.sortColumn(),
                 self.projectsView.header().sortIndicatorOrder() )
         return
 
-    def __resizeColumns( self ):
-        """ Resize the list columns """
+    def __sortFiles( self ):
+        " Sort the file items "
+        self.recentFilesView.sortItems( \
+                self.recentFilesView.sortColumn(),
+                self.recentFilesView.header().sortIndicatorOrder() )
+        return
 
+    def __resizeProjectColumns( self ):
+        """ Resize the projects list columns """
         self.projectsView.header().setStretchLastSection( True )
         self.projectsView.header().resizeSections( \
                                     QHeaderView.ResizeToContents )
         self.projectsView.header().resizeSection( 0, 22 )
+        self.projectsView.header().setResizeMode( 0, QHeaderView.Fixed )
+        return
+
+    def __resizeFileColumns( self ):
+        " Resize the files list columns "
+        self.recentFilesView.header().setStretchLastSection( True )
+        self.recentFilesView.header().resizeSections( \
+                                    QHeaderView.ResizeToContents )
+        self.recentFilesView.header().resizeSection( 0, 22 )
+        self.recentFilesView.header().setResizeMode( 0, QHeaderView.Fixed )
         return
 
     def __projectActivated( self, item, column ):
         """ Handles the double click (or Enter) on the item """
 
-        self.__contextItem = item
+        self.__projectContextItem = item
         self.__loadProject()
         return
 
     def __viewProperties( self ):
         """ Handles the 'view properties' context menu item """
 
-        if self.__contextItem is None:
+        if self.__projectContextItem is None:
             return
-        if not self.__contextItem.isValid():
+        if not self.__projectContextItem.isValid():
             return
 
-        if self.__contextItem.getFilename() == GlobalData().project.fileName:
+        if self.__projectContextItem.getFilename() == GlobalData().project.fileName:
             # This is the current project - it can be edited
             project = GlobalData().project
             dialog = ProjectPropertiesDialog( project )
@@ -447,30 +501,30 @@ class RecentProjectsViewer( QWidget ):
                     str( dialog.descriptionEdit.toPlainText() ).strip() )
         else:
             # This is not the current project - it can be viewed
-            dialog = ProjectPropertiesDialog( self.__contextItem.getFilename() )
+            dialog = ProjectPropertiesDialog( self.__projectContextItem.getFilename() )
             dialog.exec_()
         return
 
     def __deleteProject( self ):
         """ Handles the 'delete from recent' context menu item """
 
-        if self.__contextItem is None:
+        if self.__projectContextItem is None:
             return
 
         # Removal from the visible list is done via a signal which comes back
         # from settings
-        Settings().deleteRecentProject( self.__contextItem.getFilename() )
+        Settings().deleteRecentProject( self.__projectContextItem.getFilename() )
         return
 
     def __loadProject( self ):
         """ handles 'Load' context menu item """
 
-        if self.__contextItem is None:
+        if self.__projectContextItem is None:
             return
-        if not self.__contextItem.isValid():
+        if not self.__projectContextItem.isValid():
             return
 
-        projectFileName = self.__contextItem.getFilename()
+        projectFileName = self.__projectContextItem.getFilename()
         if projectFileName == GlobalData().project.fileName:
             return  # This is the current project
 
@@ -486,37 +540,47 @@ class RecentProjectsViewer( QWidget ):
             logging.error( "The project " + \
                            os.path.basename( projectFileName ) + \
                            " disappeared from the file system." )
-            self.__populate()
+            self.__populateProjects()
         QApplication.restoreOverrideCursor()
         return
 
-    def __populate( self ):
+    def __populateProjects( self ):
         " Populates the recent projects "
 
         self.projectsView.clear()
         for item in Settings().recentProjects:
             self.projectsView.addTopLevelItem( RecentProjectViewItem( item ) )
-        self.__sort()
-        self.__resizeColumns()
+        self.__sortProjects()
+        self.__resizeProjectColumns()
 
         # It looks a bit dirty when the first item is selected automatically.
         # Let's suppress automatic selection
-        #self.__contextItem = self.projectsView.topLevelItem( 0 )
-        #if self.__contextItem != None:
-        #    self.projectsView.setCurrentItem( self.__contextItem )
+        #self.__projectContextItem = self.projectsView.topLevelItem( 0 )
+        #if self.__projectContextItem != None:
+        #    self.projectsView.setCurrentItem( self.__projectContextItem )
 
-        self.__updateToolbarButtons()
+        self.__updateProjectToolbarButtons()
 
        # for index in range( 0, self.projectsView.rowCount() ):
        #     self.projectsView.verticalHeader().resizeSection( index, 22 )
 
         return
 
+    def __populateFiles( self ):
+        " Populates the recent files "
+        self.recentFilesView.clear()
+
+
+        self.__sortFiles()
+        self.__resizeFileColumns()
+        self.__updateFileToolbarButtons()
+        return
+
     def __projectChanged( self, what ):
         " Triggered when the current project is changed "
 
         if what == CodimensionProject.CompleteProject:
-            self.__populate()
+            self.__populateProjects()
             return
 
         if what == CodimensionProject.Properties:
@@ -530,4 +594,18 @@ class RecentProjectsViewer( QWidget ):
 
             items[ 0 ].updateTooltip()
             return
+
+    def __openFile( self ):
+        " Handles 'open' file menu item "
+        return
+
+
+    def __deleteFile( self ):
+        " Handles 'delete from recent' file menu item "
+        return
+
+    def __handleShowFileContextMenu( self, coord ):
+        " File context menu "
+        return
+
 
