@@ -29,7 +29,6 @@
 
 """ Find and replace widgets implementation """
 
-import logging
 from PyQt4.QtGui                import QHBoxLayout, QToolButton, QLabel, \
                                        QSizePolicy, QComboBox, \
                                        QGridLayout, QWidget, QCheckBox, \
@@ -388,7 +387,9 @@ class FindWidget( FindReplaceBase ):
 
         self._findBackward = False
         if not self.__findNextPrev( self.findtextCombo.currentText() ):
-            logging.warning( "The '" + self.findtextCombo.currentText() + "' was not found" )
+            GlobalData().mainWindow.showStatusBarMessage( \
+                    "The '" + self.findtextCombo.currentText() + \
+                    "' was not found" )
         return
 
     def onPrev( self ):
@@ -398,7 +399,9 @@ class FindWidget( FindReplaceBase ):
 
         self._findBackward = True
         if not self.__findNextPrev( self.findtextCombo.currentText() ):
-            logging.warning( "The '" + self.findtextCombo.currentText() + "' was not found" )
+            GlobalData().mainWindow.showStatusBarMessage( \
+                    "The '" + self.findtextCombo.currentText() + \
+                    "' was not found" )
         return
 
     def onPrevNext( self ):
@@ -451,8 +454,9 @@ class FindWidget( FindReplaceBase ):
                                                  self._matchTarget[ 1 ] + self._matchTarget[ 2 ],
                                                  -1, -1 )
                     if len( targets ) == 0:
-                        logging.warning( "Reached the end of the document. " \
-                                         "Searching from the beginning..." )
+                        GlobalData().mainWindow.showStatusBarMessage( \
+                                    "Reached the end of the document. " \
+                                     "Searching from the beginning..." )
                         targets = editor.getTargets( txt,
                                                      self.regexpCheckBox.isChecked(),
                                                      self.caseCheckBox.isChecked(),
@@ -476,8 +480,9 @@ class FindWidget( FindReplaceBase ):
                                                  self._matchTarget[ 0 ],
                                                  self._matchTarget[ 1 ] )
                     if len( targets ) == 0:
-                        logging.warning( "Reached the beginning of the document. " \
-                                         "Searching from the end..." )
+                        GlobalData().mainWindow.showStatusBarMessage( \
+                                        "Reached the beginning of the document. " \
+                                        "Searching from the end..." )
                         targets = editor.getTargets( txt,
                                                      self.regexpCheckBox.isChecked(),
                                                      self.caseCheckBox.isChecked(),
@@ -508,8 +513,9 @@ class FindWidget( FindReplaceBase ):
                                                  self._matchTarget[ 1 ] + self._matchTarget[ 2 ],
                                                  lineTo, indexTo )
                     if len( targets ) == 0:
-                        logging.warning( "Reached the end of the selection. " \
-                                         "Searching from the beginning..." )
+                        GlobalData().mainWindow.showStatusBarMessage( \
+                                        "Reached the end of the selection. " \
+                                        "Searching from the beginning..." )
                         targets = editor.getTargets( txt,
                                                      self.regexpCheckBox.isChecked(),
                                                      self.caseCheckBox.isChecked(),
@@ -533,8 +539,9 @@ class FindWidget( FindReplaceBase ):
                                                  self._matchTarget[ 0 ],
                                                  self._matchTarget[ 1 ] )
                     if len( targets ) == 0:
-                        logging.warning( "Reached the beginning of the selection. " \
-                                         "Searching from the end..." )
+                        GlobalData().mainWindow.showStatusBarMessage( \
+                                        "Reached the beginning of the selection. " \
+                                        "Searching from the end..." )
                         targets = editor.getTargets( txt,
                                                      self.regexpCheckBox.isChecked(),
                                                      self.caseCheckBox.isChecked(),
@@ -556,7 +563,7 @@ class FindWidget( FindReplaceBase ):
             # Call the textChanged() handler which will initiate a new search
             self._onEditTextChanged( txt )
             if self._matchTarget == [-1, -1, -1]:
-                logging.warning( "The '" + txt + "' was not found" )
+                GlobalData().mainWindow.showStatusBarMessage( "The '" + txt + "' was not found" )
 
         return True
 
