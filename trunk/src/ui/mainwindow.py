@@ -28,7 +28,8 @@ from PyQt4.QtGui                import QLabel, QToolBar, QWidget, QMessageBox, \
                                        QVBoxLayout, QSplitter, QDialog, \
                                        QSizePolicy, QAction, QMainWindow, \
                                        QShortcut, QFrame, QApplication, \
-                                       QCursor, QMenu, QToolButton, QToolTip
+                                       QCursor, QMenu, QToolButton, QToolTip, \
+                                       QPalette, QColor
 from fitlabel                   import FitPathLabel
 from utils.globals              import GlobalData
 from utils.project              import CodimensionProject
@@ -91,7 +92,6 @@ class EditorsManagerWidget( QWidget ):
 
         self.setLayout( self.layout )
         return
-
 
 
 class CodimensionMainWindow( QMainWindow ):
@@ -412,6 +412,13 @@ class CodimensionMainWindow( QMainWindow ):
         self.__statusBar = self.statusBar()
         self.__statusBar.setSizeGripEnabled( True )
 
+        sbPalette = QPalette( self.__statusBar.palette() )
+        sbPalette.setColor( QPalette.Foreground, QColor( 220, 0, 0 ) )
+        self.__statusBar.setPalette( sbPalette )
+        font = self.__statusBar.font()
+        font.setItalic( True )
+        self.__statusBar.setFont( font )
+
         self.sbLanguage = QLabel( self.__statusBar )
         self.sbLanguage.setFrameStyle( QFrame.StyledPanel )
         self.__statusBar.addPermanentWidget( self.sbLanguage )
@@ -472,13 +479,11 @@ class CodimensionMainWindow( QMainWindow ):
         createProjectButton = QAction( \
                                 PixmapCache().getIcon( 'createproject.png' ),
                                 'Create new project', self )
-        createProjectButton.setStatusTip( "Create a new project" )
         self.connect( createProjectButton, SIGNAL( "triggered()" ),
                       self.__createNewProject )
 
         printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
                                'Print', self )
-        printButton.setStatusTip( 'Print the current editor content' )
         self.connect( printButton, SIGNAL( 'triggered()' ),
                       self.notImplementedYet )
         printButton.setEnabled( False )
@@ -486,7 +491,6 @@ class CodimensionMainWindow( QMainWindow ):
         aboutButton = QAction( PixmapCache().getIcon( 'about.png' ),
                                'About (Ctrl+B)', self )
         aboutButton.setShortcut( 'Ctrl+B' )
-        aboutButton.setStatusTip( 'About message' )
         self.connect( aboutButton, SIGNAL( 'triggered()' ),
                       self.aboutButtonClicked )
 
@@ -556,14 +560,12 @@ class CodimensionMainWindow( QMainWindow ):
         self.__pymetricsButton = QAction( \
                                     PixmapCache().getIcon( 'metrics.png' ),
                                     'Project metrics', self )
-        self.__pymetricsButton.setStatusTip( 'Project metrics' )
         self.connect( self.__pymetricsButton, SIGNAL( 'triggered()' ),
                       self.pymetricsButtonClicked )
 
         self.linecounterButton = QAction( \
                                     PixmapCache().getIcon( 'linecounter.png' ),
                                     'Line counter', self )
-        self.linecounterButton.setStatusTip( 'Line counter' )
         self.connect( self.linecounterButton, SIGNAL( 'triggered()' ),
                       self.linecounterButtonClicked )
 
@@ -571,7 +573,6 @@ class CodimensionMainWindow( QMainWindow ):
                                     PixmapCache().getIcon( 'findindir.png' ),
                                     'Find in project (Ctrl+Shift+F)', self )
         self.__findInFilesButton.setShortcut( 'Ctrl+Shift+F' )
-        self.__findInFilesButton.setStatusTip( 'Find in project files' )
         self.connect( self.__findInFilesButton, SIGNAL( 'triggered()' ),
                       self.findInFilesClicked )
 
@@ -579,7 +580,6 @@ class CodimensionMainWindow( QMainWindow ):
                                     PixmapCache().getIcon( 'findname.png' ),
                                     'Find name (Alt+Shift+S)', self )
         self.__findNameButton.setShortcut( 'Alt+Shift+S' )
-        self.__findNameButton.setStatusTip( 'Find name in the project' )
         self.connect( self.__findNameButton, SIGNAL( 'triggered()' ),
                       self.findNameClicked )
 
@@ -587,7 +587,6 @@ class CodimensionMainWindow( QMainWindow ):
                                     PixmapCache().getIcon( 'findfile.png' ),
                                     'Find project file (Alt+Shift+O)', self )
         self.__findFileButton.setShortcut( 'Alt+Shift+O' )
-        self.__findFileButton.setStatusTip( 'Find project file' )
         self.connect( self.__findFileButton, SIGNAL( 'triggered()' ),
                       self.findFileClicked )
 
@@ -1280,6 +1279,11 @@ class CodimensionMainWindow( QMainWindow ):
 
         logging.info( "Please restart codimension to apply the new theme" )
         Settings().skinName = skinSubdir
+        return
+
+    def showStatusBarMessage( self, msg, timeout = 10000 ):
+        " Shows a temporary status bar message, default 10sec "
+        self.statusBar().showMessage( msg, timeout )
         return
 
 
