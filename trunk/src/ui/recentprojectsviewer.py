@@ -28,14 +28,16 @@ from PyQt4.QtGui        import QTreeWidget, QTreeWidgetItem, \
                                QHeaderView, QMenu, QCursor, \
                                QWidget, QAction, QDialog, \
                                QVBoxLayout, QSizePolicy, QToolBar, \
-                               QApplication, QCursor
+                               QApplication, QCursor, QFrame, QLabel, \
+                               QHBoxLayout, QSplitter
 from utils.pixmapcache  import PixmapCache
 from utils.settings     import Settings
 from utils.project      import getProjectProperties, CodimensionProject
 from utils.globals      import GlobalData
 from projectproperties  import ProjectPropertiesDialog
 from itemdelegates      import NoOutlineHeightDelegate
-
+from utils.fileutils    import detectFileType, getFileIcon, \
+                               PythonFileType, Python3FileType
 
 
 class RecentProjectViewItem( QTreeWidgetItem ):
@@ -109,13 +111,76 @@ class RecentProjectViewItem( QTreeWidgetItem ):
         return self.__isValid
 
 
+class RecentFileViewItem( QTreeWidgetItem ):
+    " Single recent file view item data structure "
+
+    def __init__( self, fileName ):
+
+        # full file name is expected
+        basename = os.path.basename( fileName )
+        QTreeWidgetItem.__init__( self,
+                QStringList() << "" << basename + "   " << fileName )
+
+        self.__isValid = True
+        self.updateIconAndTooltip()
+        return
+
+    def updateIconAndTooltip( self ):
+        " Updates the item icon and tooltip if required "
+
+        fileName = self.getFilename()
+
+        # Check that the file exists
+        if not os.path.exists( fileName ):
+            self.__isValid = False
+            self.setToolTip( 0, 'File does not exist' )
+            self.setToolTip( 1, 'File does not exist' )
+            self.__markBroken()
+        else:
+            fileType = detectFileType( fileName )
+            if fileType in [ PythonFileType, Python3FileType ]:
+                # The tooltip could be the file docstring
+                if GlobalData().project.isProjectFile( fileName ):
+                    infoSrc = GlobalData().project.briefModinfoCache
+                else:
+                    infoSrc = GlobalData().briefModinfoCache
+                info = infoSrc.get( fileName )
+                self.setToolTip( 0, "" )
+                self.setToolTip( 1, info.docstring )
+            self.setIcon( 0, getFileIcon( fileType ) )
+
+    def __markBroken( self ):
+        " Mark the file as broken "
+        self.setIcon( 0, PixmapCache().getIcon( 'brokenproject.png' ) )
+        return
+
+    def getFilename( self ):
+        " Provides the full file name "
+        return str( self.text( 2 ) )
+
+    def isValid( self ):
+        " True if the file is still valid "
+        return self.__isValid
+
+
+
 class RecentProjectsViewer( QWidget ):
     """ Recent projects viewer implementation """
 
     def __init__( self, parent = None ):
         QWidget.__init__( self, parent )
 
-        self.__createLayout()
+        upper = self.__createRecentFilesLayout()
+        lower = self.__createRecentProjectsLayout()
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins( 1, 1, 1, 1 )
+        splitter = QSplitter( Qt.Vertical )
+        splitter.addWidget( upper )
+        splitter.addWidget( lower )
+
+        layout.addWidget( splitter )
+        self.setLayout( layout )
 
         # create the context menu
         self.__menu = QMenu( self.projectsView )
@@ -148,8 +213,77 @@ class RecentProjectsViewer( QWidget ):
         self.__updateToolbarButtons()
         return
 
-    def __createLayout( self ):
-        " Helper to create the viewer layout "
+    def __createRecentFilesLayout( self ):
+        " Creates the upper part - recent files "
+        headerFrame = QFrame()
+        headerFrame.setFrameStyle( QFrame.StyledPanel )
+        headerFrame.setFixedHeight( 24 )
+
+        recentFilesLabel = QLabel()
+        recentFilesLabel.setText( "Recent files" )
+
+        headerLayout = QHBoxLayout()
+        headerLayout.setContentsMargins( 3, 0, 0, 0 )
+        headerLayout.addWidget( recentFilesLabel )
+        headerFrame.setLayout( headerLayout )
+
+        self.recentFilesView = QTreeWidget()
+        self.recentFilesView.setAlternatingRowColors( True )
+        self.recentFilesView.setRootIsDecorated( False )
+        self.recentFilesView.setItemsExpandable( False )
+        self.recentFilesView.setSortingEnabled( True )
+        self.recentFilesView.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
+        self.recentFilesView.setUniformRowHeights( True )
+
+        self.__filesHeaderItem = QTreeWidgetItem(
+                QStringList() << "" << "File" << "Absolute path" )
+        self.recentFilesView.setHeaderItem( self.__filesHeaderItem )
+        self.recentFilesView.header().setSortIndicator( 1, Qt.AscendingOrder )
+
+        # Toolbar part - buttons
+        self.openFileButton = QAction( PixmapCache().getIcon( 'load.png' ),
+                                       'Load the highlighted project', self )
+        spacer = QWidget()
+        spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
+        self.trashFileButton = QAction( PixmapCache().getIcon( 'trash.png' ),
+                                        'Remove from the recent list (not from ' \
+                                        'the disk)', self )
+
+        upperToolbar = QToolBar()
+        upperToolbar.setMovable( False )
+        upperToolbar.setAllowedAreas( Qt.TopToolBarArea )
+        upperToolbar.setIconSize( QSize( 16, 16 ) )
+        upperToolbar.setFixedHeight( 28 )
+        upperToolbar.setContentsMargins( 0, 0, 0, 0 )
+        upperToolbar.addAction( self.openFileButton )
+        upperToolbar.addWidget( spacer )
+        upperToolbar.addAction( self.trashFileButton )
+
+        recentFilesLayout = QVBoxLayout()
+        recentFilesLayout.setContentsMargins( 0, 0, 0, 0 )
+        recentFilesLayout.setSpacing( 0 )
+        recentFilesLayout.addWidget( headerFrame )
+        recentFilesLayout.addWidget( upperToolbar )
+        recentFilesLayout.addWidget( self.recentFilesView )
+
+        upperContainer = QWidget()
+        upperContainer.setContentsMargins( 1, 1, 1, 1 )
+        upperContainer.setLayout( recentFilesLayout )
+        return upperContainer
+
+    def __createRecentProjectsLayout( self ):
+        " Creates the bottom layout "
+        headerFrame = QFrame()
+        headerFrame.setFrameStyle( QFrame.StyledPanel )
+        headerFrame.setFixedHeight( 24 )
+
+        recentProjectsLabel = QLabel()
+        recentProjectsLabel.setText( "Recent projects" )
+
+        headerLayout = QHBoxLayout()
+        headerLayout.setContentsMargins( 3, 0, 0, 0 )
+        headerLayout.addWidget( recentProjectsLabel )
+        headerFrame.setLayout( headerLayout )
 
         # Toolbar part - buttons
         self.loadButton = QAction( PixmapCache().getIcon( 'load.png' ),
@@ -169,16 +303,16 @@ class RecentProjectsViewer( QWidget ):
         self.connect( self.trashButton, SIGNAL( "triggered()" ),
                       self.__deleteProject )
 
-        toolbar = QToolBar()
-        toolbar.setMovable( False )
-        toolbar.setAllowedAreas( Qt.TopToolBarArea )
-        toolbar.setIconSize( QSize( 16, 16 ) )
-        toolbar.setFixedHeight( 28 )
-        toolbar.setContentsMargins( 0, 0, 0, 0 )
-        toolbar.addAction( self.loadButton )
-        toolbar.addAction( self.propertiesButton )
-        toolbar.addWidget( spacer )
-        toolbar.addAction( self.trashButton )
+        lowerToolbar = QToolBar()
+        lowerToolbar.setMovable( False )
+        lowerToolbar.setAllowedAreas( Qt.TopToolBarArea )
+        lowerToolbar.setIconSize( QSize( 16, 16 ) )
+        lowerToolbar.setFixedHeight( 28 )
+        lowerToolbar.setContentsMargins( 0, 0, 0, 0 )
+        lowerToolbar.addAction( self.loadButton )
+        lowerToolbar.addAction( self.propertiesButton )
+        lowerToolbar.addWidget( spacer )
+        lowerToolbar.addAction( self.trashButton )
 
         self.projectsView = QTreeWidget()
         self.projectsView.setAlternatingRowColors( True )
@@ -188,9 +322,9 @@ class RecentProjectsViewer( QWidget ):
         self.projectsView.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         self.projectsView.setUniformRowHeights( True )
 
-        self.__headerItem = QTreeWidgetItem(
-                QStringList() << "" << "Project" << "File name" )
-        self.projectsView.setHeaderItem( self.__headerItem )
+        self.__projectsHeaderItem = QTreeWidgetItem(
+                QStringList() << "" << "Project" << "Absolute path" )
+        self.projectsView.setHeaderItem( self.__projectsHeaderItem )
 
         self.projectsView.header().setSortIndicator( 1, Qt.AscendingOrder )
         self.connect( self.projectsView,
@@ -200,14 +334,17 @@ class RecentProjectsViewer( QWidget ):
                       SIGNAL( "itemSelectionChanged()" ),
                       self.__selectionChanged )
 
-        layout = QVBoxLayout()
-        layout.setContentsMargins( 0, 0, 0, 0 )
-        layout.setSpacing( 0 )
-        layout.addWidget( toolbar )
-        layout.addWidget( self.projectsView )
+        recentProjectsLayout = QVBoxLayout()
+        recentProjectsLayout.setContentsMargins( 0, 0, 0, 0 )
+        recentProjectsLayout.setSpacing( 0 )
+        recentProjectsLayout.addWidget( headerFrame )
+        recentProjectsLayout.addWidget( lowerToolbar )
+        recentProjectsLayout.addWidget( self.projectsView )
 
-        self.setLayout( layout )
-        return
+        lowerContainer = QWidget()
+        lowerContainer.setContentsMargins( 1, 1, 1, 1 )
+        lowerContainer.setLayout( recentProjectsLayout )
+        return lowerContainer
 
     def __selectionChanged( self ):
         " Handles the changed selection "
