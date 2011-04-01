@@ -680,8 +680,8 @@ class RecentProjectsViewer( QWidget ):
 
     def __prjPathToClipboard( self ):
         " Copies the project item path to the clipboard "
-        if self.__prjContextItem is not None:
+        if self.__projectContextItem is not None:
             QApplication.clipboard().setText( \
-                    self.__prjContextItem.getFilename() )
+                    self.__projectContextItem.getFilename() )
         return
 
