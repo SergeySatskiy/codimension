@@ -561,6 +561,7 @@ class RecentProjectsViewer( QWidget ):
 
         QApplication.processEvents()
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+        projectFileName = self.__projectContextItem.getFilename()
         if os.path.exists( projectFileName ):
             mainWin = GlobalData().mainWindow
             editorsManager = mainWin.editorsManagerWidget.editorsManager
