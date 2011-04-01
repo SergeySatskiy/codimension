@@ -215,6 +215,9 @@ class RecentProjectsViewer( QWidget ):
         self.connect( self.recentFilesView,
                       SIGNAL( "customContextMenuRequested(const QPoint &)" ),
                       self.__handleShowFileContextMenu )
+
+        self.connect( GlobalData().project, SIGNAL( 'recentFilesChanged' ),
+                      self.__populateFiles )
         return
 
 
@@ -569,7 +572,8 @@ class RecentProjectsViewer( QWidget ):
     def __populateFiles( self ):
         " Populates the recent files "
         self.recentFilesView.clear()
-
+        for path in GlobalData().project.recentFiles:
+            self.recentFilesView.addTopLevelItem( RecentFileViewItem( path ) )
 
         self.__sortFiles()
         self.__resizeFileColumns()
@@ -581,6 +585,7 @@ class RecentProjectsViewer( QWidget ):
 
         if what == CodimensionProject.CompleteProject:
             self.__populateProjects()
+            self.__populateFiles()
             return
 
         if what == CodimensionProject.Properties:
