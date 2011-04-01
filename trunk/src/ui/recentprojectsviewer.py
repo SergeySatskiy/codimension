@@ -210,6 +210,9 @@ class RecentProjectsViewer( QWidget ):
         self.__openMenuItem = self.__fileMenu.addAction( \
                                 PixmapCache().getIcon( 'openitem.png' ),
                                 'Open', self.__openFile )
+        self.__copyPathFileMenuItem = self.__fileMenu.addAction( \
+                        PixmapCache().getIcon( 'copytoclipboard.png' ),
+                        'Copy path to clipboard', self.__filePathToClipboard )
         self.__fileMenu.addSeparator()
         self.__delFileMenuItem = self.__fileMenu.addAction( \
                                 PixmapCache().getIcon( 'trash.png' ),
@@ -237,6 +240,10 @@ class RecentProjectsViewer( QWidget ):
                                 PixmapCache().getIcon( 'smalli.png' ),
                                 'Properties',
                                 self.__viewProperties )
+        self.__prjCopyPathMenuItem = self.__projectMenu.addAction( \
+                                PixmapCache().getIcon( 'copytoclipboard.png' ),
+                                'Copy path to clipboard',
+                                self.__prjPathToClipboard )
         self.__projectMenu.addSeparator()
         self.__delPrjMenuItem = self.__projectMenu.addAction( \
                                 PixmapCache().getIcon( 'trash.png' ),
@@ -292,6 +299,11 @@ class RecentProjectsViewer( QWidget ):
                                        'Open the highlighted file', self )
         self.connect( self.openFileButton, SIGNAL( "triggered()" ),
                       self.__openFile )
+        self.copyFilePathButton = QAction( \
+                        PixmapCache().getIcon( 'copytoclipboard.png' ),
+                        'Copy path to clipboard', self )
+        self.connect( self.copyFilePathButton, SIGNAL( "triggered()" ),
+                      self.__filePathToClipboard )
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
         self.trashFileButton = QAction( PixmapCache().getIcon( 'trash.png' ),
@@ -307,6 +319,7 @@ class RecentProjectsViewer( QWidget ):
         upperToolbar.setFixedHeight( 28 )
         upperToolbar.setContentsMargins( 0, 0, 0, 0 )
         upperToolbar.addAction( self.openFileButton )
+        upperToolbar.addAction( self.copyFilePathButton )
         upperToolbar.addWidget( spacer )
         upperToolbar.addAction( self.trashFileButton )
 
@@ -346,6 +359,11 @@ class RecentProjectsViewer( QWidget ):
                                          'properties', self )
         self.connect( self.propertiesButton, SIGNAL( "triggered()" ),
                       self.__viewProperties )
+        self.copyPrjPathButton = QAction( \
+                        PixmapCache().getIcon( 'copytoclipboard.png' ),
+                        'Copy path to clipboard', self )
+        self.connect( self.copyPrjPathButton, SIGNAL( "triggered()" ),
+                      self.__prjPathToClipboard )
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
         self.trashButton = QAction( PixmapCache().getIcon( 'trash.png' ),
@@ -362,6 +380,7 @@ class RecentProjectsViewer( QWidget ):
         lowerToolbar.setContentsMargins( 0, 0, 0, 0 )
         lowerToolbar.addAction( self.loadButton )
         lowerToolbar.addAction( self.propertiesButton )
+        lowerToolbar.addAction( self.copyPrjPathButton )
         lowerToolbar.addWidget( spacer )
         lowerToolbar.addAction( self.trashButton )
 
@@ -430,10 +449,12 @@ class RecentProjectsViewer( QWidget ):
         if self.__projectContextItem == None:
             self.loadButton.setEnabled( False )
             self.propertiesButton.setEnabled( False )
+            self.copyPrjPathButton.setEnabled( False )
             self.trashButton.setEnabled( False )
         else:
             enabled = self.__projectContextItem.isValid()
             self.propertiesButton.setEnabled( enabled )
+            self.copyPrjPathButton.setEnabled( True )
             if enabled and not self.__projectContextItem.isCurrent():
                 self.loadButton.setEnabled( True )
                 self.trashButton.setEnabled( True )
@@ -446,6 +467,7 @@ class RecentProjectsViewer( QWidget ):
         " Updates the toolbar buttons depending on the __fileContextItem "
         enabled = self.__fileContextItem is not None
         self.openFileButton.setEnabled( enabled )
+        self.copyFilePathButton.setEnabled( enabled )
         self.trashFileButton.setEnabled( enabled )
         return
 
@@ -647,5 +669,19 @@ class RecentProjectsViewer( QWidget ):
         self.__fileContextItem = self.recentFilesView.itemAt( coord )
         if self.__fileContextItem is not None:
             self.__fileMenu.popup( QCursor.pos() )
+        return
+
+    def __filePathToClipboard( self ):
+        " Copies the file item path to the clipboard "
+        if self.__fileContextItem is not None:
+            QApplication.clipboard().setText( \
+                    self.__fileContextItem.getFilename() )
+        return
+
+    def __prjPathToClipboard( self ):
+        " Copies the project item path to the clipboard "
+        if self.__prjContextItem is not None:
+            QApplication.clipboard().setText( \
+                    self.__prjContextItem.getFilename() )
         return
 
