@@ -638,7 +638,7 @@ class RecentProjectsViewer( QWidget ):
             if self.__fileContextItem == candidate:
                 self.recentFilesView.takeTopLevelItem( index )
                 return
-            index == 1
+            index += 1
         return
 
     def __handleShowFileContextMenu( self, coord ):
