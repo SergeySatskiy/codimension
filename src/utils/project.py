@@ -979,6 +979,7 @@ class CodimensionProject( QObject ):
         self.__saveRecentFiles()
         if len( self.recentFiles ) > 32:
             self.recentFiles = self.recentFiles[ -32 : ]
+        self.emit( SIGNAL( 'recentFilesChanged' ) )
         return True
 
     def removeRecentFile( self, path ):

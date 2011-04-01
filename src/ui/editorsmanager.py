@@ -69,6 +69,7 @@ class EditorsManager( QTabWidget ):
         self.__historyFwdMenu = None
         self.__skipHistoryUpdate = False
         self.__doNotSaveTabs = False
+        self.__restoringTabs = False
         self.navigationButton = None
         self.historyBackButton = None
         self.historyFwdButton = None
@@ -515,6 +516,9 @@ class EditorsManager( QTabWidget ):
             self.__updateStatusBar()
             newWidget.setFocus()
             self.saveTabsStatus()
+            if self.__restoringTabs == False:
+                GlobalData().project.addRecentFile( fileName )
+
         except Exception, exc:
             logging.error( str( exc ) )
             return False
@@ -571,6 +575,8 @@ class EditorsManager( QTabWidget ):
             editor.setFocus()
             newWidget.updateStatus()
             self.saveTabsStatus()
+            if self.__restoringTabs == False:
+                GlobalData().project.addRecentFile( fileName )
         except Exception, exc:
             logging.error( str( exc ) )
             return False
@@ -720,6 +726,7 @@ class EditorsManager( QTabWidget ):
             else:
                 self.emit( SIGNAL( 'bufferSavedAs' ), fileName,
                            currentWidget.getUUID() )
+                GlobalData().project.addRecentFile( fileName )
             currentWidget.updateStatus()
             return True
 
@@ -1053,6 +1060,7 @@ class EditorsManager( QTabWidget ):
     def restoreTabs( self, status ):
         " Restores the tab status, i.e. load files and set cursor pos "
 
+        self.__restoringTabs = True
         self.history.clear()
 
         # Force close all the tabs if any
@@ -1119,6 +1127,7 @@ class EditorsManager( QTabWidget ):
             activeIndex = 0
             self.activateTab( activeIndex )
             self.history.clear()
+            self.__restoringTabs = False
             return
 
         # There are restored tabs
@@ -1128,6 +1137,7 @@ class EditorsManager( QTabWidget ):
         self.activateTab( activeIndex )
         self.history.clear()
         self.history.addCurrent()
+        self.__restoringTabs = False
         return
 
     @staticmethod
