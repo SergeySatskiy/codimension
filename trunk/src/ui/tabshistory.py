@@ -84,10 +84,6 @@ class TabsHistory( QObject ):
 
     def addCurrent( self ):
         " Adds the current editors manager tab to the history "
-        if self.__index != -1:
-            # There is something in the history - cut the tail
-            self.__history = self.__history[ : self.__index + 1 ]
-
         currentWidget = self.__editorsManger.currentWidget()
 
         newEntry = TabHistoryEntry()
@@ -102,6 +98,13 @@ class TabsHistory( QObject ):
             newEntry.line = currentWidget.getLine()
             newEntry.pos = currentWidget.getPos()
             newEntry.firstVisible = currentWidget.getEditor().firstVisibleLine()
+
+        if self.__index != -1:
+            if newEntry == self.__history[ self.__index ]:
+                # The new entry is the same as the current - ignore request
+                return
+            # Cut the tail of the history if needed
+            self.__history = self.__history[ : self.__index + 1 ]
 
         self.__history.append( newEntry )
         self.__enforceLimit()
