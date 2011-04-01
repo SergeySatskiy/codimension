@@ -151,6 +151,7 @@ class RecentFileViewItem( QTreeWidgetItem ):
     def __markOK( self ):
         " Mark the file as OK "
         self.__isValid = False
+        fileName = self.getFilename()
         fileType = detectFileType( fileName )
         if fileType in [ PythonFileType, Python3FileType ]:
             # The tooltip could be the file docstring
