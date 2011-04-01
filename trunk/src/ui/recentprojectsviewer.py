@@ -625,7 +625,7 @@ class RecentProjectsViewer( QWidget ):
         if not self.__fileContextItem.isValid():
             logging.warning( "Cannot open " + fName )
             return
-        GlobalData().mainWindow.openFile( fName )
+        GlobalData().mainWindow.openFile( fName, -1 )
         return
 
     def __deleteFile( self ):
