@@ -150,7 +150,7 @@ class RecentFileViewItem( QTreeWidgetItem ):
 
     def __markOK( self ):
         " Mark the file as OK "
-        self.__isValid = False
+        self.__isValid = True
         fileName = self.getFilename()
         fileType = detectFileType( fileName )
         if fileType in [ PythonFileType, Python3FileType ]:
