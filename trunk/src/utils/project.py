@@ -80,6 +80,8 @@ class CodimensionProject( QObject ):
         self.findFuncHistory = []
         self.findGlobalHistory = []
 
+        self.recentFiles = []
+
         # Precompile the exclude filters
         self.__excludeFilter = []
         for flt in Settings().projectFilesFilters:
@@ -135,6 +137,8 @@ class CodimensionProject( QObject ):
         self.findClassHistory = []
         self.findFuncHistory = []
         self.findGlobalHistory = []
+
+        self.recentFiles = []
 
         # Reset the dir watchers if so
         if self.__dirWatcher is not None:
@@ -213,6 +217,7 @@ class CodimensionProject( QObject ):
         self.__safeRemove( userProjectDir + "topleveldirs" )
         self.__safeRemove( userProjectDir + "tabsstatus" )
         self.__safeRemove( userProjectDir + "findinfiles" )
+        self.__safeRemove( userProjectDir + "recentfiles" )
         return
 
     def __createProjectFile( self ):
@@ -264,6 +269,7 @@ class CodimensionProject( QObject ):
         self.__saveTabsStatus()
         self.__saveFindFiles()
         self.__saveFindObjects()
+        self.__saveRecentFiles()
 
         self.__formatOK = True
         return
@@ -324,6 +330,16 @@ class CodimensionProject( QObject ):
         self.__writeList( f, "classhistory", "class", self.findClassHistory )
         self.__writeList( f, "funchistory", "func", self.findFuncHistory )
         self.__writeList( f, "globalhistory", "global", self.findGlobalHistory )
+        f.close()
+        return
+
+    def __saveRecentFiles( self ):
+        " Helper to save recent files list "
+        if self.fileName == "":
+            return
+        f = open( self.userProjectDir + "recentfiles", "w" )
+        self.__writeHeader( f )
+        self.__writeList( f, "recentfiles", "file", self.recentFiles )
         f.close()
         return
 
@@ -435,6 +451,7 @@ class CodimensionProject( QObject ):
         self.__loadTabsStatus()
         self.__loadFindFiles()
         self.__loadFindObjects()
+        self.__loadRecentFiles()
 
         # The project might have been moved...
         self.__createProjectFile()  # ~/.codimension/uuidNN/project
@@ -645,6 +662,31 @@ class CodimensionProject( QObject ):
                 config, 'dirhistory', 'dir' )
         self.findFilesMasks = self.__loadListSection( \
                 config, 'maskhistory', 'mask' )
+        config = None
+        return
+
+    def __loadRecentFiles( self ):
+        " Loads the recent files list "
+        confFile = self.userProjectDir + "recentfiles"
+        if not os.path.exists( confFile ):
+            logging.info( "Cannot find recentfiles project file. " \
+                          "Expected here: " + confFile )
+            self.__formatOK = False
+            return
+
+        config = ConfigParser.ConfigParser()
+        try:
+            config.read( confFile )
+        except:
+            # Bad error - cannot load project file at all
+            config = None
+            self.__formatOK = False
+            logging.warning( "Cannot read recentfiles project file " \
+                             "from here: " + confFile )
+            return
+
+        self.recentFiles = self.__loadListSection( \
+                config, 'recentfiles', 'file' )
         config = None
         return
 
@@ -925,6 +967,26 @@ class CodimensionProject( QObject ):
         for path in self.__dirList:
             result.append( self.__makeAbsolute( path ) )
         return result
+
+    def addRecentFile( self, path ):
+        " Adds a single recent file. True if a new file was inserted. "
+        if path in self.recentFiles:
+            self.recentFiles.remove( path )
+            self.recentFiles.insert( 0, path )
+            self.__saveRecentFiles()
+            return False
+        self.recentFiles.insert( 0, path )
+        self.__saveRecentFiles()
+        if len( self.recentFiles ) > 32:
+            self.recentFiles = self.recentFiles[ -32 : ]
+        return True
+
+    def removeRecentFile( self, path ):
+        " Removes a single recent file "
+        if path in self.recentFiles:
+            self.recentFiles.remove( path )
+            self.__saveRecentFiles()
+        return
 
 
 def getProjectProperties( projectFile ):
