@@ -208,7 +208,7 @@ class RecentProjectsViewer( QWidget ):
         " create the recent files popup menu "
         self.__fileMenu = QMenu( self.recentFilesView )
         self.__openMenuItem = self.__fileMenu.addAction( \
-                                PixmapCache().getIcon( 'load.png' ),
+                                PixmapCache().getIcon( 'openitem.png' ),
                                 'Open', self.__openFile )
         self.__fileMenu.addSeparator()
         self.__delFileMenuItem = self.__fileMenu.addAction( \
@@ -288,8 +288,8 @@ class RecentProjectsViewer( QWidget ):
                       self.__fileActivated )
 
         # Toolbar part - buttons
-        self.openFileButton = QAction( PixmapCache().getIcon( 'load.png' ),
-                                       'Load the highlighted project', self )
+        self.openFileButton = QAction( PixmapCache().getIcon( 'openitem.png' ),
+                                       'Open the highlighted file', self )
         self.connect( self.openFileButton, SIGNAL( "triggered()" ),
                       self.__openFile )
         spacer = QWidget()
