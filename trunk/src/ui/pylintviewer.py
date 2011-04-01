@@ -227,13 +227,13 @@ class PylintViewer( QWidget ):
         palette = scoreLabel.palette()
 
         if score < self.BadLimit:
-            palette.setColor( QPalette.Background, QColor( 250, 100, 100 ) )
+            palette.setColor( QPalette.Background, QColor( 255, 127, 127 ) )
             palette.setColor( QPalette.Foreground, QColor( 0, 0, 0 ) )
         elif score > self.GoodLimit:
-            palette.setColor( QPalette.Background, QColor( 100, 250, 100 ) )
+            palette.setColor( QPalette.Background, QColor( 220, 255, 220 ) )
             palette.setColor( QPalette.Foreground, QColor( 0, 0, 0 ) )
         else:
-            palette.setColor( QPalette.Background, QColor( 250, 250, 60 ) )
+            palette.setColor( QPalette.Background, QColor( 255, 255, 127 ) )
             palette.setColor( QPalette.Foreground, QColor( 0, 0, 0 ) )
 
         scoreLabel.setPalette( palette )
