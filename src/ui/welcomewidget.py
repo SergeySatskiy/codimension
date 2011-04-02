@@ -41,14 +41,14 @@ class WelcomeWidget( HTMLTabWidget ):
         logoPath = pixmapPath + 'logo.png'
 
         self.setHTML( \
-            """<body bgcolor="#ffffff">""" \
+            """<body bgcolor="#ffffe6">""" \
             """<p>""" \
             """<table cellspacing="1" cellpadding="3" width="100%" """ \
-            """       align="center" bgcolor="#004080" border="0">""" \
+            """       align="center" bgcolor="#A0A0FF" border="0">""" \
             """<tr>""" \
-            """  <td bgcolor="#ffffff">""" \
+            """  <td bgcolor="#ffffe6">""" \
             """    <table style="WIDTH: 100%" cellspacing="1" """ \
-            """           cellpadding="3" bgcolor="#004080">""" \
+            """           cellpadding="3" bgcolor="#A0A0FF">""" \
             """    <tr width="100%">""" \
             """      <td style="WIDTH: 110px">""" \
             """      <a href='""" + self.homePage + """'>""" \
