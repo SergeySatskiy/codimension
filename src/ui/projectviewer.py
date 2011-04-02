@@ -237,7 +237,7 @@ class ProjectViewer( QWidget ):
         self.prjPythonMenu.addSeparator()
         self.prjCopyAct = self.prjPythonMenu.addAction( \
             PixmapCache().getIcon( 'copytoclipboard.png' ),
-            'Copy Path to Clipboard', self.projectTreeView.copyToClipboard )
+            'Copy path to clipboard', self.projectTreeView.copyToClipboard )
 
         # popup menu for directories
         self.prjDirMenu = QMenu( self )
@@ -449,7 +449,7 @@ class ProjectViewer( QWidget ):
                 'Find in this directory', self.filesystemView.findInDirectory )
         self.fsDirCopyPathAct = self.fsDirMenu.addAction( \
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
-                'Copy Path to Clipboard', self.filesystemView.copyToClipboard )
+                'Copy path to clipboard', self.filesystemView.copyToClipboard )
         self.fsDirMenu.addSeparator()
         self.fsDirRemoveAct = self.fsDirMenu.addAction( \
                 PixmapCache().getIcon( 'trash.png' ),
