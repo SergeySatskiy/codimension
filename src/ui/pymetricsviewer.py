@@ -333,6 +333,12 @@ class PymetricsViewer( QWidget ):
                 fileItem = QTreeWidgetItem( QStringList() << "Editor buffer" )
             else:
                 fileItem = QTreeWidgetItem( QStringList() << fileName )
+                if GlobalData().project.isProjectFile( fileName ):
+                    infoSrc = GlobalData().project.briefModinfoCache
+                else:
+                    infoSrc = GlobalData().briefModinfoCache
+                info = infoSrc.get( fileName )
+                fileItem.setToolTip( 0, info.docstring )
             self.__totalResultsTree.addTopLevelItem( fileItem )
 
             # Messages part
