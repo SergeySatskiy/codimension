@@ -44,7 +44,9 @@ from utils.globals              import GlobalData
 from utils.settings             import Settings
 from ui.pylintviewer            import PylintViewer
 from ui.pymetricsviewer         import PymetricsViewer
-from diagram.importsdgm         import ImportsDiagramDialog
+from diagram.importsdgm         import ImportsDiagramDialog, \
+                                       ImportDiagramOptions, \
+                                       ImportsDiagramProgress
 import export
 
 
@@ -878,20 +880,48 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     def __onImportDgmTuned( self ):
         " Runs the settings dialog first "
         if self.__editor.isModified():
-            option = ImportsDiagramDialog.SingleBuffer
+            what = ImportsDiagramDialog.SingleBuffer
+            if not os.path.isabs( self.getFileName() ):
+                logging.warning( "Imports diagram can only be generated for " \
+                                 "a file. Save the editor buffer " \
+                                 "and try again." )
+                return
         else:
-            option = ImportsDiagramDialog.SingleFile
-        dlg = ImportsDiagramDialog( option, self.getFileName() )
+            what = ImportsDiagramDialog.SingleFile
+        dlg = ImportsDiagramDialog( what, self.getFileName() )
         if dlg.exec_() == QDialog.Accepted:
             # Should proceed with the diagram generation
-            pass
+            self.__generateImportDiagram( what, dlg.options )
         return
 
     def __onImportDgm( self, action ):
-        " Runs the generation process "
+        " Runs the generation process with default options "
+        if self.__editor.isModified():
+            what = ImportsDiagramDialog.SingleBuffer
+            if not os.path.isabs( self.getFileName() ):
+                logging.warning( "Imports diagram can only be generated for " \
+                                 "a file. Save the editor buffer " \
+                                 "and try again." )
+                return
+        else:
+            what = ImportsDiagramDialog.SingleFile
+        self.__generateImportDiagram( what, ImportDiagramOptions() )
         return
 
-
+    def __generateImportDiagram( self, what, options ):
+        " Show the generation progress and display the diagram "
+        if self.__editor.isModified():
+            progressDlg = ImportsDiagramProgress( what, options,
+                                                  self.getFileName(),
+                                                  self.__editor.text() )
+        else:
+            progressDlg = ImportsDiagramProgress( what, options,
+                                                  self.getFileName() )
+        if progressDlg.exec_() == QDialog.Accepted:
+            print "Accepted!"
+        else:
+            print "Rejected!"
+        return
 
     # Mandatory interface part is below
 

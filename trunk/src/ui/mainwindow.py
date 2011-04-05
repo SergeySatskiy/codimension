@@ -62,7 +62,9 @@ from findinfilesviewer          import FindInFilesViewer, hideSearchTooltip
 from findname                   import FindNameDialog
 from findfile                   import FindFileDialog
 from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
-from diagram.importsdgm         import ImportsDiagramDialog
+from diagram.importsdgm         import ImportsDiagramDialog, \
+                                       ImportsDiagramProgress, \
+                                       ImportDiagramOptions
 
 
 class EditorsManagerWidget( QWidget ):
@@ -1156,12 +1158,22 @@ class CodimensionMainWindow( QMainWindow ):
         " Runs the settings dialog first "
         dlg = ImportsDiagramDialog( ImportsDiagramDialog.ProjectFiles )
         if dlg.exec_() == QDialog.Accepted:
-            # Should proceed with the diagram generation
-            pass
+            self.__generateImportDiagram( dlg.options )
         return
 
     def __onImportDgm( self, action ):
         " Runs the generation process "
+        self.__generateImportDiagram( ImportDiagramOptions() )
+        return
+
+    def __generateImportDiagram( self, options ):
+        " Show the generation progress and display the diagram "
+        progressDlg = ImportsDiagramProgress( ImportsDiagramDialog.ProjectFiles,
+                                              options )
+        if progressDlg.exec_() == QDialog.Accepted:
+            print "Accepted!"
+        else:
+            print "Rejected!"
         return
 
     def __verticalEdgeChanged( self ):
