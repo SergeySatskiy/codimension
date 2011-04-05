@@ -51,7 +51,9 @@ from utils.fileutils    import BrokenSymlinkFileType, PythonFileType, \
 from pylintviewer       import PylintViewer
 from pymetricsviewer    import PymetricsViewer
 from newnesteddir       import NewProjectDirDialog
-from diagram.importsdgm import ImportsDiagramDialog
+from diagram.importsdgm import ImportsDiagramDialog, \
+                               ImportDiagramOptions, \
+                               ImportsDiagramProgress
 
 
 class ProjectViewer( QWidget ):
@@ -1068,8 +1070,17 @@ class ProjectViewer( QWidget ):
                 logging.warning( "There are no python files in " + \
                                  self.__prjContextItem.getPath() )
                 return
+            projectDirs = GlobalData().project.getProjectDirs()
+            if len( projectDirs ) == 1 and \
+               projectDirs[ 0 ] == self.__prjContextItem.getPath():
+                what = ImportsDiagramDialog.ProjectFiles
+            else:
+                what = ImportsDiagramDialog.DirectoryFiles
+            self.__generateImportDiagram( what, ImportDiagramOptions() )
+        else:
+            self.__generateImportDiagram( ImportsDiagramDialog.SingleFile,
+                                          ImportDiagramOptions() )
         return
-
 
     def __onImportDgmTuned( self ):
         " Triggered when a tuned import diagram is requested "
@@ -1087,18 +1098,28 @@ class ProjectViewer( QWidget ):
             projectDirs = GlobalData().project.getProjectDirs()
             if len( projectDirs ) == 1 and \
                projectDirs[ 0 ] == self.__prjContextItem.getPath():
-                dlg = ImportsDiagramDialog( ImportsDiagramDialog.ProjectFiles )
+                what = ImportsDiagramDialog.ProjectFiles
+                dlg = ImportsDiagramDialog( what )
             else:
-                dlg = ImportsDiagramDialog( ImportsDiagramDialog.DirectoryFiles,
+                what = ImportsDiagramDialog.DirectoryFiles
+                dlg = ImportsDiagramDialog( what,
                                             self.__prjContextItem.getPath() )
         else:
-            dlg = ImportsDiagramDialog( ImportsDiagramDialog.SingleFile,
+            what = ImportsDiagramDialog.SingleFile
+            dlg = ImportsDiagramDialog( what,
                                         self.__prjContextItem.getPath() )
 
         if dlg.exec_() == QDialog.Accepted:
-            # Should proceed with the diagram generation
-            pass
+            self.__generateImportDiagram( what, dlg.options )
+        return
 
-
-        pass
+    def __generateImportDiagram( self, what, options ):
+        " Show the generation progress and display the diagram "
+        progressDlg = ImportsDiagramProgress( what, options,
+                                              self.__prjContextItem.getPath() )
+        if progressDlg.exec_() == QDialog.Accepted:
+            print "Accepted!"
+        else:
+            print "Rejected!"
+        return
 
