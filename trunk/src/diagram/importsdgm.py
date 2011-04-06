@@ -44,25 +44,39 @@ class DgmConnection:
     ModuleDependency = 1
 
     def __init__( self ):
+        self.objName = ""       # Unique object name
         self.kind = -1          # See connection types
         self.source = ""        # Connection start point
         self.target = ""        # Connection end point
-        self.title = ""         # Connection title
-
-        self.refFile = ""       # File for the title
-        self.refLine = -1       # Line for the title
+        self.labels = []        # Connection labels: list of what imported
+                                # and their ref lenes:
+                                # [ [os, 15], [sys, 16]]
         return
+
+    def toGraphviz( self ):
+        " Serialize the connection in graphviz format "
+        return ""
+
+    def __eq__( self, other ):
+        " Checks if the connection connects the same objects "
+        return self.source == other.source and self.target == other.target
+
 
 class DgmDocstring:
     " Holds information about one docstring "
 
     def __init__( self ):
-        self.name = ""          # unique name
+        self.objName = ""       # Unique object name
         self.text = ""          # Module docstring
 
         self.refFile = ""       # File of the docstring
         self.refLine = -1       # Line of the docstring
         return
+
+    def toGraphviz( self ):
+        " Serialize the docstring box in graphviz format "
+        return ""
+
 
 class DgmModule:
     " Holds information about one module "
@@ -73,7 +87,7 @@ class DgmModule:
     OtherProjectModule = 2
 
     def __init__( self ):
-        self.name = ""          # unique name
+        self.objName = ""       # Unique object name
         self.kind = -1          # See module types
         self.title = ""         # title
         self.classes = []       # list of classes and their line numbers
@@ -83,6 +97,14 @@ class DgmModule:
         self.refFile = ""       # File of the module
         return
 
+    def toGraphviz( self ):
+        " Serialize the module box in graphviz format "
+        return ""
+
+    def __eq__( self, other ):
+        " Compares two module boxes "
+        return self.refFile == other.refFile
+
 
 class ImportDiagramModel:
     " Holds information about data model of an import diagram "
@@ -91,8 +113,116 @@ class ImportDiagramModel:
         self.modules = []
         self.docstrings = []
         self.connections = []
+
+        self.__objectsCounter = -1
         return
 
+    def clear( self ):
+        " Clears the diagram model "
+        self.modules = []
+        self.docstrings = []
+        self.connections = []
+
+        self.__objectsCounter = -1
+        return
+
+    def toGraphviz( self ):
+        " Serialize the import diagram in graphviz format "
+        result = ""
+        for item in self.docstrings:
+            result += item.toGraphviz() + "\n"
+        for item in self.modules:
+            result += item.toGraphviz() + "\n"
+        for item in self.connections:
+            result += item.toGraphviz() + "\n"
+        return result
+
+    def __newName( self ):
+        " Generates a short name for the graphviz objects "
+        self.__objectsCounter += 1
+        return "obj" + str( self.__objectsCounter )
+
+    def addConnection( self, conn ):
+        " Adds a connection and provides its name "
+        # The connections can be added twice if there are two import directives
+        index = -1
+        for idx in xrange( 0, len( self.connections ) ):
+            if self.connections[ idx ] == conn:
+                index = idx
+                break
+
+        if index == -1:
+            # new connection, generate name and add
+            conn.objName = self.__newName()
+            self.connections.append( conn )
+            return conn.objName
+
+        # There is already such a connection. So merge labels.
+        self.connections[ index ].labels += conn.labels
+        return self.connections[ index ].objName
+
+    def addDocstringBox( self, docBox ):
+        " Adds a module docstring "
+        # Docstring boxes cannot appear twice so just add it
+        docBox.objName = self.__newName()
+        self.docstrings.append( docBox )
+        return docBox.objName
+
+    def addModule( self, modBox ):
+        " Adds a module box "
+        # It might happened that the same module appeared more than once
+        index = -1
+        for idx in xrange( 0, len( self.modules ) ):
+            if self.modules[ idx ] == modBox:
+                index = idx
+                break
+
+        if index == -1:
+            # New module box, generate name and add it
+            modBox.objName = self.__newName()
+            self.modules.append( modBox )
+            return modBox.objName
+
+        # There is already such a box, so the box type might need to be
+        # adjusted
+        if modBox.kind == self.modules[ index ].kind:
+            return self.modules[ index ].objName
+
+        # It must not be a replacement of the out of the project module
+        if modBox.kind == DgmModule.NonProjectModule or \
+           self.modules[ index ].kind == DgmModule.NonProjectModule:
+            raise Exception( "Inconsistency. There must be no replacements " \
+                             "for a system module." )
+
+        if modBox.kind == DgmModule.ModuleOfInterest:
+            # Replace the existed one with a new one but keep the object name
+            modBox.objName = self.modules[ index ].objName
+            self.modules[ index ] = modBox
+            return modBox.objName
+
+        # No need in adjustments
+        return self.modules[ index ].objName
+
+    def findModule( self, name ):
+        " Searches for a module by the object name "
+        for obj in self.modules:
+            if obj.objName == name:
+                return obj
+        return None
+
+    def findConnection( self, name ):
+        " Searches for a connection by the object name "
+        for obj in self.connections:
+            if obj.objName == name:
+                return obj
+        return None
+
+    def findDocstring( self, name ):
+        " Searches for a docstring by the object name "
+        for obj in self.docstrings:
+            if obj.objName == name:
+                return obj
+        return None
 
 
 
@@ -408,7 +538,7 @@ class ImportsDiagramProgress( QDialog ):
                 fName = os.path.realpath( path + item )
                 self.infoLabel.setText( "Parsing " + fName + "..." )
                 QApplication.processEvents()
-                self.__filesInfo[ fName ] = infoSrc.get( fName )
+                self.__filesInfo[ fName ] = srcInfo.get( fName )
 
         return
 
