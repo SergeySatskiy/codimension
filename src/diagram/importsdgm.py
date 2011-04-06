@@ -49,13 +49,20 @@ class DgmConnection:
         self.source = ""        # Connection start point
         self.target = ""        # Connection end point
         self.labels = []        # Connection labels: list of what imported
-                                # and their ref lenes:
-                                # [ [os, 15], [sys, 16]]
+                                # ImportWhat objects
         return
 
     def toGraphviz( self ):
         " Serialize the connection in graphviz format "
-        return ""
+        attributes = 'id="' + self.objName + '"'
+        label = ""
+        for what in self.labels:
+            if label != "":
+                label += "\n"
+            label += what.name
+        if label != "":
+            attributes += ', label="' + label + '"'
+        return self.source + " -> " + self.target + '[ ' + attributes + ' ];'
 
     def __eq__( self, other ):
         " Checks if the connection connects the same objects "
@@ -70,12 +77,11 @@ class DgmDocstring:
         self.text = ""          # Module docstring
 
         self.refFile = ""       # File of the docstring
-        self.refLine = -1       # Line of the docstring
         return
 
     def toGraphviz( self ):
         " Serialize the docstring box in graphviz format "
-        return ""
+        return self.objName + ' [ shape=box, label="' + self.text + '" ];'
 
 
 class DgmModule:
@@ -90,16 +96,32 @@ class DgmModule:
         self.objName = ""       # Unique object name
         self.kind = -1          # See module types
         self.title = ""         # title
-        self.classes = []       # list of classes and their line numbers
-        self.funcs = []         # list of funcs and their line numbers
-        self.globs = []         # list of global vars and their line numbers
+        self.classes = []       # list of classes objects
+        self.funcs = []         # list of funcs objects
+        self.globs = []         # list of global var objects
 
         self.refFile = ""       # File of the module
         return
 
     def toGraphviz( self ):
         " Serialize the module box in graphviz format "
-        return ""
+        classesPart = ""
+        for klass in self.classes:
+            if classesPart != "":
+                classesPart += "\n"
+            classesPart += klass.name
+        funcsPart = ""
+        for func in self.funcs:
+            if funcsPart != "":
+                funcsPart += "\n"
+            funcsPart += func.name
+        globsPart = ""
+        for glob in self.globs:
+            if globsPart != "":
+                globsPart += "\n"
+            globsPart += glob.name
+        return self.objName + ' [ shape=record, label="' + self.title + '|' + \
+               classesPart + '|' + funcsPart + '|' + globsPart + '" ];'
 
     def __eq__( self, other ):
         " Compares two module boxes "
@@ -128,13 +150,14 @@ class ImportDiagramModel:
 
     def toGraphviz( self ):
         " Serialize the import diagram in graphviz format "
-        result = ""
+        result = "digraph ImportsDiagram { "
         for item in self.docstrings:
             result += item.toGraphviz() + "\n"
         for item in self.modules:
             result += item.toGraphviz() + "\n"
         for item in self.connections:
             result += item.toGraphviz() + "\n"
+        result += " }"
         return result
 
     def __newName( self ):
@@ -284,6 +307,8 @@ class ImportsDiagramDialog( QDialog, object ):
         self.options.includeGlobs = self.includeGlobsBox.isChecked()
         self.options.includeDocs = self.includeDocsBox.isChecked()
         self.options.includeConnText = self.includeConnTextBox.isChecked()
+
+        state = state   # Avoid pylint complains
         return
 
     def __createLayout( self ):
@@ -354,8 +379,13 @@ class ImportsDiagramProgress( QDialog ):
         self.__path = path          # could be a dir or a file
         self.__buf = buf            # content in case of a modified file
 
-        self.__projectModules = {}  # dir -> [ imports ]
-        self.__filesInfo = {}       # file -> parsed content
+        self.__projectModules = {}              # dir -> [ imports ]
+        self.__filesInfo = {}                   # file -> parsed content
+        self.__dataModel = ImportDiagramModel()
+
+        # Avoid pylint complains
+        self.progressBar = None
+        self.infoLabel = None
 
         self.__createLayout()
         self.setWindowTitle( 'Imports diagram generator' )
@@ -368,25 +398,25 @@ class ImportsDiagramProgress( QDialog ):
         self.resize( 450, 20 )
         self.setSizeGripEnabled( True )
 
-        self.verticalLayout = QVBoxLayout( self )
+        verticalLayout = QVBoxLayout( self )
 
         # Info label
         self.infoLabel = QLabel( self )
-        self.verticalLayout.addWidget( self.infoLabel )
+        verticalLayout.addWidget( self.infoLabel )
 
         # Progress bar
         self.progressBar = QProgressBar( self )
         self.progressBar.setValue( 0 )
         self.progressBar.setOrientation( Qt.Horizontal )
-        self.verticalLayout.addWidget( self.progressBar )
+        verticalLayout.addWidget( self.progressBar )
 
         # Buttons
-        self.buttonBox = QDialogButtonBox( self )
-        self.buttonBox.setOrientation( Qt.Horizontal )
-        self.buttonBox.setStandardButtons( QDialogButtonBox.Close )
-        self.verticalLayout.addWidget( self.buttonBox )
+        buttonBox = QDialogButtonBox( self )
+        buttonBox.setOrientation( Qt.Horizontal )
+        buttonBox.setStandardButtons( QDialogButtonBox.Close )
+        verticalLayout.addWidget( buttonBox )
 
-        self.connect( self.buttonBox, SIGNAL( "rejected()" ), self.__onClose )
+        self.connect( buttonBox, SIGNAL( "rejected()" ), self.__onClose )
         return
 
     def __onClose( self ):
@@ -449,7 +479,24 @@ class ImportsDiagramProgress( QDialog ):
 
         # Stage 3 - build the diagram objects
         self.progressBar.setValue( 3 )
+        try:
+            self.__buildDiagramDataModel()
+            if self.__cancelRequest:
+                QApplication.restoreOverrideCursor()
+                self.__inProgress = False
+                self.__onClose()
+                return
+        except Exception, exc:
+            QApplication.restoreOverrideCursor()
+            logging.error( str( exc ) )
+            self.__inProgress = False
+            self.__onClose()
+            return
 
+        # Stage 4 - generating the graphviz layout
+        self.progressBar.setValue( 4 )
+
+        print self.__dataModel.toGraphviz()
 
 
         QApplication.restoreOverrideCursor()
@@ -542,4 +589,134 @@ class ImportsDiagramProgress( QDialog ):
 
         return
 
+    def __buildDiagramDataModel( self ):
+        " Builds the diargam data model "
+        self.__dataModel.clear()
+
+        for fName in self.__filesInfo:
+            # Generate the module box
+            modBox = DgmModule()
+            modBox.refFile = fName
+
+            modBox.kind = DgmModule.ModuleOfInterest
+            modBox.title = os.path.basename( fName ).split( '.' )[ 0 ]
+
+            info = self.__filesInfo[ fName ]
+            if self.__options.includeClasses:
+                for klass in info.classes:
+                    modBox.classes.append( klass )
+
+            if self.__options.includeFuncs:
+                for func in info.functions:
+                    modBox.funcs.append( func )
+
+            if self.__options.includeGlobs:
+                for glob in info.globals:
+                    modBox.globs.append( glob )
+
+            # Add the module box
+            modBoxName = self.__dataModel.addModule( modBox )
+
+            # Docstring box
+            if self.__options.includeDocs:
+                if info.docstring != "":
+                    docBox = DgmDocstring()
+                    docBox.text = info.docstring
+                    docBox.refFile = fName
+
+                    # Add the box and its connection
+                    docBoxName = self.__dataModel.addDocstringBox( docBox )
+
+                    conn = DgmConnection()
+                    conn.kind = DgmConnection.ModuleDoc
+                    conn.source = modBoxName
+                    conn.target = docBoxName
+                    self.__dataModel.addConnection( conn )
+
+            # Other modules, in/out of the project
+            for item in info.imports:
+
+                impBox = DgmModule()
+                impFilePath = self.__getProjectPathForImport( fName, item.name )
+                if impFilePath == "":
+                    impBox.kind = DgmModule.NonProjectModule
+                    impBox.title = item.name
+                else:
+                    impBox.kind = DgmModule.OtherProjectModule
+                    impBox.title = os.path.basename( impFilePath ).split('.')[0]
+                    impBox.refFile = impFilePath
+
+                    cache = GlobalData().project.briefModinfoCache
+                    otherInfo = cache.get( impFilePath )
+                    if self.__options.includeClasses:
+                        for klass in otherInfo.clesses:
+                            impBox.classes.append( klass )
+
+                    if self.__options.includeFuncs:
+                        for func in otherInfo.functions:
+                            impBox.funcs.append( func )
+
+                    if self.__options.includeGlobs:
+                        for glob in otherInfo.globals:
+                            impBox.globs.append( glob )
+
+                # Add the box
+                impBoxName = self.__dataModel.addModule( impBox )
+
+                impConn = DgmConnection()
+                impConn.kind = DgmConnection.ModuleDependency
+                impConn.source = modBoxName
+                impConn.target = impBoxName
+
+                if self.__options.includeConnText:
+                    for impWhat in item.what:
+                        if impWhat.name != "":
+                            impConn.labels.append( impWhat )
+
+                self.__dataModel.addConnection( impConn )
+        return
+
+    def __getProjectPathForImport( self, originatorPath, importName ):
+        """ Provides a path to a project file or
+            empty string if it is an outside import.
+            originatorPath - abs path of a file from which something is imported
+            importName - how import looks like, e.g.: os.path
+        """
+        candidatePath = os.path.dirname( originatorPath ) + os.path.sep
+        while True:
+            path = self.__getPathForKey( candidatePath, importName )
+            if path is not None:
+                return path
+            # strip one tail dir
+            newCandidate = os.path.dirname( candidatePath[ : -1 ] ) + \
+                           os.path.sep
+            if newCandidate == candidatePath:
+                break
+            candidatePath = newCandidate
+        return ""
+
+    def __getPathForKey( self, path, importName ):
+        " Checks a single key in the imports map "
+        importsList = None
+        try:
+            importsList = self.__projectModules[ path ]
+        except:
+            return None
+
+        if importName not in importsList:
+            return None
+
+        # OK, this is a project scope import. Get the name.
+        inclompete = path + importName.replace( '.', os.path.sep )
+        dirName = os.path.dirname( inclompete ) + os.path.sep
+        fileNameBegin = os.path.basename( inclompete ) + "."
+
+        for item in os.listdir( dirName ):
+            if item.startswith( fileNameBegin ):
+                if detectFileType( dirName + item ) in [ PythonFileType,
+                                                         Python3FileType ]:
+                    return dirName + item
+
+        raise Exception( "Inconsistency detected: disappeared import '" + \
+                         importName + "' for " + path )
 
