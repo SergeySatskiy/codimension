@@ -58,10 +58,11 @@ class DgmConnection:
         label = ""
         for what in self.labels:
             if label != "":
-                label += "\n"
+                label += "\\n"
             label += what.name
         if label != "":
-            attributes += ', label="' + label + '"'
+            attributes += ', label="' + label + \
+                          '", labelfontname=Courier, labelfontsize=12'
         return self.source + " -> " + self.target + '[ ' + attributes + ' ];'
 
     def __eq__( self, other ):
@@ -81,7 +82,11 @@ class DgmDocstring:
 
     def toGraphviz( self ):
         " Serialize the docstring box in graphviz format "
-        return self.objName + ' [ shape=box, label="' + self.text + '" ];'
+        escapedText = self.text.replace( '\n', '\\n' )
+        escapedText = escapedText.replace( '"', '\\"' )
+        attributes = 'shape=box, fontname=Courier, fontsize=12'
+        return self.objName + \
+               ' [ ' + attributes + ', label="' + escapedText + '" ];'
 
 
 class DgmModule:
@@ -106,26 +111,60 @@ class DgmModule:
     def toGraphviz( self ):
         " Serialize the module box in graphviz format "
         classesPart = ""
+        funcsPart = ""
+        globsPart = ""
+
         for klass in self.classes:
             if classesPart != "":
-                classesPart += "\n"
+                classesPart += "\\n"
             classesPart += klass.name
-        funcsPart = ""
         for func in self.funcs:
             if funcsPart != "":
-                funcsPart += "\n"
+                funcsPart += "\\n"
             funcsPart += func.name
-        globsPart = ""
         for glob in self.globs:
             if globsPart != "":
-                globsPart += "\n"
+                globsPart += "\\n"
             globsPart += glob.name
-        return self.objName + ' [ shape=record, label="' + self.title + '|' + \
-               classesPart + '|' + funcsPart + '|' + globsPart + '" ];'
+
+        attributes = 'shape=record, fontname=Courier, fontsize=12'
+        title = self.title
+        if title.startswith( '__init__' ):
+            # This is a directory import, use thr dir name instead
+            title = os.path.basename( os.path.dirname( self.refFile ) )
+
+        if self.kind != DgmModule.NonProjectModule:
+            return self.objName + ' [ ' + attributes + \
+                   ', label="{' + title + '|' + \
+                   classesPart + '|' + funcsPart + '|' + globsPart + '}" ];'
+        return self.objName + ' [ ' + attributes + \
+               ', label="{' + title + '}" ];'
 
     def __eq__( self, other ):
         " Compares two module boxes "
+        if self.kind == DgmModule.NonProjectModule and \
+           other.kind == DgmModule.NonProjectModule:
+            return self.title == other.title
         return self.refFile == other.refFile
+
+
+class DgmRank:
+    " Holds information about one rank "
+
+    def __init__( self ):
+        self.firstObj = ""
+        self.secondObj = ""
+        return
+
+    def __eq__( self, other ):
+        " Compares two ranks "
+        return self.firstObj == other.firstObj and \
+               self.secondObj == other.secondObj
+
+    def toGraphviz( self ):
+        " Serialize the rank in graphviz format "
+        return '{ rank=same; "' + self.firstObj + '"; "' + \
+               self.secondObj + '"; }'
 
 
 class ImportDiagramModel:
@@ -135,6 +174,7 @@ class ImportDiagramModel:
         self.modules = []
         self.docstrings = []
         self.connections = []
+        self.ranks = []
 
         self.__objectsCounter = -1
         return
@@ -144,6 +184,7 @@ class ImportDiagramModel:
         self.modules = []
         self.docstrings = []
         self.connections = []
+        self.ranks = []
 
         self.__objectsCounter = -1
         return
@@ -157,13 +198,23 @@ class ImportDiagramModel:
             result += item.toGraphviz() + "\n"
         for item in self.connections:
             result += item.toGraphviz() + "\n"
-        result += " }"
+        for item in self.ranks:
+            result += item.toGraphviz() + "\n"
+        result += "}"
         return result
 
     def __newName( self ):
         " Generates a short name for the graphviz objects "
         self.__objectsCounter += 1
         return "obj" + str( self.__objectsCounter )
+
+    def addRank( self, rank ):
+        " Adds a rank "
+        for idx in xrange( 0, len( self.ranks ) ):
+            if self.ranks[ idx ] == rank:
+                return
+        self.ranks.append( rank )
+        return
 
     def addConnection( self, conn ):
         " Adds a connection and provides its name "
@@ -496,7 +547,10 @@ class ImportsDiagramProgress( QDialog ):
         # Stage 4 - generating the graphviz layout
         self.progressBar.setValue( 4 )
 
-        print self.__dataModel.toGraphviz()
+        print "See t.dot"
+        f = open( "t.dot", "w" )
+        f.write( self.__dataModel.toGraphviz() )
+        f.close()
 
 
         QApplication.restoreOverrideCursor()
@@ -633,6 +687,12 @@ class ImportsDiagramProgress( QDialog ):
                     conn.target = docBoxName
                     self.__dataModel.addConnection( conn )
 
+                    # Add rank for better layout
+                    rank = DgmRank()
+                    rank.firstObj = modBoxName
+                    rank.secondObj = docBoxName
+                    self.__dataModel.addRank( rank )
+
             # Other modules, in/out of the project
             for item in info.imports:
 
@@ -649,7 +709,7 @@ class ImportsDiagramProgress( QDialog ):
                     cache = GlobalData().project.briefModinfoCache
                     otherInfo = cache.get( impFilePath )
                     if self.__options.includeClasses:
-                        for klass in otherInfo.clesses:
+                        for klass in otherInfo.classes:
                             impBox.classes.append( klass )
 
                     if self.__options.includeFuncs:
@@ -707,15 +767,23 @@ class ImportsDiagramProgress( QDialog ):
             return None
 
         # OK, this is a project scope import. Get the name.
-        inclompete = path + importName.replace( '.', os.path.sep )
-        dirName = os.path.dirname( inclompete ) + os.path.sep
-        fileNameBegin = os.path.basename( inclompete ) + "."
+        incomplete = path + importName.replace( '.', os.path.sep )
+        dirName = os.path.dirname( incomplete ) + os.path.sep
+        fileNameBegin = os.path.basename( incomplete ) + "."
 
         for item in os.listdir( dirName ):
             if item.startswith( fileNameBegin ):
                 if detectFileType( dirName + item ) in [ PythonFileType,
                                                          Python3FileType ]:
                     return dirName + item
+
+        # Check if it was a directory import, i.e. __init__.py should be used
+        lastCandidateDir = incomplete + os.path.sep
+        for item in os.listdir( lastCandidateDir ):
+            if item.startswith( '__init__.' ):
+                if detectFileType( lastCandidateDir + item ) in \
+                        [ PythonFileType, Python3FileType ]:
+                    return lastCandidateDir + item
 
         raise Exception( "Inconsistency detected: disappeared import '" + \
                          importName + "' for " + path )
