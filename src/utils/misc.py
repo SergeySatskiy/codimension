@@ -22,7 +22,8 @@
 
 " Miscellaneuos utility functions "
 
-import os.path, re
+from subprocess import Popen, PIPE
+import os.path, re, tempfile
 from globals import GlobalData
 
 
@@ -92,4 +93,32 @@ def getNewFileTemplate():
             result.append( line )
 
     return "\n".join( result )
+
+
+def safeRun( self, commandArgs ):
+    " Runs the given command and reads the output "
+
+    errTmp = tempfile.mkstemp()
+    errStream = os.fdopen( errTmp[ 0 ] )
+    process = Popen( commandArgs, stdin = PIPE,
+                     stdout = PIPE, stderr = errStream,
+                     cwd = os.getcwd() )
+    process.stdin.close()
+    processStdout = process.stdout.read()
+    process.stdout.close()
+    errStream.seek( 0 )
+    err = errStream.read()
+    errStream.close()
+    process.wait()
+    try:
+        os.unlink( errTmp[ 1 ] )
+    except:
+        pass
+
+    self.retCode = process.returncode
+
+    if process.returncode != 0:
+        cmdLine = " ".join( commandArgs )
+        raise Exception( "Error executing '" + cmdLine + "': " + err )
+    return processStdout
 
