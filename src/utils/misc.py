@@ -95,7 +95,7 @@ def getNewFileTemplate():
     return "\n".join( result )
 
 
-def safeRun( self, commandArgs ):
+def safeRun( commandArgs ):
     " Runs the given command and reads the output "
 
     errTmp = tempfile.mkstemp()
@@ -114,8 +114,6 @@ def safeRun( self, commandArgs ):
         os.unlink( errTmp[ 1 ] )
     except:
         pass
-
-    self.retCode = process.returncode
 
     if process.returncode != 0:
         cmdLine = " ".join( commandArgs )
