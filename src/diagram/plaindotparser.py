@@ -26,6 +26,63 @@ import os, os.path, tempfile
 from utils.misc import safeRun
 
 
+
+def splitWithQoutasRespect( line ):
+    " Splits the space separated values and respects quoted values "
+
+    def skipSpaces( line, startPos ):
+        " Provides index of first non-space char "
+        while startPos < len( line ):
+            if line[ startPos ] != ' ':
+                return startPos
+            startPos += 1
+        return startPos
+
+    def skipTillSpace( line, startPos ):
+        " Provides index of first space char "
+        while startPos < len( line ):
+            if line[ startPos ] == ' ':
+                return startPos
+            startPos += 1
+        return startPos
+
+    def skipTillClosedQuote( line, startPos ):
+        " Provides index of a closing quote "
+        while startPos < len( line ):
+            if line[ startPos ] == '"':
+                if line[ startPos - 1 ] == '\\':
+                    startPos += 1
+                    continue
+                return startPos
+            startPos += 1
+        return startPos
+
+
+    result = []
+
+    index = 0
+    while index < len( line ):
+        # skip spaces if so
+        index = skipSpaces( line, index )
+        if index >= len( line ):
+            return result
+
+        # First symbol is not a space so it is a beginning of a value.
+        startIndex = index
+        if line[ startIndex ] == '"':
+            # Beginning of a quoted value
+            nextIndex = skipTillClosedQuote( line, startIndex + 1 )
+            result.append( line[ startIndex + 1 : nextIndex ] )
+            index = nextIndex + 1
+        else:
+            nextIndex = skipTillSpace( line, startIndex )
+            result.append( line[ startIndex : nextIndex ] )
+            index = nextIndex
+
+    return result
+
+
+
 class Graph():
     " Holds a description of a single graph "
 
@@ -94,7 +151,7 @@ class Edge():
         """ Scales to the screen coordinates """
 
         self.labelX = self.labelX * graph.scale + graph.hSpace
-        self.labelY = self.labelY * graph.scale + graph.vSpace
+        self.labelY = graph.height - self.labelY * graph.scale + graph.vSpace
 
         index = 0
         while index < len( self.points ):
@@ -115,27 +172,20 @@ class Edge():
         # edge "obj1" "obj2"
         #  4 29.806 10.389 29.208 10.236 28.375 10.000 27.722 9.833 solid black
 
-        parts = line.strip().split()
+        parts = splitWithQoutasRespect( line.strip() )
 
         if len( parts ) < 8:
-            raise Exception( "Unexpected number of parts in 'edge' statement" )
+            raise Exception( "Unexpected number of parts in 'edge' " \
+                             "statement. Line: " + line )
 
-        self.tail = parts[1]
-        if self.tail.startswith( '"' ) or self.tail.startswith( "'" ):
-            self.tail = self.tail[ 1: ]
-        if self.tail.endswith( '"' ) or self.tail.endswith( "'" ):
-            self.tail = self.tail[ :-1 ]
+        self.tail = parts[ 1 ]
+        self.head = parts[ 2 ]
 
-        self.head = parts[2]
-        if self.head.startswith( '"' ) or self.head.startswith( "'" ):
-            self.head = self.head[ 1: ]
-        if self.head.endswith( '"' ) or self.head.endswith( "'" ):
-            self.head = self.head[ :-1 ]
-
-        numberOfPoints = int( parts[3].strip() )
+        numberOfPoints = int( parts[ 3 ] )
 
         if len( parts ) < (numberOfPoints * 2 + 5):
-            raise Exception( "Unexpected number of parts in 'edge' statement" )
+            raise Exception( "Unexpected number of parts in 'edge' " \
+                             "statement. Line: " + line )
 
         point = 0
         while point < numberOfPoints:
@@ -150,27 +200,20 @@ class Edge():
         self.style  = ""
         self.color  = ""
 
-        if parts[ numberOfPoints * 2 + 4 ][0] == '"' or \
-           parts[ numberOfPoints * 2 + 4 ][0] == "'":
-            # This is the label
-            self.label = line.strip().split( '"' )[5]
-            tailParts = line.strip().split( '"' )[6].strip().split()
-            if len( tailParts ) != 4:
-                raise Exception( "Unexpected number of parts " \
-                                 "in 'edge' statement" )
-            self.labelX = float( tailParts[0].strip() )
-            self.labelY = float( tailParts[1].strip() )
-            self.style = tailParts[2].strip()
-            self.color = tailParts[3].strip()
-        else:
+        # Strip the points description
+        parts = parts[ numberOfPoints * 2 + 4 : ]
+        if len( parts ) == 2:
             # There is no label
-            if len( parts ) != (numberOfPoints * 2 + 6):
-                raise Exception( "Unexpected number of parts " \
-                                 "in 'edge' statement" )
-            self.style = parts[ numberOfPoints * 2 + 4 ].strip()
-            self.color = parts[ numberOfPoints * 2 + 5 ].strip()
-
+            self.style = parts[ 0 ]
+            self.color = parts[ 1 ]
+        else:
+            self.label = parts[ 0 ]
+            self.labelX = float( parts[ 1 ] )
+            self.labelY = float( parts[ 2 ] )
+            self.style = parts[ 3 ]
+            self.color = parts[ 4 ]
         return
+
 
 
 class Node:
@@ -205,26 +248,17 @@ class Node:
         # node "/usr/local/vim-7.1/bin/vim"  30.542 10.583 2.388 0.500
         #      "/usr/local/vim-7.1/bin/vim" solid ellipse black lightgrey
 
-        parts = line.strip().split()
-        if len( parts ) != 11:
-            raise Exception( "Unexpected number of parts in 'node' statement" )
+        parts = splitWithQoutasRespect( line.strip() )
+        if len( parts ) < 11:
+            raise Exception( "Unexpected number of parts in 'node' " \
+                             "statement. Line: " + line )
 
-        self.name = parts[1]
-        if self.name.startswith( '"' ) or self.name.startswith( "'" ):
-            self.name = self.name[ 1: ]
-        if self.name.endswith( '"' ) or self.name.endswith( "'" ):
-            self.name = self.name[ :-1 ]
-
-        self.label = parts[6]
-        if self.label.startswith( '"' ) or self.label.startswith( "'" ):
-            self.label = self.label[ 1: ]
-        if self.label.endswith( '"' ) or self.label.endswith( "'" ):
-            self.label = self.label[ :-1 ]
-
+        self.name      = parts[1]
         self.posX      = float( parts[2].strip() )
         self.posY      = float( parts[3].strip() )
         self.width     = float( parts[4].strip() )
         self.height    = float( parts[5].strip() )
+        self.label     = parts[6]
         self.style     = parts[7].strip()
         self.shape     = parts[8].strip()
         self.color     = parts[9].strip()
@@ -235,27 +269,40 @@ class Node:
 def getGraphFromPlainDotData( content ):
     " Parses data and builds a normalized graph "
     graph = Graph()
+    expectContinue = False
+    combinedLine = ""
     for line in content.split( '\n' ):
         line = line.strip()
         if line == "":
             continue
-        if line.startswith( "graph" ):
-            graph.initFromLine( line )
+        if line.endswith( '\\' ):
+            combinedLine += line[ : -1 ]
+            expectContinue = True
             continue
-        if line.startswith( "node" ):
+        if expectContinue:
+            expectContinue = False
+        combinedLine += line
+
+        if combinedLine.startswith( "graph" ):
+            graph.initFromLine( combinedLine )
+            combinedLine = ""
+            continue
+        if combinedLine.startswith( "node" ):
             node = Node()
-            node.initFromLine( line )
+            node.initFromLine( combinedLine )
             graph.nodes.append( node )
+            combinedLine = ""
             continue
-        if line.startswith( "edge" ):
+        if combinedLine.startswith( "edge" ):
             edge = Edge()
-            edge.initFromLine( line )
+            edge.initFromLine( combinedLine )
             graph.edges.append( edge )
+            combinedLine = ""
             continue
-        if line.startswith( "stop" ):
+        if combinedLine.startswith( "stop" ):
             break
 
-        raise Exception( "Unexpected plain dot line: " + line )
+        raise Exception( "Unexpected plain dot line: " + combinedLine )
 
     graph.normalize()
     return graph
