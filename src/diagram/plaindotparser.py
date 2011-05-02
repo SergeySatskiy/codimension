@@ -92,8 +92,8 @@ class Graph():
         self.width  = 0.0
         self.height = 0.0
 
-        self.vSpace = 10.0
-        self.hSpace = 10.0
+        self.vSpace = 0.0
+        self.hSpace = 0.0
 
         self.edges = []
         self.nodes = []
@@ -158,7 +158,7 @@ class Edge():
         while index < len( self.points ):
             # x
             self.points[index][0] = self.points[index][0] * graph.scale * scaleX
-            self.points[index][0] = self.points[index][0] = + graph.hSpace
+            self.points[index][0] = self.points[index][0] + graph.hSpace
             # y
             self.points[index][1] = self.points[index][1] * graph.scale * scaleY
             self.points[index][1] = graph.height - self.points[index][1] + \
