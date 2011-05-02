@@ -24,10 +24,11 @@
 
 import os, os.path, tempfile
 from utils.misc import safeRun
+from PyQt4.QtGui import QImage
 
 
 
-def splitWithQoutasRespect( line ):
+def splitWithQuotasRespect( line ):
     " Splits the space separated values and respects quoted values "
 
     def skipSpaces( line, startPos ):
@@ -98,17 +99,16 @@ class Graph():
         self.nodes = []
         return
 
-    def normalize( self ):
+    def normalize( self, scaleX, scaleY ):
         " normalizes all the measures "
 
-        self.scale = self.scale * 72 # points
-        self.width = self.width * self.scale
-        self.height = self.height * self.scale
+        self.width = self.width * self.scale * scaleX
+        self.height = self.height * self.scale * scaleY
 
         for edge in self.edges:
-            edge.normalize( self )
+            edge.normalize( self, scaleX, scaleY )
         for node in self.nodes:
-            node.normalize( self )
+            node.normalize( self, scaleX, scaleY )
 
         # increase the size to have borders around
         self.width = self.width + 2.0 * self.hSpace
@@ -147,19 +147,20 @@ class Edge():
         self.color  = ""
         return
 
-    def normalize( self, graph ):
+    def normalize( self, graph, scaleX, scaleY ):
         """ Scales to the screen coordinates """
 
-        self.labelX = self.labelX * graph.scale + graph.hSpace
-        self.labelY = graph.height - self.labelY * graph.scale + graph.vSpace
+        self.labelX = self.labelX * graph.scale * scaleX + graph.hSpace
+        self.labelY = graph.height - self.labelY * graph.scale * scaleY + \
+                      graph.vSpace
 
         index = 0
         while index < len( self.points ):
             # x
-            self.points[index][0] = self.points[index][0] * graph.scale + \
-                                    graph.hSpace
+            self.points[index][0] = self.points[index][0] * graph.scale * scaleX
+            self.points[index][0] = self.points[index][0] = + graph.hSpace
             # y
-            self.points[index][1] = self.points[index][1] * graph.scale
+            self.points[index][1] = self.points[index][1] * graph.scale * scaleY
             self.points[index][1] = graph.height - self.points[index][1] + \
                                     graph.vSpace
             index = index + 1
@@ -172,7 +173,7 @@ class Edge():
         # edge "obj1" "obj2"
         #  4 29.806 10.389 29.208 10.236 28.375 10.000 27.722 9.833 solid black
 
-        parts = splitWithQoutasRespect( line.strip() )
+        parts = splitWithQuotasRespect( line.strip() )
 
         if len( parts ) < 8:
             raise Exception( "Unexpected number of parts in 'edge' " \
@@ -232,13 +233,14 @@ class Node:
         self.fillcolor = ""
         return
 
-    def normalize( self, graph ):
+    def normalize( self, graph, scaleX, scaleY ):
         """ Scales to the screen coordinates """
 
-        self.posX = self.posX * graph.scale + graph.hSpace
-        self.posY = graph.height - self.posY * graph.scale + graph.vSpace
-        self.width = self.width * graph.scale
-        self.height = self.height * graph.scale
+        self.posX = self.posX * graph.scale * scaleX + graph.hSpace
+        self.posY = graph.height - self.posY * graph.scale * scaleY + \
+                    graph.vSpace
+        self.width = self.width * graph.scale * scaleX
+        self.height = self.height * graph.scale * scaleY
         return
 
     def initFromLine( self, line ):
@@ -248,7 +250,7 @@ class Node:
         # node "/usr/local/vim-7.1/bin/vim"  30.542 10.583 2.388 0.500
         #      "/usr/local/vim-7.1/bin/vim" solid ellipse black lightgrey
 
-        parts = splitWithQoutasRespect( line.strip() )
+        parts = splitWithQuotasRespect( line.strip() )
         if len( parts ) < 11:
             raise Exception( "Unexpected number of parts in 'node' " \
                              "statement. Line: " + line )
@@ -304,7 +306,10 @@ def getGraphFromPlainDotData( content ):
 
         raise Exception( "Unexpected plain dot line: " + combinedLine )
 
-    graph.normalize()
+#    scaleX, scaleY = detectGraphScale()
+#    print "Scale X: " + str( scaleX ) + " Scale Y: " + str( scaleY )
+#    graph.scale = scaleX
+#    graph.normalize()
     return graph
 
 
@@ -339,4 +344,47 @@ def getGraphFromDescriptionData( content ):
 
     os.unlink( graphtmp[ 1 ] )
     return graph
+
+
+def detectGraphScale():
+    " Detects the graph scale for x and y axis separately "
+
+    content = "digraph ScaleTest { b [shape=box, fontname=Courier, " \
+              "fontsize=12, label=test]; }"
+
+    # Create a temporary file with a test graph
+    testtmp = tempfile.mkstemp()
+    os.write( testtmp[ 0 ], content )
+    os.close( testtmp[ 0 ] )
+
+    # Create a temporary file with plain output
+    testPlainTmp = tempfile.mkstemp()
+    os.close( testPlainTmp[ 0 ] )
+
+    # Create a temporary file with a JPG image
+    testJpgTmp = tempfile.mkstemp()
+    os.close( testJpgTmp[ 0 ] )
+
+    safeRun( [ "dot", "-Tplain", "-o" + testPlainTmp[ 1 ], testtmp[ 1 ] ] )
+    safeRun( [ "dot", "-Tjpg", "-o" + testJpgTmp[ 1 ], testtmp[ 1 ] ] )
+    os.unlink( testtmp[ 1 ] )
+
+    # Read the image size
+    image = QImage( testJpgTmp[ 1 ] )
+    imageWidth = image.width()
+    imageHeight = image.height()
+    image = None
+    os.unlink( testJpgTmp[ 1 ] )
+
+    # Load plain format and take the graph size
+    f = open( testPlainTmp[ 1 ] )
+    for line in f:
+        if line.startswith( 'graph' ):
+            graph = Graph()
+            graph.initFromLine( line )
+            break
+
+    os.unlink( testPlainTmp[ 1 ] )
+    return float( imageWidth ) / graph.width, \
+           float( imageHeight ) / graph.height
 
