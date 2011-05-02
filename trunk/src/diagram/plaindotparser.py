@@ -91,8 +91,8 @@ class Graph():
         self.width  = 0.0
         self.height = 0.0
 
-        self.vSpace = 0.0
-        self.hSpace = 0.0
+        self.vSpace = 10.0
+        self.hSpace = 10.0
 
         self.edges = []
         self.nodes = []
