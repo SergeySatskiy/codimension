@@ -24,7 +24,6 @@
 
 import os, os.path, tempfile
 from utils.misc import safeRun
-from PyQt4.QtGui import QImage
 
 
 
@@ -306,10 +305,6 @@ def getGraphFromPlainDotData( content ):
 
         raise Exception( "Unexpected plain dot line: " + combinedLine )
 
-#    scaleX, scaleY = detectGraphScale()
-#    print "Scale X: " + str( scaleX ) + " Scale Y: " + str( scaleY )
-#    graph.scale = scaleX
-#    graph.normalize()
     return graph
 
 
@@ -344,47 +339,4 @@ def getGraphFromDescriptionData( content ):
 
     os.unlink( graphtmp[ 1 ] )
     return graph
-
-
-def detectGraphScale():
-    " Detects the graph scale for x and y axis separately "
-
-    content = "digraph ScaleTest { b [shape=box, fontname=Courier, " \
-              "fontsize=12, label=test]; }"
-
-    # Create a temporary file with a test graph
-    testtmp = tempfile.mkstemp()
-    os.write( testtmp[ 0 ], content )
-    os.close( testtmp[ 0 ] )
-
-    # Create a temporary file with plain output
-    testPlainTmp = tempfile.mkstemp()
-    os.close( testPlainTmp[ 0 ] )
-
-    # Create a temporary file with a JPG image
-    testJpgTmp = tempfile.mkstemp()
-    os.close( testJpgTmp[ 0 ] )
-
-    safeRun( [ "dot", "-Tplain", "-o" + testPlainTmp[ 1 ], testtmp[ 1 ] ] )
-    safeRun( [ "dot", "-Tjpg", "-o" + testJpgTmp[ 1 ], testtmp[ 1 ] ] )
-    os.unlink( testtmp[ 1 ] )
-
-    # Read the image size
-    image = QImage( testJpgTmp[ 1 ] )
-    imageWidth = image.width()
-    imageHeight = image.height()
-    image = None
-    os.unlink( testJpgTmp[ 1 ] )
-
-    # Load plain format and take the graph size
-    f = open( testPlainTmp[ 1 ] )
-    for line in f:
-        if line.startswith( 'graph' ):
-            graph = Graph()
-            graph.initFromLine( line )
-            break
-
-    os.unlink( testPlainTmp[ 1 ] )
-    return float( imageWidth ) / graph.width, \
-           float( imageHeight ) / graph.height
 
