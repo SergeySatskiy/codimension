@@ -833,6 +833,11 @@ class CodimensionMainWindow( QMainWindow ):
         self.editorsManagerWidget.editorsManager.openPixmapFile( path )
         return
 
+    def openDiagram( self, scene ):
+        " Show a generated diagram "
+        self.editorsManagerWidget.editorsManager.openDiagram( scene )
+        return
+
     def detectTypeAndOpenFile( self, path, lineNo = -1 ):
         " Detects the file type and opens the corresponding editor / browser "
         self.openFileByType( detectFileType( path ), path, lineNo )

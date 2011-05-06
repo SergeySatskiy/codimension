@@ -918,9 +918,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             progressDlg = ImportsDiagramProgress( what, options,
                                                   self.getFileName() )
         if progressDlg.exec_() == QDialog.Accepted:
-            print "Accepted!"
-        else:
-            print "Rejected!"
+            GlobalData().mainWindow.openDiagram( progressDlg.scene )
         return
 
     # Mandatory interface part is below

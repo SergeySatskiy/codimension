@@ -1,0 +1,639 @@
+#
+# -*- coding: utf-8 -*-
+#
+# codimension - graphics python two-way code editor and analyzer
+# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# $Id$
+#
+
+
+""" imports diagram graphics objects """
+
+import math
+from PyQt4.QtGui                import QGraphicsRectItem, QGraphicsPathItem, \
+                                       QWidget, QGraphicsView, QFont, QPen, \
+                                       QToolBar, QHBoxLayout, QColor, \
+                                       QAction, QGraphicsItem, QPainter, \
+                                       QPainterPath, QGraphicsTextItem, \
+                                       QFontMetrics
+from PyQt4.QtCore               import Qt, SIGNAL, QSize, QPointF
+from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
+from utils.pixmapcache          import PixmapCache
+
+
+# A list of items could be empty for a certain part so the default height
+# for such a section is 14 points (for 75 DPI devices)
+_EmptySectionHeight = 14.0
+
+
+
+class ImportsDgmEdgeLabel( QGraphicsTextItem ):
+    " Connector label "
+
+    def __init__( self, edge, modObj ):
+        text = edge.label.replace( '\\n', '\n' )
+        QGraphicsTextItem.__init__( self, text )
+        self.__modObj = modObj
+
+        font = QFont( "Courier", 12 )
+        self.setFont( font )
+
+        metric = QFontMetrics( font )
+        rec = metric.boundingRect( 0, 0, 10000, 10000, Qt.AlignLeft, text )
+
+        self.setPos( edge.labelX - rec.width() / 2,
+                     edge.labelY - rec.height() / 2 )
+        return
+
+
+class ImportsDgmDocConn( QGraphicsPathItem ):
+    " Connection to a docstring note "
+
+    def __init__( self, edge, modObj ):
+        QGraphicsPathItem.__init__( self )
+        self.__edge = edge
+        self.__modObj = modObj
+
+        startPoint = QPointF( edge.points[ 0 ][ 0 ], edge.points[ 0 ][ 1 ] )
+        painterPath = QPainterPath( startPoint )
+
+        index = 1
+        while index + 3 <= len( edge.points ):
+            painterPath.cubicTo(edge.points[index][0],  edge.points[index][1],
+                                edge.points[index+1][0],edge.points[index+1][1],
+                                edge.points[index+2][0],edge.points[index+2][1])
+            index = index + 3
+        if index + 2 <= len( edge.points ):
+            painterPath.quadTo(edge.points[index+1][0], edge.points[index+1][1],
+                               edge.points[index+2][0], edge.points[index+2][1])
+            index = index + 2
+
+        if index + 1 <= len( edge.points ):
+            painterPath.lineTo(edge.points[index+1][0], edge.points[index+1][1])
+
+        lastIndex = len( edge.points ) - 1
+        self.addConnector(painterPath, edge.points[0][0], edge.points[0][1],
+                          edge.points[lastIndex][0], edge.points[lastIndex][1])
+        self.setPath( painterPath )
+        return
+
+    def addConnector( self, painterPath, beginX, beginY, endX, endY ):
+        " Adds round shape connectors "
+        painterPath.addEllipse( beginX - 2.0, beginY - 2.0, 4.0, 4.0 )
+        painterPath.addEllipse( endX - 2.0, endY - 2.0, 4.0, 4.0 )
+        return
+
+    def paint( self, painter, option, widget ):
+        """ Draws a curve and then adds an arrow """
+
+        pen = QPen( QColor( 10, 10, 10) )
+        pen.setWidth( 1 )
+        self.setPen( pen )
+
+        QGraphicsPathItem.paint( self, painter, option, widget )
+        return
+
+
+
+class ImportsDgmDependConn( QGraphicsPathItem ):
+    " Connection to a dependency module "
+
+    def __init__( self, edge, modObj, connObj ):
+        QGraphicsPathItem.__init__( self )
+        self.__edge = edge
+        self.__modObj = modObj
+        self.__connObj = connObj
+
+        startPoint = QPointF( edge.points[ 0 ][ 0 ], edge.points[ 0 ][ 1 ] )
+        painterPath = QPainterPath( startPoint )
+
+        index = 1
+        while index + 3 <= len( edge.points ):
+            painterPath.cubicTo(edge.points[index][0],  edge.points[index][1],
+                                edge.points[index+1][0],edge.points[index+1][1],
+                                edge.points[index+2][0],edge.points[index+2][1])
+            index = index + 3
+        if index + 2 <= len( edge.points ):
+            painterPath.quadTo(edge.points[index+1][0], edge.points[index+1][1],
+                               edge.points[index+2][0], edge.points[index+2][1])
+            index = index + 2
+
+        if index + 1 <= len( edge.points ):
+            painterPath.lineTo(edge.points[index+1][0], edge.points[index+1][1])
+
+        lastIndex = len( edge.points ) - 1
+        self.addArrow( painterPath,
+                       edge.points[lastIndex-1][0],
+                       edge.points[lastIndex-1][1],
+                       edge.points[lastIndex][0],
+                       edge.points[lastIndex][1] )
+
+        self.setPath( painterPath )
+        return
+
+    def addArrow( self, painterPath, startX, startY, endX, endY ):
+        """
+        Add arrows to the edges
+        http://kapo-cpp.blogspot.com/2008/10/drawing-arrows-with-cairo.html
+        """
+
+        arrowLength  = 12.0
+        arrowDegrees = 0.15      # Radian
+
+        angle = math.atan2( endY - startY, endX - startX ) + math.pi
+        arrowX1 = endX + arrowLength * math.cos(angle - arrowDegrees)
+        arrowY1 = endY + arrowLength * math.sin(angle - arrowDegrees)
+        arrowX2 = endX + arrowLength * math.cos(angle + arrowDegrees)
+        arrowY2 = endY + arrowLength * math.sin(angle + arrowDegrees)
+
+        painterPath.moveTo( endX, endY )
+        painterPath.lineTo( arrowX1, arrowY1 )
+        painterPath.moveTo( endX, endY )
+        painterPath.lineTo( arrowX2, arrowY2 )
+
+        return
+
+    def paint( self, painter, option, widget ):
+        """ Draws a curve and then adds an arrow """
+
+        pen = QPen( QColor( 0, 0, 0) )
+        pen.setWidth( 1 )
+        self.setPen( pen )
+
+        QGraphicsPathItem.paint( self, painter, option, widget )
+        return
+
+
+class ImportsDgmNonPrjModule( QGraphicsRectItem ):
+    " Non-project module "
+
+    def __init__( self, node, srcobj ):
+        QGraphicsRectItem.__init__( self )
+        self.__node = node
+        self.__srcobj = srcobj
+
+        posX = node.posX - node.width / 2.0
+        posY = node.posY - node.height / 2.0
+        QGraphicsRectItem.__init__( self, posX, posY,
+                                    node.width, node.height )
+        pen = QPen( QColor( 10, 10, 10) )
+        pen.setWidth( 1 )
+        self.setPen( pen )
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
+
+        self.setBrush( QColor( 220, 255, 220 ) )
+        return
+
+    def paint( self, painter, option, widget ):
+        """ Draws a filled rectangle and then adds a title """
+
+        # Draw the rectangle
+        QGraphicsRectItem.paint( self, painter, option, widget )
+
+        # Draw text over the rectangle
+        font = QFont( "Courier", 12 )
+        painter.setFont( font )
+        painter.drawText( self.__node.posX - self.__node.width / 2.0,
+                          self.__node.posY - self.__node.height / 2.0,
+                          self.__node.width, self.__node.height,
+                          Qt.AlignCenter, self.__srcobj.title )
+        return
+
+    def mouseDoubleClickEvent( self, event ):
+        """ Open the clicked file as the new one """
+
+        pass
+
+
+class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
+    " Base class which calculates section heights "
+
+    def __init__( self, node, srcobj, deviceDPI ):
+        self.__node = node
+        self.__srcobj = srcobj
+
+        self.__heights = self.calcSectionHeights( deviceDPI )
+
+        posX = node.posX - node.width / 2.0
+        posY = node.posY - node.height / 2.0
+        QGraphicsRectItem.__init__( self, posX, posY,
+                                    node.width, node.height )
+        pen = QPen( QColor( 0, 0, 0 ) )
+        pen.setWidth( 1 )
+        self.setPen( pen )
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
+        return
+
+    def calcSectionHeights( self, deviceDPI ):
+        " Provides the module section heights "
+        heights = []
+
+        classesCount = len( self.__srcobj.classes )
+        funcsCount = len( self.__srcobj.funcs )
+        globsCount = len( self.__srcobj.globs )
+
+        totalCount = 1 + classesCount + funcsCount + globsCount
+        emptyCount = 0
+        if classesCount == 0:
+            emptyCount += 1
+        if funcsCount == 0:
+            emptyCount += 1
+        if globsCount == 0:
+            emptyCount += 1
+
+        # Adjust empty section size for the device DPI
+        emptySectionHeight = _EmptySectionHeight * float( deviceDPI ) / 75.0
+        emptySpace = emptySectionHeight * float( emptyCount )
+        pixelsPerLine = ( float( self.__node.height ) - emptySpace ) / \
+                        float( totalCount )
+
+        # Add the module name height
+        heights.append( pixelsPerLine )
+
+        # Add the classes section
+        if classesCount == 0:
+            heights.append( emptySectionHeight )
+        else:
+            heights.append( pixelsPerLine * float( classesCount ) )
+
+        # Add the functions section
+        if funcsCount == 0:
+            heights.append( emptySectionHeight )
+        else:
+            heights.append( pixelsPerLine * float( funcsCount ) )
+
+        # The globals section takes the rest
+        heights.append( float( self.__node.height ) - heights[ 0 ] - \
+                                                      heights[ 1 ] - \
+                                                      heights[ 2 ] )
+        return heights
+
+    def paint( self, painter, option, widget ):
+        " Draws a filled rectangle, adds title, classes/funcs/globs sections "
+
+        # Draw the rectangle
+        QGraphicsRectItem.paint( self, painter, option, widget )
+
+        font = QFont( "Courier", 12 )
+        painter.setFont( font )
+
+        # Draw the title
+        posX = self.__node.posX - self.__node.width / 2.0
+        posY = self.__node.posY - self.__node.height / 2.0
+        painter.drawLine( posX,
+                          posY + self.__heights[ 0 ],
+                          posX + self.__node.width,
+                          posY + self.__heights[ 0 ] )
+        painter.drawText( posX, posY,
+                          self.__node.width, self.__heights[ 0 ],
+                          Qt.AlignCenter, self.__srcobj.title )
+
+        # Draw classes
+        posY += self.__heights[ 0 ]
+        painter.drawLine( posX,
+                          posY + self.__heights[ 1 ],
+                          posX + self.__node.width,
+                          posY + self.__heights[ 1 ] )
+        if len( self.__srcobj.classes ) > 0:
+            classesPart = ""
+            for klass in self.__srcobj.classes:
+                if classesPart != "":
+                    classesPart += "\n"
+                classesPart += klass.name
+            painter.drawText( posX, posY,
+                              self.__node.width, self.__heights[ 1 ],
+                              Qt.AlignCenter, classesPart )
+
+        # Draw funcs
+        posY += self.__heights[ 1 ]
+        painter.drawLine( posX,
+                          posY + self.__heights[ 2 ],
+                          posX + self.__node.width,
+                          posY + self.__heights[ 2 ] )
+        if len( self.__srcobj.funcs ) > 0:
+            funcsPart = ""
+            for func in self.__srcobj.funcs:
+                if funcsPart != "":
+                    funcsPart += "\n"
+                funcsPart += func.name
+            painter.drawText( posX, posY,
+                              self.__node.width, self.__heights[ 2 ],
+                              Qt.AlignCenter, funcsPart )
+
+        # Draw the globals text
+        if len( self.__srcobj.globs ) > 0:
+            globsPart = ""
+            for glob in self.__srcobj.globs:
+                if globsPart != "":
+                    globsPart += "\n"
+                globsPart += glob.name
+            posY += self.__heights[ 2 ]
+            painter.drawText( posX, posY,
+                              self.__node.width, self.__heights[ 3 ],
+                              Qt.AlignCenter, globsPart )
+        return
+
+
+
+class ImportsDgmModuleOfInterest( ImportsDgmDetailedModuleBase ):
+    " Module of interest "
+
+    def __init__( self, node, srcobj, deviceDPI ):
+        ImportsDgmDetailedModuleBase.__init__( self, node, srcobj, deviceDPI )
+        self.setBrush( QColor( 224, 236, 255 ) )
+        return
+
+
+    def mouseDoubleClickEvent( self, event ):
+        """ Open the clicked file as the new one """
+
+        pass
+
+
+class ImportsDgmOtherPrjModule( ImportsDgmDetailedModuleBase ):
+    " Other in-project module "
+
+    def __init__( self, node, srcobj, deviceDPI ):
+        ImportsDgmDetailedModuleBase.__init__( self, node, srcobj, deviceDPI )
+        self.setBrush( QColor( 240, 240, 110 ) )
+        return
+
+    def mouseDoubleClickEvent( self, event ):
+        """ Open the clicked file as the new one """
+
+        pass
+
+
+class ImportsDgmDocNote( QGraphicsRectItem ):
+    " Docstring box "
+
+    def __init__( self, node, srcobj ):
+        QGraphicsRectItem.__init__( self )
+        self.__node = node
+        self.__srcobj = srcobj
+
+        posX = node.posX - node.width / 2.0
+        posY = node.posY - node.height / 2.0
+        QGraphicsRectItem.__init__( self, posX, posY,
+                                    node.width, node.height )
+        pen = QPen( QColor( 0, 0, 0) )
+        pen.setWidth( 1 )
+        self.setPen( pen )
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
+
+        self.setBrush( QColor( 253, 245, 145 ) )
+        return
+
+    def paint( self, painter, option, widget ):
+        """ Draws a filled rectangle and then adds a title """
+
+        # Draw the rectangle
+        QGraphicsRectItem.paint( self, painter, option, widget )
+
+        # Draw text over the rectangle
+        font = QFont( "Courier", 12 )
+        painter.setFont( font )
+        painter.drawText( self.__node.posX - self.__node.width / 2.0,
+                          self.__node.posY - self.__node.height / 2.0,
+                          self.__node.width, self.__node.height,
+                          Qt.AlignCenter, self.__srcobj.text )
+        return
+
+    def mouseDoubleClickEvent( self, event ):
+        """ Open the clicked file as the new one """
+
+        pass
+
+
+
+class ImportDgmWidget( QGraphicsView ):
+    " Widget to show a generated import diagram "
+
+    def __init__( self, parent = None ):
+        QGraphicsView.__init__( self, parent )
+        self.setRenderHint( QPainter.Antialiasing )
+        self.setRenderHint( QPainter.TextAntialiasing )
+        return
+
+    def keyPressEvent( self, event ):
+        """ Handles the key press events """
+        if event.key() == Qt.Key_Escape:
+            self.emit( SIGNAL('ESCPressed') )
+            event.accept()
+        else:
+            QGraphicsView.keyPressEvent( self, event )
+        return
+
+    def setScene( self, scene ):
+        " Sets the scene to display "
+        QGraphicsView.setScene( self, scene )
+        return
+
+    def resetZoom( self ):
+        " Resets the zoom "
+        self.scale( 1.0, 1.0 )
+        return
+
+    def zoomIn( self ):
+        """ Zoom when a button clicked """
+        factor = 1.41 ** (120.0/240.0)
+        self.scale( factor, factor )
+        return
+
+    def zoomOut( self ):
+        """ Zoom when a button clicked """
+        factor = 1.41 ** (-120.0/240.0)
+        self.scale( factor, factor )
+        return
+
+    def wheelEvent( self, event ):
+        """ Mouse wheel event """
+        factor = 1.41 ** ( -event.delta() / 240.0 )
+        self.scale( factor, factor )
+        return
+
+
+class ImportDgmTabWidget( QWidget, MainWindowTabWidgetBase ):
+    " Widget for an editors manager "
+
+    def __init__( self, parent = None ):
+        MainWindowTabWidgetBase.__init__( self )
+        QWidget.__init__( self, parent )
+
+        self.__viewer = ImportDgmWidget()
+        self.connect( self.__viewer, SIGNAL( 'ESCPressed' ),
+                      self.__onEsc )
+
+        self.__createLayout()
+        return
+
+    def __createLayout( self ):
+        " Creates the toolbar and layout "
+
+        # Buttons
+        printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
+                               'Print', self )
+        #printButton.setShortcut( 'Ctrl+' )
+        self.connect( printButton, SIGNAL( 'triggered()' ),
+                      self.__onPrint )
+
+        printPreviewButton = QAction( \
+                PixmapCache().getIcon( 'printpreview.png' ),
+                'Print preview', self )
+        #printPreviewButton.setShortcut( 'Ctrl+' )
+        self.connect( printPreviewButton, SIGNAL( 'triggered()' ),
+                      self.__onPrintPreview )
+
+        fixedSpacer = QWidget()
+        fixedSpacer.setFixedHeight( 16 )
+
+        zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
+                                'Zoom in (Ctrl++)', self )
+        zoomInButton.setShortcut( 'Ctrl++' )
+        self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.__onZoomIn )
+
+        zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
+                                'Zoom out (Ctrl+-)', self )
+        zoomOutButton.setShortcut( 'Ctrl+-' )
+        self.connect( zoomOutButton, SIGNAL( 'triggered()' ), self.__onZoomOut )
+
+        zoomResetButton = QAction( PixmapCache().getIcon( 'zoomreset.png' ),
+                                   'Zoom reset (Ctrl+0)', self )
+        zoomResetButton.setShortcut( 'Ctrl+0' )
+        self.connect( zoomResetButton, SIGNAL( 'triggered()' ),
+                      self.__onZoomReset )
+
+
+        # Toolbar
+        toolbar = QToolBar( self )
+        toolbar.setOrientation( Qt.Vertical )
+        toolbar.setMovable( False )
+        toolbar.setAllowedAreas( Qt.RightToolBarArea )
+        toolbar.setIconSize( QSize( 16, 16 ) )
+        toolbar.setFixedWidth( 28 )
+        toolbar.setContentsMargins( 0, 0, 0, 0 )
+        toolbar.addAction( printPreviewButton )
+        toolbar.addAction( printButton )
+        toolbar.addWidget( fixedSpacer )
+        toolbar.addAction( zoomInButton )
+        toolbar.addAction( zoomOutButton )
+        toolbar.addAction( zoomResetButton )
+
+        hLayout = QHBoxLayout()
+        hLayout.setContentsMargins( 0, 0, 0, 0 )
+        hLayout.setSpacing( 0 )
+        hLayout.addWidget( self.__viewer )
+        hLayout.addWidget( toolbar )
+
+        self.setLayout( hLayout )
+        return
+
+    def setFocus( self ):
+        " Overridden setFocus "
+        self.__viewer.setFocus()
+        return
+
+    def setScene( self, scene ):
+        " Sets the graphics scene to display "
+        self.__viewer.setScene( scene )
+        return
+
+    def __onPrint( self ):
+        " Triggered on the 'print' button "
+        pass
+
+    def __onPrintPreview( self ):
+        " Triggered on the 'print preview' button "
+        pass
+
+    def __onZoomIn( self ):
+        " Triggered on the 'zoom in' button "
+        self.__viewer.zoomIn()
+        return
+
+    def __onZoomOut( self ):
+        " Triggered on the 'zoom out' button "
+        self.__viewer.zoomOut()
+        return
+
+    def __onZoomReset( self ):
+        " Triggered on the 'zoom reset' button "
+        self.__viewer.resetZoom()
+        return
+
+    def __onEsc( self ):
+        " Triggered when Esc is pressed "
+        self.emit( SIGNAL( 'ESCPressed' ) )
+        return
+
+
+    # Mandatory interface part is below
+
+    def isModified( self ):
+        " Tells if the file is modified "
+        return False
+
+    def getRWMode( self ):
+        " Tells if the file is read only "
+        return "RO"
+
+    def getType( self ):
+        " Tells the widget type "
+        return MainWindowTabWidgetBase.GeneratedDiagram
+
+    def getLanguage( self ):
+        " Tells the content language "
+        return "Diagram"
+
+    def getFileName( self ):
+        " Tells what file name of the widget content "
+        return "N/A"
+
+    def setFileName( self, name ):
+        " Sets the file name - not applicable"
+        raise Exception( "Setting a file name for a diagram is not applicable" )
+
+    def getEol( self ):
+        " Tells the EOL style "
+        return "N/A"
+
+    def getLine( self ):
+        " Tells the cursor line "
+        return "N/A"
+
+    def getPos( self ):
+        " Tells the cursor column "
+        return "N/A"
+
+    def getEncoding( self ):
+        " Tells the content encoding "
+        return "N/A"
+
+    def getShortName( self ):
+        " Tells the display name "
+        return "Imports diagram"
+
+    def setShortName( self, name ):
+        " Sets the display name - not applicable "
+        raise Exception( "Setting a file name for a diagram is not applicable" )
+

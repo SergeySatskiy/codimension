@@ -24,16 +24,25 @@
 """ imports diagram dialog """
 
 
-import os, os.path, logging
+import os, os.path, logging, tempfile
 from PyQt4.QtCore                import Qt, SIGNAL, QTimer
 from PyQt4.QtGui                 import QDialog, QDialogButtonBox, \
                                         QVBoxLayout, QCheckBox, QLabel, \
-                                        QProgressBar, QApplication, QCursor
+                                        QProgressBar, QApplication, QCursor, \
+                                        QGraphicsScene
 from modules                     import buildDirModules
 from utils.globals               import GlobalData
 from pythonparser.cdmbriefparser import getBriefModuleInfoFromMemory
 from utils.fileutils             import detectFileType, PythonFileType, \
                                         Python3FileType
+from utils.misc                  import safeRun
+from plaindotparser              import getGraphFromDescriptionData
+from importsdgmgraphics          import ImportsDgmDocConn, \
+                                        ImportsDgmDependConn, \
+                                        ImportsDgmNonPrjModule, \
+                                        ImportsDgmModuleOfInterest, \
+                                        ImportsDgmOtherPrjModule, \
+                                        ImportsDgmDocNote, ImportsDgmEdgeLabel
 
 
 class DgmConnection:
@@ -54,7 +63,7 @@ class DgmConnection:
 
     def toGraphviz( self ):
         " Serialize the connection in graphviz format "
-        attributes = 'id="' + self.objName + '"'
+        attributes = 'id="' + self.objName + '", arrowhead=none'
         label = ""
         for what in self.labels:
             if label != "":
@@ -62,7 +71,8 @@ class DgmConnection:
             label += what.name
         if label != "":
             attributes += ', label="' + label + \
-                          '", labelfontname=Courier, labelfontsize=12'
+                          '", fontname=Courier, fontsize=12'
+
         return self.source + " -> " + self.target + '[ ' + attributes + ' ];'
 
     def __eq__( self, other ):
@@ -284,10 +294,18 @@ class ImportDiagramModel:
                 return obj
         return None
 
-    def findConnection( self, name ):
+    def findConnection( self, name, tail = "" ):
         " Searches for a connection by the object name "
+        if tail == "":
+            # Search by the connection name
+            for obj in self.connections:
+                if obj.objName == name:
+                    return obj
+            return None
+
+        # Search by the name of the objects it connects
         for obj in self.connections:
-            if obj.objName == name:
+            if obj.source == name and obj.target == tail:
                 return obj
         return None
 
@@ -432,7 +450,8 @@ class ImportsDiagramProgress( QDialog ):
 
         self.__projectModules = {}              # dir -> [ imports ]
         self.__filesInfo = {}                   # file -> parsed content
-        self.__dataModel = ImportDiagramModel()
+        self.dataModel = ImportDiagramModel()
+        self.scene = QGraphicsScene()
 
         # Avoid pylint complains
         self.progressBar = None
@@ -481,8 +500,11 @@ class ImportsDiagramProgress( QDialog ):
     def __process( self ):
         " Accumulation process "
 
+        print "physicalDpiX: " + str( self.physicalDpiX() )
+        print "physicalDpiY: " + str( self.physicalDpiY() )
+
         self.__inProgress = True
-        self.progressBar.setRange( 0, 5 )
+        self.progressBar.setRange( 0, 6 )
 
         # Stage 1 - building a list of the project modules
         self.infoLabel.setText( "Building a list of the project modules..." )
@@ -545,18 +567,42 @@ class ImportsDiagramProgress( QDialog ):
             return
 
         # Stage 4 - generating the graphviz layout
+        self.infoLabel.setText( 'Generating layout using graphviz...' )
         self.progressBar.setValue( 4 )
 
         print "See t.dot"
         f = open( "t.dot", "w" )
-        f.write( self.__dataModel.toGraphviz() )
+        f.write( self.dataModel.toGraphviz() )
         f.close()
 
+        try:
+            graph = getGraphFromDescriptionData( self.dataModel.toGraphviz() )
+            graph.normalize( self.physicalDpiX(), self.physicalDpiY() )
+        except Exception, exc:
+            QApplication.restoreOverrideCursor()
+            logging.error( str( exc ) )
+            self.__inProgress = False
+            self.__onClose()
+            return
+
+        # Stage 5 - generate graphics scene
+        self.infoLabel.setText( 'Generating graphics scene...' )
+        self.progressBar.setValue( 5 )
+
+        try:
+            self.__buildGraphicsScene( graph )
+        except Exception, exc:
+            QApplication.restoreOverrideCursor()
+            logging.error( str( exc ) )
+            self.__inProgress = False
+            self.__onClose()
+            return
 
         QApplication.restoreOverrideCursor()
         self.infoLabel.setText( 'Done' )
         self.__inProgress = False
 
+        self.accept()
         return
 
     def __buildProjectModules( self, path ):
@@ -565,7 +611,7 @@ class ImportsDiagramProgress( QDialog ):
         imports = buildDirModules( path, self.infoLabel )
         if len( imports ) > 0:
             self.__projectModules[ path ] = imports
-            print path + " -> " + str( imports )
+            # print path + " -> " + str( imports )
         QApplication.processEvents()
         if self.__cancelRequest:
             return False
@@ -645,7 +691,7 @@ class ImportsDiagramProgress( QDialog ):
 
     def __buildDiagramDataModel( self ):
         " Builds the diargam data model "
-        self.__dataModel.clear()
+        self.dataModel.clear()
 
         for fName in self.__filesInfo:
             # Generate the module box
@@ -669,7 +715,7 @@ class ImportsDiagramProgress( QDialog ):
                     modBox.globs.append( glob )
 
             # Add the module box
-            modBoxName = self.__dataModel.addModule( modBox )
+            modBoxName = self.dataModel.addModule( modBox )
 
             # Docstring box
             if self.__options.includeDocs:
@@ -679,19 +725,19 @@ class ImportsDiagramProgress( QDialog ):
                     docBox.refFile = fName
 
                     # Add the box and its connection
-                    docBoxName = self.__dataModel.addDocstringBox( docBox )
+                    docBoxName = self.dataModel.addDocstringBox( docBox )
 
                     conn = DgmConnection()
                     conn.kind = DgmConnection.ModuleDoc
                     conn.source = modBoxName
                     conn.target = docBoxName
-                    self.__dataModel.addConnection( conn )
+                    self.dataModel.addConnection( conn )
 
                     # Add rank for better layout
                     rank = DgmRank()
                     rank.firstObj = modBoxName
                     rank.secondObj = docBoxName
-                    self.__dataModel.addRank( rank )
+                    self.dataModel.addRank( rank )
 
             # Other modules, in/out of the project
             for item in info.imports:
@@ -721,7 +767,7 @@ class ImportsDiagramProgress( QDialog ):
                             impBox.globs.append( glob )
 
                 # Add the box
-                impBoxName = self.__dataModel.addModule( impBox )
+                impBoxName = self.dataModel.addModule( impBox )
 
                 impConn = DgmConnection()
                 impConn.kind = DgmConnection.ModuleDependency
@@ -733,7 +779,7 @@ class ImportsDiagramProgress( QDialog ):
                         if impWhat.name != "":
                             impConn.labels.append( impWhat )
 
-                self.__dataModel.addConnection( impConn )
+                self.dataModel.addConnection( impConn )
         return
 
     def __getProjectPathForImport( self, originatorPath, importName ):
@@ -787,4 +833,67 @@ class ImportsDiagramProgress( QDialog ):
 
         raise Exception( "Inconsistency detected: disappeared import '" + \
                          importName + "' for " + path )
+
+    def __buildGraphicsScene( self, graph ):
+        " Builds the QT graphics scene "
+        self.scene.clear()
+        self.scene.setSceneRect( 0, 0, graph.width, graph.height )
+
+        for edge in graph.edges:
+            # self.scene.addItem( GraphicsEdge( edge, self ) )
+            dataModelObj = self.dataModel.findConnection( edge.tail,
+                                                          edge.head )
+            if dataModelObj is None:
+                raise Exception( "Cannot find the following connection: " + \
+                                 edge.tail + " -> " + edge.head )
+
+            if dataModelObj.kind == DgmConnection.ModuleDoc:
+                modObj = self.dataModel.findModule( dataModelObj.source )
+                if modObj is None:
+                    raise Exception( "Cannot find module object: " + dataModelObj.source )
+                self.scene.addItem( ImportsDgmDocConn( edge, modObj ) )
+                continue
+            if dataModelObj.kind == DgmConnection.ModuleDependency:
+                # Find the source module object first
+                modObj = self.dataModel.findModule( dataModelObj.source )
+                if modObj is None:
+                    raise Exception( "Cannot find module object: " + dataModelObj.source )
+                self.scene.addItem( ImportsDgmDependConn( edge, modObj, dataModelObj ) )
+
+                if edge.label != "":
+                    self.scene.addItem( ImportsDgmEdgeLabel( edge, modObj ) )
+                continue
+
+            raise Exception( "Unexpected type of connection: " + str( dataModelObj.kind ) )
+
+
+        for node in graph.nodes:
+            dataModelObj = self.dataModel.findModule( node.name )
+            if dataModelObj is None:
+                dataModelObj = self.dataModel.findDocstring( node.name )
+            if dataModelObj is None:
+                raise Exception( "Cannot find object " + node.name )
+
+            if isinstance( dataModelObj, DgmDocstring ):
+                self.scene.addItem( ImportsDgmDocNote( node, dataModelObj ) )
+                continue
+
+            # OK, this is a module rectangle. Switch by type of the module.
+            if dataModelObj.kind == DgmModule.NonProjectModule:
+                self.scene.addItem( ImportsDgmNonPrjModule( node, dataModelObj ) )
+                continue
+
+            if dataModelObj.kind == DgmModule.ModuleOfInterest:
+                self.scene.addItem( ImportsDgmModuleOfInterest( node, dataModelObj,
+                                                                self.physicalDpiX() ) )
+                continue
+
+            if dataModelObj.kind == DgmModule.OtherProjectModule:
+                self.scene.addItem( ImportsDgmOtherPrjModule( node, dataModelObj,
+                                                              self.physicalDpiX() ) )
+                continue
+
+            raise Exception( "Unexpected type of module: " + str( dataModelObj.kind ) )
+
+        return
 
