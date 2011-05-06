@@ -49,13 +49,12 @@ from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
 from utils.globals              import GlobalData
 from utils.settings             import Settings
 from tabshistory                import TabsHistory
-
+from diagram.importsdgmgraphics import ImportDgmTabWidget
 
 
 
 class EditorsManager( QTabWidget ):
     " Tab bar with editors "
-
 
     def __init__( self, parent = None ):
 
@@ -518,6 +517,34 @@ class EditorsManager( QTabWidget ):
             self.saveTabsStatus()
             if self.__restoringTabs == False:
                 GlobalData().project.addRecentFile( fileName )
+
+        except Exception, exc:
+            logging.error( str( exc ) )
+            return False
+        return True
+
+    def openDiagram( self, scene ):
+        " Opens a tab with a graphics scene on it "
+
+        try:
+            newWidget = ImportDgmTabWidget()
+            self.connect( newWidget, SIGNAL( 'ESCPressed' ),
+                          self.__onESC )
+            newWidget.setScene( scene )
+
+            if self.widget( 0 ) == self.__welcomeWidget:
+                # It is the only welcome widget on the screen
+                self.removeTab( 0 )
+                self.setTabsClosable( True )
+
+            self.insertTab( 0, newWidget,
+                            PixmapCache().getIcon( "diagram.png" ),
+                            newWidget.getShortName() )
+            self.activateTab( 0 )
+            self.__updateControls()
+            self.__updateStatusBar()
+            newWidget.setFocus()
+            self.saveTabsStatus()
 
         except Exception, exc:
             logging.error( str( exc ) )
