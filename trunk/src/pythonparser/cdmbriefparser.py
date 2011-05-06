@@ -99,7 +99,7 @@ class ImportWhat( ModuleInfoBase ):
         self.line = line
         self.name = whatName
         self.alias = ""
-        return 
+        return
 
     def __str__( self ):
         if self.alias == "":
