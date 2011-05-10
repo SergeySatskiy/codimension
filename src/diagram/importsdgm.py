@@ -24,7 +24,7 @@
 """ imports diagram dialog """
 
 
-import os, os.path, logging, tempfile
+import os, os.path, logging
 from PyQt4.QtCore                import Qt, SIGNAL, QTimer
 from PyQt4.QtGui                 import QDialog, QDialogButtonBox, \
                                         QVBoxLayout, QCheckBox, QLabel, \
@@ -35,7 +35,6 @@ from utils.globals               import GlobalData
 from pythonparser.cdmbriefparser import getBriefModuleInfoFromMemory
 from utils.fileutils             import detectFileType, PythonFileType, \
                                         Python3FileType
-from utils.misc                  import safeRun
 from plaindotparser              import getGraphFromDescriptionData
 from importsdgmgraphics          import ImportsDgmDocConn, \
                                         ImportsDgmDependConn, \
@@ -114,6 +113,7 @@ class DgmModule:
         self.classes = []       # list of classes objects
         self.funcs = []         # list of funcs objects
         self.globs = []         # list of global var objects
+        self.imports = []       # list of imports
 
         self.refFile = ""       # File of the module
         return
@@ -500,9 +500,6 @@ class ImportsDiagramProgress( QDialog ):
     def __process( self ):
         " Accumulation process "
 
-        print "physicalDpiX: " + str( self.physicalDpiX() )
-        print "physicalDpiY: " + str( self.physicalDpiY() )
-
         self.__inProgress = True
         self.progressBar.setRange( 0, 6 )
 
@@ -569,11 +566,6 @@ class ImportsDiagramProgress( QDialog ):
         # Stage 4 - generating the graphviz layout
         self.infoLabel.setText( 'Generating layout using graphviz...' )
         self.progressBar.setValue( 4 )
-
-        print "See t.dot"
-        f = open( "t.dot", "w" )
-        f.write( self.dataModel.toGraphviz() )
-        f.close()
 
         try:
             graph = getGraphFromDescriptionData( self.dataModel.toGraphviz() )
@@ -714,6 +706,10 @@ class ImportsDiagramProgress( QDialog ):
                 for glob in info.globals:
                     modBox.globs.append( glob )
 
+            if self.__options.includeConnText:
+                for imp in info.imports:
+                    modBox.imports.append( imp )
+
             # Add the module box
             modBoxName = self.dataModel.addModule( modBox )
 
@@ -850,21 +846,25 @@ class ImportsDiagramProgress( QDialog ):
             if dataModelObj.kind == DgmConnection.ModuleDoc:
                 modObj = self.dataModel.findModule( dataModelObj.source )
                 if modObj is None:
-                    raise Exception( "Cannot find module object: " + dataModelObj.source )
+                    raise Exception( "Cannot find module object: " + \
+                                     dataModelObj.source )
                 self.scene.addItem( ImportsDgmDocConn( edge, modObj ) )
                 continue
             if dataModelObj.kind == DgmConnection.ModuleDependency:
                 # Find the source module object first
                 modObj = self.dataModel.findModule( dataModelObj.source )
                 if modObj is None:
-                    raise Exception( "Cannot find module object: " + dataModelObj.source )
-                self.scene.addItem( ImportsDgmDependConn( edge, modObj, dataModelObj ) )
+                    raise Exception( "Cannot find module object: " + \
+                                     dataModelObj.source )
+                self.scene.addItem( \
+                        ImportsDgmDependConn( edge, modObj, dataModelObj ) )
 
                 if edge.label != "":
                     self.scene.addItem( ImportsDgmEdgeLabel( edge, modObj ) )
                 continue
 
-            raise Exception( "Unexpected type of connection: " + str( dataModelObj.kind ) )
+            raise Exception( "Unexpected type of connection: " + \
+                             str( dataModelObj.kind ) )
 
 
         for node in graph.nodes:
@@ -880,20 +880,24 @@ class ImportsDiagramProgress( QDialog ):
 
             # OK, this is a module rectangle. Switch by type of the module.
             if dataModelObj.kind == DgmModule.NonProjectModule:
-                self.scene.addItem( ImportsDgmNonPrjModule( node, dataModelObj ) )
+                self.scene.addItem( \
+                        ImportsDgmNonPrjModule( node, dataModelObj ) )
                 continue
 
             if dataModelObj.kind == DgmModule.ModuleOfInterest:
-                self.scene.addItem( ImportsDgmModuleOfInterest( node, dataModelObj,
-                                                                self.physicalDpiX() ) )
+                self.scene.addItem( \
+                        ImportsDgmModuleOfInterest( node, dataModelObj,
+                                                    self.physicalDpiX() ) )
                 continue
 
             if dataModelObj.kind == DgmModule.OtherProjectModule:
-                self.scene.addItem( ImportsDgmOtherPrjModule( node, dataModelObj,
-                                                              self.physicalDpiX() ) )
+                self.scene.addItem( \
+                        ImportsDgmOtherPrjModule( node, dataModelObj,
+                                                  self.physicalDpiX() ) )
                 continue
 
-            raise Exception( "Unexpected type of module: " + str( dataModelObj.kind ) )
+            raise Exception( "Unexpected type of module: " + \
+                             str( dataModelObj.kind ) )
 
         return
 

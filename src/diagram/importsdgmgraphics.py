@@ -29,10 +29,12 @@ from PyQt4.QtGui                import QGraphicsRectItem, QGraphicsPathItem, \
                                        QToolBar, QHBoxLayout, QColor, \
                                        QAction, QGraphicsItem, QPainter, \
                                        QPainterPath, QGraphicsTextItem, \
-                                       QFontMetrics
+                                       QFontMetrics, QStyleOptionGraphicsItem, \
+                                       QPainter, QStyle
 from PyQt4.QtCore               import Qt, SIGNAL, QSize, QPointF
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.pixmapcache          import PixmapCache
+from utils.globals              import GlobalData
 
 
 # A list of items could be empty for a certain part so the default height
@@ -57,7 +59,30 @@ class ImportsDgmEdgeLabel( QGraphicsTextItem ):
 
         self.setPos( edge.labelX - rec.width() / 2,
                      edge.labelY - rec.height() / 2 )
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
+
+    def paint( self, painter, option, widget ):
+        """ Draws the edge text """
+
+        # Hide the dotted outline
+        itemOption = QStyleOptionGraphicsItem( option )
+        if itemOption.state & QStyle.State_Selected != 0:
+            itemOption.state = itemOption.state & ~QStyle.State_Selected
+
+        QGraphicsTextItem.paint( self, painter, itemOption, widget )
+        return
+
+    def mouseDoubleClickEvent( self, event ):
+        " Open the clicked file as the new one "
+
+        # Jump to the first import statement
+        line = self.__modObj.imports[ 0 ].line
+        GlobalData().mainWindow.openFile( self.__modObj.refFile, line )
+        return
+
 
 
 class ImportsDgmDocConn( QGraphicsPathItem ):
@@ -100,8 +125,8 @@ class ImportsDgmDocConn( QGraphicsPathItem ):
     def paint( self, painter, option, widget ):
         """ Draws a curve and then adds an arrow """
 
-        pen = QPen( QColor( 10, 10, 10) )
-        pen.setWidth( 1 )
+        pen = QPen( QColor( 0, 0, 0) )
+        pen.setWidth( 2 )
         self.setPen( pen )
 
         QGraphicsPathItem.paint( self, painter, option, widget )
@@ -171,9 +196,10 @@ class ImportsDgmDependConn( QGraphicsPathItem ):
         """ Draws a curve and then adds an arrow """
 
         pen = QPen( QColor( 0, 0, 0) )
-        pen.setWidth( 1 )
+        pen.setWidth( 2 )
         self.setPen( pen )
 
+        painter.setRenderHint( QPainter.Antialiasing, True )
         QGraphicsPathItem.paint( self, painter, option, widget )
         return
 
@@ -191,11 +217,8 @@ class ImportsDgmNonPrjModule( QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self, posX, posY,
                                     node.width, node.height )
         pen = QPen( QColor( 10, 10, 10) )
-        pen.setWidth( 1 )
+        pen.setWidth( 2 )
         self.setPen( pen )
-
-        # To make double click delivered
-        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
 
         self.setBrush( QColor( 220, 255, 220 ) )
         return
@@ -213,12 +236,17 @@ class ImportsDgmNonPrjModule( QGraphicsRectItem ):
                           self.__node.posY - self.__node.height / 2.0,
                           self.__node.width, self.__node.height,
                           Qt.AlignCenter, self.__srcobj.title )
+
+        pixmap = PixmapCache().getPixmap( "systemmod.png" )
+        pixmapPosX = self.__node.posX + self.__node.width / 2.0 - \
+                     pixmap.width() / 2.0
+        pixmapPosY = self.__node.posY - self.__node.height / 2.0 - \
+                     pixmap.height() / 2.0
+        painter.setRenderHint( QPainter.SmoothPixmapTransform )
+        painter.drawPixmap( pixmapPosX, pixmapPosY, pixmap )
+
         return
 
-    def mouseDoubleClickEvent( self, event ):
-        """ Open the clicked file as the new one """
-
-        pass
 
 
 class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
@@ -235,7 +263,7 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self, posX, posY,
                                     node.width, node.height )
         pen = QPen( QColor( 0, 0, 0 ) )
-        pen.setWidth( 1 )
+        pen.setWidth( 2 )
         self.setPen( pen )
 
         # To make double click delivered
@@ -289,8 +317,13 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
     def paint( self, painter, option, widget ):
         " Draws a filled rectangle, adds title, classes/funcs/globs sections "
 
+        # Hide the dotted outline
+        itemOption = QStyleOptionGraphicsItem( option )
+        if itemOption.state & QStyle.State_Selected != 0:
+            itemOption.state = itemOption.state & ~QStyle.State_Selected
+
         # Draw the rectangle
-        QGraphicsRectItem.paint( self, painter, option, widget )
+        QGraphicsRectItem.paint( self, painter, itemOption, widget )
 
         font = QFont( "Courier", 12 )
         painter.setFont( font )
@@ -298,7 +331,7 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
         # Draw the title
         posX = self.__node.posX - self.__node.width / 2.0
         posY = self.__node.posY - self.__node.height / 2.0
-        painter.drawLine( posX,
+        painter.drawLine( posX + 1,
                           posY + self.__heights[ 0 ],
                           posX + self.__node.width,
                           posY + self.__heights[ 0 ] )
@@ -308,7 +341,7 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
 
         # Draw classes
         posY += self.__heights[ 0 ]
-        painter.drawLine( posX,
+        painter.drawLine( posX + 1,
                           posY + self.__heights[ 1 ],
                           posX + self.__node.width,
                           posY + self.__heights[ 1 ] )
@@ -324,7 +357,7 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
 
         # Draw funcs
         posY += self.__heights[ 1 ]
-        painter.drawLine( posX,
+        painter.drawLine( posX + 1,
                           posY + self.__heights[ 2 ],
                           posX + self.__node.width,
                           posY + self.__heights[ 2 ] )
@@ -351,6 +384,11 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
                               Qt.AlignCenter, globsPart )
         return
 
+    def mouseDoubleClickEvent( self, event ):
+        """ Open the clicked file as the new one """
+
+        GlobalData().mainWindow.openFile( self.__srcobj.refFile, -1 )
+        return
 
 
 class ImportsDgmModuleOfInterest( ImportsDgmDetailedModuleBase ):
@@ -362,11 +400,6 @@ class ImportsDgmModuleOfInterest( ImportsDgmDetailedModuleBase ):
         return
 
 
-    def mouseDoubleClickEvent( self, event ):
-        """ Open the clicked file as the new one """
-
-        pass
-
 
 class ImportsDgmOtherPrjModule( ImportsDgmDetailedModuleBase ):
     " Other in-project module "
@@ -375,11 +408,6 @@ class ImportsDgmOtherPrjModule( ImportsDgmDetailedModuleBase ):
         ImportsDgmDetailedModuleBase.__init__( self, node, srcobj, deviceDPI )
         self.setBrush( QColor( 240, 240, 110 ) )
         return
-
-    def mouseDoubleClickEvent( self, event ):
-        """ Open the clicked file as the new one """
-
-        pass
 
 
 class ImportsDgmDocNote( QGraphicsRectItem ):
@@ -395,7 +423,7 @@ class ImportsDgmDocNote( QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self, posX, posY,
                                     node.width, node.height )
         pen = QPen( QColor( 0, 0, 0) )
-        pen.setWidth( 1 )
+        pen.setWidth( 2 )
         self.setPen( pen )
 
         # To make double click delivered
@@ -407,8 +435,13 @@ class ImportsDgmDocNote( QGraphicsRectItem ):
     def paint( self, painter, option, widget ):
         """ Draws a filled rectangle and then adds a title """
 
+        # Hide the dotted outline
+        itemOption = QStyleOptionGraphicsItem( option )
+        if itemOption.state & QStyle.State_Selected != 0:
+            itemOption.state = itemOption.state & ~QStyle.State_Selected
+
         # Draw the rectangle
-        QGraphicsRectItem.paint( self, painter, option, widget )
+        QGraphicsRectItem.paint( self, painter, itemOption, widget )
 
         # Draw text over the rectangle
         font = QFont( "Courier", 12 )
@@ -417,12 +450,22 @@ class ImportsDgmDocNote( QGraphicsRectItem ):
                           self.__node.posY - self.__node.height / 2.0,
                           self.__node.width, self.__node.height,
                           Qt.AlignCenter, self.__srcobj.text )
+
+        pixmap = PixmapCache().getPixmap( "docstring.png" )
+        pixmapPosX = self.__node.posX + self.__node.width / 2.0 - \
+                     pixmap.width() / 2.0
+        pixmapPosY = self.__node.posY - self.__node.height / 2.0 - \
+                     pixmap.height() / 2.0
+        painter.setRenderHint( QPainter.SmoothPixmapTransform )
+        painter.drawPixmap( pixmapPosX, pixmapPosY, pixmap )
         return
 
     def mouseDoubleClickEvent( self, event ):
         """ Open the clicked file as the new one """
 
-        pass
+        # TODO: when the parser provides the docstring line number, use it here
+        GlobalData().mainWindow.openFile( self.__srcobj.refFile, 1 )
+        return
 
 
 
@@ -431,8 +474,8 @@ class ImportDgmWidget( QGraphicsView ):
 
     def __init__( self, parent = None ):
         QGraphicsView.__init__( self, parent )
-        self.setRenderHint( QPainter.Antialiasing )
-        self.setRenderHint( QPainter.TextAntialiasing )
+#        self.setRenderHint( QPainter.Antialiasing )
+#        self.setRenderHint( QPainter.TextAntialiasing )
         return
 
     def keyPressEvent( self, event ):
