@@ -157,8 +157,9 @@ void checkForDocstring( pANTLR3_BASE_TREE             tree,
     if ( getType( tree ) != STRING_LITERAL ) return;
 
     tree = vectorGet( tree->children, 0 );
-    PyObject_CallFunction( callbacks->onDocstring, "s",
-                           (const char *)(tree->toString( tree )->chars) );
+    PyObject_CallFunction( callbacks->onDocstring, "si",
+                           (const char *)(tree->toString( tree )->chars),
+                           tree->getLine( tree ) );
     return;
 }
 

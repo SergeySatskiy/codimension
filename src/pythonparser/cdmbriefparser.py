@@ -206,6 +206,7 @@ class Function( ModuleInfoBase ):
         self.arguments = []
         self.decorators = []
         self.docstring = ""
+        self.docstringline = -1
         self.functions = []     # nested functions
         self.classes = []       # nested classes
         return
@@ -227,7 +228,8 @@ class Function( ModuleInfoBase ):
         for item in self.decorators:
             out += '\n' + level * "    " + str( item )
         if self.docstring != "":
-            out += '\n' + level * "    " + "Docstring: '" + self.docstring + "'"
+            out += '\n' + level * "    " + "Docstring[" + \
+                   str( self.docstringline ) + "]: '" + self.docstring + "'"
         for item in self.functions:
             out += '\n' + item.niceStringify( level + 1 )
         for item in self.classes:
@@ -247,6 +249,7 @@ class Class( ModuleInfoBase ):
         self.base = []
         self.decorators = []
         self.docstring = ""
+        self.docstringline = -1
         self.classAttributes = []
         self.instanceAttributes = []
         self.functions = []             # member functions
@@ -263,7 +266,8 @@ class Class( ModuleInfoBase ):
         for item in self.decorators:
             out += '\n' + level * "    " + str( item )
         if self.docstring != "":
-            out += '\n' + level * "    " + "Docstring: '" + self.docstring + "'"
+            out += '\n' + level * "    " + "Docstring[" + \
+                   str( self.docstringline ) + "]: '" + self.docstring + "'"
         for item in self.classAttributes:
             out += '\n' + level * "    " + str(item)
         for item in self.instanceAttributes:
@@ -282,6 +286,7 @@ class BriefModuleInfo:
         self.isOK = True
 
         self.docstring = ""
+        self.docstringline = -1
         self.encoding = None
         self.imports = []
         self.globals = []
@@ -298,7 +303,8 @@ class BriefModuleInfo:
 
         out = ""
         if self.docstring != "":
-            out += "Docstring: '" + self.docstring + "'"
+            out += "Docstring[" + str( self.docstringline ) + \
+                   "]: '" + self.docstring + "'"
         if not self.encoding is None:
             if out != "":
                 out += '\n'
@@ -438,7 +444,7 @@ class BriefModuleInfo:
         self.objectsStack[ index ].decorators[ decorIndex ].arguments.append( name )
         return
 
-    def onDocstring( self, docstr ):
+    def onDocstring( self, docstr, line ):
         " Memorizes a function/class/module docstring "
         if docstr.startswith( "'''" ) or docstr.startswith( '"""' ):
             docstr = docstr[ 3:-3 ]
@@ -446,9 +452,11 @@ class BriefModuleInfo:
             docstr = docstr[ 1:-1 ]
         if len( self.objectsStack ) == 0:
             self.docstring = trim_docstring( docstr )
+            self.docstringline = line
             return
         index = len( self.objectsStack ) - 1
         self.objectsStack[ index ].docstring = trim_docstring( docstr )
+        self.objectsStack[ index ].docstringline = line
         return
 
     def onArgument( self, name ):
