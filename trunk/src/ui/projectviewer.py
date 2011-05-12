@@ -1118,8 +1118,6 @@ class ProjectViewer( QWidget ):
         progressDlg = ImportsDiagramProgress( what, options,
                                               self.__prjContextItem.getPath() )
         if progressDlg.exec_() == QDialog.Accepted:
-            print "Accepted!"
-        else:
-            print "Rejected!"
+            GlobalData().mainWindow.openDiagram( progressDlg.scene )
         return
 
