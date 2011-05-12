@@ -160,8 +160,12 @@ class FindNameModel( QAbstractItemModel ):
         else:
             icon = PixmapCache().getIcon( 'class.png' )
 
+        tooltip = ""
+        if klass.docstring is not None:
+            tooltip = klass.docstring.text
+
         classItem = NameItem( self.rootItem, icon, prefix + klass.name,
-                              fname, klass.line, klass.docstring )
+                              fname, klass.line, tooltip )
         self.rootItem.appendChild( classItem )
         self.count += 1
 
@@ -190,10 +194,14 @@ class FindNameModel( QAbstractItemModel ):
     def __populateFunction( self, func, prefix, fname ):
         " Recursively populates the given function "
 
+        tooltip = ""
+        if func.docstring is not None:
+            tooltip = func.docstring.text
+
         funcItem = NameItem( self.rootItem,
                              PixmapCache().getIcon( 'method.png' ),
                              prefix + func.name, fname,
-                             func.line, func.docstring )
+                             func.line, tooltip )
         self.rootItem.appendChild( funcItem )
         self.count += 1
 

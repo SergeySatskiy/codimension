@@ -135,7 +135,9 @@ class ItemToSearchIn:
             if self.fileName.endswith( '.py' ) or \
                self.fileName.endswith( '.py3' ):
                 info = getBriefModuleInfoFromMemory( "\n".join( content ) )
-                self.tooltip = info.docstring
+                self.tooltip = ""
+                if info.docstring is not None:
+                    self.tooltip = info.docstring.text
 
         return
 

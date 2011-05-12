@@ -161,6 +161,7 @@ class FindFileModel( QAbstractItemModel ):
             if fname.endswith( os.path.sep ):
                 continue
             fileType = detectFileType( fname )
+            tooltip = ""
             if fileType in [ PythonFileType, Python3FileType ]:
                 widget = mainWindow.getWidgetForFileName( fname )
                 if widget is None:
@@ -168,9 +169,8 @@ class FindFileModel( QAbstractItemModel ):
                 else:
                     content = str( widget.getEditor().text() )
                     info = getBriefModuleInfoFromMemory( content )
-                tooltip = info.docstring
-            else:
-                tooltip = ""
+                if info.docstring is not None:
+                    tooltip = info.docstring.text
             newItem = FileItem( self.rootItem, getFileIcon( fileType ),
                                 fname, tooltip )
             self.rootItem.appendChild( newItem )
@@ -187,12 +187,12 @@ class FindFileModel( QAbstractItemModel ):
             fname = record[ 1 ]
             widget = record[ 2 ]
             fileType = detectFileType( fname )
+            tooltip = ""
             if fileType in [ PythonFileType, Python3FileType ]:
                 content = str( widget.getEditor().text() )
                 info = getBriefModuleInfoFromMemory( content )
-                tooltip = info.docstring
-            else:
-                tooltip = ""
+                if info.docstring is not None:
+                    tooltip = info.docstring.text
             newItem = FileItem( self.rootItem, getFileIcon( fileType ),
                                 fname, tooltip )
             self.rootItem.appendChild( newItem )
