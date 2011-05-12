@@ -449,7 +449,7 @@ class ImportsDgmDocNote( QGraphicsRectItem ):
         painter.drawText( self.__node.posX - self.__node.width / 2.0,
                           self.__node.posY - self.__node.height / 2.0,
                           self.__node.width, self.__node.height,
-                          Qt.AlignCenter, self.__srcobj.text )
+                          Qt.AlignCenter, self.__srcobj.docstring.text )
 
         pixmap = PixmapCache().getPixmap( "docstring.png" )
         pixmapPosX = self.__node.posX + self.__node.width / 2.0 - \
@@ -462,9 +462,8 @@ class ImportsDgmDocNote( QGraphicsRectItem ):
 
     def mouseDoubleClickEvent( self, event ):
         """ Open the clicked file as the new one """
-
-        # TODO: when the parser provides the docstring line number, use it here
-        GlobalData().mainWindow.openFile( self.__srcobj.refFile, 1 )
+        GlobalData().mainWindow.openFile( self.__srcobj.refFile,
+                                          self.__srcobj.docstring.line )
         return
 
 

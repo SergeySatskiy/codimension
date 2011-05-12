@@ -84,14 +84,14 @@ class DgmDocstring:
 
     def __init__( self ):
         self.objName = ""       # Unique object name
-        self.text = ""          # Module docstring
+        self.docstring = None   # Module docstring object
 
         self.refFile = ""       # File of the docstring
         return
 
     def toGraphviz( self ):
         " Serialize the docstring box in graphviz format "
-        escapedText = self.text.replace( '\n', '\\n' )
+        escapedText = self.docstring.text.replace( '\n', '\\n' )
         escapedText = escapedText.replace( '"', '\\"' )
         attributes = 'shape=box, fontname=Courier, fontsize=12'
         return self.objName + \
@@ -717,7 +717,7 @@ class ImportsDiagramProgress( QDialog ):
             if self.__options.includeDocs:
                 if info.docstring is not None:
                     docBox = DgmDocstring()
-                    docBox.text = info.docstring.text
+                    docBox.docstring = info.docstring
                     docBox.refFile = fName
 
                     # Add the box and its connection
