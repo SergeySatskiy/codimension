@@ -110,16 +110,7 @@ class ImportsDgmDocConn( QGraphicsPathItem ):
         if index + 1 <= len( edge.points ):
             painterPath.lineTo(edge.points[index+1][0], edge.points[index+1][1])
 
-        lastIndex = len( edge.points ) - 1
-        self.addConnector(painterPath, edge.points[0][0], edge.points[0][1],
-                          edge.points[lastIndex][0], edge.points[lastIndex][1])
         self.setPath( painterPath )
-        return
-
-    def addConnector( self, painterPath, beginX, beginY, endX, endY ):
-        " Adds round shape connectors "
-        painterPath.addEllipse( beginX - 2.0, beginY - 2.0, 4.0, 4.0 )
-        painterPath.addEllipse( endX - 2.0, endY - 2.0, 4.0, 4.0 )
         return
 
     def paint( self, painter, option, widget ):
@@ -127,6 +118,7 @@ class ImportsDgmDocConn( QGraphicsPathItem ):
 
         pen = QPen( QColor( 0, 0, 0) )
         pen.setWidth( 2 )
+        pen.setStyle( Qt.DotLine )
         self.setPen( pen )
 
         QGraphicsPathItem.paint( self, painter, option, widget )
