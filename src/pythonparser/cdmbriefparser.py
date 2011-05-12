@@ -194,6 +194,18 @@ class Decorator( ModuleInfoBase ):
         return val
 
 
+class Docstring():
+    " Holds a docstring information "
+
+    def __init__( self, text, line ):
+        self.line = line
+        self.text = text
+        return
+
+    def __str__( self ):
+        return "Docstring[" + str( self.line ) + "]: '" + self.text + "'"
+
+
 class Function( ModuleInfoBase ):
     " Holds information about a single function"
 
@@ -203,10 +215,9 @@ class Function( ModuleInfoBase ):
         self.name = funcName
 
         # Non-common part
+        self.docstring = None
         self.arguments = []
         self.decorators = []
-        self.docstring = ""
-        self.docstringline = -1
         self.functions = []     # nested functions
         self.classes = []       # nested classes
         return
@@ -227,9 +238,8 @@ class Function( ModuleInfoBase ):
             out += '\n' + level * "    " + "Argument: '" + item + "'"
         for item in self.decorators:
             out += '\n' + level * "    " + str( item )
-        if self.docstring != "":
-            out += '\n' + level * "    " + "Docstring[" + \
-                   str( self.docstringline ) + "]: '" + self.docstring + "'"
+        if self.docstring is not None:
+            out += '\n' + level * "    " + str( self.docstring )
         for item in self.functions:
             out += '\n' + item.niceStringify( level + 1 )
         for item in self.classes:
@@ -246,10 +256,9 @@ class Class( ModuleInfoBase ):
         self.name = className
 
         # Non-commonpart
+        self.docstring = None
         self.base = []
         self.decorators = []
-        self.docstring = ""
-        self.docstringline = -1
         self.classAttributes = []
         self.instanceAttributes = []
         self.functions = []             # member functions
@@ -265,9 +274,8 @@ class Class( ModuleInfoBase ):
             out += '\n' + level * "    " + "Base class: '" + item + "'"
         for item in self.decorators:
             out += '\n' + level * "    " + str( item )
-        if self.docstring != "":
-            out += '\n' + level * "    " + "Docstring[" + \
-                   str( self.docstringline ) + "]: '" + self.docstring + "'"
+        if self.docstring is not None:
+            out += '\n' + level * "    " + str( self.docstring )
         for item in self.classAttributes:
             out += '\n' + level * "    " + str(item)
         for item in self.instanceAttributes:
@@ -285,8 +293,7 @@ class BriefModuleInfo:
     def __init__( self ):
         self.isOK = True
 
-        self.docstring = ""
-        self.docstringline = -1
+        self.docstring = None
         self.encoding = None
         self.imports = []
         self.globals = []
@@ -302,9 +309,8 @@ class BriefModuleInfo:
         " Returns a string representation with new lines and shifts "
 
         out = ""
-        if self.docstring != "":
-            out += "Docstring[" + str( self.docstringline ) + \
-                   "]: '" + self.docstring + "'"
+        if self.docstring is not None:
+            out += str( self.docstring )
         if not self.encoding is None:
             if out != "":
                 out += '\n'
@@ -451,12 +457,11 @@ class BriefModuleInfo:
         else:
             docstr = docstr[ 1:-1 ]
         if len( self.objectsStack ) == 0:
-            self.docstring = trim_docstring( docstr )
-            self.docstringline = line
+            self.docstring = Docstring( trim_docstring( docstr ), line )
             return
         index = len( self.objectsStack ) - 1
-        self.objectsStack[ index ].docstring = trim_docstring( docstr )
-        self.objectsStack[ index ].docstringline = line
+        self.objectsStack[ index ].docstring = \
+                             Docstring( trim_docstring( docstr ), line )
         return
 
     def onArgument( self, name ):

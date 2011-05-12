@@ -298,7 +298,9 @@ class BrowserModelBase( QAbstractItemModel ):
                     node = TreeViewFileItem( parentItem, path + item )
                     if node.fileType in [ PythonFileType, Python3FileType ]:
                         modInfo = infoSrc.get( path + item )
-                        node.toolTip = modInfo.docstring
+                        node.toolTip = ""
+                        if modInfo.docstring is not None:
+                            node.toolTip = modInfo.docstring.text
 
                         if len( modInfo.errors ) > 0:
                             # Substitute icon and change the tooltip

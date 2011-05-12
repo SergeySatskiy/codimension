@@ -557,7 +557,10 @@ class TreeViewFunctionItem( TreeViewItem ):
 
         self.sourceObj = functionObj
         self.itemType = FunctionItemType
-        self.toolTip = functionObj.docstring
+
+        self.toolTip = ""
+        if functionObj.docstring is not None:
+            self.toolTip = functionObj.docstring.text
 
         if functionObj.isPrivate():
             self.icon = PixmapCache().getIcon( 'method_private.png' )
@@ -588,7 +591,10 @@ class TreeViewClassItem( TreeViewItem ):
 
         self.sourceObj = classObj
         self.itemType = ClassItemType
-        self.toolTip = classObj.docstring
+
+        self.toolTip = ""
+        if classObj.docstring is not None:
+            self.toolTip = classObj.docstring.text
 
         if classObj.isPrivate():
             self.icon = PixmapCache().getIcon( 'class_private.png' )

@@ -338,7 +338,10 @@ class PymetricsViewer( QWidget ):
                 else:
                     infoSrc = GlobalData().briefModinfoCache
                 info = infoSrc.get( fileName )
-                fileItem.setToolTip( 0, info.docstring )
+                if info.docstring is not None:
+                    fileItem.setToolTip( 0, info.docstring.text )
+                else:
+                    fileItem.setToolTip( 0, "" )
             self.__totalResultsTree.addTopLevelItem( fileItem )
 
             # Messages part

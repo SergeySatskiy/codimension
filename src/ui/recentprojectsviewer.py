@@ -161,7 +161,10 @@ class RecentFileViewItem( QTreeWidgetItem ):
                 infoSrc = GlobalData().briefModinfoCache
             info = infoSrc.get( fileName )
             self.setToolTip( 0, "" )
-            self.setToolTip( 1, info.docstring )
+            if info.docstring is not None:
+                self.setToolTip( 1, info.docstring.text )
+            else:
+                self.setToolTip( 1, "" )
         self.setIcon( 0, getFileIcon( fileType ) )
         return
 

@@ -483,7 +483,9 @@ class EditorsManager( QTabWidget ):
             else:
                 infoSrc = GlobalData().briefModinfoCache
             info = infoSrc.get( fileName )
-            return info.docstring
+            if info.docstring is not None:
+                return info.docstring.text
+            return ""
         except:
             return ""
 

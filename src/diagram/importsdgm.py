@@ -715,9 +715,9 @@ class ImportsDiagramProgress( QDialog ):
 
             # Docstring box
             if self.__options.includeDocs:
-                if info.docstring != "":
+                if info.docstring is not None:
                     docBox = DgmDocstring()
-                    docBox.text = info.docstring
+                    docBox.text = info.docstring.text
                     docBox.refFile = fName
 
                     # Add the box and its connection
