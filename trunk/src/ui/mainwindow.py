@@ -1176,9 +1176,7 @@ class CodimensionMainWindow( QMainWindow ):
         progressDlg = ImportsDiagramProgress( ImportsDiagramDialog.ProjectFiles,
                                               options )
         if progressDlg.exec_() == QDialog.Accepted:
-            print "Accepted!"
-        else:
-            print "Rejected!"
+            self.openDiagram( progressDlg.scene )
         return
 
     def __verticalEdgeChanged( self ):
