@@ -1138,7 +1138,7 @@ py_modinfo_from_mem( PyObject *  self,      /* unused */
     {
         PyErr_SetString( PyExc_TypeError, "Incorrect arguments. "
                                           "Expected: callback class "
-                                          "instance and file name" );
+                                          "instance and buffer with python code" );
         return NULL;
     }
 
