@@ -622,7 +622,7 @@ class ImportsDiagramProgress( QDialog ):
             self.infoLabel.setText( "Parsing " + self.__path + "..." )
             QApplication.processEvents()
             self.__filesInfo[ self.__path ] = \
-                        getBriefModuleInfoFromMemory( self.__buf )
+                        getBriefModuleInfoFromMemory( str( self.__buf ) )
             return
 
         if self.__what == ImportsDiagramDialog.SingleFile:

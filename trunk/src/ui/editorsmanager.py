@@ -525,7 +525,7 @@ class EditorsManager( QTabWidget ):
             return False
         return True
 
-    def openDiagram( self, scene ):
+    def openDiagram( self, scene, tooltip ):
         " Opens a tab with a graphics scene on it "
 
         try:
@@ -542,6 +542,8 @@ class EditorsManager( QTabWidget ):
             self.insertTab( 0, newWidget,
                             PixmapCache().getIcon( "diagram.png" ),
                             newWidget.getShortName() )
+            if tooltip != "":
+                self.setTabToolTip( 0, tooltip )
             self.activateTab( 0 )
             self.__updateControls()
             self.__updateStatusBar()

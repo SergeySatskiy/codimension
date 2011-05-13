@@ -833,9 +833,9 @@ class CodimensionMainWindow( QMainWindow ):
         self.editorsManagerWidget.editorsManager.openPixmapFile( path )
         return
 
-    def openDiagram( self, scene ):
+    def openDiagram( self, scene, tooltip ):
         " Show a generated diagram "
-        self.editorsManagerWidget.editorsManager.openDiagram( scene )
+        self.editorsManagerWidget.editorsManager.openDiagram( scene, tooltip )
         return
 
     def detectTypeAndOpenFile( self, path, lineNo = -1 ):
@@ -1176,7 +1176,7 @@ class CodimensionMainWindow( QMainWindow ):
         progressDlg = ImportsDiagramProgress( ImportsDiagramDialog.ProjectFiles,
                                               options )
         if progressDlg.exec_() == QDialog.Accepted:
-            self.openDiagram( progressDlg.scene )
+            self.openDiagram( progressDlg.scene, "Generated for the project" )
         return
 
     def __verticalEdgeChanged( self ):
