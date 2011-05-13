@@ -914,11 +914,15 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             progressDlg = ImportsDiagramProgress( what, options,
                                                   self.getFileName(),
                                                   self.__editor.text() )
+            tooltip = "Generated for modified buffer (" + \
+                      self.getFileName() + ")"
         else:
             progressDlg = ImportsDiagramProgress( what, options,
                                                   self.getFileName() )
+            tooltip = "Generated for file " + self.getFileName()
         if progressDlg.exec_() == QDialog.Accepted:
-            GlobalData().mainWindow.openDiagram( progressDlg.scene )
+            GlobalData().mainWindow.openDiagram( progressDlg.scene,
+                                                 tooltip )
         return
 
     # Mandatory interface part is below

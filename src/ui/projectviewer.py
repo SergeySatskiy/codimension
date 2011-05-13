@@ -1074,12 +1074,18 @@ class ProjectViewer( QWidget ):
             if len( projectDirs ) == 1 and \
                projectDirs[ 0 ] == self.__prjContextItem.getPath():
                 what = ImportsDiagramDialog.ProjectFiles
+                tooltip = "Generated for the project"
             else:
                 what = ImportsDiagramDialog.DirectoryFiles
-            self.__generateImportDiagram( what, ImportDiagramOptions() )
+                tooltip = "Generated for directory " + \
+                          self.__prjContextItem.getPath()
+            self.__generateImportDiagram( what, ImportDiagramOptions(),
+                                          tooltip )
         else:
             self.__generateImportDiagram( ImportsDiagramDialog.SingleFile,
-                                          ImportDiagramOptions() )
+                                          ImportDiagramOptions(),
+                                          "Generated for file " + \
+                                          self.__prjContextItem.getPath() )
         return
 
     def __onImportDgmTuned( self ):
@@ -1100,24 +1106,29 @@ class ProjectViewer( QWidget ):
                projectDirs[ 0 ] == self.__prjContextItem.getPath():
                 what = ImportsDiagramDialog.ProjectFiles
                 dlg = ImportsDiagramDialog( what )
+                tooltip = "Generated for the project"
             else:
                 what = ImportsDiagramDialog.DirectoryFiles
                 dlg = ImportsDiagramDialog( what,
                                             self.__prjContextItem.getPath() )
+                tooltip = "Generated for directory " + \
+                          self.__prjContextItem.getPath()
         else:
             what = ImportsDiagramDialog.SingleFile
             dlg = ImportsDiagramDialog( what,
                                         self.__prjContextItem.getPath() )
+            tooltip = "Generated for file " + self.__prjContextItem.getPath()
 
         if dlg.exec_() == QDialog.Accepted:
-            self.__generateImportDiagram( what, dlg.options )
+            self.__generateImportDiagram( what, dlg.options, tooltip )
         return
 
-    def __generateImportDiagram( self, what, options ):
+    def __generateImportDiagram( self, what, options, tooltip ):
         " Show the generation progress and display the diagram "
         progressDlg = ImportsDiagramProgress( what, options,
                                               self.__prjContextItem.getPath() )
         if progressDlg.exec_() == QDialog.Accepted:
-            GlobalData().mainWindow.openDiagram( progressDlg.scene )
+            GlobalData().mainWindow.openDiagram( progressDlg.scene,
+                                                 tooltip  )
         return
 
