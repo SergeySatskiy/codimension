@@ -25,7 +25,7 @@ from distutils.core import setup, Extension
 
 setup( name = 'cdmpyparser',
        version = '0.0.1',
-       py_modules  = [ 'cdmbriefparser.py' ],
+       py_modules  = [ 'cdmbriefparser' ],
        ext_modules = [ Extension( '_cdmpyparser',
                                   [ 'cdmpyparser.c',
                                     'lexerutils.c',
