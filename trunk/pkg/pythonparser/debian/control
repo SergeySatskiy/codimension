@@ -14,7 +14,7 @@ Section: libs
 Architecture: any
 Depends: ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}
 Provides: ${python:Provides}
-Description: A fast and comprehensive parser of the Python language.
+Description: fast and comprehensive parser of the Python language
  Written as a part of the Codimension project, this parser aims at
  pulling the most data from Python sources while exceeding the
  speed of existing parsers.
