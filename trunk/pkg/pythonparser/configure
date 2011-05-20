@@ -1,0 +1,32 @@
+#!/bin/sh
+
+src_dir="`dirname "$0"`"
+
+if test "x$DEB_BUILD_ARCH_BITS" = 'x64'; then
+    arch_bits_opt='--enable-64bit'
+else
+    arch_bits_opt='--disable-64bit'
+fi
+
+if (cd "$src_dir"/libantlr* && ./configure --with-pic $arch_bits_opt "$@"); then
+    set libantlr*
+    libantlr="$1"
+
+    cat <<EOF > Makefile
+.PHONY: all
+
+all:
+	\$(MAKE) -C $libantlr
+	\$(MAKE) -C pythonparser
+
+%:
+	\$(MAKE) -C $libantlr \$@
+	\$(MAKE) -C pythonparser \$@
+
+test:
+	@echo TODO: run unit_test.py
+
+install:
+	cd pythonparser && python setup.py install -f --root \$(DESTDIR) --install-layout=deb
+EOF
+fi
