@@ -1,6 +1,6 @@
 Source: codimension-parser
 Priority: optional
-Build-Depends: debhelper (>= 7), python (>= 2.4), python-support
+Build-Depends: debhelper (>= 7), python (>= 2.4), python-support, python-all-dev
 Standards-Version: 3.9.1
 Section: python
 Homepage: http://code.google.com/p/codimension/
