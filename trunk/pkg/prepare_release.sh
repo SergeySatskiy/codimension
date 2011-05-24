@@ -51,11 +51,11 @@ release_pythonparser()
     mkdir "$pkg_dir" || exit 4
 
     echo "Exporting '$libantlr' from Subversion..."
-    svn export -q "-r$rev" "$trunk_url/src/thirdparty/$libantlr" \
+    svn export -q "-r$rev" "$trunk_url/thirdparty/$libantlr" \
         "$pkg_dir/$libantlr" || exit 5
 
     echo "Exporting 'pythonparser' from Subversion..."
-    svn export -q "-r$rev" "$trunk_url/src/pythonparser" \
+    svn export -q "-r$rev" "$trunk_url/pythonparser" \
         "$pkg_dir/pythonparser" || exit 6
 
     echo "Exporting 'debian' from Subversion..."
