@@ -69,7 +69,7 @@ case "$#$1" in
     exit 1
     ;;
 1help|1--help|1-h)
-    cat <<EOF >&2
+    cat <<EOF
 Usage:
     $script_name help COMMAND...
     $script_name COMMAND ARG...
