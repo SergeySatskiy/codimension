@@ -12,21 +12,6 @@ tag_cmd_synopsis='Create a Subversion tag for a new component version.'
 mkorigtar_cmd_synopsis='Create a tarball for building a deb package.'
 help_cmd_synopsis='Get help on the commands of this script.'
 
-if test "$#" -lt 2; then
-    cat <<EOF >&2
-Usage:
-    $script_name help COMMAND...
-    $script_name COMMAND ARG...
-
-Available commands:
-    tag         - $tag_cmd_synopsis
-    mkorigtar   - $mkorigtar_cmd_synopsis
-    help        - $help_cmd_synopsis
-
-EOF
-    exit 1
-fi
-
 cmd_help()
 {
     for command; do
@@ -51,7 +36,7 @@ EOF
         mkorigtar) cat <<EOF ;;
 mkorigtar: $mkorigtar_cmd_synopsis
 
-Usage: $script_name mkorigtar COMPONENT VERSION
+Usage: $script_name mkorigtar COMPONENT [VERSION]
 
 Arguments:
     COMPONENT         : Component name, either "pythonparser"
@@ -59,7 +44,10 @@ Arguments:
 
     VERSION           : Desired package version. Must correspond
                         to a tag created earlier with the help of
-                        the tag command.
+                        the tag command. Alternatively, keyword
+                        'trunk' can be specified to create a
+                        tarball off trunk sources. If omitted,
+                        'trunk' is assumed.
 EOF
         help) cat <<EOF ;;
 help: $help_cmd_synopsis
@@ -75,11 +63,38 @@ EOF
     done
 }
 
+case "$#$1" in
+0)
+    echo "Type '$script_name help' for usage."
+    exit 1
+    ;;
+1help|1--help|1-h)
+    cat <<EOF >&2
+Usage:
+    $script_name help COMMAND...
+    $script_name COMMAND ARG...
+
+Available commands:
+    tag         - $tag_cmd_synopsis
+    mkorigtar   - $mkorigtar_cmd_synopsis
+    help        - $help_cmd_synopsis
+
+EOF
+    exit 0
+    ;;
+*help)
+    shift
+    cmd_help "$@"
+    exit 0
+esac
+
+tag_pythonparser()
+{
+    echo "Tagging pythonparser v$version from revision $rev"
+}
+
 mkorigtar_pythonparser()
 {
-    version="$1"
-    rev="$2"
-
     pkg_basename='codimension-parser'
 
     echo "Releasing $pkg_basename version $version based on trunk@$rev..."
@@ -130,47 +145,59 @@ command="$1"
 shift
 
 case "$command" in
-help)
-    cmd_help "$@"
-    exit 0
-    ;;
-mkorigtar)
+tag|mkorigtar)
+    component="$1"
+
+    case "$component" in
+    '')
+        echo "$script_name $command: component name required" >&2
+        exit 2
+        ;;
+    pythonparser)
+        shift
+        ;;
+    *)
+        echo "$script_name $command: unknown component '$component'" >&2
+        exit 2
+    esac
     ;;
 *)
-    echo "Unknown command '$command'." >&2
+    echo "$script_name: unknown command '$command'" >&2
     exit 2
     ;;
 esac
 
-component="$1"
-shift
-
-case "$component" in
-pythonparser)
-    ;;
-*)
-    echo "Unknown component '$component'." >&2
-    exit 3
-esac
-
 case "$command" in
-mkorigtar)
+tag|mkorigtar)
     version="$1"
 
     case "$version" in
-    '')
-        echo 'Version number is required.' >&2
-        exit 3
+    ''|trunk)
+        if test "$command" != 'mkorigtar'; then
+            echo "$script_name $command: version number required" >&2
+            exit 2
+        elif test -n "$version"; then
+            version=''
+        fi
         ;;
     *.*)
         ;;
     *)
-        echo "Argument '$version' doesn't look like a version number." >&2
-        exit 3
+        echo "$script_name: invalid version number '$version'" >&2
+        exit 2
     esac
+esac
 
+case "$command" in
+tag)
     rev="$2"
     test "x$rev" = 'x' && rev='HEAD'
 
-    mkorigtar_$component $version $rev
+    tag_$component
+    ;;
+mkorigtar)
+    rev="$2"
+    test "x$rev" = 'x' && rev='HEAD'
+
+    mkorigtar_$component
 esac
