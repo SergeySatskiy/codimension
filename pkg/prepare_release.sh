@@ -5,7 +5,8 @@
 
 script_name="`basename "$0"`"
 
-trunk_url='https://codimension.googlecode.com/svn/trunk'
+root_url='https://codimension.googlecode.com/svn'
+trunk_url="$root_url/trunk"
 libantlr='libantlr3c-3.2'
 
 tag_cmd_synopsis='Create a Subversion tag for a new component version.'
@@ -90,7 +91,18 @@ esac
 
 tag_pythonparser()
 {
-    echo "Tagging pythonparser v$version from revision $rev"
+    echo "Tagging pythonparser v$version based on trunk@$rev..."
+    svnmucc -m"Created a tag for pythonparser version $version." \
+        -U "$root_url" \
+        mkdir "tags/pythonparser/$version" \
+        cp "$rev" 'trunk/pythonparser' \
+            "tags/pythonparser/$version/pythonparser" \
+        cp "$rev" "trunk/thirdparty/$libantlr" \
+            "tags/pythonparser/$version/$libantlr" \
+        cp "$rev" 'trunk/pkg/pythonparser/debian' \
+            "tags/pythonparser/$version/debian" \
+        cp "$rev" 'trunk/pkg/pythonparser/configure' \
+            "tags/pythonparser/$version/configure"
 }
 
 mkorigtar_pythonparser()
