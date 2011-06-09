@@ -92,17 +92,15 @@ esac
 tag_pythonparser()
 {
     echo "Tagging pythonparser v$version based on trunk@$rev..."
+    version_dir="tags/pythonparser/$version"
     svnmucc -m"Created a tag for pythonparser version $version." \
         -U "$root_url" \
-        mkdir "tags/pythonparser/$version" \
-        cp "$rev" 'trunk/pythonparser' \
-            "tags/pythonparser/$version/pythonparser" \
-        cp "$rev" "trunk/thirdparty/$libantlr" \
-            "tags/pythonparser/$version/$libantlr" \
-        cp "$rev" 'trunk/pkg/pythonparser/debian' \
-            "tags/pythonparser/$version/debian" \
-        cp "$rev" 'trunk/pkg/pythonparser/configure' \
-            "tags/pythonparser/$version/configure"
+        mkdir "$version_dir" \
+        cp "$rev" 'trunk/pythonparser' "$version_dir/pythonparser" \
+        cp "$rev" "trunk/thirdparty/$libantlr" "$version_dir/$libantlr" \
+        cp "$rev" 'trunk/pkg/pythonparser/debian' "$version_dir/debian" \
+        cp "$rev" 'trunk/pkg/pythonparser/configure' "$version_dir/configure"
+    test "$?" -eq 0 || exit 4
 }
 
 mkorigtar_pythonparser()
@@ -117,25 +115,10 @@ mkorigtar_pythonparser()
     mkdir "$working_dir" || exit 4
 
     pkg_name="$pkg_basename-$version"
-
     pkg_dir="$working_dir/$pkg_name"
-    mkdir "$pkg_dir" || exit 4
 
-    echo "Exporting '$libantlr' from Subversion..."
-    svn export -q "-r$rev" "$trunk_url/thirdparty/$libantlr" \
-        "$pkg_dir/$libantlr" || exit 4
-
-    echo "Exporting 'pythonparser' from Subversion..."
-    svn export -q "-r$rev" "$trunk_url/pythonparser" \
-        "$pkg_dir/pythonparser" || exit 4
-
-    echo "Exporting 'debian' from Subversion..."
-    svn export -q "-r$rev" "$trunk_url/pkg/pythonparser/debian" \
-        "$pkg_dir/debian" || exit 4
-
-    echo "Exporting 'configure' from Subversion..."
-    svn export -q "-r$rev" "$trunk_url/pkg/pythonparser/configure" \
-        "$pkg_dir/configure" || exit 4
+    echo "Exporting pythonparser v$version from Subversion..."
+    svn export -q "$root_url/tags/pythonparser/$version" "$pkg_dir" || exit 4
 
     echo "Fixing relative paths..."
     grep -rl '\.\./thirdparty' "$pkg_dir/pythonparser" | \
