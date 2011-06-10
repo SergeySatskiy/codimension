@@ -10,7 +10,7 @@ trunk_url="$root_url/trunk"
 libantlr='libantlr3c-3.2'
 
 tag_cmd_synopsis='Create a Subversion tag for a new component version.'
-mkorigtar_cmd_synopsis='Create a tarball for building a deb package.'
+maketar_cmd_synopsis='Create a tarball for building a distribution package.'
 help_cmd_synopsis='Get help on the commands of this script.'
 
 cmd_help()
@@ -34,12 +34,15 @@ Arguments:
     REVISION          : Source revision number at which to
                         branch from trunk (HEAD by default).
 EOF
-        mkorigtar) cat <<EOF ;;
-mkorigtar: $mkorigtar_cmd_synopsis
+        maketar) cat <<EOF ;;
+maketar: $maketar_cmd_synopsis
 
-Usage: $script_name mkorigtar COMPONENT [VERSION]
+Usage: $script_name maketar PKGTYPE COMPONENT [VERSION]
 
 Arguments:
+    PKGTYPE           : Desired package type, either "deb"
+                        or "rpm".
+
     COMPONENT         : Component name, either "pythonparser"
                         or "codimension".
 
@@ -77,7 +80,7 @@ Usage:
 
 Available commands:
     tag         - $tag_cmd_synopsis
-    mkorigtar   - $mkorigtar_cmd_synopsis
+    maketar     - $maketar_cmd_synopsis
     help        - $help_cmd_synopsis
 
 EOF
@@ -91,7 +94,7 @@ esac
 
 tag_pythonparser()
 {
-    echo "Tagging pythonparser v$version based on trunk@$rev..."
+    echo "Releasing pythonparser v$version based on trunk@$rev..."
     version_dir="tags/pythonparser/$version"
     svnmucc -m"Created a tag for pythonparser version $version." \
         -U "$root_url" \
@@ -103,17 +106,15 @@ tag_pythonparser()
     test "$?" -eq 0 || exit 4
 }
 
-mkorigtar_pythonparser()
+maketar_pythonparser()
 {
-    pkg_basename='codimension-parser'
-
-    echo "Releasing $pkg_basename version $version based on trunk@$rev..."
-
     working_dir="/tmp/$script_name.`date '+%Y%m%d%H%M%S'`.$$"
 
     echo "Creating working directory $working_dir"
     mkdir "$working_dir" || exit 4
 
+    # FIXME handle the case when version is empty (trunk sources).
+    pkg_basename='codimension-parser'
     pkg_name="$pkg_basename-$version"
     pkg_dir="$working_dir/$pkg_name"
 
@@ -123,6 +124,8 @@ mkorigtar_pythonparser()
     echo "Fixing relative paths..."
     grep -rl '\.\./thirdparty' "$pkg_dir/pythonparser" | \
         xargs sed -i 's,\.\./thirdparty,..,g'
+
+    echo "Adjusting for the target distribution type ($pkgtype)..."
 
     tarball="${pkg_basename}_$version.orig.tar.gz"
     echo "Preparing $tarball"
@@ -140,7 +143,22 @@ command="$1"
 shift
 
 case "$command" in
-tag|mkorigtar)
+tag|maketar)
+    pkgtype="$1"
+
+    case "$pkgtype" in
+    '')
+        echo "$script_name $command: package type required" >&2
+        exit 2
+        ;;
+    deb|rpm)
+        shift
+        ;;
+    *)
+        echo "$script_name $command: unknown package type '$pkgtype'" >&2
+        exit 2
+    esac
+
     component="$1"
 
     case "$component" in
@@ -163,12 +181,12 @@ tag|mkorigtar)
 esac
 
 case "$command" in
-tag|mkorigtar)
+tag|maketar)
     version="$1"
 
     case "$version" in
     ''|trunk)
-        if test "$command" != 'mkorigtar'; then
+        if test "$command" != 'maketar'; then
             echo "$script_name $command: version number required" >&2
             exit 2
         elif test -n "$version"; then
@@ -190,9 +208,9 @@ tag)
 
     tag_$component
     ;;
-mkorigtar)
+maketar)
     rev="$2"
     test "x$rev" = 'x' && rev='HEAD'
 
-    mkorigtar_$component
+    maketar_$component
 esac
