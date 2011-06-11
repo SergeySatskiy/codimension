@@ -1,6 +1,6 @@
 Name: codimension-parser
 Version: 1.0
-Release: 1%{?dist}
+Release: 1
 License: GPLv3+
 Group: Development/Languages
 Summary: Fast and comprehensive parser of the Python language
