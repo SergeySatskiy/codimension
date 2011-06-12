@@ -145,6 +145,7 @@ class RecentFileViewItem( QTreeWidgetItem ):
         self.__isValid = False
         self.setToolTip( 0, 'File does not exist' )
         self.setToolTip( 1, 'File does not exist' )
+        self.setToolTip( 2, self.getFilename() )
         self.setIcon( 0, PixmapCache().getIcon( 'brokenproject.png' ) )
         return
 
@@ -160,12 +161,13 @@ class RecentFileViewItem( QTreeWidgetItem ):
             else:
                 infoSrc = GlobalData().briefModinfoCache
             info = infoSrc.get( fileName )
-            self.setToolTip( 0, "" )
             if info.docstring is not None:
                 self.setToolTip( 1, info.docstring.text )
             else:
                 self.setToolTip( 1, "" )
         self.setIcon( 0, getFileIcon( fileType ) )
+        self.setToolTip( 0, "" )
+        self.setToolTip( 2, self.getFilename() )
         return
 
     def getFilename( self ):
