@@ -91,6 +91,7 @@ class RecentProjectViewItem( QTreeWidgetItem ):
                 self.setToolTip( 0, 'Broken project file' )
                 self.setToolTip( 1, 'Broken project file' )
                 self.__markBroken()
+        self.setToolTip( 2, self.getFilename() )
         return
 
     def __markBroken( self ):
