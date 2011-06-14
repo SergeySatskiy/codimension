@@ -37,7 +37,8 @@ from utils.globals      import GlobalData
 from projectproperties  import ProjectPropertiesDialog
 from itemdelegates      import NoOutlineHeightDelegate
 from utils.fileutils    import detectFileType, getFileIcon, \
-                               PythonFileType, Python3FileType
+                               PythonFileType, Python3FileType, \
+                               CodimensionProjectFileType
 
 
 class RecentProjectViewItem( QTreeWidgetItem ):
@@ -166,6 +167,28 @@ class RecentFileViewItem( QTreeWidgetItem ):
                 self.setToolTip( 1, info.docstring.text )
             else:
                 self.setToolTip( 1, "" )
+        elif fileType == CodimensionProjectFileType:
+            # Get the project properties
+            try:
+                creationDate, author, lic, \
+                copy_right, description, \
+                version, email, uuid = getProjectProperties( fileName )
+                propertiesToolTip = "Version: " + version + "\n" \
+                                    "Description: " + description + "\n" \
+                                    "Author: " + author + "\n" \
+                                    "e-mail: " + email + "\n" \
+                                    "Copyright: " + copy_right + "\n" \
+                                    "License: " + lic + "\n" \
+                                    "Creation date: " + creationDate + "\n" \
+                                    "UUID: " + uuid
+                self.setToolTip( 1, propertiesToolTip )
+                self.setText( 0, "" )
+            except:
+                # cannot get project properties. Mark broken.
+                self.__isValid = False
+                self.setToolTip( 0, 'Broken project file' )
+                self.setToolTip( 1, 'Broken project file' )
+
         self.setIcon( 0, getFileIcon( fileType ) )
         self.setToolTip( 0, "" )
         self.setToolTip( 2, self.getFilename() )
