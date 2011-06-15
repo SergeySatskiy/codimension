@@ -1,4 +1,4 @@
-This file holds a list of sugnals which codimension may generate.
+This file holds a list of signals, which codimension may generate.
 
 CodimensionProject:
 - projectChanged:
