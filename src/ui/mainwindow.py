@@ -847,12 +847,12 @@ class CodimensionMainWindow( QMainWindow ):
         " Opens editor/browser suitable for the file type "
         path = os.path.abspath( path )
         if not os.path.exists( path ):
-            logging.error( "Cannot open " + path )
+            logging.error( "Cannot open " + path + ", does not esist" )
             return
         if os.path.islink( path ):
             path = os.path.realpath( path )
             if not os.path.exists( path ):
-                logging.error( "Cannot open " + path )
+                logging.error( "Cannot open " + path + ", does not esist" )
                 return
             # The type may differ...
             fileType = detectFileType( path )

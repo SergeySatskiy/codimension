@@ -38,7 +38,7 @@ from projectproperties  import ProjectPropertiesDialog
 from itemdelegates      import NoOutlineHeightDelegate
 from utils.fileutils    import detectFileType, getFileIcon, \
                                PythonFileType, Python3FileType, \
-                               CodimensionProjectFileType
+                               CodimensionProjectFileType, PixmapFileType
 
 
 class RecentProjectViewItem( QTreeWidgetItem ):
@@ -607,12 +607,15 @@ class RecentProjectsViewer( QWidget ):
             return
         if not self.__projectContextItem.isValid():
             return
+
+        projectFileName = self.__projectContextItem.getFilename()
+
         if self.__projectContextItem.isCurrent():
-            return  # This is the current project
+            GlobalData().mainWindow.openFile( projectFileName, -1 )
+            return  # This is the current project, open for text editing
 
         QApplication.processEvents()
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
-        projectFileName = self.__projectContextItem.getFilename()
         if os.path.exists( projectFileName ):
             mainWin = GlobalData().mainWindow
             editorsManager = mainWin.editorsManagerWidget.editorsManager
@@ -674,9 +677,41 @@ class RecentProjectsViewer( QWidget ):
         " Handles 'open' file menu item "
         self.__fileContextItem.updateIconAndTooltip()
         fName = self.__fileContextItem.getFilename()
+
         if not self.__fileContextItem.isValid():
             logging.warning( "Cannot open " + fName )
             return
+
+        fileType = detectFileType( fName )
+
+        if fileType == CodimensionProjectFileType:
+            if fName == GlobalData().project.fileName:
+                # This is the current project, open for text editing
+                GlobalData().mainWindow.openFile( fName, -1 )
+                return
+            # Load the project, it is another one
+            QApplication.processEvents()
+            QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+            if os.path.exists( fName ):
+                mainWin = GlobalData().mainWindow
+                editorsManager = mainWin.editorsManagerWidget.editorsManager
+                if editorsManager.closeRequest():
+                    prj = GlobalData().project
+                    prj.setTabsStatus( editorsManager.getTabsStatus() )
+                    editorsManager.closeAll()
+                    prj.loadProject( fName )
+            else:
+                logging.error( "The project " + \
+                               os.path.basename( fName ) + \
+                               " disappeared from the file system." )
+                self.__populateProjects()
+            QApplication.restoreOverrideCursor()
+            return
+
+        if fileType == PixmapFileType:
+            GlobalData().mainWindow.openPixmapFile( fName )
+            return
+
         GlobalData().mainWindow.openFile( fName, -1 )
         return
 
