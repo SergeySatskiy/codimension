@@ -24,7 +24,7 @@
 """ codimension brief module info cache """
 
 import os.path, cPickle
-from pythonparser.cdmbriefparser import getBriefModuleInfoFromFile
+from cdmbriefparser import getBriefModuleInfoFromFile
 
 
 class BriefModuleInfoCache( object ):

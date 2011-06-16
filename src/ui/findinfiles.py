@@ -40,7 +40,7 @@ from utils.fileutils             import detectFileType, PixmapFileType, \
                                         SOFileType, PDFFileType, \
                                         BrokenSymlinkFileType
 from mainwindowtabwidgetbase     import MainWindowTabWidgetBase
-from pythonparser.cdmbriefparser import getBriefModuleInfoFromMemory
+from cdmbriefparser              import getBriefModuleInfoFromMemory
 
 
 

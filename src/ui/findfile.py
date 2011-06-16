@@ -32,7 +32,7 @@ from PyQt4.QtGui                 import QTreeView, QAbstractItemView, \
                                         QSortFilterProxyModel, QApplication, \
                                         QHeaderView
 from utils.globals               import GlobalData
-from pythonparser.cdmbriefparser import getBriefModuleInfoFromMemory
+from cdmbriefparser              import getBriefModuleInfoFromMemory
 from itemdelegates               import NoOutlineHeightDelegate
 from utils.fileutils             import detectFileType, getFileIcon, \
                                         PythonFileType, Python3FileType

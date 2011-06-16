@@ -32,7 +32,7 @@ from PyQt4.QtGui                 import QDialog, QDialogButtonBox, \
                                         QGraphicsScene
 from modules                     import buildDirModules
 from utils.globals               import GlobalData
-from pythonparser.cdmbriefparser import getBriefModuleInfoFromMemory
+from cdmbriefparser              import getBriefModuleInfoFromMemory
 from utils.fileutils             import detectFileType, PythonFileType, \
                                         Python3FileType
 from plaindotparser              import getGraphFromDescriptionData

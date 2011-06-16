@@ -35,7 +35,7 @@ from utils.pixmapcache                  import PixmapCache
 from utils.globals                      import GlobalData
 from itemdelegates                      import NoOutlineHeightDelegate
 from pymetricsparser.pymetricsparser    import BasicMetrics
-from pythonparser.cdmbriefparser        import getBriefModuleInfoFromFile, \
+from cdmbriefparser                     import getBriefModuleInfoFromFile, \
                                                getBriefModuleInfoFromMemory
 from utils.misc                         import splitThousands
 

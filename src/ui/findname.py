@@ -31,7 +31,7 @@ from PyQt4.QtGui                 import QTreeView, QAbstractItemView, \
                                         QSortFilterProxyModel, QApplication
 from utils.globals               import GlobalData
 from utils.pixmapcache           import PixmapCache
-from pythonparser.cdmbriefparser import getBriefModuleInfoFromMemory
+from cdmbriefparser              import getBriefModuleInfoFromMemory
 from itemdelegates               import NoOutlineHeightDelegate
 from utils.settings              import Settings
 
