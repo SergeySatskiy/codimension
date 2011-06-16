@@ -464,7 +464,10 @@ class CodimensionMainWindow( QMainWindow ):
 
         # Adjust the font size
         font = self.sbLanguage.font()
-        font.setPointSize( font.pointSize() + 1 )
+
+        # No need to increase the status bar font in most of the cases.
+        # It's better only in case of XServer on PC (Xming in my experience)
+        # font.setPointSize( font.pointSize() + 1 )
         self.sbLanguage.setFont( font )
         self.sbEncoding.setFont( font )
         self.sbEol.setFont( font )
