@@ -85,7 +85,10 @@ class LogViewer( QWidget ):
         self.messages.setLineWrapMode( QTextEdit.NoWrap )
         self.messages.setFontFamily( "Monospace" )
         self.messages.setReadOnly( True )
-        self.messages.setFontPointSize( 12.0 )
+
+        # Default font size is good enough for most of the systems.
+        # 12.0 might be good only in case of the XServer on PC (Xming).
+        # self.messages.setFontPointSize( 12.0 )
 
         # Buttons
         self.selectAllButton = QAction( \
