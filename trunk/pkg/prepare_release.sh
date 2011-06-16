@@ -40,7 +40,7 @@ maketar: $maketar_cmd_synopsis
 Usage: $script_name maketar PKGTYPE COMPONENT [VERSION]
 
 Arguments:
-    PKGTYPE           : Desired package type, either "deb"
+    PKGTYPE           : Target package type, either "deb"
                         or "rpm".
 
     COMPONENT         : Component name, either "pythonparser"
@@ -127,7 +127,15 @@ maketar_pythonparser()
 
     echo "Adjusting for the target distribution type ($pkgtype)..."
 
-    tarball="${pkg_basename}_$version.orig.tar.gz"
+    case "$pkgtype" in
+    deb)
+        tarball="${pkg_basename}_$version.orig.tar.gz"
+        ;;
+    rpm)
+        tarball="$pkg_basename-$version.tar.gz"
+        rm -rf "$pkg_dir/debian"
+    esac
+
     echo "Preparing $tarball"
     tar czf "$tarball" -C "$working_dir" --owner=root --group=root \
         "$pkg_name" || exit 4
