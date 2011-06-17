@@ -697,7 +697,10 @@ class EditorsManager( QTabWidget ):
             dialog.setDirectory( os.path.dirname( currentWidget.getFileName() ) )
             dialog.selectFile( os.path.basename( currentWidget.getFileName() ) )
         else:
-            dialog.setDirectory( QDir.currentPath() )
+            if projectFile != "":
+                dialog.setDirectory( os.path.dirname( projectFile ) )
+            else:
+                dialog.setDirectory( QDir.currentPath() )
             dialog.selectFile( currentWidget.getShortName() )
 
         dialog.setOption( QFileDialog.DontConfirmOverwrite, False )
