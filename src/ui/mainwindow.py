@@ -493,12 +493,6 @@ class CodimensionMainWindow( QMainWindow ):
                       self.notImplementedYet )
         printButton.setEnabled( False )
 
-        aboutButton = QAction( PixmapCache().getIcon( 'about.png' ),
-                               'About (Ctrl+B)', self )
-        aboutButton.setShortcut( 'Ctrl+B' )
-        self.connect( aboutButton, SIGNAL( 'triggered()' ),
-                      self.aboutButtonClicked )
-
         # Imports diagram button and its menu
         importsMenu = QMenu( self )
         importsDlgAct = importsMenu.addAction( \
@@ -681,7 +675,6 @@ class CodimensionMainWindow( QMainWindow ):
         self.__toolbar.addWidget( spacer )
         self.__toolbar.addWidget( editorSettingsButton )
         self.__toolbar.addAction( self.linecounterButton )
-        self.__toolbar.addAction( aboutButton )
 
         self.addToolBar( self.__toolbar )
         return
@@ -773,18 +766,6 @@ class CodimensionMainWindow( QMainWindow ):
         self.__pylintButton.setEnabled( projectLoaded and \
                                         GlobalData().pylintAvailable )
         self.importsDiagramButton.setEnabled( GlobalData().graphvizAvailable )
-        return
-
-    def aboutButtonClicked( self ):
-        """ Shows the 'About' dialog """
-
-        QMessageBox.about( self, 'About codimension',
-                "<b>Codimension - two way python code editor " \
-                "and analyzer</b> v. " + \
-                   GlobalData().version + \
-                """<p>Written by Sergey Satskiy, (c) 2010
-                   <p>Allows editing textual and graphics
-                      representaions of the python code""" )
         return
 
     def linecounterButtonClicked( self ):
