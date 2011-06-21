@@ -30,21 +30,54 @@ def getLatestVersionFile():
     try:
         url = "http://satsky.spb.ru/codimension/LatestVersion.txt"
         response = urllib.urlopen( url )
-        content = response.read()
+        content = response.read().split( '\n' )
 
         result = {}
-        for line in content.split( '\n' ):
-            line = line.strip()
+
+        lastIndex = len( content ) - 1
+        index = 0
+
+        while index <= lastIndex:
+            # Start of a new chunk
+            line = content[ index ].strip()
             if line == "" or line.startswith( '#' ):
+                index += 1
                 continue
 
             parts = line.split( ':' )
             if len( parts ) < 2:
                 # Unknown line format
+                index += 1
                 continue
 
-            value = ':'.join( parts[ 1: ] ).strip()
-            result[ parts[ 0 ].strip() ] = value.replace( '\\n', '\n' )
+            key = parts[ 0 ].strip()
+
+            # The line could continue on the next
+            if line.endswith( '\\' ):
+                # Many lines value
+                line = line[ : -1 ]
+                parts = line.split( ':' )
+                value = ':'.join( parts[ 1: ] ).strip()
+
+                index += 1
+                while index <= lastIndex:
+                    nextLine = content[ index ].strip()
+                    if nextLine == "" or nextLine.startswith( '#' ):
+                        break
+                    if not nextLine.endswith( '\\' ):
+                        value += content[ index ].rstrip()
+                        index += 1
+                        break
+
+                    value += content[ index ].rstrip()[ :-1 ]
+                    index += 1
+
+            else:
+                # Single line value, just use it
+                value = ':'.join( parts[ 1: ] ).strip()
+                index += 1
+
+            result[ key ] = value.replace( '\\n', '\n' )
 
         # LatestVersion key must be there
         if not result.has_key( 'LatestVersion' ):
@@ -54,6 +87,7 @@ def getLatestVersionFile():
         return True, result
 
     except:
+        # raise
 
         # Does not matter what the problem was
         return False, {}

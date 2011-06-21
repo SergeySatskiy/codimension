@@ -27,10 +27,11 @@ It performs necessery initialization and starts the Qt main loop.
 
 __version__ = "1.0"
 
-import sys, os.path, traceback, logging, shutil
-from PyQt4        import QtGui
-from optparse     import OptionParser
-from PyQt4.QtCore import SIGNAL, SLOT, QTimer, QDir
+import sys, os.path, traceback, logging, shutil, time
+from PyQt4              import QtGui
+from optparse           import OptionParser
+from PyQt4.QtCore       import SIGNAL, SLOT, QTimer, QDir
+from utils.latestver    import getLatestVersionFile
 
 # Make it possible to import from the subdirectories
 srcDir = os.path.dirname( os.path.abspath( sys.argv[0] ) )
@@ -184,6 +185,22 @@ def launchUserInterface():
         splashScreen = globalData.splash
         globalData.splash = None
         del splashScreen
+
+    # Check the new version availability
+    if int( time.time() ) > Settings().lastSuccessVerCheck + 60 * 60 * 24 * 30:
+        # Last check was earlier than a month ago
+        success, values = getLatestVersionFile()
+        if success:
+            Settings().lastSuccessVerCheck = int( time.time() )
+
+            # The file has been read from the web site
+            if float( values[ "LatestVersion" ] ) > float( globalData.version ):
+                # Newer version is available
+                if not Settings().newerVerShown:
+                    logging.info( "Newer codimension version " + \
+                                  values[ "LatestVersion" ] + \
+                                  " is available. Please visit " \
+                                  "http://satsky.spb.ru/codimension/codimensionEng.php" )
 
     # Additional checks may come here
 

@@ -23,9 +23,10 @@
 """ Welcome screen """
 
 
-import os.path
-import sys
-from htmltabwidget  import HTMLTabWidget
+import os.path, sys
+from htmltabwidget      import HTMLTabWidget
+from utils.globals      import GlobalData
+from utils.latestver    import getLatestVersionFile
 
 
 class WelcomeWidget( HTMLTabWidget ):
@@ -39,6 +40,25 @@ class WelcomeWidget( HTMLTabWidget ):
         pixmapPath = os.path.dirname( os.path.abspath( sys.argv[0] ) ) + \
                      os.path.sep + 'pixmaps' + os.path.sep
         logoPath = pixmapPath + 'logo.png'
+        welcome = "Welcome to codimension v." + str( GlobalData().version )
+
+        newerVersion = ""
+        success, values = getLatestVersionFile()
+        if success:
+            if float( values[ "LatestVersion" ] ) > \
+               float( GlobalData().version ):
+                newerVersion = "<p aligh='center'>" \
+                               "Note: version " + \
+                               values[ "LatestVersion" ] + " is <a href='" + \
+                               self.homePage + "'>available</a>"
+                if values.has_key( "ReleaseDate" ):
+                    newerVersion += ", released on " + values[ "ReleaseDate" ]
+                newerVersion += "</p>"
+                if values.has_key( "ChangeLog" ):
+                    newerVersion += "Version " + values[ "LatestVersion" ] + \
+                                    " change log:"
+                    newerVersion += "<pre>" + values[ "ChangeLog" ] + "</pre>"
+
 
         self.setHTML( \
             """<body bgcolor="#ffffe6">""" \
@@ -59,29 +79,35 @@ class WelcomeWidget( HTMLTabWidget ):
             """      </td>""" \
             """      <td width="100%">""" \
             """      <h1 align="center">""" \
-            """      <font color="#ffffff">Welcome to codimension</font>""" \
+            """      <font color="#ffffff">""" + welcome + """</font>""" \
             """      </h1>""" \
             """      </td>""" \
             """    </tr>""" \
             """    </table>""" \
-            """    <p align="center"> Codimension is a two way text and """ \
-            """        graphics python code editor and analyser.</p>""" \
-            """    <p align="center"> The codimension IDE lacks the main """ \
-            """        menu and the features are available via [context] """ \
+            """    <p align="center">Codimension is yet another free """ \
+            """                      experimental Python IDE licensed """ \
+            """                      under GPL v3.</p> """ \
+            """    <p align="left">Codimension aims to provide an """ \
+            """                      integrated system for:""" \
+            """    <li>traditional text-based code editing, and</li>""" \
+            """    <li>diagram-based code analysis.</li></p>""" \
+            """    <p align="left">Codimension lacks the main """ \
+            """        menu and all the functionality is available via """ \
             """        toolbar buttons, context menues or via keyboard """ \
             """        hot keys (click F1 for a quick reference).</p>""" \
-            """    <p align="center">  Some information is available via """ \
-            """        hovering mouse cursor over certain UI elements.</p>""" \
-            """    <p align="center">Enjoy using codimension!</p>""" \
-            """    <p align="center"> If you have bug reports, comments, """ \
-            """        ideas how to improve codimension or [better] want """ \
-            """        to join developing it please contact me at """ \
+            """    <p align="left">If you want to contribute in""" \
+            """                        codimension some way please contact:""" \
+            """    <li>Sergey Satskiy at """ \
             """        <a href="mailto:sergey.satskiy@gmail.com">""" \
-            """        sergey.satskiy@gmail.com</a>""" \
+            """                 sergey.satskiy@gmail.com</a> and</li>""" \
+            """    <li>Dmitry Kazimirov at """ \
+            """        <a href="mailto:dmitrykazimirov@gmail.com">""" \
+            """                 dmitrykazimirov@gmail.com</a></li></p>""" \
+            """    <p align="left">We hope you enjoy using codimension</p>""" \
             """    </p></td></tr>""" \
             """    <br>""" \
             """  <tr>""" \
-            """<td >&nbsp;</td></tr></table></ P></p>""" \
+            """<td >&nbsp;</td></tr></table></P></p>"""  + newerVersion + \
             """</body>""" )
 
         self.setFileName( "" )
