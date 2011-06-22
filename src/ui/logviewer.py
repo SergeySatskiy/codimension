@@ -200,6 +200,7 @@ class LogViewer( QWidget ):
         self.__isEmpty = True
         self.__copyAvailable = False
         self.messages.clear()
+        self.__updateToolbarButtons()
         return
 
     def __onCopyAvailable( self, isAvailable ):
