@@ -445,8 +445,10 @@ class EditorsManager( QTabWidget ):
 
         # Update history
         if not self.__skipHistoryUpdate:
-            self.history.updateForCurrentIndex()
-            self.history.addCurrent()
+            if self.widget( 0 ) != self.__welcomeWidget:
+                # No need to update history when there is only welcome widget
+                self.history.updateForCurrentIndex()
+                self.history.addCurrent()
         return
 
     def __onHelp( self ):
