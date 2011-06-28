@@ -487,12 +487,6 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( createProjectButton, SIGNAL( "triggered()" ),
                       self.__createNewProject )
 
-        printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
-                               'Print', self )
-        self.connect( printButton, SIGNAL( 'triggered()' ),
-                      self.notImplementedYet )
-        printButton.setEnabled( False )
-
         # Imports diagram button and its menu
         importsMenu = QMenu( self )
         importsDlgAct = importsMenu.addAction( \
