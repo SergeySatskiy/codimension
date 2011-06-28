@@ -515,8 +515,6 @@ class CodimensionMainWindow( QMainWindow ):
                 PixmapCache().getIcon( 'doxygen.png' ),
                 'Generate doxygen documentation', self )
         doxygenButton.setEnabled( False )
-        fixedSpacer2 = QWidget()
-        fixedSpacer2.setFixedWidth( 5 )
         neverUsedButton = QAction( \
                 PixmapCache().getIcon( 'neverused.png' ),
                 'Analysis for never used variables, functions, classes', self )
@@ -654,21 +652,22 @@ class CodimensionMainWindow( QMainWindow ):
         self.__toolbar.setAllowedAreas( Qt.TopToolBarArea )
         self.__toolbar.setIconSize( QSize( 24, 24 ) )
         self.__toolbar.addAction( createProjectButton )
-        self.__toolbar.addAction( printButton )
+        self.__toolbar.addSeparator()
         self.__toolbar.addAction( packageDiagramButton )
         self.__toolbar.addWidget( self.importsDiagramButton )
         self.__toolbar.addAction( applicationDiagramButton )
         self.__toolbar.addAction( doxygenButton )
-        self.__toolbar.addWidget( fixedSpacer2 )
+        self.__toolbar.addSeparator()
         self.__toolbar.addAction( neverUsedButton )
         self.__toolbar.addWidget( self.__pylintButton )
         self.__toolbar.addAction( self.__pymetricsButton )
+        self.__toolbar.addAction( self.linecounterButton )
+        self.__toolbar.addSeparator()
         self.__toolbar.addAction( self.__findInFilesButton )
         self.__toolbar.addAction( self.__findNameButton )
         self.__toolbar.addAction( self.__findFileButton )
         self.__toolbar.addWidget( spacer )
         self.__toolbar.addWidget( editorSettingsButton )
-        self.__toolbar.addAction( self.linecounterButton )
 
         self.addToolBar( self.__toolbar )
         return
