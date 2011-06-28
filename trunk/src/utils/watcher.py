@@ -96,7 +96,8 @@ class Watcher( QObject ):
             for index in range( 1, len( parts ) - 1 ):
                 candidate = os.path.sep.join( parts[ 0:index ] ) + os.path.sep
                 if os.path.exists( candidate ):
-                    topDirsList.update( [ candidate ] )
+                    if os.access( candidate, os.R_OK ):
+                        topDirsList.update( [ candidate ] )
         return topDirsList
 
     @staticmethod
