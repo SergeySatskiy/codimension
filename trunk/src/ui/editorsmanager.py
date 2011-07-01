@@ -491,6 +491,43 @@ class EditorsManager( QTabWidget ):
         except:
             return ""
 
+    def _updateIconAndTooltip( self, fileType = None ):
+        " Updates the current tab icon and tooltip after the file is saved "
+        fileName = self.currentWidget().getFileName()
+
+        if fileType is None:
+            fileType = detectFileType( fileName )
+
+        if fileType not in [ PythonFileType, Python3FileType ]:
+            self.setTabIcon( self.currentIndex(), getFileIcon( fileType ) )
+            self.setTabToolTip( self.currentIndex(), "" )
+            return
+
+        try:
+            if GlobalData().project.isProjectFile( fileName ):
+                infoSrc = GlobalData().project.briefModinfoCache
+            else:
+                infoSrc = GlobalData().briefModinfoCache
+            info = infoSrc.get( fileName )
+
+            if len( info.errors ) == 0:
+                self.setTabIcon( self.currentIndex(),
+                                 PixmapCache().getIcon( 'filepython.png' ) )
+            else:
+                self.setTabIcon( self.currentIndex(),
+                                 PixmapCache().getIcon( 'filepythonbroken.png' ) )
+
+            if info.docstring is not None:
+                self.setTabToolTip( self.currentIndex(),
+                                    info.docstring.text )
+            else:
+                self.setTabToolTip( self.currentIndex(), "" )
+        except:
+            self.setTabToolTip( self.currentIndex(), "" )
+            self.setTabIcon( self.currentIndex(),
+                             PixmapCache().getIcon( 'filepythonbroken.png' ) )
+        return
+
     def openPixmapFile( self, fileName ):
         " Shows the required picture "
 
@@ -662,8 +699,7 @@ class EditorsManager( QTabWidget ):
             fileName = currentWidget.getFileName()
             if editor.writeFile( fileName ):
                 editor.setModified( False )
-                self.setTabToolTip( self.currentIndex(),
-                                    self.getFileDocstring( fileName ) )
+                self._updateIconAndTooltip()
                 self.emit( SIGNAL( 'fileUpdated' ), fileName,
                            currentWidget.getUUID() )
                 return True
@@ -749,11 +785,9 @@ class EditorsManager( QTabWidget ):
         if currentWidget.getEditor().writeFile( fileName ):
             currentWidget.setFileName( fileName )
             currentWidget.getEditor().setModified( False )
-            self.setTabToolTip( self.currentIndex(),
-                                self.getFileDocstring( fileName ) )
             newType = detectFileType( currentWidget.getShortName() )
+            self._updateIconAndTooltip( newType )
             if newType != oldType:
-                self.setTabIcon( self.currentIndex(), getFileIcon( newType ) )
                 currentWidget.getEditor().bindLexer( \
                     currentWidget.getFileName(), newType )
             if existedBefore:
