@@ -638,7 +638,7 @@ class EditorsManager( QTabWidget ):
             self.insertTab( 0, newWidget, getFileIcon( fileType ),
                             newWidget.getShortName() )
             self.activateTab( 0 )
-            self.setTabToolTip( 0, self.getFileDocstring( fileName ) )
+            self._updateIconAndTooltip( fileType )
             self.__updateControls()
             self.__connectEditorWidget( newWidget )
             self.__updateStatusBar()
