@@ -1132,3 +1132,9 @@ class ProjectViewer( QWidget ):
                                                  tooltip  )
         return
 
+    def onFileUpdated( self, fileName, uuid ):
+        " Triggered when the file is updated "
+        self.projectTreeView.onFileUpdated( fileName, uuid )
+        self.filesystemView.onFileUpdated( fileName, uuid )
+        return
+

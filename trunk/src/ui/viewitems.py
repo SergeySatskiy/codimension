@@ -171,6 +171,11 @@ class TreeViewItem( object ):
         " Provides the items icon "
         return self.icon
 
+    def setIcon( self, icon ):
+        " Sets the icon "
+        self.icon = icon
+        return
+
     def lessThan( self, other, column, order ):
         " Check, if the item is less than another "
         try:
