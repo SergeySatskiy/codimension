@@ -30,6 +30,7 @@ from PyQt4.QtGui        import QAbstractItemView, QApplication, \
                                QSortFilterProxyModel, QTreeView, \
                                QCursor
 from utils.globals      import GlobalData
+from utils.pixmapcache  import PixmapCache
 from viewitems          import DirectoryItemType, SysPathItemType, \
                                GlobalsItemType, ImportsItemType, \
                                FunctionsItemType, ClassesItemType, \
@@ -42,7 +43,8 @@ from viewitems          import DirectoryItemType, SysPathItemType, \
                                ImportWhatItemType, TreeViewDirectoryItem, \
                                TreeViewFileItem
 from utils.fileutils    import CodimensionProjectFileType, \
-                               BrokenSymlinkFileType, PixmapFileType
+                               BrokenSymlinkFileType, PixmapFileType, \
+                               PythonFileType, Python3FileType
 from itemdelegates      import NoOutlineHeightDelegate
 from parsererrors       import ParserErrorsDialog
 from utils.fileutils    import detectFileType
@@ -432,4 +434,41 @@ class FilesBrowser( QTreeView ):
             dirname = os.path.realpath( os.path.dirname( path ) ) + os.path.sep
             basename = os.path.basename( path )
         return dirname, basename
+
+    def onFileUpdated( self, fileName, uuid ):
+        " Triggered when the file is updated "
+
+        if detectFileType( fileName ) in [ PythonFileType, Python3FileType ]:
+            path = os.path.realpath( fileName )
+            if GlobalData().project.isProjectFile( fileName ):
+                infoSrc = GlobalData().project.briefModinfoCache
+            else:
+                infoSrc = GlobalData().briefModinfoCache
+            info = infoSrc.get( fileName )
+            if len( info.errors ) == 0:
+                icon = PixmapCache().getIcon( 'filepython.png' )
+            else:
+                icon = PixmapCache().getIcon( 'filepythonbroken.png' )
+
+            # For all root items
+            for treeItem in self.model().sourceModel().rootItem.childItems:
+                self.__walkTreeAndUpdateIcon( treeItem, path, icon )
+        return
+
+    def __walkTreeAndUpdateIcon( self, treeItem, path, icon ):
+        " Recursively walks the tree items and updates the icon "
+
+        if treeItem.itemType in [ DirectoryItemType, SysPathItemType ]:
+            for i in treeItem.childItems:
+                if i.itemType in [ DirectoryItemType, SysPathItemType, FileItemType ]:
+                    self.__walkTreeAndUpdateIcon( i, path, icon )
+
+        if treeItem.itemType == FileItemType:
+            if path == os.path.realpath( treeItem.getPath() ):
+                treeItem.setIcon( icon )
+                srcModel = self.model().sourceModel()
+                index = srcModel.buildIndex( treeItem.getRowPath() )
+                srcModel.emit( SIGNAL( "dataChanged(const QModelIndex &, const QModelIndex &)" ),
+                               index, index )
+        return
 
