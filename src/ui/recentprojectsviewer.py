@@ -167,6 +167,14 @@ class RecentFileViewItem( QTreeWidgetItem ):
                 self.setToolTip( 1, info.docstring.text )
             else:
                 self.setToolTip( 1, "" )
+            if len( info.errors ) == 0:
+                self.setIcon( 0,
+                              PixmapCache().getIcon( 'filepython.png' ) )
+            else:
+                self.setIcon( 0,
+                              PixmapCache().getIcon( 'filepythonbroken.png' ) )
+            self.setToolTip( 0, "" )
+
         elif fileType == CodimensionProjectFileType:
             # Get the project properties
             try:
@@ -181,6 +189,7 @@ class RecentFileViewItem( QTreeWidgetItem ):
                                     "License: " + lic + "\n" \
                                     "Creation date: " + creationDate + "\n" \
                                     "UUID: " + uuid
+                self.setToolTip( 0, "" )
                 self.setToolTip( 1, propertiesToolTip )
                 self.setText( 0, "" )
             except:
@@ -188,9 +197,8 @@ class RecentFileViewItem( QTreeWidgetItem ):
                 self.__isValid = False
                 self.setToolTip( 0, 'Broken project file' )
                 self.setToolTip( 1, 'Broken project file' )
+            self.setIcon( 0, getFileIcon( fileType ) )
 
-        self.setIcon( 0, getFileIcon( fileType ) )
-        self.setToolTip( 0, "" )
         self.setToolTip( 2, self.getFilename() )
         return
 
@@ -747,5 +755,19 @@ class RecentProjectsViewer( QWidget ):
         if self.__projectContextItem is not None:
             QApplication.clipboard().setText( \
                     self.__projectContextItem.getFilename() )
+        return
+
+    def onFileUpdated( self, fileName, uuid ):
+        " Triggered when the file is updated "
+        count = self.recentFilesView.topLevelItemCount()
+        for index in xrange( 0, count ):
+            item = self.recentFilesView.topLevelItem( index )
+
+            realPath = os.path.realpath( fileName )
+            itemRealPath = os.path.realpath( item.getFilename() )
+
+            if realPath == itemRealPath:
+                item.updateIconAndTooltip()
+                break
         return
 

@@ -259,6 +259,9 @@ class CodimensionMainWindow( QMainWindow ):
         self.__leftSideBar.addTab( recentProjectsViewer,
                                    PixmapCache().getIcon( 'project.png' ),
                                    "Recent" )
+        self.connect( self.editorsManagerWidget.editorsManager,
+                      SIGNAL( 'fileUpdated' ),
+                      recentProjectsViewer.onFileUpdated )
         #self.__leftSideBar.setTabToolTip( 1, "Recently loaded projects" )
         classesViewer = ClassesViewer()
         self.connect( self.editorsManagerWidget.editorsManager,
