@@ -42,7 +42,9 @@ from viewitems          import DirectoryItemType, SysPathItemType, \
                                AttributeItemType, GlobalItemType, \
                                ImportWhatItemType, TreeViewDirectoryItem, \
                                TreeViewFileItem, TreeViewCodingItem, \
-                               TreeViewGlobalsItem, TreeViewGlobalItem
+                               TreeViewGlobalsItem, TreeViewGlobalItem, \
+                               TreeViewImportsItem, TreeViewImportItem, \
+                               TreeViewWhatItem, TreeViewFunctionItem
 from utils.fileutils    import CodimensionProjectFileType, \
                                BrokenSymlinkFileType, PixmapFileType, \
                                PythonFileType, Python3FileType
@@ -498,14 +500,22 @@ class FilesBrowser( QTreeView ):
                 # Update content if populated
                 hadCoding = False
                 hadGlobals = False
+                hadImports = False
                 for fileChildItem in treeItem.childItems:
                     if fileChildItem.itemType == CodingItemType:
                         hadCoding = True
+                        fileChildItem.updateData( info.encoding )
                         self.__updateCodingItem( fileChildItem, info.encoding )
                         continue
                     elif fileChildItem.itemType == GlobalsItemType:
                         hadGlobals = True
+                        fileChildItem.updateData( info )
                         self.__updateGlobalsItem( fileChildItem, info.globals )
+                        continue
+                    elif fileChildItem.itemType == ImportsItemType:
+                        hadImports = True
+                        fileChildItem.updateData( info )
+                        self.__updateImportsItem( fileChildItem, info.imports )
                         continue
 
 
@@ -521,6 +531,12 @@ class FilesBrowser( QTreeView ):
                     newItem = TreeViewGlobalsItem( treeItem, info )
                     self.__addTreeItem( treeItem, newItem )
 
+                if not hadImports and treeItem.populated and \
+                   len( info.imports ) > 0:
+                    # Imports item appeared, so we need to add it
+                    newItem = TreeViewImportsItem( treeItem, info )
+                    self.__addTreeItem( treeItem, newItem )
+
         return
 
     def __updateCodingItem( self, treeItem, encodingObj ):
@@ -529,7 +545,6 @@ class FilesBrowser( QTreeView ):
             # It disappeared from the file
             self.__removeTreeItem( treeItem )
         else:
-            treeItem.updateData( encodingObj )
             self.__signalItemUpdated( treeItem )
         return
 
@@ -569,4 +584,75 @@ class FilesBrowser( QTreeView ):
             self.__addTreeItem( treeItem, newItem )
 
         return
+
+
+    def __updateImportsItem( self, treeItem, importsObj ):
+        " Updates imports item "
+        if len( importsObj ) == 0:
+            # It disappeared from the file
+            self.__removeTreeItem( treeItem )
+            return
+        if not treeItem.populated:
+            return
+
+        # Need to update item by item. There could be 2 import items with
+        # the same name, so this stuff of a copied list.
+        importsCopy = list( importsObj )
+        itemsToRemove = []
+        for importItem in treeItem.childItems:
+            name = importItem.data( 0 )
+            found = False
+            for index in xrange( len( importsCopy ) ):
+                if importsCopy[ index ].getDisplayName() == name:
+                    found = True
+                    importItem.updateData( importsCopy[ index ] )
+                    # No need to send the update signal because the name is
+                    # still the same, but need to update the importwhat items
+                    # if so
+                    self.__updateSingleImportItem( importItem, importsCopy[ index ] )
+                    del importsCopy[ index ]
+                    break
+            if not found:
+                # Disappeared item
+                itemsToRemove.append( importItem )
+        for item in itemsToRemove:
+            self.__removeTreeItem( item )
+
+        # Add those which have been introduced
+        for item in importsCopy:
+            newItem = TreeViewImportItem( treeItem, item )
+            self.__addTreeItem( treeItem, newItem )
+        return
+
+    def __updateSingleImportItem( self, treeItem, importObject ):
+        " Updates single import item, i.e. importWhat "
+        if not treeItem.populated:
+            return
+        importWhatCopy = list( importObject.what )
+        itemsToRemove = []
+        for importWhatItem in treeItem.childItems:
+            name = importWhatItem.data( 0 )
+            found = False
+            for index in xrange( len( importWhatCopy ) ):
+                if importWhatCopy[ index ].getDisplayName() == name:
+                    found = True
+                    importWhatItem.updateData( importWhatCopy[ index ] )
+                    # No need to send the update signal because the name is
+                    # still the same
+                    del importWhatCopy[ index ]
+                    break
+            if not found:
+                # Disappeared item
+                itemsToRemove.append( importWhatItem )
+        for item in itemsToRemove:
+            self.__removeTreeItem( item )
+
+        # Add those which have been introduced
+        for item in importWhatCopy:
+            newItem = TreeViewWhatItem( treeItem, item )
+            self.__addTreeItem( treeItem, newItem )
+        return
+
+
+
 
