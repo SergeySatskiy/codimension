@@ -429,6 +429,11 @@ class TreeViewGlobalsItem( TreeViewItem ):
         self.lazyPopulation = True
         return
 
+    def updateData( self, infoObj ):
+        " Updates data model source "
+        self.sourceObj = infoObj
+        return
+
 
 class TreeViewImportsItem( TreeViewItem ):
     " Imports item "
@@ -444,6 +449,10 @@ class TreeViewImportsItem( TreeViewItem ):
         self.lazyPopulation = True
         return
 
+    def updateData( self, infoObj ):
+        " Updates data model source "
+        self.sourceObj = infoObj
+        return
 
 class TreeViewFunctionsItem( TreeViewItem ):
     " Functions item "
@@ -516,7 +525,7 @@ class TreeViewCodingItem( TreeViewItem ):
         return
 
     def updateData( self, encodingObj ):
-        " Updates the element with new data "
+        " Updates data model source "
         self.sourceObj = encodingObj
         self.setData( 0, encodingObj.name )
         return
@@ -527,32 +536,41 @@ class TreeViewImportItem( TreeViewItem ):
 
     def __init__( self, parent, importObj ):
 
-        TreeViewItem.__init__( self, parent, importObj.name )
+        TreeViewItem.__init__( self, parent, importObj.getDisplayName() )
 
         self.sourceObj = importObj
         self.itemType = ImportItemType
         self.icon = PixmapCache().getIcon( 'imports.png' )
 
-        if len( importObj.what ) > 0:
-            self.populated = False
-            self.lazyPopulation = True
+        self.populated = False
+        self.lazyPopulation = True
         return
+
+    def updateData( self, importObj ):
+        " Updates data model source "
+        self.sourceObj = importObj
+        self.setData( 0, importObj.getDisplayName() )
+        return
+
 
 class TreeViewWhatItem( TreeViewItem ):
     " Single what imported item "
 
     def __init__( self, parent, whatObj ):
 
-        if whatObj.alias == "":
-            TreeViewItem.__init__( self, parent, whatObj.name )
-        else:
-            TreeViewItem.__init__( self, parent, whatObj.name + \
-                                   " as " + whatObj.alias )
+        TreeViewItem.__init__( self, parent, whatObj.getDisplayName() )
 
         self.sourceObj = whatObj
         self.itemType = ImportWhatItemType
         self.icon = PixmapCache().getIcon( 'importwhat.png' )
         return
+
+    def updateData( self, whatObj ):
+        " Updates data model source "
+        self.sourceObj = whatObj
+        self.setData( 0, whatObj.getDisplayName() )
+        return
+
 
 class TreeViewFunctionItem( TreeViewItem ):
     " Single function / class  method item "
