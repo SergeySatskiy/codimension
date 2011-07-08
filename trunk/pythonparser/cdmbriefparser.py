@@ -106,6 +106,13 @@ class ImportWhat( ModuleInfoBase ):
             return self.name + "[" + str(self.line) + "]"
         return self.name + "[" + str(self.line) + "] as " + self.alias
 
+    def getDisplayName( self ):
+        " Provides a name for display purpose respecting the alias "
+        if self.alias == "":
+            return self.name
+        return self.name + " as " + self.alias
+
+
 class Import( ModuleInfoBase ):
     " Holds information about a single import name "
 
@@ -125,6 +132,12 @@ class Import( ModuleInfoBase ):
         for item in self.what:
             whatPart += "\n    " + str( item )
         return out + whatPart
+
+    def getDisplayName( self ):
+        " Provides a name for display purpose respecting the alias "
+        if self.alias == "":
+            return self.name
+        return self.name + " as " + self.alias
 
 
 class Global( ModuleInfoBase ):
