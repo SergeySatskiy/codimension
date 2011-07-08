@@ -41,7 +41,8 @@ from viewitems          import DirectoryItemType, SysPathItemType, \
                                ClassItemType, DecoratorItemType, \
                                AttributeItemType, GlobalItemType, \
                                ImportWhatItemType, TreeViewDirectoryItem, \
-                               TreeViewFileItem
+                               TreeViewFileItem, TreeViewCodingItem, \
+                               TreeViewGlobalsItem, TreeViewGlobalItem
 from utils.fileutils    import CodimensionProjectFileType, \
                                BrokenSymlinkFileType, PixmapFileType, \
                                PythonFileType, Python3FileType
@@ -452,23 +453,120 @@ class FilesBrowser( QTreeView ):
 
             # For all root items
             for treeItem in self.model().sourceModel().rootItem.childItems:
-                self.__walkTreeAndUpdateIcon( treeItem, path, icon )
+                self.__walkTreeAndUpdate( treeItem, path, icon, info )
         return
 
-    def __walkTreeAndUpdateIcon( self, treeItem, path, icon ):
+    def __signalItemUpdated( self, treeItem ):
+        " Emits a signal that an item is updated "
+        srcModel = self.model().sourceModel()
+        index = srcModel.buildIndex( treeItem.getRowPath() )
+        srcModel.emit( SIGNAL( "dataChanged(const QModelIndex &," \
+                               "const QModelIndex &)" ), index, index )
+        return
+
+    def __removeTreeItem( self, treeItem ):
+        " Removes the given item "
+        srcModel = self.model().sourceModel()
+        index = srcModel.buildIndex( treeItem.getRowPath() )
+        srcModel.beginRemoveRows( index.parent(), index.row(), index.row() )
+        treeItem.parentItem.removeChild( treeItem )
+        srcModel.endRemoveRows()
+        return
+
+    def __addTreeItem( self, treeItem, newItem ):
+        " Adds the given item "
+        srcModel = self.model().sourceModel()
+        parentIndex = srcModel.buildIndex( treeItem.getRowPath() )
+        srcModel.addItem( newItem, parentIndex )
+        self._resort()
+        return
+
+    def __walkTreeAndUpdate( self, treeItem, path, icon, info ):
         " Recursively walks the tree items and updates the icon "
 
         if treeItem.itemType in [ DirectoryItemType, SysPathItemType ]:
             for i in treeItem.childItems:
                 if i.itemType in [ DirectoryItemType, SysPathItemType, FileItemType ]:
-                    self.__walkTreeAndUpdateIcon( i, path, icon )
+                    self.__walkTreeAndUpdate( i, path, icon, info )
 
         if treeItem.itemType == FileItemType:
             if path == os.path.realpath( treeItem.getPath() ):
+                # Update icon
                 treeItem.setIcon( icon )
-                srcModel = self.model().sourceModel()
-                index = srcModel.buildIndex( treeItem.getRowPath() )
-                srcModel.emit( SIGNAL( "dataChanged(const QModelIndex &, const QModelIndex &)" ),
-                               index, index )
+                self.__signalItemUpdated( treeItem )
+
+                # Update content if populated
+                hadCoding = False
+                hadGlobals = False
+                for fileChildItem in treeItem.childItems:
+                    if fileChildItem.itemType == CodingItemType:
+                        hadCoding = True
+                        self.__updateCodingItem( fileChildItem, info.encoding )
+                        continue
+                    elif fileChildItem.itemType == GlobalsItemType:
+                        hadGlobals = True
+                        self.__updateGlobalsItem( fileChildItem, info.globals )
+                        continue
+
+
+                if not hadCoding and treeItem.populated and \
+                   info.encoding is not None:
+                    # Coding item appeared, so we need to add it
+                    newItem = TreeViewCodingItem( treeItem, info.encoding )
+                    self.__addTreeItem( treeItem, newItem )
+
+                if not hadGlobals and treeItem.populated and \
+                   len( info.globals ) > 0:
+                    # Globals item appeared, so we need to add it
+                    newItem = TreeViewGlobalsItem( treeItem, info )
+                    self.__addTreeItem( treeItem, newItem )
+
+        return
+
+    def __updateCodingItem( self, treeItem, encodingObj ):
+        " Updates populated coding item "
+        if encodingObj is None:
+            # It disappeared from the file
+            self.__removeTreeItem( treeItem )
+        else:
+            treeItem.updateData( encodingObj )
+            self.__signalItemUpdated( treeItem )
+        return
+
+    def __updateGlobalsItem( self, treeItem, globalsObj ):
+        " Updates globals item "
+        if len( globalsObj ) == 0:
+            # It disappeared from the file
+            self.__removeTreeItem( treeItem )
+            return
+        if not treeItem.populated:
+            return
+
+        # Need to update item by item. There could be 2 global items with
+        # the same name, so this stuff of a copied list.
+        globalsCopy = list( globalsObj )
+        itemsToRemove = []
+        for globalItem in treeItem.childItems:
+            name = globalItem.data( 0 )
+            found = False
+            for index in xrange( len( globalsCopy ) ):
+                if globalsCopy[ index ].name == name:
+                    found = True
+                    globalItem.updateData( globalsCopy[ index ] )
+                    # No need to send the update signal because the name is
+                    # still the same
+                    del globalsCopy[ index ]
+                    break
+            if not found:
+                # Disappeared item
+                itemsToRemove.append( globalItem )
+        for item in itemsToRemove:
+            self.__removeTreeItem( item )
+
+        # Add those which have been introduced
+        for item in globalsCopy:
+            newItem = TreeViewGlobalItem( treeItem, item )
+            self.__addTreeItem( treeItem, newItem )
+
         return
 

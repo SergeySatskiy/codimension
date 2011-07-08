@@ -515,6 +515,12 @@ class TreeViewCodingItem( TreeViewItem ):
         self.icon = PixmapCache().getIcon( 'textencoding.png' )
         return
 
+    def updateData( self, encodingObj ):
+        " Updates the element with new data "
+        self.sourceObj = encodingObj
+        self.setData( 0, encodingObj.name )
+        return
+
 
 class TreeViewImportItem( TreeViewItem ):
     " Single import item "
@@ -663,12 +669,24 @@ class TreeViewGlobalItem( TreeViewItem ):
 
         self.sourceObj = globalObj
         self.itemType = GlobalItemType
+        self.__setIcon()
+        return
 
-        if globalObj.isPrivate():
+    def updateData( self, globalObj ):
+        " Updates the element with new data "
+        self.sourceObj = globalObj
+        self.setData( 0, globalObj.name )
+        self.__setIcon()
+        return
+
+    def __setIcon( self ):
+        " Sets the icon depending on access type "
+        if self.sourceObj.isPrivate():
             self.icon = PixmapCache().getIcon( 'attribute_private.png' )
-        elif globalObj.isProtected():
+        elif self.sourceObj.isProtected():
             self.icon = PixmapCache().getIcon( 'attribute_protected.png' )
         else:
             self.icon = PixmapCache().getIcon( 'attribute.png' )
         return
+
 
