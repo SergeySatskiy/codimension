@@ -307,6 +307,13 @@ class Class( ModuleInfoBase ):
             out += '\n' + item.niceStringify( level + 1 )
         return out
 
+    def getDisplayName( self ):
+        " Provides a name for display purpose "
+        displayName = self.name
+        if len( self.base ) > 0:
+            displayName += "( " + ", ".join( self.base ) + " )"
+        return displayName
+
 
 class BriefModuleInfo:
     " Holds a single module content information "
