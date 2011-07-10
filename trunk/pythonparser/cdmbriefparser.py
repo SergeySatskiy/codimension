@@ -206,6 +206,13 @@ class Decorator( ModuleInfoBase ):
         val += " )'"
         return val
 
+    def getDisplayName( self ):
+        " Provides a name for display purpose "
+        displayName = self.name
+        if len ( self.arguments ) > 0:
+            displayName += "( " + ", ".join( self.arguments ) + " )"
+        return displayName
+
 
 class Docstring():
     " Holds a docstring information "
