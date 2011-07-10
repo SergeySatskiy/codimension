@@ -468,6 +468,11 @@ class TreeViewFunctionsItem( TreeViewItem ):
         self.lazyPopulation = True
         return
 
+    def updateData( self, infoObj ):
+        " Updates data model source "
+        self.sourceObj = infoObj
+        return
+
 
 class TreeViewClassesItem( TreeViewItem ):
     " Classes item "
@@ -481,6 +486,11 @@ class TreeViewClassesItem( TreeViewItem ):
         self.icon = PixmapCache().getIcon( 'class.png' )
         self.populated = False
         self.lazyPopulation = True
+        return
+
+    def updateData( self, infoObj ):
+        " Updates data model source "
+        self.sourceObj = infoObj
         return
 
 
@@ -577,19 +587,12 @@ class TreeViewFunctionItem( TreeViewItem ):
 
     def __init__( self, parent, functionObj ):
 
-        displayName = functionObj.name + "("
-        if len( functionObj.arguments ) > 0:
-            displayName += " " + ", ".join( functionObj.arguments ) + " "
-        displayName += ")"
-
-        TreeViewItem.__init__( self, parent, displayName )
+        TreeViewItem.__init__( self, parent, functionObj.getDisplayName() )
 
         self.sourceObj = functionObj
         self.itemType = FunctionItemType
 
-        self.toolTip = ""
-        if functionObj.docstring is not None:
-            self.toolTip = functionObj.docstring.text
+        self.__updateTooltip()
 
         if functionObj.isPrivate():
             self.icon = PixmapCache().getIcon( 'method_private.png' )
@@ -598,12 +601,22 @@ class TreeViewFunctionItem( TreeViewItem ):
         else:
             self.icon = PixmapCache().getIcon( 'method.png' )
 
-        # Decide if it should be expandable
-        if len( functionObj.decorators ) > 0 or \
-           len( functionObj.functions ) > 0 or \
-           len( functionObj.classes ) > 0:
-            self.populated = False
-            self.lazyPopulation = True
+        self.populated = False
+        self.lazyPopulation = True
+        return
+
+    def updateData( self, functionObj ):
+        " Updates data model source "
+        self.sourceObj = functionObj
+        self.setData( 0, functionObj.getDisplayName() )
+        self.__updateTooltip()
+        return
+
+    def __updateTooltip( self ):
+        " Sets the tooltip value "
+        self.toolTip = ""
+        if self.sourceObj.docstring is not None:
+            self.toolTip = self.sourceObj.docstring.text
         return
 
 
@@ -612,18 +625,12 @@ class TreeViewClassItem( TreeViewItem ):
 
     def __init__( self, parent, classObj ):
 
-        displayName = classObj.name
-        if len( classObj.base ) > 0:
-            displayName += "( " + ", ".join( classObj.base ) + " )"
-
-        TreeViewItem.__init__( self, parent, displayName )
+        TreeViewItem.__init__( self, parent, classObj.getDisplayName() )
 
         self.sourceObj = classObj
         self.itemType = ClassItemType
 
-        self.toolTip = ""
-        if classObj.docstring is not None:
-            self.toolTip = classObj.docstring.text
+        self.__updateTooltip()
 
         if classObj.isPrivate():
             self.icon = PixmapCache().getIcon( 'class_private.png' )
@@ -642,20 +649,37 @@ class TreeViewClassItem( TreeViewItem ):
             self.lazyPopulation = True
         return
 
+    def updateData( self, classObj ):
+        " Updates data model source "
+        self.sourceObj = classObj
+        self.setData( 0, classObj.getDisplayName() )
+        self.__updateTooltip()
+        return
+
+    def __updateTooltip( self ):
+        " Sets the tooltip value "
+        self.toolTip = ""
+        if self.sourceObj.docstring is not None:
+            self.toolTip = self.sourceObj.docstring.text
+        return
+
 
 class TreeViewDecoratorItem( TreeViewItem ):
     " Single decorator item "
 
     def __init__( self, parent, decoratorObj ):
 
-        displayName = decoratorObj.name
-        if len( decoratorObj.arguments ) > 0:
-            displayName += "( " + ", ".join( decoratorObj.arguments ) + " )"
-        TreeViewItem.__init__( self, parent, displayName )
+        TreeViewItem.__init__( self, parent, decoratorObj.getDisplayName() )
 
         self.sourceObj = decoratorObj
         self.itemType = DecoratorItemType
         self.icon = PixmapCache().getIcon( 'decorator.png' )
+        return
+
+    def updateData( self, decoratorObj ):
+        " Updates data model source "
+        self.sourceObj = decoratorObj
+        self.setData( 0, decoratorObj.getDisplayName() )
         return
 
 
@@ -668,10 +692,21 @@ class TreeViewAttributeItem( TreeViewItem ):
 
         self.sourceObj = attributeObj
         self.itemType = AttributeItemType
+        self.__setIcon()
+        return
 
-        if attributeObj.isPrivate():
+    def updateData( self, attributeObj ):
+        " Updates data model source "
+        self.sourceObj = attributeObj
+        self.setData( 0, attributeObj.name )
+        self.__setIcon()
+        return
+
+    def __setIcon( self ):
+        " Sets the icon depending on access type "
+        if self.sourceObj.isPrivate():
             self.icon = PixmapCache().getIcon( 'attribute_private.png' )
-        elif attributeObj.isProtected():
+        elif self.sourceObj.isProtected():
             self.icon = PixmapCache().getIcon( 'attribute_protected.png' )
         else:
             self.icon = PixmapCache().getIcon( 'attribute.png' )
@@ -691,7 +726,7 @@ class TreeViewGlobalItem( TreeViewItem ):
         return
 
     def updateData( self, globalObj ):
-        " Updates the element with new data "
+        " Updates data model source "
         self.sourceObj = globalObj
         self.setData( 0, globalObj.name )
         self.__setIcon()
