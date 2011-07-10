@@ -259,6 +259,14 @@ class Function( ModuleInfoBase ):
             out += '\n' + item.niceStringify( level + 1 )
         return out
 
+    def getDisplayName( self ):
+        " Provides a name for display purpose "
+        displayName = self.name + "("
+        if len( self.arguments ) > 0:
+            displayName += " " + ", ".join( self.arguments ) + " "
+        displayName += ")"
+        return displayName
+
 
 class Class( ModuleInfoBase ):
     " Holds information about a single class"
