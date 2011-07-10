@@ -44,7 +44,12 @@ from viewitems          import DirectoryItemType, SysPathItemType, \
                                TreeViewFileItem, TreeViewCodingItem, \
                                TreeViewGlobalsItem, TreeViewGlobalItem, \
                                TreeViewImportsItem, TreeViewImportItem, \
-                               TreeViewWhatItem, TreeViewFunctionItem
+                               TreeViewWhatItem, TreeViewFunctionItem, \
+                               TreeViewFunctionsItem, TreeViewClassesItem, \
+                               TreeViewClassItem, TreeViewDecoratorItem, \
+                               TreeViewStaticAttributesItem, \
+                               TreeViewInstanceAttributesItem, \
+                               TreeViewAttributeItem
 from utils.fileutils    import CodimensionProjectFileType, \
                                BrokenSymlinkFileType, PixmapFileType, \
                                PythonFileType, Python3FileType
@@ -501,23 +506,53 @@ class FilesBrowser( QTreeView ):
                 hadCoding = False
                 hadGlobals = False
                 hadImports = False
+                hadFunctions = False
+                hadClasses = False
+                itemsToRemove = []
                 for fileChildItem in treeItem.childItems:
                     if fileChildItem.itemType == CodingItemType:
                         hadCoding = True
-                        fileChildItem.updateData( info.encoding )
-                        self.__updateCodingItem( fileChildItem, info.encoding )
+                        if info.encoding is None:
+                            itemsToRemove.append( fileChildItem )
+                        else:
+                            fileChildItem.updateData( info.encoding )
+                            self.__signalItemUpdated( fileChildItem )
                         continue
                     elif fileChildItem.itemType == GlobalsItemType:
                         hadGlobals = True
-                        fileChildItem.updateData( info )
-                        self.__updateGlobalsItem( fileChildItem, info.globals )
+                        if len( info.globals ) == 0:
+                            itemsToRemove.append( fileChildItem )
+                        else:
+                            fileChildItem.updateData( info )
+                            self.__updateGlobalsItem( fileChildItem, info.globals )
                         continue
                     elif fileChildItem.itemType == ImportsItemType:
                         hadImports = True
-                        fileChildItem.updateData( info )
-                        self.__updateImportsItem( fileChildItem, info.imports )
+                        if len( info.imports ) == 0:
+                            itemsToRemove.append( fileChildItem )
+                        else:
+                            fileChildItem.updateData( info )
+                            self.__updateImportsItem( fileChildItem, info.imports )
+                        continue
+                    elif fileChildItem.itemType == FunctionsItemType:
+                        hadFunctions = True
+                        if len( info.functions ) == 0:
+                            itemsToRemove.append( fileChildItem )
+                        else:
+                            fileChildItem.updateData( info )
+                            self.__updateFunctionsItem( fileChildItem, info.functions )
+                        continue
+                    elif fileChildItem.itemType == ClassesItemType:
+                        hadClasses = True
+                        if len( info.classes ) == 0:
+                            itemsToRemove.append( fileChildItem )
+                        else:
+                            fileChildItem.updateData( info )
+                            self.__updateClassesItem( fileChildItem, info.classes )
                         continue
 
+                for item in itemsToRemove:
+                    self.__removeTreeItem( item )
 
                 if not hadCoding and treeItem.populated and \
                    info.encoding is not None:
@@ -537,23 +572,21 @@ class FilesBrowser( QTreeView ):
                     newItem = TreeViewImportsItem( treeItem, info )
                     self.__addTreeItem( treeItem, newItem )
 
-        return
+                if not hadFunctions and treeItem.populated and \
+                   len( info.functions ) > 0:
+                    # Functions item appeared, so we need to add it
+                    newItem = TreeViewFunctionsItem( treeItem, info )
+                    self.__addTreeItem( treeItem, newItem )
 
-    def __updateCodingItem( self, treeItem, encodingObj ):
-        " Updates populated coding item "
-        if encodingObj is None:
-            # It disappeared from the file
-            self.__removeTreeItem( treeItem )
-        else:
-            self.__signalItemUpdated( treeItem )
+                if not hadClasses and treeItem.populated and \
+                   len( info.classes ) > 0:
+                    # Classes item appeared, so we need to add it
+                    newItem = TreeViewClassesItem( treeItem, info )
+                    self.__addTreeItem( treeItem, newItem )
         return
 
     def __updateGlobalsItem( self, treeItem, globalsObj ):
         " Updates globals item "
-        if len( globalsObj ) == 0:
-            # It disappeared from the file
-            self.__removeTreeItem( treeItem )
-            return
         if not treeItem.populated:
             return
 
@@ -585,13 +618,8 @@ class FilesBrowser( QTreeView ):
 
         return
 
-
     def __updateImportsItem( self, treeItem, importsObj ):
         " Updates imports item "
-        if len( importsObj ) == 0:
-            # It disappeared from the file
-            self.__removeTreeItem( treeItem )
-            return
         if not treeItem.populated:
             return
 
@@ -653,6 +681,244 @@ class FilesBrowser( QTreeView ):
             self.__addTreeItem( treeItem, newItem )
         return
 
+    def __updateFunctionsItem( self, treeItem, functionsObj ):
+        " Updates the functions item "
+        if not treeItem.populated:
+            return
 
+        functionsCopy = list( functionsObj )
+        itemsToRemove = []
+        for functionItem in treeItem.childItems:
+            name = functionItem.sourceObj.name
+            found = False
+            for index in xrange( len( functionsCopy ) ):
+                if functionsCopy[ index ].name == name:
+                    found = True
+                    functionItem.updateData( functionsCopy[ index ] )
+                    # arguments could be changed, so send change notification
+                    self.__signalItemUpdated( functionItem )
+                    self.__updateSingleFunctionItem( functionItem,
+                                                     functionsCopy[ index ] )
+                    del functionsCopy[ index ]
+                    break
+            if not found:
+                itemsToRemove.append( functionItem )
+        for item in itemsToRemove:
+            self.__removeTreeItem( item )
 
+        # Add those which have been introduced
+        for item in functionsCopy:
+            newItem = TreeViewFunctionItem( treeItem, item )
+            self.__addTreeItem( treeItem, newItem )
+        return
+
+    def __updateSingleFunctionItem( self, treeItem, functionObj ):
+        " Updates a single function tree item "
+        # It may have decor, classes and other functions
+        decorCopy = list( functionObj.decorators )
+        hadFunctions = False
+        hadClasses = False
+        itemsToRemove = []
+        for funcChildItem in treeItem.childItems:
+            if funcChildItem.itemType == DecoratorItemType:
+                name = funcChildItem.sourceObj.name
+                found = False
+                for index in xrange( len( decorCopy ) ):
+                    if decorCopy[ index ].name == name:
+                        found = True
+                        funcChildItem.updateData( decorCopy[ index ] )
+                        # arguments could be changed, so send change
+                        # notification
+                        self.__signalItemUpdated( funcChildItem )
+                        del decorCopy[ index ]
+                        break
+                if not found:
+                    itemsToRemove.append( funcChildItem )
+                continue
+            elif funcChildItem.itemType == FunctionsItemType:
+                hadFunctions = True
+                if len( functionObj.functions ) == 0:
+                    itemsToRemove.append( funcChildItem )
+                else:
+                    funcChildItem.updateData( functionObj )
+                    self.__updateFunctionsItem( funcChildItem,
+                                                functionObj.functions )
+                continue
+            elif funcChildItem.itemType == ClassesItemType:
+                hadClasses = True
+                if len( functionObj.classes ) == 0:
+                    itemsToRemove.append( funcChildItem )
+                else:
+                    funcChildItem.updateData( functionObj )
+                    self.__updateClassesItem( funcChildItem,
+                                              functionObj.classes )
+                continue
+        for item in itemsToRemove:
+            self.__removeTreeItem( item )
+
+        # Add those which have been introduced
+        for item in decorCopy:
+            newItem = TreeViewDecoratorItem( treeItem, item )
+            self.__addTreeItem( treeItem, newItem )
+
+        if not hadFunctions and treeItem.populated and \
+           len( functionObj.functions ) > 0:
+            newItem = TreeViewFunctionsItem( treeItem, functionObj )
+            self.__addTreeItem( treeItem, newItem )
+        if not hadClasses and treeItem.populated and \
+           len( functionObj.classes ) > 0:
+            newItem = TreeViewClassesItem( treeItem, functionObj )
+            self.__addTreeItem( treeItem, newItem )
+        return
+
+    def __updateClassesItem( self, treeItem, classesObj ):
+        " Updates the classes item "
+        if not treeItem.populated:
+            return
+
+        classesCopy = list( classesObj )
+        itemsToRemove = []
+        for classItem in treeItem.childItems:
+            name = classItem.sourceObj.name
+            found = False
+            for index in xrange( len( classesCopy ) ):
+                if classesCopy[ index ].name == name:
+                    found = True
+                    classItem.updateData( classesCopy[ index ] )
+                    # arguments could be changed, so send change notification
+                    self.__signalItemUpdated( classItem )
+                    self.__updateSingleClassItem( classItem,
+                                                  classesCopy[ index ] )
+                    del classesCopy[ index ]
+                    break
+            if not found:
+                itemsToRemove.append( classItem )
+        for item in itemsToRemove:
+            self.__removeTreeItem( item )
+
+        # Add those which have been introduced
+        for item in classesCopy:
+            newItem = TreeViewClassItem( treeItem, item )
+            self.__addTreeItem( treeItem, newItem )
+        return
+
+    def __updateSingleClassItem( self, treeItem, classObj ):
+        " Updates a single class item "
+        # There might be decorators, classes, methods, static attributes and
+        # instance attributes
+        decorCopy = list( classObj.decorators )
+        methodCopy = list( classObj.functions )
+        hadStaticAttributes = False
+        hadInstanceAttributes = False
+        hadClasses = False
+        itemsToRemove = []
+        for classChildItem in treeItem.childItems:
+            if classChildItem.itemType == DecoratorItemType:
+                name = classChildItem.sourceObj.name
+                found = False
+                for index in xrange( len( decorCopy ) ):
+                    if decorCopy[ index ].name == name:
+                        found = True
+                        classChildItem.updateData( decorCopy[ index ] )
+                        # arguments could be changed, so send change
+                        # notification
+                        self.__signalItemUpdated( classChildItem )
+                        del decorCopy[ index ]
+                        break
+                if not found:
+                    itemsToRemove.append( classChildItem )
+                continue
+            elif classChildItem.itemType == ClassesItemType:
+                hadClasses = True
+                if len( classObj.classes ) == 0:
+                    itemsToRemove.append( classChildItem )
+                else:
+                    classChildItem.updateData( classObj )
+                    self.__updateClassesItem( classChildItem,
+                                              classObj.classes )
+                continue
+            elif classChildItem.itemType == FunctionItemType:
+                name = classChildItem.sourceObj.name
+                found = False
+                for index in xrange( len( methodCopy ) ):
+                    if methodCopy[ index ].name == name:
+                        found = True
+                        classChildItem.updateData( methodCopy[ index ] )
+                        # arguments could be changed, so send change notification
+                        self.__signalItemUpdated( classChildItem )
+                        self.__updateSingleFunctionItem( classChildItem,
+                                                         methodCopy[ index ] )
+                        del methodCopy[ index ]
+                        break
+                if not found:
+                    itemsToRemove.append( classChildItem )
+                continue
+            elif classChildItem.itemType == StaticAttributesItemType:
+                hadStaticAttributes = True
+                if len( classObj.classAttributes ) == 0:
+                    itemsToRemove.append( classChildItem )
+                else:
+                    self.__updateAttrItem( classChildItem,
+                                           classObj.classAttributes )
+                continue
+            elif classChildItem.itemType == InstanceAttributesItemType:
+                hadInstanceAttributes = True
+                if len( classObj.instanceAttributes ) == 0:
+                    itemsToRemove.append( classChildItem )
+                else:
+                    self.__updateAttrItem( classChildItem,
+                                           classObj.instanceAttributes )
+                continue
+
+        for item in itemsToRemove:
+            self.__removeTreeItem( item )
+
+        # Add those which have been introduced
+        for item in decorCopy:
+            newItem = TreeViewDecoratorItem( treeItem, item )
+            self.__addTreeItem( treeItem, newItem )
+        for item in methodCopy:
+            newItem = TreeViewFunctionItem( treeItem, item )
+            self.__addTreeItem( treeItem, newItem )
+
+        if not hadClasses and treeItem.populated and \
+           len( classObj.classes ) > 0:
+            newItem = TreeViewClassesItem( treeItem, functionObj )
+            self.__addTreeItem( treeItem, newItem )
+        if not hadStaticAttributes and treeItem.populated and \
+           len( classObj.classAttributes ) > 0:
+            newItem = TreeViewStaticAttributesItem( treeItem )
+            self.__addTreeItem( treeItem, newItem )
+        if not hadInstanceAttributes and treeItem.populated and \
+           len( classObj.instanceAttributes ) > 0:
+            newItem = TreeViewInstanceAttributesItem( treeItem )
+            self.__addTreeItem( treeItem, newItem )
+
+        return
+
+    def __updateAttrItem( self, treeItem, attributesObj ):
+        " Updates the static attributes list "
+        if not treeItem.populated:
+            return
+
+        attributesCopy = list( attributesObj )
+        itemsToRemove = []
+        for attrItem in treeItem.childItems:
+            name = attrItem.data( 0 )
+            found = False
+            for index in xrange( len( attributesCopy ) ):
+                if attributesCopy[ index ].name == name:
+                    found = True
+                    attrItem.updateData( attributesCopy[ index ] )
+                    del attributesCopy[ index ]
+                    break
+            if not found:
+                itemsToRemove.append( attrItem )
+        for item in itemsToRemove:
+            self.__removeTreeItem( item )
+
+        for item in attributesCopy:
+            newItem = TreeViewAttributeItem( treeItem, item )
+            self.__addTreeItem( treeItem, newItem )
+        return
 
