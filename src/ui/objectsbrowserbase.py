@@ -24,16 +24,17 @@
 " Base and auxiliary classes for G/F/C browsers "
 
 
-from PyQt4.QtCore  import Qt, QModelIndex, SIGNAL, QRegExp
-from PyQt4.QtGui   import QAbstractItemView, QApplication, \
-                          QSortFilterProxyModel, QTreeView
-from utils.globals import GlobalData
-from utils.project import CodimensionProject
-from viewitems     import DirectoryItemType, \
-                          SysPathItemType, GlobalsItemType, ImportsItemType, \
-                          FunctionsItemType, ClassesItemType, \
-                          StaticAttributesItemType, InstanceAttributesItemType
-from itemdelegates import NoOutlineHeightDelegate
+from PyQt4.QtCore    import Qt, QModelIndex, SIGNAL, QRegExp
+from PyQt4.QtGui     import QAbstractItemView, QApplication, \
+                            QSortFilterProxyModel, QTreeView
+from utils.globals   import GlobalData
+from utils.project   import CodimensionProject
+from viewitems       import DirectoryItemType, \
+                            SysPathItemType, GlobalsItemType, ImportsItemType, \
+                            FunctionsItemType, ClassesItemType, \
+                            StaticAttributesItemType, InstanceAttributesItemType
+from itemdelegates   import NoOutlineHeightDelegate
+from utils.fileutils import detectFileType, PythonFileType, Python3FileType
 
 
 
@@ -271,7 +272,20 @@ class ObjectsBrowser( QTreeView ):
 
     def onFileUpdated( self, fileName ):
         " Triggered when the file is updated "
-        self.model().sourceModel().onFileUpdated( fileName )
+
+        if not GlobalData().project.isProjectFile( fileName ):
+            # Not a project file
+            return
+
+        if detectFileType( fileName ) not in [ PythonFileType,
+                                               Python3FileType ]:
+            return
+
+        if self.model().sourceModel().onFileUpdated( fileName ):
+            # Need resort and counter updates
+            self.layoutDisplay()
+            self.updateCounter()
+            self.model().setFilterRegExp( "" )
         return
 
     def selectionChanged( self, selected, deselected ):

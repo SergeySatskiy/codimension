@@ -111,34 +111,66 @@ class GlobalsBrowserModel( BrowserModelBase ):
 
     def onFileUpdated( self, fileName ):
         " Triggered when a file was updated "
-        if not self.globalData.project.isProjectFile( fileName ):
-            # Not a project file
-            return
 
-        if detectFileType( fileName ) not in [ PythonFileType,
-                                               Python3FileType ]:
-            return
-
-        count = 0
-        # Remove all the items which belong to this file
-        idx = len( self.rootItem.childItems ) - 1
-        while idx >= 0:
-            item = self.rootItem.childItems[ idx ]
-            if item.getPath() == fileName:
-                self.rootItem.removeChild( item )
-                count += 1
-            idx -= 1
-
-        # Insert the new items which belong to this file
+        # Here: python file which belongs to the project
         info = self.globalData.project.briefModinfoCache.get( fileName )
-        for globalObj in info.globals:
-            item = TreeViewGlobalItem( self.rootItem, globalObj )
-            item.appendData( [ fileName, globalObj.line ] )
-            self._addItem( item, self.rootItem )
-            count += 1
 
-        # Reset the model if there are any changes
-        if count > 0:
-            self.reset()
+        globalsCopy = list( info.globals )
+        itemsToRemove = []
+        needUpdate = False
+
+        # For all root items
+        path = os.path.realpath( fileName )
+        for treeItem in self.rootItem.childItems:
+            if os.path.realpath( treeItem.getPath() ) != path:
+                continue
+
+            # Item belongs to the modified file
+            name = treeItem.data( 0 )
+            found = False
+            for index in xrange( len( globalsCopy ) ):
+                if globalsCopy[ index ].name == name:
+                    found = True
+                    treeItem.updateData( globalsCopy[ index ] )
+                    # Line number might be changed
+                    treeItem.setData( 2, globalsCopy[ index ].line )
+                    self.__signalItemUpdated( treeItem )
+                    del globalsCopy[ index ]
+                    break
+            if not found:
+                itemsToRemove.append( treeItem )
+
+        for item in itemsToRemove:
+            needUpdate = True
+            self.__removeTreeItem( item )
+
+        # Add those which have been introduced
+        for item in globalsCopy:
+            needUpdate = True
+            newItem = TreeViewGlobalItem( self.rootItem, item )
+            newItem.appendData( [ fileName, item.line ] )
+            self.__addTreeItem( self.rootItem, newItem )
+
+        return needUpdate
+
+    def __signalItemUpdated( self, treeItem ):
+        " Emits a signal that an item is updated "
+        index = self.buildIndex( treeItem.getRowPath() )
+        self.emit( SIGNAL( "dataChanged(const QModelIndex &," \
+                           "const QModelIndex &)" ), index, index )
+        return
+
+    def __removeTreeItem( self, treeItem ):
+        " Removes the given item "
+        index = self.buildIndex( treeItem.getRowPath() )
+        self.beginRemoveRows( index.parent(), index.row(), index.row() )
+        treeItem.parentItem.removeChild( treeItem )
+        self.endRemoveRows()
+        return
+
+    def __addTreeItem( self, treeItem, newItem ):
+        " Adds the given item "
+        parentIndex = self.buildIndex( treeItem.getRowPath() )
+        self.addItem( newItem, parentIndex )
         return
 
