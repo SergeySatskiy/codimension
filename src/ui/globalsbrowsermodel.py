@@ -51,8 +51,6 @@ class GlobalsBrowserModel( BrowserModelBase ):
 
         self.connect( self.globalData.project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
-        self.connect( self.globalData.project, SIGNAL( 'fsChanged' ),
-                      self.__onFSChanged )
         return
 
     def __populateModel( self ):
@@ -76,38 +74,28 @@ class GlobalsBrowserModel( BrowserModelBase ):
             self.__populateModel()
         return
 
-    def __onFSChanged( self, items ):
-        " Triggered when files or dirs appeared or removed "
+    def onFSChanged( self, addedPythonFiles, deletedPythonFiles ):
+        " Triggered when some files appeared or disappeared "
 
-        count = 0
-        for path in items:
-            path = str( path )
-            if path.endswith( os.path.sep ):
-                continue # dirs are out of interest
-            if not path.endswith( '.py' ) and not path.endswith( '.py3' ):
-                continue # not a python file
+        needUpdate = False
+        itemsToDelete = []
+        for path in deletedPythonFiles:
+            for item in self.rootItem.childItems:
+                if os.path.realpath( path ) == os.path.realpath( item.getPath() ):
+                    itemsToDelete.append( item )
 
-            if path.startswith( '+' ):
-                path = path[ 1: ]
-                info = self.globalData.project.briefModinfoCache.get( path )
-                for globalObj in info.globals:
-                    item = TreeViewGlobalItem( self.rootItem, globalObj )
-                    item.appendData( [ path, globalObj.line ] )
-                    self._addItem( item, self.rootItem )
-                    count += 1
-            else:
-                path = path[ 1: ]
-                idx = len( self.rootItem.childItems ) - 1
-                while idx >= 0:
-                    item = self.rootItem.childItems[ idx ]
-                    if item.getPath() == path:
-                        self.rootItem.removeChild( item )
-                        count += 1
-                    idx -= 1
+        for item in itemsToDelete:
+            needUpdate = True
+            self.removeTreeItem( item )
 
-        if count > 0:
-            self.reset()
-        return
+        for path in addedPythonFiles:
+            info = self.globalData.project.briefModinfoCache.get( path )
+            for globalObj in info.globals:
+                needUpdate = True
+                newItem = TreeViewGlobalItem( self.rootItem, globalObj )
+                newItem.appendData( [ path, globalObj.line ] )
+                self.addTreeItem( self.rootItem, newItem )
+        return needUpdate
 
     def onFileUpdated( self, fileName ):
         " Triggered when a file was updated "
@@ -134,7 +122,7 @@ class GlobalsBrowserModel( BrowserModelBase ):
                     treeItem.updateData( globalsCopy[ index ] )
                     # Line number might be changed
                     treeItem.setData( 2, globalsCopy[ index ].line )
-                    self.__signalItemUpdated( treeItem )
+                    self.signalItemUpdated( treeItem )
                     del globalsCopy[ index ]
                     break
             if not found:
@@ -142,35 +130,14 @@ class GlobalsBrowserModel( BrowserModelBase ):
 
         for item in itemsToRemove:
             needUpdate = True
-            self.__removeTreeItem( item )
+            self.removeTreeItem( item )
 
         # Add those which have been introduced
         for item in globalsCopy:
             needUpdate = True
             newItem = TreeViewGlobalItem( self.rootItem, item )
             newItem.appendData( [ fileName, item.line ] )
-            self.__addTreeItem( self.rootItem, newItem )
+            self.addTreeItem( self.rootItem, newItem )
 
         return needUpdate
-
-    def __signalItemUpdated( self, treeItem ):
-        " Emits a signal that an item is updated "
-        index = self.buildIndex( treeItem.getRowPath() )
-        self.emit( SIGNAL( "dataChanged(const QModelIndex &," \
-                           "const QModelIndex &)" ), index, index )
-        return
-
-    def __removeTreeItem( self, treeItem ):
-        " Removes the given item "
-        index = self.buildIndex( treeItem.getRowPath() )
-        self.beginRemoveRows( index.parent(), index.row(), index.row() )
-        treeItem.parentItem.removeChild( treeItem )
-        self.endRemoveRows()
-        return
-
-    def __addTreeItem( self, treeItem, newItem ):
-        " Adds the given item "
-        parentIndex = self.buildIndex( treeItem.getRowPath() )
-        self.addItem( newItem, parentIndex )
-        return
 
