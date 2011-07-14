@@ -51,8 +51,6 @@ class FunctionsBrowserModel( BrowserModelBase ):
 
         self.connect( self.globalData.project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
-        self.connect( self.globalData.project, SIGNAL( 'fsChanged' ),
-                      self.__onFSChanged )
         return
 
     def __populateModel( self ):
@@ -76,69 +74,72 @@ class FunctionsBrowserModel( BrowserModelBase ):
             self.__populateModel()
         return
 
-    def __onFSChanged( self, items ):
-        " Triggered when files or dirs appeared or removed "
+    def onFSChanged( self, addedPythonFiles, deletedPythonFiles ):
+        " Triggered when some files appeared or disappeared "
 
-        count = 0
-        for path in items:
-            path = str( path )
-            if path.endswith( os.path.sep ):
-                continue # dirs are out of interest
-            if not path.endswith( '.py' ) and not path.endswith( '.py3' ):
-                continue # not a python file
+        needUpdate = False
+        itemsToDelete = []
+        for path in deletedPythonFiles:
+            for item in self.rootItem.childItems:
+                if os.path.realpath( path ) == os.path.realpath( item.getPath() ):
+                    itemsToDelete.append( item )
 
-            if path.startswith( '+' ):
-                path = path[ 1: ]
-                info = self.globalData.project.briefModinfoCache.get( path )
-                for func in info.functions:
-                    item = TreeViewFunctionItem( self.rootItem, func )
-                    item.appendData( [ path, func.line ] )
-                    self._addItem( item, self.rootItem )
-                    count += 1
-            else:
-                path = path[ 1: ]
-                idx = len( self.rootItem.childItems ) - 1
-                while idx >= 0:
-                    item = self.rootItem.childItems[ idx ]
-                    if item.getPath() == path:
-                        self.rootItem.removeChild( item )
-                        count += 1
-                    idx -= 1
+        for item in itemsToDelete:
+            needUpdate = True
+            self.removeTreeItem( item )
 
-        if count > 0:
-            self.reset()
-        return
+        for path in addedPythonFiles:
+            info = self.globalData.project.briefModinfoCache.get( path )
+            for funcObj in info.functions:
+                needUpdate = True
+                newItem = TreeViewFunctionItem( self.rootItem, funcObj )
+                newItem.appendData( path )
+                newItem.appendData( funcObj.line )
+                self.addTreeItem( self.rootItem, newItem )
+        return needUpdate
 
     def onFileUpdated( self, fileName ):
         " Triggered when a file was updated "
-        if not self.globalData.project.isProjectFile( fileName ):
-            # Not a project file
-            return
 
-        if detectFileType( fileName ) not in [ PythonFileType,
-                                               Python3FileType ]:
-            return
-
-        count = 0
-        # Remove all the items which belong to this file
-        idx = len( self.rootItem.childItems ) - 1
-        while idx >= 0:
-            item = self.rootItem.childItems[ idx ]
-            if item.getPath() == fileName:
-                self.rootItem.removeChild( item )
-                count += 1
-            idx -= 1
-
-        # Insert the new items which belong to this file
+        # Here: python file which belongs to the project
         info = self.globalData.project.briefModinfoCache.get( fileName )
-        for func in info.functions:
-            item = TreeViewFunctionItem( self.rootItem, func )
-            item.appendData( [ fileName, func.line ] )
-            self._addItem( item, self.rootItem )
-            count += 1
 
-        # Reset the model if there are any changes
-        if count > 0:
-            self.reset()
-        return
+        funcsCopy = list( info.functions )
+        itemsToRemove = []
+        needUpdate = False
+
+        # For all root items
+        path = os.path.realpath( fileName )
+        for treeItem in self.rootItem.childItems:
+            if os.path.realpath( treeItem.getPath() ) != path:
+                continue
+
+            # Item belongs to the modified file
+            name = treeItem.sourceObj.name
+            found = False
+            for index in xrange( len( funcsCopy ) ):
+                if funcsCopy[ index ].name == name:
+                    found = True
+                    treeItem.updateData( funcsCopy[ index ] )
+                    treeItem.setData( 2, funcsCopy[ index ].line )
+                    self.signalItemUpdated( treeItem )
+                    self.updateSingleFuncItem( treeItem, funcsCopy[ index ] )
+                    del funcsCopy[ index ]
+                    break
+            if not found:
+                itemsToRemove.append( treeItem )
+
+        for item in itemsToRemove:
+            needUpdate = True
+            self.removeTreeItem( item )
+
+        # Add those which have been introduced
+        for item in funcsCopy:
+            needUpdate = True
+            newItem = TreeViewFunctionItem( self.rootItem, item )
+            newItem.appendData( fileName )
+            newItem.appendData( item.line )
+            self.addTreeItem( self.rootItem, newItem )
+
+        return needUpdate
 

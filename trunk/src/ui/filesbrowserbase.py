@@ -883,7 +883,7 @@ class FilesBrowser( QTreeView ):
 
         if not hadClasses and treeItem.populated and \
            len( classObj.classes ) > 0:
-            newItem = TreeViewClassesItem( treeItem, functionObj )
+            newItem = TreeViewClassesItem( treeItem, classObj )
             self.__addTreeItem( treeItem, newItem )
         if not hadStaticAttributes and treeItem.populated and \
            len( classObj.classAttributes ) > 0:

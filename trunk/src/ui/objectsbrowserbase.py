@@ -24,6 +24,7 @@
 " Base and auxiliary classes for G/F/C browsers "
 
 
+import os
 from PyQt4.QtCore    import Qt, QModelIndex, SIGNAL, QRegExp
 from PyQt4.QtGui     import QAbstractItemView, QApplication, \
                             QSortFilterProxyModel, QTreeView
@@ -140,6 +141,8 @@ class ObjectsBrowser( QTreeView ):
                       self._resizeColumns )
         self.connect( self, SIGNAL( "collapsed(const QModelIndex &)" ),
                       self._resizeColumns )
+        self.connect( GlobalData().project, SIGNAL( 'fsChanged' ),
+                      self.onFSChanged )
 
         self.setRootIsDecorated( True )
         self.setAlternatingRowColors( True )
@@ -286,6 +289,36 @@ class ObjectsBrowser( QTreeView ):
             self.layoutDisplay()
             self.updateCounter()
             self.model().setFilterRegExp( "" )
+        return
+
+    def onFSChanged( self, items ):
+        " Triggered when filesystem has changes "
+        addedPythonFiles = []
+        deletedPythonFiles = []
+
+        for path in items:
+            path = str( path )
+            if path.endswith( os.path.sep ):
+                continue    # dirs are out of interest
+            if path.startswith( '+' ):
+                path = path[ 1: ]
+                if detectFileType( path ) not in [ PythonFileType,
+                                                   Python3FileType ]:
+                    continue
+                addedPythonFiles.append( path )
+            else:
+                path = path[ 1: ]
+                if detectFileType( path ) not in [ PythonFileType,
+                                                   Python3FileType ]:
+                    continue
+                deletedPythonFiles.append( path )
+        if len( addedPythonFiles ) > 0 or len( deletedPythonFiles ) > 0:
+            if self.model().sourceModel().onFSChanged( addedPythonFiles,
+                                                       deletedPythonFiles ):
+                # Need resort and counter updates
+                self.layoutDisplay()
+                self.updateCounter()
+                self.model().setFilterRegExp( "" )
         return
 
     def selectionChanged( self, selected, deselected ):
