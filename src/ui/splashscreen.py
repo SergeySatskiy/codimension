@@ -42,7 +42,7 @@ class SplashScreen( QSplashScreen ):
         self.labelAlignment = \
             Qt.Alignment( Qt.AlignBottom | Qt.AlignRight | Qt.AlignAbsolute )
 
-        QSplashScreen.__init__( self, PixmapCache().getPixmap( 'logo.png' ) )
+        QSplashScreen.__init__( self, PixmapCache().getPixmap( 'splash.png' ) )
 
         self.show()
         QApplication.flush()
@@ -52,7 +52,7 @@ class SplashScreen( QSplashScreen ):
         """ Show the message in the bottom part of the splashscreen """
 
         QSplashScreen.showMessage( self, msg,
-                                   self.labelAlignment, QColor( Qt.white ) )
+                                   self.labelAlignment, QColor( Qt.black ) )
         QApplication.processEvents()
         return
 
