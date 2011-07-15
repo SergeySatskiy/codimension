@@ -44,28 +44,23 @@ class QuickHelpWidget( HTMLTabWidget ):
 <body bgcolor="#ffffe6">
 
 <table cellspacing="1" cellpadding="3" width="100%"
-       align="center" bgcolor="#A0A0FF" border="0">
+       align="left" border="0">
 <tr>
   <td bgcolor="#ffffe6">
     <table style="WIDTH: 100%" cellspacing="1"
-           cellpadding="3" bgcolor="#A0A0FF">
+           cellpadding="3">
     <tr width="100%">
       <td style="WIDTH: 110px">
-      <a href="http://satsky.spb.ru/codimension/codimensionEng.php">
+      <!--a href="http://satsky.spb.ru/codimension/codimensionEng.php">
       <img border="0" align="left" src='file:""" + logoPath + """'
-           width="100" height="75">
-      </a>
+           width="64" height="64">
+      </a-->&nbsp;
       </td>
       <td width="100%">
-        <h1 align="center">
-          <font color="#ffffff">Quick Shortcuts Reference</font>
-        </h1>
+        <h1 align="left" style="color: #666">Keyboard Shortcut Reference</h1>
       </td>
     </tr>
     </table>
-
-    <p align="center">    The table below shows
-        some of the Codimension hot keys.</p>
 
     <p align="center">
       <table border="1" cellspacing="0"
@@ -151,16 +146,18 @@ class QuickHelpWidget( HTMLTabWidget ):
           <td>Highlight the current word</td>
           <td>Ctrl+TAB</td>
           <td>Switching between two recent tabs</td></tr>
+        <tr>
     </table>
     </p>
     <p align="center">
-       Please direct your browser to
-       <a href="http://satsky.spb.ru/codimension/codimensionEng.php">
-          http://satsky.spb.ru/codimension/codimensionEng.php</a> for
-       more Codimension documentation.
+       More documentation is available at<br/>
+       <a style="color: #666"
+          href="http://satsky.spb.ru/codimension/codimensionEng.php">
+          http://satsky.spb.ru/codimension/codimensionEng.php</a>.
     </p>
     <p align="right"> Sergey Satskiy (c), 2010 - 2011
-        <a href="mailto:sergey.satskiy@gmail.com">sergey.satskiy@gmail.com</a>
+        <a style="color: #666"
+           href="mailto:sergey.satskiy@gmail.com">sergey.satskiy@gmail.com</a>
     </p></td></tr>
 
 <p>
