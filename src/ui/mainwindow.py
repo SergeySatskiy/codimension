@@ -967,7 +967,10 @@ class CodimensionMainWindow( QMainWindow ):
             path = os.path.dirname( os.path.abspath( sys.argv[ 0 ] ) ) + \
                    os.path.sep + "thirdparty" + os.path.sep + "pymetrics" + \
                    os.path.sep + "pymetrics.py"
-            metrics = PyMetrics( path )
+            if os.path.exists( path ):
+                metrics = PyMetrics( path )
+            else:
+                metrics = PyMetrics()
             if reportOption == PylintViewer.SingleBuffer:
                 metrics.analyzeBuffer( fileOrContent )
             else:
