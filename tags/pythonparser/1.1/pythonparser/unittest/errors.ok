@@ -1,0 +1,13 @@
+Function[2]: 'f'
+Class[5]: 'A'
+Class attribute[12]: 'b'
+    Function[7]: '__init__'
+    Argument: 'self'
+    Function[10]: 'f'
+unittest/errors.py(2)  : error 10 : Missing token, at offset 7
+    near [Index: 0 (Start: 0-Stop: 0) ='<missing COLON>', type<55> Line: 2 LinePos:7]
+     : Missing COLON 
+
+unittest/errors.py(12)  : error 3 : , at offset 0
+    near [Index: 35 (Start: 0-Stop: 0) ='', type<4> Line: 12 LinePos:0]
+     : cannot match to any predicted input...
