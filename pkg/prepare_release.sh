@@ -152,20 +152,22 @@ shift
 
 case "$command" in
 tag|maketar)
-    pkgtype="$1"
+    if test "$command" = 'maketar'; then
+        pkgtype="$1"
 
-    case "$pkgtype" in
-    '')
-        echo "$script_name $command: package type required" >&2
-        exit 2
-        ;;
-    deb|rpm)
-        shift
-        ;;
-    *)
-        echo "$script_name $command: unknown package type '$pkgtype'" >&2
-        exit 2
-    esac
+        case "$pkgtype" in
+        '')
+            echo "$script_name $command: package type required" >&2
+            exit 2
+            ;;
+        deb|rpm)
+            shift
+            ;;
+        *)
+            echo "$script_name $command: unknown package type '$pkgtype'" >&2
+            exit 2
+        esac
+    fi
 
     component="$1"
 
@@ -181,15 +183,7 @@ tag|maketar)
         echo "$script_name $command: unknown component '$component'" >&2
         exit 2
     esac
-    ;;
-*)
-    echo "$script_name: unknown command '$command'" >&2
-    exit 2
-    ;;
-esac
 
-case "$command" in
-tag|maketar)
     version="$1"
 
     case "$version" in
@@ -207,6 +201,11 @@ tag|maketar)
         echo "$script_name: invalid version number '$version'" >&2
         exit 2
     esac
+    ;;
+*)
+    echo "$script_name: unknown command '$command'" >&2
+    exit 2
+    ;;
 esac
 
 case "$command" in
