@@ -31,7 +31,12 @@
 import re
 from types  import UnicodeType
 from codecs import BOM_UTF8, BOM_UTF16, BOM_UTF32
-import thirdparty.chardet as chardet
+try:
+    # For systems that have chardet installed system wide.
+    import chardet
+except ImportError:
+    # Import chardet from a local copy.
+    import thirdparty.chardet as chardet
 from PyQt4.QtCore import QString
 
 
