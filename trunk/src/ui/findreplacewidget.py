@@ -31,14 +31,56 @@
 
 from PyQt4.QtGui                import QHBoxLayout, QToolButton, QLabel, \
                                        QSizePolicy, QComboBox, \
-                                       QGridLayout, QWidget, QCheckBox, \
-                                       QShortcut
+                                       QGridLayout, QWidget, QCheckBox
 from utils.pixmapcache          import PixmapCache
 from PyQt4.QtCore               import SIGNAL, Qt, QStringList
 from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
 from utils.globals              import GlobalData
 from utils.project              import CodimensionProject
 
+
+
+class SearchAttr:
+    " Stores search attributes for a single editor "
+
+    def __init__( self ):
+        self.line = -1
+        self.pos = -1
+        self.firstLine = -1
+        self.match = [ -1, -1, -1 ]     # line, pos, length
+        return
+
+
+class SearchSupport:
+    " Auxiliary class to support incremental search "
+
+    def __init__( self ):
+        self.editorSearchAttributes = {}
+        return
+
+    def add( self, uuid, searchAttr ):
+        " Adds new editor search attributes "
+        self.editorSearchAttributes[ uuid ] = searchAttr
+        return
+
+    def hasEditor( self, uuid ):
+        " Checks if there was a search in the editor "
+        return self.editorSearchAttributes.has_key( uuid )
+
+    def get( self, uuid ):
+        " Provides the search attributes "
+        return self.editorSearchAttributes[ uuid ]
+
+    def delete( self, uuid ):
+        " Deletes the editor attributes from the storage "
+        if self.hasEditor( uuid ):
+            del self.editorSearchAttributes[ uuid ]
+        return
+
+    def clear( self ):
+        " Cleans up all the memorised search attributes "
+        self.editorSearchAttributes = {}
+        return
 
 
 class FindReplaceBase( QWidget ):
@@ -53,14 +95,10 @@ class FindReplaceBase( QWidget ):
         self.findHistory = QStringList( GlobalData().project.findHistory )
         self._findBackward = False
         self._selection = None
+        self.__skip = True
 
         # Incremental search support
-        # If not None => the search started in this editor and has not been
-        # finished
-        self._originEditor = None
-        self._originPosition = (-1, -1)     # line, pos
-        self._originFirstLine = -1
-        self._matchTarget = [-1, -1, -1]    # line, pos, length
+        self._searchSupport = SearchSupport()
 
         # Common graphics items
         self.closeButton = QToolButton( self )
@@ -104,58 +142,33 @@ class FindReplaceBase( QWidget ):
         self.caseCheckBox.setText( "Match case" )
         self.caseCheckBox.setFocusPolicy( Qt.NoFocus )
         self.caseCheckBox.setEnabled( False )
+        self.connect( self.caseCheckBox, SIGNAL( 'stateChanged(int)' ),
+                      self._onCheckBoxChange )
 
         self.wordCheckBox = QCheckBox( self )
         self.wordCheckBox.setText( "Whole word" )
         self.wordCheckBox.setFocusPolicy( Qt.NoFocus )
         self.wordCheckBox.setEnabled( False )
+        self.connect( self.wordCheckBox, SIGNAL( 'stateChanged(int)' ),
+                      self._onCheckBoxChange )
 
         self.regexpCheckBox = QCheckBox( self )
         self.regexpCheckBox.setText( "Regexp" )
         self.regexpCheckBox.setFocusPolicy( Qt.NoFocus )
         self.regexpCheckBox.setEnabled( False )
-        return
-
-    def _finalizeSearch( self ):
-        " Finalizes search in an editor if so "
-        if self._originEditor is None:
-            return
-        if self._matchTarget == [-1, -1, -1]:
-            self._originEditor = None
-            self._originPosition = (-1, -1)
-            self._originFirstLine = -1
-            return
-
-        line, pos = self._originEditor.getCursorPosition()
-        if self._originPosition[ 0 ] != line or \
-            self._originPosition[ 1 ] != pos:
-            # The cursor has been moved, so no jumps
-            self._matchTarget = [-1, -1, -1]
-            self._originEditor = None
-            self._originPosition = (-1, -1)
-            self._originFirstLine = -1
-            return
-
-        # Move the cursor
-        self._originEditor.setCursorPosition( self._matchTarget[ 0 ],
-                                              self._matchTarget[ 1 ] )
-        self._originEditor.ensureLineVisible( self._matchTarget[ 0 ] )
-
-        self._matchTarget = [-1, -1, -1]
-        self._originEditor = None
-        self._originPosition = (-1, -1)
-        self._originFirstLine = -1
+        self.connect( self.regexpCheckBox, SIGNAL( 'stateChanged(int)' ),
+                      self._onCheckBoxChange )
         return
 
     def keyPressEvent( self, event ):
-        " Handles the key press events only when the focus is in the search bar "
+        " Handles the ESC key for the search bar "
         if event.key() == Qt.Key_Escape:
-            self._finalizeSearch()
+            self._searchSupport.clear()
+            event.accept()
+            self.hide()
             activeWindow = self.editorsManager.currentWidget()
             if activeWindow:
                 activeWindow.setFocus()
-            event.accept()
-            self.hide()
         return
 
     def setFocus( self ):
@@ -170,10 +183,11 @@ class FindReplaceBase( QWidget ):
         status = currentWidget.getType() in \
                     [ MainWindowTabWidgetBase.PlainTextEditor ]
         self.findtextCombo.setEnabled( status )
-        self.findPrevButton.setEnabled( status and \
-                                        self.findtextCombo.currentText() != "" )
-        self.findNextButton.setEnabled( status and \
-                                        self.findtextCombo.currentText() != "" )
+
+        textAvailable = self.findtextCombo.currentText() != ""
+        self.findPrevButton.setEnabled( status and textAvailable )
+        self.findNextButton.setEnabled( status and textAvailable )
+
         self.caseCheckBox.setEnabled( status )
         self.wordCheckBox.setEnabled( status )
         self.regexpCheckBox.setEnabled( status )
@@ -210,131 +224,147 @@ class FindReplaceBase( QWidget ):
         self.findtextCombo.setEditText( text )
         self.findtextCombo.lineEdit().selectAll()
         self.findtextCombo.setFocus()
-        self.__skip = False
-        self._onEditTextChanged( text )
-
         self.caseCheckBox.setChecked( False )
         self.wordCheckBox.setChecked( False )
         self.regexpCheckBox.setChecked( False )
-
         self._findBackward = False
-        self._highlightOnly = True
+        self.__skip = False
 
         QWidget.show( self )
         self.activateWindow()
+
+        self._onEditTextChanged( text )
+        return
+
+    def _onCheckBoxChange( self, newState ):
+        " Triggered when a search check box state is changed "
+        if self.__skip:
+            return
+        self._performSearch()
         return
 
     def _onEditTextChanged( self, text ):
         " Triggered when the search text has been changed "
         if self.__skip:
             return
-        status = text != ""
-        self.findNextButton.setEnabled( status )
-        self.findPrevButton.setEnabled( status )
+        self._performSearch()
+        return
+
+
+    def _performSearch( self ):
+        " Performs the incremental search "
 
         currentWidget = self.editorsManager.currentWidget()
         if currentWidget.getType() not in \
                     [ MainWindowTabWidgetBase.PlainTextEditor ]:
             return
+
+        # Memorize the search arguments
+        text = self.findtextCombo.currentText()
+        isRegexp = self.regexpCheckBox.isChecked()
+        isCase = self.caseCheckBox.isChecked()
+        isWord = self.wordCheckBox.isChecked()
+
+
+        status = text != ""
+        self.findNextButton.setEnabled( status )
+        self.findPrevButton.setEnabled( status )
+
         editor = currentWidget.getEditor()
+        editorUUID = currentWidget.getUUID()
 
+        if self._searchSupport.hasEditor( editorUUID ):
+            # We've been searching here already
+            searchAattributes = self._searchSupport.get( editorUUID )
 
-        # There are the following cases:
-        # - start of the search with no text
-        # - some text was replaced with nothing
-        # - start of the search with some text
-        # - some symbols have been changed
-
-        if self._originEditor is None:
-            # There were no started search before
             if text == "":
-                # Start with no text - do nothing
+                # Remove the highlight and scroll back
+                editor.clearAllIndicators( editor.searchIndicator )
+                editor.clearAllIndicators( editor.matchIndicator )
+
+                editor.setCursorPosition( searchAattributes.line,
+                                          searchAattributes.pos )
+                editor.ensureLineVisible( searchAattributes.firstLine )
+                searchAattributes.match = [ -1, -1, -1 ]
                 return
 
-            # It is a start of a new search with some text
-            # Memorize the current state
-            self._originEditor = editor
-            self._originPosition = editor.getCursorPosition()
-            self._originFirstLine = editor.firstVisibleLine()
-
-            self._matchTarget = editor.highlightMatch( text,
-                                                       self._originPosition[ 0 ],
-                                                       self._originPosition[ 1 ],
-                                                       self.regexpCheckBox.isChecked(),
-                                                       self.caseCheckBox.isChecked(),
-                                                       self.wordCheckBox.isChecked() )
-            if self._matchTarget != [-1, -1, -1]:
-                # Scroll the editor if required
-                editor.ensureLineVisible( self._matchTarget[ 0 ] )
-
-        else:
-            # This is continue of the started search
-            if self._originEditor == editor:
-                # This is still the same editor
-                if text == "":
-                    # Remove the highlight and scroll back
-                    editor.clearAllIndicators( editor.searchIndicator )
-                    editor.clearAllIndicators( editor.matchIndicator )
-                    self._matchTarget = [-1, -1, -1]
-
-                    editor.scrollVertical( self._originFirstLine - editor.firstVisibleLine() )
-                    return
-
-                # These are changes to what it was
-                self._matchTarget = editor.highlightMatch( text,
-                                                           self._originPosition[ 0 ],
-                                                           self._originPosition[ 1 ],
-                                                           self.regexpCheckBox.isChecked(),
-                                                           self.caseCheckBox.isChecked(),
-                                                           self.wordCheckBox.isChecked() )
-                if self._matchTarget != [-1, -1, -1]:
-                    # Scroll the editor if required
-                    editor.ensureLineVisible( self._matchTarget[ 0 ] )
-                else:
-                    # Nothing is found, so scroll back to the original
-                    editor.scrollVertical( self._originFirstLine - \
-                                           editor.firstVisibleLine() )
-
+            matchTarget = editor.highlightMatch( text, searchAattributes.line,
+                                                       searchAattributes.pos,
+                                                 isRegexp, isCase, isWord )
+            searchAattributes.match = matchTarget
+            if matchTarget != [-1, -1, -1]:
+                # Move the cursor to the match
+                editor.setCursorPosition( matchTarget[ 0 ],
+                                          matchTarget[ 1 ] )
+                editor.ensureLineVisible( matchTarget[ 0 ] )
             else:
-                # The user switched to the other editor
-                self._finalizeSearch()
+                # Nothing is found, so scroll back to the original
+                editor.setCursorPosition( searchAattributes.line,
+                                          searchAattributes.pos )
+                editor.ensureLineVisible( searchAattributes.firstLine )
 
-                # Recursive call which will initiate a new search
-                self._onEditTextChanged( self.findtextCombo.currentText() )
+            return
+
+        # Brand new editor to search in
+        if text == "":
+            return
+
+        searchAattributes = SearchAttr()
+        searchAattributes.line = currentWidget.getLine()
+        searchAattributes.pos = currentWidget.getPos()
+        searchAattributes.firstLine = editor.firstVisibleLine()
+
+        matchTarget = editor.highlightMatch( text, searchAattributes.line,
+                                                   searchAattributes.pos,
+                                             isRegexp, isCase, isWord )
+        searchAattributes.match = matchTarget
+        self._searchSupport.add( editorUUID, searchAattributes )
+
+        if matchTarget != [-1, -1, -1]:
+            # Move the cursor to the match
+            editor.setCursorPosition( matchTarget[ 0 ],
+                                      matchTarget[ 1 ] )
+            editor.ensureLineVisible( matchTarget[ 0 ] )
 
         return
 
-    def _advanceMatchIndicator( self, newLine, newPos, newLength ):
-        " Advances the current match indicator "
 
-        if newLine == self._matchTarget[ 0 ] and \
-           newPos == self._matchTarget[ 1 ] and \
-           newLength == self._matchTarget[ 2 ]:
+    def _advanceMatchIndicator( self, uuid, newLine, newPos, newLength ):
+        " Advances the current match indicator for the given editor "
+
+        if not self._searchSupport.hasEditor( uuid ):
+            return
+
+        searchAattributes = self._searchSupport.get( uuid )
+        match = searchAattributes.match
+
+        if newLine == match[ 0 ] and newPos == match[ 1 ] and \
+           newLength == match[ 2 ]:
             # It is the same target - nothing to do
             return
 
-        editor = self._originEditor
+        widget = self.editorsManager.getWidgetByUUID( uuid )
+        if widget is None:
+            return
+        editor = widget.getEditor()
 
         # Replace the old highlight
-        tgtPos = editor.positionFromLineIndex( self._matchTarget[ 0 ], self._matchTarget[ 1 ] )
-        editor.clearIndicatorRange( editor.matchIndicator, tgtPos, self._matchTarget[ 2 ] )
-        editor.setIndicatorRange( editor.searchIndicator, tgtPos, self._matchTarget[ 2 ] )
+        tgtPos = editor.positionFromLineIndex( match[ 0 ], match[ 1 ] )
+        editor.clearIndicatorRange( editor.matchIndicator, tgtPos, match[ 2 ] )
+        editor.setIndicatorRange( editor.searchIndicator, tgtPos, match[ 2 ] )
 
         # Memorise new target
-        self._matchTarget = [newLine, newPos, newLength]
+        searchAattributes.match = [ newLine, newPos, newLength ]
+        self._searchSupport.add( uuid, searchAattributes )
 
         # Update the new highlight
-        tgtPos = editor.positionFromLineIndex( self._matchTarget[ 0 ], self._matchTarget[ 1 ] )
-        editor.clearIndicatorRange( editor.searchIndicator, tgtPos, self._matchTarget[ 2 ] )
-        editor.setIndicatorRange( editor.matchIndicator, tgtPos, self._matchTarget[ 2 ] )
+        tgtPos = editor.positionFromLineIndex( newLine, newPos )
+        editor.clearIndicatorRange( editor.searchIndicator, tgtPos, newLength )
+        editor.setIndicatorRange( editor.matchIndicator, tgtPos, newLength )
 
-        editor.ensureLineVisible( self._matchTarget[ 0 ] )
-
-        if (not self.isVisible() or editor.hasFocus()) and not editor.hasSelectedText():
-            self._originPosition = (self._matchTarget[ 0 ],
-                                    self._matchTarget[ 1 ] )
-            editor.setCursorPosition( self._matchTarget[ 0 ],
-                                      self._matchTarget[ 1 ] )
+        # Move the cursor to the new match
+        editor.setCursorPosition( newLine, newPos )
+        editor.ensureLineVisible( newLine )
         return
 
 
@@ -386,7 +416,7 @@ class FindWidget( FindReplaceBase ):
             return
 
         self._findBackward = False
-        if not self.__findNextPrev( self.findtextCombo.currentText() ):
+        if not self.__findNextPrev():
             GlobalData().mainWindow.showStatusBarMessage( \
                     "The '" + self.findtextCombo.currentText() + \
                     "' was not found" )
@@ -398,7 +428,7 @@ class FindWidget( FindReplaceBase ):
             return
 
         self._findBackward = True
-        if not self.__findNextPrev( self.findtextCombo.currentText() ):
+        if not self.__findNextPrev():
             GlobalData().mainWindow.showStatusBarMessage( \
                     "The '" + self.findtextCombo.currentText() + \
                     "' was not found" )
@@ -432,141 +462,98 @@ class FindWidget( FindReplaceBase ):
             self.findHistory = QStringList( GlobalData().project.findHistory )
         return
 
-    def __findNextPrev( self, txt ):
+    def __findNextPrev( self ):
         " Finds the next occurrence of the search text "
 
         currentWidget = self.editorsManager.currentWidget()
         editor = currentWidget.getEditor()
+        editorUUID = currentWidget.getUUID()
 
-        if editor == self._originEditor:
-            # Still the same editor
-            if not self._updateSelection():
-                # In the whole document
-                if self._matchTarget == [-1, -1, -1]:
-                    return False        # Nothing is found
+        # Memorize the search arguments
+        text = self.findtextCombo.currentText()
+        isRegexp = self.regexpCheckBox.isChecked()
+        isCase = self.caseCheckBox.isChecked()
+        isWord = self.wordCheckBox.isChecked()
+
+        # Identify the search start point
+        startLine = currentWidget.getLine()
+        startPos = currentWidget.getPos()
+
+        if self._searchSupport.hasEditor( editorUUID ):
+            searchAattributes = self._searchSupport.get( editorUUID )
+            if startLine == searchAattributes.match[ 0 ] and \
+               startPos == searchAattributes.match[ 1 ]:
+                # The cursor is on the current match, i.e. the user did not
+                # put the focus into the editor and did not move it
                 if not self._findBackward:
-                    # Search forward and we know for sure there is something
-                    targets = editor.getTargets( txt,
-                                                 self.regexpCheckBox.isChecked(),
-                                                 self.caseCheckBox.isChecked(),
-                                                 self.wordCheckBox.isChecked(),
-                                                 self._matchTarget[ 0 ],
-                                                 self._matchTarget[ 1 ] + self._matchTarget[ 2 ],
-                                                 -1, -1 )
-                    if len( targets ) == 0:
-                        GlobalData().mainWindow.showStatusBarMessage( \
-                                    "Reached the end of the document. " \
-                                     "Searching from the beginning..." )
-                        targets = editor.getTargets( txt,
-                                                     self.regexpCheckBox.isChecked(),
-                                                     self.caseCheckBox.isChecked(),
-                                                     self.wordCheckBox.isChecked(),
-                                                     0, 0,
-                                                     self._matchTarget[ 0 ],
-                                                     self._matchTarget[ 1 ] + self._matchTarget[ 2 ] )
+                    startPos = startPos + searchAattributes.match[ 2 ]
 
-                    # Take the very first target
-                    self._advanceMatchIndicator( targets[ 0 ][ 0 ],
-                                                 targets[ 0 ][ 1 ],
-                                                 targets[ 0 ][ 2 ] )
-                    return True
-                else:
-                    # Search backward
-                    targets = editor.getTargets( txt,
-                                                 self.regexpCheckBox.isChecked(),
-                                                 self.caseCheckBox.isChecked(),
-                                                 self.wordCheckBox.isChecked(),
-                                                 0, 0,
-                                                 self._matchTarget[ 0 ],
-                                                 self._matchTarget[ 1 ] )
-                    if len( targets ) == 0:
-                        GlobalData().mainWindow.showStatusBarMessage( \
-                                        "Reached the beginning of the document. " \
-                                        "Searching from the end..." )
-                        targets = editor.getTargets( txt,
-                                                     self.regexpCheckBox.isChecked(),
-                                                     self.caseCheckBox.isChecked(),
-                                                     self.wordCheckBox.isChecked(),
-                                                     self._matchTarget[ 0 ],
-                                                     self._matchTarget[ 1 ],
-                                                     -1, -1 )
-
-                    # Take the last item
-                    index = len( targets ) - 1
-                    self._advanceMatchIndicator( targets[ index ][ 0 ],
-                                                 targets[ index ][ 1 ],
-                                                 targets[ index ][ 2 ] )
-                    return True
             else:
-                # Only in the selection
-                if self._matchTarget == [-1, -1, -1]:
-                    return False        # Nothing is found
+                # The cursor is not at the same position as the last match,
+                # i.e. the user moved it some way
+                # Update the search attributes as if a new search is started
+                searchAattributes.line = startLine
+                searchAattributes.pos = startPos
+                searchAattributes.firstLine = editor.firstVisibleLine()
+                searchAattributes.match = [ -1, -1, -1 ]
+                self._searchSupport.add( editorUUID, searchAattributes )
 
-                lineFrom, indexFrom, lineTo, indexTo = self._selection
-                if not self._findBackward:
-                    # Search forward
-                    targets = editor.getTargets( txt,
-                                                 self.regexpCheckBox.isChecked(),
-                                                 self.caseCheckBox.isChecked(),
-                                                 self.wordCheckBox.isChecked(),
-                                                 self._matchTarget[ 0 ],
-                                                 self._matchTarget[ 1 ] + self._matchTarget[ 2 ],
-                                                 lineTo, indexTo )
-                    if len( targets ) == 0:
-                        GlobalData().mainWindow.showStatusBarMessage( \
-                                        "Reached the end of the selection. " \
-                                        "Searching from the beginning..." )
-                        targets = editor.getTargets( txt,
-                                                     self.regexpCheckBox.isChecked(),
-                                                     self.caseCheckBox.isChecked(),
-                                                     self.wordCheckBox.isChecked(),
-                                                     lineFrom, indexFrom,
-                                                     self._matchTarget[ 0 ],
-                                                     self._matchTarget[ 1 ] + self._matchTarget[ 2 ] )
+        else:
+            # There were no search in this editor
+            searchAattributes = SearchAttr()
+            searchAattributes.line = startLine
+            searchAattributes.pos = startPos
+            searchAattributes.firstLine = editor.firstVisibleLine()
+            searchAattributes.match = [ -1, -1, -1 ]
+            self._searchSupport.add( editorUUID, searchAattributes )
 
-                    # Take the very first target
-                    self._advanceMatchIndicator( targets[ 0 ][ 0 ],
-                                                 targets[ 0 ][ 1 ],
-                                                 targets[ 0 ][ 2 ] )
-                    return True
-                else:
-                    # Search backward
-                    targets = editor.getTargets( txt,
-                                                 self.regexpCheckBox.isChecked(),
-                                                 self.caseCheckBox.isChecked(),
-                                                 self.wordCheckBox.isChecked(),
-                                                 lineFrom, indexFrom,
-                                                 self._matchTarget[ 0 ],
-                                                 self._matchTarget[ 1 ] )
-                    if len( targets ) == 0:
-                        GlobalData().mainWindow.showStatusBarMessage( \
-                                        "Reached the beginning of the selection. " \
-                                        "Searching from the end..." )
-                        targets = editor.getTargets( txt,
-                                                     self.regexpCheckBox.isChecked(),
-                                                     self.caseCheckBox.isChecked(),
-                                                     self.wordCheckBox.isChecked(),
-                                                     self._matchTarget[ 0 ],
-                                                     self._matchTarget[ 1 ],
-                                                     lineTo, indexTo )
 
-                    # Take the last item
-                    index = len( targets ) - 1
-                    self._advanceMatchIndicator( targets[ index ][ 0 ],
+        # Here: start point has been identified
+        if not self._findBackward:
+            # Search forward
+            targets = editor.getTargets( text, isRegexp, isCase, isWord,
+                                         startLine, startPos, -1, -1 )
+            if len( targets ) == 0:
+                GlobalData().mainWindow.showStatusBarMessage( \
+                        "Reached the end of the document. " \
+                        "Searching from the beginning..." )
+                targets = editor.getTargets( text, isRegexp, isCase, isWord,
+                                             0, 0, startLine, startPos )
+                if len( targets ) == 0:
+                    searchAattributes = self._searchSupport.get( editorUUID )
+                    searchAattributes.match = [ -1, -1, -1 ]
+                    self._searchSupport.add( editorUUID, searchAattributes )
+                    return False    # Nothing has matched
+
+            # Move the highlight and the cursor to the new match and
+            # memorize a new match
+            self._advanceMatchIndicator( editorUUID, targets[ 0 ][ 0 ],
+                                                     targets[ 0 ][ 1 ],
+                                                     targets[ 0 ][ 2 ] )
+            return True
+
+        # Search backward
+        targets = editor.getTargets( text, isRegexp, isCase, isWord,
+                                     0, 0, startLine, startPos )
+        if len( targets ) == 0:
+            GlobalData().mainWindow.showStatusBarMessage( \
+                    "Reached the beginning of the document. " \
+                    "Searching from the end..." )
+            targets = editor.getTargets( text, isRegexp, isCase, isWord,
+                                         startLine, startPos, -1, -1 )
+            if len( targets ) == 0:
+                searchAattributes = self._searchSupport.get( editorUUID )
+                searchAattributes.match = [ -1, -1, -1 ]
+                self._searchSupport.add( editorUUID, searchAattributes )
+                return False    # Nothing has matched
+
+        # Move the highlight and the cursor to the new match and
+        # memorize a new match
+        index = len( targets ) - 1
+        self._advanceMatchIndicator( editorUUID, targets[ index ][ 0 ],
                                                  targets[ index ][ 1 ],
                                                  targets[ index ][ 2 ] )
-                    return True
-        else:
-            # Another editor
-            self._finalizeSearch()
-
-            # Call the textChanged() handler which will initiate a new search
-            self._onEditTextChanged( txt )
-            if self._matchTarget == [-1, -1, -1]:
-                GlobalData().mainWindow.showStatusBarMessage( "The '" + txt + "' was not found" )
-
         return True
-
 
 
 class ReplaceWidget( FindReplaceBase ):
