@@ -358,14 +358,14 @@ class TextEditor( ScintillaWrapper ):
 
     def highlightMatch( self, text,
                         originLine, originPos,
-                        isRegexp, caseSensitive, wholeWord ):
+                        isRegexp, caseSensitive, wholeWord,
+                        respectSelection = False ):
         """ - Highlight all the matches
             - The first one is highlighted special way
-            - Provides the found target position if so
-            It respects the selection if so """
+            - Provides the found target position if so """
         self.clearSearchIndicators()
 
-        status = self.hasSelectedText()
+        status = self.hasSelectedText() and respectSelection
         if status:
             line1, index1, line2, index2 = self.getSelection()
             if line1 == line2:
