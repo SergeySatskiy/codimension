@@ -359,9 +359,9 @@ class TextEditor( ScintillaWrapper ):
     def highlightMatch( self, text,
                         originLine, originPos,
                         isRegexp, caseSensitive, wholeWord,
-                        respectSelection = False ):
+                        respectSelection = False, highlightFirst = True ):
         """ - Highlight all the matches
-            - The first one is highlighted special way
+            - The first one is highlighted special way if requested
             - Provides the found target position if so """
         self.clearSearchIndicators()
 
@@ -379,12 +379,13 @@ class TextEditor( ScintillaWrapper ):
                 return [-1, -1, -1]
 
             # Highlight the first target in a special way
-            tgtPos = self.positionFromLineIndex( targets[ 0 ][ 0 ],
-                                                 targets[ 0 ][ 1 ] )
-            self.clearIndicatorRange( self.searchIndicator,
-                                      tgtPos, targets[ 0 ][ 2 ] )
-            self.setIndicatorRange( self.matchIndicator, tgtPos,
-                                    targets[ 0 ][ 2 ] )
+            if highlightFirst:
+                tgtPos = self.positionFromLineIndex( targets[ 0 ][ 0 ],
+                                                     targets[ 0 ][ 1 ] )
+                self.clearIndicatorRange( self.searchIndicator,
+                                          tgtPos, targets[ 0 ][ 2 ] )
+                self.setIndicatorRange( self.matchIndicator, tgtPos,
+                                        targets[ 0 ][ 2 ] )
             return [targets[ 0 ][ 0 ], targets[ 0 ][ 1 ], targets[ 0 ][ 2 ]]
 
         # There is no selected text, deal with the whole document
@@ -401,37 +402,41 @@ class TextEditor( ScintillaWrapper ):
                    originPos <= item[ 1 ] + item[ 2 ]:
                     # This is the target to highlight - cursor within the
                     # target
-                    tgtPos = self.positionFromLineIndex( item[ 0 ], item[ 1 ] )
-                    self.clearIndicatorRange( self.searchIndicator,
-                                              tgtPos, item[ 2 ] )
-                    self.setIndicatorRange( self.matchIndicator, tgtPos,
-                                            item[ 2 ] )
+                    if highlightFirst:
+                        tgtPos = self.positionFromLineIndex( item[ 0 ], item[ 1 ] )
+                        self.clearIndicatorRange( self.searchIndicator,
+                                                  tgtPos, item[ 2 ] )
+                        self.setIndicatorRange( self.matchIndicator, tgtPos,
+                                                item[ 2 ] )
                     return [item[ 0 ], item[ 1 ], item[ 2 ]]
                 if originPos < item[ 1 ]:
                     # This is the target to highlight - cursor is before the
                     # target
+                    if highlightFirst:
+                        tgtPos = self.positionFromLineIndex( item[ 0 ], item[ 1 ] )
+                        self.clearIndicatorRange( self.searchIndicator,
+                                                  tgtPos, item[ 2 ] )
+                        self.setIndicatorRange( self.matchIndicator, tgtPos,
+                                                item[ 2 ] )
+                    return [item[ 0 ], item[ 1 ], item[ 2 ]]
+            if originLine < item[ 0 ]:
+                if highlightFirst:
                     tgtPos = self.positionFromLineIndex( item[ 0 ], item[ 1 ] )
                     self.clearIndicatorRange( self.searchIndicator,
                                               tgtPos, item[ 2 ] )
                     self.setIndicatorRange( self.matchIndicator, tgtPos,
                                             item[ 2 ] )
-                    return [item[ 0 ], item[ 1 ], item[ 2 ]]
-            if originLine < item[ 0 ]:
-                tgtPos = self.positionFromLineIndex( item[ 0 ], item[ 1 ] )
-                self.clearIndicatorRange( self.searchIndicator,
-                                          tgtPos, item[ 2 ] )
-                self.setIndicatorRange( self.matchIndicator, tgtPos,
-                                        item[ 2 ] )
                 return [item[ 0 ], item[ 1 ], item[ 2 ]]
 
         # Here - nothing is found till the end of the document
         # Take the first from the beginning
-        tgtPos = self.positionFromLineIndex( targets[ 0 ][ 0 ],
-                                             targets[ 0 ][ 1 ] )
-        self.setIndicatorRange( self.matchIndicator, tgtPos,
-                                targets[ 0 ][ 2 ] )
-        self.setIndicatorRange( self.matchIndicator, tgtPos,
-                                targets[ 0 ][ 2 ] )
+        if highlightFirst:
+            tgtPos = self.positionFromLineIndex( targets[ 0 ][ 0 ],
+                                                 targets[ 0 ][ 1 ] )
+            self.setIndicatorRange( self.matchIndicator, tgtPos,
+                                    targets[ 0 ][ 2 ] )
+            self.setIndicatorRange( self.matchIndicator, tgtPos,
+                                    targets[ 0 ][ 2 ] )
         return [targets[ 0 ][ 0 ], targets[ 0 ][ 1 ], targets[ 0 ][ 2 ]]
 
     def keyPressEvent( self, event ):

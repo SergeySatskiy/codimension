@@ -291,6 +291,7 @@ class EditorsManager( QTabWidget ):
         self.__skipHistoryUpdate = False
         self.__updateControls()
         self.saveTabsStatus()
+        self.emit( SIGNAL( 'tabClosed' ), closingUUID )
         return
 
     def __updateFilePosition( self, index ):
