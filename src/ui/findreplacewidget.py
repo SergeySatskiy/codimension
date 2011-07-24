@@ -77,9 +77,13 @@ class SearchSupport:
             del self.editorSearchAttributes[ uuid ]
         return
 
-    def clear( self ):
-        " Cleans up all the memorised search attributes "
-        self.editorSearchAttributes = {}
+    def clearStartPositions( self ):
+        " Cleans up the memorised start positions "
+        for key in self.editorSearchAttributes:
+            attributes = self.editorSearchAttributes[ key ]
+            attributes.line = -1
+            attributes.pos = -1
+            self.editorSearchAttributes[ key ] = attributes
         return
 
 
@@ -99,6 +103,8 @@ class FindReplaceBase( QWidget ):
 
         # Incremental search support
         self._searchSupport = SearchSupport()
+        self.connect( editorsManager, SIGNAL( "tabClosed" ),
+                      self.__onTabClosed )
 
         # Common graphics items
         self.closeButton = QToolButton( self )
@@ -163,12 +169,17 @@ class FindReplaceBase( QWidget ):
     def keyPressEvent( self, event ):
         " Handles the ESC key for the search bar "
         if event.key() == Qt.Key_Escape:
-            self._searchSupport.clear()
+            self._searchSupport.clearStartPositions()
             event.accept()
             self.hide()
             activeWindow = self.editorsManager.currentWidget()
             if activeWindow:
                 activeWindow.setFocus()
+        return
+
+    def __onTabClosed( self, uuid ):
+        " Triggered when a tab is closed "
+        self._searchSupport.delete( uuid )
         return
 
     def setFocus( self ):
@@ -233,25 +244,25 @@ class FindReplaceBase( QWidget ):
         QWidget.show( self )
         self.activateWindow()
 
-        self._onEditTextChanged( text )
+        self._performSearch( True )
         return
 
     def _onCheckBoxChange( self, newState ):
         " Triggered when a search check box state is changed "
         if self.__skip:
             return
-        self._performSearch()
+        self._performSearch( False )
         return
 
     def _onEditTextChanged( self, text ):
         " Triggered when the search text has been changed "
         if self.__skip:
             return
-        self._performSearch()
+        self._performSearch( False )
         return
 
 
-    def _performSearch( self ):
+    def _performSearch( self, fromScratch ):
         " Performs the incremental search "
 
         currentWidget = self.editorsManager.currentWidget()
@@ -273,7 +284,7 @@ class FindReplaceBase( QWidget ):
         editor = currentWidget.getEditor()
         editorUUID = currentWidget.getUUID()
 
-        if self._searchSupport.hasEditor( editorUUID ):
+        if not fromScratch:
             # We've been searching here already
             searchAattributes = self._searchSupport.get( editorUUID )
 
@@ -306,13 +317,15 @@ class FindReplaceBase( QWidget ):
             return
 
         # Brand new editor to search in
-        if text == "":
-            return
-
         searchAattributes = SearchAttr()
         searchAattributes.line = currentWidget.getLine()
         searchAattributes.pos = currentWidget.getPos()
         searchAattributes.firstLine = editor.firstVisibleLine()
+
+        if text == "":
+            searchAattributes.match = [ -1, -1, -1 ]
+            self._searchSupport.add( editorUUID, searchAattributes )
+            return
 
         matchTarget = editor.highlightMatch( text, searchAattributes.line,
                                                    searchAattributes.pos,
@@ -511,6 +524,8 @@ class FindWidget( FindReplaceBase ):
         # Here: start point has been identified
         if not self._findBackward:
             # Search forward
+            editor.highlightMatch( text, startLine, startPos,
+                                   isRegexp, isCase, isWord, False, False )
             targets = editor.getTargets( text, isRegexp, isCase, isWord,
                                          startLine, startPos, -1, -1 )
             if len( targets ) == 0:
@@ -533,6 +548,8 @@ class FindWidget( FindReplaceBase ):
             return True
 
         # Search backward
+        editor.highlightMatch( text, startLine, startPos,
+                               isRegexp, isCase, isWord, False, False )
         targets = editor.getTargets( text, isRegexp, isCase, isWord,
                                      0, 0, startLine, startPos )
         if len( targets ) == 0:
