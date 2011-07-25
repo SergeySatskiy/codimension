@@ -63,9 +63,9 @@ def codimensionMain():
     """,
     version = "%prog " + __version__ )
 
-    parser.add_option( "--no-debug",
-                       action="store_false", dest="debug", default=True,
-                       help="switch off debug and info messages (default: On)" )
+    parser.add_option( "--debug",
+                       action="store_true", dest="debug", default=False,
+                       help="switch on debug and info messages (default: Off)" )
 
     options, args = parser.parse_args()
 
