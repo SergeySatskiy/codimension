@@ -582,6 +582,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         exportButton.setToolTip( "Export the content to..." )
         exportButton.setPopupMode( QToolButton.InstantPopup )
         exportButton.setMenu( exportMenu )
+        exportButton.setEnabled( False )
 
         self.__undoButton = QAction( \
             PixmapCache().getIcon( 'undo.png' ), 'Undo (Ctrl+Z)', self )
