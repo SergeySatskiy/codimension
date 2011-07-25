@@ -92,6 +92,7 @@ class GlobalsViewer( QWidget ):
         self.findButton = QAction( \
                 PixmapCache().getIcon( 'findusage.png' ),
                 'Find where highlighted global variable is used', self )
+        self.findButton.setVisible( False )
         self.connect( self.findButton, SIGNAL( "triggered()" ),
                       self.__findWhereUsed )
         self.copyPathButton = QAction( \

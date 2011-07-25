@@ -142,6 +142,7 @@ class ProjectViewer( QWidget ):
         self.prjFindWhereUsedButton = QAction( \
                 PixmapCache().getIcon( 'findusage.png' ),
                 'Find where the highlighted item is used', self )
+        self.prjFindWhereUsedButton.setVisible( False )
         self.prjOpenItemButton = QAction( \
                 PixmapCache().getIcon( 'openitem.png' ),
                 'Open', self )
