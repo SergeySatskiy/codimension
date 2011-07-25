@@ -518,6 +518,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         # Buttons
         printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
                                'Print', self )
+        printButton.setEnabled( False )
         #printButton.setShortcut( 'Ctrl+' )
         self.connect( printButton, SIGNAL( 'triggered()' ),
                       self.__onPrint )
@@ -525,6 +526,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         printPreviewButton = QAction( \
                 PixmapCache().getIcon( 'printpreview.png' ),
                 'Print preview', self )
+        printPreviewButton.setEnabled( False )
         #printPreviewButton.setShortcut( 'Ctrl+' )
         self.connect( printPreviewButton, SIGNAL( 'triggered()' ),
                       self.__onPrintPreview )
