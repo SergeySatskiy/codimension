@@ -507,12 +507,11 @@ class CodimensionProject( QObject ):
                     self.filesList.remove( item[ 1: ] )
                 projectItems.append( item )
             except:
-                print "EXCEPTION for '" + item + "'"
+#                print "EXCEPTION for '" + item + "'"
                 pass
-        print "'" + report + "'"
+#        print "'" + report + "'"
         self.emit( SIGNAL( 'fsChanged' ), items )
-#        self.emit( SIGNAL( 'fsChanged' ), projectItems )
-        self.__dirWatcher.debug()
+#        self.__dirWatcher.debug()
         return
 
     def __loadTabsStatus( self ):
