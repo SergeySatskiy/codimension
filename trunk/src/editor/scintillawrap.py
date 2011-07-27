@@ -767,3 +767,8 @@ class ScintillaWrapper( QsciScintilla ):
 
         return ( start, end )
 
+    def getTextAtPos( self, line, col, length ):
+        " Provides the text of the given length under the cursor "
+        text = self.text( line )
+        return text.mid( col, length )
+

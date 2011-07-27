@@ -95,11 +95,15 @@ class FindReplaceBase( QWidget ):
     def __init__( self, editorsManager, parent = None ):
 
         QWidget.__init__( self, parent )
+        self._skip = True
+
         self.editorsManager = editorsManager
+        self._currentWidget = None
+        self._isTextEditor = False
+        self._editor = None
+        self._editorUUID = False
         self.findHistory = QStringList( GlobalData().project.findHistory )
         self._findBackward = False
-        self._selection = None
-        self.__skip = True
 
         # Incremental search support
         self._searchSupport = SearchSupport()
@@ -164,6 +168,15 @@ class FindReplaceBase( QWidget ):
         self.regexpCheckBox.setEnabled( False )
         self.connect( self.regexpCheckBox, SIGNAL( 'stateChanged(int)' ),
                       self._onCheckBoxChange )
+
+        self.connect( self.findNextButton, SIGNAL( 'clicked()' ),
+                      self.onNext )
+        self.connect( self.findPrevButton, SIGNAL( 'clicked()' ),
+                      self.onPrev )
+        self.connect( self.findtextCombo.lineEdit(),
+                      SIGNAL( "returnPressed()" ),
+                      self.__findByReturnPressed )
+        self._skip = False
         return
 
     def keyPressEvent( self, event ):
@@ -187,49 +200,9 @@ class FindReplaceBase( QWidget ):
         self.findtextCombo.setFocus()
         return
 
-    def updateStatus( self ):
-        " Triggered when the current tab is changed "
-
-        currentWidget = self.editorsManager.currentWidget()
-        status = currentWidget.getType() in \
-                    [ MainWindowTabWidgetBase.PlainTextEditor ]
-        self.findtextCombo.setEnabled( status )
-
-        textAvailable = self.findtextCombo.currentText() != ""
-        self.findPrevButton.setEnabled( status and textAvailable )
-        self.findNextButton.setEnabled( status and textAvailable )
-
-        self.caseCheckBox.setEnabled( status )
-        self.wordCheckBox.setEnabled( status )
-        self.regexpCheckBox.setEnabled( status )
-
-        self._updateSelection()
-        return
-
-    def copyAvailable( self, status ):
-        " Triggered when the editor has changed the selection "
-        self._updateSelection()
-        return
-
-    def _updateSelection( self ):
-        " Updates the selection member "
-
-        self._selection = None
-        currentWidget = self.editorsManager.currentWidget()
-        if currentWidget.getType() not in \
-                    [ MainWindowTabWidgetBase.PlainTextEditor ]:
-            return False
-        if currentWidget.getEditor().hasSelectedText():
-            line1, index1, line2, index2 = \
-                currentWidget.getEditor().getSelection()
-            if line1 != line2:
-                self._selection = ( line1, index1, line2, index2 )
-                return True
-        return False
-
     def show( self, text = '' ):
         " Overridden show() method "
-        self.__skip = True
+        self._skip = True
         self.findtextCombo.clear()
         self.findtextCombo.addItems( self.findHistory )
         self.findtextCombo.setEditText( text )
@@ -239,7 +212,7 @@ class FindReplaceBase( QWidget ):
         self.wordCheckBox.setChecked( False )
         self.regexpCheckBox.setChecked( False )
         self._findBackward = False
-        self.__skip = False
+        self._skip = False
 
         QWidget.show( self )
         self.activateWindow()
@@ -247,27 +220,73 @@ class FindReplaceBase( QWidget ):
         self._performSearch( True )
         return
 
+    def updateStatus( self ):
+        " Triggered when the current tab is changed "
+
+        # Memorize the current environment
+        self._currentWidget = self.editorsManager.currentWidget()
+        self._isTextEditor = self._currentWidget.getType() in \
+                                [ MainWindowTabWidgetBase.PlainTextEditor ]
+        if self._isTextEditor:
+            self._editor = self._currentWidget.getEditor()
+            self._editorUUID = self._currentWidget.getUUID()
+        else:
+            self._editor = None
+            self._editorUUID = ""
+
+        self.findtextCombo.setEnabled( self._isTextEditor )
+
+        textAvailable = self.findtextCombo.currentText() != ""
+        self.findPrevButton.setEnabled( self._isTextEditor and textAvailable )
+        self.findNextButton.setEnabled( self._isTextEditor and textAvailable )
+
+        self.caseCheckBox.setEnabled( self._isTextEditor )
+        self.wordCheckBox.setEnabled( self._isTextEditor )
+        self.regexpCheckBox.setEnabled( self._isTextEditor )
+        return
+
+    def _resetHighlightOtherEditors( self, uuid ):
+        " Resets all the highlights in other editors except of the given "
+        searchAttributes = None
+        if self._searchSupport.hasEditor( uuid ):
+            searchAttributes = self._searchSupport.get( uuid )
+
+        for key in self._searchSupport.editorSearchAttributes:
+            if key == uuid:
+                continue
+            widget = self.editorsManager.getWidgetByUUID( key )
+            if widget is None:
+                continue
+            editor = widget.getEditor()
+            editor.clearSearchIndicators()
+
+        # Clear what is memorized about the other editors
+        self._searchSupport.editorSearchAttributes = {}
+
+        if searchAttributes is not None:
+            self._searchSupport.add( uuid, searchAttributes )
+        return
+
     def _onCheckBoxChange( self, newState ):
         " Triggered when a search check box state is changed "
-        if self.__skip:
+        if self._skip:
             return
+        self._resetHighlightOtherEditors( self._editorUUID )
         self._performSearch( False )
         return
 
     def _onEditTextChanged( self, text ):
         " Triggered when the search text has been changed "
-        if self.__skip:
+        if self._skip:
             return
+        self._resetHighlightOtherEditors( self._editorUUID )
         self._performSearch( False )
         return
 
 
     def _performSearch( self, fromScratch ):
         " Performs the incremental search "
-
-        currentWidget = self.editorsManager.currentWidget()
-        if currentWidget.getType() not in \
-                    [ MainWindowTabWidgetBase.PlainTextEditor ]:
+        if not self._isTextEditor:
             return
 
         # Memorize the search arguments
@@ -276,69 +295,79 @@ class FindReplaceBase( QWidget ):
         isCase = self.caseCheckBox.isChecked()
         isWord = self.wordCheckBox.isChecked()
 
-
         status = text != ""
         self.findNextButton.setEnabled( status )
         self.findPrevButton.setEnabled( status )
 
-        editor = currentWidget.getEditor()
-        editorUUID = currentWidget.getUUID()
+        self._initialiseSearchAttributes( self._editorUUID )
+        searchAattributes = self._searchSupport.get( self._editorUUID )
 
         if not fromScratch:
             # We've been searching here already
-            searchAattributes = self._searchSupport.get( editorUUID )
-
             if text == "":
                 # Remove the highlight and scroll back
-                editor.clearAllIndicators( editor.searchIndicator )
-                editor.clearAllIndicators( editor.matchIndicator )
+                self._editor.clearAllIndicators( self._editor.searchIndicator )
+                self._editor.clearAllIndicators( self._editor.matchIndicator )
 
-                editor.setCursorPosition( searchAattributes.line,
-                                          searchAattributes.pos )
-                editor.ensureLineVisible( searchAattributes.firstLine )
+                self._editor.setCursorPosition( searchAattributes.line,
+                                                searchAattributes.pos )
+                self._editor.ensureLineVisible( searchAattributes.firstLine )
                 searchAattributes.match = [ -1, -1, -1 ]
+                self.emit( SIGNAL( 'incSearchDone' ) )
                 return
 
-            matchTarget = editor.highlightMatch( text, searchAattributes.line,
+            matchTarget = self._editor.highlightMatch( text,
+                                                       searchAattributes.line,
                                                        searchAattributes.pos,
-                                                 isRegexp, isCase, isWord )
+                                                       isRegexp, isCase, isWord )
             searchAattributes.match = matchTarget
             if matchTarget != [-1, -1, -1]:
                 # Move the cursor to the match
-                editor.setCursorPosition( matchTarget[ 0 ],
-                                          matchTarget[ 1 ] )
-                editor.ensureLineVisible( matchTarget[ 0 ] )
+                self._editor.setCursorPosition( matchTarget[ 0 ],
+                                                matchTarget[ 1 ] )
+                self._editor.ensureLineVisible( matchTarget[ 0 ] )
             else:
                 # Nothing is found, so scroll back to the original
-                editor.setCursorPosition( searchAattributes.line,
-                                          searchAattributes.pos )
-                editor.ensureLineVisible( searchAattributes.firstLine )
+                self._editor.setCursorPosition( searchAattributes.line,
+                                                searchAattributes.pos )
+                self._editor.ensureLineVisible( searchAattributes.firstLine )
 
+            self.emit( SIGNAL( 'incSearchDone' ) )
             return
 
         # Brand new editor to search in
-        searchAattributes = SearchAttr()
-        searchAattributes.line = currentWidget.getLine()
-        searchAattributes.pos = currentWidget.getPos()
-        searchAattributes.firstLine = editor.firstVisibleLine()
-
         if text == "":
-            searchAattributes.match = [ -1, -1, -1 ]
-            self._searchSupport.add( editorUUID, searchAattributes )
+            self.emit( SIGNAL( 'incSearchDone' ) )
             return
 
-        matchTarget = editor.highlightMatch( text, searchAattributes.line,
+        matchTarget = self._editor.highlightMatch( text,
+                                                   searchAattributes.line,
                                                    searchAattributes.pos,
-                                             isRegexp, isCase, isWord )
+                                                   isRegexp, isCase, isWord )
         searchAattributes.match = matchTarget
-        self._searchSupport.add( editorUUID, searchAattributes )
+        self._searchSupport.add( self._editorUUID, searchAattributes )
 
         if matchTarget != [-1, -1, -1]:
             # Move the cursor to the match
-            editor.setCursorPosition( matchTarget[ 0 ],
-                                      matchTarget[ 1 ] )
-            editor.ensureLineVisible( matchTarget[ 0 ] )
+            self._editor.setCursorPosition( matchTarget[ 0 ],
+                                            matchTarget[ 1 ] )
+            self._editor.ensureLineVisible( matchTarget[ 0 ] )
 
+        self.emit( SIGNAL( 'incSearchDone' ) )
+        return
+
+    def _initialiseSearchAttributes( self, uuid ):
+        " Creates a record if none existed "
+        if self._searchSupport.hasEditor( uuid ):
+            return
+
+        searchAattributes = SearchAttr()
+        searchAattributes.line = self._currentWidget.getLine()
+        searchAattributes.pos = self._currentWidget.getPos()
+        searchAattributes.firstLine = self._editor.firstVisibleLine()
+
+        searchAattributes.match = [ -1, -1, -1 ]
+        self._searchSupport.add( uuid, searchAattributes )
         return
 
 
@@ -350,11 +379,6 @@ class FindReplaceBase( QWidget ):
 
         searchAattributes = self._searchSupport.get( uuid )
         match = searchAattributes.match
-
-        if newLine == match[ 0 ] and newPos == match[ 1 ] and \
-           newLength == match[ 2 ]:
-            # It is the same target - nothing to do
-            return
 
         widget = self.editorsManager.getWidgetByUUID( uuid )
         if widget is None:
@@ -378,49 +402,6 @@ class FindReplaceBase( QWidget ):
         # Move the cursor to the new match
         editor.setCursorPosition( newLine, newPos )
         editor.ensureLineVisible( newLine )
-        return
-
-
-class FindWidget( FindReplaceBase ):
-    """ Find in the current file widget """
-
-    def __init__( self, editorsManager, parent = None ):
-
-        FindReplaceBase.__init__( self, editorsManager, parent )
-
-        self.horizontalLayout = QHBoxLayout( self )
-        self.horizontalLayout.setMargin( 0 )
-
-        self.horizontalLayout.addWidget( self.closeButton )
-        self.horizontalLayout.addWidget( self.findLabel )
-        self.horizontalLayout.addWidget( self.findtextCombo )
-        self.horizontalLayout.addWidget( self.findPrevButton )
-        self.horizontalLayout.addWidget( self.findNextButton )
-        self.horizontalLayout.addWidget( self.caseCheckBox )
-        self.horizontalLayout.addWidget( self.wordCheckBox )
-        self.horizontalLayout.addWidget( self.regexpCheckBox )
-
-        self.setTabOrder( self.findtextCombo, self.caseCheckBox )
-        self.setTabOrder( self.caseCheckBox, self.wordCheckBox )
-        self.setTabOrder( self.wordCheckBox, self.regexpCheckBox )
-        self.setTabOrder( self.regexpCheckBox, self.findNextButton )
-        self.setTabOrder( self.findNextButton, self.findPrevButton )
-        self.setTabOrder( self.findPrevButton, self.closeButton )
-
-        self.connect( self.findNextButton, SIGNAL( 'clicked()' ),
-                      self.onNext )
-        self.connect( self.findPrevButton, SIGNAL( 'clicked()' ),
-                      self.onPrev )
-        self.connect( self.findtextCombo.lineEdit(),
-                      SIGNAL( "returnPressed()" ),
-                      self.__findByReturnPressed )
-        self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
-                      self.__onProjectChanged )
-        return
-
-    def updateStatus( self ):
-        " Triggered when the current tab is changed "
-        FindReplaceBase.updateStatus( self )
         return
 
     def onNext( self ):
@@ -469,31 +450,17 @@ class FindWidget( FindReplaceBase ):
             self.onNext()
         return
 
-    def __onProjectChanged( self, what ):
-        " Triggered when a project is changed "
-        if what == CodimensionProject.CompleteProject:
-            self.findHistory = QStringList( GlobalData().project.findHistory )
-        return
-
     def __findNextPrev( self ):
         " Finds the next occurrence of the search text "
-
-        currentWidget = self.editorsManager.currentWidget()
-        editor = currentWidget.getEditor()
-        editorUUID = currentWidget.getUUID()
-
-        # Memorize the search arguments
-        text = self.findtextCombo.currentText()
-        isRegexp = self.regexpCheckBox.isChecked()
-        isCase = self.caseCheckBox.isChecked()
-        isWord = self.wordCheckBox.isChecked()
+        if not self._isTextEditor:
+            return
 
         # Identify the search start point
-        startLine = currentWidget.getLine()
-        startPos = currentWidget.getPos()
+        startLine = self._currentWidget.getLine()
+        startPos = self._currentWidget.getPos()
 
-        if self._searchSupport.hasEditor( editorUUID ):
-            searchAattributes = self._searchSupport.get( editorUUID )
+        if self._searchSupport.hasEditor( self._editorUUID ):
+            searchAattributes = self._searchSupport.get( self._editorUUID )
             if startLine == searchAattributes.match[ 0 ] and \
                startPos == searchAattributes.match[ 1 ]:
                 # The cursor is on the current match, i.e. the user did not
@@ -507,70 +474,137 @@ class FindWidget( FindReplaceBase ):
                 # Update the search attributes as if a new search is started
                 searchAattributes.line = startLine
                 searchAattributes.pos = startPos
-                searchAattributes.firstLine = editor.firstVisibleLine()
+                searchAattributes.firstLine = self._editor.firstVisibleLine()
                 searchAattributes.match = [ -1, -1, -1 ]
-                self._searchSupport.add( editorUUID, searchAattributes )
+                self._searchSupport.add( self._editorUUID, searchAattributes )
 
         else:
             # There were no search in this editor
             searchAattributes = SearchAttr()
             searchAattributes.line = startLine
             searchAattributes.pos = startPos
-            searchAattributes.firstLine = editor.firstVisibleLine()
+            searchAattributes.firstLine = self._editor.firstVisibleLine()
             searchAattributes.match = [ -1, -1, -1 ]
-            self._searchSupport.add( editorUUID, searchAattributes )
-
+            self._searchSupport.add( self._editorUUID, searchAattributes )
 
         # Here: start point has been identified
+        if self.__searchFrom( startLine, startPos ):
+            # Something new has been found - change the start pos
+            searchAattributes = self._searchSupport.get( self._editorUUID )
+            searchAattributes.line = self._currentWidget.getLine()
+            searchAattributes.pos = self._currentWidget.getPos()
+            searchAattributes.firstLine = self._editor.firstVisibleLine()
+            self._searchSupport.add( self._editorUUID, searchAattributes )
+            return True
+
+        return False
+
+    def __searchFrom( self, startLine, startPos ):
+        " Searches starting from the given position "
+
+        # Memorize the search arguments
+        text = self.findtextCombo.currentText()
+        isRegexp = self.regexpCheckBox.isChecked()
+        isCase = self.caseCheckBox.isChecked()
+        isWord = self.wordCheckBox.isChecked()
+
         if not self._findBackward:
             # Search forward
-            editor.highlightMatch( text, startLine, startPos,
-                                   isRegexp, isCase, isWord, False, False )
-            targets = editor.getTargets( text, isRegexp, isCase, isWord,
-                                         startLine, startPos, -1, -1 )
+            self._editor.highlightMatch( text, startLine, startPos,
+                                         isRegexp, isCase, isWord,
+                                         False, False )
+            targets = self._editor.getTargets( text, isRegexp, isCase, isWord,
+                                               startLine, startPos, -1, -1 )
             if len( targets ) == 0:
                 GlobalData().mainWindow.showStatusBarMessage( \
                         "Reached the end of the document. " \
                         "Searching from the beginning..." )
-                targets = editor.getTargets( text, isRegexp, isCase, isWord,
-                                             0, 0, startLine, startPos )
+                targets = self._editor.getTargets( text,
+                                                   isRegexp, isCase, isWord,
+                                                   0, 0, startLine, startPos )
                 if len( targets ) == 0:
-                    searchAattributes = self._searchSupport.get( editorUUID )
+                    searchAattributes = self._searchSupport.get( self._editorUUID )
                     searchAattributes.match = [ -1, -1, -1 ]
-                    self._searchSupport.add( editorUUID, searchAattributes )
+                    self._searchSupport.add( self._editorUUID,
+                                             searchAattributes )
                     return False    # Nothing has matched
 
             # Move the highlight and the cursor to the new match and
             # memorize a new match
-            self._advanceMatchIndicator( editorUUID, targets[ 0 ][ 0 ],
-                                                     targets[ 0 ][ 1 ],
-                                                     targets[ 0 ][ 2 ] )
+            self._advanceMatchIndicator( self._editorUUID, targets[ 0 ][ 0 ],
+                                                           targets[ 0 ][ 1 ],
+                                                           targets[ 0 ][ 2 ] )
             return True
 
         # Search backward
-        editor.highlightMatch( text, startLine, startPos,
-                               isRegexp, isCase, isWord, False, False )
-        targets = editor.getTargets( text, isRegexp, isCase, isWord,
-                                     0, 0, startLine, startPos )
+        self._editor.highlightMatch( text, startLine, startPos,
+                                     isRegexp, isCase, isWord, False, False )
+        targets = self._editor.getTargets( text, isRegexp, isCase, isWord,
+                                           0, 0, startLine, startPos )
         if len( targets ) == 0:
             GlobalData().mainWindow.showStatusBarMessage( \
                     "Reached the beginning of the document. " \
                     "Searching from the end..." )
-            targets = editor.getTargets( text, isRegexp, isCase, isWord,
-                                         startLine, startPos, -1, -1 )
+            targets = self._editor.getTargets( text, isRegexp, isCase, isWord,
+                                               startLine, startPos, -1, -1 )
             if len( targets ) == 0:
-                searchAattributes = self._searchSupport.get( editorUUID )
+                searchAattributes = self._searchSupport.get( self._editorUUID )
                 searchAattributes.match = [ -1, -1, -1 ]
-                self._searchSupport.add( editorUUID, searchAattributes )
+                self._searchSupport.add( self._editorUUID, searchAattributes )
                 return False    # Nothing has matched
 
         # Move the highlight and the cursor to the new match and
         # memorize a new match
         index = len( targets ) - 1
-        self._advanceMatchIndicator( editorUUID, targets[ index ][ 0 ],
-                                                 targets[ index ][ 1 ],
-                                                 targets[ index ][ 2 ] )
+        self._advanceMatchIndicator( self._editorUUID, targets[ index ][ 0 ],
+                                                       targets[ index ][ 1 ],
+                                                       targets[ index ][ 2 ] )
         return True
+
+
+class FindWidget( FindReplaceBase ):
+    """ Find in the current file widget """
+
+    def __init__( self, editorsManager, parent = None ):
+
+        FindReplaceBase.__init__( self, editorsManager, parent )
+
+        self.horizontalLayout = QHBoxLayout( self )
+        self.horizontalLayout.setMargin( 0 )
+
+        self.horizontalLayout.addWidget( self.closeButton )
+        self.horizontalLayout.addWidget( self.findLabel )
+        self.horizontalLayout.addWidget( self.findtextCombo )
+        self.horizontalLayout.addWidget( self.findPrevButton )
+        self.horizontalLayout.addWidget( self.findNextButton )
+        self.horizontalLayout.addWidget( self.caseCheckBox )
+        self.horizontalLayout.addWidget( self.wordCheckBox )
+        self.horizontalLayout.addWidget( self.regexpCheckBox )
+
+        self.setTabOrder( self.findtextCombo, self.caseCheckBox )
+        self.setTabOrder( self.caseCheckBox, self.wordCheckBox )
+        self.setTabOrder( self.wordCheckBox, self.regexpCheckBox )
+        self.setTabOrder( self.regexpCheckBox, self.findNextButton )
+        self.setTabOrder( self.findNextButton, self.findPrevButton )
+        self.setTabOrder( self.findPrevButton, self.closeButton )
+
+        self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
+                      self.__onProjectChanged )
+        return
+
+    def __onProjectChanged( self, what ):
+        " Triggered when a project is changed "
+        if what == CodimensionProject.CompleteProject:
+            self._skip = True
+            self.findHistory = QStringList( GlobalData().project.findHistory )
+            self._skip = False
+        return
+
+    def updateStatus( self ):
+        " Triggered when the current tab is changed "
+        FindReplaceBase.updateStatus( self )
+        return
+
 
 
 class ReplaceWidget( FindReplaceBase ):
@@ -579,6 +613,7 @@ class ReplaceWidget( FindReplaceBase ):
     def __init__( self, editorsManager, parent = None ):
 
         FindReplaceBase.__init__( self, editorsManager, parent )
+        self._skip = True
         prj = GlobalData().project
         self.findHistory = QStringList( prj.replaceWhatHistory )
         self.replaceHistory = QStringList( prj.replaceHistory )
@@ -604,12 +639,16 @@ class ReplaceWidget( FindReplaceBase ):
         self.replaceButton.setToolTip( "Replace current occurrence" )
         self.replaceButton.setIcon( PixmapCache().getIcon( "replace.png" ) )
         self.replaceButton.setEnabled( False )
+        self.connect( self.replaceButton, SIGNAL( 'clicked()' ),
+                      self.__onReplace )
 
         self.replaceAllButton = QToolButton( self )
         self.replaceAllButton.setToolTip( "Replace all occurrences" )
         self.replaceAllButton.setIcon( \
                 PixmapCache().getIcon( "replaceall.png" ) )
         self.replaceAllButton.setEnabled( False )
+        self.connect( self.replaceAllButton, SIGNAL( 'clicked()' ),
+                      self.__onReplaceAll )
 
         self.gridLayout = QGridLayout( self )
         self.gridLayout.setMargin( 0 )
@@ -641,6 +680,12 @@ class ReplaceWidget( FindReplaceBase ):
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
+        self.connect( self, SIGNAL( 'incSearchDone' ), self.__onSearchDone )
+        self.connect( self.replaceCombo,
+                      SIGNAL( 'editTextChanged(const QString&)' ),
+                      self.__onReplaceTextChanged )
+        self.__connected = False
+        self._skip = False
         return
 
     def updateStatus( self ):
@@ -648,28 +693,123 @@ class ReplaceWidget( FindReplaceBase ):
 
         FindReplaceBase.updateStatus( self )
 
-        currentWidget = self.editorsManager.currentWidget()
-        status = currentWidget.getType() in \
-                    [ MainWindowTabWidgetBase.PlainTextEditor ]
-        self.replaceCombo.setEnabled( status )
-        self.replaceButton.setEnabled( status )
-        self.replaceAllButton.setEnabled( status )
+        self.__updateReplaceAllButtonStatus()
+        self.__updateReplaceButtonStatus()
+
+        if self.__connected:
+            self.__unsubscribeFromCursorChange()
+        self.__subscribeToCursorChangePos()
         return
 
+    def __updateReplaceAllButtonStatus( self ):
+        " Updates the replace all button status "
+        self.replaceCombo.setEnabled( self._isTextEditor )
+        replaceAvailable = self.replaceCombo.currentText() != ""
+        self.replaceAllButton.setEnabled( self._isTextEditor and replaceAvailable )
+        return
+
+    def __updateReplaceButtonStatus( self ):
+        " Updates the replace button status "
+        replaceTxt = self.replaceCombo.currentText()
+        if replaceTxt == "" or not self._isTextEditor:
+            self.replaceButton.setEnabled( False )
+            return
+
+        # Replace button must be enabled when the cursor is still on the
+        # last found target and the target matches what is in the 'find' combo
+        self._initialiseSearchAttributes( self._editorUUID )
+        searchAattributes = self._searchSupport.get( self._editorUUID )
+
+        currentLine = self._currentWidget.getLine()
+        currentPos = self._currentWidget.getPos()
+        if searchAattributes.match == [ -1, -1, -1 ] or \
+           searchAattributes.match[ 0 ] != currentLine or \
+           searchAattributes.match[ 1 ] != currentPos:
+            self.replaceButton.setEnabled( False )
+            return
+
+        # Get the target text
+        matchedText = self._currentWidget.getEditor().getTextAtPos( \
+                            currentLine, currentPos,
+                            searchAattributes.match[ 2 ] )
+        findText = self.findtextCombo.currentText()
+        self.replaceButton.setEnabled( matchedText == findText )
+        return
+
+
     def show( self, text = '' ):
-        " Overridden show method "
+        " Overriden show method "
+        self._skip = True
         self.replaceCombo.clear()
         self.replaceCombo.addItems( self.replaceHistory )
         self.replaceCombo.setEditText( '' )
+        self._skip = False
 
         FindReplaceBase.show( self, text )
+        self.__subscribeToCursorChangePos()
+        return
+
+    def hide( self ):
+        " Overriden hide method "
+        if self.__connected:
+            self.__unsubscribeFromCursorChange()
+        FindReplaceBase.hide( self )
         return
 
     def __onProjectChanged( self, what ):
         " Triggered when a project is changed "
         if what == CodimensionProject.CompleteProject:
             prj = GlobalData().project
+            self._skip = True
             self.findHistory = QStringList( prj.replaceWhatHistory )
             self.replaceHistory = QStringList( prj.replaceHistory )
+            self._skip = False
         return
+
+    def __onSearchDone( self ):
+        " Triggered when incremental search is done "
+        self.__updateReplaceButtonStatus()
+        return
+
+    def __onReplaceTextChanged( self, text ):
+        " Triggered when replace with text is changed "
+        self.__updateReplaceAllButtonStatus()
+        self.__updateReplaceButtonStatus()
+        return
+
+    def __subscribeToCursorChangePos( self ):
+        " Subscribes for the cursor position notification "
+        if self._editor is not None:
+            self.connect( self._editor,
+                          SIGNAL( 'cursorPositionChanged(int,int)' ),
+                          self.__cursorPositionChanged )
+            self.__connected = True
+        return
+
+    def __unsubscribeFromCursorChange( self ):
+        " Unsubscribes from the cursor position notification "
+        if self._editor is not None:
+            self.disconnect( self._editor,
+                             SIGNAL( 'cursorPositionChanged(int,int)' ),
+                             self.__cursorPositionChanged )
+            self.__connected = False
+        return
+
+    def __cursorPositionChanged( self, line, pos ):
+        " Triggered when the cursor position is changed "
+        self.__updateReplaceButtonStatus()
+        return
+
+    def __onReplaceAll( self ):
+        " Triggered when replace all button is clicked "
+
+        # Check that there is at least one target to replace
+
+
+
+        pass
+
+    def __onReplace( self ):
+        " Triggered when replace current occurance button is clicked "
+        pass
 
