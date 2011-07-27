@@ -809,9 +809,14 @@ class EditorsManager( QTabWidget ):
                 [ MainWindowTabWidgetBase.PlainTextEditor ]:
             return
 
-        self.replaceWidget.hide()
-        self.gotoWidget.hide()
-        self.findWidget.show( self.currentWidget().getEditor().getSearchText() )
+        if self.replaceWidget.isVisible():
+            self.replaceWidget.hide()
+        if self.gotoWidget.isVisible():
+            self.gotoWidget.hide()
+        if self.findWidget.isHidden():
+            self.findWidget.show( self.currentWidget().
+                                  getEditor().getSearchText() )
+        self.findWidget.setFocus()
         return
 
     def __onReplace( self ):
@@ -820,11 +825,14 @@ class EditorsManager( QTabWidget ):
                 [ MainWindowTabWidgetBase.PlainTextEditor ]:
             return
 
-        self.findWidget.hide()
-        self.gotoWidget.hide()
-        self.replaceWidget.show()
-        self.replaceWidget.show( self.currentWidget().\
-                                 getEditor().getSearchText() )
+        if self.findWidget.isVisible():
+            self.findWidget.hide()
+        if self.gotoWidget.isVisible():
+            self.gotoWidget.hide()
+        if self.replaceWidget.isHidden():
+            self.replaceWidget.show( self.currentWidget().
+                                     getEditor().getSearchText() )
+        self.replaceWidget.setFocus()
         return
 
     def __onGoto( self ):
@@ -833,9 +841,12 @@ class EditorsManager( QTabWidget ):
                 [ MainWindowTabWidgetBase.PlainTextEditor ]:
             return
 
-        self.replaceWidget.hide()
-        self.findWidget.hide()
-        self.gotoWidget.show()
+        if self.replaceWidget.isVisible():
+            self.replaceWidget.hide()
+        if self.findWidget.isVisible():
+            self.findWidget.hide()
+        if self.gotoWidget.isHidden():
+            self.gotoWidget.show()
         self.gotoWidget.setFocus()
         return
 
@@ -944,10 +955,6 @@ class EditorsManager( QTabWidget ):
                       self.__modificationChanged )
         self.connect( editor, SIGNAL( 'cursorPositionChanged(int,int)' ),
                       self.__cursorPositionChanged )
-        self.connect( editor, SIGNAL( 'copyAvailable(bool)' ),
-                      self.findWidget.copyAvailable )
-        self.connect( editor, SIGNAL( 'copyAvailable(bool)' ),
-                      self.replaceWidget.copyAvailable )
         self.connect( editor, SIGNAL( 'ESCPressed' ),
                       self.__onESC )
 
