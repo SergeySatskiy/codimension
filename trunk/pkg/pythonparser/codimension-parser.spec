@@ -1,5 +1,5 @@
 Name: codimension-parser
-Version: 1.0
+Version: 1.1
 Release: 1
 License: GPLv3+
 Group: Development/Languages
@@ -40,5 +40,10 @@ find $RPM_BUILD_ROOT -name "*.la" -exec rm -f {} ';'
 %{python_sitearch}/*.egg-info
 
 %changelog
+* Wed Jul 27 2011 Dmitry Kazimirov <dk@revl.org> - 1.1-1
+
+- Added a new method 'getDisplayName' to parser classes 'ImportWhat',
+  'Import', 'Decorator', 'Function', and 'Class'.
+
 * Fri Jun 10 2011 Dmitry Kazimirov <dk@revl.org> - 1.0-1
 - Initial release.
