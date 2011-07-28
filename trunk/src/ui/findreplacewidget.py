@@ -313,7 +313,7 @@ class FindReplaceBase( QWidget ):
                                                 searchAattributes.pos )
                 self._editor.ensureLineVisible( searchAattributes.firstLine )
                 searchAattributes.match = [ -1, -1, -1 ]
-                self.emit( SIGNAL( 'incSearchDone' ) )
+                self.emit( SIGNAL( 'incSearchDone' ), False )
                 return
 
             matchTarget = self._editor.highlightMatch( text,
@@ -326,18 +326,19 @@ class FindReplaceBase( QWidget ):
                 self._editor.setCursorPosition( matchTarget[ 0 ],
                                                 matchTarget[ 1 ] )
                 self._editor.ensureLineVisible( matchTarget[ 0 ] )
+                self.emit( SIGNAL( 'incSearchDone' ), True )
             else:
                 # Nothing is found, so scroll back to the original
                 self._editor.setCursorPosition( searchAattributes.line,
                                                 searchAattributes.pos )
                 self._editor.ensureLineVisible( searchAattributes.firstLine )
+                self.emit( SIGNAL( 'incSearchDone' ), False )
 
-            self.emit( SIGNAL( 'incSearchDone' ) )
             return
 
         # Brand new editor to search in
         if text == "":
-            self.emit( SIGNAL( 'incSearchDone' ) )
+            self.emit( SIGNAL( 'incSearchDone' ), False )
             return
 
         matchTarget = self._editor.highlightMatch( text,
@@ -352,8 +353,10 @@ class FindReplaceBase( QWidget ):
             self._editor.setCursorPosition( matchTarget[ 0 ],
                                             matchTarget[ 1 ] )
             self._editor.ensureLineVisible( matchTarget[ 0 ] )
+            self.emit( SIGNAL( 'incSearchDone' ), True )
+            return
 
-        self.emit( SIGNAL( 'incSearchDone' ) )
+        self.emit( SIGNAL( 'incSearchDone' ), False )
         return
 
     def _initialiseSearchAttributes( self, uuid ):
@@ -414,6 +417,9 @@ class FindReplaceBase( QWidget ):
             GlobalData().mainWindow.showStatusBarMessage( \
                     "The '" + self.findtextCombo.currentText() + \
                     "' was not found" )
+            self.emit( SIGNAL( 'incSearchDone' ), False )
+        else:
+            self.emit( SIGNAL( 'incSearchDone' ), True )
         return
 
     def onPrev( self ):
@@ -426,6 +432,9 @@ class FindReplaceBase( QWidget ):
             GlobalData().mainWindow.showStatusBarMessage( \
                     "The '" + self.findtextCombo.currentText() + \
                     "' was not found" )
+            self.emit( SIGNAL( 'incSearchDone' ), False )
+        else:
+            self.emit( SIGNAL( 'incSearchDone' ), True )
         return
 
     def onPrevNext( self ):
@@ -685,6 +694,7 @@ class ReplaceWidget( FindReplaceBase ):
                       SIGNAL( 'editTextChanged(const QString&)' ),
                       self.__onReplaceTextChanged )
         self.__connected = False
+        self.__replaceCouldBeEnabled = False
         self._skip = False
         return
 
@@ -694,7 +704,13 @@ class ReplaceWidget( FindReplaceBase ):
         FindReplaceBase.updateStatus( self )
 
         self.__updateReplaceAllButtonStatus()
-        self.__updateReplaceButtonStatus()
+
+        if self._isTextEditor:
+            self.__cursorPositionChanged( self._currentWidget.getLine(),
+                                          self._currentWidget.getPos() )
+        else:
+            self.replaceButton.setEnabled( False )
+            self.__replaceCouldBeEnabled = False
 
         if self.__connected:
             self.__unsubscribeFromCursorChange()
@@ -704,38 +720,11 @@ class ReplaceWidget( FindReplaceBase ):
     def __updateReplaceAllButtonStatus( self ):
         " Updates the replace all button status "
         self.replaceCombo.setEnabled( self._isTextEditor )
+        textAvailable = self.findtextCombo.currentText() != ""
         replaceAvailable = self.replaceCombo.currentText() != ""
-        self.replaceAllButton.setEnabled( self._isTextEditor and replaceAvailable )
+        self.replaceAllButton.setEnabled( self._isTextEditor and \
+                                          replaceAvailable and textAvailable )
         return
-
-    def __updateReplaceButtonStatus( self ):
-        " Updates the replace button status "
-        replaceTxt = self.replaceCombo.currentText()
-        if replaceTxt == "" or not self._isTextEditor:
-            self.replaceButton.setEnabled( False )
-            return
-
-        # Replace button must be enabled when the cursor is still on the
-        # last found target and the target matches what is in the 'find' combo
-        self._initialiseSearchAttributes( self._editorUUID )
-        searchAattributes = self._searchSupport.get( self._editorUUID )
-
-        currentLine = self._currentWidget.getLine()
-        currentPos = self._currentWidget.getPos()
-        if searchAattributes.match == [ -1, -1, -1 ] or \
-           searchAattributes.match[ 0 ] != currentLine or \
-           searchAattributes.match[ 1 ] != currentPos:
-            self.replaceButton.setEnabled( False )
-            return
-
-        # Get the target text
-        matchedText = self._currentWidget.getEditor().getTextAtPos( \
-                            currentLine, currentPos,
-                            searchAattributes.match[ 2 ] )
-        findText = self.findtextCombo.currentText()
-        self.replaceButton.setEnabled( matchedText == findText )
-        return
-
 
     def show( self, text = '' ):
         " Overriden show method "
@@ -766,15 +755,20 @@ class ReplaceWidget( FindReplaceBase ):
             self._skip = False
         return
 
-    def __onSearchDone( self ):
+    def __onSearchDone( self, found ):
         " Triggered when incremental search is done "
-        self.__updateReplaceButtonStatus()
+
+        self.replaceButton.setEnabled( found and \
+                                       self.replaceCombo.currentText() != "" )
+        self.__replaceCouldBeEnabled = True
         return
 
     def __onReplaceTextChanged( self, text ):
         " Triggered when replace with text is changed "
         self.__updateReplaceAllButtonStatus()
-        self.__updateReplaceButtonStatus()
+        replaceText = self.replaceCombo.currentText()
+        self.replaceButton.setEnabled( self.__replaceCouldBeEnabled and \
+                                       replaceText != "" )
         return
 
     def __subscribeToCursorChangePos( self ):
@@ -797,7 +791,16 @@ class ReplaceWidget( FindReplaceBase ):
 
     def __cursorPositionChanged( self, line, pos ):
         " Triggered when the cursor position is changed "
-        self.__updateReplaceButtonStatus()
+        if self._searchSupport.hasEditor( self._editorUUID ):
+            searchAattributes = self._searchSupport.get( self._editorUUID )
+            enable = line == searchAattributes.match[ 0 ] and \
+                     pos == searchAattributes.match[ 1 ]
+        else:
+            enable = False
+
+        self.replaceButton.setEnabled( enable and \
+                                       self.replaceCombo.currentText() != "" )
+        self.__replaceCouldBeEnabled = enable
         return
 
     def __onReplaceAll( self ):
