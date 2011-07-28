@@ -806,11 +806,28 @@ class ReplaceWidget( FindReplaceBase ):
     def __onReplaceAll( self ):
         " Triggered when replace all button is clicked "
 
+        text = self.findtextCombo.currentText()
+        isRegexp = self.regexpCheckBox.isChecked()
+        isCase = self.caseCheckBox.isChecked()
+        isWord = self.wordCheckBox.isChecked()
+        replaceText = self.replaceCombo.currentText()
+
         # Check that there is at least one target to replace
+        found = self._editor.findFirstTarget( text, isRegexp, isCase, isWord )
+        if not found:
+            GlobalData().mainWindow.showStatusBarMessage( \
+                "No occurances of '" + text + "' found. Nothing is replaced." )
+            return
 
-
-
-        pass
+        # There is something matching
+        count = 0
+        self._editor.beginUndoAction()
+        while found:
+            self._editor.replaceTarget( str( replaceText ) )
+            count += 1
+            found = self._editor.findNextTarget()
+        self._editor.endUndoAction()
+        return
 
     def __onReplace( self ):
         " Triggered when replace current occurance button is clicked "
