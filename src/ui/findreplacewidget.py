@@ -389,9 +389,10 @@ class FindReplaceBase( QWidget ):
         editor = widget.getEditor()
 
         # Replace the old highlight
-        tgtPos = editor.positionFromLineIndex( match[ 0 ], match[ 1 ] )
-        editor.clearIndicatorRange( editor.matchIndicator, tgtPos, match[ 2 ] )
-        editor.setIndicatorRange( editor.searchIndicator, tgtPos, match[ 2 ] )
+        if searchAattributes.match != [ -1, -1, -1 ]:
+            tgtPos = editor.positionFromLineIndex( match[ 0 ], match[ 1 ] )
+            editor.clearIndicatorRange( editor.matchIndicator, tgtPos, match[ 2 ] )
+            editor.setIndicatorRange( editor.searchIndicator, tgtPos, match[ 2 ] )
 
         # Memorise new target
         searchAattributes.match = [ newLine, newPos, newLength ]
@@ -813,7 +814,7 @@ class ReplaceWidget( FindReplaceBase ):
         replaceText = self.replaceCombo.currentText()
 
         # Check that there is at least one target to replace
-        found = self._editor.findFirstTarget( text, isRegexp, isCase, isWord )
+        found = self._editor.findFirstTarget( text, isRegexp, isCase, isWord, 0, 0 )
         if not found:
             GlobalData().mainWindow.showStatusBarMessage( \
                 "No occurances of '" + text + "' found. Nothing is replaced." )
@@ -827,9 +828,33 @@ class ReplaceWidget( FindReplaceBase ):
             count += 1
             found = self._editor.findNextTarget()
         self._editor.endUndoAction()
+        self.replaceButton.setEnabled( False )
+        self.__replaceCouldBeEnabled = False
+
+        suffix = ""
+        if count > 1:
+            suffix = "s"
+        GlobalData().mainWindow.showStatusBarMessage( \
+            str( count ) + " occurance" + suffix + " replaced." )
         return
 
     def __onReplace( self ):
         " Triggered when replace current occurance button is clicked "
-        pass
+        replaceText = self.replaceCombo.currentText()
+        text = self.findtextCombo.currentText()
+        isRegexp = self.regexpCheckBox.isChecked()
+        isCase = self.caseCheckBox.isChecked()
+        isWord = self.wordCheckBox.isChecked()
+        searchAattributes = self._searchSupport.get( self._editorUUID )
+
+        found = self._editor.findFirstTarget( text, isRegexp, isCase, isWord,
+                                              searchAattributes.match[ 0 ],
+                                              searchAattributes.match[ 1 ] )
+        if found:
+            self._editor.replaceTarget( str( replaceText ) )
+            GlobalData().mainWindow.showStatusBarMessage( "1 occurance replaced." )
+            # This will prevent highlighting the improper editor positions
+            searchAattributes.match = [ -1, -1, -1 ]
+            self.onNext()
+        return
 
