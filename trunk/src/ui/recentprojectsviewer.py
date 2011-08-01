@@ -198,6 +198,9 @@ class RecentFileViewItem( QTreeWidgetItem ):
                 self.setToolTip( 0, 'Broken project file' )
                 self.setToolTip( 1, 'Broken project file' )
             self.setIcon( 0, getFileIcon( fileType ) )
+        else:
+            # Get the other file type icon
+            self.setIcon( 0, getFileIcon( fileType ) )
 
         self.setToolTip( 2, self.getFilename() )
         return
