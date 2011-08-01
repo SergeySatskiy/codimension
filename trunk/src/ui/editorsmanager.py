@@ -34,7 +34,8 @@ from PyQt4.QtCore               import Qt, SIGNAL, \
                                        QVariant, QDir, QUrl
 from PyQt4.QtGui                import QTabWidget, QDialog, QMessageBox, \
                                        QWidget, QHBoxLayout, QMenu, \
-                                       QToolButton, QShortcut, QFileDialog
+                                       QToolButton, QShortcut, QFileDialog, \
+                                       QApplication
 from utils.pixmapcache          import PixmapCache
 from welcomewidget              import WelcomeWidget
 from helpwidget                 import QuickHelpWidget
@@ -101,6 +102,33 @@ class EditorsManager( QTabWidget ):
                       self.__onCloseRequest )
         self.connect( self, SIGNAL( "currentChanged(int)" ),
                       self.__currentChanged )
+
+        # Context menu
+        self.__tabContextMenu = QMenu( self )
+        self.__tabContextMenu.addAction( PixmapCache().getIcon( "copytoclipboard.png" ),
+                                         "Copy path to clipboard",
+                                         self.__copyTabPath )
+        self.tabBar().setContextMenuPolicy( Qt.CustomContextMenu )
+        self.connect( self.tabBar(),
+                      SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
+                      self.__showTabContextMenu )
+        return
+
+    def __showTabContextMenu( self, pos ):
+        " Shows a context menu if required "
+        clickedIndex = self.tabBar().tabAt( pos )
+        tabIndex = self.currentIndex()
+
+        if tabIndex == clickedIndex:
+            widget = self.widget( tabIndex )
+            if widget.getFileName() != "":
+                self.__tabContextMenu.popup( self.mapToGlobal( pos ) )
+        return
+
+    def __copyTabPath( self ):
+        " Triggered when copy path to clipboard item is selected "
+        QApplication.clipboard().setText( \
+                self.widget( self.currentIndex() ).getFileName() )
         return
 
     def __installActions( self ):
