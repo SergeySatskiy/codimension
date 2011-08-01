@@ -24,8 +24,8 @@
 
 
 import os.path
-from PyQt4.QtGui                import QTextEdit, QWidget, QHBoxLayout, \
-                                       QDesktopServices
+from PyQt4.QtGui                import QWidget, QHBoxLayout, \
+                                       QDesktopServices, QMenu
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from PyQt4.QtCore               import Qt, SIGNAL
 from PyQt4.QtWebKit             import QWebView, QWebPage
@@ -45,6 +45,20 @@ class HTMLViewer( QWebView ):
         else:
             QWebView.keyPressEvent( self, event )
         return
+
+    def contextMenuEvent( self, event ):
+        " Disables the default menu "
+        testContent = self.page().mainFrame().hitTestContent( event.pos() )
+        if not testContent.linkUrl().isEmpty():
+            menu = QMenu( self )
+            menu.addAction( self.pageAction( QWebPage.CopyLinkToClipboard ) )
+            menu.popup( self.mapToGlobal( event.pos() ) )
+        elif self.page().selectedText() != "":
+            menu = QMenu( self )
+            menu.addAction( self.pageAction( QWebPage.Copy ) )
+            menu.popup( self.mapToGlobal( event.pos() ) )
+        return
+
 
 
 class HTMLTabWidget( MainWindowTabWidgetBase, QWidget ):
