@@ -102,7 +102,7 @@ class FindReplaceBase( QWidget ):
         self._isTextEditor = False
         self._editor = None
         self._editorUUID = False
-        self.findHistory = QStringList( GlobalData().project.findHistory )
+        self.findHistory = GlobalData().project.findHistory
         self._findBackward = False
 
         # Incremental search support
@@ -169,10 +169,10 @@ class FindReplaceBase( QWidget ):
         self.connect( self.regexpCheckBox, SIGNAL( 'stateChanged(int)' ),
                       self._onCheckBoxChange )
 
-        self.connect( self.findNextButton, SIGNAL( 'clicked()' ),
-                      self.onNext )
-        self.connect( self.findPrevButton, SIGNAL( 'clicked()' ),
-                      self.onPrev )
+#        self.connect( self.findNextButton, SIGNAL( 'clicked()' ),
+#                      self.onNext )
+#        self.connect( self.findPrevButton, SIGNAL( 'clicked()' ),
+#                      self.onPrev )
         self.connect( self.findtextCombo.lineEdit(),
                       SIGNAL( "returnPressed()" ),
                       self.__findByReturnPressed )
@@ -319,7 +319,8 @@ class FindReplaceBase( QWidget ):
             matchTarget = self._editor.highlightMatch( text,
                                                        searchAattributes.line,
                                                        searchAattributes.pos,
-                                                       isRegexp, isCase, isWord )
+                                                       isRegexp, isCase,
+                                                       isWord )
             searchAattributes.match = matchTarget
             if matchTarget != [-1, -1, -1]:
                 # Move the cursor to the match
@@ -391,8 +392,10 @@ class FindReplaceBase( QWidget ):
         # Replace the old highlight
         if searchAattributes.match != [ -1, -1, -1 ]:
             tgtPos = editor.positionFromLineIndex( match[ 0 ], match[ 1 ] )
-            editor.clearIndicatorRange( editor.matchIndicator, tgtPos, match[ 2 ] )
-            editor.setIndicatorRange( editor.searchIndicator, tgtPos, match[ 2 ] )
+            editor.clearIndicatorRange( editor.matchIndicator,
+                                        tgtPos, match[ 2 ] )
+            editor.setIndicatorRange( editor.searchIndicator,
+                                      tgtPos, match[ 2 ] )
 
         # Memorise new target
         searchAattributes.match = [ newLine, newPos, newLength ]
@@ -533,7 +536,8 @@ class FindReplaceBase( QWidget ):
                                                    isRegexp, isCase, isWord,
                                                    0, 0, startLine, startPos )
                 if len( targets ) == 0:
-                    searchAattributes = self._searchSupport.get( self._editorUUID )
+                    searchAattributes = self._searchSupport.get( \
+                                                        self._editorUUID )
                     searchAattributes.match = [ -1, -1, -1 ]
                     self._searchSupport.add( self._editorUUID,
                                              searchAattributes )
@@ -571,6 +575,31 @@ class FindReplaceBase( QWidget ):
                                                        targets[ index ][ 2 ] )
         return True
 
+    def _addToHistory( self, combo, history, text ):
+        " Adds the item to the history. Returns true if need to add. "
+        text = str( text )
+        changes = False
+
+        if text in history:
+            if history[ 0 ] != text:
+                changes = True
+                history.remove( text )
+                history.insert( 0, text )
+        else:
+            changes = True
+            history.insert( 0, text )
+
+        if len( history ) > self.maxHistory:
+            changes = True
+            history = history[ : self.maxHistory ]
+
+        self._skip = True
+        combo.clear()
+        combo.addItems( history )
+        self._skip = False
+        return changes
+
+
 
 class FindWidget( FindReplaceBase ):
     """ Find in the current file widget """
@@ -600,13 +629,20 @@ class FindWidget( FindReplaceBase ):
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
+        self.connect( self.findNextButton, SIGNAL( 'clicked()' ),
+                      self.onNext )
+        self.connect( self.findPrevButton, SIGNAL( 'clicked()' ),
+                      self.onPrev )
         return
 
     def __onProjectChanged( self, what ):
         " Triggered when a project is changed "
         if what == CodimensionProject.CompleteProject:
             self._skip = True
-            self.findHistory = QStringList( GlobalData().project.findHistory )
+            self.findHistory = GlobalData().project.findHistory
+            self.findtextCombo.setEditText( "" )
+            self.findtextCombo.clear()
+            self.findtextCombo.addItems( self.findHistory )
             self._skip = False
         return
 
@@ -615,6 +651,27 @@ class FindWidget( FindReplaceBase ):
         FindReplaceBase.updateStatus( self )
         return
 
+    def onNext( self ):
+        " Triggered when the find next button is clicked "
+        FindReplaceBase.onNext( self )
+        self.__updateFindHistory()
+        return
+
+    def onPrev( self ):
+        " Triggered when the find previous button is clicked "
+        FindReplaceBase.onPrev( self )
+        self.__updateFindHistory()
+        return
+
+    def __updateFindHistory( self ):
+        " Updates the find history if required "
+        if self.findtextCombo.currentText() != "":
+            if self._addToHistory( self.findtextCombo,
+                                   self.findHistory,
+                                   self.findtextCombo.currentText() ):
+                prj = GlobalData().project
+                prj.setFindHistory( self.findHistory )
+        return
 
 
 class ReplaceWidget( FindReplaceBase ):
@@ -625,8 +682,8 @@ class ReplaceWidget( FindReplaceBase ):
         FindReplaceBase.__init__( self, editorsManager, parent )
         self._skip = True
         prj = GlobalData().project
-        self.findHistory = QStringList( prj.replaceWhatHistory )
-        self.replaceHistory = QStringList( prj.replaceHistory )
+        self.findHistory = prj.replaceWhatHistory
+        self.replaceHistory = prj.replaceHistory
 
         # Additional UI elements
         self.replaceLabel = QLabel( self )
@@ -690,6 +747,10 @@ class ReplaceWidget( FindReplaceBase ):
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
+        self.connect( self.findNextButton, SIGNAL( 'clicked()' ),
+                      self.onNext )
+        self.connect( self.findPrevButton, SIGNAL( 'clicked()' ),
+                      self.onPrev )
         self.connect( self, SIGNAL( 'incSearchDone' ), self.__onSearchDone )
         self.connect( self.replaceCombo,
                       SIGNAL( 'editTextChanged(const QString&)' ),
@@ -751,8 +812,14 @@ class ReplaceWidget( FindReplaceBase ):
         if what == CodimensionProject.CompleteProject:
             prj = GlobalData().project
             self._skip = True
-            self.findHistory = QStringList( prj.replaceWhatHistory )
-            self.replaceHistory = QStringList( prj.replaceHistory )
+            self.findHistory = prj.replaceWhatHistory
+            self.findtextCombo.clear()
+            self.findtextCombo.setEditText( '' )
+            self.findtextCombo.addItems( self.findHistory )
+            self.replaceHistory = prj.replaceHistory
+            self.replaceCombo.clear()
+            self.replaceCombo.setEditText( '' )
+            self.replaceCombo.addItems( self.replaceHistory )
             self._skip = False
         return
 
@@ -767,9 +834,8 @@ class ReplaceWidget( FindReplaceBase ):
     def __onReplaceTextChanged( self, text ):
         " Triggered when replace with text is changed "
         self.__updateReplaceAllButtonStatus()
-        replaceText = self.replaceCombo.currentText()
         self.replaceButton.setEnabled( self.__replaceCouldBeEnabled and \
-                                       replaceText != "" )
+                                       text != "" )
         return
 
     def __subscribeToCursorChangePos( self ):
@@ -813,8 +879,11 @@ class ReplaceWidget( FindReplaceBase ):
         isWord = self.wordCheckBox.isChecked()
         replaceText = self.replaceCombo.currentText()
 
+        self.__updateReplaceHistory( text, replaceText )
+
         # Check that there is at least one target to replace
-        found = self._editor.findFirstTarget( text, isRegexp, isCase, isWord, 0, 0 )
+        found = self._editor.findFirstTarget( text,
+                                              isRegexp, isCase, isWord, 0, 0 )
         if not found:
             GlobalData().mainWindow.showStatusBarMessage( \
                 "No occurances of '" + text + "' found. Nothing is replaced." )
@@ -847,14 +916,43 @@ class ReplaceWidget( FindReplaceBase ):
         isWord = self.wordCheckBox.isChecked()
         searchAattributes = self._searchSupport.get( self._editorUUID )
 
+        self.__updateReplaceHistory( text, replaceText )
+
         found = self._editor.findFirstTarget( text, isRegexp, isCase, isWord,
                                               searchAattributes.match[ 0 ],
                                               searchAattributes.match[ 1 ] )
         if found:
             self._editor.replaceTarget( str( replaceText ) )
-            GlobalData().mainWindow.showStatusBarMessage( "1 occurance replaced." )
+            GlobalData().mainWindow.showStatusBarMessage( "1 occurance "
+                                                          "replaced." )
             # This will prevent highlighting the improper editor positions
             searchAattributes.match = [ -1, -1, -1 ]
             self.onNext()
+        return
+
+    def __updateReplaceHistory( self, text, replaceText ):
+        " Updates the history in the project and in the combo boxes "
+
+        changedWhat = self._addToHistory( self.findtextCombo,
+                                          self.findHistory, text )
+        changedReplace = self._addToHistory( self.replaceCombo,
+                                             self.replaceHistory, replaceText )
+        if changedWhat or changedReplace:
+            prj = GlobalData().project
+            prj.setReplaceHistory( self.findHistory, self.replaceHistory )
+        return
+
+    def onNext( self ):
+        " Triggered when the find next button is clicked "
+        FindReplaceBase.onNext( self )
+        self.__updateReplaceHistory( self.findtextCombo.currentText(),
+                                     self.replaceCombo.currentText() )
+        return
+
+    def onPrev( self ):
+        " Triggered when the find previous button is clicked "
+        FindReplaceBase.onPrev( self )
+        self.__updateReplaceHistory( self.findtextCombo.currentText(),
+                                     self.replaceCombo.currentText() )
         return
 
