@@ -491,6 +491,24 @@ class TextEditor( ScintillaWrapper ):
         self.highlightWord( self.getCurrentWord() )
         return
 
+    def isImportLine( self ):
+        " Returns True if the current line is a part of an import line "
+        line, pos = self.getCursorPosition()
+
+        text = self.text( line ).trimmed()
+        while 1:
+            if text.startsWith( "import" ) or text.startsWith( "from" ):
+                return True
+
+            # It could be continuation of the previous import line
+            line -= 1
+            if line < 0:
+                break
+            text = self.text( line ).trimmed()
+            if not text.endsWith( '\\' ):
+                break
+        return False
+
 
 class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     " Plain text editor tab widget "
