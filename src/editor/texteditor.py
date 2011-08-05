@@ -27,11 +27,11 @@ import lexer
 from scintillawrap              import ScintillaWrapper
 from PyQt4.QtCore               import Qt, QFileInfo, SIGNAL, QSize, \
                                        QVariant, QDir, QUrl
-from PyQt4.QtGui                import QFont, QApplication, QCursor, \
-                                       QColor, QFontMetrics, QToolBar, \
+from PyQt4.QtGui                import QApplication, QCursor, \
+                                       QFontMetrics, QToolBar, \
                                        QHBoxLayout, QWidget, QAction, QMenu, \
                                        QSizePolicy, QToolButton, QFileDialog, \
-                                       QDialog, QMessageBox
+                                       QDialog, QMessageBox, QShortcut
 from PyQt4.Qsci                 import QsciScintilla
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.fileutils            import detectFileType, DesignerFileType, \
@@ -47,6 +47,9 @@ from ui.pymetricsviewer         import PymetricsViewer
 from diagram.importsdgm         import ImportsDiagramDialog, \
                                        ImportDiagramOptions, \
                                        ImportsDiagramProgress
+from utils.importutils          import getImportsList, \
+                                       getImportsInLine, resolveImport
+from ui.importlist              import ImportListWidget
 import export
 
 
@@ -222,7 +225,8 @@ class TextEditor( ScintillaWrapper ):
             self.lexer_.setDefaultFont( GlobalData().skin.nolexerFont )
             self.setLexer( self.lexer_ )
 
-            if self.lexer_.lexer() == "container" or self.lexer_.lexer() is None:
+            if self.lexer_.lexer() == "container" or \
+               self.lexer_.lexer() is None:
                 self.setStyleBits( self.lexer_.styleBitsNeeded() )
                 self.connect( self, SIGNAL( "SCN_STYLENEEDED(int)" ),
                               self.__styleNeeded )
@@ -270,7 +274,6 @@ class TextEditor( ScintillaWrapper ):
 
         # self.extractTasks()
         # self.extractBookmarks()
-        # self.extractPylint()
 
         QApplication.restoreOverrideCursor()
         return
@@ -403,7 +406,8 @@ class TextEditor( ScintillaWrapper ):
                     # This is the target to highlight - cursor within the
                     # target
                     if highlightFirst:
-                        tgtPos = self.positionFromLineIndex( item[ 0 ], item[ 1 ] )
+                        tgtPos = self.positionFromLineIndex( item[ 0 ],
+                                                             item[ 1 ] )
                         self.clearIndicatorRange( self.searchIndicator,
                                                   tgtPos, item[ 2 ] )
                         self.setIndicatorRange( self.matchIndicator, tgtPos,
@@ -413,7 +417,8 @@ class TextEditor( ScintillaWrapper ):
                     # This is the target to highlight - cursor is before the
                     # target
                     if highlightFirst:
-                        tgtPos = self.positionFromLineIndex( item[ 0 ], item[ 1 ] )
+                        tgtPos = self.positionFromLineIndex( item[ 0 ],
+                                                             item[ 1 ] )
                         self.clearIndicatorRange( self.searchIndicator,
                                                   tgtPos, item[ 2 ] )
                         self.setIndicatorRange( self.matchIndicator, tgtPos,
@@ -498,7 +503,7 @@ class TextEditor( ScintillaWrapper ):
         text = self.text( line ).trimmed()
         while 1:
             if text.startsWith( "import" ) or text.startsWith( "from" ):
-                return True
+                return True, line
 
             # It could be continuation of the previous import line
             line -= 1
@@ -507,7 +512,7 @@ class TextEditor( ScintillaWrapper ):
             text = self.text( line ).trimmed()
             if not text.endsWith( '\\' ):
                 break
-        return False
+        return False, -1
 
 
 class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
@@ -528,6 +533,10 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         self.connect( self.__editor, SIGNAL( 'modificationChanged(bool)' ),
                       self.__modificationChanged )
+
+        openImportAction = QShortcut( 'Ctrl+I', self )
+        self.connect( openImportAction, SIGNAL( "activated()" ),
+                      self.__onOpenImport )
         return
 
     def __createLayout( self ):
@@ -573,7 +582,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.connect( importsDlgAct, SIGNAL( 'triggered()' ),
                       self.__onImportDgmTuned )
         self.importsDiagramButton = QToolButton( self )
-        self.importsDiagramButton.setIcon( PixmapCache().getIcon( 'importsdiagram.png' ) )
+        self.importsDiagramButton.setIcon( \
+                            PixmapCache().getIcon( 'importsdiagram.png' ) )
         self.importsDiagramButton.setToolTip( 'Generate imports diagram' )
         self.importsDiagramButton.setPopupMode( QToolButton.DelayedPopup )
         self.importsDiagramButton.setMenu( importsMenu )
@@ -675,6 +685,9 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.addAction( expandTabsButton )
 
 
+        self.__importsBar = ImportListWidget( self.__editor )
+        self.__importsBar.hide()
+
         hLayout = QHBoxLayout()
         hLayout.setContentsMargins( 0, 0, 0, 0 )
         hLayout.setSpacing( 0 )
@@ -692,8 +705,9 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.pylintButton.setEnabled( self.__fileType == PythonFileType and
                                       GlobalData().pylintAvailable )
         self.pymetricsButton.setEnabled( self.__fileType == PythonFileType )
-        self.importsDiagramButton.setEnabled( self.__fileType == PythonFileType and
-                                              GlobalData().graphvizAvailable )
+        self.importsDiagramButton.setEnabled( \
+                            self.__fileType == PythonFileType and
+                            GlobalData().graphvizAvailable )
         return
 
     def __onPylint( self ):
@@ -949,6 +963,69 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         if progressDlg.exec_() == QDialog.Accepted:
             GlobalData().mainWindow.openDiagram( progressDlg.scene,
                                                  tooltip )
+        return
+
+    def __onOpenImport( self ):
+        " Triggered when Ctrl+I is received "
+
+        if self.__fileType not in [ PythonFileType, Python3FileType ]:
+            return
+
+        # Python file, we may continue
+        isImportLine, lineNo = self.__editor.isImportLine()
+        basePath = os.path.dirname( self.__fileName )
+
+        if isImportLine:
+            lineImports = getImportsInLine( self.__editor.text(), lineNo + 1 )
+            currentWord = self.__editor.getCurrentWord( "." )
+            if currentWord in lineImports:
+                # The cursor is on some import
+                path = resolveImport( basePath, currentWord )
+                if path != '':
+                    GlobalData().mainWindow.openFile( path, -1 )
+                    return
+                GlobalData().mainWindow.showStatusBarMessage( \
+                        "The import '" + currentWord + "' is not resolved." )
+                return
+            # The import has not been resolved or we are not on a certain
+            # import. Take all the imports in the line and resolve them.
+            self.__onImportList( basePath, lineImports )
+            return
+
+        # Here: the cursor is not on the import line. Take all the file imports
+        # and resolve them
+        fileImports = getImportsList( self.__editor.text() )
+        if len( fileImports ) == 0:
+            GlobalData().mainWindow.showStatusBarMessage( \
+                                            "There are no imports" )
+            return
+        self.__onImportList( basePath, fileImports )
+        return
+
+    def __onImportList( self, basePath, imports ):
+        " Works with a list of imports "
+        resolvedList = []
+        for item in imports:
+            path = resolveImport( basePath, item )
+            if path != '':
+                resolvedList.append( [ item, path ] )
+        if len( resolvedList ) == 0:
+            GlobalData().mainWindow.showStatusBarMessage( \
+                                            "No imports are resolved" )
+            return
+        if len( resolvedList ) == 1:
+            GlobalData().mainWindow.openFile( resolvedList[ 0 ][ 1 ], -1 )
+            return
+
+        # Display the import selection widget
+        self.__importsBar.showResolvedList( resolvedList )
+        return
+
+    def resizeEvent( self, event ):
+        " Resizes the import selection dialogue if necessary "
+        QWidget.resizeEvent( self, event )
+        if not self.__importsBar.isHidden():
+            self.__importsBar.resize()
         return
 
     # Mandatory interface part is below

@@ -214,7 +214,7 @@ class EditorsManager( QTabWidget ):
             self.removeTab( 0 )
             self.setTabsClosable( True )
 
-        newWidget = TextEditorTabWidget()
+        newWidget = TextEditorTabWidget( self )
         editor = newWidget.getEditor()
         newWidget.setShortName( self.getNewName() )
 
@@ -638,7 +638,7 @@ class EditorsManager( QTabWidget ):
                         self.history.addCurrent()
                     return True
             # Not found - create a new one
-            newWidget = TextEditorTabWidget()
+            newWidget = TextEditorTabWidget( self )
             editor = newWidget.getEditor()
             editor.readFile( fileName )
 

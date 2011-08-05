@@ -161,10 +161,10 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onMaximizeEditor )
         findNextAction = QShortcut( 'F3', self )
         self.connect( findNextAction, SIGNAL( "activated()" ),
-                      self.__onFindNext )
+                      self.editorsManagerWidget.editorsManager.findNext )
         findPrevAction = QShortcut( 'Shift+F3', self )
         self.connect( findPrevAction, SIGNAL( "activated()" ),
-                      self.__onFindPrev )
+                      self.editorsManagerWidget.editorsManager.findPrev )
 
         # Needs for a proper update of the pylint menu
         self.connect( GlobalData().project, SIGNAL( 'fsChanged' ),
@@ -210,16 +210,6 @@ class CodimensionMainWindow( QMainWindow ):
         " Triggered when F11 is pressed "
         self.__leftSideBar.shrink()
         self.__bottomSideBar.shrink()
-        return
-
-    def __onFindNext( self ):
-        " Triggered when F3 is pressed "
-        self.editorsManagerWidget.editorsManager.findNext()
-        return
-
-    def __onFindPrev( self ):
-        " Triggered when Shift+F3 is pressed "
-        self.editorsManagerWidget.editorsManager.findPrev()
         return
 
     def __createLayout( self, settings ):
@@ -1014,6 +1004,10 @@ class CodimensionMainWindow( QMainWindow ):
     def getWidgetForFileName( self, fname ):
         " Provides the widget found by the given file name "
         return self.editorsManagerWidget.editorsManager.getWidgetForFileName( fname )
+
+    def editorsManager( self ):
+        " Provides the editors manager "
+        return self.editorsManagerWidget.editorsManager
 
     @staticmethod
     def __buildPythonFilesList():

@@ -147,6 +147,12 @@ class QuickHelpWidget( HTMLTabWidget ):
           <td>Ctrl+TAB</td>
           <td>Switching between two recent tabs</td></tr>
         <tr>
+        <tr>
+          <td>Ctrl+I</td>
+          <td>Open import/select import to open</td>
+          <td></td>
+          <td></td></tr>
+        <tr>
     </table>
     </p>
     <p align="center">

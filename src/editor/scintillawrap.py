@@ -117,6 +117,13 @@ class ScintillaWrapper( QsciScintilla ):
         """ Provides the current cursor position """
         return self.SendScintilla( self.SCI_GETCURRENTPOS )
 
+    def getCurrentPixelPosition( self ):
+        " Provides the current text cursor position in points "
+        pos = self.SendScintilla( self.SCI_GETCURRENTPOS )
+        x = self.SendScintilla( self.SCI_POINTXFROMPOSITION, pos )
+        y = self.SendScintilla( self.SCI_POINTYFROMPOSITION, pos )
+        return x, y
+
     def setCurrentPosition( self, pos ):
         " Sets the current position "
         self.SendScintilla( self.SCI_SETCURRENTPOS, pos )
@@ -720,17 +727,17 @@ class ScintillaWrapper( QsciScintilla ):
 
         return QString( "" )
 
-    def getCurrentWord( self ):
+    def getCurrentWord( self, addChars = "" ):
         " Provides the word at the current position "
 
         line, col = self.getCursorPosition()
-        return self.getWord( line, col )
+        return self.getWord( line, col, 0, True, addChars )
 
-    def getWord( self, line, col, direction = 0, useWordChars = True ):
+    def getWord( self, line, col, direction = 0, useWordChars = True, addChars = "" ):
         """ Provides the word at a position.
             direction direction to look in (0 = whole word, 1 = left, 2 = right)
         """
-        start, end = self.getWordBoundaries( line, col, useWordChars )
+        start, end = self.getWordBoundaries( line, col, useWordChars, addChars )
         if direction == 1:
             end = col
         elif direction == 2:
@@ -741,7 +748,7 @@ class ScintillaWrapper( QsciScintilla ):
             return text.mid( start, end - start )
         return QString( '' )
 
-    def getWordBoundaries( self, line, col, useWordChars = True ):
+    def getWordBoundaries( self, line, col, useWordChars = True, addChars = "" ):
         " Provides the word boundaries at a position "
 
         text = self.text( line )
@@ -753,6 +760,7 @@ class ScintillaWrapper( QsciScintilla ):
         if wc is None or not useWordChars:
             regExp = QRegExp( '[^\w_]', cs )
         else:
+            wc += addChars
             wc = re.sub( '\w', "", wc )
             regExp = QRegExp( '[^\w%s]' % re.escape( wc ), cs )
         start = text.lastIndexOf( regExp, col ) + 1
