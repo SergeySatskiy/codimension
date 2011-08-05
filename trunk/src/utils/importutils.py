@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010 - 2011 Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,13 +20,37 @@
 # $Id$
 #
 
-
-""" Utility functions for building modules lists """
+" import utility functions "
 
 
 import os, os.path
 from utils.fileutils    import detectFileType, PythonFileType, Python3FileType
+from cdmbriefparser     import getBriefModuleInfoFromMemory
 from PyQt4.QtGui        import QApplication
+from utils.globals      import GlobalData
+
+
+def getImportsList( fileContent ):
+    " Parses a python file and provides a list imports in it "
+
+    result = []
+    info = getBriefModuleInfoFromMemory( str( fileContent ) )
+    for importObj in info.imports:
+        if importObj.name not in result:
+            result.append( importObj.name )
+    return result
+
+
+def getImportsInLine( fileContent, lineNumber ):
+    " Provides a list of imports in in the given import line "
+
+    result = []
+    info = getBriefModuleInfoFromMemory( str( fileContent ) )
+    for importObj in info.imports:
+        if importObj.line == lineNumber:
+            if importObj.name not in result:
+                result.append( importObj.name )
+    return result
 
 
 def __scanDir( prefix, path, infoLabel = None ):
@@ -72,4 +96,42 @@ def buildDirModules( path, infoLabel = None ):
     if not abspath.endswith( os.path.sep ):
         abspath += os.path.sep
     return __scanDir( "", abspath, infoLabel )
+
+
+def __checkImport( path, importStr ):
+    " Tests one dir "
+    if not path.endswith( os.path.sep ):
+        path += os.path.sep
+
+    path += importStr
+    if os.path.exists( path + ".py" ):
+        return path + ".py"
+    if os.path.exists( path + ".py3" ):
+        return path + ".py3"
+
+    path += os.path.sep + "__init__.py"
+    if os.path.exists( path ):
+        return path
+    if os.path.exists( path + "3" ):
+        return path + "3"
+
+    return ""
+
+
+def resolveImport( basePath, importString ):
+    " Resolves a single import "
+    importString = importString.replace( '.', os.path.sep )
+    if basePath != '':
+        path = __checkImport( basePath, importString )
+        if path != "":
+            return path
+
+    # Could not find at hand, try the project dirs as a base
+    dirs = GlobalData().project.getProjectDirs()
+    for basePath in dirs:
+        path = __checkImport( basePath, importString )
+        if path != "":
+            return path
+
+    return ""
 

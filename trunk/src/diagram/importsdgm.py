@@ -30,7 +30,7 @@ from PyQt4.QtGui                 import QDialog, QDialogButtonBox, \
                                         QVBoxLayout, QCheckBox, QLabel, \
                                         QProgressBar, QApplication, QCursor, \
                                         QGraphicsScene
-from modules                     import buildDirModules
+from utils.importutils           import buildDirModules
 from utils.globals               import GlobalData
 from cdmbriefparser              import getBriefModuleInfoFromMemory
 from utils.fileutils             import detectFileType, PythonFileType, \
