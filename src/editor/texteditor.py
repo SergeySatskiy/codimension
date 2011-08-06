@@ -48,7 +48,8 @@ from diagram.importsdgm         import ImportsDiagramDialog, \
                                        ImportDiagramOptions, \
                                        ImportsDiagramProgress
 from utils.importutils          import getImportsList, \
-                                       getImportsInLine, resolveImport
+                                       getImportsInLine, resolveImport, \
+                                       getImportedNameDefinitionLine
 from ui.importlist              import ImportListWidget
 import export
 
@@ -976,7 +977,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         basePath = os.path.dirname( self.__fileName )
 
         if isImportLine:
-            lineImports = getImportsInLine( self.__editor.text(), lineNo + 1 )
+            lineImports, importWhat = getImportsInLine( self.__editor.text(),
+                                                        lineNo + 1 )
             currentWord = self.__editor.getCurrentWord( "." )
             if currentWord in lineImports:
                 # The cursor is on some import
@@ -987,8 +989,25 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                 GlobalData().mainWindow.showStatusBarMessage( \
                         "The import '" + currentWord + "' is not resolved." )
                 return
-            # The import has not been resolved or we are not on a certain
-            # import. Take all the imports in the line and resolve them.
+            # We are not on a certain import.
+            # Check if it is a line with exactly one import
+            if len( lineImports ) == 1:
+                path = resolveImport( basePath, lineImports[ 0 ] )
+                if path == '':
+                    GlobalData().mainWindow.showStatusBarMessage( \
+                        "The import '" + lineImports[ 0 ] + "' is not resolved." )
+                    return
+                # The import is resolved. Check where we are.
+                if currentWord in importWhat:
+                    # We are on a certain imported name in a resolved import
+                    # So, jump to the definition line
+                    line = getImportedNameDefinitionLine( path, currentWord )
+                    GlobalData().mainWindow.openFile( path, line )
+                    return
+                GlobalData().mainWindow.openFile( path, -1 )
+                return
+
+            # Take all the imports in the line and resolve them.
             self.__onImportList( basePath, lineImports )
             return
 
@@ -999,6 +1018,15 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             GlobalData().mainWindow.showStatusBarMessage( \
                                             "There are no imports" )
             return
+        if len( fileImports ) == 1:
+            path = resolveImport( basePath, fileImports[ 0 ] )
+            if path == '':
+                GlobalData().mainWindow.showStatusBarMessage( \
+                    "The import '" + fileImports[ 0 ] + "' is not resolved." )
+                return
+            GlobalData().mainWindow.openFile( path, -1 )
+            return
+
         self.__onImportList( basePath, fileImports )
         return
 
@@ -1012,9 +1040,6 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         if len( resolvedList ) == 0:
             GlobalData().mainWindow.showStatusBarMessage( \
                                             "No imports are resolved" )
-            return
-        if len( resolvedList ) == 1:
-            GlobalData().mainWindow.openFile( resolvedList[ 0 ][ 1 ], -1 )
             return
 
         # Display the import selection widget

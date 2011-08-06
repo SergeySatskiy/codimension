@@ -129,8 +129,6 @@ def codimensionMain():
     globalData.mainWindow = mainWindow
     codimensionApp.connect( codimensionApp, SIGNAL( "lastWindowClosed()" ),
                             codimensionApp, SLOT( "quit()" ) )
-    mainWindow.connect( globalData.project, SIGNAL( 'projectChanged' ),
-                        mainWindow.onProjectChanged )
 
     # Loading project if given or the recent one
     if projectFile != "":
@@ -167,6 +165,15 @@ def codimensionMain():
                                  CodimensionProject.CompleteProject )
 
     mainWindow.show()
+
+    # The editors positions can be restored properly only when the editors have
+    # actually been drawn. Otherwise the first visible line is unknown.
+    # So, I load the project first and let object browsers initialize
+    # themselves and then manually call the main window handler to restore the
+    # editors. The last step is to connect the signal.
+    mainWindow.onProjectChanged( CodimensionProject.CompleteProject )
+    mainWindow.connect( globalData.project, SIGNAL( 'projectChanged' ),
+                        mainWindow.onProjectChanged )
 
     # Launch the user interface
     QTimer.singleShot( 0, launchUserInterface )

@@ -630,13 +630,17 @@ class EditorsManager( QTabWidget ):
             for index in range( self.count() ):
                 if self.widget( index ).getFileName() == fileName:
                     # Found
-                    currentActive = self.currentIndex() == index
+                    if self.currentIndex() == index:
+                        self.history.addCurrent()
                     self.activateTab( index )
                     if lineNo > 0:
-                        self.widget( index ).getEditor().gotoLine( lineNo )
-                    if currentActive:
-                        self.history.addCurrent()
+                        firstVisible = lineNo - 2
+                        if firstVisible <= 0:
+                            firstVisible = 1
+                        self.__restorePosition( self.widget( index ).getEditor(),
+                                                lineNo - 1, 0, firstVisible - 1 )
                     return True
+
             # Not found - create a new one
             newWidget = TextEditorTabWidget( self )
             editor = newWidget.getEditor()
@@ -645,16 +649,6 @@ class EditorsManager( QTabWidget ):
             newWidget.setFileName( fileName )
             editor.setModified( False )
             fileType = detectFileType( newWidget.getShortName() )
-
-            # Read only
-            if lineNo > 0:
-                editor.gotoLine( lineNo )
-            else:
-                # Restore the last position
-                line, pos, firstVisible = \
-                            Settings().filePositions.getPosition( fileName )
-                if line != -1:
-                    self.__restorePosition( editor, line, pos, firstVisible )
 
             if self.widget( 0 ) == self.__welcomeWidget:
                 # It is the only welcome widget on the screen
@@ -667,6 +661,20 @@ class EditorsManager( QTabWidget ):
             self.insertTab( 0, newWidget, getFileIcon( fileType ),
                             newWidget.getShortName() )
             self.activateTab( 0 )
+
+            if lineNo > 0:
+                # Jump to the asked line
+                firstVisible = lineNo - 2
+                if firstVisible <= 0:
+                    firstVisible = 1
+                self.__restorePosition( editor, lineNo - 1, 0, firstVisible - 1 )
+            else:
+                # Restore the last position
+                line, pos, firstVisible = \
+                            Settings().filePositions.getPosition( fileName )
+                if line != -1:
+                    self.__restorePosition( editor, line, pos, firstVisible )
+
             self._updateIconAndTooltip( fileType )
             self.__updateControls()
             self.__connectEditorWidget( newWidget )
