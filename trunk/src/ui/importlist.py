@@ -117,9 +117,11 @@ class ImportListWidget( QFrame ):
 
     def __populate( self, importsList ):
         " Populates the dialogue with imports "
-        headerLabels = QStringList() << \
-                        "Import (" + str( len( importsList ) ) + \
-                        " resolved imports)" << "Path"
+        count = len( importsList )
+        info = str( count ) + " resolved import"
+        if count > 1:
+            info += "s"
+        headerLabels = QStringList() << "Import (" + info + ")" << "Path"
         self.__importList.setHeaderLabels( headerLabels )
         for item in importsList:
             importItem = QTreeWidgetItem( QStringList() << item[ 0 ] \

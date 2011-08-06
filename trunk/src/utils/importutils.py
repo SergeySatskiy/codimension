@@ -25,7 +25,8 @@
 
 import os, os.path
 from utils.fileutils    import detectFileType, PythonFileType, Python3FileType
-from cdmbriefparser     import getBriefModuleInfoFromMemory
+from cdmbriefparser     import getBriefModuleInfoFromMemory, \
+                               getBriefModuleInfoFromFile
 from PyQt4.QtGui        import QApplication
 from utils.globals      import GlobalData
 
@@ -44,13 +45,17 @@ def getImportsList( fileContent ):
 def getImportsInLine( fileContent, lineNumber ):
     " Provides a list of imports in in the given import line "
 
-    result = []
+    imports = []
+    importsWhat = []
     info = getBriefModuleInfoFromMemory( str( fileContent ) )
     for importObj in info.imports:
         if importObj.line == lineNumber:
-            if importObj.name not in result:
-                result.append( importObj.name )
-    return result
+            if importObj.name not in imports:
+                imports.append( importObj.name )
+            for whatObj in importObj.what:
+                if whatObj.name not in importsWhat:
+                    importsWhat.append( whatObj.name )
+    return imports, importsWhat
 
 
 def __scanDir( prefix, path, infoLabel = None ):
@@ -134,4 +139,32 @@ def resolveImport( basePath, importString ):
             return path
 
     return ""
+
+
+def getImportedNameDefinitionLine( path, name ):
+    """ Searches for the given name in the given file and provides its
+        line number. -1 if not found.
+        Only top level names are searched through. """
+    info = None
+    mainWindow = GlobalData().mainWindow
+    widget = mainWindow.getWidgetForFileName( os.path.realpath( path ) )
+    if widget is None:
+        # The file is not opened now
+        info = getBriefModuleInfoFromFile( path )
+    else:
+        editor = widget.getEditor()
+        info = getBriefModuleInfoFromMemory( str( editor.text() ) )
+
+    # Check the object names
+    for classObj in info.classes:
+        if classObj.name == name:
+            return classObj.line
+    for funcObj in info.functions:
+        if funcObj.name == name:
+            return funcObj.line
+    for golbalObj in info.globals:
+        if globalObj.name == name:
+            return globalObj.line
+
+    return -1
 
