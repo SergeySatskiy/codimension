@@ -979,7 +979,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         if isImportLine:
             lineImports, importWhat = getImportsInLine( self.__editor.text(),
                                                         lineNo + 1 )
-            currentWord = self.__editor.getCurrentWord( "." )
+            currentWord = str( self.__editor.getCurrentWord( "." ) )
             if currentWord in lineImports:
                 # The cursor is on some import
                 path = resolveImport( basePath, currentWord )
