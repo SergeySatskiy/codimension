@@ -162,7 +162,7 @@ def getImportedNameDefinitionLine( path, name ):
     for funcObj in info.functions:
         if funcObj.name == name:
             return funcObj.line
-    for golbalObj in info.globals:
+    for globalObj in info.globals:
         if globalObj.name == name:
             return globalObj.line
 
