@@ -299,6 +299,8 @@ class FindReplaceBase( QWidget ):
         self.findNextButton.setEnabled( status )
         self.findPrevButton.setEnabled( status )
 
+        if fromScratch:
+            self._searchSupport.delete( self._editorUUID )
         self._initialiseSearchAttributes( self._editorUUID )
         searchAattributes = self._searchSupport.get( self._editorUUID )
 
