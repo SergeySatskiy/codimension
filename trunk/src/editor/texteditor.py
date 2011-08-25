@@ -462,6 +462,9 @@ class TextEditor( ScintillaWrapper ):
         elif event.key() == Qt.Key_N and Qt.ControlModifier & event.modifiers():
             self.__onHighlight()
             event.accept()
+        elif event.key() == Qt.Key_Backslash and Qt.ControlModifier & event.modifiers():
+            self.__onCompleteFromDocument()
+            event.accept()
         elif event.key() in [ Qt.Key_Left, Qt.Key_Right ] and \
              Qt.AltModifier & event.modifiers():
             event.accept()
@@ -495,6 +498,11 @@ class TextEditor( ScintillaWrapper ):
     def __onHighlight( self ):
         " Triggered when Ctrl+N is clicked "
         self.highlightWord( self.getCurrentWord() )
+        return
+
+    def __onCompleteFromDocument( self ):
+        " Triggered when Ctrl+\\ is clicked "
+        self.autoCompleteFromDocument()
         return
 
     def isImportLine( self ):

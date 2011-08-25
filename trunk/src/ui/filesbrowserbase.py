@@ -51,7 +51,7 @@ from viewitems          import DirectoryItemType, SysPathItemType, \
                                TreeViewInstanceAttributesItem, \
                                TreeViewAttributeItem
 from utils.fileutils    import CodimensionProjectFileType, \
-                               BrokenSymlinkFileType, PixmapFileType, \
+                               BrokenSymlinkFileType, \
                                PythonFileType, Python3FileType
 from itemdelegates      import NoOutlineHeightDelegate
 from parsererrors       import ParserErrorsDialog
@@ -453,7 +453,7 @@ class FilesBrowser( QTreeView ):
             else:
                 infoSrc = GlobalData().briefModinfoCache
             info = infoSrc.get( fileName )
-            if len( info.errors ) == 0:
+            if info.isOK:
                 icon = PixmapCache().getIcon( 'filepython.png' )
             else:
                 icon = PixmapCache().getIcon( 'filepythonbroken.png' )
@@ -493,7 +493,8 @@ class FilesBrowser( QTreeView ):
 
         if treeItem.itemType in [ DirectoryItemType, SysPathItemType ]:
             for i in treeItem.childItems:
-                if i.itemType in [ DirectoryItemType, SysPathItemType, FileItemType ]:
+                if i.itemType in [ DirectoryItemType,
+                                   SysPathItemType, FileItemType ]:
                     self.__walkTreeAndUpdate( i, path, icon, info )
 
         if treeItem.itemType == FileItemType:
@@ -503,86 +504,92 @@ class FilesBrowser( QTreeView ):
                 self.__signalItemUpdated( treeItem )
 
                 # Update content if populated
-                hadCoding = False
-                hadGlobals = False
-                hadImports = False
-                hadFunctions = False
-                hadClasses = False
-                itemsToRemove = []
-                for fileChildItem in treeItem.childItems:
-                    if fileChildItem.itemType == CodingItemType:
-                        hadCoding = True
-                        if info.encoding is None:
-                            itemsToRemove.append( fileChildItem )
-                        else:
-                            fileChildItem.updateData( info.encoding )
-                            self.__signalItemUpdated( fileChildItem )
-                        continue
-                    elif fileChildItem.itemType == GlobalsItemType:
-                        hadGlobals = True
-                        if len( info.globals ) == 0:
-                            itemsToRemove.append( fileChildItem )
-                        else:
-                            fileChildItem.updateData( info )
-                            self.__updateGlobalsItem( fileChildItem, info.globals )
-                        continue
-                    elif fileChildItem.itemType == ImportsItemType:
-                        hadImports = True
-                        if len( info.imports ) == 0:
-                            itemsToRemove.append( fileChildItem )
-                        else:
-                            fileChildItem.updateData( info )
-                            self.__updateImportsItem( fileChildItem, info.imports )
-                        continue
-                    elif fileChildItem.itemType == FunctionsItemType:
-                        hadFunctions = True
-                        if len( info.functions ) == 0:
-                            itemsToRemove.append( fileChildItem )
-                        else:
-                            fileChildItem.updateData( info )
-                            self.__updateFunctionsItem( fileChildItem, info.functions )
-                        continue
-                    elif fileChildItem.itemType == ClassesItemType:
-                        hadClasses = True
-                        if len( info.classes ) == 0:
-                            itemsToRemove.append( fileChildItem )
-                        else:
-                            fileChildItem.updateData( info )
-                            self.__updateClassesItem( fileChildItem, info.classes )
-                        continue
+                self.updateFileItem( treeItem, info )
+        return
 
-                for item in itemsToRemove:
-                    self.__removeTreeItem( item )
+    def updateFileItem( self, treeItem, info ):
+        " Updates the file item recursively "
+        hadCoding = False
+        hadGlobals = False
+        hadImports = False
+        hadFunctions = False
+        hadClasses = False
+        itemsToRemove = []
+        for fileChildItem in treeItem.childItems:
+            if fileChildItem.itemType == CodingItemType:
+                hadCoding = True
+                if info.encoding is None:
+                    itemsToRemove.append( fileChildItem )
+                else:
+                    fileChildItem.updateData( info.encoding )
+                    self.__signalItemUpdated( fileChildItem )
+                continue
+            elif fileChildItem.itemType == GlobalsItemType:
+                hadGlobals = True
+                if len( info.globals ) == 0:
+                    itemsToRemove.append( fileChildItem )
+                else:
+                    fileChildItem.updateData( info )
+                    self.__updateGlobalsItem( fileChildItem, info.globals )
+                continue
+            elif fileChildItem.itemType == ImportsItemType:
+                hadImports = True
+                if len( info.imports ) == 0:
+                    itemsToRemove.append( fileChildItem )
+                else:
+                    fileChildItem.updateData( info )
+                    self.__updateImportsItem( fileChildItem, info.imports )
+                continue
+            elif fileChildItem.itemType == FunctionsItemType:
+                hadFunctions = True
+                if len( info.functions ) == 0:
+                    itemsToRemove.append( fileChildItem )
+                else:
+                    fileChildItem.updateData( info )
+                    self.__updateFunctionsItem( fileChildItem, info.functions )
+                continue
+            elif fileChildItem.itemType == ClassesItemType:
+                hadClasses = True
+                if len( info.classes ) == 0:
+                    itemsToRemove.append( fileChildItem )
+                else:
+                    fileChildItem.updateData( info )
+                    self.__updateClassesItem( fileChildItem, info.classes )
+                continue
 
-                if not hadCoding and treeItem.populated and \
-                   info.encoding is not None:
-                    # Coding item appeared, so we need to add it
-                    newItem = TreeViewCodingItem( treeItem, info.encoding )
-                    self.__addTreeItem( treeItem, newItem )
+        for item in itemsToRemove:
+            self.__removeTreeItem( item )
 
-                if not hadGlobals and treeItem.populated and \
-                   len( info.globals ) > 0:
-                    # Globals item appeared, so we need to add it
-                    newItem = TreeViewGlobalsItem( treeItem, info )
-                    self.__addTreeItem( treeItem, newItem )
+        if not hadCoding and treeItem.populated and \
+           info.encoding is not None:
+            # Coding item appeared, so we need to add it
+            newItem = TreeViewCodingItem( treeItem, info.encoding )
+            self.__addTreeItem( treeItem, newItem )
 
-                if not hadImports and treeItem.populated and \
-                   len( info.imports ) > 0:
-                    # Imports item appeared, so we need to add it
-                    newItem = TreeViewImportsItem( treeItem, info )
-                    self.__addTreeItem( treeItem, newItem )
+        if not hadGlobals and treeItem.populated and \
+           len( info.globals ) > 0:
+            # Globals item appeared, so we need to add it
+            newItem = TreeViewGlobalsItem( treeItem, info )
+            self.__addTreeItem( treeItem, newItem )
 
-                if not hadFunctions and treeItem.populated and \
-                   len( info.functions ) > 0:
-                    # Functions item appeared, so we need to add it
-                    newItem = TreeViewFunctionsItem( treeItem, info )
-                    self.__addTreeItem( treeItem, newItem )
+        if not hadImports and treeItem.populated and \
+           len( info.imports ) > 0:
+            # Imports item appeared, so we need to add it
+            newItem = TreeViewImportsItem( treeItem, info )
+            self.__addTreeItem( treeItem, newItem )
 
-                if not hadClasses and treeItem.populated and \
-                   len( info.classes ) > 0:
-                    # Classes item appeared, so we need to add it
-                    newItem = TreeViewClassesItem( treeItem, info )
-                    self.__addTreeItem( treeItem, newItem )
+        if not hadFunctions and treeItem.populated and \
+           len( info.functions ) > 0:
+            # Functions item appeared, so we need to add it
+            newItem = TreeViewFunctionsItem( treeItem, info )
+            self.__addTreeItem( treeItem, newItem )
+
+        if not hadClasses and treeItem.populated and \
+           len( info.classes ) > 0:
+            # Classes item appeared, so we need to add it
+            newItem = TreeViewClassesItem( treeItem, info )
+            self.__addTreeItem( treeItem, newItem )
+
         return
 
     def __updateGlobalsItem( self, treeItem, globalsObj ):
@@ -637,7 +644,8 @@ class FilesBrowser( QTreeView ):
                     # No need to send the update signal because the name is
                     # still the same, but need to update the importwhat items
                     # if so
-                    self.__updateSingleImportItem( importItem, importsCopy[ index ] )
+                    self.__updateSingleImportItem( importItem,
+                                                   importsCopy[ index ] )
                     del importsCopy[ index ]
                     break
             if not found:
@@ -844,7 +852,8 @@ class FilesBrowser( QTreeView ):
                     if methodCopy[ index ].name == name:
                         found = True
                         classChildItem.updateData( methodCopy[ index ] )
-                        # arguments could be changed, so send change notification
+                        # arguments could be changed,
+                        # so send change notification
                         self.__signalItemUpdated( classChildItem )
                         self.__updateSingleFunctionItem( classChildItem,
                                                          methodCopy[ index ] )

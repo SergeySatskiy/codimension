@@ -155,7 +155,7 @@ class ProjectViewer( QWidget ):
                       self.projectTreeView.findInDirectory )
         self.prjShowParsingErrorsButton = QAction( \
                 PixmapCache().getIcon( 'showparsingerrors.png' ),
-                'Show parsing errors', self )
+                'Show lexer/parser errors', self )
         self.connect( self.prjShowParsingErrorsButton, SIGNAL( "triggered()" ),
                       self.showPrjParserError )
         self.prjNewDirButton = QAction( \
@@ -269,7 +269,7 @@ class ProjectViewer( QWidget ):
                 'Find in this directory', self.projectTreeView.findInDirectory )
         self.prjDirCopyPathAct = self.prjDirMenu.addAction( \
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
-                'Copy Path to Clipboard', self.projectTreeView.copyToClipboard )
+                'Copy path to clipboard', self.projectTreeView.copyToClipboard )
         self.prjDirMenu.addSeparator()
         self.prjDirRemoveFromProjectAct = self.prjDirMenu.addAction( \
                 PixmapCache().getIcon( 'removedirfromproject.png' ),
@@ -298,10 +298,10 @@ class ProjectViewer( QWidget ):
         self.prjFileMenu.addSeparator()
         self.prjFileCopyPathAct = self.prjFileMenu.addAction( \
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
-                'Copy Path to Clipboard', self.projectTreeView.copyToClipboard )
+                'Copy path to clipboard', self.projectTreeView.copyToClipboard )
         self.prjFileShowErrorsAct = self.prjFileMenu.addAction( \
                 PixmapCache().getIcon( 'showparsingerrors.png' ),
-                'Show Parsing Errors', self.showPrjParserError )
+                'Show lexer/parser errors', self.showPrjParserError )
         self.prjFileMenu.addSeparator()
         self.prjFileRemoveFromDiskAct = self.prjFileMenu.addAction( \
                 PixmapCache().getIcon( 'trash.png' ),
@@ -370,7 +370,7 @@ class ProjectViewer( QWidget ):
                       self.removeToplevelDir )
         self.fsShowParsingErrorsButton = QAction( \
                 PixmapCache().getIcon( 'showparsingerrors.png' ),
-                'Show parsing errors', self )
+                'Show lexer/parser errors', self )
         self.connect( self.fsShowParsingErrorsButton, SIGNAL( "triggered()" ),
                       self.showFsParserError )
         self.fsCopyToClipboardButton = QAction( \
@@ -427,7 +427,7 @@ class ProjectViewer( QWidget ):
                 'Copy Path to Clipboard', self.filesystemView.copyToClipboard )
         self.fsFileShowErrorsAct = self.fsFileMenu.addAction( \
                 PixmapCache().getIcon( 'showparsingerrors.png' ),
-                'Show Parsing Errors', self.showFsParserError )
+                'Show lexer/parser errors', self.showFsParserError )
         self.fsFileMenu.addSeparator()
         self.fsFileRemoveAct = self.fsFileMenu.addAction( \
                 PixmapCache().getIcon( 'trash.png' ),

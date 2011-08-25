@@ -105,7 +105,8 @@ class EditorsManager( QTabWidget ):
 
         # Context menu
         self.__tabContextMenu = QMenu( self )
-        self.__tabContextMenu.addAction( PixmapCache().getIcon( "copytoclipboard.png" ),
+        self.__tabContextMenu.addAction( PixmapCache().getIcon( \
+                                                       "copytoclipboard.png" ),
                                          "Copy path to clipboard",
                                          self.__copyTabPath )
         self.tabBar().setContextMenuPolicy( Qt.CustomContextMenu )
@@ -688,6 +689,20 @@ class EditorsManager( QTabWidget ):
             logging.error( str( exc ) )
             return False
         return True
+
+    def gotoInBuffer( self, uuid, lineNo ):
+        " Jumps to the given line in the current buffer if it matches uuid "
+        widget = self.currentWidget()
+        if widget.getUUID() != uuid:
+            return
+        self.history.addCurrent()
+        firstVisible = lineNo - 2
+        if firstVisible <= 0:
+            firstVisible = 1
+        self.__restorePosition( widget.getEditor(),
+                                lineNo - 1, 0, firstVisible - 1 )
+        widget.setFocus()
+        return
 
     def __onOpen( self ):
         " Triggered when Ctrl+O received "
@@ -1313,6 +1328,12 @@ class EditorsManager( QTabWidget ):
                 return index
             index -= 1
         return -1
+
+    def getWidgetByIndex( self, index ):
+        " Provides the widget for the given index on None "
+        if index >= self.count():
+            return None
+        return self.widget( index )
 
     def getWidgetForFileName( self, fname ):
         " Provides the widget found by the given file name "

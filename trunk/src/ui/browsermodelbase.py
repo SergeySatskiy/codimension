@@ -75,6 +75,8 @@ class BrowserModelBase( QAbstractItemModel ):
     def updateRootData( self, column, value ):
         " Updates the root entry, i.e. header "
         self.rootItem.setData( column, value )
+        self.emit( SIGNAL( "headerDataChanged(Qt::Orientation, int, int)" ),
+                   Qt.Horizontal, column, column )
         return
 
     def data( self, index, role ):
@@ -303,14 +305,15 @@ class BrowserModelBase( QAbstractItemModel ):
                         if modInfo.docstring is not None:
                             node.toolTip = modInfo.docstring.text
 
-                        if len( modInfo.errors ) > 0:
+                        if modInfo.isOK == False:
                             # Substitute icon and change the tooltip
                             node.icon = PixmapCache().getIcon( \
                                                 'filepythonbroken.png' )
                             if node.toolTip != "":
                                 node.toolTip += "\n\n"
                             node.toolTip += "Parsing errors:\n" + \
-                                            "\n".join( modInfo.errors )
+                                            "\n".join( modInfo.lexerErrors + \
+                                                       modInf.errors )
                             node.parsingErrors = True
 
                         if modInfo.encoding is None and \

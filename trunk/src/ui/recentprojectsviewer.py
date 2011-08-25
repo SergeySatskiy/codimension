@@ -167,7 +167,7 @@ class RecentFileViewItem( QTreeWidgetItem ):
                 self.setToolTip( 1, info.docstring.text )
             else:
                 self.setToolTip( 1, "" )
-            if len( info.errors ) == 0:
+            if info.isOK:
                 self.setIcon( 0,
                               PixmapCache().getIcon( 'filepython.png' ) )
             else:
