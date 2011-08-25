@@ -134,11 +134,6 @@ class ProjectViewer( QWidget ):
         headerFrame.setLayout( headerLayout )
 
         # Toolbar part - buttons
-        self.prjDefinitionButton = QAction( \
-                PixmapCache().getIcon( 'definition.png' ),
-                'Jump to the definition of the highlighted item', self )
-        self.connect( self.prjDefinitionButton, SIGNAL( "triggered()" ),
-                      self.projectTreeView.openSelectedItem )
         self.prjFindWhereUsedButton = QAction( \
                 PixmapCache().getIcon( 'findusage.png' ),
                 'Find where the highlighted item is used', self )
@@ -188,7 +183,6 @@ class ProjectViewer( QWidget ):
         upperToolbar.setIconSize( QSize( 16, 16 ) )
         upperToolbar.setFixedHeight( 28 )
         upperToolbar.setContentsMargins( 0, 0, 0, 0 )
-        upperToolbar.addAction( self.prjDefinitionButton )
         upperToolbar.addAction( self.prjFindWhereUsedButton )
         upperToolbar.addAction( self.prjFindInDirButton )
         upperToolbar.addAction( self.prjShowParsingErrorsButton )
@@ -224,10 +218,6 @@ class ProjectViewer( QWidget ):
 
         # popup menu for python files content
         self.prjPythonMenu = QMenu( self )
-        self.prjDefinitionAct = self.prjPythonMenu.addAction( \
-            PixmapCache().getIcon( 'definition.png' ),
-            'Jump to definition', self.projectTreeView.openSelectedItem )
-        self.prjPythonMenu.addSeparator()
         self.prjUsageAct = self.prjPythonMenu.addAction( \
             PixmapCache().getIcon( 'findusage.png' ),
             'Find where used', self.__findWhereUsed )
@@ -572,7 +562,6 @@ class ProjectViewer( QWidget ):
     def __updatePrjToolbarButtons( self ):
         " Updates the toolbar buttons depending on the __prjContextItem "
 
-        self.prjDefinitionButton.setEnabled( False )
         self.prjFindWhereUsedButton.setEnabled( False )
         self.prjFindInDirButton.setEnabled( False )
         self.prjShowParsingErrorsButton.setEnabled( False )
@@ -614,13 +603,6 @@ class ProjectViewer( QWidget ):
                 self.prjShowParsingErrorsButton.setEnabled( \
                                 self.__prjContextItem.parsingErrors )
 
-        if self.__prjContextItem.itemType in [ CodingItemType, ImportItemType,
-                                               FunctionItemType, ClassItemType,
-                                               DecoratorItemType,
-                                               AttributeItemType,
-                                               GlobalItemType,
-                                               ImportWhatItemType ]:
-            self.prjDefinitionButton.setEnabled( True )
         if self.__prjContextItem.itemType in [ FunctionItemType, ClassItemType,
                                                AttributeItemType,
                                                GlobalItemType ]:
@@ -713,8 +695,6 @@ class ProjectViewer( QWidget ):
                 return
 
         # Update the menu items status
-        self.prjDefinitionAct.setEnabled( \
-                self.prjDefinitionButton.isEnabled() )
         self.prjUsageAct.setEnabled( \
                 self.prjFindWhereUsedButton.isEnabled() )
         self.prjCopyAct.setEnabled( \
