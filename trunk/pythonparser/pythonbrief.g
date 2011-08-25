@@ -162,8 +162,10 @@ single_input    : NEWLINE
                 | compound_stmt NEWLINE
                 ;
 
-file_input      : EOF | ( NEWLINE | stmt )*
+file_input      : EOF
+                | ( NEWLINE | stmt )*
                     -> stmt*
+                | COMMENT EOF
                 ;
 
 eval_input      : NEWLINE*  testlist  NEWLINE*
@@ -494,7 +496,13 @@ factor          : '+'^ factor
 power           : atom  trailer*  ( options { greedy = true; } : DOUBLESTAR factor )?
                 ;
 
-atom            : LPAREN ( yield_expr -> yield_expr | testlist_comp -> testlist_comp )? RPAREN
+// Attention: the sequence of rules is very important.
+//            If the rule 'LPAREN RPAREN' is moved down - the 'a = ()'
+//            statement will not be recognised.
+//            And I still don't understand why the second rule does not work
+//            for the first 'special case'.
+atom            : LPAREN RPAREN
+                | LPAREN ( yield_expr -> yield_expr | testlist_comp -> testlist_comp )? RPAREN
                 | LBRACK listmaker? RBRACK
                     -> ^( LIST )
                 | LCURLY dictorsetmaker? RCURLY

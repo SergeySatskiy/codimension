@@ -1,4 +1,4 @@
 
 unittest/wrong_indent.py(0)  : error 3 : , at offset -1
-    near [Index: 0 (Start: 0-Stop: 0) ='    ', type<97> Line: 0 LinePos:-1]
+    near [Index: 0 (Start: 0-Stop: 0) ='    ', type<98> Line: 0 LinePos:-1]
      : cannot match to any predicted input...

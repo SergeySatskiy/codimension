@@ -197,6 +197,20 @@ class CDMBriefParserTest( unittest.TestCase ):
                          "wrong indent test failed" )
         return
 
+    def test_one_comment( self ):
+        " Test for a file which consists of a single comment line "
+
+        self.meat( self.dir + "one_comment.py",
+                   "one comment line test failed" )
+        return
+
+    def test_empty_brackets( self ):
+        " Test for empty brackets "
+
+        self.meat( self.dir + "empty_brackets.py",
+                   "empty brackets test failed" )
+        return
+
 
 # Run the unit tests
 if __name__ == '__main__':
