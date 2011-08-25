@@ -87,7 +87,8 @@ class PylintViewer( QWidget ):
         else:
             self.__noneLabel = QLabel( "Pylint is not available" )
 
-        self.__noneLabel.setFrameShape( QFrame.StyledPanel )
+#        self.__noneLabel.setFrameShape( QFrame.StyledPanel )
+        self.__noneLabel.setFrameShape( QFrame.NoFrame )
         self.__noneLabel.setAlignment( Qt.AlignHCenter )
         self.__headerFont = self.__noneLabel.font()
         self.__headerFont.setPointSize( self.__headerFont.pointSize() + 4 )
@@ -147,9 +148,11 @@ class PylintViewer( QWidget ):
         self.__vLayout.setSizeConstraint( QLayout.SetFixedSize )
 
         self.__bodyFrame = QFrame( self )
-        self.__bodyFrame.setFrameShape( QFrame.StyledPanel )
+#        self.__bodyFrame.setFrameShape( QFrame.StyledPanel )
+        self.__bodyFrame.setFrameShape( QFrame.NoFrame )
+
 #        self.__bodyFrame.setSizePolicy( QSizePolicy.Maximum,
-#                                         QSizePolicy.Expanding )
+#                                        QSizePolicy.Expanding )
         self.__bodyFrame.setLayout( self.__vLayout )
         self.bodyWidget = QScrollArea( self )
         self.bodyWidget.setFocusPolicy( Qt.NoFocus )
