@@ -78,6 +78,7 @@ struct instanceCallbacks
     PyObject *      onArgument;
     PyObject *      onBaseClass;
     PyObject *      onError;
+    PyObject *      onLexerError;
 };
 
 /* Forward declaration */
@@ -90,10 +91,10 @@ void walk( pANTLR3_BASE_TREE            tree,
 
 
 #define GET_CALLBACK( name )                                                \
-    callbacks->name = PyObject_GetAttrString( instance, #name );            \
+    callbacks->name = PyObject_GetAttrString( instance, "_" #name );        \
     if ( (! callbacks->name) || (! PyCallable_Check(callbacks->name)) )     \
     {                                                                       \
-        PyErr_SetString( PyExc_TypeError, "Cannot get " #name "method" );   \
+        PyErr_SetString( PyExc_TypeError, "Cannot get _" #name "method" );  \
         return 1;                                                           \
     }
 
@@ -118,6 +119,7 @@ getInstanceCallbacks( PyObject *                  instance,
     GET_CALLBACK( onArgument );
     GET_CALLBACK( onBaseClass );
     GET_CALLBACK( onError );
+    GET_CALLBACK( onLexerError );
 
     return 0;
 }
@@ -1001,6 +1003,104 @@ void onError( pANTLR3_BASE_RECOGNIZER    recognizer,
 }
 
 
+// The function is taken from the libantlr3 and modified to collect the message
+// in a buffer and then call the python onLexerError callback.
+// Original function: antlr3lexer.c:407 displayRecognitionError(...)
+void
+onLexerError( pANTLR3_BASE_RECOGNIZER   recognizer,
+              pANTLR3_UINT8 *           tokenNames)
+{
+    pANTLR3_LEXER           lexer;
+    pANTLR3_EXCEPTION       ex;
+    pANTLR3_STRING          ftext;
+
+    size_t                  buffer_size = 4096;
+    char                    buffer[ buffer_size ];
+    size_t                  length = 0;
+
+    lexer = (pANTLR3_LEXER)(recognizer->super);
+    ex    = lexer->rec->state->exception;
+
+    // See if there is a 'filename' we can use
+    //
+    if (ex->name == NULL)
+    {
+        length = snprintf( buffer, buffer_size, "-unknown source-(" );
+    }
+    else
+    {
+        ftext = ex->streamName->to8(ex->streamName);
+        length = snprintf( buffer, buffer_size, "%s(", ftext->chars );
+    }
+
+    if ( length < buffer_size )
+        length += snprintf( buffer + length, buffer_size - length, "%d) ",
+                            recognizer->state->exception->line);
+    if ( length < buffer_size )
+        length += snprintf( buffer + length, buffer_size - length,
+                            ": lexer error %d :\n\t%s at offset %d, ",
+                            ex->type,
+                            (pANTLR3_UINT8)(ex->message),
+                            ex->charPositionInLine + 1 );
+    {
+        ANTLR3_INT32    width;
+
+        width = ANTLR3_UINT32_CAST(( (pANTLR3_UINT8)(lexer->input->data) +
+                                     (lexer->input->size(lexer->input) )) -
+                                     (pANTLR3_UINT8)(ex->index));
+
+        if (width >= 1)
+        {
+            if (isprint(ex->c))
+            {
+                if ( length < buffer_size )
+                    length += snprintf( buffer + length, buffer_size - length,
+                                        "near '%c' :\n", ex->c );
+            }
+            else
+            {
+                if ( length < buffer_size )
+                    length += snprintf( buffer + length, buffer_size - length,
+                                        "near char(%#02X) :\n", (ANTLR3_UINT8)(ex->c) );
+            }
+            if ( length < buffer_size )
+                length += snprintf( buffer + length, buffer_size - length,
+                                    "\t%.*s\n", width > 20 ? 20 : width ,((pANTLR3_UINT8)ex->index) );
+        }
+        else
+        {
+            if ( length < buffer_size )
+                length += snprintf( buffer + length, buffer_size - length,
+                                    "(end of input).\n\t This indicates a poorly specified lexer RULE\n\t or unterminated input element such as: \"STRING[\"]\n");
+            if ( length < buffer_size )
+                length += snprintf( buffer + length, buffer_size - length,
+                                    "\t The lexer was matching from line %d, offset %d, which\n\t ",
+                                   (ANTLR3_UINT32)(lexer->rec->state->tokenStartLine),
+                                   (ANTLR3_UINT32)(lexer->rec->state->tokenStartCharPositionInLine) );
+            width = ANTLR3_UINT32_CAST(((pANTLR3_UINT8)(lexer->input->data)+(lexer->input->size(lexer->input))) - (pANTLR3_UINT8)(lexer->rec->state->tokenStartCharIndex));
+
+            if (width >= 1)
+            {
+                if ( length < buffer_size )
+                    length += snprintf( buffer + length, buffer_size - length,
+                                        "looks like this:\n\t\t%.*s\n", width > 20 ? 20 : width ,(pANTLR3_UINT8)(lexer->rec->state->tokenStartCharIndex));
+            }
+            else
+            {
+                if ( length < buffer_size )
+                    length += snprintf( buffer + length, buffer_size - length,
+                                        "is also the end of the line, so you must check your lexer rules\n");
+            }
+        }
+    }
+
+    if ( recognizer->userData != NULL )
+    {
+        PyObject_CallFunction( (PyObject *)(recognizer->userData), "s", buffer );
+    }
+}
+
+
 static PyObject *
 parse_input( pANTLR3_INPUT_STREAM           input,
              struct instanceCallbacks *     callbacks )
@@ -1043,6 +1143,9 @@ parse_input( pANTLR3_INPUT_STREAM           input,
 
     /* Memorize callbacks for coding and errors */
     lxr->onEncoding = callbacks->onEncoding;
+
+    lxr->pLexer->rec->userData = callbacks->onLexerError;
+    lxr->pLexer->rec->displayRecognitionError = onLexerError;
     psr->pParser->rec->userData = callbacks->onError;
     psr->pParser->rec->displayRecognitionError = onError;
 
@@ -1071,8 +1174,7 @@ parse_input( pANTLR3_INPUT_STREAM           input,
     {
         // This is a fallback which should not happened
         PyObject_CallFunction( callbacks->onError, "s",
-                               "Unknown error. You may send the file which "
-                               "caused the error to sergey.satskiy@gmail.com" );
+                               "Unknown error." );
         unknownError = 0;
     }
 

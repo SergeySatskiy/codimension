@@ -335,6 +335,7 @@ class BriefModuleInfo:
         self.functions = []
         self.classes = []
         self.errors = []
+        self.lexerErrors = []
 
         self.objectsStack = []
         self.__lastImport = None
@@ -401,12 +402,12 @@ class BriefModuleInfo:
 
         return
 
-    def onEncoding( self, encString, line ):
+    def _onEncoding( self, encString, line ):
         " Memorizes module encoding "
         self.encoding = Encoding( encString, line )
         return
 
-    def onGlobal( self, name, line, level ):
+    def _onGlobal( self, name, line, level ):
         " Memorizes a global variable "
 
         # level is ignored
@@ -416,26 +417,26 @@ class BriefModuleInfo:
         self.globals.append( Global( name, line ) )
         return
 
-    def onClass( self, name, line, level ):
+    def _onClass( self, name, line, level ):
         " Memorizes a class "
         self.__flushLevel( level )
         self.objectsStack.append( Class( name, line ) )
         return
 
-    def onFunction( self, name, line, level ):
+    def _onFunction( self, name, line, level ):
         " Memorizes a function "
         self.__flushLevel( level )
         self.objectsStack.append( Function( name, line ) )
         return
 
-    def onImport( self, name, line ):
+    def _onImport( self, name, line ):
         " Memorizes an import "
         if self.__lastImport is not None:
             self.imports.append( self.__lastImport )
         self.__lastImport = Import( name, line )
         return
 
-    def onAs( self, name ):
+    def _onAs( self, name ):
         " Memorizes an alias for an import or an imported item "
         if len( self.__lastImport.what ) == 0:
             self.__lastImport.alias = name
@@ -444,12 +445,12 @@ class BriefModuleInfo:
             self.__lastImport.what[ lastIndex ].alias = name
         return
 
-    def onWhat( self, name, line ):
+    def _onWhat( self, name, line ):
         " Memorizes an imported item "
         self.__lastImport.what.append( ImportWhat( name, line ) )
         return
 
-    def onClassAttribute( self, name, line, level ):
+    def _onClassAttribute( self, name, line, level ):
         " Memorizes a class attribute "
         # A class must be on the top of the stack
         attributes = self.objectsStack[ level ].classAttributes
@@ -459,7 +460,7 @@ class BriefModuleInfo:
         attributes.append( ClassAttribute( name, line ) )
         return
 
-    def onInstanceAttribute( self, name, line, level ):
+    def _onInstanceAttribute( self, name, line, level ):
         " Memorizes a class instance attribute "
         # Instance attributes may appear in member functions only so we already
         # have a function on the stack of objects. To get the class object one
@@ -471,21 +472,21 @@ class BriefModuleInfo:
         attributes.append( InstanceAttribute( name, line ) )
         return
 
-    def onDecorator( self, name, line ):
+    def _onDecorator( self, name, line ):
         " Memorizes a function or a class decorator "
         # A class or a function must be on the top of the stack
         index = len( self.objectsStack ) - 1
         self.objectsStack[ index ].decorators.append( Decorator( name, line ) )
         return
 
-    def onDecoratorArgument( self, name ):
+    def _onDecoratorArgument( self, name ):
         " Memorizes a decorator argument "
         index = len( self.objectsStack ) - 1
         decorIndex = len( self.objectsStack[ index ].decorators ) - 1
         self.objectsStack[ index ].decorators[ decorIndex ].arguments.append( name )
         return
 
-    def onDocstring( self, docstr, line ):
+    def _onDocstring( self, docstr, line ):
         " Memorizes a function/class/module docstring "
         if docstr.startswith( "'''" ) or docstr.startswith( '"""' ):
             docstr = docstr[ 3:-3 ]
@@ -499,26 +500,32 @@ class BriefModuleInfo:
                              Docstring( trim_docstring( docstr ), line )
         return
 
-    def onArgument( self, name ):
+    def _onArgument( self, name ):
         " Memorizes a function argument "
         index = len( self.objectsStack ) - 1
         self.objectsStack[ index ].arguments.append( name )
         return
 
-    def onBaseClass( self, name ):
+    def _onBaseClass( self, name ):
         " Memorizes a class base class "
         # A class must be on the top of the stack
         index = len( self.objectsStack ) - 1
         self.objectsStack[ index ].base.append( name )
         return
 
-    def onError( self, message ):
-        " Memorizies an error message "
+    def _onError( self, message ):
+        " Memorizies a parser error message "
         self.isOK = False
         if message.strip() != "":
             self.errors.append( message )
         return
 
+    def _onLexerError( self, message ):
+        " Memorizes a lexer error message "
+        self.isOK = False
+        if message.strip() != "":
+            self.lexerErrors.append( message )
+        return
 
 
 def getBriefModuleInfoFromFile( fileName ):
