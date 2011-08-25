@@ -348,11 +348,6 @@ class ProjectViewer( QWidget ):
                 'Add directory to the project', self )
         self.connect( self.fsAddDirectoryButton, SIGNAL( "triggered()" ),
                       self.filesystemView.addDirToProject )
-        self.fsOpenItemButton = QAction( \
-                PixmapCache().getIcon( 'openitem.png' ),
-                'Open', self )
-        self.connect( self.fsOpenItemButton, SIGNAL( "triggered()" ),
-                      self.filesystemView.openSelectedItem )
         self.fsFindInDirButton = QAction( \
                 PixmapCache().getIcon( 'findindir.png' ),
                 'Find in highlighted directory', self )
@@ -395,7 +390,6 @@ class ProjectViewer( QWidget ):
         lowerToolbar.setContentsMargins( 0, 0, 0, 0 )
         lowerToolbar.addAction( self.fsAddDirectoryButton )
         lowerToolbar.addWidget( fixedSpacer )
-        lowerToolbar.addAction( self.fsOpenItemButton )
         lowerToolbar.addAction( self.fsFindInDirButton )
         lowerToolbar.addAction( self.fsAddTopLevelDirButton )
         lowerToolbar.addAction( self.fsRemoveTopLevelDirButton )
@@ -542,7 +536,6 @@ class ProjectViewer( QWidget ):
         " Updates the toolbar buttons depending on the __fsContextItem "
 
         self.fsAddDirectoryButton.setEnabled( False )
-        self.fsOpenItemButton.setEnabled( False )
         self.fsFindInDirButton.setEnabled( False )
         self.fsAddTopLevelDirButton.setEnabled( False )
         self.fsRemoveTopLevelDirButton.setEnabled( False )
@@ -558,13 +551,8 @@ class ProjectViewer( QWidget ):
                       ClassesItemType, StaticAttributesItemType,
                       InstanceAttributesItemType ]:
             self.fsCopyToClipboardButton.setEnabled( True )
-            self.fsOpenItemButton.setEnabled( True )
-            if self.__fsContextItem.itemType == FileItemType and \
-               self.__fsContextItem.fileType == BrokenSymlinkFileType:
-                self.fsOpenItemButton.setEnabled( False )
 
         if self.__fsContextItem.itemType == DirectoryItemType:
-            self.fsOpenItemButton.setEnabled( False )
             self.fsFindInDirButton.setEnabled( True )
             globalData = GlobalData()
             if globalData.project.fileName != "":
@@ -810,6 +798,7 @@ class ProjectViewer( QWidget ):
         return
 
     def __findWhereUsed( self ):
+        " Triggers analysis where the highlighted item is used "
 
         return
 
