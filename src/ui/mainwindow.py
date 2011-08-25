@@ -43,6 +43,7 @@ from globalsviewer              import GlobalsViewer
 from classesviewer              import ClassesViewer
 from recentprojectsviewer       import RecentProjectsViewer
 from projectviewer              import ProjectViewer
+from outline                    import FileOutlineViewer
 from editorsmanager             import EditorsManager
 from linecounter                import LineCounterDialog
 from projectproperties          import ProjectPropertiesDialog
@@ -143,6 +144,7 @@ class CodimensionMainWindow( QMainWindow ):
         splash.showMessage( "Creating layout..." )
         self.__leftSideBar = None
         self.__bottomSideBar = None
+        self.__rightSideBar = None
 
         # Setup output redirectors
         sys.stdout = Redirector( True )
@@ -210,6 +212,7 @@ class CodimensionMainWindow( QMainWindow ):
         " Triggered when F11 is pressed "
         self.__leftSideBar.shrink()
         self.__bottomSideBar.shrink()
+        self.__rightSideBar.shrink()
         return
 
     def __createLayout( self, settings ):
@@ -223,6 +226,7 @@ class CodimensionMainWindow( QMainWindow ):
         # The layout is a sidebar-style one
         self.__bottomSideBar = SideBar( SideBar.South, self )
         self.__leftSideBar   = SideBar( SideBar.West, self )
+        self.__rightSideBar = SideBar( SideBar.East, self )
 
         # Create tabs on bars
         self.__logViewer = LogViewer()
@@ -326,12 +330,19 @@ class CodimensionMainWindow( QMainWindow ):
                                      PixmapCache().getIcon( 'findindir.png' ),
                                      'Search results' )
 
+        # Create outline viewer
+        self.__outlineViewer = FileOutlineViewer( self.editorsManagerWidget.editorsManager )
+        self.__rightSideBar.addTab( self.__outlineViewer,
+                                    PixmapCache().getIcon( 'filepython.png' ),
+                                    'File outline' )
+
         # Create splitters
         self.__horizontalSplitter = QSplitter( Qt.Horizontal )
         self.__verticalSplitter = QSplitter( Qt.Vertical )
 
         self.__horizontalSplitter.addWidget( self.__leftSideBar )
         self.__horizontalSplitter.addWidget( self.editorsManagerWidget )
+        self.__horizontalSplitter.addWidget( self.__rightSideBar )
 
         self.__verticalSplitter.addWidget( self.__horizontalSplitter )
         self.__verticalSplitter.addWidget( self.__bottomSideBar )
@@ -340,6 +351,7 @@ class CodimensionMainWindow( QMainWindow ):
 
         self.__leftSideBar.setSplitter( self.__horizontalSplitter )
         self.__bottomSideBar.setSplitter( self.__verticalSplitter )
+        self.__rightSideBar.setSplitter( self.__horizontalSplitter )
 
         # restore the side bar state
         self.__horizontalSplitter.setSizes( settings.hSplitterSizes )
@@ -348,6 +360,8 @@ class CodimensionMainWindow( QMainWindow ):
             self.__leftSideBar.shrink()
         if settings.bottomBarMinimized:
             self.__bottomSideBar.shrink()
+        if settings.rightBarMinimized:
+            self.__rightSideBar.shrink()
 
         # Setup splitters movement handlers
         self.connect( self.__verticalSplitter,
@@ -401,6 +415,7 @@ class CodimensionMainWindow( QMainWindow ):
         """ horizontal splitter moved handler """
         hList = list( self.__horizontalSplitter.sizes() )
         self.settings.leftBarMinimized = self.__leftSideBar.isMinimized()
+        self.settings.rightBarMinimized = self.__rightSideBar.isMinimized()
         self.settings.hSplitterSizes = hList
         return
 
@@ -503,18 +518,22 @@ class CodimensionMainWindow( QMainWindow ):
                 PixmapCache().getIcon( 'packagediagram.png' ),
                 'Generate package diagram', self )
         packageDiagramButton.setEnabled( False )
+        packageDiagramButton.setVisible( False )
         applicationDiagramButton = QAction( \
                 PixmapCache().getIcon( 'applicationdiagram.png' ),
                 'Generate application diagram', self )
         applicationDiagramButton.setEnabled( False )
+        applicationDiagramButton.setVisible( False )
         doxygenButton = QAction( \
                 PixmapCache().getIcon( 'doxygen.png' ),
                 'Generate doxygen documentation', self )
         doxygenButton.setEnabled( False )
+        doxygenButton.setVisible( False )
         neverUsedButton = QAction( \
                 PixmapCache().getIcon( 'neverused.png' ),
                 'Analysis for never used variables, functions, classes', self )
         neverUsedButton.setEnabled( False )
+        neverUsedButton.setVisible( False )
 
         # pylint button
         self.__existentPylintRCMenu = QMenu( self )
@@ -801,6 +820,11 @@ class CodimensionMainWindow( QMainWindow ):
         self.editorsManagerWidget.editorsManager.openFile( path, lineNo )
         return
 
+    def gotoInBuffer( self, uuid, lineNo ):
+        " Usually needs when an item is clicked in the file outline browser "
+        self.editorsManagerWidget.editorsManager.gotoInBuffer( uuid, lineNo )
+        return
+
     def openPixmapFile( self, path ):
         " User double clicked on a file "
         self.editorsManagerWidget.editorsManager.openPixmapFile( path )
@@ -890,6 +914,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.settings.hSplitterSizes = list( self.__horizontalSplitter.sizes() )
         self.settings.bottomBarMinimized = self.__bottomSideBar.isMinimized()
         self.settings.leftBarMinimized = self.__leftSideBar.isMinimized()
+        self.settings.rightBarMinimized = self.__rightSideBar.isMinimized()
 
         # Ask the editors manager to close all the editors
         editorsManager = self.editorsManagerWidget.editorsManager

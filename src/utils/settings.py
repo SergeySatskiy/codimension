@@ -37,7 +37,7 @@ _defaultScreenWidth = 0
 _defaultScreenHeight = 0
 _defaultXDelta = 0
 _defaultYDelta = 0
-_defaultHSplitSize = "200, 550"
+_defaultHSplitSize = "200, 450, 575"
 _defaultVSplitSize = "400, 150"
 _defaultFilesFilters = [ "\.svn", "\.cvs", ".*\~$",
                          ".*\.pyc$", ".*\.swp$", ".*\.pyo$" ]
@@ -137,6 +137,9 @@ class Settings( object ):
             self.bottomBarMinimized = self.__getBool( config, 'general',
                                                       'bottomBarMinimized',
                                                       False )
+            self.rightBarMinimized = self.__getBool( config, 'general',
+                                                     'rightBarMinimized',
+                                                     False )
             self.projectLoaded = self.__getBool( config, 'general',
                                                  'projectLoaded',
                                                  _defaultProjectLoaded )
@@ -167,10 +170,10 @@ class Settings( object ):
 
             asString = self.__getStr( config, 'general', 'hSplitterSizes',
                                       _defaultHSplitSize ).split( ',' )
-            if len( asString ) != 2:
+            if len( asString ) != 3:
                 asString = _defaultHSplitSize.split( ',' )
                 self.formatOK = False
-            self.hSplitterSizes = [ int(asString[0]), int(asString[1]) ]
+            self.hSplitterSizes = [ int(asString[0]), int(asString[1]), int(asString[0]) ]
 
             asString = self.__getStr( config, 'general', 'vSplitterSizes',
                                       _defaultVSplitSize ).split( ',' )
@@ -253,7 +256,8 @@ class Settings( object ):
 
             self.leftBarMinimized = False
             self.bottomBarMinimized = False
-            self.hSplitterSizes = [ 200, 550 ]
+            self.rightBarMinimized = False
+            self.hSplitterSizes = [ 200, 450, 550 ]
             self.vSplitterSizes = [ 400, 150 ]
             self.recentProjects = []
             self.projectFilesFilters = _defaultFilesFilters
@@ -339,11 +343,14 @@ class Settings( object ):
                         str( int( self.leftBarMinimized ) ) + "\n" \
                      "bottomBarMinimized=" + \
                         str( int( self.bottomBarMinimized ) ) + "\n" \
+                     "rightBarMinimized=" + \
+                        str( int( self.rightBarMinimized ) ) + "\n" \
                      "projectLoaded=" + \
                         str( int( self.projectLoaded ) ) + "\n" \
                      "hSplitterSizes=" + \
                         str( self.hSplitterSizes[0] ) + "," + \
-                        str( self.hSplitterSizes[1] ) + "\n" \
+                        str( self.hSplitterSizes[1] ) + "," + \
+                        str( self.hSplitterSizes[2] ) + "\n" \
                      "vSplitterSizes=" + \
                         str( self.vSplitterSizes[0] ) + "," + \
                         str( self.vSplitterSizes[1] ) + "\n\n" + \

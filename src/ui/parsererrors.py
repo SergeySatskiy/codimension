@@ -37,25 +37,26 @@ from utils.fileutils    import detectFileType, PythonFileType, Python3FileType
 class ParserErrorsDialog( QDialog, object ):
     " python code parser errors dialog implementation "
 
-    def __init__( self, fileName, parent = None ):
+    def __init__( self, fileName, info = None, parent = None ):
 
         QDialog.__init__( self, parent )
 
-        if not os.path.exists( fileName ):
-            raise Exception( "Cannot open " + fileName )
+        if info is None:
+            if not os.path.exists( fileName ):
+                raise Exception( "Cannot open " + fileName )
 
-        if not detectFileType( fileName ) in [ PythonFileType,
-                                               Python3FileType ]:
-            raise Exception( "Unexpected file type (" + fileName + \
-                             "). A python file is expected." )
+            if not detectFileType( fileName ) in [ PythonFileType,
+                                                   Python3FileType ]:
+                raise Exception( "Unexpected file type (" + fileName + \
+                                 "). A python file is expected." )
 
-        self.__createLayout( fileName )
-        self.setWindowTitle( "Parser/lexer errors: " + \
+        self.__createLayout( fileName, info )
+        self.setWindowTitle( "Lexer/parser errors: " + \
                              os.path.basename( fileName ) )
         self.show()
         return
 
-    def __createLayout( self, fileName ):
+    def __createLayout( self, fileName, info ):
         """ Creates the dialog layout """
 
         self.resize( 600, 220 )
@@ -70,7 +71,7 @@ class ParserErrorsDialog( QDialog, object ):
         sizePolicy.setVerticalStretch( 0 )
         sizePolicy.setHeightForWidth(infoLabel.sizePolicy().hasHeightForWidth())
         infoLabel.setSizePolicy( sizePolicy )
-        infoLabel.setText( "Parser/lexer errors for " + fileName )
+        infoLabel.setText( "Lexer/parser errors for " + fileName )
         verticalLayout.addWidget( infoLabel )
 
         # Result window
@@ -80,14 +81,18 @@ class ParserErrorsDialog( QDialog, object ):
         resultEdit.setReadOnly( True )
         resultEdit.setFontFamily( "Monospace" )
         resultEdit.setFontPointSize( 12.0 )
-        if GlobalData().project.isProjectFile( fileName ):
-            modInfo = GlobalData().project.briefModinfoCache.get( fileName )
+        if info is not None:
+            modInfo = info
         else:
-            modInfo = GlobalData().briefModinfoCache.get( fileName )
-        if len( modInfo.errors ) == 0:
+            if GlobalData().project.isProjectFile( fileName ):
+                modInfo = GlobalData().project.briefModinfoCache.get( fileName )
+            else:
+                modInfo = GlobalData().briefModinfoCache.get( fileName )
+        if modInfo.isOK:
             resultEdit.setText( "No errors found" )
         else:
-            resultEdit.setText( "\n".join( modInfo.errors ) )
+            resultEdit.setText( "\n".join( modInfo.lexerErrors + \
+                                           modInfo.errors ) )
         verticalLayout.addWidget( resultEdit )
 
         # Buttons
