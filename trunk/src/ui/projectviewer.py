@@ -143,11 +143,6 @@ class ProjectViewer( QWidget ):
                 PixmapCache().getIcon( 'findusage.png' ),
                 'Find where the highlighted item is used', self )
         self.prjFindWhereUsedButton.setVisible( False )
-        self.prjOpenItemButton = QAction( \
-                PixmapCache().getIcon( 'openitem.png' ),
-                'Open', self )
-        self.connect( self.prjOpenItemButton, SIGNAL( "triggered()" ),
-                      self.projectTreeView.openSelectedItem )
         self.prjFindInDirButton = QAction( \
                 PixmapCache().getIcon( 'findindir.png' ),
                 'Find in highlighted directory', self )
@@ -195,7 +190,6 @@ class ProjectViewer( QWidget ):
         upperToolbar.setContentsMargins( 0, 0, 0, 0 )
         upperToolbar.addAction( self.prjDefinitionButton )
         upperToolbar.addAction( self.prjFindWhereUsedButton )
-        upperToolbar.addAction( self.prjOpenItemButton )
         upperToolbar.addAction( self.prjFindInDirButton )
         upperToolbar.addAction( self.prjShowParsingErrorsButton )
         upperToolbar.addAction( self.prjNewDirButton )
@@ -580,7 +574,6 @@ class ProjectViewer( QWidget ):
 
         self.prjDefinitionButton.setEnabled( False )
         self.prjFindWhereUsedButton.setEnabled( False )
-        self.prjOpenItemButton.setEnabled( False )
         self.prjFindInDirButton.setEnabled( False )
         self.prjShowParsingErrorsButton.setEnabled( False )
         self.prjNewDirButton.setEnabled( False )
@@ -598,13 +591,8 @@ class ProjectViewer( QWidget ):
                       ClassesItemType, StaticAttributesItemType,
                       InstanceAttributesItemType ]:
             self.prjCopyToClipboardButton.setEnabled( True )
-            self.prjOpenItemButton.setEnabled( True )
-            if self.__prjContextItem.itemType == FileItemType and \
-               self.__prjContextItem.fileType == BrokenSymlinkFileType:
-                self.prjOpenItemButton.setEnabled( False )
 
         if self.__prjContextItem.itemType == DirectoryItemType:
-            self.prjOpenItemButton.setEnabled( False )
             self.prjFindInDirButton.setEnabled( True )
             self.prjNewDirButton.setEnabled( True )
             self.prjPylintButton.setEnabled( GlobalData().pylintAvailable )
