@@ -448,11 +448,11 @@ class FilesBrowser( QTreeView ):
 
         if detectFileType( fileName ) in [ PythonFileType, Python3FileType ]:
             path = os.path.realpath( fileName )
-            if GlobalData().project.isProjectFile( fileName ):
+            if GlobalData().project.isProjectFile( path ):
                 infoSrc = GlobalData().project.briefModinfoCache
             else:
                 infoSrc = GlobalData().briefModinfoCache
-            info = infoSrc.get( fileName )
+            info = infoSrc.get( path )
             if info.isOK:
                 icon = PixmapCache().getIcon( 'filepython.png' )
             else:
@@ -501,6 +501,11 @@ class FilesBrowser( QTreeView ):
             if path == os.path.realpath( treeItem.getPath() ):
                 # Update icon
                 treeItem.setIcon( icon )
+                if info.docstring is None:
+                    treeItem.toolTip = ""
+                else:
+                    treeItem.toolTip = info.docstring.text
+                treeItem.parsingErrors = not info.isOK
                 self.__signalItemUpdated( treeItem )
 
                 # Update content if populated
