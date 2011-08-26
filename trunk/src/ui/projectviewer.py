@@ -1093,6 +1093,8 @@ class ProjectViewer( QWidget ):
     def onFileUpdated( self, fileName, uuid ):
         " Triggered when the file is updated "
         self.projectTreeView.onFileUpdated( fileName, uuid )
+        self.__updatePrjToolbarButtons()
         self.filesystemView.onFileUpdated( fileName, uuid )
+        self.__updateFSToolbarButtons()
         return
 
