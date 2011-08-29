@@ -4,6 +4,8 @@
 # $Id$
 
 script_name="`basename "$0"`"
+script_dir="`dirname "$0"`"
+script_dir="`cd "$script_dir" && pwd`"
 
 root_url='https://codimension.googlecode.com/svn'
 trunk_url="$root_url/trunk"
@@ -147,6 +149,58 @@ maketar_pythonparser()
     return 0
 }
 
+maketar_codimension()
+{
+    working_dir="/tmp/$script_name.`date '+%Y%m%d%H%M%S'`.$$"
+
+    echo "Creating working directory $working_dir"
+    mkdir "$working_dir" || exit 4
+
+    if test -z "$version"; then
+        version="`head -n1 "$script_dir/$component/debian/changelog" | \
+            sed 's/.*\([0-9]\+\.[0-9.]\+\).*/\1/'`"
+        use_trunk=yes
+    fi
+    pkg_basename='codimension'
+    pkg_name="$pkg_basename-$version"
+    pkg_dir="$working_dir/$pkg_name"
+
+    echo "Exporting $component v$version from Subversion..."
+    if test -z "$use_trunk"; then
+        svn export -q "$root_url/tags/$component/$version" "$pkg_dir" || exit 4
+    else
+        svn export -q "$root_url/trunk/src" "$pkg_dir/src" || exit 4
+        rm -f "$pkg_dir/src/codimension"
+        svn export -q "$root_url/trunk/pkg/codimension/debian" \
+            "$pkg_dir/debian" || exit 4
+    fi
+
+    echo "Fixing relative paths..."
+    grep -rl '\.\./thirdparty' "$pkg_dir/src" | \
+        xargs sed -i 's,\.\./thirdparty,..,g'
+
+    echo "Adjusting for the target distribution type ($pkgtype)..."
+
+    case "$pkgtype" in
+    deb)
+        tarball="${pkg_basename}_$version.orig.tar.gz"
+        ;;
+    rpm)
+        tarball="$pkg_basename-$version.tar.gz"
+        rm -rf "$pkg_dir/debian"
+    esac
+
+    echo "Preparing $tarball"
+    tar czf "$tarball" -C "$working_dir" --owner=root --group=root \
+        "$pkg_name" || exit 4
+
+    rm -rf "$working_dir"
+
+    echo 'Done.'
+
+    return 0
+}
+
 command="$1"
 shift
 
@@ -177,6 +231,9 @@ tag|maketar)
         exit 2
         ;;
     pythonparser)
+        shift
+        ;;
+    codimension)
         shift
         ;;
     *)
