@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Codimension
+Comment=Codimension Python IDE
+Exec=codimension
+Terminal=false
+Type=Application
+Icon=codimension
+Categories=Development;IDE;
+StartupNotify=true
