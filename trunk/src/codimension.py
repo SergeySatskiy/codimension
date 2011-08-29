@@ -33,6 +33,10 @@ from optparse           import OptionParser
 from PyQt4.QtCore       import SIGNAL, SLOT, QTimer, QDir
 from utils.latestver    import getLatestVersionFile
 
+
+# Workaround if link is used
+sys.argv[0] = os.path.realpath( sys.argv[0] )
+
 # Make it possible to import from the subdirectories
 srcDir = os.path.dirname( os.path.abspath( sys.argv[0] ) )
 if not srcDir in sys.path:
