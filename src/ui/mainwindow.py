@@ -1261,7 +1261,7 @@ class CodimensionMainWindow( QMainWindow ):
 
         # Add the installed names unless the same dirs have been already copied
         # to the user local dir
-        srcDir = os.path.dirname( os.path.abspath( sys.argv[0] ) )
+        srcDir = os.path.dirname( os.path.realpath( sys.argv[0] ) )
         skinsDir = srcDir + os.path.sep + "skins" + os.path.sep
         for item in os.listdir( skinsDir ):
             if os.path.isdir( skinsDir + item ):
