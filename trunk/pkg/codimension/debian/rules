@@ -10,4 +10,8 @@
 #export DH_VERBOSE=1
 
 %:
-	dh $@ 
+	dh $@ --with python2
+
+override_dh_install:
+	dh_install src/* $(DESTDIR)usr/share/codimension/
+	dh_install
