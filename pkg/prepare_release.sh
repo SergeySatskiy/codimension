@@ -94,62 +94,57 @@ EOF
     exit 0
 esac
 
-tag_pythonparser()
+action_tag()
 {
-    echo "Releasing pythonparser v$version based on trunk@$rev..."
-    version_dir="tags/pythonparser/$version"
-    svnmucc -m"Created a tag for pythonparser version $version." \
-        -U "$root_url" \
-        mkdir "$version_dir" \
-        cp "$rev" 'trunk/pythonparser' "$version_dir/pythonparser" \
-        cp "$rev" "trunk/thirdparty/$libantlr" "$version_dir/$libantlr" \
-        cp "$rev" 'trunk/pkg/pythonparser/debian' "$version_dir/debian" \
-        cp "$rev" 'trunk/pkg/pythonparser/configure' "$version_dir/configure"
-    test "$?" -eq 0 || exit 4
+    echo "Releasing $component version $version based on trunk@$rev..."
+    version_dir="tags/$component/$version"
+    args="-U $root_url mkdir $version_dir"
+    while read source target; do
+        args="$args cp $rev trunk/$source $version_dir/$target"
+    done
+    svnmucc -m"Created a tag for $component version $version." $args || exit 4
 }
 
-maketar_pythonparser()
+action_get_from_trunk()
 {
-    working_dir="/tmp/$script_name.`date '+%Y%m%d%H%M%S'`.$$"
+    echo "Retrieving $component from trunk as version $version..."
+    while read source target; do
+        svn export -q "$root_url/trunk/$source" "$pkg_dir/$target" || exit 4
+    done
+}
 
-    echo "Creating working directory $working_dir"
-    mkdir "$working_dir" || exit 4
+act_on_pythonparser()
+{
+    $1 <<EOF
+pythonparser pythonparser
+thirdparty/$libantlr $libantlr
+pkg/pythonparser/debian debian
+pkg/pythonparser/configure configure
+EOF
+}
 
-    # FIXME handle the case when version is empty (trunk sources).
-    pkg_basename='codimension-parser'
-    pkg_name="$pkg_basename-$version"
-    pkg_dir="$working_dir/$pkg_name"
+act_on_codimension()
+{
+    $1 <<EOF
+src src
+pkg/codimension/debian debian
+EOF
+}
 
-    echo "Exporting pythonparser v$version from Subversion..."
-    svn export -q "$root_url/tags/pythonparser/$version" "$pkg_dir" || exit 4
-
+patch_pythonparser()
+{
     echo "Fixing relative paths..."
     grep -rl '\.\./thirdparty' "$pkg_dir/pythonparser" | \
         xargs sed -i 's,\.\./thirdparty,..,g'
-
-    echo "Adjusting for the target distribution type ($pkgtype)..."
-
-    case "$pkgtype" in
-    deb)
-        tarball="${pkg_basename}_$version.orig.tar.gz"
-        ;;
-    rpm)
-        tarball="$pkg_basename-$version.tar.gz"
-        rm -rf "$pkg_dir/debian"
-    esac
-
-    echo "Preparing $tarball"
-    tar czf "$tarball" -C "$working_dir" --owner=root --group=root \
-        "$pkg_name" || exit 4
-
-    rm -rf "$working_dir"
-
-    echo 'Done.'
-
-    return 0
 }
 
-maketar_codimension()
+patch_codimension()
+{
+    echo "Readying for packaging..."
+    rm -f "$pkg_dir/src/codimension"
+}
+
+maketar()
 {
     working_dir="/tmp/$script_name.`date '+%Y%m%d%H%M%S'`.$$"
 
@@ -161,31 +156,24 @@ maketar_codimension()
             sed 's/.*\([0-9]\+\.[0-9.]\+\).*/\1/'`"
         use_trunk=yes
     fi
-    pkg_basename='codimension'
     pkg_name="$pkg_basename-$version"
     pkg_dir="$working_dir/$pkg_name"
 
-    echo "Exporting $component v$version from Subversion..."
-    if test -z "$use_trunk"; then
-        svn export -q "$root_url/tags/$component/$version" "$pkg_dir" || exit 4
+    if test -n "$use_trunk"; then
+        act_on_$component action_get_from_trunk
     else
-        svn export -q "$root_url/trunk/src" "$pkg_dir/src" || exit 4
-        rm -f "$pkg_dir/src/codimension"
-        svn export -q "$root_url/trunk/pkg/codimension/debian" \
-            "$pkg_dir/debian" || exit 4
+        echo "Exporting $component v$version from Subversion..."
+        svn export -q "$root_url/tags/$component/$version" "$pkg_dir" || exit 4
     fi
 
-    echo "Fixing relative paths..."
-    grep -rl '\.\./thirdparty' "$pkg_dir/src" | \
-        xargs sed -i 's,\.\./thirdparty,..,g'
-
-    echo "Adjusting for the target distribution type ($pkgtype)..."
+    patch_$component
 
     case "$pkgtype" in
     deb)
         tarball="${pkg_basename}_$version.orig.tar.gz"
         ;;
     rpm)
+        echo "Adjusting for the target distribution type ($pkgtype)..."
         tarball="$pkg_basename-$version.tar.gz"
         rm -rf "$pkg_dir/debian"
     esac
@@ -231,9 +219,11 @@ tag|maketar)
         exit 2
         ;;
     pythonparser)
+        pkg_basename='codimension-parser'
         shift
         ;;
     codimension)
+        pkg_basename='codimension'
         shift
         ;;
     *)
@@ -268,13 +258,13 @@ esac
 case "$command" in
 tag)
     rev="$2"
-    test "x$rev" = 'x' && rev='HEAD'
+    test -z "$rev" && rev='HEAD'
 
-    tag_$component
+    act_on_$component action_tag
     ;;
 maketar)
     rev="$2"
-    test "x$rev" = 'x' && rev='HEAD'
+    test -z "$rev" && rev='HEAD'
 
-    maketar_$component
+    maketar
 esac
