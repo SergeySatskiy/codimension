@@ -23,8 +23,28 @@
 
 from distutils.core import setup, Extension
 
+long_description = """Fast and comprehensive Python language parser.
+Written as a part of the Codimension project, this parser
+aims at pulling the most data from Python sources while
+exceeding the speed of existing parsers."""
+
 setup( name = 'cdmpyparser',
-       version = '0.0.1',
+       description = 'Codimension Python Parser',
+       long_description = long_description,
+       version = 'trunk',
+       author = 'Sergey Satskiy',
+       author_email = 'sergey.satskiy@gmail.com',
+       url = 'http://satsky.spb.ru/codimension/doc/briefParserEng.php',
+       license = 'GPLv3',
+       classifiers = [
+           'Development Status :: 5 - Production/Stable',
+           'Intended Audience :: Developers',
+           'License :: OSI Approved :: GNU General Public License (GPL)',
+           'Operating System :: POSIX :: Linux',
+           'Programming Language :: C',
+           'Programming Language :: Python',
+           'Topic :: Software Development :: Libraries :: Python Modules'],
+       platforms = [ 'any' ],
        py_modules  = [ 'cdmbriefparser' ],
        ext_modules = [ Extension( '_cdmpyparser',
                                   [ 'cdmpyparser.c',
