@@ -1,0 +1,28 @@
+Docstring[2]: 'Module multiline docstring
+Second aligned string'
+Function[7]: 'f'
+Docstring[8]: 'Single line single double-quote'
+Function[11]: 'f'
+Docstring[12]: 'Single line single single-quote'
+Function[15]: 'f'
+Docstring[16]: 'Single line three single-quote'
+Function[19]: 'f'
+Docstring[20]: 'Single line three single-quote'
+Function[23]: 'f'
+Docstring[24]: 'No spaces in a single line'
+Function[27]: 'f'
+Docstring[28]: 'Multiline 1
+Multiline 2'
+Function[34]: 'f'
+Docstring[35]: 'Multiline 1-2
+          ^^^ digits'
+Function[41]: 'f'
+    Class[42]: 'C'
+    Docstring[43]: 'Nested class docstring
+Second line'
+        Function[45]: '__init__'
+        Argument: 'self'
+        Docstring[46]: 'No space in first line
+second line
+
+third line'

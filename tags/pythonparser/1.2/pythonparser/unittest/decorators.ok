@@ -1,0 +1,23 @@
+Function[3]: 'f'
+Decorator[2]: 'decor
+Function[7]: 'f'
+Decorator[6]: 'decor
+Function[11]: 'f'
+Decorator[10]: 'decor( a, b, c="warp" )'
+Function[17]: 'f'
+Decorator[14]: 'decor( a, b=12, c=32 )'
+Function[23]: 'f'
+Decorator[20]: 'decor1
+Decorator[21]: 'decor2
+Decorator[22]: 'decor3
+Function[28]: 'f'
+Decorator[26]: 'decor1
+Decorator[27]: 'decor2( a, b.c, d )'
+Function[31]: 'f'
+    Function[32]: 'g'
+        Class[35]: 'C'
+        Decorator[33]: 'decor1( a, b )'
+        Decorator[34]: 'decor2( c, d=1 )'
+            Function[36]: 'f'
+            Function[39]: 'g'
+            Decorator[38]: 'decor11( e )'

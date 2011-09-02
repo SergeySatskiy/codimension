@@ -1,0 +1,12 @@
+codimension-parser (1.1-1) natty; urgency=low
+
+  * Added a new method 'getDisplayName' to parser classes 'ImportWhat',
+    'Import', 'Decorator', 'Function', and 'Class'.
+
+ -- Dmitry Kazimirov <dk@revl.org>  Tue, 19 Jul 2011 21:33:14 -0400
+
+codimension-parser (1.0-1) natty; urgency=low
+
+  * Initial release.
+
+ -- Dmitry Kazimirov <dk@revl.org>  Wed, 18 May 2011 18:21:53 -0400
