@@ -1,3 +1,11 @@
+codimension-parser (1.2-1) natty; urgency=low
+
+  * Latest grammar fixes.
+  * Lexer errors are collected now too.
+  * First public release.
+
+ -- Dmitry Kazimirov <dk@revl.org>  Fri, 02 Sep 2011 11:14:54 -0400
+
 codimension-parser (1.1-1) natty; urgency=low
 
   * Added a new method 'getDisplayName' to parser classes 'ImportWhat',
