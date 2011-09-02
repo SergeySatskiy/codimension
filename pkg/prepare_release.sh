@@ -133,14 +133,16 @@ EOF
 
 patch_pythonparser()
 {
-    echo "Fixing relative paths..."
+    echo 'Patching...'
     grep -rl '\.\./thirdparty' "$pkg_dir/pythonparser" | \
         xargs sed -i 's,\.\./thirdparty,..,g'
+    sed -i "s/\\(version.*\\)trunk/\\1$version/" \
+        "$pkg_dir/pythonparser/setup.py"
 }
 
 patch_codimension()
 {
-    echo "Readying for packaging..."
+    echo 'Readying for packaging...'
     rm -f "$pkg_dir/src/codimension"
 }
 
