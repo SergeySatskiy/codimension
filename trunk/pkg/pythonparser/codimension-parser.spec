@@ -40,8 +40,12 @@ find $RPM_BUILD_ROOT -name "*.la" -exec rm -f {} ';'
 %{python_sitearch}/*.egg-info
 
 %changelog
-* Wed Jul 27 2011 Dmitry Kazimirov <dk@revl.org> - 1.1-1
+* Fri Sep 02 2011 Dmitry Kazimirov <dk@revl.org> - 1.2-1
+- Latest grammar fixes.
+- Lexer errors are collected now too.
+- First public release.
 
+* Wed Jul 27 2011 Dmitry Kazimirov <dk@revl.org> - 1.1-1
 - Added a new method 'getDisplayName' to parser classes 'ImportWhat',
   'Import', 'Decorator', 'Function', and 'Class'.
 
