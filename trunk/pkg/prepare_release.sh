@@ -100,7 +100,11 @@ action_tag()
     version_dir="tags/$component/$version"
     args="-U $root_url mkdir $version_dir"
     while read source target; do
-        args="$args cp $rev trunk/$source $version_dir/$target"
+        if test -n "$target"; then
+            args="$args cp $rev trunk/$source $version_dir/$target"
+        else
+            args="$args mkdir $version_dir/$source"
+        fi
     done
     svnmucc -m"Created a tag for $component version $version." $args || exit 4
 }
@@ -109,7 +113,11 @@ action_get_from_trunk()
 {
     echo "Retrieving $component from trunk as version $version..."
     while read source target; do
-        svn export -q "$root_url/trunk/$source" "$pkg_dir/$target" || exit 4
+        if test -n "$target"; then
+            svn export -q "$root_url/trunk/$source" "$pkg_dir/$target" || exit 4
+        else
+            mkdir "$pkg_dir/$source"
+        fi
     done
 }
 
@@ -128,6 +136,8 @@ act_on_codimension()
     $1 <<EOF
 src src
 pkg/codimension/debian debian
+thirdparty
+thirdparty/pymetrics-0.8.1 thirdparty/pymetrics
 EOF
 }
 
@@ -144,6 +154,7 @@ patch_codimension()
 {
     echo 'Readying for packaging...'
     rm -f "$pkg_dir/src/codimension"
+    test "x$pkgtype" = 'xdeb' && rm -rf "$pkg_dir/thirdparty"
 }
 
 maketar()
@@ -175,8 +186,8 @@ maketar()
         tarball="${pkg_basename}_$version.orig.tar.gz"
         ;;
     rpm)
-        echo "Adjusting for the target distribution type ($pkgtype)..."
         tarball="$pkg_basename-$version.tar.gz"
+        echo "Adjusting for the target distribution type ($pkgtype)..."
         rm -rf "$pkg_dir/debian"
     esac
 
