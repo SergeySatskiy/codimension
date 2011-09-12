@@ -379,25 +379,25 @@ class CodimensionMainWindow( QMainWindow ):
 
         globalData = GlobalData()
         if globalData.fileAvailable:
-            logging.info( "The 'file' utility is available" )
+            logging.debug( "The 'file' utility is available" )
         else:
             logging.warning( "The 'file' utility is not found. " \
                              "Some functionality will not be available." )
 
         if globalData.pylintAvailable:
-            logging.info( "The 'pylint' utility is available" )
+            logging.debug( "The 'pylint' utility is available" )
         else:
             logging.warning( "The 'pylint' utility is not found. " \
                              "Some functionality will not be available." )
 
         if globalData.doxygenAvailable:
-            logging.info( "The 'doxygen' utility is available" )
+            logging.debug( "The 'doxygen' utility is available" )
         else:
             logging.warning( "The 'doxygen' utility is not found. " \
                              "Some functionality will not be available." )
 
         if globalData.graphvizAvailable:
-            logging.info( "The 'graphviz' utility is available" )
+            logging.debug( "The 'graphviz' utility is available" )
         else:
             logging.warning( "The 'graphviz' utility is not found. " \
                              "Some functionality will not be available." )
@@ -994,6 +994,9 @@ class CodimensionMainWindow( QMainWindow ):
         except Exception, exc:
             QApplication.restoreOverrideCursor()
             logging.error( str( exc ) )
+            logging.info( "Note: pymetrics does not work for syntactically " \
+                          "incorrect files. Please check that your files " \
+                          "are OK before running pymetrics." )
             return
 
         QApplication.restoreOverrideCursor()
