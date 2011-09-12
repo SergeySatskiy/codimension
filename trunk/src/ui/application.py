@@ -38,8 +38,6 @@ class CodimensionApplication( QApplication ):
 
         self.mainWindow = None
 
-        # FIXME: the icon looks black and white by some reasons at least on
-        # Windows with X server
         QApplication.setWindowIcon( PixmapCache().getIcon( 'icon.png' ) )
 
         # Avoid having rectabgular frames on the status bar
