@@ -313,7 +313,7 @@ class BrowserModelBase( QAbstractItemModel ):
                                 node.toolTip += "\n\n"
                             node.toolTip += "Parsing errors:\n" + \
                                             "\n".join( modInfo.lexerErrors + \
-                                                       modInf.errors )
+                                                       modInfo.errors )
                             node.parsingErrors = True
 
                         if modInfo.encoding is None and \
