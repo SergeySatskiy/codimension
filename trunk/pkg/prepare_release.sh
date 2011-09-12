@@ -126,8 +126,9 @@ act_on_pythonparser()
     $1 <<EOF
 pythonparser pythonparser
 thirdparty/$libantlr $libantlr
-pkg/pythonparser/debian debian
 pkg/pythonparser/configure configure
+pkg/pythonparser/debian debian
+pkg/pythonparser/codimension-parser.spec codimension-parser.spec
 EOF
 }
 
@@ -135,9 +136,10 @@ act_on_codimension()
 {
     $1 <<EOF
 src src
-pkg/codimension/debian debian
 thirdparty
 thirdparty/pymetrics-0.8.1 thirdparty/pymetrics
+pkg/codimension/debian debian
+pkg/codimension/codimension.spec codimension.spec
 EOF
 }
 
@@ -181,13 +183,14 @@ maketar()
 
     patch_$component
 
+    echo "Adjusting for the target distribution type ($pkgtype)..."
     case "$pkgtype" in
     deb)
         tarball="${pkg_basename}_$version.orig.tar.gz"
+        rm -f "$pkg_dir"/*.spec
         ;;
     rpm)
         tarball="$pkg_basename-$version.tar.gz"
-        echo "Adjusting for the target distribution type ($pkgtype)..."
         rm -rf "$pkg_dir/debian"
     esac
 
