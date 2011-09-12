@@ -226,7 +226,7 @@ def setupLogging( debug ):
     if debug:
         logLevel = logging.DEBUG
     else:
-        logLevel = logging.WARNING
+        logLevel = logging.INFO
 
     # Default output stream is stderr
     logging.basicConfig( level = logLevel,
