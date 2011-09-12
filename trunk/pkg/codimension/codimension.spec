@@ -14,7 +14,7 @@ Source3: %{name}.desktop
 Requires: python2
 Requires: codimension-parser >= 1.2
 Requires: PyQt4 qscintilla-python
-Requires: pylint python-chardet
+Requires: pylint python-chardet graphviz
 
 BuildRequires: desktop-file-utils
 
