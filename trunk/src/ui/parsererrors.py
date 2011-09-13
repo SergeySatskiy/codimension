@@ -80,7 +80,7 @@ class ParserErrorsDialog( QDialog, object ):
         resultEdit.setAcceptRichText( False )
         resultEdit.setReadOnly( True )
         resultEdit.setFontFamily( "Monospace" )
-        resultEdit.setFontPointSize( 12.0 )
+        # resultEdit.setFontPointSize( 12.0 )
         if info is not None:
             modInfo = info
         else:
