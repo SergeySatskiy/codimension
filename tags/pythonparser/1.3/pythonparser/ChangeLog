@@ -1,0 +1,11 @@
+2011 Sep 12  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for release v.1.3
+* Line number and position number are collected separately for:
+  - the 'def' keyword and a function name
+  - the 'class' keyword and a class name
+
+
+2011 Sep 2  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for first public release. v.1.2

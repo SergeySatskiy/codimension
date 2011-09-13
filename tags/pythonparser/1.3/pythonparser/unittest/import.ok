@@ -1,0 +1,15 @@
+Import[1]: 'os.path'
+    isdir[1]
+Import[3]: 'os.path'
+Import[3]: 'sys'
+Import[4]: 'one' as 'ONE'
+Import[4]: 'two'
+Import[4]: 'three' as 'THREE'
+Import[7]: 'os.path'
+    isdir[7] as ISDIR
+Import[8]: 'os.path'
+    isdir[8] as ISDIR
+    islink[9] as ISLINK
+Import[10]: '.'
+    ggg[10]
+Import[13]: 'unittest'
