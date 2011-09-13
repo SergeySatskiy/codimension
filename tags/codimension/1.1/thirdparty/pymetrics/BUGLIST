@@ -1,0 +1,37 @@
+Outstanding Bugs as of Version 0.7.9
+====================================
+
+The NewFeatures24 metric does not yet check for 
+the following 2.4 features:
+
+* Unified integers (PEP 237)
+* Simplified string substitution Template subclass (PEP 292)
+* Reversd iterators (PEP 322)
+* Subprocess module (PEP 324)
+* Decimal module data type and context (PEP 327)
+* Multi-line imports (PEP 328)
+* Locale-Independent Float/String Conversions (PEP 331)
+* dict.update() method now accepts the same argument forms as 
+  the dict constructor
+* ljust(), rjust(), and center() now take an optional argument 
+  for specifying a fill character other than a space.
+* rsplit() method that works like the split() method but splits 
+  from the end of the string
+* Three keyword parameters, cmp, key, and reverse, were added 
+  to the sort() method of lists.
+* Built-in function sorted(iterable)
+* Integer operations will no longer trigger an OverflowWarning.
+* New interpreter switch, -m, that takes a name, searches for 
+  the corresponding module on sys.path, and runs the module as 
+  a script.
+* The eval(expr, globals, locals) and execfile(filename, globals, 
+  locals) functions and the exec statement now accept any mapping 
+  type for the locals parameter.
+* None is now a constant.
+* zip() built-in function and itertools.izip() now return an empty 
+  list if called with no arguments.
+
+There is no warning that the NewFeatures24 metric is unable to 
+check for runtime features or syntax changes that would raise an error. 
+Also, it is unable to check for updated library modules.
+~
