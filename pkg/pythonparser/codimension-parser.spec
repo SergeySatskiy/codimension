@@ -40,6 +40,10 @@ find $RPM_BUILD_ROOT -name "*.la" -exec rm -f {} ';'
 %{python_sitearch}/*.egg-info
 
 %changelog
+* Tue Sep 13 2011 Dmitry Kazimirov <dk@revl.org> - 1.3-1
+- Source line numbers and column positions are now remembered for
+  class and function definitions.
+
 * Fri Sep 02 2011 Dmitry Kazimirov <dk@revl.org> - 1.2-1
 - Latest grammar fixes.
 - Lexer errors are collected now too.
