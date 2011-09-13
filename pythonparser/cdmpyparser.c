@@ -311,10 +311,22 @@ void  processClassDefinition( pANTLR3_BASE_TREE            tree,
     ANTLR3_UINT32           n = tree->children->count;
     ANTLR3_UINT32           k;
 
+    /*
+     * Positions of the 'def' keyword and the function name are saved in one 32
+     * bit field 'charPosition'. See the grammar for details.
+     * The code below extracts them as separate values.
+     */
+
     ++objectsLevel;
-    PyObject_CallFunction( callbacks->onClass, "sii",
+    PyObject_CallFunction( callbacks->onClass, "siiiii",
                            (nameChild->toString( nameChild ))->chars,
-                           tree->getLine( tree ), objectsLevel );
+                           /* Function name line and pos */
+                           nameChild->getToken( nameChild )->line & 0xFFFF,
+                           (nameChild->getToken( nameChild )->charPosition & 0xFFFF) + 1, /* To make it 1 based */
+                           /* Keyword 'def' line and pos */
+                           nameChild->getToken( nameChild )->line >> 16,
+                           (nameChild->getToken( nameChild )->charPosition >> 16) + 1,    /* To make it 1 based */
+                           objectsLevel );
 
     for ( k = 1; k < n; ++k )
     {
@@ -358,10 +370,23 @@ void  processFuncDefinition( pANTLR3_BASE_TREE            tree,
     int                     isStaticMethod = 0;
     const char *            firstArgumentName = NULL; /* for class methods only */
 
+
+    /*
+     * Positions of the 'def' keyword and the function name are saved in one 32
+     * bit field 'charPosition'. See the grammar for details.
+     * The code below extracts them as separate values.
+     */
+
     ++objectsLevel;
-    PyObject_CallFunction( callbacks->onFunction, "sii",
+    PyObject_CallFunction( callbacks->onFunction, "siiiii",
                            (nameChild->toString( nameChild ))->chars,
-                           tree->getLine( tree ), objectsLevel );
+                           /* Function name line and pos */
+                           nameChild->getToken( nameChild )->line & 0xFFFF,
+                           (nameChild->getToken( nameChild )->charPosition & 0xFFFF) + 1, /* To make it 1 based */
+                           /* Keyword 'def' line and pos */
+                           nameChild->getToken( nameChild )->line >> 16,
+                           (nameChild->getToken( nameChild )->charPosition >> 16) + 1,    /* To make it 1 based */
+                           objectsLevel );
 
     for ( k = 1; k < n; ++k )
     {

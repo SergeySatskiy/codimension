@@ -195,8 +195,11 @@ decor_arglist
                     -> { pythonbriefInsertArguments( ctx, args ) }
                 ;
 
-funcdef         : decorators? 'def' NAME parameters COLON suite
-                    -> ^( FUNC_DEF  NAME  decorators? parameters  ^( BODY suite ) )
+                /* It's a hack here: the name position has both the keyword pos and the class name pos */
+funcdef         : decorators? kw = 'def' n = NAME { $n->charPosition += ($kw->charPosition << 16);
+                                                    $n->line += ($kw->line << 16);
+                                                  } parameters COLON suite
+                    -> ^( FUNC_DEF NAME  decorators? parameters  ^( BODY suite ) )
                 ;
 
 parameters      : LPAREN  varargslist?  RPAREN
@@ -573,7 +576,10 @@ setmakerclause  : comp_for | ( COMMA test )* COMMA?
                 ;
 
 
-classdef        : decorators? 'class' NAME ( LPAREN inheritancelist? RPAREN )? COLON suite
+                /* It's a hack here: the name position has both the keyword pos and the class name pos */
+classdef        : decorators? kw = 'class' n = NAME { $n->charPosition += ($kw->charPosition << 16);
+                                                      $n->line += ($kw->line << 16);
+                                                    } ( LPAREN inheritancelist? RPAREN )? COLON suite
                     -> ^( CLASS_DEF  NAME  decorators?  inheritancelist?  ^( BODY suite ) )
                 ;
 

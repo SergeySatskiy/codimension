@@ -65,7 +65,7 @@ class ModuleInfoBase:
     " Common part for the module information "
 
     def __init__( self ):
-        self.line = -1  # Line number where item is found
+        self.line = -1  # Line number where item is found (1 based)
         self.name = ""  # item identifier
         return
 
@@ -229,9 +229,12 @@ class Docstring():
 class Function( ModuleInfoBase ):
     " Holds information about a single function"
 
-    def __init__( self, funcName, line ):
+    def __init__( self, funcName, line, pos, keywordLine, keywordPos ):
         ModuleInfoBase.__init__( self )
         self.line = line
+        self.pos = pos                  # pos where function name starts (1-based)
+        self.keywordLine = keywordLine
+        self.keywordPos = keywordPos    # pos where 'def' keyword starts (1-based)
         self.name = funcName
 
         # Non-common part
@@ -252,7 +255,10 @@ class Function( ModuleInfoBase ):
     def niceStringify( self, level ):
         " Returns a string representation with new lines and shifts "
 
-        out = level * "    " + "Function[" + str(self.line) + \
+        out = level * "    " + "Function[" + str(self.keywordLine) + \
+                                       ":" + str(self.keywordPos) + \
+                                       ":" + str(self.line) + \
+                                       ":" + str(self.pos) + \
                                        "]: '" + self.name + "'"
         for item in self.arguments:
             out += '\n' + level * "    " + "Argument: '" + item + "'"
@@ -278,9 +284,12 @@ class Function( ModuleInfoBase ):
 class Class( ModuleInfoBase ):
     " Holds information about a single class"
 
-    def __init__( self, className, line ):
+    def __init__( self, className, line, pos, keywordLine, keywordPos ):
         ModuleInfoBase.__init__( self )
         self.line = line
+        self.pos = pos                  # pos where class name starts (1-based)
+        self.keywordLine = keywordLine
+        self.keywordPos = keywordPos    # pos where 'class' keyword starts (1-based)
         self.name = className
 
         # Non-commonpart
@@ -296,7 +305,10 @@ class Class( ModuleInfoBase ):
     def niceStringify( self, level ):
         " Returns a string representation with new lines and shifts "
 
-        out = level * "    " + "Class[" + str(self.line) + \
+        out = level * "    " + "Class[" + str(self.keywordLine) + \
+                                    ":" + str(self.keywordPos) + \
+                                    ":" + str(self.line) + \
+                                    ":" + str(self.pos) + \
                                     "]: '" + self.name + "'"
         for item in self.base:
             out += '\n' + level * "    " + "Base class: '" + item + "'"
@@ -417,16 +429,18 @@ class BriefModuleInfo:
         self.globals.append( Global( name, line ) )
         return
 
-    def _onClass( self, name, line, level ):
+    def _onClass( self, name, line, pos, keywordLine, keywordPos, level ):
         " Memorizes a class "
         self.__flushLevel( level )
-        self.objectsStack.append( Class( name, line ) )
+        self.objectsStack.append( Class( name, line, pos,
+                                         keywordLine, keywordPos ) )
         return
 
-    def _onFunction( self, name, line, level ):
+    def _onFunction( self, name, line, pos, keywordLine, keywordPos, level ):
         " Memorizes a function "
         self.__flushLevel( level )
-        self.objectsStack.append( Function( name, line ) )
+        self.objectsStack.append( Function( name, line, pos,
+                                            keywordLine, keywordPos ) )
         return
 
     def _onImport( self, name, line ):
