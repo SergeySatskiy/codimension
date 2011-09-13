@@ -75,5 +75,11 @@ update-desktop-database -q
 %{_datadir}/pixmaps/*.png
 
 %changelog
+* Tue Sep 13 2011 Dmitry Kazimirov <dk@revl.org> - 1.1-1
+- New upstream version, which provides a hint message for
+  pymetrics failures.
+- Syntax error exception in the file browser is now
+  correctly handled.
+
 * Mon Sep 05 2011 Dmitry Kazimirov <dk@revl.org> - 1.0-1
 - Initial release.
