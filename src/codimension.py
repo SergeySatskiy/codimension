@@ -25,7 +25,7 @@ codimension main Python script.
 It performs necessery initialization and starts the Qt main loop.
 """
 
-__version__ = "1.0"
+__version__ = "0.0"
 
 import sys, os.path, traceback, logging, shutil, time
 from PyQt4              import QtGui
