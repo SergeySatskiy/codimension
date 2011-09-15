@@ -242,7 +242,13 @@ class ObjectsBrowser( QTreeView ):
                               ClassesItemType, StaticAttributesItemType,
                               InstanceAttributesItemType,
                               DirectoryItemType, SysPathItemType ]:
-            QTreeView.mouseDoubleClickEvent( self, mouseEvent )
+            # This will return the first column index regardless in what
+            # column the double click happened
+            index = self.selectedIndexes()[ 0 ]
+            if self.isExpanded( index ):
+                self.collapse( index )
+            else:
+                self.expand( index )
         else:
             self.openItem( item )
         return

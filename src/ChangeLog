@@ -1,3 +1,8 @@
+XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Expand/collapse grouping items in the object browsers regardless what column
+  was double clicked. Issue #242
+
 2011 Sep 13  Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Prepared for first public release.
