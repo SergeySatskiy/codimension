@@ -493,14 +493,12 @@ class RecentProjectsViewer( QWidget ):
             self.trashButton.setEnabled( False )
         else:
             enabled = self.__projectContextItem.isValid()
+            isCurrentProject = self.__projectContextItem.isCurrent()
+
             self.propertiesButton.setEnabled( enabled )
             self.copyPrjPathButton.setEnabled( True )
-            if enabled and not self.__projectContextItem.isCurrent():
-                self.loadButton.setEnabled( True )
-                self.trashButton.setEnabled( True )
-            else:
-                self.loadButton.setEnabled( False )
-                self.trashButton.setEnabled( False )
+            self.loadButton.setEnabled( enabled and not isCurrentProject )
+            self.trashButton.setEnabled( not isCurrentProject )
         return
 
     def __updateFileToolbarButtons( self ):
@@ -518,14 +516,12 @@ class RecentProjectsViewer( QWidget ):
             return
 
         enabled = self.__projectContextItem.isValid()
-        self.__propsMenuItem.setEnabled( enabled )
         isCurrentProject = self.__projectContextItem.isCurrent()
+
+        self.__propsMenuItem.setEnabled( enabled )
         self.__delPrjMenuItem.setEnabled( not isCurrentProject )
         fName = self.__projectContextItem.getFilename()
-        if enabled and not isCurrentProject:
-            self.__prjLoadMenuItem.setEnabled( True )
-        else:
-            self.__prjLoadMenuItem.setEnabled( False )
+        self.__prjLoadMenuItem.setEnabled( enabled and not isCurrentProject )
 
         self.__projectMenu.popup( QCursor.pos() )
         return
