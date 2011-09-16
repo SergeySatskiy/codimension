@@ -118,10 +118,18 @@ class TextEditor( ScintillaWrapper ):
         else:
             self.setWrapMode( QsciScintilla.WrapNone )
 
+        # Moving the cursor and letting messages be processed allows the
+        # bracing highlight be switched on/off properly even if the cursor is
+        # currently on the highlighted position
+        oldLine, oldPos = self.getCursorPosition()
+        self.setCursorPosition( oldLine, 0 )
+        QApplication.processEvents()
         if settings.showBraceMatch:
             self.setBraceMatching( QsciScintilla.StrictBraceMatch )
         else:
             self.setBraceMatching( QsciScintilla.NoBraceMatch )
+        QApplication.processEvents()
+        self.setCursorPosition( oldLine, oldPos )
 
         self.setEolVisibility( settings.showEOL )
         self.setAutoIndent( settings.autoIndent )
