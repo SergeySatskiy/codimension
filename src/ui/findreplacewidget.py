@@ -33,7 +33,7 @@ from PyQt4.QtGui                import QHBoxLayout, QToolButton, QLabel, \
                                        QSizePolicy, QComboBox, \
                                        QGridLayout, QWidget, QCheckBox
 from utils.pixmapcache          import PixmapCache
-from PyQt4.QtCore               import SIGNAL, Qt, QStringList
+from PyQt4.QtCore               import SIGNAL, Qt
 from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
 from utils.globals              import GlobalData
 from utils.project              import CodimensionProject
