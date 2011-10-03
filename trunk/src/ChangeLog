@@ -1,5 +1,6 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Bug fix: exception during checking for a newer version. Issue #272.
 * Bug fix: proper on/off of the braces highlight. Issue #238.
 * Bug fix: enable 'remove recent project' toolbar button properly. Issue #271.
 * Expand/collapse grouping items in the object browsers regardless what column

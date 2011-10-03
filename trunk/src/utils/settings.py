@@ -45,6 +45,7 @@ _defaultProjectLoaded = False
 _defaultZoom = 0
 _defaultSkin = "default"
 _defaultLastSuccessVerCheck = 0
+_defaultNewerVerShown = False
 
 # Editor settings available via the user interface
 _defaultVerticalEdge = True
@@ -167,6 +168,8 @@ class Settings( object ):
                                                       'currentLineVisible', _defaultCurrentLineVisible )
             self.lastSuccessVerCheck = self.__getInt( config, 'general',
                                                       'lastSuccessVerCheck', _defaultLastSuccessVerCheck )
+            self.newerVerShown = self.__getBool( config, 'general',
+                                                 'newerVerShown', _defaultNewerVerShown )
 
             asString = self.__getStr( config, 'general', 'hSplitterSizes',
                                       _defaultHSplitSize ).split( ',' )
@@ -263,6 +266,7 @@ class Settings( object ):
             self.projectFilesFilters = _defaultFilesFilters
             self.projectLoaded = _defaultProjectLoaded
             self.lastSuccessVerCheck = _defaultLastSuccessVerCheck
+            self.newerVerShown = _defaultNewerVerShown
             return
 
         def __getInt( self, conf, sec, key, default ):
@@ -339,6 +343,7 @@ class Settings( object ):
                      "indentationGuides=" + str( self.indentationGuides ) + "\n" \
                      "currentLineVisible=" + str( self.currentLineVisible ) + "\n" \
                      "lastSuccessVerCheck=" + str( self.lastSuccessVerCheck ) + "\n" \
+                     "newerVerShown=" + str( self.newerVerShown ) + "\n" \
                      "leftBarMinimized=" + \
                         str( int( self.leftBarMinimized ) ) + "\n" \
                      "bottomBarMinimized=" + \
