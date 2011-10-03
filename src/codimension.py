@@ -212,6 +212,7 @@ def launchUserInterface():
                                   values[ "LatestVersion" ] + \
                                   " is available. Please visit " \
                                   "http://satsky.spb.ru/codimension/codimensionEng.php" )
+                    Settings().newerVerShown = True
 
     # Additional checks may come here
 
