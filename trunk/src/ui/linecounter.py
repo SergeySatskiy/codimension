@@ -28,8 +28,7 @@ import os, os.path
 from PyQt4.QtCore       import Qt, SIGNAL, QTimer
 from PyQt4.QtGui        import QDialog, QTextEdit, QDialogButtonBox, \
                                QVBoxLayout, QSizePolicy, \
-                               QProgressBar, QApplication, QFontMetrics, \
-                               QFont
+                               QProgressBar, QApplication, QFontMetrics
 from fitlabel           import FitPathLabel
 from utils.linescounter import LinesCounter
 from utils.globals      import GlobalData
@@ -79,12 +78,12 @@ class LineCounterDialog( QDialog, object ):
         self.verticalLayout.addWidget( self.progressBar )
 
         # Result window
-        font = QFont( "Monospace", 12 )
         self.resultEdit = QTextEdit( self )
         self.resultEdit.setTabChangesFocus( False )
         self.resultEdit.setAcceptRichText( False )
         self.resultEdit.setReadOnly( True )
-        self.resultEdit.setFont( font )
+        self.resultEdit.setFontFamily( "Monospace" )
+        font = self.resultEdit.font()
 
         # Calculate the vertical size
         fontMetrics = QFontMetrics( font )
