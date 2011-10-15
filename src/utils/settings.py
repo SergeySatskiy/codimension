@@ -46,6 +46,7 @@ _defaultZoom = 0
 _defaultSkin = "default"
 _defaultLastSuccessVerCheck = 0
 _defaultNewerVerShown = False
+_defaultModifiedFormat = "%s *"
 
 # Editor settings available via the user interface
 _defaultVerticalEdge = True
@@ -170,6 +171,8 @@ class Settings( object ):
                                                       'lastSuccessVerCheck', _defaultLastSuccessVerCheck )
             self.newerVerShown = self.__getBool( config, 'general',
                                                  'newerVerShown', _defaultNewerVerShown )
+            self.modifiedFormat = self.__getStr( config, 'general',
+                                                 'modifiedFormat', _defaultModifiedFormat )
 
             asString = self.__getStr( config, 'general', 'hSplitterSizes',
                                       _defaultHSplitSize ).split( ',' )
@@ -256,6 +259,7 @@ class Settings( object ):
             self.tabIndents = _defaultTabIndents
             self.indentationGuides = _defaultIndentationGuides
             self.currentLineVisible = _defaultCurrentLineVisible
+            self.modifiedFormat = _defaultModifiedFormat
 
             self.leftBarMinimized = False
             self.bottomBarMinimized = False
@@ -332,6 +336,7 @@ class Settings( object ):
                      "xdelta=" + str( self.xdelta ) + "\n" \
                      "ydelta=" + str( self.ydelta ) + "\n" \
                      "skin=" + self.skinName + "\n" \
+                     "modifiedFormat=" + self.modifiedFormat + "\n" \
                      "verticalEdge=" + str( self.verticalEdge ) + "\n" \
                      "showSpaces=" + str( self.showSpaces ) + "\n" \
                      "lineWrap=" + str( self.lineWrap ) + "\n" \

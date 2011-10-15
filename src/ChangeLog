@@ -1,5 +1,7 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Making the format string for modified files configurable. The default value
+  is "%s *". Issue #280.
 * Making autoindent switched on by default. Issue #279.
 * Do not set the font size explicitly in the simple line counter window.
 * Bug fix: exception during checking for a newer version. Issue #272.
