@@ -1,5 +1,6 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Making autoindent switched on by default. Issue #279.
 * Do not set the font size explicitly in the simple line counter window.
 * Bug fix: exception during checking for a newer version. Issue #272.
 * Bug fix: proper on/off of the braces highlight. Issue #238.
