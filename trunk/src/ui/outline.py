@@ -28,6 +28,7 @@ from PyQt4.QtGui                import QMenu, QWidget, QAction, QVBoxLayout, \
                                        QToolBar, QCursor, QFrame, QLabel
 from utils.pixmapcache          import PixmapCache
 from utils.globals              import GlobalData
+from utils.settings             import Settings
 from outlinebrowser             import OutlineBrowser
 from viewitems                  import FunctionItemType, \
                                        ClassItemType, AttributeItemType, \
@@ -291,7 +292,8 @@ class FileOutlineViewer( QWidget ):
                 self.__outlineBrowsers[ self.__currentUUID ].changed = True
                 browser = self.__outlineBrowsers[ self.__currentUUID ].browser
                 fName = self.__outlineBrowsers[ self.__currentUUID ].shortFileName
-                browser.model().sourceModel().updateRootData( 0, fName + ", +" )
+                title = Settings().modifiedFormat % fName
+                browser.model().sourceModel().updateRootData( 0, title )
         self.__updateTimer.start( 1500 )
         return
 
@@ -312,7 +314,8 @@ class FileOutlineViewer( QWidget ):
         fName = self.__outlineBrowsers[ self.__currentUUID ].shortFileName
 
         if len( info.lexerErrors ) > 0:
-            browser.model().sourceModel().updateRootData( 0, fName + ", +" )
+            title = Settings().modifiedFormat % fName
+            browser.model().sourceModel().updateRootData( 0, title )
             return
 
         browser.model().sourceModel().updateRootData( 0, fName )
@@ -353,7 +356,7 @@ class FileOutlineViewer( QWidget ):
             browser = self.__outlineBrowsers[ uuid ].browser
             self.__outlineBrowsers[ uuid ].shortFileName = baseName
             if self.__outlineBrowsers[ uuid ].changed:
-                title = baseName + ", +"
+                title = Settings().modifiedFormat % baseName
             else:
                 title = baseName
             browser.model().sourceModel().updateRootData( 0, title )
