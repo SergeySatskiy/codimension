@@ -171,6 +171,8 @@ patch_codimension()
 {
     echo 'Readying for packaging...'
     rm -f "$pkg_dir/src/codimension"
+    sed -i "s/^__version__.*/__version__ = '$version'/" \
+        "$pkg_dir/src/codimension.py"
     test "x$pkgtype" = 'xdeb' && rm -rf "$pkg_dir/thirdparty"
 }
 
