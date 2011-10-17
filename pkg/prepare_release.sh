@@ -94,8 +94,23 @@ EOF
     exit 0
 esac
 
+error()
+{
+    echo "Error: $2" >&2
+    exit $1
+}
+
 action_tag()
 {
+    echo 'Checking whether changelogs have been updated...'
+    changelog="trunk/pkg/$component/debian/changelog"
+    svn cat "$root_url/$changelog" | \
+            grep "^$pkg_basename ($version" > /dev/null && \
+        changelog="trunk/pkg/$component/$pkg_basename.spec" && \
+        svn cat "$root_url/$changelog" | \
+            grep "^Version: $version" > /dev/null || \
+        error 3 "$changelog hasn't been updated."
+
     echo "Releasing $component version $version based on trunk@$rev..."
     version_dir="tags/$component/$version"
     args="-U $root_url mkdir $version_dir"
@@ -215,15 +230,13 @@ tag|maketar)
 
         case "$pkgtype" in
         '')
-            echo "$script_name $command: package type required" >&2
-            exit 2
+            error 2 "$script_name $command: package type required"
             ;;
         deb|rpm)
             shift
             ;;
         *)
-            echo "$script_name $command: unknown package type '$pkgtype'" >&2
-            exit 2
+            error 2 "$script_name $command: unknown package type '$pkgtype'"
         esac
     fi
 
@@ -231,8 +244,7 @@ tag|maketar)
 
     case "$component" in
     '')
-        echo "$script_name $command: component name required" >&2
-        exit 2
+        error 2 "$script_name $command: component name required"
         ;;
     pythonparser)
         pkg_basename='codimension-parser'
@@ -243,8 +255,7 @@ tag|maketar)
         shift
         ;;
     *)
-        echo "$script_name $command: unknown component '$component'" >&2
-        exit 2
+        error 2 "$script_name $command: unknown component '$component'"
     esac
 
     version="$1"
@@ -252,8 +263,7 @@ tag|maketar)
     case "$version" in
     ''|trunk)
         if test "$command" != 'maketar'; then
-            echo "$script_name $command: version number required" >&2
-            exit 2
+            error 2 "$script_name $command: version number required"
         elif test -n "$version"; then
             version=''
         fi
@@ -261,13 +271,11 @@ tag|maketar)
     *.*)
         ;;
     *)
-        echo "$script_name: invalid version number '$version'" >&2
-        exit 2
+        error 2 "$script_name: invalid version number '$version'"
     esac
     ;;
 *)
-    echo "$script_name: unknown command '$command'" >&2
-    exit 2
+    error 2 "$script_name: unknown command '$command'"
     ;;
 esac
 
