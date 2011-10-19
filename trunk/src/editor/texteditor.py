@@ -26,7 +26,7 @@ import os.path, logging
 import lexer
 from scintillawrap              import ScintillaWrapper
 from PyQt4.QtCore               import Qt, QFileInfo, SIGNAL, QSize, \
-                                       QVariant, QDir, QUrl
+                                       QVariant, QDir, QUrl, QEvent
 from PyQt4.QtGui                import QApplication, QCursor, \
                                        QFontMetrics, QToolBar, \
                                        QHBoxLayout, QWidget, QAction, QMenu, \
@@ -96,7 +96,23 @@ class TextEditor( ScintillaWrapper ):
         self.setIndentationGuidesForegroundColor( skin.indentGuideColor )
 
         self.updateSettings()
+
+        # Shift+Tab support
+        self.shiftTab = QAction( self )
+        self.shiftTab.setShortcut( 'Shift+Tab' )
+        self.connect( self.shiftTab, SIGNAL( 'triggered()' ), self.__onDedent )
+        self.addAction( self.shiftTab )
         return
+
+    def focusInEvent( self, event ):
+        " Enable Shift+Tab when the focus is received "
+        self.shiftTab.setEnabled( True )
+        return ScintillaWrapper.focusInEvent( self, event )
+
+    def focusOutEvent( self, event ):
+        " Disable Shift+Tab when the focus is lost "
+        self.shiftTab.setEnabled( False )
+        return ScintillaWrapper.focusOutEvent( self, event )
 
     def updateSettings( self ):
         " Updates the editor settings "
@@ -506,6 +522,11 @@ class TextEditor( ScintillaWrapper ):
     def __onHighlight( self ):
         " Triggered when Ctrl+N is clicked "
         self.highlightWord( self.getCurrentWord() )
+        return
+
+    def __onDedent( self ):
+        " Triggered when Shift+Tab is clicked "
+        self.SendScintilla( QsciScintilla.SCI_BACKTAB )
         return
 
     def __onCompleteFromDocument( self ):
