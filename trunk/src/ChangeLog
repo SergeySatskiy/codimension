@@ -1,6 +1,8 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
-* Add support for Shift+Tab in the text editor: dedent a line or the selected
+* Adding support for commenting/uncommenting a single line or selected lines.
+  Issue #11.
+* Adding support for Shift+Tab in the text editor: dedent a line or the selected
   lines. Issue #282.
 * Making the format string for modified files configurable. The default value
   is "%s *". Issue #280.

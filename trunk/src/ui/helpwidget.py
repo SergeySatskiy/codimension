@@ -150,8 +150,8 @@ class QuickHelpWidget( HTMLTabWidget ):
         <tr>
           <td>Ctrl+I</td>
           <td>Open import/select import to open</td>
-          <td></td>
-          <td></td></tr>
+          <td>Ctrl+M</td>
+          <td>Comment/uncomment a line or selected lines</td></tr>
         <tr>
     </table>
     </p>
