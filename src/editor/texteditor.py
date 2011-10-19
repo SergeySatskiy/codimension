@@ -96,22 +96,43 @@ class TextEditor( ScintillaWrapper ):
         self.setIndentationGuidesForegroundColor( skin.indentGuideColor )
 
         self.updateSettings()
+        self.__installActions()
+        return
 
-        # Shift+Tab support
+    def __installActions( self ):
+        " Installs hot keys actions "
+        # Shift+Tab support => dedent
         self.shiftTab = QAction( self )
         self.shiftTab.setShortcut( 'Shift+Tab' )
         self.connect( self.shiftTab, SIGNAL( 'triggered()' ), self.__onDedent )
         self.addAction( self.shiftTab )
+
+        # Ctrl + N => highlight the current word
+        self.highlightAct = QAction( self )
+        self.highlightAct.setShortcut( "Ctrl+N" )
+        self.connect( self.highlightAct, SIGNAL( 'triggered()' ), self.__onHighlight )
+        self.addAction( self.highlightAct )
+
+        # Ctrl + M => comment/uncomment
+        self.commentAct = QAction( self )
+        self.commentAct.setShortcut( "Ctrl+M" )
+        self.connect( self.commentAct, SIGNAL( 'triggered()' ), self.__onCommentUncomment )
+        self.addAction( self.commentAct )
         return
+
 
     def focusInEvent( self, event ):
         " Enable Shift+Tab when the focus is received "
         self.shiftTab.setEnabled( True )
+        self.highlightAct.setEnabled( True )
+        self.commentAct.setEnabled( True )
         return ScintillaWrapper.focusInEvent( self, event )
 
     def focusOutEvent( self, event ):
         " Disable Shift+Tab when the focus is lost "
         self.shiftTab.setEnabled( False )
+        self.highlightAct.setEnabled( False )
+        self.commentAct.setEnabled( False )
         return ScintillaWrapper.focusOutEvent( self, event )
 
     def updateSettings( self ):
@@ -483,9 +504,6 @@ class TextEditor( ScintillaWrapper ):
                 # beginning of the line
                 event.setAccepted( False )
                 ScintillaWrapper.keyPressEvent( self, event )
-        elif event.key() == Qt.Key_N and Qt.ControlModifier & event.modifiers():
-            self.__onHighlight()
-            event.accept()
         elif event.key() == Qt.Key_Backslash and Qt.ControlModifier & event.modifiers():
             self.__onCompleteFromDocument()
             event.accept()
@@ -527,6 +545,52 @@ class TextEditor( ScintillaWrapper ):
     def __onDedent( self ):
         " Triggered when Shift+Tab is clicked "
         self.SendScintilla( QsciScintilla.SCI_BACKTAB )
+        return
+
+    def __onCommentUncomment( self ):
+        " Triggered when Ctrl+M is received "
+        if self.lexer_ is None or not self.lexer_.canBlockComment():
+            return
+
+        commentStr = self.lexer_.commentStr()
+
+        self.beginUndoAction()
+        if self.hasSelectedText():
+            lineFrom, indexFrom, lineTo, indexTo = self.getSelection()
+            if indexTo == 0:
+                endLine = lineTo - 1
+            else:
+                endLine = lineTo
+
+            if self.text( lineFrom ).startsWith( commentStr ):
+                # need to uncomment
+                for line in xrange( lineFrom, endLine + 1 ):
+                    if not self.text( line ).startsWith( commentStr ):
+                        continue
+                    self.setSelection( line, 0, line, commentStr.length() )
+                    self.removeSelectedText()
+                self.setSelection( lineFrom, 0, endLine + 1, 0 )
+            else:
+                # need to comment
+                for line in xrange( lineFrom, endLine + 1 ):
+                    self.insertAt( commentStr, line, 0 )
+                self.setSelection( lineFrom, 0, endLine + 1, 0 )
+        else:
+            # Detect what we need - comment or uncomment
+            line, index = self.getCursorPosition()
+            if self.text( line ).startsWith( commentStr ):
+                # need to uncomment
+                self.setSelection( line, 0, line, commentStr.length() )
+                self.removeSelectedText()
+            else:
+                # need to comment
+                self.insertAt( commentStr, line, 0 )
+            # Jump to the beginning of the next line
+            if self.lines() != line + 1:
+                line += 1
+            self.setCursorPosition( line, 0 )
+            self.ensureLineVisible( line )
+        self.endUndoAction()
         return
 
     def __onCompleteFromDocument( self ):
