@@ -883,6 +883,10 @@ class CodimensionMainWindow( QMainWindow ):
     def __createNewProject( self ):
         " Create new action "
 
+        editorsManager = self.editorsManagerWidget.editorsManager
+        if editorsManager.closeRequest() == False:
+            return
+
         dialog = ProjectPropertiesDialog()
         if dialog.exec_() != QDialog.Accepted:
             return
