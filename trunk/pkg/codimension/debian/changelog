@@ -11,7 +11,7 @@ codimension (1.2-1) oneiric; urgency=low
   * Better file modification indicator.
   * Autoindent is switched on by default now.
 
- -- Dmitry Kazimirov <revl@navigator>  Wed, 19 Oct 2011 23:40:48 -0400
+ -- Dmitry Kazimirov <dk@revl.org>  Wed, 19 Oct 2011 23:40:48 -0400
 
 codimension (1.1-1) natty; urgency=low
 
