@@ -1,3 +1,18 @@
+codimension (1.2-1) oneiric; urgency=low
+
+  * New upstream version with a significant bug fix:
+    exception during checking for a newer version
+    is properly handled.
+  * Minor bug fix: 'remove recent project' toolbar
+    button is enabled properly now.
+  * Brace highlighting can now be switched on and off.
+  * New feature: block/line commenting/uncommenting
+    with Ctrl-M.
+  * Better file modification indicator.
+  * Autoindent is switched on by default now.
+
+ -- Dmitry Kazimirov <revl@navigator>  Wed, 19 Oct 2011 23:40:48 -0400
+
 codimension (1.1-1) natty; urgency=low
 
   * New upstream version, which provides a hint message for
