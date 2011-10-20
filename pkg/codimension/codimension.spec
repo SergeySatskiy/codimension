@@ -1,5 +1,5 @@
 Name: codimension
-Version: 1.1
+Version: 1.2
 Release: 1
 License: GPLv3+
 Group: Development/Tools/IDE
@@ -75,6 +75,18 @@ update-desktop-database -q
 %{_datadir}/pixmaps/*.png
 
 %changelog
+* Wed Oct 19 2011 Dmitry Kazimirov <dk@revl.org> - 1.2-1
+- New upstream version with a significant bug fix:
+  exception during checking for a newer version
+  is properly handled.
+- Minor bug fix: 'remove recent project' toolbar
+  button is enabled properly now.
+- Brace highlighting can now be switched on and off.
+- New feature: block/line commenting/uncommenting
+  with Ctrl-M.
+- Better file modification indicator.
+- Autoindent is switched on by default now.
+
 * Tue Sep 13 2011 Dmitry Kazimirov <dk@revl.org> - 1.1-1
 - New upstream version, which provides a hint message for
   pymetrics failures.
