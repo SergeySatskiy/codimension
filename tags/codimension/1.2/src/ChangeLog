@@ -1,0 +1,26 @@
+2011 Oct 19  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Adding support for commenting/uncommenting a single line or selected lines.
+  Issue #11.
+* Adding support for Shift+Tab in the text editor: dedent a line or the selected
+  lines. Issue #282.
+* Making the format string for modified files configurable. The default value
+  is "%s *". Issue #280.
+* Making autoindent switched on by default. Issue #279.
+* Do not set the font size explicitly in the simple line counter window.
+* Bug fix: exception during checking for a newer version. Issue #272.
+* Bug fix: proper on/off of the braces highlight. Issue #238.
+* Bug fix: enable 'remove recent project' toolbar button properly. Issue #271.
+* Expand/collapse grouping items in the object browsers regardless what column
+  was double clicked. Issue #242
+
+2011 Sep 13  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for first public release.
+* Improvement: provide a hint message in case if pymetrics failed. Issue #265.
+* Bug fix: exception in the files browser if there is a syntactically incorrect
+  python file in it. Issue #266.
+
+2011 Sep 2  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for first release.
