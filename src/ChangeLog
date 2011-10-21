@@ -2,6 +2,8 @@ XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Bug fix: check that all the modified files are saved before letting a new
   project to be created. Issue #273.
+* Move the focus to the text editor if the focus was not in the editor and the
+  currently active tab is clicked. Issue #264.
 
 2011 Oct 19  Sergey Satskiy <sergey.satskiy@gmail.com>
 

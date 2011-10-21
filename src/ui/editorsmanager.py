@@ -35,7 +35,7 @@ from PyQt4.QtCore               import Qt, SIGNAL, \
 from PyQt4.QtGui                import QTabWidget, QDialog, QMessageBox, \
                                        QWidget, QHBoxLayout, QMenu, \
                                        QToolButton, QShortcut, QFileDialog, \
-                                       QApplication
+                                       QApplication, QTabBar
 from utils.pixmapcache          import PixmapCache
 from welcomewidget              import WelcomeWidget
 from helpwidget                 import QuickHelpWidget
@@ -54,12 +54,30 @@ from diagram.importsdgmgraphics import ImportDgmTabWidget
 
 
 
+class ClickableTabBar( QTabBar ):
+    " Intercepts clicking on the toolbar "
+
+    def __init__( self, parent  = None ):
+        QTabBar.__init__( self, parent )
+        return
+
+    def mousePressEvent( self, event ):
+        """ Intercepts clicking on the toolbar and emits a signal.
+            It is used to transfer focus to the currently active tab editor. """
+        tabBarPoint = self.mapTo( self, event.pos() )
+        if self.tabAt( tabBarPoint ) == self.currentIndex():
+            self.emit( SIGNAL( 'currentTabClicked' ) )
+        QTabBar.mousePressEvent( self, event )
+        return
+
+
 class EditorsManager( QTabWidget ):
     " Tab bar with editors "
 
     def __init__( self, parent = None ):
 
         QTabWidget.__init__( self, parent )
+        self.setTabBar( ClickableTabBar() )
         self.setMovable( True )
 
         self.newIndex = -1
@@ -113,6 +131,14 @@ class EditorsManager( QTabWidget ):
         self.connect( self.tabBar(),
                       SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
                       self.__showTabContextMenu )
+        self.connect( self.tabBar(), SIGNAL( 'currentTabClicked' ),
+                      self.__currentTabClicked )
+        return
+
+    def __currentTabClicked( self ):
+        " Triggered when the currently active tab is clicked "
+        if self.count() > 0:
+            self.widget( self.currentIndex() ).setFocus()
         return
 
     def __showTabContextMenu( self, pos ):
