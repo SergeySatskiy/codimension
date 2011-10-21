@@ -118,6 +118,17 @@ class TextEditor( ScintillaWrapper ):
         self.commentAct.setShortcut( "Ctrl+M" )
         self.connect( self.commentAct, SIGNAL( 'triggered()' ), self.__onCommentUncomment )
         self.addAction( self.commentAct )
+
+        # Alt + Left, Alt + Right
+        self.wordPartLeftAct = QAction( self )
+        self.wordPartLeftAct.setShortcut( "Alt+Left" )
+        self.connect( self.wordPartLeftAct, SIGNAL( 'triggered()' ), self.__onWordPartLeft )
+        self.addAction( self.wordPartLeftAct )
+
+        self.wordPartRightAct = QAction( self )
+        self.wordPartRightAct.setShortcut( "Alt+Right" )
+        self.connect( self.wordPartRightAct, SIGNAL( 'triggered()' ), self.__onWordPartRight )
+        self.addAction( self.wordPartRightAct )
         return
 
 
@@ -126,6 +137,8 @@ class TextEditor( ScintillaWrapper ):
         self.shiftTab.setEnabled( True )
         self.highlightAct.setEnabled( True )
         self.commentAct.setEnabled( True )
+        self.wordPartRightAct.setEnabled( True )
+        self.wordPartLeftAct.setEnabled( True )
         return ScintillaWrapper.focusInEvent( self, event )
 
     def focusOutEvent( self, event ):
@@ -133,6 +146,8 @@ class TextEditor( ScintillaWrapper ):
         self.shiftTab.setEnabled( False )
         self.highlightAct.setEnabled( False )
         self.commentAct.setEnabled( False )
+        self.wordPartRightAct.setEnabled( False )
+        self.wordPartLeftAct.setEnabled( False )
         return ScintillaWrapper.focusOutEvent( self, event )
 
     def updateSettings( self ):
@@ -591,6 +606,16 @@ class TextEditor( ScintillaWrapper ):
             self.setCursorPosition( line, 0 )
             self.ensureLineVisible( line )
         self.endUndoAction()
+        return
+
+    def __onWordPartLeft( self ):
+        " Triggered when Alt+Left is received "
+        self.SendScintilla( QsciScintilla.SCI_WORDPARTLEFT )
+        return
+
+    def __onWordPartRight( self ):
+        " Triggered when Alt+Right is received "
+        self.SendScintilla( QsciScintilla.SCI_WORDPARTRIGHT )
         return
 
     def __onCompleteFromDocument( self ):

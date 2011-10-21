@@ -77,12 +77,12 @@ class QuickHelpWidget( HTMLTabWidget ):
           <td>Ctrl+Up</td>
           <td>Search for callers</td></tr>
         <tr>
-          <td>Alt+Left</td>
+          <td>Alt+PgDown</td>
           <td>Back in history</td>
           <td>Ctrl+PgDown</td>
           <td>Previous tab</td></tr>
         <tr>
-          <td>Alt+Right</td>
+          <td>Alt+PgUp</td>
           <td>Forward in history</td>
           <td>Ctrl+PgUp</td>
           <td>Next tab</td></tr>
@@ -152,6 +152,12 @@ class QuickHelpWidget( HTMLTabWidget ):
           <td>Open import/select import to open</td>
           <td>Ctrl+M</td>
           <td>Comment/uncomment a line or selected lines</td></tr>
+        <tr>
+        <tr>
+          <td>Alt+Left</td>
+          <td>Word part left</td>
+          <td>Alt+Right</td>
+          <td>Word part right</td></tr>
         <tr>
     </table>
     </p>
