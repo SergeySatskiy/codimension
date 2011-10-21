@@ -416,8 +416,8 @@ class EditorsManager( QTabWidget ):
         self.historyBackButton = QToolButton( self )
         self.historyBackButton.setIcon( \
                 PixmapCache().getIcon( "1leftarrow.png" ) )
-        self.historyBackButton.setToolTip( "Back (Alt+Left)" )
-        self.historyBackButton.setShortcut( "Alt+Left" )
+        self.historyBackButton.setToolTip( "Back (Alt+PgDown)" )
+        self.historyBackButton.setShortcut( "Alt+PgDown" )
         self.historyBackButton.setPopupMode( QToolButton.DelayedPopup )
         self.historyBackButton.setMenu( self.__historyBackMenu )
         self.historyBackButton.setEnabled( False )
@@ -427,8 +427,8 @@ class EditorsManager( QTabWidget ):
         self.historyFwdButton = QToolButton( self )
         self.historyFwdButton.setIcon( \
                 PixmapCache().getIcon( "1rightarrow.png" ) )
-        self.historyFwdButton.setToolTip( "Forward (Alt+Right)" )
-        self.historyFwdButton.setShortcut( "Alt+Right" )
+        self.historyFwdButton.setToolTip( "Forward (Alt+PgUp)" )
+        self.historyFwdButton.setShortcut( "Alt+PgUp" )
         self.historyFwdButton.setPopupMode( QToolButton.DelayedPopup )
         self.historyFwdButton.setMenu( self.__historyFwdMenu )
         self.historyFwdButton.setEnabled( False )
