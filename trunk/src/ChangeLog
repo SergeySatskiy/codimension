@@ -27,7 +27,7 @@ XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
 2011 Sep 13  Sergey Satskiy <sergey.satskiy@gmail.com>
 
-* Prepared for first public release.
+* Release 1.1
 * Improvement: provide a hint message in case if pymetrics failed. Issue #265.
 * Bug fix: exception in the files browser if there is a syntactically incorrect
   python file in it. Issue #266.
