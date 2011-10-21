@@ -140,6 +140,19 @@ class TextEditor( ScintillaWrapper ):
         self.paragraphDownAct.setShortcut( "Alt+Down" )
         self.connect( self.paragraphDownAct, SIGNAL( 'triggered()' ), self.__onParagraphDown )
         self.addAction( self.paragraphDownAct )
+
+        # HOME: overwrite to jump to the beginning of the displayed line
+        self.homeAct = QAction( self )
+        self.homeAct.setShortcut( "Home" )
+        self.connect( self.homeAct, SIGNAL( 'triggered()' ), self.__onHome )
+        self.addAction( self.homeAct )
+
+        # END: overwrite to jump to the end of the displayed line
+        self.endAct = QAction( self )
+        self.endAct.setShortcut( "End" )
+        self.connect( self.endAct, SIGNAL( 'triggered()' ), self.__onEnd )
+        self.addAction( self.endAct )
+
         return
 
 
@@ -152,6 +165,8 @@ class TextEditor( ScintillaWrapper ):
         self.wordPartLeftAct.setEnabled( True )
         self.paragraphUpAct.setEnabled( True )
         self.paragraphDownAct.setEnabled( True )
+        self.homeAct.setEnabled( True )
+        self.endAct.setEnabled( True )
         return ScintillaWrapper.focusInEvent( self, event )
 
     def focusOutEvent( self, event ):
@@ -163,6 +178,8 @@ class TextEditor( ScintillaWrapper ):
         self.wordPartLeftAct.setEnabled( False )
         self.paragraphUpAct.setEnabled( False )
         self.paragraphDownAct.setEnabled( False )
+        self.homeAct.setEnabled( False )
+        self.endAct.setEnabled( False )
         return ScintillaWrapper.focusOutEvent( self, event )
 
     def updateSettings( self ):
@@ -526,14 +543,6 @@ class TextEditor( ScintillaWrapper ):
         if event.key() == Qt.Key_Escape:
             self.emit( SIGNAL('ESCPressed') )
             event.accept()
-        elif event.key() == Qt.Key_Home:
-            ScintillaWrapper.keyPressEvent( self, event )
-            line, pos = self.getCursorPosition()
-            if pos != 0:
-                # Process HOME once more to make the cursor jumping to the real
-                # beginning of the line
-                event.setAccepted( False )
-                ScintillaWrapper.keyPressEvent( self, event )
         elif event.key() == Qt.Key_Backslash and Qt.ControlModifier & event.modifiers():
             self.__onCompleteFromDocument()
             event.accept()
@@ -641,6 +650,16 @@ class TextEditor( ScintillaWrapper ):
     def __onParagraphDown( self ):
         " Triggered when Alt+Down is received "
         self.SendScintilla( QsciScintilla.SCI_PARADOWN )
+        return
+
+    def __onHome( self ):
+        " Triggered when HOME is received "
+        self.SendScintilla( QsciScintilla.SCI_HOMEDISPLAY )
+        return
+
+    def __onEnd( self ):
+        " Triggered when END is received "
+        self.SendScintilla( QsciScintilla.SCI_LINEENDDISPLAY )
         return
 
     def __onCompleteFromDocument( self ):

@@ -1,5 +1,6 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Making HOME/END jumping to the beginning/end of the visible line. Issue #284.
 * Adding support for Alt+Up and Alt+Down hot keys
 * Switching history hot keys to Alt+PgDown and Alt+PgUp
 * Adding support for Alt+Left and Alt+Right hot keys

@@ -70,12 +70,12 @@ class QuickHelpWidget( HTMLTabWidget ):
           <td>Ctrl+T</td>
           <td>New tab</td>
           <td>Ctrl+Up/Down</td>
-          <td>Scrolling without changing cursor position</td></tr>
+          <td>Scrolling up/down without changing cursor position</td></tr>
         <tr>
           <td>Alt+Up/Down</td>
           <td>Move cursor one paragraph up/down</td>
-          <td>Alt+Home/End</td>
-          <td>Move cursor to the beginning/end of the visible line</td></tr>
+          <td></td>
+          <td></td></tr>
         <tr>
           <td>Alt+PgDown</td>
           <td>Back in history</td>
