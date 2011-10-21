@@ -10,6 +10,7 @@ XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
 2011 Oct 19  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Release 1.2
 * Adding support for commenting/uncommenting a single line or selected lines.
   Issue #11.
 * Adding support for Shift+Tab in the text editor: dedent a line or the selected
