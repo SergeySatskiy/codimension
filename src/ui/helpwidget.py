@@ -69,13 +69,13 @@ class QuickHelpWidget( HTMLTabWidget ):
         <tr>
           <td>Ctrl+T</td>
           <td>New tab</td>
-          <td>Ctrl+Down</td>
-          <td>Show definition</td></tr>
+          <td>Ctrl+Up/Down</td>
+          <td>Scrolling without changing cursor position</td></tr>
         <tr>
-          <td>Ctrl+P</td>
-          <td>Tag completion</td>
-          <td>Ctrl+Up</td>
-          <td>Search for callers</td></tr>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td></tr>
         <tr>
           <td>Alt+PgDown</td>
           <td>Back in history</td>
@@ -119,8 +119,8 @@ class QuickHelpWidget( HTMLTabWidget ):
         <tr>
           <td>Ctrl+G</td>
           <td>Goto line</td>
-          <td>Ctrl+M</td>
-          <td>Toggle remark</td></tr>
+          <td></td>
+          <td></td></tr>
         <tr>
           <td>Ctrl+D</td>
           <td>Toggle bookmark</td>
