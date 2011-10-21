@@ -129,6 +129,17 @@ class TextEditor( ScintillaWrapper ):
         self.wordPartRightAct.setShortcut( "Alt+Right" )
         self.connect( self.wordPartRightAct, SIGNAL( 'triggered()' ), self.__onWordPartRight )
         self.addAction( self.wordPartRightAct )
+
+        # Alt + Up, Alt + Down
+        self.paragraphUpAct = QAction( self )
+        self.paragraphUpAct.setShortcut( "Alt+Up" )
+        self.connect( self.paragraphUpAct, SIGNAL( 'triggered()' ), self.__onParagraphUp )
+        self.addAction( self.paragraphUpAct )
+
+        self.paragraphDownAct = QAction( self )
+        self.paragraphDownAct.setShortcut( "Alt+Down" )
+        self.connect( self.paragraphDownAct, SIGNAL( 'triggered()' ), self.__onParagraphDown )
+        self.addAction( self.paragraphDownAct )
         return
 
 
@@ -139,6 +150,8 @@ class TextEditor( ScintillaWrapper ):
         self.commentAct.setEnabled( True )
         self.wordPartRightAct.setEnabled( True )
         self.wordPartLeftAct.setEnabled( True )
+        self.paragraphUpAct.setEnabled( True )
+        self.paragraphDownAct.setEnabled( True )
         return ScintillaWrapper.focusInEvent( self, event )
 
     def focusOutEvent( self, event ):
@@ -148,6 +161,8 @@ class TextEditor( ScintillaWrapper ):
         self.commentAct.setEnabled( False )
         self.wordPartRightAct.setEnabled( False )
         self.wordPartLeftAct.setEnabled( False )
+        self.paragraphUpAct.setEnabled( False )
+        self.paragraphDownAct.setEnabled( False )
         return ScintillaWrapper.focusOutEvent( self, event )
 
     def updateSettings( self ):
@@ -616,6 +631,16 @@ class TextEditor( ScintillaWrapper ):
     def __onWordPartRight( self ):
         " Triggered when Alt+Right is received "
         self.SendScintilla( QsciScintilla.SCI_WORDPARTRIGHT )
+        return
+
+    def __onParagraphUp( self ):
+        " Triggered when Alt+Up is received "
+        self.SendScintilla( QsciScintilla.SCI_PARAUP )
+        return
+
+    def __onParagraphDown( self ):
+        " Triggered when Alt+Down is received "
+        self.SendScintilla( QsciScintilla.SCI_PARADOWN )
         return
 
     def __onCompleteFromDocument( self ):
