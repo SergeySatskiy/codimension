@@ -158,6 +158,12 @@ class TextEditor( ScintillaWrapper ):
         self.shiftDelAct.setShortcut( "Shift+Del" )
         self.connect( self.shiftDelAct, SIGNAL( 'triggered()' ), self.__onShiftDel )
         self.addAction( self.shiftDelAct )
+
+        # Ctrl + \\
+        self.ctrlBackslashAct = QAction( self )
+        self.ctrlBackslashAct.setShortcut( "Ctrl+\\" )
+        self.connect( self.ctrlBackslashAct, SIGNAL( 'triggered()' ), self.__onCompleteFromDocument )
+        self.addAction( self.ctrlBackslashAct )
         return
 
 
@@ -172,6 +178,7 @@ class TextEditor( ScintillaWrapper ):
         self.paragraphDownAct.setEnabled( True )
         self.homeAct.setEnabled( True )
         self.endAct.setEnabled( True )
+        self.ctrlBackslashAct.setEnabled( True )
         return ScintillaWrapper.focusInEvent( self, event )
 
     def focusOutEvent( self, event ):
@@ -185,6 +192,7 @@ class TextEditor( ScintillaWrapper ):
         self.paragraphDownAct.setEnabled( False )
         self.homeAct.setEnabled( False )
         self.endAct.setEnabled( False )
+        self.ctrlBackslashAct.setEnabled( False )
         return ScintillaWrapper.focusOutEvent( self, event )
 
     def updateSettings( self ):
@@ -547,12 +555,6 @@ class TextEditor( ScintillaWrapper ):
 
         if event.key() == Qt.Key_Escape:
             self.emit( SIGNAL('ESCPressed') )
-            event.accept()
-        elif event.key() == Qt.Key_Backslash and Qt.ControlModifier & event.modifiers():
-            self.__onCompleteFromDocument()
-            event.accept()
-        elif event.key() in [ Qt.Key_Left, Qt.Key_Right ] and \
-             Qt.AltModifier & event.modifiers():
             event.accept()
         else:
             ScintillaWrapper.keyPressEvent( self, event )
