@@ -153,6 +153,11 @@ class TextEditor( ScintillaWrapper ):
         self.connect( self.endAct, SIGNAL( 'triggered()' ), self.__onEnd )
         self.addAction( self.endAct )
 
+        # Shift + Del
+        self.shiftDelAct = QAction( self )
+        self.shiftDelAct.setShortcut( "Shift+Del" )
+        self.connect( self.shiftDelAct, SIGNAL( 'triggered()' ), self.__onShiftDel )
+        self.addAction( self.shiftDelAct )
         return
 
 
@@ -660,6 +665,15 @@ class TextEditor( ScintillaWrapper ):
     def __onEnd( self ):
         " Triggered when END is received "
         self.SendScintilla( QsciScintilla.SCI_LINEENDDISPLAY )
+        return
+
+    def __onShiftDel( self ):
+        " Triggered when Shift+Del is received "
+        if self.hasSelectedText():
+            self.cut()
+        else:
+            self.SendScintilla( QsciScintilla.SCI_LINECOPY )
+            self.SendScintilla( QsciScintilla.SCI_LINEDELETE )
         return
 
     def __onCompleteFromDocument( self ):

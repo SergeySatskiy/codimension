@@ -1,5 +1,7 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Adding support for Shift+Del - copy to a buffer and delete a selected text
+  (if so) or the current line. Issue #285.
 * Making HOME/END jumping to the beginning/end of the visible line. Issue #284.
 * Adding support for Alt+Up and Alt+Down hot keys
 * Switching history hot keys to Alt+PgDown and Alt+PgUp
