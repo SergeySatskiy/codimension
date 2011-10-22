@@ -74,8 +74,8 @@ class QuickHelpWidget( HTMLTabWidget ):
         <tr>
           <td>Alt+Up/Down</td>
           <td>Move cursor one paragraph up/down</td>
-          <td></td>
-          <td></td></tr>
+          <td>Shift+Del</td>
+          <td>Copy to buffer and delete selected text (if so) or current line</td></tr>
         <tr>
           <td>Alt+PgDown</td>
           <td>Back in history</td>
