@@ -1,5 +1,10 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Making Shift+Home/End select till the beginning/end of a visible line.
+  Issue #286.
+* Adding support for Alt+Shift+Left/Right - select a word part. Issue #287.
+* Adding support for Alt+Shift+Up/Down - select till the beginning/end of a
+  paragraph. Issue #288.
 * Adding support for Shift+Del - copy to a buffer and delete a selected text
   (if so) or the current line. Issue #285.
 * Making HOME/END jumping to the beginning/end of the visible line. Issue #284.

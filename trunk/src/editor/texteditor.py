@@ -147,11 +147,23 @@ class TextEditor( ScintillaWrapper ):
         self.connect( self.homeAct, SIGNAL( 'triggered()' ), self.__onHome )
         self.addAction( self.homeAct )
 
+        # Shift + HOME
+        self.shiftHomeAct = QAction( self )
+        self.shiftHomeAct.setShortcut( "Shift+Home" )
+        self.connect( self.shiftHomeAct, SIGNAL( 'triggered()' ), self.__onShiftHome )
+        self.addAction( self.shiftHomeAct )
+
         # END: overwrite to jump to the end of the displayed line
         self.endAct = QAction( self )
         self.endAct.setShortcut( "End" )
         self.connect( self.endAct, SIGNAL( 'triggered()' ), self.__onEnd )
         self.addAction( self.endAct )
+
+        # Shift + END
+        self.shiftEndAct = QAction( self )
+        self.shiftEndAct.setShortcut( "Shift+End" )
+        self.connect( self.shiftEndAct, SIGNAL( 'triggered()' ), self.__onShiftEnd )
+        self.addAction( self.shiftEndAct )
 
         # Shift + Del
         self.shiftDelAct = QAction( self )
@@ -164,8 +176,29 @@ class TextEditor( ScintillaWrapper ):
         self.ctrlBackslashAct.setShortcut( "Ctrl+\\" )
         self.connect( self.ctrlBackslashAct, SIGNAL( 'triggered()' ), self.__onCompleteFromDocument )
         self.addAction( self.ctrlBackslashAct )
-        return
 
+        # Alt + Shift + Up, Alt + Shift + Down
+        self.altShiftUpAct = QAction( self )
+        self.altShiftUpAct.setShortcut( "Alt+Shift+Up" )
+        self.connect( self.altShiftUpAct, SIGNAL( 'triggered()' ), self.__onAltShiftUp )
+        self.addAction( self.altShiftUpAct )
+
+        self.altShiftDownAct = QAction( self )
+        self.altShiftDownAct.setShortcut( "Alt+Shift+Down" )
+        self.connect( self.altShiftDownAct, SIGNAL( 'triggered()' ), self.__onAltShiftDown )
+        self.addAction( self.altShiftDownAct )
+
+        # Alt + Shift + Left, Alt + Shift + Right
+        self.altShiftLeftAct = QAction( self )
+        self.altShiftLeftAct.setShortcut( "Alt+Shift+Left" )
+        self.connect( self.altShiftLeftAct, SIGNAL( 'triggered()' ), self.__onAlShiftLeft )
+        self.addAction( self.altShiftLeftAct )
+
+        self.altShiftRightAct = QAction( self )
+        self.altShiftRightAct.setShortcut( "Alt+Shift+Right" )
+        self.connect( self.altShiftRightAct, SIGNAL( 'triggered()' ), self.__onAlShiftRight )
+        self.addAction( self.altShiftRightAct )
+        return
 
     def focusInEvent( self, event ):
         " Enable Shift+Tab when the focus is received "
@@ -177,8 +210,14 @@ class TextEditor( ScintillaWrapper ):
         self.paragraphUpAct.setEnabled( True )
         self.paragraphDownAct.setEnabled( True )
         self.homeAct.setEnabled( True )
+        self.shiftHomeAct.setEnabled( True )
         self.endAct.setEnabled( True )
+        self.shiftEndAct.setEnabled( True )
         self.ctrlBackslashAct.setEnabled( True )
+        self.altShiftUpAct.setEnabled( True )
+        self.altShiftDownAct.setEnabled( True )
+        self.altShiftLeftAct.setEnabled( True )
+        self.altShiftRightAct.setEnabled( True )
         return ScintillaWrapper.focusInEvent( self, event )
 
     def focusOutEvent( self, event ):
@@ -191,8 +230,14 @@ class TextEditor( ScintillaWrapper ):
         self.paragraphUpAct.setEnabled( False )
         self.paragraphDownAct.setEnabled( False )
         self.homeAct.setEnabled( False )
+        self.shiftHomeAct.setEnabled( False )
         self.endAct.setEnabled( False )
+        self.shiftEndAct.setEnabled( False )
         self.ctrlBackslashAct.setEnabled( False )
+        self.altShiftUpAct.setEnabled( False )
+        self.altShiftDownAct.setEnabled( False )
+        self.altShiftLeftAct.setEnabled( False )
+        self.altShiftRightAct.setEnabled( False )
         return ScintillaWrapper.focusOutEvent( self, event )
 
     def updateSettings( self ):
@@ -659,14 +704,44 @@ class TextEditor( ScintillaWrapper ):
         self.SendScintilla( QsciScintilla.SCI_PARADOWN )
         return
 
+    def __onAltShiftUp( self ):
+        " Triggered when Alt+Shift+Up is received "
+        self.SendScintilla( QsciScintilla.SCI_PARAUPEXTEND )
+        return
+
+    def __onAltShiftDown( self ):
+        " Triggered when Alt+Shift+Down is received "
+        self.SendScintilla( QsciScintilla.SCI_PARADOWNEXTEND )
+        return
+
+    def __onAlShiftLeft( self ):
+        " Triggered when Alt+Shift+Left is received "
+        self.SendScintilla( QsciScintilla.SCI_WORDPARTLEFTEXTEND )
+        return
+
+    def __onAlShiftRight( self ):
+        " Triggered when Alt+Shift+Right is received "
+        self.SendScintilla( QsciScintilla.SCI_WORDPARTRIGHTEXTEND )
+        return
+
     def __onHome( self ):
         " Triggered when HOME is received "
         self.SendScintilla( QsciScintilla.SCI_HOMEDISPLAY )
         return
 
+    def __onShiftHome( self ):
+        " Triggered when Shift+HOME is received "
+        self.SendScintilla( QsciScintilla.SCI_HOMEDISPLAYEXTEND )
+        return
+
     def __onEnd( self ):
         " Triggered when END is received "
         self.SendScintilla( QsciScintilla.SCI_LINEENDDISPLAY )
+        return
+
+    def __onShiftEnd( self ):
+        " Triggered when END is received "
+        self.SendScintilla( QsciScintilla.SCI_LINEENDDISPLAYEXTEND )
         return
 
     def __onShiftDel( self ):

@@ -119,8 +119,8 @@ class QuickHelpWidget( HTMLTabWidget ):
         <tr>
           <td>Ctrl+G</td>
           <td>Goto line</td>
-          <td></td>
-          <td></td></tr>
+          <td>Alt+Shift+Left/Right</td>
+          <td>Select word part</td></tr>
         <tr>
           <td>Ctrl+D</td>
           <td>Toggle bookmark</td>
@@ -147,17 +147,20 @@ class QuickHelpWidget( HTMLTabWidget ):
           <td>Ctrl+TAB</td>
           <td>Switching between two recent tabs</td></tr>
         <tr>
-        <tr>
           <td>Ctrl+I</td>
           <td>Open import/select import to open</td>
           <td>Ctrl+M</td>
           <td>Comment/uncomment a line or selected lines</td></tr>
         <tr>
-        <tr>
           <td>Alt+Left</td>
           <td>Word part left</td>
           <td>Alt+Right</td>
           <td>Word part right</td></tr>
+        <tr>
+          <td>Alt+Shift+Up/Down</td>
+          <td>Select till the beginning/end of a paragraph</td>
+          <td>Shift+Home/End</td>
+          <td>Select till the beginning/end of a visible line</td></tr>
         <tr>
     </table>
     </p>
