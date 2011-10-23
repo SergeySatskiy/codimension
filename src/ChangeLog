@@ -1,5 +1,6 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Updating the welcome screen. Issue #279.
 * Making Shift+Home/End select till the beginning/end of a visible line.
   Issue #286.
 * Adding support for Alt+Shift+Left/Right - select a word part. Issue #287.
