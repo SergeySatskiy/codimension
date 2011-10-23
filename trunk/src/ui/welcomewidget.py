@@ -32,15 +32,18 @@ from utils.latestver    import getLatestVersionFile
 class WelcomeWidget( HTMLTabWidget ):
     """ Welcome screen """
 
-    homePage = "http://satsky.spb.ru/codimension/codimensionEng.php"
+    httpAddress = "http://satsky.spb.ru/codimension/"
+    homePage = httpAddress + "codimensionEng.php"
+    downloadPage = httpAddress + "downloadEng.php"
 
     def __init__( self, parent = None ):
 
         HTMLTabWidget.__init__( self, parent )
         pixmapPath = os.path.dirname( os.path.abspath( sys.argv[0] ) ) + \
                      os.path.sep + 'pixmaps' + os.path.sep
-        logoPath = pixmapPath + 'logo.png'
-        welcome = "Welcome to Codimension v." + str( GlobalData().version )
+        logoPath = pixmapPath + 'logo-48x48.png'
+        welcome = "  Codimension version " + str( GlobalData().version ) + \
+                  " <font size=-2>(GPL v3)</font>"
 
         newerVersion = ""
         success, values = getLatestVersionFile()
@@ -48,9 +51,9 @@ class WelcomeWidget( HTMLTabWidget ):
             if float( values[ "LatestVersion" ] ) > \
                float( GlobalData().version ):
                 newerVersion = "<p aligh='left'>" \
-                               "Note: version " + \
+                               "<b>Note</b>: version " + \
                                values[ "LatestVersion" ] + " is <a href='" + \
-                               self.homePage + "'>available</a>"
+                               self.downloadPage + "'>available</a>"
                 if values.has_key( "ReleaseDate" ):
                     newerVersion += ", released on " + values[ "ReleaseDate" ]
                 newerVersion += "</p>"
@@ -61,61 +64,46 @@ class WelcomeWidget( HTMLTabWidget ):
 
 
         self.setHTML( \
-            """<body bgcolor="#ffffe6">""" \
+            """<body bgcolor="#d5d1cf">""" \
             """<p>""" \
-            """<table cellspacing="0" cellpadding="16" width="100%" """ \
-            """       align="left" bgcolor="#ffffe6" border="0" style="width: 100%">""" \
+            """<table cellspacing="0" cellpadding="8" width="100%" """ \
+            """       align="left" bgcolor="#d5d1cf" border="0" style="width: 100%">""" \
             """<tr>""" \
             """  <td width="1%">""" \
-            """      <!--a href='""" + self.homePage + """'>""" \
+            """      <a href='""" + self.homePage + """'>""" \
             """      <img border="0" align="left" src='file:""" + logoPath + \
             """' """ \
-            """           width="64" height="64">""" \
-            """      </a-->&nbsp;""" \
+            """           width="48" height="48">""" \
+            """      </a>&nbsp;""" \
             """  </td>""" \
             """  <td>""" \
-            """      <h1 align="left" style="color: #666">""" + welcome + \
-            """      </h1>""" \
+            """      <h2 align="left" style="color: #666">""" + welcome + \
+            """      </h2>""" \
             """  </td>""" \
             """</tr>""" \
+            """</table>""" \
+
+            """<table cellspacing="0" cellpadding="8" width="100%" """ \
+            """       align="left" bgcolor="#d5d1cf" border="0" style="width: 100%">""" \
             """<tr>""" \
-            """  <td bgcolor="#ffffe6">&nbsp;</td>""" \
-            """  <td bgcolor="#ffffe6">""" \
-            """    <p align="left">Codimension is yet another free """ \
-            """                      experimental Python IDE licensed """ \
-            """                      under GPL v3.</p> """ \
-            """    <p align="left">Codimension aims to provide an """ \
-            """                      integrated system for:""" \
-            """    <li>traditional text-based code editing, and</li>""" \
-            """    <li>diagram-based code analysis.</li></p>""" \
-            """    <p align="left">Codimension lacks the main """ \
+            """  <td>""" \
+            """    <p align="left">The IDE lacks the main """ \
             """        menu and all the functionality is available via """ \
             """        toolbar buttons, context menues or via keyboard """ \
-            """        hot keys (click F1 for a quick reference).</p>""" \
+            """        hot keys (click <b>F1</b> for a quick reference).</p>""" \
             """    <p align="left">""" \
             """       Please visit """ \
-            """       <a style="color: #666" """ \
+            """       <a """ \
             """          href="http://satsky.spb.ru/codimension/codimensionEng.php">""" \
             """          http://satsky.spb.ru/codimension/codimensionEng.php</a>""" \
-            """          for more information on Codimension.""" \
+            """          for more information.""" \
             """    </p>""" \
-            """    <p align="left">If you want to contribute to """ \
-            """        the project in any way, please """ \
-            """        contact:""" \
-            """    <li>Sergey Satskiy at """ \
-            """        <a style="color: #666" """ \
-            """           href="mailto:sergey.satskiy@gmail.com">""" \
-            """                 sergey.satskiy@gmail.com</a></li>""" \
-            """    <li>Dmitry Kazimirov at """ \
-            """        <a style="color: #666" """ \
-            """           href="mailto:dk@revl.org">""" \
-            """                 dk@revl.org</a></li></p>""" \
-            """    <p align="left">We hope you enjoy using Codimension.</p>""" \
             """  </td>""" \
             """</tr>""" \
             """<tr>""" \
-            """<td bgcolor="#ffffe6" colspan="2">&nbsp;</td></tr>""" \
-            """</table></p>"""  + newerVersion + \
+            """  <td><br>""" + newerVersion + """</td>""" \
+            """</tr>""" \
+            """</table></p>""" \
             """</body>""" )
 
         self.setFileName( "" )
