@@ -1,5 +1,6 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Updating the help screen. Issue #281.
 * Updating the welcome screen. Issue #279.
 * Making Shift+Home/End select till the beginning/end of a visible line.
   Issue #286.
