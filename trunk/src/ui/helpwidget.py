@@ -43,141 +43,113 @@ class QuickHelpWidget( HTMLTabWidget ):
 <html>
 <body bgcolor="#ffffe6">
 
-<table cellspacing="1" cellpadding="3" width="100%"
-       align="left" border="0">
-<tr>
-  <td bgcolor="#ffffe6">
-    <table style="WIDTH: 100%" cellspacing="1"
-           cellpadding="3">
-    <tr width="100%">
-      <td style="WIDTH: 110px">
-      <!--a href="http://satsky.spb.ru/codimension/codimensionEng.php">
-      <img border="0" align="left" src='file:""" + logoPath + """'
-           width="64" height="64">
-      </a-->&nbsp;
-      </td>
-      <td width="100%">
-        <h1 align="left" style="color: #666">Keyboard Shortcut Reference</h1>
-      </td>
-    </tr>
-    </table>
+    <h2 align="left" style="color: #666">Keyboard Shortcut Reference</h2>
 
+    <h3 style="color: #666">Tools</h3>
     <p align="center">
       <table border="1" cellspacing="0"
              cellpadding="1" width="95%" align="center">
+        <tr>
+          <td>Ctrl+L</td>
+          <td>Pylint for a file</td>
+          <td>Ctrl+K</td>
+          <td>Pymetrics for a file</td>
+        </tr>
+      </table>
+    </p>
 
+    <h3 style="color: #666">IDE</h3>
+    <p align="center">
+      <table border="1" cellspacing="0"
+             cellpadding="1" width="95%" align="center">
         <tr>
           <td>Ctrl+T</td>
           <td>New tab</td>
-          <td>Ctrl+Up/Down</td>
-          <td>Scrolling up/down without changing cursor position</td></tr>
+          <td>F11</td>
+          <td>Shrink sidebars</td>
+        </tr>
         <tr>
+          <td>Alt+PgUp/Down</td>
+          <td>Forward/back in editing history</td>
+          <td>Ctrl+PgUp/Down</td>
+          <td>Next/previous tab</td>
+        </tr>
+        <tr>
+          <td>Ctrl+TAB</td>
+          <td>Switching between two recent tabs</td>
+          <td>Alt+Shift+S</td>
+          <td>Search a name</td>
+        </tr>
+        <tr>
+          <td>Alt+Shift+O</td>
+          <td>Search a file</td>
+          <td>Ctrl+Shift+F</td>
+          <td>Search in files</td>
+        </tr>
+      </table>
+    </p>
+
+    <h3 style="color: #666">Editor</h3>
+    <p align="center">
+      <table border="1" cellspacing="0"
+             cellpadding="1" width="95%" align="center">
+        <tr>
+          <td>Ctrl+Up/Down</td>
+          <td>Scrolling up/down without changing cursor position</td>
           <td>Alt+Up/Down</td>
           <td>Move cursor one paragraph up/down</td>
+        </tr>
+        <tr>
+          <td>Alt+Left/Right</td>
+          <td>Move cursor word part left/right</td>
+          <td>Alt+Shift+Up/Down</td>
+          <td>Select till the beginning/end of a paragraph</td>
+        </tr>
+        <tr>
+          <td>Alt+Shift+Left/Right</td>
+          <td>Select word part</td>
+          <td>Ctrl+Z/Ctrl+Shift+Z</td>
+          <td>Undo/Redo</td>
+        </tr>
+        <tr>
           <td>Shift+Del</td>
-          <td>Copy to buffer and delete selected text (if so) or current line</td></tr>
-        <tr>
-          <td>Alt+PgDown</td>
-          <td>Back in history</td>
-          <td>Ctrl+PgDown</td>
-          <td>Previous tab</td></tr>
-        <tr>
-          <td>Alt+PgUp</td>
-          <td>Forward in history</td>
-          <td>Ctrl+PgUp</td>
-          <td>Next tab</td></tr>
-        <tr>
-          <td>Ctrl+F</td>
-          <td>Search in the current file</td>
-          <td>Ctrl+Shift+F</td>
-          <td>Search in files</td></tr>
-        <tr>
-          <td>Ctrl+R</td>
-          <td>Replace in the current file</td>
-          <td>Ctrl+K</td>
-          <td>Pymetrics for a file</td></tr>
-        <tr>
+          <td>Copy to buffer and delete selected text (if so) or current line</td>
           <td>Ctrl++/-</td>
           <td>Zoom in/out</td>
-          <td>Ctrl+Z</td>
-          <td>Undo</td></tr>
+        </tr>
         <tr>
           <td>Ctrl+0</td>
           <td>Reset zoom</td>
-          <td>Ctrl+Shift+Z</td>
-          <td>Redo</td></tr>
-        <tr>
-          <td>Ctrl+S</td>
-          <td>Save</td>
-          <td>Ctrl+O</td>
-          <td>Open</td></tr>
-        <tr>
-          <td>Ctrl+Shift+S</td>
-          <td>Save as</td>
-          <td>Ctrl+A</td>
-          <td>Select all</td></tr>
-        <tr>
           <td>Ctrl+G</td>
           <td>Goto line</td>
-          <td>Alt+Shift+Left/Right</td>
-          <td>Select word part</td></tr>
+        </tr>
         <tr>
-          <td>Ctrl+D</td>
-          <td>Toggle bookmark</td>
-          <td>F1</td>
-          <td>This reference</td></tr>
+          <td>Ctrl+F</td>
+          <td>Incremental search in buffer</td>
+          <td>Ctrl+R</td>
+          <td>Replace in buffer</td>
+        </tr>
         <tr>
-          <td>F11</td>
-          <td>Shrink sidebars</td>
-          <td>Ctrl+L</td>
-          <td>Pylint for a file</td></tr>
-        <tr>
-          <td>F3</td>
-          <td>Search next</td>
-          <td>Shift+F3</td>
-          <td>Search previous</td></tr>
-        <tr>
-          <td>Alt+Shift+S</td>
-          <td>Search a name</td>
-          <td>Alt+Shift+O</td>
-          <td>Search a file</td></tr>
-        <tr>
+          <td>F3/Shift+F3</td>
+          <td>Search next/previous</td>
           <td>Ctrl+N</td>
-          <td>Highlight the current word</td>
-          <td>Ctrl+TAB</td>
-          <td>Switching between two recent tabs</td></tr>
+          <td>Highlight current word</td>
+        </tr>
         <tr>
           <td>Ctrl+I</td>
           <td>Open import/select import to open</td>
           <td>Ctrl+M</td>
-          <td>Comment/uncomment a line or selected lines</td></tr>
-        <tr>
-          <td>Alt+Left</td>
-          <td>Word part left</td>
-          <td>Alt+Right</td>
-          <td>Word part right</td></tr>
-        <tr>
-          <td>Alt+Shift+Up/Down</td>
-          <td>Select till the beginning/end of a paragraph</td>
-          <td>Shift+Home/End</td>
-          <td>Select till the beginning/end of a visible line</td></tr>
-        <tr>
-    </table>
+          <td>Comment/uncomment a line or selected lines</td>
+        </tr>
+      </table>
     </p>
-    <p align="center">
-       More documentation is available at<br/>
-       <a style="color: #666"
-          href="http://satsky.spb.ru/codimension/codimensionEng.php">
-          http://satsky.spb.ru/codimension/codimensionEng.php</a>.
-    </p>
-    <p align="right"> Sergey Satskiy (c), 2010 - 2011
-        <a style="color: #666"
-           href="mailto:sergey.satskiy@gmail.com">sergey.satskiy@gmail.com</a>
-    </p></td></tr>
 
-<p>
-<tr>
-<td >&nbsp;</td></tr></p></table>
+    <p>
+        The industry common hot keys are not shown above. Please refer to
+        <a href="http://satsky.spb.ru/codimension/keyBindings.php">
+           http://satsky.spb.ru/codimension/keyBindings.php</a> for the complete list of
+           bindings.
+    </p>
 
 </body>
 </html>
