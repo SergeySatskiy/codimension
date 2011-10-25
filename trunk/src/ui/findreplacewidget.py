@@ -601,6 +601,9 @@ class FindReplaceBase( QWidget ):
         self._skip = False
         return changes
 
+    def getLastSearchString( self ):
+        " Provides the string which was searched last time "
+        return str( self.findtextCombo.currentText() )
 
 
 class FindWidget( FindReplaceBase ):
