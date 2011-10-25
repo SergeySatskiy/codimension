@@ -45,15 +45,57 @@ class QuickHelpWidget( HTMLTabWidget ):
 
     <h2 align="left" style="color: #666">Keyboard Shortcut Reference</h2>
 
-    <h3 style="color: #666">Tools</h3>
+    <h3 style="color: #666">Editor</h3>
     <p align="center">
       <table border="1" cellspacing="0"
              cellpadding="1" width="95%" align="center">
         <tr>
-          <td>Ctrl+L</td>
-          <td>Pylint for a file</td>
-          <td>Ctrl+K</td>
-          <td>Pymetrics for a file</td>
+          <td width="15%">Ctrl+Up / Down</td>
+          <td width="35%">Scrolling up / down without changing cursor position</td>
+          <td width="15%">Alt+Up / Down</td>
+          <td width="35%">Move cursor one paragraph up / down</td>
+        </tr>
+        <tr>
+          <td>Alt+Left / Right</td>
+          <td>Move cursor word part left / right</td>
+          <td>Alt+Shift+Up / Down</td>
+          <td>Select till the beginning / end of a paragraph</td>
+        </tr>
+        <tr>
+          <td>Alt+Shift+Left / Right</td>
+          <td>Select word part</td>
+          <td>Ctrl+Z / Ctrl+Shift+Z</td>
+          <td>Undo / Redo</td>
+        </tr>
+        <tr>
+          <td>Shift+Del</td>
+          <td>Copy to buffer and delete selected text (if so) or current line</td>
+          <td>Ctrl++ / -</td>
+          <td>Zoom in / out</td>
+        </tr>
+        <tr>
+          <td>Ctrl+0</td>
+          <td>Reset zoom</td>
+          <td>Ctrl+G</td>
+          <td>Goto line</td>
+        </tr>
+        <tr>
+          <td>Ctrl+F</td>
+          <td>Incremental search in buffer</td>
+          <td>Ctrl+R</td>
+          <td>Replace in buffer</td>
+        </tr>
+        <tr>
+          <td>F3 / Shift+F3</td>
+          <td>Search next / previous</td>
+          <td>Ctrl+N</td>
+          <td>Highlight current word</td>
+        </tr>
+        <tr>
+          <td>Ctrl+I</td>
+          <td>Open import / select import to open</td>
+          <td>Ctrl+M</td>
+          <td>Comment / uncomment a line or selected lines</td>
         </tr>
       </table>
     </p>
@@ -63,16 +105,16 @@ class QuickHelpWidget( HTMLTabWidget ):
       <table border="1" cellspacing="0"
              cellpadding="1" width="95%" align="center">
         <tr>
-          <td>Ctrl+T</td>
-          <td>New tab</td>
-          <td>F11</td>
-          <td>Shrink sidebars</td>
+          <td width="15%">Ctrl+T</td>
+          <td width="35%">New tab</td>
+          <td width="15%">F11</td>
+          <td width="35%">Shrink sidebars</td>
         </tr>
         <tr>
-          <td>Alt+PgUp/Down</td>
-          <td>Forward/back in editing history</td>
-          <td>Ctrl+PgUp/Down</td>
-          <td>Next/previous tab</td>
+          <td>Alt+PgUp / Down</td>
+          <td>Forward / back in editing history</td>
+          <td>Ctrl+PgUp / Down</td>
+          <td>Next / previous tab</td>
         </tr>
         <tr>
           <td>Ctrl+TAB</td>
@@ -89,65 +131,23 @@ class QuickHelpWidget( HTMLTabWidget ):
       </table>
     </p>
 
-    <h3 style="color: #666">Editor</h3>
+    <h3 style="color: #666">Tools</h3>
     <p align="center">
       <table border="1" cellspacing="0"
              cellpadding="1" width="95%" align="center">
         <tr>
-          <td>Ctrl+Up/Down</td>
-          <td>Scrolling up/down without changing cursor position</td>
-          <td>Alt+Up/Down</td>
-          <td>Move cursor one paragraph up/down</td>
-        </tr>
-        <tr>
-          <td>Alt+Left/Right</td>
-          <td>Move cursor word part left/right</td>
-          <td>Alt+Shift+Up/Down</td>
-          <td>Select till the beginning/end of a paragraph</td>
-        </tr>
-        <tr>
-          <td>Alt+Shift+Left/Right</td>
-          <td>Select word part</td>
-          <td>Ctrl+Z/Ctrl+Shift+Z</td>
-          <td>Undo/Redo</td>
-        </tr>
-        <tr>
-          <td>Shift+Del</td>
-          <td>Copy to buffer and delete selected text (if so) or current line</td>
-          <td>Ctrl++/-</td>
-          <td>Zoom in/out</td>
-        </tr>
-        <tr>
-          <td>Ctrl+0</td>
-          <td>Reset zoom</td>
-          <td>Ctrl+G</td>
-          <td>Goto line</td>
-        </tr>
-        <tr>
-          <td>Ctrl+F</td>
-          <td>Incremental search in buffer</td>
-          <td>Ctrl+R</td>
-          <td>Replace in buffer</td>
-        </tr>
-        <tr>
-          <td>F3/Shift+F3</td>
-          <td>Search next/previous</td>
-          <td>Ctrl+N</td>
-          <td>Highlight current word</td>
-        </tr>
-        <tr>
-          <td>Ctrl+I</td>
-          <td>Open import/select import to open</td>
-          <td>Ctrl+M</td>
-          <td>Comment/uncomment a line or selected lines</td>
+          <td width="15%">Ctrl+L</td>
+          <td width="35%">Pylint for a file</td>
+          <td width="15%">Ctrl+K</td>
+          <td width="35%">Pymetrics for a file</td>
         </tr>
       </table>
     </p>
 
     <p>
         The industry common hot keys are not shown above. Please refer to
-        <a href="http://satsky.spb.ru/codimension/keyBindings.php">
-           http://satsky.spb.ru/codimension/keyBindings.php</a> for the complete list of
+        <a href="http://satsky.spb.ru/codimension/keyBindingsEng.php">
+           http://satsky.spb.ru/codimension/keyBindingsEng.php</a> for the complete list of
            bindings.
     </p>
 
