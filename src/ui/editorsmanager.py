@@ -97,6 +97,7 @@ class EditorsManager( QTabWidget ):
         self.findWidget = None
         self.replaceWidget = None
         self.gotoWidget = None
+        self.__lastDisplayedWasFindWidget = True
 
         self.history = TabsHistory( self )
         self.connect( self.history, SIGNAL( 'historyChanged' ),
@@ -894,6 +895,7 @@ class EditorsManager( QTabWidget ):
             self.findWidget.show( self.currentWidget().
                                   getEditor().getSearchText() )
         self.findWidget.setFocus()
+        self.__lastDisplayedWasFindWidget = True
         return
 
     def __onReplace( self ):
@@ -910,6 +912,7 @@ class EditorsManager( QTabWidget ):
             self.replaceWidget.show( self.currentWidget().
                                      getEditor().getSearchText() )
         self.replaceWidget.setFocus()
+        self.__lastDisplayedWasFindWidget = False
         return
 
     def __onGoto( self ):
@@ -929,13 +932,43 @@ class EditorsManager( QTabWidget ):
 
     def findNext( self ):
         " triggered when F3 is received "
-        self.findWidget.onNext()
-        return
+        if self.__lastDisplayedWasFindWidget:
+            if self.findWidget.getLastSearchString() != "":
+                self.findWidget.onNext()
+                return
+            if self.replaceWidget.getLastSearchString() != "":
+                self.replaceWidget.onNext()
+                return
+            return  # Nothing to search for
+
+        # The last on the screen was the replace widget
+        if self.replaceWidget.getLastSearchString() != "":
+            self.replaceWidget.onNext()
+            return
+        if self.findWidget.getLastSearchString() != "":
+            self.findWidget.onNext()
+            return
+        return  # nothing to search for
 
     def findPrev( self ):
         "Triggered when Shift+F3 is received "
-        self.findWidget.onPrev()
-        return
+        if self.__lastDisplayedWasFindWidget:
+            if self.findWidget.getLastSearchString() != "":
+                self.findWidget.onPrev()
+                return
+            if self.replaceWidget.getLastSearchString() != "":
+                self.replaceWidget.onPrev()
+                return
+            return  # Nothing to search for
+
+        # The last on the screen was the replace widget
+        if self.replaceWidget.getLastSearchString() != "":
+            self.replaceWidget.onPrev()
+            return
+        if self.findWidget.getLastSearchString() != "":
+            self.findWidget.onPrev()
+            return
+        return  # nothing to search for
 
     def __addHistoryMenuItem( self, menu, index, currentHistoryIndex ):
         " Prepares the history menu item "
