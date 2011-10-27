@@ -171,6 +171,12 @@ class TextEditor( ScintillaWrapper ):
         self.connect( self.shiftDelAct, SIGNAL( 'triggered()' ), self.__onShiftDel )
         self.addAction( self.shiftDelAct )
 
+        # Ctrl + X => synonym for Shift + Del
+        self.ctrlXAct = QAction( self )
+        self.ctrlXAct.setShortcut( "Ctrl+X" )
+        self.connect( self.ctrlXAct, SIGNAL( 'triggered()' ), self.__onShiftDel )
+        self.addAction( self.ctrlXAct )
+
         # Ctrl + \\
         self.ctrlBackslashAct = QAction( self )
         self.ctrlBackslashAct.setShortcut( "Ctrl+\\" )
@@ -213,6 +219,8 @@ class TextEditor( ScintillaWrapper ):
         self.shiftHomeAct.setEnabled( True )
         self.endAct.setEnabled( True )
         self.shiftEndAct.setEnabled( True )
+        self.shiftDelAct.setEnabled( True )
+        self.ctrlXAct.setEnabled( True )
         self.ctrlBackslashAct.setEnabled( True )
         self.altShiftUpAct.setEnabled( True )
         self.altShiftDownAct.setEnabled( True )
@@ -233,6 +241,8 @@ class TextEditor( ScintillaWrapper ):
         self.shiftHomeAct.setEnabled( False )
         self.endAct.setEnabled( False )
         self.shiftEndAct.setEnabled( False )
+        self.shiftDelAct.setEnabled( False )
+        self.ctrlXAct.setEnabled( False )
         self.ctrlBackslashAct.setEnabled( False )
         self.altShiftUpAct.setEnabled( False )
         self.altShiftDownAct.setEnabled( False )
