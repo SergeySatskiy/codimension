@@ -45,6 +45,56 @@ class QuickHelpWidget( HTMLTabWidget ):
 
     <h2 align="left" style="color: #666">Keyboard Shortcut Reference</h2>
 
+    <h3 style="color: #666">Tools</h3>
+    <p align="center">
+      <table border="1" cellspacing="0"
+             cellpadding="1" width="95%" align="center">
+        <tr>
+          <td width="15%">Ctrl+L</td>
+          <td width="35%">Pylint for a file</td>
+          <td width="15%">Ctrl+K</td>
+          <td width="35%">Pymetrics for a file</td>
+        </tr>
+        <tr>
+          <td>Alt+Shift+S</td>
+          <td>Search a name</td>
+          <td>Alt+Shift+O</td>
+          <td>Search a file</td>
+        </tr>
+        <tr>
+          <td>Ctrl+I</td>
+          <td>Open import / select import to open</td>
+          <td></td>
+          <td></td>
+        </tr>
+      </table>
+    </p>
+
+    <h3 style="color: #666">IDE</h3>
+    <p align="center">
+      <table border="1" cellspacing="0"
+             cellpadding="1" width="95%" align="center">
+        <tr>
+          <td width="15%">Ctrl+T</td>
+          <td width="35%">New tab</td>
+          <td width="15%">F11</td>
+          <td width="35%">Shrink sidebars</td>
+        </tr>
+        <tr>
+          <td>Alt+PgUp / Down</td>
+          <td>Forward / back in editing history</td>
+          <td>Ctrl+PgUp / Down</td>
+          <td>Next / previous tab</td>
+        </tr>
+        <tr>
+          <td>Ctrl+TAB</td>
+          <td>Switching between two recent tabs</td>
+          <td>Ctrl+Shift+F</td>
+          <td>Search in files</td>
+        </tr>
+      </table>
+    </p>
+
     <h3 style="color: #666">Editor</h3>
     <p align="center">
       <table border="1" cellspacing="0"
@@ -92,54 +142,10 @@ class QuickHelpWidget( HTMLTabWidget ):
           <td>Highlight current word</td>
         </tr>
         <tr>
-          <td>Ctrl+I</td>
-          <td>Open import / select import to open</td>
           <td>Ctrl+M</td>
           <td>Comment / uncomment a line or selected lines</td>
-        </tr>
-      </table>
-    </p>
-
-    <h3 style="color: #666">IDE</h3>
-    <p align="center">
-      <table border="1" cellspacing="0"
-             cellpadding="1" width="95%" align="center">
-        <tr>
-          <td width="15%">Ctrl+T</td>
-          <td width="35%">New tab</td>
-          <td width="15%">F11</td>
-          <td width="35%">Shrink sidebars</td>
-        </tr>
-        <tr>
-          <td>Alt+PgUp / Down</td>
-          <td>Forward / back in editing history</td>
-          <td>Ctrl+PgUp / Down</td>
-          <td>Next / previous tab</td>
-        </tr>
-        <tr>
-          <td>Ctrl+TAB</td>
-          <td>Switching between two recent tabs</td>
-          <td>Alt+Shift+S</td>
-          <td>Search a name</td>
-        </tr>
-        <tr>
-          <td>Alt+Shift+O</td>
-          <td>Search a file</td>
-          <td>Ctrl+Shift+F</td>
-          <td>Search in files</td>
-        </tr>
-      </table>
-    </p>
-
-    <h3 style="color: #666">Tools</h3>
-    <p align="center">
-      <table border="1" cellspacing="0"
-             cellpadding="1" width="95%" align="center">
-        <tr>
-          <td width="15%">Ctrl+L</td>
-          <td width="35%">Pylint for a file</td>
-          <td width="15%">Ctrl+K</td>
-          <td width="35%">Pymetrics for a file</td>
+          <td></td>
+          <td></td>
         </tr>
       </table>
     </p>
