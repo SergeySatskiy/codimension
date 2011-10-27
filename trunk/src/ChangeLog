@@ -1,5 +1,6 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Making Ctrl+X a synonym to Shift+Del. Issue #290.
 * Bug fix: F3/Shift F3 now work for the find/replace search string depending of
   what dialog was shown last. Issue #289.
 * Updating the help screen. Issue #281.
