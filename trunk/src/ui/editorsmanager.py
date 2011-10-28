@@ -891,9 +891,13 @@ class EditorsManager( QTabWidget ):
             self.replaceWidget.hide()
         if self.gotoWidget.isVisible():
             self.gotoWidget.hide()
+
+        searchText = self.currentWidget().getEditor().getSearchText()
         if self.findWidget.isHidden():
-            self.findWidget.show( self.currentWidget().
-                                  getEditor().getSearchText() )
+            self.findWidget.show( searchText )
+        else:
+            if len( searchText ) > 0:
+                self.findWidget.show( searchText )
         self.findWidget.setFocus()
         self.__lastDisplayedWasFindWidget = True
         return
@@ -908,9 +912,13 @@ class EditorsManager( QTabWidget ):
             self.findWidget.hide()
         if self.gotoWidget.isVisible():
             self.gotoWidget.hide()
+
+        searchText = self.currentWidget().getEditor().getSearchText()
         if self.replaceWidget.isHidden():
-            self.replaceWidget.show( self.currentWidget().
-                                     getEditor().getSearchText() )
+            self.replaceWidget.show( searchText )
+        else:
+            if len( searchText ) > 0:
+                self.replaceWidget.show( searchText )
         self.replaceWidget.setFocus()
         self.__lastDisplayedWasFindWidget = False
         return

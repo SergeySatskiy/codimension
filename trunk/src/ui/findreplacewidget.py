@@ -197,6 +197,7 @@ class FindReplaceBase( QWidget ):
 
     def setFocus( self ):
         " Overridded setFocus "
+        self.findtextCombo.lineEdit().selectAll()
         self.findtextCombo.setFocus()
         return
 
