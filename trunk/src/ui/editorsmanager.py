@@ -35,7 +35,7 @@ from PyQt4.QtCore               import Qt, SIGNAL, \
 from PyQt4.QtGui                import QTabWidget, QDialog, QMessageBox, \
                                        QWidget, QHBoxLayout, QMenu, \
                                        QToolButton, QShortcut, QFileDialog, \
-                                       QApplication, QTabBar
+                                       QApplication, QTabBar, QIcon
 from utils.pixmapcache          import PixmapCache
 from welcomewidget              import WelcomeWidget
 from helpwidget                 import QuickHelpWidget
@@ -104,7 +104,7 @@ class EditorsManager( QTabWidget ):
                       self.__onHistoryChanged )
 
         self.__welcomeWidget = WelcomeWidget()
-        self.addTab( self.__welcomeWidget, getFileIcon( HTMLFileType ),
+        self.addTab( self.__welcomeWidget,
                      self.__welcomeWidget.getShortName() )
         self.connect( self.__welcomeWidget, SIGNAL( 'ESCPressed' ),
                       self.__onESC )
@@ -328,7 +328,7 @@ class EditorsManager( QTabWidget ):
 
         if self.count() == 0:
             self.setTabsClosable( False )
-            self.addTab( self.__welcomeWidget, getFileIcon( HTMLFileType ),
+            self.addTab( self.__welcomeWidget,
                          self.__welcomeWidget.getShortName() )
             self.__welcomeWidget.setFocus()
             self.gotoWidget.hide()
@@ -524,7 +524,7 @@ class EditorsManager( QTabWidget ):
             # It is the only welcome widget on the screen
             self.removeTab( 0 )
             self.setTabsClosable( True )
-        self.addTab( self.__helpWidget, getFileIcon( HTMLFileType ), shortName )
+        self.addTab( self.__helpWidget, shortName )
         self.activateTab( self.count() - 1 )
         return
 
@@ -556,7 +556,6 @@ class EditorsManager( QTabWidget ):
             fileType = detectFileType( fileName )
 
         if fileType not in [ PythonFileType, Python3FileType ]:
-            self.setTabIcon( self.currentIndex(), getFileIcon( fileType ) )
             self.setTabToolTip( self.currentIndex(), "" )
             return
 
@@ -567,18 +566,18 @@ class EditorsManager( QTabWidget ):
                 infoSrc = GlobalData().briefModinfoCache
             info = infoSrc.get( fileName )
 
-            if len( info.errors ) == 0:
-                self.setTabIcon( self.currentIndex(),
-                                 PixmapCache().getIcon( 'filepython.png' ) )
-            else:
+            if len( info.errors ) + len( info.lexerErrors ) > 0:
                 self.setTabIcon( self.currentIndex(),
                                  PixmapCache().getIcon( 'filepythonbroken.png' ) )
-
-            if info.docstring is not None:
-                self.setTabToolTip( self.currentIndex(),
-                                    info.docstring.text )
+                self.setTabToolTip( self.currentIndex(), "File has parsing errors" )
             else:
-                self.setTabToolTip( self.currentIndex(), "" )
+                self.setTabIcon( self.currentIndex(), QIcon() )
+
+                if info.docstring is not None:
+                    self.setTabToolTip( self.currentIndex(),
+                                        info.docstring.text )
+                else:
+                    self.setTabToolTip( self.currentIndex(), "" )
         except:
             self.setTabToolTip( self.currentIndex(), "" )
             self.setTabIcon( self.currentIndex(),
@@ -1289,8 +1288,7 @@ class EditorsManager( QTabWidget ):
                     self.removeTab( 0 )
                     self.setTabsClosable( True )
                 shortName = self.__helpWidget.getShortName()
-                self.addTab( self.__helpWidget, getFileIcon( HTMLFileType ),
-                             shortName )
+                self.addTab( self.__helpWidget, shortName )
                 continue
 
             if not fileName.startswith( os.path.sep ):
@@ -1319,7 +1317,7 @@ class EditorsManager( QTabWidget ):
         if self.count() == 0:
             # No one was restored - display the welcome widget
             self.setTabsClosable( False )
-            self.addTab( self.__welcomeWidget, getFileIcon( HTMLFileType ),
+            self.addTab( self.__welcomeWidget,
                          self.__welcomeWidget.getShortName() )
             activeIndex = 0
             self.activateTab( activeIndex )
