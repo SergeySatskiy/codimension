@@ -956,13 +956,17 @@ class ReplaceWidget( FindReplaceBase ):
                                                           "replaced." )
             # This will prevent highlighting the improper editor positions
             searchAattributes.match = [ -1, -1, -1 ]
-            self.onNext()
         return
 
     def __onReplaceAndMove( self ):
         " Triggered when replace-and-move button is clicked "
+        oldLine = self._editor.getLine()
+        oldPos = self._editor.getPos()
         self.__onReplace()
         self.onNext()
+        if oldLine == self._editor.getLine() and \
+           oldPos == self._editor.getPos():
+            self.onNext()
         return
 
     def __updateReplaceHistory( self, text, replaceText ):
