@@ -733,6 +733,9 @@ class ReplaceWidget( FindReplaceBase ):
         self.replaceAndMoveButton.setIcon( \
                 PixmapCache().getIcon( "replace-move.png" ) )
         self.replaceAndMoveButton.setIconSize( QSize( 24, 16 ) )
+        self.replaceAndMoveButton.setEnabled( False )
+        self.connect( self.replaceAndMoveButton, SIGNAL) 'clicked()' ),
+                      self.__onReplaceAndMove )
 
         self.gridLayout = QGridLayout( self )
         self.gridLayout.setMargin( 0 )
@@ -758,8 +761,9 @@ class ReplaceWidget( FindReplaceBase ):
         self.setTabOrder( self.wordCheckBox, self.regexpCheckBox )
         self.setTabOrder( self.regexpCheckBox, self.findNextButton )
         self.setTabOrder( self.findNextButton, self.findPrevButton )
-        self.setTabOrder( self.findPrevButton, self.replaceButton )
+        self.setTabOrder( self.findPrevButton, self.replaceAndMoveButton )
         self.setTabOrder( self.replaceButton, self.replaceAllButton )
+        self.setTabOrder( self.replaceAndMoveButton, self.replaceAllButton )
         self.setTabOrder( self.replaceAllButton, self.closeButton )
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
@@ -789,6 +793,7 @@ class ReplaceWidget( FindReplaceBase ):
                                           self._currentWidget.getPos() )
         else:
             self.replaceButton.setEnabled( False )
+            self.replaceAndMoveButton.setEnabled( False )
             self.__replaceCouldBeEnabled = False
 
         if self.__connected:
@@ -845,6 +850,8 @@ class ReplaceWidget( FindReplaceBase ):
 
         self.replaceButton.setEnabled( found and \
                                        self.replaceCombo.currentText() != "" )
+        self.replaceAndMoveButton.setEnabled( found and \
+                                              self.replaceCombo.currentText() != "" )
         self.__replaceCouldBeEnabled = True
         return
 
@@ -853,6 +860,8 @@ class ReplaceWidget( FindReplaceBase ):
         self.__updateReplaceAllButtonStatus()
         self.replaceButton.setEnabled( self.__replaceCouldBeEnabled and \
                                        text != "" )
+        self.replaceAndMoveButton.setEnabled( self.__replaceCouldBeEnabled and \
+                                              text != "" )
         return
 
     def __subscribeToCursorChangePos( self ):
@@ -884,6 +893,8 @@ class ReplaceWidget( FindReplaceBase ):
 
         self.replaceButton.setEnabled( enable and \
                                        self.replaceCombo.currentText() != "" )
+        self.replaceAndMoveButton.setEnabled( enable and \
+                                              self.replaceCombo.currentText() != "" )
         self.__replaceCouldBeEnabled = enable
         return
 
@@ -915,6 +926,7 @@ class ReplaceWidget( FindReplaceBase ):
             found = self._editor.findNextTarget()
         self._editor.endUndoAction()
         self.replaceButton.setEnabled( False )
+        self.replaceAndMoveButton.setEnabled( False )
         self.__replaceCouldBeEnabled = False
 
         suffix = ""
@@ -945,6 +957,12 @@ class ReplaceWidget( FindReplaceBase ):
             # This will prevent highlighting the improper editor positions
             searchAattributes.match = [ -1, -1, -1 ]
             self.onNext()
+        return
+
+    def __onReplaceAndMove( self ):
+        " Triggered when replace-and-move button is clicked "
+        self.__onReplace()
+        self.onNext()
         return
 
     def __updateReplaceHistory( self, text, replaceText ):
