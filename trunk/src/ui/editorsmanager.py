@@ -140,6 +140,7 @@ class EditorsManager( QTabWidget ):
         " Triggered when the currently active tab is clicked "
         if self.count() > 0:
             self.widget( self.currentIndex() ).setFocus()
+            self._updateIconAndTooltip( self.currentIndex() )
         return
 
     def __showTabContextMenu( self, pos ):
@@ -492,6 +493,7 @@ class EditorsManager( QTabWidget ):
         if index == -1:
             return
 
+        self._updateIconAndTooltip( self.currentIndex() )
         self.__updateStatusBar()
 
         self.gotoWidget.updateStatus()
@@ -548,15 +550,31 @@ class EditorsManager( QTabWidget ):
         except:
             return ""
 
-    def _updateIconAndTooltip( self, fileType = None ):
+    def _updateIconAndTooltip( self, widgetIndex, fileType = None ):
         " Updates the current tab icon and tooltip after the file is saved "
-        fileName = self.currentWidget().getFileName()
+        fileName = self.widget( widgetIndex ).getFileName()
 
         if fileType is None:
             fileType = detectFileType( fileName )
 
+        if os.path.isabs( fileName ):
+            # It makes sense to test if a file disappeared or modified
+            if not self.widget( widgetIndex ).doesFileExist():
+                self.setTabToolTip( widgetIndex,
+                                    "File does not exist on the disk" )
+                self.setTabIcon( widgetIndex,
+                                 PixmapCache().getIcon( 'disappearedfile.png' ) )
+                return
+            if self.currentWidget().isDiskFileModified():
+                self.setTabToolTip( widgetIndex,
+                                    "The file has been modified outside codimension" )
+                self.setTabIcon( widgetIndex,
+                                 PixmapCache().getIcon( 'modifiedfile.png' ) )
+                return
+
+
         if fileType not in [ PythonFileType, Python3FileType ]:
-            self.setTabToolTip( self.currentIndex(), "" )
+            self.setTabToolTip( widgetIndex, "" )
             return
 
         try:
@@ -567,20 +585,19 @@ class EditorsManager( QTabWidget ):
             info = infoSrc.get( fileName )
 
             if len( info.errors ) + len( info.lexerErrors ) > 0:
-                self.setTabIcon( self.currentIndex(),
+                self.setTabIcon( widgetIndex,
                                  PixmapCache().getIcon( 'filepythonbroken.png' ) )
-                self.setTabToolTip( self.currentIndex(), "File has parsing errors" )
+                self.setTabToolTip( widgetIndex, "File has parsing errors" )
             else:
-                self.setTabIcon( self.currentIndex(), QIcon() )
+                self.setTabIcon( widgetIndex, QIcon() )
 
                 if info.docstring is not None:
-                    self.setTabToolTip( self.currentIndex(),
-                                        info.docstring.text )
+                    self.setTabToolTip( widgetIndex, info.docstring.text )
                 else:
-                    self.setTabToolTip( self.currentIndex(), "" )
+                    self.setTabToolTip( widgetIndex, "" )
         except:
-            self.setTabToolTip( self.currentIndex(), "" )
-            self.setTabIcon( self.currentIndex(),
+            self.setTabToolTip( widgetIndex, "" )
+            self.setTabIcon( widgetIndex,
                              PixmapCache().getIcon( 'filepythonbroken.png' ) )
         return
 
@@ -671,7 +688,7 @@ class EditorsManager( QTabWidget ):
             # Not found - create a new one
             newWidget = TextEditorTabWidget( self )
             editor = newWidget.getEditor()
-            editor.readFile( fileName )
+            newWidget.readFile( fileName )
 
             newWidget.setFileName( fileName )
             editor.setModified( False )
@@ -702,7 +719,7 @@ class EditorsManager( QTabWidget ):
                 if line != -1:
                     self.__restorePosition( editor, line, pos, firstVisible )
 
-            self._updateIconAndTooltip( fileType )
+            self._updateIconAndTooltip( self.currentIndex(), fileType )
             self.__updateControls()
             self.__connectEditorWidget( newWidget )
             self.__updateStatusBar()
@@ -775,9 +792,9 @@ class EditorsManager( QTabWidget ):
         if currentWidget.getFileName() != "":
             # Existed one - just save
             fileName = currentWidget.getFileName()
-            if editor.writeFile( fileName ):
+            if currentWidget.writeFile( fileName ):
                 editor.setModified( False )
-                self._updateIconAndTooltip()
+                self._updateIconAndTooltip( self.currentIndex() )
                 self.emit( SIGNAL( 'fileUpdated' ), fileName,
                            currentWidget.getUUID() )
                 return True
@@ -860,11 +877,11 @@ class EditorsManager( QTabWidget ):
         existedBefore = os.path.exists( fileName )
 
         # OK, the file name was properly selected
-        if currentWidget.getEditor().writeFile( fileName ):
+        if currentWidget.writeFile( fileName ):
             currentWidget.setFileName( fileName )
             currentWidget.getEditor().setModified( False )
             newType = detectFileType( currentWidget.getShortName() )
-            self._updateIconAndTooltip( newType )
+            self._updateIconAndTooltip( self.currentIndex(), newType )
             if newType != oldType:
                 currentWidget.getEditor().bindLexer( \
                     currentWidget.getFileName(), newType )
@@ -1410,4 +1427,12 @@ class EditorsManager( QTabWidget ):
                 return widget
             index -= 1
         return None
+
+    def checkOutsideFileChanges( self ):
+        " Checks all the tabs if the files were changed / disappeared outside "
+        index = self.count() - 1
+        while index >= 0:
+            self._updateIconAndTooltip( index )
+            index -= 1
+        return
 

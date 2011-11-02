@@ -94,3 +94,20 @@ class MainWindowTabWidgetBase():
         " Provides the widget unique ID "
         return self.__uuid
 
+    def isDiskFileModified( self ):
+        " Return True if the loaded file is modified "
+        return False
+
+    def doesFileExist( self ):
+        " Returns True if the loaded file still exists "
+        return True
+
+    def setReloadDialogShown( self, value = True ):
+        """ Sets the new value of the flag which tells if the reloading
+            dialogue has already been displayed """
+        return
+
+    def getReloadDialogShown( self ):
+        " Tells if the reload dialog has already been shown "
+        return True
+
