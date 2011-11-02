@@ -734,7 +734,7 @@ class ReplaceWidget( FindReplaceBase ):
                 PixmapCache().getIcon( "replace-move.png" ) )
         self.replaceAndMoveButton.setIconSize( QSize( 24, 16 ) )
         self.replaceAndMoveButton.setEnabled( False )
-        self.connect( self.replaceAndMoveButton, SIGNAL) 'clicked()' ),
+        self.connect( self.replaceAndMoveButton, SIGNAL( 'clicked()' ),
                       self.__onReplaceAndMove )
 
         self.gridLayout = QGridLayout( self )
