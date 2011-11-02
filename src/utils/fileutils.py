@@ -127,6 +127,9 @@ _extType = { \
 def detectFileType( path ):
     " Detects file type - must work for both existed and not existed files "
 
+    if path == '':
+        return UnknownFileType
+
     if os.path.islink( path ):
         if not os.path.exists( path ):
             return BrokenSymlinkFileType
