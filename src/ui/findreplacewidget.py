@@ -33,7 +33,7 @@ from PyQt4.QtGui                import QHBoxLayout, QToolButton, QLabel, \
                                        QSizePolicy, QComboBox, \
                                        QGridLayout, QWidget, QCheckBox
 from utils.pixmapcache          import PixmapCache
-from PyQt4.QtCore               import SIGNAL, Qt
+from PyQt4.QtCore               import SIGNAL, Qt, QSize
 from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
 from utils.globals              import GlobalData
 from utils.project              import CodimensionProject
@@ -138,6 +138,7 @@ class FindReplaceBase( QWidget ):
         self.findPrevButton = QToolButton( self )
         self.findPrevButton.setToolTip( "Previous occurrence (Shift+F3)" )
         self.findPrevButton.setIcon( PixmapCache().getIcon( "1leftarrow.png" ) )
+        self.findPrevButton.setIconSize( QSize( 24, 16 ) )
         self.findPrevButton.setFocusPolicy( Qt.NoFocus )
         self.findPrevButton.setEnabled( False )
 
@@ -145,6 +146,7 @@ class FindReplaceBase( QWidget ):
         self.findNextButton.setToolTip( "Next occurrence (F3)" )
         self.findNextButton.setIcon( \
                     PixmapCache().getIcon( "1rightarrow.png" ) )
+        self.findNextButton.setIconSize( QSize( 24, 16 ) )
         self.findNextButton.setFocusPolicy( Qt.NoFocus )
         self.findNextButton.setEnabled( False )
 
@@ -714,14 +716,23 @@ class ReplaceWidget( FindReplaceBase ):
         self.replaceButton.setEnabled( False )
         self.connect( self.replaceButton, SIGNAL( 'clicked()' ),
                       self.__onReplace )
+        self.replaceButton.setIconSize( QSize( 24, 16 ) )
 
         self.replaceAllButton = QToolButton( self )
         self.replaceAllButton.setToolTip( "Replace all occurrences" )
         self.replaceAllButton.setIcon( \
-                PixmapCache().getIcon( "replaceall.png" ) )
+                PixmapCache().getIcon( "replace-all.png" ) )
+        self.replaceAllButton.setIconSize( QSize( 24, 16 ) )
         self.replaceAllButton.setEnabled( False )
         self.connect( self.replaceAllButton, SIGNAL( 'clicked()' ),
                       self.__onReplaceAll )
+
+        self.replaceAndMoveButton = QToolButton( self )
+        self.replaceAndMoveButton.setToolTip( \
+                "Replace current occurrence and move to the next match" )
+        self.replaceAndMoveButton.setIcon( \
+                PixmapCache().getIcon( "replace-move.png" ) )
+        self.replaceAndMoveButton.setIconSize( QSize( 24, 16 ) )
 
         self.gridLayout = QGridLayout( self )
         self.gridLayout.setMargin( 0 )
@@ -738,8 +749,8 @@ class ReplaceWidget( FindReplaceBase ):
         self.gridLayout.addWidget( self.replaceLabel, 1, 1, 1, 1 )
         self.gridLayout.addWidget( self.replaceCombo, 1, 2, 1, 1 )
         self.gridLayout.addWidget( self.replaceButton, 1, 3, 1, 1 )
-        self.gridLayout.addWidget( self.replaceAllButton, 1, 4, 1, 1 )
-
+        self.gridLayout.addWidget( self.replaceAndMoveButton, 1, 4, 1, 1 )
+        self.gridLayout.addWidget( self.replaceAllButton, 1, 5, 1, 1 )
 
         self.setTabOrder( self.findtextCombo, self.replaceCombo )
         self.setTabOrder( self.replaceCombo, self.caseCheckBox )
