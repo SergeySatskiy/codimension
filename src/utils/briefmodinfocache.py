@@ -28,7 +28,7 @@ from cdmbriefparser import getBriefModuleInfoFromFile
 
 
 class BriefModuleInfoCache( object ):
-    """ Provides the module info cache singleton facility """
+    """ Provides the module info cache """
 
     def __init__( self ):
 
@@ -37,7 +37,7 @@ class BriefModuleInfoCache( object ):
         return
 
     def get( self, path ):
-        """ Provides the required pixmap """
+        """ Provides the required modinfo """
 
         path = os.path.abspath( str( path ) )
         try:
