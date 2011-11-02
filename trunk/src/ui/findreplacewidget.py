@@ -960,12 +960,12 @@ class ReplaceWidget( FindReplaceBase ):
 
     def __onReplaceAndMove( self ):
         " Triggered when replace-and-move button is clicked "
-        oldLine = self._editor.getLine()
-        oldPos = self._editor.getPos()
+        oldLine = self._currentWidget.getLine()
+        oldPos = self._currentWidget.getPos()
         self.__onReplace()
         self.onNext()
-        if oldLine == self._editor.getLine() and \
-           oldPos == self._editor.getPos():
+        if oldLine == self._currentWidget.getLine() and \
+           oldPos == self._currentWidget.getPos():
             self.onNext()
         return
 
