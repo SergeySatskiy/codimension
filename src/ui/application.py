@@ -60,6 +60,9 @@ class CodimensionApplication( QApplication ):
                 if event.key() == Qt.Key_Escape:
                     if self.mainWindow is not None:
                         self.mainWindow.hideTooltips()
+            if event.type() == QEvent.ApplicationActivate:
+                if self.mainWindow is not None:
+                    self.mainWindow.checkOutsideFileChanges()
         except:
             pass
 

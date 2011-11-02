@@ -470,6 +470,7 @@ class TextEditor( ScintillaWrapper ):
             logging.critical( "Cannot save " + fileName + \
                               ". Reason: " + str( why ) )
             return False
+
         return True
 
     def clearSearchIndicators( self ):
@@ -809,7 +810,26 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         openImportAction = QShortcut( 'Ctrl+I', self )
         self.connect( openImportAction, SIGNAL( "activated()" ),
                       self.__onOpenImport )
+
+        self.__diskModTime = None
+        self.__reloadDlgShown = False
         return
+
+    def readFile( self, fileName ):
+        " Reads the text from a file "
+        self.__editor.readFile( fileName )
+
+        # Memorize the modification date
+        self.__diskModTime = os.path.getmtime( os.path.realpath( fileName ) )
+        return
+
+    def writeFile( self, fileName ):
+        " Writes the text to a file "
+        if self.__editor.writeFile( fileName ):
+            # Memorize the modification date
+            self.__diskModTime = os.path.getmtime( os.path.realpath( fileName ) )
+            return True
+        return False
 
     def __createLayout( self ):
         " Creates the toolbar and layout "
@@ -1393,4 +1413,25 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__shortName = name
         self.__fileType = detectFileType( name )
         return
+
+    def isDiskFileModified( self ):
+        " Return True if the loaded file is modified "
+        if not os.path.exists( self.__fileName ):
+            return True
+        return self.__diskModTime != \
+               os.path.getmtime( os.path.realpath( self.__fileName ) )
+
+    def doesFileExist( self ):
+        " Returns True if the loaded file still exists "
+        return os.path.exists( self.__fileName )
+
+    def setReloadDialogShown( self, value = True ):
+        """ Sets the new value of the flag which tells if the reloading
+            dialogue has already been displayed """
+        self.__reloadDlgShown = value
+        return
+
+    def getReloadDialogShown( self ):
+        " Tells if the reload dialog has already been shown "
+        return self.__reloadDlgShown
 

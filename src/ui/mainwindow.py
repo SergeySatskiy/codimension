@@ -1313,4 +1313,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.statusBar().showMessage( msg, timeout )
         return
 
+    def checkOutsideFileChanges( self ):
+        " Checks if there are changes in the files currently loaded by codimension "
+        self.editorsManagerWidget.editorsManager.checkOutsideFileChanges()
+        return
 
