@@ -515,6 +515,14 @@ class ScintillaWrapper( QsciScintilla ):
             return ( spos, epos - spos )
         return ( 0, 0 )
 
+    def getTargetText( self ):
+        " Provides the found text "
+        begin, length = self.getFoundTarget()
+        if begin == 0 and length == 0:
+            return ""
+        line, pos = self.lineIndexFromPosition( begin )
+        return self.getTextAtPos( line, pos, length )
+
     def findFirstTarget( self, expr_, isRegexp, isCasesensitive,
                          isWordonly,
                          begline = -1, begindex = -1,
@@ -582,10 +590,14 @@ class ScintillaWrapper( QsciScintilla ):
         else:
             replacement = replaceStr.encode( "latin1" )
 
-        self.SendScintilla( cmd, len( replacement ), replacement )
+        if replacement == self.getTargetText():
+            # The found target is the same as what the user wants it
+            # to replace with
+            return False
 
+        self.SendScintilla( cmd, len( replacement ), replacement )
         self.__targetSearchStart = start + len( replaceStr )
-        return
+        return True
 
     # indicator handling methods
 
