@@ -31,13 +31,32 @@
 
 from PyQt4.QtGui                import QHBoxLayout, QToolButton, QLabel, \
                                        QSizePolicy, QComboBox, \
-                                       QGridLayout, QWidget, QCheckBox
+                                       QGridLayout, QWidget, QCheckBox, \
+                                       QKeySequence
 from utils.pixmapcache          import PixmapCache
-from PyQt4.QtCore               import SIGNAL, Qt, QSize
+from PyQt4.QtCore               import SIGNAL, Qt, QSize, QEvent
 from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
 from utils.globals              import GlobalData
 from utils.project              import CodimensionProject
 
+
+
+class ComboBoxNoUndo( QComboBox ):
+    " Combo box which allows application wide Ctrl+Z etc. "
+
+    def __init__( self, parent = None ):
+        QComboBox.__init__( self, parent )
+        return
+
+    def event( self, event):
+        """ Skips the Undo/Redo shortcuts.
+            They should be processed by the editor """
+        if event.type() == QEvent.ShortcutOverride:
+            if event.matches( QKeySequence.Undo ):
+                return False
+            if event.matches( QKeySequence.Redo ):
+                return False
+        return QComboBox.event( self, event )
 
 
 class SearchAttr:
@@ -119,7 +138,7 @@ class FindReplaceBase( QWidget ):
         self.findLabel = QLabel( self )
         self.findLabel.setText( "Find:" )
 
-        self.findtextCombo = QComboBox( self )
+        self.findtextCombo = ComboBoxNoUndo( self )
         sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Fixed )
         sizePolicy.setHorizontalStretch( 0 )
         sizePolicy.setVerticalStretch( 0 )
@@ -171,10 +190,6 @@ class FindReplaceBase( QWidget ):
         self.connect( self.regexpCheckBox, SIGNAL( 'stateChanged(int)' ),
                       self._onCheckBoxChange )
 
-#        self.connect( self.findNextButton, SIGNAL( 'clicked()' ),
-#                      self.onNext )
-#        self.connect( self.findPrevButton, SIGNAL( 'clicked()' ),
-#                      self.onPrev )
         self.connect( self.findtextCombo.lineEdit(),
                       SIGNAL( "returnPressed()" ),
                       self.__findByReturnPressed )
@@ -697,7 +712,8 @@ class ReplaceWidget( FindReplaceBase ):
         self.replaceLabel = QLabel( self )
         self.replaceLabel.setText( "Replace:" )
 
-        self.replaceCombo = QComboBox( self )
+        self.replaceCombo = ComboBoxNoUndo( self )
+
         sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Fixed )
         sizePolicy.setHorizontalStretch( 0 )
         sizePolicy.setVerticalStretch( 0 )
@@ -776,9 +792,12 @@ class ReplaceWidget( FindReplaceBase ):
         self.connect( self.replaceCombo,
                       SIGNAL( 'editTextChanged(const QString&)' ),
                       self.__onReplaceTextChanged )
+        self.connect( self.replaceCombo.lineEdit(), SIGNAL( "returnPressed()" ),
+                      self.__onReplace )
         self.__connected = False
         self.__replaceCouldBeEnabled = False
         self._skip = False
+
         return
 
     def updateStatus( self ):
