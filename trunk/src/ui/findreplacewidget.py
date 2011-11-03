@@ -305,7 +305,7 @@ class FindReplaceBase( QWidget ):
         if fromScratch:
             self._searchSupport.delete( self._editorUUID )
         self._initialiseSearchAttributes( self._editorUUID )
-        searchAattributes = self._searchSupport.get( self._editorUUID )
+        searchAttributes = self._searchSupport.get( self._editorUUID )
 
         if not fromScratch:
             # We've been searching here already
@@ -314,19 +314,19 @@ class FindReplaceBase( QWidget ):
                 self._editor.clearAllIndicators( self._editor.searchIndicator )
                 self._editor.clearAllIndicators( self._editor.matchIndicator )
 
-                self._editor.setCursorPosition( searchAattributes.line,
-                                                searchAattributes.pos )
-                self._editor.ensureLineVisible( searchAattributes.firstLine )
-                searchAattributes.match = [ -1, -1, -1 ]
+                self._editor.setCursorPosition( searchAttributes.line,
+                                                searchAttributes.pos )
+                self._editor.ensureLineVisible( searchAttributes.firstLine )
+                searchAttributes.match = [ -1, -1, -1 ]
                 self.emit( SIGNAL( 'incSearchDone' ), False )
                 return
 
             matchTarget = self._editor.highlightMatch( text,
-                                                       searchAattributes.line,
-                                                       searchAattributes.pos,
+                                                       searchAttributes.line,
+                                                       searchAttributes.pos,
                                                        isRegexp, isCase,
                                                        isWord )
-            searchAattributes.match = matchTarget
+            searchAttributes.match = matchTarget
             if matchTarget != [-1, -1, -1]:
                 # Move the cursor to the match
                 self._editor.setCursorPosition( matchTarget[ 0 ],
@@ -335,9 +335,9 @@ class FindReplaceBase( QWidget ):
                 self.emit( SIGNAL( 'incSearchDone' ), True )
             else:
                 # Nothing is found, so scroll back to the original
-                self._editor.setCursorPosition( searchAattributes.line,
-                                                searchAattributes.pos )
-                self._editor.ensureLineVisible( searchAattributes.firstLine )
+                self._editor.setCursorPosition( searchAttributes.line,
+                                                searchAttributes.pos )
+                self._editor.ensureLineVisible( searchAttributes.firstLine )
                 self.emit( SIGNAL( 'incSearchDone' ), False )
 
             return
@@ -348,11 +348,11 @@ class FindReplaceBase( QWidget ):
             return
 
         matchTarget = self._editor.highlightMatch( text,
-                                                   searchAattributes.line,
-                                                   searchAattributes.pos,
+                                                   searchAttributes.line,
+                                                   searchAttributes.pos,
                                                    isRegexp, isCase, isWord )
-        searchAattributes.match = matchTarget
-        self._searchSupport.add( self._editorUUID, searchAattributes )
+        searchAttributes.match = matchTarget
+        self._searchSupport.add( self._editorUUID, searchAttributes )
 
         if matchTarget != [-1, -1, -1]:
             # Move the cursor to the match
@@ -370,13 +370,13 @@ class FindReplaceBase( QWidget ):
         if self._searchSupport.hasEditor( uuid ):
             return
 
-        searchAattributes = SearchAttr()
-        searchAattributes.line = self._currentWidget.getLine()
-        searchAattributes.pos = self._currentWidget.getPos()
-        searchAattributes.firstLine = self._editor.firstVisibleLine()
+        searchAttributes = SearchAttr()
+        searchAttributes.line = self._currentWidget.getLine()
+        searchAttributes.pos = self._currentWidget.getPos()
+        searchAttributes.firstLine = self._editor.firstVisibleLine()
 
-        searchAattributes.match = [ -1, -1, -1 ]
-        self._searchSupport.add( uuid, searchAattributes )
+        searchAttributes.match = [ -1, -1, -1 ]
+        self._searchSupport.add( uuid, searchAttributes )
         return
 
 
@@ -386,8 +386,8 @@ class FindReplaceBase( QWidget ):
         if not self._searchSupport.hasEditor( uuid ):
             return
 
-        searchAattributes = self._searchSupport.get( uuid )
-        match = searchAattributes.match
+        searchAttributes = self._searchSupport.get( uuid )
+        match = searchAttributes.match
 
         widget = self.editorsManager.getWidgetByUUID( uuid )
         if widget is None:
@@ -395,7 +395,7 @@ class FindReplaceBase( QWidget ):
         editor = widget.getEditor()
 
         # Replace the old highlight
-        if searchAattributes.match != [ -1, -1, -1 ]:
+        if searchAttributes.match != [ -1, -1, -1 ]:
             tgtPos = editor.positionFromLineIndex( match[ 0 ], match[ 1 ] )
             editor.clearIndicatorRange( editor.matchIndicator,
                                         tgtPos, match[ 2 ] )
@@ -403,8 +403,8 @@ class FindReplaceBase( QWidget ):
                                       tgtPos, match[ 2 ] )
 
         # Memorise new target
-        searchAattributes.match = [ newLine, newPos, newLength ]
-        self._searchSupport.add( uuid, searchAattributes )
+        searchAttributes.match = [ newLine, newPos, newLength ]
+        self._searchSupport.add( uuid, searchAttributes )
 
         # Update the new highlight
         tgtPos = editor.positionFromLineIndex( newLine, newPos )
@@ -478,41 +478,41 @@ class FindReplaceBase( QWidget ):
         startPos = self._currentWidget.getPos()
 
         if self._searchSupport.hasEditor( self._editorUUID ):
-            searchAattributes = self._searchSupport.get( self._editorUUID )
-            if startLine == searchAattributes.match[ 0 ] and \
-               startPos == searchAattributes.match[ 1 ]:
+            searchAttributes = self._searchSupport.get( self._editorUUID )
+            if startLine == searchAttributes.match[ 0 ] and \
+               startPos == searchAttributes.match[ 1 ]:
                 # The cursor is on the current match, i.e. the user did not
                 # put the focus into the editor and did not move it
                 if not self._findBackward:
-                    startPos = startPos + searchAattributes.match[ 2 ]
+                    startPos = startPos + searchAttributes.match[ 2 ]
 
             else:
                 # The cursor is not at the same position as the last match,
                 # i.e. the user moved it some way
                 # Update the search attributes as if a new search is started
-                searchAattributes.line = startLine
-                searchAattributes.pos = startPos
-                searchAattributes.firstLine = self._editor.firstVisibleLine()
-                searchAattributes.match = [ -1, -1, -1 ]
-                self._searchSupport.add( self._editorUUID, searchAattributes )
+                searchAttributes.line = startLine
+                searchAttributes.pos = startPos
+                searchAttributes.firstLine = self._editor.firstVisibleLine()
+                searchAttributes.match = [ -1, -1, -1 ]
+                self._searchSupport.add( self._editorUUID, searchAttributes )
 
         else:
             # There were no search in this editor
-            searchAattributes = SearchAttr()
-            searchAattributes.line = startLine
-            searchAattributes.pos = startPos
-            searchAattributes.firstLine = self._editor.firstVisibleLine()
-            searchAattributes.match = [ -1, -1, -1 ]
-            self._searchSupport.add( self._editorUUID, searchAattributes )
+            searchAttributes = SearchAttr()
+            searchAttributes.line = startLine
+            searchAttributes.pos = startPos
+            searchAttributes.firstLine = self._editor.firstVisibleLine()
+            searchAttributes.match = [ -1, -1, -1 ]
+            self._searchSupport.add( self._editorUUID, searchAttributes )
 
         # Here: start point has been identified
         if self.__searchFrom( startLine, startPos ):
             # Something new has been found - change the start pos
-            searchAattributes = self._searchSupport.get( self._editorUUID )
-            searchAattributes.line = self._currentWidget.getLine()
-            searchAattributes.pos = self._currentWidget.getPos()
-            searchAattributes.firstLine = self._editor.firstVisibleLine()
-            self._searchSupport.add( self._editorUUID, searchAattributes )
+            searchAttributes = self._searchSupport.get( self._editorUUID )
+            searchAttributes.line = self._currentWidget.getLine()
+            searchAttributes.pos = self._currentWidget.getPos()
+            searchAttributes.firstLine = self._editor.firstVisibleLine()
+            self._searchSupport.add( self._editorUUID, searchAttributes )
             return True
 
         return False
@@ -541,11 +541,11 @@ class FindReplaceBase( QWidget ):
                                                    isRegexp, isCase, isWord,
                                                    0, 0, startLine, startPos )
                 if len( targets ) == 0:
-                    searchAattributes = self._searchSupport.get( \
+                    searchAttributes = self._searchSupport.get( \
                                                         self._editorUUID )
-                    searchAattributes.match = [ -1, -1, -1 ]
+                    searchAttributes.match = [ -1, -1, -1 ]
                     self._searchSupport.add( self._editorUUID,
-                                             searchAattributes )
+                                             searchAttributes )
                     return False    # Nothing has matched
 
             # Move the highlight and the cursor to the new match and
@@ -567,9 +567,9 @@ class FindReplaceBase( QWidget ):
             targets = self._editor.getTargets( text, isRegexp, isCase, isWord,
                                                startLine, startPos, -1, -1 )
             if len( targets ) == 0:
-                searchAattributes = self._searchSupport.get( self._editorUUID )
-                searchAattributes.match = [ -1, -1, -1 ]
-                self._searchSupport.add( self._editorUUID, searchAattributes )
+                searchAttributes = self._searchSupport.get( self._editorUUID )
+                searchAttributes.match = [ -1, -1, -1 ]
+                self._searchSupport.add( self._editorUUID, searchAttributes )
                 return False    # Nothing has matched
 
         # Move the highlight and the cursor to the new match and
@@ -885,9 +885,9 @@ class ReplaceWidget( FindReplaceBase ):
     def __cursorPositionChanged( self, line, pos ):
         " Triggered when the cursor position is changed "
         if self._searchSupport.hasEditor( self._editorUUID ):
-            searchAattributes = self._searchSupport.get( self._editorUUID )
-            enable = line == searchAattributes.match[ 0 ] and \
-                     pos == searchAattributes.match[ 1 ]
+            searchAttributes = self._searchSupport.get( self._editorUUID )
+            enable = line == searchAttributes.match[ 0 ] and \
+                     pos == searchAttributes.match[ 1 ]
         else:
             enable = False
 
@@ -933,7 +933,7 @@ class ReplaceWidget( FindReplaceBase ):
         if count > 1:
             suffix = "s"
         GlobalData().mainWindow.showStatusBarMessage( \
-            str( count ) + " occurance" + suffix + " replaced." )
+            str( count ) + " occurance" + suffix + " replaced" )
         return
 
     def __onReplace( self ):
@@ -943,19 +943,22 @@ class ReplaceWidget( FindReplaceBase ):
         isRegexp = self.regexpCheckBox.isChecked()
         isCase = self.caseCheckBox.isChecked()
         isWord = self.wordCheckBox.isChecked()
-        searchAattributes = self._searchSupport.get( self._editorUUID )
+        searchAttributes = self._searchSupport.get( self._editorUUID )
 
         self.__updateReplaceHistory( text, replaceText )
 
         found = self._editor.findFirstTarget( text, isRegexp, isCase, isWord,
-                                              searchAattributes.match[ 0 ],
-                                              searchAattributes.match[ 1 ] )
+                                              searchAttributes.match[ 0 ],
+                                              searchAttributes.match[ 1 ] )
         if found:
-            self._editor.replaceTarget( str( replaceText ) )
-            GlobalData().mainWindow.showStatusBarMessage( "1 occurance "
-                                                          "replaced." )
+            if self._editor.replaceTarget( str( replaceText ) ):
+                GlobalData().mainWindow.showStatusBarMessage( "1 occurance "
+                                                              "replaced" )
+            else:
+                GlobalData().mainWindow.showStatusBarMessage( "No occurance "
+                                                              "replaced" )
             # This will prevent highlighting the improper editor positions
-            searchAattributes.match = [ -1, -1, -1 ]
+            searchAttributes.match = [ -1, -1, -1 ]
         return
 
     def __onReplaceAndMove( self ):
