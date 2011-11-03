@@ -954,6 +954,10 @@ class ReplaceWidget( FindReplaceBase ):
             if self._editor.replaceTarget( str( replaceText ) ):
                 GlobalData().mainWindow.showStatusBarMessage( "1 occurance "
                                                               "replaced" )
+                self._editor.highlightMatch( text,
+                                             searchAttributes.match[ 0 ],
+                                             searchAttributes.match[ 1 ],
+                                             isRegexp, isCase, isWord )
             else:
                 GlobalData().mainWindow.showStatusBarMessage( "No occurance "
                                                               "replaced" )
@@ -963,13 +967,8 @@ class ReplaceWidget( FindReplaceBase ):
 
     def __onReplaceAndMove( self ):
         " Triggered when replace-and-move button is clicked "
-        oldLine = self._currentWidget.getLine()
-        oldPos = self._currentWidget.getPos()
         self.__onReplace()
         self.onNext()
-        if oldLine == self._currentWidget.getLine() and \
-           oldPos == self._currentWidget.getPos():
-            self.onNext()
         return
 
     def __updateReplaceHistory( self, text, replaceText ):
@@ -986,7 +985,13 @@ class ReplaceWidget( FindReplaceBase ):
 
     def onNext( self ):
         " Triggered when the find next button is clicked "
+        oldLine = self._currentWidget.getLine()
+        oldPos = self._currentWidget.getPos()
         FindReplaceBase.onNext( self )
+        if oldLine == self._currentWidget.getLine() and \
+           oldPos == self._currentWidget.getPos():
+            FindReplaceBase.onNext( self )
+
         self.__updateReplaceHistory( self.findtextCombo.currentText(),
                                      self.replaceCombo.currentText() )
         return
