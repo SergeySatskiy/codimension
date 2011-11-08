@@ -343,9 +343,14 @@ class FindReplaceBase( QWidget ):
                                                        isWord )
             searchAttributes.match = matchTarget
             if matchTarget != [-1, -1, -1]:
-                # Move the cursor to the match
-                self._editor.setCursorPosition( matchTarget[ 0 ],
-                                                matchTarget[ 1 ] )
+                # Select the match starting from the end. This will move the
+                # cursor to the beginnig of the match.
+                tgtPos = self._editor.positionFromLineIndex( matchTarget[ 0 ],
+                                                             matchTarget[ 1 ] )
+                eLine, ePos = self._editor.lineIndexFromPosition( tgtPos + 
+                                                                  matchTarget[ 2 ] )
+                self._editor.setSelection( eLine, ePos,
+                                           matchTarget[ 0 ], matchTarget[ 1 ] )
                 self._editor.ensureLineVisible( matchTarget[ 0 ] )
                 self.emit( SIGNAL( 'incSearchDone' ), True )
             else:
@@ -370,9 +375,14 @@ class FindReplaceBase( QWidget ):
         self._searchSupport.add( self._editorUUID, searchAttributes )
 
         if matchTarget != [-1, -1, -1]:
-            # Move the cursor to the match
-            self._editor.setCursorPosition( matchTarget[ 0 ],
-                                            matchTarget[ 1 ] )
+            # Select the match starting from the end. This will move the
+            # cursor to the beginnig of the match.
+            tgtPos = self._editor.positionFromLineIndex( matchTarget[ 0 ],
+                                                         matchTarget[ 1 ] )
+            eLine, ePos = self._editor.lineIndexFromPosition( tgtPos + 
+                                                              matchTarget[ 2 ] )
+            self._editor.setSelection( eLine, ePos,
+                                       matchTarget[ 0 ], matchTarget[ 1 ] )
             self._editor.ensureLineVisible( matchTarget[ 0 ] )
             self.emit( SIGNAL( 'incSearchDone' ), True )
             return
@@ -426,8 +436,12 @@ class FindReplaceBase( QWidget ):
         editor.clearIndicatorRange( editor.searchIndicator, tgtPos, newLength )
         editor.setIndicatorRange( editor.matchIndicator, tgtPos, newLength )
 
+        # Select the match from end to the start - this will move the
+        # cursor to the first symbol of the match
+        eLine, ePos = editor.lineIndexFromPosition( tgtPos + newLength )
+        editor.setSelection( eLine, ePos, newLine, newPos )
+
         # Move the cursor to the new match
-        editor.setCursorPosition( newLine, newPos )
         editor.ensureLineVisible( newLine )
         return
 
@@ -824,9 +838,7 @@ class ReplaceWidget( FindReplaceBase ):
         " Updates the replace all button status "
         self.replaceCombo.setEnabled( self._isTextEditor )
         textAvailable = self.findtextCombo.currentText() != ""
-        replaceAvailable = self.replaceCombo.currentText() != ""
-        self.replaceAllButton.setEnabled( self._isTextEditor and \
-                                          replaceAvailable and textAvailable )
+        self.replaceAllButton.setEnabled( self._isTextEditor and textAvailable )
         return
 
     def show( self, text = '' ):
@@ -867,10 +879,9 @@ class ReplaceWidget( FindReplaceBase ):
     def __onSearchDone( self, found ):
         " Triggered when incremental search is done "
 
-        self.replaceButton.setEnabled( found and \
-                                       self.replaceCombo.currentText() != "" )
-        self.replaceAndMoveButton.setEnabled( found and \
-                                              self.replaceCombo.currentText() != "" )
+        self.replaceButton.setEnabled( found )
+        self.replaceAndMoveButton.setEnabled( found )
+        self.replaceAllButton.setEnabled( found )
         self.__replaceCouldBeEnabled = True
         return
 
@@ -910,10 +921,8 @@ class ReplaceWidget( FindReplaceBase ):
         else:
             enable = False
 
-        self.replaceButton.setEnabled( enable and \
-                                       self.replaceCombo.currentText() != "" )
-        self.replaceAndMoveButton.setEnabled( enable and \
-                                              self.replaceCombo.currentText() != "" )
+        self.replaceButton.setEnabled( enable )
+        self.replaceAndMoveButton.setEnabled( enable )
         self.__replaceCouldBeEnabled = enable
         return
 

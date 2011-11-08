@@ -1,5 +1,6 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Make the match selected in the incremental find/replace. Issue #297.
 * Bug fix in the replace implementation. Adding separate button 'replace and
   move'. Issue #277.
 * Making Ctrl+F and Ctrl+R select the text to search even if the widget has
