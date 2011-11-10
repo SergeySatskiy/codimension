@@ -1,5 +1,7 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* New setting: HOME moves the cursor to position 0 or to the first non space
+  character. Issue #302.
 * Share the 'find' and 'replace what' search history. Issue #298.
 * Make the match selected in the incremental find/replace. Issue #297.
 * Bug fix in the replace implementation. Adding separate button 'replace and

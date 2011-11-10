@@ -95,8 +95,8 @@ class TextEditor( ScintillaWrapper ):
         self.setIndentationGuidesBackgroundColor( skin.indentGuidePaper )
         self.setIndentationGuidesForegroundColor( skin.indentGuideColor )
 
-        self.updateSettings()
         self.__installActions()
+        self.updateSettings()
         return
 
     def __installActions( self ):
@@ -737,12 +737,18 @@ class TextEditor( ScintillaWrapper ):
 
     def __onHome( self ):
         " Triggered when HOME is received "
-        self.SendScintilla( QsciScintilla.SCI_HOMEDISPLAY )
+        if Settings().jumpToFirstNonSpace:
+            self.SendScintilla( QsciScintilla.SCI_VCHOME )
+        else:
+            self.SendScintilla( QsciScintilla.SCI_HOMEDISPLAY )
         return
 
     def __onShiftHome( self ):
         " Triggered when Shift+HOME is received "
-        self.SendScintilla( QsciScintilla.SCI_HOMEDISPLAYEXTEND )
+        if Settings().jumpToFirstNonSpace:
+            self.SendScintilla( QsciScintilla.SCI_VCHOMEEXTEND )
+        else:
+            self.SendScintilla( QsciScintilla.SCI_HOMEDISPLAYEXTEND )
         return
 
     def __onEnd( self ):
