@@ -69,7 +69,6 @@ class CodimensionProject( QObject ):
         self.findNameHistory = []
         self.findFileHistory = []
         self.replaceHistory = []
-        self.replaceWhatHistory = []
         self.tabsStatus = []
 
         self.findFilesWhat = []
@@ -127,7 +126,6 @@ class CodimensionProject( QObject ):
         self.findNameHistory = []
         self.findFileHistory = []
         self.replaceHistory = []
-        self.replaceWhatHistory = []
         self.tabsStatus = []
 
         self.findFilesWhat = []
@@ -291,8 +289,6 @@ class CodimensionProject( QObject ):
         f = open( self.userProjectDir + "searchhistory", "w" )
         self.__writeHeader( f )
         self.__writeList( f, "findhistory", "find", self.findHistory )
-        self.__writeList( f, "replacewhathistory", "replacewhat",
-                             self.replaceWhatHistory )
         self.__writeList( f, "replacehistory", "replace", self.replaceHistory )
         self.__writeList( f, "findnamehistory", "find", self.findNameHistory )
         self.__writeList( f, "findfilehistory", "find", self.findFileHistory )
@@ -600,9 +596,6 @@ class CodimensionProject( QObject ):
         self.replaceHistory = self.__loadListSection( \
                 config, 'replacehistory', 'replace' )
 
-        # replace what part
-        self.replaceWhatHistory = self.__loadListSection( \
-                config, 'replacewhathistory', 'replacewhat' )
         config = None
         return
 
@@ -897,7 +890,7 @@ class CodimensionProject( QObject ):
 
     def setReplaceHistory( self, whatHistory, toHistory ):
         " Sets the new replace history and save it into a file "
-        self.replaceWhatHistory = whatHistory
+        self.findHistory = whatHistory
         self.replaceHistory = toHistory
         self.__saveSearchHistory()
         return
