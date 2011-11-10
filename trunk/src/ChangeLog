@@ -1,5 +1,6 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Share the 'find' and 'replace what' search history. Issue #298.
 * Make the match selected in the incremental find/replace. Issue #297.
 * Bug fix in the replace implementation. Adding separate button 'replace and
   move'. Issue #277.

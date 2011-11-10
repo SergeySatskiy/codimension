@@ -719,7 +719,7 @@ class ReplaceWidget( FindReplaceBase ):
         FindReplaceBase.__init__( self, editorsManager, parent )
         self._skip = True
         prj = GlobalData().project
-        self.findHistory = prj.replaceWhatHistory
+        self.findHistory = prj.findHistory
         self.replaceHistory = prj.replaceHistory
 
         # Additional UI elements
@@ -865,7 +865,7 @@ class ReplaceWidget( FindReplaceBase ):
         if what == CodimensionProject.CompleteProject:
             prj = GlobalData().project
             self._skip = True
-            self.findHistory = prj.replaceWhatHistory
+            self.findHistory = prj.findHistory
             self.findtextCombo.clear()
             self.findtextCombo.setEditText( '' )
             self.findtextCombo.addItems( self.findHistory )
