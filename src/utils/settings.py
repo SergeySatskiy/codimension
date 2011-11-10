@@ -59,6 +59,8 @@ _defaultBackspaceUnindent = True
 _defaultTabIndents = True
 _defaultIndentationGuides = False
 _defaultCurrentLineVisible = True
+_defaultJumpToFirstNonSpace = False
+_defaultRemoveTrailingOnSave = False
 
 
 
@@ -148,7 +150,8 @@ class Settings( object ):
             self.skinName = self.__getStr( config, 'general',
                                            'skin', _defaultSkin )
             self.verticalEdge = self.__getBool( config, 'general',
-                                                'verticalEdge', _defaultVerticalEdge )
+                                                'verticalEdge',
+                                                _defaultVerticalEdge )
             self.showSpaces = self.__getBool( config, 'general',
                                               'showSpaces', _defaultShowSpaces )
             self.lineWrap = self.__getBool( config, 'general',
@@ -156,23 +159,36 @@ class Settings( object ):
             self.showEOL = self.__getBool( config, 'general',
                                            'showEOL', _defaultShowEOL )
             self.showBraceMatch = self.__getBool( config, 'general',
-                                                  'showBraceMatch', _defaultShowBraceMatch )
+                                                  'showBraceMatch',
+                                                  _defaultShowBraceMatch )
             self.autoIndent = self.__getBool( config, 'general',
                                               'autoIndent', _defaultAutoIndent )
             self.backspaceUnindent = self.__getBool( config, 'general',
-                                                     'backspaceUnindent', _defaultBackspaceUnindent )
+                                                     'backspaceUnindent',
+                                                     _defaultBackspaceUnindent )
             self.tabIndents = self.__getBool( config, 'general',
                                               'tabIndents', _defaultTabIndents )
             self.indentationGuides = self.__getBool( config, 'general',
-                                                     'indentationGuides', _defaultIndentationGuides )
+                                                     'indentationGuides',
+                                                     _defaultIndentationGuides )
             self.currentLineVisible = self.__getBool( config, 'general',
-                                                      'currentLineVisible', _defaultCurrentLineVisible )
+                                                      'currentLineVisible',
+                                                      _defaultCurrentLineVisible )
+            self.jumpToFirstNonSpace = self.__getBool( config, 'general',
+                                                       'jumpToFirstNonSpace',
+                                                       _defaultJumpToFirstNonSpace )
+            self.removeTrailingOnSave = self.__getBool( config, 'general',
+                                                        'removeTrailingOnSave',
+                                                        _defaultRemoveTrailingOnSave )
             self.lastSuccessVerCheck = self.__getInt( config, 'general',
-                                                      'lastSuccessVerCheck', _defaultLastSuccessVerCheck )
+                                                      'lastSuccessVerCheck',
+                                                      _defaultLastSuccessVerCheck )
             self.newerVerShown = self.__getBool( config, 'general',
-                                                 'newerVerShown', _defaultNewerVerShown )
+                                                 'newerVerShown',
+                                                 _defaultNewerVerShown )
             self.modifiedFormat = self.__getStr( config, 'general',
-                                                 'modifiedFormat', _defaultModifiedFormat )
+                                                 'modifiedFormat',
+                                                 _defaultModifiedFormat )
 
             asString = self.__getStr( config, 'general', 'hSplitterSizes',
                                       _defaultHSplitSize ).split( ',' )
@@ -259,6 +275,8 @@ class Settings( object ):
             self.tabIndents = _defaultTabIndents
             self.indentationGuides = _defaultIndentationGuides
             self.currentLineVisible = _defaultCurrentLineVisible
+            self.jumpToFirstNonSpace = _defaultJumpToFirstNonSpace
+            self.removeTrailingOnSave = _defaultRemoveTrailingOnSave
             self.modifiedFormat = _defaultModifiedFormat
 
             self.leftBarMinimized = False
@@ -347,6 +365,8 @@ class Settings( object ):
                      "tabIndents=" + str( self.tabIndents ) + "\n" \
                      "indentationGuides=" + str( self.indentationGuides ) + "\n" \
                      "currentLineVisible=" + str( self.currentLineVisible ) + "\n" \
+                     "jumpToFirstNonSpace=" + str( self.jumpToFirstNonSpace ) + "\n" \
+                     "removeTrailingOnSave=" + str( self.removeTrailingOnSave ) + "\n" \
                      "lastSuccessVerCheck=" + str( self.lastSuccessVerCheck ) + "\n" \
                      "newerVerShown=" + str( self.newerVerShown ) + "\n" \
                      "leftBarMinimized=" + \

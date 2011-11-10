@@ -638,6 +638,14 @@ class CodimensionMainWindow( QMainWindow ):
         currentLineVisibleAct.setCheckable( True )
         currentLineVisibleAct.setChecked( self.settings.currentLineVisible )
         self.connect( currentLineVisibleAct, SIGNAL( 'changed()' ), self.__currentLineVisibleChanged )
+        jumpToFirstNonSpaceAct = editorSettingsMenu.addAction( 'HOME to first non-space' )
+        jumpToFirstNonSpaceAct.setCheckable( True )
+        jumpToFirstNonSpaceAct.setChecked( self.settings.jumpToFirstNonSpace )
+        self.connect( jumpToFirstNonSpaceAct, SIGNAL( 'changed()' ), self.__homeToFirstNonSpaceChanged )
+        removeTrailingOnSpaceAct = editorSettingsMenu.addAction( 'Auto remove trailing spaces on save' )
+        removeTrailingOnSpaceAct.setCheckable( True )
+        removeTrailingOnSpaceAct.setChecked( self.settings.removeTrailingOnSave )
+        self.connect( removeTrailingOnSpaceAct, SIGNAL( 'changed()' ), self.__removeTrailingChanged )
         editorSettingsMenu.addSeparator()
         themesMenu = editorSettingsMenu.addMenu( "Themes" )
         availableThemes = self.__buildThemesList()
@@ -1239,6 +1247,15 @@ class CodimensionMainWindow( QMainWindow ):
     def __currentLineVisibleChanged( self ):
         self.settings.currentLineVisible = not self.settings.currentLineVisible
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        return
+
+    def __homeToFirstNonSpaceChanged( self ):
+        self.settings.jumpToFirstNonSpace = not self.settings.jumpToFirstNonSpace
+        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        return
+
+    def __removeTrailingChanged( self ):
+        self.settings.removeTrailingOnSave = not self.settings.removeTrailingOnSave
         return
 
     @staticmethod
