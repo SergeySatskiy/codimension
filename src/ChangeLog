@@ -1,5 +1,7 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Bug fix: incorrect interpretation of the search pattern in 'Find in files'.
+  Issue #301.
 * Ctrl+C/Ctrl+Insert to copy the current line if there is no selection.
   Issue #304.
 * New editor setting: auto remove trailing spaces on saving. Issue #300.

@@ -736,7 +736,7 @@ class FindInFilesDialog( QDialog, object ):
         self.searchRegexp = None
 
         # Form the regexp to search
-        if self.regexpCheckBox.isChecked():
+        if not self.regexpCheckBox.isChecked():
             regexpText = re.escape( regexpText )
         if self.wordCheckBox.isChecked():
             regexpText = "\\b%s\\b" % regexpText
