@@ -177,6 +177,18 @@ class TextEditor( ScintillaWrapper ):
         self.connect( self.ctrlXAct, SIGNAL( 'triggered()' ), self.__onShiftDel )
         self.addAction( self.ctrlXAct )
 
+        # Ctrl + C
+        self.ctrlCAct = QAction( self )
+        self.ctrlCAct.setShortcut( "Ctrl+C" )
+        self.connect( self.ctrlCAct, SIGNAL( 'triggered()' ), self.__onCtrlC )
+        self.addAction( self.ctrlCAct )
+
+        # Ctrl + Insert
+        self.ctrlInsertAct = QAction( self )
+        self.ctrlInsertAct.setShortcut( 'Ctrl+Insert' )
+        self.connect( self.ctrlInsertAct, SIGNAL( 'triggered()' ), self.__onCtrlC )
+        self.addAction( self.ctrlInsertAct )
+
         # Ctrl + \\
         self.ctrlBackslashAct = QAction( self )
         self.ctrlBackslashAct.setShortcut( "Ctrl+\\" )
@@ -221,6 +233,8 @@ class TextEditor( ScintillaWrapper ):
         self.shiftEndAct.setEnabled( True )
         self.shiftDelAct.setEnabled( True )
         self.ctrlXAct.setEnabled( True )
+        self.ctrlInsertAct.setEnabled( True )
+        self.ctrlCAct.setEnabled( True )
         self.ctrlBackslashAct.setEnabled( True )
         self.altShiftUpAct.setEnabled( True )
         self.altShiftDownAct.setEnabled( True )
@@ -243,6 +257,8 @@ class TextEditor( ScintillaWrapper ):
         self.shiftEndAct.setEnabled( False )
         self.shiftDelAct.setEnabled( False )
         self.ctrlXAct.setEnabled( False )
+        self.ctrlInsertAct.setEnabled( False )
+        self.ctrlCAct.setEnabled( False )
         self.ctrlBackslashAct.setEnabled( False )
         self.altShiftUpAct.setEnabled( False )
         self.altShiftDownAct.setEnabled( False )
@@ -770,6 +786,14 @@ class TextEditor( ScintillaWrapper ):
         else:
             self.SendScintilla( QsciScintilla.SCI_LINECOPY )
             self.SendScintilla( QsciScintilla.SCI_LINEDELETE )
+        return
+
+    def __onCtrlC( self ):
+        " Triggered when Ctrl+C / Ctrl+Insert is receved "
+        if self.hasSelectedText():
+            self.copy()
+        else:
+            self.SendScintilla( QsciScintilla.SCI_LINECOPY )
         return
 
     def __onCompleteFromDocument( self ):
