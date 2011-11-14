@@ -442,7 +442,8 @@ class TextEditor( ScintillaWrapper ):
     def writeFile( self, fileName ):
         " Writes the text to a file "
 
-        fileName = unicode( fileName )
+        if Settings().removeTrailingOnSave:
+            self.removeTrailingWhitespaces()
         txt = unicode( self.text() )
 
         # work around glitch in scintilla: always make sure,
@@ -462,6 +463,7 @@ class TextEditor( ScintillaWrapper ):
             return False
 
         # now write text to the file fn
+        fileName = unicode( fileName )
         try:
             f = open( fileName, 'wb' )
             f.write( txt )
