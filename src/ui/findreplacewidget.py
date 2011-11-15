@@ -807,7 +807,7 @@ class ReplaceWidget( FindReplaceBase ):
                       SIGNAL( 'editTextChanged(const QString&)' ),
                       self.__onReplaceTextChanged )
         self.connect( self.replaceCombo.lineEdit(), SIGNAL( "returnPressed()" ),
-                      self.__onReplace )
+                      self.__onReplaceAndMove )
         self.__connected = False
         self.__replaceCouldBeEnabled = False
         self._skip = False
