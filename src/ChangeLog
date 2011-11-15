@@ -1,5 +1,6 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Some fixes in the replace implementation.
 * Bug fix: incorrect interpretation of the search pattern in 'Find in files'.
   Issue #301.
 * Ctrl+C/Ctrl+Insert to copy the current line if there is no selection.

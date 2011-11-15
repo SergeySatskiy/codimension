@@ -982,10 +982,10 @@ class ReplaceWidget( FindReplaceBase ):
             if self._editor.replaceTarget( str( replaceText ) ):
                 GlobalData().mainWindow.showStatusBarMessage( "1 occurance "
                                                               "replaced" )
-                self._editor.highlightMatch( text,
-                                             searchAttributes.match[ 0 ],
-                                             searchAttributes.match[ 1 ],
-                                             isRegexp, isCase, isWord )
+                self._editor.setCursorPosition( searchAttributes.match[0],
+                                                searchAttributes.match[1] )
+                self.replaceButton.setEnabled( False )
+                self.replaceAndMoveButton.setEnabled( False )
             else:
                 GlobalData().mainWindow.showStatusBarMessage( "No occurance "
                                                               "replaced" )
