@@ -565,7 +565,7 @@ class EditorsManager( QTabWidget ):
                 self.setTabIcon( widgetIndex,
                                  PixmapCache().getIcon( 'disappearedfile.png' ) )
                 return
-            if self.currentWidget().isDiskFileModified():
+            if self.widget( widgetIndex ).isDiskFileModified():
                 self.setTabToolTip( widgetIndex,
                                     "The file has been modified outside codimension" )
                 self.setTabIcon( widgetIndex,
