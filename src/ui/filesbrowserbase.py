@@ -235,7 +235,19 @@ class FilesBrowser( QTreeView ):
                 if itemPath != GlobalData().project.fileName:
                     QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
                     try:
-                        GlobalData().project.loadProject( itemPath )
+                        if not os.path.exists( itemPath ):
+                            logging.error( "The project " + \
+                                           os.path.basename( itemPath ) + \
+                                           " disappeared from the file system." )
+                            QApplication.restoreOverrideCursor()
+                            return
+                        mainWin = GlobalData().mainWindow
+                        editorsManager = mainWin.editorsManagerWidget.editorsManager
+                        if editorsManager.closeRequest():
+                            prj = GlobalData().project
+                            prj.setTabsStatus( editorsManager.getTabsStatus() )
+                            editorsManager.closeAll()
+                            prj.loadProject( itemPath )
                     except Exception, exc:
                         logging.error( str( exc ) )
                     QApplication.restoreOverrideCursor()
