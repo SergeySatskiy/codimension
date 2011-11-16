@@ -1,5 +1,7 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Bug fix: loading project from the filesystem browser checks if the opened
+* files are saved. Issue #295.
 * Some fixes in the replace implementation.
 * Bug fix: incorrect interpretation of the search pattern in 'Find in files'.
   Issue #301.
