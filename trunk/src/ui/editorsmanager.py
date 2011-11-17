@@ -262,8 +262,7 @@ class EditorsManager( QTabWidget ):
         # Bind a lexer
         editor.bindLexer( newWidget.getShortName(), fileType )
 
-        self.insertTab( 0, newWidget, getFileIcon( fileType ),
-                        newWidget.getShortName() )
+        self.insertTab( 0, newWidget, newWidget.getShortName() )
         self.activateTab( 0 )
 
         self.__updateControls()
@@ -622,8 +621,7 @@ class EditorsManager( QTabWidget ):
                 self.removeTab( 0 )
                 self.setTabsClosable( True )
 
-            self.insertTab( 0, newWidget, getFileIcon( PixmapFileType ),
-                            newWidget.getShortName() )
+            self.insertTab( 0, newWidget, newWidget.getShortName() )
             self.activateTab( 0 )
             self.__updateControls()
             self.__updateStatusBar()
@@ -651,9 +649,7 @@ class EditorsManager( QTabWidget ):
                 self.removeTab( 0 )
                 self.setTabsClosable( True )
 
-            self.insertTab( 0, newWidget,
-                            PixmapCache().getIcon( "diagram.png" ),
-                            newWidget.getShortName() )
+            self.insertTab( 0, newWidget, newWidget.getShortName() )
             if tooltip != "":
                 self.setTabToolTip( 0, tooltip )
             self.activateTab( 0 )
@@ -702,8 +698,7 @@ class EditorsManager( QTabWidget ):
             # Bind a lexer
             editor.bindLexer( newWidget.getFileName(), fileType )
 
-            self.insertTab( 0, newWidget, getFileIcon( fileType ),
-                            newWidget.getShortName() )
+            self.insertTab( 0, newWidget, newWidget.getShortName() )
             self.activateTab( 0 )
 
             if lineNo > 0:
