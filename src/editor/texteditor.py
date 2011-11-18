@@ -51,6 +51,7 @@ from utils.importutils          import getImportsList, \
                                        getImportsInLine, resolveImport, \
                                        getImportedNameDefinitionLine
 from ui.importlist              import ImportListWidget
+from ui.outsidechanges          import OutsideChangeWidget
 import export
 
 
@@ -220,6 +221,10 @@ class TextEditor( ScintillaWrapper ):
 
     def focusInEvent( self, event ):
         " Enable Shift+Tab when the focus is received "
+        if not self.parent().shouldAcceptFocus():
+            self.parent().setFocus()
+            return
+
         self.shiftTab.setEnabled( True )
         self.highlightAct.setEnabled( True )
         self.commentAct.setEnabled( True )
@@ -847,6 +852,9 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__reloadDlgShown = False
         return
 
+    def shouldAcceptFocus( self ):
+        return self.__outsideChangesBar.isHidden()
+
     def readFile( self, fileName ):
         " Reads the text from a file "
         self.__editor.readFile( fileName )
@@ -1011,6 +1019,9 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         self.__importsBar = ImportListWidget( self.__editor )
         self.__importsBar.hide()
+
+        self.__outsideChangesBar = OutsideChangeWidget( self.__editor )
+        self.__outsideChangesBar.hide()
 
         hLayout = QHBoxLayout()
         hLayout.setContentsMargins( 0, 0, 0, 0 )
@@ -1238,7 +1249,10 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def setFocus( self ):
         " Overridden setFocus "
-        self.__editor.setFocus()
+        if self.__outsideChangesBar.isHidden():
+            self.__editor.setFocus()
+        else:
+            self.__outsideChangesBar.setFocus()
         return
 
     def __onImportDgmTuned( self ):
@@ -1374,6 +1388,14 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         QWidget.resizeEvent( self, event )
         if not self.__importsBar.isHidden():
             self.__importsBar.resize()
+        if not self.__outsideChangesBar.isHidden():
+            self.__outsideChangesBar.resize()
+        return
+
+    def showOutsideChangesBar( self, allEnabled ):
+        " Shows the bar for the editor for the user to choose the action "
+        self.__outsideChangesBar.showChoice( self.isModified(),
+                                             allEnabled )
         return
 
     # Mandatory interface part is below
