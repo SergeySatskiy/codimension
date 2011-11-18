@@ -507,6 +507,9 @@ class EditorsManager( QTabWidget ):
                 # No need to update history when there is only welcome widget
                 self.history.updateForCurrentIndex()
                 self.history.addCurrent()
+
+        if self.currentWidget().isDiskFileModified():
+            self.currentWidget().showOutsideChangesBar( True )
         return
 
     def __onHelp( self ):
