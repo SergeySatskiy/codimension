@@ -1389,6 +1389,8 @@ class EditorsManager( QTabWidget ):
             item = self.widget( index )
             if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
                 item.getEditor().updateSettings()
+                if item.isDiskFileModified():
+                    item.resizeBars()
         return
 
     def getWidgetByUUID( self, uuid ):
