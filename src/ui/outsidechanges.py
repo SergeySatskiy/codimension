@@ -26,7 +26,8 @@ from PyQt4.QtGui        import QSizePolicy, QFrame, \
                                QTreeWidgetItem, QHeaderView, \
                                QLabel, QPushButton, \
                                QApplication, QColor, \
-                               QHeaderView, QSizePolicy, QGridLayout
+                               QHeaderView, QSizePolicy, QGridLayout, \
+                               QFontMetrics
 from utils.globals      import GlobalData
 import os.path
 
@@ -58,12 +59,24 @@ class OutsideChangeWidget( QFrame ):
         self.__messageLabel.setWordWrap( True )
         self.__leaveAsIsButton = QPushButton( "Continue editing", self )
         self.__leaveAsIsButton.setToolTip( "ESC" )
+        self.connect( self.__leaveAsIsButton, SIGNAL( 'clicked()' ), self.hide )
+
         self.__reloadButton = QPushButton( self )
-        self.__reloadAllNonChangedButton = QPushButton( \
-                                    "Reload all non-modified files", self )
+        self.connect( self.__reloadButton, SIGNAL( 'clicked()' ),
+                      self.__reload )
+
+        txt = "Reload all non-modified files"
+        self.__reloadAllNonChangedButton = QPushButton( txt, self )
+        self.connect( self.__reloadAllNonChangedButton, SIGNAL( 'clicked()' ),
+                      self.__reloadAllNonModified )
+
+        # This will prevent the buttons growing wider than necessary
+        fontMetrics = QFontMetrics( self.__reloadAllNonChangedButton.font() )
+        buttonWidth = fontMetrics.width( txt ) + 20
+        self.__reloadAllNonChangedButton.setFixedWidth( buttonWidth )
 
         gridLayout = QGridLayout( self )
-        gridLayout.setMargin( 5 )
+        gridLayout.setMargin( 3 )
 
         gridLayout.addWidget( self.__messageLabel, 0, 0, 1, 1 )
         gridLayout.addWidget( self.__leaveAsIsButton, 0, 1, 1, 1 )
@@ -149,11 +162,12 @@ class OutsideChangeWidget( QFrame ):
         return
 
     def setFocus( self ):
+        " Passes the focus to the default button "
         self.__leaveAsIsButton.setFocus()
         return
 
     def keyPressEvent( self, event ):
-        """ Handles the key press events """
+        " Handles the key press events "
         if event.key() == Qt.Key_Escape:
             editorsManager = GlobalData().mainWindow.editorsManager()
             activeWindow = editorsManager.currentWidget()
@@ -161,8 +175,23 @@ class OutsideChangeWidget( QFrame ):
                 activeWindow.setFocus()
             event.accept()
             self.hide()
-            for item in self.__markers:
-                item.hide()
-            self.parent().setReadOnly( False )
-            self.parent().setFocus()
+        return
+
+    def hide( self ):
+        " Handles the hiding of the panel and markers "
+        for item in self.__markers:
+            item.hide()
+        QFrame.hide( self )
+        self.parent().setReadOnly( False )
+        self.parent().setFocus()
+        return
+
+    def __reload( self ):
+        " Reloads the file from the disk "
+        self.emit( SIGNAL( 'ReloadRequest' ) )
+        return
+
+    def __reloadAllNonModified( self ):
+        " Reloads all the non-modified buffers "
+        self.emit( SIGNAL( 'ReloadAllNonModifiedRequest' ) )
         return

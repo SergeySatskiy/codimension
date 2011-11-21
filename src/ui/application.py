@@ -70,4 +70,3 @@ class CodimensionApplication( QApplication ):
             return QApplication.eventFilter( self, obj, event )
         except:
             return True
-

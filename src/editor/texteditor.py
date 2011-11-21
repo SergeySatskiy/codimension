@@ -1023,6 +1023,11 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__importsBar.hide()
 
         self.__outsideChangesBar = OutsideChangeWidget( self.__editor )
+        self.connect( self.__outsideChangesBar, SIGNAL( 'ReloadRequest' ),
+                      self.reload )
+        self.connect( self.__outsideChangesBar,
+                      SIGNAL( 'ReloadAllNonModifiedRequest' ),
+                      self.reloadAllNonModified )
         self.__outsideChangesBar.hide()
 
         hLayout = QHBoxLayout()
@@ -1388,6 +1393,11 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     def resizeEvent( self, event ):
         " Resizes the import selection dialogue if necessary "
         QWidget.resizeEvent( self, event )
+        self.resizeBars()
+        return
+        
+    def resizeBars( self ):
+        " Resize the bars if they are shown "
         if not self.__importsBar.isHidden():
             self.__importsBar.resize()
         if not self.__outsideChangesBar.isHidden():
@@ -1399,6 +1409,17 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.setReloadDialogShown( True )
         self.__outsideChangesBar.showChoice( self.isModified(),
                                              allEnabled )
+        return
+
+    def reload( self ):
+        " Triggered when a request to reload the file is received "
+        self.emit( SIGNAL( 'ReloadRequest' ) )
+        return
+
+    def reloadAllNonModified( self ):
+        """ Triggered when a request to reload all the
+            non-modified files is received """
+        self.emit( SIGNAL( 'ReloadAllNonModifiedRequest' ) )
         return
 
     # Mandatory interface part is below
