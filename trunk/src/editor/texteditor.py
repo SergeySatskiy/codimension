@@ -494,6 +494,8 @@ class TextEditor( ScintillaWrapper ):
                               ". Reason: " + str( why ) )
             return False
 
+        self.parent().updateModificationTime( fileName )
+        self.parent().setReloadDialogShown( False )
         return True
 
     def clearSearchIndicators( self ):
@@ -1394,6 +1396,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def showOutsideChangesBar( self, allEnabled ):
         " Shows the bar for the editor for the user to choose the action "
+        self.setReloadDialogShown( True )
         self.__outsideChangesBar.showChoice( self.isModified(),
                                              allEnabled )
         return
@@ -1489,3 +1492,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Tells if the reload dialog has already been shown "
         return self.__reloadDlgShown
 
+    def updateModificationTime( self, fileName ):
+        " Updates the modification time "
+        self.__diskModTime = \
+                    os.path.getmtime( os.path.realpath( fileName ) )
+        return

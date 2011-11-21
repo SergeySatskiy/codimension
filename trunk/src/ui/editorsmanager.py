@@ -509,7 +509,8 @@ class EditorsManager( QTabWidget ):
                 self.history.addCurrent()
 
         if self.currentWidget().isDiskFileModified():
-            self.currentWidget().showOutsideChangesBar( True )
+            if not self.currentWidget().getReloadDialogShown():
+                self.currentWidget().showOutsideChangesBar( True )
         return
 
     def __onHelp( self ):

@@ -59,7 +59,8 @@ class OutsideChangeWidget( QFrame ):
         self.__leaveAsIsButton = QPushButton( "Continue editing", self )
         self.__leaveAsIsButton.setToolTip( "ESC" )
         self.__reloadButton = QPushButton( self )
-        self.__reloadAllNonChangedButton = QPushButton( "Reload all non-modified files", self )
+        self.__reloadAllNonChangedButton = QPushButton( \
+                                    "Reload all non-modified files", self )
 
         gridLayout = QGridLayout( self )
         gridLayout.setMargin( 5 )
@@ -78,7 +79,6 @@ class OutsideChangeWidget( QFrame ):
         self.__markers.append( QFrame( self.parent() ) )
         self.__markers.append( QFrame( self.parent() ) )
 
-#        markerColor = QColor( 255, 255, 255, 128 )
         markerColor = QColor( 255, 165, 0, 255 )
         for item in self.__markers:
             pal = item.palette()
@@ -166,5 +166,3 @@ class OutsideChangeWidget( QFrame ):
             self.parent().setReadOnly( False )
             self.parent().setFocus()
         return
-
-
