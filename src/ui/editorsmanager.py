@@ -128,6 +128,9 @@ class EditorsManager( QTabWidget ):
                                                        "copytoclipboard.png" ),
                                          "Copy path to clipboard",
                                          self.__copyTabPath )
+        self.__reloadAct = self.__tabContextMenu.addAction( \
+                                    PixmapCache().getIcon( "reload.png" ),
+                                    "Reload", self.onReload )
         self.tabBar().setContextMenuPolicy( Qt.CustomContextMenu )
         self.connect( self.tabBar(),
                       SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
@@ -151,6 +154,15 @@ class EditorsManager( QTabWidget ):
         if tabIndex == clickedIndex:
             widget = self.widget( tabIndex )
             if widget.getFileName() != "":
+                if widget.isDiskFileModified():
+                    if widget.isModified():
+                        self.__reloadAct.setText( "Reload loosing changes" )
+                    else:
+                        self.__reloadAct.setText( "Reload" )
+                    self.__reloadAct.setEnabled( True )
+                else:
+                    self.__reloadAct.setText( "Reload" )
+                    self.__reloadAct.setEnabled( False )
                 self.__tabContextMenu.popup( self.mapToGlobal( pos ) )
         return
 
@@ -516,6 +528,8 @@ class EditorsManager( QTabWidget ):
             if not self.currentWidget().getReloadDialogShown():
                 self.currentWidget().showOutsideChangesBar( \
                                         self.__areThereDiskModifiedUnchanged() )
+                # Just in case check the other tabs
+                self.checkOutsideFileChanges()
         return
 
     def __onHelp( self ):
@@ -1399,6 +1413,8 @@ class EditorsManager( QTabWidget ):
             if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
                 item.getEditor().updateSettings()
                 if item.isDiskFileModified():
+                    # This will make the modification markers re-drawn
+                    # properly for the case when auto line wrap toggled
                     item.resizeBars()
         return
 
@@ -1464,27 +1480,29 @@ class EditorsManager( QTabWidget ):
 
     def onReload( self ):
         " Called when the current tab file should be reloaded "
+        self.reloadTab( self.currentIndex() )
+        return
+
+    def reloadTab( self, index ):
+        " Reloads a single tab "
         try:
-            editor = self.currentWidget().getEditor()
+            editor = self.widget( index ).getEditor()
             line, pos = editor.getCursorPosition()
             firstLine = editor.firstVisibleLine()
 
-            self.currentWidget().reload()
+            self.widget( index ).reload()
 
             self.__restorePosition( editor, line, pos, firstLine )
         except Exception, exc:
-            # Error loading the file, nothing to be changed
-            logging.error( str( exc ) )
+            # Error reloading the file, nothing to be changed
+            logginig.error( str( exc ) )
             return
 
-        # Update the tab icon
-        self._updateIconAndTooltip( self.currentIndex() )
-
-        # Remove the file from the history
-        self.__skipHistoryUpdate = True
-        self.history.tabClosed( self.currentWidget().getUUID() )
-        self.history.addCurrent()
-        self.__skipHistoryUpdate = False
+        self._updateIconAndTooltip( index )
+        self.history.tabClosed( self.widget( index ).getUUID() )
+        
+        if index == self.currentIndex():
+            self.history.addCurrent()
         return
 
     def onReloadAllNonModified( self ):
@@ -1494,8 +1512,6 @@ class EditorsManager( QTabWidget ):
         while index >= 0:
             if self.widget( index ).isModified() == False:
                 if self.widget( index ).isDiskFileModified():
-                    # Do it here
-                    pass
+                    self.reloadTab( index )
             index -= 1
         return
-
