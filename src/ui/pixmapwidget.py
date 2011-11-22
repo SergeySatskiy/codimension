@@ -31,7 +31,7 @@ from PyQt4.QtGui                import QPalette, QSizePolicy, QScrollArea, \
                                        QHBoxLayout
 from PyQt4.QtCore               import Qt, SIGNAL, QSize
 from utils.pixmapcache          import PixmapCache
-
+from outsidechanges             import OutsideChangeWidget
 
 
 
@@ -143,6 +143,11 @@ class PixmapWidget( QScrollArea ):
                                  ( (factor - 1) * scrollBar.pageStep()/2) ) )
         return
 
+    def setReadOnly( self, newValue ):
+        " Make it similar to a text editor "
+        return
+
+
 
 class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
     " Pixmap viewer tab widget "
@@ -160,6 +165,9 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
                       self.__onEsc )
 
         self.__createLayout()
+
+        self.__diskModTime = None
+        self.__reloadDlgShown = False
         return
 
     def __createLayout( self ):
@@ -220,23 +228,38 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         hLayout.addWidget( self.__viewer )
         hLayout.addWidget( toolbar )
 
+        self.__outsideChangesBar = OutsideChangeWidget( self.__viewer )
+        self.connect( self.__outsideChangesBar, SIGNAL( 'ReloadRequest' ),
+                      self.__onReload )
+        self.connect( self.__outsideChangesBar,
+                      SIGNAL( 'ReloadAllNonModifiedRequest' ),
+                      self.reloadAllNonModified )
+        self.__outsideChangesBar.hide()
+
         self.setLayout( hLayout )
         return
 
     def setFocus( self ):
         " Overridden setFocus "
-        self.__viewer.setFocus()
+        if self.__outsideChangesBar.isHidden():
+            self.__viewer.setFocus()
+        else:
+            self.__outsideChangesBar.setFocus()
         return
 
     def loadFromFile( self, path ):
         " Loads the content from the given file "
         self.__viewer.loadFromFile( path )
         self.setFileName( os.path.abspath( path ) )
+
+        # Memorize the modification date
+        self.__diskModTime = os.path.getmtime( os.path.realpath( path ) )
         return
 
     def setPixmap( self, pixmap ):
         " Loads the provided pixmap "
         self.__viewer.setPixmap( pixmap )
+        self.__diskModTime = None
         return
 
     def __onPrint( self ):
@@ -267,7 +290,49 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.emit( SIGNAL( 'ESCPressed' ) )
         return
 
+    def resizeEvent( self, event ):
+        " Resizes the outside changes dialogue if necessary "
+        QWidget.resizeEvent( self, event )
+        self.resizeBars()
+        return
 
+    def resizeBars( self ):
+        " Resize the bars if they are shown "
+        if not self.__outsideChangesBar.isHidden():
+            self.__outsideChangesBar.resize()
+        return
+
+    def __onReload( self ):
+        " Triggered when a request to reload the file is received "
+        self.emit( SIGNAL( 'ReloadRequest' ) )
+        return
+
+    def reloadAllNonModified( self ):
+        """ Triggered when a request to reload all the
+            non-modified files is received """
+        self.emit( SIGNAL( 'ReloadAllNonModifiedRequest' ) )
+        return
+
+    def showOutsideChangesBar( self, allEnabled ):
+        " Shows the bar for the viewer for the user to choose the action "
+        self.setReloadDialogShown( True )
+        self.__outsideChangesBar.showChoice( self.isModified(),
+                                             allEnabled )
+        return
+
+    def reload( self ):
+        " Called (from the editors manager) to reload the file "
+
+        # Re-read the file with updating the file timestamp
+        self.loadFromFile( self.__fileName )
+
+        # Hide the bar is necessery
+        if not self.__outsideChangesBar.isHidden():
+            self.__outsideChangesBar.hide()
+
+        # Set the shown flag
+        self.setReloadDialogShown( False )
+        return
 
     # Mandatory interface part is below
 
@@ -322,3 +387,31 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__shortName = name
         return
 
+    def isDiskFileModified( self ):
+        " Return True if the loaded file is modified "
+        if not os.path.isabs( self.__fileName ):
+            return False
+        if not os.path.exists( self.__fileName ):
+            return True
+        return self.__diskModTime != \
+               os.path.getmtime( os.path.realpath( self.__fileName ) )
+
+    def doesFileExist( self ):
+        " Returns True if the loaded file still exists "
+        return os.path.exists( self.__fileName )
+
+    def setReloadDialogShown( self, value = True ):
+        """ Sets the new value of the flag which tells if the reloading
+            dialogue has already been displayed """
+        self.__reloadDlgShown = value
+        return
+
+    def getReloadDialogShown( self ):
+        " Tells if the reload dialog has already been shown "
+        return self.__reloadDlgShown
+
+    def updateModificationTime( self, fileName ):
+        " Updates the modification time "
+        self.__diskModTime = \
+                    os.path.getmtime( os.path.realpath( fileName ) )
+        return

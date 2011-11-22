@@ -524,12 +524,13 @@ class EditorsManager( QTabWidget ):
                 self.history.updateForCurrentIndex()
                 self.history.addCurrent()
 
-        if self.currentWidget().isDiskFileModified():
-            if not self.currentWidget().getReloadDialogShown():
-                self.currentWidget().showOutsideChangesBar( \
+        if self.currentWidget().doesFileExist():
+            if self.currentWidget().isDiskFileModified():
+                if not self.currentWidget().getReloadDialogShown():
+                    self.currentWidget().showOutsideChangesBar( \
                                         self.__areThereDiskModifiedUnchanged() )
-                # Just in case check the other tabs
-                self.checkOutsideFileChanges()
+                    # Just in case check the other tabs
+                    self.checkOutsideFileChanges()
         return
 
     def __onHelp( self ):
@@ -637,6 +638,11 @@ class EditorsManager( QTabWidget ):
             newWidget = PixmapTabWidget()
             self.connect( newWidget, SIGNAL( 'ESCPressed' ),
                           self.__onESC )
+            self.connect( newWidget, SIGNAL( 'ReloadRequest' ),
+                          self.onReload )
+            self.connect( newWidget, SIGNAL( 'ReloadAllNonModifiedRequest' ),
+                          self.onReloadAllNonModified )
+
             newWidget.loadFromFile( fileName )
 
             if self.widget( 0 ) == self.__welcomeWidget:
@@ -1461,9 +1467,10 @@ class EditorsManager( QTabWidget ):
             self._updateIconAndTooltip( index )
             index -= 1
 
-        if self.currentWidget().isDiskFileModified():
-            if not self.currentWidget().getReloadDialogShown():
-                self.currentWidget().showOutsideChangesBar( \
+        if self.currentWidget().doesFileExist():
+            if self.currentWidget().isDiskFileModified():
+                if not self.currentWidget().getReloadDialogShown():
+                    self.currentWidget().showOutsideChangesBar( \
                                         self.__areThereDiskModifiedUnchanged() )
         return
 
@@ -1485,24 +1492,32 @@ class EditorsManager( QTabWidget ):
 
     def reloadTab( self, index ):
         " Reloads a single tab "
+
+        # This may happened for a text file or for a picture
+        isTextEditor = self.widget( index ).getType() == \
+                                    MainWindowTabWidgetBase.PlainTextEditor
+
         try:
-            editor = self.widget( index ).getEditor()
-            line, pos = editor.getCursorPosition()
-            firstLine = editor.firstVisibleLine()
+            if isTextEditor:
+                editor = self.widget( index ).getEditor()
+                line , pos = editor.getCursorPosition()
+                firstLine = editor.firstVisibleLine()
 
             self.widget( index ).reload()
 
-            self.__restorePosition( editor, line, pos, firstLine )
+            if isTextEditor:
+                self.__restorePosition( editor, line, pos, firstLine )
         except Exception, exc:
             # Error reloading the file, nothing to be changed
-            logginig.error( str( exc ) )
+            logging.error( str( exc ) )
             return
 
         self._updateIconAndTooltip( index )
-        self.history.tabClosed( self.widget( index ).getUUID() )
-        
-        if index == self.currentIndex():
-            self.history.addCurrent()
+
+        if isTextEditor:
+            self.history.tabClosed( self.widget( index ).getUUID() )
+            if index == self.currentIndex():
+                self.history.addCurrent()
         return
 
     def onReloadAllNonModified( self ):

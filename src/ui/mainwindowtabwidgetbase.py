@@ -111,3 +111,10 @@ class MainWindowTabWidgetBase():
         " Tells if the reload dialog has already been shown "
         return True
 
+    def showOutsideChangesBar( self, allEnabled ):
+        " Shows the outside changes bar "
+        return
+
+    def reload( self ):
+        " Reloads the widget content from the file "
+        return
