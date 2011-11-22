@@ -244,6 +244,10 @@ class EditorsManager( QTabWidget ):
             self.setTabsClosable( True )
 
         newWidget = TextEditorTabWidget( self )
+        self.connect( newWidget, SIGNAL( 'ReloadRequest' ),
+                      self.onReload )
+        self.connect( newWidget, SIGNAL( 'ReloadAllNonModifiedRequest' ),
+                      self.onReloadAllNonModified )
         editor = newWidget.getEditor()
         newWidget.setShortName( self.getNewName() )
 
@@ -510,7 +514,8 @@ class EditorsManager( QTabWidget ):
 
         if self.currentWidget().isDiskFileModified():
             if not self.currentWidget().getReloadDialogShown():
-                self.currentWidget().showOutsideChangesBar( True )
+                self.currentWidget().showOutsideChangesBar( \
+                                        self.__areThereDiskModifiedUnchanged() )
         return
 
     def __onHelp( self ):
@@ -687,6 +692,10 @@ class EditorsManager( QTabWidget ):
 
             # Not found - create a new one
             newWidget = TextEditorTabWidget( self )
+            self.connect( newWidget, SIGNAL( 'ReloadRequest' ),
+                          self.onReload )
+            self.connect( newWidget, SIGNAL( 'ReloadAllNonModifiedRequest' ),
+                          self.onReloadAllNonModified )
             editor = newWidget.getEditor()
             newWidget.readFile( fileName )
 
@@ -1434,6 +1443,59 @@ class EditorsManager( QTabWidget ):
         index = self.count() - 1
         while index >= 0:
             self._updateIconAndTooltip( index )
+            index -= 1
+
+        if self.currentWidget().isDiskFileModified():
+            if not self.currentWidget().getReloadDialogShown():
+                self.currentWidget().showOutsideChangesBar( \
+                                        self.__areThereDiskModifiedUnchanged() )
+        return
+
+    def __areThereDiskModifiedUnchanged( self ):
+        """ Returns true if there is at least one buffer with non modified
+            content for which the disk file is modified """
+        index = self.count() - 1
+        while index >= 0:
+            if self.widget( index ).isModified() == False:
+                if self.widget( index ).isDiskFileModified():
+                    return True
+            index -= 1
+        return False
+
+    def onReload( self ):
+        " Called when the current tab file should be reloaded "
+        try:
+            editor = self.currentWidget().getEditor()
+            line, pos = editor.getCursorPosition()
+            firstLine = editor.firstVisibleLine()
+
+            self.currentWidget().reload()
+
+            self.__restorePosition( editor, line, pos, firstLine )
+        except Exception, exc:
+            # Error loading the file, nothing to be changed
+            logging.error( str( exc ) )
+            return
+
+        # Update the tab icon
+        self._updateIconAndTooltip( self.currentIndex() )
+
+        # Remove the file from the history
+        self.__skipHistoryUpdate = True
+        self.history.tabClosed( self.currentWidget().getUUID() )
+        self.history.addCurrent()
+        self.__skipHistoryUpdate = False
+        return
+
+    def onReloadAllNonModified( self ):
+        """ Called when all the disk changed and not
+            modified files should be reloaded """
+        index = self.count() - 1
+        while index >= 0:
+            if self.widget( index ).isModified() == False:
+                if self.widget( index ).isDiskFileModified():
+                    # Do it here
+                    pass
             index -= 1
         return
 
