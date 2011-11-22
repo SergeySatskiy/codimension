@@ -82,7 +82,6 @@ class WelcomeWidget( HTMLTabWidget ):
             """  </td>""" \
             """</tr>""" \
             """</table>""" \
-
             """<table cellspacing="0" cellpadding="8" width="100%" """ \
             """       align="left" bgcolor="#d5d1cf" border="0" style="width: 100%">""" \
             """<tr>""" \
