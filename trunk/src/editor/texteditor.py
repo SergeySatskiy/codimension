@@ -1510,6 +1510,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def isDiskFileModified( self ):
         " Return True if the loaded file is modified "
+        if not os.path.isabs( self.__fileName ):
+            return False
         if not os.path.exists( self.__fileName ):
             return True
         return self.__diskModTime != \
