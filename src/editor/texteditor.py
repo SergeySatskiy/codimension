@@ -1024,7 +1024,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         self.__outsideChangesBar = OutsideChangeWidget( self.__editor )
         self.connect( self.__outsideChangesBar, SIGNAL( 'ReloadRequest' ),
-                      self.reload )
+                      self.__onReload )
         self.connect( self.__outsideChangesBar,
                       SIGNAL( 'ReloadAllNonModifiedRequest' ),
                       self.reloadAllNonModified )
@@ -1395,7 +1395,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         QWidget.resizeEvent( self, event )
         self.resizeBars()
         return
-        
+
     def resizeBars( self ):
         " Resize the bars if they are shown "
         if not self.__importsBar.isHidden():
@@ -1411,9 +1411,25 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                                              allEnabled )
         return
 
-    def reload( self ):
+    def __onReload( self ):
         " Triggered when a request to reload the file is received "
         self.emit( SIGNAL( 'ReloadRequest' ) )
+        return
+
+    def reload( self ):
+        " Called (from the editors manager) to reload the file "
+
+        # Re-read the file with updating the file timestamp
+        self.readFile( self.__fileName )
+
+        # Hide the bars, just in case both of them
+        if not self.__importsBar.isHidden():
+            self.__importsBar.hide()
+        if not self.__outsideChangesBar.isHidden():
+            self.__outsideChangesBar.hide()
+
+        # Set the shown flag
+        self.setReloadDialogShown( False )
         return
 
     def reloadAllNonModified( self ):
