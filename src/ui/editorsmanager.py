@@ -923,6 +923,7 @@ class EditorsManager( QTabWidget ):
                            currentWidget.getUUID() )
                 GlobalData().project.addRecentFile( fileName )
             currentWidget.updateStatus()
+            self.__updateStatusBar()
             return True
 
         return False
