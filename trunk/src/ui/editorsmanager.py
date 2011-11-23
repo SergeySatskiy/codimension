@@ -595,9 +595,10 @@ class EditorsManager( QTabWidget ):
                                  PixmapCache().getIcon( 'modifiedfile.png' ) )
                 return
 
-
         if fileType not in [ PythonFileType, Python3FileType ]:
-            self.setTabToolTip( widgetIndex, "" )
+            self.setTabIcon( widgetIndex, QIcon() )
+            self.setTabToolTip( widgetIndex,
+                                self.widget( widgetIndex ).getTooltip() )
             return
 
         try:
@@ -681,6 +682,7 @@ class EditorsManager( QTabWidget ):
             self.insertTab( 0, newWidget, newWidget.getShortName() )
             if tooltip != "":
                 self.setTabToolTip( 0, tooltip )
+                newWidget.setTooltip( tooltip )
             self.activateTab( 0 )
             self.__updateControls()
             self.__updateStatusBar()

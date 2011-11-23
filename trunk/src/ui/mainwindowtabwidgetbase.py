@@ -38,6 +38,7 @@ class MainWindowTabWidgetBase():
 
     def __init__( self ):
         self.__uuid = uuid.uuid1()
+        self.__tooltip = ""
         return
 
     def isModified( self ):
@@ -118,3 +119,12 @@ class MainWindowTabWidgetBase():
     def reload( self ):
         " Reloads the widget content from the file "
         return
+
+    def setTooltip( self, txt ):
+        " Saves the tab tooltip "
+        self.__tooltip = txt
+        return
+
+    def getTooltip( self ):
+        " Returns the saved tooltip "
+        return self.__tooltip

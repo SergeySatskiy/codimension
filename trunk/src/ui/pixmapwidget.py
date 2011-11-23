@@ -28,7 +28,7 @@ from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
 from PyQt4.QtGui                import QPalette, QSizePolicy, QScrollArea, \
                                        QImage, QPixmap, QAction, \
                                        QLabel, QToolBar, QWidget, \
-                                       QHBoxLayout
+                                       QHBoxLayout, QApplication
 from PyQt4.QtCore               import Qt, SIGNAL, QSize
 from utils.pixmapcache          import PixmapCache
 from outsidechanges             import OutsideChangeWidget
@@ -273,16 +273,22 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
     def __onZoomIn( self ):
         " Triggered on the 'zoom in' button "
         self.__viewer.doZoom( 1.25 )
+        QApplication.processEvents()
+        self.resizeBars()
         return
 
     def __onZoomOut( self ):
         " Triggered on the 'zoom out' button "
         self.__viewer.doZoom( 0.8 )
+        QApplication.processEvents()
+        self.resizeBars()
         return
 
     def __onZoomReset( self ):
         " Triggered on the 'zoom reset' button "
         self.__viewer.resetZoom()
+        QApplication.processEvents()
+        self.resizeBars()
         return
 
     def __onEsc( self ):
