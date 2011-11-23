@@ -809,29 +809,45 @@ class EditorsManager( QTabWidget ):
 
     def __onSave( self ):
         " Triggered when Ctrl+S is received "
-        if self.widget( 0 ) == self.__welcomeWidget:
-            return True
         currentWidget = self.currentWidget()
         if currentWidget.getType() != MainWindowTabWidgetBase.PlainTextEditor:
             return True
-        editor = currentWidget.getEditor()
-        if not editor.isModified() and currentWidget.getFileName() != "":
-            return True
 
-        # Now it can be a new file or a modified one
-        if currentWidget.getFileName() != "":
-            # Existed one - just save
-            fileName = currentWidget.getFileName()
+        # This is a text editor
+        editor = currentWidget.getEditor()
+        fileName = currentWidget.getFileName()
+        if fileName != "":
+            # This is the buffer which has the corresponding file on FS
+            if currentWidget.isDiskFileModified():
+                self._updateIconAndTooltip( self.currentIndex() )
+                # The disk file was modified
+                res = QMessageBox.warning( \
+                    self, "Save File",
+                    "<p>The file <b>" + fileName + \
+                    "</b> has been changed since reading it. " \
+                    "Do you really want to write into it?</p>",
+                    QMessageBox.StandardButtons( QMessageBox.Abort | \
+                                                QMessageBox.Save ),
+                    QMessageBox.Abort )
+                if res == QMessageBox.Abort or res == QMessageBox.Cancel:
+                    return False
+            else:
+                # The disk file is the same as we read it
+                if not editor.isModified():
+                    return True
+
+            # Save the buffer into the file
             if currentWidget.writeFile( fileName ):
                 editor.setModified( False )
                 self._updateIconAndTooltip( self.currentIndex() )
                 self.emit( SIGNAL( 'fileUpdated' ), fileName,
                            currentWidget.getUUID() )
                 return True
-        else:
-            # This is the new one - call Save As
-            return self.__onSaveAs()
-        return False
+            # Error saving the buffer
+            return False
+
+        # This is the new one - call Save As
+        return self.__onSaveAs()
 
     def __onSaveAs( self ):
         " Triggered when Ctrl+Shift+S is received "

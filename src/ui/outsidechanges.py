@@ -58,7 +58,7 @@ class OutsideChangeWidget( QFrame ):
     def __createLayout( self ):
         " Creates the widget layout "
 
-        self.__messageLabel = QLabel( "The file has been modified " \
+        self.__messageLabel = QLabel( "This file has been modified " \
                                       "outside of codimension. What " \
                                       "would you like to do?" )
         self.__messageLabel.setWordWrap( True )
