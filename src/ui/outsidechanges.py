@@ -39,6 +39,11 @@ class OutsideChangeWidget( QFrame ):
         QFrame.__init__( self, parent )
 
         # Make the frame nice looking
+        panelColor = QColor( 128, 0, 0, 255 )
+        palette = self.palette()
+        palette.setColor( self.backgroundRole(), panelColor )
+        self.setPalette( palette )
+
         self.setFrameShape( QFrame.StyledPanel )
         self.setLineWidth( 2 )
         self.setAutoFillBackground( True )
@@ -57,6 +62,11 @@ class OutsideChangeWidget( QFrame ):
                                       "outside of codimension. What " \
                                       "would you like to do?" )
         self.__messageLabel.setWordWrap( True )
+        self.__messageLabel.setAlignment( Qt.AlignHCenter )
+        palette = self.__messageLabel.palette()
+        palette.setColor( self.foregroundRole(), QColor( 255, 255, 255, 255 ) )
+        self.__messageLabel.setPalette( palette )
+
         self.__leaveAsIsButton = QPushButton( "Continue editing", self )
         self.__leaveAsIsButton.setToolTip( "ESC" )
         self.connect( self.__leaveAsIsButton, SIGNAL( 'clicked()' ), self.hide )
@@ -92,7 +102,7 @@ class OutsideChangeWidget( QFrame ):
         self.__markers.append( QFrame( self.parent() ) )
         self.__markers.append( QFrame( self.parent() ) )
 
-        markerColor = QColor( 255, 165, 0, 255 )
+        markerColor = QColor( 128, 0, 0, 255 )
         for item in self.__markers:
             pal = item.palette()
             pal.setColor( item.backgroundRole(), markerColor )
