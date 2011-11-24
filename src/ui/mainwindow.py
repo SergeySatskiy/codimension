@@ -457,7 +457,9 @@ class CodimensionMainWindow( QMainWindow ):
         self.sbFile.setMinimumWidth( 128 )
         self.sbFile.setFrameStyle( QFrame.StyledPanel )
         self.__statusBar.addPermanentWidget( self.sbFile, True )
-        self.sbFile.setToolTip( "Editor file name" )
+        self.sbFile.setToolTip( "Editor file name (double click to copy path)" )
+        self.connect( self.sbFile, SIGNAL( "doubleClicked" ),
+                      self.__onPathLabelDoubleClick )
 
         self.sbLine = QLabel( self.__statusBar )
         self.sbLine.setMinimumWidth( 72 )
@@ -1335,3 +1337,11 @@ class CodimensionMainWindow( QMainWindow ):
         self.editorsManagerWidget.editorsManager.checkOutsideFileChanges()
         return
 
+    def __onPathLabelDoubleClick( self ):
+        " Double click on the status bar path label "
+        txt = str( self.sbFile.getPath() )
+        if txt.startswith( "File: " ):
+            txt = txt.replace( "File: ", "" )
+        if txt not in [ "", "N/A" ]:
+            QApplication.clipboard().setText( txt )
+        return

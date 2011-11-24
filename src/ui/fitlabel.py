@@ -29,7 +29,7 @@
 """ Implementation of labels which can change its
     content to fit the label size """
 
-from PyQt4.QtCore    import Qt, QString
+from PyQt4.QtCore    import Qt, QString, SIGNAL
 from PyQt4.QtGui     import QLabel
 from utils.fileutils import compactPath
 
@@ -79,6 +79,10 @@ class FitPathLabel( QLabel ):
         QLabel.setText( self, path )
         return
 
+    def getPath( self ):
+        " Provides the stored path "
+        return self.__path
+
     def paintEvent( self, event ):
         """ Called when painting is required """
 
@@ -98,3 +102,9 @@ class FitPathLabel( QLabel ):
 
         return self.fontMetrics().width( txt )
 
+    def mouseDoubleClickEvent( self, event ):
+        " Generates the doubleClicked signal "
+        if event.button() == Qt.LeftButton:
+            self.emit( SIGNAL( 'doubleClicked' ) )
+        QLabel.mouseDoubleClickEvent( self, event )
+        return
