@@ -312,10 +312,11 @@ class EditorsManager( QTabWidget ):
         wasDiscard = False
         if self.widget( index ).isModified():
             # Ask the user if the changes should be discarded
+            self.activateTab( index )
             res = QMessageBox.warning( \
                         self.widget( index ),
                         "Unsaved changes",
-                        "<b>The document has been modified.<b>" \
+                        "<b>This document has been modified.</b>" \
                         "<p>Do you want to save changes?</p>",
                         QMessageBox.StandardButtons( \
                             QMessageBox.Cancel | \
@@ -528,7 +529,7 @@ class EditorsManager( QTabWidget ):
             if self.currentWidget().isDiskFileModified():
                 if not self.currentWidget().getReloadDialogShown():
                     self.currentWidget().showOutsideChangesBar( \
-                                        self.__areThereDiskModifiedUnchanged() )
+                                    self.__countDiskModifiedUnchanged() > 1 )
                     # Just in case check the other tabs
                     self.checkOutsideFileChanges()
         return
@@ -1490,19 +1491,20 @@ class EditorsManager( QTabWidget ):
             if self.currentWidget().isDiskFileModified():
                 if not self.currentWidget().getReloadDialogShown():
                     self.currentWidget().showOutsideChangesBar( \
-                                        self.__areThereDiskModifiedUnchanged() )
+                                    self.__countDiskModifiedUnchanged() > 1 )
         return
 
-    def __areThereDiskModifiedUnchanged( self ):
-        """ Returns true if there is at least one buffer with non modified
+    def __countDiskModifiedUnchanged( self ):
+        """ Returns the number of buffers with non modified
             content for which the disk file is modified """
+        cnt = 0
         index = self.count() - 1
         while index >= 0:
             if self.widget( index ).isModified() == False:
                 if self.widget( index ).isDiskFileModified():
-                    return True
+                    cnt += 1
             index -= 1
-        return False
+        return cnt
 
     def onReload( self ):
         " Called when the current tab file should be reloaded "
