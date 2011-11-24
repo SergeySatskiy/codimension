@@ -460,6 +460,10 @@ class CodimensionMainWindow( QMainWindow ):
         self.sbFile.setToolTip( "Editor file name (double click to copy path)" )
         self.connect( self.sbFile, SIGNAL( "doubleClicked" ),
                       self.__onPathLabelDoubleClick )
+        self.sbFile.setContextMenuPolicy( Qt.CustomContextMenu )
+        self.connect( self.sbFile,
+                      SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
+                      self.__showPathLabelContextMenu )
 
         self.sbLine = QLabel( self.__statusBar )
         self.sbLine.setMinimumWidth( 72 )
@@ -1344,4 +1348,13 @@ class CodimensionMainWindow( QMainWindow ):
             txt = txt.replace( "File: ", "" )
         if txt not in [ "", "N/A" ]:
             QApplication.clipboard().setText( txt )
+        return
+
+    def __showPathLabelContextMenu( self, pos ):
+        " Triggered when a context menu is requested for the path label "
+        contextMenu = QMenu( self )
+        contextMenu.addAction( PixmapCache().getIcon( "copytoclipboard.png" ),
+                               "Copy path to clipboard",
+                               self.__onPathLabelDoubleClick )
+        contextMenu.popup( self.sbFile.mapToGlobal( pos ) )
         return
