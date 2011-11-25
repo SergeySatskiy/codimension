@@ -62,6 +62,8 @@ class TextEditor( ScintillaWrapper ):
     searchIndicator   = ScintillaWrapper.INDIC_CONTAINER + 1
     spellingIndicator = ScintillaWrapper.INDIC_CONTAINER + 2
 
+    textToIterate = ""
+
     def __init__( self, parent = None ):
 
         ScintillaWrapper.__init__( self, parent )
@@ -113,6 +115,18 @@ class TextEditor( ScintillaWrapper ):
         self.highlightAct.setShortcut( "Ctrl+N" )
         self.connect( self.highlightAct, SIGNAL( 'triggered()' ), self.__onHighlight )
         self.addAction( self.highlightAct )
+
+        # Ctrl + . => move to the next match of the highlighted word
+        self.moveNextAct = QAction( self )
+        self.moveNextAct.setShortcut( "Ctrl+." )
+        self.connect( self.moveNextAct, SIGNAL( 'triggered()' ), self.__onNextHighlight )
+        self.addAction( self.moveNextAct )
+
+        # Ctrl + , => move to the previous match of the highlighted word
+        self.movePrevAct = QAction( self )
+        self.movePrevAct.setShortcut( "Ctrl+," )
+        self.connect( self.movePrevAct, SIGNAL( 'triggered()' ), self.__onPrevHighlight )
+        self.addAction( self.movePrevAct )
 
         # Ctrl + M => comment/uncomment
         self.commentAct = QAction( self )
@@ -227,6 +241,8 @@ class TextEditor( ScintillaWrapper ):
 
         self.shiftTab.setEnabled( True )
         self.highlightAct.setEnabled( True )
+        self.moveNextAct.setEnabled( True )
+        self.movePrevAct.setEnabled( True )
         self.commentAct.setEnabled( True )
         self.wordPartRightAct.setEnabled( True )
         self.wordPartLeftAct.setEnabled( True )
@@ -251,6 +267,8 @@ class TextEditor( ScintillaWrapper ):
         " Disable Shift+Tab when the focus is lost "
         self.shiftTab.setEnabled( False )
         self.highlightAct.setEnabled( False )
+        self.moveNextAct.setEnabled( False )
+        self.movePrevAct.setEnabled( False )
         self.commentAct.setEnabled( False )
         self.wordPartRightAct.setEnabled( False )
         self.wordPartLeftAct.setEnabled( False )
@@ -649,7 +667,12 @@ class TextEditor( ScintillaWrapper ):
 
     def __onDoubleClick( self, position, line, modifier ):
         " Triggered when the user double clicks in the editor "
-        self.highlightWord( self.selectedText() )
+        text = self.getCurrentWord()
+        if text == "" or text.contains( '\r' ) or text.contains( '\n' ):
+            TextEditor.textToIterate = ""
+        else:
+            TextEditor.textToIterate = text
+        self.highlightWord( text )
         return
 
     def highlightWord( self, text ):
@@ -666,7 +689,94 @@ class TextEditor( ScintillaWrapper ):
 
     def __onHighlight( self ):
         " Triggered when Ctrl+N is clicked "
-        self.highlightWord( self.getCurrentWord() )
+        text = self.getCurrentWord()
+        if text == "" or text.contains( '\r' ) or text.contains( '\n' ):
+            TextEditor.textToIterate = ""
+        else:
+            if TextEditor.textToIterate == text:
+                self.__onNextHighlight()
+                return
+            TextEditor.textToIterate = text
+        self.highlightWord( text )
+        return
+
+    def __onNextHighlight( self ):
+        " Triggered when Ctrl+. is clicked "
+        if TextEditor.textToIterate == "":
+            return self.__onHighlight()
+
+        targets = self.markOccurrences( self.searchIndicator,
+                                        TextEditor.textToIterate,
+                                        False, False, False, True )
+        foundCount = len( targets )
+        if foundCount == 0:
+            return
+
+        line, index = self.getCursorPosition()
+        if foundCount == 1:
+            if line == targets[ 0 ][ 0 ] and \
+               index >= targets[ 0 ][ 1 ] and \
+               index <= targets[ 0 ][ 1 ] + targets[ 0 ][ 2 ]:
+                # The only match and we are within it
+                return
+
+        for target in targets:
+            if target[ 0 ] < line:
+                continue
+            if target[ 0 ] == line:
+                lastPos = target[ 1 ] + target[ 2 ]
+                if index > lastPos:
+                    continue
+                if index >= target[ 1 ] and index <= lastPos:
+                    # Cursor within this target, we need the next one
+                    continue
+            # Move the cursor to the target
+            self.setCursorPosition( target[ 0 ], target[ 1 ] )
+            self.ensureLineVisible( target[ 0 ] )
+            return
+
+        self.setCursorPosition( targets[ 0 ][ 0 ], targets[ 0 ][ 1 ] )
+        self.ensureLineVisible( targets[ 0 ][ 0 ] )
+        return
+
+    def __onPrevHighlight( self ):
+        " Triggered when Ctrl+, is clicked "
+        if TextEditor.textToIterate == "":
+            return self.__onHighlight()
+
+        targets = self.markOccurrences( self.searchIndicator,
+                                        TextEditor.textToIterate,
+                                        False, False, False, True )
+        foundCount = len( targets )
+        if foundCount == 0:
+            return
+
+        line, index = self.getCursorPosition()
+        if foundCount == 1:
+            if line == targets[ 0 ][ 0 ] and \
+               index >= targets[ 0 ][ 1 ] and \
+               index <= targets[ 0 ][ 1 ] + targets[ 0 ][ 2 ]:
+                # The only match and we are within it
+                return
+
+        for idx in xrange( foundCount - 1, -1, -1 ):
+            target = targets[ idx ]
+            if target[ 0 ] > line:
+                continue
+            if target[ 0 ] == line:
+                if index < target[ 1 ]:
+                    continue
+                if index >= target[ 1 ] and index <= target[ 1 ] + target[ 2 ]:
+                    # Cursor within this target, we need the previous one
+                    continue
+            # Move the cursor to the target
+            self.setCursorPosition( target[ 0 ], target[ 1 ] )
+            self.ensureLineVisible( target[ 0 ] )
+            return
+
+        last = foundCount - 1
+        self.setCursorPosition( targets[ last ][ 0 ], targets[ last ][ 1 ] )
+        self.ensureLineVisible( targets[ last ][ 0 ] )
         return
 
     def __onDedent( self ):

@@ -1,5 +1,8 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* New feature: Ctrl+N will iterate over highlighted words if the current word
+  matches the previously highlighted. Ctrl+,/. will iterate over the
+  highlighted words regardless on what word the cursor is. Issue #303.
 * New feature: double click on the status bar path label copies the file path
   to the clipboard.
 * New feature: detecting files changed outside of codimension.
