@@ -819,8 +819,10 @@ class EditorsManager( QTabWidget ):
         fileName = currentWidget.getFileName()
         if fileName != "":
             # This is the buffer which has the corresponding file on FS
-            if currentWidget.isDiskFileModified():
+            if currentWidget.isDiskFileModified() and \
+               currentWidget.doesFileExist():
                 self._updateIconAndTooltip( self.currentIndex() )
+                currentWidget.setReloadDialogShown( True )
                 # The disk file was modified
                 res = QMessageBox.warning( \
                     self, "Save File",
