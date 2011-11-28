@@ -1,5 +1,6 @@
-XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
+2011 Nov 27  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Release 1.3
 * New feature: Ctrl+N will iterate over highlighted words if the current word
   matches the previously highlighted. Ctrl+,/. will iterate over the
   highlighted words regardless on what word the cursor is. Issue #303.
