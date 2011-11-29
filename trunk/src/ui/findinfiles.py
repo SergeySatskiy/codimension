@@ -99,6 +99,13 @@ class ItemToSearchIn:
             logging.error( "Cannot read " + self.fileName )
         return
 
+    @staticmethod
+    def __htmlEncode( string ):
+        " Encodes HTML "
+        return string.replace( "&", "&amp;" ) \
+                     .replace( ">", "&gt;" ) \
+                     .replace( "<", "&lt;" )
+
     def __lookThroughLines( self, content, expression ):
         " Searches through all the given lines "
         lineIndex = 0
@@ -113,12 +120,17 @@ class ItemToSearchIn:
                                                            totalLines )
                 lines = content[ start : end ]
                 matchedLineIndex = lineIndex - start
+
+                for index in xrange( 0, len( lines ) ):
+                    if index != matchedLineIndex:
+                        lines[ index ] = self.__htmlEncode( lines[ index ] )
+
                 lines[ matchedLineIndex ] = \
-                        lines[ matchedLineIndex ][ :match.start ] + \
+                        self.__htmlEncode( lines[ matchedLineIndex ][ :match.start ] ) + \
                         "<b>" + \
-                        lines[ matchedLineIndex ][ match.start:match.finish ] + \
+                        self.__htmlEncode( lines[ matchedLineIndex ][ match.start:match.finish ] ) + \
                         "</b>" + \
-                        lines[ matchedLineIndex ][ match.finish: ]
+                        self.__htmlEncode( lines[ matchedLineIndex ][ match.finish: ] )
 
                 match.tooltip = "<pre>" + "\n".join( lines ) + "</pre>"
                 self.matches.append( match )
