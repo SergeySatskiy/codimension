@@ -73,8 +73,12 @@ class TextEditor( ScintillaWrapper ):
 
         self.connect( self, SIGNAL( 'SCN_DOUBLECLICK(int,int,int)' ),
                       self.__onDoubleClick )
+        self.connect( self, SIGNAL( 'cursorPositionChanged(int,int)' ),
+                      self.__onCursorPositionChanged )
+        self.__skipChangeCursor = False
 
         skin = GlobalData().skin
+        self.__openedLine = -1
 
         self.encoding = 'utf-8'     # default
         self.lexer_ = None
@@ -652,11 +656,64 @@ class TextEditor( ScintillaWrapper ):
     def keyPressEvent( self, event ):
         """ Handles the key press events """
 
-        if event.key() == Qt.Key_Escape:
+        self.__skipChangeCursor = True
+        key = event.key()
+        if key in [ Qt.Key_Enter, Qt.Key_Return ]:
+            line, pos = self.getCursorPosition()
+            lineToTrim = -1
+            if line == self.__openedLine:
+                lineToTrim = line
+
+            ScintillaWrapper.keyPressEvent( self, event )
+            QApplication.processEvents()
+
+            self.__removeLine( lineToTrim )
+
+            # If the new line has one or more spaces then it is a candidate for
+            # automatic trimming
+            self.__openedLine = -1
+            line, pos = self.getCursorPosition()
+            text = self.text( line )
+            if len( text ) > 0 and len( text.trimmed() ) == 0:
+                self.__openedLine = line
+
+        elif key == Qt.Key_Escape:
             self.emit( SIGNAL('ESCPressed') )
             event.accept()
         else:
+            self.__openedLine = -1
             ScintillaWrapper.keyPressEvent( self, event )
+
+        self.__skipChangeCursor = False
+        return
+
+    def __onCursorPositionChanged( self, line, pos ):
+        " Triggered when the cursor changed the position "
+        if self.__skipChangeCursor:
+            return
+
+        if line == self.__openedLine:
+            self.__openedLine = -1
+            return
+
+        self.__skipChangeCursor = True
+        self.__removeLine( self.__openedLine )
+        self.__skipChangeCursor = False
+        self.__openedLine = -1
+        return
+
+    def __removeLine( self, line ):
+        " Removes characters from the given line "
+        if line < 0:
+            return
+
+        currentLine, currentPos = self.getCursorPosition()
+        self.beginUndoAction()
+        self.setCursorPosition( line, 0 )
+        self.extendSelectionToEOL()
+        self.removeSelectedText()
+        self.setCursorPosition( currentLine, currentPos )
+        self.endUndoAction()
         return
 
     def getLanguage( self ):
