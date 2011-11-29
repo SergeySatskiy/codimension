@@ -77,9 +77,10 @@ class Tooltip( QFrame ):
     def __createLayout( self ):
         " Creates the tooltip layout "
         verticalLayout = QVBoxLayout( self )
-        font = QFont( "Monospace", 12 )
         self.info = QLabel()
         self.info.setAutoFillBackground( True )
+        font = self.info.font()
+        font.setFamily( "Monospace" )
         self.info.setFont( font )
         self.info.setFrameShape( QFrame.StyledPanel )
         verticalLayout.addWidget( self.info )
