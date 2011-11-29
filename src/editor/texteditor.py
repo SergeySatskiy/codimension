@@ -214,6 +214,12 @@ class TextEditor( ScintillaWrapper ):
         self.connect( self.ctrlBackslashAct, SIGNAL( 'triggered()' ), self.__onCompleteFromDocument )
         self.addAction( self.ctrlBackslashAct )
 
+        # Ctrl + space
+        self.ctrlSpaceAct = QAction( self )
+        self.ctrlSpaceAct.setShortcut( "Ctrl+ " )
+        self.connect( self.ctrlSpaceAct, SIGNAL( 'triggered()' ), self.__onCompleteFromDocument )
+        self.addAction( self.ctrlSpaceAct )
+
         # Alt + Shift + Up, Alt + Shift + Down
         self.altShiftUpAct = QAction( self )
         self.altShiftUpAct.setShortcut( "Alt+Shift+Up" )
@@ -261,6 +267,7 @@ class TextEditor( ScintillaWrapper ):
         self.ctrlInsertAct.setEnabled( True )
         self.ctrlCAct.setEnabled( True )
         self.ctrlBackslashAct.setEnabled( True )
+        self.ctrlSpaceAct.setEnabled( True )
         self.altShiftUpAct.setEnabled( True )
         self.altShiftDownAct.setEnabled( True )
         self.altShiftLeftAct.setEnabled( True )
@@ -287,6 +294,7 @@ class TextEditor( ScintillaWrapper ):
         self.ctrlInsertAct.setEnabled( False )
         self.ctrlCAct.setEnabled( False )
         self.ctrlBackslashAct.setEnabled( False )
+        self.ctrlSpaceAct.setEnabled( False )
         self.altShiftUpAct.setEnabled( False )
         self.altShiftDownAct.setEnabled( False )
         self.altShiftLeftAct.setEnabled( False )
@@ -698,8 +706,10 @@ class TextEditor( ScintillaWrapper ):
             self.emit( SIGNAL('ESCPressed') )
             event.accept()
         else:
-            self.__openedLine = -1
-            ScintillaWrapper.keyPressEvent( self, event )
+            # Special keyboard keys are delivered as 0 values
+            if key != 0:
+                self.__openedLine = -1
+                ScintillaWrapper.keyPressEvent( self, event )
 
         self.__skipChangeCursor = False
         return
@@ -989,8 +999,8 @@ class TextEditor( ScintillaWrapper ):
         return
 
     def __onCompleteFromDocument( self ):
-        " Triggered when Ctrl+\\ is clicked "
-        self.autoCompleteFromDocument()
+        " Triggered when Ctrl+\\ or ctrl+space is clicked "
+        #self.autoCompleteFromDocument()
         return
 
     def isImportLine( self ):
