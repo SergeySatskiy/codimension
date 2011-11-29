@@ -671,11 +671,28 @@ class TextEditor( ScintillaWrapper ):
 
             # If the new line has one or more spaces then it is a candidate for
             # automatic trimming
-            self.__openedLine = -1
             line, pos = self.getCursorPosition()
             text = self.text( line )
+            self.__openedLine = -1
             if len( text ) > 0 and len( text.trimmed() ) == 0:
                 self.__openedLine = line
+
+        elif key in [ Qt.Key_Up, Qt.Key_PageUp,
+                      Qt.Key_Down, Qt.Key_PageDown ]:
+            line, pos = self.getCursorPosition()
+            lineToTrim = -1
+            if line == self.__openedLine:
+                lineToTrim = line
+
+            ScintillaWrapper.keyPressEvent( self, event )
+            QApplication.processEvents()
+
+            if lineToTrim != -1:
+                line, pos = self.getCursorPosition()
+                if line != lineToTrim:
+                    # The cursor was really moved to another line
+                    self.__removeLine( lineToTrim )
+            self.__openedLine = -1
 
         elif key == Qt.Key_Escape:
             self.emit( SIGNAL('ESCPressed') )
@@ -714,6 +731,7 @@ class TextEditor( ScintillaWrapper ):
         self.removeSelectedText()
         self.setCursorPosition( currentLine, currentPos )
         self.endUndoAction()
+        QApplication.processEvents()
         return
 
     def getLanguage( self ):
