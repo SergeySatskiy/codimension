@@ -1,6 +1,7 @@
 2011 Nov 29  Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Release 1.3
+* Bug fix: prevent NUL characters appear in the text editor. Issue #203.
 * New feature: auto trimming empty lines when a cursor is moved. Issue #294.
 * New feature: Ctrl+N will iterate over highlighted words if the current word
   matches the previously highlighted. Ctrl+,/. will iterate over the
