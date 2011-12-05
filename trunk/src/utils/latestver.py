@@ -22,14 +22,21 @@
 
 " Provides a dictionary of values from the codimension latest version file "
 
-import urllib, sys
+import socket, urllib2, sys
 
 def getLatestVersionFile():
     " Reads the latest version file from the web site "
 
+    success = True
+    values  = {}
+
+    oldTimeout = socket.getdefaulttimeout()
+    newTimeout = 2
+    socket.setdefaulttimeout( newTimeout )
+
     try:
         url = "http://satsky.spb.ru/codimension/LatestVersion.txt"
-        response = urllib.urlopen( url )
+        response = urllib2.urlopen( url )
         content = response.read().split( '\n' )
 
         result = {}
@@ -81,17 +88,20 @@ def getLatestVersionFile():
 
         # LatestVersion key must be there
         if not result.has_key( 'LatestVersion' ):
-            return False, {}
-
-        # All is fine
-        return True, result
+            success = False
+            values  = {}
+        else:
+            # All is fine
+            success = True
+            values = result
 
     except:
-        # raise
-
         # Does not matter what the problem was
-        return False, {}
+        success = False
+        values  = {}
 
+    socket.setdefaulttimeout( oldTimeout )
+    return success, values
 
 
 # The script execution entry point
