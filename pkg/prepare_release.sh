@@ -205,10 +205,12 @@ maketar()
     deb)
         tarball="${pkg_basename}_$version.orig.tar.gz"
         rm -f "$pkg_dir"/*.spec
+        mv "$pkg_dir/debian" "${pkg_basename}_$version-debian"
         ;;
     rpm)
         tarball="$pkg_basename-$version.tar.gz"
         rm -rf "$pkg_dir/debian"
+        mv "$pkg_dir"/*.spec "$pkg_basename-$version.spec"
     esac
 
     echo "Preparing $tarball"
