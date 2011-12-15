@@ -1,0 +1,76 @@
+2011 Nov 29  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Release 1.3
+* Bug fix: correct tooltips for search results in the HTML files. Issue #188.
+* Bug fix: prevent NUL characters appear in the text editor. Issue #203.
+* New feature: auto trimming empty lines when a cursor is moved. Issue #294.
+* New feature: Ctrl+N will iterate over highlighted words if the current word
+  matches the previously highlighted. Ctrl+,/. will iterate over the
+  highlighted words regardless on what word the cursor is. Issue #303.
+* New feature: double click on the status bar path label copies the file path
+  to the clipboard.
+* New feature: detecting files changed outside of codimension.
+* Bug fix: loading project from the filesystem browser checks if the opened
+  files are saved. Issue #295.
+* Some fixes in the replace implementation.
+* Bug fix: incorrect interpretation of the search pattern in 'Find in files'.
+  Issue #301.
+* Ctrl+C/Ctrl+Insert to copy the current line if there is no selection.
+  Issue #304.
+* New editor setting: auto remove trailing spaces on saving. Issue #300.
+* New setting: HOME moves the cursor to position 0 or to the first non space
+  character. Issue #302.
+* Share the 'find' and 'replace what' search history. Issue #298.
+* Make the match selected in the incremental find/replace. Issue #297.
+* Bug fix in the replace implementation. Adding separate button 'replace and
+  move'. Issue #277.
+* Making Ctrl+F and Ctrl+R select the text to search even if the widget has
+  already been displayed. Issue #291.
+* Making Ctrl+X a synonym to Shift+Del. Issue #290.
+* Bug fix: F3/Shift F3 now work for the find/replace search string depending of
+  what dialog was shown last. Issue #289.
+* Updating the help screen. Issue #281.
+* Updating the welcome screen. Issue #279.
+* Making Shift+Home/End select till the beginning/end of a visible line.
+  Issue #286.
+* Adding support for Alt+Shift+Left/Right - select a word part. Issue #287.
+* Adding support for Alt+Shift+Up/Down - select till the beginning/end of a
+  paragraph. Issue #288.
+* Adding support for Shift+Del - copy to a buffer and delete a selected text
+  (if so) or the current line. Issue #285.
+* Making HOME/END jumping to the beginning/end of the visible line. Issue #284.
+* Adding support for Alt+Up and Alt+Down hot keys
+* Switching history hot keys to Alt+PgDown and Alt+PgUp
+* Adding support for Alt+Left and Alt+Right hot keys
+* Bug fix: check that all the modified files are saved before letting a new
+  project to be created. Issue #273.
+* Move the focus to the text editor if the focus was not in the editor and the
+  currently active tab is clicked. Issue #264.
+
+2011 Oct 19  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Release 1.2
+* Adding support for commenting/uncommenting a single line or selected lines.
+  Issue #11.
+* Adding support for Shift+Tab in the text editor: dedent a line or the selected
+  lines. Issue #282.
+* Making the format string for modified files configurable. The default value
+  is "%s *". Issue #280.
+* Making autoindent switched on by default. Issue #279.
+* Do not set the font size explicitly in the simple line counter window.
+* Bug fix: exception during checking for a newer version. Issue #272.
+* Bug fix: proper on/off of the braces highlight. Issue #238.
+* Bug fix: enable 'remove recent project' toolbar button properly. Issue #271.
+* Expand/collapse grouping items in the object browsers regardless what column
+  was double clicked. Issue #242
+
+2011 Sep 13  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Release 1.1
+* Improvement: provide a hint message in case if pymetrics failed. Issue #265.
+* Bug fix: exception in the files browser if there is a syntactically incorrect
+  python file in it. Issue #266.
+
+2011 Sep 2  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for first release.
