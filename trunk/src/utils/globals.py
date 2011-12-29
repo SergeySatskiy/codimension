@@ -23,8 +23,11 @@
 """ global data singleton """
 
 import os, sys
+import rope.base.project
 from project            import CodimensionProject
 from briefmodinfocache  import BriefModuleInfoCache
+from settings           import ropePreferences
+from PyQt4.QtCore       import QDir
 
 
 class GlobalData( object ):
@@ -49,6 +52,42 @@ class GlobalData( object ):
             self.pylintAvailable = self.__checkPylint()
             self.graphvizAvailable = self.__checkGraphviz()
             return
+
+        def getRopeProject( self, fileName = "" ):
+            if self.project.fileName != "":
+                return self.project.ropeProject
+
+            # There is no current project so create a temporary one.
+            # Two cases: the buffer has been saved
+            #            not saved buffer
+            if os.path.isabs( fileName ):
+                project = rope.base.project.Project( os.path.dirname( fileName ),
+                                                     None, None,
+                                                     **ropePreferences )
+                project.validate( project.root )
+                return project
+
+            # Unsaved buffer, make an assumption that it is in home directory
+            project = rope.base.project.Project( str( QDir.homePath() ),
+                                                 None, None,
+                                                 **ropePreferences )
+            project.validate( project.root )
+            return project
+
+        def getProjectImportDirs( self ):
+            " Provides a list of the project import dirs if so "
+            if self.project.fileName == "":
+                return []
+
+            basePath = os.path.dirname( self.project.fileName ) + os.path.sep
+            result = list( self.project.importDirs )
+            index = len( result ) - 1
+            while index >= 0:
+                path = result[ index ]
+                if not os.path.isabs( path ):
+                    result[ index ] = basePath + path
+                index -= 1
+            return result
 
         @staticmethod
         def __checkFile():
