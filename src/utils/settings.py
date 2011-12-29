@@ -27,6 +27,19 @@ import os, os.path, ConfigParser, logging
 from PyQt4.QtCore import QObject, SIGNAL, QDir
 from filepositions import FilesPositions
 
+ropePreferences = { 'ignore_syntax_errors': True,
+                    'ignore_bad_imports':   True,
+                    'soa_followed_calls':   2,
+                    'extension_modules': [
+                        "sys", "os", "os.path", "time", "datetime",
+                        "thread", "errno", "inspect", "math", "cmath",
+                        "socket", "re", "zlib", "shutil",
+                        "configParser", "urllib", "urllib2", "xml",
+                        "numpy", "collections", "cPickle", "gc",
+                        "exceptions", "signal", "imp", "operator",
+                        "strop", "zipimport",
+                        "PyQt4", "PyQt4.QtGui", "QtGui",
+                        "PyQt4.QtCore", "QtCore" ] }
 
 _maxRecentProjects = 32
 _defaultXPos = 50
@@ -40,7 +53,7 @@ _defaultYDelta = 0
 _defaultHSplitSize = "200, 450, 575"
 _defaultVSplitSize = "400, 150"
 _defaultFilesFilters = [ "\.svn", "\.cvs", ".*\~$",
-                         ".*\.pyc$", ".*\.swp$", ".*\.pyo$" ]
+                         ".*\.pyc$", ".*\.swp$", ".*\.pyo$", "^\." ]
 _defaultProjectLoaded = False
 _defaultZoom = 0
 _defaultSkin = "default"
