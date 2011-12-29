@@ -24,12 +24,11 @@
 """ codimension project """
 
 import os, os.path, ConfigParser, logging, uuid, re
+import rope.base.project
 from briefmodinfocache import BriefModuleInfoCache
 from PyQt4.QtCore      import QObject, SIGNAL
-from settings          import Settings
+from settings          import Settings, ropePreferences
 from watcher           import Watcher
-from compatibility     import relpath
-
 
 
 class CodimensionProject( QObject ):
@@ -47,8 +46,7 @@ class CodimensionProject( QObject ):
 
         # Avoid pylint complains
         self.fileName = ""
-        self.userProjectDir = ""
-        self.__dirList = set()
+        self.userProjectDir = ""    # Directory in ~/.codimension/uuidNN/
         self.filesList = set()
 
         self.creationDate = ""
@@ -59,6 +57,8 @@ class CodimensionProject( QObject ):
         self.email = ""
         self.description = ""
         self.uuid = ""
+
+        self.ropeProject = None
 
         # Coming from separate files from ~/.codimension/uuidN/
         self.todos = []
@@ -80,6 +80,7 @@ class CodimensionProject( QObject ):
         self.findGlobalHistory = []
 
         self.recentFiles = []
+        self.importDirs = []
 
         # Precompile the exclude filters
         self.__excludeFilter = []
@@ -102,10 +103,9 @@ class CodimensionProject( QObject ):
         # created. This must be an absolute path.
         self.fileName = ""
         self.userProjectDir = ""
-        self.__dirList = set()
 
-        # Generated having the self.__dirList. Full paths are stored.
-        # The holds all files and directories. The dirs end with os.path.sep
+        # Generated having the project dir Full paths are stored.
+        # The set holds all files and directories. The dirs end with os.path.sep
         self.filesList = set()
 
         self.creationDate = ""
@@ -137,6 +137,7 @@ class CodimensionProject( QObject ):
         self.findGlobalHistory = []
 
         self.recentFiles = []
+        self.importDirs = []
 
         # Reset the dir watchers if so
         if self.__dirWatcher is not None:
@@ -144,7 +145,7 @@ class CodimensionProject( QObject ):
         self.__dirWatcher = None
         return
 
-    def createNew( self, fileName, author, lic, copyRight,
+    def createNew( self, fileName, importDirs, author, lic, copyRight,
                    description, creationDate, version, email ):
         " Creates a new project "
 
@@ -169,7 +170,7 @@ class CodimensionProject( QObject ):
         self.__resetValues()
 
         self.fileName = str( fileName )
-        self.__dirList.update( [ "." + os.path.sep ] )
+        self.importDirs = importDirs
         self.creationDate = creationDate
         self.author = author
         self.license = lic
@@ -189,10 +190,11 @@ class CodimensionProject( QObject ):
 
         # Update the watcher
         self.__dirWatcher = Watcher( Settings().projectFilesFilters,
-                                     self.getProjectDirs()  )
+                                     self.getProjectDir() )
         self.connect( self.__dirWatcher, SIGNAL( 'fsCahanged' ),
                       self.onFSChanged )
 
+        self.__createRopeProject()
         self.emit( SIGNAL( 'projectChanged' ), self.CompleteProject )
         return
 
@@ -236,7 +238,7 @@ class CodimensionProject( QObject ):
 
     def saveProject( self ):
         " Writes all the settings into the file "
-        if self.fileName == "":
+        if not self.isLoaded():
             return
 
         # Project properties part
@@ -254,7 +256,7 @@ class CodimensionProject( QObject ):
 
         f = open( self.fileName, "w" )
         self.__writeHeader( f )
-        self.__writeList( f, "dirs", "dir", self.__dirList )
+        self.__writeList( f, "importdirs", "dir", self.importDirs )
         f.write( propertiesPart + "\n" + \
                  "\n\n" )
         f.close()
@@ -274,69 +276,70 @@ class CodimensionProject( QObject ):
 
     def __saveTabsStatus( self ):
         " Helper to save tabs status "
-        if self.fileName == "":
-            return
-        f = open( self.userProjectDir + "tabsstatus", "w" )
-        self.__writeHeader( f )
-        self.__writeList( f, "tabsstatus", "tab", self.tabsStatus )
-        f.close()
+        if self.isLoaded():
+            f = open( self.userProjectDir + "tabsstatus", "w" )
+            self.__writeHeader( f )
+            self.__writeList( f, "tabsstatus", "tab", self.tabsStatus )
+            f.close()
         return
 
     def __saveSearchHistory( self ):
         " Helper to save the project search history "
-        if self.fileName == "":
-            return
-        f = open( self.userProjectDir + "searchhistory", "w" )
-        self.__writeHeader( f )
-        self.__writeList( f, "findhistory", "find", self.findHistory )
-        self.__writeList( f, "replacehistory", "replace", self.replaceHistory )
-        self.__writeList( f, "findnamehistory", "find", self.findNameHistory )
-        self.__writeList( f, "findfilehistory", "find", self.findFileHistory )
-        f.close()
+        if self.isLoaded():
+            f = open( self.userProjectDir + "searchhistory", "w" )
+            self.__writeHeader( f )
+            self.__writeList( f, "findhistory", "find",
+                              self.findHistory )
+            self.__writeList( f, "replacehistory", "replace",
+                              self.replaceHistory )
+            self.__writeList( f, "findnamehistory", "find",
+                              self.findNameHistory )
+            self.__writeList( f, "findfilehistory", "find",
+                              self.findFileHistory )
+            f.close()
         return
 
     def __saveTopLevelDirs( self ):
         " Helper to save the project top level dirs "
-        if self.fileName == "":
-            return
-        f = open( self.userProjectDir + "topleveldirs", "w" )
-        self.__writeHeader( f )
-        self.__writeList( f, "topleveldirs", "dir", self.topLevelDirs )
-        f.close()
+        if self.isLoaded():
+            f = open( self.userProjectDir + "topleveldirs", "w" )
+            self.__writeHeader( f )
+            self.__writeList( f, "topleveldirs", "dir", self.topLevelDirs )
+            f.close()
         return
 
     def __saveFindFiles( self ):
         " Helper to save the find in files history "
-        if self.fileName == "":
-            return
-        f = open( self.userProjectDir + "findinfiles", "w" )
-        self.__writeHeader( f )
-        self.__writeList( f, "whathistory", "what", self.findFilesWhat )
-        self.__writeList( f, "dirhistory", "dir", self.findFilesDirs )
-        self.__writeList( f, "maskhistory", "mask", self.findFilesMasks )
-        f.close()
+        if self.isLoaded():
+            f = open( self.userProjectDir + "findinfiles", "w" )
+            self.__writeHeader( f )
+            self.__writeList( f, "whathistory", "what", self.findFilesWhat )
+            self.__writeList( f, "dirhistory", "dir", self.findFilesDirs )
+            self.__writeList( f, "maskhistory", "mask", self.findFilesMasks )
+            f.close()
         return
 
     def __saveFindObjects( self ):
         " Helper to save find objects history "
-        if self.fileName == "":
-            return
-        f = open( self.userProjectDir + "findobjects", "w" )
-        self.__writeHeader( f )
-        self.__writeList( f, "classhistory", "class", self.findClassHistory )
-        self.__writeList( f, "funchistory", "func", self.findFuncHistory )
-        self.__writeList( f, "globalhistory", "global", self.findGlobalHistory )
-        f.close()
+        if self.isLoaded():
+            f = open( self.userProjectDir + "findobjects", "w" )
+            self.__writeHeader( f )
+            self.__writeList( f, "classhistory", "class",
+                              self.findClassHistory )
+            self.__writeList( f, "funchistory", "func",
+                              self.findFuncHistory )
+            self.__writeList( f, "globalhistory", "global",
+                              self.findGlobalHistory )
+            f.close()
         return
 
     def __saveRecentFiles( self ):
         " Helper to save recent files list "
-        if self.fileName == "":
-            return
-        f = open( self.userProjectDir + "recentfiles", "w" )
-        self.__writeHeader( f )
-        self.__writeList( f, "recentfiles", "file", self.recentFiles )
-        f.close()
+        if self.isLoaded():
+            f = open( self.userProjectDir + "recentfiles", "w" )
+            self.__writeHeader( f )
+            self.__writeList( f, "recentfiles", "file", self.recentFiles )
+            f.close()
         return
 
     @staticmethod
@@ -410,36 +413,33 @@ class CodimensionProject( QObject ):
         if not os.path.exists( self.userProjectDir ):
             os.mkdir( self.userProjectDir )
 
-        # dirs part
+        # import dirs part
         index = 0
         try:
             while True:
-                dirName = config.get( 'dirs',
-                                      'dir' + str(index) ).strip()
+                dirName = config.get( 'importdirs',
+                                      'dir' + str( index ) ).strip()
                 index += 1
-                absPath = self.__makeAbsolute( dirName )
+                if os.path.isabs( dirName ):
+                    absPath = dirName
+                else:
+                    absPath = self.getProjectDir() + dirName
                 if not os.path.exists( absPath ):
                     logging.error( "Codimension project: cannot find " \
-                                   "project directory: " + dirName )
+                                   "import directory: " + dirName )
                 elif not os.path.isdir( absPath ):
-                    logging.error( "Codimension project: the item: " + \
-                                   dirName + \
-                                   " is not a directory. Ignoring..." )
-                    continue
-                self.__dirList.update( [ dirName ] )
-
+                    logging.error( "Codimension project: the import path: " + \
+                                   dirName + " is not a directory" )
+                self.importDirs.append( dirName )
         except ConfigParser.NoSectionError:
             self.__formatOK = False
         except ConfigParser.NoOptionError:
-            # Just continue
+            # just continue
             pass
         except:
             self.__formatOK = False
 
         config = None
-
-        if not '.' + os.path.sep in self.__dirList:
-            self.__dirList.update( [ '.' + os.path.sep ] )
 
         # Read the other config files
         self.__loadTopLevelDirs()
@@ -470,17 +470,31 @@ class CodimensionProject( QObject ):
 
         # Setup the new watcher
         self.__dirWatcher = Watcher( Settings().projectFilesFilters,
-                                     self.getProjectDirs() )
+                                     self.getProjectDir() )
         self.connect( self.__dirWatcher, SIGNAL( 'fsCahanged' ),
                       self.onFSChanged )
 
+        self.__createRopeProject()
         self.emit( SIGNAL( 'projectChanged' ), self.CompleteProject )
+        return
+
+    def __createRopeProject( self ):
+        " Creates a rope library project "
+        if self.ropeProject is not None:
+            self.ropeProject.close()
+            self.ropeProject = None
+
+        # Rope folder is default here, so it will be created
+        self.ropeProject = rope.base.project.Project( \
+                                            self.getProjectDir(),
+                                            **ropePreferences )
+        self.ropeProject.validate( self.ropeProject.root )
         return
 
     def onFSChanged( self, items ):
         " Triggered when the watcher detects changes "
-        report = "REPORT: "
-        projectItems = []
+##        report = "REPORT: "
+##        projectItems = []
         for item in items:
             item = str( item )
 
@@ -495,19 +509,20 @@ class CodimensionProject( QObject ):
 #                        item = item[ 0 ] + realPath
 
 #            projectItems.append( item )
-            report += " " + item
+##            report += " " + item
             try:
                 if item.startswith( '+' ):
                     self.filesList.update( [ item[ 1: ] ] )
                 else:
                     self.filesList.remove( item[ 1: ] )
-                projectItems.append( item )
+##                projectItems.append( item )
             except:
 #                print "EXCEPTION for '" + item + "'"
                 pass
 #        print "'" + report + "'"
         self.emit( SIGNAL( 'fsChanged' ), items )
 #        self.__dirWatcher.debug()
+        self.ropeProject.validate( self.ropeProject.root )
         return
 
     def __loadTabsStatus( self ):
@@ -703,95 +718,24 @@ class CodimensionProject( QObject ):
         """ Unloads the current project if required """
         self.__resetValues()
         self.emit( SIGNAL( 'projectChanged' ), self.CompleteProject )
+        self.ropeProject.close()
+        self.ropeProject = None
         return
 
-    def addProjectDir( self, dirPath ):
-        " Adds the directory to the project "
-        if self.fileName == "":
-            return
-
-        # Absolute path is expected
-        if not os.path.exists( dirPath ):
-            logging.error( "Codimension project: cannot find " \
-                           "directory: " + dirPath )
-            return
-        if not os.path.isdir( dirPath ):
-            logging.error( "Codimension project: " + dirPath + \
-                           " is not a directory" )
-            return
-
-        if self.isProjectDir( dirPath ):
-            logging.debug( "The path " + dirPath + \
-                           " already belongs to the project. Skipping..." )
-            return
-
-        if not dirPath.endswith( os.path.sep ):
-            dirPath += os.path.sep
-
-        # Check that it covers the existed paths
-        coveredDir = self.doesDirCoverProjectDir( dirPath )
-        while coveredDir != "":
-            # This path is covered by new - remove it
-            logging.debug( "The dir " + dirPath + \
-                           " covers project dir: " + \
-                           coveredDir + \
-                           ". Remove the covered dir." )
-            self.__dirList.remove( coveredDir )
-            self.__dirWatcher.deregiserDir( self.__makeAbsolute( coveredDir ) )
-            coveredDir = self.doesDirCoverProjectDir( dirPath )
-
-        # Calc the relative path and insert it
-        relativePath = relpath( dirPath, os.path.dirname( self.fileName ) )
-        if not relativePath.endswith( os.path.sep ):
-            relativePath += os.path.sep
-        self.__dirList.update( [ relativePath ] )
-        self.__dirWatcher.registerDir( dirPath )
-
-        self.saveProject()
-        self.emit( SIGNAL('projectChanged'), self.CompleteProject )
-        return
-
-    def doesDirCoverProjectDir( self, path ):
-        " returns  of the covered directory or -1 if none are covered "
-        " Returns the name of the covered dir or an empty string "
-        for item in self.__dirList:
-            if self.__makeAbsolute( item ).startswith( path ):
-                return item
-        return ""
-
-    def removeProjectDir( self, dirPath ):
-        """ Removes the directory from the project """
-        if self.fileName == "":
-            return
-
-        # It is possible that a disappeared from the file system directory is
-        # to be removed from the project
-        # if not os.path.exists( dirPath ):
-        #     return
-
-        # Absolute path is expected
-        # Calc the relative path and insert it
-        relativePath = relpath( dirPath, os.path.dirname( self.fileName ) )
-        if not relativePath.endswith( os.path.sep ):
-            relativePath += os.path.sep
-
-        if not relativePath in self.__dirList:
-            return
-
-        self.__dirList.remove( relativePath )
-        self.__dirWatcher.deregisterDir( dirPath )
-        self.saveProject()
-        self.emit( SIGNAL('projectChanged'), self.CompleteProject )
+    def setImportDirs( self, paths ):
+        " Sets a new set of the project import dirs "
+        if self.importDirs != paths:
+            self.importDirs = paths
+            self.saveProject()
+            self.emit( SIGNAL( 'projectChanged' ), self.Properties )
         return
 
     def __generateFilesList( self ):
         """ Generates the files list having the list of dirs """
         self.filesList = set()
-        for path in self.__dirList:
-            path = self.__makeAbsolute( path )
-            if os.path.exists( path ):
-                self.filesList.update( [ path ] )
-                self.__scanDir( path )
+        path = self.getProjectDir()
+        self.filesList.update( [ path ] )
+        self.__scanDir( path )
         return
 
     def __scanDir( self, path ):
@@ -819,21 +763,12 @@ class CodimensionProject( QObject ):
             self.filesList.update( [ path + item ] )
         return
 
-    def __makeAbsolute( self, path ):
-        " Returns absolute path for the relative path "
-        return os.path.normpath( os.path.dirname( self.fileName ) + \
-                                 os.path.sep + path ) + os.path.sep
-
     def isProjectDir( self, path ):
         " Returns True if the path belongs to the project "
-        path = os.path.realpath( path )     # it could be a symlink
+        path = os.path.realpath( str( path ) )     # it could be a symlink
         if not path.endswith( os.path.sep ):
             path += os.path.sep
-
-        for item in self.__dirList:
-            # It could be that a nested project dir is given
-            if path.startswith( self.__makeAbsolute( item ) ):
-                return True
+        return path.startswith( self.getProjectDir() )
 
     def isProjectFile( self, path ):
         " Returns True if the path belongs to the project "
@@ -927,7 +862,7 @@ class CodimensionProject( QObject ):
         self.__saveFindObjects()
         return
 
-    def updateProperties( self, creationDate, author,
+    def updateProperties( self, importDirs, creationDate, author,
                           lic, copy_right, version,
                           email, description ):
         " Updates the project properties "
@@ -938,10 +873,12 @@ class CodimensionProject( QObject ):
            self.copyright == copy_right and \
            self.version == version and \
            self.email == email and \
-           self.description == description:
+           self.description == description and \
+           self.importDirs == importDirs:
             # No real changes
             return
 
+        self.importDirs = importDirs
         self.creationDate = creationDate
         self.author = author
         self.license = lic
@@ -953,12 +890,16 @@ class CodimensionProject( QObject ):
         self.emit( SIGNAL( 'projectChanged' ), self.Properties )
         return
 
-    def getProjectDirs( self ):
-        " Provides a list of absolute project paths "
-        result = []
-        for path in self.__dirList:
-            result.append( self.__makeAbsolute( path ) )
-        return result
+    def isLoaded( self ):
+        " returns True if a project is loaded "
+        return self.fileName != ""
+
+    def getProjectDir( self ):
+        " Provides an absolute path to the project dir "
+        if not self.isLoaded():
+            return ""
+        return os.path.dirname( os.path.realpath( self.fileName ) ) + \
+               os.path.sep
 
     def addRecentFile( self, path ):
         " Adds a single recent file. True if a new file was inserted. "
@@ -1000,6 +941,16 @@ def getProjectProperties( projectFile ):
     config.read( absPath )
 
     # We are interested in properties only
+    importDirs = []
+    index = 0
+    try:
+        while True:
+            importDirs.append( config.get( "importdirs",
+                                           "dir" + str( index ) ).strip() )
+            index += 1
+    except:
+        pass
+
     creationDate = readValue( config, 'properties', 'creationdate' )
     author = readValue( config, 'properties', 'author' )
     lic = readValue( config, 'properties', 'license' )
@@ -1008,9 +959,10 @@ def getProjectProperties( projectFile ):
                              'description' ).replace( '<CR><LF>', '\n' )
     version = readValue( config, 'properties', 'version' )
     email = readValue( config, 'properties', 'email' )
-    uuid = readValue( config, 'properties', 'uuid' )
+    projectUuid = readValue( config, 'properties', 'uuid' )
 
     config = None
 
-    return creationDate, author, lic, copy_right, description, version, email, uuid
+    return importDirs, creationDate, author, lic, copy_right, description, \
+           version, email, projectUuid
 

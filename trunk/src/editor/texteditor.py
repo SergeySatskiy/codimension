@@ -22,17 +22,19 @@
 
 " Text editor implementation "
 
+
 import os.path, logging
 import lexer
 from scintillawrap              import ScintillaWrapper
 from PyQt4.QtCore               import Qt, QFileInfo, SIGNAL, QSize, \
-                                       QVariant, QDir, QUrl, QEvent
+                                       QVariant, QDir, QUrl, \
+                                       QRect
 from PyQt4.QtGui                import QApplication, QCursor, \
                                        QFontMetrics, QToolBar, \
                                        QHBoxLayout, QWidget, QAction, QMenu, \
                                        QSizePolicy, QToolButton, QFileDialog, \
                                        QDialog, QMessageBox, QShortcut
-from PyQt4.Qsci                 import QsciScintilla
+from PyQt4.Qsci                 import QsciScintilla, QsciLexerPython
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.fileutils            import detectFileType, DesignerFileType, \
                                        LinguistFileType, MakefileType, \
@@ -49,10 +51,15 @@ from diagram.importsdgm         import ImportsDiagramDialog, \
                                        ImportsDiagramProgress
 from utils.importutils          import getImportsList, \
                                        getImportsInLine, resolveImport, \
-                                       getImportedNameDefinitionLine
+                                       getImportedNameDefinitionLine, \
+                                       resolveImports
 from ui.importlist              import ImportListWidget
 from ui.outsidechanges          import OutsideChangeWidget
 import export
+from autocomplete.bufferutils   import getContext, getPrefixAndObject, getEditorTags
+from autocomplete.completelists import getCompletionList
+from cdmbriefparser             import getBriefModuleInfoFromMemory
+from ui.completer               import CodeCompleter
 
 
 class TextEditor( ScintillaWrapper ):
@@ -104,6 +111,15 @@ class TextEditor( ScintillaWrapper ):
 
         self.__installActions()
         self.updateSettings()
+
+        # Completion support
+        self.__completionObject = ""
+        self.__completionPrefix = ""
+        self.__completionLine = -1
+        self.__completionPos = -1
+        self.__completer = CodeCompleter( self )
+        self.connect( self.__completer, SIGNAL( "activated(const QString &)" ),
+                      self.insertCompletion )
         return
 
     def __installActions( self ):
@@ -111,135 +127,151 @@ class TextEditor( ScintillaWrapper ):
         # Shift+Tab support => dedent
         self.shiftTab = QAction( self )
         self.shiftTab.setShortcut( 'Shift+Tab' )
-        self.connect( self.shiftTab, SIGNAL( 'triggered()' ), self.__onDedent )
+        self.connect( self.shiftTab, SIGNAL( 'triggered()' ),
+                      self.__onDedent )
         self.addAction( self.shiftTab )
 
         # Ctrl + N => highlight the current word
         self.highlightAct = QAction( self )
         self.highlightAct.setShortcut( "Ctrl+N" )
-        self.connect( self.highlightAct, SIGNAL( 'triggered()' ), self.__onHighlight )
+        self.connect( self.highlightAct, SIGNAL( 'triggered()' ),
+                      self.__onHighlight )
         self.addAction( self.highlightAct )
 
         # Ctrl + . => move to the next match of the highlighted word
         self.moveNextAct = QAction( self )
         self.moveNextAct.setShortcut( "Ctrl+." )
-        self.connect( self.moveNextAct, SIGNAL( 'triggered()' ), self.__onNextHighlight )
+        self.connect( self.moveNextAct, SIGNAL( 'triggered()' ),
+                      self.__onNextHighlight )
         self.addAction( self.moveNextAct )
 
         # Ctrl + , => move to the previous match of the highlighted word
         self.movePrevAct = QAction( self )
         self.movePrevAct.setShortcut( "Ctrl+," )
-        self.connect( self.movePrevAct, SIGNAL( 'triggered()' ), self.__onPrevHighlight )
+        self.connect( self.movePrevAct, SIGNAL( 'triggered()' ),
+                      self.__onPrevHighlight )
         self.addAction( self.movePrevAct )
 
         # Ctrl + M => comment/uncomment
         self.commentAct = QAction( self )
         self.commentAct.setShortcut( "Ctrl+M" )
-        self.connect( self.commentAct, SIGNAL( 'triggered()' ), self.__onCommentUncomment )
+        self.connect( self.commentAct, SIGNAL( 'triggered()' ),
+                      self.__onCommentUncomment )
         self.addAction( self.commentAct )
 
         # Alt + Left, Alt + Right
         self.wordPartLeftAct = QAction( self )
         self.wordPartLeftAct.setShortcut( "Alt+Left" )
-        self.connect( self.wordPartLeftAct, SIGNAL( 'triggered()' ), self.__onWordPartLeft )
+        self.connect( self.wordPartLeftAct, SIGNAL( 'triggered()' ),
+                      self.__onWordPartLeft )
         self.addAction( self.wordPartLeftAct )
 
         self.wordPartRightAct = QAction( self )
         self.wordPartRightAct.setShortcut( "Alt+Right" )
-        self.connect( self.wordPartRightAct, SIGNAL( 'triggered()' ), self.__onWordPartRight )
+        self.connect( self.wordPartRightAct, SIGNAL( 'triggered()' ),
+                      self.__onWordPartRight )
         self.addAction( self.wordPartRightAct )
 
         # Alt + Up, Alt + Down
         self.paragraphUpAct = QAction( self )
         self.paragraphUpAct.setShortcut( "Alt+Up" )
-        self.connect( self.paragraphUpAct, SIGNAL( 'triggered()' ), self.__onParagraphUp )
+        self.connect( self.paragraphUpAct, SIGNAL( 'triggered()' ),
+                      self.__onParagraphUp )
         self.addAction( self.paragraphUpAct )
 
         self.paragraphDownAct = QAction( self )
         self.paragraphDownAct.setShortcut( "Alt+Down" )
-        self.connect( self.paragraphDownAct, SIGNAL( 'triggered()' ), self.__onParagraphDown )
+        self.connect( self.paragraphDownAct, SIGNAL( 'triggered()' ),
+                      self.__onParagraphDown )
         self.addAction( self.paragraphDownAct )
 
         # HOME: overwrite to jump to the beginning of the displayed line
         self.homeAct = QAction( self )
         self.homeAct.setShortcut( "Home" )
-        self.connect( self.homeAct, SIGNAL( 'triggered()' ), self.__onHome )
+        self.connect( self.homeAct, SIGNAL( 'triggered()' ),
+                      self.__onHome )
         self.addAction( self.homeAct )
 
         # Shift + HOME
         self.shiftHomeAct = QAction( self )
         self.shiftHomeAct.setShortcut( "Shift+Home" )
-        self.connect( self.shiftHomeAct, SIGNAL( 'triggered()' ), self.__onShiftHome )
+        self.connect( self.shiftHomeAct, SIGNAL( 'triggered()' ),
+                      self.__onShiftHome )
         self.addAction( self.shiftHomeAct )
 
         # END: overwrite to jump to the end of the displayed line
         self.endAct = QAction( self )
         self.endAct.setShortcut( "End" )
-        self.connect( self.endAct, SIGNAL( 'triggered()' ), self.__onEnd )
+        self.connect( self.endAct, SIGNAL( 'triggered()' ),
+                      self.__onEnd )
         self.addAction( self.endAct )
 
         # Shift + END
         self.shiftEndAct = QAction( self )
         self.shiftEndAct.setShortcut( "Shift+End" )
-        self.connect( self.shiftEndAct, SIGNAL( 'triggered()' ), self.__onShiftEnd )
+        self.connect( self.shiftEndAct, SIGNAL( 'triggered()' ),
+                      self.__onShiftEnd )
         self.addAction( self.shiftEndAct )
 
         # Shift + Del
         self.shiftDelAct = QAction( self )
         self.shiftDelAct.setShortcut( "Shift+Del" )
-        self.connect( self.shiftDelAct, SIGNAL( 'triggered()' ), self.__onShiftDel )
+        self.connect( self.shiftDelAct, SIGNAL( 'triggered()' ),
+                      self.__onShiftDel )
         self.addAction( self.shiftDelAct )
 
         # Ctrl + X => synonym for Shift + Del
         self.ctrlXAct = QAction( self )
         self.ctrlXAct.setShortcut( "Ctrl+X" )
-        self.connect( self.ctrlXAct, SIGNAL( 'triggered()' ), self.__onShiftDel )
+        self.connect( self.ctrlXAct, SIGNAL( 'triggered()' ),
+                      self.__onShiftDel )
         self.addAction( self.ctrlXAct )
 
         # Ctrl + C
         self.ctrlCAct = QAction( self )
         self.ctrlCAct.setShortcut( "Ctrl+C" )
-        self.connect( self.ctrlCAct, SIGNAL( 'triggered()' ), self.__onCtrlC )
+        self.connect( self.ctrlCAct, SIGNAL( 'triggered()' ),
+                      self.__onCtrlC )
         self.addAction( self.ctrlCAct )
 
         # Ctrl + Insert
         self.ctrlInsertAct = QAction( self )
         self.ctrlInsertAct.setShortcut( 'Ctrl+Insert' )
-        self.connect( self.ctrlInsertAct, SIGNAL( 'triggered()' ), self.__onCtrlC )
+        self.connect( self.ctrlInsertAct, SIGNAL( 'triggered()' ),
+                      self.__onCtrlC )
         self.addAction( self.ctrlInsertAct )
-
-        # Ctrl + \\
-        self.ctrlBackslashAct = QAction( self )
-        self.ctrlBackslashAct.setShortcut( "Ctrl+\\" )
-        self.connect( self.ctrlBackslashAct, SIGNAL( 'triggered()' ), self.__onCompleteFromDocument )
-        self.addAction( self.ctrlBackslashAct )
 
         # Ctrl + space
         self.ctrlSpaceAct = QAction( self )
         self.ctrlSpaceAct.setShortcut( "Ctrl+ " )
-        self.connect( self.ctrlSpaceAct, SIGNAL( 'triggered()' ), self.__onCompleteFromDocument )
+        self.connect( self.ctrlSpaceAct, SIGNAL( 'triggered()' ),
+                      self.__onAutoComplete )
         self.addAction( self.ctrlSpaceAct )
 
         # Alt + Shift + Up, Alt + Shift + Down
         self.altShiftUpAct = QAction( self )
         self.altShiftUpAct.setShortcut( "Alt+Shift+Up" )
-        self.connect( self.altShiftUpAct, SIGNAL( 'triggered()' ), self.__onAltShiftUp )
+        self.connect( self.altShiftUpAct, SIGNAL( 'triggered()' ),
+                      self.__onAltShiftUp )
         self.addAction( self.altShiftUpAct )
 
         self.altShiftDownAct = QAction( self )
         self.altShiftDownAct.setShortcut( "Alt+Shift+Down" )
-        self.connect( self.altShiftDownAct, SIGNAL( 'triggered()' ), self.__onAltShiftDown )
+        self.connect( self.altShiftDownAct, SIGNAL( 'triggered()' ),
+                      self.__onAltShiftDown )
         self.addAction( self.altShiftDownAct )
 
         # Alt + Shift + Left, Alt + Shift + Right
         self.altShiftLeftAct = QAction( self )
         self.altShiftLeftAct.setShortcut( "Alt+Shift+Left" )
-        self.connect( self.altShiftLeftAct, SIGNAL( 'triggered()' ), self.__onAlShiftLeft )
+        self.connect( self.altShiftLeftAct, SIGNAL( 'triggered()' ),
+                      self.__onAlShiftLeft )
         self.addAction( self.altShiftLeftAct )
 
         self.altShiftRightAct = QAction( self )
         self.altShiftRightAct.setShortcut( "Alt+Shift+Right" )
-        self.connect( self.altShiftRightAct, SIGNAL( 'triggered()' ), self.__onAlShiftRight )
+        self.connect( self.altShiftRightAct, SIGNAL( 'triggered()' ),
+                      self.__onAlShiftRight )
         self.addAction( self.altShiftRightAct )
         return
 
@@ -266,7 +298,6 @@ class TextEditor( ScintillaWrapper ):
         self.ctrlXAct.setEnabled( True )
         self.ctrlInsertAct.setEnabled( True )
         self.ctrlCAct.setEnabled( True )
-        self.ctrlBackslashAct.setEnabled( True )
         self.ctrlSpaceAct.setEnabled( True )
         self.altShiftUpAct.setEnabled( True )
         self.altShiftDownAct.setEnabled( True )
@@ -276,6 +307,8 @@ class TextEditor( ScintillaWrapper ):
 
     def focusOutEvent( self, event ):
         " Disable Shift+Tab when the focus is lost "
+        self.__completer.hide()
+
         self.shiftTab.setEnabled( False )
         self.highlightAct.setEnabled( False )
         self.moveNextAct.setEnabled( False )
@@ -293,7 +326,6 @@ class TextEditor( ScintillaWrapper ):
         self.ctrlXAct.setEnabled( False )
         self.ctrlInsertAct.setEnabled( False )
         self.ctrlCAct.setEnabled( False )
-        self.ctrlBackslashAct.setEnabled( False )
         self.ctrlSpaceAct.setEnabled( False )
         self.altShiftUpAct.setEnabled( False )
         self.altShiftDownAct.setEnabled( False )
@@ -666,7 +698,29 @@ class TextEditor( ScintillaWrapper ):
 
         self.__skipChangeCursor = True
         key = event.key()
-        if key in [ Qt.Key_Enter, Qt.Key_Return ]:
+        if self.__completer.isVisible():
+            self.__skipChangeCursor = False
+            if key == Qt.Key_Escape:
+                self.__completer.hide()
+                self.setFocus()
+                return
+            # There could be backspace or printed characters only
+            ScintillaWrapper.keyPressEvent( self, event )
+            QApplication.processEvents()
+            if key == Qt.Key_Backspace:
+                if self.__completionPrefix == "":
+                    self.__completer.hide()
+                    self.setFocus()
+                else:
+                    self.__completionPrefix = self.__completionPrefix[ : -1 ]
+                    self.__completer.setPrefix( self.__completionPrefix )
+            else:
+                self.__completionPrefix += event.text()
+                self.__completer.setPrefix( self.__completionPrefix )
+                if self.__completer.completionCount() == 0:
+                    self.__completer.hide()
+                    self.setFocus()
+        elif key in [ Qt.Key_Enter, Qt.Key_Return ]:
             line, pos = self.getCursorPosition()
             lineToTrim = -1
             if line == self.__openedLine:
@@ -705,6 +759,18 @@ class TextEditor( ScintillaWrapper ):
         elif key == Qt.Key_Escape:
             self.emit( SIGNAL('ESCPressed') )
             event.accept()
+
+        elif key == Qt.Key_Tab:
+            line, pos = self.getCursorPosition()
+            if pos != 0:
+                char = self.charAt( self.currentPosition() - 1 )
+                if char.isalnum() or char in [ '_', '.' ]:
+                    self.__onAutoComplete()
+                    event.accept()
+                else:
+                    ScintillaWrapper.keyPressEvent( self, event )
+            else:
+                ScintillaWrapper.keyPressEvent( self, event )
         else:
             # Special keyboard keys are delivered as 0 values
             if key != 0:
@@ -749,6 +815,15 @@ class TextEditor( ScintillaWrapper ):
         if self.lexer_ is not None:
             return self.lexer_.language()
         return "Unknown"
+
+    def getCurrentPosFont( self ):
+        " Provides the font of the current character "
+        if self.lexer_ is not None:
+            font = self.lexer_.font( self.styleAt( self.currentPosition() ) )
+        else:
+            font = self.font()
+        font.setPointSize( font.pointSize() + self.getZoom() )
+        return font
 
     def __onDoubleClick( self, position, line, modifier ):
         " Triggered when the user double clicks in the editor "
@@ -998,28 +1073,281 @@ class TextEditor( ScintillaWrapper ):
             self.SendScintilla( QsciScintilla.SCI_LINECOPY )
         return
 
-    def __onCompleteFromDocument( self ):
-        " Triggered when Ctrl+\\ or ctrl+space is clicked "
-        #self.autoCompleteFromDocument()
+    def __detectLineHeight( self ):
+        " Sets the self._lineHeight "
+        firstVisible = self.firstVisibleLine()
+        lastVisible = firstVisible + self.linesOnScreen()
+        line, pos = self.getCursorPosition()
+        x, y = self.getCurrentPixelPosition()
+        if line > 0 and (line - 1) >= firstVisible \
+                    and (line - 1) <= lastVisible:
+            self.setCursorPosition( line - 1, 0 )
+            x1, y1 = self.getCurrentPixelPosition()
+            self._lineHeight = y - y1
+        else:
+            if self.lines() > line + 1 and (line + 1) >= firstVisible \
+                                       and (line + 1) <= lastVisible:
+                self.setCursorPosition( line + 1, 0 )
+                x1, y1 = self.getCurrentPixelPosition()
+                self._lineHeight = y1 -y
+            else:
+                # This is the last resort, it provides wrong values
+                currentPosFont = self.getCurrentPosFont()
+                metric = QFontMetrics( currentPosFont )
+                self._lineHeight = metric.lineSpacing()
+        self.setCursorPosition( line, pos )
+        return
+
+    def __detectCharWidth( self ):
+        " Sets the self._charWidth "
+        line, pos = self.getCursorPosition()
+        x, y = self.getCurrentPixelPosition()
+        if pos > 0:
+            self.setCursorPosition( line, pos - 1 )
+            x1, y1 = self.getCurrentPixelPosition()
+            self._charWidth = x - x1
+        else:
+            if len( self.text( line ) ) > 1:
+                self.setCursorPosition( line, pos + 1 )
+                x1, y1 = self.getCurrentPixelPosition()
+                self._charWidth = x1 - x
+            else:
+                # This is the last resort, it provides wrong values
+                currentPosFont = self.getCurrentPosFont()
+                metric = QFontMetrics( currentPosFont )
+                self._charWidth = metric.boundingRect( "W" ).width()
+        self.setCursorPosition( line, pos )
+        return
+
+    def __onAutoComplete( self ):
+        " Triggered when ctrl+space or TAB is clicked "
+
+        self.__completionObject, \
+        self.__completionPrefix = getPrefixAndObject( self )
+
+        if self.parent().getFileType() not in [ PythonFileType,
+                                                Python3FileType ]:
+            words = list( getEditorTags( self, self.__completionPrefix ) )
+            isModName = False
+        else:
+            text = str( self.text() )
+            info = getBriefModuleInfoFromMemory( text )
+            context = getContext( self, info )
+
+            words, isModName = getCompletionList( self.parent().getFileName(),
+                                                  context,
+                                                  self.__completionObject,
+                                                  self.__completionPrefix,
+                                                  self, text, info )
+
+        if len( words ) == 0:
+            self.setFocus()
+            return
+
+        line, pos = self.getCursorPosition()
+        if isModName:
+            # The prefix should be re-taken because a module name may have '.'
+            # in it.
+            self.__completionPrefix = self.getWord( line, pos, 1, True, "." )
+
+        currentPosFont = self.getCurrentPosFont()
+        self.__completer.setWordsList( words, currentPosFont )
+        self.__completer.setPrefix( self.__completionPrefix )
+
+        count = self.__completer.completionCount()
+        if count == 0:
+            self.setFocus()
+            return
+
+        # Make sure the line is visible
+        self.ensureLineVisible( line )
+        x, y = self.getCurrentPixelPosition()
+        if self.hasSelectedText():
+            # Remove the selection as it could be interpreted not as expected
+            self.setSelection( line, pos, line, pos )
+
+        if count == 1:
+            self.insertCompletion( self.__completer.currentCompletion() )
+            return
+
+        if self._charWidth <= 0:
+            self.__detectCharWidth()
+        if self._lineHeight <= 0:
+            self.__detectLineHeight()
+
+        # All the X Servers I tried have a problem with the line height, so I
+        # have some spare points in the height
+        cursorRectangle = QRect( x, y - 2,
+                                 self._charWidth, self._lineHeight + 8 )
+        self.__completer.complete( cursorRectangle )
+        return
+
+    def insertCompletion( self, text ):
+        " Triggered when a completion is selected "
+        if text != "":
+            prefixLength = len( self.__completionPrefix )
+            line, pos = self.getCursorPosition()
+            self.beginUndoAction()
+            self.setSelection( line, pos - prefixLength, line, pos )
+            self.removeSelectedText()
+            self.insert( text )
+            self.setCursorPosition( line, pos + len( text ) - prefixLength )
+            self.endUndoAction()
+            self.__completionPrefix = ""
+            self.__completionObject = ""
+            self.__completer.hide()
         return
 
     def isImportLine( self ):
         " Returns True if the current line is a part of an import line "
+        if self.isInStringLiteral():
+            return False, -1
+
         line, pos = self.getCursorPosition()
 
-        text = self.text( line ).trimmed()
-        while 1:
-            if text.startsWith( "import" ) or text.startsWith( "from" ):
+        # Find the beginning of the line
+        while True:
+            if line == 0:
+                break
+            prevLine = self.text( line - 1 ).trimmed()
+            if not prevLine.endsWith( '\\' ):
+                break
+            line -= 1
+
+        text = str( self.text( line ) ).lstrip()
+        if text.startswith( "import " ) or text.startswith( "from " ) or \
+           text.startswith( "import\\" ) or text.startswith( "from\\" ):
+            if not self.isInStringLiteral( line, 0 ):
                 return True, line
 
-            # It could be continuation of the previous import line
-            line -= 1
-            if line < 0:
-                break
-            text = self.text( line ).trimmed()
-            if not text.endsWith( '\\' ):
-                break
         return False, -1
+
+
+    def isOnSomeImport( self ):
+        """ Returns 3 values:
+            bool   - this is an import line
+            bool   - a list of modules should be provided
+            string - module name from which an aobject is to imported
+        """
+        # There are two case:
+        # import BLA1, BLA2 as WHATEVER2, BLA3
+        # from BLA import X, Y as y, Z
+        isImport, line = self.isImportLine()
+        if isImport == False:
+            return False, False, ""
+
+        text = self.text( line ).trimmed()
+        if text.startsWith( "import" ):
+            currentWord = self.getCurrentWord()
+            if currentWord in [ "import", "as" ]:
+                # It is an import line, but no need to complete
+                return True, False, ""
+            # Search for the first non space character before the current word
+            position = self.currentPosition() - 1
+            while self.charAt( position ) not in [ ' ', '\\', '\r', '\n', '\t' ]:
+                position -= 1
+            while self.charAt( position ) in [ ' ', '\\', '\r', '\n', '\t' ]:
+                position -= 1
+            if self.charAt( position ) == ',':
+                # It's an import line and need to complete
+                return True, True, ""
+
+            line, pos = self.lineIndexFromPosition( position )
+            previousWord = self.getWord( line, pos )
+            if previousWord == "import":
+                # It's an import line and need to complete
+                return True, True, ""
+            # It;s an import line but no need to complete
+            return True, False, ""
+
+        # Here: this is the from x import bla as ... statement
+        currentWord = self.getCurrentWord()
+        if currentWord in [ "from", "import", "as" ]:
+            return True, False, ""
+        # Search for the first non space character before the current word
+        position = self.currentPosition() - 1
+        while self.charAt( position ) not in [ ' ', '\\', '\r', '\n', '\t' ]:
+            position -= 1
+        while self.charAt( position ) in [ ' ', '\\', '\r', '\n', '\t' ]:
+            position -= 1
+
+        wordLine, pos = self.lineIndexFromPosition( position )
+        previousWord = self.getWord( wordLine, pos )
+        if previousWord == "as":
+            # Nothing should be completed
+            return True, False, ""
+        if previousWord == "from":
+            # Completing a module
+            return True, True, ""
+        if previousWord == "import" or self.charAt( position ) == ',':
+            # Need to complete an imported object
+            position = self.positionFromLineIndex( line, 0 )
+            while self.charAt( position ) in [ ' ', '\t' ]:
+                position += 1
+            # Expected 'from' at this position
+            wordLine, pos = self.lineIndexFromPosition( position )
+            word = self.getWord( wordLine, pos )
+            if word != 'from':
+                return True, False, ""
+            # Next is a module name
+            position += len( 'from' )
+            while self.charAt( position ) in [ ' ', '\\', '\r', '\n', '\t' ]:
+                position += 1
+            wordLine, pos = self.lineIndexFromPosition( position )
+            moduleName = self.getWord( wordLine, pos, 0, True, "." )
+            if moduleName == "":
+                return True, False, ""
+            # Sanity check - there is 'import' after that
+            position += len( moduleName )
+            while self.charAt( position ) in [ ' ', '\\', '\r', '\n', '\t' ]:
+                position += 1
+            wordLine, pos = self.lineIndexFromPosition( position )
+            word = self.getWord( wordLine, pos )
+            if word != 'import':
+                return True, False, ""
+            # Finally, this is a completion for an imported object
+            return True, True, moduleName
+
+        return True, False, ""
+
+
+    def isRemarkLine( self, line = -1, pos = -1 ):
+        " Returns true if the current line is a remark one "
+        if self.parent().getFileType() not in [ PythonFileType,
+                                                Python3FileType ]:
+            return False
+
+        if line == -1 or pos == -1:
+            cursorPosition = self.currentPosition()
+        else:
+            cursorPosition = self.positionFromLineIndex( line, pos )
+        return self.styleAt( cursorPosition ) in \
+                            [ QsciLexerPython.Comment,
+                              QsciLexerPython.CommentBlock ]
+
+
+    def isInStringLiteral( self, line = -1, pos = -1 ):
+        " Returns True if the current cursor position is in a string literal "
+        if self.parent().getFileType() not in [ PythonFileType,
+                                                Python3FileType ]:
+            return False
+
+        if line == -1 or pos == -1:
+            cursorPosition = self.currentPosition()
+        else:
+            cursorPosition = self.positionFromLineIndex( line, pos )
+        return self.styleAt( cursorPosition ) in \
+                            [ QsciLexerPython.TripleDoubleQuotedString,
+                              QsciLexerPython.TripleSingleQuotedString,
+                              QsciLexerPython.DoubleQuotedString,
+                              QsciLexerPython.SingleQuotedString,
+                              QsciLexerPython.UnclosedString ]
+
+
+    def hideCompleter( self ):
+        " Hides the completer if visible "
+        self.__completer.hide()
+        return
 
 
 class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
@@ -1064,7 +1392,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Writes the text to a file "
         if self.__editor.writeFile( fileName ):
             # Memorize the modification date
-            self.__diskModTime = os.path.getmtime( os.path.realpath( fileName ) )
+            self.__diskModTime = os.path.getmtime( \
+                                            os.path.realpath( fileName ) )
             return True
         return False
 
@@ -1265,12 +1594,12 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             # Need to parse the buffer
             GlobalData().mainWindow.showPylintReport( \
                             PylintViewer.SingleBuffer, self.__editor.text(),
-                            reportFile, self.getUUID() )
+                            reportFile, self.getUUID(), self.__fileName )
         else:
             # Need to parse the file
             GlobalData().mainWindow.showPylintReport( \
                             PylintViewer.SingleFile, self.__fileName,
-                            reportFile, self.getUUID() )
+                            reportFile, self.getUUID(), self.__fileName )
         return
 
     def __onPymetrics( self ):
@@ -1327,16 +1656,15 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         dialog = QFileDialog( self, title )
         dialog.setFileMode( QFileDialog.AnyFile )
         dialog.setLabelText( QFileDialog.Accept, "Save" )
-        projectFile = GlobalData().project.fileName
         urls = []
         for dname in QDir.drives():
             urls.append( QUrl.fromLocalFile( dname.absoluteFilePath() ) )
         urls.append( QUrl.fromLocalFile( QDir.homePath() ) )
-        if projectFile != "":
+
+        project = GlobalData().project
+        if project.isLoaded():
             # Project is loaded
-            dirs = GlobalData().project.getProjectDirs()
-            for item in dirs:
-                urls.append( QUrl.fromLocalFile( item ) )
+            urls.append( QUrl.fromLocalFile( project.getProjectDir() ) )
         dialog.setSidebarUrls( urls )
 
         if self.__fileName != "":
@@ -1534,7 +1862,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                 path = resolveImport( basePath, lineImports[ 0 ] )
                 if path == '':
                     GlobalData().mainWindow.showStatusBarMessage( \
-                        "The import '" + lineImports[ 0 ] + "' is not resolved." )
+                        "The import '" + lineImports[ 0 ] + \
+                        "' is not resolved." )
                     return
                 # The import is resolved. Check where we are.
                 if currentWord in importWhat:
@@ -1571,11 +1900,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def __onImportList( self, basePath, imports ):
         " Works with a list of imports "
-        resolvedList = []
-        for item in imports:
-            path = resolveImport( basePath, item )
-            if path != '':
-                resolvedList.append( [ item, path ] )
+
+        resolvedList = resolveImports( basePath, imports )
         if len( resolvedList ) == 0:
             GlobalData().mainWindow.showStatusBarMessage( \
                                             "No imports are resolved" )
@@ -1587,6 +1913,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def resizeEvent( self, event ):
         " Resizes the import selection dialogue if necessary "
+        self.__editor.hideCompleter()
         QWidget.resizeEvent( self, event )
         self.resizeBars()
         return
@@ -1650,6 +1977,13 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         if QFileInfo( self.__fileName ).isWritable():
             return "RW"
         return "RO"
+
+    def getFileType( self ):
+        " Provides the file type "
+        if self.__fileType == UnknownFileType:
+            if self.__shortName != "":
+                self.__fileType = detectFileType( self.__shortName )
+        return self.__fileType
 
     def getType( self ):
         " Tells the widget type "

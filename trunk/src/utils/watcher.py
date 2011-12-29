@@ -35,7 +35,7 @@ from PyQt4.QtCore import QObject, SIGNAL, QFileSystemWatcher, QStringList
 class Watcher( QObject ):
     " Filesystem watcher implementation "
 
-    def __init__( self, excludeFilters, dirsToWatch ):
+    def __init__( self, excludeFilters, dirToWatch ):
 
         QObject.__init__( self )
         self.__dirWatcher = QFileSystemWatcher( self )
@@ -57,12 +57,7 @@ class Watcher( QObject ):
             self.__excludeFilter.append( re.compile( flt ) )
 
         # Initialise the list of dirs to watch
-        for path in dirsToWatch:
-            if path.endswith( os.path.sep ):
-                self.__srcDirsToWatch.update( [ path ] )
-            else:
-                self.__srcDirsToWatch.update( [ path + os.path.sep ] )
-
+        self.__srcDirsToWatch.update( [ dirToWatch ] )
 
         self.__topLevelDirsToWatch = self.__buildTopDirsList( \
                                         self.__srcDirsToWatch )

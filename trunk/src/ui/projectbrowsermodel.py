@@ -54,8 +54,8 @@ class ProjectBrowserModel( BrowserModelBase ):
 
         self.clear()
         project = self.globalData.project
-        for path in project.getProjectDirs():
-            self.addItem( TreeViewDirectoryItem( self.rootItem, path ) )
+        self.addItem( TreeViewDirectoryItem( self.rootItem,
+                                             project.getProjectDir() ) )
         return
 
     def __onProjectChanged( self, what ):

@@ -509,13 +509,12 @@ class ImportsDiagramProgress( QDialog ):
         QApplication.processEvents()
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         try:
-            projectDirs = GlobalData().project.getProjectDirs()
-            for path in projectDirs:
-                if self.__buildProjectModules( path ) == False:
-                    QApplication.restoreOverrideCursor()
-                    self.__inProgress = False
-                    self.__onClose()
-                    return
+            projectDir = GlobalData().project.getProjectDir()
+            if self.__buildProjectModules( projectDir ) == False:
+                QApplication.restoreOverrideCursor()
+                self.__inProgress = False
+                self.__onClose()
+                return
         except Exception, exc:
             QApplication.restoreOverrideCursor()
             logging.error( str( exc ) )

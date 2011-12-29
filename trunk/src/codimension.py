@@ -28,10 +28,11 @@ It performs necessery initialization and starts the Qt main loop.
 __version__ = "0.0"
 
 import sys, os.path, traceback, logging, shutil, time
-from PyQt4              import QtGui
-from optparse           import OptionParser
-from PyQt4.QtCore       import SIGNAL, SLOT, QTimer, QDir
-from utils.latestver    import getLatestVersionFile
+from PyQt4                      import QtGui
+from optparse                   import OptionParser
+from PyQt4.QtCore               import SIGNAL, SLOT, QTimer, QDir
+from utils.latestver            import getLatestVersionFile
+from autocomplete.completelists import buildSystemWideModulesList
 
 
 # Workaround if link is used
@@ -57,7 +58,6 @@ __rootLoggingHandlers = []
 
 def codimensionMain():
     """ The codimension driver """
-
 
     # Parse command line arguments
     parser = OptionParser(
@@ -126,6 +126,9 @@ def codimensionMain():
 
     splash.showMessage( "Importing packages..." )
     from ui.mainwindow import CodimensionMainWindow
+
+    splash.showMessage( "Building system wide modules list..." )
+    buildSystemWideModulesList()
 
     splash.showMessage( "Generating main window..." )
     mainWindow = CodimensionMainWindow( splash, settings )

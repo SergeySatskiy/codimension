@@ -783,17 +783,14 @@ class EditorsManager( QTabWidget ):
 
         dialog = QFileDialog( self, 'Open file' )
         dialog.setFileMode( QFileDialog.ExistingFile )
-        projectFile = GlobalData().project.fileName
         urls = []
         for dname in QDir.drives():
             urls.append( QUrl.fromLocalFile( dname.absoluteFilePath() ) )
         urls.append( QUrl.fromLocalFile( QDir.homePath() ) )
-        if projectFile != "":
-            # Project is loaded
-            dialog.setDirectory( os.path.dirname( projectFile ) )
-            dirs = GlobalData().project.getProjectDirs()
-            for item in dirs:
-                urls.append( QUrl.fromLocalFile( item ) )
+        project = GlobalData().project
+        if project.isLoaded():
+            dialog.setDirectory( project.getProjectDir() )
+            urls.append( QUrl.fromLocalFile( project.getProjectDir() ) )
         else:
             # There is no project loaded
             dialog.setDirectory( QDir.currentPath() )
@@ -863,24 +860,21 @@ class EditorsManager( QTabWidget ):
         dialog = QFileDialog( self, 'Save as' )
         dialog.setFileMode( QFileDialog.AnyFile )
         dialog.setLabelText( QFileDialog.Accept, "Save" )
-        projectFile = GlobalData().project.fileName
         urls = []
         for dname in QDir.drives():
             urls.append( QUrl.fromLocalFile( dname.absoluteFilePath() ) )
         urls.append( QUrl.fromLocalFile( QDir.homePath() ) )
-        if projectFile != "":
-            # Project is loaded
-            dirs = GlobalData().project.getProjectDirs()
-            for item in dirs:
-                urls.append( QUrl.fromLocalFile( item ) )
+        project = GlobalData().project
+        if project.isLoaded():
+            urls.append( QUrl.fromLocalFile( project.getProjectDir() ) )
         dialog.setSidebarUrls( urls )
 
         if currentWidget.getFileName() != "":
             dialog.setDirectory( os.path.dirname( currentWidget.getFileName() ) )
             dialog.selectFile( os.path.basename( currentWidget.getFileName() ) )
         else:
-            if projectFile != "":
-                dialog.setDirectory( os.path.dirname( projectFile ) )
+            if project.isLoaded():
+                dialog.setDirectory( project.getProjectDir() )
             else:
                 dialog.setDirectory( QDir.currentPath() )
             dialog.selectFile( currentWidget.getShortName() )
@@ -1244,6 +1238,11 @@ class EditorsManager( QTabWidget ):
 
     def closeEvent( self, event ):
         " Handles the request to close "
+        # Hide completer if so
+        curWidget = self.currentWidget()
+        if curWidget.getType() == MainWindowTabWidgetBase.PlainTextEditor:
+            curWidget.getEditor().hideCompleter()
+
         if self.closeRequest():
             event.accept()
         else:
@@ -1252,6 +1251,10 @@ class EditorsManager( QTabWidget ):
 
     def closeAll( self ):
         " Close all the editors tabs "
+        curWidget = self.currentWidget()
+        if curWidget.getType() == MainWindowTabWidgetBase.PlainTextEditor:
+            curWidget.getEditor().hideCompleter()
+
         if self.closeRequest() == False:
             return
 
