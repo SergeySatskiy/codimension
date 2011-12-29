@@ -24,11 +24,14 @@
 
 
 import os, os.path
-from utils.fileutils    import detectFileType, PythonFileType, Python3FileType
-from cdmbriefparser     import getBriefModuleInfoFromMemory, \
-                               getBriefModuleInfoFromFile
-from PyQt4.QtGui        import QApplication
-from utils.globals      import GlobalData
+from utils.fileutils            import detectFileType, PythonFileType, \
+                                       Python3FileType
+from cdmbriefparser             import getBriefModuleInfoFromMemory, \
+                                       getBriefModuleInfoFromFile
+from PyQt4.QtGui                import QApplication
+from utils.globals              import GlobalData
+from autocomplete.completelists import getSystemWideModules, \
+                                       getProjectSpecificModules
 
 
 def getImportsList( fileContent ):
@@ -103,57 +106,73 @@ def buildDirModules( path, infoLabel = None ):
     return __scanDir( "", abspath, infoLabel )
 
 
-def __checkImport( path, importStr ):
-    " Tests one dir "
-    if not path.endswith( os.path.sep ):
-        path += os.path.sep
-
-    path += importStr
-    if os.path.exists( path + ".py" ):
-        return path + ".py"
-    if os.path.exists( path + ".py3" ):
-        return path + ".py3"
-
-    path += os.path.sep + "__init__.py"
-    if os.path.exists( path ):
-        return path
-    if os.path.exists( path + "3" ):
-        return path + "3"
-
-    return ""
-
-
 def resolveImport( basePath, importString ):
     " Resolves a single import "
-    importString = importString.replace( '.', os.path.sep )
-    if basePath != '':
-        path = __checkImport( basePath, importString )
-        if path != "":
-            return path
+    result = resolveImports( basePath, [ importString ] )
+    if len( result ) == 0:
+        return ""
 
-    # Could not find at hand, try the project dirs as a base
-    dirs = GlobalData().project.getProjectDirs()
-    for basePath in dirs:
-        path = __checkImport( basePath, importString )
-        if path != "":
-            return path
-
-    return ""
+    return result[ 0 ][ 1 ]
 
 
-def getImportedNameDefinitionLine( path, name ):
+def resolveImports( basePath, imports ):
+    " Resolves a list of imports "
+    specificModules = getProjectSpecificModules( basePath )
+    systemwideModules = getSystemWideModules()
+
+    result = []
+    for item in imports:
+        try:
+            path = specificModules[ item ]
+            if path is not None:
+                if os.path.isdir( path ):
+                    path += os.path.sep + "__init__.py"
+                    if not os.path.exists( path ):
+                        path += "3"
+                        if not os.path.exists( path ):
+                            continue
+                else:
+                    if not path.endswith( ".py" ) and \
+                       not path.endswith( ".py3" ):
+                           continue
+                result.append( [ item, path ] )
+            continue
+        except:
+            pass
+
+        try:
+            path = systemwideModules[ item ]
+            if path is not None:
+                if os.path.isdir( path ):
+                    path += os.path.sep + "__init__.py"
+                    if not os.path.exists( path ):
+                        path += "3"
+                        if not os.path.exists( path ):
+                            continue
+                else:
+                    if not path.endswith( ".py" ) and \
+                       not path.endswith( ".py3" ):
+                           continue
+                result.append( [ item, path ] )
+        except:
+            pass
+
+    return result
+
+
+def getImportedNameDefinitionLine( path, name, info = None ):
     """ Searches for the given name in the given file and provides its
         line number. -1 if not found.
         Only top level names are searched through. """
-    info = None
-    mainWindow = GlobalData().mainWindow
-    widget = mainWindow.getWidgetForFileName( os.path.realpath( path ) )
-    if widget is None:
-        # The file is not opened now
-        info = getBriefModuleInfoFromFile( path )
-    else:
-        editor = widget.getEditor()
-        info = getBriefModuleInfoFromMemory( str( editor.text() ) )
+    if info is None:
+        mainWindow = GlobalData().mainWindow
+        widget = mainWindow.getWidgetForFileName( os.path.realpath( path ) )
+        if widget is None:
+            # The file is not opened now
+            info = getBriefModuleInfoFromFile( path )
+        else:
+            editor = widget.getEditor()
+            info = getBriefModuleInfoFromMemory( str( editor.text() ) )
 
     # Check the object names
     for classObj in info.classes:
@@ -167,4 +186,47 @@ def getImportedNameDefinitionLine( path, name ):
             return globalObj.line
 
     return -1
+
+
+def isImportModule( info, name ):
+    " Returns the list of really matched modules "
+
+    matches = []
+    for item in info.imports:
+        # We are interested here in those which import a module
+        if len( item.what ) != 0:
+            continue
+
+        if item.alias == "":
+            if item.name == name:
+                if name not in matches:
+                    matches.append( name )
+        else:
+            if item.alias == name:
+                if item.name not in matches:
+                    matches.append( item.name )
+
+    return matches
+
+
+def isImportedObject( info, name ):
+    " Returns a list of matched modules with the real name "
+
+    matches = []
+    for item in info.imports:
+        # We are interested here in those which import an object
+        if len( item.what ) == 0:
+            continue
+
+        for whatItem in item.what:
+            if whatItem.alias == "":
+                if whatItem.name == name:
+                    if name not in matches:
+                        matches.append( [ item.name, name ] )
+            else:
+                if whatItem.alias == name:
+                    if whatItem.name not in matches:
+                        matches.append( [ item.name, whatItem.name ] )
+
+    return matches
 
