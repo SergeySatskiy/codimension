@@ -49,12 +49,6 @@ class CompleterPopup( QListView ):
                       self.__completer.moveToPrevious )
         self.addAction( shiftTabAct )
 
-        ctrlBackslashAct = QAction( self )
-        ctrlBackslashAct.setShortcut( 'Ctrl+\\' )
-        self.connect( ctrlBackslashAct, SIGNAL( 'triggered()' ),
-                      self.__completer.moveToNext )
-        self.addAction( ctrlBackslashAct )
-
         ctrlSpaceAct = QAction( self )
         ctrlSpaceAct.setShortcut( 'Ctrl+ ' )
         self.connect( ctrlSpaceAct, SIGNAL( 'triggered()' ),
