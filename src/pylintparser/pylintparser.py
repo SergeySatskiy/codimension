@@ -36,8 +36,11 @@ verbose = False
 class ErrorMessage( object ):
     " Holds a single error message "
 
-    def __init__( self, line ):
+    def __init__( self, line, cwd ):
 
+        self.__cwd = cwd
+        if not self.__cwd.endswith( os.path.sep ):
+            self.__cwd += os.path.sep
         self.fileName = ""
         self.lineNumber = -1
         self.messageID = ""
@@ -55,7 +58,7 @@ class ErrorMessage( object ):
         if len( parts ) < 3:
             raise Exception( "Unexpected pylint message format: " + line )
 
-        self.fileName = os.path.abspath( parts[ 0 ].strip() )
+        self.fileName = self.__cwd + parts[ 0 ].strip()
         self.lineNumber = int( parts[ 1 ].strip() )
 
         msg = ":".join( parts[ 2: ] )   # The message without the
@@ -272,7 +275,8 @@ class Pylint( object ):
 
         return
 
-    def analyzeFile( self, path, pylintrc = "" ):
+    def analyzeFile( self, path, pylintrc = "",
+                     importDirs = [], workingDir = "" ):
         " run pylint for a certain file or files list "
 
         self.retCode = -1
@@ -310,9 +314,19 @@ class Pylint( object ):
                 else:
                     rcArg = [ "--rcfile=" + tempFileName ]
 
+            initHook = []
+            if len( importDirs ) > 0:
+                initHook = [ "--init-hook" ]
+                code = "import sys"
+                for dirName in importDirs:
+                    code += ";sys.path.append('" + dirName + "')"
+                initHook.append( code )
+
             skipTillRecognised = False
             for line in self.__run( [ 'pylint', '-f', 'parseable',
-                                      '-i', 'y'] + rcArg + path ).split( '\n' ):
+                                      '-i', 'y'] + \
+                                    initHook + rcArg + \
+                                    path, workingDir ).split( '\n' ):
                 if skipTillRecognised:
                     lineType, shouldSkip = self.__detectLineType( line )
                     if lineType == self.Unknown:
@@ -324,7 +338,8 @@ class Pylint( object ):
                 if verbose:
                     print str( lineType ) + " -> " + line
                 if lineType == self.Message:
-                    self.errorMessages.append( ErrorMessage( line ) )
+                    self.errorMessages.append( ErrorMessage( line,
+                                                             workingDir ) )
                     continue
 
                 if lineType == self.Unknown:
@@ -350,7 +365,8 @@ class Pylint( object ):
             os.rmdir( tempDirName )
         return
 
-    def analyzeBuffer( self, content, pylintrc = "" ):
+    def analyzeBuffer( self, content, pylintrc = "",
+                       importDirs = [], workingDir = "" ):
         " run pylint for a memory buffer "
 
         # Save the buffer to a temporary file
@@ -369,7 +385,7 @@ class Pylint( object ):
 
         # Run pylint
         try:
-            self.analyzeFile( tempFileName, pylintrc )
+            self.analyzeFile( tempFileName, pylintrc, importDirs, workingDir )
         except Exception, exc:
             os.unlink( tempFileName )
             os.rmdir( tempDirName )
@@ -380,14 +396,14 @@ class Pylint( object ):
         os.rmdir( tempDirName )
         return
 
-    def __run( self, commandArgs ):
+    def __run( self, commandArgs, workingDir ):
         " Runs the given command and reads the output "
 
         errTmp = tempfile.mkstemp()
         errStream = os.fdopen( errTmp[ 0 ] )
         process = Popen( commandArgs, stdin = PIPE,
                          stdout = PIPE, stderr = errStream,
-                         cwd = os.getcwd() )
+                         cwd = workingDir )
         process.stdin.close()
         processStdout = process.stdout.read()
         process.stdout.close()

@@ -906,8 +906,27 @@ class CodimensionMainWindow( QMainWindow ):
             return
 
         # Request accepted
+        baseDir = os.path.dirname( str( dialog.projectFileName ) ) + os.path.sep
+        importDirs = []
+        index = 0
+        while index < dialog.importDirList.count():
+            dirName = str( dialog.importDirList.item( index ).text() )
+            if dirName.startswith( baseDir ):
+                # Replace paths with relative if needed
+                dirName = dirName[ len( baseDir ) : ]
+            importDirs.append( dirName )
+            index += 1
+
+        QApplication.processEvents()
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+
+        prj = GlobalData().project
+        prj.setTabsStatus( editorsManager.getTabsStatus() )
+        editorsManager.closeAll()
+
         GlobalData().project.createNew( \
                         dialog.projectFileName,
+                        importDirs,
                         str( dialog.authorEdit.text() ).strip(),
                         str( dialog.licenseEdit.text() ).strip(),
                         str( dialog.copyrightEdit.text() ).strip(),
@@ -915,6 +934,8 @@ class CodimensionMainWindow( QMainWindow ):
                         str( dialog.creationDateEdit.text() ).strip(),
                         str( dialog.versionEdit.text() ).strip(),
                         str( dialog.emailEdit.text() ).strip() )
+
+        QApplication.restoreOverrideCursor()
         Settings().addRecentProject( dialog.projectFileName )
         return
 
@@ -947,26 +968,45 @@ class CodimensionMainWindow( QMainWindow ):
         return editorsManager.closeEvent( event )
 
     def showPylintReport( self, reportOption, fileOrContent,
-                                displayName, uuid ):
+                                displayName, uuid, fileName ):
         " Passes data to the pylint viewer "
 
         # This is a python file, let's pylint it
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
 
+        projectDir = ""
+        if GlobalData().project.fileName != "":
+            projectDir = os.path.dirname( GlobalData().project.fileName ) + \
+                         os.path.sep
+
         # Detect the project pylintrc file if so
         pylintrcFile = ""
-        if GlobalData().project.fileName != "":
-            fName = os.path.dirname( GlobalData().project.fileName ) + \
-                    os.path.sep + "pylintrc"
+        if projectDir != "":
+            fName = projectDir + "pylintrc"
             if os.path.exists( fName ):
                 pylintrcFile = fName
 
         try:
             lint = Pylint()
             if reportOption == PylintViewer.SingleBuffer:
-                lint.analyzeBuffer( fileOrContent, pylintrcFile )
+                if os.path.isabs( fileName ):
+                    workingDir = os.path.dirname( fileName )
+                else:
+                    if projectDir != "":
+                        workingDir = projectDir
+                    else:
+                        workingDir = os.getcwd()
+                lint.analyzeBuffer( fileOrContent, pylintrcFile,
+                                    GlobalData().getProjectImportDirs(),
+                                    workingDir )
             else:
-                lint.analyzeFile( fileOrContent, pylintrcFile )
+                if os.path.isdir( fileName ):
+                    workingDir = fileName
+                else:
+                    workingDir = os.path.dirname( fileName )
+                lint.analyzeFile( fileOrContent, pylintrcFile,
+                                  GlobalData().getProjectImportDirs(),
+                                  workingDir )
 
         except Exception, exc:
             QApplication.restoreOverrideCursor()
@@ -1078,9 +1118,13 @@ class CodimensionMainWindow( QMainWindow ):
             logging.error( "No python files in the project" )
             return
 
+        # This may happen only if a project is loaded, so the working
+        # dir is the project dir
+        projectDir = os.path.dirname( GlobalData().project.fileName ) + \
+                         os.path.sep
         self.showPylintReport( PylintViewer.ProjectFiles,
                                filesToProcess,
-                               "", "" )
+                               "", "", projectDir )
         return
 
     def pymetricsButtonClicked( self ):

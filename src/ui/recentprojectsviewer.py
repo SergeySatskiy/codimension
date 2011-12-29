@@ -71,7 +71,7 @@ class RecentProjectViewItem( QTreeWidgetItem ):
 
             # Get the project properties
             try:
-                creationDate, author, lic, \
+                importDirs, creationDate, author, lic, \
                 copy_right, description, \
                 version, email, uuid = getProjectProperties( fileName )
                 propertiesToolTip = "Version: " + version + "\n" \
@@ -178,7 +178,7 @@ class RecentFileViewItem( QTreeWidgetItem ):
         elif fileType == CodimensionProjectFileType:
             # Get the project properties
             try:
-                creationDate, author, lic, \
+                importDirs, creationDate, author, lic, \
                 copy_right, description, \
                 version, email, uuid = getProjectProperties( fileName )
                 propertiesToolTip = "Version: " + version + "\n" \

@@ -169,14 +169,6 @@ class ProjectViewer( QWidget ):
         self.connect( self.prjPymetricsButton, SIGNAL( 'triggered()' ),
                       self.__pymetricsRequest )
 
-        spacer = QWidget()
-        spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
-        self.prjDelProjectDirButton = QAction( \
-                PixmapCache().getIcon( 'removedirfromproject.png' ),
-                'Remove directory from the project', self )
-        self.connect( self.prjDelProjectDirButton, SIGNAL( "triggered()" ),
-                      self.removeFromProject )
-
         upperToolbar = QToolBar()
         upperToolbar.setMovable( False )
         upperToolbar.setAllowedAreas( Qt.TopToolBarArea )
@@ -190,8 +182,6 @@ class ProjectViewer( QWidget ):
         upperToolbar.addAction( self.prjCopyToClipboardButton )
         upperToolbar.addAction( self.prjPylintButton )
         upperToolbar.addAction( self.prjPymetricsButton )
-        upperToolbar.addWidget( spacer )
-        upperToolbar.addAction( self.prjDelProjectDirButton )
 
         self.connect( self.projectTreeView,
                       SIGNAL( 'firstSelectedItem' ),
@@ -254,10 +244,6 @@ class ProjectViewer( QWidget ):
         self.prjDirCopyPathAct = self.prjDirMenu.addAction( \
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
                 'Copy path to clipboard', self.projectTreeView.copyToClipboard )
-        self.prjDirMenu.addSeparator()
-        self.prjDirRemoveFromProjectAct = self.prjDirMenu.addAction( \
-                PixmapCache().getIcon( 'removedirfromproject.png' ),
-                'Remove directory from the project', self.removeFromProject )
         self.prjDirMenu.addSeparator()
         self.prjDirRemoveFromDiskAct = self.prjDirMenu.addAction( \
                 PixmapCache().getIcon( 'trash.png' ),
@@ -327,11 +313,6 @@ class ProjectViewer( QWidget ):
                       self.__fsContextMenuRequested )
 
         # Toolbar part - buttons
-        self.fsAddDirectoryButton = QAction( \
-                PixmapCache().getIcon( 'adddirtoproject.png' ),
-                'Add directory to the project', self )
-        self.connect( self.fsAddDirectoryButton, SIGNAL( "triggered()" ),
-                      self.filesystemView.addDirToProject )
         self.fsFindInDirButton = QAction( \
                 PixmapCache().getIcon( 'findindir.png' ),
                 'Find in highlighted directory', self )
@@ -361,8 +342,6 @@ class ProjectViewer( QWidget ):
                                   'Re-read the file system tree', self )
         self.connect( fsReloadButton, SIGNAL( "triggered()" ),
                       self.filesystemView.reload )
-        fixedSpacer = QWidget()
-        fixedSpacer.setFixedWidth( 7 )
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
 
@@ -372,8 +351,6 @@ class ProjectViewer( QWidget ):
         lowerToolbar.setIconSize( QSize( 16, 16 ) )
         lowerToolbar.setFixedHeight( 28 )
         lowerToolbar.setContentsMargins( 0, 0, 0, 0 )
-        lowerToolbar.addAction( self.fsAddDirectoryButton )
-        lowerToolbar.addWidget( fixedSpacer )
         lowerToolbar.addAction( self.fsFindInDirButton )
         lowerToolbar.addAction( self.fsAddTopLevelDirButton )
         lowerToolbar.addAction( self.fsRemoveTopLevelDirButton )
@@ -413,10 +390,6 @@ class ProjectViewer( QWidget ):
 
         # create the directory menu
         self.fsDirMenu = QMenu( self )
-        self.fsDirAddToProjectAct = self.fsDirMenu.addAction( \
-                PixmapCache().getIcon( 'adddirtoproject.png' ),
-                'Add directory to the project',
-                self.filesystemView.addDirToProject )
         self.fsDirAddAsTopLevelAct = self.fsDirMenu.addAction( \
                 PixmapCache().getIcon( 'addtopleveldir.png' ),
                 'Add as top level directory',
@@ -488,7 +461,14 @@ class ProjectViewer( QWidget ):
         project = GlobalData().project
         dialog = ProjectPropertiesDialog( project )
         if dialog.exec_() == QDialog.Accepted:
+            importDirs = []
+            index = 0
+            while index < dialog.importDirList.count():
+                importDirs.append( str( dialog.importDirList.item( \
+                                                        index ).text() ) )
+                index += 1
             project.updateProperties( \
+                importDirs,
                 str( dialog.creationDateEdit.text() ).strip(),
                 str( dialog.authorEdit.text() ).strip(),
                 str( dialog.licenseEdit.text() ).strip(),
@@ -519,7 +499,6 @@ class ProjectViewer( QWidget ):
     def __updateFSToolbarButtons( self ):
         " Updates the toolbar buttons depending on the __fsContextItem "
 
-        self.fsAddDirectoryButton.setEnabled( False )
         self.fsFindInDirButton.setEnabled( False )
         self.fsAddTopLevelDirButton.setEnabled( False )
         self.fsRemoveTopLevelDirButton.setEnabled( False )
@@ -547,9 +526,6 @@ class ProjectViewer( QWidget ):
                 else:
                     if self.__fsContextItem.parentItem.itemType != NoItemType:
                         self.fsAddTopLevelDirButton.setEnabled( True )
-                self.fsAddDirectoryButton.setEnabled( \
-                        not globalData.project.isProjectDir( \
-                                self.__fsContextItem.getPath() ) )
 
         if self.__fsContextItem.itemType == FileItemType:
             if self.__fsContextItem.fileType in [ PythonFileType,
@@ -567,7 +543,7 @@ class ProjectViewer( QWidget ):
         self.prjShowParsingErrorsButton.setEnabled( False )
         self.prjNewDirButton.setEnabled( False )
         self.prjCopyToClipboardButton.setEnabled( False )
-        self.prjDelProjectDirButton.setEnabled( False )
+#        self.prjDelProjectDirButton.setEnabled( False )
         self.prjPylintButton.setEnabled( False )
         self.prjPymetricsButton.setEnabled( False )
 
@@ -592,8 +568,6 @@ class ProjectViewer( QWidget ):
             if self.__prjContextItem.parentItem.itemType == NoItemType:
                 projectDir = os.path.dirname(GlobalData().project.fileName) + \
                              os.path.sep
-                if not self.__prjContextItem.getPath() == projectDir:
-                    self.prjDelProjectDirButton.setEnabled( True )
 
         if self.__prjContextItem.itemType == FileItemType:
             if self.__prjContextItem.fileType in [ PythonFileType,
@@ -640,8 +614,6 @@ class ProjectViewer( QWidget ):
         self.fsFileShowErrorsAct.setEnabled( \
                 self.fsShowParsingErrorsButton.isEnabled() )
 
-        self.fsDirAddToProjectAct.setEnabled( \
-                self.fsAddDirectoryButton.isEnabled() )
         self.fsDirAddAsTopLevelAct.setEnabled( \
                 self.fsAddTopLevelDirButton.isEnabled() )
         self.fsDirRemoveFromToplevelAct.setEnabled( \
@@ -705,8 +677,6 @@ class ProjectViewer( QWidget ):
                 self.prjFindInDirButton.isEnabled() )
         self.prjDirCopyPathAct.setEnabled( \
                 self.prjCopyToClipboardButton.isEnabled() )
-        self.prjDirRemoveFromProjectAct.setEnabled( \
-                self.prjDelProjectDirButton.isEnabled() )
         self.prjFileCopyPathAct.setEnabled( \
                 self.prjCopyToClipboardButton.isEnabled() )
         self.prjFileShowErrorsAct.setEnabled( \
@@ -809,16 +779,6 @@ class ProjectViewer( QWidget ):
         self.filesystemView.showParsingErrors( self.__fsContextItem.getPath() )
         return
 
-    def removeFromProject( self ):
-        " Triggered for the remove directory from the project request "
-        if self.__prjContextItem is None:
-            return
-        if self.__prjContextItem.itemType != DirectoryItemType:
-            return
-
-        GlobalData().project.removeProjectDir( self.__prjContextItem.getPath() )
-        return
-
     def addToplevelDir( self ):
         " Triggered for adding a new top level directory "
         self.filesystemView.addToplevelDir()
@@ -846,7 +806,7 @@ class ProjectViewer( QWidget ):
             fileName = self.__prjContextItem.getPath()
             GlobalData().mainWindow.showPylintReport( PylintViewer.SingleFile,
                                                       fileName, fileName,
-                                                      "" )
+                                                      "", fileName )
             return
 
         if self.__prjContextItem.itemType != DirectoryItemType:
@@ -864,15 +824,15 @@ class ProjectViewer( QWidget ):
             logging.error( "No python files in the " + dirName + " directory" )
             return
 
-        projectDirs = GlobalData().project.getProjectDirs()
-        if len( projectDirs ) == 1 and projectDirs[ 0 ] == dirName:
+        projectDir = GlobalData().project.getProjectDir()
+        if projectDir == dirName:
             option = PylintViewer.ProjectFiles
         else:
             option = PylintViewer.DirectoryFiles
 
         GlobalData().mainWindow.showPylintReport( option,
                                                   filesToProcess,
-                                                  dirName, "" )
+                                                  dirName, "", dirName )
         return
 
     def __pymetricsRequest( self ):
@@ -908,8 +868,8 @@ class ProjectViewer( QWidget ):
             logging.error( "No python files in the " + dirName + " directory" )
             return
 
-        projectDirs = GlobalData().project.getProjectDirs()
-        if len( projectDirs ) == 1 and projectDirs[ 0 ] == dirName:
+        projectDir = GlobalData().project.getProjectDir()
+        if projectDir == dirName:
             option = PymetricsViewer.ProjectFiles
         else:
             option = PymetricsViewer.DirectoryFiles
@@ -1028,9 +988,8 @@ class ProjectViewer( QWidget ):
                 logging.warning( "There are no python files in " + \
                                  self.__prjContextItem.getPath() )
                 return
-            projectDirs = GlobalData().project.getProjectDirs()
-            if len( projectDirs ) == 1 and \
-               projectDirs[ 0 ] == self.__prjContextItem.getPath():
+            projectDir = GlobalData().project.getProjectDir()
+            if projectDir == self.__prjContextItem.getPath():
                 what = ImportsDiagramDialog.ProjectFiles
                 tooltip = "Generated for the project"
             else:
@@ -1059,9 +1018,8 @@ class ProjectViewer( QWidget ):
                 return
 
         if self.__prjContextItem.itemType == DirectoryItemType:
-            projectDirs = GlobalData().project.getProjectDirs()
-            if len( projectDirs ) == 1 and \
-               projectDirs[ 0 ] == self.__prjContextItem.getPath():
+            projectDir = GlobalData().project.getProjectDir()
+            if projectDir == self.__prjContextItem.getPath():
                 what = ImportsDiagramDialog.ProjectFiles
                 dlg = ImportsDiagramDialog( what )
                 tooltip = "Generated for the project"

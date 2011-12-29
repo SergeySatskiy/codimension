@@ -49,12 +49,6 @@ class FileSystemBrowser( FilesBrowser ):
                       self._onFSChanged )
         return
 
-    def addDirToProject( self ):
-        " Adds directory to the project "
-        item = self.model().item( self.currentIndex() )
-        GlobalData().project.addProjectDir( item.getPath() )
-        return
-
     def removeToplevelDir( self ):
         " Handles the Remove from toplevel popup menu entry "
 
@@ -81,4 +75,3 @@ class FileSystemBrowser( FilesBrowser ):
         self.model().reset()
         self.layoutDisplay()
         return
-
