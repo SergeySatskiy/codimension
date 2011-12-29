@@ -43,6 +43,8 @@ class ScintillaWrapper( QsciScintilla ):
         QsciScintilla.__init__( self, parent )
 
         self.zoom = 0
+        self._charWidth = -1
+        self._lineHeight = -1
 
         self.__targetSearchFlags = 0
         self.__targetSearchExpr = QString()
@@ -57,6 +59,8 @@ class ScintillaWrapper( QsciScintilla ):
         QsciScintilla.setLexer( self, lex )
         if lex is None:
             self.clearStyles()
+        self._charWidth = -1
+        self._lineHeight = -1
         return
 
     def clearStyles( self ):
@@ -120,8 +124,8 @@ class ScintillaWrapper( QsciScintilla ):
     def getCurrentPixelPosition( self ):
         " Provides the current text cursor position in points "
         pos = self.SendScintilla( self.SCI_GETCURRENTPOS )
-        x = self.SendScintilla( self.SCI_POINTXFROMPOSITION, pos )
-        y = self.SendScintilla( self.SCI_POINTYFROMPOSITION, pos )
+        x = self.SendScintilla( self.SCI_POINTXFROMPOSITION, 0, pos )
+        y = self.SendScintilla( self.SCI_POINTYFROMPOSITION, 0, pos )
         return x, y
 
     def setCurrentPosition( self, pos ):
@@ -227,6 +231,8 @@ class ScintillaWrapper( QsciScintilla ):
 
         self.zoom += zoom
         QsciScintilla.zoomIn( self, zoom )
+        self._charWidth = -1
+        self._lineHeight = -1
         return
 
     def zoomOut( self, zoom = 1 ):
@@ -234,6 +240,8 @@ class ScintillaWrapper( QsciScintilla ):
 
         self.zoom -= zoom
         QsciScintilla.zoomOut( self, zoom )
+        self._charWidth = -1
+        self._lineHeight = -1
         return
 
     def zoomTo( self, zoom ):
@@ -241,6 +249,8 @@ class ScintillaWrapper( QsciScintilla ):
 
         self.zoom = zoom
         QsciScintilla.zoomTo( self, zoom )
+        self._charWidth = -1
+        self._lineHeight = -1
         return
 
     def getZoom( self ):
@@ -704,6 +714,9 @@ class ScintillaWrapper( QsciScintilla ):
             self.replaceTarget( "" )
             found = self.findNextTarget()
         self.endUndoAction()
+        newLength = len( str( self.text( line ) ).rstrip() )
+        if newLength < pos:
+            pos = newLength
         self.setCursorPosition( line, pos )
         return
 
