@@ -147,7 +147,12 @@ class QuickHelpWidget( HTMLTabWidget ):
           <td>Ctrl+M</td>
           <td>Comment / uncomment a line or selected lines</td>
         </tr>
-      </table>
+        <tr>
+          <td>Ctrl+Space, TAB</td>
+          <td>Code completion</td>
+          <td></td>
+          <td></td>
+        </tr>      </table>
     </p>
 
     <p>
