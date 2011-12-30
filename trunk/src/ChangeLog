@@ -1,5 +1,6 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* New feature: docstring for a buffer tag when Ctrl+F1 is pressed.
 * Bug fix: no more cursor jumping to another line if the feature of stripping
   trailing spaces on save is switched on and a line has trailing spaces and the
   cursor is at the end of the line.

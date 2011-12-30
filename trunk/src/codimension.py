@@ -119,6 +119,12 @@ def codimensionMain():
     globalData.screenWidth = screenSize.width()
     globalData.screenHeight = screenSize.height()
 
+    try:
+        splash.showMessage( "Applying patch to rope..." )
+        import rope_patch
+        rope_patch.applyRopePatch()
+    except:
+        pass
 
     splash.showMessage( "Applying skin to lexers..." )
     from editor.lexer import updateLexersStyles

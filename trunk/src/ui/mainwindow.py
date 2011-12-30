@@ -35,6 +35,7 @@ from utils.globals              import GlobalData
 from utils.project              import CodimensionProject
 from sidebar                    import SideBar
 from logviewer                  import LogViewer
+from taghelpviewer              import TagHelpViewer
 from todoviewer                 import TodoViewer
 from redirector                 import Redirector
 from utils.pixmapcache          import PixmapCache
@@ -329,6 +330,12 @@ class CodimensionMainWindow( QMainWindow ):
         self.__bottomSideBar.addTab( self.__findInFilesViewer,
                                      PixmapCache().getIcon( 'findindir.png' ),
                                      'Search results' )
+
+        # Create tag help viewer
+        self.__tagHelpViewer = TagHelpViewer()
+        self.__bottomSideBar.addTab( self.__tagHelpViewer,
+                                     PixmapCache().getIcon( 'helpviewer.png' ),
+                                     'Tag help viewer' )
 
         # Create outline viewer
         self.__outlineViewer = FileOutlineViewer( self.editorsManagerWidget.editorsManager )
@@ -1071,6 +1078,19 @@ class CodimensionMainWindow( QMainWindow ):
         self.__bottomSideBar.show()
         self.__bottomSideBar.setCurrentWidget( self.__pymetricsViewer )
         self.__bottomSideBar.raise_()
+        return
+
+    def showTagHelp( self, calltip, docstring ):
+        " Shows a tag help "
+        if calltip is None or calltip == "":
+            if docstring is None or docstring == "":
+                return
+
+        self.__bottomSideBar.show()
+        self.__bottomSideBar.setCurrentWidget( self.__tagHelpViewer )
+        self.__bottomSideBar.raise_()
+
+        self.__tagHelpViewer.display( calltip, docstring )
         return
 
     def __onPylintTooltip( self, tooltip ):

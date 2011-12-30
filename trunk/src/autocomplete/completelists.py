@@ -237,16 +237,49 @@ def _getRopeCompletion( fileName, text, editor, prefix ):
                                                             fileName )
             proposals = rope.contrib.codeassist.code_assist( ropeProject,
                                                              text, position,
-                                                             resource )
+                                                             resource, None, 2 )
         else:
             # The file does not exist
             proposals = rope.contrib.codeassist.code_assist( ropeProject,
                                                              text, position,
-                                                             None )
+                                                             None, None, 2 )
         return proposals, True
     except:
         # Rope may throw exceptions e.g. in case of syntax errors
         return [], False
+
+
+def getCalltipAndDoc( fileName, editor ):
+    " Provides a calltip and docstring "
+    try:
+        ropeProject = GlobalData().getRopeProject( fileName )
+        position = editor.currentPosition()
+        text = str( editor.text() )
+
+        calltip = None
+        docstring = None
+
+        resource = None
+        if os.path.isabs( fileName ):
+            resource = rope.base.libutils.path_to_resource( ropeProject,
+                                                            fileName )
+
+        calltip = rope.contrib.codeassist.get_calltip( ropeProject,
+                                                       text,
+                                                       position,
+                                                       resource, 2 )
+        if calltip is not None:
+            try:
+                docstring = rope.contrib.codeassist.get_doc( ropeProject,
+                                                             text,
+                                                             position,
+                                                             resource, 2 )
+            except:
+                pass
+
+        return calltip, docstring
+    except:
+        return None, None
 
 
 def _excludePrivateAndBuiltins( proposals ):

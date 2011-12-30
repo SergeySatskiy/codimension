@@ -57,7 +57,7 @@ from ui.importlist              import ImportListWidget
 from ui.outsidechanges          import OutsideChangeWidget
 import export
 from autocomplete.bufferutils   import getContext, getPrefixAndObject, getEditorTags
-from autocomplete.completelists import getCompletionList
+from autocomplete.completelists import getCompletionList, getCalltipAndDoc
 from cdmbriefparser             import getBriefModuleInfoFromMemory
 from ui.completer               import CodeCompleter
 
@@ -248,6 +248,13 @@ class TextEditor( ScintillaWrapper ):
                       self.__onAutoComplete )
         self.addAction( self.ctrlSpaceAct )
 
+        # Ctrl + F1
+        self.ctrlF1Act = QAction( self )
+        self.ctrlF1Act.setShortcut( "Ctrl+F1" )
+        self.connect( self.ctrlF1Act, SIGNAL( 'triggered()' ),
+                      self.__onTagHelp )
+        self.addAction( self.ctrlF1Act )
+
         # Alt + Shift + Up, Alt + Shift + Down
         self.altShiftUpAct = QAction( self )
         self.altShiftUpAct.setShortcut( "Alt+Shift+Up" )
@@ -299,6 +306,7 @@ class TextEditor( ScintillaWrapper ):
         self.ctrlInsertAct.setEnabled( True )
         self.ctrlCAct.setEnabled( True )
         self.ctrlSpaceAct.setEnabled( True )
+        self.ctrlF1Act.setEnabled( True )
         self.altShiftUpAct.setEnabled( True )
         self.altShiftDownAct.setEnabled( True )
         self.altShiftLeftAct.setEnabled( True )
@@ -327,6 +335,7 @@ class TextEditor( ScintillaWrapper ):
         self.ctrlInsertAct.setEnabled( False )
         self.ctrlCAct.setEnabled( False )
         self.ctrlSpaceAct.setEnabled( False )
+        self.ctrlF1Act.setEnabled( False )
         self.altShiftUpAct.setEnabled( False )
         self.altShiftDownAct.setEnabled( False )
         self.altShiftLeftAct.setEnabled( False )
@@ -1180,6 +1189,13 @@ class TextEditor( ScintillaWrapper ):
         cursorRectangle = QRect( x, y - 2,
                                  self._charWidth, self._lineHeight + 8 )
         self.__completer.complete( cursorRectangle )
+        return
+
+    def __onTagHelp( self ):
+        " Provides help for an item if available "
+        calltip, docstring = getCalltipAndDoc( self.parent().getFileName(),
+                                               self )
+        GlobalData().mainWindow.showTagHelp( calltip, docstring )
         return
 
     def insertCompletion( self, text ):
