@@ -150,9 +150,10 @@ class QuickHelpWidget( HTMLTabWidget ):
         <tr>
           <td>Ctrl+Space, TAB</td>
           <td>Code completion</td>
-          <td></td>
-          <td></td>
-        </tr>      </table>
+          <td>Ctrl+F1</td>
+          <td>Docstring for the current buffer tag</td>
+        </tr>
+      </table>
     </p>
 
     <p>
