@@ -22,14 +22,16 @@
 " Utilities to build completeion lists to suggest to the user "
 
 
-from cdmbriefparser    import getBriefModuleInfoFromMemory, \
-                              getBriefModuleInfoFromFile
-from bufferutils       import getEditorTags
-from utils.globals     import GlobalData
-from listmodules       import getSysModules, getModules
+from cdmbriefparser          import getBriefModuleInfoFromMemory, \
+                                    getBriefModuleInfoFromFile
+from bufferutils             import getEditorTags
+from utils.globals           import GlobalData
+from listmodules             import getSysModules, getModules
 import os, imp
-import rope.base.libutils
-import rope.contrib.codeassist
+from rope.base.libutils      import path_to_resource
+from rope.contrib.codeassist import code_assist, get_calltip, get_doc
+from rope.contrib.findit     import find_definition, find_implementations, \
+                                    find_occurrences
 
 
 __systemwideModules = {}
@@ -233,16 +235,13 @@ def _getRopeCompletion( fileName, text, editor, prefix ):
         position = editor.currentPosition() - len( prefix )
 
         if os.path.isabs( fileName ):
-            resource = rope.base.libutils.path_to_resource( ropeProject,
-                                                            fileName )
-            proposals = rope.contrib.codeassist.code_assist( ropeProject,
-                                                             text, position,
-                                                             resource, None, 2 )
+            resource = path_to_resource( ropeProject, fileName )
+            proposals = code_assist( ropeProject, text, position,
+                                     resource, None, 2 )
         else:
             # The file does not exist
-            proposals = rope.contrib.codeassist.code_assist( ropeProject,
-                                                             text, position,
-                                                             None, None, 2 )
+            proposals = code_assist( ropeProject, text, position,
+                                     None, None, 2 )
         return proposals, True
     except:
         # Rope may throw exceptions e.g. in case of syntax errors
@@ -261,25 +260,34 @@ def getCalltipAndDoc( fileName, editor ):
 
         resource = None
         if os.path.isabs( fileName ):
-            resource = rope.base.libutils.path_to_resource( ropeProject,
-                                                            fileName )
+            resource = path_to_resource( ropeProject, fileName )
 
-        calltip = rope.contrib.codeassist.get_calltip( ropeProject,
-                                                       text,
-                                                       position,
-                                                       resource, 2 )
+        calltip = get_calltip( ropeProject, text, position, resource, 2 )
         if calltip is not None:
             try:
-                docstring = rope.contrib.codeassist.get_doc( ropeProject,
-                                                             text,
-                                                             position,
-                                                             resource, 2 )
+                docstring = get_doc( ropeProject, text, position, resource, 2 )
             except:
                 pass
 
         return calltip, docstring
     except:
         return None, None
+
+
+def getDefinitionLocation( fileName, editor ):
+    " Provides the definition location or None "
+    try:
+        ropeProject = GlobalData().getRopeProject( fileName )
+        position = editor.currentPosition()
+        text = str( editor.text() )
+
+        resource = None
+        if os.path.isabs( fileName ):
+            resource = path_to_resource( ropeProject, fileName )
+
+        return find_definition( ropeProject, text, position, resource, 2 )
+    except:
+        return None
 
 
 def _excludePrivateAndBuiltins( proposals ):
@@ -361,3 +369,4 @@ def getCompletionList( fileName, scope, obj, prefix,
         proposals.update( getEditorTags( editor, prefix, True ) )
 
     return list( proposals ), False
+

@@ -153,6 +153,12 @@ class QuickHelpWidget( HTMLTabWidget ):
           <td>Ctrl+F1</td>
           <td>Docstring for the current buffer tag</td>
         </tr>
+        <tr>
+          <td>Ctrl+\\</td>
+          <td>Goto definition</td>
+          <td></td>
+          <td></td>
+        </tr>
       </table>
     </p>
 
