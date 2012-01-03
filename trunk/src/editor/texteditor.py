@@ -57,7 +57,8 @@ from ui.importlist              import ImportListWidget
 from ui.outsidechanges          import OutsideChangeWidget
 import export
 from autocomplete.bufferutils   import getContext, getPrefixAndObject, getEditorTags
-from autocomplete.completelists import getCompletionList, getCalltipAndDoc
+from autocomplete.completelists import getCompletionList, getCalltipAndDoc, \
+                                       getDefinitionLocation
 from cdmbriefparser             import getBriefModuleInfoFromMemory
 from ui.completer               import CodeCompleter
 
@@ -255,6 +256,13 @@ class TextEditor( ScintillaWrapper ):
                       self.__onTagHelp )
         self.addAction( self.ctrlF1Act )
 
+        # Ctrl + \
+        self.ctrlBackslashAct = QAction( self )
+        self.ctrlBackslashAct.setShortcut( "Ctrl+\\" )
+        self.connect( self.ctrlBackslashAct, SIGNAL( 'triggered()' ),
+                      self.__onGotoDefinition )
+        self.addAction( self.ctrlBackslashAct )
+
         # Alt + Shift + Up, Alt + Shift + Down
         self.altShiftUpAct = QAction( self )
         self.altShiftUpAct.setShortcut( "Alt+Shift+Up" )
@@ -307,6 +315,7 @@ class TextEditor( ScintillaWrapper ):
         self.ctrlCAct.setEnabled( True )
         self.ctrlSpaceAct.setEnabled( True )
         self.ctrlF1Act.setEnabled( True )
+        self.ctrlBackslashAct.setEnabled( True )
         self.altShiftUpAct.setEnabled( True )
         self.altShiftDownAct.setEnabled( True )
         self.altShiftLeftAct.setEnabled( True )
@@ -336,6 +345,7 @@ class TextEditor( ScintillaWrapper ):
         self.ctrlCAct.setEnabled( False )
         self.ctrlSpaceAct.setEnabled( False )
         self.ctrlF1Act.setEnabled( False )
+        self.ctrlBackslashAct.setEnabled( False )
         self.altShiftUpAct.setEnabled( False )
         self.altShiftDownAct.setEnabled( False )
         self.altShiftLeftAct.setEnabled( False )
@@ -1196,6 +1206,22 @@ class TextEditor( ScintillaWrapper ):
         calltip, docstring = getCalltipAndDoc( self.parent().getFileName(),
                                                self )
         GlobalData().mainWindow.showTagHelp( calltip, docstring )
+        return
+
+    def __onGotoDefinition( self ):
+        " The user requested a jump to definition "
+        location = getDefinitionLocation( self.parent().getFileName(),
+                                          self )
+        if location is None:
+            GlobalData().mainWindow.showStatusBarMessage( \
+                                            "Definition is not found" )
+        else:
+            if location.resource is None:
+                # That was an unsaved yet buffer, but something has been found
+                GlobalData().mainWindow.jumpToLine( location.lineno )
+            else:
+                path = os.path.realpath( location.resource.real_path )
+                GlobalData().mainWindow.openFile( path, location.lineno )
         return
 
     def insertCompletion( self, text ):

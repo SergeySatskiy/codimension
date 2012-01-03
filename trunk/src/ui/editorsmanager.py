@@ -695,6 +695,21 @@ class EditorsManager( QTabWidget ):
             return False
         return True
 
+    def jumpToLine( self, lineNo ):
+        " Jumps to the given line within the current buffer "
+
+        # Used when rope works with unsaved buffer and a definition line is
+        # given without a resource - we need to jump within the buffer
+        self.history.updateForCurrentIndex()
+        firstVisible = lineNo - 2
+        if firstVisible <= 0:
+            firstVisible = 1
+        self.__restorePosition( self.currentWidget().getEditor(),
+                                lineNo - 1, 0, firstVisible - 1 )
+        self.history.addCurrent()
+        self.currentWidget().setFocus()
+        return
+
     def openFile( self, fileName, lineNo ):
         " Opens the required file "
         try:
@@ -703,14 +718,16 @@ class EditorsManager( QTabWidget ):
                 if self.widget( index ).getFileName() == fileName:
                     # Found
                     if self.currentIndex() == index:
-                        self.history.addCurrent()
-                    self.activateTab( index )
+                        self.history.updateForCurrentIndex()
                     if lineNo > 0:
                         firstVisible = lineNo - 2
                         if firstVisible <= 0:
                             firstVisible = 1
                         self.__restorePosition( self.widget( index ).getEditor(),
                                                 lineNo - 1, 0, firstVisible - 1 )
+                    self.activateTab( index )
+                    if self.currentIndex() == index:
+                        self.history.addCurrent()
                     return True
 
             # Not found - create a new one
@@ -769,12 +786,13 @@ class EditorsManager( QTabWidget ):
         widget = self.currentWidget()
         if widget.getUUID() != uuid:
             return
-        self.history.addCurrent()
+        self.history.updateForCurrentIndex()
         firstVisible = lineNo - 2
         if firstVisible <= 0:
             firstVisible = 1
         self.__restorePosition( widget.getEditor(),
                                 lineNo - 1, 0, firstVisible - 1 )
+        self.history.addCurrent()
         widget.setFocus()
         return
 

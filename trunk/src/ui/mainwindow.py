@@ -846,6 +846,11 @@ class CodimensionMainWindow( QMainWindow ):
         self.editorsManagerWidget.editorsManager.gotoInBuffer( uuid, lineNo )
         return
 
+    def jumpToLine( self, lineNo ):
+        " Usually needs when rope provided definition in the current unsaved buffer "
+        self.editorsManagerWidget.editorsManager.jumpToLine( lineNo )
+        return
+
     def openPixmapFile( self, path ):
         " User double clicked on a file "
         self.editorsManagerWidget.editorsManager.openPixmapFile( path )
