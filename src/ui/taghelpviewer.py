@@ -26,7 +26,7 @@ from PyQt4.QtCore import Qt, SIGNAL, QSize
 from PyQt4.QtGui import QTextEdit, QMenu, \
                         QApplication, QCursor, \
                         QHBoxLayout, QWidget, QAction, QToolBar, \
-                        QSizePolicy
+                        QSizePolicy, QLabel, QVBoxLayout, QFrame
 from utils.pixmapcache import PixmapCache
 
 
@@ -40,6 +40,7 @@ class TagHelpViewer( QWidget ):
         self.__copyAvailable = False
         self.__clearButton = None
         self.__textEdit = None
+        self.__header = None
         self.__copyButton = None
         self.__selectAllButton = None
         self.__createLayout( parent )
@@ -113,12 +114,20 @@ class TagHelpViewer( QWidget ):
         toolbar.addWidget( spacer )
         toolbar.addAction( self.__clearButton )
 
+        self.__header = QLabel( "Object: none" )
+        self.__header.setFrameStyle( QFrame.StyledPanel )
+        verticalLayout = QVBoxLayout()
+        verticalLayout.setContentsMargins( 2, 2, 2, 2 )
+        verticalLayout.setSpacing( 2 )
+        verticalLayout.addWidget( self.__header )
+        verticalLayout.addWidget( self.__textEdit )
+
         # layout
         layout = QHBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0 )
         layout.setSpacing( 0 )
         layout.addWidget( toolbar )
-        layout.addWidget( self.__textEdit )
+        layout.addLayout( verticalLayout )
 
         self.setLayout( layout )
         return
@@ -143,10 +152,11 @@ class TagHelpViewer( QWidget ):
                 self.__isEmpty = True
 
         if calltip is not None and calltip != "":
-            self.__textEdit.insertPlainText( "Calltip: " + calltip + "\n" )
-            self.__textEdit.insertPlainText( "-" * ( len( calltip ) + 9 ) + "\n" )
+            self.__header.setText( "Object: " + calltip )
+        else:
+            self.__header.setText( "Object: none" )
         if docstring is not None and docstring != "":
-            self.__textEdit.insertPlainText( "Docstring: " + "\n" + docstring )
+            self.__textEdit.insertPlainText( docstring )
 
         self.__updateToolbarButtons()
         QApplication.processEvents()
@@ -164,6 +174,7 @@ class TagHelpViewer( QWidget ):
         " Triggers when the clear function is selected "
         self.__isEmpty = True
         self.__copyAvailable = False
+        self.__header.setText( "Object: none" )
         self.__textEdit.clear()
         self.__updateToolbarButtons()
         return
