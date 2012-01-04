@@ -151,7 +151,7 @@ class QuickHelpWidget( HTMLTabWidget ):
           <td>Ctrl+Space, TAB</td>
           <td>Code completion</td>
           <td>Ctrl+F1</td>
-          <td>Docstring for the current buffer tag</td>
+          <td>Context help</td>
         </tr>
         <tr>
           <td>Ctrl+\\</td>
