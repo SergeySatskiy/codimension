@@ -233,7 +233,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__logViewer = LogViewer()
         self.__bottomSideBar.addTab( self.__logViewer,
                                      PixmapCache().getIcon( 'logviewer.png' ),
-                                     'Log viewer' )
+                                     'Log' )
         self.connect( sys.stdout, SIGNAL('appendToStdout'), self.toStdout )
         self.connect( sys.stderr, SIGNAL('appendToStderr'), self.toStderr )
 
@@ -288,7 +288,7 @@ class CodimensionMainWindow( QMainWindow ):
         todoViewer = TodoViewer()
         self.__bottomSideBar.addTab( todoViewer,
                                      PixmapCache().getIcon( 'todo.png' ),
-                                     'Todo viewer' )
+                                     'Todo' )
         self.__bottomSideBar.setTabEnabled( 1, False )
 
         # Create pylint viewer
@@ -335,7 +335,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.__tagHelpViewer = TagHelpViewer()
         self.__bottomSideBar.addTab( self.__tagHelpViewer,
                                      PixmapCache().getIcon( 'helpviewer.png' ),
-                                     'Tag help viewer' )
+                                     'Context help' )
+        self.__bottomSideBar.setTabToolTip( 5, "Ctrl+F1 in python file" )
 
         # Create outline viewer
         self.__outlineViewer = FileOutlineViewer( self.editorsManagerWidget.editorsManager )
