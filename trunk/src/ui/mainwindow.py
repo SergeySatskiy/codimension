@@ -919,7 +919,8 @@ class CodimensionMainWindow( QMainWindow ):
             return
 
         # Request accepted
-        baseDir = os.path.dirname( str( dialog.projectFileName ) ) + os.path.sep
+        baseDir = os.path.dirname( str( dialog.absProjectFileName ) ) + \
+                  os.path.sep
         importDirs = []
         index = 0
         while index < dialog.importDirList.count():
@@ -938,7 +939,7 @@ class CodimensionMainWindow( QMainWindow ):
         editorsManager.closeAll()
 
         GlobalData().project.createNew( \
-                        dialog.projectFileName,
+                        dialog.absProjectFileName,
                         importDirs,
                         str( dialog.authorEdit.text() ).strip(),
                         str( dialog.licenseEdit.text() ).strip(),
@@ -949,7 +950,7 @@ class CodimensionMainWindow( QMainWindow ):
                         str( dialog.emailEdit.text() ).strip() )
 
         QApplication.restoreOverrideCursor()
-        Settings().addRecentProject( dialog.projectFileName )
+        Settings().addRecentProject( dialog.absProjectFileName )
         return
 
     def notImplementedYet( self ):
