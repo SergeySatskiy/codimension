@@ -42,6 +42,10 @@ class ProjectPropertiesDialog( QDialog, object ):
 
         QDialog.__init__( self, parent )
 
+        # The dialog caller reads this member if the dialog was finished
+        # successfully.
+        self.absProjectFileName = None
+
         self.__createLayout()
         self.__project = project
 
@@ -445,6 +449,9 @@ class ProjectPropertiesDialog( QDialog, object ):
                 QMessageBox.critical( self, "Error",
                                       "Cannot create the project directory" )
                 return
+
+        # Save the absolute file name for further reading it by the caller
+        self.absProjectFileName = projectFileName
 
         # The minimum is provided so we can accept it
         self.accept()
