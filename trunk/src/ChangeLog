@@ -1,5 +1,9 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Bug fix: exception while creating a new project
+* New feature: run a script in a separate terminal. The running parameters are
+  cached and stored. The stored parameters are used to run the same script
+  later.
 * Bug fix: update tabs history properly when jumping within the same file.
 * New feature: goto definition (Ctrl+backslash)
 * New feature: docstring for a buffer tag when Ctrl+F1 is pressed.
