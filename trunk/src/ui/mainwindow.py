@@ -1003,25 +1003,35 @@ class CodimensionMainWindow( QMainWindow ):
                 pylintrcFile = fName
 
         try:
+            if projectDir != "":
+                workingDir = projectDir
+            else:
+                workingDir = os.getcwd()
+
             lint = Pylint()
             if reportOption == PylintViewer.SingleBuffer:
+                # No file, it's a buffer content
+                importDirs = GlobalData().getProjectImportDirs()
                 if os.path.isabs( fileName ):
-                    workingDir = os.path.dirname( fileName )
-                else:
-                    if projectDir != "":
-                        workingDir = projectDir
-                    else:
-                        workingDir = os.getcwd()
-                lint.analyzeBuffer( fileOrContent, pylintrcFile,
-                                    GlobalData().getProjectImportDirs(),
+                    path = os.path.dirname( fileName )
+                    if path not in importDirs:
+                        importDirs.append( path )
+
+                lint.analyzeBuffer( fileOrContent, pylintrcFile, importDirs,
                                     workingDir )
             else:
-                if os.path.isdir( fileName ):
-                    workingDir = fileName
-                else:
-                    workingDir = os.path.dirname( fileName )
-                lint.analyzeFile( fileOrContent, pylintrcFile,
-                                  GlobalData().getProjectImportDirs(),
+                # The file exists
+                fNames = fileOrContent
+                if type( fileOrContent ) == type( "a" ):
+                    fNames = fileOrContent.split()
+
+                importDirs = GlobalData().getProjectImportDirs()
+                for fName in fNames:
+                    path = os.path.dirname( fName )
+                    if path not in importDirs:
+                        importDirs.append( path )
+
+                lint.analyzeFile( fileOrContent, pylintrcFile, importDirs,
                                   workingDir )
 
         except Exception, exc:
