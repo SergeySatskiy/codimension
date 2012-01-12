@@ -26,8 +26,10 @@ import os, sys
 import rope.base.project
 from project            import CodimensionProject
 from briefmodinfocache  import BriefModuleInfoCache
-from settings           import ropePreferences
+from runparamscache     import RunParametersCache
+from settings           import ropePreferences, settingsDir
 from PyQt4.QtCore       import QDir
+from compatibility      import relpath
 
 
 class GlobalData( object ):
@@ -46,6 +48,10 @@ class GlobalData( object ):
             self.version = "unknown"
             self.project = CodimensionProject()
             self.briefModinfoCache = BriefModuleInfoCache()
+            self.runParamsCache = RunParametersCache()
+            if os.path.isfile( settingsDir + "runparamscache" ):
+                self.runParamsCache.deserialize( settingsDir + \
+                                                 "runparamscache" )
 
             self.fileAvailable = self.__checkFile()
             self.doxygenAvailable = self.__checkDoxygen()
@@ -53,8 +59,38 @@ class GlobalData( object ):
             self.graphvizAvailable = self.__checkGraphviz()
             return
 
+        def getRunParameters( self, fileName ):
+            " Provides the run parameters "
+            if self.project.isLoaded():
+                if self.project.isProjectFile( fileName ):
+                    key = relpath( fileName,
+                                   os.path.dirname( self.project.fileName ) )
+                else:
+                    key = fileName
+                return self.project.runParamsCache.get( key )
+
+            # No project loaded
+            return self.runParamsCache.get( fileName )
+
+        def addRunParams( self, fileName, params ):
+            " Registers new latest run parameters "
+            if self.project.isLoaded():
+                if self.project.isProjectFile( fileName ):
+                    key = relpath( fileName,
+                                   os.path.dirname( self.project.fileName ) )
+                else:
+                    key = fileName
+                self.project.runParamsCache.add( key, params )
+                self.project.serializeRunParameters()
+                return
+
+            # No project loaded
+            self.runParamsCache.add( fileName, params )
+            self.runParamsCache.serialize( settingsDir + "runparamscache" )
+            return
+
         def getRopeProject( self, fileName = "" ):
-            if self.project.fileName != "":
+            if self.project.isLoaded():
                 return self.project.ropeProject
 
             # There is no current project so create a temporary one.

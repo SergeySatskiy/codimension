@@ -43,7 +43,7 @@ srcDir = os.path.dirname( os.path.abspath( sys.argv[0] ) )
 if not srcDir in sys.path:
     sys.path.append( srcDir )
 
-from utils.settings         import Settings
+from utils.settings         import Settings, settingsDir
 from utils.globals          import GlobalData
 from ui.application         import CodimensionApplication
 from ui.splashscreen        import SplashScreen
@@ -94,7 +94,7 @@ def codimensionMain():
 
     # Load the skin
     globalData.skin = Skin()
-    globalData.skin.load( settings.basedir + "skins" + \
+    globalData.skin.load( settingsDir + "skins" + \
                           os.path.sep + settings.skinName )
 
     # Create QT application

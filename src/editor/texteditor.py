@@ -23,7 +23,7 @@
 " Text editor implementation "
 
 
-import os.path, logging
+import os.path, logging, subprocess
 import lexer
 from scintillawrap              import ScintillaWrapper
 from PyQt4.QtCore               import Qt, QFileInfo, SIGNAL, QSize, \
@@ -56,11 +56,14 @@ from utils.importutils          import getImportsList, \
 from ui.importlist              import ImportListWidget
 from ui.outsidechanges          import OutsideChangeWidget
 import export
-from autocomplete.bufferutils   import getContext, getPrefixAndObject, getEditorTags
+from autocomplete.bufferutils   import getContext, getPrefixAndObject, \
+                                       getEditorTags
 from autocomplete.completelists import getCompletionList, getCalltipAndDoc, \
                                        getDefinitionLocation
 from cdmbriefparser             import getBriefModuleInfoFromMemory
 from ui.completer               import CodeCompleter
+from ui.runparams               import RunDialog
+from utils.run                  import getTerminalCommand
 
 
 class TextEditor( ScintillaWrapper ):
@@ -1492,6 +1495,24 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                       self.__onImportDgm )
         self.importsDiagramButton.setEnabled( False )
 
+        # Run script and its menu
+        runScriptMenu = QMenu( self )
+        runScriptDlgAct = runScriptMenu.addAction( \
+                                PixmapCache().getIcon( 'detailsdlg.png' ),
+                                'Set run parameters' )
+        self.connect( runScriptDlgAct, SIGNAL( 'triggered()' ),
+                      self.__onRunScriptSettings )
+        self.runScriptButton = QToolButton( self )
+        self.runScriptButton.setIcon( \
+                            PixmapCache().getIcon( 'run.png' ) )
+        self.runScriptButton.setToolTip( 'Run script' )
+        self.runScriptButton.setPopupMode( QToolButton.DelayedPopup )
+        self.runScriptButton.setMenu( runScriptMenu )
+        self.runScriptButton.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.runScriptButton, SIGNAL( 'clicked(bool)' ),
+                      self.__onRunScript )
+        self.runScriptButton.setEnabled( False )
+
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
 
@@ -1573,6 +1594,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.addAction( self.pylintButton )
         toolbar.addAction( self.pymetricsButton )
         toolbar.addWidget( self.importsDiagramButton )
+        toolbar.addWidget( self.runScriptButton )
         toolbar.addAction( self.__undoButton )
         toolbar.addAction( self.__redoButton )
         toolbar.addWidget( spacer )
@@ -1616,6 +1638,9 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.importsDiagramButton.setEnabled( \
                             self.__fileType == PythonFileType and
                             GlobalData().graphvizAvailable )
+        self.runScriptButton.setEnabled( self.__fileType == PythonFileType and \
+                                         self.isModified() == False and \
+                                         os.path.isabs( self.__fileName ) )
         return
 
     def __onPylint( self ):
@@ -1793,6 +1818,9 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Triggered when the content is changed "
         self.__undoButton.setEnabled( self.__editor.isUndoAvailable() )
         self.__redoButton.setEnabled( self.__editor.isRedoAvailable() )
+        self.runScriptButton.setEnabled( self.__fileType == PythonFileType and \
+                                         self.isModified() == False and \
+                                         os.path.isabs( self.__fileName ) )
         return
 
     def __onRedo( self ):
@@ -2001,6 +2029,28 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             non-modified files is received """
         self.emit( SIGNAL( 'ReloadAllNonModifiedRequest' ) )
         return
+
+    def __onRunScriptSettings( self ):
+        " Shows the run parameters dialogue "
+        fileName = self.getFileName()
+        params = GlobalData().getRunParameters( fileName )
+        dlg = RunDialog( fileName, params )
+        if dlg.exec_() == QDialog.Accepted:
+            GlobalData().addRunParams( fileName, dlg.runParams )
+            self.__onRunScript()
+        return
+
+    def __onRunScript( self ):
+        " Runs the script "
+        fileName = self.getFileName()
+        params = GlobalData().getRunParameters( fileName )
+
+        cmd = getTerminalCommand( fileName )
+        print cmd
+
+        subprocess.Popen( cmd, shell = True )
+        return
+
 
     # Mandatory interface part is below
 

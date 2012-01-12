@@ -26,8 +26,9 @@
 import os, os.path, ConfigParser, logging, uuid, re
 import rope.base.project
 from briefmodinfocache import BriefModuleInfoCache
+from runparamscache    import RunParametersCache
 from PyQt4.QtCore      import QObject, SIGNAL
-from settings          import Settings, ropePreferences
+from settings          import Settings, ropePreferences, settingsDir
 from watcher           import Watcher
 
 
@@ -64,6 +65,7 @@ class CodimensionProject( QObject ):
         self.todos = []
         self.bookmarks = []
         self.briefModinfoCache = BriefModuleInfoCache()
+        self.runParamsCache = RunParametersCache()
         self.topLevelDirs = []
         self.findHistory = []
         self.findNameHistory = []
@@ -121,6 +123,7 @@ class CodimensionProject( QObject ):
         self.todos = []
         self.bookmarks = []
         self.briefModinfoCache = BriefModuleInfoCache()
+        self.runParamsCache = RunParametersCache()
         self.topLevelDirs = []
         self.findHistory = []
         self.findNameHistory = []
@@ -151,7 +154,7 @@ class CodimensionProject( QObject ):
 
         # Try to create the user project directory
         projectUuid = str( uuid.uuid1() )
-        userProjectDir = Settings().basedir + projectUuid + os.path.sep
+        userProjectDir = settingsDir + projectUuid + os.path.sep
         if not os.path.exists( userProjectDir ):
             try:
                 os.mkdir( userProjectDir )
@@ -264,6 +267,7 @@ class CodimensionProject( QObject ):
         # Save brief cache
         self.briefModinfoCache.serialize( self.userProjectDir + \
                                           "briefinfocache" )
+        self.serializeRunParameters()
         self.__saveTopLevelDirs()
         self.__saveSearchHistory()
         self.__saveTabsStatus()
@@ -272,6 +276,11 @@ class CodimensionProject( QObject ):
         self.__saveRecentFiles()
 
         self.__formatOK = True
+        return
+
+    def serializeRunParameters( self ):
+        " Saves the run parameters cache "
+        self.runParamsCache.serialize( self.userProjectDir + "runparamscache" )
         return
 
     def __saveTabsStatus( self ):
@@ -409,7 +418,7 @@ class CodimensionProject( QObject ):
             logging.warning( "Project file does not have UUID. " \
                              "Re-generate it..." )
             self.uuid = str( uuid.uuid1() )
-        self.userProjectDir = Settings().basedir + self.uuid + os.path.sep
+        self.userProjectDir = settingsDir + self.uuid + os.path.sep
         if not os.path.exists( self.userProjectDir ):
             os.mkdir( self.userProjectDir )
 
@@ -456,6 +465,9 @@ class CodimensionProject( QObject ):
         if os.path.exists( self.userProjectDir + "briefinfocache" ):
             self.briefModinfoCache.deserialize( self.userProjectDir + \
                                                 "briefinfocache" )
+        if os.path.exists( self.userProjectDir + "runparamscache" ):
+            self.runParamsCache.deserialize( self.userProjectDir + \
+                                             "runparamscache" )
 
         # Get each file info as it could be out of date
         self.__updateModinfoCache()

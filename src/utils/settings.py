@@ -27,6 +27,10 @@ import os, os.path, ConfigParser, logging
 from PyQt4.QtCore import QObject, SIGNAL, QDir
 from filepositions import FilesPositions
 
+
+settingsDir = os.path.normpath( str( QDir.homePath() ) ) + \
+              os.path.sep + ".codimension" + os.path.sep
+
 ropePreferences = { 'ignore_syntax_errors': True,
                     'ignore_bad_imports':   True,
                     'soa_followed_calls':   2,
@@ -91,19 +95,16 @@ class Settings( object ):
         def __init__( self ):
 
             QObject.__init__( self )
-            self.basedir = os.path.normpath( str( QDir.homePath() ) ) + \
-                           os.path.sep + ".codimension"
 
             # make sure that the directory exists
-            if not os.path.exists( self.basedir ):
-                os.mkdir( self.basedir )
-            self.basedir += os.path.sep
+            if not os.path.exists( settingsDir ):
+                os.mkdir( settingsDir )
 
             # Save the config file name
-            self.fullFileName = self.basedir + "settings"
+            self.fullFileName = settingsDir + "settings"
 
             # Load previous sessions files positions and tabs status
-            self.filePositions = FilesPositions( self.basedir )
+            self.filePositions = FilesPositions( settingsDir )
             self.tabsStatus = self.__loadTabsStatus()
             self.findFilesWhat, \
             self.findFilesDirs, \
@@ -471,7 +472,7 @@ class Settings( object ):
 
             config = ConfigParser.ConfigParser()
             try:
-                config.read( self.basedir + "tabsstatus" )
+                config.read( settingsDir + "tabsstatus" )
             except:
                 config = None
                 return []
@@ -483,7 +484,7 @@ class Settings( object ):
 
         def __saveTabsStatus( self ):
             " Saves the tabs status "
-            fName = self.basedir + "tabsstatus"
+            fName = settingsDir + "tabsstatus"
             try:
                 f = open( fName, "w" )
                 self.__writeHeader( f )
@@ -498,7 +499,7 @@ class Settings( object ):
             " Loads the saved find files dialog history "
             config = ConfigParser.ConfigParser()
             try:
-                config.read( self.basedir + "findinfiles" )
+                config.read( settingsDir + "findinfiles" )
             except:
                 return [], [], []
 
@@ -511,7 +512,7 @@ class Settings( object ):
             " Loads the saved find name dialog history "
             config = ConfigParser.ConfigParser()
             try:
-                config.read( self.basedir + "findinfiles" )
+                config.read( settingsDir + "findinfiles" )
             except:
                 return []
             return self.__loadListSection( config, 'findnamehistory', 'find' )
@@ -520,14 +521,14 @@ class Settings( object ):
             " Loads the saved find file dialog history "
             config = ConfigParser.ConfigParser()
             try:
-                config.read( self.basedir + "findfile" )
+                config.read( settingsDir + "findfile" )
             except:
                 return []
             return self.__loadListSection( config, 'findfilehistory', 'find' )
 
         def __saveFindFilesHistory( self ):
             " Saves the find in files dialog history "
-            fName = self.basedir + "findinfiles"
+            fName = settingsDir + "findinfiles"
             try:
                 f = open( fName, "w" )
                 self.__writeHeader( f )
@@ -545,7 +546,7 @@ class Settings( object ):
 
         def __saveFindNameHistory( self ):
             " Saves the find name dialog history "
-            fName = self.basedir + "findinfiles"
+            fName = settingsDir + "findinfiles"
             try:
                 f = open( fName, "w" )
                 self.__writeList( f, "findnamehistory", "find",
@@ -558,7 +559,7 @@ class Settings( object ):
 
         def __saveFindFileHistory( self ):
             " Saves the find file dialog history "
-            fName = self.basedir + "findfile"
+            fName = settingsDir + "findfile"
             try:
                 f = open( fName, "w" )
                 self.__writeList( f, 'findfilehistory', 'find',
