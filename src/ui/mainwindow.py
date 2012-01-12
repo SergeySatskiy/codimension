@@ -928,6 +928,8 @@ class CodimensionMainWindow( QMainWindow ):
             if dirName.startswith( baseDir ):
                 # Replace paths with relative if needed
                 dirName = dirName[ len( baseDir ) : ]
+                if dirName == "":
+                    dirName = "."
             importDirs.append( dirName )
             index += 1
 
