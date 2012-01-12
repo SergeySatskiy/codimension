@@ -121,7 +121,7 @@ class GlobalData( object ):
             while index >= 0:
                 path = result[ index ]
                 if not os.path.isabs( path ):
-                    result[ index ] = basePath + path
+                    result[ index ] = os.path.normpath( basePath + path )
                 index -= 1
             return result
 
