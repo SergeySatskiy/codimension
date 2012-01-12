@@ -1,0 +1,562 @@
+#
+# -*- coding: utf-8 -*-
+#
+# codimension - graphics python two-way code editor and analyzer
+# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# $Id$
+#
+
+
+""" Run parameters dialog """
+
+
+import os, os.path, copy
+from PyQt4.QtCore   import Qt, SIGNAL, QStringList
+from PyQt4.QtGui    import QDialog, QDialogButtonBox, QVBoxLayout, \
+                           QSizePolicy, QLabel, QGridLayout, QHBoxLayout, \
+                           QRadioButton, QGroupBox, QPushButton, QFileDialog, \
+                           QLineEdit, QTreeWidget, QAbstractItemView, \
+                           QTreeWidgetItem
+from itemdelegates  import NoOutlineHeightDelegate
+from utils.run      import RunParameters
+
+
+class EnvVarDialog( QDialog ):
+    " Single environment variable add/edit dialog "
+    def __init__( self, name = '', value = '', parent = None ):
+        QDialog.__init__( self, parent )
+
+        self.name = name
+        self.value = value
+
+        self.__nameEdit = None
+        self.__valueEdit = None
+        self.__OKButton = None
+        self.__createLayout()
+
+        self.setWindowTitle( "Environment variable" )
+        self.setMaximumHeight( self.sizeHint().height() )
+        self.setMaximumHeight( self.sizeHint().height() )
+
+        self.__nameEdit.setText( name )
+        self.__valueEdit.setText( value )
+
+        self.__nameEdit.setEnabled( name == "" )
+        self.__OKButton.setEnabled( name != "" )
+        return
+
+    def __createLayout( self ):
+        " Creates the dialog layout "
+
+        self.resize( 300, 50 )
+        self.setSizeGripEnabled( True )
+
+        # Top level layout
+        layout = QVBoxLayout( self )
+
+        gridLayout = QGridLayout()
+        nameLabel = QLabel( "Name" )
+        gridLayout.addWidget( nameLabel, 0, 0 )
+        valueLabel = QLabel( "Value" )
+        gridLayout.addWidget( valueLabel, 1, 0 )
+        self.__nameEdit = QLineEdit()
+        self.connect( self.__nameEdit,
+                      SIGNAL( 'textChanged(const QString &)' ),
+                      self.__nameChanged )
+        gridLayout.addWidget( self.__nameEdit, 0, 1 )
+        self.__valueEdit = QLineEdit()
+        self.connect( self.__valueEdit,
+                      SIGNAL( 'textChanged(const QString &)' ),
+                      self.__valueChanged )
+        gridLayout.addWidget( self.__valueEdit, 1, 1 )
+        layout.addLayout( gridLayout )
+
+        buttonBox = QDialogButtonBox()
+        buttonBox.setOrientation( Qt.Horizontal )
+        buttonBox.setStandardButtons( QDialogButtonBox.Ok |
+                                      QDialogButtonBox.Cancel )
+        self.__OKButton = buttonBox.button( QDialogButtonBox.Ok )
+        self.__OKButton.setDefault( True )
+        self.connect( buttonBox, SIGNAL( "accepted()" ), self.accept )
+        self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
+        layout.addWidget( buttonBox )
+        return
+
+    def __nameChanged( self, newName ):
+        " Triggered when a variable name is changed "
+        strippedName = str( newName ).strip()
+        self.__OKButton.setEnabled( strippedName != "" and \
+                                    ' ' not in strippedName )
+        self.name = strippedName
+        return
+
+    def __valueChanged( self, newValue ):
+        " Triggered when a variable value is changed "
+        self.value = newValue
+        return
+
+
+
+class RunDialog( QDialog ):
+    """ Run parameters dialog implementation """
+
+    # See utils.run for runParameters
+    def __init__( self, path, runParameters, parent = None ):
+        QDialog.__init__( self, parent )
+
+        # Avoid pylint complains
+        self.__argsEdit = None
+        self.__scriptWDRButton = None
+        self.__dirRButton = None
+        self.__dirEdit = None
+        self.__dirSelectButton = None
+        self.__inheritParentRButton = None
+        self.__inheritParentPlusRButton = None
+        self.__inhPlusEnvTable = None
+        self.__addInhButton = None
+        self.__delInhButton = None
+        self.__editInhButton = None
+        self.__specificRButton = None
+        self.__specEnvTable = None
+        self.__addSpecButton = None
+        self.__delSpecButton = None
+        self.__editSpecButton = None
+        self.__runButton = None
+
+        self.__createLayout()
+        self.setWindowTitle( "Run parameters for " + path )
+
+        # Restore the values
+        self.runParams = copy.deepcopy( runParameters )
+        self.__argsEdit.setText( self.runParams.arguments )
+
+        # Working dir
+        if self.runParams.useScriptLocation:
+            self.__scriptWDRButton.setChecked( True )
+            self.__dirEdit.setEnabled( False )
+            self.__dirSelectButton.setEnabled( False )
+        else:
+            self.__dirRButton.setChecked( True )
+            self.__dirEdit.setEnabled( True )
+            self.__dirSelectButton.setEnabled( True )
+
+        self.__dirEdit.setText( self.runParams.specificDir )
+
+        # Environment
+        self.__populateTable( self.__inhPlusEnvTable,
+                              self.runParams.additionToParentEnv )
+        self.__populateTable( self.__specEnvTable,
+                              self.runParams.specificEnv )
+
+        if self.runParams.envType == RunParameters.InheritParentEnv:
+            self.__inheritParentRButton.setChecked( True )
+            self.__setEnabledInheritedPlusEnv( False )
+            self.__setEnabledSpecificEnv( False )
+        elif self.runParams.envType == RunParameters.InheritParentEnvPlus:
+            self.__inheritParentPlusRButton.setChecked( True )
+            self.__setEnabledSpecificEnv( False )
+        else:
+            self.__specificRButton.setChecked( True )
+            self.__setEnabledInheritedPlusEnv( False )
+
+        self.__setRunButtonProps()
+        return
+
+    @staticmethod
+    def __populateTable( table, dictionary ):
+        " Populates the given table "
+        for key, value in dictionary.iteritems():
+            item = QTreeWidgetItem( QStringList() << key << value )
+            table.addTopLevelItem( item )
+        if len( dictionary ) > 0:
+            table.setCurrentItem( table.topLevelItem( 0 ) )
+        return
+
+    def __setEnabledInheritedPlusEnv( self, value ):
+        " Disables/enables 'inherited and add' section controls "
+        self.__inhPlusEnvTable.setEnabled( value )
+        self.__addInhButton.setEnabled( value )
+        self.__delInhButton.setEnabled( value )
+        self.__editInhButton.setEnabled( value )
+        return
+
+    def __setEnabledSpecificEnv( self, value ):
+        " Disables/enables 'specific env' section controls "
+        self.__specEnvTable.setEnabled( value )
+        self.__addSpecButton.setEnabled( value )
+        self.__delSpecButton.setEnabled( value )
+        self.__editSpecButton.setEnabled( value )
+        return
+
+    def __createLayout( self ):
+        """ Creates the dialog layout """
+
+        self.resize( 600, 300 )
+        self.setSizeGripEnabled( True )
+
+        # Top level layout
+        layout = QVBoxLayout( self )
+
+        # Cmd line arguments
+        argsLabel = QLabel( "Command line arguments" )
+        self.__argsEdit = QLineEdit()
+        self.connect( self.__argsEdit,
+                      SIGNAL( 'textChanged(const QString &)' ),
+                      self.__argsChanged )
+        argsLayout = QHBoxLayout()
+        argsLayout.addWidget( argsLabel )
+        argsLayout.addWidget( self.__argsEdit )
+        layout.addLayout( argsLayout )
+
+        # Working directory
+        workDirGroupbox = QGroupBox( self )
+        workDirGroupbox.setTitle( "Working directory" )
+        sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Preferred )
+        sizePolicy.setHorizontalStretch( 0 )
+        sizePolicy.setVerticalStretch( 0 )
+        sizePolicy.setHeightForWidth( \
+                        workDirGroupbox.sizePolicy().hasHeightForWidth() )
+        workDirGroupbox.setSizePolicy( sizePolicy )
+
+        gridLayoutWD = QGridLayout( workDirGroupbox )
+        self.__scriptWDRButton = QRadioButton( workDirGroupbox )
+        self.__scriptWDRButton.setText( "Use script location" )
+        gridLayoutWD.addWidget( self.__scriptWDRButton, 0, 0 )
+        self.connect( self.__scriptWDRButton, SIGNAL( 'clicked()' ),
+                      self.__scriptWDirClicked )
+
+        self.__dirRButton = QRadioButton( workDirGroupbox )
+        self.__dirRButton.setText( "Select directory" )
+        gridLayoutWD.addWidget( self.__dirRButton, 1, 0 )
+        self.connect( self.__dirRButton, SIGNAL( 'clicked()' ),
+                      self.__dirClicked )
+
+        self.__dirEdit = QLineEdit( workDirGroupbox )
+        gridLayoutWD.addWidget( self.__dirEdit, 1, 1 )
+        self.connect( self.__dirEdit,
+                      SIGNAL( 'textChanged(const QString &)' ),
+                      self.__workingDirChanged )
+
+        self.__dirSelectButton = QPushButton( workDirGroupbox )
+        self.__dirSelectButton.setText( "..." )
+        gridLayoutWD.addWidget( self.__dirSelectButton, 1, 2 )
+        self.connect( self.__dirSelectButton, SIGNAL( 'clicked()' ),
+                      self.__selectDirClicked )
+
+        layout.addWidget( workDirGroupbox )
+
+        # Environment
+        envGroupbox = QGroupBox( self )
+        envGroupbox.setTitle( "Environment" )
+        sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Preferred )
+        sizePolicy.setHorizontalStretch( 0 )
+        sizePolicy.setVerticalStretch( 0 )
+        sizePolicy.setHeightForWidth( \
+                        envGroupbox.sizePolicy().hasHeightForWidth() )
+        envGroupbox.setSizePolicy( sizePolicy )
+
+        layoutEnv = QVBoxLayout( envGroupbox )
+        self.__inheritParentRButton = QRadioButton( envGroupbox )
+        self.__inheritParentRButton.setText( "Inherit parent" )
+        self.connect( self.__inheritParentRButton, SIGNAL( 'clicked()' ),
+                      self.__inhClicked )
+        layoutEnv.addWidget( self.__inheritParentRButton )
+
+        self.__inheritParentPlusRButton = QRadioButton( envGroupbox )
+        self.__inheritParentPlusRButton.setText( "Inherit parent and add" )
+        self.connect( self.__inheritParentPlusRButton, SIGNAL( 'clicked()' ),
+                      self.__inhPlusClicked )
+        layoutEnv.addWidget( self.__inheritParentPlusRButton )
+        hInhPlusLayout = QHBoxLayout()
+        self.__inhPlusEnvTable = QTreeWidget()
+        self.connect( self.__inhPlusEnvTable,
+                      SIGNAL( 'itemActivated(QTreeWidgetItem*, int)' ),
+                      self.__inhPlusItemActivated )
+        self.__tuneTable( self.__inhPlusEnvTable )
+        hInhPlusLayout.addWidget( self.__inhPlusEnvTable )
+        vInhPlusLayout = QVBoxLayout()
+        self.__addInhButton = QPushButton()
+        self.connect( self.__addInhButton, SIGNAL( 'clicked()' ),
+                      self.__addInhClicked )
+        self.__addInhButton.setText( 'Add' )
+        vInhPlusLayout.addWidget( self.__addInhButton )
+        self.__delInhButton = QPushButton()
+        self.connect( self.__delInhButton, SIGNAL( 'clicked()' ),
+                      self.__delInhClicked )
+        self.__delInhButton.setText( 'Delete' )
+        vInhPlusLayout.addWidget( self.__delInhButton )
+        self.__editInhButton = QPushButton()
+        self.connect( self.__editInhButton, SIGNAL( 'clicked()' ),
+                      self.__editInhClicked )
+        self.__editInhButton.setText( "Edit" )
+        vInhPlusLayout.addWidget( self.__editInhButton )
+        hInhPlusLayout.addLayout( vInhPlusLayout )
+        layoutEnv.addLayout( hInhPlusLayout )
+
+        self.__specificRButton = QRadioButton( envGroupbox )
+        self.__specificRButton.setText( "Specific" )
+        self.connect( self.__specificRButton, SIGNAL( 'clicked()' ),
+                      self.__specClicked )
+        layoutEnv.addWidget( self.__specificRButton )
+        hSpecLayout = QHBoxLayout()
+        self.__specEnvTable = QTreeWidget()
+        self.__tuneTable( self.__specEnvTable )
+        hSpecLayout.addWidget( self.__specEnvTable )
+        vSpecLayout = QVBoxLayout()
+        self.__addSpecButton = QPushButton()
+        self.connect( self.__addSpecButton, SIGNAL( 'clicked()' ),
+                      self.__addSpecClicked )
+        self.__addSpecButton.setText( 'Add' )
+        vSpecLayout.addWidget( self.__addSpecButton )
+        self.__delSpecButton = QPushButton()
+        self.connect( self.__delSpecButton, SIGNAL( 'clicked()' ),
+                      self.__delSpecClicked )
+        self.__delSpecButton.setText( 'Delete' )
+        vSpecLayout.addWidget( self.__delSpecButton )
+        self.__editSpecButton = QPushButton()
+        self.connect( self.__editSpecButton, SIGNAL( 'clicked()' ),
+                      self.__editSpecClicked )
+        self.__editSpecButton.setText( "Edit" )
+        vSpecLayout.addWidget( self.__editSpecButton )
+        hSpecLayout.addLayout( vSpecLayout )
+        layoutEnv.addLayout( hSpecLayout )
+
+        layout.addWidget( envGroupbox )
+
+        # Buttons at the bottom
+        buttonBox = QDialogButtonBox()
+        buttonBox.setOrientation( Qt.Horizontal )
+        buttonBox.setStandardButtons( QDialogButtonBox.Cancel )
+        self.__runButton = buttonBox.addButton( "Run",
+                                                QDialogButtonBox.ActionRole )
+        self.__runButton.setDefault( True )
+        self.connect( self.__runButton, SIGNAL( 'clicked()' ),
+                      self.accept )
+        layout.addWidget( buttonBox )
+
+        self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
+        return
+
+    @staticmethod
+    def __tuneTable( table ):
+        " Sets the common settings for a table "
+
+        table.setAlternatingRowColors( True )
+        table.setRootIsDecorated( False )
+        table.setItemsExpandable( False )
+        table.setUniformRowHeights( True )
+        table.setSelectionMode( QAbstractItemView.SingleSelection )
+        table.setSelectionBehavior( QAbstractItemView.SelectRows )
+        table.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
+
+        headerLabels = QStringList() << "Variable" << "Value"
+        table.setHeaderLabels( headerLabels )
+
+        header = table.header()
+        header.setSortIndicator( 0, Qt.AscendingOrder )
+        header.setSortIndicatorShown( True )
+        header.setClickable( True )
+        table.setSortingEnabled( True )
+        return
+
+    def __scriptWDirClicked( self ):
+        " The script working dir button is clicked "
+        self.__dirEdit.setEnabled( False )
+        self.__dirSelectButton.setEnabled( False )
+        self.runParams.useScriptLocation = True
+
+        self.__setRunButtonProps()
+        return
+
+    def __dirClicked( self ):
+        " The script specific working dir button is clicked "
+        self.__dirEdit.setEnabled( True )
+        self.__dirSelectButton.setEnabled( True )
+        self.runParams.useScriptLocation = False
+
+        self.__setRunButtonProps()
+        return
+
+    def __argsChanged( self, value ):
+        " Triggered when cmd line args are changed "
+        value = str( value ).strip()
+        self.runParams.arguments = value
+        return
+
+    def __workingDirChanged( self, value ):
+        " Triggered when a working dir value is changed "
+        value = str( value )
+        self.runParams.specificDir = value
+
+        self.__setRunButtonProps()
+        return
+
+    def __setRunButtonProps( self ):
+        " Enable/disable run button and set its tooltip "
+        if self.__scriptWDRButton.isChecked() or \
+           os.path.isdir( str( self.__dirEdit.text() ) ):
+            self.__runButton.setEnabled( True )
+            self.__runButton.setToolTip( "Save parameters and run script" )
+            return
+
+        self.__runButton.setEnabled( False )
+        self.__runButton.setToolTip( "The given working " \
+                                     "dir is not found" )
+        return
+
+    def __selectDirClicked( self ):
+        " Selects the script working dir "
+        dirName = QFileDialog.getExistingDirectory( self,
+                    "Select the script working directory",
+                    self.__dirEdit.text(),
+                    QFileDialog.Options( QFileDialog.ShowDirsOnly ) )
+
+        if not dirName.isEmpty():
+            self.__dirEdit.setText( os.path.normpath( str( dirName ) ) )
+        return
+
+    def __inhClicked( self ):
+        " Inerit parent env radio button clicked "
+        self.__setEnabledInheritedPlusEnv( False )
+        self.__setEnabledSpecificEnv( False )
+        self.runParams.envType = RunParameters.InheritParentEnv
+        return
+
+    def __inhPlusClicked( self ):
+        " Inherit parent and add radio button clicked "
+        self.__setEnabledInheritedPlusEnv( True )
+        self.__setEnabledSpecificEnv( False )
+        self.runParams.envType = RunParameters.InheritParentEnvPlus
+
+        isOn = len( self.__inhPlusEnvTable.selectedIndexes() ) > 0
+        self.__delInhButton.setEnabled( isOn )
+        self.__editInhButton.setEnabled( isOn )
+        return
+
+    def __specClicked( self ):
+        " Specific env radio button clicked "
+        self.__setEnabledInheritedPlusEnv( False )
+        self.__setEnabledSpecificEnv( True )
+        self.runParams.envType = RunParameters.SpecificEnvironment
+
+        isOn = len( self.__specEnvTable.selectedIndexes() ) > 0
+        self.__delSpecButton.setEnabled( isOn )
+        self.__editSpecButton.setEnabled( isOn )
+        return
+
+    @staticmethod
+    def __delAndInsert( table, name, value ):
+        " Deletes an item by name if so; insert new; highlight it "
+        for index in xrange( table.topLevelItemCount() ):
+            item = table.topLevelItem( index )
+            if str( item.text( 0 ) ) == name:
+                table.takeTopLevelItem( index )
+                break
+
+        item = QTreeWidgetItem( QStringList() << name << value )
+        table.addTopLevelItem( item )
+        table.setCurrentItem( item )
+        return item
+
+    def __addInhClicked( self ):
+        " Add env var button clicked "
+        dlg = EnvVarDialog()
+        if dlg.exec_() == QDialog.Accepted:
+            self.__delAndInsert( self.__inhPlusEnvTable, dlg.name, dlg.value )
+            self.runParams.additionToParentEnv[ dlg.name ] = dlg.value
+            self.__delInhButton.setEnabled( True )
+            self.__editInhButton.setEnabled( True )
+        return
+
+    def __addSpecClicked( self ):
+        " Add env var button clicked "
+        dlg = EnvVarDialog()
+        if dlg.exec_() == QDialog.Accepted:
+            self.__delAndInsert( self.__specEnvTable, dlg.name, dlg.value )
+            self.runParams.specificEnv[ dlg.name ] = dlg.value
+            self.__delSpecButton.setEnabled( True )
+            self.__editSpecButton.setEnabled( True )
+        return
+
+    def __delInhClicked( self ):
+        " Delete the highlighted variable "
+        if self.__inhPlusEnvTable.topLevelItemCount() == 0:
+            return
+
+        name = self.__inhPlusEnvTable.currentItem().text( 0 )
+        for index in xrange( self.__inhPlusEnvTable.topLevelItemCount() ):
+            item = self.__inhPlusEnvTable.topLevelItem( index )
+            if name == item.text( 0 ):
+                self.__inhPlusEnvTable.takeTopLevelItem( index )
+                break
+
+        del self.runParams.additionToParentEnv[ str( name ) ]
+        if self.__inhPlusEnvTable.topLevelItemCount() == 0:
+            self.__delInhButton.setEnabled( False )
+            self.__editInhButton.setEnabled( False )
+        else:
+            self.__inhPlusEnvTable.setCurrentItem( \
+                                self.__inhPlusEnvTable.topLevelItem( 0 ) )
+        return
+
+    def __delSpecClicked( self ):
+        " Delete the highlighted variable "
+        if self.__specEnvTable.topLevelItemCount() == 0:
+            return
+
+        name = self.__specEnvTable.currentItem().text( 0 )
+        for index in xrange( self.__specEnvTable.topLevelItemCount() ):
+            item = self.__specEnvTable.topLevelItem( index )
+            if name == item.text( 0 ):
+                self.__specEnvTable.takeTopLevelItem( index )
+                break
+
+        del self.runParams.specificEnv[ str( name ) ]
+        if self.__specEnvTable.topLevelItemCount() == 0:
+            self.__delSpecButton.setEnabled( False )
+            self.__editSpecButton.setEnabled( False )
+        else:
+            self.__specEnvTable.setCurrentItem( \
+                            self.__specEnvTable.topLevelItem( 0 ) )
+        return
+
+    def __editInhClicked( self ):
+        " Edits the highlighted variable "
+        if self.__inhPlusEnvTable.topLevelItemCount() == 0:
+            return
+
+        item = self.__inhPlusEnvTable.currentItem()
+        dlg = EnvVarDialog( str( item.text( 0 ) ), str( item.text( 1 ) ), self )
+        if dlg.exec_() == QDialog.Accepted:
+            self.__delAndInsert( self.__inhPlusEnvTable, dlg.name, dlg.value )
+        return
+
+    def __inhPlusItemActivated( self, item, column ):
+        " Triggered when a table item is activated "
+        self.__editInhClicked()
+        return
+
+    def __editSpecClicked( self ):
+        " Edits the highlighted variable "
+        if self.__specEnvTable.topLevelItemCount() == 0:
+            return
+
+        item = self.__specEnvTable.currentItem()
+        dlg = EnvVarDialog( str( item.text( 0 ) ), str( item.text( 1 ) ), self )
+        if dlg.exec_() == QDialog.Accepted:
+            self.__delAndInsert( self.__specEnvTable, dlg.name, dlg.value )
+        return
