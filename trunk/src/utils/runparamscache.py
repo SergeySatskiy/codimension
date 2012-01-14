@@ -23,7 +23,7 @@
 
 """ codimension run parameters cache """
 
-import cPickle
+import cPickle, copy
 from run import RunParameters
 
 
@@ -53,7 +53,7 @@ class RunParametersCache( object ):
             self.remove( path )
             return
         # Non-default, so need to insert
-        self.__cache[ path ] = params
+        self.__cache[ path ] = copy.deepcopy( params )
         return
 
     def remove( self, path ):
