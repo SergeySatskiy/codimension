@@ -26,6 +26,7 @@
 import os, os.path, ConfigParser, logging
 from PyQt4.QtCore import QObject, SIGNAL, QDir
 from filepositions import FilesPositions
+from run import TERM_AUTO
 
 
 settingsDir = os.path.normpath( str( QDir.homePath() ) ) + \
@@ -64,6 +65,7 @@ _defaultSkin = "default"
 _defaultLastSuccessVerCheck = 0
 _defaultNewerVerShown = False
 _defaultModifiedFormat = "%s *"
+_defaultTermType = TERM_AUTO
 
 # Editor settings available via the user interface
 _defaultVerticalEdge = True
@@ -203,6 +205,9 @@ class Settings( object ):
             self.modifiedFormat = self.__getStr( config, 'general',
                                                  'modifiedFormat',
                                                  _defaultModifiedFormat )
+            self.terminalType = self.__getInt( config, 'general',
+                                               'terminalType',
+                                               _defaultTermType )
 
             asString = self.__getStr( config, 'general', 'hSplitterSizes',
                                       _defaultHSplitSize ).split( ',' )
@@ -303,6 +308,7 @@ class Settings( object ):
             self.projectLoaded = _defaultProjectLoaded
             self.lastSuccessVerCheck = _defaultLastSuccessVerCheck
             self.newerVerShown = _defaultNewerVerShown
+            self.terminalType = _defaultTermType
             return
 
         def __getInt( self, conf, sec, key, default ):
@@ -383,6 +389,7 @@ class Settings( object ):
                      "removeTrailingOnSave=" + str( self.removeTrailingOnSave ) + "\n" \
                      "lastSuccessVerCheck=" + str( self.lastSuccessVerCheck ) + "\n" \
                      "newerVerShown=" + str( self.newerVerShown ) + "\n" \
+                     "terminalType=" + str( self.terminalType ) + "\n" \
                      "leftBarMinimized=" + \
                         str( int( self.leftBarMinimized ) ) + "\n" \
                      "bottomBarMinimized=" + \
