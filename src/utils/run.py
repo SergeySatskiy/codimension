@@ -29,6 +29,12 @@
 import sys, os, getpass, commands
 
 
+TERM_AUTO    = 0
+TERM_KONSOLE = 1
+TERM_GNOME   = 2
+TERM_XTERM   = 3
+
+
 class RunParameters:
     " Stores the script run parameters "
 
@@ -112,19 +118,35 @@ def __isFileInPath( name ):
         return False
 
 
+__konsoleQuery = "kreadconfig --file kdeglobals --group General " \
+                 "--key TerminalApplication --default konsole"
 
-def getStartTerminalCommand():
+
+def getStartTerminalCommand( terminalType ):
     " Provides the UNIX command to start a new terminal, e.g.: xterm "
 
+    if terminalType == TERM_KONSOLE:
+        (s, term) = commands.getstatusoutput( __konsoleQuery )
+        if (s == 0) and __isFileInPath( term ):
+            return term
+        raise Exception( 'default KDE konsole is not found' )
+    elif terminalType == TERM_GNOME:
+        if __isFileInPath( 'gnome-terminal' ):
+            return 'gnome-terminal'
+        raise Exception( 'gnome-terminal is not in PATH' )
+    elif terminalType == TERM_XTERM:
+        if __isFileInPath( 'xterm' ):
+            return 'xterm'
+        raise Exception( 'xterm is not in PATH' )
+
+    # Autodetection is requested
     if 'COLORTERM' in os.environ:
         term = os.environ[ 'COLORTERM' ]
         if __isFileInPath( term ):
             return term
 
     if __isPrefixInEnviron( 'KDE' ):
-        konsoleQuery = "kreadconfig --file kdeglobals --group General " \
-                       "--key TerminalApplication --default konsole"
-        (s, term) = commands.getstatusoutput( konsoleQuery )
+        (s, term) = commands.getstatusoutput( __konsoleQuery )
         if (s == 0) and __isFileInPath( term ):
             return term
 
@@ -142,13 +164,16 @@ def getStartTerminalCommand():
 
 
 __osSpawn = {
-    'posix'         : "%(term)s -e %(shell)s -c '%(exec)s %(options)s; %(shell)s' &",
-    'Terminal'      : "Terminal --disable-server -x %(shell)s -c '%(exec)s %(options)s; %(shell)s' &",
-    'gnome-terminal': "gnome-terminal --disable-factory -x %(shell)s -c '%(exec)s %(options)s; %(shell)s' &",
+    'posix'         : "%(term)s -e %(shell)s -c " \
+                      "'cd %(wdir)s; %(exec)s %(options)s; %(shell)s' &",
+    'Terminal'      : "Terminal --disable-server -x %(shell)s -c " \
+                      "'cd %(wdir)s; %(exec)s %(options)s; %(shell)s' &",
+    'gnome-terminal': "gnome-terminal --disable-factory -x %(shell)s -c " \
+                      "'cd %(wdir)s; %(exec)s %(options)s; %(shell)s' &",
             }
 
 
-def getTerminalCommand( fileName ):
+def getTerminalCommand( fileName, workingDir, arguments, terminalType ):
     " Provides a command to run a separate shell terminal "
 
     if os.name != 'posix':
@@ -156,21 +181,104 @@ def getTerminalCommand( fileName ):
 
     pythonExec = sys.executable
     shell = getUserShell()
-    terminalStartCmd = getStartTerminalCommand()
+    terminalStartCmd = getStartTerminalCommand( terminalType )
+
+    args = ""
+    for index in xrange( len( arguments ) ):
+        args += ' "$CDM_ARG' + str( index ) + '"'
 
     if terminalStartCmd in __osSpawn:
         command = __osSpawn[ terminalStartCmd ] % { 'shell':   shell,
+                                                    'wdir':    workingDir,
                                                     'exec':    pythonExec,
-                                                    'options': fileName }
+                                                    'options': fileName + args }
     else:
         command = __osSpawn[ os.name ] % { 'term':    terminalStartCmd,
                                            'shell':   shell,
+                                           'wdir':    workingDir,
                                            'exec':    pythonExec,
-                                           'options': fileName }
+                                           'options': fileName + args }
 
     return command
+
+
+def parseCommandLineArguments( cmdLine ):
+    result = []
+
+    cmdLine = cmdLine.strip()
+    expectQuote = False
+    expectDblQuote = False
+    lastIndex = len( cmdLine ) - 1
+    argument = ""
+    index = 0
+    while index <= lastIndex:
+        if expectQuote:
+            if cmdLine[ index ] == "'":
+                if cmdLine[ index - 1 ] != '\\':
+                    if argument != "":
+                        result.append( argument )
+                        argument = ""
+                    expectQuote = False
+                else:
+                    argument = argument[ : -1 ] + "'"
+            else:
+                argument += cmdLine[ index ]
+            index += 1
+            continue
+        if expectDblQuote:
+            if cmdLine[ index ] == '"':
+                if cmdLine[ index - 1 ] != '\\':
+                    if argument != "":
+                        result.append( argument )
+                        argument = ""
+                    expectDblQuote = False
+                else:
+                    argument = argument[ : -1 ] + '"'
+            else:
+                argument += cmdLine[ index ]
+            index += 1
+            continue
+        # Not in a string literal
+        if cmdLine[ index ] == "'":
+            if index == 0 or cmdLine[ index - 1 ] != '\\':
+                expectQuote = True
+                if argument != "":
+                    result.append( argument )
+                    argument = ""
+            else:
+                argument = argument[ : -1 ] + "'"
+            index += 1
+            continue
+        if cmdLine[ index ] == '"':
+            if index == 0 or cmdLine[ index - 1 ] != '\\':
+                expectDblQuote = True
+                if argument != "":
+                    result.append( argument )
+                    argument = ""
+            else:
+                argument = argument[ : -1 ] + '"'
+            index += 1
+            continue
+        if cmdLine[ index ] in [ ' ', '\t' ]:
+            if argument != "":
+                result.append( argument )
+                argument = ""
+            index += 1
+            continue
+        argument += cmdLine[ index ]
+        index += 1
+
+
+    if argument != "":
+        result.append( argument )
+
+    if expectQuote or expectDblQuote:
+        raise Exception( "No closing quotation" )
+    return result
 
 
 if __name__ == '__main__':
     print "Current working dir: " + os.getcwd()
     print "Environment: " + str( os.environ )
+    print "Arguments: " + str( sys.argv )
+
