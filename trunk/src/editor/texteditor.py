@@ -24,6 +24,7 @@
 
 
 import os.path, logging, subprocess
+from subprocess import Popen
 import lexer
 from scintillawrap              import ScintillaWrapper
 from PyQt4.QtCore               import Qt, QFileInfo, SIGNAL, QSize, \
@@ -63,7 +64,8 @@ from autocomplete.completelists import getCompletionList, getCalltipAndDoc, \
 from cdmbriefparser             import getBriefModuleInfoFromMemory
 from ui.completer               import CodeCompleter
 from ui.runparams               import RunDialog
-from utils.run                  import getTerminalCommand
+from utils.run                  import getTerminalCommand, \
+                                       parseCommandLineArguments
 
 
 class TextEditor( ScintillaWrapper ):
@@ -2034,9 +2036,12 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Shows the run parameters dialogue "
         fileName = self.getFileName()
         params = GlobalData().getRunParameters( fileName )
-        dlg = RunDialog( fileName, params )
+        termType = Settings().terminalType
+        dlg = RunDialog( fileName, params, termType )
         if dlg.exec_() == QDialog.Accepted:
             GlobalData().addRunParams( fileName, dlg.runParams )
+            if dlg.termType != termType:
+                Settings().terminalType = dlg.termType
             self.__onRunScript()
         return
 
@@ -2045,10 +2050,32 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         fileName = self.getFileName()
         params = GlobalData().getRunParameters( fileName )
 
-        cmd = getTerminalCommand( fileName )
-        print cmd
+        if params.useScriptLocation:
+            workingDir = os.path.dirname( fileName )
+        else:
+            workingDir = params.specificDir
 
-        subprocess.Popen( cmd, shell = True )
+        # The arguments parsing is going to pass OK because it
+        # was checked in the run parameters dialogue
+        arguments = parseCommandLineArguments( params.arguments )
+        cmd = getTerminalCommand( fileName, workingDir, arguments,
+                                  Settings().terminalType )
+
+        if params.envType == params.InheritParentEnv:
+            # 'None' does not work here: popen stores last env somewhere and
+            # uses it inappropriately
+            environment = os.environ.copy()
+        elif params.envType == params.InheritParentEnvPlus:
+            environment = os.environ.copy()
+            environment.update( params.additionToParentEnv )
+        else:
+            environment = params.specificEnv.copy()
+
+        for index in xrange( len( arguments ) ):
+            environment[ 'CDM_ARG' + str( index ) ] = arguments[ index ]
+
+        Popen( cmd, shell = True,
+               cwd = workingDir, env = environment )
         return
 
 
