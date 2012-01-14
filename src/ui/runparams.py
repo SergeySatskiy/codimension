@@ -32,7 +32,8 @@ from PyQt4.QtGui    import QDialog, QDialogButtonBox, QVBoxLayout, \
                            QLineEdit, QTreeWidget, QAbstractItemView, \
                            QTreeWidgetItem
 from itemdelegates  import NoOutlineHeightDelegate
-from utils.run      import RunParameters
+from utils.run      import RunParameters, parseCommandLineArguments, \
+                           TERM_AUTO, TERM_GNOME, TERM_KONSOLE, TERM_XTERM
 
 
 class EnvVarDialog( QDialog ):
@@ -115,8 +116,11 @@ class RunDialog( QDialog ):
     """ Run parameters dialog implementation """
 
     # See utils.run for runParameters
-    def __init__( self, path, runParameters, parent = None ):
+    def __init__( self, path, runParameters, termType, parent = None ):
         QDialog.__init__( self, parent )
+
+        # Used as a return value
+        self.termType = termType
 
         # Avoid pylint complains
         self.__argsEdit = None
@@ -172,6 +176,16 @@ class RunDialog( QDialog ):
         else:
             self.__specificRButton.setChecked( True )
             self.__setEnabledInheritedPlusEnv( False )
+
+        # Terminal
+        if self.termType == TERM_AUTO:
+            self.__autoRButton.setChecked( True )
+        elif self.termType == TERM_KONSOLE:
+            self.__konsoleRButton.setChecked( True )
+        elif self.termType == TERM_GNOME:
+            self.__gnomeRButton.setChecked( True )
+        else:
+            self.__xtermRButton.setChecked( True )
 
         self.__setRunButtonProps()
         return
@@ -277,7 +291,7 @@ class RunDialog( QDialog ):
         layoutEnv.addWidget( self.__inheritParentRButton )
 
         self.__inheritParentPlusRButton = QRadioButton( envGroupbox )
-        self.__inheritParentPlusRButton.setText( "Inherit parent and add" )
+        self.__inheritParentPlusRButton.setText( "Inherit parent and add/modify" )
         self.connect( self.__inheritParentPlusRButton, SIGNAL( 'clicked()' ),
                       self.__inhPlusClicked )
         layoutEnv.addWidget( self.__inheritParentPlusRButton )
@@ -314,6 +328,9 @@ class RunDialog( QDialog ):
         layoutEnv.addWidget( self.__specificRButton )
         hSpecLayout = QHBoxLayout()
         self.__specEnvTable = QTreeWidget()
+        self.connect( self.__specEnvTable,
+                      SIGNAL( 'itemActivated(QTreeWidgetItem*, int)' ),
+                      self.__specItemActivated )
         self.__tuneTable( self.__specEnvTable )
         hSpecLayout.addWidget( self.__specEnvTable )
         vSpecLayout = QVBoxLayout()
@@ -334,8 +351,33 @@ class RunDialog( QDialog ):
         vSpecLayout.addWidget( self.__editSpecButton )
         hSpecLayout.addLayout( vSpecLayout )
         layoutEnv.addLayout( hSpecLayout )
-
         layout.addWidget( envGroupbox )
+
+        # Terminal
+        termGroupbox = QGroupBox( self )
+        termGroupbox.setTitle( "Terminal to run in (IDE wide setting)" )
+        sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Preferred )
+        sizePolicy.setHorizontalStretch( 0 )
+        sizePolicy.setVerticalStretch( 0 )
+        sizePolicy.setHeightForWidth( \
+                        termGroupbox.sizePolicy().hasHeightForWidth() )
+        termGroupbox.setSizePolicy( sizePolicy )
+
+        layoutTerm = QVBoxLayout( termGroupbox )
+        self.__autoRButton = QRadioButton( termGroupbox )
+        self.__autoRButton.setText( "Auto detection" )
+        layoutTerm.addWidget( self.__autoRButton )
+        self.__konsoleRButton = QRadioButton( termGroupbox )
+        self.__konsoleRButton.setText( "Default KDE konsole" )
+        layoutTerm.addWidget( self.__konsoleRButton )
+        self.__gnomeRButton = QRadioButton( termGroupbox )
+        self.__gnomeRButton.setText( "gnome-terminal" )
+        layoutTerm.addWidget( self.__gnomeRButton )
+        self.__xtermRButton = QRadioButton( termGroupbox )
+        self.__xtermRButton.setText( "xterm" )
+        layoutTerm.addWidget( self.__xtermRButton )
+        layout.addWidget( termGroupbox )
+
 
         # Buttons at the bottom
         buttonBox = QDialogButtonBox()
@@ -345,7 +387,7 @@ class RunDialog( QDialog ):
                                                 QDialogButtonBox.ActionRole )
         self.__runButton.setDefault( True )
         self.connect( self.__runButton, SIGNAL( 'clicked()' ),
-                      self.accept )
+                      self.onAccept )
         layout.addWidget( buttonBox )
 
         self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
@@ -395,27 +437,45 @@ class RunDialog( QDialog ):
         " Triggered when cmd line args are changed "
         value = str( value ).strip()
         self.runParams.arguments = value
+        self.__setRunButtonProps()
         return
 
     def __workingDirChanged( self, value ):
         " Triggered when a working dir value is changed "
         value = str( value )
         self.runParams.specificDir = value
-
         self.__setRunButtonProps()
         return
 
+    def __argumentsOK( self ):
+        " Returns True if the arguments are OK "
+        try:
+            parseCommandLineArguments( self.runParams.arguments )
+            return True
+        except:
+            return False
+
+    def __dirOK( self ):
+        " Returns True if the working dir is OK "
+        if self.__scriptWDRButton.isChecked():
+            return True
+        return os.path.isdir( str( self.__dirEdit.text() ) )
+
     def __setRunButtonProps( self ):
         " Enable/disable run button and set its tooltip "
-        if self.__scriptWDRButton.isChecked() or \
-           os.path.isdir( str( self.__dirEdit.text() ) ):
-            self.__runButton.setEnabled( True )
-            self.__runButton.setToolTip( "Save parameters and run script" )
+        if not self.__argumentsOK():
+            self.__runButton.setEnabled( False )
+            self.__runButton.setToolTip( "No closing quotation in arguments" )
             return
 
-        self.__runButton.setEnabled( False )
-        self.__runButton.setToolTip( "The given working " \
-                                     "dir is not found" )
+        if not self.__dirOK():
+            self.__runButton.setEnabled( False )
+            self.__runButton.setToolTip( "The given working " \
+                                         "dir is not found" )
+            return
+
+        self.__runButton.setEnabled( True )
+        self.__runButton.setToolTip( "Save parameters and run script" )
         return
 
     def __selectDirClicked( self ):
@@ -476,8 +536,10 @@ class RunDialog( QDialog ):
         " Add env var button clicked "
         dlg = EnvVarDialog()
         if dlg.exec_() == QDialog.Accepted:
-            self.__delAndInsert( self.__inhPlusEnvTable, dlg.name, dlg.value )
-            self.runParams.additionToParentEnv[ dlg.name ] = dlg.value
+            name = str( dlg.name )
+            value = str( dlg.value )
+            self.__delAndInsert( self.__inhPlusEnvTable, name, value )
+            self.runParams.additionToParentEnv[ name ] = value
             self.__delInhButton.setEnabled( True )
             self.__editInhButton.setEnabled( True )
         return
@@ -486,8 +548,10 @@ class RunDialog( QDialog ):
         " Add env var button clicked "
         dlg = EnvVarDialog()
         if dlg.exec_() == QDialog.Accepted:
-            self.__delAndInsert( self.__specEnvTable, dlg.name, dlg.value )
-            self.runParams.specificEnv[ dlg.name ] = dlg.value
+            name = str( dlg.name )
+            value = str( dlg.value )
+            self.__delAndInsert( self.__specEnvTable, name, value )
+            self.runParams.specificEnv[ name ] = value
             self.__delSpecButton.setEnabled( True )
             self.__editSpecButton.setEnabled( True )
         return
@@ -542,7 +606,10 @@ class RunDialog( QDialog ):
         item = self.__inhPlusEnvTable.currentItem()
         dlg = EnvVarDialog( str( item.text( 0 ) ), str( item.text( 1 ) ), self )
         if dlg.exec_() == QDialog.Accepted:
-            self.__delAndInsert( self.__inhPlusEnvTable, dlg.name, dlg.value )
+            name = str( dlg.name )
+            value = str( dlg.value )
+            self.__delAndInsert( self.__inhPlusEnvTable, name, value )
+            self.runParams.additionToParentEnv[ name ] = value
         return
 
     def __inhPlusItemActivated( self, item, column ):
@@ -558,5 +625,26 @@ class RunDialog( QDialog ):
         item = self.__specEnvTable.currentItem()
         dlg = EnvVarDialog( str( item.text( 0 ) ), str( item.text( 1 ) ), self )
         if dlg.exec_() == QDialog.Accepted:
-            self.__delAndInsert( self.__specEnvTable, dlg.name, dlg.value )
+            name = str( dlg.name )
+            value = str( dlg.value )
+            self.__delAndInsert( self.__specEnvTable, name, value )
+            self.runParams.specificEnv[ name ] = value
+        return
+
+    def __specItemActivated( self, item, column ):
+        " Triggered when a table item is activated "
+        self.__editSpecClicked()
+        return
+
+    def onAccept( self ):
+        " Saves the selected terminal value "
+        if self.__autoRButton.isChecked():
+            self.termType = TERM_AUTO
+        elif self.__konsoleRButton.isChecked():
+            self.termType = TERM_KONSOLE
+        elif self.__gnomeRButton.isChecked():
+            self.termType = TERM_GNOME
+        else:
+            self.termType = TERM_XTERM
+        self.accept()
         return
