@@ -3,16 +3,17 @@
 # Don't edit it manually unless you know what you are doing.
 #
 
-[dirs]
-dir0=./
+[importdirs]
+dir0=src
 
 [properties]
+scriptname=src/codimension.py
 creationdate=2010-08-08
 author=Sergey Satskiy
 license=GPL v3
-copyright=Copyright (c) Sergey Satskiy, 2010
-description=graphics 'python' two-way code editor and analyzer<CR><LF>It's so called "mix" of approaches
-version=0.0.2
+copyright=Copyright (c) Sergey Satskiy, 2010 - 2011
+description=Python IDE<CR><LF>Coding, metrics, analysis, diagrams etc.
+version=0.0
 email=sergey.satskiy@gmail.com
 uuid=f3933894-a35e-11df-bd37-001cc0b4d561
 
