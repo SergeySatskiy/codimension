@@ -351,7 +351,7 @@ class TreeViewFileItem( TreeViewItem ):
         if self.fileType == CodimensionProjectFileType:
             # Get the project properties
             try:
-                importDirs, creationDate, author, lic, \
+                scriptName, importDirs, creationDate, author, lic, \
                 copy_right, description, \
                 version, email, uuid = getProjectProperties( path )
                 self.toolTip = "Version: " + version + "\n" \

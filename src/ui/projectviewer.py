@@ -462,13 +462,15 @@ class ProjectViewer( QWidget ):
         dialog = ProjectPropertiesDialog( project )
         if dialog.exec_() == QDialog.Accepted:
             importDirs = []
-            index = 0
-            while index < dialog.importDirList.count():
+            for index in xrange( dialog.importDirList.count() ):
                 importDirs.append( str( dialog.importDirList.item( \
                                                         index ).text() ) )
-                index += 1
+            scriptName = str( dialog.scriptEdit.text() ).strip()
+            projectDir = project.getProjectDir()
+            if scriptName.startswith( projectDir ):
+                scriptName = scriptName.replace( projectDir, '' )
             project.updateProperties( \
-                importDirs,
+                scriptName, importDirs,
                 str( dialog.creationDateEdit.text() ).strip(),
                 str( dialog.authorEdit.text() ).strip(),
                 str( dialog.licenseEdit.text() ).strip(),

@@ -942,6 +942,7 @@ class CodimensionMainWindow( QMainWindow ):
 
         GlobalData().project.createNew( \
                         dialog.absProjectFileName,
+                        str( dialog.scriptEdit.text() ).strip(),
                         importDirs,
                         str( dialog.authorEdit.text() ).strip(),
                         str( dialog.licenseEdit.text() ).strip(),
