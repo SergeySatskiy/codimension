@@ -28,7 +28,7 @@ from PyQt4.QtCore import Qt, SIGNAL, QEvent, QObject
 from PyQt4.QtGui import QDialog, QLineEdit, QGridLayout, QLabel, QTextEdit, \
                         QDialogButtonBox, QVBoxLayout, QPushButton, \
                         QFileDialog, QMessageBox, QListWidget, QAbstractItemView
-from completers import DirCompleter
+from completers import DirCompleter, FileCompleter
 import os, pwd, socket, datetime, logging
 from utils.project import getProjectProperties
 from itemdelegates import NoOutlineHeightDelegate
@@ -86,12 +86,17 @@ class ProjectPropertiesDialog( QDialog, object ):
 
             # This is viewing properties and the argument is the path to the
             # project file
-            importDirs, creationDate, author, lic, \
+            scriptName, importDirs, creationDate, author, lic, \
             copy_right, description, \
             version, email, uuid = getProjectProperties( project )
 
+            if not os.path.isabs( scriptName ) and scriptName != "":
+                scriptName = os.path.dirname( project ) + os.path.sep + \
+                             scriptName
+
             self.nameEdit.setText( os.path.basename( project ) )
             self.dirEdit.setText( os.path.dirname( project ) )
+            self.scriptEdit.setText( scriptName )
             self.versionEdit.setText( version )
             self.authorEdit.setText( author )
             self.emailEdit.setText( email )
@@ -110,8 +115,14 @@ class ProjectPropertiesDialog( QDialog, object ):
             self.setWindowTitle( "Editing Project Properties" )
 
             # This is editing the existing project
+            scriptName = project.scriptName
+            if not os.path.isabs( scriptName ) and scriptName != "":
+                scriptName = os.path.dirname( project.fileName ) + \
+                             os.path.sep + scriptName
+
             self.nameEdit.setText( os.path.basename( project.fileName ) )
             self.dirEdit.setText( os.path.dirname( project.fileName ) )
+            self.scriptEdit.setText( scriptName )
             self.versionEdit.setText( project.version )
             self.authorEdit.setText( project.author )
             self.emailEdit.setText( project.email )
@@ -128,7 +139,7 @@ class ProjectPropertiesDialog( QDialog, object ):
                 self.importDirList.setCurrentRow( 0 )
                 self.delImportDirButton.setEnabled( True )
 
-            self.importDirList.setFocus()
+            self.scriptEdit.setFocus()
 
         return
 
@@ -162,11 +173,22 @@ class ProjectPropertiesDialog( QDialog, object ):
         gridLayout.addWidget( self.dirButton, 1, 2, 1, 1 )
         self.dirCompleter = DirCompleter( self.dirEdit )
 
+        # Project script
+        mainScriptLabel = QLabel( "Main script:", self )
+        gridLayout.addWidget( mainScriptLabel, 2, 0, 1, 1 )
+        self.scriptEdit = QLineEdit( self )
+        self.scriptEdit.setToolTip( "Project main script, " \
+                                    "used when the project is run" )
+        gridLayout.addWidget( self.scriptEdit, 2, 1, 1, 1 )
+        self.scriptButton = QPushButton( "...", self )
+        gridLayout.addWidget( self.scriptButton, 2, 2, 1, 1 )
+        self.fileCompleter = FileCompleter( self.scriptEdit )
+
         # Import dirs
         importLabel = QLabel( self )
         importLabel.setText( "Import directories:" )
         importLabel.setAlignment( Qt.AlignTop )
-        gridLayout.addWidget( importLabel, 2, 0, 1, 1 )
+        gridLayout.addWidget( importLabel, 3, 0, 1, 1 )
         self.importDirList = QListWidget( self )
         self.importDirList.setAlternatingRowColors( True )
         self.importDirList.setSelectionMode( QAbstractItemView.SingleSelection )
@@ -174,7 +196,7 @@ class ProjectPropertiesDialog( QDialog, object ):
         self.importDirList.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         self.importDirList.setToolTip( "Directories where to look for " \
                                        "project specific imports" )
-        gridLayout.addWidget( self.importDirList, 2, 1, 1, 1 )
+        gridLayout.addWidget( self.importDirList, 3, 1, 1, 1 )
 
         self.addImportDirButton = QPushButton( self )
         self.addImportDirButton.setText( "Add dir" )
@@ -185,72 +207,72 @@ class ProjectPropertiesDialog( QDialog, object ):
         vLayout.addWidget( self.addImportDirButton )
         vLayout.addWidget( self.delImportDirButton )
         vLayout.addStretch( 0 )
-        gridLayout.addLayout( vLayout, 2, 2, 1, 1 )
+        gridLayout.addLayout( vLayout, 3, 2, 1, 1 )
 
         # Version
         versionLabel = QLabel( self )
         versionLabel.setText( "Version:" )
-        gridLayout.addWidget( versionLabel, 3, 0, 1, 1 )
+        gridLayout.addWidget( versionLabel, 4, 0, 1, 1 )
         self.versionEdit = QLineEdit( self )
-        gridLayout.addWidget( self.versionEdit, 3, 1, 1, 1 )
+        gridLayout.addWidget( self.versionEdit, 4, 1, 1, 1 )
 
         # Author
         authorLabel = QLabel( self )
         authorLabel.setText( "Author:" )
-        gridLayout.addWidget( authorLabel, 4, 0, 1, 1 )
+        gridLayout.addWidget( authorLabel, 5, 0, 1, 1 )
         self.authorEdit = QLineEdit( self )
-        gridLayout.addWidget( self.authorEdit, 4, 1, 1, 1 )
+        gridLayout.addWidget( self.authorEdit, 5, 1, 1, 1 )
 
         # E-mail
         emailLabel = QLabel( self )
         emailLabel.setText( "E-mail:" )
-        gridLayout.addWidget( emailLabel, 5, 0, 1, 1 )
+        gridLayout.addWidget( emailLabel, 6, 0, 1, 1 )
         self.emailEdit = QLineEdit( self )
-        gridLayout.addWidget( self.emailEdit, 5, 1, 1, 1 )
+        gridLayout.addWidget( self.emailEdit, 6, 1, 1, 1 )
 
         # License
         licenseLabel = QLabel( self )
         licenseLabel.setText( "License:" )
-        gridLayout.addWidget( licenseLabel, 6, 0, 1, 1 )
+        gridLayout.addWidget( licenseLabel, 7, 0, 1, 1 )
         self.licenseEdit = QLineEdit( self )
-        gridLayout.addWidget( self.licenseEdit, 6, 1, 1, 1 )
+        gridLayout.addWidget( self.licenseEdit, 7, 1, 1, 1 )
 
         # Copyright
         copyrightLabel = QLabel( self )
         copyrightLabel.setText( "Copyright:" )
-        gridLayout.addWidget( copyrightLabel, 7, 0, 1, 1 )
+        gridLayout.addWidget( copyrightLabel, 8, 0, 1, 1 )
         self.copyrightEdit = QLineEdit( self )
-        gridLayout.addWidget( self.copyrightEdit, 7, 1, 1, 1 )
+        gridLayout.addWidget( self.copyrightEdit, 8, 1, 1, 1 )
 
         # Description
         descriptionLabel = QLabel( self )
         descriptionLabel.setText( "Description:" )
         descriptionLabel.setAlignment( Qt.AlignTop )
-        gridLayout.addWidget( descriptionLabel, 8, 0, 1, 1 )
+        gridLayout.addWidget( descriptionLabel, 9, 0, 1, 1 )
         self.descriptionEdit = QTextEdit( self )
         self.descriptionEdit.setTabChangesFocus( True )
         self.descriptionEdit.setAcceptRichText( False )
-        gridLayout.addWidget( self.descriptionEdit, 8, 1, 1, 1 )
+        gridLayout.addWidget( self.descriptionEdit, 9, 1, 1, 1 )
 
         # Creation date
         creationDateLabel = QLabel( self )
         creationDateLabel.setText( "Creation date:" )
-        gridLayout.addWidget( creationDateLabel, 9, 0, 1, 1 )
+        gridLayout.addWidget( creationDateLabel, 10, 0, 1, 1 )
         self.creationDateEdit = QLineEdit( self )
         self.creationDateEdit.setReadOnly( True )
         self.creationDateEdit.setFocusPolicy( Qt.NoFocus )
         self.creationDateEdit.setDisabled( True )
-        gridLayout.addWidget( self.creationDateEdit, 9, 1, 1, 1 )
+        gridLayout.addWidget( self.creationDateEdit, 10, 1, 1, 1 )
 
         # Project UUID
         uuidLabel = QLabel( self )
         uuidLabel.setText( "UUID:" )
-        gridLayout.addWidget( uuidLabel, 10, 0, 1, 1 )
+        gridLayout.addWidget( uuidLabel, 11, 0, 1, 1 )
         self.uuidEdit = QLineEdit( self )
         self.uuidEdit.setReadOnly( True )
         self.uuidEdit.setFocusPolicy( Qt.NoFocus )
         self.uuidEdit.setDisabled( True )
-        gridLayout.addWidget( self.uuidEdit, 10, 1, 1, 1 )
+        gridLayout.addWidget( self.uuidEdit, 11, 1, 1, 1 )
 
         verticalLayout.addLayout( gridLayout )
 
@@ -274,6 +296,8 @@ class ProjectPropertiesDialog( QDialog, object ):
         self.connect( buttonBox, SIGNAL( "accepted()" ), self.onOKButton )
         self.connect( buttonBox, SIGNAL( "rejected()" ), self.reject )
         self.connect( self.dirButton, SIGNAL( "clicked()" ), self.onDirButton )
+        self.connect( self.scriptButton, SIGNAL( "clicked()" ),
+                      self.onScriptButton )
         self.connect( self.importDirList, SIGNAL( "currentRowChanged(int)" ),
                       self.onImportDirRowChanged )
         self.connect( self.addImportDirButton,
@@ -285,7 +309,9 @@ class ProjectPropertiesDialog( QDialog, object ):
 
         self.setTabOrder( self.nameEdit, self.dirEdit )
         self.setTabOrder( self.dirEdit, self.dirButton )
-        self.setTabOrder( self.dirButton, self.importDirList )
+        self.setTabOrder( self.dirButton, self.scriptEdit )
+        self.setTabOrder( self.scriptEdit, self.scriptButton )
+        self.setTabOrder( self.scriptButton, self.importDirList )
         self.setTabOrder( self.importDirList, self.addImportDirButton )
         self.setTabOrder( self.addImportDirButton, self.delImportDirButton )
         self.setTabOrder( self.delImportDirButton, self.versionEdit )
@@ -317,6 +343,16 @@ class ProjectPropertiesDialog( QDialog, object ):
 
         if not dirName.isEmpty():
             self.dirEdit.setText( os.path.normpath( str( dirName ) ) )
+        return
+
+    def onScriptButton( self ):
+        " Displays a file selection dialog "
+        scriptName = QFileDialog.getOpenFileName( self,
+                        "Select project main script",
+                        self.dirEdit.text() )
+
+        if not scriptName.isEmpty():
+            self.scriptEdit.setText( os.path.normpath( str( scriptName ) ) )
         return
 
     def onImportDirRowChanged( self, row ):
@@ -488,6 +524,8 @@ class ProjectPropertiesDialog( QDialog, object ):
         self.nameEdit.setDisabled( True )
         self.dirEdit.setDisabled( True )
         self.dirButton.setDisabled( True )
+        self.scriptEdit.setDisabled( True )
+        self.scriptButton.setDisabled( True )
         self.importDirList.setDisabled( True )
         self.addImportDirButton.setDisabled( True )
         self.delImportDirButton.setDisabled( True )

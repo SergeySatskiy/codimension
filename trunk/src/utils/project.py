@@ -50,6 +50,7 @@ class CodimensionProject( QObject ):
         self.userProjectDir = ""    # Directory in ~/.codimension/uuidNN/
         self.filesList = set()
 
+        self.scriptName = ""        # Script to run the project
         self.creationDate = ""
         self.author = ""
         self.license = ""
@@ -110,6 +111,7 @@ class CodimensionProject( QObject ):
         # The set holds all files and directories. The dirs end with os.path.sep
         self.filesList = set()
 
+        self.scriptName = ""
         self.creationDate = ""
         self.author = ""
         self.license = ""
@@ -148,8 +150,8 @@ class CodimensionProject( QObject ):
         self.__dirWatcher = None
         return
 
-    def createNew( self, fileName, importDirs, author, lic, copyRight,
-                   description, creationDate, version, email ):
+    def createNew( self, fileName, scriptName, importDirs, author, lic,
+                   copyRight, description, creationDate, version, email ):
         " Creates a new project "
 
         # Try to create the user project directory
@@ -174,6 +176,7 @@ class CodimensionProject( QObject ):
 
         self.fileName = str( fileName )
         self.importDirs = importDirs
+        self.scriptName = scriptName
         self.creationDate = creationDate
         self.author = author
         self.license = lic
@@ -246,6 +249,7 @@ class CodimensionProject( QObject ):
 
         # Project properties part
         propertiesPart = "[properties]\n" \
+                         "scriptname=" + self.scriptName + "\n" \
                          "creationdate=" + self.creationDate + "\n" \
                          "author=" + self.author + "\n" \
                          "license=" + self.license + "\n" \
@@ -404,6 +408,8 @@ class CodimensionProject( QObject ):
         self.fileName = str( absPath )
 
         # Properties part
+        self.scriptName = self.__getStr( config, 'properties',
+                                                 'scriptname', '' )
         self.creationDate = self.__getStr( config, 'properties',
                                                    'creationdate', '' )
         self.author = self.__getStr( config, 'properties', 'author', '' )
@@ -874,12 +880,13 @@ class CodimensionProject( QObject ):
         self.__saveFindObjects()
         return
 
-    def updateProperties( self, importDirs, creationDate, author,
+    def updateProperties( self, scriptName, importDirs, creationDate, author,
                           lic, copy_right, version,
                           email, description ):
         " Updates the project properties "
 
-        if self.creationDate == creationDate and \
+        if self.scriptName == scriptName and \
+           self.creationDate == creationDate and \
            self.author == author and \
            self.license == lic and \
            self.copyright == copy_right and \
@@ -891,6 +898,7 @@ class CodimensionProject( QObject ):
             return
 
         self.importDirs = importDirs
+        self.scriptName = scriptName
         self.creationDate = creationDate
         self.author = author
         self.license = lic
@@ -963,6 +971,7 @@ def getProjectProperties( projectFile ):
     except:
         pass
 
+    scriptName = readValue( config, 'properties', 'scriptname' )
     creationDate = readValue( config, 'properties', 'creationdate' )
     author = readValue( config, 'properties', 'author' )
     lic = readValue( config, 'properties', 'license' )
@@ -975,6 +984,6 @@ def getProjectProperties( projectFile ):
 
     config = None
 
-    return importDirs, creationDate, author, lic, copy_right, description, \
-           version, email, projectUuid
+    return scriptName, importDirs, creationDate, author, lic, copy_right, \
+           description, version, email, projectUuid
 

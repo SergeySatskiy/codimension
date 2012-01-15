@@ -71,7 +71,7 @@ class RecentProjectViewItem( QTreeWidgetItem ):
 
             # Get the project properties
             try:
-                importDirs, creationDate, author, lic, \
+                scriptName, importDirs, creationDate, author, lic, \
                 copy_right, description, \
                 version, email, uuid = getProjectProperties( fileName )
                 propertiesToolTip = "Version: " + version + "\n" \
@@ -178,7 +178,7 @@ class RecentFileViewItem( QTreeWidgetItem ):
         elif fileType == CodimensionProjectFileType:
             # Get the project properties
             try:
-                importDirs, creationDate, author, lic, \
+                scriptName, importDirs, creationDate, author, lic, \
                 copy_right, description, \
                 version, email, uuid = getProjectProperties( fileName )
                 propertiesToolTip = "Version: " + version + "\n" \
@@ -582,7 +582,16 @@ class RecentProjectsViewer( QWidget ):
             project = GlobalData().project
             dialog = ProjectPropertiesDialog( project )
             if dialog.exec_() == QDialog.Accepted:
+                importDirs = []
+                for index in xrange( dialog.importDirList.count() ):
+                    importDirs.append( str( dialog.importDirList.item( \
+                                                            index ).text() ) )
+                scriptName = str( dialog.scriptEdit.text() ).strip()
+                projectDir = project.getProjectDir()
+                if scriptName.startswith( projectDir ):
+                    scriptName = scriptName.replace( projectDir, '' )
                 project.updateProperties( \
+                    scriptName, importDirs,
                     str( dialog.creationDateEdit.text() ).strip(),
                     str( dialog.authorEdit.text() ).strip(),
                     str( dialog.licenseEdit.text() ).strip(),
