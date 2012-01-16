@@ -41,8 +41,7 @@ from welcomewidget              import WelcomeWidget
 from helpwidget                 import QuickHelpWidget
 from editor.texteditor          import TextEditorTabWidget
 from pixmapwidget               import PixmapTabWidget
-from utils.fileutils            import detectFileType, getFileIcon, \
-                                       HTMLFileType, PythonFileType, \
+from utils.fileutils            import detectFileType, PythonFileType, \
                                        Python3FileType, PixmapFileType
 from utils.compatibility        import relpath
 from utils.misc                 import getNewFileTemplate
