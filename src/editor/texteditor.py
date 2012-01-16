@@ -2074,8 +2074,11 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         for index in xrange( len( arguments ) ):
             environment[ 'CDM_ARG' + str( index ) ] = arguments[ index ]
 
-        Popen( cmd, shell = True,
-               cwd = workingDir, env = environment )
+        try:
+            Popen( cmd, shell = True,
+                   cwd = workingDir, env = environment )
+        except Exception, exc:
+            logging.error( str( exc ) )
         return
 
 

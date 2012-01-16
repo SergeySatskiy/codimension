@@ -23,6 +23,7 @@
 """ codimension main window """
 
 import os, os.path, sys, logging, ConfigParser
+from subprocess                 import Popen
 from PyQt4.QtCore               import SIGNAL, Qt, QSize, QTimer, QDir, QVariant
 from PyQt4.QtGui                import QLabel, QToolBar, QWidget, QMessageBox, \
                                        QVBoxLayout, QSplitter, QDialog, \
@@ -67,6 +68,9 @@ from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
 from diagram.importsdgm         import ImportsDiagramDialog, \
                                        ImportsDiagramProgress, \
                                        ImportDiagramOptions
+from ui.runparams               import RunDialog
+from utils.run                  import getTerminalCommand, \
+                                       parseCommandLineArguments
 
 
 class EditorsManagerWidget( QWidget ):
@@ -520,13 +524,31 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( importsDlgAct, SIGNAL( 'triggered()' ),
                       self.__onImportDgmTuned )
         self.importsDiagramButton = QToolButton( self )
-        self.importsDiagramButton.setIcon( PixmapCache().getIcon( 'importsdiagram.png' ) )
+        self.importsDiagramButton.setIcon( \
+                            PixmapCache().getIcon( 'importsdiagram.png' ) )
         self.importsDiagramButton.setToolTip( 'Generate imports diagram' )
         self.importsDiagramButton.setPopupMode( QToolButton.DelayedPopup )
         self.importsDiagramButton.setMenu( importsMenu )
         self.importsDiagramButton.setFocusPolicy( Qt.NoFocus )
         self.connect( self.importsDiagramButton, SIGNAL( 'clicked(bool)' ),
                       self.__onImportDgm )
+
+        # Run project button and its menu
+        runProjectMenu = QMenu( self )
+        runProjectAct = runProjectMenu.addAction( \
+                                PixmapCache().getIcon( 'detailsdlg.png' ),
+                                'Set run parameters' )
+        self.connect( runProjectAct, SIGNAL( 'triggered()' ),
+                      self.__onRunProjectSettings )
+        self.runProjectButton = QToolButton( self )
+        self.runProjectButton.setIcon( \
+                            PixmapCache().getIcon( 'run.png' ) )
+        self.runProjectButton.setToolTip( 'Project is not loaded' )
+        self.runProjectButton.setPopupMode( QToolButton.DelayedPopup )
+        self.runProjectButton.setMenu( runProjectMenu )
+        self.runProjectButton.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.runProjectButton, SIGNAL( 'clicked(bool)' ),
+                      self.__onRunProject )
 
         packageDiagramButton = QAction( \
                 PixmapCache().getIcon( 'packagediagram.png' ),
@@ -692,6 +714,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__toolbar.addSeparator()
         self.__toolbar.addAction( packageDiagramButton )
         self.__toolbar.addWidget( self.importsDiagramButton )
+        self.__toolbar.addWidget( self.runProjectButton )
         self.__toolbar.addAction( applicationDiagramButton )
         self.__toolbar.addAction( doxygenButton )
         self.__toolbar.addSeparator()
@@ -776,6 +799,7 @@ class CodimensionMainWindow( QMainWindow ):
                     self.__pylintButton.setMenu( self.__absentPylintRCMenu )
             else:
                 self.settings.projectLoaded = False
+        self.updateRunDebugButtons()
         return
 
     def updateWindowTitle( self ):
@@ -791,11 +815,28 @@ class CodimensionMainWindow( QMainWindow ):
 
     def updateToolbarStatus( self ):
         " Enables/disables the toolbar buttons "
-        projectLoaded = GlobalData().project.fileName != ""
+        projectLoaded = GlobalData().project.isLoaded()
         self.linecounterButton.setEnabled( projectLoaded )
         self.__pylintButton.setEnabled( projectLoaded and \
                                         GlobalData().pylintAvailable )
         self.importsDiagramButton.setEnabled( GlobalData().graphvizAvailable )
+        return
+
+    def updateRunDebugButtons( self ):
+        " Updates the run/debug buttons statuses "
+        if not GlobalData().project.isLoaded():
+            self.runProjectButton.setEnabled( False )
+            self.runProjectButton.setToolTip( "Run project" )
+            return
+
+        if not GlobalData().isProjectScriptValid():
+            self.runProjectButton.setEnabled( False )
+            self.runProjectButton.setToolTip( "Cannot run project - script " \
+                                              "is not specified or invalid" )
+            return
+
+        self.runProjectButton.setEnabled( True )
+        self.runProjectButton.setToolTip( "Run project" )
         return
 
     def linecounterButtonClicked( self ):
@@ -1287,6 +1328,69 @@ class CodimensionMainWindow( QMainWindow ):
                                               options )
         if progressDlg.exec_() == QDialog.Accepted:
             self.openDiagram( progressDlg.scene, "Generated for the project" )
+        return
+
+    def __onRunProjectSettings( self ):
+        " Brings up the dialog with run script settings "
+        if not GlobalData().isProjectScriptValid():
+            self.updateRunDebugButtons()
+            logging.error( "Invalid project script. " \
+                           "Use project properties dialog to " \
+                           "select existing python script." )
+            return
+
+        fileName = GlobalData().project.getProjectScript()
+        params = GlobalData().getRunParameters( fileName )
+        termType = Settings().terminalType
+        dlg = RunDialog( fileName, params, termType )
+        if dlg.exec_() == QDialog.Accepted:
+            GlobalData().addRunParams( fileName, dlg.runParams )
+            if dlg.termType != termType:
+                Settings().terminalType = dlg.termType
+            self.__onRunProject()
+        return
+
+    def __onRunProject( self ):
+        " Runs the project with saved sattings "
+        if not GlobalData().isProjectScriptValid():
+            self.updateRunDebugButtons()
+            logging.error( "Invalid project script. " \
+                           "Use project properties dialog to " \
+                           "select existing python script." )
+            return
+
+        fileName = GlobalData().project.getProjectScript()
+        params = GlobalData().getRunParameters( fileName )
+
+        if params.useScriptLocation:
+            workingDir = os.path.dirname( fileName )
+        else:
+            workingDir = params.specificDir
+
+        # The arguments parsing is going to pass OK because it
+        # was checked in the run parameters dialogue
+        arguments = parseCommandLineArguments( params.arguments )
+        cmd = getTerminalCommand( fileName, workingDir, arguments,
+                                  Settings().terminalType )
+
+        if params.envType == params.InheritParentEnv:
+            # 'None' does not work here: popen stores last env somewhere and
+            # uses it inappropriately
+            environment = os.environ.copy()
+        elif params.envType == params.InheritParentEnvPlus:
+            environment = os.environ.copy()
+            environment.update( params.additionToParentEnv )
+        else:
+            environment = params.specificEnv.copy()
+
+        for index in xrange( len( arguments ) ):
+            environment[ 'CDM_ARG' + str( index ) ] = arguments[ index ]
+
+        try:
+            Popen( cmd, shell = True,
+                   cwd = workingDir, env = environment )
+        except Exception, exc:
+            logging.error( str( exc ) )
         return
 
     def __verticalEdgeChanged( self ):

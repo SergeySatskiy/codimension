@@ -112,10 +112,10 @@ class GlobalData( object ):
 
         def getProjectImportDirs( self ):
             " Provides a list of the project import dirs if so "
-            if self.project.fileName == "":
+            if not self.project.isLoaded():
                 return []
 
-            basePath = os.path.dirname( self.project.fileName ) + os.path.sep
+            basePath = self.project.getProjectDir()
             result = list( self.project.importDirs )
             index = len( result ) - 1
             while index >= 0:
@@ -124,6 +124,19 @@ class GlobalData( object ):
                     result[ index ] = os.path.normpath( basePath + path )
                 index -= 1
             return result
+
+        def isProjectScriptValid( self ):
+            " True if the project script valid "
+            scriptName = self.project.getProjectScript()
+            if not os.path.exists( scriptName ):
+                return False
+            scriptName = os.path.realpath( scriptName )
+            if not os.path.isfile( scriptName ):
+                return False
+            if not scriptName.endswith( ".py" ) and \
+               not scriptName.endswith( ".py3" ):
+                   return False
+            return True
 
         @staticmethod
         def __checkFile():
