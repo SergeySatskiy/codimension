@@ -74,7 +74,7 @@ class ClickableTabBar( QTabBar ):
 class EditorsManager( QTabWidget ):
     " Tab bar with editors "
 
-    def __init__( self, parent = None ):
+    def __init__( self, parent ):
 
         QTabWidget.__init__( self, parent )
         self.setTabBar( ClickableTabBar() )
@@ -955,6 +955,7 @@ class EditorsManager( QTabWidget ):
                 GlobalData().project.addRecentFile( fileName )
             currentWidget.updateStatus()
             self.__updateStatusBar()
+            self.__mainWindow.updateRunDebugButtons()
             return True
 
         return False

@@ -54,6 +54,7 @@ from newnesteddir       import NewProjectDirDialog
 from diagram.importsdgm import ImportsDiagramDialog, \
                                ImportDiagramOptions, \
                                ImportsDiagramProgress
+from utils.compatibility import relpath
 
 
 class ProjectViewer( QWidget ):
@@ -465,10 +466,12 @@ class ProjectViewer( QWidget ):
             for index in xrange( dialog.importDirList.count() ):
                 importDirs.append( str( dialog.importDirList.item( \
                                                         index ).text() ) )
+
             scriptName = str( dialog.scriptEdit.text() ).strip()
-            projectDir = project.getProjectDir()
-            if scriptName.startswith( projectDir ):
-                scriptName = scriptName.replace( projectDir, '' )
+            relativePath = relpath( scriptName, project.getProjectDir() )
+            if not relativePath.startswith( '..' ):
+                scriptName = relativePath
+
             project.updateProperties( \
                 scriptName, importDirs,
                 str( dialog.creationDateEdit.text() ).strip(),

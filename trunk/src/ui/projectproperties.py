@@ -91,8 +91,8 @@ class ProjectPropertiesDialog( QDialog, object ):
             version, email, uuid = getProjectProperties( project )
 
             if not os.path.isabs( scriptName ) and scriptName != "":
-                scriptName = os.path.dirname( project ) + os.path.sep + \
-                             scriptName
+                scriptName = os.path.normpath( os.path.dirname( project ) + \
+                                               os.path.sep + scriptName )
 
             self.nameEdit.setText( os.path.basename( project ) )
             self.dirEdit.setText( os.path.dirname( project ) )
@@ -115,14 +115,9 @@ class ProjectPropertiesDialog( QDialog, object ):
             self.setWindowTitle( "Editing Project Properties" )
 
             # This is editing the existing project
-            scriptName = project.scriptName
-            if not os.path.isabs( scriptName ) and scriptName != "":
-                scriptName = os.path.dirname( project.fileName ) + \
-                             os.path.sep + scriptName
-
             self.nameEdit.setText( os.path.basename( project.fileName ) )
-            self.dirEdit.setText( os.path.dirname( project.fileName ) )
-            self.scriptEdit.setText( scriptName )
+            self.dirEdit.setText( project.getProjectDir() )
+            self.scriptEdit.setText( project.getProjectScript() )
             self.versionEdit.setText( project.version )
             self.authorEdit.setText( project.author )
             self.emailEdit.setText( project.email )
