@@ -921,6 +921,16 @@ class CodimensionProject( QObject ):
         return os.path.dirname( os.path.realpath( self.fileName ) ) + \
                os.path.sep
 
+    def getProjectScript( self ):
+        " Provides the project script file name "
+        if not self.isLoaded():
+            return ""
+        if self.scriptName == "":
+            return ""
+        if os.path.isabs( self.scriptName ):
+            return self.scriptName
+        return os.path.normpath( self.getProjectDir() + self.scriptName )
+
     def addRecentFile( self, path ):
         " Adds a single recent file. True if a new file was inserted. "
         if path in self.recentFiles:
