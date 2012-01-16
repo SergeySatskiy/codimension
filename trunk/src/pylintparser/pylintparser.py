@@ -319,7 +319,7 @@ class Pylint( object ):
                 initHook = [ "--init-hook" ]
                 code = "import sys"
                 for dirName in importDirs:
-                    code += ";sys.path.append('" + dirName + "')"
+                    code += ";sys.path.insert(0,'" + dirName + "')"
                 initHook.append( code )
 
             skipTillRecognised = False
