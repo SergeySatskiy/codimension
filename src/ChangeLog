@@ -1,5 +1,7 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Bug fix: copy/paste buffer content was overwritten when the user selected an
+  item in a completion list. Issue #310.
 * Bug fix: exception while creating a new project
 * New feature: run a script in a separate terminal. The running parameters are
   cached and stored. The stored parameters are used to run the same script
