@@ -33,6 +33,7 @@ from utils.pixmapcache   import PixmapCache
 from utils.globals       import GlobalData
 from projectbrowsermodel import ProjectBrowserModel
 from filesbrowserbase    import FilesBrowser
+from utils.project       import CodimensionProject
 
 
 class ProjectBrowser( FilesBrowser ):
@@ -53,7 +54,8 @@ class ProjectBrowser( FilesBrowser ):
 
     def __onProjectChanged( self, what ):
         " Triggered when a project is changed "
-        self.model().reset()
+        if what == CodimensionProject.CompleteProject:
+            self.model().reset()
         return
 
     def reload( self ):
