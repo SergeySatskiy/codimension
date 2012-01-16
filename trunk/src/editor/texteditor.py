@@ -1232,6 +1232,7 @@ class TextEditor( ScintillaWrapper ):
     def insertCompletion( self, text ):
         " Triggered when a completion is selected "
         if text != "":
+            oldBuffer = QApplication.clipboard().text()
             prefixLength = len( self.__completionPrefix )
             line, pos = self.getCursorPosition()
             self.beginUndoAction()
@@ -1243,6 +1244,7 @@ class TextEditor( ScintillaWrapper ):
             self.__completionPrefix = ""
             self.__completionObject = ""
             self.__completer.hide()
+            QApplication.clipboard().setText( oldBuffer )
         return
 
     def isImportLine( self ):
