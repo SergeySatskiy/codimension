@@ -57,8 +57,7 @@ _defaultXDelta = 0
 _defaultYDelta = 0
 _defaultHSplitSize = "200, 450, 575"
 _defaultVSplitSize = "400, 150"
-_defaultFilesFilters = [ "\.svn", "\.cvs", ".*\~$",
-                         ".*\.pyc$", ".*\.swp$", ".*\.pyo$", "^\." ]
+_defaultFilesFilters = [ "^\." ]
 _defaultProjectLoaded = False
 _defaultZoom = 0
 _defaultSkin = "default"
