@@ -165,19 +165,30 @@ class CodeCompleter( QCompleter ):
 
     def moveToNext( self ):
         " Moves the selection one row down "
+        if self.completionCount() <= 1:
+            return
+
         newRow = self.popup().currentIndex().row() + 1
         lastRow = self.completionCount() - 1
         if newRow <= lastRow:
             cidx = self.completionModel().index( newRow, 0 )
-            self.popup().setCurrentIndex( cidx )
+        else:
+            cidx = self.completionModel().index( 0, 0 )
+        self.popup().setCurrentIndex( cidx )
         return
 
     def moveToPrevious( self ):
         " Moves the selection one row up "
+        if self.completionCount() <= 1:
+            return
+
         newRow = self.popup().currentIndex().row() - 1
         if newRow >= 0:
             cidx = self.completionModel().index( newRow, 0 )
-            self.popup().setCurrentIndex( cidx )
+        else:
+            lastRow = self.completionCount() - 1
+            cidx = self.completionModel().index( lastRow, 0 )
+        self.popup().setCurrentIndex( cidx )
         return
 
     def eventFilter( self, obj, evnt ):
@@ -186,25 +197,37 @@ class CodeCompleter( QCompleter ):
             if evnt.modifiers() != Qt.NoModifier and evnt.text().size() == 0:
                 # Supress
                 return True
-            if evnt.key() in [ Qt.Key_Enter, Qt.Key_Return ]:
+            key = evnt.key()
+            if key in [ Qt.Key_Enter, Qt.Key_Return ]:
                 self.emit( SIGNAL( "activated(const QString &)" ),
                            self.currentCompletion() )
                 return True
-            elif evnt.key() == Qt.Key_Home:
+            elif key == Qt.Key_Home:
                 cidx = self.completionModel().index( 0, 0 )
                 self.popup().setCurrentIndex( cidx )
                 return True
-            elif evnt.key() == Qt.Key_End:
+            elif key == Qt.Key_End:
                 lastRow = self.completionCount() - 1
                 cidx = self.completionModel().index( lastRow, 0 )
                 self.popup().setCurrentIndex( cidx )
                 return True
-            elif evnt.key() in [ Qt.Key_Tab, Qt.Key_Down, Qt.Key_Right ]:
+            elif key in [ Qt.Key_Tab, Qt.Key_Down, Qt.Key_Right ]:
                 self.moveToNext()
                 return True
-            elif evnt.key() in [ Qt.Key_Backtab, Qt.Key_Up, Qt.Key_Left ]:
+            elif key in [ Qt.Key_Backtab, Qt.Key_Up, Qt.Key_Left ]:
                 self.moveToPrevious()
                 return True
+            elif key == Qt.Key_PageUp:
+                cRow = self.popup().currentIndex().row()
+                if cRow == 0:
+                    self.moveToPrevious()
+                    return True
+            elif key == Qt.Key_PageDown:
+                lastRow = self.completionCount() - 1
+                cRow = self.popup().currentIndex().row()
+                if lastRow == cRow:
+                    self.moveToNext()
+                    return True
 
         return QCompleter.eventFilter( self, obj, evnt )
 
