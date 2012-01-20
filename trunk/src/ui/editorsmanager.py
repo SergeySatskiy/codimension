@@ -596,6 +596,7 @@ class EditorsManager( QTabWidget ):
                                     "The file has been modified outside codimension" )
                 self.setTabIcon( widgetIndex,
                                  PixmapCache().getIcon( 'modifiedfile.png' ) )
+                GlobalData().validateRopeProject( fileName )
                 return
 
         if fileType not in [ PythonFileType, Python3FileType ]:
@@ -862,6 +863,7 @@ class EditorsManager( QTabWidget ):
                 self._updateIconAndTooltip( self.currentIndex() )
                 self.emit( SIGNAL( 'fileUpdated' ), fileName,
                            currentWidget.getUUID() )
+                GlobalData().validateRopeProject( fileName )
                 return True
             # Error saving the buffer
             return False
@@ -951,6 +953,7 @@ class EditorsManager( QTabWidget ):
             if existedBefore:
                 self.emit( SIGNAL( 'fileUpdated' ), fileName,
                            currentWidget.getUUID() )
+                GlobalData().validateRopeProject( fileName )
             else:
                 self.emit( SIGNAL( 'bufferSavedAs' ), fileName,
                            currentWidget.getUUID() )
