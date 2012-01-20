@@ -90,6 +90,7 @@ class GlobalData( object ):
             return
 
         def getRopeProject( self, fileName = "" ):
+            " Provides existed or creates a new rope project "
             if self.project.isLoaded():
                 return self.project.ropeProject
 
@@ -109,6 +110,22 @@ class GlobalData( object ):
                                                  **ropePreferences )
             project.validate( project.root )
             return project
+
+        def validateRopeProject( self, fileName = "" ):
+            " Validates the existed rope project if so "
+            if not self.project.isLoaded():
+                return
+
+            # Currently rope supports validating of directories only
+            # There is a hope that it will support validating a single file
+            # one day. So the fileName argument is ignored by now and the whole
+            # project is invalidated.
+            if fileName != "":
+                if not fileName.endswith( ".py" ) and \
+                   not fileName.endswith( ".py3" ):
+                    return
+            self.project.ropeProject.validate( self.project.ropeProject.root )
+            return
 
         def getProjectImportDirs( self ):
             " Provides a list of the project import dirs if so "

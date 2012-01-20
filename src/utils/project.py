@@ -513,8 +513,14 @@ class CodimensionProject( QObject ):
         " Triggered when the watcher detects changes "
 ##        report = "REPORT: "
 ##        projectItems = []
+        ropeToValidate = False
+
         for item in items:
             item = str( item )
+            if ropeToValidate == False:
+                if item.endswith( ".py" ) or \
+                   item.endswith( ".py3" ):
+                    ropeToValidate = True
 
 #            if not os.path.islink( item ):
 #                realPath = os.path.realpath( item[ 1: ] )
@@ -538,9 +544,12 @@ class CodimensionProject( QObject ):
 #                print "EXCEPTION for '" + item + "'"
                 pass
 #        print "'" + report + "'"
+
+        if ropeToValidate and self.ropeProject is not None:
+            self.ropeProject.validate( self.ropeProject.root )
+
         self.emit( SIGNAL( 'fsChanged' ), items )
 #        self.__dirWatcher.debug()
-        self.ropeProject.validate( self.ropeProject.root )
         return
 
     def __loadTabsStatus( self ):
