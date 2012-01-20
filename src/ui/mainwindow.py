@@ -819,7 +819,12 @@ class CodimensionMainWindow( QMainWindow ):
         self.linecounterButton.setEnabled( projectLoaded )
         self.__pylintButton.setEnabled( projectLoaded and \
                                         GlobalData().pylintAvailable )
-        self.importsDiagramButton.setEnabled( GlobalData().graphvizAvailable )
+        self.importsDiagramButton.setEnabled( projectLoaded and \
+                                              GlobalData().graphvizAvailable )
+        self.__pymetricsButton.setEnabled( projectLoaded )
+        self.__findInFilesButton.setEnabled( projectLoaded )
+        self.__findNameButton.setEnabled( projectLoaded )
+        self.__findFileButton.setEnabled( projectLoaded )
         return
 
     def updateRunDebugButtons( self ):
