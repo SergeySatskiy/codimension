@@ -156,8 +156,8 @@ class QuickHelpWidget( HTMLTabWidget ):
         <tr>
           <td>Ctrl+\\</td>
           <td>Goto definition</td>
-          <td></td>
-          <td></td>
+          <td>Ctrl+F3</td>
+          <td>Initiate search of the current word / selection without showing find dialog</td>
         </tr>
       </table>
     </p>
