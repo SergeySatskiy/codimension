@@ -1,6 +1,10 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Release 1.4
+* New feature: Ctrl+F3 starts serach of a current word without bringing up the
+  find dialog.
+* Ctrl+F/Ctrl+R keep the 'match case' and 'whole word' flags as they were
+  before.
 * Bug fix: copy/paste buffer content was overwritten when the user selected an
   item in a completion list. Issue #310.
 * Bug fix: exception while creating a new project
@@ -15,7 +19,7 @@ XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
   cursor is at the end of the line.
 * Strip ability to have many non-nested dirs in a project.
 * New feature: project specific paths to resolve imports.
-* New feature: code completion (TAB, Ctrl + \, Ctrl + Space).
+* New feature: code completion (TAB, Ctrl+Space).
 * Dependency from the rope library is introduced.
 
 
