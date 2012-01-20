@@ -185,6 +185,9 @@ class EditorsManager( QTabWidget ):
         findAction = QShortcut( 'Ctrl+F', self )
         self.connect( findAction, SIGNAL( 'activated()' ),
                       self.__onFind )
+        hiddenFindAction = QShortcut( 'Ctrl+F3', self )
+        self.connect( hiddenFindAction, SIGNAL( "activated()" ),
+                      self.__onHiddenFind )
         replaceAction = QShortcut( 'Ctrl+R', self )
         self.connect( replaceAction, SIGNAL( 'activated()' ),
                       self.__onReplace )
@@ -978,6 +981,21 @@ class EditorsManager( QTabWidget ):
                 self.findWidget.show( searchText )
         self.findWidget.setFocus()
         self.__lastDisplayedWasFindWidget = True
+        return
+
+    def __onHiddenFind( self ):
+        " Triggered when Ctrl+F3 is received "
+        if self.currentWidget().getType() not in \
+                [ MainWindowTabWidgetBase.PlainTextEditor ]:
+            return
+
+        searchText = str( self.currentWidget().getEditor().getSearchText() )
+        if len( searchText ) > 0:
+            self.findWidget.startHiddenSearch( searchText )
+            self.__lastDisplayedWasFindWidget = True
+        else:
+            GlobalData().mainWindow.showStatusBarMessage( \
+                    "No current word to start searching" )
         return
 
     def __onReplace( self ):
