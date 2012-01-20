@@ -169,7 +169,7 @@ class FindReplaceBase( QWidget ):
         self.findNextButton.setFocusPolicy( Qt.NoFocus )
         self.findNextButton.setEnabled( False )
 
-        self.caseCheckBox = QCheckBox( self)
+        self.caseCheckBox = QCheckBox( self )
         self.caseCheckBox.setText( "Match case" )
         self.caseCheckBox.setFocusPolicy( Qt.NoFocus )
         self.caseCheckBox.setEnabled( False )
@@ -225,15 +225,27 @@ class FindReplaceBase( QWidget ):
         self.findtextCombo.addItems( self.findHistory )
         self.findtextCombo.setEditText( text )
         self.findtextCombo.lineEdit().selectAll()
-        self.findtextCombo.setFocus()
-        self.caseCheckBox.setChecked( False )
-        self.wordCheckBox.setChecked( False )
         self.regexpCheckBox.setChecked( False )
+        self.findtextCombo.setFocus()
         self._findBackward = False
         self._skip = False
 
         QWidget.show( self )
         self.activateWindow()
+
+        self._performSearch( True )
+        return
+
+    def startHiddenSearch( self, text ):
+        " Initiates search without activating the widget "
+        self._skip = True
+        self.findtextCombo.clear()
+        self.findtextCombo.addItems( self.findHistory )
+        self.findtextCombo.setEditText( text )
+        self.findtextCombo.lineEdit().selectAll()
+        self.regexpCheckBox.setChecked( False )
+        self._findBackward = False
+        self._skip = False
 
         self._performSearch( True )
         return
