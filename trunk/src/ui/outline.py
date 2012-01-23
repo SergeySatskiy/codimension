@@ -209,6 +209,7 @@ class FileOutlineViewer( QWidget ):
         # the handler had a chance to work. Therefore update the previous tab
         # first if so.
         if self.__updateTimer.isActive():
+            self.__updateTimer.stop()
             self.__updateView()
 
         # Now, switch the outline browser to the new tab
@@ -260,7 +261,8 @@ class FileOutlineViewer( QWidget ):
         editor = widget.getEditor()
         self.connect( editor, SIGNAL( 'SCEN_CHANGE()' ),
                               self.__onBufferChanged )
-
+        self.connect( editor, SIGNAL( 'cursorPositionChanged(int,int)' ),
+                              self.__cursorPositionChanged )
         info = getBriefModuleInfoFromMemory( str( editor.text() ) )
 
         shortFileName = widget.getShortName()
@@ -282,6 +284,16 @@ class FileOutlineViewer( QWidget ):
         attributes.changed = False
         self.__outlineBrowsers[ self.__currentUUID ] = attributes
         self.__outlineBrowsers[ self.__currentUUID ].browser.show()
+        return
+
+    def __cursorPositionChanged( self, xpos, ypos ):
+        " Triggered when a cursor position is changed "
+        if self.__updateTimer.isActive():
+            # If a file is very large and the cursor is moved
+            # straight after changes this will delay the update till
+            # the real pause.
+            self.__updateTimer.stop()
+            self.__updateTimer.start( 1500 )
         return
 
     def __onBufferChanged( self ):
