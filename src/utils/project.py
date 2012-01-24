@@ -792,6 +792,8 @@ class CodimensionProject( QObject ):
 
     def isProjectDir( self, path ):
         " Returns True if the path belongs to the project "
+        if not self.isLoaded():
+            return False
         path = os.path.realpath( str( path ) )     # it could be a symlink
         if not path.endswith( os.path.sep ):
             path += os.path.sep
@@ -799,6 +801,8 @@ class CodimensionProject( QObject ):
 
     def isProjectFile( self, path ):
         " Returns True if the path belongs to the project "
+        if not self.isLoaded():
+            return False
         return self.isProjectDir( os.path.dirname( path ) )
 
     def isTopLevelDir( self, path ):
