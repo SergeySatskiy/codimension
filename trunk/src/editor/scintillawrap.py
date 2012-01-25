@@ -101,6 +101,10 @@ class ScintillaWrapper( QsciScintilla ):
 
         return self.SendScintilla( self.SCI_LINESONSCREEN )
 
+    def isLineVisible( self, lineNumber ):
+        " Tells is line is visible "
+        return self.SendScintilla( self.SCI_GETLINEVISIBLE, lineNumber )
+
     def lineAt( self, pos ):
         """ Calculates the line at a position. pos is int or QPoint.
             Returns -1 if there is no line at pos """
