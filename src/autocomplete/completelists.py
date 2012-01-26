@@ -30,9 +30,8 @@ from listmodules             import getSysModules, getModules
 import os, imp
 from rope.base.libutils      import path_to_resource
 from rope.contrib.codeassist import code_assist, get_calltip, get_doc
-from rope.contrib.findit     import find_definition, find_implementations, \
-                                    find_occurrences
-
+from rope.contrib.findit     import find_definition, find_occurrences
+from rope.base               import worder
 
 __systemwideModules = {}
 __systemwideInitialized = False
@@ -229,8 +228,8 @@ def _addClassPrivateNames( classInfo, names ):
 
 def _getRopeCompletion( fileName, text, editor, prefix ):
     " Provides the rope library idea of how to complete "
-
     try:
+        GlobalData().validateRopeProject()
         ropeProject = GlobalData().getRopeProject( fileName )
         position = editor.currentPosition() - len( prefix )
 
@@ -251,6 +250,7 @@ def _getRopeCompletion( fileName, text, editor, prefix ):
 def getCalltipAndDoc( fileName, editor ):
     " Provides a calltip and docstring "
     try:
+        GlobalData().validateRopeProject()
         ropeProject = GlobalData().getRopeProject( fileName )
         position = editor.currentPosition()
         text = str( editor.text() )
@@ -277,6 +277,7 @@ def getCalltipAndDoc( fileName, editor ):
 def getDefinitionLocation( fileName, editor ):
     " Provides the definition location or None "
     try:
+        GlobalData().validateRopeProject()
         ropeProject = GlobalData().getRopeProject( fileName )
         position = editor.currentPosition()
         text = str( editor.text() )
@@ -289,6 +290,65 @@ def getDefinitionLocation( fileName, editor ):
     except:
         return None
 
+def _switchFileAndBuffer( fileName, editor ):
+    """ Saves the original file under a temporary name and
+        writes the content into the original file if needed """
+    if editor.isModified():
+        content = unicode( editor.text() )
+        dirName = os.path.dirname( fileName )
+        fName = os.path.basename( fileName )
+        temporaryName = dirName + os.path.sep + "." + fName + ".rope-temp"
+        os.rename( fileName, temporaryName )
+
+        f = open( fileName, "wb" )
+        try:
+            f.write( content )
+        except:
+            # Revert the change back
+            f.close()
+            os.rename( temporaryName, fileName )
+            raise
+        f.close()
+        return temporaryName
+
+    # The file is not modified, no need to create a temporary one
+    return fileName
+
+def _restoreOriginalFile( fileName, temporaryName, editor ):
+    " removes the temporary file and validete the project if needed "
+    if editor.isModified():
+        if temporaryName != "":
+            os.rename( temporaryName, fileName )
+    return
+
+def _buildOccurrencesImplementationsResult( locations ):
+    " Cleans up the rope locations "
+    result = []
+    for loc in locations:
+        path = os.path.realpath( loc.resource.real_path )
+        result.append( [ path, loc.lineno ] )
+    return result
+
+def getOccurrences( fileName, editor ):
+    " provides a list of the current token occurances "
+
+    temporaryName = ""
+    result = []
+    nameToSearch = ""
+    try:
+        temporaryName = _switchFileAndBuffer( fileName, editor )
+        GlobalData().validateRopeProject()
+        ropeProject = GlobalData().getRopeProject( fileName )
+        position = editor.currentPosition()
+        resource = path_to_resource( ropeProject, fileName )
+
+        nameToSearch = worder.get_name_at( resource, position )
+        result = find_occurrences( ropeProject, resource, position, True )
+    except:
+        pass
+
+    _restoreOriginalFile( fileName, temporaryName, editor )
+    return nameToSearch, _buildOccurrencesImplementationsResult( result )
 
 def _excludePrivateAndBuiltins( proposals ):
     " Returns a list of names excluding private members and __xxx__() methods "
