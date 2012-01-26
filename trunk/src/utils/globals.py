@@ -98,7 +98,7 @@ class GlobalData( object ):
             # Two cases: the buffer has been saved
             #            not saved buffer
             if os.path.isabs( fileName ):
-                project = rope.base.project.Project( os.path.dirname( fileName ),
+                project = rope.base.project.Project( os.path.dirname(fileName),
                                                      None, None,
                                                      **ropePreferences )
                 project.validate( project.root )
@@ -124,7 +124,7 @@ class GlobalData( object ):
                 if not fileName.endswith( ".py" ) and \
                    not fileName.endswith( ".py3" ):
                     return
-            self.project.ropeProject.validate( self.project.ropeProject.root )
+            self.project.ropeProject.validate()
             return
 
         def getProjectImportDirs( self ):
@@ -152,7 +152,7 @@ class GlobalData( object ):
                 return False
             if not scriptName.endswith( ".py" ) and \
                not scriptName.endswith( ".py3" ):
-                   return False
+                return False
             return True
 
         @staticmethod
