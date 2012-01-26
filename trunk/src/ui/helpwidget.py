@@ -131,7 +131,7 @@ class QuickHelpWidget( HTMLTabWidget ):
         </tr>
         <tr>
           <td>Ctrl+F</td>
-          <td>Incremental search in buffer</td>
+          <td>Initiate incremental search in buffer</td>
           <td>Ctrl+R</td>
           <td>Replace in buffer</td>
         </tr>
@@ -158,6 +158,12 @@ class QuickHelpWidget( HTMLTabWidget ):
           <td>Goto definition</td>
           <td>Ctrl+F3</td>
           <td>Initiate search of the current word / selection without showing find dialog</td>
+        </tr>
+        <tr>
+          <td>Ctrl+]</td>
+          <td>Find occurrences of the current word</td>
+          <td></td>
+          <td></td>
         </tr>
       </table>
     </p>
