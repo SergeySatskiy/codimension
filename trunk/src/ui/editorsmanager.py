@@ -596,7 +596,6 @@ class EditorsManager( QTabWidget ):
                                     "The file has been modified outside codimension" )
                 self.setTabIcon( widgetIndex,
                                  PixmapCache().getIcon( 'modifiedfile.png' ) )
-                GlobalData().validateRopeProject( fileName )
                 return
 
         if fileType not in [ PythonFileType, Python3FileType ]:
@@ -723,11 +722,16 @@ class EditorsManager( QTabWidget ):
                     if self.currentIndex() == index:
                         self.history.updateForCurrentIndex()
                     if lineNo > 0:
-                        firstVisible = lineNo - 2
-                        if firstVisible <= 0:
-                            firstVisible = 1
-                        self.__restorePosition( self.widget( index ).getEditor(),
-                                                lineNo - 1, 0, firstVisible - 1 )
+                        editor = self.widget( index ).getEditor()
+                        if editor.isLineVisible( lineNo - 1 ):
+                            editor.setCursorPosition( lineNo - 1, 0 )
+                            editor.setHScrollOffset( 0 ) # avoid unwanted scrolling
+                        else:
+                            firstVisible = lineNo - 2
+                            if firstVisible <= 0:
+                                firstVisible = 1
+                            self.__restorePosition( editor,
+                                                    lineNo - 1, 0, firstVisible - 1 )
                     self.activateTab( index )
                     if self.currentIndex() == index:
                         self.history.addCurrent()
@@ -863,7 +867,6 @@ class EditorsManager( QTabWidget ):
                 self._updateIconAndTooltip( self.currentIndex() )
                 self.emit( SIGNAL( 'fileUpdated' ), fileName,
                            currentWidget.getUUID() )
-                GlobalData().validateRopeProject( fileName )
                 return True
             # Error saving the buffer
             return False
@@ -953,7 +956,6 @@ class EditorsManager( QTabWidget ):
             if existedBefore:
                 self.emit( SIGNAL( 'fileUpdated' ), fileName,
                            currentWidget.getUUID() )
-                GlobalData().validateRopeProject( fileName )
             else:
                 self.emit( SIGNAL( 'bufferSavedAs' ), fileName,
                            currentWidget.getUUID() )
@@ -1170,6 +1172,8 @@ class EditorsManager( QTabWidget ):
         editor = editorWidget.getEditor()
         self.connect( editor, SIGNAL( 'modificationChanged(bool)' ),
                       self.__modificationChanged )
+        self.connect( editor, SIGNAL( "SCEN_CHANGE()" ),
+                      self.__contentChanged )
         self.connect( editor, SIGNAL( 'cursorPositionChanged(int,int)' ),
                       self.__cursorPositionChanged )
         self.connect( editor, SIGNAL( 'ESCPressed' ),
@@ -1188,6 +1192,13 @@ class EditorsManager( QTabWidget ):
             self.setTabText( index, title )
         else:
             self.setTabText( index, currentWidget.getShortName() )
+        self.emit( SIGNAL( "bufferModified" ), currentWidget.getFileName(),
+                                               str( currentWidget.getUUID() ) )
+        return
+
+    def __contentChanged( self ):
+        " Triggered when a buffer content is changed "
+        currentWidget = self.currentWidget()
         self.emit( SIGNAL( "bufferModified" ), currentWidget.getFileName(),
                                                str( currentWidget.getUUID() ) )
         return
