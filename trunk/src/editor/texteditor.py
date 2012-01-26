@@ -60,12 +60,13 @@ import export
 from autocomplete.bufferutils   import getContext, getPrefixAndObject, \
                                        getEditorTags
 from autocomplete.completelists import getCompletionList, getCalltipAndDoc, \
-                                       getDefinitionLocation
+                                       getDefinitionLocation, getOccurrences
 from cdmbriefparser             import getBriefModuleInfoFromMemory
 from ui.completer               import CodeCompleter
 from ui.runparams               import RunDialog
 from utils.run                  import getTerminalCommand, \
                                        parseCommandLineArguments
+from ui.findinfiles             import ItemToSearchIn, getSearchItemIndex
 
 
 class TextEditor( ScintillaWrapper ):
@@ -268,6 +269,13 @@ class TextEditor( ScintillaWrapper ):
                       self.__onGotoDefinition )
         self.addAction( self.ctrlBackslashAct )
 
+        # Ctrl + ]
+        self.occurancesAct = QAction( self )
+        self.occurancesAct.setShortcut( "Ctrl+]" )
+        self.connect( self.occurancesAct, SIGNAL( 'triggered()' ),
+                      self.__onOccurances )
+        self.addAction( self.occurancesAct )
+
         # Alt + Shift + Up, Alt + Shift + Down
         self.altShiftUpAct = QAction( self )
         self.altShiftUpAct.setShortcut( "Alt+Shift+Up" )
@@ -321,6 +329,7 @@ class TextEditor( ScintillaWrapper ):
         self.ctrlSpaceAct.setEnabled( True )
         self.ctrlF1Act.setEnabled( True )
         self.ctrlBackslashAct.setEnabled( True )
+        self.occurancesAct.setEnabled( True )
         self.altShiftUpAct.setEnabled( True )
         self.altShiftDownAct.setEnabled( True )
         self.altShiftLeftAct.setEnabled( True )
@@ -351,6 +360,7 @@ class TextEditor( ScintillaWrapper ):
         self.ctrlSpaceAct.setEnabled( False )
         self.ctrlF1Act.setEnabled( False )
         self.ctrlBackslashAct.setEnabled( False )
+        self.occurancesAct.setEnabled( False )
         self.altShiftUpAct.setEnabled( False )
         self.altShiftDownAct.setEnabled( False )
         self.altShiftLeftAct.setEnabled( False )
@@ -1149,6 +1159,7 @@ class TextEditor( ScintillaWrapper ):
         self.__completionObject, \
         self.__completionPrefix = getPrefixAndObject( self )
 
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         if self.parent().getFileType() not in [ PythonFileType,
                                                 Python3FileType ]:
             words = list( getEditorTags( self, self.__completionPrefix ) )
@@ -1163,6 +1174,7 @@ class TextEditor( ScintillaWrapper ):
                                                   self.__completionObject,
                                                   self.__completionPrefix,
                                                   self, text, info )
+        QApplication.restoreOverrideCursor()
 
         if len( words ) == 0:
             self.setFocus()
@@ -1215,8 +1227,14 @@ class TextEditor( ScintillaWrapper ):
 
     def __onGotoDefinition( self ):
         " The user requested a jump to definition "
+        if self.parent().getFileType() not in [ PythonFileType,
+                                                Python3FileType ]:
+            return
+
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         location = getDefinitionLocation( self.parent().getFileName(),
                                           self )
+        QApplication.restoreOverrideCursor()
         if location is None:
             GlobalData().mainWindow.showStatusBarMessage( \
                                             "Definition is not found" )
@@ -1227,6 +1245,53 @@ class TextEditor( ScintillaWrapper ):
             else:
                 path = os.path.realpath( location.resource.real_path )
                 GlobalData().mainWindow.openFile( path, location.lineno )
+        return
+
+    def __onOccurances( self ):
+        " The user requested a list of occurances "
+        if self.parent().getFileType() not in [ PythonFileType,
+                                                Python3FileType ]:
+            return
+        if not os.path.isabs( self.parent().getFileName() ):
+            GlobalData().mainWindow.showStatusBarMessage( \
+                                            "Save the buffer first" )
+            return
+        if self.isModified():
+            # Check that the directory is writable for a temporary file
+            dirName = os.path.dirname( self.parent().getFileName() )
+            if not os.access( dirName, os.W_OK ):
+                GlobalData().mainWindow.showStatusBarMessage( \
+                                "File directory is not writable. " \
+                                "Cannot run rope." )
+                return
+
+        # Prerequisites were checked, run the rope library
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+        name, locations = getOccurrences( self.parent().getFileName(), self )
+        if len( locations ) == 0:
+            QApplication.restoreOverrideCursor()
+            GlobalData().mainWindow.showStatusBarMessage( \
+                                        "No occurances of " + name + " found" )
+            return
+
+        # There are found items
+        result = []
+        for loc in locations:
+            index = getSearchItemIndex( result, loc[ 0 ] )
+            if index < 0:
+                widget = GlobalData().mainWindow.getWidgetForFileName( loc[0] )
+                if widget is None:
+                    uuid = ""
+                else:
+                    uuid = widget.getUUID()
+                newItem = ItemToSearchIn( loc[ 0 ], uuid )
+                result.append( newItem )
+                index = len( result ) - 1
+            result[ index ].addMatch( name, loc[ 1 ] )
+
+        QApplication.restoreOverrideCursor()
+
+        GlobalData().mainWindow.displayFindInFiles( "", result )
         return
 
     def insertCompletion( self, text ):
