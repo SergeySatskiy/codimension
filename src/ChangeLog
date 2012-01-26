@@ -1,6 +1,10 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Release 1.4
+* Bug fix: proper search result window notifications that a buffer has changed.
+* Improvement: no unnecessery scrolling of a buffer if a line to which jump is
+  requested is visible on the screen.
+* New feature: Ctrl+] searches for occurrences of a current word.
 * New feature: Ctrl+F3 starts serach of a current word without bringing up the
   find dialog.
 * Ctrl+F/Ctrl+R keep the 'match case' and 'whole word' flags as they were
