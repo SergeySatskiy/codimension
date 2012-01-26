@@ -55,6 +55,15 @@ class Match:
         self.text = ""
         return
 
+def getSearchItemIndex( items, fileName ):
+    " Provides the search item index basing on the file name "
+    index = 0
+    for item in items:
+        if item.fileName == fileName:
+            return index
+        index += 1
+    return -1
+
 class ItemToSearchIn:
     " Stores information about one item to search in "
 
@@ -66,6 +75,51 @@ class ItemToSearchIn:
         self.bufferUUID = bufferID  # Non empty for currently opened files
         self.tooltip = ""           # For python files only -> docstring
         self.matches = []
+        return
+
+    def addMatch( self, name, lineNumber ):
+        " Used to add a match which was found outside of find in files "
+        match = Match( lineNumber, 0, 0 )
+
+        # Load the file and identify matched line and tooltip
+        try:
+            if self.bufferUUID != "":
+                mainWindow = GlobalData().mainWindow
+                widget = mainWindow.getWidgetByUUID( self.bufferUUID )
+                if widget is not None:
+                    content = str( widget.getEditor().text() ).splitlines()
+                else:
+                    raise Exception( "Inconsistency. Buffer disappeared." )
+            else:
+                f = open( self.fileName )
+                content = f.read().split( "\n" )
+                f.close()
+
+            self.__fillInMatch( match, content, name, lineNumber )
+        except:
+            pass
+
+        self.matches.append( match )
+        return
+
+    def __fillInMatch( self, match, content, name, lineNumber ):
+        " Fills in the match fields from the content "
+        # Form the regexp corresponding to a single word search
+        regexpText = re.escape( name )
+        regexpText = "\\b%s\\b" % regexpText
+        flags = re.UNICODE | re.LOCALE
+        searchRegexp = re.compile( regexpText, flags )
+
+        line = content[ lineNumber - 1 ]
+        match.text = line.strip()
+
+        contains = searchRegexp.search( line )
+        match.start = contains.start()
+        match.finish = contains.end()
+        match.tooltip = self.__buildTooltip( content, lineNumber - 1,
+                                             len( content ),
+                                             match.start, match.finish )
+        self.__extractDocstring( content )
         return
 
     def search( self, expression ):
@@ -106,6 +160,28 @@ class ItemToSearchIn:
                      .replace( ">", "&gt;" ) \
                      .replace( "<", "&lt;" )
 
+    def __buildTooltip( self, content, lineIndex, totalLines,
+                              startPos, finishPos ):
+        " Forms the tooltip for the given match "
+        start, end = self.__calculateContextStart( lineIndex, totalLines )
+        lines = content[ start : end ]
+        matchIndex = lineIndex - start
+
+        # Avoid incorrect tooltips for HTML/XML files
+        for index in xrange( 0, len( lines ) ):
+            if index != matchIndex:
+                lines[ index ] = self.__htmlEncode( lines[ index ] )
+
+        lines[ matchIndex ] = \
+            self.__htmlEncode( lines[ matchIndex ][ : startPos ] ) + \
+            "<b>" + \
+            self.__htmlEncode( lines[ matchIndex ][ startPos : finishPos ] ) + \
+            "</b>" + \
+            self.__htmlEncode( lines[ matchIndex ][ finishPos : ] )
+
+        return "<pre>" + "\n".join( lines ) + "</pre>"
+
+
     def __lookThroughLines( self, content, expression ):
         " Searches through all the given lines "
         lineIndex = 0
@@ -116,23 +192,9 @@ class ItemToSearchIn:
             if contains:
                 match = Match( lineIndex + 1, contains.start(), contains.end() )
                 match.text = line.strip()
-                start, end = self.__calculateContextStart( lineIndex,
-                                                           totalLines )
-                lines = content[ start : end ]
-                matchedLineIndex = lineIndex - start
-
-                for index in xrange( 0, len( lines ) ):
-                    if index != matchedLineIndex:
-                        lines[ index ] = self.__htmlEncode( lines[ index ] )
-
-                lines[ matchedLineIndex ] = \
-                        self.__htmlEncode( lines[ matchedLineIndex ][ :match.start ] ) + \
-                        "<b>" + \
-                        self.__htmlEncode( lines[ matchedLineIndex ][ match.start:match.finish ] ) + \
-                        "</b>" + \
-                        self.__htmlEncode( lines[ matchedLineIndex ][ match.finish: ] )
-
-                match.tooltip = "<pre>" + "\n".join( lines ) + "</pre>"
+                match.tooltip = self.__buildTooltip( content, lineIndex,
+                                                     totalLines,
+                                                     match.start, match.finish )
                 self.matches.append( match )
                 if len( self.matches ) > 1024:
                     # Too much entries, stop here
@@ -144,13 +206,20 @@ class ItemToSearchIn:
 
         # Extract docsting if applicable
         if len( self.matches ) > 0:
-            if self.fileName.endswith( '.py' ) or \
-               self.fileName.endswith( '.py3' ):
-                info = getBriefModuleInfoFromMemory( "\n".join( content ) )
-                self.tooltip = ""
-                if info.docstring is not None:
-                    self.tooltip = info.docstring.text
+            self.__extractDocstring( content )
+        return
 
+    def __extractDocstring( self, content ):
+        " Extracts a docstring and sets it as a tooltip if needed "
+        if self.tooltip != "":
+            return
+
+        if self.fileName.endswith( '.py' ) or \
+           self.fileName.endswith( '.py3' ):
+            info = getBriefModuleInfoFromMemory( "\n".join( content ) )
+            self.tooltip = ""
+            if info.docstring is not None:
+                self.tooltip = info.docstring.text
         return
 
     @staticmethod
