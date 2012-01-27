@@ -1,5 +1,5 @@
 Name: codimension
-Version: 1.3
+Version: 1.4
 Release: 1
 License: GPLv3+
 Group: Development/Tools/IDE
@@ -29,6 +29,7 @@ Features:
 * Docstrings as item tooltips in browsers
 * Filtering in browsers
 * Jump to a module import/symbol definition using a hot key
+* See the list of symbol references
 * Navigation history within a file and between files
 * Syntax highlighting in the source code editor
 * Pixmap viewer
@@ -76,6 +77,36 @@ update-desktop-database -q
 %{_datadir}/pixmaps/*.png
 
 %changelog
+* Thu Jan 26 2012 Dmitry Kazimirov <dk@revl.org> - 1.4-1
+- Dependency from the rope refactoring library is introduced.
+- A stable upstream version that brings many improvements,
+  new features, and some bugfixes:
+- Improvement: no unnecessary scrolling the line to jump to is
+  already visible.
+- New feature: Ctrl+] searches for occurrences of the word
+  under the cursor.
+- New feature: Ctrl+F3 initiates the search for the word under
+  the cursor without bringing up the find dialog.
+- Ctrl+F and Ctrl+R keep the 'match case' and 'whole word' flags
+  intact between searches.
+- New feature: run the project or the current script in a new
+  terminal. Script environment and parameters are remembered
+  between runs.
+- New feature: go to definition (Ctrl+backslash)
+- New feature: docstring for the identifier under the cursor
+  when Ctrl+F1 is pressed.
+- Removed the ability to have multiple project roots.
+- New feature: project specific paths to resolve imports.
+- New feature: code completion (Tab, Ctrl+Space).
+- Fixed buffer change notifications in the search result window.
+- Bug fix: copy/paste buffer content was overwritten when an
+  item in a completion list was selected. Issue #310.
+- Bug fix: exception while creating a new project.
+- Bug fix: update tab history properly when jumping within
+  the same file.
+- Fixed cursor positioning after automatic trailing whitespace
+  removal.
+
 * Thu Dec 15 2011 Dmitry Kazimirov <dk@revl.org> - 1.3-1
 - New upstream version with lots of bug fixes and new features:
 - Bug fix: correct tooltips for search results in the HTML
