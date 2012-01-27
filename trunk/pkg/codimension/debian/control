@@ -26,6 +26,7 @@ Description: Python IDE with emphasis on graphical representation
    * Docstrings as item tooltips in browsers
    * Filtering in browsers
    * Jump to a module import/symbol definition using a hot key
+   * See the list of symbol references
    * Navigation history within a file and between files
    * Syntax highlighting in the source code editor
    * Pixmap viewer
