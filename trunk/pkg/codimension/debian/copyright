@@ -4,11 +4,11 @@ Upstream-Contact: Sergey Satskiy <sergey.satskiy@gmail.com>
 Source: https://code.google.com/p/codimension/
 
 Files: src/*
-Copyright: 2010, 2011  Sergey Satskiy <sergey.satskiy@gmail.com>
+Copyright: 2010, 2011, 2012  Sergey Satskiy <sergey.satskiy@gmail.com>
 License: GPL-3.0+
 
 Files: debian/*
-Copyright: 2011 Dmitry Kazimirov <dk@revl.org>
+Copyright: 2011, 2012 Dmitry Kazimirov <dk@revl.org>
 License: GPL-3.0+
 
 License: GPL-3.0+
