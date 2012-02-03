@@ -27,6 +27,8 @@
 
 
 import sys, os, getpass, commands
+from utils.globals import GlobalData
+from utils.settings import Settings
 
 
 TERM_AUTO    = 0
@@ -203,6 +205,8 @@ def getTerminalCommand( fileName, workingDir, arguments, terminalType ):
 
 
 def parseCommandLineArguments( cmdLine ):
+    " Parses command line arguments provided by the user in the UI "
+
     result = []
 
     cmdLine = cmdLine.strip()
@@ -275,6 +279,41 @@ def parseCommandLineArguments( cmdLine ):
     if expectQuote or expectDblQuote:
         raise Exception( "No closing quotation" )
     return result
+
+
+def getCwdCmdEnv( path ):
+    """ Provides the working directory, command line and environment
+        for running/debugging a script """
+
+    params = GlobalData().getRunParameters( path )
+
+    if params.useScriptLocation:
+        workingDir = os.path.dirname( path )
+    else:
+        workingDir = params.specificDir
+
+    # The arguments parsing is going to pass OK because it
+    # was checked in the run parameters dialogue
+    arguments = parseCommandLineArguments( params.arguments )
+    cmd = getTerminalCommand( path, workingDir, arguments,
+                              Settings().terminalType )
+
+    if params.envType == params.InheritParentEnv:
+        # 'None' does not work here: popen stores last env somewhere and
+        # uses it inappropriately
+        environment = os.environ.copy()
+    elif params.envType == params.InheritParentEnvPlus:
+        environment = os.environ.copy()
+        environment.update( params.additionToParentEnv )
+    else:
+        environment = params.specificEnv.copy()
+
+    for index in xrange( len( arguments ) ):
+        environment[ 'CDM_ARG' + str( index ) ] = arguments[ index ]
+
+    return workingDir, cmd, environment
+
+
 
 
 if __name__ == '__main__':
