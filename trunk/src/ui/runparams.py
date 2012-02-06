@@ -116,11 +116,13 @@ class RunDialog( QDialog ):
     """ Run parameters dialog implementation """
 
     # See utils.run for runParameters
-    def __init__( self, path, runParameters, termType, parent = None ):
+    def __init__( self, path, runParameters, termType, action = "",
+                  parent = None ):
         QDialog.__init__( self, parent )
 
         # Used as a return value
         self.termType = termType
+        self.__action = action.lower()
 
         # Avoid pylint complains
         self.__argsEdit = None
@@ -141,8 +143,8 @@ class RunDialog( QDialog ):
         self.__editSpecButton = None
         self.__runButton = None
 
-        self.__createLayout()
-        self.setWindowTitle( "Run parameters for " + path )
+        self.__createLayout( action )
+        self.setWindowTitle( action + " parameters for " + path )
 
         # Restore the values
         self.runParams = copy.deepcopy( runParameters )
@@ -216,7 +218,7 @@ class RunDialog( QDialog ):
         self.__editSpecButton.setEnabled( value )
         return
 
-    def __createLayout( self ):
+    def __createLayout( self, action ):
         """ Creates the dialog layout """
 
         self.resize( 600, 300 )
@@ -383,7 +385,7 @@ class RunDialog( QDialog ):
         buttonBox = QDialogButtonBox()
         buttonBox.setOrientation( Qt.Horizontal )
         buttonBox.setStandardButtons( QDialogButtonBox.Cancel )
-        self.__runButton = buttonBox.addButton( "Run",
+        self.__runButton = buttonBox.addButton( action,
                                                 QDialogButtonBox.ActionRole )
         self.__runButton.setDefault( True )
         self.connect( self.__runButton, SIGNAL( 'clicked()' ),
@@ -475,7 +477,8 @@ class RunDialog( QDialog ):
             return
 
         self.__runButton.setEnabled( True )
-        self.__runButton.setToolTip( "Save parameters and run script" )
+        self.__runButton.setToolTip( "Save parameters and " + \
+                                     self.__action + " script" )
         return
 
     def __selectDirClicked( self ):
