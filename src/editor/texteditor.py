@@ -64,8 +64,7 @@ from autocomplete.completelists import getCompletionList, getCalltipAndDoc, \
 from cdmbriefparser             import getBriefModuleInfoFromMemory
 from ui.completer               import CodeCompleter
 from ui.runparams               import RunDialog
-from utils.run                  import getTerminalCommand, \
-                                       parseCommandLineArguments
+from utils.run                  import getCwdCmdEnv
 from ui.findinfiles             import ItemToSearchIn, getSearchItemIndex
 
 
@@ -2104,7 +2103,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         fileName = self.getFileName()
         params = GlobalData().getRunParameters( fileName )
         termType = Settings().terminalType
-        dlg = RunDialog( fileName, params, termType )
+        dlg = RunDialog( fileName, params, termType, "Run" )
         if dlg.exec_() == QDialog.Accepted:
             GlobalData().addRunParams( fileName, dlg.runParams )
             if dlg.termType != termType:
@@ -2115,31 +2114,9 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     def __onRunScript( self ):
         " Runs the script "
         fileName = self.getFileName()
-        params = GlobalData().getRunParameters( fileName )
-
-        if params.useScriptLocation:
-            workingDir = os.path.dirname( fileName )
-        else:
-            workingDir = params.specificDir
-
-        # The arguments parsing is going to pass OK because it
-        # was checked in the run parameters dialogue
-        arguments = parseCommandLineArguments( params.arguments )
-        cmd = getTerminalCommand( fileName, workingDir, arguments,
-                                  Settings().terminalType )
-
-        if params.envType == params.InheritParentEnv:
-            # 'None' does not work here: popen stores last env somewhere and
-            # uses it inappropriately
-            environment = os.environ.copy()
-        elif params.envType == params.InheritParentEnvPlus:
-            environment = os.environ.copy()
-            environment.update( params.additionToParentEnv )
-        else:
-            environment = params.specificEnv.copy()
-
-        for index in xrange( len( arguments ) ):
-            environment[ 'CDM_ARG' + str( index ) ] = arguments[ index ]
+        params = GlobalData().getRunParameters( path )
+        workingDir, cmd, environment = getCwdCmdEnv( fileName, params,
+                                                     Settings().terminalType )
 
         try:
             Popen( cmd, shell = True,
