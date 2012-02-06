@@ -25,11 +25,11 @@
 import os.path, logging
 from PyQt4.QtCore       import Qt, SIGNAL, QStringList, QSize
 from PyQt4.QtGui        import QTreeWidget, QTreeWidgetItem, \
-                               QHeaderView, QMenu, QCursor, \
-                               QWidget, QAction, QDialog, \
+                               QHeaderView, QMenu, QCursor, QToolButton, \
+                               QWidget, QAction, QDialog, QSpacerItem, \
                                QVBoxLayout, QSizePolicy, QToolBar, \
                                QApplication, QCursor, QFrame, QLabel, \
-                               QHBoxLayout, QSplitter
+                               QHBoxLayout, QSplitter, QPalette
 from utils.pixmapcache  import PixmapCache
 from utils.settings     import Settings
 from utils.project      import getProjectProperties, CodimensionProject
@@ -225,16 +225,18 @@ class RecentProjectsViewer( QWidget ):
         self.__projectContextItem = None
         self.__fileContextItem = None
 
-        upper = self.__createRecentFilesLayout()
-        lower = self.__createRecentProjectsLayout()
+        self.upper = self.__createRecentFilesLayout()
+        self.lower = self.__createRecentProjectsLayout()
         self.__createProjectPopupMenu()
         self.__createFilePopupMenu()
 
         layout = QVBoxLayout()
         layout.setContentsMargins( 1, 1, 1, 1 )
         splitter = QSplitter( Qt.Vertical )
-        splitter.addWidget( upper )
-        splitter.addWidget( lower )
+        splitter.addWidget( self.upper )
+        splitter.addWidget( self.lower )
+        splitter.setCollapsible( 0, False )
+        splitter.setCollapsible( 1, False )
 
         layout.addWidget( splitter )
         self.setLayout( layout )
@@ -305,6 +307,14 @@ class RecentProjectsViewer( QWidget ):
         " Creates the upper part - recent files "
         headerFrame = QFrame()
         headerFrame.setFrameStyle( QFrame.StyledPanel )
+        headerFrame.setAutoFillBackground( True )
+        headerPalette = headerFrame.palette()
+        headerBackground = headerPalette.color( QPalette.Background )
+        headerBackground.setRgb( headerBackground.red() + 30,
+                                 headerBackground.green() + 30,
+                                 headerBackground.blue() + 30 )
+        headerPalette.setColor( QPalette.Background, headerBackground )
+        headerFrame.setPalette( headerPalette )
         headerFrame.setFixedHeight( 24 )
 
         recentFilesLabel = QLabel()
@@ -372,23 +382,44 @@ class RecentProjectsViewer( QWidget ):
         recentFilesLayout.addWidget( self.recentFilesView )
 
         upperContainer = QWidget()
-        upperContainer.setContentsMargins( 1, 1, 1, 1 )
+        upperContainer.setContentsMargins( 0, 0, 0, 0 )
         upperContainer.setLayout( recentFilesLayout )
         return upperContainer
 
     def __createRecentProjectsLayout( self ):
         " Creates the bottom layout "
-        headerFrame = QFrame()
-        headerFrame.setFrameStyle( QFrame.StyledPanel )
-        headerFrame.setFixedHeight( 24 )
+        self.headerFrame = QFrame()
+        self.headerFrame.setFrameStyle( QFrame.StyledPanel )
+        self.headerFrame.setAutoFillBackground( True )
+        headerPalette = self.headerFrame.palette()
+        headerBackground = headerPalette.color( QPalette.Background )
+        headerBackground.setRgb( headerBackground.red() + 30,
+                                 headerBackground.green() + 30,
+                                 headerBackground.blue() + 30 )
+        headerPalette.setColor( QPalette.Background, headerBackground )
+        self.headerFrame.setPalette( headerPalette )
+        self.headerFrame.setFixedHeight( 24 )
 
         recentProjectsLabel = QLabel()
         recentProjectsLabel.setText( "Recent projects" )
 
+        expandingSpacer = QSpacerItem( 10, 10, QSizePolicy.Expanding )
+
+        self.__showHideButton = QToolButton()
+        self.__showHideButton.setAutoRaise( True )
+        self.__showHideButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
+        self.__showHideButton.setFixedSize( 20, 20 )
+        self.__showHideButton.setToolTip( "Hide recent projects list" )
+        self.__showHideButton.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.__showHideButton, SIGNAL( 'clicked()' ),
+                      self.__onShowHide )
+
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins( 3, 0, 0, 0 )
         headerLayout.addWidget( recentProjectsLabel )
-        headerFrame.setLayout( headerLayout )
+        headerLayout.addSpacerItem( expandingSpacer )
+        headerLayout.addWidget( self.__showHideButton )
+        self.headerFrame.setLayout( headerLayout )
 
         # Toolbar part - buttons
         self.loadButton = QAction( PixmapCache().getIcon( 'load.png' ),
@@ -413,17 +444,17 @@ class RecentProjectsViewer( QWidget ):
         self.connect( self.trashButton, SIGNAL( "triggered()" ),
                       self.__deleteProject )
 
-        lowerToolbar = QToolBar()
-        lowerToolbar.setMovable( False )
-        lowerToolbar.setAllowedAreas( Qt.TopToolBarArea )
-        lowerToolbar.setIconSize( QSize( 16, 16 ) )
-        lowerToolbar.setFixedHeight( 28 )
-        lowerToolbar.setContentsMargins( 0, 0, 0, 0 )
-        lowerToolbar.addAction( self.loadButton )
-        lowerToolbar.addAction( self.propertiesButton )
-        lowerToolbar.addAction( self.copyPrjPathButton )
-        lowerToolbar.addWidget( spacer )
-        lowerToolbar.addAction( self.trashButton )
+        self.lowerToolbar = QToolBar()
+        self.lowerToolbar.setMovable( False )
+        self.lowerToolbar.setAllowedAreas( Qt.TopToolBarArea )
+        self.lowerToolbar.setIconSize( QSize( 16, 16 ) )
+        self.lowerToolbar.setFixedHeight( 28 )
+        self.lowerToolbar.setContentsMargins( 0, 0, 0, 0 )
+        self.lowerToolbar.addAction( self.loadButton )
+        self.lowerToolbar.addAction( self.propertiesButton )
+        self.lowerToolbar.addAction( self.copyPrjPathButton )
+        self.lowerToolbar.addWidget( spacer )
+        self.lowerToolbar.addAction( self.trashButton )
 
         self.projectsView = QTreeWidget()
         self.projectsView.setAlternatingRowColors( True )
@@ -448,12 +479,12 @@ class RecentProjectsViewer( QWidget ):
         recentProjectsLayout = QVBoxLayout()
         recentProjectsLayout.setContentsMargins( 0, 0, 0, 0 )
         recentProjectsLayout.setSpacing( 0 )
-        recentProjectsLayout.addWidget( headerFrame )
-        recentProjectsLayout.addWidget( lowerToolbar )
+        recentProjectsLayout.addWidget( self.headerFrame )
+        recentProjectsLayout.addWidget( self.lowerToolbar )
         recentProjectsLayout.addWidget( self.projectsView )
 
         lowerContainer = QWidget()
-        lowerContainer.setContentsMargins( 1, 1, 1, 1 )
+        lowerContainer.setContentsMargins( 0, 0, 0, 0 )
         lowerContainer.setLayout( recentProjectsLayout )
         return lowerContainer
 
@@ -780,5 +811,28 @@ class RecentProjectsViewer( QWidget ):
             if realPath == itemRealPath:
                 item.updateIconAndTooltip()
                 break
+        return
+
+    def __onShowHide( self ):
+        " Triggered when show/hide button is clicked "
+        if self.projectsView.isVisible():
+            self.projectsView.setVisible( False )
+            self.lowerToolbar.setVisible( False )
+            self.__showHideButton.setIcon( PixmapCache().getIcon( 'more.png' ) )
+            self.__showHideButton.setToolTip( "Show recent projects list" )
+
+            self.__minH = self.lower.minimumHeight()
+            self.__maxH = self.lower.maximumHeight()
+
+            self.lower.setMinimumHeight( self.headerFrame.height() )
+            self.lower.setMaximumHeight( self.headerFrame.height() )
+        else:
+            self.projectsView.setVisible( True )
+            self.lowerToolbar.setVisible( True )
+            self.__showHideButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
+            self.__showHideButton.setToolTip( "Hide recent projects list" )
+
+            self.lower.setMinimumHeight( self.__minH )
+            self.lower.setMaximumHeight( self.__maxH )
         return
 
