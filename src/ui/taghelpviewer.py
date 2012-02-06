@@ -23,7 +23,7 @@
 """ The tag help viewer implementation """
 
 from PyQt4.QtCore import Qt, SIGNAL, QSize
-from PyQt4.QtGui import QTextEdit, QMenu, \
+from PyQt4.QtGui import QTextEdit, QMenu, QPalette, \
                         QApplication, QCursor, \
                         QHBoxLayout, QWidget, QAction, QToolBar, \
                         QSizePolicy, QLabel, QVBoxLayout, QFrame
@@ -116,6 +116,14 @@ class TagHelpViewer( QWidget ):
 
         self.__header = QLabel( "Object: none" )
         self.__header.setFrameStyle( QFrame.StyledPanel )
+        self.__header.setAutoFillBackground( True )
+        headerPalette = self.__header.palette()
+        headerBackground = headerPalette.color( QPalette.Background )
+        headerBackground.setRgb( headerBackground.red() + 30,
+                                 headerBackground.green() + 30,
+                                 headerBackground.blue() + 30 )
+        headerPalette.setColor( QPalette.Background, headerBackground )
+        self.__header.setPalette( headerPalette )
         verticalLayout = QVBoxLayout()
         verticalLayout.setContentsMargins( 2, 2, 2, 2 )
         verticalLayout.setSpacing( 2 )
