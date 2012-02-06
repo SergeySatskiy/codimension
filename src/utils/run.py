@@ -27,8 +27,6 @@
 
 
 import sys, os, getpass, commands
-from utils.globals import GlobalData
-from utils.settings import Settings
 
 
 TERM_AUTO    = 0
@@ -281,11 +279,9 @@ def parseCommandLineArguments( cmdLine ):
     return result
 
 
-def getCwdCmdEnv( path ):
+def getCwdCmdEnv( path, params, terminalType ):
     """ Provides the working directory, command line and environment
         for running/debugging a script """
-
-    params = GlobalData().getRunParameters( path )
 
     if params.useScriptLocation:
         workingDir = os.path.dirname( path )
@@ -295,8 +291,7 @@ def getCwdCmdEnv( path ):
     # The arguments parsing is going to pass OK because it
     # was checked in the run parameters dialogue
     arguments = parseCommandLineArguments( params.arguments )
-    cmd = getTerminalCommand( path, workingDir, arguments,
-                              Settings().terminalType )
+    cmd = getTerminalCommand( path, workingDir, arguments, terminalType )
 
     if params.envType == params.InheritParentEnv:
         # 'None' does not work here: popen stores last env somewhere and
