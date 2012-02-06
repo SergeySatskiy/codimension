@@ -69,8 +69,10 @@ from diagram.importsdgm         import ImportsDiagramDialog, \
                                        ImportsDiagramProgress, \
                                        ImportDiagramOptions
 from ui.runparams               import RunDialog
-from utils.run                  import getTerminalCommand, \
-                                       parseCommandLineArguments
+from utils.run                  import getCwdCmdEnv
+from debugger.console           import DebuggerConsole
+from debugger.context           import DebuggerContext
+from debugger.modifiedunsaved   import ModifiedUnsavedDialog
 
 
 class EditorsManagerWidget( QWidget ):
@@ -108,6 +110,7 @@ class CodimensionMainWindow( QMainWindow ):
     def __init__( self, splash, settings ):
         QMainWindow.__init__( self )
 
+        self.debugMode = False
         self.settings = settings
         self.__initialisation = True
 
@@ -143,7 +146,6 @@ class CodimensionMainWindow( QMainWindow ):
         self.__createStatusBar()
 
         splash.showMessage( "Creating toolbar..." )
-        self.__toolbar = None
         self.__createToolBar()
 
         splash.showMessage( "Creating layout..." )
@@ -342,11 +344,24 @@ class CodimensionMainWindow( QMainWindow ):
                                      'Context help' )
         self.__bottomSideBar.setTabToolTip( 5, "Ctrl+F1 in python file" )
 
+        # Create the debugger console
+        self.__debuggerConsole = DebuggerConsole()
+        self.__bottomSideBar.addTab( self.__debuggerConsole,
+                                     PixmapCache().getIcon( 'debuggerconsole.png' ),
+                                     'Debugger console' )
+        self.__bottomSideBar.setTabEnabled( 6, False )
+
         # Create outline viewer
         self.__outlineViewer = FileOutlineViewer( self.editorsManagerWidget.editorsManager )
         self.__rightSideBar.addTab( self.__outlineViewer,
                                     PixmapCache().getIcon( 'filepython.png' ),
                                     'File outline' )
+
+        self.__debuggerContext = DebuggerContext()
+        self.__rightSideBar.addTab( self.__debuggerContext,
+                                    PixmapCache().getIcon( 'debugger.png' ),
+                                    'Debugger' )
+        self.__rightSideBar.setTabEnabled( 1, False )
 
         # Create splitters
         self.__horizontalSplitter = QSplitter( Qt.Horizontal )
@@ -444,6 +459,16 @@ class CodimensionMainWindow( QMainWindow ):
         font.setItalic( True )
         self.__statusBar.setFont( font )
 
+        self.dbgState = QLabel( self.__statusBar )
+        self.dbgState.setFrameStyle( QFrame.StyledPanel )
+        self.dbgState.setAutoFillBackground( True )
+        dbgPalette = self.dbgState.palette()
+        dbgPalette.setColor( QPalette.Background, QColor( 255, 255, 127 ) )
+        self.dbgState.setPalette( dbgPalette )
+        self.__statusBar.addPermanentWidget( self.dbgState )
+        self.dbgState.setToolTip( "Debugger status" )
+        self.dbgState.setVisible( False )
+
         self.sbLanguage = QLabel( self.__statusBar )
         self.sbLanguage.setFrameStyle( QFrame.StyledPanel )
         self.__statusBar.addPermanentWidget( self.sbLanguage )
@@ -510,10 +535,10 @@ class CodimensionMainWindow( QMainWindow ):
     def __createToolBar( self ):
         """ creates the buttons bar """
 
-        createProjectButton = QAction( \
+        self.createProjectButton = QAction( \
                                 PixmapCache().getIcon( 'createproject.png' ),
                                 'Create new project', self )
-        self.connect( createProjectButton, SIGNAL( "triggered()" ),
+        self.connect( self.createProjectButton, SIGNAL( "triggered()" ),
                       self.__createNewProject )
 
         # Imports diagram button and its menu
@@ -537,7 +562,7 @@ class CodimensionMainWindow( QMainWindow ):
         runProjectMenu = QMenu( self )
         runProjectAct = runProjectMenu.addAction( \
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
-                                'Set run parameters' )
+                                'Set run/debug parameters' )
         self.connect( runProjectAct, SIGNAL( 'triggered()' ),
                       self.__onRunProjectSettings )
         self.runProjectButton = QToolButton( self )
@@ -549,6 +574,23 @@ class CodimensionMainWindow( QMainWindow ):
         self.runProjectButton.setFocusPolicy( Qt.NoFocus )
         self.connect( self.runProjectButton, SIGNAL( 'clicked(bool)' ),
                       self.__onRunProject )
+
+        # Debug project button and its menu
+        debugProjectMenu = QMenu( self )
+        debugProjectAct = debugProjectMenu.addAction( \
+                                PixmapCache().getIcon( 'detailsdlg.png' ),
+                                'Set run/debug parameters' )
+        self.connect( debugProjectAct, SIGNAL( 'triggered()' ),
+                      self.__onDebugProjectSettings )
+        self.debugProjectButton = QToolButton( self )
+        self.debugProjectButton.setIcon( \
+                            PixmapCache().getIcon( 'debugger.png' ) )
+        self.debugProjectButton.setToolTip( 'Project is not loaded' )
+        self.debugProjectButton.setPopupMode( QToolButton.DelayedPopup )
+        self.debugProjectButton.setMenu( debugProjectMenu )
+        self.debugProjectButton.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.debugProjectButton, SIGNAL( 'clicked(bool)' ),
+                      self.__onDebugProject )
 
         packageDiagramButton = QAction( \
                 PixmapCache().getIcon( 'packagediagram.png' ),
@@ -701,35 +743,93 @@ class CodimensionMainWindow( QMainWindow ):
         editorSettingsButton.setMenu( editorSettingsMenu )
         editorSettingsButton.setFocusPolicy( Qt.NoFocus )
 
-
+        # Debugger buttons
+        self.__dbgBreak = QAction( PixmapCache().getIcon( 'dbgbreak.png' ),
+                                   'Break', self )
+        self.connect( self.__dbgBreak, SIGNAL( "triggered()" ), self.__onDbgBreak )
+        self.__dbgBreak.setVisible( False )
+        self.__dbgGo = QAction( PixmapCache().getIcon( 'dbggo.png' ),
+                                'Go', self )
+        self.connect( self.__dbgGo, SIGNAL( "triggered()" ), self.__onDbgGo )
+        self.__dbgGo.setVisible( False )
+        self.__dbgNext = QAction( PixmapCache().getIcon( 'dbgnext.png' ),
+                                  'Next', self )
+        self.connect( self.__dbgNext, SIGNAL( "triggered()" ), self.__onDbgNext )
+        self.__dbgNext.setVisible( False )
+        self.__dbgStepInto = QAction( PixmapCache().getIcon( 'dbgstepinto.png' ),
+                                      'Step into', self )
+        self.connect( self.__dbgStepInto, SIGNAL( "triggered()" ), self.__onDbgStepInto )
+        self.__dbgStepInto.setVisible( False )
+        self.__dbgRunToLine = QAction( PixmapCache().getIcon( 'dbgruntoline.png' ),
+                                       'Run to line', self )
+        self.connect( self.__dbgRunToLine, SIGNAL( "triggered()" ), self.__onDbgRunToLine )
+        self.__dbgRunToLine.setVisible( False )
+        self.__dbgReturn = QAction( PixmapCache().getIcon( 'dbgreturn.png' ),
+                                    'Return', self )
+        self.connect( self.__dbgReturn, SIGNAL( "triggered()" ), self.__onDbgReturn )
+        self.__dbgReturn.setVisible( False )
+        self.__dbgAnalyzeExc = QAction( PixmapCache().getIcon( "dbganalyzeexc.png" ),
+                                        'Analyze exception: OFF', self )
+        self.__dbgAnalyzeExc.setCheckable( True )
+        self.__dbgAnalyzeExc.setChecked( False )
+        self.connect( self.__dbgAnalyzeExc, SIGNAL( "triggered()" ), self.__onDbgAnalyzeExc )
+        self.__dbgAnalyzeExc.setVisible( False )
+        self.__dbgTrapUnhandled = QAction( PixmapCache().getIcon( "dbgtrapunhandled.png" ),
+                                           'Trap unhandled exception: OFF', self )
+        self.__dbgTrapUnhandled.setCheckable( True )
+        self.__dbgTrapUnhandled.setChecked( False )
+        self.connect( self.__dbgTrapUnhandled, SIGNAL( "triggered()" ), self.__onDbgTrapUnhandled )
+        self.__dbgTrapUnhandled.setVisible( False )
+        self.__dbgSync = QAction( PixmapCache().getIcon( "dbgsync.png" ),
+                                  'Sync mode: ON', self )
+        self.__dbgSync.setCheckable( True )
+        self.__dbgSync.setChecked( True )
+        self.connect( self.__dbgSync, SIGNAL( "triggered()" ), self.__onDbgSync )
+        self.__dbgSync.setVisible( False )
 
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
 
-        self.__toolbar = QToolBar()
-        self.__toolbar.setMovable( False )
-        self.__toolbar.setAllowedAreas( Qt.TopToolBarArea )
-        self.__toolbar.setIconSize( QSize( 24, 24 ) )
-        self.__toolbar.addAction( createProjectButton )
-        self.__toolbar.addSeparator()
-        self.__toolbar.addAction( packageDiagramButton )
-        self.__toolbar.addWidget( self.importsDiagramButton )
-        self.__toolbar.addWidget( self.runProjectButton )
-        self.__toolbar.addAction( applicationDiagramButton )
-        self.__toolbar.addAction( doxygenButton )
-        self.__toolbar.addSeparator()
-        self.__toolbar.addAction( neverUsedButton )
-        self.__toolbar.addWidget( self.__pylintButton )
-        self.__toolbar.addAction( self.__pymetricsButton )
-        self.__toolbar.addAction( self.linecounterButton )
-        self.__toolbar.addSeparator()
-        self.__toolbar.addAction( self.__findInFilesButton )
-        self.__toolbar.addAction( self.__findNameButton )
-        self.__toolbar.addAction( self.__findFileButton )
-        self.__toolbar.addWidget( spacer )
-        self.__toolbar.addWidget( editorSettingsButton )
+        toolbar = QToolBar()
+        toolbar.setMovable( False )
+        toolbar.setAllowedAreas( Qt.TopToolBarArea )
+        toolbar.setIconSize( QSize( 26, 26 ) )
+        toolbar.addAction( self.createProjectButton )
+        toolbar.addSeparator()
+        toolbar.addAction( packageDiagramButton )
+        toolbar.addWidget( self.importsDiagramButton )
+        toolbar.addWidget( self.runProjectButton )
+        toolbar.addWidget( self.debugProjectButton )
+        toolbar.addAction( applicationDiagramButton )
+        toolbar.addAction( doxygenButton )
+        toolbar.addSeparator()
+        toolbar.addAction( neverUsedButton )
+        toolbar.addWidget( self.__pylintButton )
+        toolbar.addAction( self.__pymetricsButton )
+        toolbar.addAction( self.linecounterButton )
+        toolbar.addSeparator()
+        toolbar.addAction( self.__findInFilesButton )
+        toolbar.addAction( self.__findNameButton )
+        toolbar.addAction( self.__findFileButton )
+        # Debugger part begin
+        self.__dbgSeparator1 = toolbar.addSeparator()
+        self.__dbgSeparator1.setVisible( False )
+        toolbar.addAction( self.__dbgBreak )
+        toolbar.addAction( self.__dbgGo )
+        toolbar.addAction( self.__dbgNext )
+        toolbar.addAction( self.__dbgStepInto )
+        toolbar.addAction( self.__dbgRunToLine )
+        toolbar.addAction( self.__dbgReturn )
+        self.__dbgSeparator2 = toolbar.addSeparator()
+        self.__dbgSeparator2.setVisible( False )
+        toolbar.addAction( self.__dbgAnalyzeExc )
+        toolbar.addAction( self.__dbgTrapUnhandled )
+        toolbar.addAction( self.__dbgSync )
+        # Debugger part end
+        toolbar.addWidget( spacer )
+        toolbar.addWidget( editorSettingsButton )
 
-        self.addToolBar( self.__toolbar )
+        self.addToolBar( toolbar )
         return
 
     def __guessMaximized( self ):
@@ -831,16 +931,23 @@ class CodimensionMainWindow( QMainWindow ):
         if not GlobalData().project.isLoaded():
             self.runProjectButton.setEnabled( False )
             self.runProjectButton.setToolTip( "Run project" )
+            self.debugProjectButton.setEnabled( False )
+            self.debugProjectButton.setToolTip( "Debug project" )
             return
 
         if not GlobalData().isProjectScriptValid():
             self.runProjectButton.setEnabled( False )
             self.runProjectButton.setToolTip( "Cannot run project - script " \
                                               "is not specified or invalid" )
+            self.debugProjectButton.setEnabled( False )
+            self.debugProjectButton.setToolTip( "Cannot debug project - script " \
+                                                "is not specified or invalid" )
             return
 
         self.runProjectButton.setEnabled( True )
         self.runProjectButton.setToolTip( "Run project" )
+        self.debugProjectButton.setEnabled( True )
+        self.debugProjectButton.setToolTip( "Debug project" )
         return
 
     def linecounterButtonClicked( self ):
@@ -1021,7 +1128,7 @@ class CodimensionMainWindow( QMainWindow ):
         editorsManager = self.editorsManagerWidget.editorsManager
         if editorsManager.getUnsavedCount() == 0:
             project = GlobalData().project
-            if project.fileName != "":
+            if project.isLoaded():
                 project.setTabsStatus( editorsManager.getTabsStatus() )
                 self.settings.tabsStatus = []
             else:
@@ -1037,7 +1144,7 @@ class CodimensionMainWindow( QMainWindow ):
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
 
         projectDir = ""
-        if GlobalData().project.fileName != "":
+        if GlobalData().project.isLoaded():
             projectDir = os.path.dirname( GlobalData().project.fileName ) + \
                          os.path.sep
 
@@ -1336,17 +1443,13 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onRunProjectSettings( self ):
         " Brings up the dialog with run script settings "
-        if not GlobalData().isProjectScriptValid():
-            self.updateRunDebugButtons()
-            logging.error( "Invalid project script. " \
-                           "Use project properties dialog to " \
-                           "select existing python script." )
+        if self.__checkProjectScriptValidity() == False:
             return
 
         fileName = GlobalData().project.getProjectScript()
         params = GlobalData().getRunParameters( fileName )
         termType = Settings().terminalType
-        dlg = RunDialog( fileName, params, termType )
+        dlg = RunDialog( fileName, params, termType, "Run" )
         if dlg.exec_() == QDialog.Accepted:
             GlobalData().addRunParams( fileName, dlg.runParams )
             if dlg.termType != termType:
@@ -1354,41 +1457,31 @@ class CodimensionMainWindow( QMainWindow ):
             self.__onRunProject()
         return
 
-    def __onRunProject( self ):
-        " Runs the project with saved sattings "
-        if not GlobalData().isProjectScriptValid():
-            self.updateRunDebugButtons()
-            logging.error( "Invalid project script. " \
-                           "Use project properties dialog to " \
-                           "select existing python script." )
+    def __onDebugProjectSettings( self ):
+        " Brings up the dialog with debug script settings "
+        if self.__checkDebugPrerequisites() == False:
             return
 
         fileName = GlobalData().project.getProjectScript()
         params = GlobalData().getRunParameters( fileName )
+        termType = Settings().terminalType
+        dlg = RunDialog( fileName, params, termType, "Debug" )
+        if dlg.exec_() == QDialog.Accepted:
+            GlobalData().addRunParams( fileName, dlg.runParams )
+            if dlg.termType != termType:
+                Settings().terminalType = dlg.termType
+            self.__onDebugProject()
+        return
 
-        if params.useScriptLocation:
-            workingDir = os.path.dirname( fileName )
-        else:
-            workingDir = params.specificDir
+    def __onRunProject( self, action = False ):
+        " Runs the project with saved sattings "
+        if self.__checkProjectScriptValidity() == False:
+            return
 
-        # The arguments parsing is going to pass OK because it
-        # was checked in the run parameters dialogue
-        arguments = parseCommandLineArguments( params.arguments )
-        cmd = getTerminalCommand( fileName, workingDir, arguments,
-                                  Settings().terminalType )
-
-        if params.envType == params.InheritParentEnv:
-            # 'None' does not work here: popen stores last env somewhere and
-            # uses it inappropriately
-            environment = os.environ.copy()
-        elif params.envType == params.InheritParentEnvPlus:
-            environment = os.environ.copy()
-            environment.update( params.additionToParentEnv )
-        else:
-            environment = params.specificEnv.copy()
-
-        for index in xrange( len( arguments ) ):
-            environment[ 'CDM_ARG' + str( index ) ] = arguments[ index ]
+        fileName = GlobalData().project.getProjectScript()
+        params = GlobalData().getRunParameters( path )
+        workingDir, cmd, environment = getCwdCmdEnv( fileName, params,
+                                                     Settings().terminalType )
 
         try:
             Popen( cmd, shell = True,
@@ -1396,6 +1489,46 @@ class CodimensionMainWindow( QMainWindow ):
         except Exception, exc:
             logging.error( str( exc ) )
         return
+
+    def __onDebugProject( self, action = False ):
+        " Debugging is requested "
+        if self.__checkDebugPrerequisites() == False:
+            return
+
+        fileName = GlobalData().project.getProjectScript()
+        params = GlobalData().getRunParameters( path )
+        workingDir, cmd, environment = getCwdCmdEnv( fileName, params,
+                                                     Settings().terminalType )
+
+        return
+
+    def __checkDebugPrerequisites( self ):
+        " Returns True if should continue "
+        if self.__checkProjectScriptValidity() == False:
+            return False
+
+        editorsManager = self.editorsManagerWidget.editorsManager
+        modifiedFiles = editorsManager.getModifiedList( True )
+        if len( modifiedFiles ) == 0:
+            return True
+
+        dlg = ModifiedUnsavedDialog( modifiedFiles, "Save and debug" )
+        if dlg.exec_() != QDialog.Accepted:
+            # Selected to cancel
+            return False
+
+        # Need to save the modified project files
+        return editorsManager.saveModified( True )
+
+    def __checkProjectScriptValidity( self ):
+        " Checks and logs error message if so. Returns True if all is OK "
+        if not GlobalData().isProjectScriptValid():
+            self.updateRunDebugButtons()
+            logging.error( "Invalid project script. " \
+                           "Use project properties dialog to " \
+                           "select existing python script." )
+            return False
+        return True
 
     def __verticalEdgeChanged( self ):
         self.settings.verticalEdge = not self.settings.verticalEdge
@@ -1550,3 +1683,78 @@ class CodimensionMainWindow( QMainWindow ):
                                self.__onPathLabelDoubleClick )
         contextMenu.popup( self.sbFile.mapToGlobal( pos ) )
         return
+
+    def updateDebuggerState( self, state ):
+        " Updates the debugger state label "
+        self.dbgState.setText( state )
+        return
+
+    def switchDebugMode( self, newState ):
+        " Switches the debug mode to the desired "
+        if self.debugMode == newState:
+            return
+
+        # Satatus bar
+        self.dbgState.setVisible( newState )
+        self.sbLanguage.setVisible( not newState )
+        self.sbEncoding.setVisible( not newState )
+        self.sbEol.setVisible( not newState )
+        self.sbWritable.setVisible( not newState )
+
+        # Toolbar buttons
+        self.createProjectButton.setEnabled( not newState )
+        self.__dbgSeparator1.setVisible( newState )
+        self.__dbgSeparator2.setVisible( newState )
+        self.__dbgAnalyzeExc.setVisible( newState )
+        self.__dbgTrapUnhandled.setVisible( newState )
+        self.__dbgSync.setVisible( newState )
+
+        # Tabs at the bottom
+        self.__bottomSideBar.setTabEnabled( 6, newState )   # concole
+
+        # Tabs at the right
+        self.__rightSideBar.setTabEnabled( 1, newState )    # vars etc.
+
+
+        self.debugMode = newState
+        self.emit( SIGNAL( 'debugModeChanged' ), newState )
+        return
+
+    def __onDbgBreak( self ):
+        pass
+    def __onDbgGo( self ):
+        pass
+    def __onDbgNext( self ):
+        pass
+    def __onDbgStepInto( self ):
+        pass
+    def __onDbgRunToLine( self ):
+        pass
+    def __onDbgReturn( self ):
+        pass
+
+    def __onDbgAnalyzeExc( self ):
+        if self.__dbgAnalyzeExc.isChecked():
+            switch = 'ON'
+        else:
+            switch = 'OFF'
+        self.__dbgAnalyzeExc.setToolTip( 'Analyze exception: ' + switch )
+        return
+
+    def __onDbgTrapUnhandled( self ):
+        if self.__dbgTrapUnhandled.isChecked():
+            switch = 'ON'
+        else:
+            switch = 'OFF'
+        self.__dbgTrapUnhandled.setToolTip( 'Trap unhandled exception: ' + \
+                                            switch )
+        return
+
+    def __onDbgSync( self ):
+        if self.__dbgSync.isChecked():
+            switch = 'ON'
+        else:
+            switch = 'OFF'
+        self.__dbgSync.setToolTip( 'Sync mode: ' + switch )
+        return
+
