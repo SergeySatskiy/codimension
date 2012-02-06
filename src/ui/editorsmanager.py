@@ -830,21 +830,28 @@ class EditorsManager( QTabWidget ):
         self.openFile( fileName, -1 )
         return
 
-    def __onSave( self ):
+    def __onSave( self, index = -1 ):
         " Triggered when Ctrl+S is received "
-        currentWidget = self.currentWidget()
-        if currentWidget.getType() != MainWindowTabWidgetBase.PlainTextEditor:
+        if index == -1:
+            widget = self.currentWidget()
+            index = self.currentIndex()
+        else:
+            widget = self.widget( index )
+
+        if widget.getType() != MainWindowTabWidgetBase.PlainTextEditor:
             return True
 
         # This is a text editor
-        editor = currentWidget.getEditor()
-        fileName = currentWidget.getFileName()
+        editor = widget.getEditor()
+        fileName = widget.getFileName()
         if fileName != "":
             # This is the buffer which has the corresponding file on FS
-            if currentWidget.isDiskFileModified() and \
-               currentWidget.doesFileExist():
-                self._updateIconAndTooltip( self.currentIndex() )
-                currentWidget.setReloadDialogShown( True )
+            if widget.isDiskFileModified() and \
+               widget.doesFileExist():
+                if index != self.currentIndex():
+                    self.activateTab( index )
+                self._updateIconAndTooltip( index )
+                widget.setReloadDialogShown( True )
                 # The disk file was modified
                 res = QMessageBox.warning( \
                     self, "Save File",
@@ -862,25 +869,31 @@ class EditorsManager( QTabWidget ):
                     return True
 
             # Save the buffer into the file
-            if currentWidget.writeFile( fileName ):
+            if widget.writeFile( fileName ):
                 editor.setModified( False )
-                self._updateIconAndTooltip( self.currentIndex() )
+                self._updateIconAndTooltip( index )
                 self.emit( SIGNAL( 'fileUpdated' ), fileName,
-                           currentWidget.getUUID() )
+                           widget.getUUID() )
                 return True
             # Error saving the buffer
             return False
 
         # This is the new one - call Save As
-        return self.__onSaveAs()
+        return self.__onSaveAs( index )
 
-    def __onSaveAs( self ):
+    def __onSaveAs( self, index = -1 ):
         " Triggered when Ctrl+Shift+S is received "
-        if self.widget( 0 ) == self.__welcomeWidget:
+        if index == -1:
+            widget = self.currentWidget()
+            index = self.currentIndex()
+        else:
+            widget = self.widget( index )
+
+        if widget.getType() != MainWindowTabWidgetBase.PlainTextEditor:
             return True
-        currentWidget = self.currentWidget()
-        if currentWidget.getType() != MainWindowTabWidgetBase.PlainTextEditor:
-            return True
+
+        if index != self.currentIndex():
+            self.activateTab( index )
 
         dialog = QFileDialog( self, 'Save as' )
         dialog.setFileMode( QFileDialog.AnyFile )
@@ -894,15 +907,15 @@ class EditorsManager( QTabWidget ):
             urls.append( QUrl.fromLocalFile( project.getProjectDir() ) )
         dialog.setSidebarUrls( urls )
 
-        if currentWidget.getFileName() != "":
-            dialog.setDirectory( os.path.dirname( currentWidget.getFileName() ) )
-            dialog.selectFile( os.path.basename( currentWidget.getFileName() ) )
+        if widget.getFileName() != "":
+            dialog.setDirectory( os.path.dirname( widget.getFileName() ) )
+            dialog.selectFile( os.path.basename( widget.getFileName() ) )
         else:
             if project.isLoaded():
                 dialog.setDirectory( project.getProjectDir() )
             else:
                 dialog.setDirectory( QDir.currentPath() )
-            dialog.selectFile( currentWidget.getShortName() )
+            dialog.selectFile( widget.getShortName() )
 
         dialog.setOption( QFileDialog.DontConfirmOverwrite, False )
         if dialog.exec_() != QDialog.Accepted:
@@ -930,7 +943,7 @@ class EditorsManager( QTabWidget ):
                 return False
 
         if os.path.exists( fileName ) and \
-           fileName != currentWidget.getFileName():
+           fileName != widget.getFileName():
             res = QMessageBox.warning( \
                 self, "Save File",
                 "<p>The file <b>" + fileName + "</b> already exists.</p>",
@@ -940,27 +953,27 @@ class EditorsManager( QTabWidget ):
             if res == QMessageBox.Abort or res == QMessageBox.Cancel:
                 return False
 
-        oldType = detectFileType( currentWidget.getShortName() )
+        oldType = detectFileType( widget.getShortName() )
 
         existedBefore = os.path.exists( fileName )
 
         # OK, the file name was properly selected
-        if currentWidget.writeFile( fileName ):
-            currentWidget.setFileName( fileName )
-            currentWidget.getEditor().setModified( False )
-            newType = detectFileType( currentWidget.getShortName() )
-            self._updateIconAndTooltip( self.currentIndex(), newType )
+        if widget.writeFile( fileName ):
+            widget.setFileName( fileName )
+            widget.getEditor().setModified( False )
+            newType = detectFileType( widget.getShortName() )
+            self._updateIconAndTooltip( index, newType )
             if newType != oldType:
-                currentWidget.getEditor().bindLexer( \
-                    currentWidget.getFileName(), newType )
+                widget.getEditor().bindLexer( \
+                    widget.getFileName(), newType )
             if existedBefore:
                 self.emit( SIGNAL( 'fileUpdated' ), fileName,
-                           currentWidget.getUUID() )
+                           widget.getUUID() )
             else:
                 self.emit( SIGNAL( 'bufferSavedAs' ), fileName,
-                           currentWidget.getUUID() )
+                           widget.getUUID() )
                 GlobalData().project.addRecentFile( fileName )
-            currentWidget.updateStatus()
+            widget.updateStatus()
             self.__updateStatusBar()
             self.__mainWindow.updateRunDebugButtons()
             return True
@@ -1254,13 +1267,7 @@ class EditorsManager( QTabWidget ):
 
     def getUnsavedCount( self ):
         " Provides the number of buffers which were not saved "
-        count = 0
-        index = self.count() - 1
-        while index >= 0:
-            if self.widget( index ).isModified():
-                count += 1
-            index -= 1
-        return count
+        return len( self.getModifiedList() )
 
     def closeRequest( self ):
         """ Returns True if it could be closed.
@@ -1268,7 +1275,7 @@ class EditorsManager( QTabWidget ):
             is activated and False is returned. """
         notSaved = []
         firstIndex = -1
-        for index in range( self.count() ):
+        for index in xrange( self.count() ):
             if self.widget( index ).isModified():
                 notSaved.append( self.widget( index ).getShortName() )
                 if firstIndex == -1:
@@ -1320,7 +1327,7 @@ class EditorsManager( QTabWidget ):
         if self.__doNotSaveTabs:
             return
 
-        if GlobalData().project.fileName != "":
+        if GlobalData().project.isLoaded():
             GlobalData().project.setTabsStatus( self.getTabsStatus() )
         else:
             Settings().tabsStatus = self.getTabsStatus()
@@ -1472,7 +1479,7 @@ class EditorsManager( QTabWidget ):
         " Sets the zoom value for all the opened editor tabs "
         Settings().zoom = zoomValue
 
-        for index in range( self.count() ):
+        for index in xrange( self.count() ):
             item = self.widget( index )
             if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
                 item.getEditor().zoomTo( zoomValue )
@@ -1481,7 +1488,7 @@ class EditorsManager( QTabWidget ):
     def getTextEditors( self ):
         " Provides a list of the currently opened text editors "
         result = []
-        for index in range( self.count() ):
+        for index in xrange( self.count() ):
             item = self.widget( index )
             if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
                 result.append( [ item.getUUID(), item.getFileName(), item ] )
@@ -1489,7 +1496,7 @@ class EditorsManager( QTabWidget ):
 
     def updateEditorsSettings( self ):
         " makes all the text editors updating settings "
-        for index in range( self.count() ):
+        for index in xrange( self.count() ):
             item = self.widget( index )
             if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
                 item.getEditor().updateSettings()
@@ -1501,22 +1508,18 @@ class EditorsManager( QTabWidget ):
 
     def getWidgetByUUID( self, uuid ):
         " Provides the widget found by the given UUID "
-        index = self.count() - 1
-        while index >= 0:
+        for index in xrange( self.count() ):
             widget = self.widget( index )
             if uuid == widget.getUUID():
                 return widget
-            index -= 1
         return None
 
     def getIndexByUUID( self, uuid ):
         " Provides the tab index for the given uuid "
-        index = self.count() - 1
-        while index >= 0:
+        for index in xrange( self.count() ):
             widget = self.widget( index )
             if uuid == widget.getUUID():
                 return index
-            index -= 1
         return -1
 
     def getWidgetByIndex( self, index ):
@@ -1527,20 +1530,16 @@ class EditorsManager( QTabWidget ):
 
     def getWidgetForFileName( self, fname ):
         " Provides the widget found by the given file name "
-        index = self.count() - 1
-        while index >= 0:
+        for index in xrange( self.count() ):
             widget = self.widget( index )
             if fname == widget.getFileName():
                 return widget
-            index -= 1
         return None
 
     def checkOutsideFileChanges( self ):
         " Checks all the tabs if the files were changed / disappeared outside "
-        index = self.count() - 1
-        while index >= 0:
+        for index in xrange( self.count() ):
             self._updateIconAndTooltip( index )
-            index -= 1
 
         if self.currentWidget().doesFileExist():
             if self.currentWidget().isDiskFileModified():
@@ -1553,12 +1552,10 @@ class EditorsManager( QTabWidget ):
         """ Returns the number of buffers with non modified
             content for which the disk file is modified """
         cnt = 0
-        index = self.count() - 1
-        while index >= 0:
+        for index in xrange( self.count() ):
             if self.widget( index ).isModified() == False:
                 if self.widget( index ).isDiskFileModified():
                     cnt += 1
-            index -= 1
         return cnt
 
     def onReload( self ):
@@ -1599,10 +1596,41 @@ class EditorsManager( QTabWidget ):
     def onReloadAllNonModified( self ):
         """ Called when all the disk changed and not
             modified files should be reloaded """
-        index = self.count() - 1
-        while index >= 0:
+        for index in xrange( self.count() ):
             if self.widget( index ).isModified() == False:
                 if self.widget( index ).isDiskFileModified():
                     self.reloadTab( index )
-            index -= 1
         return
+
+    def getModifiedList( self, projectOnly = False ):
+        " Prpovides a list of modified file names with the corresponding UUIDs "
+        result = []
+
+        for index in xrange( self.count() ):
+            widget = self.widget( index )
+            if widget.isModified():
+                fileName = widget.getFileName()
+                if projectOnly:
+                    if not GlobalData().project.isProjectFile( fileName ):
+                        continue
+                result.append( [ fileName, widget.getUUID() ] )
+        return result
+
+    def saveModified( self, projectOnly = False ):
+        " Saves the modified files. Stops on first error. "
+        for index in xrange( self.count() ):
+            widget = self.widget( index )
+            if widget.isModified():
+                fileName = widget.getFileName()
+                if projectOnly:
+                    if not GlobalData().project.isProjectFile( fileName ):
+                        continue
+                # Save the file
+                try:
+                    if self.__onSave( index ) == False:
+                        return False
+                except Exception, excpt:
+                    logging.error( str( excpt ) )
+                    return False
+        return True
+
