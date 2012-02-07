@@ -1496,7 +1496,7 @@ class CodimensionMainWindow( QMainWindow ):
             return
 
         fileName = GlobalData().project.getProjectScript()
-        params = GlobalData().getRunParameters( path )
+        params = GlobalData().getRunParameters( fileName )
         workingDir, cmd, environment = getCwdCmdEnv( fileName, params,
                                                      Settings().terminalType )
 
