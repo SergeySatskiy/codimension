@@ -70,6 +70,7 @@ class FileOutlineViewer( QWidget ):
         self.__outlineBrowsers = {}  # UUID -> OutlineAttributes
         self.__currentUUID = None
         self.__updateTimer = QTimer( self )
+        self.__updateTimer.setSingleShot( True )
         self.connect( self.__updateTimer, SIGNAL( 'timeout()' ),
                                           self.__updateView )
 
