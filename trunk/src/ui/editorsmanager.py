@@ -1629,6 +1629,7 @@ class EditorsManager( QTabWidget ):
                 try:
                     if self.__onSave( index ) == False:
                         return False
+                    self.setTabText( index, widget.getShortName() )
                 except Exception, excpt:
                     logging.error( str( excpt ) )
                     return False
