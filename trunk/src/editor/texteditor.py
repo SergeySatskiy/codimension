@@ -66,6 +66,7 @@ from ui.completer               import CodeCompleter
 from ui.runparams               import RunDialog
 from utils.run                  import getCwdCmdEnv
 from ui.findinfiles             import ItemToSearchIn, getSearchItemIndex
+from debugger.modifiedunsaved   import ModifiedUnsavedDialog
 
 
 class TextEditor( ScintillaWrapper ):
@@ -1567,7 +1568,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         runScriptMenu = QMenu( self )
         runScriptDlgAct = runScriptMenu.addAction( \
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
-                                'Set run parameters' )
+                                'Set run/debug parameters' )
         self.connect( runScriptDlgAct, SIGNAL( 'triggered()' ),
                       self.__onRunScriptSettings )
         self.runScriptButton = QToolButton( self )
@@ -1580,6 +1581,24 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.connect( self.runScriptButton, SIGNAL( 'clicked(bool)' ),
                       self.__onRunScript )
         self.runScriptButton.setEnabled( False )
+
+        # Debug script and its menu
+        debugScriptMenu = QMenu( self )
+        debugScriptDlgAct = debugScriptMenu.addAction( \
+                                PixmapCache().getIcon( 'detailsdlg.png' ),
+                                'Set run/debug parameters' )
+        self.connect( debugScriptDlgAct, SIGNAL( 'triggered()' ),
+                      self.__onDebugScriptSettings )
+        self.debugScriptButton = QToolButton( self )
+        self.debugScriptButton.setIcon( \
+                            PixmapCache().getIcon( 'debugger.png' ) )
+        self.debugScriptButton.setToolTip( 'Debug script' )
+        self.debugScriptButton.setPopupMode( QToolButton.DelayedPopup )
+        self.debugScriptButton.setMenu( debugScriptMenu )
+        self.debugScriptButton.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.debugScriptButton, SIGNAL( 'clicked(bool)' ),
+                      self.__onDebugScript )
+        self.debugScriptButton.setEnabled( False )
 
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
@@ -1663,6 +1682,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.addAction( self.pymetricsButton )
         toolbar.addWidget( self.importsDiagramButton )
         toolbar.addWidget( self.runScriptButton )
+        toolbar.addWidget( self.debugScriptButton )
         toolbar.addAction( self.__undoButton )
         toolbar.addAction( self.__redoButton )
         toolbar.addWidget( spacer )
@@ -1709,6 +1729,9 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.runScriptButton.setEnabled( self.__fileType == PythonFileType and \
                                          self.isModified() == False and \
                                          os.path.isabs( self.__fileName ) )
+        self.debugScriptButton.setEnabled( self.__fileType == PythonFileType and \
+                                           self.isModified() == False and \
+                                           os.path.isabs( self.__fileName ) )
         return
 
     def __onPylint( self ):
@@ -1889,6 +1912,9 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.runScriptButton.setEnabled( self.__fileType == PythonFileType and \
                                          self.isModified() == False and \
                                          os.path.isabs( self.__fileName ) )
+        self.debugScriptButton.setEnabled( self.__fileType == PythonFileType and \
+                                           self.isModified() == False and \
+                                           os.path.isabs( self.__fileName ) )
         return
 
     def __onRedo( self ):
@@ -2125,6 +2151,48 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             logging.error( str( exc ) )
         return
 
+    def __onDebugScriptSettings( self ):
+        " Shows the debug parameters dialogue "
+        if self.__checkDebugPrerequisites() == False:
+            return
+
+        fileName = self.getFileName()
+        params = GlobalData().getRunParameters( fileName )
+        termType = Settings().terminalType
+        dlg = RunDialog( fileName, params, termType, "Debug" )
+        if dlg.exec_() == QDialog.Accepted:
+            GlobalData().addRunParams( fileName, dlg.runParams )
+            if dlg.termType != termType:
+                Settings().terminalType = dlg.termType
+            self.__onDebugScript()
+        return
+
+    def __onDebugScript( self ):
+        " Starts debugging "
+        if self.__checkDebugPrerequisites() == False:
+            return
+
+        fileName = self.getFileName()
+        params = GlobalData().getRunParameters( fileName )
+        workingDir, cmd, environment = getCwdCmdEnv( fileName, params,
+                                                     Settings().terminalType )
+        return
+
+    def __checkDebugPrerequisites( self ):
+        " Returns True if should continue "
+        mainWindow = GlobalData().mainWindow
+        editorsManager = mainWindow.editorsManagerWidget.editorsManager
+        modifiedFiles = editorsManager.getModifiedList( True )
+        if len( modifiedFiles ) == 0:
+            return True
+
+        dlg = ModifiedUnsavedDialog( modifiedFiles, "Save and debug" )
+        if dlg.exec_() != QDialog.Accepted:
+            # Selected to cancel
+            return False
+
+        # Need to save the modified project files
+        return editorsManager.saveModified( True )
 
     # Mandatory interface part is below
 
