@@ -87,6 +87,12 @@ class ProjectViewer( QWidget ):
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
+
+        # Support switching to debug and back
+        self.connect( parent, SIGNAL( 'debugModeChanged' ),
+                      self.projectTreeView.onDebugMode )
+        self.connect( parent, SIGNAL( 'debugModeChanged' ),
+                      self.filesystemView.onDebugMode )
         return
 
 
