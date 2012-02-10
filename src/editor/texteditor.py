@@ -1489,6 +1489,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         self.__diskModTime = None
         self.__reloadDlgShown = False
+
+        self.__debugMode = False
         return
 
     def shouldAcceptFocus( self ):
@@ -1636,15 +1638,15 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                       self.__onRedo )
         self.__redoButton.setEnabled( False )
 
-        removeTrailingSpacesButton = QAction( \
+        self.removeTrailingSpacesButton = QAction( \
             PixmapCache().getIcon( 'trailingws.png' ),
             'Remove trailing spaces', self )
-        self.connect( removeTrailingSpacesButton, SIGNAL( 'triggered()' ),
+        self.connect( self.removeTrailingSpacesButton, SIGNAL( 'triggered()' ),
                       self.__onRemoveTrailingWS )
-        expandTabsButton = QAction( \
+        self.expandTabsButton = QAction( \
             PixmapCache().getIcon( 'expandtabs.png' ),
             'Expand tabs (4 spaces)', self )
-        self.connect( expandTabsButton, SIGNAL( 'triggered()' ),
+        self.connect( self.expandTabsButton, SIGNAL( 'triggered()' ),
                       self.__onExpandTabs )
 
         # Zoom buttons
@@ -1691,8 +1693,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.addAction( zoomResetButton )
         toolbar.addWidget( fixedSpacer )
         toolbar.addWidget( exportButton )
-        toolbar.addAction( removeTrailingSpacesButton )
-        toolbar.addAction( expandTabsButton )
+        toolbar.addAction( self.removeTrailingSpacesButton )
+        toolbar.addAction( self.expandTabsButton )
 
 
         self.__importsBar = ImportListWidget( self.__editor )
@@ -1909,11 +1911,18 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Triggered when the content is changed "
         self.__undoButton.setEnabled( self.__editor.isUndoAvailable() )
         self.__redoButton.setEnabled( self.__editor.isRedoAvailable() )
+        self.__updateRunDebugButtons()
+        return
+
+    def __updateRunDebugButtons( self ):
+        " Enables/disables the run and debug buttons as required "
         self.runScriptButton.setEnabled( self.__fileType == PythonFileType and \
                                          self.isModified() == False and \
+                                         self.__debugMode == False and \
                                          os.path.isabs( self.__fileName ) )
         self.debugScriptButton.setEnabled( self.__fileType == PythonFileType and \
                                            self.isModified() == False and \
+                                           self.__debugMode == False and \
                                            os.path.isabs( self.__fileName ) )
         return
 
@@ -2299,3 +2308,39 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__diskModTime = \
                     os.path.getmtime( os.path.realpath( fileName ) )
         return
+
+    def setDebugMode( self, mode, isProjectFile ):
+        " Called to switch debug/development "
+        skin = GlobalData().skin
+        self.__debugMode = mode
+
+        if mode == True:
+            self.__editor.setMarginsBackgroundColor( skin.marginPaperDebug )
+            self.__editor.setMarginsForegroundColor( skin.marginColorDebug )
+            self.__editor.setReadOnly( isProjectFile )
+
+            # Undo/redo
+            if isProjectFile:
+                self.__undoButton.setEnabled( False )
+                self.__redoButton.setEnabled( False )
+
+                # Spaces/tabs
+                self.removeTrailingSpacesButton.setEnabled( False )
+                self.expandTabsButton.setEnabled( False )
+        else:
+            self.__editor.setMarginsBackgroundColor( skin.marginPaper )
+            self.__editor.setMarginsForegroundColor( skin.marginColor )
+            self.__editor.setReadOnly( False )
+
+            # Undo/redo
+            self.__undoButton.setEnabled( self.__editor.isUndoAvailable() )
+            self.__redoButton.setEnabled( self.__editor.isRedoAvailable() )
+
+            # Spaces/tabs
+            self.removeTrailingSpacesButton.setEnabled( True )
+            self.expandTabsButton.setEnabled( True )
+
+        # Run/debug buttons
+        self.__updateRunDebugButtons()
+        return
+
