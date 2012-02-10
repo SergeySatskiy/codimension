@@ -252,14 +252,14 @@ class CodimensionMainWindow( QMainWindow ):
         logging.root.addHandler( handler )
 
 
-        projectViewer = ProjectViewer()
+        projectViewer = ProjectViewer( self )
         self.__leftSideBar.addTab( projectViewer,
                                    PixmapCache().getIcon( 'project.png' ),
                                    "Project" )
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( 'fileUpdated' ),
                       projectViewer.onFileUpdated )
-        recentProjectsViewer = RecentProjectsViewer()
+        recentProjectsViewer = RecentProjectsViewer( self )
         self.__leftSideBar.addTab( recentProjectsViewer,
                                    PixmapCache().getIcon( 'project.png' ),
                                    "Recent" )
@@ -459,7 +459,7 @@ class CodimensionMainWindow( QMainWindow ):
         font.setItalic( True )
         self.__statusBar.setFont( font )
 
-        self.dbgState = QLabel( self.__statusBar )
+        self.dbgState = QLabel( "Debugger state: unknown", self.__statusBar )
         self.dbgState.setFrameStyle( QFrame.StyledPanel )
         self.dbgState.setAutoFillBackground( True )
         dbgPalette = self.dbgState.palette()
@@ -928,6 +928,13 @@ class CodimensionMainWindow( QMainWindow ):
 
     def updateRunDebugButtons( self ):
         " Updates the run/debug buttons statuses "
+        if self.debugMode:
+            self.runProjectButton.setEnabled( False )
+            self.runProjectButton.setToolTip( "Cannot run project - debug in progress" )
+            self.debugProjectButton.setEnabled( False )
+            self.debugProjectButton.setToolTip( "Cannot debug project - debug in progress" )
+            return
+
         if not GlobalData().project.isLoaded():
             self.runProjectButton.setEnabled( False )
             self.runProjectButton.setToolTip( "Run project" )
@@ -1499,7 +1506,7 @@ class CodimensionMainWindow( QMainWindow ):
         params = GlobalData().getRunParameters( fileName )
         workingDir, cmd, environment = getCwdCmdEnv( fileName, params,
                                                      Settings().terminalType )
-
+        self.switchDebugMode( True )
         return
 
     def __checkDebugPrerequisites( self ):
@@ -1686,13 +1693,15 @@ class CodimensionMainWindow( QMainWindow ):
 
     def updateDebuggerState( self, state ):
         " Updates the debugger state label "
-        self.dbgState.setText( state )
+        self.dbgState.setText( "Debugger state: " + state )
         return
 
     def switchDebugMode( self, newState ):
         " Switches the debug mode to the desired "
         if self.debugMode == newState:
             return
+
+        self.debugMode = newState
 
         # Satatus bar
         self.dbgState.setVisible( newState )
@@ -1704,19 +1713,32 @@ class CodimensionMainWindow( QMainWindow ):
         # Toolbar buttons
         self.createProjectButton.setEnabled( not newState )
         self.__dbgSeparator1.setVisible( newState )
+        self.__dbgBreak.setVisible( newState )
+        self.__dbgGo.setVisible( newState )
+        self.__dbgNext.setVisible( newState )
+        self.__dbgStepInto.setVisible( newState )
+        self.__dbgRunToLine.setVisible( newState )
+        self.__dbgReturn.setVisible( newState )
         self.__dbgSeparator2.setVisible( newState )
         self.__dbgAnalyzeExc.setVisible( newState )
         self.__dbgTrapUnhandled.setVisible( newState )
         self.__dbgSync.setVisible( newState )
+        self.updateRunDebugButtons()
 
         # Tabs at the bottom
-        self.__bottomSideBar.setTabEnabled( 6, newState )   # concole
+        self.__bottomSideBar.setTabEnabled( 6, newState )   # console
+        if newState == True:
+            self.__bottomSideBar.show()
+            self.__bottomSideBar.setCurrentWidget( self.__debuggerConsole )
+            self.__bottomSideBar.raise_()
 
         # Tabs at the right
         self.__rightSideBar.setTabEnabled( 1, newState )    # vars etc.
+        if newState == True:
+            self.__rightSideBar.show()
+            self.__rightSideBar.setCurrentWidget( self.__debuggerContext )
+            self.__rightSideBar.raise_()
 
-
-        self.debugMode = newState
         self.emit( SIGNAL( 'debugModeChanged' ), newState )
         return
 
