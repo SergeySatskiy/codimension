@@ -26,7 +26,9 @@
 name=default
 
 marginpaper=228,228,228,255
+marginpaperdebug=255,228,228,255
 margincolor=128,128,128,255
+margincolordebug=128,128,128,255
 linenumfont=Sans Serif,12,-1,5,50,0,0,0,0,0
 
 foldingpaper=255,255,255,255
