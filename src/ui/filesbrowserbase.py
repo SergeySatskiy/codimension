@@ -150,6 +150,8 @@ class FilesBrowser( QTreeView ):
 
         self.header().setStretchLastSection( True )
         self.layoutDisplay()
+
+        self.__debugMode = False
         return
 
     def layoutDisplay( self ):
@@ -233,6 +235,11 @@ class FilesBrowser( QTreeView ):
             if itemFileType == CodimensionProjectFileType:
                 # This not the current project. Load it if still exists.
                 if itemPath != GlobalData().project.fileName:
+                    if self.__debugMode:
+                        logging.error( "Cannot change project while in debug " \
+                                       "mode. Finish debugging first." )
+                        return
+
                     QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
                     try:
                         if not os.path.exists( itemPath ):
@@ -946,5 +953,10 @@ class FilesBrowser( QTreeView ):
         for item in attributesCopy:
             newItem = TreeViewAttributeItem( treeItem, item )
             self.__addTreeItem( treeItem, newItem )
+        return
+
+    def onDebugMode( self, newState ):
+        " Memorizes the current debug state "
+        self.__debugMode = newState
         return
 
