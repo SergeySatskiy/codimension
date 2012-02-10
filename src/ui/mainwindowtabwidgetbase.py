@@ -128,3 +128,8 @@ class MainWindowTabWidgetBase():
     def getTooltip( self ):
         " Returns the saved tooltip "
         return self.__tooltip
+
+    def setDebugMode( self, mode, isProjectFile ):
+        " Switches the widget to debug mode and back "
+        return
+
