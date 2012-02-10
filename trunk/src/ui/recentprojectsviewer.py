@@ -245,6 +245,11 @@ class RecentProjectsViewer( QWidget ):
         self.__populateFiles()
         self.__updateProjectToolbarButtons()
         self.__updateFileToolbarButtons()
+
+        # Debugging mode support
+        self.__debugMode = False
+        self.connect( parent, SIGNAL( 'debugModeChanged' ),
+                      self.__onDebugMode )
         return
 
     def __createFilePopupMenu( self ):
@@ -529,7 +534,9 @@ class RecentProjectsViewer( QWidget ):
 
             self.propertiesButton.setEnabled( enabled )
             self.copyPrjPathButton.setEnabled( True )
-            self.loadButton.setEnabled( enabled and not isCurrentProject )
+            self.loadButton.setEnabled( enabled and \
+                                        not isCurrentProject and \
+                                        not self.__debugMode )
             self.trashButton.setEnabled( not isCurrentProject )
         return
 
@@ -553,7 +560,9 @@ class RecentProjectsViewer( QWidget ):
         self.__propsMenuItem.setEnabled( enabled )
         self.__delPrjMenuItem.setEnabled( not isCurrentProject )
         fName = self.__projectContextItem.getFilename()
-        self.__prjLoadMenuItem.setEnabled( enabled and not isCurrentProject )
+        self.__prjLoadMenuItem.setEnabled( enabled and \
+                                           not isCurrentProject and \
+                                           not self.__debugMode )
 
         self.__projectMenu.popup( QCursor.pos() )
         return
@@ -657,6 +666,8 @@ class RecentProjectsViewer( QWidget ):
             return
         if not self.__projectContextItem.isValid():
             return
+        if self.__debugMode:
+            return
 
         projectFileName = self.__projectContextItem.getFilename()
 
@@ -738,6 +749,10 @@ class RecentProjectsViewer( QWidget ):
             if fName == GlobalData().project.fileName:
                 # This is the current project, open for text editing
                 GlobalData().mainWindow.openFile( fName, -1 )
+                return
+            if self.__debugMode:
+                logging.error( "Cannot change project while in debug mode. " \
+                               "Finish debugging first." )
                 return
             # Load the project, it is another one
             QApplication.processEvents()
@@ -834,5 +849,13 @@ class RecentProjectsViewer( QWidget ):
 
             self.lower.setMinimumHeight( self.__minH )
             self.lower.setMaximumHeight( self.__maxH )
+        return
+
+    def __onDebugMode( self, newState ):
+        " Triggered when debug mode has changed "
+        self.__debugMode = newState
+
+        # Disable the load project button
+        self.__updateProjectToolbarButtons()
         return
 

@@ -92,6 +92,11 @@ class EditorsManager( QTabWidget ):
         self.historyFwdButton = None
         self.createNavigationButtons()
 
+        self.__debugMode = False
+        self.__debugScript = ""     # If a single script is debugged
+        self.connect( self.__mainWindow, SIGNAL( 'debugModeChanged' ),
+                      self.__onDebugMode )
+
         # Auxiliary widgets - they are created in the main window
         self.findWidget = None
         self.replaceWidget = None
@@ -288,6 +293,7 @@ class EditorsManager( QTabWidget ):
         self.__updateStatusBar()
         editor.setFocus()
         newWidget.updateStatus()
+        self.setWidgetDebugMode( newWidget )
         return
 
     def __updateControls( self ):
@@ -662,7 +668,7 @@ class EditorsManager( QTabWidget ):
             self.saveTabsStatus()
             if self.__restoringTabs == False:
                 GlobalData().project.addRecentFile( fileName )
-
+            self.setWidgetDebugMode( newWidget )
         except Exception, exc:
             logging.error( str( exc ) )
             return False
@@ -783,6 +789,7 @@ class EditorsManager( QTabWidget ):
             self.saveTabsStatus()
             if self.__restoringTabs == False:
                 GlobalData().project.addRecentFile( fileName )
+            self.setWidgetDebugMode( newWidget )
         except Exception, exc:
             logging.error( str( exc ) )
             return False
@@ -958,6 +965,9 @@ class EditorsManager( QTabWidget ):
         existedBefore = os.path.exists( fileName )
 
         # OK, the file name was properly selected
+        if self.__debugMode and self.__debugScript == fileName:
+            logging.error( "Cannot overwrite a script which is currently debugged." )
+            return False
         if widget.writeFile( fileName ):
             widget.setFileName( fileName )
             widget.getEditor().setModified( False )
@@ -1634,4 +1644,34 @@ class EditorsManager( QTabWidget ):
                     logging.error( str( excpt ) )
                     return False
         return True
+
+    def __onDebugMode( self, newState ):
+        " Triggered when the debug mode state is changed "
+        self.__debugMode = newState
+        if self.__debugMode:
+            if not GlobalData().project.isLoaded():
+                self.__debugScript = self.currentWidget().getFileName()
+        else:
+            self.__debugScript = ""
+
+        for index in xrange( self.count() ):
+            self.setWidgetDebugMode( self.widget( index ) )
+        return
+
+    def setWidgetDebugMode( self, widget ):
+        " Sets the widget debug mode "
+
+        fileName = widget.getFileName()
+        fileType = detectFileType( fileName )
+        if widget.getType() not in [ MainWindowTabWidgetBase.PlainTextEditor ]:
+            return
+        if detectFileType( fileName ) not in [ PythonFileType,
+                                               Python3FileType ]:
+            return
+
+        # Need to send the notification only to the python editors
+        isPrjFile = GlobalData().project.isProjectFile( fileName ) or \
+                    fileName == self.__debugScript
+        widget.setDebugMode( self.__debugMode, isPrjFile )
+        return
 
