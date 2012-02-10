@@ -109,7 +109,9 @@ class Skin:
         self.appCSS = ""
 
         self.marginPaper = None
+        self.marginPaperDebug = None
         self.marginColor = None
+        self.marginColorDebug = None
         self.lineNumFont = None
 
         self.foldingPaper = None
@@ -156,7 +158,9 @@ class Skin:
             { alternate-background-color: #eef0f1; } """
 
         self.marginPaper = QColor( 228, 228, 228, 255 )
+        self.marginPaperDebug = QColor( 255, 228, 228, 255 )
         self.marginColor = QColor( 128, 128, 128, 255 )
+        self.marginColorDebug = QColor( 128, 128, 128, 255 )
         self.lineNumFont = buildFont( "Sans Serif,12,-1,5,50,0,0,0,0,0" )
 
         self.foldingPaper = QColor( 255, 255, 255, 255 )
@@ -245,8 +249,12 @@ class Skin:
             config.read( [ fName ] )
             self.marginPaper = buildColor( config.get( "general",
                                                        "marginpaper" ) )
+            self.marginPaperDebug = buildColor( config.get( "general",
+                                                            "marginpaperdebug" ) )
             self.marginColor = buildColor( config.get( "general",
                                                        "margincolor" ) )
+            self.marginColorDebug = buildColor( config.get( "general",
+                                                            "margincolordebug" ) )
             self.lineNumFont = buildFont( config.get( "general",
                                                       "linenumfont" ) )
 
