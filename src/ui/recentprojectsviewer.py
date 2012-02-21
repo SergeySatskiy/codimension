@@ -315,9 +315,9 @@ class RecentProjectsViewer( QWidget ):
         headerFrame.setAutoFillBackground( True )
         headerPalette = headerFrame.palette()
         headerBackground = headerPalette.color( QPalette.Background )
-        headerBackground.setRgb( headerBackground.red() + 30,
-                                 headerBackground.green() + 30,
-                                 headerBackground.blue() + 30 )
+        headerBackground.setRgb( min( headerBackground.red() + 30, 255 ),
+                                 min( headerBackground.green() + 30, 255 ),
+                                 min( headerBackground.blue() + 30, 255 ) )
         headerPalette.setColor( QPalette.Background, headerBackground )
         headerFrame.setPalette( headerPalette )
         headerFrame.setFixedHeight( 24 )
@@ -398,9 +398,9 @@ class RecentProjectsViewer( QWidget ):
         self.headerFrame.setAutoFillBackground( True )
         headerPalette = self.headerFrame.palette()
         headerBackground = headerPalette.color( QPalette.Background )
-        headerBackground.setRgb( headerBackground.red() + 30,
-                                 headerBackground.green() + 30,
-                                 headerBackground.blue() + 30 )
+        headerBackground.setRgb( min( headerBackground.red() + 30, 255 ),
+                                 min( headerBackground.green() + 30, 255 ),
+                                 min( headerBackground.blue() + 30, 255 ) )
         headerPalette.setColor( QPalette.Background, headerBackground )
         self.headerFrame.setPalette( headerPalette )
         self.headerFrame.setFixedHeight( 24 )
