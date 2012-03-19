@@ -1,0 +1,10 @@
+
+The original winpdb (rpdb2 is a part of it) written by Nir Aides has been
+considerably restructured. The main idea was to separate a client and a server
+parts of the debugger and thus simplify the process of embedding rpdb2 into
+codimension.
+
+The work has been done by Sergey Satskiy in 2012.
+
+Winpdb home page: http://winpdb.org/
+
