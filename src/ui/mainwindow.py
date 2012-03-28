@@ -73,6 +73,7 @@ from utils.run                  import getCwdCmdEnv
 from debugger.console           import DebuggerConsole
 from debugger.context           import DebuggerContext
 from debugger.modifiedunsaved   import ModifiedUnsavedDialog
+from debugger.main              import CodimensionDebugger
 
 
 class EditorsManagerWidget( QWidget ):
@@ -111,6 +112,7 @@ class CodimensionMainWindow( QMainWindow ):
         QMainWindow.__init__( self )
 
         self.debugMode = False
+        self.__debugger = CodimensionDebugger( self )
         self.settings = settings
         self.__initialisation = True
 
@@ -1507,6 +1509,7 @@ class CodimensionMainWindow( QMainWindow ):
         workingDir, cmd, environment = getCwdCmdEnv( fileName, params,
                                                      Settings().terminalType )
         self.switchDebugMode( True )
+        self.__debugger.startDebugging()
         return
 
     def __checkDebugPrerequisites( self ):
@@ -1764,10 +1767,17 @@ class CodimensionMainWindow( QMainWindow ):
         return
 
     def __onDbgTrapUnhandled( self ):
-        if self.__dbgTrapUnhandled.isChecked():
+        self.setDbgTrapUnhandledState( self.__dbgTrapUnhandled.isChecked() )
+        return
+
+    def setDbgTrapUnhandledState( self, state ):
+        " Changes the button state and tooltip "
+        if state:
             switch = 'ON'
+            self.__dbgAnalyzeExc.setChecked( True )
         else:
             switch = 'OFF'
+            self.__dbgAnalyzeExc.setChecked( False )
         self.__dbgTrapUnhandled.setToolTip( 'Trap unhandled exception: ' + \
                                             switch )
         return
