@@ -138,7 +138,7 @@ class QuickHelpWidget( HTMLTabWidget ):
         <tr>
           <td>F3 / Shift+F3</td>
           <td>Search next / previous</td>
-          <td>Ctrl+N</td>
+          <td>Ctrl+'</td>
           <td>Highlight current word and iterate over matches</td>
         </tr>
         <tr>

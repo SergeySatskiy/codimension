@@ -140,7 +140,7 @@ class TextEditor( ScintillaWrapper ):
 
         # Ctrl + N => highlight the current word
         self.highlightAct = QAction( self )
-        self.highlightAct.setShortcut( "Ctrl+N" )
+        self.highlightAct.setShortcut( "Ctrl+'" )
         self.connect( self.highlightAct, SIGNAL( 'triggered()' ),
                       self.__onHighlight )
         self.addAction( self.highlightAct )
@@ -882,7 +882,7 @@ class TextEditor( ScintillaWrapper ):
         return
 
     def __onHighlight( self ):
-        " Triggered when Ctrl+N is clicked "
+        " Triggered when Ctrl+' is clicked "
         text = self.getCurrentWord()
         if text == "" or text.contains( '\r' ) or text.contains( '\n' ):
             TextEditor.textToIterate = ""
