@@ -348,10 +348,10 @@ class CodimensionMainWindow( QMainWindow ):
 
         # Create the debugger console
         self.__debuggerConsole = DebuggerConsole()
-        self.__bottomSideBar.addTab( self.__debuggerConsole,
-                                     PixmapCache().getIcon( 'debuggerconsole.png' ),
-                                     'Debugger console' )
-        self.__bottomSideBar.setTabEnabled( 6, False )
+#        self.__bottomSideBar.addTab( self.__debuggerConsole,
+#                                     PixmapCache().getIcon( 'debuggerconsole.png' ),
+#                                     'Debugger console' )
+#        self.__bottomSideBar.setTabEnabled( 6, False )
 
         # Create outline viewer
         self.__outlineViewer = FileOutlineViewer( self.editorsManagerWidget.editorsManager )
@@ -360,10 +360,10 @@ class CodimensionMainWindow( QMainWindow ):
                                     'File outline' )
 
         self.__debuggerContext = DebuggerContext()
-        self.__rightSideBar.addTab( self.__debuggerContext,
-                                    PixmapCache().getIcon( 'debugger.png' ),
-                                    'Debugger' )
-        self.__rightSideBar.setTabEnabled( 1, False )
+#        self.__rightSideBar.addTab( self.__debuggerContext,
+#                                    PixmapCache().getIcon( 'debugger.png' ),
+#                                    'Debugger' )
+#        self.__rightSideBar.setTabEnabled( 1, False )
 
         # Create splitters
         self.__horizontalSplitter = QSplitter( Qt.Horizontal )
@@ -593,6 +593,9 @@ class CodimensionMainWindow( QMainWindow ):
         self.debugProjectButton.setFocusPolicy( Qt.NoFocus )
         self.connect( self.debugProjectButton, SIGNAL( 'clicked(bool)' ),
                       self.__onDebugProject )
+
+        # Hide the button temporarily
+        self.debugProjectButton.setVisible( False )
 
         packageDiagramButton = QAction( \
                 PixmapCache().getIcon( 'packagediagram.png' ),
