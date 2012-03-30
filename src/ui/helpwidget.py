@@ -75,8 +75,8 @@ class QuickHelpWidget( HTMLTabWidget ):
       <table border="1" cellspacing="0"
              cellpadding="1" width="95%" align="center">
         <tr>
-          <td width="15%">Ctrl+T</td>
-          <td width="35%">New tab</td>
+          <td width="15%">Ctrl+N</td>
+          <td width="35%">New file</td>
           <td width="15%">F11</td>
           <td width="35%">Shrink sidebars</td>
         </tr>

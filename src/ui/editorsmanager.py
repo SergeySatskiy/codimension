@@ -406,9 +406,9 @@ class EditorsManager( QTabWidget ):
 
         newTabButton = QToolButton( self )
         newTabButton.setIcon( PixmapCache().getIcon( "newfiletab.png" ) )
-        newTabButton.setToolTip( "New tab (Ctrl+T)" )
+        newTabButton.setToolTip( "New file (Ctrl+N)" )
         newTabButton.setEnabled( True )
-        newTabButton.setShortcut( "Ctrl+T" )
+        newTabButton.setShortcut( "Ctrl+N" )
         self.connect( newTabButton, SIGNAL( 'clicked()' ), self.newTabClicked )
         rightCornerWidgetLayout.addWidget( newTabButton )
         self.navigationButton = QToolButton( self )
