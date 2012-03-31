@@ -360,7 +360,7 @@ def _excludePrivateAndBuiltins( proposals ):
             result.add( name )
             continue
         # Here: name starts with '__'
-        if item.scope == 'attribute' and name.endswith( '__' ):
+        if item.kind == 'attribute' and name.endswith( '__' ):
             result.add( name )
             continue
     return result
