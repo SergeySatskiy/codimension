@@ -3,6 +3,7 @@ XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 * Ctrl+' now highlight the current word, instead of Ctrl+N. Issue #323
 * Ctrl+N now creates a new file, instead of Ctrl+T. Issue #323
 * Ctrl+T is now not used for anything. Issue #323
+* Bug fix: no more exception while building a completion list. Issue #321
 
 
 
