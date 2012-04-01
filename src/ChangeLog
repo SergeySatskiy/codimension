@@ -6,6 +6,7 @@ XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 * Bug fix: no more exception while building a completion list. Issue #321
 * Bug fix: removing from FS tree via a context menu did not update the view.
   Issue #325
+* Bug fix: impossible to create a nested project directory
 
 
 
