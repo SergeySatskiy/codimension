@@ -958,7 +958,13 @@ class ProjectViewer( QWidget ):
     def __removeFs( self ):
         " Remove the selected item "
         if self.__fsContextItem is not None:
-            self.__removeItem( self.__fsContextItem.getPath() )
+            if self.__removeItem( self.__fsContextItem.getPath() ):
+                # The item has really been deleted. Update the view
+                dirname, \
+                basename = self.filesystemView._splitPath( \
+                                                self.__fsContextItem.getPath() )
+                self.filesystemView._delFromTree( self.__fsContextItem,
+                                                  dirname, basename )
         return
 
     def __removeItem( self, path ):
@@ -991,7 +997,9 @@ class ProjectViewer( QWidget ):
                     os.remove( path )
             except Exception, exc:
                 logging.error( str( exc ) )
-        return
+                return False
+            return True
+        return False
 
     @staticmethod
     def __canDeleteFile( path ):
