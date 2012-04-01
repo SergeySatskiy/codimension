@@ -786,7 +786,7 @@ class ProjectViewer( QWidget ):
         " Triggered when a new subdir should be created "
         if self.__prjContextItem is None:
             return
-        if not self.__prjContextItem.itemType != DirectoryItemType:
+        if self.__prjContextItem.itemType != DirectoryItemType:
             return
 
         dlg = NewProjectDirDialog( self )
