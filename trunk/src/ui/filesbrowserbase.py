@@ -331,15 +331,15 @@ class FilesBrowser( QTreeView ):
 
         # It is important that items are deleted first and then new are added!
         for item in itemsToDel:
-            dirname, basename = self.__splitPath( item )
+            dirname, basename = self._splitPath( item )
 
             # For all root items
             for treeItem in self.model().sourceModel().rootItem.childItems:
-                self.__delFromTree( treeItem, dirname, basename )
+                self._delFromTree( treeItem, dirname, basename )
 
 
         for item in itemsToAdd:
-            dirname, basename = self.__splitPath( item )
+            dirname, basename = self._splitPath( item )
 
             # For all root items
             for treeItem in self.model().sourceModel().rootItem.childItems:
@@ -393,13 +393,13 @@ class FilesBrowser( QTreeView ):
         return
 
 
-    def __delFromTree( self, treeItem, dirname, basename ):
+    def _delFromTree( self, treeItem, dirname, basename ):
         " Recursive function which deletes an item from the displayed tree "
 
         # treeItem is always of the directory type
         srcModel = self.model().sourceModel()
 
-        d_dirname, d_basename = self.__splitPath( treeItem.getPath() )
+        d_dirname, d_basename = self._splitPath( treeItem.getPath() )
         if d_dirname == dirname and d_basename == basename:
             index = srcModel.buildIndex( treeItem.getRowPath() )
             srcModel.beginRemoveRows( index.parent(), index.row(), index.row() )
@@ -422,11 +422,11 @@ class FilesBrowser( QTreeView ):
         for i in treeItem.childItems:
             if i.itemType == DirectoryItemType:
                 # directory
-                self.__delFromTree( i, dirname, basename )
+                self._delFromTree( i, dirname, basename )
             else:
                 # file
                 if i.isLink:
-                    l_dirname, l_basename = self.__splitPath( i.getPath() )
+                    l_dirname, l_basename = self._splitPath( i.getPath() )
                     if dirname == l_dirname and basename == l_basename:
                         index = srcModel.buildIndex( i.getRowPath() )
                         srcModel.beginRemoveRows( index.parent(),
@@ -450,7 +450,7 @@ class FilesBrowser( QTreeView ):
         return
 
     @staticmethod
-    def __splitPath( path ):
+    def _splitPath( path ):
         " Provides the dirname and the base name "
         if path.endswith( os.path.sep ):
             # directory
