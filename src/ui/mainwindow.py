@@ -271,6 +271,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( "bufferSavedAs" ),
                       recentProjectsViewer.onFileUpdated )
+        self.connect( projectViewer, SIGNAL( "fileUpdated" ),
+                      recentProjectsViewer.onFileUpdated )
 
         #self.__leftSideBar.setTabToolTip( 1, "Recently loaded projects" )
         classesViewer = ClassesViewer()
