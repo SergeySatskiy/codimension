@@ -952,6 +952,13 @@ class EditorsManager( QTabWidget ):
                                "directory " + dirName )
                 return False
 
+        if self.isFileOpened( fileName ) and widget.getFileName() != fileName:
+            QMessageBox.critical( self, "Save file",
+                                  "<p>The file <b>" + fileName + \
+                                  "</b> is opened in another tab.</p>" \
+                                  "<p>Cannot save under this name." )
+            return False
+
         if os.path.exists( fileName ) and \
            fileName != widget.getFileName():
             res = QMessageBox.warning( \
@@ -1628,6 +1635,25 @@ class EditorsManager( QTabWidget ):
                         continue
                 result.append( [ fileName, widget.getUUID() ] )
         return result
+
+    def getOpenedList( self, projectOnly = False ):
+        " provides a list of opened files "
+        result = []
+        for index in xrange( self.count() ):
+            widget = self.widget( index )
+            fileName = widget.getFileName()
+            if projectOnly:
+                if not GlobalData().project.isProjectFile( fileName ):
+                    continue
+            result.append( [ fileName, widget.getUUID() ] )
+        return result
+
+    def isFileOpened( self, fileName ):
+        " True if the file is loaded "
+        for attrs in self.getOpenedList():
+            if attrs[ 0 ] == fileName:
+                return True
+        return False
 
     def saveModified( self, projectOnly = False ):
         " Saves the modified files. Stops on first error. "
