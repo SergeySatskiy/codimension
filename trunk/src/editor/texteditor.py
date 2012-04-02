@@ -1601,6 +1601,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.connect( self.debugScriptButton, SIGNAL( 'clicked(bool)' ),
                       self.__onDebugScript )
         self.debugScriptButton.setEnabled( False )
+        self.debugScriptButton.setVisible( False )
 
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
