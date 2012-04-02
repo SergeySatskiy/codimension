@@ -158,7 +158,10 @@ class EditorsManager( QTabWidget ):
         if tabIndex == clickedIndex:
             widget = self.widget( tabIndex )
             if widget.getFileName() != "":
-                if widget.isDiskFileModified():
+                if not widget.doesFileExist():
+                    self.__reloadAct.setText( "Reload" )
+                    self.__reloadAct.setEnabled( False )
+                elif widget.isDiskFileModified():
                     if widget.isModified():
                         self.__reloadAct.setText( "Reload loosing changes" )
                     else:
