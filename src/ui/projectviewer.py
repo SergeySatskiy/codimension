@@ -505,9 +505,10 @@ class ProjectViewer( QWidget ):
                                                         index ).text() ) )
 
             scriptName = str( dialog.scriptEdit.text() ).strip()
-            relativePath = relpath( scriptName, project.getProjectDir() )
-            if not relativePath.startswith( '..' ):
-                scriptName = relativePath
+            if scriptName != "":
+                relativePath = relpath( scriptName, project.getProjectDir() )
+                if not relativePath.startswith( '..' ):
+                    scriptName = relativePath
 
             project.updateProperties( \
                 scriptName, importDirs,
