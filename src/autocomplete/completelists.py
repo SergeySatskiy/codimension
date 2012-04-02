@@ -350,8 +350,14 @@ def getOccurrences( fileName, editor ):
     _restoreOriginalFile( fileName, temporaryName, editor )
     return nameToSearch, _buildOccurrencesImplementationsResult( result )
 
+
 def _excludePrivateAndBuiltins( proposals ):
     " Returns a list of names excluding private members and __xxx__() methods "
+
+    # Different versions of rope has a different name of an attribute:
+    # 'kind' or 'scope'. 'scope' is newer.
+    initialized = False
+    hasScope = False
 
     result = set()
     for item in proposals:
@@ -360,9 +366,18 @@ def _excludePrivateAndBuiltins( proposals ):
             result.add( name )
             continue
         # Here: name starts with '__'
-        if item.kind == 'attribute' and name.endswith( '__' ):
-            result.add( name )
-            continue
+        if not initialized:
+            initialized = True
+            hasScope = hasattr( item, 'scope' )
+
+        if hasScope:
+            if item.scope == 'attribute' and name.endswith( '__' ):
+                result.add( name )
+                continue
+        else:
+            if item.kind == 'attribute' and name.endswith( '__' ):
+                result.add( name )
+                continue
     return result
 
 
