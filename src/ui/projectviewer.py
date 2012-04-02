@@ -519,6 +519,8 @@ class ProjectViewer( QWidget ):
                 str( dialog.versionEdit.text() ).strip(),
                 str( dialog.emailEdit.text() ).strip(),
                 str( dialog.descriptionEdit.toPlainText() ).strip() )
+
+            self.emit( SIGNAL( "fileUpdated" ), project.fileName, None )
         return
 
     def __fsSelectionChanged( self, index ):

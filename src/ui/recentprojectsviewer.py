@@ -815,16 +815,24 @@ class RecentProjectsViewer( QWidget ):
         return
 
     def onFileUpdated( self, fileName, uuid ):
-        " Triggered when the file is updated "
+        " Triggered when the file is updated: python or project "
+        realPath = os.path.realpath( fileName )
+
         count = self.recentFilesView.topLevelItemCount()
         for index in xrange( 0, count ):
             item = self.recentFilesView.topLevelItem( index )
 
-            realPath = os.path.realpath( fileName )
             itemRealPath = os.path.realpath( item.getFilename() )
-
             if realPath == itemRealPath:
                 item.updateIconAndTooltip()
+                break
+
+        for index in xrange( 0, self.projectsView.topLevelItemCount() ):
+            item = self.projectsView.topLevelItem( index )
+
+            itemRealPath = os.path.realpath( item.getFilename() )
+            if realPath == itemRealPath:
+                item.updateTooltip()
                 break
         return
 
