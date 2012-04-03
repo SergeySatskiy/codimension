@@ -914,6 +914,29 @@ class CodimensionProject( QObject ):
         self.emit( SIGNAL( 'projectChanged' ), self.Properties )
         return
 
+    def onProjectFileUpdated( self ):
+        " Called when a project file is updated via direct editing "
+
+        scriptName, importDirs, \
+        creationDate, author, \
+        lic, copy_right, \
+        description, version, \
+        email, projectUuid = getProjectProperties( self.fileName )
+
+        self.importDirs = importDirs
+        self.scriptName = scriptName
+        self.creationDate = creationDate
+        self.author = author
+        self.license = lic
+        self.copyright = copy_right
+        self.version = version
+        self.email = email
+        self.description = description
+
+        # no need to save, but signal just in case
+        self.emit( SIGNAL( 'projectChanged' ), self.Properties )
+        return
+
     def isLoaded( self ):
         " returns True if a project is loaded "
         return self.fileName != ""
