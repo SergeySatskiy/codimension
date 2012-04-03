@@ -57,6 +57,7 @@ from itemdelegates      import NoOutlineHeightDelegate
 from parsererrors       import ParserErrorsDialog
 from utils.fileutils    import detectFileType
 from findinfiles        import FindInFilesDialog
+from utils.project      import getProjectFileTooltip
 
 
 class FilesBrowserSortFilterProxyModel( QSortFilterProxyModel ):
@@ -465,7 +466,9 @@ class FilesBrowser( QTreeView ):
     def onFileUpdated( self, fileName, uuid ):
         " Triggered when the file is updated "
 
-        if detectFileType( fileName ) in [ PythonFileType, Python3FileType ]:
+        fileType = detectFileType( fileName )
+
+        if fileType in [ PythonFileType, Python3FileType ]:
             path = os.path.realpath( fileName )
             if GlobalData().project.isProjectFile( path ):
                 infoSrc = GlobalData().project.briefModinfoCache
@@ -479,7 +482,14 @@ class FilesBrowser( QTreeView ):
 
             # For all root items
             for treeItem in self.model().sourceModel().rootItem.childItems:
-                self.__walkTreeAndUpdate( treeItem, path, icon, info )
+                self.__walkTreeAndUpdate( treeItem, path, fileType, icon, info )
+        elif fileType == CodimensionProjectFileType:
+            path = os.path.realpath( fileName )
+
+            # For all root items
+            for treeItem in self.model().sourceModel().rootItem.childItems:
+                self.__walkTreeAndUpdate( treeItem, path, fileType, None, None )
+
         return
 
     def __signalItemUpdated( self, treeItem ):
@@ -507,28 +517,35 @@ class FilesBrowser( QTreeView ):
         self._resort()
         return
 
-    def __walkTreeAndUpdate( self, treeItem, path, icon, info ):
+    def __walkTreeAndUpdate( self, treeItem, fileType, path, icon, info ):
         " Recursively walks the tree items and updates the icon "
 
         if treeItem.itemType in [ DirectoryItemType, SysPathItemType ]:
             for i in treeItem.childItems:
                 if i.itemType in [ DirectoryItemType,
                                    SysPathItemType, FileItemType ]:
-                    self.__walkTreeAndUpdate( i, path, icon, info )
+                    self.__walkTreeAndUpdate( i, path, fileType, icon, info )
 
         if treeItem.itemType == FileItemType:
             if path == os.path.realpath( treeItem.getPath() ):
-                # Update icon
-                treeItem.setIcon( icon )
-                if info.docstring is None:
-                    treeItem.toolTip = ""
-                else:
-                    treeItem.toolTip = info.docstring.text
-                treeItem.parsingErrors = not info.isOK
-                self.__signalItemUpdated( treeItem )
+                if fileType in [ PythonFileType, Python3FileType ]:
+                    # Update icon
+                    treeItem.setIcon( icon )
+                    if info.docstring is None:
+                        treeItem.toolTip = ""
+                    else:
+                        treeItem.toolTip = info.docstring.text
+                    treeItem.parsingErrors = not info.isOK
 
-                # Update content if populated
-                self.updateFileItem( treeItem, info )
+                    self.__signalItemUpdated( treeItem )
+
+                    # Update content if populated
+                    self.updateFileItem( treeItem, info )
+                elif fileType == CodimensionProjectFileType:
+                    # Tooltip update only
+                    treeItem.toolTip = getProjectFileTooltip( path )
+                    self.__signalItemUpdated( treeItem )
+
         return
 
     def updateFileItem( self, treeItem, info ):

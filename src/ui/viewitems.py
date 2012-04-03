@@ -43,7 +43,7 @@ from utils.fileutils        import detectFileType, getFileIcon, \
                                    LinguistFileType, \
                                    CodimensionProjectFileType, \
                                    BrokenSymlinkFileType
-from utils.project          import getProjectProperties
+from utils.project          import getProjectFileTooltip
 
 NoItemType                  = -1
 
@@ -351,17 +351,7 @@ class TreeViewFileItem( TreeViewItem ):
         if self.fileType == CodimensionProjectFileType:
             # Get the project properties
             try:
-                scriptName, importDirs, creationDate, author, lic, \
-                copy_right, description, \
-                version, email, uuid = getProjectProperties( path )
-                self.toolTip = "Version: " + version + "\n" \
-                               "Description: " + description + "\n" \
-                               "Author: " + author + "\n" \
-                               "e-mail: " + email + "\n" \
-                               "Copyright: " + copy_right + "\n" \
-                               "License: " + lic + "\n" \
-                               "Creation date: " + creationDate + "\n" \
-                               "UUID: " + uuid
+                self.toolTip = getProjectFileTooltip( path )
             except:
                 # cannot get project properties
                 self.toolTip = 'Broken project file'
