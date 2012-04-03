@@ -882,6 +882,8 @@ class EditorsManager( QTabWidget ):
             if widget.writeFile( fileName ):
                 editor.setModified( False )
                 self._updateIconAndTooltip( index )
+                if GlobalData().project.fileName == fileName:
+                    GlobalData().project.onProjectFileUpdated()
                 self.emit( SIGNAL( 'fileUpdated' ), fileName,
                            widget.getUUID() )
                 return True
@@ -986,6 +988,10 @@ class EditorsManager( QTabWidget ):
             if newType != oldType:
                 widget.getEditor().bindLexer( \
                     widget.getFileName(), newType )
+
+            if GlobalData().project.fileName == fileName:
+                GlobalData().project.onProjectFileUpdated()
+
             if existedBefore:
                 self.emit( SIGNAL( 'fileUpdated' ), fileName,
                            widget.getUUID() )
