@@ -32,7 +32,7 @@ from PyQt4.QtGui        import QTreeWidget, QTreeWidgetItem, \
                                QHBoxLayout, QSplitter, QPalette
 from utils.pixmapcache  import PixmapCache
 from utils.settings     import Settings
-from utils.project      import getProjectProperties, CodimensionProject
+from utils.project      import CodimensionProject, getProjectFileTooltip
 from utils.globals      import GlobalData
 from projectproperties  import ProjectPropertiesDialog
 from itemdelegates      import NoOutlineHeightDelegate
@@ -72,18 +72,7 @@ class RecentProjectViewItem( QTreeWidgetItem ):
 
             # Get the project properties
             try:
-                scriptName, importDirs, creationDate, author, lic, \
-                copy_right, description, \
-                version, email, uuid = getProjectProperties( fileName )
-                propertiesToolTip = "Version: " + version + "\n" \
-                                    "Description: " + description + "\n" \
-                                    "Author: " + author + "\n" \
-                                    "e-mail: " + email + "\n" \
-                                    "Copyright: " + copy_right + "\n" \
-                                    "License: " + lic + "\n" \
-                                    "Creation date: " + creationDate + "\n" \
-                                    "UUID: " + uuid
-                self.setToolTip( 1, propertiesToolTip )
+                self.setToolTip( 1, getProjectFileTooltip( fileName ) )
                 self.setText( 0, "" )
                 if fileName == GlobalData().project.fileName:
                     self.__markCurrent()
@@ -179,19 +168,8 @@ class RecentFileViewItem( QTreeWidgetItem ):
         elif fileType == CodimensionProjectFileType:
             # Get the project properties
             try:
-                scriptName, importDirs, creationDate, author, lic, \
-                copy_right, description, \
-                version, email, uuid = getProjectProperties( fileName )
-                propertiesToolTip = "Version: " + version + "\n" \
-                                    "Description: " + description + "\n" \
-                                    "Author: " + author + "\n" \
-                                    "e-mail: " + email + "\n" \
-                                    "Copyright: " + copy_right + "\n" \
-                                    "License: " + lic + "\n" \
-                                    "Creation date: " + creationDate + "\n" \
-                                    "UUID: " + uuid
                 self.setToolTip( 0, "" )
-                self.setToolTip( 1, propertiesToolTip )
+                self.setToolTip( 1, getProjectFileTooltip( fileName ) )
                 self.setText( 0, "" )
             except:
                 # cannot get project properties. Mark broken.
