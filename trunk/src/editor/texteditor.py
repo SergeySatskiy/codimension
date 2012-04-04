@@ -835,12 +835,14 @@ class TextEditor( ScintillaWrapper ):
             return
 
         currentLine, currentPos = self.getCursorPosition()
+        oldBuffer = QApplication.clipboard().text()
         self.beginUndoAction()
         self.setCursorPosition( line, 0 )
         self.extendSelectionToEOL()
         self.removeSelectedText()
         self.setCursorPosition( currentLine, currentPos )
         self.endUndoAction()
+        QApplication.clipboard().setText( oldBuffer )
         QApplication.processEvents()
         return
 
