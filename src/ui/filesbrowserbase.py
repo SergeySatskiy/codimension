@@ -517,7 +517,7 @@ class FilesBrowser( QTreeView ):
         self._resort()
         return
 
-    def __walkTreeAndUpdate( self, treeItem, fileType, path, icon, info ):
+    def __walkTreeAndUpdate( self, treeItem, path, fileType, icon, info ):
         " Recursively walks the tree items and updates the icon "
 
         if treeItem.itemType in [ DirectoryItemType, SysPathItemType ]:
