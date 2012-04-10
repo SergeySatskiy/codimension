@@ -480,12 +480,12 @@ class CodimensionMainWindow( QMainWindow ):
         self.sbLanguage = QLabel( self.__statusBar )
         self.sbLanguage.setFrameStyle( QFrame.StyledPanel )
         self.__statusBar.addPermanentWidget( self.sbLanguage )
-        self.sbLanguage.setToolTip( "Editor language" )
+        self.sbLanguage.setToolTip( "Editor language/image format" )
 
         self.sbEncoding = QLabel( self.__statusBar )
         self.sbEncoding.setFrameStyle( QFrame.StyledPanel )
         self.__statusBar.addPermanentWidget( self.sbEncoding )
-        self.sbEncoding.setToolTip( "Editor encoding" )
+        self.sbEncoding.setToolTip( "Editor encoding/image size" )
 
         self.sbEol = QLabel( self.__statusBar )
         self.sbEol.setFrameStyle( QFrame.StyledPanel )
