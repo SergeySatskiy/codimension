@@ -384,6 +384,10 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Tells the content encoding "
         return self.__viewer.info
 
+    def setEncoding( self, newEncoding ):
+        " Sets the encoding - not applicable for picture viewer "
+        return
+
     def getShortName( self ):
         " Tells the display name "
         return self.__shortName
