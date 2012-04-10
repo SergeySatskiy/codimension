@@ -83,6 +83,10 @@ class MainWindowTabWidgetBase():
         " Tells the content encoding "
         raise Exception( "getEncoding() is not implemented" )
 
+    def setEncoding( self, newEncoding ):
+        " Sets the encoding for the text document "
+        raise Exception( "setEncoding() is not implemented" )
+
     def getShortName( self ):
         " Tells the display name "
         raise Exception( "getShortName() is not implemented" )

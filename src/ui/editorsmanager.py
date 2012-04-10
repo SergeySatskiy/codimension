@@ -50,6 +50,7 @@ from utils.globals              import GlobalData
 from utils.settings             import Settings
 from tabshistory                import TabsHistory
 from diagram.importsdgmgraphics import ImportDgmTabWidget
+from cdmbriefparser             import getBriefModuleInfoFromMemory
 
 
 
@@ -878,6 +879,21 @@ class EditorsManager( QTabWidget ):
                 if not editor.isModified():
                     return True
 
+            # The file type has not been changed, so the only encoding for
+            # python files need to be checked
+            fileType = detectFileType( fileName )
+            if fileType in [ PythonFileType, Python3FileType ]:
+                try:
+                    text = str( editor.text() )
+                    info = getBriefModuleInfoFromMemory( text )
+                    if info.encoding.name is not None:
+                        editor.setExplicitEncoding( info.encoding.name )
+                    else:
+                        editor.setExplicitEncoding( "utf-8" )
+                except:
+                    editor.setExplicitEncoding( "utf-8" )
+                self.__updateStatusBar()    # To update encoding
+
             # Save the buffer into the file
             if widget.writeFile( fileName ):
                 editor.setModified( False )
@@ -980,10 +996,28 @@ class EditorsManager( QTabWidget ):
         if self.__debugMode and self.__debugScript == fileName:
             logging.error( "Cannot overwrite a script which is currently debugged." )
             return False
+
+        newType = detectFileType( fileName )
+        if newType != oldType:
+            if newType in [ PythonFileType, Python3FileType ]:
+                text = str( editor.text() )
+                try:
+                    info = getBriefModuleInfoFromMemory( text )
+                    if info.encoding.name is not None:
+                        editor.setExplicitEncoding( info.encoding.name )
+                    else:
+                        editor.setExplicitEncoding( "utf-8" )
+                except:
+                    editor.setExplicitEncoding( "utf-8" )
+            elif newType in [ DesignerFileType, LinguistFileType ]:
+                editor.setExplicitEncoding( "latin-1" )
+            else:
+                editor.setExplicitEncoding( "utf-8" )
+            self.__updateStatusBar()
+
         if widget.writeFile( fileName ):
             widget.setFileName( fileName )
             widget.getEditor().setModified( False )
-            newType = detectFileType( widget.getShortName() )
             self._updateIconAndTooltip( index, newType )
             if newType != oldType:
                 widget.getEditor().bindLexer( \

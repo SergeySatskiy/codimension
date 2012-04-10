@@ -160,6 +160,10 @@ class HTMLTabWidget( MainWindowTabWidgetBase, QWidget ):
         " Tells the content encoding "
         return "N/A"
 
+    def setEncoding( self, newEncoding ):
+        " Sets the encoding - not applicable for HTML viewer "
+        return
+
     def getShortName( self ):
         " Tells the display name "
         return self.__shortName

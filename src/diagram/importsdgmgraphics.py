@@ -663,6 +663,10 @@ class ImportDgmTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Tells the content encoding "
         return "N/A"
 
+    def setEncoding( self, newEncoding ):
+        " Sets the new encoding - not applicable for the diagram viewer "
+        return
+
     def getShortName( self ):
         " Tells the display name "
         return "Imports diagram"

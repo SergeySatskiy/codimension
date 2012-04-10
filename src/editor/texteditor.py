@@ -41,7 +41,8 @@ from utils.fileutils            import detectFileType, DesignerFileType, \
                                        LinguistFileType, MakefileType, \
                                        getFileLanguage, UnknownFileType, \
                                        PythonFileType, Python3FileType
-from utils.encoding             import decode, encode, CodingError
+from utils.encoding             import decode, encode, CodingError, \
+                                       supportedCodecs
 from utils.pixmapcache          import PixmapCache
 from utils.globals              import GlobalData
 from utils.settings             import Settings
@@ -84,6 +85,7 @@ class TextEditor( ScintillaWrapper ):
         self.__initMargins()
         self.__initIndicators()
         self.__disableKeyBinding()
+        self.__initContextMenu()
 
         self.connect( self, SIGNAL( 'SCN_DOUBLECLICK(int,int,int)' ),
                       self.__onDoubleClick )
@@ -127,6 +129,71 @@ class TextEditor( ScintillaWrapper ):
         self.__completer = CodeCompleter( self )
         self.connect( self.__completer, SIGNAL( "activated(const QString &)" ),
                       self.insertCompletion )
+        return
+
+    def __initContextMenu( self ):
+        " Initializes the context menu "
+        self.__menu = QMenu( self )
+        self.__menuUndo = self.__menu.addAction( \
+                                    PixmapCache().getIcon( 'undo.png' ),
+                                    'Undo (Ctrl+Z)', self.onUndo )
+        self.__menuRedo = self.__menu.addAction( \
+                                    PixmapCache().getIcon( 'redo.png' ),
+                                    'Redo (Ctrl+Shift+Z)', self.onRedo )
+        self.__menu.addSeparator()
+        self.__menuCopy = self.__menu.addAction( \
+                                    'Copy (Ctrl+C)', self.__onCtrlC )
+        self.__menuPaste = self.__menu.addAction( \
+                                    'Paste (Ctrl+V)', self.paste )
+        self.__menuCut = self.__menu.addAction( \
+                                    'Cut (Ctrl+X)', self.__onShiftDel )
+        self.__menuSelectAll = self.__menu.addAction( \
+                                    'Select all (Ctrl+A)', self.selectAll )
+        self.__menu.addSeparator()
+        self.__menu.addMenu( self.__initEncodingMenu() )
+        self.__menu.addSeparator()
+        self.__menu.addMenu( self.__initToolsMenu() )
+        return
+
+    def __marginNumber( self, xPos ):
+        " Calculates the margin number based on a x position "
+        width = 0
+        for margin in xrange( 5 ):
+            width += self.marginWidth( margin )
+            if xPos <= width:
+                return margin
+        return None
+
+    def __initEncodingMenu( self ):
+        " Creates the encoding menu "
+        self.encodingMenu = QMenu( "Encoding" )
+        for encoding in sorted( supportedCodecs ):
+            act = self.encodingMenu.addAction( encoding )
+            act.setCheckable( True )
+            act.setData( QVariant( encoding ) )
+        self.connect( self.encodingMenu, SIGNAL( 'triggered(QAction *)' ),
+                      self.__encodingsMenuTriggered )
+        return self.encodingMenu
+
+    def __encodingsMenuTriggered( self, act ):
+        " Triggered when encoding is selected "
+        #encoding = unicode( act.data().toString() )
+        #self.__encodingChanged( "%s-selected" % encoding )
+        return
+
+    def __initToolsMenu( self ):
+        " Creates the tools menu "
+        self.toolsMenu = QMenu( "Tools" )
+        return self.toolsMenu
+
+    def contextMenuEvent( self, event ):
+        " Called just before showing a context menu "
+        event.accept()
+        if self.__marginNumber( event.x() ) is None:
+            self.__menu.popup( event.globalPos() )
+        else:
+            # Menu for a margin
+            pass
         return
 
     def __installActions( self ):
@@ -523,6 +590,24 @@ class TextEditor( ScintillaWrapper ):
         self.lexer_.styleText( self.getEndStyled(), position )
         return
 
+    def __getExplicitContentEncoding( self, fileType, content ):
+        " Provides encoding for a python file if so "
+        if fileType not in [ PythonFileType, Python3FileType ]:
+            return None
+        try:
+            info = getBriefModuleInfoFromMemory( content )
+            return info.encoding.name
+        except:
+            return None
+
+    def setExplicitEncoding( self, newEncoding ):
+        if not newEncoding in supportedCodecs:
+            logging.warning( "Cannot change the text encoding to '" + \
+                             newEncoding + "'. It is not supported." )
+            return
+        self.encoding = newEncoding
+        return
+
     def readFile( self, fileName ):
         " Reads the text from a file "
 
@@ -540,7 +625,13 @@ class TextEditor( ScintillaWrapper ):
             txt = f.read()
             self.encoding = 'latin-1'
         else:
-            txt, self.encoding = decode( f.read() )
+            content = f.read()
+            txt, self.encoding = decode( content )
+            explicitEncoding = self.__getExplicitContentEncoding( fileType,
+                                                                  str( txt ) )
+            if explicitEncoding is not None and \
+               explicitEncoding != self.encoding:
+                self.setExplicitEncoding( explicitEncoding )
         f.close()
         fileEol = self.detectEolString( txt )
 
@@ -1465,6 +1556,19 @@ class TextEditor( ScintillaWrapper ):
         self.__completer.hide()
         return
 
+    def onUndo( self ):
+        " Triggered when undo button is clicked "
+        if self.isUndoAvailable():
+            self.undo()
+        return
+
+    def onRedo( self ):
+        " Triggered when redo button is clicked "
+        if self.isRedoAvailable():
+            self.redo()
+        return
+
+
 
 class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     " Plain text editor tab widget "
@@ -2271,7 +2375,12 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def getEncoding( self ):
         " Tells the content encoding "
-        return "Unknown"
+        return self.__editor.encoding
+
+    def setEncoding( self, newEncoding ):
+        " Sets the new editor encoding "
+        self.__editor.setExplicitEncoding( newEncoding )
+        return
 
     def getShortName( self ):
         " Tells the display name "
@@ -2346,4 +2455,3 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         # Run/debug buttons
         self.__updateRunDebugButtons()
         return
-
