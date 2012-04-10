@@ -57,7 +57,6 @@ from utils.importutils          import getImportsList, \
                                        resolveImports
 from ui.importlist              import ImportListWidget
 from ui.outsidechanges          import OutsideChangeWidget
-import export
 from autocomplete.bufferutils   import getContext, getPrefixAndObject, \
                                        getEditorTags
 from autocomplete.completelists import getCompletionList, getCalltipAndDoc, \
@@ -136,21 +135,22 @@ class TextEditor( ScintillaWrapper ):
         self.__menu = QMenu( self )
         self.__menuUndo = self.__menu.addAction( \
                                     PixmapCache().getIcon( 'undo.png' ),
-                                    'Undo (Ctrl+Z)', self.onUndo )
+                                    'Undo', self.onUndo, "Ctrl+Z" )
         self.__menuRedo = self.__menu.addAction( \
                                     PixmapCache().getIcon( 'redo.png' ),
-                                    'Redo (Ctrl+Shift+Z)', self.onRedo )
+                                    'Redo', self.onRedo, "Ctrl+Shift+Z" )
         self.__menu.addSeparator()
         self.__menuCopy = self.__menu.addAction( \
-                                    'Copy (Ctrl+C)', self.__onCtrlC )
+                                    'Copy', self.__onCtrlC, "Ctrl+C" )
         self.__menuPaste = self.__menu.addAction( \
-                                    'Paste (Ctrl+V)', self.paste )
+                                    'Paste', self.paste, "Ctrl+V" )
         self.__menuCut = self.__menu.addAction( \
-                                    'Cut (Ctrl+X)', self.__onShiftDel )
+                                    'Cut', self.__onShiftDel, "Ctrl+X" )
         self.__menuSelectAll = self.__menu.addAction( \
-                                    'Select all (Ctrl+A)', self.selectAll )
+                                    'Select all', self.selectAll, "Ctrl+A" )
         self.__menu.addSeparator()
-        self.__menu.addMenu( self.__initEncodingMenu() )
+        m = self.__menu.addMenu( self.__initEncodingMenu() )
+        m.setIcon( PixmapCache().getIcon( 'textencoding.png' ) )
         self.__menu.addSeparator()
         self.__menu.addMenu( self.__initToolsMenu() )
         return
@@ -184,6 +184,10 @@ class TextEditor( ScintillaWrapper ):
     def __initToolsMenu( self ):
         " Creates the tools menu "
         self.toolsMenu = QMenu( "Tools" )
+        self.toolsMenu.addAction( PixmapCache().getIcon( 'pylint.png' ),
+                                  'pylint', self.parent().onPylint, "Ctrl+L" )
+        self.toolsMenu.addAction( PixmapCache().getIcon( 'pymetrics.png' ),
+                                  'pymetrics', self.parent().onPymetrics, "Ctrl+K" )
         return self.toolsMenu
 
     def contextMenuEvent( self, event ):
@@ -1643,7 +1647,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             'Analyse the file (Ctrl+L)', self )
         self.pylintButton.setShortcut( 'Ctrl+L' )
         self.connect( self.pylintButton, SIGNAL( 'triggered()' ),
-                      self.__onPylint )
+                      self.onPylint )
         self.pylintButton.setEnabled( False )
 
         self.pymetricsButton = QAction( \
@@ -1651,7 +1655,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             'Calculate the file metrics (Ctrl+K)', self )
         self.pymetricsButton.setShortcut( 'Ctrl+K' )
         self.connect( self.pymetricsButton, SIGNAL( 'triggered()' ),
-                      self.__onPymetrics )
+                      self.onPymetrics )
         self.pymetricsButton.setEnabled( False )
 
         # Imports diagram and its menu
@@ -1711,25 +1715,6 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
-
-        exportMenu = QMenu( self )
-        self.connect( exportMenu, SIGNAL( "triggered(QAction*)" ),
-                      self.__onExportRequest )
-        exportMenu.addAction( PixmapCache().getIcon( 'filehtml.png' ),
-                              'HTML' ).setData( QVariant( 0 ) )
-        exportMenu.addAction( PixmapCache().getIcon( 'filepdf.png' ),
-                              'PDF' ).setData( QVariant( 1 ) )
-        exportMenu.addAction( PixmapCache().getIcon( 'filertf.png' ),
-                              'RTF' ).setData( QVariant( 2 ) )
-        exportMenu.addAction( PixmapCache().getIcon( 'filetex.png' ),
-                              'TEX' ).setData( QVariant( 3 ) )
-
-        exportButton = QToolButton( self )
-        exportButton.setIcon( PixmapCache().getIcon( "export.png" ) )
-        exportButton.setToolTip( "Export the content to..." )
-        exportButton.setPopupMode( QToolButton.InstantPopup )
-        exportButton.setMenu( exportMenu )
-        exportButton.setEnabled( False )
 
         self.__undoButton = QAction( \
             PixmapCache().getIcon( 'undo.png' ), 'Undo (Ctrl+Z)', self )
@@ -1799,7 +1784,6 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.addAction( zoomOutButton )
         toolbar.addAction( zoomResetButton )
         toolbar.addWidget( fixedSpacer )
-        toolbar.addWidget( exportButton )
         toolbar.addAction( self.removeTrailingSpacesButton )
         toolbar.addAction( self.expandTabsButton )
 
@@ -1843,7 +1827,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                                            os.path.isabs( self.__fileName ) )
         return
 
-    def __onPylint( self ):
+    def onPylint( self ):
         " Triggers when pylint should be used "
 
         if self.__fileType == UnknownFileType:
@@ -1869,7 +1853,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                             reportFile, self.getUUID(), self.__fileName )
         return
 
-    def __onPymetrics( self ):
+    def onPymetrics( self ):
         " Triggers when pymetrics should be used "
 
         if self.__fileType == UnknownFileType:
@@ -1894,99 +1878,6 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                             PymetricsViewer.SingleFile, self.__fileName,
                             reportFile, self.getUUID() )
         return
-
-
-    def __onExportRequest( self, act ):
-        " Triggers when one of the export items is selected "
-
-        index, isOK = act.data().toInt()
-        if not isOK:
-            return
-        if index < 0 or index > 3:
-            logging.error( "Invalid export format requested" )
-            return
-
-        if index == 0:
-            title = "Export to HTML"
-            ext = "html"
-        elif index == 1:
-            title = "Export to PDF"
-            ext = "pdf"
-        elif index == 2:
-            title = "Export to RTF"
-            ext = "rtf"
-        else:
-            title = "Export to TeX"
-            ext = "tex"
-
-        # select the file to save to
-        dialog = QFileDialog( self, title )
-        dialog.setFileMode( QFileDialog.AnyFile )
-        dialog.setLabelText( QFileDialog.Accept, "Save" )
-        urls = []
-        for dname in QDir.drives():
-            urls.append( QUrl.fromLocalFile( dname.absoluteFilePath() ) )
-        urls.append( QUrl.fromLocalFile( QDir.homePath() ) )
-
-        project = GlobalData().project
-        if project.isLoaded():
-            # Project is loaded
-            urls.append( QUrl.fromLocalFile( project.getProjectDir() ) )
-        dialog.setSidebarUrls( urls )
-
-        if self.__fileName != "":
-            dialog.setDirectory( os.path.dirname( self.__fileName ) )
-            dialog.selectFile( self.__fileName + "." + ext )
-        else:
-            dialog.setDirectory( QDir.currentPath() )
-            dialog.selectFile( self.__shortName + "." + ext )
-
-        dialog.setOption( QFileDialog.DontConfirmOverwrite, False )
-        if dialog.exec_() != QDialog.Accepted:
-            return False
-
-        fileNames = dialog.selectedFiles()
-        fileName = os.path.abspath( str( fileNames[ 0 ] ) )
-
-        if os.path.isdir( fileName ):
-            logging.error( "A file must be selected" )
-            return False
-
-        # Check permissions to write into the file or to a directory
-        if os.path.exists( fileName ):
-            # Check write permissions for the file
-            if not os.access( fileName, os.W_OK ):
-                logging.error( "There is no write permissions for " + fileName )
-                return False
-        else:
-            # Check write permissions to the directory
-            dirName = os.path.dirname( fileName )
-            if not os.access( dirName, os.W_OK ):
-                logging.error( "There is no write permissions for the " \
-                               "directory " + dirName )
-                return False
-
-        if os.path.exists( fileName ):
-            res = QMessageBox.warning( \
-                self, "Save File",
-                "<p>The file <b>" + fileName + "</b> already exists.</p>",
-                QMessageBox.StandardButtons( QMessageBox.Abort | \
-                                             QMessageBox.Save ),
-                QMessageBox.Abort )
-            if res == QMessageBox.Abort or res == QMessageBox.Cancel:
-                return False
-
-        # OK, the file name was properly selected
-        try:
-            exporter = export.getExporter( ext, self.__editor )
-            if self.__fileName != "":
-                exporter.exportSource( self.__fileName, fileName )
-            else:
-                exporter.exportSource( self.__shortName, fileName )
-        except Exception, exc:
-            logging.error( str( exc ) )
-            return False
-        return True
 
     def __onZoomReset( self ):
         " Triggered when the zoom reset button is pressed "
