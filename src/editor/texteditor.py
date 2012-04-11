@@ -152,7 +152,8 @@ class TextEditor( ScintillaWrapper ):
         m = self.__menu.addMenu( self.__initEncodingMenu() )
         m.setIcon( PixmapCache().getIcon( 'textencoding.png' ) )
         self.__menu.addSeparator()
-        self.__menu.addMenu( self.__initToolsMenu() )
+        m = self.__menu.addMenu( self.__initToolsMenu() )
+        m.setIcon( PixmapCache().getIcon( 'toolsmenu.png' ) )
         return
 
     def __marginNumber( self, xPos ):
