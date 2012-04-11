@@ -114,7 +114,7 @@ class ProjectPropertiesDialog( QDialog, object ):
         else:
             self.setWindowTitle( "Editing Project Properties" )
 
-            # This is editing the existing project
+            # This is editing the loaded project
             self.nameEdit.setText( os.path.basename( project.fileName ) )
             self.dirEdit.setText( project.getProjectDir() )
             self.scriptEdit.setText( project.getProjectScript() )
