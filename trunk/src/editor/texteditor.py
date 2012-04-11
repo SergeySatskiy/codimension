@@ -199,6 +199,8 @@ class TextEditor( ScintillaWrapper ):
         " Called just before showing a context menu "
         event.accept()
         if self.__marginNumber( event.x() ) is None:
+            self.__menuUndo.setEnabled( self.isUndoAvailable() )
+            self.__menuRedo.setEnabled( self.isRedoAvailable() )
             self.__menu.popup( event.globalPos() )
         else:
             # Menu for a margin
@@ -1569,12 +1571,14 @@ class TextEditor( ScintillaWrapper ):
         " Triggered when undo button is clicked "
         if self.isUndoAvailable():
             self.undo()
+            self.parent().modificationChanged()
         return
 
     def onRedo( self ):
         " Triggered when redo button is clicked "
         if self.isRedoAvailable():
             self.redo()
+            self.parent().modificationChanged()
         return
 
 
@@ -1596,7 +1600,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__editor.zoomTo( Settings().zoom )
 
         self.connect( self.__editor, SIGNAL( 'modificationChanged(bool)' ),
-                      self.__modificationChanged )
+                      self.modificationChanged )
 
         openImportAction = QShortcut( 'Ctrl+I', self )
         self.connect( openImportAction, SIGNAL( "activated()" ),
@@ -1725,14 +1729,14 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             PixmapCache().getIcon( 'undo.png' ), 'Undo (Ctrl+Z)', self )
         self.__undoButton.setShortcut( 'Ctrl+Z' )
         self.connect( self.__undoButton, SIGNAL( 'triggered()' ),
-                      self.__onUndo )
+                      self.__editor.onUndo )
         self.__undoButton.setEnabled( False )
 
         self.__redoButton = QAction( \
             PixmapCache().getIcon( 'redo.png' ), 'Redo (Ctrl+Shift+Z)', self )
         self.__redoButton.setShortcut( 'Ctrl+Shift+Z' )
         self.connect( self.__redoButton, SIGNAL( 'triggered()' ),
-                      self.__onRedo )
+                      self.__editor.onRedo )
         self.__redoButton.setEnabled( False )
 
         self.removeTrailingSpacesButton = QAction( \
@@ -1910,7 +1914,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         " triggered when the print preview button is pressed "
         pass
 
-    def __modificationChanged( self, modified = False ):
+    def modificationChanged( self, modified = False ):
         " Triggered when the content is changed "
         self.__undoButton.setEnabled( self.__editor.isUndoAvailable() )
         self.__redoButton.setEnabled( self.__editor.isRedoAvailable() )
@@ -1927,20 +1931,6 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                                            self.isModified() == False and \
                                            self.__debugMode == False and \
                                            os.path.isabs( self.__fileName ) )
-        return
-
-    def __onRedo( self ):
-        " Triggered when redo button is clicked "
-        if self.__editor.isRedoAvailable():
-            self.__editor.redo()
-            self.__modificationChanged()
-        return
-
-    def __onUndo( self ):
-        " Triggered when undo button is clicked "
-        if self.__editor.isUndoAvailable():
-            self.__editor.undo()
-            self.__modificationChanged()
         return
 
     def __onRemoveTrailingWS( self ):
