@@ -141,12 +141,16 @@ class TextEditor( ScintillaWrapper ):
                                     'Redo', self.onRedo, "Ctrl+Shift+Z" )
         self.__menu.addSeparator()
         self.__menuCopy = self.__menu.addAction( \
+                                    PixmapCache().getIcon( 'copymenu.png' ),
                                     'Copy', self.__onCtrlC, "Ctrl+C" )
         self.__menuPaste = self.__menu.addAction( \
+                                    PixmapCache().getIcon( 'pastemenu.png' ),
                                     'Paste', self.paste, "Ctrl+V" )
         self.__menuCut = self.__menu.addAction( \
+                                    PixmapCache().getIcon( 'cutmenu.png' ),
                                     'Cut', self.__onShiftDel, "Ctrl+X" )
         self.__menuSelectAll = self.__menu.addAction( \
+                                    PixmapCache().getIcon( 'selectallmenu.png' ),
                                     'Select all', self.selectAll, "Ctrl+A" )
         self.__menu.addSeparator()
         m = self.__menu.addMenu( self.__initEncodingMenu() )
@@ -187,7 +191,7 @@ class TextEditor( ScintillaWrapper ):
         self.toolsMenu = QMenu( "Tools" )
         self.toolsMenu.addAction( PixmapCache().getIcon( 'pylint.png' ),
                                   'pylint', self.parent().onPylint, "Ctrl+L" )
-        self.toolsMenu.addAction( PixmapCache().getIcon( 'pymetrics.png' ),
+        self.toolsMenu.addAction( PixmapCache().getIcon( 'metrics.png' ),
                                   'pymetrics', self.parent().onPymetrics, "Ctrl+K" )
         return self.toolsMenu
 
