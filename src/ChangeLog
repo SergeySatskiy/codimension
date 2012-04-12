@@ -10,6 +10,7 @@ XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 * Bug fix: do not show the 'reload' menu item for deleted file
 * Bug fix: saving as into a file which is opened in another tab. Issue #317
 * Bug fix: updating project properties when a script name is empty
+* Python built in functions are now highlighted as keywords
 
 
 

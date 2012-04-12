@@ -36,6 +36,27 @@ from PyQt4.QtCore   import QString, QStringList
 from lexer          import Lexer
 
 
+# Python built in functions as of 2.7.3
+# http://docs.python.org/library/functions.html
+BUILTIN_FUNCS = "abs divmod input open staticmethod " \
+                "all enumerate int ord str " \
+                "any eval isinstance pow sum " \
+                "basestring execfile issubclass print super " \
+                "bin file iter property tuple " \
+                "bool filter len range type " \
+                "bytearray float list raw_input unichr " \
+                "callable format locals reduce unicode " \
+                "chr frozenset long reload vars " \
+                "classmethod getattr map repr xrange " \
+                "cmp globals max reversed zip " \
+                "compile hasattr memoryview round __import__ " \
+                "complex hash min set apply " \
+                "delattr help next setattr buffer " \
+                "dict hex object slice coerce " \
+                "dir id oct sorted intern"
+
+
+
 class LexerPython( QsciLexerPython, Lexer ):
     """ Adds lexer dependant methods to the QScintilla's version """
 
@@ -124,8 +145,5 @@ class LexerPython( QsciLexerPython, Lexer ):
         if standardSet is None:
             return standardSet
 
-        standardSetAsString = str( standardSet )
-        if "True" not in standardSetAsString:
-            return standardSetAsString + " True False"
-        return standardSet
+        return str( standardSet ) + " True False " + BUILTIN_FUNCS
 
