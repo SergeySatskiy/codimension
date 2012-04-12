@@ -907,6 +907,10 @@ class TextEditor( ScintillaWrapper ):
                     ScintillaWrapper.keyPressEvent( self, event )
             else:
                 ScintillaWrapper.keyPressEvent( self, event )
+        elif key == Qt.Key_Z and \
+            int( event.modifiers() ) == (Qt.ControlModifier + Qt.ShiftModifier):
+            event.accept()
+
         else:
             # Special keyboard keys are delivered as 0 values
             if key != 0:
