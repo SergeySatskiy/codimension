@@ -158,6 +158,9 @@ class TextEditor( ScintillaWrapper ):
         self.__menu.addSeparator()
         m = self.__menu.addMenu( self.__initToolsMenu() )
         m.setIcon( PixmapCache().getIcon( 'toolsmenu.png' ) )
+        self.__menu.addSeparator()
+        m = self.__menu.addMenu( self.__initDiagramsMenu() )
+        m.setIcon( PixmapCache().getIcon( 'diagramsmenu.png' ) )
         return
 
     def __marginNumber( self, xPos ):
@@ -188,12 +191,36 @@ class TextEditor( ScintillaWrapper ):
 
     def __initToolsMenu( self ):
         " Creates the tools menu "
-        self.toolsMenu = QMenu( "Tools" )
-        self.toolsMenu.addAction( PixmapCache().getIcon( 'pylint.png' ),
-                                  'pylint', self.parent().onPylint, "Ctrl+L" )
-        self.toolsMenu.addAction( PixmapCache().getIcon( 'metrics.png' ),
-                                  'pymetrics', self.parent().onPymetrics, "Ctrl+K" )
-        return self.toolsMenu
+        toolsMenu = QMenu( "Tools" )
+        self.pylintAct = toolsMenu.addAction( \
+                            PixmapCache().getIcon( 'pylint.png' ),
+                            'pylint', self.parent().onPylint, "Ctrl+L" )
+        self.pylintAct.setEnabled( False )
+        self.pymetricsAct = toolsMenu.addAction( \
+                            PixmapCache().getIcon( 'metrics.png' ),
+                            'pymetrics', self.parent().onPymetrics, "Ctrl+K" )
+        toolsMenu.addSeparator()
+        self.runAct = toolsMenu.addAction( \
+                            PixmapCache().getIcon( 'run.png' ),
+                            'Run script', self.parent().onRunScript )
+        self.runParamAct = toolsMenu.addAction( \
+                            PixmapCache().getIcon( 'paramsmenu.png' ),
+                            'Set parameters and run',
+                            self.parent().onRunScriptSettings )
+        return toolsMenu
+
+    def __initDiagramsMenu( self ):
+        " Creates the diagrams menu "
+        diagramsMenu = QMenu( "Diagrams" )
+        self.importsDgmAct = diagramsMenu.addAction( \
+                                PixmapCache().getIcon( 'importsdiagram.png' ),
+                                'Imports diagram',
+                                self.parent().onImportDgm )
+        self.importsDgmParamAct = diagramsMenu.addAction( \
+                                PixmapCache().getIcon( 'paramsmenu.png' ),
+                                'Fine tuned imports diagram',
+                                self.parent().onImportDgmTuned )
+        return diagramsMenu
 
     def contextMenuEvent( self, event ):
         " Called just before showing a context menu "
@@ -201,6 +228,7 @@ class TextEditor( ScintillaWrapper ):
         if self.__marginNumber( event.x() ) is None:
             self.__menuUndo.setEnabled( self.isUndoAvailable() )
             self.__menuRedo.setEnabled( self.isRedoAvailable() )
+            self.__menuPaste.setEnabled( QApplication.clipboard().text() != "" )
             self.__menu.popup( event.globalPos() )
         else:
             # Menu for a margin
@@ -1677,7 +1705,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
                                 'Fine tuned imports diagram' )
         self.connect( importsDlgAct, SIGNAL( 'triggered()' ),
-                      self.__onImportDgmTuned )
+                      self.onImportDgmTuned )
         self.importsDiagramButton = QToolButton( self )
         self.importsDiagramButton.setIcon( \
                             PixmapCache().getIcon( 'importsdiagram.png' ) )
@@ -1686,7 +1714,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.importsDiagramButton.setMenu( importsMenu )
         self.importsDiagramButton.setFocusPolicy( Qt.NoFocus )
         self.connect( self.importsDiagramButton, SIGNAL( 'clicked(bool)' ),
-                      self.__onImportDgm )
+                      self.onImportDgm )
         self.importsDiagramButton.setEnabled( False )
 
         # Run script and its menu
@@ -1695,7 +1723,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
                                 'Set run/debug parameters' )
         self.connect( runScriptDlgAct, SIGNAL( 'triggered()' ),
-                      self.__onRunScriptSettings )
+                      self.onRunScriptSettings )
         self.runScriptButton = QToolButton( self )
         self.runScriptButton.setIcon( \
                             PixmapCache().getIcon( 'run.png' ) )
@@ -1704,7 +1732,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.runScriptButton.setMenu( runScriptMenu )
         self.runScriptButton.setFocusPolicy( Qt.NoFocus )
         self.connect( self.runScriptButton, SIGNAL( 'clicked(bool)' ),
-                      self.__onRunScript )
+                      self.onRunScript )
         self.runScriptButton.setEnabled( False )
 
         # Debug script and its menu
@@ -1828,6 +1856,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                 self.__fileType = detectFileType( self.__shortName )
         self.pylintButton.setEnabled( self.__fileType == PythonFileType and
                                       GlobalData().pylintAvailable )
+        self.__editor.pylintAct.setEnabled( self.pylintButton.isEnabled() )
         self.pymetricsButton.setEnabled( self.__fileType == PythonFileType )
         self.importsDiagramButton.setEnabled( \
                             self.__fileType == PythonFileType and
@@ -1955,7 +1984,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             self.__outsideChangesBar.setFocus()
         return
 
-    def __onImportDgmTuned( self ):
+    def onImportDgmTuned( self ):
         " Runs the settings dialog first "
         if self.__editor.isModified():
             what = ImportsDiagramDialog.SingleBuffer
@@ -1972,7 +2001,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             self.__generateImportDiagram( what, dlg.options )
         return
 
-    def __onImportDgm( self, action ):
+    def onImportDgm( self, action ):
         " Runs the generation process with default options "
         if self.__editor.isModified():
             what = ImportsDiagramDialog.SingleBuffer
@@ -2130,7 +2159,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.emit( SIGNAL( 'ReloadAllNonModifiedRequest' ) )
         return
 
-    def __onRunScriptSettings( self ):
+    def onRunScriptSettings( self ):
         " Shows the run parameters dialogue "
         fileName = self.getFileName()
         params = GlobalData().getRunParameters( fileName )
@@ -2140,10 +2169,10 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             GlobalData().addRunParams( fileName, dlg.runParams )
             if dlg.termType != termType:
                 Settings().terminalType = dlg.termType
-            self.__onRunScript()
+            self.onRunScript()
         return
 
-    def __onRunScript( self ):
+    def onRunScript( self ):
         " Runs the script "
         fileName = self.getFileName()
         params = GlobalData().getRunParameters( path )
