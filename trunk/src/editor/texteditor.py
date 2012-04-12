@@ -191,36 +191,36 @@ class TextEditor( ScintillaWrapper ):
 
     def __initToolsMenu( self ):
         " Creates the tools menu "
-        toolsMenu = QMenu( "Tools" )
-        self.pylintAct = toolsMenu.addAction( \
+        self.toolsMenu = QMenu( "Tools" )
+        self.pylintAct = self.toolsMenu.addAction( \
                             PixmapCache().getIcon( 'pylint.png' ),
                             'pylint', self.parent().onPylint, "Ctrl+L" )
         self.pylintAct.setEnabled( False )
-        self.pymetricsAct = toolsMenu.addAction( \
+        self.pymetricsAct = self.toolsMenu.addAction( \
                             PixmapCache().getIcon( 'metrics.png' ),
                             'pymetrics', self.parent().onPymetrics, "Ctrl+K" )
-        toolsMenu.addSeparator()
-        self.runAct = toolsMenu.addAction( \
+        self.toolsMenu.addSeparator()
+        self.runAct = self.toolsMenu.addAction( \
                             PixmapCache().getIcon( 'run.png' ),
                             'Run script', self.parent().onRunScript )
-        self.runParamAct = toolsMenu.addAction( \
+        self.runParamAct = self.toolsMenu.addAction( \
                             PixmapCache().getIcon( 'paramsmenu.png' ),
                             'Set parameters and run',
                             self.parent().onRunScriptSettings )
-        return toolsMenu
+        return self.toolsMenu
 
     def __initDiagramsMenu( self ):
         " Creates the diagrams menu "
-        diagramsMenu = QMenu( "Diagrams" )
-        self.importsDgmAct = diagramsMenu.addAction( \
+        self.diagramsMenu = QMenu( "Diagrams" )
+        self.importsDgmAct = self.diagramsMenu.addAction( \
                                 PixmapCache().getIcon( 'importsdiagram.png' ),
                                 'Imports diagram',
                                 self.parent().onImportDgm )
-        self.importsDgmParamAct = diagramsMenu.addAction( \
+        self.importsDgmParamAct = self.diagramsMenu.addAction( \
                                 PixmapCache().getIcon( 'paramsmenu.png' ),
                                 'Fine tuned imports diagram',
                                 self.parent().onImportDgmTuned )
-        return diagramsMenu
+        return self.diagramsMenu
 
     def contextMenuEvent( self, event ):
         " Called just before showing a context menu "
@@ -1858,12 +1858,17 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                                       GlobalData().pylintAvailable )
         self.__editor.pylintAct.setEnabled( self.pylintButton.isEnabled() )
         self.pymetricsButton.setEnabled( self.__fileType == PythonFileType )
+        self.__editor.pymetricsAct.setEnabled( self.pymetricsButton.isEnabled() )
         self.importsDiagramButton.setEnabled( \
                             self.__fileType == PythonFileType and
                             GlobalData().graphvizAvailable )
+        self.__editor.importsDgmAct.setEnabled( self.importsDiagramButton.isEnabled() )
+        self.__editor.importsDgmParamAct.setEnabled( self.importsDiagramButton.isEnabled() )
         self.runScriptButton.setEnabled( self.__fileType == PythonFileType and \
                                          self.isModified() == False and \
                                          os.path.isabs( self.__fileName ) )
+        self.__editor.runAct.setEnabled( self.runScriptButton.isEnabled() )
+        self.__editor.runParamAct.setEnabled( self.runScriptButton.isEnabled() )
         self.debugScriptButton.setEnabled( self.__fileType == PythonFileType and \
                                            self.isModified() == False and \
                                            os.path.isabs( self.__fileName ) )
