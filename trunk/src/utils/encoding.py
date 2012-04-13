@@ -44,7 +44,7 @@ coding_regexps = [
     (2, re.compile(r'''coding[:=]\s*([-\w_.]+)''')),
     (1, re.compile(r'''<\?xml.*\bencoding\s*=\s*['"]([-\w_.]+)['"]\?>''')),
                  ]
-supportedCodecs = [ 'utf-8',
+supportedCodecs = [ 'utf-8', 'utf-8-bom',
                     'iso8859-1',  'iso8859-15', 'iso8859-2',  'iso8859-3',
                     'iso8859-4',  'iso8859-5',  'iso8859-6',  'iso8859-7',
                     'iso8859-8',  'iso8859-9',  'iso8859-10', 'iso8859-11',

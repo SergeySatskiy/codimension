@@ -31,7 +31,7 @@ from PyQt4.QtCore               import Qt, QFileInfo, SIGNAL, QSize, \
                                        QVariant, QDir, QUrl, \
                                        QRect
 from PyQt4.QtGui                import QApplication, QCursor, \
-                                       QFontMetrics, QToolBar, \
+                                       QFontMetrics, QToolBar, QActionGroup, \
                                        QHBoxLayout, QWidget, QAction, QMenu, \
                                        QSizePolicy, QToolButton, QFileDialog, \
                                        QDialog, QMessageBox, QShortcut
@@ -174,20 +174,30 @@ class TextEditor( ScintillaWrapper ):
 
     def __initEncodingMenu( self ):
         " Creates the encoding menu "
+        self.supportedEncodings = {}
         self.encodingMenu = QMenu( "Encoding" )
+        self.encodingsActGrp = QActionGroup( self )
         for encoding in sorted( supportedCodecs ):
             act = self.encodingMenu.addAction( encoding )
             act.setCheckable( True )
             act.setData( QVariant( encoding ) )
+            self.supportedEncodings[ encoding ] = act
+            self.encodingsActGrp.addAction( act )
         self.connect( self.encodingMenu, SIGNAL( 'triggered(QAction *)' ),
                       self.__encodingsMenuTriggered )
         return self.encodingMenu
 
     def __encodingsMenuTriggered( self, act ):
         " Triggered when encoding is selected "
-        #encoding = unicode( act.data().toString() )
-        #self.__encodingChanged( "%s-selected" % encoding )
+        encoding = unicode( act.data().toString() )
+        self.setEncoding( encoding + "-selected", True )
         return
+
+    def __normalizeEncoding( self, enc ):
+        " Strips display purpose suffix "
+        return enc.replace( "-default", "" ) \
+                  .replace( "-guessed", "" ) \
+                  .replace( "-selected", "" )
 
     def __initToolsMenu( self ):
         " Creates the tools menu "
@@ -229,6 +239,11 @@ class TextEditor( ScintillaWrapper ):
             self.__menuUndo.setEnabled( self.isUndoAvailable() )
             self.__menuRedo.setEnabled( self.isRedoAvailable() )
             self.__menuPaste.setEnabled( QApplication.clipboard().text() != "" )
+
+            # Check the proper encoding in the menu
+            encoding = self.__normalizeEncoding( self.encoding )
+            self.supportedEncodings[ encoding ].setChecked( True )
+
             self.__menu.popup( event.globalPos() )
         else:
             # Menu for a margin
@@ -629,22 +644,21 @@ class TextEditor( ScintillaWrapper ):
         self.lexer_.styleText( self.getEndStyled(), position )
         return
 
-    def __getExplicitContentEncoding( self, fileType, content ):
-        " Provides encoding for a python file if so "
-        if fileType not in [ PythonFileType, Python3FileType ]:
-            return None
-        try:
-            info = getBriefModuleInfoFromMemory( content )
-            return info.encoding.name
-        except:
-            return None
+    def setEncoding( self, newEncoding, needToNormalize ):
+        " Sets the required encoding for the buffer "
+        encoding = newEncoding
+        if needToNormalize:
+            encoding = self.__normalizeEncoding( newEncoding )
 
-    def setExplicitEncoding( self, newEncoding ):
-        if not newEncoding in supportedCodecs:
-            logging.warning( "Cannot change the text encoding to '" + \
-                             newEncoding + "'. It is not supported." )
+        if encoding not in supportedCodecs:
+            logging.warning( "Cannot change encoding to '" + \
+                             newEncoding + "'. " \
+                             "Supported encodings are: " + \
+                             ", ".join( sorted( supportedCodecs ) ) )
             return
+
         self.encoding = newEncoding
+        GlobalData().mainWindow.sbEncoding.setText( newEncoding )
         return
 
     def readFile( self, fileName ):
@@ -666,11 +680,7 @@ class TextEditor( ScintillaWrapper ):
         else:
             content = f.read()
             txt, self.encoding = decode( content )
-            explicitEncoding = self.__getExplicitContentEncoding( fileType,
-                                                                  str( txt ) )
-            if explicitEncoding is not None and \
-               explicitEncoding != self.encoding:
-                self.setExplicitEncoding( explicitEncoding )
+
         f.close()
         fileEol = self.detectEolString( txt )
 
@@ -2303,7 +2313,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def setEncoding( self, newEncoding ):
         " Sets the new editor encoding "
-        self.__editor.setExplicitEncoding( newEncoding )
+        self.__editor.setEncoding( newEncoding, False )
         return
 
     def getShortName( self ):
