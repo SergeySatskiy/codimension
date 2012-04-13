@@ -190,7 +190,7 @@ class TextEditor( ScintillaWrapper ):
     def __encodingsMenuTriggered( self, act ):
         " Triggered when encoding is selected "
         encoding = unicode( act.data().toString() )
-        self.setEncoding( encoding + "-selected", True )
+        self.setEncoding( encoding + "-selected" )
         return
 
     def __normalizeEncoding( self, enc ):
@@ -644,12 +644,12 @@ class TextEditor( ScintillaWrapper ):
         self.lexer_.styleText( self.getEndStyled(), position )
         return
 
-    def setEncoding( self, newEncoding, needToNormalize ):
+    def setEncoding( self, newEncoding ):
         " Sets the required encoding for the buffer "
-        encoding = newEncoding
-        if needToNormalize:
-            encoding = self.__normalizeEncoding( newEncoding )
+        if newEncoding == self.encoding:
+            return
 
+        encoding = self.__normalizeEncoding( newEncoding )
         if encoding not in supportedCodecs:
             logging.warning( "Cannot change encoding to '" + \
                              newEncoding + "'. " \
@@ -713,13 +713,14 @@ class TextEditor( ScintillaWrapper ):
             else:
                 txt += eol
         try:
-            txt, self.encoding = encode( txt, self.encoding )
+            txt, newEncoding = encode( txt, self.encoding )
+            self.setEncoding( newEncoding )
         except CodingError, exc:
             logging.critical( "Cannot save " + fileName + \
                               ". Reason: " + str( exc ) )
             return False
 
-        # now write text to the file fn
+        # Now write text to the file
         fileName = unicode( fileName )
         try:
             f = open( fileName, 'wb' )
@@ -2313,7 +2314,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def setEncoding( self, newEncoding ):
         " Sets the new editor encoding "
-        self.__editor.setEncoding( newEncoding, False )
+        self.__editor.setEncoding( newEncoding )
         return
 
     def getShortName( self ):

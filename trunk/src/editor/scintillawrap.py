@@ -572,7 +572,7 @@ class ScintillaWrapper( QsciScintilla ):
         if self.isUtf8():
             self.__targetSearchExpr = unicode( expr_ ).encode( "utf-8" )
         else:
-            self.__targetSearchExpr = unicode( expr_ ).encode( "latin1" )
+            self.__targetSearchExpr = unicode( expr_ ).encode( "latin-1" )
 
         if self.__targetSearchExpr:
             self.__targetSearchActive = True
@@ -602,7 +602,7 @@ class ScintillaWrapper( QsciScintilla ):
         if self.isUtf8():
             replacement = replaceStr.encode( "utf-8" )
         else:
-            replacement = replaceStr.encode( "latin1" )
+            replacement = replaceStr.encode( "latin-1" )
 
         if replacement == self.getTargetText():
             # The found target is the same as what the user wants it
