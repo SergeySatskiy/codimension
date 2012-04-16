@@ -143,39 +143,30 @@ def decode( text ):
     # Assume Latin-1
     return unicode( text, "latin-1" ), 'latin-1-guessed'
 
-def encode( text, orig_coding ):
+def encode( text, orig_coding, forceOrigCoding = False ):
     """ Encodes the text """
 
     if orig_coding == 'utf-8-bom':
         return BOM_UTF8 + text.encode( "utf-8" ), 'utf-8-bom'
 
-    # Try declared coding spec
-    coding = get_coding( text )
-    if coding:
-        try:
-            return text.encode( coding ), coding
-        except ( UnicodeError, LookupError ):
-            # Error: Declared encoding is incorrect
-            raise CodingError( coding )
+    if forceOrigCoding == False:
+        # Try declared coding spec
+        coding = get_coding( text )
+        if coding:
+            try:
+                return text.encode( coding ), coding
+            except ( UnicodeError, LookupError ):
+                # Error: Declared encoding is incorrect
+                raise CodingError( coding )
 
-    if orig_coding and orig_coding.endswith( '-selected' ):
-        coding = orig_coding.replace( "-selected", "" )
-        try:
-            return text.encode( coding ), coding
-        except ( UnicodeError, LookupError ):
-            pass
-    if orig_coding and orig_coding.endswith( '-default' ):
-        coding = orig_coding.replace( "-default", "" )
-        try:
-            return text.encode( coding ), coding
-        except ( UnicodeError, LookupError ):
-            pass
-    if orig_coding and orig_coding.endswith( '-guessed' ):
-        coding = orig_coding.replace( "-guessed", "" )
-        try:
-            return text.encode( coding ), coding
-        except ( UnicodeError, LookupError ):
-            pass
+    coding = orig_coding.replace( "-selected", "" ) \
+                        .replace( "-default", "" ) \
+                        .replace( "-guessed", "" )
+
+    try:
+        return text.encode( coding ), coding
+    except ( UnicodeError, LookupError ):
+        pass
 
     # Try saving as ASCII
     try:
