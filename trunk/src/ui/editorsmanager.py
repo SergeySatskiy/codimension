@@ -843,24 +843,6 @@ class EditorsManager( QTabWidget ):
         self.openFile( fileName, -1 )
         return
 
-    def __handleEncodingOnSave( self, widget, fileName ):
-        " Handles the encoding at the time of saving a file "
-
-        editor = widget.getEditor()
-        if widget.getEncoding().endswith( "-selected" ):
-            # The user explicitly selected something, so
-            # skip any checking
-            return
-
-        fileType = detectFileType( fileName )
-        if fileType in [ DesignerFileType, LinguistFileType ]:
-            widget.setEncoding( "latin-1" )
-            return
-
-        text, encoding = decode( str( editor.text() ) )
-        widget.setEncoding( encoding )
-        return
-
     def __onSave( self, index = -1 ):
         " Triggered when Ctrl+S is received "
         if index == -1:
@@ -898,10 +880,6 @@ class EditorsManager( QTabWidget ):
                 # The disk file is the same as we read it
                 if not editor.isModified():
                     return True
-
-            # The file type has not been changed, so the only encoding for
-            # python and xml files need to be checked
-            self.__handleEncodingOnSave( widget, fileName )
 
             # Save the buffer into the file
             if widget.writeFile( fileName ):
@@ -1006,8 +984,7 @@ class EditorsManager( QTabWidget ):
             logging.error( "Cannot overwrite a script which is currently debugged." )
             return False
 
-        self.__handleEncodingOnSave( widget, fileName )
-
+        newType = detectFileType( fileName )
         if widget.writeFile( fileName ):
             widget.setFileName( fileName )
             widget.getEditor().setModified( False )

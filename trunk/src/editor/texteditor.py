@@ -241,8 +241,13 @@ class TextEditor( ScintillaWrapper ):
             self.__menuPaste.setEnabled( QApplication.clipboard().text() != "" )
 
             # Check the proper encoding in the menu
-            encoding = self.__normalizeEncoding( self.encoding )
-            self.supportedEncodings[ encoding ].setChecked( True )
+            fileType = detectFileType( self.parent().getShortName() )
+            if fileType in [ DesignerFileType, LinguistFileType ]:
+                self.encodingMenu.setEnabled( False )
+            else:
+                self.encodingMenu.setEnabled( True )
+                encoding = self.__normalizeEncoding( self.encoding )
+                self.supportedEncodings[ encoding ].setChecked( True )
 
             self.__menu.popup( event.globalPos() )
         else:
@@ -713,7 +718,11 @@ class TextEditor( ScintillaWrapper ):
             else:
                 txt += eol
         try:
-            txt, newEncoding = encode( txt, self.encoding )
+            # For liguist and designer file types the latin-1 is enforced
+            fileType = detectFileType( fileName )
+            txt, newEncoding = encode( txt, self.encoding,
+                                       fileType in [ DesignerFileType,
+                                                     LinguistFileType ] )
             self.setEncoding( newEncoding )
         except CodingError, exc:
             logging.critical( "Cannot save " + fileName + \

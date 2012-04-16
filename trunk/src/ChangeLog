@@ -1,5 +1,6 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Release 1.5
 * Ctrl+' now highlight the current word, instead of Ctrl+N. Issue #323
 * Ctrl+N now creates a new file, instead of Ctrl+T. Issue #323
 * Ctrl+T is now not used for anything. Issue #323
@@ -10,8 +11,9 @@ XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 * Bug fix: do not show the 'reload' menu item for deleted file
 * Bug fix: saving as into a file which is opened in another tab. Issue #317
 * Bug fix: updating project properties when a script name is empty
-* Python built in functions are now highlighted as keywords
-
+* Python built in functions (as of python 2.7) are now highlighted as keywords
+* File encoding is displayed and can be changed via a context menu. Issue #69
+* New feature: the editor context menu
 
 
 2012 Jan 26  Sergey Satskiy <sergey.satskiy@gmail.com>
