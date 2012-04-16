@@ -427,6 +427,13 @@ class TextEditor( ScintillaWrapper ):
         self.connect( self.altShiftRightAct, SIGNAL( 'triggered()' ),
                       self.__onAlShiftRight )
         self.addAction( self.altShiftRightAct )
+
+        # Alt+U
+        self.altUAct = QAction( self )
+        self.altUAct.setShortcut( "Alt+U" )
+        self.connect( self.altUAct, SIGNAL( 'triggered()' ),
+                      self.__onScopeBegin )
+        self.addAction( self.altUAct )
         return
 
     def focusInEvent( self, event ):
@@ -460,6 +467,7 @@ class TextEditor( ScintillaWrapper ):
         self.altShiftDownAct.setEnabled( True )
         self.altShiftLeftAct.setEnabled( True )
         self.altShiftRightAct.setEnabled( True )
+        self.altUAct.setEnabled( True )
         return ScintillaWrapper.focusInEvent( self, event )
 
     def focusOutEvent( self, event ):
@@ -491,6 +499,7 @@ class TextEditor( ScintillaWrapper ):
         self.altShiftDownAct.setEnabled( False )
         self.altShiftLeftAct.setEnabled( False )
         self.altShiftRightAct.setEnabled( False )
+        self.altUAct.setEnabled( False )
         return ScintillaWrapper.focusOutEvent( self, event )
 
     def updateSettings( self ):
@@ -1401,6 +1410,20 @@ class TextEditor( ScintillaWrapper ):
             else:
                 path = os.path.realpath( location.resource.real_path )
                 GlobalData().mainWindow.openFile( path, location.lineno )
+        return
+
+    def __onScopeBegin( self ):
+        " The user requested jumping to the current scope begin "
+        if self.parent().getFileType() not in [ PythonFileType,
+                                                Python3FileType ]:
+            return
+
+        text = str( self.text() )
+        info = getBriefModuleInfoFromMemory( text )
+        context = getContext( self, info )
+        print str(context)
+        if context.getScope() != context.GlobalScope:
+            GlobalData().mainWindow.jumpToLine( context.getLastScopeLine() )
         return
 
     def __onOccurances( self ):
