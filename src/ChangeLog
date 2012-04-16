@@ -14,6 +14,8 @@ XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 * Python built in functions (as of python 2.7) are now highlighted as keywords
 * File encoding is displayed and can be changed via a context menu. Issue #69
 * New feature: the editor context menu
+* New feature: Alt+U tp jump to the first line of the current function or
+  class. Issue #316
 
 
 2012 Jan 26  Sergey Satskiy <sergey.satskiy@gmail.com>

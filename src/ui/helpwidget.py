@@ -162,8 +162,8 @@ class QuickHelpWidget( HTMLTabWidget ):
         <tr>
           <td>Ctrl+]</td>
           <td>Find occurrences of the current word</td>
-          <td></td>
-          <td></td>
+          <td>Alt+U</td>
+          <td>Jump to the beginning of the current function or class</td>
         </tr>
       </table>
     </p>

@@ -715,11 +715,15 @@ class EditorsManager( QTabWidget ):
         # Used when rope works with unsaved buffer and a definition line is
         # given without a resource - we need to jump within the buffer
         self.history.updateForCurrentIndex()
-        firstVisible = lineNo - 2
-        if firstVisible <= 0:
-            firstVisible = 1
-        self.__restorePosition( self.currentWidget().getEditor(),
-                                lineNo - 1, 0, firstVisible - 1 )
+        editor = self.currentWidget().getEditor()
+        if editor.isLineVisible( lineNo - 1 ):
+            firstVisible = 0
+        else:
+            firstVisible = lineNo - 2
+            if firstVisible <= 0:
+                firstVisible = 1
+
+        self.__restorePosition( editor, lineNo - 1, 0, firstVisible - 1 )
         self.history.addCurrent()
         self.currentWidget().setFocus()
         return
