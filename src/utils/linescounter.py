@@ -51,17 +51,22 @@ class LinesCounter:
 
         afile = open( path )
         for line in afile:
-            line = line.strip()
-            if line == "":
-                self.emptyLines += 1
-                continue
-            if line.startswith( '#' ):
-                self.commentLines += 1
-                continue
-            if line.startswith( 'class ' ):
-                self.classes += 1
-            self.codeLines += 1
+            self.__processLine( line )
         afile.close()
+        return
+
+    def __processLine( self, line ):
+        " Process a single line "
+        line = line.strip()
+        if line == "":
+            self.emptyLines += 1
+            return
+        if line.startswith( '#' ):
+            self.commentLines += 1
+            return
+        if line.startswith( 'class ' ):
+            self.classes += 1
+        self.codeLines += 1
         return
 
     def __processDir( self, path, extensions ):
@@ -106,6 +111,15 @@ class LinesCounter:
             path += os.path.sep
 
         self.__processDir( path, extensions )
+        return
+
+    def getLinesInBuffer( self, editor ):
+        " Counts lines in the given Scintilla buffer "
+        self.__reset()
+        txt = str( editor.text() )
+        self.filesSize = len( txt )
+        for line in txt.split( '\n' ):
+            self.__processLine( line )
         return
 
 

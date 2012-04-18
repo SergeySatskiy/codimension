@@ -27,7 +27,7 @@
 import os, os.path
 from PyQt4.QtCore       import Qt, SIGNAL, QTimer
 from PyQt4.QtGui        import QDialog, QTextEdit, QDialogButtonBox, \
-                               QVBoxLayout, QSizePolicy, \
+                               QVBoxLayout, QSizePolicy, QCursor, \
                                QProgressBar, QApplication, QFontMetrics
 from fitlabel           import FitPathLabel
 from utils.linescounter import LinesCounter
@@ -39,12 +39,17 @@ from utils.misc         import splitThousands
 class LineCounterDialog( QDialog, object ):
     """ line counter dialog implementation """
 
-    def __init__( self, parent = None ):
+    def __init__( self, fName = None, editor = None, parent = None ):
 
         QDialog.__init__( self, parent )
 
         self.__cancelRequest = False
         self.__inProgress = False
+        if fName is not None:
+            self.__fName = fName.strip()
+        else:
+            self.__fName = None
+        self.__editor = editor
         self.__createLayout()
         self.setWindowTitle( "Line counter" )
         QTimer.singleShot( 0, self.__process )
@@ -102,6 +107,26 @@ class LineCounterDialog( QDialog, object ):
         self.connect( self.buttonBox, SIGNAL( "rejected()" ), self.__onClose )
         return
 
+    def __scanDir( self, path, files ):
+        " Recursively builds a list of python files "
+
+        if path in self.__scannedDirs:
+            return
+
+        self.__scannedDirs.append( path )
+        for item in os.listdir( path ):
+            if os.path.isdir( path + item ):
+                nestedDir = os.path.realpath( path + item )
+                if not nestedDir.endswith( os.path.sep ):
+                    nestedDir += os.path.sep
+                self.__scanDir( nestedDir, files )
+            else:
+                candidate = os.path.realpath( path + item )
+                if candidate.endswith( ".py" ) or candidate.endswith( ".py3" ):
+                    if not candidate in files:
+                        files.append( candidate )
+        return
+
     def __onClose( self ):
         " triggered when the close button is clicked "
 
@@ -114,7 +139,25 @@ class LineCounterDialog( QDialog, object ):
         " Accumulation process "
 
         self.__inProgress = True
-        files = GlobalData().project.filesList
+        if self.__fName is not None:
+            if os.path.exists( self.__fName ):
+                if os.path.isdir( self.__fName ):
+                    self.__fName = os.path.realpath( self.__fName )
+                    if not self.__fName.endswith( os.path.sep ):
+                        self.__fName += os.path.sep
+                    files = []
+                    self.__scannedDirs = []
+                    QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+                    self.__scanDir( self.__fName, files )
+                    QApplication.restoreOverrideCursor()
+                else:
+                    files = [ self.__fName ]
+            else:
+                files = []
+        elif self.__editor is not None:
+            files = [ "buffer" ]
+        else:
+            files = GlobalData().project.filesList
         self.progressBar.setRange( 0, len( files ) )
 
         accumulator = LinesCounter()
@@ -130,9 +173,18 @@ class LineCounterDialog( QDialog, object ):
 
             self.infoLabel.setPath( 'Processing: ' + fileName )
 
-            if (fileName.endswith( '.py' ) or fileName.endswith( '.py3' )) and \
-               os.path.exists( fileName ):
-                current.getLines( fileName )
+            processed = False
+            if self.__editor is not None:
+                current.getLinesInBuffer( self.__editor )
+                processed = True
+            else:
+                if (fileName.endswith( '.py' ) or \
+                    fileName.endswith( '.py3' )) and \
+                   os.path.exists( fileName ):
+                    current.getLines( fileName )
+                    processed = True
+
+            if processed:
                 accumulator.files += current.files
                 accumulator.filesSize += current.filesSize
                 accumulator.codeLines += current.codeLines
@@ -149,7 +201,7 @@ class LineCounterDialog( QDialog, object ):
         self.__inProgress = False
 
         # Update text in the text window
-        files = splitThousands( str( accumulator.files ) )
+        nFiles = splitThousands( str( accumulator.files ) )
         filesSize = splitThousands( str( accumulator.filesSize ) )
         classes = splitThousands( str( accumulator.classes ) )
         codeLines = splitThousands( str( accumulator.codeLines ) )
@@ -158,13 +210,21 @@ class LineCounterDialog( QDialog, object ):
         totalLines = splitThousands( str( accumulator.codeLines +
                                           accumulator.emptyLines +
                                           accumulator.commentLines ) )
-        self.resultEdit.setText( \
-                "Python files in project: " + files + "\n" \
-                "Total files size:        " + filesSize + " bytes\n" \
-                "Classes:                 " + classes + "\n" \
-                "Code lines:              " + codeLines + "\n" \
-                "Empty lines:             " + emptyLines + "\n" \
-                "Comment lines:           " + commentLines + "\n" \
-                "Total lines:             " + totalLines )
+
+        output = "Classes:                 " + classes + "\n" \
+                 "Code lines:              " + codeLines + "\n" \
+                 "Empty lines:             " + emptyLines + "\n" \
+                 "Comment lines:           " + commentLines + "\n" \
+                 "Total lines:             " + totalLines
+
+        if self.__editor is None:
+            output = "Number of python files:  " + nFiles + "\n" \
+                     "Total files size:        " + filesSize + " bytes\n" + \
+                     output
+        else:
+            output = "Number of characters:    " + filesSize + "\n" + \
+                     output
+
+        self.resultEdit.setText( output )
         return
 
