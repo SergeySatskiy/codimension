@@ -1420,8 +1420,7 @@ class TextEditor( ScintillaWrapper ):
 
         text = str( self.text() )
         info = getBriefModuleInfoFromMemory( text )
-        context = getContext( self, info )
-        print str(context)
+        context = getContext( self, info, True )
         if context.getScope() != context.GlobalScope:
             GlobalData().mainWindow.jumpToLine( context.getLastScopeLine() )
         return
