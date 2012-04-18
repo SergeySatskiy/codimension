@@ -136,7 +136,7 @@ class CodimensionMainWindow( QMainWindow ):
             self.move( settings.xpos + settings.xdelta,
                        settings.ypos + settings.ydelta )
 
-        splash.showMessage( "Initializing statusbar..." )
+        splash.showMessage( "Initializing status and menu bars..." )
         self.__statusBar = None
         self.sbLanguage = None
         self.sbFile = None
@@ -146,6 +146,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.sbWritable = None
         self.sbEncoding = None
         self.__createStatusBar()
+        self.__initMainMenu()
 
         splash.showMessage( "Creating toolbar..." )
         self.__createToolBar()
@@ -539,6 +540,11 @@ class CodimensionMainWindow( QMainWindow ):
         self.sbPos.setFont( font )
 
         return
+
+    def __initMainMenu( self ):
+        " Initializes the main menu bar "
+        menuBar = self.menuBar()
+        
 
     def __createToolBar( self ):
         """ creates the buttons bar """
