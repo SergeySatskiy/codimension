@@ -165,8 +165,13 @@ def _endsWithTripleQuotedString( editor, line, pos ):
                           QsciLexerPython.TripleSingleQuotedString ]
 
 
-def getContext( editor, info = None ):
-    " Detects the context where the text cursor is "
+def getContext( editor, info = None, readOnly = False ):
+    """ Detects the context where the text cursor is.
+        readOnly == True is used when a context is detected for search
+        purposes like jumping to the beginning of the current scope.
+        The difference is how empty lines are treated. If readOnly is set
+        then empty lines are skipped backward and the last non empty
+        line is used to detect the context. """
 
     # It is expected that this is a python editor.
     # If non-python editor is given, then a global context is provided
@@ -183,6 +188,18 @@ def getContext( editor, info = None ):
         info = getBriefModuleInfoFromMemory( str( editor.text() ) )
 
     line, pos = editor.getCursorPosition()
+    if readOnly == True:
+        while line >= 0:
+            text = editor.text( line )
+            trimmedText = text.trimmed()
+            if trimmedText != "":
+                pos = len( text )
+                break
+            line -= 1
+        if line < 0:
+            line = 0
+            pos = 0
+
     _IdentifyScope( info, context, line )
 
     if context.length == 0:
