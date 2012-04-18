@@ -67,6 +67,7 @@ from ui.runparams               import RunDialog
 from utils.run                  import getCwdCmdEnv
 from ui.findinfiles             import ItemToSearchIn, getSearchItemIndex
 from debugger.modifiedunsaved   import ModifiedUnsavedDialog
+from ui.linecounter             import LineCounterDialog
 
 
 class TextEditor( ScintillaWrapper ):
@@ -1813,6 +1814,12 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                       self.__editor.onRedo )
         self.__redoButton.setEnabled( False )
 
+        self.lineCounterButton = QAction( \
+            PixmapCache().getIcon( 'linecounter.png' ),
+            'Line counter', self )
+        self.connect( self.lineCounterButton, SIGNAL( 'triggered()' ),
+                      self.__onLineCounter )
+
         self.removeTrailingSpacesButton = QAction( \
             PixmapCache().getIcon( 'trailingws.png' ),
             'Remove trailing spaces', self )
@@ -1867,6 +1874,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.addAction( zoomOutButton )
         toolbar.addAction( zoomResetButton )
         toolbar.addWidget( fixedSpacer )
+        toolbar.addAction( self.lineCounterButton )
         toolbar.addAction( self.removeTrailingSpacesButton )
         toolbar.addAction( self.expandTabsButton )
 
@@ -1914,6 +1922,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.debugScriptButton.setEnabled( self.__fileType == PythonFileType and \
                                            self.isModified() == False and \
                                            os.path.isabs( self.__fileName ) )
+        self.lineCounterButton.setEnabled( self.__fileType == PythonFileType )
         return
 
     def onPylint( self ):
@@ -2011,6 +2020,11 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                                            self.isModified() == False and \
                                            self.__debugMode == False and \
                                            os.path.isabs( self.__fileName ) )
+        return
+
+    def __onLineCounter( self ):
+        " triggered when line counter button is clicked "
+        LineCounterDialog( None, self.__editor ).exec_()
         return
 
     def __onRemoveTrailingWS( self ):
@@ -2402,7 +2416,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                 self.__undoButton.setEnabled( False )
                 self.__redoButton.setEnabled( False )
 
-                # Spaces/tabs
+                # Spaces/tabs/line 
                 self.removeTrailingSpacesButton.setEnabled( False )
                 self.expandTabsButton.setEnabled( False )
         else:
