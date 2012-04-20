@@ -426,12 +426,6 @@ class CodimensionMainWindow( QMainWindow ):
             logging.warning( "The 'pylint' utility is not found. " \
                              "Some functionality will not be available." )
 
-        if globalData.doxygenAvailable:
-            logging.debug( "The 'doxygen' utility is available" )
-        else:
-            logging.warning( "The 'doxygen' utility is not found. " \
-                             "Some functionality will not be available." )
-
         if globalData.graphvizAvailable:
             logging.debug( "The 'graphviz' utility is available" )
         else:
@@ -624,11 +618,6 @@ class CodimensionMainWindow( QMainWindow ):
                 'Generate application diagram', self )
         applicationDiagramButton.setEnabled( False )
         applicationDiagramButton.setVisible( False )
-        doxygenButton = QAction( \
-                PixmapCache().getIcon( 'doxygen.png' ),
-                'Generate doxygen documentation', self )
-        doxygenButton.setEnabled( False )
-        doxygenButton.setVisible( False )
         neverUsedButton = QAction( \
                 PixmapCache().getIcon( 'neverused.png' ),
                 'Analysis for never used variables, functions, classes', self )
@@ -823,7 +812,6 @@ class CodimensionMainWindow( QMainWindow ):
         toolbar.addWidget( self.runProjectButton )
         toolbar.addWidget( self.debugProjectButton )
         toolbar.addAction( applicationDiagramButton )
-        toolbar.addAction( doxygenButton )
         toolbar.addSeparator()
         toolbar.addAction( neverUsedButton )
         toolbar.addWidget( self.__pylintButton )
