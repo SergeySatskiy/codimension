@@ -35,7 +35,7 @@ def getLatestVersionFile():
     socket.setdefaulttimeout( newTimeout )
 
     try:
-        url = "http://satsky.spb.ru/codimension/LatestVersion.txt"
+        url = "http://satsky.spb.ru/codimension/LatestVersion.php"
         response = urllib2.urlopen( url )
         content = response.read().split( '\n' )
 
