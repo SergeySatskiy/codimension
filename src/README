@@ -26,8 +26,5 @@ OTHER DEPENDENCIES
 * Pylint 0.21.1 or higher
     Ubuntu: pylint
 
-* Doxygen 1.7.1 or higher
-    Ubuntu: doxygen
-
 * Graphviz 2.26.3 or higher
     Ubuntu: graphviz

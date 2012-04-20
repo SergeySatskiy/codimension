@@ -54,7 +54,6 @@ class GlobalData( object ):
                                                  "runparamscache" )
 
             self.fileAvailable = self.__checkFile()
-            self.doxygenAvailable = self.__checkDoxygen()
             self.pylintAvailable = self.__checkPylint()
             self.graphvizAvailable = self.__checkGraphviz()
             return
@@ -162,14 +161,6 @@ class GlobalData( object ):
             if 'win' in sys.platform.lower():
                 return os.system( 'which file > /NUL 2>&1' ) == 0
             return os.system( 'which file > /dev/null 2>&1' ) == 0
-
-        @staticmethod
-        def __checkDoxygen():
-            " Checks if the doxygen available "
-
-            if 'win' in sys.platform.lower():
-                return os.system( 'which doxygen > /NUL 2>&1' ) == 0
-            return os.system( 'which doxygen > /dev/null 2>&1' ) == 0
 
         @staticmethod
         def __checkGraphviz():
