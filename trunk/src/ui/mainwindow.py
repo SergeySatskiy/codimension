@@ -538,10 +538,16 @@ class CodimensionMainWindow( QMainWindow ):
     def __initMainMenu( self ):
         " Initializes the main menu bar "
         menuBar = self.menuBar()
+
         self.__fileMenu = QMenu( "&File", self )
-        self.__FileQuitAct = self.__fileMenu.addAction( \
+        self.__openProjectAct = self.__fileMenu.addAction( \
+                                        PixmapCache().getIcon( 'project.png' ),
+                                        'Open project', self.__openProject,
+                                        'Ctrl+Shift+O' )
+        self.__fileQuitAct = self.__fileMenu.addAction( \
                                         PixmapCache().getIcon( 'exitmenu.png' ),
-                                        "Quit", self.__onQuit, "Ctrl+Q" )
+                                        "Quit", QApplication.closeAllWindows,
+                                        "Ctrl+Q" )
         menuBar.addMenu( self.__fileMenu )
         return
 
@@ -1798,8 +1804,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.__dbgSync.setToolTip( 'Sync mode: ' + switch )
         return
 
-    def __onQuit( self ):
-        " Quit the application "
-        QApplication.closeAllWindows()
+    def __openProject( self ):
+        " Shows up a dialog to open a project "
         return
+
 
