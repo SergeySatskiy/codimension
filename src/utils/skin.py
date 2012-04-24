@@ -24,18 +24,26 @@
 
 import logging, os, ConfigParser
 from PyQt4.QtGui import QColor, QFont
-from PyQt4.Qsci import QsciScintilla
 from csscache import parseSingleCSS
 
 
-def buildColor( colorAsString ):
+def buildColor( colorAsStr ):
     " Converts saved color into QColor object "
-    colorAsString = colorAsString.strip()
-    parts = colorAsString.split( ',' )
+    colorAsStr = colorAsStr.strip()
+    parts = colorAsStr.split( ',' )
     if len( parts ) != 4:
         raise Exception( "Unexpected color format" )
     return QColor( int( parts[ 0 ] ), int( parts[ 1 ] ),
                    int( parts[ 2 ] ), int( parts[ 3 ] ) )
+
+
+def colorAsString( color ):
+    " Converts the given color to a string "
+    return ",".join( [ str( color.red() ),
+                       str( color.green() ),
+                       str( color.blue() ),
+                       str( color.alpha() ) ] )
+
 
 def buildFont( fontAsString ):
     " Converts saved font into QFont object "
@@ -104,6 +112,7 @@ class Skin:
     " Holds the definitions for a skin "
 
     def __init__( self ):
+        self.__isOK = True
         self.name = ""
         self.lexerStyles = {}   # name -> LexerStyles
         self.appCSS = ""
@@ -143,7 +152,7 @@ class Skin:
 
     def __reset( self ):
         " Resets all the values to the default "
-        self.name = "hard-coded"
+        self.name = "default"
         self.lexerStyles = {}
         self.appCSS = """
             QStatusBar::item
@@ -199,32 +208,30 @@ class Skin:
         dirName += os.path.sep
         appFile = dirName + "application.css"
         if not os.path.exists( appFile ):
-            logging.error( "Cannot find " + appFile + \
-                           ". No skin will be used." )
+            logging.warning( "Cannot find " + appFile + \
+                             ". Default skin will be used." )
             self.__reset()
             return False
 
         generalFile = dirName + "general"
         if not os.path.exists( generalFile ):
-            logging.error( "Cannot find " + generalFile + \
-                           ". No skin will be used." )
+            logging.warning( "Cannot find " + generalFile + \
+                             ". Default skin will be used." )
             self.__reset()
             return False
 
         lexersFile = dirName + "lexers"
         if not os.path.exists( lexersFile ):
-            logging.error( "Cannot find " + lexersFile + \
-                           ". No skin will be used." )
+            logging.warning( "Cannot find " + lexersFile + \
+                             ". Default skin will be used." )
             self.__reset()
             return False
 
         # All the files are in place. Load them
         if not self.__loadAppCSS( appFile ):
-            self.__reset()
-            return False
+            self.__saveAppCSS( appFile )
         if not self.__loadGeneral( generalFile ):
-            self.__reset()
-            return False
+            self.__saveGeneral( generalFile )
         if not self.__loadLexers( lexersFile ):
             self.__reset()
             return False
@@ -238,72 +245,132 @@ class Skin:
             parseSingleCSS( fName, content )
             self.appCSS = "".join( content )
         except:
-            logging.error( "Cannot read " + fName + ". No skin will be used." )
+            logging.warning( "Cannot read application CSS from " + fName + \
+                             ". The file will be updated with a default CSS." )
             return False
         return True
+
+    def __getColor( self, config, section, value ):
+        " Reads a value from the given section "
+        try:
+            return buildColor( config.get( section, value ) )
+        except:
+            logging.warning( "Cannot read the [" + section + "]/" + \
+                             value + " value from the skin file. " \
+                             "The file will be updated with a default value." )
+            self.__isOK = False
+            return None
+
+    def __getFont( self, config, section, value ):
+        " Reads a value from the given section "
+        try:
+            return buildFont( config.get( section, value ) )
+        except:
+            logging.warning( "Cannot read the [" + section + "]/" + \
+                             value + " value from the skin file. " \
+                             "The file will be updated with a default value." )
+            self.__isOK = False
+            return None
+
+    def __getInt( self, config, section, value ):
+        " Reads a value from the given section "
+        try:
+            return config.getint( section, value )
+        except:
+            logging.warning( "Cannot read the [" + section + "]/" + \
+                             value + " value from the skin file. " \
+                             "The file will be updated with a default value." )
+            self.__isOK = False
+            return None
 
     def __loadGeneral( self, fName ):
         " Loads the general settings file "
         config = ConfigParser.ConfigParser()
         try:
             config.read( [ fName ] )
-            self.marginPaper = buildColor( config.get( "general",
-                                                       "marginpaper" ) )
-            self.marginPaperDebug = buildColor( config.get( "general",
-                                                            "marginpaperdebug" ) )
-            self.marginColor = buildColor( config.get( "general",
-                                                       "margincolor" ) )
-            self.marginColorDebug = buildColor( config.get( "general",
-                                                            "margincolordebug" ) )
-            self.lineNumFont = buildFont( config.get( "general",
-                                                      "linenumfont" ) )
-
-            self.foldingPaper = buildColor( config.get( "general",
-                                                        "foldingpaper" ) )
-            self.foldingColor = buildColor( config.get( "general",
-                                                        "foldingcolor" ) )
-
-            self.searchMarkColor = buildColor( config.get( "general",
-                                                           "searchmarkcolor" ) )
-            self.searchMarkAlpha = config.getint( "general",
-                                                  "searchmarkalpha" )
-            self.matchMarkColor = buildColor( config.get( "general",
-                                                          "matchmarkcolor" ) )
-            self.matchMarkAlpha = config.getint( "general",
-                                                 "matchmarkalpha" )
-            self.spellingMarkColor = buildColor( config.get( "general",
-                                                             "spellingmarkcolor" ) )
-            self.spellingMarkAlpha = config.getint( "general",
-                                                    "spellingmarkalpha" )
-
-            self.nolexerPaper = buildColor( config.get( "general",
-                                                        "nolexerpaper" ) )
-            self.nolexerColor = buildColor( config.get( "general",
-                                                        "nolexercolor" ) )
-            self.nolexerFont = buildFont( config.get( "general",
-                                                      "nolexerfont" ) )
-
-            self.currentLinePaper = buildColor( config.get( "general",
-                                                            "currentlinepaper" ) )
-            self.edgeColor = buildColor( config.get( "general",
-                                                     "edgecolor" ) )
-            self.matchedBracePaper = buildColor( config.get( "general",
-                                                             "matchedbracepaper" ) )
-            self.matchedBraceColor = buildColor( config.get( "general",
-                                                             "matchedbracecolor" ) )
-            self.unmatchedBracePaper = buildColor( config.get( "general",
-                                                               "unmatchedbracepaper" ) )
-            self.unmatchedBraceColor = buildColor( config.get( "general",
-                                                               "unmatchedbracecolor" ) )
-
-            self.indentGuidePaper = buildColor( config.get( "general",
-                                                            "indentguidepaper" ) )
-            self.indentGuideColor = buildColor( config.get( "general",
-                                                            "indentguidecolor" ) )
         except:
-            logging.error( "Cannot read " + fName + ". No skin will be used." )
+            logging.warning( "Cannot read the skin file " + fName + \
+                             ". The file will be updated with default values." )
             return False
-        return True
+
+        val = self.__getColor( config, "general", "marginpaper" )
+        if val is not None:
+            self.marginPaper = val
+        val = self.__getColor( config, "general", "marginpaperdebug" )
+        if val is not None:
+            self.marginPaperDebug = val
+        val = self.__getColor( config, "general", "margincolor" )
+        if val is not None:
+            self.marginColor = val
+        val = self.__getColor( config, "general", "margincolordebug" )
+        if val is not None:
+            self.marginColorDebug = val
+        val = self.__getFont( config, "general", "linenumfont" )
+        if val is not None:
+            self.lineNumFont = val
+
+        val = self.__getColor( config, "general", "foldingpaper" )
+        if val is not None:
+            self.foldingPaper = val
+        val = self.__getColor( config, "general", "foldingcolor" )
+        if val is not None:
+            self.foldingColor = val
+
+        val = self.__getColor( config, "general", "searchmarkcolor" )
+        if val is not None:
+            self.searchMarkColor = val
+        val = self.__getInt( config, "general", "searchmarkalpha" )
+        if val is not None:
+            self.searchMarkAlpha = val
+        val = self.__getColor( config, "general", "matchmarkcolor" )
+        if val is not None:
+            self.matchMarkColor = val
+        val = self.__getInt( config, "general", "matchmarkalpha" )
+        if val is not None:
+            self.matchMarkAlpha = val
+        val = self.__getColor( config, "general", "spellingmarkcolor" )
+        if val is not None:
+            self.spellingMarkColor = val
+        val = self.__getInt( config, "general", "spellingmarkalpha" )
+        if val is not None:
+            self.spellingMarkAlpha = val
+
+        val = self.__getColor( config, "general", "nolexerpaper" )
+        if val is not None:
+            self.nolexerPaper = val
+        val = self.__getColor( config, "general", "nolexercolor" )
+        if val is not None:
+            self.nolexerColor = val
+        val = self.__getFont( config, "general", "nolexerfont" )
+        if val is not None:
+            self.nolexerFont = val
+
+        val = self.__getColor( config, "general", "currentlinepaper" )
+        if val is not None:
+            self.currentLinePaper = val
+        val = self.__getColor( config, "general", "edgecolor" )
+        if val is not None:
+            self.edgeColor = val
+        val = self.__getColor( config, "general", "matchedbracepaper" )
+        if val is not None:
+            self.matchedBracePaper = val
+        val = self.__getColor( config, "general", "matchedbracecolor" )
+        if val is not None:
+            self.matchedBraceColor = val
+        val = self.__getColor( config, "general", "unmatchedbracepaper" )
+        if val is not None:
+            self.unmatchedBracePaper = val
+        val = self.__getColor( config, "general", "unmatchedbracecolor" )
+        if val is not None:
+            self.unmatchedBraceColor = val
+
+        val = self.__getColor( config, "general", "indentguidepaper" )
+        if val is not None:
+            self.indentGuidePaper = val
+        val = self.__getColor( config, "general", "indentguidecolor" )
+        if val is not None:
+            self.indentGuideColor = val
+        return self.__isOK
 
     def __loadLexers( self, fName ):
         " Loads the lexers settings file "
@@ -336,4 +403,60 @@ class Skin:
         " Cleans up memory taken by the lexer styles "
         self.lexerStyles = {}
         return
+
+    def __saveGeneral( self, fName ):
+        " Writes the general skin file "
+        try:
+            f = open( fName, "w" )
+            f.write( "# Automatically updated due to missed or corrupted values\n" )
+            f.write( "[general]\n" )
+            f.write( "name=" + self.name + "\n\n" )
+
+            f.write( "marginpaper=" + colorAsString( self.marginPaper ) + "\n" )
+            f.write( "marginpaperdebug=" + colorAsString( self.marginPaperDebug ) + "\n" )
+            f.write( "margincolor=" + colorAsString( self.marginColor ) + "\n" )
+            f.write( "margincolordebug=" + colorAsString( self.marginColorDebug ) + "\n" )
+            f.write( "linenumfont=" + self.lineNumFont.toString() + "\n\n" )
+
+            f.write( "foldingpaper=" + colorAsString( self.foldingPaper ) + "\n" )
+            f.write( "foldingcolor=" + colorAsString( self.foldingColor ) + "\n" )
+
+            f.write( "searchmarkcolor=" + colorAsString( self.searchMarkColor ) + "\n" )
+            f.write( "searchmarkalpha=" + str( self.searchMarkAlpha ) + "\n\n" )
+
+            f.write( "matchmarkcolor=" + colorAsString( self.matchMarkColor ) + "\n" )
+            f.write( "matchmarkalpha=" + str( self.matchMarkAlpha ) + "\n\n" )
+
+            f.write( "spellingmarkcolor=" + colorAsString( self.spellingMarkColor ) + "\n" )
+            f.write( "spellingmarkalpha=" + str( self.spellingMarkAlpha ) + "\n\n" )
+
+            f.write( "nolexerpaper=" + colorAsString( self.nolexerPaper ) + "\n" )
+            f.write( "nolexercolor=" + colorAsString( self.nolexerColor ) + "\n" )
+            f.write( "nolexerfont=" + self.nolexerFont.toString() + "\n\n" )
+
+            f.write( "currentlinepaper=" + colorAsString( self.currentLinePaper ) + "\n" )
+            f.write( "edgecolor=" + colorAsString( self.edgeColor ) + "\n\n" )
+
+            f.write( "matchedbracepaper=" + colorAsString( self.matchedBracePaper ) + "\n" )
+            f.write( "matchedbracecolor=" + colorAsString( self.matchedBraceColor ) + "\n" )
+            f.write( "unmatchedbracepaper=" + colorAsString( self.unmatchedBracePaper ) + "\n" )
+            f.write( "unmatchedbracecolor=" + colorAsString( self.unmatchedBraceColor ) + "\n\n" )
+
+            f.write( "indentguidepaper=" + colorAsString( self.indentGuidePaper ) + "\n" )
+            f.write( "indentguidecolor=" + colorAsString( self.indentGuideColor ) + "\n" )
+            f.close()
+        except:
+            logging.warning( "Could not write skin file " + fName )
+        return
+
+    def __saveAppCSS( self, appFile ):
+        " Writes the application CSS "
+        try:
+            f = open( appFile, "w" )
+            f.write( self.appCSS + "\n" )
+            f.close()
+        except:
+            logging.warning( "Could not write skin CSS file " + appFile )
+        return
+
 
