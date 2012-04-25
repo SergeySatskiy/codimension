@@ -184,9 +184,6 @@ class EditorsManager( QTabWidget ):
 
     def __installActions( self ):
         " Installs various key combinations handlers "
-        openAction = QShortcut( 'Ctrl+O', self )
-        self.connect( openAction, SIGNAL( "activated()" ),
-                      self.onOpen )
         saveAction = QShortcut( 'Ctrl+S', self )
         self.connect( saveAction, SIGNAL( "activated()" ),
                       self.__onSave )
