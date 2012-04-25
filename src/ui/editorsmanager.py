@@ -820,33 +820,6 @@ class EditorsManager( QTabWidget ):
         widget.setFocus()
         return
 
-    def onOpen( self ):
-        " Triggered when Ctrl+O received "
-
-        dialog = QFileDialog( self, 'Open file' )
-        dialog.setFileMode( QFileDialog.ExistingFile )
-        urls = []
-        for dname in QDir.drives():
-            urls.append( QUrl.fromLocalFile( dname.absoluteFilePath() ) )
-        urls.append( QUrl.fromLocalFile( QDir.homePath() ) )
-        project = GlobalData().project
-        if project.isLoaded():
-            dialog.setDirectory( project.getProjectDir() )
-            urls.append( QUrl.fromLocalFile( project.getProjectDir() ) )
-        else:
-            # There is no project loaded
-            dialog.setDirectory( QDir.currentPath() )
-        dialog.setSidebarUrls( urls )
-
-        if dialog.exec_() != QDialog.Accepted:
-            return
-
-        fileNames = dialog.selectedFiles()
-        fileName = os.path.abspath( str( fileNames[0] ) )
-
-        self.openFile( fileName, -1 )
-        return
-
     def __onSave( self, index = -1 ):
         " Triggered when Ctrl+S is received "
         if index == -1:

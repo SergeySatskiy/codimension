@@ -548,9 +548,8 @@ class CodimensionMainWindow( QMainWindow ):
                                         'Open &project', self.__openProject,
                                         'Ctrl+Shift+O' )
         self.__openFileAct = self.__fileMenu.addAction( \
-                                        PixmapCache().getIcon( 'file.png' ),
-                                        '&Open file',
-                                        self.editorsManagerWidget.editorsManager.onOpen,
+                                        PixmapCache().getIcon( 'filemenu.png' ),
+                                        '&Open file', self.__openFile,
                                         'Ctrl+O' )
         self.__fileMenu.addSeparator()
         self.__fileQuitAct = self.__fileMenu.addAction( \
@@ -1822,14 +1821,14 @@ class CodimensionMainWindow( QMainWindow ):
         for dname in QDir.drives():
             urls.append( QUrl.fromLocalFile( dname.absoluteFilePath() ) )
         urls.append( QUrl.fromLocalFile( QDir.homePath() ) )
-        dialog.setDirectory( QDir.currentPath() )
+        dialog.setDirectory( QDir.homePath() )
         dialog.setSidebarUrls( urls )
 
         if dialog.exec_() != QDialog.Accepted:
             return
 
         fileNames = dialog.selectedFiles()
-        fileName = os.path.abspath( str( fileNames[0] ) )
+        fileName = os.path.realpath( str( fileNames[0] ) )
         if fileName == GlobalData().project.fileName:
             logging.warning( "The selected project to load is " \
                              "the currently loaded one." )
@@ -1845,4 +1844,39 @@ class CodimensionMainWindow( QMainWindow ):
         QApplication.restoreOverrideCursor()
         return
 
+
+    def __openFile( self ):
+        " Triggers when Ctrl+O is pressed "
+
+        dialog = QFileDialog( self, 'Open file' )
+        dialog.setFileMode( QFileDialog.ExistingFile )
+        urls = []
+        for dname in QDir.drives():
+            urls.append( QUrl.fromLocalFile( dname.absoluteFilePath() ) )
+        urls.append( QUrl.fromLocalFile( QDir.homePath() ) )
+        project = GlobalData().project
+        if project.isLoaded():
+            dialog.setDirectory( project.getProjectDir() )
+            urls.append( QUrl.fromLocalFile( project.getProjectDir() ) )
+        else:
+            # There is no project loaded
+            dialog.setDirectory( QDir.homePath() )
+        dialog.setSidebarUrls( urls )
+
+        if dialog.exec_() != QDialog.Accepted:
+            return
+
+        fileNames = dialog.selectedFiles()
+        fileName = os.path.realpath( str( fileNames[0] ) )
+
+        fileType = detectFileType( fileName )
+        editorsManager = self.editorsManagerWidget.editorsManager
+
+        if fileType == PixmapFileType:
+            editorsManager.openPixmapFile( fileName )
+        elif fileType in [ SOFileType, ELFFileType, PDFFileType ]:
+            logging.warning( "No viewer for binary files is available" )
+        else:
+            editorsManager.openFile( fileName, -1 )
+        return
 
