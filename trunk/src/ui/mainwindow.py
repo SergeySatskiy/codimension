@@ -543,8 +543,14 @@ class CodimensionMainWindow( QMainWindow ):
         self.__fileMenu = QMenu( "&File", self )
         self.__openProjectAct = self.__fileMenu.addAction( \
                                         PixmapCache().getIcon( 'project.png' ),
-                                        'Open project', self.__openProject,
+                                        'Open &project', self.__openProject,
                                         'Ctrl+Shift+O' )
+        self.__openFileAct = self.__fileMenu.addAction( \
+                                        PixmapCache().getIcon( 'file.png' ),
+                                        '&Open file',
+                                        self.editorsManagerWidget.editorsManager.onOpen,
+                                        'Ctrl+O' )
+        self.__fileMenu.addSeparator()
         self.__fileQuitAct = self.__fileMenu.addAction( \
                                         PixmapCache().getIcon( 'exitmenu.png' ),
                                         "Quit", QApplication.closeAllWindows,
@@ -1503,7 +1509,7 @@ class CodimensionMainWindow( QMainWindow ):
             return
 
         fileName = GlobalData().project.getProjectScript()
-        params = GlobalData().getRunParameters( path )
+        params = GlobalData().getRunParameters( fileName )
         workingDir, cmd, environment = getCwdCmdEnv( fileName, params,
                                                      Settings().terminalType )
 

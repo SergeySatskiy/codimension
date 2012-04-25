@@ -186,7 +186,7 @@ class EditorsManager( QTabWidget ):
         " Installs various key combinations handlers "
         openAction = QShortcut( 'Ctrl+O', self )
         self.connect( openAction, SIGNAL( "activated()" ),
-                      self.__onOpen )
+                      self.onOpen )
         saveAction = QShortcut( 'Ctrl+S', self )
         self.connect( saveAction, SIGNAL( "activated()" ),
                       self.__onSave )
@@ -820,7 +820,7 @@ class EditorsManager( QTabWidget ):
         widget.setFocus()
         return
 
-    def __onOpen( self ):
+    def onOpen( self ):
         " Triggered when Ctrl+O received "
 
         dialog = QFileDialog( self, 'Open file' )
