@@ -17,6 +17,7 @@ XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 * New feature: Alt+U tp jump to the first line of the current function or
   class. Issue #316
 * New feature: dumb line counter for the buffer. Issue #107
+* Open project via an OS file selection dialog (Ctrl+Shift+O)
 
 
 2012 Jan 26  Sergey Satskiy <sergey.satskiy@gmail.com>

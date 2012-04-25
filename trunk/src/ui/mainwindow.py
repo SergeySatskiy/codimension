@@ -24,13 +24,14 @@
 
 import os, os.path, sys, logging, ConfigParser
 from subprocess                 import Popen
-from PyQt4.QtCore               import SIGNAL, Qt, QSize, QTimer, QDir, QVariant
+from PyQt4.QtCore               import SIGNAL, Qt, QSize, QTimer, QDir, QVariant, \
+                                       QUrl
 from PyQt4.QtGui                import QLabel, QToolBar, QWidget, QMessageBox, \
                                        QVBoxLayout, QSplitter, QDialog, \
                                        QSizePolicy, QAction, QMainWindow, \
                                        QShortcut, QFrame, QApplication, \
                                        QCursor, QMenu, QToolButton, QToolTip, \
-                                       QPalette, QColor
+                                       QPalette, QColor, QFileDialog, QDialog
 from fitlabel                   import FitPathLabel
 from utils.globals              import GlobalData
 from utils.project              import CodimensionProject
@@ -1806,6 +1807,34 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __openProject( self ):
         " Shows up a dialog to open a project "
+        dialog = QFileDialog( self, 'Open project' )
+        dialog.setFileMode( QFileDialog.ExistingFile )
+        dialog.setNameFilter( "Codimension project files (*.cdm)" )
+        urls = []
+        for dname in QDir.drives():
+            urls.append( QUrl.fromLocalFile( dname.absoluteFilePath() ) )
+        urls.append( QUrl.fromLocalFile( QDir.homePath() ) )
+        dialog.setDirectory( QDir.currentPath() )
+        dialog.setSidebarUrls( urls )
+
+        if dialog.exec_() != QDialog.Accepted:
+            return
+
+        fileNames = dialog.selectedFiles()
+        fileName = os.path.abspath( str( fileNames[0] ) )
+        if fileName == GlobalData().project.fileName:
+            logging.warning( "The selected project to load is " \
+                             "the currently loaded one." )
+            return
+
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+        editorsManager = self.editorsManagerWidget.editorsManager
+        if editorsManager.closeRequest():
+            prj = GlobalData().project
+            prj.setTabsStatus( editorsManager.getTabsStatus() )
+            editorsManager.closeAll()
+            prj.loadProject( fileName )
+        QApplication.restoreOverrideCursor()
         return
 
 
