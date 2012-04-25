@@ -58,7 +58,9 @@ from pylintparser.pylintparser  import Pylint
 from utils.fileutils            import PythonFileType, \
                                        Python3FileType, detectFileType, \
                                        PixmapFileType, SOFileType, \
-                                       ELFFileType, PDFFileType
+                                       ELFFileType, PDFFileType, \
+                                       PythonCompiledFileType, \
+                                       CodimensionProjectFileType
 from pymetricsviewer            import PymetricsViewer
 from pymetricsparser.pymetricsparser    import PyMetrics
 from findinfiles                import FindInFilesDialog
@@ -1834,6 +1836,10 @@ class CodimensionMainWindow( QMainWindow ):
                              "the currently loaded one." )
             return
 
+        if detectFileType( fileName ) != CodimensionProjectFileType:
+            logging.warning( "Codimension project file must have .cdm extension" )
+            return
+
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         editorsManager = self.editorsManagerWidget.editorsManager
         if editorsManager.closeRequest():
@@ -1874,7 +1880,11 @@ class CodimensionMainWindow( QMainWindow ):
 
         if fileType == PixmapFileType:
             editorsManager.openPixmapFile( fileName )
-        elif fileType in [ SOFileType, ELFFileType, PDFFileType ]:
+        # Just a few file types
+        elif fileType in [ SOFileType, ELFFileType,
+                           PDFFileType, PythonCompiledFileType ] or \
+             fileName.endswith( ".bz2" ) or fileName.endswith( ".zip" ) or \
+             fileName.endswith( ".tar" ):
             logging.warning( "No viewer for binary files is available" )
         else:
             editorsManager.openFile( fileName, -1 )
