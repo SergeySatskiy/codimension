@@ -539,12 +539,23 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __initMainMenu( self ):
         " Initializes the main menu bar "
+        editorsManager = self.editorsManagerWidget.editorsManager
         menuBar = self.menuBar()
 
         self.__fileMenu = QMenu( "&File", self )
+        self.__newProjectAct = self.__fileMenu.addAction( \
+                                        PixmapCache().getIcon( 'project.png' ),
+                                        "New &project", self.__createNewProject,
+                                        'Ctrl+Shift+N' )
+        self.__newFileAct = self.__fileMenu.addAction( \
+                                        PixmapCache().getIcon( 'filemenu.png' ),
+                                        "New &file",
+                                        editorsManager.newTabClicked,
+                                        'Ctrl+N' )
+        self.__fileMenu.addSeparator()
         self.__openProjectAct = self.__fileMenu.addAction( \
                                         PixmapCache().getIcon( 'project.png' ),
-                                        'Open &project', self.__openProject,
+                                        'Open p&roject', self.__openProject,
                                         'Ctrl+Shift+O' )
         self.__openFileAct = self.__fileMenu.addAction( \
                                         PixmapCache().getIcon( 'filemenu.png' ),
@@ -553,7 +564,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__fileMenu.addSeparator()
         self.__fileQuitAct = self.__fileMenu.addAction( \
                                         PixmapCache().getIcon( 'exitmenu.png' ),
-                                        "Quit", QApplication.closeAllWindows,
+                                        "&Quit", QApplication.closeAllWindows,
                                         "Ctrl+Q" )
 
 
