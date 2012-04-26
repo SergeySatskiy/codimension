@@ -173,9 +173,6 @@ class CodimensionMainWindow( QMainWindow ):
         self.updateWindowTitle()
         self.__printThirdPartyAvailability()
 
-        maximizeAction = QShortcut( 'F11', self )
-        self.connect( maximizeAction, SIGNAL( "activated()" ),
-                      self.__onMaximizeEditor )
         findNextAction = QShortcut( 'F3', self )
         self.connect( findNextAction, SIGNAL( "activated()" ),
                       self.editorsManagerWidget.editorsManager.findNext )
@@ -558,7 +555,15 @@ class CodimensionMainWindow( QMainWindow ):
                                         PixmapCache().getIcon( 'exitmenu.png' ),
                                         "Quit", QApplication.closeAllWindows,
                                         "Ctrl+Q" )
+
+
+        self.__viewMenu = QMenu( "&View", self )
+        self.__shrinkBarsAct = self.__viewMenu.addAction( \
+                                        PixmapCache().getIcon( 'shrinkmenu.png' ),
+                                        "&Shrink bars", self.__onMaximizeEditor,
+                                        'F11' )
         menuBar.addMenu( self.__fileMenu )
+        menuBar.addMenu( self.__viewMenu )
         return
 
     def __createToolBar( self ):
