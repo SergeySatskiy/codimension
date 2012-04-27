@@ -597,7 +597,7 @@ class CodimensionMainWindow( QMainWindow ):
                                         'Alt+Shift+S' )
         self.__fileProjectFileAct = self.__searchMenu.addAction( \
                                         PixmapCache().getIcon( 'findfile.png' ),
-                                        'Find &project file'
+                                        'Find &project file',
                                         self.findFileClicked,
                                         'Alt+Shift+O' )
 
