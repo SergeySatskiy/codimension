@@ -747,7 +747,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.__findInFilesButton, SIGNAL( 'triggered()' ),
                       self.findInFilesClicked )
 
-        self.ndNameButtoon = QActin( \
+        self.__findNameButton = QAction( \
                                     PixmapCache().getIcon( 'findname.png' ),
                                     'Find name in project (Alt+Shift+S)', self )
         self.connect( self.__findNameButton, SIGNAL( 'triggered()' ),
