@@ -595,6 +595,11 @@ class CodimensionMainWindow( QMainWindow ):
                                         'Find &name in project',
                                         self.findNameClicked,
                                         'Alt+Shift+S' )
+        self.__fileProjectFileAct = self.__searchMenu.addAction( \
+                                        PixmapCache().getIcon( 'findfile.png' ),
+                                        'Find &project file'
+                                        self.findFileClicked,
+                                        'Alt+Shift+O' )
 
         self.__toolsMenu = QMenu( "&Tools", self )
 
@@ -742,7 +747,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.__findInFilesButton, SIGNAL( 'triggered()' ),
                       self.findInFilesClicked )
 
-        self.__findNameButton = QAction( \
+        self.ndNameButtoon = QActin( \
                                     PixmapCache().getIcon( 'findname.png' ),
                                     'Find name in project (Alt+Shift+S)', self )
         self.connect( self.__findNameButton, SIGNAL( 'triggered()' ),
@@ -751,7 +756,6 @@ class CodimensionMainWindow( QMainWindow ):
         self.__findFileButton = QAction( \
                                     PixmapCache().getIcon( 'findfile.png' ),
                                     'Find project file (Alt+Shift+O)', self )
-        self.__findFileButton.setShortcut( 'Alt+Shift+O' )
         self.connect( self.__findFileButton, SIGNAL( 'triggered()' ),
                       self.findFileClicked )
 
@@ -1957,5 +1961,6 @@ class CodimensionMainWindow( QMainWindow ):
         " Triggered when the search menu is about to show "
         projectLoaded = GlobalData().project.isLoaded()
         self.__findNameMenuAct.setEnabled( projectLoaded )
+        self.__fileProjectFileAct.setEnabled( projectLoaded )
         return
 
