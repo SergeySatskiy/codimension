@@ -184,12 +184,6 @@ class EditorsManager( QTabWidget ):
 
     def __installActions( self ):
         " Installs various key combinations handlers "
-        saveAction = QShortcut( 'Ctrl+S', self )
-        self.connect( saveAction, SIGNAL( "activated()" ),
-                      self.__onSave )
-        saveAsAction = QShortcut( 'Ctrl+Shift+S', self )
-        self.connect( saveAsAction, SIGNAL( "activated()" ),
-                      self.__onSaveAs )
         findAction = QShortcut( 'Ctrl+F', self )
         self.connect( findAction, SIGNAL( 'activated()' ),
                       self.__onFind )
@@ -335,7 +329,7 @@ class EditorsManager( QTabWidget ):
                             QMessageBox.Save ),
                         QMessageBox.Save )
             if res == QMessageBox.Save:
-                if self.__onSave() != True:
+                if self.onSave() != True:
                     # Failed to save
                     return
             if res == QMessageBox.Cancel:
@@ -816,7 +810,7 @@ class EditorsManager( QTabWidget ):
         widget.setFocus()
         return
 
-    def __onSave( self, index = -1 ):
+    def onSave( self, index = -1 ):
         " Triggered when Ctrl+S is received "
         if index == -1:
             widget = self.currentWidget()
@@ -867,9 +861,9 @@ class EditorsManager( QTabWidget ):
             return False
 
         # This is the new one - call Save As
-        return self.__onSaveAs( index )
+        return self.onSaveAs( index )
 
-    def __onSaveAs( self, index = -1 ):
+    def onSaveAs( self, index = -1 ):
         " Triggered when Ctrl+Shift+S is received "
         if index == -1:
             widget = self.currentWidget()
@@ -1649,7 +1643,7 @@ class EditorsManager( QTabWidget ):
                         continue
                 # Save the file
                 try:
-                    if self.__onSave( index ) == False:
+                    if self.onSave( index ) == False:
                         return False
                     self.setTabText( index, widget.getShortName() )
                 except Exception, excpt:

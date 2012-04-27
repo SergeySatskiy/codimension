@@ -543,6 +543,8 @@ class CodimensionMainWindow( QMainWindow ):
         menuBar = self.menuBar()
 
         self.__fileMenu = QMenu( "&File", self )
+        self.connect( self.__fileMenu, SIGNAL( "aboutToShow()" ),
+                      self.__aboutToShowFileMenu )
         self.__newProjectAct = self.__fileMenu.addAction( \
                                         PixmapCache().getIcon( 'project.png' ),
                                         "New &project", self.__createNewProject,
@@ -562,19 +564,49 @@ class CodimensionMainWindow( QMainWindow ):
                                         '&Open file', self.__openFile,
                                         'Ctrl+O' )
         self.__fileMenu.addSeparator()
+        self.__saveFileAct = self.__fileMenu.addAction( \
+                                        PixmapCache().getIcon( 'savemenu.png' ),
+                                        '&Save',
+                                        editorsManager.onSave,
+                                        'Ctrl+S' )
+        self.__saveFileAsAct = self.__fileMenu.addAction( \
+                                        PixmapCache().getIcon( 'saveasmenu.png' ),
+                                        'Save &as',
+                                        editorsManager.onSaveAs,
+                                        'Ctrl+Shift+S' )
+        self.__fileMenu.addSeparator()
         self.__fileQuitAct = self.__fileMenu.addAction( \
                                         PixmapCache().getIcon( 'exitmenu.png' ),
                                         "&Quit", QApplication.closeAllWindows,
                                         "Ctrl+Q" )
 
+        self.__editMenu = QMenu( "&Edit", self )
+
+        self.__searchMenu = QMenu( "&Search", self )
+        self.__searchInFilesAct = self.__searchMenu.addAction( \
+                                        PixmapCache().getIcon( 'findindir.png' ),
+                                        "Find in files", self.findInFilesClicked,
+                                        "Ctrl+Shift+F" )
+
+        self.__toolsMenu = QMenu( "&Tools", self )
+
+        self.__diagramsMenu = QMenu( "&Diagrams", self )
 
         self.__viewMenu = QMenu( "&View", self )
         self.__shrinkBarsAct = self.__viewMenu.addAction( \
                                         PixmapCache().getIcon( 'shrinkmenu.png' ),
                                         "&Shrink bars", self.__onMaximizeEditor,
                                         'F11' )
+
+        self.__helpMenu = QMenu( "&Help", self )
+
         menuBar.addMenu( self.__fileMenu )
+        menuBar.addMenu( self.__editMenu )
+        menuBar.addMenu( self.__searchMenu )
+        menuBar.addMenu( self.__toolsMenu )
+        menuBar.addMenu( self.__diagramsMenu )
         menuBar.addMenu( self.__viewMenu )
+        menuBar.addMenu( self.__helpMenu )
         return
 
     def __createToolBar( self ):
@@ -699,7 +731,6 @@ class CodimensionMainWindow( QMainWindow ):
         self.__findInFilesButton = QAction( \
                                     PixmapCache().getIcon( 'findindir.png' ),
                                     'Find in project (Ctrl+Shift+F)', self )
-        self.__findInFilesButton.setShortcut( 'Ctrl+Shift+F' )
         self.connect( self.__findInFilesButton, SIGNAL( 'triggered()' ),
                       self.findInFilesClicked )
 
@@ -1904,5 +1935,14 @@ class CodimensionMainWindow( QMainWindow ):
             logging.warning( "No viewer for binary files is available" )
         else:
             editorsManager.openFile( fileName, -1 )
+        return
+
+    def __aboutToShowFileMenu( self ):
+        " Triggered when the file menu is about to show "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        enableSaving = editorsManager.currentWidget().getType() == \
+                       MainWindowTabWidgetBase.PlainTextEditor
+        self.__saveFileAct.setEnabled( enableSaving )
+        self.__saveFileAsAct.setEnabled( enableSaving )
         return
 
