@@ -583,10 +583,18 @@ class CodimensionMainWindow( QMainWindow ):
         self.__editMenu = QMenu( "&Edit", self )
 
         self.__searchMenu = QMenu( "&Search", self )
+        self.connect( self.__searchMenu, SIGNAL( "aboutToShow()" ),
+                      self.__aboutToShowSearchMenu )
         self.__searchInFilesAct = self.__searchMenu.addAction( \
                                         PixmapCache().getIcon( 'findindir.png' ),
-                                        "Find in files", self.findInFilesClicked,
+                                        "Find in &files", self.findInFilesClicked,
                                         "Ctrl+Shift+F" )
+        self.__searchMenu.addSeparator()
+        self.__findNameMenuAct = self.__searchMenu.addAction( \
+                                        PixmapCache().getIcon( 'findname.png' ),
+                                        'Find &name in project',
+                                        self.findNameClicked,
+                                        'Alt+Shift+S' )
 
         self.__toolsMenu = QMenu( "&Tools", self )
 
@@ -730,14 +738,13 @@ class CodimensionMainWindow( QMainWindow ):
 
         self.__findInFilesButton = QAction( \
                                     PixmapCache().getIcon( 'findindir.png' ),
-                                    'Find in project (Ctrl+Shift+F)', self )
+                                    'Find in project files (Ctrl+Shift+F)', self )
         self.connect( self.__findInFilesButton, SIGNAL( 'triggered()' ),
                       self.findInFilesClicked )
 
         self.__findNameButton = QAction( \
                                     PixmapCache().getIcon( 'findname.png' ),
-                                    'Find name (Alt+Shift+S)', self )
-        self.__findNameButton.setShortcut( 'Alt+Shift+S' )
+                                    'Find name in project (Alt+Shift+S)', self )
         self.connect( self.__findNameButton, SIGNAL( 'triggered()' ),
                       self.findNameClicked )
 
@@ -1944,5 +1951,11 @@ class CodimensionMainWindow( QMainWindow ):
                        MainWindowTabWidgetBase.PlainTextEditor
         self.__saveFileAct.setEnabled( enableSaving )
         self.__saveFileAsAct.setEnabled( enableSaving )
+        return
+
+    def __aboutToShowSearchMenu( self ):
+        " Triggered when the search menu is about to show "
+        projectLoaded = GlobalData().project.isLoaded()
+        self.__findNameMenuAct.setEnabled( projectLoaded )
         return
 
