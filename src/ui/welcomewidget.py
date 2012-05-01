@@ -46,8 +46,7 @@ class WelcomeWidget( HTMLTabWidget ):
                   " <font size=-2>(GPL v3)</font>"
 
         newerVersion = ""
-#        success, values = getLatestVersionFile()
-        success = False
+        success, values = getLatestVersionFile()
         if success:
             if float( values[ "LatestVersion" ] ) > \
                float( GlobalData().version ):
