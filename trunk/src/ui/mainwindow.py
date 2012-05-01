@@ -169,6 +169,7 @@ class CodimensionMainWindow( QMainWindow ):
 
         splash.showMessage( "Initializing main menu bar..." )
         self.__initMainMenu()
+        self.__tabChanged()     # Updates availability
 
         self.updateWindowTitle()
         self.__printThirdPartyAvailability()
@@ -257,13 +258,13 @@ class CodimensionMainWindow( QMainWindow ):
         logging.root.addHandler( handler )
 
 
-        projectViewer = ProjectViewer( self )
-        self.__leftSideBar.addTab( projectViewer,
+        self.projectViewer = ProjectViewer( self )
+        self.__leftSideBar.addTab( self.projectViewer,
                                    PixmapCache().getIcon( 'project.png' ),
                                    "Project" )
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( 'fileUpdated' ),
-                      projectViewer.onFileUpdated )
+                      self.projectViewer.onFileUpdated )
         recentProjectsViewer = RecentProjectsViewer( self )
         self.__leftSideBar.addTab( recentProjectsViewer,
                                    PixmapCache().getIcon( 'project.png' ),
@@ -274,7 +275,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( "bufferSavedAs" ),
                       recentProjectsViewer.onFileUpdated )
-        self.connect( projectViewer, SIGNAL( "fileUpdated" ),
+        self.connect( self.projectViewer, SIGNAL( "fileUpdated" ),
                       recentProjectsViewer.onFileUpdated )
 
         #self.__leftSideBar.setTabToolTip( 1, "Recently loaded projects" )
@@ -540,51 +541,62 @@ class CodimensionMainWindow( QMainWindow ):
     def __initMainMenu( self ):
         " Initializes the main menu bar "
         editorsManager = self.editorsManagerWidget.editorsManager
-        menuBar = self.menuBar()
+        self.connect( editorsManager, SIGNAL( "currentChanged(int)" ),
+                      self.__tabChanged )
 
-        self.__fileMenu = QMenu( "&File", self )
-        self.connect( self.__fileMenu, SIGNAL( "aboutToShow()" ),
-                      self.__aboutToShowFileMenu )
-        self.__newProjectAct = self.__fileMenu.addAction( \
+        # The Project menu
+        self.__projectMenu = QMenu( "&Project", self )
+        self.__newProjectAct = self.__projectMenu.addAction( \
                                         PixmapCache().getIcon( 'project.png' ),
-                                        "New &project", self.__createNewProject,
+                                        "&New project", self.__createNewProject,
                                         'Ctrl+Shift+N' )
-        self.__newFileAct = self.__fileMenu.addAction( \
+        self.__openProjectAct = self.__projectMenu.addAction( \
+                                        PixmapCache().getIcon( 'project.png' ),
+                                        '&Open project', self.__openProject,
+                                        'Ctrl+Shift+O' )
+        self.__unloadProjectAct = self.__projectMenu.addAction( \
+                                        PixmapCache().getIcon( 'unloadproject.png' ),
+                                        '&Unload project',
+                                        self.projectViewer.unloadProject )
+        self.__projectPropsAct = self.__projectMenu.addAction( \
+                                        PixmapCache().getIcon( 'smalli.png' ),
+                                        '&Properties',
+                                        self.projectViewer.projectProperties )
+        self.__projectMenu.addSeparator()
+        self.__quitAct = self.__projectMenu.addAction( \
+                                        PixmapCache().getIcon( 'exitmenu.png' ),
+                                        "E&xit codimension", QApplication.closeAllWindows,
+                                        "Ctrl+Q" )
+
+        # The Tab menu
+        self.__tabMenu = QMenu( "&Tab", self )
+        self.__newTabAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'filemenu.png' ),
-                                        "New &file",
+                                        "&New tab",
                                         editorsManager.newTabClicked,
                                         'Ctrl+N' )
-        self.__fileMenu.addSeparator()
-        self.__openProjectAct = self.__fileMenu.addAction( \
-                                        PixmapCache().getIcon( 'project.png' ),
-                                        'Open p&roject', self.__openProject,
-                                        'Ctrl+Shift+O' )
-        self.__openFileAct = self.__fileMenu.addAction( \
+        self.__tabMenu.addSeparator()
+        self.__openFileAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'filemenu.png' ),
                                         '&Open file', self.__openFile,
                                         'Ctrl+O' )
-        self.__fileMenu.addSeparator()
-        self.__saveFileAct = self.__fileMenu.addAction( \
+        self.__tabMenu.addSeparator()
+        self.__saveFileAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'savemenu.png' ),
                                         '&Save',
                                         editorsManager.onSave,
                                         'Ctrl+S' )
-        self.__saveFileAsAct = self.__fileMenu.addAction( \
+        self.__saveFileAsAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'saveasmenu.png' ),
-                                        'Save &as',
+                                        'Save &as...',
                                         editorsManager.onSaveAs,
                                         'Ctrl+Shift+S' )
-        self.__fileMenu.addSeparator()
-        self.__fileQuitAct = self.__fileMenu.addAction( \
-                                        PixmapCache().getIcon( 'exitmenu.png' ),
-                                        "&Quit", QApplication.closeAllWindows,
-                                        "Ctrl+Q" )
 
+        # The Edit menu
         self.__editMenu = QMenu( "&Edit", self )
 
+        # The Search menu
         self.__searchMenu = QMenu( "&Search", self )
-        self.connect( self.__searchMenu, SIGNAL( "aboutToShow()" ),
-                      self.__aboutToShowSearchMenu )
         self.__searchInFilesAct = self.__searchMenu.addAction( \
                                         PixmapCache().getIcon( 'findindir.png' ),
                                         "Find in &files", self.findInFilesClicked,
@@ -601,21 +613,128 @@ class CodimensionMainWindow( QMainWindow ):
                                         self.findFileClicked,
                                         'Alt+Shift+O' )
 
-        self.__toolsMenu = QMenu( "&Tools", self )
+        # The Tools menu
+        self.__toolsMenu = QMenu( "T&ools", self )
 
+        # The Run menu
+        self.__runMenu = QMenu( "&Run", self )
+        self.__prjRunAct = self.__runMenu.addAction( \
+                                        PixmapCache().getIcon( 'run.png' ),
+                                        'Run project main script',
+                                        self.__onRunProject )
+        self.__prjRunDlgAct = self.__runMenu.addAction( \
+                                        PixmapCache().getIcon( 'detailsdlg.png' ),
+                                        'Run project main script...',
+                                        self.__onRunProjectSettings )
+        self.__tabRunAct = self.__runMenu.addAction( \
+                                        PixmapCache().getIcon( 'run.png' ),
+                                        'Run tab script',
+                                        self.__onRunTab )
+        self.__tabRunDlgAct = self.__runMenu.addAction( \
+                                        PixmapCache().getIcon( 'detailsdlg.png' ),
+                                        'Run tab script...',
+                                        self.__onRunTabDlg )
+
+        # The Diagrams menu
         self.__diagramsMenu = QMenu( "&Diagrams", self )
+        self.__prjImportDgmAct = self.__diagramsMenu.addAction( \
+                                        PixmapCache().getIcon( 'importsdiagram.png' ),
+                                        'Project imports diagram',
+                                        self.__onImportDgm )
+        self.__prjImportsDgmDlgAct = self.__diagramsMenu.addAction( \
+                                        PixmapCache().getIcon( 'detailsdlg.png' ),
+                                        'Project imports diagram...',
+                                        self.__onImportDgmTuned )
+        self.__tabImportDgmAct = self.__diagramsMenu.addAction( \
+                                        PixmapCache().getIcon( 'importsdiagram.png' ),
+                                        'Tab imports diagram',
+                                        self.__onTabImportDgm )
+        self.__tabImportDgmDlgAct = self.__diagramsMenu.addAction( \
+                                        PixmapCache().getIcon( 'detailsdlg.png' ),
+                                        'Tab imports diagram...',
+                                        self.__onTabImportDgmTuned )
 
+        # The View menu
         self.__viewMenu = QMenu( "&View", self )
         self.__shrinkBarsAct = self.__viewMenu.addAction( \
                                         PixmapCache().getIcon( 'shrinkmenu.png' ),
                                         "&Shrink bars", self.__onMaximizeEditor,
                                         'F11' )
+        self.__leftSideBar = QMenu( "&Left sidebar", self )
+        self.connect( self.__leftSideBar, SIGNAL( "triggered(QAction*)" ),
+                      self.__activateSideTab )
+        self.__prjBarAct = self.__leftSideBar.addAction( \
+                                        PixmapCache().getIcon( 'project.png' ),
+                                        'Activate &project tab' )
+        self.__prjBarAct.setData( QVariant( 'prj' ) )
+        self.__recentBarAct = self.__leftSideBar.addAction( \
+                                        PixmapCache().getIcon( 'project.png' ),
+                                        'Activate &recent tab' )
+        self.__recentBarAct.setData( QVariant( 'recent' ) )
+        self.__classesBarAct = self.__leftSideBar.addAction( \
+                                        PixmapCache().getIcon( 'class.png' ),
+                                        'Activate &classes tab' )
+        self.__classesBarAct.setData( QVariant( 'classes' ) )
+        self.__funcsBarAct = self.__leftSideBar.addAction( \
+                                        PixmapCache().getIcon( 'fx.png' ),
+                                        'Activate &functions tab' )
+        self.__funcsBarAct.setData( QVariant( 'funcs' ) )
+        self.__globsBarAct = self.__leftSideBar.addAction( \
+                                        PixmapCache().getIcon( 'globalvar.png' ),
+                                        'Activate &globals tab' )
+        self.__globsBarAct.setData( QVariant( 'globs' ) )
+        self.__viewMenu.addMenu( self.__leftSideBar )
 
+        self.__rightSideBar = QMenu( "&Right sidebar", self )
+        self.connect( self.__rightSideBar, SIGNAL( "triggered(QAction*)" ),
+                      self.__activateSideTab )
+        self.__outlineBarAct = self.__rightSideBar.addAction( \
+                                        PixmapCache().getIcon( 'filepython.png' ),
+                                        'Activate &outline tab' )
+        self.__outlineBarAct.setData( QVariant( 'outline' ) )
+        self.__viewMenu.addMenu( self.__rightSideBar )
+
+        self.__bottomSideBar = QMenu( "&Bottom sidebar", self )
+        self.connect( self.__bottomSideBar, SIGNAL( "triggered(QAction*)" ),
+                      self.__activateSideTab )
+        self.__logBarAct = self.__bottomSideBar.addAction( \
+                                        PixmapCache().getIcon( 'logviewer.png' ),
+                                        'Activate &log tab' )
+        self.__logBarAct.setData( QVariant( 'log' ) )
+        self.__pylintBarAct = self.__bottomSideBar.addAction( \
+                                        PixmapCache().getIcon( 'pylint.png' ),
+                                        'Activate &pylint tab' )
+        self.__pylintBarAct.setData( QVariant( 'pylint' ) )
+        self.__pymetricsBarAct = self.__bottomSideBar.addAction( \
+                                        PixmapCache().getIcon( 'metrics.png' ),
+                                        'Activate &py&metrics tab' )
+        self.__pymetricsBarAct.setData( QVariant( 'pymetrics' ) )
+        self.__searchBarAct = self.__bottomSideBar.addAction( \
+                                        PixmapCache().getIcon( 'metrics.png' ),
+                                        'Activate &search tab' )
+        self.__searchBarAct.setData( QVariant( 'search' ) )
+        self.__contextHelpBarAct = self.__bottomSideBar.addAction( \
+                                        PixmapCache().getIcon( 'helpviewer.png' ),
+                                        'Activate context &help tab' )
+        self.__contextHelpBarAct.setData( QVariant( 'contexthelp' ) )
+
+        # The Help menu
         self.__helpMenu = QMenu( "&Help", self )
+        self.__shortcutsAct = self.__helpMenu.addAction( \
+                                        PixmapCache().getIcon( 'shortcutsmenu.png' ),
+                                        'Major shortcuts',
+                                        editorsManager.onHelp, 'F1' )
+        self.__contextHelpAct = self.__helpMenu.addAction( \
+                                        PixmapCache().getIcon( 'helpviewer.png' ),
+                                        'Current identifier help',
+                                        self.__onContextHelp, 'Ctrl+F1' )
 
-        menuBar.addMenu( self.__fileMenu )
+        menuBar = self.menuBar()
+        menuBar.addMenu( self.__projectMenu )
+        menuBar.addMenu( self.__tabMenu )
         menuBar.addMenu( self.__editMenu )
         menuBar.addMenu( self.__searchMenu )
+        menuBar.addMenu( self.__runMenu )
         menuBar.addMenu( self.__toolsMenu )
         menuBar.addMenu( self.__diagramsMenu )
         menuBar.addMenu( self.__viewMenu )
@@ -1519,7 +1638,7 @@ class CodimensionMainWindow( QMainWindow ):
             self.__generateImportDiagram( dlg.options )
         return
 
-    def __onImportDgm( self, action ):
+    def __onImportDgm( self, action = False ):
         " Runs the generation process "
         self.__generateImportDiagram( ImportDiagramOptions() )
         return
@@ -1948,19 +2067,84 @@ class CodimensionMainWindow( QMainWindow ):
             editorsManager.openFile( fileName, -1 )
         return
 
-    def __aboutToShowFileMenu( self ):
-        " Triggered when the file menu is about to show "
+    def __tabChanged( self, index = 0 ):
+        " Triggered when the current tab is changed "
+        projectLoaded = GlobalData().project.isLoaded()
+        prjScriptValid = GlobalData().isProjectScriptValid()
         editorsManager = self.editorsManagerWidget.editorsManager
-        enableSaving = editorsManager.currentWidget().getType() == \
-                       MainWindowTabWidgetBase.PlainTextEditor
+        currentWidget = editorsManager.currentWidget()
+
+        if currentWidget is None:
+            enableSaving = False
+            isPythonBuffer = False
+        else:
+            enableSaving = editorsManager.currentWidget().getType() == \
+                           MainWindowTabWidgetBase.PlainTextEditor
+            isPythonBuffer = currentWidget.getType() == \
+                             MainWindowTabWidgetBase.PlainTextEditor and \
+                             detectFileType( currentWidget.getShortName() ) \
+                                in [ PythonFileType, Python3FileType ]
+
+        # Project menu items
+        self.__unloadProjectAct.setEnabled( projectLoaded )
+        self.__projectPropsAct.setEnabled( projectLoaded )
+
+        # Tab menu
         self.__saveFileAct.setEnabled( enableSaving )
         self.__saveFileAsAct.setEnabled( enableSaving )
-        return
 
-    def __aboutToShowSearchMenu( self ):
-        " Triggered when the search menu is about to show "
-        projectLoaded = GlobalData().project.isLoaded()
+        # Search menu
         self.__findNameMenuAct.setEnabled( projectLoaded )
         self.__fileProjectFileAct.setEnabled( projectLoaded )
+
+        # Diagram menu
+        self.__prjImportDgmAct.setEnabled( projectLoaded )
+        self.__prjImportsDgmDlgAct.setEnabled( projectLoaded )
+        self.__tabImportDgmAct.setEnabled( isPythonBuffer )
+        self.__tabImportDgmDlgAct.setEnabled( isPythonBuffer )
+
+        # Run menu
+        self.__prjRunAct.setEnabled( projectLoaded and prjScriptValid )
+        self.__prjRunDlgAct.setEnabled( projectLoaded and prjScriptValid )
+        self.__tabRunAct.setEnabled( isPythonBuffer )
+        self.__tabRunDlgAct.setEnabled( isPythonBuffer )
+
+        # Help menu
+        self.__contextHelpAct.setEnabled( isPythonBuffer )
+
+        return
+
+
+    def __onTabImportDgm( self ):
+        " Triggered when tab imports diagram is requested "
+        return
+
+    def __onTabImportDgmTuned( self ):
+        " Triggered when tuned tab imports diagram is requested "
+        return
+
+    def __onMajorShortcuts( self ):
+        " Triggered when major shortcut help is requested "
+        return
+
+    def __onRunTab( self ):
+        " Triggered when run tab script is requested "
+        return
+
+    def __onRunTabDlg( self ):
+        " Triggered when run tab script dialog is requested "
+        return
+
+    def __onContextHelp( self ):
+        " Triggered when Ctrl+F1 is clicked "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.getEditor().onTagHelp()
+        return
+
+    def __activateSideTab( self, act ):
+        " Triggered when a side bar should be activated "
+        name = act.data().toString()
+        print name
         return
 
