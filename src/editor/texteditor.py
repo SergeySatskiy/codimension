@@ -386,7 +386,7 @@ class TextEditor( ScintillaWrapper ):
         self.ctrlF1Act = QAction( self )
         self.ctrlF1Act.setShortcut( "Ctrl+F1" )
         self.connect( self.ctrlF1Act, SIGNAL( 'triggered()' ),
-                      self.__onTagHelp )
+                      self.onTagHelp )
         self.addAction( self.ctrlF1Act )
 
         # Ctrl + \
@@ -1384,7 +1384,7 @@ class TextEditor( ScintillaWrapper ):
         self.__completer.complete( cursorRectangle )
         return
 
-    def __onTagHelp( self ):
+    def onTagHelp( self ):
         " Provides help for an item if available "
         calltip, docstring = getCalltipAndDoc( self.parent().getFileName(),
                                                self )

@@ -46,7 +46,8 @@ class WelcomeWidget( HTMLTabWidget ):
                   " <font size=-2>(GPL v3)</font>"
 
         newerVersion = ""
-        success, values = getLatestVersionFile()
+#        success, values = getLatestVersionFile()
+        success = False
         if success:
             if float( values[ "LatestVersion" ] ) > \
                float( GlobalData().version ):
@@ -86,12 +87,9 @@ class WelcomeWidget( HTMLTabWidget ):
             """       align="left" bgcolor="#d5d1cf" border="0" style="width: 100%">""" \
             """<tr>""" \
             """  <td>""" \
-            """    <p align="left">The IDE lacks the main """ \
-            """        menu and all the functionality is available via """ \
-            """        toolbar buttons, context menues or via keyboard """ \
-            """        hot keys (click <b>F1</b> for a quick reference).</p>""" \
+            """    <p align="left">Click <b>F1</b> for major shortcut reference or """ \
             """    <p align="left">""" \
-            """       Please visit """ \
+            """       visit """ \
             """       <a """ \
             """          href="http://satsky.spb.ru/codimension/codimensionEng.php">""" \
             """          http://satsky.spb.ru/codimension/codimensionEng.php</a>""" \

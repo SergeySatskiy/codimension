@@ -205,9 +205,6 @@ class EditorsManager( QTabWidget ):
         prevTabAction = QShortcut( 'Ctrl+PgDown', self )
         self.connect( prevTabAction, SIGNAL( 'activated()' ),
                       self.__onPrevTab )
-        helpAction = QShortcut( 'F1', self )
-        self.connect( helpAction, SIGNAL( 'activated()' ),
-                      self.__onHelp )
         gotoAction = QShortcut( 'Ctrl+G', self )
         self.connect( gotoAction, SIGNAL( 'activated()' ),
                       self.__onGoto )
@@ -538,7 +535,7 @@ class EditorsManager( QTabWidget ):
                     self.checkOutsideFileChanges()
         return
 
-    def __onHelp( self ):
+    def onHelp( self ):
         " Triggered when F1 is received "
         shortName = self.__helpWidget.getShortName()
         # Check if it is already opened

@@ -128,7 +128,7 @@ class ProjectViewer( QWidget ):
         self.propertiesButton.setEnabled( False )
         self.propertiesButton.setFocusPolicy( Qt.NoFocus )
         self.connect( self.propertiesButton, SIGNAL( "clicked()" ),
-                      self.__projectProperties )
+                      self.projectProperties )
 
         self.unloadButton = QToolButton()
         self.unloadButton.setAutoRaise( True )
@@ -139,7 +139,7 @@ class ProjectViewer( QWidget ):
         self.unloadButton.setEnabled( False )
         self.unloadButton.setFocusPolicy( Qt.NoFocus )
         self.connect( self.unloadButton, SIGNAL( "clicked()" ),
-                      self.__unloadProject )
+                      self.unloadProject )
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins( 0, 0, 0, 0 )
@@ -455,7 +455,7 @@ class ProjectViewer( QWidget ):
         return
 
     @staticmethod
-    def __unloadProject():
+    def unloadProject():
         " Unloads the project "
         # Check first if the project can be unloaded
         globalData = GlobalData()
@@ -493,7 +493,7 @@ class ProjectViewer( QWidget ):
         self.__updatePrjToolbarButtons()
         return
 
-    def __projectProperties( self ):
+    def projectProperties( self ):
         " Triggered when the project properties button is clicked "
 
         project = GlobalData().project
