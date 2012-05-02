@@ -591,9 +591,63 @@ class CodimensionMainWindow( QMainWindow ):
                                         'Save &as...',
                                         editorsManager.onSaveAs,
                                         'Ctrl+Shift+S' )
+        self.__tabMenu.addSeparator()
+        self.__tabJumpToDefAct = self.__tabMenu.addAction( \
+                                        PixmapCache().getIcon( 'definition.png' ),
+                                        "&Jump to definition",
+                                        self.__onTabJumpToDef,
+                                        'Ctrl+\\' )
+        self.__tabJumpToScopeBeginAct = self.__tabMenu.addAction( \
+                                        PixmapCache().getIcon( '' ),
+                                        'Jump to &scope begin',
+                                        self.__onTabJumpToScopeBegin,
+                                        'Alt+U' )
+        self.__tabOpenImportAct = self.__tabMenu.addAction( \
+                                        PixmapCache().getIcon( 'imports.png' ),
+                                        'Open &import(s)',
+                                        self.__onTabOpenImport,
+                                        'Ctrl+I' )
 
         # The Edit menu
         self.__editMenu = QMenu( "&Edit", self )
+        self.__undoAct = self.__editMenu.addAction( \
+                                        PixmapCache().getIcon( 'undo.png' ),
+                                        '&Undo',
+                                        self.__onUndo,
+                                        'Ctrl+Z' )
+        self.__redoAct = self.__editMenu.addAction( \
+                                        PixmapCache().getIcon( 'redo.png' ),
+                                        '&Redo',
+                                        self.__onRedo,
+                                        'Ctrl+Shift+Z' )
+        self.__cutAct = self.__editMenu.addAction( \
+                                        PixmapCache().getIcon( 'cutmenu.png' ),
+                                        'Cut', self.__onCut,
+                                        'Ctrl+X' )
+        self.__copyAct = self.__editMenu.addAction( \
+                                        PixmapCache().getIcon( 'copymenu.png' ),
+                                        'Copy', self.__onCopy,
+                                        'Ctrl+C' )
+        self.__pasteAct = self.__editMenu.addAction( \
+                                        PixmapCache().getIcon( 'pastemenu.png' ),
+                                        'Paste', self.__onPaste,
+                                        'Ctrl+V' )
+        self.__selectAllAct = self.__editMenu.addAction( \
+                                        PixmapCache().getIcon( 'selectallmenu.png' ),
+                                        'Select all', self.__onSelectAll,
+                                        'Ctrl+A' )
+        self.__commentAct = self.__editMenu.addAction( \
+                                        PixmapCache().getIcon( 'commentmenu.png' ),
+                                        'Comment/uncomment', self.__onComment,
+                                        'Ctrl+M' )
+        self.__duplicateAct = self.__editMenu.addAction( \
+                                        PixmapCache().getIcon( 'duplicatemenu.png' ),
+                                        'Duplicate line', self.__onDuplicate,
+                                        'Ctrl+D' )
+        self.__autocompleteAct = self.__editMenu.addAction( \
+                                        PixmapCache().getIcon( 'autocompletemenu.png' ),
+                                        'Autocomplete', self.__onAutocomplete,
+                                        "Ctrl+Space" )
 
         # The Search menu
         self.__searchMenu = QMenu( "&Search", self )
@@ -612,46 +666,122 @@ class CodimensionMainWindow( QMainWindow ):
                                         'Find &project file',
                                         self.findFileClicked,
                                         'Alt+Shift+O' )
+        self.__searchMenu.addSeparator()
+        self.__findOccurencesAct = self.__searchMenu.addAction( \
+                                        PixmapCache().getIcon( 'findfile.png' ),
+                                        'Find &occurences',
+                                        self.__onFindOccurences,
+                                        'Ctrl+]' )
+        self.__goToLineAct = self.__searchMenu.addAction( \
+                                        PixmapCache().getIcon( 'gotolonemenu.png' ),
+                                        '&Go to line...',
+                                        self.__onGoToLine,
+                                        'Ctrl+G' )
+        self.__findAct = self.__searchMenu.addAction( \
+                                        PixmapCache().getIcon( 'find.png' ),
+                                        'Incremental &search...',
+                                        self.__onFind,
+                                        "Ctrl+F" )
+        self.__findCurrentAct = self.__searchMenu.addAction( \
+                                        PixmapCache().getIcon( 'find.png' ),
+                                        '&Identifier incremental search',
+                                        self.__onFindCurrent,
+                                        'Ctrl+F3' )
+        self.__replaceAct = self.__searchMenu.addAction( \
+                                        PixmapCache().getIcon( 'replace.png' ),
+                                        'Incremental &replace...',
+                                        self.__onReplace,
+                                        "Ctrl+R" )
+        self.__findNextAct = self.__searchMenu.addAction( \
+                                        PixmapCache().getIcon( 'findnext.png' ),
+                                        "Find &next",
+                                        self.__onFindNext,
+                                        "F3" )
+        self.__findPrevAct = self.__searchMenu.addAction( \
+                                        PixmapCache().getIcon( 'findprev.png' ),
+                                        "Find pre&vious",
+                                        self.__onFindPrevious,
+                                        "Shift+F3" )
 
         # The Tools menu
         self.__toolsMenu = QMenu( "T&ools", self )
+        self.__prjPylintAct = self.__toolsMenu.addAction( \
+                                        PixmapCache().getIcon( 'pylint.png' ),
+                                        '&Pylint for project',
+                                        self.pylintButtonClicked )
+        self.__prjGenPylintrcAct = self.__toolsMenu.addAction( \
+                                        PixmapCache().getIcon( 'generate.png' ),
+                                        '&Generate project pylintrc',
+                                        self.__onGenPylintRC )
+        self.__prjEditPylintrcAct = self.__toolsMenu.addAction( \
+                                        PixmapCache().getIcon( 'edit.png' ),
+                                        '&Edit project pylintrc',
+                                        self.__onEditPylintRC )
+        self.__prjDelPylintrcAct = self.__toolsMenu.addAction( \
+                                        PixmapCache().getIcon( 'trash.png' ),
+                                        '&Delete project pylintrc',
+                                        self.__onDelPylintRC )
+        self.__tabPylintAct = self.__toolsMenu.addAction( \
+                                        PixmapCache().getIcon( 'pylint.png' ),
+                                        'P&ylint for tab',
+                                        self.__onTabPylint,
+                                        "Ctrl+L" )
+        self.__toolsMenu.addSeparator()
+        self.__prjPymetricsAct = self.__toolsMenu.addAction( \
+                                        PixmapCache().getIcon( 'metrics.png' ),
+                                        'Py&metrics for project',
+                                        self.pymetricsButtonClicked )
+        self.__tabPymetricsAct = self.__toolsMenu.addAction( \
+                                        PixmapCache().getIcon( 'metrics.png' ),
+                                        "Pyme&trics for tab",
+                                        self.__onTabPymetrics,
+                                        "Ctrl+K" )
+        self.__toolsMenu.addSeparator()
+        self.__prjLineCounterAct = self.__toolsMenu.addAction( \
+                                        PixmapCache().getIcon( 'linecounter.png' ),
+                                        "&Line counter for project",
+                                        self.linecounterButtonClicked )
+        self.__tabLineCounterAct = self.__toolsMenu.addAction( \
+                                        PixmapCache().getIcon( 'linecounter.png' ),
+                                        "L&ine counter for tab",
+                                        self.__onTabLineCounter )
 
         # The Run menu
         self.__runMenu = QMenu( "&Run", self )
         self.__prjRunAct = self.__runMenu.addAction( \
                                         PixmapCache().getIcon( 'run.png' ),
-                                        'Run project main script',
+                                        'Run &project main script',
                                         self.__onRunProject )
         self.__prjRunDlgAct = self.__runMenu.addAction( \
                                         PixmapCache().getIcon( 'detailsdlg.png' ),
-                                        'Run project main script...',
+                                        'Run p&roject main script...',
                                         self.__onRunProjectSettings )
         self.__tabRunAct = self.__runMenu.addAction( \
                                         PixmapCache().getIcon( 'run.png' ),
-                                        'Run tab script',
+                                        'Run &tab script',
                                         self.__onRunTab )
         self.__tabRunDlgAct = self.__runMenu.addAction( \
                                         PixmapCache().getIcon( 'detailsdlg.png' ),
-                                        'Run tab script...',
+                                        'Run t&ab script...',
                                         self.__onRunTabDlg )
 
         # The Diagrams menu
         self.__diagramsMenu = QMenu( "&Diagrams", self )
         self.__prjImportDgmAct = self.__diagramsMenu.addAction( \
                                         PixmapCache().getIcon( 'importsdiagram.png' ),
-                                        'Project imports diagram',
+                                        '&Project imports diagram',
                                         self.__onImportDgm )
         self.__prjImportsDgmDlgAct = self.__diagramsMenu.addAction( \
                                         PixmapCache().getIcon( 'detailsdlg.png' ),
-                                        'Project imports diagram...',
+                                        'P&roject imports diagram...',
                                         self.__onImportDgmTuned )
         self.__tabImportDgmAct = self.__diagramsMenu.addAction( \
                                         PixmapCache().getIcon( 'importsdiagram.png' ),
-                                        'Tab imports diagram',
+                                        '&Tab imports diagram',
                                         self.__onTabImportDgm )
         self.__tabImportDgmDlgAct = self.__diagramsMenu.addAction( \
                                         PixmapCache().getIcon( 'detailsdlg.png' ),
-                                        'Tab imports diagram...',
+                                        'T&ab imports diagram...',
                                         self.__onTabImportDgmTuned )
 
         # The View menu
@@ -660,73 +790,87 @@ class CodimensionMainWindow( QMainWindow ):
                                         PixmapCache().getIcon( 'shrinkmenu.png' ),
                                         "&Shrink bars", self.__onMaximizeEditor,
                                         'F11' )
-        self.__leftSideBar = QMenu( "&Left sidebar", self )
-        self.connect( self.__leftSideBar, SIGNAL( "triggered(QAction*)" ),
+        self.__leftSideBarMenu = QMenu( "&Left sidebar", self )
+        self.connect( self.__leftSideBarMenu, SIGNAL( "triggered(QAction*)" ),
                       self.__activateSideTab )
-        self.__prjBarAct = self.__leftSideBar.addAction( \
+        self.__prjBarAct = self.__leftSideBarMenu.addAction( \
                                         PixmapCache().getIcon( 'project.png' ),
                                         'Activate &project tab' )
         self.__prjBarAct.setData( QVariant( 'prj' ) )
-        self.__recentBarAct = self.__leftSideBar.addAction( \
+        self.__recentBarAct = self.__leftSideBarMenu.addAction( \
                                         PixmapCache().getIcon( 'project.png' ),
                                         'Activate &recent tab' )
         self.__recentBarAct.setData( QVariant( 'recent' ) )
-        self.__classesBarAct = self.__leftSideBar.addAction( \
+        self.__classesBarAct = self.__leftSideBarMenu.addAction( \
                                         PixmapCache().getIcon( 'class.png' ),
                                         'Activate &classes tab' )
         self.__classesBarAct.setData( QVariant( 'classes' ) )
-        self.__funcsBarAct = self.__leftSideBar.addAction( \
+        self.__funcsBarAct = self.__leftSideBarMenu.addAction( \
                                         PixmapCache().getIcon( 'fx.png' ),
                                         'Activate &functions tab' )
         self.__funcsBarAct.setData( QVariant( 'funcs' ) )
-        self.__globsBarAct = self.__leftSideBar.addAction( \
+        self.__globsBarAct = self.__leftSideBarMenu.addAction( \
                                         PixmapCache().getIcon( 'globalvar.png' ),
                                         'Activate &globals tab' )
         self.__globsBarAct.setData( QVariant( 'globs' ) )
-        self.__viewMenu.addMenu( self.__leftSideBar )
+        self.__viewMenu.addMenu( self.__leftSideBarMenu )
 
-        self.__rightSideBar = QMenu( "&Right sidebar", self )
-        self.connect( self.__rightSideBar, SIGNAL( "triggered(QAction*)" ),
+        self.__rightSideBarMenu = QMenu( "&Right sidebar", self )
+        self.connect( self.__rightSideBarMenu, SIGNAL( "triggered(QAction*)" ),
                       self.__activateSideTab )
-        self.__outlineBarAct = self.__rightSideBar.addAction( \
+        self.__outlineBarAct = self.__rightSideBarMenu.addAction( \
                                         PixmapCache().getIcon( 'filepython.png' ),
                                         'Activate &outline tab' )
         self.__outlineBarAct.setData( QVariant( 'outline' ) )
-        self.__viewMenu.addMenu( self.__rightSideBar )
+        self.__viewMenu.addMenu( self.__rightSideBarMenu )
 
-        self.__bottomSideBar = QMenu( "&Bottom sidebar", self )
-        self.connect( self.__bottomSideBar, SIGNAL( "triggered(QAction*)" ),
+        self.__bottomSideBarMenu = QMenu( "&Bottom sidebar", self )
+        self.connect( self.__bottomSideBarMenu, SIGNAL( "triggered(QAction*)" ),
                       self.__activateSideTab )
-        self.__logBarAct = self.__bottomSideBar.addAction( \
+        self.__logBarAct = self.__bottomSideBarMenu.addAction( \
                                         PixmapCache().getIcon( 'logviewer.png' ),
                                         'Activate &log tab' )
         self.__logBarAct.setData( QVariant( 'log' ) )
-        self.__pylintBarAct = self.__bottomSideBar.addAction( \
+        self.__pylintBarAct = self.__bottomSideBarMenu.addAction( \
                                         PixmapCache().getIcon( 'pylint.png' ),
                                         'Activate &pylint tab' )
         self.__pylintBarAct.setData( QVariant( 'pylint' ) )
-        self.__pymetricsBarAct = self.__bottomSideBar.addAction( \
+        self.__pymetricsBarAct = self.__bottomSideBarMenu.addAction( \
                                         PixmapCache().getIcon( 'metrics.png' ),
-                                        'Activate &py&metrics tab' )
+                                        'Activate py&metrics tab' )
         self.__pymetricsBarAct.setData( QVariant( 'pymetrics' ) )
-        self.__searchBarAct = self.__bottomSideBar.addAction( \
-                                        PixmapCache().getIcon( 'metrics.png' ),
+        self.__searchBarAct = self.__bottomSideBarMenu.addAction( \
+                                        PixmapCache().getIcon( 'findindir.png' ),
                                         'Activate &search tab' )
         self.__searchBarAct.setData( QVariant( 'search' ) )
-        self.__contextHelpBarAct = self.__bottomSideBar.addAction( \
+        self.__contextHelpBarAct = self.__bottomSideBarMenu.addAction( \
                                         PixmapCache().getIcon( 'helpviewer.png' ),
                                         'Activate context &help tab' )
         self.__contextHelpBarAct.setData( QVariant( 'contexthelp' ) )
+        self.__viewMenu.addMenu( self.__bottomSideBarMenu )
+        self.__viewMenu.addSeparator()
+        self.__zoomInAct = self.__viewMenu.addAction( \
+                                        PixmapCache().getIcon( 'zoomin.png' ),
+                                        'Zoom &in', self.__onZoomIn,
+                                        'Ctrl++' )
+        self.__zoomOutAct = self.__viewMenu.addAction( \
+                                        PixmapCache().getIcon( 'zoomout.png' ),
+                                        'Zoom &out', self.__onZoomOut,
+                                        'Ctrl+-' )
+        self.__zoom11Act = self.__viewMenu.addAction( \
+                                        PixmapCache().getIcon( 'zoomreset.png' ),
+                                        'Zoom &reset', self.__onZoomReset,
+                                        'Ctrl+0' )
 
         # The Help menu
         self.__helpMenu = QMenu( "&Help", self )
         self.__shortcutsAct = self.__helpMenu.addAction( \
                                         PixmapCache().getIcon( 'shortcutsmenu.png' ),
-                                        'Major shortcuts',
+                                        '&Major shortcuts',
                                         editorsManager.onHelp, 'F1' )
         self.__contextHelpAct = self.__helpMenu.addAction( \
                                         PixmapCache().getIcon( 'helpviewer.png' ),
-                                        'Current identifier help',
+                                        '&Current identifier help',
                                         self.__onContextHelp, 'Ctrl+F1' )
 
         menuBar = self.menuBar()
@@ -2144,7 +2288,110 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __activateSideTab( self, act ):
         " Triggered when a side bar should be activated "
-        name = act.data().toString()
-        print name
+        try:
+            name = act.data().toString()
+            print name
+        except Exception, exc:
+            print "Exception: " + str( exc )
+        return
+
+    def __onTabPylint( self ):
+        " Triggered when pylint for the current tab is requested "
+        return
+
+    def __onTabPymetrics( self ):
+        " Triggered when pymetrics for the current tab is requested "
+        return
+
+    def __onTabLineCounter( self ):
+        " Triggered when line counter for the current buffer is requested "
+        return
+
+    def __onTabJumpToDef( self ):
+        " Triggered when jump to defenition is requested "
+        return
+
+    def __onTabJumpToScopeBegin( self ):
+        " Triggered when jump to the beginning of the current scope is requested "
+        return
+
+    def __onFindOccurences( self ):
+        " Triggered when search for occurences is requested "
+        return
+
+    def __onTabOpenImport( self ):
+        " Triggered when open import is requested "
+        return
+
+    def __onUndo( self ):
+        " Triggered when undo action is requested "
+        return
+
+    def __onRedo( self ):
+        " Triggered when redo action is requested "
+        return
+
+    def __onZoomIn( self ):
+        " Triggered when zoom in is requested "
+        return
+
+    def __onZoomOut( self ):
+        " Triggered when zoom out is requested "
+        return
+
+    def __onZoomReset( self ):
+        " Triggered when zoom 1:1 is requested "
+        return
+
+    def __onGoToLine( self ):
+        " Triggered when go to line is requested "
+        return
+
+    def __onCut( self ):
+        " Triggered when cut is requested "
+        return
+
+    def __onCopy( self ):
+        " Triggered when copy is requested "
+        return
+
+    def __onPaste( self ):
+        " Triggered when paste is requested "
+        return
+
+    def __onSelectAll( self ):
+        " Triggered when select all is requested "
+        return
+
+    def __onComment( self ):
+        " Triggered when comment/uncomment is requested "
+        return
+
+    def __onDuplicate( self ):
+        " Triggered when duplicate line is requested "
+        return
+
+    def __onAutocomplete( self ):
+        " Triggered when autocomplete is requested "
+        return
+
+    def __onFind( self ):
+        " Triggered when find is requested "
+        return
+
+    def __onFindCurrent( self ):
+        " Triggered when find of the current identifier is requested "
+        return
+
+    def __onReplace( self ):
+        " Triggered when replace is requested "
+        return
+
+    def __onFindNext( self ):
+        " Triggered when find next is requested "
+        return
+
+    def __onFindPrevious( self ):
+        " Triggered when find previous is requested "
         return
 
