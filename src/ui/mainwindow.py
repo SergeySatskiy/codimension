@@ -589,7 +589,7 @@ class CodimensionMainWindow( QMainWindow ):
                                         PixmapCache().getIcon( 'saveasmenu.png' ),
                                         'Save &as...',
                                         editorsManager.onSaveAs,
-
+                                        "Ctrl+Shift+S" )
         self.__tabJumpToDefAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'definition.png' ),
                                         "&Jump to definition",
