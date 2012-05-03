@@ -136,32 +136,35 @@ class TextEditor( ScintillaWrapper ):
         self.__menu = QMenu( self )
         self.__menuUndo = self.__menu.addAction( \
                                     PixmapCache().getIcon( 'undo.png' ),
-                                    'Undo', self.onUndo, "Ctrl+Z" )
+                                    '&Undo', self.onUndo, "Ctrl+Z" )
         self.__menuRedo = self.__menu.addAction( \
                                     PixmapCache().getIcon( 'redo.png' ),
-                                    'Redo', self.onRedo, "Ctrl+Shift+Z" )
+                                    '&Redo', self.onRedo, "Ctrl+Shift+Z" )
         self.__menu.addSeparator()
-        self.__menuCopy = self.__menu.addAction( \
-                                    PixmapCache().getIcon( 'copymenu.png' ),
-                                    'Copy', self.__onCtrlC, "Ctrl+C" )
-        self.__menuPaste = self.__menu.addAction( \
-                                    PixmapCache().getIcon( 'pastemenu.png' ),
-                                    'Paste', self.paste, "Ctrl+V" )
         self.__menuCut = self.__menu.addAction( \
                                     PixmapCache().getIcon( 'cutmenu.png' ),
-                                    'Cut', self.__onShiftDel, "Ctrl+X" )
+                                    'Cu&t', self.__onShiftDel, "Ctrl+X" )
+        self.__menuCopy = self.__menu.addAction( \
+                                    PixmapCache().getIcon( 'copymenu.png' ),
+                                    '&Copy', self.__onCtrlC, "Ctrl+C" )
+        self.__menuPaste = self.__menu.addAction( \
+                                    PixmapCache().getIcon( 'pastemenu.png' ),
+                                    '&Paste', self.paste, "Ctrl+V" )
         self.__menuSelectAll = self.__menu.addAction( \
                                     PixmapCache().getIcon( 'selectallmenu.png' ),
-                                    'Select all', self.selectAll, "Ctrl+A" )
+                                    'Select &all', self.selectAll, "Ctrl+A" )
         self.__menu.addSeparator()
         m = self.__menu.addMenu( self.__initEncodingMenu() )
-        m.setIcon( PixmapCache().getIcon( 'textencoding.png' ) )
+        m.setIcon( PixmapCache().getIcon( 'text&encoding.png' ) )
         self.__menu.addSeparator()
         m = self.__menu.addMenu( self.__initToolsMenu() )
-        m.setIcon( PixmapCache().getIcon( 'toolsmenu.png' ) )
+        m.setIcon( PixmapCache().getIcon( 'tools&menu.png' ) )
         self.__menu.addSeparator()
         m = self.__menu.addMenu( self.__initDiagramsMenu() )
-        m.setIcon( PixmapCache().getIcon( 'diagramsmenu.png' ) )
+        m.setIcon( PixmapCache().getIcon( '&diagramsmenu.png' ) )
+
+        self.connect( self.__menu, SIGNAL( "aboutToHide()" ),
+                      self.__onHideContextMenu )
         return
 
     def __marginNumber( self, xPos ):
@@ -239,7 +242,9 @@ class TextEditor( ScintillaWrapper ):
         if self.__marginNumber( event.x() ) is None:
             self.__menuUndo.setEnabled( self.isUndoAvailable() )
             self.__menuRedo.setEnabled( self.isRedoAvailable() )
+            self.__menuCut.setEnabled( True )
             self.__menuPaste.setEnabled( QApplication.clipboard().text() != "" )
+            self.__menuSelectAll.setEnabled( True )
 
             # Check the proper encoding in the menu
             fileType = detectFileType( self.parent().getShortName() )
@@ -254,6 +259,15 @@ class TextEditor( ScintillaWrapper ):
         else:
             # Menu for a margin
             pass
+        return
+
+    def __onHideContextMenu( self ):
+        " Called when the buffer context menu is about to hide "
+        self.__menuUndo.setEnabled( False )
+        self.__menuRedo.setEnabled( False )
+        self.__menuCut.setEnabled( False )
+        self.__menuPaste.setEnabled( False )
+        self.__menuSelectAll.setEnabled( False )
         return
 
     def __installActions( self ):

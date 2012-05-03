@@ -575,7 +575,6 @@ class CodimensionMainWindow( QMainWindow ):
                                         "&New tab",
                                         editorsManager.newTabClicked,
                                         'Ctrl+N' )
-        self.__tabMenu.addSeparator()
         self.__openFileAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'filemenu.png' ),
                                         '&Open file', self.__openFile,
@@ -590,16 +589,15 @@ class CodimensionMainWindow( QMainWindow ):
                                         PixmapCache().getIcon( 'saveasmenu.png' ),
                                         'Save &as...',
                                         editorsManager.onSaveAs,
-                                        'Ctrl+Shift+S' )
-        self.__tabMenu.addSeparator()
+
         self.__tabJumpToDefAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'definition.png' ),
                                         "&Jump to definition",
                                         self.__onTabJumpToDef,
                                         'Ctrl+\\' )
         self.__tabJumpToScopeBeginAct = self.__tabMenu.addAction( \
-                                        PixmapCache().getIcon( '' ),
-                                        'Jump to &scope begin',
+                                        PixmapCache().getIcon( 'jumpupscopemenu.png' ),
+                                        'Jump to scope &begin',
                                         self.__onTabJumpToScopeBegin,
                                         'Alt+U' )
         self.__tabOpenImportAct = self.__tabMenu.addAction( \
@@ -620,40 +618,42 @@ class CodimensionMainWindow( QMainWindow ):
                                         '&Redo',
                                         self.__onRedo,
                                         'Ctrl+Shift+Z' )
+        self.__editMenu.addSeparator()
         self.__cutAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'cutmenu.png' ),
-                                        'Cut', self.__onCut,
+                                        'Cu&t', self.__onCut,
                                         'Ctrl+X' )
         self.__copyAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'copymenu.png' ),
-                                        'Copy', self.__onCopy,
+                                        '&Copy', self.__onCopy,
                                         'Ctrl+C' )
         self.__pasteAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'pastemenu.png' ),
-                                        'Paste', self.__onPaste,
+                                        '&Paste', self.__onPaste,
                                         'Ctrl+V' )
         self.__selectAllAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'selectallmenu.png' ),
-                                        'Select all', self.__onSelectAll,
+                                        'Select &all', self.__onSelectAll,
                                         'Ctrl+A' )
+        self.__editMenu.addSeparator()
         self.__commentAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'commentmenu.png' ),
-                                        'Comment/uncomment', self.__onComment,
+                                        'C&omment/uncomment', self.__onComment,
                                         'Ctrl+M' )
         self.__duplicateAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'duplicatemenu.png' ),
-                                        'Duplicate line', self.__onDuplicate,
+                                        '&Duplicate line', self.__onDuplicate,
                                         'Ctrl+D' )
         self.__autocompleteAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'autocompletemenu.png' ),
-                                        'Autocomplete', self.__onAutocomplete,
+                                        'Autoco&mplete', self.__onAutocomplete,
                                         "Ctrl+Space" )
 
         # The Search menu
         self.__searchMenu = QMenu( "&Search", self )
         self.__searchInFilesAct = self.__searchMenu.addAction( \
                                         PixmapCache().getIcon( 'findindir.png' ),
-                                        "Find in &files", self.findInFilesClicked,
+                                        "&Find in files", self.findInFilesClicked,
                                         "Ctrl+Shift+F" )
         self.__searchMenu.addSeparator()
         self.__findNameMenuAct = self.__searchMenu.addAction( \
@@ -673,7 +673,7 @@ class CodimensionMainWindow( QMainWindow ):
                                         self.__onFindOccurences,
                                         'Ctrl+]' )
         self.__goToLineAct = self.__searchMenu.addAction( \
-                                        PixmapCache().getIcon( 'gotolonemenu.png' ),
+                                        PixmapCache().getIcon( 'gotoline.png' ),
                                         '&Go to line...',
                                         self.__onGoToLine,
                                         'Ctrl+G' )
@@ -693,12 +693,12 @@ class CodimensionMainWindow( QMainWindow ):
                                         self.__onReplace,
                                         "Ctrl+R" )
         self.__findNextAct = self.__searchMenu.addAction( \
-                                        PixmapCache().getIcon( 'findnext.png' ),
+                                        PixmapCache().getIcon( '1rightarrow.png' ),
                                         "Find &next",
                                         self.__onFindNext,
                                         "F3" )
         self.__findPrevAct = self.__searchMenu.addAction( \
-                                        PixmapCache().getIcon( 'findprev.png' ),
+                                        PixmapCache().getIcon( '1leftarrow.png' ),
                                         "Find pre&vious",
                                         self.__onFindPrevious,
                                         "Shift+F3" )
@@ -859,7 +859,7 @@ class CodimensionMainWindow( QMainWindow ):
                                         'Ctrl+-' )
         self.__zoom11Act = self.__viewMenu.addAction( \
                                         PixmapCache().getIcon( 'zoomreset.png' ),
-                                        'Zoom &reset', self.__onZoomReset,
+                                        'Zoom r&eset', self.__onZoomReset,
                                         'Ctrl+0' )
 
         # The Help menu
