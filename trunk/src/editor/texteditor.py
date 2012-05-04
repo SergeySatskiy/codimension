@@ -155,13 +155,13 @@ class TextEditor( ScintillaWrapper ):
                                     'Select &all', self.selectAll )
         self.__menu.addSeparator()
         m = self.__menu.addMenu( self.__initEncodingMenu() )
-        m.setIcon( PixmapCache().getIcon( 'text&encoding.png' ) )
+        m.setIcon( PixmapCache().getIcon( 'textencoding.png' ) )
         self.__menu.addSeparator()
         m = self.__menu.addMenu( self.__initToolsMenu() )
-        m.setIcon( PixmapCache().getIcon( 'tools&menu.png' ) )
+        m.setIcon( PixmapCache().getIcon( 'toolsmenu.png' ) )
         self.__menu.addSeparator()
         m = self.__menu.addMenu( self.__initDiagramsMenu() )
-        m.setIcon( PixmapCache().getIcon( '&diagramsmenu.png' ) )
+        m.setIcon( PixmapCache().getIcon( 'diagramsmenu.png' ) )
 
         self.connect( self.__menu, SIGNAL( "aboutToHide()" ),
                       self.__onHideContextMenu )
@@ -179,7 +179,7 @@ class TextEditor( ScintillaWrapper ):
     def __initEncodingMenu( self ):
         " Creates the encoding menu "
         self.supportedEncodings = {}
-        self.encodingMenu = QMenu( "Encoding" )
+        self.encodingMenu = QMenu( "&Encoding" )
         self.encodingsActGrp = QActionGroup( self )
         for encoding in sorted( supportedCodecs ):
             act = self.encodingMenu.addAction( encoding )
@@ -205,7 +205,7 @@ class TextEditor( ScintillaWrapper ):
 
     def __initToolsMenu( self ):
         " Creates the tools menu "
-        self.toolsMenu = QMenu( "Tools" )
+        self.toolsMenu = QMenu( "Too&ls" )
         self.pylintAct = self.toolsMenu.addAction( \
                             PixmapCache().getIcon( 'pylint.png' ),
                             'pylint', self.parent().onPylint, "Ctrl+L" )
@@ -225,7 +225,7 @@ class TextEditor( ScintillaWrapper ):
 
     def __initDiagramsMenu( self ):
         " Creates the diagrams menu "
-        self.diagramsMenu = QMenu( "Diagrams" )
+        self.diagramsMenu = QMenu( "&Diagrams" )
         self.importsDgmAct = self.diagramsMenu.addAction( \
                                 PixmapCache().getIcon( 'importsdiagram.png' ),
                                 'Imports diagram',

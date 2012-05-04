@@ -648,6 +648,14 @@ class CodimensionMainWindow( QMainWindow ):
                                         PixmapCache().getIcon( 'autocompletemenu.png' ),
                                         'Autoco&mplete', self.__onAutocomplete,
                                         "Ctrl+Space" )
+        self.__expandTabsAct = self.__editMenu.addAction( \
+                                        PixmapCache().getIcon( 'expandtabs.png' ),
+                                        'Expand tabs (&4 spaces)',
+                                        self.__onExpandTabs )
+        self.__trailingSpacesAct = self.__editMenu.addAction( \
+                                        PixmapCache().getIcon( 'trailingws.png' ),
+                                        'Remove trailing &spaces',
+                                        self.__onRemoveTrailingSpaces )
 
         # The Search menu
         self.__searchMenu = QMenu( "&Search", self )
@@ -668,7 +676,7 @@ class CodimensionMainWindow( QMainWindow ):
                                         'Alt+Shift+O' )
         self.__searchMenu.addSeparator()
         self.__findOccurencesAct = self.__searchMenu.addAction( \
-                                        PixmapCache().getIcon( 'findfile.png' ),
+                                        PixmapCache().getIcon( 'findindir.png' ),
                                         'Find &occurences',
                                         self.__onFindOccurences,
                                         'Ctrl+]' )
@@ -678,7 +686,7 @@ class CodimensionMainWindow( QMainWindow ):
                                         self.__onGoToLine,
                                         'Ctrl+G' )
         self.__findAct = self.__searchMenu.addAction( \
-                                        PixmapCache().getIcon( 'find.png' ),
+                                        PixmapCache().getIcon( 'findindir.png' ),
                                         'Incremental &search...',
                                         self.__onFind,
                                         "Ctrl+F" )
@@ -2393,5 +2401,13 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onFindPrevious( self ):
         " Triggered when find previous is requested "
+        return
+
+    def __onExpandTabs( self ):
+        " Triggered when tabs expansion is requested "
+        return
+
+    def __onRemoveTrailingSpaces( self ):
+        " Triggered when trailing spaces removal is requested "
         return
 
