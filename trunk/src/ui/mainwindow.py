@@ -608,33 +608,29 @@ class CodimensionMainWindow( QMainWindow ):
 
         # The Edit menu
         self.__editMenu = QMenu( "&Edit", self )
+        self.connect( self.__editMenu, SIGNAL( "aboutToShow()" ),
+                      self.__editAboutToShow )
+        self.connect( self.__editMenu, SIGNAL( "aboutToHide()" ),
+                      self.__editAboutToHide )
         self.__undoAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'undo.png' ),
-                                        '&Undo',
-                                        self.__onUndo,
-                                        'Ctrl+Z' )
+                                        '&Undo', self.__onUndo )
         self.__redoAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'redo.png' ),
-                                        '&Redo',
-                                        self.__onRedo,
-                                        'Ctrl+Shift+Z' )
+                                        '&Redo', self.__onRedo )
         self.__editMenu.addSeparator()
         self.__cutAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'cutmenu.png' ),
-                                        'Cu&t', self.__onCut,
-                                        'Ctrl+X' )
+                                        'Cu&t', self.__onCut )
         self.__copyAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'copymenu.png' ),
-                                        '&Copy', self.__onCopy,
-                                        'Ctrl+C' )
+                                        '&Copy', self.__onCopy )
         self.__pasteAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'pastemenu.png' ),
-                                        '&Paste', self.__onPaste,
-                                        'Ctrl+V' )
+                                        '&Paste', self.__onPaste )
         self.__selectAllAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'selectallmenu.png' ),
-                                        'Select &all', self.__onSelectAll,
-                                        'Ctrl+A' )
+                                        'Select &all', self.__onSelectAll )
         self.__editMenu.addSeparator()
         self.__commentAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'commentmenu.png' ),
@@ -2409,5 +2405,25 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onRemoveTrailingSpaces( self ):
         " Triggered when trailing spaces removal is requested "
+        return
+
+    def __editAboutToShow( self ):
+        " Triggered when edit menu is about to show "
+        self.__undoAct.setShortcut( "Ctrl+Z" )
+        self.__redoAct.setShortcut( "Ctrl+Shift+Z" )
+        self.__cutAct.setShortcut( "Ctrl+X" )
+        self.__copyAct.setShortcut( "Ctrl+C" )
+        self.__pasteAct.setShortcut( "Ctrl+V" )
+        self.__selectAllAct.setShortcut( "Ctrl+A" )
+        return
+
+    def __editAboutToHide( self ):
+        " Triggered when edit menu is about to hide "
+        self.__undoAct.setShortcut( "" )
+        self.__redoAct.setShortcut( "" )
+        self.__cutAct.setShortcut( "" )
+        self.__copyAct.setShortcut( "" )
+        self.__pasteAct.setShortcut( "" )
+        self.__selectAllAct.setShortcut( "" )
         return
 
