@@ -393,7 +393,7 @@ class TextEditor( ScintillaWrapper ):
         self.ctrlBackslashAct = QAction( self )
         self.ctrlBackslashAct.setShortcut( "Ctrl+\\" )
         self.connect( self.ctrlBackslashAct, SIGNAL( 'triggered()' ),
-                      self.__onGotoDefinition )
+                      self.onGotoDefinition )
         self.addAction( self.ctrlBackslashAct )
 
         # Ctrl + ]
@@ -433,7 +433,7 @@ class TextEditor( ScintillaWrapper ):
         self.altUAct = QAction( self )
         self.altUAct.setShortcut( "Alt+U" )
         self.connect( self.altUAct, SIGNAL( 'triggered()' ),
-                      self.__onScopeBegin )
+                      self.onScopeBegin )
         self.addAction( self.altUAct )
         return
 
@@ -1391,7 +1391,7 @@ class TextEditor( ScintillaWrapper ):
         GlobalData().mainWindow.showTagHelp( calltip, docstring )
         return
 
-    def __onGotoDefinition( self ):
+    def onGotoDefinition( self ):
         " The user requested a jump to definition "
         if self.parent().getFileType() not in [ PythonFileType,
                                                 Python3FileType ]:
@@ -1413,7 +1413,7 @@ class TextEditor( ScintillaWrapper ):
                 GlobalData().mainWindow.openFile( path, location.lineno )
         return
 
-    def __onScopeBegin( self ):
+    def onScopeBegin( self ):
         " The user requested jumping to the current scope begin "
         if self.parent().getFileType() not in [ PythonFileType,
                                                 Python3FileType ]:
@@ -1679,7 +1679,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         openImportAction = QShortcut( 'Ctrl+I', self )
         self.connect( openImportAction, SIGNAL( "activated()" ),
-                      self.__onOpenImport )
+                      self.onOpenImport )
 
         self.__diskModTime = None
         self.__reloadDlgShown = False
@@ -2093,7 +2093,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                                                  tooltip )
         return
 
-    def __onOpenImport( self ):
+    def onOpenImport( self ):
         " Triggered when Ctrl+I is received "
 
         if self.__fileType not in [ PythonFileType, Python3FileType ]:
