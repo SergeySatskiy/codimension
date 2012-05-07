@@ -570,6 +570,10 @@ class CodimensionMainWindow( QMainWindow ):
 
         # The Tab menu
         self.__tabMenu = QMenu( "&Tab", self )
+        self.connect( self.__tabMenu, SIGNAL( "aboutToShow()" ),
+                      self.__tabAboutToShow )
+        self.connect( self.__tabMenu, SIGNAL( "aboutToHide()" ),
+                      self.__tabAboutToHide )
         self.__newTabAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'filemenu.png' ),
                                         "&New tab",
@@ -577,34 +581,23 @@ class CodimensionMainWindow( QMainWindow ):
                                         'Ctrl+N' )
         self.__openFileAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'filemenu.png' ),
-                                        '&Open file', self.__openFile,
-                                        'Ctrl+O' )
+                                        '&Open file', self.__openFile, 'Ctrl+O' )
         self.__tabMenu.addSeparator()
         self.__saveFileAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'savemenu.png' ),
-                                        '&Save',
-                                        editorsManager.onSave,
-                                        'Ctrl+S' )
+                                        '&Save', editorsManager.onSave, 'Ctrl+S' )
         self.__saveFileAsAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'saveasmenu.png' ),
-                                        'Save &as...',
-                                        editorsManager.onSaveAs,
-                                        "Ctrl+Shift+S" )
+                                        'Save &as...', editorsManager.onSaveAs, "Ctrl+Shift+S" )
         self.__tabJumpToDefAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'definition.png' ),
-                                        "&Jump to definition",
-                                        self.__onTabJumpToDef,
-                                        'Ctrl+\\' )
+                                        "&Jump to definition", self.__onTabJumpToDef )
         self.__tabJumpToScopeBeginAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'jumpupscopemenu.png' ),
-                                        'Jump to scope &begin',
-                                        self.__onTabJumpToScopeBegin,
-                                        'Alt+U' )
+                                        'Jump to scope &begin', self.__onTabJumpToScopeBegin )
         self.__tabOpenImportAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'imports.png' ),
-                                        'Open &import(s)',
-                                        self.__onTabOpenImport,
-                                        'Ctrl+I' )
+                                        'Open &import(s)', self.__onTabOpenImport )
 
         # The Edit menu
         self.__editMenu = QMenu( "&Edit", self )
@@ -1239,8 +1232,13 @@ class CodimensionMainWindow( QMainWindow ):
         if what == CodimensionProject.CompleteProject:
             self.updateToolbarStatus()
             self.updateWindowTitle()
-            if GlobalData().project.fileName != "":
-                self.settings.projectLoaded = True
+
+            projectLoaded = GlobalData().project.isLoaded()
+            self.__unloadProjectAct.setEnabled( projectLoaded )
+            self.__projectPropsAct.setEnabled( projectLoaded )
+
+            self.settings.projectLoaded = projectLoaded
+            if projectLoaded:
                 editorsManager = self.editorsManagerWidget.editorsManager
                 editorsManager.restoreTabs( GlobalData().project.tabsStatus )
 
@@ -1248,8 +1246,6 @@ class CodimensionMainWindow( QMainWindow ):
                     self.__pylintButton.setMenu( self.__existentPylintRCMenu )
                 else:
                     self.__pylintButton.setMenu( self.__absentPylintRCMenu )
-            else:
-                self.settings.projectLoaded = False
         self.updateRunDebugButtons()
         return
 
@@ -2233,13 +2229,12 @@ class CodimensionMainWindow( QMainWindow ):
                              detectFileType( currentWidget.getShortName() ) \
                                 in [ PythonFileType, Python3FileType ]
 
-        # Project menu items
-        self.__unloadProjectAct.setEnabled( projectLoaded )
-        self.__projectPropsAct.setEnabled( projectLoaded )
-
         # Tab menu
         self.__saveFileAct.setEnabled( enableSaving )
         self.__saveFileAsAct.setEnabled( enableSaving )
+        self.__tabJumpToDefAct.setEnabled( isPythonBuffer )
+        self.__tabJumpToScopeBeginAct.setEnabled( isPythonBuffer )
+        self.__tabOpenImportAct.setEnabled( isPythonBuffer )
 
         # Search menu
         self.__findNameMenuAct.setEnabled( projectLoaded )
@@ -2313,10 +2308,16 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onTabJumpToDef( self ):
         " Triggered when jump to defenition is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.getEditor().onGotoDefinition()
         return
 
     def __onTabJumpToScopeBegin( self ):
         " Triggered when jump to the beginning of the current scope is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.getEditor().onScopeBegin()
         return
 
     def __onFindOccurences( self ):
@@ -2325,6 +2326,9 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onTabOpenImport( self ):
         " Triggered when open import is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.onOpenImport()
         return
 
     def __onUndo( self ):
@@ -2417,6 +2421,13 @@ class CodimensionMainWindow( QMainWindow ):
         self.__selectAllAct.setShortcut( "Ctrl+A" )
         return
 
+    def __tabAboutToShow( self ):
+        " Triggered when tab menu is about to show "
+        self.__tabJumpToDefAct.setShortcut( "Ctrl+\\" )
+        self.__tabJumpToScopeBeginAct.setShortcut( "Alt+U" )
+        self.__tabOpenImportAct.setShortcut( "Ctrl+I" )
+        return
+
     def __editAboutToHide( self ):
         " Triggered when edit menu is about to hide "
         self.__undoAct.setShortcut( "" )
@@ -2425,5 +2436,12 @@ class CodimensionMainWindow( QMainWindow ):
         self.__copyAct.setShortcut( "" )
         self.__pasteAct.setShortcut( "" )
         self.__selectAllAct.setShortcut( "" )
+        return
+
+    def __tabAboutToHide( self ):
+        " Triggered when tab menu is about to hide "
+        self.__tabJumpToDefAct.setShortcut( "" )
+        self.__tabJumpToScopeBeginAct.setShortcut( "" )
+        self.__tabOpenImportAct.setShortcut( "" )
         return
 
