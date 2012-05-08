@@ -309,6 +309,11 @@ class ScintillaWrapper( QsciScintilla ):
         self.SendScintilla( self.SCI_NEWLINE )
         return
 
+    def duplicateLine( self ):
+        " Duplicates the current line "
+        self.SendScintilla( self.SCI_LINEDUPLICATE )
+        return
+
     def deleteBack( self ):
         """ Deletes the character to the left of the cursor """
 

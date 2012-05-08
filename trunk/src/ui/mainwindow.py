@@ -627,16 +627,13 @@ class CodimensionMainWindow( QMainWindow ):
         self.__editMenu.addSeparator()
         self.__commentAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'commentmenu.png' ),
-                                        'C&omment/uncomment', self.__onComment,
-                                        'Ctrl+M' )
+                                        'C&omment/uncomment', self.__onComment )
         self.__duplicateAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'duplicatemenu.png' ),
-                                        '&Duplicate line', self.__onDuplicate,
-                                        'Ctrl+D' )
+                                        '&Duplicate line', self.__onDuplicate )
         self.__autocompleteAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'autocompletemenu.png' ),
-                                        'Autoco&mplete', self.__onAutocomplete,
-                                        "Ctrl+Space" )
+                                        'Autoco&mplete', self.__onAutocomplete )
         self.__expandTabsAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'expandtabs.png' ),
                                         'Expand tabs (&4 spaces)',
@@ -2211,6 +2208,26 @@ class CodimensionMainWindow( QMainWindow ):
             editorsManager.openFile( fileName, -1 )
         return
 
+    def __isPlainTextBuffer( self ):
+        " Provides if saving is enabled "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        if currentWidget is None:
+            return False
+        return editorsManager.currentWidget().getType() == \
+               MainWindowTabWidgetBase.PlainTextEditor
+
+    def __isPythonBuffer( self ):
+        " True if the current tab is a python buffer "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        if currentWidget is None:
+            return False
+        return currentWidget.getType() == \
+                MainWindowTabWidgetBase.PlainTextEditor and \
+               detectFileType( currentWidget.getShortName() ) \
+                          in [ PythonFileType, Python3FileType ]
+
     def __tabChanged( self, index = 0 ):
         " Triggered when the current tab is changed "
         projectLoaded = GlobalData().project.isLoaded()
@@ -2228,13 +2245,6 @@ class CodimensionMainWindow( QMainWindow ):
                              MainWindowTabWidgetBase.PlainTextEditor and \
                              detectFileType( currentWidget.getShortName() ) \
                                 in [ PythonFileType, Python3FileType ]
-
-        # Tab menu
-        self.__saveFileAct.setEnabled( enableSaving )
-        self.__saveFileAsAct.setEnabled( enableSaving )
-        self.__tabJumpToDefAct.setEnabled( isPythonBuffer )
-        self.__tabJumpToScopeBeginAct.setEnabled( isPythonBuffer )
-        self.__tabOpenImportAct.setEnabled( isPythonBuffer )
 
         # Search menu
         self.__findNameMenuAct.setEnabled( projectLoaded )
@@ -2333,10 +2343,16 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onUndo( self ):
         " Triggered when undo action is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.getEditor().onUndo()
         return
 
     def __onRedo( self ):
         " Triggered when redo action is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.getEditor().onRedo()
         return
 
     def __onZoomIn( self ):
@@ -2357,30 +2373,51 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onCut( self ):
         " Triggered when cut is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.getEditor().onShiftDel()
         return
 
     def __onCopy( self ):
         " Triggered when copy is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.getEditor().onCtrlC()
         return
 
     def __onPaste( self ):
         " Triggered when paste is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.getEditor().paste()
         return
 
     def __onSelectAll( self ):
         " Triggered when select all is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.getEditor().selectAll()
         return
 
     def __onComment( self ):
         " Triggered when comment/uncomment is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.getEditor().onCommentUncomment()
         return
 
     def __onDuplicate( self ):
         " Triggered when duplicate line is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.getEditor().duplicateLine()
         return
 
     def __onAutocomplete( self ):
         " Triggered when autocomplete is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.getEditor().onAutoComplete()
         return
 
     def __onFind( self ):
@@ -2405,24 +2442,61 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onExpandTabs( self ):
         " Triggered when tabs expansion is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.onExpandTabs()
         return
 
     def __onRemoveTrailingSpaces( self ):
         " Triggered when trailing spaces removal is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.onRemoveTrailingWS()
         return
 
     def __editAboutToShow( self ):
         " Triggered when edit menu is about to show "
+        isPlainBuffer = self.__isPlainTextBuffer()
+        isPythonBuffer = self.__isPythonBuffer()
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        if isPlainBuffer:
+            editor = currentWidget.getEditor()
+
         self.__undoAct.setShortcut( "Ctrl+Z" )
+        self.__undoAct.setEnabled( isPlainBuffer and editor.isUndoAvailable() )
         self.__redoAct.setShortcut( "Ctrl+Shift+Z" )
+        self.__redoAct.setEnabled( isPlainBuffer and editor.isRedoAvailable() )
         self.__cutAct.setShortcut( "Ctrl+X" )
+        self.__cutAct.setEnabled( isPlainBuffer )
         self.__copyAct.setShortcut( "Ctrl+C" )
+        self.__copyAct.setEnabled( isPlainBuffer )
         self.__pasteAct.setShortcut( "Ctrl+V" )
+        self.__pasteAct.setEnabled( isPlainBuffer and \
+                                    QApplication.clipboard().text() != "" )
         self.__selectAllAct.setShortcut( "Ctrl+A" )
+        self.__selectAllAct.setEnabled( isPlainBuffer )
+        self.__commentAct.setShortcut( "Ctrl+M" )
+        self.__commentAct.setEnabled( isPythonBuffer )
+        self.__duplicateAct.setShortcut( "Ctrl+D" )
+        self.__duplicateAct.setEnabled( isPlainBuffer )
+        self.__autocompleteAct.setShortcut( "Ctrl+Space" )
+        self.__autocompleteAct.setEnabled( isPlainBuffer )
+        self.__expandTabsAct.setEnabled( isPlainBuffer )
+        self.__trailingSpacesAct.setEnabled( isPlainBuffer )
         return
 
     def __tabAboutToShow( self ):
         " Triggered when tab menu is about to show "
+        enableSaving = self.__isPlainTextBuffer()
+        isPythonBuffer = self.__isPythonBuffer()
+
+        self.__saveFileAct.setEnabled( enableSaving )
+        self.__saveFileAsAct.setEnabled( enableSaving )
+        self.__tabJumpToDefAct.setEnabled( isPythonBuffer )
+        self.__tabJumpToScopeBeginAct.setEnabled( isPythonBuffer )
+        self.__tabOpenImportAct.setEnabled( isPythonBuffer )
+
         self.__tabJumpToDefAct.setShortcut( "Ctrl+\\" )
         self.__tabJumpToScopeBeginAct.setShortcut( "Alt+U" )
         self.__tabOpenImportAct.setShortcut( "Ctrl+I" )
@@ -2436,6 +2510,9 @@ class CodimensionMainWindow( QMainWindow ):
         self.__copyAct.setShortcut( "" )
         self.__pasteAct.setShortcut( "" )
         self.__selectAllAct.setShortcut( "" )
+        self.__commentAct.setShortcut( "" )
+        self.__duplicateAct.setShortcut( "" )
+        self.__autocompleteAct.setShortcut( "" )
         return
 
     def __tabAboutToHide( self ):
