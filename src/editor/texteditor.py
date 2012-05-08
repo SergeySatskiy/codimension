@@ -143,10 +143,10 @@ class TextEditor( ScintillaWrapper ):
         self.__menu.addSeparator()
         self.__menuCut = self.__menu.addAction( \
                                     PixmapCache().getIcon( 'cutmenu.png' ),
-                                    'Cu&t', self.__onShiftDel, "Ctrl+X" )
+                                    'Cu&t', self.onShiftDel, "Ctrl+X" )
         self.__menuCopy = self.__menu.addAction( \
                                     PixmapCache().getIcon( 'copymenu.png' ),
-                                    '&Copy', self.__onCtrlC, "Ctrl+C" )
+                                    '&Copy', self.onCtrlC, "Ctrl+C" )
         self.__menuPaste = self.__menu.addAction( \
                                     PixmapCache().getIcon( 'pastemenu.png' ),
                                     '&Paste', self.paste, "Ctrl+V" )
@@ -290,7 +290,7 @@ class TextEditor( ScintillaWrapper ):
         self.commentAct = QAction( self )
         self.commentAct.setShortcut( "Ctrl+M" )
         self.connect( self.commentAct, SIGNAL( 'triggered()' ),
-                      self.__onCommentUncomment )
+                      self.onCommentUncomment )
         self.addAction( self.commentAct )
 
         # Alt + Left, Alt + Right
@@ -351,35 +351,35 @@ class TextEditor( ScintillaWrapper ):
         self.shiftDelAct = QAction( self )
         self.shiftDelAct.setShortcut( "Shift+Del" )
         self.connect( self.shiftDelAct, SIGNAL( 'triggered()' ),
-                      self.__onShiftDel )
+                      self.onShiftDel )
         self.addAction( self.shiftDelAct )
 
         # Ctrl + X => synonym for Shift + Del
         self.ctrlXAct = QAction( self )
         self.ctrlXAct.setShortcut( "Ctrl+X" )
         self.connect( self.ctrlXAct, SIGNAL( 'triggered()' ),
-                      self.__onShiftDel )
+                      self.onShiftDel )
         self.addAction( self.ctrlXAct )
 
         # Ctrl + C
         self.ctrlCAct = QAction( self )
         self.ctrlCAct.setShortcut( "Ctrl+C" )
         self.connect( self.ctrlCAct, SIGNAL( 'triggered()' ),
-                      self.__onCtrlC )
+                      self.onCtrlC )
         self.addAction( self.ctrlCAct )
 
         # Ctrl + Insert
         self.ctrlInsertAct = QAction( self )
         self.ctrlInsertAct.setShortcut( 'Ctrl+Insert' )
         self.connect( self.ctrlInsertAct, SIGNAL( 'triggered()' ),
-                      self.__onCtrlC )
+                      self.onCtrlC )
         self.addAction( self.ctrlInsertAct )
 
         # Ctrl + space
         self.ctrlSpaceAct = QAction( self )
         self.ctrlSpaceAct.setShortcut( "Ctrl+ " )
         self.connect( self.ctrlSpaceAct, SIGNAL( 'triggered()' ),
-                      self.__onAutoComplete )
+                      self.onAutoComplete )
         self.addAction( self.ctrlSpaceAct )
 
         # Ctrl + F1
@@ -959,7 +959,7 @@ class TextEditor( ScintillaWrapper ):
             if pos != 0:
                 char = self.charAt( self.currentPosition() - 1 )
                 if char.isalnum() or char in [ '_', '.' ]:
-                    self.__onAutoComplete()
+                    self.onAutoComplete()
                     event.accept()
                 else:
                     ScintillaWrapper.keyPressEvent( self, event )
@@ -1144,7 +1144,7 @@ class TextEditor( ScintillaWrapper ):
         self.SendScintilla( QsciScintilla.SCI_BACKTAB )
         return
 
-    def __onCommentUncomment( self ):
+    def onCommentUncomment( self ):
         " Triggered when Ctrl+M is received "
         if self.lexer_ is None or not self.lexer_.canBlockComment():
             return
@@ -1256,7 +1256,7 @@ class TextEditor( ScintillaWrapper ):
         self.SendScintilla( QsciScintilla.SCI_LINEENDDISPLAYEXTEND )
         return
 
-    def __onShiftDel( self ):
+    def onShiftDel( self ):
         " Triggered when Shift+Del is received "
         if self.hasSelectedText():
             self.cut()
@@ -1265,7 +1265,7 @@ class TextEditor( ScintillaWrapper ):
             self.SendScintilla( QsciScintilla.SCI_LINEDELETE )
         return
 
-    def __onCtrlC( self ):
+    def onCtrlC( self ):
         " Triggered when Ctrl+C / Ctrl+Insert is receved "
         if self.hasSelectedText():
             self.copy()
@@ -1319,7 +1319,7 @@ class TextEditor( ScintillaWrapper ):
         self.setCursorPosition( line, pos )
         return
 
-    def __onAutoComplete( self ):
+    def onAutoComplete( self ):
         " Triggered when ctrl+space or TAB is clicked "
 
         self.__completionObject, \
@@ -1824,12 +1824,12 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             PixmapCache().getIcon( 'trailingws.png' ),
             'Remove trailing spaces', self )
         self.connect( self.removeTrailingSpacesButton, SIGNAL( 'triggered()' ),
-                      self.__onRemoveTrailingWS )
+                      self.onRemoveTrailingWS )
         self.expandTabsButton = QAction( \
             PixmapCache().getIcon( 'expandtabs.png' ),
             'Expand tabs (4 spaces)', self )
         self.connect( self.expandTabsButton, SIGNAL( 'triggered()' ),
-                      self.__onExpandTabs )
+                      self.onExpandTabs )
 
         # Zoom buttons
         zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
@@ -2027,12 +2027,12 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         LineCounterDialog( None, self.__editor ).exec_()
         return
 
-    def __onRemoveTrailingWS( self ):
+    def onRemoveTrailingWS( self ):
         " Triggers when the trailing spaces should be wiped out "
         self.__editor.removeTrailingWhitespaces()
         return
 
-    def __onExpandTabs( self ):
+    def onExpandTabs( self ):
         " Expands tabs if there are any "
         self.__editor.expandTabs( 4 )
         return
