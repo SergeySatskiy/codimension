@@ -2062,7 +2062,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             self.__generateImportDiagram( what, dlg.options )
         return
 
-    def onImportDgm( self, action ):
+    def onImportDgm( self, action = None ):
         " Runs the generation process with default options "
         if self.__editor.isModified():
             what = ImportsDiagramDialog.SingleBuffer
