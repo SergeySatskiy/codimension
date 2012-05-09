@@ -1835,18 +1835,18 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
                                 'Zoom in (Ctrl++)', self )
         zoomInButton.setShortcut( 'Ctrl++' )
-        self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.__onZoomIn )
+        self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.onZoomIn )
 
         zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
                                 'Zoom out (Ctrl+-)', self )
         zoomOutButton.setShortcut( 'Ctrl+-' )
-        self.connect( zoomOutButton, SIGNAL( 'triggered()' ), self.__onZoomOut )
+        self.connect( zoomOutButton, SIGNAL( 'triggered()' ), self.onZoomOut )
 
         zoomResetButton = QAction( PixmapCache().getIcon( 'zoomreset.png' ),
                                    'Zoom reset (Ctrl+0)', self )
         zoomResetButton.setShortcut( 'Ctrl+0' )
         self.connect( zoomResetButton, SIGNAL( 'triggered()' ),
-                      self.__onZoomReset )
+                      self.onZoomReset )
 
         fixedSpacer = QWidget()
         fixedSpacer.setFixedHeight( 16 )
@@ -1977,19 +1977,19 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                             reportFile, self.getUUID() )
         return
 
-    def __onZoomReset( self ):
+    def onZoomReset( self ):
         " Triggered when the zoom reset button is pressed "
         if self.__editor.zoom != 0:
             self.emit( SIGNAL( 'TextEditorZoom' ), 0 )
         return
 
-    def __onZoomIn( self ):
+    def onZoomIn( self ):
         " Triggered when the zoom in button is pressed "
         if self.__editor.zoom < 20:
             self.emit( SIGNAL( 'TextEditorZoom' ), self.__editor.zoom + 1 )
         return
 
-    def __onZoomOut( self ):
+    def onZoomOut( self ):
         " Triggered when the zoom out button is pressed "
         if self.__editor.zoom > -10:
             self.emit( SIGNAL( 'TextEditorZoom' ), self.__editor.zoom - 1 )
