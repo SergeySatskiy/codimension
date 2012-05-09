@@ -645,6 +645,10 @@ class CodimensionMainWindow( QMainWindow ):
 
         # The Search menu
         self.__searchMenu = QMenu( "&Search", self )
+        self.connect( self.__searchMenu, SIGNAL( "aboutToShow()" ),
+                      self.__searchAboutToShow )
+        self.connect( self.__searchMenu, SIGNAL( "aboutToHide()" ),
+                      self.__searchAboutToHide )
         self.__searchInFilesAct = self.__searchMenu.addAction( \
                                         PixmapCache().getIcon( 'findindir.png' ),
                                         "&Find in files", self.findInFilesClicked,
@@ -663,42 +667,34 @@ class CodimensionMainWindow( QMainWindow ):
         self.__searchMenu.addSeparator()
         self.__findOccurencesAct = self.__searchMenu.addAction( \
                                         PixmapCache().getIcon( 'findindir.png' ),
-                                        'Find &occurences',
-                                        self.__onFindOccurences,
-                                        'Ctrl+]' )
+                                        'Find &occurences', self.__onFindOccurences )
         self.__goToLineAct = self.__searchMenu.addAction( \
                                         PixmapCache().getIcon( 'gotoline.png' ),
-                                        '&Go to line...',
-                                        self.__onGoToLine,
-                                        'Ctrl+G' )
+                                        '&Go to line...', self.__onGoToLine )
         self.__findAct = self.__searchMenu.addAction( \
                                         PixmapCache().getIcon( 'findindir.png' ),
-                                        'Incremental &search...',
-                                        self.__onFind,
-                                        "Ctrl+F" )
+                                        'Incremental &search...', self.__onFind )
         self.__findCurrentAct = self.__searchMenu.addAction( \
                                         PixmapCache().getIcon( 'find.png' ),
                                         '&Identifier incremental search',
-                                        self.__onFindCurrent,
-                                        'Ctrl+F3' )
+                                        self.__onFindCurrent )
         self.__replaceAct = self.__searchMenu.addAction( \
                                         PixmapCache().getIcon( 'replace.png' ),
                                         'Incremental &replace...',
-                                        self.__onReplace,
-                                        "Ctrl+R" )
+                                        self.__onReplace )
         self.__findNextAct = self.__searchMenu.addAction( \
                                         PixmapCache().getIcon( '1rightarrow.png' ),
-                                        "Find &next",
-                                        self.__onFindNext,
-                                        "F3" )
+                                        "Find &next", self.__onFindNext )
         self.__findPrevAct = self.__searchMenu.addAction( \
                                         PixmapCache().getIcon( '1leftarrow.png' ),
-                                        "Find pre&vious",
-                                        self.__onFindPrevious,
-                                        "Shift+F3" )
+                                        "Find pre&vious", self.__onFindPrevious )
 
         # The Tools menu
         self.__toolsMenu = QMenu( "T&ools", self )
+        self.connect( self.__toolsMenu, SIGNAL( "aboutToShow()" ),
+                      self.__toolsAboutToShow )
+        self.connect( self.__toolsMenu, SIGNAL( "aboutToHide()" ),
+                      self.__toolsAboutToHide )
         self.__prjPylintAct = self.__toolsMenu.addAction( \
                                         PixmapCache().getIcon( 'pylint.png' ),
                                         '&Pylint for project',
@@ -717,9 +713,7 @@ class CodimensionMainWindow( QMainWindow ):
                                         self.__onDelPylintRC )
         self.__tabPylintAct = self.__toolsMenu.addAction( \
                                         PixmapCache().getIcon( 'pylint.png' ),
-                                        'P&ylint for tab',
-                                        self.__onTabPylint,
-                                        "Ctrl+L" )
+                                        'P&ylint for tab', self.__onTabPylint )
         self.__toolsMenu.addSeparator()
         self.__prjPymetricsAct = self.__toolsMenu.addAction( \
                                         PixmapCache().getIcon( 'metrics.png' ),
@@ -727,9 +721,7 @@ class CodimensionMainWindow( QMainWindow ):
                                         self.pymetricsButtonClicked )
         self.__tabPymetricsAct = self.__toolsMenu.addAction( \
                                         PixmapCache().getIcon( 'metrics.png' ),
-                                        "Pyme&trics for tab",
-                                        self.__onTabPymetrics,
-                                        "Ctrl+K" )
+                                        "Pyme&trics for tab", self.__onTabPymetrics )
         self.__toolsMenu.addSeparator()
         self.__prjLineCounterAct = self.__toolsMenu.addAction( \
                                         PixmapCache().getIcon( 'linecounter.png' ),
@@ -780,6 +772,10 @@ class CodimensionMainWindow( QMainWindow ):
 
         # The View menu
         self.__viewMenu = QMenu( "&View", self )
+        self.connect( self.__viewMenu, SIGNAL( "aboutToShow()" ),
+                      self.__viewAboutToShow )
+        self.connect( self.__viewMenu, SIGNAL( "aboutToHide()" ),
+                      self.__viewAboutToHide )
         self.__shrinkBarsAct = self.__viewMenu.addAction( \
                                         PixmapCache().getIcon( 'shrinkmenu.png' ),
                                         "&Shrink bars", self.__onMaximizeEditor,
@@ -845,27 +841,27 @@ class CodimensionMainWindow( QMainWindow ):
         self.__viewMenu.addSeparator()
         self.__zoomInAct = self.__viewMenu.addAction( \
                                         PixmapCache().getIcon( 'zoomin.png' ),
-                                        'Zoom &in', self.__onZoomIn,
-                                        'Ctrl++' )
+                                        'Zoom &in', self.__onZoomIn )
         self.__zoomOutAct = self.__viewMenu.addAction( \
                                         PixmapCache().getIcon( 'zoomout.png' ),
-                                        'Zoom &out', self.__onZoomOut,
-                                        'Ctrl+-' )
+                                        'Zoom &out', self.__onZoomOut )
         self.__zoom11Act = self.__viewMenu.addAction( \
                                         PixmapCache().getIcon( 'zoomreset.png' ),
-                                        'Zoom r&eset', self.__onZoomReset,
-                                        'Ctrl+0' )
+                                        'Zoom r&eset', self.__onZoomReset )
 
         # The Help menu
         self.__helpMenu = QMenu( "&Help", self )
+        self.connect( self.__helpMenu, SIGNAL( "aboutToShow()" ),
+                      self.__helpAboutToShow )
+        self.connect( self.__helpMenu, SIGNAL( "aboutToHide()" ),
+                      self.__helpAboutToHide )
         self.__shortcutsAct = self.__helpMenu.addAction( \
                                         PixmapCache().getIcon( 'shortcutsmenu.png' ),
                                         '&Major shortcuts',
                                         editorsManager.onHelp, 'F1' )
         self.__contextHelpAct = self.__helpMenu.addAction( \
                                         PixmapCache().getIcon( 'helpviewer.png' ),
-                                        '&Current identifier help',
-                                        self.__onContextHelp, 'Ctrl+F1' )
+                                        '&Current identifier help', self.__onContextHelp )
 
         menuBar = self.menuBar()
         menuBar.addMenu( self.__projectMenu )
@@ -2214,8 +2210,8 @@ class CodimensionMainWindow( QMainWindow ):
         currentWidget = editorsManager.currentWidget()
         if currentWidget is None:
             return False
-        return editorsManager.currentWidget().getType() == \
-               MainWindowTabWidgetBase.PlainTextEditor
+        return currentWidget.getType() == \
+                    MainWindowTabWidgetBase.PlainTextEditor
 
     def __isPythonBuffer( self ):
         " True if the current tab is a python buffer "
@@ -2227,6 +2223,14 @@ class CodimensionMainWindow( QMainWindow ):
                 MainWindowTabWidgetBase.PlainTextEditor and \
                detectFileType( currentWidget.getShortName() ) \
                           in [ PythonFileType, Python3FileType ]
+
+    def __isGraphicsBuffer( self ):
+        " True if is pictures viewer "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        if currentWidget is None:
+            return False
+        return currentWidget.getType() == MainWindowTabWidgetBase.PictureViewer
 
     def __tabChanged( self, index = 0 ):
         " Triggered when the current tab is changed "
@@ -2274,10 +2278,6 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onTabImportDgmTuned( self ):
         " Triggered when tuned tab imports diagram is requested "
-        return
-
-    def __onMajorShortcuts( self ):
-        " Triggered when major shortcut help is requested "
         return
 
     def __onRunTab( self ):
@@ -2357,14 +2357,20 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onZoomIn( self ):
         " Triggered when zoom in is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        editorsManager.zoomIn()
         return
 
     def __onZoomOut( self ):
         " Triggered when zoom out is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        editorsManager.zoomOut()
         return
 
     def __onZoomReset( self ):
         " Triggered when zoom 1:1 is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        editorsManager.zoomReset()
         return
 
     def __onGoToLine( self ):
@@ -2502,6 +2508,56 @@ class CodimensionMainWindow( QMainWindow ):
         self.__tabOpenImportAct.setShortcut( "Ctrl+I" )
         return
 
+    def __searchAboutToShow( self ):
+        " Triggered when search menu is about to show "
+        isPlainTextBuffer = self.__isPlainTextBuffer()
+        self.__findOccurencesAct.setEnabled( self.__isPythonBuffer() )
+        self.__goToLineAct.setEnabled( isPlainTextBuffer )
+        self.__findAct.setEnabled( isPlainTextBuffer )
+        self.__findCurrentAct.setEnabled( isPlainTextBuffer )
+        self.__replaceAct.setEnabled( isPlainTextBuffer )
+        self.__findNextAct.setEnabled( isPlainTextBuffer )
+        self.__findPrevAct.setEnabled( isPlainTextBuffer )
+
+        self.__findOccurencesAct.setShortcut( "Ctrl+]" )
+        self.__goToLineAct.setShortcut( "Ctrl+G" )
+        self.__findAct.setShortcut( "Ctrl+F" )
+        self.__findCurrentAct.setShortcut( "Ctrl+F3" )
+        self.__replaceAct.setShortcut( "Ctrl+R" )
+        self.__findNextAct.setShortcut( "F3" )
+        self.__findPrevAct.setShortcut( "Shift+F3" )
+        return
+
+    def __toolsAboutToShow( self ):
+        " Triggered when tools menu is about to show "
+        isPythonBuffer = self.__isPythonBuffer()
+        self.__tabPylintAct.setEnabled( isPythonBuffer )
+        self.__tabPymetricsAct.setEnabled( isPythonBuffer )
+
+        self.__tabPylintAct.setShortcut( "Ctrl+L" )
+        self.__tabPymetricsAct.setShortcut( "Ctrl+K" )
+        return
+
+    def __viewAboutToShow( self ):
+        " Triggered when view menu is about to show "
+        isPlainTextBuffer = self.__isPlainTextBuffer()
+        isGraphicsBuffer = self.__isGraphicsBuffer()
+        self.__zoomInAct.setEnabled( isPlainTextBuffer or isGraphicsBuffer )
+        self.__zoomOutAct.setEnabled( isPlainTextBuffer or isGraphicsBuffer )
+        self.__zoom11Act.setEnabled( isPlainTextBuffer or isGraphicsBuffer )
+
+        self.__zoomInAct.setShortcut( "Ctrl++" )
+        self.__zoomOutAct.setShortcut( "Ctrl+-" )
+        self.__zoom11Act.setShortcut( "Ctrl+0" )
+        return
+
+    def __helpAboutToShow( self ):
+        " Triggered when help menu is about to show "
+        self.__contextHelpAct.setEnabled( self.__isPythonBuffer() )
+
+        self.__contextHelpAct.setShortcut( "Ctrl+F1" )
+        return
+
     def __editAboutToHide( self ):
         " Triggered when edit menu is about to hide "
         self.__undoAct.setShortcut( "" )
@@ -2520,5 +2576,34 @@ class CodimensionMainWindow( QMainWindow ):
         self.__tabJumpToDefAct.setShortcut( "" )
         self.__tabJumpToScopeBeginAct.setShortcut( "" )
         self.__tabOpenImportAct.setShortcut( "" )
+        return
+
+    def __searchAboutToHide( self ):
+        " Triggered when search menu is about to hide "
+        self.__findOccurencesAct.setShortcut( "" )
+        self.__goToLineAct.setShortcut( "" )
+        self.__findAct.setShortcut( "" )
+        self.__findCurrentAct.setShortcut( "" )
+        self.__replaceAct.setShortcut( "" )
+        self.__findNextAct.setShortcut( "" )
+        self.__findPrevAct.setShortcut( "" )
+        return
+
+    def __toolsAboutToHide( self ):
+        " Triggered when tools menu is about to hide "
+        self.__tabPylintAct.setShortcut( "" )
+        self.__tabPymetricsAct.setShortcut( "" )
+        return
+
+    def __viewAboutToHide( self ):
+        " Triggered when view menu is about to hide "
+        self.__zoomInAct.setShortcut( "" )
+        self.__zoomOutAct.setShortcut( "" )
+        self.__zoom11Act.setShortcut( "" )
+        return
+
+    def __helpAboutToHide( self ):
+        " Triggered when help menu is about to hide "
+        self.__contextHelpAct.setShortcut( "" )
         return
 

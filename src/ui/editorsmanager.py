@@ -1678,3 +1678,12 @@ class EditorsManager( QTabWidget ):
         widget.setDebugMode( self.__debugMode, isPrjFile )
         return
 
+    def zoomIn( self ):
+        return
+
+    def zoomOut( self ):
+        return
+
+    def zoomReset( self ):
+        return
+
