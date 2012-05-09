@@ -186,13 +186,13 @@ class EditorsManager( QTabWidget ):
         " Installs various key combinations handlers "
         findAction = QShortcut( 'Ctrl+F', self )
         self.connect( findAction, SIGNAL( 'activated()' ),
-                      self.__onFind )
+                      self.onFind )
         hiddenFindAction = QShortcut( 'Ctrl+F3', self )
         self.connect( hiddenFindAction, SIGNAL( "activated()" ),
-                      self.__onHiddenFind )
+                      self.onHiddenFind )
         replaceAction = QShortcut( 'Ctrl+R', self )
         self.connect( replaceAction, SIGNAL( 'activated()' ),
-                      self.__onReplace )
+                      self.onReplace )
         closeTabAction = QShortcut( 'Ctrl+F4', self )
         self.connect( closeTabAction, SIGNAL( 'activated()' ),
                       self.__onCloseTab )
@@ -207,7 +207,7 @@ class EditorsManager( QTabWidget ):
                       self.__onPrevTab )
         gotoAction = QShortcut( 'Ctrl+G', self )
         self.connect( gotoAction, SIGNAL( 'activated()' ),
-                      self.__onGoto )
+                      self.onGoto )
         return
 
     def registerAuxWidgets( self, find, replace, goto ):
@@ -974,7 +974,7 @@ class EditorsManager( QTabWidget ):
 
         return False
 
-    def __onFind( self ):
+    def onFind( self ):
         " Triggered when Ctrl+F is received "
         if self.currentWidget().getType() not in \
                 [ MainWindowTabWidgetBase.PlainTextEditor ]:
@@ -995,7 +995,7 @@ class EditorsManager( QTabWidget ):
         self.__lastDisplayedWasFindWidget = True
         return
 
-    def __onHiddenFind( self ):
+    def onHiddenFind( self ):
         " Triggered when Ctrl+F3 is received "
         if self.currentWidget().getType() not in \
                 [ MainWindowTabWidgetBase.PlainTextEditor ]:
@@ -1010,7 +1010,7 @@ class EditorsManager( QTabWidget ):
                     "No current word to start searching" )
         return
 
-    def __onReplace( self ):
+    def onReplace( self ):
         " Triggered when Ctrl+R is received "
         if self.currentWidget().getType() not in \
                 [ MainWindowTabWidgetBase.PlainTextEditor ]:
@@ -1031,7 +1031,7 @@ class EditorsManager( QTabWidget ):
         self.__lastDisplayedWasFindWidget = False
         return
 
-    def __onGoto( self ):
+    def onGoto( self ):
         " Triggered when Ctrl+G is received "
         if self.currentWidget().getType() not in \
                 [ MainWindowTabWidgetBase.PlainTextEditor ]:
