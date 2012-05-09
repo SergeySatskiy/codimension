@@ -990,7 +990,7 @@ class CodimensionMainWindow( QMainWindow ):
 
         self.linecounterButton = QAction( \
                                     PixmapCache().getIcon( 'linecounter.png' ),
-                                    'Line counter', self )
+                                    'Project line counter', self )
         self.connect( self.linecounterButton, SIGNAL( 'triggered()' ),
                       self.linecounterButtonClicked )
 
@@ -2371,6 +2371,9 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onFindOccurences( self ):
         " Triggered when search for occurences is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.getEditor().onOccurances()
         return
 
     def __onTabOpenImport( self ):
@@ -2414,6 +2417,8 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onGoToLine( self ):
         " Triggered when go to line is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        editorsManager.onGoto()
         return
 
     def __onCut( self ):
@@ -2467,22 +2472,32 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onFind( self ):
         " Triggered when find is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        editorsManager.onFind()
         return
 
     def __onFindCurrent( self ):
         " Triggered when find of the current identifier is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        editorsManager.onHiddenFind()
         return
 
     def __onReplace( self ):
         " Triggered when replace is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        editorsManager.onReplace()
         return
 
     def __onFindNext( self ):
         " Triggered when find next is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        editorsManager.findNext()
         return
 
     def __onFindPrevious( self ):
         " Triggered when find previous is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        editorsManager.findPrev()
         return
 
     def __onExpandTabs( self ):

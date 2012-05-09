@@ -400,7 +400,7 @@ class TextEditor( ScintillaWrapper ):
         self.occurancesAct = QAction( self )
         self.occurancesAct.setShortcut( "Ctrl+]" )
         self.connect( self.occurancesAct, SIGNAL( 'triggered()' ),
-                      self.__onOccurances )
+                      self.onOccurances )
         self.addAction( self.occurancesAct )
 
         # Alt + Shift + Up, Alt + Shift + Down
@@ -1426,7 +1426,7 @@ class TextEditor( ScintillaWrapper ):
             GlobalData().mainWindow.jumpToLine( context.getLastScopeLine() )
         return
 
-    def __onOccurances( self ):
+    def onOccurances( self ):
         " The user requested a list of occurances "
         if self.parent().getFileType() not in [ PythonFileType,
                                                 Python3FileType ]:
