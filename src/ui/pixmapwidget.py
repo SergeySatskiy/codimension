@@ -193,18 +193,18 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
                                 'Zoom in (Ctrl++)', self )
         zoomInButton.setShortcut( 'Ctrl++' )
-        self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.__onZoomIn )
+        self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.onZoomIn )
 
         zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
                                 'Zoom out (Ctrl+-)', self )
         zoomOutButton.setShortcut( 'Ctrl+-' )
-        self.connect( zoomOutButton, SIGNAL( 'triggered()' ), self.__onZoomOut )
+        self.connect( zoomOutButton, SIGNAL( 'triggered()' ), self.onZoomOut )
 
         zoomResetButton = QAction( PixmapCache().getIcon( 'zoomreset.png' ),
                                    'Zoom reset (Ctrl+0)', self )
         zoomResetButton.setShortcut( 'Ctrl+0' )
         self.connect( zoomResetButton, SIGNAL( 'triggered()' ),
-                      self.__onZoomReset )
+                      self.onZoomReset )
 
 
         # Toolbar
@@ -270,21 +270,21 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Triggered on the 'print preview' button "
         pass
 
-    def __onZoomIn( self ):
+    def onZoomIn( self ):
         " Triggered on the 'zoom in' button "
         self.__viewer.doZoom( 1.25 )
         QApplication.processEvents()
         self.resizeBars()
         return
 
-    def __onZoomOut( self ):
+    def onZoomOut( self ):
         " Triggered on the 'zoom out' button "
         self.__viewer.doZoom( 0.8 )
         QApplication.processEvents()
         self.resizeBars()
         return
 
-    def __onZoomReset( self ):
+    def onZoomReset( self ):
         " Triggered on the 'zoom reset' button "
         self.__viewer.resetZoom()
         QApplication.processEvents()
