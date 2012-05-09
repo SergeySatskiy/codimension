@@ -2273,10 +2273,16 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onTabImportDgm( self ):
         " Triggered when tab imports diagram is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.onImportDgm()
         return
 
     def __onTabImportDgmTuned( self ):
         " Triggered when tuned tab imports diagram is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.onImportDgmTuned()
         return
 
     def __onRunTab( self ):
