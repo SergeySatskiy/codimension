@@ -265,39 +265,39 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( 'fileUpdated' ),
                       self.projectViewer.onFileUpdated )
-        recentProjectsViewer = RecentProjectsViewer( self )
-        self.__leftSideBar.addTab( recentProjectsViewer,
+        self.recentProjectsViewer = RecentProjectsViewer( self )
+        self.__leftSideBar.addTab( self.recentProjectsViewer,
                                    PixmapCache().getIcon( 'project.png' ),
                                    "Recent" )
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( 'fileUpdated' ),
-                      recentProjectsViewer.onFileUpdated )
+                      self.recentProjectsViewer.onFileUpdated )
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( "bufferSavedAs" ),
-                      recentProjectsViewer.onFileUpdated )
+                      self.recentProjectsViewer.onFileUpdated )
         self.connect( self.projectViewer, SIGNAL( "fileUpdated" ),
-                      recentProjectsViewer.onFileUpdated )
+                      self.recentProjectsViewer.onFileUpdated )
 
         #self.__leftSideBar.setTabToolTip( 1, "Recently loaded projects" )
-        classesViewer = ClassesViewer()
+        self.classesViewer = ClassesViewer()
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( 'fileUpdated' ),
-                      classesViewer.onFileUpdated )
-        self.__leftSideBar.addTab( classesViewer,
+                      self.classesViewer.onFileUpdated )
+        self.__leftSideBar.addTab( self.classesViewer,
                                    PixmapCache().getIcon( 'class.png' ),
                                    "Classes" )
-        functionsViewer = FunctionsViewer()
+        self.functionsViewer = FunctionsViewer()
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( 'fileUpdated' ),
-                      functionsViewer.onFileUpdated )
-        self.__leftSideBar.addTab( functionsViewer,
+                      self.functionsViewer.onFileUpdated )
+        self.__leftSideBar.addTab( self.functionsViewer,
                                    PixmapCache().getIcon( 'fx.png' ),
                                    "Functions" )
-        globalsViewer = GlobalsViewer()
+        self.globalsViewer = GlobalsViewer()
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( 'fileUpdated' ),
-                      globalsViewer.onFileUpdated )
-        self.__leftSideBar.addTab( globalsViewer,
+                      self.globalsViewer.onFileUpdated )
+        self.__leftSideBar.addTab( self.globalsViewer,
                                    PixmapCache().getIcon( 'globalvar.png' ),
                                    "Globals" )
 
@@ -2271,7 +2271,6 @@ class CodimensionMainWindow( QMainWindow ):
 
         return
 
-
     def __onTabImportDgm( self ):
         " Triggered when tab imports diagram is requested "
         return
@@ -2297,11 +2296,51 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __activateSideTab( self, act ):
         " Triggered when a side bar should be activated "
-        try:
-            name = act.data().toString()
-            print name
-        except Exception, exc:
-            print "Exception: " + str( exc )
+        name = str( act.data().toString() )
+        if name == "prj":
+            self.__leftSideBar.show()
+            self.__leftSideBar.setCurrentWidget( self.projectViewer )
+            self.__leftSideBar.raise_()
+        elif name == "recent":
+            self.__leftSideBar.show()
+            self.__leftSideBar.setCurrentWidget( self.recentProjectsViewer )
+            self.__leftSideBar.raise_()
+        elif name == "classes":
+            self.__leftSideBar.show()
+            self.__leftSideBar.setCurrentWidget( self.classesViewer )
+            self.__leftSideBar.raise_()
+        elif name == "funcs":
+            self.__leftSideBar.show()
+            self.__leftSideBar.setCurrentWidget( self.functionsViewer )
+            self.__leftSideBar.raise_()
+        elif name == "globs":
+            self.__leftSideBar.show()
+            self.__leftSideBar.setCurrentWidget( self.globalsViewer )
+            self.__leftSideBar.raise_()
+        elif name == "outline":
+            self.__rightSideBar.show()
+            self.__rightSideBar.setCurrentWidget( self.__outlineViewer )
+            self.__rightSideBar.raise_()
+        elif name == "log":
+            self.__bottomSideBar.show()
+            self.__bottomSideBar.setCurrentWidget( self.__logViewer )
+            self.__bottomSideBar.raise_()
+        elif name == "pylint":
+            self.__bottomSideBar.show()
+            self.__bottomSideBar.setCurrentWidget( self.__pylintViewer )
+            self.__bottomSideBar.raise_()
+        elif name == "pymetrics":
+            self.__bottomSideBar.show()
+            self.__bottomSideBar.setCurrentWidget( self.__pymetricsViewer )
+            self.__bottomSideBar.raise_()
+        elif name == "search":
+            self.__bottomSideBar.show()
+            self.__bottomSideBar.setCurrentWidget( self.__findInFilesViewer )
+            self.__bottomSideBar.raise_()
+        elif name == "contexthelp":
+            self.__bottomSideBar.show()
+            self.__bottomSideBar.setCurrentWidget( self.__tagHelpViewer )
+            self.__bottomSideBar.raise_()
         return
 
     def __onTabPylint( self ):
