@@ -18,6 +18,7 @@ XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
   class. Issue #316
 * New feature: dumb line counter for the buffer. Issue #107
 * Open project via an OS file selection dialog (Ctrl+Shift+O)
+* Main menu has been added
 
 
 2012 Jan 26  Sergey Satskiy <sergey.satskiy@gmail.com>
