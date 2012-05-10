@@ -1818,7 +1818,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             PixmapCache().getIcon( 'linecounter.png' ),
             'Line counter', self )
         self.connect( self.lineCounterButton, SIGNAL( 'triggered()' ),
-                      self.__onLineCounter )
+                      self.onLineCounter )
 
         self.removeTrailingSpacesButton = QAction( \
             PixmapCache().getIcon( 'trailingws.png' ),
@@ -2022,7 +2022,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                                            os.path.isabs( self.__fileName ) )
         return
 
-    def __onLineCounter( self ):
+    def onLineCounter( self ):
         " triggered when line counter button is clicked "
         LineCounterDialog( None, self.__editor ).exec_()
         return
@@ -2236,7 +2236,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     def onRunScript( self ):
         " Runs the script "
         fileName = self.getFileName()
-        params = GlobalData().getRunParameters( path )
+        params = GlobalData().getRunParameters( fileName )
         workingDir, cmd, environment = getCwdCmdEnv( fileName, params,
                                                      Settings().terminalType )
 

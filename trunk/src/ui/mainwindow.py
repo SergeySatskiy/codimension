@@ -169,7 +169,6 @@ class CodimensionMainWindow( QMainWindow ):
 
         splash.showMessage( "Initializing main menu bar..." )
         self.__initMainMenu()
-        self.__tabChanged()     # Updates availability
 
         self.updateWindowTitle()
         self.__printThirdPartyAvailability()
@@ -541,8 +540,6 @@ class CodimensionMainWindow( QMainWindow ):
     def __initMainMenu( self ):
         " Initializes the main menu bar "
         editorsManager = self.editorsManagerWidget.editorsManager
-        self.connect( editorsManager, SIGNAL( "currentChanged(int)" ),
-                      self.__tabChanged )
 
         # The Project menu
         self.__projectMenu = QMenu( "&Project", self )
@@ -737,6 +734,8 @@ class CodimensionMainWindow( QMainWindow ):
 
         # The Run menu
         self.__runMenu = QMenu( "&Run", self )
+        self.connect( self.__runMenu, SIGNAL( "aboutToShow()" ),
+                      self.__runAboutToShow )
         self.__prjRunAct = self.__runMenu.addAction( \
                                         PixmapCache().getIcon( 'run.png' ),
                                         'Run &project main script',
@@ -756,6 +755,8 @@ class CodimensionMainWindow( QMainWindow ):
 
         # The Diagrams menu
         self.__diagramsMenu = QMenu( "&Diagrams", self )
+        self.connect( self.__diagramsMenu, SIGNAL( "aboutToShow()" ),
+                      self.__diagramsAboutToShow )
         self.__prjImportDgmAct = self.__diagramsMenu.addAction( \
                                         PixmapCache().getIcon( 'importsdiagram.png' ),
                                         '&Project imports diagram',
@@ -2242,45 +2243,6 @@ class CodimensionMainWindow( QMainWindow ):
             return False
         return currentWidget.getType() == MainWindowTabWidgetBase.PictureViewer
 
-    def __tabChanged( self, index = 0 ):
-        " Triggered when the current tab is changed "
-        projectLoaded = GlobalData().project.isLoaded()
-        prjScriptValid = GlobalData().isProjectScriptValid()
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-
-        if currentWidget is None:
-            enableSaving = False
-            isPythonBuffer = False
-        else:
-            enableSaving = editorsManager.currentWidget().getType() == \
-                           MainWindowTabWidgetBase.PlainTextEditor
-            isPythonBuffer = currentWidget.getType() == \
-                             MainWindowTabWidgetBase.PlainTextEditor and \
-                             detectFileType( currentWidget.getShortName() ) \
-                                in [ PythonFileType, Python3FileType ]
-
-        # Search menu
-        self.__findNameMenuAct.setEnabled( projectLoaded )
-        self.__fileProjectFileAct.setEnabled( projectLoaded )
-
-        # Diagram menu
-        self.__prjImportDgmAct.setEnabled( projectLoaded )
-        self.__prjImportsDgmDlgAct.setEnabled( projectLoaded )
-        self.__tabImportDgmAct.setEnabled( isPythonBuffer )
-        self.__tabImportDgmDlgAct.setEnabled( isPythonBuffer )
-
-        # Run menu
-        self.__prjRunAct.setEnabled( projectLoaded and prjScriptValid )
-        self.__prjRunDlgAct.setEnabled( projectLoaded and prjScriptValid )
-        self.__tabRunAct.setEnabled( isPythonBuffer )
-        self.__tabRunDlgAct.setEnabled( isPythonBuffer )
-
-        # Help menu
-        self.__contextHelpAct.setEnabled( isPythonBuffer )
-
-        return
-
     def __onTabImportDgm( self ):
         " Triggered when tab imports diagram is requested "
         editorsManager = self.editorsManagerWidget.editorsManager
@@ -2297,10 +2259,16 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onRunTab( self ):
         " Triggered when run tab script is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.onRunScript()
         return
 
     def __onRunTabDlg( self ):
         " Triggered when run tab script dialog is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.onRunScriptSettings()
         return
 
     def __onContextHelp( self ):
@@ -2361,14 +2329,23 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onTabPylint( self ):
         " Triggered when pylint for the current tab is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.onPylint()
         return
 
     def __onTabPymetrics( self ):
         " Triggered when pymetrics for the current tab is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.onPymetrics()
         return
 
     def __onTabLineCounter( self ):
         " Triggered when line counter for the current buffer is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.onLineCounter()
         return
 
     def __onTabJumpToDef( self ):
@@ -2594,12 +2571,42 @@ class CodimensionMainWindow( QMainWindow ):
         self.__findPrevAct.setShortcut( "Shift+F3" )
         return
 
+    def __diagramsAboutToShow( self ):
+        " Triggered when the diagrams menu is about to show "
+        isPythonBuffer = self.__isPythonBuffer()
+        self.__tabImportDgmAct.setEnabled( isPythonBuffer )
+        self.__tabImportDgmDlgAct.setEnabled( isPythonBuffer )
+        return
+
+    def __runAboutToShow( self ):
+        " Triggered when the run menu is about to show "
+        projectLoaded = GlobalData().project.isLoaded()
+        prjScriptValid = GlobalData().isProjectScriptValid()
+        isPythonBuffer = self.__isPythonBuffer()
+
+        self.__prjRunAct.setEnabled( projectLoaded and prjScriptValid )
+        self.__prjRunDlgAct.setEnabled( projectLoaded and prjScriptValid )
+        self.__tabRunAct.setEnabled( isPythonBuffer )
+        self.__tabRunDlgAct.setEnabled( isPythonBuffer )
+        return
+
     def __toolsAboutToShow( self ):
         " Triggered when tools menu is about to show "
         isPythonBuffer = self.__isPythonBuffer()
+        projectLoaded = GlobalData().project.isLoaded()
         self.__tabPylintAct.setEnabled( isPythonBuffer )
         self.__tabPymetricsAct.setEnabled( isPythonBuffer )
         self.__tabLineCounterAct.setEnabled( isPythonBuffer )
+
+        if projectLoaded:
+            rcExists = os.path.exists( self.__getPylintRCFileName() )
+            self.__prjGenPylintrcAct.setEnabled( not rcExists )
+            self.__prjEditPylintrcAct.setEnabled( rcExists )
+            self.__prjDelPylintrcAct.setEnabled( rcExists )
+        else:
+            self.__prjGenPylintrcAct.setEnabled( False )
+            self.__prjEditPylintrcAct.setEnabled( False )
+            self.__prjDelPylintrcAct.setEnabled( False )
 
         self.__tabPylintAct.setShortcut( "Ctrl+L" )
         self.__tabPymetricsAct.setShortcut( "Ctrl+K" )
