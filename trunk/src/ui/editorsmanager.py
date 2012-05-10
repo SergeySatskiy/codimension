@@ -195,7 +195,7 @@ class EditorsManager( QTabWidget ):
                       self.onReplace )
         closeTabAction = QShortcut( 'Ctrl+F4', self )
         self.connect( closeTabAction, SIGNAL( 'activated()' ),
-                      self.__onCloseTab )
+                      self.onCloseTab )
         nextTabAction = QShortcut( 'Ctrl+PgUp', self )
         self.connect( nextTabAction, SIGNAL( 'activated()' ),
                       self.__onNextTab )
@@ -302,11 +302,15 @@ class EditorsManager( QTabWidget ):
         self.historyFwdButton.setEnabled( self.history.forwardAvailable() )
         return
 
-    def __onCloseTab( self ):
+    def onCloseTab( self ):
         " Triggered when Ctrl+F4 is received "
         if self.widget( 0 ) != self.__welcomeWidget:
             self.__onCloseRequest( self.currentIndex() )
         return
+
+    def isTabClosable( self ):
+        " Returns True if the current TAB is closable "
+        return self.widget( 0 ) != self.__welcomeWidget
 
     def __onCloseRequest( self, index ):
         " Close tab handler "
@@ -1700,5 +1704,25 @@ class EditorsManager( QTabWidget ):
         if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
                                  MainWindowTabWidgetBase.PictureViewer ]:
             widget.onZoomReset()
+        return
+
+    def isCopyAvailable( self ):
+        " Checks if Ctrl+C works for the current widget "
+        widget = self.currentWidget()
+        if widget.getType() == MainWindowTabWidgetBase.PlainTextEditor:
+            return True
+        if widget.getType() == MainWindowTabWidgetBase.HTMLViewer:
+            return widget.getViewer().selectedText() != ""
+
+    def onCopy( self ):
+        " Called when Ctrl+C is selected via main menu "
+        widget = self.currentWidget()
+        if widget.getType() == MainWindowTabWidgetBase.PlainTextEditor:
+            widget.getEditor().onCtrlC()
+            return
+        if widget.getType() == MainWindowTabWidgetBase.HTMLViewer:
+            text = widget.getViewer().selectedText()
+            if text != "":
+                QApplication.clipboard().setText( text )
         return
 
