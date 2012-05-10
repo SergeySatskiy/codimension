@@ -582,6 +582,9 @@ class CodimensionMainWindow( QMainWindow ):
         self.__openFileAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'filemenu.png' ),
                                         '&Open file', self.__openFile, 'Ctrl+O' )
+        self.__closeTabAct = self.__tabMenu.addAction( \
+                                        PixmapCache().getIcon( 'closetabmenu.png' ),
+                                        'Close tab', editorsManager.onCloseTab )
         self.__tabMenu.addSeparator()
         self.__saveFileAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'savemenu.png' ),
@@ -617,7 +620,7 @@ class CodimensionMainWindow( QMainWindow ):
                                         'Cu&t', self.__onCut )
         self.__copyAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'copymenu.png' ),
-                                        '&Copy', self.__onCopy )
+                                        '&Copy', editorsManager.onCopy )
         self.__pasteAct = self.__editMenu.addAction( \
                                         PixmapCache().getIcon( 'pastemenu.png' ),
                                         '&Paste', self.__onPaste )
@@ -1229,6 +1232,13 @@ class CodimensionMainWindow( QMainWindow ):
             projectLoaded = GlobalData().project.isLoaded()
             self.__unloadProjectAct.setEnabled( projectLoaded )
             self.__projectPropsAct.setEnabled( projectLoaded )
+            self.__findNameMenuAct.setEnabled( projectLoaded )
+            self.__fileProjectFileAct.setEnabled( projectLoaded )
+            self.__prjPylintAct.setEnabled( projectLoaded )
+            self.__prjPymetricsAct.setEnabled( projectLoaded )
+            self.__prjLineCounterAct.setEnabled( projectLoaded )
+            self.__prjImportDgmAct.setEnabled( projectLoaded )
+            self.__prjImportsDgmDlgAct.setEnabled( projectLoaded )
 
             self.settings.projectLoaded = projectLoaded
             if projectLoaded:
@@ -2434,13 +2444,6 @@ class CodimensionMainWindow( QMainWindow ):
         currentWidget.getEditor().onShiftDel()
         return
 
-    def __onCopy( self ):
-        " Triggered when copy is requested "
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.getEditor().onCtrlC()
-        return
-
     def __onPaste( self ):
         " Triggered when paste is requested "
         editorsManager = self.editorsManagerWidget.editorsManager
@@ -2536,7 +2539,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__cutAct.setShortcut( "Ctrl+X" )
         self.__cutAct.setEnabled( isPlainBuffer )
         self.__copyAct.setShortcut( "Ctrl+C" )
-        self.__copyAct.setEnabled( isPlainBuffer )
+        self.__copyAct.setEnabled( editorsManager.isCopyAvailable() )
         self.__pasteAct.setShortcut( "Ctrl+V" )
         self.__pasteAct.setEnabled( isPlainBuffer and \
                                     QApplication.clipboard().text() != "" )
@@ -2556,13 +2559,16 @@ class CodimensionMainWindow( QMainWindow ):
         " Triggered when tab menu is about to show "
         enableSaving = self.__isPlainTextBuffer()
         isPythonBuffer = self.__isPythonBuffer()
+        editorsManager = self.editorsManagerWidget.editorsManager
 
         self.__saveFileAct.setEnabled( enableSaving )
         self.__saveFileAsAct.setEnabled( enableSaving )
+        self.__closeTabAct.setEnabled( editorsManager.isTabClosable() )
         self.__tabJumpToDefAct.setEnabled( isPythonBuffer )
         self.__tabJumpToScopeBeginAct.setEnabled( isPythonBuffer )
         self.__tabOpenImportAct.setEnabled( isPythonBuffer )
 
+        self.__closeTabAct.setShortcut( "Ctrl+F4" )
         self.__tabJumpToDefAct.setShortcut( "Ctrl+\\" )
         self.__tabJumpToScopeBeginAct.setShortcut( "Alt+U" )
         self.__tabOpenImportAct.setShortcut( "Ctrl+I" )
@@ -2593,6 +2599,7 @@ class CodimensionMainWindow( QMainWindow ):
         isPythonBuffer = self.__isPythonBuffer()
         self.__tabPylintAct.setEnabled( isPythonBuffer )
         self.__tabPymetricsAct.setEnabled( isPythonBuffer )
+        self.__tabLineCounterAct.setEnabled( isPythonBuffer )
 
         self.__tabPylintAct.setShortcut( "Ctrl+L" )
         self.__tabPymetricsAct.setShortcut( "Ctrl+K" )
@@ -2633,6 +2640,7 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __tabAboutToHide( self ):
         " Triggered when tab menu is about to hide "
+        self.__closeTabAct.setShortcut( "" )
         self.__tabJumpToDefAct.setShortcut( "" )
         self.__tabJumpToScopeBeginAct.setShortcut( "" )
         self.__tabOpenImportAct.setShortcut( "" )

@@ -113,6 +113,10 @@ class HTMLTabWidget( MainWindowTabWidgetBase, QWidget ):
                       QDesktopServices.openUrl )
         return
 
+    def getViewer( self ):
+        " Provides the QWebView "
+        return self.__editor
+
     def setFocus( self ):
         " Overridden setFocus "
         self.__editor.setFocus()
