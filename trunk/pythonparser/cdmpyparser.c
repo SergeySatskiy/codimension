@@ -1333,7 +1333,7 @@ static PyMethodDef _cdm_py_parser_methods[] =
     void init_cdmpyparser( void )
     {
         PyObject *  module = Py_InitModule( "_cdmpyparser", _cdm_py_parser_methods );
-        PyModule_AddStringConstant( module, "version", "0.0.1" );
+        PyModule_AddStringConstant( module, "version", "1.3" );
     }
 #else
     /* Python 3 initialization */
@@ -1351,7 +1351,7 @@ static PyMethodDef _cdm_py_parser_methods[] =
     {
         PyObject *  module;
         module = PyModule_Create( & _cdm_py_parser_module );
-        PyModule_AddStringConstant( module, "version", "0.0.1" );
+        PyModule_AddStringConstant( module, "version", "1.3" );
         return module;
     }
 #endif
