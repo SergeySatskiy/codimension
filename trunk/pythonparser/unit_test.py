@@ -204,6 +204,12 @@ class CDMBriefParserTest( unittest.TestCase ):
                    "one comment line test failed" )
         return
 
+    def test_comments_only( self ):
+        " Test for a file with no other lines except of comments "
+
+        self.meat( self.dir + "commentsonly.py",
+                   "comments only with no other empty lines test failed" )
+
     def test_empty_brackets( self ):
         " Test for empty brackets "
 
