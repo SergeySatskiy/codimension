@@ -266,6 +266,8 @@ class FileOutlineViewer( QWidget ):
                               self.__cursorPositionChanged )
         info = getBriefModuleInfoFromMemory( str( editor.text() ) )
 
+        self.showParsingErrorsButton.setEnabled( info.isOK != True )
+
         shortFileName = widget.getShortName()
         browser = OutlineBrowser( uuid, shortFileName, info )
         self.__connectOutlineBrowser( browser )
