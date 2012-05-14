@@ -27,6 +27,7 @@
 
 #include <regex.h>
 
+#define CDM_PY_PARSER_VERSION       "1.4"
 #define MAX_DOTTED_NAME_LENGTH      256
 
 
@@ -1246,6 +1247,27 @@ py_modinfo_from_file( PyObject *  self,     /* unused */
 
     /* Start the parser business */
     pANTLR3_INPUT_STREAM input = antlr3AsciiFileStreamNew( (pANTLR3_UINT8) fileName );
+
+    /* Dirty hack:
+     * it's a problem if a comment is the last one in the file and it does not
+     * have EOL at the end. It's easier to add EOL here (if EOL is not the last
+     * character) than to change the grammar.
+     * The run-time library reserves one byte in the patched version for EOL if
+     * needed.
+     */
+    if ( input != NULL )
+    {
+        if ( input->sizeBuf > 0 )
+        {
+            if ( ((char*)(input->data))[ input->sizeBuf - 1 ] != '\n' )
+            {
+                ((char*)(input->data))[ input->sizeBuf ] = '\n';
+                input->sizeBuf += 1;
+            }
+        }
+    }
+
+    /* There is no need to revert the changes because the input is closed */
     return parse_input( input, & callbacks );
 }
 
@@ -1290,7 +1312,35 @@ py_modinfo_from_mem( PyObject *  self,      /* unused */
     /* Start the parser business */
     pANTLR3_INPUT_STREAM    input = antlr3NewAsciiStringInPlaceStream( (pANTLR3_UINT8) content,
                                                                        strlen( content ), NULL );
-    return parse_input( input, & callbacks );
+
+    /* Dirty hack:
+     * it's a problem if a comment is the last one in the file and it does not
+     * have EOL at the end. It's easier to add EOL here (if EOL is not the last
+     * character) than to change the grammar.
+     * The \0 byte is used for temporary injection of EOL.
+     */
+    int     eolAdded = 0;
+    if ( input != NULL )
+    {
+        if ( input->sizeBuf > 0 )
+        {
+            if ( ((char*)(input->data))[ input->sizeBuf - 1 ] != '\n' )
+            {
+                ((char*)(input->data))[ input->sizeBuf ] = '\n';
+                input->sizeBuf += 1;
+                eolAdded = 1;
+            }
+        }
+    }
+
+    PyObject *      result = parse_input( input, & callbacks );
+
+    /* Revert the hack changes back if needed */
+    if ( eolAdded == 1 )
+    {
+        ((char*)(input->data))[ input->sizeBuf - 1 ] = 0;
+    }
+    return result;
 }
 
 
@@ -1333,7 +1383,7 @@ static PyMethodDef _cdm_py_parser_methods[] =
     void init_cdmpyparser( void )
     {
         PyObject *  module = Py_InitModule( "_cdmpyparser", _cdm_py_parser_methods );
-        PyModule_AddStringConstant( module, "version", "1.3" );
+        PyModule_AddStringConstant( module, "version", CDM_PY_PARSER_VERSION );
     }
 #else
     /* Python 3 initialization */
@@ -1351,7 +1401,7 @@ static PyMethodDef _cdm_py_parser_methods[] =
     {
         PyObject *  module;
         module = PyModule_Create( & _cdm_py_parser_module );
-        PyModule_AddStringConstant( module, "version", "1.3" );
+        PyModule_AddStringConstant( module, "version", CDM_PY_PARSER_VERSION );
         return module;
     }
 #endif
