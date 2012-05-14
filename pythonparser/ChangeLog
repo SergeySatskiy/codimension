@@ -1,3 +1,9 @@
+2012 May 13  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for release v.1.4
+* Bug fix: no more problems in case if the last line is a comment one and there
+  is no EOL at the end of this line.
+
 2011 Sep 12  Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Prepared for release v.1.3
