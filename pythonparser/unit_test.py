@@ -65,6 +65,13 @@ class CDMBriefParserTest( unittest.TestCase ):
         info = cdmbriefparser.getBriefModuleInfoFromFile( pythonFile )
         self.failUnless( info.isOK == True )
 
+        f = open( pythonFile )
+        content = f.read()
+        f.close()
+
+        info = cdmbriefparser.getBriefModuleInfoFromMemory( content )
+        self.failUnless( info.isOK == True )
+
         outFileName = pythonFile.replace( ".py", ".out" )
         outFile = open( outFileName, "w" )
         outFile.write( info.niceStringify() )
@@ -210,6 +217,12 @@ class CDMBriefParserTest( unittest.TestCase ):
         self.meat( self.dir + "commentsonly.py",
                    "comments only with no other empty lines test failed" )
 
+    def test_noendofline( self ):
+        " Test for a file which has no EOL at the end "
+
+        self.meat( self.dir + "noendofline.py",
+                   "No end of line at the end of the file test failed" )
+
     def test_empty_brackets( self ):
         " Test for empty brackets "
 
@@ -220,5 +233,6 @@ class CDMBriefParserTest( unittest.TestCase ):
 
 # Run the unit tests
 if __name__ == '__main__':
+    print "Testing parser version: " + cdmbriefparser.getVersion()
     unittest.main()
 
