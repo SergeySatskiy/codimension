@@ -38,10 +38,10 @@ gen: pythonbrief.g
 	CLASSPATH=/home/swift/antlr/antlrworks-1.4.jar java org.antlr.Tool pythonbrief.g
 
 lexerutils.o: lexerutils.c
-	gcc -O2 -I/usr/include/python2.6/ ${FLAGS} ${INCLUDE} -c lexerutils.c
+	gcc -O2 -I/usr/include/python2.7/ ${FLAGS} ${INCLUDE} -c lexerutils.c
 
 clean:
-	rm -rf *.o core.* _cdmpyparser.so build/ brief_test
+	rm -rf *.o core.* _cdmpyparser.so build/ brief_test core
 
 cleanall: clean
 	rm -f $(GENERATED_FILES)
