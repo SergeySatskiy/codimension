@@ -124,10 +124,7 @@ antlr3readAscii(pANTLR3_INPUT_STREAM    input, pANTLR3_UINT8 fileName)
 
 	/* Allocate buffer for this input set   
 	*/
-    /* Note: this is dirty hack. One byte is reserved for EOL in case
-     * the last line in the file does not end with it. Adding EOL is done
-     * in the parser code */
-	input->data	    = ANTLR3_MALLOC((size_t)fSize + 1);
+	input->data	    = ANTLR3_MALLOC((size_t)fSize);
 	input->sizeBuf  = fSize;
 
 	if	(input->data == NULL)
