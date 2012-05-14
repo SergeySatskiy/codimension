@@ -559,3 +559,7 @@ def getBriefModuleInfoFromMemory( content ):
     modInfo.flush()
     return modInfo
 
+def getVersion():
+    " Provides the parser version "
+    return _cdmpyparser.version
+
