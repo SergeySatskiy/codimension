@@ -31,7 +31,8 @@ from PyQt4.QtGui                import QLabel, QToolBar, QWidget, QMessageBox, \
                                        QSizePolicy, QAction, QMainWindow, \
                                        QShortcut, QFrame, QApplication, \
                                        QCursor, QMenu, QToolButton, QToolTip, \
-                                       QPalette, QColor, QFileDialog, QDialog
+                                       QPalette, QColor, QFileDialog, QDialog, \
+                                       QDesktopServices
 from fitlabel                   import FitPathLabel
 from utils.globals              import GlobalData
 from utils.project              import CodimensionProject
@@ -782,7 +783,7 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__viewAboutToHide )
         self.__shrinkBarsAct = self.__viewMenu.addAction( \
                                         PixmapCache().getIcon( 'shrinkmenu.png' ),
-                                        "&Shrink bars", self.__onMaximizeEditor,
+                                        "&Hide sidebars", self.__onMaximizeEditor,
                                         'F11' )
         self.__leftSideBarMenu = QMenu( "&Left sidebar", self )
         self.connect( self.__leftSideBarMenu, SIGNAL( "triggered(QAction*)" ),
@@ -866,6 +867,15 @@ class CodimensionMainWindow( QMainWindow ):
         self.__contextHelpAct = self.__helpMenu.addAction( \
                                         PixmapCache().getIcon( 'helpviewer.png' ),
                                         '&Current identifier help', self.__onContextHelp )
+        self.__helpMenu.addSeparator()
+        self.__allShotcutsAct = self.__helpMenu.addAction( \
+                                        PixmapCache().getIcon( 'allshortcutsmenu.png' ),
+                                        '&All shortcuts (web page)',
+                                        self.__onAllShortcurs )
+        self.__homePageAct = self.__helpMenu.addAction( \
+                                        PixmapCache().getIcon( 'homepagemenu.png' ),
+                                        'Codimension &home page',
+                                        self.__onHomePage )
 
         menuBar = self.menuBar()
         menuBar.addMenu( self.__projectMenu )
@@ -2276,6 +2286,16 @@ class CodimensionMainWindow( QMainWindow ):
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.getEditor().onTagHelp()
+        return
+
+    def __onHomePage( self ):
+        " Triggered when opening the home page is requested "
+        QDesktopServices.openUrl( QUrl( "http://satsky.spb.ru/codimension/" ) )
+        return
+
+    def __onAllShortcurs( self ):
+        " Triggered when opening key bindings page is requested"
+        QDesktopServices.openUrl( QUrl( "http://satsky.spb.ru/codimension/keyBindingsEng.php" ) )
         return
 
     def __activateSideTab( self, act ):
