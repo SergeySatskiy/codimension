@@ -1713,6 +1713,7 @@ class EditorsManager( QTabWidget ):
             return True
         if widget.getType() == MainWindowTabWidgetBase.HTMLViewer:
             return widget.getViewer().selectedText() != ""
+        return False
 
     def onCopy( self ):
         " Called when Ctrl+C is selected via main menu "
