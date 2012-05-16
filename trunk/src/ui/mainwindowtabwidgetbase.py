@@ -29,12 +29,12 @@ import uuid
 class MainWindowTabWidgetBase():
     " Base class for all the main window tab widgets "
 
-    Unknown          = -1
-    PlainTextEditor  = 0    # Text only editor (including python)
-    PythonEditor     = 1    # Text/graphics python only editor widget
-    PictureViewer    = 2
-    HTMLViewer       = 3
-    GeneratedDiagram = 4
+    Unknown              = -1
+    PlainTextEditor      = 0    # Text only editor (including python)
+    PythonGraphicsEditor = 1    # Text/graphics python only editor widget
+    PictureViewer        = 2
+    HTMLViewer           = 3
+    GeneratedDiagram     = 4
 
     def __init__( self ):
         self.__uuid = uuid.uuid1()
