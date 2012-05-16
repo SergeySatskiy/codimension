@@ -29,7 +29,7 @@
 """ The real main widget - tab bar with editors """
 
 
-import logging, os.path
+import logging, os, os.path
 from PyQt4.QtCore               import Qt, SIGNAL, \
                                        QVariant, QDir, QUrl
 from PyQt4.QtGui                import QTabWidget, QDialog, QMessageBox, \
@@ -131,13 +131,18 @@ class EditorsManager( QTabWidget ):
 
         # Context menu
         self.__tabContextMenu = QMenu( self )
-        self.__tabContextMenu.addAction( PixmapCache().getIcon( \
-                                                       "copytoclipboard.png" ),
-                                         "Copy path to clipboard",
-                                         self.__copyTabPath )
+        self.__copyPathAct = self.__tabContextMenu.addAction( \
+                                    PixmapCache().getIcon( "copytoclipboard.png" ),
+                                    "Copy path to clipboard",
+                                    self.__copyTabPath )
         self.__reloadAct = self.__tabContextMenu.addAction( \
                                     PixmapCache().getIcon( "reload.png" ),
                                     "Reload", self.onReload )
+        self.__tabContextMenu.addSeparator()
+        self.__delCurrentAct = self.__tabContextMenu.addAction( \
+                                    PixmapCache().getIcon( "trash.png" ),
+                                    "Close and delete from disk",
+                                    self.__closeDelete )
         self.tabBar().setContextMenuPolicy( Qt.CustomContextMenu )
         self.connect( self.tabBar(),
                       SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
@@ -160,7 +165,9 @@ class EditorsManager( QTabWidget ):
 
         if tabIndex == clickedIndex:
             widget = self.widget( tabIndex )
-            if widget.getFileName() != "":
+            if widget.getFileName() != "" and \
+               widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
+                                     MainWindowTabWidgetBase.PictureViewer ]:
                 if not widget.doesFileExist():
                     self.__reloadAct.setText( "Reload" )
                     self.__reloadAct.setEnabled( False )
@@ -173,6 +180,8 @@ class EditorsManager( QTabWidget ):
                 else:
                     self.__reloadAct.setText( "Reload" )
                     self.__reloadAct.setEnabled( False )
+                self.__copyPathAct.setEnabled( widget.getType() == \
+                                    MainWindowTabWidgetBase.PlainTextEditor )
                 self.__tabContextMenu.popup( self.mapToGlobal( pos ) )
         return
 
@@ -180,6 +189,36 @@ class EditorsManager( QTabWidget ):
         " Triggered when copy path to clipboard item is selected "
         QApplication.clipboard().setText( \
                 self.widget( self.currentIndex() ).getFileName() )
+        return
+
+    def __closeDelete( self ):
+        """ Triggered when the current tab is requested to be closed and the
+            loaded file deleted from the disk """
+        tabIndex = self.currentIndex()
+        widget = self.widget( tabIndex )
+        fileName = widget.getFileName()
+
+        res = QMessageBox.warning( self, "Close tab and delete",
+                "<p>Are you sure to close the tab and delete " \
+                "<b>" + fileName + "</b> from the disk?</p>",
+                QMessageBox.StandardButtons( QMessageBox.Cancel | \
+                                             QMessageBox.Yes ),
+                QMessageBox.Cancel )
+        if res == QMessageBox.Cancel:
+            return
+
+        if not os.path.exists( fileName ):
+            logging.error( "Cannot find " + fileName + " on the disk." )
+            return
+
+        try:
+            os.remove( fileName )
+        except Exception, exc:
+            logging.error( str( exc ) )
+            return
+
+        # Finally, close the tab
+        self.__onCloseRequest( tabIndex, True )
         return
 
     def __installActions( self ):
@@ -312,11 +351,11 @@ class EditorsManager( QTabWidget ):
         " Returns True if the current TAB is closable "
         return self.widget( 0 ) != self.__welcomeWidget
 
-    def __onCloseRequest( self, index ):
+    def __onCloseRequest( self, index, enforced = False ):
         " Close tab handler "
 
         wasDiscard = False
-        if self.widget( index ).isModified():
+        if self.widget( index ).isModified() and enforced == False:
             # Ask the user if the changes should be discarded
             self.activateTab( index )
             res = QMessageBox.warning( \
@@ -343,7 +382,7 @@ class EditorsManager( QTabWidget ):
         # - there were no changes
 
         closingUUID = self.widget( index ).getUUID()
-        if not wasDiscard:
+        if not wasDiscard and not enforced:
             self.__updateFilePosition( index )
 
         self.__skipHistoryUpdate = True
