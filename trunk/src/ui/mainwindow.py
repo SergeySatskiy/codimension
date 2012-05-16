@@ -652,7 +652,7 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__searchAboutToHide )
         self.__searchInFilesAct = self.__searchMenu.addAction( \
                                         PixmapCache().getIcon( 'findindir.png' ),
-                                        "&Find in files", self.findInFilesClicked,
+                                        "Find in file&s", self.findInFilesClicked,
                                         "Ctrl+Shift+F" )
         self.__searchMenu.addSeparator()
         self.__findNameMenuAct = self.__searchMenu.addAction( \
@@ -669,26 +669,26 @@ class CodimensionMainWindow( QMainWindow ):
         self.__findOccurencesAct = self.__searchMenu.addAction( \
                                         PixmapCache().getIcon( 'findindir.png' ),
                                         'Find &occurences', self.__onFindOccurences )
-        self.__goToLineAct = self.__searchMenu.addAction( \
-                                        PixmapCache().getIcon( 'gotoline.png' ),
-                                        '&Go to line...', self.__onGoToLine )
         self.__findAct = self.__searchMenu.addAction( \
                                         PixmapCache().getIcon( 'findindir.png' ),
-                                        'Incremental &search...', self.__onFind )
+                                        '&Find...', self.__onFind )
         self.__findCurrentAct = self.__searchMenu.addAction( \
                                         PixmapCache().getIcon( 'find.png' ),
-                                        '&Identifier incremental search',
+                                        'Find current &word',
                                         self.__onFindCurrent )
-        self.__replaceAct = self.__searchMenu.addAction( \
-                                        PixmapCache().getIcon( 'replace.png' ),
-                                        'Incremental &replace...',
-                                        self.__onReplace )
         self.__findNextAct = self.__searchMenu.addAction( \
                                         PixmapCache().getIcon( '1rightarrow.png' ),
                                         "Find &next", self.__onFindNext )
         self.__findPrevAct = self.__searchMenu.addAction( \
                                         PixmapCache().getIcon( '1leftarrow.png' ),
                                         "Find pre&vious", self.__onFindPrevious )
+        self.__replaceAct = self.__searchMenu.addAction( \
+                                        PixmapCache().getIcon( 'replace.png' ),
+                                        '&Replace...',
+                                        self.__onReplace )
+        self.__goToLineAct = self.__searchMenu.addAction( \
+                                        PixmapCache().getIcon( 'gotoline.png' ),
+                                        '&Go to line...', self.__onGoToLine )
 
         # The Tools menu
         self.__toolsMenu = QMenu( "T&ools", self )
@@ -866,7 +866,7 @@ class CodimensionMainWindow( QMainWindow ):
                                         editorsManager.onHelp, 'F1' )
         self.__contextHelpAct = self.__helpMenu.addAction( \
                                         PixmapCache().getIcon( 'helpviewer.png' ),
-                                        '&Current identifier help', self.__onContextHelp )
+                                        'Current &word help', self.__onContextHelp )
         self.__helpMenu.addSeparator()
         self.__allShotcutsAct = self.__helpMenu.addAction( \
                                         PixmapCache().getIcon( 'allshortcutsmenu.png' ),
