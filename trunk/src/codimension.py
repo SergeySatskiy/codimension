@@ -27,7 +27,7 @@ It performs necessery initialization and starts the Qt main loop.
 
 __version__ = "0.0"
 
-import sys, os.path, traceback, logging, shutil, time
+import sys, os, os.path, traceback, logging, shutil, time
 from PyQt4                      import QtGui
 from optparse                   import OptionParser
 from PyQt4.QtCore               import SIGNAL, SLOT, QTimer, QDir
@@ -96,6 +96,12 @@ def codimensionMain():
     globalData.skin = Skin()
     globalData.skin.load( settingsDir + "skins" + \
                           os.path.sep + settings.skinName )
+
+    # QT on UBUNTU has a bug - the main menu bar does not generate the
+    # 'aboutToHide' signal (though 'aboutToShow' is generated properly. This
+    # prevents codimension working properly so this hack below disables the
+    # global menu bar for codimension and makes it working properly.
+    os.environ[ "QT_X11_NO_NATIVE_MENUBAR" ] = "1"
 
     # Create QT application
     codimensionApp = CodimensionApplication( sys.argv )
