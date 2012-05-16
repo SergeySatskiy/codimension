@@ -544,6 +544,8 @@ class CodimensionMainWindow( QMainWindow ):
 
         # The Project menu
         self.__projectMenu = QMenu( "&Project", self )
+        self.connect( self.__projectMenu, SIGNAL( "aboutToShow()" ),
+                      self.__prjAboutToShow )
         self.__newProjectAct = self.__projectMenu.addAction( \
                                         PixmapCache().getIcon( 'project.png' ),
                                         "&New project", self.__createNewProject,
@@ -560,6 +562,11 @@ class CodimensionMainWindow( QMainWindow ):
                                         PixmapCache().getIcon( 'smalli.png' ),
                                         '&Properties',
                                         self.projectViewer.projectProperties )
+        self.__projectMenu.addSeparator()
+        self.__recentPrjMenu = QMenu( "&Recent projects", self )
+        self.connect( self.__recentPrjMenu, SIGNAL( "triggered(QAction*)" ),
+                      self.__onRecentPrj )
+        self.__projectMenu.addMenu( self.__recentPrjMenu )
         self.__projectMenu.addSeparator()
         self.__quitAct = self.__projectMenu.addAction( \
                                         PixmapCache().getIcon( 'exitmenu.png' ),
@@ -2175,16 +2182,20 @@ class CodimensionMainWindow( QMainWindow ):
             logging.warning( "Codimension project file must have .cdm extension" )
             return
 
+        self.__loadProject( fileName )
+        return
+
+    def __loadProject( self, projectFile ):
+        " Loads the given project "
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         editorsManager = self.editorsManagerWidget.editorsManager
         if editorsManager.closeRequest():
             prj = GlobalData().project
             prj.setTabsStatus( editorsManager.getTabsStatus() )
             editorsManager.closeAll()
-            prj.loadProject( fileName )
+            prj.loadProject( projectFile )
         QApplication.restoreOverrideCursor()
         return
-
 
     def __openFile( self ):
         " Triggers when Ctrl+O is pressed "
@@ -2701,4 +2712,29 @@ class CodimensionMainWindow( QMainWindow ):
         " Triggered when help menu is about to hide "
         self.__contextHelpAct.setShortcut( "" )
         return
+
+    def __prjAboutToShow( self ):
+        " Triggered when recent projects submenu is about to show "
+        self.__recentPrjMenu.clear()
+        addedCount = 0
+
+        currentPrj = GlobalData().project.fileName
+        for item in Settings().recentProjects:
+            if item == currentPrj:
+                continue
+            addedCount += 1
+            act = self.__recentPrjMenu.addAction( \
+                                "&" + str( addedCount ) + \
+                                " " + os.path.basename( item ).replace( ".cdm", "" ) )
+            act.setData( QVariant( item ) )
+
+        self.__recentPrjMenu.setEnabled( addedCount > 0 )
+        return
+
+    def __onRecentPrj( self, act ):
+        " Triggered when a recent project is requested to be loaded "
+        path = str( act.data().toString() )
+        self.__loadProject( path )
+        return
+
 
