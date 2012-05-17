@@ -2763,6 +2763,10 @@ class CodimensionMainWindow( QMainWindow ):
     def __onRecentFile( self, act ):
         " Triggered when a recent file is requested to be loaded "
         path = str( act.data().toString() )
-        print "File to load: " + path
+        fileType = detectFileType( path )
+        if fileType == PixmapFileType:
+            self.openPixmapFile( path )
+            return
+        self.openFile( path, -1 )
         return
 

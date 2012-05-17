@@ -213,6 +213,7 @@ class FilesBrowser( QTreeView ):
                               InstanceAttributesItemType,
                               DirectoryItemType, SysPathItemType ]:
             return
+
         if item.itemType == FileItemType:
             if item.fileType == BrokenSymlinkFileType:
                 return
@@ -233,40 +234,9 @@ class FilesBrowser( QTreeView ):
                 itemPath = os.path.realpath( itemPath )
                 itemFileType = item.fileType
 
-            if itemFileType == CodimensionProjectFileType:
-                # This not the current project. Load it if still exists.
-                if itemPath != GlobalData().project.fileName:
-                    if self.__debugMode:
-                        logging.error( "Cannot change project while in debug " \
-                                       "mode. Finish debugging first." )
-                        return
-
-                    QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
-                    try:
-                        if not os.path.exists( itemPath ):
-                            logging.error( "The project " + \
-                                           os.path.basename( itemPath ) + \
-                                           " disappeared from the file system." )
-                            QApplication.restoreOverrideCursor()
-                            return
-                        mainWin = GlobalData().mainWindow
-                        editorsManager = mainWin.editorsManagerWidget.editorsManager
-                        if editorsManager.closeRequest():
-                            prj = GlobalData().project
-                            prj.setTabsStatus( editorsManager.getTabsStatus() )
-                            editorsManager.closeAll()
-                            prj.loadProject( itemPath )
-                    except Exception, exc:
-                        logging.error( str( exc ) )
-                    QApplication.restoreOverrideCursor()
-                    return
-                else:
-                    # This is the currenly loaded project
-                    # Make it possible to look at the project file content
-                    # I trust the developer
-                    pass
             GlobalData().mainWindow.openFileByType( itemFileType, itemPath, -1 )
             return
+
         if item.itemType in [ CodingItemType, ImportItemType, FunctionItemType,
                               ClassItemType, DecoratorItemType,
                               AttributeItemType, GlobalItemType,
