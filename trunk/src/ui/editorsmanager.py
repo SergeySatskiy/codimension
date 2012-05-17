@@ -83,6 +83,7 @@ class EditorsManager( QTabWidget ):
         self.setMovable( True )
 
         self.newIndex = -1
+        self.newCloneIndex = -1
         self.__mainWindow = parent
         self.__navigationMenu = None
         self.__historyBackMenu = None
@@ -131,17 +132,21 @@ class EditorsManager( QTabWidget ):
 
         # Context menu
         self.__tabContextMenu = QMenu( self )
+        self.__cloneAct = self.__tabContextMenu.addAction( \
+                                    PixmapCache().getIcon( "clonetabmenu.png" ),
+                                    "&Clone",
+                                    self.onClone )
         self.__copyPathAct = self.__tabContextMenu.addAction( \
                                     PixmapCache().getIcon( "copytoclipboard.png" ),
-                                    "Copy path to clipboard",
+                                    "Copy &path to clipboard",
                                     self.__copyTabPath )
         self.__reloadAct = self.__tabContextMenu.addAction( \
                                     PixmapCache().getIcon( "reload.png" ),
-                                    "Reload", self.onReload )
+                                    "&Reload", self.onReload )
         self.__tabContextMenu.addSeparator()
         self.__delCurrentAct = self.__tabContextMenu.addAction( \
                                     PixmapCache().getIcon( "trash.png" ),
-                                    "Close and delete from disk",
+                                    "Close and &delete from disk",
                                     self.__closeDelete )
         self.tabBar().setContextMenuPolicy( Qt.CustomContextMenu )
         self.connect( self.tabBar(),
@@ -165,24 +170,33 @@ class EditorsManager( QTabWidget ):
 
         if tabIndex == clickedIndex:
             widget = self.widget( tabIndex )
-            if widget.getFileName() != "" and \
-               widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
-                                     MainWindowTabWidgetBase.PictureViewer ]:
+            widgetType = widget.getType()
+            if widgetType not in [ MainWindowTabWidgetBase.PlainTextEditor,
+                                   MainWindowTabWidgetBase.PictureViewer ]:
+                return
+
+            fName = widget.getFileName()
+            self.__cloneAct.setEnabled( widgetType == \
+                                MainWindowTabWidgetBase.PlainTextEditor )
+            self.__copyPathAct.setEnabled( fName != "" )
+
+            if widget.getFileName() != "":
                 if not widget.doesFileExist():
-                    self.__reloadAct.setText( "Reload" )
+                    self.__reloadAct.setText( "&Reload" )
                     self.__reloadAct.setEnabled( False )
                 elif widget.isDiskFileModified():
                     if widget.isModified():
-                        self.__reloadAct.setText( "Reload loosing changes" )
+                        self.__reloadAct.setText( "&Reload loosing changes" )
                     else:
-                        self.__reloadAct.setText( "Reload" )
+                        self.__reloadAct.setText( "&Reload" )
                     self.__reloadAct.setEnabled( True )
                 else:
-                    self.__reloadAct.setText( "Reload" )
+                    self.__reloadAct.setText( "&Reload" )
                     self.__reloadAct.setEnabled( False )
-                self.__copyPathAct.setEnabled( widget.getType() == \
-                                    MainWindowTabWidgetBase.PlainTextEditor )
-                self.__tabContextMenu.popup( self.mapToGlobal( pos ) )
+            else:
+                self.__reloadAct.setText( "&Reload" )
+                self.__reloadAct.setEnabled( False )
+            self.__tabContextMenu.popup( self.mapToGlobal( pos ) )
         return
 
     def __copyTabPath( self ):
@@ -207,18 +221,38 @@ class EditorsManager( QTabWidget ):
         if res == QMessageBox.Cancel:
             return
 
-        if not os.path.exists( fileName ):
-            logging.error( "Cannot find " + fileName + " on the disk." )
-            return
-
         try:
-            os.remove( fileName )
+            if os.path.exists( fileName ):
+                os.remove( fileName )
+            else:
+                logging.info( "Could not find " + fileName + \
+                              " on the disk. Ignoring and closing tab." )
         except Exception, exc:
             logging.error( str( exc ) )
             return
 
         # Finally, close the tab
         self.__onCloseRequest( tabIndex, True )
+        return
+
+    def onClone( self ):
+        " Triggered when a tab is requested for cloning "
+        widget = self.currentWidget()
+        widgetType = widget.getType()
+        if widgetType != MainWindowTabWidgetBase.PlainTextEditor:
+            return
+
+        editor = widget.getEditor()
+        firstVisible = editor.firstVisibleLine()
+        line, pos = editor.getCursorPosition()
+
+        # Create a new tab
+        self.newTabClicked( editor.text(),
+                            self.getNewCloneName( widget.getShortName() ) )
+
+        # Put the cursor to the exact same position as it was in the cloned tab
+        newWidget = self.currentWidget()
+        self.__restorePosition( newWidget.getEditor(), line, pos, firstVisible )
         return
 
     def __installActions( self ):
@@ -261,6 +295,18 @@ class EditorsManager( QTabWidget ):
         self.newIndex += 1
         return "unnamed" + str( self.newIndex ) + ".py"
 
+    def getNewCloneName( self, shortName ):
+        " Provides a new name for a cloned file "
+        self.newCloneIndex += 1
+        if '.' in shortName:
+            parts = shortName.split( '.' )
+            name = '.'.join( parts[ 0 : len( parts ) - 1 ] )
+            ext = parts[ -1 ]
+            return name + "-clone" + str( self.newCloneIndex ) + "." + ext
+
+        # No '.' in the name
+        return shortName + "-clone" + str( self.newCloneIndex )
+
     def activateTab( self, index ):
         " Activates the given tab "
         self.setCurrentIndex( index )
@@ -287,7 +333,7 @@ class EditorsManager( QTabWidget ):
             self.activateTab( newIndex )
         return
 
-    def newTabClicked( self ):
+    def newTabClicked( self, initialContent = None, shortName = None ):
         " new tab click handler "
 
         if self.widget( 0 ) == self.__welcomeWidget:
@@ -301,19 +347,25 @@ class EditorsManager( QTabWidget ):
         self.connect( newWidget, SIGNAL( 'ReloadAllNonModifiedRequest' ),
                       self.onReloadAllNonModified )
         editor = newWidget.getEditor()
-        newWidget.setShortName( self.getNewName() )
+        if shortName is None:
+            newWidget.setShortName( self.getNewName() )
+        else:
+            newWidget.setShortName( shortName )
 
         fileType = detectFileType( newWidget.getShortName() )
 
-        # Load a template content if available
-        initialContent = getNewFileTemplate()
-        if initialContent != "":
+        if initialContent is None:
+            # Load a template content if available
+            initialContent = getNewFileTemplate()
+            if initialContent != "":
+                editor.setText( initialContent )
+                lineNo = editor.lines()
+                self.__restorePosition( editor, lineNo - 1,
+                                        editor.lineLength( lineNo - 1 ), -1 )
+                editor.ensureLineVisible( lineNo - 1 )
+        else:
             editor.setText( initialContent )
-            lineNo = editor.lines()
-            self.__restorePosition( editor, lineNo - 1,
-                                    editor.lineLength( lineNo - 1 ), -1 )
-            editor.ensureLineVisible( lineNo - 1 )
-            editor.setModified( False )
+        editor.setModified( False )
 
         # Bind a lexer
         editor.bindLexer( newWidget.getShortName(), fileType )

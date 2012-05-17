@@ -587,9 +587,12 @@ class CodimensionMainWindow( QMainWindow ):
         self.__openFileAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'filemenu.png' ),
                                         '&Open file', self.__openFile, 'Ctrl+O' )
+        self.__cloneTabAct = self.__tabMenu.addAction( \
+                                        PixmapCache().getIcon( 'clonetabmenu.png' ),
+                                        '&Clone tab', editorsManager.onClone )
         self.__closeTabAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'closetabmenu.png' ),
-                                        'Close tab', editorsManager.onCloseTab )
+                                        'Close &tab', editorsManager.onCloseTab )
         self.__tabMenu.addSeparator()
         self.__saveFileAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'savemenu.png' ),
@@ -2570,12 +2573,13 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __tabAboutToShow( self ):
         " Triggered when tab menu is about to show "
-        enableSaving = self.__isPlainTextBuffer()
+        plainTextBuffer = self.__isPlainTextBuffer()
         isPythonBuffer = self.__isPythonBuffer()
         editorsManager = self.editorsManagerWidget.editorsManager
 
-        self.__saveFileAct.setEnabled( enableSaving )
-        self.__saveFileAsAct.setEnabled( enableSaving )
+        self.__cloneTabAct.setEnabled( plainTextBuffer )
+        self.__saveFileAct.setEnabled( plainTextBuffer )
+        self.__saveFileAsAct.setEnabled( plainTextBuffer )
         self.__closeTabAct.setEnabled( editorsManager.isTabClosable() )
         self.__tabJumpToDefAct.setEnabled( isPythonBuffer )
         self.__tabJumpToScopeBeginAct.setEnabled( isPythonBuffer )
