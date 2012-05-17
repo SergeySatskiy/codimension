@@ -1319,26 +1319,28 @@ py_modinfo_from_mem( PyObject *  self,      /* unused */
      * character) than to change the grammar.
      * The \0 byte is used for temporary injection of EOL.
      */
-    int     eolAdded = 0;
+    int     eolAddedAt = 0;
     if ( input != NULL )
     {
         if ( input->sizeBuf > 0 )
         {
             if ( ((char*)(input->data))[ input->sizeBuf - 1 ] != '\n' )
             {
-                ((char*)(input->data))[ input->sizeBuf ] = '\n';
+                eolAddedAt = input->sizeBuf;
+                ((char*)(input->data))[ eolAddedAt ] = '\n';
                 input->sizeBuf += 1;
-                eolAdded = 1;
             }
         }
     }
 
     PyObject *      result = parse_input( input, & callbacks );
 
-    /* Revert the hack changes back if needed */
-    if ( eolAdded == 1 )
+    /* Revert the hack changes back if needed.
+     * Input is closed here so the original content pointer is used.
+     */
+    if ( eolAddedAt != 0 )
     {
-        ((char*)(input->data))[ input->sizeBuf - 1 ] = 0;
+        content[ eolAddedAt ] = 0;
     }
     return result;
 }
