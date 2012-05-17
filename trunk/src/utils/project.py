@@ -968,7 +968,7 @@ class CodimensionProject( QObject ):
         self.recentFiles.insert( 0, path )
         self.__saveRecentFiles()
         if len( self.recentFiles ) > 32:
-            self.recentFiles = self.recentFiles[ -32 : ]
+            self.recentFiles = self.recentFiles[ 0 : 32 ]
         self.emit( SIGNAL( 'recentFilesChanged' ) )
         return True
 
