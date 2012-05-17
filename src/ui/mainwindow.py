@@ -606,6 +606,11 @@ class CodimensionMainWindow( QMainWindow ):
         self.__tabOpenImportAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'imports.png' ),
                                         'Open &import(s)', self.__onTabOpenImport )
+        self.__tabMenu.addSeparator()
+        self.__recentFilesMenu = QMenu( "&Recent files", self )
+        self.connect( self.__recentFilesMenu, SIGNAL( "triggered(QAction*)" ),
+                      self.__onRecentFile )
+        self.__tabMenu.addMenu( self.__recentFilesMenu )
 
         # The Edit menu
         self.__editMenu = QMenu( "&Edit", self )
@@ -2580,6 +2585,18 @@ class CodimensionMainWindow( QMainWindow ):
         self.__tabJumpToDefAct.setShortcut( "Ctrl+\\" )
         self.__tabJumpToScopeBeginAct.setShortcut( "Alt+U" )
         self.__tabOpenImportAct.setShortcut( "Ctrl+I" )
+
+        self.__recentFilesMenu.clear()
+        addedCount = 0
+
+        for item in GlobalData().project.recentFiles:
+            addedCount += 1
+            act = self.__recentFilesMenu.addAction( \
+                                self.__getAccelerator( addedCount ) + \
+                                item )
+            act.setData( QVariant( item ) )
+
+        self.__recentFilesMenu.setEnabled( addedCount > 0 )
         return
 
     def __searchAboutToShow( self ):
@@ -2713,6 +2730,12 @@ class CodimensionMainWindow( QMainWindow ):
         self.__contextHelpAct.setShortcut( "" )
         return
 
+    def __getAccelerator( self, count ):
+        " Provides an accelerator text for a menu item "
+        if count < 10:
+            return "&" + str( count ) + " "
+        return "&" + chr( count - 10 + ord( 'a' ) ) + " "
+
     def __prjAboutToShow( self ):
         " Triggered when recent projects submenu is about to show "
         self.__recentPrjMenu.clear()
@@ -2724,8 +2747,8 @@ class CodimensionMainWindow( QMainWindow ):
                 continue
             addedCount += 1
             act = self.__recentPrjMenu.addAction( \
-                                "&" + str( addedCount ) + \
-                                " " + os.path.basename( item ).replace( ".cdm", "" ) )
+                                self.__getAccelerator( addedCount ) + \
+                                os.path.basename( item ).replace( ".cdm", "" ) )
             act.setData( QVariant( item ) )
 
         self.__recentPrjMenu.setEnabled( addedCount > 0 )
@@ -2737,4 +2760,9 @@ class CodimensionMainWindow( QMainWindow ):
         self.__loadProject( path )
         return
 
+    def __onRecentFile( self, act ):
+        " Triggered when a recent file is requested to be loaded "
+        path = str( act.data().toString() )
+        print "File to load: " + path
+        return
 

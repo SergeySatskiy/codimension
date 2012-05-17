@@ -344,10 +344,6 @@ class Settings( object ):
             self.__saveFindFileHistory()
 
             # Recent projects part
-            if len( self.recentProjects ) > _maxRecentProjects:
-                self.recentProjects = \
-                    self.recentProjects[ len(self.recentProjects) - \
-                                         _maxRecentProjects : ]
             recentPart = "[recentProjects]\n"
             index = 0
             for item in self.recentProjects:
@@ -418,7 +414,9 @@ class Settings( object ):
             if absProjectFile in self.recentProjects:
                 self.recentProjects.remove( absProjectFile )
 
-            self.recentProjects.append( absProjectFile )
+            self.recentProjects.insert( 0, absProjectFile )
+            if len( self.recentProjects ) > _maxRecentProjects:
+                self.recentProjects = self.recentProjects[ 0 : _maxRecentProjects ]
             self.flushSettings()
             self.emit( SIGNAL('recentListChanged') )
             return
