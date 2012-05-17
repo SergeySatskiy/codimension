@@ -167,11 +167,11 @@ def codimensionMain():
             return      # Some project was loaded but now it is not available
 
         splash.showMessage( " Loading recent project..." )
-        if os.path.exists( settings.recentProjects[ -1 ] ):
-            globalData.project.loadProject( settings.recentProjects[ -1 ] )
+        if os.path.exists( settings.recentProjects[ 0 ] ):
+            globalData.project.loadProject( settings.recentProjects[ 0 ] )
         else:
             logging.warning( "Cannot open the most recent project: " + \
-                             settings.recentProjects[ -1 ] + \
+                             settings.recentProjects[ 0 ] + \
                              ". Ignore and continue." )
             # Fake signal for triggering browsers layout
             globalData.project.emit( SIGNAL( 'projectChanged' ),

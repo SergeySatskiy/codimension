@@ -2733,8 +2733,8 @@ class CodimensionMainWindow( QMainWindow ):
     def __getAccelerator( self, count ):
         " Provides an accelerator text for a menu item "
         if count < 10:
-            return "&" + str( count ) + " "
-        return "&" + chr( count - 10 + ord( 'a' ) ) + " "
+            return "&" + str( count ) + ".  "
+        return "&" + chr( count - 10 + ord( 'a' ) ) + ".  "
 
     def __prjAboutToShow( self ):
         " Triggered when recent projects submenu is about to show "
