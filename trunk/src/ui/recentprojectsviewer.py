@@ -722,35 +722,6 @@ class RecentProjectsViewer( QWidget ):
             return
 
         fileType = detectFileType( fName )
-
-        if fileType == CodimensionProjectFileType:
-            if fName == GlobalData().project.fileName:
-                # This is the current project, open for text editing
-                GlobalData().mainWindow.openFile( fName, -1 )
-                return
-            if self.__debugMode:
-                logging.error( "Cannot change project while in debug mode. " \
-                               "Finish debugging first." )
-                return
-            # Load the project, it is another one
-            QApplication.processEvents()
-            QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
-            if os.path.exists( fName ):
-                mainWin = GlobalData().mainWindow
-                editorsManager = mainWin.editorsManagerWidget.editorsManager
-                if editorsManager.closeRequest():
-                    prj = GlobalData().project
-                    prj.setTabsStatus( editorsManager.getTabsStatus() )
-                    editorsManager.closeAll()
-                    prj.loadProject( fName )
-            else:
-                logging.error( "The project " + \
-                               os.path.basename( fName ) + \
-                               " disappeared from the file system." )
-                self.__populateProjects()
-            QApplication.restoreOverrideCursor()
-            return
-
         if fileType == PixmapFileType:
             GlobalData().mainWindow.openPixmapFile( fName )
             return
