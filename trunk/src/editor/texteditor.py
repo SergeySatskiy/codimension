@@ -162,6 +162,10 @@ class TextEditor( ScintillaWrapper ):
         self.__menu.addSeparator()
         m = self.__menu.addMenu( self.__initDiagramsMenu() )
         m.setIcon( PixmapCache().getIcon( 'diagramsmenu.png' ) )
+        self.__menu.addSeparator()
+        self.__menuOpenAsFile = self.__menu.addAction( \
+                                    PixmapCache().getIcon( 'filemenu.png' ),
+                                    'O&pen as file', self.openAsFile )
         return
 
     def __marginNumber( self, xPos ):
@@ -250,11 +254,26 @@ class TextEditor( ScintillaWrapper ):
                 encoding = self.__normalizeEncoding( self.encoding )
                 self.supportedEncodings[ encoding ].setChecked( True )
 
+            self.__menuOpenAsFile.setEnabled( self.openAsFileAvailable() )
             self.__menu.popup( event.globalPos() )
         else:
             # Menu for a margin
             pass
         return
+
+    def openAsFileAvailable( self ):
+        " True if there is something to try to open as a file "
+        isImportLine, line = self.isImportLine()
+        if isImportLine:
+            return False
+        selectedText = str( self.selectedText() ).strip()
+        singleSelection = selectedText != "" and \
+                          '\n' not in selectedText and \
+                          '\r' not in selectedText
+        currentWord = ""
+        if selectedText == "":
+            currentWord = str( self.getCurrentWord() ).strip()
+        return singleSelection or currentWord != ""
 
     def __installActions( self ):
         " Installs hot keys actions "
@@ -1656,7 +1675,51 @@ class TextEditor( ScintillaWrapper ):
             self.parent().modificationChanged()
         return
 
+    def openAsFile( self ):
+        """ Triggered when a selection or a current tag is
+            requested to be opened as a file """
+        selectedText = str( self.selectedText() ).strip()
+        singleSelection = selectedText != "" and \
+                          '\n' not in selectedText and \
+                          '\r' not in selectedText
+        currentWord = ""
+        if selectedText == "":
+            currentWord = str( self.getCurrentWord() ).strip()
 
+        path = currentWord
+        if singleSelection:
+            path = selectedText
+
+        # Now the processing
+        if os.path.isabs( path ):
+            GlobalData().mainWindow.detectTypeAndOpenFile( path )
+            return
+        # This is not an absolute path but could be a relative path for the
+        # current buffer file. Let's try it.
+        fileName = self.parent().getFileName()
+        if fileName != "":
+            # There is a file name
+            fName = os.path.dirname( fileName ) + os.path.sep + path
+            fName = os.path.abspath( os.path.realpath( fName ) )
+            if os.path.exists( fName ):
+                GlobalData().mainWindow.detectTypeAndOpenFile( fName )
+                return
+        if GlobalData().project.isLoaded():
+            # Try it as a relative path to the project
+            prjFile = GlobalData().project.fileName
+            fName = os.path.dirname( prjFile ) + os.path.sep + path
+            fName = os.path.abspath( os.path.realpath( fName ) )
+            if os.path.exists( fName ):
+                GlobalData().mainWindow.detectTypeAndOpenFile( fName )
+                return
+        # The last hope - open as is
+        if os.path.exists( path ):
+            path = os.path.abspath( os.path.realpath( path ) )
+            GlobalData().mainWindow.detectTypeAndOpenFile( path )
+            return
+
+        logging.error( "Cannot find '" + path + "' to open" )
+        return
 
 class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     " Plain text editor tab widget "

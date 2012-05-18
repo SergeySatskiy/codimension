@@ -609,6 +609,9 @@ class CodimensionMainWindow( QMainWindow ):
         self.__tabOpenImportAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'imports.png' ),
                                         'Open &import(s)', self.__onTabOpenImport )
+        self.__openAsFileAct = self.__tabMenu.addAction( \
+                                        PixmapCache().getIcon( 'filemenu.png' ),
+                                        'O&pen as file', self.__onOpenAsFile )
         self.__tabMenu.addSeparator()
         self.__recentFilesMenu = QMenu( "&Recent files", self )
         self.connect( self.__recentFilesMenu, SIGNAL( "triggered(QAction*)" ),
@@ -1406,12 +1409,12 @@ class CodimensionMainWindow( QMainWindow ):
         " Opens editor/browser suitable for the file type "
         path = os.path.abspath( path )
         if not os.path.exists( path ):
-            logging.error( "Cannot open " + path + ", does not esist" )
+            logging.error( "Cannot open " + path + ", does not exist" )
             return
         if os.path.islink( path ):
             path = os.path.realpath( path )
             if not os.path.exists( path ):
-                logging.error( "Cannot open " + path + ", does not esist" )
+                logging.error( "Cannot open " + path + ", does not exist" )
                 return
             # The type may differ...
             fileType = detectFileType( path )
@@ -1421,6 +1424,10 @@ class CodimensionMainWindow( QMainWindow ):
 
         if not os.access( path, os.R_OK ):
             logging.error( "No read permissions to open " + path )
+            return
+
+        if not os.path.isfile( path ):
+            logging.error( path + " is not a file" )
             return
 
         if fileType == PixmapFileType:
@@ -2415,6 +2422,13 @@ class CodimensionMainWindow( QMainWindow ):
         currentWidget.onOpenImport()
         return
 
+    def __onOpenAsFile( self ):
+        " Triggered when open as file is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.getEditor().openAsFile()
+        return
+
     def __onUndo( self ):
         " Triggered when undo action is requested "
         editorsManager = self.editorsManagerWidget.editorsManager
@@ -2584,6 +2598,12 @@ class CodimensionMainWindow( QMainWindow ):
         self.__tabJumpToDefAct.setEnabled( isPythonBuffer )
         self.__tabJumpToScopeBeginAct.setEnabled( isPythonBuffer )
         self.__tabOpenImportAct.setEnabled( isPythonBuffer )
+        if plainTextBuffer:
+            widget = editorsManager.currentWidget()
+            available = widget.getEditor().openAsFileAvailable()
+            self.__openAsFileAct.setEnabled( available )
+        else:
+            self.__openAsFileAct.setEnabled( False )
 
         self.__closeTabAct.setShortcut( "Ctrl+F4" )
         self.__tabJumpToDefAct.setShortcut( "Ctrl+\\" )
