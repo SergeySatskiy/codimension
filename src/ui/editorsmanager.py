@@ -143,6 +143,10 @@ class EditorsManager( QTabWidget ):
         self.__reloadAct = self.__tabContextMenu.addAction( \
                                     PixmapCache().getIcon( "reload.png" ),
                                     "&Reload", self.onReload )
+        self.__closeOtherAct = self.__tabContextMenu.addAction( \
+                                    PixmapCache().getIcon( "" ),
+                                    "Close other",
+                                    self.onCloseOther )
         self.__tabContextMenu.addSeparator()
         self.__delCurrentAct = self.__tabContextMenu.addAction( \
                                     PixmapCache().getIcon( "trash.png" ),
@@ -178,6 +182,7 @@ class EditorsManager( QTabWidget ):
             fName = widget.getFileName()
             self.__cloneAct.setEnabled( widgetType == \
                                 MainWindowTabWidgetBase.PlainTextEditor )
+            self.__closeOtherAct.setEnabled( self.closeOtherAvailable() )
             self.__copyPathAct.setEnabled( fName != "" )
 
             if widget.getFileName() != "":
@@ -198,6 +203,10 @@ class EditorsManager( QTabWidget ):
                 self.__reloadAct.setEnabled( False )
             self.__tabContextMenu.popup( self.mapToGlobal( pos ) )
         return
+
+    def closeOtherAvailable( self ):
+        " True if the menu option is available "
+        return self.widget( 0 ) != self.__welcomeWidget
 
     def __copyTabPath( self ):
         " Triggered when copy path to clipboard item is selected "
@@ -253,6 +262,26 @@ class EditorsManager( QTabWidget ):
         # Put the cursor to the exact same position as it was in the cloned tab
         newWidget = self.currentWidget()
         self.__restorePosition( newWidget.getEditor(), line, pos, firstVisible )
+        return
+
+    def onCloseOther():
+        " Triggered when all other tabs are requested to be closed "
+        notSaved = []
+        toClose = []
+        for index in xrange( self.count() ):
+            if self.widget( index ).isModified():
+                notSaved.append( self.widget( index ).getShortName() )
+            else:
+                # The tab will be closed soon, so save the file position
+                self.__updateFilePosition( index )
+                toClose.insert( 0, index )
+
+        # There are not saved files
+        logging.error( "Please close or save the modified files explicitly (" + \
+                       ", ".join( notSaved ) + ")" )
+
+        for index in toClose:
+            self.__onCloseRequest( index )
         return
 
     def __installActions( self ):

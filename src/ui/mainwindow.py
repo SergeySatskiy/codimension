@@ -590,6 +590,9 @@ class CodimensionMainWindow( QMainWindow ):
         self.__cloneTabAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'clonetabmenu.png' ),
                                         '&Clone tab', editorsManager.onClone )
+        self.__closeOtherTabsAct = self.__tabMenu.addAction( \
+                                        PixmapCache().getIcon( '' ),
+                                        'Close other tabs', editorsManager.onCloseOther )
         self.__closeTabAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'closetabmenu.png' ),
                                         'Close &tab', editorsManager.onCloseTab )
@@ -2592,6 +2595,7 @@ class CodimensionMainWindow( QMainWindow ):
         editorsManager = self.editorsManagerWidget.editorsManager
 
         self.__cloneTabAct.setEnabled( plainTextBuffer )
+        self.__closeOtherTabsAct.setEnabled( editorsManager.closeOtherAvailable() )
         self.__saveFileAct.setEnabled( plainTextBuffer )
         self.__saveFileAsAct.setEnabled( plainTextBuffer )
         self.__closeTabAct.setEnabled( editorsManager.isTabClosable() )
