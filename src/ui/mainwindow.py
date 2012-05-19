@@ -592,7 +592,7 @@ class CodimensionMainWindow( QMainWindow ):
                                         '&Clone tab', editorsManager.onClone )
         self.__closeOtherTabsAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( '' ),
-                                        'Close other tabs', editorsManager.onCloseOther )
+                                        'Close oth&er tabs', editorsManager.onCloseOther )
         self.__closeTabAct = self.__tabMenu.addAction( \
                                         PixmapCache().getIcon( 'closetabmenu.png' ),
                                         'Close &tab', editorsManager.onCloseTab )

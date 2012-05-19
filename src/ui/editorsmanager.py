@@ -145,7 +145,7 @@ class EditorsManager( QTabWidget ):
                                     "&Reload", self.onReload )
         self.__closeOtherAct = self.__tabContextMenu.addAction( \
                                     PixmapCache().getIcon( "" ),
-                                    "Close other",
+                                    "Close oth&er tabs",
                                     self.onCloseOther )
         self.__tabContextMenu.addSeparator()
         self.__delCurrentAct = self.__tabContextMenu.addAction( \
@@ -206,7 +206,7 @@ class EditorsManager( QTabWidget ):
 
     def closeOtherAvailable( self ):
         " True if the menu option is available "
-        return self.widget( 0 ) != self.__welcomeWidget
+        return self.widget( 0 ) != self.__welcomeWidget and self.count() > 1
 
     def __copyTabPath( self ):
         " Triggered when copy path to clipboard item is selected "
@@ -264,11 +264,13 @@ class EditorsManager( QTabWidget ):
         self.__restorePosition( newWidget.getEditor(), line, pos, firstVisible )
         return
 
-    def onCloseOther():
+    def onCloseOther( self ):
         " Triggered when all other tabs are requested to be closed "
         notSaved = []
         toClose = []
         for index in xrange( self.count() ):
+            if index == self.currentIndex():
+                continue
             if self.widget( index ).isModified():
                 notSaved.append( self.widget( index ).getShortName() )
             else:
@@ -276,9 +278,10 @@ class EditorsManager( QTabWidget ):
                 self.__updateFilePosition( index )
                 toClose.insert( 0, index )
 
-        # There are not saved files
-        logging.error( "Please close or save the modified files explicitly (" + \
-                       ", ".join( notSaved ) + ")" )
+        if len( notSaved ) > 0:
+            # There are not saved files
+            logging.error( "Please close or save the modified files " \
+                           "explicitly (" + ", ".join( notSaved ) + ")" )
 
         for index in toClose:
             self.__onCloseRequest( index )
