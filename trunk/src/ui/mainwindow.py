@@ -829,6 +829,11 @@ class CodimensionMainWindow( QMainWindow ):
                                         PixmapCache().getIcon( 'globalvar.png' ),
                                         'Activate &globals tab' )
         self.__globsBarAct.setData( QVariant( 'globs' ) )
+        self.__leftSideBarMenu.addSeparator()
+        self.__hideLeftSideBarAct = self.__leftSideBarMenu.addAction( \
+                                        PixmapCache().getIcon( "" ),
+                                        '&Hide left sidebar',
+                                        self.__leftSideBar.shrink )
         self.__viewMenu.addMenu( self.__leftSideBarMenu )
 
         self.__rightSideBarMenu = QMenu( "&Right sidebar", self )
@@ -838,6 +843,11 @@ class CodimensionMainWindow( QMainWindow ):
                                         PixmapCache().getIcon( 'filepython.png' ),
                                         'Activate &outline tab' )
         self.__outlineBarAct.setData( QVariant( 'outline' ) )
+        self.__rightSideBarMenu.addSeparator()
+        self.__hideRightSideBarAct = self.__rightSideBarMenu.addAction( \
+                                        PixmapCache().getIcon( "" ),
+                                        '&Hide right sidebar',
+                                        self.__rightSideBar.shrink )
         self.__viewMenu.addMenu( self.__rightSideBarMenu )
 
         self.__bottomSideBarMenu = QMenu( "&Bottom sidebar", self )
@@ -863,6 +873,11 @@ class CodimensionMainWindow( QMainWindow ):
                                         PixmapCache().getIcon( 'helpviewer.png' ),
                                         'Activate context &help tab' )
         self.__contextHelpBarAct.setData( QVariant( 'contexthelp' ) )
+        self.__bottomSideBarMenu.addSeparator()
+        self.__hideBottomSideBarAct = self.__bottomSideBarMenu.addAction( \
+                                        PixmapCache().getIcon( "" ),
+                                        '&Hide bottom sidebar',
+                                        self.__bottomSideBar.shrink )
         self.__viewMenu.addMenu( self.__bottomSideBarMenu )
         self.__viewMenu.addSeparator()
         self.__zoomInAct = self.__viewMenu.addAction( \
