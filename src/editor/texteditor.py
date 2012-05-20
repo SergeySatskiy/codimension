@@ -29,7 +29,7 @@ import lexer
 from scintillawrap              import ScintillaWrapper
 from PyQt4.QtCore               import Qt, QFileInfo, SIGNAL, QSize, \
                                        QVariant, QDir, QUrl, \
-                                       QRect
+                                       QRect, QEvent
 from PyQt4.QtGui                import QApplication, QCursor, \
                                        QFontMetrics, QToolBar, QActionGroup, \
                                        QHBoxLayout, QWidget, QAction, QMenu, \
@@ -129,7 +129,21 @@ class TextEditor( ScintillaWrapper ):
         self.__completer = CodeCompleter( self )
         self.connect( self.__completer, SIGNAL( "activated(const QString &)" ),
                       self.insertCompletion )
+
+        self.installEventFilter( self )
         return
+
+    def eventFilter( self, obj, event ):
+        " Event filter to catch shortcuts on UBUNTU "
+        if event.type() == QEvent.KeyPress:
+            if event.modifiers() == Qt.ShiftModifier:
+                if event.key() == Qt.Key_Delete:
+                    return self.onShiftDel()
+            if event.modifiers() == Qt.ControlModifier:
+                if event.key() == Qt.Key_X:
+                    return self.onShiftDel()
+
+        return ScintillaWrapper.eventFilter( self, obj, event )
 
     def __initContextMenu( self ):
         " Initializes the context menu "
@@ -366,20 +380,6 @@ class TextEditor( ScintillaWrapper ):
                       self.__onShiftEnd )
         self.addAction( self.shiftEndAct )
 
-        # Shift + Del
-        self.shiftDelAct = QAction( self )
-        self.shiftDelAct.setShortcut( "Shift+Del" )
-        self.connect( self.shiftDelAct, SIGNAL( 'triggered()' ),
-                      self.onShiftDel )
-        self.addAction( self.shiftDelAct )
-
-        # Ctrl + X => synonym for Shift + Del
-        self.ctrlXAct = QAction( self )
-        self.ctrlXAct.setShortcut( "Ctrl+X" )
-        self.connect( self.ctrlXAct, SIGNAL( 'triggered()' ),
-                      self.onShiftDel )
-        self.addAction( self.ctrlXAct )
-
         # Ctrl + C
         self.ctrlCAct = QAction( self )
         self.ctrlCAct.setShortcut( "Ctrl+C" )
@@ -475,8 +475,6 @@ class TextEditor( ScintillaWrapper ):
         self.shiftHomeAct.setEnabled( True )
         self.endAct.setEnabled( True )
         self.shiftEndAct.setEnabled( True )
-        self.shiftDelAct.setEnabled( True )
-        self.ctrlXAct.setEnabled( True )
         self.ctrlInsertAct.setEnabled( True )
         self.ctrlCAct.setEnabled( True )
         self.ctrlSpaceAct.setEnabled( True )
@@ -507,8 +505,6 @@ class TextEditor( ScintillaWrapper ):
         self.shiftHomeAct.setEnabled( False )
         self.endAct.setEnabled( False )
         self.shiftEndAct.setEnabled( False )
-        self.shiftDelAct.setEnabled( False )
-        self.ctrlXAct.setEnabled( False )
         self.ctrlInsertAct.setEnabled( False )
         self.ctrlCAct.setEnabled( False )
         self.ctrlSpaceAct.setEnabled( False )
@@ -1282,7 +1278,7 @@ class TextEditor( ScintillaWrapper ):
         else:
             self.SendScintilla( QsciScintilla.SCI_LINECOPY )
             self.SendScintilla( QsciScintilla.SCI_LINEDELETE )
-        return
+        return True
 
     def onCtrlC( self ):
         " Triggered when Ctrl+C / Ctrl+Insert is receved "
