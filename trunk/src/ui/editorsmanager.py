@@ -853,7 +853,8 @@ class EditorsManager( QTabWidget ):
                         self.history.updateForCurrentIndex()
                     if lineNo > 0:
                         editor = self.widget( index ).getEditor()
-                        if editor.isLineVisible( lineNo - 1 ):
+                        if self.currentIndex() == index and \
+                           editor.isLineVisible( lineNo - 1 ):
                             editor.setCursorPosition( lineNo - 1, 0 )
                             editor.setHScrollOffset( 0 ) # avoid unwanted scrolling
                         else:
