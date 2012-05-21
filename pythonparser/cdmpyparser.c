@@ -27,7 +27,9 @@
 
 #include <regex.h>
 
-#define CDM_PY_PARSER_VERSION       "1.4"
+#ifndef CDM_PY_PARSER_VERSION
+#define CDM_PY_PARSER_VERSION       "trunk"
+#endif
 #define MAX_DOTTED_NAME_LENGTH      256
 
 

@@ -28,10 +28,12 @@ Written as a part of the Codimension project, this parser
 aims at pulling the most data from Python sources while
 exceeding the speed of existing parsers."""
 
+version = 'trunk'
+
 setup( name = 'cdmpyparser',
        description = 'Codimension Python Parser',
        long_description = long_description,
-       version = 'trunk',
+       version = version,
        author = 'Sergey Satskiy',
        author_email = 'sergey.satskiy@gmail.com',
        url = 'http://satsky.spb.ru/codimension/doc/briefParserEng.php',
@@ -52,6 +54,7 @@ setup( name = 'cdmpyparser',
                                     'pythonbriefLexer.c',
                                     'pythonbriefParser.c' ],
                                   extra_compile_args = [ '-Wno-unused', '-fomit-frame-pointer',
+                                                         '-DCDM_PY_PARSER_VERSION="' + version + '"',
                                                          '-I../thirdparty/libantlr3c-3.2',
                                                          '-I../thirdparty/libantlr3c-3.2/include',
                                                          '-ffast-math' ],
