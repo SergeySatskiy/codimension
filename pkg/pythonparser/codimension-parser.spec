@@ -1,5 +1,5 @@
 Name: codimension-parser
-Version: 1.3
+Version: 1.4
 Release: 1
 License: GPLv3+
 Group: Development/Languages
@@ -40,6 +40,10 @@ find $RPM_BUILD_ROOT -name "*.la" -exec rm -f {} ';'
 %{python_sitearch}/*.egg-info
 
 %changelog
+* Mon May 21 2012 Dmitry Kazimirov <dk@revl.org> - 1.4-1
+- Upstream changes: Bug fix: make parseable the input where
+  the last line is a comment and has no EOL.
+
 * Tue Sep 13 2011 Dmitry Kazimirov <dk@revl.org> - 1.3-1
 - Source line numbers and column positions are now remembered for
   class and function definitions.
