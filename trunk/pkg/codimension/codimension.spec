@@ -1,5 +1,5 @@
 Name: codimension
-Version: 1.4
+Version: 1.5
 Release: 1
 License: GPLv3+
 Group: Development/Tools/IDE
@@ -77,6 +77,30 @@ update-desktop-database -q
 %{_datadir}/pixmaps/*.png
 
 %changelog
+* Mon May 21 2012 Dmitry Kazimirov <dk@revl.org> - 1.5-1
+- Upstream changes for release 1.5:
+- Ctrl+' replaces Ctrl+N to highlight the current word. Issue #323
+- Ctrl+N replaces Ctrl+T to create a new file. Issue #323
+- Ctrl+T is not used for anything now. Issue #323
+- Bug fix for exception while building a completion list. Issue #321
+- Bug fix to update the FS view after file/dir removal via the
+  context menu.  Issue #325
+- Bug fix to make it possible to create a nested project directory
+- Bug fix: do not show the 'reload' menu item for deleted files
+- Bug fix for Save As when the target file is open in another tab.
+  Issue #317
+- Bug fix for updating the project properties when the script
+  name is empty.
+- Python built-in functions are now highlighted as keywords.
+- File encoding is displayed and can be changed via a context menu.
+  Issue #69
+- New feature: the editor context menu.
+- New feature: Alt+U to jump to the first line of the current
+  function or class. Issue #316
+- New feature: line counter for the buffer. Issue #107
+- Open project via the OS file selection dialog (Ctrl+Shift+O)
+- New feature: the main menu.
+
 * Thu Jan 26 2012 Dmitry Kazimirov <dk@revl.org> - 1.4-1
 - Dependency from the rope refactoring library is introduced.
 - A stable upstream version that brings many improvements,
