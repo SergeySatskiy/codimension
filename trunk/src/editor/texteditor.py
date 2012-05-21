@@ -118,7 +118,6 @@ class TextEditor( ScintillaWrapper ):
         self.setIndentationGuidesBackgroundColor( skin.indentGuidePaper )
         self.setIndentationGuidesForegroundColor( skin.indentGuideColor )
 
-        self.__installActions()
         self.updateSettings()
 
         # Completion support
@@ -136,12 +135,62 @@ class TextEditor( ScintillaWrapper ):
     def eventFilter( self, obj, event ):
         " Event filter to catch shortcuts on UBUNTU "
         if event.type() == QEvent.KeyPress:
-            if event.modifiers() == Qt.ShiftModifier:
-                if event.key() == Qt.Key_Delete:
+            key = event.key()
+            modifiers = event.modifiers()
+            if modifiers == Qt.ShiftModifier:
+                if key == Qt.Key_Delete:
                     return self.onShiftDel()
-            if event.modifiers() == Qt.ControlModifier:
-                if event.key() == Qt.Key_X:
+                if key == Qt.Key_Tab:
+                    return self.__onDedent()
+                if key == Qt.Key_End:
+                    return self.__onShiftEnd()
+                if key == Qt.Key_Home:
+                    return self.__onShiftHome()
+            if modifiers == Qt.ControlModifier:
+                if key == Qt.Key_X:
                     return self.onShiftDel()
+                if key in [ Qt.Key_C, Qt.Key_Insert ]:
+                    return self.onCtrlC()
+                if key == ord( "'" ):               # Ctrl + '
+                    return self.__onHighlight()
+                if key == Qt.Key_Period:
+                    return self.__onNextHighlight() # Ctrl + .
+                if key == Qt.Key_Comma:
+                    return self.__onPrevHighlight() # Ctrl + ,
+                if key == Qt.Key_M:
+                    return self.onCommentUncomment()
+                if key == Qt.Key_Space:
+                    return self.onAutoComplete()
+                if key == Qt.Key_F1:
+                    return self.onTagHelp()
+                if key == Qt.Key_Backslash:
+                    return self.onGotoDefinition()
+                if key == Qt.Key_BracketRight:
+                    return self.onOccurances()
+            if modifiers == Qt.AltModifier:
+                if key == Qt.Key_Left:
+                    return self.__onWordPartLeft()
+                if key == Qt.Key_Right:
+                    return self.__onWordPartRight()
+                if key == Qt.Key_Up:
+                    return self.__onParagraphUp()
+                if key == Qt.Key_Down:
+                    return self.__onParagraphDown()
+                if key == Qt.Key_U:
+                    return self.onScopeBegin()
+            if modifiers == Qt.AltModifier | Qt.ShiftModifier:
+                if key == Qt.Key_Up:
+                    return self.__onAltShiftUp()
+                if key == Qt.Key_Down:
+                    return self.__onAltShiftDown()
+                if key == Qt.Key_Left:
+                    return self.__onAlShiftLeft()
+                if key == Qt.Key_Right:
+                    return self.__onAlShiftRight()
+            if key == Qt.Key_Home:
+                return self.__onHome()
+            if key == Qt.Key_End:
+                return self.__onEnd()
 
         return ScintillaWrapper.eventFilter( self, obj, event )
 
@@ -289,233 +338,16 @@ class TextEditor( ScintillaWrapper ):
             currentWord = str( self.getCurrentWord() ).strip()
         return singleSelection or currentWord != ""
 
-    def __installActions( self ):
-        " Installs hot keys actions "
-        # Shift+Tab support => dedent
-        self.shiftTab = QAction( self )
-        self.shiftTab.setShortcut( 'Shift+Tab' )
-        self.connect( self.shiftTab, SIGNAL( 'triggered()' ),
-                      self.__onDedent )
-        self.addAction( self.shiftTab )
-
-        # Ctrl + N => highlight the current word
-        self.highlightAct = QAction( self )
-        self.highlightAct.setShortcut( "Ctrl+'" )
-        self.connect( self.highlightAct, SIGNAL( 'triggered()' ),
-                      self.__onHighlight )
-        self.addAction( self.highlightAct )
-
-        # Ctrl + . => move to the next match of the highlighted word
-        self.moveNextAct = QAction( self )
-        self.moveNextAct.setShortcut( "Ctrl+." )
-        self.connect( self.moveNextAct, SIGNAL( 'triggered()' ),
-                      self.__onNextHighlight )
-        self.addAction( self.moveNextAct )
-
-        # Ctrl + , => move to the previous match of the highlighted word
-        self.movePrevAct = QAction( self )
-        self.movePrevAct.setShortcut( "Ctrl+," )
-        self.connect( self.movePrevAct, SIGNAL( 'triggered()' ),
-                      self.__onPrevHighlight )
-        self.addAction( self.movePrevAct )
-
-        # Ctrl + M => comment/uncomment
-        self.commentAct = QAction( self )
-        self.commentAct.setShortcut( "Ctrl+M" )
-        self.connect( self.commentAct, SIGNAL( 'triggered()' ),
-                      self.onCommentUncomment )
-        self.addAction( self.commentAct )
-
-        # Alt + Left, Alt + Right
-        self.wordPartLeftAct = QAction( self )
-        self.wordPartLeftAct.setShortcut( "Alt+Left" )
-        self.connect( self.wordPartLeftAct, SIGNAL( 'triggered()' ),
-                      self.__onWordPartLeft )
-        self.addAction( self.wordPartLeftAct )
-
-        self.wordPartRightAct = QAction( self )
-        self.wordPartRightAct.setShortcut( "Alt+Right" )
-        self.connect( self.wordPartRightAct, SIGNAL( 'triggered()' ),
-                      self.__onWordPartRight )
-        self.addAction( self.wordPartRightAct )
-
-        # Alt + Up, Alt + Down
-        self.paragraphUpAct = QAction( self )
-        self.paragraphUpAct.setShortcut( "Alt+Up" )
-        self.connect( self.paragraphUpAct, SIGNAL( 'triggered()' ),
-                      self.__onParagraphUp )
-        self.addAction( self.paragraphUpAct )
-
-        self.paragraphDownAct = QAction( self )
-        self.paragraphDownAct.setShortcut( "Alt+Down" )
-        self.connect( self.paragraphDownAct, SIGNAL( 'triggered()' ),
-                      self.__onParagraphDown )
-        self.addAction( self.paragraphDownAct )
-
-        # HOME: overwrite to jump to the beginning of the displayed line
-        self.homeAct = QAction( self )
-        self.homeAct.setShortcut( "Home" )
-        self.connect( self.homeAct, SIGNAL( 'triggered()' ),
-                      self.__onHome )
-        self.addAction( self.homeAct )
-
-        # Shift + HOME
-        self.shiftHomeAct = QAction( self )
-        self.shiftHomeAct.setShortcut( "Shift+Home" )
-        self.connect( self.shiftHomeAct, SIGNAL( 'triggered()' ),
-                      self.__onShiftHome )
-        self.addAction( self.shiftHomeAct )
-
-        # END: overwrite to jump to the end of the displayed line
-        self.endAct = QAction( self )
-        self.endAct.setShortcut( "End" )
-        self.connect( self.endAct, SIGNAL( 'triggered()' ),
-                      self.__onEnd )
-        self.addAction( self.endAct )
-
-        # Shift + END
-        self.shiftEndAct = QAction( self )
-        self.shiftEndAct.setShortcut( "Shift+End" )
-        self.connect( self.shiftEndAct, SIGNAL( 'triggered()' ),
-                      self.__onShiftEnd )
-        self.addAction( self.shiftEndAct )
-
-        # Ctrl + C
-        self.ctrlCAct = QAction( self )
-        self.ctrlCAct.setShortcut( "Ctrl+C" )
-        self.connect( self.ctrlCAct, SIGNAL( 'triggered()' ),
-                      self.onCtrlC )
-        self.addAction( self.ctrlCAct )
-
-        # Ctrl + Insert
-        self.ctrlInsertAct = QAction( self )
-        self.ctrlInsertAct.setShortcut( 'Ctrl+Insert' )
-        self.connect( self.ctrlInsertAct, SIGNAL( 'triggered()' ),
-                      self.onCtrlC )
-        self.addAction( self.ctrlInsertAct )
-
-        # Ctrl + space
-        self.ctrlSpaceAct = QAction( self )
-        self.ctrlSpaceAct.setShortcut( "Ctrl+ " )
-        self.connect( self.ctrlSpaceAct, SIGNAL( 'triggered()' ),
-                      self.onAutoComplete )
-        self.addAction( self.ctrlSpaceAct )
-
-        # Ctrl + F1
-        self.ctrlF1Act = QAction( self )
-        self.ctrlF1Act.setShortcut( "Ctrl+F1" )
-        self.connect( self.ctrlF1Act, SIGNAL( 'triggered()' ),
-                      self.onTagHelp )
-        self.addAction( self.ctrlF1Act )
-
-        # Ctrl + \
-        self.ctrlBackslashAct = QAction( self )
-        self.ctrlBackslashAct.setShortcut( "Ctrl+\\" )
-        self.connect( self.ctrlBackslashAct, SIGNAL( 'triggered()' ),
-                      self.onGotoDefinition )
-        self.addAction( self.ctrlBackslashAct )
-
-        # Ctrl + ]
-        self.occurancesAct = QAction( self )
-        self.occurancesAct.setShortcut( "Ctrl+]" )
-        self.connect( self.occurancesAct, SIGNAL( 'triggered()' ),
-                      self.onOccurances )
-        self.addAction( self.occurancesAct )
-
-        # Alt + Shift + Up, Alt + Shift + Down
-        self.altShiftUpAct = QAction( self )
-        self.altShiftUpAct.setShortcut( "Alt+Shift+Up" )
-        self.connect( self.altShiftUpAct, SIGNAL( 'triggered()' ),
-                      self.__onAltShiftUp )
-        self.addAction( self.altShiftUpAct )
-
-        self.altShiftDownAct = QAction( self )
-        self.altShiftDownAct.setShortcut( "Alt+Shift+Down" )
-        self.connect( self.altShiftDownAct, SIGNAL( 'triggered()' ),
-                      self.__onAltShiftDown )
-        self.addAction( self.altShiftDownAct )
-
-        # Alt + Shift + Left, Alt + Shift + Right
-        self.altShiftLeftAct = QAction( self )
-        self.altShiftLeftAct.setShortcut( "Alt+Shift+Left" )
-        self.connect( self.altShiftLeftAct, SIGNAL( 'triggered()' ),
-                      self.__onAlShiftLeft )
-        self.addAction( self.altShiftLeftAct )
-
-        self.altShiftRightAct = QAction( self )
-        self.altShiftRightAct.setShortcut( "Alt+Shift+Right" )
-        self.connect( self.altShiftRightAct, SIGNAL( 'triggered()' ),
-                      self.__onAlShiftRight )
-        self.addAction( self.altShiftRightAct )
-
-        # Alt+U
-        self.altUAct = QAction( self )
-        self.altUAct.setShortcut( "Alt+U" )
-        self.connect( self.altUAct, SIGNAL( 'triggered()' ),
-                      self.onScopeBegin )
-        self.addAction( self.altUAct )
-        return
-
     def focusInEvent( self, event ):
         " Enable Shift+Tab when the focus is received "
         if not self.parent().shouldAcceptFocus():
             self.parent().setFocus()
             return
-
-        self.shiftTab.setEnabled( True )
-        self.highlightAct.setEnabled( True )
-        self.moveNextAct.setEnabled( True )
-        self.movePrevAct.setEnabled( True )
-        self.commentAct.setEnabled( True )
-        self.wordPartRightAct.setEnabled( True )
-        self.wordPartLeftAct.setEnabled( True )
-        self.paragraphUpAct.setEnabled( True )
-        self.paragraphDownAct.setEnabled( True )
-        self.homeAct.setEnabled( True )
-        self.shiftHomeAct.setEnabled( True )
-        self.endAct.setEnabled( True )
-        self.shiftEndAct.setEnabled( True )
-        self.ctrlInsertAct.setEnabled( True )
-        self.ctrlCAct.setEnabled( True )
-        self.ctrlSpaceAct.setEnabled( True )
-        self.ctrlF1Act.setEnabled( True )
-        self.ctrlBackslashAct.setEnabled( True )
-        self.occurancesAct.setEnabled( True )
-        self.altShiftUpAct.setEnabled( True )
-        self.altShiftDownAct.setEnabled( True )
-        self.altShiftLeftAct.setEnabled( True )
-        self.altShiftRightAct.setEnabled( True )
-        self.altUAct.setEnabled( True )
         return ScintillaWrapper.focusInEvent( self, event )
 
     def focusOutEvent( self, event ):
         " Disable Shift+Tab when the focus is lost "
         self.__completer.hide()
-
-        self.shiftTab.setEnabled( False )
-        self.highlightAct.setEnabled( False )
-        self.moveNextAct.setEnabled( False )
-        self.movePrevAct.setEnabled( False )
-        self.commentAct.setEnabled( False )
-        self.wordPartRightAct.setEnabled( False )
-        self.wordPartLeftAct.setEnabled( False )
-        self.paragraphUpAct.setEnabled( False )
-        self.paragraphDownAct.setEnabled( False )
-        self.homeAct.setEnabled( False )
-        self.shiftHomeAct.setEnabled( False )
-        self.endAct.setEnabled( False )
-        self.shiftEndAct.setEnabled( False )
-        self.ctrlInsertAct.setEnabled( False )
-        self.ctrlCAct.setEnabled( False )
-        self.ctrlSpaceAct.setEnabled( False )
-        self.ctrlF1Act.setEnabled( False )
-        self.ctrlBackslashAct.setEnabled( False )
-        self.occurancesAct.setEnabled( False )
-        self.altShiftUpAct.setEnabled( False )
-        self.altShiftDownAct.setEnabled( False )
-        self.altShiftLeftAct.setEnabled( False )
-        self.altShiftRightAct.setEnabled( False )
-        self.altUAct.setEnabled( False )
         return ScintillaWrapper.focusOutEvent( self, event )
 
     def updateSettings( self ):
@@ -1069,11 +901,10 @@ class TextEditor( ScintillaWrapper ):
             TextEditor.textToIterate = ""
         else:
             if TextEditor.textToIterate == text:
-                self.__onNextHighlight()
-                return
+                return self.__onNextHighlight()
             TextEditor.textToIterate = text
         self.highlightWord( text )
-        return
+        return True
 
     def __onNextHighlight( self ):
         " Triggered when Ctrl+. is clicked "
@@ -1085,7 +916,7 @@ class TextEditor( ScintillaWrapper ):
                                         False, False, False, True )
         foundCount = len( targets )
         if foundCount == 0:
-            return
+            return True
 
         line, index = self.getCursorPosition()
         if foundCount == 1:
@@ -1093,7 +924,7 @@ class TextEditor( ScintillaWrapper ):
                index >= targets[ 0 ][ 1 ] and \
                index <= targets[ 0 ][ 1 ] + targets[ 0 ][ 2 ]:
                 # The only match and we are within it
-                return
+                return True
 
         for target in targets:
             if target[ 0 ] < line:
@@ -1108,11 +939,11 @@ class TextEditor( ScintillaWrapper ):
             # Move the cursor to the target
             self.setCursorPosition( target[ 0 ], target[ 1 ] )
             self.ensureLineVisible( target[ 0 ] )
-            return
+            return True
 
         self.setCursorPosition( targets[ 0 ][ 0 ], targets[ 0 ][ 1 ] )
         self.ensureLineVisible( targets[ 0 ][ 0 ] )
-        return
+        return True
 
     def __onPrevHighlight( self ):
         " Triggered when Ctrl+, is clicked "
@@ -1124,7 +955,7 @@ class TextEditor( ScintillaWrapper ):
                                         False, False, False, True )
         foundCount = len( targets )
         if foundCount == 0:
-            return
+            return True
 
         line, index = self.getCursorPosition()
         if foundCount == 1:
@@ -1132,7 +963,7 @@ class TextEditor( ScintillaWrapper ):
                index >= targets[ 0 ][ 1 ] and \
                index <= targets[ 0 ][ 1 ] + targets[ 0 ][ 2 ]:
                 # The only match and we are within it
-                return
+                return True
 
         for idx in xrange( foundCount - 1, -1, -1 ):
             target = targets[ idx ]
@@ -1147,22 +978,22 @@ class TextEditor( ScintillaWrapper ):
             # Move the cursor to the target
             self.setCursorPosition( target[ 0 ], target[ 1 ] )
             self.ensureLineVisible( target[ 0 ] )
-            return
+            return True
 
         last = foundCount - 1
         self.setCursorPosition( targets[ last ][ 0 ], targets[ last ][ 1 ] )
         self.ensureLineVisible( targets[ last ][ 0 ] )
-        return
+        return True
 
     def __onDedent( self ):
         " Triggered when Shift+Tab is clicked "
         self.SendScintilla( QsciScintilla.SCI_BACKTAB )
-        return
+        return True
 
     def onCommentUncomment( self ):
         " Triggered when Ctrl+M is received "
         if self.lexer_ is None or not self.lexer_.canBlockComment():
-            return
+            return True
 
         commentStr = self.lexer_.commentStr()
 
@@ -1203,47 +1034,47 @@ class TextEditor( ScintillaWrapper ):
             self.setCursorPosition( line, 0 )
             self.ensureLineVisible( line )
         self.endUndoAction()
-        return
+        return True
 
     def __onWordPartLeft( self ):
         " Triggered when Alt+Left is received "
         self.SendScintilla( QsciScintilla.SCI_WORDPARTLEFT )
-        return
+        return True
 
     def __onWordPartRight( self ):
         " Triggered when Alt+Right is received "
         self.SendScintilla( QsciScintilla.SCI_WORDPARTRIGHT )
-        return
+        return True
 
     def __onParagraphUp( self ):
         " Triggered when Alt+Up is received "
         self.SendScintilla( QsciScintilla.SCI_PARAUP )
-        return
+        return True
 
     def __onParagraphDown( self ):
         " Triggered when Alt+Down is received "
         self.SendScintilla( QsciScintilla.SCI_PARADOWN )
-        return
+        return True
 
     def __onAltShiftUp( self ):
         " Triggered when Alt+Shift+Up is received "
         self.SendScintilla( QsciScintilla.SCI_PARAUPEXTEND )
-        return
+        return True
 
     def __onAltShiftDown( self ):
         " Triggered when Alt+Shift+Down is received "
         self.SendScintilla( QsciScintilla.SCI_PARADOWNEXTEND )
-        return
+        return True
 
     def __onAlShiftLeft( self ):
         " Triggered when Alt+Shift+Left is received "
         self.SendScintilla( QsciScintilla.SCI_WORDPARTLEFTEXTEND )
-        return
+        return True
 
     def __onAlShiftRight( self ):
         " Triggered when Alt+Shift+Right is received "
         self.SendScintilla( QsciScintilla.SCI_WORDPARTRIGHTEXTEND )
-        return
+        return True
 
     def __onHome( self ):
         " Triggered when HOME is received "
@@ -1251,7 +1082,7 @@ class TextEditor( ScintillaWrapper ):
             self.SendScintilla( QsciScintilla.SCI_VCHOME )
         else:
             self.SendScintilla( QsciScintilla.SCI_HOMEDISPLAY )
-        return
+        return True
 
     def __onShiftHome( self ):
         " Triggered when Shift+HOME is received "
@@ -1259,17 +1090,17 @@ class TextEditor( ScintillaWrapper ):
             self.SendScintilla( QsciScintilla.SCI_VCHOMEEXTEND )
         else:
             self.SendScintilla( QsciScintilla.SCI_HOMEDISPLAYEXTEND )
-        return
+        return True
 
     def __onEnd( self ):
         " Triggered when END is received "
         self.SendScintilla( QsciScintilla.SCI_LINEENDDISPLAY )
-        return
+        return True
 
     def __onShiftEnd( self ):
         " Triggered when END is received "
         self.SendScintilla( QsciScintilla.SCI_LINEENDDISPLAYEXTEND )
-        return
+        return True
 
     def onShiftDel( self ):
         " Triggered when Shift+Del is received "
@@ -1286,7 +1117,7 @@ class TextEditor( ScintillaWrapper ):
             self.copy()
         else:
             self.SendScintilla( QsciScintilla.SCI_LINECOPY )
-        return
+        return True
 
     def __detectLineHeight( self ):
         " Sets the self._lineHeight "
@@ -1359,7 +1190,7 @@ class TextEditor( ScintillaWrapper ):
 
         if len( words ) == 0:
             self.setFocus()
-            return
+            return True
 
         line, pos = self.getCursorPosition()
         if isModName:
@@ -1374,7 +1205,7 @@ class TextEditor( ScintillaWrapper ):
         count = self.__completer.completionCount()
         if count == 0:
             self.setFocus()
-            return
+            return True
 
         # Make sure the line is visible
         self.ensureLineVisible( line )
@@ -1385,7 +1216,7 @@ class TextEditor( ScintillaWrapper ):
 
         if count == 1:
             self.insertCompletion( self.__completer.currentCompletion() )
-            return
+            return True
 
         if self._charWidth <= 0:
             self.__detectCharWidth()
@@ -1397,20 +1228,20 @@ class TextEditor( ScintillaWrapper ):
         cursorRectangle = QRect( x, y - 2,
                                  self._charWidth, self._lineHeight + 8 )
         self.__completer.complete( cursorRectangle )
-        return
+        return True
 
     def onTagHelp( self ):
         " Provides help for an item if available "
         calltip, docstring = getCalltipAndDoc( self.parent().getFileName(),
                                                self )
         GlobalData().mainWindow.showTagHelp( calltip, docstring )
-        return
+        return True
 
     def onGotoDefinition( self ):
         " The user requested a jump to definition "
         if self.parent().getFileType() not in [ PythonFileType,
                                                 Python3FileType ]:
-            return
+            return True
 
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         location = getDefinitionLocation( self.parent().getFileName(),
@@ -1426,30 +1257,30 @@ class TextEditor( ScintillaWrapper ):
             else:
                 path = os.path.realpath( location.resource.real_path )
                 GlobalData().mainWindow.openFile( path, location.lineno )
-        return
+        return True
 
     def onScopeBegin( self ):
         " The user requested jumping to the current scope begin "
         if self.parent().getFileType() not in [ PythonFileType,
                                                 Python3FileType ]:
-            return
+            return True
 
         text = str( self.text() )
         info = getBriefModuleInfoFromMemory( text )
         context = getContext( self, info, True )
         if context.getScope() != context.GlobalScope:
             GlobalData().mainWindow.jumpToLine( context.getLastScopeLine() )
-        return
+        return True
 
     def onOccurances( self ):
         " The user requested a list of occurances "
         if self.parent().getFileType() not in [ PythonFileType,
                                                 Python3FileType ]:
-            return
+            return True
         if not os.path.isabs( self.parent().getFileName() ):
             GlobalData().mainWindow.showStatusBarMessage( \
                                             "Save the buffer first" )
-            return
+            return True
         if self.isModified():
             # Check that the directory is writable for a temporary file
             dirName = os.path.dirname( self.parent().getFileName() )
@@ -1457,7 +1288,7 @@ class TextEditor( ScintillaWrapper ):
                 GlobalData().mainWindow.showStatusBarMessage( \
                                 "File directory is not writable. " \
                                 "Cannot run rope." )
-                return
+                return True
 
         # Prerequisites were checked, run the rope library
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
@@ -1466,7 +1297,7 @@ class TextEditor( ScintillaWrapper ):
             QApplication.restoreOverrideCursor()
             GlobalData().mainWindow.showStatusBarMessage( \
                                         "No occurances of " + name + " found" )
-            return
+            return True
 
         # There are found items
         result = []
@@ -1486,7 +1317,7 @@ class TextEditor( ScintillaWrapper ):
         QApplication.restoreOverrideCursor()
 
         GlobalData().mainWindow.displayFindInFiles( "", result )
-        return
+        return True
 
     def insertCompletion( self, text ):
         " Triggered when a completion is selected "
