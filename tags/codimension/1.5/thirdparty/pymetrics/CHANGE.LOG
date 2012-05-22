@@ -1,0 +1,295 @@
+Change Log from 0.8.0 to 0.8.1
+==============================
+
+1) Bug fixes: 
+  a) Version 0.8.0 was Python version sensitive. It behaved
+     differently when run under versions before 2.5 and those
+     at or after 2.5 due to changes in the way __import__
+     worked.
+  b) BUGLIST was not being update which each new release.
+
+Change Log from 0.7.9 to 0.8.0
+==============================
+
+Converted distribution to use the standard Python setup.py method.
+Thanks to Carlos Garcia Campos (carlosgc-at-gnome.org).
+
+Change Log from 0.7.6 to 0.7.9
+==============================
+
+1) Bug fixes:
+   a) ProcessRun was not executed under all circumstances.
+   b) Code blocks in __main__ were ignored.
+   c) Missing input files raised an exception and terminate after printing help.
+   d) Class doc strings were counted as function doc strings.
+   e) Metric module with missing metric class raised a 'key' exception.
+   f) File with trailing whitespace on last indented line caused exception.
+2) Output sent to stderr also sent to stdout. This allows user to see error
+   in content since the output from stderr and stdout are not in sync.
+3) Changed default metric class name so that for metric module wxYz,
+   the default metric class name is WxYzMetric (note capitalized name)
+   when the metric class name is omitted in the --includeMetrics
+   parameter.
+4) Added Decorators to newFeatures24 metric.
+
+
+Change Log from 0.7.1 to 0.7.6
+==============================
+1) Added Features
+   a) New option -B to suppress Basic Metrics output
+   b) Added the new -e option. When the option is used,
+      the SQL command file does not try to recreate
+      the SQL tables. In other words, only INSERT
+      commands are generated. Use this option if you are
+      sure the SQL data and token tables already exist.
+      This option implies the -N option (it deletes the
+      old SQL command file, if it exists).
+   c) Added computation of COCOMO 2's Source Lines Of Code
+      (SLOC) metric. In COCOMO 2, SLOC is defined as:
+
+        * Only Source lines that are delivered as part
+          of the product are included.
+        * Test drivers and other support software is excluded
+        * Source lines are created by the project staff.
+          Code created by applications generators is excluded
+        * One SLOC is one logical line of code
+        * Declarations are counted as SLOC
+        * Comments are not counted as SLOC
+        * Blank and empty lines are not counted as SLOC
+
+      The COCOMO 1 model's SLOC is now called DSI (Delivered
+      Source Instructions) in COCOMO 2.
+
+      For example, in COCOMO 2, a Python "if-else" statement is
+      counted as one SLOC, but might be counted as several DSIs.
+
+      Given all that, PyMetrics will count test code if requested.
+      I believe that this is correct to count test code because
+      it is the basis of good Extreme Programming methodology.
+
+      This SLOC metric also introduced raw text metrics. This
+      has lead to a new member function of MetricBase:
+
+        processSrcLines( self, srcLines, *a, **kw)
+
+      where srcLines   is a string containing the raw text
+                       of the current file.
+
+      This member function is called once per file.
+
+      The SLOC metric is computed by default.
+
+      The following definitions are used to compute SLOC:
+
+        1)  All literals are treated as occupying one logical
+            line, regardless of the number of physical lines
+            that are spanned.
+        2)  All parenthesized lists, expressions, and argument
+            lists are treated as occupying one logical line,
+            regardless of the number of physical lines spanned.
+        3)  All documentation strings are ignored.
+
+2) Bug Fixes
+   a) In Help, the default value displayed for --quiet
+      was reversed. It now reads more logically.
+
+3) Miscellaneous
+   a) Now clearly identify generated code with a comment
+      in the first line starting with
+
+        "-- Automatically generated ..."
+
+4) Added testSLOC.py to sample/ subdirectory. It tests most of
+   weird cases that may occur in a Python source file due to
+   continuations, literals of various types, and code spanning
+   multiple lines. The source code shows what is counted with
+   comments on the end of each counted source line. As of thie
+   release, the SLOC metric for this file is 28.
+
+Change Log from 0.6.0 to 0.7.1
+==============================
+Quite a lot has changed from the last version. The changes
+fall into two categories:
+
+1) Added Features
+   a) More command line options to add flexibility to what
+      is computed and displayed.
+
+      PLEASE RUN PyMetrics TO DISPLAY ALL THE OPTIONS.
+
+   b) Easier creation and inclusion of your own metrics
+   c) Creation of a SQL table, called metricData, in the the
+      metrics database that contains all the metrics that
+      have been calculated. This table also tracks metrics
+      over time, so you can compare metrics from one run
+      to the next.
+   d) Added library name field to SQL output. This is an
+      user-defined name to identify a collection of modules.
+      For example, all the Zope modules might have a 'zope'
+      library name while all your modules might have your
+      initials as a library name. In this way, you could
+      compare the metrics in your library against the
+      metrics in the Zope library.
+
+      You could also use this feature to define a standard
+      set of metrics with a library name of 'std' and then
+      you could measure all other modules against the 'std'
+      modules.
+
+2) Refactoring and Reworking
+   a) Due to the major enhancements introduced in this
+      version, a number of modules have been refactored
+      to simplify them and make them more testable.
+   b) Unit tests have been written for a number of modules.
+      The tests are contained in the "test" subdirectory.
+      The "test" subdirectory has been added to this
+      distribution.
+3) Added missing LICENSE and "examples" subdirectory.
+4) Fixed various bugs, none critical.
+
+Change Log from 0.5.3 to 0.6
+============================
+1)  Modified PyMetrics to handle IOErrors more
+    gracefully and continue executing, if
+    possible.
+2)  Check for lines ending in '\r' and convert character
+    to blank since Python normally converts '\r' to '\n'
+    on Windows and Mac systems.
+3)  Changed metric format so each metric number appears
+    before its name.
+4)  Added the -f/--files option to allow the user to
+    specify a file containing a list of modules to analyse.
+5)  Fixed Halstead metric code to handle degenerate
+    programs better.
+6)  Changed SQL and CSV output to have symbolic names for
+    types of names in fully-qualified function and class
+    names.
+7)  Changed semantic type of 'self' from VARNAME to KEYWORD.
+8)  Now count any token of semantic significance, like
+    keywords, function names, etc.
+9)  Fixed issue where tarball dir was not created at a higher
+    level directory with the name of the version in the tarball.
+10) Counts of Token Types now listed in alphabetic order.
+11) Added -K option to suppress display of token types.
+12) Introduced MetricBase class for use in designing your
+    own metrics. Member functions include:
+
+    processToken( self, fcnName, className, tok, *args, **kwds )
+    processStmt( self, fcnName, className, stmt, *args, **kwds )
+    processBlock( self, fcnName, className, block, *args, **kwds )
+    processFunction( self, fcnName, className, fcn, *args, **kwds )
+    processClass( self, fcnName, className, cls, *args, **kwds )
+    processModule( self, moduleName, module, *args, **kwds )
+    processRun( self, run, *args, **kwds )
+
+   where:
+
+    context is context in which last token occurred.
+    metrics is metrics up to the point where function called
+    tok     is last completed token
+    stmt    is last completed statement
+    block   is last completed block
+    fcn is last completed function
+    cls is last completed class
+    mod is last completed module
+    run is last completed run (i.e., everything)
+
+   Each of the stmt, block, fcn, cls, mod, and run is a
+   list of tokens.
+
+   The context is a dictionary related to the last token
+   processed before invoking one of the processX member
+   function. The context contains:
+
+    inFile      current file name
+    fcnDepth    current nested function depth
+    classDepth  current nested class depth
+    parenDepth  current parenthesis depth
+    bracketDepth    current depth of brackets ([])
+    braceDepth  current depth of braces ({})
+    blockNum    current unique block number
+    blockDepth  current nested block depth
+
+13) By default, the Halstead metric is not displayed. It is still
+    available, as explained by the Help. This makes the -H
+    option redundant at this point. I have removed this metric
+    because I have not found it to be generally useful. You may
+    differ and include it in any of you runs.
+14) By default, the token and keyword counts are not displayed.
+    They are still available using the -k option. The -K option
+    is still present, but redundant at this point. Again, I did
+    not find this metric of particular use, so I made it
+    optional.
+15) By far, the most time spend in running PyMetrics is in
+    writing out the SQL and CSV files. Suppressing one or both,
+    if you do not need them, will speed up processing. However,
+    I did speed up the processing of these files by 20-50%.
+
+
+Change Log from 0.5.2 to 0.5.3
+==============================
+1) PyMetrics is now available under CVS.
+2) Fixed a bug where the tokenize library module
+   allowed the position of a comment on a line by
+   itself to affect the indentation of subsequent
+   blocks. This would cause a crash if the affected
+   code included a function return statement.
+3) Fixed bug where the McCabe metric routine was
+   being called twice for most tokens.
+4) Changed tokenize module to yield 5 parameters,
+   as it originally did. At an early stage, I
+   erroneously thought that I needed to pass back
+   an extra value.
+5) Sped up processing slightly by skipping redundant
+   tests.
+6) Changed subdirectory name from tests to examples.
+
+Change Log from 0.5.1 to 0.5.2
+==============================
+This is a bug fix release.
+
+1) Fixed bug where program failed if first line of
+   file started with #!.
+
+Change Log from 0.5.0 to 0.5.1
+==============================
+This is mainly a bug fix release. The changes made
+also include:
+
+1) Fixed several divide by zero bugs that could
+   occur for degenerate Python programs.
+2) Corrected version.py to reflect the correct
+   version and name of the program.
+3) Removed %DocStrings metric since it was
+   meaningless.
+4) Fixed bug where nested classes and nested
+   functions were not correctly reported.
+5) Changed format of report on classes/functions
+   having or missing Doc strings.
+6) Report on classes/functions now uses fully
+   qualified names.
+7) Refactored some code to common up handling of
+   certain types of tokens.
+8) Added the -z/--zero command line option. Normally,
+   zero and empty metrics are not shown. This option
+   forces the values to be displayed.
+
+Change Log from 0.4.0 to 0.5.0
+==============================
+1) Simplified processing of command line arguents and
+   parameter handling by objectifying parameter parsing.
+2) Eliminated need for global variables when handling
+   command line parameters and options.
+3) Rearranged basic metrics to appear before computed
+   metrics.
+4) Moved code out of the main module, PyMetrics.py,
+   into separate files.
+5) Clarified some options in the Help output. Also
+   added the -S option to suppress output of the SQL
+   command file.
+6) Defined and implemented endOfToken, endOfStmt,
+   endOfFcn, endOfClass, endOfModule, and endOfRun
+   functions for main program.
+7) Implemented a very simple subscribe feature to
+   allow various metric classes to be registered for
+   the events in point 6).
