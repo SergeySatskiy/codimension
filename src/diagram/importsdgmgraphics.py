@@ -542,20 +542,20 @@ class ImportDgmTabWidget( QWidget, MainWindowTabWidgetBase ):
         fixedSpacer.setFixedHeight( 16 )
 
         zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
-                                'Zoom in (Ctrl++)', self )
-        zoomInButton.setShortcut( 'Ctrl++' )
-        self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.__onZoomIn )
+                                'Zoom in (Ctrl+=)', self )
+        zoomInButton.setShortcut( 'Ctrl+=' )
+        self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.onZoomIn )
 
         zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
                                 'Zoom out (Ctrl+-)', self )
         zoomOutButton.setShortcut( 'Ctrl+-' )
-        self.connect( zoomOutButton, SIGNAL( 'triggered()' ), self.__onZoomOut )
+        self.connect( zoomOutButton, SIGNAL( 'triggered()' ), self.onZoomOut )
 
         zoomResetButton = QAction( PixmapCache().getIcon( 'zoomreset.png' ),
                                    'Zoom reset (Ctrl+0)', self )
         zoomResetButton.setShortcut( 'Ctrl+0' )
         self.connect( zoomResetButton, SIGNAL( 'triggered()' ),
-                      self.__onZoomReset )
+                      self.onZoomReset )
 
 
         # Toolbar
@@ -600,17 +600,17 @@ class ImportDgmTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Triggered on the 'print preview' button "
         pass
 
-    def __onZoomIn( self ):
+    def onZoomIn( self ):
         " Triggered on the 'zoom in' button "
         self.__viewer.zoomIn()
         return
 
-    def __onZoomOut( self ):
+    def onZoomOut( self ):
         " Triggered on the 'zoom out' button "
         self.__viewer.zoomOut()
         return
 
-    def __onZoomReset( self ):
+    def onZoomReset( self ):
         " Triggered on the 'zoom reset' button "
         self.__viewer.resetZoom()
         return
