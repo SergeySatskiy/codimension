@@ -179,6 +179,10 @@ class TextEditor( ScintillaWrapper ):
                     return self.parent().onPymetrics()
                 if key == Qt.Key_I:
                     return self.parent().onOpenImport()
+                if key == Qt.Key_Home:
+                    return self.onFirstChar()
+                if key == Qt.Key_End:
+                    return self.onLastChar()
             if modifiers == Qt.AltModifier:
                 if key == Qt.Key_Left:
                     return self.__onWordPartLeft()
@@ -893,6 +897,26 @@ class TextEditor( ScintillaWrapper ):
             TextEditor.textToIterate = text
         self.highlightWord( text )
         return
+
+    def onFirstChar( self ):
+        " Jump to the first character in the buffer "
+        self.setCursorPosition( 0, 0 )
+        self.ensureLineVisible( 0 )
+        self.setHScrollOffset( 0 )
+        return True
+
+    def onLastChar( self ):
+        " Jump to the last char "
+        line = self.lines()
+        if line != 0:
+            line -= 1
+        pos = self.lineLength( line )
+        if pos != 0:
+            pos -= 1
+        self.setCursorPosition( line, pos )
+        self.ensureLineVisible( line )
+        self.setHScrollOffset( 0 )
+        return True
 
     def highlightWord( self, text ):
         " Highlights the given word with the searchIndicator "
