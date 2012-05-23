@@ -2297,6 +2297,14 @@ class CodimensionMainWindow( QMainWindow ):
             return False
         return currentWidget.getType() == MainWindowTabWidgetBase.PictureViewer
 
+    def __isGeneratedDiagram( self ):
+        " True if this is a generated diagram "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        if currentWidget is None:
+            return False
+        return currentWidget.getType() == MainWindowTabWidgetBase.GeneratedDiagram
+
     def __onTabImportDgm( self ):
         " Triggered when tab imports diagram is requested "
         editorsManager = self.editorsManagerWidget.editorsManager
@@ -2707,11 +2715,14 @@ class CodimensionMainWindow( QMainWindow ):
         " Triggered when view menu is about to show "
         isPlainTextBuffer = self.__isPlainTextBuffer()
         isGraphicsBuffer = self.__isGraphicsBuffer()
-        self.__zoomInAct.setEnabled( isPlainTextBuffer or isGraphicsBuffer )
-        self.__zoomOutAct.setEnabled( isPlainTextBuffer or isGraphicsBuffer )
-        self.__zoom11Act.setEnabled( isPlainTextBuffer or isGraphicsBuffer )
+        isGeneratedDiagram = self.__isGeneratedDiagram()
+        zoomEnabled = isPlainTextBuffer or isGraphicsBuffer or \
+                      isGeneratedDiagram
+        self.__zoomInAct.setEnabled( zoomEnabled )
+        self.__zoomOutAct.setEnabled( zoomEnabled )
+        self.__zoom11Act.setEnabled( zoomEnabled )
 
-        self.__zoomInAct.setShortcut( "Ctrl++" )
+        self.__zoomInAct.setShortcut( "Ctrl+=" )
         self.__zoomOutAct.setShortcut( "Ctrl+-" )
         self.__zoom11Act.setShortcut( "Ctrl+0" )
         return

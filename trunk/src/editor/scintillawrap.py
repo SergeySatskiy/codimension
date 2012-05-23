@@ -250,7 +250,6 @@ class ScintillaWrapper( QsciScintilla ):
 
     def zoomTo( self, zoom ):
         """ Zooms to the specific zoom factor """
-
         self.zoom = zoom
         QsciScintilla.zoomTo( self, zoom )
         self._charWidth = -1

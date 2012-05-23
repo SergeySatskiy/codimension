@@ -120,7 +120,7 @@ class QuickHelpWidget( HTMLTabWidget ):
         <tr>
           <td>Shift+Del</td>
           <td>Copy to buffer and delete selected text (if so) or current line</td>
-          <td>Ctrl++ / -</td>
+          <td>Ctrl+= / -</td>
           <td>Zoom in / out</td>
         </tr>
         <tr>

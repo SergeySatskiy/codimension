@@ -34,7 +34,7 @@ from PyQt4.QtGui                import QApplication, QCursor, \
                                        QFontMetrics, QToolBar, QActionGroup, \
                                        QHBoxLayout, QWidget, QAction, QMenu, \
                                        QSizePolicy, QToolButton, QFileDialog, \
-                                       QDialog, QMessageBox, QShortcut
+                                       QDialog, QMessageBox
 from PyQt4.Qsci                 import QsciScintilla, QsciLexerPython
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.fileutils            import detectFileType, DesignerFileType, \
@@ -167,6 +167,18 @@ class TextEditor( ScintillaWrapper ):
                     return self.onGotoDefinition()
                 if key == Qt.Key_BracketRight:
                     return self.onOccurances()
+                if key == Qt.Key_Minus:
+                    return self.parent().onZoomOut()
+                if key == Qt.Key_Equal:
+                    return self.parent().onZoomIn()
+                if key == Qt.Key_0:
+                    return self.parent().onZoomReset()
+                if key == Qt.Key_L:
+                    return self.parent().onPylint()
+                if key == Qt.Key_K:
+                    return self.parent().onPymetrics()
+                if key == Qt.Key_I:
+                    return self.parent().onOpenImport()
             if modifiers == Qt.AltModifier:
                 if key == Qt.Key_Left:
                     return self.__onWordPartLeft()
@@ -1567,10 +1579,6 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.connect( self.__editor, SIGNAL( 'modificationChanged(bool)' ),
                       self.modificationChanged )
 
-        openImportAction = QShortcut( 'Ctrl+I', self )
-        self.connect( openImportAction, SIGNAL( "activated()" ),
-                      self.onOpenImport )
-
         self.__diskModTime = None
         self.__reloadDlgShown = False
 
@@ -1604,7 +1612,6 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
                                'Print', self )
         printButton.setEnabled( False )
-        #printButton.setShortcut( 'Ctrl+' )
         self.connect( printButton, SIGNAL( 'triggered()' ),
                       self.__onPrint )
 
@@ -1612,14 +1619,12 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                 PixmapCache().getIcon( 'printpreview.png' ),
                 'Print preview', self )
         printPreviewButton.setEnabled( False )
-        #printPreviewButton.setShortcut( 'Ctrl+' )
         self.connect( printPreviewButton, SIGNAL( 'triggered()' ),
                       self.__onPrintPreview )
 
         self.pylintButton = QAction( \
             PixmapCache().getIcon( 'pylint.png' ),
             'Analyse the file (Ctrl+L)', self )
-        self.pylintButton.setShortcut( 'Ctrl+L' )
         self.connect( self.pylintButton, SIGNAL( 'triggered()' ),
                       self.onPylint )
         self.pylintButton.setEnabled( False )
@@ -1627,7 +1632,6 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.pymetricsButton = QAction( \
             PixmapCache().getIcon( 'metrics.png' ),
             'Calculate the file metrics (Ctrl+K)', self )
-        self.pymetricsButton.setShortcut( 'Ctrl+K' )
         self.connect( self.pymetricsButton, SIGNAL( 'triggered()' ),
                       self.onPymetrics )
         self.pymetricsButton.setEnabled( False )
@@ -1723,18 +1727,15 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         # Zoom buttons
         zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
-                                'Zoom in (Ctrl++)', self )
-        zoomInButton.setShortcut( 'Ctrl++' )
+                                'Zoom in (Ctrl+=)', self )
         self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.onZoomIn )
 
         zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
                                 'Zoom out (Ctrl+-)', self )
-        zoomOutButton.setShortcut( 'Ctrl+-' )
         self.connect( zoomOutButton, SIGNAL( 'triggered()' ), self.onZoomOut )
 
         zoomResetButton = QAction( PixmapCache().getIcon( 'zoomreset.png' ),
                                    'Zoom reset (Ctrl+0)', self )
-        zoomResetButton.setShortcut( 'Ctrl+0' )
         self.connect( zoomResetButton, SIGNAL( 'triggered()' ),
                       self.onZoomReset )
 
@@ -1822,7 +1823,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             if self.__shortName != "":
                 self.__fileType = detectFileType( self.__shortName )
         if self.__fileType not in [ PythonFileType, Python3FileType ]:
-            return
+            return True
 
         if self.__fileName != "":
             reportFile = self.__fileName
@@ -1839,7 +1840,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             GlobalData().mainWindow.showPylintReport( \
                             PylintViewer.SingleFile, self.__fileName,
                             reportFile, self.getUUID(), self.__fileName )
-        return
+        return True
 
     def onPymetrics( self ):
         " Triggers when pymetrics should be used "
@@ -1848,7 +1849,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             if self.__shortName != "":
                 self.__fileType = detectFileType( self.__shortName )
         if self.__fileType not in [ PythonFileType, Python3FileType ]:
-            return
+            return True
 
         if self.__fileName != "":
             reportFile = self.__fileName
@@ -1865,25 +1866,25 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             GlobalData().mainWindow.showPymetricsReport( \
                             PymetricsViewer.SingleFile, self.__fileName,
                             reportFile, self.getUUID() )
-        return
+        return True
 
     def onZoomReset( self ):
         " Triggered when the zoom reset button is pressed "
         if self.__editor.zoom != 0:
             self.emit( SIGNAL( 'TextEditorZoom' ), 0 )
-        return
+        return True
 
     def onZoomIn( self ):
         " Triggered when the zoom in button is pressed "
         if self.__editor.zoom < 20:
             self.emit( SIGNAL( 'TextEditorZoom' ), self.__editor.zoom + 1 )
-        return
+        return True
 
     def onZoomOut( self ):
         " Triggered when the zoom out button is pressed "
         if self.__editor.zoom > -10:
             self.emit( SIGNAL( 'TextEditorZoom' ), self.__editor.zoom - 1 )
-        return
+        return True
 
     def __onPrint( self ):
         " Triggered when the print button is pressed "
@@ -1987,7 +1988,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Triggered when Ctrl+I is received "
 
         if self.__fileType not in [ PythonFileType, Python3FileType ]:
-            return
+            return True
 
         # Python file, we may continue
         isImportLine, lineNo = self.__editor.isImportLine()
@@ -2002,10 +2003,10 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                 path = resolveImport( basePath, currentWord )
                 if path != '':
                     GlobalData().mainWindow.openFile( path, -1 )
-                    return
+                    return True
                 GlobalData().mainWindow.showStatusBarMessage( \
                         "The import '" + currentWord + "' is not resolved." )
-                return
+                return True
             # We are not on a certain import.
             # Check if it is a line with exactly one import
             if len( lineImports ) == 1:
@@ -2014,20 +2015,20 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                     GlobalData().mainWindow.showStatusBarMessage( \
                         "The import '" + lineImports[ 0 ] + \
                         "' is not resolved." )
-                    return
+                    return True
                 # The import is resolved. Check where we are.
                 if currentWord in importWhat:
                     # We are on a certain imported name in a resolved import
                     # So, jump to the definition line
                     line = getImportedNameDefinitionLine( path, currentWord )
                     GlobalData().mainWindow.openFile( path, line )
-                    return
+                    return True
                 GlobalData().mainWindow.openFile( path, -1 )
-                return
+                return True
 
             # Take all the imports in the line and resolve them.
             self.__onImportList( basePath, lineImports )
-            return
+            return True
 
         # Here: the cursor is not on the import line. Take all the file imports
         # and resolve them
@@ -2035,18 +2036,18 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         if len( fileImports ) == 0:
             GlobalData().mainWindow.showStatusBarMessage( \
                                             "There are no imports" )
-            return
+            return True
         if len( fileImports ) == 1:
             path = resolveImport( basePath, fileImports[ 0 ] )
             if path == '':
                 GlobalData().mainWindow.showStatusBarMessage( \
                     "The import '" + fileImports[ 0 ] + "' is not resolved." )
-                return
+                return True
             GlobalData().mainWindow.openFile( path, -1 )
-            return
+            return True
 
         self.__onImportList( basePath, fileImports )
-        return
+        return True
 
     def __onImportList( self, basePath, imports ):
         " Works with a list of imports "

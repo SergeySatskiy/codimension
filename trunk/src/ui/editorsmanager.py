@@ -1810,7 +1810,8 @@ class EditorsManager( QTabWidget ):
         " Called if main menu item is selected "
         widget = self.currentWidget()
         if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
-                                 MainWindowTabWidgetBase.PictureViewer ]:
+                                 MainWindowTabWidgetBase.PictureViewer,
+                                 MainWindowTabWidgetBase.GeneratedDiagram ]:
             widget.onZoomIn()
         return
 
@@ -1818,7 +1819,8 @@ class EditorsManager( QTabWidget ):
         " Called if main menu item is selected "
         widget = self.currentWidget()
         if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
-                                 MainWindowTabWidgetBase.PictureViewer ]:
+                                 MainWindowTabWidgetBase.PictureViewer,
+                                 MainWindowTabWidgetBase.GeneratedDiagram ]:
             widget.onZoomOut()
         return
 
@@ -1826,7 +1828,8 @@ class EditorsManager( QTabWidget ):
         " Called if main menu item is selected "
         widget = self.currentWidget()
         if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
-                                 MainWindowTabWidgetBase.PictureViewer ]:
+                                 MainWindowTabWidgetBase.PictureViewer,
+                                 MainWindowTabWidgetBase.GeneratedDiagram ]:
             widget.onZoomReset()
         return
 
