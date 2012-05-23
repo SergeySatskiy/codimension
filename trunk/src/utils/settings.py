@@ -65,6 +65,7 @@ _defaultLastSuccessVerCheck = 0
 _defaultNewerVerShown = False
 _defaultModifiedFormat = "%s *"
 _defaultTermType = TERM_AUTO
+_defaultEditorEdge = 80
 
 # Editor settings available via the user interface
 _defaultVerticalEdge = True
@@ -207,6 +208,8 @@ class Settings( object ):
             self.terminalType = self.__getInt( config, 'general',
                                                'terminalType',
                                                _defaultTermType )
+            self.editorEdge = self.__getInt( config, 'general',
+                                             'editorEdge', _defaultEditorEdge )
 
             asString = self.__getStr( config, 'general', 'hSplitterSizes',
                                       _defaultHSplitSize ).split( ',' )
@@ -263,8 +266,8 @@ class Settings( object ):
 
             # If format is bad then overwrite the file
             if self.formatOK == False:
-                logging.info( "Bad format of settings detected. " \
-                              "Overwriting the settings file." )
+                logging.info( "Some settings missed or bad format of the " \
+                              "settings file. Restoring the settings file." )
                 self.flushSettings()
 
             return
@@ -308,6 +311,7 @@ class Settings( object ):
             self.lastSuccessVerCheck = _defaultLastSuccessVerCheck
             self.newerVerShown = _defaultNewerVerShown
             self.terminalType = _defaultTermType
+            self.editorEdge = _defaultEditorEdge
             return
 
         def __getInt( self, conf, sec, key, default ):
@@ -385,6 +389,7 @@ class Settings( object ):
                      "lastSuccessVerCheck=" + str( self.lastSuccessVerCheck ) + "\n" \
                      "newerVerShown=" + str( self.newerVerShown ) + "\n" \
                      "terminalType=" + str( self.terminalType ) + "\n" \
+                     "editorEdge=" + str( self.editorEdge ) + "\n" \
                      "leftBarMinimized=" + \
                         str( int( self.leftBarMinimized ) ) + "\n" \
                      "bottomBarMinimized=" + \

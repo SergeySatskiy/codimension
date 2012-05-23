@@ -109,7 +109,7 @@ class TextEditor( ScintillaWrapper ):
         self.setFocusPolicy( Qt.StrongFocus )
         self.setIndentationWidth( 4 )
         self.setTabWidth( 4 )
-        self.setEdgeColumn( 80 )
+        self.setEdgeColumn( Settings().editorEdge )
 
         self.setMatchedBraceBackgroundColor( skin.matchedBracePaper )
         self.setMatchedBraceForegroundColor( skin.matchedBraceColor )
