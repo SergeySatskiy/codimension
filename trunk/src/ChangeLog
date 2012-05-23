@@ -1,4 +1,4 @@
-2012 May 20  Sergey Satskiy <sergey.satskiy@gmail.com>
+2012 XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Release 1.5
 * Ctrl+' now highlight the current word, instead of Ctrl+N. Issue #323
@@ -19,6 +19,10 @@
 * New feature: dumb line counter for the buffer. Issue #107
 * Open project via an OS file selection dialog (Ctrl+Shift+O)
 * Main menu has been added
+* Bug fix: hot keys on Ubuntu
+* Bug fix: imports diagram reset scale action
+* Replacing Ctrl++ with Ctrl+= for zooming in
+* Adding the editor edge column number to the settings file
 
 
 2012 Jan 26  Sergey Satskiy <sergey.satskiy@gmail.com>
