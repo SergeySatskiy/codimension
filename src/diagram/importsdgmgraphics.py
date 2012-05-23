@@ -31,7 +31,7 @@ from PyQt4.QtGui                import QGraphicsRectItem, QGraphicsPathItem, \
                                        QPainterPath, QGraphicsTextItem, \
                                        QFontMetrics, QStyleOptionGraphicsItem, \
                                        QPainter, QStyle
-from PyQt4.QtCore               import Qt, SIGNAL, QSize, QPointF
+from PyQt4.QtCore               import Qt, SIGNAL, QSize, QPointF, QRectF
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.pixmapcache          import PixmapCache
 from utils.globals              import GlobalData
@@ -485,7 +485,11 @@ class ImportDgmWidget( QGraphicsView ):
 
     def resetZoom( self ):
         " Resets the zoom "
-        self.scale( 1.0, 1.0 )
+        # I don't really understand how it works
+        # Taken from here:
+        # http://cep.xor.aps.anl.gov/software/qt4-x11-4.2.2-browser/d9/df9/qgraphicsview_8cpp-source.html
+        unity = self.matrix().mapRect( QRectF( 0, 0, 1, 1 ) )
+        self.scale( 1 / unity.width(), 1 / unity.height() )
         return
 
     def zoomIn( self ):
