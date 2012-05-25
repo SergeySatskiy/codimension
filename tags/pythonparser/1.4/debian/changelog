@@ -1,3 +1,9 @@
+codimension-parser (1.4-2) unstable; urgency=low
+
+  * Release for Debian unstable.
+
+ -- Dmitry Kazimirov <dk@revl.org>  Fri, 25 May 2012 18:14:51 -0400
+
 codimension-parser (1.4-1) precise; urgency=low
 
   * Upstream changes: Bug fix: make parseable the input where
