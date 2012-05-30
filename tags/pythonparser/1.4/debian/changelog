@@ -1,3 +1,9 @@
+codimension-parser (1.4-3) unreleased; urgency=low
+
+  * Release for Debian unreleased.
+
+ -- Dmitry Kazimirov <dk@revl.org>  Wed, 30 May 2012 13:49:08 -0400
+
 codimension-parser (1.4-2) unstable; urgency=low
 
   * Release for Debian unstable.
