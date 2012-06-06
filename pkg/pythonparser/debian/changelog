@@ -3,8 +3,9 @@ codimension-parser (1.4-4) unstable; urgency=low
   * Release for Debian unstable.
   * Standards-Version: '3.9.1' -> '3.9.3'
   * Added a debian/watch file.
+  * Updated config.guess and config.sub in libantlr.
 
- -- Dmitry Kazimirov <dk@revl.org>  Tue, 05 Jun 2012 13:22:18 -0400
+ -- Dmitry Kazimirov <dk@revl.org>  Wed, 06 Jun 2012 13:29:41 -0400
 
 codimension-parser (1.4-2) unstable; urgency=low
 
