@@ -385,6 +385,16 @@ class ScintillaWrapper( QsciScintilla ):
         self.SendScintilla( self.SCI_LINEENDEXTEND )
         return
 
+    def extendSelectionToEOF( self ):
+        " Extends the selection to the end of file "
+        self.SendScintilla( self.SCI_DOCUMENTENDEXTEND )
+        return
+
+    def extendSelectionToBOF( self ):
+        " Extends the selection to the beginning of the file "
+        self.SendScintilla( self.SCI_DOCUMENTSTARTEXTEND )
+        return
+
     def setHScrollOffset( self, value ):
         " Sets the current horizontal offset "
         self.SendScintilla( self.SCI_SETXOFFSET, value )
