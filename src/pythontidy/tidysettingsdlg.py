@@ -264,6 +264,8 @@ class TidySettingsDialog( QDialog ):
 
     def __reset( self ):
         " Resets the values to default "
+
+        self.__validate()
         return
 
     @staticmethod
@@ -276,7 +278,7 @@ class TidySettingsDialog( QDialog ):
                 typeName = "QLineEdit"
             else:
                 typeName = "QTextEdit"
-            field.setStyleSheet( typeName + "{ background: ffa07a; }" )
+            field.setStyleSheet( typeName + "{ background: #ffa07a; }" )
         return
 
     def __saveAndAccept( self ):
@@ -286,6 +288,51 @@ class TidySettingsDialog( QDialog ):
 
     def __validate( self, text = None ):
         " Validates input "
+        allValid = True
+        val = str( self.__colsEdit.text() )
+        try:
+            intVal = int( val )
+            if intVal <= 0:
+                allValid = False
+                self.__setValid( self.__colsEdit, False )
+            else:
+                self.__setValid( self.__colsEdit, True )
+        except:
+            allValid = False
+            self.__setValid( self.__colsEdit, False )
+
+        if '=' not in self.__assignmentEdit.text():
+            allValid = False
+            self.__setValid( self.__assignmentEdit, False )
+        else:
+            self.__setValid( self.__assignmentEdit, True )
+
+        if '=' not in self.__funcAssignEdit.text():
+            allValid = False
+            self.__setValid( self.__funcAssignEdit, False )
+        else:
+            self.__setValid( self.__funcAssignEdit, True )
+
+        if ':' not in self.__dictSepEdit.text():
+            allValid = False
+            self.__setValid( self.__dictSepEdit, False )
+        else:
+            self.__setValid( self.__dictSepEdit, True )
+
+        if ':' not in self.__sliceSepEdit.text():
+            allValid = False
+            self.__setValid( self.__sliceSepEdit, False )
+        else:
+            self.__setValid( self.__sliceSepEdit, True )
+
+        val = str( self.__inEdit.text() )
+        if val.strip() != "" and not val.strip().startswith( '#!' ):
+            allValid = False
+            self.__setValid( self.__inEdit, False )
+        else:
+            self.__setValid( self.__inEdit, True )
+
+        self.__tidyButton.setEnabled( allValid )
         return
 
 
