@@ -265,6 +265,40 @@ class TidySettingsDialog( QDialog ):
     def __reset( self ):
         " Resets the values to default "
 
+        self.__colsEdit.setText( str( self.__settings.getDefaultValue( "COL_LIMIT" ) ) )
+        self.__assignmentEdit.setText( self.__settings.getDefaultValue( "ASSIGNMENT" ) )
+        self.__funcAssignEdit.setText( self.__settings.getDefaultValue( "FUNCTION_PARAM_ASSIGNMENT" ) )
+        self.__dictSepEdit.setText( self.__settings.getDefaultValue( "DICT_COLON" ) )
+        self.__sliceSepEdit.setText( self.__settings.getDefaultValue( "SLICE_COLON" ) )
+        self.__inEdit.setText( self.__settings.getDefaultValue( "SHEBANG" ) )
+        self.__outCodingEdit.setText( self.__settings.getDefaultValue( "CODING" ) )
+        self.__srcCodingEdit.setText( self.__settings.getDefaultValue( "CODING_SPEC" ) )
+        self.__boilEdit.setPlainText( self.__settings.getDefaultValue( "BOILERPLATE" ) )
+        self.__keepBlanks.setChecked( self.__settings.getDefaultValue( "KEEP_BLANK_LINES" ) )
+        self.__addBlanks.setChecked( self.__settings.getDefaultValue( "ADD_BLANK_LINES_AROUND_COMMENTS" ) )
+        self.__justifyDoc.setChecked( self.__settings.getDefaultValue( "LEFTJUST_DOC_STRINGS" ) )
+        self.__wrapDoc.setChecked( self.__settings.getDefaultValue( "WRAP_DOC_STRINGS" ) )
+        self.__recodeStrings.setChecked( self.__settings.getDefaultValue( "RECODE_STRINGS" ) )
+        self.__splitStrings.setChecked( self.__settings.getDefaultValue( "CAN_SPLIT_STRINGS" ) )
+        self.__keepUnassignedConst.setChecked( self.__settings.getDefaultValue( "KEEP_UNASSIGNED_CONSTANTS" ) )
+        self.__parenTuple.setChecked( self.__settings.getDefaultValue( "PARENTHESIZE_TUPLE_DISPLAY" ) )
+        self.__javaListDedent.setChecked( self.__settings.getDefaultValue( "JAVA_STYLE_LIST_DEDENT" ) )
+
+        use1 = self.__settings.getDefaultValue( "SINGLE_QUOTED_STRINGS" )
+        use2 = self.__settings.getDefaultValue( "DOUBLE_QUOTED_STRINGS" )
+        if use1:
+            self.__use1RButton.setChecked( True )
+            self.__use2RButton.setChecked( False )
+            self.__useAsIsRButton.setChecked( False )
+        elif use2:
+            self.__use1RButton.setChecked( False )
+            self.__use2RButton.setChecked( True )
+            self.__useAsIsRButton.setChecked( False )
+        else:
+            self.__use1RButton.setChecked( False )
+            self.__use2RButton.setChecked( False )
+            self.__useAsIsRButton.setChecked( True )
+
         self.__validate()
         return
 
@@ -331,6 +365,14 @@ class TidySettingsDialog( QDialog ):
             self.__setValid( self.__inEdit, False )
         else:
             self.__setValid( self.__inEdit, True )
+
+        val = str( self.__srcCodingEdit.text() )
+        if val.strip() != "" and not val.strip().startswith( '#' ):
+            allValid = False
+            self.__setValid( self.__srcCodingEdit, False )
+        else:
+            self.__setValid( self.__srcCodingEdit, True )
+
 
         self.__tidyButton.setEnabled( allValid )
         return
