@@ -90,11 +90,11 @@ class PythonTidySetting:
         " Sets all the values to default ones "
         self.settings = {}
         for key in TIDY_SETTINGS:
-            self.settings[ key ] = self.__getDefaultValue( key )
+            self.settings[ key ] = self.getDefaultValue( key )
         return
 
     @staticmethod
-    def __getDefaultValue( name ):
+    def getDefaultValue( name ):
         " Returns a default parameter value "
         typeName = TIDY_SETTINGS[ name ][ 1 ]
         value = TIDY_SETTINGS[ name ][ 2 ]
@@ -149,7 +149,7 @@ class PythonTidySetting:
                     else:
                         raise Exception( "Unexpected type" )
                 except:
-                    self.settings[ key ] = self.__getDefaultValue( key )
+                    self.settings[ key ] = self.getDefaultValue( key )
                     isOK = False
         except:
             # Really bad mistake in the config file, so use defaults
