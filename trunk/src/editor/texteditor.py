@@ -68,6 +68,9 @@ from utils.run                  import getCwdCmdEnv
 from ui.findinfiles             import ItemToSearchIn, getSearchItemIndex
 from debugger.modifiedunsaved   import ModifiedUnsavedDialog
 from ui.linecounter             import LineCounterDialog
+from pythontidy.tidy            import getPythonTidySetting, PythonTidyDriver, \
+                                       getPythonTidySettingFileName
+from pythontidy.tidysettingsdlg import TidySettingsDialog
 
 
 class TextEditor( ScintillaWrapper ):
@@ -1732,6 +1735,24 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                       self.__editor.onRedo )
         self.__redoButton.setEnabled( False )
 
+        # Python tidy script button and its menu
+        pythonTidyMenu = QMenu( self )
+        pythonTidyDlgAct = pythonTidyMenu.addAction( \
+                                PixmapCache().getIcon( 'detailsdlg.png' ),
+                                'Set python tidy parameters' )
+        self.connect( pythonTidyDlgAct, SIGNAL( 'triggered()' ),
+                      self.__onPythonTidySettings )
+        self.pythonTidyButton = QToolButton( self )
+        self.pythonTidyButton.setIcon( \
+                      PixmapCache().getIcon( 'pythontidy.png' ) )
+        self.pythonTidyButton.setToolTip( 'Python tidy' )
+        self.pythonTidyButton.setPopupMode( QToolButton.DelayedPopup )
+        self.pythonTidyButton.setMenu( pythonTidyMenu )
+        self.pythonTidyButton.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.pythonTidyButton, SIGNAL( 'clicked(bool)' ),
+                      self.onPythonTidy )
+        self.pythonTidyButton.setEnabled( False )
+
         self.lineCounterButton = QAction( \
             PixmapCache().getIcon( 'linecounter.png' ),
             'Line counter', self )
@@ -1789,6 +1810,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.addAction( zoomOutButton )
         toolbar.addAction( zoomResetButton )
         toolbar.addWidget( fixedSpacer )
+        toolbar.addWidget( self.pythonTidyButton )
         toolbar.addAction( self.lineCounterButton )
         toolbar.addAction( self.removeTrailingSpacesButton )
         toolbar.addAction( self.expandTabsButton )
@@ -1837,6 +1859,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.debugScriptButton.setEnabled( self.__fileType == PythonFileType and \
                                            self.isModified() == False and \
                                            os.path.isabs( self.__fileName ) )
+        self.pythonTidyButton.setEnabled( self.__fileType == PythonFileType )
         self.lineCounterButton.setEnabled( self.__fileType == PythonFileType )
         return
 
@@ -1937,8 +1960,78 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                                            os.path.isabs( self.__fileName ) )
         return
 
+    def onPythonTidy( self ):
+        " Triggered when python tidy should be called "
+        tidy = PythonTidyDriver()
+        result = tidy.run( str( self.__editor.text() ),
+                           getPythonTidySetting() )
+        diff = tidy.getDiff()
+        if diff is None:
+            GlobalData().mainWindow.showStatusBarMessage( \
+                    "PythonTidy did no changes." )
+            return
+
+        # There are changes, so replace the text and tell about the changes
+        self.replaceAll( result )
+        logging.info( "PythonTidy diff for " + self.getShortName() + "\n" + \
+                      '\n'.join( list( diff ) ) )
+        return
+
+    def __onPythonTidySettings( self ):
+        " Triggered when a python tidy settings are requested "
+        tidySettings = getPythonTidySetting()
+        settingsFile = getPythonTidySettingFileName()
+        dlg = TidySettingsDialog( tidySettings, settingsFile, self )
+        if dlg.exec_() != QDialog.Accepted:
+            return
+
+        tidy = PythonTidyDriver()
+        result = tidy.run( str( self.__editor.text() ),
+                           tidySettings )
+        diff = tidy.getDiff()
+        if diff is None:
+            GlobalData().mainWindow.showStatusBarMessage( \
+                    "PythonTidy did no changes." )
+            return
+
+        # There are changes, so replace the text and tell about the changes
+        self.replaceAll( result )
+        logging.info( "PythonTidy diff for " + self.getShortName() + "\n" + \
+                      '\n'.join( list( diff ) ) )
+        return
+
+    def replaceAll( self, newText ):
+        " Replaces the current buffer content with a new text "
+        # Unfortunately, the setText() clears the undo history so it cannot be
+        # used. The selectAll() and replacing selected text do not suite
+        # because after undo the cursor does not jump to the previous position.
+        # So, there is an ugly select -> replace manipulation below...
+        self.__editor.beginUndoAction()
+
+        origLine, origPos = self.__editor.getCursorPosition()
+        self.__editor.setSelection( 0, 0, origLine, origPos )
+        self.__editor.removeSelectedText()
+        self.__editor.insert( newText )
+        self.__editor.setCurrentPosition( len( newText ) )
+        line, pos = self.__editor.getCursorPosition()
+        lastLine = self.__editor.lines()
+        self.__editor.setSelection( line, pos,
+                                    lastLine - 1,
+                                    len( self.__editor.text( lastLine - 1 ) ) )
+        self.__editor.removeSelectedText()
+        self.__editor.setCursorPosition( origLine, origPos )
+
+        # These two for the proper cursor positioning after redo
+        self.__editor.insert( "s" )
+        self.__editor.setCursorPosition( origLine, origPos + 1 )
+        self.__editor.deleteBack()
+        self.__editor.setCursorPosition( origLine, origPos )
+
+        self.__editor.endUndoAction()
+        return
+
     def onLineCounter( self ):
-        " triggered when line counter button is clicked "
+        " Triggered when line counter button is clicked "
         LineCounterDialog( None, self.__editor ).exec_()
         return
 
