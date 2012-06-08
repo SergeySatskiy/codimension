@@ -23,6 +23,7 @@
 
 """ PythonTidy settings dialog """
 
+import logging
 from PyQt4.QtCore                import Qt, SIGNAL
 from PyQt4.QtGui                 import QDialog, QDialogButtonBox, \
                                         QVBoxLayout, QLabel, QFontMetrics, \
@@ -333,6 +334,44 @@ class TidySettingsDialog( QDialog ):
 
     def __saveAndAccept( self ):
         " Saves the changes and accepts the values "
+        self.__validate()
+        if self.__tidyButton.isEnabled() == False:
+            return
+
+        self.__settings.settings[ "COL_LIMIT" ] = int( self.__colsEdit.text() )
+        self.__settings.settings[ "ASSIGNMENT" ] = str( self.__assignmentEdit.text() )
+        self.__settings.settings[ "FUNCTION_PARAM_ASSIGNMENT" ] = str( self.__funcAssignEdit.text() )
+        self.__settings.settings[ "DICT_COLON" ] = str( self.__dictSepEdit.text() )
+        self.__settings.settings[ "SLICE_COLON" ] = str( self.__sliceSepEdit.text() )
+        self.__settings.settings[ "SHEBANG" ] = str( self.__inEdit.text() )
+        self.__settings.settings[ "CODING" ] = str( self.__outCodingEdit.text() )
+        self.__settings.settings[ "CODING_SPEC" ] = str( self.__srcCodingEdit.text() )
+        self.__settings.settings[ "BOILERPLATE" ] = str( self.__boilEdit.toPlainText() )
+        self.__settings.settings[ "KEEP_BLANK_LINES" ] = bool( self.__keepBlanks.isChecked() )
+        self.__settings.settings[ "ADD_BLANK_LINES_AROUND_COMMENTS" ] = bool( self.__addBlanks.isChecked() )
+        self.__settings.settings[ "LEFTJUST_DOC_STRINGS" ] = bool( self.__justifyDoc.isChecked() )
+        self.__settings.settings[ "WRAP_DOC_STRINGS" ] = bool( self.__wrapDoc.isChecked() )
+        self.__settings.settings[ "RECODE_STRINGS" ] = bool( self.__recodeStrings.isChecked() )
+        self.__settings.settings[ "CAN_SPLIT_STRINGS" ] = bool( self.__splitStrings.isChecked() )
+        self.__settings.settings[ "KEEP_UNASSIGNED_CONSTANTS" ] = bool( self.__keepUnassignedConst.isChecked() )
+        self.__settings.settings[ "PARENTHESIZE_TUPLE_DISPLAY" ] = bool( self.__parenTuple.isChecked() )
+        self.__settings.settings[ "JAVA_STYLE_LIST_DEDENT" ] = bool( self.__javaListDedent.isChecked() )
+
+        if self.__use1RButton.isChecked():
+            self.__settings.settings[ "SINGLE_QUOTED_STRINGS" ] = True
+            self.__settings.settings[ "DOUBLE_QUOTED_STRINGS" ] = False
+        elif self.__use2RButton.isChecked():
+            self.__settings.settings[ "SINGLE_QUOTED_STRINGS" ] = False
+            self.__settings.settings[ "DOUBLE_QUOTED_STRINGS" ] = True
+        else:
+            self.__settings.settings[ "SINGLE_QUOTED_STRINGS" ] = False
+            self.__settings.settings[ "DOUBLE_QUOTED_STRINGS" ] = False
+
+        try:
+            self.__settings.saveToFile( self.__path )
+        except:
+            logging.error( "Error saving PythonTidy settings into " + \
+                           self.__path + ". Ignor and continue." )
         self.accept()
         return
 
