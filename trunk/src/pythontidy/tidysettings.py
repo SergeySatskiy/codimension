@@ -38,7 +38,7 @@ TIDY_SETTINGS = { \
       'string', ' = ' ),
       'FUNCTION_PARAM_ASSIGNMENT' :
     ( 'How function-parameter assignment should appear',
-      'string', ' = ' ),
+      'string', '=' ),
       'DICT_COLON' :
     ( 'This separates dictionary keys from values',
       'string', ': ' ),
@@ -52,7 +52,7 @@ TIDY_SETTINGS = { \
     ( 'One line comment naming the Python interpreter to Unix shells',
       'string', '#!/usr/bin/python' ),
       'CODING' :
-    ( 'The output character encoding (codec).',
+    ( 'The output character encoding (codec)',
       'string', 'utf-8' ),
       'CODING_SPEC' :
     ( 'Source file encoding comment',
@@ -64,10 +64,10 @@ TIDY_SETTINGS = { \
     ( 'How a blank line should appear (up to the newline character)',
       'string', '' ),
       'KEEP_BLANK_LINES' :
-    ( 'If true, preserve one blank where blank(s) are encountered',
+    ( 'Preserve one blank where blank(s) are encountered',
       'bool', True ),
       'ADD_BLANK_LINES_AROUND_COMMENTS' :
-    ( 'If true, set off comment blocks with blanks',
+    ( 'Set off comment blocks with blanks',
       'bool', True ),
       'MAX_SEPS_FUNC_DEF' :
     ( 'Split lines containing longer function definitions',
@@ -88,19 +88,19 @@ TIDY_SETTINGS = { \
     ( 'How the left margin should appear',
       'string', '' ),
       'LEFTJUST_DOC_STRINGS' :
-    ( 'If true, left justify doc strings',
+    ( 'Left justify doc strings',
       'bool', False ),
       'WRAP_DOC_STRINGS' :
-    ( 'If true, long doc strings are wrapped',
+    ( 'Wrap long doc strings',
       'bool', False ),
       'DOUBLE_QUOTED_STRINGS' :
-    ( 'If true, use quotes instead of apostrophes for string literals',
+    ( 'Use quotes instead of apostrophes for string literals',
       'bool', False ),
       'SINGLE_QUOTED_STRINGS' :
-    ( 'If true, use apostrophes instead of quotes for string literals',
+    ( 'Use apostrophes instead of quotes for string literals',
       'bool', False ),
       'RECODE_STRINGS' :
-    ( "If true, try to decode strings",
+    ( "Try to decode strings",
       'bool', False ),
       'OVERRIDE_NEWLINE' :
     ( "How the newline sequence should appear.\n" \
@@ -110,32 +110,31 @@ TIDY_SETTINGS = { \
       "output newline sequence may be specified here.",
       "string", None ),
       'CAN_SPLIT_STRINGS' :
-    ( 'If true, longer strings will be split',
+    ( 'Split longer strings',
       'bool', False ),
       'DOC_TAB_REPLACEMENT' :
     ( 'This literal replaces tab characters in doc strings and comments',
       'string', '    ' ),
       'KEEP_UNASSIGNED_CONSTANTS' :
-    ( "Optionally preserve unassigned constants so that code to be tidied " \
-      "may contain blocks of commented-out lines that have been no-op'ed " \
-      "with leading and trailing triple quotes. Python scripts may declare " \
-      "constants without assigning them to a variables, but PythonTidy " \
+    ( "Preserve unassigned constants so that code to be tidied\n" \
+      "may contain blocks of commented-out lines that have been no-op'ed\n" \
+      "with leading and trailing triple quotes. Python scripts may declare\n" \
+      "constants without assigning them to a variables, but PythonTidy\n" \
       "considers this wasteful and normally elides them.",
       'bool', False ),
       'PARENTHESIZE_TUPLE_DISPLAY' :
-    ( "Optionally omit parentheses around tuples, which are superfluous " \
-      "after all. Normal PythonTidy behavior will be still to include them " \
-      "as a sort of tuple display analogous to list displays, dict " \
+    ( "Omit parentheses around tuples, which are superfluous\n" \
+      "after all. Normal PythonTidy behavior will be still to include them\n" \
+      "as a sort of tuple display analogous to list displays, dict\n" \
       "displays, and yet-to-come set displays.",
       'bool', True ),
       'JAVA_STYLE_LIST_DEDENT' :
-    ( "When PythonTidy splits longer lines because MAX_SEPS " \
-      "are exceeded, the statement normally is closed before the margin is " \
-      "restored. The closing bracket, brace, or parenthesis is placed at the " \
-      "current indent level. This looks ugly to \"C\" programmers. When " \
-      "JAVA_STYLE_LIST_DEDENT is True, the closing bracket, brace, or " \
-      "parenthesis is brought back left to the indent level of the enclosing " \
-      "statement.",
+    ( "When PythonTidy splits longer lines, the statement normally is\n" \
+      "closed before the margin is restored. The closing bracket, brace,\n" \
+      "or parenthesis is placed at the current indent level. This looks\n" \
+      "ugly to \"C\" programmers. If this option is checked, the closing\n" \
+      "bracket, brace, or parenthesis is brought back left to the indent\n" \
+      "level of the enclosing statement.",
       'bool', False ),
       'INDENTATION' :
     ( 'String used to indent lines',

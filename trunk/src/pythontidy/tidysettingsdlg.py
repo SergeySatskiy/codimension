@@ -25,7 +25,7 @@
 
 from PyQt4.QtCore                import Qt, SIGNAL
 from PyQt4.QtGui                 import QDialog, QDialogButtonBox, \
-                                        QVBoxLayout, QLabel, \
+                                        QVBoxLayout, QLabel, QFontMetrics, \
                                         QLineEdit, QHBoxLayout, \
                                         QGridLayout, QTextEdit, QCheckBox, \
                                         QGroupBox, QSizePolicy, QRadioButton
@@ -47,7 +47,7 @@ class TidySettingsDialog( QDialog ):
     def __createLayout( self ):
         """ Creates the dialog layout """
 
-        self.resize( 600, 300 )
+        self.resize( 700, 300 )
         self.setSizeGripEnabled( True )
 
         layout = QVBoxLayout( self )
@@ -75,20 +75,20 @@ class TidySettingsDialog( QDialog ):
         self.connect( self.__assignmentEdit,
                       SIGNAL( "textChanged(const QString &)" ),
                       self.__validate )
-        gridLayout.addWidget( assignmentLabel, 1, 0, 1, 1 )
-        gridLayout.addWidget( self.__assignmentEdit, 1, 1, 1, 1 )
+        gridLayout.addWidget( assignmentLabel, 0, 3, 1, 1 )
+        gridLayout.addWidget( self.__assignmentEdit, 0, 4, 1, 1 )
         self.__assignmentEdit.setFont( font )
 
         # Function parameters assignment
-        funcAssignLabel = QLabel( "Function params assignment" )
+        funcAssignLabel = QLabel( "Function params\nassignment" )
         self.__funcAssignEdit = QLineEdit()
         self.__funcAssignEdit.setText( self.__settings.settings[ "FUNCTION_PARAM_ASSIGNMENT" ] )
         self.__funcAssignEdit.setToolTip( self.__settings.getDescription( "FUNCTION_PARAM_ASSIGNMENT" ) )
         self.connect( self.__funcAssignEdit,
                       SIGNAL( "textChanged(const QString &)" ),
                       self.__validate )
-        gridLayout.addWidget( funcAssignLabel, 2, 0, 1, 1 )
-        gridLayout.addWidget( self.__funcAssignEdit, 2, 1, 1, 1 )
+        gridLayout.addWidget( funcAssignLabel, 1, 0, 1, 1 )
+        gridLayout.addWidget( self.__funcAssignEdit, 1, 1, 1, 1 )
         self.__funcAssignEdit.setFont( font )
 
         # Dictionary separator
@@ -99,8 +99,8 @@ class TidySettingsDialog( QDialog ):
         self.connect( self.__dictSepEdit,
                       SIGNAL( "textChanged(const QString &)" ),
                       self.__validate )
-        gridLayout.addWidget( dictSepLabel, 3, 0, 1, 1 )
-        gridLayout.addWidget( self.__dictSepEdit, 3, 1, 1, 1 )
+        gridLayout.addWidget( dictSepLabel, 1, 3, 1, 1 )
+        gridLayout.addWidget( self.__dictSepEdit, 1, 4, 1, 1 )
         self.__dictSepEdit.setFont( font )
 
         # Slice separator
@@ -111,8 +111,8 @@ class TidySettingsDialog( QDialog ):
         self.connect( self.__sliceSepEdit,
                       SIGNAL( "textChanged(const QString &)" ),
                       self.__validate )
-        gridLayout.addWidget( sliceSepLabel, 4, 0, 1, 1 )
-        gridLayout.addWidget( self.__sliceSepEdit, 4, 1, 1, 1 )
+        gridLayout.addWidget( sliceSepLabel, 2, 0, 1, 1 )
+        gridLayout.addWidget( self.__sliceSepEdit, 2, 1, 1, 1 )
         self.__sliceSepEdit.setFont( font )
 
         # Interpreter
@@ -123,8 +123,8 @@ class TidySettingsDialog( QDialog ):
         self.connect( self.__inEdit,
                       SIGNAL( "textChanged(const QString &)" ),
                       self.__validate )
-        gridLayout.addWidget( inLabel, 5, 0, 1, 1 )
-        gridLayout.addWidget( self.__inEdit, 5, 1, 1, 1 )
+        gridLayout.addWidget( inLabel, 2, 3, 1, 1 )
+        gridLayout.addWidget( self.__inEdit, 2, 4, 1, 1 )
         self.__inEdit.setFont( font )
 
         # Coding spec
@@ -135,104 +135,112 @@ class TidySettingsDialog( QDialog ):
         self.connect( self.__outCodingEdit,
                       SIGNAL( "textChanged(const QString &)" ),
                       self.__validate )
-        gridLayout.addWidget( codingLabel, 6, 0, 1, 1 )
-        gridLayout.addWidget( self.__outCodingEdit, 6, 1, 1, 1 )
+        gridLayout.addWidget( codingLabel, 3, 0, 1, 1 )
+        gridLayout.addWidget( self.__outCodingEdit, 3, 1, 1, 1 )
         self.__outCodingEdit.setFont( font )
 
         # Src coding comment
-        srcCodingLabel = QLabel( "File encoding comment" )
+        srcCodingLabel = QLabel( "File encoding\ncomment" )
         self.__srcCodingEdit = QLineEdit()
         self.__srcCodingEdit.setText( self.__settings.settings[ "CODING_SPEC" ] )
         self.__srcCodingEdit.setToolTip( self.__settings.getDescription( "CODING_SPEC" ) )
         self.connect( self.__srcCodingEdit,
                       SIGNAL( "textChanged(const QString &)" ),
                       self.__validate )
-        gridLayout.addWidget( srcCodingLabel, 7, 0, 1, 1 )
-        gridLayout.addWidget( self.__srcCodingEdit, 7, 1, 1, 1 )
+        gridLayout.addWidget( srcCodingLabel, 3, 3, 1, 1 )
+        gridLayout.addWidget( self.__srcCodingEdit, 3, 4, 1, 1 )
         self.__srcCodingEdit.setFont( font )
 
+        layout.addLayout( gridLayout )
+
+
         # Boilerplate
-        boilLabel = QLabel( "Boilerplate" )
+        boilLabel = QLabel( "Boilerplate  " )
+        boilLabel.setAlignment( Qt.AlignTop )
         self.__boilEdit = QTextEdit()
         self.__boilEdit.setPlainText( self.__settings.settings[ "BOILERPLATE" ] )
         self.__boilEdit.setToolTip( self.__settings.getDescription( "BOILERPLATE" ) )
         self.__boilEdit.setTabChangesFocus( True )
         self.__boilEdit.setAcceptRichText( False )
+        self.__boilEdit.setFont( font )
         self.connect( self.__boilEdit,
                       SIGNAL( "textChanged()" ),
                       self.__validate )
-        gridLayout.addWidget( boilLabel, 8, 0, 1, 1 )
-        gridLayout.addWidget( self.__boilEdit, 8, 1, 1, 1 )
-        self.__boilEdit.setFont( font )
+        boilLayout = QHBoxLayout()
+        boilLayout.addWidget( boilLabel )
+        boilLayout.addWidget( self.__boilEdit )
+        layout.addLayout( boilLayout )
 
-        layout.addLayout( gridLayout )
 
 
         # Now check boxes and radio buttons
+        cbGridLayout = QGridLayout()
         self.__keepBlanks = QCheckBox( "Keep blank lines" )
         self.__keepBlanks.setChecked( self.__settings.settings[ "KEEP_BLANK_LINES" ] )
         self.__keepBlanks.setToolTip( self.__settings.getDescription( "KEEP_BLANK_LINES" ) )
-        layout.addWidget( self.__keepBlanks )
+        cbGridLayout.addWidget( self.__keepBlanks, 0, 0, 1, 1 )
 
         self.__addBlanks = QCheckBox( "Add blank lines around comments" )
         self.__addBlanks.setChecked( self.__settings.settings[ "ADD_BLANK_LINES_AROUND_COMMENTS" ] )
         self.__addBlanks.setToolTip( self.__settings.getDescription( "ADD_BLANK_LINES_AROUND_COMMENTS" ) )
-        layout.addWidget( self.__addBlanks )
+        cbGridLayout.addWidget( self.__addBlanks, 0, 2, 1, 1 )
 
         self.__justifyDoc = QCheckBox( "Left justify doc strings" )
         self.__justifyDoc.setChecked( self.__settings.settings[ "LEFTJUST_DOC_STRINGS" ] )
         self.__justifyDoc.setToolTip( self.__settings.getDescription( "LEFTJUST_DOC_STRINGS" ) )
-        layout.addWidget( self.__justifyDoc )
+        cbGridLayout.addWidget( self.__justifyDoc, 1, 0, 1, 1 )
 
         self.__wrapDoc = QCheckBox( "Wrap long doc strings" )
         self.__wrapDoc.setChecked( self.__settings.settings[ "WRAP_DOC_STRINGS" ] )
         self.__wrapDoc.setToolTip( self.__settings.getDescription( "WRAP_DOC_STRINGS" ) )
-        layout.addWidget( self.__wrapDoc )
+        cbGridLayout.addWidget( self.__wrapDoc, 1, 2, 1, 1 )
 
         self.__recodeStrings = QCheckBox( "Try to decode strings" )
         self.__recodeStrings.setChecked( self.__settings.settings[ "RECODE_STRINGS" ] )
         self.__recodeStrings.setToolTip( self.__settings.getDescription( "RECODE_STRINGS" ) )
-        layout.addWidget( self.__recodeStrings )
+        cbGridLayout.addWidget( self.__recodeStrings, 2, 0, 1, 1 )
 
         self.__splitStrings = QCheckBox( "Split long strings" )
         self.__splitStrings.setChecked( self.__settings.settings[ "CAN_SPLIT_STRINGS" ] )
         self.__splitStrings.setToolTip( self.__settings.getDescription( "CAN_SPLIT_STRINGS" ) )
-        layout.addWidget( self.__splitStrings )
+        cbGridLayout.addWidget( self.__splitStrings, 2, 2, 1, 1 )
 
         self.__keepUnassignedConst = QCheckBox( "Keep unassigned constants" )
         self.__keepUnassignedConst.setChecked( self.__settings.settings[ "KEEP_UNASSIGNED_CONSTANTS" ] )
         self.__keepUnassignedConst.setToolTip( self.__settings.getDescription( "KEEP_UNASSIGNED_CONSTANTS" ) )
-        layout.addWidget( self.__keepUnassignedConst )
+        cbGridLayout.addWidget( self.__keepUnassignedConst, 3, 0, 1, 1 )
 
         self.__parenTuple = QCheckBox( "Parenthesize tuple display" )
         self.__parenTuple.setChecked( self.__settings.settings[ "PARENTHESIZE_TUPLE_DISPLAY" ] )
         self.__parenTuple.setToolTip( self.__settings.getDescription( "PARENTHESIZE_TUPLE_DISPLAY" ) )
-        layout.addWidget( self.__parenTuple )
+        cbGridLayout.addWidget( self.__parenTuple, 3, 2, 1, 1 )
 
         self.__javaListDedent = QCheckBox( "Java style list dedent" )
         self.__javaListDedent.setChecked( self.__settings.settings[ "JAVA_STYLE_LIST_DEDENT" ] )
         self.__javaListDedent.setToolTip( self.__settings.getDescription( "JAVA_STYLE_LIST_DEDENT" ) )
-        layout.addWidget( self.__javaListDedent )
+        cbGridLayout.addWidget( self.__javaListDedent, 4, 0, 1, 1 )
+
+        layout.addLayout( cbGridLayout )
 
 
-        # Quotas radio buttons
-        quotasGroupbox = QGroupBox( "Quotas" )
+        # Quotes radio buttons
+        quotesGroupbox = QGroupBox( "Quotes" )
         sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Preferred )
         sizePolicy.setHorizontalStretch( 0 )
         sizePolicy.setVerticalStretch( 0 )
         sizePolicy.setHeightForWidth( \
-                        quotasGroupbox.sizePolicy().hasHeightForWidth() )
-        quotasGroupbox.setSizePolicy( sizePolicy )
+                        quotesGroupbox.sizePolicy().hasHeightForWidth() )
+        quotesGroupbox.setSizePolicy( sizePolicy )
 
-        layoutQG = QVBoxLayout( quotasGroupbox )
+        layoutQG = QVBoxLayout( quotesGroupbox )
         self.__use1RButton = QRadioButton( "Use apostrophes instead of quotes for string literals",
-                                           quotasGroupbox )
+                                           quotesGroupbox )
         layoutQG.addWidget( self.__use1RButton )
         self.__use2RButton = QRadioButton( "Use quotes instead of apostrophes for string literals",
-                                           quotasGroupbox )
+                                           quotesGroupbox )
         layoutQG.addWidget( self.__use2RButton )
         self.__useAsIsRButton = QRadioButton( "Do not make changes",
-                                              quotasGroupbox )
+                                              quotesGroupbox )
         layoutQG.addWidget( self.__useAsIsRButton )
         use1 = self.__settings.settings[ "SINGLE_QUOTED_STRINGS" ]
         use2 = self.__settings.settings[ "DOUBLE_QUOTED_STRINGS" ]
@@ -242,8 +250,14 @@ class TidySettingsDialog( QDialog ):
             self.__use2RButton.setChecked( True )
         else:
             self.__useAsIsRButton.setChecked( True )
-        layout.addWidget( quotasGroupbox )
+        layout.addWidget( quotesGroupbox )
 
+        fontMetrics = QFontMetrics( font )
+        editWidth = fontMetrics.width( "iso8859-10  " ) + 20
+        self.__colsEdit.setFixedWidth( editWidth )
+        self.__funcAssignEdit.setFixedWidth( editWidth )
+        self.__sliceSepEdit.setFixedWidth( editWidth )
+        self.__outCodingEdit.setFixedWidth( editWidth )
 
         # Buttons at the bottom
         buttonBox = QDialogButtonBox( self )
@@ -251,9 +265,11 @@ class TidySettingsDialog( QDialog ):
         buttonBox.setStandardButtons( QDialogButtonBox.Cancel )
         self.__resetButton = buttonBox.addButton( "Reset to Default",
                                                   QDialogButtonBox.ActionRole )
+        self.__resetButton.setToolTip( "Mostly as recommended by PEP 8 / PEP 308" )
         self.connect( self.__resetButton, SIGNAL( 'clicked()' ), self.__reset )
         self.__tidyButton = buttonBox.addButton( "Tidy",
                                                  QDialogButtonBox.ActionRole )
+        self.__tidyButton.setToolTip( "Save settings and run PythonTidy" )
         self.__tidyButton.setDefault( True )
         self.connect( self.__tidyButton, SIGNAL( 'clicked()' ),
                       self.__saveAndAccept )
