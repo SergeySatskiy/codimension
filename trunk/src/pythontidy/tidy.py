@@ -135,12 +135,12 @@ class PythonTidySetting:
             config.read( fileName )
             for key in TIDY_SETTINGS:
                 try:
-                    value = conf.get( "general", key ).strip()
+                    value = config.get( "general", key ).strip()
                     typeName = self.__getTypeName( key )
                     if typeName == 'int':
                         self.settings[ key ] = int( value )
                     elif typeName == 'bool':
-                        self.settings[ key ] = bool( value )
+                        self.settings[ key ] = value.upper() == "TRUE"
                     elif typeName == 'string':
                         value = value[ 1 : -1 ]
                         value = value.replace( '<CR><LF>', '\n' ) \
