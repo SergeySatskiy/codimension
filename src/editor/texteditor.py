@@ -1963,8 +1963,13 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     def onPythonTidy( self ):
         " Triggered when python tidy should be called "
         tidy = PythonTidyDriver()
-        result = tidy.run( str( self.__editor.text() ),
-                           getPythonTidySetting() )
+        try:
+            result = tidy.run( str( self.__editor.text() ),
+                               getPythonTidySetting() )
+        except Exception, exc:
+            logging.error( str( exc ) )
+            return
+
         diff = tidy.getDiff()
         if diff is None:
             GlobalData().mainWindow.showStatusBarMessage( \
@@ -1986,8 +1991,13 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             return
 
         tidy = PythonTidyDriver()
-        result = tidy.run( str( self.__editor.text() ),
-                           tidySettings )
+        try:
+            result = tidy.run( str( self.__editor.text() ),
+                               tidySettings )
+        except Exception, exc:
+            logging.error( str( exc ) )
+            return
+
         diff = tidy.getDiff()
         if diff is None:
             GlobalData().mainWindow.showStatusBarMessage( \
