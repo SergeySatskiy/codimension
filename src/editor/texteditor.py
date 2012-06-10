@@ -1745,7 +1745,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.pythonTidyButton = QToolButton( self )
         self.pythonTidyButton.setIcon( \
                       PixmapCache().getIcon( 'pythontidy.png' ) )
-        self.pythonTidyButton.setToolTip( 'Python tidy' )
+        self.pythonTidyButton.setToolTip( 'Python tidy (code must be syntactically valid)' )
         self.pythonTidyButton.setPopupMode( QToolButton.DelayedPopup )
         self.pythonTidyButton.setMenu( pythonTidyMenu )
         self.pythonTidyButton.setFocusPolicy( Qt.NoFocus )
@@ -1962,10 +1962,16 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def onPythonTidy( self ):
         " Triggered when python tidy should be called "
+        text = str( self.__editor.text() )
+        info = getBriefModuleInfoFromMemory( text )
+        if info.isOK == False:
+            logging.warning( "The python code is syntactically incorrect. " \
+                             "Fix it first and then run PythonTidy." )
+            return
+
         tidy = PythonTidyDriver()
         try:
-            result = tidy.run( str( self.__editor.text() ),
-                               getPythonTidySetting() )
+            result = tidy.run( text, getPythonTidySetting() )
         except Exception, exc:
             logging.error( str( exc ) )
             return
@@ -1984,6 +1990,13 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def __onPythonTidySettings( self ):
         " Triggered when a python tidy settings are requested "
+        text = str( self.__editor.text() )
+        info = getBriefModuleInfoFromMemory( text )
+        if info.isOK == False:
+            logging.warning( "The python code is syntactically incorrect. " \
+                             "Fix it first and then run PythonTidy." )
+            return
+
         tidySettings = getPythonTidySetting()
         settingsFile = getPythonTidySettingFileName()
         dlg = TidySettingsDialog( tidySettings, settingsFile, self )
