@@ -78,7 +78,8 @@ from debugger.console           import DebuggerConsole
 from debugger.context           import DebuggerContext
 from debugger.modifiedunsaved   import ModifiedUnsavedDialog
 from debugger.main              import CodimensionDebugger
-
+from htmltabwidget              import HTMLTabWidget
+from thirdparty.diff2html.diff2html import parse_from_memory
 
 class EditorsManagerWidget( QWidget ):
     " Tab widget which has tabs with editors and viewers "
@@ -355,6 +356,13 @@ class CodimensionMainWindow( QMainWindow ):
                                      PixmapCache().getIcon( 'helpviewer.png' ),
                                      'Context help' )
         self.__bottomSideBar.setTabToolTip( 5, "Ctrl+F1 in python file" )
+
+        # Create diff viewer
+        self.__diffViewer = HTMLTabWidget()
+        self.__bottomSideBar.addTab( self.__diffViewer,
+                                     PixmapCache().getIcon( 'diffviewer.png' ),
+                                     'Diff viewer' )
+        self.__bottomSideBar.setTabToolTip( 6, 'Diff viewer' )
 
         # Create the debugger console
         self.__debuggerConsole = DebuggerConsole()
@@ -1671,6 +1679,19 @@ class CodimensionMainWindow( QMainWindow ):
         self.__bottomSideBar.raise_()
 
         self.__tagHelpViewer.display( calltip, docstring )
+        return
+
+    def showDiff( self, diff, tooltip = "" ):
+        " Shows the diff "
+
+        self.__bottomSideBar.show()
+        self.__bottomSideBar.setCurrentWidget( self.__diffViewer )
+        self.__bottomSideBar.raise_()
+
+        try:
+            self.__diffViewer.setHTML( parse_from_memory( diff, False, True ) )
+        except Exception, exc:
+            logging.error( "Error showing diff: " + str( exc ) )
         return
 
     def __onPylintTooltip( self, tooltip ):
