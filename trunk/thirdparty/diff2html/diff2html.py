@@ -46,7 +46,7 @@ html_hdr = """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 		<meta name="generator" content="diff2html.rb" />
 		<title>HTML Diff</title>
 		<style>
-			table { border:0px; border-collapse:collapse; width: 100%; font-size:0.75em; font-family: Lucida Console, monospace }
+			table { border:0px; border-collapse:collapse; width: 100%; font-size: 100%; font-family: Monospace }
 			td.line { color:#8080a0 }
 			th { background: black; color: white }
 			tr.diffunmodified td { background: #D0D0E0 }
