@@ -25,6 +25,7 @@
 
 import os.path, logging, subprocess
 from subprocess import Popen
+from datetime import datetime
 import lexer
 from scintillawrap              import ScintillaWrapper
 from PyQt4.QtCore               import Qt, QFileInfo, SIGNAL, QSize, \
@@ -1984,8 +1985,10 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         # There are changes, so replace the text and tell about the changes
         self.replaceAll( result )
+        timestamp = datetime.now().strftime( "%Y-%m-%d %H:%M:%S" )
         diffAsText = '\n'.join( list( diff ) )
-        diffAsText = diffAsText.replace( " --- ", " --- " + self.getShortName() )
+        diffAsText = diffAsText.replace( "--- ", "--- " + self.getShortName(), 1 )
+        diffAsText = diffAsText.replace( "+++ ", "+++ generated at " + timestamp, 1 )
         GlobalData().mainWindow.showDiff( diffAsText, self.getShortName() )
         return
 
@@ -2020,8 +2023,10 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         # There are changes, so replace the text and tell about the changes
         self.replaceAll( result )
+        timestamp = datetime.now().strftime( "%Y-%m-%d %H:%M:%S" )
         diffAsText = '\n'.join( list( diff ) )
-        diffAsText = diffAsText.replace( " --- ", " --- " + self.getShortName() )
+        diffAsText = diffAsText.replace( "--- ", "--- " + self.getShortName(), 1 )
+        diffAsText = diffAsText.replace( "+++ ", "+++ generated at " + timestamp, 1 )
         GlobalData().mainWindow.showDiff( diffAsText, self.getShortName() )
         return
 
