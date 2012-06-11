@@ -1984,8 +1984,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         # There are changes, so replace the text and tell about the changes
         self.replaceAll( result )
-        logging.info( "PythonTidy diff for " + self.getShortName() + "\n" + \
-                      '\n'.join( list( diff ) ) )
+        GlobalData().mainWindow.showDiff( '\n'.join( list( diff ) ),
+                                          self.getShortName() )
         return
 
     def __onPythonTidySettings( self ):
@@ -2019,8 +2019,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         # There are changes, so replace the text and tell about the changes
         self.replaceAll( result )
-        logging.info( "PythonTidy diff for " + self.getShortName() + "\n" + \
-                      '\n'.join( list( diff ) ) )
+        GlobalData().mainWindow.showDiff( '\n'.join( list( diff ) ),
+                                          self.getShortName() )
         return
 
     def replaceAll( self, newText ):
