@@ -46,7 +46,7 @@ html_hdr = """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 		<meta name="generator" content="diff2html.rb" />
 		<title>HTML Diff</title>
 		<style>
-			table { border:0px; border-collapse:collapse; width: 100%; font-size: 100%; font-family: Monospace }
+			table { border:0px; border-collapse:collapse; width: 98%; font-size: 100%; font-family: Monospace }
 			td.line { color:#8080a0 }
 			th { background: black; color: white }
 			tr.diffunmodified td { background: #D0D0E0 }
@@ -60,7 +60,7 @@ html_hdr = """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 			tr.diffseparator td {}
 		</style>
 		</head>
-		<body>
+		<body bgcolor="#ffffe6">
 """
 
 html_footer = """
@@ -68,7 +68,7 @@ html_footer = """
 """
 
 table_hdr = """
-		<table class="diff">
+		<table cellpadding="2px" align="center" class="diff">
 """
 
 table_footer = """
@@ -304,13 +304,13 @@ def parse_input(inputfile, outputfile,
         if l == "":
             break
 
-        m = re.match('^--- ([^\s]*)', l)
+        m = re.match('^--- (.*)', l)
         if m:
             empty_buffer(outputfile)
             file1 = m.groups()[0]
             while True:
                 l = inputfile.readline()
-                m = re.match('^\+\+\+ ([^\s]*)', l)
+                m = re.match('^\+\+\+ (.*)', l)
                 if m:
                     file2 = m.groups()[0]
                     break
