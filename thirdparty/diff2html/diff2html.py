@@ -191,12 +191,14 @@ def convert(s, linesize=0, ponct=0):
             t += c
             i += 1
 
-        if linesize and (WORDBREAK.count(c) == 1):
-            t += '&#8203;'
-            i = 0
-        if linesize and i > linesize:
-            i = 0
-            t += "&#8203;"
+        # Some versions of QT have a bug which display 'space of zero width'
+        # improperly, so I get rid of this.
+        #if linesize and (WORDBREAK.count(c) == 1):
+        #    t += '&#8203;'
+        #    i = 0
+        #if linesize and i > linesize:
+        #    i = 0
+        #    t += "&#8203;"
 
     return t
 
