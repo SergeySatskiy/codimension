@@ -1742,7 +1742,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
                                 'Set python tidy parameters' )
         self.connect( pythonTidyDlgAct, SIGNAL( 'triggered()' ),
-                      self.__onPythonTidySettings )
+                      self.onPythonTidySettings )
         self.pythonTidyButton = QToolButton( self )
         self.pythonTidyButton.setIcon( \
                       PixmapCache().getIcon( 'pythontidy.png' ) )
@@ -1972,8 +1972,11 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         tidy = PythonTidyDriver()
         try:
+            QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
             result = tidy.run( text, getPythonTidySetting() )
+            QApplication.restoreOverrideCursor()
         except Exception, exc:
+            QApplication.restoreOverrideCursor()
             logging.error( str( exc ) )
             return
 
@@ -1992,7 +1995,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         GlobalData().mainWindow.showDiff( diffAsText, self.getShortName() )
         return
 
-    def __onPythonTidySettings( self ):
+    def onPythonTidySettings( self ):
         " Triggered when a python tidy settings are requested "
         text = str( self.__editor.text() )
         info = getBriefModuleInfoFromMemory( text )
@@ -2009,9 +2012,12 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         tidy = PythonTidyDriver()
         try:
+            QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
             result = tidy.run( str( self.__editor.text() ),
                                tidySettings )
+            QApplication.restoreOverrideCursor()
         except Exception, exc:
+            QApplication.restoreOverrideCursor()
             logging.error( str( exc ) )
             return
 
