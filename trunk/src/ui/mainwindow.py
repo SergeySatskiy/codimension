@@ -761,6 +761,15 @@ class CodimensionMainWindow( QMainWindow ):
                                         PixmapCache().getIcon( 'linecounter.png' ),
                                         "L&ine counter for tab",
                                         self.__onTabLineCounter )
+        self.__toolsMenu.addSeparator()
+        self.__tabPythonTidyAct = self.__toolsMenu.addAction( \
+                                        PixmapCache().getIcon( 'pythontidy.png' ),
+                                        'PythonT&idy for tab',
+                                        self.__onTabPythonTidy )
+        self.__tabPythonTidyDlgAct = self.__toolsMenu.addAction( \
+                                        PixmapCache().getIcon( 'detailsdlg.png' ),
+                                        'PythonTi&dy for tab...',
+                                        self.__onTabPythonTidyDlg )
 
         # The Run menu
         self.__runMenu = QMenu( "&Run", self )
@@ -2441,6 +2450,20 @@ class CodimensionMainWindow( QMainWindow ):
         currentWidget.onLineCounter()
         return
 
+    def __onTabPythonTidy( self ):
+        " Triggered when python tidy is requested for a tab "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.onPythonTidy()
+        return
+
+    def __onTabPythonTidyDlg( self ):
+        " Triggered when python tidy with settings is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.onPythonTidySettings()
+        return
+
     def __onTabJumpToDef( self ):
         " Triggered when jump to defenition is requested "
         editorsManager = self.editorsManagerWidget.editorsManager
@@ -2717,6 +2740,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.__tabPylintAct.setEnabled( isPythonBuffer )
         self.__tabPymetricsAct.setEnabled( isPythonBuffer )
         self.__tabLineCounterAct.setEnabled( isPythonBuffer )
+        self.__tabPythonTidyAct.setEnabled( isPythonBuffer )
+        self.__tabPythonTidyDlgAct.setEnabled( isPythonBuffer )
 
         if projectLoaded:
             rcExists = os.path.exists( self.__getPylintRCFileName() )
