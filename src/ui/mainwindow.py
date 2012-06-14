@@ -890,6 +890,10 @@ class CodimensionMainWindow( QMainWindow ):
                                         PixmapCache().getIcon( 'helpviewer.png' ),
                                         'Activate context &help tab' )
         self.__contextHelpBarAct.setData( QVariant( 'contexthelp' ) )
+        self.__diffBarAct = self.__bottomSideBarMenu.addAction( \
+                                        PixmapCache().getIcon( 'diffviewer.png' ),
+                                        'Activate &diff tab' )
+        self.__diffBarAct.setData( QVariant( 'diff' ) )
         self.__bottomSideBarMenu.addSeparator()
         self.__hideBottomSideBarAct = self.__bottomSideBarMenu.addAction( \
                                         PixmapCache().getIcon( "" ),
@@ -2426,6 +2430,10 @@ class CodimensionMainWindow( QMainWindow ):
         elif name == "contexthelp":
             self.__bottomSideBar.show()
             self.__bottomSideBar.setCurrentWidget( self.__tagHelpViewer )
+            self.__bottomSideBar.raise_()
+        elif name == 'diff':
+            self.__bottomSideBar.show()
+            self.__bottomSideBar.setCurrentWidget( self.__diffViewer )
             self.__bottomSideBar.raise_()
         return
 
