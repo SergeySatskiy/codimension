@@ -80,6 +80,7 @@ class HTMLTabWidget( MainWindowTabWidgetBase, QWidget ):
 
         self.__fileName = ""
         self.__shortName = ""
+        self.__encoding = "N/A"
         return
 
     def __onEsc( self ):
@@ -92,6 +93,10 @@ class HTMLTabWidget( MainWindowTabWidgetBase, QWidget ):
         self.__editor.setHtml( content )
         self.__connectPage()
         return
+
+    def getHTML( self ):
+        " Provides the currently shown HTML "
+        return self.__editor.page().mainFrame().toHtml()
 
     def loadFormFile( self, path ):
         " Loads the content from the given file "
@@ -162,10 +167,11 @@ class HTMLTabWidget( MainWindowTabWidgetBase, QWidget ):
 
     def getEncoding( self ):
         " Tells the content encoding "
-        return "N/A"
+        return self.__encoding
 
     def setEncoding( self, newEncoding ):
-        " Sets the encoding - not applicable for HTML viewer "
+        " Sets the encoding - used for Diff files "
+        self.__encoding = newEncoding
         return
 
     def getShortName( self ):

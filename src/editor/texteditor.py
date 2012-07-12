@@ -1990,9 +1990,14 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.replaceAll( result )
         timestamp = datetime.now().strftime( "%Y-%m-%d %H:%M:%S" )
         diffAsText = '\n'.join( list( diff ) )
-        diffAsText = diffAsText.replace( "--- ", "--- " + self.getShortName(), 1 )
-        diffAsText = diffAsText.replace( "+++ ", "+++ generated at " + timestamp, 1 )
-        GlobalData().mainWindow.showDiff( diffAsText, self.getShortName() )
+        diffAsText = diffAsText.replace( "--- ",
+                                         "--- " + self.getShortName(), 1 )
+        diffAsText = diffAsText.replace( "+++ ",
+                                         "+++ generated at " + timestamp, 1 )
+        GlobalData().mainWindow.showDiff( diffAsText,
+                                          "PythonTidy diff for " + \
+                                          self.getShortName() + \
+                                          " generated at " + timestamp )
         return
 
     def onPythonTidySettings( self ):
@@ -2031,9 +2036,14 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.replaceAll( result )
         timestamp = datetime.now().strftime( "%Y-%m-%d %H:%M:%S" )
         diffAsText = '\n'.join( list( diff ) )
-        diffAsText = diffAsText.replace( "--- ", "--- " + self.getShortName(), 1 )
-        diffAsText = diffAsText.replace( "+++ ", "+++ generated at " + timestamp, 1 )
-        GlobalData().mainWindow.showDiff( diffAsText, self.getShortName() )
+        diffAsText = diffAsText.replace( "--- ",
+                                         "--- " + self.getShortName(), 1 )
+        diffAsText = diffAsText.replace( "+++ ",
+                                         "+++ generated at " + timestamp, 1 )
+        GlobalData().mainWindow.showDiff( diffAsText,
+                                          "PythonTidy diff for " + \
+                                          self.getShortName() + \
+                                          " generated at " + timestamp )
         return
 
     def replaceAll( self, newText ):
