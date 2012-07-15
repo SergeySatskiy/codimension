@@ -555,7 +555,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.__projectMenu, SIGNAL( "aboutToShow()" ),
                       self.__prjAboutToShow )
         self.__newProjectAct = self.__projectMenu.addAction( \
-                                        PixmapCache().getIcon( 'project.png' ),
+                                        PixmapCache().getIcon( 'createproject.png' ),
                                         "&New project", self.__createNewProject,
                                         'Ctrl+Shift+N' )
         self.__openProjectAct = self.__projectMenu.addAction( \
@@ -949,12 +949,6 @@ class CodimensionMainWindow( QMainWindow ):
     def __createToolBar( self ):
         """ creates the buttons bar """
 
-        self.createProjectButton = QAction( \
-                                PixmapCache().getIcon( 'createproject.png' ),
-                                'Create new project', self )
-        self.connect( self.createProjectButton, SIGNAL( "triggered()" ),
-                      self.__createNewProject )
-
         # Imports diagram button and its menu
         importsMenu = QMenu( self )
         importsDlgAct = importsMenu.addAction( \
@@ -1203,10 +1197,9 @@ class CodimensionMainWindow( QMainWindow ):
         toolbar.setMovable( False )
         toolbar.setAllowedAreas( Qt.TopToolBarArea )
         toolbar.setIconSize( QSize( 26, 26 ) )
-        toolbar.addAction( self.createProjectButton )
-        toolbar.addSeparator()
         toolbar.addAction( packageDiagramButton )
         toolbar.addWidget( self.importsDiagramButton )
+        toolbar.addSeparator()
         toolbar.addWidget( self.runProjectButton )
         toolbar.addWidget( self.debugProjectButton )
         toolbar.addAction( applicationDiagramButton )
@@ -1235,6 +1228,7 @@ class CodimensionMainWindow( QMainWindow ):
         toolbar.addAction( self.__dbgSync )
         # Debugger part end
         toolbar.addWidget( spacer )
+        toolbar.addSeparator()
         toolbar.addWidget( editorSettingsButton )
 
         self.addToolBar( toolbar )
@@ -2154,7 +2148,6 @@ class CodimensionMainWindow( QMainWindow ):
         self.sbWritable.setVisible( not newState )
 
         # Toolbar buttons
-        self.createProjectButton.setEnabled( not newState )
         self.__dbgSeparator1.setVisible( newState )
         self.__dbgBreak.setVisible( newState )
         self.__dbgGo.setVisible( newState )
