@@ -1879,6 +1879,8 @@ class EditorsManager( QTabWidget ):
             return True
         if widget.getType() == MainWindowTabWidgetBase.HTMLViewer:
             return widget.getViewer().selectedText() != ""
+        if widget.getType() == MainWindowTabWidgetBase.GeneratedDiagram:
+            return True
         return False
 
     def onCopy( self ):
@@ -1891,5 +1893,9 @@ class EditorsManager( QTabWidget ):
             text = widget.getViewer().selectedText()
             if text != "":
                 QApplication.clipboard().setText( text )
+            return
+        if widget.getType() == MainWindowTabWidgetBase.GeneratedDiagram:
+            widget.onCopy()
+            return
         return
 

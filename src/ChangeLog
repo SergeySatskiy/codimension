@@ -2,6 +2,7 @@
 
 * New feature: PythonTidy integration and diff viewers
 * New Project button is removed from the main window toolbar
+* New feature: copying a diagram to the clipboard
 
 
 2012 XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
