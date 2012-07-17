@@ -27,10 +27,10 @@ import math
 from PyQt4.QtGui                import QGraphicsRectItem, QGraphicsPathItem, \
                                        QWidget, QGraphicsView, QFont, QPen, \
                                        QToolBar, QHBoxLayout, QColor, \
-                                       QAction, QGraphicsItem, QPainter, \
+                                       QAction, QGraphicsItem, \
                                        QPainterPath, QGraphicsTextItem, \
                                        QFontMetrics, QStyleOptionGraphicsItem, \
-                                       QPainter, QStyle
+                                       QPainter, QStyle, QImage, QApplication
 from PyQt4.QtCore               import Qt, SIGNAL, QSize, QPointF, QRectF
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.pixmapcache          import PixmapCache
@@ -622,6 +622,20 @@ class ImportDgmTabWidget( QWidget, MainWindowTabWidgetBase ):
     def __onEsc( self ):
         " Triggered when Esc is pressed "
         self.emit( SIGNAL( 'ESCPressed' ) )
+        return
+
+    def onCopy( self ):
+        " Copies the diagram to the exchange buffer "
+        scene = self.__viewer.scene()
+        image = QImage( scene.width(), scene.height(),
+                        QImage.Format_ARGB32_Premultiplied )
+        painter = QPainter( image )
+        # If switched on then rectangles edges will not be sharp
+        # painter.setRenderHint( QPainter.Antialiasing )
+        scene.render( painter )
+        painter.end()
+
+        QApplication.clipboard().setImage( image )
         return
 
 
