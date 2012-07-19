@@ -33,6 +33,7 @@ import os, pwd, socket, datetime, logging
 from utils.project import getProjectProperties
 from itemdelegates import NoOutlineHeightDelegate
 from utils.compatibility import relpath
+from utils.misc import getLocaleDate
 
 
 class ProjectPropertiesDialog( QDialog, object ):
@@ -78,7 +79,7 @@ class ProjectPropertiesDialog( QDialog, object ):
             self.copyrightEdit.setText( "Copyright (c) " + \
                                         self.authorEdit.text() + ", " + \
                                         str( datetime.date.today().year ) )
-            self.creationDateEdit.setText( str( datetime.date.today() ) )
+            self.creationDateEdit.setText( getLocaleDate() )
             self.nameEdit.setFocus()
 
         elif type( project ) == type( "" ):
