@@ -24,7 +24,11 @@
 
 from subprocess import Popen, PIPE
 import os.path, re, tempfile
+import getpass
+import locale
+import datetime
 from globals import GlobalData
+from settings import settingsDir
 
 
 # File name of the template for any new file.
@@ -38,16 +42,48 @@ def splitThousands( value, sep = "'" ):
         return value
     return splitThousands( value[ : -3 ], sep ) + sep + value[ -3 : ]
 
+def getLocaleDate():
+    " Provides locale formatted date "
+    now = datetime.datetime.now()
+    try:
+        date_format = locale.nl_langinfo( locale.D_FMT )
+        return now.strftime( date_format )
+    except:
+        return now.strftime( '%Y-%m-%d' )
+
+def getLocaleTime():
+    " Provides locale formatted time "
+    now = datetime.datetime.now()
+    try:
+        time_format = locale.nl_langinfo( locale.T_FMT )
+        return now.strftime( time_format )
+    except:
+        return now.strftime( '%H:%M:%S' )
+
+def getLocaleDateTime():
+    " Provides locale date time "
+    return getLocaleDate() + " " + getLocaleTime()
+
+
+def getTemplateFileName():
+    " Provides the new file template file name "
+    project = GlobalData().project
+    if project.isLoaded():
+        # Project is loaded - use from the project dir
+        projectDir = os.path.dirname( project.fileName )
+        if not projectDir.endswith( os.path.sep ):
+            projectDir += os.path.sep
+    else:
+        # No project loaded - use from settings
+        projectDir = settingsDir
+    return projectDir + "template.py"
+
+
+
 def getNewFileTemplate():
     " Searches for the template file and fills fields in it "
 
-    projectFile = GlobalData().project.fileName
-    if projectFile == "":
-        return ""
-
-    # Project is currently loaded - search for the template file
-    templateFile = os.path.dirname( projectFile ) + os.path.sep + \
-                   templateFileName
+    templateFile = getTemplateFileName()
     if not os.path.exists( templateFile ):
         return ""
 
@@ -60,39 +96,86 @@ def getNewFileTemplate():
 
     # substitute the fields
     project = GlobalData().project
-    subs = [ ( re.compile( re.escape( '$creationdate' ), re.I ),
-               project.creationDate ),
-             ( re.compile( re.escape( '$author' ), re.I ),
-               project.author ),
-             ( re.compile( re.escape( '$license' ), re.I ),
-               project.license ),
-             ( re.compile( re.escape( '$copyright' ), re.I ),
-               project.copyright ),
-             ( re.compile( re.escape( '$version' ), re.I ),
-               project.version ),
-             ( re.compile( re.escape( '$email' ), re.I ),
-               project.email ) ]
+    projectLoaded = project.isLoaded()
+    if projectLoaded:
+        subs = [ ( re.compile( re.escape( '$projectdate' ), re.I ),
+                   project.creationDate ),
+                 ( re.compile( re.escape( '$author' ), re.I ),
+                   project.author ),
+                 ( re.compile( re.escape( '$license' ), re.I ),
+                   project.license ),
+                 ( re.compile( re.escape( '$copyright' ), re.I ),
+                   project.copyright ),
+                 ( re.compile( re.escape( '$version' ), re.I ),
+                   project.version ),
+                 ( re.compile( re.escape( '$email' ), re.I ),
+                   project.email ) ]
+    else:
+        subs = []
 
-    # description could be multilined so it is a different story
-    descriptionRegexp = re.compile( re.escape( '$description' ), re.I )
-    description = project.description.split( '\n' )
+    # Common substitutions
+    subs.append( ( re.compile( re.escape( '$date' ), re.I ),
+                   getLocaleDate() ) )
+    subs.append( ( re.compile( re.escape( '$time' ), re.I ),
+                   getLocaleTime() ) )
+    subs.append( ( re.compile( re.escape( '$user' ), re.I ),
+                   getpass.getuser() ) )
+
+    if projectLoaded:
+        # description could be multilined so it is a different story
+        descriptionRegexp = re.compile( re.escape( '$description' ), re.I )
+        description = project.description.split( '\n' )
 
     result = []
     for line in content:
         for key, value in subs:
             line = re.sub( key, value, line )
-        # description part
-        match = re.search( descriptionRegexp, line )
-        if match is not None:
-            # description is in the line
-            leadingPart = line[ : match.start() ]
-            trailingPart = line[ match.end() : ]
-            for dline in description:
-                result.append( leadingPart + dline + trailingPart )
+        if projectLoaded:
+            # description part if so
+            match = re.search( descriptionRegexp, line )
+            if match is not None:
+                # description is in the line
+                leadingPart = line[ : match.start() ]
+                trailingPart = line[ match.end() : ]
+                for dline in description:
+                    result.append( leadingPart + dline + trailingPart )
+            else:
+                result.append( line )
         else:
             result.append( line )
 
     return "\n".join( result )
+
+def getDefaultTemplate():
+    " Provides a body (i.e. help) of the default template file "
+    return """\
+#
+# This template will be used when a new file is created.
+#
+# Codimension supports a template file which is used when there is no
+# loaded project plus each project can have its own template.
+# The no project template is stored in the codimension settings directory
+# while individual project templates must be stored in the top project
+# directory. In both cases the template file must be called 'template.py'.
+#
+# The following variables will be replaced with actual values if
+# they are found in the template:
+#
+# $projectdate     Project creation date     (*)
+# $author          Project author            (*)
+# $license         Project license           (*)
+# $copyright       Project copyright string  (*)
+# $version         Project version           (*)
+# $email           Project author e-mail     (*)
+# $description     Project description       (*)
+# $date            Current date
+# $time            Current time
+# $user            Current user name
+#
+# Note: variables marked with (*) are available only for the templates for
+#       individual projects. The values for the variables are taken from
+#       the project properties dialogue.
+#"""
 
 
 def safeRun( commandArgs ):

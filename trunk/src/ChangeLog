@@ -3,6 +3,8 @@
 * New feature: PythonTidy integration and diff viewers
 * New Project button is removed from the main window toolbar
 * New feature: copying a diagram to the clipboard
+* New feature: new file template support for the case when no new
+  project is loaded. UI to create/edit/delete new file templates added.
 
 
 2012 XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>

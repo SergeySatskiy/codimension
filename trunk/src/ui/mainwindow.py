@@ -36,6 +36,7 @@ from PyQt4.QtGui                import QLabel, QToolBar, QWidget, QMessageBox, \
 from fitlabel                   import FitPathLabel
 from utils.globals              import GlobalData
 from utils.project              import CodimensionProject
+from utils.misc                 import getTemplateFileName, getDefaultTemplate
 from sidebar                    import SideBar
 from logviewer                  import LogViewer
 from taghelpviewer              import TagHelpViewer
@@ -1046,6 +1047,36 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.__pylintButton, SIGNAL( 'clicked(bool)' ),
                       self.pylintButtonClicked )
 
+        # Project template button
+        self.__templateMenu = QMenu( self )
+        self.__createTemplateAct = self.__templateMenu.addAction( \
+                                    PixmapCache().getIcon( 'generate.png' ),
+                                    'Create new file template' )
+        self.connect( self.__createTemplateAct, SIGNAL( 'triggered()' ),
+                      self.__onCreateTemplate )
+        self.__editTemplateAct = self.__templateMenu.addAction( \
+                                    PixmapCache().getIcon( 'edit.png' ),
+                                    'Edit new file template' )
+        self.connect( self.__editTemplateAct, SIGNAL( 'triggered()' ),
+                      self.__onEditTemplate )
+        self.__templateMenu.addSeparator()
+        self.__delTemplateAct = self.__templateMenu.addAction( \
+                                    PixmapCache().getIcon( 'trash.png' ),
+                                    'Delete new file template' )
+        self.connect( self.__delTemplateAct, SIGNAL( 'triggered()' ),
+                      self.__onDelTemplate )
+
+
+        self.__templateButton = QToolButton( self )
+        self.__templateButton.setIcon( PixmapCache().getIcon( 'template.png' ) )
+        self.__templateButton.setToolTip( 'New file template' )
+        self.__templateButton.setPopupMode( QToolButton.InstantPopup )
+        self.__templateButton.setMenu( self.__templateMenu )
+        self.__templateButton.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.__templateMenu, SIGNAL( 'aboutToShow()' ),
+                      self.__onTemplateMenuAboutToShow )
+
+
         # pymetrics button
         self.__pymetricsButton = QAction( \
                                     PixmapCache().getIcon( 'metrics.png' ),
@@ -1229,6 +1260,7 @@ class CodimensionMainWindow( QMainWindow ):
         # Debugger part end
         toolbar.addWidget( spacer )
         toolbar.addSeparator()
+        toolbar.addWidget( self.__templateButton )
         toolbar.addWidget( editorSettingsButton )
 
         self.addToolBar( toolbar )
@@ -1813,17 +1845,55 @@ class CodimensionMainWindow( QMainWindow ):
         self.openFile( fileName, -1 )
         return
 
+    def __onEditTemplate( self ):
+        " Triggered when template should be edited "
+        fileName = getTemplateFileName()
+        if not os.path.exists( fileName ):
+            logging.error( "The template file " + fileName + \
+                           " disappeared from the file system." )
+            return
+        self.openFile( fileName, -1 )
+        return
+
+    def __onDelTemplate( self ):
+        " Triggered when template should be deleted "
+        fileName = getTemplateFileName()
+        if os.path.exists( fileName ):
+            os.unlink( fileName )
+        return
+
+    def __onCreateTemplate( self ):
+        " Creates a new template and opens it for editing "
+        fileName = getTemplateFileName()
+        try:
+            f = open( fileName, "w" )
+            f.write( getDefaultTemplate() )
+            f.close()
+        except Exception, exc:
+            logging.error( "Error creating a template file: " + str( exc ) )
+            return
+        self.openFile( fileName, -1 )
+        return
+
+    def __onTemplateMenuAboutToShow( self ):
+        " Triggered when the template menu is about to show "
+        exist =  os.path.exists( getTemplateFileName() )
+        self.__createTemplateAct.setEnabled( not exist )
+        self.__editTemplateAct.setEnabled( exist )
+        self.__delTemplateAct.setEnabled( exist )
+        return
+
     def __onFSChanged( self, items ):
         " Update the pylint button menu if pylintrc appeared/disappeared "
-        fileName = self.__getPylintRCFileName()
+        pylintRCFileName = self.__getPylintRCFileName()
         for path in items:
             path = str( path )
-            if path.endswith( fileName ):
+            if path.endswith( pylintRCFileName ):
                 if path.startswith( '+' ):
                     self.__pylintButton.setMenu( self.__existentPylintRCMenu )
                 else:
                     self.__pylintButton.setMenu( self.__absentPylintRCMenu )
-            break
+                break
         return
 
     def displayFindInFiles( self, searchRegexp, searchResults ):
