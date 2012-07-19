@@ -1092,7 +1092,7 @@ class CodimensionMainWindow( QMainWindow ):
 
         self.__findInFilesButton = QAction( \
                                     PixmapCache().getIcon( 'findindir.png' ),
-                                    'Find in project files (Ctrl+Shift+F)', self )
+                                    'Find in files (Ctrl+Shift+F)', self )
         self.connect( self.__findInFilesButton, SIGNAL( 'triggered()' ),
                       self.findInFilesClicked )
 
