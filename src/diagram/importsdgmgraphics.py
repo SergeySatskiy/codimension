@@ -474,6 +474,10 @@ class ImportDgmWidget( QGraphicsView ):
         if event.key() == Qt.Key_Escape:
             self.emit( SIGNAL('ESCPressed') )
             event.accept()
+        elif event.key() == Qt.Key_C and \
+             event.modifiers() == Qt.ControlModifier:
+            self.parent().onCopy()
+            event.accept()
         else:
             QGraphicsView.keyPressEvent( self, event )
         return
@@ -518,7 +522,7 @@ class ImportDgmTabWidget( QWidget, MainWindowTabWidgetBase ):
         MainWindowTabWidgetBase.__init__( self )
         QWidget.__init__( self, parent )
 
-        self.__viewer = ImportDgmWidget()
+        self.__viewer = ImportDgmWidget( self )
         self.connect( self.__viewer, SIGNAL( 'ESCPressed' ),
                       self.__onEsc )
 
