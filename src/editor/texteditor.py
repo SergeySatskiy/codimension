@@ -25,7 +25,6 @@
 
 import os.path, logging, subprocess
 from subprocess import Popen
-from datetime import datetime
 import lexer
 from scintillawrap              import ScintillaWrapper
 from PyQt4.QtCore               import Qt, QFileInfo, SIGNAL, QSize, \
@@ -47,6 +46,7 @@ from utils.encoding             import decode, encode, CodingError, \
 from utils.pixmapcache          import PixmapCache
 from utils.globals              import GlobalData
 from utils.settings             import Settings
+from utils.misc                 import getLocaleDateTime
 from ui.pylintviewer            import PylintViewer
 from ui.pymetricsviewer         import PymetricsViewer
 from diagram.importsdgm         import ImportsDiagramDialog, \
@@ -1988,7 +1988,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         # There are changes, so replace the text and tell about the changes
         self.replaceAll( result )
-        timestamp = datetime.now().strftime( "%Y-%m-%d %H:%M:%S" )
+        timestamp = getLocaleDateTime()
         diffAsText = '\n'.join( list( diff ) )
         diffAsText = diffAsText.replace( "--- ",
                                          "--- " + self.getShortName(), 1 )
@@ -2034,7 +2034,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         # There are changes, so replace the text and tell about the changes
         self.replaceAll( result )
-        timestamp = datetime.now().strftime( "%Y-%m-%d %H:%M:%S" )
+        timestamp = getLocaleDateTime()
         diffAsText = '\n'.join( list( diff ) )
         diffAsText = diffAsText.replace( "--- ",
                                          "--- " + self.getShortName(), 1 )
