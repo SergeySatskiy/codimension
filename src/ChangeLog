@@ -5,6 +5,8 @@
 * New feature: copying a diagram to the clipboard (main menu and Ctrl+C)
 * New feature: new file template support for the case when no new
   project is loaded. UI to create/edit/delete new file templates added.
+* Editor settings are moved from the main toolbar button with menu to the
+  introduced main menu 'Options'
 
 
 2012 XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
