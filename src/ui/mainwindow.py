@@ -36,7 +36,8 @@ from PyQt4.QtGui                import QLabel, QToolBar, QWidget, QMessageBox, \
 from fitlabel                   import FitPathLabel
 from utils.globals              import GlobalData
 from utils.project              import CodimensionProject
-from utils.misc                 import getTemplateFileName, getDefaultTemplate
+from utils.misc                 import getTemplateFileName, getDefaultTemplate, \
+                                       getProjectTemplateFile
 from sidebar                    import SideBar
 from logviewer                  import LogViewer
 from taghelpviewer              import TagHelpViewer
@@ -571,6 +572,25 @@ class CodimensionMainWindow( QMainWindow ):
                                         PixmapCache().getIcon( 'smalli.png' ),
                                         '&Properties',
                                         self.projectViewer.projectProperties )
+        self.__projectMenu.addSeparator()
+        self.__prjTemplateMenu = QMenu( "New project file &template", self )
+        self.__createPrjTemplateAct = self.__prjTemplateMenu.addAction( \
+                                        PixmapCache().getIcon( 'generate.png' ),
+                                        '&Create' )
+        self.connect( self.__createPrjTemplateAct, SIGNAL( 'triggered()' ),
+                      self.__onCreatePrjTemplate )
+        self.__editPrjTemplateAct = self.__prjTemplateMenu.addAction( \
+                                        PixmapCache().getIcon( 'edit.png' ),
+                                        '&Edit' )
+        self.connect( self.__editPrjTemplateAct, SIGNAL( 'triggered()' ),
+                      self.__onEditPrjTemplate )
+        self.__prjTemplateMenu.addSeparator()
+        self.__delPrjTemplateAct = self.__prjTemplateMenu.addAction( \
+                                        PixmapCache().getIcon( 'trash.png' ),
+                                        '&Delete' )
+        self.connect( self.__delPrjTemplateAct, SIGNAL( 'triggered()' ),
+                      self.__onDelPrjTemplate )
+        self.__projectMenu.addMenu( self.__prjTemplateMenu )
         self.__projectMenu.addSeparator()
         self.__recentPrjMenu = QMenu( "&Recent projects", self )
         self.connect( self.__recentPrjMenu, SIGNAL( "triggered(QAction*)" ),
@@ -1326,6 +1346,7 @@ class CodimensionMainWindow( QMainWindow ):
             projectLoaded = GlobalData().project.isLoaded()
             self.__unloadProjectAct.setEnabled( projectLoaded )
             self.__projectPropsAct.setEnabled( projectLoaded )
+            self.__prjTemplateMenu.setEnabled( projectLoaded )
             self.__findNameMenuAct.setEnabled( projectLoaded )
             self.__fileProjectFileAct.setEnabled( projectLoaded )
             self.__prjPylintAct.setEnabled( projectLoaded )
@@ -1343,6 +1364,7 @@ class CodimensionMainWindow( QMainWindow ):
                     self.__pylintButton.setMenu( self.__existentPylintRCMenu )
                 else:
                     self.__pylintButton.setMenu( self.__absentPylintRCMenu )
+
         self.updateRunDebugButtons()
         return
 
@@ -1853,6 +1875,39 @@ class CodimensionMainWindow( QMainWindow ):
                            " disappeared from the file system." )
             return
         self.openFile( fileName, -1 )
+        return
+
+    def __onCreatePrjTemplate( self ):
+        " Triggered when project template should be created "
+        fileName = getProjectTemplateFile()
+        try:
+            f = open( fileName, "w" )
+            f.write( getDefaultTemplate() )
+            f.close()
+        except Exception, exc:
+            logging.error( "Error creating a template file: " + str( exc ) )
+            return
+        self.openFile( fileName, -1 )
+        return
+
+    def __onEditPrjTemplate( self ):
+        " Triggered when project template should be edited "
+        fileName = getProjectTemplateFile()
+        if fileName is not None:
+            if not os.path.exists( fileName ):
+                logging.error( "The template file " + fileName + \
+                               " disappeared from the file system." )
+                return
+            self.openFile( fileName, -1 )
+        return
+
+    def __onDelPrjTemplate( self ):
+        " Triggered when project template should be deleted "
+        fileName = getProjectTemplateFile()
+        if fileName is not None:
+            if os.path.exists( fileName ):
+                os.unlink( fileName )
+                logging.info( "New project file template deleted" )
         return
 
     def __onDelTemplate( self ):
@@ -2915,10 +2970,11 @@ class CodimensionMainWindow( QMainWindow ):
         return "&" + chr( count - 10 + ord( 'a' ) ) + ".  "
 
     def __prjAboutToShow( self ):
-        " Triggered when recent projects submenu is about to show "
+        " Triggered when project menu is about to show "
+
+        # Recent projects part
         self.__recentPrjMenu.clear()
         addedCount = 0
-
         currentPrj = GlobalData().project.fileName
         for item in Settings().recentProjects:
             if item == currentPrj:
@@ -2930,6 +2986,14 @@ class CodimensionMainWindow( QMainWindow ):
             act.setData( QVariant( item ) )
 
         self.__recentPrjMenu.setEnabled( addedCount > 0 )
+
+        # Template part
+        fileName = getProjectTemplateFile()
+        if fileName is not None:
+            exists = os.path.exists( fileName )
+            self.__createPrjTemplateAct.setEnabled( not exists )
+            self.__editPrjTemplateAct.setEnabled( exists )
+            self.__delPrjTemplateAct.setEnabled( exists )
         return
 
     def __onRecentPrj( self, act ):

@@ -79,6 +79,17 @@ def getTemplateFileName():
     return projectDir + "template.py"
 
 
+def getProjectTemplateFile():
+    " Provides the name of the project template file "
+    project = GlobalData().project
+    if project.isLoaded():
+        # Project is loaded - use from the project dir
+        projectDir = os.path.dirname( project.fileName )
+        if not projectDir.endswith( os.path.sep ):
+            projectDir += os.path.sep
+        return projectDir + "template.py"
+    return None
+
 
 def getNewFileTemplate():
     " Searches for the template file and fills fields in it "
