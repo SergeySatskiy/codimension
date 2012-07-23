@@ -36,7 +36,7 @@ from PyQt4.QtGui                import QLabel, QToolBar, QWidget, QMessageBox, \
 from fitlabel                   import FitPathLabel
 from utils.globals              import GlobalData
 from utils.project              import CodimensionProject
-from utils.misc                 import getTemplateFileName, getDefaultTemplate, \
+from utils.misc                 import getDefaultTemplate, getIDETemplateFile, \
                                        getProjectTemplateFile
 from sidebar                    import SideBar
 from logviewer                  import LogViewer
@@ -573,7 +573,7 @@ class CodimensionMainWindow( QMainWindow ):
                                         '&Properties',
                                         self.projectViewer.projectProperties )
         self.__projectMenu.addSeparator()
-        self.__prjTemplateMenu = QMenu( "New project file &template", self )
+        self.__prjTemplateMenu = QMenu( "New file &template", self )
         self.__createPrjTemplateAct = self.__prjTemplateMenu.addAction( \
                                         PixmapCache().getIcon( 'generate.png' ),
                                         '&Create' )
@@ -934,6 +934,29 @@ class CodimensionMainWindow( QMainWindow ):
 
         # Options menu
         self.__optionsMenu = QMenu( "&Options", self )
+        self.connect( self.__optionsMenu, SIGNAL( "aboutToShow()" ),
+                      self.__optionsAboutToShow )
+
+        self.__ideTemplateMenu = QMenu( "New file &template", self )
+        self.__ideCreateTemplateAct = self.__ideTemplateMenu.addAction( \
+                                    PixmapCache().getIcon( 'generate.png' ),
+                                    '&Create' )
+        self.connect( self.__ideCreateTemplateAct, SIGNAL( 'triggered()' ),
+                      self.__onCreateIDETemplate )
+        self.__ideEditTemplateAct = self.__ideTemplateMenu.addAction( \
+                                    PixmapCache().getIcon( 'edit.png' ),
+                                    '&Edit' )
+        self.connect( self.__ideEditTemplateAct, SIGNAL( 'triggered()' ),
+                      self.__onEditIDETemplate )
+        self.__ideTemplateMenu.addSeparator()
+        self.__ideDelTemplateAct = self.__ideTemplateMenu.addAction( \
+                                    PixmapCache().getIcon( 'trash.png' ),
+                                    '&Delete' )
+        self.connect( self.__ideDelTemplateAct, SIGNAL( 'triggered()' ),
+                      self.__onDelIDETemplate )
+        self.__optionsMenu.addMenu( self.__ideTemplateMenu )
+        self.__optionsMenu.addSeparator()
+
         verticalEdgeAct = self.__optionsMenu.addAction( 'Show vertical edge' )
         verticalEdgeAct.setCheckable( True )
         verticalEdgeAct.setChecked( self.settings.verticalEdge )
@@ -1130,36 +1153,6 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.__pylintButton, SIGNAL( 'clicked(bool)' ),
                       self.pylintButtonClicked )
 
-        # Project template button
-        self.__templateMenu = QMenu( self )
-        self.__createTemplateAct = self.__templateMenu.addAction( \
-                                    PixmapCache().getIcon( 'generate.png' ),
-                                    'Create new file template' )
-        self.connect( self.__createTemplateAct, SIGNAL( 'triggered()' ),
-                      self.__onCreateTemplate )
-        self.__editTemplateAct = self.__templateMenu.addAction( \
-                                    PixmapCache().getIcon( 'edit.png' ),
-                                    'Edit new file template' )
-        self.connect( self.__editTemplateAct, SIGNAL( 'triggered()' ),
-                      self.__onEditTemplate )
-        self.__templateMenu.addSeparator()
-        self.__delTemplateAct = self.__templateMenu.addAction( \
-                                    PixmapCache().getIcon( 'trash.png' ),
-                                    'Delete new file template' )
-        self.connect( self.__delTemplateAct, SIGNAL( 'triggered()' ),
-                      self.__onDelTemplate )
-
-
-        self.__templateButton = QToolButton( self )
-        self.__templateButton.setIcon( PixmapCache().getIcon( 'template.png' ) )
-        self.__templateButton.setToolTip( 'New file template' )
-        self.__templateButton.setPopupMode( QToolButton.InstantPopup )
-        self.__templateButton.setMenu( self.__templateMenu )
-        self.__templateButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__templateMenu, SIGNAL( 'aboutToShow()' ),
-                      self.__onTemplateMenuAboutToShow )
-
-
         # pymetrics button
         self.__pymetricsButton = QAction( \
                                     PixmapCache().getIcon( 'metrics.png' ),
@@ -1272,9 +1265,7 @@ class CodimensionMainWindow( QMainWindow ):
         toolbar.addAction( self.__dbgTrapUnhandled )
         toolbar.addAction( self.__dbgSync )
         # Debugger part end
-        toolbar.addWidget( spacer )
-        toolbar.addSeparator()
-        toolbar.addWidget( self.__templateButton )
+        # toolbar.addWidget( spacer )
 
         self.addToolBar( toolbar )
         return
@@ -1860,38 +1851,14 @@ class CodimensionMainWindow( QMainWindow ):
         self.openFile( fileName, -1 )
         return
 
-    def __onEditTemplate( self ):
-        " Triggered when template should be edited "
-        fileName = getTemplateFileName()
-        if not os.path.exists( fileName ):
-            logging.error( "The template file " + fileName + \
-                           " disappeared from the file system." )
-            return
-        self.openFile( fileName, -1 )
-        return
-
     def __onCreatePrjTemplate( self ):
         " Triggered when project template should be created "
-        fileName = getProjectTemplateFile()
-        try:
-            f = open( fileName, "w" )
-            f.write( getDefaultTemplate() )
-            f.close()
-        except Exception, exc:
-            logging.error( "Error creating a template file: " + str( exc ) )
-            return
-        self.openFile( fileName, -1 )
+        self.createTemplateFile( getProjectTemplateFile() )
         return
 
     def __onEditPrjTemplate( self ):
         " Triggered when project template should be edited "
-        fileName = getProjectTemplateFile()
-        if fileName is not None:
-            if not os.path.exists( fileName ):
-                logging.error( "The template file " + fileName + \
-                               " disappeared from the file system." )
-                return
-            self.openFile( fileName, -1 )
+        self.editTemplateFile( getProjectTemplateFile() )
         return
 
     def __onDelPrjTemplate( self ):
@@ -1900,19 +1867,16 @@ class CodimensionMainWindow( QMainWindow ):
         if fileName is not None:
             if os.path.exists( fileName ):
                 os.unlink( fileName )
-                logging.info( "New project file template deleted" )
+                logging.info( "Project new file template deleted" )
         return
 
-    def __onDelTemplate( self ):
-        " Triggered when template should be deleted "
-        fileName = getTemplateFileName()
-        if os.path.exists( fileName ):
-            os.unlink( fileName )
+    def __onCreateIDETemplate( self ):
+        " Triggered to create IDE template "
+        self.createTemplateFile( getIDETemplateFile() )
         return
 
-    def __onCreateTemplate( self ):
-        " Creates a new template and opens it for editing "
-        fileName = getTemplateFileName()
+    def createTemplateFile( self, fileName ):
+        " Creates a template file "
         try:
             f = open( fileName, "w" )
             f.write( getDefaultTemplate() )
@@ -1923,12 +1887,28 @@ class CodimensionMainWindow( QMainWindow ):
         self.openFile( fileName, -1 )
         return
 
-    def __onTemplateMenuAboutToShow( self ):
-        " Triggered when the template menu is about to show "
-        exist =  os.path.exists( getTemplateFileName() )
-        self.__createTemplateAct.setEnabled( not exist )
-        self.__editTemplateAct.setEnabled( exist )
-        self.__delTemplateAct.setEnabled( exist )
+    def __onEditIDETemplate( self ):
+        " Triggered to edit IDE template "
+        self.editTemplateFile( getIDETemplateFile() )
+        return
+
+    def editTemplateFile( self, fileName ):
+        " Edits the timepale file "
+        if fileName is not None:
+            if not os.path.exists( fileName ):
+                logging.error( "The template file " + fileName + \
+                               " disappeared from the file system." )
+                return
+            self.openFile( fileName, -1 )
+        return
+
+    def __onDelIDETemplate( self ):
+        " Triggered to del IDE template "
+        fileName = getIDETemplateFile()
+        if fileName is not None:
+            if os.path.exists( fileName ):
+                os.unlink( fileName )
+                logging.info( "IDE new file template deleted" )
         return
 
     def __onFSChanged( self, items ):
@@ -2897,6 +2877,14 @@ class CodimensionMainWindow( QMainWindow ):
         self.__zoomInAct.setShortcut( "Ctrl+=" )
         self.__zoomOutAct.setShortcut( "Ctrl+-" )
         self.__zoom11Act.setShortcut( "Ctrl+0" )
+        return
+
+    def __optionsAboutToShow( self ):
+        " Triggered when the options menu is about to show "
+        exists = os.path.exists( getIDETemplateFile() )
+        self.__ideCreateTemplateAct.setEnabled( not exists )
+        self.__ideEditTemplateAct.setEnabled( exists )
+        self.__ideDelTemplateAct.setEnabled( exists )
         return
 
     def __helpAboutToShow( self ):

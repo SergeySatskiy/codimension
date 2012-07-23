@@ -65,18 +65,9 @@ def getLocaleDateTime():
     return getLocaleDate() + " " + getLocaleTime()
 
 
-def getTemplateFileName():
-    " Provides the new file template file name "
-    project = GlobalData().project
-    if project.isLoaded():
-        # Project is loaded - use from the project dir
-        projectDir = os.path.dirname( project.fileName )
-        if not projectDir.endswith( os.path.sep ):
-            projectDir += os.path.sep
-    else:
-        # No project loaded - use from settings
-        projectDir = settingsDir
-    return projectDir + "template.py"
+def getIDETemplateFile():
+    " Provides the name of the IDE template file "
+    return settingsDir + "template.py"
 
 
 def getProjectTemplateFile():
@@ -94,7 +85,12 @@ def getProjectTemplateFile():
 def getNewFileTemplate():
     " Searches for the template file and fills fields in it "
 
-    templateFile = getTemplateFileName()
+    templateFile = getProjectTemplateFile()
+    if templateFile is None:
+        templateFile = getIDETemplateFile()
+    elif not os.path.exists( templateFile ):
+        templateFile = getIDETemplateFile()
+
     if not os.path.exists( templateFile ):
         return ""
 
@@ -163,11 +159,14 @@ def getDefaultTemplate():
 #
 # This template will be used when a new file is created.
 #
-# Codimension supports a template file which is used when there is no
-# loaded project plus each project can have its own template.
-# The no project template is stored in the codimension settings directory
-# while individual project templates must be stored in the top project
-# directory. In both cases the template file must be called 'template.py'.
+# Codimension supports an IDE-wide template file and separate template files
+# for each project. If a project is loaded then codimension checks the project
+# template file and IDE-wide one in this order. The first existed is used to
+# create a new file. If no project is loaded then the only IDE-wide template
+# file is checked.
+# The IDE-wide template file is stored in the codimension settings directory
+# while individual project template files are stored in the top project
+# directory. In both cases the template file is called 'template.py'.
 #
 # The following variables will be replaced with actual values if
 # they are found in the template:
