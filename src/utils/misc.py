@@ -159,13 +159,13 @@ def getDefaultTemplate():
 #
 # This template will be used when a new file is created.
 #
-# Codimension supports an IDE-wide template file and separate template files
-# for each project. If a project is loaded then codimension checks the project
-# template file and IDE-wide one in this order. The first existed is used to
-# create a new file. If no project is loaded then the only IDE-wide template
-# file is checked.
+# Codimension supports an IDE-wide template file and project-specific template
+# files for each project. If a project is loaded then codimension checks the
+# project-specific template file and IDE-wide one in this order. The first one
+# found is used to create a new file. If no project is loaded then only the
+# IDE-wide template file is checked.
 # The IDE-wide template file is stored in the codimension settings directory
-# while individual project template files are stored in the top project
+# while project-specific template files are stored in the top project
 # directory. In both cases the template file is called 'template.py'.
 #
 # The following variables will be replaced with actual values if
@@ -182,9 +182,9 @@ def getDefaultTemplate():
 # $time            Current time
 # $user            Current user name
 #
-# Note: variables marked with (*) are available only for the templates for
-#       individual projects. The values for the variables are taken from
-#       the project properties dialogue.
+# Note: variables marked with (*) are available only for the project-specific
+#       templates. The values for the variables are taken from the project
+#       properties dialogue.
 #"""
 
 
