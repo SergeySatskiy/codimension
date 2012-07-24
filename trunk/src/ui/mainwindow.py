@@ -573,7 +573,7 @@ class CodimensionMainWindow( QMainWindow ):
                                         '&Properties',
                                         self.projectViewer.projectProperties )
         self.__projectMenu.addSeparator()
-        self.__prjTemplateMenu = QMenu( "New file &template", self )
+        self.__prjTemplateMenu = QMenu( "Project-specific &template", self )
         self.__createPrjTemplateAct = self.__prjTemplateMenu.addAction( \
                                         PixmapCache().getIcon( 'generate.png' ),
                                         '&Create' )
@@ -937,7 +937,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.__optionsMenu, SIGNAL( "aboutToShow()" ),
                       self.__optionsAboutToShow )
 
-        self.__ideTemplateMenu = QMenu( "New file &template", self )
+        self.__ideTemplateMenu = QMenu( "IDE-wide &template", self )
         self.__ideCreateTemplateAct = self.__ideTemplateMenu.addAction( \
                                     PixmapCache().getIcon( 'generate.png' ),
                                     '&Create' )
