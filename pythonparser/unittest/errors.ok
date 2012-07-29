@@ -1,9 +1,9 @@
-Function[2:1:2:5]: 'f'
-Class[5:1:5:7]: 'A'
-Class attribute[12]: 'b'
-    Function[7:5:7:9]: '__init__'
+Function[2:1:2:5:5]: 'f'
+Class[5:1:5:7:25]: 'A'
+Class attribute[12:13:105]: 'b'
+    Function[7:5:7:9:37]: '__init__'
     Argument: 'self'
-    Function[10:5:10:9]: 'f'
+    Function[10:5:10:9:77]: 'f'
 unittest/errors.py(2)  : error 10 : Missing token, at offset 7
     near [Index: 0 (Start: 0-Stop: 0) ='<missing COLON>', type<56> Line: 2 LinePos:7]
      : Missing COLON 
