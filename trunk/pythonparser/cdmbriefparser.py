@@ -61,12 +61,18 @@ def trim_docstring( docstring ):
     return '\n'.join( trimmed )
 
 
-class ModuleInfoBase:
+class ModuleInfoBase():
     " Common part for the module information "
 
-    def __init__( self ):
-        self.line = -1  # Line number where item is found (1 based)
-        self.name = ""  # item identifier
+    def __init__( self, name, line, pos, absPosition ):
+        self.name = name        # Item identifier
+        self.line = line        # Line number where item is found (1-based)
+        self.pos  = pos         # Item position in the line (1-based)
+
+        self.__absPosition = absPosition  # Absolute position of the first item
+                                          # identifier character starting from
+                                          # the beginning of the input stream
+                                          # (0-based)
         return
 
     def isPrivate( self ):
@@ -77,34 +83,41 @@ class ModuleInfoBase:
         " True if it is protected "
         return not self.isPrivate() and self.name.startswith( '_' )
 
+    def _getLPA( self ):
+        " Provides line, pos and absPosition line as string "
+        return str( self.line ) + ":" + \
+               str( self.pos ) + ":" + \
+               str( self.__absPosition )
+
+    def getDisplayName( self ):
+        """ Provides a name for display purpose.
+            It is going to be overriden in deriving classes """
+        return self.name
+
 
 class Encoding( ModuleInfoBase ):
     " Holds information about encoding string "
 
-    def __init__( self, encName, line ):
-        ModuleInfoBase.__init__( self )
-        self.line = line
-        self.name = encName
+    def __init__( self, encName, line, pos, absPosition ):
+        ModuleInfoBase.__init__( self, encName, line, pos, absPosition )
         return
 
     def __str__( self ):
-        return "Encoding[" + str(self.line) + "]: '" + self.name + "'"
+        return "Encoding[" + self._getLPA() + "]: '" + self.name + "'"
 
 
 class ImportWhat( ModuleInfoBase ):
     " Holds information about a single imported item "
 
-    def __init__( self, whatName, line ):
-        ModuleInfoBase.__init__( self )
-        self.line = line
-        self.name = whatName
+    def __init__( self, whatName, line, pos, absPosition ):
+        ModuleInfoBase.__init__( self, whatName, line, pos, absPosition )
         self.alias = ""
         return
 
     def __str__( self ):
         if self.alias == "":
-            return self.name + "[" + str(self.line) + "]"
-        return self.name + "[" + str(self.line) + "] as " + self.alias
+            return self.name + "[" + self._getLPA() + "]"
+        return self.name + "[" + self._getLPA() + "] as " + self.alias
 
     def getDisplayName( self ):
         " Provides a name for display purpose respecting the alias "
@@ -116,16 +129,14 @@ class ImportWhat( ModuleInfoBase ):
 class Import( ModuleInfoBase ):
     " Holds information about a single import name "
 
-    def __init__( self, importName, line ):
-        ModuleInfoBase.__init__( self )
-        self.line = line
-        self.name = importName
+    def __init__( self, importName, line, pos, absPosition ):
+        ModuleInfoBase.__init__( self, importName, line, pos, absPosition )
         self.alias = ""
         self.what = []
         return
 
     def __str__( self ):
-        out = "Import[" + str(self.line) + "]: '" + self.name + "'"
+        out = "Import[" + self._getLPA() + "]: '" + self.name + "'"
         if self.alias != "":
             out += " as '" + self.alias + "'"
         whatPart = ""
@@ -143,56 +154,46 @@ class Import( ModuleInfoBase ):
 class Global( ModuleInfoBase ):
     " Holds information about a single global variable "
 
-    def __init__( self, globalName, line ):
-        ModuleInfoBase.__init__( self )
-        self.line = line
-        self.name = globalName
+    def __init__( self, globalName, line, pos, absPosition ):
+        ModuleInfoBase.__init__( self, globalName, line, pos, absPosition )
         return
 
     def __str__( self ):
-        return "Global[" + str(self.line) + "]: '" + self.name + "'"
+        return "Global[" + self._getLPA() + "]: '" + self.name + "'"
 
 
 class ClassAttribute( ModuleInfoBase ):
     " Holds information about a class attribute "
 
-    def __init__( self, attrName, line ):
-        ModuleInfoBase.__init__( self )
-        self.line = line
-        self.name = attrName
+    def __init__( self, attrName, line, pos, absPosition ):
+        ModuleInfoBase.__init__( self, attrName, line, pos, absPosition )
         return
 
     def __str__( self ):
-        return "Class attribute[" + str(self.line) + "]: '" + self.name + "'"
+        return "Class attribute[" + self._getLPA() + "]: '" + self.name + "'"
 
 
 class InstanceAttribute( ModuleInfoBase ):
     " Holds information about a class instance attribute "
 
-    def __init__( self, attrName, line ):
-        ModuleInfoBase.__init__( self )
-        self.line = line
-        self.name = attrName
+    def __init__( self, attrName, line, pos, absPosition ):
+        ModuleInfoBase.__init__( self, attrName, line, pos, absPosition )
         return
 
     def __str__( self ):
-        return "Instance attribute[" + str(self.line) + "]: '" + self.name + "'"
+        return "Instance attribute[" + self._getLPA() + "]: '" + self.name + "'"
 
 
 class Decorator( ModuleInfoBase ):
     " Holds information about a class/function decorator "
 
-    def __init__( self, decorName, line ):
-        ModuleInfoBase.__init__( self )
-        self.line = line
-        self.name = decorName
-
-        # Non-common part
+    def __init__( self, decorName, line, pos, absPosition ):
+        ModuleInfoBase.__init__( self, decorName, line, pos, absPosition )
         self.arguments = []
         return
 
     def __str__( self ):
-        val = "Decorator[" + str(self.line) + "]: '" + self.name
+        val = "Decorator[" + self._getLPA() + "]: '" + self.name
         if len( self.arguments ) == 0:
             return val
         val += "( "
@@ -229,15 +230,15 @@ class Docstring():
 class Function( ModuleInfoBase ):
     " Holds information about a single function"
 
-    def __init__( self, funcName, line, pos, keywordLine, keywordPos ):
-        ModuleInfoBase.__init__( self )
-        self.line = line
-        self.pos = pos                  # pos where function name starts (1-based)
-        self.keywordLine = keywordLine
-        self.keywordPos = keywordPos    # pos where 'def' keyword starts (1-based)
-        self.name = funcName
+    def __init__( self, funcName, line, pos, absPosition,
+                        keywordLine, keywordPos ):
+        ModuleInfoBase.__init__( self, funcName, line, pos, absPosition )
 
-        # Non-common part
+        self.keywordLine = keywordLine  # line where 'def' keyword
+                                        # starts (1-based).
+        self.keywordPos = keywordPos    # pos where 'def' keyword
+                                        # starts (1-based).
+
         self.docstring = None
         self.arguments = []
         self.decorators = []
@@ -257,8 +258,7 @@ class Function( ModuleInfoBase ):
 
         out = level * "    " + "Function[" + str(self.keywordLine) + \
                                        ":" + str(self.keywordPos) + \
-                                       ":" + str(self.line) + \
-                                       ":" + str(self.pos) + \
+                                       ":" + self._getLPA() + \
                                        "]: '" + self.name + "'"
         for item in self.arguments:
             out += '\n' + level * "    " + "Argument: '" + item + "'"
@@ -284,15 +284,15 @@ class Function( ModuleInfoBase ):
 class Class( ModuleInfoBase ):
     " Holds information about a single class"
 
-    def __init__( self, className, line, pos, keywordLine, keywordPos ):
-        ModuleInfoBase.__init__( self )
-        self.line = line
-        self.pos = pos                  # pos where class name starts (1-based)
-        self.keywordLine = keywordLine
-        self.keywordPos = keywordPos    # pos where 'class' keyword starts (1-based)
-        self.name = className
+    def __init__( self, className, line, pos, absPosition,
+                        keywordLine, keywordPos ):
+        ModuleInfoBase.__init__( self, className, line, pos, absPosition )
 
-        # Non-commonpart
+        self.keywordLine = keywordLine  # line where 'def' keyword
+                                        # starts (1-based).
+        self.keywordPos = keywordPos    # pos where 'def' keyword
+                                        # starts (1-based).
+
         self.docstring = None
         self.base = []
         self.decorators = []
@@ -307,8 +307,7 @@ class Class( ModuleInfoBase ):
 
         out = level * "    " + "Class[" + str(self.keywordLine) + \
                                     ":" + str(self.keywordPos) + \
-                                    ":" + str(self.line) + \
-                                    ":" + str(self.pos) + \
+                                    ":" + self._getLPA() + \
                                     "]: '" + self.name + "'"
         for item in self.base:
             out += '\n' + level * "    " + "Base class: '" + item + "'"
@@ -334,7 +333,7 @@ class Class( ModuleInfoBase ):
         return displayName
 
 
-class BriefModuleInfo:
+class BriefModuleInfo():
     " Holds a single module content information "
 
     def __init__( self ):
@@ -414,40 +413,42 @@ class BriefModuleInfo:
 
         return
 
-    def _onEncoding( self, encString, line ):
+    def _onEncoding( self, encString, line, pos, absPosition ):
         " Memorizes module encoding "
-        self.encoding = Encoding( encString, line )
+        self.encoding = Encoding( encString, line, pos, absPosition )
         return
 
-    def _onGlobal( self, name, line, level ):
+    def _onGlobal( self, name, line, pos, absPosition, level ):
         " Memorizes a global variable "
 
         # level is ignored
         for item in self.globals:
             if item.name == name:
                 return
-        self.globals.append( Global( name, line ) )
+        self.globals.append( Global( name, line, pos, absPosition ) )
         return
 
-    def _onClass( self, name, line, pos, keywordLine, keywordPos, level ):
+    def _onClass( self, name, line, pos, absPosition,
+                        keywordLine, keywordPos, level ):
         " Memorizes a class "
         self.__flushLevel( level )
-        self.objectsStack.append( Class( name, line, pos,
+        self.objectsStack.append( Class( name, line, pos, absPosition,
                                          keywordLine, keywordPos ) )
         return
 
-    def _onFunction( self, name, line, pos, keywordLine, keywordPos, level ):
+    def _onFunction( self, name, line, pos, absPosition,
+                           keywordLine, keywordPos, level ):
         " Memorizes a function "
         self.__flushLevel( level )
-        self.objectsStack.append( Function( name, line, pos,
+        self.objectsStack.append( Function( name, line, pos, absPosition,
                                             keywordLine, keywordPos ) )
         return
 
-    def _onImport( self, name, line ):
+    def _onImport( self, name, line, pos, absPosition ):
         " Memorizes an import "
         if self.__lastImport is not None:
             self.imports.append( self.__lastImport )
-        self.__lastImport = Import( name, line )
+        self.__lastImport = Import( name, line, pos, absPosition )
         return
 
     def _onAs( self, name ):
@@ -459,22 +460,23 @@ class BriefModuleInfo:
             self.__lastImport.what[ lastIndex ].alias = name
         return
 
-    def _onWhat( self, name, line ):
+    def _onWhat( self, name, line, pos, absPosition ):
         " Memorizes an imported item "
-        self.__lastImport.what.append( ImportWhat( name, line ) )
+        self.__lastImport.what.append( ImportWhat( name, line, pos,
+                                                         absPosition ) )
         return
 
-    def _onClassAttribute( self, name, line, level ):
+    def _onClassAttribute( self, name, line, pos, absPosition, level ):
         " Memorizes a class attribute "
         # A class must be on the top of the stack
         attributes = self.objectsStack[ level ].classAttributes
         for item in attributes:
             if item.name == name:
                 return
-        attributes.append( ClassAttribute( name, line ) )
+        attributes.append( ClassAttribute( name, line, pos, absPosition ) )
         return
 
-    def _onInstanceAttribute( self, name, line, level ):
+    def _onInstanceAttribute( self, name, line, pos, absPosition, level ):
         " Memorizes a class instance attribute "
         # Instance attributes may appear in member functions only so we already
         # have a function on the stack of objects. To get the class object one
@@ -483,14 +485,16 @@ class BriefModuleInfo:
         for item in attributes:
             if item.name == name:
                 return
-        attributes.append( InstanceAttribute( name, line ) )
+        attributes.append( InstanceAttribute( name, line, pos, absPosition ) )
         return
 
-    def _onDecorator( self, name, line ):
+    def _onDecorator( self, name, line, pos, absPosition ):
         " Memorizes a function or a class decorator "
         # A class or a function must be on the top of the stack
         index = len( self.objectsStack ) - 1
-        self.objectsStack[ index ].decorators.append( Decorator( name, line ) )
+        self.objectsStack[ index ].decorators.append( \
+                                            Decorator( name, line, pos,
+                                                       absPosition ) )
         return
 
     def _onDecoratorArgument( self, name ):
