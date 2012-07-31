@@ -43,13 +43,14 @@ srcDir = os.path.dirname( os.path.abspath( sys.argv[0] ) )
 if not srcDir in sys.path:
     sys.path.append( srcDir )
 
-from utils.settings         import Settings, settingsDir
-from utils.globals          import GlobalData
-from ui.application         import CodimensionApplication
-from ui.splashscreen        import SplashScreen
-from utils.pixmapcache      import PixmapCache
-from utils.project          import CodimensionProject
-from utils.skin             import Skin
+from utils.settings             import Settings, settingsDir
+from utils.globals              import GlobalData
+from ui.application             import CodimensionApplication
+from ui.splashscreen            import SplashScreen
+from utils.pixmapcache          import PixmapCache
+from utils.project              import CodimensionProject
+from utils.skin                 import Skin
+from utils.briefmodinfocache    import validateBriefModuleInfoCache
 
 
 # Saving the root logging handlers
@@ -141,6 +142,9 @@ def codimensionMain():
 
     splash.showMessage( "Building system wide modules list..." )
     buildSystemWideModulesList()
+
+    splash.showMessage( "Validating brief module info cache..." )
+    validateBriefModuleInfoCache()
 
     splash.showMessage( "Generating main window..." )
     mainWindow = CodimensionMainWindow( splash, settings )
