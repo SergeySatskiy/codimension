@@ -69,7 +69,7 @@ class ModuleInfoBase():
         self.line = line        # Line number where item is found (1-based)
         self.pos  = pos         # Item position in the line (1-based)
 
-        self.__absPosition = absPosition  # Absolute position of the first item
+        self.absPosition = absPosition    # Absolute position of the first item
                                           # identifier character starting from
                                           # the beginning of the input stream
                                           # (0-based)
