@@ -23,7 +23,7 @@
 
 """ codimension project """
 
-import os, os.path, ConfigParser, logging, uuid, re
+import os, os.path, ConfigParser, logging, uuid, re, copy
 import rope.base.project
 from briefmodinfocache import BriefModuleInfoCache
 from runparamscache    import RunParametersCache
@@ -60,7 +60,8 @@ class CodimensionProject( QObject ):
         self.description = ""
         self.uuid = ""
 
-        self.ropeProject = None
+        self.__ropeProject = None
+        self.__ropeSourceDirs = []
 
         # Coming from separate files from ~/.codimension/uuidN/
         self.todos = []
@@ -496,17 +497,49 @@ class CodimensionProject( QObject ):
         self.emit( SIGNAL( 'projectChanged' ), self.CompleteProject )
         return
 
+    def __getImportDirsForRope( self ):
+        " Provides the list of import dirs for the rope library "
+        result = []
+        for path in self.importDirs:
+            if not os.path.isabs( path ):
+                # The only relative paths can be accepted by rope
+                result.append( path )
+        result.sort()
+        return result
+
+    def getRopeProject( self ):
+        " Provides the rope project "
+        if self.__getImportDirsForRope() != self.__ropeSourceDirs:
+            # The user changed the project import dirs, so let's
+            # re-create the project
+            self.__createRopeProject()
+        return self.__ropeProject
+
+    def validateRopeProject( self, fileName ):
+        " Validates the rope project "
+        # Currently rope can validate a directory only so the argument
+        # is ignored
+        self.__ropeProject.validate()
+        return
+
     def __createRopeProject( self ):
         " Creates a rope library project "
-        if self.ropeProject is not None:
-            self.ropeProject.close()
-            self.ropeProject = None
+        if self.__ropeProject is not None:
+            self.__ropeProject.close()
+            self.__ropeProject = None
+            self.__ropeSourceDirs = []
+
+        # Deal with import dirs and preferences first
+        self.__ropeSourceDirs = self.__getImportDirsForRope()
+        prefs = copy.deepcopy( ropePreferences )
+        if len( self.__ropeSourceDirs ) != 0:
+            prefs[ "source_folders" ] = self.__ropeSourceDirs
 
         # Rope folder is default here, so it will be created
-        self.ropeProject = rope.base.project.Project( \
+        self.__ropeProject = rope.base.project.Project( \
                                             self.getProjectDir(),
-                                            **ropePreferences )
-        self.ropeProject.validate( self.ropeProject.root )
+                                            **prefs )
+        self.__ropeProject.validate( self.__ropeProject.root )
         return
 
     def onFSChanged( self, items ):
@@ -736,8 +769,9 @@ class CodimensionProject( QObject ):
         """ Unloads the current project if required """
         self.__resetValues()
         self.emit( SIGNAL( 'projectChanged' ), self.CompleteProject )
-        self.ropeProject.close()
-        self.ropeProject = None
+        self.__ropeProject.close()
+        self.__ropeProject = None
+        self.__ropeSourceDirs = []
         return
 
     def setImportDirs( self, paths ):

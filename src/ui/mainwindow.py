@@ -82,6 +82,7 @@ from debugger.modifiedunsaved   import ModifiedUnsavedDialog
 from debugger.main              import CodimensionDebugger
 from diffviewer                 import DiffViewer
 from thirdparty.diff2html.diff2html import parse_from_memory
+from analysis.notused           import NotUsedAnalysisProgress
 
 class EditorsManagerWidget( QWidget ):
     " Tab widget which has tabs with editors and viewers "
@@ -791,6 +792,19 @@ class CodimensionMainWindow( QMainWindow ):
                                         PixmapCache().getIcon( 'detailsdlg.png' ),
                                         'PythonTi&dy for tab...',
                                         self.__onTabPythonTidyDlg )
+        self.__toolsMenu.addSeparator()
+        self.__unusedClassesAct = self.__toolsMenu.addAction( \
+                                        PixmapCache().getIcon( 'notused.png' ),
+                                        'Not used classes analysis',
+                                        self.__onNotUsedClasses )
+        self.__unusedFunctionsAct = self.__toolsMenu.addAction( \
+                                        PixmapCache().getIcon( 'notused.png' ),
+                                        'Not used functions analysis',
+                                        self.__onNotUsedFunctions )
+        self.__unusedGlobalsAct = self.__toolsMenu.addAction( \
+                                        PixmapCache().getIcon( 'notused.png' ),
+                                        'Not used global variables analysis',
+                                        self.__onNotUsedGlobals )
 
         # The Run menu
         self.__runMenu = QMenu( "&Run", self )
@@ -1338,6 +1352,9 @@ class CodimensionMainWindow( QMainWindow ):
             self.__prjLineCounterAct.setEnabled( projectLoaded )
             self.__prjImportDgmAct.setEnabled( projectLoaded )
             self.__prjImportsDgmDlgAct.setEnabled( projectLoaded )
+            self.__unusedFunctionsAct.setEnabled( projectLoaded )
+            self.__unusedGlobalsAct.setEnabled( projectLoaded )
+            self.__unusedClassesAct.setEnabled( projectLoaded )
 
             self.settings.projectLoaded = projectLoaded
             if projectLoaded:
@@ -2992,4 +3009,32 @@ class CodimensionMainWindow( QMainWindow ):
             return
         self.openFile( path, -1 )
         return
+
+    def __onNotUsedFunctions( self ):
+        " Triggered when not used functions analysis requested "
+        dlg = NotUsedAnalysisProgress( \
+                        NotUsedAnalysisProgress.Functions,
+                        self.functionsViewer.funcViewer.model().sourceModel(),
+                        self )
+        dlg.exec_()
+        return
+
+    def __onNotUsedGlobals( self ):
+        " Triggered when not used global vars analysis requested "
+        dlg = NotUsedAnalysisProgress( \
+                        NotUsedAnalysisProgress.Globals,
+                        self.globalsViewer.globalsViewer.model().sourceModel(),
+                        self )
+        dlg.exec_()
+        return
+
+    def __onNotUsedClasses( self ):
+        " Triggered when not used classes analysis requested "
+        dlg = NotUsedAnalysisProgress( \
+                        NotUsedAnalysisProgress.Classes,
+                        self.classesViewer.clViewer.model().sourceModel(),
+                        self )
+        dlg.exec_()
+        return
+
 

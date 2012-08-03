@@ -329,8 +329,20 @@ def _buildOccurrencesImplementationsResult( locations ):
         result.append( [ path, loc.lineno ] )
     return result
 
-def getOccurrences( fileName, editor ):
-    " provides a list of the current token occurances "
+
+def getOccurrences( fileName, editorOrPosition, throwException = False ):
+    """ Provides occurences for the current editor position or
+        for a position in a file """
+    if type( editorOrPosition ) == type( 1 ):
+        # This is called for a position in the existing file
+        return getOccurencesForFilePosition( fileName, editorOrPosition,
+                                             throwException )
+    return getOccurencesForEditor( fileName, editorOrPosition,
+                                   throwException )
+
+
+def getOccurencesForEditor( fileName, editor, throwException ):
+    " Provides a list of the current token occurences "
 
     temporaryName = ""
     result = []
@@ -345,10 +357,28 @@ def getOccurrences( fileName, editor ):
         nameToSearch = worder.get_name_at( resource, position )
         result = find_occurrences( ropeProject, resource, position, True )
     except:
+        if throwException:
+            raise
         pass
 
     _restoreOriginalFile( fileName, temporaryName, editor )
     return nameToSearch, _buildOccurrencesImplementationsResult( result )
+
+
+def getOccurencesForFilePosition( fileName, position, throwException ):
+    " Provides a list of the token at position occurences "
+    result = []
+    try:
+        GlobalData().validateRopeProject()
+        ropeProject = GlobalData().getRopeProject( fileName )
+        resource = path_to_resource( ropeProject, fileName )
+
+        result = find_occurrences( ropeProject, resource, position, True )
+    except:
+        if throwException:
+            raise
+        pass
+    return _buildOccurrencesImplementationsResult( result )
 
 
 def _excludePrivateAndBuiltins( proposals ):
