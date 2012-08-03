@@ -67,7 +67,7 @@ def getLocaleDateTime():
 
 def getIDETemplateFile():
     " Provides the name of the IDE template file "
-    return settingsDir + "template.py"
+    return settingsDir + templateFileName
 
 
 def getProjectTemplateFile():
@@ -78,7 +78,7 @@ def getProjectTemplateFile():
         projectDir = os.path.dirname( project.fileName )
         if not projectDir.endswith( os.path.sep ):
             projectDir += os.path.sep
-        return projectDir + "template.py"
+        return projectDir + templateFileName
     return None
 
 

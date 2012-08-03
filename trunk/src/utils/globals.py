@@ -91,7 +91,7 @@ class GlobalData( object ):
         def getRopeProject( self, fileName = "" ):
             " Provides existed or creates a new rope project "
             if self.project.isLoaded():
-                return self.project.ropeProject
+                return self.project.getRopeProject()
 
             # There is no current project so create a temporary one.
             # Two cases: the buffer has been saved
@@ -123,7 +123,7 @@ class GlobalData( object ):
                 if not fileName.endswith( ".py" ) and \
                    not fileName.endswith( ".py3" ):
                     return
-            self.project.ropeProject.validate()
+            self.project.validateRopeProject( fileName )
             return
 
         def getProjectImportDirs( self ):

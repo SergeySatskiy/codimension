@@ -93,7 +93,6 @@ class FunctionsViewer( QWidget ):
         self.findButton = QAction( \
                 PixmapCache().getIcon( 'findusage.png' ),
                 'Find where highlighted function is used', self )
-        self.findButton.setVisible( False )
         self.connect( self.findButton, SIGNAL( "triggered()" ),
                       self.__findWhereUsed )
         self.copyPathButton = QAction( \
@@ -101,6 +100,12 @@ class FunctionsViewer( QWidget ):
                 'Copy path to clipboard', self )
         self.connect( self.copyPathButton, SIGNAL( "triggered()" ),
                       self.funcViewer.copyToClipboard )
+
+        self.findNotUsedButton = QAction( \
+                PixmapCache().getIcon( 'notused.png' ),
+                'Not used functions analysis', self )
+        self.connect( self.findNotUsedButton, SIGNAL( "triggered()" ),
+                      self.__findNotUsed )
 
         toolbar = QToolBar( self )
         toolbar.setMovable( False )
@@ -119,6 +124,7 @@ class FunctionsViewer( QWidget ):
                                        QSizePolicy.Expanding )
         self.filterEdit.lineEdit().setToolTip( "Space separated regular expressions" )
         toolbar.addWidget( self.filterEdit )
+        toolbar.addAction( self.findNotUsedButton )
         self.connect( self.filterEdit,
                       SIGNAL( "editTextChanged(const QString &)" ),
                       self.__filterChanged )
@@ -190,7 +196,7 @@ class FunctionsViewer( QWidget ):
             self.filterEdit.clear()
 
             project = GlobalData().project
-            if project.fileName != "":
+            if project.isLoaded():
                 self.disconnect( self.filterEdit,
                                  SIGNAL( "editTextChanged(const QString &)" ),
                                  self.__filterChanged )
@@ -198,6 +204,9 @@ class FunctionsViewer( QWidget ):
                 self.connect( self.filterEdit,
                               SIGNAL( "editTextChanged(const QString &)" ),
                               self.__filterChanged )
+                self.findNotUsedButton.setEnabled( True )
+            else:
+                self.findNotUsedButton.setEnabled( False )
             self.filterEdit.clearEditText()
         return
 
@@ -234,6 +243,10 @@ class FunctionsViewer( QWidget ):
                     self.__contextItem.getPath(),
                     self.__contextItem.sourceObj )
         return
+
+    def __findNotUsed( self ):
+        " Runs the not used functions analysis "
+        pass
 
     def __updateButtons( self ):
         " Updates the toolbar buttons depending on what is selected "
