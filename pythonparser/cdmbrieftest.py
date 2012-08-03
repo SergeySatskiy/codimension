@@ -47,7 +47,6 @@ def main():
     parser = OptionParser(
     """
     %prog <file name>
-    Note #1: netschedule server will be running on the same host
     """ )
     parser.add_option( "-m", "--use-memory-buffer",
                        action="store_true", dest="memory", default=False,
