@@ -87,7 +87,7 @@ class ModuleInfoBase():
         " Provides line, pos and absPosition line as string "
         return str( self.line ) + ":" + \
                str( self.pos ) + ":" + \
-               str( self.__absPosition )
+               str( self.absPosition )
 
     def getDisplayName( self ):
         """ Provides a name for display purpose.
