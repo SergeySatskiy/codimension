@@ -92,7 +92,6 @@ class ClassesViewer( QWidget ):
         self.findButton = QAction( \
                 PixmapCache().getIcon( 'findusage.png' ),
                 'Find where highlighted class is used', self )
-        self.findButton.setVisible( False )
         self.connect( self.findButton, SIGNAL( "triggered()" ),
                       self.__findWhereUsed )
         self.copyPathButton = QAction( \
@@ -100,6 +99,12 @@ class ClassesViewer( QWidget ):
                 'Copy path to clipboard', self )
         self.connect( self.copyPathButton, SIGNAL( "triggered()" ),
                       self.clViewer.copyToClipboard )
+
+        self.findNotUsedButton = QAction( \
+                PixmapCache().getIcon( 'notused.png' ),
+                'Unused class analysis', self )
+        self.connect( self.findNotUsedButton, SIGNAL( "triggered()" ),
+                      self.__findNotUsed )
 
         toolbar = QToolBar( self )
         toolbar.setMovable( False )
@@ -118,6 +123,7 @@ class ClassesViewer( QWidget ):
                                        QSizePolicy.Expanding )
         self.filterEdit.lineEdit().setToolTip( "Space separated regular expressions" )
         toolbar.addWidget( self.filterEdit )
+        toolbar.addAction( self.findNotUsedButton )
         self.connect( self.filterEdit,
                       SIGNAL( "editTextChanged(const QString &)" ),
                       self.__filterChanged )
@@ -186,7 +192,7 @@ class ClassesViewer( QWidget ):
             self.filterEdit.clear()
 
             project = GlobalData().project
-            if project.fileName != "":
+            if project.isLoaded():
                 self.disconnect( self.filterEdit,
                                  SIGNAL( "editTextChanged(const QString &)" ),
                                  self.__filterChanged )
@@ -194,6 +200,9 @@ class ClassesViewer( QWidget ):
                 self.connect( self.filterEdit,
                               SIGNAL( "editTextChanged(const QString &)" ),
                               self.__filterChanged )
+                self.findNotUsedButton.setEnabled( True )
+            else:
+                self.findNotUsedButton.setEnabled( False )
             self.filterEdit.clearEditText()
         return
 
@@ -229,6 +238,11 @@ class ClassesViewer( QWidget ):
             GlobalData().mainWindow.findWhereUsed( \
                     self.__contextItem.getPath(),
                     self.__contextItem.sourceObj )
+        return
+
+    def __findNotUsed( self ):
+        " Runs the unused class analysis "
+        GlobalData().mainWindow.onNotUsedClasses()
         return
 
     def __updateButtons( self ):

@@ -795,16 +795,16 @@ class CodimensionMainWindow( QMainWindow ):
         self.__toolsMenu.addSeparator()
         self.__unusedClassesAct = self.__toolsMenu.addAction( \
                                         PixmapCache().getIcon( 'notused.png' ),
-                                        'Not used classes analysis',
-                                        self.__onNotUsedClasses )
+                                        'Unused class analysis',
+                                        self.onNotUsedClasses )
         self.__unusedFunctionsAct = self.__toolsMenu.addAction( \
                                         PixmapCache().getIcon( 'notused.png' ),
-                                        'Not used functions analysis',
-                                        self.__onNotUsedFunctions )
+                                        'Unused function analysis',
+                                        self.onNotUsedFunctions )
         self.__unusedGlobalsAct = self.__toolsMenu.addAction( \
                                         PixmapCache().getIcon( 'notused.png' ),
-                                        'Not used global variables analysis',
-                                        self.__onNotUsedGlobals )
+                                        'Unused global variable analysis',
+                                        self.onNotUsedGlobals )
 
         # The Run menu
         self.__runMenu = QMenu( "&Run", self )
@@ -3010,7 +3010,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.openFile( path, -1 )
         return
 
-    def __onNotUsedFunctions( self ):
+    def onNotUsedFunctions( self ):
         " Triggered when not used functions analysis requested "
         dlg = NotUsedAnalysisProgress( \
                         NotUsedAnalysisProgress.Functions,
@@ -3019,7 +3019,7 @@ class CodimensionMainWindow( QMainWindow ):
         dlg.exec_()
         return
 
-    def __onNotUsedGlobals( self ):
+    def onNotUsedGlobals( self ):
         " Triggered when not used global vars analysis requested "
         dlg = NotUsedAnalysisProgress( \
                         NotUsedAnalysisProgress.Globals,
@@ -3028,7 +3028,7 @@ class CodimensionMainWindow( QMainWindow ):
         dlg.exec_()
         return
 
-    def __onNotUsedClasses( self ):
+    def onNotUsedClasses( self ):
         " Triggered when not used classes analysis requested "
         dlg = NotUsedAnalysisProgress( \
                         NotUsedAnalysisProgress.Classes,
