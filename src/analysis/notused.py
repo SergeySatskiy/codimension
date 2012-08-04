@@ -233,7 +233,9 @@ class NotUsedAnalysisProgress( QDialog ):
             QApplication.processEvents()
 
         if self.__found == 0:
-            logging.info( "No unused candidates found" )
+            # The analysis could be interrupted
+            if not self.__cancelRequest:
+                logging.info( "No unused candidates found" )
         else:
             mainWindow.displayFindInFiles( "", candidates )
 
