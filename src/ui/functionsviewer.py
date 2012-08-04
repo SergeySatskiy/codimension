@@ -103,7 +103,7 @@ class FunctionsViewer( QWidget ):
 
         self.findNotUsedButton = QAction( \
                 PixmapCache().getIcon( 'notused.png' ),
-                'Not used functions analysis', self )
+                'Unused function analysis', self )
         self.connect( self.findNotUsedButton, SIGNAL( "triggered()" ),
                       self.__findNotUsed )
 
@@ -245,8 +245,9 @@ class FunctionsViewer( QWidget ):
         return
 
     def __findNotUsed( self ):
-        " Runs the not used functions analysis "
-        pass
+        " Runs the unused function analysis "
+        GlobalData().mainWindow.onNotUsedFunctions()
+        return
 
     def __updateButtons( self ):
         " Updates the toolbar buttons depending on what is selected "

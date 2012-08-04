@@ -45,7 +45,7 @@ class NotUsedAnalysisProgress( QDialog ):
         QDialog.__init__( self, parent )
 
         if what not in [ self.Functions, self.Classes, self.Globals ]:
-            raise Exception( "Unsupported not used analysis type: " + \
+            raise Exception( "Unsupported unused analysis type: " + \
                              str( what ) )
 
         self.__cancelRequest = False
@@ -68,13 +68,13 @@ class NotUsedAnalysisProgress( QDialog ):
 
     def __formTitle( self ):
         " Forms the progress dialog title "
-        title = "Not used "
+        title = "Unused "
         if self.__what == self.Functions:
-            title += 'functions'
+            title += 'function'
         elif self.__what == self.Classes:
-            title += 'classes'
+            title += 'class'
         else:
-            title += 'globlal variables'
+            title += 'globlal variable'
         return title + " analysis"
 
     def __formInfoLabel( self, name ):
@@ -225,7 +225,7 @@ class NotUsedAnalysisProgress( QDialog ):
             QApplication.processEvents()
 
         if self.__found == 0:
-            logging.info( "No not used candidates found" )
+            logging.info( "No unused candidates found" )
         else:
             mainWindow.displayFindInFiles( "", candidates )
 

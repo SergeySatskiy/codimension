@@ -101,6 +101,12 @@ class GlobalsViewer( QWidget ):
         self.connect( self.copyPathButton, SIGNAL( "triggered()" ),
                       self.globalsViewer.copyToClipboard )
 
+        self.findNotUsedButton = QAction( \
+                PixmapCache().getIcon( 'notused.png' ),
+                'Unused global variable analysis', self )
+        self.connect( self.findNotUsedButton, SIGNAL( "triggered()" ),
+                      self.__findNotUsed )
+
         toolbar = QToolBar( self )
         toolbar.setMovable( False )
         toolbar.setAllowedAreas( Qt.TopToolBarArea )
@@ -118,6 +124,7 @@ class GlobalsViewer( QWidget ):
                                        QSizePolicy.Expanding )
         self.filterEdit.lineEdit().setToolTip( "Space separated regular expressions" )
         toolbar.addWidget( self.filterEdit )
+        toolbar.addAction( self.findNotUsedButton )
         self.connect( self.filterEdit,
                       SIGNAL( "editTextChanged(const QString &)" ),
                       self.__filterChanged )
@@ -186,7 +193,7 @@ class GlobalsViewer( QWidget ):
             self.filterEdit.clear()
 
             project = GlobalData().project
-            if project.fileName != "":
+            if project.isLoaded():
                 self.disconnect( self.filterEdit,
                                  SIGNAL( "editTextChanged(const QString &)" ),
                                  self.__filterChanged )
@@ -194,6 +201,9 @@ class GlobalsViewer( QWidget ):
                 self.connect( self.filterEdit,
                               SIGNAL( "editTextChanged(const QString &)" ),
                               self.__filterChanged )
+                self.findNotUsedButton.setEnabled( True )
+            else:
+                self.findNotUsedButton.setEnabled( False )
             self.filterEdit.clearEditText()
         return
 
@@ -230,6 +240,11 @@ class GlobalsViewer( QWidget ):
             GlobalData().mainWindow.findWhereUsed( \
                     self.__contextItem.getPath(),
                     self.__contextItem.sourceObj )
+        return
+
+    def __findNotUsed( self ):
+        " Runs the unused global variable analysis "
+        GlobalData().mainWindow.onNotUsedGlobals()
         return
 
     def __updateButtons( self ):
