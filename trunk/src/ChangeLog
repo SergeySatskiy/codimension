@@ -12,6 +12,8 @@
 * Bug fix: incorrect file icons in the editing history
 * Bug fix: incorrect file name in the editing history after save as
 * Bug fix: impossible to save non-modified file when it disappeared from disk
+* New feature: total number of matches is now shown in the search results
+  header
 
 
 2012 XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>

@@ -419,11 +419,14 @@ class FindInFilesViewer( QWidget ):
         self.__reportResults = results
 
         # Add the complete information
+        totalMatched = 0
         for item in results:
-            if len( item.matches ) == 1:
+            matched = len( item.matches )
+            totalMatched += matched
+            if matched == 1:
                 matchText = " (1 match)"
             else:
-                matchText = " (" + str( len( item.matches ) ) + " matches)"
+                matchText = " (" + str( matched ) + " matches)"
             columns = QStringList() << item.fileName << matchText
             fileItem = MatchTableFileItem( columns, item.bufferUUID )
             fileItem.setIcon( 0,
@@ -438,6 +441,12 @@ class FindInFilesViewer( QWidget ):
                 matchItem = MatchTableItem( columns, match.tooltip )
                 fileItem.addChild( matchItem )
             fileItem.setExpanded( True )
+
+        # Update the header with the total number of matches
+        headerLabels = QStringList() << "File name / line" \
+                                     << "Text (total matches: " + \
+                                        str( totalMatched ) + ")"
+        self.__resultsTree.setHeaderLabels( headerLabels )
 
         # Resizing the table
         self.__resultsTree.header().resizeSections( \
