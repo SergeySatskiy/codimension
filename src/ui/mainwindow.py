@@ -1352,9 +1352,6 @@ class CodimensionMainWindow( QMainWindow ):
             self.__prjLineCounterAct.setEnabled( projectLoaded )
             self.__prjImportDgmAct.setEnabled( projectLoaded )
             self.__prjImportsDgmDlgAct.setEnabled( projectLoaded )
-            self.__unusedFunctionsAct.setEnabled( projectLoaded )
-            self.__unusedGlobalsAct.setEnabled( projectLoaded )
-            self.__unusedClassesAct.setEnabled( projectLoaded )
 
             self.settings.projectLoaded = projectLoaded
             if projectLoaded:
@@ -2871,10 +2868,16 @@ class CodimensionMainWindow( QMainWindow ):
             self.__prjGenPylintrcAct.setEnabled( not rcExists )
             self.__prjEditPylintrcAct.setEnabled( rcExists )
             self.__prjDelPylintrcAct.setEnabled( rcExists )
+            self.__unusedClassesAct.setEnabled( self.classesViewer.getItemCount() > 0 )
+            self.__unusedFunctionsAct.setEnabled( self.functionsViewer.getItemCount() > 0 )
+            self.__unusedGlobalsAct.setEnabled( self.globalsViewer.getItemCount() > 0 )
         else:
             self.__prjGenPylintrcAct.setEnabled( False )
             self.__prjEditPylintrcAct.setEnabled( False )
             self.__prjDelPylintrcAct.setEnabled( False )
+            self.__unusedClassesAct.setEnabled( False )
+            self.__unusedFunctionsAct.setEnabled( False )
+            self.__unusedGlobalsAct.setEnabled( False )
 
         self.__tabPylintAct.setShortcut( "Ctrl+L" )
         self.__tabPymetricsAct.setShortcut( "Ctrl+K" )
