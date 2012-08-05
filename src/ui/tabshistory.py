@@ -22,6 +22,7 @@
 
 " Tabs history support implementation "
 
+import os.path
 from mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from PyQt4.QtCore            import QObject, SIGNAL
 
@@ -301,4 +302,12 @@ class TabsHistory( QObject ):
         self.__tabsSequence.append( self.__index )
         self.emit( SIGNAL( 'historyChanged' ) )
         return True
+
+    def updateFileNameForTab( self, uuid, newFileName ):
+        " After SaveAs the file name should be updated "
+        newDisplayName = os.path.basename( newFileName )
+        for item in self.__history:
+            if item.uuid == uuid:
+                item.displayName = newDisplayName
+        return
 
