@@ -711,30 +711,33 @@ class EditorsManager( QTabWidget ):
 
     def _updateIconAndTooltip( self, widgetIndex, fileType = None ):
         " Updates the current tab icon and tooltip after the file is saved "
-        fileName = self.widget( widgetIndex ).getFileName()
+        widget = self.widget( widgetIndex )
+        fileName = widget.getFileName()
 
         if fileType is None:
             fileType = detectFileType( fileName )
 
         if os.path.isabs( fileName ):
             # It makes sense to test if a file disappeared or modified
-            if not self.widget( widgetIndex ).doesFileExist():
+            if not widget.doesFileExist():
                 self.setTabToolTip( widgetIndex,
-                                    "File does not exist on the disk" )
-                self.setTabIcon( widgetIndex,
-                                 PixmapCache().getIcon( 'disappearedfile.png' ) )
+                                    "The file does not exist on the disk" )
+                icon = PixmapCache().getIcon( 'disappearedfile.png' )
+                self.setTabIcon( widgetIndex, icon )
+                self.history.updateIconForTab( widget.getUUID(), icon )
                 return
-            if self.widget( widgetIndex ).isDiskFileModified():
+            if widget.isDiskFileModified():
                 self.setTabToolTip( widgetIndex,
                                     "The file has been modified outside codimension" )
-                self.setTabIcon( widgetIndex,
-                                 PixmapCache().getIcon( 'modifiedfile.png' ) )
+                icon = PixmapCache().getIcon( 'modifiedfile.png' )
+                self.setTabIcon( widgetIndex, icon )
+                self.history.updateIconForTab( widget.getUUID(), icon )
                 return
 
         if fileType not in [ PythonFileType, Python3FileType ]:
             self.setTabIcon( widgetIndex, QIcon() )
-            self.setTabToolTip( widgetIndex,
-                                self.widget( widgetIndex ).getTooltip() )
+            self.setTabToolTip( widgetIndex, widget.getTooltip() )
+            self.history.updateIconForTab( widget.getUUID(), QIcon() )
             return
 
         try:
@@ -745,11 +748,13 @@ class EditorsManager( QTabWidget ):
             info = infoSrc.get( fileName )
 
             if len( info.errors ) + len( info.lexerErrors ) > 0:
-                self.setTabIcon( widgetIndex,
-                                 PixmapCache().getIcon( 'filepythonbroken.png' ) )
-                self.setTabToolTip( widgetIndex, "File has parsing errors" )
+                icon = PixmapCache().getIcon( 'filepythonbroken.png' )
+                self.setTabIcon( widgetIndex, icon )
+                self.setTabToolTip( widgetIndex, "The disk version of file has parsing errors" )
+                self.history.updateIconForTab( widget.getUUID(), icon )
             else:
                 self.setTabIcon( widgetIndex, QIcon() )
+                self.history.updateIconForTab( widget.getUUID(), QIcon() )
 
                 if info.docstring is not None:
                     self.setTabToolTip( widgetIndex, info.docstring.text )
@@ -757,8 +762,9 @@ class EditorsManager( QTabWidget ):
                     self.setTabToolTip( widgetIndex, "" )
         except:
             self.setTabToolTip( widgetIndex, "" )
-            self.setTabIcon( widgetIndex,
-                             PixmapCache().getIcon( 'filepythonbroken.png' ) )
+            icon = PixmapCache().getIcon( 'filepythonbroken.png' )
+            self.setTabIcon( widgetIndex, icon )
+            self.history.updateIconForTab( widget.getUUID(), icon )
         return
 
     def openPixmapFile( self, fileName ):

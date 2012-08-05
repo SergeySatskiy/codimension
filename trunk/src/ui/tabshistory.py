@@ -311,3 +311,10 @@ class TabsHistory( QObject ):
                 item.displayName = newDisplayName
         return
 
+    def updateIconForTab( self, uuid, icon ):
+        " Broken/disappeared/modified icons could appear for a file "
+        for item in self.__history:
+            if item.uuid == uuid:
+                item.icon = icon
+        return
+
