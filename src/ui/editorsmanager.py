@@ -1009,7 +1009,8 @@ class EditorsManager( QTabWidget ):
                     return False
             else:
                 # The disk file is the same as we read it
-                if not editor.isModified():
+                if not editor.isModified() and \
+                   widget.doesFileExist():
                     return True
 
             # Save the buffer into the file
