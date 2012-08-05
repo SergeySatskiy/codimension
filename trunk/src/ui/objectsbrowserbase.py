@@ -325,6 +325,7 @@ class ObjectsBrowser( QTreeView ):
                 self.layoutDisplay()
                 self.updateCounter()
                 self.model().setFilterRegExp( "" )
+                self.emit( SIGNAL( 'modelFilesChanged' ) )
         return
 
     def selectionChanged( self, selected, deselected ):

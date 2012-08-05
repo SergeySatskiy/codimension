@@ -73,6 +73,8 @@ class ClassesViewer( QWidget ):
                       self.__selectionChanged )
         self.connect( self.clViewer, SIGNAL( "openingItem" ),
                       self.itemActivated )
+        self.connect( self.clViewer, SIGNAL( "modelFilesChanged" ),
+                      self.modelFilesChanged )
 
         self.filterEdit.lineEdit().setFocus()
         self.__contextItem = None
@@ -105,6 +107,7 @@ class ClassesViewer( QWidget ):
                 'Unused class analysis', self )
         self.connect( self.findNotUsedButton, SIGNAL( "triggered()" ),
                       self.__findNotUsed )
+        self.findNotUsedButton.setEnabled( False )
 
         toolbar = QToolBar( self )
         toolbar.setMovable( False )
@@ -156,6 +159,10 @@ class ClassesViewer( QWidget ):
         self.__updateButtons()
         return
 
+    def getItemCount( self ):
+        " Provides the number of items in the model - total, not only visible "
+        return self.clViewer.model().sourceModel().rowCount()
+
     def itemActivated( self, path, line ):
         " Handles the item activation "
         self.filterEdit.addItem( self.filterEdit.lineEdit().text() )
@@ -200,7 +207,7 @@ class ClassesViewer( QWidget ):
                 self.connect( self.filterEdit,
                               SIGNAL( "editTextChanged(const QString &)" ),
                               self.__filterChanged )
-                self.findNotUsedButton.setEnabled( True )
+                self.findNotUsedButton.setEnabled( self.getItemCount() > 0 )
             else:
                 self.findNotUsedButton.setEnabled( False )
             self.filterEdit.clearEditText()
@@ -269,5 +276,14 @@ class ClassesViewer( QWidget ):
     def onFileUpdated( self, fileName, uuid ):
         " Triggered when the file is updated "
         self.clViewer.onFileUpdated( fileName )
+        self.findNotUsedButton.setEnabled( GlobalData().project.isLoaded() and \
+                                           self.getItemCount() > 0 )
         return
+
+    def modelFilesChanged( self ):
+        " Triggered when the source model has a file or files added or deleted "
+        self.findNotUsedButton.setEnabled( GlobalData().project.isLoaded() and \
+                                           self.getItemCount() > 0 )
+        return
+
 
