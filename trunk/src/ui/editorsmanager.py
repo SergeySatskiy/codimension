@@ -1128,13 +1128,13 @@ class EditorsManager( QTabWidget ):
             if GlobalData().project.fileName == fileName:
                 GlobalData().project.onProjectFileUpdated()
 
+            uuid = widget.getUUID()
             if existedBefore:
-                self.emit( SIGNAL( 'fileUpdated' ), fileName,
-                           widget.getUUID() )
+                self.emit( SIGNAL( 'fileUpdated' ), fileName, uuid )
             else:
-                self.emit( SIGNAL( 'bufferSavedAs' ), fileName,
-                           widget.getUUID() )
+                self.emit( SIGNAL( 'bufferSavedAs' ), fileName, uuid )
                 GlobalData().project.addRecentFile( fileName )
+            self.history.updateFileNameForTab( uuid, fileName )
             widget.updateStatus()
             self.__updateStatusBar()
             self.__mainWindow.updateRunDebugButtons()
