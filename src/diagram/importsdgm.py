@@ -462,6 +462,14 @@ class ImportsDiagramProgress( QDialog ):
         QTimer.singleShot( 0, self.__process )
         return
 
+    def keyPressEvent( self, event ):
+        " Processes the ESC key specifically "
+        if event.key() == Qt.Key_Escape:
+            self.__onClose()
+        else:
+            QDialog.keyPressEvent( self, event )
+        return
+
     def __createLayout( self ):
         """ Creates the dialog layout """
 
