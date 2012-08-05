@@ -7,6 +7,11 @@
   project is loaded. UI to create/edit/delete new file templates added.
 * Editor settings are moved from the main toolbar button with menu to the
   introduced main menu 'Options'
+* New feature: unused class/function/global variable analysis
+* New feature: find occurences for classes/functions/global variables viewers
+* Bug fix: incorrect file icons in the editing history
+* Bug fix: incorrect file name in the editing history after save as
+* Bug fix: impossible to save non-modified file when it disappeared from disk
 
 
 2012 XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
