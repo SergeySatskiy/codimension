@@ -83,6 +83,9 @@ from debugger.main              import CodimensionDebugger
 from diffviewer                 import DiffViewer
 from thirdparty.diff2html.diff2html import parse_from_memory
 from analysis.notused           import NotUsedAnalysisProgress
+from autocomplete.completelists import getOccurrences
+from findinfiles                import ItemToSearchIn, getSearchItemIndex
+
 
 class EditorsManagerWidget( QWidget ):
     " Tab widget which has tabs with editors and viewers "
@@ -1525,15 +1528,6 @@ class CodimensionMainWindow( QMainWindow ):
         self.openFile( path, lineNo )
         return
 
-    def findWhereUsed( self, fileName, item ):
-        " User requested a search where an item is used "
-
-        logging.debug( "Where used search is requested." \
-                       " Item source file: " + fileName + \
-                       " Item name: " + item.name + \
-                       " ItemType: " + str( type( item ) ) )
-        return
-
     def __createNewProject( self ):
         " Create new action "
 
@@ -2602,7 +2596,39 @@ class CodimensionMainWindow( QMainWindow ):
         " Triggered when search for occurences is requested "
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
-        currentWidget.getEditor().onOccurances()
+        currentWidget.getEditor().onOccurences()
+        return
+
+    def findWhereUsed( self, fileName, item ):
+        " Find occurences for c/f/g browsers "
+
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+
+        # False for no exceptions
+        locations = getOccurrences( fileName, item.absPosition, False )
+        if len( locations ) == 0:
+            QApplication.restoreOverrideCursor()
+            self.showStatusBarMessage( "No occurances of " + item.name + " found" )
+            return
+
+        # Process locations for find results window
+        result = []
+        for loc in locations:
+            index = getSearchItemIndex( result, loc[ 0 ] )
+            if index < 0:
+                widget = self.getWidgetForFileName( loc[0] )
+                if widget is None:
+                    uuid = ""
+                else:
+                    uuid = widget.getUUID()
+                newItem = ItemToSearchIn( loc[ 0 ], uuid )
+                result.append( newItem )
+                index = len( result ) - 1
+            result[ index ].addMatch( item.name, loc[ 1 ] )
+
+        QApplication.restoreOverrideCursor()
+
+        self.displayFindInFiles( "", result )
         return
 
     def __onTabOpenImport( self ):

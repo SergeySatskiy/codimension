@@ -56,7 +56,7 @@ class ClassesViewer( QWidget ):
         self.__menu.addSeparator()
         self.__findMenuItem = self.__menu.addAction( \
                                 PixmapCache().getIcon( 'findusage.png' ),
-                                'Find where used', self.__findWhereUsed )
+                                'Find occurences', self.__findWhereUsed )
         self.__menu.addSeparator()
         self.__copyMenuItem = self.__menu.addAction( \
                                 PixmapCache().getIcon( 'copytoclipboard.png' ),
@@ -88,12 +88,12 @@ class ClassesViewer( QWidget ):
         # Toolbar part - buttons
         self.definitionButton = QAction( \
                 PixmapCache().getIcon( 'definition.png' ),
-                'Jump to highlighted class definition', self )
+                'Jump to highlighted item definition', self )
         self.connect( self.definitionButton, SIGNAL( "triggered()" ),
                       self.__goToDefinition )
         self.findButton = QAction( \
                 PixmapCache().getIcon( 'findusage.png' ),
-                'Find where highlighted class is used', self )
+                'Find highlighted item occurences', self )
         self.connect( self.findButton, SIGNAL( "triggered()" ),
                       self.__findWhereUsed )
         self.copyPathButton = QAction( \

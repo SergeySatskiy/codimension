@@ -56,7 +56,7 @@ class GlobalsViewer( QWidget ):
         self.__menu.addSeparator()
         self.__findMenuItem = self.__menu.addAction( \
                                 PixmapCache().getIcon( 'findusage.png' ),
-                                'Find where used', self.__findWhereUsed )
+                                'Find occurence', self.__findWhereUsed )
         self.__menu.addSeparator()
         self.__copyMenuItem = self.__menu.addAction( \
                                 PixmapCache().getIcon( 'copytoclipboard.png' ),
@@ -88,13 +88,12 @@ class GlobalsViewer( QWidget ):
         # Toolbar part - buttons
         self.definitionButton = QAction( \
                 PixmapCache().getIcon( 'definition.png' ),
-                'Jump to highlighted global variable definition', self )
+                'Jump to highlighted item definition', self )
         self.connect( self.definitionButton, SIGNAL( "triggered()" ),
                       self.__goToDefinition )
         self.findButton = QAction( \
                 PixmapCache().getIcon( 'findusage.png' ),
-                'Find where highlighted global variable is used', self )
-        self.findButton.setVisible( False )
+                'Find highlighted item occurences', self )
         self.connect( self.findButton, SIGNAL( "triggered()" ),
                       self.__findWhereUsed )
         self.copyPathButton = QAction( \

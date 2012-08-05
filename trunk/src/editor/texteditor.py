@@ -170,7 +170,7 @@ class TextEditor( ScintillaWrapper ):
                 if key == Qt.Key_Backslash:
                     return self.onGotoDefinition()
                 if key == Qt.Key_BracketRight:
-                    return self.onOccurances()
+                    return self.onOccurences()
                 if key == Qt.Key_Minus:
                     return self.parent().onZoomOut()
                 if key == Qt.Key_Equal:
@@ -1312,7 +1312,7 @@ class TextEditor( ScintillaWrapper ):
             GlobalData().mainWindow.jumpToLine( context.getLastScopeLine() )
         return True
 
-    def onOccurances( self ):
+    def onOccurences( self ):
         " The user requested a list of occurances "
         if self.parent().getFileType() not in [ PythonFileType,
                                                 Python3FileType ]:
