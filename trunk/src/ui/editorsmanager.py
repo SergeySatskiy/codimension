@@ -996,6 +996,7 @@ class EditorsManager( QTabWidget ):
         fileName = widget.getFileName()
         if fileName != "":
             # This is the buffer which has the corresponding file on FS
+            existedBefore = os.path.exists( fileName )
             if widget.isDiskFileModified() and \
                widget.doesFileExist():
                 if index != self.currentIndex():
@@ -1025,8 +1026,10 @@ class EditorsManager( QTabWidget ):
                 self._updateIconAndTooltip( index )
                 if GlobalData().project.fileName == fileName:
                     GlobalData().project.onProjectFileUpdated()
-                self.emit( SIGNAL( 'fileUpdated' ), fileName,
-                           widget.getUUID() )
+                if existedBefore:
+                    # Otherwise the FS watcher will signal the chages
+                    self.emit( SIGNAL( 'fileUpdated' ), fileName,
+                               widget.getUUID() )
                 return True
             # Error saving the buffer
             return False
