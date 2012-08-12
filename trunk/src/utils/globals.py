@@ -88,6 +88,14 @@ class GlobalData( object ):
             self.runParamsCache.serialize( settingsDir + "runparamscache" )
             return
 
+        def getProfileOutputPath( self ):
+            " Provides the path to the profile output file "
+            if self.project.isLoaded():
+                return self.project.userProjectDir + "profile.out"
+
+            # No project loaded
+            return settingsDir + "profile.out"
+
         def getRopeProject( self, fileName = "" ):
             " Provides existed or creates a new rope project "
             if self.project.isLoaded():
