@@ -85,6 +85,7 @@ from thirdparty.diff2html.diff2html import parse_from_memory
 from analysis.notused           import NotUsedAnalysisProgress
 from autocomplete.completelists import getOccurrences
 from findinfiles                import ItemToSearchIn, getSearchItemIndex
+from profiling.profui           import ProfilingProgressDialog
 
 
 class EditorsManagerWidget( QWidget ):
@@ -829,6 +830,23 @@ class CodimensionMainWindow( QMainWindow ):
                                         PixmapCache().getIcon( 'detailsdlg.png' ),
                                         'Run t&ab script...',
                                         self.__onRunTabDlg )
+        self.__runMenu.addSeparator()
+        self.__prjProfileAct = self.__runMenu.addAction( \
+                                        PixmapCache().getIcon( 'profile.png' ),
+                                        'Profile project main script',
+                                        self.__onProfileProject )
+        self.__prjProfileDlgAct = self.__runMenu.addAction( \
+                                        PixmapCache().getIcon( 'profile.png' ),
+                                        'Profile project main script...',
+                                        self.__onProfileProjectSettings )
+        self.__tabProfileAct = self.__runMenu.addAction( \
+                                        PixmapCache().getIcon( 'profile.png' ),
+                                        'Profile tab script',
+                                        self.__onProfileTab )
+        self.__tabProfileDlgAct = self.__runMenu.addAction( \
+                                        PixmapCache().getIcon( 'profile.png' ),
+                                        'Profile tab script...',
+                                        self.__onProfileTabDlg )
 
         # The Diagrams menu
         self.__diagramsMenu = QMenu( "&Diagrams", self )
@@ -1107,6 +1125,24 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.runProjectButton, SIGNAL( 'clicked(bool)' ),
                       self.__onRunProject )
 
+        # profile project button and its menu
+        profileProjectMenu = QMenu( self )
+        profileProjectAct = profileProjectMenu.addAction( \
+                                PixmapCache().getIcon( 'detailsdlg.png' ),
+                                'Set run/debug parameters' )
+        self.connect( profileProjectAct, SIGNAL( 'triggered()' ),
+                      self.__onProfileProjectSettings )
+        self.profileProjectButton = QToolButton( self )
+        self.profileProjectButton.setIcon( \
+                            PixmapCache().getIcon( 'profile.png' ) )
+        self.profileProjectButton.setToolTip( 'Project is not loaded' )
+        self.profileProjectButton.setPopupMode( QToolButton.DelayedPopup )
+        self.profileProjectButton.setMenu( profileProjectMenu )
+        self.profileProjectButton.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.profileProjectButton, SIGNAL( 'clicked(bool)' ),
+                      self.__onProfileProject )
+
+
         # Debug project button and its menu
         debugProjectMenu = QMenu( self )
         debugProjectAct = debugProjectMenu.addAction( \
@@ -1257,6 +1293,7 @@ class CodimensionMainWindow( QMainWindow ):
         toolbar.addSeparator()
         toolbar.addWidget( self.runProjectButton )
         toolbar.addWidget( self.debugProjectButton )
+        toolbar.addWidget( self.profileProjectButton )
         toolbar.addAction( applicationDiagramButton )
         toolbar.addSeparator()
         toolbar.addAction( neverUsedButton )
@@ -1400,6 +1437,8 @@ class CodimensionMainWindow( QMainWindow ):
             self.runProjectButton.setToolTip( "Cannot run project - debug in progress" )
             self.debugProjectButton.setEnabled( False )
             self.debugProjectButton.setToolTip( "Cannot debug project - debug in progress" )
+            self.profileProjectButton.setEnabled( False )
+            self.profileProjectButton.setToolTip( "Cannot profile project - debug in progress" )
             return
 
         if not GlobalData().project.isLoaded():
@@ -1407,6 +1446,8 @@ class CodimensionMainWindow( QMainWindow ):
             self.runProjectButton.setToolTip( "Run project" )
             self.debugProjectButton.setEnabled( False )
             self.debugProjectButton.setToolTip( "Debug project" )
+            self.profileProjectButton.setEnabled( False )
+            self.profileProjectButton.setToolTip( "Profile project" )
             return
 
         if not GlobalData().isProjectScriptValid():
@@ -1416,12 +1457,17 @@ class CodimensionMainWindow( QMainWindow ):
             self.debugProjectButton.setEnabled( False )
             self.debugProjectButton.setToolTip( "Cannot debug project - script " \
                                                 "is not specified or invalid" )
+            self.profileProjectButton.setEnabled( False )
+            self.profileProjectButton.setToolTip( "Cannot profile project - script " \
+                                                  "is not specified or invalid" )
             return
 
         self.runProjectButton.setEnabled( True )
         self.runProjectButton.setToolTip( "Run project" )
         self.debugProjectButton.setEnabled( True )
         self.debugProjectButton.setToolTip( "Debug project" )
+        self.profileProjectButton.setEnabled( True )
+        self.profileProjectButton.setToolTip( "Profile project" )
         return
 
     def linecounterButtonClicked( self ):
@@ -2006,6 +2052,22 @@ class CodimensionMainWindow( QMainWindow ):
             self.__onRunProject()
         return
 
+    def __onProfileProjectSettings( self ):
+        " Brings up the dialog with profile script settings "
+        if self.__checkProjectScriptValidity() == False:
+            return
+
+        fileName = GlobalData().project.getProjectScript()
+        params = GlobalData().getRunParameters( fileName )
+        termType = Settings().terminalType
+        dlg = RunDialog( fileName, params, termType, "Profile" )
+        if dlg.exec_() == QDialog.Accepted:
+            GlobalData().addRunParams( fileName, dlg.runParams )
+            if dlg.termType != termType:
+                Settings().terminalType = dlg.termType
+            self.__onProfileProject()
+        return
+
     def __onDebugProjectSettings( self ):
         " Brings up the dialog with debug script settings "
         if self.__checkDebugPrerequisites() == False:
@@ -2035,6 +2097,19 @@ class CodimensionMainWindow( QMainWindow ):
         try:
             Popen( cmd, shell = True,
                    cwd = workingDir, env = environment )
+        except Exception, exc:
+            logging.error( str( exc ) )
+        return
+
+    def __onProfileProject( self, action = False ):
+        " Profiles the project with saved settings "
+        if self.__checkProjectScriptValidity() == False:
+            return
+
+        try:
+            dlg = ProfilingProgressDialog( \
+                        GlobalData().project.getProjectScript() )
+            dlg.exec_()
         except Exception, exc:
             logging.error( str( exc ) )
         return
@@ -2466,11 +2541,25 @@ class CodimensionMainWindow( QMainWindow ):
         currentWidget.onRunScript()
         return
 
+    def __onProfileTab( self ):
+        " Triggered when profile script is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.onProfileScript()
+        return
+
     def __onRunTabDlg( self ):
         " Triggered when run tab script dialog is requested "
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.onRunScriptSettings()
+        return
+
+    def __onProfileTabDlg( self ):
+        " Triggered when profile tab script dialog is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.onProfileScriptSettings()
         return
 
     def __onContextHelp( self ):
@@ -2877,6 +2966,11 @@ class CodimensionMainWindow( QMainWindow ):
         self.__prjRunDlgAct.setEnabled( projectLoaded and prjScriptValid )
         self.__tabRunAct.setEnabled( isPythonBuffer )
         self.__tabRunDlgAct.setEnabled( isPythonBuffer )
+
+        self.__prjProfileAct.setEnabled( projectLoaded and prjScriptValid )
+        self.__prjProfileDlgAct.setEnabled( projectLoaded and prjScriptValid )
+        self.__tabProfileAct.setEnabled( isPythonBuffer )
+        self.__tabProfileDlgAct.setEnabled( isPythonBuffer )
         return
 
     def __toolsAboutToShow( self ):

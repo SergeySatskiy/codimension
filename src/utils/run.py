@@ -26,7 +26,7 @@
 " Utility functions to support running scripts "
 
 
-import sys, os, getpass, commands
+import sys, os, os.path, getpass, commands
 
 
 TERM_AUTO    = 0
@@ -64,7 +64,6 @@ class RunParameters:
                self.envType == RunParameters.InheritParentEnv and \
                len( self.additionToParentEnv ) == 0 and \
                len( self.specificEnv ) == 0
-
 
 
 def getUserShell():
@@ -172,8 +171,20 @@ __osSpawn = {
                       "'cd %(wdir)s; %(exec)s %(options)s; %(shell)s' &",
             }
 
+# The profiling needs to waiting for the child process to finish
+# Unfortunately Popen-ed process finishes immediately, I guess because of &
+# So the child process PID is signalled over UDP - see the $PPID part
+__osSpawnForProfile = {
+    'posix'         : "%(term)s -e %(shell)s -c " \
+                      "'%(exec)s %(fb)s %(port)d $PPID; cd %(wdir)s; %(exec)s -m cProfile -o %(out)s %(options)s; %(exec)s %(fb)s %(port)d $?; %(shell)s' &",
+    'Terminal'      : "Terminal --disable-server -x %(shell)s -c " \
+                      "'%(exec)s %(fb)s %(port)d $PPID; cd %(wdir)s; %(exec)s -m cProfile -o %(out)s %(options)s; %(exec)s %(fb)s %(port)d $?; %(shell)s' &",
+    'gnome-terminal': "gnome-terminal --disable-factory -x %(shell)s -c " \
+                      "'%(exec)s %(fb)s %(port)d $PPID; cd %(wdir)s; %(exec)s -m cProfile -o %(out)s %(options)s; %(exec)s %(fb)s %(port)d $?; %(shell)s' &",
+                      }
 
-def getTerminalCommand( fileName, workingDir, arguments, terminalType ):
+
+def getTerminalCommand( fileName, workingDir, arguments, terminalType, port ):
     " Provides a command to run a separate shell terminal "
 
     if os.name != 'posix':
@@ -187,17 +198,46 @@ def getTerminalCommand( fileName, workingDir, arguments, terminalType ):
     for index in xrange( len( arguments ) ):
         args += ' "$CDM_ARG' + str( index ) + '"'
 
-    if terminalStartCmd in __osSpawn:
-        command = __osSpawn[ terminalStartCmd ] % { 'shell':   shell,
-                                                    'wdir':    workingDir,
-                                                    'exec':    pythonExec,
-                                                    'options': fileName + args }
+    if port is None:
+        # The command is for running something
+        if terminalStartCmd in __osSpawn:
+            command = __osSpawn[ terminalStartCmd ] % { 'shell':   shell,
+                                                        'wdir':    workingDir,
+                                                        'exec':    pythonExec,
+                                                        'options': fileName + args }
+        else:
+            command = __osSpawn[ os.name ] % { 'term':    terminalStartCmd,
+                                               'shell':   shell,
+                                               'wdir':    workingDir,
+                                               'exec':    pythonExec,
+                                               'options': fileName + args }
     else:
-        command = __osSpawn[ os.name ] % { 'term':    terminalStartCmd,
-                                           'shell':   shell,
-                                           'wdir':    workingDir,
-                                           'exec':    pythonExec,
-                                           'options': fileName + args }
+        # The command is profiling something.
+        # Calculate the procfeedback.py path.
+        procfeedbackPath = os.path.sep.join( [ os.path.dirname( sys.argv[ 0 ] ),
+                                             "utils", "procfeedback.py" ] )
+
+        # Decide where to store the profiling output
+        from globals import GlobalData
+        outputPath = GlobalData().getProfileOutputPath()
+
+        if terminalStartCmd in __osSpawnForProfile:
+            command = __osSpawnForProfile[ terminalStartCmd ] % { 'shell':   shell,
+                                                                  'wdir':    workingDir,
+                                                                  'exec':    pythonExec,
+                                                                  'options': fileName + args,
+                                                                  'out':     outputPath,
+                                                                  'fb':      procfeedbackPath,
+                                                                  'port':    port }
+        else:
+            command = __osSpawnForProfile[ os.name ] % { 'term':    terminalStartCmd,
+                                                         'shell':   shell,
+                                                         'wdir':    workingDir,
+                                                         'exec':    pythonExec,
+                                                         'options': fileName + args,
+                                                         'out':     outputPath,
+                                                         'fb':      procfeedbackPath,
+                                                         'port':    port }
 
     return command
 
@@ -279,7 +319,7 @@ def parseCommandLineArguments( cmdLine ):
     return result
 
 
-def getCwdCmdEnv( path, params, terminalType ):
+def getCwdCmdEnv( path, params, terminalType, port = None ):
     """ Provides the working directory, command line and environment
         for running/debugging a script """
 
@@ -291,7 +331,7 @@ def getCwdCmdEnv( path, params, terminalType ):
     # The arguments parsing is going to pass OK because it
     # was checked in the run parameters dialogue
     arguments = parseCommandLineArguments( params.arguments )
-    cmd = getTerminalCommand( path, workingDir, arguments, terminalType )
+    cmd = getTerminalCommand( path, workingDir, arguments, terminalType, port )
 
     if params.envType == params.InheritParentEnv:
         # 'None' does not work here: popen stores last env somewhere and

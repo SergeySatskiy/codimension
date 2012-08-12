@@ -72,6 +72,7 @@ from ui.linecounter             import LineCounterDialog
 from pythontidy.tidy            import getPythonTidySetting, PythonTidyDriver, \
                                        getPythonTidySettingFileName
 from pythontidy.tidysettingsdlg import TidySettingsDialog
+from profiling.profui           import ProfilingProgressDialog
 
 
 class TextEditor( ScintillaWrapper ):
@@ -305,6 +306,14 @@ class TextEditor( ScintillaWrapper ):
                             PixmapCache().getIcon( 'paramsmenu.png' ),
                             'Set parameters and run',
                             self.parent().onRunScriptSettings )
+        self.toolsMenu.addSeparator()
+        self.profileAct = self.toolsMenu.addAction( \
+                            PixmapCache().getIcon( 'profile.png' ),
+                            'Profile script', self.parent().onProfileScript )
+        self.profileParamAct = self.toolsMenu.addAction( \
+                            PixmapCache().getIcon( 'paramsmenu.png' ),
+                            'Set parameters and profile',
+                            self.parent().onProfileScriptSettings )
         return self.toolsMenu
 
     def __initDiagramsMenu( self ):
@@ -1700,6 +1709,24 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                       self.onRunScript )
         self.runScriptButton.setEnabled( False )
 
+        # Profile script and its menu
+        profileScriptMenu = QMenu( self )
+        profileScriptDlgAct = profileScriptMenu.addAction( \
+                                PixmapCache().getIcon( 'detailsdlg.png' ),
+                                'Set profile parameters' )
+        self.connect( profileScriptDlgAct, SIGNAL( 'triggered()' ),
+                      self.onProfileScriptSettings )
+        self.profileScriptButton = QToolButton( self )
+        self.profileScriptButton.setIcon( \
+                            PixmapCache().getIcon( 'profile.png' ) )
+        self.profileScriptButton.setToolTip( 'Profile script' )
+        self.profileScriptButton.setPopupMode( QToolButton.DelayedPopup )
+        self.profileScriptButton.setMenu( profileScriptMenu )
+        self.profileScriptButton.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.profileScriptButton, SIGNAL( 'clicked(bool)' ),
+                      self.onProfileScript )
+        self.profileScriptButton.setEnabled( False )
+
         # Debug script and its menu
         debugScriptMenu = QMenu( self )
         debugScriptDlgAct = debugScriptMenu.addAction( \
@@ -1803,6 +1830,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.addAction( self.pymetricsButton )
         toolbar.addWidget( self.importsDiagramButton )
         toolbar.addWidget( self.runScriptButton )
+        toolbar.addWidget( self.profileScriptButton )
         toolbar.addWidget( self.debugScriptButton )
         toolbar.addAction( self.__undoButton )
         toolbar.addAction( self.__redoButton )
@@ -1855,8 +1883,11 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.runScriptButton.setEnabled( self.__fileType == PythonFileType and \
                                          self.isModified() == False and \
                                          os.path.isabs( self.__fileName ) )
+        self.profileScriptButton.setEnabled( self.runScriptButton.isEnabled() )
         self.__editor.runAct.setEnabled( self.runScriptButton.isEnabled() )
         self.__editor.runParamAct.setEnabled( self.runScriptButton.isEnabled() )
+        self.__editor.profileAct.setEnabled( self.runScriptButton.isEnabled() )
+        self.__editor.profileParamAct.setEnabled( self.runScriptButton.isEnabled() )
         self.debugScriptButton.setEnabled( self.__fileType == PythonFileType and \
                                            self.isModified() == False and \
                                            os.path.isabs( self.__fileName ) )
@@ -1955,10 +1986,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                                          self.isModified() == False and \
                                          self.__debugMode == False and \
                                          os.path.isabs( self.__fileName ) )
-        self.debugScriptButton.setEnabled( self.__fileType == PythonFileType and \
-                                           self.isModified() == False and \
-                                           self.__debugMode == False and \
-                                           os.path.isabs( self.__fileName ) )
+        self.profileScriptButton.setEnabled( self.runScriptButton.isEnabled() )
+        self.debugScriptButton.setEnabled( self.runScriptButton.isEnabled() )
         return
 
     def onPythonTidy( self ):
@@ -2287,7 +2316,20 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             self.onRunScript()
         return
 
-    def onRunScript( self ):
+    def onProfileScriptSettings( self ):
+        " Shows the profile parameters dialogue "
+        fileName = self.getFileName()
+        params = GlobalData().getRunParameters( fileName )
+        termType = Settings().terminalType
+        dlg = RunDialog( fileName, params, termType, "Profile" )
+        if dlg.exec_() == QDialog.Accepted:
+            GlobalData().addRunParams( fileName, dlg.runParams )
+            if dlg.termType != termType:
+                Settings().terminalType = dlg.termType
+            self.onProfileScript()
+        return
+
+    def onRunScript( self, action = False ):
         " Runs the script "
         fileName = self.getFileName()
         params = GlobalData().getRunParameters( fileName )
@@ -2297,6 +2339,14 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         try:
             Popen( cmd, shell = True,
                    cwd = workingDir, env = environment )
+        except Exception, exc:
+            logging.error( str( exc ) )
+        return
+
+    def onProfileScript( self, action = False ):
+        " Profiles the script "
+        try:
+            ProfilingProgressDialog( self.getFileName() ).exec_()
         except Exception, exc:
             logging.error( str( exc ) )
         return
