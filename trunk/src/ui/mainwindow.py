@@ -1800,6 +1800,12 @@ class CodimensionMainWindow( QMainWindow ):
         self.editorsManagerWidget.editorsManager.showDiff( content, tooltip )
         return
 
+    def showProfileReport( self, widget, tooltip ):
+        " Shows the given profile report "
+        self.editorsManagerWidget.editorsManager.showProfileReport( widget,
+                                                                    tooltip )
+        return
+
     def __onPylintTooltip( self, tooltip ):
         " Updates the pylint viewer tab tooltip "
         self.__bottomSideBar.setTabToolTip( 2, tooltip )

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2012  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2012  Sergey Satskiy sergey.satskiy@gmail.com
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,16 +20,22 @@
 # $Id$
 #
 
-" Profiling results as a graph "
+" Profiler test "
 
-from PyQt4.QtGui import QWidget
+def test_f( bla ):
+    if bla > 0:
+        bla += 1
+    else:
+        bla += 2
+    return bla
 
+def test_g( foo ):
+    if foo == 0:
+        while foo < 100:
+            foo = test_f( foo )
+    else:
+        print "Foo != 0"
+    return
 
-class ProfileGraphViewer( QWidget ):
-    " Profiling results as a graph "
-
-    def __init__( self, parent = None ):
-        QWidget.__init__( self, parent )
-        return
-
+test_g( 0 )
 
