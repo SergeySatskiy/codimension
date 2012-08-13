@@ -24,13 +24,17 @@
 
 
 import pstats
+import logging
+import os.path
 
-from PyQt4.QtCore import SIGNAL, QStringList
-from PyQt4.QtGui import QTreeWidgetItem, QTreeWidget
+from PyQt4.QtCore import Qt, SIGNAL, QStringList
+from PyQt4.QtGui import QTreeWidgetItem, QTreeWidget, QColor, QBrush
 from ui.itemdelegates import NoOutlineHeightDelegate
+from utils.globals import GlobalData
 
 
 FLOAT_FORMAT = "%8.6f"
+NON_PROJECT_BACKGROUND = QColor( 255, 227, 227 )
 
 
 class ProfilingTableItem( QTreeWidgetItem ):
@@ -56,12 +60,9 @@ class ProfilingTableItem( QTreeWidgetItem ):
 
         # Try first numeric comparison
         try:
-            return int( txt ) < int( otherTxt )
+            return float( txt ) < float( otherTxt )
         except:
-            try:
-                return float( txt ) < float( otherTxt )
-            except:
-                pass
+            pass
         # Fallback to string comparison
         return txt < otherTxt
 
@@ -73,6 +74,13 @@ class ProfileTableViewer( QTreeWidget ):
         QTreeWidget.__init__( self, parent )
 
         self.__script = scriptName
+        project = GlobalData().project
+        if project.isLoaded():
+            self.__projectPrefix = os.path.dirname( project.fileName )
+        else:
+            self.__projectPrefix = os.path.dirname( scriptName )
+        if not self.__projectPrefix.endswith( os.path.sep ):
+            self.__projectPrefix += os.path.sep
 
         self.setAlternatingRowColors( True )
         self.setRootIsDecorated( False )
@@ -82,22 +90,65 @@ class ProfileTableViewer( QTreeWidget ):
         self.setUniformRowHeights( True )
         headerLabels = QStringList()
 
-        headerLabels << "# of calls" << "Total time" << "Total time per call"
-        headerLabels << "Cumulative time" << "Cumulative time per call"
+        headerLabels << "# of calls" << "Total time" << "Per call"
+        headerLabels << "Cum. time" << "Per call"
         headerLabels << "File name/line" << "Function" << "# of callers"
-        self.setHeaderLabels( headerLabels )
+
+        headerItem = QTreeWidgetItem( headerLabels )
+        headerItem.setToolTip( 0, "Actual calls/primitive call " \
+                                  "(not induced via recursion)" )
+        headerItem.setToolTip( 1, "Total time spent in function " \
+                                  "(excluding time made in calls " \
+                                  "to sub-functions)" )
+        headerItem.setToolTip( 2, "Total time divided by number " \
+                                  "of actual calls" )
+        headerItem.setToolTip( 3, "Total time spent in function and all " \
+                                  "subfunctions (from invocation till exit)" )
+        headerItem.setToolTip( 4, "Cumulative time divided by number " \
+                                  "of promitive calls" )
+        headerItem.setToolTip( 5, "Function location" )
+        headerItem.setToolTip( 6, "Function name" )
+        headerItem.setToolTip( 7, "Function callers" )
+
+        self.setHeaderLabels( headerItem )
         self.connect( self, SIGNAL( "itemActivated(QTreeWidgetItem *, int)" ),
                       self.__activated )
 
         self.__populate( dataFile )
         return
 
+    def __setItemBackground( self, item, fileName ):
+        " Sets reddish background "
+        if not fileName.startswith( self.__projectPrefix ):
+            brush = QBrush( NON_PROJECT_BACKGROUND )
+            item.setBackground( 0, brush )
+            item.setBackground( 1, brush )
+        return
 
     def __activated( self, item, column ):
         " Triggered when the item is activated "
 
-        print "Item activated"
+        # Column with the function address
+        address = item.text( 5 )
+        if address == "" or ":" not in address:
+            return
+
+        try:
+            parts = address.split( ':' )
+            line = int( parts[ len( parts ) - 1 ] )
+            fileName = ":".join( parts[ : -1 ] )
+        except:
+            logging.error( "Could not parse function location" )
+            return
+
+        print "Item activated. file name: '" + fileName + "' line: " + str( line )
         return
+
+    def __getCallLine( self, func, props ):
+        " Provides the formatted call line "
+        print "Func: " + func
+        print "Props: " + props
+        return "dumb"
 
     def __createItem( self, funcFileName, funcLine, funcName,
                             primitiveCalls, actualCalls, totalTime,
@@ -116,13 +167,33 @@ class ProfileTableViewer( QTreeWidget ):
         values << FLOAT_FORMAT % cumulativeTimePerCall
 
         if funcLine is not None and funcLine != 0:
-            values << funcFileName + ":" + str( funcLine )
+            funcLocation = funcFileName + ":" + str( funcLine )
         else:
-            values << funcFileName
+            funcLocation = funcFileName
+        values << funcLocation
 
         values << funcName
-        values << str( len( callers ) )
-        self.addTopLevelItem( ProfilingTableItem( values ) )
+
+        callersCount = len( callers )
+        values << str( callersCount )
+
+        item = ProfilingTableItem( values )
+        for column in [ 0, 1, 2, 3, 4 ]:
+            item.setTextAlignment( column, Qt.AlignRight )
+
+        if funcLocation is not None and funcLocation != "":
+            item.setToolTip( 5, funcLocation )
+
+        if callersCount != 0:
+            tooltip = ""
+            for func in callers:
+                if tooltip != "":
+                    tootip += "\n"
+                tooltip += self.__getCallLine( func, callers[ func ] )
+            item.setToolTip( 7, tooltip )
+
+        self.__setItemBackground( item, funcFileName )
+        self.addTopLevelItem( item )
         return
 
     def __populate( self, dataFile ):

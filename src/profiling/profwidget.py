@@ -61,34 +61,36 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
         self.connect( self.__toggleViewButton, SIGNAL( 'toggled(bool)' ),
                       self.__switchView )
 
-        printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
-                               'Print', self )
-        self.connect( printButton, SIGNAL( 'triggered()' ),
+        self.__printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
+                                      'Print', self )
+        self.connect( self.__printButton, SIGNAL( 'triggered()' ),
                       self.__onPrint )
+        self.__printButton.hide()
 
-        printPreviewButton = QAction( \
+        self.__printPreviewButton = QAction( \
                 PixmapCache().getIcon( 'printpreview.png' ),
                 'Print preview', self )
-        self.connect( printPreviewButton, SIGNAL( 'triggered()' ),
+        self.connect( self.__printPreviewButton, SIGNAL( 'triggered()' ),
                       self.__onPrintPreview )
+        self.__printPreviewButton.hide()
 
         fixedSpacer = QWidget()
         fixedSpacer.setFixedHeight( 16 )
 
-        zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
-                                'Zoom in (Ctrl+=)', self )
-        zoomInButton.setShortcut( 'Ctrl+=' )
-        self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.onZoomIn )
+        self.__zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
+                                       'Zoom in (Ctrl+=)', self )
+        self.__zoomInButton.setShortcut( 'Ctrl+=' )
+        self.connect( self.__zoomInButton, SIGNAL( 'triggered()' ), self.onZoomIn )
 
-        zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
-                                'Zoom out (Ctrl+-)', self )
-        zoomOutButton.setShortcut( 'Ctrl+-' )
-        self.connect( zoomOutButton, SIGNAL( 'triggered()' ), self.onZoomOut )
+        self.__zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
+                                        'Zoom out (Ctrl+-)', self )
+        self.__zoomOutButton.setShortcut( 'Ctrl+-' )
+        self.connect( self.__zoomOutButton, SIGNAL( 'triggered()' ), self.onZoomOut )
 
-        zoomResetButton = QAction( PixmapCache().getIcon( 'zoomreset.png' ),
-                                   'Zoom reset (Ctrl+0)', self )
-        zoomResetButton.setShortcut( 'Ctrl+0' )
-        self.connect( zoomResetButton, SIGNAL( 'triggered()' ),
+        self.__zoomResetButton = QAction( PixmapCache().getIcon( 'zoomreset.png' ),
+                                          'Zoom reset (Ctrl+0)', self )
+        self.__zoomResetButton.setShortcut( 'Ctrl+0' )
+        self.connect( self.__zoomResetButton, SIGNAL( 'triggered()' ),
                       self.onZoomReset )
 
 
@@ -102,12 +104,12 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.setContentsMargins( 0, 0, 0, 0 )
 
         toolbar.addAction( self.__toggleViewButton )
-        toolbar.addAction( printPreviewButton )
-        toolbar.addAction( printButton )
+        toolbar.addAction( self.__printPreviewButton )
+        toolbar.addAction( self.__printButton )
         toolbar.addWidget( fixedSpacer )
-        toolbar.addAction( zoomInButton )
-        toolbar.addAction( zoomOutButton )
-        toolbar.addAction( zoomResetButton )
+        toolbar.addAction( self.__zoomInButton )
+        toolbar.addAction( self.__zoomOutButton )
+        toolbar.addAction( self.__zoomResetButton )
 
         hLayout = QHBoxLayout()
         hLayout.setContentsMargins( 0, 0, 0, 0 )
@@ -139,11 +141,17 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
             self.__profTable.show()
             self.__toggleViewButton.setIcon( PixmapCache().getIcon( 'treeview.png' ) )
             self.__toggleViewButton.setToolTip( 'Switch to diagram view' )
+            self.__zoomInButton.setEnabled( False )
+            self.__zoomOutButton.setEnabled( False )
+            self.__zoomResetButton.setEnabled( False )
         else:
             self.__profTable.hide()
             self.__profGraph.show()
             self.__toggleViewButton.setIcon( PixmapCache().getIcon( 'tableview.png' ) )
             self.__toggleViewButton.setToolTip( 'Switch to table view' )
+            self.__zoomInButton.setEnabled( True )
+            self.__zoomOutButton.setEnabled( True )
+            self.__zoomResetButton.setEnabled( True )
         return
 
     def __onPrint( self ):
