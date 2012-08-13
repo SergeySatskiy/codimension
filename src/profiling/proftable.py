@@ -23,9 +23,14 @@
 " Profiling results as a table "
 
 
+import pstats
+
 from PyQt4.QtCore import SIGNAL, QStringList
 from PyQt4.QtGui import QTreeWidgetItem, QTreeWidget
 from ui.itemdelegates import NoOutlineHeightDelegate
+
+
+FLOAT_FORMAT = "%8.6f"
 
 
 class ProfilingTableItem( QTreeWidgetItem ):
@@ -34,25 +39,40 @@ class ProfilingTableItem( QTreeWidgetItem ):
     def __init__( self, items ):
         QTreeWidgetItem.__init__( self, items )
 
+    @staticmethod
+    def __getActualCalls( txt ):
+        # Returns the actual number of calls as integer
+        return int( str( txt ).split( '/' )[ 0 ] )
+
     def __lt__( self, other ):
         " Integer or string sorting "
         sortColumn = self.treeWidget().sortColumn()
         txt = self.text( sortColumn )
         otherTxt = other.text( sortColumn )
+
+        # The first column may have two value
+        if sortColumn == 0:
+            return self.__getActualCalls( txt ) < self.__getActualCalls( otherTxt )
+
+        # Try first numeric comparison
         try:
-            val = int( txt )
-            otherVal = int( otherTxt )
-            return val < otherVal
+            return int( txt ) < int( otherTxt )
         except:
-            pass
+            try:
+                return float( txt ) < float( otherTxt )
+            except:
+                pass
+        # Fallback to string comparison
         return txt < otherTxt
 
 
 class ProfileTableViewer( QTreeWidget ):
     " Profiling results table viewer "
 
-    def __init__( self, parent = None ):
+    def __init__( self, scriptName, dataFile, parent = None ):
         QTreeWidget.__init__( self, parent )
+
+        self.__script = scriptName
 
         self.setAlternatingRowColors( True )
         self.setRootIsDecorated( False )
@@ -60,10 +80,17 @@ class ProfileTableViewer( QTreeWidget ):
         self.setSortingEnabled( True )
         self.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         self.setUniformRowHeights( True )
-        headerLabels = QStringList() << "# of calls" << "File name/line" << "Function"
+        headerLabels = QStringList()
+
+        headerLabels << "# of calls" << "Total time" << "Total time per call"
+        headerLabels << "Cumulative time" << "Cumulative time per call"
+        headerLabels << "File name/line" << "Function" << "# of callers"
         self.setHeaderLabels( headerLabels )
         self.connect( self, SIGNAL( "itemActivated(QTreeWidgetItem *, int)" ),
                       self.__activated )
+
+        self.__populate( dataFile )
+        return
 
 
     def __activated( self, item, column ):
@@ -72,7 +99,60 @@ class ProfileTableViewer( QTreeWidget ):
         print "Item activated"
         return
 
-    def __createItem( self, calls, fileName, line, function ):
+    def __createItem( self, funcFileName, funcLine, funcName,
+                            primitiveCalls, actualCalls, totalTime,
+                            cumulativeTime, timePerCall, cumulativeTimePerCall,
+                            callers ):
         " Creates an item to display "
-        pass
+        values = QStringList()
+        if primitiveCalls == actualCalls:
+            values << str( actualCalls )
+        else:
+            values << str( actualCalls ) + "/" + str( primitiveCalls )
+
+        values << FLOAT_FORMAT % totalTime
+        values << FLOAT_FORMAT % timePerCall
+        values << FLOAT_FORMAT % cumulativeTime
+        values << FLOAT_FORMAT % cumulativeTimePerCall
+
+        if funcLine is not None and funcLine != 0:
+            values << funcFileName + ":" + str( funcLine )
+        else:
+            values << funcFileName
+
+        values << funcName
+        values << str( len( callers ) )
+        self.addTopLevelItem( ProfilingTableItem( values ) )
+        return
+
+    def __populate( self, dataFile ):
+        " Populates the data "
+
+        stats = pstats.Stats( dataFile )
+        totalCalls = stats.total_calls
+        totalPrimitiveCalls = stats.prim_calls  # The calls was not induced via recursion
+        totalTime = stats.total_tt
+
+        for func, ( primitiveCalls, actualCalls, totalTime,
+                    cumulativeTime, callers) in stats.stats.items():
+
+            # Calc time per call
+            if actualCalls == 0:
+                timePerCall = 0.0
+            else:
+                timePerCall = totalTime / actualCalls
+
+            # Calc time per cummulative call
+            if primitiveCalls == 0:
+                cumulativeTimePerCall = 0.0
+            else:
+                cumulativeTimePerCall = cumulativeTime / primitiveCalls
+
+            self.__createItem( func[ 0 ], func[ 1 ], func[ 2 ],
+                               primitiveCalls, actualCalls, totalTime,
+                               cumulativeTime, timePerCall, cumulativeTimePerCall,
+                               callers )
+        return
+
+
 

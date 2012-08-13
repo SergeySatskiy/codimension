@@ -868,6 +868,32 @@ class EditorsManager( QTabWidget ):
 
         return
 
+    def showProfileReport( self, newWidget, tooltip ):
+        " Shows profiling report "
+        try:
+            self.connect( newWidget, SIGNAL( 'ESCPressed' ),
+                          self.__onESC )
+
+            if self.widget( 0 ) == self.__welcomeWidget:
+                # It is the only welcome widget on the screen
+                self.removeTab( 0 )
+                self.setTabsClosable( True )
+
+            self.insertTab( 0, newWidget, newWidget.getShortName() )
+            if tooltip != "":
+                self.setTabToolTip( 0, tooltip )
+                newWidget.setTooltip( tooltip )
+            self.activateTab( 0 )
+            self.__updateControls()
+            self.__updateStatusBar()
+            newWidget.setFocus()
+            self.saveTabsStatus()
+
+        except Exception, exc:
+            logging.error( str( exc ) )
+
+        return
+
     def jumpToLine( self, lineNo ):
         " Jumps to the given line within the current buffer "
 

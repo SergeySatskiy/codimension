@@ -32,6 +32,7 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.run import getCwdCmdEnv
 from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
+from utils.misc import getLocaleDateTime
 
 from PyQt4.QtCore import Qt, SIGNAL, QTimer
 from PyQt4.QtGui import QDialog, QDialogButtonBox, QVBoxLayout, QLabel, \
@@ -128,13 +129,11 @@ class ProfilingProgressDialog( QDialog ):
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
 
         sock, port = createDoneFeedbackSocket()
-        print "Created socket to listen on port " + str( port )
 
         params = GlobalData().getRunParameters( self.__scriptName )
         workingDir, cmd, environment = getCwdCmdEnv( self.__scriptName, params,
                                                      Settings().terminalType,
                                                      port )
-        print "Command line: " + cmd
         try:
             profProc = Popen( cmd, shell = True,
                               cwd = workingDir, env = environment )
@@ -183,8 +182,6 @@ class ProfilingProgressDialog( QDialog ):
                                 "error spawning process to profile" )
                 return
 
-        print "Handshake received. Child process PID: " + str( self.__childPID )
-
         # Second stage: wait till PID has gone or finish confirmation received
         while True:
             time.sleep( POLL_INTERVAL )
@@ -227,10 +224,12 @@ class ProfilingProgressDialog( QDialog ):
         self.infoLabel.setText( "Done. Collecting the results..." )
 
         outputFile = GlobalData().getProfileOutputPath()
-        print "The profile results are here: " + outputFile
 
-
-
+        widget = ProfileResultsWidget( self.__scriptName, outputFile )
+        GlobalData().mainWindow.showProfileReport( widget,
+                "Profiling report for " + \
+                os.path.basename( self.__scriptName ) + \
+                " at " + getLocaleDateTime() )
 
         QApplication.restoreOverrideCursor()
         self.__inProgress = False

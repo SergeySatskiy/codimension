@@ -34,16 +34,18 @@ from utils.pixmapcache import PixmapCache
 class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
     " Profiling results widget "
 
-    def __init__( self, parent = None ):
+    def __init__( self, scriptName, dataFile, parent = None ):
 
         MainWindowTabWidgetBase.__init__( self )
         QWidget.__init__( self, parent )
 
-        self.__profTable = ProfileTableViewer()
+        self.__profTable = ProfileTableViewer( scriptName, dataFile )
         self.__profGraph = ProfileGraphViewer()
         self.__profTable.hide()
 
-        self.connect( self.__viewer, SIGNAL( 'ESCPressed' ),
+        self.connect( self.__profTable, SIGNAL( 'ESCPressed' ),
+                      self.__onEsc )
+        self.connect( self.__profGraph, SIGNAL( 'ESCPressed' ),
                       self.__onEsc )
 
         self.__createLayout()
@@ -53,6 +55,12 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
         " Creates the toolbar and layout "
 
         # Buttons
+        self.__toggleViewButton = QAction( PixmapCache().getIcon( 'tableview.png' ),
+                                           'Switch to table view', self )
+        self.__toggleViewButton.setCheckable( True )
+        self.connect( self.__toggleViewButton, SIGNAL( 'toggled(bool)' ),
+                      self.__switchView )
+
         printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
                                'Print', self )
         self.connect( printButton, SIGNAL( 'triggered()' ),
@@ -92,6 +100,8 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.setIconSize( QSize( 16, 16 ) )
         toolbar.setFixedWidth( 28 )
         toolbar.setContentsMargins( 0, 0, 0, 0 )
+
+        toolbar.addAction( self.__toggleViewButton )
         toolbar.addAction( printPreviewButton )
         toolbar.addAction( printButton )
         toolbar.addWidget( fixedSpacer )
@@ -120,6 +130,20 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
     def __onEsc( self ):
         " Triggered when Esc is pressed "
         self.emit( SIGNAL( 'ESCPressed' ) )
+        return
+
+    def __switchView( self, state ):
+        " Triggered when view is to be switched "
+        if state:
+            self.__profGraph.hide()
+            self.__profTable.show()
+            self.__toggleViewButton.setIcon( PixmapCache().getIcon( 'treeview.png' ) )
+            self.__toggleViewButton.setToolTip( 'Switch to diagram view' )
+        else:
+            self.__profTable.hide()
+            self.__profGraph.show()
+            self.__toggleViewButton.setIcon( PixmapCache().getIcon( 'tableview.png' ) )
+            self.__toggleViewButton.setToolTip( 'Switch to table view' )
         return
 
     def __onPrint( self ):
