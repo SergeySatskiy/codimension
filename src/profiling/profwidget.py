@@ -34,12 +34,12 @@ from utils.pixmapcache import PixmapCache
 class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
     " Profiling results widget "
 
-    def __init__( self, scriptName, dataFile, parent = None ):
+    def __init__( self, scriptName, params, reportTime, dataFile, parent = None ):
 
         MainWindowTabWidgetBase.__init__( self )
         QWidget.__init__( self, parent )
 
-        self.__profTable = ProfileTableViewer( scriptName, dataFile )
+        self.__profTable = ProfileTableViewer( scriptName, params, reportTime, dataFile )
         self.__profGraph = ProfileGraphViewer()
         self.__profTable.hide()
 
@@ -65,14 +65,14 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
                                       'Print', self )
         self.connect( self.__printButton, SIGNAL( 'triggered()' ),
                       self.__onPrint )
-        self.__printButton.hide()
+        self.__printButton.setEnabled( False )
 
         self.__printPreviewButton = QAction( \
                 PixmapCache().getIcon( 'printpreview.png' ),
                 'Print preview', self )
         self.connect( self.__printPreviewButton, SIGNAL( 'triggered()' ),
                       self.__onPrintPreview )
-        self.__printPreviewButton.hide()
+        self.__printPreviewButton.setEnabled( False )
 
         fixedSpacer = QWidget()
         fixedSpacer.setFixedHeight( 16 )
@@ -144,6 +144,7 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
             self.__zoomInButton.setEnabled( False )
             self.__zoomOutButton.setEnabled( False )
             self.__zoomResetButton.setEnabled( False )
+            self.__profTable.setFocus()
         else:
             self.__profTable.hide()
             self.__profGraph.show()
@@ -152,6 +153,7 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
             self.__zoomInButton.setEnabled( True )
             self.__zoomOutButton.setEnabled( True )
             self.__zoomResetButton.setEnabled( True )
+            self.__profGraph.setFocus()
         return
 
     def __onPrint( self ):
