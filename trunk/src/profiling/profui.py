@@ -225,11 +225,12 @@ class ProfilingProgressDialog( QDialog ):
 
         outputFile = GlobalData().getProfileOutputPath()
 
-        widget = ProfileResultsWidget( self.__scriptName, outputFile )
+        reportTime = getLocaleDateTime()
+        widget = ProfileResultsWidget( self.__scriptName, params, reportTime, outputFile )
         GlobalData().mainWindow.showProfileReport( widget,
                 "Profiling report for " + \
                 os.path.basename( self.__scriptName ) + \
-                " at " + getLocaleDateTime() )
+                " at " + reportTime )
 
         QApplication.restoreOverrideCursor()
         self.__inProgress = False

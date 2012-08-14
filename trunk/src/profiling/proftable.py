@@ -28,13 +28,14 @@ import logging
 import os.path
 
 from PyQt4.QtCore import Qt, SIGNAL, QStringList
-from PyQt4.QtGui import QTreeWidgetItem, QTreeWidget, QColor, QBrush
+from PyQt4.QtGui import QTreeWidgetItem, QTreeWidget, QColor, QBrush, QLabel, \
+                        QWidget, QVBoxLayout, QFrame, QPalette
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.globals import GlobalData
 
 
 FLOAT_FORMAT = "%8.6f"
-NON_PROJECT_BACKGROUND = QColor( 255, 227, 227 )
+NON_PROJECT_BACKGROUND = QColor( 255, 255, 37 )
 
 
 class ProfilingTableItem( QTreeWidgetItem ):
@@ -67,11 +68,13 @@ class ProfilingTableItem( QTreeWidgetItem ):
         return txt < otherTxt
 
 
-class ProfileTableViewer( QTreeWidget ):
+class ProfileTableViewer( QWidget ):
     " Profiling results table viewer "
 
-    def __init__( self, scriptName, dataFile, parent = None ):
-        QTreeWidget.__init__( self, parent )
+    def __init__( self, scriptName, params, reportTime, dataFile, parent = None ):
+        QWidget.__init__( self, parent )
+
+        self.__table = QTreeWidget( self )
 
         self.__script = scriptName
         project = GlobalData().project
@@ -82,19 +85,20 @@ class ProfileTableViewer( QTreeWidget ):
         if not self.__projectPrefix.endswith( os.path.sep ):
             self.__projectPrefix += os.path.sep
 
-        self.setAlternatingRowColors( True )
-        self.setRootIsDecorated( False )
-        self.setItemsExpandable( False )
-        self.setSortingEnabled( True )
-        self.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
-        self.setUniformRowHeights( True )
+        self.__table.setAlternatingRowColors( True )
+        self.__table.setRootIsDecorated( False )
+        self.__table.setItemsExpandable( False )
+        self.__table.setSortingEnabled( True )
+        self.__table.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
+        self.__table.setUniformRowHeights( True )
         headerLabels = QStringList()
 
         headerLabels << "# of calls" << "Total time" << "Per call"
         headerLabels << "Cum. time" << "Per call"
         headerLabels << "File name/line" << "Function" << "# of callers"
+        self.__table.setHeaderLabels( headerLabels )
 
-        headerItem = QTreeWidgetItem( headerLabels )
+        headerItem = self.__table.headerItem()
         headerItem.setToolTip( 0, "Actual calls/primitive call " \
                                   "(not induced via recursion)" )
         headerItem.setToolTip( 1, "Total time spent in function " \
@@ -110,26 +114,59 @@ class ProfileTableViewer( QTreeWidget ):
         headerItem.setToolTip( 6, "Function name" )
         headerItem.setToolTip( 7, "Function callers" )
 
-        self.setHeaderLabels( headerItem )
-        self.connect( self, SIGNAL( "itemActivated(QTreeWidgetItem *, int)" ),
+        self.connect( self.__table, SIGNAL( "itemActivated(QTreeWidgetItem *, int)" ),
                       self.__activated )
 
-        self.__populate( dataFile )
+        self.__stats = pstats.Stats( dataFile )
+        totalCalls = self.__stats.total_calls
+        totalPrimitiveCalls = self.__stats.prim_calls  # The calls was not induced via recursion
+        totalTime = self.__stats.total_tt
+
+        summary = QLabel( "<b>Script:</b> " + self.__script + " " + params.arguments + "<br>" \
+                          "<b>Run at:</b> " + reportTime + "<br>" + \
+                          str( totalCalls ) + " function calls (" + \
+                          str( totalPrimitiveCalls ) + " primitive calls) in " + \
+                          FLOAT_FORMAT % totalTime + " CPU seconds" )
+        summary.setFrameStyle( QFrame.StyledPanel )
+        summary.setAutoFillBackground( True )
+        summaryPalette = summary.palette()
+        summaryBackground = summaryPalette.color( QPalette.Background )
+        summaryBackground.setRgb( min( summaryBackground.red() + 30, 255 ),
+                                  min( summaryBackground.green() + 30, 255 ),
+                                  min( summaryBackground.blue() + 30, 255 ) )
+        summaryPalette.setColor( QPalette.Background, summaryBackground )
+        summary.setPalette( summaryPalette )
+
+        vLayout = QVBoxLayout()
+        vLayout.setContentsMargins( 0, 0, 0, 0 )
+        vLayout.setSpacing( 0 )
+        vLayout.addWidget( summary )
+        vLayout.addWidget( self.__table )
+
+        self.setLayout( vLayout )
+
+
+        self.__populate()
+        return
+
+    def setFocus( self ):
+        " Set focus to the proper widget "
+        self.__table.setFocus()
         return
 
     def __setItemBackground( self, item, fileName ):
         " Sets reddish background "
         if not fileName.startswith( self.__projectPrefix ):
             brush = QBrush( NON_PROJECT_BACKGROUND )
-            item.setBackground( 0, brush )
-            item.setBackground( 1, brush )
+            for column in xrange( 0, 8 ):
+                item.setBackground( column, brush )
         return
 
     def __activated( self, item, column ):
         " Triggered when the item is activated "
 
         # Column with the function address
-        address = item.text( 5 )
+        address = str( item.text( 5 ) )
         if address == "" or ":" not in address:
             return
 
@@ -137,17 +174,20 @@ class ProfileTableViewer( QTreeWidget ):
             parts = address.split( ':' )
             line = int( parts[ len( parts ) - 1 ] )
             fileName = ":".join( parts[ : -1 ] )
+            GlobalData().mainWindow.openFile( fileName, line )
         except:
             logging.error( "Could not parse function location" )
-            return
-
-        print "Item activated. file name: '" + fileName + "' line: " + str( line )
         return
 
     def __getCallLine( self, func, props ):
         " Provides the formatted call line "
-        print "Func: " + func
-        print "Props: " + props
+        calls = str( props[ 1 ] )
+        if props[ 0 ] != props[ 1 ]:
+            calls += "/" + str( props[ 0 ] )
+        
+        return func[ 0 ] + ":" + str( func[ 1 ] ) + "(" + func[ 2 ] + ") " + calls
+        print "Func: " + str( func )
+        print "Props: " + str( props )
         return "dumb"
 
     def __createItem( self, funcFileName, funcLine, funcName,
@@ -188,24 +228,20 @@ class ProfileTableViewer( QTreeWidget ):
             tooltip = ""
             for func in callers:
                 if tooltip != "":
-                    tootip += "\n"
+                    tooltip += "\n"
                 tooltip += self.__getCallLine( func, callers[ func ] )
             item.setToolTip( 7, tooltip )
 
         self.__setItemBackground( item, funcFileName )
-        self.addTopLevelItem( item )
+        self.__table.addTopLevelItem( item )
         return
 
-    def __populate( self, dataFile ):
+    def __populate( self ):
         " Populates the data "
 
-        stats = pstats.Stats( dataFile )
-        totalCalls = stats.total_calls
-        totalPrimitiveCalls = stats.prim_calls  # The calls was not induced via recursion
-        totalTime = stats.total_tt
 
         for func, ( primitiveCalls, actualCalls, totalTime,
-                    cumulativeTime, callers) in stats.stats.items():
+                    cumulativeTime, callers) in self.__stats.stats.items():
 
             # Calc time per call
             if actualCalls == 0:
