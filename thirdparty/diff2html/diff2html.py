@@ -20,6 +20,7 @@
 #
 # Authors: Olivier MATZ <zer0@droids-corp.org>
 #          Alan De Smet <adesmet@cs.wisc.edu>
+#          Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # Inspired by diff2html.rb from Dave Burt <dave (at) burt.id.au>
 # (mainly for html theme)
@@ -32,7 +33,7 @@
 #   and display those directly.
 
 
-import sys, re, htmlentitydefs, getopt
+import sys, re, htmlentitydefs, getopt, StringIO
 
 # minimum line size, we add a zero-sized breakable space every
 # LINESIZE characters
@@ -291,47 +292,47 @@ def empty_buffer(output_file):
     buf = []
 
 
-def parse_input(inputfile, outputfile,
+def parse_input(input_file, output_file,
                 exclude_headers, show_hunk_infos):
     global add_cpt, del_cpt
     global line1, line2
     global hunk_off1, hunk_size1, hunk_off2, hunk_size2
 
     if not exclude_headers:
-        outputfile.write(html_hdr)
-    outputfile.write(table_hdr)
+        output_file.write(html_hdr)
+    output_file.write(table_hdr)
 
     while True:
-        l = inputfile.readline()
+        l = input_file.readline()
         if l == "":
             break
 
         m = re.match('^--- (.*)', l)
         if m:
-            empty_buffer(outputfile)
+            empty_buffer(output_file)
             file1 = m.groups()[0]
             while True:
-                l = inputfile.readline()
+                l = input_file.readline()
                 m = re.match('^\+\+\+ (.*)', l)
                 if m:
                     file2 = m.groups()[0]
                     break
-            add_filename(file1, file2, outputfile)
+            add_filename(file1, file2, output_file)
             hunk_off1, hunk_size1, hunk_off2, hunk_size2 = 0, 0, 0, 0
             continue
 
         m = re.match("@@ -(\d+),?(\d*) \+(\d+),?(\d*)", l)
         if m:
-            empty_buffer(outputfile)
+            empty_buffer(output_file)
             hunk_data = map(lambda x:x=="" and 1 or int(x), m.groups())
             hunk_off1, hunk_size1, hunk_off2, hunk_size2 = hunk_data
             line1, line2 = hunk_off1, hunk_off2
-            add_hunk(outputfile, show_hunk_infos)
+            add_hunk(output_file, show_hunk_infos)
             continue
 
         if hunk_size1 == 0 and hunk_size2 == 0:
-            empty_buffer(outputfile)
-            add_comment(l, outputfile)
+            empty_buffer(output_file)
+            add_comment(l, output_file)
             continue
 
         if re.match("^\+", l):
@@ -347,19 +348,19 @@ def parse_input(inputfile, outputfile,
             continue
 
         if re.match("^\ ", l) and hunk_size1 and hunk_size2:
-            empty_buffer(outputfile)
+            empty_buffer(output_file)
             hunk_size1 -= 1
             hunk_size2 -= 1
             buf.append((l[1:], l[1:]))
             continue
 
-        empty_buffer(outputfile)
-        add_comment(l, outputfile)
+        empty_buffer(output_file)
+        add_comment(l, output_file)
 
-    empty_buffer(outputfile)
-    outputfile.write(table_footer)
+    empty_buffer(output_file)
+    output_file.write(table_footer)
     if not exclude_headers:
-        outputfile.write(html_footer)
+        output_file.write(html_footer)
 
 
 def usage():
@@ -384,8 +385,8 @@ def main():
     global linesize, tabsize
     global show_CR
 
-    inputfile = sys.stdin
-    outputfile = sys.stdout
+    input_file = sys.stdin
+    output_file = sys.stdout
 
     exclude_headers = False
     show_hunk_infos = False
@@ -405,9 +406,9 @@ def main():
             usage()
             sys.exit()
         elif o in ("-i", "--input"):
-            inputfile = open(a, "r")
+            input_file = open(a, "r")
         elif o in ("-o", "--output"):
-            outputfile = open(a, "w")
+            output_file = open(a, "w")
         elif o in ("-x", "--exclude-html-headers"):
             exclude_headers = True
         elif o in ("-t", "--tabsize"):
@@ -420,7 +421,7 @@ def main():
             show_hunk_infos = True
         else:
             assert False, "unhandled option"
-    parse_input(inputfile, outputfile,
+    parse_input(input_file, output_file,
                 exclude_headers, show_hunk_infos)
 
 
