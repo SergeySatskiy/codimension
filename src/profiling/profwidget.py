@@ -61,6 +61,13 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
         self.connect( self.__toggleViewButton, SIGNAL( 'toggled(bool)' ),
                       self.__switchView )
 
+        self.__togglePathButton = QAction( PixmapCache().getIcon( 'longpath.png' ),
+                                           'Show full paths for item location', self )
+        self.__togglePathButton.setCheckable( True )
+        self.connect( self.__togglePathButton, SIGNAL( 'toggled(bool)' ),
+                      self.__togglePath )
+        self.__togglePathButton.setEnabled( False )
+
         self.__printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
                                       'Print', self )
         self.connect( self.__printButton, SIGNAL( 'triggered()' ),
@@ -139,11 +146,12 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
         if state:
             self.__profGraph.hide()
             self.__profTable.show()
-            self.__toggleViewButton.setIcon( PixmapCache().getIcon( 'treeview.png' ) )
+            self.__toggleViewButton.setIcon( PixmapCache().getIcon( 'profdgmview.png' ) )
             self.__toggleViewButton.setToolTip( 'Switch to diagram view' )
             self.__zoomInButton.setEnabled( False )
             self.__zoomOutButton.setEnabled( False )
             self.__zoomResetButton.setEnabled( False )
+            self.__togglePathButton.setEnabled( True )
             self.__profTable.setFocus()
         else:
             self.__profTable.hide()
@@ -153,7 +161,19 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
             self.__zoomInButton.setEnabled( True )
             self.__zoomOutButton.setEnabled( True )
             self.__zoomResetButton.setEnabled( True )
+            self.__togglePathButton.setEnabled( False )
             self.__profGraph.setFocus()
+        return
+
+    def __togglePath( self. state ):
+        " Triggered when full path/file name is switched "
+        self.__profTable.togglePath( state )
+        if state:
+            self.__togglePathButton.setIcon( PixmapCache().getIcon( 'longpath.png' ) )
+            self.__togglePathButton.setToolTip( 'Show full paths for item location' )
+        else:
+            self.__togglePathButton.setIcon( PixmapCache().getIcon( 'shortpath.png' ) )
+            self.__togglePathButton.setToolTip( 'Show file names only for item location' )
         return
 
     def __onPrint( self ):

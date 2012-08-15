@@ -29,41 +29,71 @@ import os.path
 
 from PyQt4.QtCore import Qt, SIGNAL, QStringList
 from PyQt4.QtGui import QTreeWidgetItem, QTreeWidget, QColor, QBrush, QLabel, \
-                        QWidget, QVBoxLayout, QFrame, QPalette
+                        QWidget, QVBoxLayout, QFrame, QPalette, QHeaderView
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.globals import GlobalData
 
 
 FLOAT_FORMAT = "%8.6f"
-NON_PROJECT_BACKGROUND = QColor( 255, 255, 37 )
 
 
 class ProfilingTableItem( QTreeWidgetItem ):
     " Profiling table row "
 
-    def __init__( self, items ):
+    def __init__( self, items, isOutside, path, line ):
         QTreeWidgetItem.__init__( self, items )
+
+        self.fileName = path
+        self.line = line
+        self.isOutside = isOutside
+
+        if isOutside:
+            self.setIcon( 0, PixmapCache().getIcon( 'nonprojectentry.png' ) )
+            self.setToolTip( 0, 'Record of an outside function' )
+        else:
+            self.setIcon( 0, PixmapCache().getIcon( 'empty.png' ) )
+            self.setToolTip( 0, '' )
+        return
 
     @staticmethod
     def __getActualCalls( txt ):
         # Returns the actual number of calls as integer
-        return int( str( txt ).split( '/' )[ 0 ] )
+        return int( str( txt ).split( '/', 1 )[ 0 ] )
+
+    @staticmethod
+    def __getFloatValue( txt ):
+        # Returns a float value from a column
+        return float( str( txt ).split( ' ', 1 )[ 0 ] )
 
     def __lt__( self, other ):
         " Integer or string sorting "
         sortColumn = self.treeWidget().sortColumn()
+
+        if sortColumn == 0:
+            return self.isOutside < other.isOutside
+
         txt = self.text( sortColumn )
         otherTxt = other.text( sortColumn )
-
-        # The first column may have two value
-        if sortColumn == 0:
+        if sortColumn == 1:
             return self.__getActualCalls( txt ) < self.__getActualCalls( otherTxt )
 
-        # Try first numeric comparison
-        try:
-            return float( txt ) < float( otherTxt )
-        except:
-            pass
+        if sortColumn in [ 2, 3, 4, 5 ]:
+            return self.__getFloatValue( txt ) < self.__getFloatValue( otherTxt )
+
+        if sortColumn == 6:
+            # Function location
+            if self.fileName == other.fileName:
+                return self.line < other.line
+            return self.fileName < other.fileName
+
+        if sortColumn == 7:
+            # Function name
+            return txt < otherTxt
+
+        if sortColumn in [ 8, 9 ]:
+            # Number of callers/collees
+            return int( txt ) < int( otherTxt )
+
         # Fallback to string comparison
         return txt < otherTxt
 
@@ -93,26 +123,28 @@ class ProfileTableViewer( QWidget ):
         self.__table.setUniformRowHeights( True )
         headerLabels = QStringList()
 
-        headerLabels << "# of calls" << "Total time" << "Per call"
+        headerLabels << "" << "Calls" << "Total time" << "Per call"
         headerLabels << "Cum. time" << "Per call"
-        headerLabels << "File name/line" << "Function" << "# of callers"
+        headerLabels << "File name/line" << "Function" << "Callers" << "Callees"
         self.__table.setHeaderLabels( headerLabels )
 
         headerItem = self.__table.headerItem()
-        headerItem.setToolTip( 0, "Actual calls/primitive call " \
+        headerItem.setToolTip( 0, "Indication if it is an outside function" )
+        headerItem.setToolTip( 1, "Actual number of calls/primitive calls " \
                                   "(not induced via recursion)" )
-        headerItem.setToolTip( 1, "Total time spent in function " \
+        headerItem.setToolTip( 2, "Total time spent in function " \
                                   "(excluding time made in calls " \
                                   "to sub-functions)" )
-        headerItem.setToolTip( 2, "Total time divided by number " \
+        headerItem.setToolTip( 3, "Total time divided by number " \
                                   "of actual calls" )
-        headerItem.setToolTip( 3, "Total time spent in function and all " \
+        headerItem.setToolTip( 4, "Total time spent in function and all " \
                                   "subfunctions (from invocation till exit)" )
-        headerItem.setToolTip( 4, "Cumulative time divided by number " \
-                                  "of promitive calls" )
-        headerItem.setToolTip( 5, "Function location" )
-        headerItem.setToolTip( 6, "Function name" )
-        headerItem.setToolTip( 7, "Function callers" )
+        headerItem.setToolTip( 5, "Cumulative time divided by number " \
+                                  "of primitive calls" )
+        headerItem.setToolTip( 6, "Function location" )
+        headerItem.setToolTip( 7, "Function name" )
+        headerItem.setToolTip( 8, "Function callers" )
+        headerItem.setToolTip( 9, "Function callees" )
 
         self.connect( self.__table, SIGNAL( "itemActivated(QTreeWidgetItem *, int)" ),
                       self.__activated )
@@ -145,8 +177,13 @@ class ProfileTableViewer( QWidget ):
 
         self.setLayout( vLayout )
 
-
         self.__populate()
+        return
+
+    def __resize( self ):
+        " Resizes columns to the content "
+        self.__table.header().resizeSections( QHeaderView.ResizeToContents )
+        self.__table.header().setStretchLastSection( True )
         return
 
     def setFocus( self ):
@@ -154,29 +191,20 @@ class ProfileTableViewer( QWidget ):
         self.__table.setFocus()
         return
 
-    def __setItemBackground( self, item, fileName ):
-        " Sets reddish background "
-        if not fileName.startswith( self.__projectPrefix ):
-            brush = QBrush( NON_PROJECT_BACKGROUND )
-            for column in xrange( 0, 8 ):
-                item.setBackground( column, brush )
-        return
+    def __isOutsideItem( self, fileName ):
+        " Detects if the record should be shown as an outside one "
+        return not fileName.startswith( self.__projectPrefix )
 
     def __activated( self, item, column ):
         " Triggered when the item is activated "
 
-        # Column with the function address
-        address = str( item.text( 5 ) )
-        if address == "" or ":" not in address:
-            return
-
         try:
-            parts = address.split( ':' )
-            line = int( parts[ len( parts ) - 1 ] )
-            fileName = ":".join( parts[ : -1 ] )
-            GlobalData().mainWindow.openFile( fileName, line )
+            if item.line == 0 or item.fileName is None or \
+               not os.path.abspath( item.fileName ):
+                return
+            GlobalData().mainWindow.openFile( item.fileName, item.line )
         except:
-            logging.error( "Could not parse function location" )
+            logging.error( "Could not jump to function location" )
         return
 
     def __getCallLine( self, func, props ):
@@ -239,7 +267,6 @@ class ProfileTableViewer( QWidget ):
     def __populate( self ):
         " Populates the data "
 
-
         for func, ( primitiveCalls, actualCalls, totalTime,
                     cumulativeTime, callers) in self.__stats.stats.items():
 
@@ -259,7 +286,14 @@ class ProfileTableViewer( QWidget ):
                                primitiveCalls, actualCalls, totalTime,
                                cumulativeTime, timePerCall, cumulativeTimePerCall,
                                callers )
+        self.__resize()
+        self.__table.header().setSortIndicator( 2, Qt.DescendingOrder )
+        self.__table.sortItems( 2,
+                                self.__table.header().sortIndicatorOrder() )
         return
 
-
+    def togglePath( self, state ):
+        " Switches between showing full paths or file names in locations "
+        print "State: " + bool( state )
+        return
 
