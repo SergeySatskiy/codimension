@@ -32,6 +32,7 @@ from PyQt4.QtGui import QTreeWidgetItem, QTreeWidget, QColor, QBrush, QLabel, \
                         QWidget, QVBoxLayout, QFrame, QPalette, QHeaderView
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.globals import GlobalData
+from utils.pixmapcache import PixmapCache
 
 
 FLOAT_FORMAT = "%8.6f"
@@ -53,6 +54,16 @@ class ProfilingTableItem( QTreeWidgetItem ):
         else:
             self.setIcon( 0, PixmapCache().getIcon( 'empty.png' ) )
             self.setToolTip( 0, '' )
+        return
+
+    def updateLocation( self, isFull ):
+        " Updates the function location cell "
+        if self.fileName != "":
+            if isFull:
+                loc = self.fileName + ":" + str( self.line )
+            else:
+                loc = os.path.basename( self.fileName ) + ":" + str( self.line )
+            self.setText( 6, loc )
         return
 
     @staticmethod
@@ -125,7 +136,7 @@ class ProfileTableViewer( QWidget ):
 
         headerLabels << "" << "Calls" << "Total time" << "Per call"
         headerLabels << "Cum. time" << "Per call"
-        headerLabels << "File name/line" << "Function" << "Callers" << "Callees"
+        headerLabels << "File name:line" << "Function" << "Callers" << "Callees"
         self.__table.setHeaderLabels( headerLabels )
 
         headerItem = self.__table.headerItem()
@@ -177,13 +188,15 @@ class ProfileTableViewer( QWidget ):
 
         self.setLayout( vLayout )
 
-        self.__populate()
+        self.__populate( totalTime )
         return
 
     def __resize( self ):
         " Resizes columns to the content "
         self.__table.header().resizeSections( QHeaderView.ResizeToContents )
         self.__table.header().setStretchLastSection( True )
+        self.__table.header().resizeSection( 0, 28 )
+        self.__table.header().setResizeMode( 0, QHeaderView.Fixed )
         return
 
     def setFocus( self ):
@@ -218,39 +231,55 @@ class ProfileTableViewer( QWidget ):
         print "Props: " + str( props )
         return "dumb"
 
-    def __createItem( self, funcFileName, funcLine, funcName,
+    @staticmethod
+    def __getLocationAndName( func ):
+        " Provides standardized function file name, line and its name "
+        if func[ : 2 ] == ( '~', 0 ):
+            # special case for built-in functions
+            name = func[ 2 ]
+            if name.startswith( '<' ) and name.endswith( '>' ):
+                return "", 0, "{%s}" % name[ 1 : -1 ]
+            return "", 0, name
+        return func[ 0 ], func[ 1 ], func[ 2 ]
+
+    def __createItem( self, func, totalCPUTime,
                             primitiveCalls, actualCalls, totalTime,
                             cumulativeTime, timePerCall, cumulativeTimePerCall,
                             callers ):
         " Creates an item to display "
         values = QStringList()
+        values << ""
         if primitiveCalls == actualCalls:
             values << str( actualCalls )
         else:
             values << str( actualCalls ) + "/" + str( primitiveCalls )
 
-        values << FLOAT_FORMAT % totalTime
+        values << FLOAT_FORMAT % totalTime + " (%3.2f%%)" % (totalTime / totalCPUTime * 100)
         values << FLOAT_FORMAT % timePerCall
         values << FLOAT_FORMAT % cumulativeTime
         values << FLOAT_FORMAT % cumulativeTimePerCall
 
-        if funcLine is not None and funcLine != 0:
-            funcLocation = funcFileName + ":" + str( funcLine )
+        funcFileName, funcLine, funcName = self.__getLocationAndName( func )
+        if funcFileName == "":
+            funcShortLocation = ""
         else:
-            funcLocation = funcFileName
-        values << funcLocation
-
+            funcShortLocation = os.path.basename( funcFileName ) + ":" + str( funcLine )
+        values << funcShortLocation
         values << funcName
 
         callersCount = len( callers )
         values << str( callersCount )
 
-        item = ProfilingTableItem( values )
-        for column in [ 0, 1, 2, 3, 4 ]:
-            item.setTextAlignment( column, Qt.AlignRight )
+        values << ""    # callees
 
-        if funcLocation is not None and funcLocation != "":
-            item.setToolTip( 5, funcLocation )
+        item = ProfilingTableItem( values, self.__isOutsideItem( funcFileName ),
+                                   funcFileName, funcLine )
+        for column in [ 1, 2, 3, 4, 5, 8, 9 ]:
+            item.setTextAlignment( column, Qt.AlignRight )
+        item.setTextAlignment( 0, Qt.AlignCenter )
+
+        if funcFileName != "":
+            item.setToolTip( 6, funcFileName + ":" + str( funcLine ) )
 
         if callersCount != 0:
             tooltip = ""
@@ -258,13 +287,12 @@ class ProfileTableViewer( QWidget ):
                 if tooltip != "":
                     tooltip += "\n"
                 tooltip += self.__getCallLine( func, callers[ func ] )
-            item.setToolTip( 7, tooltip )
+            item.setToolTip( 8, tooltip )
 
-        self.__setItemBackground( item, funcFileName )
         self.__table.addTopLevelItem( item )
         return
 
-    def __populate( self ):
+    def __populate( self, totalCPUTime ):
         " Populates the data "
 
         for func, ( primitiveCalls, actualCalls, totalTime,
@@ -282,7 +310,7 @@ class ProfileTableViewer( QWidget ):
             else:
                 cumulativeTimePerCall = cumulativeTime / primitiveCalls
 
-            self.__createItem( func[ 0 ], func[ 1 ], func[ 2 ],
+            self.__createItem( func, totalCPUTime,
                                primitiveCalls, actualCalls, totalTime,
                                cumulativeTime, timePerCall, cumulativeTimePerCall,
                                callers )
@@ -294,6 +322,8 @@ class ProfileTableViewer( QWidget ):
 
     def togglePath( self, state ):
         " Switches between showing full paths or file names in locations "
-        print "State: " + bool( state )
+        for index in xrange( 0, self.__table.topLevelItemCount() ):
+            self.__table.topLevelItem( index ).updateLocation( state )
+        self.__resize()
         return
 
