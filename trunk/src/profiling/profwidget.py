@@ -111,6 +111,7 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.setContentsMargins( 0, 0, 0, 0 )
 
         toolbar.addAction( self.__toggleViewButton )
+        toolbar.addAction( self.__togglePathButton )
         toolbar.addAction( self.__printPreviewButton )
         toolbar.addAction( self.__printButton )
         toolbar.addWidget( fixedSpacer )
@@ -165,15 +166,15 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
             self.__profGraph.setFocus()
         return
 
-    def __togglePath( self. state ):
+    def __togglePath( self, state ):
         " Triggered when full path/file name is switched "
         self.__profTable.togglePath( state )
         if state:
-            self.__togglePathButton.setIcon( PixmapCache().getIcon( 'longpath.png' ) )
-            self.__togglePathButton.setToolTip( 'Show full paths for item location' )
-        else:
             self.__togglePathButton.setIcon( PixmapCache().getIcon( 'shortpath.png' ) )
             self.__togglePathButton.setToolTip( 'Show file names only for item location' )
+        else:
+            self.__togglePathButton.setIcon( PixmapCache().getIcon( 'longpath.png' ) )
+            self.__togglePathButton.setToolTip( 'Show full paths for item location' )
         return
 
     def __onPrint( self ):
