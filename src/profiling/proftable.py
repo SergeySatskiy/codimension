@@ -171,7 +171,7 @@ class ProfileTableViewer( QWidget ):
 
         # Parse the collected info
         self.__stats = pstats.Stats( dataFile )
-        self.__stats.stats.calc_callees()
+        self.__stats.calc_callees()
 
         totalCalls = self.__stats.total_calls
         totalPrimitiveCalls = self.__stats.prim_calls  # The calls were not induced via recursion
@@ -217,14 +217,13 @@ class ProfileTableViewer( QWidget ):
         self.__contextMenu.addMenu( self.__calleesMenu )
         self.__contextMenu.addMenu( self.__outsideCalleesMenu )
 
-        self.__table.SetContextMenuPolicy( Qt.CustomContextMenu )
+        self.__table.setContextMenuPolicy( Qt.CustomContextMenu )
         self.connect( self.__table, SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
                       self.__showContextMenu )
         return
 
     def __showContextMenu( self, point ):
         " Context menu "
-        print "Context menu requested"
         self.__callersMenu.clear()
         self.__outsideCallersMenu.clear()
         self.__calleesMenu.clear()
@@ -250,7 +249,7 @@ class ProfileTableViewer( QWidget ):
             self.__calleesMenu.setEnabled( True )
             self.__outsideCalleesMenu.setEnabled( True )
 
-        self.__contextMenu.popup( self.mapToGlobal( point ) )
+        self.__contextMenu.popup( self.__table.mapToGlobal( point ) )
         return
 
     def __resize( self ):
@@ -334,11 +333,11 @@ class ProfileTableViewer( QWidget ):
         values << str( callersCount )
 
         # Callees
-        if func in self.__stats.stats.all_callees:
-            calleesCount = len( self.__stats.stats.all_callees[ func ] )
+        if func in self.__stats.all_callees:
+            calleesCount = len( self.__stats.all_callees[ func ] )
         else:
             calleesCount = 0
-        values = << str( calleesCount )
+        values << str( calleesCount )
 
         item = ProfilingTableItem( values, self.__isOutsideItem( funcFileName ),
                                    funcFileName, funcLine )

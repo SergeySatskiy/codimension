@@ -39,7 +39,7 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
         MainWindowTabWidgetBase.__init__( self )
         QWidget.__init__( self, parent )
 
-        self.__profTable = ProfileTableViewer( scriptName, params, reportTime, dataFile )
+        self.__profTable = ProfileTableViewer( scriptName, params, reportTime, dataFile, self )
         self.__profGraph = ProfileGraphViewer()
         self.__profTable.hide()
 
