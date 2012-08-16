@@ -29,7 +29,8 @@ import os.path
 
 from PyQt4.QtCore import Qt, SIGNAL, QStringList
 from PyQt4.QtGui import QTreeWidgetItem, QTreeWidget, QColor, QBrush, QLabel, \
-                        QWidget, QVBoxLayout, QFrame, QPalette, QHeaderView
+                        QWidget, QVBoxLayout, QFrame, QPalette, QHeaderView, \
+                        QMenu
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.globals import GlobalData
 from utils.pixmapcache import PixmapCache
@@ -65,6 +66,14 @@ class ProfilingTableItem( QTreeWidgetItem ):
                 loc = os.path.basename( self.fileName ) + ":" + str( self.line )
             self.setText( 6, loc )
         return
+
+    def callersCount( self ):
+        " Provides the number of callers "
+        return int( str( self.text( 8 ) ) )
+
+    def calleesCount( self ):
+        " Provides the number of callees "
+        return int( str( self.text( 9 ) ) )
 
     @staticmethod
     def __getActualCalls( txt ):
@@ -160,9 +169,12 @@ class ProfileTableViewer( QWidget ):
         self.connect( self.__table, SIGNAL( "itemActivated(QTreeWidgetItem *, int)" ),
                       self.__activated )
 
+        # Parse the collected info
         self.__stats = pstats.Stats( dataFile )
+        self.__stats.stats.calc_callees()
+
         totalCalls = self.__stats.total_calls
-        totalPrimitiveCalls = self.__stats.prim_calls  # The calls was not induced via recursion
+        totalPrimitiveCalls = self.__stats.prim_calls  # The calls were not induced via recursion
         totalTime = self.__stats.total_tt
 
         summary = QLabel( "<b>Script:</b> " + self.__script + " " + params.arguments + "<br>" \
@@ -187,8 +199,58 @@ class ProfileTableViewer( QWidget ):
         vLayout.addWidget( self.__table )
 
         self.setLayout( vLayout )
+        self.__createContextMenu()
 
         self.__populate( totalTime )
+        return
+
+    def __createContextMenu( self ):
+        " Creates context menu for the table raws "
+        self.__contextMenu = QMenu( self )
+        self.__callersMenu = QMenu( "Callers", self )
+        self.__outsideCallersMenu = QMenu( "Outside callers", self )
+        self.__calleesMenu = QMenu( "Callees", self )
+        self.__outsideCalleesMenu = QMenu( "Outside callees", self )
+        self.__contextMenu.addMenu( self.__callersMenu )
+        self.__contextMenu.addMenu( self.__outsideCallersMenu )
+        self.__contextMenu.addSeparator()
+        self.__contextMenu.addMenu( self.__calleesMenu )
+        self.__contextMenu.addMenu( self.__outsideCalleesMenu )
+
+        self.__table.SetContextMenuPolicy( Qt.CustomContextMenu )
+        self.connect( self.__table, SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
+                      self.__showContextMenu )
+        return
+
+    def __showContextMenu( self, point ):
+        " Context menu "
+        print "Context menu requested"
+        self.__callersMenu.clear()
+        self.__outsideCallersMenu.clear()
+        self.__calleesMenu.clear()
+        self.__outsideCalleesMenu.clear()
+
+        # Detect what the item was clicked
+        item = self.__table.itemAt( point )
+
+        # Build the context menu
+        # .addAction
+        # .setData
+        if item.callersCount() == 0:
+            self.__callersMenu.setEnabled( False )
+            self.__outsideCallersMenu.setEnabled( False )
+        else:
+            self.__callersMenu.setEnabled( True )
+            self.__outsideCallersMenu.setEnabled( True )
+
+        if item.calleesCount() == 0:
+            self.__calleesMenu.setEnabled( False )
+            self.__outsideCalleesMenu.setEnabled( False )
+        else:
+            self.__calleesMenu.setEnabled( True )
+            self.__outsideCalleesMenu.setEnabled( True )
+
+        self.__contextMenu.popup( self.mapToGlobal( point ) )
         return
 
     def __resize( self ):
@@ -267,10 +329,16 @@ class ProfileTableViewer( QWidget ):
         values << funcShortLocation
         values << funcName
 
+        # Callers
         callersCount = len( callers )
         values << str( callersCount )
 
-        values << ""    # callees
+        # Callees
+        if func in self.__stats.stats.all_callees:
+            calleesCount = len( self.__stats.stats.all_callees[ func ] )
+        else:
+            calleesCount = 0
+        values = << str( calleesCount )
 
         item = ProfilingTableItem( values, self.__isOutsideItem( funcFileName ),
                                    funcFileName, funcLine )
