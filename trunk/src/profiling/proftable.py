@@ -43,12 +43,13 @@ MAX_CALLS_IN_TOOLTIP = 32
 class ProfilingTableItem( QTreeWidgetItem ):
     " Profiling table row "
 
-    def __init__( self, items, isOutside, path, line ):
+    def __init__( self, items, isOutside, path, line, originalTuple ):
         QTreeWidgetItem.__init__( self, items )
 
         self.fileName = path
         self.line = line
         self.isOutside = isOutside
+        self.originalTuple = originalTuple
 
         if isOutside:
             self.setIcon( 0, PixmapCache().getIcon( 'nonprojectentry.png' ) )
@@ -240,15 +241,33 @@ class ProfileTableViewer( QWidget ):
             self.__callersMenu.setEnabled( False )
             self.__outsideCallersMenu.setEnabled( False )
         else:
-            self.__callersMenu.setEnabled( True )
-            self.__outsideCallersMenu.setEnabled( True )
+            callers = self.__stats.stats[ item.originalTuple ][ 4 ]
+            callersList = callers.keys()
+            callersList.sort()
+            for callerFunc in callersList:
+                menuText = self.__getCallLine( callerFunc, callers[ callerFunc ] )
+                if self.__isOutsideItem( callerFunc[ 0 ] ):
+                    self.__outsideCallersMenu.addAction( menuText )
+                else:
+                    self.__callersMenu.addAction( menuText )
+            self.__callersMenu.setEnabled( not self.__callersMenu.isEmpty() )
+            self.__outsideCallersMenu.setEnabled( not self.__outsideCallersMenu.isEmpty() )
 
         if item.calleesCount() == 0:
             self.__calleesMenu.setEnabled( False )
             self.__outsideCalleesMenu.setEnabled( False )
         else:
-            self.__calleesMenu.setEnabled( True )
-            self.__outsideCalleesMenu.setEnabled( True )
+            callees = self.__stats.all_callees[ item.originalTuple ]
+            calleesList = callees.keys()
+            calleesList.sort()
+            for calleeFunc in calleesList:
+                menuText = self.__getCallLine( calleeFunc, callees[ calleeFunc ] )
+                if self.__isOutsideItem( calleeFunc[ 0 ] ):
+                    self.__outsideCalleesMenu.addAction( menuText )
+                else:
+                    self.__calleesMenu.addAction( menuText )
+            self.__calleesMenu.setEnabled( not self.__calleesMenu.isEmpty() )
+            self.__outsideCalleesMenu.setEnabled( not self.__outsideCalleesMenu.isEmpty() )
 
         self.__contextMenu.popup( self.__table.mapToGlobal( point ) )
         return
@@ -353,7 +372,7 @@ class ProfileTableViewer( QWidget ):
         values << str( calleesCount )
 
         item = ProfilingTableItem( values, self.__isOutsideItem( funcFileName ),
-                                   funcFileName, funcLine )
+                                   funcFileName, funcLine, func )
         for column in [ 1, 2, 3, 4, 5, 8, 9 ]:
             item.setTextAlignment( column, Qt.AlignRight )
         item.setTextAlignment( 0, Qt.AlignCenter )
