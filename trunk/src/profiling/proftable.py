@@ -274,7 +274,7 @@ class ProfileTableViewer( QWidget ):
 
         try:
             if item.line == 0 or item.fileName is None or \
-               not os.path.abspath( item.fileName ):
+               not os.path.isabs( item.fileName ):
                 return
             GlobalData().mainWindow.openFile( item.fileName, item.line )
         except:
