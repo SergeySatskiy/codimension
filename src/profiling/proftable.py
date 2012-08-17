@@ -37,6 +37,7 @@ from utils.pixmapcache import PixmapCache
 
 
 FLOAT_FORMAT = "%8.6f"
+MAX_CALLS_IN_TOOLTIP = 32
 
 
 class ProfilingTableItem( QTreeWidgetItem ):
@@ -281,16 +282,32 @@ class ProfileTableViewer( QWidget ):
             logging.error( "Could not jump to function location" )
         return
 
+    @staticmethod
+    def __getFuncShortLocation( funcFileName, funcLine ):
+        " Provides unified shortened function location "
+        if funcFileName == "":
+            return ""
+        return os.path.basename( funcFileName ) + ":" + str( funcLine )
+
     def __getCallLine( self, func, props ):
         " Provides the formatted call line "
-        calls = str( props[ 1 ] )
-        if props[ 0 ] != props[ 1 ]:
-            calls += "/" + str( props[ 0 ] )
-        
-        return func[ 0 ] + ":" + str( func[ 1 ] ) + "(" + func[ 2 ] + ") " + calls
-        print "Func: " + str( func )
-        print "Props: " + str( props )
-        return "dumb"
+        funcFileName, funcLine, funcName = self.__getLocationAndName( func )
+        if isinstance( props, tuple ):
+            actualCalls, primitiveCalls, totalTime, cumulativeTime = props
+            if primitiveCalls != actualCalls:
+                callsString = str( actualCalls ) + "/" + str( primitiveCalls )
+            else:
+                callsString = str( actualCalls )
+
+            return callsString + "\t" + FLOAT_FORMAT % totalTime + "\t" + \
+                   FLOAT_FORMAT % cumulativeTime + "\t" + \
+                   self.__getFuncShortLocation( funcFileName, funcLine ) + \
+                   "(" + funcName + ")"
+
+        # I've never seen this branch working so it is just in case.
+        # There was something like this in the pstats module
+        return self.__getFuncShortLocation( funcFileName, funcLine ) + \
+               "(" + funcName + ")"
 
     @staticmethod
     def __getLocationAndName( func ):
@@ -315,17 +332,13 @@ class ProfileTableViewer( QWidget ):
         else:
             values << str( actualCalls ) + "/" + str( primitiveCalls )
 
-        values << FLOAT_FORMAT % totalTime + " (%3.2f%%)" % (totalTime / totalCPUTime * 100)
+        values << FLOAT_FORMAT % totalTime + " \t(%3.2f%%)" % (totalTime / totalCPUTime * 100)
         values << FLOAT_FORMAT % timePerCall
         values << FLOAT_FORMAT % cumulativeTime
         values << FLOAT_FORMAT % cumulativeTimePerCall
 
         funcFileName, funcLine, funcName = self.__getLocationAndName( func )
-        if funcFileName == "":
-            funcShortLocation = ""
-        else:
-            funcShortLocation = os.path.basename( funcFileName ) + ":" + str( funcLine )
-        values << funcShortLocation
+        values << self.__getFuncShortLocation( funcFileName, funcLine )
         values << funcName
 
         # Callers
@@ -350,11 +363,28 @@ class ProfileTableViewer( QWidget ):
 
         if callersCount != 0:
             tooltip = ""
-            for func in callers:
+            callersList = callers.keys()
+            callersList.sort()
+            for callerFunc in callersList[ : MAX_CALLS_IN_TOOLTIP ]:
                 if tooltip != "":
                     tooltip += "\n"
-                tooltip += self.__getCallLine( func, callers[ func ] )
+                tooltip += self.__getCallLine( callerFunc, callers[ callerFunc ] )
+            if callersCount > MAX_CALLS_IN_TOOLTIP:
+                tooltip += "\n. . ."
             item.setToolTip( 8, tooltip )
+
+        if calleesCount != 0:
+            callees = self.__stats.all_callees[ func ]
+            tooltip = ""
+            calleesList = callees.keys()
+            calleesList.sort()
+            for calleeFunc in calleesList[ : MAX_CALLS_IN_TOOLTIP ]:
+                if tooltip != "":
+                    tooltip += "\n"
+                tooltip += self.__getCallLine( calleeFunc, callees[ calleeFunc ] )
+            if calleesCount > MAX_CALLS_IN_TOOLTIP:
+                tooltip += "\n. . ."
+            item.setToolTip( 9, tooltip )
 
         self.__table.addTopLevelItem( item )
         return
