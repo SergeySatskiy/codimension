@@ -42,7 +42,7 @@ def _getCode( workingDir, moduleToImport, name, importDirs ):
     if len( importDirs ) > 0:
         srcCode += "import sys;"
         for importPath in importDirs:
-            srcCode += "sys.path.append( '" + importPath + "' );"
+            srcCode += "sys.path.append( \"" + importPath + "\" );"
 
     srcCode += "import dis;" \
                "import " + moduleToImport + " as m;" \
@@ -62,15 +62,14 @@ def _getCodeForStandaloneScript( path, name, importDirs ):
     return _getCode( workingDir, moduleToImport, name, importDirs )
 
 
-def _getCodeForNestedScript( projectTopDir, relativePath,
+def _getCodeForNestedScript( topDir, relativePath,
                              name, importDirs ):
     """ Provides a complete command line for a module which is in
         a nested directory starting from a project top dir.
-        projectTopDir is like /a/b/c
+        topDir is like /a/b/c
         relativePath is like d/e/f.py """
-    workingDir = projectTopDir
     moduleToImport = relativePath.replace( os.path.sep, '.' )
-    return _getCode( workingDir, moduleToImport, name, importDirs )
+    return _getCode( topDir, moduleToImport, name, importDirs )
 
 
 def _checkInitPresence( startDir, dirs ):
@@ -120,42 +119,44 @@ def getDisassembled( path, name ):
 
     cmdLine2 = ""
     project = GlobalData().project
+    importDirs = GlobalData().getProjectImportDirs()
     if project.isProjectFile:
         # There are at least two options:
-        # - to import starting from the project top level dir
+        # - to import starting from the project top level dir (project main
+        #   script dir)
         # - to import starting from the directory where the script is located
         # Let's try both of them
-        projectTopDir = os.path.dirname( project.fileName )
+        if project.scriptName != "" and os.path.exists( project.scriptName ):
+            topDir = os.path.dirname( project.scriptName )
+        else:
+            topDir = os.path.dirname( project.fileName )
+
         scriptDir = os.path.dirname( path )
-        if projectTopDir == scriptDir:
-            cmdLine = _getCodeForStandaloneScript( path, name,
-                                                   project.importDirs )
+        if topDir == scriptDir:
+            cmdLine = _getCodeForStandaloneScript( path, name, importDirs )
         else:
             # Calculate the relative path
             # it will be like 'c/d/e/my.py'
-            relativePath = relpath( path, projectTopDir )
+            relativePath = relpath( path, topDir )
 
             # Make sure there are __init__ files in all paths down
-            if _checkInitPresence( projectTopDir,
+            if _checkInitPresence( topDir,
                                    os.path.dirname( relativePath ) ) == False:
                 # No init files in the structure, so there is no point to try
                 # importing from the project top directory
                 cmdLine = _getCodeForStandaloneScript( path,
-                                                       name,
-                                                       project.importDirs )
+                                                       name, importDirs )
             else:
                 # Need to try both options of importing
                 # We may get luck succesfully loading it
                 cmdLine = _getCodeForStandaloneScript( path,
-                                                       name,
-                                                       project.importDirs )
+                                                       name, importDirs )
 
-                cmdLine2 = _getCodeForNestedScript( projectTopDir,
+                cmdLine2 = _getCodeForNestedScript( topDir,
                                                     relativePath,
-                                                    name,
-                                                    project.importDirs )
+                                                    name, importDirs )
     else:
-        cmdLine = _getCodeForStandaloneScript( path, name, project.importDirs )
+        cmdLine = _getCodeForStandaloneScript( path, name, importDirs )
 
     # cmdLine is formed in any case
     # cmdLine2 only if certain conditions are met
