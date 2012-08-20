@@ -33,7 +33,8 @@ from utils.project   import CodimensionProject
 from viewitems       import DirectoryItemType, \
                             SysPathItemType, GlobalsItemType, ImportsItemType, \
                             FunctionsItemType, ClassesItemType, \
-                            StaticAttributesItemType, InstanceAttributesItemType
+                            StaticAttributesItemType, InstanceAttributesItemType, \
+                            FunctionItemType, ClassItemType
 from itemdelegates   import NoOutlineHeightDelegate
 from utils.fileutils import detectFileType, PythonFileType, Python3FileType
 
@@ -271,6 +272,16 @@ class ObjectsBrowser( QTreeView ):
         line = item.data( 2 )
         self.emit( SIGNAL( 'openingItem' ), path, line )
         GlobalData().mainWindow.openFile( path, line )
+        return
+
+    def getDisassebled( self, item ):
+        " Handles showing disassembled code "
+        if item.itemType not in [ FunctionItemType, ClassItemType ]:
+            return
+
+        path = item.getPath()
+        qualifiedName = item.getQualifiedName()
+        GlobalData().mainWindow.showDisassembler( path, qualifiedName )
         return
 
     def copyToClipboard( self ):
