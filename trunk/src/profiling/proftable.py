@@ -27,10 +27,10 @@ import pstats
 import logging
 import os.path
 
-from PyQt4.QtCore import Qt, SIGNAL, QStringList
+from PyQt4.QtCore import Qt, SIGNAL, QStringList, QVariant
 from PyQt4.QtGui import QTreeWidgetItem, QTreeWidget, QColor, QBrush, QLabel, \
                         QWidget, QVBoxLayout, QFrame, QPalette, QHeaderView, \
-                        QMenu
+                        QMenu, QItemSelectionModel, QAbstractItemView
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.globals import GlobalData
 from utils.pixmapcache import PixmapCache
@@ -39,43 +39,93 @@ from utils.pixmapcache import PixmapCache
 FLOAT_FORMAT = "%8.6f"
 MAX_CALLS_IN_TOOLTIP = 32
 
+OUTSIDE_COL_INDEX = 0
+CALLS_COL_INDEX = 1
+TOTAL_COL_INDEX = 2
+TOTALPERCALL_COL_INDEX = 3
+CUM_COL_INDEX = 4
+CUMPERCALL_COL_INDEX = 5
+LOCATION_COL_INDEX = 6
+NAME_COL_INDEX = 7
+CALLERS_COL_INDEX = 8
+CALLEES_COL_INDEX = 9
+
 
 class ProfilingTableItem( QTreeWidgetItem ):
     " Profiling table row "
 
-    def __init__( self, items, isOutside, path, line, originalTuple ):
+    def __init__( self, items, isOutside, funcIDs ):
         QTreeWidgetItem.__init__( self, items )
 
-        self.fileName = path
-        self.line = line
-        self.isOutside = isOutside
-        self.originalTuple = originalTuple
+        self.__isOutside = isOutside
+        self.__funcIDs = funcIDs
 
+        # Set the first column icon
         if isOutside:
-            self.setIcon( 0, PixmapCache().getIcon( 'nonprojectentry.png' ) )
-            self.setToolTip( 0, 'Record of an outside function' )
+            self.setIcon( OUTSIDE_COL_INDEX,
+                          PixmapCache().getIcon( 'nonprojectentry.png' ) )
+            self.setToolTip( OUTSIDE_COL_INDEX,
+                             'Record of an outside function' )
         else:
-            self.setIcon( 0, PixmapCache().getIcon( 'empty.png' ) )
-            self.setToolTip( 0, '' )
+            self.setIcon( OUTSIDE_COL_INDEX,
+                          PixmapCache().getIcon( 'empty.png' ) )
+            self.setToolTip( OUTSIDE_COL_INDEX, '' )
+
+        # Sets the location/name columns
+        self.updateLocation( False )
+        self.setText( NAME_COL_INDEX, self.getFunctionName() )
+
+        for column in [ CALLS_COL_INDEX, TOTALPERCALL_COL_INDEX,
+                        CUM_COL_INDEX, CUMPERCALL_COL_INDEX,
+                        CALLERS_COL_INDEX, CALLEES_COL_INDEX ]:
+            self.setTextAlignment( column, Qt.AlignRight )
+        self.setTextAlignment( TOTAL_COL_INDEX, Qt.AlignLeft )
         return
+
+    def getFuncIDs( self ):
+        " Provides the function identification exactly as pstats defines it "
+        return self.__funcIDs
+
+    def getFileName( self ):
+        " Provides the item file name "
+        if self.__funcIDs[ 0 ] == '~':
+            return ""
+        return self.__funcIDs[ 0 ]
+
+    def getLineNumber( self ):
+        " Provides the line number "
+        return self.__funcIDs[ 1 ]
+
+    def getFunctionName( self ):
+        " Provides the function name "
+        name = self.__funcIDs[ 2 ]
+        if self.__funcIDs[ : 2 ] == ( '~', 0 ):
+            # special case for built-in functions
+            if name.startswith( '<' ) and name.endswith( '>' ):
+                return "{%s}" % name[ 1 : -1 ]
+        return name
 
     def updateLocation( self, isFull ):
         " Updates the function location cell "
-        if self.fileName != "":
+        fileName = self.getFileName()
+        if fileName != "":
             if isFull:
-                loc = self.fileName + ":" + str( self.line )
+                loc = fileName + ":" + str( self.getLineNumber() )
             else:
-                loc = os.path.basename( self.fileName ) + ":" + str( self.line )
-            self.setText( 6, loc )
+                loc = os.path.basename( fileName ) + ":" + \
+                      str( self.getLineNumber() )
+            self.setText( LOCATION_COL_INDEX, loc )
+            self.setToolTip( LOCATION_COL_INDEX,
+                             fileName + ":" + str( self.getLineNumber() ) )
         return
 
     def callersCount( self ):
         " Provides the number of callers "
-        return int( str( self.text( 8 ) ) )
+        return int( str( self.text( CALLERS_COL_INDEX ) ) )
 
     def calleesCount( self ):
         " Provides the number of callees "
-        return int( str( self.text( 9 ) ) )
+        return int( str( self.text( CALLEES_COL_INDEX ) ) )
 
     @staticmethod
     def __getActualCalls( txt ):
@@ -91,33 +141,61 @@ class ProfilingTableItem( QTreeWidgetItem ):
         " Integer or string sorting "
         sortColumn = self.treeWidget().sortColumn()
 
-        if sortColumn == 0:
-            return self.isOutside < other.isOutside
+        if sortColumn == OUTSIDE_COL_INDEX:
+            return self.__isOutside < other.__isOutside
 
         txt = self.text( sortColumn )
         otherTxt = other.text( sortColumn )
-        if sortColumn == 1:
-            return self.__getActualCalls( txt ) < self.__getActualCalls( otherTxt )
+        if sortColumn == CALLS_COL_INDEX:
+            return self.__getActualCalls( txt ) < \
+                   self.__getActualCalls( otherTxt )
 
-        if sortColumn in [ 2, 3, 4, 5 ]:
-            return self.__getFloatValue( txt ) < self.__getFloatValue( otherTxt )
+        if sortColumn in [ TOTAL_COL_INDEX, TOTALPERCALL_COL_INDEX,
+                           CUM_COL_INDEX, CUMPERCALL_COL_INDEX ]:
+            return self.__getFloatValue( txt ) < \
+                   self.__getFloatValue( otherTxt )
 
-        if sortColumn == 6:
-            # Function location
-            if self.fileName == other.fileName:
-                return self.line < other.line
-            return self.fileName < other.fileName
+        if sortColumn == LOCATION_COL_INDEX:
+            sfName = self.getFileName()
+            ofName = other.getFileName()
+            if sfName == ofName:
+                return self.getLineNumber() < other.getLineNumber()
+            return sfName < ofName
 
-        if sortColumn == 7:
-            # Function name
+        if sortColumn == NAME_COL_INDEX:
             return txt < otherTxt
 
-        if sortColumn in [ 8, 9 ]:
-            # Number of callers/collees
+        if sortColumn in [ CALLERS_COL_INDEX, CALLEES_COL_INDEX ]:
             return int( txt ) < int( otherTxt )
 
         # Fallback to string comparison
         return txt < otherTxt
+
+    def match( self, locationAndName ):
+        " Checks if the item function location and name matches what received "
+        parts = locationAndName.split( ":" )
+        if len( parts ) != 3:
+            return False
+        return self.getFunctionName() == parts[ 2 ] and \
+               str( self.getLineNumber() ) == parts[ 1 ] and \
+               self.getFileName() == parts[ 0 ]
+
+
+class ProfilerTreeWidget( QTreeWidget ):
+    " Need only to generate ESCPressed signal "
+
+    def __init__( self, parent = None ):
+        QTreeWidget.__init__( self, parent )
+        return
+
+    def keyPressEvent( self, event ):
+        " Handles the key press events "
+        if event.key() == Qt.Key_Escape:
+            self.emit( SIGNAL('ESCPressed') )
+            event.accept()
+        else:
+            QTreeWidget.keyPressEvent( self, event )
+        return
 
 
 class ProfileTableViewer( QWidget ):
@@ -126,7 +204,9 @@ class ProfileTableViewer( QWidget ):
     def __init__( self, scriptName, params, reportTime, dataFile, parent = None ):
         QWidget.__init__( self, parent )
 
-        self.__table = QTreeWidget( self )
+        self.__table = ProfilerTreeWidget( self )
+        self.connect( self.__table, SIGNAL( 'ESCPressed' ),
+                      self.__onEsc )
 
         self.__script = scriptName
         project = GlobalData().project
@@ -143,6 +223,8 @@ class ProfileTableViewer( QWidget ):
         self.__table.setSortingEnabled( True )
         self.__table.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         self.__table.setUniformRowHeights( True )
+        self.__table.setSelectionMode( QAbstractItemView.SingleSelection )
+        self.__table.setSelectionBehavior( QAbstractItemView.SelectRows )
         headerLabels = QStringList()
 
         headerLabels << "" << "Calls" << "Total time" << "Per call"
@@ -206,6 +288,11 @@ class ProfileTableViewer( QWidget ):
         self.__populate( totalTime )
         return
 
+    def __onEsc( self ):
+        " Triggered when Esc is pressed "
+        self.emit( SIGNAL( 'ESCPressed' ) )
+        return
+
     def __createContextMenu( self ):
         " Creates context menu for the table raws "
         self.__contextMenu = QMenu( self )
@@ -218,6 +305,18 @@ class ProfileTableViewer( QWidget ):
         self.__contextMenu.addSeparator()
         self.__contextMenu.addMenu( self.__calleesMenu )
         self.__contextMenu.addMenu( self.__outsideCalleesMenu )
+        self.__contextMenu.addSeparator()
+        self.__disasmAct = self.__contextMenu.addAction( "Disassemble",
+                                                         self.__onDisassemble )
+
+        self.connect( self.__callersMenu, SIGNAL( "triggered(QAction*)" ),
+                      self.__onCallContextMenu )
+        self.connect( self.__outsideCallersMenu, SIGNAL( "triggered(QAction*)" ),
+                      self.__onCallContextMenu )
+        self.connect( self.__calleesMenu, SIGNAL( "triggered(QAction*)" ),
+                      self.__onCallContextMenu )
+        self.connect( self.__outsideCalleesMenu, SIGNAL( "triggered(QAction*)" ),
+                      self.__onCallContextMenu )
 
         self.__table.setContextMenuPolicy( Qt.CustomContextMenu )
         self.connect( self.__table, SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
@@ -234,22 +333,26 @@ class ProfileTableViewer( QWidget ):
         # Detect what the item was clicked
         item = self.__table.itemAt( point )
 
+        self.__disasmAct.setEnabled( item.getFileName() != "" )
+
         # Build the context menu
-        # .addAction
-        # .setData
         if item.callersCount() == 0:
             self.__callersMenu.setEnabled( False )
             self.__outsideCallersMenu.setEnabled( False )
         else:
-            callers = self.__stats.stats[ item.originalTuple ][ 4 ]
+            callers = self.__stats.stats[ item.getFuncIDs() ][ 4 ]
             callersList = callers.keys()
             callersList.sort()
             for callerFunc in callersList:
                 menuText = self.__getCallLine( callerFunc, callers[ callerFunc ] )
                 if self.__isOutsideItem( callerFunc[ 0 ] ):
-                    self.__outsideCallersMenu.addAction( menuText )
+                    act = self.__outsideCallersMenu.addAction( menuText )
                 else:
-                    self.__callersMenu.addAction( menuText )
+                    act = self.__callersMenu.addAction( menuText )
+                funcFileName, funcLine, funcName = self.__getLocationAndName( callerFunc )
+                act.setData( QVariant( funcFileName + ":" + \
+                                       str( funcLine ) + ":" + \
+                                       funcName ) )
             self.__callersMenu.setEnabled( not self.__callersMenu.isEmpty() )
             self.__outsideCallersMenu.setEnabled( not self.__outsideCallersMenu.isEmpty() )
 
@@ -257,27 +360,39 @@ class ProfileTableViewer( QWidget ):
             self.__calleesMenu.setEnabled( False )
             self.__outsideCalleesMenu.setEnabled( False )
         else:
-            callees = self.__stats.all_callees[ item.originalTuple ]
+            callees = self.__stats.all_callees[ item.getFuncIDs() ]
             calleesList = callees.keys()
             calleesList.sort()
             for calleeFunc in calleesList:
                 menuText = self.__getCallLine( calleeFunc, callees[ calleeFunc ] )
                 if self.__isOutsideItem( calleeFunc[ 0 ] ):
-                    self.__outsideCalleesMenu.addAction( menuText )
+                    act = self.__outsideCalleesMenu.addAction( menuText )
                 else:
-                    self.__calleesMenu.addAction( menuText )
+                    act = self.__calleesMenu.addAction( menuText )
+                funcFileName, funcLine, funcName = self.__getLocationAndName( calleeFunc )
+                act.setData( QVariant( funcFileName + ":" + \
+                                       str( funcLine ) + ":" + \
+                                       funcName ) )
             self.__calleesMenu.setEnabled( not self.__calleesMenu.isEmpty() )
             self.__outsideCalleesMenu.setEnabled( not self.__outsideCalleesMenu.isEmpty() )
 
         self.__contextMenu.popup( self.__table.mapToGlobal( point ) )
         return
 
+    def __onDisassemble( self ):
+        " On disassemble something "
+        item = self.__table.selectedItems()[ 0 ]
+        GlobalData().mainWindow.showDisassembler( item.getFileName(),
+                                                  item.getFunctionName() )
+        return
+
     def __resize( self ):
         " Resizes columns to the content "
         self.__table.header().resizeSections( QHeaderView.ResizeToContents )
         self.__table.header().setStretchLastSection( True )
-        self.__table.header().resizeSection( 0, 28 )
-        self.__table.header().setResizeMode( 0, QHeaderView.Fixed )
+        self.__table.header().resizeSection( OUTSIDE_COL_INDEX, 28 )
+        self.__table.header().setResizeMode( OUTSIDE_COL_INDEX,
+                                             QHeaderView.Fixed )
         return
 
     def setFocus( self ):
@@ -293,10 +408,11 @@ class ProfileTableViewer( QWidget ):
         " Triggered when the item is activated "
 
         try:
-            if item.line == 0 or item.fileName is None or \
-               not os.path.isabs( item.fileName ):
+            line = item.getLineNumber()
+            fileName = item.getFileName()
+            if line == 0 or not os.path.isabs( fileName ):
                 return
-            GlobalData().mainWindow.openFile( item.fileName, item.line )
+            GlobalData().mainWindow.openFile( fileName, line )
         except:
             logging.error( "Could not jump to function location" )
         return
@@ -356,9 +472,9 @@ class ProfileTableViewer( QWidget ):
         values << FLOAT_FORMAT % cumulativeTime
         values << FLOAT_FORMAT % cumulativeTimePerCall
 
-        funcFileName, funcLine, funcName = self.__getLocationAndName( func )
-        values << self.__getFuncShortLocation( funcFileName, funcLine )
-        values << funcName
+        # Location and name will be filled in the item constructor
+        values << ""
+        values << ""
 
         # Callers
         callersCount = len( callers )
@@ -371,14 +487,8 @@ class ProfileTableViewer( QWidget ):
             calleesCount = 0
         values << str( calleesCount )
 
-        item = ProfilingTableItem( values, self.__isOutsideItem( funcFileName ),
-                                   funcFileName, funcLine, func )
-        for column in [ 1, 2, 3, 4, 5, 8, 9 ]:
-            item.setTextAlignment( column, Qt.AlignRight )
-        item.setTextAlignment( 0, Qt.AlignCenter )
-
-        if funcFileName != "":
-            item.setToolTip( 6, funcFileName + ":" + str( funcLine ) )
+        item = ProfilingTableItem( values, self.__isOutsideItem( func[ 0 ] ),
+                                   func )
 
         if callersCount != 0:
             tooltip = ""
@@ -441,5 +551,16 @@ class ProfileTableViewer( QWidget ):
         for index in xrange( 0, self.__table.topLevelItemCount() ):
             self.__table.topLevelItem( index ).updateLocation( state )
         self.__resize()
+        return
+
+    def __onCallContextMenu( self, act ):
+        " Triggered when a context menu action is requested "
+        name = str( act.data().toString() )
+        for index in xrange( 0, self.__table.topLevelItemCount() ):
+            item = self.__table.topLevelItem( index )
+            if item.match( name ):
+                self.__table.clearSelection()
+                self.__table.scrollToItem( item )
+                self.__table.setCurrentItem( item )
         return
 
