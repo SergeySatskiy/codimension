@@ -59,6 +59,11 @@ class FunctionsViewer( QWidget ):
                                 PixmapCache().getIcon( 'findusage.png' ),
                                 'Find occurences', self.__findWhereUsed )
         self.__menu.addSeparator()
+        self.__disasmMenuItem = self.__menu.addAction( \
+                                PixmapCache().getIcon( '' ),
+                                'Disassemble',
+                                self.__onDisassemble )
+        self.__menu.addSeparator()
         self.__copyMenuItem = self.__menu.addAction( \
                                 PixmapCache().getIcon( 'copytoclipboard.png' ),
                                 'Copy path to clipboard',
@@ -234,6 +239,10 @@ class FunctionsViewer( QWidget ):
         self.__findMenuItem.setEnabled( self.findButton.isEnabled() )
         self.__copyMenuItem.setEnabled( self.copyPathButton.isEnabled() )
 
+        canDisassemble = self.__contextItem.itemType == FunctionItemType and \
+                         self.__contextItem.parentItem.isRoot()
+        self.__disasmMenuItem.setEnabled( canDisassemble )
+
         self.__menu.popup( QCursor.pos() )
         return
 
@@ -289,4 +298,9 @@ class FunctionsViewer( QWidget ):
         self.findNotUsedButton.setEnabled( GlobalData().project.isLoaded() and \
                                            self.getItemCount() > 0 )
         return
+
+    def __onDisassemble( self ):
+        " Disassembling has been requested "
+        if self.__contextItem is not None:
+            self.funcViewer.getDisassebled( self.__contextItem )
 

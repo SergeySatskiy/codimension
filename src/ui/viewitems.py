@@ -224,6 +224,20 @@ class TreeViewItem( object ):
 
         return path
 
+    def getQualifiedName( self ):
+        " Provides the qualified item name "
+        current = self
+        name = ""
+        while current is not None:
+            if current.itemType in [ FunctionItemType, ClassItemType ]:
+                namePart = current.data( 0 ).split( "(" )[ 0 ]
+                if name != "":
+                    name = namePart + "." + name
+                else:
+                    name = namePart
+            current = current.parentItem
+        return name
+
     def getRowPath( self ):
         " Provides the row path "
         rowPath = []
