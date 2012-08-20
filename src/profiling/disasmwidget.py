@@ -91,7 +91,7 @@ class DisassemblerResultsWidget( QWidget, MainWindowTabWidgetBase ):
         self.__text.setLineWrapMode( QTextEdit.NoWrap )
         self.__text.setFontFamily( "Monospace" )
         self.__text.setReadOnly( True )
-        self.__text.setText( code )
+        self.__text.setPlainText( code )
 
         vLayout = QVBoxLayout()
         vLayout.addWidget( summary )
