@@ -36,6 +36,7 @@ class MainWindowTabWidgetBase():
     HTMLViewer           = 3
     GeneratedDiagram     = 4
     ProfileViewer        = 5
+    DisassemblerViewer   = 6
 
     def __init__( self ):
         self.__uuid = uuid.uuid1()
