@@ -333,7 +333,9 @@ class ProfileTableViewer( QWidget ):
         # Detect what the item was clicked
         item = self.__table.itemAt( point )
 
-        self.__disasmAct.setEnabled( item.getFileName() != "" )
+        funcName = item.getFunctionName()
+        self.__disasmAct.setEnabled( item.getFileName() != "" and \
+                                     not funcName.startswith( "<" ) )
 
         # Build the context menu
         if item.callersCount() == 0:
