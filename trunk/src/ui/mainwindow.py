@@ -86,6 +86,7 @@ from analysis.notused           import NotUsedAnalysisProgress
 from autocomplete.completelists import getOccurrences
 from findinfiles                import ItemToSearchIn, getSearchItemIndex
 from profiling.profui           import ProfilingProgressDialog
+from profiling.disasm           import getDisassembled
 
 
 class EditorsManagerWidget( QWidget ):
@@ -3166,4 +3167,14 @@ class CodimensionMainWindow( QMainWindow ):
         dlg.exec_()
         return
 
+    def showDisassembler( self, scriptPath, name ):
+        " Triggered when a disassembler should be shown "
+        try:
+            code = getDisassembled( scriptPath, name )
+            editorsManager = self.editorsManagerWidget.editorsManager
+            editorsManager.showDisassembler( scriptPath, name, code )
+        except:
+            logging.error( "Could not get '" + name + "' from " + \
+                           scriptPath + " disassembled." )
+        return
 

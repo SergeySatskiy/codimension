@@ -45,7 +45,7 @@ from utils.fileutils            import detectFileType, PythonFileType, \
                                        Python3FileType, PixmapFileType, \
                                        DesignerFileType, LinguistFileType
 from utils.compatibility        import relpath
-from utils.misc                 import getNewFileTemplate
+from utils.misc                 import getNewFileTemplate, getLocaleDateTime
 from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
 from utils.globals              import GlobalData
 from utils.settings             import Settings
@@ -54,6 +54,7 @@ from diagram.importsdgmgraphics import ImportDgmTabWidget
 from cdmbriefparser             import getBriefModuleInfoFromMemory
 from utils.encoding             import decode
 from htmltabwidget              import HTMLTabWidget
+from profiling.disasmwidget     import DisassemblerResultsWidget
 
 
 
@@ -888,11 +889,40 @@ class EditorsManager( QTabWidget ):
             self.__updateStatusBar()
             newWidget.setFocus()
             self.saveTabsStatus()
-
         except Exception, exc:
             logging.error( str( exc ) )
-
         return
+
+    def showDisassembler( self, scriptPath, name, code ):
+        " Shows the disassembled code "
+        try:
+            reportTime = getLocaleDateTime()
+            tooltip = "Disassembling '" + name + "' from " + \
+                      os.path.basename( scriptPath ) + \
+                      " at " + reportTime
+            newWidget = DisassemblerResultsWidget( scriptPath, name,
+                                                   code, reportTime )
+            self.connect( newWidget, SIGNAL( 'ESCPressed' ),
+                          self.__onESC )
+
+            if self.widget( 0 ) == self.__welcomeWidget:
+                # It is the only welcome widget on the screen
+                self.removeTab( 0 )
+                self.setTabsClosable( True )
+
+            self.insertTab( 0, newWidget, newWidget.getShortName() )
+            if tooltip != "":
+                self.setTabToolTip( 0, tooltip )
+                newWidget.setTooltip( tooltip )
+            self.activateTab( 0 )
+            self.__updateControls()
+            self.__updateStatusBar()
+            newWidget.setFocus()
+            self.saveTabsStatus()
+        except Exception, exc:
+            logging.error( str( exc ) )
+        return
+
 
     def jumpToLine( self, lineNo ):
         " Jumps to the given line within the current buffer "
