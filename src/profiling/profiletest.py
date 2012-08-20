@@ -23,8 +23,10 @@
 " Profiler test "
 
 def test_f( bla ):
+    if bla > 55:
+        return bla + 1
     if bla > 0:
-        bla += 1
+        bla += test_f( bla + 1)
     else:
         bla += 2
     return bla
