@@ -41,7 +41,19 @@ class RunParametersCache( object ):
     def get( self, path ):
         """ Provides the required parameters object """
         try:
-            return self.__cache[ path ]
+            params = self.__cache[ path ]
+            if hasattr( params, "closeTerminal" ):
+                return params
+            newParams = RunParameters()
+            newParams.arguments = params.arguments
+            newParams.useScriptLocation = params.useScriptLocation
+            newParams.specificDir = params.specificDir
+            newParams.envType = params.envType
+            newParams.additionToParentEnv = params.additionToParentEnv
+            newParams.specificEnv = params.specificEnv
+            newParams.closeTerminal = False
+            self.__cache[ path ] = newParams
+            return newParams
         except KeyError:
             return RunParameters()
 
