@@ -74,7 +74,7 @@ from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
 from diagram.importsdgm         import ImportsDiagramDialog, \
                                        ImportsDiagramProgress, \
                                        ImportDiagramOptions
-from ui.runparams               import RunDialog
+from runparams                  import RunDialog
 from utils.run                  import getCwdCmdEnv
 from debugger.console           import DebuggerConsole
 from debugger.context           import DebuggerContext

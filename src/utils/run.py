@@ -54,6 +54,9 @@ class RunParameters:
         self.envType = RunParameters.InheritParentEnv
         self.additionToParentEnv = {}
         self.specificEnv = {}
+
+        # Close terminal
+        self.closeTerminal = False
         return
 
     def isDefault( self ):
@@ -63,7 +66,8 @@ class RunParameters:
                self.specificDir == "" and \
                self.envType == RunParameters.InheritParentEnv and \
                len( self.additionToParentEnv ) == 0 and \
-               len( self.specificEnv ) == 0
+               len( self.specificEnv ) == 0 and \
+               self.closeTerminal == False
 
 
 def getUserShell():

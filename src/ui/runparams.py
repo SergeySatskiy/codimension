@@ -30,7 +30,7 @@ from PyQt4.QtGui    import QDialog, QDialogButtonBox, QVBoxLayout, \
                            QSizePolicy, QLabel, QGridLayout, QHBoxLayout, \
                            QRadioButton, QGroupBox, QPushButton, QFileDialog, \
                            QLineEdit, QTreeWidget, QAbstractItemView, \
-                           QTreeWidgetItem
+                           QTreeWidgetItem, QCheckBox
 from itemdelegates  import NoOutlineHeightDelegate
 from utils.run      import RunParameters, parseCommandLineArguments, \
                            TERM_AUTO, TERM_GNOME, TERM_KONSOLE, TERM_XTERM
@@ -188,6 +188,9 @@ class RunDialog( QDialog ):
             self.__gnomeRButton.setChecked( True )
         else:
             self.__xtermRButton.setChecked( True )
+
+        # Close checkbox
+        self.__closeCheckBox.setChecked( self.runParams.closeTerminal )
 
         self.__setRunButtonProps()
         return
@@ -380,6 +383,13 @@ class RunDialog( QDialog ):
         layoutTerm.addWidget( self.__xtermRButton )
         layout.addWidget( termGroupbox )
 
+        # Close checkbox
+        self.__closeCheckBox = QCheckBox( "Close terminal upon " \
+                                          "successfull completion" )
+        self.connect( self.__closeCheckBox, SIGNAL( "stateChanged(int)" ),
+                      self.__onCloseChanged )
+        layout.addWidget( self.__closeCheckBox )
+
 
         # Buttons at the bottom
         buttonBox = QDialogButtonBox()
@@ -447,6 +457,11 @@ class RunDialog( QDialog ):
         value = str( value )
         self.runParams.specificDir = value
         self.__setRunButtonProps()
+        return
+
+    def __onCloseChanged( self, state ):
+        " Triggered when the close terminal check box changed "
+        self.runParams.closeTerminal = state != 0
         return
 
     def __argumentsOK( self ):
