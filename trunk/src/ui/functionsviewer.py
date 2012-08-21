@@ -60,7 +60,7 @@ class FunctionsViewer( QWidget ):
                                 'Find occurences', self.__findWhereUsed )
         self.__menu.addSeparator()
         self.__disasmMenuItem = self.__menu.addAction( \
-                                PixmapCache().getIcon( '' ),
+                                PixmapCache().getIcon( 'disasmmenu.png' ),
                                 'Disassemble',
                                 self.__onDisassemble )
         self.__menu.addSeparator()
@@ -239,8 +239,7 @@ class FunctionsViewer( QWidget ):
         self.__findMenuItem.setEnabled( self.findButton.isEnabled() )
         self.__copyMenuItem.setEnabled( self.copyPathButton.isEnabled() )
 
-        canDisassemble = self.__contextItem.itemType == FunctionItemType and \
-                         self.__contextItem.parentItem.isRoot()
+        canDisassemble = self.__contextItem.canGetDisassembler()
         self.__disasmMenuItem.setEnabled( canDisassemble )
 
         self.__menu.popup( QCursor.pos() )

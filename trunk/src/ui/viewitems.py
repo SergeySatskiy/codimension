@@ -238,6 +238,30 @@ class TreeViewItem( object ):
             current = current.parentItem
         return name
 
+    def canGetDisassembler( self ):
+        " True if disassembler can be retrieved "
+
+        # The dis module has a limitation: it cannot disassembler anything
+        # nested to a function. It can however disassembler something nested in
+        # a class.
+        # Private class members cannot be disassebled as individual items
+        # either.
+        current = self
+        if current.itemType not in [ FunctionItemType, ClassItemType ]:
+            return False
+
+        if current.itemType == FunctionItemType:
+            if current.data( 0 ).startswith( "__" ):
+                if not current.parentItem.isRoot():
+                    return False
+
+        current = current.parentItem
+        while current is not None:
+            if current.itemType == FunctionItemType:
+                return False
+            current = current.parentItem
+        return True
+
     def getRowPath( self ):
         " Provides the row path "
         rowPath = []
