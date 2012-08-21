@@ -14,6 +14,8 @@
 * Bug fix: impossible to save non-modified file when it disappeared from disk
 * New feature: total number of matches is now shown in the search results
   header
+* New feature: disassember for functions and classes in the function/class
+  viewers
 
 
 2012 XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>

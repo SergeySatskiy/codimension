@@ -306,8 +306,9 @@ class ProfileTableViewer( QWidget ):
         self.__contextMenu.addMenu( self.__calleesMenu )
         self.__contextMenu.addMenu( self.__outsideCalleesMenu )
         self.__contextMenu.addSeparator()
-        self.__disasmAct = self.__contextMenu.addAction( "Disassemble",
-                                                         self.__onDisassemble )
+        self.__disasmAct = self.__contextMenu.addAction(
+                                    PixmapCache().getIcon( 'disasmmenu.png' ),
+                                    "Disassemble", self.__onDisassemble )
 
         self.connect( self.__callersMenu, SIGNAL( "triggered(QAction*)" ),
                       self.__onCallContextMenu )
