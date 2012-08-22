@@ -2115,7 +2115,7 @@ class CodimensionMainWindow( QMainWindow ):
 
         try:
             dlg = ProfilingProgressDialog( \
-                        GlobalData().project.getProjectScript() )
+                        GlobalData().project.getProjectScript(), self )
             dlg.exec_()
         except Exception, exc:
             logging.error( str( exc ) )

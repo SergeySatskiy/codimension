@@ -2346,7 +2346,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     def onProfileScript( self, action = False ):
         " Profiles the script "
         try:
-            ProfilingProgressDialog( self.getFileName() ).exec_()
+            ProfilingProgressDialog( self.getFileName(), self ).exec_()
         except Exception, exc:
             logging.error( str( exc ) )
         return
