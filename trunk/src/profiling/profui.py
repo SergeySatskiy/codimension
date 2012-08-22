@@ -226,7 +226,8 @@ class ProfilingProgressDialog( QDialog ):
         outputFile = GlobalData().getProfileOutputPath()
 
         reportTime = getLocaleDateTime()
-        widget = ProfileResultsWidget( self.__scriptName, params, reportTime, outputFile )
+        widget = ProfileResultsWidget( self.__scriptName, params, reportTime, outputFile,
+                                       self.parentWidget() )
         GlobalData().mainWindow.showProfileReport( widget,
                 "Profiling report for " + \
                 os.path.basename( self.__scriptName ) + \

@@ -30,7 +30,7 @@ import os.path
 from PyQt4.QtCore import Qt, SIGNAL, QStringList, QVariant
 from PyQt4.QtGui import QTreeWidgetItem, QTreeWidget, QColor, QBrush, QLabel, \
                         QWidget, QVBoxLayout, QFrame, QPalette, QHeaderView, \
-                        QMenu, QItemSelectionModel, QAbstractItemView
+                        QMenu, QItemSelectionModel, QAbstractItemView, QCursor
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.globals import GlobalData
 from utils.pixmapcache import PixmapCache
@@ -379,7 +379,7 @@ class ProfileTableViewer( QWidget ):
             self.__calleesMenu.setEnabled( not self.__calleesMenu.isEmpty() )
             self.__outsideCalleesMenu.setEnabled( not self.__outsideCalleesMenu.isEmpty() )
 
-        self.__contextMenu.popup( self.__table.mapToGlobal( point ) )
+        self.__contextMenu.popup( QCursor.pos() )
         return
 
     def __onDisassemble( self ):

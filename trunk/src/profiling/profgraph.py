@@ -23,13 +23,26 @@
 " Profiling results as a graph "
 
 from PyQt4.QtGui import QWidget
+from utils.misc import safeRun
 
 
 class ProfileGraphViewer( QWidget ):
     " Profiling results as a graph "
 
-    def __init__( self, parent = None ):
+    def __init__( self, dataFile, parent = None ):
         QWidget.__init__( self, parent )
+
+        self.__dataFile = dataFile
+        self.__getDiagramLayout()
         return
+
+    def __getDiagramLayout( self ):
+        " Runs external tools to get the diagram layout "
+
+        # First step is to run grpof2dot
+        dotSpec = safeRun( [ 'gprof2dot', '-f', 'pstats', self.__dataFile ] )
+        print dotSpec
+        return
+
 
 
