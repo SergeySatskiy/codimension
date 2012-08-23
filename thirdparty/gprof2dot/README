@@ -6,3 +6,6 @@ Patched:
   not really a big deal.
 - arrow size is set to 0.0. It allows receiving the full path for a connection
   and later add the arrow on the graphics scene.
+- changed the way how a function name is formed to make it consistent with a
+  table representation and the standard pstats output
+

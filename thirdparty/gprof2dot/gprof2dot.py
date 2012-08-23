@@ -2357,10 +2357,23 @@ class PstatsParser:
         self.profile = Profile()
         self.function_ids = {}
 
+    #def get_function_name(self, (filename, line, name)):
+    #    module = os.path.splitext(filename)[0]
+    #    module = os.path.basename(module)
+    #    return "%s:%d:%s" % (module, line, name)
+
     def get_function_name(self, (filename, line, name)):
-        module = os.path.splitext(filename)[0]
-        module = os.path.basename(module)
-        return "%s:%d:%s" % (module, line, name)
+        funcname = ""
+        if filename != "~":
+            funcname = os.path.basename( filename ) + ":"
+        if line != 0:
+            funcname += str( line ) + ":"
+        if filename == "~" and line == 0 and \
+           name.startswith( '<' ) and name.endswith( '>' ):
+            funcname += "{%s}" % name[ 1 : -1 ]
+        else:
+            funcname += name
+        return funcname
 
     def get_function(self, key):
         try:
