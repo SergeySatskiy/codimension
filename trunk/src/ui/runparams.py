@@ -385,7 +385,7 @@ class RunDialog( QDialog ):
 
         # Close checkbox
         self.__closeCheckBox = QCheckBox( "Close terminal upon " \
-                                          "successfull completion" )
+                                          "successful completion" )
         self.connect( self.__closeCheckBox, SIGNAL( "stateChanged(int)" ),
                       self.__onCloseChanged )
         layout.addWidget( self.__closeCheckBox )
