@@ -91,12 +91,13 @@ class FuncConnection( QGraphicsPathItem ):
         if index + 1 <= len( edge.points ):
             painterPath.lineTo(edge.points[index+1][0], edge.points[index+1][1])
 
-        lastIndex = len( edge.points ) - 1
-        self.addArrow( painterPath,
-                       edge.points[lastIndex-1][0],
-                       edge.points[lastIndex-1][1],
-                       edge.points[lastIndex][0],
-                       edge.points[lastIndex][1] )
+        if edge.head != edge.tail:
+            lastIndex = len( edge.points ) - 1
+            self.addArrow( painterPath,
+                           edge.points[lastIndex-1][0],
+                           edge.points[lastIndex-1][1],
+                           edge.points[lastIndex][0],
+                           edge.points[lastIndex][1] )
 
         self.setPath( painterPath )
         return
