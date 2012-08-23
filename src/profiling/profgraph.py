@@ -28,7 +28,7 @@ from PyQt4.QtGui import QWidget, QLabel, QFrame, QPalette, QVBoxLayout, \
                         QGraphicsScene, QGraphicsPathItem, QPainterPath, \
                         QPen, QColor, QPainter, QGraphicsTextItem, \
                         QFont, QFontMetrics, QStyleOptionGraphicsItem, \
-                        QStyle, QGraphicsItem
+                        QStyle, QGraphicsItem, QGraphicsRectItem
 from utils.misc import safeRun
 from diagram.plaindotparser import getGraphFromPlainDotData
 from diagram.importsdgmgraphics import ImportDgmWidget
@@ -135,6 +135,50 @@ class FuncConnection( QGraphicsPathItem ):
         return
 
 
+class Function( QGraphicsRectItem ):
+    " Rectangle for a function "
+
+    def __init__( self, node ):
+        QGraphicsRectItem.__init__( self )
+        self.__node = node
+
+        posX = node.posX - node.width / 2.0
+        posY = node.posY - node.height / 2.0
+        QGraphicsRectItem.__init__( self, posX, posY,
+                                    node.width, node.height )
+        pen = QPen( QColor( 10, 10, 10) )
+        pen.setWidth( 2 )
+        self.setPen( pen )
+
+        self.setBrush( QColor( 220, 255, 220 ) )
+        return
+
+    def paint( self, painter, option, widget ):
+        """ Draws a filled rectangle and then adds a title """
+
+        # Draw the rectangle
+        QGraphicsRectItem.paint( self, painter, option, widget )
+
+        # Draw text over the rectangle
+        font = QFont( "Arial", 10 )
+        painter.setFont( font )
+        painter.drawText( self.__node.posX - self.__node.width / 2.0,
+                          self.__node.posY - self.__node.height / 2.0,
+                          self.__node.width, self.__node.height,
+                          Qt.AlignCenter, self.__node.label )
+
+        #
+        #pixmap = PixmapCache().getPixmap( "systemmod.png" )
+        #pixmapPosX = self.__node.posX + self.__node.width / 2.0 - \
+        #             pixmap.width() / 2.0
+        #pixmapPosY = self.__node.posY - self.__node.height / 2.0 - \
+        #             pixmap.height() / 2.0
+        #painter.setRenderHint( QPainter.SmoothPixmapTransform )
+        #painter.drawPixmap( pixmapPosX, pixmapPosY, pixmap )
+
+        return
+
+
 class ProfileGraphViewer( QWidget ):
     " Profiling results as a graph "
 
@@ -217,7 +261,7 @@ class ProfileGraphViewer( QWidget ):
                 self.__scene.addItem( FuncConnectionLabel( edge ) )
 
         for node in graph.nodes:
-            pass
+            self.__scene.addItem( Function( node ) )
 
         return
 
