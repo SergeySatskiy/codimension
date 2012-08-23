@@ -46,7 +46,7 @@ class FuncConnectionLabel( QGraphicsTextItem ):
         self.setFont( font )
 
         metric = QFontMetrics( font )
-        rec = metric.boundingRect( 0, 0, 10000, 10000, Qt.AlignLeft, text )
+        rec = metric.boundingRect( 0, 0, 10000, 10000, Qt.AlignCenter, text )
 
         self.setPos( edge.labelX - rec.width() / 2,
                      edge.labelY - rec.height() / 2 )
@@ -146,26 +146,44 @@ class Function( QGraphicsRectItem ):
         posY = node.posY - node.height / 2.0
         QGraphicsRectItem.__init__( self, posX, posY,
                                     node.width, node.height )
+
+        self.setRectanglePen()
+
+        # node.color is like "#fe0400"
+        if node.color.startswith( "#" ):
+            color = QColor( int( node.color[ 1:3 ], 16 ),
+                            int( node.color[ 3:5 ], 16 ),
+                            int( node.color[ 5: ], 16 ) )
+        else:
+            color = QColor( 220, 255, 220 )
+        self.setBrush( color )
+        return
+
+    def setRectanglePen( self ):
         pen = QPen( QColor( 10, 10, 10) )
         pen.setWidth( 2 )
+        pen.setJoinStyle( Qt.RoundJoin )
         self.setPen( pen )
-
-        self.setBrush( QColor( 220, 255, 220 ) )
         return
 
     def paint( self, painter, option, widget ):
         """ Draws a filled rectangle and then adds a title """
 
         # Draw the rectangle
+        pen = painter.pen()
+        pen.setJoinStyle( Qt.RoundJoin )
+        painter.setPen( pen )
         QGraphicsRectItem.paint( self, painter, option, widget )
 
         # Draw text over the rectangle
         font = QFont( "Arial", 10 )
         painter.setFont( font )
+        painter.setPen( QPen( QColor( 255, 255, 255 ) ) )
         painter.drawText( self.__node.posX - self.__node.width / 2.0,
                           self.__node.posY - self.__node.height / 2.0,
                           self.__node.width, self.__node.height,
-                          Qt.AlignCenter, self.__node.label )
+                          Qt.AlignCenter,
+                          self.__node.label.replace( '\\n', '\n' ) )
 
         #
         #pixmap = PixmapCache().getPixmap( "systemmod.png" )
