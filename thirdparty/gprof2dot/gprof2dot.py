@@ -40,7 +40,7 @@ except ImportError:
 
 
 def times(x):
-    return u"%u\xd7" % (x,)
+    return "%dx" % (x,)
 
 def percentage(p):
     return "%.02f%%" % (p*100.0,)
@@ -2469,7 +2469,8 @@ class Theme:
         return max(weight*self.maxpenwidth, self.minpenwidth)
 
     def edge_arrowsize(self, weight):
-        return 0.5 * math.sqrt(self.edge_penwidth(weight))
+        return 0.0
+        # return 0.5 * math.sqrt(self.edge_penwidth(weight))
 
     def fontsize(self, weight):
         return max(weight**2 * self.maxfontsize, self.minfontsize)
@@ -2622,7 +2623,7 @@ class DotWriter:
                     label = event.format(function[event])
                     labels.append(label)
             if function.called is not None:
-                labels.append(u"%u\xd7" % (function.called,))
+                labels.append("%dx" % (function.called,))
 
             if function.weight is not None:
                 weight = function.weight
