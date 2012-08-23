@@ -154,7 +154,8 @@ class ProjectViewer( QWidget ):
         self.prjFindWhereUsedButton = QAction( \
                 PixmapCache().getIcon( 'findusage.png' ),
                 'Find where the highlighted item is used', self )
-        self.prjFindWhereUsedButton.setVisible( False )
+        self.connect( self.prjFindWhereUsedButton, SIGNAL( "triggered()" ),
+                      self.__findWhereUsed )
         self.prjFindInDirButton = QAction( \
                 PixmapCache().getIcon( 'findindir.png' ),
                 'Find in highlighted directory', self )
@@ -227,7 +228,11 @@ class ProjectViewer( QWidget ):
         self.prjPythonMenu = QMenu( self )
         self.prjUsageAct = self.prjPythonMenu.addAction( \
             PixmapCache().getIcon( 'findusage.png' ),
-            'Find where used', self.__findWhereUsed )
+            'Find occurences', self.__findWhereUsed )
+        self.prjPythonMenu.addSeparator()
+        self.__disasmMenuItem = self.prjPythonMenu.addAction( \
+            PixmapCache().getIcon( 'disasmmenu.png' ),
+            'Disassemble', self.__onDisassemble )
         self.prjPythonMenu.addSeparator()
         self.prjCopyAct = self.prjPythonMenu.addAction( \
             PixmapCache().getIcon( 'copytoclipboard.png' ),
@@ -736,6 +741,9 @@ class ProjectViewer( QWidget ):
         self.prjFilePymetricsAct.setEnabled( \
                 self.prjPymetricsButton.isEnabled() )
 
+        canDisassemble = self.__prjContextItem.canGetDisassembler()
+        self.__disasmMenuItem.setEnabled( canDisassemble )
+
         # Imports diagram menu
         enabled = False
         if self.__prjContextItem.itemType == DirectoryItemType:
@@ -783,7 +791,25 @@ class ProjectViewer( QWidget ):
 
     def __findWhereUsed( self ):
         " Triggers analysis where the highlighted item is used "
+        if self.__prjContextItem is not None:
+            GlobalData().mainWindow.findWhereUsed( \
+                            self.__prjContextItem.getPath(),
+                            self.__prjContextItem.sourceObj )
+        return
 
+    def __onDisassemble( self ):
+        " Triggers disassembling the selected project item "
+        if self.__prjContextItem is not None:
+            self.__onDisasm( self.__prjContextItem )
+        return
+
+    def __onDisasm( self, item ):
+        " Disassembles the required item "
+        if item.itemType not in [ FunctionItemType, ClassItemType ]:
+            return
+        path = item.getPath()
+        qualifiedName = item.getQualifiedName()
+        GlobalData().mainWindow.showDisassembler( path, qualifiedName )
         return
 
     def __createDir( self ):
