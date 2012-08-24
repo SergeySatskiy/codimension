@@ -142,6 +142,7 @@ class Function( QGraphicsRectItem ):
     def __init__( self, node ):
         QGraphicsRectItem.__init__( self )
         self.__node = node
+        self.__id = self.__extractID()
 
         posX = node.posX - node.width / 2.0
         posY = node.posY - node.height / 2.0
@@ -158,14 +159,30 @@ class Function( QGraphicsRectItem ):
         else:
             color = QColor( 220, 255, 220 )
         self.setBrush( color )
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def setRectanglePen( self ):
-        pen = QPen( QColor( 10, 10, 10) )
+        pen = QPen( QColor( 0, 0, 0) )
         pen.setWidth( 2 )
         pen.setJoinStyle( Qt.RoundJoin )
         self.setPen( pen )
         return
+
+    def __extractID( self ):
+        " Extracts the ID from the label "
+        parts = self.__node.label.split( "--" )
+        length = len( parts )
+        if length == 0:
+            return -1
+        try:
+            node_id = int( parts[ length - 1 ] )
+            self.__node.label = "--".join( parts[ :-1 ] )
+            return node_id
+        except:
+            return -1
 
     def paint( self, painter, option, widget ):
         """ Draws a filled rectangle and then adds a title """
@@ -196,6 +213,10 @@ class Function( QGraphicsRectItem ):
         #painter.drawPixmap( pixmapPosX, pixmapPosY, pixmap )
 
         return
+
+    def mouseDoubleClickEvent( self, event ):
+        " Open the clicked file if it could be opened "
+        print "ID: " + str( self.__id )
 
 
 class ProfileGraphViewer( QWidget ):
