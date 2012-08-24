@@ -2643,7 +2643,7 @@ class DotWriter:
             else:
                 weight = 0.0
 
-            label = '\n'.join(labels)
+            label = '\n'.join(labels) + "--" + str( function.id )
             self.node(function.id, 
                 label = label, 
                 color = self.color(theme.node_bgcolor(weight)), 
