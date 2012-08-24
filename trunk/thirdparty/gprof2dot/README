@@ -11,4 +11,5 @@ Patched:
 - adding the function id as a suffix to the label. This label will be stripped
   at the time of preparing a graph scheme and used to find the corresponding
   file name/line/type of module.
-
+- printing both actual number of calls and number of primitive calls if they
+  are no equal (pstats only)
