@@ -270,8 +270,8 @@ class CodimensionProject( QObject ):
         f.close()
 
         # Save brief cache
-        self.briefModinfoCache.serialize( self.userProjectDir + \
-                                          "briefinfocache" )
+        self.serializeModinfoCache()
+
         self.serializeRunParameters()
         self.__saveTopLevelDirs()
         self.__saveSearchHistory()
@@ -286,6 +286,12 @@ class CodimensionProject( QObject ):
     def serializeRunParameters( self ):
         " Saves the run parameters cache "
         self.runParamsCache.serialize( self.userProjectDir + "runparamscache" )
+        return
+
+    def serializeModinfoCache( self ):
+        " Saves the modules info cache "
+        self.briefModinfoCache.serialize( self.userProjectDir + \
+                                          "briefinfocache" )
         return
 
     def __saveTabsStatus( self ):
@@ -767,6 +773,8 @@ class CodimensionProject( QObject ):
 
     def unloadProject( self ):
         """ Unloads the current project if required """
+        if self.isLoaded():
+            self.serializeModinfoCache()
         self.__resetValues()
         self.emit( SIGNAL( 'projectChanged' ), self.CompleteProject )
         self.__ropeProject.close()

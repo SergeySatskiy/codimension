@@ -1645,6 +1645,7 @@ class CodimensionMainWindow( QMainWindow ):
         if editorsManager.getUnsavedCount() == 0:
             project = GlobalData().project
             if project.isLoaded():
+                project.serializeModinfoCache()
                 project.setTabsStatus( editorsManager.getTabsStatus() )
                 self.settings.tabsStatus = []
             else:
