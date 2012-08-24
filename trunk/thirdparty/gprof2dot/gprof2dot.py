@@ -184,7 +184,7 @@ class Function(Object):
         self.process = None
         self.calls = {}
         self.called = None
-        self.actual_called = None
+        self.primitive_called = None
         self.weight = None
         self.cycle = None
 
@@ -2392,11 +2392,11 @@ class PstatsParser:
     def parse(self):
         self.profile[TIME] = 0.0
         self.profile[TOTAL_TIME] = self.stats.total_tt
-        for fn, (actual_calls, primitive_calls,
+        for fn, (primitive_calls, actual_calls,
                  tt, ct, callers) in self.stats.stats.iteritems():
             callee = self.get_function(fn)
-            callee.called = primitive_calls
-            callee.actual_called = actual_calls
+            callee.called = actual_calls
+            callee.primitive_called = primitive_calls
             callee[TOTAL_TIME] = ct
             callee[TIME] = tt
             self.profile[TIME] += tt
@@ -2406,11 +2406,11 @@ class PstatsParser:
                 call = Call(callee.id)
                 if isinstance(value, tuple):
                     for i in xrange(0, len(value), 4):
-                        primitive_calls, actual_calls, tt, ct = value[i:i+4]
+                        actual_calls, primitive_calls, tt, ct = value[i:i+4]
                         if CALLS in call:
-                            call[CALLS] += actual_calls
+                            call[CALLS] += primitive_calls
                         else:
-                            call[CALLS] = actual_calls
+                            call[CALLS] = primitive_calls
 
                         if TOTAL_TIME in call:
                             call[TOTAL_TIME] += ct
@@ -2419,7 +2419,7 @@ class PstatsParser:
 
                 else:
                     call[CALLS] = value
-                    call[TOTAL_TIME] = ratio(value, primitive_calls)*ct
+                    call[TOTAL_TIME] = ratio(value, actual_calls)*ct
 
                 caller.add_call(call)
         #self.stats.print_stats()
@@ -2639,9 +2639,9 @@ class DotWriter:
                     label = event.format(function[event])
                     labels.append(label)
             if function.called is not None and \
-               function.actual_called is not None and \
-               function.called != function.actual_called:
-                labels.append("%d/%dx" % (function.actual_called, function.called,))
+               function.primitive_called is not None and \
+               function.called != function.primitive_called:
+                labels.append("%d/%dx" % (function.called, function.primitive_called))
             elif function.called is not None:
                 labels.append("%dx" % (function.called,))
 
