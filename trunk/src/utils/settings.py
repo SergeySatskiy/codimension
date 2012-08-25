@@ -66,6 +66,8 @@ _defaultNewerVerShown = False
 _defaultModifiedFormat = "%s *"
 _defaultTermType = TERM_AUTO
 _defaultEditorEdge = 80
+_defaultProfileNodeLimit = 1.0
+_defaultProfileEdgeLimit = 1.0
 
 # Editor settings available via the user interface
 _defaultVerticalEdge = True
@@ -208,6 +210,12 @@ class Settings( object ):
             self.terminalType = self.__getInt( config, 'general',
                                                'terminalType',
                                                _defaultTermType )
+            self.profileNodeLimit = self.__getFloat( config, 'general',
+                                                     'profileNodeLimit',
+                                                     _defaultProfileNodeLimit )
+            self.profileEdgeLimit = self.__getFloat( config, 'general',
+                                                     'profileEdgeLimit',
+                                                     _defaultProfileEdgeLimit )
             self.editorEdge = self.__getInt( config, 'general',
                                              'editorEdge', _defaultEditorEdge )
 
@@ -312,12 +320,22 @@ class Settings( object ):
             self.newerVerShown = _defaultNewerVerShown
             self.terminalType = _defaultTermType
             self.editorEdge = _defaultEditorEdge
+            self.profileNodeLimit = _defaultProfileNodeLimit
+            self.profileEdgeLimit = _defaultProfileEdgeLimit
             return
 
         def __getInt( self, conf, sec, key, default ):
             " Helper to read a config value "
             try:
                 return conf.getint( sec, key )
+            except:
+                self.formatOK = False
+            return default
+
+        def __getFloat( self, conf, sec, key, default ):
+            " Helper to read a config value "
+            try:
+                return conf.getfloat( sec, key )
             except:
                 self.formatOK = False
             return default
@@ -389,6 +407,8 @@ class Settings( object ):
                      "lastSuccessVerCheck=" + str( self.lastSuccessVerCheck ) + "\n" \
                      "newerVerShown=" + str( self.newerVerShown ) + "\n" \
                      "terminalType=" + str( self.terminalType ) + "\n" \
+                     "profileNodeLimit=" + str( self.profileNodeLimit ) + "\n" \
+                     "profileEdgeLimit=" + str( self.profileEdgeLimit ) + "\n" \
                      "editorEdge=" + str( self.editorEdge ) + "\n" \
                      "leftBarMinimized=" + \
                         str( int( self.leftBarMinimized ) ) + "\n" \
