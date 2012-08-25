@@ -2308,7 +2308,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         fileName = self.getFileName()
         params = GlobalData().getRunParameters( fileName )
         termType = Settings().terminalType
-        dlg = RunDialog( fileName, params, termType, "Run" )
+        dlg = RunDialog( fileName, params, termType, -1.0, -1.0, "Run" )
         if dlg.exec_() == QDialog.Accepted:
             GlobalData().addRunParams( fileName, dlg.runParams )
             if dlg.termType != termType:
@@ -2321,11 +2321,18 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         fileName = self.getFileName()
         params = GlobalData().getRunParameters( fileName )
         termType = Settings().terminalType
-        dlg = RunDialog( fileName, params, termType, "Profile" )
+        profileNodeLimit = Settings().profileNodeLimit
+        profileEdgeLimit = Settings().profileEdgeLimit
+        dlg = RunDialog( fileName, params, termType,
+                         profileNodeLimit, profileEdgeLimit, "Profile" )
         if dlg.exec_() == QDialog.Accepted:
             GlobalData().addRunParams( fileName, dlg.runParams )
             if dlg.termType != termType:
                 Settings().terminalType = dlg.termType
+            if dlg.nodeLimit != profileNodeLimit:
+                Settings().profileNodeLimit = dlg.nodeLimit
+            if dlg.edgeLimit != profileEdgeLimit:
+                Settings().profileEdgeLimit = dlg.profileEdgeLimit
             self.onProfileScript()
         return
 
@@ -2359,7 +2366,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         fileName = self.getFileName()
         params = GlobalData().getRunParameters( fileName )
         termType = Settings().terminalType
-        dlg = RunDialog( fileName, params, termType, "Debug" )
+        dlg = RunDialog( fileName, params, termType, -1.0, -1.0, "Debug" )
         if dlg.exec_() == QDialog.Accepted:
             GlobalData().addRunParams( fileName, dlg.runParams )
             if dlg.termType != termType:
