@@ -30,7 +30,7 @@ from PyQt4.QtGui    import QDialog, QDialogButtonBox, QVBoxLayout, \
                            QSizePolicy, QLabel, QGridLayout, QHBoxLayout, \
                            QRadioButton, QGroupBox, QPushButton, QFileDialog, \
                            QLineEdit, QTreeWidget, QAbstractItemView, \
-                           QTreeWidgetItem, QCheckBox
+                           QTreeWidgetItem, QCheckBox, QDoubleValidator
 from itemdelegates  import NoOutlineHeightDelegate
 from utils.run      import RunParameters, parseCommandLineArguments, \
                            TERM_AUTO, TERM_GNOME, TERM_KONSOLE, TERM_XTERM
@@ -116,12 +116,16 @@ class RunDialog( QDialog ):
     """ Run parameters dialog implementation """
 
     # See utils.run for runParameters
-    def __init__( self, path, runParameters, termType, action = "",
+    def __init__( self, path, runParameters, termType,
+                  nodeLimit, edgeLimit, action = "",
                   parent = None ):
         QDialog.__init__( self, parent )
 
         # Used as a return value
         self.termType = termType
+        self.nodeLimit = nodeLimit
+        self.edgeLimit = edgeLimit
+
         self.__action = action.lower()
 
         # Avoid pylint complains
@@ -191,6 +195,15 @@ class RunDialog( QDialog ):
 
         # Close checkbox
         self.__closeCheckBox.setChecked( self.runParams.closeTerminal )
+
+        # Profile limits if so
+        if self.__action == "profile":
+            if self.nodeLimit < 0.0 or self.nodeLimit > 100.0:
+                self.nodeLimit = 1.0
+            self.__nodeLimitEdit.setText( str( self.nodeLimit ) )
+            if self.edgeLimit < 0.0 or self.edgeLimit > 100.0:
+                self.edgeLimit = 1.0
+            self.__edgeLimitEdit.setText( str( self.edgeLimit ) )
 
         self.__setRunButtonProps()
         return
@@ -390,6 +403,32 @@ class RunDialog( QDialog ):
                       self.__onCloseChanged )
         layout.addWidget( self.__closeCheckBox )
 
+        # Profiling only
+        if self.__action == "profile":
+            limitsGroupbox = QGroupBox( self )
+            limitsGroupbox.setTitle( "Limits to what to show on diagram (IDE wide setting)" )
+            sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Preferred )
+            sizePolicy.setHorizontalStretch( 0 )
+            sizePolicy.setVerticalStretch( 0 )
+            sizePolicy.setHeightForWidth( \
+                    limitsGroupbox.sizePolicy().hasHeightForWidth() )
+            limitsGroupbox.setSizePolicy( sizePolicy )
+
+            layoutLimits = QGridLayout( limitsGroupbox )
+            self.__nodeLimitEdit = QLineEdit()
+            self.__nodeLimitValidator = QDoubleValidator( 0.0, 100.0, 2, self )
+            self.__nodeLimitValidator.setNotation( QDoubleValidator.StandardNotation )
+            self.__nodeLimitEdit.setValidator( self.__nodeLimitValidator )
+            nodeLimitLabel = QLabel( "Nodes below this percentage will be hidden" )
+            self.__edgeLimitEdit = QLineEdit()
+            self.__edgeLimitValidator = QDoubleValidator( 0.0, 100.0, 2, self )
+            self.__edgeLimitValidator.setNotation( QDoubleValidator.StandardNotation )
+            self.__edgeLimitEdit.setValidator( self.__edgeLimitValidator )
+            edgeLimitLabel = QLabel( "Edges below this percentage will be hidden" )
+            layoutLimits.addWidget( nodeLimitLabel, 0, 0 )
+            layoutLimits.addWidget( self.__nodeLimitEdit, 0, 1 )
+            layoutLimits.addWidget( edgeLimitLabel, 1, 0 )
+            layoutLimits.addWidget( self.__edgeLimitEdit, 1, 1 )
 
         # Buttons at the bottom
         buttonBox = QDialogButtonBox()
@@ -655,7 +694,7 @@ class RunDialog( QDialog ):
         return
 
     def onAccept( self ):
-        " Saves the selected terminal value "
+        " Saves the selected terminal and profiling values "
         if self.__autoRButton.isChecked():
             self.termType = TERM_AUTO
         elif self.__konsoleRButton.isChecked():
@@ -664,5 +703,10 @@ class RunDialog( QDialog ):
             self.termType = TERM_GNOME
         else:
             self.termType = TERM_XTERM
+
+        if self.__action == "profile":
+            self.nodeLimit = float( str( self.__nodeLimitEdit.text() ) )
+            self.edgeLimit = float( str( self.__edgeLimitEdit.text() ) )
+
         self.accept()
         return
