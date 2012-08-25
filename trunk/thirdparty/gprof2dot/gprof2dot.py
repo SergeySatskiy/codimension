@@ -119,6 +119,7 @@ class Event(object):
 
 
 CALLS = Event("Calls", 0, add, times)
+ACTUAL_CALLS = Event("ActualCalls", 0, add, times)
 SAMPLES = Event("Samples", 0, add)
 SAMPLES2 = Event("Samples", 0, add)
 
@@ -2411,6 +2412,10 @@ class PstatsParser:
                             call[CALLS] += primitive_calls
                         else:
                             call[CALLS] = primitive_calls
+                        if ACTUAL_CALLS in call:
+                            call[ACTUAL_CALLS] += actual_calls
+                        else:
+                            call[ACTUAL_CALLS] = actual_calls
 
                         if TOTAL_TIME in call:
                             call[TOTAL_TIME] += ct
@@ -2419,6 +2424,7 @@ class PstatsParser:
 
                 else:
                     call[CALLS] = value
+                    call[ACTUAL_CALLS] = value
                     call[TOTAL_TIME] = ratio(value, actual_calls)*ct
 
                 caller.add_call(call)
@@ -2676,13 +2682,13 @@ class DotWriter:
 
                 label = '\n'.join(labels)
 
-                self.edge(function.id, call.callee_id, 
-                    label = label, 
-                    color = self.color(theme.edge_color(weight)), 
+                self.edge(function.id, call.callee_id,
+                    label = label,
+                    color = self.color(theme.edge_color(weight)),
                     fontcolor = self.color(theme.edge_color(weight)),
-                    fontsize = "%.2f" % theme.edge_fontsize(weight), 
-                    penwidth = "%.2f" % theme.edge_penwidth(weight), 
-                    labeldistance = "%.2f" % theme.edge_penwidth(weight), 
+                    fontsize = "%.2f" % theme.edge_fontsize(weight),
+                    penwidth = "%.2f" % theme.edge_penwidth(weight),
+                    labeldistance = "%.2f" % theme.edge_penwidth(weight),
                     arrowsize = "%.2f" % theme.edge_arrowsize(weight),
                 )
 
