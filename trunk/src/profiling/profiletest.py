@@ -22,22 +22,19 @@
 
 " Profiler test "
 
-def test_f( bla ):
-    if bla > 55:
-        return bla + 1
-    if bla > 0:
-        bla += test_f( bla + 1)
-    else:
-        bla += 2
-    return bla
 
-def test_g( foo ):
-    if foo == 0:
-        while foo < 100:
-            foo = test_f( foo )
-    else:
-        print "Foo != 0"
-    return
 
-test_g( 0 )
 
+
+def f( bla ):
+    if bla == -1:
+        return -1
+    if bla >= 5:
+        return -1
+    return f( bla + 1 )
+
+def g( foo ):
+    f( foo )
+
+f( 0 )
+g( -1 )
