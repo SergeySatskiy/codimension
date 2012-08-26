@@ -193,21 +193,37 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
         " Triggered on the 'print preview' button "
         pass
 
+    def isZoomApplicable( self ):
+        " Should the zoom menu items be available "
+        return self.__profGraph.isVisible()
+
     def onZoomIn( self ):
         " Triggered on the 'zoom in' button "
-        self.__profGraph.zoomIn()
+        if self.__profGraph.isVisible():
+            self.__profGraph.zoomIn()
         return
 
     def onZoomOut( self ):
         " Triggered on the 'zoom out' button "
-        self.__profGraph.zoomOut()
+        if self.__profGraph.isVisible():
+            self.__profGraph.zoomOut()
         return
 
     def onZoomReset( self ):
         " Triggered on the 'zoom reset' button "
-        self.__profGraph.resetZoom()
+        if self.__profGraph.isVisible():
+            self.__profGraph.resetZoom()
         return
 
+    def isCopyAvailable( self ):
+        " Tells id the main menu copy item should be switched on "
+        return self.__profGraph.isVisible()
+
+    def onCopy( self ):
+        " Ctrl+C triggered "
+        if self.__profGraph.isVisible():
+            self.__profGraph.onCopy()
+        return
 
 
     # Mandatory interface part is below

@@ -476,7 +476,7 @@ class ImportDgmWidget( QGraphicsView ):
             event.accept()
         elif event.key() == Qt.Key_C and \
              event.modifiers() == Qt.ControlModifier:
-            self.parent().onCopy()
+            self.onCopy()
             event.accept()
         else:
             QGraphicsView.keyPressEvent( self, event )
@@ -513,6 +513,21 @@ class ImportDgmWidget( QGraphicsView ):
         factor = 1.41 ** ( -event.delta() / 240.0 )
         self.scale( factor, factor )
         return
+
+    def onCopy( self ):
+        " Copies the diagram to the exchange buffer "
+        scene = self.scene()
+        image = QImage( scene.width(), scene.height(),
+                        QImage.Format_ARGB32_Premultiplied )
+        painter = QPainter( image )
+        # If switched on then rectangles edges will not be sharp
+        # painter.setRenderHint( QPainter.Antialiasing )
+        scene.render( painter )
+        painter.end()
+
+        QApplication.clipboard().setImage( image )
+        return
+
 
 
 class ImportDgmTabWidget( QWidget, MainWindowTabWidgetBase ):
@@ -630,16 +645,7 @@ class ImportDgmTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def onCopy( self ):
         " Copies the diagram to the exchange buffer "
-        scene = self.__viewer.scene()
-        image = QImage( scene.width(), scene.height(),
-                        QImage.Format_ARGB32_Premultiplied )
-        painter = QPainter( image )
-        # If switched on then rectangles edges will not be sharp
-        # painter.setRenderHint( QPainter.Antialiasing )
-        scene.render( painter )
-        painter.end()
-
-        QApplication.clipboard().setImage( image )
+        self.__viewer.onCopy()
         return
 
 
