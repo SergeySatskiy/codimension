@@ -13,3 +13,6 @@ Patched:
   file name/line/type of module.
 - printing both actual number of calls and number of primitive calls if they
   are no equal (pstats only)
+- fixing what is shown on the recursive calls edges. Now recursive calls plus
+  non-recursive calls are equeal to what is shown in the function box (pstats
+  only)
