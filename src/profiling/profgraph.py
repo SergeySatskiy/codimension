@@ -359,4 +359,18 @@ class ProfileGraphViewer( QWidget ):
         self.emit( SIGNAL( 'ESCPressed' ) )
         return
 
+    def zoomIn( self ):
+        " Triggered on the 'zoom in' button "
+        self.__viewer.zoomIn()
+        return
+
+    def zoomOut( self ):
+        " Triggered on the 'zoom out' button "
+        self.__viewer.zoomOut()
+        return
+
+    def resetZoom( self ):
+        " Triggered on the 'zoom reset' button "
+        self.__viewer.resetZoom()
+        return
 
