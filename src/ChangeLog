@@ -16,6 +16,8 @@
   header
 * New feature: disassember for functions and classes in the function/class
   viewers
+* New feature: profiling support: representing the results as a graphics
+  diagram and as a table
 
 
 2012 XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
