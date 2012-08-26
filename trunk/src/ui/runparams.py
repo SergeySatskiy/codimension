@@ -146,6 +146,8 @@ class RunDialog( QDialog ):
         self.__delSpecButton = None
         self.__editSpecButton = None
         self.__runButton = None
+        self.__nodeLimitEdit = None
+        self.__edgeLimitEdit = None
 
         self.__createLayout( action )
         self.setWindowTitle( action + " parameters for " + path )
@@ -237,7 +239,7 @@ class RunDialog( QDialog ):
     def __createLayout( self, action ):
         """ Creates the dialog layout """
 
-        self.resize( 600, 300 )
+        self.resize( 650, 300 )
         self.setSizeGripEnabled( True )
 
         # Top level layout
@@ -371,9 +373,38 @@ class RunDialog( QDialog ):
         layoutEnv.addLayout( hSpecLayout )
         layout.addWidget( envGroupbox )
 
-        # Terminal
+        # Terminal and profile limits
+        if self.__action == "profile":
+            layout.addWidget( self.__getIDEWideGroupbox() )
+        else:
+            termGroupbox = self.__getTermGroupbox()
+            termGroupbox.setTitle( "Terminal to run in (IDE wide setting)" )
+            layout.addWidget( termGroupbox )
+
+        # Close checkbox
+        self.__closeCheckBox = QCheckBox( "Close terminal upon " \
+                                          "successful completion" )
+        self.connect( self.__closeCheckBox, SIGNAL( "stateChanged(int)" ),
+                      self.__onCloseChanged )
+        layout.addWidget( self.__closeCheckBox )
+
+        # Buttons at the bottom
+        buttonBox = QDialogButtonBox()
+        buttonBox.setOrientation( Qt.Horizontal )
+        buttonBox.setStandardButtons( QDialogButtonBox.Cancel )
+        self.__runButton = buttonBox.addButton( action,
+                                                QDialogButtonBox.ActionRole )
+        self.__runButton.setDefault( True )
+        self.connect( self.__runButton, SIGNAL( 'clicked()' ),
+                      self.onAccept )
+        layout.addWidget( buttonBox )
+
+        self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
+        return
+
+    def __getTermGroupbox( self ):
+        " Creates the term groupbox "
         termGroupbox = QGroupBox( self )
-        termGroupbox.setTitle( "Terminal to run in (IDE wide setting)" )
         sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Preferred )
         sizePolicy.setHorizontalStretch( 0 )
         sizePolicy.setVerticalStretch( 0 )
@@ -394,55 +425,63 @@ class RunDialog( QDialog ):
         self.__xtermRButton = QRadioButton( termGroupbox )
         self.__xtermRButton.setText( "xterm" )
         layoutTerm.addWidget( self.__xtermRButton )
-        layout.addWidget( termGroupbox )
+        return termGroupbox
 
-        # Close checkbox
-        self.__closeCheckBox = QCheckBox( "Close terminal upon " \
-                                          "successful completion" )
-        self.connect( self.__closeCheckBox, SIGNAL( "stateChanged(int)" ),
-                      self.__onCloseChanged )
-        layout.addWidget( self.__closeCheckBox )
+    def __getIDEWideGroupbox( self ):
+        " Creates the IDE wide groupbox "
+        ideGroupbox = QGroupBox( self )
+        ideGroupbox.setTitle( "IDE Wide Settings" )
+        sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Preferred )
+        sizePolicy.setHorizontalStretch( 0 )
+        sizePolicy.setVerticalStretch( 0 )
+        sizePolicy.setHeightForWidth( \
+                        ideGroupbox.sizePolicy().hasHeightForWidth() )
+        ideGroupbox.setSizePolicy( sizePolicy )
 
-        # Profiling only
-        if self.__action == "profile":
-            limitsGroupbox = QGroupBox( self )
-            limitsGroupbox.setTitle( "Limits to what to show on diagram (IDE wide setting)" )
-            sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Preferred )
-            sizePolicy.setHorizontalStretch( 0 )
-            sizePolicy.setVerticalStretch( 0 )
-            sizePolicy.setHeightForWidth( \
-                    limitsGroupbox.sizePolicy().hasHeightForWidth() )
-            limitsGroupbox.setSizePolicy( sizePolicy )
+        layoutIDE = QHBoxLayout( ideGroupbox )
 
-            layoutLimits = QGridLayout( limitsGroupbox )
-            self.__nodeLimitEdit = QLineEdit()
-            self.__nodeLimitValidator = QDoubleValidator( 0.0, 100.0, 2, self )
-            self.__nodeLimitValidator.setNotation( QDoubleValidator.StandardNotation )
-            self.__nodeLimitEdit.setValidator( self.__nodeLimitValidator )
-            nodeLimitLabel = QLabel( "Nodes below this percentage will be hidden" )
-            self.__edgeLimitEdit = QLineEdit()
-            self.__edgeLimitValidator = QDoubleValidator( 0.0, 100.0, 2, self )
-            self.__edgeLimitValidator.setNotation( QDoubleValidator.StandardNotation )
-            self.__edgeLimitEdit.setValidator( self.__edgeLimitValidator )
-            edgeLimitLabel = QLabel( "Edges below this percentage will be hidden" )
-            layoutLimits.addWidget( nodeLimitLabel, 0, 0 )
-            layoutLimits.addWidget( self.__nodeLimitEdit, 0, 1 )
-            layoutLimits.addWidget( edgeLimitLabel, 1, 0 )
-            layoutLimits.addWidget( self.__edgeLimitEdit, 1, 1 )
+        termGroupbox = self.__getTermGroupbox()
+        termGroupbox.setTitle( "Terminal to run in" )
+        layoutIDE.addWidget( termGroupbox )
 
-        # Buttons at the bottom
-        buttonBox = QDialogButtonBox()
-        buttonBox.setOrientation( Qt.Horizontal )
-        buttonBox.setStandardButtons( QDialogButtonBox.Cancel )
-        self.__runButton = buttonBox.addButton( action,
-                                                QDialogButtonBox.ActionRole )
-        self.__runButton.setDefault( True )
-        self.connect( self.__runButton, SIGNAL( 'clicked()' ),
-                      self.onAccept )
-        layout.addWidget( buttonBox )
+        limitsGroupbox = self.__getProfileLimitsGroupbox()
+        layoutIDE.addWidget( limitsGroupbox )
+        return ideGroupbox
 
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
-        return
+    def __getProfileLimitsGroupbox( self ):
+        " Creates the profile limits groupbox "
+        limitsGroupbox = QGroupBox( self )
+        limitsGroupbox.setTitle( "Profiler diagram limits" )
+        sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Preferred )
+        sizePolicy.setHorizontalStretch( 0 )
+        sizePolicy.setVerticalStretch( 0 )
+        sizePolicy.setHeightForWidth( \
+                limitsGroupbox.sizePolicy().hasHeightForWidth() )
+        limitsGroupbox.setSizePolicy( sizePolicy )
+
+        layoutLimits = QGridLayout( limitsGroupbox )
+        self.__nodeLimitEdit = QLineEdit()
+        self.connect( self.__nodeLimitEdit, SIGNAL( "textEdited(const QString &)" ),
+                      self.__setRunButtonProps )
+        self.__nodeLimitValidator = QDoubleValidator( 0.0, 100.0, 2, self )
+        self.__nodeLimitValidator.setNotation( QDoubleValidator.StandardNotation )
+        self.__nodeLimitEdit.setValidator( self.__nodeLimitValidator )
+        nodeLimitLabel = QLabel( "Hide nodes below" )
+        self.__edgeLimitEdit = QLineEdit()
+        self.connect( self.__edgeLimitEdit, SIGNAL( "textEdited(const QString &)" ),
+                      self.__setRunButtonProps )
+        self.__edgeLimitValidator = QDoubleValidator( 0.0, 100.0, 2, self )
+        self.__edgeLimitValidator.setNotation( QDoubleValidator.StandardNotation )
+        self.__edgeLimitEdit.setValidator( self.__edgeLimitValidator )
+        edgeLimitLabel = QLabel( "Hide edges below" )
+        layoutLimits.addWidget( nodeLimitLabel, 0, 0 )
+        layoutLimits.addWidget( self.__nodeLimitEdit, 0, 1 )
+        layoutLimits.addWidget( QLabel( "%" ), 0, 2 )
+        layoutLimits.addWidget( edgeLimitLabel, 1, 0 )
+        layoutLimits.addWidget( self.__edgeLimitEdit, 1, 1 )
+        layoutLimits.addWidget( QLabel( "%" ), 1, 2 )
+        return limitsGroupbox
+
 
     @staticmethod
     def __tuneTable( table ):
@@ -517,7 +556,7 @@ class RunDialog( QDialog ):
             return True
         return os.path.isdir( str( self.__dirEdit.text() ) )
 
-    def __setRunButtonProps( self ):
+    def __setRunButtonProps( self, newText = None ):
         " Enable/disable run button and set its tooltip "
         if not self.__argumentsOK():
             self.__runButton.setEnabled( False )
@@ -529,6 +568,30 @@ class RunDialog( QDialog ):
             self.__runButton.setToolTip( "The given working " \
                                          "dir is not found" )
             return
+
+        if self.__nodeLimitEdit is not None:
+            txt = str( self.__nodeLimitEdit.text() ).strip()
+            try:
+                value = float( txt )
+                if value < 0.0 or value > 100.0:
+                    raise Exception( "Out of range" )
+            except:
+                self.__runButton.setEnabled( False )
+                self.__runButton.setToolTip( "The given node limit " \
+                                             "is out of range" )
+                return
+
+        if self.__edgeLimitEdit is not None:
+            txt = str( self.__edgeLimitEdit.text() ).strip()
+            try:
+                value = float( txt )
+                if value < 0.0 or value > 100.0:
+                    raise Exception( "Out of range" )
+            except:
+                self.__runButton.setEnabled( False )
+                self.__runButton.setToolTip( "The given edge limit " \
+                                             "is out of range" )
+                return
 
         self.__runButton.setEnabled( True )
         self.__runButton.setToolTip( "Save parameters and " + \
