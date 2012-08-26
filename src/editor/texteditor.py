@@ -2332,7 +2332,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             if dlg.nodeLimit != profileNodeLimit:
                 Settings().profileNodeLimit = dlg.nodeLimit
             if dlg.edgeLimit != profileEdgeLimit:
-                Settings().profileEdgeLimit = dlg.profileEdgeLimit
+                Settings().profileEdgeLimit = dlg.edgeLimit
             self.onProfileScript()
         return
 
