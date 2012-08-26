@@ -180,6 +180,7 @@ class Function(Object):
     def __init__(self, id, name):
         Object.__init__(self)
         self.id = id
+        self.index = None
         self.name = name
         self.module = None
         self.process = None
@@ -2377,7 +2378,7 @@ class PstatsParser:
             funcname += name
         return funcname
 
-    def get_function(self, key):
+    def get_function(self, key, index = None):
         try:
             id = self.function_ids[key]
         except KeyError:
@@ -2388,14 +2389,19 @@ class PstatsParser:
             self.function_ids[key] = id
         else:
             function = self.profile.functions[id]
+
+        if index is not None:
+            function.index = index
         return function
 
     def parse(self):
         self.profile[TIME] = 0.0
         self.profile[TOTAL_TIME] = self.stats.total_tt
+        index = 0
         for fn, (primitive_calls, actual_calls,
                  tt, ct, callers) in self.stats.stats.iteritems():
-            callee = self.get_function(fn)
+            callee = self.get_function(fn, index)
+            index += 1
             callee.called = actual_calls
             callee.primitive_called = primitive_calls
             callee[TOTAL_TIME] = ct
@@ -2656,7 +2662,9 @@ class DotWriter:
             else:
                 weight = 0.0
 
-            label = '\n'.join(labels) + "--" + str( function.id )
+            label = '\n'.join(labels)
+            if function.index is not None:
+                label += "--" + str( function.index )
             self.node(function.id,
                 label = label,
                 color = self.color(theme.node_bgcolor(weight)),
