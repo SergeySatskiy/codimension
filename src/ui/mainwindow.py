@@ -2535,6 +2535,14 @@ class CodimensionMainWindow( QMainWindow ):
             return False
         return currentWidget.getType() == MainWindowTabWidgetBase.GeneratedDiagram
 
+    def __isProfileViewer( self ):
+        " True if this is a profile viewer "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        if currentWidget is None:
+            return False
+        return currentWidget.getType() == MainWindowTabWidgetBase.ProfileViewer
+
     def __onTabImportDgm( self ):
         " Triggered when tab imports diagram is requested "
         editorsManager = self.editorsManagerWidget.editorsManager
@@ -3023,8 +3031,13 @@ class CodimensionMainWindow( QMainWindow ):
         isPlainTextBuffer = self.__isPlainTextBuffer()
         isGraphicsBuffer = self.__isGraphicsBuffer()
         isGeneratedDiagram = self.__isGeneratedDiagram()
+        isProfileViewer = self.__isProfileViewer()
         zoomEnabled = isPlainTextBuffer or isGraphicsBuffer or \
                       isGeneratedDiagram
+        if zoomEnabled == False and isProfileViewer:
+            editorsManager = self.editorsManagerWidget.editorsManager
+            currentWidget = editorsManager.currentWidget()
+            zoomEnabled = currentWidget.isZoomApplicable()
         self.__zoomInAct.setEnabled( zoomEnabled )
         self.__zoomOutAct.setEnabled( zoomEnabled )
         self.__zoom11Act.setEnabled( zoomEnabled )

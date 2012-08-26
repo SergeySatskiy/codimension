@@ -1916,7 +1916,8 @@ class EditorsManager( QTabWidget ):
         widget = self.currentWidget()
         if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
                                  MainWindowTabWidgetBase.PictureViewer,
-                                 MainWindowTabWidgetBase.GeneratedDiagram ]:
+                                 MainWindowTabWidgetBase.GeneratedDiagram,
+                                 MainWindowTabWidgetBase.ProfileViewer ]:
             widget.onZoomIn()
         return
 
@@ -1925,7 +1926,8 @@ class EditorsManager( QTabWidget ):
         widget = self.currentWidget()
         if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
                                  MainWindowTabWidgetBase.PictureViewer,
-                                 MainWindowTabWidgetBase.GeneratedDiagram ]:
+                                 MainWindowTabWidgetBase.GeneratedDiagram,
+                                 MainWindowTabWidgetBase.ProfileViewer ]:
             widget.onZoomOut()
         return
 
@@ -1934,33 +1936,39 @@ class EditorsManager( QTabWidget ):
         widget = self.currentWidget()
         if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
                                  MainWindowTabWidgetBase.PictureViewer,
-                                 MainWindowTabWidgetBase.GeneratedDiagram ]:
+                                 MainWindowTabWidgetBase.GeneratedDiagram,
+                                 MainWindowTabWidgetBase.ProfileViewer ]:
             widget.onZoomReset()
         return
 
     def isCopyAvailable( self ):
         " Checks if Ctrl+C works for the current widget "
         widget = self.currentWidget()
-        if widget.getType() == MainWindowTabWidgetBase.PlainTextEditor:
+        widgetType = widget.getType()
+        if widgetType == MainWindowTabWidgetBase.PlainTextEditor:
             return True
-        if widget.getType() == MainWindowTabWidgetBase.HTMLViewer:
+        if widgetType == MainWindowTabWidgetBase.HTMLViewer:
             return widget.getViewer().selectedText() != ""
-        if widget.getType() == MainWindowTabWidgetBase.GeneratedDiagram:
+        if widgetType == MainWindowTabWidgetBase.GeneratedDiagram:
             return True
+        if widgetType == MainWindowTabWidgetBase.ProfileViewer:
+            return widget.isCopyAvailable()
         return False
 
     def onCopy( self ):
         " Called when Ctrl+C is selected via main menu "
         widget = self.currentWidget()
-        if widget.getType() == MainWindowTabWidgetBase.PlainTextEditor:
+        widgetType = widget.getType()
+        if widgetType == MainWindowTabWidgetBase.PlainTextEditor:
             widget.getEditor().onCtrlC()
             return
-        if widget.getType() == MainWindowTabWidgetBase.HTMLViewer:
+        if widgetType == MainWindowTabWidgetBase.HTMLViewer:
             text = widget.getViewer().selectedText()
             if text != "":
                 QApplication.clipboard().setText( text )
             return
-        if widget.getType() == MainWindowTabWidgetBase.GeneratedDiagram:
+        if widgetType in [ MainWindowTabWidgetBase.GeneratedDiagram,
+                           MainWindowTabWidgetBase.ProfileViewer ]:
             widget.onCopy()
             return
         return
