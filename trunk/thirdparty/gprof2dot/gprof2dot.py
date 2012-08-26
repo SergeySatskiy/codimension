@@ -119,7 +119,6 @@ class Event(object):
 
 
 CALLS = Event("Calls", 0, add, times)
-ACTUAL_CALLS = Event("ActualCalls", 0, add, times)
 SAMPLES = Event("Samples", 0, add)
 SAMPLES2 = Event("Samples", 0, add)
 
@@ -2360,11 +2359,6 @@ class PstatsParser:
         self.profile = Profile()
         self.function_ids = {}
 
-    #def get_function_name(self, (filename, line, name)):
-    #    module = os.path.splitext(filename)[0]
-    #    module = os.path.basename(module)
-    #    return "%s:%d:%s" % (module, line, name)
-
     def get_function_name(self, (filename, line, name)):
         funcname = ""
         if filename != "~":
@@ -2415,22 +2409,23 @@ class PstatsParser:
                     for i in xrange(0, len(value), 4):
                         actual_calls, primitive_calls, tt, ct = value[i:i+4]
                         if CALLS in call:
-                            call[CALLS] += primitive_calls
+                            if callee.id != caller.id:
+                                call[CALLS] += primitive_calls
+                            else:
+                                # Recursive
+                                call[CALLS] += actual_calls
                         else:
-                            call[CALLS] = primitive_calls
-                        if ACTUAL_CALLS in call:
-                            call[ACTUAL_CALLS] += actual_calls
-                        else:
-                            call[ACTUAL_CALLS] = actual_calls
-
+                            if callee.id != caller.id:
+                                call[CALLS] = primitive_calls
+                            else:
+                                # Recursive
+                                call[CALLS] = actual_calls
                         if TOTAL_TIME in call:
                             call[TOTAL_TIME] += ct
                         else:
                             call[TOTAL_TIME] = ct
-
                 else:
                     call[CALLS] = value
-                    call[ACTUAL_CALLS] = value
                     call[TOTAL_TIME] = ratio(value, actual_calls)*ct
 
                 caller.add_call(call)
