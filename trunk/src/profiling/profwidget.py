@@ -22,6 +22,7 @@
 
 " Profiling results widget "
 
+import pstats
 from proftable import ProfileTableViewer
 from profgraph import ProfileGraphViewer
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
@@ -39,8 +40,15 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
         MainWindowTabWidgetBase.__init__( self )
         QWidget.__init__( self, parent )
 
-        self.__profTable = ProfileTableViewer( scriptName, params, reportTime, dataFile, self )
-        self.__profGraph = ProfileGraphViewer( scriptName, params, reportTime, dataFile, self )
+        # The same stats object is needed for both - a table and a graph
+        # So, parse profile output once and then pass the object further
+        stats = pstats.Stats( dataFile )
+        stats.calc_callees()
+
+        self.__profTable = ProfileTableViewer( scriptName, params, reportTime,
+                                               dataFile, stats, self )
+        self.__profGraph = ProfileGraphViewer( scriptName, params, reportTime,
+                                               dataFile, stats, self )
         self.__profTable.hide()
 
         self.connect( self.__profTable, SIGNAL( 'ESCPressed' ),

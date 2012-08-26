@@ -23,7 +23,6 @@
 " Profiling results as a table "
 
 
-import pstats
 import logging
 import os.path
 
@@ -201,7 +200,8 @@ class ProfilerTreeWidget( QTreeWidget ):
 class ProfileTableViewer( QWidget ):
     " Profiling results table viewer "
 
-    def __init__( self, scriptName, params, reportTime, dataFile, parent = None ):
+    def __init__( self, scriptName, params, reportTime,
+                        dataFile, stats, parent = None ):
         QWidget.__init__( self, parent )
 
         self.__table = ProfilerTreeWidget( self )
@@ -209,6 +209,7 @@ class ProfileTableViewer( QWidget ):
                       self.__onEsc )
 
         self.__script = scriptName
+        self.__stats = stats
         project = GlobalData().project
         if project.isLoaded():
             self.__projectPrefix = os.path.dirname( project.fileName )
@@ -252,10 +253,6 @@ class ProfileTableViewer( QWidget ):
 
         self.connect( self.__table, SIGNAL( "itemActivated(QTreeWidgetItem *, int)" ),
                       self.__activated )
-
-        # Parse the collected info
-        self.__stats = pstats.Stats( dataFile )
-        self.__stats.calc_callees()
 
         totalCalls = self.__stats.total_calls
         totalPrimitiveCalls = self.__stats.prim_calls  # The calls were not induced via recursion
@@ -525,7 +522,7 @@ class ProfileTableViewer( QWidget ):
         " Populates the data "
 
         for func, ( primitiveCalls, actualCalls, totalTime,
-                    cumulativeTime, callers) in self.__stats.stats.items():
+                    cumulativeTime, callers ) in self.__stats.stats.items():
 
             # Calc time per call
             if actualCalls == 0:

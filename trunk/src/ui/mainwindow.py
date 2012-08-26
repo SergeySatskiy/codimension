@@ -1113,7 +1113,7 @@ class CodimensionMainWindow( QMainWindow ):
         runProjectMenu = QMenu( self )
         runProjectAct = runProjectMenu.addAction( \
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
-                                'Set run/debug parameters' )
+                                'Set run parameters' )
         self.connect( runProjectAct, SIGNAL( 'triggered()' ),
                       self.__onRunProjectSettings )
         self.runProjectButton = QToolButton( self )
@@ -1130,7 +1130,7 @@ class CodimensionMainWindow( QMainWindow ):
         profileProjectMenu = QMenu( self )
         profileProjectAct = profileProjectMenu.addAction( \
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
-                                'Set run/debug parameters' )
+                                'Set profile parameters' )
         self.connect( profileProjectAct, SIGNAL( 'triggered()' ),
                       self.__onProfileProjectSettings )
         self.profileProjectButton = QToolButton( self )
@@ -1148,7 +1148,7 @@ class CodimensionMainWindow( QMainWindow ):
         debugProjectMenu = QMenu( self )
         debugProjectAct = debugProjectMenu.addAction( \
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
-                                'Set run/debug parameters' )
+                                'Set debug parameters' )
         self.connect( debugProjectAct, SIGNAL( 'triggered()' ),
                       self.__onDebugProjectSettings )
         self.debugProjectButton = QToolButton( self )
@@ -2079,7 +2079,7 @@ class CodimensionMainWindow( QMainWindow ):
             if dlg.nodeLimit != profileNodeLimit:
                 Settings().profileNodeLimit = dlg.nodeLimit
             if dlg.edgeLimit != profileEdgeLimit:
-                Settings().profileEdgeLimit = dlg.profileEdgeLimit
+                Settings().profileEdgeLimit = dlg.edgeLimit
             self.__onProfileProject()
         return
 

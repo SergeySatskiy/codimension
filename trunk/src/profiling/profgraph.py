@@ -22,7 +22,7 @@
 
 " Profiling results as a graph "
 
-import sys, os, pstats, math
+import sys, os, os.path, math
 from PyQt4.QtCore import Qt, SIGNAL, QPointF
 from PyQt4.QtGui import QWidget, QLabel, QFrame, QPalette, QVBoxLayout, \
                         QGraphicsScene, QGraphicsPathItem, QPainterPath, \
@@ -30,6 +30,9 @@ from PyQt4.QtGui import QWidget, QLabel, QFrame, QPalette, QVBoxLayout, \
                         QFont, QFontMetrics, QStyleOptionGraphicsItem, \
                         QStyle, QGraphicsItem, QGraphicsRectItem
 from utils.misc import safeRun
+from utils.settings import Settings
+from utils.globals import GlobalData
+from utils.pixmapcache import PixmapCache
 from diagram.plaindotparser import getGraphFromPlainDotData
 from diagram.importsdgmgraphics import ImportDgmWidget
 from proftable import FLOAT_FORMAT
@@ -139,10 +142,12 @@ class FuncConnection( QGraphicsPathItem ):
 class Function( QGraphicsRectItem ):
     " Rectangle for a function "
 
-    def __init__( self, node ):
+    def __init__( self, node, fileName, lineNumber, outside ):
         QGraphicsRectItem.__init__( self )
         self.__node = node
-        self.__id = self.__extractID()
+        self.__fileName = fileName
+        self.__lineNumber = lineNumber
+        self.__outside = outside
 
         posX = node.posX - node.width / 2.0
         posY = node.posY - node.height / 2.0
@@ -160,8 +165,10 @@ class Function( QGraphicsRectItem ):
             color = QColor( 220, 255, 220 )
         self.setBrush( color )
 
-        # To make double click delivered
-        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
+        # To make item selectable
+        self.setFlag( QGraphicsItem.ItemIsSelectable,
+                      os.path.isabs( self.__fileName ) and \
+                      self.__lineNumber > 0 )
         return
 
     def setRectanglePen( self ):
@@ -170,19 +177,6 @@ class Function( QGraphicsRectItem ):
         pen.setJoinStyle( Qt.RoundJoin )
         self.setPen( pen )
         return
-
-    def __extractID( self ):
-        " Extracts the ID from the label "
-        parts = self.__node.label.split( "--" )
-        length = len( parts )
-        if length == 0:
-            return -1
-        try:
-            node_id = int( parts[ length - 1 ] )
-            self.__node.label = "--".join( parts[ :-1 ] )
-            return node_id
-        except:
-            return -1
 
     def paint( self, painter, option, widget ):
         """ Draws a filled rectangle and then adds a title """
@@ -203,32 +197,63 @@ class Function( QGraphicsRectItem ):
                           Qt.AlignCenter,
                           self.__node.label.replace( '\\n', '\n' ) )
 
-        #
-        #pixmap = PixmapCache().getPixmap( "systemmod.png" )
-        #pixmapPosX = self.__node.posX + self.__node.width / 2.0 - \
-        #             pixmap.width() / 2.0
-        #pixmapPosY = self.__node.posY - self.__node.height / 2.0 - \
-        #             pixmap.height() / 2.0
-        #painter.setRenderHint( QPainter.SmoothPixmapTransform )
-        #painter.drawPixmap( pixmapPosX, pixmapPosY, pixmap )
-
+        if self.__outside:
+            pixmap = PixmapCache().getPixmap( "nonprojectentrydgm.png" )
+            pixmapPosX = self.__node.posX - self.__node.width / 2.0 + 2
+            pixmapPosY = self.__node.posY + self.__node.height / 2.0 - \
+                         pixmap.height() - 2
+            painter.setRenderHint( QPainter.SmoothPixmapTransform )
+            painter.drawPixmap( pixmapPosX, pixmapPosY, pixmap )
         return
 
     def mouseDoubleClickEvent( self, event ):
         " Open the clicked file if it could be opened "
-        print "ID: " + str( self.__id )
+        if self.__lineNumber == 0:
+            return
+        if not os.path.isabs( self.__fileName ):
+            return
+
+        GlobalData().mainWindow.openFile( self.__fileName,
+                                          self.__lineNumber )
+        return
+
+
+# The node label has attached nodeID to it as follows:
+# <label>--id
+def extractNodeID( label ):
+    " Extracts the ID from the label "
+    parts = label.split( "--" )
+    length = len( parts )
+    if length == 1:
+        return -1, label
+    try:
+        node_id = int( parts[ length - 1 ] )
+        return node_id, "--".join( parts[ :-1 ] )
+    except:
+        return -1, label
+
 
 
 class ProfileGraphViewer( QWidget ):
     " Profiling results as a graph "
 
-    def __init__( self, scriptName, params, reportTime, dataFile, parent = None ):
+    def __init__( self, scriptName, params, reportTime,
+                        dataFile, stats, parent = None ):
         QWidget.__init__( self, parent )
 
         self.__dataFile = dataFile
         self.__script = scriptName
         self.__reportTime = reportTime
         self.__params = params
+        self.__stats = stats
+
+        project = GlobalData().project
+        if project.isLoaded():
+            self.__projectPrefix = os.path.dirname( project.fileName )
+        else:
+            self.__projectPrefix = os.path.dirname( scriptName )
+        if not self.__projectPrefix.endswith( os.path.sep ):
+            self.__projectPrefix += os.path.sep
 
         self.__createLayout()
         self.__getDiagramLayout()
@@ -241,9 +266,12 @@ class ProfileGraphViewer( QWidget ):
         self.__viewer.setFocus()
         return
 
+    def __isOutsideItem( self, fileName ):
+        " Detects if the record should be shown as an outside one "
+        return not fileName.startswith( self.__projectPrefix )
+
     def __createLayout( self ):
         " Creates the widget layout "
-        self.__stats = pstats.Stats( self.__dataFile )
         totalCalls = self.__stats.total_calls
         totalPrimitiveCalls = self.__stats.prim_calls  # The calls were not induced via recursion
         totalTime = self.__stats.total_tt
@@ -280,12 +308,22 @@ class ProfileGraphViewer( QWidget ):
     def __getDiagramLayout( self ):
         " Runs external tools to get the diagram layout "
 
+        # Preparation: build a map of func ID -> fileName + line
+        funcMap = {}
+        index = 0
+        for func, props in self.__stats.stats.items():
+            funcMap[ index ] = ( func[ 0 ], func[ 1 ] )
+            index += 1
+
         # First step is to run grpof2dot
         gprof2dot = os.path.dirname( sys.argv[ 0 ] ) + os.path.sep + \
                     "thirdparty" + os.path.sep + "gprof2dot" + \
                     os.path.sep + "gprof2dot.py"
         outputFile = self.__dataFile + ".dot"
-        dotSpec = safeRun( [ gprof2dot, '-n', '0.0', '-e', '0.0',
+        nodeLimit = Settings().profileNodeLimit
+        edgeLimit = Settings().profileEdgeLimit
+        dotSpec = safeRun( [ gprof2dot, '-n', str( nodeLimit ),
+                             '-e', str( edgeLimit ),
                              '-f', 'pstats', '-o', outputFile,
                              self.__dataFile ] )
         graphDescr = safeRun( [ "dot", "-Tplain", outputFile ] )
@@ -301,7 +339,18 @@ class ProfileGraphViewer( QWidget ):
                 self.__scene.addItem( FuncConnectionLabel( edge ) )
 
         for node in graph.nodes:
-            self.__scene.addItem( Function( node ) )
+            fileName = ""
+            lineNumber = 0
+            isOutside = True
+            nodeID, newLabel = extractNodeID( node.label )
+            if nodeID != -1:
+                node.label = newLabel
+
+                # Now, detect the file name/line number and
+                # if it belongs to the project
+                ( fileName, lineNumber ) = funcMap[ nodeID ]
+            self.__scene.addItem( Function( node, fileName, lineNumber,
+                                            self.__isOutsideItem( fileName ) ) )
 
         return
 
