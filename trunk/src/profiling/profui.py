@@ -109,6 +109,7 @@ class ProfilingProgressDialog( QDialog ):
         buttonBox = QDialogButtonBox( self )
         buttonBox.setOrientation( Qt.Horizontal )
         buttonBox.setStandardButtons( QDialogButtonBox.Cancel )
+        self.__cancelButton = buttonBox.button( QDialogButtonBox.Cancel )
         verticalLayout.addWidget( buttonBox )
 
         self.connect( buttonBox, SIGNAL( "rejected()" ), self.__onClose )
@@ -222,6 +223,8 @@ class ProfilingProgressDialog( QDialog ):
 
         # Now, the results are just fine. Collect and present them.
         self.infoLabel.setText( "Done. Collecting the results..." )
+        self.__cancelButton.setEnabled( False )
+        QApplication.processEvents()
 
         outputFile = GlobalData().getProfileOutputPath()
 
