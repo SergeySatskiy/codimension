@@ -484,6 +484,7 @@ class ImportDgmWidget( QGraphicsView ):
 
     def setScene( self, scene ):
         " Sets the scene to display "
+        scene.setBackgroundBrush( GlobalData().skin.nolexerPaper )
         QGraphicsView.setScene( self, scene )
         return
 
