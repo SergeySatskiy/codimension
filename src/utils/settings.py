@@ -204,6 +204,8 @@ class Settings( object ):
             self.newerVerShown = self.__getBool( config, 'general',
                                                  'newerVerShown',
                                                  _defaultNewerVerShown )
+            self.showFSViewer = self.__getBool( config, 'general',
+                                                'showFSViewer', True )
             self.modifiedFormat = self.__getStr( config, 'general',
                                                  'modifiedFormat',
                                                  _defaultModifiedFormat )
@@ -318,6 +320,7 @@ class Settings( object ):
             self.projectLoaded = _defaultProjectLoaded
             self.lastSuccessVerCheck = _defaultLastSuccessVerCheck
             self.newerVerShown = _defaultNewerVerShown
+            self.showFSViewer = True
             self.terminalType = _defaultTermType
             self.editorEdge = _defaultEditorEdge
             self.profileNodeLimit = _defaultProfileNodeLimit
@@ -406,6 +409,7 @@ class Settings( object ):
                      "removeTrailingOnSave=" + str( self.removeTrailingOnSave ) + "\n" \
                      "lastSuccessVerCheck=" + str( self.lastSuccessVerCheck ) + "\n" \
                      "newerVerShown=" + str( self.newerVerShown ) + "\n" \
+                     "showFSViewer=" + str( self.showFSViewer ) + "\n" \
                      "terminalType=" + str( self.terminalType ) + "\n" \
                      "profileNodeLimit=" + str( self.profileNodeLimit ) + "\n" \
                      "profileEdgeLimit=" + str( self.profileEdgeLimit ) + "\n" \
