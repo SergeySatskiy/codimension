@@ -425,38 +425,13 @@ def main():
                 exclude_headers, show_hunk_infos)
 
 
-def parse_from_memory(txt,
-                      exclude_headers, show_hunk_infos):
+def parse_from_memory(txt, exclude_headers, show_hunk_infos):
     " Parses diff from memory and returns a string with html "
-    class InputFileLikeDummy:
-        " Imitates file input for a string "
-        def __init__(self, txt):
-            self.__index = 0
-            self.__lines = txt.splitlines(True)
-            self.__lastIndex = len( self.__lines ) - 1
-            return
-        def readline(self):
-            " Imitates readline behavior "
-            if self.__index > self.__lastIndex:
-                return ""
-            self.__index += 1
-            return self.__lines[self.__index - 1]
+    input_stream = StringIO.StringIO(txt)
+    output_stream = StringIO.StringIO()
+    parse_input(input_stream, output_stream, exclude_headers, show_hunk_infos)
+    return output_stream.getvalue()
 
-    class OutputFileLikeDummy:
-        " Imitates an output file "
-        def __init__(self):
-            self.buf = ""
-            return
-        def write(self, what):
-            " Writes into an internal buffer "
-            self.buf += what
-            return
-
-    inputStream = InputFileLikeDummy(txt)
-    outputStream = OutputFileLikeDummy()
-    parse_input(inputStream, outputStream,
-                exclude_headers, show_hunk_infos)
-    return outputStream.buf
 
 if __name__ == "__main__":
     main()
