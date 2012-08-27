@@ -33,6 +33,7 @@ from PyQt4.QtGui        import QWidget, QVBoxLayout, \
                                QMessageBox, QPalette
 from utils.pixmapcache  import PixmapCache
 from utils.globals      import GlobalData
+from utils.settings     import Settings
 from projectproperties  import ProjectPropertiesDialog
 from utils.project      import CodimensionProject
 from filesystembrowser  import FileSystemBrowser
@@ -93,6 +94,10 @@ class ProjectViewer( QWidget ):
                       self.projectTreeView.onDebugMode )
         self.connect( parent, SIGNAL( 'debugModeChanged' ),
                       self.filesystemView.onDebugMode )
+
+        # At the beginning the FS viewer is shown, so hide it if needed
+        if Settings().showFSViewer == False:
+            self.__onShowHide()
         return
 
 
@@ -1149,6 +1154,8 @@ class ProjectViewer( QWidget ):
 
             self.lower.setMinimumHeight( self.headerFrame.height() )
             self.lower.setMaximumHeight( self.headerFrame.height() )
+
+            Settings().showFSViewer = False
         else:
             self.filesystemView.setVisible( True )
             self.lowerToolbar.setVisible( True )
@@ -1157,5 +1164,7 @@ class ProjectViewer( QWidget ):
 
             self.lower.setMinimumHeight( self.__minH )
             self.lower.setMaximumHeight( self.__maxH )
+
+            Settings().showFSViewer = True
         return
 
