@@ -97,9 +97,8 @@ class ProjectViewer( QWidget ):
 
         # At the beginning the FS viewer is shown, so hide it if needed
         if Settings().showFSViewer == False:
-            self.__onShowHide()
+            self.__onShowHide( True )
         return
-
 
     def __createProjectPartLayout( self ):
         """ Creates the upper part of the project viewer """
@@ -1141,9 +1140,9 @@ class ProjectViewer( QWidget ):
         self.__updateFSToolbarButtons()
         return
 
-    def __onShowHide( self ):
+    def __onShowHide( self, startup = False ):
         " Triggered when show/hide button is clicked "
-        if self.filesystemView.isVisible():
+        if startup or self.filesystemView.isVisible():
             self.filesystemView.setVisible( False )
             self.lowerToolbar.setVisible( False )
             self.__showHideButton.setIcon( PixmapCache().getIcon( 'more.png' ) )
