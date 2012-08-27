@@ -86,7 +86,7 @@ class EnvVarDialog( QDialog ):
         gridLayout.addWidget( self.__valueEdit, 1, 1 )
         layout.addLayout( gridLayout )
 
-        buttonBox = QDialogButtonBox()
+        buttonBox = QDialogButtonBox( self )
         buttonBox.setOrientation( Qt.Horizontal )
         buttonBox.setStandardButtons( QDialogButtonBox.Ok |
                                       QDialogButtonBox.Cancel )
@@ -389,11 +389,11 @@ class RunDialog( QDialog ):
         layout.addWidget( self.__closeCheckBox )
 
         # Buttons at the bottom
-        buttonBox = QDialogButtonBox()
+        buttonBox = QDialogButtonBox( self )
         buttonBox.setOrientation( Qt.Horizontal )
         buttonBox.setStandardButtons( QDialogButtonBox.Cancel )
         self.__runButton = buttonBox.addButton( action,
-                                                QDialogButtonBox.ActionRole )
+                                                QDialogButtonBox.AcceptRole )
         self.__runButton.setDefault( True )
         self.connect( self.__runButton, SIGNAL( 'clicked()' ),
                       self.onAccept )
