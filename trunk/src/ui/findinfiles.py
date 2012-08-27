@@ -413,7 +413,7 @@ class FindInFilesDialog( QDialog, object ):
         buttonBox.setOrientation( Qt.Horizontal )
         buttonBox.setStandardButtons( QDialogButtonBox.Cancel )
         self.findButton = buttonBox.addButton( "Find",
-                                               QDialogButtonBox.ActionRole )
+                                               QDialogButtonBox.AcceptRole )
         self.findButton.setDefault( True )
         self.connect( self.findButton, SIGNAL( 'clicked()' ),
                       self.__process )
