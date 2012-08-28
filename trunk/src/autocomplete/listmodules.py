@@ -12,6 +12,8 @@
 " Routines to get a list of modules; sys and for a dir "
 
 import imp, sys, os, re
+from os.path import join, isfile, basename, splitext, realpath, isdir, sep
+from os import listdir, getcwd
 
 # known test packages
 TEST_PACKAGES = "test.", "bsddb.test.", "distutils.tests."
@@ -66,14 +68,14 @@ def getModules( path ):
     oldStderr = sys.stderr
     sys.stderr = DevNull()
     modules = {}
-    for fName in os.listdir( path ):
-        fName = os.path.join( path, fName )
-        if os.path.isfile( fName ):
-            modName, e = os.path.splitext( fName )
+    for fName in listdir( path ):
+        fName = join( path, fName )
+        if isfile( fName ):
+            modName, e = splitext( fName )
             suffix = __getSuffix( fName )
             if not suffix:
                 continue
-            modName = os.path.basename( modName )
+            modName = basename( modName )
             if modName == "__init__":
                 continue
             if __regexpr.match( modName ):
@@ -87,28 +89,28 @@ def getModules( path ):
                         continue
                 if not __isTestModule( modName ):
                     if not fName.endswith( ".pyc" ):
-                        modules[ modName ] = os.path.realpath( fName )
-        elif os.path.isdir( fName ):
-            modName = os.path.basename( fName )
-            if os.path.isfile( os.path.join( fName, "__init__.py" ) ) or \
-               os.path.isfile( os.path.join( fName, "__init__.py3" ) ):
+                        modules[ modName ] = realpath( fName )
+        elif isdir( fName ):
+            modName = basename( fName )
+            if isfile( join( fName, "__init__.py" ) ) or \
+               isfile( join( fName, "__init__.py3" ) ):
                 if not __isTestModule( modName ):
-                    modules[ modName ] = os.path.realpath( fName )
+                    modules[ modName ] = realpath( fName )
                 for subMod, fName in getModules( fName ).items():
                     candidate = modName + "." + subMod
                     if not __isTestModule( candidate ):
-                        modules[ candidate ] = os.path.realpath( fName )
+                        modules[ candidate ] = realpath( fName )
     sys.stderr = oldStderr
     return modules
 
 def __getSysPathExceptCurrent():
     " Provides a list of paths for system modules "
 
-    path = map( os.path.realpath, map( os.path.abspath, sys.path[ : ] ) )
+    path = map( realpath, map( os.path.abspath, sys.path[ : ] ) )
 
-    def __filterCallback( path, cwd = os.path.realpath( os.getcwd() ) ):
+    def __filterCallback( path, cwd = realpath( getcwd() ) ):
         " get rid of non-existent directories and the current directory "
-        return os.path.isdir( path ) and path != cwd
+        return isdir( path ) and path != cwd
 
     return filter( __filterCallback, path )
 
