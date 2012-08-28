@@ -236,7 +236,7 @@ class ProjectViewer( QWidget ):
         self.prjPythonMenu.addSeparator()
         self.__disasmMenuItem = self.prjPythonMenu.addAction( \
             PixmapCache().getIcon( 'disasmmenu.png' ),
-            'Disassemble', self.__onDisassemble )
+            'Disassemble', self.__onPrjDisassemble )
         self.prjPythonMenu.addSeparator()
         self.prjCopyAct = self.prjPythonMenu.addAction( \
             PixmapCache().getIcon( 'copytoclipboard.png' ),
@@ -426,7 +426,7 @@ class ProjectViewer( QWidget ):
         self.fsFileMenu = QMenu( self )
         self.fsFileCopyPathAct = self.fsFileMenu.addAction( \
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
-                'Copy Path to Clipboard', self.filesystemView.copyToClipboard )
+                'Copy path to clipboard', self.filesystemView.copyToClipboard )
         self.fsFileShowErrorsAct = self.fsFileMenu.addAction( \
                 PixmapCache().getIcon( 'showparsingerrors.png' ),
                 'Show lexer/parser errors', self.showFsParserError )
@@ -461,6 +461,20 @@ class ProjectViewer( QWidget ):
         self.fsBrokenLinkMenu.addAction( \
                 PixmapCache().getIcon( 'trash.png' ),
                 'Remove broken link from the disk', self.__removeFs )
+
+        # popup menu for python files content
+        self.fsPythonMenu = QMenu( self )
+        self.fsUsageAct = self.fsPythonMenu.addAction( \
+            PixmapCache().getIcon( 'findusage.png' ),
+            'Find occurences', self.__fsFindWhereUsed )
+        self.fsPythonMenu.addSeparator()
+        self.fsDisasmMenuItem = self.fsPythonMenu.addAction( \
+            PixmapCache().getIcon( 'disasmmenu.png' ),
+            'Disassemble', self.__onFSDisassemble )
+        self.fsPythonMenu.addSeparator()
+        self.fsCopyAct = self.fsPythonMenu.addAction( \
+            PixmapCache().getIcon( 'copytoclipboard.png' ),
+            'Copy path to clipboard', self.filesystemView.copyToClipboard )
         return
 
     @staticmethod
@@ -666,6 +680,8 @@ class ProjectViewer( QWidget ):
         # Update the menu items status
         self.fsFileCopyPathAct.setEnabled( \
                 self.fsCopyToClipboardButton.isEnabled() )
+        self.fsCopyAct.setEnabled( \
+                self.fsCopyToClipboardButton.isEnabled() )
         self.fsFileShowErrorsAct.setEnabled( \
                 self.fsShowParsingErrorsButton.isEnabled() )
 
@@ -677,6 +693,18 @@ class ProjectViewer( QWidget ):
                 self.fsFindInDirButton.isEnabled() )
         self.fsDirCopyPathAct.setEnabled( \
                 self.fsCopyToClipboardButton.isEnabled() )
+
+        canDisassemble = self.__fsContextItem.canGetDisassembler()
+        self.fsDisasmMenuItem.setEnabled( canDisassemble )
+
+        # Add more conditions
+        self.fsUsageAct.setEnabled( \
+                self.__fsContextItem.itemType in [ FunctionItemType,
+                                                   ClassItemType,
+                                                   AttributeItemType,
+                                                   GlobalItemType ] and \
+                GlobalData().project.isProjectFile( \
+                        self.__fsContextItem.getPath() ) )
 
         if self.__fsContextItem.itemType == FileItemType:
             if self.__fsContextItem.isLink:
@@ -695,6 +723,14 @@ class ProjectViewer( QWidget ):
             self.fsDirRemoveAct.setEnabled( \
                     self.__canDeleteDir( self.__fsContextItem.getPath() ) )
             self.fsDirMenu.popup( QCursor.pos() )
+        elif self.__fsContextItem.itemType in [ CodingItemType, ImportItemType,
+                                                FunctionItemType,
+                                                ClassItemType,
+                                                DecoratorItemType,
+                                                AttributeItemType,
+                                                GlobalItemType,
+                                                ImportWhatItemType ]:
+            self.fsPythonMenu.popup( QCursor.pos() )
         return
 
     def __prjContextMenuRequested( self, coord ):
@@ -801,10 +837,24 @@ class ProjectViewer( QWidget ):
                             self.__prjContextItem.sourceObj )
         return
 
-    def __onDisassemble( self ):
+    def __fsFindWhereUsed( self ):
+        " Triggers analysis where the FS highlighted item is used "
+        if self.__fsContextItem is not None:
+            GlobalData().mainWindow.findWhereUsed( \
+                            self.__fsContextItem.getPath(),
+                            self.__fsContextItem.sourceObj )
+        return
+
+    def __onPrjDisassemble( self ):
         " Triggers disassembling the selected project item "
         if self.__prjContextItem is not None:
             self.__onDisasm( self.__prjContextItem )
+        return
+
+    def __onFSDisassemble( self ):
+        " Triggers disassembling the selected FS item "
+        if self.__fsContextItem is not None:
+            self.__onDisasm( self.__fsContextItem )
         return
 
     def __onDisasm( self, item ):
