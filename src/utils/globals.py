@@ -165,7 +165,7 @@ class GlobalData( object ):
         def getFileLineDocstring( self, fName, line ):
             " Provides a docstring if so for the given file and line "
             if not ( fName.endswith( '.py' ) or fName.endswith( '.py3' ) ):
-                return
+                return ""
 
             if self.project.isLoaded():
                 infoCache = self.project.briefModinfoCache
