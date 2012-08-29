@@ -474,28 +474,23 @@ class RecentProjectsViewer( QWidget ):
     def __projectSelectionChanged( self ):
         " Handles the projects changed selection "
         selected = list( self.projectsView.selectedItems() )
-        if len( selected ) > 1:
-            raise Exception( "Internal error. Only one recent project must " \
-                             "be selectable. Please contact developers." )
 
-        if len( selected ) == 0:
-            self.__projectContextItem = None
-        else:
+        if selected:
             self.__projectContextItem = selected[ 0 ]
+        else:
+            self.__projectContextItem = None
+
         self.__updateProjectToolbarButtons()
         return
 
     def __fileSelectionChanged( self ):
         " Handles the files changed selection "
         selected = list( self.recentFilesView.selectedItems() )
-        if len( selected ) > 1:
-            raise Exception( "Internal error. Only one recent file must " \
-                             "be selectable. Please contact developers." )
 
-        if len( selected ) == 0:
-            self.__fileContextItem = None
-        else:
+        if selected:
             self.__fileContextItem = selected[ 0 ]
+        else:
+            self.__fileContextItem = None
         self.__updateFileToolbarButtons()
         return
 
