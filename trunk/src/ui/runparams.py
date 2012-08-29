@@ -216,7 +216,7 @@ class RunDialog( QDialog ):
         for key, value in dictionary.iteritems():
             item = QTreeWidgetItem( QStringList() << key << value )
             table.addTopLevelItem( item )
-        if len( dictionary ) > 0:
+        if dictionary:
             table.setCurrentItem( table.topLevelItem( 0 ) )
         return
 
@@ -622,9 +622,12 @@ class RunDialog( QDialog ):
         self.__setEnabledSpecificEnv( False )
         self.runParams.envType = RunParameters.InheritParentEnvPlus
 
-        isOn = len( self.__inhPlusEnvTable.selectedIndexes() ) > 0
-        self.__delInhButton.setEnabled( isOn )
-        self.__editInhButton.setEnabled( isOn )
+        if self.__inhPlusEnvTable.selectedIndexes():
+            self.__delInhButton.setEnabled( True )
+            self.__editInhButton.setEnabled( True )
+        else:
+            self.__delInhButton.setEnabled( False )
+            self.__editInhButton.setEnabled( False )
         return
 
     def __specClicked( self ):
@@ -633,9 +636,12 @@ class RunDialog( QDialog ):
         self.__setEnabledSpecificEnv( True )
         self.runParams.envType = RunParameters.SpecificEnvironment
 
-        isOn = len( self.__specEnvTable.selectedIndexes() ) > 0
-        self.__delSpecButton.setEnabled( isOn )
-        self.__editSpecButton.setEnabled( isOn )
+        if self.__specEnvTable.selectedIndexes():
+            self.__delSpecButton.setEnabled( True )
+            self.__editSpecButton.setEnabled( True )
+        else:
+            self.__delSpecButton.setEnabled( False )
+            self.__editSpecButton.setEnabled( False )
         return
 
     @staticmethod
