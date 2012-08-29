@@ -88,7 +88,7 @@ class Watcher( QObject ):
         topDirsList = set()
         for path in srcDirs:
             parts = path.split( os.path.sep )
-            for index in range( 1, len( parts ) - 1 ):
+            for index in xrange( 1, len( parts ) - 1 ):
                 candidate = os.path.sep.join( parts[ 0:index ] ) + os.path.sep
                 if os.path.exists( candidate ):
                     if os.access( candidate, os.R_OK ):
@@ -174,7 +174,7 @@ class Watcher( QObject ):
             #   watcher. This list includes both top level and project level
             # - deregister dirs from the watcher
             # - emit a signal of what disappeared
-            if len( diff ) == 0:
+            if not diff:
                 return  # no changes
 
             self.__fsTopLevelSnapshot[ path ] = newSet
@@ -187,31 +187,31 @@ class Watcher( QObject ):
                                             itemsToReport )
 
             # Here: it is possible that the last dir to watch disappeared
-            if len( newSet ) == 0:
+            if not newSet:
                 # There is nothing to watch here anymore
                 dirsToBeRemoved << path
                 del self.__fsTopLevelSnapshot[ path ]
 
                 parts = path[ 1:-1 ].split( os.path.sep )
-#                for index in range( len( parts ) - 2, -1, -1 ):
-                for index in range( len( parts ) - 2, 0, -1 ):
+#                for index in xrange( len( parts ) - 2, -1, -1 ):
+                for index in xrange( len( parts ) - 2, 0, -1 ):
                     candidate = os.path.sep + \
                                 os.path.sep.join( parts[ 0 : index ] ) + \
                                 os.path.sep
                     dirSet = self.__fsTopLevelSnapshot[ candidate ]
                     dirSet.remove( parts[ index + 1 ] + os.path.sep )
-                    if len( dirSet ) == 0:
+                    if not dirSet:
                         dirsToBeRemoved << candidate
                         del self.__fsTopLevelSnapshot[ candidate ]
                         continue
                     break   # it is not the last item in the set
 
             # Update the watcher
-            if len( dirsToBeRemoved ) != 0:
+            if dirsToBeRemoved:
                 self.__dirWatcher.removePaths( dirsToBeRemoved )
 
             # Report
-            if len( itemsToReport ) > 0:
+            if itemsToReport:
                 self.emit( SIGNAL( 'fsCahanged' ), itemsToReport )
             return
         except:
@@ -237,7 +237,7 @@ class Watcher( QObject ):
             deletedItems = oldSet - newSet
             addedItems = newSet - oldSet
 
-            if len( deletedItems ) == 0 and len( addedItems ) == 0:
+            if not deletedItems and not addedItems:
                 return  # No changes
 
             # Update the changed dir set
@@ -271,9 +271,9 @@ class Watcher( QObject ):
                     itemsToReport << "-" + path + item
 
             # Update the watcher
-            if len( dirsToBeRemoved ) != 0:
+            if dirsToBeRemoved:
                 self.__dirWatcher.removePaths( dirsToBeRemoved )
-            if len( dirsToBeAdded ) != 0:
+            if dirsToBeAdded:
                 self.__dirWatcher.addPaths( dirsToBeAdded )
 
             # Report
@@ -413,14 +413,14 @@ class Watcher( QObject ):
         self.__topLevelDirsToWatch = newTopLevelDirsToWatch
 
         # Update the watcher
-        if len( dirsToWatch ) != 0:
+        if dirsToWatch:
             dirs = QStringList()
             for item in dirsToWatch:
                 dirs << item
             self.__dirWatcher.addPaths( dirs )
 
         # Report the changes
-        if len( itemsToReport ) > 0:
+        if itemsToReport:
             self.emit( SIGNAL( 'fsCahanged' ), itemsToReport )
 
         # self.debug()
@@ -493,11 +493,11 @@ class Watcher( QObject ):
         self.__topLevelDirsToWatch = newTopLevelDirsToWatch
 
         # Update the watcher
-        if len( dirsToBeRemoved ) != 0:
+        if dirsToBeRemoved:
             self.__dirWatcher.removePaths( dirsToBeRemoved )
 
         # Report the changes
-        if len( itemsToReport ) > 0:
+        if itemsToReport:
             self.emit( SIGNAL( 'fsCahanged' ), itemsToReport )
 
         # self.debug()
