@@ -22,11 +22,8 @@
 
 " Profiler test "
 
-
-
-
-
 def f( bla ):
+    " F function docstring "
     if bla == -1:
         return -1
     if bla >= 5:
@@ -34,7 +31,14 @@ def f( bla ):
     return f( bla + 1 )
 
 def g( foo ):
+    " g function doc "
     f( foo )
 
 f( 0 )
 g( -1 )
+
+class A:
+    def f():
+        pass
+
+
