@@ -70,6 +70,13 @@ class ProfilingTableItem( QTreeWidgetItem ):
                           PixmapCache().getIcon( 'empty.png' ) )
             self.setToolTip( OUTSIDE_COL_INDEX, '' )
 
+            fileName = self.getFileName()
+            if fileName != "":
+                self.setToolTip( NAME_COL_INDEX,
+                                 GlobalData().getFileLineDocstring( fileName,
+                                    self.getLineNumber() ) )
+
+
         # Sets the location/name columns
         self.updateLocation( False )
         self.setText( NAME_COL_INDEX, self.getFunctionName() )
