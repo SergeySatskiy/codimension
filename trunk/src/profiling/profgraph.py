@@ -169,6 +169,11 @@ class Function( QGraphicsRectItem ):
         self.setFlag( QGraphicsItem.ItemIsSelectable,
                       os.path.isabs( self.__fileName ) and \
                       self.__lineNumber > 0 )
+
+        # Set tooltip as a function docstring
+        if fileName != "" and lineNumber != 0:
+            self.setToolTip( \
+                    GlobalData().getFileLineDocstring( fileName, lineNumber ) )
         return
 
     def setRectanglePen( self ):
