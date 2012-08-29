@@ -12,7 +12,7 @@
 " Routines to get a list of modules; sys and for a dir "
 
 import imp, sys, os, re
-from os.path import join, isfile, basename, splitext, realpath, isdir, sep
+from os.path import isfile, basename, splitext, realpath, isdir, sep
 from os import listdir, getcwd
 
 # known test packages
@@ -60,16 +60,19 @@ def __isTestModule( modName ):
             return True
     return False
 
+
 __regexpr = re.compile("(?i)[a-z_]\w*$")
 
 def getModules( path ):
-    " Provides modules in a given directory "
+    """ Provides modules in a given directory.
+        It expects absolute real path. Otherwise it is not guaranteed it
+        works all right. """
 
     oldStderr = sys.stderr
     sys.stderr = DevNull()
     modules = {}
     for fName in listdir( path ):
-        fName = join( path, fName )
+        fName = path + sep + fName
         if isfile( fName ):
             modName, e = splitext( fName )
             suffix = __getSuffix( fName )
@@ -92,8 +95,8 @@ def getModules( path ):
                         modules[ modName ] = realpath( fName )
         elif isdir( fName ):
             modName = basename( fName )
-            if isfile( join( fName, "__init__.py" ) ) or \
-               isfile( join( fName, "__init__.py3" ) ):
+            if isfile( fName + sep + "__init__.py" ) or \
+               isfile( fName + sep + "__init__.py3" ):
                 if not __isTestModule( modName ):
                     modules[ modName ] = realpath( fName )
                 for subMod, fName in getModules( fName ).items():
