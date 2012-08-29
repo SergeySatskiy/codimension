@@ -328,7 +328,7 @@ class FileOutlineViewer( QWidget ):
         browser = self.__outlineBrowsers[ self.__currentUUID ].browser
         fName = self.__outlineBrowsers[ self.__currentUUID ].shortFileName
 
-        if len( info.lexerErrors ) > 0:
+        if info.lexerErrors:
             title = Settings().modifiedFormat % fName
             browser.model().sourceModel().updateRootData( 0, title )
             return
