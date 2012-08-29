@@ -175,7 +175,9 @@ class GlobalData( object ):
             def checkFuncObject( obj, line ):
                 " Checks docstring for a function or a class "
                 if obj.line == line or obj.keywordLine == line:
-                    return True, obj.docstring
+                    if obj.docstring is None:
+                        return True, ""
+                    return True, obj.docstring.text
                 for item in obj.classes + obj.functions:
                     found, docstring = checkFuncObject( item, line )
                     if found:
