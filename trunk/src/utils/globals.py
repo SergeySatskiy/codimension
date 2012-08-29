@@ -162,6 +162,36 @@ class GlobalData( object ):
                 return False
             return True
 
+        def getFileLineDocstring( self, fName, line ):
+            " Provides a docstring if so for the given file and line "
+            if not ( fName.endswith( '.py' ) or fName.endswith( '.py3' ) ):
+                return
+
+            if self.project.isLoaded():
+                infoCache = self.project.briefModinfoCache
+            else:
+                infoCache = self.briefModinfoCache
+
+            def checkFuncObject( obj, line ):
+                " Checks docstring for a function or a class "
+                if obj.line == line or obj.keywordLine == line:
+                    return True, obj.docstring
+                for item in obj.classes + obj.functions:
+                    found, docstring = checkFuncObject( item, line )
+                    if found:
+                        return True, docstring
+                return False, ""
+
+            try:
+                info = infoCache.get( fName )
+                for item in info.classes + info.functions:
+                    found, docstring = checkFuncObject( item, line )
+                    if found:
+                        return docstring
+            except:
+                pass
+            return ""
+
         @staticmethod
         def __checkFile():
             " Checks if the file utility available "
