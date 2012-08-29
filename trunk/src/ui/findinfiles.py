@@ -41,6 +41,7 @@ from utils.fileutils             import detectFileType, PixmapFileType, \
                                         BrokenSymlinkFileType
 from mainwindowtabwidgetbase     import MainWindowTabWidgetBase
 from cdmbriefparser              import getBriefModuleInfoFromMemory
+from autocomplete.listmodules    import resolveLink
 
 
 
@@ -529,7 +530,7 @@ class FindInFilesDialog( QDialog, object ):
         " Sets up the filters "
 
         # Set filters if provided
-        if len( filters ) > 0:
+        if filters:
             self.filterCombo.setEditText( ";".join( filters ) )
         else:
             self.filterCombo.setEditText( "" )
@@ -718,10 +719,19 @@ class FindInFilesDialog( QDialog, object ):
         " Files recursively for the dir "
         for item in os.listdir( path ):
             if os.path.isdir( path + item ):
-                FindInFilesDialog.__dirFiles( path + item + os.path.sep,
-                                              filterRe, files )
+                if item in [ ".svn", ".cvs" ]:
+                    # It does not make sense to search in revision control dirs
+                    continue
+                anotherDir, isLoop = resolveLink( path + item + os.path.sep )
+                if not isLoop:
+                    FindInFilesDialog.__dirFiles( anotherDir + os.path.sep,
+                                                  filterRe, files )
                 continue
-            realItem = os.path.realpath( path + item )
+            if not os.path.isfile( path + item ):
+                continue
+            realItem, isLoop = resolveLink( path + item )
+            if isLoop:
+                continue
             if filterRe is None or filterRe.match( realItem ):
                 found = False
                 for itm in files:
@@ -760,11 +770,10 @@ class FindInFilesDialog( QDialog, object ):
         if self.openFilesRButton.isChecked():
             return self.__openedFiles( filterRe )
 
-        dirname = str( self.dirEditCombo.currentText() ).strip()
-        if not dirname.endswith( os.path.sep ):
-            dirname += os.path.sep
+        dirname = os.path.realpath( \
+                        str( self.dirEditCombo.currentText() ).strip() )
         files = []
-        self.__dirFiles( dirname, filterRe, files )
+        self.__dirFiles( dirname + os.path.sep, filterRe, files )
         return files
 
 
