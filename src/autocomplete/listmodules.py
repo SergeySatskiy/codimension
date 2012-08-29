@@ -12,8 +12,9 @@
 " Routines to get a list of modules; sys and for a dir "
 
 import imp, sys, os, re
-from os.path import isfile, basename, splitext, realpath, isdir, sep
-from os import listdir, getcwd
+from os.path import isfile, basename, splitext, realpath, isdir, \
+                    sep, islink, isabs, dirname, normpath
+from os import listdir, getcwd, readlink
 
 # known test packages
 TEST_PACKAGES = "test.", "bsddb.test.", "distutils.tests."
@@ -92,19 +93,44 @@ def getModules( path ):
                         continue
                 if not __isTestModule( modName ):
                     if not fName.endswith( ".pyc" ):
-                        modules[ modName ] = realpath( fName )
+                        resolved, isLoop = resolveLink( fName )
+                        if not isLoop:
+                            modules[ modName ] = resolved
         elif isdir( fName ):
             modName = basename( fName )
             if isfile( fName + sep + "__init__.py" ) or \
                isfile( fName + sep + "__init__.py3" ):
                 if not __isTestModule( modName ):
-                    modules[ modName ] = realpath( fName )
+                    resolved, isLoop = resolveLink( fName )
+                    if not isLoop:
+                        modules[ modName ] = resolved
                 for subMod, fName in getModules( fName ).items():
                     candidate = modName + "." + subMod
                     if not __isTestModule( candidate ):
-                        modules[ candidate ] = realpath( fName )
+                        resolved, isLoop = resolveLink( fName )
+                        if not isLoop:
+                            modules[ candidate ] = resolved
     sys.stderr = oldStderr
     return modules
+
+
+def resolveLink( path ):
+    """ Resolves links and detects loops """
+    paths_seen = []
+    while islink( path ):
+        if path in paths_seen:
+            # Already seen this path, so we must have a symlink loop
+            return path, True
+        paths_seen.append( path )
+        # Resolve where the link points to
+        resolved = readlink( path )
+        if not isabs( resolved ):
+            dir_name = dirname( path )
+            path = normpath( dir_name + sep + resolved )
+        else:
+            path = normpath( resolved )
+    return path, False
+
 
 def __getSysPathExceptCurrent():
     " Provides a list of paths for system modules "
