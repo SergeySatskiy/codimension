@@ -194,6 +194,16 @@ class GlobalData( object ):
                 pass
             return ""
 
+        def getModInfo( self, path ):
+            " Provides a module info for the given file "
+            if not ( path.endswith( '.py' ) or path.endswith( '.py3' ) ):
+                raise Exception( "Trying to parse non-python file: " + path + \
+                                 ". Expected extensions .py or .py3" )
+
+            if self.project.isLoaded():
+                return self.project.briefModinfoCache.get( path )
+            return self.briefModinfoCache.get( path )
+
         @staticmethod
         def __checkFile():
             " Checks if the file utility available "

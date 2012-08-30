@@ -548,7 +548,7 @@ class ImportsDiagramProgress( QDialog ):
             return
 
         if len( self.__filesInfo ) == 0:
-            logging.warning( "No modules were identified to build diagram for" )
+            logging.warning( "No files were identified to build diagram for" )
             QApplication.restoreOverrideCursor()
             self.__inProgress = False
             self.__onClose()
@@ -634,23 +634,16 @@ class ImportsDiagramProgress( QDialog ):
 
         if self.__what == ImportsDiagramDialog.SingleFile:
             self.__path = os.path.realpath( self.__path )
-            if GlobalData().project.isProjectFile( self.__path ):
-                infoSrc = GlobalData().project.briefModinfoCache
-            else:
-                infoSrc = GlobalData().briefModinfoCache
             self.infoLabel.setText( "Parsing " + self.__path + "..." )
             QApplication.processEvents()
-            self.__filesInfo[ self.__path ] = infoSrc.get( self.__path )
+            self.__filesInfo[ self.__path ] = GlobalData().getModInfo( self.__path )
             return
 
+        infoSrc = GlobalData().project.briefModinfoCache
         if self.__what == ImportsDiagramDialog.ProjectFiles:
             # The whole project was requested
-            infoSrc = GlobalData().project.briefModinfoCache
             for fName in GlobalData().project.filesList:
-                if fName.endswith( os.path.sep ):
-                    continue
-                fileType = detectFileType( fName )
-                if fileType in [ PythonFileType, Python3FileType ]:
+                if fName.endswith( ".py" ) or fName.endswith( ".py3" ):
                     self.infoLabel.setText( "Parsing " + fName + "..." )
                     QApplication.processEvents()
                     self.__filesInfo[ fName ] = infoSrc.get( fName )
