@@ -578,7 +578,7 @@ class FindInFilesDialog( QDialog, object ):
         if self.projectRButton.isChecked():
             # Whole project
             for fname in GlobalData().project.filesList:
-                if fname.endswith( os.path.sep ):
+                if fname.endswith( sep ):
                     continue
                 matched = filterRe.match( fname )
                 if matched:
@@ -602,8 +602,8 @@ class FindInFilesDialog( QDialog, object ):
 
         else:
             # Search in the dir
-            if not dirname.endswith( os.path.sep ):
-                dirname += os.path.sep
+            if not dirname.endswith( sep ):
+                dirname += sep
             matched, tooLong = self.__matchInDir( dirname, filterRe, startTime )
 
         if matched:
@@ -628,7 +628,7 @@ class FindInFilesDialog( QDialog, object ):
                 tooLong = True
                 return matched, tooLong
             if os.path.isdir( path + item ):
-                dname = path + item + os.path.sep
+                dname = path + item + sep
                 matched, tooLong = FindInFilesDialog.__matchInDir( dname,
                                                                    filterRe,
                                                                    startTime )
@@ -683,12 +683,12 @@ class FindInFilesDialog( QDialog, object ):
     @staticmethod
     def __projectFiles( filterRe ):
         " Project files list respecting the mask "
+        mainWindow = GlobalData().mainWindow
         files = []
         for fname in GlobalData().project.filesList:
-            if fname.endswith( os.path.sep ):
+            if fname.endswith( sep ):
                 continue
             if filterRe is None or filterRe.match( fname ):
-                mainWindow = GlobalData().mainWindow
                 widget = mainWindow.getWidgetForFileName( fname )
                 if widget is None:
                     fileType = detectFileType( fname )
@@ -774,7 +774,7 @@ class FindInFilesDialog( QDialog, object ):
         dirname = os.path.realpath( \
                         str( self.dirEditCombo.currentText() ).strip() )
         files = []
-        self.__dirFiles( dirname + os.path.sep, filterRe, files )
+        self.__dirFiles( dirname + sep, filterRe, files )
         return files
 
 
