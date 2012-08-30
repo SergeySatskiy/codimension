@@ -411,6 +411,27 @@ def _excludePrivateAndBuiltins( proposals ):
     return result
 
 
+def _isSystemImportOrAlias( obj, text, info ):
+    " Checks if the obj is a system wide import name (possibly alias) "
+    buildSystemWideModulesList()
+
+    if __systemwideModules.has_key( obj ):
+        return True, obj
+
+    # Check aliases
+    if info is None:
+        info = getBriefModuleInfoFromMemory( text )
+    for item in info.imports:
+        if item.alias == obj:
+            if __systemwideModules.has_key( item.name ):
+                # That's an alias for a system module
+                return True, item.name
+            # That's an alias for something else, so stop search for a system
+            # module alias
+            return False, obj
+    return False, obj
+
+
 def getCompletionList( fileName, scope, obj, prefix,
                        editor, text, info = None ):
     """ High level function. It provides a list of suggestions for
@@ -458,6 +479,14 @@ def getCompletionList( fileName, scope, obj, prefix,
                 _addClassPrivateNames( scope.levels[ scope.length - 2 ][ 0 ],
                                        result )
                 return list( result ), False
+
+    # Rope does not offer anything for system modules, let's handle it here
+    # if so
+    if obj != "":
+        isSystemImport, realImportName = _isSystemImportOrAlias( obj, text, info )
+        if isSystemImport:
+            # Yes, that is a reference to something from a system module
+            return __getImportedObjects( realImportName, "" ), False
 
     # Try rope completion
     proposals, isOK = _getRopeCompletion( fileName, text, editor, prefix )
