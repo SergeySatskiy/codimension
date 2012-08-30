@@ -124,6 +124,10 @@ _extType = { \
 }
 
 
+__cachedFileTypes = {}
+__QTSupportedImageFormats = QImageReader.supportedImageFormats()
+
+
 def detectFileType( path ):
     " Detects file type - must work for both existed and not existed files "
 
@@ -134,26 +138,35 @@ def detectFileType( path ):
         if not os.path.exists( path ):
             return BrokenSymlinkFileType
 
+    if __cachedFileTypes.has_key( path ):
+        return __cachedFileTypes[ path ]
+
     # Must work for not existed files, e.g. new file request will also use it
     #    if not os.path.exists( absPath ):
     #        raise Exception( "Cannot find file: " + path )
 
     parts = os.path.splitext( path )
-    fileExtension = parts[ len( parts ) - 1 ].lower()[ 1: ]
+    fileExtension = parts[ -1 ].lower()[ 1: ]
 
     try:
-        return _extType[ fileExtension ]
+        fType = _extType[ fileExtension ]
+        __cachedFileTypes[ path ] = fType
+        return fType
     except:
         pass
 
     if fileExtension == 'h':
         if path.lower().endswith( '.ui.h' ):
+            __cachedFileTypes[ path ] = DesignerHeaderFileType
             return DesignerHeaderFileType
+        __cachedFileTypes[ path ] = CHeaderFileType
         return CHeaderFileType
-    if fileExtension in QImageReader.supportedImageFormats():
+    if fileExtension in __QTSupportedImageFormats:
+        __cachedFileTypes[ path ] = PixmapFileType
         return PixmapFileType
 
     if path.lower().endswith( 'makefile' ):
+        __cachedFileTypes[ path ] = MakefileType
         return MakefileType
 
     if GlobalData().fileAvailable:
@@ -162,12 +175,15 @@ def detectFileType( path ):
             output = os.popen( 'file -b ' + path ).read().lower()
             if 'elf ' in output:
                 if 'executable' in output:
+                    __cachedFileTypes[ path ] = ELFFileType
                     return ELFFileType
                 if 'shared object' in output:
+                    __cachedFileTypes[ path ] = SOFileType
                     return SOFileType
         except:
             pass
 
+    __cachedFileTypes[ path ] = UnknownFileType
     return UnknownFileType
 
 
