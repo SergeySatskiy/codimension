@@ -489,6 +489,12 @@ class FindInFilesViewer( QWidget ):
             hideSearchTooltip()
             return
 
+        if column != 1:
+            # Show the tooltip only for the column with results
+            self.lastEntered = None
+            hideSearchTooltip()
+            return
+
         # Memorize the row height for proper tooltip displaying later
         global cellHeight
         cellHeight = self.__resultsTree.visualItemRect( item ).height()
