@@ -45,9 +45,9 @@ class ModifiedUnsavedDialog( QDialog ):
     def __init__( self, files, action, parent = None ):
         QDialog.__init__( self, parent )
 
-        if len( files ) >= 2:
-            title = str( len( files ) ) + \
-                    " project files are modified and not saved"
+        count = len( files )
+        if count >= 2:
+            title = str( count ) + " project files are modified and not saved"
         else:
             title = "1 project file modified and not saved"
         self.setWindowTitle( title )
