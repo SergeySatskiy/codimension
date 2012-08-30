@@ -25,6 +25,7 @@
 
 
 import os, os.path, re, time, logging
+from os.path import sep
 from PyQt4.QtCore                import Qt, SIGNAL
 from PyQt4.QtGui                 import QDialog, QDialogButtonBox, \
                                         QVBoxLayout, QSizePolicy, QLabel, \
@@ -722,9 +723,9 @@ class FindInFilesDialog( QDialog, object ):
                 if item in [ ".svn", ".cvs" ]:
                     # It does not make sense to search in revision control dirs
                     continue
-                anotherDir, isLoop = resolveLink( path + item + os.path.sep )
+                anotherDir, isLoop = resolveLink( path + item )
                 if not isLoop:
-                    FindInFilesDialog.__dirFiles( anotherDir + os.path.sep,
+                    FindInFilesDialog.__dirFiles( anotherDir + sep,
                                                   filterRe, files )
                 continue
             if not os.path.isfile( path + item ):
