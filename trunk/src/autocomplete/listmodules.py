@@ -98,18 +98,24 @@ def getModules( path ):
                             modules[ modName ] = resolved
         elif isdir( fName ):
             modName = basename( fName )
-            if isfile( fName + sep + "__init__.py" ) or \
-               isfile( fName + sep + "__init__.py3" ):
-                if not __isTestModule( modName ):
+
+            candidate = fName + sep + "__init__.py"
+            if not isfile( candidate ):
+                candidate += "3"
+                if not isfile( candidate ):
+                    continue
+
+            if not __isTestModule( modName ):
+                resolved, isLoop = resolveLink( candidate )
+                if not isLoop:
+                    modules[ modName ] = resolved
+
+            for subMod, fName in getModules( fName ).items():
+                candidate = modName + "." + subMod
+                if not __isTestModule( candidate ):
                     resolved, isLoop = resolveLink( fName )
                     if not isLoop:
-                        modules[ modName ] = resolved
-                for subMod, fName in getModules( fName ).items():
-                    candidate = modName + "." + subMod
-                    if not __isTestModule( candidate ):
-                        resolved, isLoop = resolveLink( fName )
-                        if not isLoop:
-                            modules[ candidate ] = resolved
+                        modules[ candidate ] = resolved
     sys.stderr = oldStderr
     return modules
 
