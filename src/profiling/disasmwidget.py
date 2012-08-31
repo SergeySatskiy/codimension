@@ -75,7 +75,7 @@ class DisassemblerResultsWidget( QWidget, MainWindowTabWidgetBase ):
 
         summary = QLabel( "<b>Script:</b> " + scriptName + "<br>" \
                           "<b>Name:</b> " + name + "<br>" \
-                          "<b>Disassembed at:</b> " + reportTime )
+                          "<b>Disassembled at:</b> " + reportTime )
         summary.setFrameStyle( QFrame.StyledPanel )
         summary.setAutoFillBackground( True )
         summaryPalette = summary.palette()
