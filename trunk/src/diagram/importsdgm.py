@@ -448,6 +448,14 @@ class ImportsDiagramProgress( QDialog ):
         self.__path = path          # could be a dir or a file
         self.__buf = buf            # content in case of a modified file
 
+        # Working process data
+        self.__participantFiles = []    # Collected list of files
+        self.__participantDirs = []     # Dirs to be covered (no / at the end)
+        self.__projectImportDirs = []
+        self.__projectImportsCache = {} # utils.settings -> /full/path/to.py
+        self.__dirsToImportsCache = {}  # /dir/path -> { my.mod: path.py, ... }
+
+
         self.__projectModules = {}              # dir -> [ imports ]
         self.__filesInfo = {}                   # file -> parsed content
         self.dataModel = ImportDiagramModel()
@@ -458,7 +466,7 @@ class ImportsDiagramProgress( QDialog ):
         self.infoLabel = None
 
         self.__createLayout()
-        self.setWindowTitle( 'Imports diagram generator' )
+        self.setWindowTitle( 'Imports/dependencies diagram generator' )
         QTimer.singleShot( 0, self.__process )
         return
 
@@ -505,11 +513,117 @@ class ImportsDiagramProgress( QDialog ):
             self.close()
         return
 
+    def __buildParticipants( self ):
+        " Builds a list of participating files and dirs "
+        if self.__what in [ ImportsDiagramDialog.SingleBuffer,
+                            ImportsDiagramDialog.SingleFile ]:
+            # File exists but could be modified
+            self.__path = os.path.realpath( self.__path )
+            self.__participantFiles.append( self.__path )
+            dName = os.path.dirname( self.__path )
+            self.__participantDirs.append( dName )
+            return
+
+        if self.__what == ImportsDiagramDialog.ProjectFiles:
+            self.__scanProjectDirs()
+            return
+
+        # This is a recursive directory
+        self.__path = os.path.realpath( self.__path )
+        self.__participantDirs.append( self.__path )
+        self.__scanDirForPythonFiles( self.__path + os.path.sep )
+        return
+
+    def __scanDirForPythonFiles( self, path ):
+        " Scans the directory for the python files recursively "
+        if GlobalData().project.isProjectDir( self.__path ):
+            # Project dir - don't bother about scanning the disk further
+            self.__scanProjectDirs()
+            return
+
+        # Non-project, scan it
+        for item in os.listdir( path ):
+            if os.path.isdir( path + item ):
+                self.__participantDirs.append( path + item )
+                self.__scanDirForPythonFiles( path + item + os.path.sep )
+                continue
+            if item.endswith( ".py" ) or item.endswith( ".py3" ):
+                fName = os.path.realpath( path + item )
+                # If it was a link, the target could be non-python
+                if fName.endswith( ".py" ) or fName.endswith( ".py3" ):
+                    self.__participantFiles.append( fName )
+        return
+
+    def __scanProjectDirs( self ):
+        " Populates participant lists from the project files "
+        for fName in GlobalData().project.filesList:
+            if fName.endswith( ".py" ) or fName.endswith( ".py3" ):
+                self.__participantFiles.append( fName )
+                candidateDir = os.path.dirname( fName )
+                if candidateDir not in self.__participantDirs:
+                    self.__participantDirs.append( candidateDir )
+        return
+
+    def isProjectImport( self, importString ):
+        " Checks if it is a project import string and provides a path if so "
+        if self.__projectImportsCache.has_key( importString ):
+            return self.__projectImportsCache[ importString ]
+
+        subpath = importString.replace( '.', os.path.sep )
+        candidates = [ subpath + ".py", subpath + ".py3",
+                       subpath + os.path.sep + "__init__.py",
+                       subpath + os.path.sep + "__init__.py3" ]
+        for path in self.__projectImportDirs:
+            for item in candidates:
+                fName = path + item
+                if os.path.isfile( fName ):
+                    self.__projectImportsCache[ importString ] = fName
+                    return fName
+        return None
+
+    def isLocalImport( self, dirName, importString ):
+        " Checks if it is local dir import string and provides a path if so "
+        dirFound = False
+        if self.__dirsToImportsCache.has_key( dirName ):
+            dirFound = True
+            importsDict = self.__dirsToImportsCache[ dirName ]
+            if importsDict.has_key( importString ):
+                return importsDict[ importString ]
+
+        subpath = importString.replace( '.', os.path.sep )
+        candidates = [ subpath + ".py", subpath + ".py3",
+                       subpath + os.path.sep + "__init__.py",
+                       subpath + os.path.sep + "__init__.py3" ]
+        for item in candidates:
+            fName = dirName + os.path.sep + item
+            if os.path.isfile( fName ):
+                # Found on the FS. Add to the dictionary
+                if dirFound:
+                    importsDict[ importString ] = fName
+                else:
+                    self.__dirsToImportsCache[ dirName ] = { importString: fName }
+                return fName
+        return None
+
     def __process( self ):
         " Accumulation process "
 
         self.__inProgress = True
         self.progressBar.setRange( 0, 6 )
+
+        # Build the following lists:
+        # - list of participating python files
+        # - list of participating dirs
+        # - list of dirs that the project declared for imports
+        self.__buildParticipants()
+        self.__projectImportDirs = \
+                    GlobalData().project.getImportDirsAsAbsolutePaths()
+
+        # Now, parse the files and build the diagram data model
+
+
+
+
 
         # Stage 1 - building a list of the project modules
         self.infoLabel.setText( "Building a list of the project modules..." )
