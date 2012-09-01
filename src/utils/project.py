@@ -503,6 +503,16 @@ class CodimensionProject( QObject ):
         self.emit( SIGNAL( 'projectChanged' ), self.CompleteProject )
         return
 
+    def getImportDirsAsAbsolutePaths( self ):
+        " Provides a list of import dirs as absolute paths "
+        result = []
+        for path in self.importDirs:
+            if os.path.isabs( path ):
+                result.append( path )
+            else:
+                result.append( self.getProjectDir() + path )
+        return result
+
     def __getImportDirsForRope( self ):
         " Provides the list of import dirs for the rope library "
         result = []
