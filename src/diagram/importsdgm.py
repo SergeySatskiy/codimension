@@ -28,13 +28,10 @@ import os, os.path, logging, sys
 from PyQt4.QtCore                import Qt, SIGNAL, QTimer
 from PyQt4.QtGui                 import QDialog, QDialogButtonBox, \
                                         QVBoxLayout, QCheckBox, QLabel, \
-                                        QProgressBar, QApplication, QCursor, \
+                                        QProgressBar, QApplication, \
                                         QGraphicsScene
-from utils.importutils           import buildDirModules
 from utils.globals               import GlobalData
 from cdmbriefparser              import getBriefModuleInfoFromMemory
-from utils.fileutils             import detectFileType, PythonFileType, \
-                                        Python3FileType
 from plaindotparser              import getGraphFromDescriptionData
 from importsdgmgraphics          import ImportsDgmDocConn, \
                                         ImportsDgmDependConn, \
@@ -86,7 +83,7 @@ class DgmConnection:
             label += what.name
         if label != "":
             attributes += ', label="' + label + \
-                          '", fontname=Courier, fontsize=12'
+                          '", fontname=Arial, fontsize=10'
 
         return self.source + " -> " + self.target + '[ ' + attributes + ' ];'
 
@@ -109,7 +106,7 @@ class DgmDocstring:
         " Serialize the docstring box in graphviz format "
         escapedText = self.docstring.text.replace( '\n', '\\n' )
         escapedText = escapedText.replace( '"', '\\"' )
-        attributes = 'shape=box, fontname=Courier, fontsize=12'
+        attributes = 'shape=box, fontname=Arial, fontsize=10'
         return self.objName + \
                ' [ ' + attributes + ', label="' + escapedText + '" ];'
 
@@ -156,7 +153,7 @@ class DgmModule:
                 globsPart += "\\n"
             globsPart += glob.name
 
-        attributes = 'shape=record, fontname=Courier, fontsize=12'
+        attributes = 'shape=record, fontname=Arial, fontsize=10'
         title = self.title
         if title.startswith( '__init__' ):
             # This is a directory import, use thr dir name instead
@@ -292,12 +289,6 @@ class ImportDiagramModel:
         # adjusted
         if modBox.kind == self.modules[ index ].kind:
             return self.modules[ index ].objName
-
-        # It must not be a replacement of the out of the project module
-        if modBox.kind == DgmModule.NonProjectModule or \
-           self.modules[ index ].kind == DgmModule.NonProjectModule:
-            raise Exception( "Inconsistency. There must be no replacements " \
-                             "for a system module." )
 
         if modBox.kind == DgmModule.ModuleOfInterest:
             # Replace the existed one with a new one but keep the object name
@@ -475,9 +466,6 @@ class ImportsDiagramProgress( QDialog ):
         self.__projectImportsCache = {} # utils.settings -> /full/path/to.py
         self.__dirsToImportsCache = {}  # /dir/path -> { my.mod: path.py, ... }
 
-
-        self.__projectModules = {}              # dir -> [ imports ]
-        self.__filesInfo = {}                   # file -> parsed content
         self.dataModel = ImportDiagramModel()
         self.scene = QGraphicsScene()
 
@@ -540,7 +528,6 @@ class ImportsDiagramProgress( QDialog ):
             # File exists but could be modified
             self.__path = os.path.realpath( self.__path )
             self.__participantFiles.append( self.__path )
-            dName = os.path.dirname( self.__path )
             return
 
         if self.__what == ImportsDiagramDialog.ProjectFiles:
@@ -572,7 +559,6 @@ class ImportsDiagramProgress( QDialog ):
         for fName in GlobalData().project.filesList:
             if fName.endswith( ".py" ) or fName.endswith( ".py3" ):
                 self.__participantFiles.append( fName )
-                candidateDir = os.path.dirname( fName )
         return
 
     def isProjectImport( self, importString ):
@@ -723,7 +709,9 @@ class ImportsDiagramProgress( QDialog ):
                     if systemWideImportPath is not None:
                         impBox.kind = DgmModule.SystemWideModule
                         impBox.refFile = systemWideImportPath
-                        impBox.tooltip = self.__getSytemWideImportDocstring( systemWideImportPath )
+                        impBox.docstring = \
+                                self.__getSytemWideImportDocstring( \
+                                                        systemWideImportPath )
                     else:
                         impBox.kind = DgmModule.UnknownModule
 
@@ -745,61 +733,81 @@ class ImportsDiagramProgress( QDialog ):
     def __process( self ):
         " Accumulation process "
 
-        self.__inProgress = True
-        self.infoLabel.setText( 'Building the list of files to analyze...' )
-        QApplication.processEvents()
-
-        # Build the list of participating python files
-        self.__buildParticipants()
-        self.__projectImportDirs = \
-                    GlobalData().project.getImportDirsAsAbsolutePaths()
-
-        self.progressBar.setRange( 0, len( self.__participantFiles ) )
-        index = 1
-
-        # Now, parse the files and build the diagram data model
-        if self.__what == ImportsDiagramDialog.SingleBuffer:
-            info = getBriefModuleInfoFromMemory( str( self.__buf ) )
-            self.__addSingleFileToDataModel( info, self.__path )
-        else:
-            if GlobalData().project.isLoaded():
-                infoSrc = GlobalData().project.briefModinfoCache
-            else:
-                infoSrc = GlobalData().briefModinfoCache
-            for fName in self.__participantFiles:
-                self.progressBar.setValue( index )
-                self.infoLabel.setText( 'Analyzing ' + fName + "..." )
-                QApplication.processEvents()
-                info = infoSrc.get( fName )
-                self.__addSingleFileToDataModel( info, fName )
-                index += 1
-
-        # The import caches  and other working data are not needed anymore
+        # Intermediate working data
         self.__participantFiles = []
         self.__projectImportDirs = []
         self.__projectImportsCache = {}
 
-
-        # Generating the graphviz layout
-        self.infoLabel.setText( 'Generating layout using graphviz...' )
-        QApplication.processEvents()
+        self.dataModel.clear()
+        self.__inProgress = True
 
         try:
+            self.infoLabel.setText( 'Building the list of files to analyze...' )
+            QApplication.processEvents()
+
+            # Build the list of participating python files
+            self.__buildParticipants()
+            self.__projectImportDirs = \
+                        GlobalData().project.getImportDirsAsAbsolutePaths()
+
+
+            QApplication.processEvents()
+            if self.__cancelRequest == True:
+                QApplication.restoreOverrideCursor()
+                self.close()
+                return
+
+            self.progressBar.setRange( 0, len( self.__participantFiles ) )
+            index = 1
+
+            # Now, parse the files and build the diagram data model
+            if self.__what == ImportsDiagramDialog.SingleBuffer:
+                info = getBriefModuleInfoFromMemory( str( self.__buf ) )
+                self.__addSingleFileToDataModel( info, self.__path )
+            else:
+                if GlobalData().project.isLoaded():
+                    infoSrc = GlobalData().project.briefModinfoCache
+                else:
+                    infoSrc = GlobalData().briefModinfoCache
+                for fName in self.__participantFiles:
+                    self.progressBar.setValue( index )
+                    self.infoLabel.setText( 'Analyzing ' + fName + "..." )
+                    QApplication.processEvents()
+                    if self.__cancelRequest == True:
+                        QApplication.restoreOverrideCursor()
+                        self.dataModel.clear()
+                        self.close()
+                        return
+                    info = infoSrc.get( fName )
+                    self.__addSingleFileToDataModel( info, fName )
+                    index += 1
+
+            # The import caches and other working data are not needed anymore
+            self.__participantFiles = None
+            self.__projectImportDirs = None
+            self.__projectImportsCache = None
+
+
+            # Generating the graphviz layout
+            self.infoLabel.setText( 'Generating layout using graphviz...' )
+            QApplication.processEvents()
+
             graph = getGraphFromDescriptionData( self.dataModel.toGraphviz() )
             graph.normalize( self.physicalDpiX(), self.physicalDpiY() )
-        except Exception, exc:
-            QApplication.restoreOverrideCursor()
-            logging.error( str( exc ) )
-            self.__inProgress = False
-            self.__onClose()
-            return
+            QApplication.processEvents()
+            if self.__cancelRequest == True:
+                QApplication.restoreOverrideCursor()
+                self.dataModel.clear()
+                self.close()
+                return
 
-        # Generate graphics scene
-        self.infoLabel.setText( 'Generating graphics scene...' )
-        QApplication.processEvents()
-
-        try:
+            # Generate graphics scene
+            self.infoLabel.setText( 'Generating graphics scene...' )
+            QApplication.processEvents()
             self.__buildGraphicsScene( graph )
+
+            # TODO
+            # Clear the data model
         except Exception, exc:
             QApplication.restoreOverrideCursor()
             logging.error( str( exc ) )
