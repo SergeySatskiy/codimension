@@ -613,7 +613,7 @@ class ImportsDiagramProgress( QDialog ):
     def __addBoxInfo( self, box, info ):
         " Adds information to the given box if so configured "
         if info.docstring is not None:
-            box.tooltip = info.docstring
+            box.docstring = info.docstring.text
 
         if self.__options.includeClasses:
             for klass in info.classes:
@@ -661,7 +661,7 @@ class ImportsDiagramProgress( QDialog ):
         " Provides the system wide module docstring "
         try:
             info = GlobalData().project.briefModinfoCache.get( path )
-            return info.docstring
+            return info.docstring.text
         except:
             return ""
 
