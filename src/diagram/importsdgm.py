@@ -24,7 +24,7 @@
 """ imports diagram dialog """
 
 
-import os, os.path, logging
+import os, os.path, logging, sys
 from PyQt4.QtCore                import Qt, SIGNAL, QTimer
 from PyQt4.QtGui                 import QDialog, QDialogButtonBox, \
                                         QVBoxLayout, QCheckBox, QLabel, \
@@ -38,10 +38,26 @@ from utils.fileutils             import detectFileType, PythonFileType, \
 from plaindotparser              import getGraphFromDescriptionData
 from importsdgmgraphics          import ImportsDgmDocConn, \
                                         ImportsDgmDependConn, \
-                                        ImportsDgmNonPrjModule, \
+                                        ImportsDgmSystemWideModule, \
+                                        ImportsDgmUnknownModule, \
+                                        ImportsDgmBuiltInModule, \
                                         ImportsDgmModuleOfInterest, \
                                         ImportsDgmOtherPrjModule, \
                                         ImportsDgmDocNote, ImportsDgmEdgeLabel
+from autocomplete.completelists import getSystemWideModules
+
+
+__builtInModules = list( sys.builtin_module_names )
+__builtInModules.append( "os.path" )
+if "__builtin__" in __builtInModules:
+    __builtInModules.remove( "__builtin__" )
+if "__main__" in __builtInModules:
+    __builtInModules.remove( "__main__" )
+
+
+def isBuiltInImport( importString ):
+    " True if it is a built-in module "
+    return importString in __builtInModules
 
 
 class DgmConnection:
@@ -102,9 +118,11 @@ class DgmModule:
     " Holds information about one module "
 
     # Module types
-    NonProjectModule = 0
-    ModuleOfInterest = 1
-    OtherProjectModule = 2
+    ModuleOfInterest = 0
+    OtherProjectModule = 1
+    SystemWideModule = 2
+    BuiltInModule = 3
+    UnknownModule = 4
 
     def __init__( self ):
         self.objName = ""       # Unique object name
@@ -116,6 +134,7 @@ class DgmModule:
         self.imports = []       # list of imports
 
         self.refFile = ""       # File of the module
+        self.docstring = ""
         return
 
     def toGraphviz( self ):
@@ -143,7 +162,8 @@ class DgmModule:
             # This is a directory import, use thr dir name instead
             title = os.path.basename( os.path.dirname( self.refFile ) )
 
-        if self.kind != DgmModule.NonProjectModule:
+        if self.kind in [ DgmModule.ModuleOfInterest,
+                          DgmModule.OtherProjectModule ]:
             return self.objName + ' [ ' + attributes + \
                    ', label="{' + title + '|' + \
                    classesPart + '|' + funcsPart + '|' + globsPart + '}" ];'
@@ -152,10 +172,11 @@ class DgmModule:
 
     def __eq__( self, other ):
         " Compares two module boxes "
-        if self.kind == DgmModule.NonProjectModule and \
-           other.kind == DgmModule.NonProjectModule:
-            return self.title == other.title
-        return self.refFile == other.refFile
+        return self.objName == other.objName
+#        if self.kind == DgmModule.NonProjectModule and \
+#           other.kind == DgmModule.NonProjectModule:
+#            return self.title == other.title
+#        return self.refFile == other.refFile
 
 
 class DgmRank:
@@ -324,7 +345,7 @@ class ImportDiagramOptions:
         self.includeClasses = True
         self.includeFuncs = True
         self.includeGlobs = True
-        self.includeDocs = True
+        self.includeDocs = False
         self.includeConnText = True
         return
 
@@ -450,7 +471,6 @@ class ImportsDiagramProgress( QDialog ):
 
         # Working process data
         self.__participantFiles = []    # Collected list of files
-        self.__participantDirs = []     # Dirs to be covered (no / at the end)
         self.__projectImportDirs = []
         self.__projectImportsCache = {} # utils.settings -> /full/path/to.py
         self.__dirsToImportsCache = {}  # /dir/path -> { my.mod: path.py, ... }
@@ -521,7 +541,6 @@ class ImportsDiagramProgress( QDialog ):
             self.__path = os.path.realpath( self.__path )
             self.__participantFiles.append( self.__path )
             dName = os.path.dirname( self.__path )
-            self.__participantDirs.append( dName )
             return
 
         if self.__what == ImportsDiagramDialog.ProjectFiles:
@@ -530,21 +549,15 @@ class ImportsDiagramProgress( QDialog ):
 
         # This is a recursive directory
         self.__path = os.path.realpath( self.__path )
-        self.__participantDirs.append( self.__path )
         self.__scanDirForPythonFiles( self.__path + os.path.sep )
         return
 
     def __scanDirForPythonFiles( self, path ):
         " Scans the directory for the python files recursively "
-        if GlobalData().project.isProjectDir( self.__path ):
-            # Project dir - don't bother about scanning the disk further
-            self.__scanProjectDirs()
-            return
-
-        # Non-project, scan it
         for item in os.listdir( path ):
+            if item in [ ".svn",  ".cvs" ]:
+                continue
             if os.path.isdir( path + item ):
-                self.__participantDirs.append( path + item )
                 self.__scanDirForPythonFiles( path + item + os.path.sep )
                 continue
             if item.endswith( ".py" ) or item.endswith( ".py3" ):
@@ -560,8 +573,6 @@ class ImportsDiagramProgress( QDialog ):
             if fName.endswith( ".py" ) or fName.endswith( ".py3" ):
                 self.__participantFiles.append( fName )
                 candidateDir = os.path.dirname( fName )
-                if candidateDir not in self.__participantDirs:
-                    self.__participantDirs.append( candidateDir )
         return
 
     def isProjectImport( self, importString ):
@@ -575,7 +586,7 @@ class ImportsDiagramProgress( QDialog ):
                        subpath + os.path.sep + "__init__.py3" ]
         for path in self.__projectImportDirs:
             for item in candidates:
-                fName = path + item
+                fName = path + os.path.sep + item
                 if os.path.isfile( fName ):
                     self.__projectImportsCache[ importString ] = fName
                     return fName
@@ -605,88 +616,173 @@ class ImportsDiagramProgress( QDialog ):
                 return fName
         return None
 
+    def isSystemWideImport( self, importString ):
+        " Provides a path to the system wide import or None "
+        systemWideModules = getSystemWideModules()
+        try:
+            return systemWideModules[ importString ]
+        except:
+            return None
+
+    def __addBoxInfo( self, box, info ):
+        " Adds information to the given box if so configured "
+        if info.docstring is not None:
+            box.tooltip = info.docstring
+
+        if self.__options.includeClasses:
+            for klass in info.classes:
+                box.classes.append( klass )
+
+        if self.__options.includeFuncs:
+            for func in info.functions:
+                box.funcs.append( func )
+
+        if self.__options.includeGlobs:
+            for glob in info.globals:
+                box.globs.append( glob )
+
+        if self.__options.includeConnText:
+            for imp in info.imports:
+                box.imports.append( imp )
+
+        return
+
+    def __addDocstringBox( self, info, fName, modBoxName ):
+        " Adds a docstring box if needed "
+        if self.__options.includeDocs:
+            if info.docstring is not None:
+                docBox = DgmDocstring()
+                docBox.docstring = info.docstring
+                docBox.refFile = fName
+
+                # Add the box and its connection
+                docBoxName = self.dataModel.addDocstringBox( docBox )
+
+                conn = DgmConnection()
+                conn.kind = DgmConnection.ModuleDoc
+                conn.source = modBoxName
+                conn.target = docBoxName
+                self.dataModel.addConnection( conn )
+
+                # Add rank for better layout
+                rank = DgmRank()
+                rank.firstObj = modBoxName
+                rank.secondObj = docBoxName
+                self.dataModel.addRank( rank )
+        return
+
+    def __getSytemWideImportDocstring( self, path ):
+        " Provides the system wide module docstring "
+        try:
+            info = GlobalData().project.briefModinfoCache.get( path )
+            return info.docstring
+        except:
+            return ""
+
+    def __addSingleFileToDataModel( self, info, fName ):
+        " Adds a single file to the data model "
+        modBox = DgmModule()
+        modBox.refFile = fName
+
+        modBox.kind = DgmModule.ModuleOfInterest
+        modBox.title = os.path.basename( fName ).split( '.' )[ 0 ]
+
+        self.__addBoxInfo( modBox, info )
+        modBoxName = self.dataModel.addModule( modBox )
+        self.__addDocstringBox( info, fName, modBoxName )
+
+        # Add what is imported
+        isProjectFile = GlobalData().project.isProjectFile( fName )
+        for item in info.imports:
+            impBox = DgmModule()
+
+            importPath = None
+            systemWideImportPath = None
+            if isProjectFile:
+                importPath = self.isProjectImport( item.name )
+            if importPath is None:
+                importPath = self.isLocalImport( os.path.dirname( fName ), item.name )
+
+            if importPath is not None:
+                impBox.kind = DgmModule.OtherProjectModule
+                impBox.title = os.path.basename( importPath ).split( '.' )[ 0 ]
+                impBox.refFile = importPath
+                otherInfo = GlobalData().project.briefModinfoCache.get( importPath )
+
+                # It's a local or project import
+                self.__addBoxInfo( impBox, otherInfo )
+
+            else:
+                impBox.kind = DgmModule.UnknownModule
+                impBox.title = item.name
+
+                if isBuiltInImport( item.name ):
+                    impBox.kind = DgmModule.BuiltInModule
+                else:
+                    systemWideImportPath = self.isSystemWideImport( item.name )
+                    if systemWideImportPath is not None:
+                        impBox.kind = DgmModule.SystemWideModule
+                        impBox.refFile = systemWideImportPath
+                        impBox.tooltip = self.__getSytemWideImportDocstring( systemWideImportPath )
+                    else:
+                        impBox.kind = DgmModule.UnknownModule
+
+            impBoxName = self.dataModel.addModule( impBox )
+
+            impConn = DgmConnection()
+            impConn.kind = DgmConnection.ModuleDependency
+            impConn.source = modBoxName
+            impConn.target = impBoxName
+
+            if self.__options.includeConnText:
+                for impWhat in item.what:
+                    if impWhat.name != "":
+                        impConn.labels.append( impWhat )
+            self.dataModel.addConnection( impConn )
+
+        return
+
     def __process( self ):
         " Accumulation process "
 
         self.__inProgress = True
-        self.progressBar.setRange( 0, 6 )
+        self.infoLabel.setText( 'Building the list of files to analyze...' )
+        QApplication.processEvents()
 
-        # Build the following lists:
-        # - list of participating python files
-        # - list of participating dirs
-        # - list of dirs that the project declared for imports
+        # Build the list of participating python files
         self.__buildParticipants()
         self.__projectImportDirs = \
                     GlobalData().project.getImportDirsAsAbsolutePaths()
 
+        self.progressBar.setRange( 0, len( self.__participantFiles ) )
+        index = 1
+
         # Now, parse the files and build the diagram data model
+        if self.__what == ImportsDiagramDialog.SingleBuffer:
+            info = getBriefModuleInfoFromMemory( str( self.__buf ) )
+            self.__addSingleFileToDataModel( info, self.__path )
+        else:
+            if GlobalData().project.isLoaded():
+                infoSrc = GlobalData().project.briefModinfoCache
+            else:
+                infoSrc = GlobalData().briefModinfoCache
+            for fName in self.__participantFiles:
+                self.progressBar.setValue( index )
+                self.infoLabel.setText( 'Analyzing ' + fName + "..." )
+                QApplication.processEvents()
+                info = infoSrc.get( fName )
+                self.__addSingleFileToDataModel( info, fName )
+                index += 1
+
+        # The import caches  and other working data are not needed anymore
+        self.__participantFiles = []
+        self.__projectImportDirs = []
+        self.__projectImportsCache = {}
 
 
-
-
-
-        # Stage 1 - building a list of the project modules
-        self.infoLabel.setText( "Building a list of the project modules..." )
-        self.progressBar.setValue( 1 )
-        QApplication.processEvents()
-        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
-        try:
-            projectDir = GlobalData().project.getProjectDir()
-            if self.__buildProjectModules( projectDir ) == False:
-                QApplication.restoreOverrideCursor()
-                self.__inProgress = False
-                self.__onClose()
-                return
-        except Exception, exc:
-            QApplication.restoreOverrideCursor()
-            logging.error( str( exc ) )
-            self.__inProgress = False
-            self.__onClose()
-            return
-
-        # Stage 2 - process input python files
-        self.progressBar.setValue( 2 )
-
-        try:
-            self.__buildContentInfo()
-            if self.__cancelRequest:
-                QApplication.restoreOverrideCursor()
-                self.__inProgress = False
-                self.__onClose()
-                return
-        except Exception, exc:
-            QApplication.restoreOverrideCursor()
-            logging.error( str( exc ) )
-            self.__inProgress = False
-            self.__onClose()
-            return
-
-        if len( self.__filesInfo ) == 0:
-            logging.warning( "No files were identified to build diagram for" )
-            QApplication.restoreOverrideCursor()
-            self.__inProgress = False
-            self.__onClose()
-            return
-
-        # Stage 3 - build the diagram objects
-        self.progressBar.setValue( 3 )
-        try:
-            self.__buildDiagramDataModel()
-            if self.__cancelRequest:
-                QApplication.restoreOverrideCursor()
-                self.__inProgress = False
-                self.__onClose()
-                return
-        except Exception, exc:
-            QApplication.restoreOverrideCursor()
-            logging.error( str( exc ) )
-            self.__inProgress = False
-            self.__onClose()
-            return
-
-        # Stage 4 - generating the graphviz layout
+        # Generating the graphviz layout
         self.infoLabel.setText( 'Generating layout using graphviz...' )
-        self.progressBar.setValue( 4 )
+        QApplication.processEvents()
 
         try:
             graph = getGraphFromDescriptionData( self.dataModel.toGraphviz() )
@@ -698,9 +794,9 @@ class ImportsDiagramProgress( QDialog ):
             self.__onClose()
             return
 
-        # Stage 5 - generate graphics scene
+        # Generate graphics scene
         self.infoLabel.setText( 'Generating graphics scene...' )
-        self.progressBar.setValue( 5 )
+        QApplication.processEvents()
 
         try:
             self.__buildGraphicsScene( graph )
@@ -713,236 +809,11 @@ class ImportsDiagramProgress( QDialog ):
 
         QApplication.restoreOverrideCursor()
         self.infoLabel.setText( 'Done' )
+        QApplication.processEvents()
         self.__inProgress = False
 
         self.accept()
         return
-
-    def __buildProjectModules( self, path ):
-        " Builds the projects modules list "
-
-        imports = buildDirModules( path, self.infoLabel )
-        if len( imports ) > 0:
-            self.__projectModules[ path ] = imports
-            # print path + " -> " + str( imports )
-        QApplication.processEvents()
-        if self.__cancelRequest:
-            return False
-        for item in os.listdir( path ):
-            if item in [ ".svn", ".cvs" ]:
-                continue
-            candidate = path + item + os.path.sep
-            if os.path.isdir( candidate ):
-                if self.__buildProjectModules( candidate ) == False:
-                    return False
-        return True
-
-    def __buildContentInfo( self ):
-        " Builds a map of file names and the parsed info "
-        if self.__what == ImportsDiagramDialog.SingleBuffer:
-            self.infoLabel.setText( "Parsing " + self.__path + "..." )
-            QApplication.processEvents()
-            self.__filesInfo[ self.__path ] = \
-                        getBriefModuleInfoFromMemory( str( self.__buf ) )
-            return
-
-        if self.__what == ImportsDiagramDialog.SingleFile:
-            self.__path = os.path.realpath( self.__path )
-            self.infoLabel.setText( "Parsing " + self.__path + "..." )
-            QApplication.processEvents()
-            self.__filesInfo[ self.__path ] = GlobalData().getModInfo( self.__path )
-            return
-
-        infoSrc = GlobalData().project.briefModinfoCache
-        if self.__what == ImportsDiagramDialog.ProjectFiles:
-            # The whole project was requested
-            for fName in GlobalData().project.filesList:
-                if fName.endswith( ".py" ) or fName.endswith( ".py3" ):
-                    self.infoLabel.setText( "Parsing " + fName + "..." )
-                    QApplication.processEvents()
-                    self.__filesInfo[ fName ] = infoSrc.get( fName )
-            return
-
-        # Recursive dir was required
-        self.__path = os.path.realpath( self.__path )
-        if not self.__path.endswith( os.path.sep ):
-            self.__path += os.path.sep
-        if GlobalData().project.isProjectDir( self.__path ):
-            self.__buildDirContentInfo( self.__path,
-                             GlobalData().project.briefModinfoCache )
-        else:
-            self.__buildDirContentInfo( self.__path,
-                             GlobalData().briefModinfoCache )
-        return
-
-    def __buildDirContentInfo( self, path, srcInfo ):
-        " Recursively builds the info for a directory "
-
-        for item in os.listdir( path ):
-            if os.path.isdir( path + item ):
-                self.__buildDirContentInfo( path + item + os.path.sep,
-                                            srcInfo )
-                continue
-            if self.__cancelRequest:
-                return
-            fileType = detectFileType( path + item )
-            if fileType in [ PythonFileType, Python3FileType ]:
-                # Avoid symlinks
-                fName = os.path.realpath( path + item )
-                self.infoLabel.setText( "Parsing " + fName + "..." )
-                QApplication.processEvents()
-                self.__filesInfo[ fName ] = srcInfo.get( fName )
-
-        return
-
-    def __buildDiagramDataModel( self ):
-        " Builds the diargam data model "
-        self.dataModel.clear()
-
-        for fName in self.__filesInfo:
-            # Generate the module box
-            modBox = DgmModule()
-            modBox.refFile = fName
-
-            modBox.kind = DgmModule.ModuleOfInterest
-            modBox.title = os.path.basename( fName ).split( '.' )[ 0 ]
-
-            info = self.__filesInfo[ fName ]
-            if self.__options.includeClasses:
-                for klass in info.classes:
-                    modBox.classes.append( klass )
-
-            if self.__options.includeFuncs:
-                for func in info.functions:
-                    modBox.funcs.append( func )
-
-            if self.__options.includeGlobs:
-                for glob in info.globals:
-                    modBox.globs.append( glob )
-
-            if self.__options.includeConnText:
-                for imp in info.imports:
-                    modBox.imports.append( imp )
-
-            # Add the module box
-            modBoxName = self.dataModel.addModule( modBox )
-
-            # Docstring box
-            if self.__options.includeDocs:
-                if info.docstring is not None:
-                    docBox = DgmDocstring()
-                    docBox.docstring = info.docstring
-                    docBox.refFile = fName
-
-                    # Add the box and its connection
-                    docBoxName = self.dataModel.addDocstringBox( docBox )
-
-                    conn = DgmConnection()
-                    conn.kind = DgmConnection.ModuleDoc
-                    conn.source = modBoxName
-                    conn.target = docBoxName
-                    self.dataModel.addConnection( conn )
-
-                    # Add rank for better layout
-                    rank = DgmRank()
-                    rank.firstObj = modBoxName
-                    rank.secondObj = docBoxName
-                    self.dataModel.addRank( rank )
-
-            # Other modules, in/out of the project
-            for item in info.imports:
-
-                impBox = DgmModule()
-                impFilePath = self.__getProjectPathForImport( fName, item.name )
-                if impFilePath == "":
-                    impBox.kind = DgmModule.NonProjectModule
-                    impBox.title = item.name
-                else:
-                    impBox.kind = DgmModule.OtherProjectModule
-                    impBox.title = os.path.basename( impFilePath ).split('.')[0]
-                    impBox.refFile = impFilePath
-
-                    cache = GlobalData().project.briefModinfoCache
-                    otherInfo = cache.get( impFilePath )
-                    if self.__options.includeClasses:
-                        for klass in otherInfo.classes:
-                            impBox.classes.append( klass )
-
-                    if self.__options.includeFuncs:
-                        for func in otherInfo.functions:
-                            impBox.funcs.append( func )
-
-                    if self.__options.includeGlobs:
-                        for glob in otherInfo.globals:
-                            impBox.globs.append( glob )
-
-                # Add the box
-                impBoxName = self.dataModel.addModule( impBox )
-
-                impConn = DgmConnection()
-                impConn.kind = DgmConnection.ModuleDependency
-                impConn.source = modBoxName
-                impConn.target = impBoxName
-
-                if self.__options.includeConnText:
-                    for impWhat in item.what:
-                        if impWhat.name != "":
-                            impConn.labels.append( impWhat )
-
-                self.dataModel.addConnection( impConn )
-        return
-
-    def __getProjectPathForImport( self, originatorPath, importName ):
-        """ Provides a path to a project file or
-            empty string if it is an outside import.
-            originatorPath - abs path of a file from which something is imported
-            importName - how import looks like, e.g.: os.path
-        """
-        candidatePath = os.path.dirname( originatorPath ) + os.path.sep
-        while True:
-            path = self.__getPathForKey( candidatePath, importName )
-            if path is not None:
-                return path
-            # strip one tail dir
-            newCandidate = os.path.dirname( candidatePath[ : -1 ] ) + \
-                           os.path.sep
-            if newCandidate == candidatePath:
-                break
-            candidatePath = newCandidate
-        return ""
-
-    def __getPathForKey( self, path, importName ):
-        " Checks a single key in the imports map "
-        importsList = None
-        try:
-            importsList = self.__projectModules[ path ]
-        except:
-            return None
-
-        if importName not in importsList:
-            return None
-
-        # OK, this is a project scope import. Get the name.
-        incomplete = path + importName.replace( '.', os.path.sep )
-        dirName = os.path.dirname( incomplete ) + os.path.sep
-        fileNameBegin = os.path.basename( incomplete ) + "."
-
-        for item in os.listdir( dirName ):
-            if item.startswith( fileNameBegin ):
-                if detectFileType( dirName + item ) in [ PythonFileType,
-                                                         Python3FileType ]:
-                    return dirName + item
-
-        # Check if it was a directory import, i.e. __init__.py should be used
-        lastCandidateDir = incomplete + os.path.sep
-        for item in os.listdir( lastCandidateDir ):
-            if item.startswith( '__init__.' ):
-                if detectFileType( lastCandidateDir + item ) in \
-                        [ PythonFileType, Python3FileType ]:
-                    return lastCandidateDir + item
-
-        raise Exception( "Inconsistency detected: disappeared import '" + \
-                         importName + "' for " + path )
 
     def __buildGraphicsScene( self, graph ):
         " Builds the QT graphics scene "
@@ -993,11 +864,6 @@ class ImportsDiagramProgress( QDialog ):
                 continue
 
             # OK, this is a module rectangle. Switch by type of the module.
-            if dataModelObj.kind == DgmModule.NonProjectModule:
-                self.scene.addItem( \
-                        ImportsDgmNonPrjModule( node, dataModelObj ) )
-                continue
-
             if dataModelObj.kind == DgmModule.ModuleOfInterest:
                 self.scene.addItem( \
                         ImportsDgmModuleOfInterest( node, dataModelObj,
@@ -1008,6 +874,21 @@ class ImportsDiagramProgress( QDialog ):
                 self.scene.addItem( \
                         ImportsDgmOtherPrjModule( node, dataModelObj,
                                                   self.physicalDpiX() ) )
+                continue
+
+            if dataModelObj.kind == DgmModule.SystemWideModule:
+                self.scene.addItem( \
+                        ImportsDgmSystemWideModule( node, dataModelObj ) )
+                continue
+
+            if dataModelObj.kind == DgmModule.BuiltInModule:
+                self.scene.addItem( \
+                        ImportsDgmBuiltInModule( node, dataModelObj ) )
+                continue
+
+            if dataModelObj.kind == DgmModule.UnknownModule:
+                self.scene.addItem( \
+                        ImportsDgmUnknownModule( node, dataModelObj ) )
                 continue
 
             raise Exception( "Unexpected type of module: " + \

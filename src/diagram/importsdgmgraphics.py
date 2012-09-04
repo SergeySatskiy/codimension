@@ -196,8 +196,8 @@ class ImportsDgmDependConn( QGraphicsPathItem ):
         return
 
 
-class ImportsDgmNonPrjModule( QGraphicsRectItem ):
-    " Non-project module "
+class ImportsDgmUnknownModule( QGraphicsRectItem ):
+    " Unknown module "
 
     def __init__( self, node, srcobj ):
         QGraphicsRectItem.__init__( self )
@@ -212,7 +212,7 @@ class ImportsDgmNonPrjModule( QGraphicsRectItem ):
         pen.setWidth( 2 )
         self.setPen( pen )
 
-        self.setBrush( QColor( 220, 255, 220 ) )
+        self.setBrush( QColor( 0, 0, 255 ) )
         return
 
     def paint( self, painter, option, widget ):
@@ -223,6 +223,98 @@ class ImportsDgmNonPrjModule( QGraphicsRectItem ):
 
         # Draw text over the rectangle
         font = QFont( "Courier", 12 )
+        painter.setFont( font )
+        painter.drawText( self.__node.posX - self.__node.width / 2.0,
+                          self.__node.posY - self.__node.height / 2.0,
+                          self.__node.width, self.__node.height,
+                          Qt.AlignCenter, self.__srcobj.title )
+        return
+
+
+class ImportsDgmBuiltInModule( QGraphicsRectItem ):
+    " Built-in module "
+
+    def __init__( self, node, srcobj ):
+        QGraphicsRectItem.__init__( self )
+        self.__node = node
+        self.__srcobj = srcobj
+
+        posX = node.posX - node.width / 2.0
+        posY = node.posY - node.height / 2.0
+        QGraphicsRectItem.__init__( self, posX, posY,
+                                    node.width, node.height )
+        pen = QPen( QColor( 10, 10, 10) )
+        pen.setWidth( 4 )
+        self.setPen( pen )
+
+        self.setBrush( QColor( 0, 255, 0 ) )
+        return
+
+    def paint( self, painter, option, widget ):
+        """ Draws a filled rectangle and then adds a title """
+
+        # Draw the rectangle
+        QGraphicsRectItem.paint( self, painter, option, widget )
+
+        # Draw text over the rectangle
+        font = QFont( "Courier", 12 )
+        painter.setFont( font )
+        painter.drawText( self.__node.posX - self.__node.width / 2.0,
+                          self.__node.posY - self.__node.height / 2.0,
+                          self.__node.width, self.__node.height,
+                          Qt.AlignCenter, self.__srcobj.title )
+
+        pixmap = PixmapCache().getPixmap( "systemmod.png" )
+        pixmapPosX = self.__node.posX + self.__node.width / 2.0 - \
+                     pixmap.width() / 2.0
+        pixmapPosY = self.__node.posY - self.__node.height / 2.0 - \
+                     pixmap.height() / 2.0
+        painter.setRenderHint( QPainter.SmoothPixmapTransform )
+        painter.drawPixmap( pixmapPosX, pixmapPosY, pixmap )
+        return
+
+
+class ImportsDgmSystemWideModule( QGraphicsRectItem ):
+    " Systemwide module "
+
+    def __init__( self, node, srcobj ):
+        QGraphicsRectItem.__init__( self )
+        self.__node = node
+        self.__srcobj = srcobj
+
+        posX = node.posX - node.width / 2.0
+        posY = node.posY - node.height / 2.0
+        QGraphicsRectItem.__init__( self, posX, posY,
+                                    node.width, node.height )
+        pen = QPen( QColor( 10, 10, 10) )
+        pen.setWidth( 2 )
+        self.setPen( pen )
+
+        self.__setTooltip()
+        self.setBrush( QColor( 220, 255, 220 ) )
+        return
+
+    def __setTooltip( self ):
+        " Sets the module tooltip "
+        tooltip = ""
+        if self.__srcobj.refFile != "":
+            tooltip = self.__srcobj.refFile
+        if self.__srcobj.docstring != "":
+            if tooltip != "":
+                tooltip += "\n"
+            tooltip += self.__srcobj.docstring
+        self.setToolTip( tooltip )
+        return
+
+    def paint( self, painter, option, widget ):
+        """ Draws a filled rectangle and then adds a title """
+
+        # Draw the rectangle
+        QGraphicsRectItem.paint( self, painter, option, widget )
+
+        # Draw text over the rectangle
+        font = QFont( "Arial", 12 )
+        font.setBold( True )
         painter.setFont( font )
         painter.drawText( self.__node.posX - self.__node.width / 2.0,
                           self.__node.posY - self.__node.height / 2.0,
@@ -257,6 +349,8 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
         pen = QPen( QColor( 0, 0, 0 ) )
         pen.setWidth( 2 )
         self.setPen( pen )
+
+        self.__setTooltip()
 
         # To make double click delivered
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
@@ -305,6 +399,17 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
                                                       heights[ 1 ] - \
                                                       heights[ 2 ] )
         return heights
+
+    def __setTooltip( self ):
+        " Sets the module tooltip "
+        tooltip = ""
+        if self.__srcobj.refFile != "":
+            tooltip = self.__srcobj.refFile
+        if self.__srcobj.docstring != "":
+            if tooltip != "":
+                tooltip += "\n"
+        self.setToolTip( tooltip )
+        return
 
     def paint( self, painter, option, widget ):
         " Draws a filled rectangle, adds title, classes/funcs/globs sections "
