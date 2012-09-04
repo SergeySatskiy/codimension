@@ -51,7 +51,7 @@ class ImportsDgmEdgeLabel( QGraphicsTextItem ):
         QGraphicsTextItem.__init__( self, text )
         self.__modObj = modObj
 
-        font = QFont( "Courier", 12 )
+        font = QFont( "Arial", 10 )
         self.setFont( font )
 
         metric = QFontMetrics( font )
@@ -222,7 +222,7 @@ class ImportsDgmUnknownModule( QGraphicsRectItem ):
         QGraphicsRectItem.paint( self, painter, option, widget )
 
         # Draw text over the rectangle
-        font = QFont( "Courier", 12 )
+        font = QFont( "Arial", 10 )
         painter.setFont( font )
         painter.drawText( self.__node.posX - self.__node.width / 2.0,
                           self.__node.posY - self.__node.height / 2.0,
@@ -257,7 +257,7 @@ class ImportsDgmBuiltInModule( QGraphicsRectItem ):
         QGraphicsRectItem.paint( self, painter, option, widget )
 
         # Draw text over the rectangle
-        font = QFont( "Courier", 12 )
+        font = QFont( "Arial", 10 )
         painter.setFont( font )
         painter.drawText( self.__node.posX - self.__node.width / 2.0,
                           self.__node.posY - self.__node.height / 2.0,
@@ -408,6 +408,7 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
         if self.__srcobj.docstring != "":
             if tooltip != "":
                 tooltip += "\n"
+            tooltip += self.__srcobj.docstring
         self.setToolTip( tooltip )
         return
 
@@ -422,7 +423,7 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
         # Draw the rectangle
         QGraphicsRectItem.paint( self, painter, itemOption, widget )
 
-        font = QFont( "Courier", 12 )
+        font = QFont( "Arial", 10 )
         painter.setFont( font )
 
         # Draw the title
@@ -541,7 +542,7 @@ class ImportsDgmDocNote( QGraphicsRectItem ):
         QGraphicsRectItem.paint( self, painter, itemOption, widget )
 
         # Draw text over the rectangle
-        font = QFont( "Courier", 12 )
+        font = QFont( "Arial", 10 )
         painter.setFont( font )
         painter.drawText( self.__node.posX - self.__node.width / 2.0,
                           self.__node.posY - self.__node.height / 2.0,
