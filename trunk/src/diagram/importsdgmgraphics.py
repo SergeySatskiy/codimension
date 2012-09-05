@@ -320,6 +320,8 @@ class ImportsDgmSystemWideModule( QGraphicsRectItem ):
             itemOption = QStyleOptionGraphicsItem( option )
             if itemOption.state & QStyle.State_Selected != 0:
                 itemOption.state = itemOption.state & ~QStyle.State_Selected
+        else:
+            itemOption = option
 
         # Draw the rectangle
         QGraphicsRectItem.paint( self, painter, itemOption, widget )

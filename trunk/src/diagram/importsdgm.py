@@ -604,11 +604,12 @@ class ImportsDiagramProgress( QDialog ):
 
     def isSystemWideImport( self, importString ):
         " Provides a path to the system wide import or None "
-        systemWideModules = getSystemWideModules()
+        # Systemwide modules may not have a path if it is a
+        # binary module, e.g. an .so library
         try:
-            return systemWideModules[ importString ]
+            return True, getSystemWideModules()[ importString ]
         except:
-            return None
+            return False, None
 
     def __addBoxInfo( self, box, info ):
         " Adds information to the given box if so configured "
@@ -712,10 +713,11 @@ class ImportsDiagramProgress( QDialog ):
                 if isBuiltInImport( item.name ):
                     impBox.kind = DgmModule.BuiltInModule
                 else:
-                    systemWideImportPath = self.isSystemWideImport( item.name )
-                    if systemWideImportPath is not None:
+                    found, systemWideImportPath = self.isSystemWideImport( item.name )
+                    if found:
                         impBox.kind = DgmModule.SystemWideModule
-                        impBox.refFile = systemWideImportPath
+                        if systemWideImportPath is not None:
+                            impBox.refFile = systemWideImportPath
                         impBox.docstring = \
                                 self.__getSytemWideImportDocstring( \
                                                         systemWideImportPath )
