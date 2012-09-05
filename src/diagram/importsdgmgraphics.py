@@ -208,11 +208,11 @@ class ImportsDgmUnknownModule( QGraphicsRectItem ):
         posY = node.posY - node.height / 2.0
         QGraphicsRectItem.__init__( self, posX, posY,
                                     node.width, node.height )
-        pen = QPen( QColor( 10, 10, 10) )
+        pen = QPen( QColor( 153, 0, 0 ) )
         pen.setWidth( 2 )
         self.setPen( pen )
 
-        self.setBrush( QColor( 0, 0, 255 ) )
+        self.setBrush( QColor( 216, 216, 207 ) )
         return
 
     def paint( self, painter, option, widget ):
@@ -224,6 +224,7 @@ class ImportsDgmUnknownModule( QGraphicsRectItem ):
         # Draw text over the rectangle
         font = QFont( "Arial", 10 )
         painter.setFont( font )
+        painter.setPen( QPen( QColor( 90, 90, 88 ) ) )
         painter.drawText( self.__node.posX - self.__node.width / 2.0,
                           self.__node.posY - self.__node.height / 2.0,
                           self.__node.width, self.__node.height,
