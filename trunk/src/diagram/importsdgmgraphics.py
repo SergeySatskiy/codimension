@@ -322,7 +322,7 @@ class ImportsDgmSystemWideModule( QGraphicsRectItem ):
                 itemOption.state = itemOption.state & ~QStyle.State_Selected
 
         # Draw the rectangle
-        QGraphicsRectItem.paint( self, painter, option, widget )
+        QGraphicsRectItem.paint( self, painter, itemOption, widget )
 
         # Draw text over the rectangle
         font = QFont( "Arial", 10 )
