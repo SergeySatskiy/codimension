@@ -288,12 +288,16 @@ class ImportsDgmSystemWideModule( QGraphicsRectItem ):
         posY = node.posY - node.height / 2.0
         QGraphicsRectItem.__init__( self, posX, posY,
                                     node.width, node.height )
-        pen = QPen( QColor( 10, 10, 10) )
+        pen = QPen( QColor( 0, 0, 0) )
         pen.setWidth( 2 )
         self.setPen( pen )
 
         self.__setTooltip()
         self.setBrush( QColor( 220, 255, 220 ) )
+
+        if self.__srcobj.refFile != "":
+            # System module with a path is clickable
+            self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def __setTooltip( self ):
@@ -303,7 +307,7 @@ class ImportsDgmSystemWideModule( QGraphicsRectItem ):
             tooltip = self.__srcobj.refFile
         if self.__srcobj.docstring != "":
             if tooltip != "":
-                tooltip += "\n"
+                tooltip += "\n\n"
             tooltip += self.__srcobj.docstring
         self.setToolTip( tooltip )
         return
@@ -311,28 +315,43 @@ class ImportsDgmSystemWideModule( QGraphicsRectItem ):
     def paint( self, painter, option, widget ):
         """ Draws a filled rectangle and then adds a title """
 
+        if self.__srcobj.refFile != "":
+            # Hide the dotted outline for clickable system modules
+            itemOption = QStyleOptionGraphicsItem( option )
+            if itemOption.state & QStyle.State_Selected != 0:
+                itemOption.state = itemOption.state & ~QStyle.State_Selected
+
         # Draw the rectangle
         QGraphicsRectItem.paint( self, painter, option, widget )
 
         # Draw text over the rectangle
-        font = QFont( "Arial", 12 )
-        font.setBold( True )
+        font = QFont( "Arial", 10 )
         painter.setFont( font )
         painter.drawText( self.__node.posX - self.__node.width / 2.0,
                           self.__node.posY - self.__node.height / 2.0,
                           self.__node.width, self.__node.height,
                           Qt.AlignCenter, self.__srcobj.title )
 
-        pixmap = PixmapCache().getPixmap( "systemmod.png" )
+        # .py module has a path to it, binary system wide module
+        # does not have a path
+        if self.__srcobj.refFile != "":
+            pixmap = PixmapCache().getPixmap( "systemmod.png" )
+        else:
+            pixmap = PixmapCache().getPixmap( "binarymod.png" )
+
         pixmapPosX = self.__node.posX + self.__node.width / 2.0 - \
                      pixmap.width() / 2.0
         pixmapPosY = self.__node.posY - self.__node.height / 2.0 - \
                      pixmap.height() / 2.0
         painter.setRenderHint( QPainter.SmoothPixmapTransform )
         painter.drawPixmap( pixmapPosX, pixmapPosY, pixmap )
-
         return
 
+    def mouseDoubleClickEvent( self, event ):
+        """ Open the clicked file as the new one """
+        if self.__srcobj.refFile != "":
+            GlobalData().mainWindow.openFile( self.__srcobj.refFile, -1 )
+        return
 
 
 class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
@@ -409,7 +428,7 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
             tooltip = self.__srcobj.refFile
         if self.__srcobj.docstring != "":
             if tooltip != "":
-                tooltip += "\n"
+                tooltip += "\n\n"
             tooltip += self.__srcobj.docstring
         self.setToolTip( tooltip )
         return
@@ -445,7 +464,7 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
                           posY + self.__heights[ 1 ],
                           posX + self.__node.width,
                           posY + self.__heights[ 1 ] )
-        if len( self.__srcobj.classes ) > 0:
+        if self.__srcobj.classes:
             classesPart = ""
             for klass in self.__srcobj.classes:
                 if classesPart != "":
@@ -461,7 +480,7 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
                           posY + self.__heights[ 2 ],
                           posX + self.__node.width,
                           posY + self.__heights[ 2 ] )
-        if len( self.__srcobj.funcs ) > 0:
+        if self.__srcobj.funcs:
             funcsPart = ""
             for func in self.__srcobj.funcs:
                 if funcsPart != "":
@@ -472,7 +491,7 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
                               Qt.AlignCenter, funcsPart )
 
         # Draw the globals text
-        if len( self.__srcobj.globs ) > 0:
+        if self.__srcobj.globs:
             globsPart = ""
             for glob in self.__srcobj.globs:
                 if globsPart != "":
