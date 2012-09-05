@@ -38,8 +38,8 @@ from utils.globals              import GlobalData
 
 
 # A list of items could be empty for a certain part so the default height
-# for such a section is 14 points (for 75 DPI devices)
-_EmptySectionHeight = 14.0
+# for such a section is 10 points (for 75 DPI devices)
+_EmptySectionHeight = 10.0
 
 
 
