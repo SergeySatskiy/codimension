@@ -667,6 +667,13 @@ class ImportsDiagramProgress( QDialog ):
 
     def __addSingleFileToDataModel( self, info, fName ):
         " Adds a single file to the data model "
+        if fName.endswith( "__init__.py" ) or \
+           fName.endswith( "__init__.py3" ):
+            if not info.classes and not info.functions and \
+               not info.globals and not info.imports:
+                # Skip dummy init files
+                return
+
         modBox = DgmModule()
         modBox.refFile = fName
 
