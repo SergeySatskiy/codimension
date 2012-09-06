@@ -641,8 +641,8 @@ class DiagramWidget( QGraphicsView ):
         self.scale( factor, factor )
         return
 
-    def onCopy( self ):
-        " Copies the diagram to the exchange buffer "
+    def __getImage( self ):
+        " Renders the diagram to an image "
         scene = self.scene()
         image = QImage( scene.width(), scene.height(),
                         QImage.Format_ARGB32_Premultiplied )
@@ -651,8 +651,16 @@ class DiagramWidget( QGraphicsView ):
         # painter.setRenderHint( QPainter.Antialiasing )
         scene.render( painter )
         painter.end()
+        return image
 
-        QApplication.clipboard().setImage( image )
+    def onCopy( self ):
+        " Copies the diagram to the exchange buffer "
+        QApplication.clipboard().setImage( self.__getImage() )
+        return
+
+    def saveTo( self, fName ):
+        " Saves the rendered image to a file "
+        self.__getImage().save( fName, "PNG" )
         return
 
 
