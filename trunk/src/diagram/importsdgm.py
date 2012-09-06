@@ -388,27 +388,27 @@ class ImportsDiagramDialog( QDialog, object ):
         # Check boxes
         self.includeClassesBox = QCheckBox( self )
         self.includeClassesBox.setText( "Show &classes in modules" )
-        self.includeClassesBox.setChecked( True )
+        self.includeClassesBox.setChecked( self.options.includeClasses )
         self.connect( self.includeClassesBox, SIGNAL( 'stateChanged(int)' ),
                       self.__updateOptions )
         self.includeFuncsBox = QCheckBox( self )
         self.includeFuncsBox.setText( "Show &functions in modules" )
-        self.includeFuncsBox.setChecked( True )
+        self.includeFuncsBox.setChecked( self.options.includeFuncs )
         self.connect( self.includeFuncsBox, SIGNAL( 'stateChanged(int)' ),
                       self.__updateOptions )
         self.includeGlobsBox = QCheckBox( self )
         self.includeGlobsBox.setText( "Show &global variables in modules" )
-        self.includeGlobsBox.setChecked( True )
+        self.includeGlobsBox.setChecked( self.options.includeGlobs )
         self.connect( self.includeGlobsBox, SIGNAL( 'stateChanged(int)' ),
                       self.__updateOptions )
         self.includeDocsBox = QCheckBox( self )
         self.includeDocsBox.setText( "Show modules &docstrings" )
-        self.includeDocsBox.setChecked( True )
+        self.includeDocsBox.setChecked( self.options.includeDocs )
         self.connect( self.includeDocsBox, SIGNAL( 'stateChanged(int)' ),
                       self.__updateOptions )
         self.includeConnTextBox = QCheckBox( self )
         self.includeConnTextBox.setText( "Show connection &labels" )
-        self.includeConnTextBox.setChecked( True )
+        self.includeConnTextBox.setChecked( self.options.includeConnText )
         self.connect( self.includeConnTextBox, SIGNAL( 'stateChanged(int)' ),
                       self.__updateOptions )
 
