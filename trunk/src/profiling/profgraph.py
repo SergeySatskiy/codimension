@@ -177,6 +177,7 @@ class Function( QGraphicsRectItem ):
         return
 
     def setRectanglePen( self ):
+        " Sets the diagram pen "
         pen = QPen( QColor( 0, 0, 0) )
         pen.setWidth( 2 )
         pen.setJoinStyle( Qt.RoundJoin )
@@ -186,11 +187,16 @@ class Function( QGraphicsRectItem ):
     def paint( self, painter, option, widget ):
         """ Draws a filled rectangle and then adds a title """
 
+        # Hide the dotted outline
+        itemOption = QStyleOptionGraphicsItem( option )
+        if itemOption.state & QStyle.State_Selected != 0:
+            itemOption.state = itemOption.state & ~QStyle.State_Selected
+
         # Draw the rectangle
         pen = painter.pen()
         pen.setJoinStyle( Qt.RoundJoin )
         painter.setPen( pen )
-        QGraphicsRectItem.paint( self, painter, option, widget )
+        QGraphicsRectItem.paint( self, painter, itemOption, widget )
 
         # Draw text over the rectangle
         font = QFont( "Arial", 10 )
@@ -365,6 +371,7 @@ class ProfileGraphViewer( QWidget ):
         return
 
     def onCopy( self ):
+        " Copies the diagram to the exchange buffer "
         self.__viewer.onCopy()
         return
 
