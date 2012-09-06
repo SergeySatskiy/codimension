@@ -3082,6 +3082,9 @@ class CodimensionMainWindow( QMainWindow ):
         self.__tabJumpToDefAct.setShortcut( "" )
         self.__tabJumpToScopeBeginAct.setShortcut( "" )
         self.__tabOpenImportAct.setShortcut( "" )
+
+        self.__saveFileAct.setEnabled( True )
+        self.__saveFileAsAct.setEnabled( True )
         return
 
     def __searchAboutToHide( self ):
