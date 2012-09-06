@@ -162,7 +162,7 @@ class DgmModule:
         if self.isProjectModule() and other.isProjectModule():
             return self.title == other.title
         return self.refFile == other.refFile and \
-               self.kind == other.kind
+               self.kind == other.kind and self.title == other.title
 
 
 class DgmRank:
