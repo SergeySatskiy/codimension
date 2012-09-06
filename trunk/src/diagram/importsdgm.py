@@ -154,7 +154,7 @@ class DgmModule:
 
     def isProjectModule( self ):
         " True if belongs to the project or the dir of interest "
-        return self.kind in [ self.ModuleOfInterest.
+        return self.kind in [ self.ModuleOfInterest,
                               self.OtherProjectModule ]
 
     def __eq__( self, other ):
