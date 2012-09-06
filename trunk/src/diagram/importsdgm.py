@@ -24,37 +24,22 @@
 """ imports diagram dialog """
 
 
-import os, os.path, logging, sys
-from PyQt4.QtCore                import Qt, SIGNAL, QTimer
-from PyQt4.QtGui                 import QDialog, QDialogButtonBox, \
-                                        QVBoxLayout, QCheckBox, QLabel, \
-                                        QProgressBar, QApplication, \
-                                        QGraphicsScene
-from utils.globals               import GlobalData
-from cdmbriefparser              import getBriefModuleInfoFromMemory
-from plaindotparser              import getGraphFromDescriptionData
-from importsdgmgraphics          import ImportsDgmDocConn, \
-                                        ImportsDgmDependConn, \
-                                        ImportsDgmSystemWideModule, \
-                                        ImportsDgmUnknownModule, \
-                                        ImportsDgmBuiltInModule, \
-                                        ImportsDgmModuleOfInterest, \
-                                        ImportsDgmOtherPrjModule, \
-                                        ImportsDgmDocNote, ImportsDgmEdgeLabel
+import os, os.path, logging
+from PyQt4.QtCore import Qt, SIGNAL, QTimer
+from PyQt4.QtGui import QDialog, QDialogButtonBox, QVBoxLayout, QCheckBox, \
+                        QLabel, QProgressBar, QApplication, QGraphicsScene
+from utils.globals import GlobalData
+from cdmbriefparser import getBriefModuleInfoFromMemory
+from plaindotparser import getGraphFromDescriptionData
+from importsdgmgraphics import ImportsDgmDocConn, ImportsDgmDependConn, \
+                               ImportsDgmSystemWideModule, \
+                               ImportsDgmUnknownModule, \
+                               ImportsDgmBuiltInModule, \
+                               ImportsDgmModuleOfInterest, \
+                               ImportsDgmOtherPrjModule, \
+                               ImportsDgmDocNote, ImportsDgmEdgeLabel
 from autocomplete.completelists import getSystemWideModules
 
-
-__builtInModules = list( sys.builtin_module_names )
-__builtInModules.append( "os.path" )
-if "__builtin__" in __builtInModules:
-    __builtInModules.remove( "__builtin__" )
-if "__main__" in __builtInModules:
-    __builtInModules.remove( "__main__" )
-
-
-def isBuiltInImport( importString ):
-    " True if it is a built-in module "
-    return importString in __builtInModules
 
 
 class DgmConnection:
@@ -662,7 +647,9 @@ class ImportsDiagramProgress( QDialog ):
         " Provides the system wide module docstring "
         try:
             info = GlobalData().project.briefModinfoCache.get( path )
-            return info.docstring.text
+            if info.docstring is not None:
+                return info.docstring.text
+            return ""
         except:
             return ""
 
@@ -710,19 +697,16 @@ class ImportsDiagramProgress( QDialog ):
                 impBox.kind = DgmModule.UnknownModule
                 impBox.title = item.name
 
-                if isBuiltInImport( item.name ):
-                    impBox.kind = DgmModule.BuiltInModule
-                else:
-                    found, systemWideImportPath = self.isSystemWideImport( item.name )
-                    if found:
+                found, systemWideImportPath = self.isSystemWideImport( item.name )
+                if found:
+                    if systemWideImportPath is not None:
                         impBox.kind = DgmModule.SystemWideModule
-                        if systemWideImportPath is not None:
-                            impBox.refFile = systemWideImportPath
+                        impBox.refFile = systemWideImportPath
                         impBox.docstring = \
-                                self.__getSytemWideImportDocstring( \
-                                                        systemWideImportPath )
+                            self.__getSytemWideImportDocstring( \
+                                            systemWideImportPath )
                     else:
-                        impBox.kind = DgmModule.UnknownModule
+                        impBox.kind = DgmModule.BuiltInModule
 
             impBoxName = self.dataModel.addModule( impBox )
 
