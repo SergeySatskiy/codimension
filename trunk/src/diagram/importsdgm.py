@@ -590,9 +590,16 @@ class ImportsDiagramProgress( QDialog ):
     def isSystemWideImport( self, importString ):
         " Provides a path to the system wide import or None "
         # Systemwide modules may not have a path if it is a
-        # binary module, e.g. an .so library
+        # built-in module, or to have a path to an .so library
         try:
-            return True, getSystemWideModules()[ importString ]
+            path = getSystemWideModules()[ importString ]
+            if path is None:
+                return True, None
+            if path.endswith( ".py" ):
+                return True, path
+            if path.endswith( ".py3" ):
+                return True, path
+            return True, None
         except:
             return False, None
 
@@ -645,6 +652,9 @@ class ImportsDiagramProgress( QDialog ):
 
     def __getSytemWideImportDocstring( self, path ):
         " Provides the system wide module docstring "
+        if not path.endswith( '.py' ) and not path.endswith( '.py3' ):
+            return ""
+
         try:
             info = GlobalData().project.briefModinfoCache.get( path )
             if info.docstring is not None:
