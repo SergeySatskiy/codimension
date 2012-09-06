@@ -219,10 +219,20 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
         " Tells id the main menu copy item should be switched on "
         return self.__profGraph.isVisible()
 
+    def isDiagramActive( self ):
+        " Tells if the diagram is active "
+        return self.__profGraph.isVisible()
+
     def onCopy( self ):
         " Ctrl+C triggered "
         if self.__profGraph.isVisible():
             self.__profGraph.onCopy()
+        return
+
+    def onSaveAs( self, fileName ):
+        " Saves the diagram into a file "
+        if self.__profGraph.isVisible():
+            self.__profGraph.onSaveAs( fileName )
         return
 
 

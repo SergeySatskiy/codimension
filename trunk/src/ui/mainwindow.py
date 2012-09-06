@@ -2533,7 +2533,12 @@ class CodimensionMainWindow( QMainWindow ):
         currentWidget = editorsManager.currentWidget()
         if currentWidget is None:
             return False
-        return currentWidget.getType() == MainWindowTabWidgetBase.GeneratedDiagram
+        if currentWidget.getType() == MainWindowTabWidgetBase.GeneratedDiagram:
+            return True
+        if currentWidget.getType() == MainWindowTabWidgetBase.ProfileViewer:
+            if currentWidget.isDiagramActive():
+                return True
+        return False
 
     def __isProfileViewer( self ):
         " True if this is a profile viewer "
