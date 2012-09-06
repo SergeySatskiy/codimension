@@ -663,6 +663,18 @@ class ImportsDiagramProgress( QDialog ):
         except:
             return ""
 
+    @staticmethod
+    def __getModuleTitle( fName ):
+        " Extracts a module name out of the file name "
+        baseTitle = os.path.basename( fName ).split( '.' )[ 0 ]
+        if baseTitle != "__init__":
+            return baseTitle
+
+        # __init__ is not very descriptive. Add a top level dir.
+        dirName = os.path.dirname( fName )
+        topDir = os.path.basename( dirName )
+        return topDir + "(" + baseTitle + ")"
+
     def __addSingleFileToDataModel( self, info, fName ):
         " Adds a single file to the data model "
         if fName.endswith( "__init__.py" ) or \
@@ -676,7 +688,7 @@ class ImportsDiagramProgress( QDialog ):
         modBox.refFile = fName
 
         modBox.kind = DgmModule.ModuleOfInterest
-        modBox.title = os.path.basename( fName ).split( '.' )[ 0 ]
+        modBox.title = self.__getModuleTitle( fName )
 
         self.__addBoxInfo( modBox, info )
         modBoxName = self.dataModel.addModule( modBox )
