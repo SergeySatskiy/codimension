@@ -658,7 +658,7 @@ class DiagramWidget( QGraphicsView ):
         QApplication.clipboard().setImage( self.__getImage() )
         return
 
-    def saveTo( self, fName ):
+    def onSaveAs( self, fName ):
         " Saves the rendered image to a file "
         self.__getImage().save( fName, "PNG" )
         return
@@ -781,6 +781,11 @@ class ImportDgmTabWidget( QWidget, MainWindowTabWidgetBase ):
     def onCopy( self ):
         " Copies the diagram to the exchange buffer "
         self.__viewer.onCopy()
+        return
+
+    def onSaveAs( self, fName ):
+        " Saves the diagram into the given file "
+        self.__viewer.onSaveAs( fName )
         return
 
 

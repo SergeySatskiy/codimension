@@ -1041,6 +1041,8 @@ class EditorsManager( QTabWidget ):
         if index == -1:
             widget = self.currentWidget()
             index = self.currentIndex()
+            if widget.getType() == MainWindowTabWidgetBase.GeneratedDiagram:
+                return self.onSaveDiagramAs()
         else:
             widget = self.widget( index )
 
@@ -1098,6 +1100,8 @@ class EditorsManager( QTabWidget ):
         if index == -1:
             widget = self.currentWidget()
             index = self.currentIndex()
+            if widget.getType() == MainWindowTabWidgetBase.GeneratedDiagram:
+                return self.onSaveDiagramAs()
         else:
             widget = self.widget( index )
 
@@ -1206,6 +1210,77 @@ class EditorsManager( QTabWidget ):
             return True
 
         return False
+
+    def onSaveDiagramAs( self ):
+        " Saves the current tab diagram to a file "
+        widget = self.currentWidget()
+        if widget.getType() != MainWindowTabWidgetBase.GeneratedDiagram:
+            return
+
+        dialog = QFileDialog( self, 'Save diagram as' )
+        dialog.setFileMode( QFileDialog.AnyFile )
+        dialog.setLabelText( QFileDialog.Accept, "Save" )
+        dialog.setNameFilter( "PNG files (*.png)" )
+        urls = []
+        for dname in QDir.drives():
+            urls.append( QUrl.fromLocalFile( dname.absoluteFilePath() ) )
+        urls.append( QUrl.fromLocalFile( QDir.homePath() ) )
+        project = GlobalData().project
+        if project.isLoaded():
+            urls.append( QUrl.fromLocalFile( project.getProjectDir() ) )
+        dialog.setSidebarUrls( urls )
+
+        if project.isLoaded():
+            dialog.setDirectory( project.getProjectDir() )
+        else:
+            dialog.setDirectory( QDir.currentPath() )
+        dialog.selectFile( "diagram.png" )
+
+        dialog.setOption( QFileDialog.DontConfirmOverwrite, False )
+        if dialog.exec_() != QDialog.Accepted:
+            return False
+
+        fileNames = dialog.selectedFiles()
+        fileName = os.path.abspath( str( fileNames[0] ) )
+
+        if os.path.isdir( fileName ):
+            logging.error( "A file must be selected" )
+            return False
+
+        if "." not in fileName:
+            fileName += ".png"
+
+        # Check permissions to write into the file or to a directory
+        if os.path.exists( fileName ):
+            # Check write permissions for the file
+            if not os.access( fileName, os.W_OK ):
+                logging.error( "There is no write permissions for " + fileName )
+                return False
+        else:
+            # Check write permissions to the directory
+            dirName = os.path.dirname( fileName )
+            if not os.access( dirName, os.W_OK ):
+                logging.error( "There is no write permissions for the " \
+                               "directory " + dirName )
+                return False
+
+        if os.path.exists( fileName ):
+            res = QMessageBox.warning( \
+                self, "Save diagram as",
+                "<p>The file <b>" + fileName + "</b> already exists.</p>",
+                QMessageBox.StandardButtons( QMessageBox.Abort | \
+                                             QMessageBox.Save ),
+                QMessageBox.Abort )
+            if res == QMessageBox.Abort or res == QMessageBox.Cancel:
+                return False
+
+        # All prerequisites are checked, save it
+        try:
+            widget.onSaveAs( fileName )
+        except Exception, excpt:
+            logging.error( str( excpt ) )
+            return False
+        return True
 
     def onFind( self ):
         " Triggered when Ctrl+F is received "
