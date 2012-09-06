@@ -2917,12 +2917,13 @@ class CodimensionMainWindow( QMainWindow ):
         " Triggered when tab menu is about to show "
         plainTextBuffer = self.__isPlainTextBuffer()
         isPythonBuffer = self.__isPythonBuffer()
+        isGeneratedDiagram = self.__isGeneratedDiagram()
         editorsManager = self.editorsManagerWidget.editorsManager
 
         self.__cloneTabAct.setEnabled( plainTextBuffer )
         self.__closeOtherTabsAct.setEnabled( editorsManager.closeOtherAvailable() )
         self.__saveFileAct.setEnabled( plainTextBuffer )
-        self.__saveFileAsAct.setEnabled( plainTextBuffer )
+        self.__saveFileAsAct.setEnabled( plainTextBuffer or isGeneratedDiagram )
         self.__closeTabAct.setEnabled( editorsManager.isTabClosable() )
         self.__tabJumpToDefAct.setEnabled( isPythonBuffer )
         self.__tabJumpToScopeBeginAct.setEnabled( isPythonBuffer )
