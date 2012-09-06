@@ -266,7 +266,7 @@ class ImportsDgmBuiltInModule( QGraphicsRectItem ):
                           self.__node.width, self.__node.height,
                           Qt.AlignCenter, self.__srcobj.title )
 
-        pixmap = PixmapCache().getPixmap( "embeddedmod.png" )
+        pixmap = PixmapCache().getPixmap( "binarymod.png" )
         pixmapPosX = self.__node.posX + self.__node.width / 2.0 - \
                      pixmap.width() / 2.0
         pixmapPosY = self.__node.posY - self.__node.height / 2.0 - \
@@ -295,9 +295,8 @@ class ImportsDgmSystemWideModule( QGraphicsRectItem ):
         self.__setTooltip()
         self.setBrush( QColor( 220, 255, 220 ) )
 
-        if self.__srcobj.refFile != "":
-            # System module with a path is clickable
-            self.setFlag( QGraphicsItem.ItemIsSelectable, True )
+        # System modules are clickable
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def __setTooltip( self ):
@@ -315,13 +314,10 @@ class ImportsDgmSystemWideModule( QGraphicsRectItem ):
     def paint( self, painter, option, widget ):
         """ Draws a filled rectangle and then adds a title """
 
-        if self.__srcobj.refFile != "":
-            # Hide the dotted outline for clickable system modules
-            itemOption = QStyleOptionGraphicsItem( option )
-            if itemOption.state & QStyle.State_Selected != 0:
-                itemOption.state = itemOption.state & ~QStyle.State_Selected
-        else:
-            itemOption = option
+        # Hide the dotted outline for clickable system modules
+        itemOption = QStyleOptionGraphicsItem( option )
+        if itemOption.state & QStyle.State_Selected != 0:
+            itemOption.state = itemOption.state & ~QStyle.State_Selected
 
         # Draw the rectangle
         QGraphicsRectItem.paint( self, painter, itemOption, widget )
@@ -334,13 +330,7 @@ class ImportsDgmSystemWideModule( QGraphicsRectItem ):
                           self.__node.width, self.__node.height,
                           Qt.AlignCenter, self.__srcobj.title )
 
-        # .py module has a path to it, binary system wide module
-        # does not have a path
-        if self.__srcobj.refFile != "":
-            pixmap = PixmapCache().getPixmap( "systemmod.png" )
-        else:
-            pixmap = PixmapCache().getPixmap( "binarymod.png" )
-
+        pixmap = PixmapCache().getPixmap( "systemmod.png" )
         pixmapPosX = self.__node.posX + self.__node.width / 2.0 - \
                      pixmap.width() / 2.0
         pixmapPosY = self.__node.posY - self.__node.height / 2.0 - \
@@ -447,6 +437,7 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
         QGraphicsRectItem.paint( self, painter, itemOption, widget )
 
         font = QFont( "Arial", 10 )
+        font.setLetterSpacing( QFont.PercentageSpacing, 120.0 )
         painter.setFont( font )
 
         # Draw the title
