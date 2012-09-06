@@ -1247,7 +1247,13 @@ class EditorsManager( QTabWidget ):
             dialog.setDirectory( project.getProjectDir() )
         else:
             dialog.setDirectory( QDir.currentPath() )
-        dialog.selectFile( "diagram.png" )
+
+        if widgetType == MainWindowTabWidgetBase.GeneratedDiagram:
+            dialog.selectFile( "imports-diagram.png" )
+        elif widgetType == MainWindowTabWidgetBase.ProfileViewer:
+            dialog.selectFile( "profiling-diagram.png" )
+        else:
+            dialog.selectFile( "diagram.png" )
 
         dialog.setOption( QFileDialog.DontConfirmOverwrite, False )
         if dialog.exec_() != QDialog.Accepted:
