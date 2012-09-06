@@ -43,7 +43,7 @@ def getSysModules():
     modules[ "os.path" ] = None
 
     for path in paths:
-        modules.update( getModules( path, "" ) )
+        modules.update( getModules( path ) )
 
     return modules
 
@@ -64,15 +64,13 @@ def __isTestModule( modName ):
 
 __regexpr = re.compile("(?i)[a-z_]\w*$")
 
-def getModules( path, submodPrefix ):
+def getModules( path ):
     """ Provides modules in a given directory.
         It expects absolute real path. Otherwise it is not guaranteed it
         works all right. """
 
     oldStderr = sys.stderr
     sys.stderr = DevNull()
-    oldStdout = sys.stdout
-    sys.stdout = DevNull()
     modules = {}
     for fName in listdir( path ):
         fName = path + sep + fName
@@ -85,19 +83,24 @@ def getModules( path, submodPrefix ):
             if modName == "__init__":
                 continue
             if __regexpr.match( modName ):
+                if __isTestModule( modName ):
+                    continue
                 if suffix[ 2 ] == imp.C_EXTENSION:
-                    # check that this extension can be imported
-                    try:
-                        __import__( submodPrefix + modName )
-                    except:
-                        # There could be different errors,
-                        # so to be on the safe side all are supressed
-                        continue
-                if not __isTestModule( modName ):
-                    if not fName.endswith( ".pyc" ):
-                        resolved, isLoop = resolveLink( fName )
-                        if not isLoop:
-                            modules[ modName ] = resolved
+                    # The initial version checked if this module could
+                    # be imported. It turned out that some libraries
+                    # on Ubuntu in particular can just hang. So I do
+                    # not check loading and voluntary add path to
+                    # the list of modules. Otherwise autocomplete
+                    # will not work for some important (and properly loadable)
+                    # modules like PyQt4
+                    resolved, isLoop = resolveLink( fName )
+                    if not isLoop:
+                        modules[ modName ] = resolved
+                    continue
+                if not fName.endswith( ".pyc" ):
+                    resolved, isLoop = resolveLink( fName )
+                    if not isLoop:
+                        modules[ modName ] = resolved
         elif isdir( fName ):
             modName = basename( fName )
 
@@ -112,14 +115,13 @@ def getModules( path, submodPrefix ):
                 if not isLoop:
                     modules[ modName ] = resolved
 
-            for subMod, fName in getModules( fName, modName + "." ).items():
+            for subMod, fName in getModules( fName ).items():
                 candidate = modName + "." + subMod
                 if not __isTestModule( candidate ):
                     resolved, isLoop = resolveLink( fName )
                     if not isLoop:
                         modules[ candidate ] = resolved
     sys.stderr = oldStderr
-    sys.stdout = oldStdout
     return modules
 
 
