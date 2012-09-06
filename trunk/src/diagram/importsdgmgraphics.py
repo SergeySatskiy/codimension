@@ -223,6 +223,7 @@ class ImportsDgmUnknownModule( QGraphicsRectItem ):
 
         # Draw text over the rectangle
         font = QFont( "Arial", 10 )
+        font.setBold( True )
         painter.setFont( font )
         painter.setPen( QPen( QColor( 90, 90, 88 ) ) )
         painter.drawText( self.__node.posX - self.__node.width / 2.0,
@@ -259,6 +260,7 @@ class ImportsDgmBuiltInModule( QGraphicsRectItem ):
 
         # Draw text over the rectangle
         font = QFont( "Arial", 10 )
+        font.setBold( True )
         painter.setFont( font )
         painter.setPen( QPen( QColor( 90, 90, 88 ) ) )
         painter.drawText( self.__node.posX - self.__node.width / 2.0,
@@ -324,6 +326,7 @@ class ImportsDgmSystemWideModule( QGraphicsRectItem ):
 
         # Draw text over the rectangle
         font = QFont( "Arial", 10 )
+        font.setBold( True )
         painter.setFont( font )
         painter.drawText( self.__node.posX - self.__node.width / 2.0,
                           self.__node.posY - self.__node.height / 2.0,
@@ -437,7 +440,7 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
         QGraphicsRectItem.paint( self, painter, itemOption, widget )
 
         font = QFont( "Arial", 10 )
-        font.setLetterSpacing( QFont.PercentageSpacing, 120.0 )
+        font.setBold( True )
         painter.setFont( font )
 
         # Draw the title
@@ -450,6 +453,9 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
         painter.drawText( posX, posY,
                           self.__node.width, self.__heights[ 0 ],
                           Qt.AlignCenter, self.__srcobj.title )
+
+        font.setBold( False )
+        painter.setFont( font )
 
         # Draw classes
         posY += self.__heights[ 0 ]
