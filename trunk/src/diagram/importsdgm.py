@@ -152,13 +152,17 @@ class DgmModule:
         return self.objName + ' [ ' + attributes + \
                ', label="{' + title + '}" ];'
 
+    def isProjectModule( self ):
+        " True if belongs to the project or the dir of interest "
+        return self.kind in [ self.ModuleOfInterest.
+                              self.OtherProjectModule ]
+
     def __eq__( self, other ):
         " Compares two module boxes "
-        return self.objName == other.objName
-#        if self.kind == DgmModule.NonProjectModule and \
-#           other.kind == DgmModule.NonProjectModule:
-#            return self.title == other.title
-#        return self.refFile == other.refFile
+        if self.isProjectModule() and other.isProjectModule():
+            return self.title == other.title
+        return self.refFile == other.refFile and \
+               self.kind == other.kind
 
 
 class DgmRank:
