@@ -375,6 +375,11 @@ class ProfileGraphViewer( QWidget ):
         self.__viewer.onCopy()
         return
 
+    def onSaveAs( self, fileName ):
+        " Saves the diagram to a file "
+        self.__viewer.onSaveAs( fileName )
+        return
+
     def zoomIn( self ):
         " Triggered on the 'zoom in' button "
         self.__viewer.zoomIn()

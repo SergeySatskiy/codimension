@@ -1041,7 +1041,11 @@ class EditorsManager( QTabWidget ):
         if index == -1:
             widget = self.currentWidget()
             index = self.currentIndex()
-            if widget.getType() == MainWindowTabWidgetBase.GeneratedDiagram:
+            widgetType = widget.getType()
+
+            if widgetType == MainWindowTabWidgetBase.GeneratedDiagram or \
+               (widgetType == MainWindowTabWidgetBase.ProfileViewer and \
+                widget.isDiagramActive()):
                 return self.onSaveDiagramAs()
         else:
             widget = self.widget( index )
@@ -1100,7 +1104,11 @@ class EditorsManager( QTabWidget ):
         if index == -1:
             widget = self.currentWidget()
             index = self.currentIndex()
-            if widget.getType() == MainWindowTabWidgetBase.GeneratedDiagram:
+            widgetType = widget.getType()
+
+            if widgetType == MainWindowTabWidgetBase.GeneratedDiagram or \
+               (widgetType == MainWindowTabWidgetBase.ProfileViewer and \
+                widget.isDiagramActive()):
                 return self.onSaveDiagramAs()
         else:
             widget = self.widget( index )
@@ -1214,8 +1222,13 @@ class EditorsManager( QTabWidget ):
     def onSaveDiagramAs( self ):
         " Saves the current tab diagram to a file "
         widget = self.currentWidget()
-        if widget.getType() != MainWindowTabWidgetBase.GeneratedDiagram:
+        widgetType = widget.getType()
+        if widgetType not in [ MainWindowTabWidgetBase.GeneratedDiagram,
+                               MainWindowTabWidgetBase.ProfileViewer ]:
             return
+        if widgetType == MainWindowTabWidgetBase.ProfileViewer:
+            if not widget.isDiagramActive():
+                return
 
         dialog = QFileDialog( self, 'Save diagram as' )
         dialog.setFileMode( QFileDialog.AnyFile )
