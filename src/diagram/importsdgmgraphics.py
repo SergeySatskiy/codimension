@@ -586,8 +586,8 @@ class ImportsDgmDocNote( QGraphicsRectItem ):
 
 
 
-class ImportDgmWidget( QGraphicsView ):
-    " Widget to show a generated import diagram "
+class DiagramWidget( QGraphicsView ):
+    " Widget to show a generated diagram "
 
     def __init__( self, parent = None ):
         QGraphicsView.__init__( self, parent )
@@ -664,7 +664,7 @@ class ImportDgmTabWidget( QWidget, MainWindowTabWidgetBase ):
         MainWindowTabWidgetBase.__init__( self )
         QWidget.__init__( self, parent )
 
-        self.__viewer = ImportDgmWidget( self )
+        self.__viewer = DiagramWidget( self )
         self.connect( self.__viewer, SIGNAL( 'ESCPressed' ),
                       self.__onEsc )
 

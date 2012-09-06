@@ -34,7 +34,7 @@ from utils.settings import Settings
 from utils.globals import GlobalData
 from utils.pixmapcache import PixmapCache
 from diagram.plaindotparser import getGraphFromPlainDotData
-from diagram.importsdgmgraphics import ImportDgmWidget
+from diagram.importsdgmgraphics import DiagramWidget
 from proftable import FLOAT_FORMAT
 
 
@@ -303,7 +303,7 @@ class ProfileGraphViewer( QWidget ):
         summary.setPalette( summaryPalette )
 
         self.__scene = QGraphicsScene()
-        self.__viewer = ImportDgmWidget()
+        self.__viewer = DiagramWidget()
         self.connect( self.__viewer, SIGNAL( 'ESCPressed' ), self.__onESC )
 
         vLayout = QVBoxLayout()
