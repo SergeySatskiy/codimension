@@ -138,11 +138,13 @@ class DgmModule:
                 globsPart += "\\n"
             globsPart += glob.name
 
+        spareForTopBottom = "\\n"
+
         attributes = 'shape=box, fontname=Arial, fontsize=10'
 
         if self.isProjectModule():
             return self.objName + ' [ ' + attributes + \
-                   ', label="{' + self.title + '\\n' + \
+                   ', label="{' + spareForTopBottom + self.title + '\\n' + \
                    classesPart + '\\n' + funcsPart + '\\n' + globsPart + '}" ];'
         return self.objName + ' [ ' + attributes + \
                ', label="{' + self.title + '}" ];'
