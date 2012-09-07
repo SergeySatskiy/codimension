@@ -37,11 +37,6 @@ from utils.pixmapcache          import PixmapCache
 from utils.globals              import GlobalData
 
 
-# A list of items could be empty for a certain part so the default height
-# for such a section is 10 points (for 75 DPI devices)
-_EmptySectionHeight = 10.0
-
-
 
 class ImportsDgmEdgeLabel( QGraphicsTextItem ):
     " Connector label "
@@ -356,7 +351,7 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
         self.__node = node
         self.__srcobj = srcobj
 
-        self.__heights = self.calcSectionHeights( deviceDPI )
+        self.__pixelsPerLine = self.calcPixelsPerLine()
 
         posX = node.posX - node.width / 2.0
         posY = node.posY - node.height / 2.0
@@ -372,49 +367,17 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
-    def calcSectionHeights( self, deviceDPI ):
+    def calcPixelsPerLine( self ):
         " Provides the module section heights "
-        heights = []
 
-        classesCount = len( self.__srcobj.classes )
-        funcsCount = len( self.__srcobj.funcs )
-        globsCount = len( self.__srcobj.globs )
 
-        totalCount = 1 + classesCount + funcsCount + globsCount
-        emptyCount = 0
-        if classesCount == 0:
-            emptyCount += 1
-        if funcsCount == 0:
-            emptyCount += 1
-        if globsCount == 0:
-            emptyCount += 1
+        numberOfLines = len( self.__srcobj.classes ) + \
+                        len( self.__srcobj.funcs ) + \
+                        len( self.__srcobj.globs ) +
+                        3   # Sections dividers
 
-        # Adjust empty section size for the device DPI
-        emptySectionHeight = _EmptySectionHeight * float( deviceDPI ) / 75.0
-        emptySpace = emptySectionHeight * float( emptyCount )
-        pixelsPerLine = ( float( self.__node.height ) - emptySpace ) / \
-                        float( totalCount )
-
-        # Add the module name height
-        heights.append( pixelsPerLine )
-
-        # Add the classes section
-        if classesCount == 0:
-            heights.append( emptySectionHeight )
-        else:
-            heights.append( pixelsPerLine * float( classesCount ) )
-
-        # Add the functions section
-        if funcsCount == 0:
-            heights.append( emptySectionHeight )
-        else:
-            heights.append( pixelsPerLine * float( funcsCount ) )
-
-        # The globals section takes the rest
-        heights.append( float( self.__node.height ) - heights[ 0 ] - \
-                                                      heights[ 1 ] - \
-                                                      heights[ 2 ] )
-        return heights
+        return float( self.__node.height ) / \
+               float( numberOfLines )
 
     def __setTooltip( self ):
         " Sets the module tooltip "
@@ -438,6 +401,37 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
 
         # Draw the rectangle
         QGraphicsRectItem.paint( self, painter, itemOption, widget )
+
+
+        # Start from the bottom to automatically take potential spare
+        # pixels for the title
+        font = QFont( "Arial", 10 )
+        painter.setFont( font )
+        posX = self.__node.posX - self.__node.width / 2.0
+        posY = self.__node.posY + self.__node.height - self.__pixelsPerLine / 2
+        lines = [ "" ] + self.__srcobj.classes + \
+                [ "" ] + self.__srcobj.funcs + \
+                [ "" ] + self.__srcobj.globs
+
+
+        for index in xrange( len( lines ) - 1, -1, -1 ):
+            if lines[ index ] == "":
+                # Draw a separation line
+                painter.drawLine( posX + 1, posY,
+                                  posX + self.__node.width,
+                                  posY )
+            else:
+                # Draw a text line
+                painter.drawText( posX, posY,
+                                  self.__node.width, self.__pixelsPerLine,
+                                  Qt.AlighCenter, lines[ index ] )
+            posY -= self.__pixelsPerLine
+
+        return
+
+
+
+
 
         font = QFont( "Arial", 10 )
         font.setBold( True )
@@ -598,7 +592,7 @@ class DiagramWidget( QGraphicsView ):
     def keyPressEvent( self, event ):
         """ Handles the key press events """
         if event.key() == Qt.Key_Escape:
-            self.emit( SIGNAL('ESCPressed') )
+            self.emit( SIGNAL( 'ESCPressed' ) )
             event.accept()
         elif event.key() == Qt.Key_C and \
              event.modifiers() == Qt.ControlModifier:

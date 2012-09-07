@@ -138,19 +138,14 @@ class DgmModule:
                 globsPart += "\\n"
             globsPart += glob.name
 
-        attributes = 'shape=record, fontname=Arial, fontsize=10'
-        title = self.title
-        if title.startswith( '__init__' ):
-            # This is a directory import, use thr dir name instead
-            title = os.path.basename( os.path.dirname( self.refFile ) )
+        attributes = 'shape=box, fontname=Arial, fontsize=10'
 
-        if self.kind in [ DgmModule.ModuleOfInterest,
-                          DgmModule.OtherProjectModule ]:
+        if self.isProjectModule():
             return self.objName + ' [ ' + attributes + \
-                   ', label="{' + title + '|' + \
-                   classesPart + '|' + funcsPart + '|' + globsPart + '}" ];'
+                   ', label="{' + self.title + '\\n' + \
+                   classesPart + '\\n' + funcsPart + '\\n' + globsPart + '}" ];'
         return self.objName + ' [ ' + attributes + \
-               ', label="{' + title + '}" ];'
+               ', label="{' + self.title + '}" ];'
 
     def isProjectModule( self ):
         " True if belongs to the project or the dir of interest "
@@ -158,9 +153,9 @@ class DgmModule:
                               self.OtherProjectModule ]
 
     def __eq__( self, other ):
-        " Compares two module boxes "
+        " Compares two module boxes when they are added to the data model "
         if self.isProjectModule() and other.isProjectModule():
-            return self.title == other.title
+            return self.refFile == other.refFile
         return self.refFile == other.refFile and \
                self.kind == other.kind and self.title == other.title
 
