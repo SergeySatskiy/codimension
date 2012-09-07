@@ -370,14 +370,20 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
     def calcPixelsPerLine( self ):
         " Provides the module section heights "
 
+        self.__lines = [ self.__srcobj.title, None ]
+        for klass in self.__srcobj.classes:
+            self.__lines.append( klass.name )
+        self.__lines.append( None )
+        for func in self.__srcobj.funcs:
+            self.__lines.append( func.name )
+        self.__lines.append( None )
+        for glob in self.__srcobj.globs:
+            self.__lines.append( glob.name )
 
-        numberOfLines = len( self.__srcobj.classes ) + \
-                        len( self.__srcobj.funcs ) + \
-                        len( self.__srcobj.globs ) +
-                        3   # Sections dividers
-
-        return float( self.__node.height ) / \
-               float( numberOfLines )
+        # One line a spare for half a line at the top and half a line at the
+        # bottom
+        return int( float( self.__node.height ) / \
+                    float( len( self.__lines ) + 1 ) )
 
     def __setTooltip( self ):
         " Sets the module tooltip "
@@ -408,92 +414,34 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
         font = QFont( "Arial", 10 )
         painter.setFont( font )
         posX = self.__node.posX - self.__node.width / 2.0
-        posY = self.__node.posY + self.__node.height - self.__pixelsPerLine / 2
-        lines = [ "" ] + self.__srcobj.classes + \
-                [ "" ] + self.__srcobj.funcs + \
-                [ "" ] + self.__srcobj.globs
+        posY = self.__node.posY + self.__node.height / 2.0 - 1.5 * self.__pixelsPerLine
 
-
-        for index in xrange( len( lines ) - 1, -1, -1 ):
-            if lines[ index ] == "":
+        occupiedPixels = 0
+        for index in xrange( len( self.__lines ) - 1, 0, -1 ):
+            if self.__lines[ index ] is None:
                 # Draw a separation line
-                painter.drawLine( posX + 1, posY,
+                painter.drawLine( posX + 1, posY + self.__pixelsPerLine / 2.0,
                                   posX + self.__node.width,
-                                  posY )
-            else:
+                                  posY + self.__pixelsPerLine / 2.0)
+            elif self.__lines[ index ] != "":
                 # Draw a text line
-                painter.drawText( posX, posY,
-                                  self.__node.width, self.__pixelsPerLine,
-                                  Qt.AlighCenter, lines[ index ] )
+                # Sometimes the bottom part of 'g' is not drawn so I add 2
+                # spare pixels.
+                painter.drawText( int( posX ), int( posY ),
+                                  int( self.__node.width ), self.__pixelsPerLine + 2,
+                                  Qt.AlignCenter, self.__lines[ index ] )
+            occupiedPixels += self.__pixelsPerLine
             posY -= self.__pixelsPerLine
 
-        return
-
-
-
-
-
-        font = QFont( "Arial", 10 )
+        # Draw the title in bold
         font.setBold( True )
         painter.setFont( font )
 
-        # Draw the title
-        posX = self.__node.posX - self.__node.width / 2.0
+        available = self.__node.height - occupiedPixels
         posY = self.__node.posY - self.__node.height / 2.0
-        painter.drawLine( posX + 1,
-                          posY + self.__heights[ 0 ],
-                          posX + self.__node.width,
-                          posY + self.__heights[ 0 ] )
-        painter.drawText( posX, posY,
-                          self.__node.width, self.__heights[ 0 ],
-                          Qt.AlignCenter, self.__srcobj.title )
-
-        font.setBold( False )
-        painter.setFont( font )
-
-        # Draw classes
-        posY += self.__heights[ 0 ]
-        painter.drawLine( posX + 1,
-                          posY + self.__heights[ 1 ],
-                          posX + self.__node.width,
-                          posY + self.__heights[ 1 ] )
-        if self.__srcobj.classes:
-            classesPart = ""
-            for klass in self.__srcobj.classes:
-                if classesPart != "":
-                    classesPart += "\n"
-                classesPart += klass.name
-            painter.drawText( posX, posY,
-                              self.__node.width, self.__heights[ 1 ],
-                              Qt.AlignCenter, classesPart )
-
-        # Draw funcs
-        posY += self.__heights[ 1 ]
-        painter.drawLine( posX + 1,
-                          posY + self.__heights[ 2 ],
-                          posX + self.__node.width,
-                          posY + self.__heights[ 2 ] )
-        if self.__srcobj.funcs:
-            funcsPart = ""
-            for func in self.__srcobj.funcs:
-                if funcsPart != "":
-                    funcsPart += "\n"
-                funcsPart += func.name
-            painter.drawText( posX, posY,
-                              self.__node.width, self.__heights[ 2 ],
-                              Qt.AlignCenter, funcsPart )
-
-        # Draw the globals text
-        if self.__srcobj.globs:
-            globsPart = ""
-            for glob in self.__srcobj.globs:
-                if globsPart != "":
-                    globsPart += "\n"
-                globsPart += glob.name
-            posY += self.__heights[ 2 ]
-            painter.drawText( posX, posY,
-                              self.__node.width, self.__heights[ 3 ],
-                              Qt.AlignCenter, globsPart )
+        painter.drawText( int( posX ), int( posY ),
+                          int( self.__node.width ), int( available ),
+                          Qt.AlignCenter, self.__lines[ 0 ] )
         return
 
     def mouseDoubleClickEvent( self, event ):
