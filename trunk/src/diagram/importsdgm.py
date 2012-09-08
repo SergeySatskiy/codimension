@@ -884,7 +884,9 @@ class ImportsDiagramProgress( QDialog ):
                 raise Exception( "Cannot find object " + node.name )
 
             if isinstance( dataModelObj, DgmDocstring ):
-                self.scene.addItem( ImportsDgmDocNote( node, dataModelObj ) )
+                self.scene.addItem( ImportsDgmDocNote( node,
+                                                       dataModelObj.docstring,
+                                                       dataModelObj.refFile ) )
                 continue
 
             # OK, this is a module rectangle. Switch by type of the module.
