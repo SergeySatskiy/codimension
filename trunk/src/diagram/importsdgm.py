@@ -144,10 +144,10 @@ class DgmModule:
 
         if self.isProjectModule():
             return self.objName + ' [ ' + attributes + \
-                   ', label="{' + spareForTopBottom + self.title + '\\n' + \
-                   classesPart + '\\n' + funcsPart + '\\n' + globsPart + '}" ];'
+                   ', label="' + spareForTopBottom + self.title + '\\n' + \
+                   classesPart + '\\n' + funcsPart + '\\n' + globsPart + '" ];'
         return self.objName + ' [ ' + attributes + \
-               ', label="{' + self.title + '}" ];'
+               ', label="' + self.title + '" ];'
 
     def isProjectModule( self ):
         " True if belongs to the project or the dir of interest "
@@ -907,12 +907,12 @@ class ImportsDiagramProgress( QDialog ):
 
             if dataModelObj.kind == DgmModule.BuiltInModule:
                 self.scene.addItem( \
-                        ImportsDgmBuiltInModule( node, dataModelObj ) )
+                        ImportsDgmBuiltInModule( node ) )
                 continue
 
             if dataModelObj.kind == DgmModule.UnknownModule:
                 self.scene.addItem( \
-                        ImportsDgmUnknownModule( node, dataModelObj ) )
+                        ImportsDgmUnknownModule( node ) )
                 continue
 
             raise Exception( "Unexpected type of module: " + \

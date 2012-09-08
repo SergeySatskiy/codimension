@@ -194,10 +194,9 @@ class ImportsDgmDependConn( QGraphicsPathItem ):
 class ImportsDgmUnknownModule( QGraphicsRectItem ):
     " Unknown module "
 
-    def __init__( self, node, srcobj ):
+    def __init__( self, node ):
         QGraphicsRectItem.__init__( self )
         self.__node = node
-        self.__srcobj = srcobj
 
         posX = node.posX - node.width / 2.0
         posY = node.posY - node.height / 2.0
@@ -224,17 +223,16 @@ class ImportsDgmUnknownModule( QGraphicsRectItem ):
         painter.drawText( self.__node.posX - self.__node.width / 2.0,
                           self.__node.posY - self.__node.height / 2.0,
                           self.__node.width, self.__node.height,
-                          Qt.AlignCenter, self.__srcobj.title )
+                          Qt.AlignCenter, self.__node.label )
         return
 
 
 class ImportsDgmBuiltInModule( QGraphicsRectItem ):
     " Built-in module "
 
-    def __init__( self, node, srcobj ):
+    def __init__( self, node ):
         QGraphicsRectItem.__init__( self )
         self.__node = node
-        self.__srcobj = srcobj
 
         posX = node.posX - node.width / 2.0
         posY = node.posY - node.height / 2.0
@@ -261,7 +259,7 @@ class ImportsDgmBuiltInModule( QGraphicsRectItem ):
         painter.drawText( self.__node.posX - self.__node.width / 2.0,
                           self.__node.posY - self.__node.height / 2.0,
                           self.__node.width, self.__node.height,
-                          Qt.AlignCenter, self.__srcobj.title )
+                          Qt.AlignCenter, self.__node.label )
 
         pixmap = PixmapCache().getPixmap( "binarymod.png" )
         pixmapPosX = self.__node.posX + self.__node.width / 2.0 - \
