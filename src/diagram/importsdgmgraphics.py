@@ -471,10 +471,11 @@ class ImportsDgmOtherPrjModule( ImportsDgmDetailedModuleBase ):
 class ImportsDgmDocNote( QGraphicsRectItem ):
     " Docstring box "
 
-    def __init__( self, node, srcobj ):
+    def __init__( self, node, srcobj, refFile ):
         QGraphicsRectItem.__init__( self )
         self.__node = node
         self.__srcobj = srcobj
+        self.__refFile = refFile
 
         posX = node.posX - node.width / 2.0
         posY = node.posY - node.height / 2.0
@@ -507,7 +508,7 @@ class ImportsDgmDocNote( QGraphicsRectItem ):
         painter.drawText( self.__node.posX - self.__node.width / 2.0,
                           self.__node.posY - self.__node.height / 2.0,
                           self.__node.width, self.__node.height,
-                          Qt.AlignCenter, self.__srcobj.docstring.text )
+                          Qt.AlignCenter, self.__srcobj.text )
 
         pixmap = PixmapCache().getPixmap( "docstring.png" )
         pixmapPosX = self.__node.posX + self.__node.width / 2.0 - \
@@ -520,8 +521,8 @@ class ImportsDgmDocNote( QGraphicsRectItem ):
 
     def mouseDoubleClickEvent( self, event ):
         """ Open the clicked file as the new one """
-        GlobalData().mainWindow.openFile( self.__srcobj.refFile,
-                                          self.__srcobj.docstring.line )
+        GlobalData().mainWindow.openFile( self.__refFile,
+                                          self.__srcobj.line )
         return
 
 
