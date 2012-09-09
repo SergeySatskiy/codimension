@@ -346,9 +346,10 @@ class ImportsDgmSystemWideModule( QGraphicsRectItem ):
 class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
     " Base class which calculates section heights "
 
-    def __init__( self, node, srcobj, deviceDPI ):
+    def __init__( self, node, refFile, srcobj, deviceDPI ):
         self.__node = node
         self.__srcobj = srcobj
+        self.__refFile = refFile
 
         self.__pixelsPerLine = self.calcPixelsPerLine()
 
@@ -387,8 +388,8 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
     def __setTooltip( self ):
         " Sets the module tooltip "
         tooltip = ""
-        if self.__srcobj.refFile != "":
-            tooltip = self.__srcobj.refFile
+        if self.__refFile != "":
+            tooltip = self.__refFile
         if self.__srcobj.docstring != "":
             if tooltip != "":
                 tooltip += "\n\n"
@@ -444,17 +445,17 @@ class ImportsDgmDetailedModuleBase( QGraphicsRectItem ):
         return
 
     def mouseDoubleClickEvent( self, event ):
-        """ Open the clicked file as the new one """
-
-        GlobalData().mainWindow.openFile( self.__srcobj.refFile, -1 )
+        " Open the clicked file as the new one "
+        GlobalData().mainWindow.openFile( self.__refFile, -1 )
         return
 
 
 class ImportsDgmModuleOfInterest( ImportsDgmDetailedModuleBase ):
     " Module of interest "
 
-    def __init__( self, node, srcobj, deviceDPI ):
-        ImportsDgmDetailedModuleBase.__init__( self, node, srcobj, deviceDPI )
+    def __init__( self, node, refFile, srcobj, deviceDPI ):
+        ImportsDgmDetailedModuleBase.__init__( self, node, refFile,
+                                               srcobj, deviceDPI )
         self.setBrush( QColor( 224, 236, 255 ) )
         return
 
@@ -463,8 +464,9 @@ class ImportsDgmModuleOfInterest( ImportsDgmDetailedModuleBase ):
 class ImportsDgmOtherPrjModule( ImportsDgmDetailedModuleBase ):
     " Other in-project module "
 
-    def __init__( self, node, srcobj, deviceDPI ):
-        ImportsDgmDetailedModuleBase.__init__( self, node, srcobj, deviceDPI )
+    def __init__( self, node, refFile, srcobj, deviceDPI ):
+        ImportsDgmDetailedModuleBase.__init__( self, node, refFile,
+                                               srcobj, deviceDPI )
         self.setBrush( QColor( 240, 240, 110 ) )
         return
 
@@ -472,7 +474,7 @@ class ImportsDgmOtherPrjModule( ImportsDgmDetailedModuleBase ):
 class ImportsDgmDocNote( QGraphicsRectItem ):
     " Docstring box "
 
-    def __init__( self, node, srcobj, refFile ):
+    def __init__( self, node, refFile, srcobj ):
         QGraphicsRectItem.__init__( self )
         self.__node = node
         self.__srcobj = srcobj
