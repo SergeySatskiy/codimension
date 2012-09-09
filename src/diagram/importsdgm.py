@@ -904,7 +904,9 @@ class ImportsDiagramProgress( QDialog ):
 
             if dataModelObj.kind == DgmModule.SystemWideModule:
                 self.scene.addItem( \
-                        ImportsDgmSystemWideModule( node, dataModelObj ) )
+                        ImportsDgmSystemWideModule( node,
+                                                    dataModelObj.refFile,
+                                                    dataModelObj.docstring ) )
                 continue
 
             if dataModelObj.kind == DgmModule.BuiltInModule:

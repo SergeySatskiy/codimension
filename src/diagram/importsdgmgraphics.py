@@ -274,10 +274,11 @@ class ImportsDgmBuiltInModule( QGraphicsRectItem ):
 class ImportsDgmSystemWideModule( QGraphicsRectItem ):
     " Systemwide module "
 
-    def __init__( self, node, srcobj ):
+    def __init__( self, node, refFile, docstring ):
         QGraphicsRectItem.__init__( self )
         self.__node = node
-        self.__srcobj = srcobj
+        self.__refFile = refFile
+        self.__docstring = docstring
 
         posX = node.posX - node.width / 2.0
         posY = node.posY - node.height / 2.0
@@ -297,12 +298,12 @@ class ImportsDgmSystemWideModule( QGraphicsRectItem ):
     def __setTooltip( self ):
         " Sets the module tooltip "
         tooltip = ""
-        if self.__srcobj.refFile != "":
-            tooltip = self.__srcobj.refFile
-        if self.__srcobj.docstring != "":
+        if self.__refFile != "":
+            tooltip = self.__refFile
+        if self.__docstring != "":
             if tooltip != "":
                 tooltip += "\n\n"
-            tooltip += self.__srcobj.docstring
+            tooltip += self.__docstring
         self.setToolTip( tooltip )
         return
 
@@ -324,7 +325,7 @@ class ImportsDgmSystemWideModule( QGraphicsRectItem ):
         painter.drawText( self.__node.posX - self.__node.width / 2.0,
                           self.__node.posY - self.__node.height / 2.0,
                           self.__node.width, self.__node.height,
-                          Qt.AlignCenter, self.__srcobj.title )
+                          Qt.AlignCenter, self.__node.label )
 
         pixmap = PixmapCache().getPixmap( "systemmod.png" )
         pixmapPosX = self.__node.posX + self.__node.width / 2.0 - \
@@ -337,8 +338,8 @@ class ImportsDgmSystemWideModule( QGraphicsRectItem ):
 
     def mouseDoubleClickEvent( self, event ):
         """ Open the clicked file as the new one """
-        if self.__srcobj.refFile != "":
-            GlobalData().mainWindow.openFile( self.__srcobj.refFile, -1 )
+        if self.__refFile != "":
+            GlobalData().mainWindow.openFile( self.__refFile, -1 )
         return
 
 
