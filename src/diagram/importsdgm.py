@@ -822,8 +822,8 @@ class ImportsDiagramProgress( QDialog ):
             QApplication.processEvents()
             self.__buildGraphicsScene( graph )
 
-            # TODO
             # Clear the data model
+            self.dataModel = None
         except Exception, exc:
             QApplication.restoreOverrideCursor()
             logging.error( str( exc ) )
@@ -885,20 +885,22 @@ class ImportsDiagramProgress( QDialog ):
 
             if isinstance( dataModelObj, DgmDocstring ):
                 self.scene.addItem( ImportsDgmDocNote( node,
-                                                       dataModelObj.docstring,
-                                                       dataModelObj.refFile ) )
+                                                       dataModelObj.refFile,
+                                                       dataModelObj.docstring ) )
                 continue
 
             # OK, this is a module rectangle. Switch by type of the module.
             if dataModelObj.kind == DgmModule.ModuleOfInterest:
                 self.scene.addItem( \
-                        ImportsDgmModuleOfInterest( node, dataModelObj,
+                        ImportsDgmModuleOfInterest( node, dataModelObj.refFile,
+                                                    dataModelObj,
                                                     self.physicalDpiX() ) )
                 continue
 
             if dataModelObj.kind == DgmModule.OtherProjectModule:
                 self.scene.addItem( \
-                        ImportsDgmOtherPrjModule( node, dataModelObj,
+                        ImportsDgmOtherPrjModule( node, dataModelObj.refFile,
+                                                  dataModelObj,
                                                   self.physicalDpiX() ) )
                 continue
 
