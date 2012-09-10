@@ -691,7 +691,8 @@ class FindInFilesDialog( QDialog, object ):
             if filterRe is None or filterRe.match( fname ):
                 widget = mainWindow.getWidgetForFileName( fname )
                 if widget is None:
-                    fileType = detectFileType( fname )
+                    # Do not check for broken symlinks
+                    fileType = detectFileType( fname, False )
                     if fileType not in [ PythonCompiledFileType, PixmapFileType,
                                          ELFFileType, SOFileType, PDFFileType,
                                          BrokenSymlinkFileType ]:
