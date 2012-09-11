@@ -1,3 +1,10 @@
+codimension-parser (1.5-1) precise; urgency=low
+
+  * New: input stream offsets for most of the items.
+  * Fix to make the absPosition attribute accessible.
+
+ -- Dmitry Kazimirov <dk@revl.org>  Tue, 11 Sep 2012 00:31:00 -0400
+
 codimension-parser (1.4-4) unstable; urgency=low
 
   * Release for Debian unstable.
