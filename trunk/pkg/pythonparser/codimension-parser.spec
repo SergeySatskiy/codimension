@@ -40,6 +40,10 @@ find $RPM_BUILD_ROOT -name "*.la" -exec rm -f {} ';'
 %{python_sitearch}/*.egg-info
 
 %changelog
+* Tue Sep 11 2012 Dmitry Kazimirov <dk@revl.org> - 1.5-1
+- New: input stream offsets for most of the items.
+- Fix to make the absPosition attribute accessible.
+
 * Mon May 21 2012 Dmitry Kazimirov <dk@revl.org> - 1.4-1
 - Upstream changes: Bug fix: make parseable the input where
   the last line is a comment and has no EOL.
