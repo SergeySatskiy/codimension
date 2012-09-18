@@ -1,5 +1,5 @@
 Name: codimension
-Version: 1.5
+Version: 1.6
 Release: 1
 License: GPLv3+
 Group: Development/Tools/IDE
@@ -77,7 +77,7 @@ update-desktop-database -q
 %{_datadir}/pixmaps/*.png
 
 %changelog
-* Mon Sep 17 2012 Dmitry Kazimirov <dk@revl.org> - 1.5-1
+* Mon Sep 17 2012 Dmitry Kazimirov <dk@revl.org> - 1.6-1
 
 - Upstream changes for release 1.5:
 - New feature: PythonTidy integration and diff viewers.

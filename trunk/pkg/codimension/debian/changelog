@@ -1,4 +1,4 @@
-codimension (1.5-2) precise; urgency=low
+codimension (1.6-1) precise; urgency=low
 
   * Added the missing __init__.py in thirdparty/.
 
