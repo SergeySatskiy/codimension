@@ -6,7 +6,7 @@ Build-Depends: debhelper (>= 7.0.50~)
 Build-Depends-Indep: python-all (>= 2.5), python-support,
  python-qt4 (>= 4.7.6), python-qscintilla2 (>=2.4.3)
 XS-Python-Version: >=2.5
-Standards-Version: 3.9.1
+Standards-Version: 3.9.3
 Homepage: http://code.google.com/p/codimension/
 Vcs-Svn: https://codimension.googlecode.com/svn
 Vcs-Browser: http://code.google.com/p/codimension/source/browse/
