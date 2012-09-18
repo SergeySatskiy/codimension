@@ -1,0 +1,18 @@
+Downloaded from http://code.google.com/p/jrfonseca/wiki/Gprof2Dot#Download
+
+Patched:
+- the unicode symbol \xd7 was replaced with a banal 'x'. I don't know how to
+  handle it properly on the graphics scene on one hand. On the other hand it's
+  not really a big deal.
+- arrow size is set to 0.0. It allows receiving the full path for a connection
+  and later add the arrow on the graphics scene.
+- changed the way how a function name is formed to make it consistent with a
+  table representation and the standard pstats output
+- adding the function id as a suffix to the label. This label will be stripped
+  at the time of preparing a graph scheme and used to find the corresponding
+  file name/line/type of module.
+- printing both actual number of calls and number of primitive calls if they
+  are no equal (pstats only)
+- fixing what is shown on the recursive calls edges. Now recursive calls plus
+  non-recursive calls are equeal to what is shown in the function box (pstats
+  only)
