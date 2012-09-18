@@ -152,6 +152,7 @@ act_on_codimension()
     $1 <<EOF
 src src
 thirdparty
+thirdparty/__init__.py thirdparty/__init__.py
 thirdparty/diff2html thirdparty/diff2html
 thirdparty/gprof2dot thirdparty/gprof2dot
 thirdparty/pymetrics-0.8.1 thirdparty/pymetrics
