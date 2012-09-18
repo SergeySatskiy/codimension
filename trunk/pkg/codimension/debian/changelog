@@ -1,3 +1,9 @@
+codimension (1.5-2) precise; urgency=low
+
+  * Added the missing __init__.py in thirdparty/.
+
+ -- Dmitry Kazimirov <dk@revl.org>  Tue, 18 Sep 2012 12:11:45 -0400
+
 codimension (1.5-1) precise; urgency=low
 
   * Upstream changes for release 1.5:
