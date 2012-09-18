@@ -177,7 +177,7 @@ patch_codimension()
     sed -i "s/^__version__.*/__version__ = '$version'/" \
         "$pkg_dir/src/codimension.py"
     test "x$pkgtype" = 'xdeb' && \
-        rm -rf "$pkg_dir/thirdparty/pymetrics" "$pkg_dir/COPYING"
+        rm -rf "$pkg_dir/thirdparty/pymetrics" "$pkg_dir/src/COPYING"
 }
 
 maketar()
