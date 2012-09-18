@@ -152,7 +152,10 @@ act_on_codimension()
     $1 <<EOF
 src src
 thirdparty
+thirdparty/diff2html thirdparty/diff2html
+thirdparty/gprof2dot thirdparty/gprof2dot
 thirdparty/pymetrics-0.8.1 thirdparty/pymetrics
+thirdparty/pythontidy thirdparty/pythontidy
 pkg/codimension/debian debian
 pkg/codimension/codimension.spec codimension.spec
 EOF
@@ -173,7 +176,7 @@ patch_codimension()
     rm -f "$pkg_dir/src/codimension"
     sed -i "s/^__version__.*/__version__ = '$version'/" \
         "$pkg_dir/src/codimension.py"
-    test "x$pkgtype" = 'xdeb' && rm -rf "$pkg_dir/thirdparty"
+    test "x$pkgtype" = 'xdeb' && rm -rf "$pkg_dir/thirdparty/pymetrics"
 }
 
 maketar()
