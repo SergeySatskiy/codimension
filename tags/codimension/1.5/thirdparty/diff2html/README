@@ -1,0 +1,10 @@
+The original script has been patched by
+Sergey Satskiy <sergey.satskiy@gmail.com>
+The main changes are:
+- Make it possible to work in case there are empty lines between --- and +++
+- Remove trailing spaces
+- Reduce the number of global variables
+- Reduce the number of complains from pylint
+- Change the default number of spaces in tabs from 8 to 4
+- Make it possible to work from memory
+
