@@ -12,7 +12,7 @@ Source2: %{name}.sharedmimeinfo
 Source3: %{name}.desktop
 
 Requires: python2
-Requires: codimension-parser >= 1.3
+Requires: codimension-parser >= 1.5
 Requires: PyQt4 qscintilla-python
 Requires: pylint python-chardet graphviz
 Requires: python-rope >= 0.9.2
