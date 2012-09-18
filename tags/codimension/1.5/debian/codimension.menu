@@ -1,7 +1,0 @@
-?package(codimension):\
-    needs="X11" \
-    section="Applications/Programming"\
-    title="Codimension" \
-    longtitle="Codimension Python IDE" \
-    command="/usr/bin/codimension" \
-    icon="/usr/share/pixmaps/codimension.png"

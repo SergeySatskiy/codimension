@@ -1,3 +1,0 @@
-This directory is likely obsolete.
-The application.css is now skinnable so it was moved to the skins directory.
-The CSS cache class is left for a while and could be removed later.
