@@ -77,8 +77,35 @@ update-desktop-database -q
 %{_datadir}/pixmaps/*.png
 
 %changelog
-* Mon May 21 2012 Dmitry Kazimirov <dk@revl.org> - 1.5-1
+* Mon Sep 17 2012 Dmitry Kazimirov <dk@revl.org> - 1.5-1
+
 - Upstream changes for release 1.5:
+- New feature: PythonTidy integration and diff viewers.
+- New feature: copying a diagram to the clipboard (main menu and Ctrl+C)
+- New feature: support for the new file templates when no new
+  project is loaded; UI to create, edit, and delete new file
+  templates.
+- New feature: unused class, function, and global
+  variable analysis.
+- New feature: find occurences in class, function, and
+  global variable viewers.
+- Bug fix for incorrect file icons in the editing history.
+- Bug fix for incorrect file name in the editing history
+  after "Save As".
+- Bug fix: it is now possible to save unchanged files that were
+  deleted from the disk.
+- "New Project" button is removed from the main toolbar.
+- Editor settings are moved from the main toolbar to the
+  new main menu item 'Options'.
+- New feature: total number of matches is now shown
+  in the search result header.
+- New feature: disassember for functions and classes
+  in the function and class viewers.
+- New feature: profiling support (with both graphical and
+  tabular result representation).
+- New feature: export of the profiler and module dependency
+  diagrams to PNG images.
+- Visual and performance improvements of import diagrams.
 - Ctrl+' replaces Ctrl+N to highlight the current word. Issue #323
 - Ctrl+N replaces Ctrl+T to create a new file. Issue #323
 - Ctrl+T is not used for anything now. Issue #323

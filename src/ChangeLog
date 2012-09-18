@@ -1,5 +1,6 @@
-2012 XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
+2012 Sep 17  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Release 1.5
 * New feature: PythonTidy integration and diff viewers
 * New Project button is removed from the main window toolbar
 * New feature: copying a diagram to the clipboard (main menu and Ctrl+C)
@@ -21,11 +22,6 @@
 * New feature: exporting profiling and imports diagrams in png format
 * Improvement of import diagrams: performance; tooltips for modules;
   better text alignment; better recognition of the system modules
-
-
-2012 XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
-
-* Release 1.5
 * Ctrl+' now highlight the current word, instead of Ctrl+N. Issue #323
 * Ctrl+N now creates a new file, instead of Ctrl+T. Issue #323
 * Ctrl+T is now not used for anything. Issue #323
