@@ -1,6 +1,6 @@
 2012 Sep 17  Sergey Satskiy <sergey.satskiy@gmail.com>
 
-* Release 1.5
+* Release 1.6
 * New feature: PythonTidy integration and diff viewers
 * New Project button is removed from the main window toolbar
 * New feature: copying a diagram to the clipboard (main menu and Ctrl+C)
