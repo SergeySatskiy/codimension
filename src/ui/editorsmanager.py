@@ -170,6 +170,10 @@ class EditorsManager( QTabWidget ):
             self._updateIconAndTooltip( self.currentIndex() )
         return
 
+    def setFocus( self ):
+        " Explicitly sets focus to the current widget "
+        self.currentWidget().setFocus()
+
     def __showTabContextMenu( self, pos ):
         " Shows a context menu if required "
         clickedIndex = self.tabBar().tabAt( pos )

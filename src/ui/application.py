@@ -62,6 +62,7 @@ class CodimensionApplication( QApplication ):
                         self.mainWindow.hideTooltips()
             if event.type() == QEvent.ApplicationActivate:
                 if self.mainWindow is not None:
+                    self.mainWindow.editorsManagerWidget.editorsManager.setFocus()
                     self.mainWindow.checkOutsideFileChanges()
         except:
             pass
