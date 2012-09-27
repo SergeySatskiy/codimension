@@ -30,9 +30,20 @@ __version__ = "0.0"
 import sys, os, os.path, traceback, logging, shutil, time
 from PyQt4                      import QtGui
 from optparse                   import OptionParser
-from PyQt4.QtCore               import SIGNAL, SLOT, QTimer, QDir
+from PyQt4.QtCore               import SIGNAL, SLOT, QTimer, QDir, QTextCodec
 from utils.latestver            import getLatestVersionFile
 from autocomplete.completelists import buildSystemWideModulesList
+
+
+try:
+    # Dirty hack to have default encoding set.
+    # Otherwise national letters in input fields will lead to
+    # exceptions/incorrect behavior
+    reload( sys )
+    sys.setdefaultencoding( "utf-8" )
+    QTextCodec.setCodecForCStrings( QTextCodec.codecForName( "utf-8" ) )
+except AttributeError:
+    pass
 
 
 # Workaround if link is used
