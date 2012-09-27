@@ -1,3 +1,9 @@
+XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Setting the default encoding to 'utf-8' for codimension itself.
+* Explicitly pass focus to the current editor when codimension is activated.
+
+
 2012 Sep 17  Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Release 1.6
