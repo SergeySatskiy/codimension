@@ -37,6 +37,7 @@ class CodimensionApplication( QApplication ):
         QApplication.setStyle( 'plastique' )
 
         self.mainWindow = None
+        self.__lastFocus = None
 
         QApplication.setWindowIcon( PixmapCache().getIcon( 'icon.png' ) )
 
@@ -56,14 +57,19 @@ class CodimensionApplication( QApplication ):
     def eventFilter( self, obj, event ):
         " Event filter to catch ESC application wide "
         try:
-            if event.type() == QEvent.KeyPress:
+            eventType = event.type()
+            if eventType == QEvent.KeyPress:
                 if event.key() == Qt.Key_Escape:
                     if self.mainWindow is not None:
                         self.mainWindow.hideTooltips()
-            if event.type() == QEvent.ApplicationActivate:
+            elif eventType == QEvent.ApplicationActivate:
+                if self.__lastFocus is not None:
+                    self.__lastFocus.setFocus()
+                    self.__lastFocus = None
                 if self.mainWindow is not None:
-                    self.mainWindow.editorsManagerWidget.editorsManager.setFocus()
                     self.mainWindow.checkOutsideFileChanges()
+            elif eventType == QEvent.ApplicationDeactivate:
+                self.__lastFocus = QApplication.focusWidget()
         except:
             pass
 
@@ -71,3 +77,4 @@ class CodimensionApplication( QApplication ):
             return QApplication.eventFilter( self, obj, event )
         except:
             return True
+
