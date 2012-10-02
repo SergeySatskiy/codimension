@@ -129,7 +129,8 @@ class GlobalData( object ):
             # project is invalidated.
             if fileName != "":
                 if not fileName.endswith( ".py" ) and \
-                   not fileName.endswith( ".py3" ):
+                   not fileName.endswith( ".py3" ) and \
+                   not fileName.endswith( ".pyw" ):
                     return
             self.project.validateRopeProject( fileName )
             return
@@ -158,13 +159,16 @@ class GlobalData( object ):
             if not os.path.isfile( scriptName ):
                 return False
             if not scriptName.endswith( ".py" ) and \
-               not scriptName.endswith( ".py3" ):
+               not scriptName.endswith( ".py3" ) and \
+               not scriptName.endswith( ".pyw" ):
                 return False
             return True
 
         def getFileLineDocstring( self, fName, line ):
             " Provides a docstring if so for the given file and line "
-            if not ( fName.endswith( '.py' ) or fName.endswith( '.py3' ) ):
+            if not ( fName.endswith( '.py' ) or \
+                     fName.endswith( '.py3' ) or \
+                     fName.endswith( '.pyw' ) ):
                 return ""
 
             if self.project.isLoaded():
@@ -196,9 +200,11 @@ class GlobalData( object ):
 
         def getModInfo( self, path ):
             " Provides a module info for the given file "
-            if not ( path.endswith( '.py' ) or path.endswith( '.py3' ) ):
+            if not ( path.endswith( '.py' ) or \
+                     path.endswith( '.py3' ) or \
+                     path.endswith( '.pyw' ) ):
                 raise Exception( "Trying to parse non-python file: " + path + \
-                                 ". Expected extensions .py or .py3" )
+                                 ". Expected extensions .py or .py3 or .pyw" )
 
             if self.project.isLoaded():
                 return self.project.briefModinfoCache.get( path )
