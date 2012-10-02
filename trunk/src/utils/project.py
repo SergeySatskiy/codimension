@@ -239,7 +239,8 @@ class CodimensionProject( QObject ):
     def __updateModinfoCache( self ):
         " Helper to hit each cache item "
         for item in self.filesList:
-            if item.endswith( '.py' ) or item.endswith( '.py3' ):
+            if item.endswith( '.py' ) or item.endswith( '.py3' ) or \
+               item.endswith( '.pyw' ):
                 self.briefModinfoCache.get( item )
         return
 
