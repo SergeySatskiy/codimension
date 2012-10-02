@@ -1,5 +1,7 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Early logging on Windows based X Server could lead to crashes so some
+  warnings were delayed.
 * Setting the default encoding to 'utf-8' for codimension itself.
 * Explicitly pass focus to the current editor when codimension is activated.
 
