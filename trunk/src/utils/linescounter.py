@@ -86,7 +86,7 @@ class LinesCounter:
                 continue
         return
 
-    def getLines( self, path, extensions = [ '.py', '.py3' ] ):
+    def getLines( self, path, extensions = [ '.py', '.py3', '.pyw' ] ):
         " Accumulates lines for a file or directory "
 
         if not os.path.exists( path ):
