@@ -67,6 +67,11 @@ from utils.briefmodinfocache    import validateBriefModuleInfoCache
 # Saving the root logging handlers
 __rootLoggingHandlers = []
 
+# In case of windows XServers (at least X-Win32) early usage of redirected
+# logging.something(...) leads to a silent crash. It does not happen in a pure
+# Linux environment though. So some warning messages are delayed till the
+# main application loop has started.
+__delayedWarnings = []
 
 def codimensionMain():
     """ The codimension driver """
@@ -185,9 +190,10 @@ def codimensionMain():
         if os.path.exists( settings.recentProjects[ 0 ] ):
             globalData.project.loadProject( settings.recentProjects[ 0 ] )
         else:
-            logging.warning( "Cannot open the most recent project: " + \
-                             settings.recentProjects[ 0 ] + \
-                             ". Ignore and continue." )
+            global __delayedWarnings
+            __delayedWarnings.append( "Cannot open the most recent project: " + \
+                                      settings.recentProjects[ 0 ] + \
+                                      ". Ignore and continue." )
             # Fake signal for triggering browsers layout
             globalData.project.emit( SIGNAL( 'projectChanged' ),
                                      CodimensionProject.CompleteProject )
@@ -243,6 +249,9 @@ def launchUserInterface():
                                   " is available. Please visit " \
                                   "http://satsky.spb.ru/codimension/codimensionEng.php" )
                     Settings().newerVerShown = True
+
+    for message in __delayedWarnings:
+        logging.warning( message )
 
     # Additional checks may come here
 
