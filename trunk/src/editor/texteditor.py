@@ -145,7 +145,7 @@ class TextEditor( ScintillaWrapper ):
             if modifiers == Qt.ShiftModifier:
                 if key == Qt.Key_Delete:
                     return self.onShiftDel()
-                if key == Qt.Key_Tab:
+                if key == Qt.Key_Tab or key == Qt.Key_Backtab:
                     return self.__onDedent()
                 if key == Qt.Key_End:
                     return self.__onShiftEnd()
@@ -2527,7 +2527,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                 self.__undoButton.setEnabled( False )
                 self.__redoButton.setEnabled( False )
 
-                # Spaces/tabs/line 
+                # Spaces/tabs/line
                 self.removeTrailingSpacesButton.setEnabled( False )
                 self.expandTabsButton.setEnabled( False )
         else:
