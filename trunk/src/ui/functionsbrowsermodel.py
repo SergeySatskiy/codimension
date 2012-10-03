@@ -59,7 +59,9 @@ class FunctionsBrowserModel( BrowserModelBase ):
         self.clear()
         project = self.globalData.project
         for fname in project.filesList:
-            if fname.endswith( '.py' ) or fname.endswith( '.py3' ):
+            if fname.endswith( '.py' ) or \
+               fname.endswith( '.py3' ) or \
+               fname.endswith( '.pyw' ):
                 info = project.briefModinfoCache.get( fname )
                 for func in info.functions:
                     item = TreeViewFunctionItem( self.rootItem, func )

@@ -125,7 +125,9 @@ class FindNameModel( QAbstractItemModel ):
 
         mainWindow = GlobalData().mainWindow
         for fname in GlobalData().project.filesList:
-            if fname.endswith( '.py' ) or fname.endswith( '.py3' ):
+            if fname.endswith( '.py' ) or \
+               fname.endswith( '.py3' ) or \
+               fname.endswith( '.pyw' ):
                 widget = mainWindow.getWidgetForFileName( fname )
                 if widget is None:
                     info = GlobalData().project.briefModinfoCache.get( fname )
@@ -222,7 +224,9 @@ class FindNameModel( QAbstractItemModel ):
             # uuid = record[ 0 ]
             fname = record[ 1 ]
             widget = record[ 2 ]
-            if fname.endswith( '.py' ) or fname.endswith( '.py3' ):
+            if fname.endswith( '.py' ) or \
+               fname.endswith( '.py3' ) or \
+               fname.endswith( '.pyw' ):
                 content = str( widget.getEditor().text() )
                 info = getBriefModuleInfoFromMemory( content )
                 self.__populateInfo( info, fname )

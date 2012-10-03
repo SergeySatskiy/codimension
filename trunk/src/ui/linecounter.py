@@ -122,7 +122,9 @@ class LineCounterDialog( QDialog, object ):
                 self.__scanDir( nestedDir, files )
             else:
                 candidate = os.path.realpath( path + item )
-                if candidate.endswith( ".py" ) or candidate.endswith( ".py3" ):
+                if candidate.endswith( ".py" ) or \
+                   candidate.endswith( ".py3" ) or \
+                   candidate.endswith( ".pyw" ):
                     if not candidate in files:
                         files.append( candidate )
         return
@@ -179,7 +181,8 @@ class LineCounterDialog( QDialog, object ):
                 processed = True
             else:
                 if (fileName.endswith( '.py' ) or \
-                    fileName.endswith( '.py3' )) and \
+                    fileName.endswith( '.py3' ) or \
+                    fileName.endswith( '.pyw' )) and \
                    os.path.exists( fileName ):
                     current.getLines( fileName )
                     processed = True
