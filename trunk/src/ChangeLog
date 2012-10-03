@@ -1,5 +1,7 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Shift+Tab intercepted properly in the editor window in Windows based X
+  Server. Issue #334
 * Early logging on Windows based X Server could lead to crashes so some
   warnings were delayed.
 * Setting the default encoding to 'utf-8' for codimension itself.
