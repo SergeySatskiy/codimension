@@ -1,0 +1,65 @@
+Format: http://dep.debian.net/deps/dep5
+Upstream-Name: codimension
+Upstream-Contact: Sergey Satskiy <sergey.satskiy@gmail.com>
+Source: https://code.google.com/p/codimension/
+
+Files: src/*
+Copyright: 2010, 2011, 2012  Sergey Satskiy <sergey.satskiy@gmail.com>
+License: GPL-3.0+
+
+Files: debian/*
+Copyright: 2011, 2012 Dmitry Kazimirov <dk@revl.org>
+License: GPL-3.0+
+
+Files: thirdparty/diff2html/*
+Copyright: 2012, Sergey Satskiy <sergey.satskiy@gmail.com>
+           2012, Olivier MATZ <zer0@droids-corp.org>
+           2009, Alan De Smet <adesmet@cs.wisc.edu>
+License: GPL-2.0+
+
+Files: thirdparty/gprof2dot/*
+Copyright: 2008, 2009 Jose Fonseca
+License: GPL-3.0+
+
+Files: thirdparty/pythontidy/*
+Copyright: 2006 Charles Curtis Rhode <CRhode@LacusVeris.com>
+License: GPL-2.0+
+
+License: GPL-3.0+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This package is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this program. If not, see <http://www.gnu.org/licenses/>.
+ .
+ On Debian systems, the complete text of the GNU General
+ Public License version 3 can be found in "/usr/share/common-licenses/GPL-3".
+
+License: GPL-2.0+
+ This program is free software; you can redistribute it
+ and/or modify it under the terms of the GNU General Public
+ License as published by the Free Software Foundation; either
+ version 2 of the License, or (at your option) any later
+ version.
+ .
+ This program is distributed in the hope that it will be
+ useful, but WITHOUT ANY WARRANTY; without even the implied
+ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ PURPOSE.  See the GNU General Public License for more
+ details.
+ .
+ You should have received a copy of the GNU General Public
+ License along with this package; if not, write to the Free
+ Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ Boston, MA  02110-1301 USA
+ .
+ On Debian systems, the full text of the GNU General Public
+ License version 2 can be found in the file
+ `/usr/share/common-licenses/GPL-2'.
