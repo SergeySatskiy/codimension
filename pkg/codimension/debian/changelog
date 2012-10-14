@@ -1,3 +1,14 @@
+codimension (1.7-1) precise; urgency=low
+
+  * Upstream bugfix release:
+  * Early logging on Windows-based X Server could lead to crashes.
+  * Shift+Tab is intercepted properly in the editor window on Windows.
+  * The default encoding is now set to 'utf-8' for Codimension itself.
+  * Explicitly pass focus to the current editor when Codimension is
+    activated.
+
+ -- Dmitry Kazimirov <dk@revl.org>  Sun, 14 Oct 2012 01:35:37 -0400
+
 codimension (1.6-1) precise; urgency=low
 
   * Added the missing __init__.py in thirdparty/.
