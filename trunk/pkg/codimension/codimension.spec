@@ -1,6 +1,6 @@
 Name: codimension
-Version: 1.6
-Release: 2
+Version: 1.7
+Release: 1
 License: GPLv3+
 Group: Development/Tools/IDE
 Summary: Python IDE with emphasis on graphical representation
@@ -77,8 +77,16 @@ update-desktop-database -q
 %{_datadir}/pixmaps/*.png
 
 %changelog
-* Sun Oct 14 2012 Dmitry Kazimirov <dk@revl.org> - 1.6-2
+* Sun Oct 14 2012 Dmitry Kazimirov <dk@revl.org> - 1.7-1
 - Python dependency: python2 -> python
+- Upstream bugfix release:
+- Early logging on Windows-based X Server could lead to crashes.
+- Shift+Tab is intercepted properly in the editor window on Windows.
+- The default encoding is now set to 'utf-8' for Codimension itself.
+- Explicitly pass focus to the current editor when Codimension is
+  activated.
+
+ -- Dmitry Kazimirov <dk@revl.org>  Sun, 14 Oct 2012 01:35:37 -0400
 
 * Mon Sep 17 2012 Dmitry Kazimirov <dk@revl.org> - 1.6-1
 - Upstream changes for release 1.5:
