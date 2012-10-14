@@ -1,6 +1,6 @@
 Name: codimension
 Version: 1.6
-Release: 1
+Release: 2
 License: GPLv3+
 Group: Development/Tools/IDE
 Summary: Python IDE with emphasis on graphical representation
@@ -11,7 +11,7 @@ Source1: %{name}.png
 Source2: %{name}.sharedmimeinfo
 Source3: %{name}.desktop
 
-Requires: python2
+Requires: python
 Requires: codimension-parser >= 1.5
 Requires: PyQt4 qscintilla-python
 Requires: pylint python-chardet graphviz
@@ -77,8 +77,10 @@ update-desktop-database -q
 %{_datadir}/pixmaps/*.png
 
 %changelog
-* Mon Sep 17 2012 Dmitry Kazimirov <dk@revl.org> - 1.6-1
+* Sun Oct 14 2012 Dmitry Kazimirov <dk@revl.org> - 1.6-2
+- Python dependency: python2 -> python
 
+* Mon Sep 17 2012 Dmitry Kazimirov <dk@revl.org> - 1.6-1
 - Upstream changes for release 1.5:
 - New feature: PythonTidy integration and diff viewers.
 - New feature: copying a diagram to the clipboard (main menu and Ctrl+C)
