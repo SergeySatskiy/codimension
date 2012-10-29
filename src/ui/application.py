@@ -23,8 +23,8 @@
 
 """ definition of the codimension QT based application class """
 
-from PyQt4.QtCore       import Qt, QEvent
-from PyQt4.QtGui        import QApplication
+from PyQt4.QtCore       import Qt, QEvent, QTimer, SIGNAL
+from PyQt4.QtGui        import QApplication, QDialog
 from utils.pixmapcache  import PixmapCache
 from utils.globals      import GlobalData
 
@@ -39,6 +39,17 @@ class CodimensionApplication( QApplication ):
         self.mainWindow = None
         self.__lastFocus = None
 
+        # Sick! It seems that QT sends Activate/Deactivate signals every time
+        # a dialog window is opened/closed. This happens very quickly (and
+        # totally unexpected!). The last focus window must not be memorized
+        # for these cases. The timer before helps to handle this wierd
+        # behavior. Without the timer clicking 'Cancel' in a dialog box leads
+        # to a core dump.
+        self.__deactivateTimer = QTimer( self )
+        self.__deactivateTimer.setSingleShot( True )
+        self.connect( self.__deactivateTimer, SIGNAL( 'timeout()' ),
+                                              self.__onDeactivate )
+
         QApplication.setWindowIcon( PixmapCache().getIcon( 'icon.png' ) )
 
         # Avoid having rectabgular frames on the status bar
@@ -47,6 +58,13 @@ class CodimensionApplication( QApplication ):
             self.setStyleSheet( appCSS )
 
         self.installEventFilter( self )
+        return
+
+    def __onDeactivate( self ):
+        " Triggered when timer fires "
+        if self.__deactivateTimer.isActive():
+            self.__deactivateTimer.stop()
+        self.__lastFocus = QApplication.focusWidget()
         return
 
     def setMainWindow( self, window ):
@@ -63,13 +81,17 @@ class CodimensionApplication( QApplication ):
                     if self.mainWindow is not None:
                         self.mainWindow.hideTooltips()
             elif eventType == QEvent.ApplicationActivate:
+                if self.__deactivateTimer.isActive():
+                    self.__deactivateTimer.stop()
                 if self.__lastFocus is not None:
                     self.__lastFocus.setFocus()
                     self.__lastFocus = None
                 if self.mainWindow is not None:
                     self.mainWindow.checkOutsideFileChanges()
             elif eventType == QEvent.ApplicationDeactivate:
-                self.__lastFocus = QApplication.focusWidget()
+                if self.__deactivateTimer.isActive():
+                    self.__deactivateTimer.stop()
+                self.__deactivateTimer.start( 25 )
         except:
             pass
 
@@ -77,4 +99,3 @@ class CodimensionApplication( QApplication ):
             return QApplication.eventFilter( self, obj, event )
         except:
             return True
-
