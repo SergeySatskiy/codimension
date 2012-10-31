@@ -1,13 +1,9 @@
-XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
+2012 Oct 31 Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Release 1.7
 * Bug fix: core dump if 'Cancel' is clicked in a dialog window. It is caused
   by saving the last focus widget and excessive generation of
   QT activate/deactivate signals.
-
-
-2012 Oct 14 Sergey Satskiy <sergey.satskiy@gmail.com>
-
-* Release 1.7
 * Shift+Tab intercepted properly in the editor window in Windows based X
   Server. Issue #334
 * Early logging on Windows based X Server could lead to crashes so some
