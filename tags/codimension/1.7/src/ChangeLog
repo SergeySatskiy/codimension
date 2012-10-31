@@ -1,3 +1,10 @@
+XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Bug fix: core dump if 'Cancel' is clicked in a dialog window. It is caused
+  by saving the last focus widget and excessive generation of
+  QT activate/deactivate signals.
+
+
 2012 Oct 14 Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Release 1.7
