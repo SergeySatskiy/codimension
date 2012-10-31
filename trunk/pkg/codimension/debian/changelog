@@ -1,4 +1,4 @@
-codimension (1.7-1) quantal; urgency=low
+codimension (1.7-1) precise; urgency=low
 
   * Upstream bugfix release:
   * Early logging on Windows-based X Server could lead to crashes.
