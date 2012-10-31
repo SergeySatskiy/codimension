@@ -40,7 +40,7 @@ find $RPM_BUILD_ROOT -name "*.la" -exec rm -f {} ';'
 %{python_sitearch}/*.egg-info
 
 %changelog
-* Sun Oct 14 2012 Dmitry Kazimirov <dk@revl.org> - 1.5-2
+* Wed Oct 31 2012 Dmitry Kazimirov <dk@revl.org> - 1.5-2
 - Python dependency: python2 -> python
 
 * Tue Sep 11 2012 Dmitry Kazimirov <dk@revl.org> - 1.5-1

@@ -1,15 +1,15 @@
 Name: codimension-parser
 Version: 1.5
-Release: 1
+Release: 2
 License: GPLv3+
 Group: Development/Languages
 Summary: Fast and comprehensive parser of the Python language
 Source0: %{name}-%{version}.tar.gz
 
-Requires: python2
+Requires: python
 
 BuildRequires: libtool
-BuildRequires: python2-devel
+BuildRequires: python-devel
 
 # Exclude .so libraries from the "Provides" list.
 %{?filter_setup:
@@ -40,6 +40,9 @@ find $RPM_BUILD_ROOT -name "*.la" -exec rm -f {} ';'
 %{python_sitearch}/*.egg-info
 
 %changelog
+* Wed Oct 31 2012 Dmitry Kazimirov <dk@revl.org> - 1.5-2
+- Python dependency: python2 -> python
+
 * Tue Sep 11 2012 Dmitry Kazimirov <dk@revl.org> - 1.5-1
 - New: input stream offsets for most of the items.
 - Fix to make the absPosition attribute accessible.
