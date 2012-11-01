@@ -7,7 +7,7 @@ Summary: Python IDE with emphasis on graphical representation
 BuildArch: noarch
 
 Source0: %{name}-%{version}.tar.gz
-Source1: %{name}.png
+Source1: %{name}.xpm
 Source2: %{name}.sharedmimeinfo
 Source3: %{name}.desktop
 
@@ -55,7 +55,7 @@ cp -pr thirdparty $RPM_BUILD_ROOT%{_datadir}/%{name}/
 mkdir -p $RPM_BUILD_ROOT/%{_bindir}
 ln -s ../share/codimension/codimension.py $RPM_BUILD_ROOT/%{_bindir}/%{name}
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/pixmaps
-cp -p %{SOURCE1} $RPM_BUILD_ROOT%{_datadir}/pixmaps/%{name}.png
+cp -p %{SOURCE1} $RPM_BUILD_ROOT%{_datadir}/pixmaps/%{name}.xpm
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/mime/packages
 cp -p %{SOURCE2} $RPM_BUILD_ROOT%{_datadir}/mime/packages/%{name}.xml
 desktop-file-install --dir $RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE3}
@@ -74,7 +74,7 @@ update-desktop-database -q
 %{_datadir}/%{name}
 %{_datadir}/applications/*.desktop
 %{_datadir}/mime/packages/*.xml
-%{_datadir}/pixmaps/*.png
+%{_datadir}/pixmaps/*.xpm
 
 %changelog
 * Sun Oct 14 2012 Dmitry Kazimirov <dk@revl.org> - 1.7-1
