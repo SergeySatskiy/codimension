@@ -440,9 +440,8 @@ class FindInFilesDialog( QDialog, object ):
         comboBox.setDuplicatesEnabled( False )
         return
 
-
     def __onClose( self ):
-        " triggered when the close button is clicked "
+        " Triggered when the close button is clicked "
 
         self.__cancelRequest = True
         if not self.__inProgress:
@@ -703,6 +702,9 @@ class FindInFilesDialog( QDialog, object ):
                                 [ MainWindowTabWidgetBase.PlainTextEditor ]:
                         files.append( ItemToSearchIn( fname,
                                                       widget.getUUID() ) )
+            QApplication.processEvents()
+            if self.__cancelRequest:
+                raise Exception( "Cancel request" )
         return files
 
     def __openedFiles( self, filterRe ):
@@ -715,12 +717,18 @@ class FindInFilesDialog( QDialog, object ):
             fname = record[ 1 ]
             if filterRe is None or filterRe.match( fname ):
                 files.append( ItemToSearchIn( fname, uuid ) )
+            QApplication.processEvents()
+            if self.__cancelRequest:
+                raise Exception( "Cancel request" )
         return files
 
     @staticmethod
     def __dirFiles( path, filterRe, files ):
         " Files recursively for the dir "
         for item in os.listdir( path ):
+            QApplication.processEvents()
+            if self.__cancelRequest:
+                raise Exception( "Cancel request" )
             if os.path.isdir( path + item ):
                 if item in [ ".svn", ".cvs" ]:
                     # It does not make sense to search in revision control dirs
@@ -847,7 +855,18 @@ class FindInFilesDialog( QDialog, object ):
 
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         self.fileLabel.setPath( 'Building list of files to search in...' )
-        files = self.__buildFilesList()
+        QApplication.processEvents()
+        try:
+            files = self.__buildFilesList()
+        except Exception, exc:
+            if "Cancel request" in str( exc ):
+                QApplication.restoreOverrideCursor()
+                self.close()
+                return
+            else:
+                QApplication.restoreOverrideCursor()
+                logging.error( str( exc ) )
+                self.close()
         QApplication.restoreOverrideCursor()
         QApplication.processEvents()
 
