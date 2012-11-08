@@ -680,8 +680,7 @@ class FindInFilesDialog( QDialog, object ):
         return
 
 
-    @staticmethod
-    def __projectFiles( filterRe ):
+    def __projectFiles( self, filterRe ):
         " Project files list respecting the mask "
         mainWindow = GlobalData().mainWindow
         files = []
@@ -722,8 +721,7 @@ class FindInFilesDialog( QDialog, object ):
                 raise Exception( "Cancel request" )
         return files
 
-    @staticmethod
-    def __dirFiles( path, filterRe, files ):
+    def __dirFiles( self, path, filterRe, files ):
         " Files recursively for the dir "
         for item in os.listdir( path ):
             QApplication.processEvents()
@@ -735,8 +733,8 @@ class FindInFilesDialog( QDialog, object ):
                     continue
                 anotherDir, isLoop = resolveLink( path + item )
                 if not isLoop:
-                    FindInFilesDialog.__dirFiles( anotherDir + sep,
-                                                  filterRe, files )
+                    self.__dirFiles( anotherDir + sep,
+                                     filterRe, files )
                 continue
             if not os.path.isfile( path + item ):
                 continue
@@ -867,6 +865,7 @@ class FindInFilesDialog( QDialog, object ):
                 QApplication.restoreOverrideCursor()
                 logging.error( str( exc ) )
                 self.close()
+                return
         QApplication.restoreOverrideCursor()
         QApplication.processEvents()
 
