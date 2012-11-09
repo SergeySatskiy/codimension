@@ -1466,10 +1466,14 @@ class EditorsManager( QTabWidget ):
         widget = self.getWidgetByUUID( entry.uuid )
         self.activateTab( index )
         if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
-            # Need to jump to the memorized position
-            editor = widget.getEditor()
-            self.__restorePosition( editor, entry.line, entry.pos,
-                                    entry.firstVisible )
+            if widget.getLine() != entry.line or \
+               widget.getPos() != entry.pos or \
+               widget.getEditor().firstVisibleLine() != entry.firstVisible:
+                # Need to jump to the memorized position because something
+                # has been changed
+                editor = widget.getEditor()
+                self.__restorePosition( editor, entry.line, entry.pos,
+                                        entry.firstVisible )
         self.__skipHistoryUpdate = False
         return
 
