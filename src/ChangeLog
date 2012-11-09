@@ -1,3 +1,10 @@
+XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prevent loosing selection in case switching between history positions
+  if nothing has been changed in the required buffer.
+* Have the find-in-files dialog interruptible at the stage of building
+  the list of files to search in.
+
 2012 Oct 31 Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Release 1.7
