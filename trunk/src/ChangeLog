@@ -1,5 +1,7 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Add a shortcut in the 'Open file' dialog to the directory where the
+  current tab file (if so) is.
 * Add file to the recent files list at the time of closing a tab as well
   (not only at the time of opening). Otherwise a file is not there when it
   was loaded from a command line and then its tab is closed.
