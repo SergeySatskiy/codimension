@@ -1161,9 +1161,6 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.debugProjectButton, SIGNAL( 'clicked(bool)' ),
                       self.__onDebugProject )
 
-        # Hide the button temporarily
-        self.debugProjectButton.setVisible( False )
-
         packageDiagramButton = QAction( \
                 PixmapCache().getIcon( 'packagediagram.png' ),
                 'Generate package diagram', self )
@@ -1263,24 +1260,12 @@ class CodimensionMainWindow( QMainWindow ):
                                     'Return', self )
         self.connect( self.__dbgReturn, SIGNAL( "triggered()" ), self.__onDbgReturn )
         self.__dbgReturn.setVisible( False )
-        self.__dbgAnalyzeExc = QAction( PixmapCache().getIcon( "dbganalyzeexc.png" ),
-                                        'Analyze exception: OFF', self )
-        self.__dbgAnalyzeExc.setCheckable( True )
-        self.__dbgAnalyzeExc.setChecked( False )
-        self.connect( self.__dbgAnalyzeExc, SIGNAL( "triggered()" ), self.__onDbgAnalyzeExc )
-        self.__dbgAnalyzeExc.setVisible( False )
         self.__dbgTrapUnhandled = QAction( PixmapCache().getIcon( "dbgtrapunhandled.png" ),
                                            'Trap unhandled exception: OFF', self )
         self.__dbgTrapUnhandled.setCheckable( True )
         self.__dbgTrapUnhandled.setChecked( False )
         self.connect( self.__dbgTrapUnhandled, SIGNAL( "triggered()" ), self.__onDbgTrapUnhandled )
         self.__dbgTrapUnhandled.setVisible( False )
-        self.__dbgSync = QAction( PixmapCache().getIcon( "dbgsync.png" ),
-                                  'Sync mode: ON', self )
-        self.__dbgSync.setCheckable( True )
-        self.__dbgSync.setChecked( True )
-        self.connect( self.__dbgSync, SIGNAL( "triggered()" ), self.__onDbgSync )
-        self.__dbgSync.setVisible( False )
 
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
@@ -1316,9 +1301,7 @@ class CodimensionMainWindow( QMainWindow ):
         toolbar.addAction( self.__dbgReturn )
         self.__dbgSeparator2 = toolbar.addSeparator()
         self.__dbgSeparator2.setVisible( False )
-        toolbar.addAction( self.__dbgAnalyzeExc )
         toolbar.addAction( self.__dbgTrapUnhandled )
-        toolbar.addAction( self.__dbgSync )
         # Debugger part end
         # toolbar.addWidget( spacer )
 
@@ -2352,9 +2335,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.__dbgRunToLine.setVisible( newState )
         self.__dbgReturn.setVisible( newState )
         self.__dbgSeparator2.setVisible( newState )
-        self.__dbgAnalyzeExc.setVisible( newState )
+
         self.__dbgTrapUnhandled.setVisible( newState )
-        self.__dbgSync.setVisible( newState )
         self.updateRunDebugButtons()
 
         # Tabs at the bottom
@@ -2387,14 +2369,6 @@ class CodimensionMainWindow( QMainWindow ):
     def __onDbgReturn( self ):
         pass
 
-    def __onDbgAnalyzeExc( self ):
-        if self.__dbgAnalyzeExc.isChecked():
-            switch = 'ON'
-        else:
-            switch = 'OFF'
-        self.__dbgAnalyzeExc.setToolTip( 'Analyze exception: ' + switch )
-        return
-
     def __onDbgTrapUnhandled( self ):
         self.setDbgTrapUnhandledState( self.__dbgTrapUnhandled.isChecked() )
         return
@@ -2403,20 +2377,12 @@ class CodimensionMainWindow( QMainWindow ):
         " Changes the button state and tooltip "
         if state:
             switch = 'ON'
-            self.__dbgAnalyzeExc.setChecked( True )
+            self.__dbgTrapUnhandled.setChecked( True )
         else:
             switch = 'OFF'
-            self.__dbgAnalyzeExc.setChecked( False )
+            self.__dbgTrapUnhandled.setChecked( False )
         self.__dbgTrapUnhandled.setToolTip( 'Trap unhandled exception: ' + \
                                             switch )
-        return
-
-    def __onDbgSync( self ):
-        if self.__dbgSync.isChecked():
-            switch = 'ON'
-        else:
-            switch = 'OFF'
-        self.__dbgSync.setToolTip( 'Sync mode: ' + switch )
         return
 
     def __openProject( self ):
