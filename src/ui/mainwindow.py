@@ -2435,6 +2435,18 @@ class CodimensionMainWindow( QMainWindow ):
         for dname in QDir.drives():
             urls.append( QUrl.fromLocalFile( dname.absoluteFilePath() ) )
         urls.append( QUrl.fromLocalFile( QDir.homePath() ) )
+
+        editorsManager = self.editorsManagerWidget.editorsManager
+        try:
+            fileName = editorsManager.currentWidget().getFileName()
+            if os.path.isabs( fileName ):
+                dirName = os.path.dirname( fileName )
+                url = QUrl.fromLocalFile( dirName )
+                if not url in urls:
+                    urls.append( url )
+        except:
+            pass
+
         project = GlobalData().project
         if project.isLoaded():
             dialog.setDirectory( project.getProjectDir() )
@@ -2451,7 +2463,6 @@ class CodimensionMainWindow( QMainWindow ):
         fileName = os.path.realpath( str( fileNames[0] ) )
 
         fileType = detectFileType( fileName )
-        editorsManager = self.editorsManagerWidget.editorsManager
 
         if fileType == PixmapFileType:
             editorsManager.openPixmapFile( fileName )
