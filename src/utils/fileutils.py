@@ -28,7 +28,7 @@
 
 """ file related utils """
 
-import os.path
+import os, os.path
 from PyQt4.QtGui        import QImageReader
 from globals            import GlobalData
 from utils.pixmapcache  import PixmapCache

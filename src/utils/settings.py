@@ -44,7 +44,10 @@ ropePreferences = { 'ignore_syntax_errors': True,
                         "exceptions", "signal", "imp", "operator",
                         "strop", "zipimport",
                         "PyQt4", "PyQt4.QtGui", "QtGui",
-                        "PyQt4.QtCore", "QtCore" ] }
+                        "PyQt4.QtCore", "QtCore" ],
+                    'ignored_resources': [
+                        "*.pyc", "*~", ".ropeproject",
+                        ".hg", ".svn", "_svn", ".git", ".cvs" ] }
 
 _maxRecentProjects = 32
 _defaultXPos = 50
