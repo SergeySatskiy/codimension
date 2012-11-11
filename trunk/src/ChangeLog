@@ -1,5 +1,9 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* When completion is called and a temporary rope project is created,
+  exclude all the subdirectories where there are no __init__.py[3] files.
+  This mitigate a setup with a network home dir ( or network file location)
+  in a directory where there are lots of subdirectories
 * Add a shortcut in the 'Open file' dialog to the directory where the
   current tab file (if so) is.
 * Add file to the recent files list at the time of closing a tab as well

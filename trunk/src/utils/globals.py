@@ -22,7 +22,7 @@
 
 """ global data singleton """
 
-import os, sys
+import os, sys,  copy
 import rope.base.project
 from project            import CodimensionProject
 from briefmodinfocache  import BriefModuleInfoCache
@@ -30,6 +30,30 @@ from runparamscache     import RunParametersCache
 from settings           import ropePreferences, settingsDir
 from PyQt4.QtCore       import QDir
 from compatibility      import relpath
+
+
+# This function needs to have a rope project built smart
+def getSubdirs( path, baseNamesOnly = True, excludePythonModulesDirs = True ):
+    " Provides a list of sub directories for the given path "
+    subdirs = []
+    try:
+        path = os.path.realpath( path ) + os.path.sep
+        for item in os.listdir( path ):
+            candidate = path + item
+            if os.path.isdir( candidate ):
+                if excludePythonModulesDirs:
+                    modFile1 = candidate + os.path.sep + "__init__.py"
+                    modFile2 = candidate + os.path.sep + "__init__.py3"
+                    if os.path.exists( modFile1 ) or \
+                       os.path.exists( modFile2 ):
+                        continue
+                if baseNamesOnly:
+                    subdirs.append( item )
+                else:
+                    subdirs.append( candidate )
+    except:
+        pass
+    return subdirs
 
 
 class GlobalData( object ):
@@ -105,16 +129,26 @@ class GlobalData( object ):
             # Two cases: the buffer has been saved
             #            not saved buffer
             if os.path.isabs( fileName ):
-                project = rope.base.project.Project( os.path.dirname(fileName),
-                                                     None, None,
-                                                     **ropePreferences )
-                project.validate( project.root )
-                return project
+                dirName = os.path.dirname( fileName )
+            else:
+                # Unsaved buffer, make an assumption that
+                # it is in home directory
+                dirName = str( QDir.homePath() )
 
-            # Unsaved buffer, make an assumption that it is in home directory
-            project = rope.base.project.Project( str( QDir.homePath() ),
-                                                 None, None,
-                                                 **ropePreferences )
+            prefs = copy.deepcopy( ropePreferences )
+
+            # Exclude nested dirs as it could take too long
+            # Get only dir names and do not get those dirs
+            # where __init__.py[3] are present
+            subdirsToExclude = getSubdirs( dirName, True, True )
+
+            if prefs.has_key( "ignored_resources" ):
+                prefs[ "ignored_resources" ] += subdirsToExclude
+            else:
+                prefs[ "ignored_resources" ] = subdirsToExclude
+
+            project = rope.base.project.Project( dirName, None, None,
+                                                 **prefs )
             project.validate( project.root )
             return project
 
