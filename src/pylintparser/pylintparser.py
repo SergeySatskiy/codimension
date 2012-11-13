@@ -58,7 +58,11 @@ class ErrorMessage( object ):
         if len( parts ) < 3:
             raise Exception( "Unexpected pylint message format: " + line )
 
-        self.fileName = self.__cwd + parts[ 0 ].strip()
+        reportFileName = parts[ 0 ].strip()
+        if os.path.isabs( reportFileName ):
+            self.fileName = reportFileName
+        else:
+            self.fileName = self.__cwd + reportFileName
         self.lineNumber = int( parts[ 1 ].strip() )
 
         msg = ":".join( parts[ 2: ] )   # The message without the
