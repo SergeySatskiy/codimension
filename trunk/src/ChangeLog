@@ -1,5 +1,6 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Sometimes pylint reports absolute paths so it is respected now.
 * When completion is called and a temporary rope project is created,
   exclude all the subdirectories where there are no __init__.py[3] files.
   This mitigate a setup with a network home dir ( or network file location)
