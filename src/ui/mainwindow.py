@@ -1160,6 +1160,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.debugProjectButton.setFocusPolicy( Qt.NoFocus )
         self.connect( self.debugProjectButton, SIGNAL( 'clicked(bool)' ),
                       self.__onDebugProject )
+        self.debugProjectButton.setVisible( False )
 
         packageDiagramButton = QAction( \
                 PixmapCache().getIcon( 'packagediagram.png' ),
