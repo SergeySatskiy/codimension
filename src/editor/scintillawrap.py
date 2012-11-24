@@ -618,13 +618,18 @@ class ScintillaWrapper( QsciScintilla ):
         else:
             replacement = replaceStr.encode( "latin-1" )
 
-        if replacement == self.getTargetText():
+        target = self.getTargetText()
+        if replacement == target:
             # The found target is the same as what the user wants it
             # to replace with
             return False
 
         self.SendScintilla( cmd, len( replacement ), replacement )
-        self.__targetSearchStart = start + len( replaceStr )
+
+        # Adjust the target search start and end
+        replaceLength = len( replaceStr )
+        self.__targetSearchStart = start + replaceLength
+        self.__targetSearchEnd += replaceLength - len( target )
         return True
 
     # indicator handling methods

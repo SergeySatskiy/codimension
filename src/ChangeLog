@@ -1,6 +1,7 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
-* Fix: main menu -> tools -> pylint for project led to an exception.
+* Bug fix: tab expanding (replace all) did not replace everything.
+* Bug fix: main menu -> tools -> pylint for project led to an exception.
   Issue #346.
 * Sometimes pylint reports absolute paths so it is respected now.
 * When completion is called and a temporary rope project is created,
