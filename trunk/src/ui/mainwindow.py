@@ -1829,7 +1829,7 @@ class CodimensionMainWindow( QMainWindow ):
         QApplication.processEvents()
         return filesToProcess
 
-    def pylintButtonClicked( self, action ):
+    def pylintButtonClicked( self, action = None):
         " Project pylint report is requested "
 
         filesToProcess = self.__buildPythonFilesList()
