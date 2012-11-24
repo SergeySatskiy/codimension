@@ -60,7 +60,7 @@ class RunParametersCache( object ):
     def add( self, path, params ):
         " Adds run params into cache if needed "
         if params.isDefault():
-            if not self.__cache.has_key( path ):
+            if not path in self.__cache:
                 return
             self.remove( path )
             return

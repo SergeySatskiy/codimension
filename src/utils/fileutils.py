@@ -138,7 +138,7 @@ def detectFileType( path, checkForBrokenLink = True ):
         if not os.path.exists( path ):
             return BrokenSymlinkFileType
 
-    if __cachedFileTypes.has_key( path ):
+    if path in __cachedFileTypes:
         return __cachedFileTypes[ path ]
 
     # Must work for not existed files, e.g. new file request will also use it

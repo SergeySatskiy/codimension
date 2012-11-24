@@ -337,7 +337,7 @@ class Watcher( QObject ):
     def __processRemoveTopDir( self, path, dirsToBeRemoved, itemsToReport ):
         " Called for a disappeared top level dir "
 
-        if self.__fsTopLevelSnapshot.has_key( path ):
+        if path in self.__fsTopLevelSnapshot:
             # It is still a top level dir
             dirsToBeRemoved << path
             for item in self.__fsTopLevelSnapshot[ path ]:
@@ -507,7 +507,7 @@ class Watcher( QObject ):
         " Deregisters a directory recursively "
         dirsToBeRemoved << path
         itemsToReport << "-" + path
-        if self.__fsTopLevelSnapshot.has_key( path ):
+        if path in self.__fsTopLevelSnapshot:
             # This is a top level dir
             for item in self.__fsTopLevelSnapshot[ path ]:
                 if item.endswith( os.path.sep ):
@@ -521,7 +521,7 @@ class Watcher( QObject ):
             return
 
         # It is from an a project level snapshot
-        if self.__fsSnapshot.has_key( path ):
+        if path in self.__fsSnapshot:
             for item in self.__fsSnapshot[ path ]:
                 if item.endswith( os.path.sep ):
                     # It's a dir

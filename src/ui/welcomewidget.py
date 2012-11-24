@@ -54,10 +54,10 @@ class WelcomeWidget( HTMLTabWidget ):
                                "<b>Note</b>: version " + \
                                values[ "LatestVersion" ] + " is <a href='" + \
                                self.downloadPage + "'>available</a>"
-                if values.has_key( "ReleaseDate" ):
+                if "ReleaseDate" in values:
                     newerVersion += ", released on " + values[ "ReleaseDate" ]
                 newerVersion += "</p>"
-                if values.has_key( "ChangeLog" ):
+                if "ChangeLog" in values:
                     newerVersion += "Version " + values[ "LatestVersion" ] + \
                                     " change log:"
                     newerVersion += "<pre>" + values[ "ChangeLog" ] + "</pre>"

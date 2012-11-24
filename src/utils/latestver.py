@@ -87,7 +87,7 @@ def getLatestVersionFile():
             result[ key ] = value.replace( '\\n', '\n' )
 
         # LatestVersion key must be there
-        if not result.has_key( 'LatestVersion' ):
+        if not 'LatestVersion' in result:
             success = False
             values  = {}
         else:

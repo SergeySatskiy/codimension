@@ -244,7 +244,7 @@ class FileOutlineViewer( QWidget ):
         # This is a python file, check if we already have the parsed info in
         # the cache
         uuid = widget.getUUID()
-        if self.__outlineBrowsers.has_key( uuid ):
+        if uuid in self.__outlineBrowsers:
             # We have it, hide the current and show the existed
             if self.__currentUUID is not None:
                 self.__outlineBrowsers[ self.__currentUUID ].browser.hide()
@@ -302,7 +302,7 @@ class FileOutlineViewer( QWidget ):
     def __onBufferChanged( self ):
         " Triggered when a change in the buffer is identified "
         self.__updateTimer.stop()
-        if self.__outlineBrowsers.has_key( self.__currentUUID ):
+        if self.__currentUUID in self.__outlineBrowsers:
             if self.__outlineBrowsers[ self.__currentUUID ].changed == False:
                 self.__outlineBrowsers[ self.__currentUUID ].changed = True
                 browser = self.__outlineBrowsers[ self.__currentUUID ].browser
@@ -344,14 +344,14 @@ class FileOutlineViewer( QWidget ):
     def __onTabClosed( self, uuid ):
         " Triggered when a tab is closed "
 
-        if self.__outlineBrowsers.has_key( uuid ):
+        if uuid in self.__outlineBrowsers:
             del self.__outlineBrowsers[ uuid ]
         return
 
     def __onSavedBufferAs( self, fileName, uuid ):
         " Triggered when a file is saved with a new name "
 
-        if self.__outlineBrowsers.has_key( uuid ):
+        if uuid in self.__outlineBrowsers:
 
             baseName = os.path.basename( fileName )
             if detectFileType( baseName ) not in [ PythonFileType,
