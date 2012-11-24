@@ -128,7 +128,7 @@ def __getImportedObjects( moduleName, fileName ):
 
     modulePath = None
     moduleName = str( moduleName )
-    if __systemwideModules.has_key( moduleName ):
+    if moduleName in __systemwideModules:
         modulePath = __systemwideModules[ moduleName ]
         if modulePath is None:
             # it could be a built-in module
@@ -137,7 +137,7 @@ def __getImportedObjects( moduleName, fileName ):
         # Not a system wide, try search in the project
         # or current directories
         specificModules = getProjectSpecificModules( fileName )
-        if specificModules.has_key( moduleName ):
+        if moduleName in specificModules:
             modulePath = specificModules[ moduleName ]
 
     if modulePath is None:
@@ -415,7 +415,7 @@ def _isSystemImportOrAlias( obj, text, info ):
     " Checks if the obj is a system wide import name (possibly alias) "
     buildSystemWideModulesList()
 
-    if __systemwideModules.has_key( obj ):
+    if obj in __systemwideModules:
         return True, obj
 
     # Check aliases
@@ -423,7 +423,7 @@ def _isSystemImportOrAlias( obj, text, info ):
         info = getBriefModuleInfoFromMemory( text )
     for item in info.imports:
         if item.alias == obj:
-            if __systemwideModules.has_key( item.name ):
+            if item.name in __systemwideModules:
                 # That's an alias for a system module
                 return True, item.name
             # That's an alias for something else, so stop search for a system

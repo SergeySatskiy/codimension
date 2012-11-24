@@ -142,7 +142,7 @@ class GlobalData( object ):
             # where __init__.py[3] are present
             subdirsToExclude = getSubdirs( dirName, True, True )
 
-            if prefs.has_key( "ignored_resources" ):
+            if "ignored_resources" in prefs:
                 prefs[ "ignored_resources" ] += subdirsToExclude
             else:
                 prefs[ "ignored_resources" ] = subdirsToExclude

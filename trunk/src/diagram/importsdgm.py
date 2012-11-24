@@ -549,7 +549,7 @@ class ImportsDiagramProgress( QDialog ):
 
     def isProjectImport( self, importString ):
         " Checks if it is a project import string and provides a path if so "
-        if self.__projectImportsCache.has_key( importString ):
+        if importString in self.__projectImportsCache:
             return self.__projectImportsCache[ importString ]
 
         subpath = importString.replace( '.', os.path.sep )
@@ -567,10 +567,10 @@ class ImportsDiagramProgress( QDialog ):
     def isLocalImport( self, dirName, importString ):
         " Checks if it is local dir import string and provides a path if so "
         dirFound = False
-        if self.__dirsToImportsCache.has_key( dirName ):
+        if dirName in self.__dirsToImportsCache:
             dirFound = True
             importsDict = self.__dirsToImportsCache[ dirName ]
-            if importsDict.has_key( importString ):
+            if importString in importsDict:
                 return importsDict[ importString ]
 
         subpath = importString.replace( '.', os.path.sep )

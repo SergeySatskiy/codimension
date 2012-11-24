@@ -84,7 +84,7 @@ class SearchSupport:
 
     def hasEditor( self, uuid ):
         " Checks if there was a search in the editor "
-        return self.editorSearchAttributes.has_key( uuid )
+        return uuid in self.editorSearchAttributes
 
     def get( self, uuid ):
         " Provides the search attributes "
