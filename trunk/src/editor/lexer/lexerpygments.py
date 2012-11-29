@@ -141,6 +141,7 @@ class LexerPygments( LexerContainer ):
 
         self.__pygmentsName = name
         self.__fileName = fileName
+        self.__lexerGuessed = False
 
         self.descriptions = {
             PYGMENTS_DEFAULT       : "Default",
@@ -256,13 +257,13 @@ class LexerPygments( LexerContainer ):
         """ Provides the default font for a style """
 
         if style in [ PYGMENTS_COMMENT, PYGMENTS_PREPROCESSOR ]:
-            f = QFont( "Bitstream Vera Serif", 9 )
+            f = QFont( "Monospace", 14 )
             if style == PYGMENTS_PREPROCESSOR:
                 f.setItalic( True )
             return f
 
         if style in [ PYGMENTS_STRING ]:
-            return QFont( "Bitstream Vera Serif", 10 )
+            return QFont( "Monospace", 14 )
 
         if style in [ PYGMENTS_KEYWORD, PYGMENTS_OPERATOR,  PYGMENTS_WORD,
                       PYGMENTS_BUILTIN, PYGMENTS_ATTRIBUTE, PYGMENTS_FUNCTION,
@@ -288,6 +289,7 @@ class LexerPygments( LexerContainer ):
     def __guessLexer( self ):
         """ Guesses a pygments lexer """
 
+        self.__lexerGuessed = True
         if self.__pygmentsName:
             lexerClass = find_lexer_class( self.__pygmentsName )
             if lexerClass is not None:
@@ -307,6 +309,11 @@ class LexerPygments( LexerContainer ):
                     return get_lexer_for_filename( filename )
                 except ClassNotFound:
                     pass
+
+        # Last resort - text only
+        lexerClass = find_lexer_class( "Text only" )
+        if lexerClass is not None:
+            return lexerClass()
         return None
 
     def canStyle( self ):
@@ -314,7 +321,8 @@ class LexerPygments( LexerContainer ):
         if self.editor is None:
             return True
 
-        self.__lexer = self.__guessLexer()
+        if self.__lexerGuessed == False:
+            self.__lexer = self.__guessLexer()
         return self.__lexer is not None
 
     def name( self ):
@@ -327,7 +335,8 @@ class LexerPygments( LexerContainer ):
         """ Performs the styling """
 
         text = unicode( self.editor.text() )[ :end + 1 ].encode( 'utf-8' )
-        self.__lexer = self.__guessLexer()
+        if self.__lexerGuessed == False:
+            self.__lexer = self.__guessLexer()
 
         cpos = 0
         self.editor.startStyling( cpos, 0x3f )
