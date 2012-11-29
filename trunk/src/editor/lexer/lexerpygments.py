@@ -31,8 +31,7 @@
 
 
 from pygments.token      import Token
-from pygments.lexers     import guess_lexer_for_filename, \
-                                guess_lexer, find_lexer_class
+from pygments.lexers     import find_lexer_class, get_lexer_for_filename
 from pygments.util       import ClassNotFound
 
 from PyQt4.QtCore        import QString
@@ -230,12 +229,10 @@ class LexerPygments( LexerContainer ):
 
     def language( self ):
         """ Provides the language of the lexer """
-
         return "Guessed"
 
     def description( self, style ):
         """ Provides the descriptions of the styles supported by the lexer """
-
         try:
             return self.descriptions[ style ]
         except KeyError:
@@ -243,7 +240,6 @@ class LexerPygments( LexerContainer ):
 
     def defaultColor( self, style ):
         """ Provides the default foreground color for a style """
-
         try:
             return self.defaultColors[ style ]
         except KeyError:
@@ -251,7 +247,6 @@ class LexerPygments( LexerContainer ):
 
     def defaultPaper( self, style ):
         """ Provides the default paper for a style """
-
         try:
             return self.defaultPapers[ style ]
         except KeyError:
@@ -288,53 +283,42 @@ class LexerPygments( LexerContainer ):
 
     def styleBitsNeeded( self ):
         """ Provides the number of style bits needed by the lexer """
-
         return 6
 
-    def __guessLexer( self, text ):
+    def __guessLexer( self ):
         """ Guesses a pygments lexer """
-
-        lexer = None
 
         if self.__pygmentsName:
             lexerClass = find_lexer_class( self.__pygmentsName )
             if lexerClass is not None:
-                lexer = lexerClass()
-
-        elif text:
-            # step 1: guess based on filename and text
+                return lexerClass()
+        else:
+            # Unfortunately, guessing a lexer by text lead to unpredictable
+            # behaviour in some cases. E.g. national non-english characters
+            # are mis-displayed or even core dump is generated. So the part
+            # of guessing by text has been removed.
             if self.editor is not None:
                 if self.__fileName != "":
                     filename = self.__fileName
                 else:
                     filename = self.editor.getFileName()
-                try:
-                    lexer = guess_lexer_for_filename( filename, text )
-                except ClassNotFound:
-                    pass
 
-            # step 2: guess on text only
-            if lexer is None:
                 try:
-                    lexer = guess_lexer( text )
+                    return get_lexer_for_filename( filename )
                 except ClassNotFound:
                     pass
-        return lexer
+        return None
 
     def canStyle( self ):
         """ Checks if the lexer is able to style the text """
-
         if self.editor is None:
             return True
 
-        text = unicode( self.editor.text() ).encode( 'utf-8' )
-        self.__lexer = self.__guessLexer( text )
-
+        self.__lexer = self.__guessLexer()
         return self.__lexer is not None
 
     def name( self ):
         """ Provides the name of the pygments lexer """
-
         if self.__lexer is None:
             return ""
         return self.__lexer.name
@@ -343,7 +327,7 @@ class LexerPygments( LexerContainer ):
         """ Performs the styling """
 
         text = unicode( self.editor.text() )[ :end + 1 ].encode( 'utf-8' )
-        self.__lexer = self.__guessLexer( text )
+        self.__lexer = self.__guessLexer()
 
         cpos = 0
         self.editor.startStyling( cpos, 0x3f )
@@ -365,12 +349,10 @@ class LexerPygments( LexerContainer ):
 
     def isCommentStyle( self, style ):
         """ Checks if a style is a comment one """
-
         return style in [ PYGMENTS_COMMENT ]
 
     def isStringStyle( self, style ):
         """ Checks if a style is a string one """
-
         return style in [ PYGMENTS_STRING,     PYGMENTS_DOCSTRING,
                           PYGMENTS_OTHER,      PYGMENTS_HEADING,
                           PYGMENTS_SUBHEADING, PYGMENTS_EMPHASIZE,
