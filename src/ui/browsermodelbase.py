@@ -275,7 +275,7 @@ class BrowserModelBase( QAbstractItemModel ):
             return
 
         excludes = [ '.svn', '.cvs', '.hg', '.git' ]
-        items = [ itm for itm in items if not in excludes ]
+        items = [ itm for itm in items if itm not in excludes ]
 
         if items:
 
