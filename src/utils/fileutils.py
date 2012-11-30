@@ -120,12 +120,15 @@ _extType = { \
     'html'  :   HTMLFileType,
     'css'   :   CSSFileType,
     'xml'   :   XMLFileType,
+    'xsl'   :   XMLFileType,
+    'xslt'  :   XMLFileType,
     'so'    :   SOFileType
 }
 
 
 __cachedFileTypes = {}
-__QTSupportedImageFormats = QImageReader.supportedImageFormats()
+__QTSupportedImageFormats = [ str( fmt ) for fmt in \
+                              QImageReader.supportedImageFormats() ]
 
 
 def detectFileType( path, checkForBrokenLink = True ):
@@ -145,8 +148,7 @@ def detectFileType( path, checkForBrokenLink = True ):
     #    if not os.path.exists( absPath ):
     #        raise Exception( "Cannot find file: " + path )
 
-    parts = os.path.splitext( path )
-    fileExtension = parts[ -1 ].lower()[ 1: ]
+    fileExtension = path.split( '.' )[ -1 ].lower()
 
     try:
         fType = _extType[ fileExtension ]
@@ -230,3 +232,4 @@ def compactPath( path, width, measure = len ):
         tail = tail[ 1: ]
 
     return ""
+
