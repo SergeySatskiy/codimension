@@ -150,12 +150,10 @@ def detectFileType( path, checkForBrokenLink = True ):
 
     fileExtension = path.split( '.' )[ -1 ].lower()
 
-    try:
+    if fileExtension in _extType:
         fType = _extType[ fileExtension ]
         __cachedFileTypes[ path ] = fType
         return fType
-    except:
-        pass
 
     if fileExtension == 'h':
         if path.lower().endswith( '.ui.h' ):
