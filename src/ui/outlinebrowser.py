@@ -59,13 +59,13 @@ class OutlineBrowserModel( BrowserModelBase ):
         self.clear()
         if info.encoding is not None:
             self.addItem( TreeViewCodingItem( self.rootItem, info.encoding ) )
-        if len( info.imports ) > 0:
+        if info.imports:
             self.addItem( TreeViewImportsItem( self.rootItem, info ) )
-        if len( info.globals ) > 0:
+        if info.globals:
             self.addItem( TreeViewGlobalsItem( self.rootItem, info ) )
-        if len( info.functions ) > 0:
+        if info.functions:
             self.addItem( TreeViewFunctionsItem( self.rootItem, info ) )
-        if len( info.classes ) > 0:
+        if info.classes:
             self.addItem( TreeViewClassesItem( self.rootItem, info ) )
         return
 
