@@ -274,14 +274,10 @@ class BrowserModelBase( QAbstractItemModel ):
             logging.error( "Cannot populate directory. " + str( exc ) )
             return
 
-        index = len( items ) - 1
-        while index >= 0:
-            if items[ index ].startswith( '.svn' ) or \
-               items[ index ].startswith( '.cvs' ):
-                del items[ index ]
-            index -= 1
+        excludes = [ '.svn', '.cvs', '.hg', '.git' ]
+        items = [ itm for itm in items if not in excludes ]
 
-        if len( items ) > 0:
+        if items:
 
             # Pick up the modinfo source
             if self.globalData.project.isProjectDir( path ):
@@ -317,10 +313,10 @@ class BrowserModelBase( QAbstractItemModel ):
                             node.parsingErrors = True
 
                         if modInfo.encoding is None and \
-                           len( modInfo.imports ) == 0 and \
-                           len( modInfo.globals ) == 0 and \
-                           len( modInfo.functions ) == 0 and \
-                           len( modInfo.classes ) == 0:
+                           not modInfo.imports and \
+                           not modInfo.globals and \
+                           not modInfo.functions and \
+                           not modInfo.classes:
                             node.populated = True
                             node.lazyPopulation = False
 
@@ -335,7 +331,7 @@ class BrowserModelBase( QAbstractItemModel ):
     def populateSysPathItem( self, parentItem, repopulate = False ):
         " Populates the sys.path item's subtree "
 
-        if len( sys.path ) > 0:
+        if sys.path:
             if repopulate:
                 self.beginInsertRows( self.createIndex( parentItem.row(),
                                                         0, parentItem ),
@@ -369,13 +365,13 @@ class BrowserModelBase( QAbstractItemModel ):
         count = 0
         if modInfo.encoding is not None:
             count += 1
-        if len( modInfo.imports ) > 0:
+        if modInfo.imports:
             count += 1
-        if len( modInfo.globals ) > 0:
+        if modInfo.globals:
             count += 1
-        if len( modInfo.functions ) > 0:
+        if modInfo.functions:
             count += 1
-        if len( modInfo.classes ) > 0:
+        if modInfo.classes:
             count += 1
 
         if count == 0:
@@ -390,19 +386,19 @@ class BrowserModelBase( QAbstractItemModel ):
             node = TreeViewCodingItem( parentItem, modInfo.encoding )
             self._addItem( node, parentItem )
 
-        if len( modInfo.imports ) > 0:
+        if modInfo.imports:
             node = TreeViewImportsItem( parentItem, modInfo )
             self._addItem( node, parentItem )
 
-        if len( modInfo.globals ) > 0:
+        if modInfo.globals:
             node = TreeViewGlobalsItem( parentItem, modInfo )
             self._addItem( node, parentItem )
 
-        if len( modInfo.functions ) > 0:
+        if modInfo.functions:
             node = TreeViewFunctionsItem( parentItem, modInfo )
             self._addItem( node, parentItem )
 
-        if len( modInfo.classes ) > 0:
+        if modInfo.classes:
             node = TreeViewClassesItem( parentItem, modInfo )
             self._addItem( node, parentItem )
 
@@ -468,11 +464,11 @@ class BrowserModelBase( QAbstractItemModel ):
         count = len( parentItem.sourceObj.decorators ) + \
                 len( parentItem.sourceObj.functions )
 
-        if len( parentItem.sourceObj.classes ) > 0:
+        if parentItem.sourceObj.classes:
             count += 1
-        if len( parentItem.sourceObj.classAttributes ) > 0:
+        if parentItem.sourceObj.classAttributes:
             count += 1
-        if len( parentItem.sourceObj.instanceAttributes ) > 0:
+        if parentItem.sourceObj.instanceAttributes:
             count += 1
 
         if count == 0:
@@ -497,21 +493,21 @@ class BrowserModelBase( QAbstractItemModel ):
                 node.appendData( item.line )
             self._addItem( node, parentItem )
 
-        if len( parentItem.sourceObj.classes ) > 0:
+        if parentItem.sourceObj.classes:
             node = TreeViewClassesItem( parentItem, parentItem.sourceObj )
             if parentItem.columnCount() > 1:
                 node.appendData( parentItem.data( 1 ) )
                 node.appendData( 'n/a' )
             self._addItem( node, parentItem )
 
-        if len( parentItem.sourceObj.classAttributes ) > 0:
+        if parentItem.sourceObj.classAttributes:
             node = TreeViewStaticAttributesItem( parentItem )
             if parentItem.columnCount() > 1:
                 node.appendData( parentItem.data( 1 ) )
                 node.appendData( 'n/a' )
             self._addItem( node, parentItem )
 
-        if len( parentItem.sourceObj.instanceAttributes ) > 0:
+        if parentItem.sourceObj.instanceAttributes:
             node = TreeViewInstanceAttributesItem( parentItem )
             if parentItem.columnCount() > 1:
                 node.appendData( parentItem.data( 1 ) )
@@ -529,9 +525,9 @@ class BrowserModelBase( QAbstractItemModel ):
         # Count the number of items
         count = len( parentItem.sourceObj.decorators )
 
-        if len( parentItem.sourceObj.functions ) > 0:
+        if parentItem.sourceObj.functions:
             count += 1
-        if len( parentItem.sourceObj.classes ) > 0:
+        if parentItem.sourceObj.classes:
             count += 1
 
         if count == 0:
@@ -549,14 +545,14 @@ class BrowserModelBase( QAbstractItemModel ):
                 node.appendData( item.line )
             self._addItem( node, parentItem )
 
-        if len( parentItem.sourceObj.functions ) > 0:
+        if parentItem.sourceObj.functions:
             node = TreeViewFunctionsItem( parentItem, parentItem.sourceObj )
             if parentItem.columnCount() > 1:
                 node.appendData( parentItem.data( 1 ) )
                 node.appendData( 'n/a' )
             self._addItem( node, parentItem )
 
-        if len( parentItem.sourceObj.classes ) > 0:
+        if parentItem.sourceObj.classes:
             node = TreeViewClassesItem( parentItem, parentItem.sourceObj )
             if parentItem.columnCount() > 1:
                 node.appendData( parentItem.data( 1 ) )
@@ -645,7 +641,7 @@ class BrowserModelBase( QAbstractItemModel ):
                 continue
             elif classChildItem.itemType == ClassesItemType:
                 hadClasses = True
-                if len( classObj.classes ) == 0:
+                if not classObj.classes:
                     itemsToRemove.append( classChildItem )
                 else:
                     classChildItem.updateData( classObj )
@@ -671,7 +667,7 @@ class BrowserModelBase( QAbstractItemModel ):
                 continue
             elif classChildItem.itemType == StaticAttributesItemType:
                 hadStaticAttributes = True
-                if len( classObj.classAttributes ) == 0:
+                if not classObj.classAttributes:
                     itemsToRemove.append( classChildItem )
                 else:
                     self.updateAttrItem( classChildItem,
@@ -679,7 +675,7 @@ class BrowserModelBase( QAbstractItemModel ):
                 continue
             elif classChildItem.itemType == InstanceAttributesItemType:
                 hadInstanceAttributes = True
-                if len( classObj.instanceAttributes ) == 0:
+                if not classObj.instanceAttributes:
                     itemsToRemove.append( classChildItem )
                 else:
                     self.updateAttrItem( classChildItem,
@@ -701,20 +697,19 @@ class BrowserModelBase( QAbstractItemModel ):
             newItem.appendData( item.line )
             self.addTreeItem( treeItem, newItem )
 
-        if not hadClasses and treeItem.populated and \
-           len( classObj.classes ) > 0:
+        if not hadClasses and treeItem.populated and classObj.classes:
             newItem = TreeViewClassesItem( treeItem, classObj )
             newItem.appendData( treeItem.data( 1 ) )
             newItem.appendData( 'n/a' )
             self.addTreeItem( treeItem, newItem )
         if not hadStaticAttributes and treeItem.populated and \
-           len( classObj.classAttributes ) > 0:
+           classObj.classAttributes:
             newItem = TreeViewStaticAttributesItem( treeItem )
             newItem.appendData( treeItem.data( 1 ) )
             newItem.appendData( 'n/a' )
             self.addTreeItem( treeItem, newItem )
         if not hadInstanceAttributes and treeItem.populated and \
-           len( classObj.instanceAttributes ) > 0:
+           classObj.instanceAttributes:
             newItem = TreeViewInstanceAttributesItem( treeItem )
             newItem.appendData( treeItem.data( 1 ) )
             newItem.appendData( 'n/a' )
@@ -751,7 +746,7 @@ class BrowserModelBase( QAbstractItemModel ):
                 continue
             elif funcChildItem.itemType == FunctionsItemType:
                 hadFunctions = True
-                if len( funcObj.functions ) == 0:
+                if not funcObj.functions:
                     itemsToRemove.append( funcChildItem )
                 else:
                     funcChildItem.updateData( funcObj )
@@ -760,7 +755,7 @@ class BrowserModelBase( QAbstractItemModel ):
                 continue
             elif funcChildItem.itemType == ClassesItemType:
                 hadClasses = True
-                if len( funcObj.classes ) == 0:
+                if not funcObj.classes:
                     itemsToRemove.append( funcChildItem )
                 else:
                     funcChildItem.updateData( funcObj )
@@ -777,14 +772,12 @@ class BrowserModelBase( QAbstractItemModel ):
             newItem.appendData( item.line )
             self.addTreeItem( treeItem, newItem )
 
-        if not hadFunctions and treeItem.populated and \
-           len( funcObj.functions ) > 0:
+        if not hadFunctions and treeItem.populated and funcObj.functions:
             newItem = TreeViewFunctionsItem( treeItem, funcObj )
             newItem.appendData( treeItem.data( 1 ) )
             newItem.appendData( 'n/a' )
             self.addTreeItem( treeItem, newItem )
-        if not hadClasses and treeItem.populated and \
-           len( funcObj.classes ) > 0:
+        if not hadClasses and treeItem.populated and funcObj.classes:
             newItem = TreeViewClassesItem( treeItem, funcObj )
             newItem.appendData( treeItem.data( 1 ) )
             newItem.appendData( 'n/a' )
