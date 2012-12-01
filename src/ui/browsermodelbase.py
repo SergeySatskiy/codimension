@@ -497,21 +497,21 @@ class BrowserModelBase( QAbstractItemModel ):
             node = TreeViewClassesItem( parentItem, parentItem.sourceObj )
             if parentItem.columnCount() > 1:
                 node.appendData( parentItem.data( 1 ) )
-                node.appendData( 'n/a' )
+                node.appendData( -1 )
             self._addItem( node, parentItem )
 
         if parentItem.sourceObj.classAttributes:
             node = TreeViewStaticAttributesItem( parentItem )
             if parentItem.columnCount() > 1:
                 node.appendData( parentItem.data( 1 ) )
-                node.appendData( 'n/a' )
+                node.appendData( -1 )
             self._addItem( node, parentItem )
 
         if parentItem.sourceObj.instanceAttributes:
             node = TreeViewInstanceAttributesItem( parentItem )
             if parentItem.columnCount() > 1:
                 node.appendData( parentItem.data( 1 ) )
-                node.appendData( 'n/a' )
+                node.appendData( -1 )
             self._addItem( node, parentItem )
 
         if repopulate:
@@ -538,6 +538,7 @@ class BrowserModelBase( QAbstractItemModel ):
             self.beginInsertRows( self.createIndex( parentItem.row(),
                                                     0, parentItem ),
                                   0, count - 1 )
+
         for item in parentItem.sourceObj.decorators:
             node = TreeViewDecoratorItem( parentItem, item )
             if parentItem.columnCount() > 1:
@@ -549,14 +550,14 @@ class BrowserModelBase( QAbstractItemModel ):
             node = TreeViewFunctionsItem( parentItem, parentItem.sourceObj )
             if parentItem.columnCount() > 1:
                 node.appendData( parentItem.data( 1 ) )
-                node.appendData( 'n/a' )
+                node.appendData( -1 )
             self._addItem( node, parentItem )
 
         if parentItem.sourceObj.classes:
             node = TreeViewClassesItem( parentItem, parentItem.sourceObj )
             if parentItem.columnCount() > 1:
                 node.appendData( parentItem.data( 1 ) )
-                node.appendData( 'n/a' )
+                node.appendData( -1 )
             self._addItem( node, parentItem )
 
         if repopulate:
@@ -700,19 +701,19 @@ class BrowserModelBase( QAbstractItemModel ):
         if not hadClasses and treeItem.populated and classObj.classes:
             newItem = TreeViewClassesItem( treeItem, classObj )
             newItem.appendData( treeItem.data( 1 ) )
-            newItem.appendData( 'n/a' )
+            newItem.appendData( -1 )
             self.addTreeItem( treeItem, newItem )
         if not hadStaticAttributes and treeItem.populated and \
            classObj.classAttributes:
             newItem = TreeViewStaticAttributesItem( treeItem )
             newItem.appendData( treeItem.data( 1 ) )
-            newItem.appendData( 'n/a' )
+            newItem.appendData( -1 )
             self.addTreeItem( treeItem, newItem )
         if not hadInstanceAttributes and treeItem.populated and \
            classObj.instanceAttributes:
             newItem = TreeViewInstanceAttributesItem( treeItem )
             newItem.appendData( treeItem.data( 1 ) )
-            newItem.appendData( 'n/a' )
+            newItem.appendData( -1 )
             self.addTreeItem( treeItem, newItem )
 
         return
@@ -723,7 +724,7 @@ class BrowserModelBase( QAbstractItemModel ):
             return
 
         # It may have decor, classes and other functions
-        decorCopy = list( funcObj.decorators )
+        existingDecors = []
         hadFunctions = False
         hadClasses = False
         itemsToRemove = []
@@ -731,15 +732,14 @@ class BrowserModelBase( QAbstractItemModel ):
             if funcChildItem.itemType == DecoratorItemType:
                 name = funcChildItem.sourceObj.name
                 found = False
-                for index in xrange( len( decorCopy ) ):
-                    if decorCopy[ index ].name == name:
+                for decor in funcObj.decorators:
+                    if decor.name == name:
                         found = True
-                        funcChildItem.updateData( decorCopy[ index ] )
-                        # arguments could be changed, so send change
-                        # notification
-                        funcChildItem.setData( 2, decorCopy[ index ].line )
+                        existingDecors.append( name )
+                        funcChildItem.updateData( decor )
+                        # Arguments could be changed
+                        funcChildItem.setData( 2, decor.line )
                         self.signalItemUpdated( funcChildItem )
-                        del decorCopy[ index ]
                         break
                 if not found:
                     itemsToRemove.append( funcChildItem )
@@ -762,25 +762,27 @@ class BrowserModelBase( QAbstractItemModel ):
                     self.updateClassesItem( funcChildItem,
                                             funcObj.classes )
                 continue
+
         for item in itemsToRemove:
             self.removeTreeItem( item )
 
         # Add those which have been introduced
-        for item in decorCopy:
-            newItem = TreeViewDecoratorItem( treeItem, item )
-            newItem.appendData( treeItem.data( 1 ) )
-            newItem.appendData( item.line )
-            self.addTreeItem( treeItem, newItem )
+        for decor in funcObj.decorators:
+            if decor.name not in existingDecors:
+                newItem = TreeViewDecoratorItem( treeItem, decor )
+                newItem.appendData( treeItem.data( 1 ) )
+                newItem.appendData( decor.line )
+                self.addTreeItem( treeItem, newItem )
 
         if not hadFunctions and treeItem.populated and funcObj.functions:
             newItem = TreeViewFunctionsItem( treeItem, funcObj )
             newItem.appendData( treeItem.data( 1 ) )
-            newItem.appendData( 'n/a' )
+            newItem.appendData( -1 )
             self.addTreeItem( treeItem, newItem )
         if not hadClasses and treeItem.populated and funcObj.classes:
             newItem = TreeViewClassesItem( treeItem, funcObj )
             newItem.appendData( treeItem.data( 1 ) )
-            newItem.appendData( 'n/a' )
+            newItem.appendData( -1 )
             self.addTreeItem( treeItem, newItem )
         return
 
@@ -789,33 +791,34 @@ class BrowserModelBase( QAbstractItemModel ):
         if not treeItem.populated:
             return
 
-        classesCopy = list( classesObj )
+        existingClasses = []
         itemsToRemove = []
         for classItem in treeItem.childItems:
             name = classItem.sourceObj.name
             found = False
-            for index in xrange( len( classesCopy ) ):
-                if classesCopy[ index ].name == name:
+            for cls in classesObj:
+                if cls.name == name:
                     found = True
-                    classItem.updateData( classesCopy[ index ] )
-                    classItem.setData( 2, classesCopy[ index ].line )
-                    # arguments could be changed, so send change notification
+                    existingClasses.append( name )
+                    classItem.updateData( cls )
+                    classItem.setData( 2, cls.line )
+                    # Arguments could be changed
                     self.signalItemUpdated( classItem )
-                    self.updateSingleClassItem( classItem,
-                                                classesCopy[ index ] )
-                    del classesCopy[ index ]
+                    self.updateSingleClassItem( classItem, cls )
                     break
             if not found:
                 itemsToRemove.append( classItem )
+
         for item in itemsToRemove:
             self.removeTreeItem( item )
 
         # Add those which have been introduced
-        for item in classesCopy:
-            newItem = TreeViewClassItem( treeItem, item )
-            newItem.appendData( treeItem.data( 1 ) )
-            newItem.appendData( item.line )
-            self.addTreeItem( treeItem, newItem )
+        for cls in classesObj:
+            if cls.name not in existingClasses:
+                newItem = TreeViewClassItem( treeItem, cls )
+                newItem.appendData( treeItem.data( 1 ) )
+                newItem.appendData( cls.line )
+                self.addTreeItem( treeItem, newItem )
         return
 
     def updateFunctionsItem( self, treeItem, functionsObj ):
@@ -823,21 +826,20 @@ class BrowserModelBase( QAbstractItemModel ):
         if not treeItem.populated:
             return
 
-        functionsCopy = list( functionsObj )
+        existingFunctions = []
         itemsToRemove = []
         for functionItem in treeItem.childItems:
             name = functionItem.sourceObj.name
             found = False
-            for index in xrange( len( functionsCopy ) ):
-                if functionsCopy[ index ].name == name:
+            for func in functionsObj:
+                if func.name == name:
                     found = True
-                    functionItem.updateData( functionsCopy[ index ] )
-                    functionItem.setData( 2, functionsCopy[ index ].line )
-                    # arguments could be changed, so send change notification
+                    existingFunctions.append( name )
+                    functionItem.updateData( func )
+                    functionItem.setData( 2, func.line )
+                    # Arguments could be changed
                     self.signalItemUpdated( functionItem )
-                    self.updateSingleFuncItem( functionItem,
-                                               functionsCopy[ index ] )
-                    del functionsCopy[ index ]
+                    self.updateSingleFuncItem( functionItem, func )
                     break
             if not found:
                 itemsToRemove.append( functionItem )
@@ -845,11 +847,12 @@ class BrowserModelBase( QAbstractItemModel ):
             self.removeTreeItem( item )
 
         # Add those which have been introduced
-        for item in functionsCopy:
-            newItem = TreeViewFunctionItem( treeItem, item )
-            newItem.appendData( treeItem.data( 1 ) )
-            newItem.appendData( item.line )
-            self.addTreeItem( treeItem, newItem )
+        for func in functionsObj:
+            if func.name not in existingFunctions:
+                newItem = TreeViewFunctionItem( treeItem, func )
+                newItem.appendData( treeItem.data( 1 ) )
+                newItem.appendData( func.line )
+                self.addTreeItem( treeItem, newItem )
         return
 
     def updateAttrItem( self, treeItem, attributesObj ):
