@@ -78,9 +78,10 @@ class TreeViewItem( object ):
 
         if type( data ) == list:
             self.itemData = data
+            self.itemDataSize = len( self.itemData )
         else:
             self.itemData = [ data ]
-        self.itemDataSize = len( self.itemData )
+            self.itemDataSize = 1
 
         self.parentItem = parent
         self.itemType = NoItemType
@@ -99,9 +100,10 @@ class TreeViewItem( object ):
 
         if type( data ) == list:
             self.itemData += data
+            self.itemDataSize = len( self.itemData )
         else:
             self.itemData.append( data )
-        self.itemDataSize = len( self.itemData )
+            self.itemDataSize += 1
         return
 
     def appendChild( self, child ):
