@@ -185,21 +185,6 @@ class BrowserModelBase( QAbstractItemModel ):
             self.populateItem( parentItem )
         return parentItem.childCount()
 
-    def hasChildren( self, parent = QModelIndex() ):
-        " Checks for the presence of child items "
-
-        # Only the first column should have children
-        if parent.column() > 0:
-            return False
-
-        if not parent.isValid():
-            return self.rootItem.childCount() > 0
-
-        if parent.internalPointer().lazyPopulation:
-            return True
-
-        return parent.internalPointer().childCount() > 0
-
     def clear( self ):
         " Clears the model "
         self.rootItem.removeChildren()
@@ -259,6 +244,7 @@ class BrowserModelBase( QAbstractItemModel ):
             self.populateFunctionItem( parentItem, repopulate )
         elif parentItem.itemType == ImportItemType:
             self.populateImportItem( parentItem, repopulate )
+        parentItem.populated = True
         return
 
     def populateDirectoryItem( self, parentItem, repopulate = False ):
@@ -616,8 +602,8 @@ class BrowserModelBase( QAbstractItemModel ):
 
         # There might be decorators, classes, methods, static attributes and
         # instance attributes
-        decorCopy = list( classObj.decorators )
-        methodCopy = list( classObj.functions )
+        existingsDecors = []
+        existingMethods = []
         hadStaticAttributes = False
         hadInstanceAttributes = False
         hadClasses = False
@@ -626,16 +612,16 @@ class BrowserModelBase( QAbstractItemModel ):
             if classChildItem.itemType == DecoratorItemType:
                 name = classChildItem.sourceObj.name
                 found = False
-                for index in xrange( len( decorCopy ) ):
-                    if decorCopy[ index ].name == name:
+                for decor in classObj.decorators:
+                    if decor.name == name:
                         found = True
-                        classChildItem.updateData( decorCopy[ index ] )
+                        existingDecors.append( name )
+                        classChildItem.updateData( decor )
                         # Line number might be changed
-                        classChildItem.setData( 2, decorCopy[ index ].line )
+                        classChildItem.setData( 2, decor.line )
                         # arguments could be changed, so send change
                         # notification
                         self.signalItemUpdated( classChildItem )
-                        del decorCopy[ index ]
                         break
                 if not found:
                     itemsToRemove.append( classChildItem )
@@ -652,16 +638,16 @@ class BrowserModelBase( QAbstractItemModel ):
             elif classChildItem.itemType == FunctionItemType:
                 name = classChildItem.sourceObj.name
                 found = False
-                for index in xrange( len( methodCopy ) ):
-                    if methodCopy[ index ].name == name:
+                for method in classObj.functions:
+                    if method.name == name:
                         found = True
-                        classChildItem.updateData( methodCopy[ index ] )
-                        classChildItem.setData( 2, methodCopy[ index ].line )
+                        existingMethods.append( name )
+                        classChildItem.updateData( method )
+                        classChildItem.setData( 2, method.line )
                         # arguments could be changed, so send change notification
                         self.signalItemUpdated( classChildItem )
                         self.updateSingleFuncItem( classChildItem,
-                                                   methodCopy[ index ] )
-                        del methodCopy[ index ]
+                                                   method )
                         break
                 if not found:
                     itemsToRemove.append( classChildItem )
@@ -687,16 +673,18 @@ class BrowserModelBase( QAbstractItemModel ):
             self.removeTreeItem( item )
 
         # Add those which have been introduced
-        for item in decorCopy:
-            newItem = TreeViewDecoratorItem( treeItem, item )
-            newItem.appendData( treeItem.data( 1 ) )
-            newItem.appendData( item.line )
-            self.addTreeItem( treeItem, newItem )
-        for item in methodCopy:
-            newItem = TreeViewFunctionItem( treeItem, item )
-            newItem.appendData( treeItem.data( 1 ) )
-            newItem.appendData( item.line )
-            self.addTreeItem( treeItem, newItem )
+        for decor in classObj.decorators:
+            if decor.name not in existingDecors:
+                newItem = TreeViewDecoratorItem( treeItem, decor )
+                newItem.appendData( treeItem.data( 1 ) )
+                newItem.appendData( decor.line )
+                self.addTreeItem( treeItem, newItem )
+        for method in classObj.functions:
+            if method.name not in existingMethods:
+                newItem = TreeViewFunctionItem( treeItem, method )
+                newItem.appendData( treeItem.data( 1 ) )
+                newItem.appendData( method.line )
+                self.addTreeItem( treeItem, newItem )
 
         if not hadClasses and treeItem.populated and classObj.classes:
             newItem = TreeViewClassesItem( treeItem, classObj )
@@ -843,6 +831,7 @@ class BrowserModelBase( QAbstractItemModel ):
                     break
             if not found:
                 itemsToRemove.append( functionItem )
+
         for item in itemsToRemove:
             self.removeTreeItem( item )
 
@@ -860,28 +849,30 @@ class BrowserModelBase( QAbstractItemModel ):
         if not treeItem.populated:
             return
 
-        attributesCopy = list( attributesObj )
+        existingAttributes = []
         itemsToRemove = []
         for attrItem in treeItem.childItems:
             name = attrItem.data( 0 )
             found = False
-            for index in xrange( len( attributesCopy ) ):
-                if attributesCopy[ index ].name == name:
+            for attr in attributesObj:
+                if attr.name == name:
                     found = True
-                    attrItem.updateData( attributesCopy[ index ] )
-                    attrItem.setData( 2, attributesCopy[ index ].line )
+                    existingAttributes.append( name )
+                    attrItem.updateData( attr )
+                    attrItem.setData( 2, attr.line )
                     self.signalItemUpdated( attrItem )
-                    del attributesCopy[ index ]
                     break
             if not found:
                 itemsToRemove.append( attrItem )
+
         for item in itemsToRemove:
             self.removeTreeItem( item )
 
-        for item in attributesCopy:
-            newItem = TreeViewAttributeItem( treeItem, item )
-            newItem.appendData( treeItem.data( 1 ) )
-            newItem.appendData( item.line )
-            self.addTreeItem( treeItem, newItem )
+        for attr in attributesObj:
+            if attr.name not in existingAttributes:
+                newItem = TreeViewAttributeItem( treeItem, attr )
+                newItem.appendData( treeItem.data( 1 ) )
+                newItem.appendData( attr.line )
+                self.addTreeItem( treeItem, newItem )
         return
 
