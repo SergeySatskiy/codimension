@@ -616,12 +616,15 @@ class BrowserModelBase( QAbstractItemModel ):
                     if decor.name == name:
                         found = True
                         existingDecors.append( name )
-                        classChildItem.updateData( decor )
-                        # Line number might be changed
-                        classChildItem.setData( 2, decor.line )
-                        # arguments could be changed, so send change
-                        # notification
-                        self.signalItemUpdated( classChildItem )
+                        if cmpDecoratorDisplayName( classChildItem.sourceObj,
+                                                    decor ):
+                            classChildItem.updateData( decor )
+                            classChildItem.setData( 2, decor.line )
+                        else:
+                            # Appearence changed
+                            classChildItem.updateData( decor )
+                            classChildItem.setData( 2, decor.line )
+                            self.signalItemUpdated( classChildItem )
                         break
                 if not found:
                     itemsToRemove.append( classChildItem )
@@ -642,10 +645,15 @@ class BrowserModelBase( QAbstractItemModel ):
                     if method.name == name:
                         found = True
                         existingMethods.append( name )
-                        classChildItem.updateData( method )
-                        classChildItem.setData( 2, method.line )
-                        # arguments could be changed, so send change notification
-                        self.signalItemUpdated( classChildItem )
+                        if cmpFunctionDisplayName( classChildItem.sourceObj,
+                                                   method ):
+                            classChildItem.updateData( method )
+                            classChildItem.setData( 2, method.line )
+                        else:
+                            # Appearence changed
+                            classChildItem.updateData( method )
+                            classChildItem.setData( 2, method.line )
+                            self.signalItemUpdated( classChildItem )
                         self.updateSingleFuncItem( classChildItem,
                                                    method )
                         break
@@ -724,10 +732,15 @@ class BrowserModelBase( QAbstractItemModel ):
                     if decor.name == name:
                         found = True
                         existingDecors.append( name )
-                        funcChildItem.updateData( decor )
-                        # Arguments could be changed
-                        funcChildItem.setData( 2, decor.line )
-                        self.signalItemUpdated( funcChildItem )
+                        if cmpDecoratorDisplayName( funcChildItem.sourceObj,
+                                                    decor ):
+                            funcChildItem.updateData( decor )
+                            funcChildItem.setData( 2, decor.line )
+                        else:
+                            # Appearence changed
+                            funcChildItem.updateData( decor )
+                            funcChildItem.setData( 2, decor.line )
+                            self.signalItemUpdated( funcChildItem )
                         break
                 if not found:
                     itemsToRemove.append( funcChildItem )
@@ -788,10 +801,14 @@ class BrowserModelBase( QAbstractItemModel ):
                 if cls.name == name:
                     found = True
                     existingClasses.append( name )
-                    classItem.updateData( cls )
-                    classItem.setData( 2, cls.line )
-                    # Arguments could be changed
-                    self.signalItemUpdated( classItem )
+                    if cmpClassDisplayName( classItem.sourceObj, cls ):
+                        classItem.updateData( cls )
+                        classItem.setData( 2, cls.line )
+                    else:
+                        # Appearence changed
+                        classItem.updateData( cls )
+                        classItem.setData( 2, cls.line )
+                        self.signalItemUpdated( classItem )
                     self.updateSingleClassItem( classItem, cls )
                     break
             if not found:
@@ -823,10 +840,15 @@ class BrowserModelBase( QAbstractItemModel ):
                 if func.name == name:
                     found = True
                     existingFunctions.append( name )
-                    functionItem.updateData( func )
-                    functionItem.setData( 2, func.line )
-                    # Arguments could be changed
-                    self.signalItemUpdated( functionItem )
+                    if cmpFunctionDisplayName( functionItem.sourceObj,
+                                               func ):
+                        functionItem.updateData( func )
+                        functionItem.setData( 2, func.line )
+                    else:
+                        # Appearence changed
+                        functionItem.updateData( func )
+                        functionItem.setData( 2, func.line )
+                        self.signalItemUpdated( functionItem )
                     self.updateSingleFuncItem( functionItem, func )
                     break
             if not found:
@@ -860,7 +882,10 @@ class BrowserModelBase( QAbstractItemModel ):
                     existingAttributes.append( name )
                     attrItem.updateData( attr )
                     attrItem.setData( 2, attr.line )
-                    self.signalItemUpdated( attrItem )
+                    # There is no need to send a signal to update the item
+                    # because the only name is displayed and it's not
+                    # changed.
+                    # self.signalItemUpdated( attrItem )
                     break
             if not found:
                 itemsToRemove.append( attrItem )
@@ -876,3 +901,34 @@ class BrowserModelBase( QAbstractItemModel ):
                 self.addTreeItem( treeItem, newItem )
         return
 
+def cmpDocstringDisplayName( lhs, rhs ):
+    " Returns True if the display names are the same "
+    if lhs is None and rhs is None:
+        return True
+    if lhs is None or rhs is None:
+        return False
+    return lhs.text == rhs.text
+
+def cmpFunctionDisplayName( lhs, rhs ):
+    " Returns True if the functions display names are the same "
+    if lhs.name != rhs.name:
+        return False
+    if lhs.arguments != rhs.arguments:
+        return False
+    return cmpDocstringDisplayName( lhs.docstring, rhs.docstring )
+
+def cmpDecoratorDisplayName( lhs, rhs ):
+    " Returns True if the decorators display names are the same "
+    if lhs.name != rhs.name:
+        return False
+    if lhs.arguments != rhs.arguments:
+        return False
+    return True
+
+def cmpClassDisplayName( lhs, rhs ):
+    " Returns True if the classes display names are the same "
+    if lhs.name != rhs.name:
+        return False
+    if lhs.base != rhs.base:
+        return False
+    return cmpDocstringDisplayName( lhs.docstring, rhs.docstring )
