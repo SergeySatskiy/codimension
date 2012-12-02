@@ -97,11 +97,6 @@ class FilesBrowserSortFilterProxyModel( QSortFilterProxyModel ):
         sourceIndex = self.mapToSource( index )
         return self.sourceModel().item( sourceIndex )
 
-    def hasChildren( self, parent = QModelIndex() ):
-        " Checks the presence of the child items "
-        sourceIndex = self.mapToSource( parent )
-        return self.sourceModel().hasChildren( sourceIndex )
-
     def filterAcceptsRow( self, sourceRow, sourceParent ):
         " Filters rows "
         if not self.__shouldFilter:
