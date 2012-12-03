@@ -297,5 +297,5 @@ class ClassesViewer( QWidget ):
     def __onDisassemble( self ):
         " Disassembling has been requested "
         if self.__contextItem is not None:
-            self.clViewer.getDisassebled( self.__contextItem )
+            self.clViewer.getDisassembled( self.__contextItem )
 
