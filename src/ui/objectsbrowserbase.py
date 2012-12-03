@@ -276,7 +276,7 @@ class ObjectsBrowser( QTreeView ):
         GlobalData().mainWindow.openFile( path, line )
         return
 
-    def getDisassebled( self, item ):
+    def getDisassembled( self, item ):
         " Handles showing disassembled code "
         if item.itemType not in [ FunctionItemType, ClassItemType ]:
             return

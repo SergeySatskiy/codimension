@@ -301,5 +301,5 @@ class FunctionsViewer( QWidget ):
     def __onDisassemble( self ):
         " Disassembling has been requested "
         if self.__contextItem is not None:
-            self.funcViewer.getDisassebled( self.__contextItem )
+            self.funcViewer.getDisassembled( self.__contextItem )
 
