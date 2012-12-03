@@ -341,12 +341,12 @@ class ObjectsBrowser( QTreeView ):
 
     def selectionChanged( self, selected, deselected ):
         " Slot is called when the selection has been changed "
-        if len( selected.indexes() ) == 0:
-            self.emit( SIGNAL( "selectionChanged" ), None )
-        else:
+        if selected.indexes():
             # The objects browsers may have no more than one selected item
             self.emit( SIGNAL( "selectionChanged" ),
                        selected.indexes()[ 0 ] )
+        else:
+            self.emit( SIGNAL( "selectionChanged" ), None )
         QTreeView.selectionChanged( self, selected, deselected )
         return
 
