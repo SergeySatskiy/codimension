@@ -31,7 +31,6 @@
 from utils.pixmapcache     import PixmapCache
 from functionsbrowsermodel import FunctionsBrowserModel
 from objectsbrowserbase    import ObjectsBrowser
-from PyQt4.QtCore          import SIGNAL
 
 
 class FunctionsBrowser( ObjectsBrowser ):
@@ -39,13 +38,9 @@ class FunctionsBrowser( ObjectsBrowser ):
 
     def __init__( self, parent = None ):
 
-        sourceModel = FunctionsBrowserModel()
-        ObjectsBrowser.__init__( self, sourceModel, parent )
+        ObjectsBrowser.__init__( self, FunctionsBrowserModel(), parent )
 
         self.setWindowTitle( 'Functions browser' )
         self.setWindowIcon( PixmapCache().getIcon( 'icon.png' ) )
-
-        self.connect( sourceModel, SIGNAL( 'modelReset()' ),
-                      self.updateCounter )
         return
 
