@@ -144,6 +144,8 @@ class ObjectsBrowser( QTreeView ):
                       self._resizeColumns )
         self.connect( GlobalData().project, SIGNAL( 'fsChanged' ),
                       self.onFSChanged )
+        self.connect( self.__model, SIGNAL( 'modelReset()' ),
+                      self.updateCounter )
 
         self.setRootIsDecorated( True )
         self.setAlternatingRowColors( True )
