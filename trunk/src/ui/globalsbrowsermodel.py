@@ -105,7 +105,7 @@ class GlobalsBrowserModel( BrowserModelBase ):
         # Here: python file which belongs to the project
         info = self.globalData.project.briefModinfoCache.get( fileName )
 
-        globalsCopy = list( info.globals )
+        existingGlobals = []
         itemsToRemove = []
         needUpdate = False
 
@@ -118,15 +118,18 @@ class GlobalsBrowserModel( BrowserModelBase ):
             # Item belongs to the modified file
             name = treeItem.data( 0 )
             found = False
-            for index in xrange( len( globalsCopy ) ):
-                if globalsCopy[ index ].name == name:
+            for glob in info.globals:
+                if glob.name == name:
                     found = True
-                    treeItem.updateData( globalsCopy[ index ] )
-                    # Line number might be changed
-                    treeItem.setData( 2, globalsCopy[ index ].line )
-                    self.signalItemUpdated( treeItem )
-                    del globalsCopy[ index ]
-                    break
+                    existingGlobals.append( name )
+                    if treeItem.data( 2 ) != glob.line:
+                        # Appearance has changed
+                        treeItem.updateData( glob )
+                        treeItem.setData( 2, glob.line )
+                        self.signalItemUpdated( treeItem )
+                    else:
+                        treeItem.updateData( glob )
+
             if not found:
                 itemsToRemove.append( treeItem )
 
@@ -135,11 +138,12 @@ class GlobalsBrowserModel( BrowserModelBase ):
             self.removeTreeItem( item )
 
         # Add those which have been introduced
-        for item in globalsCopy:
-            needUpdate = True
-            newItem = TreeViewGlobalItem( self.rootItem, item )
-            newItem.appendData( [ fileName, item.line ] )
-            self.addTreeItem( self.rootItem, newItem )
+        for item in info.globals:
+            if not item.name in existingGlobals:
+                needUpdate = True
+                newItem = TreeViewGlobalItem( self.rootItem, item )
+                newItem.appendData( [ fileName, item.line ] )
+                self.addTreeItem( self.rootItem, newItem )
 
         return needUpdate
 
