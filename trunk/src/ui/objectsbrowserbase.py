@@ -301,7 +301,7 @@ class ObjectsBrowser( QTreeView ):
                                                Python3FileType ]:
             return
 
-        if self.model().sourceModel().onFileUpdated( fileName ):
+        if self.__model.onFileUpdated( fileName ):
             # Need resort and counter updates
             self.layoutDisplay()
             self.updateCounter()
@@ -329,9 +329,9 @@ class ObjectsBrowser( QTreeView ):
                                                    Python3FileType ]:
                     continue
                 deletedPythonFiles.append( path )
-        if len( addedPythonFiles ) > 0 or len( deletedPythonFiles ) > 0:
-            if self.model().sourceModel().onFSChanged( addedPythonFiles,
-                                                       deletedPythonFiles ):
+        if addedPythonFiles or deletedPythonFiles:
+            if self.__model.onFSChanged( addedPythonFiles,
+                                         deletedPythonFiles ):
                 # Need resort and counter updates
                 self.layoutDisplay()
                 self.updateCounter()
