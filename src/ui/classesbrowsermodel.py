@@ -105,7 +105,8 @@ class ClassesBrowserModel( BrowserModelBase ):
         # Here: python file which belongs to the project
         info = self.globalData.project.briefModinfoCache.get( fileName )
 
-        classesCopy = list( info.classes )
+#        classesCopy = list( info.classes )
+        existingClasses = []
         itemsToRemove = []
         needUpdate = False
 
@@ -118,14 +119,14 @@ class ClassesBrowserModel( BrowserModelBase ):
             # Item belongs to the modified file
             name = treeItem.sourceObj.name
             found = False
-            for index in xrange( len( classesCopy ) ):
-                if classesCopy[ index ].name == name:
+            for cls in info.classes:
+                if cls.name == name:
                     found = True
-                    treeItem.updateData( classesCopy[ index ] )
-                    treeItem.setData( 2, classesCopy[ index ].line )
+                    existingClasses.append( name )
+                    treeItem.updateData( cls )
+                    treeItem.setData( 2, cls.line )
                     self.signalItemUpdated( treeItem )
-                    self.updateSingleClassItem( treeItem, classesCopy[ index ] )
-                    del classesCopy[ index ]
+                    self.updateSingleClassItem( treeItem, cls )
                     break
             if not found:
                 itemsToRemove.append( treeItem )
@@ -135,12 +136,12 @@ class ClassesBrowserModel( BrowserModelBase ):
             self.removeTreeItem( item )
 
         # Add those which have been introduced
-        for item in classesCopy:
-            needUpdate = True
-            newItem = TreeViewClassItem( self.rootItem, item )
-            newItem.appendData( fileName )
-            newItem.appendData( item.line )
-            self.addTreeItem( self.rootItem, newItem )
+        for item in info.classes:
+            if not item.name in existingClasses:
+                needUpdate = True
+                newItem = TreeViewClassItem( self.rootItem, item )
+                newItem.appendData( [ fileName, item.line ] )
+                self.addTreeItem( self.rootItem, newItem )
 
         return needUpdate
 
