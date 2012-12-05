@@ -23,7 +23,7 @@
 
 
 from PyQt4.Qsci         import QsciLexerPython
-from PyQt4.QtCore       import QString, QRegExp, Qt
+from PyQt4.QtCore       import QString, QRegExp
 from cdmbriefparser     import getBriefModuleInfoFromMemory
 
 
