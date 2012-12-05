@@ -195,7 +195,7 @@ class TreeViewItem( object ):
 
         # The item could be used for G/F/C viewers where the file name is
         # available in the second column
-        if len( self.itemData ) >= 2:
+        if self.itemDataSize >= 2:
             return self.itemData[ 1 ]
 
         # Memorize if it is a directory item
@@ -270,7 +270,7 @@ class TreeViewItem( object ):
         child = self
         current = self.parentItem
         while not current is None:
-            for index in range( 0, len( current.childItems ) ):
+            for index in xrange( 0, len( current.childItems ) ):
                 if current.childItems[ index ] == child:
                     rowPath = [ index ] + rowPath
                     child = current
@@ -670,11 +670,11 @@ class TreeViewClassItem( TreeViewItem ):
             self.icon = PixmapCache().getIcon( 'class.png' )
 
         # Decide if it should be expandable
-        if len( classObj.decorators ) > 0 or \
-           len( classObj.functions ) > 0 or \
-           len( classObj.classes ) > 0 or \
-           len( classObj.classAttributes ) > 0 or \
-           len( classObj.instanceAttributes ) > 0:
+        if classObj.decorators or \
+           classObj.functions or \
+           classObj.classes or \
+           classObj.classAttributes or \
+           classObj.instanceAttributes:
             self.populated = False
             self.lazyPopulation = True
         return
