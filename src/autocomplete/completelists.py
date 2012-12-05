@@ -458,7 +458,7 @@ def getCompletionList( fileName, scope, obj, prefix,
     # Check a popular case self. and then something
     if scope.getScope() == scope.ClassMethodScope:
         infoObj = scope.getInfoObj()
-        if not infoObj.isStaticMethod() and len( infoObj.arguments ) > 0:
+        if not infoObj.isStaticMethod() and infoObj.arguments:
             firstArgName = infoObj.arguments[ 0 ]
             if firstArgName == obj:
                 # The user completes the class member
@@ -494,7 +494,7 @@ def getCompletionList( fileName, scope, obj, prefix,
         return list( getEditorTags( editor, prefix, True ) ), False
 
     proposals = _excludePrivateAndBuiltins( proposals )
-    if len( proposals ) == 0:
+    if not proposals:
         return list( getEditorTags( editor, prefix, True ) ), False
 
     if obj == "":
