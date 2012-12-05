@@ -185,6 +185,18 @@ class BrowserModelBase( QAbstractItemModel ):
             self.populateItem( parentItem )
         return parentItem.childCount()
 
+    def hasChildren( self, parent = QModelIndex() ):
+        " Returns True if the parent has children "
+        # Only the first column should have children
+        if parent.column() > 0:
+            return False
+        if not parent.isValid():
+            return self.rootItem.childCount() > 0
+
+        if parent.internalPointer().lazyPopulation:
+            return True
+        return parent.internalPointer().childCount() > 0
+
     def clear( self ):
         " Clears the model "
         self.rootItem.removeChildren()
@@ -342,6 +354,8 @@ class BrowserModelBase( QAbstractItemModel ):
         if not detectFileType( path ) in [ PythonFileType, Python3FileType ]:
             return
 
+        parentItem.populated = True
+
         if self.globalData.project.isProjectFile( path ):
             modInfo = self.globalData.project.briefModinfoCache.get( path )
         else:
@@ -397,6 +411,8 @@ class BrowserModelBase( QAbstractItemModel ):
                         repopulate = False ):
         " Helper for populating lists "
 
+        parentItem.populated = True
+
         if repopulate:
             self.beginInsertRows( self.createIndex( parentItem.row(),
                                                     0, parentItem ),
@@ -445,6 +461,8 @@ class BrowserModelBase( QAbstractItemModel ):
 
     def populateClassItem( self, parentItem, repopulate ):
         " Populates a class item "
+
+        parentItem.populated = True
 
         # Count the number of items
         count = len( parentItem.sourceObj.decorators ) + \
@@ -507,6 +525,8 @@ class BrowserModelBase( QAbstractItemModel ):
 
     def populateFunctionItem( self, parentItem, repopulate ):
         " Populates a function item "
+
+        parentItem.populated = True
 
         # Count the number of items
         count = len( parentItem.sourceObj.decorators )
@@ -694,23 +714,24 @@ class BrowserModelBase( QAbstractItemModel ):
                 newItem.appendData( method.line )
                 self.addTreeItem( treeItem, newItem )
 
-        if not hadClasses and treeItem.populated and classObj.classes:
+        if not hadClasses and classObj.classes:
             newItem = TreeViewClassesItem( treeItem, classObj )
             newItem.appendData( treeItem.data( 1 ) )
             newItem.appendData( -1 )
             self.addTreeItem( treeItem, newItem )
-        if not hadStaticAttributes and treeItem.populated and \
+        if not hadStaticAttributes and \
            classObj.classAttributes:
             newItem = TreeViewStaticAttributesItem( treeItem )
             newItem.appendData( treeItem.data( 1 ) )
             newItem.appendData( -1 )
             self.addTreeItem( treeItem, newItem )
-        if not hadInstanceAttributes and treeItem.populated and \
+        if not hadInstanceAttributes and \
            classObj.instanceAttributes:
             newItem = TreeViewInstanceAttributesItem( treeItem )
             newItem.appendData( treeItem.data( 1 ) )
             newItem.appendData( -1 )
             self.addTreeItem( treeItem, newItem )
+
 
         return
 
@@ -775,12 +796,12 @@ class BrowserModelBase( QAbstractItemModel ):
                 newItem.appendData( decor.line )
                 self.addTreeItem( treeItem, newItem )
 
-        if not hadFunctions and treeItem.populated and funcObj.functions:
+        if not hadFunctions and funcObj.functions:
             newItem = TreeViewFunctionsItem( treeItem, funcObj )
             newItem.appendData( treeItem.data( 1 ) )
             newItem.appendData( -1 )
             self.addTreeItem( treeItem, newItem )
-        if not hadClasses and treeItem.populated and funcObj.classes:
+        if not hadClasses and funcObj.classes:
             newItem = TreeViewClassesItem( treeItem, funcObj )
             newItem.appendData( treeItem.data( 1 ) )
             newItem.appendData( -1 )
