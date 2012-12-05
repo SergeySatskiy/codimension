@@ -265,7 +265,7 @@ class FilesBrowser( QTreeView ):
         dlg = FindInFilesDialog( FindInFilesDialog.inDirectory,
                                  "", searchDir )
         dlg.exec_()
-        if len( dlg.searchResults ) != 0:
+        if dlg.searchResults:
             GlobalData().mainWindow.displayFindInFiles( dlg.searchRegexp,
                                                         dlg.searchResults )
         return
@@ -353,9 +353,7 @@ class FilesBrowser( QTreeView ):
                 if os.path.realpath( i.getPath() ) == dirname + basename:
                     # Update the link status
                     i.updateLinkStatus( i.getPath() )
-                    index = srcModel.buildIndex( i.getRowPath() )
-                    srcModel.emit( SIGNAL( "dataChanged(const QModelIndex &, const QModelIndex &)" ),
-                                   index, index )
+                    self.__signalItemUpdated( i )
         return
 
 
@@ -378,9 +376,7 @@ class FilesBrowser( QTreeView ):
             if os.path.realpath( treeItem.getPath() ) == dirname + basename:
                 # Broken link now
                 treeItem.updateStatus()
-                index = srcModel.buildIndex( treeItem.getRowPath() )
-                srcModel.emit( SIGNAL( "dataChanged(const QModelIndex &, const QModelIndex &)" ),
-                               index, index )
+                self.__signalItemUpdated( treeItem )
                 return
 
 
@@ -401,9 +397,7 @@ class FilesBrowser( QTreeView ):
                         srcModel.endRemoveRows()
                     elif os.path.realpath( i.getPath() ) == dirname + basename:
                         i.updateLinkStatus( i.getPath() )
-                        index = srcModel.buildIndex( i.getRowPath() )
-                        srcModel.emit( SIGNAL( "dataChanged(const QModelIndex &, const QModelIndex &)" ),
-                                       index, index )
+                        self.__signalItemUpdated( i )
                 else:
                     # Regular final file
                     if os.path.realpath( i.getPath() ) == dirname + basename:
@@ -550,7 +544,9 @@ class FilesBrowser( QTreeView ):
                 hadFunctions = True
                 if info.functions:
                     fileChildItem.updateData( info )
-                    self.model().sourceModel().updateFunctionsItem( fileChildItem, info.functions )
+                    self.model().sourceModel().updateFunctionsItem( \
+                                                            fileChildItem,
+                                                            info.functions )
                 else:
                     itemsToRemove.append( fileChildItem )
                 continue
@@ -558,7 +554,8 @@ class FilesBrowser( QTreeView ):
                 hadClasses = True
                 if info.classes:
                     fileChildItem.updateData( info )
-                    self.model().sourceModel().updateClassesItem( fileChildItem, info.classes )
+                    self.model().sourceModel().updateClassesItem( fileChildItem,
+                                                                  info.classes )
                 else:
                     itemsToRemove.append( fileChildItem )
                 continue
@@ -599,31 +596,31 @@ class FilesBrowser( QTreeView ):
         if not treeItem.populated:
             return
 
-        # Need to update item by item. There could be 2 global items with
-        # the same name, so this stuff of a copied list.
-        globalsCopy = list( globalsObj )
+        existingGlobals = []
         itemsToRemove = []
         for globalItem in treeItem.childItems:
             name = globalItem.data( 0 )
             found = False
-            for index in xrange( len( globalsCopy ) ):
-                if globalsCopy[ index ].name == name:
+            for glob in globalsObj:
+                if glob.name == name:
                     found = True
-                    globalItem.updateData( globalsCopy[ index ] )
+                    existingGlobals.append( name )
+                    globalItem.updateData( glob )
                     # No need to send the update signal because the name is
                     # still the same
-                    del globalsCopy[ index ]
                     break
             if not found:
                 # Disappeared item
                 itemsToRemove.append( globalItem )
+
         for item in itemsToRemove:
             self.__removeTreeItem( item )
 
         # Add those which have been introduced
-        for item in globalsCopy:
-            newItem = TreeViewGlobalItem( treeItem, item )
-            self.__addTreeItem( treeItem, newItem )
+        for glob in globalsObj:
+            if not glob.name in existingGlobals:
+                newItem = TreeViewGlobalItem( treeItem, glob )
+                self.__addTreeItem( treeItem, newItem )
 
         return
 
@@ -653,6 +650,7 @@ class FilesBrowser( QTreeView ):
             if not found:
                 # Disappeared item
                 itemsToRemove.append( importItem )
+
         for item in itemsToRemove:
             self.__removeTreeItem( item )
 
@@ -682,6 +680,7 @@ class FilesBrowser( QTreeView ):
             if not found:
                 # Disappeared item
                 itemsToRemove.append( importWhatItem )
+
         for item in itemsToRemove:
             self.__removeTreeItem( item )
 
