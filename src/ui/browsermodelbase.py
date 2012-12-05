@@ -622,7 +622,7 @@ class BrowserModelBase( QAbstractItemModel ):
 
         # There might be decorators, classes, methods, static attributes and
         # instance attributes
-        existingsDecors = []
+        existingDecors = []
         existingMethods = []
         hadStaticAttributes = False
         hadInstanceAttributes = False
