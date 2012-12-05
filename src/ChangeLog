@@ -1,5 +1,7 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Performance improvement and bug fixes in the file content trees, e.g
+  file outline browser, project files browser etc.
 * Bug fix: files with national characters with not-recognized type could
   lead to unpredicted behaviour (up to core dumps). Issue #348
 * Bug fix: tab expanding (replace all) did not replace everything.
