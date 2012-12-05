@@ -27,8 +27,7 @@
 import os.path, logging
 from PyQt4.QtCore       import Qt, QModelIndex, SIGNAL
 from PyQt4.QtGui        import QAbstractItemView, QApplication, \
-                               QSortFilterProxyModel, QTreeView, \
-                               QCursor
+                               QSortFilterProxyModel, QTreeView
 from utils.globals      import GlobalData
 from utils.pixmapcache  import PixmapCache
 from viewitems          import DirectoryItemType, SysPathItemType, \
@@ -44,12 +43,8 @@ from viewitems          import DirectoryItemType, SysPathItemType, \
                                TreeViewFileItem, TreeViewCodingItem, \
                                TreeViewGlobalsItem, TreeViewGlobalItem, \
                                TreeViewImportsItem, TreeViewImportItem, \
-                               TreeViewWhatItem, TreeViewFunctionItem, \
-                               TreeViewFunctionsItem, TreeViewClassesItem, \
-                               TreeViewClassItem, TreeViewDecoratorItem, \
-                               TreeViewStaticAttributesItem, \
-                               TreeViewInstanceAttributesItem, \
-                               TreeViewAttributeItem
+                               TreeViewWhatItem, \
+                               TreeViewFunctionsItem, TreeViewClassesItem
 from utils.fileutils    import CodimensionProjectFileType, \
                                BrokenSymlinkFileType, \
                                PythonFileType, Python3FileType
