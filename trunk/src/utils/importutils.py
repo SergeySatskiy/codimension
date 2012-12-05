@@ -109,10 +109,9 @@ def buildDirModules( path, infoLabel = None ):
 def resolveImport( basePath, importString ):
     " Resolves a single import "
     result = resolveImports( basePath, [ importString ] )
-    if len( result ) == 0:
-        return ""
-
-    return result[ 0 ][ 1 ]
+    if result:
+        return result[ 0 ][ 1 ]
+    return ""
 
 
 def resolveImports( basePath, imports ):
@@ -134,7 +133,7 @@ def resolveImports( basePath, imports ):
                 else:
                     if not path.endswith( ".py" ) and \
                        not path.endswith( ".py3" ):
-                           continue
+                        continue
                 result.append( [ item, path ] )
             continue
         except:
@@ -152,7 +151,7 @@ def resolveImports( basePath, imports ):
                 else:
                     if not path.endswith( ".py" ) and \
                        not path.endswith( ".py3" ):
-                           continue
+                        continue
                 result.append( [ item, path ] )
         except:
             pass
@@ -194,7 +193,7 @@ def isImportModule( info, name ):
     matches = []
     for item in info.imports:
         # We are interested here in those which import a module
-        if len( item.what ) != 0:
+        if item.what:
             continue
 
         if item.alias == "":
@@ -215,7 +214,7 @@ def isImportedObject( info, name ):
     matches = []
     for item in info.imports:
         # We are interested here in those which import an object
-        if len( item.what ) == 0:
+        if not item.what:
             continue
 
         for whatItem in item.what:
