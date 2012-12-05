@@ -20,16 +20,16 @@
 # $Id$
 #
 
-from PyQt4.QtCore       import Qt, SIGNAL, QStringList, QEventLoop
+" UI support for detected outside changes of files "
+
+
+from PyQt4.QtCore       import Qt, SIGNAL, QEventLoop
 from PyQt4.QtGui        import QSizePolicy, QFrame, \
-                               QTreeWidget, QApplication, \
-                               QTreeWidgetItem, QHeaderView, \
-                               QLabel, QPushButton, \
+                               QApplication, QLabel, QPushButton, \
                                QApplication, QColor, \
-                               QHeaderView, QSizePolicy, QGridLayout, \
+                               QSizePolicy, QGridLayout, \
                                QFontMetrics
 from utils.globals      import GlobalData
-import os.path
 
 
 class OutsideChangeWidget( QFrame ):
@@ -47,6 +47,12 @@ class OutsideChangeWidget( QFrame ):
         self.setFrameShape( QFrame.StyledPanel )
         self.setLineWidth( 2 )
         self.setAutoFillBackground( True )
+
+        # Keep pylint happy
+        self.__messageLabel = None
+        self.__leaveAsIsButton = None
+        self.__reloadButton = None
+        self.__reloadAllNonChangedButton = None
 
         self.__markers = []
         self.__createLayout()
@@ -205,3 +211,4 @@ class OutsideChangeWidget( QFrame ):
         " Reloads all the non-modified buffers "
         self.emit( SIGNAL( 'ReloadAllNonModifiedRequest' ) )
         return
+
