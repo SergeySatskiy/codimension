@@ -23,18 +23,16 @@
 " Text editor implementation "
 
 
-import os.path, logging, subprocess
+import os.path, logging
 from subprocess import Popen
 import lexer
 from scintillawrap              import ScintillaWrapper
 from PyQt4.QtCore               import Qt, QFileInfo, SIGNAL, QSize, \
-                                       QVariant, QDir, QUrl, \
-                                       QRect, QEvent
+                                       QVariant, QRect, QEvent
 from PyQt4.QtGui                import QApplication, QCursor, \
                                        QFontMetrics, QToolBar, QActionGroup, \
                                        QHBoxLayout, QWidget, QAction, QMenu, \
-                                       QSizePolicy, QToolButton, QFileDialog, \
-                                       QDialog, QMessageBox
+                                       QSizePolicy, QToolButton, QDialog
 from PyQt4.Qsci                 import QsciScintilla, QsciLexerPython
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.fileutils            import detectFileType, DesignerFileType, \
@@ -235,8 +233,8 @@ class TextEditor( ScintillaWrapper ):
                                     PixmapCache().getIcon( 'pastemenu.png' ),
                                     '&Paste', self.paste, "Ctrl+V" )
         self.__menuSelectAll = self.__menu.addAction( \
-                                    PixmapCache().getIcon( 'selectallmenu.png' ),
-                                    'Select &all', self.selectAll, "Ctrl+A" )
+                                PixmapCache().getIcon( 'selectallmenu.png' ),
+                                'Select &all', self.selectAll, "Ctrl+A" )
         self.__menu.addSeparator()
         m = self.__menu.addMenu( self.__initEncodingMenu() )
         m.setIcon( PixmapCache().getIcon( 'textencoding.png' ) )
@@ -490,7 +488,7 @@ class TextEditor( ScintillaWrapper ):
     def __disableKeyBinding( self ):
         " Disable some unwanted key bindings "
         ctrl  = self.SCMOD_CTRL << 16
-        shift = self.SCMOD_SHIFT << 16
+        # shift = self.SCMOD_SHIFT << 16
         self.SendScintilla( self.SCI_CLEARCMDKEY, ord( 'L' ) + ctrl )
         return
 
@@ -1432,11 +1430,11 @@ class TextEditor( ScintillaWrapper ):
                 return True, False, ""
             # Search for the first non space character before the current word
             position = self.currentPosition() - 1
-            while self.charAt( position ) not in [ ' ', '\\', '\r', '\n', '\t' ]:
+            while self.charAt(position) not in [ ' ', '\\', '\r', '\n', '\t' ]:
                 position -= 1
-            while self.charAt( position ) in [ ' ', '\\', '\r', '\n', '\t' ]:
+            while self.charAt(position) in [ ' ', '\\', '\r', '\n', '\t' ]:
                 position -= 1
-            if self.charAt( position ) == ',':
+            if self.charAt(position) == ',':
                 # It's an import line and need to complete
                 return True, True, ""
 
@@ -1773,7 +1771,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.pythonTidyButton = QToolButton( self )
         self.pythonTidyButton.setIcon( \
                       PixmapCache().getIcon( 'pythontidy.png' ) )
-        self.pythonTidyButton.setToolTip( 'Python tidy (code must be syntactically valid)' )
+        self.pythonTidyButton.setToolTip( 'Python tidy (code must be ' \
+                                          'syntactically valid)' )
         self.pythonTidyButton.setPopupMode( QToolButton.DelayedPopup )
         self.pythonTidyButton.setMenu( pythonTidyMenu )
         self.pythonTidyButton.setFocusPolicy( Qt.NoFocus )
@@ -1874,12 +1873,15 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                                       GlobalData().pylintAvailable )
         self.__editor.pylintAct.setEnabled( self.pylintButton.isEnabled() )
         self.pymetricsButton.setEnabled( self.__fileType == PythonFileType )
-        self.__editor.pymetricsAct.setEnabled( self.pymetricsButton.isEnabled() )
+        self.__editor.pymetricsAct.setEnabled( \
+                            self.pymetricsButton.isEnabled() )
         self.importsDiagramButton.setEnabled( \
                             self.__fileType == PythonFileType and
                             GlobalData().graphvizAvailable )
-        self.__editor.importsDgmAct.setEnabled( self.importsDiagramButton.isEnabled() )
-        self.__editor.importsDgmParamAct.setEnabled( self.importsDiagramButton.isEnabled() )
+        self.__editor.importsDgmAct.setEnabled( \
+                                    self.importsDiagramButton.isEnabled() )
+        self.__editor.importsDgmParamAct.setEnabled( \
+                                    self.importsDiagramButton.isEnabled() )
         self.runScriptButton.setEnabled( self.__fileType == PythonFileType and \
                                          self.isModified() == False and \
                                          os.path.isabs( self.__fileName ) )
@@ -1887,10 +1889,12 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__editor.runAct.setEnabled( self.runScriptButton.isEnabled() )
         self.__editor.runParamAct.setEnabled( self.runScriptButton.isEnabled() )
         self.__editor.profileAct.setEnabled( self.runScriptButton.isEnabled() )
-        self.__editor.profileParamAct.setEnabled( self.runScriptButton.isEnabled() )
-        self.debugScriptButton.setEnabled( self.__fileType == PythonFileType and \
-                                           self.isModified() == False and \
-                                           os.path.isabs( self.__fileName ) )
+        self.__editor.profileParamAct.setEnabled( \
+                                    self.runScriptButton.isEnabled() )
+        self.debugScriptButton.setEnabled( \
+                                    self.__fileType == PythonFileType and \
+                                    self.isModified() == False and \
+                                    os.path.isabs( self.__fileName ) )
         self.pythonTidyButton.setEnabled( self.__fileType == PythonFileType )
         self.lineCounterButton.setEnabled( self.__fileType == PythonFileType )
         return
