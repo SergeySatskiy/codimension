@@ -42,8 +42,7 @@ from helpwidget                 import QuickHelpWidget
 from editor.texteditor          import TextEditorTabWidget
 from pixmapwidget               import PixmapTabWidget
 from utils.fileutils            import detectFileType, PythonFileType, \
-                                       Python3FileType, PixmapFileType, \
-                                       DesignerFileType, LinguistFileType
+                                       Python3FileType, PixmapFileType
 from utils.compatibility        import relpath
 from utils.misc                 import getNewFileTemplate, getLocaleDateTime
 from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
@@ -51,8 +50,6 @@ from utils.globals              import GlobalData
 from utils.settings             import Settings
 from tabshistory                import TabsHistory
 from diagram.importsdgmgraphics import ImportDgmTabWidget
-from cdmbriefparser             import getBriefModuleInfoFromMemory
-from utils.encoding             import decode
 from htmltabwidget              import HTMLTabWidget
 from profiling.disasmwidget     import DisassemblerResultsWidget
 
@@ -285,7 +282,7 @@ class EditorsManager( QTabWidget ):
                 self.__updateFilePosition( index )
                 toClose.insert( 0, index )
 
-        if len( notSaved ) > 0:
+        if notSaved:
             # There are not saved files
             logging.error( "Please close or save the modified files " \
                            "explicitly (" + ", ".join( notSaved ) + ")" )
@@ -762,7 +759,7 @@ class EditorsManager( QTabWidget ):
                 infoSrc = GlobalData().briefModinfoCache
             info = infoSrc.get( fileName )
 
-            if len( info.errors ) + len( info.lexerErrors ) > 0:
+            if info.errors  or info.lexerErrors:
                 icon = PixmapCache().getIcon( 'filepythonbroken.png' )
                 self.setTabIcon( widgetIndex, icon )
                 self.setTabToolTip( widgetIndex, "The disk version of file has parsing errors" )
@@ -1330,7 +1327,7 @@ class EditorsManager( QTabWidget ):
         if self.findWidget.isHidden():
             self.findWidget.show( searchText )
         else:
-            if len( searchText ) > 0:
+            if searchText:
                 self.findWidget.show( searchText )
         self.findWidget.setFocus()
         self.__lastDisplayedWasFindWidget = True
@@ -1343,7 +1340,7 @@ class EditorsManager( QTabWidget ):
             return
 
         searchText = str( self.currentWidget().getEditor().getSearchText() )
-        if len( searchText ) > 0:
+        if searchText:
             self.findWidget.startHiddenSearch( searchText )
             self.__lastDisplayedWasFindWidget = True
         else:
@@ -1366,7 +1363,7 @@ class EditorsManager( QTabWidget ):
         if self.replaceWidget.isHidden():
             self.replaceWidget.show( searchText )
         else:
-            if len( searchText ) > 0:
+            if searchText:
                 self.replaceWidget.show( searchText )
         self.replaceWidget.setFocus()
         self.__lastDisplayedWasFindWidget = False
@@ -1623,7 +1620,7 @@ class EditorsManager( QTabWidget ):
                 # The tab will be closed soon, so save the file position
                 self.__updateFilePosition( index )
 
-        if len( notSaved ) == 0:
+        if not notSaved:
             return True
 
         # There are not saved files
