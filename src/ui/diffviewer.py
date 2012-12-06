@@ -23,10 +23,8 @@
 """ The diff viewer implementation """
 
 from PyQt4.QtCore import Qt, SIGNAL, QSize
-from PyQt4.QtGui import QMenu, QPalette, \
-                        QApplication, QCursor, \
-                        QHBoxLayout, QWidget, QAction, QToolBar, \
-                        QSizePolicy, QLabel, QVBoxLayout, QFrame
+from PyQt4.QtGui import QHBoxLayout, QWidget, QAction, QToolBar, \
+                        QSizePolicy, QVBoxLayout
 from utils.pixmapcache import PixmapCache
 from htmltabwidget     import HTMLTabWidget
 from utils.globals     import GlobalData
@@ -43,7 +41,7 @@ class DiffViewer( QWidget ):
         self.__viewer = None
         self.__clearButton = None
         self.__sendUpButton = None
-        self.__createLayout( parent )
+        self.__createLayout()
         self.__isEmpty = True
         self.__tooltip = ""
         self.__inClear = False
@@ -52,7 +50,7 @@ class DiffViewer( QWidget ):
         self.__updateToolbarButtons()
         return
 
-    def __createLayout( self, parent ):
+    def __createLayout( self ):
         " Helper to create the viewer layout "
 
         self.__viewer = HTMLTabWidget()
