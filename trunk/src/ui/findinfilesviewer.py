@@ -29,7 +29,7 @@ from PyQt4.QtGui        import QToolBar, QCursor, QBrush, \
                                QSizePolicy, QFrame, \
                                QTreeWidget, QApplication, \
                                QTreeWidgetItem, QHeaderView, QToolTip, \
-                               QPalette, QColor, QFont, QVBoxLayout
+                               QPalette, QColor, QVBoxLayout
 from utils.pixmapcache  import PixmapCache
 from utils.globals      import GlobalData
 from itemdelegates      import NoOutlineHeightDelegate
@@ -299,6 +299,11 @@ class FindInFilesViewer( QWidget ):
         self.__headerFont = self.__noneLabel.font()
         self.__headerFont.setPointSize( self.__headerFont.pointSize() + 4 )
         self.__noneLabel.setFont( self.__headerFont )
+
+        # Keep pylint happy
+        self.printButton = None
+        self.clearButton = None
+        self.printPreviewButton = None
 
         self.__createLayout( parent )
 
