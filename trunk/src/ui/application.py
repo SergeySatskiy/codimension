@@ -24,7 +24,7 @@
 """ definition of the codimension QT based application class """
 
 from PyQt4.QtCore       import Qt, QEvent, QTimer, SIGNAL
-from PyQt4.QtGui        import QApplication, QDialog
+from PyQt4.QtGui        import QApplication
 from utils.pixmapcache  import PixmapCache
 from utils.globals      import GlobalData
 
