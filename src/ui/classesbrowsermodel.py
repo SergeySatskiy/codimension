@@ -33,10 +33,8 @@ import os.path
 from PyQt4.QtCore       import SIGNAL
 from PyQt4.QtCore       import QVariant
 from viewitems          import TreeViewClassItem
-from utils.globals      import GlobalData
 from utils.project      import CodimensionProject
 from browsermodelbase   import BrowserModelBase
-from utils.fileutils    import detectFileType, PythonFileType, Python3FileType
 
 
 class ClassesBrowserModel( BrowserModelBase ):
@@ -82,7 +80,8 @@ class ClassesBrowserModel( BrowserModelBase ):
         itemsToDelete = []
         for path in deletedPythonFiles:
             for item in self.rootItem.childItems:
-                if os.path.realpath( path ) == os.path.realpath( item.getPath() ):
+                if os.path.realpath( path ) == \
+                   os.path.realpath( item.getPath() ):
                     itemsToDelete.append( item )
 
         for item in itemsToDelete:
@@ -105,7 +104,6 @@ class ClassesBrowserModel( BrowserModelBase ):
         # Here: python file which belongs to the project
         info = self.globalData.project.briefModinfoCache.get( fileName )
 
-#        classesCopy = list( info.classes )
         existingClasses = []
         itemsToRemove = []
         needUpdate = False
