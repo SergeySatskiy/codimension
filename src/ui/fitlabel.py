@@ -29,7 +29,7 @@
 """ Implementation of labels which can change its
     content to fit the label size """
 
-from PyQt4.QtCore    import Qt, QString, SIGNAL
+from PyQt4.QtCore    import Qt, SIGNAL
 from PyQt4.QtGui     import QLabel
 from utils.fileutils import compactPath
 
