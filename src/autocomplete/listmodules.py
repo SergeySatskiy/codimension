@@ -50,6 +50,8 @@ def getSysModules():
 
 class DevNull:
     " Stderr supresser "
+    def __init__( self ):
+        pass
     def write( self, data ):
         " Supresses everything what is written into a stream "
         pass
@@ -75,7 +77,7 @@ def getModules( path ):
     for fName in listdir( path ):
         fName = path + sep + fName
         if isfile( fName ):
-            modName, e = splitext( fName )
+            modName, ext = splitext( fName )
             suffix = __getSuffix( fName )
             if not suffix:
                 continue
@@ -155,9 +157,9 @@ def __getSysPathExceptCurrent():
     return filter( __filterCallback, path )
 
 if __name__ == "__main__":
-    modules = getSysModules()
-    names = modules.keys()
+    sysModules = getSysModules()
+    names = sysModules.keys()
     names.sort()
     for name in names:
-        print "Name: " + name + " Path: " + str( modules[ name ] )
+        print "Name: " + name + " Path: " + str( sysModules[ name ] )
 
