@@ -128,9 +128,9 @@ class ScintillaWrapper( QsciScintilla ):
     def getCurrentPixelPosition( self ):
         " Provides the current text cursor position in points "
         pos = self.SendScintilla( self.SCI_GETCURRENTPOS )
-        x = self.SendScintilla( self.SCI_POINTXFROMPOSITION, 0, pos )
-        y = self.SendScintilla( self.SCI_POINTYFROMPOSITION, 0, pos )
-        return x, y
+        xPos = self.SendScintilla( self.SCI_POINTXFROMPOSITION, 0, pos )
+        yPos = self.SendScintilla( self.SCI_POINTYFROMPOSITION, 0, pos )
+        return xPos, yPos
 
     def setCurrentPosition( self, pos ):
         " Sets the current position "
@@ -482,7 +482,7 @@ class ScintillaWrapper( QsciScintilla ):
         pos = self.SendScintilla( self.SCI_POSITIONFROMLINE, line )
 
         # Allow for multi-byte characters
-        for i in range( index ):
+        for i in xrange( index ):
             pos = self.positionAfter( pos )
         return pos
 
@@ -781,7 +781,8 @@ class ScintillaWrapper( QsciScintilla ):
         line, col = self.getCursorPosition()
         return self.getWord( line, col, 0, True, addChars )
 
-    def getWord( self, line, col, direction = 0, useWordChars = True, addChars = "" ):
+    def getWord( self, line, col, direction = 0,
+                 useWordChars = True, addChars = "" ):
         """ Provides the word at a position.
             direction direction to look in (0 = whole word, 1 = left, 2 = right)
         """
@@ -796,21 +797,22 @@ class ScintillaWrapper( QsciScintilla ):
             return text.mid( start, end - start )
         return QString( '' )
 
-    def getWordBoundaries( self, line, col, useWordChars = True, addChars = "" ):
+    def getWordBoundaries( self, line, col,
+                           useWordChars = True, addChars = "" ):
         " Provides the word boundaries at a position "
 
         text = self.text( line )
         if self.caseSensitive():
-            cs = Qt.CaseSensitive
+            sensitivity = Qt.CaseSensitive
         else:
-            cs = Qt.CaseInsensitive
-        wc = self.wordCharacters()
-        if wc is None or not useWordChars:
-            regExp = QRegExp( '[^\w_]', cs )
+            sensitivity = Qt.CaseInsensitive
+        wChars = self.wordCharacters()
+        if wChars is None or not useWordChars:
+            regExp = QRegExp( '[^\w_]', sensitivity )
         else:
-            wc += addChars
-            wc = re.sub( '\w', "", wc )
-            regExp = QRegExp( '[^\w%s]' % re.escape( wc ), cs )
+            wChars += addChars
+            wChars = re.sub( '\w', "", wChars )
+            regExp = QRegExp( '[^\w%s]' % re.escape( wChars ), sensitivity )
         start = text.lastIndexOf( regExp, col ) + 1
         end = text.indexOf( regExp, col )
         if start == end + 1 and col > 0:
