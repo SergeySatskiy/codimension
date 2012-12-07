@@ -236,14 +236,14 @@ class TextEditor( ScintillaWrapper ):
                                 PixmapCache().getIcon( 'selectallmenu.png' ),
                                 'Select &all', self.selectAll, "Ctrl+A" )
         self.__menu.addSeparator()
-        m = self.__menu.addMenu( self.__initEncodingMenu() )
-        m.setIcon( PixmapCache().getIcon( 'textencoding.png' ) )
+        menu = self.__menu.addMenu( self.__initEncodingMenu() )
+        menu.setIcon( PixmapCache().getIcon( 'textencoding.png' ) )
         self.__menu.addSeparator()
-        m = self.__menu.addMenu( self.__initToolsMenu() )
-        m.setIcon( PixmapCache().getIcon( 'toolsmenu.png' ) )
+        menu = self.__menu.addMenu( self.__initToolsMenu() )
+        menu.setIcon( PixmapCache().getIcon( 'toolsmenu.png' ) )
         self.__menu.addSeparator()
-        m = self.__menu.addMenu( self.__initDiagramsMenu() )
-        m.setIcon( PixmapCache().getIcon( 'diagramsmenu.png' ) )
+        menu = self.__menu.addMenu( self.__initDiagramsMenu() )
+        menu.setIcon( PixmapCache().getIcon( 'diagramsmenu.png' ) )
         self.__menu.addSeparator()
         self.__menuOpenAsFile = self.__menu.addAction( \
                                     PixmapCache().getIcon( 'filemenu.png' ),
@@ -280,7 +280,8 @@ class TextEditor( ScintillaWrapper ):
         self.setEncoding( encoding + "-selected" )
         return
 
-    def __normalizeEncoding( self, enc ):
+    @staticmethod
+    def __normalizeEncoding( enc ):
         " Strips display purpose suffix "
         return enc.replace( "-default", "" ) \
                   .replace( "-guessed", "" ) \
@@ -425,7 +426,7 @@ class TextEditor( ScintillaWrapper ):
         # The supported margins: line numbers (4 digits), bookmarks, folding
 
         # reset standard margins settings
-        for margin in range( 5 ):
+        for margin in xrange( 5 ):
             self.setMarginLineNumbers( margin, False )
             self.setMarginMarkerMask( margin, 0 )
             self.setMarginWidth( margin, 0 )
@@ -1171,18 +1172,18 @@ class TextEditor( ScintillaWrapper ):
         firstVisible = self.firstVisibleLine()
         lastVisible = firstVisible + self.linesOnScreen()
         line, pos = self.getCursorPosition()
-        x, y = self.getCurrentPixelPosition()
+        xPos, yPos = self.getCurrentPixelPosition()
         if line > 0 and (line - 1) >= firstVisible \
                     and (line - 1) <= lastVisible:
             self.setCursorPosition( line - 1, 0 )
-            x1, y1 = self.getCurrentPixelPosition()
-            self._lineHeight = y - y1
+            xPos1, yPos1 = self.getCurrentPixelPosition()
+            self._lineHeight = yPos - yPos1
         else:
             if self.lines() > line + 1 and (line + 1) >= firstVisible \
                                        and (line + 1) <= lastVisible:
                 self.setCursorPosition( line + 1, 0 )
-                x1, y1 = self.getCurrentPixelPosition()
-                self._lineHeight = y1 -y
+                xPos1, yPos1 = self.getCurrentPixelPosition()
+                self._lineHeight = yPos1 -yPos
             else:
                 # This is the last resort, it provides wrong values
                 currentPosFont = self.getCurrentPosFont()
@@ -1194,16 +1195,16 @@ class TextEditor( ScintillaWrapper ):
     def __detectCharWidth( self ):
         " Sets the self._charWidth "
         line, pos = self.getCursorPosition()
-        x, y = self.getCurrentPixelPosition()
+        xPos, yPos = self.getCurrentPixelPosition()
         if pos > 0:
             self.setCursorPosition( line, pos - 1 )
-            x1, y1 = self.getCurrentPixelPosition()
-            self._charWidth = x - x1
+            xPos1, yPos1 = self.getCurrentPixelPosition()
+            self._charWidth = xPos - xPos1
         else:
             if len( self.text( line ) ) > 1:
                 self.setCursorPosition( line, pos + 1 )
-                x1, y1 = self.getCurrentPixelPosition()
-                self._charWidth = x1 - x
+                xPos1, yPos1 = self.getCurrentPixelPosition()
+                self._charWidth = xPos1 - xPos
             else:
                 # This is the last resort, it provides wrong values
                 currentPosFont = self.getCurrentPosFont()
@@ -1256,7 +1257,7 @@ class TextEditor( ScintillaWrapper ):
 
         # Make sure the line is visible
         self.ensureLineVisible( line )
-        x, y = self.getCurrentPixelPosition()
+        xPos, yPos = self.getCurrentPixelPosition()
         if self.hasSelectedText():
             # Remove the selection as it could be interpreted not as expected
             self.setSelection( line, pos, line, pos )
@@ -1272,7 +1273,7 @@ class TextEditor( ScintillaWrapper ):
 
         # All the X Servers I tried have a problem with the line height, so I
         # have some spare points in the height
-        cursorRectangle = QRect( x, y - 2,
+        cursorRectangle = QRect( xPos, yPos - 2,
                                  self._charWidth, self._lineHeight + 8 )
         self.__completer.complete( cursorRectangle )
         return True
@@ -1390,6 +1391,7 @@ class TextEditor( ScintillaWrapper ):
             return False, -1
 
         line, pos = self.getCursorPosition()
+        pos = pos   # Makes pylint happy
 
         # Find the beginning of the line
         while True:
