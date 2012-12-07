@@ -359,7 +359,6 @@ def getOccurencesForEditor( fileName, editor, throwException ):
     except:
         if throwException:
             raise
-        pass
 
     _restoreOriginalFile( fileName, temporaryName, editor )
     return nameToSearch, _buildOccurrencesImplementationsResult( result )
@@ -377,7 +376,6 @@ def getOccurencesForFilePosition( fileName, position, throwException ):
     except:
         if throwException:
             raise
-        pass
     return _buildOccurrencesImplementationsResult( result )
 
 
