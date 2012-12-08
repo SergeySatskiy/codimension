@@ -162,7 +162,7 @@ class NotUsedAnalysisProgress( QDialog ):
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
         modified = editorsManager.getModifiedList( True ) # True - only project files
-        if len( modified ) > 0:
+        if modified:
             modNames = [ modItem[ 0 ] for modItem in modified ]
             label = "File"
             if len( modified ) >= 2:
