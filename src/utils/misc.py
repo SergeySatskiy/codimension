@@ -35,6 +35,9 @@ from settings import settingsDir
 # The file is searched nearby the project file.
 templateFileName = "template.py"
 
+# File name with pylint settings
+pylintFileName = "pylintrc"
+
 
 def splitThousands( value, sep = "'" ):
     " provides thousands separated value "
@@ -68,6 +71,10 @@ def getLocaleDateTime():
 def getIDETemplateFile():
     " Provides the name of the IDE template file "
     return settingsDir + templateFileName
+
+def getIDEPylintFile():
+    " Provides the name of the IDE pylintrc file "
+    return settingsDir + pylintFileName
 
 
 def getProjectTemplateFile():
