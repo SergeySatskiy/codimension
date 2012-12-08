@@ -37,7 +37,7 @@ from fitlabel                   import FitPathLabel
 from utils.globals              import GlobalData
 from utils.project              import CodimensionProject
 from utils.misc                 import getDefaultTemplate, getIDETemplateFile, \
-                                       getProjectTemplateFile
+                                       getProjectTemplateFile, getIDEPylintFile
 from sidebar                    import SideBar
 from logviewer                  import LogViewer
 from taghelpviewer              import TagHelpViewer
@@ -596,7 +596,22 @@ class CodimensionMainWindow( QMainWindow ):
                                         '&Delete' )
         self.connect( self.__delPrjTemplateAct, SIGNAL( 'triggered()' ),
                       self.__onDelPrjTemplate )
+        self.__prjPylintMenu = QMenu( "Project-specific p&ylintrc", self )
+        self.__prjGenPylintrcAct = self.__prjPylintMenu.addAction( \
+                                        PixmapCache().getIcon( 'generate.png' ),
+                                        '&Create',
+                                        self.__onGenPylintRC )
+        self.__prjEditPylintrcAct = self.__prjPylintMenu.addAction( \
+                                        PixmapCache().getIcon( 'edit.png' ),
+                                        '&Edit',
+                                        self.__onEditPylintRC )
+        self.__prjPylintMenu.addSeparator()
+        self.__prjDelPylintrcAct = self.__prjPylintMenu.addAction( \
+                                        PixmapCache().getIcon( 'trash.png' ),
+                                        '&Delete',
+                                        self.__onDelPylintRC )
         self.__projectMenu.addMenu( self.__prjTemplateMenu )
+        self.__projectMenu.addMenu( self.__prjPylintMenu )
         self.__projectMenu.addSeparator()
         self.__recentPrjMenu = QMenu( "&Recent projects", self )
         self.connect( self.__recentPrjMenu, SIGNAL( "triggered(QAction*)" ),
@@ -756,18 +771,6 @@ class CodimensionMainWindow( QMainWindow ):
                                         PixmapCache().getIcon( 'pylint.png' ),
                                         '&Pylint for project',
                                         self.pylintButtonClicked )
-        self.__prjGenPylintrcAct = self.__toolsMenu.addAction( \
-                                        PixmapCache().getIcon( 'generate.png' ),
-                                        '&Generate project pylintrc',
-                                        self.__onGenPylintRC )
-        self.__prjEditPylintrcAct = self.__toolsMenu.addAction( \
-                                        PixmapCache().getIcon( 'edit.png' ),
-                                        '&Edit project pylintrc',
-                                        self.__onEditPylintRC )
-        self.__prjDelPylintrcAct = self.__toolsMenu.addAction( \
-                                        PixmapCache().getIcon( 'trash.png' ),
-                                        '&Delete project pylintrc',
-                                        self.__onDelPylintRC )
         self.__tabPylintAct = self.__toolsMenu.addAction( \
                                         PixmapCache().getIcon( 'pylint.png' ),
                                         'P&ylint for tab', self.__onTabPylint )
@@ -991,6 +994,25 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.__ideDelTemplateAct, SIGNAL( 'triggered()' ),
                       self.__onDelIDETemplate )
         self.__optionsMenu.addMenu( self.__ideTemplateMenu )
+
+        self.__idePylintMenu = QMenu( "IDE-wide &pylint", self )
+        self.__ideCreatePylintAct = self.__idePylintMenu.addAction( \
+                                    PixmapCache().getIcon( 'generate.png' ),
+                                    '&Create' )
+        self.connect( self.__ideCreatePylintAct, SIGNAL( 'triggered()' ),
+                      self.__onCreateIDEPylint )
+        self.__ideEditPylintAct = self.__idePylintMenu.addAction( \
+                                    PixmapCache().getIcon( 'edit.png' ),
+                                    '&Edit' )
+        self.connect( self.__ideEditPylintAct, SIGNAL( 'triggered()' ),
+                      self.__onEditIDEPylint )
+        self.__idePylintMenu.addSeparator()
+        self.__ideDelPylintAct = self.__idePylintMenu.addAction( \
+                                    PixmapCache().getIcon( 'trash.png' ),
+                                    '&Delete' )
+        self.connect( self.__ideDelPylintAct, SIGNAL( 'triggered()' ),
+                      self.__onDelIDEPylint )
+        self.__optionsMenu.addMenu( self.__idePylintMenu )
         self.__optionsMenu.addSeparator()
 
         verticalEdgeAct = self.__optionsMenu.addAction( 'Show vertical edge' )
@@ -1182,18 +1204,18 @@ class CodimensionMainWindow( QMainWindow ):
         self.__existentPylintRCMenu = QMenu( self )
         editAct = self.__existentPylintRCMenu.addAction( \
                                     PixmapCache().getIcon( 'edit.png' ),
-                                    'Edit the project pylintrc' )
+                                    'Edit project-specific pylintrc' )
         self.connect( editAct, SIGNAL( 'triggered()' ), self.__onEditPylintRC )
         self.__existentPylintRCMenu.addSeparator()
         delAct = self.__existentPylintRCMenu.addAction( \
                                     PixmapCache().getIcon( 'trash.png' ),
-                                    'Delete the project pylintrc' )
+                                    'Delete project-specific pylintrc' )
         self.connect( delAct, SIGNAL( 'triggered()' ), self.__onDelPylintRC )
 
         self.__absentPylintRCMenu = QMenu( self )
         genAct = self.__absentPylintRCMenu.addAction( \
                                     PixmapCache().getIcon( 'generate.png' ),
-                                    'Generate the project pylintrc' )
+                                    'Create project-specific pylintrc' )
         self.connect( genAct, SIGNAL( 'triggered()' ), self.__onGenPylintRC )
 
         self.__pylintButton = QToolButton( self )
@@ -1652,7 +1674,14 @@ class CodimensionMainWindow( QMainWindow ):
         # Detect the project pylintrc file if so
         pylintrcFile = ""
         if projectDir != "":
+            # First try project-specific pylintrc
             fName = projectDir + "pylintrc"
+            if os.path.exists( fName ):
+                pylintrcFile = fName
+
+        if pylintrcFile == "":
+            # Second try IDE-wide pylintrc
+            fName = getIDEPylintFile()
             if os.path.exists( fName ):
                 pylintrcFile = fName
 
@@ -1955,6 +1984,34 @@ class CodimensionMainWindow( QMainWindow ):
             if os.path.exists( fileName ):
                 os.unlink( fileName )
                 logging.info( "IDE new file template deleted" )
+        return
+
+    def __onCreateIDEPylint( self ):
+        " Triggered to create IDE pylint "
+        fileName = getIDEPylintFile()
+        if not os.path.exists( fileName ):
+            if os.system( "pylint --generate-rcfile > " + fileName ) != 0:
+                logging.error( "Error generating the project pylintrc (" + \
+                               fileName + ")" )
+                return
+        self.openFile( fileName, -1 )
+        return
+
+    def __onEditIDEPylint( self ):
+        " Triggered to edit IDE pylint "
+        fileName = getIDEPylintFile()
+        if not os.path.exists( fileName ):
+            logging.error( "Cannot find the IDE-wide pylintrc (" + \
+                           fileName + ")" )
+            return
+        self.openFile( fileName, -1 )
+        return
+
+    def __onDelIDEPylint( self ):
+        " Triggered to delete IDE pylint "
+        fileName = getIDEPylintFile()
+        if os.path.exists( fileName ):
+            os.unlink( fileName )
         return
 
     def __onFSChanged( self, items ):
@@ -2991,17 +3048,10 @@ class CodimensionMainWindow( QMainWindow ):
         self.__tabPythonTidyDlgAct.setEnabled( isPythonBuffer )
 
         if projectLoaded:
-            rcExists = os.path.exists( self.__getPylintRCFileName() )
-            self.__prjGenPylintrcAct.setEnabled( not rcExists )
-            self.__prjEditPylintrcAct.setEnabled( rcExists )
-            self.__prjDelPylintrcAct.setEnabled( rcExists )
             self.__unusedClassesAct.setEnabled( self.classesViewer.getItemCount() > 0 )
             self.__unusedFunctionsAct.setEnabled( self.functionsViewer.getItemCount() > 0 )
             self.__unusedGlobalsAct.setEnabled( self.globalsViewer.getItemCount() > 0 )
         else:
-            self.__prjGenPylintrcAct.setEnabled( False )
-            self.__prjEditPylintrcAct.setEnabled( False )
-            self.__prjDelPylintrcAct.setEnabled( False )
             self.__unusedClassesAct.setEnabled( False )
             self.__unusedFunctionsAct.setEnabled( False )
             self.__unusedGlobalsAct.setEnabled( False )
@@ -3037,6 +3087,11 @@ class CodimensionMainWindow( QMainWindow ):
         self.__ideCreateTemplateAct.setEnabled( not exists )
         self.__ideEditTemplateAct.setEnabled( exists )
         self.__ideDelTemplateAct.setEnabled( exists )
+
+        exists = os.path.exists( getIDEPylintFile() )
+        self.__ideCreatePylintAct.setEnabled( not exists )
+        self.__ideEditPylintAct.setEnabled( exists )
+        self.__ideDelPylintAct.setEnabled( exists )
         return
 
     def __helpAboutToShow( self ):
@@ -3123,13 +3178,23 @@ class CodimensionMainWindow( QMainWindow ):
 
         self.__recentPrjMenu.setEnabled( addedCount > 0 )
 
-        # Template part
-        fileName = getProjectTemplateFile()
-        if fileName is not None:
-            exists = os.path.exists( fileName )
+        if GlobalData().project.isLoaded():
+            # Template part
+            exists = os.path.exists( getProjectTemplateFile() )
+            self.__prjTemplateMenu.setEnabled( True )
             self.__createPrjTemplateAct.setEnabled( not exists )
             self.__editPrjTemplateAct.setEnabled( exists )
             self.__delPrjTemplateAct.setEnabled( exists )
+            # Pylint part
+            exists = os.path.exists( self.__getPylintRCFileName() )
+            self.__prjPylintMenu.setEnabled( True )
+            self.__prjGenPylintrcAct.setEnabled( not exists )
+            self.__prjEditPylintrcAct.setEnabled( exists )
+            self.__prjDelPylintrcAct.setEnabled( exists )
+        else:
+            self.__prjTemplateMenu.setEnabled( False )
+            self.__prjPylintMenu.setEnabled( False )
+
         return
 
     def __onRecentPrj( self, act ):
