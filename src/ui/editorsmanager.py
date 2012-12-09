@@ -1541,8 +1541,6 @@ class EditorsManager( QTabWidget ):
             self.setTabText( index, title )
         else:
             self.setTabText( index, currentWidget.getShortName() )
-        self.emit( SIGNAL( "bufferModified" ), currentWidget.getFileName(),
-                                               str( currentWidget.getUUID() ) )
         return
 
     def __contentChanged( self ):
