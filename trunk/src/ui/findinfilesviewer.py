@@ -240,6 +240,24 @@ class FindResultsTreeWidget( QTreeWidget ):
 
     def __init__( self, parent = None ):
         QTreeWidget.__init__( self, parent )
+        self.__fNameCache = set()
+        self.__uuidCache = set()
+        return
+
+    def resetCache( self ):
+        " Resets the caches "
+        self.__fNameCache = set()
+        self.__uuidCache = set()
+        return
+
+    def buildCache( self ):
+        " Builds the caches "
+        index = self.topLevelItemCount() - 1
+        while index >= 0:
+            item = self.topLevelItem( index )
+            self.__fNameCache.add( str( item.data( 0, Qt.DisplayRole ).toString() ) )
+            self.__uuidCache.add( item.uuid )
+            index -= 1
         return
 
     def leaveEvent( self, event ):
@@ -254,25 +272,51 @@ class FindResultsTreeWidget( QTreeWidget ):
 
     def onBufferModified( self, fileName, uuid ):
         " Triggered when a buffer is modified "
+        if uuid in self.__uuidCache:
+            self.__markByUUID( uuid )
+            self.__uuidCache.remove( uuid )
+            return
+        if fileName in self.__fNameCache:
+            self.__markByFileName( fileName )
+            self.__fNameCache.remove( fileName )
+            return
+
+    def __markByUUID( self, uuid ):
+        " Marks an item modified basing on the editor UUID "
         index = self.topLevelItemCount() - 1
         while index >= 0:
             item = self.topLevelItem( index )
-            if item.uuid == uuid or \
-               str( item.data( 0, Qt.DisplayRole ).toString() ) == fileName:
-                # The buffer for this item has been modified
-                brush = QBrush( QColor( 255, 227, 227 ) )
-                item.setBackground( 0, brush )
-                item.setBackground( 1, brush )
-                childIndex = item.childCount() - 1
-                while childIndex >= 0:
-                    childItem = item.child( childIndex )
-                    childItem.setModified( True )
-                    if searchTooltip.item == childItem:
-                        searchTooltip.setModified( True )
-                    childIndex -= 1
+            if item.uuid == uuid:
+                self.__markItem( item )
+                break
             index -= 1
         return
 
+    def __markByFileName( self, fileName ):
+        " Marks an item modified basing on the file name "
+        index = self.topLevelItemCount() - 1
+        while index >= 0:
+            item = self.topLevelItem( index )
+            if str( item.data( 0, Qt.DisplayRole ).toString() ) == fileName:
+                self.__markItem( item )
+                break
+            index -= 1
+        return
+
+    @staticmethod
+    def __markItem( item ):
+        " Marks a single item modified "
+        brush = QBrush( QColor( 255, 227, 227 ) )
+        item.setBackground( 0, brush )
+        item.setBackground( 1, brush )
+        childIndex = item.childCount() - 1
+        while childIndex >= 0:
+            childItem = item.child( childIndex )
+            childItem.setModified( True )
+            if searchTooltip.item == childItem:
+                searchTooltip.setModified( True )
+            childIndex -= 1
+        return
 
 
 class FindInFilesViewer( QWidget ):
@@ -405,6 +449,15 @@ class FindInFilesViewer( QWidget ):
         if not self.__reportShown:
             return
 
+        # Disconnect the buffer change signal if it is connected
+        if self.__bufferChangeconnected:
+            self.__bufferChangeconnected = False
+            mainWindow = GlobalData().mainWindow
+            editorsManager = mainWindow.editorsManagerWidget.editorsManager
+            self.disconnect( editorsManager, SIGNAL( 'bufferModified' ),
+                             self.__resultsTree.onBufferModified )
+
+        self.__resultsTree.resetCache()
         self.__resultsTree.clear()
         self.__resultsTree.hide()
         self.__noneLabel.show()
@@ -459,6 +512,7 @@ class FindInFilesViewer( QWidget ):
 
         # Show the complete information
         self.__resultsTree.show()
+        self.__resultsTree.buildCache()
 
         self.__reportShown = True
         self.__updateButtonsStatus()
