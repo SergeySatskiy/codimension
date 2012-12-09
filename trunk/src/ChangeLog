@@ -1,5 +1,7 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Improvement: better handling the fact that an editing buffer is changed by
+  the find-in-files result window. Issue #318.
 * New feature: IDE-wide pylintrc support. Issue #344.
 * Performance improvement and bug fixes in the file content trees, e.g
   file outline browser, project files browser etc.
