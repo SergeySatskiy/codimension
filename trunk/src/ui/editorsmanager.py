@@ -198,7 +198,8 @@ class EditorsManager( QTabWidget ):
             self.__closeOtherAct.setEnabled( self.closeOtherAvailable() )
             self.__copyPathAct.setEnabled( fName != "" )
             self.__highlightInPrjAct.setEnabled( os.path.isabs( fName ) and \
-                                                 GlobalData().project.isLoaded() )
+                                                 GlobalData().project.isLoaded() and \
+                                                 GlobalData().project.isProjectFile( fName ) )
             self.__highlightInFSAct.setEnabled( os.path.isabs( fName ) )
 
             if fName != "":
