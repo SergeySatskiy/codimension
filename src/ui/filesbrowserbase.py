@@ -225,7 +225,7 @@ class FilesBrowser( QTreeView ):
             if not startItem.populated:
                 self.expand( srcModel.buildIndex( startItem.getRowPath() ) )
             # find the dirName in the item and make it the current item
-            for treeItem in startItem.childItem:
+            for treeItem in startItem.childItems:
                 if str( treeItem.data( 0 ) ) == dirName:
                     startItem = treeItem
                     continue
