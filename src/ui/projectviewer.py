@@ -1217,3 +1217,11 @@ class ProjectViewer( QWidget ):
             Settings().showFSViewer = True
         return
 
+    def highlightPrjItem( self, path ):
+        " Triggered when the file is to be highlighted in a project tree "
+        return self.projectTreeView.highlightItem( path )
+
+    def highlightFSItem( self, path ):
+        " Triggered when the file is to be highlighted in the FS tree "
+        return self.filesystemView.highlightItem( path )
+

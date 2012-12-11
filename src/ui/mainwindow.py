@@ -3251,3 +3251,27 @@ class CodimensionMainWindow( QMainWindow ):
                            scriptPath + " disassembled." )
         return
 
+    def onHighlightInPrj( self, path ):
+        " Triggered when the file is to be highlighted in a project tree "
+        if not GlobalData().project.isLoaded():
+            return
+        if not os.path.isabs( path ):
+            return
+        if not GlobalData().project.isProjectFile( path ):
+            return
+        if self.projectViewer.highlightPrjItem( path ):
+            self.__leftSideBar.show()
+            self.__leftSideBar.setCurrentWidget( self.projectViewer )
+            self.__leftSideBar.raise_()
+        return
+
+    def onHighlightInFS( self, path ):
+        " Triggered when the file is to be highlighted in the FS tree "
+        if not os.path.isabs( path ):
+            return
+        if self.projectViewer.highlightFSItem( path ):
+            self.__leftSideBar.show()
+            self.__leftSideBar.setCurrentWidget( self.projectViewer )
+            self.__leftSideBar.raise_()
+        return
+

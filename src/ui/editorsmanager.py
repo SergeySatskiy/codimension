@@ -132,6 +132,15 @@ class EditorsManager( QTabWidget ):
 
         # Context menu
         self.__tabContextMenu = QMenu( self )
+        self.__highlightInPrjAct = self.__tabContextMenu.addAction( \
+                                    PixmapCache().getIcon( "" ),
+                                    "Highlight in project browser",
+                                    self.onHighlightInPrj )
+        self.__highlightInFSAct = self.__tabContextMenu.addAction( \
+                                    PixmapCache().getIcon( "" ),
+                                    "Highlight in file system browser",
+                                    self.onHighlightInFS )
+        self.__tabContextMenu.addSeparator()
         self.__cloneAct = self.__tabContextMenu.addAction( \
                                     PixmapCache().getIcon( "clonetabmenu.png" ),
                                     "&Clone",
@@ -188,8 +197,11 @@ class EditorsManager( QTabWidget ):
                                 MainWindowTabWidgetBase.PlainTextEditor )
             self.__closeOtherAct.setEnabled( self.closeOtherAvailable() )
             self.__copyPathAct.setEnabled( fName != "" )
+            self.__highlightInPrjAct.setEnabled( os.path.isabs( fName ) and \
+                                                 GlobalData().project.isLoaded() )
+            self.__highlightInFSAct.setEnabled( os.path.isabs( fName ) )
 
-            if widget.getFileName() != "":
+            if fName != "":
                 if not widget.doesFileExist():
                     self.__reloadAct.setText( "&Reload" )
                     self.__reloadAct.setEnabled( False )
@@ -246,6 +258,35 @@ class EditorsManager( QTabWidget ):
 
         # Finally, close the tab
         self.__onCloseRequest( tabIndex, True )
+        return
+
+    def onHighlightInPrj( self ):
+        " Triggered when the file is to be highlighted in a project tree "
+        if not GlobalData().project.isLoaded():
+            return
+        widget = self.currentWidget()
+        widgetType = widget.getType()
+        if widgetType not in [ MainWindowTabWidgetBase.PlainTextEditor,
+                               MainWindowTabWidgetBase.PictureViewer ]:
+            return
+        fName = widget.getFileName()
+        if not os.path.isabs( fName ):
+            return
+
+        GlobalData().mainWindow.highlightInPrj( fName )
+        return
+
+    def onHighlightInFS( self ):
+        " Triggered when the file is to be highlighted in the FS tree "
+        widget = self.currentWidget()
+        widgetType = widget.getType()
+        if widgetType not in [ MainWindowTabWidgetBase.PlainTextEditor,
+                               MainWindowTabWidgetBase.PictureViewer ]:
+            return
+        fName = widget.getFileName()
+        if not os.path.isabs( fName ):
+            return
+        GlobalData().mainWindow.highlightInFS( fName )
         return
 
     def onClone( self ):
