@@ -204,18 +204,35 @@ class FilesBrowser( QTreeView ):
         " Highlights an item which matches the given path "
         # Find the top level item first
         startItem = None
-        for treeItem in self.model().sourceModel().rootItem.childItems:
+        srcModel = self.model().sourceModel()
+        for treeItem in srcModel.rootItem.childItems:
             itemPath = treeItem.getPath()
             if path.startswith( itemPath ):
                 startItem = treeItem
                 break
         if startItem is None:
-            print "Item not found"
             return False
 
-        # Here: the start item has been found
+        if not os.path.exists( path ):
+            return False
+
+        # Here: the start item has been found and the file exists for sure
         parts = path.replace( itemPath, "" ).split( os.path.sep )
-        print "Item found. Path parts: " + str( parts )
+        dirs = parts[ : -1 ]
+        fName = parts[ -1 ]
+
+        for dirName in dirs:
+            if not startItem.populated:
+                self.expand( srcModel.buildIndex( startItem.getRowPath() ) )
+            # find the dirName in the item and make it the current item
+            for treeItem in startItem.childItem:
+                if str( treeItem.data( 0 ) ) == dirName:
+                    startItem = treeItem
+                    continue
+            return False
+
+        # Here: all the dirs have been found
+        print "Item data: " + str( startItem.data( 0 ) )
 
         return True
 
