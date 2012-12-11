@@ -200,6 +200,25 @@ class FilesBrowser( QTreeView ):
         self.openItem( item )
         return
 
+    def highlightItem( self, path ):
+        " Highlights an item which matches the given path "
+        # Find the top level item first
+        startItem = None
+        for treeItem in self.sourceModel().rootItem.childItems:
+            itemPath = treeItem.getPath()
+            if path.startswith( itemPath ):
+                startItem = treeItem
+                break
+        if startItem is None:
+            print "Item not found"
+            return False
+
+        # Here: the start item has been found
+        parts = path.replace( itemPath, "" ).split( os.path.sep )
+        print "Item found. Path parts: " + str( parts )
+
+        return True
+
     def openItem( self, item ):
         " Handles the case when an item is activated "
         if item.itemType in [ GlobalsItemType,
