@@ -204,7 +204,7 @@ class FilesBrowser( QTreeView ):
         " Highlights an item which matches the given path "
         # Find the top level item first
         startItem = None
-        for treeItem in self.sourceModel().rootItem.childItems:
+        for treeItem in self.model().sourceModel().rootItem.childItems:
             itemPath = treeItem.getPath()
             if path.startswith( itemPath ):
                 startItem = treeItem
