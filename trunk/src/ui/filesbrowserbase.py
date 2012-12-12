@@ -207,7 +207,7 @@ class FilesBrowser( QTreeView ):
         srcModel = self.model().sourceModel()
         for treeItem in srcModel.rootItem.childItems:
             itemPath = treeItem.getPath()
-            if path.startswith( itemPath ):
+            if itemPath != "" and path.startswith( itemPath ):
                 startItem = treeItem
                 break
         if startItem is None:
@@ -217,24 +217,39 @@ class FilesBrowser( QTreeView ):
             return False
 
         # Here: the start item has been found and the file exists for sure
+        if not startItem.populated:
+            index = srcModel.buildIndex( startItem.getRowPath() )
+            self.expand( self.model().mapFromSource( index ) )
+
         parts = path.replace( itemPath, "" ).split( os.path.sep )
         dirs = parts[ : -1 ]
         fName = parts[ -1 ]
 
         for dirName in dirs:
-            if not startItem.populated:
-                self.expand( srcModel.buildIndex( startItem.getRowPath() ) )
             # find the dirName in the item and make it the current item
+            found = False
             for treeItem in startItem.childItems:
                 if str( treeItem.data( 0 ) ) == dirName:
                     startItem = treeItem
-                    continue
+                    found = True
+                    if not startItem.populated:
+                        index = srcModel.buildIndex( startItem.getRowPath() )
+                        self.expand( self.model().mapFromSource( index ) )
+                    break
+            if found:
+                continue
             return False
 
-        # Here: all the dirs have been found
-        print "Item data: " + str( startItem.data( 0 ) )
+        # Here: all the dirs have been found and they are expanded
+        for treeItem in startItem.childItems:
+            if str( treeItem.data( 0 ) ) == fName:
+                # Found the item to highlight
+                index = srcModel.buildIndex( treeItem.getRowPath() )
+                self.setCurrentIndex( self.model().mapFromSource( index ) )
+                self.setFocus()
+                return True
 
-        return True
+        return False
 
     def openItem( self, item ):
         " Handles the case when an item is activated "
