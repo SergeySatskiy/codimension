@@ -1223,5 +1223,10 @@ class ProjectViewer( QWidget ):
 
     def highlightFSItem( self, path ):
         " Triggered when the file is to be highlighted in the FS tree "
-        return self.filesystemView.highlightItem( path )
+        result = self.filesystemView.highlightItem( path )
+        if result:
+            # Found, so check if the panel is shown
+            if not self.filesystemView.isVisible():
+                self.__onShowHide()
+        return result
 

@@ -133,12 +133,12 @@ class EditorsManager( QTabWidget ):
         # Context menu
         self.__tabContextMenu = QMenu( self )
         self.__highlightInPrjAct = self.__tabContextMenu.addAction( \
-                                    PixmapCache().getIcon( "" ),
-                                    "Highlight in project browser",
+                                    PixmapCache().getIcon( "highlightmenu.png" ),
+                                    "&Highlight in project browser",
                                     self.onHighlightInPrj )
         self.__highlightInFSAct = self.__tabContextMenu.addAction( \
-                                    PixmapCache().getIcon( "" ),
-                                    "Highlight in file system browser",
+                                    PixmapCache().getIcon( "highlightmenu.png" ),
+                                    "H&ighlight in file system browser",
                                     self.onHighlightInFS )
         self.__tabContextMenu.addSeparator()
         self.__cloneAct = self.__tabContextMenu.addAction( \
