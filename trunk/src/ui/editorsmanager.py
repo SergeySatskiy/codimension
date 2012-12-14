@@ -71,6 +71,10 @@ class ClickableTabBar( QTabBar ):
         QTabBar.mousePressEvent( self, event )
         return
 
+    def focusInEvent( self, event ):
+        " Passes focus to the current tab "
+        self.parent().setFocus()
+
 
 class EditorsManager( QTabWidget ):
     " Tab bar with editors "
@@ -78,7 +82,7 @@ class EditorsManager( QTabWidget ):
     def __init__( self, parent ):
 
         QTabWidget.__init__( self, parent )
-        self.setTabBar( ClickableTabBar() )
+        self.setTabBar( ClickableTabBar( self ) )
         self.setMovable( True )
 
         self.newIndex = -1
