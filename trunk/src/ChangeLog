@@ -1,5 +1,7 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Improvement: focus is moved to the current editor widget automatically when
+  it is received by the editor tab widget. Issue #350.
 * Improvement: 'highilight in project' and 'highlight in filesystem'
   editor tab context menu added. Issue #258.
 * Improvement: better handling the fact that an editing buffer is changed by
