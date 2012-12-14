@@ -182,7 +182,10 @@ class EditorsManager( QTabWidget ):
 
     def setFocus( self ):
         " Explicitly sets focus to the current widget "
-        self.currentWidget().setFocus()
+        widget = self.currentWidget()
+        if widget is not None:
+            widget.setFocus()
+        return
 
     def __showTabContextMenu( self, pos ):
         " Shows a context menu if required "
