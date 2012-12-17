@@ -173,8 +173,8 @@ class ControlFlow:
 
     def serialize( self, buf ):
         " Serializes the object basing on the buffer parsed "
-        self.bang.serialize( buf )
-        self.encoding.serialize( buf )
+        self.bangLine.serialize( buf )
+        self.encodingLine.serialize( buf )
         for item in self.body:
             item.serialize( buf )
         return
