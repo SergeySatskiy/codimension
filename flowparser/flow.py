@@ -178,6 +178,10 @@ class BangLine( Fragment ):
         content = self.getContent( buf )
         return content.replace( "#!", "", 1 ).strip()
 
+    def __str__( self ):
+        " Converts to a string "
+        return "Bang line: " + Fragment.__str__( self )
+
 
 class EncodingLine( Fragment ):
     " Represents a line with the file encoding "
@@ -193,6 +197,10 @@ class EncodingLine( Fragment ):
             return match.group( 1 ).lower()
         raise Exception( "Inconsistency: no encoding " \
                          "found in th encoding line" )
+
+    def __str__( self ):
+        " Converts to a string "
+        return "Encoding line: " + Fragment.__str__( self )
 
 
 class Comment( Fragment ):
@@ -224,6 +232,10 @@ class Comment( Fragment ):
             spacesToStrip = min( leadingCharCounts )
             content = [ line[ spacesToStrip : ] for line in content ]
         return '\n'.join( content )
+
+    def __str__( self ):
+        " Converts to a string "
+        return "Comment: " + Fragment.__str__( self )
 
 
 class Docstring( Fragment ):
@@ -276,6 +288,10 @@ class Docstring( Fragment ):
 
         # Return a single string:
         return '\n'.join( trimmed )
+
+    def __str__( self ):
+        " Converts to a string "
+        return "Docstring: " + Fragment.__str__( self )
 
 
 class Argument( Fragment ):
