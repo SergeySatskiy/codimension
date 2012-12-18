@@ -316,8 +316,30 @@ class Argument( Fragment ):
                "  Default value: " + str( self.defaultVal )
 
 
+class Decorator( Fragment ):
+    " Represents a single decorator "
 
-### TODO: Do we need trailing comments at all?
+    def __init__( self ):
+        Fragment.__init__( self )
+
+        self.leadingComment = None  # Fragment for the leading comment
+        self.sideComments = []      # Fragments for the side comments
+
+        self.name = None            # Fragment for a name
+        self.arguments = []         # Fragments for arguments
+        return
+
+    def __str__( self ):
+        " Converts to a string "
+        result = "Decorator: " + Fragment.__str__( self ) + "\n" \
+                 "  Leading comment: " + str( self.leadingComment ) + "\n" \
+                 "  Name: " + str( self.name )
+        for comment in self.sideComments:
+            result += "\n  Side comment: " + str( comment )
+        for argument in self.arguments:
+            result += "\n  Argument: " + str( argument )
+        return result
+
 
 
 class CodeBlock( Fragment ):
@@ -327,7 +349,6 @@ class CodeBlock( Fragment ):
         Fragment.__init__( self )
         self.leadingComment = None
         self.body = []                  # Pairs (Fragment, Comment)
-        self.trailingComment = None
         return
 
 
