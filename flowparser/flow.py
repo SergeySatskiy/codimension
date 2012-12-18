@@ -42,9 +42,6 @@ class Fragment:
     def __init__( self ):
 
         # Minimal necessary information.
-        # Position 0 depends on the fragment scope.
-        # The global scope fragments have it as the input stream beginning.
-        # Nested fragments have it as the beginning of their parent.
         self.begin = None       # Absolute position of the first fragment
                                 # character. 0-based
                                 # It must never be None.
@@ -57,9 +54,7 @@ class Fragment:
                                 # scope fragments.
 
         # Excessive members for convenience. This makes it easier to work with
-        # the editor buffer directly. The line numbers start different for
-        # global scope fragments and for nested fragments similar to the start
-        # and begin positions.
+        # the editor buffer directly.
         self.beginLine = None   # 1-based line number
         self.beginPos = None    # 1-based position number in the line
         self.endLine = None     # 1-based line number
@@ -67,26 +62,15 @@ class Fragment:
 
         # Serialization support
         self.serialized = False # True if has been serialized
-        self.content = None     # Must be not None only for the global scope
-                                # objects and is filled when serialized.
-                                # The nested objects refer to their top level
-                                # parent for the content.
         return
 
     def isSerialized( self ):
         " True if the object has already been serialized "
         return self.serialized
 
-    def serialize( self, buf ):
+    def serialize( self ):
         " Serializes the object basing on the buffer parsed "
-        if self.serialized:
-            return
-
         self.serialized = True
-        if self.parent is not None:
-            return
-
-        self.content = buf[ self.begin : self.end + 1 ]
         return
 
     def getContent( self, buf = None ):
@@ -96,20 +80,14 @@ class Fragment:
                              "fragment without its buffer" )
 
         if self.serialized:
-            if self.parent is None:
-                return self.content
-
             # Find the global scope parent
             current = self
             while current.parent is not None:
                 current = current.parent
-            buf = current.content
-            beginInBuf = self.getAbsoluteBegin() - current.begin
-            endInBug = self.getAbsoluteEnd() - current.begin
-            return buf[ beginInBuf : endInBug + 1 ]
+            return current.content[ self.begin : self.end + 1 ]
 
         # Non-serialized
-        return buf[ self.getAbsoluteBegin() : self.getAbsoluteEnd() + 1 ]
+        return buf[ self.begin : self.end + 1 ]
 
     def getLineContent( self, buf = None ):
         """ Provides a content with complete lines
@@ -123,16 +101,9 @@ class Fragment:
 
     def getLine( self, forBegin = True ):
         " Provides the actual line for the specified end "
-        current = self
         if forBegin:
-            result = self.beginLine
-        else:
-            result = self.endLine
-
-        while current.parent is not None:
-            current = current.parent
-            result += current.beginLine - 1
-        return result
+            return self.beginLine
+        return self.endLine
 
     def getPos( self, forBegin = True ):
         " Provides the position in the specified end line "
@@ -143,41 +114,52 @@ class Fragment:
     def getAbsoluteBegin( self ):
         """ Provides 0-based position starting from
             the beginning of the input stream """
-        result = self.begin
-        current = self
-        while current.parent is not None:
-            current = current.parent
-            result += current.begin
-        return result
+        return self.begin
 
     def getAbsoluteEnd( self ):
         """ Provides 0-based position starting from
             the beginning of the input stream """
-        if self.parent is None:
-            return self.end
-
-        return self.getAbsoluteBegin() + self.end
+        return self.end
 
     def __str__( self ):
         " Converts to a string "
+        return "Fragment[" + str( self.begin ) + ":" + str( self.end ) + \
+               "] (" + str( self.beginLine ) + "," + str( self.beginPos ) + \
+               ") (" + str( self.endLine ) + "," + str( self.endPos ) + ")"
 
 
-class ControlFlow:
+class ControlFlow( Fragment ):
     " Represents one python file content "
 
     def __init__( self ):
+        Fragment.__init__( self )
+        self.parent = None          # The only object which has to have it None
+
         self.bangLine = None        # Bang line fragment
         self.encodingLine = None    # Encoding line fragment
 
         self.body = []              # List of global scope fragments
 
+        # Additional field to support serialization
+        self.content = None     # Not None when the ControlFlow is serialized
+        return
+
     def serialize( self, buf ):
         " Serializes the object basing on the buffer parsed "
-        self.bangLine.serialize( buf )
-        self.encodingLine.serialize( buf )
+
+        self.content = buf
+
+        self.bangLine.serialize()
+        self.encodingLine.serialize()
         for item in self.body:
-            item.serialize( buf )
+            item.serialize()
         return
+
+    def __str__( self ):
+        " Converts to string "
+        return "Bang: " + str( self.bangLine ) + "\n" \
+               "Encoding: " + str( self.encodingLine ) + "\n" \
+               "Body:\n" + "\n".join( [ str( item ) for item in self.body ] )
 
 
 class BangLine( Fragment ):
@@ -187,7 +169,7 @@ class BangLine( Fragment ):
         Fragment.__init__( self )
         return
 
-    def getDisplayString( self, buf = None ):
+    def getDisplayValue( self, buf = None ):
         " Provides the actual bang line "
         content = self.getContent( buf )
         return content.replace( "#!", "", 1 ).strip()
@@ -200,7 +182,7 @@ class EncodingLine( Fragment ):
         Fragment.__init__( self )
         return
 
-    def getDisplayString( self, buf = None ):
+    def getDisplayValue( self, buf = None ):
         " Provides the encoding "
         match = CODING_REGEXP.search( self.getContent( buf ) )
         if match:
@@ -216,7 +198,7 @@ class Comment( Fragment ):
         Fragment.__init__( self )
         return
 
-    def getDisplayString( self, buf = None ):
+    def getDisplayValue( self, buf = None ):
         " Provides the comment without the syntactic shugar "
         content = [ line.strip()[ 1: ] for line \
                     in self.getContent( buf ).split( '\n' ) ]
