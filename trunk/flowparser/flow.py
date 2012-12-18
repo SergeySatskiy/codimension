@@ -26,7 +26,7 @@ content for the further displaying it as graphics
 """
 
 import re
-
+import sys
 
 
 CODING_REGEXP = re.compile( r'''coding[:=]\s*([-\w_.]+)''' )
@@ -138,7 +138,11 @@ class ControlFlow( Fragment ):
         self.bangLine = None        # Bang line fragment
         self.encodingLine = None    # Encoding line fragment
 
-        self.body = []              # List of global scope fragments
+        self.body = []              # List of global scope fragments. It could be:
+                                    # Docstring, Comment, CodeBlock,
+                                    # Function, Class
+                                    # For, While, Try, With, Assert, If, Pass,
+                                    # Raise, Return
 
         # Additional field to support serialization
         self.content = None     # Not None when the ControlFlow is serialized
@@ -221,5 +225,71 @@ class Comment( Fragment ):
             content = [ line[ spacesToStrip : ] for line in content ]
         return '\n'.join( content )
 
+
+class Docstring( Fragment ):
+    " Represents a docstring "
+
+    def __init__( self ):
+        Fragment.__init__( self )
+        return
+
+    def getDisplayValue( self, buf = None ):
+        " Provides the docstring without syntactic sugar "
+
+        rawContent = self.getContent( buf )
+
+        # First, strip quotes
+        stripCount = 1
+        if rawContent.startswith( '"""' ) or rawContent.startswith( "'''" ):
+            stripCount = 3
+        return self.trimDocstring( rawContent[ stripCount : -stripCount ] )
+
+    @staticmethod
+    def trimDocstring( docstring ):
+        " Taken from http://www.python.org/dev/peps/pep-0257/ "
+
+        if not docstring:
+            return ''
+
+        # Convert tabs to spaces (following the normal Python rules)
+        # and split into a list of lines:
+        lines = docstring.expandtabs().splitlines()
+
+        # Determine minimum indentation (first line doesn't count):
+        indent = sys.maxint
+        for line in lines[ 1: ]:
+            stripped = line.lstrip()
+            if stripped:
+                indent = min( indent, len( line ) - len( stripped ) )
+
+        # Remove indentation (first line is special):
+        trimmed = [ lines[ 0 ].strip() ]
+        if indent < sys.maxint:
+            for line in lines[ 1: ]:
+                trimmed.append( line[ indent: ].rstrip() )
+
+        # Strip off trailing and leading blank lines:
+        while trimmed and not trimmed[ -1 ]:
+            trimmed.pop()
+        while trimmed and not trimmed[ 0 ]:
+            trimmed.pop( 0 )
+
+        # Return a single string:
+        return '\n'.join( trimmed )
+
+
+
+### TODO: Do we need trailing comments at all?
+
+
+class CodeBlock( Fragment ):
+    " Represents a code block "
+
+    def __init__( self ):
+        Fragment.__init__( self )
+        self.leadingComment = None
+        self.body = []                  # Pairs (Fragment, Comment)
+        self.trailingComment = None
+        return
 
 
