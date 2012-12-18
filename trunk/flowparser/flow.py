@@ -304,7 +304,7 @@ class Argument( Fragment ):
         self.name = None            # Fragment for the name
 
         self.defaultValComment = None   # Fragment for a default value comment
-        self.defaultVal = None          # Fragment for a default value
+        self.defaultVal = None          # Fragment or Call for a default value
         return
 
     def __str__( self ):
@@ -316,6 +316,24 @@ class Argument( Fragment ):
                "  Default value: " + str( self.defaultVal )
 
 
+
+class Call( Fragment ):
+    " Represent a single function call "
+
+    def __init__( self ):
+        Fragment.__init__( self )
+
+        self.leadingComment = None  # Comment fragment
+        self.sideComment = None     # Comment fragment
+
+        self.name = None            # Name fragment
+        self.arguments = []         # Arguments instances
+        return
+
+
+
+
+
 class Decorator( Fragment ):
     " Represents a single decorator "
 
@@ -323,19 +341,18 @@ class Decorator( Fragment ):
         Fragment.__init__( self )
 
         self.leadingComment = None  # Fragment for the leading comment
-        self.sideComments = []      # Fragments for the side comments
+        self.sideComment = None     # Fragment for the side comment
 
         self.name = None            # Fragment for a name
-        self.arguments = []         # Fragments for arguments
+        self.arguments = []         # Arguments instances
         return
 
     def __str__( self ):
         " Converts to a string "
         result = "Decorator: " + Fragment.__str__( self ) + "\n" \
                  "  Leading comment: " + str( self.leadingComment ) + "\n" \
-                 "  Name: " + str( self.name )
-        for comment in self.sideComments:
-            result += "\n  Side comment: " + str( comment )
+                 "  Name: " + str( self.name ) + "\n" \
+                 "  Side comment: " + str( self.sideComment )
         for argument in self.arguments:
             result += "\n  Argument: " + str( argument )
         return result
