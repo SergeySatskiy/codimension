@@ -135,14 +135,14 @@ class ControlFlow( Fragment ):
         Fragment.__init__( self )
         self.parent = None          # The only object which has to have it None
 
-        self.bangLine = None        # Bang line fragment
-        self.encodingLine = None    # Encoding line fragment
+        self.bangLine = None        # Bang line Fragment
+        self.encodingLine = None    # Encoding line Fragment
 
         self.body = []              # List of global scope fragments. It could be:
                                     # Docstring, Comment, CodeBlock,
                                     # Function, Class
                                     # For, While, Try, With, Assert, If, Pass,
-                                    # Raise, Return
+                                    # Raise, Return etc.
 
         # Additional field to support serialization
         self.content = None     # Not None when the ControlFlow is serialized
@@ -276,6 +276,28 @@ class Docstring( Fragment ):
 
         # Return a single string:
         return '\n'.join( trimmed )
+
+
+class Argument( Fragment ):
+    " Represents a single argument for anything which may have it "
+
+    def __init__( self ):
+        Fragment.__init__( self )
+
+        self.nameComment = None     # Fragment for a name comment
+        self.name = None            # Fragment for the name
+
+        self.defaultValComment = None   # Fragment for a default value comment
+        self.defaultVal = None          # Fragment for a default value
+        return
+
+    def __str__( self ):
+        " Converts to a string "
+        return "Argument: " + Fragment.__str__( self ) + "\n" \
+               "  Name comment: " + str( self.nameComment ) + "\n" \
+               "  Name: " + str( self.name ) + "\n" \
+               "  Default value comment: " + str( self.defaultValComment ) + "\n" \
+               "  Default value: " + str( self.defaultVal )
 
 
 
