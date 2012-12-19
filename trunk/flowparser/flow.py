@@ -323,14 +323,20 @@ class Call( Fragment ):
     def __init__( self ):
         Fragment.__init__( self )
 
-        self.leadingComment = None  # Comment fragment
         self.sideComment = None     # Comment fragment
 
         self.name = None            # Name fragment
         self.arguments = []         # Arguments instances
         return
 
-
+    def __str__( self ):
+        " Converts to a string "
+        result = "Call: " + Fragment.__str__( self ) + "\n" \
+                 "  Side comment: " + str( self.sideComment ) + "\n" \
+                 "  Name: " + str( self.name )
+        for argument in self.arguments:
+            result += "\n  Argument: " + str( argument )
+        return result
 
 
 
@@ -358,6 +364,22 @@ class Decorator( Fragment ):
         return result
 
 
+class CodeLine( Fragment ):
+    " Represents a single line of code with a side comment if so "
+
+    def __init__( self ):
+        Fragment.__init__( self ):
+
+        self.statement = None       # Fragment for a statement
+        self.sideComment = None     # Comment if so
+        return
+
+    def __str__( self ):
+        return "CodeLine: " + Fragment.__str__( self ) + "\n" \
+               "  Statement: " + str( self.statement ) + "\n" \
+               "  Side comment: " + str( self.sideComment )
+
+
 
 class CodeBlock( Fragment ):
     " Represents a code block "
@@ -365,7 +387,7 @@ class CodeBlock( Fragment ):
     def __init__( self ):
         Fragment.__init__( self )
         self.leadingComment = None
-        self.body = []                  # Pairs (Fragment, Comment)
+        self.body = []                  # CodeLine or Call instances
         return
 
 
