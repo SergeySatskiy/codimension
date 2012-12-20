@@ -630,3 +630,37 @@ class Raise( Fragment ):
                "Value: " + str( self.value )
 
 
+
+class Assert( Fragment ):
+    " Represents a single assert statement "
+
+    def __init__( self ):
+        Fragment.__init__( self )
+        self.leadingComment = None  # Fragment for the leading comment
+        self.sideComment = None     # Fragment for the side comment
+
+        self.test = None            # Fragment for the test expression
+        self.message = None         # Fragment for the message
+        return
+
+    def serialize( self ):
+        " Serializes the object "
+        Fragment.serialize( self )
+        if self.leadingComment is not None:
+            self.leadingComment.serialize()
+        if self.sideComment is not None:
+            self.sideComment.serialize()
+        if self.test is not None:
+            self.test.serialize()
+        if self.message is not None:
+            self.message.serialize()
+        return
+
+    def __str__( self ):
+        " Converts to a string "
+        return "Assert: " + Fragment.__str__( self ) + "\n" \
+               "Leading comment: " + str( self.leadingComment ) + "\n" \
+               "Side comment: " + str( self.sideComment ) + "\n" \
+               "Test: " + str( self.test ) + "\n" \
+               "Message: " + str( self.message )
+
