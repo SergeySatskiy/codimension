@@ -487,6 +487,7 @@ class Continue( Fragment ):
         return
 
     def serialize( self ):
+        " Serializes the object "
         Fragment.serialize( self )
         if self.leadingComment is not None:
             self.leadingComment.serialize()
@@ -499,4 +500,34 @@ class Continue( Fragment ):
         return "Continue: " + Fragment.__str__( self ) + "\n" \
                "Leading comment: " + str( self.leadingComment ) + "\n" \
                "Side comment: " + str( self.sideComment )
+
+
+class Return( Fragment ):
+    " Represents a single return statement "
+
+    def __init__( self ):
+        Fragment.__init__( self )
+        self.leadingComment = None  # Fragment for the leading comment
+        self.sideComment = None     # Fragment for the side comment
+
+        self.value = None           # Fragment for the value
+        return
+
+    def serialize( self ):
+        " Serializes the object "
+        Fragment.serialize( self )
+        if self.leadingComment is not None:
+            self.leadingComment.serialize()
+        if self.sideComment is not None:
+            self.sideComment.serialize()
+        if self.value is not None:
+            self.value.serialize()
+        return
+
+    def __str__( self ):
+        " Converts to a string "
+        return "Return: " + Fragment.__str__( self ) + "\n" \
+               "Leading comment: " + str( self.leadingComment ) + "\n" \
+               "Side comment: " + str( self.sideComment ) + "\n" \
+               "Value: " + str( self.value )
 
