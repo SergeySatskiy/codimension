@@ -279,8 +279,8 @@ class Comment( Fragment ):
 
     def __str__( self ):
         " Converts to a string "
-        return "Comment: " + Fragment.__str__( self ) + "\n  " + \
-               "\n  ".join( [ str( line ) for line in self.commentLines ] )
+        return "Comment: " + Fragment.__str__( self ) + "\n" + \
+               "\n".join( [ str( line ) for line in self.commentLines ] )
 
 
 class Docstring( Fragment ):
@@ -356,10 +356,10 @@ class Decorator( Fragment ):
     def __str__( self ):
         " Converts to a string "
         return "Decorator: " + Fragment.__str__( self ) + "\n" \
-               "  Leading comment: " + str( self.leadingComment ) + "\n" \
-               "  Name: " + str( self.name ) + "\n" \
-               "  Side comment: " + str( self.sideComment ) + "\n" \
-               "  Arguments: " + str( self.arguments )
+               "Leading comment: " + str( self.leadingComment ) + "\n" \
+               "Name: " + str( self.name ) + "\n" \
+               "Side comment: " + str( self.sideComment ) + "\n" \
+               "Arguments: " + str( self.arguments )
 
     def serialize( self ):
         " Serializes the object "
@@ -397,8 +397,57 @@ class CodeBlock( Fragment ):
     def __str__( self ):
         " Converts to a string "
         return "Code block: " + Fragment.__str__( self ) + "\n" \
-               "  Leading comment: " + str( self.leadingComment ) + "\n" \
-               "  Side comment: " + str( self.sideComment ) + "\n" \
-               "  Body: " + str( self.body )
+               "Leading comment: " + str( self.leadingComment ) + "\n" \
+               "Side comment: " + str( self.sideComment ) + "\n" \
+               "Body: " + str( self.body )
 
+
+class Function( Fragment ):
+    " Represents a single function "
+
+    def __init__( self ):
+        Fragment.__init__( self )
+        self.leadingComment = None  # Fragment for the leading comment
+        self.decorators = []        # Instances of Decorator
+        self.sideComment = None     # Fragment for the side comment
+
+        self.name = None            # Fragment for the function name
+        self.arguments = None       # Fragment for the function arguments:
+                                    # Starting from '(', ending with ')'
+
+        self.body = []              # Fragment for the body
+        return
+
+    def serialize( self ):
+        " Serializes the object "
+        Fragment.serialize( self )
+        if self.leadingComment is not None:
+            self.leadingComment.serialize()
+        for decor in self.decorators:
+            decor.serialize()
+        if self.sideComment is not None:
+            self.sideComment.serialize()
+        self.name.serialize()
+        self.arguments.serialize()
+        for item in self.body:
+            item.serialize()
+        return
+
+    def __str__( self ):
+        " Converts to a string "
+        if self.decorators:
+            decorPart = "\n" + \
+                        "\n".join( [ str( decor ) \
+                                     for decor in self.decorators ] )
+        else:
+            decorPart = "None"
+
+        return "Function: " + Fragment.__str__( self ) + "\n" \
+               "Leading comment: " + str( self.leadingComment ) + "\n" \
+               "Side comment: " + str( self.sideComment ) + "\n" \
+               "Decorators: " + decorPart + "\n" \
+               "Name: " + str( self.name ) + "\n" \
+               "Arguments: " + str( self.arguments ) + "\n" \
+               "Body:\n" + \
+               "\n".join( [ str( item ) for item in self.body ] )
 
