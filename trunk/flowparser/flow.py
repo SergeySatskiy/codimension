@@ -69,7 +69,7 @@ class Fragment:
         return self.serialized
 
     def serialize( self ):
-        " Serializes the object basing on the buffer parsed "
+        " Serializes the object "
         self.serialized = True
         return
 
@@ -153,8 +153,10 @@ class ControlFlow( Fragment ):
 
         self.content = buf
 
-        self.bangLine.serialize()
-        self.encodingLine.serialize()
+        if self.bangLine is not None:
+            self.bangLine.serialize()
+        if self.encodingLine is not None:
+            self.encodingLine.serialize()
         for item in self.body:
             item.serialize()
         return
@@ -337,52 +339,6 @@ class Docstring( Fragment ):
         return "Docstring: " + Fragment.__str__( self )
 
 
-class Argument( Fragment ):
-    " Represents a single argument for anything which may have it "
-
-    def __init__( self ):
-        Fragment.__init__( self )
-
-        self.nameComment = None     # Fragment for a name comment
-        self.name = None            # Fragment for the name
-
-        self.defaultValComment = None   # Fragment for a default value comment
-        self.defaultVal = None          # Fragment or Call for a default value
-        return
-
-    def __str__( self ):
-        " Converts to a string "
-        return "Argument: " + Fragment.__str__( self ) + "\n" \
-               "  Name comment: " + str( self.nameComment ) + "\n" \
-               "  Name: " + str( self.name ) + "\n" \
-               "  Default value comment: " + str( self.defaultValComment ) + "\n" \
-               "  Default value: " + str( self.defaultVal )
-
-
-
-class Call( Fragment ):
-    " Represent a single function call "
-
-    def __init__( self ):
-        Fragment.__init__( self )
-
-        self.sideComment = None     # Comment fragment
-
-        self.name = None            # Name fragment
-        self.arguments = []         # Arguments instances
-        return
-
-    def __str__( self ):
-        " Converts to a string "
-        result = "Call: " + Fragment.__str__( self ) + "\n" \
-                 "  Side comment: " + str( self.sideComment ) + "\n" \
-                 "  Name: " + str( self.name )
-        for argument in self.arguments:
-            result += "\n  Argument: " + str( argument )
-        return result
-
-
-
 class Decorator( Fragment ):
     " Represents a single decorator "
 
@@ -393,35 +349,29 @@ class Decorator( Fragment ):
         self.sideComment = None     # Fragment for the side comment
 
         self.name = None            # Fragment for a name
-        self.arguments = []         # Arguments instances
+        self.arguments = None       # Fragment for arguments:
+                                    # Starting from '(', ending with ')'
         return
 
     def __str__( self ):
         " Converts to a string "
-        result = "Decorator: " + Fragment.__str__( self ) + "\n" \
-                 "  Leading comment: " + str( self.leadingComment ) + "\n" \
-                 "  Name: " + str( self.name ) + "\n" \
-                 "  Side comment: " + str( self.sideComment )
-        for argument in self.arguments:
-            result += "\n  Argument: " + str( argument )
-        return result
+        return "Decorator: " + Fragment.__str__( self ) + "\n" \
+               "  Leading comment: " + str( self.leadingComment ) + "\n" \
+               "  Name: " + str( self.name ) + "\n" \
+               "  Side comment: " + str( self.sideComment ) + "\n" \
+               "  Arguments: " + str( self.arguments )
 
-
-class CodeLine( Fragment ):
-    " Represents a single line of code with a side comment if so "
-
-    def __init__( self ):
-        Fragment.__init__( self ):
-
-        self.statement = None       # Fragment for a statement
-        self.sideComment = None     # Comment if so
+    def serialize( self ):
+        " Serializes the object "
+        Fragment.serialize( self )
+        if self.leadingComment is not None:
+            self.leadingComment.serialize()
+        if self.sideComment is not None:
+            self.sideComment.serialize()
+        self.name.serialize()
+        if self.arguments is not None:
+            self.arguments.serialize()
         return
-
-    def __str__( self ):
-        return "CodeLine: " + Fragment.__str__( self ) + "\n" \
-               "  Statement: " + str( self.statement ) + "\n" \
-               "  Side comment: " + str( self.sideComment )
-
 
 
 class CodeBlock( Fragment ):
@@ -429,8 +379,26 @@ class CodeBlock( Fragment ):
 
     def __init__( self ):
         Fragment.__init__( self )
-        self.leadingComment = None
-        self.body = []                  # CodeLine or Call instances
+        self.leadingComment = None  # Fragment for the leading comment
+        self.sideComment = None     # Fragment for the side comment
+        self.body = None            # Fragment for the body
         return
+
+    def serialize( self ):
+        " Serializes the object "
+        Fragment.serialize( self )
+        if self.leadingComment is not None:
+            self.leadingComment.serialize()
+        if self.sideComment is not None:
+            self.sideComment.serialize()
+        self.body.serialize()
+        return
+
+    def __str__( self ):
+        " Converts to a string "
+        return "Code block: " + Fragment.__str__( self ) + "\n" \
+               "  Leading comment: " + str( self.leadingComment ) + "\n" \
+               "  Side comment: " + str( self.sideComment ) + "\n" \
+               "  Body: " + str( self.body )
 
 
