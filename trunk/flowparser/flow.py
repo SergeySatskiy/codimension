@@ -451,3 +451,30 @@ class Function( Fragment ):
                "Body:\n" + \
                "\n".join( [ str( item ) for item in self.body ] )
 
+
+class Break( Fragment ):
+    " Represents a single break statement "
+
+    def __init__( self ):
+        Fragment.__init__( self )
+        self.leadingComment = None  # Fragment for the leading comment
+        self.sideComment = None     # Fragment for the side comment
+        return
+
+    def serialize( self ):
+        " Serializes the object "
+        Fragment.serialize( self )
+        if self.leadingComment is not None:
+            self.leadingComment.serialize()
+        if self.sideComment is not None:
+            self.sideComment.serialize()
+        return
+
+    def __str__( self ):
+        " Converts to a string "
+        return "Break: " + Fragment.__str__( self ) + "\n" \
+               "Leading comment: " + str( self.leadingComment ) + "\n" \
+               "Side comment: " + str( self.sideComment )
+
+
+
