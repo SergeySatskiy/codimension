@@ -457,6 +457,69 @@ class Function( Fragment ):
                "\n".join( [ str( item ) for item in self.body ] )
 
 
+
+class Class( Fragment ):
+    " Represents a single class "
+
+    def __init__( self ):
+        Fragment.__init__( self )
+        self.leadingComment = None  # Fragment for the leading comment
+        self.decorators = []        # Instances of Decorator
+        self.sideComment = None     # Fragment for the side comment
+
+        self.name = None            # Fragment for the function name
+        self.baseClasses = []       # Fragments for base classes names
+
+        self.docstring = None       # Docstring fragment
+        self.body = []              # Fragment for the body
+        return
+
+    def serialize( self ):
+        " Serializes the object "
+        Fragment.serialize( self )
+        if self.leadingComment is not None:
+            self.leadingComment.serialize()
+        for decor in self.decorators:
+            decor.serialize()
+        if self.sideComment is not None:
+            self.sideComment.serialize()
+        self.name.serialize()
+        for baseClass in self.baseClasses:
+            baseClass.serialize()
+        if self.docstring is not None:
+            self.docstring.serialize()
+        for item in self.body:
+            item.serialize()
+        return
+
+    def __str__( self ):
+        " Converts to a string "
+        if self.decorators:
+            decorPart = "\n" + \
+                        "\n".join( [ str( decor ) \
+                                     for decor in self.decorators ] )
+        else:
+            decorPart = "None"
+
+        if self.baseClasses:
+            baseClassPart = "\n" + \
+                        "\n".join( [ str( baseClass ) \
+                                     for baseClass in self.baseClasses ] )
+        else:
+            baseClassPart = "None"
+
+        return "Class: " + Fragment.__str__( self ) + "\n" \
+               "Leading comment: " + str( self.leadingComment ) + "\n" \
+               "Side comment: " + str( self.sideComment ) + "\n" \
+               "Decorators: " + decorPart + "\n" + \
+               "Base classes: " + baseClassPart + "\n" \
+               "Name: " + str( self.name ) + "\n" \
+               "Docstring: " + str( self.docstring ) + "\n" \
+               "Body:\n" + \
+               "\n".join( [ str( item ) for item in self.body ] )
+
+
+
 class Break( Fragment ):
     " Represents a single break statement "
 
