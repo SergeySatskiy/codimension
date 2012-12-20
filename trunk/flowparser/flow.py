@@ -203,39 +203,82 @@ class EncodingLine( Fragment ):
         return "Encoding line: " + Fragment.__str__( self )
 
 
-class Comment( Fragment ):
-    " Represents a one or many lines comment "
+#
+# Codimension recognizes three types of comments:
+# - standalone comments
+# - leading comments
+# - side comment
+# In all cases a comment consists of one or more comment lines
+#
+
+
+class CommentLine( Fragment ):
+    " Represents a single comment line "
 
     def __init__( self ):
         Fragment.__init__( self )
         return
 
     def getDisplayValue( self, buf = None ):
-        " Provides the comment without the syntactic shugar "
-        content = [ line.strip()[ 1: ] for line \
-                    in self.getContent( buf ).split( '\n' ) ]
-
-        # Identify the number of leading spaces after the 'hash' character
-        # common for all the lines
-        leadingCharCounts = []
-        for line in content:
-            count = 0
-            for char in line:
-                if char == " ":
-                    count += 1
-                else:
-                    break
-            if count != 0:
-                leadingCharCounts.append( count )
-
-        if leadingCharCounts:
-            spacesToStrip = min( leadingCharCounts )
-            content = [ line[ spacesToStrip : ] for line in content ]
-        return '\n'.join( content )
+        " Provides the comment line content without trailing spaces "
+        return self.getContent( buf ).strip()
 
     def __str__( self ):
         " Converts to a string "
-        return "Comment: " + Fragment.__str__( self )
+        return "Comment line: " + Fragment.__str__( self )
+
+
+
+# Strictly speaking there is no need to derive from Fragment because
+# a comment consists of a set of lines which are fragments themseves.
+# It is however suits well for the leading and standalone comments so
+# it was decided to have this derivation.
+class Comment( Fragment ):
+    " Represents a one or many lines comment "
+
+    def __init__( self ):
+        Fragment.__init__( self )
+        self.commentLines = []      # CommentLine instances
+        return
+
+    def getDisplayValue( self, buf = None ):
+        " Provides the comment without trailing spaces "
+        if not self.commentLines:
+            return ""
+
+        beginPositions = set( [ line.beginPos for line in self.commentLines ] )
+        sameShift = ( len( beginPositions ) == 1 )
+        minShift = min( beginPositions )
+
+        visibleLines = []
+        currentLine = self.commentLines[ 0 ].beginLine - 1
+        for line in self.commentLines:
+            if line.beginLine - currentLine > 1:
+                # Insert empty lines
+                for count in xrange( 1, line.beginLine - currentLine ):
+                    visibleLines.append( "" )
+            if sameShift:
+                visibleLines.append( line.getContent( buf ).strip() )
+            else:
+                if line.beginPos > minShift:
+                    visibleLines.append( ( line.beginPos - minShift ) * " " + \
+                                         line.getContent( buf ).strip() )
+                else:
+                    visibleLines.append( line.getContent( buf ).strip() )
+
+        return "\n".join( visibleLines )
+
+    def serialize( self ):
+        " Serializes the object "
+        Fragment.serialize( self )
+        for line in self.commentLines:
+            line.serialize()
+        return
+
+    def __str__( self ):
+        " Converts to a string "
+        return "Comment: " + Fragment.__str__( self ) + "\n  " + \
+               "\n  ".join( [ str( line ) for line in self.commentLines ] )
 
 
 class Docstring( Fragment ):
