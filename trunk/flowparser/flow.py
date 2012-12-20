@@ -414,6 +414,7 @@ class Function( Fragment ):
         self.name = None            # Fragment for the function name
         self.arguments = None       # Fragment for the function arguments:
                                     # Starting from '(', ending with ')'
+        self.docstring = None       # Docstring fragment
 
         self.body = []              # Fragment for the body
         return
@@ -428,7 +429,10 @@ class Function( Fragment ):
         if self.sideComment is not None:
             self.sideComment.serialize()
         self.name.serialize()
-        self.arguments.serialize()
+        if self.arguments is not None:
+            self.arguments.serialize()
+        if self.docstring is not None:
+            self.docstring.serialize()
         for item in self.body:
             item.serialize()
         return
@@ -448,6 +452,7 @@ class Function( Fragment ):
                "Decorators: " + decorPart + "\n" \
                "Name: " + str( self.name ) + "\n" \
                "Arguments: " + str( self.arguments ) + "\n" \
+               "Docstring: " + str( self.docstring ) + "\n" \
                "Body:\n" + \
                "\n".join( [ str( item ) for item in self.body ] )
 
