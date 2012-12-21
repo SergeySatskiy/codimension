@@ -664,3 +664,40 @@ class Assert( Fragment ):
                "Test: " + str( self.test ) + "\n" \
                "Message: " + str( self.message )
 
+
+class While( Fragment ):
+    " Represents a single while loop "
+
+    def __init__( self ):
+        Fragment.__init__( self )
+        self.leadingComment = None  # Fragment for the leading comment
+        self.sideComment = None     # Fragment for the side comment
+
+        self.condition = None       # Fragment for the condition
+        self.body = []
+        return
+
+    def serialize( self ):
+        " Serializes the object "
+        Fragment.serialize( self )
+        if self.leadingComment is not None:
+            self.leadingComment.serialize()
+        if self.sideComment is not None:
+            self.sideComment.serialize()
+        if self.condition is not None:
+            self.condition.serialize()
+        for item in self.body:
+            item.serialize()
+        return
+
+    def __str__( self ):
+        " Converts to a string "
+
+        return "While: " + Fragment.__str__( self ) + "\n" \
+               "Leading comment: " + str( self.leadingComment ) + "\n" \
+               "Side comment: " + str( self.sideComment ) + "\n" \
+               "condition: " + str( self.condition ) + "\n" \
+               "Body:\n" + \
+               "\n".join( [ str( item ) for item in self.body ] )
+
+
