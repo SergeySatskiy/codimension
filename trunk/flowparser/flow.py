@@ -693,7 +693,7 @@ class SysExit( Fragment ):
     def __str__( self ):
         " Converts to a string "
 
-        return "While: " + Fragment.__str__( self ) + "\n" \
+        return "SysExit: " + Fragment.__str__( self ) + "\n" \
                "Leading comment: " + str( self.leadingComment ) + "\n" \
                "Side comment: " + str( self.sideComment ) + "\n" \
                "Argument: " + str( self.argument )
@@ -708,6 +708,8 @@ class While( Fragment ):
 
         self.condition = None       # Fragment for the condition
         self.body = []
+
+        self.elsePart = None        # IfPart instance
         return
 
     def serialize( self ):
@@ -721,6 +723,8 @@ class While( Fragment ):
             self.condition.serialize()
         for item in self.body:
             item.serialize()
+        if self.elsePart is not None:
+            self.elsePart.serialize()
         return
 
     def __str__( self ):
@@ -731,7 +735,8 @@ class While( Fragment ):
                "Side comment: " + str( self.sideComment ) + "\n" \
                "Condition: " + str( self.condition ) + "\n" \
                "Body:\n" + \
-               "\n".join( [ str( item ) for item in self.body ] )
+               "\n".join( [ str( item ) for item in self.body ] ) + "\n" \
+               "Else part: " + str( self.elsePart )
 
 
 #
@@ -747,6 +752,8 @@ class For( Fragment ):
 
         self.iteration = None       # Fragment for the iteration
         self.body = []
+
+        self.elsePart = None        # IfPart instance
         return
 
     def serialize( self ):
@@ -760,6 +767,8 @@ class For( Fragment ):
             self.iteration.serialize()
         for item in self.body:
             item.serialize()
+        if self.elsePart is not None:
+            self.elsePart.serialize()
         return
 
     def __str__( self ):
@@ -770,7 +779,9 @@ class For( Fragment ):
                "Side comment: " + str( self.sideComment ) + "\n" \
                "Iteration: " + str( self.iteration ) + "\n" \
                "Body:\n" + \
-               "\n".join( [ str( item ) for item in self.body ] )
+               "\n".join( [ str( item ) for item in self.body ] ) + "\n" \
+               "Else part: " + str( self.elsePart )
+
 
 
 class Import( Fragment ):
@@ -915,9 +926,5 @@ class With( Fragment ):
 
 
 # try
-
-
-# 'else' for 'for'
-# 'else' for 'while'
 
 
