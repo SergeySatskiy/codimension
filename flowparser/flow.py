@@ -874,3 +874,50 @@ class If( Fragment ):
                "Parts:\n" + \
                "\n".join( [ str( item ) for item in self.ifParts ] )
 
+
+
+class With( Fragment ):
+    " Represents a single with statement "
+
+    def __init__( self ):
+        Fragment.__init__( self )
+
+        self.leadingComment = None  # Fragment for the leading comment
+        self.sideComment = None     # Fragment for the side comment
+
+        self.obj = None             # Fragment for the object
+        self.body = []
+        return
+
+    def serialize( self ):
+        " Serializes the object "
+        Fragment.serialize( self )
+        if self.leadingComment is not None:
+            self.leadingComment.serialize()
+        if self.sideComment is not None:
+            self.sideComment.serialize()
+        if self.obj is not None:
+            self.obj.serialize()
+        for item in self.body:
+            item.serialize()
+        return
+
+    def __str__( self ):
+        " Converts to a string "
+
+        return "With: " + Fragment.__str__( self ) + "\n" \
+               "Leading comment: " + str( self.leadingComment ) + "\n" \
+               "Side comment: " + str( self.sideComment ) + "\n" \
+               "Obj: " + str( self.obj ) + "\n" \
+               "Body:\n" + \
+               "\n".join( [ str( item ) for item in self.body ] )
+
+
+
+# try
+
+
+# 'else' for 'for'
+# 'else' for 'while'
+
+
