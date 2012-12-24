@@ -665,6 +665,8 @@ class Assert( Fragment ):
                "Message: " + str( self.message )
 
 
+# sys.exit( ... ) must be recognized regardless of how it was imported
+# with or without an alias
 class SysExit( Fragment ):
     " Represents a single sys.exit() call "
 
@@ -769,5 +771,45 @@ class For( Fragment ):
                "Iteration: " + str( self.iteration ) + "\n" \
                "Body:\n" + \
                "\n".join( [ str( item ) for item in self.body ] )
+
+
+class Import( Fragment ):
+    " Represents a single import statement "
+
+    def __init__( self ):
+        Fragment.__init__( self )
+
+        self.leadingComment = None  # Fragment for the leading comment
+        self.sideComment = None     # Fragment for the side comment
+
+        self.fromPart = None        # It is filled with A for statements like
+                                    # from A import ...
+        self.whatPart = None        # It is filled with B for statements like
+                                    # from A import B
+                                    # import B
+                                    # where B could be a list with aliases
+        return
+
+    def serialize( self ):
+        " Serializes the object "
+        Fragment.serialize( self )
+        if self.leadingComment is not None:
+            self.leadingComment.serialize()
+        if self.sideComment is not None:
+            self.sideComment.serialize()
+        if self.fromPart is not None:
+            self.fromPart.serialize()
+        if self.whatPart is not None:
+            self.whatPart.serialize()
+        return
+
+    def __str__( self ):
+        " Converts to a string "
+
+        return "Import: " + Fragment.__str__( self ) + "\n" \
+               "Leading comment: " + str( self.leadingComment ) + "\n" \
+               "Side comment: " + str( self.sideComment ) + "\n" \
+               "From: " + str( self.fromPart ) + "\n" \
+               "What: " + str( self.whatPart )
 
 
