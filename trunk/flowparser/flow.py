@@ -729,7 +729,7 @@ class While( Fragment ):
         return "While: " + Fragment.__str__( self ) + "\n" \
                "Leading comment: " + str( self.leadingComment ) + "\n" \
                "Side comment: " + str( self.sideComment ) + "\n" \
-               "condition: " + str( self.condition ) + "\n" \
+               "Condition: " + str( self.condition ) + "\n" \
                "Body:\n" + \
                "\n".join( [ str( item ) for item in self.body ] )
 
@@ -812,4 +812,65 @@ class Import( Fragment ):
                "From: " + str( self.fromPart ) + "\n" \
                "What: " + str( self.whatPart )
 
+
+
+class IfPart( Fragment ):
+    " Represents a single branch (if or elif or else) in the if statement "
+
+    def __init__( self ):
+        Fragment.__init__( self )
+
+        self.leadingComment = None  # Fragment for the leading comment
+        self.sideComment = None     # Fragment for the side comment
+
+        self.condition = None       # None for 'else' part
+        self.body = []
+        return
+
+    def serialize( self ):
+        " Serializes the object "
+        Fragment.serialize( self )
+        if self.leadingComment is not None:
+            self.leadingComment.serialize()
+        if self.sideComment is not None:
+            self.sideComment.serialize()
+        if self.condition is not None:
+            self.condition.serialize()
+        for item in self.body:
+            item.serialize()
+        return
+
+    def __str__( self ):
+        " Converts to a string "
+
+        return "If part: " + Fragment.__str__( self ) + "\n" \
+               "Leading comment: " + str( self.leadingComment ) + "\n" \
+               "Side comment: " + str( self.sideComment ) + "\n" \
+               "Condition: " + str( self.condition ) + "\n" \
+               "Body:\n" + \
+               "\n".join( [ str( item ) for item in self.body ] )
+
+
+class If( Fragment ):
+    " Represents a single if statement "
+
+    def __init__( self ):
+        Fragment.__init__( self )
+
+        self.ifParts = []           # List of IfPart
+        return
+
+    def serialize( self ):
+        " Serializes the object "
+        Fragment.serialize( self )
+        for item in self.ifParts:
+            item.serialize()
+        return
+
+    def __str__( self ):
+        " Converts to a string "
+
+        return "If: " + Fragment.__str__( self ) + "\n" \
+               "Parts:\n" + \
+               "\n".join( [ str( item ) for item in self.ifParts ] )
 
