@@ -925,6 +925,90 @@ class With( Fragment ):
 
 
 
-# try
+class ExceptPart( Fragment ):
+    " Represents a single except part "
 
+    def __init__( self ):
+        Fragment.__init__( self )
+
+        self.leadingComment = None  # Fragment for the leading comment
+        self.sideComment = None     # Fragment for the side comment
+
+        self.exceptionType = None   # Fragment for the exception type
+                                    # None for finally
+        self.variable = None        # Fragment for the variable
+                                    # it comes after ',' or 'as'
+                                    # None for finally
+        self.body = []
+        return
+
+    def serialize( self ):
+        " Serializes the object "
+        Fragment.serialize( self )
+        if self.leadingComment is not None:
+            self.leadingComment.serialize()
+        if self.sideComment is not None:
+            self.sideComment.serialize()
+        if self.exceptionType is not None:
+            self.exceptionType.serialize()
+        if self.variable is not None:
+            self.variable.serialize()
+        for item in self.body:
+            item.serialize()
+        return
+
+    def __str__( self ):
+        " Converts to a string "
+
+        return "If part: " + Fragment.__str__( self ) + "\n" \
+               "Leading comment: " + str( self.leadingComment ) + "\n" \
+               "Side comment: " + str( self.sideComment ) + "\n" \
+               "Exception type: " + str( self.exceptionType ) + "\n" \
+               "Variable: " + str( self.variable ) + "\n" \
+               "Body:\n" + \
+               "\n".join( [ str( item ) for item in self.body ] )
+
+
+
+class Try( Fragment ):
+    " Represents a single try statement "
+
+    def __init__( self ):
+        Fragment.__init__( self )
+
+        self.leadingComment = None  # Fragment for the leading comment
+        self.sideComment = None     # Fragment for the side comment
+        self.body = []
+
+        self.exceptParts = []       # List of ExceptPart instances
+
+        self.finallyPart = None     # ExceptPart for the finally part
+        return
+
+    def serialize( self ):
+        " Serializes the object "
+        Fragment.serialize( self )
+        if self.leadingComment is not None:
+            self.leadingComment.serialize()
+        if self.sideComment is not None:
+            self.sideComment.serialize()
+        for item in self.body:
+            item.serialize()
+        for item in self.exceptParts:
+            item.serialize()
+        if self.finallyPart is not None:
+            self.finallyPart.serialize()
+        return
+
+    def __str__( self ):
+        " Converts to a string "
+
+        return "If part: " + Fragment.__str__( self ) + "\n" \
+               "Leading comment: " + str( self.leadingComment ) + "\n" \
+               "Side comment: " + str( self.sideComment ) + "\n" \
+               "Body:\n" + \
+               "\n".join( [ str( item ) for item in self.body ] ) + "\n" \
+               "Except parts:\n" + \
+               "\n".join( [ str( item ) for item in self.exceptParts ] ) + "\n" \
+               "Finally part: " + str( self.finallyPart )
 
