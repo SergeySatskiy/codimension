@@ -339,77 +339,85 @@ class Docstring( Fragment ):
         return "Docstring: " + Fragment.__str__( self )
 
 
-class Decorator( Fragment ):
-    " Represents a single decorator "
+class FragmentWithComments( Fragment ):
+    " Represents a fragment with (optionally) a leading and side comments "
 
     def __init__( self ):
         Fragment.__init__( self )
 
         self.leadingComment = None  # Fragment for the leading comment
         self.sideComment = None     # Fragment for the side comment
+        return
+
+    def serialize( self ):
+        " Serializes the object "
+        Fragment.serialize( self )
+        if self.leadingComment is not None:
+            self.leadingComment.serialize()
+        if self.sideComment is not None:
+            self.sideComment.serialize()
+        return
+
+    def __str__( self ):
+        " Converts to a string "
+        return "Fragment with comments: " + Fragment.__str__( self ) + "\n" \
+               "Leading comment: " + str( self.leadingComment ) + "\n" \
+               "Side comment: " + str( self.sideComment )
+
+
+class Decorator( FragmentWithComments ):
+    " Represents a single decorator "
+
+    def __init__( self ):
+        FragmentWithComments.__init__( self )
 
         self.name = None            # Fragment for a name
         self.arguments = None       # Fragment for arguments:
                                     # Starting from '(', ending with ')'
         return
 
-    def __str__( self ):
-        " Converts to a string "
-        return "Decorator: " + Fragment.__str__( self ) + "\n" \
-               "Leading comment: " + str( self.leadingComment ) + "\n" \
-               "Name: " + str( self.name ) + "\n" \
-               "Side comment: " + str( self.sideComment ) + "\n" \
-               "Arguments: " + str( self.arguments )
-
     def serialize( self ):
         " Serializes the object "
-        Fragment.serialize( self )
-        if self.leadingComment is not None:
-            self.leadingComment.serialize()
-        if self.sideComment is not None:
-            self.sideComment.serialize()
+        FragmentWithComments.serialize( self )
         self.name.serialize()
         if self.arguments is not None:
             self.arguments.serialize()
         return
 
+    def __str__( self ):
+        " Converts to a string "
+        return "Decorator: " + FragmentWithComments.__str__( self ) + "\n" \
+               "Name: " + str( self.name ) + "\n" \
+               "Arguments: " + str( self.arguments )
 
-class CodeBlock( Fragment ):
+
+class CodeBlock( FragmentWithComments ):
     " Represents a code block "
 
     def __init__( self ):
-        Fragment.__init__( self )
-        self.leadingComment = None  # Fragment for the leading comment
-        self.sideComment = None     # Fragment for the side comment
+        FragmentWithComments.__init__( self )
         self.body = None            # Fragment for the body
         return
 
     def serialize( self ):
         " Serializes the object "
-        Fragment.serialize( self )
-        if self.leadingComment is not None:
-            self.leadingComment.serialize()
-        if self.sideComment is not None:
-            self.sideComment.serialize()
-        self.body.serialize()
+        FragmentWithComments.serialize( self )
+        if self.body is not None:
+            self.body.serialize()
         return
 
     def __str__( self ):
         " Converts to a string "
-        return "Code block: " + Fragment.__str__( self ) + "\n" \
-               "Leading comment: " + str( self.leadingComment ) + "\n" \
-               "Side comment: " + str( self.sideComment ) + "\n" \
+        return "Code block: " + FragmentWithComments.__str__( self ) + "\n" \
                "Body: " + str( self.body )
 
 
-class Function( Fragment ):
+class Function( FragmentWithComments ):
     " Represents a single function "
 
     def __init__( self ):
-        Fragment.__init__( self )
-        self.leadingComment = None  # Fragment for the leading comment
+        FragmentWithComments.__init__( self )
         self.decorators = []        # Instances of Decorator
-        self.sideComment = None     # Fragment for the side comment
 
         self.name = None            # Fragment for the function name
         self.arguments = None       # Fragment for the function arguments:
@@ -421,13 +429,9 @@ class Function( Fragment ):
 
     def serialize( self ):
         " Serializes the object "
-        Fragment.serialize( self )
-        if self.leadingComment is not None:
-            self.leadingComment.serialize()
+        FragmentWithComments.serialize( self )
         for decor in self.decorators:
             decor.serialize()
-        if self.sideComment is not None:
-            self.sideComment.serialize()
         self.name.serialize()
         if self.arguments is not None:
             self.arguments.serialize()
@@ -446,9 +450,7 @@ class Function( Fragment ):
         else:
             decorPart = "None"
 
-        return "Function: " + Fragment.__str__( self ) + "\n" \
-               "Leading comment: " + str( self.leadingComment ) + "\n" \
-               "Side comment: " + str( self.sideComment ) + "\n" \
+        return "Function: " + FragmentWithComments.__str__( self ) + "\n" \
                "Decorators: " + decorPart + "\n" \
                "Name: " + str( self.name ) + "\n" \
                "Arguments: " + str( self.arguments ) + "\n" \
@@ -457,15 +459,12 @@ class Function( Fragment ):
                "\n".join( [ str( item ) for item in self.body ] )
 
 
-
-class Class( Fragment ):
+class Class( FragmentWithComments ):
     " Represents a single class "
 
     def __init__( self ):
-        Fragment.__init__( self )
-        self.leadingComment = None  # Fragment for the leading comment
+        FragmentWithComments.__init__( self )
         self.decorators = []        # Instances of Decorator
-        self.sideComment = None     # Fragment for the side comment
 
         self.name = None            # Fragment for the function name
         self.baseClasses = []       # Fragments for base classes names
@@ -476,14 +475,11 @@ class Class( Fragment ):
 
     def serialize( self ):
         " Serializes the object "
-        Fragment.serialize( self )
-        if self.leadingComment is not None:
-            self.leadingComment.serialize()
+        FragmentWithComments.serialize( self )
         for decor in self.decorators:
             decor.serialize()
-        if self.sideComment is not None:
-            self.sideComment.serialize()
-        self.name.serialize()
+        if self.name is not None:
+            self.name.serialize()
         for baseClass in self.baseClasses:
             baseClass.serialize()
         if self.docstring is not None:
@@ -508,9 +504,7 @@ class Class( Fragment ):
         else:
             baseClassPart = "None"
 
-        return "Class: " + Fragment.__str__( self ) + "\n" \
-               "Leading comment: " + str( self.leadingComment ) + "\n" \
-               "Side comment: " + str( self.sideComment ) + "\n" \
+        return "Class: " + FragmentWithComments.__str__( self ) + "\n" \
                "Decorators: " + decorPart + "\n" + \
                "Base classes: " + baseClassPart + "\n" \
                "Name: " + str( self.name ) + "\n" \
@@ -520,124 +514,79 @@ class Class( Fragment ):
 
 
 
-class Break( Fragment ):
+class Break( FragmentWithComments ):
     " Represents a single break statement "
 
     def __init__( self ):
-        Fragment.__init__( self )
-        self.leadingComment = None  # Fragment for the leading comment
-        self.sideComment = None     # Fragment for the side comment
-        return
-
-    def serialize( self ):
-        " Serializes the object "
-        Fragment.serialize( self )
-        if self.leadingComment is not None:
-            self.leadingComment.serialize()
-        if self.sideComment is not None:
-            self.sideComment.serialize()
+        FragmentWithComments.__init__( self )
         return
 
     def __str__( self ):
         " Converts to a string "
-        return "Break: " + Fragment.__str__( self ) + "\n" \
-               "Leading comment: " + str( self.leadingComment ) + "\n" \
-               "Side comment: " + str( self.sideComment )
+        return "Break: " + FragmentWithComments.__str__( self )
 
 
-class Continue( Fragment ):
+class Continue( FragmentWithComments ):
     " Represents a single continue statement "
 
     def __init__( self ):
-        Fragment.__init__( self )
-        self.leadingComment = None  # Fragment for the leading comment
-        self.sideComment = None     # Fragment for the side comment
-        return
-
-    def serialize( self ):
-        " Serializes the object "
-        Fragment.serialize( self )
-        if self.leadingComment is not None:
-            self.leadingComment.serialize()
-        if self.sideComment is not None:
-            self.sideComment.serialize()
+        FragmentWithComments.__init__( self )
         return
 
     def __str__( self ):
         " Converts to a string "
-        return "Continue: " + Fragment.__str__( self ) + "\n" \
-               "Leading comment: " + str( self.leadingComment ) + "\n" \
-               "Side comment: " + str( self.sideComment )
+        return "Continue: " + FragmentWithComments.__str__( self )
 
 
-class Return( Fragment ):
+class Return( FragmentWithComments ):
     " Represents a single return statement "
 
     def __init__( self ):
-        Fragment.__init__( self )
-        self.leadingComment = None  # Fragment for the leading comment
-        self.sideComment = None     # Fragment for the side comment
+        FragmentWithComments.__init__( self )
 
         self.value = None           # Fragment for the value
         return
 
     def serialize( self ):
         " Serializes the object "
-        Fragment.serialize( self )
-        if self.leadingComment is not None:
-            self.leadingComment.serialize()
-        if self.sideComment is not None:
-            self.sideComment.serialize()
+        FragmentWithComments.serialize( self )
         if self.value is not None:
             self.value.serialize()
         return
 
     def __str__( self ):
         " Converts to a string "
-        return "Return: " + Fragment.__str__( self ) + "\n" \
-               "Leading comment: " + str( self.leadingComment ) + "\n" \
-               "Side comment: " + str( self.sideComment ) + "\n" \
+        return "Return: " + FragmentWithComments.__str__( self ) + "\n" \
                "Value: " + str( self.value )
 
 
-class Raise( Fragment ):
+class Raise( FragmentWithComments ):
     " Represents a single raise statement "
 
     def __init__( self ):
-        Fragment.__init__( self )
-        self.leadingComment = None  # Fragment for the leading comment
-        self.sideComment = None     # Fragment for the side comment
+        FragmentWithComments.__init__( self )
 
         self.value = None           # Fragment for the value
         return
 
     def serialize( self ):
         " Serializes the object "
-        Fragment.serialize( self )
-        if self.leadingComment is not None:
-            self.leadingComment.serialize()
-        if self.sideComment is not None:
-            self.sideComment.serialize()
+        FragmentWithComments.serialize( self )
         if self.value is not None:
             self.value.serialize()
         return
 
     def __str__( self ):
         " Converts to a string "
-        return "Raise: " + Fragment.__str__( self ) + "\n" \
-               "Leading comment: " + str( self.leadingComment ) + "\n" \
-               "Side comment: " + str( self.sideComment ) + "\n" \
+        return "Raise: " + FragmentWithComments.__str__( self ) + "\n" \
                "Value: " + str( self.value )
 
 
-
-class Assert( Fragment ):
+class Assert( FragmentWithComments ):
     " Represents a single assert statement "
 
     def __init__( self ):
-        Fragment.__init__( self )
-        self.leadingComment = None  # Fragment for the leading comment
-        self.sideComment = None     # Fragment for the side comment
+        FragmentWithComments.__init__( self )
 
         self.test = None            # Fragment for the test expression
         self.message = None         # Fragment for the message
@@ -645,11 +594,7 @@ class Assert( Fragment ):
 
     def serialize( self ):
         " Serializes the object "
-        Fragment.serialize( self )
-        if self.leadingComment is not None:
-            self.leadingComment.serialize()
-        if self.sideComment is not None:
-            self.sideComment.serialize()
+        FragmentWithComments.serialize( self )
         if self.test is not None:
             self.test.serialize()
         if self.message is not None:
@@ -658,22 +603,18 @@ class Assert( Fragment ):
 
     def __str__( self ):
         " Converts to a string "
-        return "Assert: " + Fragment.__str__( self ) + "\n" \
-               "Leading comment: " + str( self.leadingComment ) + "\n" \
-               "Side comment: " + str( self.sideComment ) + "\n" \
+        return "Assert: " + FragmentWithComments.__str__( self ) + "\n" \
                "Test: " + str( self.test ) + "\n" \
                "Message: " + str( self.message )
 
 
 # sys.exit( ... ) must be recognized regardless of how it was imported
 # with or without an alias
-class SysExit( Fragment ):
+class SysExit( FragmentWithComments ):
     " Represents a single sys.exit() call "
 
     def __init__( self ):
-        Fragment.__init__( self )
-        self.leadingComment = None  # Fragment for the leading comment
-        self.sideComment = None     # Fragment for the side comment
+        FragmentWithComments.__init__( self )
 
         self.argument = None        # Fragment for the argument from '('
                                     # till ')'
@@ -681,30 +622,21 @@ class SysExit( Fragment ):
 
     def serialize( self ):
         " Serializes the object "
-        Fragment.serialize( self )
-        if self.leadingComment is not None:
-            self.leadingComment.serialize()
-        if self.sideComment is not None:
-            self.sideComment.serialize()
+        FragmentWithComments.serialize( self )
         if self.argument is not None:
             self.argument.serialize()
         return
 
     def __str__( self ):
         " Converts to a string "
-
-        return "SysExit: " + Fragment.__str__( self ) + "\n" \
-               "Leading comment: " + str( self.leadingComment ) + "\n" \
-               "Side comment: " + str( self.sideComment ) + "\n" \
+        return "SysExit: " + FragmentWithComments.__str__( self ) + "\n" \
                "Argument: " + str( self.argument )
 
-class While( Fragment ):
+class While( FragmentWithComments ):
     " Represents a single while loop "
 
     def __init__( self ):
-        Fragment.__init__( self )
-        self.leadingComment = None  # Fragment for the leading comment
-        self.sideComment = None     # Fragment for the side comment
+        FragmentWithComments.__init__( self )
 
         self.condition = None       # Fragment for the condition
         self.body = []
@@ -714,11 +646,7 @@ class While( Fragment ):
 
     def serialize( self ):
         " Serializes the object "
-        Fragment.serialize( self )
-        if self.leadingComment is not None:
-            self.leadingComment.serialize()
-        if self.sideComment is not None:
-            self.sideComment.serialize()
+        FragmentWithComments.serialize( self )
         if self.condition is not None:
             self.condition.serialize()
         for item in self.body:
@@ -730,9 +658,7 @@ class While( Fragment ):
     def __str__( self ):
         " Converts to a string "
 
-        return "While: " + Fragment.__str__( self ) + "\n" \
-               "Leading comment: " + str( self.leadingComment ) + "\n" \
-               "Side comment: " + str( self.sideComment ) + "\n" \
+        return "While: " + FragmentWithComments.__str__( self ) + "\n" \
                "Condition: " + str( self.condition ) + "\n" \
                "Body:\n" + \
                "\n".join( [ str( item ) for item in self.body ] ) + "\n" \
@@ -742,13 +668,11 @@ class While( Fragment ):
 #
 # NOTE: The For instances must not be instantiated for list comprehensions
 #
-class For( Fragment ):
+class For( FragmentWithComments ):
     " Represents a single for loop "
 
     def __init__( self ):
-        Fragment.__init__( self )
-        self.leadingComment = None  # Fragment for the leading comment
-        self.sideComment = None     # Fragment for the side comment
+        FragmentWithComments.__init__( self )
 
         self.iteration = None       # Fragment for the iteration
         self.body = []
@@ -758,11 +682,7 @@ class For( Fragment ):
 
     def serialize( self ):
         " Serializes the object "
-        Fragment.serialize( self )
-        if self.leadingComment is not None:
-            self.leadingComment.serialize()
-        if self.sideComment is not None:
-            self.sideComment.serialize()
+        FragmentWithComments.serialize( self )
         if self.iteration is not None:
             self.iteration.serialize()
         for item in self.body:
@@ -773,25 +693,18 @@ class For( Fragment ):
 
     def __str__( self ):
         " Converts to a string "
-
-        return "While: " + Fragment.__str__( self ) + "\n" \
-               "Leading comment: " + str( self.leadingComment ) + "\n" \
-               "Side comment: " + str( self.sideComment ) + "\n" \
+        return "While: " + FragmentWithComments.__str__( self ) + "\n" \
                "Iteration: " + str( self.iteration ) + "\n" \
                "Body:\n" + \
                "\n".join( [ str( item ) for item in self.body ] ) + "\n" \
                "Else part: " + str( self.elsePart )
 
 
-
-class Import( Fragment ):
+class Import( FragmentWithComments ):
     " Represents a single import statement "
 
     def __init__( self ):
-        Fragment.__init__( self )
-
-        self.leadingComment = None  # Fragment for the leading comment
-        self.sideComment = None     # Fragment for the side comment
+        FragmentWithComments.__init__( self )
 
         self.fromPart = None        # It is filled with A for statements like
                                     # from A import ...
@@ -803,11 +716,7 @@ class Import( Fragment ):
 
     def serialize( self ):
         " Serializes the object "
-        Fragment.serialize( self )
-        if self.leadingComment is not None:
-            self.leadingComment.serialize()
-        if self.sideComment is not None:
-            self.sideComment.serialize()
+        FragmentWithComments.serialize( self )
         if self.fromPart is not None:
             self.fromPart.serialize()
         if self.whatPart is not None:
@@ -817,22 +726,17 @@ class Import( Fragment ):
     def __str__( self ):
         " Converts to a string "
 
-        return "Import: " + Fragment.__str__( self ) + "\n" \
-               "Leading comment: " + str( self.leadingComment ) + "\n" \
-               "Side comment: " + str( self.sideComment ) + "\n" \
+        return "Import: " + FragmentWithComments.__str__( self ) + "\n" \
                "From: " + str( self.fromPart ) + "\n" \
                "What: " + str( self.whatPart )
 
 
 
-class IfPart( Fragment ):
+class IfPart( FragmentWithComments ):
     " Represents a single branch (if or elif or else) in the if statement "
 
     def __init__( self ):
-        Fragment.__init__( self )
-
-        self.leadingComment = None  # Fragment for the leading comment
-        self.sideComment = None     # Fragment for the side comment
+        FragmentWithComments.__init__( self )
 
         self.condition = None       # None for 'else' part
         self.body = []
@@ -840,11 +744,7 @@ class IfPart( Fragment ):
 
     def serialize( self ):
         " Serializes the object "
-        Fragment.serialize( self )
-        if self.leadingComment is not None:
-            self.leadingComment.serialize()
-        if self.sideComment is not None:
-            self.sideComment.serialize()
+        FragmentWithComments.serialize( self )
         if self.condition is not None:
             self.condition.serialize()
         for item in self.body:
@@ -853,10 +753,7 @@ class IfPart( Fragment ):
 
     def __str__( self ):
         " Converts to a string "
-
-        return "If part: " + Fragment.__str__( self ) + "\n" \
-               "Leading comment: " + str( self.leadingComment ) + "\n" \
-               "Side comment: " + str( self.sideComment ) + "\n" \
+        return "If part: " + FragmentWithComments.__str__( self ) + "\n" \
                "Condition: " + str( self.condition ) + "\n" \
                "Body:\n" + \
                "\n".join( [ str( item ) for item in self.body ] )
@@ -880,21 +777,16 @@ class If( Fragment ):
 
     def __str__( self ):
         " Converts to a string "
-
         return "If: " + Fragment.__str__( self ) + "\n" \
                "Parts:\n" + \
                "\n".join( [ str( item ) for item in self.ifParts ] )
 
 
-
-class With( Fragment ):
+class With( FragmentWithComments ):
     " Represents a single with statement "
 
     def __init__( self ):
-        Fragment.__init__( self )
-
-        self.leadingComment = None  # Fragment for the leading comment
-        self.sideComment = None     # Fragment for the side comment
+        FragmentWithComments.__init__( self )
 
         self.obj = None             # Fragment for the object
         self.body = []
@@ -902,11 +794,7 @@ class With( Fragment ):
 
     def serialize( self ):
         " Serializes the object "
-        Fragment.serialize( self )
-        if self.leadingComment is not None:
-            self.leadingComment.serialize()
-        if self.sideComment is not None:
-            self.sideComment.serialize()
+        FragmentWithComments.serialize( self )
         if self.obj is not None:
             self.obj.serialize()
         for item in self.body:
@@ -915,24 +803,17 @@ class With( Fragment ):
 
     def __str__( self ):
         " Converts to a string "
-
-        return "With: " + Fragment.__str__( self ) + "\n" \
-               "Leading comment: " + str( self.leadingComment ) + "\n" \
-               "Side comment: " + str( self.sideComment ) + "\n" \
+        return "With: " + FragmentWithComments.__str__( self ) + "\n" \
                "Obj: " + str( self.obj ) + "\n" \
                "Body:\n" + \
                "\n".join( [ str( item ) for item in self.body ] )
 
 
-
-class ExceptPart( Fragment ):
+class ExceptPart( FragmentWithComments ):
     " Represents a single except part "
 
     def __init__( self ):
-        Fragment.__init__( self )
-
-        self.leadingComment = None  # Fragment for the leading comment
-        self.sideComment = None     # Fragment for the side comment
+        FragmentWithComments.__init__( self )
 
         self.exceptionType = None   # Fragment for the exception type
                                     # None for finally
@@ -944,11 +825,7 @@ class ExceptPart( Fragment ):
 
     def serialize( self ):
         " Serializes the object "
-        Fragment.serialize( self )
-        if self.leadingComment is not None:
-            self.leadingComment.serialize()
-        if self.sideComment is not None:
-            self.sideComment.serialize()
+        FragmentWithComments.serialize( self )
         if self.exceptionType is not None:
             self.exceptionType.serialize()
         if self.variable is not None:
@@ -959,39 +836,27 @@ class ExceptPart( Fragment ):
 
     def __str__( self ):
         " Converts to a string "
-
-        return "If part: " + Fragment.__str__( self ) + "\n" \
-               "Leading comment: " + str( self.leadingComment ) + "\n" \
-               "Side comment: " + str( self.sideComment ) + "\n" \
+        return "If part: " + FragmentWithComments.__str__( self ) + "\n" \
                "Exception type: " + str( self.exceptionType ) + "\n" \
                "Variable: " + str( self.variable ) + "\n" \
                "Body:\n" + \
                "\n".join( [ str( item ) for item in self.body ] )
 
 
-
-class Try( Fragment ):
+class Try( FragmentWithComments ):
     " Represents a single try statement "
 
     def __init__( self ):
-        Fragment.__init__( self )
+        FragmentWithComments.__init__( self )
 
-        self.leadingComment = None  # Fragment for the leading comment
-        self.sideComment = None     # Fragment for the side comment
         self.body = []
-
         self.exceptParts = []       # List of ExceptPart instances
-
         self.finallyPart = None     # ExceptPart for the finally part
         return
 
     def serialize( self ):
         " Serializes the object "
-        Fragment.serialize( self )
-        if self.leadingComment is not None:
-            self.leadingComment.serialize()
-        if self.sideComment is not None:
-            self.sideComment.serialize()
+        FragmentWithComments.serialize( self )
         for item in self.body:
             item.serialize()
         for item in self.exceptParts:
@@ -1002,10 +867,7 @@ class Try( Fragment ):
 
     def __str__( self ):
         " Converts to a string "
-
-        return "If part: " + Fragment.__str__( self ) + "\n" \
-               "Leading comment: " + str( self.leadingComment ) + "\n" \
-               "Side comment: " + str( self.sideComment ) + "\n" \
+        return "If part: " + FragmentWithComments.__str__( self ) + "\n" \
                "Body:\n" + \
                "\n".join( [ str( item ) for item in self.body ] ) + "\n" \
                "Except parts:\n" + \
