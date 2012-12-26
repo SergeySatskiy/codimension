@@ -54,6 +54,23 @@ BUILTIN_FUNCS = "abs divmod input open staticmethod " \
                 "delattr help next setattr buffer " \
                 "dict hex object slice coerce " \
                 "dir id oct sorted intern"
+BOOLEANS = "True False"
+BUILTIN_EXCEPTIONS = "BaseException Exception ArithmeticError " \
+                     "LookupError EnvironmentError " \
+                     "AssertionError AttributeError EOFError " \
+                     "FloatingPointError GeneratorExit " \
+                     "IOError ImportError IndentationError " \
+                     "IndexError KeyError KeyboardInterrupt " \
+                     "MemoryError NameError NotImplementedError " \
+                     "OSError OverflowError ReferenceError " \
+                     "RuntimeError StopIteration SyntaxError " \
+                     "SystemError SystemExit TabError TypeError " \
+                     "UnboundLocalError UnicodeError UnicodeEncodeError " \
+                     "UnicodeDecodeError UnicodeTranslateError " \
+                     "ValueError WindowsError ZeroDivisionError " \
+                     "Warning UserWarning DeprecationWarning " \
+                     "SyntaxWarning RuntimeWarning FutureWarning"
+TREAT_AS_KEYWORDS = BUILTIN_FUNCS + " " + BOOLEANS + " " + BUILTIN_EXCEPTIONS
 
 
 
@@ -145,5 +162,5 @@ class LexerPython( QsciLexerPython, Lexer ):
         if standardSet is None:
             return standardSet
 
-        return str( standardSet ) + " True False " + BUILTIN_FUNCS
+        return str( standardSet ) + " " + TREAT_AS_KEYWORDS
 
