@@ -396,20 +396,21 @@ class CodeBlock( FragmentWithComments ):
 
     def __init__( self ):
         FragmentWithComments.__init__( self )
-        self.body = None            # Fragment for the body
+        self.body = []              # Fragments for the body
         return
 
     def serialize( self ):
         " Serializes the object "
         FragmentWithComments.serialize( self )
-        if self.body is not None:
-            self.body.serialize()
+        for item in self.body:
+            item.serialize()
         return
 
     def __str__( self ):
         " Converts to a string "
         return "Code block: " + FragmentWithComments.__str__( self ) + "\n" \
-               "Body: " + str( self.body )
+               "Body:\n" + \
+               "\n".join( [ str( item ) for item in self.body ] )
 
 
 class Function( FragmentWithComments ):
