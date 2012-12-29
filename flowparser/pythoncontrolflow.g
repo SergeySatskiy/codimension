@@ -118,30 +118,30 @@ tokens
     pANTLR3_VECTOR  tokens;
     void *          onEncoding;
 
-    void (*origFree) ( struct pythonbriefLexer_Ctx_struct *  ctx );
+    void (*origFree) ( struct pythoncontrolflowLexer_Ctx_struct *  ctx );
     pANTLR3_COMMON_TOKEN (*origNextToken)( pANTLR3_TOKEN_SOURCE  toksource );
 }
 
 // Declare functions from lexerutils.c
 @lexer::members
 {
-    pANTLR3_COMMON_TOKEN    pythonbriefLexer_createLexerToken( pANTLR3_LEXER  lexer,
-                                                               ANTLR3_UINT32  tokenType,
-                                                               pANTLR3_UINT8  text );
-    char *                  pythonbriefLexer_syntetizeEmptyString( int  spaces );
-    void                    pythonbriefLexer_initLexer( ppythonbriefLexer  ctx );
-    void                    searchForCoding( ppythonbriefLexer  ctx,
-                                             char *             lineStart,
-                                             ANTLR3_UINT32      lineNumber );
+    pANTLR3_COMMON_TOKEN    pythoncontrolflowLexer_createLexerToken( pANTLR3_LEXER  lexer,
+                                                                     ANTLR3_UINT32  tokenType,
+                                                                     pANTLR3_UINT8  text );
+    char *                  pythoncontrolflowLexer_syntetizeEmptyString( int  spaces );
+    void                    pythoncontrolflowLexer_initLexer( ppythoncontrolflowLexer  ctx );
+    void                    searchForCoding( ppythoncontrolflowLexer  ctx,
+                                             char *                   lineStart,
+                                             ANTLR3_UINT32            lineNumber );
 }
 
 @parser::members
 {
-    pANTLR3_BASE_TREE pythonbriefInsertInheritance( struct pythonbriefParser_Ctx_struct *  ctx,
-                                                    pANTLR3_VECTOR                         args );
+    pANTLR3_BASE_TREE pythoncontrolflowInsertInheritance( struct pythoncontrolflowParser_Ctx_struct *  ctx,
+                                                          pANTLR3_VECTOR                               args );
 
-    pANTLR3_BASE_TREE pythonbriefInsertArguments( struct pythonbriefParser_Ctx_struct *  ctx,
-                                                  pANTLR3_VECTOR                         args );
+    pANTLR3_BASE_TREE pythoncontrolflowInsertArguments( struct pythoncontrolflowParser_Ctx_struct *  ctx,
+                                                        pANTLR3_VECTOR                               args );
     void addTypedName( pANTLR3_VECTOR       v,
                        ANTLR3_UINT32        type,
                        pANTLR3_UINT8        name );
@@ -150,7 +150,7 @@ tokens
 // This going to lexer constructor
 @lexer::apifuncs
 {
-    pythonbriefLexer_initLexer( ctx );
+    pythoncontrolflowLexer_initLexer( ctx );
 }
 
 
@@ -192,7 +192,7 @@ decor_arglist
                     | STAR t1 = test { addTypedName( args, STAR_ARG, $t1.text->chars ); } ( COMMA a3 = argument { addTypedName( args, NAME_ARG, $a3.text->chars ); } )* ( COMMA DOUBLESTAR t2 = test { addTypedName( args, DBL_STAR_ARG, $t2.text->chars ); } )?
                     | DOUBLESTAR t3 = test { addTypedName( args, DBL_STAR_ARG, $t3.text->chars ); }
                 )
-                    -> { pythonbriefInsertArguments( ctx, args ) }
+                    -> { pythoncontrolflowInsertArguments( ctx, args ) }
                 ;
 
                 /* It's a hack here: the name position has both the keyword pos and the class name pos */
@@ -222,7 +222,7 @@ varargslist
                     ( STAR n1 = NAME { addTypedName( f_args, STAR_ARG, $n1.text->chars ); } ( COMMA DOUBLESTAR n2 = NAME { addTypedName( f_args, DBL_STAR_ARG, $n2.text->chars ); } )? | DOUBLESTAR n3 = NAME { addTypedName( f_args, DBL_STAR_ARG, $n3.text->chars ); } )
                 | dp1 = defparameter { addTypedName( f_args, NAME_ARG, $dp1.text->chars ); }
                     ( options { greedy = true; } : COMMA dp2 = defparameter { addTypedName( f_args, NAME_ARG, $dp2.text->chars ); } )* COMMA? )
-                    -> { pythonbriefInsertArguments( ctx, f_args ) }
+                    -> { pythoncontrolflowInsertArguments( ctx, f_args ) }
                 ;
 
 fpdef           : NAME
@@ -594,7 +594,7 @@ inheritancelist
                 }
                 : t1 = test { arguments->add( arguments, $t1.text->chars, NULL ); }
                     ( options { k = 2; } : COMMA t2 = test { arguments->add( arguments, $t2.text->chars, NULL ); } )*  COMMA?
-                    -> { pythonbriefInsertInheritance( ctx, arguments ) }
+                    -> { pythoncontrolflowInsertInheritance( ctx, arguments ) }
                 ;
 
 
@@ -807,7 +807,7 @@ ASSIGN          : '=' ;
  *  emit a newline.
  */
 CONTINUED_LINE  : '\\' ( '\r' )? '\n' ( ' ' | '\t' )* { $channel = HIDDEN; }
-                ( NEWLINE { static char __newlinebuf[] = "\n"; EMITNEW( pythonbriefLexer_createLexerToken( LEXER, TOKTEXT( NEWLINE, __newlinebuf ) ) ); } )?
+                ( NEWLINE { static char __newlinebuf[] = "\n"; EMITNEW( pythoncontrolflowLexer_createLexerToken( LEXER, TOKTEXT( NEWLINE, __newlinebuf ) ) ); } )?
                 ;
 
 /** Treat a sequence of blank lines as a single blank line.  If
@@ -851,7 +851,7 @@ LEADING_WS
             | '\t' { spaces += 8; spaces -= (spaces \% 8); }
         )+
             {
-                EMITNEW( pythonbriefLexer_createLexerToken( LEXER, TOKTEXT( LEADING_WS, pythonbriefLexer_syntetizeEmptyString( spaces ) ) ) );
+                EMITNEW( pythoncontrolflowLexer_createLexerToken( LEXER, TOKTEXT( LEADING_WS, pythoncontrolflowLexer_syntetizeEmptyString( spaces ) ) ) );
             }
         // kill trailing newline if present and then ignore
         (
