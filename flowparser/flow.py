@@ -37,7 +37,7 @@ CODING_REGEXP = re.compile( r'''coding[:=]\s*([-\w_.]+)''' )
 #
 
 class Fragment:
-    " Represents a single text fragment of a python file"
+    " Represents a single text fragment of a python file "
 
     def __init__( self ):
 
@@ -49,9 +49,7 @@ class Fragment:
                                 # character. 0-based
                                 # It must never be None.
 
-        self.parent = None      # Reference to the parent fragment. The only
-                                # case when it is None is for the global
-                                # scope fragments.
+        self.parent = None      # Reference to the parent fragment.
 
         # Excessive members for convenience. This makes it easier to work with
         # the editor buffer directly.
