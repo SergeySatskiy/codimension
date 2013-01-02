@@ -137,13 +137,16 @@ int process( const char *  filename, int  count )
             char *      lastChar = (char *)tok->stop;
             while ( lastChar != tok->start && (*lastChar == '\n' || *lastChar == '\r' || *lastChar == 0) )
                 --lastChar;
+            char *      firstChar = (char *)tok->start;
+            while ( *firstChar != '#' )
+                ++firstChar;
 
-            size_t      commentSize = lastChar - tok->start + 1;
-            size_t      begin = (void*)tok->start - (void*)tok->input->data;
+            size_t      commentSize = lastChar - firstChar + 1;
+            size_t      begin = (void*)firstChar - (void*)tok->input->data;
             size_t      end = begin + commentSize - 1;
             char        buffer[ 4096 ];
 
-            snprintf( buffer, commentSize + 1, "%s", tok->getText( tok )->chars );
+            snprintf( buffer, commentSize + 1, "%s", firstChar );
             printf( "COMMENT line: %ld size: %ld start: %ld end: %ld content: '%s'\n",
                     line, commentSize, begin, end, buffer );
         }
