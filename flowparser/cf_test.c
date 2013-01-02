@@ -90,7 +90,10 @@ int process( const char *  filename, int  count )
         return 1;
     }
 
-    tstream->discardOffChannelToks( tstream, ANTLR3_TRUE );
+    // I cannot discard off channel tokens because all the comments
+    // will be discarded. Instead there is another pass to collect comment
+    // tokens from the lexer.
+    // tstream->discardOffChannelToks( tstream, ANTLR3_TRUE );
 
     // Create parser
     ppythoncontrolflowParser psr = pythoncontrolflowParserNew( tstream );
@@ -120,6 +123,30 @@ int process( const char *  filename, int  count )
     {
         printf( "Error parsing the input file\n" );
         retVal = 1;
+    }
+
+    size_t      tokenCount = tstream->tokens->size( tstream->tokens );
+    printf( "Number of tokens in the stream: %ld\n", tokenCount );
+
+    for ( size_t  k = 0; k < tokenCount; ++k ) {
+        pANTLR3_COMMON_TOKEN    tok = tstream->tokens->get( tstream->tokens, k );
+        if ( tok->type == COMMENT ) {
+            size_t      line = tok->line;
+
+            // Adjust the last character of the comment
+            char *      lastChar = (char *)tok->stop;
+            while ( lastChar != tok->start && (*lastChar == '\n' || *lastChar == '\r' || *lastChar == 0) )
+                --lastChar;
+
+            size_t      commentSize = lastChar - tok->start + 1;
+            size_t      begin = (void*)tok->start - (void*)tok->input->data;
+            size_t      end = begin + commentSize - 1;
+            char        buffer[ 4096 ];
+
+            snprintf( buffer, commentSize + 1, "%s", tok->getText( tok )->chars );
+            printf( "COMMENT line: %ld size: %ld start: %ld end: %ld content: '%s'\n",
+                    line, commentSize, begin, end, buffer );
+        }
     }
 
     // Clean up
