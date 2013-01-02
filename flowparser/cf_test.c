@@ -138,17 +138,18 @@ int process( const char *  filename, int  count )
             while ( lastChar != tok->start && (*lastChar == '\n' || *lastChar == '\r' || *lastChar == 0) )
                 --lastChar;
             char *      firstChar = (char *)tok->start;
-            while ( *firstChar != '#' )
+            while ( *firstChar != '#' ) {
                 ++firstChar;
-
+                ++tok->charPosition;
+            }
             size_t      commentSize = lastChar - firstChar + 1;
             size_t      begin = (void*)firstChar - (void*)tok->input->data;
             size_t      end = begin + commentSize - 1;
             char        buffer[ 4096 ];
 
             snprintf( buffer, commentSize + 1, "%s", firstChar );
-            printf( "COMMENT line: %ld size: %ld start: %ld end: %ld content: '%s'\n",
-                    line, commentSize, begin, end, buffer );
+            printf( "COMMENT size: %03ld start: %06ld end: %06ld line: %03d pos: %03d content: '%s'\n",
+                    commentSize, begin, end, line, tok->charPosition + 1, buffer );
         }
     }
 
