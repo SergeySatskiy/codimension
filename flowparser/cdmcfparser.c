@@ -22,13 +22,13 @@
 
 
 #include <Python.h>
-#include "pythoncontrolflowLexer.h"
-#include "pythoncontrolflowParser.h"
+#include "pycfLexer.h"
+#include "pycfParser.h"
 
 #include <regex.h>
 
-#ifndef CDM_PYCF_PARSER_VERSION
-#define CDM_PYCF_PARSER_VERSION       "trunk"
+#ifndef CDM_CF_PARSER_VERSION
+#define CDM_CF_PARSER_VERSION       "trunk"
 #endif
 #define MAX_DOTTED_NAME_LENGTH      256
 
@@ -669,9 +669,9 @@ void walk( pANTLR3_BASE_TREE            tree,
  *       is called. So these values are initialized before the rule
  *       and passed to searchForEncoding(...)
  */
-void  searchForCoding( ppythoncontrolflowLexer  ctx,
-                       char *                   lineStart,
-                       ANTLR3_UINT32            lineNumber )
+void  searchForCoding( ppycfLexer     ctx,
+                       char *         lineStart,
+                       ANTLR3_UINT32  lineNumber )
 {
     if ( ctx->onEncoding == NULL )
         return; /* Analysis is disabled after first found encoding */
@@ -1204,7 +1204,7 @@ parse_input( pANTLR3_INPUT_STREAM           input,
         return NULL;
     }
 
-    ppythoncontrolflowLexer lxr = pythoncontrolflowLexerNew( input );
+    ppycfLexer lxr = pycfLexerNew( input );
     if ( lxr == NULL )
     {
         input->close( input );
@@ -1224,7 +1224,7 @@ parse_input( pANTLR3_INPUT_STREAM           input,
     tstream->discardOffChannelToks( tstream, ANTLR3_TRUE );
 
     // Create parser
-    ppythoncontrolflowParser psr = pythoncontrolflowParserNew( tstream );
+    ppycfParser psr = pycfParserNew( tstream );
     if ( psr == NULL )
     {
         input->close( input );
@@ -1435,15 +1435,15 @@ static PyMethodDef _cdm_pycf_parser_methods[] =
     /* Python 2 initialization */
     void init_cdmpycfparser( void )
     {
-        PyObject *  module = Py_InitModule( "_cdmpycfparser", _cdm_pycf_parser_methods );
-        PyModule_AddStringConstant( module, "version", CDM_PYCF_PARSER_VERSION );
+        PyObject *  module = Py_InitModule( "_cdmcfparser", _cdm_pycf_parser_methods );
+        PyModule_AddStringConstant( module, "version", CDM_CF_PARSER_VERSION );
     }
 #else
     /* Python 3 initialization */
     static struct PyModuleDef _cdm_pycf_parser_module =
     {
         PyModuleDef_HEAD_INIT,
-        "_cdmpycfparser",
+        "_cdmcfparser",
         NULL,
         -1,
         _cdm_pycf_parser_methods
@@ -1454,7 +1454,7 @@ static PyMethodDef _cdm_pycf_parser_methods[] =
     {
         PyObject *  module;
         module = PyModule_Create( & _cdm_pycf_parser_module );
-        PyModule_AddStringConstant( module, "version", CDM_PYCF_PARSER_VERSION );
+        PyModule_AddStringConstant( module, "version", CDM_CF_PARSER_VERSION );
         return module;
     }
 #endif

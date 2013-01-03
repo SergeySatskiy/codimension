@@ -21,8 +21,8 @@
  */
 
 
-#include "pythoncontrolflowLexer.h"
-#include "pythoncontrolflowParser.h"
+#include "pycfLexer.h"
+#include "pycfParser.h"
 
 
 
@@ -69,7 +69,7 @@ int process( const char *  filename, int  count )
     }
 
     // Create lexer
-    ppythoncontrolflowLexer     lxr = pythoncontrolflowLexerNew( input );
+    ppycfLexer     lxr = pycfLexerNew( input );
 
     if ( lxr == NULL )
     {
@@ -96,7 +96,7 @@ int process( const char *  filename, int  count )
     // tstream->discardOffChannelToks( tstream, ANTLR3_TRUE );
 
     // Create parser
-    ppythoncontrolflowParser psr = pythoncontrolflowParserNew( tstream );
+    ppycfParser psr = pycfParserNew( tstream );
 
     if ( psr == NULL )
     {
@@ -163,9 +163,9 @@ int process( const char *  filename, int  count )
 }
 
 
-void  searchForCoding( ppythoncontrolflowLexer  ctx,
-                       char *                   lineStart,
-                       ANTLR3_UINT32            lineNumber )
+void  searchForCoding( ppycfLexer     ctx,
+                       char *         lineStart,
+                       ANTLR3_UINT32  lineNumber )
 {
     /* fake function to avoid linking with python libs */
     return;

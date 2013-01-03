@@ -23,8 +23,8 @@
  */
 
 
-#include "pythoncontrolflowLexer.h"
-#include "pythoncontrolflowParser.h"
+#include "pycfLexer.h"
+#include "pycfParser.h"
 #include <assert.h>
 
 
@@ -45,9 +45,9 @@
 
 // helper function to create token in lexer
 pANTLR3_COMMON_TOKEN
-pythoncontrolflowLexer_createLexerToken( pANTLR3_LEXER  lexer,
-                                         ANTLR3_UINT32  tokenType,
-                                         pANTLR3_UINT8  text )
+pycfLexer_createLexerToken( pANTLR3_LEXER  lexer,
+                            ANTLR3_UINT32  tokenType,
+                            pANTLR3_UINT8  text )
 {
     pANTLR3_COMMON_TOKEN    newToken = lexer->rec->state->tokFactory->newToken( lexer->rec->state->tokFactory );
 
@@ -87,7 +87,7 @@ char  emptyString[] = "                                        "
 static
 char *   endofemptystring = &emptyString[ sizeof( emptyString ) - 1 ];
 
-char *  pythoncontrolflowLexer_syntetizeEmptyString( int  spaces )
+char *  pycfLexer_syntetizeEmptyString( int  spaces )
 {
 
     assert((endofemptystring-spaces) >= emptyString);
@@ -102,8 +102,8 @@ static STACK_INT  FIRST_CHAR_POSITION = 0;
  * setting of startPos and calling original handler
  */
 static pANTLR3_COMMON_TOKEN
-pythoncontrolflowLexer_nextTokenLowerLevelImpl( ppythoncontrolflowLexer     ctx,
-                                                pANTLR3_TOKEN_SOURCE        toksource )
+pycfLexer_nextTokenLowerLevelImpl( ppycfLexer            ctx,
+                                   pANTLR3_TOKEN_SOURCE  toksource )
 {
     ctx->startPos = ctx->pLexer->getCharPositionInLine( ctx->pLexer );
 
@@ -121,9 +121,9 @@ pythoncontrolflowLexer_nextTokenLowerLevelImpl( ppythoncontrolflowLexer     ctx,
 
 
 static pANTLR3_COMMON_TOKEN
-pythoncontrolflowLexer_createDedentIdentToken( ppythoncontrolflowLexer  ctx,
-                                               ANTLR3_UINT32            toktype,
-                                               ANTLR3_UINT32            tokline )
+pycfLexer_createDedentIdentToken( ppycfLexer     ctx,
+                                  ANTLR3_UINT32  toktype,
+                                  ANTLR3_UINT32  tokline )
 {
     pANTLR3_COMMON_TOKEN    tok = ctx->pLexer->rec->state->tokFactory->newToken( ctx->pLexer->rec->state->tokFactory );
 
@@ -139,8 +139,8 @@ pythoncontrolflowLexer_createDedentIdentToken( ppythoncontrolflowLexer  ctx,
 
 // Return the index on stack of previous indent level == i else -1
 static STACK_INT
-pythoncontrolflowLexer_findPreviousIndent( ppythoncontrolflowLexer  ctx,
-                                           STACK_INT                i )
+pycfLexer_findPreviousIndent( ppycfLexer  ctx,
+                              STACK_INT   i )
 {
     STACK_INT   j;
 
@@ -155,10 +155,10 @@ pythoncontrolflowLexer_findPreviousIndent( ppythoncontrolflowLexer  ctx,
 
 
 static void
-pythoncontrolflowLexer_insertImaginaryIndentDedentTokens( ppythoncontrolflowLexer     ctx,
-                                                          pANTLR3_TOKEN_SOURCE        toksource )
+pycfLexer_insertImaginaryIndentDedentTokens( ppycfLexer            ctx,
+                                             pANTLR3_TOKEN_SOURCE  toksource )
 {
-    pANTLR3_COMMON_TOKEN    t = pythoncontrolflowLexer_nextTokenLowerLevelImpl( ctx, toksource );
+    pANTLR3_COMMON_TOKEN    t = pycfLexer_nextTokenLowerLevelImpl( ctx, toksource );
     ctx->tokens->add( ctx->tokens, t, NULL );
 
     // if not a NEWLINE, doesn't signal indent/dedent work; just enqueue
@@ -172,7 +172,7 @@ pythoncontrolflowLexer_insertImaginaryIndentDedentTokens( ppythoncontrolflowLexe
     // grab first token of next line (skip COMMENT tokens)
     for ( ; ; )
     {
-        t = pythoncontrolflowLexer_nextTokenLowerLevelImpl( ctx, toksource );
+        t = pycfLexer_nextTokenLowerLevelImpl( ctx, toksource );
 
         if ( t->getType( t ) == COMMENT ) // Pass comments to output stream (= skip processing here)
         {
@@ -212,18 +212,18 @@ pythoncontrolflowLexer_insertImaginaryIndentDedentTokens( ppythoncontrolflowLexe
     {
         ctx->identStack->push( ctx->identStack, (void *)cpos, NULL );
         ctx->tokens->add( ctx->tokens,
-                          pythoncontrolflowLexer_createDedentIdentToken( ctx, INDENT, lineno ),
+                          pycfLexer_createDedentIdentToken( ctx, INDENT, lineno ),
                           NULL );
     }
     else if (cpos < lastIndent)
     {
-        ANTLR3_INT32 prevIndex = pythoncontrolflowLexer_findPreviousIndent( ctx, cpos );
+        ANTLR3_INT32 prevIndex = pycfLexer_findPreviousIndent( ctx, cpos );
 
         // generate DEDENTs for each indent level we backed up over
         while ( ctx->identStack->size( ctx->identStack ) > (prevIndex + 1) )
         {
             ctx->tokens->add( ctx->tokens,
-                              pythoncontrolflowLexer_createDedentIdentToken( ctx, DEDENT, lineno ),
+                              pycfLexer_createDedentIdentToken( ctx, DEDENT, lineno ),
                               NULL );
             ctx->identStack->pop( ctx->identStack );
         }
@@ -237,10 +237,10 @@ pythoncontrolflowLexer_insertImaginaryIndentDedentTokens( ppythoncontrolflowLexe
 
 
 static pANTLR3_COMMON_TOKEN
-pythoncontrolflowLexer_nextTokenImpl( pANTLR3_TOKEN_SOURCE  toksource )
+pycfLexer_nextTokenImpl( pANTLR3_TOKEN_SOURCE  toksource )
 {
-    pANTLR3_LEXER               lexer = (pANTLR3_LEXER)( toksource->super );
-    ppythoncontrolflowLexer     ctx = (ppythoncontrolflowLexer) lexer->ctx;
+    pANTLR3_LEXER  lexer = (pANTLR3_LEXER)( toksource->super );
+    ppycfLexer     ctx = (ppycfLexer) lexer->ctx;
 
     for ( ; ; )
     {
@@ -249,7 +249,7 @@ pythoncontrolflowLexer_nextTokenImpl( pANTLR3_TOKEN_SOURCE  toksource )
             return (pANTLR3_COMMON_TOKEN) ctx->tokens->remove( ctx->tokens, 0 );
         }
 
-        pythoncontrolflowLexer_insertImaginaryIndentDedentTokens( ctx, toksource );
+        pycfLexer_insertImaginaryIndentDedentTokens( ctx, toksource );
     }
 
     assert( 0 == 1 ); // This part of code should be never reached
@@ -258,7 +258,7 @@ pythoncontrolflowLexer_nextTokenImpl( pANTLR3_TOKEN_SOURCE  toksource )
 
 
 static void
-pythoncontrolflowLexer_FreeImpl( struct pythoncontrolflowLexer_Ctx_struct *  ctx )
+pycfLexer_FreeImpl( struct pycfLexer_Ctx_struct *  ctx )
 {
     ctx->tokens->free( ctx->tokens );
     ctx->identStack->free( ctx->identStack );
@@ -268,7 +268,7 @@ pythoncontrolflowLexer_FreeImpl( struct pythoncontrolflowLexer_Ctx_struct *  ctx
 
 
 
-void  pythoncontrolflowLexer_initLexer( ppythoncontrolflowLexer  ctx )
+void  pycfLexer_initLexer( ppycfLexer  ctx )
 {
     ctx->implicitLineJoiningLevel = 0;
     ctx->startPos = -1;
@@ -279,10 +279,10 @@ void  pythoncontrolflowLexer_initLexer( ppythoncontrolflowLexer  ctx )
 
     // Override nextToken implementation by Python specific
     ctx->origNextToken = ctx->pLexer->rec->state->tokSource->nextToken;
-    ctx->pLexer->rec->state->tokSource->nextToken = pythoncontrolflowLexer_nextTokenImpl;
+    ctx->pLexer->rec->state->tokSource->nextToken = pycfLexer_nextTokenImpl;
 
     ctx->origFree = ctx->free;
-    ctx->free = pythoncontrolflowLexer_FreeImpl;
+    ctx->free = pycfLexer_FreeImpl;
 
     ctx->onEncoding = NULL;
     return;
@@ -290,8 +290,8 @@ void  pythoncontrolflowLexer_initLexer( ppythoncontrolflowLexer  ctx )
 
 
 pANTLR3_BASE_TREE
-pythoncontrolflowInsertInheritance( struct pythoncontrolflowParser_Ctx_struct *  ctx,
-                                    pANTLR3_VECTOR                               args )
+pycfInsertInheritance( struct pycfParser_Ctx_struct *  ctx,
+                       pANTLR3_VECTOR                  args )
 {
     ANTLR3_UINT32   n = args->size( args );
     if ( n == 0 ) return NULL;      /* No base classes, so do not create the CLASS_INHERITANCE node */
@@ -337,8 +337,8 @@ void addTypedName( pANTLR3_VECTOR       v,
 }
 
 pANTLR3_BASE_TREE
-pythoncontrolflowInsertArguments( struct pythoncontrolflowParser_Ctx_struct *  ctx,
-                                  pANTLR3_VECTOR                               args )
+pycfInsertArguments( struct pycfParser_Ctx_struct *  ctx,
+                     pANTLR3_VECTOR                  args )
 {
     ANTLR3_UINT32   n = args->size( args );
 
