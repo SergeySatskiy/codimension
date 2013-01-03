@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * $Id: cdmpyparser.c 651 2012-07-29 22:25:55Z sergey.satskiy@gmail.com $
+ * $Id$
  *
  * Python extension module
  */
@@ -27,8 +27,8 @@
 
 #include <regex.h>
 
-#ifndef CDM_PY_PARSER_VERSION
-#define CDM_PY_PARSER_VERSION       "trunk"
+#ifndef CDM_PYCF_PARSER_VERSION
+#define CDM_PYCF_PARSER_VERSION       "trunk"
 #endif
 #define MAX_DOTTED_NAME_LENGTH      256
 
@@ -65,6 +65,12 @@ enum Scope {
 /* The structure holds resolved callbacks for Python class methods */
 struct instanceCallbacks
 {
+    PyObject *      onError;
+    PyObject *      onLexerError;
+    PyObject *      onBangLine;
+    PyObject *      onEncodingLine;
+
+    /*
     PyObject *      onEncoding;
     PyObject *      onGlobal;
     PyObject *      onFunction;
@@ -79,8 +85,7 @@ struct instanceCallbacks
     PyObject *      onDocstring;
     PyObject *      onArgument;
     PyObject *      onBaseClass;
-    PyObject *      onError;
-    PyObject *      onLexerError;
+    */
 };
 
 /* Forward declaration */
@@ -106,6 +111,12 @@ static int
 getInstanceCallbacks( PyObject *                  instance,
                       struct instanceCallbacks *  callbacks )
 {
+    GET_CALLBACK( onError );
+    GET_CALLBACK( onLexerError );
+    GET_CALLBACK( onBangLine );
+    GET_CALLBACK( onEncodingLine );
+
+    /*
     GET_CALLBACK( onEncoding );
     GET_CALLBACK( onGlobal );
     GET_CALLBACK( onClass );
@@ -120,13 +131,13 @@ getInstanceCallbacks( PyObject *                  instance,
     GET_CALLBACK( onDocstring );
     GET_CALLBACK( onArgument );
     GET_CALLBACK( onBaseClass );
-    GET_CALLBACK( onError );
-    GET_CALLBACK( onLexerError );
+    */
 
     return 0;
 }
 
 
+#if 0
 /* Fills the given buffer
  * Returns: token of the first name tokens
  */
@@ -721,6 +732,7 @@ void  searchForCoding( ppythoncontrolflowLexer  ctx,
     *endofline = current;
     return;
 }
+#endif
 
 
 static int      unknownError = 0;
@@ -1223,7 +1235,7 @@ parse_input( pANTLR3_INPUT_STREAM           input,
     }
 
     /* Memorize callbacks for coding and errors */
-    lxr->onEncoding = callbacks->onEncoding;
+//    lxr->onEncoding = callbacks->onEncoding;
 
     lxr->pLexer->rec->userData = callbacks->onLexerError;
     lxr->pLexer->rec->displayRecognitionError = onLexerError;
@@ -1268,10 +1280,10 @@ parse_input( pANTLR3_INPUT_STREAM           input,
 
 
 /* Parses the given file. Returns 0 if all is OK */
-static char py_modinfo_from_file_doc[] = "Get control flow module info from a file";
+static char pycf_modinfo_from_file_doc[] = "Get control flow module info from a file";
 static PyObject *
-py_modinfo_from_file( PyObject *  self,     /* unused */
-                      PyObject *  args )
+pycf_modinfo_from_file( PyObject *  self,     /* unused */
+                        PyObject *  args )
 {
     PyObject *                  callbackClass = NULL;
     char *                      fileName;
@@ -1337,10 +1349,10 @@ py_modinfo_from_file( PyObject *  self,     /* unused */
 
 
 /* Parses the given code. Returns 0 if all is OK */
-static char py_modinfo_from_mem_doc[] = "Get control flow module info from memory";
+static char pycf_modinfo_from_mem_doc[] = "Get control flow module info from memory";
 static PyObject *
-py_modinfo_from_mem( PyObject *  self,      /* unused */
-                     PyObject *  args )
+pycf_modinfo_from_mem( PyObject *  self,      /* unused */
+                       PyObject *  args )
 {
     PyObject *                  callbackClass;
     char *                      content;
@@ -1411,63 +1423,38 @@ py_modinfo_from_mem( PyObject *  self,      /* unused */
 
 
 
-
-static char py_full_modinfo_from_file_doc[] = "Get full module info from file";
-static PyObject *
-py_full_modinfo_from_file( PyObject *  self,    /* unused */
-                           PyObject *  args )
+static PyMethodDef _cdm_pycf_parser_methods[] =
 {
-
-    return Py_BuildValue( "i", 0 );
-}
-
-
-static char py_full_modinfo_from_mem_doc[] = "Get full module info from memory";
-static PyObject *
-py_full_modinfo_from_mem( PyObject *  self,     /* unused */
-                          PyObject *  args )
-{
-
-    return Py_BuildValue( "i", 0 );
-}
-
-
-
-
-static PyMethodDef _cdm_py_parser_methods[] =
-{
-    { "getControlFlowModuleInfoFromFile",   py_modinfo_from_file,      METH_VARARGS, py_modinfo_from_file_doc },
-    { "getControlFlowModuleInfoFromMemory", py_modinfo_from_mem,       METH_VARARGS, py_modinfo_from_mem_doc },
-    { "getFullModuleInfoFromFile",          py_full_modinfo_from_file, METH_VARARGS, py_full_modinfo_from_file_doc },
-    { "getFullModuleInfoFromMemory",        py_full_modinfo_from_mem,  METH_VARARGS, py_full_modinfo_from_mem_doc },
+    { "getControlFlowModuleInfoFromFile",   pycf_modinfo_from_file,      METH_VARARGS, pycf_modinfo_from_file_doc },
+    { "getControlFlowModuleInfoFromMemory", pycf_modinfo_from_mem,       METH_VARARGS, pycf_modinfo_from_mem_doc },
     { NULL, NULL, 0, NULL }
 };
 
 
 #if PY_MAJOR_VERSION < 3
     /* Python 2 initialization */
-    void init_cdmpyparser( void )
+    void init_cdmpycfparser( void )
     {
-        PyObject *  module = Py_InitModule( "_cdmpyparser", _cdm_py_parser_methods );
-        PyModule_AddStringConstant( module, "version", CDM_PY_PARSER_VERSION );
+        PyObject *  module = Py_InitModule( "_cdmpycfparser", _cdm_pycf_parser_methods );
+        PyModule_AddStringConstant( module, "version", CDM_PYCF_PARSER_VERSION );
     }
 #else
     /* Python 3 initialization */
-    static struct PyModuleDef _cdm_py_parser_module =
+    static struct PyModuleDef _cdm_pycf_parser_module =
     {
         PyModuleDef_HEAD_INIT,
-        "_cdmpyparser",
+        "_cdmpycfparser",
         NULL,
         -1,
-        _cdm_py_parser_methods
+        _cdm_pycf_parser_methods
     };
 
     PyMODINIT_FUNC
-    PyInit__cdmpyparser( void )
+    PyInit__cdmpycfparser( void )
     {
         PyObject *  module;
-        module = PyModule_Create( & _cdm_py_parser_module );
-        PyModule_AddStringConstant( module, "version", CDM_PY_PARSER_VERSION );
+        module = PyModule_Create( & _cdm_pycf_parser_module );
+        PyModule_AddStringConstant( module, "version", CDM_PYCF_PARSER_VERSION );
         return module;
     }
 #endif
