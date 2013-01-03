@@ -39,7 +39,8 @@
  */
 
 
-grammar pythoncontrolflow;
+/* Python control flow */
+grammar pycf;
 
 options
 {
