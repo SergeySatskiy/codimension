@@ -36,6 +36,12 @@ class ControlFlowParserIFace:
         self.cf = controlFlowInstance
         return
 
+    def _onError( self, message ):
+        pass
+
+    def _onLexerError( self, message ):
+        pass
+
     def _onBangLine( self, begin, end,
                            beginLine, beginPos,
                            endLine, endPos ):
