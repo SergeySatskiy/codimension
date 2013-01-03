@@ -1425,8 +1425,8 @@ pycf_modinfo_from_mem( PyObject *  self,      /* unused */
 
 static PyMethodDef _cdm_pycf_parser_methods[] =
 {
-    { "getControlFlowModuleInfoFromFile",   pycf_modinfo_from_file,      METH_VARARGS, pycf_modinfo_from_file_doc },
-    { "getControlFlowModuleInfoFromMemory", pycf_modinfo_from_mem,       METH_VARARGS, pycf_modinfo_from_mem_doc },
+    { "getControlFlowFromFile",   pycf_modinfo_from_file,      METH_VARARGS, pycf_modinfo_from_file_doc },
+    { "getControlFlowFromMemory", pycf_modinfo_from_mem,       METH_VARARGS, pycf_modinfo_from_mem_doc },
     { NULL, NULL, 0, NULL }
 };
 
