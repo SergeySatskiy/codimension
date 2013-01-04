@@ -91,6 +91,12 @@ class CDMControlFlowParserTest( unittest.TestCase ):
                    "empty file test failed" )
         return
 
+    def test_bang( self ):
+        " Test file with a bang line "
+        self.meat( self.dir + "bang.py",
+                   "bang line file test failed" )
+        return
+
 #    def test_import( self ):
 #        " Tests imports "
 #        self.meat( self.dir + "import.py",
