@@ -142,6 +142,11 @@ class ControlFlow( Fragment ):
                                     # For, While, Try, With, Assert, If, Pass,
                                     # Raise, Return etc.
 
+        # Error reporting support
+        self.isOK = True
+        self.errors = []
+        self.lexerErrors = []
+
         # Additional field to support serialization
         self.content = None     # Not None when the ControlFlow is serialized
         return
