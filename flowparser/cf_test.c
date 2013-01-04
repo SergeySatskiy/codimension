@@ -135,7 +135,7 @@ int process( const char *  filename, int  count )
 
             // Adjust the last character of the comment
             char *      lastChar = (char *)tok->stop;
-            while ( lastChar != tok->start && (*lastChar == '\n' || *lastChar == '\r' || *lastChar == 0) )
+            while ( *lastChar == '\n' || *lastChar == '\r' || *lastChar == 0 )
                 --lastChar;
             char *      firstChar = (char *)tok->start;
             while ( *firstChar != '#' ) {
