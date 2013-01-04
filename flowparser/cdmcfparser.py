@@ -20,8 +20,8 @@
 # $Id$
 #
 
-""" The file holds types and a glue code between python and C python
-    code parser """
+""" The file holds a glue code between python and C python
+    control flow parser """
 
 from _cdmcfparser import version, getControlFlowFromMemory as getCFlow
 from cfiface import ControlFlowParserIFace
