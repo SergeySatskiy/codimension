@@ -735,6 +735,66 @@ void  searchForCoding( ppycfLexer     ctx,
 #endif
 
 
+int isBangLine( pANTLR3_COMMON_TOKEN  token,
+                char *                firstChar,
+                size_t                commentSize )
+{
+    if ( commentSize < 2 )          return 0;
+    if ( firstChar[ 1 ] != '!' )    return 0;
+    return 1;
+}
+
+
+// Second pass function which collects all the comments
+void collectComments( pANTLR3_COMMON_TOKEN_STREAM  tokenStream,
+                      struct instanceCallbacks *   callbacks )
+{
+    size_t      tokenCount = tokenStream->tokens->size( tokenStream->tokens );
+    size_t      k;
+
+    for ( k = 0; k < tokenCount; ++k )
+    {
+        pANTLR3_COMMON_TOKEN    tok = tokenStream->tokens->get( tokenStream->tokens, k );
+        if ( tok->type != COMMENT )
+            continue;
+
+        // Here: we have a comment token
+        size_t      line = tok->line;   // 1-based
+
+        // Adjust first and last character pointers
+        char *      lastChar = (char *)tok->stop;
+        char *      firstChar = (char *)tok->start;
+
+        while ( *lastChar == '\n' || *lastChar == '\r' || *lastChar == 0 )
+            --lastChar;
+        while ( *firstChar != '#' )
+        {
+            ++firstChar;
+            ++tok->charPosition;
+        }
+
+        size_t      commentSize = lastChar - firstChar + 1;
+        size_t      begin = (void*)firstChar - (void*)tok->input->data;
+        size_t      end = begin + commentSize - 1;
+        size_t      beginPos = tok->charPosition + 1;
+        size_t      endPos = beginPos + commentSize - 1;
+
+        // All possible information about a single line comment has been
+        // extracted.
+        if ( line == 1 && isBangLine( tok, firstChar, commentSize ) != 0 )
+        {
+            PyObject_CallFunction( callbacks->onBangLine, "iiiiii",
+                                   begin, end, line, beginPos, line, endPos );
+            continue;
+        }
+
+
+
+
+    }
+}
+
+
 // Debug purpose
 void walk( pANTLR3_BASE_TREE            tree,
            struct instanceCallbacks *   callbacks,
@@ -1239,7 +1299,12 @@ parse_input( pANTLR3_INPUT_STREAM           input,
         PyErr_SetString( PyExc_RuntimeError, "Cannot create token stream" );
         return NULL;
     }
-    tstream->discardOffChannelToks( tstream, ANTLR3_TRUE );
+
+    // The off channel tokens must not be discarded because all the comments
+    // will be discarded as well.
+    // Instead the second pass iterates over lexer tokens to pick all the
+    // comments.
+    // tstream->discardOffChannelToks( tstream, ANTLR3_TRUE );
 
     // Create parser
     ppycfParser psr = pycfParserNew( tstream );
@@ -1276,8 +1341,11 @@ parse_input( pANTLR3_INPUT_STREAM           input,
         return NULL;
     }
 
-    /* Walk the tree and populate the python structures */
+    /* Fisrt pass: walk the tree and populate the python structures */
     walk( tree, callbacks, -1, GLOBAL_SCOPE, NULL, 0 );
+
+    /* Second pass: collect all comments */
+    collectComments( tstream, callbacks );
 
     /* cleanup */
     psr->free( psr );
