@@ -37,10 +37,18 @@ class ControlFlowParserIFace:
         return
 
     def _onError( self, message ):
-        pass
+        " Reports parsing error "
+        self.cf.isOK = False
+        if message.strip():
+            self.cf.errors.append( message )
+        return
 
     def _onLexerError( self, message ):
-        pass
+        " Reports lexer error "
+        self.cf.isOK = False
+        if message.strip():
+            self.cf.lexerErrors.append( message )
+        return
 
     def _onBangLine( self, begin, end,
                            beginLine, beginPos,
