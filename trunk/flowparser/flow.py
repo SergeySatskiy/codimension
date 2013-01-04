@@ -166,8 +166,18 @@ class ControlFlow( Fragment ):
 
     def __str__( self ):
         " Converts to string "
-        return "Bang: " + str( self.bangLine ) + "\n" \
-               "Encoding: " + str( self.encodingLine ) + "\n" \
+        if self.bangLine is None:
+            bangPart = "Bang: None"
+        else:
+            bangPart = str( self.bangLine )
+
+        if self.encodingLine is None:
+            encodingPart = "Encoding: None"
+        else:
+            encodingPart = str( self.encodingLine )
+
+        return bangPart + "\n" + \
+               encodingPart + "\n" \
                "Body:\n" + "\n".join( [ str( item ) for item in self.body ] )
 
 
@@ -185,7 +195,7 @@ class BangLine( Fragment ):
 
     def __str__( self ):
         " Converts to a string "
-        return "Bang line: " + Fragment.__str__( self )
+        return "Bang: " + Fragment.__str__( self )
 
 
 class EncodingLine( Fragment ):
@@ -205,7 +215,7 @@ class EncodingLine( Fragment ):
 
     def __str__( self ):
         " Converts to a string "
-        return "Encoding line: " + Fragment.__str__( self )
+        return "Encoding: " + Fragment.__str__( self )
 
 
 #
