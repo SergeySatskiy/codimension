@@ -735,6 +735,24 @@ void  searchForCoding( ppycfLexer     ctx,
 #endif
 
 
+// Debug purpose
+void walk( pANTLR3_BASE_TREE            tree,
+           struct instanceCallbacks *   callbacks,
+           int                          objectsLevel,
+           enum Scope                   scope,
+           const char *                 firstArgName,
+           int                          entryLevel )
+{
+    return;
+}
+void  searchForCoding( ppycfLexer     ctx,
+                       char *         lineStart,
+                       ANTLR3_UINT32  lineNumber )
+{
+    return;
+}
+
+
 static int      unknownError = 0;
 
 // The code is taken from the libantlr3 and modified to collect the message
