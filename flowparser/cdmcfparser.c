@@ -1279,80 +1279,12 @@ parse_input( pANTLR3_INPUT_STREAM           input,
 }
 
 
-/* Parses the given file. Returns 0 if all is OK */
-static char pycf_modinfo_from_file_doc[] = "Get control flow module info from a file";
-static PyObject *
-pycf_modinfo_from_file( PyObject *  self,     /* unused */
-                        PyObject *  args )
-{
-    PyObject *                  callbackClass = NULL;
-    char *                      fileName;
-    struct instanceCallbacks    callbacks;
-
-    /* Parse the passed arguments */
-    if ( ! PyArg_ParseTuple( args, "Os", & callbackClass, & fileName ) )
-    {
-        PyErr_SetString( PyExc_TypeError, "Incorrect arguments. "
-                                          "Expected: callback class "
-                                          "instance and file name" );
-        return NULL;
-    }
-
-    /* Check the passed argument */
-    if ( ! fileName )
-    {
-        PyErr_SetString( PyExc_TypeError, "Incorrect file name" );
-        return NULL;
-    }
-    if ( ! callbackClass )
-    {
-        PyErr_SetString( PyExc_TypeError, "Invalid callback class argument" );
-        return NULL;
-    }
-    if ( ! PyInstance_Check( callbackClass ) )
-    {
-        PyErr_SetString( PyExc_TypeError, "Incorrect callback class instance" );
-        return NULL;
-    }
-
-    /* Get pointers to the members */
-    if ( getInstanceCallbacks( callbackClass, & callbacks ) != 0 )
-    {
-        return NULL;
-    }
-
-    /* Start the parser business */
-    pANTLR3_INPUT_STREAM input = antlr3AsciiFileStreamNew( (pANTLR3_UINT8) fileName );
-
-    /* Dirty hack:
-     * it's a problem if a comment is the last one in the file and it does not
-     * have EOL at the end. It's easier to add EOL here (if EOL is not the last
-     * character) than to change the grammar.
-     * The run-time library reserves one byte in the patched version for EOL if
-     * needed.
-     */
-    if ( input != NULL )
-    {
-        if ( input->sizeBuf > 0 )
-        {
-            if ( ((char*)(input->data))[ input->sizeBuf - 1 ] != '\n' )
-            {
-                ((char*)(input->data))[ input->sizeBuf ] = '\n';
-                input->sizeBuf += 1;
-            }
-        }
-    }
-
-    /* There is no need to revert the changes because the input is closed */
-    return parse_input( input, & callbacks );
-}
-
 
 /* Parses the given code. Returns 0 if all is OK */
-static char pycf_modinfo_from_mem_doc[] = "Get control flow module info from memory";
+static char pycf_from_mem_doc[] = "Get control flow module info from memory";
 static PyObject *
-pycf_modinfo_from_mem( PyObject *  self,      /* unused */
-                       PyObject *  args )
+pycf_from_mem( PyObject *  self,      /* unused */
+               PyObject *  args )
 {
     PyObject *                  callbackClass;
     char *                      content;
@@ -1423,37 +1355,36 @@ pycf_modinfo_from_mem( PyObject *  self,      /* unused */
 
 
 
-static PyMethodDef _cdm_pycf_parser_methods[] =
+static PyMethodDef _cdm_cf_parser_methods[] =
 {
-    { "getControlFlowFromFile",   pycf_modinfo_from_file,      METH_VARARGS, pycf_modinfo_from_file_doc },
-    { "getControlFlowFromMemory", pycf_modinfo_from_mem,       METH_VARARGS, pycf_modinfo_from_mem_doc },
+    { "getControlFlowFromMemory", pycf_from_mem, METH_VARARGS, pycf_from_mem_doc },
     { NULL, NULL, 0, NULL }
 };
 
 
 #if PY_MAJOR_VERSION < 3
     /* Python 2 initialization */
-    void init_cdmpycfparser( void )
+    void init_cdmcfparser( void )
     {
-        PyObject *  module = Py_InitModule( "_cdmcfparser", _cdm_pycf_parser_methods );
+        PyObject *  module = Py_InitModule( "_cdmcfparser", _cdm_cf_parser_methods );
         PyModule_AddStringConstant( module, "version", CDM_CF_PARSER_VERSION );
     }
 #else
     /* Python 3 initialization */
-    static struct PyModuleDef _cdm_pycf_parser_module =
+    static struct PyModuleDef _cdm_cf_parser_module =
     {
         PyModuleDef_HEAD_INIT,
         "_cdmcfparser",
         NULL,
         -1,
-        _cdm_pycf_parser_methods
+        _cdm_cf_parser_methods
     };
 
     PyMODINIT_FUNC
     PyInit__cdmpycfparser( void )
     {
         PyObject *  module;
-        module = PyModule_Create( & _cdm_pycf_parser_module );
+        module = PyModule_Create( & _cdm_cf_parser_module );
         PyModule_AddStringConstant( module, "version", CDM_CF_PARSER_VERSION );
         return module;
     }
