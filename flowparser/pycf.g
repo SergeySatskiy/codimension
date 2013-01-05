@@ -117,7 +117,6 @@ tokens
 
     pANTLR3_STACK   identStack;
     pANTLR3_VECTOR  tokens;
-    void *          onEncoding;
 
     void (*origFree) ( struct pycfLexer_Ctx_struct *  ctx );
     pANTLR3_COMMON_TOKEN (*origNextToken)( pANTLR3_TOKEN_SOURCE  toksource );
@@ -131,9 +130,6 @@ tokens
                                                         pANTLR3_UINT8  text );
     char *                  pycfLexer_syntetizeEmptyString( int  spaces );
     void                    pycfLexer_initLexer( ppycfLexer  ctx );
-    void                    searchForCoding( ppycfLexer     ctx,
-                                             char *         lineStart,
-                                             ANTLR3_UINT32  lineNumber );
 }
 
 @parser::members
@@ -880,15 +876,12 @@ COMMENT
     {
         $channel = HIDDEN;
 
-        ANTLR3_UINT32   initLine = ctx->pLexer->input->line;
         char *          lineStartBuf = (char*)ctx->pLexer->input->currentLine;
     }
     : (
       { ctx->startPos == 0 }?=> ( ' ' | '\t' )* a='#' ( ~'\n' )* '\n'+
     | { ctx->startPos > 0  }?=> b='#' ( ~'\n' )* // let NEWLINE handle \n unless char pos==0 for '#'
-      ) {
-            if ( initLine <= 2 ) searchForCoding( ctx, lineStartBuf, initLine );
-        }
+      )
     ;
 
 
