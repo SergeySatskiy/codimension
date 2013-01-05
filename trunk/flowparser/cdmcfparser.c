@@ -71,7 +71,6 @@ struct instanceCallbacks
     PyObject *      onEncodingLine;
 
     /*
-    PyObject *      onEncoding;
     PyObject *      onGlobal;
     PyObject *      onFunction;
     PyObject *      onClass;
@@ -117,7 +116,6 @@ getInstanceCallbacks( PyObject *                  instance,
     GET_CALLBACK( onEncodingLine );
 
     /*
-    GET_CALLBACK( onEncoding );
     GET_CALLBACK( onGlobal );
     GET_CALLBACK( onClass );
     GET_CALLBACK( onFunction );
@@ -673,9 +671,6 @@ void  searchForCoding( ppycfLexer     ctx,
                        char *         lineStart,
                        ANTLR3_UINT32  lineNumber )
 {
-    if ( ctx->onEncoding == NULL )
-        return; /* Analysis is disabled after first found encoding */
-
     /* prepare regexp
      * I don't know why the original expression does not work here:
      * coding[=:]\s*([-\w.]+)
@@ -745,12 +740,42 @@ int isBangLine( pANTLR3_COMMON_TOKEN  token,
 }
 
 
+int isEncodingLine( pANTLR3_COMMON_TOKEN  token,
+                    char *                firstChar,
+                    size_t                commentSize )
+{
+    /* Prepare the comment body */
+    char        buffer[ commentSize + 1 ];
+    snprintf( buffer, commentSize + 1, "%s", firstChar );
+
+    /* prepare regexp
+     * I don't know why the original expression does not work here:
+     * coding[=:]\s*([-\w.]+)
+     */
+    char *      pattern = "coding[=:]\\s*";
+    regex_t     preg;
+    regmatch_t  pmatch[1];
+
+    if ( regcomp( &preg, pattern, 0 ) != 0 )
+        return 0; /* Compile error */
+
+    int         result = 0;
+    if ( regexec( &preg, buffer, 1, pmatch, 0 ) == 0 )
+        result = 1;
+
+    regfree( &preg );
+    return result;
+}
+
+
+
 // Second pass function which collects all the comments
 void collectComments( pANTLR3_COMMON_TOKEN_STREAM  tokenStream,
                       struct instanceCallbacks *   callbacks )
 {
     size_t      tokenCount = tokenStream->tokens->size( tokenStream->tokens );
     size_t      k;
+    int         encodingFound = 0;
 
     for ( k = 0; k < tokenCount; ++k )
     {
@@ -788,8 +813,17 @@ void collectComments( pANTLR3_COMMON_TOKEN_STREAM  tokenStream,
             continue;
         }
 
-
-
+        if ( ( line == 1 || line == 2 ) && encodingFound == 0 )
+        {
+            // That might be an encoding line
+            if ( isEncodingLine( tok, firstChar, commentSize ) != 0 )
+            {
+                encodingFound = 1;
+                PyObject_CallFunction( callbacks->onEncodingLine, "iiiiii",
+                                       begin, end, line, beginPos, line, endPos );
+                continue;
+            }
+        }
 
     }
 }
@@ -802,12 +836,6 @@ void walk( pANTLR3_BASE_TREE            tree,
            enum Scope                   scope,
            const char *                 firstArgName,
            int                          entryLevel )
-{
-    return;
-}
-void  searchForCoding( ppycfLexer     ctx,
-                       char *         lineStart,
-                       ANTLR3_UINT32  lineNumber )
 {
     return;
 }
@@ -1317,9 +1345,7 @@ parse_input( pANTLR3_INPUT_STREAM           input,
         return NULL;
     }
 
-    /* Memorize callbacks for coding and errors */
-//    lxr->onEncoding = callbacks->onEncoding;
-
+    /* Memorize callbacks for errors */
     lxr->pLexer->rec->userData = callbacks->onLexerError;
     lxr->pLexer->rec->displayRecognitionError = onLexerError;
     psr->pParser->rec->userData = callbacks->onError;

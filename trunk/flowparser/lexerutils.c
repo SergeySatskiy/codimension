@@ -284,7 +284,6 @@ void  pycfLexer_initLexer( ppycfLexer  ctx )
     ctx->origFree = ctx->free;
     ctx->free = pycfLexer_FreeImpl;
 
-    ctx->onEncoding = NULL;
     return;
 }
 
