@@ -24,7 +24,9 @@
 Definition of an interface class for the control flow C parser
 """
 
-from flow import BangLine, EncodingLine, Fragment
+from flow import ( BangLine, EncodingLine, Fragment,
+                   CommentLine, Comment )
+from cml import CMLRecord
 
 
 class ControlFlowParserIFace:
@@ -93,19 +95,38 @@ class ControlFlowParserIFace:
                                   beginLine, beginPos,
                                   endLine, endPos ):
         " Generic comment fragment. The exact comment type is unknown yet "
-        fragment = Fragment()
-        fragment.begin = begin
-        fragment.end = end
-        fragment.beginLine = beginLine
-        fragment.beginPos = beginPos
-        fragment.endLine = endLine
-        fragment.endPos = endPos
+        commentLine = CommentLine()
+        commentLine.begin = begin
+        commentLine.end = end
+        commentLine.beginLine = beginLine
+        commentLine.beginPos = beginPos
+        commentLine.endLine = endLine
+        commentLine.endPos = endPos
 
-        self.comments.append( fragment )
+        self.comments.append( commentLine )
         return
 
     def _onStandaloneCommentFinished( self ):
-        pass
+        " Standalone comment finished "
+        comment = Comment()
+        comment.commentLines = self.comments
+        self.comments = []
+
+        # Update parent for all members
+        for line in comment.commentLines:
+            line.parent = comment
+
+        # Update the whole fragment properties
+        comment.begin = comment.commentLines[ 0 ].begin
+        comment.end = comment.commentLines[ -1 ].end
+        comment.beginLine = comment.commentLines[ 0 ].beginLine
+        comment.beginPos = comment.commentLines[ 0 ].beginPos
+        comment.endLine = comment.commentLines[ -1 ].endLine
+        comment.endPos = comment.commentLines[ -1 ].endPos
+
+        # Insert the comment at the proper location
+        # TODO
+        return
 
     def _onSideCommentFinished( self ):
         pass
