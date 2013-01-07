@@ -33,6 +33,20 @@
 #define MAX_DOTTED_NAME_LENGTH      256
 
 
+// Comments accumulating support
+#define NO_COMMENTS_ACCUMULATED     0
+#define STANDALONE_COMMENT_STARTED  1
+#define CML_COMMENT_STARTED         2
+#define SIDE_COMMENT_STARTED        3
+
+// Comment type detection
+#define STANDALONE_COMMENT_LINE     0
+#define SIDE_COMMENT_LINE           1
+#define CML_COMMENT_LINE            2
+#define CML_COMMENT_LINE_CONTINUE   3
+
+
+
 /* copied (and modified) from libantlr3 to avoid indirect function calls */
 static inline ANTLR3_UINT32 getType( pANTLR3_BASE_TREE tree )
 {
@@ -69,6 +83,11 @@ struct instanceCallbacks
     PyObject *      onLexerError;
     PyObject *      onBangLine;
     PyObject *      onEncodingLine;
+
+    PyObject *      onCommentFragment;
+    PyObject *      onStandaloneCommentFinished;
+    PyObject *      onSideCommentFinished;
+    PyObject *      onCMLCommentFinished;
 
     /*
     PyObject *      onGlobal;
@@ -114,6 +133,11 @@ getInstanceCallbacks( PyObject *                  instance,
     GET_CALLBACK( onLexerError );
     GET_CALLBACK( onBangLine );
     GET_CALLBACK( onEncodingLine );
+
+    GET_CALLBACK( onCommentFragment );
+    GET_CALLBACK( onStandaloneCommentFinished );
+    GET_CALLBACK( onSideCommentFinished );
+    GET_CALLBACK( onCMLCommentFinished );
 
     /*
     GET_CALLBACK( onGlobal );
@@ -660,73 +684,6 @@ void walk( pANTLR3_BASE_TREE            tree,
     return;
 }
 
-
-/* Note: the lineNumber and lineStart cannot be calculated
- *       in searchForCoding(...) from ctx. It seems to me that
- *       the ctx has been updated at the time searchForCoding(...)
- *       is called. So these values are initialized before the rule
- *       and passed to searchForEncoding(...)
- */
-void  searchForCoding( ppycfLexer     ctx,
-                       char *         lineStart,
-                       ANTLR3_UINT32  lineNumber )
-{
-    /* prepare regexp
-     * I don't know why the original expression does not work here:
-     * coding[=:]\s*([-\w.]+)
-     */
-    char *      pattern = "coding[=:]\\s*";
-    regex_t     preg;
-    regmatch_t  pmatch[1];
-
-    if ( regcomp( &preg, pattern, 0 ) != 0 )
-        return; /* Compile error */
-
-
-    /* Find the end of the line and put \0 there */
-    char *      endofline = lineStart;
-    char        current;
-    for ( ; ; ++endofline )
-    {
-        current = *endofline;
-        if ( current == '\0' || current == '\n' ||
-             current == '\r' )
-            break;
-    }
-
-    /* replace the endofline char with '\0' */
-    *endofline = '\0';
-
-    /* check if the regexp matched */
-    if ( regexec( &preg, lineStart, 1, pmatch, 0 ) == 0 )
-    {
-        /* The first char after the match is the first encoding char */
-        char *  begin = lineStart + pmatch[0].rm_eo;
-        char *  end = begin;
-        char    last;
-
-        /* Advance the end pointer */
-        for ( ; ; ++end )
-        {
-            last = *end;
-            if ( last == '\0' || isspace( last ) )
-                break;
-        }
-
-        *end = '\0';
-        PyObject_CallFunction( (PyObject*)ctx->onEncoding, "siii",
-                               begin, lineNumber,
-                               begin - lineStart + 1, /* Make it 1-based */
-                               begin - (char *)ctx->pLexer->input->data );
-        *end = last;
-        ctx->onEncoding = NULL;
-    }
-    regfree( &preg );
-
-    /* revert back the last line symbol */
-    *endofline = current;
-    return;
-}
 #endif
 
 
@@ -768,6 +725,83 @@ int isEncodingLine( pANTLR3_COMMON_TOKEN  token,
 }
 
 
+int  isStandaloneComment( pANTLR3_COMMON_TOKEN_STREAM  tokenStream,
+                          pANTLR3_COMMON_TOKEN         currentToken,
+                          size_t                       currentIndex )
+{
+    size_t      tokenLine = currentToken->line;
+
+    --currentIndex;
+    while ( currentIndex >= 0 )
+    {
+        pANTLR3_COMMON_TOKEN    tok = tokenStream->tokens->get( tokenStream->tokens,
+                                                                currentIndex );
+        if ( tok->line != tokenLine )
+            return 1;
+
+        if ( tok->type != INDENT && tok->type != DEDENT )
+            return 0;
+    }
+
+    return 1;
+}
+
+
+int  isSideComment( pANTLR3_COMMON_TOKEN_STREAM  tokenStream,
+                    pANTLR3_COMMON_TOKEN         currentToken,
+                    size_t                       currentIndex )
+{
+    if ( isStandaloneComment( tokenStream, currentToken, currentIndex ) == 1 )
+        return 0;
+    return 1;
+}
+
+
+int  detectCommentType( pANTLR3_COMMON_TOKEN_STREAM  tokenStream,
+                        pANTLR3_COMMON_TOKEN         currentToken,
+                        size_t                       currentIndex,
+                        char *                       firstChar,
+                        size_t                       commentSize )
+{
+    // Side comment could not be a CML one
+    if ( isSideComment( tokenStream, currentToken, currentIndex ) == 1 )
+        return SIDE_COMMENT_LINE;
+
+    // Here: it could be a standalone, a CML comment begin or CML comment
+    // continue
+    char        buffer[ commentSize + 1 ];
+    snprintf( buffer, commentSize + 1, "%s", firstChar );
+
+    if ( strncmp( buffer, "# cml 1.0 C ", 12 ) == 0 )
+        return CML_COMMENT_LINE_CONTINUE;
+
+    if ( strncmp( buffer, "# cml 1.0 ", 10 ) == 0 )
+        return CML_COMMENT_LINE;
+
+    return STANDALONE_COMMENT_LINE;
+}
+
+void  flushCollectedComments( int                          what,
+                              struct instanceCallbacks *   callbacks )
+{
+    switch ( what )
+    {
+        case NO_COMMENTS_ACCUMULATED:
+            // Nothing to flush
+            break;
+        case STANDALONE_COMMENT_STARTED:
+            PyObject_CallFunction( callbacks->onStandaloneCommentFinished, "" );
+            break;
+        case CML_COMMENT_STARTED:
+            PyObject_CallFunction( callbacks->onCMLCommentFinished, "" );
+            break;
+        case SIDE_COMMENT_STARTED:
+            PyObject_CallFunction( callbacks->onSideCommentFinished, "" );
+            break;
+    }
+}
+
+
 
 // Second pass function which collects all the comments
 void collectComments( pANTLR3_COMMON_TOKEN_STREAM  tokenStream,
@@ -776,6 +810,8 @@ void collectComments( pANTLR3_COMMON_TOKEN_STREAM  tokenStream,
     size_t      tokenCount = tokenStream->tokens->size( tokenStream->tokens );
     size_t      k;
     int         encodingFound = 0;
+    int         state = NO_COMMENTS_ACCUMULATED;
+    size_t      lastCommentLine = 0;
 
     for ( k = 0; k < tokenCount; ++k )
     {
@@ -825,7 +861,41 @@ void collectComments( pANTLR3_COMMON_TOKEN_STREAM  tokenStream,
             }
         }
 
+        int     commentType = detectCommentType( tokenStream, tok, k,
+                                                 firstChar, commentSize );
+        switch ( state )
+        {
+            case NO_COMMENTS_ACCUMULATED:
+                lastCommentLine = line;
+                switch ( commentType )
+                {
+                    case SIDE_COMMENT_LINE:
+                        state = SIDE_COMMENT_STARTED;
+                        break;
+                    case STANDALONE_COMMENT_LINE:
+                        state = STANDALONE_COMMENT_STARTED;
+                        break;
+                    case CML_COMMENT_LINE:
+                        state = CML_COMMENT_STARTED;
+                        break;
+                    default:
+                        // It is impossible to have anything else here
+                        break;
+                }
+                PyObject_CallFunction( callbacks->onCommentFragment, "iiiiii",
+                                       begin, end, line, beginPos, line, endPos );
+                break;
+            case STANDALONE_COMMENT_STARTED:
+            case CML_COMMENT_STARTED:
+            case SIDE_COMMENT_STARTED:
+
+            default:
+                ;
+        }
+
     }
+
+    flushCollectedComments( state, callbacks );
 }
 
 
