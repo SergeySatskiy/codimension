@@ -150,7 +150,7 @@ def generateScopeBlock( text ):
     textParts = text.split( '\n' )
     recordBegin.append( "# cml 1.0 S SB " + recordUUID + " " + textParts[ 0 ] )
     for part in textParts[ 1: ]:
-        recordBegin.append( "# cml 1.0 S C " + part )
+        recordBegin.append( "# cml 1.0 C " + part )
 
     recordEnd = "# cml 1.0 S SE " + recordUUID
     return recordBegin, recordEnd
