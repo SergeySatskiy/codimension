@@ -24,7 +24,7 @@
 Definition of an interface class for the control flow C parser
 """
 
-from flow import BangLine, EncodingLine
+from flow import BangLine, EncodingLine, Fragment
 
 
 class ControlFlowParserIFace:
@@ -34,6 +34,7 @@ class ControlFlowParserIFace:
 
         # Reference to the object where all the collected info is stored
         self.cf = controlFlowInstance
+        self.comments = []
         return
 
     def _onError( self, message ):
@@ -88,5 +89,19 @@ class ControlFlowParserIFace:
         self.cf.encodingLine = encodingLine
         return
 
+    def _onCommentFragment( self, begin, end,
+                                  beginLine, beginPos,
+                                  endLine, endPos ):
+        " Generic comment fragment. The exact comment type is unknown yet "
+        fragment = Fragment()
+        fragment.begin = begin
+        fragment.end = end
+        fragment.beginLine = beginLine
+        fragment.beginPos = beginPos
+        fragment.endLine = endLine
+        fragment.endPos = endPos
+
+        self.comments.append( fragment )
+        return
 
 
