@@ -804,7 +804,12 @@ ASSIGN          : '=' ;
  *  emit a newline.
  */
 CONTINUED_LINE  : '\\' ( '\r' )? '\n' ( ' ' | '\t' )* { $channel = HIDDEN; }
-                ( NEWLINE { static char __newlinebuf[] = "\n"; EMITNEW( pycfLexer_createLexerToken( LEXER, TOKTEXT( NEWLINE, __newlinebuf ) ) ); } )?
+                ( NEWLINE
+                    {
+                        static char __newlinebuf[] = "\n";
+                        EMITNEW( pycfLexer_createLexerToken( LEXER, TOKTEXT( NEWLINE, __newlinebuf ) ) );
+                    }
+                )?
                 ;
 
 /** Treat a sequence of blank lines as a single blank line.  If
@@ -848,7 +853,9 @@ LEADING_WS
             | '\t' { spaces += 8; spaces -= (spaces \% 8); }
         )+
             {
-                EMITNEW( pycfLexer_createLexerToken( LEXER, TOKTEXT( LEADING_WS, pycfLexer_syntetizeEmptyString( spaces ) ) ) );
+                EMITNEW( pycfLexer_createLexerToken( LEXER,
+                                                     TOKTEXT( LEADING_WS,
+                                                              pycfLexer_syntetizeEmptyString( spaces ) ) ) );
             }
         // kill trailing newline if present and then ignore
         (
@@ -875,8 +882,6 @@ COMMENT
     @init
     {
         $channel = HIDDEN;
-
-        char *          lineStartBuf = (char*)ctx->pLexer->input->currentLine;
     }
     : (
       { ctx->startPos == 0 }?=> ( ' ' | '\t' )* a='#' ( ~'\n' )* '\n'+
