@@ -802,6 +802,41 @@ void  flushCollectedComments( int                          what,
 }
 
 
+int  startNewCommentFragment( struct instanceCallbacks *   callbacks,
+                              int                          commentType,
+                              size_t                       begin,
+                              size_t                       end,
+                              size_t                       line,
+                              size_t                       beginPos,
+                              size_t                       endPos )
+{
+    int         state;
+
+    switch ( commentType )
+    {
+        case SIDE_COMMENT_LINE:
+            state = SIDE_COMMENT_STARTED;
+            break;
+        case STANDALONE_COMMENT_LINE:
+            state = STANDALONE_COMMENT_STARTED;
+            break;
+        case CML_COMMENT_LINE:
+            state = CML_COMMENT_STARTED;
+            break;
+        default:
+            // It is impossible to have anything else here
+            // If it was a CML comment continue then it means the
+            // code is broken. So, collect the comment as a
+            // standalone comment.
+            state = STANDALONE_COMMENT_STARTED;
+            break;
+    }
+    PyObject_CallFunction( callbacks->onCommentFragment, "iiiiii",
+                           begin, end, line, beginPos, line, endPos );
+    return state;
+}
+
+
 
 // Second pass function which collects all the comments
 void collectComments( pANTLR3_COMMON_TOKEN_STREAM  tokenStream,
@@ -867,32 +902,131 @@ void collectComments( pANTLR3_COMMON_TOKEN_STREAM  tokenStream,
         {
             case NO_COMMENTS_ACCUMULATED:
                 lastCommentLine = line;
+                state = startNewCommentFragment( callbacks, commentType,
+                                                 begin, end, line, beginPos, endPos );
+                break;
+            case STANDALONE_COMMENT_STARTED:
+                if ( line != lastCommentLine + 1 )
+                {
+                    flushCollectedComments( state, callbacks );
+                    lastCommentLine = line;
+                    state = startNewCommentFragment( callbacks, commentType,
+                                                     begin, end, line, beginPos, endPos );
+                    break;
+                }
+
+                // This is next line comment
+                lastCommentLine = line;
                 switch ( commentType )
                 {
                     case SIDE_COMMENT_LINE:
-                        state = SIDE_COMMENT_STARTED;
+                        flushCollectedComments( state, callbacks );
+                        state = startNewCommentFragment( callbacks, commentType,
+                                                         begin, end, line, beginPos, endPos );
                         break;
                     case STANDALONE_COMMENT_LINE:
-                        state = STANDALONE_COMMENT_STARTED;
+                        PyObject_CallFunction( callbacks->onCommentFragment, "iiiiii",
+                                               begin, end, line, beginPos, line, endPos );
                         break;
                     case CML_COMMENT_LINE:
-                        state = CML_COMMENT_STARTED;
+                        flushCollectedComments( state, callbacks );
+                        state = startNewCommentFragment( callbacks, commentType,
+                                                         begin, end, line, beginPos, endPos );
                         break;
                     default:
-                        // It is impossible to have anything else here
+                        // If it comes here it means the code is broken. It is
+                        // a CML continue without a beginning.
+                        // Therefore, collect it as a separate standalone
+                        // comment
+                        flushCollectedComments( state, callbacks );
+                        state = startNewCommentFragment( callbacks, STANDALONE_COMMENT_LINE,
+                                                         begin, end, line, beginPos, endPos );
+                        flushCollectedComments( state, callbacks );
+                        state = NO_COMMENTS_ACCUMULATED;
                         break;
                 }
-                PyObject_CallFunction( callbacks->onCommentFragment, "iiiiii",
-                                       begin, end, line, beginPos, line, endPos );
                 break;
-            case STANDALONE_COMMENT_STARTED:
             case CML_COMMENT_STARTED:
+                if ( line != lastCommentLine + 1 )
+                {
+                    flushCollectedComments( state, callbacks );
+                    lastCommentLine = line;
+                    state = startNewCommentFragment( callbacks, commentType,
+                                                     begin, end, line, beginPos, endPos );
+                    break;
+                }
+
+                // This is next line comment
+                lastCommentLine = line;
+                switch ( commentType )
+                {
+                    case SIDE_COMMENT_LINE:
+                        flushCollectedComments( state, callbacks );
+                        state = startNewCommentFragment( callbacks, commentType,
+                                                         begin, end, line, beginPos, endPos );
+                        break;
+                    case STANDALONE_COMMENT_LINE:
+                        flushCollectedComments( state, callbacks );
+                        state = startNewCommentFragment( callbacks, commentType,
+                                                         begin, end, line, beginPos, endPos );
+                        break;
+                    case CML_COMMENT_LINE:
+                        flushCollectedComments( state, callbacks );
+                        state = startNewCommentFragment( callbacks, commentType,
+                                                         begin, end, line, beginPos, endPos );
+                        break;
+                    case CML_COMMENT_LINE_CONTINUE:
+                        PyObject_CallFunction( callbacks->onCommentFragment, "iiiiii",
+                                               begin, end, line, beginPos, line, endPos );
+                        break;
+                }
+                break;
             case SIDE_COMMENT_STARTED:
+                if ( line != lastCommentLine + 1 )
+                {
+                    flushCollectedComments( state, callbacks );
+                    lastCommentLine = line;
+                    state = startNewCommentFragment( callbacks, commentType,
+                                                     begin, end, line, beginPos, endPos );
+                    break;
+                }
+
+                // This is next line comment
+                lastCommentLine = line;
+                switch ( commentType )
+                {
+                    case SIDE_COMMENT_LINE:
+                        PyObject_CallFunction( callbacks->onCommentFragment, "iiiiii",
+                                               begin, end, line, beginPos, line, endPos );
+                        break;
+                    case STANDALONE_COMMENT_LINE:
+                        flushCollectedComments( state, callbacks );
+                        state = startNewCommentFragment( callbacks, commentType,
+                                                         begin, end, line, beginPos, endPos );
+                        break;
+                    case CML_COMMENT_LINE:
+                        flushCollectedComments( state, callbacks );
+                        state = startNewCommentFragment( callbacks, commentType,
+                                                         begin, end, line, beginPos, endPos );
+                        break;
+                    default:
+                        // If it comes here it means the code is broken. It is
+                        // a CML continue without a beginning.
+                        // Therefore, collect it as a separate standalone
+                        // comment
+                        flushCollectedComments( state, callbacks );
+                        state = startNewCommentFragment( callbacks, STANDALONE_COMMENT_LINE,
+                                                         begin, end, line, beginPos, endPos );
+                        flushCollectedComments( state, callbacks );
+                        state = NO_COMMENTS_ACCUMULATED;
+                        break;
+                }
+                break;
 
             default:
+                // Must not be here. If so then it a code design bug.
                 ;
         }
-
     }
 
     flushCollectedComments( state, callbacks );
