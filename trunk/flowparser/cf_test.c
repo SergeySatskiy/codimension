@@ -128,9 +128,11 @@ int process( const char *  filename, int  count )
     size_t      tokenCount = tstream->tokens->size( tstream->tokens );
     printf( "Number of tokens in the stream: %ld\n", tokenCount );
 
-    for ( size_t  k = 0; k < tokenCount; ++k ) {
+    for ( size_t  k = 0; k < tokenCount; ++k )
+    {
         pANTLR3_COMMON_TOKEN    tok = tstream->tokens->get( tstream->tokens, k );
-        if ( tok->type == COMMENT ) {
+        if ( tok->type == COMMENT )
+        {
             size_t      line = tok->line;
 
             // Adjust the last character of the comment
@@ -138,7 +140,8 @@ int process( const char *  filename, int  count )
             while ( *lastChar == '\n' || *lastChar == '\r' || *lastChar == 0 )
                 --lastChar;
             char *      firstChar = (char *)tok->start;
-            while ( *firstChar != '#' ) {
+            while ( *firstChar != '#' )
+            {
                 ++firstChar;
                 ++tok->charPosition;
             }
@@ -150,6 +153,11 @@ int process( const char *  filename, int  count )
             snprintf( buffer, commentSize + 1, "%s", firstChar );
             printf( "COMMENT size: %03ld start: %06ld end: %06ld line: %03d pos: %03d content: '%s'\n",
                     commentSize, begin, end, line, tok->charPosition + 1, buffer );
+        }
+        else
+        {
+            printf( "Token line: %03ld Token type: %03ld\n",
+                    tok->line, tok->type );
         }
     }
 
