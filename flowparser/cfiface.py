@@ -104,4 +104,13 @@ class ControlFlowParserIFace:
         self.comments.append( fragment )
         return
 
+    def _onStandaloneCommentFinished( self ):
+        pass
+
+    def _onSideCommentFinished( self ):
+        pass
+
+    def _onCMLCommentFinished( self ):
+        pass
+
 
