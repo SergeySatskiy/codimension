@@ -41,13 +41,13 @@ where:
       record to mark an end of the markup scope.
   S - scope record. That means that later on there must be a paired markup
       record.
+  C - continue of a previous record. This allows to have multilined records of
+      any type.
 - <record subtype> is a subtype identifier. Version 1.0 supports the following:
   SB - scope begin record. It must have UUID as the first item in the
        [all the rest] part.
   SE - scope end record. It must have UUID as the first item in the
        [all the rest] part.
-  C - continue of a previous record. This allows to have multilined records of
-      any type.
 
 The end of records is implicit. It is an absence of the 'C' subtype record as
 the next line.
@@ -68,7 +68,7 @@ Some python code
 The same as multilined record:
 
 # cml 1.0 S SB 1234-123456-123456-1234
-# cml 1.0 S C Calculation of a checksum
+# cml 1.0 C Calculation of a checksum
 
 ...
 Some python code
