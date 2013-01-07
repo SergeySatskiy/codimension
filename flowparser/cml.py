@@ -58,6 +58,7 @@ class RecordType:
 
     independentRecord = "I"
     scopeRecord = "S"
+    continuation = "C"
 
     def __init__( self ):
         pass
@@ -66,7 +67,15 @@ class RecordType:
     def isSupported( otherType ):
         " Returns True if it is supported "
         return otherType in [ RecordType.independentRecord,
-                              RecordType.scopeRecord ]
+                              RecordType.scopeRecord,
+                              RecordType.continuation ]
+
+    def __str__( self ):
+        " Converts to string "
+        return "CML record types: " \
+               "Independent Record: '" + RecordType.independentRecord + "' " \
+               "Scope Record: '" + RecordType.scopeRecord + "' " \
+               "Continuation: '" + RecordType.continuation + "'"
 
 
 class RecordSubType:
@@ -74,7 +83,6 @@ class RecordSubType:
 
     scopeBegin = "SB"
     scopeEnd = "SE"
-    continuation = "C"
 
     def __init__( self ):
         pass
@@ -83,8 +91,13 @@ class RecordSubType:
     def isSupported( otherSubtype ):
         " Returns True if it is supported "
         return otherSubtype in [ RecordSubType.scopeBegin,
-                                 RecordSubType.scopeEnd,
-                                 RecordSubType.continuation ]
+                                 RecordSubType.scopeEnd ]
+
+    def __str__( self ):
+        " Converts to string "
+        return "CML record subtypes: " \
+               "Scope Begin: '" + RecordSubType.scopeBegin + "' " \
+               "Scope End: '" + RecordSubType.scopeEnd + "'"
 
 
 
@@ -93,11 +106,12 @@ class CMLRecord( Fragment ):
 
     def __init__( self ):
         Fragment.__init__( self )
+        self.body = []      # Fragments for individual parts (lines)
         return
 
     def getVersion( self, buf = None ):
         " Provides the record version or throws an exception "
-        contentParts = self.getContent( buf ).split()
+        contentParts = self.body[ 0 ].getContent( buf ).split()
         # The version is the third field
         if len( contentParts ) < 3:
             raise Exception( "Unexpected CML record format" )
@@ -109,7 +123,7 @@ class CMLRecord( Fragment ):
 
     def getType( self, buf = None ):
         " Provides the record type or throws an exception "
-        contentParts = self.getContent( buf ).split()
+        contentParts = self.body[ 0 ].getContent( buf ).split()
         # The type must be fourth field
         if len( contentParts ) < 4:
             raise Exception( "Unexpected CML record format" )
@@ -118,7 +132,7 @@ class CMLRecord( Fragment ):
 
     def getSubType( self, buf = None ):
         " Provides the record subtype or throws an exception "
-        contentParts = self.getContent( buf ).split()
+        contentParts = self.body[ 0 ].getContent( buf ).split()
         # The subtype must be the fifth field
         if len( contentParts ) < 5:
             raise Exception( "Unexpected CML record format" )
@@ -128,14 +142,15 @@ class CMLRecord( Fragment ):
     def getUUID( self, buf = None ):
         " Provides the record UUID or throws an exception "
         # UUID might be there but might be not
-        contentParts = self.getContent( buf ).split()
+        contentParts = self.body[ 0 ].getContent( buf ).split()
         if len( contentParts ) < 6:
             raise Exception( " The record does not have UUID" )
         return contentParts[ 5 ]
 
     def __str__( self ):
         " Converts to string "
-        return "CML record: " + Fragment.__str__( self )
+        return "CML record: " + Fragment.__str__( self ) + \
+               "\nBody:\n" + "\n".join( [ str( item ) for item in self.body ] )
 
 
 
