@@ -109,20 +109,20 @@ class ControlFlowParserIFace:
     def _onStandaloneCommentFinished( self ):
         " Standalone comment finished "
         comment = Comment()
-        comment.commentLines = self.comments
+        comment.body = self.comments
         self.comments = []
 
         # Update parent for all members
-        for line in comment.commentLines:
+        for line in comment.body:
             line.parent = comment
 
         # Update the whole fragment properties
-        comment.begin = comment.commentLines[ 0 ].begin
-        comment.end = comment.commentLines[ -1 ].end
-        comment.beginLine = comment.commentLines[ 0 ].beginLine
-        comment.beginPos = comment.commentLines[ 0 ].beginPos
-        comment.endLine = comment.commentLines[ -1 ].endLine
-        comment.endPos = comment.commentLines[ -1 ].endPos
+        comment.begin = comment.body[ 0 ].begin
+        comment.end = comment.body[ -1 ].end
+        comment.beginLine = comment.body[ 0 ].beginLine
+        comment.beginPos = comment.body[ 0 ].beginPos
+        comment.endLine = comment.body[ -1 ].endLine
+        comment.endPos = comment.body[ -1 ].endPos
 
         # Insert the comment at the proper location
         self.__insertStandaloneComment( comment, self.cf, self.cf.body, False )
