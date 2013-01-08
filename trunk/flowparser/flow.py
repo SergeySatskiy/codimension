@@ -119,6 +119,10 @@ class Fragment:
             the beginning of the input stream """
         return self.end
 
+    def getLineRange( self ):
+        " Provides line range for the fragment "
+        return [ self.beginLine, self.endLine ]
+
     def __str__( self ):
         " Converts to a string "
         return "Fragment[" + str( self.begin ) + ":" + str( self.end ) + \
