@@ -257,21 +257,21 @@ class Comment( Fragment ):
 
     def __init__( self ):
         Fragment.__init__( self )
-        self.commentLines = []      # CommentLine instances
+        self.body = []      # CommentLine instances
         return
 
     def getDisplayValue( self, buf = None ):
         " Provides the comment without trailing spaces "
-        if not self.commentLines:
+        if not self.body:
             return ""
 
-        beginPositions = set( [ line.beginPos for line in self.commentLines ] )
+        beginPositions = set( [ line.beginPos for line in self.body ] )
         sameShift = ( len( beginPositions ) == 1 )
         minShift = min( beginPositions )
 
         visibleLines = []
-        currentLine = self.commentLines[ 0 ].beginLine - 1
-        for line in self.commentLines:
+        currentLine = self.body[ 0 ].beginLine - 1
+        for line in self.body:
             if line.beginLine - currentLine > 1:
                 # Insert empty lines
                 for count in xrange( 1, line.beginLine - currentLine ):
@@ -290,14 +290,14 @@ class Comment( Fragment ):
     def serialize( self ):
         " Serializes the object "
         Fragment.serialize( self )
-        for line in self.commentLines:
+        for line in self.body:
             line.serialize()
         return
 
     def __str__( self ):
         " Converts to a string "
         return "Comment: " + Fragment.__str__( self ) + "\n" + \
-               "\n".join( [ str( line ) for line in self.commentLines ] )
+               "\n".join( [ str( line ) for line in self.body ] )
 
 
 class Docstring( Fragment ):
