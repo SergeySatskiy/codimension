@@ -24,8 +24,8 @@
 Definition of an interface class for the control flow C parser
 """
 
-from flow import ( BangLine, EncodingLine, Fragment,
-                   CommentLine, Comment )
+from flow import ( BangLine, EncodingLine,
+                   CommentLine, Comment, FragmentWithComments )
 from cml import CMLRecord
 
 
@@ -125,13 +125,60 @@ class ControlFlowParserIFace:
         comment.endPos = comment.commentLines[ -1 ].endPos
 
         # Insert the comment at the proper location
-        # TODO
+        self.__insertStandaloneComment( comment, self.cf, self.cf.body, False )
+        return
+
+    def _onCMLCommentFinished( self ):
+        " CML Record finished "
+        cml = CMLRecord()
+        cml.body = self.comments
+        self.comments = []
+
+        # Update parent for all members
+        for line in cml.body:
+            line.parent = cml
+
+        # Update the whole fragment properties
+        cml.begin = cml.body[ 0 ].begin
+        cml.end = cml.body[ -1 ].end
+        cml.beginLine = cml.body[ 0 ].beginLine
+        cml.beginPos = cml.body[ 0 ].beginPos
+        cml.endLine = cml.body[ -1 ].endLine
+        cml.endPos = cml.body[ -1 ].endPos
+
+        # Insert the comment at the proper location
+        self.__insertStandaloneComment( cml, self.cf, self.cf.body, True )
+        return
+
+    def __insertStandaloneComment( self, obj, parent, body, isCML ):
+        " Inserts the fragment into the proper position in the control flow "
+        line = obj.beginLine
+        index = -1
+        for item in body:
+            index += 1
+            lineRange = item.getLineRange()
+            if line >= lineRange[ 0 ] and line <= lineRange[ 1 ]:
+                self.__insertStandaloneComment( obj, item, item.body, isCML )
+                return
+            if lineRange[ 0 ] > line:
+                if obj.endLine + 1 != lineRange[ 0 ] or isCML or \
+                   not isinstance( item, FragmentWithComments ):
+                    # Insert as standalone
+                    obj.parent = parent
+                    body.insert( index, obj )
+                    return
+                else:
+                    # Insert as leading comment
+                    obj.parent = item
+                    item.leadingComment = obj
+                    return
+
+        # Not found in the list, so append to the end
+        obj.parent = parent
+        body.append( obj )
         return
 
     def _onSideCommentFinished( self ):
-        pass
-
-    def _onCMLCommentFinished( self ):
         pass
 
 
