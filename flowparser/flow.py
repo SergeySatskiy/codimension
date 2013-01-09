@@ -231,23 +231,6 @@ class EncodingLine( Fragment ):
 #
 
 
-class CommentLine( Fragment ):
-    " Represents a single comment line "
-
-    def __init__( self ):
-        Fragment.__init__( self )
-        return
-
-    def getDisplayValue( self, buf = None ):
-        " Provides the comment line content without trailing spaces "
-        return self.getContent( buf ).strip()
-
-    def __str__( self ):
-        " Converts to a string "
-        return "Comment line: " + Fragment.__str__( self )
-
-
-
 # Strictly speaking there is no need to derive from Fragment because
 # a comment consists of a set of lines which are fragments themseves.
 # It is however suits well for the leading and standalone comments so
@@ -257,7 +240,7 @@ class Comment( Fragment ):
 
     def __init__( self ):
         Fragment.__init__( self )
-        self.body = []      # CommentLine instances
+        self.body = []      # Fragments instances
         return
 
     def getDisplayValue( self, buf = None ):
