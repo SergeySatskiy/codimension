@@ -41,7 +41,7 @@ lexerutils.o: lexerutils.c
 	gcc -O2 -I/usr/include/python2.7/ ${FLAGS} ${INCLUDE} -c lexerutils.c
 
 clean:
-	rm -rf *.o core.* _cdmcfparser.so build/ cf_test core
+	rm -rf *.o core.* _cdmcfparser.so build/ cf_test core *.pyc
 
 cleanall: clean
 	rm -f $(GENERATED_FILES)
