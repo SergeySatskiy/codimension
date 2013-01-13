@@ -103,16 +103,16 @@ class CDMControlFlowParserTest( unittest.TestCase ):
                    "second line must not be a bang failed" )
         return
 
+    def test_coding1( self ):
+        " Test coding 1"
+        self.meat( self.dir + "coding1.py",
+                   "error retrieving coding" )
+        return
+
 #    def test_import( self ):
 #        " Tests imports "
 #        self.meat( self.dir + "import.py",
 #                   "import test failed" )
-#        return
-
-#    def test_coding1( self ):
-#        " Test coding 1"
-#        self.meat( self.dir + "coding1.py",
-#                   "error retrieving coding" )
 #        return
 
 #    def test_coding2( self ):
