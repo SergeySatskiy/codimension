@@ -77,7 +77,7 @@ class CDMControlFlowParserTest( unittest.TestCase ):
 
         outFileName = pythonFile.replace( ".py", ".out" )
         outFile = open( outFileName, "w" )
-        outFile.write( str( controlFlow ) )
+        outFile.write( controlFlow.niceStringify() + "\n" )
         outFile.close()
 
         okFileName = pythonFile.replace( ".py", ".ok" )
@@ -95,6 +95,12 @@ class CDMControlFlowParserTest( unittest.TestCase ):
         " Test file with a bang line "
         self.meat( self.dir + "bang.py",
                    "bang line file test failed" )
+        return
+
+    def test_notbang( self ):
+        " Test that the second line is not a bang "
+        self.meat( self.dir + "notbang.py",
+                   "second line must not be a bang failed" )
         return
 
 #    def test_import( self ):
