@@ -147,6 +147,13 @@ class CMLRecord( Fragment ):
             raise Exception( " The record does not have UUID" )
         return contentParts[ 5 ]
 
+    def niceStringify( self, level ):
+        " Returns a string representation with new lines and shifts "
+        joiner = "\n" + ( level + 1 ) * "    "
+        return level * "    " + "CML record: " + Fragment.__str__( self ) + \
+               joiner + joiner.join( [ str( item ) for item in self.body ] )
+
+
     def __str__( self ):
         " Converts to string "
         return "CML record: " + Fragment.__str__( self ) + \

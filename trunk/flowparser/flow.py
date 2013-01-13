@@ -168,8 +168,8 @@ class ControlFlow( Fragment ):
             item.serialize()
         return
 
-    def __str__( self ):
-        " Converts to string "
+    def __getBangEncodingAsStr( self ):
+        " Helper for stringification "
         if self.bangLine is None:
             bangPart = "Bang: None"
         else:
@@ -179,10 +179,23 @@ class ControlFlow( Fragment ):
             encodingPart = "Encoding: None"
         else:
             encodingPart = str( self.encodingLine )
+        return bangPart, encodingPart
 
+    def __str__( self ):
+        " Converts to string "
+        bangPart, encodingPart = self.__getBangEncodingAsStr()
         return bangPart + "\n" + \
                encodingPart + "\n" \
                "Body:\n" + "\n".join( [ str( item ) for item in self.body ] )
+
+    def niceStringify( self ):
+        " Returns a string representation with new lines and shifts "
+        bangPart, encodingPart = self.__getBangEncodingAsStr()
+        return bangPart + "\n" + \
+               encodingPart + "\n" \
+               "Body:\n" + "\n".join( [ item.niceStringify( 1 ) \
+                                        for item in self.body ] )
+
 
 
 class BangLine( Fragment ):
@@ -281,6 +294,12 @@ class Comment( Fragment ):
         " Converts to a string "
         return "Comment: " + Fragment.__str__( self ) + "\n" + \
                "\n".join( [ str( line ) for line in self.body ] )
+
+    def niceStringify( self, level ):
+        " Returns a string representation with new lines and shifts "
+        joiner = "\n" + ( level + 1 ) * "    "
+        return level * "    " + "Comment: " + Fragment.__str__( self ) + \
+               joiner + joiner.join( [ str( item ) for item in self.body ] )
 
 
 class Docstring( Fragment ):
