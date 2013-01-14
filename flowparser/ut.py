@@ -127,6 +127,12 @@ class CDMControlFlowParserTest( unittest.TestCase ):
                    "error collecting cml type I" )
         return
 
+    def test_cml2( self ):
+        " Test cml 2"
+        self.meat( self.dir + "cml2.py",
+                   "error collecting cml type I with C" )
+        return
+
 #    def test_import( self ):
 #        " Tests imports "
 #        self.meat( self.dir + "import.py",
