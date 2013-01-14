@@ -1,0 +1,10 @@
+Bang: None
+Encoding: None
+Body:
+    Comment: Fragment[0:15] (1,1) (1,16)
+        Fragment[0:15] (1,1) (1,16)
+    CML record: Fragment[18:93] (3,1) (4,37)
+        Fragment[18:55] (3,1) (3,38)
+        Fragment[57:93] (4,1) (4,37)
+    CML record: Fragment[96:133] (6,1) (6,38)
+        Fragment[96:133] (6,1) (6,38)
