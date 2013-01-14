@@ -109,16 +109,16 @@ class CDMControlFlowParserTest( unittest.TestCase ):
                    "error retrieving coding" )
         return
 
+    def test_coding2( self ):
+        " Test coding 2"
+        self.meat( self.dir + "coding2.py",
+                   "error retrieving coding" )
+        return
+
 #    def test_import( self ):
 #        " Tests imports "
 #        self.meat( self.dir + "import.py",
 #                   "import test failed" )
-#        return
-
-#    def test_coding2( self ):
-#        " Test coding 2"
-#        self.meat( self.dir + "coding2.py",
-#                   "error retrieving coding" )
 #        return
 
 #    def test_coding3( self ):
