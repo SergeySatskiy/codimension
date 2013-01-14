@@ -727,7 +727,7 @@ int isEncodingLine( pANTLR3_COMMON_TOKEN  token,
 
 int  isStandaloneComment( pANTLR3_COMMON_TOKEN_STREAM  tokenStream,
                           pANTLR3_COMMON_TOKEN         currentToken,
-                          size_t                       currentIndex )
+                          ssize_t                      currentIndex )
 {
     size_t      tokenLine = currentToken->line;
 
