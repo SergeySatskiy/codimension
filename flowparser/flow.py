@@ -322,6 +322,7 @@ class Docstring( Fragment ):
 
     def __init__( self ):
         Fragment.__init__( self )
+        self.body = []
         return
 
     def getDisplayValue( self, buf = None ):
@@ -368,9 +369,23 @@ class Docstring( Fragment ):
         # Return a single string:
         return '\n'.join( trimmed )
 
+    def serialize( self ):
+        " Serializes the object "
+        Fragment.serialize( self )
+        for line in self.body:
+            line.serialize()
+        return
+
     def __str__( self ):
         " Converts to a string "
-        return "Docstring: " + Fragment.__str__( self )
+        return "Docstring: " + Fragment.__str__( self ) + "\n" + \
+               "\n".join( [ str( line ) for line in self.body ] )
+
+    def niceStringify( self, level ):
+        " Returns a string representation with new lines and shifts "
+        joiner = "\n" + ( level + 1 ) * "    "
+        return level * "    " + "Docstring: " + Fragment.__str__( self ) + \
+               joiner + joiner.join( [ str( item ) for item in self.body ] )
 
 
 class FragmentWithComments( Fragment ):
