@@ -28,7 +28,7 @@ import ConfigParser
 import thirdparty.pythontidy.PythonTidy as PythonTidy
 from tidysettings import TIDY_SETTINGS
 from utils.globals import GlobalData
-from utils.settings import Settings
+from utils.settings import Settings, settingsDir
 
 
 
@@ -36,7 +36,7 @@ def getPythonTidySettingFileName():
     " provides the .ini file name "
     if GlobalData().project.isLoaded():
         return GlobalData().project.userProjectDir + "pythontidy.ini"
-    return Settings().settingsDir + "pythontidy.ini"
+    return settingsDir + "pythontidy.ini"
 
 
 def getPythonTidySetting():

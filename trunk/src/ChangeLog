@@ -1,5 +1,6 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Bug fix: running python tidy with settings led to an exception.
 * Improvement: focus is moved to the current editor widget automatically when
   it is received by the editor tab widget. Issue #350.
 * Improvement: 'highilight in project' and 'highlight in filesystem'
