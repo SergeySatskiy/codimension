@@ -36,7 +36,7 @@ class ControlFlowParserIFace:
 
         # Reference to the object where all the collected info is stored
         self.cf = controlFlowInstance
-        self.commentLines = []
+        self.fragments = []
         return
 
     def _onError( self, message ):
@@ -54,75 +54,42 @@ class ControlFlowParserIFace:
         return
 
     def _onBangLine( self, begin, end,
-                           beginLine, beginPos,
-                           endLine, endPos ):
+                           beginLine, beginPos, endLine, endPos ):
         " Called when bang line is found "
-        bangLine = BangLine()
-        bangLine.begin = begin
-        bangLine.end = end
+        bangLine = BangLine( begin, end, beginLine, beginPos,
+                                         endLine, endPos )
 
         # Parent is the global scope
         bangLine.parent = self.cf
-
-        bangLine.beginLine = beginLine
-        bangLine.beginPos = beginPos
-        bangLine.endLine = endLine
-        bangLine.endPos = endPos
 
         self.cf.bangLine = bangLine
         return
 
     def _onEncodingLine( self, begin, end,
-                               beginLine, beginPos,
-                               endLine, endPos ):
+                               beginLine, beginPos, endLine, endPos ):
         " Called when encoding line is found "
-        encodingLine = EncodingLine()
-        encodingLine.begin = begin
-        encodingLine.end = end
+        encodingLine = EncodingLine( begin, end, beginLine, beginPos,
+                                                 endLine, endPos )
 
         # Parent is the global scope
         encodingLine.parent = self.cf
 
-        encodingLine.beginLine = beginLine
-        encodingLine.beginPos = beginPos
-        encodingLine.endLine = endLine
-        encodingLine.endPos = endPos
-
         self.cf.encodingLine = encodingLine
         return
 
-    def _onCommentFragment( self, begin, end,
-                                  beginLine, beginPos,
-                                  endLine, endPos ):
-        " Generic comment fragment. The exact comment type is unknown yet "
-        commentLine = Fragment()
-        commentLine.begin = begin
-        commentLine.end = end
-        commentLine.beginLine = beginLine
-        commentLine.beginPos = beginPos
-        commentLine.endLine = endLine
-        commentLine.endPos = endPos
-
-        self.commentLines.append( commentLine )
+    def _onFragment( self, begin, end,
+                           beginLine, beginPos, endLine, endPos ):
+        " Generic fragment. The exact fragment type is unknown yet "
+        self.fragments.append( Fragment( begin, end, beginLine, beginPos,
+                                         endLine, endPos ) )
         return
 
     def _onStandaloneCommentFinished( self ):
         " Standalone comment finished "
         comment = Comment()
-        comment.body = self.commentLines
-        self.commentLines = []
-
-        # Update parent for all members
-        for line in comment.body:
-            line.parent = comment
-
-        # Update the whole fragment properties
-        comment.begin = comment.body[ 0 ].begin
-        comment.end = comment.body[ -1 ].end
-        comment.beginLine = comment.body[ 0 ].beginLine
-        comment.beginPos = comment.body[ 0 ].beginPos
-        comment.endLine = comment.body[ -1 ].endLine
-        comment.endPos = comment.body[ -1 ].endPos
+        self.__wrapFragments( comment, self.fragments )
+        comment.body = self.fragments
+        self.fragments = []
 
         # Insert the comment at the proper location
         self.__insertStandaloneComment( comment, self.cf, self.cf.body, False )
@@ -131,23 +98,25 @@ class ControlFlowParserIFace:
     def _onCMLCommentFinished( self ):
         " CML Record finished "
         cml = CMLRecord()
-        cml.body = self.commentLines
-        self.commentLines = []
-
-        # Update parent for all members
-        for line in cml.body:
-            line.parent = cml
-
-        # Update the whole fragment properties
-        cml.begin = cml.body[ 0 ].begin
-        cml.end = cml.body[ -1 ].end
-        cml.beginLine = cml.body[ 0 ].beginLine
-        cml.beginPos = cml.body[ 0 ].beginPos
-        cml.endLine = cml.body[ -1 ].endLine
-        cml.endPos = cml.body[ -1 ].endPos
+        self.__wrapFragments( cml, self.fragments )
+        cml.body = self.fragments
+        self.fragments = []
 
         # Insert the comment at the proper location
         self.__insertStandaloneComment( cml, self.cf, self.cf.body, True )
+        return
+
+    def __wrapFragments( self, obj, parts ):
+        " Sets the wrapping object properties "
+        for part in parts:
+            part.parent = obj
+
+        obj.begin = parts[ 0 ].begin
+        obj.end = parts[ -1 ].end
+        obj.beginLine = parts[ 0 ].beginLine
+        obj.beginPos = parts[ 0 ].beginPos
+        obj.endLine = parts[ -1 ].endLine
+        obj.endPos = parts[ -1 ].endPos
         return
 
     def __insertStandaloneComment( self, obj, parent, body, isCML ):
@@ -179,6 +148,6 @@ class ControlFlowParserIFace:
         return
 
     def _onSideCommentFinished( self ):
-        pass
+        raise Exception( "Not implemented yet" )
 
 

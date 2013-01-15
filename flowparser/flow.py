@@ -39,24 +39,26 @@ CODING_REGEXP = re.compile( r'''coding[:=]\s*([-\w_.]+)''' )
 class Fragment:
     " Represents a single text fragment of a python file "
 
-    def __init__( self ):
-
-        # Minimal necessary information.
-        self.begin = None       # Absolute position of the first fragment
-                                # character. 0-based
-                                # It must never be None.
-        self.end = None         # Absolute position of the last fragment
-                                # character. 0-based
-                                # It must never be None.
+    def __init__( self, begin = None, end = None,
+                        beginLine = None, beginPos = None,
+                        endLine = None, endPos = None ):
 
         self.parent = None      # Reference to the parent fragment.
 
+        # Minimal necessary information.
+        self.begin = begin      # Absolute position of the first fragment
+                                # character. 0-based
+                                # It must never be None.
+        self.end = end          # Absolute position of the last fragment
+                                # character. 0-based
+                                # It must never be None.
+
         # Excessive members for convenience. This makes it easier to work with
         # the editor buffer directly.
-        self.beginLine = None   # 1-based line number
-        self.beginPos = None    # 1-based position number in the line
-        self.endLine = None     # 1-based line number
-        self.endPos = None      # 1-based position number in the line
+        self.beginLine = beginLine  # 1-based line number
+        self.beginPos = beginPos    # 1-based position number in the line
+        self.endLine = endLine      # 1-based line number
+        self.endPos = endPos        # 1-based position number in the line
 
         # Serialization support
         self.serialized = False # True if has been serialized
@@ -137,8 +139,9 @@ class ControlFlow( Fragment ):
         Fragment.__init__( self )
         self.parent = None          # The only object which has to have it None
 
-        self.bangLine = None        # Bang line Fragment
-        self.encodingLine = None    # Encoding line Fragment
+        self.bangLine = None        # Bang line fragment
+        self.encodingLine = None    # Encoding line fragment
+        self.docstring = None       # Docstring fragment
 
         self.body = []              # List of global scope fragments. It could be:
                                     # Docstring, Comment, CodeBlock,
@@ -164,6 +167,8 @@ class ControlFlow( Fragment ):
             self.bangLine.serialize()
         if self.encodingLine is not None:
             self.encodingLine.serialize()
+        if self.docstring is not None:
+            self.docstring.serialize()
         for item in self.body:
             item.serialize()
         return
@@ -179,20 +184,28 @@ class ControlFlow( Fragment ):
             encodingPart = "Encoding: None"
         else:
             encodingPart = str( self.encodingLine )
-        return bangPart, encodingPart
+
+        if self.docstring is None:
+            docstringPart = "Docstring: None"
+        else:
+            docstringPart = str( self.docstring )
+
+        return bangPart, encodingPart, docstringPart
 
     def __str__( self ):
         " Converts to string "
-        bangPart, encodingPart = self.__getBangEncodingAsStr()
+        bangPart, encodingPart, docstringPart = self.__getBangEncodingAsStr()
         return bangPart + "\n" + \
-               encodingPart + "\n" \
+               encodingPart + "\n" + \
+               docstringPart + "\n" \
                "Body:\n" + "\n".join( [ str( item ) for item in self.body ] )
 
     def niceStringify( self ):
         " Returns a string representation with new lines and shifts "
-        bangPart, encodingPart = self.__getBangEncodingAsStr()
+        bangPart, encodingPart, docstringPart = self.__getBangEncodingAsStr()
         return bangPart + "\n" + \
-               encodingPart + "\n" \
+               encodingPart + "\n" + \
+               docstringPart + "\n" \
                "Body:\n" + "\n".join( [ item.niceStringify( 1 ) \
                                         for item in self.body ] )
 
@@ -201,8 +214,9 @@ class ControlFlow( Fragment ):
 class BangLine( Fragment ):
     " Represents a line with the bang notation "
 
-    def __init__( self ):
-        Fragment.__init__( self )
+    def __init__( self, begin, end, beginLine, beginPos, endLine, endPos ):
+        Fragment.__init__( self, begin, end, beginLine, beginPos,
+                                             endLine, endPos )
         return
 
     def getDisplayValue( self, buf = None ):
@@ -218,8 +232,9 @@ class BangLine( Fragment ):
 class EncodingLine( Fragment ):
     " Represents a line with the file encoding "
 
-    def __init__( self ):
-        Fragment.__init__( self )
+    def __init__( self, begin, end, beginLine, beginPos, endLine, endPos ):
+        Fragment.__init__( self, begin, end, beginLine, beginPos,
+                                             endLine, endPos )
         return
 
     def getDisplayValue( self, buf = None ):

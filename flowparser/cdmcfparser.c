@@ -84,7 +84,7 @@ struct instanceCallbacks
     PyObject *      onBangLine;
     PyObject *      onEncodingLine;
 
-    PyObject *      onCommentFragment;
+    PyObject *      onFragment;
     PyObject *      onStandaloneCommentFinished;
     PyObject *      onSideCommentFinished;
     PyObject *      onCMLCommentFinished;
@@ -134,7 +134,7 @@ getInstanceCallbacks( PyObject *                  instance,
     GET_CALLBACK( onBangLine );
     GET_CALLBACK( onEncodingLine );
 
-    GET_CALLBACK( onCommentFragment );
+    GET_CALLBACK( onFragment );
     GET_CALLBACK( onStandaloneCommentFinished );
     GET_CALLBACK( onSideCommentFinished );
     GET_CALLBACK( onCMLCommentFinished );
@@ -159,7 +159,6 @@ getInstanceCallbacks( PyObject *                  instance,
 }
 
 
-#if 0
 /* Fills the given buffer
  * Returns: token of the first name tokens
  */
@@ -192,17 +191,34 @@ pANTLR3_COMMON_TOKEN  getDottedName( pANTLR3_BASE_TREE  tree,
 void checkForDocstring( pANTLR3_BASE_TREE             tree,
                         struct instanceCallbacks *    callbacks )
 {
+printf( "Checking docstring %p\n", tree);
     if ( tree == NULL ) return;
-    if ( getType( tree ) != TEST_LIST ) return;
-    if ( tree->children->count < 1 ) return;
+printf( "Type %d\n", getType( tree ));
+    if ( getType( tree ) == TEST_LIST ) {
+        if ( tree->children->count < 1 ) return;
+        tree = vectorGet( tree->children, 0 );
+    }
+//printf( "Children %d\n", tree->children->count);
+//    if ( tree->children->count < 1 ) return;
 
-    tree = vectorGet( tree->children, 0 );
+//    tree = vectorGet( tree->children, 0 );
+printf( "Type %d\n", getType( tree ));
     if ( getType( tree ) != STRING_LITERAL ) return;
 
     tree = vectorGet( tree->children, 0 );
-    PyObject_CallFunction( callbacks->onDocstring, "si",
-                           (const char *)(tree->toString( tree )->chars),
-                           tree->getLine( tree ) );
+pANTLR3_COMMON_TOKEN  tok = tree->getToken( tree );
+char *      lastChar = (char *)tok->stop;
+char *      firstChar = (char *)tok->start;
+size_t      line = tok->line;   // 1-based
+size_t      tokSize = lastChar - firstChar + 1;
+size_t      begin = (void*)firstChar - (void*)tok->input->data;
+size_t      end = begin + tokSize - 1;
+size_t      beginPos = tok->charPosition + 1;
+size_t      endPos = beginPos + tokSize - 1;
+printf( "Begin: %ld End: %ld Begin pos: %ld End pos: %ld\n", begin, end, beginPos, endPos );
+//    PyObject_CallFunction( callbacks->onDocstring, "si",
+//                           (const char *)(tree->toString( tree )->chars),
+//                           tree->getLine( tree ) );
     return;
 }
 
@@ -220,19 +236,19 @@ void  processWhat( pANTLR3_BASE_TREE            tree,
         if ( getType( child ) == AS )
         {
             pANTLR3_BASE_TREE  asChild = vectorGet( child->children, 0 );
-            PyObject_CallFunction( callbacks->onAs, "s",
-                                   (const char *)(asChild->toString( asChild )->chars) );
+//            PyObject_CallFunction( callbacks->onAs, "s",
+//                                   (const char *)(asChild->toString( asChild )->chars) );
             continue;
         }
 
         /* Otherwise it is what is imported */
         pANTLR3_COMMON_TOKEN    token = child->getToken( child );
 
-        PyObject_CallFunction( callbacks->onWhat, "siii",
-                               (const char *)(child->toString( child )->chars),
-                               token->line,
-                               token->charPosition + 1, /* Make it 1-based */
-                               (void *)token->start - token->input->data );
+//        PyObject_CallFunction( callbacks->onWhat, "siii",
+//                               (const char *)(child->toString( child )->chars),
+//                               token->line,
+//                               token->charPosition + 1, /* Make it 1-based */
+//                               (void *)token->start - token->input->data );
     }
     return;
 }
@@ -254,11 +270,11 @@ void  processImport( pANTLR3_BASE_TREE            tree,
         if ( getType( t ) == DOTTED_NAME )
         {
             pANTLR3_COMMON_TOKEN    token = getDottedName( t, name );
-            PyObject_CallFunction( callbacks->onImport, "siii",
-                                   name,
-                                   token->line,
-                                   token->charPosition + 1, /* Make it 1-based */
-                                   (void *)(token->start) - token->input->data );
+//            PyObject_CallFunction( callbacks->onImport, "siii",
+//                                   name,
+//                                   token->line,
+//                                   token->charPosition + 1, /* Make it 1-based */
+//                                   (void *)(token->start) - token->input->data );
         }
 
         if ( getType( t ) == WHAT )
@@ -269,8 +285,8 @@ void  processImport( pANTLR3_BASE_TREE            tree,
         if ( getType( t ) == AS )
         {
             pANTLR3_BASE_TREE  asChild = vectorGet( t->children, 0 );
-            PyObject_CallFunction( callbacks->onAs, "s",
-                                   (const char *)(asChild->toString( asChild )->chars) );
+//            PyObject_CallFunction( callbacks->onAs, "s",
+//                                   (const char *)(asChild->toString( asChild )->chars) );
         }
 
     }
@@ -294,7 +310,7 @@ const char *  processArguments( pANTLR3_BASE_TREE    tree,
             case NAME_ARG:
                 {
                     const char *    name = (const char *)(arg->toString( arg )->chars);
-                    PyObject_CallFunction( onArg, "s", name );
+//                    PyObject_CallFunction( onArg, "s", name );
                     if ( i == 0 ) firstArgument = name;
                 }
                 break;
@@ -304,7 +320,7 @@ const char *  processArguments( pANTLR3_BASE_TREE    tree,
                     char            augName[ strlen( name ) + 2 ];
                     augName[0] = '*';
                     strcpy( augName + 1, name );
-                    PyObject_CallFunction( onArg, "s", augName );
+//                    PyObject_CallFunction( onArg, "s", augName );
                 }
                 break;
             case DBL_STAR_ARG:
@@ -314,7 +330,7 @@ const char *  processArguments( pANTLR3_BASE_TREE    tree,
                     augName[0] = '*';
                     augName[1] = '*';
                     strcpy( augName + 2, name );
-                    PyObject_CallFunction( onArg, "s", augName );
+//                    PyObject_CallFunction( onArg, "s", augName );
                 }
                 break;
         }
@@ -331,11 +347,11 @@ int processDecor( pANTLR3_BASE_TREE            tree,
 
     pANTLR3_COMMON_TOKEN    token = getDottedName( tree->children->get( tree->children, 0 ),
                                                    name );
-    PyObject_CallFunction( callbacks->onDecorator, "siii",
-                           name,
-                           token->line,
-                           token->charPosition + 1, /* Make it 1-based */
-                           (void *)token->start - token->input->data );
+//    PyObject_CallFunction( callbacks->onDecorator, "siii",
+//                           name,
+//                           token->line,
+//                           token->charPosition + 1, /* Make it 1-based */
+//                           (void *)token->start - token->input->data );
     if ( strcmp( name, "staticmethod" ) == 0 )
     {
         isStaticMethod = 1;
@@ -345,8 +361,8 @@ int processDecor( pANTLR3_BASE_TREE            tree,
     if ( tree->children->count > 1 )
     {
         /* There are arguments - process the ARGUMENTS node*/
-        processArguments( vectorGet( tree->children, 1 ),
-                          callbacks->onDecoratorArgument );
+        processArguments( vectorGet( tree->children, 1 ), NULL );
+//                          callbacks->onDecoratorArgument );
     }
 
     return isStaticMethod;
@@ -371,16 +387,16 @@ void  processClassDefinition( pANTLR3_BASE_TREE            tree,
      */
 
     ++objectsLevel;
-    PyObject_CallFunction( callbacks->onClass, "siiiiii",
-                           (nameChild->toString( nameChild ))->chars,
-                           /* Function name line and pos */
-                           token->line & 0xFFFF,
-                           (token->charPosition & 0xFFFF) + 1, /* To make it 1-based */
-                           (void *)token->start - token->input->data,
-                           /* Keyword 'def' line and pos */
-                           token->line >> 16,
-                           (token->charPosition >> 16) + 1,    /* To make it 1-based */
-                           objectsLevel );
+//    PyObject_CallFunction( callbacks->onClass, "siiiiii",
+//                           (nameChild->toString( nameChild ))->chars,
+//                           /* Function name line and pos */
+//                           token->line & 0xFFFF,
+//                           (token->charPosition & 0xFFFF) + 1, /* To make it 1-based */
+//                           (void *)token->start - token->input->data,
+//                           /* Keyword 'def' line and pos */
+//                           token->line >> 16,
+//                           (token->charPosition >> 16) + 1,    /* To make it 1-based */
+//                           objectsLevel );
 
     for ( k = 1; k < n; ++k )
     {
@@ -397,8 +413,8 @@ void  processClassDefinition( pANTLR3_BASE_TREE            tree,
                     for ( k = 0; k < n; ++k )
                     {
                         pANTLR3_BASE_TREE   base = vectorGet( t->children, k );
-                        PyObject_CallFunction( callbacks->onBaseClass, "s",
-                                               (const char *)(base->toString( base )->chars) );
+//                        PyObject_CallFunction( callbacks->onBaseClass, "s",
+//                                               (const char *)(base->toString( base )->chars) );
                     }
                 }
                 continue;
@@ -433,16 +449,16 @@ void  processFuncDefinition( pANTLR3_BASE_TREE            tree,
      */
 
     ++objectsLevel;
-    PyObject_CallFunction( callbacks->onFunction, "siiiiii",
-                           (nameChild->toString( nameChild ))->chars,
-                           /* Function name line and pos */
-                           token->line & 0xFFFF,
-                           (token->charPosition & 0xFFFF) + 1, /* To make it 1-based */
-                           (void *)token->start - token->input->data,
-                           /* Keyword 'def' line and pos */
-                           token->line >> 16,
-                           (token->charPosition >> 16) + 1,    /* To make it 1-based */
-                           objectsLevel );
+//    PyObject_CallFunction( callbacks->onFunction, "siiiiii",
+//                           (nameChild->toString( nameChild ))->chars,
+//                           /* Function name line and pos */
+//                           token->line & 0xFFFF,
+//                           (token->charPosition & 0xFFFF) + 1, /* To make it 1-based */
+//                           (void *)token->start - token->input->data,
+//                           /* Keyword 'def' line and pos */
+//                           token->line >> 16,
+//                           (token->charPosition >> 16) + 1,    /* To make it 1-based */
+//                           objectsLevel );
 
     for ( k = 1; k < n; ++k )
     {
@@ -453,7 +469,8 @@ void  processFuncDefinition( pANTLR3_BASE_TREE            tree,
                 isStaticMethod += processDecor( t, callbacks );
                 continue;
             case ARGUMENTS:
-                firstArgumentName = processArguments( t, callbacks->onArgument );
+                firstArgumentName = processArguments( t, NULL );
+//                                                      callbacks->onArgument );
                 continue;
             case BODY:
                 checkForDocstring( vectorGet( t->children, 0 ), callbacks );
@@ -508,12 +525,12 @@ void processAssign( pANTLR3_BASE_TREE   tree,
                 child = vectorGet( child->children, 0 );
 
                 pANTLR3_COMMON_TOKEN    token = child->getToken( child );
-                PyObject_CallFunction( onVariable, "siiii",
-                                       (child->toString( child ))->chars,
-                                       token->line,
-                                       token->charPosition + 1, /* Make it 1-based */
-                                       (void *)token->start - token->input->data,
-                                       objectsLevel );
+//                PyObject_CallFunction( onVariable, "siiii",
+//                                       (child->toString( child ))->chars,
+//                                       token->line,
+//                                       token->charPosition + 1, /* Make it 1-based */
+//                                       (void *)token->start - token->input->data,
+//                                       objectsLevel );
                 return;
             }
 
@@ -524,12 +541,12 @@ void processAssign( pANTLR3_BASE_TREE   tree,
                 child = vectorGet( child->children, 0 );
 
                 pANTLR3_COMMON_TOKEN    token = child->getToken( child );
-                PyObject_CallFunction( onVariable, "siiii",
-                                       (child->toString( child ))->chars,
-                                       token->line,
-                                       token->charPosition + 1, /* Make it 1-based */
-                                       (void *)token->start - token->input->data,
-                                       objectsLevel );
+//                PyObject_CallFunction( onVariable, "siiii",
+//                                       (child->toString( child ))->chars,
+//                                       token->line,
+//                                       token->charPosition + 1, /* Make it 1-based */
+//                                       (void *)token->start - token->input->data,
+//                                       objectsLevel );
             }
         }
     }
@@ -582,12 +599,12 @@ void processInstanceMember( pANTLR3_BASE_TREE           tree,
             child = vectorGet( child->children, 0 );
 
             pANTLR3_COMMON_TOKEN    token = child->getToken( child );
-            PyObject_CallFunction( callbacks->onInstanceAttribute, "siiii",
-                                   (child->toString( child ))->chars,
-                                   token->line,
-                                   token->charPosition + 1, /* Make it 1-based */
-                                   (void *)token->start - token->input->data,
-                                   objectsLevel );
+//            PyObject_CallFunction( callbacks->onInstanceAttribute, "siiii",
+//                                   (child->toString( child ))->chars,
+//                                   token->line,
+//                                   token->charPosition + 1, /* Make it 1-based */
+//                                   (void *)token->start - token->input->data,
+//                                   objectsLevel );
             return;
         }
 
@@ -600,12 +617,12 @@ void processInstanceMember( pANTLR3_BASE_TREE           tree,
         child = vectorGet( child->children, 0 );
 
         pANTLR3_COMMON_TOKEN    token = child->getToken( child );
-        PyObject_CallFunction( callbacks->onInstanceAttribute, "siiii",
-                               (child->toString( child ))->chars,
-                               token->line,
-                               token->charPosition + 1, /* Make it 1-based */
-                               (void *)token->start - token->input->data,
-                               objectsLevel );
+//        PyObject_CallFunction( callbacks->onInstanceAttribute, "siiii",
+//                               (child->toString( child ))->chars,
+//                               token->line,
+//                               token->charPosition + 1, /* Make it 1-based */
+//                               (void *)token->start - token->input->data,
+//                               objectsLevel );
     }
     return;
 }
@@ -635,9 +652,11 @@ void walk( pANTLR3_BASE_TREE            tree,
             return;
         case ASSIGN:
             if ( scope == GLOBAL_SCOPE )
-                processAssign( tree, callbacks->onGlobal, objectsLevel );
+                processAssign( tree, NULL, objectsLevel );
+//                               callbacks->onGlobal, objectsLevel );
             if ( scope == CLASS_SCOPE )
-                processAssign( tree, callbacks->onClassAttribute, objectsLevel );
+                processAssign( tree, NULL, objectsLevel );
+//                               callbacks->onClassAttribute, objectsLevel );
             if ( scope == CLASS_METHOD_SCOPE )
                 processInstanceMember( tree, callbacks, firstArgName, objectsLevel );
 
@@ -684,7 +703,6 @@ void walk( pANTLR3_BASE_TREE            tree,
     return;
 }
 
-#endif
 
 
 int isBangLine( pANTLR3_COMMON_TOKEN  token,
@@ -831,7 +849,7 @@ int  startNewCommentFragment( struct instanceCallbacks *   callbacks,
             state = STANDALONE_COMMENT_STARTED;
             break;
     }
-    PyObject_CallFunction( callbacks->onCommentFragment, "iiiiii",
+    PyObject_CallFunction( callbacks->onFragment, "iiiiii",
                            begin, end, line, beginPos, line, endPos );
     return state;
 }
@@ -925,7 +943,7 @@ void collectComments( pANTLR3_COMMON_TOKEN_STREAM  tokenStream,
                                                          begin, end, line, beginPos, endPos );
                         break;
                     case STANDALONE_COMMENT_LINE:
-                        PyObject_CallFunction( callbacks->onCommentFragment, "iiiiii",
+                        PyObject_CallFunction( callbacks->onFragment, "iiiiii",
                                                begin, end, line, beginPos, line, endPos );
                         break;
                     case CML_COMMENT_LINE:
@@ -976,7 +994,7 @@ void collectComments( pANTLR3_COMMON_TOKEN_STREAM  tokenStream,
                                                          begin, end, line, beginPos, endPos );
                         break;
                     case CML_COMMENT_LINE_CONTINUE:
-                        PyObject_CallFunction( callbacks->onCommentFragment, "iiiiii",
+                        PyObject_CallFunction( callbacks->onFragment, "iiiiii",
                                                begin, end, line, beginPos, line, endPos );
                         break;
                 }
@@ -996,7 +1014,7 @@ void collectComments( pANTLR3_COMMON_TOKEN_STREAM  tokenStream,
                 switch ( commentType )
                 {
                     case SIDE_COMMENT_LINE:
-                        PyObject_CallFunction( callbacks->onCommentFragment, "iiiiii",
+                        PyObject_CallFunction( callbacks->onFragment, "iiiiii",
                                                begin, end, line, beginPos, line, endPos );
                         break;
                     case STANDALONE_COMMENT_LINE:
@@ -1030,18 +1048,6 @@ void collectComments( pANTLR3_COMMON_TOKEN_STREAM  tokenStream,
     }
 
     flushCollectedComments( state, callbacks );
-}
-
-
-// Debug purpose
-void walk( pANTLR3_BASE_TREE            tree,
-           struct instanceCallbacks *   callbacks,
-           int                          objectsLevel,
-           enum Scope                   scope,
-           const char *                 firstArgName,
-           int                          entryLevel )
-{
-    return;
 }
 
 
