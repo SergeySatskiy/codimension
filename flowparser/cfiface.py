@@ -25,7 +25,7 @@ Definition of an interface class for the control flow C parser
 """
 
 from flow import ( BangLine, EncodingLine,
-                   Fragment, Comment, FragmentWithComments )
+                   Fragment, Comment, FragmentWithComments, Docstring )
 from cml import CMLRecord
 
 
@@ -36,7 +36,8 @@ class ControlFlowParserIFace:
 
         # Reference to the object where all the collected info is stored
         self.cf = controlFlowInstance
-        self.fragments = []
+        self.__fragments = []
+        self.__objectsStack = []
         return
 
     def _onError( self, message ):
@@ -80,16 +81,16 @@ class ControlFlowParserIFace:
     def _onFragment( self, begin, end,
                            beginLine, beginPos, endLine, endPos ):
         " Generic fragment. The exact fragment type is unknown yet "
-        self.fragments.append( Fragment( begin, end, beginLine, beginPos,
-                                         endLine, endPos ) )
+        self.__fragments.append( Fragment( begin, end, beginLine, beginPos,
+                                           endLine, endPos ) )
         return
 
     def _onStandaloneCommentFinished( self ):
         " Standalone comment finished "
         comment = Comment()
-        self.__wrapFragments( comment, self.fragments )
-        comment.body = self.fragments
-        self.fragments = []
+        self.__wrapFragments( comment, self.__fragments )
+        comment.body = self.__fragments
+        self.__fragments = []
 
         # Insert the comment at the proper location
         self.__insertStandaloneComment( comment, self.cf, self.cf.body, False )
@@ -98,9 +99,9 @@ class ControlFlowParserIFace:
     def _onCMLCommentFinished( self ):
         " CML Record finished "
         cml = CMLRecord()
-        self.__wrapFragments( cml, self.fragments )
-        cml.body = self.fragments
-        self.fragments = []
+        self.__wrapFragments( cml, self.__fragments )
+        cml.body = self.__fragments
+        self.__fragments = []
 
         # Insert the comment at the proper location
         self.__insertStandaloneComment( cml, self.cf, self.cf.body, True )
@@ -149,5 +150,23 @@ class ControlFlowParserIFace:
 
     def _onSideCommentFinished( self ):
         raise Exception( "Not implemented yet" )
+
+    def _onDocstringFinished( self ):
+        " Called when a docstring is finished "
+        docstring = Docstring()
+        self.__wrapFragments( docstring, self.__fragments )
+        docstring.body = self.__fragments
+        self.__fragments = []
+
+        # Insert into the proper object
+        if not self.__objectsStack:
+            docstring.parent = self.cf
+            self.cf.docstring = docstring
+            return
+
+        index = len( self.__objectsStack ) - 1
+        docstring.parent = self.__objectsStack[ index ]
+        self.__objectsStack[ index ].docstring = docstring
+        return
 
 
