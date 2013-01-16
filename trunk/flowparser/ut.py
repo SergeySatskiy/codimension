@@ -104,39 +104,45 @@ class CDMControlFlowParserTest( unittest.TestCase ):
         return
 
     def test_coding1( self ):
-        " Test coding 1"
+        " Test coding 1 "
         self.meat( self.dir + "coding1.py",
                    "error retrieving coding" )
         return
 
     def test_coding2( self ):
-        " Test coding 2"
+        " Test coding 2 "
         self.meat( self.dir + "coding2.py",
                    "error retrieving coding" )
         return
 
     def test_coding3( self ):
-        " Test coding 3"
+        " Test coding 3 "
         self.meat( self.dir + "coding3.py",
                    "error retrieving coding" )
         return
 
     def test_cml1( self ):
-        " Test cml 1"
+        " Test cml 1 "
         self.meat( self.dir + "cml1.py",
                    "error collecting cml type I" )
         return
 
     def test_cml2( self ):
-        " Test cml 2"
+        " Test cml 2 "
         self.meat( self.dir + "cml2.py",
                    "error collecting cml type I with C" )
         return
 
     def test_cml3( self ):
-        " Test cml 3"
+        " Test cml 3 "
         self.meat( self.dir + "cml3.py",
                    "error collecting cml type S with C" )
+        return
+
+    def test_docstring1( self ):
+        " Test docstring 1 "
+        self.meat( self.dir + "docstring1.py",
+                   "module docstring error - 1 line" )
         return
 
 #    def test_import( self ):
