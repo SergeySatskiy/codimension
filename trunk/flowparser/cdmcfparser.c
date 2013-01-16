@@ -162,16 +162,18 @@ getInstanceCallbacks( PyObject *                  instance,
 
 
 static
-void splitIntoFragments( pANTLR3_COMMON_TOKEN          token,
+void splitIntoFragments( pANTLR3_COMMON_TOKEN          first,
+                         pANTLR3_COMMON_TOKEN          last,
                          struct instanceCallbacks *    callbacks )
 {
-    char *      streamBegin = (char*)token->input->data;
-    size_t      currentLine = token->line;    // 1-based
-    char *      currentFirstChar = (char *)token->start;
+    char *      streamBegin = (char*)first->input->data;
+    size_t      currentLine = first->line;    // 1-based
+    char *      currentFirstChar = (char *)first->start;
     char *      current = currentFirstChar;
-    size_t      currentBeginPos = token->charPosition + 1;
+    size_t      currentBeginPos = first->charPosition + 1;
     size_t      currentEndPos = currentBeginPos;
-    char *      lastChar = (char *)token->stop;
+    char *      lastChar = (char *)last->stop;
+
     int         skipLine = 0;
     char *      currentLastChar = currentFirstChar;
 
@@ -283,9 +285,18 @@ void checkForDocstring( pANTLR3_BASE_TREE             tree,
     }
     if ( getType( tree ) != STRING_LITERAL ) return;
 
-    tree = vectorGet( tree->children, 0 );
+    // There could be many children
+    pANTLR3_COMMON_TOKEN    first;
+    pANTLR3_COMMON_TOKEN    last;
+    pANTLR3_BASE_TREE       childTree;
 
-    splitIntoFragments( tree->getToken( tree ), callbacks );
+    childTree = vectorGet( tree->children, 0 );
+    first = childTree->getToken( childTree );
+
+    childTree = vectorGet( tree->children, tree->children->count - 1 );
+    last = childTree->getToken( childTree );
+
+    splitIntoFragments( first, last, callbacks );
     PyObject_CallFunction( callbacks->onDocstringFinished, "" );
     return;
 }
