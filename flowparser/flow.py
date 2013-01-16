@@ -173,7 +173,7 @@ class ControlFlow( Fragment ):
             item.serialize()
         return
 
-    def __getBangEncodingAsStr( self ):
+    def __getBangEncodingAsStr( self, level = 0 ):
         " Helper for stringification "
         if self.bangLine is None:
             bangPart = "Bang: None"
@@ -188,7 +188,7 @@ class ControlFlow( Fragment ):
         if self.docstring is None:
             docstringPart = "Docstring: None"
         else:
-            docstringPart = str( self.docstring )
+            docstringPart = self.docstring.niceStringify( level )
 
         return bangPart, encodingPart, docstringPart
 
