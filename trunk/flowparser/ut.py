@@ -175,6 +175,12 @@ class CDMControlFlowParserTest( unittest.TestCase ):
                    "module docstring error - 2 lines, joined" )
         return
 
+    def test_docstring7( self ):
+        " Test docstring 7 "
+        self.meat( self.dir + "docstring7.py",
+                   'module docstring error - multilined with """' )
+        return
+
 #    def test_import( self ):
 #        " Tests imports "
 #        self.meat( self.dir + "import.py",
