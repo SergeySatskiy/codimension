@@ -151,6 +151,18 @@ class CDMControlFlowParserTest( unittest.TestCase ):
                    "module docstring error - 1 line" )
         return
 
+    def test_docstring3( self ):
+        " Test docstring 3 "
+        self.meat( self.dir + "docstring3.py",
+                   "module docstring error - 2 lines" )
+        return
+
+    def test_docstring4( self ):
+        " Test docstring 4 "
+        self.meat( self.dir + "docstring4.py",
+                   "module docstring error - 1 line, joined" )
+        return
+
 #    def test_import( self ):
 #        " Tests imports "
 #        self.meat( self.dir + "import.py",
