@@ -88,6 +88,7 @@ struct instanceCallbacks
     PyObject *      onStandaloneCommentFinished;
     PyObject *      onSideCommentFinished;
     PyObject *      onCMLCommentFinished;
+    PyObject *      onDocstringFinished;
 
     /*
     PyObject *      onGlobal;
@@ -138,6 +139,7 @@ getInstanceCallbacks( PyObject *                  instance,
     GET_CALLBACK( onStandaloneCommentFinished );
     GET_CALLBACK( onSideCommentFinished );
     GET_CALLBACK( onCMLCommentFinished );
+    GET_CALLBACK( onDocstringFinished );
 
     /*
     GET_CALLBACK( onGlobal );
@@ -159,9 +161,91 @@ getInstanceCallbacks( PyObject *                  instance,
 }
 
 
+static
+void splitIntoFragments( pANTLR3_COMMON_TOKEN          token,
+                         struct instanceCallbacks *    callbacks )
+{
+    char *      streamBegin = (char*)token->input->data;
+    size_t      currentLine = token->line;    // 1-based
+    char *      currentFirstChar = (char *)token->start;
+    char *      current = currentFirstChar;
+    size_t      currentBeginPos = token->charPosition + 1;
+    size_t      currentEndPos = currentBeginPos;
+    char *      lastChar = (char *)token->stop;
+    int         skipLine = 0;
+    char *      currentLastChar = currentFirstChar;
+
+    while ( current != lastChar )
+    {
+        skipLine = 0;
+        if ( *current == '\r' )
+        {
+            currentLastChar = current - 1;
+            skipLine = 1;
+            if ( *(current + 1) == '\n' )
+                ++current;
+        }
+        else
+        {
+            if ( *current == '\n' )
+            {
+                currentLastChar = current - 1;
+                skipLine = 1;
+            }
+        }
+
+        if ( skipLine != 0 ) {
+            // The end of the current fragment has been found.
+            // Submit the fragment and skip till the next line.
+            PyObject_CallFunction( callbacks->onFragment, "iiiiii",
+                                   currentFirstChar - streamBegin,      // begin shift
+                                   currentLastChar - streamBegin,       // end shift
+                                   currentLine,
+                                   currentBeginPos,
+                                   currentLine,
+                                   currentEndPos - 1);
+
+            // The current points to the CR/LF last character
+            while ( *current == '\n' || *current == '\r' )
+            {
+                ++currentLine;
+                if ( *current == '\r' )
+                {
+                    if ( *(current + 1) == '\n' )
+                        ++current;
+                }
+                ++current;
+            }
+
+            currentFirstChar = current;
+            currentBeginPos = 1;
+            currentEndPos = 1;
+            continue;
+        }
+
+        ++current;
+        ++currentEndPos;
+    }
+
+
+    // Submit the last fragment
+    PyObject_CallFunction( callbacks->onFragment, "iiiiii",
+                           currentFirstChar - streamBegin,      // begin shift
+                           lastChar - streamBegin,              // end shift
+                           currentLine,
+                           currentBeginPos,
+                           currentLine,
+                           currentEndPos );
+
+    return;
+}
+
+
+
 /* Fills the given buffer
  * Returns: token of the first name tokens
  */
+static
 pANTLR3_COMMON_TOKEN  getDottedName( pANTLR3_BASE_TREE  tree,
                                      char *             name )
 {
@@ -191,34 +275,18 @@ pANTLR3_COMMON_TOKEN  getDottedName( pANTLR3_BASE_TREE  tree,
 void checkForDocstring( pANTLR3_BASE_TREE             tree,
                         struct instanceCallbacks *    callbacks )
 {
-printf( "Checking docstring %p\n", tree);
     if ( tree == NULL ) return;
-printf( "Type %d\n", getType( tree ));
-    if ( getType( tree ) == TEST_LIST ) {
+    if ( getType( tree ) == TEST_LIST )
+    {
         if ( tree->children->count < 1 ) return;
         tree = vectorGet( tree->children, 0 );
     }
-//printf( "Children %d\n", tree->children->count);
-//    if ( tree->children->count < 1 ) return;
-
-//    tree = vectorGet( tree->children, 0 );
-printf( "Type %d\n", getType( tree ));
     if ( getType( tree ) != STRING_LITERAL ) return;
 
     tree = vectorGet( tree->children, 0 );
-pANTLR3_COMMON_TOKEN  tok = tree->getToken( tree );
-char *      lastChar = (char *)tok->stop;
-char *      firstChar = (char *)tok->start;
-size_t      line = tok->line;   // 1-based
-size_t      tokSize = lastChar - firstChar + 1;
-size_t      begin = (void*)firstChar - (void*)tok->input->data;
-size_t      end = begin + tokSize - 1;
-size_t      beginPos = tok->charPosition + 1;
-size_t      endPos = beginPos + tokSize - 1;
-printf( "Begin: %ld End: %ld Begin pos: %ld End pos: %ld\n", begin, end, beginPos, endPos );
-//    PyObject_CallFunction( callbacks->onDocstring, "si",
-//                           (const char *)(tree->toString( tree )->chars),
-//                           tree->getLine( tree ) );
+
+    splitIntoFragments( tree->getToken( tree ), callbacks );
+    PyObject_CallFunction( callbacks->onDocstringFinished, "" );
     return;
 }
 
