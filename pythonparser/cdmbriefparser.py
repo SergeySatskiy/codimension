@@ -194,23 +194,22 @@ class Decorator( ModuleInfoBase ):
 
     def __str__( self ):
         val = "Decorator[" + self._getLPA() + "]: '" + self.name
-        if len( self.arguments ) == 0:
-            return val
-        val += "( "
-        first = True
-        for item in self.arguments:
-            if first:
-                val += item
-                first = False
-            else:
-                val += ", " + item
-        val += " )'"
+        if self.arguments:
+            val += "( "
+            first = True
+            for item in self.arguments:
+                if first:
+                    val += item
+                    first = False
+                else:
+                    val += ", " + item
+            val += " )'"
         return val
 
     def getDisplayName( self ):
         " Provides a name for display purpose "
         displayName = self.name
-        if len ( self.arguments ) > 0:
+        if self.arguments:
             displayName += "( " + ", ".join( self.arguments ) + " )"
         return displayName
 
@@ -275,7 +274,7 @@ class Function( ModuleInfoBase ):
     def getDisplayName( self ):
         " Provides a name for display purpose "
         displayName = self.name + "("
-        if len( self.arguments ) > 0:
+        if self.arguments:
             displayName += " " + ", ".join( self.arguments ) + " "
         displayName += ")"
         return displayName
@@ -328,7 +327,7 @@ class Class( ModuleInfoBase ):
     def getDisplayName( self ):
         " Provides a name for display purpose "
         displayName = self.name
-        if len( self.base ) > 0:
+        if self.base:
             displayName += "( " + ", ".join( self.base ) + " )"
         return displayName
 
@@ -391,8 +390,10 @@ class BriefModuleInfo():
     def __flushLevel( self, level ):
         " Merge the found objects to the required level "
 
-        while len( self.objectsStack ) > level:
-            lastIndex = len( self.objectsStack ) - 1
+        objectsCount = len( self.objectsStack )
+
+        while objectsCount > level:
+            lastIndex = objectsCount - 1
             if lastIndex == 0:
                 # We have exactly one element in the stack
                 if self.objectsStack[ 0 ].__class__.__name__ == "Class":
@@ -409,7 +410,9 @@ class BriefModuleInfo():
             else:
                 self.objectsStack[ lastIndex - 1 ].functions. \
                         append( self.objectsStack[ lastIndex ] )
+
             del self.objectsStack[ lastIndex ]
+            objectsCount -= 1
 
         return
 
@@ -453,11 +456,10 @@ class BriefModuleInfo():
 
     def _onAs( self, name ):
         " Memorizes an alias for an import or an imported item "
-        if len( self.__lastImport.what ) == 0:
-            self.__lastImport.alias = name
+        if self.__lastImport.what:
+            self.__lastImport.what[ -1 ].alias = name
         else:
-            lastIndex = len( self.__lastImport.what ) - 1
-            self.__lastImport.what[ lastIndex ].alias = name
+            self.__lastImport.alias = name
         return
 
     def _onWhat( self, name, line, pos, absPosition ):
@@ -491,17 +493,14 @@ class BriefModuleInfo():
     def _onDecorator( self, name, line, pos, absPosition ):
         " Memorizes a function or a class decorator "
         # A class or a function must be on the top of the stack
-        index = len( self.objectsStack ) - 1
-        self.objectsStack[ index ].decorators.append( \
+        self.objectsStack[ -1 ].decorators.append( \
                                             Decorator( name, line, pos,
                                                        absPosition ) )
         return
 
     def _onDecoratorArgument( self, name ):
         " Memorizes a decorator argument "
-        index = len( self.objectsStack ) - 1
-        decorIndex = len( self.objectsStack[ index ].decorators ) - 1
-        self.objectsStack[ index ].decorators[ decorIndex ].arguments.append( name )
+        self.objectsStack[ -1 ].decorators[ -1 ].arguments.append( name )
         return
 
     def _onDocstring( self, docstr, line ):
@@ -510,25 +509,24 @@ class BriefModuleInfo():
             docstr = docstr[ 3:-3 ]
         else:
             docstr = docstr[ 1:-1 ]
-        if len( self.objectsStack ) == 0:
-            self.docstring = Docstring( trim_docstring( docstr ), line )
+
+        if self.objectsStack:
+            self.objectsStack[ -1 ].docstring = \
+                                 Docstring( trim_docstring( docstr ), line )
             return
-        index = len( self.objectsStack ) - 1
-        self.objectsStack[ index ].docstring = \
-                             Docstring( trim_docstring( docstr ), line )
+
+        self.docstring = Docstring( trim_docstring( docstr ), line )
         return
 
     def _onArgument( self, name ):
         " Memorizes a function argument "
-        index = len( self.objectsStack ) - 1
-        self.objectsStack[ index ].arguments.append( name )
+        self.objectsStack[ -1 ].arguments.append( name )
         return
 
     def _onBaseClass( self, name ):
         " Memorizes a class base class "
         # A class must be on the top of the stack
-        index = len( self.objectsStack ) - 1
-        self.objectsStack[ index ].base.append( name )
+        self.objectsStack[ -1 ].base.append( name )
         return
 
     def _onError( self, message ):
