@@ -148,6 +148,12 @@ class CDMBriefParserTest( unittest.TestCase ):
                    "docstring test failed" )
         return
 
+    def test_docstrings2( self ):
+        " Test docstrings 2 "
+        self.meat( self.dir + "docstring2.py",
+                   "docstring test failed (the only file content)" )
+        return
+
     def test_decorators( self ):
         " Test decorators "
         self.meat( self.dir + "decorators.py",
