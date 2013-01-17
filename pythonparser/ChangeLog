@@ -1,6 +1,7 @@
 2013 Jan XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Bug fix: module docstring if it is the only file item is recognised properly
+* Minor code cleanup
 
 2012 Sep 17  Sergey Satskiy <sergey.satskiy@gmail.com>
 
