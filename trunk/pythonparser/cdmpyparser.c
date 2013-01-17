@@ -159,12 +159,19 @@ pANTLR3_COMMON_TOKEN  getDottedName( pANTLR3_BASE_TREE  tree,
 void checkForDocstring( pANTLR3_BASE_TREE             tree,
                         struct instanceCallbacks *    callbacks )
 {
-    if ( tree == NULL ) return;
-    if ( getType( tree ) != TEST_LIST ) return;
-    if ( tree->children->count < 1 ) return;
+    if ( tree == NULL )
+        return;
 
-    tree = vectorGet( tree->children, 0 );
-    if ( getType( tree ) != STRING_LITERAL ) return;
+    if ( getType( tree ) == TEST_LIST )
+    {
+        if ( tree->children->count < 1 )
+            return;
+
+        tree = vectorGet( tree->children, 0 );
+    }
+
+    if ( getType( tree ) != STRING_LITERAL )
+        return;
 
     tree = vectorGet( tree->children, 0 );
     PyObject_CallFunction( callbacks->onDocstring, "si",
