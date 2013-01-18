@@ -505,11 +505,6 @@ class BriefModuleInfo():
 
     def _onDocstring( self, docstr, line ):
         " Memorizes a function/class/module docstring "
-        if docstr.startswith( "'''" ) or docstr.startswith( '"""' ):
-            docstr = docstr[ 3:-3 ]
-        else:
-            docstr = docstr[ 1:-1 ]
-
         if self.objectsStack:
             self.objectsStack[ -1 ].docstring = \
                                  Docstring( trim_docstring( docstr ), line )

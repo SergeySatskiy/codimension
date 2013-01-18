@@ -30,7 +30,7 @@
 #ifndef CDM_PY_PARSER_VERSION
 #define CDM_PY_PARSER_VERSION       "trunk"
 #endif
-#define MAX_DOTTED_NAME_LENGTH      256
+#define MAX_DOTTED_NAME_LENGTH      512
 
 
 /* copied (and modified) from libantlr3 to avoid indirect function calls */
@@ -130,8 +130,8 @@ getInstanceCallbacks( PyObject *                  instance,
 /* Fills the given buffer
  * Returns: token of the first name tokens
  */
-pANTLR3_COMMON_TOKEN  getDottedName( pANTLR3_BASE_TREE  tree,
-                                     char *             name )
+static pANTLR3_COMMON_TOKEN  getDottedName( pANTLR3_BASE_TREE  tree,
+                                            char *             name )
 {
     ANTLR3_UINT32           n = tree->children->count;
     ANTLR3_UINT32           k;
@@ -156,8 +156,25 @@ pANTLR3_COMMON_TOKEN  getDottedName( pANTLR3_BASE_TREE  tree,
 }
 
 
-void checkForDocstring( pANTLR3_BASE_TREE             tree,
-                        struct instanceCallbacks *    callbacks )
+/* returns 1 or 3, i.e. the number of quotes used in a string literal part */
+static size_t getStringLiteralPrefixLength( pANTLR3_COMMON_TOKEN  token )
+{
+    char *      firstChar = (char *)token->start;
+    char *      lastChar = (char *)token->stop;
+
+    if ( strncmp( firstChar, "\"\"\"", 3 ) == 0 )
+        return 3;
+    if ( strncmp( firstChar, "'''", 3 ) == 0 )
+        return 3;
+    return 1;
+}
+
+
+/* I saw some files which have bigger than 20kb docstrings! */
+#define MAX_DOCSTRING_SIZE      32768
+
+static void checkForDocstring( pANTLR3_BASE_TREE             tree,
+                               struct instanceCallbacks *    callbacks )
 {
     if ( tree == NULL )
         return;
@@ -173,16 +190,49 @@ void checkForDocstring( pANTLR3_BASE_TREE             tree,
     if ( getType( tree ) != STRING_LITERAL )
         return;
 
-    tree = vectorGet( tree->children, 0 );
+    char                    buffer[ MAX_DOCSTRING_SIZE ];
+    size_t                  collected = 0;
+    pANTLR3_BASE_TREE       currentPart;
+    pANTLR3_COMMON_TOKEN    currentToken;
+    size_t                  index = 0;
+    size_t                  charsToSkip;
+    size_t                  charsToCopy;
+
+    while ( index < tree->children->count )
+    {
+        currentPart = vectorGet( tree->children, index );
+        currentToken = currentPart->getToken( currentPart );
+        charsToSkip = getStringLiteralPrefixLength( currentToken );
+        charsToCopy = (char *)currentToken->stop -
+                      (char *)currentToken->start - 2 * charsToSkip + 1;
+
+        if ( collected + charsToCopy + 1 > MAX_DOCSTRING_SIZE )
+        {
+            strncpy( buffer + collected,
+                     (char *)currentToken->start + charsToSkip,
+                     MAX_DOCSTRING_SIZE - collected - charsToCopy - 1 );
+            collected = MAX_DOCSTRING_SIZE - 1;
+            break;
+        }
+
+        strncpy( buffer + collected,
+                 (char *)currentToken->start + charsToSkip,
+                 charsToCopy );
+        collected += charsToCopy;
+        ++index;
+    }
+
+    buffer[ collected ] = 0;
+
     PyObject_CallFunction( callbacks->onDocstring, "si",
-                           (const char *)(tree->toString( tree )->chars),
+                           buffer,
                            tree->getLine( tree ) );
     return;
 }
 
 
-void  processWhat( pANTLR3_BASE_TREE            tree,
-                   struct instanceCallbacks *   callbacks )
+static void  processWhat( pANTLR3_BASE_TREE            tree,
+                          struct instanceCallbacks *   callbacks )
 {
     ANTLR3_UINT32   n = tree->children->count;
     ANTLR3_UINT32   k;
@@ -212,8 +262,8 @@ void  processWhat( pANTLR3_BASE_TREE            tree,
 }
 
 
-void  processImport( pANTLR3_BASE_TREE            tree,
-                     struct instanceCallbacks *   callbacks )
+static void  processImport( pANTLR3_BASE_TREE            tree,
+                            struct instanceCallbacks *   callbacks )
 {
     ANTLR3_UINT32   n = tree->children->count;
     ANTLR3_UINT32   k;
@@ -252,8 +302,8 @@ void  processImport( pANTLR3_BASE_TREE            tree,
 }
 
 
-const char *  processArguments( pANTLR3_BASE_TREE    tree,
-                                PyObject *           onArg )
+static const char *  processArguments( pANTLR3_BASE_TREE    tree,
+                                       PyObject *           onArg )
 {
     const char *    firstArgument = NULL;   /* For non-static class members only,
                                                so it cannot be * or ** */
@@ -297,8 +347,8 @@ const char *  processArguments( pANTLR3_BASE_TREE    tree,
 }
 
 
-int processDecor( pANTLR3_BASE_TREE            tree,
-                  struct instanceCallbacks *   callbacks )
+static int processDecor( pANTLR3_BASE_TREE            tree,
+                         struct instanceCallbacks *   callbacks )
 {
     int     isStaticMethod = 0;
     char    name[ MAX_DOTTED_NAME_LENGTH ];     /* decor name */
@@ -327,11 +377,11 @@ int processDecor( pANTLR3_BASE_TREE            tree,
 }
 
 
-void  processClassDefinition( pANTLR3_BASE_TREE            tree,
-                              struct instanceCallbacks *   callbacks,
-                              int                          objectsLevel,
-                              enum Scope                   scope,
-                              int                          entryLevel )
+static void  processClassDefinition( pANTLR3_BASE_TREE            tree,
+                                     struct instanceCallbacks *   callbacks,
+                                     int                          objectsLevel,
+                                     enum Scope                   scope,
+                                     int                          entryLevel )
 {
     pANTLR3_BASE_TREE       nameChild = vectorGet( tree->children, 0 );
     ANTLR3_UINT32           n = tree->children->count;
@@ -386,11 +436,11 @@ void  processClassDefinition( pANTLR3_BASE_TREE            tree,
 }
 
 
-void  processFuncDefinition( pANTLR3_BASE_TREE            tree,
-                             struct instanceCallbacks *   callbacks,
-                             int                          objectsLevel,
-                             enum Scope                   scope,
-                             int                          entryLevel )
+static void  processFuncDefinition( pANTLR3_BASE_TREE            tree,
+                                    struct instanceCallbacks *   callbacks,
+                                    int                          objectsLevel,
+                                    enum Scope                   scope,
+                                    int                          entryLevel )
 {
     pANTLR3_BASE_TREE       nameChild = vectorGet( tree->children, 0 );
     ANTLR3_UINT32           n = tree->children->count;
@@ -457,9 +507,9 @@ void  processFuncDefinition( pANTLR3_BASE_TREE            tree,
     return;
 }
 
-void processAssign( pANTLR3_BASE_TREE   tree,
-                    PyObject *          onVariable,
-                    int                 objectsLevel )
+static void processAssign( pANTLR3_BASE_TREE   tree,
+                           PyObject *          onVariable,
+                           int                 objectsLevel )
 {
     if ( tree->children->count == 0 )
         return;
@@ -510,10 +560,10 @@ void processAssign( pANTLR3_BASE_TREE   tree,
     return;
 }
 
-void processInstanceMember( pANTLR3_BASE_TREE           tree,
-                            struct instanceCallbacks *  callbacks,
-                            const char *                firstArgName,
-                            int                         objectsLevel )
+static void processInstanceMember( pANTLR3_BASE_TREE           tree,
+                                   struct instanceCallbacks *  callbacks,
+                                   const char *                firstArgName,
+                                   int                         objectsLevel )
 {
     if ( firstArgName == NULL )         return;
     if ( tree->children->count == 0 )   return;
