@@ -1,5 +1,7 @@
 2013 Jan XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Bug fix: docstrings comprised of many string literal parts are properly
+  recognized now
 * Bug fix: module docstring if it is the only file item is recognised properly
 * Minor code cleanup
 
