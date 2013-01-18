@@ -143,47 +143,52 @@ static STACK_INT  pythonbriefLexer_findPreviousIndent( ppythonbriefLexer  ctx,
     for ( j = ctx->identStack->size( ctx->identStack ) - 1; j >= 0; --j )
     {
         STACK_INT    pos = (STACK_INT) (ctx->identStack->get( ctx->identStack, j ));
-        if ( pos == i ) return j;
+        if ( pos == i )
+            return j;
     }
 
     return FIRST_CHAR_POSITION;
 }
 
 
-static void pythonbriefLexer_insertImaginaryIndentDedentTokens( ppythonbriefLexer     ctx,
-                                                                pANTLR3_TOKEN_SOURCE  toksource )
+static void
+pythonbriefLexer_insertImaginaryIndentDedentTokens( ppythonbriefLexer     ctx,
+                                                    pANTLR3_TOKEN_SOURCE  toksource )
 {
     pANTLR3_COMMON_TOKEN    t = pythonbriefLexer_nextTokenLowerLevelImpl( ctx, toksource );
     ctx->tokens->add( ctx->tokens, t, NULL );
 
     // if not a NEWLINE, doesn't signal indent/dedent work; just enqueue
-    if ( t->getType( t ) != NEWLINE ) return;
+    if ( t->type != NEWLINE )
+        return;
 
     // Ignore newlines on hidden channel
-    if ( t->getChannel( t ) == HIDDEN ) return;
+    if ( t->channel == HIDDEN )
+        return;
 
-    ANTLR3_INT32    newlineno = t->getLine( t ) + 1;
+    ANTLR3_INT32    newlineno = t->line + 1;
 
     // grab first token of next line (skip COMMENT tokens)
     for ( ; ; )
     {
         t = pythonbriefLexer_nextTokenLowerLevelImpl( ctx, toksource );
 
-        if ( t->getType( t ) == COMMENT ) // Pass comments to output stream (= skip processing here)
+        if ( t->type == COMMENT ) // Pass comments to output stream (= skip processing here)
         {
             ctx->tokens->add( ctx->tokens, t, NULL );
             continue;
         }
 
         //Ignore LEADING_WS on HIDDEN channel - these are emited by empty line with some whitespaces on it
-        if ( (t->getType( t ) == LEADING_WS) && (t->getChannel( t ) == HIDDEN)) continue;
+        if ( (t->type == LEADING_WS) && (t->channel == HIDDEN))
+            continue;
 
         break;
     }
 
     // compute cpos as the char pos of next non-WS token in line
     STACK_INT   cpos;
-    switch ( t->getType( t ) )
+    switch ( t->type )
     {
 
         case EOF:
@@ -195,13 +200,14 @@ static void pythonbriefLexer_insertImaginaryIndentDedentTokens( ppythonbriefLexe
             break;
 
         default:
-            cpos = t->getCharPositionInLine( t );
+            cpos = t->charPosition;
             break;
     }
 
     STACK_INT       lastIndent = (STACK_INT) ctx->identStack->peek( ctx->identStack );
-    ANTLR3_INT32    lineno = t->getLine( t );
-    if ( lineno <= 0 ) lineno = newlineno;
+    ANTLR3_INT32    lineno = t->line;
+    if ( lineno <= 0 )
+        lineno = newlineno;
 
     if ( cpos > lastIndent )
     {
@@ -225,7 +231,7 @@ static void pythonbriefLexer_insertImaginaryIndentDedentTokens( ppythonbriefLexe
     }
 
     // Filter out LEADING_WS tokens
-    if ( t->getType( t ) != LEADING_WS )
+    if ( t->type != LEADING_WS )
         ctx->tokens->add( ctx->tokens, t, NULL );
 }
 
