@@ -38,7 +38,8 @@ static inline ANTLR3_UINT32 getType( pANTLR3_BASE_TREE tree )
 {
     pANTLR3_COMMON_TREE    theTree = (pANTLR3_COMMON_TREE)(tree->super);
 
-    if (theTree->token == NULL) return 0;
+    if (theTree->token == NULL)
+        return 0;
     return theTree->token->getType(theTree->token);
 }
 static inline void *  vectorGet( pANTLR3_VECTOR vector, ANTLR3_UINT32 entry )
