@@ -20,7 +20,7 @@
 # $Id$
 #
 
-" Speed test for the codimention brief parser "
+" Speed test for the codimension brief parser "
 
 import os, os.path, sys
 import datetime
