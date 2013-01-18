@@ -1,4 +1,4 @@
-2013 Jan XX  Sergey Satskiy <sergey.satskiy@gmail.com>
+2013 Jan 18  Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Prepared for release v.1.6
 * Bug fix: docstrings comprised of many string literal parts are properly
