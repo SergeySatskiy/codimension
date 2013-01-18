@@ -127,8 +127,8 @@ static pANTLR3_COMMON_TOKEN pythonbriefLexer_createDedentIdentToken( ppythonbrie
     tok->type = toktype;
     tok->input = ctx->pLexer->rec->state->tokFactory->input;
     tok->textState = ANTLR3_TEXT_NONE;
-    tok->setCharPositionInLine( tok, 0 );
-    tok->setLine( tok, tokline );
+    tok->charPosition = 0;
+    tok->line = tokline;
 
     return tok;
 }
