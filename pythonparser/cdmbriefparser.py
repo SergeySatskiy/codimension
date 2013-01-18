@@ -53,9 +53,9 @@ def trim_docstring( docstring ):
 
     # Strip off trailing and leading blank lines:
     while trimmed and not trimmed[ -1 ]:
-        trimmed.pop()
+        del trimmed[ -1 ]
     while trimmed and not trimmed[ 0 ]:
-        trimmed.pop( 0 )
+        del trimmed[ 0 ]
 
     # Return a single string:
     return '\n'.join( trimmed )
