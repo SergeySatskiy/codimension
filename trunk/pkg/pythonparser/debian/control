@@ -7,7 +7,7 @@ Homepage: http://code.google.com/p/codimension/
 Vcs-Svn: https://codimension.googlecode.com/svn
 Vcs-Browser: http://code.google.com/p/codimension/source/browse/
 XS-Python-Version: ${python:Versions}
-Maintainer: Dmitry Kazimirov <dk@revl.org>
+Maintainer: Sergey Satskiy <sergey.satskiy@gmail.com>
 
 Package: codimension-parser
 Section: libs
