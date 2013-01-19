@@ -758,10 +758,12 @@ class Import( FragmentWithComments ):
 
         self.fromPart = None        # It is filled with A for statements like
                                     # from A import ...
-        self.whatPart = None        # It is filled with B for statements like
+        self.whatPart = []          # It is filled with B for statements like
                                     # from A import B
                                     # import B
                                     # where B could be a list with aliases
+                                    # It is a list of fragments because it can
+                                    # be multilined.
         return
 
     def serialize( self ):
