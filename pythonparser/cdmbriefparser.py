@@ -24,7 +24,7 @@
     code parser """
 
 import _cdmpyparser
-import sys
+from sys import maxint
 
 
 
@@ -39,26 +39,29 @@ def trim_docstring( docstring ):
     lines = docstring.expandtabs().splitlines()
 
     # Determine minimum indentation (first line doesn't count):
-    indent = sys.maxint
+    indent = maxint
     for line in lines[ 1: ]:
         stripped = line.lstrip()
         if stripped:
             indent = min( indent, len( line ) - len( stripped ) )
 
     # Remove indentation (first line is special):
-    trimmed = [ lines[ 0 ].strip() ]
-    if indent < sys.maxint:
+    lines[ 0 ] = lines[ 0 ].strip()
+    if indent < maxint:
+        index = 1
         for line in lines[ 1: ]:
-            trimmed.append( line[ indent: ].rstrip() )
+            lines[ index ] = line[ indent: ].rstrip()
+            index += 1
 
     # Strip off trailing and leading blank lines:
-    while trimmed and not trimmed[ -1 ]:
-        del trimmed[ -1 ]
-    while trimmed and not trimmed[ 0 ]:
-        del trimmed[ 0 ]
+    while lines and not lines[ -1 ]:
+        del lines[ -1 ]
+    while lines and not lines[ 0 ]:
+        del lines[ 0 ]
 
     # Return a single string:
-    return '\n'.join( trimmed )
+    return '\n'.join( lines )
+
 
 
 class ModuleInfoBase():
