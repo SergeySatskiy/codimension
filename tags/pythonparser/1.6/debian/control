@@ -1,0 +1,20 @@
+Source: codimension-parser
+Priority: optional
+Build-Depends: debhelper (>= 7), python (>= 2.4), python-support, python-all-dev
+Standards-Version: 3.9.3
+Section: python
+Homepage: http://code.google.com/p/codimension/
+Vcs-Svn: https://codimension.googlecode.com/svn
+Vcs-Browser: http://code.google.com/p/codimension/source/browse/
+XS-Python-Version: ${python:Versions}
+Maintainer: Dmitry Kazimirov <dk@revl.org>
+
+Package: codimension-parser
+Section: libs
+Architecture: any
+Depends: ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}
+Provides: ${python:Provides}
+Description: fast and comprehensive parser of the Python language
+ Written as a part of the Codimension project, this parser aims at
+ pulling the most data from Python sources while exceeding the
+ speed of existing parsers.
