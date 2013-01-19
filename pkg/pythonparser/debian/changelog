@@ -1,6 +1,6 @@
-codimension-parser (1.6-1) unstable; urgency=low
+codimension-parser (1.6-1) quantal; urgency=low
 
-  * Release for Debian unstable
+  * Release for quantal series.
   * Fix: docstrings comprised of many string literal parts are properly recognized.
   * Fix: module docstring is recognized even if it is the only file content.
   * Minor code cleanups targeting the parser performance.
