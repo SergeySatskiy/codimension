@@ -1,5 +1,5 @@
 Name: codimension-parser
-Version: 1.5
+Version: 1.6
 Release: 2
 License: GPLv3+
 Group: Development/Languages
@@ -40,6 +40,12 @@ find $RPM_BUILD_ROOT -name "*.la" -exec rm -f {} ';'
 %{python_sitearch}/*.egg-info
 
 %changelog
+* Fri Jan 18 2013 Sergey Satskiy <sergey.satskiy@gmail.com> - 1.6-1
+- Fix: docstrings comprised of many string literal parts are properly
+  recognized.
+- Fix: module docstring is recognized even if it is the only file content.
+- Minor code cleanups targeting the parser performance.
+
 * Wed Oct 31 2012 Dmitry Kazimirov <dk@revl.org> - 1.5-2
 - Python dependency: python2 -> python
 
