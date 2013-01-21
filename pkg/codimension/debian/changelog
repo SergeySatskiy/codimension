@@ -1,4 +1,4 @@
-codimension (1.8-1) quantal; urgency=low
+codimension (1.8-2) precise; urgency=low
 
   * Upstream changes for release 1.8:
   * Bug fix: running python tidy with settings led to an exception.
