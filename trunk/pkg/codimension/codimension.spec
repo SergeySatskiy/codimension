@@ -1,5 +1,5 @@
 Name: codimension
-Version: 1.7
+Version: 1.8
 Release: 1
 License: GPLv3+
 Group: Development/Tools/IDE
@@ -12,7 +12,7 @@ Source2: %{name}.sharedmimeinfo
 Source3: %{name}.desktop
 
 Requires: python
-Requires: codimension-parser >= 1.5
+Requires: codimension-parser >= 1.6
 Requires: PyQt4 qscintilla-python
 Requires: pylint python-chardet graphviz
 Requires: python-rope >= 0.9.2
@@ -77,6 +77,41 @@ update-desktop-database -q
 %{_datadir}/pixmaps/*.xpm
 
 %changelog
+* Sun Jan 20 2013 Sergey Satskiy <sergey.satskiy@gmail.com> - 1.8-1
+- Upstream changes for release 1.8:
+- Bug fix: running python tidy with settings led to an exception.
+- Improvement: focus is moved to the current editor widget automatically when
+  it is received by the editor tab widget. Issue #350.
+- Improvement: 'highilight in project' and 'highlight in filesystem'
+  editor tab context menu added. Issue #258.
+- Improvement: better handling the fact that an editing buffer is changed by
+  the find-in-files result window. Issue #318.
+- New feature: IDE-wide pylintrc support. Issue #344.
+- Performance improvement and bug fixes in the file content trees, e.g
+  file outline browser, project files browser etc.
+- Bug fix: files with national characters with not-recognized type could
+  lead to unpredicted behaviour (up to core dumps). Issue #348
+- Bug fix: tab expanding (replace all) did not replace everything.
+- Bug fix: main menu -> tools -> pylint for project led to an exception.
+  Issue #346.
+- Sometimes pylint reports absolute paths so it is respected now.
+- When completion is called and a temporary rope project is created,
+  exclude all the subdirectories where there are no __init__.py[3] files.
+  This mitigate a setup with a network home dir (or network file location)
+  in a directory where there are lots of subdirectories
+- Add a shortcut in the 'Open file' dialog to the directory where the
+  current tab file (if so) is.
+- Add file to the recent files list at the time of closing a tab as well
+  (not only at the time of opening). Otherwise a file is not there when it
+  was loaded from a command line and then its tab is closed.
+- Do not loose the current editor position when there was an incremental
+  search on a tab and then another tab is closed.
+- Prevent loosing selection in case switching between history positions
+  if nothing has been changed in the required buffer.
+- Have the find-in-files dialog interruptible at the stage of building
+  the list of files to search in.
+
+
 * Sun Oct 14 2012 Dmitry Kazimirov <dk@revl.org> - 1.7-1
 - Python dependency: python2 -> python
 - Upstream bugfix release:
