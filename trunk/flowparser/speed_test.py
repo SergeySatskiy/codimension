@@ -72,6 +72,9 @@ else:
     print "Collecting a list of python classes..."
     startDir = os.path.sep + "usr" + os.path.sep + "lib64" + os.path.sep + \
                "python2.7" + os.path.sep
+    if not os.path.exists( startDir ):
+        startDir = os.path.sep + "usr" + os.path.sep + "lib" + os.path.sep + \
+                   "python2.7" + os.path.sep
     collectFiles( startDir, pythonFiles )
     print "Collected " + str(len(pythonFiles)) + " files from " + startDir
 
