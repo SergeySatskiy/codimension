@@ -268,21 +268,21 @@ class Comment( Fragment ):
 
     def __init__( self ):
         Fragment.__init__( self )
-        self.body = []      # Fragments instances
+        self.parts = []      # Fragments instances
         return
 
     def getDisplayValue( self, buf = None ):
         " Provides the comment without trailing spaces "
-        if not self.body:
+        if not self.parts:
             return ""
 
-        beginPositions = set( [ line.beginPos for line in self.body ] )
+        beginPositions = set( [ line.beginPos for line in self.parts ] )
         sameShift = ( len( beginPositions ) == 1 )
         minShift = min( beginPositions )
 
         visibleLines = []
-        currentLine = self.body[ 0 ].beginLine - 1
-        for line in self.body:
+        currentLine = self.parts[ 0 ].beginLine - 1
+        for line in self.parts:
             if line.beginLine - currentLine > 1:
                 # Insert empty lines
                 for count in xrange( 1, line.beginLine - currentLine ):
@@ -301,20 +301,46 @@ class Comment( Fragment ):
     def serialize( self ):
         " Serializes the object "
         Fragment.serialize( self )
-        for line in self.body:
+        for line in self.parts:
             line.serialize()
         return
 
     def __str__( self ):
         " Converts to a string "
         return "Comment: " + Fragment.__str__( self ) + "\n" + \
-               "\n".join( [ str( line ) for line in self.body ] )
+               "\n".join( [ str( line ) for line in self.parts ] )
 
     def niceStringify( self, level ):
         " Returns a string representation with new lines and shifts "
         joiner = "\n" + ( level + 1 ) * "    "
         return level * "    " + "Comment: " + Fragment.__str__( self ) + \
-               joiner + joiner.join( [ str( item ) for item in self.body ] )
+               joiner + joiner.join( [ str( item ) for item in self.parts ] )
+
+
+class FragmentWithComments( Fragment ):
+    " Represents a fragment with (optionally) a leading and side comments "
+
+    def __init__( self ):
+        Fragment.__init__( self )
+
+        self.leadingComment = None  # Fragment for the leading comment
+        self.sideComment = None     # Fragment for the side comment
+        return
+
+    def serialize( self ):
+        " Serializes the object "
+        Fragment.serialize( self )
+        if self.leadingComment is not None:
+            self.leadingComment.serialize()
+        if self.sideComment is not None:
+            self.sideComment.serialize()
+        return
+
+    def __str__( self ):
+        " Converts to a string "
+        return "Fragment with comments: " + Fragment.__str__( self ) + "\n" \
+               "Leading comment: " + str( self.leadingComment ) + "\n" \
+               "Side comment: " + str( self.sideComment )
 
 
 class Docstring( Fragment ):
@@ -322,7 +348,8 @@ class Docstring( Fragment ):
 
     def __init__( self ):
         Fragment.__init__( self )
-        self.body = []
+        self.parts = []
+        self.sideComment = None
         return
 
     def getDisplayValue( self, buf = None ):
@@ -372,46 +399,20 @@ class Docstring( Fragment ):
     def serialize( self ):
         " Serializes the object "
         Fragment.serialize( self )
-        for line in self.body:
+        for line in self.parts:
             line.serialize()
         return
 
     def __str__( self ):
         " Converts to a string "
         return "Docstring: " + Fragment.__str__( self ) + "\n" + \
-               "\n".join( [ str( line ) for line in self.body ] )
+               "\n".join( [ str( line ) for line in self.parts ] )
 
     def niceStringify( self, level ):
         " Returns a string representation with new lines and shifts "
         joiner = "\n" + ( level + 1 ) * "    "
         return level * "    " + "Docstring: " + Fragment.__str__( self ) + \
-               joiner + joiner.join( [ str( item ) for item in self.body ] )
-
-
-class FragmentWithComments( Fragment ):
-    " Represents a fragment with (optionally) a leading and side comments "
-
-    def __init__( self ):
-        Fragment.__init__( self )
-
-        self.leadingComment = None  # Fragment for the leading comment
-        self.sideComment = None     # Fragment for the side comment
-        return
-
-    def serialize( self ):
-        " Serializes the object "
-        Fragment.serialize( self )
-        if self.leadingComment is not None:
-            self.leadingComment.serialize()
-        if self.sideComment is not None:
-            self.sideComment.serialize()
-        return
-
-    def __str__( self ):
-        " Converts to a string "
-        return "Fragment with comments: " + Fragment.__str__( self ) + "\n" \
-               "Leading comment: " + str( self.leadingComment ) + "\n" \
-               "Side comment: " + str( self.sideComment )
+               joiner + joiner.join( [ str( item ) for item in self.parts ] )
 
 
 class Decorator( FragmentWithComments ):

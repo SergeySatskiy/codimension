@@ -106,12 +106,12 @@ class CMLRecord( Fragment ):
 
     def __init__( self ):
         Fragment.__init__( self )
-        self.body = []      # Fragments for individual parts (lines)
+        self.parts = []     # Fragments for individual parts (lines)
         return
 
     def getVersion( self, buf = None ):
         " Provides the record version or throws an exception "
-        contentParts = self.body[ 0 ].getContent( buf ).split()
+        contentParts = self.parts[ 0 ].getContent( buf ).split()
         # The version is the third field
         if len( contentParts ) < 3:
             raise Exception( "Unexpected CML record format" )
@@ -123,7 +123,7 @@ class CMLRecord( Fragment ):
 
     def getType( self, buf = None ):
         " Provides the record type or throws an exception "
-        contentParts = self.body[ 0 ].getContent( buf ).split()
+        contentParts = self.parts[ 0 ].getContent( buf ).split()
         # The type must be fourth field
         if len( contentParts ) < 4:
             raise Exception( "Unexpected CML record format" )
@@ -132,7 +132,7 @@ class CMLRecord( Fragment ):
 
     def getSubType( self, buf = None ):
         " Provides the record subtype or throws an exception "
-        contentParts = self.body[ 0 ].getContent( buf ).split()
+        contentParts = self.parts[ 0 ].getContent( buf ).split()
         # The subtype must be the fifth field
         if len( contentParts ) < 5:
             raise Exception( "Unexpected CML record format" )
@@ -142,7 +142,7 @@ class CMLRecord( Fragment ):
     def getUUID( self, buf = None ):
         " Provides the record UUID or throws an exception "
         # UUID might be there but might be not
-        contentParts = self.body[ 0 ].getContent( buf ).split()
+        contentParts = self.parts[ 0 ].getContent( buf ).split()
         if len( contentParts ) < 6:
             raise Exception( " The record does not have UUID" )
         return contentParts[ 5 ]
@@ -151,13 +151,13 @@ class CMLRecord( Fragment ):
         " Returns a string representation with new lines and shifts "
         joiner = "\n" + ( level + 1 ) * "    "
         return level * "    " + "CML record: " + Fragment.__str__( self ) + \
-               joiner + joiner.join( [ str( item ) for item in self.body ] )
+               joiner + joiner.join( [ str( item ) for item in self.parts ] )
 
 
     def __str__( self ):
         " Converts to string "
         return "CML record: " + Fragment.__str__( self ) + \
-               "\nBody:\n" + "\n".join( [ str( item ) for item in self.body ] )
+               "\nBody:\n" + "\n".join( [ str( item ) for item in self.parts ] )
 
 
 

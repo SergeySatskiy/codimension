@@ -89,7 +89,7 @@ class ControlFlowParserIFace:
         " Standalone comment finished "
         comment = Comment()
         self.__wrapFragments( comment, self.__fragments )
-        comment.body = self.__fragments
+        comment.parts = self.__fragments
         self.__fragments = []
 
         # Insert the comment at the proper location
@@ -100,7 +100,7 @@ class ControlFlowParserIFace:
         " CML Record finished "
         cml = CMLRecord()
         self.__wrapFragments( cml, self.__fragments )
-        cml.body = self.__fragments
+        cml.parts = self.__fragments
         self.__fragments = []
 
         # Insert the comment at the proper location
@@ -149,13 +149,14 @@ class ControlFlowParserIFace:
         return
 
     def _onSideCommentFinished( self ):
+        return
         raise Exception( "Not implemented yet" )
 
     def _onDocstringFinished( self ):
         " Called when a docstring is finished "
         docstring = Docstring()
         self.__wrapFragments( docstring, self.__fragments )
-        docstring.body = self.__fragments
+        docstring.parts = self.__fragments
         self.__fragments = []
 
         # Insert into the proper object
