@@ -444,8 +444,14 @@ class RunDialog( QDialog ):
         termGroupbox.setTitle( "Terminal to run in" )
         layoutIDE.addWidget( termGroupbox )
 
-        limitsGroupbox = self.__getProfileLimitsGroupbox()
-        layoutIDE.addWidget( limitsGroupbox )
+        if self.__action == "profile":
+            # Profile version of the dialog
+            limitsGroupbox = self.__getProfileLimitsGroupbox()
+            layoutIDE.addWidget( limitsGroupbox )
+        else:
+            # Debug version of the dialog
+            dbgGroupbox = self.__getDebugGroupbox()
+            layoutIDE.addWidget( dbgGroupbox )
         return ideGroupbox
 
     def __getProfileLimitsGroupbox( self ):
@@ -481,6 +487,41 @@ class RunDialog( QDialog ):
         layoutLimits.addWidget( self.__edgeLimitEdit, 1, 1 )
         layoutLimits.addWidget( QLabel( "%" ), 1, 2 )
         return limitsGroupbox
+
+    def __getDebugGroupbox( self ):
+        " Creates the debug settings groupbox "
+        dbgGroupbox = QGroupBox( self )
+        dbgGroupbox.setTitle( "Debugger" )
+        sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Preferred )
+        sizePolicy.setHorizontalStretch( 0 )
+        sizePolicy.setVerticalStretch( 0 )
+        sizePolicy.setHeightForWidth(
+                    dbgGroupbox.sizePolicy().hasHeightForWidth() )
+        dbgGroupbox.setSizePolicy( sizePolicy )
+
+        dbgLayout = QVBoxLayout( dbgGroupbox )
+        self.__reportExceptionCheckBox = QCheckBox( "Report &exceptions" )
+        self.connect( self.__reportExceptionCheckBox, SIGNAL( "stateChanged(int)" ),
+                      self.__onReportExceptionChanged )
+        self.__traceInterpreterCheckBox = QCheckBox( "&Trace interpreter libs" )
+        self.connect( self.__traceInterpreterCheckBox, SIGNAL( "stateChanged(int)" ),
+                      self.__onTraceInterpreterChanged )
+        self.__stopAtFirstCheckBox = QCheckBox( "&Stop at first line" )
+        self.connect( self.__stopAtFirstCheckBox, SIGNAL( "stateChanged(int)" ),
+                      self.__onStopAtFirstChanged )
+        self.__autoforkCheckBox = QCheckBox( "Fork without asking" )
+        self.connect( self.__autoforkCheckBox, SIGNAL( "stateChanged(int)" ),
+                      self.__onAutoforkChanged )
+        self.__debugChildCheckBox = QCheckBox( "&Debug child process" )
+        self.connect( self.__debugChildCheckBox, SIGNAL( "stateChanged(int)" ),
+                      self.__onDebugChild )
+
+        dbgLayout.addWidget( self.__reportExceptionCheckBox )
+        dbgLayout.addWidget( self.__traceInterpreterCheckBox )
+        dbgLayout.addWidget( self.__stopAtFirstCheckBox )
+        dbgLayout.addWidget( self.__autoforkCheckBox )
+        dbgLayout.addWidget( self.__debugChildCheckBox )
+        return dbgGroupbox
 
 
     @staticmethod
@@ -541,6 +582,26 @@ class RunDialog( QDialog ):
         " Triggered when the close terminal check box changed "
         self.runParams.closeTerminal = state != 0
         return
+
+    def __onReportExceptionChanged( self, state ):
+        " Triggered when exception report check box changed "
+        pass
+
+    def __onTraceInterpreterChanged( self, state ):
+        " Triggered when trace interpreter changed "
+        pass
+
+    def __onStopAtFirstChanged( self, state ):
+        " Triggered when stop at first changed "
+        pass
+
+    def __onAutoforkChanged( self, state ):
+        " Triggered when autofork changed "
+        pass
+
+    def __onDebugChild( self, state ):
+        " Triggered when debug child changed "
+        pass
 
     def __argumentsOK( self ):
         " Returns True if the arguments are OK "
