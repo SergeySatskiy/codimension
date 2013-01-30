@@ -374,7 +374,7 @@ class RunDialog( QDialog ):
         layout.addWidget( envGroupbox )
 
         # Terminal and profile limits
-        if self.__action == "profile":
+        if self.__action in [ "profile", "debug" ]:
             layout.addWidget( self.__getIDEWideGroupbox() )
         else:
             termGroupbox = self.__getTermGroupbox()
