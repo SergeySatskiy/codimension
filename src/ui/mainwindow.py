@@ -1255,9 +1255,20 @@ class CodimensionMainWindow( QMainWindow ):
                       self.findFileClicked )
 
         # Debugger buttons
+        self.__dbgStop = QAction( PixmapCache().getIcon( 'dbgstop.png' ),
+                                  'Stop debugging session', self )
+        self.connect( self.__dbgStop, SIGNAL( "triggered()" ),
+                      self.__onStopDbgSession )
+        self.__dbgStop.setVisible( False )
+        self.__dbgRestart = QAction( PixmapCache().getIcon( 'dbgrestart.png' ),
+                                     'Restart debugging section', self )
+        self.connect( self.__dbgRestart, SIGNAL( "triggered()" ),
+                      self.__onRestartDbgSession )
+        self.__dbgRestart.setVisible( False )
         self.__dbgBreak = QAction( PixmapCache().getIcon( 'dbgbreak.png' ),
                                    'Break', self )
-        self.connect( self.__dbgBreak, SIGNAL( "triggered()" ), self.__onDbgBreak )
+        self.connect( self.__dbgBreak, SIGNAL( "triggered()" ),
+                      self.__onDbgBreak )
         self.__dbgBreak.setVisible( False )
         self.__dbgGo = QAction( PixmapCache().getIcon( 'dbggo.png' ),
                                 'Go', self )
@@ -1309,6 +1320,8 @@ class CodimensionMainWindow( QMainWindow ):
         dbgSpacer.setSizePolicy( QSizePolicy.Fixed, QSizePolicy.Fixed )
         dbgSpacer.setFixedWidth( 40 )
         toolbar.addWidget( dbgSpacer )
+        toolbar.addAction( self.__dbgStop )
+        toolbar.addAction( self.__dbgRestart )
         toolbar.addAction( self.__dbgBreak )
         toolbar.addAction( self.__dbgGo )
         toolbar.addAction( self.__dbgNext )
@@ -2377,6 +2390,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.sbWritable.setVisible( not newState )
 
         # Toolbar buttons
+        self.__dbgStop.setVisible( newState )
+        self.__dbgRestart.setVisible( newState )
         self.__dbgBreak.setVisible( newState )
         self.__dbgGo.setVisible( newState )
         self.__dbgNext.setVisible( newState )
@@ -2403,6 +2418,10 @@ class CodimensionMainWindow( QMainWindow ):
         self.emit( SIGNAL( 'debugModeChanged' ), newState )
         return
 
+    def __onStopDbgSession( self ):
+        pass
+    def __onRestartDbgSession( self ):
+        pass
     def __onDbgBreak( self ):
         pass
     def __onDbgGo( self ):
