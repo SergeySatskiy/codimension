@@ -23,70 +23,65 @@
 """ codimension main window """
 
 import os, os.path, sys, logging, ConfigParser
-from subprocess                 import Popen
-from PyQt4.QtCore               import SIGNAL, Qt, QSize, QTimer, QDir, QVariant, \
-                                       QUrl
-from PyQt4.QtGui                import QLabel, QToolBar, QWidget, QMessageBox, \
-                                       QVBoxLayout, QSplitter, QDialog, \
-                                       QSizePolicy, QAction, QMainWindow, \
-                                       QShortcut, QFrame, QApplication, \
-                                       QCursor, QMenu, QToolButton, QToolTip, \
-                                       QPalette, QColor, QFileDialog, QDialog, \
-                                       QDesktopServices
-from fitlabel                   import FitPathLabel
-from utils.globals              import GlobalData
-from utils.project              import CodimensionProject
-from utils.misc                 import getDefaultTemplate, getIDETemplateFile, \
-                                       getProjectTemplateFile, getIDEPylintFile
-from sidebar                    import SideBar
-from logviewer                  import LogViewer
-from taghelpviewer              import TagHelpViewer
-from todoviewer                 import TodoViewer
-from redirector                 import Redirector
-from utils.pixmapcache          import PixmapCache
-from functionsviewer            import FunctionsViewer
-from globalsviewer              import GlobalsViewer
-from classesviewer              import ClassesViewer
-from recentprojectsviewer       import RecentProjectsViewer
-from projectviewer              import ProjectViewer
-from outline                    import FileOutlineViewer
-from editorsmanager             import EditorsManager
-from linecounter                import LineCounterDialog
-from projectproperties          import ProjectPropertiesDialog
-from utils.settings             import Settings
-from findreplacewidget          import FindWidget, ReplaceWidget
-from gotolinewidget             import GotoLineWidget
-from pylintviewer               import PylintViewer
-from pylintparser.pylintparser  import Pylint
-from utils.fileutils            import PythonFileType, \
-                                       Python3FileType, detectFileType, \
-                                       PixmapFileType, SOFileType, \
-                                       ELFFileType, PDFFileType, \
-                                       PythonCompiledFileType, \
-                                       CodimensionProjectFileType
-from pymetricsviewer            import PymetricsViewer
-from pymetricsparser.pymetricsparser    import PyMetrics
-from findinfiles                import FindInFilesDialog
-from findinfilesviewer          import FindInFilesViewer, hideSearchTooltip
-from findname                   import FindNameDialog
-from findfile                   import FindFileDialog
-from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
-from diagram.importsdgm         import ImportsDiagramDialog, \
-                                       ImportsDiagramProgress, \
-                                       ImportDiagramOptions
-from runparams                  import RunDialog
-from utils.run                  import getCwdCmdEnv
-from debugger.console           import DebuggerConsole
-from debugger.context           import DebuggerContext
-from debugger.modifiedunsaved   import ModifiedUnsavedDialog
-from debugger.main              import CodimensionDebugger
-from diffviewer                 import DiffViewer
+from subprocess import Popen
+from PyQt4.QtCore import SIGNAL, Qt, QSize, QTimer, QDir, QVariant, QUrl
+from PyQt4.QtGui import ( QLabel, QToolBar, QWidget, QMessageBox,
+                          QVBoxLayout, QSplitter, QDialog, QSizePolicy,
+                          QAction, QMainWindow, QShortcut, QFrame,
+                          QApplication, QCursor, QMenu, QToolButton,
+                          QToolTip, QPalette, QColor, QFileDialog, QDialog,
+                          QDesktopServices )
+from fitlabel import FitPathLabel
+from utils.globals import GlobalData
+from utils.project import CodimensionProject
+from utils.misc import ( getDefaultTemplate, getIDETemplateFile, 
+                         getProjectTemplateFile, getIDEPylintFile )
+from sidebar import SideBar
+from logviewer import LogViewer
+from taghelpviewer import TagHelpViewer
+from todoviewer import TodoViewer
+from redirector import Redirector
+from utils.pixmapcache import PixmapCache
+from functionsviewer import FunctionsViewer
+from globalsviewer import GlobalsViewer
+from classesviewer import ClassesViewer
+from recentprojectsviewer import RecentProjectsViewer
+from projectviewer import ProjectViewer
+from outline import FileOutlineViewer
+from editorsmanager import EditorsManager
+from linecounter import LineCounterDialog
+from projectproperties import ProjectPropertiesDialog
+from utils.settings import Settings
+from findreplacewidget import FindWidget, ReplaceWidget
+from gotolinewidget import GotoLineWidget
+from pylintviewer import PylintViewer
+from pylintparser.pylintparser import Pylint
+from utils.fileutils import ( PythonFileType, Python3FileType, detectFileType,
+                              PixmapFileType, SOFileType, ELFFileType,
+                              PDFFileType, PythonCompiledFileType,
+                              CodimensionProjectFileType )
+from pymetricsviewer import PymetricsViewer
+from pymetricsparser.pymetricsparser import PyMetrics
+from findinfiles import FindInFilesDialog
+from findinfilesviewer import FindInFilesViewer, hideSearchTooltip
+from findname import FindNameDialog
+from findfile import FindFileDialog
+from mainwindowtabwidgetbase import MainWindowTabWidgetBase
+from diagram.importsdgm import ( ImportsDiagramDialog, ImportsDiagramProgress,
+                                 ImportDiagramOptions )
+from runparams import RunDialog
+from utils.run import getCwdCmdEnv
+from debugger.console import DebuggerConsole
+from debugger.context import DebuggerContext
+from debugger.modifiedunsaved import ModifiedUnsavedDialog
+from debugger.main import CodimensionDebugger
+from diffviewer import DiffViewer
 from thirdparty.diff2html.diff2html import parse_from_memory
-from analysis.notused           import NotUsedAnalysisProgress
+from analysis.notused import NotUsedAnalysisProgress
 from autocomplete.completelists import getOccurrences
-from findinfiles                import ItemToSearchIn, getSearchItemIndex
-from profiling.profui           import ProfilingProgressDialog
-from profiling.disasm           import getDisassembled
+from findinfiles import ItemToSearchIn, getSearchItemIndex
+from profiling.profui import ProfilingProgressDialog
+from profiling.disasm import getDisassembled
 
 
 class EditorsManagerWidget( QWidget ):
@@ -380,7 +375,8 @@ class CodimensionMainWindow( QMainWindow ):
 #        self.__bottomSideBar.setTabEnabled( 6, False )
 
         # Create outline viewer
-        self.__outlineViewer = FileOutlineViewer( self.editorsManagerWidget.editorsManager )
+        self.__outlineViewer = FileOutlineViewer( \
+                                    self.editorsManagerWidget.editorsManager )
         self.__rightSideBar.addTab( self.__outlineViewer,
                                     PixmapCache().getIcon( 'filepython.png' ),
                                     'File outline' )
@@ -1182,7 +1178,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.debugProjectButton.setFocusPolicy( Qt.NoFocus )
         self.connect( self.debugProjectButton, SIGNAL( 'clicked(bool)' ),
                       self.__onDebugProject )
-        self.debugProjectButton.setVisible( False )
+        self.debugProjectButton.setVisible( True )
 
         packageDiagramButton = QAction( \
                 PixmapCache().getIcon( 'packagediagram.png' ),
@@ -1283,12 +1279,6 @@ class CodimensionMainWindow( QMainWindow ):
                                     'Return', self )
         self.connect( self.__dbgReturn, SIGNAL( "triggered()" ), self.__onDbgReturn )
         self.__dbgReturn.setVisible( False )
-        self.__dbgTrapUnhandled = QAction( PixmapCache().getIcon( "dbgtrapunhandled.png" ),
-                                           'Trap unhandled exception: OFF', self )
-        self.__dbgTrapUnhandled.setCheckable( True )
-        self.__dbgTrapUnhandled.setChecked( False )
-        self.connect( self.__dbgTrapUnhandled, SIGNAL( "triggered()" ), self.__onDbgTrapUnhandled )
-        self.__dbgTrapUnhandled.setVisible( False )
 
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
@@ -1314,17 +1304,17 @@ class CodimensionMainWindow( QMainWindow ):
         toolbar.addAction( self.__findNameButton )
         toolbar.addAction( self.__findFileButton )
         # Debugger part begin
-        self.__dbgSeparator1 = toolbar.addSeparator()
-        self.__dbgSeparator1.setVisible( False )
+
+        dbgSpacer = QWidget()
+        dbgSpacer.setSizePolicy( QSizePolicy.Fixed, QSizePolicy.Fixed )
+        dbgSpacer.setFixedWidth( 40 )
+        toolbar.addWidget( dbgSpacer )
         toolbar.addAction( self.__dbgBreak )
         toolbar.addAction( self.__dbgGo )
         toolbar.addAction( self.__dbgNext )
         toolbar.addAction( self.__dbgStepInto )
         toolbar.addAction( self.__dbgRunToLine )
         toolbar.addAction( self.__dbgReturn )
-        self.__dbgSeparator2 = toolbar.addSeparator()
-        self.__dbgSeparator2.setVisible( False )
-        toolbar.addAction( self.__dbgTrapUnhandled )
         # Debugger part end
         # toolbar.addWidget( spacer )
 
@@ -1487,9 +1477,10 @@ class CodimensionMainWindow( QMainWindow ):
 
         searchText = ""
         editorsManager = self.editorsManagerWidget.editorsManager
-        if editorsManager.currentWidget().getType() in \
+        currentWidget = editorsManager.currentWidget()
+        if currentWidget.getType() in \
                 [ MainWindowTabWidgetBase.PlainTextEditor ]:
-            searchText = editorsManager.currentWidget().getEditor().getSearchText()
+            searchText = currentWidget.getEditor().getSearchText()
 
         dlg = FindInFilesDialog( FindInFilesDialog.inProject, searchText )
         dlg.exec_()
@@ -1527,7 +1518,8 @@ class CodimensionMainWindow( QMainWindow ):
         return
 
     def jumpToLine( self, lineNo ):
-        " Usually needs when rope provided definition in the current unsaved buffer "
+        """ Usually needs when rope provided definition
+            in the current unsaved buffer """
         self.editorsManagerWidget.editorsManager.jumpToLine( lineNo )
         return
 
@@ -2385,16 +2377,13 @@ class CodimensionMainWindow( QMainWindow ):
         self.sbWritable.setVisible( not newState )
 
         # Toolbar buttons
-        self.__dbgSeparator1.setVisible( newState )
         self.__dbgBreak.setVisible( newState )
         self.__dbgGo.setVisible( newState )
         self.__dbgNext.setVisible( newState )
         self.__dbgStepInto.setVisible( newState )
         self.__dbgRunToLine.setVisible( newState )
         self.__dbgReturn.setVisible( newState )
-        self.__dbgSeparator2.setVisible( newState )
 
-        self.__dbgTrapUnhandled.setVisible( newState )
         self.updateRunDebugButtons()
 
         # Tabs at the bottom
@@ -2426,22 +2415,6 @@ class CodimensionMainWindow( QMainWindow ):
         pass
     def __onDbgReturn( self ):
         pass
-
-    def __onDbgTrapUnhandled( self ):
-        self.setDbgTrapUnhandledState( self.__dbgTrapUnhandled.isChecked() )
-        return
-
-    def setDbgTrapUnhandledState( self, state ):
-        " Changes the button state and tooltip "
-        if state:
-            switch = 'ON'
-            self.__dbgTrapUnhandled.setChecked( True )
-        else:
-            switch = 'OFF'
-            self.__dbgTrapUnhandled.setChecked( False )
-        self.__dbgTrapUnhandled.setToolTip( 'Trap unhandled exception: ' + \
-                                            switch )
-        return
 
     def __openProject( self ):
         " Shows up a dialog to open a project "
