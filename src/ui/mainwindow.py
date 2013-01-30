@@ -1030,35 +1030,43 @@ class CodimensionMainWindow( QMainWindow ):
         showBraceMatchAct = self.__optionsMenu.addAction( 'Show brace matching' )
         showBraceMatchAct.setCheckable( True )
         showBraceMatchAct.setChecked( self.settings.showBraceMatch )
-        self.connect( showBraceMatchAct, SIGNAL( 'changed()' ), self.__showBraceMatchChanged )
+        self.connect( showBraceMatchAct, SIGNAL( 'changed()' ),
+                      self.__showBraceMatchChanged )
         autoIndentAct = self.__optionsMenu.addAction( 'Auto indent' )
         autoIndentAct.setCheckable( True )
         autoIndentAct.setChecked( self.settings.autoIndent )
-        self.connect( autoIndentAct, SIGNAL( 'changed()' ), self.__autoIndentChanged )
+        self.connect( autoIndentAct, SIGNAL( 'changed()' ),
+                      self.__autoIndentChanged )
         backspaceUnindentAct = self.__optionsMenu.addAction( 'Backspace unindent' )
         backspaceUnindentAct.setCheckable( True )
         backspaceUnindentAct.setChecked( self.settings.backspaceUnindent )
-        self.connect( backspaceUnindentAct, SIGNAL( 'changed()' ), self.__backspaceUnindentChanged )
+        self.connect( backspaceUnindentAct, SIGNAL( 'changed()' ),
+                      self.__backspaceUnindentChanged )
         tabIndentsAct = self.__optionsMenu.addAction( 'TAB indents' )
         tabIndentsAct.setCheckable( True )
         tabIndentsAct.setChecked( self.settings.tabIndents )
-        self.connect( tabIndentsAct, SIGNAL( 'changed()' ), self.__tabIndentsChanged )
+        self.connect( tabIndentsAct, SIGNAL( 'changed()' ),
+                      self.__tabIndentsChanged )
         indentationGuidesAct = self.__optionsMenu.addAction( 'Show indentation guides' )
         indentationGuidesAct.setCheckable( True )
         indentationGuidesAct.setChecked( self.settings.indentationGuides )
-        self.connect( indentationGuidesAct, SIGNAL( 'changed()' ), self.__indentationGuidesChanged )
+        self.connect( indentationGuidesAct, SIGNAL( 'changed()' ),
+                      self.__indentationGuidesChanged )
         currentLineVisibleAct = self.__optionsMenu.addAction( 'Highlight current line' )
         currentLineVisibleAct.setCheckable( True )
         currentLineVisibleAct.setChecked( self.settings.currentLineVisible )
-        self.connect( currentLineVisibleAct, SIGNAL( 'changed()' ), self.__currentLineVisibleChanged )
+        self.connect( currentLineVisibleAct, SIGNAL( 'changed()' ),
+                      self.__currentLineVisibleChanged )
         jumpToFirstNonSpaceAct = self.__optionsMenu.addAction( 'HOME to first non-space' )
         jumpToFirstNonSpaceAct.setCheckable( True )
         jumpToFirstNonSpaceAct.setChecked( self.settings.jumpToFirstNonSpace )
-        self.connect( jumpToFirstNonSpaceAct, SIGNAL( 'changed()' ), self.__homeToFirstNonSpaceChanged )
+        self.connect( jumpToFirstNonSpaceAct, SIGNAL( 'changed()' ),
+                      self.__homeToFirstNonSpaceChanged )
         removeTrailingOnSpaceAct = self.__optionsMenu.addAction( 'Auto remove trailing spaces on save' )
         removeTrailingOnSpaceAct.setCheckable( True )
         removeTrailingOnSpaceAct.setChecked( self.settings.removeTrailingOnSave )
-        self.connect( removeTrailingOnSpaceAct, SIGNAL( 'changed()' ), self.__removeTrailingChanged )
+        self.connect( removeTrailingOnSpaceAct, SIGNAL( 'changed()' ),
+                      self.__removeTrailingChanged )
         self.__optionsMenu.addSeparator()
         themesMenu = self.__optionsMenu.addMenu( "Themes" )
         availableThemes = self.__buildThemesList()
@@ -1272,23 +1280,28 @@ class CodimensionMainWindow( QMainWindow ):
         self.__dbgBreak.setVisible( False )
         self.__dbgGo = QAction( PixmapCache().getIcon( 'dbggo.png' ),
                                 'Go', self )
-        self.connect( self.__dbgGo, SIGNAL( "triggered()" ), self.__onDbgGo )
+        self.connect( self.__dbgGo, SIGNAL( "triggered()" ),
+                      self.__onDbgGo )
         self.__dbgGo.setVisible( False )
         self.__dbgNext = QAction( PixmapCache().getIcon( 'dbgnext.png' ),
                                   'Next', self )
-        self.connect( self.__dbgNext, SIGNAL( "triggered()" ), self.__onDbgNext )
+        self.connect( self.__dbgNext, SIGNAL( "triggered()" ),
+                      self.__onDbgNext )
         self.__dbgNext.setVisible( False )
         self.__dbgStepInto = QAction( PixmapCache().getIcon( 'dbgstepinto.png' ),
                                       'Step into', self )
-        self.connect( self.__dbgStepInto, SIGNAL( "triggered()" ), self.__onDbgStepInto )
+        self.connect( self.__dbgStepInto, SIGNAL( "triggered()" ),
+                      self.__onDbgStepInto )
         self.__dbgStepInto.setVisible( False )
         self.__dbgRunToLine = QAction( PixmapCache().getIcon( 'dbgruntoline.png' ),
                                        'Run to line', self )
-        self.connect( self.__dbgRunToLine, SIGNAL( "triggered()" ), self.__onDbgRunToLine )
+        self.connect( self.__dbgRunToLine, SIGNAL( "triggered()" ),
+                      self.__onDbgRunToLine )
         self.__dbgRunToLine.setVisible( False )
         self.__dbgReturn = QAction( PixmapCache().getIcon( 'dbgreturn.png' ),
                                     'Return', self )
-        self.connect( self.__dbgReturn, SIGNAL( "triggered()" ), self.__onDbgReturn )
+        self.connect( self.__dbgReturn, SIGNAL( "triggered()" ),
+                      self.__onDbgReturn )
         self.__dbgReturn.setVisible( False )
 
         spacer = QWidget()
@@ -1444,11 +1457,14 @@ class CodimensionMainWindow( QMainWindow ):
         " Updates the run/debug buttons statuses "
         if self.debugMode:
             self.runProjectButton.setEnabled( False )
-            self.runProjectButton.setToolTip( "Cannot run project - debug in progress" )
+            self.runProjectButton.setToolTip( "Cannot run project - "
+                                              "debug in progress" )
             self.debugProjectButton.setEnabled( False )
-            self.debugProjectButton.setToolTip( "Cannot debug project - debug in progress" )
+            self.debugProjectButton.setToolTip( "Cannot debug project - "
+                                                "debug in progress" )
             self.profileProjectButton.setEnabled( False )
-            self.profileProjectButton.setToolTip( "Cannot profile project - debug in progress" )
+            self.profileProjectButton.setToolTip( "Cannot profile project - "
+                                                  "debug in progress" )
             return
 
         if not GlobalData().project.isLoaded():
@@ -1462,13 +1478,13 @@ class CodimensionMainWindow( QMainWindow ):
 
         if not GlobalData().isProjectScriptValid():
             self.runProjectButton.setEnabled( False )
-            self.runProjectButton.setToolTip( "Cannot run project - script " \
+            self.runProjectButton.setToolTip( "Cannot run project - script "
                                               "is not specified or invalid" )
             self.debugProjectButton.setEnabled( False )
-            self.debugProjectButton.setToolTip( "Cannot debug project - script " \
+            self.debugProjectButton.setToolTip( "Cannot debug project - script "
                                                 "is not specified or invalid" )
             self.profileProjectButton.setEnabled( False )
-            self.profileProjectButton.setToolTip( "Cannot profile project - script " \
+            self.profileProjectButton.setToolTip( "Cannot profile project - script "
                                                   "is not specified or invalid" )
             return
 
@@ -2064,7 +2080,8 @@ class CodimensionMainWindow( QMainWindow ):
             logging.error( str( exc ) )
         return
 
-    def hideTooltips( self ):
+    @staticmethod
+    def hideTooltips():
         " Hides all the tooltips "
         QToolTip.hideText()
         hideSearchTooltip()
@@ -2217,62 +2234,76 @@ class CodimensionMainWindow( QMainWindow ):
         return True
 
     def __verticalEdgeChanged( self ):
+        " Editor setting changed "
         self.settings.verticalEdge = not self.settings.verticalEdge
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
         return
 
     def __showSpacesChanged( self ):
+        " Editor setting changed "
         self.settings.showSpaces = not self.settings.showSpaces
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
         return
 
     def __lineWrapChanged( self ):
+        " Editor setting changed "
         self.settings.lineWrap = not self.settings.lineWrap
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
         return
 
     def __showEOLChanged( self ):
+        " Editor setting changed "
         self.settings.showEOL = not self.settings.showEOL
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
         return
 
     def __showBraceMatchChanged( self ):
+        " Editor setting changed "
         self.settings.showBraceMatch = not self.settings.showBraceMatch
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
         return
 
     def __autoIndentChanged( self ):
+        " Editor setting changed "
         self.settings.autoIndent = not self.settings.autoIndent
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
         return
 
     def __backspaceUnindentChanged( self ):
+        " Editor setting changed "
         self.settings.backspaceUnindent = not self.settings.backspaceUnindent
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
         return
 
     def __tabIndentsChanged( self ):
+        " Editor setting changed "
         self.settings.tabIndents = not self.settings.tabIndents
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
         return
 
     def __indentationGuidesChanged( self ):
+        " Editor setting changed "
         self.settings.indentationGuides = not self.settings.indentationGuides
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
         return
 
     def __currentLineVisibleChanged( self ):
+        " Editor setting changed "
         self.settings.currentLineVisible = not self.settings.currentLineVisible
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
         return
 
     def __homeToFirstNonSpaceChanged( self ):
-        self.settings.jumpToFirstNonSpace = not self.settings.jumpToFirstNonSpace
+        " Editor setting changed "
+        self.settings.jumpToFirstNonSpace = \
+                                not self.settings.jumpToFirstNonSpace
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
         return
 
     def __removeTrailingChanged( self ):
-        self.settings.removeTrailingOnSave = not self.settings.removeTrailingOnSave
+        " Editor setting changed "
+        self.settings.removeTrailingOnSave = \
+                                not self.settings.removeTrailingOnSave
         return
 
     @staticmethod
@@ -2348,7 +2379,8 @@ class CodimensionMainWindow( QMainWindow ):
         return
 
     def checkOutsideFileChanges( self ):
-        " Checks if there are changes in the files currently loaded by codimension "
+        """ Checks if there are changes in the files
+            currently loaded by codimension """
         self.editorsManagerWidget.editorsManager.checkOutsideFileChanges()
         return
 
@@ -2419,20 +2451,28 @@ class CodimensionMainWindow( QMainWindow ):
         return
 
     def __onStopDbgSession( self ):
+        " Debugger stop debugging clicked "
         pass
     def __onRestartDbgSession( self ):
+        " Debugger restart session clicked "
         pass
     def __onDbgBreak( self ):
+        " Debugger stop clicked "
         pass
     def __onDbgGo( self ):
+        " Debugger continue clicked "
         pass
     def __onDbgNext( self ):
+        " Debugger step over clicked "
         pass
     def __onDbgStepInto( self ):
+        " Debugger step into clicked "
         pass
     def __onDbgRunToLine( self ):
+        " Debugger run to cursor clicked "
         pass
     def __onDbgReturn( self ):
+        " Debugger step out clicked "
         pass
 
     def __openProject( self ):
@@ -2458,7 +2498,8 @@ class CodimensionMainWindow( QMainWindow ):
             return
 
         if detectFileType( fileName ) != CodimensionProjectFileType:
-            logging.warning( "Codimension project file must have .cdm extension" )
+            logging.warning( "Codimension project file "
+                             "must have .cdm extension" )
             return
 
         self.__loadProject( fileName )
@@ -2631,7 +2672,8 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onAllShortcurs( self ):
         " Triggered when opening key bindings page is requested"
-        QDesktopServices.openUrl( QUrl( "http://satsky.spb.ru/codimension/keyBindingsEng.php" ) )
+        QDesktopServices.openUrl(
+            QUrl( "http://satsky.spb.ru/codimension/keyBindingsEng.php" ) )
         return
 
     def __activateSideTab( self, act ):
@@ -2730,7 +2772,8 @@ class CodimensionMainWindow( QMainWindow ):
         return
 
     def __onTabJumpToScopeBegin( self ):
-        " Triggered when jump to the beginning of the current scope is requested "
+        """ Triggered when jump to the beginning
+            of the current scope is requested """
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.getEditor().onScopeBegin()
@@ -2752,7 +2795,8 @@ class CodimensionMainWindow( QMainWindow ):
         locations = getOccurrences( fileName, item.absPosition, False )
         if len( locations ) == 0:
             QApplication.restoreOverrideCursor()
-            self.showStatusBarMessage( "No occurances of " + item.name + " found" )
+            self.showStatusBarMessage( "No occurances of " +
+                                       item.name + " found" )
             return
 
         # Process locations for find results window
@@ -2953,7 +2997,8 @@ class CodimensionMainWindow( QMainWindow ):
         editorsManager = self.editorsManagerWidget.editorsManager
 
         self.__cloneTabAct.setEnabled( plainTextBuffer )
-        self.__closeOtherTabsAct.setEnabled( editorsManager.closeOtherAvailable() )
+        self.__closeOtherTabsAct.setEnabled(
+                                    editorsManager.closeOtherAvailable() )
         self.__saveFileAct.setEnabled( plainTextBuffer )
         self.__saveFileAsAct.setEnabled( plainTextBuffer or isGeneratedDiagram )
         self.__closeTabAct.setEnabled( editorsManager.isTabClosable() )
@@ -3040,9 +3085,12 @@ class CodimensionMainWindow( QMainWindow ):
         self.__tabPythonTidyDlgAct.setEnabled( isPythonBuffer )
 
         if projectLoaded:
-            self.__unusedClassesAct.setEnabled( self.classesViewer.getItemCount() > 0 )
-            self.__unusedFunctionsAct.setEnabled( self.functionsViewer.getItemCount() > 0 )
-            self.__unusedGlobalsAct.setEnabled( self.globalsViewer.getItemCount() > 0 )
+            self.__unusedClassesAct.setEnabled(
+                            self.classesViewer.getItemCount() > 0 )
+            self.__unusedFunctionsAct.setEnabled(
+                            self.functionsViewer.getItemCount() > 0 )
+            self.__unusedGlobalsAct.setEnabled(
+                            self.globalsViewer.getItemCount() > 0 )
         else:
             self.__unusedClassesAct.setEnabled( False )
             self.__unusedFunctionsAct.setEnabled( False )
@@ -3146,7 +3194,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.__contextHelpAct.setShortcut( "" )
         return
 
-    def __getAccelerator( self, count ):
+    @staticmethod
+    def __getAccelerator( count ):
         " Provides an accelerator text for a menu item "
         if count < 10:
             return "&" + str( count ) + ".  "
