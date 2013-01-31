@@ -2314,7 +2314,10 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         fileName = self.getFileName()
         params = GlobalData().getRunParameters( fileName )
         termType = Settings().terminalType
-        dlg = RunDialog( fileName, params, termType, -1.0, -1.0, "Run" )
+        profilerParams = Settings().getProfilerSettings()
+        debuggerParams = Settings().getDebuggerSettings()
+        dlg = RunDialog( fileName, params, termType,
+                         profilerParams, debuggerParams, "Run" )
         if dlg.exec_() == QDialog.Accepted:
             GlobalData().addRunParams( fileName, dlg.runParams )
             if dlg.termType != termType:
@@ -2327,18 +2330,16 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         fileName = self.getFileName()
         params = GlobalData().getRunParameters( fileName )
         termType = Settings().terminalType
-        profileNodeLimit = Settings().profileNodeLimit
-        profileEdgeLimit = Settings().profileEdgeLimit
+        profilerParams = Settings().getProfilerSettings()
+        debuggerParams = Settings().getDebuggerSettings()
         dlg = RunDialog( fileName, params, termType,
-                         profileNodeLimit, profileEdgeLimit, "Profile" )
+                         profilerParams, debuggerParams, "Profile" )
         if dlg.exec_() == QDialog.Accepted:
             GlobalData().addRunParams( fileName, dlg.runParams )
             if dlg.termType != termType:
                 Settings().terminalType = dlg.termType
-            if dlg.nodeLimit != profileNodeLimit:
-                Settings().profileNodeLimit = dlg.nodeLimit
-            if dlg.edgeLimit != profileEdgeLimit:
-                Settings().profileEdgeLimit = dlg.edgeLimit
+            if dlg.profilerParams != profilerParams:
+                Settings().setProfilerSettings( dlg.profilerParams )
             self.onProfileScript()
         return
 
@@ -2372,11 +2373,16 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         fileName = self.getFileName()
         params = GlobalData().getRunParameters( fileName )
         termType = Settings().terminalType
-        dlg = RunDialog( fileName, params, termType, -1.0, -1.0, "Debug" )
+        profilerParams = Settings().getProfilerSettings()
+        debuggerParams = Settings().getDebuggerSettings()
+        dlg = RunDialog( fileName, params, termType,
+                         profilerParams, debuggerParams, "Debug" )
         if dlg.exec_() == QDialog.Accepted:
             GlobalData().addRunParams( fileName, dlg.runParams )
             if dlg.termType != termType:
                 Settings().terminalType = dlg.termType
+            if dlg.debuggerParams != debuggerParams:
+                Settings().setDebuggerSettings( dlg.debuggerParams )
             self.__onDebugScript()
         return
 

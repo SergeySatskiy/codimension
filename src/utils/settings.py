@@ -102,12 +102,23 @@ class DebuggerSettings:
         self.followChild = True
         return
 
+    def __eq__( self, other ):
+        return self.reportExceptions == other.reportExceptions and \
+               self.traceInterpreter == other.traceInterpreter and \
+               self.stopAtFirstLine == other.stopAtFirstLine and \
+               self.autofork == other.autofork and \
+               self.followChild == other.followChild
+
 class ProfilerSettings:
     " Holds IDE-wide profiler options "
     def __init__( self ):
         self.nodeLimit = 1.0
         self.edgeLimit = 1.0
         return
+
+    def __eq__( self, other ):
+        return self.nodeLimit == other.nodeLimit and \
+               self.edgeLimit == other.edgeLimit
 
 
 class Settings( object ):

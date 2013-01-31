@@ -117,14 +117,14 @@ class RunDialog( QDialog ):
 
     # See utils.run for runParameters
     def __init__( self, path, runParameters, termType,
-                  nodeLimit, edgeLimit, action = "",
-                  parent = None ):
+                  profilerParams, debuggerParams,
+                  action = "", parent = None ):
         QDialog.__init__( self, parent )
 
         # Used as a return value
         self.termType = termType
-        self.nodeLimit = nodeLimit
-        self.edgeLimit = edgeLimit
+        self.profilerParams = profilerParams
+        self.debuggerParams = debuggerParams
 
         self.__action = action.lower()
 
@@ -200,12 +200,26 @@ class RunDialog( QDialog ):
 
         # Profile limits if so
         if self.__action == "profile":
-            if self.nodeLimit < 0.0 or self.nodeLimit > 100.0:
-                self.nodeLimit = 1.0
-            self.__nodeLimitEdit.setText( str( self.nodeLimit ) )
-            if self.edgeLimit < 0.0 or self.edgeLimit > 100.0:
-                self.edgeLimit = 1.0
-            self.__edgeLimitEdit.setText( str( self.edgeLimit ) )
+            if self.profilerParams.nodeLimit < 0.0 or \
+               self.profilerParams.nodeLimit > 100.0:
+                self.profilerParams.nodeLimit = 1.0
+            self.__nodeLimitEdit.setText( str( self.profilerParams.nodeLimit ) )
+            if self.profilerParams.edgeLimit < 0.0 or \
+               self.profilerParams.edgeLimit > 100.0:
+                self.profilerParams.edgeLimit = 1.0
+            self.__edgeLimitEdit.setText( str( self.profilerParams.edgeLimit ) )
+        elif self.__action == "debug":
+            self.__reportExceptionCheckBox.setChecked(
+                                    self.debuggerParams.reportExceptions )
+            self.__traceInterpreterCheckBox.setChecked(
+                                    self.debuggerParams.traceInterpreter )
+            self.__stopAtFirstCheckBox.setChecked(
+                                    self.debuggerParams.stopAtFirstLine )
+            self.__autoforkCheckBox.setChecked(
+                                    self.debuggerParams.autofork )
+            self.__debugChildCheckBox.setChecked(
+                                    self.debuggerParams.followChild )
+            self.__debugChildCheckBox.setEnabled( self.debuggerParams.autofork )
 
         self.__setRunButtonProps()
         return
@@ -585,23 +599,29 @@ class RunDialog( QDialog ):
 
     def __onReportExceptionChanged( self, state ):
         " Triggered when exception report check box changed "
-        pass
+        self.debuggerParams.reportExceptions = state != 0
+        return
 
     def __onTraceInterpreterChanged( self, state ):
         " Triggered when trace interpreter changed "
-        pass
+        self.debuggerParams.traceInterpreter = state != 0
+        return
 
     def __onStopAtFirstChanged( self, state ):
         " Triggered when stop at first changed "
-        pass
+        self.debuggerParams.stopAtFirstLine = state != 0
+        return
 
     def __onAutoforkChanged( self, state ):
         " Triggered when autofork changed "
-        pass
+        self.debuggerParams.autofork = state != 0
+        self.__debugChildCheckBox.setEnabled( self.debuggerParams.autofork )
+        return
 
     def __onDebugChild( self, state ):
         " Triggered when debug child changed "
-        pass
+        self.debuggerParams.followChild = state != 0
+        return
 
     def __argumentsOK( self ):
         " Returns True if the arguments are OK "
@@ -835,8 +855,10 @@ class RunDialog( QDialog ):
             self.termType = TERM_XTERM
 
         if self.__action == "profile":
-            self.nodeLimit = float( str( self.__nodeLimitEdit.text() ) )
-            self.edgeLimit = float( str( self.__edgeLimitEdit.text() ) )
+            self.profilerParams.nodeLimit = float(
+                                    str( self.__nodeLimitEdit.text() ) )
+            self.profilerParams.edgeLimit = float(
+                                    str( self.__edgeLimitEdit.text() ) )
 
         self.accept()
         return
