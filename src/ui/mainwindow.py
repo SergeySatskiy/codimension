@@ -2390,21 +2390,54 @@ class CodimensionMainWindow( QMainWindow ):
         self.editorsManagerWidget.editorsManager.checkOutsideFileChanges()
         return
 
-    def __onPathLabelDoubleClick( self ):
-        " Double click on the status bar path label "
+    def __getPathLabelFilePath( self ):
+        " Provides undecorated path label content "
         txt = str( self.sbFile.getPath() )
         if txt.startswith( "File: " ):
             txt = txt.replace( "File: ", "" )
+        return txt
+
+    def __onPathLabelDoubleClick( self ):
+        " Double click on the status bar path label "
+        txt = self.__getPathLabelFilePath()
         if txt not in [ "", "N/A" ]:
             QApplication.clipboard().setText( txt )
+        return
+
+    def __onCopyDirToClipboard( self ):
+        " Copies the dir path of the current file into the clipboard "
+        txt = self.__getPathLabelFilePath()
+        if txt not in [ "", "N/A" ]:
+            try:
+                QApplication.clipboard().setText( os.path.dirname( txt ) +
+                                                  os.path.sep )
+            except:
+                pass
+        return
+
+    def __onCopyFileNameToClipboard( self ):
+        " Copies the file name of the current file into the clipboard "
+        txt = self.__getPathLabelFilePath()
+        if txt not in [ "", "N/A" ]:
+            try:
+                QApplication.clipboard().setText( os.path.basename( txt ) )
+            except:
+                pass
         return
 
     def __showPathLabelContextMenu( self, pos ):
         " Triggered when a context menu is requested for the path label "
         contextMenu = QMenu( self )
         contextMenu.addAction( PixmapCache().getIcon( "copytoclipboard.png" ),
-                               "Copy path to clipboard",
+                               "Copy full path to clipboard",
                                self.__onPathLabelDoubleClick )
+        contextMenu.addSeparator()
+        contextMenu.addAction( PixmapCache().getIcon( "" ),
+                               "Copy directory path to clipboard",
+                               self.__onCopyDirToClipboard )
+        contextMenu.addAction( PixmapCache().getIcon( "" ),
+                               "Copy file name to clipboard",
+                               self.__onCopyFileNameToClipboard )
         contextMenu.popup( self.sbFile.mapToGlobal( pos ) )
         return
 
