@@ -145,119 +145,101 @@ class Settings( object ):
                 self.flushSettings()
                 return
 
-            self.zoom = self.__getInt( config, 'general', 'zoom', _defaultZoom )
-            self.xpos = self.__getInt( config, 'general', 'xpos', _defaultXPos )
-            self.ypos = self.__getInt( config, 'general', 'ypos', _defaultYPos )
-            self.width = self.__getInt( config, 'general', 'width',
-                                        _defaultWidth )
-            self.height = self.__getInt( config, 'general', 'height',
-                                         _defaultHeight )
-            self.xdelta = self.__getInt( config, 'general', 'xdelta',
-                                         _defaultXDelta )
-            self.ydelta = self.__getInt( config, 'general', 'ydelta',
-                                         _defaultYDelta )
-            self.screenWidth = self.__getInt( config, 'general', 'screenwidth',
-                                              _defaultScreenWidth )
+            self.zoom = self.__getInt( config, 'general',
+                        'zoom', _defaultZoom )
+            self.xpos = self.__getInt( config, 'general',
+                        'xpos', _defaultXPos )
+            self.ypos = self.__getInt( config, 'general',
+                        'ypos', _defaultYPos )
+            self.width = self.__getInt( config, 'general',
+                        'width', _defaultWidth )
+            self.height = self.__getInt( config, 'general',
+                        'height', _defaultHeight )
+            self.xdelta = self.__getInt( config, 'general',
+                        'xdelta', _defaultXDelta )
+            self.ydelta = self.__getInt( config, 'general',
+                        'ydelta', _defaultYDelta )
+            self.screenWidth = self.__getInt( config, 'general',
+                        'screenwidth', _defaultScreenWidth )
             self.screenHeight = self.__getInt( config, 'general',
-                                               'screenheight',
-                                               _defaultScreenHeight )
+                        'screenheight', _defaultScreenHeight )
             self.leftBarMinimized = self.__getBool( config, 'general',
-                                                    'leftBarMinimized',
-                                                    False )
+                        'leftBarMinimized', False )
             self.bottomBarMinimized = self.__getBool( config, 'general',
-                                                      'bottomBarMinimized',
-                                                      False )
+                        'bottomBarMinimized', False )
             self.rightBarMinimized = self.__getBool( config, 'general',
-                                                     'rightBarMinimized',
-                                                     False )
+                        'rightBarMinimized', False )
             self.projectLoaded = self.__getBool( config, 'general',
-                                                 'projectLoaded',
-                                                 _defaultProjectLoaded )
+                        'projectLoaded', _defaultProjectLoaded )
             self.skinName = self.__getStr( config, 'general',
-                                           'skin', _defaultSkin )
+                        'skin', _defaultSkin )
             self.verticalEdge = self.__getBool( config, 'general',
-                                                'verticalEdge',
-                                                _defaultVerticalEdge )
+                        'verticalEdge', _defaultVerticalEdge )
             self.showSpaces = self.__getBool( config, 'general',
-                                              'showSpaces', _defaultShowSpaces )
+                        'showSpaces', _defaultShowSpaces )
             self.lineWrap = self.__getBool( config, 'general',
-                                            'lineWrap', _defaultLineWrap )
+                        'lineWrap', _defaultLineWrap )
             self.showEOL = self.__getBool( config, 'general',
-                                           'showEOL', _defaultShowEOL )
+                        'showEOL', _defaultShowEOL )
             self.showBraceMatch = self.__getBool( config, 'general',
-                                                  'showBraceMatch',
-                                                  _defaultShowBraceMatch )
+                        'showBraceMatch', _defaultShowBraceMatch )
             self.autoIndent = self.__getBool( config, 'general',
-                                              'autoIndent', _defaultAutoIndent )
+                        'autoIndent', _defaultAutoIndent )
             self.backspaceUnindent = self.__getBool( config, 'general',
-                                                     'backspaceUnindent',
-                                                     _defaultBackspaceUnindent )
+                        'backspaceUnindent', _defaultBackspaceUnindent )
             self.tabIndents = self.__getBool( config, 'general',
-                                              'tabIndents', _defaultTabIndents )
+                        'tabIndents', _defaultTabIndents )
             self.indentationGuides = self.__getBool( config, 'general',
-                                                     'indentationGuides',
-                                                     _defaultIndentationGuides )
+                        'indentationGuides', _defaultIndentationGuides )
             self.currentLineVisible = self.__getBool( config, 'general',
-                                                      'currentLineVisible',
-                                                      _defaultCurrentLineVisible )
+                        'currentLineVisible', _defaultCurrentLineVisible )
             self.jumpToFirstNonSpace = self.__getBool( config, 'general',
-                                                       'jumpToFirstNonSpace',
-                                                       _defaultJumpToFirstNonSpace )
+                        'jumpToFirstNonSpace', _defaultJumpToFirstNonSpace )
             self.removeTrailingOnSave = self.__getBool( config, 'general',
-                                                        'removeTrailingOnSave',
-                                                        _defaultRemoveTrailingOnSave )
+                        'removeTrailingOnSave', _defaultRemoveTrailingOnSave )
             self.lastSuccessVerCheck = self.__getInt( config, 'general',
-                                                      'lastSuccessVerCheck',
-                                                      _defaultLastSuccessVerCheck )
+                        'lastSuccessVerCheck', _defaultLastSuccessVerCheck )
             self.newerVerShown = self.__getBool( config, 'general',
-                                                 'newerVerShown',
-                                                 _defaultNewerVerShown )
+                        'newerVerShown', _defaultNewerVerShown )
             self.showFSViewer = self.__getBool( config, 'general',
-                                                'showFSViewer', True )
+                        'showFSViewer', True )
             self.modifiedFormat = self.__getStr( config, 'general',
-                                                 'modifiedFormat',
-                                                 _defaultModifiedFormat )
+                        'modifiedFormat', _defaultModifiedFormat )
             self.terminalType = self.__getInt( config, 'general',
-                                               'terminalType',
-                                               _defaultTermType )
+                        'terminalType', _defaultTermType )
 
             # Profile parameters, IDE wide
             self.profileNodeLimit = self.__getFloat( config, 'general',
-                                                     'profileNodeLimit',
-                                                     _defaultProfileNodeLimit )
+                        'profileNodeLimit', _defaultProfileNodeLimit )
             self.profileEdgeLimit = self.__getFloat( config, 'general',
-                                                     'profileEdgeLimit',
-                                                     _defaultProfileEdgeLimit )
+                        'profileEdgeLimit', _defaultProfileEdgeLimit )
 
             # Debug parameters, IDE wide
             self.debugReportExceptions = self.__getBool( config, 'general',
-                                                         'debugReportExceptions',
-                                                         _defaultDebugReportExceptions )
+                        'debugReportExceptions', _defaultDebugReportExceptions )
             self.debugTraceInterpreter = self.__getBool( config, 'general',
-                                                         'debugTraceInterpreter',
-                                                         _defaultDebugTraceInterpreter )
+                        'debugTraceInterpreter', _defaultDebugTraceInterpreter )
             self.debugStopAtFirstLine = self.__getBool( config, 'general',
-                                                        'debugStopAtFirstLine',
-                                                        _defaultDebugStopAtFirstLine )
+                        'debugStopAtFirstLine', _defaultDebugStopAtFirstLine )
             self.debugAutofork = self.__getBool( config, 'general',
-                                                 'debugAutofork',
-                                                 _defaultDebugAutofork )
+                        'debugAutofork', _defaultDebugAutofork )
             self.debugFollowChild = self.__getBool( config, 'general',
-                                                    'debugFollowChild',
-                                                    _defaultDebugFollowChild )
+                        'debugFollowChild', _defaultDebugFollowChild )
 
             self.editorEdge = self.__getInt( config, 'general',
-                                             'editorEdge', _defaultEditorEdge )
+                        'editorEdge', _defaultEditorEdge )
 
-            asString = self.__getStr( config, 'general', 'hSplitterSizes',
-                                      _defaultHSplitSize ).split( ',' )
+            asString = self.__getStr( config, 'general',
+                        'hSplitterSizes', _defaultHSplitSize ).split( ',' )
             if len( asString ) != 3:
                 asString = _defaultHSplitSize.split( ',' )
                 self.formatOK = False
-            self.hSplitterSizes = [ int(asString[0]), int(asString[1]), int(asString[0]) ]
+            self.hSplitterSizes = [ int(asString[0]),
+                                    int(asString[1]),
+                                    int(asString[0]) ]
 
-            asString = self.__getStr( config, 'general', 'vSplitterSizes',
-                                      _defaultVSplitSize ).split( ',' )
+            asString = self.__getStr( config, 'general',
+                        'vSplitterSizes', _defaultVSplitSize ).split( ',' )
             if len( asString ) != 2:
                 asString = _defaultVSplitSize.split( ',' )
                 self.formatOK = False
@@ -416,59 +398,58 @@ class Settings( object ):
 
             f = open( self.fullFileName, "w" )
             self.__writeHeader( f )
-            f.write( "[general]\n"
-                     "zoom=" + str( self.zoom ) + "\n"
-                     "xpos=" + str( self.xpos ) + "\n"
-                     "ypos=" + str( self.ypos ) + "\n"
-                     "width=" + str( self.width ) + "\n"
-                     "height=" + str( self.height ) + "\n"
-                     "screenwidth=" + str( self.screenWidth ) + "\n"
-                     "screenheight=" + str( self.screenHeight ) + "\n"
-                     "xdelta=" + str( self.xdelta ) + "\n"
-                     "ydelta=" + str( self.ydelta ) + "\n"
-                     "skin=" + self.skinName + "\n"
-                     "modifiedFormat=" + self.modifiedFormat + "\n"
-                     "verticalEdge=" + str( self.verticalEdge ) + "\n"
-                     "showSpaces=" + str( self.showSpaces ) + "\n"
-                     "lineWrap=" + str( self.lineWrap ) + "\n"
-                     "showEOL=" + str( self.showEOL ) + "\n"
-                     "showBraceMatch=" + str( self.showBraceMatch ) + "\n"
-                     "autoIndent=" + str( self.autoIndent ) + "\n"
-                     "backspaceUnindent=" + str( self.backspaceUnindent ) + "\n"
-                     "tabIndents=" + str( self.tabIndents ) + "\n"
-                     "indentationGuides=" + str( self.indentationGuides ) + "\n"
-                     "currentLineVisible=" + str( self.currentLineVisible ) + "\n"
-                     "jumpToFirstNonSpace=" + str( self.jumpToFirstNonSpace ) + "\n"
-                     "removeTrailingOnSave=" + str( self.removeTrailingOnSave ) + "\n"
-                     "lastSuccessVerCheck=" + str( self.lastSuccessVerCheck ) + "\n"
-                     "newerVerShown=" + str( self.newerVerShown ) + "\n"
-                     "showFSViewer=" + str( self.showFSViewer ) + "\n"
-                     "terminalType=" + str( self.terminalType ) + "\n"
-                     "profileNodeLimit=" + str( self.profileNodeLimit ) + "\n"
-                     "profileEdgeLimit=" + str( self.profileEdgeLimit ) + "\n"
-                     "debugReportExceptions=" + str( self.debugReportExceptions ) + "\n"
-                     "debugTraceInterpreter=" + str( self.debugTraceInterpreter ) + "\n"
-                     "debugStopAtFirstLine=" + str( self.debugStopAtFirstLine ) + "\n"
-                     "debugAutofork=" + str( self.debugAutofork ) + "\n"
-                     "debugFollowChild=" + str( self.debugFollowChild ) + "\n"
-                     "editorEdge=" + str( self.editorEdge ) + "\n"
-                     "leftBarMinimized=" +
-                        str( int( self.leftBarMinimized ) ) + "\n"
-                     "bottomBarMinimized=" +
-                        str( int( self.bottomBarMinimized ) ) + "\n"
-                     "rightBarMinimized=" +
-                        str( int( self.rightBarMinimized ) ) + "\n"
-                     "projectLoaded=" +
-                        str( int( self.projectLoaded ) ) + "\n"
-                     "hSplitterSizes=" +
-                        str( self.hSplitterSizes[0] ) + "," +
-                        str( self.hSplitterSizes[1] ) + "," +
-                        str( self.hSplitterSizes[2] ) + "\n"
-                     "vSplitterSizes=" +
-                        str( self.vSplitterSizes[0] ) + "," +
-                        str( self.vSplitterSizes[1] ) + "\n\n" +
-                     recentPart + "\n\n" +
-                     filterPart + "\n" )
+            f.write(
+            "[general]\n"
+            "zoom=" + str( self.zoom ) + "\n"
+            "xpos=" + str( self.xpos ) + "\n"
+            "ypos=" + str( self.ypos ) + "\n"
+            "width=" + str( self.width ) + "\n"
+            "height=" + str( self.height ) + "\n"
+            "screenwidth=" + str( self.screenWidth ) + "\n"
+            "screenheight=" + str( self.screenHeight ) + "\n"
+            "xdelta=" + str( self.xdelta ) + "\n"
+            "ydelta=" + str( self.ydelta ) + "\n"
+            "skin=" + self.skinName + "\n"
+            "modifiedFormat=" + self.modifiedFormat + "\n"
+            "verticalEdge=" + str( self.verticalEdge ) + "\n"
+            "showSpaces=" + str( self.showSpaces ) + "\n"
+            "lineWrap=" + str( self.lineWrap ) + "\n"
+            "showEOL=" + str( self.showEOL ) + "\n"
+            "showBraceMatch=" + str( self.showBraceMatch ) + "\n"
+            "autoIndent=" + str( self.autoIndent ) + "\n"
+            "backspaceUnindent=" + str( self.backspaceUnindent ) + "\n"
+            "tabIndents=" + str( self.tabIndents ) + "\n"
+            "indentationGuides=" + str( self.indentationGuides ) + "\n"
+            "currentLineVisible=" + str( self.currentLineVisible ) + "\n"
+            "jumpToFirstNonSpace=" + str( self.jumpToFirstNonSpace ) + "\n"
+            "removeTrailingOnSave=" + str( self.removeTrailingOnSave ) + "\n"
+            "lastSuccessVerCheck=" + str( self.lastSuccessVerCheck ) + "\n"
+            "newerVerShown=" + str( self.newerVerShown ) + "\n"
+            "showFSViewer=" + str( self.showFSViewer ) + "\n"
+            "terminalType=" + str( self.terminalType ) + "\n"
+            "profileNodeLimit=" + str( self.profileNodeLimit ) + "\n"
+            "profileEdgeLimit=" + str( self.profileEdgeLimit ) + "\n"
+            "debugReportExceptions=" + str( self.debugReportExceptions ) + "\n"
+            "debugTraceInterpreter=" + str( self.debugTraceInterpreter ) + "\n"
+            "debugStopAtFirstLine=" + str( self.debugStopAtFirstLine ) + "\n"
+            "debugAutofork=" + str( self.debugAutofork ) + "\n"
+            "debugFollowChild=" + str( self.debugFollowChild ) + "\n"
+            "editorEdge=" + str( self.editorEdge ) + "\n"
+            "leftBarMinimized=" + str( int( self.leftBarMinimized ) ) + "\n"
+            "bottomBarMinimized=" +
+                    str( int( self.bottomBarMinimized ) ) + "\n"
+            "rightBarMinimized=" +
+                    str( int( self.rightBarMinimized ) ) + "\n"
+            "projectLoaded=" + str( int( self.projectLoaded ) ) + "\n"
+            "hSplitterSizes=" +
+                    str( self.hSplitterSizes[0] ) + "," +
+                    str( self.hSplitterSizes[1] ) + "," +
+                    str( self.hSplitterSizes[2] ) + "\n"
+            "vSplitterSizes=" +
+                    str( self.vSplitterSizes[0] ) + "," +
+                    str( self.vSplitterSizes[1] ) + "\n\n" +
+                 recentPart + "\n\n" +
+                 filterPart + "\n" )
 
             f.flush()
             f.close()
@@ -483,7 +464,8 @@ class Settings( object ):
 
             self.recentProjects.insert( 0, absProjectFile )
             if len( self.recentProjects ) > _maxRecentProjects:
-                self.recentProjects = self.recentProjects[ 0 : _maxRecentProjects ]
+                self.recentProjects = \
+                            self.recentProjects[ 0 : _maxRecentProjects ]
             self.flushSettings()
             self.emit( SIGNAL('recentListChanged') )
             return
@@ -505,10 +487,10 @@ class Settings( object ):
         @staticmethod
         def __writeHeader( fileObj ):
             " Helper to write a header with a warning "
-            fileObj.write( "#\n" \
-                           "# Generated automatically.\n" \
-                           "# Don't edit it manually unless you " \
-                           "know what you are doing.\n" \
+            fileObj.write( "#\n"
+                           "# Generated automatically.\n"
+                           "# Don't edit it manually unless you "
+                           "know what you are doing.\n"
                            "#\n\n" )
             return
 
