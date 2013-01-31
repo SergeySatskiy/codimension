@@ -92,6 +92,23 @@ _defaultJumpToFirstNonSpace = False
 _defaultRemoveTrailingOnSave = False
 
 
+class DebuggerSettings:
+    " Holds IDE-wide debugger options "
+    def __init__( self ):
+        self.reportExceptions = True
+        self.traceInterpreter = True
+        self.stopAtFirstLine = True
+        self.autofork = False
+        self.followChild = True
+        return
+
+class ProfilerSettings:
+    " Holds IDE-wide profiler options "
+    def __init__( self ):
+        self.nodeLimit = 1.0
+        self.edgeLimit = 1.0
+        return
+
 
 class Settings( object ):
     """
@@ -479,7 +496,8 @@ class Settings( object ):
                 self.emit( SIGNAL('recentListChanged') )
             return
 
-        def getDefaultGeometry( self ):
+        @staticmethod
+        def getDefaultGeometry():
             " Provides the default window size and location "
             return _defaultXPos, _defaultYPos, \
                    _defaultWidth, _defaultHeight
@@ -638,3 +656,36 @@ class Settings( object ):
         self.flushSettings()
         return
 
+    def getProfilerSettings( self ):
+        " Provides the profiler IDE-wide settings "
+        profSettings = ProfilerSettings()
+        profSettings.edgeLimit = self.iInstance.profileEdgeLimit
+        profSettings.nodeLimit = self.iInstance.profileNodeLimit
+        return profSettings
+
+    def setProfilerSettings( self, newValues ):
+        " Updates the profiler settings "
+        self.iInstance.profileEdgeLimit = newValues.edgeLimit
+        self.iInstance.profileNodeLimit = newValues.nodeLimit
+        self.flushSettings()
+        return
+
+    def getDebuggerSettings( self ):
+        " Provides the debugger IDE-wide settings "
+        dbgSettings = DebuggerSettings()
+        dbgSettings.autofork = self.iInstance.debugAutofork
+        dbgSettings.followChild = self.iInstance.debugFollowChild
+        dbgSettings.reportExceptions = self.iInstance.debugReportExceptions
+        dbgSettings.stopAtFirstLine = self.iInstance.debugStopAtFirstLine
+        dbgSettings.traceInterpreter = self.iInstance.debugTraceInterpreter
+        return dbgSettings
+
+    def setDebuggerSettings( self, newValues ):
+        " Updates the debugger settings "
+        self.iInstance.debugAutofork = newValues.autofork
+        self.iInstance.debugFollowChild = newValues.followChild
+        self.iInstance.debugReportExceptions = newValues.reportExceptions
+        self.iInstance.debugStopAtFirstLine = newValues.stopAtFirstLine
+        self.iInstance.debugTraceInterpreter = newValues.traceInterpreter
+        self.flushSettings()
+        return
