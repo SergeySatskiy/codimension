@@ -149,10 +149,18 @@ class EditorsManager( QTabWidget ):
                                     PixmapCache().getIcon( "clonetabmenu.png" ),
                                     "&Clone",
                                     self.onClone )
-        self.__copyPathAct = self.__tabContextMenu.addAction( \
+        self.__copyFullPathAct = self.__tabContextMenu.addAction(
                                     PixmapCache().getIcon( "copytoclipboard.png" ),
-                                    "Copy &path to clipboard",
-                                    self.__copyTabPath )
+                                    "Copy full &path to clipboard",
+                                    self.__copyTabFullPath )
+        self.__copyDirPathAct = self.__tabContextMenu.addAction(
+                                    PixmapCache().getIcon( "" ),
+                                    "Copy directory p&ath to clipboard",
+                                    self.__copyTabDirPath )
+        self.__copyFileNameAct = self.__tabContextMenu.addAction(
+                                    PixmapCache().getIcon( "" ),
+                                    "Copy &file name to clipboard",
+                                    self.__copyTabFileName )
         self.__reloadAct = self.__tabContextMenu.addAction( \
                                     PixmapCache().getIcon( "reload.png" ),
                                     "&Reload", self.onReload )
@@ -203,7 +211,9 @@ class EditorsManager( QTabWidget ):
             self.__cloneAct.setEnabled( widgetType == \
                                 MainWindowTabWidgetBase.PlainTextEditor )
             self.__closeOtherAct.setEnabled( self.closeOtherAvailable() )
-            self.__copyPathAct.setEnabled( fName != "" )
+            self.__copyFullPathAct.setEnabled( fName != "" )
+            self.__copyDirPathAct.setEnabled( fName != "" )
+            self.__copyFileNameAct.setEnabled( fName != "" )
             self.__highlightInPrjAct.setEnabled( os.path.isabs( fName ) and \
                                                  GlobalData().project.isLoaded() and \
                                                  GlobalData().project.isProjectFile( fName ) )
@@ -232,10 +242,22 @@ class EditorsManager( QTabWidget ):
         " True if the menu option is available "
         return self.widget( 0 ) != self.__welcomeWidget and self.count() > 1
 
-    def __copyTabPath( self ):
+    def __copyTabFullPath( self ):
         " Triggered when copy path to clipboard item is selected "
-        QApplication.clipboard().setText( \
+        QApplication.clipboard().setText(
                 self.widget( self.currentIndex() ).getFileName() )
+        return
+
+    def __copyTabDirPath( self ):
+        " Triggered when copy dir path to clipboard is selected "
+        QApplication.clipboard().setText(
+                os.path.dirname( self.widget( self.currentIndex() ).getFileName() ) + os.path.sep )
+        return
+
+    def __copyTabFileName( self ):
+        " Triggered when copy the file name to clipboard is selected "
+        QApplication.clipboard().setText(
+                os.path.basename( self.widget( self.currentIndex() ).getFileName() ) )
         return
 
     def __closeDelete( self ):
