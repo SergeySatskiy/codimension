@@ -33,24 +33,35 @@ Module implementing the Python debugger interface for the debug server.
 
 import sys
 import os
-import socket
-import subprocess
 
-from PyQt4.QtCore import *
+from PyQt4.QtCore import ( SIGNAL, QString, QStringList, QProcess, QObject,
+                           QTextCodec, QTimer )
+from PyQt4.QtGui import QMessageBox, QInputDialog
 
-from KdeQt import KQMessageBox, KQInputDialog
+
 from KdeQt.KQApplication import e4App
 
-from DebugProtocol import *
-import DebugClientCapabilities
+from client.protocol import ( ResponseOK, RequestOK, RequestEnv, ResponseSyntax,
+                              RequestVariable, RequestThreadList,
+                              RequestThreadSet, ResponseThreadSet,
+                              RequestVariables, ResponseStack, ResponseLine,
+                              RequestStep, RequestStepOver, RequestStepOut,
+                              RequestStepQuit, RequestShutdown, RequestBreak,
+                              ResponseThreadList, ResponseRaw,
+                              ResponseException, RequestContinue, RequestRun,
+                              RequestBreakIgnore, RequestBreakEnable,
+                              RequestWatch, RequestLoad, RequestForkTo,
+                              RequestEval, ResponseBPConditionError,
+                              ResponseWPConditionError, RequestWatchEnable,
+                              RequestWatchIgnore, RequestExec, RequestBanner,
+                              ResponseBanner, RequestSetFilter, ResponseForkTo,
+                              RequestForkMode, ResponseContinue, ResponseExit,
+                              ResponseVariables, RequestCompletion,
+                              ResponseVariable, ResponseCompletion,
+                              EOT, ResponseClearWatch )
 
-import Preferences
 import Utilities
 
-from eric4config import getConfig
-
-
-ClientDefaultCapabilities = DebugClientCapabilities.HasAll
 
 def getRegistryData():
     """
@@ -68,8 +79,7 @@ def getRegistryData():
 
     if exts:
         return ["Python", ClientDefaultCapabilities, exts]
-    else:
-        return ["", 0, []]
+    return ["", 0, []]
 
 
 class DebuggerInterfacePython( QObject ):
@@ -77,66 +87,51 @@ class DebuggerInterfacePython( QObject ):
     Class implementing the Python debugger interface for the debug server.
     """
 
-    def __init__( self, debugServer, passive ):
+    def __init__( self, debugServer ):
         """
         Constructor
 
         @param debugServer reference to the debug server (DebugServer)
-        @param passive flag indicating passive connection mode (boolean)
         """
         QObject.__init__( self )
 
         self.__isNetworked = True
-        self.__autoContinue = not passive
+        self.__autoContinue = True
 
         self.debugServer = debugServer
-        self.passive = passive
         self.process = None
 
         self.qsock = None
         self.queue = []
 
-        # set default values for capabilities of clients
-        self.clientCapabilities = ClientDefaultCapabilities
+        self.codec = QTextCodec.codecForName( "utf-8" )
+        return
 
-        self.codec = QTextCodec.codecForName(str(Preferences.getSystem("StringEncoding")))
-
-        if passive:
-            # set translation function
-            if Preferences.getDebugger("PathTranslation"):
-                self.translateRemote = \
-                    unicode(Preferences.getDebugger("PathTranslationRemote"))
-                self.translateLocal = \
-                    unicode(Preferences.getDebugger("PathTranslationLocal"))
-                self.translate = self.__remoteTranslation
-            else:
-                self.translate = self.__identityTranslation
-
-    def __identityTranslation( self, fn, remote2local = True ):
+    def __identityTranslation( self, fname, remote2local = True ):
         """
         Private method to perform the identity path translation.
 
-        @param fn filename to be translated (string or QString)
+        @param fname filename to be translated (string or QString)
         @param remote2local flag indicating the direction of translation
             (False = local to remote, True = remote to local [default])
         @return translated filename (string)
         """
-        return unicode( fn )
+        return unicode( fname )
 
-    def __remoteTranslation( self, fn, remote2local = True ):
+    def __remoteTranslation( self, fname, remote2local = True ):
         """
         Private method to perform the path translation.
 
-        @param fn filename to be translated (string or QString)
+        @param fname filename to be translated (string or QString)
         @param remote2local flag indicating the direction of translation
             (False = local to remote, True = remote to local [default])
         @return translated filename (string)
         """
         if remote2local:
-            return unicode( fn ).replace( self.translateRemote,
-                                          self.translateLocal )
-        return unicode( fn ).replace( self.translateLocal,
-                                      self.translateRemote )
+            return unicode( fname ).replace( self.translateRemote,
+                                             self.translateLocal )
+        return unicode( fname ).replace( self.translateLocal,
+                                         self.translateRemote )
 
     def __startProcess( self, program, arguments, environment = None ):
         """
@@ -211,7 +206,7 @@ class DebuggerInterfacePython( QObject ):
                 args[0] = Utilities.getExecutablePath(args[0])
                 process, error = self.__startProcess(args[0], args[1:])
                 if process is None:
-                    KQMessageBox.critical(None,
+                    QMessageBox.critical(None,
                         self.trUtf8("Start Debugger"),
                         self.trUtf8(\
                             """<p>The debugger backend could not be started.</p>"""
@@ -257,7 +252,7 @@ class DebuggerInterfacePython( QObject ):
                 args[0] = Utilities.getExecutablePath(args[0])
                 process, error = self.__startProcess(args[0], args[1:], clientEnv)
                 if process is None:
-                    KQMessageBox.critical(None,
+                    QMessageBox.critical(None,
                         self.trUtf8("Start Debugger"),
                         self.trUtf8(\
                             """<p>The debugger backend could not be started.</p>"""
@@ -268,7 +263,7 @@ class DebuggerInterfacePython( QObject ):
             [debugClient, noencoding, str(port), redirect, ipaddr],
             clientEnv)
         if process is None:
-            KQMessageBox.critical(None,
+            QMessageBox.critical(None,
                 self.trUtf8("Start Debugger"),
                 self.trUtf8(
                     """<p>The debugger backend could not be started.</p>"""
@@ -310,7 +305,7 @@ class DebuggerInterfacePython( QObject ):
                 args[0] = Utilities.getExecutablePath(args[0])
                 process, error = self.__startProcess(args[0], args[1:])
                 if process is None:
-                    KQMessageBox.critical(None,
+                    QMessageBox.critical(None,
                         self.trUtf8("Start Debugger"),
                         self.trUtf8(\
                             """<p>The debugger backend could not be started.</p>"""
@@ -354,7 +349,7 @@ class DebuggerInterfacePython( QObject ):
                 args[0] = Utilities.getExecutablePath(args[0])
                 process, error = self.__startProcess(args[0], args[1:], clientEnv)
                 if process is None:
-                    KQMessageBox.critical(None,
+                    QMessageBox.critical(None,
                         self.trUtf8("Start Debugger"),
                         self.trUtf8(\
                             """<p>The debugger backend could not be started.</p>"""
@@ -365,20 +360,12 @@ class DebuggerInterfacePython( QObject ):
             [debugClient, noencoding, str(port), redirect, ipaddr],
             clientEnv)
         if process is None:
-            KQMessageBox.critical(None,
+            QMessageBox.critical(None,
                 self.trUtf8("Start Debugger"),
                 self.trUtf8(
                     """<p>The debugger backend could not be started.</p>"""
                     """<p>Reason: %1</p>""").arg(error))
         return process, self.__isNetworked
-
-    def getClientCapabilities( self ):
-        """
-        Public method to retrieve the debug clients capabilities.
-
-        @return debug client capabilities (integer)
-        """
-        return self.clientCapabilities
 
     def newConnection( self, sock ):
         """
@@ -641,7 +628,7 @@ class DebuggerInterfacePython( QObject ):
         # cond is combination of cond and special (s. watch expression viewer)
         self.__sendCommand('%s%s,%d\n' % (RequestWatchIgnore, cond, count))
 
-    def remoteRawInput(self,s):
+    def remoteRawInput( self, s ):
         """
         Public method to send the raw input to the debugged program.
 
@@ -717,12 +704,6 @@ class DebuggerInterfacePython( QObject ):
         """
         self.__sendCommand(RequestBanner + '\n')
 
-    def remoteCapabilities(self):
-        """
-        Public slot to get the debug clients capabilities.
-        """
-        self.__sendCommand(RequestCapabilities + '\n')
-
     def remoteCompletion(self, text):
         """
         Public slot to get the a list of possible commandline completions
@@ -732,41 +713,12 @@ class DebuggerInterfacePython( QObject ):
         """
         self.__sendCommand("%s%s\n" % (RequestCompletion, text))
 
-    def remoteUTPrepare(self, fn, tn, tfn, cov, covname, coverase):
-        """
-        Public method to prepare a new unittest run.
-
-        @param fn the filename to load (string)
-        @param tn the testname to load (string)
-        @param tfn the test function name to load tests from (string)
-        @param cov flag indicating collection of coverage data is requested
-        @param covname filename to be used to assemble the coverage caches
-                filename
-        @param coverase flag indicating erasure of coverage data is requested
-        """
-        fn = self.translate(os.path.abspath(unicode(fn)), False)
-        self.__sendCommand('%s%s|%s|%s|%d|%s|%d\n' % \
-            (RequestUTPrepare,
-             unicode(fn), unicode(tn), unicode(tfn), cov, unicode(covname), coverase))
-
-    def remoteUTRun(self):
-        """
-        Public method to start a unittest run.
-        """
-        self.__sendCommand('%s\n' % RequestUTRun)
-
-    def remoteUTStop(self):
-        """
-        Public method to stop a unittest run.
-        """
-        self.__sendCommand('%s\n' % RequestUTStop)
-
     def __askForkTo(self):
         """
         Private method to ask the user which branch of a fork to follow.
         """
         selections = [self.trUtf8("Parent Process"), self.trUtf8("Child process")]
-        res, ok = KQInputDialog.getItem(\
+        res, ok = QInputDialog.getItem(\
             None,
             self.trUtf8("Client forking"),
             self.trUtf8("Select the fork branch to follow."),
@@ -841,25 +793,25 @@ class DebuggerInterfacePython( QObject ):
                         variables = vlist[1:]
                     except IndexError:
                         variables = []
-                    self.debugServer.clientVariables(scope, variables)
+                    self.debugServer.clientVariables( scope, variables )
                     continue
 
                 if resp == ResponseVariable:
-                    vlist = eval(line[eoc:-1])
-                    scope = vlist[0]
+                    vlist = eval( line[ eoc : -1 ] )
+                    scope = vlist[ 0 ]
                     try:
-                        variables = vlist[1:]
+                        variables = vlist[ 1 : ]
                     except IndexError:
                         variables = []
-                    self.debugServer.clientVariable(scope, variables)
+                    self.debugServer.clientVariable( scope, variables )
                     continue
 
                 if resp == ResponseOK:
-                    self.debugServer.clientStatement(False)
+                    self.debugServer.clientStatement( False )
                     continue
 
                 if resp == ResponseContinue:
-                    self.debugServer.clientStatement(True)
+                    self.debugServer.clientStatement( True )
                     continue
 
                 if resp == ResponseException:
@@ -880,105 +832,72 @@ class DebuggerInterfacePython( QObject ):
                     continue
 
                 if resp == ResponseSyntax:
-                    exc = line[eoc:-1]
-                    exc = self.translate(exc, True)
+                    exc = line[ eoc : -1 ]
+                    exc = self.translate( exc, True )
                     try:
-                        message, (fn, ln, cn) = eval(exc)
-                        if fn is None:
-                            fn = ''
-                    except (IndexError, ValueError):
+                        message, ( fname, ln, cn ) = eval( exc )
+                        if fname is None:
+                            fname = ''
+                    except ( IndexError, ValueError ):
                         message = None
-                        fn = ''
+                        fname = ''
                         ln = 0
                         cn = 0
                     if cn is None:
                         cn = 0
-                    self.debugServer.clientSyntaxError(message, fn, ln, cn)
+                    self.debugServer.clientSyntaxError( message, fname, ln, cn )
                     continue
 
                 if resp == ResponseExit:
-                    self.debugServer.clientExit(line[eoc:-1])
+                    self.debugServer.clientExit( line[ eoc : -1 ] )
                     continue
 
                 if resp == ResponseClearBreak:
-                    fn, lineno = line[eoc:-1].split(',')
-                    lineno = int(lineno)
-                    fn = self.translate(fn, True)
-                    self.debugServer.clientClearBreak(fn, lineno)
+                    fname, lineno = line[ eoc : -1 ].split( ',' )
+                    lineno = int( lineno )
+                    fname = self.translate( fname, True )
+                    self.debugServer.clientClearBreak( fname, lineno )
                     continue
 
                 if resp == ResponseBPConditionError:
-                    fn, lineno = line[eoc:-1].split(',')
-                    lineno = int(lineno)
-                    fn = self.translate(fn, True)
-                    self.debugServer.clientBreakConditionError(fn, lineno)
+                    fname, lineno = line[ eoc : -1 ].split( ',' )
+                    lineno = int( lineno )
+                    fname = self.translate( fname, True )
+                    self.debugServer.clientBreakConditionError( fname, lineno )
                     continue
 
                 if resp == ResponseClearWatch:
-                    cond = line[eoc:-1]
-                    self.debugServer.clientClearWatch(cond)
+                    cond = line[ eoc : -1 ]
+                    self.debugServer.clientClearWatch( cond )
                     continue
 
                 if resp == ResponseWPConditionError:
-                    cond = line[eoc:-1]
-                    self.debugServer.clientWatchConditionError(cond)
+                    cond = line[ eoc : -1 ]
+                    self.debugServer.clientWatchConditionError( cond )
                     continue
 
                 if resp == ResponseRaw:
-                    prompt, echo = eval(line[eoc:-1])
-                    self.debugServer.clientRawInput(prompt, echo)
+                    prompt, echo = eval( line[ eoc : -1 ] )
+                    self.debugServer.clientRawInput( prompt, echo )
                     continue
 
                 if resp == ResponseBanner:
-                    version, platform, dbgclient = eval(line[eoc:-1])
-                    self.debugServer.clientBanner(version, platform, dbgclient)
-                    continue
-
-                if resp == ResponseCapabilities:
-                    cap, clType = eval(line[eoc:-1])
-                    self.clientCapabilities = cap
-                    self.debugServer.clientCapabilities(cap, clType)
+                    version, platform, dbgclient = eval( line[ eoc : -1 ] )
+                    self.debugServer.clientBanner( version, platform,
+                                                   dbgclient )
                     continue
 
                 if resp == ResponseCompletion:
-                    clstring, text = line[eoc:-1].split('||')
-                    cl = eval(clstring)
-                    self.debugServer.clientCompletionList(cl, text)
+                    clstring, text = line[ eoc : -1 ].split( '||' )
+                    clist = eval( clstring )
+                    self.debugServer.clientCompletionList( clist, text )
                     continue
 
                 if resp == PassiveStartup:
-                    fn, exc = line[eoc:-1].split('|')
-                    exc = bool(exc)
-                    fn = self.translate(fn, True)
-                    self.debugServer.passiveStartUp(fn, exc)
-                    continue
-
-                if resp == ResponseUTPrepared:
-                    res, exc_type, exc_value = eval(line[eoc:-1])
-                    self.debugServer.clientUtPrepared(res, exc_type, exc_value)
-                    continue
-
-                if resp == ResponseUTStartTest:
-                    testname, doc = eval(line[eoc:-1])
-                    self.debugServer.clientUtStartTest(testname, doc)
-                    continue
-
-                if resp == ResponseUTStopTest:
-                    self.debugServer.clientUtStopTest()
-                    continue
-
-                if resp == ResponseUTTestFailed:
-                    testname, traceback = eval(line[eoc:-1])
-                    self.debugServer.clientUtTestFailed(testname, traceback)
-                    continue
-
-                if resp == ResponseUTTestErrored:
-                    testname, traceback = eval(line[eoc:-1])
-                    self.debugServer.clientUtTestErrored(testname, traceback)
-                    continue
-
-                if resp == ResponseUTFinished:
-                    self.debugServer.clientUtFinished()
+                    fname, exc = line[ eoc : -1 ].split( '|' )
+                    exc = bool( exc )
+                    fname = self.translate( fname, True )
+                    self.debugServer.passiveStartUp( fname, exc )
                     continue
 
                 if resp == RequestForkTo:
