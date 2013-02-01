@@ -1,3 +1,10 @@
+XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* New feature: tab context menu and current path label context menu on the
+  status bar are extended with copying directory path and copying file name
+  options.
+
+
 2013 Jan 20 Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Release 1.8
@@ -32,6 +39,7 @@
   if nothing has been changed in the required buffer.
 * Have the find-in-files dialog interruptible at the stage of building
   the list of files to search in.
+
 
 2012 Oct 31 Sergey Satskiy <sergey.satskiy@gmail.com>
 
