@@ -1148,15 +1148,26 @@ class EditorsManager( QTabWidget ):
                 self._updateIconAndTooltip( index )
                 widget.setReloadDialogShown( True )
                 # The disk file was modified
-                res = QMessageBox.warning( \
-                    self, "Save File",
-                    "<p>The file <b>" + fileName + \
-                    "</b> has been changed since reading it. " \
-                    "Do you really want to write into it?</p>",
-                    QMessageBox.StandardButtons( QMessageBox.Abort | \
-                                                QMessageBox.Save ),
-                    QMessageBox.Abort )
-                if res == QMessageBox.Abort or res == QMessageBox.Cancel:
+                dlg = QMessageBox( QMessageBox.Warning, "Save File",
+                    "<p>The file <b>" + fileName +
+                    "</b> was modified by another process after it was opened "
+                    "in this tab, so by saving it you could potentially "
+                    "overwrite other changes.</p>"
+                    "<p>Do you want to save the tab content, "
+                    "reload loosing your changes, or cancel saving?</p>" )
+                dlg.addButton( QMessageBox.Cancel )
+                dlg.addButton( QMessageBox.Save )
+                dlg.addButton( QMessageBox.RestoreDefaults )
+                btn = dlg.button( QMessageBox.RestoreDefaults )
+                btn.setText( "&Reload" )
+                dlg.setDefaultButton( QMessageBox.Cancel )
+                res = dlg.exec_()
+
+                if res == QMessageBox.Cancel:
+                    return False
+                if res == QMessageBox.RestoreDefaults:
+                    # Need to reload from the disk
+                    self.reloadTab( self.currentIndex() )
                     return False
             else:
                 # The disk file is the same as we read it
