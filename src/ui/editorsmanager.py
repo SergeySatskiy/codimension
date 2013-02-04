@@ -1168,7 +1168,7 @@ class EditorsManager( QTabWidget ):
                 if res == QMessageBox.RestoreDefaults:
                     # Need to reload from the disk
                     self.reloadTab( self.currentIndex() )
-                    return False
+                    return True
             else:
                 # The disk file is the same as we read it
                 if not editor.isModified() and \
