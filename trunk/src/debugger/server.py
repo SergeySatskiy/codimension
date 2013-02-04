@@ -32,7 +32,6 @@ Module implementing the debug server
 """
 
 from PyQt4.QtCore import SIGNAL, QModelIndex, QString
-from PyQt4.QtGui import QMessageBox
 from PyQt4.QtNetwork import QTcpServer, QHostAddress, QHostInfo
 
 from breakpointmodel import BreakPointModel
@@ -109,7 +108,7 @@ class DebugServer( QTcpServer ):
         self.debugging = False
         self.running = False
         self.clientProcess = None
-        self.__autoClearShell = False
+        self.bannerReceived = False
 
         self.connect( self, SIGNAL( "clientClearBreak" ),
                       self.__clientClearBreakPoint )
@@ -234,60 +233,55 @@ class DebugServer( QTcpServer ):
             console window (boolean)
         """
         self.running = False
-        if not self.passive or not self.passiveClientExited:
-            if self.debuggerInterface and self.debuggerInterface.isConnected():
-                self.shutdownServer()
-                self.emit( SIGNAL( 'clientGone' ),
-                           unplanned & self.debugging )
+        if self.debuggerInterface and self.debuggerInterface.isConnected():
+            self.shutdownServer()
+            self.emit( SIGNAL( 'clientGone' ),
+                       unplanned & self.debugging )
 
-        # only start the client, if we are not in passive mode
-        if not self.passive:
-            if self.clientProcess:
-                self.disconnect( self.clientProcess,
-                                 SIGNAL( "readyReadStandardError()" ),
-                                 self.__clientProcessError )
-                self.disconnect( self.clientProcess,
-                                 SIGNAL( "readyReadStandardOutput()" ),
-                                 self.__clientProcessOutput )
-                self.clientProcess.close()
-                self.clientProcess.kill()
-                self.clientProcess.waitForFinished( 10000 )
-                self.clientProcess = None
+        if self.clientProcess:
+            self.disconnect( self.clientProcess,
+                             SIGNAL( "readyReadStandardError()" ),
+                             self.__clientProcessError )
+            self.disconnect( self.clientProcess,
+                             SIGNAL( "readyReadStandardOutput()" ),
+                             self.__clientProcessOutput )
+            self.clientProcess.close()
+            self.clientProcess.kill()
+            self.clientProcess.waitForFinished( 10000 )
+            self.clientProcess = None
 
-            if forProject:
-                project = e4App().getObject( "Project" )
-                if not project.isDebugPropertiesLoaded():
-                    self.clientProcess, isNetworked = \
-                        self.debuggerInterface.startRemote( self.serverPort(),
-                                                            runInConsole )
-                else:
-                    self.clientProcess, isNetworked = \
-                        self.debuggerInterface.startRemoteForProject( self.serverPort(),
-                                                                      runInConsole )
-            else:
+        if forProject:
+            project = e4App().getObject( "Project" )
+            if not project.isDebugPropertiesLoaded():
                 self.clientProcess, isNetworked = \
                     self.debuggerInterface.startRemote( self.serverPort(),
                                                         runInConsole )
+            else:
+                self.clientProcess, isNetworked = \
+                    self.debuggerInterface.startRemoteForProject(
+                                                        self.serverPort(),
+                                                        runInConsole )
+        else:
+            self.clientProcess, isNetworked = \
+                self.debuggerInterface.startRemote( self.serverPort(),
+                                                    runInConsole )
 
-            if self.clientProcess:
-                self.connect( self.clientProcess,
-                              SIGNAL( "readyReadStandardError()" ),
-                              self.__clientProcessError )
-                self.connect( self.clientProcess,
-                              SIGNAL( "readyReadStandardOutput()" ),
-                              self.__clientProcessOutput )
+        if self.clientProcess:
+            self.connect( self.clientProcess,
+                          SIGNAL( "readyReadStandardError()" ),
+                          self.__clientProcessError )
+            self.connect( self.clientProcess,
+                          SIGNAL( "readyReadStandardOutput()" ),
+                          self.__clientProcessOutput )
 
-                if not isNetworked:
-                    # the client is connected through stdin and stdout
-                    # Perform actions necessary, if client type has changed
-                    if self.lastClientType != self.clientType:
-                        self.lastClientType = self.clientType
-                        self.remoteBanner()
-                    elif self.__autoClearShell:
-                        self.__autoClearShell = False
-                        self.remoteBanner()
+            if not isNetworked:
+                # the client is connected through stdin and stdout
+                # Perform actions necessary, if client type has changed
+                if self.bannerReceived == False:
+                    self.bannerReceived = True
+                    self.remoteBanner()
 
-                    self.debuggerInterface.flush()
+                self.debuggerInterface.flush()
         return
 
     def __clientProcessOutput( self ):
@@ -325,7 +319,8 @@ class DebugServer( QTcpServer ):
         if self.debugging:
             for row in xrange( start, end + 1 ):
                 index = self.breakpointModel.index( row, 0, parentIndex )
-                fname, lineno = self.breakpointModel.getBreakPointByIndex( index )[ 0 : 2 ]
+                fname, lineno = \
+                    self.breakpointModel.getBreakPointByIndex( index )[ 0 : 2 ]
                 self.remoteBreakpoint( fname, lineno, False )
         return
 
@@ -363,13 +358,13 @@ class DebugServer( QTcpServer ):
         if self.debugging:
             for row in xrange( start, end + 1 ):
                 index = self.breakpointModel.index( row, 0, parentIndex )
-                fn, line, cond, temp, enabled, ignorecount = \
+                fname, line, cond, temp, enabled, ignorecount = \
                     self.breakpointModel.getBreakPointByIndex( index )[ : 6 ]
-                self.remoteBreakpoint( fn, line, True, cond, temp )
+                self.remoteBreakpoint( fname, line, True, cond, temp )
                 if not enabled:
-                    self.__remoteBreakpointEnable( fn, line, False )
+                    self.__remoteBreakpointEnable( fname, line, False )
                 if ignorecount:
-                    self.__remoteBreakpointIgnore( fn, line, ignorecount )
+                    self.__remoteBreakpointIgnore( fname, line, ignorecount )
         return
 
     def __makeWatchCondition( self, cond, special ):
@@ -395,7 +390,8 @@ class DebugServer( QTcpServer ):
         Private method to split a remote watch expression.
 
         @param cond remote expression (string or QString)
-        @return tuple of local expression (string) and special condition (string)
+        @return tuple of local expression (string) and special
+                condition (string)
         """
         cond = unicode( cond )
         if cond.endswith( " ??created??" ):
@@ -434,7 +430,8 @@ class DebugServer( QTcpServer ):
         if self.debugging:
             for row in xrange( start, end + 1 ):
                 index = self.watchpointModel.index( row, 0, parentIndex )
-                cond, special = self.watchpointModel.getWatchPointByIndex( index )[ 0 : 2 ]
+                cond, special = \
+                    self.watchpointModel.getWatchPointByIndex( index )[ 0 : 2 ]
                 cond = self.__makeWatchCondition( cond, special )
                 self.__remoteWatchpoint( cond, False )
         return
@@ -461,18 +458,19 @@ class DebugServer( QTcpServer ):
         @param end end row (integer)
         """
         if self.debugging:
-            for row in range(start, end+1):
-                index = self.watchpointModel.index(row, 0, parentIndex)
+            for row in xrange( start, end + 1 ):
+                index = self.watchpointModel.index( row, 0, parentIndex )
                 cond, special, temp, enabled, ignorecount = \
-                    self.watchpointModel.getWatchPointByIndex(index)[:5]
-                cond = self.__makeWatchCondition(cond, special)
-                self.__remoteWatchpoint(cond, True, temp)
+                    self.watchpointModel.getWatchPointByIndex( index )[ : 5 ]
+                cond = self.__makeWatchCondition( cond, special )
+                self.__remoteWatchpoint( cond, True, temp )
                 if not enabled:
-                    self.__remoteWatchpointEnable(cond, False)
+                    self.__remoteWatchpointEnable( cond, False )
                 if ignorecount:
-                    self.__remoteWatchpointIgnore(cond, ignorecount)
+                    self.__remoteWatchpointIgnore( cond, ignorecount )
+        return
 
-    def __changeWatchPoints(self, startIndex, endIndex):
+    def __changeWatchPoints( self, startIndex, endIndex ):
         """
         Private slot to set changed watch expressions.
 
@@ -484,7 +482,7 @@ class DebugServer( QTcpServer ):
                                    startIndex.row(), endIndex.row() )
         return
 
-    def getClientCapabilities( self, cType) :
+    def getClientCapabilities( self, cType ):
         """
         Public method to retrieve the debug clients capabilities.
 
@@ -496,46 +494,22 @@ class DebugServer( QTcpServer ):
         except KeyError:
             return 0    # no capabilities
 
-    def __newConnection(self):
+    def __newConnection( self ):
         """
         Private slot to handle a new connection.
         """
         sock = self.nextPendingConnection()
-        peerAddress = sock.peerAddress().toString()
-        if Preferences.getDebugger("AllowedHosts").indexOf(peerAddress) == -1:
-            # the peer is not allowed to connect
-            res = QMessageBox.warning(None,
-                self.trUtf8("Connection from illegal host"),
-                self.trUtf8("""<p>A connection was attempted by the"""
-                    """ illegal host <b>%1</b>. Accept this connection?</p>""")\
-                    .arg(peerAddress),
-                QMessageBox.StandardButtons(\
-                    QMessageBox.No | \
-                    QMessageBox.Yes),
-                QMessageBox.No)
-            if res == QMessageBox.No:
-                sock.abort()
-                return
-            else:
-                allowedHosts = Preferences.getDebugger("AllowedHosts")
-                allowedHosts.append(peerAddress)
-                Preferences.setDebugger("AllowedHosts", allowedHosts)
-
-        accepted = self.debuggerInterface.newConnection(sock)
+        accepted = self.debuggerInterface.newConnection( sock )
         if accepted:
             # Perform actions necessary, if client type has changed
-            if self.lastClientType != self.clientType:
-                self.lastClientType = self.clientType
-                self.remoteBanner()
-            elif self.__autoClearShell:
-                self.__autoClearShell = False
-                self.remoteBanner()
-            elif self.passive:
+            if self.bannerReceived == False:
+                self.bannerReceived = True
                 self.remoteBanner()
 
             self.debuggerInterface.flush()
+        return
 
-    def shutdownServer(self):
+    def shutdownServer( self ):
         """
         Public method to cleanly shut down.
 
@@ -544,8 +518,9 @@ class DebugServer( QTcpServer ):
         """
         if self.debuggerInterface is not None:
             self.debuggerInterface.shutdown()
+        return
 
-    def remoteEnvironment(self, env):
+    def remoteEnvironment( self, env ):
         """
         Public method to set the environment for a program to debug, run, ...
 
@@ -553,108 +528,113 @@ class DebugServer( QTcpServer ):
         """
         envlist = Utilities.parseEnvironmentString(env)
         envdict = {}
-        for el in envlist:
+        for item in envlist:
             try:
-                key, value = el.split('=', 1)
-                if value.startswith('"') or value.startswith("'"):
-                    value = value[1:-1]
-                envdict[unicode(key)] = unicode(value)
+                key, value = item.split( '=', 1 )
+                if value.startswith( '"' ) or value.startswith( "'" ):
+                    value = value[ 1 : -1 ]
+                envdict[ unicode( key ) ] = unicode( value )
             except:
                 pass
-        self.debuggerInterface.remoteEnvironment(envdict)
+        self.debuggerInterface.remoteEnvironment( envdict )
+        return
 
-    def remoteLoad(self, fn, argv, wd, env, autoClearShell = True,
-                   tracePython = False, autoContinue = True, forProject = False,
-                   runInConsole = False, autoFork = False, forkChild = False):
+    def remoteLoad( self, fname, argv, wdir, env,
+                    tracePython = False, autoContinue = True,
+                    forProject = False, runInConsole = False, autoFork = False,
+                    forkChild = False ):
         """
         Public method to load a new program to debug.
 
-        @param fn the filename to debug (string)
-        @param argv the commandline arguments to pass to the program (string or QString)
-        @param wd the working directory for the program (string)
+        @param fname the filename to debug (string)
+        @param argv the commandline arguments to pass to the program
+               (string or QString)
+        @param wdir the working directory for the program (string)
         @param env environment settings (string)
-        @keyparam autoClearShell flag indicating, that the interpreter window should
-            be cleared (boolean)
-        @keyparam tracePython flag indicating if the Python library should be traced
-            as well (boolean)
-        @keyparam autoContinue flag indicating, that the debugger should not stop
-            at the first executable line (boolean)
+        @keyparam autoClearShell flag indicating, that the interpreter window
+                  should be cleared (boolean)
+        @keyparam tracePython flag indicating if the Python library should be
+                  traced as well (boolean)
+        @keyparam autoContinue flag indicating, that the debugger should not
+                  stop at the first executable line (boolean)
         @keyparam forProject flag indicating a project related action (boolean)
         @keyparam runInConsole flag indicating to start the debugger in a
             console window (boolean)
         @keyparam autoFork flag indicating the automatic fork mode (boolean)
-        @keyparam forkChild flag indicating to debug the child after forking (boolean)
+        @keyparam forkChild flag indicating to debug the child
+                  after forking (boolean)
         """
-        self.__autoClearShell = autoClearShell
-        self.__autoContinue = autoContinue
 
         # Restart the client
-        self.startClient(False, forProject = forProject, runInConsole = runInConsole)
+        self.startClient( False, forProject = forProject,
+                          runInConsole = runInConsole )
 
         self.remoteEnvironment(env)
 
-        self.debuggerInterface.remoteLoad(fn, argv, wd, tracePython, autoContinue,
-                                          autoFork, forkChild)
+        self.debuggerInterface.remoteLoad( fname, argv, wdir, tracePython,
+                                           autoContinue, autoFork, forkChild )
         self.debugging = True
         self.running = True
         self.__restoreBreakpoints()
         self.__restoreWatchpoints()
+        return
 
-    def remoteRun(self, fn, argv, wd, env, autoClearShell = True,
+    def remoteRun(self, fname, argv, wdir, env,
                   forProject = False, runInConsole = False,
                   autoFork = False, forkChild = False):
         """
         Public method to load a new program to run.
 
         @param fn the filename to run (string)
-        @param argv the commandline arguments to pass to the program (string or QString)
+        @param argv the commandline arguments to pass
+               to the program (string or QString)
         @param wd the working directory for the program (string)
         @param env environment settings (string)
-        @keyparam autoClearShell flag indicating, that the interpreter window should
-            be cleared (boolean)
+        @keyparam autoClearShell flag indicating, that the interpreter
+                  window should be cleared (boolean)
         @keyparam forProject flag indicating a project related action (boolean)
         @keyparam runInConsole flag indicating to start the debugger in a
             console window (boolean)
         @keyparam autoFork flag indicating the automatic fork mode (boolean)
-        @keyparam forkChild flag indicating to debug the child after forking (boolean)
+        @keyparam forkChild flag indicating to debug the child
+                  after forking (boolean)
         """
-        self.__autoClearShell = autoClearShell
-
         # Restart the client
-        self.startClient(False, forProject = forProject, runInConsole = runInConsole)
+        self.startClient( False, forProject = forProject,
+                          runInConsole = runInConsole )
 
-        self.remoteEnvironment(env)
+        self.remoteEnvironment( env )
 
-        self.debuggerInterface.remoteRun(fn, argv, wd, autoFork, forkChild)
+        self.debuggerInterface.remoteRun( fname, argv, wdir,
+                                          autoFork, forkChild )
         self.debugging = False
         self.running = True
+        return
 
-    def remoteStatement(self, stmt):
+    def remoteStatement( self, stmt ):
         """
         Public method to execute a Python statement.
 
         @param stmt the Python statement to execute (string). It
               should not have a trailing newline.
         """
-        self.debuggerInterface.remoteStatement(stmt)
+        self.debuggerInterface.remoteStatement( stmt )
+        return
 
-    def remoteStep(self):
-        """
-        Public method to single step the debugged program.
-        """
+    def remoteStep( self ):
+        " Single step the debugged program "
         self.debuggerInterface.remoteStep()
+        return
 
-    def remoteStepOver(self):
-        """
-        Public method to step over the debugged program.
-        """
+    def remoteStepOver( self ):
+        " Steps over the debugged program "
         self.debuggerInterface.remoteStepOver()
+        return
 
-    def remoteStepOut(self):
-        """
-        Public method to step out the debugged program.
-        """
+    def remoteStepOut( self ):
+        " Steps out the debugged program "
         self.debuggerInterface.remoteStepOut()
+        return
 
     def remoteStepQuit( self ):
         " Stops the debugged program "
@@ -670,41 +650,42 @@ class DebugServer( QTcpServer ):
         self.debuggerInterface.remoteContinue( special )
         return
 
-    def remoteBreakpoint( self, fn, line, shouldSet,
+    def remoteBreakpoint( self, fname, line, shouldSet,
                           cond = None, temp = False ):
         """
         Public method to set or clear a breakpoint.
 
-        @param fn filename the breakpoint belongs to (string)
+        @param fname filename the breakpoint belongs to (string)
         @param line linenumber of the breakpoint (int)
         @param set flag indicating setting or resetting a breakpoint (boolean)
         @param cond condition of the breakpoint (string)
         @param temp flag indicating a temporary breakpoint (boolean)
         """
-        self.debuggerInterface.remoteBreakpoint( fn, line, shouldSet,
+        self.debuggerInterface.remoteBreakpoint( fname, line, shouldSet,
                                                  cond, temp )
         return
 
-    def __remoteBreakpointEnable( self, fn, line, enable ):
+    def __remoteBreakpointEnable( self, fname, line, enable ):
         """
         Private method to enable or disable a breakpoint.
 
-        @param fn filename the breakpoint belongs to (string)
+        @param fname filename the breakpoint belongs to (string)
         @param line linenumber of the breakpoint (int)
-        @param enable flag indicating enabling or disabling a breakpoint (boolean)
+        @param enable flag indicating enabling or
+               disabling a breakpoint (boolean)
         """
-        self.debuggerInterface.remoteBreakpointEnable( fn, line, enable )
+        self.debuggerInterface.remoteBreakpointEnable( fname, line, enable )
         return
 
-    def __remoteBreakpointIgnore( self, fn, line, count ):
+    def __remoteBreakpointIgnore( self, fname, line, count ):
         """
         Private method to ignore a breakpoint the next couple of occurrences.
 
-        @param fn filename the breakpoint belongs to (string)
+        @param fname filename the breakpoint belongs to (string)
         @param line linenumber of the breakpoint (int)
         @param count number of occurrences to ignore (int)
         """
-        self.debuggerInterface.remoteBreakpointIgnore( fn, line, count )
+        self.debuggerInterface.remoteBreakpointIgnore( fname, line, count )
         return
 
     def __remoteWatchpoint( self, cond, shouldSet, temp = False ):
@@ -712,7 +693,8 @@ class DebugServer( QTcpServer ):
         Private method to set or clear a watch expression.
 
         @param cond expression of the watch expression (string)
-        @param set flag indicating setting or resetting a watch expression (boolean)
+        @param set flag indicating setting or
+               resetting a watch expression (boolean)
         @param temp flag indicating a temporary watch expression (boolean)
         """
         # cond is combination of cond and special (s. watch expression viewer)
@@ -724,7 +706,8 @@ class DebugServer( QTcpServer ):
         Private method to enable or disable a watch expression.
 
         @param cond expression of the watch expression (string)
-        @param enable flag indicating enabling or disabling a watch expression (boolean)
+        @param enable flag indicating enabling or
+               disabling a watch expression (boolean)
         """
         # cond is combination of cond and special (s. watch expression viewer)
         self.debuggerInterface.remoteWatchpointEnable( cond, enable )
@@ -732,7 +715,8 @@ class DebugServer( QTcpServer ):
 
     def __remoteWatchpointIgnore( self, cond, count ):
         """
-        Private method to ignore a watch expression the next couple of occurrences.
+        Private method to ignore a watch expression
+        the next couple of occurrences.
 
         @param cond expression of the watch expression (string)
         @param count number of occurrences to ignore (int)
@@ -741,13 +725,13 @@ class DebugServer( QTcpServer ):
         self.debuggerInterface.remoteWatchpointIgnore( cond, count )
         return
 
-    def remoteRawInput( self, s ):
+    def remoteRawInput( self, inputString ):
         """
         Public method to send the raw input to the debugged program.
 
-        @param s the raw input (string)
+        @param inputString the raw input (string)
         """
-        self.debuggerInterface.remoteRawInput( s )
+        self.debuggerInterface.remoteRawInput( inputString )
         self.emit( SIGNAL( 'clientRawInputSent' ) )
         return
 
@@ -802,7 +786,8 @@ class DebugServer( QTcpServer ):
 
     def remoteEval( self, arg ):
         """
-        Public method to evaluate arg in the current context of the debugged program.
+        Public method to evaluate arg in the current context
+        of the debugged program.
 
         @param arg the arguments to evaluate (string)
         """
@@ -811,7 +796,8 @@ class DebugServer( QTcpServer ):
 
     def remoteExec( self, stmt ):
         """
-        Public method to execute stmt in the current context of the debugged program.
+        Public method to execute stmt in the current context
+        of the debugged program.
 
         @param stmt statement to execute (string)
         """
@@ -962,50 +948,57 @@ class DebugServer( QTcpServer ):
         self.running = False
         return
 
-    def clientClearBreak(self, filename, lineno):
+    def clientClearBreak( self, filename, lineno ):
         """
         Public method to process the client clear breakpoint command.
 
         @param filename filename of the breakpoint (string)
         @param lineno line umber of the breakpoint (integer)
         """
-        self.emit(SIGNAL('clientClearBreak'), filename, lineno)
+        self.emit( SIGNAL( 'clientClearBreak' ), filename, lineno )
+        return
 
-    def clientBreakConditionError(self, filename, lineno):
+    def clientBreakConditionError( self, filename, lineno ):
         """
         Public method to process the client breakpoint condition error info.
 
         @param filename filename of the breakpoint (string)
         @param lineno line umber of the breakpoint (integer)
         """
-        self.emit(SIGNAL('clientBreakConditionError'), filename, lineno)
+        self.emit( SIGNAL( 'clientBreakConditionError' ), filename, lineno )
+        return
 
-    def clientClearWatch(self, condition):
+    def clientClearWatch( self, condition ):
         """
         Public slot to handle the clientClearWatch signal.
 
-        @param condition expression of watch expression to clear (string or QString)
+        @param condition expression of watch expression
+               to clear (string or QString)
         """
-        self.emit(SIGNAL('clientClearWatch'), condition)
+        self.emit( SIGNAL( 'clientClearWatch' ), condition )
+        return
 
-    def clientWatchConditionError(self, condition):
+    def clientWatchConditionError( self, condition ):
         """
         Public method to process the client watch expression error info.
 
-        @param condition expression of watch expression to clear (string or QString)
+        @param condition expression of watch expression
+               to clear (string or QString)
         """
-        self.emit(SIGNAL('clientWatchConditionError'), condition)
+        self.emit( SIGNAL( 'clientWatchConditionError' ), condition )
+        return
 
-    def clientRawInput(self, prompt, echo):
+    def clientRawInput( self, prompt, echo ):
         """
         Public method to process the client raw input command.
 
         @param prompt the input prompt (string)
         @param echo flag indicating an echoing of the input (boolean)
         """
-        self.emit(SIGNAL('clientRawInput'), prompt, echo)
+        self.emit( SIGNAL( 'clientRawInput' ), prompt, echo )
+        return
 
-    def clientBanner(self, version, platform, debugClient):
+    def clientBanner( self, version, platform, debugClient ):
         """
         Public method to process the client banner info.
 
@@ -1013,98 +1006,44 @@ class DebugServer( QTcpServer ):
         @param platform hostname of the client (string)
         @param debugClient additional debugger type info (string)
         """
-        self.emit(SIGNAL('clientBanner'), version, platform, debugClient)
+        self.emit( SIGNAL( 'clientBanner' ), version, platform, debugClient )
+        return
 
-    def clientCapabilities(self, capabilities, clientType):
+    def clientCapabilities( self, capabilities, clientType ):
         """
         Public method to process the client capabilities info.
 
         @param capabilities bitmaks with the client capabilities (integer)
         @param clientType type of the debug client (string)
         """
-        self.__clientCapabilities[clientType] = capabilities
-        self.emit(SIGNAL('clientCapabilities'), capabilities, clientType)
+        self.__clientCapabilities[ clientType ] = capabilities
+        self.emit( SIGNAL( 'clientCapabilities' ), capabilities, clientType )
+        return
 
-    def clientCompletionList(self, completionList, text):
+    def clientCompletionList( self, completionList, text ):
         """
         Public method to process the client auto completion info.
 
         @param completionList list of possible completions (list of strings)
         @param text the text to be completed (string)
         """
-        self.emit(SIGNAL('clientCompletionList'), completionList, text)
+        self.emit( SIGNAL( 'clientCompletionList' ), completionList, text )
+        return
 
-    def clientUtPrepared(self, result, exceptionType, exceptionValue):
-        """
-        Public method to process the client unittest prepared info.
-
-        @param result number of test cases (0 = error) (integer)
-        @param exceptionType exception type (string)
-        @param exceptionValue exception message (string)
-        """
-        self.emit(SIGNAL('utPrepared'), result, exceptionType, exceptionValue)
-
-    def clientUtStartTest(self, testname, doc):
-        """
-        Public method to process the client start test info.
-
-        @param testname name of the test (string)
-        @param doc short description of the test (string)
-        """
-        self.emit(SIGNAL('utStartTest'), testname, doc)
-
-    def clientUtStopTest(self):
-        """
-        Public method to process the client stop test info.
-        """
-        self.emit(SIGNAL('utStopTest'))
-
-    def clientUtTestFailed(self, testname, traceback):
-        """
-        Public method to process the client test failed info.
-
-        @param testname name of the test (string)
-        @param traceback lines of traceback info (string)
-        """
-        self.emit(SIGNAL('utTestFailed'), testname, traceback)
-
-    def clientUtTestErrored(self, testname, traceback):
-        """
-        Public method to process the client test errored info.
-
-        @param testname name of the test (string)
-        @param traceback lines of traceback info (string)
-        """
-        self.emit(SIGNAL('utTestErrored'), testname, traceback)
-
-    def clientUtFinished(self):
-        """
-        Public method to process the client unit test finished info.
-        """
-        self.emit(SIGNAL('utFinished'))
-
-    def passiveStartUp(self, fn, exc):
+    def passiveStartUp( self, fname, exc ):
         """
         Public method to handle a passive debug connection.
 
-        @param fn filename of the debugged script (string)
+        @param fname filename of the debugged script (string)
         @param exc flag to enable exception reporting of the IDE (boolean)
         """
-        print unicode(self.trUtf8("Passive debug connection received"))
-        self.passiveClientExited = False
+        print "Passive debug connection received"
         self.debugging = True
         self.running = True
         self.__restoreBreakpoints()
         self.__restoreWatchpoints()
-        self.emit(SIGNAL('passiveDebugStarted'), fn, exc)
-
-    def __passiveShutDown( self ):
-        """
-        Private method to shut down a passive debug connection.
-        """
-        self.passiveClientExited = True
-        self.shutdownServer()
-        print unicode(self.trUtf8("Passive debug connection closed"))
+        self.emit( SIGNAL( 'passiveDebugStarted' ), fname, exc )
+        return
 
     def __restoreBreakpoints( self ):
         " Restore the breakpoints after a restart "
