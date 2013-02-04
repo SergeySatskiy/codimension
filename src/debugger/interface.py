@@ -58,9 +58,8 @@ from client.protocol import ( ResponseOK, RequestOK, RequestEnv, ResponseSyntax,
                               RequestForkMode, ResponseContinue, ResponseExit,
                               ResponseVariables, RequestCompletion,
                               ResponseVariable, ResponseCompletion,
-                              EOT, ResponseClearWatch )
-
-import Utilities
+                              EOT, PassiveStartup, ResponseClearWatch,
+                              ResponseClearBreak )
 
 
 def getRegistryData():
@@ -446,14 +445,14 @@ class DebuggerInterfacePython( QObject ):
         self.__sendCommand( '%s%s\n' % ( RequestEnv, unicode( env ) ) )
         return
 
-    def remoteLoad( self, fn, argv, wd, traceInterpreter = False,
+    def remoteLoad( self, fname, argv, wdir, traceInterpreter = False,
                     autoContinue = True, autoFork = False, forkChild = False):
         """
         Public method to load a new program to debug.
 
-        @param fn the filename to debug (string)
+        @param fname the filename to debug (string)
         @param argv the commandline arguments to pass to the program (string or QString)
-        @param wd the working directory for the program (string)
+        @param wdir the working directory for the program (string)
         @keyparam traceInterpreter flag indicating if the interpreter library should be
             traced as well (boolean)
         @keyparam autoContinue flag indicating, that the debugger should not stop
@@ -463,61 +462,61 @@ class DebuggerInterfacePython( QObject ):
         """
         self.__autoContinue = autoContinue
 
-        wd = self.translate(wd, False)
-        fn = self.translate(os.path.abspath(unicode(fn)), False)
+        wdir = self.translate(wdir, False)
+        fname = self.translate(os.path.abspath(unicode(fname)), False)
         self.__sendCommand('%s%s\n' % (RequestForkMode, repr((autoFork, forkChild))))
         self.__sendCommand('%s%s|%s|%s|%d\n' % \
-            (RequestLoad, unicode(wd),
-             unicode(fn), unicode(Utilities.parseOptionString(argv)), traceInterpreter))
+            (RequestLoad, unicode(wdir),
+             unicode(fname), unicode(Utilities.parseOptionString(argv)), traceInterpreter))
 
-    def remoteRun(self, fn, argv, wd, autoFork = False, forkChild = False):
+    def remoteRun(self, fname, argv, wdir, autoFork = False, forkChild = False):
         """
         Public method to load a new program to run.
 
-        @param fn the filename to run (string)
+        @param fname the filename to run (string)
         @param argv the commandline arguments to pass to the program (string or QString)
-        @param wd the working directory for the program (string)
+        @param wdir the working directory for the program (string)
         @keyparam autoFork flag indicating the automatic fork mode (boolean)
         @keyparam forkChild flag indicating to debug the child after forking (boolean)
         """
-        wd = self.translate(wd, False)
-        fn = self.translate(os.path.abspath(unicode(fn)), False)
+        wdir = self.translate(wdir, False)
+        fname = self.translate(os.path.abspath(unicode(fname)), False)
         self.__sendCommand('%s%s\n' % (RequestForkMode, repr((autoFork, forkChild))))
         self.__sendCommand('%s%s|%s|%s\n' % \
-            (RequestRun, unicode(wd),
-             unicode(fn), unicode(Utilities.parseOptionString(argv))))
+            (RequestRun, unicode(wdir),
+             unicode(fname), unicode(Utilities.parseOptionString(argv))))
 
-    def remoteCoverage(self, fn, argv, wd, erase = False):
+    def remoteCoverage(self, fname, argv, wdir, erase = False):
         """
         Public method to load a new program to collect coverage data.
 
-        @param fn the filename to run (string)
+        @param fname the filename to run (string)
         @param argv the commandline arguments to pass to the program (string or QString)
-        @param wd the working directory for the program (string)
+        @param wdir the working directory for the program (string)
         @keyparam erase flag indicating that coverage info should be
             cleared first (boolean)
         """
-        wd = self.translate(wd, False)
-        fn = self.translate(os.path.abspath(unicode(fn)), False)
+        wdir = self.translate(wdir, False)
+        fname = self.translate(os.path.abspath(unicode(fname)), False)
         self.__sendCommand('%s%s@@%s@@%s@@%d\n' % \
-            (RequestCoverage, unicode(wd),
-             unicode(fn), unicode(Utilities.parseOptionString(argv)),
+            (RequestCoverage, unicode(wdir),
+             unicode(fname), unicode(Utilities.parseOptionString(argv)),
              erase))
 
-    def remoteProfile(self, fn, argv, wd, erase = False):
+    def remoteProfile(self, fname, argv, wdir, erase = False):
         """
         Public method to load a new program to collect profiling data.
 
-        @param fn the filename to run (string)
+        @param fname the filename to run (string)
         @param argv the commandline arguments to pass to the program (string or QString)
-        @param wd the working directory for the program (string)
+        @param wdir the working directory for the program (string)
         @keyparam erase flag indicating that timing info should be cleared first (boolean)
         """
-        wd = self.translate(wd, False)
-        fn = self.translate(os.path.abspath(unicode(fn)), False)
+        wdir = self.translate(wdir, False)
+        fname = self.translate(os.path.abspath(unicode(fname)), False)
         self.__sendCommand('%s%s|%s|%s|%d\n' % \
-            (RequestProfile, unicode(wd),
-             unicode(fn), unicode(Utilities.parseOptionString(argv)), erase))
+            (RequestProfile, unicode(wdir),
+             unicode(fname), unicode(Utilities.parseOptionString(argv)), erase))
 
     def remoteStatement( self, stmt ):
         """
@@ -561,41 +560,41 @@ class DebuggerInterfacePython( QObject ):
         """
         self.__sendCommand('%s%d\n' % (RequestContinue, special))
 
-    def remoteBreakpoint(self, fn, line, set, cond = None, temp = False):
+    def remoteBreakpoint(self, fname, line, set, cond = None, temp = False):
         """
         Public method to set or clear a breakpoint.
 
-        @param fn filename the breakpoint belongs to (string)
+        @param fname filename the breakpoint belongs to (string)
         @param line linenumber of the breakpoint (int)
         @param set flag indicating setting or resetting a breakpoint (boolean)
         @param cond condition of the breakpoint (string)
         @param temp flag indicating a temporary breakpoint (boolean)
         """
-        fn = self.translate(fn, False)
+        fname = self.translate(fname, False)
         self.__sendCommand('%s%s@@%d@@%d@@%d@@%s\n' % \
-                           (RequestBreak, fn, line, temp, set, cond))
+                           (RequestBreak, fname, line, temp, set, cond))
 
-    def remoteBreakpointEnable(self, fn, line, enable):
+    def remoteBreakpointEnable(self, fname, line, enable):
         """
         Public method to enable or disable a breakpoint.
 
-        @param fn filename the breakpoint belongs to (string)
+        @param fname filename the breakpoint belongs to (string)
         @param line linenumber of the breakpoint (int)
         @param enable flag indicating enabling or disabling a breakpoint (boolean)
         """
-        fn = self.translate(fn, False)
-        self.__sendCommand('%s%s,%d,%d\n' % (RequestBreakEnable, fn, line, enable))
+        fname = self.translate(fname, False)
+        self.__sendCommand('%s%s,%d,%d\n' % (RequestBreakEnable, fname, line, enable))
 
-    def remoteBreakpointIgnore(self, fn, line, count):
+    def remoteBreakpointIgnore(self, fname, line, count):
         """
         Public method to ignore a breakpoint the next couple of occurrences.
 
-        @param fn filename the breakpoint belongs to (string)
+        @param fname filename the breakpoint belongs to (string)
         @param line linenumber of the breakpoint (int)
         @param count number of occurrences to ignore (int)
         """
-        fn = self.translate(fn, False)
-        self.__sendCommand('%s%s,%d,%d\n' % (RequestBreakIgnore, fn, line, count))
+        fname = self.translate(fname, False)
+        self.__sendCommand('%s%s,%d,%d\n' % (RequestBreakIgnore, fname, line, count))
 
     def remoteWatchpoint(self, cond, set, temp = False):
         """
@@ -690,19 +689,15 @@ class DebuggerInterfacePython( QObject ):
         """
         self.__sendCommand('%s%s\n' % (RequestEval, arg))
 
-    def remoteExec(self, stmt):
-        """
-        Public method to execute stmt in the current context of the debugged program.
-
-        @param stmt statement to execute (string)
-        """
-        self.__sendCommand('%s%s\n' % (RequestExec, stmt))
+    def remoteExec( self, stmt ):
+        " Executs stmt in the current context of the debugged program "
+        self.__sendCommand( '%s%s\n' % ( RequestExec, stmt ) )
+        return
 
     def remoteBanner(self):
-        """
-        Public slot to get the banner info of the remote client.
-        """
-        self.__sendCommand(RequestBanner + '\n')
+        " Provides the banner info of the remote client "
+        self.__sendCommand( RequestBanner + '\n' )
+        return
 
     def remoteCompletion(self, text):
         """
