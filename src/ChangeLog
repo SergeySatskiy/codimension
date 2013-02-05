@@ -1,5 +1,7 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Better dialogs for the cases when both the disk version and the buffer
+  content were modified and the user closes the tab or saves the tab content.
 * New feature: tab context menu and current path label context menu on the
   status bar are extended with copying directory path and copying file name
   options.
