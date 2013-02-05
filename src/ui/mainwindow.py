@@ -477,16 +477,6 @@ class CodimensionMainWindow( QMainWindow ):
         font.setItalic( True )
         self.__statusBar.setFont( font )
 
-        self.dbgState = QLabel( "Debugger state: unknown", self.__statusBar )
-        self.dbgState.setFrameStyle( QFrame.StyledPanel )
-        self.dbgState.setAutoFillBackground( True )
-        dbgPalette = self.dbgState.palette()
-        dbgPalette.setColor( QPalette.Background, QColor( 255, 255, 127 ) )
-        self.dbgState.setPalette( dbgPalette )
-        self.__statusBar.addPermanentWidget( self.dbgState )
-        self.dbgState.setToolTip( "Debugger status" )
-        self.dbgState.setVisible( False )
-
         self.sbLanguage = QLabel( self.__statusBar )
         self.sbLanguage.setFrameStyle( QFrame.StyledPanel )
         self.__statusBar.addPermanentWidget( self.sbLanguage )
@@ -2441,11 +2431,6 @@ class CodimensionMainWindow( QMainWindow ):
         contextMenu.popup( self.sbFile.mapToGlobal( pos ) )
         return
 
-    def updateDebuggerState( self, state ):
-        " Updates the debugger state label "
-        self.dbgState.setText( "Debugger state: " + state )
-        return
-
     def switchDebugMode( self, newState ):
         " Switches the debug mode to the desired "
         if self.debugMode == newState:
@@ -2454,7 +2439,6 @@ class CodimensionMainWindow( QMainWindow ):
         self.debugMode = newState
 
         # Satatus bar
-        self.dbgState.setVisible( newState )
         self.sbLanguage.setVisible( not newState )
         self.sbEncoding.setVisible( not newState )
         self.sbEol.setVisible( not newState )
