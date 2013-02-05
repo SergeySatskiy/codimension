@@ -136,43 +136,43 @@ class EditorsManager( QTabWidget ):
 
         # Context menu
         self.__tabContextMenu = QMenu( self )
-        self.__highlightInPrjAct = self.__tabContextMenu.addAction( \
-                                    PixmapCache().getIcon( "highlightmenu.png" ),
-                                    "&Highlight in project browser",
-                                    self.onHighlightInPrj )
-        self.__highlightInFSAct = self.__tabContextMenu.addAction( \
-                                    PixmapCache().getIcon( "highlightmenu.png" ),
-                                    "H&ighlight in file system browser",
-                                    self.onHighlightInFS )
+        self.__highlightInPrjAct = self.__tabContextMenu.addAction(
+                                PixmapCache().getIcon( "highlightmenu.png" ),
+                                "&Highlight in project browser",
+                                self.onHighlightInPrj )
+        self.__highlightInFSAct = self.__tabContextMenu.addAction(
+                                PixmapCache().getIcon( "highlightmenu.png" ),
+                                "H&ighlight in file system browser",
+                                self.onHighlightInFS )
         self.__tabContextMenu.addSeparator()
-        self.__cloneAct = self.__tabContextMenu.addAction( \
-                                    PixmapCache().getIcon( "clonetabmenu.png" ),
-                                    "&Clone",
-                                    self.onClone )
+        self.__cloneAct = self.__tabContextMenu.addAction(
+                                PixmapCache().getIcon( "clonetabmenu.png" ),
+                                "&Clone",
+                                self.onClone )
         self.__copyFullPathAct = self.__tabContextMenu.addAction(
-                                    PixmapCache().getIcon( "copytoclipboard.png" ),
-                                    "Copy full &path to clipboard",
-                                    self.__copyTabFullPath )
+                                PixmapCache().getIcon( "copytoclipboard.png" ),
+                                "Copy full &path to clipboard",
+                                self.__copyTabFullPath )
         self.__copyDirPathAct = self.__tabContextMenu.addAction(
-                                    PixmapCache().getIcon( "" ),
-                                    "Copy directory p&ath to clipboard",
-                                    self.__copyTabDirPath )
+                                PixmapCache().getIcon( "" ),
+                                "Copy directory p&ath to clipboard",
+                                self.__copyTabDirPath )
         self.__copyFileNameAct = self.__tabContextMenu.addAction(
-                                    PixmapCache().getIcon( "" ),
-                                    "Copy &file name to clipboard",
-                                    self.__copyTabFileName )
-        self.__reloadAct = self.__tabContextMenu.addAction( \
-                                    PixmapCache().getIcon( "reload.png" ),
-                                    "&Reload", self.onReload )
-        self.__closeOtherAct = self.__tabContextMenu.addAction( \
-                                    PixmapCache().getIcon( "" ),
-                                    "Close oth&er tabs",
-                                    self.onCloseOther )
+                                PixmapCache().getIcon( "" ),
+                                "Copy &file name to clipboard",
+                                self.__copyTabFileName )
+        self.__reloadAct = self.__tabContextMenu.addAction(
+                                PixmapCache().getIcon( "reload.png" ),
+                                "&Reload", self.onReload )
+        self.__closeOtherAct = self.__tabContextMenu.addAction(
+                                PixmapCache().getIcon( "" ),
+                                "Close oth&er tabs",
+                                self.onCloseOther )
         self.__tabContextMenu.addSeparator()
-        self.__delCurrentAct = self.__tabContextMenu.addAction( \
-                                    PixmapCache().getIcon( "trash.png" ),
-                                    "Close and &delete from disk",
-                                    self.__closeDelete )
+        self.__delCurrentAct = self.__tabContextMenu.addAction(
+                                PixmapCache().getIcon( "trash.png" ),
+                                "Close and &delete from disk",
+                                self.__closeDelete )
         self.tabBar().setContextMenuPolicy( Qt.CustomContextMenu )
         self.connect( self.tabBar(),
                       SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
@@ -208,15 +208,16 @@ class EditorsManager( QTabWidget ):
                 return
 
             fName = widget.getFileName()
-            self.__cloneAct.setEnabled( widgetType == \
+            self.__cloneAct.setEnabled( widgetType ==
                                 MainWindowTabWidgetBase.PlainTextEditor )
             self.__closeOtherAct.setEnabled( self.closeOtherAvailable() )
             self.__copyFullPathAct.setEnabled( fName != "" )
             self.__copyDirPathAct.setEnabled( fName != "" )
             self.__copyFileNameAct.setEnabled( fName != "" )
-            self.__highlightInPrjAct.setEnabled( os.path.isabs( fName ) and \
-                                                 GlobalData().project.isLoaded() and \
-                                                 GlobalData().project.isProjectFile( fName ) )
+            self.__highlightInPrjAct.setEnabled(
+                        os.path.isabs( fName ) and
+                        GlobalData().project.isLoaded() and
+                        GlobalData().project.isProjectFile( fName ) )
             self.__highlightInFSAct.setEnabled( os.path.isabs( fName ) )
 
             if fName != "":
@@ -251,13 +252,16 @@ class EditorsManager( QTabWidget ):
     def __copyTabDirPath( self ):
         " Triggered when copy dir path to clipboard is selected "
         QApplication.clipboard().setText(
-                os.path.dirname( self.widget( self.currentIndex() ).getFileName() ) + os.path.sep )
+                os.path.dirname(
+                    self.widget( self.currentIndex() ).getFileName() ) +
+                                 os.path.sep )
         return
 
     def __copyTabFileName( self ):
         " Triggered when copy the file name to clipboard is selected "
         QApplication.clipboard().setText(
-                os.path.basename( self.widget( self.currentIndex() ).getFileName() ) )
+                os.path.basename(
+                    self.widget( self.currentIndex() ).getFileName() ) )
         return
 
     def __closeDelete( self ):
@@ -522,23 +526,53 @@ class EditorsManager( QTabWidget ):
         if self.widget( index ).isModified() and enforced == False:
             # Ask the user if the changes should be discarded
             self.activateTab( index )
-            res = QMessageBox.warning( \
-                        self.widget( index ),
-                        "Unsaved changes",
-                        "<b>This document has been modified.</b>" \
-                        "<p>Do you want to save changes?</p>",
-                        QMessageBox.StandardButtons( \
-                            QMessageBox.Cancel | \
-                            QMessageBox.Discard | \
+            widget = self.currentWidget()
+            fileName = widget.getFileName()
+
+            if fileName and widget.isDiskFileModified() and \
+               widget.doesFileExist():
+                # Both: the disk and the tab were modified
+                self._updateIconAndTooltip( index )
+
+                res = QMessageBox.warning( widget, "Close Tab",
+                    "<p>The file <b>" + fileName +
+                    "</b> was modified by another process after it was opened "
+                    "and modified in this tab.</p>"
+                    "<p>Do you want to save the tab content "
+                    "(potentially loosing other hanges) and close the tab, "
+                    "discard your changes and close the tab or "
+                    "cancel closing the tab?</p>",
+                        QMessageBox.StandardButtons(
+                            QMessageBox.Cancel | QMessageBox.Discard | \
                             QMessageBox.Save ),
                         QMessageBox.Save )
-            if res == QMessageBox.Save:
-                if self.onSave() != True:
-                    # Failed to save
+
+                if res == QMessageBox.Save:
+                    if self.onSave( -1, True ) != True:
+                        # Failed to save
+                        return
+                if res == QMessageBox.Cancel:
                     return
-            if res == QMessageBox.Cancel:
-                return
-            wasDiscard = res == QMessageBox.Discard
+                wasDiscard = res == QMessageBox.Discard
+            else:
+                # The case when the disk file is the same as the currently
+                # loaded
+                res = QMessageBox.warning( widget, "Close Tab",
+                        "<p>The tab content was modified.</p>"
+                        "<p>Do you want to save the tab content and close, "
+                        "discard your changes and close the tab or "
+                        "cancel closing the tab?</p>",
+                        QMessageBox.StandardButtons(
+                            QMessageBox.Cancel | QMessageBox.Discard | \
+                            QMessageBox.Save ),
+                        QMessageBox.Save )
+                if res == QMessageBox.Save:
+                    if self.onSave() != True:
+                        # Failed to save
+                        return
+                if res == QMessageBox.Cancel:
+                    return
+                wasDiscard = res == QMessageBox.Discard
 
         # Here:
         # - the user decided to discard changes
@@ -811,7 +845,8 @@ class EditorsManager( QTabWidget ):
                 return
             if widget.isDiskFileModified():
                 self.setTabToolTip( widgetIndex,
-                                    "The file has been modified outside codimension" )
+                                    "The file has been modified "
+                                    "outside codimension" )
                 icon = PixmapCache().getIcon( 'modifiedfile.png' )
                 self.setTabIcon( widgetIndex, icon )
                 self.history.updateIconForTab( widget.getUUID(), icon )
@@ -833,7 +868,9 @@ class EditorsManager( QTabWidget ):
             if info.errors  or info.lexerErrors:
                 icon = PixmapCache().getIcon( 'filepythonbroken.png' )
                 self.setTabIcon( widgetIndex, icon )
-                self.setTabToolTip( widgetIndex, "The disk version of file has parsing errors" )
+                self.setTabToolTip( widgetIndex,
+                                    "The disk version of file "
+                                    "has parsing errors" )
                 self.history.updateIconForTab( widget.getUUID(), icon )
             else:
                 self.setTabIcon( widgetIndex, QIcon() )
@@ -1039,13 +1076,15 @@ class EditorsManager( QTabWidget ):
                         if self.currentIndex() == index and \
                            editor.isLineVisible( lineNo - 1 ):
                             editor.setCursorPosition( lineNo - 1, 0 )
-                            editor.setHScrollOffset( 0 ) # avoid unwanted scrolling
+                            editor.setHScrollOffset( 0 )    # avoid unwanted
+                                                            # scrolling
                         else:
                             firstVisible = lineNo - 2
                             if firstVisible <= 0:
                                 firstVisible = 1
                             self.__restorePosition( editor,
-                                                    lineNo - 1, 0, firstVisible - 1 )
+                                                    lineNo - 1, 0,
+                                                    firstVisible - 1 )
                     self.activateTab( index )
                     if self.currentIndex() == index:
                         self.history.addCurrent()
@@ -1080,7 +1119,8 @@ class EditorsManager( QTabWidget ):
                 firstVisible = lineNo - 2
                 if firstVisible <= 0:
                     firstVisible = 1
-                self.__restorePosition( editor, lineNo - 1, 0, firstVisible - 1 )
+                self.__restorePosition( editor, lineNo - 1, 0,
+                                        firstVisible - 1 )
             else:
                 # Restore the last position
                 line, pos, firstVisible = \
@@ -1118,7 +1158,7 @@ class EditorsManager( QTabWidget ):
         widget.setFocus()
         return
 
-    def onSave( self, index = -1 ):
+    def onSave( self, index = -1, forced = False ):
         " Triggered when Ctrl+S is received "
         if index == -1:
             widget = self.currentWidget()
@@ -1142,7 +1182,7 @@ class EditorsManager( QTabWidget ):
             # This is the buffer which has the corresponding file on FS
             existedBefore = os.path.exists( fileName )
             if widget.isDiskFileModified() and \
-               widget.doesFileExist():
+               widget.doesFileExist() and not forced:
                 if index != self.currentIndex():
                     self.activateTab( index )
                 self._updateIconAndTooltip( index )
