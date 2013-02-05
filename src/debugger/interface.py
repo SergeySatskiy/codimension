@@ -38,9 +38,6 @@ from PyQt4.QtCore import ( SIGNAL, QString, QStringList, QProcess, QObject,
                            QTextCodec, QTimer )
 from PyQt4.QtGui import QMessageBox, QInputDialog
 
-
-from KdeQt.KQApplication import e4App
-
 from client.protocol import ( ResponseOK, RequestOK, RequestEnv, ResponseSyntax,
                               RequestVariable, RequestThreadList,
                               RequestThreadSet, ResponseThreadSet,
@@ -451,72 +448,54 @@ class DebuggerInterfacePython( QObject ):
         Public method to load a new program to debug.
 
         @param fname the filename to debug (string)
-        @param argv the commandline arguments to pass to the program (string or QString)
+        @param argv the commandline arguments to pass to
+               the program (string or QString)
         @param wdir the working directory for the program (string)
-        @keyparam traceInterpreter flag indicating if the interpreter library should be
-            traced as well (boolean)
-        @keyparam autoContinue flag indicating, that the debugger should not stop
-            at the first executable line (boolean)
+        @keyparam traceInterpreter flag indicating if the interpreter library
+                  should be traced as well (boolean)
+        @keyparam autoContinue flag indicating, that the debugger should not
+                  stop at the first executable line (boolean)
         @keyparam autoFork flag indicating the automatic fork mode (boolean)
-        @keyparam forkChild flag indicating to debug the child after forking (boolean)
+        @keyparam forkChild flag indicating to debug the child after forking
+                 (boolean)
         """
         self.__autoContinue = autoContinue
 
-        wdir = self.translate(wdir, False)
-        fname = self.translate(os.path.abspath(unicode(fname)), False)
-        self.__sendCommand('%s%s\n' % (RequestForkMode, repr((autoFork, forkChild))))
-        self.__sendCommand('%s%s|%s|%s|%d\n' % \
-            (RequestLoad, unicode(wdir),
-             unicode(fname), unicode(Utilities.parseOptionString(argv)), traceInterpreter))
+        wdir = self.translate( wdir, False )
+        fname = self.translate( os.path.abspath( unicode( fname ) ), False )
+        self.__sendCommand( '%s%s\n' %
+                            ( RequestForkMode, repr( ( autoFork,
+                                                       forkChild ) ) ) )
+        self.__sendCommand( '%s%s|%s|%s|%d\n' %
+                            ( RequestLoad, unicode( wdir ),
+                              unicode( fname ),
+                              unicode( Utilities.parseOptionString( argv ) ),
+                              traceInterpreter ) )
+        return
 
-    def remoteRun(self, fname, argv, wdir, autoFork = False, forkChild = False):
+    def remoteRun( self, fname, argv, wdir,
+                   autoFork = False, forkChild = False ):
         """
         Public method to load a new program to run.
 
         @param fname the filename to run (string)
-        @param argv the commandline arguments to pass to the program (string or QString)
+        @param argv the commandline arguments to pass to
+               the program (string or QString)
         @param wdir the working directory for the program (string)
         @keyparam autoFork flag indicating the automatic fork mode (boolean)
-        @keyparam forkChild flag indicating to debug the child after forking (boolean)
+        @keyparam forkChild flag indicating to debug
+                  the child after forking (boolean)
         """
-        wdir = self.translate(wdir, False)
-        fname = self.translate(os.path.abspath(unicode(fname)), False)
-        self.__sendCommand('%s%s\n' % (RequestForkMode, repr((autoFork, forkChild))))
-        self.__sendCommand('%s%s|%s|%s\n' % \
-            (RequestRun, unicode(wdir),
-             unicode(fname), unicode(Utilities.parseOptionString(argv))))
-
-    def remoteCoverage(self, fname, argv, wdir, erase = False):
-        """
-        Public method to load a new program to collect coverage data.
-
-        @param fname the filename to run (string)
-        @param argv the commandline arguments to pass to the program (string or QString)
-        @param wdir the working directory for the program (string)
-        @keyparam erase flag indicating that coverage info should be
-            cleared first (boolean)
-        """
-        wdir = self.translate(wdir, False)
-        fname = self.translate(os.path.abspath(unicode(fname)), False)
-        self.__sendCommand('%s%s@@%s@@%s@@%d\n' % \
-            (RequestCoverage, unicode(wdir),
-             unicode(fname), unicode(Utilities.parseOptionString(argv)),
-             erase))
-
-    def remoteProfile(self, fname, argv, wdir, erase = False):
-        """
-        Public method to load a new program to collect profiling data.
-
-        @param fname the filename to run (string)
-        @param argv the commandline arguments to pass to the program (string or QString)
-        @param wdir the working directory for the program (string)
-        @keyparam erase flag indicating that timing info should be cleared first (boolean)
-        """
-        wdir = self.translate(wdir, False)
-        fname = self.translate(os.path.abspath(unicode(fname)), False)
-        self.__sendCommand('%s%s|%s|%s|%d\n' % \
-            (RequestProfile, unicode(wdir),
-             unicode(fname), unicode(Utilities.parseOptionString(argv)), erase))
+        wdir = self.translate( wdir, False )
+        fname = self.translate( os.path.abspath( unicode( fname ) ), False )
+        self.__sendCommand( '%s%s\n' %
+                            ( RequestForkMode, repr( ( autoFork,
+                                                       forkChild ) ) ) )
+        self.__sendCommand( '%s%s|%s|%s\n' %
+                            ( RequestRun, unicode( wdir ),
+                              unicode( fname ),
+                              unicode( Utilities.parseOptionString( argv ) ) ) )
+        return
 
     def remoteStatement( self, stmt ):
         """
@@ -535,57 +514,55 @@ class DebuggerInterfacePython( QObject ):
         return
 
     def remoteStepOver( self ):
-        """
-        Public method to step over the debugged program.
-        """
-        self.__sendCommand(RequestStepOver + '\n')
+        " Steps over the debugged program "
+        self.__sendCommand( RequestStepOver + '\n' )
+        return
 
     def remoteStepOut( self ):
-        """
-        Public method to step out the debugged program.
-        """
-        self.__sendCommand(RequestStepOut + '\n')
+        " Steps out the debugged program "
+        self.__sendCommand( RequestStepOut + '\n' )
+        return
 
     def remoteStepQuit(self):
-        """
-        Public method to stop the debugged program.
-        """
-        self.__sendCommand(RequestStepQuit + '\n')
+        " Stops the debugged program "
+        self.__sendCommand( RequestStepQuit + '\n' )
+        return
 
-    def remoteContinue(self, special = False):
-        """
-        Public method to continue the debugged program.
+    def remoteContinue( self, special = False ):
+        " Continues the debugged program "
+        self.__sendCommand( '%s%d\n' % ( RequestContinue, special ) )
+        return
 
-        @param special flag indicating a special continue operation
-        """
-        self.__sendCommand('%s%d\n' % (RequestContinue, special))
-
-    def remoteBreakpoint(self, fname, line, set, cond = None, temp = False):
+    def remoteBreakpoint( self, fname, line, isSet, cond = None, temp = False ):
         """
         Public method to set or clear a breakpoint.
 
         @param fname filename the breakpoint belongs to (string)
         @param line linenumber of the breakpoint (int)
-        @param set flag indicating setting or resetting a breakpoint (boolean)
+        @param isSet flag indicating setting or resetting a breakpoint (boolean)
         @param cond condition of the breakpoint (string)
         @param temp flag indicating a temporary breakpoint (boolean)
         """
-        fname = self.translate(fname, False)
-        self.__sendCommand('%s%s@@%d@@%d@@%d@@%s\n' % \
-                           (RequestBreak, fname, line, temp, set, cond))
+        fname = self.translate( fname, False )
+        self.__sendCommand( '%s%s@@%d@@%d@@%d@@%s\n' %
+                            ( RequestBreak, fname, line, temp, isSet, cond ) )
+        return
 
-    def remoteBreakpointEnable(self, fname, line, enable):
+    def remoteBreakpointEnable( self, fname, line, enable ):
         """
         Public method to enable or disable a breakpoint.
 
         @param fname filename the breakpoint belongs to (string)
         @param line linenumber of the breakpoint (int)
-        @param enable flag indicating enabling or disabling a breakpoint (boolean)
+        @param enable flag indicating enabling or
+               disabling a breakpoint (boolean)
         """
-        fname = self.translate(fname, False)
-        self.__sendCommand('%s%s,%d,%d\n' % (RequestBreakEnable, fname, line, enable))
+        fname = self.translate( fname, False )
+        self.__sendCommand( '%s%s,%d,%d\n' %
+                            ( RequestBreakEnable, fname, line, enable ) )
+        return
 
-    def remoteBreakpointIgnore(self, fname, line, count):
+    def remoteBreakpointIgnore( self, fname, line, count ):
         """
         Public method to ignore a breakpoint the next couple of occurrences.
 
@@ -593,63 +570,73 @@ class DebuggerInterfacePython( QObject ):
         @param line linenumber of the breakpoint (int)
         @param count number of occurrences to ignore (int)
         """
-        fname = self.translate(fname, False)
-        self.__sendCommand('%s%s,%d,%d\n' % (RequestBreakIgnore, fname, line, count))
+        fname = self.translate( fname, False )
+        self.__sendCommand( '%s%s,%d,%d\n' %
+                            ( RequestBreakIgnore, fname, line, count ) )
+        return
 
-    def remoteWatchpoint(self, cond, set, temp = False):
+    def remoteWatchpoint( self, cond, isSet, temp = False ):
         """
         Public method to set or clear a watch expression.
 
         @param cond expression of the watch expression (string)
-        @param set flag indicating setting or resetting a watch expression (boolean)
+        @param set flag indicating setting or resetting
+               a watch expression (boolean)
         @param temp flag indicating a temporary watch expression (boolean)
         """
         # cond is combination of cond and special (s. watch expression viewer)
-        self.__sendCommand('%s%s@@%d@@%d\n' % (RequestWatch, cond, temp, set))
+        self.__sendCommand( '%s%s@@%d@@%d\n' %
+                            ( RequestWatch, cond, temp, isSet ) )
+        return
 
-    def remoteWatchpointEnable(self, cond, enable):
+    def remoteWatchpointEnable( self, cond, enable ):
         """
         Public method to enable or disable a watch expression.
 
         @param cond expression of the watch expression (string)
-        @param enable flag indicating enabling or disabling a watch expression (boolean)
+        @param enable flag indicating enabling or disabling
+               a watch expression (boolean)
         """
         # cond is combination of cond and special (s. watch expression viewer)
-        self.__sendCommand('%s%s,%d\n' % (RequestWatchEnable, cond, enable))
+        self.__sendCommand( '%s%s,%d\n' % ( RequestWatchEnable, cond, enable ) )
+        return
 
-    def remoteWatchpointIgnore(self, cond, count):
+    def remoteWatchpointIgnore( self, cond, count ):
         """
-        Public method to ignore a watch expression the next couple of occurrences.
+        Public method to ignore a watch expression the next
+        couple of occurrences.
 
         @param cond expression of the watch expression (string)
         @param count number of occurrences to ignore (int)
         """
         # cond is combination of cond and special (s. watch expression viewer)
-        self.__sendCommand('%s%s,%d\n' % (RequestWatchIgnore, cond, count))
+        self.__sendCommand( '%s%s,%d\n' % ( RequestWatchIgnore, cond, count ) )
+        return
 
-    def remoteRawInput( self, s ):
+    def remoteRawInput( self, inputString ):
         """
         Public method to send the raw input to the debugged program.
 
-        @param s the raw input (string)
+        @param inputString the raw input (string)
         """
-        self.__sendCommand(s + '\n')
+        self.__sendCommand( inputString + '\n' )
+        return
 
-    def remoteThreadList(self):
-        """
-        Public method to request the list of threads from the client.
-        """
-        self.__sendCommand('%s\n' % RequestThreadList)
+    def remoteThreadList( self ):
+        " Requests the list of threads from the client "
+        self.__sendCommand( RequestThreadList + '\n' )
+        return
 
-    def remoteSetThread(self, tid):
+    def remoteSetThread( self, tid ):
         """
         Public method to request to set the given thread as current thread.
 
         @param tid id of the thread (integer)
         """
-        self.__sendCommand('%s%d\n' % (RequestThreadSet, tid))
+        self.__sendCommand( '%s%d\n' % ( RequestThreadSet, tid ) )
+        return
 
-    def remoteClientVariables(self, scope, filter, framenr = 0):
+    def remoteClientVariables( self, scope, fltr, framenr = 0 ):
         """
         Public method to request the variables of the debugged program.
 
@@ -657,77 +644,77 @@ class DebuggerInterfacePython( QObject ):
         @param filter list of variable types to filter out (list of int)
         @param framenr framenumber of the variables to retrieve (int)
         """
-        self.__sendCommand('%s%d, %d, %s\n' % \
-            (RequestVariables, framenr, scope, unicode(filter)))
+        self.__sendCommand( '%s%d, %d, %s\n' %
+            ( RequestVariables, framenr, scope, unicode( fltr ) ) )
+        return
 
-    def remoteClientVariable(self, scope, filter, var, framenr = 0):
+    def remoteClientVariable( self, scope, fltr, var, framenr = 0 ):
         """
         Public method to request the variables of the debugged program.
 
         @param scope the scope of the variables (0 = local, 1 = global)
-        @param filter list of variable types to filter out (list of int)
+        @param fltr list of variable types to filter out (list of int)
         @param var list encoded name of variable to retrieve (string)
         @param framenr framenumber of the variables to retrieve (int)
         """
-        self.__sendCommand('%s%s, %d, %d, %s\n' % \
-            (RequestVariable, unicode(var), framenr, scope, str(filter)))
+        self.__sendCommand( '%s%s, %d, %d, %s\n' %
+            ( RequestVariable, unicode( var ), framenr, scope, str( fltr ) ) )
+        return
 
-    def remoteClientSetFilter(self, scope, filter):
+    def remoteClientSetFilter( self, scope, fltr ):
         """
         Public method to set a variables filter list.
 
         @param scope the scope of the variables (0 = local, 1 = global)
-        @param filter regexp string for variable names to filter out (string)
+        @param fltr regexp string for variable names to filter out (string)
         """
-        self.__sendCommand('%s%d, "%s"\n' % (RequestSetFilter, scope, filter))
+        self.__sendCommand( '%s%d, "%s"\n' % ( RequestSetFilter, scope, fltr ) )
+        return
 
-    def remoteEval(self, arg):
+    def remoteEval( self, arg ):
         """
-        Public method to evaluate arg in the current context of the debugged program.
+        Public method to evaluate arg in the current context
+        of the debugged program.
 
         @param arg the arguments to evaluate (string)
         """
-        self.__sendCommand('%s%s\n' % (RequestEval, arg))
+        self.__sendCommand( '%s%s\n' % ( RequestEval, arg ) )
+        return
 
     def remoteExec( self, stmt ):
         " Executs stmt in the current context of the debugged program "
         self.__sendCommand( '%s%s\n' % ( RequestExec, stmt ) )
         return
 
-    def remoteBanner(self):
+    def remoteBanner( self ):
         " Provides the banner info of the remote client "
         self.__sendCommand( RequestBanner + '\n' )
         return
 
-    def remoteCompletion(self, text):
+    def remoteCompletion( self, text ):
         """
         Public slot to get the a list of possible commandline completions
         from the remote client.
 
         @param text the text to be completed (string or QString)
         """
-        self.__sendCommand("%s%s\n" % (RequestCompletion, text))
+        self.__sendCommand( "%s%s\n" % ( RequestCompletion, text ) )
+        return
 
-    def __askForkTo(self):
-        """
-        Private method to ask the user which branch of a fork to follow.
-        """
-        selections = [self.trUtf8("Parent Process"), self.trUtf8("Child process")]
-        res, ok = QInputDialog.getItem(\
-            None,
-            self.trUtf8("Client forking"),
-            self.trUtf8("Select the fork branch to follow."),
-            selections,
-            0, False)
-        if not ok or res == selections[0]:
-            self.__sendCommand(ResponseForkTo + 'parent\n')
+    def __askForkTo( self ):
+        " Asks the user which branch of a fork to follow "
+        selections = [ "Parent Process", "Child process" ]
+        res, isOk = QInputDialog.getItem( None,
+            "Client forking", "Select the fork branch to follow.",
+            selections, 0, False )
+        if not isOk or res == selections[0]:
+            self.__sendCommand( ResponseForkTo + 'parent\n' )
         else:
-            self.__sendCommand(ResponseForkTo + 'child\n')
+            self.__sendCommand( ResponseForkTo + 'child\n' )
+        return
 
     def __parseClientLine( self ):
-        """
-        Private method to handle data from the client.
-        """
+        " Handles data from the client "
         while self.qsock and self.qsock.canReadLine():
             qs = self.qsock.readLine()
             if self.codec is not None:
@@ -830,17 +817,18 @@ class DebuggerInterfacePython( QObject ):
                     exc = line[ eoc : -1 ]
                     exc = self.translate( exc, True )
                     try:
-                        message, ( fname, ln, cn ) = eval( exc )
+                        message, ( fname, linenum, charnum ) = eval( exc )
                         if fname is None:
                             fname = ''
                     except ( IndexError, ValueError ):
                         message = None
                         fname = ''
-                        ln = 0
-                        cn = 0
-                    if cn is None:
-                        cn = 0
-                    self.debugServer.clientSyntaxError( message, fname, ln, cn )
+                        linenum = 0
+                        charnum = 0
+                    if charnum is None:
+                        charnum = 0
+                    self.debugServer.clientSyntaxError( message, fname,
+                                                        linenum, charnum )
                     continue
 
                 if resp == ResponseExit:
