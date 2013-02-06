@@ -35,9 +35,9 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * Add file to the recent files list at the time of closing a tab as well
   (not only at the time of opening). Otherwise a file is not there when it
   was loaded from a command line and then its tab is closed.
-* Do not loose the current editor position when there was an incremental
+* Do not lose the current editor position when there was an incremental
   search on a tab and then another tab is closed.
-* Prevent loosing selection in case switching between history positions
+* Prevent losing selection in case switching between history positions
   if nothing has been changed in the required buffer.
 * Have the find-in-files dialog interruptible at the stage of building
   the list of files to search in.

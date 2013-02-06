@@ -226,7 +226,7 @@ class EditorsManager( QTabWidget ):
                     self.__reloadAct.setEnabled( False )
                 elif widget.isDiskFileModified():
                     if widget.isModified():
-                        self.__reloadAct.setText( "&Reload loosing changes" )
+                        self.__reloadAct.setText( "&Reload losing changes" )
                     else:
                         self.__reloadAct.setText( "&Reload" )
                     self.__reloadAct.setEnabled( True )
@@ -539,7 +539,7 @@ class EditorsManager( QTabWidget ):
                     "</b> was modified by another process after it was opened "
                     "and modified in this tab.</p>"
                     "<p>Do you want to save the tab content "
-                    "(potentially loosing other hanges) and close the tab, "
+                    "(potentially losing other changes) and close the tab, "
                     "discard your changes and close the tab or "
                     "cancel closing the tab?</p>",
                         QMessageBox.StandardButtons(
@@ -1194,7 +1194,7 @@ class EditorsManager( QTabWidget ):
                     "in this tab, so by saving it you could potentially "
                     "overwrite other changes.</p>"
                     "<p>Do you want to save the tab content, "
-                    "reload loosing your changes, or cancel saving?</p>" )
+                    "reload losing your changes, or cancel saving?</p>" )
                 dlg.addButton( QMessageBox.Cancel )
                 dlg.addButton( QMessageBox.Save )
                 dlg.addButton( QMessageBox.RestoreDefaults )
