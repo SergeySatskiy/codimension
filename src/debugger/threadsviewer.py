@@ -20,7 +20,7 @@
 # $Id$
 #
 
-" stack viewer "
+" Thread viewer "
 
 
 from PyQt4.QtCore       import Qt, SIGNAL, QStringList, QEventLoop
