@@ -180,6 +180,9 @@ def detectFileType( path, checkForBrokenLink = True ):
                 if 'shared object' in output:
                     __cachedFileTypes[ path ] = SOFileType
                     return SOFileType
+            elif fileExtension == "cgi" and 'python' in output:
+                __cachedFileTypes[ path ] = PythonFileType
+                return PythonFileType
         except:
             pass
 
