@@ -162,7 +162,7 @@ class OutsideChangeWidget( QFrame ):
     def showChoice( self, modified, allEnabled ):
         " Brings up the panel with the correct text and buttons "
         if modified:
-            self.__reloadButton.setText( "Reload loosing changes" )
+            self.__reloadButton.setText( "Reload losing changes" )
         else:
             self.__reloadButton.setText( "Reload" )
         self.__reloadAllNonChangedButton.setEnabled( allEnabled )
