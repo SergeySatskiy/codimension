@@ -2434,7 +2434,9 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     def getFileType( self ):
         " Provides the file type "
         if self.__fileType == UnknownFileType:
-            if self.__shortName != "":
+            if self.__fileName:
+                self.__fileType = detectFileType( self.__fileName )
+            elif self.__shortName:
                 self.__fileType = detectFileType( self.__shortName )
         return self.__fileType
 
