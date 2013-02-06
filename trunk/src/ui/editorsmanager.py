@@ -1101,7 +1101,7 @@ class EditorsManager( QTabWidget ):
 
             newWidget.setFileName( fileName )
             editor.setModified( False )
-            fileType = detectFileType( newWidget.getShortName() )
+            fileType = detectFileType( fileName )
 
             if self.widget( 0 ) == self.__welcomeWidget:
                 # It is the only welcome widget on the screen
