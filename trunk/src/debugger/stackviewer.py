@@ -20,7 +20,7 @@
 # $Id$
 #
 
-" stack viewer "
+" Stack viewer "
 
 
 from PyQt4.QtCore       import Qt, SIGNAL, QStringList
