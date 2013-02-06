@@ -231,8 +231,7 @@ class FileOutlineViewer( QWidget ):
             return
 
         # This is text editor, detect the file type
-        if detectFileType( widget.getShortName() ) not in [ PythonFileType,
-                                                            Python3FileType ]:
+        if widget.getFileType() not in [ PythonFileType, Python3FileType ]:
             if self.__currentUUID is not None:
                 self.__outlineBrowsers[ self.__currentUUID ].browser.hide()
                 self.__currentUUID = None
