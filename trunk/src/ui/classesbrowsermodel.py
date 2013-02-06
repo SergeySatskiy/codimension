@@ -35,7 +35,7 @@ from PyQt4.QtCore       import QVariant
 from viewitems          import TreeViewClassItem
 from utils.project      import CodimensionProject
 from browsermodelbase   import BrowserModelBase
-
+from utils.fileutils    import detectFileType, PythonFileType, Python3FileType
 
 class ClassesBrowserModel( BrowserModelBase ):
     " Class implementing the project browser model "
@@ -57,8 +57,7 @@ class ClassesBrowserModel( BrowserModelBase ):
         self.clear()
         project = self.globalData.project
         for fname in project.filesList:
-            if fname.endswith( '.py' ) or fname.endswith( '.py3' ) or \
-               fname.endswith( '.pyw' ):
+            if detectFileType( fname ) in [ PythonFileType, Python3FileType ]:
                 info = project.briefModinfoCache.get( fname )
                 for classObj in info.classes:
                     item = TreeViewClassItem( self.rootItem, classObj )
