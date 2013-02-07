@@ -71,11 +71,15 @@ def getModules( path ):
         It expects absolute real path. Otherwise it is not guaranteed it
         works all right. """
 
+    # Make sure the path does not have double separators
+    # and has separator at the end
+    path = normpath( path ) + sep
+
     oldStderr = sys.stderr
     sys.stderr = DevNull()
     modules = {}
     for fName in listdir( path ):
-        fName = path + sep + fName
+        fName = path + fName
         if isfile( fName ):
             modName, ext = splitext( fName )
             suffix = __getSuffix( fName )

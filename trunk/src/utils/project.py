@@ -756,12 +756,20 @@ class CodimensionProject( QObject ):
             # Bad error - cannot load project file at all
             config = None
             self.__formatOK = False
-            logging.warning( "Cannot read recentfiles project file " \
+            logging.warning( "Cannot read recentfiles project file "
                              "from here: " + confFile )
             return
 
-        self.recentFiles = self.__loadListSection( \
+        self.recentFiles = self.__loadListSection(
                 config, 'recentfiles', 'file' )
+
+        # Due to a bug there could be the same files twice in the list.
+        # The difference is doubled path separator. Fix it here.
+        temp = set()
+        for path in self.recentFiles:
+            temp.add( os.path.normpath( path ) )
+        self.recentFiles = list( temp )
+
         config = None
         return
 

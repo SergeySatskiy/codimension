@@ -66,29 +66,31 @@ def getSystemWideModules():
     return __systemwideModules
 
 
-def getProjectSpecificModules( fileName = "" ):
+def getProjectSpecificModules( path = "" ):
     " Provides a dictionary of the project specific modules "
     specificModules = {}
     importDirs = GlobalData().getProjectImportDirs()
-    for path in importDirs:
-        specificModules.update( getModules( path ) )
+    for importPath in importDirs:
+        specificModules.update( getModules( importPath ) )
 
     projectFile = GlobalData().project.fileName
     if projectFile != "":
-        basedir = os.path.dirname( projectFile ) + os.path.sep
+        basedir = os.path.dirname( projectFile )
         if basedir not in importDirs:
             importDirs.append( basedir )
             specificModules.update( getModules( basedir ) )
 
-    if os.path.isabs( fileName ):
-        if os.path.isfile( fileName ):
-            basedir = os.path.dirname( fileName ) + os.path.sep
-        else:
-            basedir = fileName
-            if not basedir.endswith( os.path.sep ):
-                basedir += os.path.sep
-        if basedir not in importDirs:
+    if path and os.path.isabs( path ):
+        path = os.path.normpath( path )
+        basedir = ""
+        if os.path.isfile( path ):
+            basedir = os.path.dirname( path )
+        elif os.path.isdir( path ):
+            basedir = path
+
+        if basedir and basedir not in importDirs:
             specificModules.update( getModules( basedir ) )
+
     return specificModules
 
 

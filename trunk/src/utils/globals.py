@@ -170,7 +170,9 @@ class GlobalData( object ):
             return
 
         def getProjectImportDirs( self ):
-            " Provides a list of the project import dirs if so "
+            """ Provides a list of the project import dirs if so.
+                Note: the paths do not have '/' at the end due to
+                os.path.normpath """
             if not self.project.isLoaded():
                 return []
 
