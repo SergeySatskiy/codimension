@@ -560,7 +560,7 @@ class CodimensionMainWindow( QMainWindow ):
                                         PixmapCache().getIcon( 'unloadproject.png' ),
                                         '&Unload project',
                                         self.projectViewer.unloadProject )
-        self.__projectPropsAct = self.__projectMenu.addAction( \
+        self.__projectPropsAct = self.__projectMenu.addAction(
                                         PixmapCache().getIcon( 'smalli.png' ),
                                         '&Properties',
                                         self.projectViewer.projectProperties )
@@ -583,7 +583,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.__delPrjTemplateAct, SIGNAL( 'triggered()' ),
                       self.__onDelPrjTemplate )
         self.__prjPylintMenu = QMenu( "Project-specific p&ylintrc", self )
-        self.__prjGenPylintrcAct = self.__prjPylintMenu.addAction( \
+        self.__prjGenPylintrcAct = self.__prjPylintMenu.addAction(
                                         PixmapCache().getIcon( 'generate.png' ),
                                         '&Create',
                                         self.__onGenPylintRC )
@@ -592,12 +592,16 @@ class CodimensionMainWindow( QMainWindow ):
                                         '&Edit',
                                         self.__onEditPylintRC )
         self.__prjPylintMenu.addSeparator()
-        self.__prjDelPylintrcAct = self.__prjPylintMenu.addAction( \
+        self.__prjDelPylintrcAct = self.__prjPylintMenu.addAction(
                                         PixmapCache().getIcon( 'trash.png' ),
                                         '&Delete',
                                         self.__onDelPylintRC )
         self.__projectMenu.addMenu( self.__prjTemplateMenu )
         self.__projectMenu.addMenu( self.__prjPylintMenu )
+        self.__prjRopeConfigAct = self.__projectMenu.addAction(
+                                    PixmapCache().getIcon( 'edit.png' ),
+                                    'Edit project-specific rope &config file',
+                                    self.__onRopeConfig )
         self.__projectMenu.addSeparator()
         self.__recentPrjMenu = QMenu( "&Recent projects", self )
         self.connect( self.__recentPrjMenu, SIGNAL( "triggered(QAction*)" ),
@@ -1397,6 +1401,8 @@ class CodimensionMainWindow( QMainWindow ):
             projectLoaded = GlobalData().project.isLoaded()
             self.__unloadProjectAct.setEnabled( projectLoaded )
             self.__projectPropsAct.setEnabled( projectLoaded )
+            self.__prjRopeConfigAct.setEnabled( projectLoaded and
+                                os.path.exists( self.__getRopeConfig() ) )
             self.__prjTemplateMenu.setEnabled( projectLoaded )
             self.__findNameMenuAct.setEnabled( projectLoaded )
             self.__fileProjectFileAct.setEnabled( projectLoaded )
@@ -1906,6 +1912,24 @@ class CodimensionMainWindow( QMainWindow ):
         if not projectDir.endswith( os.path.sep ):
             projectDir += os.path.sep
         return projectDir + "pylintrc"
+
+    @staticmethod
+    def __getRopeConfig():
+        " Provides the rope config file path "
+        projectDir = os.path.dirname( GlobalData().project.fileName )
+        if not projectDir.endswith( os.path.sep ):
+            projectDir += os.path.sep
+        return projectDir + ".ropeproject" + os.path.sep + "config.py"
+
+    def __onRopeConfig( self ):
+        " Requests to load rope config file for editing "
+        fileName = self.__getRopeConfig()
+        if not os.path.exists( fileName ):
+            logging.error( "Cannot find the project rope  config file (" +
+                           fileName + ")" )
+            return
+        self.openFile( fileName, -1 )
+        return
 
     def __onEditPylintRC( self ):
         " Request to edit the project pylint rc "
@@ -3255,9 +3279,13 @@ class CodimensionMainWindow( QMainWindow ):
             self.__prjGenPylintrcAct.setEnabled( not exists )
             self.__prjEditPylintrcAct.setEnabled( exists )
             self.__prjDelPylintrcAct.setEnabled( exists )
+            # Rope part
+            self.__prjRopeConfigAct.setEnabled(
+                                os.path.exists( self.__getRopeConfig() ) )
         else:
             self.__prjTemplateMenu.setEnabled( False )
             self.__prjPylintMenu.setEnabled( False )
+            self.__prjRopeConfigAct.setEnabled( False )
 
         return
 
