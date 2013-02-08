@@ -2631,8 +2631,8 @@ class CodimensionMainWindow( QMainWindow ):
             return False
         return currentWidget.getType() == \
                 MainWindowTabWidgetBase.PlainTextEditor and \
-               detectFileType( currentWidget.getShortName() ) \
-                          in [ PythonFileType, Python3FileType ]
+               currentWidget.getFileType() in \
+                            [ PythonFileType, Python3FileType ]
 
     def __isGraphicsBuffer( self ):
         " True if is pictures viewer "
