@@ -278,7 +278,7 @@ class PymetricsViewer( QWidget ):
             tooltip = "Metrics generated for directory: " + \
                       self.__reportFileName
         elif self.__reportOption == self.ProjectFiles:
-            tooltip = "Metrics generated for the whole projects"
+            tooltip = "Metrics generated for the whole project"
         elif self.__reportOption == self.SingleFile:
             tooltip = "Metrics generated for file: " + self.__reportFileName
         elif self.__reportOption == self.SingleBuffer:

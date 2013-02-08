@@ -1690,20 +1690,20 @@ class CodimensionMainWindow( QMainWindow ):
 
         # Detect the project pylintrc file if so
         pylintrcFile = ""
-        if projectDir != "":
+        if projectDir:
             # First try project-specific pylintrc
             fName = projectDir + "pylintrc"
             if os.path.exists( fName ):
                 pylintrcFile = fName
 
-        if pylintrcFile == "":
+        if not pylintrcFile:
             # Second try IDE-wide pylintrc
             fName = getIDEPylintFile()
             if os.path.exists( fName ):
                 pylintrcFile = fName
 
         try:
-            if projectDir != "":
+            if projectDir:
                 workingDir = projectDir
             else:
                 workingDir = os.getcwd()
