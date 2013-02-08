@@ -337,7 +337,7 @@ class TextEditor( ScintillaWrapper ):
             self.__menuPaste.setEnabled( QApplication.clipboard().text() != "" )
 
             # Check the proper encoding in the menu
-            fileType = detectFileType( self.parent().getShortName() )
+            fileType = self.parent().getFileType()
             if fileType in [ DesignerFileType, LinguistFileType ]:
                 self.encodingMenu.setEnabled( False )
             else:
@@ -1869,44 +1869,41 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     def updateStatus( self ):
         " Updates the toolbar buttons status "
         if self.__fileType == UnknownFileType:
-            if self.__shortName != "":
-                self.__fileType = detectFileType( self.__shortName )
-        self.pylintButton.setEnabled( self.__fileType == PythonFileType and
+            self.__fileType = self.getFileType()
+        isPythonFile = self.__fileType in [ PythonFileType, Python3FileType ]
+        self.pylintButton.setEnabled( isPythonFile and
                                       GlobalData().pylintAvailable )
         self.__editor.pylintAct.setEnabled( self.pylintButton.isEnabled() )
-        self.pymetricsButton.setEnabled( self.__fileType == PythonFileType )
-        self.__editor.pymetricsAct.setEnabled( \
+        self.pymetricsButton.setEnabled( isPythonFile )
+        self.__editor.pymetricsAct.setEnabled(
                             self.pymetricsButton.isEnabled() )
-        self.importsDiagramButton.setEnabled( \
-                            self.__fileType == PythonFileType and
+        self.importsDiagramButton.setEnabled( isPythonFile and
                             GlobalData().graphvizAvailable )
-        self.__editor.importsDgmAct.setEnabled( \
+        self.__editor.importsDgmAct.setEnabled(
                                     self.importsDiagramButton.isEnabled() )
-        self.__editor.importsDgmParamAct.setEnabled( \
+        self.__editor.importsDgmParamAct.setEnabled(
                                     self.importsDiagramButton.isEnabled() )
-        self.runScriptButton.setEnabled( self.__fileType == PythonFileType and \
-                                         self.isModified() == False and \
+        self.runScriptButton.setEnabled( isPythonFile and
+                                         self.isModified() == False and
                                          os.path.isabs( self.__fileName ) )
         self.profileScriptButton.setEnabled( self.runScriptButton.isEnabled() )
         self.__editor.runAct.setEnabled( self.runScriptButton.isEnabled() )
         self.__editor.runParamAct.setEnabled( self.runScriptButton.isEnabled() )
         self.__editor.profileAct.setEnabled( self.runScriptButton.isEnabled() )
-        self.__editor.profileParamAct.setEnabled( \
+        self.__editor.profileParamAct.setEnabled(
                                     self.runScriptButton.isEnabled() )
-        self.debugScriptButton.setEnabled( \
-                                    self.__fileType == PythonFileType and \
-                                    self.isModified() == False and \
+        self.debugScriptButton.setEnabled( isPythonFile and
+                                    self.isModified() == False and
                                     os.path.isabs( self.__fileName ) )
-        self.pythonTidyButton.setEnabled( self.__fileType == PythonFileType )
-        self.lineCounterButton.setEnabled( self.__fileType == PythonFileType )
+        self.pythonTidyButton.setEnabled( isPythonFile )
+        self.lineCounterButton.setEnabled( isPythonFile )
         return
 
     def onPylint( self ):
         " Triggers when pylint should be used "
 
         if self.__fileType == UnknownFileType:
-            if self.__shortName != "":
-                self.__fileType = detectFileType( self.__shortName )
+            self.__fileType = self.getFileType()
         if self.__fileType not in [ PythonFileType, Python3FileType ]:
             return True
 
@@ -1931,8 +1928,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Triggers when pymetrics should be used "
 
         if self.__fileType == UnknownFileType:
-            if self.__shortName != "":
-                self.__fileType = detectFileType( self.__shortName )
+            self.__fileType = self.getFileType()
         if self.__fileType not in [ PythonFileType, Python3FileType ]:
             return True
 
@@ -2447,8 +2443,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     def getLanguage( self ):
         " Tells the content language "
         if self.__fileType == UnknownFileType:
-            if self.__shortName != "":
-                self.__fileType = detectFileType( self.__shortName )
+            self.__fileType = self.getFileType()
         if self.__fileType != UnknownFileType:
             return getFileLanguage( self.__fileType )
         return self.__editor.getLanguage()
