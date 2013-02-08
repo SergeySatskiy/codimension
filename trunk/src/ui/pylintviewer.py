@@ -358,20 +358,31 @@ class PylintViewer( QWidget ):
         else:
             text = "\n".join( similarity.fragment )
             toolTip = ""
-        fragmentLabel = QLabel( "<pre>" + text + "</pre>" )
+        fragmentLabel = QLabel( "<pre>" + self.__htmlEncode( text ) + "</pre>" )
         if toolTip != "":
-            fragmentLabel.setToolTip( toolTip )
+            fragmentLabel.setToolTip( "<pre>" + self.__htmlEncode( toolTip ) +
+                                      "</pre>" )
         palette = fragmentLabel.palette()
         palette.setColor( QPalette.Background, QColor( 250, 250, 175 ) )
         palette.setColor( QPalette.Foreground, QColor( 0, 0, 0 ) )
         fragmentLabel.setPalette( palette )
         fragmentLabel.setFrameShape( QFrame.StyledPanel )
         fragmentLabel.setAutoFillBackground( True )
-        fragmentLabel.setFont( QFont( "Monospace", 12 ) )
+
+        labelFont = fragmentLabel.font()
+        labelFont.setFamily( "Monospace" )
+        fragmentLabel.setFont( labelFont )
 
         self.__vLayout.addWidget( fragmentLabel )
         self.__widgets.append( fragmentLabel )
         return
+
+    @staticmethod
+    def __htmlEncode( string ):
+        " Encodes HTML "
+        return string.replace( "&", "&amp;" ) \
+                     .replace( ">", "&gt;" ) \
+                     .replace( "<", "&lt;" )
 
     def __addSectionSpacer( self ):
         " Adds a fixed height spacer to the VBox layout "
