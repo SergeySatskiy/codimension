@@ -199,7 +199,12 @@ class Similarity( object ):
             if os.path.exists( candidate ):
                 parts[ 0 ] = candidate
             else:
-                parts[ 0 ] = Similarity.__findFileName( parts[ 0 ], filesList )
+                candidate = cwd + parts[ 0 ] + ".cgi"
+                if os.path.exists( candidate ):
+                    parts[ 0 ] = candidate
+                else:
+                    parts[ 0 ] = Similarity.__findFileName( parts[ 0 ],
+                                                            filesList )
         return parts
 
     @staticmethod
@@ -211,11 +216,15 @@ class Similarity( object ):
         candidates = []
         match1 = os.path.sep + moduleName + ".py"
         match2 = os.path.sep + moduleName + ".py3"
+        match3 = os.path.sep + moduleName + ".cgi"
         for fName in filesList:
             if fName.endswith( match1 ):
                 candidates.append( fName )
                 continue
             if fName.endswith( match2 ):
+                candidates.append( fName )
+                continue
+            if fName.endswith( match3 ):
                 candidates.append( fName )
 
         length = len( candidates )
@@ -234,7 +243,7 @@ class Similarity( object ):
     def __str__( self ):
         " Converts a similarity to a string "
         filesPart = "Similarity: ["
-        for index in range( len( self.files ) ):
+        for index in xrange( len( self.files ) ):
             filesPart += self.files[ index ][ 0 ] + ':' + \
                          str( self.files[ index ][ 1 ] )
             if index < len( self.files ) - 1:
