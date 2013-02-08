@@ -358,13 +358,13 @@ class TextEditor( ScintillaWrapper ):
         if isImportLine:
             return False
         selectedText = str( self.selectedText() ).strip()
-        singleSelection = selectedText != "" and \
+        singleSelection = selectedText and \
                           '\n' not in selectedText and \
                           '\r' not in selectedText
         currentWord = ""
-        if selectedText == "":
+        if not selectedText:
             currentWord = str( self.getCurrentWord() ).strip()
-        return singleSelection or currentWord != ""
+        return singleSelection or currentWord
 
     def focusInEvent( self, event ):
         " Enable Shift+Tab when the focus is received "
@@ -1907,19 +1907,19 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         if self.__fileType not in [ PythonFileType, Python3FileType ]:
             return True
 
-        if self.__fileName != "":
+        if self.__fileName:
             reportFile = self.__fileName
         else:
             reportFile = self.__shortName
 
         if self.isModified() or self.__fileName == "":
             # Need to parse the buffer
-            GlobalData().mainWindow.showPylintReport( \
+            GlobalData().mainWindow.showPylintReport(
                             PylintViewer.SingleBuffer, self.__editor.text(),
                             reportFile, self.getUUID(), self.__fileName )
         else:
             # Need to parse the file
-            GlobalData().mainWindow.showPylintReport( \
+            GlobalData().mainWindow.showPylintReport(
                             PylintViewer.SingleFile, self.__fileName,
                             reportFile, self.getUUID(), self.__fileName )
         return True
@@ -1932,19 +1932,19 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         if self.__fileType not in [ PythonFileType, Python3FileType ]:
             return True
 
-        if self.__fileName != "":
+        if self.__fileName:
             reportFile = self.__fileName
         else:
             reportFile = self.__shortName
 
         if self.isModified() or self.__fileName == "":
             # Need to parse the buffer
-            GlobalData().mainWindow.showPymetricsReport( \
+            GlobalData().mainWindow.showPymetricsReport(
                             PymetricsViewer.SingleBuffer, self.__editor.text(),
                             reportFile, self.getUUID() )
         else:
             # Need to parse the file
-            GlobalData().mainWindow.showPymetricsReport( \
+            GlobalData().mainWindow.showPymetricsReport(
                             PymetricsViewer.SingleFile, self.__fileName,
                             reportFile, self.getUUID() )
         return True
@@ -1997,7 +1997,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         text = str( self.__editor.text() )
         info = getBriefModuleInfoFromMemory( text )
         if info.isOK == False:
-            logging.warning( "The python code is syntactically incorrect. " \
+            logging.warning( "The python code is syntactically incorrect. "
                              "Fix it first and then run PythonTidy." )
             return
 
@@ -2013,7 +2013,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         diff = tidy.getDiff()
         if diff is None:
-            GlobalData().mainWindow.showStatusBarMessage( \
+            GlobalData().mainWindow.showStatusBarMessage(
                     "PythonTidy did no changes." )
             return
 
@@ -2026,8 +2026,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         diffAsText = diffAsText.replace( "+++ ",
                                          "+++ generated at " + timestamp, 1 )
         GlobalData().mainWindow.showDiff( diffAsText,
-                                          "PythonTidy diff for " + \
-                                          self.getShortName() + \
+                                          "PythonTidy diff for " +
+                                          self.getShortName() +
                                           " generated at " + timestamp )
         return
 
@@ -2036,7 +2036,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         text = str( self.__editor.text() )
         info = getBriefModuleInfoFromMemory( text )
         if info.isOK == False:
-            logging.warning( "The python code is syntactically incorrect. " \
+            logging.warning( "The python code is syntactically incorrect. "
                              "Fix it first and then run PythonTidy." )
             return
 
@@ -2059,7 +2059,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         diff = tidy.getDiff()
         if diff is None:
-            GlobalData().mainWindow.showStatusBarMessage( \
+            GlobalData().mainWindow.showStatusBarMessage(
                     "PythonTidy did no changes." )
             return
 
@@ -2072,8 +2072,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         diffAsText = diffAsText.replace( "+++ ",
                                          "+++ generated at " + timestamp, 1 )
         GlobalData().mainWindow.showDiff( diffAsText,
-                                          "PythonTidy diff for " + \
-                                          self.getShortName() + \
+                                          "PythonTidy diff for " +
+                                          self.getShortName() +
                                           " generated at " + timestamp )
         return
 
@@ -2135,8 +2135,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         if self.__editor.isModified():
             what = ImportsDiagramDialog.SingleBuffer
             if not os.path.isabs( self.getFileName() ):
-                logging.warning( "Imports diagram can only be generated for " \
-                                 "a file. Save the editor buffer " \
+                logging.warning( "Imports diagram can only be generated for "
+                                 "a file. Save the editor buffer "
                                  "and try again." )
                 return
         else:
@@ -2152,8 +2152,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         if self.__editor.isModified():
             what = ImportsDiagramDialog.SingleBuffer
             if not os.path.isabs( self.getFileName() ):
-                logging.warning( "Imports diagram can only be generated for " \
-                                 "a file. Save the editor buffer " \
+                logging.warning( "Imports diagram can only be generated for "
+                                 "a file. Save the editor buffer "
                                  "and try again." )
                 return
         else:
@@ -2198,7 +2198,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                 if path != '':
                     GlobalData().mainWindow.openFile( path, -1 )
                     return True
-                GlobalData().mainWindow.showStatusBarMessage( \
+                GlobalData().mainWindow.showStatusBarMessage(
                         "The import '" + currentWord + "' is not resolved." )
                 return True
             # We are not on a certain import.
@@ -2227,14 +2227,14 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         # Here: the cursor is not on the import line. Take all the file imports
         # and resolve them
         fileImports = getImportsList( self.__editor.text() )
-        if len( fileImports ) == 0:
-            GlobalData().mainWindow.showStatusBarMessage( \
+        if not fileImports:
+            GlobalData().mainWindow.showStatusBarMessage(
                                             "There are no imports" )
             return True
         if len( fileImports ) == 1:
             path = resolveImport( basePath, fileImports[ 0 ] )
             if path == '':
-                GlobalData().mainWindow.showStatusBarMessage( \
+                GlobalData().mainWindow.showStatusBarMessage(
                     "The import '" + fileImports[ 0 ] + "' is not resolved." )
                 return True
             GlobalData().mainWindow.openFile( path, -1 )
@@ -2247,8 +2247,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Works with a list of imports "
 
         resolvedList = resolveImports( basePath, imports )
-        if len( resolvedList ) == 0:
-            GlobalData().mainWindow.showStatusBarMessage( \
+        if not resolvedList:
+            GlobalData().mainWindow.showStatusBarMessage(
                                             "No imports are resolved" )
             return
 
@@ -2398,7 +2398,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
         modifiedFiles = editorsManager.getModifiedList( True )
-        if len( modifiedFiles ) == 0:
+        if not modifiedFiles:
             return True
 
         dlg = ModifiedUnsavedDialog( modifiedFiles, "Save and debug" )
