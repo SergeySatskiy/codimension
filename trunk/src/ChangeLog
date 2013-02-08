@@ -1,5 +1,6 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Bug fix: double slashes in full file names when opened via Ctrl+I.
 * New feature: access to the project rope settings file via the Project menu.
 * Better dialogs for the cases when both the disk version and the buffer
   content were modified and the user closes the tab or saves the tab content.
