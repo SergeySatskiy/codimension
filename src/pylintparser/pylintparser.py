@@ -318,13 +318,19 @@ class Pylint( object ):
                 else:
                     rcArg = [ "--rcfile=" + tempFileName ]
 
-            initHook = []
+            initHook = [ "--init-hook" ]
             if importDirs:
-                initHook = [ "--init-hook" ]
                 code = "import sys"
                 for dirName in importDirs:
                     code += ";sys.path.insert(0,'" + dirName + "')"
-                initHook.append( code )
+
+            # Dirty hack to support CGI files pylinting
+            if code:
+                code += ";\n"
+            code += "try: from logilab.common import modutils;" \
+                    "modutils.PY_SOURCE_EXTS=('py','cgi');\nexcept: pass"
+
+            initHook.append( code )
 
             skipTillRecognised = False
             for line in self.__run( [ 'pylint', '-f', 'parseable',
