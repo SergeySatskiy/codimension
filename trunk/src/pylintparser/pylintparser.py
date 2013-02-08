@@ -312,14 +312,14 @@ class Pylint( object ):
         try:
 
             rcArg = []
-            if pylintrc != "":
+            if pylintrc:
                 if os.path.exists( pylintrc ):
                     rcArg = [ "--rcfile=" + pylintrc ]
                 else:
                     rcArg = [ "--rcfile=" + tempFileName ]
 
             initHook = []
-            if len( importDirs ) > 0:
+            if importDirs:
                 initHook = [ "--init-hook" ]
                 code = "import sys"
                 for dirName in importDirs:
@@ -328,8 +328,8 @@ class Pylint( object ):
 
             skipTillRecognised = False
             for line in self.__run( [ 'pylint', '-f', 'parseable',
-                                      '-i', 'y'] + \
-                                    initHook + rcArg + \
+                                      '-i', 'y'] +
+                                    initHook + rcArg +
                                     path, workingDir ).split( '\n' ):
                 if skipTillRecognised:
                     lineType, shouldSkip = self.__detectLineType( line )

@@ -433,7 +433,7 @@ class PylintViewer( QWidget ):
             tooltip = "Report generated for directory: " + \
                       self.__reportFileName
         elif self.__reportOption == self.ProjectFiles:
-            tooltip = "Report generated for the whole projects"
+            tooltip = "Report generated for the whole project"
         elif self.__reportOption == self.SingleFile:
             tooltip = "Report generated for file: " + self.__reportFileName
         elif self.__reportOption == self.SingleBuffer:
