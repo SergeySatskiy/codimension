@@ -1,5 +1,8 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Pylint and other tools support for python .cgi files.
+* Bug fix: improper tooltips and text in similarities pylint sections
+  if contained html.
 * Bug fix: double slashes in full file names when opened via Ctrl+I.
 * New feature: access to the project rope settings file via the Project menu.
 * Better dialogs for the cases when both the disk version and the buffer
