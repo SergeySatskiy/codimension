@@ -63,37 +63,63 @@ MakefileType                = 23
 BrokenSymlinkFileType       = 50
 
 
-_fileTypes = { \
-    UnknownFileType            : [ PixmapCache().getIcon( 'filemisc.png' ), 'Unknown' ],
-    PythonFileType             : [ PixmapCache().getIcon( 'filepython.png' ), 'Python' ],
-    PythonCompiledFileType     : [ PixmapCache().getIcon( 'filepythoncompiled.png' ), 'Binary' ],
-    Python3FileType            : [ PixmapCache().getIcon( 'filepython.png' ), 'Python' ],
-    RubyFileType               : [ PixmapCache().getIcon( 'fileruby.png' ), 'Ruby' ],
-    DesignerFileType           : [ PixmapCache().getIcon( 'filedesigner.png' ), 'XML' ],
-    DesignerHeaderFileType     : [ PixmapCache().getIcon( 'filedesigner.png' ), 'C++' ],
-    LinguistFileType           : [ PixmapCache().getIcon( 'filelinguist2.png' ), 'XML' ],
-    QTResourceFileType         : [ PixmapCache().getIcon( 'fileresource.png' ), 'XML' ],
-    CodimensionProjectFileType : [ PixmapCache().getIcon( 'fileproject.png' ), 'Properties' ],
-    IDLFileType                : [ PixmapCache().getIcon( 'fileidl.png' ), 'IDL' ],
-    PixmapFileType             : [ PixmapCache().getIcon( 'filepixmap.png' ), 'Pixmap' ],
-    SVGFileType                : [ PixmapCache().getIcon( 'filesvg.png' ), 'XML' ],
-    DFileType                  : [ PixmapCache().getIcon( 'filed.png' ), 'D' ],
-    CFileType                  : [ PixmapCache().getIcon( 'filec.png' ), 'C' ],
-    CHeaderFileType            : [ PixmapCache().getIcon( 'filecheader.png' ), 'C' ],
-    CPPFileType                : [ PixmapCache().getIcon( 'filecpp.png' ), 'C++' ],
-    CPPHeaderFileType          : [ PixmapCache().getIcon( 'filecppheader.png' ), 'C++' ],
-    ELFFileType                : [ PixmapCache().getIcon( 'filebinary.png' ), 'Binary' ],
-    SOFileType                 : [ PixmapCache().getIcon( 'fileso.png' ), 'Binary' ],
-    PDFFileType                : [ PixmapCache().getIcon( 'filepdf.png' ), 'PDF' ],
-    HTMLFileType               : [ PixmapCache().getIcon( 'filehtml.png' ), 'HTML' ],
-    CSSFileType                : [ PixmapCache().getIcon( 'filecss.png' ), 'CSS' ],
-    XMLFileType                : [ PixmapCache().getIcon( 'filexml.png' ), 'XML' ],
-    MakefileType               : [ PixmapCache().getIcon( 'filemake.png' ), 'Makefile' ],
-    BrokenSymlinkFileType      : [ PixmapCache().getIcon( 'filebrokenlink.png' ), 'Unknown' ]
+_fileTypes = {
+    UnknownFileType:
+        [ PixmapCache().getIcon( 'filemisc.png' ), 'Unknown' ],
+    PythonFileType:
+        [ PixmapCache().getIcon( 'filepython.png' ), 'Python' ],
+    PythonCompiledFileType:
+        [ PixmapCache().getIcon( 'filepythoncompiled.png' ), 'Binary' ],
+    Python3FileType:
+        [ PixmapCache().getIcon( 'filepython.png' ), 'Python' ],
+    RubyFileType:
+        [ PixmapCache().getIcon( 'fileruby.png' ), 'Ruby' ],
+    DesignerFileType:
+        [ PixmapCache().getIcon( 'filedesigner.png' ), 'XML' ],
+    DesignerHeaderFileType:
+        [ PixmapCache().getIcon( 'filedesigner.png' ), 'C++' ],
+    LinguistFileType:
+        [ PixmapCache().getIcon( 'filelinguist2.png' ), 'XML' ],
+    QTResourceFileType:
+        [ PixmapCache().getIcon( 'fileresource.png' ), 'XML' ],
+    CodimensionProjectFileType :
+        [ PixmapCache().getIcon( 'fileproject.png' ), 'Properties' ],
+    IDLFileType:
+        [ PixmapCache().getIcon( 'fileidl.png' ), 'IDL' ],
+    PixmapFileType:
+        [ PixmapCache().getIcon( 'filepixmap.png' ), 'Pixmap' ],
+    SVGFileType:
+        [ PixmapCache().getIcon( 'filesvg.png' ), 'XML' ],
+    DFileType:
+        [ PixmapCache().getIcon( 'filed.png' ), 'D' ],
+    CFileType:
+        [ PixmapCache().getIcon( 'filec.png' ), 'C' ],
+    CHeaderFileType:
+        [ PixmapCache().getIcon( 'filecheader.png' ), 'C' ],
+    CPPFileType:
+        [ PixmapCache().getIcon( 'filecpp.png' ), 'C++' ],
+    CPPHeaderFileType:
+        [ PixmapCache().getIcon( 'filecppheader.png' ), 'C++' ],
+    ELFFileType:
+        [ PixmapCache().getIcon( 'filebinary.png' ), 'Binary' ],
+    SOFileType:
+        [ PixmapCache().getIcon( 'fileso.png' ), 'Binary' ],
+    PDFFileType:
+        [ PixmapCache().getIcon( 'filepdf.png' ), 'PDF' ],
+    HTMLFileType:
+        [ PixmapCache().getIcon( 'filehtml.png' ), 'HTML' ],
+    CSSFileType:
+        [ PixmapCache().getIcon( 'filecss.png' ), 'CSS' ],
+    XMLFileType:
+        [ PixmapCache().getIcon( 'filexml.png' ), 'XML' ],
+    MakefileType:
+        [ PixmapCache().getIcon( 'filemake.png' ), 'Makefile' ],
+    BrokenSymlinkFileType:
+        [ PixmapCache().getIcon( 'filebrokenlink.png' ), 'Unknown' ]
 }
 
 
-_extType = { \
+_extType = {
     'py'    :   PythonFileType,
     'pyw'   :   PythonFileType,
     'ptl'   :   PythonFileType,
@@ -127,21 +153,25 @@ _extType = { \
 
 
 __cachedFileTypes = {}
-__QTSupportedImageFormats = [ str( fmt ) for fmt in \
+__QTSupportedImageFormats = [ str( fmt ) for fmt in
                               QImageReader.supportedImageFormats() ]
 
+# Cached value to avoid unnecessary searches for a name
+fileAvailable = GlobalData().fileAvailable
 
-def detectFileType( path, checkForBrokenLink = True ):
+
+
+def detectFileType( path, checkForBrokenLink = True, skipCache = False ):
     " Detects file type - must work for both existed and not existed files "
 
-    if path == '':
+    if not path:
         return UnknownFileType
 
     if checkForBrokenLink and os.path.islink( path ):
         if not os.path.exists( path ):
             return BrokenSymlinkFileType
 
-    if path in __cachedFileTypes:
+    if path in __cachedFileTypes and not skipCache:
         return __cachedFileTypes[ path ]
 
     # Must work for not existed files, e.g. new file request will also use it
@@ -169,7 +199,7 @@ def detectFileType( path, checkForBrokenLink = True ):
         __cachedFileTypes[ path ] = MakefileType
         return MakefileType
 
-    if GlobalData().fileAvailable:
+    if fileAvailable:
         try:
             # It is safe to do it even for a not existing file
             output = os.popen( 'file -b ' + path ).read().lower()
