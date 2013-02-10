@@ -42,7 +42,8 @@ from helpwidget                 import QuickHelpWidget
 from editor.texteditor          import TextEditorTabWidget
 from pixmapwidget               import PixmapTabWidget
 from utils.fileutils            import detectFileType, PythonFileType, \
-                                       Python3FileType, PixmapFileType
+                                       Python3FileType, PixmapFileType, \
+                                       UnknownFileType
 from utils.compatibility        import relpath
 from utils.misc                 import getNewFileTemplate, getLocaleDateTime
 from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
@@ -1211,23 +1212,36 @@ class EditorsManager( QTabWidget ):
                     return True
             else:
                 # The disk file is the same as we read it
-                if not editor.isModified() and \
-                   widget.doesFileExist():
+                if not editor.isModified() and widget.doesFileExist():
                     return True
 
             # Save the buffer into the file
-            if widget.writeFile( fileName ):
-                editor.setModified( False )
-                self._updateIconAndTooltip( index )
-                if GlobalData().project.fileName == fileName:
-                    GlobalData().project.onProjectFileUpdated()
-                if existedBefore:
-                    # Otherwise the FS watcher will signal the chages
-                    self.emit( SIGNAL( 'fileUpdated' ), fileName,
-                               widget.getUUID() )
-                return True
-            # Error saving the buffer
-            return False
+            oldFileType = widget.getFileType()
+            if widget.writeFile( fileName ) == False:
+                # Error saving.
+                return False
+
+            # The disk access has happened anyway so it does not make sense
+            # to save on one disk operation for detecting a file type.
+            # It could be changed due to a symlink or due to a newly populated
+            # content like in .cgi files
+            newFileType = detectFileType( fileName, True, True )
+            if oldFileType != newFileType:
+                widget.setFileType( newFileType )
+                widget.getEditor().bindLexer( fileName, newFileType )
+                widget.updateStatus()
+                self.__updateStatusBar()
+                self.__mainWindow.updateRunDebugButtons()
+
+            editor.setModified( False )
+            self._updateIconAndTooltip( index )
+            if GlobalData().project.fileName == fileName:
+                GlobalData().project.onProjectFileUpdated()
+            if existedBefore:
+                # Otherwise the FS watcher will signal the chages
+                self.emit( SIGNAL( 'fileUpdated' ), fileName,
+                           widget.getUUID() )
+            return True
 
         # This is the new one - call Save As
         return self.onSaveAs( index )
@@ -1295,20 +1309,20 @@ class EditorsManager( QTabWidget ):
             # Check write permissions to the directory
             dirName = os.path.dirname( fileName )
             if not os.access( dirName, os.W_OK ):
-                logging.error( "There is no write permissions for the " \
+                logging.error( "There is no write permissions for the "
                                "directory " + dirName )
                 return False
 
         if self.isFileOpened( fileName ) and widget.getFileName() != fileName:
             QMessageBox.critical( self, "Save file",
-                                  "<p>The file <b>" + fileName + \
-                                  "</b> is opened in another tab.</p>" \
+                                  "<p>The file <b>" + fileName +
+                                  "</b> is opened in another tab.</p>"
                                   "<p>Cannot save under this name." )
             return False
 
         if os.path.exists( fileName ) and \
            fileName != widget.getFileName():
-            res = QMessageBox.warning( \
+            res = QMessageBox.warning(
                 self, "Save File",
                 "<p>The file <b>" + fileName + "</b> already exists.</p>",
                 QMessageBox.StandardButtons( QMessageBox.Abort | \
@@ -1317,40 +1331,41 @@ class EditorsManager( QTabWidget ):
             if res == QMessageBox.Abort or res == QMessageBox.Cancel:
                 return False
 
-        oldType = detectFileType( widget.getShortName() )
+        oldType = widget.getFileType()
 
         existedBefore = os.path.exists( fileName )
 
         # OK, the file name was properly selected
         if self.__debugMode and self.__debugScript == fileName:
-            logging.error( "Cannot overwrite a script which is currently debugged." )
+            logging.error( "Cannot overwrite a script "
+                           "which is currently debugged." )
             return False
 
-        newType = detectFileType( fileName )
-        if widget.writeFile( fileName ):
-            widget.setFileName( fileName )
-            widget.getEditor().setModified( False )
-            self._updateIconAndTooltip( index, newType )
-            if newType != oldType:
-                widget.getEditor().bindLexer( \
-                    widget.getFileName(), newType )
+        if widget.writeFile( fileName ) == False:
+            # Failed to write, inform and exit
+            return False
 
-            if GlobalData().project.fileName == fileName:
-                GlobalData().project.onProjectFileUpdated()
+        widget.setFileName( fileName )
+        widget.getEditor().setModified( False )
+        newType = widget.getFileType()
+        self._updateIconAndTooltip( index, newType )
+        if newType != oldType:
+            widget.getEditor().bindLexer( fileName, newType )
 
-            uuid = widget.getUUID()
-            if existedBefore:
-                self.emit( SIGNAL( 'fileUpdated' ), fileName, uuid )
-            else:
-                self.emit( SIGNAL( 'bufferSavedAs' ), fileName, uuid )
-                GlobalData().project.addRecentFile( fileName )
-            self.history.updateFileNameForTab( uuid, fileName )
-            widget.updateStatus()
-            self.__updateStatusBar()
-            self.__mainWindow.updateRunDebugButtons()
-            return True
+        if GlobalData().project.fileName == fileName:
+            GlobalData().project.onProjectFileUpdated()
 
-        return False
+        uuid = widget.getUUID()
+        if existedBefore:
+            self.emit( SIGNAL( 'fileUpdated' ), fileName, uuid )
+        else:
+            self.emit( SIGNAL( 'bufferSavedAs' ), fileName, uuid )
+            GlobalData().project.addRecentFile( fileName )
+        self.history.updateFileNameForTab( uuid, fileName )
+        widget.updateStatus()
+        self.__updateStatusBar()
+        self.__mainWindow.updateRunDebugButtons()
+        return True
 
     def onSaveDiagramAs( self ):
         " Saves the current tab diagram to a file "

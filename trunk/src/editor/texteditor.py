@@ -364,7 +364,7 @@ class TextEditor( ScintillaWrapper ):
         currentWord = ""
         if not selectedText:
             currentWord = str( self.getCurrentWord() ).strip()
-        return singleSelection or currentWord
+        return singleSelection != "" or currentWord != ""
 
     def focusInEvent( self, event ):
         " Enable Shift+Tab when the focus is received "
@@ -604,7 +604,7 @@ class TextEditor( ScintillaWrapper ):
                 txt += eol
         try:
             # For liguist and designer file types the latin-1 is enforced
-            fileType = detectFileType( fileName )
+            fileType = detectFileType( fileName, True, True )
             txt, newEncoding = encode( txt, self.encoding,
                                        fileType in [ DesignerFileType,
                                                      LinguistFileType ] )
@@ -2435,6 +2435,12 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             elif self.__shortName:
                 self.__fileType = detectFileType( self.__shortName )
         return self.__fileType
+
+    def setFileType( self, typeToSet ):
+        """ Sets the file type explicitly.
+            It needs e.g. for .cgi files which can change its type """
+        self.__fileType = typeToSet
+        return
 
     def getType( self ):
         " Tells the widget type "
