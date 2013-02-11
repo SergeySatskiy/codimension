@@ -1,5 +1,6 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Bash/sh file type recognition added.
 * Pylint and other tools support for python .cgi files.
 * Bug fix: improper tooltips and text in similarities pylint sections
   if contained html.
