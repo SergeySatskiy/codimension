@@ -59,6 +59,7 @@ HTMLFileType                = 20
 CSSFileType                 = 21
 XMLFileType                 = 22
 MakefileType                = 23
+ShellFileType               = 24
 
 BrokenSymlinkFileType       = 50
 
@@ -115,7 +116,9 @@ _fileTypes = {
     MakefileType:
         [ PixmapCache().getIcon( 'filemake.png' ), 'Makefile' ],
     BrokenSymlinkFileType:
-        [ PixmapCache().getIcon( 'filebrokenlink.png' ), 'Unknown' ]
+        [ PixmapCache().getIcon( 'filebrokenlink.png' ), 'Unknown' ],
+    ShellFileType:
+        [ PixmapCache().getIcon( 'fileshell.png' ), 'Shell' ],
 }
 
 
@@ -148,7 +151,9 @@ _extType = {
     'xml'   :   XMLFileType,
     'xsl'   :   XMLFileType,
     'xslt'  :   XMLFileType,
-    'so'    :   SOFileType
+    'so'    :   SOFileType,
+    'bash'  :   ShellFileType,
+    'sh'    :   ShellFileType,
 }
 
 
@@ -210,9 +215,16 @@ def detectFileType( path, checkForBrokenLink = True, skipCache = False ):
                 if 'shared object' in output:
                     __cachedFileTypes[ path ] = SOFileType
                     return SOFileType
-            elif fileExtension == "cgi" and 'python' in output:
-                __cachedFileTypes[ path ] = PythonFileType
-                return PythonFileType
+            elif fileExtension == "cgi":
+                if 'python' in output:
+                    __cachedFileTypes[ path ] = PythonFileType
+                    return PythonFileType
+                if 'bourne-again shell' in output:
+                    __cachedFileTypes[ path ] = ShellFileType
+                    return ShellFileType
+                if 'posix shell' in output:
+                    __cachedFileTypes[ path ] = ShellFileType
+                    return ShellFileType
         except:
             pass
 

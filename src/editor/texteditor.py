@@ -586,6 +586,23 @@ class TextEditor( ScintillaWrapper ):
         QApplication.restoreOverrideCursor()
         return
 
+    def getFileEncoding( self, fileName, fileType ):
+        " Provides the file encoding. "
+        if fileType in [ DesignerFileType, LinguistFileType ]:
+            # special treatment for Qt-Linguist and Qt-Designer files
+            return 'latin-1'
+
+        try:
+            f = open( unicode( fileName ), 'rb' )
+            fewLines = f.read( 512 )
+            f.close()
+        except IOError:
+            raise Exception( "Cannot read file " + fileName +
+                             " to detect its encoding")
+
+        txt, encoding = decode( fewLines )
+        return encoding
+
     def writeFile( self, fileName ):
         " Writes the text to a file "
 
@@ -608,7 +625,6 @@ class TextEditor( ScintillaWrapper ):
             txt, newEncoding = encode( txt, self.encoding,
                                        fileType in [ DesignerFileType,
                                                      LinguistFileType ] )
-            self.setEncoding( newEncoding )
         except CodingError, exc:
             logging.critical( "Cannot save " + fileName + \
                               ". Reason: " + str( exc ) )
@@ -625,6 +641,7 @@ class TextEditor( ScintillaWrapper ):
                               ". Reason: " + str( why ) )
             return False
 
+        self.setEncoding( self.getFileEncoding( fileName, fileType ) )
         self.parent().updateModificationTime( fileName )
         self.parent().setReloadDialogShown( False )
         return True
