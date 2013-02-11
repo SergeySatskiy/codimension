@@ -32,17 +32,14 @@
 
 from PyQt4.QtCore    import QStringList
 from PyQt4.QtGui     import QApplication
-from utils.fileutils import PythonFileType, Python3FileType, RubyFileType, \
-                            DesignerFileType, DesignerHeaderFileType, \
-                            LinguistFileType, QTResourceFileType, \
-                            CodimensionProjectFileType, \
-                            IDLFileType, \
-                            SVGFileType, DFileType, \
-                            CFileType, CHeaderFileType, \
-                            CPPFileType, CPPHeaderFileType, \
-                            HTMLFileType, \
-                            CSSFileType, XMLFileType, \
-                            MakefileType
+from utils.fileutils import ( PythonFileType, Python3FileType, RubyFileType,
+                              DesignerFileType, DesignerHeaderFileType,
+                              LinguistFileType, QTResourceFileType,
+                              CodimensionProjectFileType, IDLFileType,
+                              SVGFileType, DFileType, CFileType,
+                              CHeaderFileType, CPPFileType, CPPHeaderFileType,
+                              HTMLFileType, CSSFileType, XMLFileType,
+                              MakefileType, ShellFileType )
 
 
 # The lexer registry
@@ -131,6 +128,7 @@ from lexermakefile import LexerMakefile
 from lexercpp import LexerCPP
 from lexerxml import LexerXML
 from lexerproperties import LexerProperties
+from lexerbash import LexerBash
 
 __lexers = { PythonFileType             : LexerPython(),
              Python3FileType            : LexerPython(),
@@ -150,7 +148,8 @@ __lexers = { PythonFileType             : LexerPython(),
              LinguistFileType           : LexerXML(),
              QTResourceFileType         : LexerXML(),
              SVGFileType                : LexerXML(),
-             CodimensionProjectFileType : LexerProperties() }
+             CodimensionProjectFileType : LexerProperties(),
+             ShellFileType              : LexerBash() }
 
 _skin = None
 
