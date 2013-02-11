@@ -47,7 +47,7 @@ from viewitems          import DirectoryItemType, SysPathItemType, \
                                TreeViewFunctionsItem, TreeViewClassesItem
 from utils.fileutils    import CodimensionProjectFileType, \
                                BrokenSymlinkFileType, \
-                               PythonFileType, Python3FileType
+                               PythonFileType, Python3FileType, getFileIcon
 from itemdelegates      import NoOutlineHeightDelegate
 from parsererrors       import ParserErrorsDialog
 from utils.fileutils    import detectFileType
@@ -499,6 +499,13 @@ class FilesBrowser( QTreeView ):
             # For all root items
             for treeItem in self.model().sourceModel().rootItem.childItems:
                 self.__walkTreeAndUpdate( treeItem, path, fileType, None, None )
+        elif fileName.endswith( ".cgi" ):
+            path = os.path.realpath( fileName )
+
+            icon = getFileIcon( fileType )
+            # For all root items
+            for treeItem in self.model().sourceModel().rootItem.childItems:
+                self.__walkTreeAndUpdate( treeItem, path, fileType, icon, None )
 
         return
 
@@ -555,6 +562,18 @@ class FilesBrowser( QTreeView ):
                     # Tooltip update only
                     treeItem.toolTip = getProjectFileTooltip( path )
                     self.__signalItemUpdated( treeItem )
+                elif path.endswith( ".cgi" ):
+                    # It can only happened when python CGI is not a python any
+                    # more. So display it a a general file.
+                    # The case when a cgi became a python file is covered in
+                    # the first branch of this if statement.
+                    treeItem.setIcon( icon )
+                    treeItem.toolTip = ""
+                    self.__signalItemUpdated( treeItem )
+
+                    # Remove child items if so
+                    while treeItem.childItems:
+                        self.__removeTreeItem( treeItem.childItems[ 0 ] )
 
         return
 
