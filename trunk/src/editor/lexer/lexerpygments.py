@@ -142,6 +142,7 @@ class LexerPygments( LexerContainer ):
         self.__pygmentsName = name
         self.__fileName = fileName
         self.__lexerGuessed = False
+        self.__language = "Guessed"
 
         self.descriptions = {
             PYGMENTS_DEFAULT       : "Default",
@@ -230,7 +231,7 @@ class LexerPygments( LexerContainer ):
 
     def language( self ):
         """ Provides the language of the lexer """
-        return "Guessed"
+        return self.__language
 
     def description( self, style ):
         """ Provides the descriptions of the styles supported by the lexer """
@@ -293,6 +294,7 @@ class LexerPygments( LexerContainer ):
         if self.__pygmentsName:
             lexerClass = find_lexer_class( self.__pygmentsName )
             if lexerClass is not None:
+                self.__language = "Guessed: " + lexerClass.name
                 return lexerClass()
         else:
             # Unfortunately, guessing a lexer by text lead to unpredictable
@@ -306,13 +308,16 @@ class LexerPygments( LexerContainer ):
                     filename = self.editor.getFileName()
 
                 try:
-                    return get_lexer_for_filename( filename )
+                    lexerClass = get_lexer_for_filename( filename )
+                    self.__language = "Guessed: " + lexerClass.name
+                    return lexerClass
                 except ClassNotFound:
                     pass
 
         # Last resort - text only
         lexerClass = find_lexer_class( "Text only" )
         if lexerClass is not None:
+            self.__language = "Guessed: " + lexerClass.name
             return lexerClass()
         return None
 

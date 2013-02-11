@@ -66,6 +66,8 @@ class FileOutlineViewer( QWidget ):
                       self.__onTabClosed )
         self.connect( self.__editorsManager, SIGNAL( 'bufferSavedAs' ),
                       self.__onSavedBufferAs )
+        self.connect( self.__editorsManager, SIGNAL( 'fileTypeChanged' ),
+                      self.__onFileTypeChanged )
 
         self.__outlineBrowsers = {}  # UUID -> OutlineAttributes
         self.__currentUUID = None
@@ -214,7 +216,10 @@ class FileOutlineViewer( QWidget ):
             self.__updateView()
 
         # Now, switch the outline browser to the new tab
-        widget = self.__editorsManager.getWidgetByIndex( index )
+        if index == -1:
+            widget = self.__editorsManager.currentWidget()
+        else:
+            widget = self.__editorsManager.getWidgetByIndex( index )
         if widget is None:
             if self.__currentUUID is not None:
                 self.__outlineBrowsers[ self.__currentUUID ].browser.hide()
@@ -353,7 +358,7 @@ class FileOutlineViewer( QWidget ):
         if uuid in self.__outlineBrowsers:
 
             baseName = os.path.basename( fileName )
-            if detectFileType( baseName ) not in [ PythonFileType,
+            if detectFileType( fileName ) not in [ PythonFileType,
                                                    Python3FileType ]:
                 # It's not a python file anymore
                 if uuid == self.__currentUUID:
@@ -374,6 +379,25 @@ class FileOutlineViewer( QWidget ):
             else:
                 title = baseName
             browser.model().sourceModel().updateRootData( 0, title )
+        return
+
+    def __onFileTypeChanged( self, fileName, uuid, newFileType ):
+        " Triggered when the current buffer file type is changed, e.g. .cgi "
+        if newFileType in [ PythonFileType, Python3FileType ]:
+            # The file became a python one
+            if uuid not in self.__outlineBrowsers:
+                self.__onTabChanged( -1 )
+        else:
+            if uuid in self.__outlineBrowsers:
+                # It's not a python file any more
+                if uuid == self.__currentUUID:
+                    self.__outlineBrowsers[ uuid ].browser.hide()
+                    self.__noneLabel.show()
+                    self.__currentUUID = None
+
+                del self.__outlineBrowsers[ uuid ]
+                self.showParsingErrorsButton.setEnabled( False )
+                self.findButton.setEnabled( False )
         return
 
     def __showParserError( self ):

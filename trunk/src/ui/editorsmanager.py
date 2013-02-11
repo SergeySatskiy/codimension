@@ -1232,6 +1232,8 @@ class EditorsManager( QTabWidget ):
                 widget.updateStatus()
                 self.__updateStatusBar()
                 self.__mainWindow.updateRunDebugButtons()
+                self.emit( SIGNAL( 'fileTypeChanged' ), fileName,
+                           widget.getUUID(), newFileType )
 
             editor.setModified( False )
             self._updateIconAndTooltip( index )
@@ -1351,6 +1353,8 @@ class EditorsManager( QTabWidget ):
         self._updateIconAndTooltip( index, newType )
         if newType != oldType:
             widget.getEditor().bindLexer( fileName, newType )
+            self.emit( SIGNAL( 'fileTypeChanged' ), fileName,
+                       widget.getUUID(), newType )
 
         if GlobalData().project.fileName == fileName:
             GlobalData().project.onProjectFileUpdated()
