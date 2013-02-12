@@ -483,6 +483,12 @@ class CodimensionMainWindow( QMainWindow ):
         self.__statusBar.addPermanentWidget( self.sbWritable )
         self.sbWritable.setToolTip( "Editor file read/write mode" )
 
+        self.sbPyflakes = QLabel( self.__statusBar )
+        self.sbPyflakes.setFrameStyle( QFrame.StyledPanel )
+        self.__statusBar.addPermanentWidget( self.sbPyflakes )
+        self.sbPyflakes.setToolTip( "Not a python file: pyflakes is sleeping" )
+        self.sbPyflakes.setPixmap( PixmapCache().getPixmap( 'flakessleep.png' ) )
+
         self.sbFile = FitPathLabel( self.__statusBar )
         self.sbFile.setMaximumWidth( 512 )
         self.sbFile.setMinimumWidth( 128 )
