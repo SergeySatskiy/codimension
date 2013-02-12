@@ -218,6 +218,8 @@ class Similarity( object ):
         match2 = os.path.sep + moduleName + ".py3"
         match3 = os.path.sep + moduleName + ".cgi"
         for fName in filesList:
+            if os.path.sep + ".ropeproject" + os.path.sep in fName:
+                continue
             if fName.endswith( match1 ):
                 candidates.append( fName )
                 continue
