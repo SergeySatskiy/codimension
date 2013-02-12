@@ -22,75 +22,32 @@
 
 " Interactive errors report using pyflakes "
 
-import sys, compiler
-import _ast
+from _ast import PyCF_ONLY_AST
+from pyflakes.checker import Checker
 
 
 def getFileErrors( sourceCode ):
+    " Provides a list of warnings/errors for the given source code "
 
     sourceCode += '\n'
-    from pyflakes.checker import Checker
+
     # First, compile into an AST and handle syntax errors.
     try:
-        tree = compile(sourceCode, "<string>", "exec", _ast.PyCF_ONLY_AST)
+        tree = compile( sourceCode, "<string>", "exec", PyCF_ONLY_AST )
     except SyntaxError, value:
         # If there's an encoding problem with the file, the text is None.
         if value.text is None:
             return []
-        else:
-            return [(value.args[0], value.lineno)]
+        return [ ( value.args[0], value.lineno ) ]
     else:
         # Okay, it's syntactically valid.  Now check it.
-        w = Checker(tree, "<string>")
-        w.messages.sort(lambda a, b: cmp(a.lineno, b.lineno))
+        w = Checker( tree, "<string>" )
+        w.messages.sort( lambda a, b: cmp( a.lineno, b.lineno ) )
         results = []
         lines = sourceCode.splitlines()
         for warning in w.messages:
-            if 'analysis:ignore' not in lines[warning.lineno-1]:
-                results.append((warning.message % warning.message_args,
-                                warning.lineno))
+            if 'analysis:ignore' not in lines[ warning.lineno - 1 ]:
+                results.append( ( warning.message % warning.message_args,
+                                  warning.lineno ) )
         return results
-
-
-
-
-def getFileErrorsOld( sourceCode ):
-    " Checks the given buffer and returns a list of errors "
-
-    try:
-        tree = compiler.parse( sourceCode + "\n" )
-    except (SyntaxError, IndentationError), excpt:
-        message = excpt.args[ 0 ]
-        value = sys.exc_info()[ 1 ]
-        try:
-            lineno, _offset, _text = value[ 1 ][ 1: ]
-        except IndexError:
-            # Compilation error
-            return []
-        return [ [ message, lineno, True ] ]
-    except:
-        return []
-
-    try:
-        import pyflakes.checker, pyflakes.messages
-    except:
-        return []
-
-    # Pyflakes was imported successfully
-    result = []
-    warnings = pyflakes.checker.Checker( tree, "" )
-    warnings.messages.sort( lambda a, b: cmp( a.lineno, b.lineno ) )
-
-    errorMessages = ( pyflakes.messages.UndefinedName,
-                      pyflakes.messages.UndefinedExport,
-                      pyflakes.messages.UndefinedLocal,
-                      pyflakes.messages.DuplicateArgument,
-                      pyflakes.messages.LateFutureImport )
-    lines = sourceCode.splitlines()
-    for warning in warnings.messages:
-        if 'pyflakes:ignore' not in lines[ warning.lineno - 1 ]:
-            result.append( ( warning.message % warning.message_args,
-                             warning.lineno,
-                             isinstance( warning, errorMessages ) ) )
-    return result
 
