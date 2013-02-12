@@ -54,6 +54,8 @@ class PyflakesViewer( QObject ):
 
         self.__editorsManager = editorsManager
         self.__uiLabel = uiLabel
+        self.setFlakesNotAvailable( self.__uiLabel )
+
         self.connect( self.__editorsManager, SIGNAL( "currentChanged(int)" ),
                       self.__onTabChanged )
         self.connect( self.__editorsManager, SIGNAL( "tabClosed" ),
