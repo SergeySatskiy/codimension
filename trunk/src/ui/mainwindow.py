@@ -26,7 +26,7 @@ import os, os.path, sys, logging, ConfigParser
 from subprocess import Popen
 from PyQt4.QtCore import SIGNAL, Qt, QSize, QTimer, QDir, QVariant, QUrl
 from PyQt4.QtGui import ( QLabel, QToolBar, QWidget, QMessageBox,
-                          QVBoxLayout, QSplitter, QDialog, QSizePolicy,
+                          QVBoxLayout, QSplitter, QSizePolicy,
                           QAction, QMainWindow, QShortcut, QFrame,
                           QApplication, QCursor, QMenu, QToolButton,
                           QToolTip, QPalette, QColor, QFileDialog, QDialog,
@@ -48,6 +48,7 @@ from classesviewer import ClassesViewer
 from recentprojectsviewer import RecentProjectsViewer
 from projectviewer import ProjectViewer
 from outline import FileOutlineViewer
+from pyflakesviewer import PyflakesViewer
 from editorsmanager import EditorsManager
 from linecounter import LineCounterDialog
 from projectproperties import ProjectPropertiesDialog
@@ -367,6 +368,11 @@ class CodimensionMainWindow( QMainWindow ):
                                     self.editorsManagerWidget.editorsManager )
         self.__rightSideBar.addTab( self.__outlineViewer,
                 PixmapCache().getIcon( 'filepython.png' ), 'File outline' )
+
+        # Create the pyflakes viewer
+        self.__pyflakesViewer = PyflakesViewer(
+                                    self.editorsManagerWidget.editorsManager,
+                                    self.sbPyflakes )
 
         self.__debuggerContext = DebuggerContext()
         self.__rightSideBar.addTab( self.__debuggerContext,

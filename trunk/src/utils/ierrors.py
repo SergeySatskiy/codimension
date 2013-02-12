@@ -23,9 +23,38 @@
 " Interactive errors report using pyflakes "
 
 import sys, compiler
+import _ast
 
 
 def getFileErrors( sourceCode ):
+
+    sourceCode += '\n'
+    from pyflakes.checker import Checker
+    # First, compile into an AST and handle syntax errors.
+    try:
+        tree = compile(sourceCode, "<string>", "exec", _ast.PyCF_ONLY_AST)
+    except SyntaxError, value:
+        # If there's an encoding problem with the file, the text is None.
+        if value.text is None:
+            return []
+        else:
+            return [(value.args[0], value.lineno)]
+    else:
+        # Okay, it's syntactically valid.  Now check it.
+        w = Checker(tree, "<string>")
+        w.messages.sort(lambda a, b: cmp(a.lineno, b.lineno))
+        results = []
+        lines = sourceCode.splitlines()
+        for warning in w.messages:
+            if 'analysis:ignore' not in lines[warning.lineno-1]:
+                results.append((warning.message % warning.message_args,
+                                warning.lineno))
+        return results
+
+
+
+
+def getFileErrorsOld( sourceCode ):
     " Checks the given buffer and returns a list of errors "
 
     try:

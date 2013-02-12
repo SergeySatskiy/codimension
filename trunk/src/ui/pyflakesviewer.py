@@ -122,7 +122,7 @@ class PyflakesViewer( QObject ):
             if results:
                 # There are complains
                 self.__uiLabel.setToolTip(
-                            "File checked: there are pyflakes complains" )
+                            "File checked: there are pyflakes complains " + str( results ))
                 self.__uiLabel.setPixmap(
                             PixmapCache().getPixmap( 'flakeserrors.png' ) )
             else:
@@ -150,7 +150,7 @@ class PyflakesViewer( QObject ):
         if results:
             # There are complains
             self.__uiLabel.setToolTip(
-                        "File checked: there are pyflakes complains" )
+                        "File checked: there are pyflakes complains " + str( results ) )
             self.__uiLabel.setPixmap(
                         PixmapCache().getPixmap( 'flakeserrors.png' ) )
         else:
@@ -202,7 +202,7 @@ class PyflakesViewer( QObject ):
         if results:
             # There are complains
             self.__uiLabel.setToolTip(
-                        "File checked: there are pyflakes complains" )
+                        "File checked: there are pyflakes complains " + str( results ))
             self.__uiLabel.setPixmap(
                         PixmapCache().getPixmap( 'flakeserrors.png' ) )
         else:
