@@ -1818,10 +1818,14 @@ class CodimensionMainWindow( QMainWindow ):
     @staticmethod
     def __buildPythonFilesList():
         " Builds the list of python project files "
+        ropeDir = os.path.sep + ".ropeproject" + os.path.sep
+
         QApplication.processEvents()
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         filesToProcess = []
         for item in GlobalData().project.filesList:
+            if ropeDir in item:
+                continue
             if detectFileType( item ) in [ PythonFileType,
                                            Python3FileType ]:
                 filesToProcess.append( item )
