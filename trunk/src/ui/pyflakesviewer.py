@@ -82,40 +82,32 @@ class PyflakesViewer( QObject ):
             self.__updateTimer.stop()
             self.__updateView()
 
-        # Now, switch the outline browser to the new tab
+        # Now, switch the pyflakes browser to the new tab
         if index == -1:
             widget = self.__editorsManager.currentWidget()
         else:
             widget = self.__editorsManager.getWidgetByIndex( index )
         if widget is None:
             self.__currentUUID = None
-            self.__uiLabel.setToolTip(
-                        "Not a python file: pyflakes is sleeping" )
-            self.__uiLabel.setPixmap(
-                        PixmapCache().getPixmap( 'flakessleep.png' ) )
+            self.setFlakesNotAvailable( self.__uiLabel )
             return
 
         if widget.getType() not in [ MainWindowTabWidgetBase.PlainTextEditor ]:
             self.__currentUUID = None
-            self.__uiLabel.setToolTip(
-                        "Not a python file: pyflakes is sleeping" )
-            self.__uiLabel.setPixmap(
-                        PixmapCache().getPixmap( 'flakessleep.png' ) )
+            self.setFlakesNotAvailable( self.__uiLabel )
             return
 
         # This is text editor, detect the file type
         if widget.getFileType() not in [ PythonFileType, Python3FileType ]:
             self.__currentUUID = None
-            self.__uiLabel.setToolTip(
-                        "Not a python file: pyflakes is sleeping" )
-            self.__uiLabel.setPixmap(
-                        PixmapCache().getPixmap( 'flakessleep.png' ) )
+            self.setFlakesNotAvailable( self.__uiLabel )
             return
 
 
         # This is a python file, check if we already have the parsed info in
         # the cache
         uuid = widget.getUUID()
+        self.__currentUUID = uuid
         if uuid in self.__flakesResults:
             # We have it, change the icon and the tooltip correspondingly
             results = self.__flakesResults[ uuid ].messages
@@ -147,18 +139,7 @@ class PyflakesViewer( QObject ):
         self.__flakesResults[ uuid ] = attributes
         self.__currentUUID = uuid
 
-        if results:
-            # There are complains
-            self.__uiLabel.setToolTip(
-                        "File checked: there are pyflakes complains " + str( results ) )
-            self.__uiLabel.setPixmap(
-                        PixmapCache().getPixmap( 'flakeserrors.png' ) )
-        else:
-            # There are no complains
-            self.__uiLabel.setToolTip(
-                        "File checked: no pyflakes complains" )
-            self.__uiLabel.setPixmap(
-                        PixmapCache().getPixmap( 'flakesok.png' ) )
+        self.setFlakesResults( self.__uiLabel, results )
         return
 
     def __cursorPositionChanged( self, xpos, ypos ):
@@ -177,10 +158,7 @@ class PyflakesViewer( QObject ):
         if self.__currentUUID in self.__flakesResults:
             if self.__flakesResults[ self.__currentUUID ].changed == False:
                 self.__flakesResults[ self.__currentUUID ].changed = True
-                self.__uiLabel.setToolTip(
-                            "File is modified: pyflakes is waiting for time slice" )
-                self.__uiLabel.setPixmap(
-                            PixmapCache().getPixmap( 'flakesmodified.png' ) )
+                self.setFlakesWaiting( self.__uiLabel )
         self.__updateTimer.start( 1500 )
         return
 
@@ -199,18 +177,7 @@ class PyflakesViewer( QObject ):
         self.__flakesResults[ self.__currentUUID ].messages = results
         self.__flakesResults[ self.__currentUUID ].changed = False
 
-        if results:
-            # There are complains
-            self.__uiLabel.setToolTip(
-                        "File checked: there are pyflakes complains " + str( results ))
-            self.__uiLabel.setPixmap(
-                        PixmapCache().getPixmap( 'flakeserrors.png' ) )
-        else:
-            # There are no complains
-            self.__uiLabel.setToolTip(
-                        "File checked: no pyflakes complains" )
-            self.__uiLabel.setPixmap(
-                        PixmapCache().getPixmap( 'flakesok.png' ) )
+        self.setFlakesResults( self.__uiLabel, results )
         return
 
     def __onTabClosed( self, uuid ):
@@ -233,10 +200,7 @@ class PyflakesViewer( QObject ):
                     self.__currentUUID = None
 
                 del self.__flakesResults[ uuid ]
-                self.__uiLabel.setToolTip(
-                            "Not a python file: pyflakes is sleeping" )
-                self.__uiLabel.setPixmap(
-                            PixmapCache().getPixmap( 'flakessleep.png' ) )
+                self.setFlakesNotAvailable( self.__uiLabel )
         return
 
     def __onFileTypeChanged( self, fileName, uuid, newFileType ):
@@ -252,9 +216,39 @@ class PyflakesViewer( QObject ):
                     self.__currentUUID = None
 
                 del self.__flakesResults[ uuid ]
-                self.__uiLabel.setToolTip(
-                            "Not a python file: pyflakes is sleeping" )
-                self.__uiLabel.setPixmap(
-                            PixmapCache().getPixmap( 'flakessleep.png' ) )
-
+                self.setFlakesNotAvailable( self.__uiLabel )
         return
+
+    @staticmethod
+    def setFlakesResults( label, results ):
+        """ Displays the appropriate icon:
+            - pyflakes has no complains
+            - pyflakes found errors """
+        if results:
+            # There are complains
+            label.setToolTip( "File checked: there are pyflakes complains " +
+                              str( results ) )
+            label.setPixmap( PixmapCache().getPixmap( 'flakeserrors.png' ) )
+        else:
+            # There are no complains
+            label.setToolTip( "File checked: no pyflakes complains" )
+            label.setPixmap( PixmapCache().getPixmap( 'flakesok.png' ) )
+        return
+
+    @staticmethod
+    def setFlakesWaiting( label ):
+        """ Displays the appropriate icon that pyflakes is waiting
+            for a time slice to start checking """
+        label.setToolTip( "File is modified: "
+                          "pyflakes is waiting for time slice" )
+        label.setPixmap( PixmapCache().getPixmap( 'flakesmodified.png' ) )
+        return
+
+    @staticmethod
+    def setFlakesNotAvailable( label ):
+        " Displays the appropriate icon that pyflakes is not available "
+        label.setToolTip( "Not a python file: pyflakes is sleeping" )
+        label.setPixmap( PixmapCache().getPixmap( 'flakessleep.png' ) )
+        return
+
+
