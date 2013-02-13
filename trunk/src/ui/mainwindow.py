@@ -490,7 +490,6 @@ class CodimensionMainWindow( QMainWindow ):
         self.sbWritable.setToolTip( "Editor file read/write mode" )
 
         self.sbPyflakes = QLabel( self.__statusBar )
-        self.sbPyflakes.setFrameStyle( QFrame.StyledPanel )
         self.__statusBar.addPermanentWidget( self.sbPyflakes )
 
         self.sbFile = FitPathLabel( self.__statusBar )
