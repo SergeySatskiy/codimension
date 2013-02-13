@@ -508,10 +508,11 @@ class TextEditor( ScintillaWrapper ):
                              self.__styleNeeded )
 
         self.lexer_ = lexer.getLexerByType( fileType, fileName, self )
+        skin = GlobalData().skin
         if self.lexer_ is not None:
-            self.lexer_.setDefaultPaper( GlobalData().skin.nolexerPaper )
-            self.lexer_.setDefaultColor( GlobalData().skin.nolexerColor )
-            self.lexer_.setDefaultFont( GlobalData().skin.nolexerFont )
+            self.lexer_.setDefaultPaper( skin.nolexerPaper )
+            self.lexer_.setDefaultColor( skin.nolexerColor )
+            self.lexer_.setDefaultFont( skin.nolexerFont )
             self.setLexer( self.lexer_ )
 
             if self.lexer_.lexer() == "container" or \
@@ -527,6 +528,13 @@ class TextEditor( ScintillaWrapper ):
             ais = self.lexer_.autoIndentStyle()
 
         self.setIndentationsUseTabs( fileType == MakefileType )
+
+        # Scintilla bug? workaround
+        # If a lexer is switched to text-only, the font on margin is lost
+        # Set it again
+        self.setMarginsBackgroundColor( skin.marginPaper )
+        self.setMarginsForegroundColor( skin.marginColor )
+        self.setMarginsFont( skin.lineNumFont )
         return
 
     def __styleNeeded( self, position ):
