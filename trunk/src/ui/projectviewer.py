@@ -1008,9 +1008,12 @@ class ProjectViewer( QWidget ):
     @staticmethod
     def __getPythonFilesInDir( coveringDir, path ):
         " Provides the list of python files in a dir respecting symlinks "
+        ropeDir = os.path.sep + ".ropeproject" + os.path.sep
         files = []
         for item in os.listdir( path ):
             candidate = path + item
+            if ropeDir in candidate:
+                continue
             if os.path.isdir( candidate ):
                 if os.path.islink( candidate ):
                     realpath = os.path.realpath( candidate )
