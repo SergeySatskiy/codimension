@@ -1,5 +1,6 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Basic pyflakes support.
 * Python .cgi support in outline browser.
 * Bash/sh file type recognition added.
 * Pylint and other tools support for python .cgi files.
