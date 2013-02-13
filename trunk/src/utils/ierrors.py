@@ -23,7 +23,7 @@
 " Interactive errors report using pyflakes "
 
 from _ast import PyCF_ONLY_AST
-from pyflakes.checker import Checker
+from thirdparty.pyflakes.checker import Checker
 
 
 def getFileErrors( sourceCode ):
