@@ -127,6 +127,7 @@ _extType = {
     'pyw'   :   PythonFileType,
     'ptl'   :   PythonFileType,
     'pyc'   :   PythonCompiledFileType,
+    'pyo'   :   PythonCompiledFileType,
     'py3'   :   Python3FileType,
     'pyw3'  :   Python3FileType,
     'rb'    :   RubyFileType,
