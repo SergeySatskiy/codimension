@@ -42,8 +42,7 @@ from helpwidget                 import QuickHelpWidget
 from editor.texteditor          import TextEditorTabWidget
 from pixmapwidget               import PixmapTabWidget
 from utils.fileutils            import detectFileType, PythonFileType, \
-                                       Python3FileType, PixmapFileType, \
-                                       UnknownFileType
+                                       Python3FileType, PixmapFileType
 from utils.compatibility        import relpath
 from utils.misc                 import getNewFileTemplate, getLocaleDateTime
 from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
@@ -2146,11 +2145,9 @@ class EditorsManager( QTabWidget ):
         " Sets the widget debug mode "
 
         fileName = widget.getFileName()
-        fileType = detectFileType( fileName )
         if widget.getType() not in [ MainWindowTabWidgetBase.PlainTextEditor ]:
             return
-        if detectFileType( fileName ) not in [ PythonFileType,
-                                               Python3FileType ]:
+        if widget.getFileType() not in [ PythonFileType, Python3FileType ]:
             return
 
         # Need to send the notification only to the python editors
