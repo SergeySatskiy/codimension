@@ -22,7 +22,6 @@
 
 """ Pyflakes results viewer """
  
-import os.path
 from PyQt4.QtCore import SIGNAL, QTimer, QObject
 from utils.pixmapcache import PixmapCache
 from utils.fileutils import PythonFileType, Python3FileType, detectFileType
@@ -113,18 +112,7 @@ class PyflakesViewer( QObject ):
         if uuid in self.__flakesResults:
             # We have it, change the icon and the tooltip correspondingly
             results = self.__flakesResults[ uuid ].messages
-            if results:
-                # There are complains
-                self.__uiLabel.setToolTip(
-                            "File checked: there are pyflakes complains " + str( results ))
-                self.__uiLabel.setPixmap(
-                            PixmapCache().getPixmap( 'flakeserrors.png' ) )
-            else:
-                # There are no complains
-                self.__uiLabel.setToolTip(
-                            "File checked: no pyflakes complains" )
-                self.__uiLabel.setPixmap(
-                            PixmapCache().getPixmap( 'flakesok.png' ) )
+            self.setFlakesResults( self.__uiLabel, results )
             return
 
         # It is first time we are here, create a new
@@ -184,7 +172,6 @@ class PyflakesViewer( QObject ):
 
     def __onTabClosed( self, uuid ):
         " Triggered when a tab is closed "
-
         if uuid in self.__flakesResults:
             del self.__flakesResults[ uuid ]
         return
@@ -194,13 +181,10 @@ class PyflakesViewer( QObject ):
 
         if uuid in self.__flakesResults:
 
-            baseName = os.path.basename( fileName )
             if detectFileType( fileName ) not in [ PythonFileType,
                                                    Python3FileType ]:
                 # It's not a python file anymore
-                if uuid == self.__currentUUID:
-                    self.__currentUUID = None
-
+                self.__currentUUID = None
                 del self.__flakesResults[ uuid ]
                 self.setFlakesNotAvailable( self.__uiLabel )
         return
@@ -222,14 +206,26 @@ class PyflakesViewer( QObject ):
         return
 
     @staticmethod
+    def __htmlEncode( string ):
+        " Encodes HTML "
+        return string.replace( "&", "&amp;" ) \
+                     .replace( ">", "&gt;" ) \
+                     .replace( "<", "&lt;" )
+
+    @staticmethod
     def setFlakesResults( label, results ):
         """ Displays the appropriate icon:
             - pyflakes has no complains
             - pyflakes found errors """
         if results:
             # There are complains
-            label.setToolTip( "File checked: there are pyflakes complains " +
-                              str( results ) )
+            complains = "File checked: there are pyflakes complains<br>"
+            for item in results:
+                if complains:
+                    complains += "<br>"
+                complains += "Line " + str( item[ 1 ] ) + ": " + \
+                             PyflakesViewer.__htmlEncode( item[ 0 ] )
+            label.setToolTip( complains.replace( " ", "&nbsp;" ) )
             label.setPixmap( PixmapCache().getPixmap( 'flakeserrors.png' ) )
         else:
             # There are no complains
@@ -252,5 +248,4 @@ class PyflakesViewer( QObject ):
         label.setToolTip( "Not a python file: pyflakes is sleeping" )
         label.setPixmap( PixmapCache().getPixmap( 'flakessleep.png' ) )
         return
-
 
