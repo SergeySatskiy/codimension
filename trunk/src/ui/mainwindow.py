@@ -489,7 +489,10 @@ class CodimensionMainWindow( QMainWindow ):
         self.__statusBar.addPermanentWidget( self.sbWritable )
         self.sbWritable.setToolTip( "Editor file read/write mode" )
 
-        self.sbPyflakes = QLabel( self.__statusBar )
+        # FitPathLabel has support for double click event,
+        # so it is used here. Purely it would be better to have another
+        # class for a pixmap label. But I am lazy.
+        self.sbPyflakes = FitPathLabel( self.__statusBar )
         self.__statusBar.addPermanentWidget( self.sbPyflakes )
 
         self.sbFile = FitPathLabel( self.__statusBar )

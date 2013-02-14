@@ -22,7 +22,8 @@
 
 """ Pyflakes results viewer """
  
-from PyQt4.QtCore import SIGNAL, QTimer, QObject
+from PyQt4.QtCore import SIGNAL, QTimer, QObject, Qt, QVariant
+from PyQt4.QtGui import QMenu
 from utils.pixmapcache import PixmapCache
 from utils.fileutils import PythonFileType, Python3FileType, detectFileType
 from mainwindowtabwidgetbase import MainWindowTabWidgetBase
@@ -71,6 +72,14 @@ class PyflakesViewer( QObject ):
         self.connect( self.__updateTimer, SIGNAL( 'timeout()' ),
                                           self.__updateView )
 
+        # Context menu for the messages icon
+        self.__uiLabel.setContextMenuPolicy( Qt.CustomContextMenu )
+        self.connect( self.__uiLabel,
+                      SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
+                      self.__showPyflakesContextMenu )
+        self.connect( self.__uiLabel,
+                      SIGNAL( 'doubleClicked' ),
+                      self.__jumpToFirstMessage )
         return
 
     def __onTabChanged( self, index ):
@@ -203,6 +212,61 @@ class PyflakesViewer( QObject ):
 
                 del self.__flakesResults[ uuid ]
                 self.setFlakesNotAvailable( self.__uiLabel )
+        return
+
+    def __showPyflakesContextMenu( self, pos ):
+        " Triggered when the icon context menu is requested "
+        if self.__currentUUID is None:
+            return
+        if self.__currentUUID not in self.__flakesResults:
+            return
+
+        messages = self.__flakesResults[ self.__currentUUID ].messages
+        if not messages:
+            return
+
+        # OK, we have something to show
+        contextMenu = QMenu( self.__uiLabel )
+        for item in messages:
+            act = contextMenu.addAction( "Line " + str( item[ 1 ] ) + ": " +
+                                   item[ 0 ] )
+            act.setData( QVariant( item[ 1 ] ) )
+        self.connect( contextMenu, SIGNAL( "triggered(QAction*)" ),
+                      self.__onContextMenu )
+        contextMenu.popup( self.__uiLabel.mapToGlobal( pos ) )
+        return
+
+    def __onContextMenu( self, act ):
+        " Triggered when a context menu item is selected "
+        if self.__currentUUID is None:
+            return
+        widget = self.__editorsManager.getWidgetByUUID( self.__currentUUID )
+        if widget is None:
+            return
+
+        lineNum, isOK = act.data().toInt()
+        if not isOK:
+            return
+
+        self.__editorsManager.jumpToLine( lineNum )
+        return
+
+    def __jumpToFirstMessage( self ):
+        " Double click on the icon "
+        if self.__currentUUID is None:
+            return
+        if self.__currentUUID not in self.__flakesResults:
+            return
+
+        messages = self.__flakesResults[ self.__currentUUID ].messages
+        if not messages:
+            return
+
+        widget = self.__editorsManager.getWidgetByUUID( self.__currentUUID )
+        if widget is None:
+            return
+
+        self.__editorsManager.jumpToLine( messages[ 0 ][ 1 ] )
         return
 
     @staticmethod
