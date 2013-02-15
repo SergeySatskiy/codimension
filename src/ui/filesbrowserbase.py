@@ -221,7 +221,7 @@ class FilesBrowser( QTreeView ):
             index = srcModel.buildIndex( startItem.getRowPath() )
             self.expand( self.model().mapFromSource( index ) )
 
-        parts = path.replace( itemPath, "" ).split( os.path.sep )
+        parts = path[ len( itemPath ) : ].split( os.path.sep )
         dirs = parts[ : -1 ]
         fName = parts[ -1 ]
 
