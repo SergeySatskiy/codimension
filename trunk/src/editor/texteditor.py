@@ -215,6 +215,9 @@ class TextEditor( ScintillaWrapper ):
 
     def __initContextMenu( self ):
         " Initializes the context menu "
+        mainWindow = GlobalData().mainWindow
+        editorsManager = mainWindow.editorsManagerWidget.editorsManager
+
         self.__menu = QMenu( self )
         self.__menuUndo = self.__menu.addAction( \
                                     PixmapCache().getIcon( 'undo.png' ),
@@ -245,9 +248,22 @@ class TextEditor( ScintillaWrapper ):
         menu = self.__menu.addMenu( self.__initDiagramsMenu() )
         menu.setIcon( PixmapCache().getIcon( 'diagramsmenu.png' ) )
         self.__menu.addSeparator()
-        self.__menuOpenAsFile = self.__menu.addAction( \
-                                    PixmapCache().getIcon( 'filemenu.png' ),
-                                    'O&pen as file', self.openAsFile )
+        self.__menuOpenAsFile = self.__menu.addAction(
+                                PixmapCache().getIcon( 'filemenu.png' ),
+                                'O&pen as file', self.openAsFile )
+        self.__menuDownloadAndShow = self.__menu.addAction(
+                                PixmapCache().getIcon( 'filemenu.png' ),
+                                'Do&wnload and show',
+                                self.downloadAndShow )
+        self.__menu.addSeparator()
+        self.__menuHighlightInPrj = self.__menu.addAction(
+                                PixmapCache().getIcon( "highlightmenu.png" ),
+                                "&Highlight in project browser",
+                                editorsManager.onHighlightInPrj )
+        self.__menuHighlightInFS = self.__menu.addAction(
+                                PixmapCache().getIcon( "highlightmenu.png" ),
+                                "H&ighlight in file system browser",
+                                editorsManager.onHighlightInFS )
         return
 
     def __marginNumber( self, xPos ):
@@ -338,6 +354,7 @@ class TextEditor( ScintillaWrapper ):
 
             # Check the proper encoding in the menu
             fileType = self.parent().getFileType()
+            fileName = self.parent().getFileName()
             if fileType in [ DesignerFileType, LinguistFileType ]:
                 self.encodingMenu.setEnabled( False )
             else:
@@ -346,6 +363,13 @@ class TextEditor( ScintillaWrapper ):
                 self.supportedEncodings[ encoding ].setChecked( True )
 
             self.__menuOpenAsFile.setEnabled( self.openAsFileAvailable() )
+            self.__menuDownloadAndShow.setEnabled(
+                                        self.downloadAndShowAvailable() )
+            self.__menuHighlightInPrj.setEnabled(
+                        os.path.isabs( fileName ) and
+                        GlobalData().project.isLoaded() and
+                        GlobalData().project.isProjectFile( fileName ) )
+            self.__menuHighlightInFS.setEnabled( os.path.isabs( fileName ) )
             self.__menu.popup( event.globalPos() )
         else:
             # Menu for a margin
@@ -358,13 +382,30 @@ class TextEditor( ScintillaWrapper ):
         if isImportLine:
             return False
         selectedText = str( self.selectedText() ).strip()
-        singleSelection = selectedText and \
-                          '\n' not in selectedText and \
-                          '\r' not in selectedText
-        currentWord = ""
+        if selectedText:
+            return '\n' not in selectedText and \
+                   '\r' not in selectedText
+
+        currentWord = str( self.getCurrentWord() ).strip()
+        return currentWord != ""
+
+    def downloadAndShowAvailable( self ):
+        " True if download and show available "
+        isImportLine, line = self.isImportLine()
+        if isImportLine:
+            return False
+        selectedText = str( self.selectedText() ).strip()
         if not selectedText:
-            currentWord = str( self.getCurrentWord() ).strip()
-        return singleSelection != "" or currentWord != ""
+            return False
+
+        if '\n' in selectedText or '\r' in selectedText:
+            # Not a single line selection
+            return False
+
+        return selectedText.startswith( 'http:' ) or \
+               selectedText.startswith( 'https:' ) or \
+               ( selectedText.startswith( 'www.' ) and '/' in selectedText )
+
 
     def focusInEvent( self, event ):
         " Enable Shift+Tab when the focus is received "
@@ -1621,6 +1662,11 @@ class TextEditor( ScintillaWrapper ):
 
         logging.error( "Cannot find '" + path + "' to open" )
         return
+
+    def downloadAndShow( self ):
+        " Triggered when the user wants to download and see the file "
+        return
+
 
 class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     " Plain text editor tab widget "
