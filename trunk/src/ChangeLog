@@ -1,5 +1,7 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Bug fix: 'highlight in file system browser' did not work if it was not a
+  project file.
 * Basic pyflakes support.
 * Python .cgi support in outline browser.
 * Bash/sh file type recognition added.
