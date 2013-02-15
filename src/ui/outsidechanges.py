@@ -39,7 +39,7 @@ class OutsideChangeWidget( QFrame ):
         QFrame.__init__( self, parent )
 
         # Make the frame nice looking
-        panelColor = QColor( 224, 0, 0, 255 )
+        panelColor = QColor( 170, 17, 17 )
         palette = self.palette()
         palette.setColor( self.backgroundRole(), panelColor )
         self.setPalette( palette )
