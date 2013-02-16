@@ -121,7 +121,7 @@ class PyflakesViewer( QObject ):
         if uuid in self.__flakesResults:
             # We have it, change the icon and the tooltip correspondingly
             results = self.__flakesResults[ uuid ].messages
-            self.setFlakesResults( self.__uiLabel, results )
+            self.setFlakesResults( self.__uiLabel, results, None )
             return
 
         # It is first time we are here, create a new
@@ -138,7 +138,7 @@ class PyflakesViewer( QObject ):
         self.__flakesResults[ uuid ] = attributes
         self.__currentUUID = uuid
 
-        self.setFlakesResults( self.__uiLabel, results )
+        self.setFlakesResults( self.__uiLabel, results, editor )
         return
 
     def __cursorPositionChanged( self, xpos, ypos ):
@@ -153,6 +153,14 @@ class PyflakesViewer( QObject ):
 
     def __onBufferChanged( self ):
         " Triggered when a change in the buffer is identified "
+        if self.__currentUUID is None:
+            return
+        widget = self.__editorsManager.getWidgetByUUID( self.__currentUUID )
+        if widget is None:
+            return
+        if widget.getEditor().ignoreBufferChangedSignal:
+            return
+
         self.__updateTimer.stop()
         if self.__currentUUID in self.__flakesResults:
             if self.__flakesResults[ self.__currentUUID ].changed == False:
@@ -170,13 +178,16 @@ class PyflakesViewer( QObject ):
         if widget is None:
             return
 
+        if self.__flakesResults[ self.__currentUUID ].changed == False:
+            return
+
         editor = widget.getEditor()
         results = getFileErrors( str( editor.text() ) )
 
         self.__flakesResults[ self.__currentUUID ].messages = results
         self.__flakesResults[ self.__currentUUID ].changed = False
 
-        self.setFlakesResults( self.__uiLabel, results )
+        self.setFlakesResults( self.__uiLabel, results, editor )
         return
 
     def __onTabClosed( self, uuid ):
@@ -277,10 +288,14 @@ class PyflakesViewer( QObject ):
                      .replace( "<", "&lt;" )
 
     @staticmethod
-    def setFlakesResults( label, results ):
+    def setFlakesResults( label, results, editor ):
         """ Displays the appropriate icon:
             - pyflakes has no complains
             - pyflakes found errors """
+
+        if editor is not None:
+            editor.clearPyflakesMessages()
+
         if results:
             # There are complains
             complains = "File checked: there are pyflakes complains<br>"
@@ -289,6 +304,8 @@ class PyflakesViewer( QObject ):
                     complains += "<br>"
                 complains += "Line " + str( item[ 1 ] ) + ": " + \
                              PyflakesViewer.__htmlEncode( item[ 0 ] )
+                if editor is not None:
+                    editor.addPyflakesMessage( item[ 1 ], item[ 0 ] )
             label.setToolTip( complains.replace( " ", "&nbsp;" ) )
             label.setPixmap( PixmapCache().getPixmap( 'flakeserrors.png' ) )
         else:
