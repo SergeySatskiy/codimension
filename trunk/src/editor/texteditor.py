@@ -28,11 +28,12 @@ from subprocess import Popen
 import lexer
 from scintillawrap              import ScintillaWrapper
 from PyQt4.QtCore               import Qt, QFileInfo, SIGNAL, QSize, \
-                                       QVariant, QRect, QEvent
+                                       QVariant, QRect, QEvent, QPoint
 from PyQt4.QtGui                import QApplication, QCursor, \
                                        QFontMetrics, QToolBar, QActionGroup, \
                                        QHBoxLayout, QWidget, QAction, QMenu, \
-                                       QSizePolicy, QToolButton, QDialog
+                                       QSizePolicy, QToolButton, QDialog, \
+                                       QToolTip
 from PyQt4.Qsci                 import QsciScintilla, QsciLexerPython
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.fileutils            import detectFileType, DesignerFileType, \
@@ -98,6 +99,12 @@ class TextEditor( ScintillaWrapper ):
                       self.__onDoubleClick )
         self.connect( self, SIGNAL( 'cursorPositionChanged(int,int)' ),
                       self.__onCursorPositionChanged )
+
+        self.SendScintilla( self.SCI_SETMOUSEDWELLTIME, 1000 )
+        self.connect( self, SIGNAL( 'SCN_DWELLSTART(int,int,int)' ),
+                      self.__onDwellStart )
+        self.connect( self, SIGNAL( 'SCN_DWELLEND(int,int,int)' ),
+                      self.__onDwellEnd )
         self.__skipChangeCursor = False
 
         skin = GlobalData().skin
@@ -110,6 +117,7 @@ class TextEditor( ScintillaWrapper ):
         self.ignoreBufferChangedSignal = False  # Changing margin icons also
                                                 # generates BufferChanged
                                                 # signal which is extra
+        self.__pyflakesTooltipShown = False
 
         self.setPaper( skin.nolexerPaper )
         self.setColor( skin.nolexerColor )
@@ -995,6 +1003,44 @@ class TextEditor( ScintillaWrapper ):
         self.highlightWord( text )
         return
 
+    def __onDwellStart( self, position, x, y ):
+        " Triggered when mouse started to dwell "
+        if not self.underMouse():
+            return
+        marginNumber = self.__marginNumber( x )
+        if marginNumber != self.MESSAGES_MARGIN:
+            return
+
+        # Calculate the line
+        pos = self.SendScintilla( self.SCI_POSITIONFROMPOINT, x, y )
+        line, posInLine = self.lineIndexFromPosition( pos )
+
+        if self.markersAtLine( line ) & (1 << self.__pyflakesMsgMarker) == 0:
+            return
+
+        handle = self.__markerHandleByLine( line )
+        if handle == -1:
+            return
+
+        message = self.__pyflakesMessages[ handle ]
+        QToolTip.showText( self.mapToGlobal( QPoint( x, y ) ), message )
+        self.__pyflakesTooltipShown = True
+        return
+
+    def __markerHandleByLine( self, line ):
+        for handle in self.__pyflakesMessages.keys():
+            if self.SendScintilla( self.SCI_MARKERLINEFROMHANDLE,
+                                   handle ) == line:
+                return handle
+        return -1
+
+    def __onDwellEnd( self, position, x, y ):
+        " Triggered when mouse ended to dwell "
+        if self.__pyflakesTooltipShown:
+            self.__pyflakesTooltipShown = False
+            QToolTip.hideText()
+        return
+
     def onFirstChar( self ):
         " Jump to the first character in the buffer "
         self.setCursorPosition( 0, 0 )
@@ -1685,8 +1731,7 @@ class TextEditor( ScintillaWrapper ):
     def clearPyflakesMessages( self ):
         " Clears all the pyflakes markers "
         self.ignoreBufferChangedSignal = True
-        for item in self.__pyflakesMessages.keys():
-            self.markerDeleteHandle( item )
+        self.markerDeleteAll( self.__pyflakesMsgMarker )
         self.__pyflakesMessages = {}
         self.ignoreBufferChangedSignal = False
         return
