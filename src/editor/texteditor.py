@@ -82,6 +82,10 @@ class TextEditor( ScintillaWrapper ):
 
     textToIterate = ""
 
+    LINENUM_MARGIN = 0
+    MESSAGES_MARGIN = 1
+    FOLDING_MARGIN = 2
+
     def __init__( self, parent = None ):
 
         ScintillaWrapper.__init__( self, parent )
@@ -101,6 +105,11 @@ class TextEditor( ScintillaWrapper ):
 
         self.encoding = 'utf-8'     # default
         self.lexer_ = None
+
+        self.__pyflakesMessages = {}    # marker handle -> error message
+        self.ignoreBufferChangedSignal = False  # Changing margin icons also
+                                                # generates BufferChanged
+                                                # signal which is extra
 
         self.setPaper( skin.nolexerPaper )
         self.setColor( skin.nolexerColor )
@@ -479,18 +488,28 @@ class TextEditor( ScintillaWrapper ):
 
         # Set margin 0 for line numbers
         self.setMarginsFont( skin.lineNumFont )
-        self.setMarginLineNumbers( 0, True )
+        self.setMarginLineNumbers( self.LINENUM_MARGIN, True )
         fontMetrics = QFontMetrics( skin.lineNumFont )
-        self.setMarginWidth( 0, fontMetrics.width( ' 8888' ) )
+        self.setMarginWidth( self.LINENUM_MARGIN,
+                             fontMetrics.width( ' 8888' ) )
 
-        # Setup bookmark margin
-        self.setMarginWidth( 1, 16 )
+        # Setup messages margin
+        self.setMarginWidth( self.MESSAGES_MARGIN, 16 )
 
         # Setup folding margin
-        self.setMarginWidth( 2, 16 )
-        self.setFolding( QsciScintilla.PlainFoldStyle, 2 )
+        self.setMarginWidth( self.FOLDING_MARGIN, 16 )
+        self.setFolding( QsciScintilla.PlainFoldStyle, self.FOLDING_MARGIN )
         self.setFoldMarginColors( skin.foldingColor,
                                   skin.foldingPaper )
+
+        # Setup margin markers
+        self.__pyflakesMsgMarker = self.markerDefine(
+                    PixmapCache().getPixmap( 'pyflakesmsgmarker.png' ) )
+        pyflakesMarginMask = ( 1 << self.__pyflakesMsgMarker )
+        self.setMarginMarkerMask( self.MESSAGES_MARGIN,
+                                  pyflakesMarginMask )
+        self.setMarginSensitivity( self.MESSAGES_MARGIN, True )
+
         return
 
     def __initIndicators( self ):
@@ -1661,6 +1680,26 @@ class TextEditor( ScintillaWrapper ):
             return
 
         logging.error( "Cannot find '" + path + "' to open" )
+        return
+
+    def clearPyflakesMessages( self ):
+        " Clears all the pyflakes markers "
+        self.ignoreBufferChangedSignal = True
+        for item in self.__pyflakesMessages.keys():
+            self.markerDeleteHandle( item )
+        self.__pyflakesMessages = {}
+        self.ignoreBufferChangedSignal = False
+        return
+
+    def addPyflakesMessage( self, line, message ):
+        " Shows up a pyflakes message "
+        self.ignoreBufferChangedSignal = True
+        if line <= 0:
+            line = 1    # Sometimes line is reported as 0
+
+        handle = self.markerAdd( line - 1, self.__pyflakesMsgMarker )
+        self.__pyflakesMessages[ handle ] = message
+        self.ignoreBufferChangedSignal = False
         return
 
     def downloadAndShow( self ):

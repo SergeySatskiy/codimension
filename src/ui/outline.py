@@ -305,6 +305,15 @@ class FileOutlineViewer( QWidget ):
 
     def __onBufferChanged( self ):
         " Triggered when a change in the buffer is identified "
+        if self.__currentUUID is None:
+            return
+        widget = self.__editorsManager.getWidgetByUUID(
+                                        self.__currentUUID )
+        if widget is None:
+            return
+        if widget.getEditor().ignoreBufferChangedSignal:
+            return
+
         self.__updateTimer.stop()
         if self.__currentUUID in self.__outlineBrowsers:
             if self.__outlineBrowsers[ self.__currentUUID ].changed == False:
