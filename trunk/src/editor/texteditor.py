@@ -1010,6 +1010,8 @@ class TextEditor( ScintillaWrapper ):
         marginNumber = self.__marginNumber( x )
         if marginNumber != self.MESSAGES_MARGIN:
             return
+        if not self.__pyflakesMessages:
+            return
 
         # Calculate the line
         pos = self.SendScintilla( self.SCI_POSITIONFROMPOINT, x, y )
