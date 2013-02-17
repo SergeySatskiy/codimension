@@ -284,7 +284,7 @@ class EditorsManager( QTabWidget ):
             if os.path.exists( fileName ):
                 os.remove( fileName )
             else:
-                logging.info( "Could not find " + fileName + \
+                logging.info( "Could not find " + fileName +
                               " on the disk. Ignoring and closing tab." )
         except Exception, exc:
             logging.error( str( exc ) )

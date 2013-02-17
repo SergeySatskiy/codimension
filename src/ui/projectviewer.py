@@ -1076,12 +1076,20 @@ class ProjectViewer( QWidget ):
                                    QMessageBox.Cancel )
         if res == QMessageBox.Yes:
             try:
-                if os.path.islink( path ):
-                    os.remove( path )
-                elif os.path.isdir( path ):
-                    shutil.rmtree( path )
+                # Unfortunately, remote file system may fail to report that
+                # something has been deleted. So let's check that the
+                # requested item still exists
+                if os.path.exists( path ):
+                    if os.path.islink( path ):
+                        os.remove( path )
+                    elif os.path.isdir( path ):
+                        shutil.rmtree( path )
+                    else:
+                        os.remove( path )
                 else:
-                    os.remove( path )
+                    logging.info( "Could not find " + path +
+                                  " on the disk. Ignoring and "
+                                  "deleting from the browser." )
             except Exception, exc:
                 logging.error( str( exc ) )
                 return False
