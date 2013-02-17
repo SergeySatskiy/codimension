@@ -100,7 +100,6 @@ class TextEditor( ScintillaWrapper ):
         self.connect( self, SIGNAL( 'cursorPositionChanged(int,int)' ),
                       self.__onCursorPositionChanged )
 
-        self.SendScintilla( self.SCI_SETMOUSEDWELLTIME, 1000 )
         self.connect( self, SIGNAL( 'SCN_DWELLSTART(int,int,int)' ),
                       self.__onDwellStart )
         self.connect( self, SIGNAL( 'SCN_DWELLEND(int,int,int)' ),
@@ -1736,6 +1735,7 @@ class TextEditor( ScintillaWrapper ):
         self.markerDeleteAll( self.__pyflakesMsgMarker )
         self.__pyflakesMessages = {}
         self.ignoreBufferChangedSignal = False
+        self.__updateDwellingTime()
         return
 
     def addPyflakesMessage( self, line, message ):
@@ -1747,10 +1747,20 @@ class TextEditor( ScintillaWrapper ):
         handle = self.markerAdd( line - 1, self.__pyflakesMsgMarker )
         self.__pyflakesMessages[ handle ] = message
         self.ignoreBufferChangedSignal = False
+        self.__updateDwellingTime()
         return
 
     def downloadAndShow( self ):
         " Triggered when the user wants to download and see the file "
+        return
+
+    def __updateDwellingTime( self ):
+        " Updates the dwelling time as necessary "
+        if self.__pyflakesMessages:
+            self.SendScintilla( self.SCI_SETMOUSEDWELLTIME, 1000 )
+        else:
+            self.SendScintilla( self.SCI_SETMOUSEDWELLTIME,
+                                self.SC_TIME_FOREVER )
         return
 
 
