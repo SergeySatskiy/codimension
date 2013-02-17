@@ -143,7 +143,10 @@ class ItemToSearchIn:
         #       try searching in a file
         if not os.path.isabs( self.fileName ) or \
            not os.path.exists( self.fileName ):
-            raise Exception( "Neither buffer nor file exists." )
+            # Unfortunately not all network file systems report the
+            # fact that a file has been deleted from the disk so
+            # let's simply ignore such files
+            return
 
         # File exists, search in the file
         try:
