@@ -239,8 +239,9 @@ class PyflakesViewer( QObject ):
         # OK, we have something to show
         contextMenu = QMenu( self.__uiLabel )
         for item in messages:
-            act = contextMenu.addAction( "Line " + str( item[ 1 ] ) + ": " +
-                                   item[ 0 ] )
+            act = contextMenu.addAction(
+                        PixmapCache().getIcon( 'pyflakesmsgmarker.png' ),
+                        "Line " + str( item[ 1 ] ) + ": " + item[ 0 ] )
             act.setData( QVariant( item[ 1 ] ) )
         self.connect( contextMenu, SIGNAL( "triggered(QAction*)" ),
                       self.__onContextMenu )
