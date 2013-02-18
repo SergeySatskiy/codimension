@@ -1,5 +1,6 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Main menu 'tab' now has 'highlight in...' items.
 * Bug fix: 'highlight in file system browser' did not work if it was not a
   project file.
 * Basic pyflakes support.
