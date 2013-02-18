@@ -639,6 +639,9 @@ class CodimensionMainWindow( QMainWindow ):
         self.__openAsFileAct = self.__tabMenu.addAction(
                 PixmapCache().getIcon( 'filemenu.png' ),
                 'O&pen as file', self.__onOpenAsFile )
+        self.__downloadAndShowAct = self.__tabMenu.addAction(
+                PixmapCache().getIcon( 'filemenu.png' ),
+                'Download and show', self.__onDownloadAndShow )
         self.__tabMenu.addSeparator()
         self.__highlightInPrjAct = self.__tabMenu.addAction(
                 PixmapCache().getIcon( 'highlightmenu.png' ),
@@ -2856,6 +2859,13 @@ class CodimensionMainWindow( QMainWindow ):
         currentWidget.getEditor().openAsFile()
         return
 
+    def __onDownloadAndShow( self ):
+        " Triggered when a selected string should be treated as URL "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.getEditor().downloadAndShow()
+        return
+
     def __onUndo( self ):
         " Triggered when undo action is requested "
         editorsManager = self.editorsManagerWidget.editorsManager
@@ -3030,10 +3040,14 @@ class CodimensionMainWindow( QMainWindow ):
         self.__tabOpenImportAct.setEnabled( isPythonBuffer )
         if plainTextBuffer:
             widget = editorsManager.currentWidget()
-            available = widget.getEditor().openAsFileAvailable()
-            self.__openAsFileAct.setEnabled( available )
+            editor = widget.getEditor()
+            self.__openAsFileAct.setEnabled(
+                        editor.openAsFileAvailable() )
+            self.__downloadAndShowAct.setEnabled(
+                        editor.downloadAndShowAvailable() )
         else:
             self.__openAsFileAct.setEnabled( False )
+            self.__downloadAndShowAct.setEnabled( False )
 
         self.__highlightInPrjAct.setEnabled(
                 editorsManager.isHighlightInPrjAvailable() )
