@@ -195,6 +195,28 @@ class EditorsManager( QTabWidget ):
             widget.setFocus()
         return
 
+    def isHighlightInPrjAvailable( self ):
+        " Returns True if highlight in project should be enabled "
+        widget = self.currentWidget()
+        widgetType = widget.getType()
+        if widgetType not in [ MainWindowTabWidgetBase.PlainTextEditor,
+                               MainWindowTabWidgetBase.PictureViewer ]:
+            return False
+        fName = widget.getFileName()
+        return os.path.isabs( fName ) and \
+               GlobalData().project.isLoaded() and \
+               GlobalData().project.isProjectFile( fName )
+
+    def isHighlightInFSAvailable( self ):
+        " Returns True if the highlight in FS should be enabled "
+        widget = self.currentWidget()
+        widgetType = widget.getType()
+        if widgetType not in [ MainWindowTabWidgetBase.PlainTextEditor,
+                               MainWindowTabWidgetBase.PictureViewer ]:
+            return False
+        fName = widget.getFileName()
+        return os.path.isabs( fName )
+
     def __showTabContextMenu( self, pos ):
         " Shows a context menu if required "
         clickedIndex = self.tabBar().tabAt( pos )
@@ -215,10 +237,9 @@ class EditorsManager( QTabWidget ):
             self.__copyDirPathAct.setEnabled( fName != "" )
             self.__copyFileNameAct.setEnabled( fName != "" )
             self.__highlightInPrjAct.setEnabled(
-                        os.path.isabs( fName ) and
-                        GlobalData().project.isLoaded() and
-                        GlobalData().project.isProjectFile( fName ) )
-            self.__highlightInFSAct.setEnabled( os.path.isabs( fName ) )
+                                    self.isHighlightInPrjAvailable() )
+            self.__highlightInFSAct.setEnabled(
+                                        self.isHighlightInFSAvailable() )
 
             if fName != "":
                 if not widget.doesFileExist():
