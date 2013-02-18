@@ -178,6 +178,8 @@ class ScintillaWrapper( QsciScintilla ):
                 utf8Len = 3
             elif ( ord( character[0] ) & 0xC0 ) == 0xC0:
                 utf8Len = 2
+            else:
+                return character
             while len( character ) < utf8Len:
                 pos += 1
                 character += self.rawCharAt( pos )
