@@ -640,6 +640,15 @@ class CodimensionMainWindow( QMainWindow ):
                 PixmapCache().getIcon( 'filemenu.png' ),
                 'O&pen as file', self.__onOpenAsFile )
         self.__tabMenu.addSeparator()
+        self.__highlightInPrjAct = self.__tabMenu.addAction(
+                PixmapCache().getIcon( 'highlightmenu.png' ),
+                'Highlight in project browser',
+                editorsManager.onHighlightInPrj )
+        self.__highlightInFSAct = self.__tabMenu.addAction(
+                PixmapCache().getIcon( 'highlightmenu.png' ),
+                'Highlight in file system browser',
+                editorsManager.onHighlightInFS )
+        self.__tabMenu.addSeparator()
         self.__recentFilesMenu = QMenu( "&Recent files", self )
         self.connect( self.__recentFilesMenu, SIGNAL( "triggered(QAction*)" ),
                       self.__onRecentFile )
@@ -3025,6 +3034,11 @@ class CodimensionMainWindow( QMainWindow ):
             self.__openAsFileAct.setEnabled( available )
         else:
             self.__openAsFileAct.setEnabled( False )
+
+        self.__highlightInPrjAct.setEnabled(
+                editorsManager.isHighlightInPrjAvailable() )
+        self.__highlightInFSAct.setEnabled(
+                editorsManager.isHighlightInFSAvailable() )
 
         self.__closeTabAct.setShortcut( "Ctrl+F4" )
         self.__tabJumpToDefAct.setShortcut( "Ctrl+\\" )
