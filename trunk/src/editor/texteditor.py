@@ -23,7 +23,7 @@
 " Text editor implementation "
 
 
-import os.path, logging
+import os.path, logging, urllib2, socket
 from subprocess import Popen
 import lexer
 from scintillawrap              import ScintillaWrapper
@@ -1752,6 +1752,26 @@ class TextEditor( ScintillaWrapper ):
 
     def downloadAndShow( self ):
         " Triggered when the user wants to download and see the file "
+        url = str( self.selectedText() ).strip()
+
+        oldTimeout = socket.getdefaulttimeout()
+        newTimeout = 5      # Otherwise the pause is too long
+        socket.setdefaulttimeout( newTimeout )
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+
+        try:
+            response = urllib2.urlopen( url )
+            content = response.read()
+
+            # The content has been read sucessfully
+            mainWindow = GlobalData().mainWindow
+            editorsManager = mainWindow.editorsManagerWidget.editorsManager
+            editorsManager.newTabClicked( content, os.path.basename( url ) )
+        except Exception, exc:
+            logging.error( "Error downloading '" + url + "'\n" + str( exc ) )
+
+        QApplication.restoreOverrideCursor()
+        socket.setdefaulttimeout( oldTimeout )
         return
 
     def __updateDwellingTime( self ):
