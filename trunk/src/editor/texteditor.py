@@ -416,9 +416,8 @@ class TextEditor( ScintillaWrapper ):
             # Not a single line selection
             return False
 
-        return selectedText.startswith( 'http:' ) or \
-               selectedText.startswith( 'https:' ) or \
-               ( selectedText.startswith( 'www.' ) and '/' in selectedText )
+        return selectedText.startswith( 'http://' ) or \
+               selectedText.startswith( 'www.' )
 
 
     def focusInEvent( self, event ):
@@ -1751,6 +1750,8 @@ class TextEditor( ScintillaWrapper ):
     def downloadAndShow( self ):
         " Triggered when the user wants to download and see the file "
         url = str( self.selectedText() ).strip()
+        if url.startswith( "www." ):
+            url = "http://" + url
 
         oldTimeout = socket.getdefaulttimeout()
         newTimeout = 5      # Otherwise the pause is too long
@@ -1775,6 +1776,8 @@ class TextEditor( ScintillaWrapper ):
     def openInBrowser( self ):
         " Triggered when a selected URL should be opened in a browser "
         url = str( self.selectedText() ).strip()
+        if url.startswith( "www." ):
+            url = "http://" + url
         QDesktopServices.openUrl( QUrl( url ) )
         return
 
