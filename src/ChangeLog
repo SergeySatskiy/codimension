@@ -1,5 +1,7 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Main menu and the text editor context menu now have 'open in browser'
+  item.
 * Main menu and the text editor context menu now have 'downdload and show'
   item.
 * Main menu 'tab' now has 'highlight in...' items.
