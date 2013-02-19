@@ -642,6 +642,9 @@ class CodimensionMainWindow( QMainWindow ):
         self.__downloadAndShowAct = self.__tabMenu.addAction(
                 PixmapCache().getIcon( 'filemenu.png' ),
                 'Download and show', self.__onDownloadAndShow )
+        self.__openInBrowserAct = self.__tabMenu.addAction(
+                PixmapCache().getIcon( 'homepagemenu.png' ),
+                'Open in browser', self.__onOpenInBrowser )
         self.__tabMenu.addSeparator()
         self.__highlightInPrjAct = self.__tabMenu.addAction(
                 PixmapCache().getIcon( 'highlightmenu.png' ),
@@ -2866,6 +2869,13 @@ class CodimensionMainWindow( QMainWindow ):
         currentWidget.getEditor().downloadAndShow()
         return
 
+    def __onOpenInBrowser ( self ):
+        " Triggered when a selected url should be opened in a browser "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.getEditor().openInBrowser()
+        return
+
     def __onUndo( self ):
         " Triggered when undo action is requested "
         editorsManager = self.editorsManagerWidget.editorsManager
@@ -3045,9 +3055,12 @@ class CodimensionMainWindow( QMainWindow ):
                         editor.openAsFileAvailable() )
             self.__downloadAndShowAct.setEnabled(
                         editor.downloadAndShowAvailable() )
+            self.__openInBrowserAct.setEnabled(
+                        editor.downloadAndShowAvailable() )
         else:
             self.__openAsFileAct.setEnabled( False )
             self.__downloadAndShowAct.setEnabled( False )
+            self.__openInBrowserAct.setEnabled( False )
 
         self.__highlightInPrjAct.setEnabled(
                 editorsManager.isHighlightInPrjAvailable() )

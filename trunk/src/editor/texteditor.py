@@ -26,52 +26,46 @@
 import os.path, logging, urllib2, socket
 from subprocess import Popen
 import lexer
-from scintillawrap              import ScintillaWrapper
-from PyQt4.QtCore               import Qt, QFileInfo, SIGNAL, QSize, \
-                                       QVariant, QRect, QEvent, QPoint
-from PyQt4.QtGui                import QApplication, QCursor, \
-                                       QFontMetrics, QToolBar, QActionGroup, \
-                                       QHBoxLayout, QWidget, QAction, QMenu, \
-                                       QSizePolicy, QToolButton, QDialog, \
-                                       QToolTip
-from PyQt4.Qsci                 import QsciScintilla, QsciLexerPython
+from scintillawrap import ScintillaWrapper
+from PyQt4.QtCore import ( Qt, QFileInfo, SIGNAL, QSize, QUrl,
+                           QVariant, QRect, QEvent, QPoint )
+from PyQt4.QtGui import ( QApplication, QCursor, QFontMetrics, QToolBar,
+                          QActionGroup, QHBoxLayout, QWidget, QAction, QMenu,
+                          QSizePolicy, QToolButton, QDialog, QToolTip, 
+                          QDesktopServices )
+from PyQt4.Qsci import QsciScintilla, QsciLexerPython
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from utils.fileutils            import detectFileType, DesignerFileType, \
-                                       LinguistFileType, MakefileType, \
-                                       getFileLanguage, UnknownFileType, \
-                                       PythonFileType, Python3FileType
-from utils.encoding             import decode, encode, CodingError, \
-                                       supportedCodecs
-from utils.pixmapcache          import PixmapCache
-from utils.globals              import GlobalData
-from utils.settings             import Settings
-from utils.misc                 import getLocaleDateTime
-from ui.pylintviewer            import PylintViewer
-from ui.pymetricsviewer         import PymetricsViewer
-from diagram.importsdgm         import ImportsDiagramDialog, \
-                                       ImportDiagramOptions, \
-                                       ImportsDiagramProgress
-from utils.importutils          import getImportsList, \
-                                       getImportsInLine, resolveImport, \
-                                       getImportedNameDefinitionLine, \
-                                       resolveImports
-from ui.importlist              import ImportListWidget
-from ui.outsidechanges          import OutsideChangeWidget
-from autocomplete.bufferutils   import getContext, getPrefixAndObject, \
-                                       getEditorTags
-from autocomplete.completelists import getCompletionList, getCalltipAndDoc, \
-                                       getDefinitionLocation, getOccurrences
-from cdmbriefparser             import getBriefModuleInfoFromMemory
-from ui.completer               import CodeCompleter
-from ui.runparams               import RunDialog
-from utils.run                  import getCwdCmdEnv
-from ui.findinfiles             import ItemToSearchIn, getSearchItemIndex
-from debugger.modifiedunsaved   import ModifiedUnsavedDialog
-from ui.linecounter             import LineCounterDialog
-from pythontidy.tidy            import getPythonTidySetting, PythonTidyDriver, \
-                                       getPythonTidySettingFileName
+from utils.fileutils import ( detectFileType, DesignerFileType,
+                              LinguistFileType, MakefileType, getFileLanguage,
+                              UnknownFileType, PythonFileType, Python3FileType )
+from utils.encoding import decode, encode, CodingError, supportedCodecs
+from utils.pixmapcache import PixmapCache
+from utils.globals import GlobalData
+from utils.settings import Settings
+from utils.misc import getLocaleDateTime
+from ui.pylintviewer import PylintViewer
+from ui.pymetricsviewer import PymetricsViewer
+from diagram.importsdgm import ( ImportsDiagramDialog, ImportDiagramOptions,
+                                 ImportsDiagramProgress )
+from utils.importutils import ( getImportsList, getImportsInLine, resolveImport,
+                                getImportedNameDefinitionLine, resolveImports )
+from ui.importlist import ImportListWidget
+from ui.outsidechanges import OutsideChangeWidget
+from autocomplete.bufferutils import ( getContext, getPrefixAndObject,
+                                       getEditorTags )
+from autocomplete.completelists import ( getCompletionList, getCalltipAndDoc,
+                                         getDefinitionLocation, getOccurrences )
+from cdmbriefparser import getBriefModuleInfoFromMemory
+from ui.completer import CodeCompleter
+from ui.runparams import RunDialog
+from utils.run import getCwdCmdEnv
+from ui.findinfiles import ItemToSearchIn, getSearchItemIndex
+from debugger.modifiedunsaved import ModifiedUnsavedDialog
+from ui.linecounter import LineCounterDialog
+from pythontidy.tidy import ( getPythonTidySetting, PythonTidyDriver,
+                              getPythonTidySettingFileName )
 from pythontidy.tidysettingsdlg import TidySettingsDialog
-from profiling.profui           import ProfilingProgressDialog
+from profiling.profui import ProfilingProgressDialog
 
 
 class TextEditor( ScintillaWrapper ):
@@ -269,8 +263,10 @@ class TextEditor( ScintillaWrapper ):
                                 'O&pen as file', self.openAsFile )
         self.__menuDownloadAndShow = self.__menu.addAction(
                                 PixmapCache().getIcon( 'filemenu.png' ),
-                                'Do&wnload and show',
-                                self.downloadAndShow )
+                                'Do&wnload and show', self.downloadAndShow )
+        self.__menuOpenInBrowser = self.__menu.addAction(
+                                PixmapCache().getIcon( 'homepagemenu.png' ),
+                                'Open in browser', self.openInBrowser )
         self.__menu.addSeparator()
         self.__menuHighlightInPrj = self.__menu.addAction(
                                 PixmapCache().getIcon( "highlightmenu.png" ),
@@ -380,6 +376,8 @@ class TextEditor( ScintillaWrapper ):
 
             self.__menuOpenAsFile.setEnabled( self.openAsFileAvailable() )
             self.__menuDownloadAndShow.setEnabled(
+                                        self.downloadAndShowAvailable() )
+            self.__menuOpenInBrowser.setEnabled(
                                         self.downloadAndShowAvailable() )
             self.__menuHighlightInPrj.setEnabled(
                         os.path.isabs( fileName ) and
@@ -1772,6 +1770,12 @@ class TextEditor( ScintillaWrapper ):
 
         QApplication.restoreOverrideCursor()
         socket.setdefaulttimeout( oldTimeout )
+        return
+
+    def openInBrowser( self ):
+        " Triggered when a selected URL should be opened in a browser "
+        url = str( self.selectedText() ).strip()
+        QDesktopServices.openUrl( QUrl( url ) )
         return
 
     def __updateDwellingTime( self ):
