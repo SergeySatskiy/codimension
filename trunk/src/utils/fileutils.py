@@ -28,7 +28,8 @@
 
 """ file related utils """
 
-import os, os.path
+from os import popen
+from os.path import islink, exists, split, join
 from PyQt4.QtGui        import QImageReader
 from globals            import GlobalData
 from utils.pixmapcache  import PixmapCache
@@ -173,15 +174,15 @@ def detectFileType( path, checkForBrokenLink = True, skipCache = False ):
     if not path:
         return UnknownFileType
 
-    if checkForBrokenLink and os.path.islink( path ):
-        if not os.path.exists( path ):
+    if checkForBrokenLink and islink( path ):
+        if not exists( path ):
             return BrokenSymlinkFileType
 
-    if path in __cachedFileTypes and not skipCache:
+    if not skipCache and path in __cachedFileTypes:
         return __cachedFileTypes[ path ]
 
     # Must work for not existed files, e.g. new file request will also use it
-    #    if not os.path.exists( absPath ):
+    #    if not exists( absPath ):
     #        raise Exception( "Cannot find file: " + path )
 
     fileExtension = path.split( '.' )[ -1 ].lower()
@@ -208,7 +209,7 @@ def detectFileType( path, checkForBrokenLink = True, skipCache = False ):
     if fileAvailable:
         try:
             # It is safe to do it even for a not existing file
-            output = os.popen( 'file -b ' + path ).read().lower()
+            output = popen( 'file -b ' + path ).read().lower()
             if 'elf ' in output:
                 if 'executable' in output:
                     __cachedFileTypes[ path ] = ELFFileType
@@ -258,14 +259,14 @@ def compactPath( path, width, measure = len ):
 
     ellipsis = '...'
 
-    head, tail = os.path.split( path )
+    head, tail = split( path )
     while head:
-        path = os.path.join( "%s%s" % ( head, ellipsis ), tail )
+        path = join( "%s%s" % ( head, ellipsis ), tail )
         if measure( path ) <= width:
             return path
         head = head[ :-1 ]
 
-    path = os.path.join( ellipsis, tail )
+    path = join( ellipsis, tail )
     if measure( path ) <= width:
         return path
 
