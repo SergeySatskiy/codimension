@@ -42,7 +42,8 @@ from helpwidget                 import QuickHelpWidget
 from editor.texteditor          import TextEditorTabWidget
 from pixmapwidget               import PixmapTabWidget
 from utils.fileutils            import detectFileType, PythonFileType, \
-                                       Python3FileType, PixmapFileType
+                                       Python3FileType, PixmapFileType, \
+                                       UnknownFileType
 from utils.compatibility        import relpath
 from utils.misc                 import getNewFileTemplate, getLocaleDateTime
 from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
@@ -1370,11 +1371,12 @@ class EditorsManager( QTabWidget ):
         widget.setFileName( fileName )
         widget.getEditor().setModified( False )
         newType = widget.getFileType()
-        self._updateIconAndTooltip( index, newType )
-        if newType != oldType:
+        if newType != oldType or newType == UnknownFileType:
             widget.getEditor().bindLexer( fileName, newType )
+            newType = widget.getFileType()
             self.emit( SIGNAL( 'fileTypeChanged' ), fileName,
                        widget.getUUID(), newType )
+        self._updateIconAndTooltip( index, newType )
 
         if GlobalData().project.fileName == fileName:
             GlobalData().project.onProjectFileUpdated()
