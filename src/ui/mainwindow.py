@@ -1237,11 +1237,6 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.__dbgRestart, SIGNAL( "triggered()" ),
                       self.__onRestartDbgSession )
         self.__dbgRestart.setVisible( False )
-        self.__dbgBreak = QAction( PixmapCache().getIcon( 'dbgbreak.png' ),
-                                   'Break', self )
-        self.connect( self.__dbgBreak, SIGNAL( "triggered()" ),
-                      self.__onDbgBreak )
-        self.__dbgBreak.setVisible( False )
         self.__dbgGo = QAction( PixmapCache().getIcon( 'dbggo.png' ),
                                 'Go', self )
         self.connect( self.__dbgGo, SIGNAL( "triggered()" ),
@@ -1299,7 +1294,6 @@ class CodimensionMainWindow( QMainWindow ):
         toolbar.addWidget( dbgSpacer )
         toolbar.addAction( self.__dbgStop )
         toolbar.addAction( self.__dbgRestart )
-        toolbar.addAction( self.__dbgBreak )
         toolbar.addAction( self.__dbgGo )
         toolbar.addAction( self.__dbgNext )
         toolbar.addAction( self.__dbgStepInto )
@@ -2458,7 +2452,6 @@ class CodimensionMainWindow( QMainWindow ):
         # Toolbar buttons
         self.__dbgStop.setVisible( newState )
         self.__dbgRestart.setVisible( newState )
-        self.__dbgBreak.setVisible( newState )
         self.__dbgGo.setVisible( newState )
         self.__dbgNext.setVisible( newState )
         self.__dbgStepInto.setVisible( newState )
@@ -2482,9 +2475,6 @@ class CodimensionMainWindow( QMainWindow ):
         pass
     def __onRestartDbgSession( self ):
         " Debugger restart session clicked "
-        pass
-    def __onDbgBreak( self ):
-        " Debugger stop clicked "
         pass
     def __onDbgGo( self ):
         " Debugger continue clicked "
