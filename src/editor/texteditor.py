@@ -1784,7 +1784,7 @@ class TextEditor( ScintillaWrapper ):
     def __updateDwellingTime( self ):
         " Updates the dwelling time as necessary "
         if self.__pyflakesMessages:
-            self.SendScintilla( self.SCI_SETMOUSEDWELLTIME, 1000 )
+            self.SendScintilla( self.SCI_SETMOUSEDWELLTIME, 250 )
         else:
             self.SendScintilla( self.SCI_SETMOUSEDWELLTIME,
                                 self.SC_TIME_FOREVER )
