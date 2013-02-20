@@ -1,5 +1,6 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Bug fix: autocomplition for non-ascii text did not work.
 * Main menu and the text editor context menu now have 'open in browser'
   item.
 * Main menu and the text editor context menu now have 'downdload and show'
