@@ -921,7 +921,8 @@ class TextEditor( ScintillaWrapper ):
         elif key == Qt.Key_Tab:
             line, pos = self.getCursorPosition()
             if pos != 0:
-                char = self.charAt( self.currentPosition() - 1 )
+                previousCharPos = self.positionFromLineIndex( line, pos - 1 )
+                char = self.charAt( previousCharPos )
                 if char.isalnum() or char in [ '_', '.' ]:
                     self.onAutoComplete()
                     event.accept()
