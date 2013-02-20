@@ -994,6 +994,9 @@ class ReplaceWidget( FindReplaceBase ):
             if self._editor.replaceTarget( str( replaceText ) ):
                 GlobalData().mainWindow.showStatusBarMessage( "1 occurance "
                                                               "replaced" )
+                # Positioning cursor to the end of the replaced text helps
+                # to avoid problems of replacing 'text' with 'prefix_text'
+                searchAttributes.match[1] += len( replaceText )
                 self._editor.setCursorPosition( searchAttributes.match[0],
                                                 searchAttributes.match[1] )
                 self.replaceButton.setEnabled( False )
