@@ -42,6 +42,8 @@ class ScintillaWrapper( QsciScintilla ):
 
         QsciScintilla.__init__( self, parent )
 
+        self.SendScintilla( self.SCI_SETLAYOUTCACHE, self.SC_CACHE_DOCUMENT )
+
         self.zoom = 0
         self._charWidth = -1
         self._lineHeight = -1
