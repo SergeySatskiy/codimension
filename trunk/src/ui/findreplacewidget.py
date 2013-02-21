@@ -525,8 +525,15 @@ class FindReplaceBase( QWidget ):
                 # The cursor is on the current match, i.e. the user did not
                 # put the focus into the editor and did not move it
                 if not self._findBackward:
-                    startPos = startPos + searchAttributes.match[ 2 ]
-
+                    # The match[ 2 ] gives the length in bytes, not in chars
+                    # which could be national i.e. multibytes. So calc the
+                    # right length in chars...
+                    pos = self._editor.positionFromLineIndex( startLine,
+                                                              startPos )
+                    adjustment = len( self._editor.stringAt(
+                                                pos,
+                                                searchAttributes.match[ 2 ] ) )
+                    startPos = startPos + adjustment
             else:
                 # The cursor is not at the same position as the last match,
                 # i.e. the user moved it some way
@@ -536,7 +543,6 @@ class FindReplaceBase( QWidget ):
                 searchAttributes.firstLine = self._editor.firstVisibleLine()
                 searchAttributes.match = [ -1, -1, -1 ]
                 self._searchSupport.add( self._editorUUID, searchAttributes )
-
         else:
             # There were no search in this editor
             searchAttributes = SearchAttr()

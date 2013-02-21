@@ -156,20 +156,28 @@ class ScintillaWrapper( QsciScintilla ):
 
     def setStyling( self, length, style ):
         """ Styles some text """
-
         self.SendScintilla( self.SCI_SETSTYLING, length, style )
         return
 
     def setStyleBits( self, bits ):
         """ Sets the number of bits to be used for styling """
-
         self.SendScintilla( self.SCI_SETSTYLEBITS, bits )
         return
 
-    def charAt( self, pos ):
-        """ Provides the character at the pos in the text
-            observing multibyte characters """
+    def stringAt( self, pos, length ):
+        """ Provides a string starting at position 'pos' with
+            the length of 'length' bytes (not characters!).
+            It respects multibyte characters """
+        lastPos = pos + length
+        result = u""
+        while pos < lastPos:
+            decodedChar, utf8Len = self.__decodeMultibyteCharacter( pos )
+            pos += utf8Len
+            result += decodedChar
+        return result
 
+    def __decodeMultibyteCharacter( self, pos ):
+        " Provides decoded character if needed and the lenght "
         character = self.rawCharAt( pos )
         if character and ord( character ) > 127 and self.isUtf8():
             if ( ord( character[0] ) & 0xF0 ) == 0xF0:
@@ -179,12 +187,18 @@ class ScintillaWrapper( QsciScintilla ):
             elif ( ord( character[0] ) & 0xC0 ) == 0xC0:
                 utf8Len = 2
             else:
-                return character
+                return character, 1
             while len( character ) < utf8Len:
                 pos += 1
                 character += self.rawCharAt( pos )
-            return character.decode( 'utf8' )
-        return character
+            return character.decode( 'utf8' ), utf8Len
+        return character, 1
+
+    def charAt( self, pos ):
+        """ Provides the character at the pos in the text
+            observing multibyte characters """
+        decodedChar, utf8Len = self.__decodeMultibyteCharacter( pos )
+        return decodedChar
 
     def rawCharAt( self, pos ):
         """ Provides the raw character at the pos in the text """
