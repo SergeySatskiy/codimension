@@ -1078,7 +1078,7 @@ class TextEditor( ScintillaWrapper ):
         if text == "" or text.contains( '\r' ) or text.contains( '\n' ):
             TextEditor.textToIterate = ""
         else:
-            if TextEditor.textToIterate == text:
+            if str( TextEditor.textToIterate ).lower() == str( text ).lower():
                 return self.__onNextHighlight()
             TextEditor.textToIterate = text
         self.highlightWord( text )
