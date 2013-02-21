@@ -33,6 +33,22 @@ from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui  import QComboBox
 
 
+class EnterSensitiveComboBox( QComboBox ):
+    " Combo box which emits 'enterClicked' signal "
+
+    def __init__( self, parent = None ):
+        QComboBox.__init__( self, parent )
+        return
+
+    def keyReleaseEvent( self, event ):
+        " Triggered when a key is released "
+        QComboBox.keyReleaseEvent( self, event )
+        key = event.key()
+        if key == Qt.Key_Enter or key == Qt.Key_Return:
+            self.emit( SIGNAL( 'enterClicked' ) )
+        return
+
+
 class CDMComboBox( QComboBox ):
     " QComboBox minor extension "
 
@@ -60,7 +76,7 @@ class CDMComboBox( QComboBox ):
     def getItems( self ):
         " Provides the list of items (text only) "
         items = []
-        for index in range( self.count() ):
+        for index in xrange( self.count() ):
             items.append( str( self.itemText( index ) ) )
         return items
 
@@ -81,4 +97,3 @@ class CDMComboBox( QComboBox ):
         while self.count() > self.itemsLimit:
             self.removeItem( self.count() - 1 )
         return
-
