@@ -24,19 +24,18 @@
 
 
 import os, os.path
-from PyQt4.QtCore                import Qt, QAbstractItemModel, QRegExp, \
-                                        QModelIndex, SIGNAL, QVariant
-from PyQt4.QtGui                 import QTreeView, QAbstractItemView, \
-                                        QDialog, QVBoxLayout, QCursor, \
-                                        QComboBox, QSizePolicy, \
-                                        QSortFilterProxyModel, QApplication, \
-                                        QHeaderView
-from utils.globals               import GlobalData
-from cdmbriefparser              import getBriefModuleInfoFromMemory
-from itemdelegates               import NoOutlineHeightDelegate
-from utils.fileutils             import detectFileType, getFileIcon, \
-                                        PythonFileType, Python3FileType
-from utils.settings              import Settings
+from PyQt4.QtCore import ( Qt, QAbstractItemModel, QRegExp, QModelIndex,
+                           SIGNAL, QVariant )
+from PyQt4.QtGui import ( QTreeView, QAbstractItemView, QDialog, QVBoxLayout,
+                          QCursor, QSizePolicy, QHeaderView, QComboBox,
+                          QSortFilterProxyModel, QApplication )
+from utils.globals import GlobalData
+from cdmbriefparser import getBriefModuleInfoFromMemory
+from itemdelegates import NoOutlineHeightDelegate
+from utils.fileutils import ( detectFileType, getFileIcon,
+                              PythonFileType, Python3FileType )
+from utils.settings import Settings
+from combobox import EnterSensitiveComboBox
 
 
 class FileItemRoot( object ):
@@ -399,10 +398,11 @@ class FilesBrowser( QTreeView ):
         self.__sortModel.setDynamicSortFilter( True )
         self.__sortModel.setSourceModel( self.__model )
         self.setModel( self.__sortModel )
-        self.contextItem = None
+        self.selectedIndex = None
 
         self.connect( self, SIGNAL( "activated(const QModelIndex &)" ),
-                      self._openItem )
+                      self.openCurrentItem )
+
         self.setRootIsDecorated( False )
         self.setAlternatingRowColors( True )
         self.setUniformRowHeights( True )
@@ -421,6 +421,15 @@ class FilesBrowser( QTreeView ):
         self.layoutDisplay()
         return
 
+    def selectionChanged( self, selected, deselected ):
+        " Slot is called when the selection has been changed "
+        if selected.indexes():
+            self.selectedIndex = selected.indexes()[ 0 ]
+        else:
+            self.selectedIndex = None
+        QTreeView.selectionChanged( self, selected, deselected )
+        return
+
     def layoutDisplay( self ):
         " Performs the layout operation "
         self.doItemsLayout()
@@ -435,9 +444,11 @@ class FilesBrowser( QTreeView ):
                            self.header().sortIndicatorOrder() )
         return
 
-    def _openItem( self ):
+    def openCurrentItem( self ):
         " Triggers when an item is clicked or double clicked "
-        item = self.model().item( self.currentIndex() )
+        if self.selectedIndex is None:
+            return
+        item = self.model().item( self.selectedIndex )
         self.openItem( item )
         return
 
@@ -493,7 +504,18 @@ class FindFileDialog( QDialog ):
                       SIGNAL( "editTextChanged(const QString &)" ),
                       self.__filterChanged )
 
+        self.__highlightFirst()
         self.__updateTitle()
+        return
+
+    def __highlightFirst( self ):
+        " Sets the selection to the first item in the files list "
+        if self.__filesBrowser.getVisible() == 0:
+            return
+        self.__filesBrowser.clearSelection()
+
+        first = self.__filesBrowser.model().index( 0, 0, QModelIndex() )
+        self.__filesBrowser.setCurrentIndex( first )
         return
 
     def __updateTitle( self ):
@@ -518,10 +540,12 @@ class FindFileDialog( QDialog ):
         self.__filesBrowser = FilesBrowser( self )
         verticalLayout.addWidget( self.__filesBrowser )
 
-        self.findCombo = QComboBox( self )
+        self.findCombo = EnterSensitiveComboBox( self )
         self.__tuneCombo( self.findCombo )
         self.findCombo.lineEdit().setToolTip( "Regular expression to search for" )
         verticalLayout.addWidget( self.findCombo )
+        self.connect( self.findCombo, SIGNAL( 'enterClicked' ),
+                      self.__enterInFilter )
         return
 
     @staticmethod
@@ -530,7 +554,7 @@ class FindFileDialog( QDialog ):
         sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Fixed )
         sizePolicy.setHorizontalStretch( 0 )
         sizePolicy.setVerticalStretch( 0 )
-        sizePolicy.setHeightForWidth( \
+        sizePolicy.setHeightForWidth(
                             comboBox.sizePolicy().hasHeightForWidth() )
         comboBox.setSizePolicy( sizePolicy )
         comboBox.setEditable( True )
@@ -542,6 +566,7 @@ class FindFileDialog( QDialog ):
     def __filterChanged( self, text ):
         " Triggers when the filter text changed "
         self.__filesBrowser.setFilter( text )
+        self.__highlightFirst()
         self.__updateTitle()
         return
 
@@ -559,10 +584,16 @@ class FindFileDialog( QDialog ):
                 self.__findFileHistory = self.__findFileHistory[ : 32 ]
 
             if GlobalData().project.fileName != "":
-                GlobalData().project.setFindFileHistory( \
+                GlobalData().project.setFindFileHistory(
                                         self.__findFileHistory )
             else:
                 Settings().findFileHistory = self.__findFileHistory
         self.close()
         return
 
+    def __enterInFilter( self ):
+        " Handles ENTER and RETURN keys in the find combo "
+        if self.__filesBrowser.getVisible() == 0:
+            return
+        self.__filesBrowser.openCurrentItem()
+        return
