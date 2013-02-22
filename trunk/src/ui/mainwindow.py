@@ -1034,6 +1034,56 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( removeTrailingOnSpaceAct, SIGNAL( 'changed()' ),
                       self.__removeTrailingChanged )
         self.__optionsMenu.addSeparator()
+        tooltipsMenu = self.__optionsMenu.addMenu( "Tooltips" )
+        projectTooltipsAct = tooltipsMenu.addAction( "&Project tab" )
+        projectTooltipsAct.setCheckable( True )
+        projectTooltipsAct.setChecked(
+                                    self.settings.projectTooltips )
+        self.connect( projectTooltipsAct, SIGNAL( 'changed()' ),
+                      self.__projectTooltipsChanged )
+        recentTooltipsAct = tooltipsMenu.addAction( "&Recent tab" )
+        recentTooltipsAct.setCheckable( True )
+        recentTooltipsAct.setChecked(
+                                    self.settings.recentTooltips )
+        self.connect( recentTooltipsAct, SIGNAL( 'changed()' ),
+                      self.__recentTooltipsChanged )
+        classesTooltipsAct = tooltipsMenu.addAction( "&Classes tab" )
+        classesTooltipsAct.setCheckable( True )
+        classesTooltipsAct.setChecked(
+                                    self.settings.classesTooltips )
+        self.connect( classesTooltipsAct, SIGNAL( 'changed()' ),
+                      self.__classesTooltipsChanged )
+        functionsTooltipsAct = tooltipsMenu.addAction( "&Functions tab" )
+        functionsTooltipsAct.setCheckable( True )
+        functionsTooltipsAct.setChecked(
+                                    self.settings.functionsTooltips )
+        self.connect( functionsTooltipsAct, SIGNAL( 'changed()' ),
+                      self.__functionsTooltipsChanged )
+        outlineTooltipsAct = tooltipsMenu.addAction( "&Outline tab" )
+        outlineTooltipsAct.setCheckable( True )
+        outlineTooltipsAct.setChecked(
+                                    self.settings.outlineTooltips )
+        self.connect( outlineTooltipsAct, SIGNAL( 'changed()' ),
+                      self.__outlineTooltipsChanged )
+        findNameTooltipsAct = tooltipsMenu.addAction( "Find &name dialog" )
+        findNameTooltipsAct.setCheckable( True )
+        findNameTooltipsAct.setChecked(
+                                    self.settings.findNameTooltips )
+        self.connect( findNameTooltipsAct, SIGNAL( 'changed()' ),
+                      self.__findNameTooltipsChanged )
+        findFileTooltipsAct = tooltipsMenu.addAction( "Find &file dialog" )
+        findFileTooltipsAct.setCheckable( True )
+        findFileTooltipsAct.setChecked(
+                                    self.settings.findFileTooltips )
+        self.connect( findFileTooltipsAct, SIGNAL( 'changed()' ),
+                      self.__findFileTooltipsChanged )
+        editorTooltipsAct = tooltipsMenu.addAction( "&Editor tabs" )
+        editorTooltipsAct.setCheckable( True )
+        editorTooltipsAct.setChecked(
+                                    self.settings.editorTooltips )
+        self.connect( editorTooltipsAct, SIGNAL( 'changed()' ),
+                      self.__editorTooltipsChanged )
+        self.__optionsMenu.addSeparator()
         themesMenu = self.__optionsMenu.addMenu( "Themes" )
         availableThemes = self.__buildThemesList()
         for theme in availableThemes:
@@ -2298,6 +2348,54 @@ class CodimensionMainWindow( QMainWindow ):
         " Editor setting changed "
         self.settings.removeTrailingOnSave = \
                                 not self.settings.removeTrailingOnSave
+        return
+
+    def __projectTooltipsChanged( self ):
+        " Tooltips setting changed "
+        self.settings.projectTooltips = \
+                                not self.settings.projectTooltips
+        return
+
+    def __recentTooltipsChanged( self ):
+        " Tooltips setting changed "
+        self.settings.recentTooltips = \
+                                not self.settings.recentTooltips
+        return
+
+    def __classesTooltipsChanged( self ):
+        " Tooltips setting changed "
+        self.settings.classesTooltips = \
+                                not self.settings.classesTooltips
+        return
+
+    def __functionsTooltipsChanged( self ):
+        " Tooltips setting changed "
+        self.settings.functionsTooltips = \
+                                not self.settings.functionsTooltips
+        return
+
+    def __outlineTooltipsChanged( self ):
+        " Tooltips setting changed "
+        self.settings.outlineTooltips = \
+                                not self.settings.outlineTooltips
+        return
+
+    def __findNameTooltipsChanged( self ):
+        " Tooltips setting changed "
+        self.settings.findNameTooltips = \
+                                not self.settings.findNameTooltips
+        return
+
+    def __findFileTooltipsChanged( self ):
+        " Tooltips setting changed "
+        self.settings.findFileTooltips = \
+                                not self.settings.findFileTooltips
+        return
+
+    def __editorTooltipsChanged( self ):
+        " Tooltips setting changed "
+        self.settings.editorTooltips = \
+                                not self.settings.editorTooltips
         return
 
     @staticmethod
