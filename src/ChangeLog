@@ -1,5 +1,6 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Allow explicit reloading even if a buffer is not modified.
 * File outside modification detection now includes a file size.
 * Files deleted via IDE UI are removed from the recent files list as well.
 * Bug fix: respect multibyte chars when search incrementally
