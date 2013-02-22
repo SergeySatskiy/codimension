@@ -726,15 +726,7 @@ class RecentProjectsViewer( QWidget ):
 
     def __deleteFile( self ):
         " Handles 'delete from recent' file menu item "
-        fName = self.__fileContextItem.getFilename()
-        GlobalData().project.removeRecentFile( fName )
-        index = 0
-        while True:
-            candidate = self.recentFilesView.topLevelItem( index )
-            if self.__fileContextItem == candidate:
-                self.recentFilesView.takeTopLevelItem( index )
-                return
-            index += 1
+        self.removeRecentFile( self.__fileContextItem.getFilename() )
         return
 
     def __handleShowFileContextMenu( self, coord ):
@@ -811,3 +803,13 @@ class RecentProjectsViewer( QWidget ):
         self.__updateProjectToolbarButtons()
         return
 
+    def removeRecentFile( self, fName ):
+        " Removes a single file from the recent files list "
+        GlobalData().project.removeRecentFile( fName )
+
+        for index in xrange( self.recentFilesView.topLevelItemCount() ):
+            candidate = self.recentFilesView.topLevelItem( index )
+            if candidate.getFilename() == fName:
+                self.recentFilesView.takeTopLevelItem( index )
+                return
+        return

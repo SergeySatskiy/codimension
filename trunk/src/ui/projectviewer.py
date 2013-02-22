@@ -1039,19 +1039,23 @@ class ProjectViewer( QWidget ):
     def __removePrj( self ):
         " Remove the selected item "
         if self.__prjContextItem is not None:
-            self.__removeItem( self.__prjContextItem.getPath() )
+            fName = self.__prjContextItem.getPath()
+            if self.__removeItem( fName ):
+                GlobalData().mainWindow.recentProjectsViewer.removeRecentFile(
+                                                                        fName )
         return
 
     def __removeFs( self ):
         " Remove the selected item "
         if self.__fsContextItem is not None:
-            if self.__removeItem( self.__fsContextItem.getPath() ):
+            fName = self.__fsContextItem.getPath()
+            if self.__removeItem( fName ):
                 # The item has really been deleted. Update the view
-                dirname, \
-                basename = self.filesystemView._splitPath( \
-                                                self.__fsContextItem.getPath() )
+                dirname, basename = self.filesystemView._splitPath( fName )
                 self.filesystemView._delFromTree( self.__fsContextItem,
                                                   dirname, basename )
+                GlobalData().mainWindow.recentProjectsViewer.removeRecentFile(
+                                                                        fName )
         return
 
     def __removeItem( self, path ):
