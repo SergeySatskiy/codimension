@@ -246,16 +246,14 @@ class EditorsManager( QTabWidget ):
                 if not widget.doesFileExist():
                     self.__reloadAct.setText( "&Reload" )
                     self.__reloadAct.setEnabled( False )
-                elif widget.isDiskFileModified():
-                    if widget.isModified():
-                        self.__reloadAct.setText( "&Reload losing changes" )
-                    else:
-                        self.__reloadAct.setText( "&Reload" )
+                elif widget.isModified():
+                    self.__reloadAct.setText( "&Reload losing changes" )
                     self.__reloadAct.setEnabled( True )
                 else:
                     self.__reloadAct.setText( "&Reload" )
-                    self.__reloadAct.setEnabled( False )
+                    self.__reloadAct.setEnabled( True )
             else:
+                # There is no full file name yet, so nothing to reload
                 self.__reloadAct.setText( "&Reload" )
                 self.__reloadAct.setEnabled( False )
             self.__tabContextMenu.popup( self.mapToGlobal( pos ) )
