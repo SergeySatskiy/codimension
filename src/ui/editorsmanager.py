@@ -314,6 +314,7 @@ class EditorsManager( QTabWidget ):
 
         # Finally, close the tab
         self.__onCloseRequest( tabIndex, True )
+        GlobalData().mainWindow.recentProjectsViewer.removeRecentFile( fileName )
         return
 
     def onHighlightInPrj( self ):
@@ -611,7 +612,7 @@ class EditorsManager( QTabWidget ):
               MainWindowTabWidgetBase.PictureViewer ]:
             # Yes, it needs to be saved if it was saved at least once
             fileName = self.widget( index ).getFileName()
-            if os.path.isabs( fileName ):
+            if os.path.isabs( fileName ) and os.path.exists( fileName ):
                 GlobalData().project.addRecentFile( fileName )
 
         self.__skipHistoryUpdate = True
