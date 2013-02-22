@@ -1,5 +1,6 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* File outside modification detection now includes a file size.
 * Files deleted via IDE UI are removed from the recent files list as well.
 * Bug fix: respect multibyte chars when search incrementally
 * Bug fix: autocomplition for non-ascii text did not work.

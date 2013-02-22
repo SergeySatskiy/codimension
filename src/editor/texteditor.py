@@ -1817,6 +1817,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                       self.modificationChanged )
 
         self.__diskModTime = None
+        self.__diskSize = None
         self.__reloadDlgShown = False
 
         self.__debugMode = False
@@ -1830,15 +1831,18 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__editor.readFile( fileName )
 
         # Memorize the modification date
-        self.__diskModTime = os.path.getmtime( os.path.realpath( fileName ) )
+        path = os.path.realpath( fileName )
+        self.__diskModTime = os.path.getmtime( path )
+        self.__diskSize = os.path.getsize( path )
         return
 
     def writeFile( self, fileName ):
         " Writes the text to a file "
         if self.__editor.writeFile( fileName ):
             # Memorize the modification date
-            self.__diskModTime = os.path.getmtime( \
-                                            os.path.realpath( fileName ) )
+            path = os.path.realpath( fileName )
+            self.__diskModTime = os.path.getmtime( path )
+            self.__diskSize = os.path.getsize( path )
             return True
         return False
 
@@ -2704,8 +2708,9 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             return False
         if not os.path.exists( self.__fileName ):
             return True
-        return self.__diskModTime != \
-               os.path.getmtime( os.path.realpath( self.__fileName ) )
+        path = os.path.realpath( self.__fileName )
+        return self.__diskModTime != os.path.getmtime( path ) or \
+               self.__diskSize != os.path.getsize( path )
 
     def doesFileExist( self ):
         " Returns True if the loaded file still exists "
@@ -2723,8 +2728,9 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def updateModificationTime( self, fileName ):
         " Updates the modification time "
-        self.__diskModTime = \
-                    os.path.getmtime( os.path.realpath( fileName ) )
+        path = os.path.realpath( fileName )
+        self.__diskModTime = os.path.getmtime( path )
+        self.__diskSize = os.path.getsize( path )
         return
 
     def setDebugMode( self, mode, isProjectFile ):

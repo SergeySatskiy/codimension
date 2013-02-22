@@ -167,6 +167,7 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__createLayout()
 
         self.__diskModTime = None
+        self.__diskSize = None
         self.__reloadDlgShown = False
         return
 
@@ -253,13 +254,16 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.setFileName( os.path.abspath( path ) )
 
         # Memorize the modification date
-        self.__diskModTime = os.path.getmtime( os.path.realpath( path ) )
+        path = os.path.realpath( path )
+        self.__diskModTime = os.path.getmtime( path )
+        self.__diskSize = os.path.getsize( path )
         return
 
     def setPixmap( self, pixmap ):
         " Loads the provided pixmap "
         self.__viewer.setPixmap( pixmap )
         self.__diskModTime = None
+        self.__diskSize = None
         return
 
     def __onPrint( self ):
@@ -403,8 +407,9 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
             return False
         if not os.path.exists( self.__fileName ):
             return True
-        return self.__diskModTime != \
-               os.path.getmtime( os.path.realpath( self.__fileName ) )
+        path = os.path.realpath( self.__fileName )
+        return self.__diskModTime != os.path.getmtime( path ) or \
+               self.__diskSize != os.path.getsize( path )
 
     def doesFileExist( self ):
         " Returns True if the loaded file still exists "
@@ -422,6 +427,8 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def updateModificationTime( self, fileName ):
         " Updates the modification time "
-        self.__diskModTime = \
-                    os.path.getmtime( os.path.realpath( fileName ) )
+        path = os.path.realpath( fileName )
+        self.__diskModTime = os.path.getmtime( path )
+        self.__diskSize = os.path.getsize( path )
         return
+
