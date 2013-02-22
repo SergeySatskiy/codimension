@@ -23,17 +23,17 @@
 " Find name feature implementation "
 
 
-from PyQt4.QtCore                import Qt, QAbstractItemModel, QRegExp, \
-                                        QModelIndex, SIGNAL, QVariant
-from PyQt4.QtGui                 import QTreeView, QAbstractItemView, \
-                                        QDialog, QVBoxLayout, QCursor, \
-                                        QComboBox, QSizePolicy, \
-                                        QSortFilterProxyModel, QApplication
-from utils.globals               import GlobalData
-from utils.pixmapcache           import PixmapCache
-from cdmbriefparser              import getBriefModuleInfoFromMemory
-from itemdelegates               import NoOutlineHeightDelegate
-from utils.settings              import Settings
+from PyQt4.QtCore import ( Qt, QAbstractItemModel, QRegExp, QModelIndex,
+                           SIGNAL, QVariant )
+from PyQt4.QtGui import ( QTreeView, QAbstractItemView, QDialog, QVBoxLayout,
+                          QCursor, QComboBox, QSizePolicy,
+                          QSortFilterProxyModel, QApplication )
+from utils.globals import GlobalData
+from utils.pixmapcache import PixmapCache
+from cdmbriefparser import getBriefModuleInfoFromMemory
+from itemdelegates import NoOutlineHeightDelegate
+from utils.settings import Settings
+from combobox import EnterSensitiveComboBox
 
 
 class NameItem( object ):
@@ -432,10 +432,11 @@ class NamesBrowser( QTreeView ):
         self.__sortModel.setDynamicSortFilter( True )
         self.__sortModel.setSourceModel( self.__model )
         self.setModel( self.__sortModel )
-        self.contextItem = None
+        self.selectedIndex = None
 
         self.connect( self, SIGNAL( "activated(const QModelIndex &)" ),
-                      self._openItem )
+                      self.openCurrentItem )
+
         self.setRootIsDecorated( False )
         self.setAlternatingRowColors( True )
         self.setUniformRowHeights( True )
@@ -454,6 +455,15 @@ class NamesBrowser( QTreeView ):
         self.layoutDisplay()
         return
 
+    def selectionChanged( self, selected, deselected ):
+        " Slot is called when the selection has been changed "
+        if selected.indexes():
+            self.selectedIndex = selected.indexes()[ 0 ]
+        else:
+            self.selectedIndex = None
+        QTreeView.selectionChanged( self, selected, deselected )
+        return
+
     def layoutDisplay( self ):
         " Performs the layout operation "
         self.doItemsLayout()
@@ -467,9 +477,11 @@ class NamesBrowser( QTreeView ):
                            self.header().sortIndicatorOrder() )
         return
 
-    def _openItem( self ):
+    def openCurrentItem( self ):
         " Triggers when an item is clicked or double clicked "
-        item = self.model().item( self.currentIndex() )
+        if self.selectedIndex is None:
+            return
+        item = self.model().item( self.selectedIndex )
         self.openItem( item )
         return
 
@@ -530,7 +542,19 @@ class FindNameDialog( QDialog ):
                       SIGNAL( "editTextChanged(const QString &)" ),
                       self.__filterChanged )
 
+        self.__highlightFirst()
         self.__updateTitle()
+        return
+
+    def __highlightFirst( self ):
+        " Sets the selection to the first item in the files list "
+        if self.__namesBrowser.getVisible() == 0:
+            return
+        self.__namesBrowser.clearSelection()
+
+        first = self.__namesBrowser.model().index( 0, 0, QModelIndex() )
+        self.__namesBrowser.setCurrentIndex( first )
+        self.__namesBrowser.scrollTo( first )
         return
 
     def __updateTitle( self ):
@@ -555,10 +579,12 @@ class FindNameDialog( QDialog ):
         self.__namesBrowser = NamesBrowser( self )
         verticalLayout.addWidget( self.__namesBrowser )
 
-        self.findCombo = QComboBox( self )
+        self.findCombo = EnterSensitiveComboBox( self )
         self.__tuneCombo( self.findCombo )
         self.findCombo.lineEdit().setToolTip( "Regular expression to search for" )
         verticalLayout.addWidget( self.findCombo )
+        self.connect( self.findCombo, SIGNAL( 'enterClicked' ),
+                      self.__enterInFilter )
         return
 
     @staticmethod
@@ -567,7 +593,7 @@ class FindNameDialog( QDialog ):
         sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Fixed )
         sizePolicy.setHorizontalStretch( 0 )
         sizePolicy.setVerticalStretch( 0 )
-        sizePolicy.setHeightForWidth( \
+        sizePolicy.setHeightForWidth(
                             comboBox.sizePolicy().hasHeightForWidth() )
         comboBox.setSizePolicy( sizePolicy )
         comboBox.setEditable( True )
@@ -579,6 +605,7 @@ class FindNameDialog( QDialog ):
     def __filterChanged( self, text ):
         " Triggers when the filter text changed "
         self.__namesBrowser.setFilter( text )
+        self.__highlightFirst()
         self.__updateTitle()
         return
 
@@ -596,10 +623,16 @@ class FindNameDialog( QDialog ):
                 self.__findNameHistory = self.__findNameHistory[ : 32 ]
 
             if GlobalData().project.fileName != "":
-                GlobalData().project.setFindNameHistory( \
+                GlobalData().project.setFindNameHistory(
                                         self.__findNameHistory )
             else:
                 Settings().findNameHistory = self.__findNameHistory
         self.close()
         return
 
+    def __enterInFilter( self ):
+        " Handles ENTER and RETURN keys in the find combo "
+        if self.__namesBrowser.getVisible() == 0:
+            return
+        self.__namesBrowser.openCurrentItem()
+        return

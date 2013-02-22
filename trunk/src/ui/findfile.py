@@ -516,6 +516,7 @@ class FindFileDialog( QDialog ):
 
         first = self.__filesBrowser.model().index( 0, 0, QModelIndex() )
         self.__filesBrowser.setCurrentIndex( first )
+        self.__filesBrowser.scrollTo( first )
         return
 
     def __updateTitle( self ):
