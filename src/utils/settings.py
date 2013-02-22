@@ -60,7 +60,8 @@ _defaultXDelta = 0
 _defaultYDelta = 0
 _defaultHSplitSize = "200, 450, 575"
 _defaultVSplitSize = "400, 150"
-_defaultFilesFilters = [ "^\.", ".*\~$", ".*\.pyc$", ".*\.swp$", ".*\.pyo$" ]
+_defaultFilesFilters = [ "^\\.", ".*\\~$",
+                         ".*\\.pyc$", ".*\\.swp$", ".*\\.pyo$" ]
 _defaultProjectLoaded = False
 _defaultZoom = 0
 _defaultSkin = "default"
@@ -90,6 +91,16 @@ _defaultIndentationGuides = False
 _defaultCurrentLineVisible = True
 _defaultJumpToFirstNonSpace = False
 _defaultRemoveTrailingOnSave = False
+
+# Tooltip settings
+_defaultProjectTooltips = True
+_defaultRecentTooltips = True
+_defaultClassesTooltips = True
+_defaultFunctionsTooltips = True
+_defaultOutlineTooltips = True
+_defaultFindNameTooltips = True
+_defaultFindFileTooltips = True
+_defaultEditorTooltips = True
 
 
 class DebuggerSettings:
@@ -236,6 +247,23 @@ class Settings( object ):
             self.terminalType = self.__getInt( config, 'general',
                         'terminalType', _defaultTermType )
 
+            self.projectTooltips = self.__getBool( config, "general",
+                        "projectTooltips", _defaultProjectTooltips )
+            self.recentTooltips = self.__getBool( config, "general",
+                        "recentTooltips", _defaultRecentTooltips )
+            self.classesTooltips = self.__getBool( config, "general",
+                        "classesTooltips", _defaultClassesTooltips )
+            self.functionsTooltips = self.__getBool( config, "general",
+                        "functionsTooltips", _defaultFunctionsTooltips )
+            self.outlineTooltips = self.__getBool( config, "general",
+                        "outlineTooltips", _defaultOutlineTooltips )
+            self.findNameTooltips = self.__getBool( config, "general",
+                        "findNameTooltips", _defaultFindNameTooltips )
+            self.findFileTooltips = self.__getBool( config, "general",
+                        "findFileTooltips", _defaultFindFileTooltips )
+            self.editorTooltips = self.__getBool( config, "general",
+                        "editorTooltips", _defaultEditorTooltips )
+
             # Profile parameters, IDE wide
             self.profileNodeLimit = self.__getFloat( config, 'general',
                         'profileNodeLimit', _defaultProfileNodeLimit )
@@ -347,6 +375,15 @@ class Settings( object ):
             self.jumpToFirstNonSpace = _defaultJumpToFirstNonSpace
             self.removeTrailingOnSave = _defaultRemoveTrailingOnSave
             self.modifiedFormat = _defaultModifiedFormat
+
+            self.projectTooltips = _defaultProjectTooltips
+            self.recentTooltips = _defaultRecentTooltips
+            self.classesTooltips = _defaultClassesTooltips
+            self.functionsTooltips = _defaultFunctionsTooltips
+            self.outlineTooltips = _defaultOutlineTooltips
+            self.findNameTooltips = _defaultFindNameTooltips
+            self.findFileTooltips = _defaultFindFileTooltips
+            self.editorTooltips = _defaultEditorTooltips
 
             self.leftBarMinimized = False
             self.bottomBarMinimized = False
@@ -464,6 +501,14 @@ class Settings( object ):
             "debugFollowChild=" + str( self.debugFollowChild ) + "\n"
             "editorEdge=" + str( self.editorEdge ) + "\n"
             "leftBarMinimized=" + str( int( self.leftBarMinimized ) ) + "\n"
+            "projectTooltips=" + str( self.projectTooltips ) + "\n"
+            "recentTooltips=" + str( self.recentTooltips ) + "\n"
+            "classesTooltips=" + str( self.classesTooltips ) + "\n"
+            "functionsTooltips=" + str( self.functionsTooltips ) + "\n"
+            "outlineTooltips=" + str( self.outlineTooltips ) + "\n"
+            "findNameTooltips=" + str( self.findNameTooltips ) + "\n"
+            "findFileTooltips=" + str( self.findFileTooltips ) + "\n"
+            "editorTooltips=" + str( self.editorTooltips ) + "\n"
             "bottomBarMinimized=" +
                     str( int( self.bottomBarMinimized ) ) + "\n"
             "rightBarMinimized=" +
