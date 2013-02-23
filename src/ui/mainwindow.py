@@ -1071,7 +1071,7 @@ class CodimensionMainWindow( QMainWindow ):
                                     self.settings.findNameTooltips )
         self.connect( findNameTooltipsAct, SIGNAL( 'changed()' ),
                       self.__findNameTooltipsChanged )
-        findFileTooltipsAct = tooltipsMenu.addAction( "Find &file dialog" )
+        findFileTooltipsAct = tooltipsMenu.addAction( "Find fi&le dialog" )
         findFileTooltipsAct.setCheckable( True )
         findFileTooltipsAct.setChecked(
                                     self.settings.findFileTooltips )
