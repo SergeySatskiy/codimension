@@ -182,13 +182,14 @@ class FindFileModel( QAbstractItemModel ):
 
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
+        showTooltips = Settings().findFileTooltips
         for record in editorsManager.getTextEditors():
             # uuid = record[ 0 ]
             fname = record[ 1 ]
             widget = record[ 2 ]
             fileType = detectFileType( fname )
             tooltip = ""
-            if fileType in [ PythonFileType, Python3FileType ]:
+            if showTooltips and fileType in [ PythonFileType, Python3FileType ]:
                 content = str( widget.getEditor().text() )
                 info = getBriefModuleInfoFromMemory( content )
                 if info.docstring is not None:
