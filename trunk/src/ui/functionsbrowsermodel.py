@@ -62,7 +62,8 @@ class FunctionsBrowserModel( BrowserModelBase ):
                 info = project.briefModinfoCache.get( fname )
                 for func in info.functions:
                     item = TreeViewFunctionItem( self.rootItem, func )
-                    item.appendData( [ fname, func.line ] )
+                    item.appendData( [ os.path.basename( fname ), func.line ] )
+                    item.setPath( fname )
                     self._addItem( item, self.rootItem )
         return
 

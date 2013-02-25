@@ -89,6 +89,7 @@ class TreeViewItem( object ):
         self.populated = True
         self.lazyPopulation = False
         self.toolTip = ""
+        self.path = None
         return
 
     def isRoot( self ):
@@ -104,6 +105,11 @@ class TreeViewItem( object ):
         else:
             self.itemData.append( data )
             self.itemDataSize += 1
+        return
+
+    def setPath( self, path ):
+        " Sets the item path "
+        self.path = path
         return
 
     def appendChild( self, child ):
@@ -195,6 +201,8 @@ class TreeViewItem( object ):
 
         # The item could be used for G/F/C viewers where the file name is
         # available in the second column
+        if self.path is not None:
+            return self.path
         if self.itemDataSize >= 2:
             return self.itemData[ 1 ]
 

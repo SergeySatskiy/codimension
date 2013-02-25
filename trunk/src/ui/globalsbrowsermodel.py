@@ -61,7 +61,9 @@ class GlobalsBrowserModel( BrowserModelBase ):
                 info = project.briefModinfoCache.get( fname )
                 for globalObj in info.globals:
                     item = TreeViewGlobalItem( self.rootItem, globalObj )
-                    item.appendData( [ fname, globalObj.line ] )
+                    item.appendData( [ os.path.basename( fname ),
+                                       globalObj.line ] )
+                    item.setPath( fname )
                     self._addItem( item, self.rootItem )
         return
 
