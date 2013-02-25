@@ -105,6 +105,7 @@ class FindNameModel( QAbstractItemModel ):
 
         self.rootItem = NameItem( None, None, "Name", "", "", "" )
         self.count = 0
+        self.showTooltips = Settings().findNameTooltips
         self.__populateModel()
         return
 
@@ -163,7 +164,7 @@ class FindNameModel( QAbstractItemModel ):
             icon = PixmapCache().getIcon( 'class.png' )
 
         tooltip = ""
-        if klass.docstring is not None:
+        if self.showTooltips and klass.docstring is not None:
             tooltip = klass.docstring.text
 
         classItem = NameItem( self.rootItem, icon, prefix + klass.name,
@@ -197,7 +198,7 @@ class FindNameModel( QAbstractItemModel ):
         " Recursively populates the given function "
 
         tooltip = ""
-        if func.docstring is not None:
+        if self.showTooltips and func.docstring is not None:
             tooltip = func.docstring.text
 
         funcItem = NameItem( self.rootItem,
