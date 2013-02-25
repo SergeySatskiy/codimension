@@ -22,17 +22,16 @@
 
 """ The classes viewer implementation """
 
-from PyQt4.QtCore       import Qt, SIGNAL, QSize, QRect
-from PyQt4.QtGui        import QMenu, QWidget, QAction, QVBoxLayout, \
-                               QToolBar, QCursor, QLabel, QSizePolicy, \
-                               QItemSelectionModel
-from combobox           import CDMComboBox
-from utils.pixmapcache  import PixmapCache
-from utils.globals      import GlobalData
-from utils.project      import CodimensionProject
-from classesbrowser     import ClassesBrowser
-from viewitems          import DecoratorItemType, FunctionItemType, \
-                               ClassItemType, AttributeItemType, GlobalItemType
+from PyQt4.QtCore import Qt, SIGNAL, QSize, QRect
+from PyQt4.QtGui import ( QMenu, QWidget, QAction, QVBoxLayout, QToolBar,
+                          QCursor, QLabel, QSizePolicy, QItemSelectionModel )
+from combobox import CDMComboBox
+from utils.pixmapcache import PixmapCache
+from utils.globals import GlobalData
+from utils.project import CodimensionProject
+from classesbrowser import ClassesBrowser
+from viewitems import ( DecoratorItemType, FunctionItemType, ClassItemType,
+                        AttributeItemType, GlobalItemType )
 
 
 class ClassesViewer( QWidget ):
@@ -83,6 +82,11 @@ class ClassesViewer( QWidget ):
 
         self.filterEdit.lineEdit().setFocus()
         self.__contextItem = None
+        return
+
+    def setTooltips( self, switchOn ):
+        " Triggers the tooltips mode "
+        self.clViewer.model().sourceModel().setTooltips( switchOn )
         return
 
     def __createLayout( self ):

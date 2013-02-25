@@ -2366,12 +2366,14 @@ class CodimensionMainWindow( QMainWindow ):
         " Tooltips setting changed "
         self.settings.classesTooltips = \
                                 not self.settings.classesTooltips
+        self.classesViewer.setTooltips( self.settings.classesTooltips )
         return
 
     def __functionsTooltipsChanged( self ):
         " Tooltips setting changed "
         self.settings.functionsTooltips = \
                                 not self.settings.functionsTooltips
+        self.functionsViewer.setTooltips( self.settings.functionsTooltips )
         return
 
     def __outlineTooltipsChanged( self ):

@@ -86,6 +86,11 @@ class FunctionsViewer( QWidget ):
         self.__contextItem = None
         return
 
+    def setTooltips( self, switchOn ):
+        " Triggers showing python objects tooltips "
+        self.funcViewer.model().sourceModel().setTooltips( switchOn )
+        return
+
     def __createLayout( self ):
         " Helper to create the viewer layout "
 
