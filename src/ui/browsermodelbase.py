@@ -61,6 +61,12 @@ class BrowserModelBase( QAbstractItemModel ):
         self.rootItem = TreeViewItem( None, headerData )
         self.globalData = GlobalData()
         self.projectTopLevelDirs = []
+        self.showTooltips = True
+        return
+
+    def setTooltips( self, switchOn ):
+        " Sets the tooltip mode: to show or not to show them "
+        self.showTooltips = switchOn
         return
 
     def columnCount( self, parent = QModelIndex() ):
@@ -98,7 +104,7 @@ class BrowserModelBase( QAbstractItemModel ):
             item = index.internalPointer()
             if column == 1 and item.path is not None:
                 return QVariant( item.path )
-            if column == 0 and item.toolTip != "":
+            if self.showTooltips and column == 0 and item.toolTip != "":
                 return QVariant( item.toolTip )
         return QVariant()
 

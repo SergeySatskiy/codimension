@@ -87,6 +87,12 @@ class FileOutlineViewer( QWidget ):
                                 'Find where used', self.__findWhereUsed )
         return
 
+    def setTooltips( self, switchOn ):
+        " Sets the tooltips mode "
+        for key in self.__outlineBrowsers:
+            self.__outlineBrowsers[ key ].browser.setTooltips( switchOn )
+        return
+
     def __connectOutlineBrowser( self, browser ):
         " Connects a new buffer signals "
         browser.setContextMenuPolicy( Qt.CustomContextMenu )
