@@ -61,7 +61,9 @@ class ClassesBrowserModel( BrowserModelBase ):
                 info = project.briefModinfoCache.get( fname )
                 for classObj in info.classes:
                     item = TreeViewClassItem( self.rootItem, classObj )
-                    item.appendData( [ fname, classObj.line ] )
+                    item.appendData( [ os.path.basename( fname ),
+                                     classObj.line ] )
+                    item.setPath( fname )
                     self._addItem( item, self.rootItem )
         return
 
