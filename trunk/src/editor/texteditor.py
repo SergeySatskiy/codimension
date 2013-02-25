@@ -1374,7 +1374,8 @@ class TextEditor( ScintillaWrapper ):
         if isModName:
             # The prefix should be re-taken because a module name may have '.'
             # in it.
-            self.__completionPrefix = self.getWord( line, pos, 1, True, "." )
+            self.__completionPrefix = str( self.getWord( line, pos,
+                                                         1, True, "." ) )
 
         currentPosFont = self.getCurrentPosFont()
         self.__completer.setWordsList( words, currentPosFont )
