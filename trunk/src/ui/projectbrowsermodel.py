@@ -29,20 +29,20 @@
 " Project browser model "
 
 
-from PyQt4.QtCore       import SIGNAL
-from PyQt4.QtCore       import QVariant
-from viewitems          import TreeViewDirectoryItem
-from utils.globals      import GlobalData
-from utils.project      import CodimensionProject
-from browsermodelbase   import BrowserModelBase
-
+from PyQt4.QtCore import SIGNAL
+from PyQt4.QtCore import QVariant
+from viewitems import TreeViewDirectoryItem
+from utils.globals import GlobalData
+from utils.project import CodimensionProject
+from browsermodelbase import BrowserModelBase
+from utils.settings import Settings
 
 class ProjectBrowserModel( BrowserModelBase ):
     " Class implementing the project browser model "
 
     def __init__( self, parent = None ):
         BrowserModelBase.__init__( self, QVariant( "Name" ), parent )
-
+        self.setTooltips( Settings().projectTooltips )
         self.populateModel()
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),

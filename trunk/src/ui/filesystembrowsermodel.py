@@ -29,11 +29,12 @@
 " File system browser model "
 
 
-from PyQt4.QtCore       import QVariant, QModelIndex, QDir, SIGNAL
-from viewitems          import TreeViewDirectoryItem, TreeViewSysPathItem
-from utils.globals      import GlobalData
-from utils.project      import CodimensionProject
-from browsermodelbase   import BrowserModelBase
+from PyQt4.QtCore import QVariant, QModelIndex, QDir, SIGNAL
+from viewitems import TreeViewDirectoryItem, TreeViewSysPathItem
+from utils.globals import GlobalData
+from utils.project import CodimensionProject
+from browsermodelbase import BrowserModelBase
+from utils.settings import Settings
 
 
 
@@ -43,6 +44,7 @@ class FileSystemBrowserModel( BrowserModelBase ):
     def __init__( self, parent = None ):
 
         BrowserModelBase.__init__( self, QVariant( "Name" ), parent )
+        self.setTooltips( Settings().projectTooltips )
 
         self.projectTopLevelDirs = []
         self.populateModel()

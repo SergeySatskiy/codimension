@@ -100,6 +100,12 @@ class ProjectViewer( QWidget ):
             self.__onShowHide( True )
         return
 
+    def setTooltips( self, switchOn ):
+        " Triggers the tooltips mode "
+        self.projectTreeView.model().sourceModel().setTooltips( switchOn )
+        self.filesystemView.model().sourceModel().setTooltips( switchOn )
+        return
+
     def __createProjectPartLayout( self ):
         """ Creates the upper part of the project viewer """
 
