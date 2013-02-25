@@ -156,12 +156,13 @@ class FindFileModel( QAbstractItemModel ):
         " Populates find name dialog from the project files "
 
         mainWindow = GlobalData().mainWindow
+        showTooltips = Settings().findFileTooltips
         for fname in GlobalData().project.filesList:
             if fname.endswith( os.path.sep ):
                 continue
             fileType = detectFileType( fname )
             tooltip = ""
-            if fileType in [ PythonFileType, Python3FileType ]:
+            if showTooltips and fileType in [ PythonFileType, Python3FileType ]:
                 widget = mainWindow.getWidgetForFileName( fname )
                 if widget is None:
                     info = GlobalData().project.briefModinfoCache.get( fname )
