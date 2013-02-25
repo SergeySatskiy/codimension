@@ -30,12 +30,13 @@
 
 
 import os.path
-from PyQt4.QtCore       import SIGNAL
-from PyQt4.QtCore       import QVariant
-from viewitems          import TreeViewFunctionItem
-from utils.project      import CodimensionProject
-from browsermodelbase   import BrowserModelBase
-from utils.fileutils    import detectFileType, PythonFileType, Python3FileType
+from PyQt4.QtCore import SIGNAL
+from PyQt4.QtCore import QVariant
+from viewitems import TreeViewFunctionItem
+from utils.project import CodimensionProject
+from browsermodelbase import BrowserModelBase
+from utils.fileutils import detectFileType, PythonFileType, Python3FileType
+from utils.settings import Settings
 
 
 class FunctionsBrowserModel( BrowserModelBase ):
@@ -45,7 +46,7 @@ class FunctionsBrowserModel( BrowserModelBase ):
         BrowserModelBase.__init__( self, [ QVariant( "Name" ),
                                            QVariant( "File name" ),
                                            QVariant( "Line" ) ], parent )
-
+        self.setTooltips( Settings().functionsTooltips )
         self.__populateModel()
 
         self.connect( self.globalData.project, SIGNAL( 'projectChanged' ),
