@@ -23,26 +23,21 @@
 " File outline browser and its model "
 
 
-from PyQt4.QtGui        import QTreeView
-from PyQt4.QtCore       import QVariant
-from utils.globals      import GlobalData
-from browsermodelbase   import BrowserModelBase
-from utils.pixmapcache  import PixmapCache
-from filesbrowserbase   import FilesBrowser
-from viewitems          import DirectoryItemType, SysPathItemType, \
-                               GlobalsItemType, ImportsItemType, \
-                               FunctionsItemType, ClassesItemType, \
-                               StaticAttributesItemType, \
-                               InstanceAttributesItemType, \
-                               CodingItemType, ImportItemType, \
-                               FunctionItemType, \
-                               ClassItemType, DecoratorItemType, \
-                               AttributeItemType, GlobalItemType, \
-                               ImportWhatItemType, \
-                               TreeViewCodingItem, \
-                               TreeViewGlobalsItem, \
-                               TreeViewImportsItem, \
-                               TreeViewFunctionsItem, TreeViewClassesItem
+from PyQt4.QtGui import QTreeView
+from PyQt4.QtCore import QVariant
+from utils.globals import GlobalData
+from browsermodelbase import BrowserModelBase
+from utils.pixmapcache import PixmapCache
+from filesbrowserbase import FilesBrowser
+from viewitems import ( DirectoryItemType, SysPathItemType, GlobalsItemType,
+                        ImportsItemType, FunctionsItemType, ClassesItemType,
+                        StaticAttributesItemType, InstanceAttributesItemType,
+                        CodingItemType, ImportItemType, FunctionItemType,
+                        ClassItemType, DecoratorItemType, AttributeItemType,
+                        GlobalItemType, ImportWhatItemType, TreeViewCodingItem,
+                        TreeViewGlobalsItem, TreeViewImportsItem,
+                        TreeViewFunctionsItem, TreeViewClassesItem )
+from utils.settings import Settings
 
 
 
@@ -52,6 +47,7 @@ class OutlineBrowserModel( BrowserModelBase ):
     def __init__( self, shortName, info, parent = None ):
         BrowserModelBase.__init__( self, QVariant( shortName ), parent )
         self.populateModel( info )
+        self.setTooltips( Settings().outlineTooltips )
         return
 
     def populateModel( self, info ):
@@ -82,6 +78,11 @@ class OutlineBrowser( FilesBrowser ):
 
         self.setWindowTitle( 'File outline' )
         self.setWindowIcon( PixmapCache().getIcon( 'icon.png' ) )
+        return
+
+    def setTooltips( self, switchOn ):
+        " Sets the tooltip mode "
+        self.model().sourceModel().setTooltips( switchOn )
         return
 
     def reload( self ):
