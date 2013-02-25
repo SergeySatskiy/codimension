@@ -23,22 +23,21 @@
 """ list viewer base class for classes/func etc list viewers """
 
 import os.path, logging
-from PyQt4.QtCore       import Qt, SIGNAL, QStringList, QSize
-from PyQt4.QtGui        import QTreeWidget, QTreeWidgetItem, \
-                               QHeaderView, QMenu, QCursor, QToolButton, \
-                               QWidget, QAction, QDialog, QSpacerItem, \
-                               QVBoxLayout, QSizePolicy, QToolBar, \
-                               QApplication, QCursor, QFrame, QLabel, \
-                               QHBoxLayout, QSplitter, QPalette
-from utils.pixmapcache  import PixmapCache
-from utils.settings     import Settings
-from utils.project      import CodimensionProject, getProjectFileTooltip
-from utils.globals      import GlobalData
-from projectproperties  import ProjectPropertiesDialog
-from itemdelegates      import NoOutlineHeightDelegate
-from utils.fileutils    import detectFileType, getFileIcon, \
-                               PythonFileType, Python3FileType, \
-                               CodimensionProjectFileType, PixmapFileType
+from PyQt4.QtCore import Qt, SIGNAL, QStringList, QSize
+from PyQt4.QtGui import ( QTreeWidget, QTreeWidgetItem, QHeaderView, QMenu,
+                          QCursor, QToolButton, QWidget, QAction, QDialog,
+                          QSpacerItem, QVBoxLayout, QSizePolicy, QToolBar,
+                          QApplication, QFrame, QLabel, QHBoxLayout, QSplitter,
+                          QPalette )
+from utils.pixmapcache import PixmapCache
+from utils.settings import Settings
+from utils.project import CodimensionProject, getProjectFileTooltip
+from utils.globals import GlobalData
+from projectproperties import ProjectPropertiesDialog
+from itemdelegates import NoOutlineHeightDelegate
+from utils.fileutils import ( detectFileType, getFileIcon, PythonFileType,
+                              Python3FileType, CodimensionProjectFileType,
+                              PixmapFileType )
 from utils.compatibility import relpath
 
 
