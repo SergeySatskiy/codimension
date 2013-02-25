@@ -2361,6 +2361,7 @@ class CodimensionMainWindow( QMainWindow ):
         " Tooltips setting changed "
         self.settings.recentTooltips = \
                                 not self.settings.recentTooltips
+        self.recentProjectsViewer.setTooltips( self.settings.recentTooltips )
         return
 
     def __classesTooltipsChanged( self ):

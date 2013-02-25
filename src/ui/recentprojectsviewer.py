@@ -71,12 +71,16 @@ class RecentProjectViewItem( QTreeWidgetItem ):
 
             # Get the project properties
             try:
-                self.setToolTip( 1, getProjectFileTooltip( fileName ) )
+                tooltip = getProjectFileTooltip( fileName )
+                if Settings().recentTooltips:
+                    self.setToolTip( 1, tooltip )
+                else:
+                    self.setToolTip( 1, "" )
                 self.setText( 0, "" )
                 if fileName == GlobalData().project.fileName:
                     self.__markCurrent()
             except:
-                # cannot get project properties. Mark broken.
+                # Cannot get project properties. Mark broken.
                 self.__isValid = False
                 self.setToolTip( 0, 'Broken project file' )
                 self.setToolTip( 1, 'Broken project file' )
@@ -152,7 +156,7 @@ class RecentFileViewItem( QTreeWidgetItem ):
             else:
                 infoSrc = GlobalData().briefModinfoCache
             info = infoSrc.get( fileName )
-            if info.docstring is not None:
+            if info.docstring is not None and Settings().recentTooltips:
                 self.setToolTip( 1, info.docstring.text )
             else:
                 self.setToolTip( 1, "" )
@@ -168,7 +172,11 @@ class RecentFileViewItem( QTreeWidgetItem ):
             # Get the project properties
             try:
                 self.setToolTip( 0, "" )
-                self.setToolTip( 1, getProjectFileTooltip( fileName ) )
+                tooltip = getProjectFileTooltip( fileName )
+                if Settings().recentTooltips:
+                    self.setToolTip( 1, tooltip )
+                else:
+                    self.setToolTip( 1, "" )
                 self.setText( 0, "" )
             except:
                 # cannot get project properties. Mark broken.
@@ -227,6 +235,14 @@ class RecentProjectsViewer( QWidget ):
         self.__debugMode = False
         self.connect( parent, SIGNAL( 'debugModeChanged' ),
                       self.__onDebugMode )
+        return
+
+    def setTooltips( self, switchOn ):
+        " Switches the tooltips mode "
+        for index in xrange( 0, self.recentFilesView.topLevelItemCount() ):
+            self.recentFilesView.topLevelItem( index ).updateIconAndTooltip()
+        for index in xrange( 0, self.projectsView.topLevelItemCount() ):
+            self.projectsView.topLevelItem( index ).updateTooltip()
         return
 
     def __createFilePopupMenu( self ):
