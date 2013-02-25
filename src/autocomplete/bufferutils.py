@@ -280,7 +280,7 @@ def getPrefixAndObject( editor ):
         if line < 0 or col < 0:
             return obj, prefix
 
-        txt = editor.text( line )
+        txt = str( editor.text( line ) )
         if txt[ col ] != '.':
             return obj, prefix
 
@@ -290,7 +290,7 @@ def getPrefixAndObject( editor ):
 
         part = str( editor.getWord( line, col + 1, 1, True ) )
         if part == "":
-            txt = editor.text( line )
+            txt = str( editor.text( line ) )
             if txt[ col ] in [ ")", "]", "}", "'", '"' ]:
                 if obj != "":
                     obj = "." + obj
