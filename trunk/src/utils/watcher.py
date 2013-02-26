@@ -57,7 +57,7 @@ class Watcher( QObject ):
             self.__excludeFilter.append( re.compile( flt ) )
 
         # Initialise the list of dirs to watch
-        self.__srcDirsToWatch.update( [ dirToWatch ] )
+        self.__srcDirsToWatch.add( dirToWatch )
 
         self.__topLevelDirsToWatch = self.__buildTopDirsList( \
                                         self.__srcDirsToWatch )
@@ -92,7 +92,7 @@ class Watcher( QObject ):
                 candidate = os.path.sep.join( parts[ 0:index ] ) + os.path.sep
                 if os.path.exists( candidate ):
                     if os.access( candidate, os.R_OK ):
-                        topDirsList.update( [ candidate ] )
+                        topDirsList.add( candidate )
         return topDirsList
 
     @staticmethod
@@ -110,7 +110,7 @@ class Watcher( QObject ):
                     slashIndex = candidate.find( os.path.sep ) + 1
                     item = candidate[ : slashIndex ]
                     if os.path.exists( path + item ):
-                        itemsSet.update( [ item ] )
+                        itemsSet.add( item )
             snapshot[ path ] = itemsSet
         return snapshot
 
@@ -126,19 +126,19 @@ class Watcher( QObject ):
         if not os.path.exists( path ):
             return
 
-        snapshotDirs.update( [ path ] )
+        snapshotDirs.add( path )
         dirItems = set()
         for item in os.listdir( path ):
             if self.__shouldExclude( item ):
                 continue
             if os.path.isdir( path + item ):
                 dirName = path + item + os.path.sep
-                dirItems.update( [ item + os.path.sep ] )
+                dirItems.add( item + os.path.sep )
                 if itemsToReport is not None:
                     itemsToReport << "+" + dirName
                 self.__addSnapshotPath( dirName, snapshotDirs, itemsToReport )
                 continue
-            dirItems.update( [ item ] )
+            dirItems.add( item )
             if itemsToReport is not None:
                 itemsToReport << "+" + path + item
         self.__fsSnapshot[ path ] = dirItems
@@ -162,7 +162,7 @@ class Watcher( QObject ):
                     continue    # Only dirs are of interest for the top level
                 item = item + os.path.sep
                 if item in oldSet:
-                    newSet.update( [ item ] )
+                    newSet.add( item )
             # Now we have an old set and a new one with those from the old
             # which actually exist
             diff = oldSet - newSet
@@ -228,9 +228,9 @@ class Watcher( QObject ):
                 if self.__shouldExclude( item ):
                     continue
                 if os.path.isdir( path + item ):
-                    newSet.update( [ item + os.path.sep ] )
+                    newSet.add( item + os.path.sep )
                 else:
-                    newSet.update( [ item ] )
+                    newSet.add( item )
 
             # Here: we have a new and old snapshots
             # Lets calculate the difference
@@ -306,11 +306,11 @@ class Watcher( QObject ):
                 continue
             if os.path.isdir( path + item ):
                 dirName = path + item + os.path.sep
-                dirItems.update( [ item + os.path.sep ] )
+                dirItems.add( item + os.path.sep )
                 self.__processAddedDir( dirName, dirsToBeAdded, itemsToReport )
                 continue
             itemsToReport << "+" + path + item
-            dirItems.update( [ item ] )
+            dirItems.add( item )
         self.__fsSnapshot[ path ] = dirItems
         return
 
@@ -376,7 +376,7 @@ class Watcher( QObject ):
         # - add the dir to the fs snapshot
         # - collect dirs to add to the watcher
         # - collect items to report
-        self.__srcDirsToWatch.update( [ path ] )
+        self.__srcDirsToWatch.add( path )
 
         dirsToWatch = set()
         itemsToReport = QStringList()
@@ -388,7 +388,7 @@ class Watcher( QObject ):
         addedDirs = newTopLevelDirsToWatch - self.__topLevelDirsToWatch
 
         for item in addedDirs:
-            dirsToWatch.update( [ item ] )
+            dirsToWatch.add( item )
 
             # Identify items to be watched by this dir
             dirItems = set()
@@ -400,14 +400,14 @@ class Watcher( QObject ):
                     slashIndex = candidate.find( os.path.sep ) + 1
                     dirName = candidate[ : slashIndex ]
                     if os.path.exists( item + dirName ):
-                        dirItems.update( [ dirName ] )
+                        dirItems.add( dirName )
             # Update the top level dirs snapshot
             self.__fsTopLevelSnapshot[ item ] = dirItems
 
         # Update the top level snapshot with the added dir
         upperDir = os.path.dirname( path[ :-1 ] ) + os.path.sep
         dirName = path.replace( upperDir, '' )
-        self.__fsTopLevelSnapshot[ upperDir ].update( [ dirName ] )
+        self.__fsTopLevelSnapshot[ upperDir ].add( dirName )
 
         # Update the list of top level dirs to watch
         self.__topLevelDirsToWatch = newTopLevelDirsToWatch
@@ -431,7 +431,7 @@ class Watcher( QObject ):
         if not os.path.exists( path ):
             return
 
-        dirsToWatch.update( [ path ] )
+        dirsToWatch.add( path )
         itemsToReport << "+" + path
 
         dirItems = set()
@@ -440,11 +440,11 @@ class Watcher( QObject ):
                 continue
             if os.path.isdir( path + item ):
                 dirName = path + item + os.path.sep
-                dirItems.update( [ item + os.path.sep ] )
+                dirItems.add( item + os.path.sep )
                 itemsToReport << "+" + path + item + os.path.sep
                 self.__addSnapshotPath( dirName, dirsToWatch, itemsToReport )
                 continue
-            dirItems.update( [ item ] )
+            dirItems.add( item )
             itemsToReport << "+" + path + item
         self.__fsSnapshot[ path ] = dirItems
         return

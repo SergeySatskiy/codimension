@@ -25,11 +25,12 @@
 
 import os, os.path, ConfigParser, logging, uuid, re, copy
 import rope.base.project
+from os.path import realpath, islink, isdir, sep
 from briefmodinfocache import BriefModuleInfoCache
-from runparamscache    import RunParametersCache
-from PyQt4.QtCore      import QObject, SIGNAL
-from settings          import Settings, ropePreferences, settingsDir
-from watcher           import Watcher
+from runparamscache import RunParametersCache
+from PyQt4.QtCore import QObject, SIGNAL
+from settings import Settings, ropePreferences, settingsDir
+from watcher import Watcher
 
 
 class CodimensionProject( QObject ):
@@ -157,7 +158,7 @@ class CodimensionProject( QObject ):
 
         # Try to create the user project directory
         projectUuid = str( uuid.uuid1() )
-        userProjectDir = settingsDir + projectUuid + os.path.sep
+        userProjectDir = settingsDir + projectUuid + sep
         if not os.path.exists( userProjectDir ):
             try:
                 os.mkdir( userProjectDir )
@@ -432,7 +433,7 @@ class CodimensionProject( QObject ):
             logging.warning( "Project file does not have UUID. " \
                              "Re-generate it..." )
             self.uuid = str( uuid.uuid1() )
-        self.userProjectDir = settingsDir + self.uuid + os.path.sep
+        self.userProjectDir = settingsDir + self.uuid + sep
         if not os.path.exists( self.userProjectDir ):
             os.mkdir( self.userProjectDir )
 
@@ -450,7 +451,7 @@ class CodimensionProject( QObject ):
                 if not os.path.exists( absPath ):
                     logging.error( "Codimension project: cannot find " \
                                    "import directory: " + dirName )
-                elif not os.path.isdir( absPath ):
+                elif not isdir( absPath ):
                     logging.error( "Codimension project: the import path: " + \
                                    dirName + " is not a directory" )
                 self.importDirs.append( dirName )
@@ -566,21 +567,21 @@ class CodimensionProject( QObject ):
         for item in items:
             item = str( item )
 
-#            if not os.path.islink( item ):
-#                realPath = os.path.realpath( item[ 1: ] )
-#                isDir = item.endswith( os.path.sep )
+#            if not islink( item ):
+#                realPath = realpath( item[ 1: ] )
+#                isDir = item.endswith( sep )
 #                if isDir:
-#                    if self.isProjectDir( realPath + os.path.sep ):
-#                        item = item[ 0 ] + realPath + os.path.sep
+#                    if self.isProjectDir( realPath + sep ):
+#                        item = item[ 0 ] + realPath + sep
 #                else:
-#                    if self.isProjectFile( realPath + os.path.sep ):
+#                    if self.isProjectFile( realPath + sep ):
 #                        item = item[ 0 ] + realPath
 
 #            projectItems.append( item )
 ##            report += " " + item
             try:
                 if item.startswith( '+' ):
-                    self.filesList.update( [ item[ 1: ] ] )
+                    self.filesList.add( item[ 1: ] )
                 else:
                     self.filesList.remove( item[ 1: ] )
 ##                projectItems.append( item )
@@ -813,7 +814,7 @@ class CodimensionProject( QObject ):
         """ Generates the files list having the list of dirs """
         self.filesList = set()
         path = self.getProjectDir()
-        self.filesList.update( [ path ] )
+        self.filesList.add( path )
         self.__scanDir( path )
         return
 
@@ -826,29 +827,30 @@ class CodimensionProject( QObject ):
 
             # Exclude symlinks if they point to the other project
             # covered pieces
-            if os.path.islink( path + item ):
-                realItem = os.path.realpath( path + item )
-                if os.path.isdir( realItem ):
+            candidate = path + item
+            if islink( candidate ):
+                realItem = realpath( candidate )
+                if isdir( realItem ):
                     if self.isProjectDir( realItem ):
                         continue
                 else:
                     if self.isProjectDir( os.path.dirname( realItem ) ):
                         continue
 
-            if os.path.isdir( path + item ):
-                self.filesList.update( [ path + item + os.path.sep ] )
-                self.__scanDir( path + item + os.path.sep )
+            if isdir( candidate ):
+                self.filesList.add( candidate + sep )
+                self.__scanDir( candidate + sep )
                 continue
-            self.filesList.update( [ path + item ] )
+            self.filesList.add( candidate )
         return
 
     def isProjectDir( self, path ):
         " Returns True if the path belongs to the project "
         if not self.isLoaded():
             return False
-        path = os.path.realpath( str( path ) )     # it could be a symlink
-        if not path.endswith( os.path.sep ):
-            path += os.path.sep
+        path = realpath( str( path ) )     # it could be a symlink
+        if not path.endswith( sep ):
+            path += sep
         return path.startswith( self.getProjectDir() )
 
     def isProjectFile( self, path ):
@@ -859,14 +861,14 @@ class CodimensionProject( QObject ):
 
     def isTopLevelDir( self, path ):
         " Checks if the path is a top level dir "
-        if not path.endswith( os.path.sep ):
-            path += os.path.sep
+        if not path.endswith( sep ):
+            path += sep
         return path in self.topLevelDirs
 
     def addTopLevelDir( self, path ):
         " Adds the path to the top level dirs list "
-        if not path.endswith( os.path.sep ):
-            path += os.path.sep
+        if not path.endswith( sep ):
+            path += sep
         if path in self.topLevelDirs:
             logging.warning( "Top level dir " + path + \
                              " is already in the list of dirs. " \
@@ -878,8 +880,8 @@ class CodimensionProject( QObject ):
 
     def removeTopLevelDir( self, path ):
         " Removes the path from the top level dirs list "
-        if not path.endswith( os.path.sep ):
-            path += os.path.sep
+        if not path.endswith( sep ):
+            path += sep
         if path not in self.topLevelDirs:
             logging.warning( "Top level dir " + path + \
                              " is not in the list of dirs. Ignore removing..." )
@@ -1006,8 +1008,7 @@ class CodimensionProject( QObject ):
         " Provides an absolute path to the project dir "
         if not self.isLoaded():
             return ""
-        return os.path.dirname( os.path.realpath( self.fileName ) ) + \
-               os.path.sep
+        return os.path.dirname( realpath( self.fileName ) ) + sep
 
     def getProjectScript( self ):
         " Provides the project script file name "
