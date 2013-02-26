@@ -131,8 +131,8 @@ class CodimensionMainWindow( QMainWindow ):
         # The size restore is done twice to avoid huge flickering
         # This one is approximate, the one in the timer handler is precise
         screenSize = GlobalData().application.desktop().screenGeometry()
-        if screenSize.width() != settings.screenWidth or \
-           screenSize.height() != settings.screenHeight:
+        if screenSize.width() != settings.screenwidth or \
+           screenSize.height() != settings.screenheight:
             # The screen resolution has been changed, use the default pos
             defXPos, defYpos, \
             defWidth, defHeight = settings.getDefaultGeometry()
@@ -198,11 +198,11 @@ class CodimensionMainWindow( QMainWindow ):
     def __restorePosition( self ):
         " Makes sure that the window frame delta is proper "
         screenSize = GlobalData().application.desktop().screenGeometry()
-        if screenSize.width() != self.settings.screenWidth or \
-           screenSize.height() != self.settings.screenHeight:
+        if screenSize.width() != self.settings.screenwidth or \
+           screenSize.height() != self.settings.screenheight:
             # The screen resolution has been changed, save the new values
-            self.settings.screenWidth = screenSize.width()
-            self.settings.screenHeight = screenSize.height()
+            self.settings.screenwidth = screenSize.width()
+            self.settings.screenheight = screenSize.height()
             self.settings.xdelta = self.settings.xpos - self.x()
             self.settings.ydelta = self.settings.ypos - self.y()
             self.settings.xpos = self.x()
@@ -1088,7 +1088,7 @@ class CodimensionMainWindow( QMainWindow ):
         for theme in availableThemes:
             themeAct = themesMenu.addAction( theme[ 1 ] )
             themeAct.setData( QVariant( theme[ 0 ] ) )
-            if theme[ 0 ] == Settings().skinName:
+            if theme[ 0 ] == Settings().skin:
                 font = themeAct.font()
                 font.setBold( True )
                 themeAct.setFont( font )
@@ -2471,11 +2471,11 @@ class CodimensionMainWindow( QMainWindow ):
     def __onTheme( self, act ):
         " Triggers when a theme is selected "
         skinSubdir = str( act.data().toString() )
-        if Settings().skinName == skinSubdir:
+        if Settings().skin == skinSubdir:
             return
 
         logging.info( "Please restart codimension to apply the new theme" )
-        Settings().skinName = skinSubdir
+        Settings().skin = skinSubdir
         return
 
     def showStatusBarMessage( self, msg, timeout = 10000 ):
