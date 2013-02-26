@@ -264,14 +264,14 @@ class CodimensionMainWindow( QMainWindow ):
 
         self.projectViewer = ProjectViewer( self )
         self.__leftSideBar.addTab( self.projectViewer,
-                                   PixmapCache().getIcon( 'project.png' ),
+                                   PixmapCache().getIcon( '' ),
                                    "Project" )
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( 'fileUpdated' ),
                       self.projectViewer.onFileUpdated )
         self.recentProjectsViewer = RecentProjectsViewer( self )
         self.__leftSideBar.addTab( self.recentProjectsViewer,
-                                   PixmapCache().getIcon( 'project.png' ),
+                                   PixmapCache().getIcon( '' ),
                                    "Recent" )
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( 'fileUpdated' ),
@@ -282,27 +282,26 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.projectViewer, SIGNAL( "fileUpdated" ),
                       self.recentProjectsViewer.onFileUpdated )
 
-        #self.__leftSideBar.setTabToolTip( 1, "Recently loaded projects" )
         self.classesViewer = ClassesViewer()
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( 'fileUpdated' ),
                       self.classesViewer.onFileUpdated )
         self.__leftSideBar.addTab( self.classesViewer,
-                                   PixmapCache().getIcon( 'class.png' ),
+                                   PixmapCache().getIcon( '' ),
                                    "Classes" )
         self.functionsViewer = FunctionsViewer()
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( 'fileUpdated' ),
                       self.functionsViewer.onFileUpdated )
         self.__leftSideBar.addTab( self.functionsViewer,
-                                   PixmapCache().getIcon( 'fx.png' ),
+                                   PixmapCache().getIcon( '' ),
                                    "Functions" )
         self.globalsViewer = GlobalsViewer()
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( 'fileUpdated' ),
                       self.globalsViewer.onFileUpdated )
         self.__leftSideBar.addTab( self.globalsViewer,
-                                   PixmapCache().getIcon( 'globalvar.png' ),
+                                   PixmapCache().getIcon( '' ),
                                    "Globals" )
 
 
@@ -367,7 +366,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__outlineViewer = FileOutlineViewer(
                                     self.editorsManagerWidget.editorsManager )
         self.__rightSideBar.addTab( self.__outlineViewer,
-                PixmapCache().getIcon( 'filepython.png' ), 'File outline' )
+                PixmapCache().getIcon( '' ), 'File outline' )
 
         # Create the pyflakes viewer
         self.__pyflakesViewer = PyflakesViewer(
@@ -376,7 +375,7 @@ class CodimensionMainWindow( QMainWindow ):
 
         self.__debuggerContext = DebuggerContext()
         self.__rightSideBar.addTab( self.__debuggerContext,
-                PixmapCache().getIcon( 'debugger.png' ), 'Debugger' )
+                PixmapCache().getIcon( '' ), 'Debugger' )
         self.__rightSideBar.setTabEnabled( 1, False )
 
         # Create splitters
