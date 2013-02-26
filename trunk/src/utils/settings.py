@@ -185,6 +185,7 @@ class Settings( object ):
 
             QObject.__init__( self )
             self.values = {}
+            self.__setDefaultValues()
 
             # make sure that the directory exists
             if not os.path.exists( settingsDir ):
@@ -194,15 +195,13 @@ class Settings( object ):
             self.fullFileName = settingsDir + "settings"
 
             # Load previous sessions files positions and tabs status
-            self.filePositions = FilesPositions( settingsDir )
-            self.tabsStatus = self.__loadTabsStatus()
-            self.findFilesWhat, \
-            self.findFilesDirs, \
-            self.findFilesMasks = self.__loadFindFilesHistory()
-            self.findNameHistory = self.__loadFindNameHistory()
-            self.findFileHistory = self.__loadFindFileHistory()
-
-            self.__setDefaultValues()
+            self.values[ "filePositions" ] = FilesPositions( settingsDir )
+            self.values[ "tabsStatus" ] = self.__loadTabsStatus()
+            self.values[ "findFilesWhat" ], \
+            self.values[ "findFilesDirs" ], \
+            self.values[ "findFilesMasks" ] = self.__loadFindFilesHistory()
+            self.values[ "findNameHistory" ] = self.__loadFindNameHistory()
+            self.values[ "findFileHistory" ] = self.__loadFindFileHistory()
 
             # Create file if does not exist
             if not os.path.exists( self.fullFileName ):
@@ -427,12 +426,6 @@ class Settings( object ):
             return
 
         @staticmethod
-        def getDefaultGeometry():
-            " Provides the default window size and location "
-            return _X_POS_DEFAULT, _Y_POS_DEFAULT, \
-                   _WIDTH_DEFAULT, _HEIGHT_DEFAULT
-
-        @staticmethod
         def __writeHeader( fileObj ):
             " Helper to write a header with a warning "
             fileObj.write( "#\n"
@@ -487,7 +480,8 @@ class Settings( object ):
             try:
                 f = open( fName, "w" )
                 self.__writeHeader( f )
-                self.__writeList( f, "tabsstatus", "tab", self.tabsStatus )
+                self.__writeList( f, "tabsstatus",
+                                  "tab", self.values[ "tabsStatus" ] )
                 f.close()
             except:
                 # Do nothing, it's not vital important to have this file
@@ -532,11 +526,11 @@ class Settings( object ):
                 f = open( fName, "w" )
                 self.__writeHeader( f )
                 self.__writeList( f, "whathistory", "what",
-                                  self.findFilesWhat )
+                                  self.values[ "findFilesWhat" ] )
                 self.__writeList( f, "dirhistory", "dir",
-                                  self.findFilesDirs )
+                                  self.values[ "findFilesDirs" ] )
                 self.__writeList( f, "maskhistory", "mask",
-                                  self.findFilesMasks )
+                                  self.values[ "findFilesMasks" ] )
                 f.close()
             except:
                 # Do nothing, it's not vital important to have this file
@@ -549,7 +543,7 @@ class Settings( object ):
             try:
                 f = open( fName, "w" )
                 self.__writeList( f, "findnamehistory", "find",
-                                  self.findNameHistory )
+                                  self.values[ "findNameHistory" ] )
                 f.close()
             except:
                 # Do nothing, it's not vital important to have this file
@@ -562,7 +556,7 @@ class Settings( object ):
             try:
                 f = open( fName, "w" )
                 self.__writeList( f, 'findfilehistory', 'find',
-                                  self.findFileHistory )
+                                  self.values[ "findFileHistory" ] )
                 f.close()
             except:
                 pass
@@ -584,6 +578,24 @@ class Settings( object ):
             self.iInstance.values[ aAttr ] = aValue
             self.iInstance.flushSettings()
         return
+
+    def addRecentProject( self, projectFile ):
+        self.iInstance.addRecentProject( projectFile )
+        return
+
+    def deleteRecentProject( self, projectFile ):
+        self.iInstance.deleteRecentProject( projectFile )
+        return
+
+    def flushSettings( self ):
+        self.iInstance.flushSettings()
+        return
+
+    @staticmethod
+    def getDefaultGeometry():
+        " Provides the default window size and location "
+        return _X_POS_DEFAULT, _Y_POS_DEFAULT, \
+               _WIDTH_DEFAULT, _HEIGHT_DEFAULT
 
     def getProfilerSettings( self ):
         " Provides the profiler IDE-wide settings "
