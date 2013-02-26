@@ -46,7 +46,7 @@ ropePreferences = { 'ignore_syntax_errors': True,
                         "PyQt4", "PyQt4.QtGui", "QtGui",
                         "PyQt4.QtCore", "QtCore" ],
                     'ignored_resources': [
-                        "*.pyc", "*~", ".ropeproject",
+                        "*.pyo", "*.pyc", "*~", ".ropeproject",
                         ".hg", ".svn", "_svn", ".git", ".cvs" ] }
 
 _maxRecentProjects = 32
