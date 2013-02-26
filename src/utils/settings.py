@@ -32,6 +32,15 @@ from run import TERM_AUTO
 settingsDir = os.path.normpath( str( QDir.homePath() ) ) + \
               os.path.sep + ".codimension" + os.path.sep
 
+_H_SPLITTER_SIZES_DEFAULT = [ 200, 450, 575 ]
+_V_SPLITTER_SIZES_DEFAULT = [ 400, 150 ]
+_X_POS_DEFAULT = 50
+_Y_POS_DEFAULT = 50
+_WIDTH_DEFAULT = 750
+_HEIGHT_DEFAULT = 550
+_MAX_RECENT_PROJECTS = 32
+
+
 ropePreferences = { 'ignore_syntax_errors': True,
                     'ignore_bad_imports':   True,
                     'soa_followed_calls':   2,
@@ -49,58 +58,87 @@ ropePreferences = { 'ignore_syntax_errors': True,
                         "*.pyo", "*.pyc", "*~", ".ropeproject",
                         ".hg", ".svn", "_svn", ".git", ".cvs" ] }
 
-_maxRecentProjects = 32
-_defaultXPos = 50
-_defaultYPos = 50
-_defaultWidth = 750
-_defaultHeight = 550
-_defaultScreenWidth = 0
-_defaultScreenHeight = 0
-_defaultXDelta = 0
-_defaultYDelta = 0
-_defaultHSplitSize = "200, 450, 575"
-_defaultVSplitSize = "400, 150"
-_defaultFilesFilters = [ "^\\.", ".*\\~$",
-                         ".*\\.pyc$", ".*\\.swp$", ".*\\.pyo$" ]
-_defaultProjectLoaded = False
-_defaultZoom = 0
-_defaultSkin = "default"
-_defaultLastSuccessVerCheck = 0
-_defaultNewerVerShown = False
-_defaultModifiedFormat = "%s *"
-_defaultTermType = TERM_AUTO
-_defaultEditorEdge = 80
-_defaultProfileNodeLimit = 1.0
-_defaultProfileEdgeLimit = 1.0
-_defaultDebugReportExceptions = True
-_defaultDebugTraceInterpreter = True
-_defaultDebugStopAtFirstLine = True
-_defaultDebugAutofork = False
-_defaultDebugFollowChild = True
 
-# Editor settings available via the user interface
-_defaultVerticalEdge = True
-_defaultShowSpaces = True
-_defaultLineWrap = False
-_defaultShowEOL = False
-_defaultShowBraceMatch = True
-_defaultAutoIndent = True
-_defaultBackspaceUnindent = True
-_defaultTabIndents = True
-_defaultIndentationGuides = False
-_defaultCurrentLineVisible = True
-_defaultJumpToFirstNonSpace = False
-_defaultRemoveTrailingOnSave = False
+class CDMSetting:
+    " Holds a single CDM setting description "
+    TYPE_INT = 0
+    TYPE_FLOAT = 1
+    TYPE_BOOL = 2
+    TYPE_STR = 3
+    TYPE_STR_LST = 4
+    TYPE_INT_LST = 5
 
-# Tooltip settings
-_defaultProjectTooltips = True
-_defaultRecentTooltips = True
-_defaultClassesTooltips = True
-_defaultFunctionsTooltips = True
-_defaultOutlineTooltips = True
-_defaultFindNameTooltips = True
-_defaultFindFileTooltips = True
-_defaultEditorTooltips = True
+    def __init__( self, name, sType, default ):
+        self.name = name
+        self.sType = sType
+        self.default = default
+        return
+
+
+CDM_SETTINGS = {
+"general": [
+    CDMSetting( "zoom", CDMSetting.TYPE_INT, 0 ),
+    CDMSetting( "xpos", CDMSetting.TYPE_INT, _X_POS_DEFAULT ),
+    CDMSetting( "ypos", CDMSetting.TYPE_INT, _Y_POS_DEFAULT ),
+    CDMSetting( "width", CDMSetting.TYPE_INT, _WIDTH_DEFAULT ),
+    CDMSetting( "height", CDMSetting.TYPE_INT, _HEIGHT_DEFAULT ),
+    CDMSetting( "screenwidth", CDMSetting.TYPE_INT, 0 ),
+    CDMSetting( "screenheight", CDMSetting.TYPE_INT, 0 ),
+    CDMSetting( "xdelta", CDMSetting.TYPE_INT, 0 ),
+    CDMSetting( "ydelta", CDMSetting.TYPE_INT, 0 ),
+    CDMSetting( "skin", CDMSetting.TYPE_STR, "default" ),
+    CDMSetting( "modifiedFormat", CDMSetting.TYPE_STR, "%s *" ),
+    CDMSetting( "verticalEdge", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "showSpaces", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "lineWrap", CDMSetting.TYPE_BOOL, False ),
+    CDMSetting( "showEOL", CDMSetting.TYPE_BOOL, False ),
+    CDMSetting( "showBraceMatch", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "autoIndent", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "backspaceUnindent", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "tabIndents", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "indentationGuides", CDMSetting.TYPE_BOOL, False ),
+    CDMSetting( "currentLineVisible", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "jumpToFirstNonSpace", CDMSetting.TYPE_BOOL, False ),
+    CDMSetting( "removeTrailingOnSave", CDMSetting.TYPE_BOOL, False ),
+    CDMSetting( "lastSuccessVerCheck", CDMSetting.TYPE_INT, 0 ),
+    CDMSetting( "newerVerShown", CDMSetting.TYPE_BOOL, False ),
+    CDMSetting( "showFSViewer", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "terminalType", CDMSetting.TYPE_INT, TERM_AUTO ),
+    CDMSetting( "profileNodeLimit", CDMSetting.TYPE_FLOAT, 1.0 ),
+    CDMSetting( "profileEdgeLimit", CDMSetting.TYPE_FLOAT, 1.0 ),
+    CDMSetting( "debugReportExceptions", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "debugTraceInterpreter", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "debugStopAtFirstLine", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "debugAutofork", CDMSetting.TYPE_BOOL, False ),
+    CDMSetting( "debugFollowChild", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "editorEdge", CDMSetting.TYPE_INT, 80 ),
+    CDMSetting( "projectTooltips", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "recentTooltips", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "classesTooltips", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "functionsTooltips", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "outlineTooltips", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "findNameTooltips", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "findFileTooltips", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "editorTooltips", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "leftBarMinimized", CDMSetting.TYPE_BOOL, False ),
+    CDMSetting( "bottomBarMinimized", CDMSetting.TYPE_BOOL, False ),
+    CDMSetting( "rightBarMinimized", CDMSetting.TYPE_BOOL, False ),
+    CDMSetting( "projectLoaded", CDMSetting.TYPE_BOOL, False ),
+    CDMSetting( "hSplitterSizes", CDMSetting.TYPE_INT_LST,
+                _H_SPLITTER_SIZES_DEFAULT ),
+    CDMSetting( "vSplitterSizes", CDMSetting.TYPE_INT_LST,
+                _V_SPLITTER_SIZES_DEFAULT )
+           ],
+"recentProjects" : [
+    CDMSetting( "project", CDMSetting.TYPE_STR_LST, [] )
+                   ],
+"projectFilesFilters" : [
+    CDMSetting( "filter", CDMSetting.TYPE_STR_LST, [ "^\\.", ".*\\~$",
+                                                     ".*\\.pyc$", ".*\\.swp$",
+                                                     ".*\\.pyo$" ] )
+                        ]
+               }
+
 
 
 class DebuggerSettings:
@@ -146,6 +184,7 @@ class Settings( object ):
         def __init__( self ):
 
             QObject.__init__( self )
+            self.values = {}
 
             # make sure that the directory exists
             if not os.path.exists( settingsDir ):
@@ -171,273 +210,153 @@ class Settings( object ):
                 self.flushSettings()
                 return
 
-            self.formatOK = True
-            config = ConfigParser.ConfigParser()
+            self.__readErrors = []
+            self.__config = ConfigParser.ConfigParser()
 
             try:
-                config.read( [ self.fullFileName ] )
+                self.__config.read( [ self.fullFileName ] )
             except:
                 # Bad error - save default
-                config = None
+                self.__config = None
                 logging.warning( "Bad format of settings detected. " \
-                                 "Overwriting the settings file." )
+                                 "Overwriting the settings file..." )
                 self.flushSettings()
                 return
 
-            self.zoom = self.__getInt( config, 'general',
-                        'zoom', _defaultZoom )
-            self.xpos = self.__getInt( config, 'general',
-                        'xpos', _defaultXPos )
-            self.ypos = self.__getInt( config, 'general',
-                        'ypos', _defaultYPos )
-            self.width = self.__getInt( config, 'general',
-                        'width', _defaultWidth )
-            self.height = self.__getInt( config, 'general',
-                        'height', _defaultHeight )
-            self.xdelta = self.__getInt( config, 'general',
-                        'xdelta', _defaultXDelta )
-            self.ydelta = self.__getInt( config, 'general',
-                        'ydelta', _defaultYDelta )
-            self.screenWidth = self.__getInt( config, 'general',
-                        'screenwidth', _defaultScreenWidth )
-            self.screenHeight = self.__getInt( config, 'general',
-                        'screenheight', _defaultScreenHeight )
-            self.leftBarMinimized = self.__getBool( config, 'general',
-                        'leftBarMinimized', False )
-            self.bottomBarMinimized = self.__getBool( config, 'general',
-                        'bottomBarMinimized', False )
-            self.rightBarMinimized = self.__getBool( config, 'general',
-                        'rightBarMinimized', False )
-            self.projectLoaded = self.__getBool( config, 'general',
-                        'projectLoaded', _defaultProjectLoaded )
-            self.skinName = self.__getStr( config, 'general',
-                        'skin', _defaultSkin )
-            self.verticalEdge = self.__getBool( config, 'general',
-                        'verticalEdge', _defaultVerticalEdge )
-            self.showSpaces = self.__getBool( config, 'general',
-                        'showSpaces', _defaultShowSpaces )
-            self.lineWrap = self.__getBool( config, 'general',
-                        'lineWrap', _defaultLineWrap )
-            self.showEOL = self.__getBool( config, 'general',
-                        'showEOL', _defaultShowEOL )
-            self.showBraceMatch = self.__getBool( config, 'general',
-                        'showBraceMatch', _defaultShowBraceMatch )
-            self.autoIndent = self.__getBool( config, 'general',
-                        'autoIndent', _defaultAutoIndent )
-            self.backspaceUnindent = self.__getBool( config, 'general',
-                        'backspaceUnindent', _defaultBackspaceUnindent )
-            self.tabIndents = self.__getBool( config, 'general',
-                        'tabIndents', _defaultTabIndents )
-            self.indentationGuides = self.__getBool( config, 'general',
-                        'indentationGuides', _defaultIndentationGuides )
-            self.currentLineVisible = self.__getBool( config, 'general',
-                        'currentLineVisible', _defaultCurrentLineVisible )
-            self.jumpToFirstNonSpace = self.__getBool( config, 'general',
-                        'jumpToFirstNonSpace', _defaultJumpToFirstNonSpace )
-            self.removeTrailingOnSave = self.__getBool( config, 'general',
-                        'removeTrailingOnSave', _defaultRemoveTrailingOnSave )
-            self.lastSuccessVerCheck = self.__getInt( config, 'general',
-                        'lastSuccessVerCheck', _defaultLastSuccessVerCheck )
-            self.newerVerShown = self.__getBool( config, 'general',
-                        'newerVerShown', _defaultNewerVerShown )
-            self.showFSViewer = self.__getBool( config, 'general',
-                        'showFSViewer', True )
-            self.modifiedFormat = self.__getStr( config, 'general',
-                        'modifiedFormat', _defaultModifiedFormat )
-            self.terminalType = self.__getInt( config, 'general',
-                        'terminalType', _defaultTermType )
+            for section in CDM_SETTINGS:
+                for setting in CDM_SETTINGS[ section ]:
+                    if setting.sType == CDMSetting.TYPE_INT:
+                        self.values[ setting.name ] = self.__getInt(
+                                section, setting.name, setting.default )
+                    elif setting.sType == CDMSetting.TYPE_FLOAT:
+                        self.values[ setting.name ] = self.__getFloat(
+                                section, setting.name, setting.default )
+                    elif setting.sType == CDMSetting.TYPE_BOOL:
+                        self.values[ setting.name ] = self.__getBool(
+                                section, setting.name, setting.default )
+                    elif setting.sType == CDMSetting.TYPE_STR:
+                        self.values[ setting.name ] = self.__getStr(
+                                section, setting.name, setting.default )
+                    elif setting.sType == CDMSetting.TYPE_STR_LST:
+                        self.values[ section ] = self.__getStrList(
+                                section, setting.name, setting.default )
+                    elif setting.sType == CDMSetting.TYPE_INT_LST:
+                        self.values[ setting.name ] = self.__getIntList(
+                                section, setting.name, setting.default )
+                    else:
+                        raise Exception( "Unexpected setting type: " +
+                                         str( setting.sType ) )
 
-            self.projectTooltips = self.__getBool( config, "general",
-                        "projectTooltips", _defaultProjectTooltips )
-            self.recentTooltips = self.__getBool( config, "general",
-                        "recentTooltips", _defaultRecentTooltips )
-            self.classesTooltips = self.__getBool( config, "general",
-                        "classesTooltips", _defaultClassesTooltips )
-            self.functionsTooltips = self.__getBool( config, "general",
-                        "functionsTooltips", _defaultFunctionsTooltips )
-            self.outlineTooltips = self.__getBool( config, "general",
-                        "outlineTooltips", _defaultOutlineTooltips )
-            self.findNameTooltips = self.__getBool( config, "general",
-                        "findNameTooltips", _defaultFindNameTooltips )
-            self.findFileTooltips = self.__getBool( config, "general",
-                        "findFileTooltips", _defaultFindFileTooltips )
-            self.editorTooltips = self.__getBool( config, "general",
-                        "editorTooltips", _defaultEditorTooltips )
+            # Special checks
+            if len( self.values[ "hSplitterSizes" ] ) != \
+                                    len( _H_SPLITTER_SIZES_DEFAULT ):
+                self.__readErrors.append( "Unexpected number of values in the "
+                                          "[general]/hSplitterSizes setting. "
+                                          "Using default: " +
+                                          str( _H_SPLITTER_SIZES_DEFAULT ) )
+                self.values[ "hSplitterSizes" ] = _H_SPLITTER_SIZES_DEFAULT
 
-            # Profile parameters, IDE wide
-            self.profileNodeLimit = self.__getFloat( config, 'general',
-                        'profileNodeLimit', _defaultProfileNodeLimit )
-            self.profileEdgeLimit = self.__getFloat( config, 'general',
-                        'profileEdgeLimit', _defaultProfileEdgeLimit )
+            if len( self.values[ "vSplitterSizes" ] ) != \
+                                    len( _V_SPLITTER_SIZES_DEFAULT ):
+                self.__readErrors.append( "Unexpected number of values in the "
+                                          "[general]/vSplitterSizes setting. "
+                                          "Using default: " +
+                                          str( _V_SPLITTER_SIZES_DEFAULT ) )
+                self.values[ "vSplitterSizes" ] = _V_SPLITTER_SIZES_DEFAULT
 
-            # Debug parameters, IDE wide
-            self.debugReportExceptions = self.__getBool( config, 'general',
-                        'debugReportExceptions', _defaultDebugReportExceptions )
-            self.debugTraceInterpreter = self.__getBool( config, 'general',
-                        'debugTraceInterpreter', _defaultDebugTraceInterpreter )
-            self.debugStopAtFirstLine = self.__getBool( config, 'general',
-                        'debugStopAtFirstLine', _defaultDebugStopAtFirstLine )
-            self.debugAutofork = self.__getBool( config, 'general',
-                        'debugAutofork', _defaultDebugAutofork )
-            self.debugFollowChild = self.__getBool( config, 'general',
-                        'debugFollowChild', _defaultDebugFollowChild )
-
-            self.editorEdge = self.__getInt( config, 'general',
-                        'editorEdge', _defaultEditorEdge )
-
-            asString = self.__getStr( config, 'general',
-                        'hSplitterSizes', _defaultHSplitSize ).split( ',' )
-            if len( asString ) != 3:
-                asString = _defaultHSplitSize.split( ',' )
-                self.formatOK = False
-            self.hSplitterSizes = [ int(asString[0]),
-                                    int(asString[1]),
-                                    int(asString[0]) ]
-
-            asString = self.__getStr( config, 'general',
-                        'vSplitterSizes', _defaultVSplitSize ).split( ',' )
-            if len( asString ) != 2:
-                asString = _defaultVSplitSize.split( ',' )
-                self.formatOK = False
-            self.vSplitterSizes = [ int(asString[0]), int(asString[1]) ]
-
-            # recent projects part
-            self.recentProjects = []
-            index = 0
-            try:
-                while True:
-                    projectFile = config.get( 'recentProjects',
-                                              'project' + str(index) ).strip()
-                    self.recentProjects.append( str( projectFile ) )
-                    index += 1
-            except ConfigParser.NoSectionError:
-                self.formatOK = False
-            except ConfigParser.NoOptionError:
-                # Just continue
-                pass
-            except:
-                self.formatOK = False
-
-            # Filters part
-            self.projectFilesFilters = []
-            index = 0
-            try:
-                while True:
-                    flt = config.get( 'projectFilesFilters',
-                                      'filter' + str(index) ).strip()
-                    self.projectFilesFilters.append( flt )
-                    index += 1
-            except ConfigParser.NoSectionError:
-                self.formatOK = False
-                self.projectFilesFilters = _defaultFilesFilters
-            except ConfigParser.NoOptionError:
-                # Just continue
-                pass
-            except:
-                self.formatOK = False
-                self.projectFilesFilters = _defaultFilesFilters
-
-
-            config = None
+            self.__config = None
 
             # If format is bad then overwrite the file
-            if self.formatOK == False:
-                logging.info( "Some settings missed or bad format of the "
-                              "settings file. Restoring the settings file." )
+            if self.__readErrors:
+                for message in self.__readErrors:
+                    logging.info( message )
+                    logging.info( "Restoring missed or broken values..." )
                 self.flushSettings()
-
             return
 
         def __setDefaultValues( self ):
             " Sets the default values to the members "
-
-            self.zoom = _defaultZoom
-            self.xpos = _defaultXPos
-            self.ypos = _defaultXPos
-            self.width = _defaultWidth
-            self.height = _defaultHeight
-            self.screenWidth = _defaultScreenWidth
-            self.screenHeight = _defaultScreenHeight
-            self.xdelta = _defaultXDelta
-            self.ydelta = _defaultYDelta
-            self.skinName = _defaultSkin
-
-            self.verticalEdge = _defaultVerticalEdge
-            self.showSpaces = _defaultShowSpaces
-            self.lineWrap = _defaultLineWrap
-            self.showEOL = _defaultShowEOL
-            self.showBraceMatch = _defaultShowBraceMatch
-            self.autoIndent = _defaultAutoIndent
-            self.backspaceUnindent = _defaultBackspaceUnindent
-            self.tabIndents = _defaultTabIndents
-            self.indentationGuides = _defaultIndentationGuides
-            self.currentLineVisible = _defaultCurrentLineVisible
-            self.jumpToFirstNonSpace = _defaultJumpToFirstNonSpace
-            self.removeTrailingOnSave = _defaultRemoveTrailingOnSave
-            self.modifiedFormat = _defaultModifiedFormat
-
-            self.projectTooltips = _defaultProjectTooltips
-            self.recentTooltips = _defaultRecentTooltips
-            self.classesTooltips = _defaultClassesTooltips
-            self.functionsTooltips = _defaultFunctionsTooltips
-            self.outlineTooltips = _defaultOutlineTooltips
-            self.findNameTooltips = _defaultFindNameTooltips
-            self.findFileTooltips = _defaultFindFileTooltips
-            self.editorTooltips = _defaultEditorTooltips
-
-            self.leftBarMinimized = False
-            self.bottomBarMinimized = False
-            self.rightBarMinimized = False
-            self.hSplitterSizes = [ 200, 450, 550 ]
-            self.vSplitterSizes = [ 400, 150 ]
-            self.recentProjects = []
-            self.projectFilesFilters = _defaultFilesFilters
-            self.projectLoaded = _defaultProjectLoaded
-            self.lastSuccessVerCheck = _defaultLastSuccessVerCheck
-            self.newerVerShown = _defaultNewerVerShown
-            self.showFSViewer = True
-            self.terminalType = _defaultTermType
-            self.editorEdge = _defaultEditorEdge
-            self.profileNodeLimit = _defaultProfileNodeLimit
-            self.profileEdgeLimit = _defaultProfileEdgeLimit
-            self.debugReportExceptions = _defaultDebugReportExceptions
-            self.debugTraceInterpreter = _defaultDebugTraceInterpreter
-            self.debugStopAtFirstLine = _defaultDebugStopAtFirstLine
-            self.debugAutofork = _defaultDebugAutofork
-            self.debugFollowChild = _defaultDebugFollowChild
+            for section in CDM_SETTINGS:
+                for setting in CDM_SETTINGS[ section ]:
+                    if setting.sType == CDMSetting.TYPE_STR_LST:
+                        self.values[ section ] = setting.default
+                    else:
+                        self.values[ setting.name ] = setting.default
             return
 
-        def __getInt( self, conf, sec, key, default ):
+        def __getInt( self, sec, key, default ):
             " Helper to read a config value "
             try:
-                return conf.getint( sec, key )
+                return self.__config.getint( sec, key )
             except:
-                self.formatOK = False
+                self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
+                                          " setting. Using default: " +
+                                          str( default ) )
             return default
 
-        def __getFloat( self, conf, sec, key, default ):
+        def __getFloat( self, sec, key, default ):
             " Helper to read a config value "
             try:
-                return conf.getfloat( sec, key )
+                return self.__config.getfloat( sec, key )
             except:
-                self.formatOK = False
+                self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
+                                          " setting. Using default: " +
+                                          str( default ) )
             return default
 
-        def __getBool( self, conf, sec, key, default ):
+        def __getBool( self, sec, key, default ):
             " Helper to read a config value "
             try:
-                return conf.getboolean( sec, key )
+                return self.__config.getboolean( sec, key )
             except:
-                self.formatOK = False
+                self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
+                                          " setting. Using default: " +
+                                          str( default ) )
             return default
 
-        def __getStr( self, conf, sec, key, default ):
+        def __getStr( self, sec, key, default ):
             " Helper to read a config value "
             try:
-                return conf.get( sec, key ).strip()
+                return self.__config.get( sec, key ).strip()
             except:
-                self.formatOK = False
+                self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
+                                          " setting. Using default: " +
+                                          str( default ) )
             return default
+
+        def __getIntList( self, sec, key, default ):
+            " Helper to read a list of integer values "
+            try:
+                values = self.__config.get( sec, key ).split( ',' )
+                return [ int( x ) for x in values ]
+            except:
+                self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
+                                          " setting. Using default: " +
+                                          str( default ) )
+            return default
+
+        def __getStrList( self, sec, key, default ):
+            " Helper to read a list of string values "
+            values = []
+            try:
+                index = 0
+                while True:
+                    values.append( self.__config.get( sec,
+                                        key + str( index ) ).strip() )
+                    index += 1
+            except ConfigParser.NoOptionError:
+                # Just continue
+                return values
+            except ConfigParser.NoSectionError:
+                self.__readErrors.append( "Section [" + sec + "] is not found. "
+                                          "Using default values: " +
+                                          str( default ) )
+            except:
+                self.__readErrors.append( "Cannot get a setting from section [" +
+                                          sec + "]. Using default values for "
+                                          "the section: " + str( default ) )
+            return default
+
 
         def flushSettings( self ):
             """ Writes all the settings into the file """
@@ -448,97 +367,49 @@ class Settings( object ):
             self.__saveFindNameHistory()
             self.__saveFindFileHistory()
 
-            # Recent projects part
-            recentPart = "[recentProjects]\n"
-            index = 0
-            for item in self.recentProjects:
-                recentPart += "project" + str(index) + "=" + item + "\n"
-                index += 1
-
-            filterPart = "[projectFilesFilters]\n"
-            index = 0
-            for item in self.projectFilesFilters:
-                filterPart += "filter" + str(index) + "=" + item + "\n"
-                index += 1
-
             f = open( self.fullFileName, "w" )
             self.__writeHeader( f )
-            f.write(
-            "[general]\n"
-            "zoom=" + str( self.zoom ) + "\n"
-            "xpos=" + str( self.xpos ) + "\n"
-            "ypos=" + str( self.ypos ) + "\n"
-            "width=" + str( self.width ) + "\n"
-            "height=" + str( self.height ) + "\n"
-            "screenwidth=" + str( self.screenWidth ) + "\n"
-            "screenheight=" + str( self.screenHeight ) + "\n"
-            "xdelta=" + str( self.xdelta ) + "\n"
-            "ydelta=" + str( self.ydelta ) + "\n"
-            "skin=" + self.skinName + "\n"
-            "modifiedFormat=" + self.modifiedFormat + "\n"
-            "verticalEdge=" + str( self.verticalEdge ) + "\n"
-            "showSpaces=" + str( self.showSpaces ) + "\n"
-            "lineWrap=" + str( self.lineWrap ) + "\n"
-            "showEOL=" + str( self.showEOL ) + "\n"
-            "showBraceMatch=" + str( self.showBraceMatch ) + "\n"
-            "autoIndent=" + str( self.autoIndent ) + "\n"
-            "backspaceUnindent=" + str( self.backspaceUnindent ) + "\n"
-            "tabIndents=" + str( self.tabIndents ) + "\n"
-            "indentationGuides=" + str( self.indentationGuides ) + "\n"
-            "currentLineVisible=" + str( self.currentLineVisible ) + "\n"
-            "jumpToFirstNonSpace=" + str( self.jumpToFirstNonSpace ) + "\n"
-            "removeTrailingOnSave=" + str( self.removeTrailingOnSave ) + "\n"
-            "lastSuccessVerCheck=" + str( self.lastSuccessVerCheck ) + "\n"
-            "newerVerShown=" + str( self.newerVerShown ) + "\n"
-            "showFSViewer=" + str( self.showFSViewer ) + "\n"
-            "terminalType=" + str( self.terminalType ) + "\n"
-            "profileNodeLimit=" + str( self.profileNodeLimit ) + "\n"
-            "profileEdgeLimit=" + str( self.profileEdgeLimit ) + "\n"
-            "debugReportExceptions=" + str( self.debugReportExceptions ) + "\n"
-            "debugTraceInterpreter=" + str( self.debugTraceInterpreter ) + "\n"
-            "debugStopAtFirstLine=" + str( self.debugStopAtFirstLine ) + "\n"
-            "debugAutofork=" + str( self.debugAutofork ) + "\n"
-            "debugFollowChild=" + str( self.debugFollowChild ) + "\n"
-            "editorEdge=" + str( self.editorEdge ) + "\n"
-            "leftBarMinimized=" + str( int( self.leftBarMinimized ) ) + "\n"
-            "projectTooltips=" + str( self.projectTooltips ) + "\n"
-            "recentTooltips=" + str( self.recentTooltips ) + "\n"
-            "classesTooltips=" + str( self.classesTooltips ) + "\n"
-            "functionsTooltips=" + str( self.functionsTooltips ) + "\n"
-            "outlineTooltips=" + str( self.outlineTooltips ) + "\n"
-            "findNameTooltips=" + str( self.findNameTooltips ) + "\n"
-            "findFileTooltips=" + str( self.findFileTooltips ) + "\n"
-            "editorTooltips=" + str( self.editorTooltips ) + "\n"
-            "bottomBarMinimized=" +
-                    str( int( self.bottomBarMinimized ) ) + "\n"
-            "rightBarMinimized=" +
-                    str( int( self.rightBarMinimized ) ) + "\n"
-            "projectLoaded=" + str( int( self.projectLoaded ) ) + "\n"
-            "hSplitterSizes=" +
-                    str( self.hSplitterSizes[0] ) + "," +
-                    str( self.hSplitterSizes[1] ) + "," +
-                    str( self.hSplitterSizes[2] ) + "\n"
-            "vSplitterSizes=" +
-                    str( self.vSplitterSizes[0] ) + "," +
-                    str( self.vSplitterSizes[1] ) + "\n\n" +
-                 recentPart + "\n\n" +
-                 filterPart + "\n" )
+            for section in CDM_SETTINGS:
+                f.write( "\n[" + section + "]\n" )
+                for setting in CDM_SETTINGS[ section ]:
+                    if setting.sType in [ CDMSetting.TYPE_INT,
+                                          CDMSetting.TYPE_FLOAT,
+                                          CDMSetting.TYPE_BOOL,
+                                          CDMSetting.TYPE_STR ]:
+                        f.write( setting.name + "=" +
+                                 str( self.values[ setting.name ] ) + "\n" )
+                    elif setting.sType == CDMSetting.TYPE_INT_LST:
+                        strVal = [ str( x ) for x in
+                                            self.values[ setting.name ] ]
+                        f.write( setting.name + "=" +
+                                 ",".join( strVal ) + "\n" )
+                    elif setting.sType == CDMSetting.TYPE_STR_LST:
+                        index = 0
+                        for item in self.values[ section ]:
+                            f.write( setting.name + str( index ) + "=" +
+                                     item + "\n" )
+                            index += 1
+                    else:
+                        raise Exception( "Unexpected setting type: " +
+                                         str( setting.sType ) )
 
             f.flush()
             f.close()
-            self.formatOK = True
+            self.__readErrors = []
             return
 
         def addRecentProject( self, projectFile ):
             " Adds the recent project to the list "
             absProjectFile = os.path.abspath( projectFile )
-            if absProjectFile in self.recentProjects:
-                self.recentProjects.remove( absProjectFile )
+            recentProjects = self.values[ "recentProjects" ]
 
-            self.recentProjects.insert( 0, absProjectFile )
-            if len( self.recentProjects ) > _maxRecentProjects:
-                self.recentProjects = \
-                            self.recentProjects[ 0 : _maxRecentProjects ]
+            if absProjectFile in recentProjects:
+                recentProjects.remove( absProjectFile )
+
+            recentProjects.insert( 0, absProjectFile )
+            if len( recentProjects ) > _MAX_RECENT_PROJECTS:
+                recentProjects = recentProjects[ 0 : _MAX_RECENT_PROJECTS ]
+            self.values[ "recentProjects" ] = recentProjects
             self.flushSettings()
             self.emit( SIGNAL('recentListChanged') )
             return
@@ -546,8 +417,11 @@ class Settings( object ):
         def deleteRecentProject( self, projectFile ):
             " Deletes the recent project from the list "
             absProjectFile = os.path.abspath( projectFile )
-            if absProjectFile in self.recentProjects:
-                self.recentProjects.remove( absProjectFile )
+            recentProjects = self.values[ "recentProjects" ]
+
+            if absProjectFile in recentProjects:
+                recentProjects.remove( absProjectFile )
+                self.values[ "recentProjects" ] = recentProjects
                 self.flushSettings()
                 self.emit( SIGNAL('recentListChanged') )
             return
@@ -555,16 +429,14 @@ class Settings( object ):
         @staticmethod
         def getDefaultGeometry():
             " Provides the default window size and location "
-            return _defaultXPos, _defaultYPos, \
-                   _defaultWidth, _defaultHeight
+            return _X_POS_DEFAULT, _Y_POS_DEFAULT, \
+                   _WIDTH_DEFAULT, _HEIGHT_DEFAULT
 
         @staticmethod
         def __writeHeader( fileObj ):
             " Helper to write a header with a warning "
             fileObj.write( "#\n"
-                           "# Generated automatically.\n"
-                           "# Don't edit it manually unless you "
-                           "know what you are doing.\n"
+                           "# Generated automatically\n"
                            "#\n\n" )
             return
 
@@ -705,43 +577,52 @@ class Settings( object ):
         return
 
     def __getattr__( self, aAttr ):
-        return getattr( self.iInstance, aAttr )
+        return self.iInstance.values[ aAttr ]
 
     def __setattr__( self, aAttr, aValue ):
-        setattr( self.iInstance, aAttr, aValue )
-        self.flushSettings()
+        if self.iInstance.values[ aAttr ] != aValue:
+            self.iInstance.values[ aAttr ] = aValue
+            self.iInstance.flushSettings()
         return
 
     def getProfilerSettings( self ):
         " Provides the profiler IDE-wide settings "
         profSettings = ProfilerSettings()
-        profSettings.edgeLimit = self.iInstance.profileEdgeLimit
-        profSettings.nodeLimit = self.iInstance.profileNodeLimit
+        profSettings.edgeLimit = self.iInstance.values[ "profileEdgeLimit" ]
+        profSettings.nodeLimit = self.iInstance.values[ "profileNodeLimit" ]
         return profSettings
 
     def setProfilerSettings( self, newValues ):
         " Updates the profiler settings "
-        self.iInstance.profileEdgeLimit = newValues.edgeLimit
-        self.iInstance.profileNodeLimit = newValues.nodeLimit
-        self.flushSettings()
+        if self.iInstance.values[ "profileEdgeLimit" ] != newValues.edgeLimit or \
+           self.iInstance.values[ "profileNodeLimit" ] != newValues.nodeLimit:
+            self.iInstance.values[ "profileEdgeLimit" ] = newValues.edgeLimit
+            self.iInstance.values[ "profileNodeLimit" ] = newValues.nodeLimit
+            self.iInstance.flushSettings()
         return
 
     def getDebuggerSettings( self ):
         " Provides the debugger IDE-wide settings "
         dbgSettings = DebuggerSettings()
-        dbgSettings.autofork = self.iInstance.debugAutofork
-        dbgSettings.followChild = self.iInstance.debugFollowChild
-        dbgSettings.reportExceptions = self.iInstance.debugReportExceptions
-        dbgSettings.stopAtFirstLine = self.iInstance.debugStopAtFirstLine
-        dbgSettings.traceInterpreter = self.iInstance.debugTraceInterpreter
+        dbgSettings.autofork = self.iInstance.values[ "debugAutofork" ]
+        dbgSettings.followChild = self.iInstance.values[ "debugFollowChild" ]
+        dbgSettings.reportExceptions = self.iInstance.values[ "debugReportExceptions" ]
+        dbgSettings.stopAtFirstLine = self.iInstance.values[ "debugStopAtFirstLine" ]
+        dbgSettings.traceInterpreter = self.iInstance.values[ "debugTraceInterpreter" ]
         return dbgSettings
 
     def setDebuggerSettings( self, newValues ):
         " Updates the debugger settings "
-        self.iInstance.debugAutofork = newValues.autofork
-        self.iInstance.debugFollowChild = newValues.followChild
-        self.iInstance.debugReportExceptions = newValues.reportExceptions
-        self.iInstance.debugStopAtFirstLine = newValues.stopAtFirstLine
-        self.iInstance.debugTraceInterpreter = newValues.traceInterpreter
-        self.flushSettings()
+        if self.iInstance.values[ "debugAutofork" ] != newValues.autofork or \
+           self.iInstance.values[ "debugFollowChild" ] != newValues.followChild or \
+           self.iInstance.values[ "debugReportExceptions" ] != newValues.reportExceptions or \
+           self.iInstance.values[ "debugStopAtFirstLine" ] != newValues.stopAtFirstLine or \
+           self.iInstance.values[ "debugTraceInterpreter" ] != newValues.traceInterpreter:
+            self.iInstance.values[ "debugAutofork" ] = newValues.autofork
+            self.iInstance.values[ "debugFollowChild" ] = newValues.followChild
+            self.iInstance.values[ "debugReportExceptions" ] = newValues.reportExceptions
+            self.iInstance.values[ "debugStopAtFirstLine" ] = newValues.stopAtFirstLine
+            self.iInstance.values[ "debugTraceInterpreter" ] = newValues.traceInterpreter
+            self.iInstance.flushSettings()
         return
+
