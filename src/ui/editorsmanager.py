@@ -897,7 +897,7 @@ class EditorsManager( QTabWidget ):
                 self.setTabIcon( widgetIndex, QIcon() )
                 self.history.updateIconForTab( widget.getUUID(), QIcon() )
 
-                if info.docstring is not None:
+                if info.docstring is not None and Settings().editorTooltips:
                     self.setTabToolTip( widgetIndex, info.docstring.text )
                 else:
                     self.setTabToolTip( widgetIndex, "" )
@@ -2238,5 +2238,14 @@ class EditorsManager( QTabWidget ):
                            MainWindowTabWidgetBase.ProfileViewer ]:
             widget.onCopy()
             return
+        return
+
+    def setTooltips( self, switchOn ):
+        " Sets the tooltips mode "
+        for index in xrange( self.count() ):
+            widget = self.widget( index )
+            widgetType = widget.getType()
+            if widgetType == MainWindowTabWidgetBase.PlainTextEditor:
+                self._updateIconAndTooltip( index )
         return
 

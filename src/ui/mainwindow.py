@@ -2400,6 +2400,8 @@ class CodimensionMainWindow( QMainWindow ):
         " Tooltips setting changed "
         self.settings.editorTooltips = \
                                 not self.settings.editorTooltips
+        self.editorsManagerWidget.editorsManager.setTooltips(
+                        self.settings.editorTooltips )
         return
 
     @staticmethod
