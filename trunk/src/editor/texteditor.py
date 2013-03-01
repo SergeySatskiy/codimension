@@ -559,8 +559,11 @@ class TextEditor( ScintillaWrapper ):
 
     def gotoLine( self, lineNo ):
         " Jumps to the beginning of the line lineNo "
-        self.setCursorPosition( lineNo - 1, 0 )
-        self.ensureLineVisible( lineNo )
+        if self.isLineVisible( lineNo - 1 ):
+            self.setCursorPosition( lineNo - 1, 0 )
+        else:
+            self.setCursorPosition( lineNo - 1, 0 )
+            self.ensureLineVisible( lineNo )
         return
 
     def bindLexer( self, fileName, fileType ):
@@ -1795,6 +1798,28 @@ class TextEditor( ScintillaWrapper ):
         else:
             self.SendScintilla( self.SCI_SETMOUSEDWELLTIME,
                                 self.SC_TIME_FOREVER )
+        return
+
+    def restorePosition( self, line, pos, firstVisible = None ):
+        " Restores the view as it is specified "
+
+        # This business with a wrap mode is a workaround a scintilla bug:
+        # in wrap mode the line is miscalculated.
+        currentWrapMode = self.wrapMode()
+        if currentWrapMode != QsciScintilla.WrapNone:
+            self.setWrapMode( QsciScintilla.WrapNone )
+
+        self.setCursorPosition( line, pos )
+        self.setHScrollOffset( 0 ) # avoid unwanted scrolling
+
+        if firstVisible is not None:
+            self.ensureLineVisible( firstVisible )
+            currentLine = self.firstVisibleLine()
+            self.scrollVertical( firstVisible - currentLine )
+
+        # Restore the mode if needed
+        if currentWrapMode != QsciScintilla.WrapNone:
+            self.setWrapMode( currentWrapMode )
         return
 
 
