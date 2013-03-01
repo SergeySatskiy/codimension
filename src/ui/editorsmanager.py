@@ -361,7 +361,7 @@ class EditorsManager( QTabWidget ):
 
         # Put the cursor to the exact same position as it was in the cloned tab
         newWidget = self.currentWidget()
-        self.__restorePosition( newWidget.getEditor(), line, pos, firstVisible )
+        newWidget.getEditor().restorePosition( line, pos, firstVisible )
         return
 
     def onCloseOther( self ):
@@ -497,9 +497,8 @@ class EditorsManager( QTabWidget ):
             if initialContent != "":
                 editor.setText( initialContent )
                 lineNo = editor.lines()
-                self.__restorePosition( editor, lineNo - 1,
-                                        editor.lineLength( lineNo - 1 ), -1 )
-                editor.ensureLineVisible( lineNo - 1 )
+                editor.restorePosition( lineNo - 1,
+                                        editor.lineLength( lineNo - 1 ) )
         else:
             editor.setText( initialContent )
         editor.setModified( False )
@@ -1072,13 +1071,13 @@ class EditorsManager( QTabWidget ):
         self.history.updateForCurrentIndex()
         editor = self.currentWidget().getEditor()
         if editor.isLineVisible( lineNo - 1 ):
-            firstVisible = 0
+            editor.restorePosition( lineNo - 1, 0 )
         else:
             firstVisible = lineNo - 2
             if firstVisible <= 0:
                 firstVisible = 1
+            editor.restorePosition( lineNo - 1, 0, firstVisible - 1 )
 
-        self.__restorePosition( editor, lineNo - 1, 0, firstVisible - 1 )
         self.history.addCurrent()
         self.currentWidget().setFocus()
         return
@@ -1096,15 +1095,12 @@ class EditorsManager( QTabWidget ):
                         editor = self.widget( index ).getEditor()
                         if self.currentIndex() == index and \
                            editor.isLineVisible( lineNo - 1 ):
-                            editor.setCursorPosition( lineNo - 1, 0 )
-                            editor.setHScrollOffset( 0 )    # avoid unwanted
-                                                            # scrolling
+                            editor.restorePosition( lineNo - 1, 0 )
                         else:
                             firstVisible = lineNo - 2
                             if firstVisible <= 0:
                                 firstVisible = 1
-                            self.__restorePosition( editor,
-                                                    lineNo - 1, 0,
+                            editor.restorePosition( lineNo - 1, 0,
                                                     firstVisible - 1 )
                     self.activateTab( index )
                     if self.currentIndex() == index:
@@ -1140,14 +1136,13 @@ class EditorsManager( QTabWidget ):
                 firstVisible = lineNo - 2
                 if firstVisible <= 0:
                     firstVisible = 1
-                self.__restorePosition( editor, lineNo - 1, 0,
-                                        firstVisible - 1 )
+                editor.restorePosition( lineNo - 1, 0, firstVisible - 1 )
             else:
                 # Restore the last position
                 line, pos, firstVisible = \
                             Settings().filePositions.getPosition( fileName )
                 if line != -1:
-                    self.__restorePosition( editor, line, pos, firstVisible )
+                    editor.restorePosition( line, pos, firstVisible )
 
             self._updateIconAndTooltip( self.currentIndex(), fileType )
             self.__updateControls()
@@ -1170,11 +1165,14 @@ class EditorsManager( QTabWidget ):
         if widget.getUUID() != uuid:
             return
         self.history.updateForCurrentIndex()
-        firstVisible = lineNo - 2
-        if firstVisible <= 0:
-            firstVisible = 1
-        self.__restorePosition( widget.getEditor(),
-                                lineNo - 1, 0, firstVisible - 1 )
+        editor = widget.getEditor()
+        if editor.isLineVisible( lineNo - 1 ):
+            editor.restorePosition( lineNo - 1, 0 )
+        else:
+            firstVisible = lineNo - 2
+            if firstVisible <= 0:
+                firstVisible = 1
+            editor.restorePosition( lineNo - 1, 0, firstVisible - 1 )
         self.history.addCurrent()
         widget.setFocus()
         return
@@ -1641,7 +1639,7 @@ class EditorsManager( QTabWidget ):
                 # Need to jump to the memorized position because something
                 # has been changed
                 editor = widget.getEditor()
-                self.__restorePosition( editor, entry.line, entry.pos,
+                editor.restorePosition( entry.line, entry.pos,
                                         entry.firstVisible )
         self.__skipHistoryUpdate = False
         return
@@ -1933,8 +1931,8 @@ class EditorsManager( QTabWidget ):
 
             # A usual file
             if self.openFile( fileName, line ):
-                self.__restorePosition( self.widget( 0 ).getEditor(),
-                                        line, pos, firstLine )
+                self.widget( 0 ).getEditor().restorePosition( line, pos,
+                                                              firstLine )
 
         # Switch to the last active tab
         if self.count() == 0:
@@ -1956,19 +1954,6 @@ class EditorsManager( QTabWidget ):
         self.history.clear()
         self.history.addCurrent()
         self.__restoringTabs = False
-        return
-
-    @staticmethod
-    def __restorePosition( editor, line, pos, firstVisible ):
-        """ Set the cursor to the required position and
-            makes sure a certain line is visible if given """
-        editor.setCursorPosition( line, pos )
-        editor.setHScrollOffset( 0 ) # avoid unwanted scrolling
-
-        if firstVisible != -1:
-            editor.ensureLineVisible( firstVisible )
-            currentLine = editor.firstVisibleLine()
-            editor.scrollVertical( firstVisible - currentLine )
         return
 
     def __onZoom( self, zoomValue ):
@@ -2075,7 +2060,7 @@ class EditorsManager( QTabWidget ):
             self.widget( index ).reload()
 
             if isTextEditor:
-                self.__restorePosition( editor, line, pos, firstLine )
+                editor.restorePosition( line, pos, firstLine )
         except Exception, exc:
             # Error reloading the file, nothing to be changed
             logging.error( str( exc ) )
