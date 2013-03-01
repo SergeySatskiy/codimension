@@ -713,29 +713,34 @@ class BrowserModelBase( QAbstractItemModel ):
         for decor in classObj.decorators:
             if decor.name not in existingDecors:
                 newItem = TreeViewDecoratorItem( treeItem, decor )
-                newItem.appendData( [ treeItem.data( 1 ), decor.line ] )
-                newItem.setPath( self.findParentPath( treeItem ) )
+                if treeItem.columnCount() > 1:
+                    newItem.appendData( [ treeItem.data( 1 ), decor.line ] )
+                    newItem.setPath( self.findParentPath( treeItem ) )
                 self.addTreeItem( treeItem, newItem )
         for method in classObj.functions:
             if method.name not in existingMethods:
                 newItem = TreeViewFunctionItem( treeItem, method )
-                newItem.appendData( [ treeItem.data( 1 ), method.line ] )
-                newItem.setPath( self.findParentPath( treeItem ) )
+                if treeItem.columnCount() > 1:
+                    newItem.appendData( [ treeItem.data( 1 ), method.line ] )
+                    newItem.setPath( self.findParentPath( treeItem ) )
                 self.addTreeItem( treeItem, newItem )
 
         if not hadClasses and classObj.classes:
             newItem = TreeViewClassesItem( treeItem, classObj )
-            newItem.appendData( [ "", "" ] )
+            if treeItem.columnCount() > 1:
+                newItem.appendData( [ "", "" ] )
             self.addTreeItem( treeItem, newItem )
         if not hadStaticAttributes and \
            classObj.classAttributes:
             newItem = TreeViewStaticAttributesItem( treeItem )
-            newItem.appendData( [ "", "" ] )
+            if treeItem.columnCount() > 1:
+                newItem.appendData( [ "", "" ] )
             self.addTreeItem( treeItem, newItem )
         if not hadInstanceAttributes and \
            classObj.instanceAttributes:
             newItem = TreeViewInstanceAttributesItem( treeItem )
-            newItem.appendData( [ "", "" ] )
+            if treeItem.columnCount() > 1:
+                newItem.appendData( [ "", "" ] )
             self.addTreeItem( treeItem, newItem )
 
 
@@ -798,17 +803,20 @@ class BrowserModelBase( QAbstractItemModel ):
         for decor in funcObj.decorators:
             if decor.name not in existingDecors:
                 newItem = TreeViewDecoratorItem( treeItem, decor )
-                newItem.appendData( [ treeItem.data( 1 ), decor.line ] )
-                newItem.setPath( self.findParentPath( treeItem ) )
+                if treeItem.columnCount() > 1:
+                    newItem.appendData( [ treeItem.data( 1 ), decor.line ] )
+                    newItem.setPath( self.findParentPath( treeItem ) )
                 self.addTreeItem( treeItem, newItem )
 
         if not hadFunctions and funcObj.functions:
             newItem = TreeViewFunctionsItem( treeItem, funcObj )
-            newItem.appendData( [ "", "" ] )
+            if treeItem.columnCount() > 1:
+                newItem.appendData( [ "", "" ] )
             self.addTreeItem( treeItem, newItem )
         if not hadClasses and funcObj.classes:
             newItem = TreeViewClassesItem( treeItem, funcObj )
-            newItem.appendData( [ "", "" ] )
+            if treeItem.columnCount() > 1:
+                newItem.appendData( [ "", "" ] )
             self.addTreeItem( treeItem, newItem )
         return
 
@@ -846,8 +854,9 @@ class BrowserModelBase( QAbstractItemModel ):
         for cls in classesObj:
             if cls.name not in existingClasses:
                 newItem = TreeViewClassItem( treeItem, cls )
-                newItem.appendData( [ treeItem.data( 1 ), cls.line ] )
-                newItem.setPath( self.findParentPath( treeItem ) )
+                if treeItem.columnCount() > 1:
+                    newItem.appendData( [ treeItem.data( 1 ), cls.line ] )
+                    newItem.setPath( self.findParentPath( treeItem ) )
                 self.addTreeItem( treeItem, newItem )
         return
 
@@ -886,8 +895,9 @@ class BrowserModelBase( QAbstractItemModel ):
         for func in functionsObj:
             if func.name not in existingFunctions:
                 newItem = TreeViewFunctionItem( treeItem, func )
-                newItem.appendData( [ treeItem.data( 1 ), func.line ] )
-                newItem.setPath( self.findParentPath( treeItem ) )
+                if treeItem.columnCount() > 1:
+                    newItem.appendData( [ treeItem.data( 1 ), func.line ] )
+                    newItem.setPath( self.findParentPath( treeItem ) )
                 self.addTreeItem( treeItem, newItem )
         return
 
@@ -921,8 +931,9 @@ class BrowserModelBase( QAbstractItemModel ):
         for attr in attributesObj:
             if attr.name not in existingAttributes:
                 newItem = TreeViewAttributeItem( treeItem, attr )
-                newItem.appendData( [ treeItem.data( 1 ), attr.line ] )
-                newItem.setPath( self.findParentPath( treeItem ) )
+                if treeItem.columnCount() > 1:
+                    newItem.appendData( [ treeItem.data( 1 ), attr.line ] )
+                    newItem.setPath( self.findParentPath( treeItem ) )
                 self.addTreeItem( treeItem, newItem )
         return
 
