@@ -192,10 +192,10 @@ class CodimensionMainWindow( QMainWindow ):
 
         # 0 does not work, the window must be properly
         # drawn before restoring the old position
-        QTimer.singleShot( 1, self.__restorePosition )
+        QTimer.singleShot( 1, self.__restoreWindowPosition )
         return
 
-    def __restorePosition( self ):
+    def __restoreWindowPosition( self ):
         " Makes sure that the window frame delta is proper "
         screenSize = GlobalData().application.desktop().screenGeometry()
         if screenSize.width() != self.settings.screenwidth or \

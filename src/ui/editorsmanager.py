@@ -361,7 +361,7 @@ class EditorsManager( QTabWidget ):
 
         # Put the cursor to the exact same position as it was in the cloned tab
         newWidget = self.currentWidget()
-        newWidget.getEditor().restorePosition( line, pos, firstVisible )
+        newWidget.getEditor().gotoLine( line + 1, pos + 1, firstVisible + 1 )
         return
 
     def onCloseOther( self ):
@@ -497,8 +497,7 @@ class EditorsManager( QTabWidget ):
             if initialContent != "":
                 editor.setText( initialContent )
                 lineNo = editor.lines()
-                editor.restorePosition( lineNo - 1,
-                                        editor.lineLength( lineNo - 1 ) )
+                editor.gotoLine( lineNo, editor.lineLength( lineNo - 1 ) )
         else:
             editor.setText( initialContent )
         editor.setModified( False )
@@ -1069,14 +1068,8 @@ class EditorsManager( QTabWidget ):
         # Used when rope works with unsaved buffer and a definition line is
         # given without a resource - we need to jump within the buffer
         self.history.updateForCurrentIndex()
-        editor = self.currentWidget().getEditor()
-        if editor.isLineVisible( lineNo - 1 ):
-            editor.restorePosition( lineNo - 1, 0 )
-        else:
-            firstVisible = lineNo - 2
-            if firstVisible <= 0:
-                firstVisible = 1
-            editor.restorePosition( lineNo - 1, 0, firstVisible - 1 )
+
+        self.currentWidget().getEditor().gotoLine( lineNo )
 
         self.history.addCurrent()
         self.currentWidget().setFocus()
@@ -1086,22 +1079,14 @@ class EditorsManager( QTabWidget ):
         " Opens the required file "
         try:
             # Check if the file is already opened
-            for index in range( self.count() ):
+            for index in xrange( self.count() ):
                 if self.widget( index ).getFileName() == fileName:
                     # Found
                     if self.currentIndex() == index:
                         self.history.updateForCurrentIndex()
                     if lineNo > 0:
                         editor = self.widget( index ).getEditor()
-                        if self.currentIndex() == index and \
-                           editor.isLineVisible( lineNo - 1 ):
-                            editor.restorePosition( lineNo - 1, 0 )
-                        else:
-                            firstVisible = lineNo - 2
-                            if firstVisible <= 0:
-                                firstVisible = 1
-                            editor.restorePosition( lineNo - 1, 0,
-                                                    firstVisible - 1 )
+                        editor.gotoLine( lineNo )
                     self.activateTab( index )
                     if self.currentIndex() == index:
                         self.history.addCurrent()
@@ -1133,16 +1118,13 @@ class EditorsManager( QTabWidget ):
 
             if lineNo > 0:
                 # Jump to the asked line
-                firstVisible = lineNo - 2
-                if firstVisible <= 0:
-                    firstVisible = 1
-                editor.restorePosition( lineNo - 1, 0, firstVisible - 1 )
+                editor.gotoLine( lineNo )
             else:
                 # Restore the last position
                 line, pos, firstVisible = \
                             Settings().filePositions.getPosition( fileName )
                 if line != -1:
-                    editor.restorePosition( line, pos, firstVisible )
+                    editor.gotoLine( line + 1, pos + 1, firstVisible + 1)
 
             self._updateIconAndTooltip( self.currentIndex(), fileType )
             self.__updateControls()
@@ -1165,14 +1147,7 @@ class EditorsManager( QTabWidget ):
         if widget.getUUID() != uuid:
             return
         self.history.updateForCurrentIndex()
-        editor = widget.getEditor()
-        if editor.isLineVisible( lineNo - 1 ):
-            editor.restorePosition( lineNo - 1, 0 )
-        else:
-            firstVisible = lineNo - 2
-            if firstVisible <= 0:
-                firstVisible = 1
-            editor.restorePosition( lineNo - 1, 0, firstVisible - 1 )
+        editor = widget.getEditor().gotoLine( lineNo )
         self.history.addCurrent()
         widget.setFocus()
         return
@@ -1639,8 +1614,8 @@ class EditorsManager( QTabWidget ):
                 # Need to jump to the memorized position because something
                 # has been changed
                 editor = widget.getEditor()
-                editor.restorePosition( entry.line, entry.pos,
-                                        entry.firstVisible )
+                editor.gotoLine( entry.line + 1, entry.pos + 1,
+                                 entry.firstVisible + 1)
         self.__skipHistoryUpdate = False
         return
 
@@ -1931,8 +1906,8 @@ class EditorsManager( QTabWidget ):
 
             # A usual file
             if self.openFile( fileName, line ):
-                self.widget( 0 ).getEditor().restorePosition( line, pos,
-                                                              firstLine )
+                self.widget( 0 ).getEditor().gotoLine( line + 1, pos + 1,
+                                                       firstLine + 1)
 
         # Switch to the last active tab
         if self.count() == 0:
@@ -2060,7 +2035,7 @@ class EditorsManager( QTabWidget ):
             self.widget( index ).reload()
 
             if isTextEditor:
-                editor.restorePosition( line, pos, firstLine )
+                editor.gotoLine( line + 1, pos + 1, firstLine + 1 )
         except Exception, exc:
             # Error reloading the file, nothing to be changed
             logging.error( str( exc ) )

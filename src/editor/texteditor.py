@@ -557,15 +557,6 @@ class TextEditor( ScintillaWrapper ):
         self.SendScintilla( self.SCI_CLEARCMDKEY, ord( 'L' ) + ctrl )
         return
 
-    def gotoLine( self, lineNo ):
-        " Jumps to the beginning of the line lineNo "
-        if self.isLineVisible( lineNo - 1 ):
-            self.setCursorPosition( lineNo - 1, 0 )
-        else:
-            self.setCursorPosition( lineNo - 1, 0 )
-            self.ensureLineVisible( lineNo )
-        return
-
     def bindLexer( self, fileName, fileType ):
         " Sets the correct lexer depending on language "
 
@@ -1800,27 +1791,50 @@ class TextEditor( ScintillaWrapper ):
                                 self.SC_TIME_FOREVER )
         return
 
-    def restorePosition( self, line, pos, firstVisible = None ):
-        " Restores the view as it is specified "
+    def gotoLine( self, line, pos = None, firstVisible = None ):
+        """ Jumps to the given position and scrolls if needed.
+            line and pos and firstVisible are 1-based. """
 
-        # This business with a wrap mode is a workaround a scintilla bug:
-        # in wrap mode the line is miscalculated.
-        currentWrapMode = self.wrapMode()
-        if currentWrapMode != QsciScintilla.WrapNone:
-            self.setWrapMode( QsciScintilla.WrapNone )
+        # Normalize editor line and pos
+        editorLine = line - 1
+        if editorLine < 0:
+            editorLine = 0
+        if pos is None or pos <= 0:
+            editorPos = 0
+        else:
+            editorPos = pos - 1
 
-        self.setCursorPosition( line, pos )
+        if self.isLineOnScreen( editorLine ):
+            if firstVisible is None:
+                self.setCursorPosition( editorLine, editorPos )
+                return
+
+        # The line could be in a collapsed block
+        self.ensureLineVisible( editorLine )
+
+        # Otherwise we would deal with scrolling any way, so normalize
+        # the first visible line
+        if firstVisible is None:
+            editorFirstVisible = editorLine - 1
+        else:
+            editorFirstVisible = firstVisible - 1
+        if editorFirstVisible < 0:
+            editorFirstVisible = 0
+
+        self.setCursorPosition( editorLine, editorPos )
         self.setHScrollOffset( 0 ) # avoid unwanted scrolling
 
-        if firstVisible is not None:
-            self.ensureLineVisible( firstVisible )
-            currentLine = self.firstVisibleLine()
-            self.scrollVertical( firstVisible - currentLine )
-
-        # Restore the mode if needed
-        if currentWrapMode != QsciScintilla.WrapNone:
-            self.setWrapMode( currentWrapMode )
+        # The loop below is required because in line wrap mode a line could
+        # occupy a few lines while the scroll is done in formal lines.
+        # In practice the desirable scroll is done in up to 5 iterations or so!
+        self.SendScintilla( self.SCI_SETFIRSTVISIBLELINE, editorFirstVisible )
+        currentFirstVisible = self.firstVisibleLine()
+        while currentFirstVisible != editorFirstVisible:
+            self.scrollVertical( editorFirstVisible - currentFirstVisible )
+            currentFirstVisible = self.firstVisibleLine()
         return
+
+
 
 
 class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
