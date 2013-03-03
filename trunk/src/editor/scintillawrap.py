@@ -100,8 +100,30 @@ class ScintillaWrapper( QsciScintilla ):
 
     def linesOnScreen( self ):
         """ Provides the number of the visible lines """
-
         return self.SendScintilla( self.SCI_LINESONSCREEN )
+
+    def firstVisibleLine( self ):
+        " Overriden base class method "
+        # Scintilla makes mistake if a line wrap mode is on
+        # So this ugly implementation...
+        pos = self.SendScintilla( self.SCI_POSITIONFROMPOINT, 1, 1 )
+        line, index = self.lineIndexFromPosition( pos )
+        return line
+
+    def lastVisibleLine( self ):
+        " Provides the last visible line on the screen "
+        pos = self.SendScintilla( self.SCI_POSITIONFROMPOINT, 1,
+                                  self.height() - 3 )
+        line, index = self.lineIndexFromPosition( pos )
+        return line
+
+    def isLineOnScreen( self, lineNumber ):
+        " True if the line is on screen and visible "
+        if not self.isLineVisible( lineNumber ):
+            return False
+        if lineNumber < self.firstVisibleLine():
+            return False
+        return lineNumber <= self.lastVisibleLine()
 
     def isLineVisible( self, lineNumber ):
         " Tells is line is visible "
