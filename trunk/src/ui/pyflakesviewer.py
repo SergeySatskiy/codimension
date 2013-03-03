@@ -27,7 +27,7 @@ from PyQt4.QtGui import QMenu
 from utils.pixmapcache import PixmapCache
 from utils.fileutils import PythonFileType, Python3FileType, detectFileType
 from mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from utils.ierrors import getFileErrors
+from analysis.ierrors import getFileErrors
 
 
 
