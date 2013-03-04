@@ -22,16 +22,16 @@
 " Utilities to build completeion lists to suggest to the user "
 
 
-from cdmbriefparser          import getBriefModuleInfoFromMemory, \
-                                    getBriefModuleInfoFromFile
-from bufferutils             import getEditorTags
-from utils.globals           import GlobalData
-from listmodules             import getSysModules, getModules
+from cdmbriefparser import ( getBriefModuleInfoFromMemory,
+                             getBriefModuleInfoFromFile )
+from bufferutils import getEditorTags
+from utils.globals import GlobalData
+from listmodules import getSysModules, getModules
 import os, imp
-from rope.base.libutils      import path_to_resource
+from rope.base.libutils import path_to_resource
 from rope.contrib.codeassist import code_assist, get_calltip, get_doc
-from rope.contrib.findit     import find_definition, find_occurrences
-from rope.base               import worder
+from rope.contrib.findit import find_definition, find_occurrences
+from rope.base import worder
 
 __systemwideModules = {}
 __systemwideInitialized = False
