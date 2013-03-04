@@ -24,7 +24,7 @@
 """ codimension project """
 
 import os, os.path, ConfigParser, logging, uuid, re, copy
-import rope.base.project
+from rope.base.project import Project as RopeProject
 from os.path import realpath, islink, isdir, sep
 from briefmodinfocache import BriefModuleInfoCache
 from runparamscache import RunParametersCache
@@ -554,9 +554,8 @@ class CodimensionProject( QObject ):
             prefs[ "source_folders" ] = self.__ropeSourceDirs
 
         # Rope folder is default here, so it will be created
-        self.__ropeProject = rope.base.project.Project( \
-                                            self.getProjectDir(),
-                                            **prefs )
+        self.__ropeProject = RopeProject( self.getProjectDir(),
+                                          **prefs )
         self.__ropeProject.validate( self.__ropeProject.root )
         return
 
