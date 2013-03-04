@@ -105,23 +105,14 @@ def __isBinaryModule( moduleName ):
 
 def __getParsedModuleNames( info ):
     " Provides the names which could be imported from a module "
-    result = []
+    result = set()
     for item in info.globals:
-        name = item.name
-        if name.startswith( '__' ) and not name.endswith( '__' ):
-            continue
-        result.append( name )
+        result.add( item.name )
     for item in info.functions:
-        name = item.name
-        if name.startswith( '__' ) and not name.endswith( '__' ):
-            continue
-        result.append( name )
+        result.add( item.name )
     for item in info.classes:
-        name = item.name
-        if name.startswith( '__' ) and not name.endswith( '__' ):
-            continue
-        result.append( name )
-    return result
+        result.add( item.name )
+    return list( result )
 
 
 def __getImportedObjects( moduleName, fileName ):
