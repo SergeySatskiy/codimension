@@ -27,13 +27,8 @@ It performs necessery initialization and starts the Qt main loop.
 
 __version__ = "0.0"
 
-import sys, os, os.path, traceback, logging, shutil, time
-from PyQt4 import QtGui
-from optparse import OptionParser
+import sys, os, os.path
 from PyQt4.QtCore import SIGNAL, SLOT, QTimer, QDir, QTextCodec
-from utils.latestver import getLatestVersionFile
-from autocomplete.completelists import buildSystemWideModulesList
-
 
 try:
     # Dirty hack to have default encoding set.
@@ -52,8 +47,18 @@ sys.argv[0] = os.path.realpath( sys.argv[0] )
 # Make it possible to import from the subdirectories
 srcDir = os.path.dirname( os.path.abspath( sys.argv[0] ) )
 if not srcDir in sys.path:
-    sys.path.append( srcDir )
+    sys.path.insert( 0, srcDir )
+ropeDir = srcDir + os.path.sep + "thirdparty" + os.path.sep + "rope"
+if not ropeDir in sys.path:
+    sys.path.insert( 0, ropeDir )
 
+
+
+import traceback, logging, shutil, time
+from PyQt4 import QtGui
+from optparse import OptionParser
+from utils.latestver import getLatestVersionFile
+from autocomplete.completelists import buildSystemWideModulesList
 from utils.settings             import Settings, settingsDir
 from utils.globals              import GlobalData
 from ui.application             import CodimensionApplication
