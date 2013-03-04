@@ -326,5 +326,9 @@ def getEditorTags( editor, exclude = "", excludePythonKeywords = False ):
                 if word not in excludeSet:
                     result.add( word )
 
+    # If a cursor is in a middle of the word then the current word is not what
+    # you need.
+    currentWord = str( editor.getCurrentWord() ).strip()
+    result.discard( currentWord )
     return result
 
