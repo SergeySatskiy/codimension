@@ -57,7 +57,7 @@ def __getModuleNames( fileName ):
     # if file is an absolute path: modules for the basedir
     specificModules = getProjectSpecificModules( fileName )
     specificModules.update( __systemwideModules )
-    return specificModules.keys()
+    return set( specificModules.keys() )
 
 
 def getSystemWideModules():
@@ -112,7 +112,7 @@ def __getParsedModuleNames( info ):
         result.add( item.name )
     for item in info.classes:
         result.add( item.name )
-    return list( result )
+    return result
 
 
 def __getImportedObjects( moduleName, fileName ):
@@ -134,17 +134,17 @@ def __getImportedObjects( moduleName, fileName ):
             modulePath = specificModules[ moduleName ]
 
     if modulePath is None:
-        return []
+        return set()
 
     binarySuffix = __isBinaryModule( modulePath )
     if binarySuffix is not None:
         try:
             modName = os.path.basename( modulePath )
             modObj = imp.load_module( modName, None, modulePath, binarySuffix )
-            return dir( modObj )
+            return set( dir( modObj ) )
         except:
             # Failed to load a binary module
-            return []
+            return set()
 
     # It's not a binary module, so parse it and make a list of objects.
     # Check first if the module is loaded into the editor
@@ -192,14 +192,12 @@ def getImportNames( importName ):
     try:
         mod = importModule( importName )
 
-        result = []
+        result = set()
         for item in dir( mod ):
-            if item.startswith( '__' ):
-                continue
-            result.append( item )
+            result.add( item )
         return result
     except:
-        return []
+        return set()
 
 
 def _addClassPrivateNames( classInfo, names ):
@@ -375,7 +373,7 @@ def getOccurencesForFilePosition( fileName, position, throwException ):
 def _excludePrivateAndBuiltins( proposals ):
     " Returns a list of names excluding private members and __xxx__() methods "
 
-    # Different versions of rope has a different name of an attribute:
+    # Different versions of rope have a different name of an attribute:
     # 'kind' or 'scope'. 'scope' is newer.
     initialized = False
     hasScope = False
@@ -429,15 +427,22 @@ def getCompletionList( fileName, scope, obj, prefix,
         autocompletion depending on the text cursor scope and the
         object the user wants competion for """
 
+    # The current editor word should be excluded in all the cases
+    currentWord = str( editor.getCurrentWord() ).strip()
+
     onImportModule, needToComplete, moduleName = editor.isOnSomeImport()
     if onImportModule:
         if not needToComplete:
             # No need to complete
             return [], False
         if moduleName != "":
-            return __getImportedObjects( moduleName, fileName ), False
+            result = __getImportedObjects( moduleName, fileName )
+            result.discard( currentWord )
+            return list( result ), False
         # Need to complete a module name
-        return list( __getModuleNames( fileName ) ), True
+        result = __getModuleNames( fileName )
+        result.discard( currentWord )
+        return list( result ), True
 
     if editor.isRemarkLine():
         return list( getEditorTags( editor, prefix, True ) ), False
@@ -469,6 +474,7 @@ def getCompletionList( fileName, scope, obj, prefix,
                     info = getBriefModuleInfoFromMemory( text )
                 _addClassPrivateNames( scope.levels[ scope.length - 2 ][ 0 ],
                                        result )
+                result.discard( currentWord )
                 return list( result ), False
 
     # Rope does not offer anything for system modules, let's handle it here
@@ -477,7 +483,9 @@ def getCompletionList( fileName, scope, obj, prefix,
         isSystemImport, realImportName = _isSystemImportOrAlias( obj, text, info )
         if isSystemImport:
             # Yes, that is a reference to something from a system module
-            return __getImportedObjects( realImportName, "" ), False
+            result = __getImportedObjects( realImportName, "" )
+            result.discard( currentWord )
+            return list( result ), False
 
     # Try rope completion
     proposals, isOK = _getRopeCompletion( fileName, text, editor, prefix )
@@ -493,5 +501,6 @@ def getCompletionList( fileName, scope, obj, prefix,
         # words from another scope
         proposals.update( getEditorTags( editor, prefix, True ) )
 
+    proposals.discard( currentWord )
     return list( proposals ), False
 
