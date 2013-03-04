@@ -497,7 +497,7 @@ class EditorsManager( QTabWidget ):
             if initialContent != "":
                 editor.setText( initialContent )
                 lineNo = editor.lines()
-                editor.gotoLine( lineNo, editor.lineLength( lineNo - 1 ) )
+                editor.gotoLine( lineNo, editor.lineLength( lineNo - 1 ) + 1 )
         else:
             editor.setText( initialContent )
         editor.setModified( False )
