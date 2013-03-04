@@ -23,13 +23,13 @@
 """ global data singleton """
 
 import os, sys,  copy
-import rope.base.project
-from project            import CodimensionProject
-from briefmodinfocache  import BriefModuleInfoCache
-from runparamscache     import RunParametersCache
-from settings           import ropePreferences, settingsDir
-from PyQt4.QtCore       import QDir
-from compatibility      import relpath
+from rope.base.project import Project as RopeProject
+from project import CodimensionProject
+from briefmodinfocache import BriefModuleInfoCache
+from runparamscache import RunParametersCache
+from settings import ropePreferences, settingsDir
+from PyQt4.QtCore import QDir
+from compatibility import relpath
 
 
 # This function needs to have a rope project built smart
@@ -147,8 +147,7 @@ class GlobalData( object ):
             else:
                 prefs[ "ignored_resources" ] = subdirsToExclude
 
-            project = rope.base.project.Project( dirName, None, None,
-                                                 **prefs )
+            project = RopeProject( dirName, None, None, **prefs )
             project.validate( project.root )
             return project
 
