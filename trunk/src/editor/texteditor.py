@@ -1545,7 +1545,7 @@ class TextEditor( ScintillaWrapper ):
         """ Returns 3 values:
             bool   - this is an import line
             bool   - a list of modules should be provided
-            string - module name from which an aobject is to imported
+            string - module name from which an object is to be imported
         """
         # There are two case:
         # import BLA1, BLA2 as WHATEVER2, BLA3
@@ -1553,6 +1553,8 @@ class TextEditor( ScintillaWrapper ):
         isImport, line = self.isImportLine()
         if isImport == False:
             return False, False, ""
+
+        charsToSkip = [ ' ', '\\', '\r', '\n', '\t' ]
 
         text = self.text( line ).trimmed()
         if text.startsWith( "import" ):
@@ -1562,11 +1564,12 @@ class TextEditor( ScintillaWrapper ):
                 return True, False, ""
             # Search for the first non space character before the current word
             position = self.currentPosition() - 1
-            while self.charAt(position) not in [ ' ', '\\', '\r', '\n', '\t' ]:
+            while self.charAt( position ) not in charsToSkip:
                 position -= 1
-            while self.charAt(position) in [ ' ', '\\', '\r', '\n', '\t' ]:
+            while self.charAt( position ) in charsToSkip:
                 position -= 1
-            if self.charAt(position) == ',':
+            previousChar = self.charAt( position )
+            if previousChar in [ ',', '(' ]:
                 # It's an import line and need to complete
                 return True, True, ""
 
@@ -1584,9 +1587,9 @@ class TextEditor( ScintillaWrapper ):
             return True, False, ""
         # Search for the first non space character before the current word
         position = self.currentPosition() - 1
-        while self.charAt( position ) not in [ ' ', '\\', '\r', '\n', '\t' ]:
+        while self.charAt( position ) not in charsToSkip:
             position -= 1
-        while self.charAt( position ) in [ ' ', '\\', '\r', '\n', '\t' ]:
+        while self.charAt( position ) in charsToSkip:
             position -= 1
 
         wordLine, pos = self.lineIndexFromPosition( position )
@@ -1597,7 +1600,8 @@ class TextEditor( ScintillaWrapper ):
         if previousWord == "from":
             # Completing a module
             return True, True, ""
-        if previousWord == "import" or self.charAt( position ) == ',':
+        previousChar = self.charAt( position )
+        if previousWord == "import" or previousChar in [ ',', '(' ]:
             # Need to complete an imported object
             position = self.positionFromLineIndex( line, 0 )
             while self.charAt( position ) in [ ' ', '\t' ]:
@@ -1609,7 +1613,7 @@ class TextEditor( ScintillaWrapper ):
                 return True, False, ""
             # Next is a module name
             position += len( 'from' )
-            while self.charAt( position ) in [ ' ', '\\', '\r', '\n', '\t' ]:
+            while self.charAt( position ) in charsToSkip:
                 position += 1
             wordLine, pos = self.lineIndexFromPosition( position )
             moduleName = self.getWord( wordLine, pos, 0, True, "." )
@@ -1617,7 +1621,7 @@ class TextEditor( ScintillaWrapper ):
                 return True, False, ""
             # Sanity check - there is 'import' after that
             position += len( moduleName )
-            while self.charAt( position ) in [ ' ', '\\', '\r', '\n', '\t' ]:
+            while self.charAt( position ) in charsToSkip:
                 position += 1
             wordLine, pos = self.lineIndexFromPosition( position )
             word = self.getWord( wordLine, pos )
