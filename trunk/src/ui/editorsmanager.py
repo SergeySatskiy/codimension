@@ -30,29 +30,26 @@
 
 
 import logging, os, os.path
-from PyQt4.QtCore               import Qt, SIGNAL, \
-                                       QVariant, QDir, QUrl
-from PyQt4.QtGui                import QTabWidget, QDialog, QMessageBox, \
-                                       QWidget, QHBoxLayout, QMenu, \
-                                       QToolButton, QShortcut, QFileDialog, \
-                                       QApplication, QTabBar, QIcon
-from utils.pixmapcache          import PixmapCache
-from welcomewidget              import WelcomeWidget
-from helpwidget                 import QuickHelpWidget
-from editor.texteditor          import TextEditorTabWidget
-from pixmapwidget               import PixmapTabWidget
-from utils.fileutils            import detectFileType, PythonFileType, \
-                                       Python3FileType, PixmapFileType, \
-                                       UnknownFileType
-from utils.compatibility        import relpath
-from utils.misc                 import getNewFileTemplate, getLocaleDateTime
-from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
-from utils.globals              import GlobalData
-from utils.settings             import Settings
-from tabshistory                import TabsHistory
+from PyQt4.QtCore import Qt, SIGNAL, QVariant, QDir, QUrl
+from PyQt4.QtGui import ( QTabWidget, QDialog, QMessageBox, QWidget,
+                          QHBoxLayout, QMenu, QToolButton, QShortcut,
+                          QFileDialog, QApplication, QTabBar, QIcon )
+from utils.pixmapcache import PixmapCache
+from welcomewidget import WelcomeWidget
+from helpwidget import QuickHelpWidget
+from editor.texteditor import TextEditorTabWidget
+from pixmapwidget import PixmapTabWidget
+from utils.fileutils import ( detectFileType, PythonFileType, Python3FileType,
+                              PixmapFileType, UnknownFileType )
+from utils.compatibility import relpath
+from utils.misc import getNewFileTemplate, getLocaleDateTime
+from mainwindowtabwidgetbase import MainWindowTabWidgetBase
+from utils.globals import GlobalData
+from utils.settings import Settings
+from tabshistory import TabsHistory
 from diagram.importsdgmgraphics import ImportDgmTabWidget
-from htmltabwidget              import HTMLTabWidget
-from profiling.disasmwidget     import DisassemblerResultsWidget
+from htmltabwidget import HTMLTabWidget
+from profiling.disasmwidget import DisassemblerResultsWidget
 
 
 
