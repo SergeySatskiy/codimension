@@ -160,7 +160,7 @@ class FilesBrowser( QTreeView ):
     def _resizeColumns( self, index ):
         " Resizes the view when items get expanded or collapsed "
 
-        rowCount = self.model().rowCount()
+        # rowCount = self.model().rowCount()
         self.header().setStretchLastSection( True )
 
         width = max( 100, self.sizeHintForColumn( 0 ) )
