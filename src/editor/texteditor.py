@@ -1528,7 +1528,7 @@ class TextEditor( ScintillaWrapper ):
             if line == 0:
                 break
             prevLine = self.text( line - 1 ).trimmed()
-            if not prevLine.endsWith( '\\' ):
+            if not prevLine.endsWith( '\\' ) and not prevLine.endsWith( ',' ):
                 break
             line -= 1
 
