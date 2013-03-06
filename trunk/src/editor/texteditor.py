@@ -1843,7 +1843,13 @@ class TextEditor( ScintillaWrapper ):
         currentFirstVisible = self.firstVisibleLine()
         while currentFirstVisible != editorFirstVisible:
             self.scrollVertical( editorFirstVisible - currentFirstVisible )
-            currentFirstVisible = self.firstVisibleLine()
+            newFirstVisible = self.firstVisibleLine()
+            if newFirstVisible == currentFirstVisible:
+                # Scintilla refuses to scroll any further, e.g.
+                # The memorized position was below the current file size (file
+                # was reduced outside of codimension)
+                break
+            currentFirstVisible = newFirstVisible
         return
 
 
