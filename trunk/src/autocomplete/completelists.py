@@ -427,22 +427,15 @@ def getCompletionList( fileName, scope, obj, prefix,
         autocompletion depending on the text cursor scope and the
         object the user wants competion for """
 
-    # The current editor word should be excluded in all the cases
-    currentWord = str( editor.getCurrentWord() ).strip()
-
     onImportModule, needToComplete, moduleName = editor.isOnSomeImport()
     if onImportModule:
         if not needToComplete:
             # No need to complete
             return [], False
         if moduleName != "":
-            result = __getImportedObjects( moduleName, fileName )
-            result.discard( currentWord )
-            return list( result ), False
+            return list( __getImportedObjects( moduleName, fileName  ) ), False
         # Need to complete a module name
-        result = __getModuleNames( fileName )
-        result.discard( currentWord )
-        return list( result ), True
+        return list( __getModuleNames( fileName ) ), True
 
     if editor.isRemarkLine():
         return list( getEditorTags( editor, prefix, True ) ), False
@@ -474,7 +467,6 @@ def getCompletionList( fileName, scope, obj, prefix,
                     info = getBriefModuleInfoFromMemory( text )
                 _addClassPrivateNames( scope.levels[ scope.length - 2 ][ 0 ],
                                        result )
-                result.discard( currentWord )
                 return list( result ), False
 
     # Rope does not offer anything for system modules, let's handle it here
@@ -483,24 +475,28 @@ def getCompletionList( fileName, scope, obj, prefix,
         isSystemImport, realImportName = _isSystemImportOrAlias( obj, text, info )
         if isSystemImport:
             # Yes, that is a reference to something from a system module
-            result = __getImportedObjects( realImportName, "" )
-            result.discard( currentWord )
-            return list( result ), False
+            return list( __getImportedObjects( realImportName, "" ) ), False
 
     # Try rope completion
     proposals, isOK = _getRopeCompletion( fileName, text, editor, prefix )
+
     if isOK == False:
         return list( getEditorTags( editor, prefix, True ) ), False
 
-    proposals = _excludePrivateAndBuiltins( proposals )
-    if not proposals:
+    result = _excludePrivateAndBuiltins( proposals )
+
+    # By some reasons rope sometimes inserts the current word with '=' at the
+    # end. Let's just discard it.
+    currentWord = str( editor.getCurrentWord() ).strip()
+    result.discard( currentWord + "=" )
+
+    if not result:
         return list( getEditorTags( editor, prefix, True ) ), False
 
     if obj == "":
         # Inject the editor tags as it might be good to have
         # words from another scope
-        proposals.update( getEditorTags( editor, prefix, True ) )
+        result.update( getEditorTags( editor, prefix, True ) )
 
-    proposals.discard( currentWord )
-    return list( proposals ), False
+    return list( result ), False
 
