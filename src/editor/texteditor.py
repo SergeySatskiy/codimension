@@ -1495,19 +1495,28 @@ class TextEditor( ScintillaWrapper ):
     def insertCompletion( self, text ):
         " Triggered when a completion is selected "
         if text:
-            oldBuffer = QApplication.clipboard().text()
+            currentWord = str( self.getCurrentWord() )
             prefixLength = len( self.__completionPrefix.decode( 'utf-8' ) )
+            wordLength = len( currentWord.decode( 'utf-8' ) )
             line, pos = self.getCursorPosition()
-            self.beginUndoAction()
-            self.setSelection( line, pos - prefixLength, line, pos )
-            self.removeSelectedText()
-            self.insert( text )
-            self.setCursorPosition( line, pos + len( text ) - prefixLength )
-            self.endUndoAction()
+
+            if text == currentWord:
+                # No changes, just possible cursor position change
+                self.setCursorPosition( line, pos + len( text ) - prefixLength )
+            else:
+                oldBuffer = QApplication.clipboard().text()
+                self.beginUndoAction()
+                self.setSelection( line, pos - prefixLength,
+                                   line, pos + wordLength - prefixLength )
+                self.removeSelectedText()
+                self.insert( text )
+                self.setCursorPosition( line, pos + len( text ) - prefixLength )
+                self.endUndoAction()
+                QApplication.clipboard().setText( oldBuffer )
+
             self.__completionPrefix = ""
             self.__completionObject = ""
             self.__completer.hide()
-            QApplication.clipboard().setText( oldBuffer )
         return
 
     @staticmethod
