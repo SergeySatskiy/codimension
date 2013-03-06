@@ -1840,7 +1840,6 @@ class TextEditor( ScintillaWrapper ):
         # The loop below is required because in line wrap mode a line could
         # occupy a few lines while the scroll is done in formal lines.
         # In practice the desirable scroll is done in up to 5 iterations or so!
-        self.SendScintilla( self.SCI_SETFIRSTVISIBLELINE, editorFirstVisible )
         currentFirstVisible = self.firstVisibleLine()
         while currentFirstVisible != editorFirstVisible:
             self.scrollVertical( editorFirstVisible - currentFirstVisible )
