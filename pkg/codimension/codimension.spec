@@ -15,7 +15,6 @@ Requires: python
 Requires: codimension-parser >= 1.6
 Requires: PyQt4 qscintilla-python
 Requires: pylint python-chardet graphviz
-Requires: python-rope >= 0.9.2
 
 BuildRequires: desktop-file-utils
 
