@@ -211,5 +211,5 @@ class LogViewer( QWidget ):
 
     def getText( self ):
         " Provides the content as a plain text "
-        return str( self.messages.plainText() )
+        return str( self.messages.toPlainText() )
 

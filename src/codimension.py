@@ -410,7 +410,7 @@ def exceptionHook( excType, excValue, tracebackObj ):
         else:
             f.write( "Has not been created yet\n" )
 
-        f.write( "\n\n" )
+        f.write( "------\n\n" )
         f.close()
     except:
         savedOK = False
@@ -422,23 +422,24 @@ def exceptionHook( excType, excValue, tracebackObj ):
     # Display the message as a QT modal dialog box if the application
     # has started
     if not globalData.application is None:
-        message = "<html>Unhandled exception is caught. "
+        message = "<html><body>"
         if savedOK:
-            message += "The collected information was saved in " + \
+            message += "Stack trace and log window content saved in " + \
                        excptFileName + ".<br>"
         else:
-            message += "Error saving the collected information in " + \
+            message += "Failed to save stack trace and log window content in " + \
                        excptFileName + ".<br>"
 
         lines = stackTraceString.split( '\n' )
         if len( lines ) > 32:
-            message += "First 32 lines of the stack trace:<br>" + \
+            message += "First 32 lines of the stack trace " \
+                       "(the rest is truncated):" \
                        "<pre>" + "\n".join( lines[ : 32 ] ) + "<pre>"
         else:
-            message += "Stack trace:<br>" + \
+            message += "Stack trace:" + \
                        "<pre>" + stackTraceString + "</pre>"
-        message += "</html>"
-        QtGui.QMessageBox.critical( None, "Error: " + error, message )
+        message += "</body></html>"
+        QtGui.QMessageBox.critical( None, "Unhandled exception: " + error, message )
         globalData.application.exit( 1 )
     return
 
