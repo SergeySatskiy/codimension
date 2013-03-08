@@ -39,7 +39,8 @@ from utils.fileutils import ( PythonFileType, Python3FileType, RubyFileType,
                               SVGFileType, DFileType, CFileType,
                               CHeaderFileType, CPPFileType, CPPHeaderFileType,
                               HTMLFileType, CSSFileType, XMLFileType,
-                              MakefileType, ShellFileType, JavascriptFileType )
+                              MakefileType, ShellFileType, JavascriptFileType,
+                              DiffFileType )
 
 
 # The lexer registry
@@ -130,6 +131,7 @@ from lexerxml import LexerXML
 from lexerproperties import LexerProperties
 from lexerbash import LexerBash
 from lexerjavascript import LexerJavaScript
+from lexerdiff import LexerDiff
 
 __lexers = { PythonFileType             : LexerPython(),
              Python3FileType            : LexerPython(),
@@ -151,7 +153,8 @@ __lexers = { PythonFileType             : LexerPython(),
              SVGFileType                : LexerXML(),
              CodimensionProjectFileType : LexerProperties(),
              ShellFileType              : LexerBash(),
-             JavascriptFileType         : LexerJavaScript() }
+             JavascriptFileType         : LexerJavaScript(),
+             DiffFileType               : LexerDiff() }
 
 _skin = None
 
