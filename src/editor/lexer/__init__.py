@@ -39,7 +39,7 @@ from utils.fileutils import ( PythonFileType, Python3FileType, RubyFileType,
                               SVGFileType, DFileType, CFileType,
                               CHeaderFileType, CPPFileType, CPPHeaderFileType,
                               HTMLFileType, CSSFileType, XMLFileType,
-                              MakefileType, ShellFileType )
+                              MakefileType, ShellFileType, JavascriptFileType )
 
 
 # The lexer registry
@@ -129,6 +129,7 @@ from lexercpp import LexerCPP
 from lexerxml import LexerXML
 from lexerproperties import LexerProperties
 from lexerbash import LexerBash
+from lexerjavascript import LexerJavaScript
 
 __lexers = { PythonFileType             : LexerPython(),
              Python3FileType            : LexerPython(),
@@ -149,7 +150,8 @@ __lexers = { PythonFileType             : LexerPython(),
              QTResourceFileType         : LexerXML(),
              SVGFileType                : LexerXML(),
              CodimensionProjectFileType : LexerProperties(),
-             ShellFileType              : LexerBash() }
+             ShellFileType              : LexerBash(),
+             JavascriptFileType         : LexerJavaScript() }
 
 _skin = None
 
