@@ -1,5 +1,7 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Unhandled exceptions hook now saves the trace back and the log window content
+  in a file.
 * Some autocomplete improvements
 * Allow explicit reloading even if a buffer is not modified.
 * File outside modification detection now includes a file size.
