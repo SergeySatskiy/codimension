@@ -54,19 +54,19 @@ if not ropeDir in sys.path:
 
 
 
-import traceback, logging, shutil, time
+import traceback, logging, shutil, time, datetime
 from PyQt4 import QtGui
 from optparse import OptionParser
 from utils.latestver import getLatestVersionFile
 from autocomplete.completelists import buildSystemWideModulesList
-from utils.settings             import Settings, settingsDir
-from utils.globals              import GlobalData
-from ui.application             import CodimensionApplication
-from ui.splashscreen            import SplashScreen
-from utils.pixmapcache          import PixmapCache
-from utils.project              import CodimensionProject
-from utils.skin                 import Skin
-from utils.briefmodinfocache    import validateBriefModuleInfoCache
+from utils.settings import Settings, settingsDir
+from utils.globals import GlobalData
+from ui.application import CodimensionApplication
+from ui.splashscreen import SplashScreen
+from utils.pixmapcache import PixmapCache
+from utils.project import CodimensionProject
+from utils.skin import Skin
+from utils.briefmodinfocache import validateBriefModuleInfoCache
 
 
 # Saving the root logging handlers
@@ -386,16 +386,59 @@ def exceptionHook( excType, excValue, tracebackObj ):
     stackTraceString = "".join( traceback.format_exception( excType, excValue,
                                                             tracebackObj ) )
 
-    # Write a message to a log file
+    # Save the traceback to a file explicitly together with a log window
+    # content.
+    excptFileName = settingsDir + "unhandledexceptions.log"
+    try:
+        savedOK = True
+        f = open( excptFileName, "a" )
+        f.write( "------ Unhandled exception report at " +
+                 str( datetime.datetime.now() ) + "\n" )
+        f.write( "Traceback:\n" )
+        f.write( stackTraceString )
+
+        f.write( "Log window:\n" )
+        if globalData.mainWindow is not None:
+            # i.e. the log window is available, save its content too
+            logWindowContent = globalData.mainWindow.getLogViewerContent()
+            logWindowContent = logWindowContent.strip()
+            if logWindowContent:
+                f.write( logWindowContent )
+                f.write( "\n" )
+            else:
+                f.write( "Nothing is there\n" )
+        else:
+            f.write( "Has not been created yet\n" )
+
+        f.write( "\n\n" )
+        f.close()
+    except:
+        savedOK = False
+
+    # This output will be to a console if the application has not started yet
+    # or to a log window otherwise.
     logging.error( "Unhandled exception is caught\n" + stackTraceString )
 
     # Display the message as a QT modal dialog box if the application
     # has started
     if not globalData.application is None:
-        QtGui.QMessageBox.critical( None, "Error: " + error,
-                                    "<html>Unhandled exception is caught." \
-                                    "<pre>" + stackTraceString + "</pre>" \
-                                    "</html>" )
+        message = "<html>Unhandled exception is caught. "
+        if savedOK:
+            message += "The collected information was saved in " + \
+                       excptFileName + ".<br>"
+        else:
+            message += "Error saving the collected information in " + \
+                       excptFileName + ".<br>"
+
+        lines = stackTraceString.split( '\n' )
+        if len( lines ) > 32:
+            message += "First 32 lines of the stack trace:<br>" + \
+                       "<pre>" + "\n".join( lines[ : 32 ] ) + "<pre>"
+        else:
+            message += "Stack trace:<br>" + \
+                       "<pre>" + stackTraceString + "</pre>"
+        message += "</html>"
+        QtGui.QMessageBox.critical( None, "Error: " + error, message )
         globalData.application.exit( 1 )
     return
 
