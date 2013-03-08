@@ -3468,3 +3468,7 @@ class CodimensionMainWindow( QMainWindow ):
             self.__leftSideBar.raise_()
         return
 
+    def getLogViewerContent( self ):
+        " Provides the log viewer window content as a plain text "
+        return self.__logViewer.getText()
+
