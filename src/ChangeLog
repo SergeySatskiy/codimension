@@ -1,6 +1,6 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
-* Scintilla lexers for javascript and diff files
+* More bound scintilla lexers
 * Unhandled exceptions hook now saves the trace back and the log window content
   in a file.
 * Some autocomplete improvements
