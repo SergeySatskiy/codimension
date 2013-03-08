@@ -63,6 +63,7 @@ MakefileType                = 23
 ShellFileType               = 24
 JavascriptFileType          = 25
 DiffFileType                = 26
+JavaFileType                = 27
 
 BrokenSymlinkFileType       = 50
 
@@ -126,6 +127,8 @@ _fileTypes = {
         [ PixmapCache().getIcon( 'filejs.png' ), 'Javascript' ],
     DiffFileType:
         [ PixmapCache().getIcon( 'filediff.png' ), 'Diff' ],
+    JavaFileType:
+        [ PixmapCache().getIcon( 'filejava.png' ), 'Java' ],
 }
 
 
@@ -165,6 +168,7 @@ _extType = {
     'js'    :   JavascriptFileType,
     'diff'  :   DiffFileType,
     'patch' :   DiffFileType,
+    'java'  :   JavaFileType,
 }
 
 
