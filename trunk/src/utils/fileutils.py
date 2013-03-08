@@ -61,6 +61,7 @@ CSSFileType                 = 21
 XMLFileType                 = 22
 MakefileType                = 23
 ShellFileType               = 24
+JavascriptFileType          = 25
 
 BrokenSymlinkFileType       = 50
 
@@ -120,6 +121,8 @@ _fileTypes = {
         [ PixmapCache().getIcon( 'filebrokenlink.png' ), 'Unknown' ],
     ShellFileType:
         [ PixmapCache().getIcon( 'fileshell.png' ), 'Shell' ],
+    JavascriptFileType:
+        [ PixmapCache().getIcon( 'filejs.png' ), 'Javascript' ],
 }
 
 
@@ -156,6 +159,7 @@ _extType = {
     'so'    :   SOFileType,
     'bash'  :   ShellFileType,
     'sh'    :   ShellFileType,
+    'js'    :   JavascriptFileType,
 }
 
 
