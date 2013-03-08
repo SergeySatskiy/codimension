@@ -209,3 +209,7 @@ class LogViewer( QWidget ):
         self.__updateToolbarButtons()
         return
 
+    def getText( self ):
+        " Provides the content as a plain text "
+        return str( self.messages.plainText() )
+
