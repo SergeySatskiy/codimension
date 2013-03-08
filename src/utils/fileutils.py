@@ -64,6 +64,10 @@ ShellFileType               = 24
 JavascriptFileType          = 25
 DiffFileType                = 26
 JavaFileType                = 27
+PascalFileType              = 28
+PerlFileType                = 29
+TCLFileType                 = 30
+PropsFileType               = 31
 
 BrokenSymlinkFileType       = 50
 
@@ -129,6 +133,14 @@ _fileTypes = {
         [ PixmapCache().getIcon( 'filediff.png' ), 'Diff' ],
     JavaFileType:
         [ PixmapCache().getIcon( 'filejava.png' ), 'Java' ],
+    PascalFileType:
+        [ PixmapCache().getIcon( 'filepascal.png' ), 'Pascal' ],
+    PerlFileType:
+        [ PixmapCache().getIcon( 'fileperl.png' ), 'Perl' ],
+    TCLFileType:
+        [ PixmapCache().getIcon( 'filetcl.png' ), 'TCL' ],
+    PropsFileType:
+        [ PixmapCache().getIcon( 'fileprops.png' ), 'Properties' ],
 }
 
 
@@ -169,6 +181,24 @@ _extType = {
     'diff'  :   DiffFileType,
     'patch' :   DiffFileType,
     'java'  :   JavaFileType,
+    'dfm'   :   PascalFileType,
+    'dpk'   :   PascalFileType,
+    'dpr'   :   PascalFileType,
+    'inc'   :   PascalFileType,
+    'pas'   :   PascalFileType,
+    'pp'    :   PascalFileType,
+    'ph'    :   PerlFileType,
+    'pl'    :   PerlFileType,
+    'pm'    :   PerlFileType,
+    'tcl'   :   TCLFileType,
+    'tk'    :   TCLFileType,
+    'cfg'   :   PropsFileType,
+    'cnf'   :   PropsFileType,
+    'inf'   :   PropsFileType,
+    'ini'   :   PropsFileType,
+    'rc'    :   PropsFileType,
+    'reg'   :   PropsFileType,
+    'properties':   PropsFileType,
 }
 
 
