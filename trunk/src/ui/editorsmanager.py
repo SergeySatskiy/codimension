@@ -1144,7 +1144,7 @@ class EditorsManager( QTabWidget ):
         if widget.getUUID() != uuid:
             return
         self.history.updateForCurrentIndex()
-        editor = widget.getEditor().gotoLine( lineNo )
+        widget.getEditor().gotoLine( lineNo )
         self.history.addCurrent()
         widget.setFocus()
         return
@@ -1339,10 +1339,10 @@ class EditorsManager( QTabWidget ):
 
         widget.setFileName( fileName )
         widget.getEditor().setModified( False )
-        newType = widget.getFileType()
+        newType = detectFileType( fileName, True, True )
         if newType != oldType or newType == UnknownFileType:
+            widget.setFileType( newType )
             widget.getEditor().bindLexer( fileName, newType )
-            newType = widget.getFileType()
             self.emit( SIGNAL( 'fileTypeChanged' ), fileName,
                        widget.getUUID(), newType )
         self._updateIconAndTooltip( index, newType )
