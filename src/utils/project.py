@@ -192,7 +192,6 @@ class CodimensionProject( QObject ):
         self.__createProjectFile()  # ~/.codimension/uuidNN/project
 
         self.__generateFilesList()
-        self.__updateModinfoCache()
 
         self.saveProject()
 
@@ -236,14 +235,6 @@ class CodimensionProject( QObject ):
             f.close()
         except:
             return
-
-    def __updateModinfoCache( self ):
-        " Helper to hit each cache item "
-        for item in self.filesList:
-            if item.endswith( '.py' ) or item.endswith( '.py3' ) or \
-               item.endswith( '.pyw' ):
-                self.briefModinfoCache.get( item )
-        return
 
     def saveProject( self ):
         " Writes all the settings into the file "
@@ -483,9 +474,6 @@ class CodimensionProject( QObject ):
         if os.path.exists( self.userProjectDir + "runparamscache" ):
             self.runParamsCache.deserialize( self.userProjectDir + \
                                              "runparamscache" )
-
-        # Get each file info as it could be out of date
-        self.__updateModinfoCache()
 
         if not self.__formatOK:
             logging.info( "Project files are broken or absent. " \
