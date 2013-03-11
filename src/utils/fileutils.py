@@ -68,6 +68,7 @@ PascalFileType              = 28
 PerlFileType                = 29
 TCLFileType                 = 30
 PropsFileType               = 31
+TexFileType                 = 32
 
 BrokenSymlinkFileType       = 50
 
@@ -141,6 +142,8 @@ _fileTypes = {
         [ PixmapCache().getIcon( 'filetcl.png' ), 'TCL' ],
     PropsFileType:
         [ PixmapCache().getIcon( 'fileprops.png' ), 'Properties' ],
+    TexFileType:
+        [ PixmapCache().getIcon( 'filetex.png' ), 'TeX' ],
 }
 
 
@@ -198,6 +201,11 @@ _extType = {
     'ini'   :   PropsFileType,
     'rc'    :   PropsFileType,
     'reg'   :   PropsFileType,
+    'aux'   :   TexFileType,
+    'idx'   :   TexFileType,
+    'sty'   :   TexFileType,
+    'tex'   :   TexFileType,
+    'toc'   :   TexFileType,
     'properties':   PropsFileType,
 }
 

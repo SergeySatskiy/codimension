@@ -41,7 +41,8 @@ from utils.fileutils import ( PythonFileType, Python3FileType, RubyFileType,
                               HTMLFileType, CSSFileType, XMLFileType,
                               MakefileType, ShellFileType, JavascriptFileType,
                               DiffFileType, JavaFileType, PascalFileType,
-                              PerlFileType, TCLFileType, PropsFileType )
+                              PerlFileType, TCLFileType, PropsFileType,
+                              TexFileType )
 
 
 # The lexer registry
@@ -138,6 +139,7 @@ from lexerpascal import LexerPascal
 from lexerperl import LexerPerl
 from lexertcl import LexerTCL
 from lexerproperties import LexerProperties
+from lexertex import LexerTeX
 
 __lexers = { PythonFileType             : LexerPython(),
              Python3FileType            : LexerPython(),
@@ -165,7 +167,8 @@ __lexers = { PythonFileType             : LexerPython(),
              PascalFileType             : LexerPascal(),
              PerlFileType               : LexerPerl(),
              TCLFileType                : LexerTCL(),
-             PropsFileType              : LexerProperties() }
+             PropsFileType              : LexerProperties(),
+             TexFileType                : LexerTeX() }
 
 _skin = None
 
