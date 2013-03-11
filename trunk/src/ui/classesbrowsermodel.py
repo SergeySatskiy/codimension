@@ -30,8 +30,8 @@
 
 
 import os.path
-from PyQt4.QtCore import SIGNAL
-from PyQt4.QtCore import QVariant
+from os.path import basename
+from PyQt4.QtCore import SIGNAL, QVariant
 from viewitems import TreeViewClassItem
 from utils.project import CodimensionProject
 from browsermodelbase import BrowserModelBase
@@ -58,15 +58,15 @@ class ClassesBrowserModel( BrowserModelBase ):
 
         self.clear()
         project = self.globalData.project
+        cache = project.briefModinfoCache
         for fname in project.filesList:
             if detectFileType( fname ) in [ PythonFileType, Python3FileType ]:
-                info = project.briefModinfoCache.get( fname )
+                info = cache.get( fname )
                 for classObj in info.classes:
                     item = TreeViewClassItem( self.rootItem, classObj )
-                    item.appendData( [ os.path.basename( fname ),
-                                     classObj.line ] )
+                    item.appendData( [ basename( fname ), classObj.line ] )
                     item.setPath( fname )
-                    self._addItem( item, self.rootItem )
+                    self.rootItem.appendChild( item )
         return
 
     def __onProjectChanged( self, what ):
@@ -96,8 +96,8 @@ class ClassesBrowserModel( BrowserModelBase ):
             for classObj in info.classes:
                 needUpdate = True
                 newItem = TreeViewClassItem( self.rootItem, classObj )
-                newItem.appendData( path )
-                newItem.appendData( classObj.line )
+                newItem.appendData( [ basename( path ), classObj.line ] )
+                newItem.setPath( path )
                 self.addTreeItem( self.rootItem, newItem )
         return needUpdate
 
@@ -141,7 +141,8 @@ class ClassesBrowserModel( BrowserModelBase ):
             if not item.name in existingClasses:
                 needUpdate = True
                 newItem = TreeViewClassItem( self.rootItem, item )
-                newItem.appendData( [ fileName, item.line ] )
+                newItem.appendData( [ basename( fileName ), item.line ] )
+                newItem.setPath( fileName )
                 self.addTreeItem( self.rootItem, newItem )
 
         return needUpdate

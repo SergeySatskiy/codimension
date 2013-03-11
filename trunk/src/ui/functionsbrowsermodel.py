@@ -30,6 +30,7 @@
 
 
 import os.path
+from os.path import basename
 from PyQt4.QtCore import SIGNAL
 from PyQt4.QtCore import QVariant
 from viewitems import TreeViewFunctionItem
@@ -58,14 +59,15 @@ class FunctionsBrowserModel( BrowserModelBase ):
 
         self.clear()
         project = self.globalData.project
+        cache = project.briefModinfoCache
         for fname in project.filesList:
             if detectFileType( fname ) in [ PythonFileType, Python3FileType ]:
-                info = project.briefModinfoCache.get( fname )
+                info = cache.get( fname )
                 for func in info.functions:
                     item = TreeViewFunctionItem( self.rootItem, func )
-                    item.appendData( [ os.path.basename( fname ), func.line ] )
+                    item.appendData( [ basename( fname ), func.line ] )
                     item.setPath( fname )
-                    self._addItem( item, self.rootItem )
+                    self.rootItem.appendChild( item )
         return
 
     def __onProjectChanged( self, what ):
@@ -95,8 +97,8 @@ class FunctionsBrowserModel( BrowserModelBase ):
             for funcObj in info.functions:
                 needUpdate = True
                 newItem = TreeViewFunctionItem( self.rootItem, funcObj )
-                newItem.appendData( path )
-                newItem.appendData( funcObj.line )
+                newItem.appendData( [ basename( path ), funcObj.line ] )
+                newItem.setPath( path )
                 self.addTreeItem( self.rootItem, newItem )
         return needUpdate
 
@@ -140,7 +142,8 @@ class FunctionsBrowserModel( BrowserModelBase ):
             if not item.name in existingFunctions:
                 needUpdate = True
                 newItem = TreeViewFunctionItem( self.rootItem, item )
-                newItem.appendData( [ fileName, item.line ] )
+                newItem.appendData( [ basename( fileName ), item.line ] )
+                newItem.setPath( fileName )
                 self.addTreeItem( self.rootItem, newItem )
 
         return needUpdate

@@ -30,12 +30,12 @@
 
 
 import os.path
-from PyQt4.QtCore       import SIGNAL
-from PyQt4.QtCore       import QVariant
-from viewitems          import TreeViewGlobalItem
-from utils.project      import CodimensionProject
-from browsermodelbase   import BrowserModelBase
-from utils.fileutils    import detectFileType, PythonFileType, Python3FileType
+from os.path import basename
+from PyQt4.QtCore import SIGNAL, QVariant
+from viewitems import TreeViewGlobalItem
+from utils.project import CodimensionProject
+from browsermodelbase import BrowserModelBase
+from utils.fileutils import detectFileType, PythonFileType, Python3FileType
 
 class GlobalsBrowserModel( BrowserModelBase ):
     " Class implementing the globals browser model "
@@ -56,15 +56,15 @@ class GlobalsBrowserModel( BrowserModelBase ):
 
         self.clear()
         project = self.globalData.project
+        cache = project.briefModinfoCache
         for fname in project.filesList:
             if detectFileType( fname ) in [ PythonFileType, Python3FileType ]:
-                info = project.briefModinfoCache.get( fname )
+                info = cache.get( fname )
                 for globalObj in info.globals:
                     item = TreeViewGlobalItem( self.rootItem, globalObj )
-                    item.appendData( [ os.path.basename( fname ),
-                                       globalObj.line ] )
+                    item.appendData( [ basename( fname ), globalObj.line ] )
                     item.setPath( fname )
-                    self._addItem( item, self.rootItem )
+                    self.rootItem.appendChild( item )
         return
 
     def __onProjectChanged( self, what ):
@@ -94,7 +94,8 @@ class GlobalsBrowserModel( BrowserModelBase ):
             for globalObj in info.globals:
                 needUpdate = True
                 newItem = TreeViewGlobalItem( self.rootItem, globalObj )
-                newItem.appendData( [ path, globalObj.line ] )
+                newItem.appendData( [ basename( path ), globalObj.line ] )
+                newItem.setPath( path )
                 self.addTreeItem( self.rootItem, newItem )
         return needUpdate
 
@@ -141,7 +142,8 @@ class GlobalsBrowserModel( BrowserModelBase ):
             if not item.name in existingGlobals:
                 needUpdate = True
                 newItem = TreeViewGlobalItem( self.rootItem, item )
-                newItem.appendData( [ fileName, item.line ] )
+                newItem.appendData( [ basename( fileName ), item.line ] )
+                newItem.setPath( fileName )
                 self.addTreeItem( self.rootItem, newItem )
 
         return needUpdate
