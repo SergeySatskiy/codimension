@@ -1682,13 +1682,17 @@ class CodimensionMainWindow( QMainWindow ):
         if editorsManager.getUnsavedCount() == 0:
             project = GlobalData().project
             if project.isLoaded():
-                project.serializeModinfoCache()
                 project.setTabsStatus( editorsManager.getTabsStatus() )
                 self.settings.tabsStatus = []
             else:
                 self.settings.tabsStatus = editorsManager.getTabsStatus()
 
-        return editorsManager.closeEvent( event )
+        if editorsManager.closeEvent( event ):
+            # The IDE is going to be closed just now
+            project = GlobalData().project
+            project.unloadProject( False )
+
+        return
 
     def showPylintReport( self, reportOption, fileOrContent,
                                 displayName, uuid, fileName ):
