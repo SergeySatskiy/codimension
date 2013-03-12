@@ -715,15 +715,15 @@ class CodimensionProject( QObject ):
             # Bad error - cannot load project file at all
             config = None
             self.__formatOK = False
-            logging.warning( "Cannot read findinfiles project file " \
+            logging.warning( "Cannot read findinfiles project file "
                              "from here: " + confFile )
             return
 
-        self.findFilesWhat = self.__loadListSection( \
+        self.findFilesWhat = self.__loadListSection(
                 config, 'whathistory', 'what' )
-        self.findFilesDirs = self.__loadListSection( \
+        self.findFilesDirs = self.__loadListSection(
                 config, 'dirhistory', 'dir' )
-        self.findFilesMasks = self.__loadListSection( \
+        self.findFilesMasks = self.__loadListSection(
                 config, 'maskhistory', 'mask' )
         config = None
         return
@@ -732,7 +732,7 @@ class CodimensionProject( QObject ):
         " Loads the recent files list "
         confFile = self.userProjectDir + "recentfiles"
         if not os.path.exists( confFile ):
-            logging.info( "Cannot find recentfiles project file. " \
+            logging.info( "Cannot find recentfiles project file. "
                           "Expected here: " + confFile )
             self.__formatOK = False
             return
@@ -778,12 +778,14 @@ class CodimensionProject( QObject ):
             self.__formatOK = False
         return items
 
-    def unloadProject( self ):
+    def unloadProject( self, emitSignal = True ):
         """ Unloads the current project if required """
         if self.isLoaded():
             self.serializeModinfoCache()
         self.__resetValues()
-        self.emit( SIGNAL( 'projectChanged' ), self.CompleteProject )
+        if emitSignal:
+            # No need to send a signal e.g. if IDE is closing
+            self.emit( SIGNAL( 'projectChanged' ), self.CompleteProject )
         self.__ropeProject.close()
         self.__ropeProject = None
         self.__ropeSourceDirs = []
