@@ -251,6 +251,26 @@ class FilesBrowser( QTreeView ):
 
         return False
 
+    def getExpanded( self ):
+        " Provides a list of paths which are currently expanded "
+        expandedPaths = []
+        srcModel = self.model().sourceModel()
+        self.__getExpanded( srcModel, srcModel.rootItem, expandedPaths )
+        expandedPaths.sort()
+        return expandedPaths
+
+    def __getExpanded( self, srcModel, item, paths ):
+        " Provides a list of the expanded dirs in the files tree "
+        for treeItem in item.childItems:
+            if treeItem.itemType not in [ DirectoryItemType, SysPathItemType ]:
+                continue
+            index = srcModel.buildIndex( treeItem.getRowPath() )
+            if self.isExpanded( self.model().mapFromSource( index ) ):
+                paths.append( treeItem.getPath() )
+                self.__getExpanded( srcModel, treeItem, paths )
+        return
+
+
     def openItem( self, item ):
         " Handles the case when an item is activated "
         if item.itemType in [ GlobalsItemType,
