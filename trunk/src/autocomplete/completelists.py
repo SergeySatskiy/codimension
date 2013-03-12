@@ -462,6 +462,11 @@ def getCompletionList( fileName, scope, obj, prefix,
                 # Exclude everything private and built-in
                 result = _excludePrivateAndBuiltins( proposals )
 
+                # By some reasons rope sometimes inserts the current
+                # word with '=' at the end. Let's just discard it.
+                currentWord = str( editor.getCurrentWord() ).strip()
+                result.discard( currentWord + "=" )
+
                 # Add private members of the class itself
                 if info is None:
                     info = getBriefModuleInfoFromMemory( text )
@@ -472,7 +477,8 @@ def getCompletionList( fileName, scope, obj, prefix,
     # Rope does not offer anything for system modules, let's handle it here
     # if so
     if obj != "":
-        isSystemImport, realImportName = _isSystemImportOrAlias( obj, text, info )
+        isSystemImport, realImportName = _isSystemImportOrAlias( obj,
+                                                                 text, info )
         if isSystemImport:
             # Yes, that is a reference to something from a system module
             return list( __getImportedObjects( realImportName, "" ) ), False
@@ -499,4 +505,3 @@ def getCompletionList( fileName, scope, obj, prefix,
         result.update( getEditorTags( editor, prefix, True ) )
 
     return list( result ), False
-
