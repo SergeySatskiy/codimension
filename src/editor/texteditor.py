@@ -1496,8 +1496,8 @@ class TextEditor( ScintillaWrapper ):
         " Triggered when a completion is selected "
         if text:
             currentWord = str( self.getCurrentWord() )
-            prefixLength = len( self.__completionPrefix.decode( 'utf-8' ) )
-            wordLength = len( currentWord.decode( 'utf-8' ) )
+            prefixLength = len( str( self.__completionPrefix ).decode( 'utf-8' ) )
+            # wordLength = len( currentWord.decode( 'utf-8' ) )
             line, pos = self.getCursorPosition()
 
             if text == currentWord:
@@ -1507,7 +1507,7 @@ class TextEditor( ScintillaWrapper ):
                 oldBuffer = QApplication.clipboard().text()
                 self.beginUndoAction()
                 self.setSelection( line, pos - prefixLength,
-                                   line, pos + wordLength - prefixLength )
+                                   line, pos )
                 self.removeSelectedText()
                 self.insert( text )
                 self.setCursorPosition( line, pos + len( text ) - prefixLength )
