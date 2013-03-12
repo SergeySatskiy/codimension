@@ -502,9 +502,9 @@ class ProjectViewer( QWidget ):
         if what != CodimensionProject.CompleteProject:
             return
 
-        if GlobalData().project.fileName != "":
-            self.projectLabel.setText( 'Project: ' + \
-                             os.path.basename( \
+        if GlobalData().project.isLoaded():
+            self.projectLabel.setText( 'Project: ' +
+                             os.path.basename(
                                 GlobalData().project.fileName )[ : -4 ] )
             self.propertiesButton.setEnabled( True )
             self.unloadButton.setEnabled( True )
