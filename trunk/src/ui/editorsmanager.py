@@ -1768,9 +1768,10 @@ class EditorsManager( QTabWidget ):
 
         if self.closeRequest():
             event.accept()
-        else:
-            event.ignore()
-        return
+            return True
+
+        event.ignore()
+        return False
 
     def closeAll( self ):
         " Close all the editors tabs "
