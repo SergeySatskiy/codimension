@@ -103,7 +103,7 @@ def getModules( path ):
                     if not isLoop:
                         modules[ modName ] = resolved
                     continue
-                if not fName.endswith( ".pyc" ):
+                if not fName.endswith( ".pyc" ) and not fName.endswith( ".pyo" ):
                     resolved, isLoop = resolveLink( fName )
                     if not isLoop:
                         modules[ modName ] = resolved
