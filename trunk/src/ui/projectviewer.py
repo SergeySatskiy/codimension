@@ -88,6 +88,8 @@ class ProjectViewer( QWidget ):
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
+        self.connect( GlobalData().project, SIGNAL( 'restoreProjectExpandedDirs' ),
+                      self.__onRestorePrjExpandedDirs )
 
         # Support switching to debug and back
         self.connect( parent, SIGNAL( 'debugModeChanged' ),
@@ -495,6 +497,12 @@ class ProjectViewer( QWidget ):
             editorsManager.closeAll()
             globalData.project.fileBrowserPaths = mainWindow.getProjectExpandedPaths()
             globalData.project.unloadProject()
+        return
+
+    def __onRestorePrjExpandedDirs( self ):
+        " Triggered when a project tree should restore its previous state "
+        for path in GlobalData().project.fileBrowserPaths:
+            self.projectTreeView.highlightItem( path )
         return
 
     def __onProjectChanged( self, what ):

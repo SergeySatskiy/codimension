@@ -217,9 +217,8 @@ class FilesBrowser( QTreeView ):
             return False
 
         # Here: the start item has been found and the file exists for sure
-        if not startItem.populated:
-            index = srcModel.buildIndex( startItem.getRowPath() )
-            self.expand( self.model().mapFromSource( index ) )
+        index = srcModel.buildIndex( startItem.getRowPath() )
+        self.setExpanded( self.model().mapFromSource( index ), True )
 
         parts = path[ len( itemPath ) : ].split( os.path.sep )
         dirs = parts[ : -1 ]
@@ -235,7 +234,7 @@ class FilesBrowser( QTreeView ):
                     # Need to expand regardless it is populated or not because
                     # a dir could be populated but not expanded.
                     index = srcModel.buildIndex( startItem.getRowPath() )
-                    self.expand( self.model().mapFromSource( index ) )
+                    self.setExpanded( self.model().mapFromSource( index ), True )
                     break
             if found:
                 continue
@@ -245,7 +244,7 @@ class FilesBrowser( QTreeView ):
         if fName == '':
             # It was a directory item, so there is no need to highlight,
             # it was just expanding dirs request.
-            return True
+            return False
 
         for treeItem in startItem.childItems:
             if str( treeItem.data( 0 ) ) == fName:

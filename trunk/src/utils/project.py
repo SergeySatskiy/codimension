@@ -165,13 +165,13 @@ class CodimensionProject( QObject ):
             try:
                 os.mkdir( userProjectDir )
             except:
-                logging.error( "Cannot create user project directory: " + \
-                               self.userProjectDir + ". Please check the " \
-                               "available disk space and re-create the " \
+                logging.error( "Cannot create user project directory: " +
+                               self.userProjectDir + ". Please check the "
+                               "available disk space and re-create the "
                                "project." )
                 raise
         else:
-            logging.warning( "The user project directory existed! " \
+            logging.warning( "The user project directory existed! "
                              "The content will be overwritten." )
             self.__removeProjectFiles( userProjectDir )
 
@@ -261,8 +261,7 @@ class CodimensionProject( QObject ):
         f = open( self.fileName, "w" )
         self.__writeHeader( f )
         self.__writeList( f, "importdirs", "dir", self.importDirs )
-        f.write( propertiesPart + "\n" + \
-                 "\n\n" )
+        f.write( propertiesPart + "\n\n\n" )
         f.close()
 
         # Save brief cache
@@ -286,7 +285,7 @@ class CodimensionProject( QObject ):
 
     def serializeModinfoCache( self ):
         " Saves the modules info cache "
-        self.briefModinfoCache.serialize( self.userProjectDir + \
+        self.briefModinfoCache.serialize( self.userProjectDir +
                                           "briefinfocache" )
         return
 
@@ -361,10 +360,10 @@ class CodimensionProject( QObject ):
     @staticmethod
     def __writeHeader( fileObj ):
         " Helper to write a header with a warning "
-        fileObj.write( "#\n" \
-                       "# Generated automatically.\n" \
-                       "# Don't edit it manually unless you " \
-                       "know what you are doing.\n" \
+        fileObj.write( "#\n"
+                       "# Generated automatically.\n"
+                       "# Don't edit it manually unless you "
+                       "know what you are doing.\n"
                        "#\n\n" )
         return
 
@@ -394,7 +393,7 @@ class CodimensionProject( QObject ):
         if not os.path.exists( absPath ):
             raise Exception( "Cannot open project file " + projectFile )
         if not absPath.endswith( ".cdm" ):
-            raise Exception( "Unexpected project file extension. " \
+            raise Exception( "Unexpected project file extension. "
                              "Expected: .cdm" )
 
         config = ConfigParser.ConfigParser()
@@ -424,7 +423,7 @@ class CodimensionProject( QObject ):
         self.email = self.__getStr( config, 'properties', 'email', '' )
         self.uuid = self.__getStr( config, 'properties', 'uuid', '' )
         if self.uuid == "":
-            logging.warning( "Project file does not have UUID. " \
+            logging.warning( "Project file does not have UUID. "
                              "Re-generate it..." )
             self.uuid = str( uuid.uuid1() )
         self.userProjectDir = settingsDir + self.uuid + sep
@@ -443,10 +442,10 @@ class CodimensionProject( QObject ):
                 else:
                     absPath = self.getProjectDir() + dirName
                 if not os.path.exists( absPath ):
-                    logging.error( "Codimension project: cannot find " \
+                    logging.error( "Codimension project: cannot find "
                                    "import directory: " + dirName )
                 elif not isdir( absPath ):
-                    logging.error( "Codimension project: the import path: " + \
+                    logging.error( "Codimension project: the import path: " +
                                    dirName + " is not a directory" )
                 self.importDirs.append( dirName )
         except ConfigParser.NoSectionError:
@@ -473,14 +472,14 @@ class CodimensionProject( QObject ):
         self.__generateFilesList()
 
         if os.path.exists( self.userProjectDir + "briefinfocache" ):
-            self.briefModinfoCache.deserialize( self.userProjectDir + \
+            self.briefModinfoCache.deserialize( self.userProjectDir +
                                                 "briefinfocache" )
         if os.path.exists( self.userProjectDir + "runparamscache" ):
-            self.runParamsCache.deserialize( self.userProjectDir + \
+            self.runParamsCache.deserialize( self.userProjectDir +
                                              "runparamscache" )
 
         if not self.__formatOK:
-            logging.info( "Project files are broken or absent. " \
+            logging.info( "Project files are broken or absent. "
                           "Overwriting the project files." )
             self.saveProject()
 
@@ -495,6 +494,7 @@ class CodimensionProject( QObject ):
 
         self.__createRopeProject()
         self.emit( SIGNAL( 'projectChanged' ), self.CompleteProject )
+        self.emit( SIGNAL( 'restoreProjectExpandedDirs' ) )
         return
 
     def getImportDirsAsAbsolutePaths( self ):
@@ -589,7 +589,7 @@ class CodimensionProject( QObject ):
         " Loads the last tabs status "
         configFile = self.userProjectDir + "tabsstatus"
         if not os.path.exists( configFile ):
-            logging.info( "Cannot find tabsstatus project file. " \
+            logging.info( "Cannot find tabsstatus project file. "
                           "Expected here: " + configFile )
             self.__formatOK = False
             return
@@ -601,7 +601,7 @@ class CodimensionProject( QObject ):
             # Bad error - cannot load project file at all
             config = None
             self.__formatOK = False
-            logging.warning( "Cannot read tabsstatus project file " \
+            logging.warning( "Cannot read tabsstatus project file "
                              "from here: " + configFile )
             return
 
@@ -637,7 +637,7 @@ class CodimensionProject( QObject ):
         " Loads the top level dirs "
         configFile = self.userProjectDir + "topleveldirs"
         if not os.path.exists( configFile ):
-            logging.info( "Cannot find topleveldirs project file. " \
+            logging.info( "Cannot find topleveldirs project file. "
                           "Expected here: " + configFile )
             self.__formatOK = False
             return
@@ -649,12 +649,12 @@ class CodimensionProject( QObject ):
             # Bad error - cannot load project file at all
             config = None
             self.__formatOK = False
-            logging.warning( "Cannot read topleveldirs project file " \
+            logging.warning( "Cannot read topleveldirs project file "
                              "from here: " + configFile )
             return
 
         # dirs part
-        self.topLevelDirs = self.__loadListSection( \
+        self.topLevelDirs = self.__loadListSection(
                 config, 'topleveldirs', 'dir' )
 
         config = None
@@ -664,7 +664,7 @@ class CodimensionProject( QObject ):
         " Loads the search history file content "
         confFile = self.userProjectDir + "searchhistory"
         if not os.path.exists( confFile ):
-            logging.info( "Cannot find searchhistory project file. " \
+            logging.info( "Cannot find searchhistory project file. "
                           "Expected here: " + confFile )
             self.__formatOK = False
             return
@@ -676,20 +676,20 @@ class CodimensionProject( QObject ):
             # Bad error - cannot load project file at all
             config = None
             self.__formatOK = False
-            logging.warning( "Cannot read searchhistory project file " \
+            logging.warning( "Cannot read searchhistory project file "
                              "from here: " + confFile )
             return
 
         # find part
-        self.findHistory = self.__loadListSection( \
+        self.findHistory = self.__loadListSection(
                 config, 'findhistory', 'find' )
-        self.findNameHistory = self.__loadListSection( \
+        self.findNameHistory = self.__loadListSection(
                 config, 'findnamehistory', 'find' )
-        self.findFileHistory = self.__loadListSection( \
+        self.findFileHistory = self.__loadListSection(
                 config, 'findfilehistory', 'find' )
 
         # replace part
-        self.replaceHistory = self.__loadListSection( \
+        self.replaceHistory = self.__loadListSection(
                 config, 'replacehistory', 'replace' )
 
         config = None
@@ -699,7 +699,7 @@ class CodimensionProject( QObject ):
         " Loads the find objects history "
         confFile = self.userProjectDir + "findobjects"
         if not os.path.exists( confFile ):
-            logging.info( "Cannot find findobjects project file. " \
+            logging.info( "Cannot find findobjects project file. "
                           "Expected here: " + confFile )
             self.__formatOK = False
             return
@@ -711,15 +711,15 @@ class CodimensionProject( QObject ):
             # Bad error - cannot load project file at all
             config = None
             self.__formatOK = False
-            logging.warning( "Cannot read findobjects project file " \
+            logging.warning( "Cannot read findobjects project file "
                              "from here: " + confFile )
             return
 
-        self.findClassHistory = self.__loadListSection( \
+        self.findClassHistory = self.__loadListSection(
                 config, 'classhistory', 'class' )
-        self.findFuncHistory = self.__loadListSection( \
+        self.findFuncHistory = self.__loadListSection(
                 config, 'funchistory', 'func' )
-        self.findGlobalHistory = self.__loadListSection( \
+        self.findGlobalHistory = self.__loadListSection(
                 config, 'globalhistory', 'global' )
         config = None
         return
@@ -728,7 +728,7 @@ class CodimensionProject( QObject ):
         " Loads the find in files history "
         confFile = self.userProjectDir + "findinfiles"
         if not os.path.exists( confFile ):
-            logging.info( "Cannot find findinfiles project file. " \
+            logging.info( "Cannot find findinfiles project file. "
                           "Expected here: " + confFile )
             self.__formatOK = False
             return
@@ -899,8 +899,8 @@ class CodimensionProject( QObject ):
         if not path.endswith( sep ):
             path += sep
         if path in self.topLevelDirs:
-            logging.warning( "Top level dir " + path + \
-                             " is already in the list of dirs. " \
+            logging.warning( "Top level dir " + path +
+                             " is already in the list of dirs. "
                              "Ignore adding..." )
             return
         self.topLevelDirs.append( path )
@@ -912,7 +912,7 @@ class CodimensionProject( QObject ):
         if not path.endswith( sep ):
             path += sep
         if path not in self.topLevelDirs:
-            logging.warning( "Top level dir " + path + \
+            logging.warning( "Top level dir " + path +
                              " is not in the list of dirs. Ignore removing..." )
             return
         self.topLevelDirs.remove( path )
