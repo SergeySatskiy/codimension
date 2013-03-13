@@ -493,6 +493,7 @@ class ProjectViewer( QWidget ):
         if editorsManager.closeRequest():
             globalData.project.setTabsStatus( editorsManager.getTabsStatus() )
             editorsManager.closeAll()
+            globalData.project.fileBrowserPaths = mainWindow.getProjectExpandedPaths()
             globalData.project.unloadProject()
         return
 

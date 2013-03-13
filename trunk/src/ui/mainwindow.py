@@ -1690,9 +1690,17 @@ class CodimensionMainWindow( QMainWindow ):
         if editorsManager.closeEvent( event ):
             # The IDE is going to be closed just now
             project = GlobalData().project
+            project.fileBrowserPaths = self.getProjectExpandedPaths()
             project.unloadProject( False )
 
         return
+
+    def getProjectExpandedPaths( self ):
+        " Provides a list of expanded project directories "
+        project = GlobalData().project
+        if project.isLoaded():
+            return self.projectViewer.projectTreeView.getExpanded()
+        return []
 
     def showPylintReport( self, reportOption, fileOrContent,
                                 displayName, uuid, fileName ):

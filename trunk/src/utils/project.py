@@ -86,6 +86,7 @@ class CodimensionProject( QObject ):
 
         self.recentFiles = []
         self.importDirs = []
+        self.fileBrowserPaths = []
 
         # Precompile the exclude filters
         self.__excludeFilter = []
@@ -145,6 +146,7 @@ class CodimensionProject( QObject ):
 
         self.recentFiles = []
         self.importDirs = []
+        self.fileBrowserPaths = []
 
         # Reset the dir watchers if so
         if self.__dirWatcher is not None:
@@ -225,6 +227,7 @@ class CodimensionProject( QObject ):
         self.__safeRemove( userProjectDir + "tabsstatus" )
         self.__safeRemove( userProjectDir + "findinfiles" )
         self.__safeRemove( userProjectDir + "recentfiles" )
+        self.__safeRemove( userProjectDir + "filebrowser" )
         return
 
     def __createProjectFile( self ):
@@ -463,6 +466,7 @@ class CodimensionProject( QObject ):
         self.__loadFindFiles()
         self.__loadFindObjects()
         self.__loadRecentFiles()
+        self.__loadProjectBrowserExpandedDirs()
 
         # The project might have been moved...
         self.__createProjectFile()  # ~/.codimension/uuidNN/project
@@ -602,9 +606,30 @@ class CodimensionProject( QObject ):
             return
 
         # tabs part
-        self.tabsStatus = self.__loadListSection( \
-                config, 'tabsstatus', 'tab' )
+        self.tabsStatus = self.__loadListSection( config, 'tabsstatus', 'tab' )
 
+        config = None
+        return
+
+    def __loadProjectBrowserExpandedDirs( self ):
+        " Loads the project browser expanded dirs "
+        configFile = self.userProjectDir + "filebrowser"
+        if not os.path.exists( configFile ):
+            self.fileBrowserPaths = []
+            return
+
+        config = ConfigParser.ConfigParser()
+        try:
+            config.read( configFile )
+        except:
+            # Bad error - cannot load project file at all
+            config = None
+            self.fileBrowserPaths = []
+            return
+
+        # dirs part
+        self.fileBrowserPaths = self.__loadListSection( config, 'filebrowser',
+                                                        'path' )
         config = None
         return
 
@@ -782,6 +807,7 @@ class CodimensionProject( QObject ):
         """ Unloads the current project if required """
         if self.isLoaded():
             self.serializeModinfoCache()
+            self.__saveProjectBrowserExpandedDirs()
         self.__resetValues()
         if emitSignal:
             # No need to send a signal e.g. if IDE is closing
@@ -789,6 +815,20 @@ class CodimensionProject( QObject ):
         self.__ropeProject.close()
         self.__ropeProject = None
         self.__ropeSourceDirs = []
+        return
+
+    def __saveProjectBrowserExpandedDirs( self ):
+        " Saves the pathes expanded in the project browser "
+        if not self.isLoaded():
+            return
+
+        try:
+            f = open( self.userProjectDir + "filebrowser", "w" )
+            self.__writeHeader( f )
+            self.__writeList( f, "filebrowser", "path", self.fileBrowserPaths )
+            f.close()
+        except:
+            pass
         return
 
     def setImportDirs( self, paths ):

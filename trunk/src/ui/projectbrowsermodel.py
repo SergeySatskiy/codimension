@@ -64,5 +64,9 @@ class ProjectBrowserModel( BrowserModelBase ):
 
         if what == CodimensionProject.CompleteProject:
             self.populateModel()
+            project = self.globalData.project
+            if project.isLoaded():
+                for path in project.fileBrowserPaths:
+                    GlobalData().mainWindow.projectViewer.projectTreeView.highlightItem( path )
         return
 
