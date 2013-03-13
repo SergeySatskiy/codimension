@@ -1,5 +1,7 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Project viewer restores the previous session expanded directories at the
+  start automatically.
 * More bound scintilla lexers
 * Unhandled exceptions hook now saves the trace back and the log window content
   in a file.
