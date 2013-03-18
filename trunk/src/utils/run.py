@@ -35,6 +35,11 @@ TERM_GNOME   = 2
 TERM_XTERM   = 3
 
 
+CMD_TYPE_RUN     = 0
+CMD_TYPE_PROFILE = 1
+CMD_TYPE_DEBUG   = 2
+
+
 class RunParameters:
     " Stores the script run parameters "
 
@@ -193,11 +198,20 @@ __osSpawnForProfile = {
                       "%(exec)s %(fb)s %(port)d $CDM_RES; %(exit_if_ok)s %(shell)s' &",
                       }
 
+__osSpawnForDebug = {
+    'posix'         : "",
+    'Terminal'      : "",
+    'gnome-terminal': "",
+                    }
+
+
+
 EXIT_IF_OK = 'test "_$CDM_RES" == "_0" && exit;'
 
 
-def getTerminalCommand( fileName, workingDir, arguments,
-                        terminalType, closeTerminal, port ):
+
+def getTerminalCommandToRun( fileName, workingDir, arguments,
+                             terminalType, closeTerminal ):
     " Provides a command to run a separate shell terminal "
 
     if os.name != 'posix':
@@ -216,43 +230,105 @@ def getTerminalCommand( fileName, workingDir, arguments,
     else:
         exit_if_ok = ""
 
-    if port is None:
-        # The command is for running something
-        if terminalStartCmd in __osSpawn:
-            command = __osSpawn[ terminalStartCmd ] % { 'shell':      shell,
-                                                        'wdir':       workingDir,
-                                                        'exec':       pythonExec,
-                                                        'options':    fileName + args,
-                                                        'exit_if_ok': exit_if_ok }
-        else:
-            command = __osSpawn[ os.name ] % { 'term':       terminalStartCmd,
-                                               'shell':      shell,
-                                               'wdir':       workingDir,
-                                               'exec':       pythonExec,
-                                               'options':    fileName + args,
-                                               'exit_if_ok': exit_if_ok }
+    if terminalStartCmd in __osSpawn:
+        return __osSpawn[ terminalStartCmd ] % { 'shell':      shell,
+                                                 'wdir':       workingDir,
+                                                 'exec':       pythonExec,
+                                                 'options':    fileName + args,
+                                                 'exit_if_ok': exit_if_ok }
+
+    return __osSpawn[ os.name ] % { 'term':       terminalStartCmd,
+                                    'shell':      shell,
+                                    'wdir':       workingDir,
+                                    'exec':       pythonExec,
+                                    'options':    fileName + args,
+                                    'exit_if_ok': exit_if_ok }
+
+
+
+def getTerminalCommandToProfile( fileName, workingDir, arguments,
+                                 terminalType, closeTerminal, port ):
+    " Provides a command to run a separate shell terminal "
+
+    if os.name != 'posix':
+        raise Exception( "Cannot guess terminal command." )
+
+    pythonExec = sys.executable
+    shell = getUserShell()
+    terminalStartCmd = getStartTerminalCommand( terminalType )
+
+    args = ""
+    for index in xrange( len( arguments ) ):
+        args += ' "$CDM_ARG' + str( index ) + '"'
+
+    if closeTerminal:
+        exit_if_ok = EXIT_IF_OK
     else:
-        # The command is profiling something.
-        # Calculate the procfeedback.py path.
-        procfeedbackPath = os.path.sep.join( [ os.path.dirname( sys.argv[ 0 ] ),
-                                             "utils", "procfeedback.py" ] )
+        exit_if_ok = ""
 
-        # Decide where to store the profiling output
-        from globals import GlobalData
-        outputPath = GlobalData().getProfileOutputPath()
+    # Calculate the procfeedback.py path.
+    procfeedbackPath = os.path.sep.join( [ os.path.dirname( sys.argv[ 0 ] ),
+                                         "utils", "procfeedback.py" ] )
 
-        if terminalStartCmd in __osSpawnForProfile:
-            command = __osSpawnForProfile[ terminalStartCmd ] % { 'shell':      shell,
-                                                                  'wdir':       workingDir,
-                                                                  'exec':       pythonExec,
-                                                                  'options':    fileName + args,
-                                                                  'out':        outputPath,
-                                                                  'fb':         procfeedbackPath,
-                                                                  'port':       port,
-                                                                  'exit_if_ok': exit_if_ok }
-        else:
-            command = __osSpawnForProfile[ os.name ] % { 'term':       terminalStartCmd,
-                                                         'shell':      shell,
+    # Decide where to store the profiling output
+    from globals import GlobalData
+    outputPath = GlobalData().getProfileOutputPath()
+
+    if terminalStartCmd in __osSpawnForProfile:
+        return __osSpawnForProfile[ terminalStartCmd ] % { 'shell':      shell,
+                                                           'wdir':       workingDir,
+                                                           'exec':       pythonExec,
+                                                           'options':    fileName + args,
+                                                           'out':        outputPath,
+                                                           'fb':         procfeedbackPath,
+                                                           'port':       port,
+                                                           'exit_if_ok': exit_if_ok }
+    return __osSpawnForProfile[ os.name ] % { 'term':       terminalStartCmd,
+                                              'shell':      shell,
+                                              'wdir':       workingDir,
+                                              'exec':       pythonExec,
+                                              'options':    fileName + args,
+                                              'out':        outputPath,
+                                              'fb':         procfeedbackPath,
+                                              'port':       port,
+                                              'exit_if_ok': exit_if_ok }
+
+def getTerminalCommandToDebug( fileName, workingDir, arguments,
+                               params, port ):
+    " Provides a command line to debug in a separate shell terminal "
+
+    if os.name != 'posix':
+        raise Exception( "Cannot guess terminal command." )
+
+    # TODO: change it later to a selectable python interpreter
+    pythonExec = sys.executable
+    shell = getUserShell()
+    terminalStartCmd = getStartTerminalCommand( terminalType )
+
+    args = ""
+    for index in xrange( len( arguments ) ):
+        args += ' "$CDM_ARG' + str( index ) + '"'
+
+    if closeTerminal:
+        exit_if_ok = EXIT_IF_OK
+    else:
+        exit_if_ok = ""
+
+    # Calculate the procfeedback.py path.
+    procfeedbackPath = os.path.sep.join( [ os.path.dirname( sys.argv[ 0 ] ),
+                                           "utils", "procfeedback.py" ] )
+
+    # Calculate the debug client path.
+    debugClientPath = os.path.sep.join( [ os.path.dirname( sys.argv[ 0 ] ),
+                                          "debugger", "client", "client.py" ] )
+
+    # Get the debugging specific parameters
+    from settings import Settings
+    debugSettings = Settings().getDebuggerSettings()
+
+    # Here: all the parameters are prepared, need to combine the command line
+    if terminalStartCmd in __osSpawnForProfile:
+        return __osSpawnForDebug[ terminalStartCmd ] % { 'shell':      shell,
                                                          'wdir':       workingDir,
                                                          'exec':       pythonExec,
                                                          'options':    fileName + args,
@@ -260,8 +336,15 @@ def getTerminalCommand( fileName, workingDir, arguments,
                                                          'fb':         procfeedbackPath,
                                                          'port':       port,
                                                          'exit_if_ok': exit_if_ok }
-
-    return command
+    return __osSpawnForDebug[ os.name ] % { 'term':       terminalStartCmd,
+                                            'shell':      shell,
+                                            'wdir':       workingDir,
+                                            'exec':       pythonExec,
+                                            'options':    fileName + args,
+                                            'out':        outputPath,
+                                            'fb':         procfeedbackPath,
+                                            'port':       port,
+                                            'exit_if_ok': exit_if_ok }
 
 
 def parseCommandLineArguments( cmdLine ):
@@ -341,7 +424,7 @@ def parseCommandLineArguments( cmdLine ):
     return result
 
 
-def getCwdCmdEnv( path, params, terminalType, port = None ):
+def getCwdCmdEnv( cmdType, path, params, terminalType, port = None ):
     """ Provides the working directory, command line and environment
         for running/debugging a script """
 
@@ -353,8 +436,20 @@ def getCwdCmdEnv( path, params, terminalType, port = None ):
     # The arguments parsing is going to pass OK because it
     # was checked in the run parameters dialogue
     arguments = parseCommandLineArguments( params.arguments )
-    cmd = getTerminalCommand( path, workingDir, arguments,
-                              terminalType, params.closeTerminal, port )
+    if cmdType == CMD_TYPE_RUN:
+        cmd = getTerminalCommandToRun( path, workingDir, arguments,
+                                       terminalType, params.closeTerminal )
+    elif cmdType == CMD_TYPE_PROFILE:
+        cmd = getTerminalCommandToProfile( path, workingDir, arguments,
+                                           terminalType, params.closeTerminal,
+                                           port )
+    elif cmdType == CMD_TYPE_DEBUG:
+        cmd = getTerminalCommandToDebug( path, workingDir, arguments,
+                                         terminalType, params.closeTerminal,
+                                         port )
+    else:
+        raise Exception( "Unknown command requested. "
+                         "Supported command types are: run, profile, debug." )
 
     if params.envType == params.InheritParentEnv:
         # 'None' does not work here: popen stores last env somewhere and
