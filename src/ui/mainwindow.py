@@ -71,7 +71,7 @@ from mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from diagram.importsdgm import ( ImportsDiagramDialog, ImportsDiagramProgress,
                                  ImportDiagramOptions )
 from runparams import RunDialog
-from utils.run import getCwdCmdEnv
+from utils.run import getCwdCmdEnv, CMD_TYPE_RUN, CMD_TYPE_DEBUG
 from debugger.context import DebuggerContext
 from debugger.modifiedunsaved import ModifiedUnsavedDialog
 from debugger.main import CodimensionDebugger
@@ -2224,7 +2224,8 @@ class CodimensionMainWindow( QMainWindow ):
 
         fileName = GlobalData().project.getProjectScript()
         params = GlobalData().getRunParameters( fileName )
-        workingDir, cmd, environment = getCwdCmdEnv( fileName, params,
+        workingDir, cmd, environment = getCwdCmdEnv( CMD_TYPE_RUN,
+                                                     fileName, params,
                                                      Settings().terminalType )
 
         try:
@@ -2253,8 +2254,14 @@ class CodimensionMainWindow( QMainWindow ):
             return
 
         fileName = GlobalData().project.getProjectScript()
+        self.debugScript( fileName )
+        return
+
+    def debugScript( self, fileName ):
+        " Runs a script to debug "
         params = GlobalData().getRunParameters( fileName )
-        workingDir, cmd, environment = getCwdCmdEnv( fileName, params,
+        workingDir, cmd, environment = getCwdCmdEnv( CMD_TYPE_DEBUG,
+                                                     fileName, params,
                                                      Settings().terminalType )
         self.switchDebugMode( True )
         self.__debugger.startDebugging()

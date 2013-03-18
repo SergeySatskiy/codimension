@@ -58,7 +58,7 @@ from autocomplete.completelists import ( getCompletionList, getCalltipAndDoc,
 from cdmbriefparser import getBriefModuleInfoFromMemory
 from ui.completer import CodeCompleter
 from ui.runparams import RunDialog
-from utils.run import getCwdCmdEnv
+from utils.run import getCwdCmdEnv, CMD_TYPE_RUN, CMD_TYPE_DEBUG
 from ui.findinfiles import ItemToSearchIn, getSearchItemIndex
 from debugger.modifiedunsaved import ModifiedUnsavedDialog
 from ui.linecounter import LineCounterDialog
@@ -2006,7 +2006,6 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.connect( self.debugScriptButton, SIGNAL( 'clicked(bool)' ),
                       self.__onDebugScript )
         self.debugScriptButton.setEnabled( False )
-        self.debugScriptButton.setVisible( False )
 
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
@@ -2605,7 +2604,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Runs the script "
         fileName = self.getFileName()
         params = GlobalData().getRunParameters( fileName )
-        workingDir, cmd, environment = getCwdCmdEnv( fileName, params,
+        workingDir, cmd, environment = getCwdCmdEnv( CMD_TYPE_RUN,
+                                                     fileName, params,
                                                      Settings().terminalType )
 
         try:
@@ -2649,10 +2649,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         if self.__checkDebugPrerequisites() == False:
             return
 
-        fileName = self.getFileName()
-        params = GlobalData().getRunParameters( fileName )
-        workingDir, cmd, environment = getCwdCmdEnv( fileName, params,
-                                                     Settings().terminalType )
+        GlobalData().mainWindow.debugScript( self.getFileName() )
         return
 
     def __checkDebugPrerequisites( self ):

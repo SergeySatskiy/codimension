@@ -30,7 +30,7 @@ from subprocess import Popen
 from profwidget import ProfileResultsWidget
 from utils.globals import GlobalData
 from utils.settings import Settings
-from utils.run import getCwdCmdEnv
+from utils.run import getCwdCmdEnv, CMD_TYPE_PROFILE
 from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
 from utils.misc import getLocaleDateTime
 
@@ -132,7 +132,8 @@ class ProfilingProgressDialog( QDialog ):
         sock, port = createDoneFeedbackSocket()
 
         params = GlobalData().getRunParameters( self.__scriptName )
-        workingDir, cmd, environment = getCwdCmdEnv( self.__scriptName, params,
+        workingDir, cmd, environment = getCwdCmdEnv( CMD_TYPE_PROFILE,
+                                                     self.__scriptName, params,
                                                      Settings().terminalType,
                                                      port )
         try:
