@@ -39,3 +39,8 @@ class CodimensionDebugger():
         return
 
 
+    def stopDebugging( self ):
+        " Stops debugging "
+        return
+
+

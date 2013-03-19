@@ -2595,7 +2595,10 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onStopDbgSession( self ):
         " Debugger stop debugging clicked "
-        pass
+        self.__debugger.stopDebugging()
+        self.switchDebugMode( False )
+        return
+
     def __onRestartDbgSession( self ):
         " Debugger restart session clicked "
         pass

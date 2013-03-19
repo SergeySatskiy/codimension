@@ -294,7 +294,7 @@ def getTerminalCommandToProfile( fileName, workingDir, arguments,
                                               'exit_if_ok': exit_if_ok }
 
 def getTerminalCommandToDebug( fileName, workingDir, arguments,
-                               params, port ):
+                               terminalType, closeTerminal, port ):
     " Provides a command line to debug in a separate shell terminal "
 
     if os.name != 'posix':
@@ -332,7 +332,6 @@ def getTerminalCommandToDebug( fileName, workingDir, arguments,
                                                          'wdir':       workingDir,
                                                          'exec':       pythonExec,
                                                          'options':    fileName + args,
-                                                         'out':        outputPath,
                                                          'fb':         procfeedbackPath,
                                                          'port':       port,
                                                          'exit_if_ok': exit_if_ok }
@@ -341,7 +340,6 @@ def getTerminalCommandToDebug( fileName, workingDir, arguments,
                                             'wdir':       workingDir,
                                             'exec':       pythonExec,
                                             'options':    fileName + args,
-                                            'out':        outputPath,
                                             'fb':         procfeedbackPath,
                                             'port':       port,
                                             'exit_if_ok': exit_if_ok }
