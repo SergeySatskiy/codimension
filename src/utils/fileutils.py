@@ -268,8 +268,8 @@ def detectFileType( path, checkForBrokenLink = True, skipCache = False ):
                 if 'shared object' in output:
                     __cachedFileTypes[ path ] = SOFileType
                     return SOFileType
-            elif fileExtension == "cgi":
-                if 'python' in output:
+            else:
+                if 'python ' in output:
                     __cachedFileTypes[ path ] = PythonFileType
                     return PythonFileType
                 if 'bourne-again shell' in output:
