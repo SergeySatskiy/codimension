@@ -199,7 +199,10 @@ __osSpawnForProfile = {
                       }
 
 __osSpawnForDebug = {
-    'posix'         : "",
+    'posix'         : "%(term)s -e %(shell)s -c " \
+                      "'%(exec)s %(fb)s %(fbport)d $PPID; cd %(wdir)s; " \
+                      "%(exec)s %(dbgclient)s %(dbgopt)s -- %(app)s; CDM_RES=$?; " \
+                      "%(exec)s %(fb)s %(fbport)d $CDM_RES; %(exit_if_ok)s %(shell)s' &",
     'Terminal'      : "",
     'gnome-terminal': "",
                     }
@@ -294,7 +297,8 @@ def getTerminalCommandToProfile( fileName, workingDir, arguments,
                                               'exit_if_ok': exit_if_ok }
 
 def getTerminalCommandToDebug( fileName, workingDir, arguments,
-                               terminalType, closeTerminal, port ):
+                               terminalType, closeTerminal,
+                               procFeedbackPort, tcpServerPort ):
     " Provides a command line to debug in a separate shell terminal "
 
     if os.name != 'posix':
@@ -326,22 +330,42 @@ def getTerminalCommandToDebug( fileName, workingDir, arguments,
     from settings import Settings
     debugSettings = Settings().getDebuggerSettings()
 
+    # Form the debug client options
+    dbgopt = "-n -h localhost -p " + str( tcpServerPort )
+    if not debugSettings.reportExceptions:
+        dbgopt += " -e"
+    if debugSettings.traceInterpreter:
+        dbgopt += " -t"
+    if debugSettings.stopAtFirstLine:
+        pass    # TODO: not used now?
+    if debugSettings.autofork:
+        pass    # TODO: not used now?
+    if debugSettings.followChild:
+        pass    # TODO: not used now?
+
+
     # Here: all the parameters are prepared, need to combine the command line
     if terminalStartCmd in __osSpawnForProfile:
         return __osSpawnForDebug[ terminalStartCmd ] % { 'shell':      shell,
                                                          'wdir':       workingDir,
                                                          'exec':       pythonExec,
-                                                         'options':    fileName + args,
+                                                         'app':        fileName + args,
                                                          'fb':         procfeedbackPath,
-                                                         'port':       port,
+                                                         'fbport':     procFeedbackPort,
+                                                         'tcpport':    tcpServerPort,
+                                                         'dbgclient':  debugClientPath,
+                                                         'dbgopt':     dbgopt,
                                                          'exit_if_ok': exit_if_ok }
     return __osSpawnForDebug[ os.name ] % { 'term':       terminalStartCmd,
                                             'shell':      shell,
                                             'wdir':       workingDir,
                                             'exec':       pythonExec,
-                                            'options':    fileName + args,
+                                            'app':        fileName + args,
                                             'fb':         procfeedbackPath,
-                                            'port':       port,
+                                            'fbport':     procFeedbackPort,
+                                            'tcpport':    tcpServerPort,
+                                            'dbgclient':  debugClientPath,
+                                            'dbgopt':     dbgopt,
                                             'exit_if_ok': exit_if_ok }
 
 
@@ -422,7 +446,8 @@ def parseCommandLineArguments( cmdLine ):
     return result
 
 
-def getCwdCmdEnv( cmdType, path, params, terminalType, port = None ):
+def getCwdCmdEnv( cmdType, path, params, terminalType,
+                  procFeedbackPort = None, tcpServerPort = None ):
     """ Provides the working directory, command line and environment
         for running/debugging a script """
 
@@ -440,11 +465,11 @@ def getCwdCmdEnv( cmdType, path, params, terminalType, port = None ):
     elif cmdType == CMD_TYPE_PROFILE:
         cmd = getTerminalCommandToProfile( path, workingDir, arguments,
                                            terminalType, params.closeTerminal,
-                                           port )
+                                           procFeedbackPort )
     elif cmdType == CMD_TYPE_DEBUG:
         cmd = getTerminalCommandToDebug( path, workingDir, arguments,
                                          terminalType, params.closeTerminal,
-                                         port )
+                                         procFeedbackPort, tcpServerPort )
     else:
         raise Exception( "Unknown command requested. "
                          "Supported command types are: run, profile, debug." )

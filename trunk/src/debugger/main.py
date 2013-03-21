@@ -24,6 +24,7 @@
 
 import socket
 import logging
+from subprocess import Popen
 from PyQt4.QtCore import SIGNAL, QTimer, QObject, Qt
 from PyQt4.QtGui import QApplication, QCursor
 from PyQt4.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
@@ -80,13 +81,22 @@ class CodimensionDebugger( QObject ):
         self.__createTCPServer()
 
         params = GlobalData().getRunParameters( fileName )
-        workingDir, cmd, environment = getCwdCmdEnv( CMD_TYPE_DEBUG,
-                                                     fileName, params,
-                                                     Settings().terminalType )
+        workingDir, cmd, environment = getCwdCmdEnv(
+                                            CMD_TYPE_DEBUG,
+                                            fileName, params,
+                                            Settings().terminalType,
+                                            self.__procFeedbackPort,
+                                            self.__tcpServer.serverPort() )
 
-        # Run the client
+        print "Debug working dir: " + str( workingDir )
+        print "Debug command: " + str( cmd )
+        print "Environment: " + str( environment )
 
-        # Wait for the parent PID
+        # Run the client -  exception is processed in the outer scope
+#        Popen( cmd, shell = True, cwd = workingDir, env = environment )
+
+        # Wait for the child PID
+
 
         # Wait till the client incoming connection
 
