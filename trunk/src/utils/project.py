@@ -812,7 +812,8 @@ class CodimensionProject( QObject ):
         if emitSignal:
             # No need to send a signal e.g. if IDE is closing
             self.emit( SIGNAL( 'projectChanged' ), self.CompleteProject )
-        self.__ropeProject.close()
+        if self.__ropeProject is not None:
+            self.__ropeProject.close()
         self.__ropeProject = None
         self.__ropeSourceDirs = []
         return
