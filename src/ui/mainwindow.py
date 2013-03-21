@@ -2250,21 +2250,13 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onDebugProject( self, action = False ):
         " Debugging is requested "
-        if self.__checkDebugPrerequisites() == False:
-            return
-
-        fileName = GlobalData().project.getProjectScript()
-        self.debugScript( fileName )
+        if self.__checkDebugPrerequisites():
+            self.debugScript( GlobalData().project.getProjectScript() )
         return
 
     def debugScript( self, fileName ):
         " Runs a script to debug "
-        params = GlobalData().getRunParameters( fileName )
-        workingDir, cmd, environment = getCwdCmdEnv( CMD_TYPE_DEBUG,
-                                                     fileName, params,
-                                                     Settings().terminalType )
-        self.switchDebugMode( True )
-        self.__debugger.startDebugging()
+        self.__debugger.startDebugging( fileName )
         return
 
     def __checkDebugPrerequisites( self ):
@@ -2596,7 +2588,6 @@ class CodimensionMainWindow( QMainWindow ):
     def __onStopDbgSession( self ):
         " Debugger stop debugging clicked "
         self.__debugger.stopDebugging()
-        self.switchDebugMode( False )
         return
 
     def __onRestartDbgSession( self ):

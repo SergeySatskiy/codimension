@@ -20,27 +20,55 @@
 # $Id$
 #
 
-" debugger "
+" Debugger server "
+
+
+from utils.globals import GlobalData
+from utils.run import getCwdCmdEnv, CMD_TYPE_DEBUG
+from utils.settings import Settings
 
 
 class CodimensionDebugger():
-    " Wrapper around rpdb2 "
+    " Debugger server implementation "
+
+    STATE_IDLE = 0
+    STATE_PROLOGUE = 1
+    STATE_DEBUGGING = 2
+    STATE_FINISHING = 3
 
     def __init__( self, mainWindow ):
 
         # To control the user interface elements
         self.__mainWindow = mainWindow
+        self.__state = self.STATE_IDLE
 
+        self.__procFeedbackSocket = None
+        self.__tcpServer = None
+        self.__procWatchTimer = None
+        self.__procPID = None
 
         return
 
-    def startDebugging( self ):
+    def startDebugging( self, fileName ):
         " Starts debugging a script "
+        if self.__state != self.STATE_IDLE:
+            return
+
+        # Switch the UI and make debugging visually noticable
+        self.__mainWindow.switchDebugMode( True )
+
+        params = GlobalData().getRunParameters( fileName )
+        workingDir, cmd, environment = getCwdCmdEnv( CMD_TYPE_DEBUG,
+                                                     fileName, params,
+                                                     Settings().terminalType )
+
+
         return
 
 
     def stopDebugging( self ):
         " Stops debugging "
+        self.__mainWindow.switchDebugMode( False )
         return
 
 
