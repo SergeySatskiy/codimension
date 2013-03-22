@@ -24,15 +24,22 @@
 
 import socket
 import logging
+import errno
+import time
 from subprocess import Popen
-from PyQt4.QtCore import SIGNAL, QTimer, QObject, Qt
+from PyQt4.QtCore import SIGNAL, QTimer, QObject, Qt, QTextCodec, QString
 from PyQt4.QtGui import QApplication, QCursor
 from PyQt4.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
 
 from utils.globals import GlobalData
 from utils.run import getCwdCmdEnv, CMD_TYPE_DEBUG
 from utils.settings import Settings
+from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
+from client.protocol import EOT
 
+
+POLL_INTERVAL = 0.1
+HANDSHAKE_TIMEOUT = 15
 
 class CodimensionDebugger( QObject ):
     " Debugger server implementation "
@@ -56,6 +63,7 @@ class CodimensionDebugger( QObject ):
         self.__procWatchTimer = None
         self.__procPID = None
 
+        self.__codec = QTextCodec.codecForName( "utf-8" )
         return
 
     def startDebugging( self, fileName ):
@@ -93,14 +101,44 @@ class CodimensionDebugger( QObject ):
         print "Environment: " + str( environment )
 
         # Run the client -  exception is processed in the outer scope
-#        Popen( cmd, shell = True, cwd = workingDir, env = environment )
+        Popen( cmd, shell = True, cwd = workingDir, env = environment )
 
         # Wait for the child PID
-
+        self.__waitChildPID()
 
         # Wait till the client incoming connection
 
         return
+
+    def __waitChildPID( self ):
+        " Waits for the child PID on the feedback socket "
+        startTime = time.time()
+        while True:
+            time.sleep( POLL_INTERVAL )
+            QApplication.processEvents()
+
+            data = self.__getProcfeedbackData()
+            if data != "":
+                # We've got the message, extract the PID to watch
+                msgParts = decodeMessage( data )
+                if len( msgParts ) != 1:
+                    raise Exception( "Unexpected handshake message: '" +
+                                     data + "'. Expected debuggee child "
+                                     "process PID." )
+                try:
+                    self.__procPID = int( msgParts[ 0 ] )
+                    break   # Move to stage 2
+                except:
+                    raise Exception( "Broken handshake message: '" +
+                                     data + ". Cannot convert debuggee "
+                                     "child process PID to integer." )
+
+            if time.time() - startTime > HANDSHAKE_TIMEOUT:
+                raise Exception( "Handshake timeout: "
+                                 "error spawning process to profile" )
+        print "Debuggee PID: " + str( self.__procPID )
+        return
+
 
     def __createProcfeedbackSocket( self ):
         " Creates the process feedback socket "
@@ -122,6 +160,16 @@ class CodimensionDebugger( QObject ):
         self.__tcpServer.listen( QHostAddress.LocalHost )
         return
 
+    def __getProcfeedbackData( self ):
+        " Checks if data avalable in the socket and reads it if so "
+        try:
+            data = self.__procFeedbackSocket.recv( 1024, socket.MSG_DONTWAIT )
+        except socket.error, excpt:
+            if excpt[ 0 ] == errno.EWOULDBLOCK:
+                return ""
+            raise
+        return data
+
     def __newConnection( self ):
         " Handles new incoming connections "
         sock = self.__tcpServer.nextPendingConnection()
@@ -137,14 +185,29 @@ class CodimensionDebugger( QObject ):
         self.connect( self.__clientSocket, SIGNAL( 'readyRead()' ),
                       self.__parseClientLine )
 
+        self.__state = self.STATE_DEBUGGING
         print "New connection has been accepted"
         return
 
     def __parseClientLine( self ):
-        print "Client sent a packet "
+        " Triggered when something has been received from the client "
+        while self.__clientSocket and self.__clientSocket.canReadLine():
+            qs = self.__clientSocket.readLine()
+            us = self.__codec.fromUnicode( QString( qs ) )
+            line = str( us )
+            if line.endswith( EOT ):
+                line = line[ : -len( EOT ) ]
+                if not line:
+                    continue
+
+            print "Server received: " + line
+        return
+
 
     def __disconnected( self ):
         print "Client disconnected"
+        self.stopDebugging()
+        return
 
     def stopDebugging( self ):
         " Stops debugging "
@@ -159,12 +222,7 @@ class CodimensionDebugger( QObject ):
         self.__procFeedbackSocket = None
         self.__procFeedbackPort = None
 
-        # Close the TCP server
-        if self.__tcpServer is not None:
-            self.disconnect( self.__tcpServer, SIGNAL( "newConnection()" ),
-                             self.__newConnection )
-            self.__tcpServer.close()
-        self.__tcpServer = None
+        # Close the opened socket if so
         if self.__clientSocket is not None:
             self.disconnect( self.__clientSocket, SIGNAL( 'disconnected()' ),
                              self.__disconnected )
@@ -172,6 +230,13 @@ class CodimensionDebugger( QObject ):
                              self.__parseClientLine )
             self.__clientSocket.close()
         self.__clientSocket = None
+
+        # Close the TCP server if so
+        if self.__tcpServer is not None:
+            self.disconnect( self.__tcpServer, SIGNAL( "newConnection()" ),
+                             self.__newConnection )
+            self.__tcpServer.close()
+        self.__tcpServer = None
 
         self.__mainWindow.switchDebugMode( False )
         self.__state = self.STATE_IDLE
