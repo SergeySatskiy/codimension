@@ -2596,18 +2596,25 @@ class CodimensionMainWindow( QMainWindow ):
     def __onDbgGo( self ):
         " Debugger continue clicked "
         pass
+
     def __onDbgNext( self ):
         " Debugger step over clicked "
-        pass
+        self.__debugger.remoteStepOver()
+        return
+
     def __onDbgStepInto( self ):
         " Debugger step into clicked "
-        pass
+        self.__debugger.remoteStep()
+        return
+
     def __onDbgRunToLine( self ):
         " Debugger run to cursor clicked "
         pass
+
     def __onDbgReturn( self ):
         " Debugger step out clicked "
-        pass
+        self.__debugger.remoteStepOut()
+        return
 
     def __openProject( self ):
         " Shows up a dialog to open a project "
