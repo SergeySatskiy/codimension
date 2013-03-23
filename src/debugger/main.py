@@ -35,7 +35,7 @@ from utils.globals import GlobalData
 from utils.run import getCwdCmdEnv, CMD_TYPE_DEBUG
 from utils.settings import Settings
 from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
-from client.protocol import EOT
+from client.protocol import EOT, RequestStep, RequestStepOver, RequestStepOut
 
 
 POLL_INTERVAL = 0.1
@@ -69,12 +69,16 @@ class CodimensionDebugger( QObject ):
     def startDebugging( self, fileName ):
         " Starts debugging a script "
         if self.__state != self.STATE_IDLE:
+            logging.error( "Cannot start debug session. "
+                           "The previous one has not finished yet." )
             return
 
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         try:
             self.__initiatePrologue( fileName )
+            self.__mainWindow.showStatusBarMessage( "Debugging session started", 2000 )
         except Exception, exc:
+            self.__mainWindow.showStatusBarMessage( "" )
             logging.error( str( exc ) )
             self.stopDebugging()
         QApplication.restoreOverrideCursor()
@@ -85,9 +89,12 @@ class CodimensionDebugger( QObject ):
         self.__state = self.STATE_PROLOGUE
         self.__mainWindow.switchDebugMode( True )
 
+        self.__mainWindow.showStatusBarMessage( "Creating process feedback socket..." )
         self.__createProcfeedbackSocket()
+        self.__mainWindow.showStatusBarMessage( "Creating TCP server..." )
         self.__createTCPServer()
 
+        self.__mainWindow.showStatusBarMessage( "Creating command line..." )
         params = GlobalData().getRunParameters( fileName )
         workingDir, cmd, environment = getCwdCmdEnv(
                                             CMD_TYPE_DEBUG,
@@ -101,12 +108,15 @@ class CodimensionDebugger( QObject ):
         print "Environment: " + str( environment )
 
         # Run the client -  exception is processed in the outer scope
+        self.__mainWindow.showStatusBarMessage( "Running program to debug..." )
         Popen( cmd, shell = True, cwd = workingDir, env = environment )
 
         # Wait for the child PID
+        self.__mainWindow.showStatusBarMessage( "Waiting for the child PID..." )
         self.__waitChildPID()
 
         # Wait till the client incoming connection
+        self.__mainWindow.showStatusBarMessage( "Waiting for the client connection..." )
 
         return
 
@@ -189,6 +199,15 @@ class CodimensionDebugger( QObject ):
         print "New connection has been accepted"
         return
 
+    def __sendCommand( self, command ):
+        " Sends a command to the debuggee "
+        if self.__clientSocket:
+            self.__clientSocket.write( command.encode( 'utf8' ) )
+            return
+
+        raise Exception( "Cannot send command to debuggee - "
+                         "no connection established. Command: " + command )
+
     def __parseClientLine( self ):
         " Triggered when something has been received from the client "
         while self.__clientSocket and self.__clientSocket.canReadLine():
@@ -241,3 +260,20 @@ class CodimensionDebugger( QObject ):
         self.__mainWindow.switchDebugMode( False )
         self.__state = self.STATE_IDLE
         return
+
+
+    def remoteStep( self ):
+        " Single step in the debugged program "
+        self.__sendCommand( RequestStep + '\n' )
+        return
+
+    def remoteStepOver( self ):
+        " Step over the debugged program "
+        self.__sendCommand( RequestStepOver + '\n' )
+        return
+
+    def remoteStepOut(self):
+        " Step out the debugged program "
+        self.__sendCommand( RequestStepOut + '\n' )
+        return
+
