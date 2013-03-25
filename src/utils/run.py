@@ -336,8 +336,6 @@ def getTerminalCommandToDebug( fileName, workingDir, arguments,
         dbgopt += " -e"
     if debugSettings.traceInterpreter:
         dbgopt += " -t"
-    if debugSettings.stopAtFirstLine:
-        pass    # TODO: not used now?
     if debugSettings.autofork:
         pass    # TODO: not used now?
     if debugSettings.followChild:
