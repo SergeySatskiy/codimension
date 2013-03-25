@@ -121,6 +121,9 @@ class CodimensionMainWindow( QMainWindow ):
 
         self.debugMode = False
         self.__debugger = CodimensionDebugger( self )
+        self.connect( self.__debugger, SIGNAL( "DebuggerStateChanged" ),
+                      self.__onDebuggerStateChanged )
+
         self.settings = settings
         self.__initialisation = True
 
@@ -1276,6 +1279,12 @@ class CodimensionMainWindow( QMainWindow ):
                       self.findFileClicked )
 
         # Debugger buttons
+        self.__dbgStopBrutal = QAction( PixmapCache().getIcon( 'dbgstopbrutal.png' ),
+                                       'Stop debugging session and '
+                                       'close debugged program terminal', self )
+        self.connect( self.__dbgStopBrutal, SIGNAL( "triggered()" ),
+                      self.__onBrutalStopDbgSession )
+        self.__dbgStopBrutal.setVisible( False )
         self.__dbgStop = QAction( PixmapCache().getIcon( 'dbgstop.png' ),
                                   'Stop debugging session', self )
         self.connect( self.__dbgStop, SIGNAL( "triggered()" ),
@@ -1341,6 +1350,7 @@ class CodimensionMainWindow( QMainWindow ):
         dbgSpacer.setSizePolicy( QSizePolicy.Fixed, QSizePolicy.Fixed )
         dbgSpacer.setFixedWidth( 40 )
         toolbar.addWidget( dbgSpacer )
+        toolbar.addAction( self.__dbgStopBrutal )
         toolbar.addAction( self.__dbgStop )
         toolbar.addAction( self.__dbgRestart )
         toolbar.addAction( self.__dbgGo )
@@ -2565,6 +2575,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.sbWritable.setVisible( not newState )
 
         # Toolbar buttons
+        self.__dbgStopBrutal.setVisible( newState )
         self.__dbgStop.setVisible( newState )
         self.__dbgRestart.setVisible( newState )
         self.__dbgGo.setVisible( newState )
@@ -2585,9 +2596,63 @@ class CodimensionMainWindow( QMainWindow ):
         self.emit( SIGNAL( 'debugModeChanged' ), newState )
         return
 
+    def __onDebuggerStateChanged( self, newState ):
+        " Triggered when the debugger reported its state changed "
+        if newState == CodimensionDebugger.STATE_IDLE:
+            self.__dbgStopBrutal.setEnabled( False )
+            self.__dbgStop.setEnabled( False )
+            self.__dbgRestart.setEnabled( False )
+            self.__dbgGo.setEnabled( False )
+            self.__dbgNext.setEnabled( False )
+            self.__dbgStepInto.setEnabled( False )
+            self.__dbgRunToLine.setEnabled( False )
+            self.__dbgReturn.setEnabled( False )
+        elif newState == CodimensionDebugger.STATE_PROLOGUE:
+            self.__dbgStopBrutal.setEnabled( True )
+            self.__dbgStop.setEnabled( False )
+            self.__dbgRestart.setEnabled( False )
+            self.__dbgGo.setEnabled( False )
+            self.__dbgNext.setEnabled( False )
+            self.__dbgStepInto.setEnabled( False )
+            self.__dbgRunToLine.setEnabled( False )
+            self.__dbgReturn.setEnabled( False )
+        elif newState == CodimensionDebugger.STATE_DEBUGGING:
+            self.__dbgStopBrutal.setEnabled( True )
+            self.__dbgStop.setEnabled( True )
+            self.__dbgRestart.setEnabled( True )
+            self.__dbgGo.setEnabled( True )
+            self.__dbgNext.setEnabled( True )
+            self.__dbgStepInto.setEnabled( True )
+            self.__dbgRunToLine.setEnabled( True )
+            self.__dbgReturn.setEnabled( True )
+        elif newState == CodimensionDebugger.STATE_FINISHING:
+            self.__dbgStopBrutal.setEnabled( True )
+            self.__dbgStop.setEnabled( False )
+            self.__dbgRestart.setEnabled( False )
+            self.__dbgGo.setEnabled( False )
+            self.__dbgNext.setEnabled( False )
+            self.__dbgStepInto.setEnabled( False )
+            self.__dbgRunToLine.setEnabled( False )
+            self.__dbgReturn.setEnabled( False )
+        elif newState == CodimensionDebugger.STATE_BRUTAL_FINISHING:
+            self.__dbgStopBrutal.setEnabled( False )
+            self.__dbgStop.setEnabled( False )
+            self.__dbgRestart.setEnabled( False )
+            self.__dbgGo.setEnabled( False )
+            self.__dbgNext.setEnabled( False )
+            self.__dbgStepInto.setEnabled( False )
+            self.__dbgRunToLine.setEnabled( False )
+            self.__dbgReturn.setEnabled( False )
+        return
+
+    def __onBrutalStopDbgSession( self ):
+        " Stop debugging brutally "
+        self.__debugger.stopDebugging( True )
+        return
+
     def __onStopDbgSession( self ):
         " Debugger stop debugging clicked "
-        self.__debugger.stopDebugging()
+        self.__debugger.stopDebugging( False )
         return
 
     def __onRestartDbgSession( self ):
@@ -2595,7 +2660,8 @@ class CodimensionMainWindow( QMainWindow ):
         pass
     def __onDbgGo( self ):
         " Debugger continue clicked "
-        pass
+        self.__debugger.remoteContinue()
+        return
 
     def __onDbgNext( self ):
         " Debugger step over clicked "

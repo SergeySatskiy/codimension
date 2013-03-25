@@ -454,7 +454,7 @@ class DebugClientBase( object ):
         eoc = line.find( '<' )
 
         if eoc >= 0 and line[ 0 ] == '>':
-            # Get the command part and any argument.
+            # Get the command part and the arguments
             cmd = line[ : eoc + 1 ]
             arg = line[ eoc + 1 : ]
 
