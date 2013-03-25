@@ -34,10 +34,10 @@ linenumfont=Sans Serif,12,-1,5,50,0,0,0,0,0
 foldingpaper=255,255,255,255
 foldingcolor=230,230,230,255
 
-searchmarkcolor=110,255,110,255
+searchmarkcolor=0,255,0,255
 searchmarkalpha=100
 
-matchmarkcolor=110,110,255,255
+matchmarkcolor=0,0,255,255
 matchmarkalpha=100
 
 spellingmarkcolor=139,0,0,255
@@ -48,12 +48,12 @@ nolexercolor=0,0,0,255
 nolexerfont=Monospace,14,-1,5,50,0,0,0,0,0
 
 currentlinepaper=232,232,255,255
-edgecolor=220,220,220,255
+edgecolor=127,127,127,255
 
-matchedbracepaper=190,190,190,255
+matchedbracepaper=255,255,255,255
 matchedbracecolor=0,0,255,255
-unmatchedbracepaper=190,190,190,255
-unmatchedbracecolor=190,0,0,255
+unmatchedbracepaper=127,0,0,255
+unmatchedbracecolor=255,255,255,255
 
 indentguidepaper=230,230,230,255
 indentguidecolor=127,127,127,255

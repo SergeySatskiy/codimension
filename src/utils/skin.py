@@ -192,7 +192,7 @@ class Skin:
         self.matchedBracePaper = QColor( 255, 255, 255, 255 )
         self.matchedBraceColor = QColor( 0, 0, 255, 255 )
         self.unmatchedBracePaper = QColor( 127, 0, 0, 255 )
-        self.unmatchedBraceColor = QColor( 0, 0, 255, 255 )
+        self.unmatchedBraceColor = QColor( 255, 255, 255, 255 )
 
         self.indentGuidePaper = QColor( 230, 230, 230, 255 )
         self.indentGuideColor = QColor( 127, 127, 127, 255 )
