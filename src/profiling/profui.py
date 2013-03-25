@@ -179,7 +179,7 @@ class ProfilingProgressDialog( QDialog ):
                                     "child process PID to integer." )
                     return
 
-            if time.time() - startTime > 30:
+            if time.time() - startTime > HANDSHAKE_TIMEOUT:
                 self.__onError( "Handshake timeout: " \
                                 "error spawning process to profile" )
                 return
