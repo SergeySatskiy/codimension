@@ -34,7 +34,7 @@ from PyQt4.QtGui import ( QLabel, QToolBar, QWidget, QMessageBox,
 from fitlabel import FitPathLabel
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
-from utils.misc import ( getDefaultTemplate, getIDETemplateFile, 
+from utils.misc import ( getDefaultTemplate, getIDETemplateFile,
                          getProjectTemplateFile, getIDEPylintFile )
 from sidebar import SideBar
 from logviewer import LogViewer
@@ -470,6 +470,16 @@ class CodimensionMainWindow( QMainWindow ):
         font = self.__statusBar.font()
         font.setItalic( True )
         self.__statusBar.setFont( font )
+
+        self.dbgState = QLabel( "Debugger: unknown", self.__statusBar )
+        self.dbgState.setFrameStyle( QFrame.StyledPanel )
+        self.dbgState.setAutoFillBackground( True )
+        dbgPalette = self.dbgState.palette()
+        dbgPalette.setColor( QPalette.Background, QColor( 255, 255, 127 ) )
+        self.dbgState.setPalette( dbgPalette )
+        self.__statusBar.addPermanentWidget( self.dbgState )
+        self.dbgState.setToolTip( "Debugger status" )
+        self.dbgState.setVisible( False )
 
         self.sbLanguage = QLabel( self.__statusBar )
         self.sbLanguage.setFrameStyle( QFrame.StyledPanel )
@@ -2569,6 +2579,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.debugMode = newState
 
         # Satatus bar
+        self.dbgState.setVisible( newState )
         self.sbLanguage.setVisible( not newState )
         self.sbEncoding.setVisible( not newState )
         self.sbEol.setVisible( not newState )
@@ -2598,51 +2609,52 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onDebuggerStateChanged( self, newState ):
         " Triggered when the debugger reported its state changed "
-        if newState == CodimensionDebugger.STATE_IDLE:
+        if newState == CodimensionDebugger.STATE_STOPPED:
             self.__dbgStopBrutal.setEnabled( False )
             self.__dbgStop.setEnabled( False )
             self.__dbgRestart.setEnabled( False )
-            self.__dbgGo.setEnabled( False )
-            self.__dbgNext.setEnabled( False )
-            self.__dbgStepInto.setEnabled( False )
-            self.__dbgRunToLine.setEnabled( False )
-            self.__dbgReturn.setEnabled( False )
+            self.__setDebugControlFlowButtonsState( False )
+            self.dbgState.setText( "Debugger: stopped" )
         elif newState == CodimensionDebugger.STATE_PROLOGUE:
             self.__dbgStopBrutal.setEnabled( True )
             self.__dbgStop.setEnabled( False )
             self.__dbgRestart.setEnabled( False )
-            self.__dbgGo.setEnabled( False )
-            self.__dbgNext.setEnabled( False )
-            self.__dbgStepInto.setEnabled( False )
-            self.__dbgRunToLine.setEnabled( False )
-            self.__dbgReturn.setEnabled( False )
-        elif newState == CodimensionDebugger.STATE_DEBUGGING:
+            self.__setDebugControlFlowButtonsState( False )
+            self.dbgState.setText( "Debugger: prologue" )
+        elif newState == CodimensionDebugger.STATE_IN_IDE:
             self.__dbgStopBrutal.setEnabled( True )
             self.__dbgStop.setEnabled( True )
             self.__dbgRestart.setEnabled( True )
-            self.__dbgGo.setEnabled( True )
-            self.__dbgNext.setEnabled( True )
-            self.__dbgStepInto.setEnabled( True )
-            self.__dbgRunToLine.setEnabled( True )
-            self.__dbgReturn.setEnabled( True )
+            self.__setDebugControlFlowButtonsState( True )
+            self.dbgState.setText( "Debugger: waiting" )
+        elif newState == CodimensionDebugger.STATE_IN_CLIENT:
+            self.__dbgStopBrutal.setEnabled( True )
+            self.__dbgStop.setEnabled( True )
+            self.__dbgRestart.setEnabled( True )
+            self.__setDebugControlFlowButtonsState( False )
+            self.dbgState.setText( "Debugger: running" )
         elif newState == CodimensionDebugger.STATE_FINISHING:
             self.__dbgStopBrutal.setEnabled( True )
             self.__dbgStop.setEnabled( False )
             self.__dbgRestart.setEnabled( False )
-            self.__dbgGo.setEnabled( False )
-            self.__dbgNext.setEnabled( False )
-            self.__dbgStepInto.setEnabled( False )
-            self.__dbgRunToLine.setEnabled( False )
-            self.__dbgReturn.setEnabled( False )
+            self.__setDebugControlFlowButtonsState( False )
+            self.dbgState.setText( "Debugger: finishing" )
         elif newState == CodimensionDebugger.STATE_BRUTAL_FINISHING:
             self.__dbgStopBrutal.setEnabled( False )
             self.__dbgStop.setEnabled( False )
             self.__dbgRestart.setEnabled( False )
-            self.__dbgGo.setEnabled( False )
-            self.__dbgNext.setEnabled( False )
-            self.__dbgStepInto.setEnabled( False )
-            self.__dbgRunToLine.setEnabled( False )
-            self.__dbgReturn.setEnabled( False )
+            self.__setDebugControlFlowButtonsState( False )
+            self.dbgState.setText( "Debugger: force finishing" )
+        QApplication.processEvents()
+        return
+
+    def __setDebugControlFlowButtonsState( self, enabled ):
+        " Sets the control flow debug buttons state "
+        self.__dbgGo.setEnabled( enabled )
+        self.__dbgNext.setEnabled( enabled )
+        self.__dbgStepInto.setEnabled( enabled )
+        self.__dbgRunToLine.setEnabled( enabled )
+        self.__dbgReturn.setEnabled( enabled )
         return
 
     def __onBrutalStopDbgSession( self ):
