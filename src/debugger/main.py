@@ -49,18 +49,19 @@ GRACEFUL_SHUTDOWN_TIMEOUT = 5
 class CodimensionDebugger( QObject ):
     " Debugger server implementation "
 
-    STATE_IDLE = 0
+    STATE_STOPPED = 0
     STATE_PROLOGUE = 1
-    STATE_DEBUGGING = 2
-    STATE_FINISHING = 3
-    STATE_BRUTAL_FINISHING = 4
+    STATE_IN_CLIENT = 2
+    STATE_IN_IDE = 3
+    STATE_FINISHING = 4
+    STATE_BRUTAL_FINISHING = 5
 
     def __init__( self, mainWindow ):
         QObject.__init__( self )
 
         # To control the user interface elements
         self.__mainWindow = mainWindow
-        self.__state = self.STATE_IDLE
+        self.__state = self.STATE_STOPPED
 
         self.__procFeedbackSocket = None
         self.__procFeedbackPort = None
@@ -82,7 +83,7 @@ class CodimensionDebugger( QObject ):
 
     def startDebugging( self, fileName ):
         " Starts debugging a script "
-        if self.__state != self.STATE_IDLE:
+        if self.__state != self.STATE_STOPPED:
             logging.error( "Cannot start debug session. "
                            "The previous one has not finished yet." )
             return
@@ -90,10 +91,7 @@ class CodimensionDebugger( QObject ):
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         try:
             self.__initiatePrologue( fileName )
-            self.__mainWindow.showStatusBarMessage( "Debugging session "
-                                                    "started", 2000 )
         except Exception, exc:
-            self.__mainWindow.showStatusBarMessage( "" )
             logging.error( str( exc ) )
             self.stopDebugging()
         QApplication.restoreOverrideCursor()
@@ -109,13 +107,9 @@ class CodimensionDebugger( QObject ):
 
         self.__mainWindow.switchDebugMode( True )
 
-        self.__mainWindow.showStatusBarMessage( "Creating process "
-                                                "feedback socket..." )
         self.__createProcfeedbackSocket()
-        self.__mainWindow.showStatusBarMessage( "Creating TCP server..." )
         self.__createTCPServer()
 
-        self.__mainWindow.showStatusBarMessage( "Creating command line..." )
         params = GlobalData().getRunParameters( fileName )
         workingDir, cmd, environment = getCwdCmdEnv(
                                             CMD_TYPE_DEBUG,
@@ -132,16 +126,12 @@ class CodimensionDebugger( QObject ):
         print "Environment: " + str( environment )
 
         # Run the client -  exception is processed in the outer scope
-        self.__mainWindow.showStatusBarMessage( "Running program to debug..." )
         Popen( cmd, shell = True, cwd = workingDir, env = environment )
 
         # Wait for the child PID
-        self.__mainWindow.showStatusBarMessage( "Waiting for the child PID..." )
         self.__waitChildPID()
 
         # Wait till the client incoming connection
-        self.__mainWindow.showStatusBarMessage( "Waiting for the "
-                                                "client connection..." )
         self.__waitIncomingConnection()
         return
 
@@ -243,7 +233,7 @@ class CodimensionDebugger( QObject ):
         self.connect( self.__clientSocket, SIGNAL( 'readyRead()' ),
                       self.__parseClientLine )
 
-        self.__changeDebuggerState( self.STATE_DEBUGGING )
+        self.__changeDebuggerState( self.STATE_IN_CLIENT )
         print "New connection has been accepted"
         return
 
@@ -300,6 +290,9 @@ class CodimensionDebugger( QObject ):
                     else:
                         self.__stopAtFirstLine = True
                         QTimer.singleShot( 0, self.remoteContinue )
+
+                    if resp == ResponseLine:
+                        self.__changeDebuggerState( self.STATE_IN_IDE )
                     continue
 
 
@@ -317,7 +310,7 @@ class CodimensionDebugger( QObject ):
 
     def stopDebugging( self, brutal = False ):
         " Stops debugging "
-        if self.__state in [ self.STATE_IDLE, self.STATE_BRUTAL_FINISHING ]:
+        if self.__state in [ self.STATE_STOPPED, self.STATE_BRUTAL_FINISHING ]:
             return
         if not brutal and self.__state == self.STATE_FINISHING:
             return
@@ -379,7 +372,7 @@ class CodimensionDebugger( QObject ):
         self.__procPID = None
 
         self.__mainWindow.switchDebugMode( False )
-        self.__changeDebuggerState( self.STATE_IDLE )
+        self.__changeDebuggerState( self.STATE_STOPPED )
         return
 
 
@@ -389,21 +382,25 @@ class CodimensionDebugger( QObject ):
 
     def remoteStep( self ):
         " Single step in the debugged program "
+        self.__changeDebuggerState( self.STATE_IN_CLIENT )
         self.__sendCommand( RequestStep + '\n' )
         return
 
     def remoteStepOver( self ):
         " Step over the debugged program "
+        self.__changeDebuggerState( self.STATE_IN_CLIENT )
         self.__sendCommand( RequestStepOver + '\n' )
         return
 
     def remoteStepOut( self ):
         " Step out the debugged program "
+        self.__changeDebuggerState( self.STATE_IN_CLIENT )
         self.__sendCommand( RequestStepOut + '\n' )
         return
 
     def remoteContinue( self, special = False ):
         " Continues the debugged program "
+        self.__changeDebuggerState( self.STATE_IN_CLIENT )
         self.__sendCommand( '%s%d\n' % ( RequestContinue, special ) )
         return
 
