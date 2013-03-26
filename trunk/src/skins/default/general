@@ -50,10 +50,10 @@ nolexerfont=Monospace,14,-1,5,50,0,0,0,0,0
 currentlinepaper=232,232,255,255
 edgecolor=127,127,127,255
 
-matchedbracepaper=255,255,255,255
-matchedbracecolor=0,0,255,255
-unmatchedbracepaper=127,0,0,255
-unmatchedbracecolor=255,255,255,255
+matchedbracepaper=132,117,245,255
+matchedbracecolor=255,255,255,255
+unmatchedbracepaper=250,89,68,255
+unmatchedbracecolor=0,0,255,255
 
 indentguidepaper=230,230,230,255
 indentguidecolor=127,127,127,255
