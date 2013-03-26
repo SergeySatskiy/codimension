@@ -376,7 +376,7 @@ class CodimensionMainWindow( QMainWindow ):
                                     self.editorsManagerWidget.editorsManager,
                                     self.sbPyflakes )
 
-        self.__debuggerContext = DebuggerContext()
+        self.__debuggerContext = DebuggerContext( self.__debugger )
         self.__rightSideBar.addTab( self.__debuggerContext,
                 PixmapCache().getIcon( '' ), 'Debugger' )
         self.__rightSideBar.setTabEnabled( 1, False )
