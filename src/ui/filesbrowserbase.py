@@ -25,34 +25,30 @@
 
 
 import os.path, logging
-from PyQt4.QtCore       import Qt, QModelIndex, SIGNAL
-from PyQt4.QtGui        import QAbstractItemView, QApplication, \
-                               QSortFilterProxyModel, QTreeView
-from utils.globals      import GlobalData
-from utils.pixmapcache  import PixmapCache
-from viewitems          import DirectoryItemType, SysPathItemType, \
-                               GlobalsItemType, ImportsItemType, \
-                               FunctionsItemType, ClassesItemType, \
-                               StaticAttributesItemType, \
-                               InstanceAttributesItemType, \
-                               CodingItemType, ImportItemType, \
-                               FileItemType, FunctionItemType, \
-                               ClassItemType, DecoratorItemType, \
-                               AttributeItemType, GlobalItemType, \
-                               ImportWhatItemType, TreeViewDirectoryItem, \
-                               TreeViewFileItem, TreeViewCodingItem, \
-                               TreeViewGlobalsItem, TreeViewGlobalItem, \
-                               TreeViewImportsItem, TreeViewImportItem, \
-                               TreeViewWhatItem, \
-                               TreeViewFunctionsItem, TreeViewClassesItem
-from utils.fileutils    import CodimensionProjectFileType, \
-                               BrokenSymlinkFileType, \
-                               PythonFileType, Python3FileType, getFileIcon
-from itemdelegates      import NoOutlineHeightDelegate
-from parsererrors       import ParserErrorsDialog
-from utils.fileutils    import detectFileType
-from findinfiles        import FindInFilesDialog
-from utils.project      import getProjectFileTooltip
+from PyQt4.QtCore import Qt, QModelIndex, SIGNAL
+from PyQt4.QtGui import ( QAbstractItemView, QApplication,
+                          QSortFilterProxyModel, QTreeView )
+from utils.globals import GlobalData
+from utils.pixmapcache import PixmapCache
+from viewitems import ( DirectoryItemType, SysPathItemType, GlobalsItemType,
+                        ImportsItemType, FunctionsItemType, ClassesItemType,
+                        StaticAttributesItemType, InstanceAttributesItemType,
+                        CodingItemType, ImportItemType, FileItemType,
+                        FunctionItemType, ClassItemType, DecoratorItemType,
+                        AttributeItemType, GlobalItemType, ImportWhatItemType,
+                        TreeViewDirectoryItem, TreeViewFileItem,
+                        TreeViewCodingItem, TreeViewGlobalsItem,
+                        TreeViewGlobalItem, TreeViewImportsItem,
+                        TreeViewImportItem, TreeViewWhatItem,
+                        TreeViewFunctionsItem, TreeViewClassesItem )
+from utils.fileutils import ( CodimensionProjectFileType,
+                              BrokenSymlinkFileType, PythonFileType,
+                              Python3FileType, getFileIcon )
+from itemdelegates import NoOutlineHeightDelegate
+from parsererrors import ParserErrorsDialog
+from utils.fileutils import detectFileType
+from findinfiles import FindInFilesDialog
+from utils.project import getProjectFileTooltip
 
 
 class FilesBrowserSortFilterProxyModel( QSortFilterProxyModel ):
@@ -413,7 +409,7 @@ class FilesBrowser( QTreeView ):
 
             if not foundInChildren:
                 if item.endswith( os.path.sep ):
-                    newItem = TreeViewDirectoryItem( \
+                    newItem = TreeViewDirectoryItem(
                                 treeItem, treeItem.getPath() + basename, False )
                 else:
                     newItem = TreeViewFileItem( treeItem,
@@ -538,7 +534,7 @@ class FilesBrowser( QTreeView ):
         " Emits a signal that an item is updated "
         srcModel = self.model().sourceModel()
         index = srcModel.buildIndex( treeItem.getRowPath() )
-        srcModel.emit( SIGNAL( "dataChanged(const QModelIndex &," \
+        srcModel.emit( SIGNAL( "dataChanged(const QModelIndex &,"
                                "const QModelIndex &)" ), index, index )
         return
 
@@ -639,9 +635,10 @@ class FilesBrowser( QTreeView ):
                 hadFunctions = True
                 if info.functions:
                     fileChildItem.updateData( info )
-                    self.model().sourceModel().updateFunctionsItem( \
+                    self.model().sourceModel().updateFunctionsItem(
                                                             fileChildItem,
                                                             info.functions )
+                    self._resort()
                 else:
                     itemsToRemove.append( fileChildItem )
                 continue
@@ -651,6 +648,7 @@ class FilesBrowser( QTreeView ):
                     fileChildItem.updateData( info )
                     self.model().sourceModel().updateClassesItem( fileChildItem,
                                                                   info.classes )
+                    self._resort()
                 else:
                     itemsToRemove.append( fileChildItem )
                 continue
