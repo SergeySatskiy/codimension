@@ -23,27 +23,26 @@
 " debugger context viewer "
 
 
-from stackviewer        import StackViewer
-from threadsviewer      import ThreadsViewer
-from namespacesviewer   import NamespacesViewer
+from stackviewer import StackViewer
+from threadsviewer import ThreadsViewer
+from namespacesviewer import NamespacesViewer
 
-from PyQt4.QtCore       import Qt, SIGNAL, QStringList, QEventLoop
-from PyQt4.QtGui        import QSizePolicy, QSizePolicy, QFrame, \
-                               QTreeWidget, QApplication, \
-                               QTreeWidgetItem, QHeaderView, \
-                               QVBoxLayout, QLabel, QWidget, \
-                               QApplication, QAbstractItemView, \
-                               QHeaderView, QSizePolicy, QSplitter
-from utils.globals      import GlobalData
+from PyQt4.QtCore import Qt, SIGNAL, QStringList, QEventLoop
+from PyQt4.QtGui import ( QSizePolicy, QSizePolicy, QFrame, QTreeWidget,
+                          QApplication, QTreeWidgetItem, QHeaderView,
+                          QVBoxLayout, QLabel, QWidget, QApplication,
+                          QAbstractItemView, QHeaderView, QSizePolicy,
+                          QSplitter )
+from utils.globals import GlobalData
 import os.path
 
 
 class DebuggerContext( QWidget ):
     " Implements the debugger context viewer "
 
-    def __init__( self, parent = None ):
+    def __init__( self, debugger, parent = None ):
         QWidget.__init__( self, parent )
-
+        self.__debugger = debugger
         self.__createLayout()
         return
 
@@ -56,12 +55,12 @@ class DebuggerContext( QWidget ):
         self.splitter = QSplitter( Qt.Vertical )
 
         self.__namespacesViewer = NamespacesViewer( self.splitter )
-        self.__threadsViewer = ThreadsViewer( self.splitter )
         self.__stackViewer = StackViewer( self.splitter )
+        self.__threadsViewer = ThreadsViewer( self.splitter )
 
         self.splitter.addWidget( self.__namespacesViewer )
-        self.splitter.addWidget( self.__threadsViewer )
         self.splitter.addWidget( self.__stackViewer )
+        self.splitter.addWidget( self.__threadsViewer )
 
         self.splitter.setCollapsible( 0, False )
         self.splitter.setCollapsible( 1, False )
