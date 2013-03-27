@@ -48,6 +48,7 @@ class DebuggerContext( QWidget ):
         self.connect( self.__debugger, SIGNAL( 'ClientStack' ),
                       self.__onClientStack )
 
+        self.currentStack = None
         self.__createLayout()
         return
 
@@ -74,11 +75,19 @@ class DebuggerContext( QWidget ):
         verticalLayout.addWidget( self.splitter )
         return
 
+    def clear( self ):
+        " Clears everything "
+        self.__namespacesViewer.clear()
+        self.__stackViewer.clear()
+        self.__threadsViewer.clear()
+        return
+
     def __onClientLine( self, fileName, line, forStack ):
         " Handles the signal from the debugged program "
         pass
 
     def __onClientStack( self, stack ):
         " Handles the signal from the debugged program "
-        pass
+        self.__stackViewer.setStack( stack )
+        return
 

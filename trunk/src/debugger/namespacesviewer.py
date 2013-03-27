@@ -164,4 +164,9 @@ class NamespacesViewer( QWidget ):
         self.__filter = NamespacesViewer.MaxFilter
         return
 
-
+    def clear( self ):
+        " Clears the content "
+        self.__locals.clear()
+        self.__globals.clear()
+        self.__exceptions.clear()
+        return

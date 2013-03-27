@@ -127,6 +127,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.__debugger = CodimensionDebugger( self )
         self.connect( self.__debugger, SIGNAL( "DebuggerStateChanged" ),
                       self.__onDebuggerStateChanged )
+        self.connect( self.__debugger, SIGNAL( 'ClientLine' ),
+                      self.__onDebuggerCurrentLine )
 
         self.settings = settings
         self.__initialisation = True
@@ -2581,6 +2583,7 @@ class CodimensionMainWindow( QMainWindow ):
             return
 
         self.debugMode = newState
+        self.__removeCurrenDebugLineHighlight()
         self.__lastDebugFileName = None
         self.__lastDebugLineNumber = None
 
@@ -2652,6 +2655,32 @@ class CodimensionMainWindow( QMainWindow ):
             self.__setDebugControlFlowButtonsState( False )
             self.dbgState.setText( "Debugger: force finishing" )
         QApplication.processEvents()
+        return
+
+    def __onDebuggerCurrentLine( self, fileName, lineNumber, isStack ):
+        " Triggered when the client reported a new line "
+        self.__removeCurrenDebugLineHighlight()
+
+        self.__lastDebugFileName = fileName
+        self.__lastDebugLineNumber = lineNumber
+
+        editorsManager = self.editorsManagerWidget.editorsManager
+        editorsManager.openFile( fileName, lineNumber )
+        editorsManager.jumpToLine( lineNumber )
+
+        editor = editorsManager.currentWidget().getEditor()
+        editor.gotoLine( lineNumber )
+        editor.highlightCurrentDebuggerLine( lineNumber )
+        return
+
+    def __removeCurrenDebugLineHighlight( self ):
+        " Removes the current debug line highlight "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        if self.__lastDebugFileName is not None:
+            widget = editorsManager.getWidgetForFileName(
+                                                self.__lastDebugFileName )
+            if widget != None:
+                widget.getEditor().clearCurrentDebuggerLine()
         return
 
     def __setDebugControlFlowButtonsState( self, enabled ):

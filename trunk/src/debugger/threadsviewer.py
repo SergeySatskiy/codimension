@@ -122,3 +122,8 @@ class ThreadsViewer( QWidget ):
             self.setMaximumHeight( self.__maxH )
         return
 
+    def clear( self ):
+        " Clears the content "
+        self.__threadsList.clear()
+        return
+
