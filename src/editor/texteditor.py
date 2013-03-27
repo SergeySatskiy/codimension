@@ -32,7 +32,7 @@ from PyQt4.QtCore import ( Qt, QFileInfo, SIGNAL, QSize, QUrl,
 from PyQt4.QtGui import ( QApplication, QCursor, QFontMetrics, QToolBar,
                           QActionGroup, QHBoxLayout, QWidget, QAction, QMenu,
                           QSizePolicy, QToolButton, QDialog, QToolTip, 
-                          QDesktopServices )
+                          QDesktopServices, QColor )
 from PyQt4.Qsci import QsciScintilla, QsciLexerPython
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.fileutils import ( detectFileType, DesignerFileType,
@@ -58,7 +58,7 @@ from autocomplete.completelists import ( getCompletionList, getCalltipAndDoc,
 from cdmbriefparser import getBriefModuleInfoFromMemory
 from ui.completer import CodeCompleter
 from ui.runparams import RunDialog
-from utils.run import getCwdCmdEnv, CMD_TYPE_RUN, CMD_TYPE_DEBUG
+from utils.run import getCwdCmdEnv, CMD_TYPE_RUN
 from ui.findinfiles import ItemToSearchIn, getSearchItemIndex
 from debugger.modifiedunsaved import ModifiedUnsavedDialog
 from ui.linecounter import LineCounterDialog
@@ -88,6 +88,7 @@ class TextEditor( ScintillaWrapper ):
         self.__initIndicators()
         self.__disableKeyBinding()
         self.__initContextMenu()
+        self.__initDebuggerMarkers()
 
         self.connect( self, SIGNAL( 'SCN_DOUBLECLICK(int,int,int)' ),
                       self.__onDoubleClick )
@@ -514,6 +515,26 @@ class TextEditor( ScintillaWrapper ):
                                   pyflakesMarginMask )
         self.setMarginSensitivity( self.MESSAGES_MARGIN, True )
 
+        return
+
+    def __initDebuggerMarkers( self ):
+        " Initializes debugger related markers "
+        self.__currentDebuggerLineMarker = self.markerDefine(
+                                                    QsciScintilla.Background )
+        self.setMarkerForegroundColor( QColor( 0, 0, 255 ),
+                                       self.__currentDebuggerLineMarker )
+        self.setMarkerBackgroundColor( QColor( 255, 255, 127 ),
+                                        self.__currentDebuggerLineMarker )
+        return
+
+    def highlightCurrentDebuggerLine( self, line ):
+        " Highlights the current debugger line "
+        self.markerAdd( line - 1, self.__currentDebuggerLineMarker )
+        return
+
+    def clearCurrentDebuggerLine( self ):
+        " Removes the current debugger line marker "
+        self.markerDeleteAll( self.__currentDebuggerLineMarker )
         return
 
     def __initIndicators( self ):

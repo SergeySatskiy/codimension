@@ -23,15 +23,57 @@
 " Stack viewer "
 
 
-from PyQt4.QtCore       import Qt, SIGNAL, QStringList
-from PyQt4.QtGui        import QSizePolicy, QFrame, QTreeWidget, QToolButton, \
-                               QTreeWidgetItem, QHeaderView, QVBoxLayout, \
-                               QLabel, QWidget, QAbstractItemView, \
-                               QSpacerItem, QHBoxLayout, QPalette
-from utils.globals      import GlobalData
-from ui.itemdelegates   import NoOutlineHeightDelegate
-from utils.pixmapcache  import PixmapCache
+from PyQt4.QtCore import Qt, SIGNAL, QStringList
+from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeWidget, QToolButton,
+                          QTreeWidgetItem, QHeaderView, QVBoxLayout,
+                          QLabel, QWidget, QAbstractItemView,
+                          QSpacerItem, QHBoxLayout, QPalette )
+from utils.globals import GlobalData
+from ui.itemdelegates import NoOutlineHeightDelegate
+from utils.pixmapcache import PixmapCache
 import os.path
+
+
+class StackFrameItem( QTreeWidgetItem ):
+    " Single stack frame item data structure "
+
+    def __init__( self, fileName, lineNumber, funcName ):
+
+        shortened = os.path.basename( fileName ) + ":" + str( lineNumber )
+        full = fileName + ":" + str( lineNumber )
+
+        self.__lineNumber = lineNumber
+        QTreeWidgetItem.__init__( self,
+                QStringList() << "" << shortened << funcName << fileName )
+
+        self.__isCurrent = False
+
+        for index in xrange( 4 ):
+            self.setToolTip( index, full )
+        return
+
+    def setCurrent( self, value ):
+        """ Mark the current stack frame with an icon if so """
+        self.__isCurrent = value
+        if value:
+            self.setIcon( 0, PixmapCache().getIcon( 'currentframe.png' ) )
+        else:
+            self.setIcon( 0, None )
+        return
+
+    def getFilename( self ):
+        """ Provides the full project filename """
+        return str( self.text( 3 ) )
+
+    def getLineNumber( self ):
+        " Provides the line number "
+        return self.__lineNumber
+
+    def isCurrent( self ):
+        " True if the project is current "
+        return self.__isCurrent
+
+
 
 
 class StackViewer( QWidget ):
@@ -40,6 +82,7 @@ class StackViewer( QWidget ):
     def __init__( self, parent = None ):
         QWidget.__init__( self, parent )
 
+        self.currentStack = None
         self.__createLayout()
         return
 
@@ -85,6 +128,7 @@ class StackViewer( QWidget ):
         self.headerFrame.setLayout( headerLayout )
 
         self.__framesList = QTreeWidget()
+        self.__framesList.setSortingEnabled( False )
         self.__framesList.setAlternatingRowColors( True )
         self.__framesList.setRootIsDecorated( False )
         self.__framesList.setItemsExpandable( False )
@@ -93,8 +137,8 @@ class StackViewer( QWidget ):
         self.__framesList.setSelectionBehavior( QAbstractItemView.SelectRows )
         self.__framesList.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
 
-        headerLabels = QStringList() << "Frame" << "File name" \
-                                     << "Line" << "Function" << "Path"
+        headerLabels = QStringList() << "" << "File:line" \
+                                     << "Function" << "Full path"
         self.__framesList.setHeaderLabels( headerLabels )
 
         verticalLayout.addWidget( self.headerFrame )
@@ -122,3 +166,30 @@ class StackViewer( QWidget ):
             self.setMaximumHeight( self.__maxH )
         return
 
+    def clear( self ):
+        " Clears the content "
+        self.__framesList.clear()
+        self.currentStack = None
+        return
+
+    def __resizeColumns( self ):
+        " Resize the files list columns "
+        self.__framesList.header().setStretchLastSection( True )
+        self.__framesList.header().resizeSections(
+                                    QHeaderView.ResizeToContents )
+        self.__framesList.header().resizeSection( 0, 22 )
+        self.__framesList.header().setResizeMode( 0, QHeaderView.Fixed )
+        return
+
+
+    def setStack( self, stack ):
+        " Sets the new call stack and selects the first item in it "
+        self.clear()
+
+        self.currentStack = stack
+        for s in stack:
+            item = StackFrameItem( s[ 0 ], s[ 1 ], s[ 2 ] )
+            self.__framesList.addTopLevelItem( item )
+        self.__resizeColumns()
+        self.__framesList.topLevelItem( 0 ).setCurrent( True )
+        return
