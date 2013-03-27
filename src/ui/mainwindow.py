@@ -120,6 +120,10 @@ class CodimensionMainWindow( QMainWindow ):
         QMainWindow.__init__( self )
 
         self.debugMode = False
+        # Last position the IDE received control from the debugger
+        self.__lastDebugFileName = None
+        self.__lastDebugLineNumber = None
+
         self.__debugger = CodimensionDebugger( self )
         self.connect( self.__debugger, SIGNAL( "DebuggerStateChanged" ),
                       self.__onDebuggerStateChanged )
@@ -2577,6 +2581,8 @@ class CodimensionMainWindow( QMainWindow ):
             return
 
         self.debugMode = newState
+        self.__lastDebugFileName = None
+        self.__lastDebugLineNumber = None
 
         # Satatus bar
         self.dbgState.setVisible( newState )
