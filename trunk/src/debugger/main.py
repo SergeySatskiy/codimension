@@ -283,8 +283,7 @@ class CodimensionDebugger( QObject ):
 
                     if self.__stopAtFirstLine:
                         cf = stack[ 0 ]
-                        self.emit( SIGNAL( 'ClientLine' ),
-                                   cf[ 0 ], int( cf[ 1 ] ),
+                        self.emit( SIGNAL( 'ClientLine' ), cf[ 0 ], int( cf[ 1 ] ),
                                    resp == ResponseStack )
                         self.emit( SIGNAL( 'ClientStack' ), stack )
                     else:
