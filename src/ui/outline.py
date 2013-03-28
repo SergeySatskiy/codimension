@@ -60,6 +60,7 @@ class FileOutlineViewer( QWidget ):
         QWidget.__init__( self, parent )
 
         self.__editorsManager = editorsManager
+        self.__mainWindow = parent
         self.connect( self.__editorsManager, SIGNAL( "currentChanged(int)" ),
                       self.__onTabChanged )
         self.connect( self.__editorsManager, SIGNAL( "tabClosed" ),
@@ -318,6 +319,8 @@ class FileOutlineViewer( QWidget ):
         if widget is None:
             return
         if widget.getEditor().ignoreBufferChangedSignal:
+            return
+        if self.__mainWindow.debugMode:
             return
 
         self.__updateTimer.stop()

@@ -160,6 +160,8 @@ class PyflakesViewer( QObject ):
             return
         if widget.getEditor().ignoreBufferChangedSignal:
             return
+        if self.parent().debugMode:
+            return
 
         self.__updateTimer.stop()
         if self.__currentUUID in self.__flakesResults:
