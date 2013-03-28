@@ -340,13 +340,14 @@ class LexerPygments( LexerContainer ):
         """ Performs the styling """
 
         text = unicode( self.editor.text() )[ :end + 1 ].encode( 'utf-8' )
+        textLen = len( text )
         if self.__lexerGuessed == False:
             self.__lexer = self.__guessLexer()
 
         cpos = 0
         self.editor.startStyling( cpos, 0x3f )
         if self.__lexer is None:
-            self.editor.setStyling( len( text ), PYGMENTS_DEFAULT )
+            self.editor.setStyling( textLen, PYGMENTS_DEFAULT )
         else:
             eolLen = len( self.editor.getLineSeparator() )
             for token, txt in self.__lexer.get_tokens( text ):
@@ -355,9 +356,11 @@ class LexerPygments( LexerContainer ):
                 tlen = len( txt )
                 if eolLen > 1:
                     tlen += txt.count( '\n' )
-                if tlen:
-                    self.editor.setStyling( tlen, style )
                 cpos += tlen
+                if tlen and cpos < textLen:
+                    self.editor.setStyling( tlen, style )
+                else:
+                    break
             self.editor.startStyling( cpos, 0x3f )
         return
 
