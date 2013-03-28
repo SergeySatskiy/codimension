@@ -1336,6 +1336,11 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.__dbgReturn, SIGNAL( "triggered()" ),
                       self.__onDbgReturn )
         self.__dbgReturn.setVisible( False )
+        self.__dbgJumpToCurrent = QAction( PixmapCache().getIcon( 'dbgtocurrent.png' ),
+                                           'Jump to the current debugger line', self )
+        self.connect( self.__dbgJumpToCurrent, SIGNAL( "triggered()" ),
+                      self.__onDbgJumpToCurrent )
+        self.__dbgJumpToCurrent.setVisible( False )
 
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
@@ -1374,6 +1379,7 @@ class CodimensionMainWindow( QMainWindow ):
         toolbar.addAction( self.__dbgStepInto )
         toolbar.addAction( self.__dbgRunToLine )
         toolbar.addAction( self.__dbgReturn )
+        toolbar.addAction( self.__dbgJumpToCurrent )
         # Debugger part end
         # toolbar.addWidget( spacer )
 
@@ -2584,8 +2590,6 @@ class CodimensionMainWindow( QMainWindow ):
 
         self.debugMode = newState
         self.__removeCurrenDebugLineHighlight()
-        self.__lastDebugFileName = None
-        self.__lastDebugLineNumber = None
 
         # Satatus bar
         self.dbgState.setVisible( newState )
@@ -2603,6 +2607,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__dbgStepInto.setVisible( newState )
         self.__dbgRunToLine.setVisible( newState )
         self.__dbgReturn.setVisible( newState )
+        self.__dbgJumpToCurrent.setVisible( newState )
 
         self.updateRunDebugButtons()
 
@@ -2618,6 +2623,9 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onDebuggerStateChanged( self, newState ):
         " Triggered when the debugger reported its state changed "
+        if newState != CodimensionDebugger.STATE_IN_IDE:
+            self.__removeCurrenDebugLineHighlight()
+
         if newState == CodimensionDebugger.STATE_STOPPED:
             self.__dbgStopBrutal.setEnabled( False )
             self.__dbgStop.setEnabled( False )
@@ -2663,24 +2671,19 @@ class CodimensionMainWindow( QMainWindow ):
 
         self.__lastDebugFileName = fileName
         self.__lastDebugLineNumber = lineNumber
-
-        editorsManager = self.editorsManagerWidget.editorsManager
-        editorsManager.openFile( fileName, lineNumber )
-        editorsManager.jumpToLine( lineNumber )
-
-        editor = editorsManager.currentWidget().getEditor()
-        editor.gotoLine( lineNumber )
-        editor.highlightCurrentDebuggerLine( lineNumber )
+        self.__onDbgJumpToCurrent()
         return
 
     def __removeCurrenDebugLineHighlight( self ):
         " Removes the current debug line highlight "
-        editorsManager = self.editorsManagerWidget.editorsManager
         if self.__lastDebugFileName is not None:
+            editorsManager = self.editorsManagerWidget.editorsManager
             widget = editorsManager.getWidgetForFileName(
                                                 self.__lastDebugFileName )
-            if widget != None:
+            if widget is not None:
                 widget.getEditor().clearCurrentDebuggerLine()
+            self.__lastDebugFileName = None
+            self.__lastDebugLineNumber = None
         return
 
     def __setDebugControlFlowButtonsState( self, enabled ):
@@ -2690,6 +2693,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__dbgStepInto.setEnabled( enabled )
         self.__dbgRunToLine.setEnabled( enabled )
         self.__dbgReturn.setEnabled( enabled )
+        self.__dbgJumpToCurrent.setEnabled( enabled )
         return
 
     def __onBrutalStopDbgSession( self ):
@@ -2727,6 +2731,22 @@ class CodimensionMainWindow( QMainWindow ):
     def __onDbgReturn( self ):
         " Debugger step out clicked "
         self.__debugger.remoteStepOut()
+        return
+
+    def __onDbgJumpToCurrent( self ):
+        " Jump to the current debug line "
+        if self.__lastDebugFileName is None or \
+           self.__lastDebugLineNumber is None:
+            return
+
+        editorsManager = self.editorsManagerWidget.editorsManager
+        editorsManager.openFile( self.__lastDebugFileName,
+                                 self.__lastDebugLineNumber )
+
+        editor = editorsManager.currentWidget().getEditor()
+        editor.gotoLine( self.__lastDebugLineNumber )
+        editor.highlightCurrentDebuggerLine( self.__lastDebugLineNumber )
+        editorsManager.currentWidget().setFocus()
         return
 
     def __openProject( self ):

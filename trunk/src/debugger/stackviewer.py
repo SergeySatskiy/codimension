@@ -28,7 +28,6 @@ from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeWidget, QToolButton,
                           QTreeWidgetItem, QHeaderView, QVBoxLayout,
                           QLabel, QWidget, QAbstractItemView,
                           QSpacerItem, QHBoxLayout, QPalette )
-from utils.globals import GlobalData
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import PixmapCache
 import os.path
@@ -170,6 +169,7 @@ class StackViewer( QWidget ):
         " Clears the content "
         self.__framesList.clear()
         self.currentStack = None
+        self.__stackLabel.setText( "Stack" )
         return
 
     def __resizeColumns( self ):
@@ -192,4 +192,5 @@ class StackViewer( QWidget ):
             self.__framesList.addTopLevelItem( item )
         self.__resizeColumns()
         self.__framesList.topLevelItem( 0 ).setCurrent( True )
+        self.__stackLabel.setText( "Stack (total: " + str( len( stack ) ) + ")" )
         return
