@@ -37,7 +37,8 @@ from utils.settings import Settings
 from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
 from client.protocol import ( EOT, RequestStep, RequestStepOver, RequestStepOut,
                               RequestShutdown, ResponseLine, ResponseStack,
-                              RequestContinue )
+                              RequestContinue, RequestThreadList,
+                              RequestVariables )
 
 
 POLL_INTERVAL = 0.1
@@ -400,6 +401,21 @@ class CodimensionDebugger( QObject ):
     def remoteContinue( self, special = False ):
         " Continues the debugged program "
         self.__changeDebuggerState( self.STATE_IN_CLIENT )
-        self.__sendCommand( '%s%d\n' % ( RequestContinue, special ) )
+        if special:
+            self.__sendCommand( RequestContinue + '1\n' )
+        else:
+            self.__sendCommand( RequestContinue + '0\n' )
+        return
+
+    def remoteThreadList( self ):
+        " Provides the threads list "
+        self.__sendCommand( RequestThreadList + "\n" )
+        return
+
+    def remoteClientVariables( self, scope, framenr = 0 ):
+        """ Provides the client variables.
+            scope - 0 => local, 1 => global """
+        self.__sendCommand( RequestVariables +
+                            str( framenr ) + ", " + str( scope ) + "\n" )
         return
 

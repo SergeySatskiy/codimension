@@ -459,7 +459,9 @@ class DebugClientBase( object ):
             arg = line[ eoc + 1 : ]
 
             if cmd == RequestVariables:
-                frmnr, scope, fltr = eval(arg)
+                frmnr, scope = eval(arg)
+                # No need in filter, it'll be done on the server side
+                fltr = []
                 self.__dumpVariables(int(frmnr), int(scope), fltr)
                 return
 
