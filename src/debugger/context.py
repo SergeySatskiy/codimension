@@ -84,7 +84,10 @@ class DebuggerContext( QWidget ):
 
     def __onClientLine( self, fileName, line, forStack ):
         " Handles the signal from the debugged program "
-        pass
+        if not forStack:
+            self.__debugger.remoteThreadList()
+            self.__debugger.remoteClientVariables( 1 )  # globals
+        return
 
     def __onClientStack( self, stack ):
         " Handles the signal from the debugged program "
