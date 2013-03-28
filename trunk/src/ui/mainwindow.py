@@ -373,14 +373,15 @@ class CodimensionMainWindow( QMainWindow ):
 
         # Create outline viewer
         self.__outlineViewer = FileOutlineViewer(
-                                    self.editorsManagerWidget.editorsManager )
+                                    self.editorsManagerWidget.editorsManager,
+                                    self )
         self.__rightSideBar.addTab( self.__outlineViewer,
                 PixmapCache().getIcon( '' ), 'File outline' )
 
         # Create the pyflakes viewer
         self.__pyflakesViewer = PyflakesViewer(
                                     self.editorsManagerWidget.editorsManager,
-                                    self.sbPyflakes )
+                                    self.sbPyflakes, self )
 
         self.__debuggerContext = DebuggerContext( self.__debugger )
         self.__rightSideBar.addTab( self.__debuggerContext,
