@@ -510,9 +510,11 @@ class TextEditor( ScintillaWrapper ):
         # Setup margin markers
         self.__pyflakesMsgMarker = self.markerDefine(
                     PixmapCache().getPixmap( 'pyflakesmsgmarker.png' ) )
-        pyflakesMarginMask = ( 1 << self.__pyflakesMsgMarker )
-        self.setMarginMarkerMask( self.MESSAGES_MARGIN,
-                                  pyflakesMarginMask )
+        self.__dbgMarker = self.markerDefine(
+                    PixmapCache().getPixmap( 'dbgcurrentmarker.png' ) )
+
+        marginMask = ( 1 << self.__pyflakesMsgMarker | 1 << self.__dbgMarker )
+        self.setMarginMarkerMask( self.MESSAGES_MARGIN, marginMask )
         self.setMarginSensitivity( self.MESSAGES_MARGIN, True )
 
         return
@@ -530,11 +532,13 @@ class TextEditor( ScintillaWrapper ):
     def highlightCurrentDebuggerLine( self, line ):
         " Highlights the current debugger line "
         self.markerAdd( line - 1, self.__currentDebuggerLineMarker )
+        self.markerAdd( line - 1, self.__dbgMarker )
         return
 
     def clearCurrentDebuggerLine( self ):
         " Removes the current debugger line marker "
         self.markerDeleteAll( self.__currentDebuggerLineMarker )
+        self.markerDeleteAll( self.__dbgMarker )
         return
 
     def __initIndicators( self ):
