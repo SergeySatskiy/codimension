@@ -132,9 +132,16 @@ class StackViewer( QWidget ):
         self.__framesList.setRootIsDecorated( False )
         self.__framesList.setItemsExpandable( False )
         self.__framesList.setUniformRowHeights( True )
-        self.__framesList.setSelectionMode( QAbstractItemView.SingleSelection )
+        self.__framesList.setSelectionMode( QAbstractItemView.NoSelection )
         self.__framesList.setSelectionBehavior( QAbstractItemView.SelectRows )
         self.__framesList.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
+
+        self.connect( self.__framesList,
+                      SIGNAL( "clicked(const QModelIndex&)" ),
+                      self.__onFrameClicked )
+        self.connect( self.__framesList,
+                      SIGNAL( "doubleClicked(const QModelIndex&)" ),
+                      self.__onFrameDoubleClicked )
 
         headerLabels = QStringList() << "" << "File:line" \
                                      << "Function" << "Full path"
@@ -194,3 +201,13 @@ class StackViewer( QWidget ):
         self.__framesList.topLevelItem( 0 ).setCurrent( True )
         self.__stackLabel.setText( "Stack (total: " + str( len( stack ) ) + ")" )
         return
+
+    def __onFrameClicked( self, index ):
+        " Triggered when a frame is clicked "
+        print "Frame clicked"
+
+    def __onFrameDoubleClicked( self, index ):
+        " Triggered when a frame is double clicked "
+        print "Frame double clicked"
+
+
