@@ -23,16 +23,54 @@
 " Thread viewer "
 
 
-from PyQt4.QtCore       import Qt, SIGNAL, QStringList, QEventLoop
-from PyQt4.QtGui        import QFrame, QTreeWidget, QToolButton, \
+from PyQt4.QtCore import Qt, SIGNAL, QStringList, QEventLoop
+from PyQt4.QtGui import QFrame, QTreeWidget, QToolButton, \
                                QTreeWidgetItem, QHeaderView, \
                                QVBoxLayout, QLabel, QWidget, \
                                QAbstractItemView, QSizePolicy, QSpacerItem, \
                                QHBoxLayout, QPalette
-from utils.globals      import GlobalData
-from ui.itemdelegates   import NoOutlineHeightDelegate
-from utils.pixmapcache  import PixmapCache
-import os.path
+from ui.itemdelegates import NoOutlineHeightDelegate
+from utils.pixmapcache import PixmapCache
+
+
+class ThreadItem( QTreeWidgetItem ):
+    " Single thread item data structure "
+
+    def __init__( self, tid, name, state ):
+        QTreeWidgetItem.__init__( self,
+                QStringList() << "" << str( tid ) << name << state )
+
+        self.__isCurrent = False
+
+        for index in xrange( 4 ):
+            self.setToolTip( index, state )
+        return
+
+    def setCurrent( self, value ):
+        """ Mark the current thread with an icon if so """
+        self.__isCurrent = value
+        if value:
+            self.setIcon( 0, PixmapCache().getIcon( 'currentthread.png' ) )
+        else:
+            self.setIcon( 0, None )
+        return
+
+    def getTID( self ):
+        """ Provides the thread ID """
+        return int( self.text( 1 ) )
+
+    def getName( self ):
+        " Provides the thread name "
+        return str( self.text( 2 ) )
+
+    def getState( self ):
+        " Provides the thread state "
+        return str( self.text( 3 ) )
+
+    def isCurrent( self ):
+        " True if the project is current "
+        return self.__isCurrent
+
 
 
 class ThreadsViewer( QWidget ):
@@ -86,15 +124,23 @@ class ThreadsViewer( QWidget ):
         self.headerFrame.setLayout( headerLayout )
 
         self.__threadsList = QTreeWidget()
+        self.__threadsList.setSortingEnabled( False )
         self.__threadsList.setAlternatingRowColors( True )
         self.__threadsList.setRootIsDecorated( False )
         self.__threadsList.setItemsExpandable( False )
         self.__threadsList.setUniformRowHeights( True )
-        self.__threadsList.setSelectionMode( QAbstractItemView.SingleSelection )
+        self.__threadsList.setSelectionMode( QAbstractItemView.NoSelection )
         self.__threadsList.setSelectionBehavior( QAbstractItemView.SelectRows )
         self.__threadsList.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
 
-        headerLabels = QStringList() << "TID" << "Name" << "State"
+        self.connect( self.__threadsList,
+                      SIGNAL( "clicked(const QModelIndex&)" ),
+                      self.__onThreadClicked )
+        self.connect( self.__threadsList,
+                      SIGNAL( "doubleClicked(const QModelIndex&)" ),
+                      self.__onThreadDoubleClicked )
+
+        headerLabels = QStringList() << "" << "TID" << "Name" << "State"
         self.__threadsList.setHeaderLabels( headerLabels )
 
         verticalLayout.addWidget( self.headerFrame )
@@ -122,8 +168,43 @@ class ThreadsViewer( QWidget ):
             self.setMaximumHeight( self.__maxH )
         return
 
+    def __resizeColumns( self ):
+        " Resize the files list columns "
+        self.__threadsList.header().setStretchLastSection( True )
+        self.__threadsList.header().resizeSections(
+                                    QHeaderView.ResizeToContents )
+        self.__threadsList.header().resizeSection( 0, 22 )
+        self.__threadsList.header().setResizeMode( 0, QHeaderView.Fixed )
+        return
+
     def clear( self ):
         " Clears the content "
         self.__threadsList.clear()
+        self.__threadsLabel.setText( "Threads" )
         return
 
+    def populate( self, currentThreadID, threadList ):
+        " Populates the thread list from the client "
+        self.clear()
+        for thread in threadList:
+            if thread[ 'broken' ]:
+                state = "Waiting at breakpoint"
+            else:
+                state = "Running"
+            item = ThreadItem( thread[ 'id' ], thread[ 'name' ], state )
+            if thread[ 'id' ] == currentThreadID:
+                item.setCurrent( True )
+            self.__threadsList.addTopLevelItem( item )
+
+        self.__resizeColumns()
+        self.__threadsLabel.setText( "Threads (total: " +
+                                     str( len( threadList ) ) + ")" )
+        return
+
+    def __onThreadClicked( self, index ):
+        " Triggered when a thread is clicked "
+        print "Thread clicked"
+
+    def __onThreadDoubleClicked( self, index ):
+        " Triggered when a thread is double clicked "
+        print "Thread double clicked"
