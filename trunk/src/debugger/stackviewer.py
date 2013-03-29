@@ -189,7 +189,7 @@ class StackViewer( QWidget ):
         return
 
 
-    def setStack( self, stack ):
+    def populate( self, stack ):
         " Sets the new call stack and selects the first item in it "
         self.clear()
 
@@ -199,7 +199,8 @@ class StackViewer( QWidget ):
             self.__framesList.addTopLevelItem( item )
         self.__resizeColumns()
         self.__framesList.topLevelItem( 0 ).setCurrent( True )
-        self.__stackLabel.setText( "Stack (total: " + str( len( stack ) ) + ")" )
+        self.__stackLabel.setText( "Stack (total: " +
+                                   str( len( stack ) ) + ")" )
         return
 
     def __onFrameClicked( self, index ):

@@ -27,14 +27,8 @@ from stackviewer import StackViewer
 from threadsviewer import ThreadsViewer
 from namespacesviewer import NamespacesViewer
 
-from PyQt4.QtCore import Qt, SIGNAL, QStringList, QEventLoop
-from PyQt4.QtGui import ( QSizePolicy, QSizePolicy, QFrame, QTreeWidget,
-                          QApplication, QTreeWidgetItem, QHeaderView,
-                          QVBoxLayout, QLabel, QWidget, QApplication,
-                          QAbstractItemView, QHeaderView, QSizePolicy,
-                          QSplitter )
-from utils.globals import GlobalData
-import os.path
+from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtGui import QVBoxLayout, QWidget, QSplitter
 
 
 class DebuggerContext( QWidget ):
@@ -47,6 +41,8 @@ class DebuggerContext( QWidget ):
                       self.__onClientLine )
         self.connect( self.__debugger, SIGNAL( 'ClientStack' ),
                       self.__onClientStack )
+        self.connect( self.__debugger, SIGNAL( 'ClientThreadList' ),
+                      self.__onClientThreadList )
 
         self.currentStack = None
         self.__createLayout()
@@ -91,6 +87,10 @@ class DebuggerContext( QWidget ):
 
     def __onClientStack( self, stack ):
         " Handles the signal from the debugged program "
-        self.__stackViewer.setStack( stack )
+        self.__stackViewer.populate( stack )
         return
 
+    def __onClientThreadList( self, currentThreadID, threadList ):
+        " Handles the thread list from the remote client "
+        self.__threadsViewer.populate( currentThreadID, threadList )
+        return

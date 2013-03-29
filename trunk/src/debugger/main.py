@@ -38,7 +38,7 @@ from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
 from client.protocol import ( EOT, RequestStep, RequestStepOver, RequestStepOut,
                               RequestShutdown, ResponseLine, ResponseStack,
                               RequestContinue, RequestThreadList,
-                              RequestVariables )
+                              RequestVariables, ResponseThreadList )
 
 
 POLL_INTERVAL = 0.1
@@ -293,6 +293,12 @@ class CodimensionDebugger( QObject ):
 
                     if resp == ResponseLine:
                         self.__changeDebuggerState( self.STATE_IN_IDE )
+                    continue
+
+                if resp == ResponseThreadList:
+                    currentThreadID, threadList = eval( line[ eoc : -1 ] )
+                    self.emit( SIGNAL( 'ClientThreadList' ),
+                               currentThreadID, threadList )
                     continue
 
 
