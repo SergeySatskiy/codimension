@@ -23,7 +23,7 @@
 " Thread viewer "
 
 
-from PyQt4.QtCore import Qt, SIGNAL, QStringList, QEventLoop
+from PyQt4.QtCore import Qt, SIGNAL, QStringList
 from PyQt4.QtGui import QFrame, QTreeWidget, QToolButton, \
                                QTreeWidgetItem, QHeaderView, \
                                QVBoxLayout, QLabel, QWidget, \
@@ -38,7 +38,7 @@ class ThreadItem( QTreeWidgetItem ):
 
     def __init__( self, tid, name, state ):
         QTreeWidgetItem.__init__( self,
-                QStringList() << "" << str( tid ) << name << state )
+                QStringList() << "" << name << state << str( tid ) )
 
         self.__isCurrent = False
 
@@ -140,7 +140,7 @@ class ThreadsViewer( QWidget ):
                       SIGNAL( "doubleClicked(const QModelIndex&)" ),
                       self.__onThreadDoubleClicked )
 
-        headerLabels = QStringList() << "" << "TID" << "Name" << "State"
+        headerLabels = QStringList() << "" << "Name" << "State" << "TID"
         self.__threadsList.setHeaderLabels( headerLabels )
 
         verticalLayout.addWidget( self.headerFrame )
