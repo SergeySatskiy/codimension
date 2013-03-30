@@ -1328,7 +1328,7 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onDbgStepInto )
         self.__dbgStepInto.setVisible( False )
         self.__dbgRunToLine = QAction(
-            PixmapCache().getIcon( 'dbgruntoline.png' ), 'Run to line', self )
+            PixmapCache().getIcon( 'dbgruntoline.png' ), 'Run to cursor line', self )
         self.connect( self.__dbgRunToLine, SIGNAL( "triggered()" ),
                       self.__onDbgRunToLine )
         self.__dbgRunToLine.setVisible( False )
