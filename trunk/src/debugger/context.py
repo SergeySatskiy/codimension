@@ -25,7 +25,7 @@
 
 from stackviewer import StackViewer
 from threadsviewer import ThreadsViewer
-from namespacesviewer import NamespacesViewer
+from namespacesviewer import VariablesViewer
 
 from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui import QVBoxLayout, QWidget, QSplitter
@@ -56,11 +56,11 @@ class DebuggerContext( QWidget ):
 
         self.splitter = QSplitter( Qt.Vertical )
 
-        self.__namespacesViewer = NamespacesViewer( self.splitter )
+        self.__variablesViewer = VariablesViewer( self.splitter )
         self.__stackViewer = StackViewer( self.splitter )
         self.__threadsViewer = ThreadsViewer( self.splitter )
 
-        self.splitter.addWidget( self.__namespacesViewer )
+        self.splitter.addWidget( self.__variablesViewer )
         self.splitter.addWidget( self.__stackViewer )
         self.splitter.addWidget( self.__threadsViewer )
 
@@ -73,7 +73,7 @@ class DebuggerContext( QWidget ):
 
     def clear( self ):
         " Clears everything "
-        self.__namespacesViewer.clear()
+        self.__variablesViewer.clear()
         self.__stackViewer.clear()
         self.__threadsViewer.clear()
         return

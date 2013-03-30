@@ -20,39 +20,28 @@
 # $Id$
 #
 
-" namespaces viewer "
+" Variables viewer "
 
 
-from PyQt4.QtCore       import Qt, SIGNAL, QStringList
-from PyQt4.QtGui        import QFrame, QVBoxLayout, QLabel, QWidget, \
-                               QSizePolicy, QTabWidget, QSpacerItem, \
-                               QHBoxLayout, QToolButton, QPalette
-from namespace          import NamespaceViewer
-from utils.pixmapcache  import PixmapCache
+from PyQt4.QtCore import Qt, SIGNAL, QStringList
+from PyQt4.QtGui import ( QFrame, QVBoxLayout, QLabel, QWidget,
+                          QSizePolicy, QTabWidget, QSpacerItem,
+                          QHBoxLayout, QToolButton, QPalette )
+from utils.pixmapcache import PixmapCache
+from ui.combobox import CDMComboBox
 
 
-class NamespacesViewer( QWidget ):
-    " Implements the stack viewer for a debugger "
+class VariablesViewer( QWidget ):
+    " Implements the variables viewer for a debugger "
 
-    MinFilter = 0
-    MedFilter = 1
-    MaxFilter = 2
+    FilterGlobalAndLocal = 0
+    FilterGlobalOnly = 1
+    FilterLocalOnly = 2
 
     def __init__( self, parent = None ):
         QWidget.__init__( self, parent )
 
-        self.__locals = NamespaceViewer()
-        self.__globals = NamespaceViewer()
-        self.__exceptions = NamespaceViewer()
-        self.__filter = NamespacesViewer.MedFilter
-
-        self.__namespacesBar = QTabWidget()
-        self.__namespacesBar.addTab( self.__locals, "Local" )
-        self.__namespacesBar.addTab( self.__globals,
-                                     PixmapCache().getIcon( 'globalvar.png' ),
-                                     "Global" )
-        self.__namespacesBar.addTab( self.__exceptions, "Exception" )
-
+        self.__filter = VariablesViewer.FilterGlobalAndLocal
         self.__createLayout()
         return
 
@@ -75,40 +64,79 @@ class NamespacesViewer( QWidget ):
         headerFrame.setPalette( headerPalette )
         headerFrame.setFixedHeight( 24 )
 
-        label = QLabel( "Namespaces" )
+        label = QLabel( "Variables" )
 
         expandingSpacer = QSpacerItem( 10, 10, QSizePolicy.Expanding )
         fixedSpacer = QSpacerItem( 3, 3 )
 
-        self.__minFilterButton = QToolButton()
-        self.__minFilterButton.setCheckable( True )
-        self.__minFilterButton.setChecked( False )
-        self.__minFilterButton.setIcon( PixmapCache().getIcon( 'maxitems.png' ) )
-        self.__minFilterButton.setFixedSize( 20, 20 )
-        self.__minFilterButton.setToolTip( "Filter: minimum" )
-        self.__minFilterButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__minFilterButton, SIGNAL( 'clicked()' ),
-                      self.__onMinFilter )
+        self.__globalAndLocalButton = QToolButton()
+        self.__globalAndLocalButton.setCheckable( True )
+        self.__globalAndLocalButton.setChecked( True )
+        self.__globalAndLocalButton.setIcon( PixmapCache().getIcon( 'dbgfltgl.png' ) )
+        self.__globalAndLocalButton.setFixedSize( 20, 20 )
+        self.__globalAndLocalButton.setToolTip( "Show global and local variables" )
+        self.__globalAndLocalButton.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.__globalAndLocalButton, SIGNAL( 'clicked()' ),
+                      self.__onGlobalAndLocalFilter )
 
-        self.__medFilterButton = QToolButton()
-        self.__medFilterButton.setCheckable( True )
-        self.__medFilterButton.setChecked( True )
-        self.__medFilterButton.setIcon( PixmapCache().getIcon( 'meditems.png' ) )
-        self.__medFilterButton.setFixedSize( 20, 20 )
-        self.__medFilterButton.setToolTip( "Filter: medium" )
-        self.__medFilterButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__medFilterButton, SIGNAL( 'clicked()' ),
-                      self.__onMedFilter )
+        self.__localOnlyButton = QToolButton()
+        self.__localOnlyButton.setCheckable( True )
+        self.__localOnlyButton.setChecked( False )
+        self.__localOnlyButton.setIcon( PixmapCache().getIcon( 'dbgfltlo.png' ) )
+        self.__localOnlyButton.setFixedSize( 20, 20 )
+        self.__localOnlyButton.setToolTip( "Show local variables only" )
+        self.__localOnlyButton.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.__localOnlyButton, SIGNAL( 'clicked()' ),
+                      self.__onLocalFilter )
 
-        self.__maxFilterButton = QToolButton()
-        self.__maxFilterButton.setCheckable( True )
-        self.__maxFilterButton.setChecked( False )
-        self.__maxFilterButton.setIcon( PixmapCache().getIcon( 'minitems.png' ) )
-        self.__maxFilterButton.setFixedSize( 20, 20 )
-        self.__maxFilterButton.setToolTip( "Filter: maximum" )
-        self.__maxFilterButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__maxFilterButton, SIGNAL( 'clicked()' ),
-                      self.__onMaxFilter )
+        self.__globalOnlyButton = QToolButton()
+        self.__globalOnlyButton.setCheckable( True )
+        self.__globalOnlyButton.setChecked( False )
+        self.__globalOnlyButton.setIcon( PixmapCache().getIcon( 'dbgfltgo.png' ) )
+        self.__globalOnlyButton.setFixedSize( 20, 20 )
+        self.__globalOnlyButton.setToolTip( "Show global variables only" )
+        self.__globalOnlyButton.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.__globalOnlyButton, SIGNAL( 'clicked()' ),
+                      self.__onGlobalFilter )
+
+        # Predefined name filters
+        self.__noHideButton = QToolButton()
+        self.__noHideButton.setCheckable( True )
+        self.__noHideButton.setChecked( True )
+        self.__noHideButton.setIcon( PixmapCache().getIcon( 'dbgfltall.png' ) )
+        self.__noHideButton.setFixedSize( 20, 20 )
+        self.__noHideButton.setToolTip( "Do not hide _ and __ starting variables" )
+        self.__noHideButton.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.__noHideButton, SIGNAL( 'clicked()' ),
+                      self.__onNoHide )
+
+        self.__hide__Button = QToolButton()
+        self.__hide__Button.setCheckable( True )
+        self.__hide__Button.setChecked( False )
+        self.__hide__Button.setIcon( PixmapCache().getIcon( 'dbgflt__.png' ) )
+        self.__hide__Button.setFixedSize( 20, 20 )
+        self.__hide__Button.setToolTip( "Hide varibles starting with __" )
+        self.__hide__Button.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.__hide__Button, SIGNAL( 'clicked()' ),
+                      self.__onHide__ )
+
+        self.__hide_Button = QToolButton()
+        self.__hide_Button.setCheckable( True )
+        self.__hide_Button.setChecked( False )
+        self.__hide_Button.setIcon( PixmapCache().getIcon( 'dbgflt_.png' ) )
+        self.__hide_Button.setFixedSize( 20, 20 )
+        self.__hide_Button.setToolTip( "Hide variables starting with _" )
+        self.__hide_Button.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.__hide_Button, SIGNAL( 'clicked()' ),
+                      self.__onHide_ )
+
+        self.__filterEdit = CDMComboBox( True )
+        self.__filterEdit.setSizePolicy( QSizePolicy.Expanding,
+                                         QSizePolicy.Expanding )
+        self.__filterEdit.lineEdit().setToolTip(
+                                    "Space separated regular expressions" )
+        self.__filterEdit.setFixedHeight( 26 )
+
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins( 0, 0, 0, 0 )
@@ -116,57 +144,75 @@ class NamespacesViewer( QWidget ):
         headerLayout.addSpacerItem( fixedSpacer )
         headerLayout.addWidget( label )
         headerLayout.addSpacerItem( expandingSpacer )
-        headerLayout.addWidget( self.__minFilterButton )
-        headerLayout.addWidget( self.__medFilterButton )
-        headerLayout.addWidget( self.__maxFilterButton )
+        headerLayout.addWidget( self.__globalAndLocalButton )
+        headerLayout.addWidget( self.__localOnlyButton )
+        headerLayout.addWidget( self.__globalOnlyButton )
         headerFrame.setLayout( headerLayout )
 
+        filterLayout = QHBoxLayout()
+        filterLayout.setContentsMargins( 0, 0, 0, 0 )
+        filterLayout.setSpacing( 0 )
+        filterLayout.addWidget( self.__noHideButton )
+        filterLayout.addWidget( self.__hide__Button )
+        filterLayout.addWidget( self.__hide_Button )
+        filterLayout.addWidget( self.__filterEdit )
+
         verticalLayout.addWidget( headerFrame )
-        verticalLayout.addWidget( self.__namespacesBar )
+        verticalLayout.addLayout( filterLayout )
         return
 
-    def __onMinFilter( self ):
-        " Min filtering has been pressed "
-        self.__minFilterButton.setChecked( True )
-        self.__medFilterButton.setChecked( False )
-        self.__maxFilterButton.setChecked( False )
+    def __onGlobalAndLocalFilter( self ):
+        " Global and local filter has been pressed "
+        self.__globalAndLocalButton.setChecked( True )
+        self.__localOnlyButton.setChecked( False )
+        self.__globalOnlyButton.setChecked( False )
 
-        if self.__filter == NamespacesViewer.MinFilter:
+        if self.__filter == VariablesViewer.FilterGlobalAndLocal:
             # No changes
             return
 
-        self.__filter = NamespacesViewer.MinFilter
+        self.__filter = VariablesViewer.FilterGlobalAndLocal
         return
 
-    def __onMedFilter( self ):
-        " Med filtering has been pressed "
-        self.__minFilterButton.setChecked( False )
-        self.__medFilterButton.setChecked( True )
-        self.__maxFilterButton.setChecked( False )
+    def __onLocalFilter( self ):
+        " Local only filter has been pressed "
+        self.__globalAndLocalButton.setChecked( False )
+        self.__localOnlyButton.setChecked( True )
+        self.__globalOnlyButton.setChecked( False )
 
-        if self.__filter == NamespacesViewer.MedFilter:
+        if self.__filter == VariablesViewer.FilterLocalOnly:
             # No changes
             return
 
-        self.__filter = NamespacesViewer.MedFilter
+        self.__filter = VariablesViewer.FilterLocalOnly
         return
 
-    def __onMaxFilter( self ):
-        " Max filtering has been pressed "
-        self.__minFilterButton.setChecked( False )
-        self.__medFilterButton.setChecked( False )
-        self.__maxFilterButton.setChecked( True )
+    def __onGlobalFilter( self ):
+        " Global only filter has been pressed "
+        self.__globalAndLocalButton.setChecked( False )
+        self.__localOnlyButton.setChecked( False )
+        self.__globalOnlyButton.setChecked( True )
 
-        if self.__filter == NamespacesViewer.MaxFilter:
+        if self.__filter == VariablesViewer.FilterGlobalOnly:
             # No changes
             return
 
-        self.__filter = NamespacesViewer.MaxFilter
+        self.__filter = VariablesViewer.FilterGlobalOnly
         return
+
+    def __onNoHide( self ):
+        " No hide filter has pressed "
+        return
+
+    def __onHide__( self ):
+        " Hide __ filter has pressed "
+        return
+
+    def __onHide_( self ):
+        " Hide _ filter has pressed "
+        return
+
 
     def clear( self ):
         " Clears the content "
-        self.__locals.clear()
-        self.__globals.clear()
-        self.__exceptions.clear()
         return
