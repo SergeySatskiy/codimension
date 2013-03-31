@@ -34,14 +34,21 @@ from ui.combobox import CDMComboBox
 class VariablesViewer( QWidget ):
     " Implements the variables viewer for a debugger "
 
+    # First group of filters
     FilterGlobalAndLocal = 0
     FilterGlobalOnly = 1
     FilterLocalOnly = 2
+
+    # Second group of filters
+    FilterNone = 0
+    Filter__ = 1
+    Filter_ = 2
 
     def __init__( self, parent = None ):
         QWidget.__init__( self, parent )
 
         self.__filter = VariablesViewer.FilterGlobalAndLocal
+        self.__nameFilter = VariablesViewer.FilterNone
         self.__createLayout()
         return
 
@@ -104,7 +111,7 @@ class VariablesViewer( QWidget ):
         self.__noHideButton.setCheckable( True )
         self.__noHideButton.setChecked( True )
         self.__noHideButton.setIcon( PixmapCache().getIcon( 'dbgfltall.png' ) )
-        self.__noHideButton.setFixedSize( 20, 20 )
+        self.__noHideButton.setFixedSize( 26, 26 )
         self.__noHideButton.setToolTip( "Do not hide _ and __ starting variables" )
         self.__noHideButton.setFocusPolicy( Qt.NoFocus )
         self.connect( self.__noHideButton, SIGNAL( 'clicked()' ),
@@ -114,7 +121,7 @@ class VariablesViewer( QWidget ):
         self.__hide__Button.setCheckable( True )
         self.__hide__Button.setChecked( False )
         self.__hide__Button.setIcon( PixmapCache().getIcon( 'dbgflt__.png' ) )
-        self.__hide__Button.setFixedSize( 20, 20 )
+        self.__hide__Button.setFixedSize( 26, 26 )
         self.__hide__Button.setToolTip( "Hide varibles starting with __" )
         self.__hide__Button.setFocusPolicy( Qt.NoFocus )
         self.connect( self.__hide__Button, SIGNAL( 'clicked()' ),
@@ -124,11 +131,12 @@ class VariablesViewer( QWidget ):
         self.__hide_Button.setCheckable( True )
         self.__hide_Button.setChecked( False )
         self.__hide_Button.setIcon( PixmapCache().getIcon( 'dbgflt_.png' ) )
-        self.__hide_Button.setFixedSize( 20, 20 )
+        self.__hide_Button.setFixedSize( 26, 26 )
         self.__hide_Button.setToolTip( "Hide variables starting with _" )
         self.__hide_Button.setFocusPolicy( Qt.NoFocus )
         self.connect( self.__hide_Button, SIGNAL( 'clicked()' ),
                       self.__onHide_ )
+        fixedSpacer2 = QSpacerItem( 5, 5 )
 
         self.__filterEdit = CDMComboBox( True )
         self.__filterEdit.setSizePolicy( QSizePolicy.Expanding,
@@ -155,6 +163,7 @@ class VariablesViewer( QWidget ):
         filterLayout.addWidget( self.__noHideButton )
         filterLayout.addWidget( self.__hide__Button )
         filterLayout.addWidget( self.__hide_Button )
+        filterLayout.addSpacerItem( fixedSpacer2 )
         filterLayout.addWidget( self.__filterEdit )
 
         verticalLayout.addWidget( headerFrame )
@@ -163,53 +172,80 @@ class VariablesViewer( QWidget ):
 
     def __onGlobalAndLocalFilter( self ):
         " Global and local filter has been pressed "
-        self.__globalAndLocalButton.setChecked( True )
-        self.__localOnlyButton.setChecked( False )
-        self.__globalOnlyButton.setChecked( False )
-
         if self.__filter == VariablesViewer.FilterGlobalAndLocal:
             # No changes
             return
+
+        self.__globalAndLocalButton.setChecked( True )
+        self.__localOnlyButton.setChecked( False )
+        self.__globalOnlyButton.setChecked( False )
 
         self.__filter = VariablesViewer.FilterGlobalAndLocal
         return
 
     def __onLocalFilter( self ):
         " Local only filter has been pressed "
-        self.__globalAndLocalButton.setChecked( False )
-        self.__localOnlyButton.setChecked( True )
-        self.__globalOnlyButton.setChecked( False )
-
         if self.__filter == VariablesViewer.FilterLocalOnly:
             # No changes
             return
+
+        self.__globalAndLocalButton.setChecked( False )
+        self.__localOnlyButton.setChecked( True )
+        self.__globalOnlyButton.setChecked( False )
 
         self.__filter = VariablesViewer.FilterLocalOnly
         return
 
     def __onGlobalFilter( self ):
         " Global only filter has been pressed "
-        self.__globalAndLocalButton.setChecked( False )
-        self.__localOnlyButton.setChecked( False )
-        self.__globalOnlyButton.setChecked( True )
-
         if self.__filter == VariablesViewer.FilterGlobalOnly:
             # No changes
             return
+
+        self.__globalAndLocalButton.setChecked( False )
+        self.__localOnlyButton.setChecked( False )
+        self.__globalOnlyButton.setChecked( True )
 
         self.__filter = VariablesViewer.FilterGlobalOnly
         return
 
     def __onNoHide( self ):
         " No hide filter has pressed "
+        if self.__nameFilter == VariablesViewer.FilterNone:
+            # No changes
+            return
+
+        self.__noHideButton.setChecked( True )
+        self.__hide__Button.setChecked( False )
+        self.__hide_Button.setChecked( False )
+
+        self.__nameFilter = VariablesViewer.FilterNone
         return
 
     def __onHide__( self ):
         " Hide __ filter has pressed "
+        if self.__nameFilter == VariablesViewer.Filter__:
+            # No changes
+            return
+
+        self.__noHideButton.setChecked( False )
+        self.__hide__Button.setChecked( True )
+        self.__hide_Button.setChecked( False )
+
+        self.__nameFilter = VariablesViewer.Filter__
         return
 
     def __onHide_( self ):
         " Hide _ filter has pressed "
+        if self.__nameFilter == VariablesViewer.Filter_:
+            # No changes
+            return
+
+        self.__noHideButton.setChecked( False )
+        self.__hide__Button.setChecked( False )
+        self.__hide_Button.setChecked( True )
+
+        self.__nameFilter = VariablesViewer.Filter_
         return
 
 
