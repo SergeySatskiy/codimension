@@ -25,7 +25,7 @@
 
 from stackviewer import StackViewer
 from threadsviewer import ThreadsViewer
-from namespacesviewer import VariablesViewer
+from variablesviewer import VariablesViewer
 
 from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui import QVBoxLayout, QWidget, QSplitter
