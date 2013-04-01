@@ -23,12 +23,13 @@
 " Variables viewer "
 
 
-from PyQt4.QtCore import Qt, SIGNAL, QStringList
+from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui import ( QFrame, QVBoxLayout, QLabel, QWidget,
-                          QSizePolicy, QTabWidget, QSpacerItem,
+                          QSizePolicy, QSpacerItem,
                           QHBoxLayout, QToolButton, QPalette )
 from utils.pixmapcache import PixmapCache
 from ui.combobox import CDMComboBox
+from variablesbrowser import VariablesBrowser
 
 
 class VariablesViewer( QWidget ):
@@ -47,6 +48,7 @@ class VariablesViewer( QWidget ):
     def __init__( self, parent = None ):
         QWidget.__init__( self, parent )
 
+        self.__browser = VariablesBrowser( self )
         self.__filter = VariablesViewer.FilterGlobalAndLocal
         self.__nameFilter = VariablesViewer.FilterNone
         self.__createLayout()
@@ -145,6 +147,16 @@ class VariablesViewer( QWidget ):
                                     "Space separated regular expressions" )
         self.__filterEdit.setFixedHeight( 26 )
 
+        self.__execStatement = CDMComboBox( False )
+        self.__execStatement.setSizePolicy( QSizePolicy.Expanding,
+                                            QSizePolicy.Expanding )
+        self.__execStatement.lineEdit().setToolTip(
+                                "Expression to be exceuted on the debuggee" )
+        self.__execStatement.setFixedHeight( 26 )
+        fixedSpacer3 = QSpacerItem( 5, 5 )
+        self.__execButton = QToolButton()
+        self.__execButton.setText( "Exec" )
+
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins( 0, 0, 0, 0 )
@@ -166,8 +178,17 @@ class VariablesViewer( QWidget ):
         filterLayout.addSpacerItem( fixedSpacer2 )
         filterLayout.addWidget( self.__filterEdit )
 
+        execLayout = QHBoxLayout()
+        execLayout.setContentsMargins( 0, 0, 0, 0 )
+        execLayout.setSpacing( 0 )
+        execLayout.addWidget( self.__execStatement )
+        execLayout.addSpacerItem( fixedSpacer3 )
+        execLayout.addWidget( self.__execButton )
+
         verticalLayout.addWidget( headerFrame )
         verticalLayout.addLayout( filterLayout )
+        verticalLayout.addWidget( self.__browser )
+        verticalLayout.addLayout( execLayout )
         return
 
     def __onGlobalAndLocalFilter( self ):
