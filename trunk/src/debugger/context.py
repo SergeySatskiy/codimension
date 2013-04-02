@@ -43,6 +43,8 @@ class DebuggerContext( QWidget ):
                       self.__onClientStack )
         self.connect( self.__debugger, SIGNAL( 'ClientThreadList' ),
                       self.__onClientThreadList )
+        self.connect( self.__debugger, SIGNAL( 'ClientVariables' ),
+                      self.__onClientVariables )
 
         self.currentStack = None
         self.__createLayout()
@@ -81,8 +83,10 @@ class DebuggerContext( QWidget ):
     def __onClientLine( self, fileName, line, forStack ):
         " Handles the signal from the debugged program "
         if not forStack:
+            self.__variablesViewer.clear()
             self.__debugger.remoteThreadList()
             self.__debugger.remoteClientVariables( 1 )  # globals
+            self.__debugger.remoteClientVariables( 0 )  # locals
         return
 
     def __onClientStack( self, stack ):
@@ -94,3 +98,15 @@ class DebuggerContext( QWidget ):
         " Handles the thread list from the remote client "
         self.__threadsViewer.populate( currentThreadID, threadList )
         return
+
+    def __onClientVariables( self, scope, variables ):
+        " Handles the client variables lists "
+        frameNumber = self.__stackViewer.getFrameNumber()
+        if scope in [ -1, 0 ]:
+            # Empty list for local variables
+            self.__variablesViewer.updateVariables( False, frameNumber, variables )
+        else:
+            self.__variablesViewer.updateVariables( True, frameNumber, variables )
+        return
+
+
