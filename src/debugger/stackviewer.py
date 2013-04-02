@@ -82,6 +82,7 @@ class StackViewer( QWidget ):
         QWidget.__init__( self, parent )
 
         self.currentStack = None
+        self.currentFrame = 0
         self.__createLayout()
         return
 
@@ -203,12 +204,18 @@ class StackViewer( QWidget ):
                                    str( len( stack ) ) + ")" )
         return
 
+    def getFrameNumber( self ):
+        " Provides the current frame number "
+        return self.currentFrame
+
     def __onFrameClicked( self, index ):
         " Triggered when a frame is clicked "
+        # Must update the current frame number
         print "Frame clicked"
 
     def __onFrameDoubleClicked( self, index ):
         " Triggered when a frame is double clicked "
+        # Must update the current frame number
         print "Frame double clicked"
 
 

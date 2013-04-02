@@ -38,7 +38,8 @@ from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
 from client.protocol import ( EOT, RequestStep, RequestStepOver, RequestStepOut,
                               RequestShutdown, ResponseLine, ResponseStack,
                               RequestContinue, RequestThreadList,
-                              RequestVariables, ResponseThreadList )
+                              RequestVariables, ResponseThreadList,
+                              ResponseVariables )
 
 
 POLL_INTERVAL = 0.1
@@ -301,6 +302,15 @@ class CodimensionDebugger( QObject ):
                                currentThreadID, threadList )
                     continue
 
+                if resp == ResponseVariables:
+                    vlist = eval( line[ eoc : -1 ] )
+                    scope = vlist[ 0 ]
+                    try:
+                        variables = vlist[ 1 : ]
+                    except IndexError:
+                        variables = []
+                    self.emit( SIGNAL( 'ClientVariables' ), scope, variables )
+                    continue
 
         return
 

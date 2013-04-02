@@ -52,6 +52,9 @@ class VariablesViewer( QWidget ):
         self.__filter = VariablesViewer.FilterGlobalAndLocal
         self.__nameFilter = VariablesViewer.FilterNone
         self.__createLayout()
+
+        self.__globalsCache = {}
+        self.__localsCache = {}
         return
 
     def __createLayout( self ):
@@ -269,7 +272,38 @@ class VariablesViewer( QWidget ):
         self.__nameFilter = VariablesViewer.Filter_
         return
 
+    def updateVariables( self, areGlobals, frameNumber, variables ):
+        " Triggered when a new set of variables is received "
+        if areGlobals:
+            self.__globalsCache[ frameNumber ] = variables
+        else:
+            self.__localsCache[ frameNumber ] = variables
+        self.__browser.updateVariables( areGlobals, variables )
+        return
+
+    def showFrame( self, frameNumber ):
+        " Shows the frame variables if they are cached and tells the result "
+        globalsStatus = False
+        if frameNumber in self.__globalsCache:
+            globalsStatus = True
+            self.__browser.updateVariables( True,
+                                            self.__globalsCache[ frameNumber ] )
+        localsStatus = False
+        if frameNumber in self.__localsCache:
+            localsStatus = True
+            self.__browser.updateVariables( False,
+                                            self.__localsCache[ frameNumber ] )
+        return globalsStatus, localsStatus
 
     def clear( self ):
         " Clears the content "
+        self.resetCache()
+        self.__browser.clear()
         return
+
+    def resetCache( self ):
+        " Resets the variables cache "
+        self.__globalsCache = {}
+        self.__localsCache = {}
+        return
+

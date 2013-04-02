@@ -28,6 +28,45 @@ from PyQt4.QtGui import ( QSortFilterProxyModel, QAbstractItemView,
                           QTreeView, QHeaderView )
 from utils.pixmapcache import PixmapCache
 from ui.itemdelegates  import NoOutlineHeightDelegate
+from utils.encoding import toUnicode
+
+
+VARIABLE_DISPLAY_TYPE = {
+    '__':                           'Hidden Attributes',
+    'nonetype':                     'None',
+    'type':                         'Type',
+    'bool':                         'Boolean',
+    'int':                          'Integer',
+    'long':                         'Long Integer',
+    'float':                        'Float',
+    'complex':                      'Complex',
+    'str':                          'String',
+    'unicode':                      'Unicode String',
+    'tuple':                        'Tuple',
+    'list':                         'List/Array',
+    'dict':                         'Dictionary/Hash/Map',
+    'dict-proxy':                   'Dictionary Proxy',
+    'set':                          'Set',
+    'file':                         'File',
+    'xrange':                       'X Range',
+    'slice':                        'Slice',
+    'buffer':                       'Buffer',
+    'class':                        'Class',
+    'instance':                     'Class Instance',
+    'classobj':                     'Class Instance',
+    'instance method':              'Class Method',
+    'property':                     'Class Property',
+    'generator':                    'Generator',
+    'function':                     'Function',
+    'builtin_function_or_method':   'Builtin Function',
+    'code':                         'Code',
+    'module':                       'Module',
+    'ellipsis':                     'Ellipsis',
+    'traceback':                    'Traceback',
+    'frame':                        'Frame',
+    'other':                        'Other' }
+
+NONPRINTABLE = QRegExp( r"""(\\x\d\d)+""" )
 
 
 
@@ -84,14 +123,52 @@ class VariableItemRoot( object ):
 
 class VariableItem( object ):
     " Represents a single variable item "
+
+    TYPE_INDICATORS = { 'list' : '[]', 'tuple' : '()', 'dict' : '{}',
+                        'Array' : '[]', 'Hash' : '{}' }
+
     def __init__( self, parent, isGlobal, varName, varType, varValue ):
         self.parentItem = parent
+        self.children = []
+        self.childCount = 0
+
+        self.isGlobal = isGlobal
+        self.tooltip = ""
+        self.varName = varName
+        self.varType = varType
+        self.varValue = varValue
+
         if isGlobal:
             self.icon = PixmapCache().getIcon( 'globvar.png' )
         else:
             self.icon = PixmapCache().getIcon( 'locvar.png' )
         return
 
+    def columnCount( self ):
+        return 3
+
+    def data( self, column ):
+        if column == 0:
+            # Name
+            if self.varType in VariableItem.TYPE_INDICATORS:
+                return self.varName + VariableItem.TYPE_INDICATORS[ self.varType ]
+            return self.varName
+        elif column == 1:
+            # Type
+            return self.varType
+        elif column == 2:
+            # Representation
+            return self.varValue
+        else:
+            return None
+
+    def childCount( self ):
+        return self.childCount
+
+    def addChild( self, item ):
+        self.children.append( item )
+        self.childCount += 1
+        return
 
 
 
@@ -103,11 +180,6 @@ class VariablesModel( QAbstractItemModel ):
 
         self.rootItem = VariableItemRoot( [ "Name", "Type", "Representation" ] )
         self.count = 0
-        return
-
-    def populateModel( self, variables ):
-        " Populates the variables model "
-        self.clear()
         return
 
     def columnCount( self, parent = QModelIndex() ):
@@ -229,6 +301,71 @@ class VariablesModel( QAbstractItemModel ):
         if not index.isValid():
             return None
         return index.internalPointer()
+
+    def __clearByScope( self, areGlobals ):
+        " Removes all the items which are in the given scope "
+        count = 0
+        for index in xrange( self.rootItem.childCount() - 1, -1, -1 ):
+            if self.rootItem.childItems[ index ].isGlobal == areGlobals:
+                count += 1
+                del self.rootItem.childItems[ index ]
+        return count
+
+    def updateVariables( self, areGlobals, variables ):
+        " Updates the variables "
+        self.__clearByScope( areGlobals )
+        for ( varName, varType, varValue ) in variables:
+            self.__addItem( self.rootItem, areGlobals,
+                            varName, varType, varValue )
+        return
+
+    def __getDisplayType( self, varType ):
+        " Provides a variable type for display purpose "
+        key = varType.lower()
+        if key in VARIABLE_DISPLAY_TYPE:
+            return VARIABLE_DISPLAY_TYPE[ key ]
+        return varType
+
+    def __unicode( self, value ):
+        " Converts a string to unicode "
+        if type( value ) is type( u"" ):
+            return value
+
+        try:
+            return unicode( value, "utf-8" )
+        except TypeError:
+            return str( value )
+        except UnicodeError:
+            return toUnicode( value )
+
+    def __addItem( self, parentItem, isGlobal, varName, varType, varValue ):
+        " Adds a new item to the children of the parentItem "
+        displayType = self.__getDisplayType( varType )
+        if varType in [ 'list', 'Array', 'tuple', 'dict', 'Hash' ]:
+            return self.__generateItem( parentItem, isGlobal,
+                                        varName, displayType,
+                                        str( varValue ) + " item(s)",
+                                        True )
+        if varType in [ 'unicode', 'str' ]:
+            if NONPRINTABLE.indexIn( varValue ) != -1:
+                stringValue = varValue
+            else:
+                try:
+                    stringValue = eval( varValue )
+                except:
+                    stringValue = value
+            return self.__generateItem( parentItem, isGlobal,
+                                        varName, displayType,
+                                        self.__unicode( stringValue ) )
+
+        return self.__generateItem( parentItem, isGlobal,
+                                    varName, displayType, varValue )
+
+    def __generateItem( self, parentItem, isGlobal,
+                              varName, varType, varValue ):
+        " Generates an appropriate variable item "
+        pass
+
 
 
 
@@ -370,6 +507,12 @@ class VariablesBrowser( QTreeView ):
         print "Item requested to open"
         return
 
+    def clear( self ):
+        " Clears the view content "
+        print "Browser clear() is not implemented yet"
+        self.model().sourceModel().clear()
+        return
+
     def getTotal( self ):
         " Provides the total number of items "
         return self.model().sourceModel().count
@@ -386,3 +529,9 @@ class VariablesBrowser( QTreeView ):
         # This is to trigger filtering - ugly but I don't know how else
         self.model().setFilterRegExp( "" )
         return
+
+    def updateVariables( self, areGlobals, variables ):
+        " Updates the required type of variables "
+        self.model().sourceModel().updateVariables( areGlobals, variables )
+        return
+
