@@ -154,12 +154,21 @@ class VariablesViewer( QWidget ):
         self.__execStatement.setSizePolicy( QSizePolicy.Expanding,
                                             QSizePolicy.Expanding )
         self.__execStatement.lineEdit().setToolTip(
-                                "Expression to be exceuted on the debuggee" )
+                                "Expression to be executed on the debuggee" )
         self.__execStatement.setFixedHeight( 26 )
         fixedSpacer3 = QSpacerItem( 5, 5 )
         self.__execButton = QToolButton()
         self.__execButton.setText( "Exec" )
 
+        self.__evalStatement = CDMComboBox( False )
+        self.__evalStatement.setSizePolicy( QSizePolicy.Expanding,
+                                            QSizePolicy.Expanding )
+        self.__evalStatement.lineEdit().setToolTip(
+                                "Expression to be evaluated on the debuggee" )
+        self.__evalStatement.setFixedHeight( 26 )
+        fixedSpacer4 = QSpacerItem( 5, 5 )
+        self.__evalButton = QToolButton()
+        self.__evalButton.setText( "Eval" )
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins( 0, 0, 0, 0 )
@@ -188,10 +197,18 @@ class VariablesViewer( QWidget ):
         execLayout.addSpacerItem( fixedSpacer3 )
         execLayout.addWidget( self.__execButton )
 
+        evalLayout = QHBoxLayout()
+        evalLayout.setContentsMargins( 0, 0, 0, 0 )
+        evalLayout.setSpacing( 0 )
+        evalLayout.addWidget( self.__evalStatement )
+        evalLayout.addSpacerItem( fixedSpacer4 )
+        evalLayout.addWidget( self.__evalButton )
+
         verticalLayout.addWidget( headerFrame )
         verticalLayout.addLayout( filterLayout )
         verticalLayout.addWidget( self.__browser )
         verticalLayout.addLayout( execLayout )
+        verticalLayout.addLayout( evalLayout )
         return
 
     def __onGlobalAndLocalFilter( self ):

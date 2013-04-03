@@ -378,6 +378,8 @@ class VariablesSortFilterProxyModel( QSortFilterProxyModel ):
         self.__sortOrder = None     # Avoid pylint complains
 
         self.__filters = []
+        self.__scopeFilter = 0
+        self.__nameFilter = 0
         self.__filtersCount = 0
         self.__sourceModelRoot = None
         return
@@ -411,10 +413,12 @@ class VariablesSortFilterProxyModel( QSortFilterProxyModel ):
         sourceIndex = self.mapToSource( parent )
         return self.sourceModel().hasChildren( sourceIndex )
 
-    def setFilter( self, text ):
+    def setFilter( self, text, scopeFilter, nameFilter ):
         " Sets the new filters "
         self.__filters = []
         self.__filtersCount = 0
+        self.__scopeFilter = scopeFilter
+        self.__nameFilter = nameFilter
         self.__sourceModelRoot = None
         for part in str( text ).strip().split():
             regexp = QRegExp( part, Qt.CaseInsensitive, QRegExp.RegExp2 )
@@ -425,11 +429,36 @@ class VariablesSortFilterProxyModel( QSortFilterProxyModel ):
 
     def filterAcceptsRow( self, sourceRow, sourceParent ):
         " Filters rows "
-        if self.__filtersCount == 0 or self.__sourceModelRoot is None:
+        if self.__sourceModelRoot is None:
+            return True
+
+        item = self.__sourceModelRoot.child( sourceRow )
+
+        # Scope filter: 0 - G & L
+        #               1 - G only
+        #               2 - L only
+        if self.__scopeFilter == 1:
+            if not item.isGlobal:
+                return False
+        elif self.__scopeFilter == 2:
+            if item.isGlobal:
+                return False
+
+        nameToMatch = item.varName
+
+        # Name filter:  0 - none
+        #               1 - __
+        #               2 - _
+        if self.__nameFilter == 1:
+            if nameToMatch.startswith( "__" ):
+                return False
+        elif self.__nameFilter == 2:
+            if nameToMatch.startswith( "_" ):
+                return False
+
+        if self.__filtersCount == 0:
             return True     # No filters
 
-        return True
-        nameToMatch = self.__sourceModelRoot.child( sourceRow ).basename
         for regexp in self.__filters:
             if regexp.indexIn( nameToMatch ) == -1:
                 return False
@@ -521,10 +550,10 @@ class VariablesBrowser( QTreeView ):
         " Provides the number of currently visible items "
         return self.model().rowCount()
 
-    def setFilter( self, text ):
+    def setFilter( self, text, scopeFilter, nameFilter ):
         " Called when the filter has been changed "
         # Notify the filtering model of the new filters
-        self.model().setFilter( text )
+        self.model().setFilter( text, scopeFilter, nameFilter )
 
         # This is to trigger filtering - ugly but I don't know how else
         self.model().setFilterRegExp( "" )
