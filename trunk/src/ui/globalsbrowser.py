@@ -39,6 +39,7 @@ class GlobalsBrowser( ObjectsBrowser ):
     def __init__( self, parent = None ):
 
         ObjectsBrowser.__init__( self, GlobalsBrowserModel(), parent )
+        self.setRootIsDecorated( False )
 
         self.setWindowTitle( 'Globals browser' )
         self.setWindowIcon( PixmapCache().getIcon( 'icon.png' ) )
