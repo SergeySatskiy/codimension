@@ -22,13 +22,24 @@
 
 """ The debugger namespace viewer implementation """
 
-from PyQt4.QtCore import ( Qt, SIGNAL, QModelIndex, QRegExp,
-                           QAbstractItemModel, QVariant )
-from PyQt4.QtGui import ( QSortFilterProxyModel, QAbstractItemView,
-                          QTreeView, QHeaderView )
-from utils.pixmapcache import PixmapCache
+
+from PyQt4.QtCore import ( Qt, SIGNAL, QRegExp,
+                           QString, QStringList )
+from PyQt4.QtGui import ( QAbstractItemView,
+                          QTreeWidget )
 from ui.itemdelegates  import NoOutlineHeightDelegate
 from utils.encoding import toUnicode
+from variableitems import VariableItem, SpecialVariableItem, ArrayElementVariableItem, SpecialArrayElementVariableItem
+
+
+NONPRINTABLE = QRegExp( r"""(\\x\d\d)+""" )
+VARNAME_CLASS_1 = QRegExp( r'<.*(instance|object) at 0x.*>(\[\]|\{\}|\(\))' )
+VARNAME_CLASS_2 = QRegExp( r'<class .* at 0x.*>(\[\]|\{\}|\(\))' )
+VARTYPE_CLASS = QRegExp( 'class .*' )
+VARVALUE_CLASS_1 = QRegExp( '<.*(instance|object) at 0x.*>' )
+VARVALUE_CLASS_2 = QRegExp( '<class .* at 0x.*>' )
+VARNAME_SPECIAL_ARRAY_ELEMENT = QRegExp( r'^\d+(\[\]|\{\}|\(\))$' )
+VARNAME_ARRAY_ELEMENT = QRegExp( r'^\d+$' )
 
 
 VARIABLE_DISPLAY_TYPE = {
@@ -66,265 +77,219 @@ VARIABLE_DISPLAY_TYPE = {
     'frame':                        'Frame',
     'other':                        'Other' }
 
-NONPRINTABLE = QRegExp( r"""(\\x\d\d)+""" )
 
 
-
-class VariableItemRoot( object ):
-    " Variables list root item "
-    def __init__( self, values ):
-        self.itemData = values
-        self.childItems = []
-        self.childItemsSize = 0
-        return
-
-    def columnCount( self ):
-        " Provides the number of columns "
-        return len( self.itemData )
-
-    def data( self, column ):
-        " Provides a value of the given column "
-        try:
-            return self.itemData[ column ]
-        except:
-            return ""
-
-    def appendChild( self, child ):
-        " Add a child item "
-        self.childItems.append( child )
-        self.childItemsSize += 1
-        return
-
-    def childCount( self ):
-        " Provides the number of children "
-        return self.childItemsSize
-
-    def removeChildren( self ):
-        " Removes all the children "
-        self.childItems = []
-        self.childItemsSize = 0
-        return
-
-    def child( self, row ):
-        " Provides a reference to a child "
-        return self.childItems[ row ]
-
-    def parent( self ):
-        " Provides a reference to the parent item "
-        return None
-
-    def lessThan( self, other, column, order ):
-        " Check, if the item is less than another "
-        try:
-            self.itemData[ column ] < other.itemData[ column ]
-        except:
-            return False
-
-
-class VariableItem( object ):
-    " Represents a single variable item "
-
-    TYPE_INDICATORS = { 'list' : '[]', 'tuple' : '()', 'dict' : '{}',
-                        'Array' : '[]', 'Hash' : '{}' }
-
-    def __init__( self, parent, isGlobal, varName, varType, varValue ):
-        self.parentItem = parent
-        self.children = []
-        self.childCount = 0
-
-        self.isGlobal = isGlobal
-        self.tooltip = ""
-        self.varName = varName
-        self.varType = varType
-        self.varValue = varValue
-
-        if isGlobal:
-            self.icon = PixmapCache().getIcon( 'globvar.png' )
-        else:
-            self.icon = PixmapCache().getIcon( 'locvar.png' )
-        return
-
-    def columnCount( self ):
-        return 3
-
-    def data( self, column ):
-        if column == 0:
-            # Name
-            if self.varType in VariableItem.TYPE_INDICATORS:
-                return self.varName + VariableItem.TYPE_INDICATORS[ self.varType ]
-            return self.varName
-        elif column == 1:
-            # Type
-            return self.varType
-        elif column == 2:
-            # Representation
-            return self.varValue
-        else:
-            return None
-
-    def childCount( self ):
-        return self.childCount
-
-    def addChild( self, item ):
-        self.children.append( item )
-        self.childCount += 1
-        return
-
-
-
-class VariablesModel( QAbstractItemModel ):
-    " Find file data model implementation "
+class VariablesBrowser( QTreeWidget ):
+    " Variables browser implementation "
 
     def __init__( self, parent = None ):
-        QAbstractItemModel.__init__( self, parent )
+        QTreeWidget.__init__( self, parent )
 
-        self.rootItem = VariableItemRoot( [ "Name", "Type", "Representation" ] )
-        self.count = 0
+        self.setRootIsDecorated( True )
+        self.setAlternatingRowColors( True )
+        self.setUniformRowHeights( True )
+        self.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
+
+        self.setSelectionBehavior( QAbstractItemView.SelectRows )
+
+        self.setHeaderLabels( QStringList() << "Name" << "Value" << "Type" )
+        header = self.header()
+        header.setSortIndicator( 0, Qt.AscendingOrder )
+        header.setSortIndicatorShown( True )
+        header.setClickable( True )
+        header.setStretchLastSection( True )
+
+        self.connect( self, SIGNAL( "itemExpanded(QTreeWidgetItem*)"), self.__expandItemSignal )
+        self.connect( self, SIGNAL( "itemCollapsed(QTreeWidgetItem*)"), self.collapseItem )
+
+        self.resortEnabled = True
+        self.openItems = []
+        self.framenr = 0
         return
 
-    def columnCount( self, parent = QModelIndex() ):
-        " Provides the number of columns "
-        if parent.isValid():
-            return parent.internalPointer().columnCount()
-        return self.rootItem.columnCount()
+    def __findItem( self, slist, column, node = None ):
+        """
+        Searches for an item.
 
-    def rowCount( self, parent = QModelIndex() ):
-        " Provides the number of rows "
+        It is used to find a specific item in column,
+        that is a child of node. If node is None, a child of the
+        QTreeWidget is searched.
 
-        # Only the first column should have children
-        if parent.column() > 0:
-            return 0
-
-        if not parent.isValid():
-            return self.rootItem.childCount()
-
-        parentItem = parent.internalPointer()
-        return parentItem.childCount()
-
-    def data( self, index, role ):
-        " Provides data of an item "
-        if not index.isValid():
-            return QVariant()
-
-        if role == Qt.DisplayRole:
-            item = index.internalPointer()
-            if index.column() < item.columnCount():
-                return QVariant( item.data( index.column() ) )
-            elif index.column() == item.columnCount() and \
-                 index.column() < self.columnCount( self.parent( index ) ):
-                # This is for the case when an item under a multi-column
-                # parent doesn't have a value for all the columns
-                return QVariant( "" )
-        elif role == Qt.DecorationRole:
-            if index.column() == 0:
-                return QVariant( index.internalPointer().icon )
-        elif role == Qt.ToolTipRole:
-            item = index.internalPointer()
-            if item.tooltip != "":
-                return QVariant( item.tooltip )
-
-        return QVariant()
-
-    def flags( self, index ):
-        " Provides the item flags "
-        if not index.isValid():
-            return Qt.ItemIsEnabled
-        return Qt.ItemIsEnabled | Qt.ItemIsSelectable
-
-    def headerData( self, section, orientation, role = Qt.DisplayRole ):
-        " Provides the header data "
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            if section >= self.rootItem.columnCount():
-                return QVariant( "" )
-            return self.rootItem.data( section )
-        return QVariant()
-
-    def index( self, row, column, parent = QModelIndex() ):
-        " Creates an index "
-
-        # The model/view framework considers negative values out-of-bounds,
-        # however in python they work when indexing into lists. So make sure
-        # we return an invalid index for out-of-bounds row/col
-        if row < 0 or column < 0 or \
-           row >= self.rowCount( parent ) or \
-           column >= self.columnCount( parent ):
-            return QModelIndex()
-
-        if not parent.isValid():
-            parentItem = self.rootItem
+        @param slist searchlist (list of strings or QStrings)
+        @param column index of column to search in (int)
+        @param node start point of the search
+        @return the found item or None
+        """
+        if node is None:
+            count = self.topLevelItemCount()
         else:
-            parentItem = parent.internalPointer()
+            count = node.childCount()
 
-        try:
-            childItem = parentItem.child( row )
-        except IndexError:
-            childItem = None
-            return QModelIndex()
+        for index in xrange( count ):
+            if node is None:
+                item = self.topLevelItem( index )
+            else:
+                item = node.child( index )
 
-        if childItem:
-            return self.createIndex( row, column, childItem )
-        return QModelIndex()
+            if QString.compare( item.text( column ), slist[ 0 ] ) == 0:
+                if len( slist ) > 1:
+                    item = self.__findItem( slist[ 1 : ], column, item )
+                return item
 
-    def parent( self, index ):
-        " Provides the index of the parent object "
+        return None
 
-        if not index.isValid():
-            return QModelIndex()
-
-        childItem = index.internalPointer()
-        parentItem = childItem.parent()
-
-        if parentItem == self.rootItem:
-            return QModelIndex()
-
-        return self.createIndex( parentItem.row(), 0, parentItem )
-
-    def hasChildren( self, parent = QModelIndex() ):
-        " Checks for the presence of child items "
-
-        # Only the first column should have children
-        if parent.column() > 0:
-            return False
-
-        if not parent.isValid():
-            return self.rootItem.childCount() > 0
-        return parent.internalPointer().childCount() > 0
-
-    def clear( self ):
-        " Clears the model "
-        self.rootItem.removeChildren()
-        self.reset()
+    def __clearScopeVariables( self, areGlobals ):
+        " Removes those variables which belong to the specified frame "
+        count = self.topLevelItemCount()
+        for index in xrange( count - 1, -1, -1 ):
+            item = self.topLevelItem( index )
+            if item.isGlobal() == areGlobals:
+                self.takeTopLevelItem( index )
         return
 
-    def item( self, index ):
-        " Provides a reference to an item "
-        if not index.isValid():
-            return None
-        return index.internalPointer()
+    def showVariables( self, areGlobals, vlist, frmnr ):
+        """
+        Shows variables list.
 
-    def __clearByScope( self, areGlobals ):
-        " Removes all the items which are in the given scope "
-        count = 0
-        for index in xrange( self.rootItem.childCount() - 1, -1, -1 ):
-            if self.rootItem.childItems[ index ].isGlobal == areGlobals:
-                count += 1
-                del self.rootItem.childItems[ index ]
-        return count
+        @param vlist the list of variables to be displayed. Each
+                listentry is a tuple of three values.
+                <ul>
+                <li>the variable name (string)</li>
+                <li>the variables type (string)</li>
+                <li>the variables value (string)</li>
+                </ul
+        @param frmnr frame number (0 is the current frame) (int)
+        """
+        self.current = self.currentItem()
+        if self.current:
+            self.curpathlist = self.__buildTreePath( self.current )
+        self.__clearScopeVariables( areGlobals )
+        self.__scrollToItem = None
+        self.framenr = frmnr
 
-    def updateVariables( self, areGlobals, variables ):
-        " Updates the variables "
-        self.__clearByScope( areGlobals )
-        for ( varName, varType, varValue ) in variables:
-            self.__addItem( self.rootItem, areGlobals,
-                            varName, varType, varValue )
+        if len( vlist ):
+            self.resortEnabled = False
+            for ( var, vtype, value ) in vlist:
+                self.__addItem( None, areGlobals, vtype, var, value )
+
+            # reexpand tree
+            openItems = self.openItems[ : ]
+            openItems.sort()
+            self.openItems = []
+            for itemPath in openItems:
+                itm = self.__findItem( itemPath, 0 )
+                if itm is not None:
+                    self.expandItem( itm )
+                else:
+                    self.openItems.append( itemPath )
+
+            if self.current:
+                citm = self.__findItem( self.curpathlist, 0 )
+                if citm:
+                    self.setCurrentItem( citm )
+                    self.setItemSelected( citm, True )
+                    self.scrollToItem( citm, QAbstractItemView.PositionAtTop )
+                    self.current = None
+
+            self.resortEnabled = True
+            self.__resort()
         return
 
-    def __getDisplayType( self, varType ):
-        " Provides a variable type for display purpose "
-        key = varType.lower()
-        if key in VARIABLE_DISPLAY_TYPE:
-            return VARIABLE_DISPLAY_TYPE[ key ]
-        return varType
+    def showVariable( self, isGlobal, vlist ):
+        """
+        Public method to show variables in a list.
+
+        @param vlist the list of subitems to be displayed. 
+                The first element gives the path of the
+                parent variable. Each other listentry is 
+                a tuple of three values.
+                <ul>
+                <li>the variable name (string)</li>
+                <li>the variables type (string)</li>
+                <li>the variables value (string)</li>
+                </ul>
+        """
+        resortEnabled = self.resortEnabled
+        self.resortEnabled = False
+        if self.current is None:
+            self.current = self.currentItem()
+            if self.current:
+                self.curpathlist = self.__buildTreePath( self.current )
+
+        subelementsAdded = False
+        if vlist:
+            itm = self.__findItem( vlist[ 0 ], 0 )
+            for var, vtype, value in vlist[ 1 : ]:
+                self.__addItem( itm, isGlobal, vtype, var, value )
+            subelementsAdded = True
+
+        # reexpand tree
+        openItems = self.openItems[ : ]
+        openItems.sort()
+        self.openItems = []
+        for itemPath in openItems:
+            itm = self.__findItem( itemPath, 0 )
+            if itm is not None and not itm.isExpanded():
+                if itm.populated:
+                    self.blockSignals( True )
+                    itm.setExpanded( True )
+                    self.blockSignals( False )
+                else:
+                    self.expandItem( itm )
+        self.openItems = openItems[ : ]
+
+        if self.current:
+            citm = self.__findItem( self.curpathlist, 0 )
+            if citm:
+                self.setCurrentItem( citm )
+                self.setItemSelected( citm, True )
+                if self.__scrollToItem:
+                    self.scrollToItem( self.__scrollToItem,
+                                       QAbstractItemView.PositionAtTop )
+                else:
+                    self.scrollToItem( citm, QAbstractItemView.PositionAtTop )
+                self.current = None
+        elif self.__scrollToItem:
+            self.scrollToItem( self.__scrollToItem, QAbstractItemView.PositionAtTop )
+
+        self.resortEnabled = resortEnabled
+        self.__resort()
+        return
+
+    def __generateItem( self, parentItem, isGlobal,
+                              varName, varValue, varType, isSpecial = False ):
+        " Generates an appropriate variable item "
+        if isSpecial:
+            if VARNAME_CLASS_1.exactMatch( varName ) or \
+               VARNAME_CLASS_2.exactMatch( varName ):
+                isSpecial = False
+
+        if VARTYPE_CLASS.exactMatch( varType ):
+            return SpecialVariableItem( parentItem, isGlobal,
+                                        varName, varValue, varType[ 7 : -1 ],
+                                        self.framenr )
+
+        elif varType != "void *" and \
+            ( VARVALUE_CLASS_1.exactMatch( varValue ) or \
+               VARVALUE_CLASS_2.exactMatch( varValue ) or \
+               isSpecial ):
+            if VARNAME_SPECIAL_ARRAY_ELEMENT.exactMatch( varName ):
+                return SpecialArrayElementVariableItem( parentItem, isGlobal,
+                                                        varName, varValue, varType,
+                                                        self.framenr )
+            return SpecialVariableItem( parentItem, isGlobal,
+                                        varName, varValue, varType,
+                                        self.framenr )
+        else:
+            if isinstance( varValue, str ):
+                varValue = QString.fromLocal8Bit( varValue )
+            if VARNAME_ARRAY_ELEMENT.exactMatch( varName ):
+                return ArrayElementVariableItem( parentItem, isGlobal,
+                                                 varName, varValue, varType )
+            return VariableItem( parentItem, isGlobal,
+                                 varName, varValue, varType )
+
+        print "WARNING: Reached the end without forming a variable!"
 
     def __unicode( self, value ):
         " Converts a string to unicode "
@@ -338,13 +303,23 @@ class VariablesModel( QAbstractItemModel ):
         except UnicodeError:
             return toUnicode( value )
 
-    def __addItem( self, parentItem, isGlobal, varName, varType, varValue ):
+    def __getDisplayType( self, varType ):
+        " Provides a variable type for display purpose "
+        key = varType.lower()
+        if key in VARIABLE_DISPLAY_TYPE:
+            return VARIABLE_DISPLAY_TYPE[ key ]
+        return varType
+
+    def __addItem( self, parentItem, isGlobal, varType, varName, varValue ):
         " Adds a new item to the children of the parentItem "
+        if parentItem is None:
+            parentItem = self
+
         displayType = self.__getDisplayType( varType )
         if varType in [ 'list', 'Array', 'tuple', 'dict', 'Hash' ]:
             return self.__generateItem( parentItem, isGlobal,
-                                        varName, displayType,
-                                        str( varValue ) + " item(s)",
+                                        varName, str( varValue ) + " item(s)",
+                                        displayType,
                                         True )
         if varType in [ 'unicode', 'str' ]:
             if NONPRINTABLE.indexIn( varValue ) != -1:
@@ -353,214 +328,86 @@ class VariablesModel( QAbstractItemModel ):
                 try:
                     stringValue = eval( varValue )
                 except:
-                    stringValue = value
+                    stringValue = varValue
             return self.__generateItem( parentItem, isGlobal,
-                                        varName, displayType,
-                                        self.__unicode( stringValue ) )
+                                        varName, self.__unicode( stringValue ),
+                                        displayType )
 
         return self.__generateItem( parentItem, isGlobal,
-                                    varName, displayType, varValue )
+                                    varName, varValue, displayType )
 
-    def __generateItem( self, parentItem, isGlobal,
-                              varName, varType, varValue ):
-        " Generates an appropriate variable item "
-        pass
-
-
-
-
-class VariablesSortFilterProxyModel( QSortFilterProxyModel ):
-    " Variables sort filter proxy model "
-
-    def __init__( self, parent = None ):
-        QSortFilterProxyModel.__init__( self, parent )
-        self.__sortColumn = None    # Avoid pylint complains
-        self.__sortOrder = None     # Avoid pylint complains
-
-        self.__filters = []
-        self.__scopeFilter = 0
-        self.__nameFilter = 0
-        self.__filtersCount = 0
-        self.__sourceModelRoot = None
+    def mouseDoubleClickEvent( self, mouseEvent ):
+        item = self.itemAt( mouseEvent.pos() )
+        print "Double click detected"
         return
 
-    def sort( self, column, order ):
-        " Sorts the items "
-        self.__sortColumn = column
-        self.__sortOrder = order
-        QSortFilterProxyModel.sort( self, column, order )
+    def __buildTreePath( self, itm ):
+        """
+        Private method to build up a path from the top to an item.
+
+        @param itm item to build the path for (QTreeWidgetItem)
+        @return list of names denoting the path from the top (list of strings)
+        """
+        name = unicode( itm.text( 0 ) )
+        pathlist = [ name ]
+
+        par = itm.parent()
+        # build up a path from the top to the item
+        while par is not None:
+            pname = unicode( par.text( 0 ) )
+            pathlist.insert( 0, pname )
+            par = par.parent()
+
+        return pathlist[ : ]
+
+    def __expandItemSignal( self, parentItem ):
+        """
+        Private slot to handle the expanded signal.
+
+        @param parentItem reference to the item being expanded (QTreeWidgetItem)
+        """
+        self.expandItem( parentItem )
+        self.__scrollToItem = parentItem
         return
 
-    def lessThan( self, left, right ):
-        " Sorts the displayed items "
-        lhs = left.model() and left.model().item( left ) or None
-        rhs = right.model() and right.model().item( right ) or None
+    def expandItem( self, parentItem ):
+        """
+        Public slot to handle the expanded signal.
 
-        if lhs and rhs:
-            return lhs.lessThan( rhs, self.__sortColumn, self.__sortOrder )
-        return False
-
-    def item( self, index ):
-        " Provides a reference to the item "
-        if not index.isValid():
-            return None
-
-        sourceIndex = self.mapToSource( index )
-        return self.sourceModel().item( sourceIndex )
-
-    def hasChildren( self, parent = QModelIndex() ):
-        " Checks the presence of the child items "
-        sourceIndex = self.mapToSource( parent )
-        return self.sourceModel().hasChildren( sourceIndex )
-
-    def setFilter( self, text, scopeFilter, nameFilter ):
-        " Sets the new filters "
-        self.__filters = []
-        self.__filtersCount = 0
-        self.__scopeFilter = scopeFilter
-        self.__nameFilter = nameFilter
-        self.__sourceModelRoot = None
-        for part in str( text ).strip().split():
-            regexp = QRegExp( part, Qt.CaseInsensitive, QRegExp.RegExp2 )
-            self.__filters.append( regexp )
-            self.__filtersCount += 1
-        self.__sourceModelRoot = self.sourceModel().rootItem
-        return
-
-    def filterAcceptsRow( self, sourceRow, sourceParent ):
-        " Filters rows "
-        if self.__sourceModelRoot is None:
-            return True
-
-        item = self.__sourceModelRoot.child( sourceRow )
-
-        # Scope filter: 0 - G & L
-        #               1 - G only
-        #               2 - L only
-        if self.__scopeFilter == 1:
-            if not item.isGlobal:
-                return False
-        elif self.__scopeFilter == 2:
-            if item.isGlobal:
-                return False
-
-        nameToMatch = item.varName
-
-        # Name filter:  0 - none
-        #               1 - __
-        #               2 - _
-        if self.__nameFilter == 1:
-            if nameToMatch.startswith( "__" ):
-                return False
-        elif self.__nameFilter == 2:
-            if nameToMatch.startswith( "_" ):
-                return False
-
-        if self.__filtersCount == 0:
-            return True     # No filters
-
-        for regexp in self.__filters:
-            if regexp.indexIn( nameToMatch ) == -1:
-                return False
-        return True
-
-
-class VariablesBrowser( QTreeView ):
-    " Variables browser implementation "
-
-    def __init__( self, parent = None ):
-        QTreeView.__init__( self, parent )
-
-        self.__parentDialog = parent
-        self.__model = VariablesModel()
-        self.__sortModel = VariablesSortFilterProxyModel()
-        self.__sortModel.setDynamicSortFilter( True )
-        self.__sortModel.setSourceModel( self.__model )
-        self.setModel( self.__sortModel )
-        self.selectedIndex = None
-
-        self.connect( self, SIGNAL( "activated(const QModelIndex &)" ),
-                      self.openCurrentItem )
-
-        self.setRootIsDecorated( False )
-        self.setAlternatingRowColors( True )
-        self.setUniformRowHeights( True )
-        self.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
-
-        header = self.header()
-        header.setSortIndicator( 0, Qt.AscendingOrder )
-        header.setSortIndicatorShown( True )
-        header.setClickable( True )
-
-        self.setSortingEnabled( True )
-
-        self.setSelectionMode( QAbstractItemView.SingleSelection )
-        self.setSelectionBehavior( QAbstractItemView.SelectRows )
-
-        self.layoutDisplay()
-        return
-
-    def selectionChanged( self, selected, deselected ):
-        " Slot is called when the selection has been changed "
-        if selected.indexes():
-            self.selectedIndex = selected.indexes()[ 0 ]
-        else:
-            self.selectedIndex = None
-        QTreeView.selectionChanged( self, selected, deselected )
-        return
-
-    def layoutDisplay( self ):
-        " Performs the layout operation "
-        self.doItemsLayout()
-        self.header().resizeSections( QHeaderView.ResizeToContents )
-        self.header().setStretchLastSection( True )
-        self._resort()
-        return
-
-    def _resort( self ):
-        " Re-sorts the tree "
-        self.model().sort( self.header().sortIndicatorSection(),
-                           self.header().sortIndicatorOrder() )
-        return
-
-    def openCurrentItem( self ):
-        " Triggers when an item is clicked or double clicked "
-        if self.selectedIndex is None:
+        @param parentItem reference to the item being expanded (QTreeWidgetItem)
+        """
+        pathlist = self.__buildTreePath( parentItem )
+        self.openItems.append( pathlist )
+        if parentItem.populated:
             return
-        item = self.model().item( self.selectedIndex )
-        self.openItem( item )
+
+        try:
+            parentItem.expand()
+            self.__resort()
+        except AttributeError:
+            QTreeWidget.expandItem( self, parentItem )
         return
 
-    def openItem( self, item ):
-        " Handles the case when an item is activated "
-        print "Item requested to open"
+    def collapseItem( self, parentItem ):
+        """
+        Public slot to handle the collapsed signal.
+
+        @param parentItem reference to the item being collapsed (QTreeWidgetItem)
+        """
+        pathlist = self.__buildTreePath( parentItem )
+        self.openItems.remove( pathlist )
+
+        try:
+            parentItem.collapse()
+        except AttributeError:
+            QTreeWidget.collapseItem( self, parentItem )
         return
 
-    def clear( self ):
-        " Clears the view content "
-        print "Browser clear() is not implemented yet"
-        self.model().sourceModel().clear()
-        return
-
-    def getTotal( self ):
-        " Provides the total number of items "
-        return self.model().sourceModel().count
-
-    def getVisible( self ):
-        " Provides the number of currently visible items "
-        return self.model().rowCount()
-
-    def setFilter( self, text, scopeFilter, nameFilter ):
-        " Called when the filter has been changed "
-        # Notify the filtering model of the new filters
-        self.model().setFilter( text, scopeFilter, nameFilter )
-
-        # This is to trigger filtering - ugly but I don't know how else
-        self.model().setFilterRegExp( "" )
-        return
-
-    def updateVariables( self, areGlobals, variables ):
-        " Updates the required type of variables "
-        self.model().sourceModel().updateVariables( areGlobals, variables )
+    def __resort( self ):
+        """
+        Private method to resort the tree.
+        """
+        if self.resortEnabled:
+            self.sortItems( self.sortColumn(), self.header().sortIndicatorOrder() )
         return
 
