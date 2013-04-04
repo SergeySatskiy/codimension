@@ -107,6 +107,15 @@ class VariablesBrowser( QTreeWidget ):
         self.framenr = 0
         return
 
+    def scrollTo( self, index, hint = QAbstractItemView.EnsureVisible ):
+        """ Disables horizontal scrolling when a row is clicked.
+            Found here: http://qt-project.org/faq/answer/how_can_i_disable_autoscroll_when_selecting_a_partially_displayed_column_in
+        """
+        oldValue = self.horizontalScrollBar().value()
+        QTreeWidget.scrollTo( self, index, hint )
+        self.horizontalScrollBar().setValue( oldValue )
+        return
+
     def __findItem( self, slist, column, node = None ):
         """
         Searches for an item.
