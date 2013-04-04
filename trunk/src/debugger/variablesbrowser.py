@@ -82,7 +82,7 @@ VARIABLE_DISPLAY_TYPE = {
 class VariablesBrowser( QTreeWidget ):
     " Variables browser implementation "
 
-    def __init__( self, parent = None ):
+    def __init__( self, debugger, parent = None ):
         QTreeWidget.__init__( self, parent )
 
         self.setRootIsDecorated( True )
@@ -105,6 +105,7 @@ class VariablesBrowser( QTreeWidget ):
         self.resortEnabled = True
         self.openItems = []
         self.framenr = 0
+        self.__debugger = debugger
         return
 
     def scrollTo( self, index, hint = QAbstractItemView.EnsureVisible ):
@@ -287,7 +288,7 @@ class VariablesBrowser( QTreeWidget ):
                 isSpecial = False
 
         if VARTYPE_CLASS.exactMatch( varType ):
-            return SpecialVariableItem( parentItem, isGlobal,
+            return SpecialVariableItem( parentItem, self.__debugger, isGlobal,
                                         varName, varValue, varType[ 7 : -1 ],
                                         self.framenr )
 
@@ -296,10 +297,10 @@ class VariablesBrowser( QTreeWidget ):
                VARVALUE_CLASS_2.exactMatch( varValue ) or \
                isSpecial ):
             if VARNAME_SPECIAL_ARRAY_ELEMENT.exactMatch( varName ):
-                return SpecialArrayElementVariableItem( parentItem, isGlobal,
+                return SpecialArrayElementVariableItem( parentItem, self.__debugger, isGlobal,
                                                         varName, varValue, varType,
                                                         self.framenr )
-            return SpecialVariableItem( parentItem, isGlobal,
+            return SpecialVariableItem( parentItem, self.__debugger, isGlobal,
                                         varName, varValue, varType,
                                         self.framenr )
         else:

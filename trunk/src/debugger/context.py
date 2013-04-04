@@ -45,6 +45,8 @@ class DebuggerContext( QWidget ):
                       self.__onClientThreadList )
         self.connect( self.__debugger, SIGNAL( 'ClientVariables' ),
                       self.__onClientVariables )
+        self.connect( self.__debugger, SIGNAL( 'ClientVariable' ),
+                      self.__onClientVariable )
 
         self.currentStack = None
         self.__createLayout()
@@ -58,7 +60,8 @@ class DebuggerContext( QWidget ):
 
         self.splitter = QSplitter( Qt.Vertical )
 
-        self.__variablesViewer = VariablesViewer( self.splitter )
+        self.__variablesViewer = VariablesViewer( self.__debugger,
+                                                  self.splitter )
         self.__stackViewer = StackViewer( self.splitter )
         self.__threadsViewer = ThreadsViewer( self.splitter )
 
@@ -109,4 +112,11 @@ class DebuggerContext( QWidget ):
             self.__variablesViewer.updateVariables( True, frameNumber, variables )
         return
 
+    def __onClientVariable( self, scope, variables ):
+        " Handles the client variable list "
+        if scope in [ -1, 0 ]:
+            self.__variablesViewer.updateVariable( False, variables )
+        else:
+            self.__variablesViewer.updateVariable( True, variables )
+        return
 

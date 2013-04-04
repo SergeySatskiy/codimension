@@ -39,7 +39,8 @@ from client.protocol import ( EOT, RequestStep, RequestStepOver, RequestStepOut,
                               RequestShutdown, ResponseLine, ResponseStack,
                               RequestContinue, RequestThreadList,
                               RequestVariables, ResponseThreadList,
-                              ResponseVariables )
+                              ResponseVariables, RequestVariable,
+                              ResponseVariable )
 
 
 POLL_INTERVAL = 0.1
@@ -312,6 +313,16 @@ class CodimensionDebugger( QObject ):
                     self.emit( SIGNAL( 'ClientVariables' ), scope, variables )
                     continue
 
+                if resp == ResponseVariable:
+                    vlist = eval( line[ eoc : -1 ] )
+                    scope = vlist[ 0 ]
+                    try:
+                        variables = vlist[ 1 : ]
+                    except IndexError:
+                        variables = []
+                    self.emit( SIGNAL( 'ClientVariable' ), scope, variables )
+                    continue
+
         return
 
 
@@ -431,7 +442,17 @@ class CodimensionDebugger( QObject ):
     def remoteClientVariables( self, scope, framenr = 0 ):
         """ Provides the client variables.
             scope - 0 => local, 1 => global """
+        scope = int( scope )
         self.__sendCommand( RequestVariables +
+                            str( framenr ) + ", " + str( scope ) + "\n" )
+        return
+
+    def remoteClientVariable( self, scope, var, framenr = 0 ):
+        """ Provides the client variable.
+            scope - 0 => local, 1 => global """
+        scope = int( scope )
+        self.__sendCommand( RequestVariable +
+                            unicode( var ) + ", " +
                             str( framenr ) + ", " + str( scope ) + "\n" )
         return
 

@@ -45,10 +45,10 @@ class VariablesViewer( QWidget ):
     Filter__ = 1
     Filter_ = 2
 
-    def __init__( self, parent = None ):
+    def __init__( self, debugger, parent = None ):
         QWidget.__init__( self, parent )
 
-        self.__browser = VariablesBrowser( self )
+        self.__browser = VariablesBrowser( debugger, self )
         self.__filter = VariablesViewer.FilterGlobalAndLocal
         self.__nameFilter = VariablesViewer.FilterNone
         self.__createLayout()
@@ -289,6 +289,11 @@ class VariablesViewer( QWidget ):
     def updateVariables( self, areGlobals, frameNumber, variables ):
         " Triggered when a new set of variables is received "
         self.__browser.showVariables( areGlobals, variables, frameNumber )
+        return
+
+    def updateVariable( self, areGlobals, variables ):
+        " Triggered when a new variable has been received "
+        self.__browser.showVariable( areGlobals, variables )
         return
 
     def clear( self ):

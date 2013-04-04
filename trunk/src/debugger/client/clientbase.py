@@ -459,15 +459,17 @@ class DebugClientBase( object ):
             arg = line[ eoc + 1 : ]
 
             if cmd == RequestVariables:
-                frmnr, scope = eval(arg)
+                frmnr, scope = eval( arg )
                 # No need in filter, it'll be done on the server side
                 fltr = []
-                self.__dumpVariables(int(frmnr), int(scope), fltr)
+                self.__dumpVariables( int( frmnr ), int( scope ), fltr )
                 return
 
             if cmd == RequestVariable:
-                var, frmnr, scope, fltr = eval(arg)
-                self.__dumpVariable(var, int(frmnr), int(scope), fltr)
+                var, frmnr, scope = eval( arg )
+                # No need in filter, it'll be done on the server side
+                fltr = []
+                self.__dumpVariable( var, int( frmnr ), int( scope ), fltr )
                 return
 
             if cmd == RequestThreadList:
