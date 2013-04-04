@@ -51,14 +51,15 @@ class VariableItem( QTreeWidgetItem ):
             displayName += VariableItem.TYPE_INDICATORS[ displayType ]
 
         # Decide about the display value
-        lines = str( displayValue ).splitlines()
-        if len( lines ) > 1:
+        lines = QString( displayValue ).split( QRegExp( r"\r\n|\r|\n" ) )
+        lineCount = len( lines )
+        if lineCount > 1:
             # There are many lines. Find first non-empty.
             nonEmptyIndex = None
             index = -1
             for line in lines:
                 index += 1
-                if len( line.strip() ) > 0:
+                if len( line.trimmed() ) > 0:
                     nonEmptyIndex = index
                     break
             if nonEmptyIndex is None:
@@ -68,7 +69,7 @@ class VariableItem( QTreeWidgetItem ):
                     displayValue = lines[ nonEmptyIndex ][ : 128 ] + "<...>"
                 else:
                     displayValue = lines[ nonEmptyIndex ]
-                    if nonEmptyIndex < len( lines ) - 1:
+                    if nonEmptyIndex < lineCount - 1:
                         displayValue += "<...>"
 
                 if nonEmptyIndex > 0:
