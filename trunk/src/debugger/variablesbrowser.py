@@ -23,13 +23,13 @@
 """ The debugger namespace viewer implementation """
 
 
-from PyQt4.QtCore import ( Qt, SIGNAL, QRegExp,
-                           QString, QStringList )
-from PyQt4.QtGui import ( QAbstractItemView,
-                          QTreeWidget )
+from PyQt4.QtCore import Qt, SIGNAL, QRegExp, QString, QStringList
+from PyQt4.QtGui import QAbstractItemView, QHeaderView, QTreeWidget
 from ui.itemdelegates  import NoOutlineHeightDelegate
 from utils.encoding import toUnicode
-from variableitems import VariableItem, SpecialVariableItem, ArrayElementVariableItem, SpecialArrayElementVariableItem
+from variableitems import ( VariableItem, SpecialVariableItem,
+                            ArrayElementVariableItem,
+                            SpecialArrayElementVariableItem )
 
 
 NONPRINTABLE = QRegExp( r"""(\\x\d\d)+""" )
@@ -191,24 +191,34 @@ class VariablesBrowser( QTreeWidget ):
                     self.scrollToItem( citm, QAbstractItemView.PositionAtTop )
                     self.current = None
 
+            self.__resizeSections()
+
             self.resortEnabled = True
             self.__resort()
         return
 
-    def showVariable( self, isGlobal, vlist ):
-        """
-        Public method to show variables in a list.
+    def __resizeSections( self ):
+        " Resizes the variable sections "
+        if self.topLevelItemCount() == 0:
+            return
 
-        @param vlist the list of subitems to be displayed. 
-                The first element gives the path of the
-                parent variable. Each other listentry is 
-                a tuple of three values.
-                <ul>
-                <li>the variable name (string)</li>
-                <li>the variables type (string)</li>
-                <li>the variables value (string)</li>
-                </ul>
-        """
+        header = self.header()
+        nameSectionSize = header.sectionSize( 0 )
+        header.resizeSections( QHeaderView.ResizeToContents )
+        if header.sectionSize( 0 ) < nameSectionSize:
+            header.resizeSection( 0, nameSectionSize )
+        return
+
+    def showVariable( self, isGlobal, vlist ):
+        " Shows variables in a list "
+
+        # vlist the list of subitems to be displayed. The first element gives
+        # the path of the parent variable. Each other listentry is a tuple of
+        # three values:
+        #   the variable name (string)
+        #   the variables type (string)
+        #   the variables value (string)
+
         resortEnabled = self.resortEnabled
         self.resortEnabled = False
         if self.current is None:
@@ -218,9 +228,9 @@ class VariablesBrowser( QTreeWidget ):
 
         subelementsAdded = False
         if vlist:
-            itm = self.__findItem( vlist[ 0 ], 0 )
+            item = self.__findItem( vlist[ 0 ], 0 )
             for var, vtype, value in vlist[ 1 : ]:
-                self.__addItem( itm, isGlobal, vtype, var, value )
+                self.__addItem( item, isGlobal, vtype, var, value )
             subelementsAdded = True
 
         # reexpand tree
@@ -228,14 +238,14 @@ class VariablesBrowser( QTreeWidget ):
         openItems.sort()
         self.openItems = []
         for itemPath in openItems:
-            itm = self.__findItem( itemPath, 0 )
-            if itm is not None and not itm.isExpanded():
-                if itm.populated:
+            item = self.__findItem( itemPath, 0 )
+            if item is not None and not item.isExpanded():
+                if item.populated:
                     self.blockSignals( True )
-                    itm.setExpanded( True )
+                    item.setExpanded( True )
                     self.blockSignals( False )
                 else:
-                    self.expandItem( itm )
+                    self.expandItem( item )
         self.openItems = openItems[ : ]
 
         if self.current:
@@ -250,7 +260,10 @@ class VariablesBrowser( QTreeWidget ):
                     self.scrollToItem( citm, QAbstractItemView.PositionAtTop )
                 self.current = None
         elif self.__scrollToItem:
-            self.scrollToItem( self.__scrollToItem, QAbstractItemView.PositionAtTop )
+            self.scrollToItem( self.__scrollToItem,
+                               QAbstractItemView.PositionAtTop )
+
+        self.__resizeSections()
 
         self.resortEnabled = resortEnabled
         self.__resort()
@@ -341,43 +354,30 @@ class VariablesBrowser( QTreeWidget ):
         print "Double click detected"
         return
 
-    def __buildTreePath( self, itm ):
-        """
-        Private method to build up a path from the top to an item.
+    def __buildTreePath( self, item ):
+        " Builds up a path from the top to the given item "
+        name = unicode( item.text( 0 ) )
+        pathList = [ name ]
 
-        @param itm item to build the path for (QTreeWidgetItem)
-        @return list of names denoting the path from the top (list of strings)
-        """
-        name = unicode( itm.text( 0 ) )
-        pathlist = [ name ]
-
-        par = itm.parent()
+        parent = item.parent()
         # build up a path from the top to the item
-        while par is not None:
-            pname = unicode( par.text( 0 ) )
-            pathlist.insert( 0, pname )
-            par = par.parent()
+        while parent is not None:
+            parentVariableName = unicode( parent.text( 0 ) )
+            pathList.insert( 0, parentVariableName )
+            parent = parent.parent()
 
-        return pathlist[ : ]
+        return pathList[ : ]
 
     def __expandItemSignal( self, parentItem ):
-        """
-        Private slot to handle the expanded signal.
-
-        @param parentItem reference to the item being expanded (QTreeWidgetItem)
-        """
+        " Handles the expanded signal "
         self.expandItem( parentItem )
         self.__scrollToItem = parentItem
         return
 
     def expandItem( self, parentItem ):
-        """
-        Public slot to handle the expanded signal.
-
-        @param parentItem reference to the item being expanded (QTreeWidgetItem)
-        """
-        pathlist = self.__buildTreePath( parentItem )
-        self.openItems.append( pathlist )
+        " Handles the expanded signal "
+        pathList = self.__buildTreePath( parentItem )
+        self.openItems.append( pathList )
         if parentItem.populated:
             return
 
@@ -389,13 +389,9 @@ class VariablesBrowser( QTreeWidget ):
         return
 
     def collapseItem( self, parentItem ):
-        """
-        Public slot to handle the collapsed signal.
-
-        @param parentItem reference to the item being collapsed (QTreeWidgetItem)
-        """
-        pathlist = self.__buildTreePath( parentItem )
-        self.openItems.remove( pathlist )
+        " Handles the collapsed signal "
+        pathList = self.__buildTreePath( parentItem )
+        self.openItems.remove( pathList )
 
         try:
             parentItem.collapse()
@@ -404,10 +400,9 @@ class VariablesBrowser( QTreeWidget ):
         return
 
     def __resort( self ):
-        """
-        Private method to resort the tree.
-        """
+        " Resorts the tree "
         if self.resortEnabled:
-            self.sortItems( self.sortColumn(), self.header().sortIndicatorOrder() )
+            self.sortItems( self.sortColumn(),
+                            self.header().sortIndicatorOrder() )
         return
 
