@@ -26,8 +26,9 @@
 
 " Debugger variable browser items "
 
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from PyQt4.QtCore import Qt, QString, QRegExp, QStringList
+from PyQt4.QtGui import QTreeWidgetItem
+from utils.pixmapcache import PixmapCache
 
 
 
@@ -50,7 +51,7 @@ class VariableItem( QTreeWidgetItem ):
             displayName += VariableItem.TYPE_INDICATORS[ displayType ]
 
         # Decide about the display value
-        lines = displayValue.splitlines()
+        lines = str( displayValue ).splitlines()
         if len( lines ) > 1:
             # There are many lines. Find first non-empty.
             nonEmptyIndex = None
@@ -204,9 +205,9 @@ class SpecialVariableItem( VariableItem ):
             par = par.parent()
 
         # Step 2: request the variable from the debugger
-        filter = e4App().getObject("DebugUI").variablesFilter(self.scope)
-        e4App().getObject("DebugServer").remoteClientVariable(\
-            self.scope, filter, pathlist, self.frameNumber)
+#        filter = e4App().getObject("DebugUI").variablesFilter(self.scope)
+#        e4App().getObject("DebugServer").remoteClientVariable(\
+#            self.scope, filter, pathlist, self.frameNumber)
         return
 
 
