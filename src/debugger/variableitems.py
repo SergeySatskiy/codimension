@@ -182,7 +182,7 @@ class SpecialVariableItem( VariableItem ):
     tuples and dictionaries.
     """
 
-    def __init__( self, parent, isGlobal,
+    def __init__( self, parent, debugger, isGlobal,
                         displayName, displayValue, displayType, frameNumber ):
         VariableItem.__init__( self, parent, isGlobal,
                                      displayName, displayValue, displayType )
@@ -190,6 +190,7 @@ class SpecialVariableItem( VariableItem ):
         self.populated = False
 
         self.frameNumber = frameNumber
+        self.__debugger = debugger
         return
 
     def expand( self ):
@@ -206,9 +207,8 @@ class SpecialVariableItem( VariableItem ):
             par = par.parent()
 
         # Step 2: request the variable from the debugger
-#        filter = e4App().getObject("DebugUI").variablesFilter(self.scope)
-#        e4App().getObject("DebugServer").remoteClientVariable(\
-#            self.scope, filter, pathlist, self.frameNumber)
+        self.__debugger.remoteClientVariable( self.isGlobal(),
+                                              pathlist, self.frameNumber )
         return
 
 
@@ -242,10 +242,10 @@ class ArrayElementVariableItem( VariableItem ):
 class SpecialArrayElementVariableItem( SpecialVariableItem ):
     " Represents a special array variable node "
 
-    def __init__( self, parent, isGlobal,
+    def __init__( self, parent, debugger, isGlobal,
                         displayName, displayValue, displayType, frameNumber ):
 
-        SpecialVariableItem.__init__( self, parent, isGlobal,
+        SpecialVariableItem.__init__( self, parent, debugger, isGlobal,
                                       displayName, displayValue, displayType, frameNumber )
 
         """
