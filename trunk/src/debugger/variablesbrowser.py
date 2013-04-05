@@ -111,7 +111,13 @@ class VariablesBrowser( QTreeWidget ):
         self.openItems = []
         self.framenr = 0
         self.__debugger = debugger
+
+        # Ugly filtering support
         self.__hiddenItems = []
+        self.__scopeFilter = 0  # Global and local
+        self.__nameFilter = 0   # No filtering
+        self.__textFilter = ""  # No text filter
+        self.__filterIsSet = False
 
         self.setSortingEnabled( True )
         return
@@ -441,9 +447,64 @@ class VariablesBrowser( QTreeWidget ):
 
     def clear( self ):
         " Resets everything "
-        self.__hiddenItems = []
         self.resortEnabled = True
         self.openItems = []
         self.framenr = 0
+
+        self.__scopeFilter = 0
+        self.__nameFilter = 0
+        self.__textFilter = ""
+        self.__hiddenItems = []
+        self.__filterIsSet = False
+
         QTreeWidget.clear( self )
         return
+
+    def setFilter( self, scopeFilter, nameFilter, textFilter ):
+        " Sets the new filter "
+        self.__scopeFilter = scopeFilter
+        self.__nameFilter = nameFilter
+        self.__textFilter = textFilter.strip()
+
+
+
+
+        if self.__scopeFilter == 0 and \
+           self.__nameFilter == 0 and \
+           self.__textFilter == "":
+            self.__filterIsSet = False
+        else:
+            self.__filterIsSet = True
+        return
+
+    def __variableToShow( self, varName, isGlobal ):
+        " Checks if the given item should be shown "
+        if not self.__filterIsSet:
+            return True
+
+        # Something is set so start checking
+        varName = str( varName )
+        if varName.endswith( "]" ) or \
+           varName.endswith( "}" ) or \
+           varName.endswith( ")" ):
+            varName = varName[ : -2 ]   # Strip display purpose decor if so
+
+        if self.__scopeFilter == 1:
+            # Global only
+            if not isGlobal:
+                return False
+        elif self.__scopeFilter == 2:
+            # Local only
+            if isGlobal:
+                return False
+
+        if self.__nameFilter == 1:
+            # __ names to be filtered out
+            if varName.startswith( "__" ):
+                return False
+        elif self.__nameFilter == 2:
+            # _ names to be filtered out
+            if varName.startswith( "_" ):
+                return False
+
+        
