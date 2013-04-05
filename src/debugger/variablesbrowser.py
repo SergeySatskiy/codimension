@@ -112,6 +112,8 @@ class VariablesBrowser( QTreeWidget ):
         self.framenr = 0
         self.__debugger = debugger
         self.__hiddenItems = []
+
+        self.setSortingEnabled( True )
         return
 
     def scrollTo( self, index, hint = QAbstractItemView.EnsureVisible ):
@@ -185,6 +187,7 @@ class VariablesBrowser( QTreeWidget ):
 
         if len( vlist ):
             self.resortEnabled = False
+            self.setSortingEnabled( False )
             for ( var, vtype, value ) in vlist:
                 self.__addItem( None, areGlobals, vtype, var, value )
 
@@ -210,6 +213,7 @@ class VariablesBrowser( QTreeWidget ):
             self.__resizeSections()
 
             self.resortEnabled = True
+            self.setSortingEnabled( True )
             self.__resort()
         return
 
@@ -237,6 +241,8 @@ class VariablesBrowser( QTreeWidget ):
 
         resortEnabled = self.resortEnabled
         self.resortEnabled = False
+        self.setSortingEnabled( False )
+
         if self.current is None:
             self.current = self.currentItem()
             if self.current:
@@ -282,6 +288,8 @@ class VariablesBrowser( QTreeWidget ):
         self.__resizeSections()
 
         self.resortEnabled = resortEnabled
+        if self.resortEnabled:
+            self.setSortingEnabled( True )
         self.__resort()
         return
 
