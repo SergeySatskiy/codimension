@@ -73,7 +73,7 @@ class VariablesViewer( QWidget ):
         headerFrame.setPalette( headerPalette )
         headerFrame.setFixedHeight( 24 )
 
-        label = QLabel( "Variables" )
+        self.__headerLabel = QLabel( "Variables" )
 
         expandingSpacer = QSpacerItem( 10, 10, QSizePolicy.Expanding )
         fixedSpacer = QSpacerItem( 3, 3 )
@@ -171,7 +171,7 @@ class VariablesViewer( QWidget ):
         headerLayout.setContentsMargins( 0, 0, 0, 0 )
         headerLayout.setSpacing( 0 )
         headerLayout.addSpacerItem( fixedSpacer )
-        headerLayout.addWidget( label )
+        headerLayout.addWidget( self.__headerLabel )
         headerLayout.addSpacerItem( expandingSpacer )
         headerLayout.addWidget( self.__globalAndLocalButton )
         headerLayout.addWidget( self.__localOnlyButton )
@@ -283,16 +283,28 @@ class VariablesViewer( QWidget ):
     def updateVariables( self, areGlobals, frameNumber, variables ):
         " Triggered when a new set of variables is received "
         self.__browser.showVariables( areGlobals, variables, frameNumber )
+        self.__updateHeaderLabel()
         return
 
     def updateVariable( self, areGlobals, variables ):
         " Triggered when a new variable has been received "
         self.__browser.showVariable( areGlobals, variables )
+        self.__updateHeaderLabel()
+        return
+
+    def __updateHeaderLabel( self ):
+        shown, total = self.__browser.getShownAndTotalCounts()
+        if shown == 0 and total == 0:
+            self.__headerLabel.setText( "Variables" )
+        else:
+            self.__headerLabel.setText( "Variables (" + str( shown ) +
+                                        " of " + str( total ) + ")" )
         return
 
     def clear( self ):
         " Clears the content "
         self.__browser.clear()
+        self.__updateHeaderLabel()
         return
 
 

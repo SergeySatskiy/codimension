@@ -102,13 +102,16 @@ class VariablesBrowser( QTreeWidget ):
         header.setClickable( True )
         header.setStretchLastSection( True )
 
-        self.connect( self, SIGNAL( "itemExpanded(QTreeWidgetItem*)"), self.__expandItemSignal )
-        self.connect( self, SIGNAL( "itemCollapsed(QTreeWidgetItem*)"), self.collapseItem )
+        self.connect( self, SIGNAL( "itemExpanded(QTreeWidgetItem*)"),
+                      self.__expandItemSignal )
+        self.connect( self, SIGNAL( "itemCollapsed(QTreeWidgetItem*)"),
+                      self.collapseItem )
 
         self.resortEnabled = True
         self.openItems = []
         self.framenr = 0
         self.__debugger = debugger
+        self.__hiddenItems = []
         return
 
     def scrollTo( self, index, hint = QAbstractItemView.EnsureVisible ):
@@ -423,3 +426,16 @@ class VariablesBrowser( QTreeWidget ):
                             self.header().sortIndicatorOrder() )
         return
 
+    def getShownAndTotalCounts( self ):
+        " Provides the total number of variables and currently shown "
+        shownCount = self.topLevelItemCount()
+        return shownCount, len( self.__hiddenItems ) + shownCount
+
+    def clear( self ):
+        " Resets everything "
+        self.__hiddenItems = []
+        self.resortEnabled = True
+        self.openItems = []
+        self.framenr = 0
+        QTreeWidget.clear( self )
+        return
