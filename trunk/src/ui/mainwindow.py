@@ -2615,6 +2615,7 @@ class CodimensionMainWindow( QMainWindow ):
         # Tabs at the right
         self.__rightSideBar.setTabEnabled( 1, newState )    # vars etc.
         if newState == True:
+            self.__debuggerContext.clear()
             self.__rightSideBar.show()
             self.__rightSideBar.setCurrentWidget( self.__debuggerContext )
             self.__rightSideBar.raise_()
