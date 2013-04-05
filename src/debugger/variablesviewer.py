@@ -25,8 +25,8 @@
 
 from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui import ( QFrame, QVBoxLayout, QLabel, QWidget,
-                          QSizePolicy, QSpacerItem,
-                          QHBoxLayout, QToolButton, QPalette )
+                          QSizePolicy, QSpacerItem, QGridLayout,
+                          QHBoxLayout, QToolButton, QPalette, QPushButton )
 from utils.pixmapcache import PixmapCache
 from ui.combobox import CDMComboBox
 from variablesbrowser import VariablesBrowser
@@ -153,9 +153,9 @@ class VariablesViewer( QWidget ):
         self.__execStatement.lineEdit().setToolTip(
                                 "Expression to be executed on the debuggee" )
         self.__execStatement.setFixedHeight( 26 )
-        fixedSpacer3 = QSpacerItem( 5, 5 )
-        self.__execButton = QToolButton()
-        self.__execButton.setText( "Exec" )
+        self.__execButton = QPushButton( "Exec" )
+        self.__execButton.setFocusPolicy( Qt.NoFocus )
+        self.__execButton.setEnabled( False )
 
         self.__evalStatement = CDMComboBox( False )
         self.__evalStatement.setSizePolicy( QSizePolicy.Expanding,
@@ -163,9 +163,9 @@ class VariablesViewer( QWidget ):
         self.__evalStatement.lineEdit().setToolTip(
                                 "Expression to be evaluated on the debuggee" )
         self.__evalStatement.setFixedHeight( 26 )
-        fixedSpacer4 = QSpacerItem( 5, 5 )
-        self.__evalButton = QToolButton()
-        self.__evalButton.setText( "Eval" )
+        self.__evalButton = QPushButton( "Eval" )
+        self.__evalButton.setFocusPolicy( Qt.NoFocus )
+        self.__evalButton.setEnabled( False )
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins( 0, 0, 0, 0 )
@@ -187,25 +187,19 @@ class VariablesViewer( QWidget ):
         filterLayout.addSpacerItem( fixedSpacer2 )
         filterLayout.addWidget( self.__filterEdit )
 
-        execLayout = QHBoxLayout()
-        execLayout.setContentsMargins( 0, 0, 0, 0 )
-        execLayout.setSpacing( 0 )
-        execLayout.addWidget( self.__execStatement )
-        execLayout.addSpacerItem( fixedSpacer3 )
-        execLayout.addWidget( self.__execButton )
-
-        evalLayout = QHBoxLayout()
-        evalLayout.setContentsMargins( 0, 0, 0, 0 )
-        evalLayout.setSpacing( 0 )
-        evalLayout.addWidget( self.__evalStatement )
-        evalLayout.addSpacerItem( fixedSpacer4 )
-        evalLayout.addWidget( self.__evalButton )
+        execEvalLayout = QGridLayout()
+        execEvalLayout.setContentsMargins( 1, 1, 1, 1 )
+        execEvalLayout.setSpacing( 1 )
+        execEvalLayout.addWidget( self.__execStatement, 0, 0 )
+        execEvalLayout.addWidget( self.__execButton, 0, 1 )
+        execEvalLayout.addWidget( self.__evalStatement, 1, 0 )
+        execEvalLayout.addWidget( self.__evalButton, 1, 1 )
 
         verticalLayout.addWidget( headerFrame )
         verticalLayout.addLayout( filterLayout )
         verticalLayout.addWidget( self.__browser )
-        verticalLayout.addLayout( execLayout )
-        verticalLayout.addLayout( evalLayout )
+        verticalLayout.addLayout( execEvalLayout )
+
         return
 
     def __onGlobalAndLocalFilter( self ):
