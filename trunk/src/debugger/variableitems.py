@@ -36,19 +36,12 @@ from utils.pixmapcache import PixmapCache
 class VariableItem( QTreeWidgetItem ):
     " Base structure for variable items "
 
-    TYPE_INDICATORS = { 'list' : '[]', 'tuple' : '()', 'dict' : '{}',
-                        'Array' : '[]', 'Hash' : '{}' }
-
     def __init__( self, parent, isGlobal,
                         displayName, displayValue, displayType ):
         self.__isGlobal = isGlobal
         self.__value = displayValue
         self.__name = displayName
         self.__type = displayType
-
-        # Decide what displayName will be
-        if displayType in VariableItem.TYPE_INDICATORS:
-            displayName += VariableItem.TYPE_INDICATORS[ displayType ]
 
         # Decide about the display value
         lines = QString( displayValue ).split( QRegExp( r"\r\n|\r|\n" ) )

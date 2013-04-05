@@ -82,6 +82,9 @@ VARIABLE_DISPLAY_TYPE = {
 class VariablesBrowser( QTreeWidget ):
     " Variables browser implementation "
 
+    TYPE_INDICATORS = { 'list' : '[]', 'tuple' : '()', 'dict' : '{}',
+                        'Array' : '[]', 'Hash' : '{}' }
+
     def __init__( self, debugger, parent = None ):
         QTreeWidget.__init__( self, parent )
 
@@ -337,6 +340,10 @@ class VariablesBrowser( QTreeWidget ):
         " Adds a new item to the children of the parentItem "
         if parentItem is None:
             parentItem = self
+
+        # Decide what displayName will be
+        if varType in self.TYPE_INDICATORS:
+            varName += self.TYPE_INDICATORS[ varType ]
 
         displayType = self.__getDisplayType( varType )
         if varType in [ 'list', 'Array', 'tuple', 'dict', 'Hash' ]:
