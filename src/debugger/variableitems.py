@@ -168,7 +168,6 @@ class VariableItem( QTreeWidgetItem ):
         return
 
 
-
 class SpecialVariableItem( VariableItem ):
     """
     These special variable nodes are generated for classes, lists,
