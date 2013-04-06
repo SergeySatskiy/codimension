@@ -24,11 +24,10 @@
 
 
 from PyQt4.QtCore import Qt, SIGNAL, QStringList
-from PyQt4.QtGui import QFrame, QTreeWidget, QToolButton, \
-                               QTreeWidgetItem, QHeaderView, \
-                               QVBoxLayout, QLabel, QWidget, \
-                               QAbstractItemView, QSizePolicy, QSpacerItem, \
-                               QHBoxLayout, QPalette
+from PyQt4.QtGui import ( QFrame, QTreeWidget, QToolButton, QTreeWidgetItem,
+                          QHeaderView, QVBoxLayout, QLabel, QWidget,
+                          QAbstractItemView, QSizePolicy, QSpacerItem,
+                          QHBoxLayout, QPalette )
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import PixmapCache
 
@@ -125,13 +124,17 @@ class ThreadsViewer( QWidget ):
 
         self.__threadsList = QTreeWidget()
         self.__threadsList.setSortingEnabled( False )
-        self.__threadsList.setAlternatingRowColors( True )
+        # I might not need that because of two reasons:
+        # - the window has no focus
+        # - the window has custom current indicator
+        # self.__threadsList.setAlternatingRowColors( True )
         self.__threadsList.setRootIsDecorated( False )
         self.__threadsList.setItemsExpandable( False )
         self.__threadsList.setUniformRowHeights( True )
         self.__threadsList.setSelectionMode( QAbstractItemView.NoSelection )
         self.__threadsList.setSelectionBehavior( QAbstractItemView.SelectRows )
         self.__threadsList.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
+        self.__threadsList.setFocusPolicy( Qt.NoFocus )
 
         self.connect( self.__threadsList,
                       SIGNAL( "clicked(const QModelIndex&)" ),

@@ -129,13 +129,17 @@ class StackViewer( QWidget ):
 
         self.__framesList = QTreeWidget()
         self.__framesList.setSortingEnabled( False )
-        self.__framesList.setAlternatingRowColors( True )
+        # I might not need that because of two reasons:
+        # - the window has no focus
+        # - the window has custom current indicator
+        # self.__framesList.setAlternatingRowColors( True )
         self.__framesList.setRootIsDecorated( False )
         self.__framesList.setItemsExpandable( False )
         self.__framesList.setUniformRowHeights( True )
         self.__framesList.setSelectionMode( QAbstractItemView.NoSelection )
         self.__framesList.setSelectionBehavior( QAbstractItemView.SelectRows )
         self.__framesList.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
+        self.__framesList.setFocusPolicy( Qt.NoFocus )
 
         self.connect( self.__framesList,
                       SIGNAL( "clicked(const QModelIndex&)" ),
