@@ -52,6 +52,10 @@ class VariablesViewer( QWidget ):
         self.__filter = VariablesViewer.FilterGlobalAndLocal
         self.__nameFilter = VariablesViewer.FilterNone
         self.__createLayout()
+
+        self.setTabOrder( self.__filterEdit, self.__browser )
+        self.setTabOrder( self.__browser, self.__execStatement )
+        self.setTabOrder( self.__execStatement, self.__evalStatement )
         return
 
     def __createLayout( self ):
