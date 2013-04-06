@@ -83,7 +83,7 @@ class VariablesViewer( QWidget ):
         self.__globalAndLocalButton.setChecked( True )
         self.__globalAndLocalButton.setIcon( PixmapCache().getIcon( 'dbgfltgl.png' ) )
         self.__globalAndLocalButton.setFixedSize( 20, 20 )
-        self.__globalAndLocalButton.setToolTip( "Show global and local variables" )
+        self.__globalAndLocalButton.setToolTip( "Do not filter out global or local variables" )
         self.__globalAndLocalButton.setFocusPolicy( Qt.NoFocus )
         self.connect( self.__globalAndLocalButton, SIGNAL( 'clicked()' ),
                       self.__onGlobalAndLocalFilter )
@@ -93,7 +93,7 @@ class VariablesViewer( QWidget ):
         self.__localOnlyButton.setChecked( False )
         self.__localOnlyButton.setIcon( PixmapCache().getIcon( 'dbgfltlo.png' ) )
         self.__localOnlyButton.setFixedSize( 20, 20 )
-        self.__localOnlyButton.setToolTip( "Show local variables only" )
+        self.__localOnlyButton.setToolTip( "Filter out global variables" )
         self.__localOnlyButton.setFocusPolicy( Qt.NoFocus )
         self.connect( self.__localOnlyButton, SIGNAL( 'clicked()' ),
                       self.__onLocalFilter )
@@ -103,7 +103,7 @@ class VariablesViewer( QWidget ):
         self.__globalOnlyButton.setChecked( False )
         self.__globalOnlyButton.setIcon( PixmapCache().getIcon( 'dbgfltgo.png' ) )
         self.__globalOnlyButton.setFixedSize( 20, 20 )
-        self.__globalOnlyButton.setToolTip( "Show global variables only" )
+        self.__globalOnlyButton.setToolTip( "Filter out local variables" )
         self.__globalOnlyButton.setFocusPolicy( Qt.NoFocus )
         self.connect( self.__globalOnlyButton, SIGNAL( 'clicked()' ),
                       self.__onGlobalFilter )
@@ -114,7 +114,7 @@ class VariablesViewer( QWidget ):
         self.__noHideButton.setChecked( True )
         self.__noHideButton.setIcon( PixmapCache().getIcon( 'dbgfltall.png' ) )
         self.__noHideButton.setFixedSize( 26, 26 )
-        self.__noHideButton.setToolTip( "Do not hide _ and __ starting variables" )
+        self.__noHideButton.setToolTip( "Do not filter out variables starting with _ or __" )
         self.__noHideButton.setFocusPolicy( Qt.NoFocus )
         self.connect( self.__noHideButton, SIGNAL( 'clicked()' ),
                       self.__onNoHide )
@@ -124,7 +124,7 @@ class VariablesViewer( QWidget ):
         self.__hide__Button.setChecked( False )
         self.__hide__Button.setIcon( PixmapCache().getIcon( 'dbgflt__.png' ) )
         self.__hide__Button.setFixedSize( 26, 26 )
-        self.__hide__Button.setToolTip( "Hide varibles starting with __" )
+        self.__hide__Button.setToolTip( "Filter out varibles starting with __" )
         self.__hide__Button.setFocusPolicy( Qt.NoFocus )
         self.connect( self.__hide__Button, SIGNAL( 'clicked()' ),
                       self.__onHide__ )
@@ -134,7 +134,7 @@ class VariablesViewer( QWidget ):
         self.__hide_Button.setChecked( False )
         self.__hide_Button.setIcon( PixmapCache().getIcon( 'dbgflt_.png' ) )
         self.__hide_Button.setFixedSize( 26, 26 )
-        self.__hide_Button.setToolTip( "Hide variables starting with _" )
+        self.__hide_Button.setToolTip( "Filter out variables starting with _" )
         self.__hide_Button.setFocusPolicy( Qt.NoFocus )
         self.connect( self.__hide_Button, SIGNAL( 'clicked()' ),
                       self.__onHide_ )
@@ -144,14 +144,14 @@ class VariablesViewer( QWidget ):
         self.__filterEdit.setSizePolicy( QSizePolicy.Expanding,
                                          QSizePolicy.Expanding )
         self.__filterEdit.lineEdit().setToolTip(
-                                    "Space separated regular expressions" )
+                                    "Filter (space separated regular expressions)" )
         self.__filterEdit.setFixedHeight( 26 )
 
         self.__execStatement = CDMComboBox( False )
         self.__execStatement.setSizePolicy( QSizePolicy.Expanding,
                                             QSizePolicy.Expanding )
         self.__execStatement.lineEdit().setToolTip(
-                                "Expression to be executed on the debuggee" )
+                                "Expression to be executed" )
         self.__execStatement.setFixedHeight( 26 )
         self.__execButton = QPushButton( "Exec" )
         self.__execButton.setFocusPolicy( Qt.NoFocus )
@@ -161,7 +161,7 @@ class VariablesViewer( QWidget ):
         self.__evalStatement.setSizePolicy( QSizePolicy.Expanding,
                                             QSizePolicy.Expanding )
         self.__evalStatement.lineEdit().setToolTip(
-                                "Expression to be evaluated on the debuggee" )
+                                "Expression to be evaluated" )
         self.__evalStatement.setFixedHeight( 26 )
         self.__evalButton = QPushButton( "Eval" )
         self.__evalButton.setFocusPolicy( Qt.NoFocus )
