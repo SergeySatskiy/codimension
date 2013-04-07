@@ -116,8 +116,9 @@ class VariablesBrowser( QTreeWidget ):
         self.__hiddenItems = []
         self.__scopeFilter = 0  # Global and local
         self.__nameFilter = 0   # No filtering
-        self.__textFilter = ""  # No text filter
         self.__filterIsSet = False
+        self.__textFilters = []
+        self.__textFiltersCount = 0
 
         self.setSortingEnabled( True )
         return
@@ -453,7 +454,8 @@ class VariablesBrowser( QTreeWidget ):
 
         self.__scopeFilter = 0
         self.__nameFilter = 0
-        self.__textFilter = ""
+        self.__textFilters = []
+        self.__textFiltersCount = 0
         self.__hiddenItems = []
         self.__filterIsSet = False
 
@@ -464,14 +466,18 @@ class VariablesBrowser( QTreeWidget ):
         " Sets the new filter "
         self.__scopeFilter = scopeFilter
         self.__nameFilter = nameFilter
-        self.__textFilter = textFilter.strip()
 
-
+        self.__textFilters = []
+        self.__textFiltersCount = 0
+        for part in textFilter.split():
+            regexp = QRegExp( part, Qt.CaseInsensitive, QRegExp.RegExp2 )
+            self.__textFilters.append( regexp )
+            self.__textFiltersCount += 1
 
 
         if self.__scopeFilter == 0 and \
            self.__nameFilter == 0 and \
-           self.__textFilter == "":
+           self.__textFiltersCount == 0:
             self.__filterIsSet = False
         else:
             self.__filterIsSet = True

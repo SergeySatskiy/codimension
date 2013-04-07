@@ -202,9 +202,15 @@ __osSpawnForDebug = {
     'posix'         : "%(term)s -e %(shell)s -c " \
                       "'%(exec)s %(fb)s %(fbport)d $PPID; cd %(wdir)s; " \
                       "%(exec)s %(dbgclient)s %(dbgopt)s -- %(app)s; CDM_RES=$?; " \
-                      "%(exec)s %(fb)s %(fbport)d $CDM_RES; %(exit_if_ok)s %(shell)s' &",
-    'Terminal'      : "",
-    'gnome-terminal': "",
+                      "%(exit_if_ok)s %(shell)s' &",
+    'Terminal'      : "Terminal --disable-server -x %(shell)s -c " \
+                      "'%(exec)s %(fb)s %(fbport)d $PPID; cd %(wdir)s; " \
+                      "%(exec)s %(dbgclient)s %(dbgopt)s -- %(app)s; CDM_RES=$?; " \
+                      "%(exit_if_ok)s %(shell)s' &",
+    'gnome-terminal': "gnome-terminal --disable-factory -x %(shell)s -c " \
+                      "'%(exec)s %(fb)s %(fbport)d $PPID; cd %(wdir)s; " \
+                      "%(exec)s %(dbgclient)s %(dbgopt)s -- %(app)s; CDM_RES=$?; " \
+                      "%(exit_if_ok)s %(shell)s' &",
                     }
 
 

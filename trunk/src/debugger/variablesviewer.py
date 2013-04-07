@@ -48,6 +48,7 @@ class VariablesViewer( QWidget ):
     def __init__( self, debugger, parent = None ):
         QWidget.__init__( self, parent )
 
+        self.__debugger = debugger
         self.__browser = VariablesBrowser( debugger, self )
         self.__filter = VariablesViewer.FilterGlobalAndLocal
         self.__nameFilter = VariablesViewer.FilterNone
@@ -150,26 +151,39 @@ class VariablesViewer( QWidget ):
         self.__filterEdit.lineEdit().setToolTip(
                                     "Filter (space separated regular expressions)" )
         self.__filterEdit.setFixedHeight( 26 )
+        self.connect( self.__filterEdit,
+                      SIGNAL( 'editTextChanged(const QString&)' ),
+                      self.__textFilterChanged )
 
-        self.__execStatement = CDMComboBox( False )
+        self.__execStatement = CDMComboBox( True )
         self.__execStatement.setSizePolicy( QSizePolicy.Expanding,
                                             QSizePolicy.Expanding )
         self.__execStatement.lineEdit().setToolTip(
                                 "Expression to be executed" )
         self.__execStatement.setFixedHeight( 26 )
+        self.connect( self.__execStatement,
+                      SIGNAL( 'editTextChanged(const QString&)' ),
+                      self.__execStatementChanged )
         self.__execButton = QPushButton( "Exec" )
         self.__execButton.setFocusPolicy( Qt.NoFocus )
         self.__execButton.setEnabled( False )
+        self.connect( self.__execButton, SIGNAL( 'clicked()' ),
+                      self.__onExec )
 
-        self.__evalStatement = CDMComboBox( False )
+        self.__evalStatement = CDMComboBox( True )
         self.__evalStatement.setSizePolicy( QSizePolicy.Expanding,
                                             QSizePolicy.Expanding )
         self.__evalStatement.lineEdit().setToolTip(
                                 "Expression to be evaluated" )
         self.__evalStatement.setFixedHeight( 26 )
+        self.connect( self.__evalStatement,
+                      SIGNAL( 'editTextChanged(const QString&)' ),
+                      self.__evalStatementChanged )
         self.__evalButton = QPushButton( "Eval" )
         self.__evalButton.setFocusPolicy( Qt.NoFocus )
         self.__evalButton.setEnabled( False )
+        self.connect( self.__evalButton, SIGNAL( 'clicked()' ),
+                      self.__onEval )
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins( 0, 0, 0, 0 )
@@ -208,80 +222,86 @@ class VariablesViewer( QWidget ):
 
     def __onGlobalAndLocalFilter( self ):
         " Global and local filter has been pressed "
-        if self.__filter == VariablesViewer.FilterGlobalAndLocal:
-            # No changes
-            return
-
         self.__globalAndLocalButton.setChecked( True )
         self.__localOnlyButton.setChecked( False )
         self.__globalOnlyButton.setChecked( False )
 
+        if self.__filter == VariablesViewer.FilterGlobalAndLocal:
+            # No changes
+            return
+
         self.__filter = VariablesViewer.FilterGlobalAndLocal
+        self.__updateFilter()
         return
 
     def __onLocalFilter( self ):
         " Local only filter has been pressed "
-        if self.__filter == VariablesViewer.FilterLocalOnly:
-            # No changes
-            return
-
         self.__globalAndLocalButton.setChecked( False )
         self.__localOnlyButton.setChecked( True )
         self.__globalOnlyButton.setChecked( False )
 
+        if self.__filter == VariablesViewer.FilterLocalOnly:
+            # No changes
+            return
+
         self.__filter = VariablesViewer.FilterLocalOnly
+        self.__updateFilter()
         return
 
     def __onGlobalFilter( self ):
         " Global only filter has been pressed "
-        if self.__filter == VariablesViewer.FilterGlobalOnly:
-            # No changes
-            return
-
         self.__globalAndLocalButton.setChecked( False )
         self.__localOnlyButton.setChecked( False )
         self.__globalOnlyButton.setChecked( True )
 
+        if self.__filter == VariablesViewer.FilterGlobalOnly:
+            # No changes
+            return
+
         self.__filter = VariablesViewer.FilterGlobalOnly
+        self.__updateFilter()
         return
 
     def __onNoHide( self ):
         " No hide filter has pressed "
-        if self.__nameFilter == VariablesViewer.FilterNone:
-            # No changes
-            return
-
         self.__noHideButton.setChecked( True )
         self.__hide__Button.setChecked( False )
         self.__hide_Button.setChecked( False )
 
+        if self.__nameFilter == VariablesViewer.FilterNone:
+            # No changes
+            return
+
         self.__nameFilter = VariablesViewer.FilterNone
+        self.__updateFilter()
         return
 
     def __onHide__( self ):
         " Hide __ filter has pressed "
-        if self.__nameFilter == VariablesViewer.Filter__:
-            # No changes
-            return
-
         self.__noHideButton.setChecked( False )
         self.__hide__Button.setChecked( True )
         self.__hide_Button.setChecked( False )
 
+        if self.__nameFilter == VariablesViewer.Filter__:
+            # No changes
+            return
+
         self.__nameFilter = VariablesViewer.Filter__
+        self.__updateFilter()
         return
 
     def __onHide_( self ):
         " Hide _ filter has pressed "
-        if self.__nameFilter == VariablesViewer.Filter_:
-            # No changes
-            return
-
         self.__noHideButton.setChecked( False )
         self.__hide__Button.setChecked( False )
         self.__hide_Button.setChecked( True )
 
+        if self.__nameFilter == VariablesViewer.Filter_:
+            # No changes
+            return
+
         self.__nameFilter = VariablesViewer.Filter_
+        self.__updateFilter()
         return
 
     def updateVariables( self, areGlobals, frameNumber, variables ):
@@ -305,10 +325,49 @@ class VariablesViewer( QWidget ):
                                         " of " + str( total ) + ")" )
         return
 
-    def clear( self ):
-        " Clears the content "
-        self.__browser.clear()
+    def __textFilterChanged( self, text ):
+        " Triggered when a text filter has been changed "
+        self.__updateFilter()
+        return
+
+    def __updateFilter( self ):
+        " Updates the current filter "
+        self.__browser.setFilter( self.__filter, self.__nameFilter,
+                                  str( self.__filterEdit.currentText() ).strip() )
         self.__updateHeaderLabel()
         return
 
+    def clear( self ):
+        " Clears the content "
+        self.__browser.clear()
+        self.__execStatement.lineEdit().setText( "" )
+        self.__evalStatement.lineEdit().setText( "" )
+        self.__updateHeaderLabel()
+        return
+
+    def __evalStatementChanged( self, text ):
+        " Triggered when a eval statement is changed "
+        text = str( text ).strip()
+        self.__evalButton.setEnabled( text != "" )
+        return
+
+    def __onEval( self ):
+        " Triggered when the Eval button is clicked "
+        text = str( self.__evalStatement.currentText() ).strip()
+        if text != "":
+            self.__debugger.remoteEval( text )
+        return
+
+    def __execStatementChanged( self, text ):
+        " Triggered when a exec statement is changed "
+        text = str( text ).strip()
+        self.__execButton.setEnabled( text != "" )
+        return
+
+    def __onExec( self ):
+        " Triggered when the Exec button is clicked "
+        text = str( self.__execStatement.currentText() ).strip()
+        if text != "":
+            self.__debugger.remoteExec( text )
+        return
 

@@ -40,7 +40,8 @@ from client.protocol import ( EOT, RequestStep, RequestStepOver, RequestStepOut,
                               RequestContinue, RequestThreadList,
                               RequestVariables, ResponseThreadList,
                               ResponseVariables, RequestVariable,
-                              ResponseVariable )
+                              ResponseVariable, RequestExec, RequestEval,
+                              RequestBreak )
 
 
 POLL_INTERVAL = 0.1
@@ -455,4 +456,24 @@ class CodimensionDebugger( QObject ):
                             unicode( var ) + ", " +
                             str( framenr ) + ", " + str( scope ) + "\n" )
         return
+
+    def remoteEval( self, expression ):
+        " Evaluates the expression in the current context of the debuggee "
+        self.__sendCommand( RequestEval + expression + "\n" )
+        return
+
+    def remoteExec( self, statement ):
+        " Executes the expression in the current context of the debuggee "
+        self.__sendCommand( RequestExec + statement + "\n" )
+        return
+
+    def remoteBreakpoint( self, fileName, line,
+                          isSetting, condition = None, temporary = False ):
+        " Sets or clears a breakpoint "
+        self.__sendCommand( RequestBreak + fileName + "@@" + str( line ) +
+                            "@@" + str( int( temporary ) ) + "@@" +
+                            str( int( isSetting ) ) + "@@" +
+                            str( condition ) + "\n" )
+        return
+
 
