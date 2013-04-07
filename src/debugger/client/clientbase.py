@@ -1796,8 +1796,8 @@ class DebugClientBase( object ):
             self.mainThread.set_trace()
         return
 
-    def startProgInDebugger( self, progargs, wd = '', host = None,
-                             port = None, exceptions = 1,
+    def startProgInDebugger( self, progargs, wd, host,
+                             port, exceptions = 1,
                              tracePython = 0, redirect = 1 ):
         """
         Public method used to start the remote debugger.
@@ -1814,13 +1814,6 @@ class DebugClientBase( object ):
         @param redirect flag indicating redirection of stdin, stdout
                and stderr (boolean)
         """
-        if host is None:
-            host = os.getenv( 'CODIMENSION_HOST',
-                              CODIMENSION_DEFAULT_DBG_HOST )
-        if port is None:
-            port = os.getenv( 'CODIMENSION_PORT',
-                              CODIMENSION_DEFAULT_DBG_PORT )
-
         remoteAddress = self.__resolveHost( host )
         self.connectDebugger( port, remoteAddress, redirect )
 
@@ -1888,12 +1881,11 @@ class DebugClientBase( object ):
         """
         try:
             host, version = host.split( "@@" )
+            family = socket.AF_INET6
         except ValueError:
             version = 'v4'
-        if version == 'v4':
             family = socket.AF_INET
-        else:
-            family = socket.AF_INET6
+
         return socket.getaddrinfo( host, None, family,
                                    socket.SOCK_STREAM )[ 0 ][ 4 ][ 0 ]
 
@@ -1940,7 +1932,9 @@ class DebugClientBase( object ):
                 else:   # unknown option
                     del args[0]
             if not args:
-                print "No program given. Aborting!"
+                print "No program given. Aborting..."
+            elif port is None or host is None:
+                print "Network address is not provided. Aborting..."
             else:
                 if not self.noencoding:
                     self.__coding = self.defaultCoding
@@ -2042,3 +2036,4 @@ class DebugClientBase( object ):
         sysPath.insert( 0, firstEntry )
         sysPath.insert( 0, '' )
         return sysPath
+
