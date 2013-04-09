@@ -1137,8 +1137,11 @@ class DebugClientBase( object ):
         @param scope 1 to report global variables, 0 for local variables (int)
         @param fltr the indices of variable types to be filtered (list of int)
         """
-        if scope == 0:
-            self.framenr = frmnr
+        # The original version did not change the frame number for the global
+        # scope. It had to be changed because the global scope could also be
+        # different for different frames, e.g. __file__ for different files.
+        # So, change the frame unconditionally
+        self.framenr = frmnr
 
         f = self.currentThread.getCurrentFrame()
 
