@@ -62,7 +62,7 @@ class DebuggerContext( QWidget ):
 
         self.__variablesViewer = VariablesViewer( self.__debugger,
                                                   self.splitter )
-        self.__stackViewer = StackViewer( self.splitter )
+        self.__stackViewer = StackViewer( self.__debugger, self.splitter )
         self.__threadsViewer = ThreadsViewer( self.splitter )
 
         self.splitter.addWidget( self.__variablesViewer )
@@ -88,8 +88,8 @@ class DebuggerContext( QWidget ):
         if not forStack:
             self.__variablesViewer.clear()
             self.__debugger.remoteThreadList()
-            self.__debugger.remoteClientVariables( 1 )  # globals
-            self.__debugger.remoteClientVariables( 0 )  # locals
+            self.__debugger.remoteClientVariables( 1, 0 )  # globals
+            self.__debugger.remoteClientVariables( 0, 0 )  # locals
         return
 
     def __onClientStack( self, stack ):

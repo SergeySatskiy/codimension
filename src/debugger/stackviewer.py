@@ -36,7 +36,7 @@ import os.path
 class StackFrameItem( QTreeWidgetItem ):
     " Single stack frame item data structure "
 
-    def __init__( self, fileName, lineNumber, funcName ):
+    def __init__( self, fileName, lineNumber, funcName, frameNumber ):
 
         shortened = os.path.basename( fileName ) + ":" + str( lineNumber )
         full = fileName + ":" + str( lineNumber )
@@ -46,6 +46,7 @@ class StackFrameItem( QTreeWidgetItem ):
                 QStringList() << "" << shortened << funcName << fileName )
 
         self.__isCurrent = False
+        self.__frameNumber = frameNumber
 
         for index in xrange( 4 ):
             self.setToolTip( index, full )
@@ -57,8 +58,12 @@ class StackFrameItem( QTreeWidgetItem ):
         if value:
             self.setIcon( 0, PixmapCache().getIcon( 'currentframe.png' ) )
         else:
-            self.setIcon( 0, None )
+            self.setIcon( 0, PixmapCache().getIcon( 'empty.png' ) )
         return
+
+    def getFrameNumber( self ):
+        " Provides the frame number "
+        return self.__frameNumber
 
     def getFilename( self ):
         """ Provides the full project filename """
@@ -78,9 +83,10 @@ class StackFrameItem( QTreeWidgetItem ):
 class StackViewer( QWidget ):
     " Implements the stack viewer for a debugger "
 
-    def __init__( self, parent = None ):
+    def __init__( self, debugger, parent = None ):
         QWidget.__init__( self, parent )
 
+        self.__debugger = debugger
         self.currentStack = None
         self.currentFrame = 0
         self.__createLayout()
@@ -142,10 +148,10 @@ class StackViewer( QWidget ):
         self.__framesList.setFocusPolicy( Qt.NoFocus )
 
         self.connect( self.__framesList,
-                      SIGNAL( "clicked(const QModelIndex&)" ),
+                      SIGNAL( "itemClicked(QTreeWidgetItem*,int)" ),
                       self.__onFrameClicked )
         self.connect( self.__framesList,
-                      SIGNAL( "doubleClicked(const QModelIndex&)" ),
+                      SIGNAL( "itemDoubleClicked(QTreeWidgetItem*,int)" ),
                       self.__onFrameDoubleClicked )
 
         headerLabels = QStringList() << "" << "File:line" \
@@ -199,9 +205,12 @@ class StackViewer( QWidget ):
         self.clear()
 
         self.currentStack = stack
+        self.currentFrame = 0
+        frameNumber = 0
         for s in stack:
-            item = StackFrameItem( s[ 0 ], s[ 1 ], s[ 2 ] )
+            item = StackFrameItem( s[ 0 ], s[ 1 ], s[ 2 ], frameNumber )
             self.__framesList.addTopLevelItem( item )
+            frameNumber += 1
         self.__resizeColumns()
         self.__framesList.topLevelItem( 0 ).setCurrent( True )
         self.__stackLabel.setText( "Stack (total: " +
@@ -212,14 +221,32 @@ class StackViewer( QWidget ):
         " Provides the current frame number "
         return self.currentFrame
 
-    def __onFrameClicked( self, index ):
+    def __onFrameClicked( self, item, column ):
         " Triggered when a frame is clicked "
-        # Must update the current frame number
-        print "Frame clicked"
+        if item.isCurrent():
+            return
 
-    def __onFrameDoubleClicked( self, index ):
+        # Hide the current indicator
+        self.__framesList.topLevelItem( self.currentFrame ).setCurrent( False )
+
+        # Show the new indicator
+        self.currentFrame = item.getFrameNumber()
+        for index in xrange( self.__framesList.topLevelItemCount() ):
+            item = self.__framesList.topLevelItem( index )
+            if item.getFrameNumber() == self.currentFrame:
+                item.setCurrent( True )
+        self.__debugger.remoteClientVariables( 1, self.currentFrame )  # globals
+        self.__debugger.remoteClientVariables( 0, self.currentFrame )  # locals
+        return
+
+    def __onFrameDoubleClicked( self, item, column ):
         " Triggered when a frame is double clicked "
-        # Must update the current frame number
-        print "Frame double clicked"
+        # The frame has been switched already because the double click
+        # signal always comes after the single click one
+        fileName = item.getFilename()
+        lineNumber = item.getLineNumber()
+        print "Frame double clicked!"
+        return
+
 
 
