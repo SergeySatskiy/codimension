@@ -289,3 +289,8 @@ class StackViewer( QWidget ):
         self.__onFrameDoubleClicked( self.__contextItem, 0 )
         return
 
+    def switchControl( self, isInIDE ):
+        " Switches the UI depending where the control flow is "
+        self.__framesList.setEnabled( isInIDE )
+        return
+

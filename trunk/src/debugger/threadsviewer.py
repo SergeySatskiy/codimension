@@ -204,6 +204,11 @@ class ThreadsViewer( QWidget ):
                                      str( len( threadList ) ) + ")" )
         return
 
+    def switchControl( self, isInIDE ):
+        " Switches the UI depending where the control flow is "
+        self.__threadsList.setEnabled( isInIDE )
+        return
+
     def __onThreadClicked( self, index ):
         " Triggered when a thread is clicked "
         print "Thread clicked"

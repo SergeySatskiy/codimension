@@ -2627,6 +2627,9 @@ class CodimensionMainWindow( QMainWindow ):
         " Triggered when the debugger reported its state changed "
         if newState != CodimensionDebugger.STATE_IN_IDE:
             self.__removeCurrenDebugLineHighlight()
+            self.__debuggerContext.switchControl( False )
+        else:
+            self.__debuggerContext.switchControl( True )
 
         if newState == CodimensionDebugger.STATE_STOPPED:
             self.__dbgStopBrutal.setEnabled( False )
