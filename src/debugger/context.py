@@ -86,7 +86,6 @@ class DebuggerContext( QWidget ):
     def __onClientLine( self, fileName, line, forStack ):
         " Handles the signal from the debugged program "
         if not forStack:
-            self.__variablesViewer.clear()
             self.__debugger.remoteThreadList()
             self.__debugger.remoteClientVariables( 1, 0 )  # globals
             self.__debugger.remoteClientVariables( 0, 0 )  # locals
@@ -119,4 +118,12 @@ class DebuggerContext( QWidget ):
         else:
             self.__variablesViewer.updateVariable( True, variables )
         return
+
+    def switchControl( self, isInIDE ):
+        " Switches the UI depending where the control flow is "
+        self.__variablesViewer.switchControl( isInIDE )
+        self.__stackViewer.switchControl( isInIDE )
+        self.__threadsViewer.switchControl( isInIDE )
+        return
+
 

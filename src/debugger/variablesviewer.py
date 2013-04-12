@@ -343,6 +343,7 @@ class VariablesViewer( QWidget ):
         self.__execStatement.lineEdit().setText( "" )
         self.__evalStatement.lineEdit().setText( "" )
         self.__updateHeaderLabel()
+        print "Clear called"
         return
 
     def __evalStatementChanged( self, text ):
@@ -370,4 +371,32 @@ class VariablesViewer( QWidget ):
         if text != "":
             self.__debugger.remoteExec( text )
         return
+
+    def switchControl( self, isInIDE ):
+        " Switches the UI depending where the control flow is "
+        self.__browser.setEnabled( isInIDE )
+        self.__globalAndLocalButton.setEnabled( isInIDE )
+        self.__localOnlyButton.setEnabled( isInIDE )
+        self.__globalOnlyButton.setEnabled( isInIDE )
+        self.__noHideButton.setEnabled( isInIDE )
+        self.__hide__Button.setEnabled( isInIDE )
+        self.__hide_Button.setEnabled( isInIDE )
+        self.__filterEdit.setEnabled( isInIDE )
+
+        self.__execStatement.setEnabled( isInIDE )
+        if isInIDE:
+            text = str( self.__execStatement.currentText() ).strip()
+            self.__execButton.setEnabled( text != "" )
+        else:
+            self.__execButton.setEnabled( False )
+
+        self.__evalStatement.setEnabled( isInIDE )
+        if isInIDE:
+            text = str( self.__evalStatement.currentText() ).strip()
+            self.__evalButton.setEnabled( text != "" )
+        else:
+            self.__evalButton.setEnabled( False )
+        return
+
+
 
