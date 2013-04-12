@@ -26,10 +26,11 @@
 from PyQt4.QtCore import Qt, SIGNAL, QStringList
 from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeWidget, QToolButton,
                           QTreeWidgetItem, QHeaderView, QVBoxLayout,
-                          QLabel, QWidget, QAbstractItemView,
-                          QSpacerItem, QHBoxLayout, QPalette )
+                          QLabel, QWidget, QAbstractItemView, QMenu,
+                          QSpacerItem, QHBoxLayout, QPalette, QCursor )
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import PixmapCache
+from utils.globals import GlobalData
 import os.path
 
 
@@ -89,7 +90,18 @@ class StackViewer( QWidget ):
         self.__debugger = debugger
         self.currentStack = None
         self.currentFrame = 0
+        self.__createPopupMenu()
         self.__createLayout()
+        return
+
+    def __createPopupMenu( self ):
+        " Creates the popup menu "
+        self.__framesMenu = QMenu()
+        self.__setCurrentMenuItem = self.__framesMenu.addAction(
+                    "Set current (single click)", self.__onSetCurrent )
+        self.__jumpMenuItem = self.__framesMenu.addAction(
+                    "Set current and jump to the source (double click)",
+                    self.__onSetCurrentAndJump )
         return
 
     def __createLayout( self ):
@@ -133,7 +145,7 @@ class StackViewer( QWidget ):
         headerLayout.addWidget( self.__showHideButton )
         self.headerFrame.setLayout( headerLayout )
 
-        self.__framesList = QTreeWidget()
+        self.__framesList = QTreeWidget( self )
         self.__framesList.setSortingEnabled( False )
         # I might not need that because of two reasons:
         # - the window has no focus
@@ -146,6 +158,7 @@ class StackViewer( QWidget ):
         self.__framesList.setSelectionBehavior( QAbstractItemView.SelectRows )
         self.__framesList.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         self.__framesList.setFocusPolicy( Qt.NoFocus )
+        self.__framesList.setContextMenuPolicy( Qt.CustomContextMenu )
 
         self.connect( self.__framesList,
                       SIGNAL( "itemClicked(QTreeWidgetItem*,int)" ),
@@ -153,6 +166,9 @@ class StackViewer( QWidget ):
         self.connect( self.__framesList,
                       SIGNAL( "itemDoubleClicked(QTreeWidgetItem*,int)" ),
                       self.__onFrameDoubleClicked )
+        self.connect( self.__framesList,
+                      SIGNAL( "customContextMenuRequested(const QPoint &)" ),
+                      self.__showContextMenu )
 
         headerLabels = QStringList() << "" << "File:line" \
                                      << "Function" << "Full path"
@@ -245,8 +261,31 @@ class StackViewer( QWidget ):
         # signal always comes after the single click one
         fileName = item.getFilename()
         lineNumber = item.getLineNumber()
-        print "Frame double clicked!"
+
+        editorsManager = GlobalData().mainWindow.editorsManager()
+        editorsManager.openFile( fileName, lineNumber )
+        editor = editorsManager.currentWidget().getEditor()
+        editor.gotoLine( lineNumber )
+        editorsManager.currentWidget().setFocus()
         return
 
+    def __showContextMenu( self, coord ):
+        " Shows the frames list context menu "
+        self.__contextItem = self.__framesList.itemAt( coord )
+        if self.__contextItem is not None:
+            self.__setCurrentMenuItem.setEnabled(
+                                not self.__contextItem.isCurrent() )
+            self.__framesMenu.popup( QCursor.pos() )
+        return
 
+    def __onSetCurrent( self ):
+        " Context menu item handler "
+        self.__onFrameClicked( self.__contextItem, 0 )
+        return
+
+    def __onSetCurrentAndJump( self ):
+        " Context menu item handler "
+        self.__onFrameClicked( self.__contextItem, 0 )
+        self.__onFrameDoubleClicked( self.__contextItem, 0 )
+        return
 
