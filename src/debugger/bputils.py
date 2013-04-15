@@ -23,7 +23,53 @@
 #
 
 
+"""
+Breakpoint related utilities
+"""
+
+
 validBreakPointLinesCache = {}
+
+
+def getBreakpointLine( userLine, isEmptyLine, srcCode ):
+    " Provides the line where the debugger can actually break "
+
+    # The function should be called for a python buffer only
+    try:
+        validLines = calcBreakpointLines( srcCode )
+        if validLines is None:
+            # If there is a compile error, let the user decide
+            return userLine
+    except:
+        # If there is a compile error, let the user decide
+        return userLine
+
+    if userLine in validLines:
+        return userLine
+
+    # Not a valid breakpoint line. Search the closest suitable.
+    validLines = list( validLines ).sort()
+    if isEmptyLine:
+        # Take a line after this one
+        for line in validLines:
+            if line > userLine:
+                return line
+        # There are no lines after the given one
+        if validLines:
+            return validLines[ -1 ]
+        # There are no valid lines at all
+        return None
+
+    # Take a line before this one
+    for index in xrange( len( validLines ), -1, -1 ):
+        if validLines[ index ] < userLine:
+            return validLines[ index ]
+    # There are no lines after the given one
+    if validLines:
+        return validLines[ 0 ]
+    # There are no valid lines at all
+    return None
+
 
 
 def clearValidBreakpointLinesCache():
