@@ -365,8 +365,10 @@ class VariablesViewer( QWidget ):
         " Triggered when the Eval button is clicked "
         text = str( self.__evalStatement.currentText() ).strip()
         if text != "":
-            self.__debugger.remoteEval( text,
-                            GlobalData().mainWindow.getCurrentFrameNumber() )
+            currentFrame = GlobalData().mainWindow.getCurrentFrameNumber()
+            self.__debugger.remoteEval( text, currentFrame )
+            self.__debugger.remoteClientVariables( 1, currentFrame )  # globals
+            self.__debugger.remoteClientVariables( 0, currentFrame )  # locals
         return
 
     def __execStatementChanged( self, text ):
@@ -379,8 +381,10 @@ class VariablesViewer( QWidget ):
         " Triggered when the Exec button is clicked "
         text = str( self.__execStatement.currentText() ).strip()
         if text != "":
-            self.__debugger.remoteExec( text,
-                            GlobalData().mainWindow.getCurrentFrameNumber() )
+            currentFrame = GlobalData().mainWindow.getCurrentFrameNumber()
+            self.__debugger.remoteExec( text, currentFrame )
+            self.__debugger.remoteClientVariables( 1, currentFrame )  # globals
+            self.__debugger.remoteClientVariables( 0, currentFrame )  # locals
         return
 
     def switchControl( self, isInIDE ):
