@@ -720,9 +720,7 @@ class DebugClientBase( object ):
                     return
 
                 try:
-                    value = eval( expression,
-                                  f.f_globals,
-                                  f.f_locals )
+                    value = eval( expression, f.f_globals, f.f_locals )
                 except:
                     # Report the exception and the traceback
                     try:
@@ -767,8 +765,8 @@ class DebugClientBase( object ):
                     return
 
                 try:
-                    code = compile( expression + '\n', '<stdin>', 'single' )
-                    exec code in f.f_globals, f.f_locals
+                    code = compile( expression + '\n', '<string>', 'exec' )
+                    exec( code, f.f_globals, f.f_locals )
                 except:
                     # Report the exception and the traceback
                     try:
