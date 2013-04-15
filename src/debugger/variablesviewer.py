@@ -30,6 +30,7 @@ from PyQt4.QtGui import ( QFrame, QVBoxLayout, QLabel, QWidget,
 from utils.pixmapcache import PixmapCache
 from ui.combobox import CDMComboBox
 from variablesbrowser import VariablesBrowser
+from utils.globals import GlobalData
 
 
 class VariablesViewer( QWidget ):
@@ -340,10 +341,18 @@ class VariablesViewer( QWidget ):
     def clear( self ):
         " Clears the content "
         self.__browser.clear()
-        self.__execStatement.lineEdit().setText( "" )
-        self.__evalStatement.lineEdit().setText( "" )
         self.__updateHeaderLabel()
-        print "Clear called"
+        return
+
+    def clearAll( self ):
+        " Clears everything including the history "
+        self.clear()
+        self.__execStatement.lineEdit().setText( "" )
+        self.__execStatement.clear()
+        self.__evalStatement.lineEdit().setText( "" )
+        self.__evalStatement.clear()
+        self.__filterEdit.lineEdit().setText( "" )
+        self.__filterEdit.clear()
         return
 
     def __evalStatementChanged( self, text ):
@@ -356,7 +365,8 @@ class VariablesViewer( QWidget ):
         " Triggered when the Eval button is clicked "
         text = str( self.__evalStatement.currentText() ).strip()
         if text != "":
-            self.__debugger.remoteEval( text )
+            self.__debugger.remoteEval( text,
+                            GlobalData().mainWindow.getCurrentFrameNumber() )
         return
 
     def __execStatementChanged( self, text ):
@@ -369,7 +379,8 @@ class VariablesViewer( QWidget ):
         " Triggered when the Exec button is clicked "
         text = str( self.__execStatement.currentText() ).strip()
         if text != "":
-            self.__debugger.remoteExec( text )
+            self.__debugger.remoteExec( text,
+                            GlobalData().mainWindow.getCurrentFrameNumber() )
         return
 
     def switchControl( self, isInIDE ):

@@ -82,6 +82,7 @@ from autocomplete.completelists import getOccurrences
 from findinfiles import ItemToSearchIn, getSearchItemIndex
 from profiling.profui import ProfilingProgressDialog
 from profiling.disasm import getDisassembled
+from debugger.bputils import clearValidBreakpointLinesCache
 
 
 class EditorsManagerWidget( QWidget ):
@@ -2591,6 +2592,7 @@ class CodimensionMainWindow( QMainWindow ):
 
         self.debugMode = newState
         self.__removeCurrenDebugLineHighlight()
+        clearValidBreakpointLinesCache()
 
         # Satatus bar
         self.dbgState.setVisible( newState )
@@ -2696,9 +2698,28 @@ class CodimensionMainWindow( QMainWindow ):
         self.__dbgGo.setEnabled( enabled )
         self.__dbgNext.setEnabled( enabled )
         self.__dbgStepInto.setEnabled( enabled )
-        self.__dbgRunToLine.setEnabled( enabled )
         self.__dbgReturn.setEnabled( enabled )
         self.__dbgJumpToCurrent.setEnabled( enabled )
+
+        self.setRunToLineButtonState()
+        return
+
+    def setRunToLineButtonState( self ):
+        " Sets the Run To Line button state "
+        # Separate story:
+        # - no run to unbreakable line
+        # - no run for non-python file
+        if not self.debugMode:
+            self.__dbgRunToLine.setEnabled( False )
+            return
+        if not self.__isPythonBuffer():
+            self.__dbgRunToLine.setEnabled( False )
+            return
+
+        # That's for sure a python buffer, so the widget exists
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        self.__dbgRunToLine.setEnabled( currentWidget.isLineBreakable() )
         return
 
     def __onBrutalStopDbgSession( self ):
@@ -2714,6 +2735,7 @@ class CodimensionMainWindow( QMainWindow ):
     def __onRestartDbgSession( self ):
         " Debugger restart session clicked "
         pass
+
     def __onDbgGo( self ):
         " Debugger continue clicked "
         self.__debugger.remoteContinue()
@@ -2731,7 +2753,18 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onDbgRunToLine( self ):
         " Debugger run to cursor clicked "
-        pass
+        # The run-to-line button state is set approprietly
+        if not self.__dbgRunToLine.isEnabled():
+            return
+
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+
+        self.__debugger.remoteBreakpoint( currentWidget.getFileName(),
+                                          currentWidget.getLine() + 1,
+                                          True, None, True )
+        self.__debugger.remoteContinue()
+        return
 
     def __onDbgReturn( self ):
         " Debugger step out clicked "
@@ -3629,4 +3662,8 @@ class CodimensionMainWindow( QMainWindow ):
     def getLogViewerContent( self ):
         " Provides the log viewer window content as a plain text "
         return self.__logViewer.getText()
+
+    def getCurrentFrameNumber( self ):
+        " Provides the current stack frame number "
+        return self.__debuggerContext.getCurrentFrameNumber()
 

@@ -1702,6 +1702,9 @@ class EditorsManager( QTabWidget ):
         mainWindow = self.__mainWindow
         mainWindow.sbLine.setText( "Line: " + str( line + 1 ) )
         mainWindow.sbPos.setText( "Pos: " + str( pos + 1 ) )
+
+        if self.__debugMode:
+            mainWindow.setRunToLineButtonState()
         return
 
     def __updateStatusBar( self ):
@@ -1729,6 +1732,8 @@ class EditorsManager( QTabWidget ):
         else:
             mainWindow.sbFile.setPath( "File: " + \
                                        currentWidget.getFileName() )
+        if self.__debugMode:
+            mainWindow.setRunToLineButtonState()
         return
 
     def getUnsavedCount( self ):

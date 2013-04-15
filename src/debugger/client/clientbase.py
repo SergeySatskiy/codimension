@@ -705,10 +705,24 @@ class DebugClientBase( object ):
                 return
 
             if cmd == RequestEval:
+                parts = arg.split( ",", 1 )
+                frameNumber = int( parts[ 0 ] )
+                expression = parts[ 1 ].strip()
+
+                f = self.currentThread.getCurrentFrame()
+                while f is not None and frameNumber > 0:
+                    f = f.f_back
+                    frameNumber -= 1
+
+                if f is None:
+                    self.write( 'Bad frame number\n' )
+                    self.write( ResponseOK + '\n' )
+                    return
+
                 try:
-                    value = eval( arg,
-                            self.currentThread.getCurrentFrame().f_globals,
-                            self.currentThread.getCurrentFrameLocals() )
+                    value = eval( expression,
+                                  f.f_globals,
+                                  f.f_locals )
                 except:
                     # Report the exception and the traceback
                     try:
@@ -738,11 +752,23 @@ class DebugClientBase( object ):
                 return
 
             if cmd == RequestExec:
-                _globals = self.currentThread.getCurrentFrame().f_globals
-                _locals = self.currentThread.getCurrentFrameLocals()
+                parts = arg.split( ",", 1 )
+                frameNumber = int( parts[ 0 ] )
+                expression = parts[ 1 ].strip()
+
+                f = self.currentThread.getCurrentFrame()
+                while f is not None and frameNumber > 0:
+                    f = f.f_back
+                    frameNumber -= 1
+
+                if f is None:
+                    self.write( 'Bad frame number\n' )
+                    self.write( ResponseOK + '\n' )
+                    return
+
                 try:
-                    code = compile(arg + '\n', '<stdin>', 'single')
-                    exec code in _globals, _locals
+                    code = compile( expression + '\n', '<stdin>', 'single' )
+                    exec code in f.f_globals, f.f_locals
                 except:
                     # Report the exception and the traceback
                     try:
