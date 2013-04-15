@@ -186,7 +186,7 @@ class CodimensionDebugger( QObject ):
 
             if time.time() - startTime > HANDSHAKE_TIMEOUT:
                 raise Exception( "Handshake timeout: "
-                                 "error spawning process to profile" )
+                                 "error spawning process to debug" )
         print "Debuggee PID: " + str( self.__procPID )
         return
 
