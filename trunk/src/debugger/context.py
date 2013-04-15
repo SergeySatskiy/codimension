@@ -126,4 +126,7 @@ class DebuggerContext( QWidget ):
         self.__threadsViewer.switchControl( isInIDE )
         return
 
+    def getCurrentFrameNumber( self ):
+        " Provides the current frame number "
+        return self.__stackViewer.getFrameNumber()
 

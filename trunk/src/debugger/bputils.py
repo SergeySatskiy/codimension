@@ -28,15 +28,12 @@ validBreakPointLinesCache = {}
 
 def clearValidBreakpointLinesCache():
     " Resets the cache "
-    global validBreakPointLinesCache
     validBreakPointLinesCache = {}
     return
 
 
 def getBreakpointLines( fileName, srcCode ):
     " Provides a set of breakable lines "
-    global validBreakPointLinesCache
-
     if validBreakPointLinesCache.has_key( fileName ):
         return validBreakPointLinesCache[ fileName ]
 

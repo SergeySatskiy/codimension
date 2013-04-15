@@ -457,14 +457,16 @@ class CodimensionDebugger( QObject ):
                             str( framenr ) + ", " + str( scope ) + "\n" )
         return
 
-    def remoteEval( self, expression ):
+    def remoteEval( self, expression, framenr ):
         " Evaluates the expression in the current context of the debuggee "
-        self.__sendCommand( RequestEval + expression + "\n" )
+        self.__sendCommand( RequestEval +
+                            str( framenr ) + ", " + expression + "\n" )
         return
 
-    def remoteExec( self, statement ):
+    def remoteExec( self, statement, framenr ):
         " Executes the expression in the current context of the debuggee "
-        self.__sendCommand( RequestExec + statement + "\n" )
+        self.__sendCommand( RequestExec +
+                            str( framenr ) + ", " + statement + "\n" )
         return
 
     def remoteBreakpoint( self, fileName, line,

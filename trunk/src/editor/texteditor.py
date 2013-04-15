@@ -66,6 +66,7 @@ from pythontidy.tidy import ( getPythonTidySetting, PythonTidyDriver,
                               getPythonTidySettingFileName )
 from pythontidy.tidysettingsdlg import TidySettingsDialog
 from profiling.profui import ProfilingProgressDialog
+from debugger.bputils import getBreakpointLines
 
 
 class TextEditor( ScintillaWrapper ):
@@ -1904,6 +1905,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__reloadDlgShown = False
 
         self.__debugMode = False
+        self.__breakableLines = None
         return
 
     def shouldAcceptFocus( self ):
@@ -2817,6 +2819,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Called to switch debug/development "
         skin = GlobalData().skin
         self.__debugMode = mode
+        self.__breakableLines = None
 
         if mode == True:
             self.__editor.setMarginsBackgroundColor( skin.marginPaperDebug )
@@ -2847,3 +2850,23 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         # Run/debug buttons
         self.__updateRunDebugButtons()
         return
+
+    def isLineBreakable( self ):
+        " Returns True if a breakpoint could be placed on the current line "
+        if not self.getFileType() in [ PythonFileType,
+                                       Python3FileType ]:
+            return False
+
+        currentLine = self.getLine() + 1
+        if self.__breakableLines is not None:
+            return currentLine in self.__breakableLines
+
+        self.__breakableLines = getBreakpointLines( self.getFileName(),
+                                                    str( self.__editor.text() ) )
+        if self.__breakableLines is None:
+            # Be on the safe side - if there is a problem of
+            # getting the breakable lines, let the user decide
+            return True
+
+        return currentLine in self.__breakableLines
+
