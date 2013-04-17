@@ -719,8 +719,11 @@ class DebugClientBase( object ):
                     self.write( ResponseOK + '\n' )
                     return
 
+                _globals = f.f_globals
+                _locals = f.f_locals
+
                 try:
-                    value = eval( expression, f.f_globals, f.f_locals )
+                    value = eval( expression, _globals, _locals )
                 except:
                     # Report the exception and the traceback
                     try:
@@ -764,9 +767,19 @@ class DebugClientBase( object ):
                     self.write( ResponseOK + '\n' )
                     return
 
+                # Locals are copied (not referenced) here!
+                _globals = f.f_globals
+                _locals = f.f_locals
+
                 try:
                     code = compile( expression + '\n', '<string>', 'exec' )
-                    exec( code, f.f_globals, f.f_locals )
+                    exec( code, _globals, _locals )
+
+                    # These two dict updates do not work. If a local
+                    # variable is changed in the _locals it is not updated
+                    # below. I have no ideas how to fix it.
+                    f.f_globals.update( _globals )
+                    f.f_locals.update( _locals )
                 except:
                     # Report the exception and the traceback
                     try:
