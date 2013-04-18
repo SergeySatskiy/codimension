@@ -93,9 +93,18 @@ class ScintillaWrapper( QsciScintilla ):
 
         fontFamily = str( font.family() )
         fontSize = font.pointSize()
+        fontWeight = int( font.weight() )
+        isItalic = font.italic()
+        isUnderline = font.underline()
         for style in rangeLow + rangeHigh:
             self.SendScintilla( self.SCI_STYLESETFONT, style, fontFamily )
             self.SendScintilla( self.SCI_STYLESETSIZE, style, fontSize )
+            try:
+                self.SendScintilla( self.SCI_STYLESETWEIGHT, style, fontWeight * 10 )
+            except AttributeError:
+                self.SendScintilla( self.SCI_STYLESETBOLD, style, fontWeight > 50 )
+            self.SendScintilla( self.SCI_STYLESETITALIC, style, isItalic )
+            self.SendScintilla( self.SCI_STYLESETUNDERLINE, style, isUnderline )
         return
 
     def linesOnScreen( self ):
