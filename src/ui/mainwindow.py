@@ -130,6 +130,8 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onDebuggerStateChanged )
         self.connect( self.__debugger, SIGNAL( 'ClientLine' ),
                       self.__onDebuggerCurrentLine )
+        self.connect( self.__debugger, SIGNAL( 'ClientException' ),
+                      self.__onDebuggerClientException )
 
         self.settings = settings
         self.__initialisation = True
@@ -2679,6 +2681,34 @@ class CodimensionMainWindow( QMainWindow ):
         self.__lastDebugFileName = fileName
         self.__lastDebugLineNumber = lineNumber
         self.__onDbgJumpToCurrent()
+        return
+
+    def __onDebuggerClientException( self, excType, excMessage, excStackTrace ):
+        " Debugged program exception handler "
+        if excType is None or excType.startswith( "unhandled" ):
+#            self.__onStopDbgSession()
+            self.switchDebugMode( False )
+            QMessageBox.critical( self, "",
+                                  "An unhandled exception occured. See the "
+                                  "debugged program console for the details." )
+            return
+
+        # TODO: handle ignored exceptions
+
+        if not excStackTrace:
+            self.__onStopDbgSession()
+            QMessageBox.critical( self, "",
+                                  "An exception did not report the stack trace. "
+                                  "Debug session is closed." )
+            return
+
+        fileName = excStackTrace[ 0 ][ 0 ]
+        lineNumber = excStackTrace[ 0 ][ 1 ]
+        self.__onDebuggerCurrentLine( fileName, lineNumber, False )
+        self.__debugger.remoteThreadList()
+        self.__debuggerContext.onClientStack( excStackTrace )
+        self.__debugger.remoteClientVariables( 1, 0 ) # globals
+        self.__debugger.remoteClientVariables( 0, 0 ) # locals
         return
 
     def __removeCurrenDebugLineHighlight( self ):

@@ -224,7 +224,12 @@ class StackViewer( QWidget ):
         self.currentFrame = 0
         frameNumber = 0
         for s in stack:
-            item = StackFrameItem( s[ 0 ], s[ 1 ], s[ 2 ], frameNumber )
+            if len( s ) == 2:
+                # This is when an exception comes
+                funcName = ""
+            else:
+                funcName = s[ 2 ]
+            item = StackFrameItem( s[ 0 ], s[ 1 ], funcName, frameNumber )
             self.__framesList.addTopLevelItem( item )
             frameNumber += 1
         self.__resizeColumns()

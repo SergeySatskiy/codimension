@@ -40,7 +40,7 @@ class DebuggerContext( QWidget ):
         self.connect( self.__debugger, SIGNAL( 'ClientLine' ),
                       self.__onClientLine )
         self.connect( self.__debugger, SIGNAL( 'ClientStack' ),
-                      self.__onClientStack )
+                      self.onClientStack )
         self.connect( self.__debugger, SIGNAL( 'ClientThreadList' ),
                       self.__onClientThreadList )
         self.connect( self.__debugger, SIGNAL( 'ClientVariables' ),
@@ -91,7 +91,7 @@ class DebuggerContext( QWidget ):
             self.__debugger.remoteClientVariables( 0, 0 )  # locals
         return
 
-    def __onClientStack( self, stack ):
+    def onClientStack( self, stack ):
         " Handles the signal from the debugged program "
         self.__stackViewer.populate( stack )
         return

@@ -41,7 +41,7 @@ from client.protocol import ( EOT, RequestStep, RequestStepOver, RequestStepOut,
                               RequestVariables, ResponseThreadList,
                               ResponseVariables, RequestVariable,
                               ResponseVariable, RequestExec, RequestEval,
-                              RequestBreak )
+                              RequestBreak, ResponseException )
 
 
 POLL_INTERVAL = 0.1
@@ -323,6 +323,26 @@ class CodimensionDebugger( QObject ):
                         variables = []
                     self.emit( SIGNAL( 'ClientVariable' ), scope, variables )
                     continue
+
+                if resp == ResponseException:
+                    self.__changeDebuggerState( self.STATE_IN_IDE )
+                    exc = line[ eoc : -1 ]
+                    try:
+                        excList = eval( exc )
+                        excType = excList[ 0 ]
+                        excMessage = excList[ 1 ]
+                        stackTrace = excList[ 2 : ]
+                        if stackTrace and stackTrace[ 0 ] and \
+                           stackTrace[ 0 ][ 0 ] == "<string>":
+                            stackTrace = []
+                    except (IndexError, ValueError, SyntaxError):
+                        excType = None
+                        excMessage = ""
+                        stackTrace = []
+                    self.emit( SIGNAL( 'ClientException' ),
+                               excType, excMessage, stackTrace )
+                    continue
+
 
         return
 
