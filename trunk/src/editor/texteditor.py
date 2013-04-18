@@ -513,8 +513,10 @@ class TextEditor( ScintillaWrapper ):
                     PixmapCache().getPixmap( 'pyflakesmsgmarker.png' ) )
         self.__dbgMarker = self.markerDefine(
                     PixmapCache().getPixmap( 'dbgcurrentmarker.png' ) )
+        self.__excptMarker = self.markerDefine(
+                    PixmapCache().getPixmap( 'dbgexcptmarker.png' ) )
 
-        marginMask = ( 1 << self.__pyflakesMsgMarker | 1 << self.__dbgMarker )
+        marginMask = ( 1 << self.__pyflakesMsgMarker | 1 << self.__dbgMarker | 1 << self.__excptMarker )
         self.setMarginMarkerMask( self.MESSAGES_MARGIN, marginMask )
         self.setMarginSensitivity( self.MESSAGES_MARGIN, True )
 
@@ -527,19 +529,32 @@ class TextEditor( ScintillaWrapper ):
         self.setMarkerForegroundColor( QColor( 0, 0, 255 ),
                                        self.__currentDebuggerLineMarker )
         self.setMarkerBackgroundColor( QColor( 255, 255, 127 ),
-                                        self.__currentDebuggerLineMarker )
+                                       self.__currentDebuggerLineMarker )
+
+        self.__exceptionLineMarker = self.markerDefine(
+                                                    QsciScintilla.Background )
+        self.setMarkerForegroundColor( QColor( 255, 255, 127 ),
+                                       self.__exceptionLineMarker )
+        self.setMarkerBackgroundColor( QColor( 255, 0, 0 ),
+                                       self.__exceptionLineMarker )
         return
 
-    def highlightCurrentDebuggerLine( self, line ):
+    def highlightCurrentDebuggerLine( self, line, asException ):
         " Highlights the current debugger line "
-        self.markerAdd( line - 1, self.__currentDebuggerLineMarker )
-        self.markerAdd( line - 1, self.__dbgMarker )
+        if asException:
+            self.markerAdd( line - 1, self.__exceptionLineMarker )
+            self.markerAdd( line - 1, self.__excptMarker )
+        else:
+            self.markerAdd( line - 1, self.__currentDebuggerLineMarker )
+            self.markerAdd( line - 1, self.__dbgMarker )
         return
 
     def clearCurrentDebuggerLine( self ):
         " Removes the current debugger line marker "
         self.markerDeleteAll( self.__currentDebuggerLineMarker )
+        self.markerDeleteAll( self.__exceptionLineMarker )
         self.markerDeleteAll( self.__dbgMarker )
+        self.markerDeleteAll( self.__excptMarker )
         return
 
     def __initIndicators( self ):
