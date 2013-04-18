@@ -124,6 +124,7 @@ class CodimensionMainWindow( QMainWindow ):
         # Last position the IDE received control from the debugger
         self.__lastDebugFileName = None
         self.__lastDebugLineNumber = None
+        self.__lastDebugAsException = None
 
         self.__debugger = CodimensionDebugger( self )
         self.connect( self.__debugger, SIGNAL( "DebuggerStateChanged" ),
@@ -2674,12 +2675,13 @@ class CodimensionMainWindow( QMainWindow ):
         QApplication.processEvents()
         return
 
-    def __onDebuggerCurrentLine( self, fileName, lineNumber, isStack ):
+    def __onDebuggerCurrentLine( self, fileName, lineNumber, isStack, asException = False ):
         " Triggered when the client reported a new line "
         self.__removeCurrenDebugLineHighlight()
 
         self.__lastDebugFileName = fileName
         self.__lastDebugLineNumber = lineNumber
+        self.__lastDebugAsException = asException
         self.__onDbgJumpToCurrent()
         return
 
@@ -2721,6 +2723,7 @@ class CodimensionMainWindow( QMainWindow ):
                 widget.getEditor().clearCurrentDebuggerLine()
             self.__lastDebugFileName = None
             self.__lastDebugLineNumber = None
+            self.__lastDebugAsException = None
         return
 
     def __setDebugControlFlowButtonsState( self, enabled ):
@@ -2804,7 +2807,8 @@ class CodimensionMainWindow( QMainWindow ):
     def __onDbgJumpToCurrent( self ):
         " Jump to the current debug line "
         if self.__lastDebugFileName is None or \
-           self.__lastDebugLineNumber is None:
+           self.__lastDebugLineNumber is None or \
+           self.__lastDebugAsException is None:
             return
 
         editorsManager = self.editorsManagerWidget.editorsManager
@@ -2813,7 +2817,8 @@ class CodimensionMainWindow( QMainWindow ):
 
         editor = editorsManager.currentWidget().getEditor()
         editor.gotoLine( self.__lastDebugLineNumber )
-        editor.highlightCurrentDebuggerLine( self.__lastDebugLineNumber )
+        editor.highlightCurrentDebuggerLine( self.__lastDebugLineNumber,
+                                             self.__lastDebugAsException )
         editorsManager.currentWidget().setFocus()
         return
 
