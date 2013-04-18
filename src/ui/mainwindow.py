@@ -2690,7 +2690,7 @@ class CodimensionMainWindow( QMainWindow ):
         if excType is None or excType.startswith( "unhandled" ):
 #            self.__onStopDbgSession()
             self.switchDebugMode( False )
-            QMessageBox.critical( self, "",
+            QMessageBox.critical( self, "Debugging session",
                                   "An unhandled exception occured. See the "
                                   "debugged program console for the details." )
             return
@@ -2699,14 +2699,14 @@ class CodimensionMainWindow( QMainWindow ):
 
         if not excStackTrace:
             self.__onStopDbgSession()
-            QMessageBox.critical( self, "",
+            QMessageBox.critical( self, "Debugging session",
                                   "An exception did not report the stack trace. "
                                   "Debug session is closed." )
             return
 
         fileName = excStackTrace[ 0 ][ 0 ]
         lineNumber = excStackTrace[ 0 ][ 1 ]
-        self.__onDebuggerCurrentLine( fileName, lineNumber, False )
+        self.__onDebuggerCurrentLine( fileName, lineNumber, False, True )
         self.__debugger.remoteThreadList()
         self.__debuggerContext.onClientStack( excStackTrace )
         self.__debugger.remoteClientVariables( 1, 0 ) # globals

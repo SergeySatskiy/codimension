@@ -31,7 +31,7 @@ from PyQt4.QtCore import ( Qt, QFileInfo, SIGNAL, QSize, QUrl,
                            QVariant, QRect, QEvent, QPoint )
 from PyQt4.QtGui import ( QApplication, QCursor, QFontMetrics, QToolBar,
                           QActionGroup, QHBoxLayout, QWidget, QAction, QMenu,
-                          QSizePolicy, QToolButton, QDialog, QToolTip, 
+                          QSizePolicy, QToolButton, QDialog, QToolTip,
                           QDesktopServices, QColor )
 from PyQt4.Qsci import QsciScintilla, QsciLexerPython
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
@@ -524,6 +524,7 @@ class TextEditor( ScintillaWrapper ):
 
     def __initDebuggerMarkers( self ):
         " Initializes debugger related markers "
+        skin = GlobalData().skin
         self.__currentDebuggerLineMarker = self.markerDefine(
                                                     QsciScintilla.Background )
         self.setMarkerForegroundColor( QColor( 0, 0, 255 ),
@@ -535,7 +536,7 @@ class TextEditor( ScintillaWrapper ):
                                                     QsciScintilla.Background )
         self.setMarkerForegroundColor( QColor( 255, 255, 127 ),
                                        self.__exceptionLineMarker )
-        self.setMarkerBackgroundColor( QColor( 255, 0, 0 ),
+        self.setMarkerBackgroundColor( skin.marginPaperDebug,
                                        self.__exceptionLineMarker )
         return
 
