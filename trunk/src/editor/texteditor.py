@@ -527,16 +527,16 @@ class TextEditor( ScintillaWrapper ):
         skin = GlobalData().skin
         self.__currentDebuggerLineMarker = self.markerDefine(
                                                     QsciScintilla.Background )
-        self.setMarkerForegroundColor( QColor( 0, 0, 255 ),
+        self.setMarkerForegroundColor( skin.debugCurrentLineMarkerColor,
                                        self.__currentDebuggerLineMarker )
-        self.setMarkerBackgroundColor( QColor( 255, 255, 127 ),
+        self.setMarkerBackgroundColor( skin.debugCurrentLineMarkerPaper,
                                        self.__currentDebuggerLineMarker )
 
         self.__exceptionLineMarker = self.markerDefine(
                                                     QsciScintilla.Background )
-        self.setMarkerForegroundColor( QColor( 255, 255, 127 ),
+        self.setMarkerForegroundColor( skin.debugExcptLineMarkerColor,
                                        self.__exceptionLineMarker )
-        self.setMarkerBackgroundColor( skin.marginPaperDebug,
+        self.setMarkerBackgroundColor( skin.debugExcptLineMarkerPaper,
                                        self.__exceptionLineMarker )
         return
 

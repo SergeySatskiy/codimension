@@ -147,6 +147,11 @@ class Skin:
         self.indentGuidePaper = None
         self.indentGuideColor = None
 
+        self.debugCurrentLineMarkerPaper = None
+        self.debugCurrentLineMarkerColor = None
+        self.debugExcptLineMarkerPaper = None
+        self.debugExcptLineMarkerColor = None
+
         self.__reset()
         return
 
@@ -196,6 +201,11 @@ class Skin:
 
         self.indentGuidePaper = QColor( 230, 230, 230, 255 )
         self.indentGuideColor = QColor( 127, 127, 127, 255 )
+
+        self.debugCurrentLineMarkerPaper = QColor( 255, 255, 127, 255 )
+        self.debugCurrentLineMarkerColor = QColor( 0, 0, 255, 255 )
+        self.debugExcptLineMarkerPaper = QColor( 255, 64, 64, 255 )
+        self.debugExcptLineMarkerColor = QColor( 255, 255, 127, 255 )
         return
 
 
@@ -370,6 +380,19 @@ class Skin:
         val = self.__getColor( config, "general", "indentguidecolor" )
         if val is not None:
             self.indentGuideColor = val
+
+        val = self.__getColor( config, "general", "debugcurrentlinemarkerpaper" )
+        if val is not None:
+            self.debugCurrentLineMarkerPaper = val
+        val = self.__getColor( config, "general", "debugcurrentlinemarkercolor" )
+        if val is not None:
+            self.debugCurrentLineMarkerColor = val
+        val = self.__getColor( config, "general", "debugexcptlinemarkerpaper" )
+        if val is not None:
+            self.debugExcptLineMarkerPaper = val
+        val = self.__getColor( config, "general", "debugexcptlinemarkercolor" )
+        if val is not None:
+            self.debugExcptLineMarkerColor = val
         return self.__isOK
 
     def __loadLexers( self, fName ):
@@ -444,6 +467,12 @@ class Skin:
 
             f.write( "indentguidepaper=" + colorAsString( self.indentGuidePaper ) + "\n" )
             f.write( "indentguidecolor=" + colorAsString( self.indentGuideColor ) + "\n" )
+
+            f.write( "debugcurrentlinemarkerpaper=" + colorAsString( self.debugCurrentLineMarkerPaper ) + "\n" )
+            f.write( "debugcurrentlinemarkercolor=" + colorAsString( self.debugCurrentLineMarkerColor ) + "\n" )
+            f.write( "debugexcptlinemarkerpaper=" + colorAsString( self.debugExcptLineMarkerPaper ) + "\n" )
+            f.write( "debugexcptlinemarkercolor=" + colorAsString( self.debugExcptLineMarkerColor ) + "\n" )
+
             f.close()
         except:
             logging.warning( "Could not write skin file " + fName )
@@ -458,5 +487,4 @@ class Skin:
         except:
             logging.warning( "Could not write skin CSS file " + appFile )
         return
-
 
