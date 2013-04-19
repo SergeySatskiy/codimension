@@ -136,7 +136,10 @@ CDM_SETTINGS = {
     CDMSetting( "filter", CDMSetting.TYPE_STR_LST, [ "^\\.", ".*\\~$",
                                                      ".*\\.pyc$", ".*\\.swp$",
                                                      ".*\\.pyo$" ] )
-                        ]
+                        ],
+"ignoredExceptions" : [
+    CDMSetting( "exceptiontype", CDMSetting.TYPE_STR_LST, [] )
+                      ]
                }
 
 
@@ -425,6 +428,20 @@ class Settings( object ):
                 self.emit( SIGNAL('recentListChanged') )
             return
 
+        def addExceptionFilter( self, excptType ):
+            " Adds a new exception filter "
+            if excptType not in self.values[ "ignoredExceptions" ]:
+                self.values[ "ignoredExceptions" ].append( excptType )
+                self.flushSettings()
+            return
+
+        def deleteExceptionFilter( self, excptType ):
+            " Deletes the exception filter "
+            if excptType in self.values[ "ignoredExceptions" ]:
+                self.values[ "ignoredExceptions" ].remove( excptType )
+                self.flushSettings()
+            return
+
         @staticmethod
         def __writeHeader( fileObj ):
             " Helper to write a header with a warning "
@@ -585,6 +602,14 @@ class Settings( object ):
 
     def deleteRecentProject( self, projectFile ):
         self.iInstance.deleteRecentProject( projectFile )
+        return
+
+    def addExceptionFilter( self, excptType ):
+        self.iInstance.addExceptionFilter( excptType )
+        return
+
+    def deleteExceptionFilter( self, excptType ):
+        self.iInstance.deleteExceptionFilter( excptType )
         return
 
     def flushSettings( self ):
