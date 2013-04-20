@@ -27,7 +27,8 @@ from PyQt4.QtCore import Qt, SIGNAL, QStringList
 from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeWidget, QToolButton,
                           QTreeWidgetItem, QHeaderView, QVBoxLayout,
                           QLabel, QWidget, QAbstractItemView, QMenu,
-                          QSpacerItem, QHBoxLayout, QPalette, QCursor )
+                          QSpacerItem, QHBoxLayout, QPalette, QCursor,
+                          QLineEdit, QPushButton )
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
@@ -87,7 +88,7 @@ class IgnoredExceptionsViewer( QWidget ):
                       self.__onShowHide )
 
         headerLayout = QHBoxLayout()
-        headerLayout.setContentsMargins( 0, 0, 0, 0 )
+        headerLayout.setContentsMargins( 1, 1, 1, 1 )
         headerLayout.addSpacerItem( fixedSpacer )
         headerLayout.addWidget( self.__excptLabel )
         headerLayout.addSpacerItem( expandingSpacer )
@@ -112,8 +113,28 @@ class IgnoredExceptionsViewer( QWidget ):
         headerLabels = QStringList() << "Exception type"
         self.__exceptionsList.setHeaderLabels( headerLabels )
 
+        self.__excTypeEdit = QLineEdit()
+        self.__excTypeEdit.setFixedHeight( 26 )
+        self.__addButton = QPushButton( "Add" )
+        self.__addButton.setFocusPolicy( Qt.NoFocus )
+        self.__addButton.setEnabled( False )
+
+        self.__removeButton = QToolButton()
+        self.__removeButton.setIcon( PixmapCache().getIcon( 'trash.png' ) )
+        self.__removeButton.setFixedSize( 24, 24 )
+        self.__removeButton.setToolTip( "Remove from the ignored exception type list" )
+        self.__removeButton.setFocusPolicy( Qt.NoFocus )
+
+        addLayout = QHBoxLayout()
+        addLayout.setContentsMargins( 1, 1, 1, 1 )
+        addLayout.setSpacing( 1 )
+        addLayout.addWidget( self.__excTypeEdit )
+        addLayout.addWidget( self.__addButton )
+
         verticalLayout.addWidget( self.headerFrame )
+        verticalLayout.addWidget( self.__removeButton )
         verticalLayout.addWidget( self.__exceptionsList )
+        verticalLayout.addLayout( addLayout )
         return
 
     def clear( self ):
@@ -126,6 +147,9 @@ class IgnoredExceptionsViewer( QWidget ):
         " Triggered when show/hide button is clicked "
         if self.__exceptionsList.isVisible():
             self.__exceptionsList.setVisible( False )
+            self.__excTypeEdit.setVisible( False )
+            self.__addButton.setVisible( False )
+            self.__removeButton.setVisible( False )
             self.__showHideButton.setIcon( PixmapCache().getIcon( 'more.png' ) )
             self.__showHideButton.setToolTip( "Show ignored exceptions list" )
 
@@ -136,6 +160,9 @@ class IgnoredExceptionsViewer( QWidget ):
             self.setMaximumHeight( self.headerFrame.height() )
         else:
             self.__exceptionsList.setVisible( True )
+            self.__excTypeEdit.setVisible( True )
+            self.__addButton.setVisible( True )
+            self.__removeButton.setVisible( True )
             self.__showHideButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
             self.__showHideButton.setToolTip( "Hide ignored exceptions list" )
 
