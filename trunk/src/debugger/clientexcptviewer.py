@@ -93,6 +93,25 @@ class ClientExceptionsViewer( QWidget ):
         self.__exceptionsList.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         self.__exceptionsList.setContextMenuPolicy( Qt.CustomContextMenu )
 
+        self.__addToIgnoreButton = QToolButton()
+        self.__addToIgnoreButton.setIcon( PixmapCache().getIcon( 'add.png' ) )
+        self.__addToIgnoreButton.setFixedSize( 24, 24 )
+        self.__addToIgnoreButton.setToolTip( "Add exception to the list of ignored" )
+        self.__addToIgnoreButton.setFocusPolicy( Qt.NoFocus )
+
+        expandingSpacer = QSpacerItem( 10, 10, QSizePolicy.Expanding )
+
+        self.__jumpToCodeButton = QToolButton()
+        self.__jumpToCodeButton.setIcon( PixmapCache().getIcon( 'gotoline.png' ) )
+        self.__jumpToCodeButton.setFixedSize( 24, 24 )
+        self.__jumpToCodeButton.setToolTip( "Jump to the code" )
+        self.__jumpToCodeButton.setFocusPolicy( Qt.NoFocus )
+
+        toolbarLayout = QHBoxLayout()
+        toolbarLayout.addWidget( self.__addToIgnoreButton )
+        toolbarLayout.addSpacerItem( expandingSpacer )
+        toolbarLayout.addWidget( self.__jumpToCodeButton )
+
         self.connect( self.__exceptionsList,
                       SIGNAL( "itemDoubleClicked(QTreeWidgetItem*,int)" ),
                       self.__onExceptionDoubleClicked )
@@ -104,6 +123,7 @@ class ClientExceptionsViewer( QWidget ):
         self.__exceptionsList.setHeaderLabels( headerLabels )
 
         verticalLayout.addWidget( self.headerFrame )
+        verticalLayout.addLayout( toolbarLayout )
         verticalLayout.addWidget( self.__exceptionsList )
         return
 
