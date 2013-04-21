@@ -88,6 +88,8 @@ class CodimensionProject( QObject ):
         self.importDirs = []
         self.fileBrowserPaths = []
 
+        self.ignoredExcpt = []
+
         # Precompile the exclude filters
         self.__excludeFilter = []
         for flt in Settings().projectFilesFilters:
@@ -147,6 +149,8 @@ class CodimensionProject( QObject ):
         self.recentFiles = []
         self.importDirs = []
         self.fileBrowserPaths = []
+
+        self.ignoredExcpt = []
 
         # Reset the dir watchers if so
         if self.__dirWatcher is not None:
@@ -228,6 +232,7 @@ class CodimensionProject( QObject ):
         self.__safeRemove( userProjectDir + "findinfiles" )
         self.__safeRemove( userProjectDir + "recentfiles" )
         self.__safeRemove( userProjectDir + "filebrowser" )
+        self.__safeRemove( userProjectDir + "ignoredexcpt" )
         return
 
     def __createProjectFile( self ):
@@ -274,6 +279,7 @@ class CodimensionProject( QObject ):
         self.__saveFindFiles()
         self.__saveFindObjects()
         self.__saveRecentFiles()
+        self.__saveIgnoredExcpt()
 
         self.__formatOK = True
         return
@@ -354,6 +360,15 @@ class CodimensionProject( QObject ):
             f = open( self.userProjectDir + "recentfiles", "w" )
             self.__writeHeader( f )
             self.__writeList( f, "recentfiles", "file", self.recentFiles )
+            f.close()
+        return
+
+    def __saveIgnoredExcpt( self ):
+        " Helper to save ignored exceptions list "
+        if self.isLoaded():
+            f = open( self.userProjectDir + "ignoredexcpt", "w" )
+            self.__writeHeader( f )
+            self.__writeList( f, "ignoredexcpt", "excpttype", self.ignoredExcpt )
             f.close()
         return
 
@@ -466,6 +481,7 @@ class CodimensionProject( QObject ):
         self.__loadFindObjects()
         self.__loadRecentFiles()
         self.__loadProjectBrowserExpandedDirs()
+        self.__loadIgnoredExceptions()
 
         # The project might have been moved...
         self.__createProjectFile()  # ~/.codimension/uuidNN/project
@@ -786,6 +802,31 @@ class CodimensionProject( QObject ):
         config = None
         return
 
+    def __loadIgnoredExceptions( self ):
+        " Loads the ignored exceptions list "
+        confFile = self.userProjectDir + "ignoredexcpt"
+        if not os.path.exists( confFile ):
+            logging.info( "Cannot find ignored exceptions file. "
+                          "Expected here: " + confFile )
+            self.__formatOK = False
+            return
+
+        config = ConfigParser.ConfigParser()
+        try:
+            config.read( confFile )
+        except:
+            # Bad error - cannot load project file at all
+            config = None
+            self.__formatOK = False
+            logging.warning( "Cannot read ignored exceptions file "
+                             "from here: " + confFile )
+            return
+
+        self.ignoredExcpt = self.__loadListSection(
+                config, "ignoredexcpt", "excpttype" )
+        config = None
+        return
+
     def __loadListSection( self, config, section, listPrefix ):
         " Loads a list off the given section from the given file "
         items = []
@@ -1071,6 +1112,19 @@ class CodimensionProject( QObject ):
             self.__saveRecentFiles()
         return
 
+    def addExceptionFilter( self, excptType ):
+        " Adds a new ignored exception type "
+        if excptType not in self.ignoredExcpt:
+            self.ignoredExcpt.append( excptType )
+            self.__saveIgnoredExcpt()
+        return
+
+    def deleteExceptionFilter( self, excptType ):
+        " Remove ignored exception type "
+        if excptType in self.ignoredExcpt:
+            self.ignoredExcpt.remove( excptType )
+            self.__saveIgnoredExcpt()
+        return
 
 def getProjectProperties( projectFile ):
     """ Provides project properties or throws an exception """
