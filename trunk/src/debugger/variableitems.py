@@ -31,6 +31,75 @@ from PyQt4.QtGui import QTreeWidgetItem
 from utils.pixmapcache import PixmapCache
 
 
+def getDisplayValue( displayValue ):
+    " Takes potentially multilined value and converts it to a single line "
+
+    lines = QString( displayValue ).split( QRegExp( r"\r\n|\r|\n" ) )
+    lineCount = len( lines )
+    if lineCount > 1:
+        # There are many lines. Find first non-empty.
+        nonEmptyIndex = None
+        index = -1
+        for line in lines:
+            index += 1
+            if len( line.trimmed() ) > 0:
+                nonEmptyIndex = index
+                break
+        if nonEmptyIndex is None:
+            displayValue = ""   # Multilined empty string
+        else:
+            if len( lines[ nonEmptyIndex ] ) > 128:
+                displayValue = lines[ nonEmptyIndex ][ : 128 ] + "<...>"
+            else:
+                displayValue = lines[ nonEmptyIndex ]
+                if nonEmptyIndex < lineCount - 1:
+                    displayValue += "<...>"
+
+            if nonEmptyIndex > 0:
+                displayValue = "<...>" + displayValue
+    else:
+        # There is just one line
+        if len( lines[ 0 ] ) > 128:
+            displayValue = lines[ 0 ][ : 128 ] + "<...>"
+
+    return displayValue
+
+
+def getTooltipValue( value ):
+    """ Takes a potentially multilined string and converts it to
+        the form suitable for tooltips """
+
+    value = QString( value )
+    if Qt.mightBeRichText( value ):
+        tooltipValue = Qt.escape( value )
+    else:
+        tooltipValue = value
+
+    lines = QString( tooltipValue ).split( QRegExp( r"\r\n|\r|\n" ) )
+    lineCount = len( lines )
+    if lineCount > 1:
+        value = ""
+        index = 0
+        for line in lines:
+            if index >= 5:  # First 5 lines only
+                break
+            if index > 0:
+                value += "\n"
+            if len( line ) > 128:
+                value += line[ : 128 ] + "<...>"
+            else:
+                value += line
+            index += 1
+        if lineCount > 5:
+            value += "\n<...>"
+    else:
+        if len( lines[ 0 ] ) > 128:
+            value = lines[ 0 ][ : 128 ] + "<...>"
+        else:
+            value = lines[ 0 ]
+
+    return value
+
 
 
 class VariableItem( QTreeWidgetItem ):
@@ -44,64 +113,18 @@ class VariableItem( QTreeWidgetItem ):
         self.__type = displayType
 
         # Decide about the display value
-        lines = QString( displayValue ).split( QRegExp( r"\r\n|\r|\n" ) )
-        lineCount = len( lines )
-        if lineCount > 1:
-            # There are many lines. Find first non-empty.
-            nonEmptyIndex = None
-            index = -1
-            for line in lines:
-                index += 1
-                if len( line.trimmed() ) > 0:
-                    nonEmptyIndex = index
-                    break
-            if nonEmptyIndex is None:
-                displayValue = ""   # Multilined empty string
-            else:
-                if len( lines[ nonEmptyIndex ] ) > 128:
-                    displayValue = lines[ nonEmptyIndex ][ : 128 ] + "<...>"
-                else:
-                    displayValue = lines[ nonEmptyIndex ]
-                    if nonEmptyIndex < lineCount - 1:
-                        displayValue += "<...>"
-
-                if nonEmptyIndex > 0:
-                    displayValue = "<...>" + displayValue
-        else:
-            # There is just one line
-            if len( lines[ 0 ] ) > 128:
-                displayValue = lines[ 0 ][ : 128 ] + "<...>"
-
+        displayValue = getDisplayValue( displayValue )
 
         # Decide about the tooltip
         self.__tooltip = "Name: " + displayName + "\n" + \
-                         "Type: " + displayType + "\n"
-        if Qt.mightBeRichText( self.__value ):
-            tooltipValue = Qt.escape( self.__value )
-        else:
-            tooltipValue = QString( self.__value )
+                         "Type: " + displayType + "\n" + \
+                         "Value: "
 
-        lines = QString( tooltipValue ).split( QRegExp( r"\r\n|\r|\n" ) )
-        if len( lines ) > 1:
-            self.__tooltip += "Value:\n"
-            index = 0
-            for line in lines:
-                if index >= 5:  # First 5 lines only
-                    break
-                if index > 0:
-                    self.__tooltip += "\n"
-                if len( line ) > 128:
-                    self.__tooltip += line[ : 128 ] + "<...>"
-                else:
-                    self.__tooltip += line
-                index += 1
-            if len( lines ) > 5:
-                self.__tooltip += "\n<...>"
+        tooltipDisplayValue = getTooltipValue( self.__value )
+        if '\r' in tooltipDisplayValue or '\n' in tooltipDisplayValue:
+            self.__tooltip += "\n" + tooltipDisplayValue
         else:
-            if len( lines[ 0 ] ) > 128:
-                self.__tooltip += "Value: " + lines[ 0 ][ : 128 ] + "<...>"
-            else:
-                self.__tooltip += "Value: " + lines[ 0 ]
+            self.__tooltip += tooltipDisplayValue
 
         QTreeWidgetItem.__init__( self, parent,
                                   QStringList() << displayName << displayValue << displayType )
