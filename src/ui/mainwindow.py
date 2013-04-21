@@ -75,6 +75,7 @@ from utils.run import getCwdCmdEnv, CMD_TYPE_RUN, CMD_TYPE_DEBUG
 from debugger.context import DebuggerContext
 from debugger.modifiedunsaved import ModifiedUnsavedDialog
 from debugger.main import CodimensionDebugger
+from debugger.excpt import DebuggerExceptions
 from diffviewer import DiffViewer
 from thirdparty.diff2html.diff2html import parse_from_memory
 from analysis.notused import NotUsedAnalysisProgress
@@ -391,6 +392,10 @@ class CodimensionMainWindow( QMainWindow ):
         self.__rightSideBar.addTab( self.__debuggerContext,
                 PixmapCache().getIcon( '' ), 'Debugger' )
         self.__rightSideBar.setTabEnabled( 1, False )
+
+        self.__debuggerExceptions = DebuggerExceptions()
+        self.__rightSideBar.addTab( self.__debuggerExceptions,
+                PixmapCache().getIcon( '' ), 'Exceptions' )
 
         # Create splitters
         self.__horizontalSplitter = QSplitter( Qt.Horizontal )
@@ -2621,6 +2626,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__rightSideBar.setTabEnabled( 1, newState )    # vars etc.
         if newState == True:
             self.__debuggerContext.clear()
+            self.__debuggerExceptions.clear()
             self.__rightSideBar.show()
             self.__rightSideBar.setCurrentWidget( self.__debuggerContext )
             self.__rightSideBar.raise_()
@@ -2687,22 +2693,28 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onDebuggerClientException( self, excType, excMessage, excStackTrace ):
         " Debugged program exception handler "
+        if excStackTrace:
+            self.__debuggerExceptions.addException( excType, excMessage,
+                                                    excStackTrace )
+
         if excType is None or excType.startswith( "unhandled" ):
-#            self.__onStopDbgSession()
-            self.switchDebugMode( False )
             QMessageBox.critical( self, "Debugging session",
-                                  "An unhandled exception occured. See the "
-                                  "debugged program console for the details." )
+                                  "An unhandled exception occured.\n"
+                                  "See the debugged program console for the details.\n"
+                                  "The debugging session will be closed." )
+            QTimer.singleShot( 0, self.__onStopDbgSession )
             return
 
         # TODO: handle ignored exceptions
 
         if not excStackTrace:
-            self.__onStopDbgSession()
             QMessageBox.critical( self, "Debugging session",
                                   "An exception did not report the stack trace. "
                                   "Debug session is closed." )
+            QTimer.singleShot( 0, self.__onStopDbgSession )
             return
+
+
 
         fileName = excStackTrace[ 0 ][ 0 ]
         lineNumber = excStackTrace[ 0 ][ 1 ]

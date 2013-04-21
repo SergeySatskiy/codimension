@@ -73,7 +73,7 @@ class IgnoredExceptionsViewer( QWidget ):
         self.headerFrame.setPalette( headerPalette )
         self.headerFrame.setFixedHeight( 24 )
 
-        self.__excptLabel = QLabel( "Ignored types" )
+        self.__excptLabel = QLabel( "Ignored exception types" )
 
         expandingSpacer = QSpacerItem( 10, 10, QSizePolicy.Expanding )
         fixedSpacer = QSpacerItem( 3, 3 )
@@ -140,7 +140,7 @@ class IgnoredExceptionsViewer( QWidget ):
     def clear( self ):
         " Clears the content "
         self.__exceptionsList.clear()
-        self.__excptLabel.setText( "Exceptions" )
+        self.__excptLabel.setText( "Ignored exception types" )
         return
 
     def __onShowHide( self ):

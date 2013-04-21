@@ -65,3 +65,10 @@ class DebuggerExceptions( QWidget ):
         self.__ignoredExcptViewer.clear()
         return
 
+    def addException( self, exceptionType, exceptionMessage,
+                            stackTrace ):
+        " Adds the exception to the view "
+        self.__clientExcptViewer.addException( exceptionType, exceptionMessage,
+                                               stackTrace )
+        return
+

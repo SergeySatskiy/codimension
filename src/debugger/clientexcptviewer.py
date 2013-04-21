@@ -32,7 +32,107 @@ from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 import os.path
+from variableitems import getDisplayValue, getTooltipValue
 
+
+STACK_FRAME_ITEM = 0
+EXCEPTION_ITEM = 1
+
+class StackFrameItem( QTreeWidgetItem ):
+    " One stack trace frame "
+
+    def __init__( self, parentItem, fileName, lineNumber ):
+        QTreeWidgetItem.__init__( self, parentItem )
+
+        self.__fileName = fileName
+        self.__lineNumber = lineNumber
+        self.setText( 0, os.path.basename( fileName ) + ":" + str( lineNumber ) )
+        self.setToolTip( 0, fileName + ":" + str( lineNumber ) )
+        return
+
+    def getType( self ):
+        " Provides the item type "
+        return STACK_FRAME_ITEM
+
+    def getLocation( self ):
+        " Provides the location in the code "
+        return self.toolTip( 0 )
+
+    def getFileName( self ):
+        " Provides the file name "
+        return self.__fileName
+
+    def getLineNumber( self ):
+        " Provides the line number "
+        return self.__lineNumber
+
+
+class ExceptionItem( QTreeWidgetItem ):
+    " One exception item "
+
+    def __init__( self, parentItem, exceptionType, exceptionMessage,
+                  stackTrace ):
+        QTreeWidgetItem.__init__( self, parentItem )
+        self.__count = 1
+        self.__exceptionType = exceptionType
+        self.__exceptionMessage = exceptionMessage
+
+        if exceptionMessage == "":
+            self.setText( 0, exceptionType )
+            self.setToolTip( 0, "Type: " + exceptionType )
+        else:
+            self.setText( 0, exceptionType + ", " +
+                             getDisplayValue( exceptionMessage ) )
+            tooltip = "Type: " + exceptionType + "\n" + \
+                      "Message: "
+            tooltipMessage = getTooltipValue( exceptionMessage )
+            if '\r' in tooltipMessage or '\n' in tooltipMessage:
+                tooltip += "\n" + tooltipMessage
+            else:
+                tooltip += tooltipMessage
+            self.setToolTip( 0, tooltip )
+
+        for fileName, lineNumber in stackTrace:
+            StackFrameItem( self, fileName, lineNumber )
+        return
+
+    def getType( self ):
+        " Provides the item type "
+        return STACK_FRAME_ITEM
+
+    def getCount( self ):
+        " Provides the number of same exceptions "
+        return self.__count
+
+    def incrementCounter( self ):
+        " Increments the counter of the same exceptions "
+        self.__count += 1
+        if self.__exceptionMessage == "":
+            self.setText( 0, self.__exceptionType +
+                             " (" + str( self.__count ) + " times)" )
+        else:
+            self.setText( 0, self.__exceptionType +
+                             " (" + str( self.__count ) + " times), " +
+                             getDisplayValue( self.__exceptionMessage ) )
+        return
+
+    def equal( self, exceptionType, exceptionMessage, stackTrace ):
+        " Returns True if the exceptions are equal "
+        if exceptionType != self.__exceptionType:
+            return False
+        if exceptionMessage != self.__exceptionMessage:
+            return False
+
+        count = self.childCount()
+        if count != len( stackTrace ):
+            return False
+
+        for index in xrange( self.childCount() ):
+            child = self.child( index )
+            otherLocation = stackTrace[ index ][ 0 ] + ":" + str( stackTrace[ index ][ 1 ] )
+            if otherLocation != child.getLocation():
+                return False
+        return True
 
 
 
@@ -98,6 +198,7 @@ class ClientExceptionsViewer( QWidget ):
         self.__addToIgnoreButton.setFixedSize( 24, 24 )
         self.__addToIgnoreButton.setToolTip( "Add exception to the list of ignored" )
         self.__addToIgnoreButton.setFocusPolicy( Qt.NoFocus )
+        self.__addToIgnoreButton.setEnabled( False )
 
         expandingSpacer = QSpacerItem( 10, 10, QSizePolicy.Expanding )
 
@@ -106,6 +207,7 @@ class ClientExceptionsViewer( QWidget ):
         self.__jumpToCodeButton.setFixedSize( 24, 24 )
         self.__jumpToCodeButton.setToolTip( "Jump to the code" )
         self.__jumpToCodeButton.setFocusPolicy( Qt.NoFocus )
+        self.__jumpToCodeButton.setEnabled( False )
 
         toolbarLayout = QHBoxLayout()
         toolbarLayout.addWidget( self.__addToIgnoreButton )
@@ -131,6 +233,8 @@ class ClientExceptionsViewer( QWidget ):
         " Clears the content "
         self.__exceptionsList.clear()
         self.__excptLabel.setText( "Exceptions" )
+        self.__addToIgnoreButton.setEnabled( False )
+        self.__jumpToCodeButton.setEnabled( False )
         return
 
     def __onExceptionDoubleClicked( self, item, column ):
@@ -156,4 +260,34 @@ class ClientExceptionsViewer( QWidget ):
 
     def __onAddToIgnore( self ):
         pass
+
+    def addException( self, exceptionType, exceptionMessage,
+                            stackTrace ):
+        " Adds the exception to the view "
+        for index in xrange( self.__exceptionsList.topLevelItemCount() ):
+            item = self.__exceptionsList.topLevelItem( index )
+            if item.equal( exceptionType, exceptionMessage, stackTrace ):
+                item.incrementCounter()
+                self.__updateExceptionsLabel()
+                return
+
+        ExceptionItem( self.__exceptionsList, exceptionType,
+                       exceptionMessage, stackTrace )
+        self.__updateExceptionsLabel()
+        return
+
+    def __updateExceptionsLabel( self ):
+        " Updates the exceptions header label "
+        total = self.getTotalCount()
+        if total > 1:
+            self.__excptLabel.setText( "Exceptions (total: " +
+                                       str( total ) + ")" )
+        return
+
+    def getTotalCount( self ):
+        " Provides the total number of exceptions "
+        count = 0
+        for index in xrange( self.__exceptionsList.topLevelItemCount() ):
+            count += self.__exceptionsList.topLevelItem( index ).getCount()
+        return count
 
