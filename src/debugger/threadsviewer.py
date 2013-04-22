@@ -30,6 +30,7 @@ from PyQt4.QtGui import ( QFrame, QTreeWidget, QToolButton, QTreeWidgetItem,
                           QHBoxLayout, QPalette )
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import PixmapCache
+from utils.settings import Settings
 
 
 class ThreadItem( QTreeWidgetItem ):
@@ -79,6 +80,9 @@ class ThreadsViewer( QWidget ):
         QWidget.__init__( self, parent )
 
         self.__createLayout()
+
+        if Settings().showThreadViewer == False:
+            self.__onShowHide( True )
         return
 
     def __createLayout( self ):
@@ -150,9 +154,9 @@ class ThreadsViewer( QWidget ):
         verticalLayout.addWidget( self.__threadsList )
         return
 
-    def __onShowHide( self ):
+    def __onShowHide( self, startup = False ):
         " Triggered when show/hide button is clicked "
-        if self.__threadsList.isVisible():
+        if startup or self.__threadsList.isVisible():
             self.__threadsList.setVisible( False )
             self.__showHideButton.setIcon( PixmapCache().getIcon( 'more.png' ) )
             self.__showHideButton.setToolTip( "Show threads list" )
@@ -162,6 +166,8 @@ class ThreadsViewer( QWidget ):
 
             self.setMinimumHeight( self.headerFrame.height() )
             self.setMaximumHeight( self.headerFrame.height() )
+
+            Settings().showThreadViewer = False
         else:
             self.__threadsList.setVisible( True )
             self.__showHideButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
@@ -169,6 +175,8 @@ class ThreadsViewer( QWidget ):
 
             self.setMinimumHeight( self.__minH )
             self.setMaximumHeight( self.__maxH )
+
+            Settings().showThreadViewer = True
         return
 
     def __resizeColumns( self ):
