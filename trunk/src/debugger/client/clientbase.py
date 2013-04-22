@@ -409,7 +409,7 @@ class DebugClientBase( object ):
         self.pendingResponse = ResponseException
         return
 
-    def sessionClose( self, shouldExit = 1 ):
+    def sessionClose( self, shouldExit = 1, exitCode = 0 ):
         """
         Closes the session with the debugger and optionally terminate.
 
@@ -433,7 +433,7 @@ class DebugClientBase( object ):
 
         if shouldExit:
             # Ok, go away.
-            sys.exit()
+            sys.exit( exitCode )
         return
 
     def handleLine( self, line ):
@@ -611,7 +611,7 @@ class DebugClientBase( object ):
                 return
 
             if cmd == RequestShutdown:
-                self.sessionClose()
+                self.sessionClose( 1, 99 )
                 return
 
             if cmd == RequestBreak:
