@@ -146,6 +146,11 @@ class ClientExceptionsViewer( QWidget ):
         self.__createLayout()
         return
 
+    def setFocus( self ):
+        " Sets the widget focus "
+        self.__exceptionsList.setFocus()
+        return
+
     def __createPopupMenu( self ):
         " Creates the popup menu "
         self.__excptMenu = QMenu()
@@ -268,11 +273,15 @@ class ClientExceptionsViewer( QWidget ):
             item = self.__exceptionsList.topLevelItem( index )
             if item.equal( exceptionType, exceptionMessage, stackTrace ):
                 item.incrementCounter()
+                self.__exceptionsList.clearSelection()
+                self.__exceptionsList.setCurrentItem( item )
                 self.__updateExceptionsLabel()
                 return
 
-        ExceptionItem( self.__exceptionsList, exceptionType,
-                       exceptionMessage, stackTrace )
+        item = ExceptionItem( self.__exceptionsList, exceptionType,
+                              exceptionMessage, stackTrace )
+        self.__exceptionsList.clearSelection()
+        self.__exceptionsList.setCurrentItem( item )
         self.__updateExceptionsLabel()
         return
 
