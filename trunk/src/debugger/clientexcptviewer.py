@@ -99,7 +99,7 @@ class ExceptionItem( QTreeWidgetItem ):
 
     def getType( self ):
         " Provides the item type "
-        return STACK_FRAME_ITEM
+        return EXCEPTION_ITEM
 
     def getCount( self ):
         " Provides the number of same exceptions "
