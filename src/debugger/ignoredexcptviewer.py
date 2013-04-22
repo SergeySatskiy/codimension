@@ -32,6 +32,8 @@ from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeWidget, QToolButton,
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
+from utils.project import CodimensionProject
+from utils.settings import Settings
 import os.path
 
 
@@ -45,6 +47,11 @@ class IgnoredExceptionsViewer( QWidget ):
 
         self.__createPopupMenu()
         self.__createLayout()
+        self.__ignored = []
+        self.__currentItem = None
+
+        self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
+                      self.__onProjectChanged )
         return
 
     def __createPopupMenu( self ):
@@ -109,21 +116,32 @@ class IgnoredExceptionsViewer( QWidget ):
         self.connect( self.__exceptionsList,
                       SIGNAL( "customContextMenuRequested(const QPoint &)" ),
                       self.__showContextMenu )
+        self.connect( self.__exceptionsList, SIGNAL( "itemSelectionChanged()" ),
+                      self.__onSelectionChanged )
 
         headerLabels = QStringList() << "Exception type"
         self.__exceptionsList.setHeaderLabels( headerLabels )
 
         self.__excTypeEdit = QLineEdit()
         self.__excTypeEdit.setFixedHeight( 26 )
+        self.connect( self.__excTypeEdit, SIGNAL( 'textChanged(const QString &)' ),
+                      self.__onNewFilterChanged )
+        self.connect( self.__excTypeEdit, SIGNAL( 'returnPressed()' ),
+                      self.__onAddExceptionFilter )
         self.__addButton = QPushButton( "Add" )
         self.__addButton.setFocusPolicy( Qt.NoFocus )
         self.__addButton.setEnabled( False )
+        self.connect( self.__addButton, SIGNAL( 'clicked()' ),
+                      self.__onAddExceptionFilter )
 
         self.__removeButton = QToolButton()
         self.__removeButton.setIcon( PixmapCache().getIcon( 'trash.png' ) )
         self.__removeButton.setFixedSize( 24, 24 )
         self.__removeButton.setToolTip( "Remove from the ignored exception type list" )
         self.__removeButton.setFocusPolicy( Qt.NoFocus )
+        self.__removeButton.setEnabled( False )
+        self.connect( self.__removeButton, SIGNAL( 'clicked()' ),
+                      self.__onRemoveFromIgnore )
 
         addLayout = QHBoxLayout()
         addLayout.setContentsMargins( 1, 1, 1, 1 )
@@ -140,7 +158,9 @@ class IgnoredExceptionsViewer( QWidget ):
     def clear( self ):
         " Clears the content "
         self.__exceptionsList.clear()
-        self.__excptLabel.setText( "Ignored exception types" )
+        self.__excTypeEdit.clear()
+        self.__addButton.setEnabled( False )
+        self.__updateTitle()
         return
 
     def __onShowHide( self ):
@@ -170,13 +190,117 @@ class IgnoredExceptionsViewer( QWidget ):
             self.setMaximumHeight( self.__maxH )
         return
 
+    def __onSelectionChanged( self ):
+        " Triggered when the current item is changed "
+        selected = list( self.__exceptionsList.selectedItems() )
+        if selected:
+            self.__currentItem = selected[ 0 ]
+            self.__removeButton.setEnabled( True )
+        else:
+            self.__currentItem = None
+            self.__removeButton.setEnabled( False )
+        return
+
     def __showContextMenu( self, coord ):
         " Shows the frames list context menu "
-        self.__contextItem = self.__exceptionsList.itemAt( coord )
-        if self.__contextItem is not None:
+        contextItem = self.__exceptionsList.itemAt( coord )
+        if contextItem is not None:
+            self.__currentItem = contextItem
             self.__excptMenu.popup( QCursor.pos() )
         return
 
+    def __updateTitle( self ):
+        " Updates the section title "
+        count = self.__exceptionsList.topLevelItemCount()
+        if count == 0:
+            self.__excptLabel.setText( "Ignored exception types" )
+        else:
+            self.__excptLabel.setText( "Ignored exception types (total: " +
+                                       str( count ) + ")" )
+        return
+
+    def __onProjectChanged( self, what ):
+        " Triggered when a project is changed "
+        if what != CodimensionProject.CompleteProject:
+            return
+
+        self.clear()
+        project = GlobalData().project
+        if project.isLoaded():
+            self.__ignored = list( project.ignoredExcpt )
+        else:
+            self.__ignored = list( Settings().ignoredExceptions )
+
+        for exceptionType in self.__ignored:
+            item = QTreeWidgetItem( self.__exceptionsList )
+            item.setText( 0, exceptionType )
+        self.__updateTitle()
+        return
+
+    def __onNewFilterChanged( self, text ):
+        " Triggered when the text is changed "
+        text = str( text ).strip()
+        if text == "":
+            self.__addButton.setEnabled( False )
+            return
+        if " " in text:
+            self.__addButton.setEnabled( False )
+            return
+
+        if text in self.__ignored:
+            self.__addButton.setEnabled( False )
+            return
+
+        self.__addButton.setEnabled( True )
+        return
+
+    def __onAddExceptionFilter( self ):
+        " Adds an item into the ignored exceptions list "
+        text = str( self.__excTypeEdit.text() ).strip()
+        if text == "":
+            return
+        if " " in text:
+            return
+        if text in self.__ignored:
+            return
+
+        item = QTreeWidgetItem( self.__exceptionsList )
+        item.setText( 0, text )
+
+        project = GlobalData().project
+        if project.isLoaded():
+            project.addExceptionFilter( text )
+        else:
+            Settings().addExceptionFilter( text )
+        self.__ignored.append( text )
+        self.__updateTitle()
+        return
+
     def __onRemoveFromIgnore( self ):
-        pass
+        " Removes an item from the ignored exception types list "
+        if self.__currentItem is None:
+            return
+
+        text = self.__currentItem.text( 0 )
+
+        # Find the item index and remove it
+        index = 0
+        while True:
+            if self.__exceptionsList.topLevelItem( index ).text( 0 ) == text:
+                self.__exceptionsList.takeTopLevelItem( index )
+                break
+            index += 1
+
+        project = GlobalData().project
+        if project.isLoaded():
+            project.deleteExceptionFilter( text )
+        else:
+            Settings().deleteExceptionFilter( text )
+        self.__ignored.remove( text )
+        self.__updateTitle()
+        return
+
+    def isIgnored( self, exceptionType ):
+        " Returns True if this exception type should be ignored "
+        return exceptionType in self.__ignored
 
