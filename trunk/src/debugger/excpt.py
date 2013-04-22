@@ -62,7 +62,6 @@ class DebuggerExceptions( QWidget ):
     def clear( self ):
         " Clears everything "
         self.__clientExcptViewer.clear()
-        self.__ignoredExcptViewer.clear()
         return
 
     def addException( self, exceptionType, exceptionMessage,
@@ -71,4 +70,17 @@ class DebuggerExceptions( QWidget ):
         self.__clientExcptViewer.addException( exceptionType, exceptionMessage,
                                                stackTrace )
         return
+
+    def isIgnored( self, exceptionType ):
+        " Returns True if this exception type should be ignored "
+        return self.__ignoredExcptViewer.isIgnored( exceptionType )
+
+    def setFocus( self ):
+        " Sets the focus to the client exception window "
+        self.__clientExcptViewer.setFocus()
+        return
+
+    def getTotalClientExceptionCount( self ):
+        " Provides the total number of the client exceptions "
+        return self.__clientExcptViewer.getTotalCount()
 

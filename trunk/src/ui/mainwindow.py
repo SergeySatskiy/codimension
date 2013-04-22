@@ -2627,6 +2627,7 @@ class CodimensionMainWindow( QMainWindow ):
         if newState == True:
             self.__debuggerContext.clear()
             self.__debuggerExceptions.clear()
+            self.__rightSideBar.setTabText( 2, "Exceptions" )
             self.__rightSideBar.show()
             self.__rightSideBar.setCurrentWidget( self.__debuggerContext )
             self.__rightSideBar.raise_()
@@ -2696,6 +2697,8 @@ class CodimensionMainWindow( QMainWindow ):
         if excStackTrace:
             self.__debuggerExceptions.addException( excType, excMessage,
                                                     excStackTrace )
+            count = self.__debuggerExceptions.getTotalClientExceptionCount()
+            self.__rightSideBar.setTabText( 2, "Exceptions (" + str( count ) + ")" )
 
         if excType is None or excType.startswith( "unhandled" ):
             QMessageBox.critical( self, "Debugging session",
@@ -2705,16 +2708,21 @@ class CodimensionMainWindow( QMainWindow ):
             QTimer.singleShot( 0, self.__onStopDbgSession )
             return
 
-        # TODO: handle ignored exceptions
-
         if not excStackTrace:
             QMessageBox.critical( self, "Debugging session",
-                                  "An exception did not report the stack trace. "
-                                  "Debug session is closed." )
+                                  "An exception did not report the stack trace.\n"
+                                  "Debug session will be closed." )
             QTimer.singleShot( 0, self.__onStopDbgSession )
             return
 
+        if self.__debuggerExceptions.isIgnored( str( excType ) ):
+            # Continue the last action
+            pass
 
+        # Should stop at the exception
+        self.__rightSideBar.show()
+        self.__rightSideBar.setCurrentWidget( self.__debuggerExceptions )
+        self.__rightSideBar.raise_()
 
         fileName = excStackTrace[ 0 ][ 0 ]
         lineNumber = excStackTrace[ 0 ][ 1 ]
@@ -2723,6 +2731,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__debuggerContext.onClientStack( excStackTrace )
         self.__debugger.remoteClientVariables( 1, 0 ) # globals
         self.__debugger.remoteClientVariables( 0, 0 ) # locals
+        self.__debuggerExceptions.setFocus()
         return
 
     def __removeCurrenDebugLineHighlight( self ):
