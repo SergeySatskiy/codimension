@@ -47,8 +47,9 @@ class DebuggerExceptions( QWidget ):
 
         self.splitter = QSplitter( Qt.Vertical )
 
-        self.__clientExcptViewer = ClientExceptionsViewer( self.splitter )
         self.__ignoredExcptViewer = IgnoredExceptionsViewer( self.splitter )
+        self.__clientExcptViewer = ClientExceptionsViewer( self.splitter,
+                                                           self.__ignoredExcptViewer )
 
         self.splitter.addWidget( self.__clientExcptViewer )
         self.splitter.addWidget( self.__ignoredExcptViewer )

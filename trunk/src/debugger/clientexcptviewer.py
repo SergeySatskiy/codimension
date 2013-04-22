@@ -33,6 +33,7 @@ from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 import os.path
 from variableitems import getDisplayValue, getTooltipValue
+from utils.project import CodimensionProject
 
 
 STACK_FRAME_ITEM = 0
@@ -104,6 +105,10 @@ class ExceptionItem( QTreeWidgetItem ):
         " Provides the number of same exceptions "
         return self.__count
 
+    def getExceptionType( self ):
+        " Provides the exception type "
+        return self.__exceptionType
+
     def incrementCounter( self ):
         " Increments the counter of the same exceptions "
         self.__count += 1
@@ -139,11 +144,17 @@ class ExceptionItem( QTreeWidgetItem ):
 class ClientExceptionsViewer( QWidget ):
     " Implements the client exceptions viewer for a debugger "
 
-    def __init__( self, parent = None ):
+    def __init__( self, parent, ignoredExceptionsViewer ):
         QWidget.__init__( self, parent )
+
+        self.__ignoredExceptionsViewer = ignoredExceptionsViewer
+        self.__currentItem = None
 
         self.__createPopupMenu()
         self.__createLayout()
+
+        self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
+                      self.__onProjectChanged )
         return
 
     def setFocus( self ):
@@ -156,6 +167,8 @@ class ClientExceptionsViewer( QWidget ):
         self.__excptMenu = QMenu()
         self.__addToIgnoreMenuItem = self.__excptMenu.addAction(
                     "Add to ignore list", self.__onAddToIgnore )
+        self.__jumpToCodeMenuItem = self.__excptMenu.addAction(
+                    "Jump to code", self.__onJumpToCode )
         return
 
     def __createLayout( self ):
@@ -204,6 +217,9 @@ class ClientExceptionsViewer( QWidget ):
         self.__addToIgnoreButton.setToolTip( "Add exception to the list of ignored" )
         self.__addToIgnoreButton.setFocusPolicy( Qt.NoFocus )
         self.__addToIgnoreButton.setEnabled( False )
+        self.connect( self.__addToIgnoreButton,
+                      SIGNAL( 'clicked()' ),
+                      self.__onAddToIgnore )
 
         expandingSpacer = QSpacerItem( 10, 10, QSizePolicy.Expanding )
 
@@ -213,6 +229,9 @@ class ClientExceptionsViewer( QWidget ):
         self.__jumpToCodeButton.setToolTip( "Jump to the code" )
         self.__jumpToCodeButton.setFocusPolicy( Qt.NoFocus )
         self.__jumpToCodeButton.setEnabled( False )
+        self.connect( self.__jumpToCodeButton,
+                      SIGNAL( 'clicked()' ),
+                      self.__onJumpToCode )
 
         toolbarLayout = QHBoxLayout()
         toolbarLayout.addWidget( self.__addToIgnoreButton )
@@ -225,6 +244,10 @@ class ClientExceptionsViewer( QWidget ):
         self.connect( self.__exceptionsList,
                       SIGNAL( "customContextMenuRequested(const QPoint &)" ),
                       self.__showContextMenu )
+        self.connect( self.__exceptionsList,
+                      SIGNAL( "itemSelectionChanged()" ),
+                      self.__onSelectionChanged )
+
 
         headerLabels = QStringList() << "Exception"
         self.__exceptionsList.setHeaderLabels( headerLabels )
@@ -237,34 +260,57 @@ class ClientExceptionsViewer( QWidget ):
     def clear( self ):
         " Clears the content "
         self.__exceptionsList.clear()
-        self.__excptLabel.setText( "Exceptions" )
+        self.__updateExceptionsLabel()
         self.__addToIgnoreButton.setEnabled( False )
         self.__jumpToCodeButton.setEnabled( False )
+        self.__currentItem = None
         return
 
     def __onExceptionDoubleClicked( self, item, column ):
         " Triggered when an exception is double clicked "
-        # The frame has been switched already because the double click
-        # signal always comes after the single click one
-#        fileName = item.getFilename()
-#        lineNumber = item.getLineNumber()
+        if self.__currentItem is not None:
+            if self.__currentItem.getType() == STACK_FRAME_ITEM:
+                self.__onJumpToCode()
+                return
 
-#        editorsManager = GlobalData().mainWindow.editorsManager()
-#        editorsManager.openFile( fileName, lineNumber )
-#        editor = editorsManager.currentWidget().getEditor()
-#        editor.gotoLine( lineNumber )
-#        editorsManager.currentWidget().setFocus()
+            # This is an exception item itself.
+            # Open a separate dialog window with th detailed info.
+
         return
 
     def __showContextMenu( self, coord ):
         " Shows the frames list context menu "
         self.__contextItem = self.__exceptionsList.itemAt( coord )
+
+        self.__addToIgnoreMenuItem.setEnabled( self.__addButton.isEnabled() )
+        self.__jumpToCodeMenuItem.setEnabled( self.__jumpToCodeButton.isEnabled() )
+
         if self.__contextItem is not None:
             self.__excptMenu.popup( QCursor.pos() )
         return
 
     def __onAddToIgnore( self ):
-        pass
+        " Adds an exception into the ignore list "
+        if self.__currentItem is not None:
+            self.__ignoredExceptionsViewer.addExceptionFilter(
+                        str( self.__currentItem.getExceptionType() ) )
+            self.__addToIgnoreButton.setEnabled( False )
+        return
+
+    def __onJumpToCode( self ):
+        " Jumps to the corresponding source code line "
+        if self.__currentItem is not None:
+            if self.__currentItem.getType() == STACK_FRAME_ITEM:
+                fileName = self.__currentItem.getFileName()
+                if '<' not in fileName and '>' not in fileName:
+                    lineNumber = self.__currentItem.getLineNumber()
+
+                    editorsManager = GlobalData().mainWindow.editorsManager()
+                    editorsManager.openFile( fileName, lineNumber )
+                    editor = editorsManager.currentWidget().getEditor()
+                    editor.gotoLine( lineNumber )
+                    editorsManager.currentWidget().setFocus()
+        return
 
     def addException( self, exceptionType, exceptionMessage,
                             stackTrace ):
@@ -299,4 +345,35 @@ class ClientExceptionsViewer( QWidget ):
         for index in xrange( self.__exceptionsList.topLevelItemCount() ):
             count += self.__exceptionsList.topLevelItem( index ).getCount()
         return count
+
+    def __onProjectChanged( self, what ):
+        " Triggered when a project is changed "
+        if what == CodimensionProject.CompleteProject:
+            self.clear()
+        return
+
+    def __onSelectionChanged( self ):
+        " Triggered when the current item is changed "
+        selected = list( self.__exceptionsList.selectedItems() )
+        if selected:
+            self.__currentItem = selected[ 0 ]
+            if self.__currentItem.getType() == STACK_FRAME_ITEM:
+                fileName = self.__currentItem.getFileName()
+                if '<' in fileName or '>' in fileName:
+                    self.__jumpToCodeButton.setEnabled( False )
+                else:
+                    self.__jumpToCodeButton.setEnabled( True )
+                self.__addToIgnoreButton.setEnabled( False )
+            else:
+                self.__jumpToCodeButton.setEnabled( False )
+                excType = str( self.__currentItem.getExceptionType() )
+                if self.__ignoredExceptionsViewer.isIgnored( excType ):
+                    self.__addToIgnoreButton.setEnabled( False )
+                else:
+                    self.__addToIgnoreButton.setEnabled( True )
+        else:
+            self.__currentItem = None
+            self.__addToIgnoreButton.setEnabled( False )
+            self.__jumpToCodeButton.setEnabled( False )
+        return
 

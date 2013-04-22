@@ -161,6 +161,7 @@ class IgnoredExceptionsViewer( QWidget ):
         self.__excTypeEdit.clear()
         self.__addButton.setEnabled( False )
         self.__updateTitle()
+        self.__currentItem = None
         return
 
     def __onShowHide( self ):
@@ -257,24 +258,29 @@ class IgnoredExceptionsViewer( QWidget ):
     def __onAddExceptionFilter( self ):
         " Adds an item into the ignored exceptions list "
         text = str( self.__excTypeEdit.text() ).strip()
-        if text == "":
+        self.addExceptionFilter( text )
+
+    def addExceptionFilter( self, excType ):
+        " Adds a new item into the ignored exceptions list "
+        if excType == "":
             return
-        if " " in text:
+        if " " in excType:
             return
-        if text in self.__ignored:
+        if excType in self.__ignored:
             return
 
         item = QTreeWidgetItem( self.__exceptionsList )
-        item.setText( 0, text )
+        item.setText( 0, excType )
 
         project = GlobalData().project
         if project.isLoaded():
-            project.addExceptionFilter( text )
+            project.addExceptionFilter( excType )
         else:
-            Settings().addExceptionFilter( text )
-        self.__ignored.append( text )
+            Settings().addExceptionFilter( excType )
+        self.__ignored.append( excType )
         self.__updateTitle()
         return
+
 
     def __onRemoveFromIgnore( self ):
         " Removes an item from the ignored exception types list "
