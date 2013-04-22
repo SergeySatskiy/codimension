@@ -52,6 +52,9 @@ class IgnoredExceptionsViewer( QWidget ):
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
+
+        if Settings().showIgnoredExcViewer == False:
+            self.__onShowHide( True )
         return
 
     def __createPopupMenu( self ):
@@ -164,9 +167,9 @@ class IgnoredExceptionsViewer( QWidget ):
         self.__currentItem = None
         return
 
-    def __onShowHide( self ):
+    def __onShowHide( self, startup = False ):
         " Triggered when show/hide button is clicked "
-        if self.__exceptionsList.isVisible():
+        if startup or self.__exceptionsList.isVisible():
             self.__exceptionsList.setVisible( False )
             self.__excTypeEdit.setVisible( False )
             self.__addButton.setVisible( False )
@@ -179,6 +182,8 @@ class IgnoredExceptionsViewer( QWidget ):
 
             self.setMinimumHeight( self.headerFrame.height() )
             self.setMaximumHeight( self.headerFrame.height() )
+
+            Settings().showIgnoredExcViewer = False
         else:
             self.__exceptionsList.setVisible( True )
             self.__excTypeEdit.setVisible( True )
@@ -189,6 +194,8 @@ class IgnoredExceptionsViewer( QWidget ):
 
             self.setMinimumHeight( self.__minH )
             self.setMaximumHeight( self.__maxH )
+
+            Settings().showIgnoredExcViewer = True
         return
 
     def __onSelectionChanged( self ):

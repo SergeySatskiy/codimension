@@ -31,6 +31,7 @@ from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeWidget, QToolButton,
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
+from utils.settings import Settings
 import os.path
 
 
@@ -92,6 +93,9 @@ class StackViewer( QWidget ):
         self.currentFrame = 0
         self.__createPopupMenu()
         self.__createLayout()
+
+        if Settings().showStackViewer == False:
+            self.__onShowHide( True )
         return
 
     def __createPopupMenu( self ):
@@ -178,9 +182,9 @@ class StackViewer( QWidget ):
         verticalLayout.addWidget( self.__framesList )
         return
 
-    def __onShowHide( self ):
+    def __onShowHide( self, startup = False ):
         " Triggered when show/hide button is clicked "
-        if self.__framesList.isVisible():
+        if startup or self.__framesList.isVisible():
             self.__framesList.setVisible( False )
             self.__showHideButton.setIcon( PixmapCache().getIcon( 'more.png' ) )
             self.__showHideButton.setToolTip( "Show frames list" )
@@ -190,6 +194,8 @@ class StackViewer( QWidget ):
 
             self.setMinimumHeight( self.headerFrame.height() )
             self.setMaximumHeight( self.headerFrame.height() )
+
+            Settings().showStackViewer = False
         else:
             self.__framesList.setVisible( True )
             self.__showHideButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
@@ -197,6 +203,8 @@ class StackViewer( QWidget ):
 
             self.setMinimumHeight( self.__minH )
             self.setMaximumHeight( self.__maxH )
+
+            Settings().showStackViewer = True
         return
 
     def clear( self ):
