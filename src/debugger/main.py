@@ -28,7 +28,7 @@ import errno
 import time
 from subprocess import Popen
 from PyQt4.QtCore import SIGNAL, QTimer, QObject, Qt, QTextCodec, QString
-from PyQt4.QtGui import QApplication, QCursor
+from PyQt4.QtGui import QApplication, QCursor, QInputDialog
 from PyQt4.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
 
 from utils.globals import GlobalData
@@ -41,7 +41,8 @@ from client.protocol import ( EOT, RequestStep, RequestStepOver, RequestStepOut,
                               RequestVariables, ResponseThreadList,
                               ResponseVariables, RequestVariable,
                               ResponseVariable, RequestExec, RequestEval,
-                              RequestBreak, ResponseException )
+                              RequestBreak, ResponseException, RequestForkTo,
+                              ResponseForkTo )
 
 
 POLL_INTERVAL = 0.1
@@ -343,6 +344,9 @@ class CodimensionDebugger( QObject ):
                                excType, excMessage, stackTrace )
                     continue
 
+                if resp == RequestForkTo:
+                    self.__askForkTo()
+                    continue
 
         return
 
@@ -427,6 +431,19 @@ class CodimensionDebugger( QObject ):
     def __noPathTranslation( self, fname, remote2local = True ):
         """ Dump to support later path translations """
         return unicode( fname )
+
+    def __askForkTo( self ):
+        " Asks what to follow, a parent or a child "
+        selections = [ "Parent Process", "Child process" ]
+        res, ok = QInputDialog.getItem( None,
+                                        "Client forking",
+                                        "Select the fork branch to follow.",
+                                        selections, 0, False )
+        if not ok or res == selections[ 0 ]:
+            self.__sendCommand( ResponseForkTo + 'parent\n' )
+        else:
+            self.__sendCommand( ResponseForkTo + 'child\n' )
+        return
 
     def remoteStep( self ):
         " Single step in the debugged program "
