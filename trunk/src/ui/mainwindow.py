@@ -2774,7 +2774,12 @@ class CodimensionMainWindow( QMainWindow ):
         lineNumber = excStackTrace[ 0 ][ 1 ]
         self.__onDebuggerCurrentLine( fileName, lineNumber, False, True )
         self.__debugger.remoteThreadList()
-        self.__debugger.remoteStack()
+
+        # If a stack is explicitly requested then the only deepest frame
+        # is reported. It is better to stick with the exception stack
+        # for the time beeing.
+        self.__debuggerContext.onClientStack( excStackTrace )
+
         self.__debugger.remoteClientVariables( 1, 0 ) # globals
         self.__debugger.remoteClientVariables( 0, 0 ) # locals
         self.__debuggerExceptions.setFocus()
