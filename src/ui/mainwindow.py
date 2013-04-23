@@ -2774,7 +2774,7 @@ class CodimensionMainWindow( QMainWindow ):
         lineNumber = excStackTrace[ 0 ][ 1 ]
         self.__onDebuggerCurrentLine( fileName, lineNumber, False, True )
         self.__debugger.remoteThreadList()
-        self.__debuggerContext.onClientStack( excStackTrace )
+        self.__debugger.remoteStack()
         self.__debugger.remoteClientVariables( 1, 0 ) # globals
         self.__debugger.remoteClientVariables( 0, 0 ) # locals
         self.__debuggerExceptions.setFocus()

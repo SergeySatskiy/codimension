@@ -43,7 +43,7 @@ import re
 
 
 from protocol import ( ResponseOK, RequestOK, RequestEnv, RequestVariable,
-                       RequestThreadList, RequestThreadSet,
+                       RequestThreadList, RequestThreadSet, RequestStack,
                        ResponseThreadSet, RequestVariables, ResponseStack,
                        RequestStep, RequestStepOver, RequestStepOut,
                        RequestStepQuit, RequestShutdown, RequestBreak,
@@ -474,6 +474,11 @@ class DebugClientBase( object ):
 
             if cmd == RequestThreadList:
                 self.__dumpThreadList()
+                return
+
+            if cmd == RequestStack:
+                stack = self.currentThread.getStack()
+                self.write('%s%s\n' % (ResponseStack, unicode(stack)))
                 return
 
             if cmd == RequestThreadSet:
