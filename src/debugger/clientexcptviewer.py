@@ -282,7 +282,7 @@ class ClientExceptionsViewer( QWidget ):
         " Shows the frames list context menu "
         self.__contextItem = self.__exceptionsList.itemAt( coord )
 
-        self.__addToIgnoreMenuItem.setEnabled( self.__addButton.isEnabled() )
+        self.__addToIgnoreMenuItem.setEnabled( self.__addToIgnoreButton.isEnabled() )
         self.__jumpToCodeMenuItem.setEnabled( self.__jumpToCodeButton.isEnabled() )
 
         if self.__contextItem is not None:
@@ -367,7 +367,8 @@ class ClientExceptionsViewer( QWidget ):
             else:
                 self.__jumpToCodeButton.setEnabled( False )
                 excType = str( self.__currentItem.getExceptionType() )
-                if self.__ignoredExceptionsViewer.isIgnored( excType ):
+                if self.__ignoredExceptionsViewer.isIgnored( excType ) or \
+                   " " in excType or excType.startswith( "unhandled" ):
                     self.__addToIgnoreButton.setEnabled( False )
                 else:
                     self.__addToIgnoreButton.setEnabled( True )
