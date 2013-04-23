@@ -78,13 +78,13 @@ class ExceptionItem( QTreeWidgetItem ):
         self.__exceptionType = exceptionType
         self.__exceptionMessage = exceptionMessage
 
-        if exceptionMessage == "":
-            self.setText( 0, exceptionType )
-            self.setToolTip( 0, "Type: " + exceptionType )
+        if exceptionMessage == "" or exceptionMessage is None:
+            self.setText( 0, str( exceptionType ) )
+            self.setToolTip( 0, "Type: " + str( exceptionType ) )
         else:
-            self.setText( 0, exceptionType + ", " +
+            self.setText( 0, str( exceptionType ) + ", " +
                              getDisplayValue( exceptionMessage ) )
-            tooltip = "Type: " + exceptionType + "\n" + \
+            tooltip = "Type: " + str( exceptionType ) + "\n" + \
                       "Message: "
             tooltipMessage = getTooltipValue( exceptionMessage )
             if '\r' in tooltipMessage or '\n' in tooltipMessage:
@@ -93,8 +93,9 @@ class ExceptionItem( QTreeWidgetItem ):
                 tooltip += tooltipMessage
             self.setToolTip( 0, tooltip )
 
-        for fileName, lineNumber in stackTrace:
-            StackFrameItem( self, fileName, lineNumber )
+        if stackTrace:
+            for fileName, lineNumber in stackTrace:
+                StackFrameItem( self, fileName, lineNumber )
         return
 
     def getType( self ):
@@ -112,11 +113,11 @@ class ExceptionItem( QTreeWidgetItem ):
     def incrementCounter( self ):
         " Increments the counter of the same exceptions "
         self.__count += 1
-        if self.__exceptionMessage == "":
-            self.setText( 0, self.__exceptionType +
+        if self.__exceptionMessage == "" or self.__exceptionMessage is None:
+            self.setText( 0, str( self.__exceptionType ) +
                              " (" + str( self.__count ) + " times)" )
         else:
-            self.setText( 0, self.__exceptionType +
+            self.setText( 0, str( self.__exceptionType ) +
                              " (" + str( self.__count ) + " times), " +
                              getDisplayValue( self.__exceptionMessage ) )
         return
@@ -128,11 +129,14 @@ class ExceptionItem( QTreeWidgetItem ):
         if exceptionMessage != self.__exceptionMessage:
             return False
 
+        if stackTrace is None:
+            stackTrace = []
+
         count = self.childCount()
         if count != len( stackTrace ):
             return False
 
-        for index in xrange( self.childCount() ):
+        for index in xrange( count ):
             child = self.child( index )
             otherLocation = stackTrace[ index ][ 0 ] + ":" + str( stackTrace[ index ][ 1 ] )
             if otherLocation != child.getLocation():
