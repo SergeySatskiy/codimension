@@ -42,7 +42,7 @@ from client.protocol import ( EOT, RequestStep, RequestStepOver, RequestStepOut,
                               ResponseVariables, RequestVariable,
                               ResponseVariable, RequestExec, RequestEval,
                               RequestBreak, ResponseException, RequestForkTo,
-                              ResponseForkTo )
+                              ResponseForkTo, RequestStack )
 
 
 POLL_INTERVAL = 0.1
@@ -475,6 +475,11 @@ class CodimensionDebugger( QObject ):
     def remoteThreadList( self ):
         " Provides the threads list "
         self.__sendCommand( RequestThreadList + "\n" )
+        return
+
+    def remoteStack( self ):
+        " Provides the current thread stack "
+        self.__sendCommand( RequestStack + "\n" )
         return
 
     def remoteClientVariables( self, scope, framenr = 0 ):

@@ -68,6 +68,7 @@ RequestCompletion =        '>Completion<'
 #RequestUTStop =            '>UTStop<'
 RequestForkTo =            '>ForkTo<'
 RequestForkMode =          '>ForkMode<'
+RequestStack =             '>CurrentStack<'
 
 ResponseOK =               '>OK<'
 #ResponseCapabilities =     RequestCapabilities
@@ -85,7 +86,7 @@ ResponseVariables =        RequestVariables
 ResponseVariable =         RequestVariable
 ResponseThreadList =       RequestThreadList
 ResponseThreadSet =        RequestThreadSet
-ResponseStack =            '>CurrentStack<'
+ResponseStack =            RequestStack
 ResponseBanner =           RequestBanner
 ResponseCompletion =       RequestCompletion
 #ResponseUTPrepared =       '>UTPrepared<'
