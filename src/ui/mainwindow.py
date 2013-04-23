@@ -141,6 +141,8 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onDebuggerCurrentLine )
         self.connect( self.__debugger, SIGNAL( 'ClientException' ),
                       self.__onDebuggerClientException )
+        self.connect( self.__debugger, SIGNAL( 'ClientSyntaxError' ),
+                      self.__onDebuggerClientSyntaxError )
 
         self.settings = settings
         self.__initialisation = True
@@ -2783,6 +2785,23 @@ class CodimensionMainWindow( QMainWindow ):
         self.__debugger.remoteClientVariables( 1, 0 ) # globals
         self.__debugger.remoteClientVariables( 0, 0 ) # locals
         self.__debuggerExceptions.setFocus()
+        return
+
+    def __onDebuggerClientSyntaxError( self, message, fileName, lineNo, charNo ):
+        " Triggered when the client reported a syntax error "
+        QTimer.singleShot( 0, self.__onBrutalStopDbgSession )
+
+        if message is None:
+            logging.error( "The program being debugged contains an unspecified "
+                           "syntax error.\nDebugging session is closed." )
+            return
+
+        # Jump to the source code
+        self.openFile( fileName, lineNo )
+        logging.error( "The file " + fileName + " contains syntax error:\n" +
+                       message + "\n"
+                       "at line " + str( lineNo ) + ", position " + str( charNo ) +
+                       ".\nDebugging session is closed." )
         return
 
     def __removeCurrenDebugLineHighlight( self ):
