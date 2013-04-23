@@ -2702,26 +2702,52 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onDebuggerClientException( self, excType, excMessage, excStackTrace ):
         " Debugged program exception handler "
-        if excStackTrace:
-            self.__debuggerExceptions.addException( excType, excMessage,
-                                                    excStackTrace )
-            count = self.__debuggerExceptions.getTotalClientExceptionCount()
-            self.__rightSideBar.setTabText( 2, "Exceptions (" + str( count ) + ")" )
 
-        if excType is None or excType.startswith( "unhandled" ):
-            QMessageBox.critical( self, "Debugging session",
-                                  "An unhandled exception occured.\n"
-                                  "See the debugged program console for the details.\n"
-                                  "The debugging session will be closed." )
-            QTimer.singleShot( 0, self.__onStopDbgSession )
+        self.__debuggerExceptions.addException( excType, excMessage,
+                                                excStackTrace )
+        count = self.__debuggerExceptions.getTotalClientExceptionCount()
+        self.__rightSideBar.setTabText( 2, "Exceptions (" + str( count ) + ")" )
+
+        # The information about the exception is stored in the exception window
+        # regardless whether there is a stack trace or not. So, there is no
+        # need to show the exception info in the closing dialog (if this dialog
+        # is required).
+
+        if excType is None or excType.startswith( "unhandled" ) or not excStackTrace:
+            self.__rightSideBar.show()
+            self.__rightSideBar.setCurrentWidget( self.__debuggerExceptions )
+            self.__rightSideBar.raise_()
+
+            if not excStackTrace:
+                message = "An exception did not report the stack trace.\n" \
+                          "Debug session will be closed."
+            else:
+                message = "An unhandled exception occured.\n" \
+                          "The debugging session will be closed."
+
+            dlg = QMessageBox( QMessageBox.Critical, "Debugging session",
+                               message )
+            dlg.addButton( QMessageBox.Ok )
+            dlg.addButton( QMessageBox.Cancel )
+
+            btn1 = dlg.button( QMessageBox.Ok )
+            btn1.setText( "&Close debug console" )
+            btn1.setIcon( PixmapCache().getIcon( '' ) )
+
+            btn2 = dlg.button( QMessageBox.Cancel )
+            btn2.setText( "&Keep debug console" )
+            btn2.setIcon( PixmapCache().getIcon( '' ) )
+
+            dlg.setDefaultButton( QMessageBox.Ok )
+            res = dlg.exec_()
+
+            if res == QMessageBox.Cancel:
+                QTimer.singleShot( 0, self.__onStopDbgSession )
+            else:
+                QTimer.singleShot( 0, self.__onBrutalStopDbgSession )
+            self.__debuggerExceptions.setFocus()
             return
 
-        if not excStackTrace:
-            QMessageBox.critical( self, "Debugging session",
-                                  "An exception did not report the stack trace.\n"
-                                  "Debug session will be closed." )
-            QTimer.singleShot( 0, self.__onStopDbgSession )
-            return
 
         if self.__debuggerExceptions.isIgnored( str( excType ) ):
             # Continue the last action
