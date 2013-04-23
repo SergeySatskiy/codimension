@@ -118,6 +118,12 @@ class EditorsManagerWidget( QWidget ):
 class CodimensionMainWindow( QMainWindow ):
     """ Main application window """
 
+    DEBUG_ACTION_GO = 1
+    DEBUG_ACTION_NEXT = 2
+    DEBUG_ACTION_STEP_INTO = 3
+    DEBUG_ACTION_RUN_TO_LINE = 4
+    DEBUG_ACTION_STEP_OUT = 5
+
     def __init__( self, splash, settings ):
         QMainWindow.__init__( self )
 
@@ -126,6 +132,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__lastDebugFileName = None
         self.__lastDebugLineNumber = None
         self.__lastDebugAsException = None
+        self.__lastDebugAction = None
 
         self.__debugger = CodimensionDebugger( self )
         self.connect( self.__debugger, SIGNAL( "DebuggerStateChanged" ),
@@ -2631,6 +2638,7 @@ class CodimensionMainWindow( QMainWindow ):
             self.__rightSideBar.show()
             self.__rightSideBar.setCurrentWidget( self.__debuggerContext )
             self.__rightSideBar.raise_()
+            self.__lastDebugAction = None
 
         self.emit( SIGNAL( 'debugModeChanged' ), newState )
         return
@@ -2717,7 +2725,19 @@ class CodimensionMainWindow( QMainWindow ):
 
         if self.__debuggerExceptions.isIgnored( str( excType ) ):
             # Continue the last action
-            pass
+            if self.__lastDebugAction is None:
+                self.__debugger.remoteContinue()
+            elif self.__lastDebugAction == self.DEBUG_ACTION_GO:
+                self.__debugger.remoteContinue()
+            elif self.__lastDebugAction == self.DEBUG_ACTION_NEXT:
+                self.__debugger.remoteStepOver()
+            elif self.__lastDebugAction == self.DEBUG_ACTION_STEP_INTO:
+                self.__debugger.remoteStep()
+            elif self.__lastDebugAction == self.DEBUG_ACTION_RUN_TO_LINE:
+                self.__debugger.remoteContinue()
+            elif self.__lastDebugAction == self.DEBUG_ACTION_STEP_OUT:
+                self.__debugger.remoteStepOut()
+            return
 
         # Should stop at the exception
         self.__rightSideBar.show()
@@ -2792,16 +2812,19 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onDbgGo( self ):
         " Debugger continue clicked "
+        self.__lastDebugAction = self.DEBUG_ACTION_GO
         self.__debugger.remoteContinue()
         return
 
     def __onDbgNext( self ):
         " Debugger step over clicked "
+        self.__lastDebugAction = self.DEBUG_ACTION_NEXT
         self.__debugger.remoteStepOver()
         return
 
     def __onDbgStepInto( self ):
         " Debugger step into clicked "
+        self.__lastDebugAction = self.DEBUG_ACTION_STEP_INTO
         self.__debugger.remoteStep()
         return
 
@@ -2811,6 +2834,7 @@ class CodimensionMainWindow( QMainWindow ):
         if not self.__dbgRunToLine.isEnabled():
             return
 
+        self.__lastDebugAction = self.DEBUG_ACTION_RUN_TO_LINE
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
 
@@ -2822,6 +2846,7 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onDbgReturn( self ):
         " Debugger step out clicked "
+        self.__lastDebugAction = self.DEBUG_ACTION_STEP_OUT
         self.__debugger.remoteStepOut()
         return
 
