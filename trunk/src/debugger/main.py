@@ -42,7 +42,7 @@ from client.protocol import ( EOT, RequestStep, RequestStepOver, RequestStepOut,
                               ResponseVariables, RequestVariable,
                               ResponseVariable, RequestExec, RequestEval,
                               RequestBreak, ResponseException, RequestForkTo,
-                              ResponseForkTo, RequestStack )
+                              ResponseForkTo, RequestStack, ResponseSyntax )
 
 
 POLL_INTERVAL = 0.1
@@ -342,6 +342,23 @@ class CodimensionDebugger( QObject ):
                         stackTrace = []
                     self.emit( SIGNAL( 'ClientException' ),
                                excType, excMessage, stackTrace )
+                    continue
+
+                if resp == ResponseSyntax:
+                    exc = line[ eoc : -1 ]
+                    try:
+                        message, ( fileName, lineNo, charNo ) = eval( exc )
+                        if fileName is None:
+                            fileName = ""
+                    except ( IndexError, ValueError ):
+                        message = None
+                        fileName = ''
+                        lineNo = 0
+                        charNo = 0
+                    if charNo is None:
+                        charNo = 0
+                    self.emit( SIGNAL( 'ClientSyntaxError' ),
+                               message, fileName, lineNo, charNo )
                     continue
 
                 if resp == RequestForkTo:
