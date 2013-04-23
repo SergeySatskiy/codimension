@@ -2787,21 +2787,40 @@ class CodimensionMainWindow( QMainWindow ):
         self.__debuggerExceptions.setFocus()
         return
 
-    def __onDebuggerClientSyntaxError( self, message, fileName, lineNo, charNo ):
+    def __onDebuggerClientSyntaxError( self, errMessage, fileName, lineNo, charNo ):
         " Triggered when the client reported a syntax error "
-        QTimer.singleShot( 0, self.__onBrutalStopDbgSession )
 
-        if message is None:
-            logging.error( "The program being debugged contains an unspecified "
-                           "syntax error.\nDebugging session is closed." )
-            return
+        if errMessage is None:
+            message = "The program being debugged contains an unspecified " \
+                      "syntax error.\nDebugging session is closed."
+        else:
+            # Jump to the source code
+            self.openFile( fileName, lineNo )
+            message = "The file " + fileName + " contains syntax error:\n" + \
+                       errMessage + "\n" \
+                       "at line " + str( lineNo ) + ", position " + str( charNo ) + \
+                       ".\nDebugging session is closed."
 
-        # Jump to the source code
-        self.openFile( fileName, lineNo )
-        logging.error( "The file " + fileName + " contains syntax error:\n" +
-                       message + "\n"
-                       "at line " + str( lineNo ) + ", position " + str( charNo ) +
-                       ".\nDebugging session is closed." )
+        dlg = QMessageBox( QMessageBox.Critical, "Debugging session",
+                           message )
+        dlg.addButton( QMessageBox.Ok )
+        dlg.addButton( QMessageBox.Cancel )
+
+        btn1 = dlg.button( QMessageBox.Ok )
+        btn1.setText( "&Close debug console" )
+        btn1.setIcon( PixmapCache().getIcon( '' ) )
+
+        btn2 = dlg.button( QMessageBox.Cancel )
+        btn2.setText( "&Keep debug console" )
+        btn2.setIcon( PixmapCache().getIcon( '' ) )
+
+        dlg.setDefaultButton( QMessageBox.Ok )
+        res = dlg.exec_()
+
+        if res == QMessageBox.Cancel:
+            QTimer.singleShot( 0, self.__onStopDbgSession )
+        else:
+            QTimer.singleShot( 0, self.__onBrutalStopDbgSession )
         return
 
     def __removeCurrenDebugLineHighlight( self ):
