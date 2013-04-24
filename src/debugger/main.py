@@ -93,13 +93,16 @@ class CodimensionDebugger( QObject ):
                            "The previous one has not finished yet." )
             return
 
-        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         try:
+            QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
             self.__initiatePrologue( fileName )
+            QApplication.restoreOverrideCursor()
+            self.connect( self.__clientSocket, SIGNAL( 'readyRead()' ),
+                          self.__parseClientLine )
         except Exception, exc:
+            QApplication.restoreOverrideCursor()
             logging.error( str( exc ) )
             self.stopDebugging()
-        QApplication.restoreOverrideCursor()
         return
 
     def __initiatePrologue( self, fileName ):
@@ -125,10 +128,6 @@ class CodimensionDebugger( QObject ):
 
         debugSettings = Settings().getDebuggerSettings()
         self.__stopAtFirstLine = debugSettings.stopAtFirstLine
-
-        print "Debug working dir: " + str( workingDir )
-        print "Debug command: " + str( cmd )
-        print "Environment: " + str( environment )
 
         # Run the client -  exception is processed in the outer scope
         Popen( cmd, shell = True, cwd = workingDir, env = environment )
@@ -235,8 +234,14 @@ class CodimensionDebugger( QObject ):
                                              1 )
         self.connect( self.__clientSocket, SIGNAL( 'disconnected()' ),
                       self.__disconnected )
-        self.connect( self.__clientSocket, SIGNAL( 'readyRead()' ),
-                      self.__parseClientLine )
+
+        # The readyRead() signal should not be connected here. Sometimes
+        # e.g. in case of syntax errors, a message from the remote side comes
+        # very quickly, before the prologue is finished.
+        # So, connecting this signal is moved to the top level, see
+        # startDebugging()
+        # self.connect( self.__clientSocket, SIGNAL( 'readyRead()' ),
+        #               self.__parseClientLine )
 
         self.__changeDebuggerState( self.STATE_IN_CLIENT )
         print "New connection has been accepted"
