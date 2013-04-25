@@ -2795,7 +2795,11 @@ class CodimensionMainWindow( QMainWindow ):
                       "syntax error.\nDebugging session will be closed."
         else:
             # Jump to the source code
-            self.openFile( fileName, lineNo )
+            editorsManager = self.editorsManagerWidget.editorsManager
+            editorsManager.openFile( fileName, lineNo )
+            editor = editorsManager.currentWidget().getEditor()
+            editor.gotoLine( lineNo, charNo )
+
             message = "The file " + fileName + " contains syntax error: '" + \
                        errMessage + "' " \
                        "at line " + str( lineNo ) + ", position " + str( charNo ) + \
