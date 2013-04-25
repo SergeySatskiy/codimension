@@ -2722,7 +2722,7 @@ class CodimensionMainWindow( QMainWindow ):
 
             if not excStackTrace:
                 message = "An exception did not report the stack trace.\n" \
-                          "Debug session will be closed."
+                          "The debugging session will be closed."
             else:
                 message = "An unhandled exception occured.\n" \
                           "The debugging session will be closed."
@@ -2792,14 +2792,14 @@ class CodimensionMainWindow( QMainWindow ):
 
         if errMessage is None:
             message = "The program being debugged contains an unspecified " \
-                      "syntax error.\nDebugging session is closed."
+                      "syntax error.\nDebugging session will be closed."
         else:
             # Jump to the source code
             self.openFile( fileName, lineNo )
-            message = "The file " + fileName + " contains syntax error:\n" + \
-                       errMessage + "\n" \
+            message = "The file " + fileName + " contains syntax error: '" + \
+                       errMessage + "' " \
                        "at line " + str( lineNo ) + ", position " + str( charNo ) + \
-                       ".\nDebugging session is closed."
+                       ".\nDebugging session will be closed."
 
         dlg = QMessageBox( QMessageBox.Critical, "Debugging session",
                            message )

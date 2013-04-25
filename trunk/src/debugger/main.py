@@ -42,7 +42,8 @@ from client.protocol import ( EOT, RequestStep, RequestStepOver, RequestStepOut,
                               ResponseVariables, RequestVariable,
                               ResponseVariable, RequestExec, RequestEval,
                               RequestBreak, ResponseException, RequestForkTo,
-                              ResponseForkTo, RequestStack, ResponseSyntax )
+                              ResponseForkTo, RequestStack, ResponseSyntax,
+                              ResponseExit )
 
 
 POLL_INTERVAL = 0.1
@@ -99,6 +100,7 @@ class CodimensionDebugger( QObject ):
             QApplication.restoreOverrideCursor()
             self.connect( self.__clientSocket, SIGNAL( 'readyRead()' ),
                           self.__parseClientLine )
+            self.__parseClientLine()
         except Exception, exc:
             QApplication.restoreOverrideCursor()
             logging.error( str( exc ) )
@@ -368,6 +370,11 @@ class CodimensionDebugger( QObject ):
 
                 if resp == RequestForkTo:
                     self.__askForkTo()
+                    continue
+
+                if resp == ResponseExit:
+                    logging.info( "Debugged script finished with exit code " +
+                                  line[ eoc : -1 ] )
                     continue
 
         return
