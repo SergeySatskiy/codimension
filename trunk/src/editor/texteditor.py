@@ -149,7 +149,7 @@ class TextEditor( ScintillaWrapper ):
                       SIGNAL( 'marginClicked(int, int, Qt::KeyboardModifiers)' ),
                       self.__marginClicked )
 
-         self.installEventFilter( self )
+        self.installEventFilter( self )
         return
 
     def eventFilter( self, obj, event ):
