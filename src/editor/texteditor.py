@@ -79,8 +79,9 @@ class TextEditor( ScintillaWrapper ):
     textToIterate = ""
 
     LINENUM_MARGIN = 0
-    MESSAGES_MARGIN = 1
-    FOLDING_MARGIN = 2
+    BPOINT_MARGIN = 1
+    MESSAGES_MARGIN = 2
+    FOLDING_MARGIN = 3
 
     def __init__( self, parent = None ):
 
@@ -144,7 +145,11 @@ class TextEditor( ScintillaWrapper ):
         self.connect( self.__completer, SIGNAL( "activated(const QString &)" ),
                       self.insertCompletion )
 
-        self.installEventFilter( self )
+        self.connect( self,
+                      SIGNAL( 'marginClicked(int, int, Qt::KeyboardModifiers)' ),
+                      self.__marginClicked )
+
+         self.installEventFilter( self )
         return
 
     def eventFilter( self, obj, event ):
@@ -288,6 +293,12 @@ class TextEditor( ScintillaWrapper ):
             if xPos <= width:
                 return margin
         return None
+
+    def __marginClicked( self, margin, line, modifiers ):
+        " Triggered when a margin is clicked "
+        if margin == self.BPOINT_MARGIN:
+            self.__toggleBreakpoint( line + 1 )
+        return
 
     def __initEncodingMenu( self ):
         " Creates the encoding menu "
@@ -499,6 +510,9 @@ class TextEditor( ScintillaWrapper ):
         self.setMarginWidth( self.LINENUM_MARGIN,
                              fontMetrics.width( ' 8888' ) )
 
+        # Setup break point margin
+        self.setMarginWidth( self.BPOINT_MARGIN, 16 )
+
         # Setup messages margin
         self.setMarginWidth( self.MESSAGES_MARGIN, 16 )
 
@@ -515,11 +529,16 @@ class TextEditor( ScintillaWrapper ):
                     PixmapCache().getPixmap( 'dbgcurrentmarker.png' ) )
         self.__excptMarker = self.markerDefine(
                     PixmapCache().getPixmap( 'dbgexcptmarker.png' ) )
+        self.__bpointMarker = self.markerDefine(
+                    PixmapCache().getPixmap( 'dbgbpointmarker.png' ) )
 
         marginMask = ( 1 << self.__pyflakesMsgMarker | 1 << self.__dbgMarker | 1 << self.__excptMarker )
         self.setMarginMarkerMask( self.MESSAGES_MARGIN, marginMask )
         self.setMarginSensitivity( self.MESSAGES_MARGIN, True )
 
+        bpointMarginMask = ( 1 << self.__bpointMarker )
+        self.setMarginMarkerMask( self.BPOINT_MARGIN, bpointMarginMask )
+        self.setMarginSensitivity( self.BPOINT_MARGIN, True )
         return
 
     def __initDebuggerMarkers( self ):
@@ -1894,6 +1913,14 @@ class TextEditor( ScintillaWrapper ):
             currentFirstVisible = newFirstVisible
         return
 
+
+        ## Break points support
+
+    def __toggleBreakpoint( self, line, temporary = False ):
+        " Toggles the line breakpoint "
+
+        # Check first if it is a breakable line
+        return
 
 
 
