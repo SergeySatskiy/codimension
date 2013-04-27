@@ -77,9 +77,12 @@ class ClickableTabBar( QTabBar ):
 class EditorsManager( QTabWidget ):
     " Tab bar with editors "
 
-    def __init__( self, parent ):
+    def __init__( self, parent, debugger ):
 
         QTabWidget.__init__( self, parent )
+
+        self.__debugger = debugger
+
         self.setTabBar( ClickableTabBar( self ) )
         self.setMovable( True )
 
@@ -475,7 +478,7 @@ class EditorsManager( QTabWidget ):
             self.removeTab( 0 )
             self.setTabsClosable( True )
 
-        newWidget = TextEditorTabWidget( self )
+        newWidget = TextEditorTabWidget( self, self.__debugger )
         self.connect( newWidget, SIGNAL( 'ReloadRequest' ),
                       self.onReload )
         self.connect( newWidget, SIGNAL( 'ReloadAllNonModifiedRequest' ),
@@ -1090,7 +1093,7 @@ class EditorsManager( QTabWidget ):
                     return True
 
             # Not found - create a new one
-            newWidget = TextEditorTabWidget( self )
+            newWidget = TextEditorTabWidget( self, self.__debugger )
             self.connect( newWidget, SIGNAL( 'ReloadRequest' ),
                           self.onReload )
             self.connect( newWidget, SIGNAL( 'ReloadAllNonModifiedRequest' ),

@@ -83,9 +83,12 @@ class TextEditor( ScintillaWrapper ):
     MESSAGES_MARGIN = 2
     FOLDING_MARGIN = 3
 
-    def __init__( self, parent = None ):
+    def __init__( self, parent, debugger ):
 
         ScintillaWrapper.__init__( self, parent )
+
+        self.__debugger = debugger
+
         self.__initMargins()
         self.__initIndicators()
         self.__disableKeyBinding()
@@ -1927,12 +1930,12 @@ class TextEditor( ScintillaWrapper ):
 class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     " Plain text editor tab widget "
 
-    def __init__( self, parent = None ):
+    def __init__( self, parent, debugger ):
 
         MainWindowTabWidgetBase.__init__( self )
         QWidget.__init__( self, parent )
 
-        self.__editor = TextEditor( self )
+        self.__editor = TextEditor( self, debugger )
         self.__fileName = ""
         self.__shortName = ""
         self.__fileType = UnknownFileType

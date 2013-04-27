@@ -45,6 +45,8 @@ from client.protocol import ( EOT, RequestStep, RequestStepOver, RequestStepOut,
                               ResponseForkTo, RequestStack, ResponseSyntax,
                               ResponseExit )
 
+from breakpointmodel import BreakPointModel
+from watchpointmodel import WatchPointModel
 
 POLL_INTERVAL = 0.1
 HANDSHAKE_TIMEOUT = 15
@@ -79,7 +81,15 @@ class CodimensionDebugger( QObject ):
         self.__translatePath = None
 
         self.__codec = QTextCodec.codecForName( "utf-8" )
+
+        self.__breakpointModel = BreakPointModel( self )
+        self.__watchpointModel = WatchPointModel( self )
+
         return
+
+    def getBreakPointModel( self ):
+        " Provides a reference to the breakpoints model "
+        return self.__breakpointModel
 
     def __changeDebuggerState( self, newState ):
         " Changes the debugger state "
