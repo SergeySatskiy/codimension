@@ -91,9 +91,9 @@ class EditorsManagerWidget( QWidget ):
 
     def __init__( self, parent ):
 
-        QWidget.__init__( self )
+        QWidget.__init__( self, debugger )
 
-        self.editorsManager = EditorsManager( parent )
+        self.editorsManager = EditorsManager( parent, debugger )
         self.findWidget = FindWidget( self.editorsManager )
         self.replaceWidget = ReplaceWidget( self.editorsManager )
         self.gotoLineWidget = GotoLineWidget( self.editorsManager )
@@ -258,7 +258,7 @@ class CodimensionMainWindow( QMainWindow ):
     def __createLayout( self, settings ):
         """ creates the UI layout """
 
-        self.editorsManagerWidget = EditorsManagerWidget( self )
+        self.editorsManagerWidget = EditorsManagerWidget( self, self.__debugger )
         self.editorsManagerWidget.findWidget.hide()
         self.editorsManagerWidget.replaceWidget.hide()
         self.editorsManagerWidget.gotoLineWidget.hide()
