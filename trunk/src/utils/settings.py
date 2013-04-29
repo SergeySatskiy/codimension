@@ -106,6 +106,7 @@ CDM_SETTINGS = {
     CDMSetting( "showStackViewer", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "showThreadViewer", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "showIgnoredExcViewer", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "showWatchPointViewer", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "terminalType", CDMSetting.TYPE_INT, TERM_AUTO ),
     CDMSetting( "profileNodeLimit", CDMSetting.TYPE_FLOAT, 1.0 ),
     CDMSetting( "profileEdgeLimit", CDMSetting.TYPE_FLOAT, 1.0 ),

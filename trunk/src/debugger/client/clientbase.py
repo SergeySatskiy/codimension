@@ -2074,7 +2074,7 @@ class DebugClientBase( object ):
         @return path list for use as sys.path (list of strings)
         """
         sysPath = [ path for path in \
-                    os.environ.get( "PYTHONPATH", "" ).split( os.path.sep )
+                    os.environ.get( "PYTHONPATH", "" ).split( ":" )
                     if path not in sys.path ] + sys.path[ : ]
         if "" in sysPath:
             sysPath.remove( "" )
