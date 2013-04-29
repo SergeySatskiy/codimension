@@ -37,8 +37,8 @@ import types
 import atexit
 import inspect
 
-from protocol import ResponseClearWatch, ResponseClearBreak, \
-                     ResponseLine, ResponseSyntax, ResponseException
+from protocol_cdm_dbg import ( ResponseClearWatch, ResponseClearBreak,
+                               ResponseLine, ResponseSyntax, ResponseException )
 
 RECURSION_LIMIT = 64
 

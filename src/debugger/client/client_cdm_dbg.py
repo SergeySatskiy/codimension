@@ -33,9 +33,9 @@ Module implementing the multithreaded version of the debug client.
 
 import thread
 import sys
-from clientbase import DebugClientBase, DebugClientInstance
-from debugthread import DebugThread
-from asyncio import AsyncIO
+from clientbase_cdm_dbg import DebugClientBase, DebugClientInstance
+from debugthread_cdm_dbg import DebugThread
+from asyncio_cdm_dbg import AsyncIO
 
 
 def _debugclient_start_new_thread( target, args, kwargs = {} ):

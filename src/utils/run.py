@@ -330,7 +330,7 @@ def getTerminalCommandToDebug( fileName, workingDir, arguments,
 
     # Calculate the debug client path.
     debugClientPath = os.path.sep.join( [ os.path.dirname( sys.argv[ 0 ] ),
-                                          "debugger", "client", "client.py" ] )
+                                          "debugger", "client", "client_cdm_dbg.py" ] )
 
     # Get the debugging specific parameters
     from settings import Settings

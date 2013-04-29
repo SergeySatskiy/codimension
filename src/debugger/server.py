@@ -35,15 +35,15 @@ from utils.globals import GlobalData
 from utils.run import getCwdCmdEnv, CMD_TYPE_DEBUG
 from utils.settings import Settings
 from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
-from client.protocol import ( EOT, RequestStep, RequestStepOver, RequestStepOut,
-                              RequestShutdown, ResponseLine, ResponseStack,
-                              RequestContinue, RequestThreadList,
-                              RequestVariables, ResponseThreadList,
-                              ResponseVariables, RequestVariable,
-                              ResponseVariable, RequestExec, RequestEval,
-                              RequestBreak, ResponseException, RequestForkTo,
-                              ResponseForkTo, RequestStack, ResponseSyntax,
-                              ResponseExit )
+from client.protocol_cdm_dbg import ( EOT, RequestStep, RequestStepOver, RequestStepOut,
+                                      RequestShutdown, ResponseLine, ResponseStack,
+                                      RequestContinue, RequestThreadList,
+                                      RequestVariables, ResponseThreadList,
+                                      ResponseVariables, RequestVariable,
+                                      ResponseVariable, RequestExec, RequestEval,
+                                      RequestBreak, ResponseException, RequestForkTo,
+                                      ResponseForkTo, RequestStack, ResponseSyntax,
+                                      ResponseExit )
 
 from breakpointmodel import BreakPointModel
 from watchpointmodel import WatchPointModel
@@ -387,12 +387,11 @@ class CodimensionDebugger( QObject ):
                     continue
 
                 if resp == ResponseExit:
-                    logging.info( "Debugged script finished with exit code " +
-                                  line[ eoc : -1 ] )
+                    self.emit( SIGNAL( 'ClientFinished' ), line[ eoc : -1 ] )
+                    break
                     continue
 
         return
-
 
     def __disconnected( self ):
         " Triggered when the client closed the connection "
