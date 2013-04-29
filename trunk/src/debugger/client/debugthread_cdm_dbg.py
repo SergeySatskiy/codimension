@@ -34,7 +34,7 @@ Module implementing the debug thread
 import bdb
 import sys
 
-from base import DebugBase
+from base_cdm_dbg import DebugBase
 
 
 

@@ -74,7 +74,7 @@ from runparams import RunDialog
 from utils.run import getCwdCmdEnv, CMD_TYPE_RUN, CMD_TYPE_DEBUG
 from debugger.context import DebuggerContext
 from debugger.modifiedunsaved import ModifiedUnsavedDialog
-from debugger.main import CodimensionDebugger
+from debugger.server import CodimensionDebugger
 from debugger.excpt import DebuggerExceptions
 from debugger.bpwp import DebuggerBreakWatchPoints
 from diffviewer import DiffViewer
@@ -144,6 +144,8 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onDebuggerClientException )
         self.connect( self.__debugger, SIGNAL( 'ClientSyntaxError' ),
                       self.__onDebuggerClientSyntaxError )
+        self.connect( self.__debugger, SIGNAL( 'ClientFinished' ),
+                      self.__onDebuggerClientFinished )
 
         self.settings = settings
         self.__initialisation = True
@@ -2831,6 +2833,12 @@ class CodimensionMainWindow( QMainWindow ):
             QTimer.singleShot( 0, self.__onStopDbgSession )
         else:
             QTimer.singleShot( 0, self.__onBrutalStopDbgSession )
+        return
+
+    def __onDebuggerClientFinished( self, exitCode ):
+        " Triggered when the debugged program has reported its exit code "
+        logging.info( "Debugged script finished with exit code " +
+                      str( exitCode ) )
         return
 
     def __removeCurrenDebugLineHighlight( self ):

@@ -33,7 +33,7 @@ file like socket interface for the debugger.
 
 import socket
 
-from protocol import EOT
+from protocol_cdm_dbg import EOT
 
 
 def AsyncPendingWrite( fileObj ):

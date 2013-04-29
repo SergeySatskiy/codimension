@@ -42,25 +42,25 @@ import imp
 import re
 
 
-from protocol import ( ResponseOK, RequestOK, RequestEnv, RequestVariable,
-                       RequestThreadList, RequestThreadSet, RequestStack,
-                       ResponseThreadSet, RequestVariables, ResponseStack,
-                       RequestStep, RequestStepOver, RequestStepOut,
-                       RequestStepQuit, RequestShutdown, RequestBreak,
-                       ResponseThreadList, ResponseRaw, ResponseException,
-                       RequestContinue, RequestRun, RequestBreakIgnore,
-                       RequestBreakEnable, RequestWatch, RequestLoad,
-                       RequestForkTo, RequestEval, ResponseBPConditionError,
-                       ResponseWPConditionError, RequestWatchEnable,
-                       RequestWatchIgnore, RequestExec, RequestBanner,
-                       ResponseBanner, RequestSetFilter, ResponseForkTo,
-                       RequestForkMode, ResponseContinue, ResponseExit,
-                       ResponseVariables, DebugAddress, RequestCompletion,
-                       ResponseVariable, ResponseCompletion, PassiveStartup )
-from base import setRecursionLimit
-from config import ConfigVarTypeStrings
-from asyncfile import AsyncFile, AsyncPendingWrite
-from completer import Completer
+from protocol_cdm_dbg import ( ResponseOK, RequestOK, RequestEnv, RequestVariable,
+                               RequestThreadList, RequestThreadSet, RequestStack,
+                               ResponseThreadSet, RequestVariables, ResponseStack,
+                               RequestStep, RequestStepOver, RequestStepOut,
+                               RequestStepQuit, RequestShutdown, RequestBreak,
+                               ResponseThreadList, ResponseRaw, ResponseException,
+                               RequestContinue, RequestRun, RequestBreakIgnore,
+                               RequestBreakEnable, RequestWatch, RequestLoad,
+                               RequestForkTo, RequestEval, ResponseBPConditionError,
+                               ResponseWPConditionError, RequestWatchEnable,
+                               RequestWatchIgnore, RequestExec, RequestBanner,
+                               ResponseBanner, RequestSetFilter, ResponseForkTo,
+                               RequestForkMode, ResponseContinue, ResponseExit,
+                               ResponseVariables, DebugAddress, RequestCompletion,
+                               ResponseVariable, ResponseCompletion, PassiveStartup )
+from base_cdm_dbg import setRecursionLimit
+from config_cdm_dbg import ConfigVarTypeStrings
+from asyncfile_cdm_dbg import AsyncFile, AsyncPendingWrite
+from completer_cdm_dbg import Completer
 
 
 CODIMENSION_DEFAULT_DBG_HOST = 'localhost'
