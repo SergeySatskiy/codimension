@@ -91,6 +91,10 @@ class CodimensionDebugger( QObject ):
         " Provides a reference to the breakpoints model "
         return self.__breakpointModel
 
+    def getWatchPointModel( self ):
+        " Provides a reference to the watch points model "
+        return self.__watchpointModel
+
     def __changeDebuggerState( self, newState ):
         " Changes the debugger state "
         self.__state = newState
