@@ -76,6 +76,7 @@ from debugger.context import DebuggerContext
 from debugger.modifiedunsaved import ModifiedUnsavedDialog
 from debugger.main import CodimensionDebugger
 from debugger.excpt import DebuggerExceptions
+from debugger.bpwp import DebuggerBreakWatchPoints
 from diffviewer import DiffViewer
 from thirdparty.diff2html.diff2html import parse_from_memory
 from analysis.notused import NotUsedAnalysisProgress
@@ -89,9 +90,9 @@ from debugger.bputils import clearValidBreakpointLinesCache
 class EditorsManagerWidget( QWidget ):
     " Tab widget which has tabs with editors and viewers "
 
-    def __init__( self, parent ):
+    def __init__( self, parent, debugger ):
 
-        QWidget.__init__( self, debugger )
+        QWidget.__init__( self, parent )
 
         self.editorsManager = EditorsManager( parent, debugger )
         self.findWidget = FindWidget( self.editorsManager )
@@ -405,6 +406,11 @@ class CodimensionMainWindow( QMainWindow ):
         self.__debuggerExceptions = DebuggerExceptions()
         self.__rightSideBar.addTab( self.__debuggerExceptions,
                 PixmapCache().getIcon( '' ), 'Exceptions' )
+
+        self.__debuggerBreakWatchPoints = DebuggerBreakWatchPoints( self,
+                                                                    self.__debugger )
+        self.__rightSideBar.addTab( self.__debuggerBreakWatchPoints,
+                PixmapCache().getIcon( '' ), 'Breakpoints' )
 
         # Create splitters
         self.__horizontalSplitter = QSplitter( Qt.Horizontal )

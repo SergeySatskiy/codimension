@@ -338,9 +338,11 @@ class ClientExceptionsViewer( QWidget ):
     def __updateExceptionsLabel( self ):
         " Updates the exceptions header label "
         total = self.getTotalCount()
-        if total > 1:
+        if total > 0:
             self.__excptLabel.setText( "Exceptions (total: " +
                                        str( total ) + ")" )
+        else:
+            self.__excptLabel.setText( "Exceptions" )
         return
 
     def getTotalCount( self ):
