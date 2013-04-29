@@ -201,7 +201,7 @@ __osSpawnForProfile = {
 __osSpawnForDebug = {
     'posix'         : "%(term)s -e %(shell)s -c " \
                       "'%(exec)s %(fb)s %(fbport)d $PPID; cd %(wdir)s; " \
-                      "%(exec)s %(dbgclient)s %(dbgopt)s -- %(app)s; CDM_RES=$?; " \
+                      "%(exec)s %(dbgclient)s %(dbgopt)s -- %(app)s; CDM_RES=$?; echo -e \"Script finished with exit code $CDM_RES\"; " \
                       "%(exit_if_ok)s %(shell)s' &",
     'Terminal'      : "Terminal --disable-server -x %(shell)s -c " \
                       "'%(exec)s %(fb)s %(fbport)d $PPID; cd %(wdir)s; " \
@@ -337,7 +337,7 @@ def getTerminalCommandToDebug( fileName, workingDir, arguments,
     debugSettings = Settings().getDebuggerSettings()
 
     # Form the debug client options
-    dbgopt = "-n -h localhost -p " + str( tcpServerPort )
+    dbgopt = "-n -h localhost -p " + str( tcpServerPort ) + " -w " + workingDir
     if not debugSettings.reportExceptions:
         dbgopt += " -e"
     if debugSettings.traceInterpreter:
