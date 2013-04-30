@@ -84,6 +84,18 @@ class Breakpoint:
         " Provides the file name "
         return self.__fileName
 
+    def getAbsoluteFileName( self ):
+        " Provides the absolute file name "
+        if self.__fileName is None:
+            return None
+        if os.path.isabs( self.__fileName ):
+            return self.__fileName
+
+        project = GlobalData().project
+        if project.isLoaded():
+            return project.getProjectDir() + self.__fileName
+        return os.path.abspath( self.__fileName )
+
     def getLineNumber( self ):
         " Provides the line number "
         return self.__lineNumber
@@ -103,6 +115,17 @@ class Breakpoint:
     def getIgnoreCount( self ):
         " Provides the ignore count "
         return self.__ignoreCount
+
+    def getLocation( self, fullForm = False ):
+        " Provides the breakpoint location "
+        if self.__fileName is None:
+            return str( self.__fileName ) + ":" + str( self.__lineNumber )
+
+        if fullForm:
+            return self.getAbsoluteFileName() + ":" + str( self.__lineNumber )
+
+        return os.path.basename( self.__fileName ) + ":" + \
+               str( self.__lineNumber )
 
     def serialize( self ):
         " Serializes the breakpoint to a string "
