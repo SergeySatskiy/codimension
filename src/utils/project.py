@@ -89,6 +89,8 @@ class CodimensionProject( QObject ):
         self.fileBrowserPaths = []
 
         self.ignoredExcpt = []
+        self.breakpoints = []
+        self.watchpoints = []
 
         # Precompile the exclude filters
         self.__excludeFilter = []
@@ -151,6 +153,8 @@ class CodimensionProject( QObject ):
         self.fileBrowserPaths = []
 
         self.ignoredExcpt = []
+        self.breakpoints = []
+        self.watchpoints = []
 
         # Reset the dir watchers if so
         if self.__dirWatcher is not None:
@@ -233,6 +237,8 @@ class CodimensionProject( QObject ):
         self.__safeRemove( userProjectDir + "recentfiles" )
         self.__safeRemove( userProjectDir + "filebrowser" )
         self.__safeRemove( userProjectDir + "ignoredexcpt" )
+        self.__safeRemove( userProjectDir + "breakpoints" )
+        self.__safeRemove( userProjectDir + "watchpoints" )
         return
 
     def __createProjectFile( self ):
@@ -354,22 +360,37 @@ class CodimensionProject( QObject ):
             f.close()
         return
 
+    def __saveSectionToFile( self, fileName, sectionName, itemName, values ):
+        " Saves the given values into a file "
+        if self.isLoaded():
+            f = open( self.userProjectDir + fileName, "w" )
+            self.__writeHeader( f )
+            self.__writeList( f, sectionName, itemName, values )
+            f.close()
+        return
+
     def __saveRecentFiles( self ):
         " Helper to save recent files list "
-        if self.isLoaded():
-            f = open( self.userProjectDir + "recentfiles", "w" )
-            self.__writeHeader( f )
-            self.__writeList( f, "recentfiles", "file", self.recentFiles )
-            f.close()
+        self.__saveSectionToFile( "recentfiles", "recentfiles", "file",
+                                  self.recentFiles )
         return
 
     def __saveIgnoredExcpt( self ):
         " Helper to save ignored exceptions list "
-        if self.isLoaded():
-            f = open( self.userProjectDir + "ignoredexcpt", "w" )
-            self.__writeHeader( f )
-            self.__writeList( f, "ignoredexcpt", "excpttype", self.ignoredExcpt )
-            f.close()
+        self.__saveSectionToFile( "ignoredexcpt", "ignoredexcpt",
+                                  "excpttype", self.ignoredExcpt )
+        return
+
+    def __saveBreakpoints( self ):
+        " Helper to save breakpoints "
+        self.__saveSectionToFile( "breakpoints", "breakpoints",
+                                  "bpoint", self.breakpoints )
+        return
+
+    def __saveWatchpoints( self ):
+        " helper to save watchpoints "
+        self.__saveSectionToFile( "watchpoints", "watchpoints",
+                                  "wpoint", self.watchpoints )
         return
 
     @staticmethod
@@ -482,6 +503,8 @@ class CodimensionProject( QObject ):
         self.__loadRecentFiles()
         self.__loadProjectBrowserExpandedDirs()
         self.__loadIgnoredExceptions()
+        self.__loadBreakpoints()
+        self.__loadWatchpoints()
 
         # The project might have been moved...
         self.__createProjectFile()  # ~/.codimension/uuidNN/project
@@ -802,11 +825,12 @@ class CodimensionProject( QObject ):
         config = None
         return
 
-    def __loadIgnoredExceptions( self ):
-        " Loads the ignored exceptions list "
-        confFile = self.userProjectDir + "ignoredexcpt"
+    def __loadSectionFromFile( self, fileName, sectionName, itemName,
+                               storage, errMessageEntity ):
+        " Loads the given section from the given file "
+        confFile = self.userProjectDir + fileName
         if not os.path.exists( confFile ):
-            logging.info( "Cannot find ignored exceptions file. "
+            logging.info( "Cannot find " + errMessageEntity + " file. "
                           "Expected here: " + confFile )
             self.__formatOK = False
             return
@@ -818,13 +842,33 @@ class CodimensionProject( QObject ):
             # Bad error - cannot load project file at all
             config = None
             self.__formatOK = False
-            logging.warning( "Cannot read ignored exceptions file "
+            logging.warning( "Cannot read " + errMessageEntity + " file "
                              "from here: " + confFile )
             return
 
-        self.ignoredExcpt = self.__loadListSection(
-                config, "ignoredexcpt", "excpttype" )
+        storage = self.__loadListSection( config, sectionName, itemName )
         config = None
+        return
+
+    def __loadIgnoredExceptions( self ):
+        " Loads the ignored exceptions list "
+        self.__loadSectionFromFile( "ignoredexcpt", "ignoredexcpt",
+                                    "excpttype", self.ignoredExcpt,
+                                    "ignored exceptions" )
+        return
+
+    def __loadBreakpoints( self ):
+        " Loads the project breakpoints "
+        self.__loadSectionFromFile( "breakpoints", "breakpoints",
+                                    "bpoint", self.breakpoints,
+                                    "breakpoints" )
+        return
+
+    def __loadWatchpoints( self ):
+        " Loads the project watchpoints "
+        self.__loadSectionFromFile( "watchpoints", "watchpoints",
+                                    "wpoint", self.watchpoints,
+                                    "watchpoints" )
         return
 
     def __loadListSection( self, config, section, listPrefix ):
@@ -1125,6 +1169,47 @@ class CodimensionProject( QObject ):
             self.ignoredExcpt.remove( excptType )
             self.__saveIgnoredExcpt()
         return
+
+    def addBreakpoint( self, bpointStr ):
+        " Adds serialized breakpoint "
+        if bpointStr not in self.breakpoints:
+            self.breakpoints.append( bpointStr )
+            self.__saveBreakpoints()
+        return
+
+    def deleteBreakpoint( self, bpointStr ):
+        " Deletes serialized breakpoint "
+        if bpointStr in self.breakpoints:
+            self.breakpoints.remove( bpointStr )
+            self.__saveBreakpoints()
+        return
+
+    def setBreakpoints( self, bpointStrList ):
+        " Sets breakpoints list "
+        self.breakpoints = bpointStrList
+        self.__saveBreakpoints()
+        return
+
+    def addWatchpoint( self, wpointStr ):
+        " Adds serialized watchpoint "
+        if wpointStrnot in self.watchpoints:
+            self.watchpoints.append( wpointStr )
+            self.__saveWatchpoints()
+        return
+
+    def deleteWatchpoint( self, wpointStr ):
+        " Deletes serialized watchpoint "
+        if wpointStr in self.watchpoints:
+            self.watchpoints.remove( wpointStr )
+            self.__saveWatchpoints()
+        return
+
+    def setWatchpoints( self, wpointStrList ):
+        " Sets watchpoints list "
+        self.watchpoints = wpointStrList
+        self.__saveWatchpoints()
+        return
+
 
 def getProjectProperties( projectFile ):
     """ Provides project properties or throws an exception """
