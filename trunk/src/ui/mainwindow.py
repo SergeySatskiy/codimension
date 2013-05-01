@@ -2862,7 +2862,10 @@ class CodimensionMainWindow( QMainWindow ):
         self.__dbgReturn.setEnabled( enabled )
         self.__dbgJumpToCurrent.setEnabled( enabled )
 
-        self.setRunToLineButtonState()
+        if enabled:
+            self.setRunToLineButtonState()
+        else:
+            self.__dbgRunToLine.setEnabled( False )
         return
 
     def setRunToLineButtonState( self ):
