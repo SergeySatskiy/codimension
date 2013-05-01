@@ -209,6 +209,8 @@ class Settings( object ):
             self.values[ "findFilesMasks" ] = self.__loadFindFilesHistory()
             self.values[ "findNameHistory" ] = self.__loadFindNameHistory()
             self.values[ "findFileHistory" ] = self.__loadFindFileHistory()
+            self.values[ "breakpoints" ] = self.__loadBreakpoints()
+            self.values[ "watchpoints" ] = self.__loadWatchpoints()
 
             # Create file if does not exist
             if not os.path.exists( self.fullFileName ):
@@ -372,6 +374,8 @@ class Settings( object ):
             self.__saveFindFilesHistory()
             self.__saveFindNameHistory()
             self.__saveFindFileHistory()
+            self.__saveBreakpoints()
+            self.__saveWatchpoints()
 
             f = open( self.fullFileName, "w" )
             self.__writeHeader( f )
@@ -522,23 +526,35 @@ class Settings( object ):
             mask = self.__loadListSection( config, 'maskhistory', 'mask' )
             return what, dirs, mask
 
-        def __loadFindNameHistory( self ):
-            " Loads the saved find name dialog history "
+        def __loadStringSectionFromFile( self, fileName, sectionName,
+                                         itemName ):
+            " Loads a string section from a file "
             config = ConfigParser.ConfigParser()
             try:
-                config.read( settingsDir + "findinfiles" )
+                config.read( settingsDir + fileName )
             except:
                 return []
-            return self.__loadListSection( config, 'findnamehistory', 'find' )
+            return self.__loadListSection( config, sectionName, itemName )
+
+        def __loadFindNameHistory( self ):
+            " Loads the saved find name dialog history "
+            return self.__loadStringSectionFromFile( "findinfiles",
+                                                     "findnamehistory", "find" )
 
         def __loadFindFileHistory( self ):
             " Loads the saved find file dialog history "
-            config = ConfigParser.ConfigParser()
-            try:
-                config.read( settingsDir + "findfile" )
-            except:
-                return []
-            return self.__loadListSection( config, 'findfilehistory', 'find' )
+            return self.__loadStringSectionFromFile( "findfile",
+                                                     "findfilehistory", "find" )
+
+        def __loadBreakpoints( self ):
+            " Loads the saved breakpoints "
+            return self.__loadStringSectionFromFile( "breakpoints",
+                                                     "breakpoints", "bpoint" )
+
+        def __loadWatchpoints( self ):
+            " Loads the saved watchpoints "
+            return self.__loadStringSectionFromFile( "watchpoints",
+                                                     "watchpoints", "wpoint" )
 
         def __saveFindFilesHistory( self ):
             " Saves the find in files dialog history "
@@ -558,29 +574,43 @@ class Settings( object ):
                 pass
             return
 
-        def __saveFindNameHistory( self ):
-            " Saves the find name dialog history "
-            fName = settingsDir + "findinfiles"
+        def __saveStringSectionToFile( self, fileName, sectionName,
+                                       itemName, valuesName ):
+            " Saves a string section into a file "
+            fName = settingsDir + fileName
             try:
                 f = open( fName, "w" )
-                self.__writeList( f, "findnamehistory", "find",
-                                  self.values[ "findNameHistory" ] )
+                self.__writeList( f, sectionName, itemName,
+                                  self.values[ valuesName ] )
                 f.close()
             except:
-                # Do nothing, it's not vital important to have this file
+                # This method is for files which existance is not vitally
+                # important
                 pass
+            return
+
+        def __saveFindNameHistory( self ):
+            " Saves the find name dialog history "
+            self.__saveStringSectionToFile( "findinfiles", "findnamehistory",
+                                            "find", "findNameHistory" )
             return
 
         def __saveFindFileHistory( self ):
             " Saves the find file dialog history "
-            fName = settingsDir + "findfile"
-            try:
-                f = open( fName, "w" )
-                self.__writeList( f, 'findfilehistory', 'find',
-                                  self.values[ "findFileHistory" ] )
-                f.close()
-            except:
-                pass
+            self.__saveStringSectionToFile( "findfile", "findfilehistory",
+                                            "find", "findFileHistory" )
+            return
+
+        def __saveBreakpoints( self ):
+            " Saves the breakpoints "
+            self.__saveStringSectionToFile( "breakpoints", "breakpoints",
+                                            "bpoint", "breakpoints" )
+            return
+
+        def __saveWatchpoints( self ):
+            " Saves the watchpoints "
+            self.__saveStringSectionToFile( "watchpoints", "watchpoints",
+                                            "wpoint", "watchpoints" )
             return
 
 
