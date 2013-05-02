@@ -286,6 +286,8 @@ class CodimensionProject( QObject ):
         self.__saveFindObjects()
         self.__saveRecentFiles()
         self.__saveIgnoredExcpt()
+        self.__saveBreakpoints()
+        self.__saveWatchpoints()
 
         self.__formatOK = True
         return
