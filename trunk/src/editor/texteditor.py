@@ -67,6 +67,7 @@ from pythontidy.tidy import ( getPythonTidySetting, PythonTidyDriver,
 from pythontidy.tidysettingsdlg import TidySettingsDialog
 from profiling.profui import ProfilingProgressDialog
 from debugger.bputils import getBreakpointLines
+from debugger.breakpoint import Breakpoint
 
 
 class TextEditor( ScintillaWrapper ):
@@ -117,6 +118,8 @@ class TextEditor( ScintillaWrapper ):
                                                 # generates BufferChanged
                                                 # signal which is extra
         self.__pyflakesTooltipShown = False
+
+        self.__breakpoints = {}         # marker handle -> Breakpoint
 
         self.setPaper( skin.nolexerPaper )
         self.setColor( skin.nolexerColor )
@@ -1921,10 +1924,33 @@ class TextEditor( ScintillaWrapper ):
 
     def __toggleBreakpoint( self, line, temporary = False ):
         " Toggles the line breakpoint "
-
-        # Check first if it is a breakable line
+        fileName = self.parent().getFileName()
+        model = self.__debugger.getBreakPointModel()
+        for handle, bpoint in self.__breakpoints.items():
+            if self.markerLine( handle ) == line - 1:
+                index = model.getBreakPointIndex( fileName, line )
+                if not model.isBreakPointTemporaryByIndex( index ):
+                    self.__addBreakpoint( line, True )
+                else:
+                    model.deleteBreakPointByIndex( index )
+                return
+        self.__addBreakpoint( line, temporary )
         return
 
+    def __addBreakpoint( self, line, temporary ):
+        " Adds a new breakpoint "
+        # The prerequisites:
+        # - it is saved buffer
+        # - it is a python buffer
+        # - it is a breakable line
+        # are checked in the function
+        if not self.parent().isLineBreakable( line, True, True ):
+            return
+
+        bpoint = Breakpoint( self.parent().getFileName(),
+                             line, "", temporary, True, 0 )
+        self.__debugger.getBreakPointModel().addBreakpoint( bpoint )
+        return
 
 
 class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
@@ -2897,22 +2923,31 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__updateRunDebugButtons()
         return
 
-    def isLineBreakable( self ):
+    def isLineBreakable( self, line = None,
+                               enforceRecalc = False,
+                               enforceSure = False ):
         " Returns True if a breakpoint could be placed on the current line "
+        if self.__fileName is None or \
+           self.__fileName == "" or \
+           os.path.isabs( self.__fileName ) == False:
+            return False
         if not self.getFileType() in [ PythonFileType,
                                        Python3FileType ]:
             return False
 
-        currentLine = self.getLine() + 1
-        if self.__breakableLines is not None:
-            return currentLine in self.__breakableLines
+        if line is None:
+            line = self.getLine() + 1
+        if self.__breakableLines is not None and enforceRecalc == False:
+            return line in self.__breakableLines
 
         self.__breakableLines = getBreakpointLines( self.getFileName(),
                                                     str( self.__editor.text() ) )
-        if self.__breakableLines is None:
-            # Be on the safe side - if there is a problem of
-            # getting the breakable lines, let the user decide
-            return True
+        if self.__breakableLines is None :
+            if enforceSure == False:
+                # Be on the safe side - if there is a problem of
+                # getting the breakable lines, let the user decide
+                return True
+            return False
 
-        return currentLine in self.__breakableLines
+        return line in self.__breakableLines
 
