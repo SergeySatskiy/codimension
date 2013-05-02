@@ -59,6 +59,16 @@ class Breakpoint:
 
         return
 
+    def update( self, otherBreakPoint ):
+        " Basically copies values from another breakpoint "
+        self.__fileName = otherBreakPoint.getFileName()
+        self.__lineNumber = otherBreakPoint.getLineNumber()
+        self.__condition = otherBreakPoint.getCondition()
+        self.__temporary = otherBreakPoint.isTemporary()
+        self.__enabled = otherBreakPoint.isEnabled()
+        self.__ignoreCount = otherBreakPoint.getIgnoreCount()
+        return
+
     def isValid( self ):
         " True if the breakpoint is valid "
         if self.__fileName is None:

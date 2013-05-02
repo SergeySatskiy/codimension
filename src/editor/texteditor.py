@@ -155,6 +155,23 @@ class TextEditor( ScintillaWrapper ):
                       SIGNAL( 'marginClicked(int, int, Qt::KeyboardModifiers)' ),
                       self.__marginClicked )
 
+        # Breakpoint support
+        self.__inLinesChanged = False
+        bpointModel = self.__debugger.getBreakPointModel()
+        self.connect( bpointModel,
+                      SIGNAL( "rowsAboutToBeRemoved(const QModelIndex &, int, int)" ),
+                      self.__deleteBreakPoints )
+        self.connect( bpointModel,
+                      SIGNAL( "dataAboutToBeChanged(const QModelIndex &, const QModelIndex &)" ),
+                      self.__breakPointDataAboutToBeChanged )
+        self.connect( bpointModel,
+                      SIGNAL( "dataChanged(const QModelIndex &, const QModelIndex &)" ),
+                      self.__changeBreakPoints )
+        self.connect( bpointModel,
+                      SIGNAL( "rowsInserted(const QModelIndex &, int, int)" ),
+                      self.__addBreakPoints )
+        self.connect( self, SIGNAL( "linesChanged()" ), self.__linesChanged )
+
         self.installEventFilter( self )
         return
 
@@ -537,13 +554,21 @@ class TextEditor( ScintillaWrapper ):
                     PixmapCache().getPixmap( 'dbgexcptmarker.png' ) )
         self.__bpointMarker = self.markerDefine(
                     PixmapCache().getPixmap( 'dbgbpointmarker.png' ) )
+        self.__tempbpointMarker = self.markerDefine(
+                    PixmapCache().markerDefine( 'dbgtmpbpointmarker.png' ) )
+        self.__disbpointMarker = self.markerDefine(
+                    PixmapCache().getPixmap( 'dbgdisbpointmarker.png' ) )
 
-        marginMask = ( 1 << self.__pyflakesMsgMarker | 1 << self.__dbgMarker | 1 << self.__excptMarker )
+        marginMask = ( 1 << self.__pyflakesMsgMarker |
+                       1 << self.__dbgMarker |
+                       1 << self.__excptMarker )
         self.setMarginMarkerMask( self.MESSAGES_MARGIN, marginMask )
         self.setMarginSensitivity( self.MESSAGES_MARGIN, True )
 
-        bpointMarginMask = ( 1 << self.__bpointMarker )
-        self.setMarginMarkerMask( self.BPOINT_MARGIN, bpointMarginMask )
+        self.__bpointMarginMask = ( 1 << self.__bpointMarker |
+                                    1 << self.__tempbpointMarker |
+                                    1 << self.__disbpointMarker )
+        self.setMarginMarkerMask( self.BPOINT_MARGIN, self.__bpointMarginMask )
         self.setMarginSensitivity( self.BPOINT_MARGIN, True )
         return
 
@@ -1920,7 +1945,7 @@ class TextEditor( ScintillaWrapper ):
         return
 
 
-        ## Break points support
+    ## Break points support
 
     def __toggleBreakpoint( self, line, temporary = False ):
         " Toggles the line breakpoint "
@@ -1951,6 +1976,91 @@ class TextEditor( ScintillaWrapper ):
                              line, "", temporary, True, 0 )
         self.__debugger.getBreakPointModel().addBreakpoint( bpoint )
         return
+
+    def __deleteBreakPoints( self, parentIndex, start, end ):
+        " Deletes breakpoints "
+        bpointModel = self.__debugger.getBreakPointModel()
+        for row in xrange( start, end + 1 ):
+            index = bpointModel.index( row, 0, parentIndex )
+            bpoint = bpointModel.getBreakPointByIndex( index )
+            fileName = bpoint.getAbsoluteFileName()
+
+            if fileName == self.parent().getFileName():
+                self.clearBreakpoint( bpoint.getLineNumber() )
+        return
+
+    def clearBreakpoint( self, line ):
+        " Clears a breakpoint "
+        if self.__inLinesChanged:
+            return
+
+        for handle, bpoint in self.__breakpoints.items():
+            if self.markerLine( handle ) == line - 1:
+                del self.__breakpoints[ handle ]
+                self.markerDeleteHandle( handle )
+                return
+        # Ignore the request if not found
+        return
+
+    def __breakPointDataAboutToBeChanged( self, startIndex, endIndex ):
+        " Handles the dataAboutToBeChanged signal of the breakpoint model "
+        self.__deleteBreakPoints( QModelIndex(),
+                                  startIndex.row(), endIndex.row() )
+        return
+
+    def __changeBreakPoints( self, startIndex, endIndex ):
+        " Sets changed breakpoints "
+        self.__addBreakPoints( QModelIndex(),
+                               startIndex.row(), endIndex.row() )
+        return
+
+    def __addBreakPoints( self, parentIndex, start, end ):
+        " Adds breakpoints "
+        bpointModel = self.__debugger.getBreakPointModel()
+        for row in xrange( start, end + 1 ):
+            index = bpointModel.index( row, 0, parentIndex )
+            bpoint = bpointModel.getBreakPointByIndex( index )
+            fileName = bpoint.getAbsoluteFileName()
+
+            if fileName == self.parent().getFileName():
+                self.newBreakpointWithProperties( bpoint )
+        return
+
+    def newBreakpointWithProperties( self, bpoint ):
+        " Sets a new breakpoint and its properties "
+        if not bpoint.isEnabled():
+            marker = self.__disbpointMarker
+        elif bpoint.isTemporary():
+            marker = self.__tempbpointMarker
+        else:
+            marker = self.__bpointMarker
+
+        if self.markersAtLine( line - 1 ) & self.__bpointMarginMask == 0:
+            handle = self.markerAdd( line-1, marker )
+            self.__breakpoints[ handle ] = bpoint
+        return
+
+    def __linesChanged( self ):
+        " Tracks text changes "
+        if self.__breakpoints:
+            bps = []    # list of breakpoints
+            for handle, bpoint in self.__breakpoints.items():
+                line = self.markerLine( handle ) + 1
+                bps.append( bpoint )
+                self.markerDeleteHandle( handle )
+
+            self.__breakpoints = {}
+            self.__inLinesChanged = True
+            bpointModel = self.__debugger.getBreakPointModel()
+            for bp in bps:
+                index = bpointModel.getBreakPointIndex( bp.getAbsoluteFileName(),
+                                                        bp.getLineNumber() )
+                bpointModel.setBreakPointByIndex( index, bp )
+            self.__inLinesChanged = False
+        return
+
+
+
 
 
 class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
