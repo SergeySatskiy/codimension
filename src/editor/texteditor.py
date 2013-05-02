@@ -2035,8 +2035,9 @@ class TextEditor( ScintillaWrapper ):
         else:
             marker = self.__bpointMarker
 
+        line = bpoint.getLineNumber()
         if self.markersAtLine( line - 1 ) & self.__bpointMarginMask == 0:
-            handle = self.markerAdd( line-1, marker )
+            handle = self.markerAdd( line - 1, marker )
             self.__breakpoints[ handle ] = bpoint
         return
 
