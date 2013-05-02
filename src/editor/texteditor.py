@@ -555,7 +555,7 @@ class TextEditor( ScintillaWrapper ):
         self.__bpointMarker = self.markerDefine(
                     PixmapCache().getPixmap( 'dbgbpointmarker.png' ) )
         self.__tempbpointMarker = self.markerDefine(
-                    PixmapCache().markerDefine( 'dbgtmpbpointmarker.png' ) )
+                    PixmapCache().getPixmap( 'dbgtmpbpointmarker.png' ) )
         self.__disbpointMarker = self.markerDefine(
                     PixmapCache().getPixmap( 'dbgdisbpointmarker.png' ) )
 
