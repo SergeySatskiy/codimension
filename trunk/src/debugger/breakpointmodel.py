@@ -44,8 +44,7 @@ class BreakPointModel( QAbstractItemModel ):
 
         self.breakpoints = []
         self.header = [
-            QVariant( 'Filename' ),
-            QVariant( 'Line' ),
+            QVariant( 'File:line' ),
             QVariant( 'Condition' ),
             QVariant( 'Temporary' ),
             QVariant( 'Enabled' ),
@@ -53,17 +52,17 @@ class BreakPointModel( QAbstractItemModel ):
                       ]
         self.alignments = [
             QVariant( Qt.Alignment( Qt.AlignLeft ) ),
-            QVariant( Qt.Alignment( Qt.AlignRight ) ),
             QVariant( Qt.Alignment( Qt.AlignLeft ) ),
             QVariant( Qt.Alignment( Qt.AlignHCenter ) ),
             QVariant( Qt.Alignment( Qt.AlignHCenter ) ),
             QVariant( Qt.Alignment( Qt.AlignRight ) ),
-            QVariant( Qt.Alignment( Qt.AlignHCenter ) ),
                           ]
+        self.__columnCount = len( self.header )
+        return
 
     def columnCount( self, parent = QModelIndex() ):
         " Provides the current column count "
-        return len( self.header ) + 1
+        return self.__columnCount
 
     def rowCount( self, parent = QModelIndex() ):
         " Provides the current row count "
@@ -74,36 +73,28 @@ class BreakPointModel( QAbstractItemModel ):
         return 0
 
     def data( self, index, role ):
-        """
-        Public method to get the requested data.
-
-        @param index index of the requested data (QModelIndex)
-        @param role role of the requested data (Qt.ItemDataRole)
-        @return the requested data (QVariant)
-        """
+        " Provides the requested data "
         if not index.isValid():
             return QVariant()
 
         if role == Qt.DisplayRole or role == Qt.ToolTipRole:
             column = index.column()
-            if column < len( self.header ):
+            if column < self.__columnCount:
                 bpoint = self.breakpoints[ index.row() ]
                 if column == 0:
-                    value = bpoint.getFileName()
+                    value = bpoint.getLocation()
                 elif column == 1:
-                    value = bpoint.getLineNumber()
-                elif column == 2:
                     value = bpoint.getCondition()
-                elif column == 3:
+                elif column == 2:
                     value = bpoint.isTemporary()
-                elif column == 4:
+                elif column == 3:
                     value = bpoint.isEnabled()
                 else:
                     value = bpoint.getIgnoreCount()
                 return QVariant( value )
 
         if role == Qt.TextAlignmentRole:
-            if index.column() < len( self.alignments ):
+            if index.column() < self.__columnCount:
                 return self.alignments[ index.column() ]
 
         return QVariant()
@@ -121,18 +112,11 @@ class BreakPointModel( QAbstractItemModel ):
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
     def headerData( self, section, orientation, role = Qt.DisplayRole ):
-        """
-        Public method to get header data.
-
-        @param section section number of the requested header data (integer)
-        @param orientation orientation of the header (Qt.Orientation)
-        @param role role of the requested data (Qt.ItemDataRole)
-        @return header data (QVariant)
-        """
+        " Provides header data "
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            if section >= len( self.header ):
-                return QVariant( "" )
-            return self.header[ section ]
+            if section < self.__columnCount:
+                return self.header[ section ]
+            return QVariant( "" )
 
         return QVariant()
 
@@ -153,12 +137,7 @@ class BreakPointModel( QAbstractItemModel ):
         return self.createIndex( row, column, self.breakpoints[ row ] )
 
     def parent( self, index ):
-        """
-        Public method to get the parent index.
-
-        @param index index of item to get parent (QModelIndex)
-        @return index of parent (QModelIndex)
-        """
+        " Provides the parent index "
         return QModelIndex()
 
     def hasChildren( self, parent = QModelIndex() ):
@@ -255,9 +234,7 @@ class BreakPointModel( QAbstractItemModel ):
         return
 
     def deleteAll( self ):
-        """
-        Public method to delete all breakpoints.
-        """
+        " Deletes all breakpoints "
         if self.breakpoints:
             self.beginRemoveRows( QModelIndex(), 0,
                                   len( self.breakpoints ) - 1 )
@@ -266,16 +243,10 @@ class BreakPointModel( QAbstractItemModel ):
         return
 
     def getBreakPointByIndex( self, index ):
-        """
-        Public method to get the values of a breakpoint given by index.
-
-        @param index index of the breakpoint (QModelIndex)
-        @return breakpoint (list of seven values (filename, line number,
-            condition, temporary flag, enabled flag, ignore count))
-        """
+        " Provides a breakpoint by index "
         if index.isValid():
-            return self.breakpoints[ index.row() ][ : ] # return a copy
-        return []
+            return self.breakpoints[ index.row() ]
+        return None
 
     def getBreakPointIndex( self, fname, lineno ):
         """
