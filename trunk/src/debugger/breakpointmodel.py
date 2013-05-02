@@ -159,29 +159,20 @@ class BreakPointModel( QAbstractItemModel ):
         self.endInsertRows()
         return
 
-    def setBreakPointByIndex( self, index, fname, line, properties ):
-        """
-        Public method to set the values of a breakpoint given by index.
+    def setBreakPointByIndex( self, index, bpoint ):
+        " Set the values of a breakpoint given by index "
 
-        @param index index of the breakpoint (QModelIndex)
-        @param fname filename of the breakpoint (string or QString)
-        @param line line number of the breakpoint (integer)
-        @param properties properties of the breakpoint
-            (tuple of condition (string or QString), temporary flag (bool),
-             enabled flag (bool), ignore count (integer))
-        """
         if index.isValid():
             row = index.row()
             index1 = self.createIndex( row, 0, self.breakpoints[ row ] )
-            index2 = self.createIndex( row, len( self.breakpoints[ row ] ),
+            index2 = self.createIndex( row, self.__columnCount - 1,
                                        self.breakpoints[ row ] )
             self.emit(
                 SIGNAL( "dataAboutToBeChanged(const QModelIndex&, const QModelIndex&)" ),
                 index1, index2 )
-            i = 0
-            for value in [ unicode( fname ), line ] + list( properties ):
-                self.breakpoints[ row ][ i ] = value
-                i += 1
+
+            self.breakpoints[ row ].update( bpoint )
+
             self.emit(
                 SIGNAL( "dataChanged(const QModelIndex&, const QModelIndex&)" ),
                         index1, index2 )
