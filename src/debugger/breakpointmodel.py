@@ -85,10 +85,22 @@ class BreakPointModel( QAbstractItemModel ):
             return QVariant()
 
         if role == Qt.DisplayRole or role == Qt.ToolTipRole:
-            if index.column() < len( self.header ):
-                return QVariant(
-                        self.breakpoints[
-                                index.row() ][ index.column() ] )
+            column = index.column()
+            if column < len( self.header ):
+                bpoint = self.breakpoints[ index.row() ]
+                if column == 0:
+                    value = bpoint.getFileName()
+                elif column == 1:
+                    value = bpoint.getLineNumber()
+                elif column == 2:
+                    value = bpoint.getCondition()
+                elif column == 3:
+                    value = bpoint.isTemporary()
+                elif column == 4:
+                    value = bpoint.isEnabled()
+                else:
+                    value = bpoint.getIgnoreCount()
+                return QVariant( value )
 
         if role == Qt.TextAlignmentRole:
             if index.column() < len( self.alignments ):
@@ -160,17 +172,8 @@ class BreakPointModel( QAbstractItemModel ):
             return len(self.breakpoints) > 0
         return False
 
-    def addBreakPoint( self, fname, line, properties ):
-        """
-        Public method to add a new breakpoint to the list.
-
-        @param fname filename of the breakpoint (string or QString)
-        @param line line number of the breakpoint (integer)
-        @param properties properties of the breakpoint
-            (tuple of condition (string or QString), temporary flag (bool),
-             enabled flag (bool), ignore count (integer))
-        """
-        bpoint = [ unicode( fname ), line ] + list( properties )
+    def addBreakpoint( self, bpoint ):
+        " Adds a new breakpoint to the list "
         cnt = len( self.breakpoints )
         self.beginInsertRows( QModelIndex(), cnt, cnt )
         self.breakpoints.append( bpoint )
@@ -226,11 +229,7 @@ class BreakPointModel( QAbstractItemModel ):
         return
 
     def deleteBreakPointByIndex( self, index ):
-        """
-        Public method to set the values of a breakpoint given by index.
-
-        @param index index of the breakpoint (QModelIndex)
-        """
+        " Deletes the breakpoint by its index "
         if index.isValid():
             row = index.row()
             self.beginRemoveRows( QModelIndex(), row, row )
@@ -290,7 +289,8 @@ class BreakPointModel( QAbstractItemModel ):
         fname = unicode( fname )
         for row in xrange( len( self.breakpoints ) ):
             bpoint = self.breakpoints[ row ]
-            if unicode( bpoint[ 0 ]) == fname and bpoint[ 1 ] == lineno:
+            if unicode( bpoint.getAbsoluteFileName() ) == fname and \
+               bpoint.getLineNumber() == lineno:
                 return self.createIndex( row, 0, self.breakpoints[ row ] )
 
         return QModelIndex()
@@ -303,5 +303,5 @@ class BreakPointModel( QAbstractItemModel ):
         @return flag indicating a temporary breakpoint (boolean)
         """
         if index.isValid():
-            return self.breakpoints[ index.row() ][ 3 ]
+            return self.breakpoints[ index.row() ].isTemporary()
         return False
