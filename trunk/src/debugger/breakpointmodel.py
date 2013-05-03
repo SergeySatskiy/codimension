@@ -77,7 +77,7 @@ class BreakPointModel( QAbstractItemModel ):
         if not index.isValid():
             return QVariant()
 
-        if role == Qt.DisplayRole or role == Qt.ToolTipRole:
+        if role == Qt.DisplayRole:
             column = index.column()
             if column < self.__columnCount:
                 bpoint = self.breakpoints[ index.row() ]
@@ -92,6 +92,12 @@ class BreakPointModel( QAbstractItemModel ):
                 else:
                     value = bpoint.getIgnoreCount()
                 return QVariant( value )
+        if role == Qt.ToolTipRole:
+            column = index.column()
+            if column < self.__columnCount:
+                return QVariant( self.breakpoints[ index.row() ].getTooltip() )
+            else:
+                return QVariant()
 
         if role == Qt.TextAlignmentRole:
             if index.column() < self.__columnCount:
@@ -121,14 +127,7 @@ class BreakPointModel( QAbstractItemModel ):
         return QVariant()
 
     def index( self, row, column, parent = QModelIndex() ):
-        """
-        Public method to create an index.
-
-        @param row row number for the index (integer)
-        @param column column number for the index (integer)
-        @param parent index of the parent item (QModelIndex)
-        @return requested index (QModelIndex)
-        """
+        " Creates an index "
         if parent.isValid() or \
            row < 0 or row >= len( self.breakpoints ) or \
            column < 0 or column >= len( self.header ):
@@ -141,14 +140,9 @@ class BreakPointModel( QAbstractItemModel ):
         return QModelIndex()
 
     def hasChildren( self, parent = QModelIndex() ):
-        """
-        Public method to check for the presence of child items.
-
-        @param parent index of parent item (QModelIndex)
-        @return flag indicating the presence of child items (boolean)
-        """
+        " Checks if there are child items "
         if not parent.isValid():
-            return len(self.breakpoints) > 0
+            return len( self.breakpoints ) > 0
         return False
 
     def addBreakpoint( self, bpoint ):

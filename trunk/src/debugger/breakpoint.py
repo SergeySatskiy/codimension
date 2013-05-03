@@ -142,6 +142,14 @@ class Breakpoint:
         return os.path.basename( self.__fileName ) + ":" + \
                str( self.__lineNumber )
 
+    def getTooltip( self ):
+        " Provides the breakpoint tooltip "
+        return "Location: " + self.getLocation( True ) + "\n" \
+               "Enabled: " + str( self.__enabled ) + "\n" \
+               "Temporary: " + str( self.__temporary ) + "\n" \
+               "Ignore count: " + str( self.__ignoreCount ) + "\n" \
+               "Condition: " + str( self.__condition )
+
     def serialize( self ):
         " Serializes the breakpoint to a string "
         return ":::".join( [ str( self.__fileName ), str( self.lineNumber ),
