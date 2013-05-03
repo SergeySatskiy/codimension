@@ -78,10 +78,11 @@ def clearValidBreakpointLinesCache():
     return
 
 
-def getBreakpointLines( fileName, srcCode ):
+def getBreakpointLines( fileName, srcCode, enforceRecalc = False ):
     " Provides a set of breakable lines "
-    if validBreakPointLinesCache.has_key( fileName ):
-        return validBreakPointLinesCache[ fileName ]
+    if enforceRecalc == False:
+        if validBreakPointLinesCache.has_key( fileName ):
+            return validBreakPointLinesCache[ fileName ]
 
     try:
         if srcCode is None:

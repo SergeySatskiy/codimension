@@ -69,6 +69,11 @@ class Breakpoint:
         self.__ignoreCount = otherBreakPoint.getIgnoreCount()
         return
 
+    def updateLineNumber( self, line ):
+        " Updates the line number. Used when there are changes in the editor "
+        self.__lineNumber = line
+        return
+
     def isValid( self ):
         " True if the breakpoint is valid "
         if self.__fileName is None:
