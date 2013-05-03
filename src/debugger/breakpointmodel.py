@@ -178,6 +178,25 @@ class BreakPointModel( QAbstractItemModel ):
                         index1, index2 )
         return
 
+    def updateLineNumberByIndex( self, index, newLineNumber ):
+        " Update the line number by index "
+
+        if index.isValid():
+            row = index.row()
+            index1 = self.createIndex( row, 0, self.breakpoints[ row ] )
+            index2 = self.createIndex( row, self.__columnCount - 1,
+                                       self.breakpoints[ row ] )
+            self.emit(
+                SIGNAL( "dataAboutToBeChanged(const QModelIndex&, const QModelIndex&)" ),
+                index1, index2 )
+
+            self.breakpoints[ row ].updateLineNumber( newLineNumber )
+
+            self.emit(
+                SIGNAL( "dataChanged(const QModelIndex&, const QModelIndex&)" ),
+                        index1, index2 )
+        return
+
     def setBreakPointEnabledByIndex( self, index, enabled ):
         """
         Public method to set the enabled state of a breakpoint given by index.

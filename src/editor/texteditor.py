@@ -28,7 +28,7 @@ from subprocess import Popen
 import lexer
 from scintillawrap import ScintillaWrapper
 from PyQt4.QtCore import ( Qt, QFileInfo, SIGNAL, QSize, QUrl,
-                           QVariant, QRect, QEvent, QPoint )
+                           QVariant, QRect, QEvent, QPoint, QModelIndex )
 from PyQt4.QtGui import ( QApplication, QCursor, QFontMetrics, QToolBar,
                           QActionGroup, QHBoxLayout, QWidget, QAction, QMenu,
                           QSizePolicy, QToolButton, QDialog, QToolTip,
@@ -81,8 +81,8 @@ class TextEditor( ScintillaWrapper ):
 
     LINENUM_MARGIN = 0
     BPOINT_MARGIN = 1
-    MESSAGES_MARGIN = 2
-    FOLDING_MARGIN = 3
+    FOLDING_MARGIN = 2
+    MESSAGES_MARGIN = 3
 
     def __init__( self, parent, debugger ):
 
@@ -1955,6 +1955,7 @@ class TextEditor( ScintillaWrapper ):
             if self.markerLine( handle ) == line - 1:
                 index = model.getBreakPointIndex( fileName, line )
                 if not model.isBreakPointTemporaryByIndex( index ):
+                    model.deleteBreakPointByIndex( index )
                     self.__addBreakpoint( line, True )
                 else:
                     model.deleteBreakPointByIndex( index )
@@ -2044,19 +2045,26 @@ class TextEditor( ScintillaWrapper ):
     def __linesChanged( self ):
         " Tracks text changes "
         if self.__breakpoints:
+            bpointModel = self.__debugger.getBreakPointModel()
             bps = []    # list of breakpoints
             for handle, bpoint in self.__breakpoints.items():
                 line = self.markerLine( handle ) + 1
-                bps.append( bpoint )
                 self.markerDeleteHandle( handle )
+
+                breakable = self.parent().isLineBreakable( line, True, True )
+                if not breakable:
+                    index = bpointModel.getBreakPointIndex( bpoint.getAbsoluteFileName(),
+                                                            bpoint.getLineNumber() )
+                    bpointModel.deleteBreakPointByIndex( index )
+                else:
+                    bps.append( ( bpoint, line ) )
 
             self.__breakpoints = {}
             self.__inLinesChanged = True
-            bpointModel = self.__debugger.getBreakPointModel()
-            for bp in bps:
+            for bp, newLineNumber in bps:
                 index = bpointModel.getBreakPointIndex( bp.getAbsoluteFileName(),
                                                         bp.getLineNumber() )
-                bpointModel.setBreakPointByIndex( index, bp )
+                bpointModel.updateLineNumberByIndex( index, newLineNumber )
             self.__inLinesChanged = False
         return
 
@@ -3052,7 +3060,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             return line in self.__breakableLines
 
         self.__breakableLines = getBreakpointLines( self.getFileName(),
-                                                    str( self.__editor.text() ) )
+                                                    str( self.__editor.text() ),
+                                                    enforceRecalc )
         if self.__breakableLines is None :
             if enforceSure == False:
                 # Be on the safe side - if there is a problem of
