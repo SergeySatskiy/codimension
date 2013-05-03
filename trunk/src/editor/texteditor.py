@@ -1998,7 +1998,9 @@ class TextEditor( ScintillaWrapper ):
         for handle, bpoint in self.__breakpoints.items():
             if self.markerLine( handle ) == line - 1:
                 del self.__breakpoints[ handle ]
+                self.ignoreBufferChangedSignal = True
                 self.markerDeleteHandle( handle )
+                self.ignoreBufferChangedSignal = False
                 return
         # Ignore the request if not found
         return
@@ -2038,7 +2040,9 @@ class TextEditor( ScintillaWrapper ):
 
         line = bpoint.getLineNumber()
         if self.markersAtLine( line - 1 ) & self.__bpointMarginMask == 0:
+            self.ignoreBufferChangedSignal = True
             handle = self.markerAdd( line - 1, marker )
+            self.ignoreBufferChangedSignal = False
             self.__breakpoints[ handle ] = bpoint
         return
 
@@ -2049,7 +2053,9 @@ class TextEditor( ScintillaWrapper ):
             bps = []    # list of breakpoints
             for handle, bpoint in self.__breakpoints.items():
                 line = self.markerLine( handle ) + 1
+                self.ignoreBufferChangedSignal = True
                 self.markerDeleteHandle( handle )
+                self.ignoreBufferChangedSignal = False
 
                 breakable = self.parent().isLineBreakable( line, True, True )
                 if not breakable:
