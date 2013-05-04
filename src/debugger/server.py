@@ -43,7 +43,9 @@ from client.protocol_cdm_dbg import ( EOT, RequestStep, RequestStepOver, Request
                                       ResponseVariable, RequestExec, RequestEval,
                                       RequestBreak, ResponseException, RequestForkTo,
                                       ResponseForkTo, RequestStack, ResponseSyntax,
-                                      ResponseExit )
+                                      ResponseExit, PassiveStartup, RequestBreakEnable,
+                                      RequestBreakIgnore, ResponseClearBreak,
+                                      ResponseBPConditionError )
 
 from breakpointmodel import BreakPointModel
 from watchpointmodel import WatchPointModel
@@ -85,6 +87,21 @@ class CodimensionDebugger( QObject ):
         self.__breakpointModel = BreakPointModel( self )
         self.__watchpointModel = WatchPointModel( self )
 
+        self.connect( self.__breakpointModel,
+                      SIGNAL( "rowsAboutToBeRemoved(const QModelIndex &, int, int)" ),
+                      self.__deleteBreakPoints )
+        self.connect( self.__breakpointModel,
+                      SIGNAL( "dataAboutToBeChanged(const QModelIndex &, const QModelIndex &)" ),
+                      self.__breakPointDataAboutToBeChanged )
+        self.connect( self.__breakpointModel,
+                      SIGNAL( "dataChanged(const QModelIndex &, const QModelIndex &)" ),
+                      self.__changeBreakPoints )
+        self.connect( self.__breakpointModel,
+                      SIGNAL( "rowsInserted(const QModelIndex &, int, int)" ),
+                      self.__addBreakPoints )
+        self.connect( self,
+                      SIGNAL( "ClientClearBreak" ),
+                      self.__clientClearBreakPoint )
         return
 
     def getBreakPointModel( self ):
@@ -386,6 +403,23 @@ class CodimensionDebugger( QObject ):
                     self.__askForkTo()
                     continue
 
+                if resp == PassiveStartup:
+                    self.__sendBreakpoints()
+                    self.__sendWatchpoints()
+                    continue
+
+                if resp == ResponseClearBreak:
+                    fileName, line = line[ eoc : -1 ].split( ',' )
+                    line = int( line )
+                    self.emit( SIGNAL( 'ClientClearBreak' ), fileName, line )
+                    continue
+
+                if resp == ResponseBPConditionError:
+                    fileName, line = line[ eoc : -1 ].split( ',' )
+                    line = int( line )
+                    self.emit( SIGNAL( 'ClientBreakConditionError' ), fileName, line )
+                    continue
+
                 if resp == ResponseExit:
                     self.emit( SIGNAL( 'ClientFinished' ), line[ eoc : -1 ] )
                     break
@@ -485,6 +519,93 @@ class CodimensionDebugger( QObject ):
             self.__sendCommand( ResponseForkTo + 'parent\n' )
         else:
             self.__sendCommand( ResponseForkTo + 'child\n' )
+        return
+
+    def __sendBreakpoints( self ):
+        " Sends the breakpoints to the debugged program "
+        self.__addBreakPoints( QModelIndex(), 0,
+                               self.__breakpointModel.rowCount() - 1 )
+        return
+
+    def __addBreakPoints( self, parentIndex, start, end ):
+        " Adds breakpoints "
+        if self.__state in [ self.STATE_STOPPED,
+                             self.STATE_FINISHING,
+                             self.STATE_BRUTAL_FINISHING ]:
+            return
+
+        for row in xrange( start, end + 1 ):
+            index = self.__breakpointModel.index( row, 0, parentIndex )
+            bpoint = self.__breakpointModel.getBreakPointByIndex( index )
+            fileName = bpoint.getAbsoluteFileName()
+            line = bpoint.getLineNumber()
+            self.remoteBreakpoint( fileName, line, True,
+                                   bpoint.getCondition(),
+                                   bpoint.isTemporary() )
+            if not bpoint.isEnabled():
+                self.__remoteBreakpointEnable( fileName, line, False )
+            ignoreCount = bpoint.getIgnoreCount()
+            if ignoreCount > 0:
+                self.__remoteBreakpointIgnore( fileName, line,
+                                               ignoreCount )
+        return
+
+    def __deleteBreakPoints( self, parentIndex, start, end ):
+        " Deletes breakpoints "
+        if self.__state in [ self.STATE_STOPPED,
+                             self.STATE_FINISHING,
+                             self.STATE_BRUTAL_FINISHING ]:
+            return
+
+        for row in xrange( start, end + 1 ):
+            index = self.__breakpointModel.index( row, 0, parentIndex )
+            bpoint = self.__breakpointModel.getBreakPointByIndex( index )
+            fileName = bpoint.getAbsoluteFileName()
+            line = bpoint.getLineNumber()
+            self.remoteBreakpoint( fileName, line, False )
+        return
+
+    def __breakPointDataAboutToBeChanged( self, startIndex, endIndex ):
+        " Handles the dataAboutToBeChanged signal of the breakpoint model "
+        self.__deleteBreakPoints( QModelIndex(),
+                                  startIndex.row(), endIndex.row() )
+        return
+
+    def __changeBreakPoints( self, startIndex, endIndex ):
+        " Sets changed breakpoints "
+        self.__addBreakPoints( QModelIndex(), startIndex.row(), endIndex.row() )
+        return
+
+
+    def __sendWatchpoints( self ):
+        " Sends the watchpoints to the debugged program "
+        return
+
+    def __remoteBreakpointEnable( self, fileName, line, enable ):
+        " Sends the breakpoint enability "
+        if enable:
+            enable = 1
+        else:
+            enable = 0
+        self.__sendCommand( RequestBreakEnable + fileName + ',' +
+                            str( line ) + ',' + str( enable ) + '\n' )
+        return
+
+    def __remoteBreakpointIgnore( self, fileName, line, ignoreCount ):
+        " Sends the breakpoint ignore count "
+        self.__sendCommand( RequestBreakIgnore + fileName + ',' +
+                            str( line ) + ',' + str( ignoreCount ) + '\n' )
+        return
+
+    def __clientClearBreakPoint( self, fileName, line ):
+        " Handles the clientClearBreak signal "
+        if self.__state in [ self.STATE_STOPPED,
+                             self.STATE_FINISHING,
+                             self.STATE_BRUTAL_FINISHING ]:
+            return
+
+        index = self.__breakpointModel.getBreakPointIndex( fileName, line )
+        self.__breakpointModel.deleteBreakPointByIndex( index )
         return
 
     def remoteStep( self ):
