@@ -121,56 +121,25 @@ class BreakPointView( QTreeView ):
         return
 
     def __createPopupMenus( self ):
-        """
-        Private method to generate the popup menus.
-        """
+        " Generate the popup menu "
         self.menu = QMenu()
-        self.menu.addAction(self.trUtf8("Add"), self.__addBreak)
-        self.menu.addAction(self.trUtf8("Edit..."), self.__editBreak)
+        self.menu.addAction( "Add", self.__addBreak )
+        self.menu.addAction( "Edit...", self.__editBreak )
         self.menu.addSeparator()
-        self.menu.addAction(self.trUtf8("Enable"), self.__enableBreak)
-        self.menu.addAction(self.trUtf8("Enable all"), self.__enableAllBreaks)
+        self.menu.addAction( "Enable", self.__enableBreak )
+        self.menu.addAction( "Enable all", self.__enableAllBreaks )
         self.menu.addSeparator()
-        self.menu.addAction(self.trUtf8("Disable"), self.__disableBreak)
-        self.menu.addAction(self.trUtf8("Disable all"), self.__disableAllBreaks)
+        self.menu.addAction( "Disable", self.__disableBreak )
+        self.menu.addAction( "Disable all", self.__disableAllBreaks )
         self.menu.addSeparator()
-        self.menu.addAction(self.trUtf8("Delete"), self.__deleteBreak)
-        self.menu.addAction(self.trUtf8("Delete all"), self.__deleteAllBreaks)
+        self.menu.addAction( "Delete", self.__deleteBreak )
+        self.menu.addAction( "Delete all", self.__deleteAllBreaks )
         self.menu.addSeparator()
-        self.menu.addAction(self.trUtf8("Goto"), self.__showSource)
-
-        self.backMenuActions = {}
-        self.backMenu = QMenu()
-        self.backMenu.addAction(self.trUtf8("Add"), self.__addBreak)
-        self.backMenuActions["EnableAll"] = \
-            self.backMenu.addAction(self.trUtf8("Enable all"), self.__enableAllBreaks)
-        self.backMenuActions["DisableAll"] = \
-            self.backMenu.addAction(self.trUtf8("Disable all"), self.__disableAllBreaks)
-        self.backMenuActions["DeleteAll"] = \
-            self.backMenu.addAction(self.trUtf8("Delete all"), self.__deleteAllBreaks)
-        self.connect(self.backMenu, SIGNAL('aboutToShow()'), self.__showBackMenu)
-
-        self.multiMenu = QMenu()
-        self.multiMenu.addAction(self.trUtf8("Add"), self.__addBreak)
-        self.multiMenu.addSeparator()
-        self.multiMenu.addAction(self.trUtf8("Enable selected"),
-            self.__enableSelectedBreaks)
-        self.multiMenu.addAction(self.trUtf8("Enable all"), self.__enableAllBreaks)
-        self.multiMenu.addSeparator()
-        self.multiMenu.addAction(self.trUtf8("Disable selected"),
-            self.__disableSelectedBreaks)
-        self.multiMenu.addAction(self.trUtf8("Disable all"), self.__disableAllBreaks)
-        self.multiMenu.addSeparator()
-        self.multiMenu.addAction(self.trUtf8("Delete selected"),
-            self.__deleteSelectedBreaks)
-        self.multiMenu.addAction(self.trUtf8("Delete all"), self.__deleteAllBreaks)
+        self.menu.addAction( "Jump to code", self.__showSource )
+        return
 
     def __showContextMenu( self, coord ):
-        """
-        Private slot to show the context menu.
-
-        @param coord the position of the mouse pointer (QPoint)
-        """
+        " Shows the context menu "
         cnt = self.__getSelectedItemsCount()
         if cnt <= 1:
             index = self.indexAt(coord)
@@ -178,17 +147,11 @@ class BreakPointView( QTreeView ):
                 cnt = 1
                 self.__setRowSelected(index)
         coord = self.mapToGlobal(coord)
-        if cnt > 1:
-            self.multiMenu.popup(coord)
-        elif cnt == 1:
+        if cnt == 1:
             self.menu.popup(coord)
-        else:
-            self.backMenu.popup(coord)
 
     def __addBreak( self ):
-        """
-        Private slot to handle the add breakpoint context menu entry.
-        """
+        " Handles the add breakpoint context menu entry "
         dlg = EditBreakpointDialog((self.fnHistory[0], None), None,
             self.condHistory, self, modal = 1, addMode = 1,
             filenameHistory = self.fnHistory)
@@ -340,19 +303,6 @@ class BreakPointView( QTreeView ):
             self.__clearSelection()
             self.__setRowSelected( index, True )
         return
-
-    def __showBackMenu(self):
-        """
-        Private slot to handle the aboutToShow signal of the background menu.
-        """
-        if self.model().rowCount() == 0:
-            self.backMenuActions["EnableAll"].setEnabled(False)
-            self.backMenuActions["DisableAll"].setEnabled(False)
-            self.backMenuActions["DeleteAll"].setEnabled(False)
-        else:
-            self.backMenuActions["EnableAll"].setEnabled(True)
-            self.backMenuActions["DisableAll"].setEnabled(True)
-            self.backMenuActions["DeleteAll"].setEnabled(True)
 
     def __getSelectedItemsCount( self ):
         " Provides the count of items selected "

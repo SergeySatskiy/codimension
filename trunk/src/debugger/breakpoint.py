@@ -29,7 +29,7 @@ from utils.globals import GlobalData
 class Breakpoint:
     " Represents a single breakpoint "
 
-    def __init__( self, fileName = None, lineNumber = None, condition = None,
+    def __init__( self, fileName = None, lineNumber = None, condition = "",
                         temporary = False, enabled = True, ignoreCount = 0 ):
 
         if fileName is None:
@@ -148,7 +148,7 @@ class Breakpoint:
                "Enabled: " + str( self.__enabled ) + "\n" \
                "Temporary: " + str( self.__temporary ) + "\n" \
                "Ignore count: " + str( self.__ignoreCount ) + "\n" \
-               "Condition: " + str( self.__condition )
+               "Condition: " + self.__condition
 
     def serialize( self ):
         " Serializes the breakpoint to a string "
