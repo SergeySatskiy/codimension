@@ -98,7 +98,7 @@ class BreakPointView( QTreeView ):
                            self.header().sortIndicatorOrder() )
         return
 
-    def __toSourceIndex( self, index ):
+    def toSourceIndex( self, index ):
         " Converts an index to a source index "
         return self.sortingModel.mapToSource( index )
 
@@ -123,7 +123,6 @@ class BreakPointView( QTreeView ):
     def __createPopupMenus( self ):
         " Generate the popup menu "
         self.menu = QMenu()
-        self.menu.addAction( "Add", self.__addBreak )
         self.menu.addAction( "Edit...", self.__editBreak )
         self.menu.addSeparator()
         self.menu.addAction( "Enable", self.__enableBreak )
@@ -150,22 +149,30 @@ class BreakPointView( QTreeView ):
         if cnt == 1:
             self.menu.popup(coord)
 
-    def __addBreak( self ):
-        " Handles the add breakpoint context menu entry "
-        dlg = EditBreakpointDialog((self.fnHistory[0], None), None,
-            self.condHistory, self, modal = 1, addMode = 1,
-            filenameHistory = self.fnHistory)
-        if dlg.exec_() == QDialog.Accepted:
-            fn, line, cond, temp, enabled, count = dlg.getAddData()
-
-            self.__model.addBreakPoint( fn, line, (unicode(cond), temp, enabled, count))
-            self.__resizeColumns()
-            self.__resort()
 
     def __doubleClicked( self, index ):
         " Handles the double clicked signal "
-        if index.isValid():
-            self.__editBreakpoint( index )
+        if not index.isValid():
+            return
+
+        sindex = self.toSourceIndex( index )
+        if not sindex.isValid():
+            return
+
+        # Jump to the code
+        bpoint = self.__model.getBreakPointByIndex( sindex )
+        fileName = bpoint.getAbsoluteFileName()
+        line = bpoint.getLineNumber()
+        self.jumpToCode( fileName, line )
+        return
+
+    def jumpToCode( self, fileName, line ):
+        " Jumps to the source code "
+        editorsManager = GlobalData().mainWindow.editorsManager()
+        editorsManager.openFile( fileName, line )
+        editor = editorsManager.currentWidget().getEditor()
+        editor.gotoLine( line )
+        editorsManager.currentWidget().setFocus()
         return
 
     def __editBreak( self ):
@@ -177,7 +184,7 @@ class BreakPointView( QTreeView ):
 
     def __editBreakpoint( self, index ):
         " Edits a breakpoint "
-        sindex = self.__toSourceIndex( index )
+        sindex = self.toSourceIndex( index )
         if sindex.isValid():
             bp = self.__model.getBreakPointByIndex( sindex )
             if not bp:
@@ -198,7 +205,7 @@ class BreakPointView( QTreeView ):
 
     def __setBpEnabled( self, index, enabled ):
         " Sets the enabled status of a breakpoint "
-        sindex = self.__toSourceIndex( index )
+        sindex = self.toSourceIndex( index )
         if sindex.isValid():
             self.__model.setBreakPointEnabledByIndex( sindex, enabled )
         return
@@ -260,7 +267,7 @@ class BreakPointView( QTreeView ):
     def __deleteBreak( self ):
         " Handles the delete breakpoint context menu entry "
         index = self.currentIndex()
-        sindex = self.__toSourceIndex( index )
+        sindex = self.toSourceIndex( index )
         if sindex.isValid():
             self.__model.deleteBreakPointByIndex( sindex )
         return
@@ -274,7 +281,7 @@ class BreakPointView( QTreeView ):
         " Handles the delete selected breakpoints context menu entry "
         idxList = []
         for index in self.selectedIndexes():
-            sindex = self.__toSourceIndex( index )
+            sindex = self.toSourceIndex( index )
             if sindex.isValid() and index.column() == 0:
                 idxList.append( sindex )
         self.__model.deleteBreakPoints( idxList )
@@ -283,7 +290,7 @@ class BreakPointView( QTreeView ):
     def __showSource( self ):
         " Handles the goto context menu entry "
         index = self.currentIndex()
-        sindex = self.__toSourceIndex( index )
+        sindex = self.toSourceIndex( index )
         bp = self.__model.getBreakPointByIndex( sindex )
         if not bp:
             return
@@ -310,6 +317,16 @@ class BreakPointView( QTreeView ):
         # column count is 1 greater than selectable
         return count
 
+    def selectionChanged( self, selected, deselected ):
+        " The slot is called when the selection has changed "
+        if selected.indexes():
+            self.emit( SIGNAL( 'selectionChanged' ),
+                       selected.indexes()[ 0 ] )
+        else:
+            self.emit( SIGNAL( 'selectionChanged' ), None )
+        QTreeView.selectionChanged( self, selected, deselected )
+        return
+
 
 
 class BreakPointViewer( QWidget ):
@@ -319,26 +336,18 @@ class BreakPointViewer( QWidget ):
         QWidget.__init__( self, parent )
 
         self.__currentItem = None
-
-        self.__createPopupMenu()
         self.__createLayout( bpointsModel )
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
+        self.connect( self.__bpointsList,
+                      SIGNAL( "selectionChanged" ),
+                      self.__onSelectionChanged )
         return
 
     def setFocus( self ):
         " Sets the widget focus "
         self.__bpointsList.setFocus()
-        return
-
-    def __createPopupMenu( self ):
-        " Creates the popup menu "
-        #self.__excptMenu = QMenu()
-        #self.__addToIgnoreMenuItem = self.__excptMenu.addAction(
-        #            "Add to ignore list", self.__onAddToIgnore )
-        #self.__jumpToCodeMenuItem = self.__excptMenu.addAction(
-        #            "Jump to code", self.__onJumpToCode )
         return
 
     def __createLayout( self, bpointsModel ):
@@ -372,8 +381,17 @@ class BreakPointViewer( QWidget ):
 
         self.__bpointsList = BreakPointView( self, bpointsModel )
 
+        self.__editButton = QToolButton()
+        self.__editButton.setIcon( PixmapCache().getIcon( 'bpprops.png' ) )
+        self.__editButton.setFixedSize( 24, 24 )
+        self.__editButton.setToolTip( "Edit breakpoint properties" )
+        self.__editButton.setFocusPolicy( Qt.NoFocus )
+        self.__editButton.setEnabled( False )
+        self.connect( self.__editButton, SIGNAL( 'clicked()' ),
+                      self.__onEdit )
+
         self.__enableButton = QToolButton()
-        self.__enableButton.setIcon( PixmapCache().getIcon( 'add.png' ) )
+        self.__enableButton.setIcon( PixmapCache().getIcon( 'bpenable.png' ) )
         self.__enableButton.setFixedSize( 24, 24 )
         self.__enableButton.setToolTip( "Enable/disable the breakpoint" )
         self.__enableButton.setFocusPolicy( Qt.NoFocus )
@@ -395,13 +413,10 @@ class BreakPointViewer( QWidget ):
                       self.__onJumpToCode )
 
         toolbarLayout = QHBoxLayout()
+        toolbarLayout.addWidget( self.__editButton )
         toolbarLayout.addWidget( self.__enableButton )
         toolbarLayout.addSpacerItem( expandingSpacer )
         toolbarLayout.addWidget( self.__jumpToCodeButton )
-
-        self.connect( self.__bpointsList,
-                      SIGNAL( "itemSelectionChanged()" ),
-                      self.__onSelectionChanged )
 
         verticalLayout.addWidget( self.headerFrame )
         verticalLayout.addLayout( toolbarLayout )
@@ -414,22 +429,6 @@ class BreakPointViewer( QWidget ):
         self.__updateBreakpointsLabel()
         self.__jumpToCodeButton.setEnabled( False )
         self.__currentItem = None
-        return
-
-    def __onJumpToCode( self ):
-        " Jumps to the corresponding source code line "
-        return
-        if self.__currentItem is not None:
-            if self.__currentItem.getType() == STACK_FRAME_ITEM:
-                fileName = self.__currentItem.getFileName()
-                if '<' not in fileName and '>' not in fileName:
-                    lineNumber = self.__currentItem.getLineNumber()
-
-                    editorsManager = GlobalData().mainWindow.editorsManager()
-                    editorsManager.openFile( fileName, lineNumber )
-                    editor = editorsManager.currentWidget().getEditor()
-                    editor.gotoLine( lineNumber )
-                    editorsManager.currentWidget().setFocus()
         return
 
     def __updateBreakpointsLabel( self ):
@@ -456,34 +455,41 @@ class BreakPointViewer( QWidget ):
             self.clear()
         return
 
-    def __onSelectionChanged( self ):
+    def __onSelectionChanged( self, index ):
         " Triggered when the current item is changed "
-        return
-        selected = list( self.__exceptionsList.selectedItems() )
-        if selected:
-            self.__currentItem = selected[ 0 ]
-            if self.__currentItem.getType() == STACK_FRAME_ITEM:
-                fileName = self.__currentItem.getFileName()
-                if '<' in fileName or '>' in fileName:
-                    self.__jumpToCodeButton.setEnabled( False )
-                else:
-                    self.__jumpToCodeButton.setEnabled( True )
-                self.__addToIgnoreButton.setEnabled( False )
-            else:
-                self.__jumpToCodeButton.setEnabled( False )
-                excType = str( self.__currentItem.getExceptionType() )
-                if self.__ignoredExceptionsViewer.isIgnored( excType ) or \
-                   " " in excType or excType.startswith( "unhandled" ):
-                    self.__addToIgnoreButton.setEnabled( False )
-                else:
-                    self.__addToIgnoreButton.setEnabled( True )
-        else:
+        if index is None:
             self.__currentItem = None
-            self.__addToIgnoreButton.setEnabled( False )
+        else:
+            srcModel = self.__bpointsList.model().sourceModel()
+            sindex = self.__bpointsList.toSourceIndex( index )
+            self.__currentItem = srcModel.getBreakPointByIndex( sindex )
+        self.__updateButtons()
+        return
+
+    def __updateButtons( self ):
+        " Updates the buttons status "
+        if self.__currentItem is None:
+            self.__editButton.setEnabled( False )
+            self.__enableButton.setEnabled( False )
             self.__jumpToCodeButton.setEnabled( False )
+        else:
+            self.__editButton.setEnabled( True )
+            self.__enableButton.setEnabled( True )
+            self.__jumpToCodeButton.setEnabled( True )
         return
 
     def __onEnableDisable( self ):
         " Triggered when a breakpoint should be enabled/disabled "
         return
 
+    def __onEdit( self ):
+        " Triggered when a breakpoint should be edited "
+        return
+
+    def __onJumpToCode( self ):
+        " Triggered when should jump to source "
+        if self.__currentItem is None:
+            return
+        self.__bpointsList.jumpToCode( self.__currentItem.getAbsoluteFileName(),
+                                       self.__currentItem.getLineNumber() )
+        return
