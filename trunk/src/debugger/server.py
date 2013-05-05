@@ -27,7 +27,7 @@ import logging
 import errno
 import time
 from subprocess import Popen
-from PyQt4.QtCore import SIGNAL, QTimer, QObject, Qt, QTextCodec, QString
+from PyQt4.QtCore import SIGNAL, QTimer, QObject, Qt, QTextCodec, QString, QModelIndex
 from PyQt4.QtGui import QApplication, QCursor, QInputDialog
 from PyQt4.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
 
