@@ -23,7 +23,7 @@
 " Break points viewer "
 
 
-from PyQt4.QtCore import Qt, SIGNAL, QStringList
+from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeView, QToolButton,
                           QHeaderView, QVBoxLayout, QSortFilterProxyModel,
                           QLabel, QWidget, QAbstractItemView, QMenu,
@@ -33,6 +33,7 @@ from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
+from editbreakpoint import BreakpointEditDialog
 
 
 class BreakPointView( QTreeView ):
@@ -77,10 +78,10 @@ class BreakPointView( QTreeView ):
         header.setClickable( True )
 
         self.setSortingEnabled( True )
-        self.__layoutDisplay()
+        self.layoutDisplay()
         return
 
-    def __layoutDisplay( self ):
+    def layoutDisplay( self ):
         " Performs the layout operation "
         self.__resizeColumns()
         self.__resort()
@@ -123,32 +124,61 @@ class BreakPointView( QTreeView ):
     def __createPopupMenus( self ):
         " Generate the popup menu "
         self.menu = QMenu()
-        self.menu.addAction( "Edit...", self.__editBreak )
+        self.__editAct = self.menu.addAction(
+                                PixmapCache().getIcon( 'bpprops.png' ),
+                                "Edit...", self.__editBreak )
         self.menu.addSeparator()
-        self.menu.addAction( "Enable", self.__enableBreak )
-        self.menu.addAction( "Enable all", self.__enableAllBreaks )
+        self.__enableAct = self.menu.addAction(
+                                PixmapCache().getIcon( 'bpenable.png' ),
+                                "Enable", self.enableBreak )
+        self.__enableAllAct = self.menu.addAction(
+                                PixmapCache().getIcon( 'bpenable.png' ),
+                                "Enable all", self.enableAllBreaks )
         self.menu.addSeparator()
-        self.menu.addAction( "Disable", self.__disableBreak )
-        self.menu.addAction( "Disable all", self.__disableAllBreaks )
+        self.__disableAct = self.menu.addAction(
+                                PixmapCache().getIcon( 'bpdisable.png' ),
+                                "Disable", self.disableBreak )
+        self.__disableAllAct = self.menu.addAction(
+                                PixmapCache().getIcon( 'bpdisable.png' ),
+                                "Disable all", self.disableAllBreaks )
         self.menu.addSeparator()
-        self.menu.addAction( "Delete", self.__deleteBreak )
-        self.menu.addAction( "Delete all", self.__deleteAllBreaks )
+        self.__delAct = self.menu.addAction(
+                                PixmapCache().getIcon( 'bpdel.png' ),
+                                "Delete", self.deleteBreak )
+        self.__delAllAct = self.menu.addAction(
+                                PixmapCache().getIcon( 'bpdelall.png' ),
+                                "Delete all", self.deleteAllBreaks )
         self.menu.addSeparator()
-        self.menu.addAction( "Jump to code", self.__showSource )
+        self.__jumpToCodeAct = self.menu.addAction(
+                                PixmapCache().getIcon( 'gotoline.png' ),
+                                "Jump to code", self.__showSource )
         return
 
     def __showContextMenu( self, coord ):
         " Shows the context menu "
-        cnt = self.__getSelectedItemsCount()
-        if cnt <= 1:
-            index = self.indexAt(coord)
-            if index.isValid():
-                cnt = 1
-                self.__setRowSelected(index)
-        coord = self.mapToGlobal(coord)
-        if cnt == 1:
-            self.menu.popup(coord)
+        index = self.currentIndex()
+        if not index.isValid():
+            return
+        sindex = self.toSourceIndex( index )
+        if not sindex.isValid():
+            return
+        bp = self.__model.getBreakPointByIndex( sindex )
+        if not bp:
+            return
 
+        enableCount, disableCount = self.__model.getCounts()
+
+        self.__editAct.setEnabled( True )
+        self.__enableAct.setEnabled( not bp.isEnabled() )
+        self.__disableAct.setEnabled( bp.isEnabled() )
+        self.__jumpToCodeAct.setEnabled( True )
+        self.__delAct.setEnabled( True )
+        self.__enableAllAct.setEnabled( disableCount > 0 )
+        self.__disableAllAct.setEnabled( enableCount > 0 )
+        self.__delAllAct.setEnabled( enableCount + disableCount > 0 )
+
+        self.menu.popup( QCursor.pos() )
+        return
 
     def __doubleClicked( self, index ):
         " Handles the double clicked signal "
@@ -190,17 +220,13 @@ class BreakPointView( QTreeView ):
             if not bp:
                 return
 
-            fn, line, cond, temp, enabled, count = bp[ : 6 ]
-
-            dlg = EditBreakpointDialog((fn, line), (cond, temp, enabled, count),
-                self.condHistory, self, modal = True)
+            dlg = BreakpointEditDialog( bp )
             if dlg.exec_() == QDialog.Accepted:
-                cond, temp, enabled, count = dlg.getData()
-
-                self.__model.setBreakPointByIndex( sindex,
-                    fn, line, (unicode(cond), temp, enabled, count ) )
-                self.__resizeColumns()
-                self.__resort()
+                newBpoint = dlg.getData()
+                if newBpoint == bp:
+                    return
+                self.__model.setBreakPointByIndex( sindex, newBpoint )
+                self.layoutDisplay()
         return
 
     def __setBpEnabled( self, index, enabled ):
@@ -210,7 +236,7 @@ class BreakPointView( QTreeView ):
             self.__model.setBreakPointEnabledByIndex( sindex, enabled )
         return
 
-    def __enableBreak( self ):
+    def enableBreak( self ):
         " Handles the enable breakpoint context menu entry "
         index = self.currentIndex()
         self.__setBpEnabled( index, True )
@@ -218,7 +244,7 @@ class BreakPointView( QTreeView ):
         self.__resort()
         return
 
-    def __enableAllBreaks( self ):
+    def enableAllBreaks( self ):
         " Handles the enable all breakpoints context menu entry "
         index = self.model().index( 0, 0 )
         while index.isValid():
@@ -228,16 +254,7 @@ class BreakPointView( QTreeView ):
         self.__resort()
         return
 
-    def __enableSelectedBreaks( self ):
-        " Handles the enable selected breakpoints context menu entry "
-        for index in self.selectedIndexes():
-            if index.column() == 0:
-                self.__setBpEnabled( index, True )
-        self.__resizeColumns()
-        self.__resort()
-        return
-
-    def __disableBreak( self ):
+    def disableBreak( self ):
         " Handles the disable breakpoint context menu entry "
         index = self.currentIndex()
         self.__setBpEnabled( index, False )
@@ -245,7 +262,7 @@ class BreakPointView( QTreeView ):
         self.__resort()
         return
 
-    def __disableAllBreaks( self ):
+    def disableAllBreaks( self ):
         " Handles the disable all breakpoints context menu entry "
         index = self.model().index( 0, 0 )
         while index.isValid():
@@ -255,16 +272,7 @@ class BreakPointView( QTreeView ):
         self.__resort()
         return
 
-    def __disableSelectedBreaks( self ):
-        " Handles the disable selected breakpoints context menu entry "
-        for index in self.selectedIndexes():
-            if index.column() == 0:
-                self.__setBpEnabled( index, False )
-        self.__resizeColumns()
-        self.__resort()
-        return
-
-    def __deleteBreak( self ):
+    def deleteBreak( self ):
         " Handles the delete breakpoint context menu entry "
         index = self.currentIndex()
         sindex = self.toSourceIndex( index )
@@ -272,31 +280,15 @@ class BreakPointView( QTreeView ):
             self.__model.deleteBreakPointByIndex( sindex )
         return
 
-    def __deleteAllBreaks( self ):
+    def deleteAllBreaks( self ):
         " Handles the delete all breakpoints context menu entry "
         self.__model.deleteAll()
-        return
-
-    def __deleteSelectedBreaks( self ):
-        " Handles the delete selected breakpoints context menu entry "
-        idxList = []
-        for index in self.selectedIndexes():
-            sindex = self.toSourceIndex( index )
-            if sindex.isValid() and index.column() == 0:
-                idxList.append( sindex )
-        self.__model.deleteBreakPoints( idxList )
         return
 
     def __showSource( self ):
         " Handles the goto context menu entry "
         index = self.currentIndex()
-        sindex = self.toSourceIndex( index )
-        bp = self.__model.getBreakPointByIndex( sindex )
-        if not bp:
-            return
-
-        fn, line = bp[ : 2 ]
-        self.emit( SIGNAL( "sourceFile" ), fn, line )
+        self.__doubleClicked( index )
         return
 
     def highlightBreakpoint( self, fn, lineno ):
@@ -343,6 +335,9 @@ class BreakPointViewer( QWidget ):
         self.connect( self.__bpointsList,
                       SIGNAL( "selectionChanged" ),
                       self.__onSelectionChanged )
+        self.connect( bpointsModel,
+                      SIGNAL( 'BreakpoinsChanged' ),
+                      self.__onModelChanged )
         return
 
     def setFocus( self ):
@@ -393,14 +388,42 @@ class BreakPointViewer( QWidget ):
         self.__enableButton = QToolButton()
         self.__enableButton.setIcon( PixmapCache().getIcon( 'bpenable.png' ) )
         self.__enableButton.setFixedSize( 24, 24 )
-        self.__enableButton.setToolTip( "Enable/disable the breakpoint" )
+        self.__enableButton.setToolTip( "Enable the breakpoint" )
         self.__enableButton.setFocusPolicy( Qt.NoFocus )
         self.__enableButton.setEnabled( False )
         self.connect( self.__enableButton,
                       SIGNAL( 'clicked()' ),
                       self.__onEnableDisable )
 
-        expandingSpacer = QSpacerItem( 10, 10, QSizePolicy.Expanding )
+        self.__disableButton = QToolButton()
+        self.__disableButton.setIcon( PixmapCache().getIcon( 'bpdisable.png' ) )
+        self.__disableButton.setFixedSize( 24, 24 )
+        self.__disableButton.setToolTip( "Disable the breakpoint" )
+        self.__disableButton.setFocusPolicy( Qt.NoFocus )
+        self.__disableButton.setEnabled( False )
+        self.connect( self.__disableButton,
+                      SIGNAL( 'clicked()' ),
+                      self.__onEnableDisable )
+
+        self.__enableAllButton = QToolButton()
+        self.__enableAllButton.setIcon( PixmapCache().getIcon( 'bpenable.png' ) )
+        self.__enableAllButton.setFixedSize( 24, 24 )
+        self.__enableAllButton.setToolTip( "Enable all the breakpoint" )
+        self.__enableAllButton.setFocusPolicy( Qt.NoFocus )
+        self.__enableAllButton.setEnabled( False )
+        self.connect( self.__enableAllButton,
+                      SIGNAL( 'clicked()' ),
+                      self.__onEnableAll )
+
+        self.__disableAllButton = QToolButton()
+        self.__disableAllButton.setIcon( PixmapCache().getIcon( 'bpdisable.png' ) )
+        self.__disableAllButton.setFixedSize( 24, 24 )
+        self.__disableAllButton.setToolTip( "Disable all the breakpoint" )
+        self.__disableAllButton.setFocusPolicy( Qt.NoFocus )
+        self.__disableAllButton.setEnabled( False )
+        self.connect( self.__disableAllButton,
+                      SIGNAL( 'clicked()' ),
+                      self.__onDisableAll )
 
         self.__jumpToCodeButton = QToolButton()
         self.__jumpToCodeButton.setIcon( PixmapCache().getIcon( 'gotoline.png' ) )
@@ -412,11 +435,46 @@ class BreakPointViewer( QWidget ):
                       SIGNAL( 'clicked()' ),
                       self.__onJumpToCode )
 
+        self.__delButton = QToolButton()
+        self.__delButton.setIcon( PixmapCache().getIcon( 'bpdel.png' ) )
+        self.__delButton.setFixedSize( 24, 24 )
+        self.__delButton.setToolTip( "Delete the breakpoint" )
+        self.__delButton.setFocusPolicy( Qt.NoFocus )
+        self.__delButton.setEnabled( False )
+        self.connect( self.__delButton,
+                      SIGNAL( 'clicked()' ),
+                      self.__onDel )
+
+        self.__delAllButton = QToolButton()
+        self.__delAllButton.setIcon( PixmapCache().getIcon( 'bpdelall.png' ) )
+        self.__delAllButton.setFixedSize( 24, 24 )
+        self.__delAllButton.setToolTip( "Delete all the breakpoint" )
+        self.__delAllButton.setFocusPolicy( Qt.NoFocus )
+        self.__delAllButton.setEnabled( False )
+        self.connect( self.__delAllButton,
+                      SIGNAL( 'clicked()' ),
+                      self.__onDelAll )
+
+
         toolbarLayout = QHBoxLayout()
         toolbarLayout.addWidget( self.__editButton )
+        fixedSpacer2 = QSpacerItem( 5, 5 )
+        toolbarLayout.addSpacerItem( fixedSpacer2 )
         toolbarLayout.addWidget( self.__enableButton )
-        toolbarLayout.addSpacerItem( expandingSpacer )
+        toolbarLayout.addWidget( self.__disableButton )
+        fixedSpacer3 = QSpacerItem( 5, 5 )
+        toolbarLayout.addSpacerItem( fixedSpacer3 )
+        toolbarLayout.addWidget( self.__enableAllButton )
+        toolbarLayout.addWidget( self.__disableAllButton )
+        expandingSpacer = QSpacerItem( 10, 10, QSizePolicy.Expanding )
+        fixedSpacer4 = QSpacerItem( 5, 5 )
+        toolbarLayout.addSpacerItem( fixedSpacer4 )
         toolbarLayout.addWidget( self.__jumpToCodeButton )
+        toolbarLayout.addSpacerItem( expandingSpacer )
+        toolbarLayout.addWidget( self.__delButton )
+        fixedSpacer5 = QSpacerItem( 5, 5 )
+        toolbarLayout.addSpacerItem( fixedSpacer5 )
+        toolbarLayout.addWidget( self.__delAllButton )
 
         verticalLayout.addWidget( self.headerFrame )
         verticalLayout.addLayout( toolbarLayout )
@@ -425,29 +483,22 @@ class BreakPointViewer( QWidget ):
 
     def clear( self ):
         " Clears the content "
-#        self.__bpointsList.clear()
+        self.__onDelAll()
         self.__updateBreakpointsLabel()
-        self.__jumpToCodeButton.setEnabled( False )
         self.__currentItem = None
         return
 
     def __updateBreakpointsLabel( self ):
         " Updates the breakpoints header label "
-        total = self.getTotalCount()
+        enableCount, \
+        disableCount = self.__bpointsList.model().sourceModel().getCounts()
+        total = enableCount + disableCount
         if total > 0:
             self.__breakpointLabel.setText( "Breakpoints (total: " +
                                        str( total ) + ")" )
         else:
             self.__breakpointLabel.setText( "Breakpoints" )
         return
-
-    def getTotalCount( self ):
-        " Provides the total number of exceptions "
-        count = 0
-        return count
-        for index in xrange( self.__exceptionsList.topLevelItemCount() ):
-            count += self.__exceptionsList.topLevelItem( index ).getCount()
-        return count
 
     def __onProjectChanged( self, what ):
         " Triggered when a project is changed "
@@ -468,22 +519,54 @@ class BreakPointViewer( QWidget ):
 
     def __updateButtons( self ):
         " Updates the buttons status "
+
+        enableCount, \
+        disableCount = self.__bpointsList.model().sourceModel().getCounts()
+
         if self.__currentItem is None:
             self.__editButton.setEnabled( False )
             self.__enableButton.setEnabled( False )
+            self.__disableButton.setEnabled( False )
             self.__jumpToCodeButton.setEnabled( False )
+            self.__delButton.setEnabled( False )
         else:
             self.__editButton.setEnabled( True )
-            self.__enableButton.setEnabled( True )
+            self.__enableButton.setEnabled( not self.__currentItem.isEnabled() )
+            self.__disableButton.setEnabled( self.__currentItem.isEnabled() )
             self.__jumpToCodeButton.setEnabled( True )
+            self.__delButton.setEnabled( True )
+
+        self.__enableAllButton.setEnabled( disableCount > 0 )
+        self.__disableAllButton.setEnabled( enableCount > 0 )
+        self.__delAllButton.setEnabled( enableCount + disableCount > 0 )
         return
 
     def __onEnableDisable( self ):
         " Triggered when a breakpoint should be enabled/disabled "
+        if self.__currentItem is None:
+            return
+
+        if self.__currentItem.isEnabled():
+            self.__bpointsList.disableBreak()
+        else:
+            self.__bpointsList.enableBreak()
         return
 
     def __onEdit( self ):
         " Triggered when a breakpoint should be edited "
+        if self.__currentItem is None:
+            return
+
+        dlg = BreakpointEditDialog( self.__currentItem )
+        if dlg.exec_() == QDialog.Accepted:
+            newBpoint = dlg.getData()
+            if newBpoint == self.__currentItem:
+                return
+            model = self.__bpointsList.model().sourceModel()
+            index = model.getBreakPointIndex( self.__currentItem.getAbsoluteFileName(),
+                                              self.__currentItem.getLineNumber() )
+            model.setBreakPointByIndex( index, newBpoint )
+            self.__bpointsList.layoutDisplay()
         return
 
     def __onJumpToCode( self ):
@@ -492,4 +575,33 @@ class BreakPointViewer( QWidget ):
             return
         self.__bpointsList.jumpToCode( self.__currentItem.getAbsoluteFileName(),
                                        self.__currentItem.getLineNumber() )
+        return
+
+    def __onEnableAll( self ):
+        " Triggered when all the breakpoints should be enabled "
+        self.__bpointsList.enableAllBreaks()
+        return
+
+    def __onDisableAll( self ):
+        " Triggered when all the breakpoints should be disabled "
+        self.__bpointsList.disableAllBreaks()
+        return
+
+    def __onDel( self ):
+        " Triggered when a breakpoint should be deleted "
+        if self.__currentItem is None:
+            return
+        self.__bpointsList.deleteBreak()
+        return
+
+    def __onDelAll( self ):
+        " Triggered when all the breakpoints should be deleted "
+        self.__bpointsList.deleteAllBreaks()
+        return
+
+    def __onModelChanged( self ):
+        " Triggered when something has changed in any of the breakpoints "
+        self.__updateBreakpointsLabel()
+        self.__updateButtons()
+        self.__bpointsList.layoutDisplay()
         return

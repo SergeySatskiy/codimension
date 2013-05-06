@@ -151,6 +151,7 @@ class BreakPointModel( QAbstractItemModel ):
         self.beginInsertRows( QModelIndex(), cnt, cnt )
         self.breakpoints.append( bpoint )
         self.endInsertRows()
+        self.emit( SIGNAL( 'BreakpoinsChanged' ) )
         return
 
     def setBreakPointByIndex( self, index, bpoint ):
@@ -170,6 +171,7 @@ class BreakPointModel( QAbstractItemModel ):
             self.emit(
                 SIGNAL( "dataChanged(const QModelIndex&, const QModelIndex&)" ),
                         index1, index2 )
+        self.emit( SIGNAL( 'BreakpoinsChanged' ) )
         return
 
     def updateLineNumberByIndex( self, index, newLineNumber ):
@@ -189,6 +191,7 @@ class BreakPointModel( QAbstractItemModel ):
             self.emit(
                 SIGNAL( "dataChanged(const QModelIndex&, const QModelIndex&)" ),
                         index1, index2 )
+        self.emit( SIGNAL( 'BreakpoinsChanged' ) )
         return
 
     def setBreakPointEnabledByIndex( self, index, enabled ):
@@ -200,15 +203,17 @@ class BreakPointModel( QAbstractItemModel ):
         """
         if index.isValid():
             row = index.row()
-            col = 4
-            index1 = self.createIndex( row, col, self.breakpoints[ row ] )
+            index1 = self.createIndex( row, 0, self.breakpoints[ row ] )
+            index2 = self.createIndex( row, self.__columnCount - 1,
+                                       self.breakpoints[ row ] )
             self.emit(
                 SIGNAL( "dataAboutToBeChanged(const QModelIndex &, const QModelIndex &)" ),
-                index1, index1 )
-            self.breakpoints[ row ][ col ] = enabled
+                index1, index2 )
+            self.breakpoints[ row ].setEnabled( enabled )
             self.emit(
                 SIGNAL( "dataChanged(const QModelIndex&, const QModelIndex&)" ),
-                        index1, index1 )
+                        index1, index2 )
+        self.emit( SIGNAL( 'BreakpoinsChanged' ) )
         return
 
     def deleteBreakPointByIndex( self, index ):
@@ -218,6 +223,7 @@ class BreakPointModel( QAbstractItemModel ):
             self.beginRemoveRows( QModelIndex(), row, row )
             del self.breakpoints[ row ]
             self.endRemoveRows()
+        self.emit( SIGNAL( 'BreakpoinsChanged' ) )
         return
 
     def deleteBreakPoints( self, idxList ):
@@ -235,6 +241,7 @@ class BreakPointModel( QAbstractItemModel ):
             self.beginRemoveRows( QModelIndex(), row, row )
             del self.breakpoints[ row ]
             self.endRemoveRows()
+        self.emit( SIGNAL( 'BreakpoinsChanged' ) )
         return
 
     def deleteAll( self ):
@@ -244,6 +251,7 @@ class BreakPointModel( QAbstractItemModel ):
                                   len( self.breakpoints ) - 1 )
             self.breakpoints = []
             self.endRemoveRows()
+        self.emit( SIGNAL( 'BreakpoinsChanged' ) )
         return
 
     def getBreakPointByIndex( self, index ):
@@ -280,3 +288,14 @@ class BreakPointModel( QAbstractItemModel ):
         if index.isValid():
             return self.breakpoints[ index.row() ].isTemporary()
         return False
+
+    def getCounts( self ):
+        " Provides enable/disable counters "
+        enableCount = 0
+        disableCount = 0
+        for bp in self.breakpoints:
+            if bp.isEnabled():
+                enableCount += 1
+            else:
+                disableCount += 1
+        return enableCount, disableCount
