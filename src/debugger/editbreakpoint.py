@@ -29,6 +29,7 @@ from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout,
                           QLabel, QGridLayout, QSpinBox, QCheckBox )
 from utils.pixmapcache import PixmapCache
 from ui.combobox import CDMComboBox
+from breakpoint import Breakpoint
 
 
 
@@ -39,15 +40,31 @@ class BreakpointEditDialog( QDialog ):
     def __init__( self, bpoint, parent = None ):
         QDialog.__init__( self, parent )
 
+        self.__origBpoint = bpoint
         self.setWindowTitle( "Edit breakpoint properties" )
         self.setWindowIcon( PixmapCache().getIcon( 'bpprops.png' ) )
         self.__createLayout( bpoint )
+        self.__OKButton.setEnabled( False )
+
+
+        self.connect( self.__conditionValue.lineEdit(),
+                      SIGNAL( 'textChanged(const QString &)' ),
+                      self.__changed )
+        self.connect( self.__ignoreValue,
+                      SIGNAL( 'valueChanged(int)' ),
+                      self.__changed )
+        self.connect( self.__enabled,
+                      SIGNAL( 'stateChanged(int)' ),
+                      self.__changed )
+        self.connect( self.__tempCheckbox,
+                      SIGNAL( 'stateChanged(int)' ),
+                      self.__changed )
         return
 
     def __createLayout( self, bpoint ):
         """ Creates the dialog layout """
 
-        self.resize( 400, 300 )
+        self.resize( 400, 150 )
         self.setSizeGripEnabled( True )
 
         # Top level layout
@@ -94,5 +111,20 @@ class BreakpointEditDialog( QDialog ):
         self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
         layout.addWidget( buttonBox )
 
-        self.__OKButton.setFocus()
+        self.__conditionValue.setFocus()
         return
+
+    def __changed( self, skipped = None ):
+        " Triggered when something has been changed "
+        self.__OKButton.setEnabled( True )
+        return
+
+    def getData( self ):
+        " Provides a new instance of a breakpoint "
+        newBPoint = Breakpoint( self.__origBpoint.getAbsoluteFileName(),
+                                self.__origBpoint.getLineNumber(),
+                                str( self.__conditionValue.lineEdit().text() ).strip(),
+                                self.__tempCheckbox.isChecked(),
+                                self.__enabled.isChecked(),
+                                self.__ignoreValue.value() )
+        return newBPoint

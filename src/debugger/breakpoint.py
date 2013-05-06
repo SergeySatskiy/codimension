@@ -55,7 +55,7 @@ class Breakpoint:
         self.__condition = condition
         self.__temporary = temporary
         self.__enabled = enabled
-        self.__ignoreCount = 0
+        self.__ignoreCount = ignoreCount
 
         return
 
@@ -127,6 +127,11 @@ class Breakpoint:
         " True if enabled "
         return self.__enabled
 
+    def setEnabled( self, enabled ):
+        " Sets the new value "
+        self.__enabled = enabled
+        return
+
     def getIgnoreCount( self ):
         " Provides the ignore count "
         return self.__ignoreCount
@@ -152,7 +157,7 @@ class Breakpoint:
 
     def serialize( self ):
         " Serializes the breakpoint to a string "
-        return ":::".join( [ str( self.__fileName ), str( self.lineNumber ),
+        return ":::".join( [ str( self.__fileName ), str( self.__lineNumber ),
                              str( self.__condition ), str( self.__temporary ),
                              str( self.__enabled ), str( self.__ignoreCount ) ] )
 
@@ -191,3 +196,11 @@ class Breakpoint:
 
         return self.isValid()
 
+    def __eq__( self, other ):
+        " True if equal "
+        return self.__fileName == other.__fileName and \
+               self.__lineNumber == other.__lineNumber and \
+               self.__condition == other.__condition and \
+               self.__temporary == other.__temporary and \
+               self.__enabled == other.__enabled and \
+               self.__ignoreCount == other.__ignoreCount
