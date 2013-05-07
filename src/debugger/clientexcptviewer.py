@@ -237,10 +237,21 @@ class ClientExceptionsViewer( QWidget ):
                       SIGNAL( 'clicked()' ),
                       self.__onJumpToCode )
 
+        self.__delAllButton = QToolButton()
+        self.__delAllButton.setIcon( PixmapCache().getIcon( 'trash.png' ) )
+        self.__delAllButton.setFixedSize( 24, 24 )
+        self.__delAllButton.setToolTip( "Delete all the client exceptions" )
+        self.__delAllButton.setFocusPolicy( Qt.NoFocus )
+        self.__delAllButton.setEnabled( False )
+        self.connect( self.__delAllButton,
+                      SIGNAL( 'clicked()' ),
+                      self.__onDelAll )
+
         toolbarLayout = QHBoxLayout()
         toolbarLayout.addWidget( self.__addToIgnoreButton )
-        toolbarLayout.addSpacerItem( expandingSpacer )
         toolbarLayout.addWidget( self.__jumpToCodeButton )
+        toolbarLayout.addSpacerItem( expandingSpacer )
+        toolbarLayout.addWidget( self.__delAllButton )
 
         self.connect( self.__exceptionsList,
                       SIGNAL( "itemDoubleClicked(QTreeWidgetItem*,int)" ),
@@ -267,7 +278,9 @@ class ClientExceptionsViewer( QWidget ):
         self.__updateExceptionsLabel()
         self.__addToIgnoreButton.setEnabled( False )
         self.__jumpToCodeButton.setEnabled( False )
+        self.__delAllButton.setEnabled( False )
         self.__currentItem = None
+        self.emit( SIGNAL( 'ClientExceptionsCleared' ) )
         return
 
     def __onExceptionDoubleClicked( self, item, column ):
@@ -316,6 +329,11 @@ class ClientExceptionsViewer( QWidget ):
                     editorsManager.currentWidget().setFocus()
         return
 
+    def __onDelAll( self ):
+        " Triggered when all the exceptions should be deleted "
+        self.clear()
+        return
+
     def addException( self, exceptionType, exceptionMessage,
                             stackTrace ):
         " Adds the exception to the view "
@@ -333,6 +351,7 @@ class ClientExceptionsViewer( QWidget ):
         self.__exceptionsList.clearSelection()
         self.__exceptionsList.setCurrentItem( item )
         self.__updateExceptionsLabel()
+        self.__delAllButton.setEnabled( True )
         return
 
     def __updateExceptionsLabel( self ):
