@@ -28,7 +28,7 @@ import errno
 import time
 from subprocess import Popen
 from PyQt4.QtCore import SIGNAL, QTimer, QObject, Qt, QTextCodec, QString, QModelIndex
-from PyQt4.QtGui import QApplication, QCursor, QInputDialog
+from PyQt4.QtGui import QApplication, QCursor, QInputDialog, QDialog
 from PyQt4.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
 
 from utils.globals import GlobalData
@@ -49,6 +49,7 @@ from client.protocol_cdm_dbg import ( EOT, RequestStep, RequestStepOver, Request
 
 from breakpointmodel import BreakPointModel
 from watchpointmodel import WatchPointModel
+from editbreakpoint import BreakpointEditDialog
 
 POLL_INTERVAL = 0.1
 HANDSHAKE_TIMEOUT = 15
@@ -102,6 +103,9 @@ class CodimensionDebugger( QObject ):
         self.connect( self,
                       SIGNAL( "ClientClearBreak" ),
                       self.__clientClearBreakPoint )
+        self.connect( self,
+                      SIGNAL( 'ClientBreakConditionError' ),
+                      self.__clientBreakConditionError )
         return
 
     def getBreakPointModel( self ):
@@ -301,7 +305,7 @@ class CodimensionDebugger( QObject ):
                 if not line:
                     continue
 
-            print "Server received: " + line
+            # print "Server received: " + line
 
             eoc = line.find( '<' ) + 1
 
@@ -422,8 +426,9 @@ class CodimensionDebugger( QObject ):
 
                 if resp == ResponseExit:
                     self.emit( SIGNAL( 'ClientFinished' ), line[ eoc : -1 ] )
-                    break
                     continue
+
+            print "Unhandled message received by the server: " + line
 
         return
 
@@ -605,7 +610,28 @@ class CodimensionDebugger( QObject ):
             return
 
         index = self.__breakpointModel.getBreakPointIndex( fileName, line )
-        self.__breakpointModel.deleteBreakPointByIndex( index )
+        if index.isValid():
+            self.__breakpointModel.deleteBreakPointByIndex( index )
+        return
+
+    def __clientBreakConditionError( self, fileName, line ):
+        " Handles the condition error "
+        logging.error( "The condition of the breakpoint at " +
+                       fileName + ":" + str( line ) +
+                       " contains a syntax error." )
+        index = self.__breakpointModel.getBreakPointIndex( fileName, line )
+        if not index.isValid():
+            return
+        bpoint = self.__breakpointModel.getBreakPointByIndex( index )
+        if not bpoint:
+            return
+
+        dlg = BreakpointEditDialog( bpoint )
+        if dlg.exec_() == QDialog.Accepted:
+            newBpoint = dlg.getData()
+            if newBpoint == bpoint:
+                return
+            self.__breakpointModel.setBreakPointByIndex( index, newBpoint )
         return
 
     def remoteStep( self ):
