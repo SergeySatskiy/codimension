@@ -661,6 +661,8 @@ class DebugBase( bdb.Bdb ):
                 frlist.reverse()
 
                 self.currentFrame = frlist[ 0 ]
+                self.currentFrameLocals = frlist[0].f_locals
+                # remember the locals because it is reinitialized when accessed
 
                 for fr in frlist:
                     filename = self._dbgClient.absPath( \
@@ -668,7 +670,7 @@ class DebugBase( bdb.Bdb ):
                     linenr = fr.f_lineno
 
                     fBasename = os.path.basename( filename )
-                    if fBasename.startswith( "DebugClient" ) or \
+                    if fBasename.endswith( "_cdm_dbg.py" ) or \
                        fBasename == "bdb.py":
                         break
 
