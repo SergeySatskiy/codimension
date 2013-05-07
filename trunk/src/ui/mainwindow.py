@@ -146,6 +146,9 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onDebuggerClientSyntaxError )
         self.connect( self.__debugger, SIGNAL( 'ClientFinished' ),
                       self.__onDebuggerClientFinished )
+        self.connect( self.__debugger.getBreakPointModel(),
+                      SIGNAL( 'BreakpoinsChanged' ),
+                      self.__onBreakpointsModelChanged )
 
         self.settings = settings
         self.__initialisation = True
@@ -3846,4 +3849,13 @@ class CodimensionMainWindow( QMainWindow ):
         self.__rightSideBar.setTabText( 2, "Exceptions" )
         return
 
+    def __onBreakpointsModelChanged( self ):
+        " Triggered when something is changed in the breakpoints list "
+        enabledCount, disabledCount = self.__debugger.getBreakPointModel().getCounts()
+        total = enabledCount + disabledCount
+        if total == 0:
+            self.__rightSideBar.setTabText( 3, "Breakpoints" )
+        else:
+            self.__rightSideBar.setTabText( 3, "Breakpoints (" + str( total ) + ")"
+        return
 
