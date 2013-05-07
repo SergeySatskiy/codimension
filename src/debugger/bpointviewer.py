@@ -127,19 +127,22 @@ class BreakPointView( QTreeView ):
         self.__editAct = self.menu.addAction(
                                 PixmapCache().getIcon( 'bpprops.png' ),
                                 "Edit...", self.__editBreak )
+        self.__jumpToCodeAct = self.menu.addAction(
+                                PixmapCache().getIcon( 'gotoline.png' ),
+                                "Jump to code", self.__showSource )
         self.menu.addSeparator()
         self.__enableAct = self.menu.addAction(
                                 PixmapCache().getIcon( 'bpenable.png' ),
                                 "Enable", self.enableBreak )
         self.__enableAllAct = self.menu.addAction(
-                                PixmapCache().getIcon( 'bpenable.png' ),
+                                PixmapCache().getIcon( 'bpenableall.png' ),
                                 "Enable all", self.enableAllBreaks )
         self.menu.addSeparator()
         self.__disableAct = self.menu.addAction(
                                 PixmapCache().getIcon( 'bpdisable.png' ),
                                 "Disable", self.disableBreak )
         self.__disableAllAct = self.menu.addAction(
-                                PixmapCache().getIcon( 'bpdisable.png' ),
+                                PixmapCache().getIcon( 'bpdisableall.png' ),
                                 "Disable all", self.disableAllBreaks )
         self.menu.addSeparator()
         self.__delAct = self.menu.addAction(
@@ -148,10 +151,6 @@ class BreakPointView( QTreeView ):
         self.__delAllAct = self.menu.addAction(
                                 PixmapCache().getIcon( 'bpdelall.png' ),
                                 "Delete all", self.deleteAllBreaks )
-        self.menu.addSeparator()
-        self.__jumpToCodeAct = self.menu.addAction(
-                                PixmapCache().getIcon( 'gotoline.png' ),
-                                "Jump to code", self.__showSource )
         return
 
     def __showContextMenu( self, coord ):
@@ -406,7 +405,7 @@ class BreakPointViewer( QWidget ):
                       self.__onEnableDisable )
 
         self.__enableAllButton = QToolButton()
-        self.__enableAllButton.setIcon( PixmapCache().getIcon( 'bpenable.png' ) )
+        self.__enableAllButton.setIcon( PixmapCache().getIcon( 'bpenableall.png' ) )
         self.__enableAllButton.setFixedSize( 24, 24 )
         self.__enableAllButton.setToolTip( "Enable all the breakpoint" )
         self.__enableAllButton.setFocusPolicy( Qt.NoFocus )
@@ -416,7 +415,7 @@ class BreakPointViewer( QWidget ):
                       self.__onEnableAll )
 
         self.__disableAllButton = QToolButton()
-        self.__disableAllButton.setIcon( PixmapCache().getIcon( 'bpdisable.png' ) )
+        self.__disableAllButton.setIcon( PixmapCache().getIcon( 'bpdisableall.png' ) )
         self.__disableAllButton.setFixedSize( 24, 24 )
         self.__disableAllButton.setToolTip( "Disable all the breakpoint" )
         self.__disableAllButton.setFocusPolicy( Qt.NoFocus )
@@ -458,18 +457,18 @@ class BreakPointViewer( QWidget ):
 
         toolbarLayout = QHBoxLayout()
         toolbarLayout.addWidget( self.__editButton )
+        toolbarLayout.addWidget( self.__jumpToCodeButton )
         fixedSpacer2 = QSpacerItem( 5, 5 )
         toolbarLayout.addSpacerItem( fixedSpacer2 )
         toolbarLayout.addWidget( self.__enableButton )
-        toolbarLayout.addWidget( self.__disableButton )
+        toolbarLayout.addWidget( self.__enableAllButton )
         fixedSpacer3 = QSpacerItem( 5, 5 )
         toolbarLayout.addSpacerItem( fixedSpacer3 )
-        toolbarLayout.addWidget( self.__enableAllButton )
+        toolbarLayout.addWidget( self.__disableButton )
         toolbarLayout.addWidget( self.__disableAllButton )
         expandingSpacer = QSpacerItem( 10, 10, QSizePolicy.Expanding )
         fixedSpacer4 = QSpacerItem( 5, 5 )
         toolbarLayout.addSpacerItem( fixedSpacer4 )
-        toolbarLayout.addWidget( self.__jumpToCodeButton )
         toolbarLayout.addSpacerItem( expandingSpacer )
         toolbarLayout.addWidget( self.__delButton )
         fixedSpacer5 = QSpacerItem( 5, 5 )
