@@ -37,6 +37,9 @@ class DebuggerExceptions( QWidget ):
         QWidget.__init__( self, parent )
 
         self.__createLayout()
+        self.connect( self.__clientExcptViewer,
+                      SIGNAL( 'ClientExceptionsCleared' ),
+                      self.__onClientExceptionsCleared )
         return
 
     def __createLayout( self ):
@@ -84,4 +87,9 @@ class DebuggerExceptions( QWidget ):
     def getTotalClientExceptionCount( self ):
         " Provides the total number of the client exceptions "
         return self.__clientExcptViewer.getTotalCount()
+
+    def __onClientExceptionsCleared( self ):
+        " Triggered when the user cleared exceptions "
+        self.emit( SIGNAL( 'ClientExceptionsCleared' ) )
+        return
 

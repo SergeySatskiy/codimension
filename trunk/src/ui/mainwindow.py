@@ -408,6 +408,9 @@ class CodimensionMainWindow( QMainWindow ):
         self.__debuggerExceptions = DebuggerExceptions()
         self.__rightSideBar.addTab( self.__debuggerExceptions,
                 PixmapCache().getIcon( '' ), 'Exceptions' )
+        self.connect( self.__debuggerExceptions,
+                      SIGNAL( 'ClientExceptionsCleared' ),
+                      self.__onClientExceptionsCleared )
 
         self.__debuggerBreakWatchPoints = DebuggerBreakWatchPoints( self,
                                                                     self.__debugger )
@@ -3837,4 +3840,10 @@ class CodimensionMainWindow( QMainWindow ):
     def getCurrentFrameNumber( self ):
         " Provides the current stack frame number "
         return self.__debuggerContext.getCurrentFrameNumber()
+
+    def __onClientExceptionsCleared( self ):
+        " Triggered when the user cleared the client exceptions "
+        self.__rightSideBar.setTabText( 2, "Exceptions" )
+        return
+
 
