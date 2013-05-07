@@ -3856,6 +3856,6 @@ class CodimensionMainWindow( QMainWindow ):
         if total == 0:
             self.__rightSideBar.setTabText( 3, "Breakpoints" )
         else:
-            self.__rightSideBar.setTabText( 3, "Breakpoints (" + str( total ) + ")"
+            self.__rightSideBar.setTabText( 3, "Breakpoints (" + str( total ) + ")" )
         return
 
