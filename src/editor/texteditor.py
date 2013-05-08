@@ -2074,8 +2074,14 @@ class TextEditor( ScintillaWrapper ):
             self.__inLinesChanged = False
         return
 
-
-
+    def restoreBreakpoints( self ):
+        " Restores the breakpoints "
+        self.markerDeleteAll( self.__bpointMarker )
+        self.markerDeleteAll( self.__tempbpointMarker )
+        self.markerDeleteAll( self.__disbpointMarker )
+        self.__addBreakPoints( QModelIndex(), 0,
+                               self.__debugger.getBreakPointModel().rowCount() - 1 )
+        return
 
 
 class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
@@ -2111,6 +2117,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     def readFile( self, fileName ):
         " Reads the text from a file "
         self.__editor.readFile( fileName )
+        self.setFileName( fileName )
+        self.__editor.restoreBreakpoints()
 
         # Memorize the modification date
         path = os.path.realpath( fileName )
@@ -2125,6 +2133,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             path = os.path.realpath( fileName )
             self.__diskModTime = os.path.getmtime( path )
             self.__diskSize = os.path.getsize( path )
+            self.setFileName( fileName )
+            self.__editor.restoreBreakpoints()
             return True
         return False
 

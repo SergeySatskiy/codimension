@@ -1101,7 +1101,6 @@ class EditorsManager( QTabWidget ):
             editor = newWidget.getEditor()
             newWidget.readFile( fileName )
 
-            newWidget.setFileName( fileName )
             editor.setModified( False )
             fileType = detectFileType( fileName )
 
@@ -1340,7 +1339,6 @@ class EditorsManager( QTabWidget ):
             # Failed to write, inform and exit
             return False
 
-        widget.setFileName( fileName )
         widget.getEditor().setModified( False )
         newType = detectFileType( fileName, True, True )
         if newType != oldType or newType == UnknownFileType:

@@ -22,7 +22,7 @@
 
 " Break points viewer "
 
-
+import logging
 from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeView, QToolButton,
                           QHeaderView, QVBoxLayout, QSortFilterProxyModel,
@@ -35,6 +35,8 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.project import CodimensionProject
 from editbreakpoint import BreakpointEditDialog
+from breakpoint import Breakpoint
+from bputils import getBreakpointLines
 
 
 class BreakPointView( QTreeView ):
@@ -504,8 +506,36 @@ class BreakPointViewer( QWidget ):
 
     def __onProjectChanged( self, what ):
         " Triggered when a project is changed "
-        if what == CodimensionProject.CompleteProject:
-            self.clear()
+        if what != CodimensionProject.CompleteProject:
+            return
+
+        self.clear()
+        model = self.__bpointsList.model().sourceModel()
+        project = GlobalData().project
+        if project.isLoaded():
+            bpoints = project.breakpoints
+        else:
+            bpoints = Settings().breakpoints
+
+        for bp in bpoints:
+            newBpoint = Breakpoint()
+            try:
+                if not newBpoint.deserialize( bp ):
+                    # Non valid
+                    continue
+            except:
+                continue
+            # Need to check if it still points to a breakable line
+            line = newBpoint.getLineNumber()
+            fileName = newBpoint.getAbsoluteFileName()
+            breakableLines = getBreakpointLines( fileName, None, True )
+            if breakableLines is not None and line in breakableLines:
+                model.addBreakpoint( newBpoint )
+            else:
+                logging.warning( "Breakpoint at " + fileName + ":" +
+                                 str( line ) + " does not point to a breakable "
+                                 "line anymore (the file was modified outside of the "
+                                 "IDE). The breakpoint is deleted." )
         return
 
     def __onProjectAboutToUnload( self ):
@@ -516,7 +546,7 @@ class BreakPointViewer( QWidget ):
         if project.isLoaded():
             project.setBreakpoints( model.serialize() )
         else:
-            Settings()[ "breakpoints" ] = model.serialize()
+            Settings().breakpoints = model.serialize()
         return
 
     def __onSelectionChanged( self, index ):
