@@ -32,6 +32,7 @@ from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeView, QToolButton,
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
+from utils.settings import Settings
 from utils.project import CodimensionProject
 from editbreakpoint import BreakpointEditDialog
 
@@ -331,6 +332,8 @@ class BreakPointViewer( QWidget ):
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
+        self.connect( GlobalData().project, SIGNAL( 'projectAboutToUnload' ),
+                      self.__onProjectAboutToUnload )
         self.connect( self.__bpointsList,
                       SIGNAL( "selectionChanged" ),
                       self.__onSelectionChanged )
@@ -503,6 +506,17 @@ class BreakPointViewer( QWidget ):
         " Triggered when a project is changed "
         if what == CodimensionProject.CompleteProject:
             self.clear()
+        return
+
+    def __onProjectAboutToUnload( self ):
+        " Triggered before the project is unloaded "
+        model = self.__bpointsList.model().sourceModel()
+
+        project = GlobalData().project
+        if project.isLoaded():
+            project.setBreakpoints( model.serialize() )
+        else:
+            Settings()[ "breakpoints" ] = model.serialize()
         return
 
     def __onSelectionChanged( self, index ):

@@ -299,3 +299,11 @@ class BreakPointModel( QAbstractItemModel ):
             else:
                 disableCount += 1
         return enableCount, disableCount
+
+    def serialize( self ):
+        " Provides a list of serialized breakpoints "
+        result = []
+        for bp in self.breakpoints:
+            result.append( bp.serialize() )
+        return result
+
