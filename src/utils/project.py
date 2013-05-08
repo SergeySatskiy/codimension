@@ -892,6 +892,7 @@ class CodimensionProject( QObject ):
 
     def unloadProject( self, emitSignal = True ):
         """ Unloads the current project if required """
+        self.emit( SIGNAL( 'projectAboutToUnload' ) )
         if self.isLoaded():
             self.serializeModinfoCache()
             self.__saveProjectBrowserExpandedDirs()
