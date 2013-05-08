@@ -828,14 +828,14 @@ class CodimensionProject( QObject ):
         return
 
     def __loadSectionFromFile( self, fileName, sectionName, itemName,
-                               storage, errMessageEntity ):
+                               errMessageEntity ):
         " Loads the given section from the given file "
         confFile = self.userProjectDir + fileName
         if not os.path.exists( confFile ):
             logging.info( "Cannot find " + errMessageEntity + " file. "
                           "Expected here: " + confFile )
             self.__formatOK = False
-            return
+            return []
 
         config = ConfigParser.ConfigParser()
         try:
@@ -846,31 +846,31 @@ class CodimensionProject( QObject ):
             self.__formatOK = False
             logging.warning( "Cannot read " + errMessageEntity + " file "
                              "from here: " + confFile )
-            return
+            return []
 
-        storage = self.__loadListSection( config, sectionName, itemName )
+        values = self.__loadListSection( config, sectionName, itemName )
         config = None
-        return
+        return values
 
     def __loadIgnoredExceptions( self ):
         " Loads the ignored exceptions list "
-        self.__loadSectionFromFile( "ignoredexcpt", "ignoredexcpt",
-                                    "excpttype", self.ignoredExcpt,
-                                    "ignored exceptions" )
+        self.ignoredExcpt = self.__loadSectionFromFile(
+                                    "ignoredexcpt", "ignoredexcpt",
+                                    "excpttype", "ignored exceptions" )
         return
 
     def __loadBreakpoints( self ):
         " Loads the project breakpoints "
-        self.__loadSectionFromFile( "breakpoints", "breakpoints",
-                                    "bpoint", self.breakpoints,
-                                    "breakpoints" )
+        self.breakpoints = self.__loadSectionFromFile(
+                                    "breakpoints", "breakpoints",
+                                    "bpoint", "breakpoints" )
         return
 
     def __loadWatchpoints( self ):
         " Loads the project watchpoints "
-        self.__loadSectionFromFile( "watchpoints", "watchpoints",
-                                    "wpoint", self.watchpoints,
-                                    "watchpoints" )
+        self.watchpoints = self.__loadSectionFromFile(
+                                    "watchpoints", "watchpoints",
+                                    "wpoint", "watchpoints" )
         return
 
     def __loadListSection( self, config, section, listPrefix ):
@@ -1195,7 +1195,7 @@ class CodimensionProject( QObject ):
 
     def addWatchpoint( self, wpointStr ):
         " Adds serialized watchpoint "
-        if wpointStrnot in self.watchpoints:
+        if wpointStr not in self.watchpoints:
             self.watchpoints.append( wpointStr )
             self.__saveWatchpoints()
         return
