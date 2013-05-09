@@ -243,7 +243,7 @@ class IgnoredExceptionsViewer( QWidget ):
         else:
             self.__excptLabel.setText( "Ignored exception types (total: " +
                                        str( count ) + ")" )
-        self.__delAllButton.setEnabled( count != 0 )
+        self.__removeAllButton.setEnabled( count != 0 )
         return
 
     def __onProjectChanged( self, what ):
