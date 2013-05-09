@@ -171,7 +171,7 @@ class IgnoredExceptionsViewer( QWidget ):
         addLayout.addWidget( self.__addButton )
 
         verticalLayout.addWidget( self.headerFrame )
-        verticalLayout.addWidget( toolbarLayout )
+        verticalLayout.addLayout( toolbarLayout )
         verticalLayout.addWidget( self.__exceptionsList )
         verticalLayout.addLayout( addLayout )
         return
