@@ -137,14 +137,32 @@ class IgnoredExceptionsViewer( QWidget ):
         self.connect( self.__addButton, SIGNAL( 'clicked()' ),
                       self.__onAddExceptionFilter )
 
+        expandingSpacer2 = QSpacerItem( 1, 1, QSizePolicy.Expanding )
         self.__removeButton = QToolButton()
-        self.__removeButton.setIcon( PixmapCache().getIcon( 'trash.png' ) )
+        self.__removeButton.setIcon( PixmapCache().getIcon( 'ignexcptdel.png' ) )
         self.__removeButton.setFixedSize( 24, 24 )
         self.__removeButton.setToolTip( "Remove from the ignored exception type list" )
         self.__removeButton.setFocusPolicy( Qt.NoFocus )
         self.__removeButton.setEnabled( False )
         self.connect( self.__removeButton, SIGNAL( 'clicked()' ),
                       self.__onRemoveFromIgnore )
+
+        fixedSpacer1 = QSpacerItem( 5, 5 )
+
+        self.__removeAllButton = QToolButton()
+        self.__removeAllButton.setIcon( PixmapCache().getIcon( 'ignexcptdelall.png' ) )
+        self.__removeAllButton.setFixedSize( 24, 24 )
+        self.__removeAllButton.setToolTip( "Remove all the ignored exception types" )
+        self.__removeAllButton.setFocusPolicy( Qt.NoFocus )
+        self.__removeAllButton.setEnabled( False )
+        self.connect( self.__removeAllButton, SIGNAL( 'clicked()' ),
+                      self.__onRemoveAllFromIgnore )
+
+        toolbarLayout = QHBoxLayout()
+        toolbarLayout.addSpacerItem( expandingSpacer2 )
+        toolbarLayout.addWidget( self.__removeButton )
+        toolbarLayout.addSpacerItem( fixedSpacer1 )
+        toolbarLayout.addWidget( self.__removeAllButton )
 
         addLayout = QHBoxLayout()
         addLayout.setContentsMargins( 1, 1, 1, 1 )
@@ -153,7 +171,7 @@ class IgnoredExceptionsViewer( QWidget ):
         addLayout.addWidget( self.__addButton )
 
         verticalLayout.addWidget( self.headerFrame )
-        verticalLayout.addWidget( self.__removeButton )
+        verticalLayout.addWidget( toolbarLayout )
         verticalLayout.addWidget( self.__exceptionsList )
         verticalLayout.addLayout( addLayout )
         return
@@ -225,6 +243,7 @@ class IgnoredExceptionsViewer( QWidget ):
         else:
             self.__excptLabel.setText( "Ignored exception types (total: " +
                                        str( count ) + ")" )
+        self.__delAllButton.setEnabled( count != 0 )
         return
 
     def __onProjectChanged( self, what ):
@@ -311,6 +330,11 @@ class IgnoredExceptionsViewer( QWidget ):
             Settings().deleteExceptionFilter( text )
         self.__ignored.remove( text )
         self.__updateTitle()
+        return
+
+    def __onRemoveAllFromIgnore( self ):
+        " Triggered when all the ignored exceptions should be deleted "
+        self.clear()
         return
 
     def isIgnored( self, exceptionType ):
