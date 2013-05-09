@@ -929,6 +929,18 @@ class CodimensionMainWindow( QMainWindow ):
                 PixmapCache().getIcon( 'filepython.png' ),
                 'Activate &outline tab' )
         self.__outlineBarAct.setData( QVariant( 'outline' ) )
+        self.__debugBarAct = self.__rightSideBarMenu.addAction(
+                PixmapCache().getIcon( '' ),
+                'Activate &debug tab' )
+        self.__debugBarAct.setData( QVariant( 'debug' ) )
+        self.__excptBarAct = self.__rightSideBarMenu.addAction(
+                PixmapCache().getIcon( '' ),
+                'Activate &exceptions tab' )
+        self.__excptBarAct.setData( QVariant( 'excpt' ) )
+        self.__bpointBarAct = self.__rightSideBarMenu.addAction(
+                PixmapCache().getIcon( '' ),
+                'Activate &breakpoints tab' )
+        self.__bpointBarAct.setData( QVariant( 'bpoint' ) )
         self.__rightSideBarMenu.addSeparator()
         self.__hideRightSideBarAct = self.__rightSideBarMenu.addAction(
                 PixmapCache().getIcon( "" ),
@@ -3194,6 +3206,18 @@ class CodimensionMainWindow( QMainWindow ):
             self.__rightSideBar.show()
             self.__rightSideBar.setCurrentWidget( self.__outlineViewer )
             self.__rightSideBar.raise_()
+        elif name == "debug":
+            self.__rightSideBar.show()
+            self.__rightSideBar.setCurrentWidget( self.__debuggerContext )
+            self.__rightSideBar.raise_()
+        elif name == "excpt":
+            self.__rightSideBar.show()
+            self.__rightSideBar.setCurrentWidget( self.__debuggerExceptions )
+            self.__rightSideBar.raise_()
+        elif name == "bpoint":
+            self.__rightSideBar.show()
+            self.__rightSideBar.setCurrentWidget( self.__debuggerBreakWatchPoints )
+            self.__rightSideBar.raise_()
         elif name == "log":
             self.__bottomSideBar.show()
             self.__bottomSideBar.setCurrentWidget( self.__logViewer )
@@ -3635,6 +3659,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.__zoomInAct.setShortcut( "Ctrl+=" )
         self.__zoomOutAct.setShortcut( "Ctrl+-" )
         self.__zoom11Act.setShortcut( "Ctrl+0" )
+
+        self.__debugBarAct.setEnabled( self.debugMode )
         return
 
     def __optionsAboutToShow( self ):
