@@ -1179,6 +1179,9 @@ class DebugClientBase( object ):
         @param scope 1 to report global variables, 0 for local variables (int)
         @param fltr the indices of variable types to be filtered (list of int)
         """
+        if self.currentThread is None:
+            return
+
         # The original version did not change the frame number for the global
         # scope. It had to be changed because the global scope could also be
         # different for different frames, e.g. __file__ for different files.
@@ -1223,6 +1226,9 @@ class DebugClientBase( object ):
         @param scope 1 to report global variables, 0 for local variables (int)
         @param fltr the indices of variable types to be filtered (list of int)
         """
+        if self.currentThread is None:
+            return
+
         f = self.currentThread.getCurrentFrame()
 
         while f is not None and frmnr > 0:
@@ -1442,12 +1448,15 @@ class DebugClientBase( object ):
             varlist.extend(vlist)
 
             if obj is not None and not formatSequences:
-                if unicode(repr(obj)).startswith('{'):
-                    varlist.append(('...', 'dict', "%d" % len(obj.keys())))
-                elif unicode(repr(obj)).startswith('['):
-                    varlist.append(('...', 'list', "%d" % len(obj)))
-                elif unicode(repr(obj)).startswith('('):
-                    varlist.append(('...', 'tuple', "%d" % len(obj)))
+                try:
+                    if unicode(repr(obj)).startswith('{'):
+                        varlist.append(('...', 'dict', "%d" % len(obj.keys())))
+                    elif unicode(repr(obj)).startswith('['):
+                        varlist.append(('...', 'list', "%d" % len(obj)))
+                    elif unicode(repr(obj)).startswith('('):
+                        varlist.append(('...', 'tuple', "%d" % len(obj)))
+                except:
+                    pass
 
         self.write('%s%s\n' % (ResponseVariable, unicode(varlist)))
 
@@ -1970,6 +1979,14 @@ class DebugClientBase( object ):
                     del args[0]
                 elif args[0] == '--no-encoding':
                     self.noencoding = True
+                    del args[0]
+                elif args[0] == '--fork-child':
+                    self.fork_auto = True
+                    self.fork_child = True
+                    del args[0]
+                elif args[0] == '--fork-parent':
+                    self.fork_auto = True
+                    self.fork_child = False
                     del args[0]
                 elif args[0] == '--':
                     del args[0]
