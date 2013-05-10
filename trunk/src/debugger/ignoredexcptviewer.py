@@ -61,6 +61,7 @@ class IgnoredExceptionsViewer( QWidget ):
         " Creates the popup menu "
         self.__excptMenu = QMenu()
         self.__removeMenuItem = self.__excptMenu.addAction(
+                    PixmapCache().getIcon( 'ignexcptdel.png' ),
                     "Remove from ignore list", self.__onRemoveFromIgnore )
         return
 
