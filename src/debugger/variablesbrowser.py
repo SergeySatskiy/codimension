@@ -30,6 +30,7 @@ from utils.encoding import toUnicode
 from variableitems import ( VariableItem, SpecialVariableItem,
                             ArrayElementVariableItem,
                             SpecialArrayElementVariableItem )
+from viewvariable import ViewVariableDialog
 
 
 NONPRINTABLE = QRegExp( r"""(\\x\d\d)+""" )
@@ -386,7 +387,25 @@ class VariablesBrowser( QTreeWidget ):
 
     def mouseDoubleClickEvent( self, mouseEvent ):
         item = self.itemAt( mouseEvent.pos() )
-        print "Double click detected"
+        childCount = item.childCount()
+        if childCount == 0:
+            # Show the dialog
+            if item.parent() is None:
+                nameLabel = "Name"
+            else:
+                parentType = item.parent().getType()
+                if 'List' in parentType:
+                    nameLabel = "Index"
+                elif 'Dictionary' in parentType:
+                    nameLabel = "Key"
+                else:
+                    nameLabel = "Name"
+            dlg = ViewVariableDialog( nameLabel, item.getName(), item.getType(),
+                                      item.getValue(), item.isGlobal() )
+            dlg.exec_()
+            return
+
+        QTreeWidget.mouseDoubleClickEvent( self, mouseEvent )
         return
 
     def __buildTreePath( self, item ):

@@ -26,45 +26,58 @@
 
 from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout,
-                          QLabel, QGridLayout, QSpinBox, QCheckBox,
-                          QTextEdit )
+                          QLabel, QGridLayout, QTextEdit )
 from utils.pixmapcache import PixmapCache
-from ui.combobox import CDMComboBox
-from breakpoint import Breakpoint
 
 
 
 class ViewVariableDialog( QDialog ):
     " Dialog all the properties of a variable "
 
-    def __init__( self, varName, varType, varValue, parent = None ):
+    def __init__( self, nameLabel, varName,
+                        varType, varValue, isGlobal, parent = None ):
         QDialog.__init__( self, parent )
-        self.__createLayout( varName, varType, varValue )
+        if isGlobal:
+            self.setWindowTitle( "Global variable '" + varName + "'" )
+            self.setWindowIcon( PixmapCache().getIcon( "globvar.png" ) )
+        else:
+            self.setWindowTitle( "Local variable '" + varName + "'" )
+            self.setWindowIcon( PixmapCache().getIcon( "locvar.png" ) )
+        self.__createLayout( nameLabel, varName, varType, varValue, isGlobal )
         return
 
-    def __createLayout( self, varName, varType, varValue ):
+    def __createLayout( self, nameLabel, varName, varType, varValue, isGlobal ):
         """ Creates the dialog layout """
 
-        self.resize( 400, 150 )
+        self.resize( 600, 250 )
         self.setSizeGripEnabled( True )
 
         # Top level layout
         layout = QVBoxLayout( self )
 
         gridLayout = QGridLayout()
-        varNameLabel = QLabel( "Name:" )
-        gridLayout.addWidget( varNameLabel, 0, 0 )
+        varScopeLabel = QLabel( "Scope:" )
+        gridLayout.addWidget( varScopeLabel, 0, 0, Qt.AlignTop )
+        if isGlobal:
+            varScopeValue = QLabel( "Global" )
+        else:
+            varScopeValue = QLabel( "Local" )
+        gridLayout.addWidget( varScopeValue, 0, 1 )
+
+        varNameLabel = QLabel( nameLabel + ":" )
+        gridLayout.addWidget( varNameLabel, 1, 0, Qt.AlignTop )
         varNameValue = QLabel( varName )
-        gridLayout.addWidget( varNameValue, 0, 1 )
+        gridLayout.addWidget( varNameValue, 1, 1 )
         varTypeLabel = QLabel( "Type:" )
-        gridLayout.addWidget( varTypeLabel, 1, 0 )
+        gridLayout.addWidget( varTypeLabel, 2, 0, Qt.AlignTop )
         varTypeValue = QLabel( varType )
-        gridLayout.addWidget( varTypeValue, 1, 1 )
+        gridLayout.addWidget( varTypeValue, 2, 1 )
         varValueLabel = QLabel( "Value:" )
-        gridLayout.addWidget( varValueLabel, 2, 0 )
+        gridLayout.addWidget( varValueLabel, 3, 0, Qt.AlignTop )
         varValueValue = QTextEdit()
         varValueValue.setReadOnly( True )
-        gridLayout.addWidget( varValueValue, 2, 1 )
+        varValueValue.setPlainText( varValue )
+        gridLayout.addWidget( varValueValue, 3, 1 )
         layout.addLayout( gridLayout )
 
         # Buttons at the bottom
