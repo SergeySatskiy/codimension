@@ -35,7 +35,7 @@ from ui.fitlabel import FramedLabelWithDoubleClick
 class ViewVariableDialog( QDialog ):
     " Dialog all the properties of a variable "
 
-    def __init__( self, nameLabel, varName,
+    def __init__( self, varName,
                         varType, varValue, isGlobal, parent = None ):
         QDialog.__init__( self, parent )
         if isGlobal:
@@ -44,7 +44,7 @@ class ViewVariableDialog( QDialog ):
         else:
             self.setWindowTitle( "Local variable '" + varName + "'" )
             self.setWindowIcon( PixmapCache().getIcon( "locvar.png" ) )
-        self.__createLayout( nameLabel, varName, varType, varValue, isGlobal )
+        self.__createLayout( varName, varType, varValue, isGlobal )
         return
 
     def __createLayout( self, varName, varType, varValue, isGlobal ):

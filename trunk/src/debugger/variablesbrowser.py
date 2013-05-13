@@ -413,7 +413,7 @@ class VariablesBrowser( QTreeWidget ):
         if name[ -2 : ] in [ '[]', '{}', '()' ]:
             name = name[ : -2 ]
 
-        par = itm.parent()
+        par = item.parent()
         nlist = [ name ]
         # build up the fully qualified name
         while par is not None:
