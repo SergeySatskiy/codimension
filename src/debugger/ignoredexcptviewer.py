@@ -25,7 +25,7 @@
 
 from PyQt4.QtCore import Qt, SIGNAL, QStringList
 from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeWidget, QToolButton,
-                          QTreeWidgetItem, QHeaderView, QVBoxLayout,
+                          QTreeWidgetItem, QVBoxLayout,
                           QLabel, QWidget, QAbstractItemView, QMenu,
                           QSpacerItem, QHBoxLayout, QPalette, QCursor,
                           QLineEdit, QPushButton )
@@ -34,7 +34,6 @@ from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
 from utils.settings import Settings
-import os.path
 
 
 
@@ -193,6 +192,7 @@ class IgnoredExceptionsViewer( QWidget ):
             self.__excTypeEdit.setVisible( False )
             self.__addButton.setVisible( False )
             self.__removeButton.setVisible( False )
+            self.__removeAllButton.setVisible( False )
             self.__showHideButton.setIcon( PixmapCache().getIcon( 'more.png' ) )
             self.__showHideButton.setToolTip( "Show ignored exceptions list" )
 
@@ -208,6 +208,7 @@ class IgnoredExceptionsViewer( QWidget ):
             self.__excTypeEdit.setVisible( True )
             self.__addButton.setVisible( True )
             self.__removeButton.setVisible( True )
+            self.__removeAllButton.setVisible( True )
             self.__showHideButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
             self.__showHideButton.setToolTip( "Hide ignored exceptions list" )
 

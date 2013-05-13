@@ -53,7 +53,7 @@ VARIABLE_DISPLAY_TYPE = {
     'buffer':                       'Buffer',
     'class':                        'Class',
     'instance':                     'Class Instance',
-    'classobj':                     'Class Instance',
+    'classobj':                     'Class',
     'instance method':              'Class Method',
     'property':                     'Class Property',
     'generator':                    'Generator',

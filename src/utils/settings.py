@@ -115,6 +115,8 @@ CDM_SETTINGS = {
     CDMSetting( "debugStopAtFirstLine", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "debugAutofork", CDMSetting.TYPE_BOOL, False ),
     CDMSetting( "debugFollowChild", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "debugHideMCF", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "debugGLFilter", CDMSetting.TYPE_INT, 0 ),
     CDMSetting( "editorEdge", CDMSetting.TYPE_INT, 80 ),
     CDMSetting( "projectTooltips", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "recentTooltips", CDMSetting.TYPE_BOOL, True ),
