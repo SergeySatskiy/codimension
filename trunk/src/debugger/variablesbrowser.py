@@ -65,7 +65,7 @@ VARIABLE_DISPLAY_TYPE = {
     'buffer':                       'Buffer',
     'class':                        'Class',
     'instance':                     'Class Instance',
-    'classobj':                     'Class Instance',
+    'classobj':                     'Class',
     'instance method':              'Class Method',
     'property':                     'Class Property',
     'generator':                    'Generator',
@@ -114,9 +114,8 @@ class VariablesBrowser( QTreeWidget ):
         self.__debugger = debugger
 
         # Ugly filtering support
-        self.__hiddenItems = []
+        self.__hideMCFFilter = False
         self.__scopeFilter = 0  # Global and local
-        self.__nameFilter = 0   # No filtering
         self.__filterIsSet = False
         self.__textFilters = []
         self.__textFiltersCount = 0
@@ -197,7 +196,10 @@ class VariablesBrowser( QTreeWidget ):
             self.resortEnabled = False
             self.setSortingEnabled( False )
             for ( var, vtype, value ) in vlist:
-                self.__addItem( None, areGlobals, vtype, var, value )
+                item = self.__addItem( None, areGlobals, vtype, var, value )
+                item.setHidden( not self.__variableToShow( item.getName(),
+                                                           item.isGlobal(),
+                                                           item.getType() ) )
 
             # reexpand tree
             openItems = self.openItems[ : ]
@@ -260,7 +262,10 @@ class VariablesBrowser( QTreeWidget ):
         if vlist:
             item = self.__findItem( vlist[ 0 ], 0 )
             for var, vtype, value in vlist[ 1 : ]:
-                self.__addItem( item, isGlobal, vtype, var, value )
+                newItem = self.__addItem( item, isGlobal, vtype, var, value )
+                newItem.setHidden( not self.__variableToShow( newItem.getName(),
+                                                              newItem.isGlobal(),
+                                                              newItem.getType() ) )
             subelementsAdded = True
 
         # reexpand tree
@@ -387,6 +392,9 @@ class VariablesBrowser( QTreeWidget ):
 
     def mouseDoubleClickEvent( self, mouseEvent ):
         item = self.itemAt( mouseEvent.pos() )
+        if item is None:
+            return
+
         childCount = item.childCount()
         if childCount == 0:
             # Show the dialog
@@ -462,8 +470,12 @@ class VariablesBrowser( QTreeWidget ):
 
     def getShownAndTotalCounts( self ):
         " Provides the total number of variables and currently shown "
-        shownCount = self.topLevelItemCount()
-        return shownCount, len( self.__hiddenItems ) + shownCount
+        total = self.topLevelItemCount()
+        shownCount = 0
+        for index in xrange( total ):
+            if not self.topLevelItem( index ).isHidden():
+                shownCount += 1
+        return shownCount, total
 
     def clear( self ):
         " Resets everything "
@@ -471,20 +483,22 @@ class VariablesBrowser( QTreeWidget ):
         self.openItems = []
         self.framenr = 0
 
-        self.__scopeFilter = 0
-        self.__nameFilter = 0
-        self.__textFilters = []
-        self.__textFiltersCount = 0
-        self.__hiddenItems = []
-        self.__filterIsSet = False
-
         QTreeWidget.clear( self )
         return
 
-    def setFilter( self, scopeFilter, nameFilter, textFilter ):
+    def clearFilters( self ):
+        " Clears the variable filters "
+        self.__hideMCFFilter = False
+        self.__scopeFilter = 0
+        self.__textFilters = []
+        self.__textFiltersCount = 0
+        self.__filterIsSet = False
+        return
+
+    def setFilter( self, hideMCFFilter, scopeFilter, textFilter ):
         " Sets the new filter "
+        self.__hideMCFFilter = hideMCFFilter
         self.__scopeFilter = scopeFilter
-        self.__nameFilter = nameFilter
 
         self.__textFilters = []
         self.__textFiltersCount = 0
@@ -493,19 +507,60 @@ class VariablesBrowser( QTreeWidget ):
             self.__textFilters.append( regexp )
             self.__textFiltersCount += 1
 
-
-        if self.__scopeFilter == 0 and \
-           self.__nameFilter == 0 and \
+        if self.__hideMCFFilter == False and \
+           self.__scopeFilter == 0 and \
            self.__textFiltersCount == 0:
             self.__filterIsSet = False
         else:
             self.__filterIsSet = True
+        self.__applyFilters()
         return
 
-    def __variableToShow( self, varName, isGlobal ):
+    def __applyFilters( self ):
+        " Re-applies the filters to the list "
+        resortEnabled = self.resortEnabled
+        self.resortEnabled = False
+        self.setSortingEnabled( False )
+
+        for index in xrange( self.topLevelItemCount() ):
+            item = self.topLevelItem( index )
+            toShow = self.__variableToShow( item.getName(),
+                                            item.isGlobal(),
+                                            item.getType() )
+            item.setHidden( not toShow )
+            if toShow:
+                self.__applyFiltersRecursively( item )
+
+        self.__resizeSections()
+        self.resortEnabled = resortEnabled
+        if self.resortEnabled:
+            self.setSortingEnabled( True )
+        self.__resort()
+        return
+
+    def __applyFiltersRecursively( self, item ):
+        " Applies the filter recursively to all the children of the given item "
+
+        for index in xrange( item.childCount() ):
+            childItem = item.child( index )
+            if not hasattr( childItem, "getName" ):
+                continue
+            toShow = self.__variableToShow( childItem.getName(),
+                                            childItem.isGlobal(),
+                                            childItem.getType() )
+            childItem.setHidden( not toShow )
+            if toShow:
+                self.__applyFiltersRecursively( childItem )
+        return
+
+    def __variableToShow( self, varName, isGlobal, varType ):
         " Checks if the given item should be shown "
         if not self.__filterIsSet:
             return True
+
+        if self.__hideMCFFilter:
+            if self.__isMCF( varType ):
+                return False
 
         # Something is set so start checking
         varName = str( varName )
@@ -523,13 +578,13 @@ class VariablesBrowser( QTreeWidget ):
             if isGlobal:
                 return False
 
-        if self.__nameFilter == 1:
-            # __ names to be filtered out
-            if varName.startswith( "__" ):
-                return False
-        elif self.__nameFilter == 2:
-            # _ names to be filtered out
-            if varName.startswith( "_" ):
-                return False
+        return True
 
-        
+    def __isMCF( self, varType ):
+        " Returns True if it is a module, a function or a class "
+        if varType == "Module":
+            return True
+        if varType == "Class":
+            return True
+        if varType == "Function":
+            return True

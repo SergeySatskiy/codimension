@@ -28,6 +28,7 @@ from PyQt4.QtGui import ( QFrame, QVBoxLayout, QLabel, QWidget,
                           QSizePolicy, QSpacerItem, QGridLayout,
                           QHBoxLayout, QToolButton, QPalette, QPushButton )
 from utils.pixmapcache import PixmapCache
+from utils.settings import Settings
 from ui.combobox import CDMComboBox
 from variablesbrowser import VariablesBrowser
 from utils.globals import GlobalData
@@ -41,23 +42,20 @@ class VariablesViewer( QWidget ):
     FilterGlobalOnly = 1
     FilterLocalOnly = 2
 
-    # Second group of filters
-    FilterNone = 0
-    Filter__ = 1
-    Filter_ = 2
-
     def __init__( self, debugger, parent = None ):
         QWidget.__init__( self, parent )
 
         self.__debugger = debugger
         self.__browser = VariablesBrowser( debugger, self )
-        self.__filter = VariablesViewer.FilterGlobalAndLocal
-        self.__nameFilter = VariablesViewer.FilterNone
+        self.__filter = Settings().debugGLFilter
+        self.__hideMCFFilter = Settings().debugHideMCF
         self.__createLayout()
 
         self.setTabOrder( self.__filterEdit, self.__browser )
         self.setTabOrder( self.__browser, self.__execStatement )
         self.setTabOrder( self.__execStatement, self.__evalStatement )
+
+        self.__updateFilter()
         return
 
     def __createLayout( self ):
@@ -83,10 +81,21 @@ class VariablesViewer( QWidget ):
 
         expandingSpacer = QSpacerItem( 10, 10, QSizePolicy.Expanding )
         fixedSpacer = QSpacerItem( 3, 3 )
+        fixedSpacer1 = QSpacerItem( 5, 5 )
+
+        self.__mcfButton = QToolButton()
+        self.__mcfButton.setCheckable( True )
+        self.__mcfButton.setChecked( self.__hideMCFFilter )
+        self.__mcfButton.setIcon( PixmapCache().getIcon( 'dbgfltmcf.png' ) )
+        self.__mcfButton.setFixedSize( 20, 20 )
+        self.__mcfButton.setToolTip( "Show/hide modules, classes and functions" )
+        self.__mcfButton.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.__mcfButton, SIGNAL( 'clicked()' ),
+                      self.__onMCFFilter )
 
         self.__globalAndLocalButton = QToolButton()
         self.__globalAndLocalButton.setCheckable( True )
-        self.__globalAndLocalButton.setChecked( True )
+        self.__globalAndLocalButton.setChecked( self.__filter == VariablesViewer.FilterGlobalAndLocal )
         self.__globalAndLocalButton.setIcon( PixmapCache().getIcon( 'dbgfltgl.png' ) )
         self.__globalAndLocalButton.setFixedSize( 20, 20 )
         self.__globalAndLocalButton.setToolTip( "Do not filter out global or local variables" )
@@ -96,7 +105,7 @@ class VariablesViewer( QWidget ):
 
         self.__localOnlyButton = QToolButton()
         self.__localOnlyButton.setCheckable( True )
-        self.__localOnlyButton.setChecked( False )
+        self.__localOnlyButton.setChecked( self.__filter == VariablesViewer.FilterLocalOnly )
         self.__localOnlyButton.setIcon( PixmapCache().getIcon( 'dbgfltlo.png' ) )
         self.__localOnlyButton.setFixedSize( 20, 20 )
         self.__localOnlyButton.setToolTip( "Filter out global variables" )
@@ -106,45 +115,13 @@ class VariablesViewer( QWidget ):
 
         self.__globalOnlyButton = QToolButton()
         self.__globalOnlyButton.setCheckable( True )
-        self.__globalOnlyButton.setChecked( False )
+        self.__globalOnlyButton.setChecked( self.__filter == VariablesViewer.FilterGlobalOnly )
         self.__globalOnlyButton.setIcon( PixmapCache().getIcon( 'dbgfltgo.png' ) )
         self.__globalOnlyButton.setFixedSize( 20, 20 )
         self.__globalOnlyButton.setToolTip( "Filter out local variables" )
         self.__globalOnlyButton.setFocusPolicy( Qt.NoFocus )
         self.connect( self.__globalOnlyButton, SIGNAL( 'clicked()' ),
                       self.__onGlobalFilter )
-
-        # Predefined name filters
-        self.__noHideButton = QToolButton()
-        self.__noHideButton.setCheckable( True )
-        self.__noHideButton.setChecked( True )
-        self.__noHideButton.setIcon( PixmapCache().getIcon( 'dbgfltall.png' ) )
-        self.__noHideButton.setFixedSize( 26, 26 )
-        self.__noHideButton.setToolTip( "Do not filter out variables starting with _ or __" )
-        self.__noHideButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__noHideButton, SIGNAL( 'clicked()' ),
-                      self.__onNoHide )
-
-        self.__hide__Button = QToolButton()
-        self.__hide__Button.setCheckable( True )
-        self.__hide__Button.setChecked( False )
-        self.__hide__Button.setIcon( PixmapCache().getIcon( 'dbgflt__.png' ) )
-        self.__hide__Button.setFixedSize( 26, 26 )
-        self.__hide__Button.setToolTip( "Filter out varibles starting with __" )
-        self.__hide__Button.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__hide__Button, SIGNAL( 'clicked()' ),
-                      self.__onHide__ )
-
-        self.__hide_Button = QToolButton()
-        self.__hide_Button.setCheckable( True )
-        self.__hide_Button.setChecked( False )
-        self.__hide_Button.setIcon( PixmapCache().getIcon( 'dbgflt_.png' ) )
-        self.__hide_Button.setFixedSize( 26, 26 )
-        self.__hide_Button.setToolTip( "Filter out variables starting with _" )
-        self.__hide_Button.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__hide_Button, SIGNAL( 'clicked()' ),
-                      self.__onHide_ )
-        fixedSpacer2 = QSpacerItem( 5, 5 )
 
         self.__filterEdit = CDMComboBox( True )
         self.__filterEdit.setSizePolicy( QSizePolicy.Expanding,
@@ -155,6 +132,7 @@ class VariablesViewer( QWidget ):
         self.connect( self.__filterEdit,
                       SIGNAL( 'editTextChanged(const QString&)' ),
                       self.__textFilterChanged )
+        self.__filterEdit.setVisible( False )
 
         self.__execStatement = CDMComboBox( True )
         self.__execStatement.setSizePolicy( QSizePolicy.Expanding,
@@ -192,6 +170,8 @@ class VariablesViewer( QWidget ):
         headerLayout.addSpacerItem( fixedSpacer )
         headerLayout.addWidget( self.__headerLabel )
         headerLayout.addSpacerItem( expandingSpacer )
+        headerLayout.addWidget( self.__mcfButton )
+        headerLayout.addSpacerItem( fixedSpacer1 )
         headerLayout.addWidget( self.__globalAndLocalButton )
         headerLayout.addWidget( self.__localOnlyButton )
         headerLayout.addWidget( self.__globalOnlyButton )
@@ -200,10 +180,6 @@ class VariablesViewer( QWidget ):
         filterLayout = QHBoxLayout()
         filterLayout.setContentsMargins( 0, 0, 0, 0 )
         filterLayout.setSpacing( 0 )
-        filterLayout.addWidget( self.__noHideButton )
-        filterLayout.addWidget( self.__hide__Button )
-        filterLayout.addWidget( self.__hide_Button )
-        filterLayout.addSpacerItem( fixedSpacer2 )
         filterLayout.addWidget( self.__filterEdit )
 
         execEvalLayout = QGridLayout()
@@ -221,6 +197,13 @@ class VariablesViewer( QWidget ):
 
         return
 
+    def __onMCFFilter( self ):
+        " Triggered when modules/classes/functions filter changed "
+        self.__hideMCFFilter = self.__mcfButton.isChecked()
+        Settings().debugHideMCF = self.__hideMCFFilter
+        self.__updateFilter()
+        return
+
     def __onGlobalAndLocalFilter( self ):
         " Global and local filter has been pressed "
         self.__globalAndLocalButton.setChecked( True )
@@ -231,6 +214,7 @@ class VariablesViewer( QWidget ):
             # No changes
             return
 
+        Settings().debugGLFilter = VariablesViewer.FilterGlobalAndLocal
         self.__filter = VariablesViewer.FilterGlobalAndLocal
         self.__updateFilter()
         return
@@ -245,6 +229,7 @@ class VariablesViewer( QWidget ):
             # No changes
             return
 
+        Settings().debugGLFilter = VariablesViewer.FilterLocalOnly
         self.__filter = VariablesViewer.FilterLocalOnly
         self.__updateFilter()
         return
@@ -259,49 +244,8 @@ class VariablesViewer( QWidget ):
             # No changes
             return
 
+        Settings().debugGLFilter = VariablesViewer.FilterGlobalOnly
         self.__filter = VariablesViewer.FilterGlobalOnly
-        self.__updateFilter()
-        return
-
-    def __onNoHide( self ):
-        " No hide filter has pressed "
-        self.__noHideButton.setChecked( True )
-        self.__hide__Button.setChecked( False )
-        self.__hide_Button.setChecked( False )
-
-        if self.__nameFilter == VariablesViewer.FilterNone:
-            # No changes
-            return
-
-        self.__nameFilter = VariablesViewer.FilterNone
-        self.__updateFilter()
-        return
-
-    def __onHide__( self ):
-        " Hide __ filter has pressed "
-        self.__noHideButton.setChecked( False )
-        self.__hide__Button.setChecked( True )
-        self.__hide_Button.setChecked( False )
-
-        if self.__nameFilter == VariablesViewer.Filter__:
-            # No changes
-            return
-
-        self.__nameFilter = VariablesViewer.Filter__
-        self.__updateFilter()
-        return
-
-    def __onHide_( self ):
-        " Hide _ filter has pressed "
-        self.__noHideButton.setChecked( False )
-        self.__hide__Button.setChecked( False )
-        self.__hide_Button.setChecked( True )
-
-        if self.__nameFilter == VariablesViewer.Filter_:
-            # No changes
-            return
-
-        self.__nameFilter = VariablesViewer.Filter_
         self.__updateFilter()
         return
 
@@ -333,7 +277,8 @@ class VariablesViewer( QWidget ):
 
     def __updateFilter( self ):
         " Updates the current filter "
-        self.__browser.setFilter( self.__filter, self.__nameFilter,
+        self.__browser.setFilter( self.__hideMCFFilter,
+                                  self.__filter,
                                   str( self.__filterEdit.currentText() ).strip() )
         self.__updateHeaderLabel()
         return
@@ -393,9 +338,6 @@ class VariablesViewer( QWidget ):
         self.__globalAndLocalButton.setEnabled( isInIDE )
         self.__localOnlyButton.setEnabled( isInIDE )
         self.__globalOnlyButton.setEnabled( isInIDE )
-        self.__noHideButton.setEnabled( isInIDE )
-        self.__hide__Button.setEnabled( isInIDE )
-        self.__hide_Button.setEnabled( isInIDE )
         self.__filterEdit.setEnabled( isInIDE )
 
         self.__execStatement.setEnabled( isInIDE )
@@ -412,6 +354,3 @@ class VariablesViewer( QWidget ):
         else:
             self.__evalButton.setEnabled( False )
         return
-
-
-
