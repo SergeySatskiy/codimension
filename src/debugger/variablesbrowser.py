@@ -597,9 +597,5 @@ class VariablesBrowser( QTreeWidget ):
 
     def __isMCF( self, varType ):
         " Returns True if it is a module, a function or a class "
-        if varType == "Module":
-            return True
-        if varType == "Class":
-            return True
-        if varType == "Function":
-            return True
+        return varType in [ "Module", "Class", "Function", "Type" ]
+
