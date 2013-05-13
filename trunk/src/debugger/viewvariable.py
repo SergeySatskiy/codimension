@@ -58,7 +58,7 @@ class ViewVariableDialog( QDialog ):
 
         gridLayout = QGridLayout()
         gridLayout.setSpacing( 2 )
-        varScopeLabel = ( "Scope:" )
+        varScopeLabel = QLabel( "Scope:" )
         gridLayout.addWidget( varScopeLabel, 0, 0, Qt.AlignTop )
         if isGlobal:
             varScopeValue = FramedLabelWithDoubleClick( "Global" )
