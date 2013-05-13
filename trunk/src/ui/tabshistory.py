@@ -50,7 +50,7 @@ class TabHistoryEntry:
 class TabsHistory( QObject ):
     " Holds the editors manager history "
 
-    limit = 64
+    limit = 32
 
     def __init__( self, editorsManager ):
         QObject.__init__( self )
