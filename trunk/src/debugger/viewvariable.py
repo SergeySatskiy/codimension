@@ -47,7 +47,7 @@ class ViewVariableDialog( QDialog ):
         self.__createLayout( nameLabel, varName, varType, varValue, isGlobal )
         return
 
-    def __createLayout( self, nameLabel, varName, varType, varValue, isGlobal ):
+    def __createLayout( self, varName, varType, varValue, isGlobal ):
         """ Creates the dialog layout """
 
         self.resize( 600, 250 )
@@ -67,7 +67,7 @@ class ViewVariableDialog( QDialog ):
         varScopeValue.setToolTip( "Double click to copy" )
         gridLayout.addWidget( varScopeValue, 0, 1 )
 
-        varNameLabel = QLabel( nameLabel + ":" )
+        varNameLabel = QLabel( "Name:" )
         gridLayout.addWidget( varNameLabel, 1, 0, Qt.AlignTop )
         varNameValue = FramedLabelWithDoubleClick( varName )
         varNameValue.setToolTip( "Double click to copy" )

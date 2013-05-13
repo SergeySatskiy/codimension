@@ -398,23 +398,38 @@ class VariablesBrowser( QTreeWidget ):
         childCount = item.childCount()
         if childCount == 0:
             # Show the dialog
-            if item.parent() is None:
-                nameLabel = "Name"
-            else:
-                parentType = item.parent().getType()
-                if 'List' in parentType:
-                    nameLabel = "Index"
-                elif 'Dictionary' in parentType:
-                    nameLabel = "Key"
-                else:
-                    nameLabel = "Name"
-            dlg = ViewVariableDialog( nameLabel, item.getName(), item.getType(),
-                                      item.getValue(), item.isGlobal() )
+            dlg = ViewVariableDialog( self.__getQualifiedName( item ),
+                                      item.getType(), item.getValue(),
+                                      item.isGlobal() )
             dlg.exec_()
             return
 
         QTreeWidget.mouseDoubleClickEvent( self, mouseEvent )
         return
+
+    def __getQualifiedName( self, item ):
+        " Provides a fully qualified name "
+        name = item.getName()
+        if name[ -2 : ] in [ '[]', '{}', '()' ]:
+            name = name[ : -2 ]
+
+        par = itm.parent()
+        nlist = [ name ]
+        # build up the fully qualified name
+        while par is not None:
+            pname = par.getName()
+            if pname[ -2 : ] in [ '[]', '{}', '()' ]:
+                if nlist[ 0 ].endswith( "." ):
+                    nlist[ 0 ] = '[%s].' % nlist[ 0 ][ : -1 ]
+                else:
+                    nlist[ 0 ] = '[%s]' % nlist[ 0 ]
+                nlist.insert( 0, pname[ : -2 ] )
+            else:
+                nlist.insert( 0, '%s.' % pname )
+            par = par.parent()
+
+        name = ''.join( nlist )
+        return name
 
     def __buildTreePath( self, item ):
         " Builds up a path from the top to the given item "
