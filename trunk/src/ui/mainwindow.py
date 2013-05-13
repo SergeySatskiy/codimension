@@ -2616,7 +2616,7 @@ class CodimensionMainWindow( QMainWindow ):
         " Triggered when a context menu is requested for the path label "
         contextMenu = QMenu( self )
         contextMenu.addAction( PixmapCache().getIcon( "copytoclipboard.png" ),
-                               "Copy full path to clipboard",
+                               "Copy full path to clipboard (double click)",
                                self.__onPathLabelDoubleClick )
         contextMenu.addSeparator()
         contextMenu.addAction( PixmapCache().getIcon( "" ),

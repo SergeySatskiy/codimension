@@ -30,7 +30,7 @@
     content to fit the label size """
 
 from PyQt4.QtCore    import Qt, SIGNAL
-from PyQt4.QtGui     import QLabel
+from PyQt4.QtGui     import QLabel, QApplication, QFrame
 from utils.fileutils import compactPath
 
 class FitLabel( QLabel ):
@@ -108,3 +108,23 @@ class FitPathLabel( QLabel ):
             self.emit( SIGNAL( 'doubleClicked' ) )
         QLabel.mouseDoubleClickEvent( self, event )
         return
+
+
+class FramedLabelWithDoubleClick( QLabel ):
+    " A label with a nice frame and double click for copy content to clipboard "
+
+    def __init__( self, text = None, parent = None ):
+        QLabel.__init__( self, parent )
+        self.setFrameStyle( QFrame.StyledPanel )
+        if text is not None:
+            self.setText( text )
+        return
+
+    def mouseDoubleClickEvent( self, event ):
+        if event.button() == Qt.LeftButton:
+            txt = str( self.text() ).strip()
+            if txt:
+                QApplication.clipboard().setText( txt )
+        QLabel.mouseDoubleClickEvent( self, event )
+        return
+

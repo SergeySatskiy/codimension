@@ -28,6 +28,7 @@ from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout,
                           QLabel, QGridLayout, QTextEdit )
 from utils.pixmapcache import PixmapCache
+from ui.fitlabel import FramedLabelWithDoubleClick
 
 
 
@@ -56,24 +57,28 @@ class ViewVariableDialog( QDialog ):
         layout = QVBoxLayout( self )
 
         gridLayout = QGridLayout()
-        varScopeLabel = QLabel( "Scope:" )
+        gridLayout.setSpacing( 2 )
+        varScopeLabel = ( "Scope:" )
         gridLayout.addWidget( varScopeLabel, 0, 0, Qt.AlignTop )
         if isGlobal:
-            varScopeValue = QLabel( "Global" )
+            varScopeValue = FramedLabelWithDoubleClick( "Global" )
         else:
-            varScopeValue = QLabel( "Local" )
+            varScopeValue = FramedLabelWithDoubleClick( "Local" )
+        varScopeValue.setToolTip( "Double click to copy" )
         gridLayout.addWidget( varScopeValue, 0, 1 )
 
         varNameLabel = QLabel( nameLabel + ":" )
         gridLayout.addWidget( varNameLabel, 1, 0, Qt.AlignTop )
-        varNameValue = QLabel( varName )
+        varNameValue = FramedLabelWithDoubleClick( varName )
+        varNameValue.setToolTip( "Double click to copy" )
         font = varNameValue.font()
         font.setFamily( "Monospace" )
         varNameValue.setFont( font )
         gridLayout.addWidget( varNameValue, 1, 1 )
         varTypeLabel = QLabel( "Type:" )
         gridLayout.addWidget( varTypeLabel, 2, 0, Qt.AlignTop )
-        varTypeValue = QLabel( varType )
+        varTypeValue = FramedLabelWithDoubleClick( varType )
+        varTypeValue.setToolTip( "Double click to copy" )
         varTypeValue.setFont( font )
         gridLayout.addWidget( varTypeValue, 2, 1 )
         varValueLabel = QLabel( "Value:" )
@@ -97,6 +102,6 @@ class ViewVariableDialog( QDialog ):
         self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
         layout.addWidget( buttonBox )
 
-        self.__OKButton.setFocus()
+        varValueValue.setFocus()
         return
 
