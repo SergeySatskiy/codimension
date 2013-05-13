@@ -630,8 +630,7 @@ class EditorsManager( QTabWidget ):
                 # There is nothing in the history yet
                 self.history.addCurrent()
             else:
-                if self.currentIndex() == index:
-                    self.__activateHistoryTab()
+                self.__activateHistoryTab()
 
         self.__skipHistoryUpdate = False
         self.__updateControls()
