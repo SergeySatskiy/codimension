@@ -45,7 +45,9 @@ from client.protocol_cdm_dbg import ( EOT, RequestStep, RequestStepOver, Request
                                       ResponseForkTo, RequestStack, ResponseSyntax,
                                       ResponseExit, PassiveStartup, RequestBreakEnable,
                                       RequestBreakIgnore, ResponseClearBreak,
-                                      ResponseBPConditionError )
+                                      ResponseBPConditionError, ResponseEval,
+                                      ResponseEvalOK, ResponseEvalError,
+                                      ResponseExec, ResponseExecError )
 
 from breakpointmodel import BreakPointModel
 from watchpointmodel import WatchPointModel
@@ -82,6 +84,10 @@ class CodimensionDebugger( QObject ):
         self.__disconnectReceived = None
         self.__stopAtFirstLine = None
         self.__translatePath = None
+
+        # Support collecting message parts for Eval and Exec
+        self.__msgParts = []
+        self.__collecting = False
 
         self.__codec = QTextCodec.codecForName( "utf-8" )
 
@@ -128,6 +134,9 @@ class CodimensionDebugger( QObject ):
             logging.error( "Cannot start debug session. "
                            "The previous one has not finished yet." )
             return
+
+        self.__msgParts = []
+        self.__collecting = False
 
         try:
             QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
@@ -427,6 +436,39 @@ class CodimensionDebugger( QObject ):
                 if resp == ResponseExit:
                     self.emit( SIGNAL( 'ClientFinished' ), line[ eoc : -1 ] )
                     continue
+
+                if resp == ResponseEval:
+                    self.__msgParts = []
+                    self.__collecting = True
+                    continue
+
+                if resp == ResponseEvalOK:
+                    self.emit( SIGNAL( 'EvalOK' ), ''.join( self.__msgParts ) )
+                    self.__msgParts = []
+                    self.__collecting = False
+                    continue
+
+                if resp == ResponseEvalError:
+                    self.emit( SIGNAL( 'EvalError' ), ''.join( self.__msgParts ) )
+                    self.__msgParts = []
+                    self.__collecting = False
+                    continue
+
+                if resp == ResponseExec:
+                    self.__msgParts = []
+                    self.__collecting = True
+                    continue
+
+                if resp == ResponseExecError:
+                    self.emit( SIGNAL( 'ExecError' ), ''.join( self.__msgParts ) )
+                    self.__msgParts = []
+                    self.__collecting = False
+                    continue
+
+
+            if self.__collecting:
+                self.__msgParts.append( line )
+                continue
 
             print "Unhandled message received by the server: " + line
 
