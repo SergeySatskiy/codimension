@@ -123,8 +123,8 @@ class RunDialog( QDialog ):
 
         # Used as a return value
         self.termType = termType
-        self.profilerParams = profilerParams
-        self.debuggerParams = debuggerParams
+        self.profilerParams = copy.deepcopy( profilerParams )
+        self.debuggerParams = copy.deepcopy( debuggerParams )
 
         self.__action = action.lower()
 
