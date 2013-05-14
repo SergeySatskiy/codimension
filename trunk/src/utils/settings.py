@@ -452,6 +452,12 @@ class Settings( object ):
                 self.flushSettings()
             return
 
+        def setExceptionFilters( self, newFilters ):
+            " Sets the new exception filters "
+            self.values[ "ignoredExceptions" ] = newFilters
+            self.flushSettings()
+            return
+
         @staticmethod
         def __writeHeader( fileObj ):
             " Helper to write a header with a warning "
