@@ -1753,11 +1753,11 @@ class DebugClientBase( object ):
     def __completionList(self, text):
         """
         Private slot to handle the request for a commandline completion list.
-        
+
         @param text the text to be completed (string)
         """
         completerDelims = ' \t\n`~!@#$%^&*()-=+[{]}\\|;:\'",<>/?'
-        
+
         completions = []
         state = 0
         # find position of last delim character
@@ -1770,7 +1770,7 @@ class DebugClientBase( object ):
                     text = text[pos+1:]
                 break
             pos -= 1
-        
+
         try:
             comp = self.complete(text, state)
         except:
@@ -1782,7 +1782,7 @@ class DebugClientBase( object ):
                 comp = self.complete(text, state)
             except:
                 comp = None
-            
+
         self.write( "%s%s||%s\n" % ( ResponseCompletion,
                                      unicode( completions ), text ) )
         return
@@ -2006,40 +2006,8 @@ class DebugClientBase( object ):
                                           tracePython = tracePython,
                                           redirect = redirect )
         else:
-            if sys.argv[1] == '--no-encoding':
-                self.noencoding = True
-                del sys.argv[1]
-            if sys.argv[1] == '':
-                del sys.argv[1]
-            try:
-                port = int(sys.argv[1])
-            except (ValueError, IndexError):
-                port = -1
-            try:
-                redirect = int(sys.argv[2])
-            except (ValueError, IndexError):
-                redirect = 1
-            try:
-                ipOrHost = sys.argv[3]
-                if ':' in ipOrHost:
-                    remoteAddress = ipOrHost
-                elif ipOrHost[0] in '0123456789':
-                    remoteAddress = ipOrHost
-                else:
-                    remoteAddress = self.__resolveHost(ipOrHost)
-            except:
-                remoteAddress = None
-            sys.argv = ['']
-            if not '' in sys.path:
-                sys.path.insert(0, '')
-            if port >= 0:
-                if not self.noencoding:
-                    self.__coding = self.defaultCoding
-                    setDefaultEncoding( self.defaultCoding )
-                self.connectDebugger(port, remoteAddress, redirect)
-                self.__interact()
-            else:
-                print "No network port given. Aborting..."
+            print "No script to debug. Aborting..."
+        return
 
     def fork( self ):
         """
