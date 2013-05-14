@@ -732,6 +732,15 @@ class DebugClientBase( object ):
 
                 try:
                     value = eval( expression, _globals, _locals )
+                except SyntaxError, excpt:
+                    # Generic way below reports nothing in case of a syntax
+                    # error
+                    _list = [ "Traceback (innermost last):\n" ]
+                    _list += traceback.format_exception_only( SyntaxError, excpt )
+
+                    self.write( ResponseEval + '\n' )
+                    map( self.write, _list )
+                    self.write( ResponseEvalError + '\n' )
                 except:
                     # Report the exception and the traceback
                     try:
@@ -790,6 +799,15 @@ class DebugClientBase( object ):
                     # below. I have no ideas how to fix it.
                     f.f_globals.update( _globals )
                     f.f_locals.update( _locals )
+                except SyntaxError, excpt:
+                    # Generic way below reports nothing in case of a syntax
+                    # error
+                    _list = [ "Traceback (innermost last):\n" ]
+                    _list += traceback.format_exception_only( SyntaxError, excpt )
+
+                    self.write( ResponseEval + '\n' )
+                    map( self.write, _list )
+                    self.write( ResponseEvalError + '\n' )
                 except:
                     # Report the exception and the traceback
                     try:
