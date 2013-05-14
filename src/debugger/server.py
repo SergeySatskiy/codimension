@@ -89,6 +89,11 @@ class CodimensionDebugger( QObject ):
         self.__msgParts = []
         self.__collecting = False
 
+        self.__exitCode = None
+        self.__fileName = None
+        self.__runParameters = None
+        self.__debugSettings = None
+
         self.__codec = QTextCodec.codecForName( "utf-8" )
 
         self.__breakpointModel = BreakPointModel( self )
@@ -114,6 +119,14 @@ class CodimensionDebugger( QObject ):
                       self.__clientBreakConditionError )
         return
 
+    def getScriptPath( self ):
+        " Provides the path to the debugged script "
+        return self.__fileName
+
+    def getRunDebugParameters( self ):
+        " Provides the running and debugging parameters "
+        return self.__runParameters, self.__debugSettings
+
     def getBreakPointModel( self ):
         " Provides a reference to the breakpoints model "
         return self.__breakpointModel
@@ -137,6 +150,10 @@ class CodimensionDebugger( QObject ):
 
         self.__msgParts = []
         self.__collecting = False
+        self.__exitCode = None
+        self.__fileName = None
+        self.__runParameters = None
+        self.__debugSettings = None
 
         try:
             QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
@@ -153,6 +170,7 @@ class CodimensionDebugger( QObject ):
 
     def __initiatePrologue( self, fileName ):
         " Prologue is starting here "
+        self.__fileName = fileName 
         self.__changeDebuggerState( self.STATE_PROLOGUE )
         self.__disconnectReceived = False
 
@@ -164,16 +182,16 @@ class CodimensionDebugger( QObject ):
         self.__createProcfeedbackSocket()
         self.__createTCPServer()
 
-        params = GlobalData().getRunParameters( fileName )
+        self.__runParameters = GlobalData().getRunParameters( fileName )
         workingDir, cmd, environment = getCwdCmdEnv(
                                             CMD_TYPE_DEBUG,
-                                            fileName, params,
+                                            fileName, self.__runParameters,
                                             Settings().terminalType,
                                             self.__procFeedbackPort,
                                             self.__tcpServer.serverPort() )
 
-        debugSettings = Settings().getDebuggerSettings()
-        self.__stopAtFirstLine = debugSettings.stopAtFirstLine
+        self.__debugSettings = Settings().getDebuggerSettings()
+        self.__stopAtFirstLine = self.__debugSettings.stopAtFirstLine
 
         # Run the client -  exception is processed in the outer scope
         Popen( cmd, shell = True, cwd = workingDir, env = environment )
@@ -233,7 +251,6 @@ class CodimensionDebugger( QObject ):
             if time.time() - startTime > HANDSHAKE_TIMEOUT:
                 raise Exception( "Handshake timeout: "
                                  "error spawning process to debug" )
-        print "Debuggee PID: " + str( self.__procPID )
         return
 
 
@@ -290,7 +307,6 @@ class CodimensionDebugger( QObject ):
         #               self.__parseClientLine )
 
         self.__changeDebuggerState( self.STATE_IN_CLIENT )
-        print "New connection has been accepted"
         return
 
     def __sendCommand( self, command ):
@@ -435,6 +451,10 @@ class CodimensionDebugger( QObject ):
 
                 if resp == ResponseExit:
                     self.emit( SIGNAL( 'ClientFinished' ), line[ eoc : -1 ] )
+                    try:
+                        self.__exitCode = int( line[ eoc : -1 ] )
+                    except:
+                        pass
                     continue
 
                 if resp == ResponseEval:
@@ -476,7 +496,6 @@ class CodimensionDebugger( QObject ):
 
     def __disconnected( self ):
         " Triggered when the client closed the connection "
-        print "Client disconnected"
         # Note: if the stopDebugging call is done synchronously - you've got
         #       a core dump!
         self.__disconnectReceived = True
@@ -527,7 +546,6 @@ class CodimensionDebugger( QObject ):
                              self.__disconnected )
             self.__clientSocket.close()
         self.__clientSocket = None
-        print "client socket closed"
 
         # Close the TCP server if so
         if self.__tcpServer is not None:
@@ -538,7 +556,13 @@ class CodimensionDebugger( QObject ):
 
         # Deal with the process if so
         if self.__procPID is not None:
-            if brutal:
+            killOnSuccess = False
+            if self.__exitCode is not None and self.__exitCode == 0:
+                if self.__runParameters is not None and \
+                   self.__runParameters.closeTerminal:
+                    killOnSuccess = True
+
+            if brutal or killOnSuccess:
                 try:
                     # Throws exceptions if cannot kill the process
                     killProcess( self.__procPID )
@@ -548,6 +572,10 @@ class CodimensionDebugger( QObject ):
 
         self.__mainWindow.switchDebugMode( False )
         self.__changeDebuggerState( self.STATE_STOPPED )
+
+        self.__fileName = None
+        self.__runParameters = None
+        self.__debugSettings = None
         return
 
 
