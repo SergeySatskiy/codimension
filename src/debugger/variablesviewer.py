@@ -51,9 +51,10 @@ class VariablesViewer( QWidget ):
         self.__hideMCFFilter = Settings().debugHideMCF
         self.__createLayout()
 
-        self.setTabOrder( self.__filterEdit, self.__browser )
         self.setTabOrder( self.__browser, self.__execStatement )
-        self.setTabOrder( self.__execStatement, self.__evalStatement )
+        self.setTabOrder( self.__execStatement, self.__execButton )
+        self.setTabOrder( self.__execButton, self.__evalStatement )
+        self.setTabOrder( self.__evalStatement, self.__evalButton )
 
         self.__updateFilter()
         return
@@ -123,17 +124,6 @@ class VariablesViewer( QWidget ):
         self.connect( self.__globalOnlyButton, SIGNAL( 'clicked()' ),
                       self.__onGlobalFilter )
 
-        self.__filterEdit = CDMComboBox( True )
-        self.__filterEdit.setSizePolicy( QSizePolicy.Expanding,
-                                         QSizePolicy.Expanding )
-        self.__filterEdit.lineEdit().setToolTip(
-                                    "Filter (space separated regular expressions)" )
-        self.__filterEdit.setFixedHeight( 26 )
-        self.connect( self.__filterEdit,
-                      SIGNAL( 'editTextChanged(const QString&)' ),
-                      self.__textFilterChanged )
-        self.__filterEdit.setVisible( False )
-
         self.__execStatement = CDMComboBox( True )
         self.__execStatement.setSizePolicy( QSizePolicy.Expanding,
                                             QSizePolicy.Expanding )
@@ -143,8 +133,10 @@ class VariablesViewer( QWidget ):
         self.connect( self.__execStatement,
                       SIGNAL( 'editTextChanged(const QString&)' ),
                       self.__execStatementChanged )
+        self.connect( self.__execStatement,
+                      SIGNAL( 'enterClicked' ), self.__onEnterInExec )
         self.__execButton = QPushButton( "Exec" )
-        self.__execButton.setFocusPolicy( Qt.NoFocus )
+        # self.__execButton.setFocusPolicy( Qt.NoFocus )
         self.__execButton.setEnabled( False )
         self.connect( self.__execButton, SIGNAL( 'clicked()' ),
                       self.__onExec )
@@ -158,8 +150,10 @@ class VariablesViewer( QWidget ):
         self.connect( self.__evalStatement,
                       SIGNAL( 'editTextChanged(const QString&)' ),
                       self.__evalStatementChanged )
+        self.connect( self.__evalStatement,
+                      SIGNAL( 'enterClicked' ), self.__onEnterInEval )
         self.__evalButton = QPushButton( "Eval" )
-        self.__evalButton.setFocusPolicy( Qt.NoFocus )
+        # self.__evalButton.setFocusPolicy( Qt.NoFocus )
         self.__evalButton.setEnabled( False )
         self.connect( self.__evalButton, SIGNAL( 'clicked()' ),
                       self.__onEval )
@@ -177,11 +171,6 @@ class VariablesViewer( QWidget ):
         headerLayout.addWidget( self.__globalOnlyButton )
         headerFrame.setLayout( headerLayout )
 
-        filterLayout = QHBoxLayout()
-        filterLayout.setContentsMargins( 0, 0, 0, 0 )
-        filterLayout.setSpacing( 0 )
-        filterLayout.addWidget( self.__filterEdit )
-
         execEvalLayout = QGridLayout()
         execEvalLayout.setContentsMargins( 1, 1, 1, 1 )
         execEvalLayout.setSpacing( 1 )
@@ -191,7 +180,6 @@ class VariablesViewer( QWidget ):
         execEvalLayout.addWidget( self.__evalButton, 1, 1 )
 
         verticalLayout.addWidget( headerFrame )
-        verticalLayout.addLayout( filterLayout )
         verticalLayout.addWidget( self.__browser )
         verticalLayout.addLayout( execEvalLayout )
 
@@ -278,8 +266,7 @@ class VariablesViewer( QWidget ):
     def __updateFilter( self ):
         " Updates the current filter "
         self.__browser.setFilter( self.__hideMCFFilter,
-                                  self.__filter,
-                                  str( self.__filterEdit.currentText() ).strip() )
+                                  self.__filter, "" )
         self.__updateHeaderLabel()
         return
 
@@ -296,14 +283,17 @@ class VariablesViewer( QWidget ):
         self.__execStatement.clear()
         self.__evalStatement.lineEdit().setText( "" )
         self.__evalStatement.clear()
-        self.__filterEdit.lineEdit().setText( "" )
-        self.__filterEdit.clear()
         return
 
     def __evalStatementChanged( self, text ):
         " Triggered when a eval statement is changed "
         text = str( text ).strip()
         self.__evalButton.setEnabled( text != "" )
+        return
+
+    def __onEnterInEval( self ):
+        " Enter/return in eval "
+        self.__onEval()
         return
 
     def __onEval( self ):
@@ -322,6 +312,11 @@ class VariablesViewer( QWidget ):
         self.__execButton.setEnabled( text != "" )
         return
 
+    def __onEnterInExec( self ):
+        " Enter/return clicked in exec "
+        self.__onExec()
+        return
+
     def __onExec( self ):
         " Triggered when the Exec button is clicked "
         text = str( self.__execStatement.currentText() ).strip()
@@ -338,7 +333,6 @@ class VariablesViewer( QWidget ):
         self.__globalAndLocalButton.setEnabled( isInIDE )
         self.__localOnlyButton.setEnabled( isInIDE )
         self.__globalOnlyButton.setEnabled( isInIDE )
-        self.__filterEdit.setEnabled( isInIDE )
 
         self.__execStatement.setEnabled( isInIDE )
         if isInIDE:
