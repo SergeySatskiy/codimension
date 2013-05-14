@@ -1173,6 +1173,12 @@ class CodimensionProject( QObject ):
             self.__saveIgnoredExcpt()
         return
 
+    def setExceptionFilters( self, newFilters ):
+        " Sets the new filters "
+        self.ignoredExcpt = newFilters
+        self.__saveIgnoredExcpt()
+        return
+
     def addBreakpoint( self, bpointStr ):
         " Adds serialized breakpoint "
         if bpointStr not in self.breakpoints:

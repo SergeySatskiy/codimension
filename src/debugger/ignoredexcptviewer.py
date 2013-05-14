@@ -337,6 +337,12 @@ class IgnoredExceptionsViewer( QWidget ):
     def __onRemoveAllFromIgnore( self ):
         " Triggered when all the ignored exceptions should be deleted "
         self.clear()
+
+        project = GlobalData().project
+        if project.isLoaded():
+            project.setExceptionFilters( [] )
+        else:
+            Settings().setExceptionFilters( [] )
         return
 
     def isIgnored( self, exceptionType ):
