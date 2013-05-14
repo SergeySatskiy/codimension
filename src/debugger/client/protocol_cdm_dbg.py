@@ -37,11 +37,8 @@ DebugAddress = '127.0.0.1'
 # The protocol "words".
 RequestOK =                '>OK?<'
 RequestEnv =               '>Environment<'
-#RequestCapabilities =      '>Capabilities<'
 RequestLoad =              '>Load<'
 RequestRun =               '>Run<'
-#RequestCoverage =          '>Coverage<'
-#RequestProfile =           '>Profile<'
 RequestContinue =          '>Continue<'
 RequestStep =              '>Step<'
 RequestStepOver =          '>StepOver<'
@@ -63,15 +60,11 @@ RequestExec =              '>Exec<'
 RequestShutdown =          '>Shutdown<'
 RequestBanner =            '>Banner<'
 RequestCompletion =        '>Completion<'
-#RequestUTPrepare =         '>UTPrepare<'
-#RequestUTRun =             '>UTRun<'
-#RequestUTStop =            '>UTStop<'
 RequestForkTo =            '>ForkTo<'
 RequestForkMode =          '>ForkMode<'
 RequestStack =             '>CurrentStack<'
 
 ResponseOK =               '>OK<'
-#ResponseCapabilities =     RequestCapabilities
 ResponseContinue =         '>Continue<'
 ResponseException =        '>Exception<'
 ResponseSyntax =           '>SyntaxError<'
@@ -89,13 +82,12 @@ ResponseThreadSet =        RequestThreadSet
 ResponseStack =            RequestStack
 ResponseBanner =           RequestBanner
 ResponseCompletion =       RequestCompletion
-#ResponseUTPrepared =       '>UTPrepared<'
-#ResponseUTStartTest =      '>UTStartTest<'
-#ResponseUTStopTest =       '>UTStopTest<'
-#ResponseUTTestFailed =     '>UTTestFailed<'
-#ResponseUTTestErrored =    '>UTTestErrored<'
-#ResponseUTFinished =       '>UTFinished<'
 ResponseForkTo =           RequestForkTo
+ResponseEval =             RequestEval
+ResponseEvalOK =           '>EvalOK<'
+ResponseEvalError =        '>EvalError<'
+ResponseExec =             RequestExec
+ResponseExecError =        '>ExecError<'
 
 PassiveStartup =           '>PassiveStartup<'
 

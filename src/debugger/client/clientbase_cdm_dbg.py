@@ -56,7 +56,9 @@ from protocol_cdm_dbg import ( ResponseOK, RequestOK, RequestEnv, RequestVariabl
                                ResponseBanner, RequestSetFilter, ResponseForkTo,
                                RequestForkMode, ResponseContinue, ResponseExit,
                                ResponseVariables, DebugAddress, RequestCompletion,
-                               ResponseVariable, ResponseCompletion, PassiveStartup )
+                               ResponseVariable, ResponseCompletion, PassiveStartup,
+                               ResponseEval, ResponseEvalOK, ResponseEvalError,
+                               ResponseExec, ResponseExecError )
 from base_cdm_dbg import setRecursionLimit
 from config_cdm_dbg import ConfigVarTypeStrings
 from asyncfile_cdm_dbg import AsyncFile, AsyncPendingWrite
@@ -720,8 +722,9 @@ class DebugClientBase( object ):
                     frameNumber -= 1
 
                 if f is None:
+                    self.write( ResponseEval + '\n' )
                     self.write( 'Bad frame number\n' )
-                    self.write( ResponseOK + '\n' )
+                    self.write( ResponseEvalError + '\n' )
                     return
 
                 _globals = f.f_globals
@@ -747,13 +750,14 @@ class DebugClientBase( object ):
                     finally:
                         tblist = tback = None
 
+                    self.write( ResponseEval + '\n' )
                     map( self.write, _list )
-
-                    self.write( ResponseException + '\n' )
+                    self.write( ResponseEvalError + '\n' )
 
                 else:
+                    self.write( ResponseEval + '\n' )
                     self.write( unicode( value ) + '\n' )
-                    self.write( ResponseOK + '\n' )
+                    self.write( ResponseEvalOK + '\n' )
 
                 return
 
@@ -768,8 +772,9 @@ class DebugClientBase( object ):
                     frameNumber -= 1
 
                 if f is None:
+                    self.write( ResponseExec + '\n' )
                     self.write( 'Bad frame number\n' )
-                    self.write( ResponseOK + '\n' )
+                    self.write( ResponseExecError + '\n' )
                     return
 
                 # Locals are copied (not referenced) here!
@@ -803,9 +808,9 @@ class DebugClientBase( object ):
                     finally:
                         tblist = tback = None
 
+                    self.write( ResponseExec + '\n' )
                     map( self.write, _list )
-
-                    self.write( ResponseException + '\n' )
+                    self.write( ResponseExecError + '\n' )
 
                 return
 

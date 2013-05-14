@@ -149,6 +149,12 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.__debugger.getBreakPointModel(),
                       SIGNAL( 'BreakpoinsChanged' ),
                       self.__onBreakpointsModelChanged )
+        self.connect( self.__debugger, SIGNAL( 'EvalOK' ),
+                      self.__onEvalOK )
+        self.connect( self.__debugger, SIGNAL( 'EvalError' ),
+                      self.__onEvalError )
+        self.connect( self.__debugger, SIGNAL( 'ExecError' ),
+                      self.__onExecError )
 
         self.settings = settings
         self.__initialisation = True
@@ -3885,3 +3891,17 @@ class CodimensionMainWindow( QMainWindow ):
             self.__rightSideBar.setTabText( 3, "Breakpoints (" + str( total ) + ")" )
         return
 
+    def __onEvalOK( self, message ):
+        " Triggered when Eval completed successfully "
+        logging.info( "Eval succeeded:\n" + message )
+        return
+
+    def __onEvalError( self, message ):
+        " Triggered when Eval failed "
+        logging.error( "Eval failed:\n" + message )
+        return
+
+    def __onExecError( self, message ):
+        " Triggered when Eval failed "
+        logging.error( "Exec failed:\n" + message )
+        return
