@@ -198,19 +198,22 @@ __osSpawnForProfile = {
                       "%(exec)s %(fb)s %(port)d $CDM_RES; %(exit_if_ok)s %(shell)s' &",
                       }
 
+# Unfortunately, the debugger does not use the debuggee exit code as its exit
+# code. So it is impossible to detect in a bash part whether the console should
+# be closed.
 __osSpawnForDebug = {
     'posix'         : "%(term)s -e %(shell)s -c " \
                       "'%(exec)s %(fb)s %(fbport)d $PPID; cd %(wdir)s; " \
-                      "%(exec)s %(dbgclient)s %(dbgopt)s -- %(app)s; CDM_RES=$?; echo; echo -e \"Script finished with exit code $CDM_RES\"; " \
-                      "%(exit_if_ok)s %(shell)s' &",
+                      "%(exec)s %(dbgclient)s %(dbgopt)s -- %(app)s; echo; echo -e \"Script finished\"; " \
+                      "%(shell)s' &",
     'Terminal'      : "Terminal --disable-server -x %(shell)s -c " \
                       "'%(exec)s %(fb)s %(fbport)d $PPID; cd %(wdir)s; " \
-                      "%(exec)s %(dbgclient)s %(dbgopt)s -- %(app)s; CDM_RES=$?; echo; echo -e \"Script finished with exit code $CDM_RES\"; " \
-                      "%(exit_if_ok)s %(shell)s' &",
+                      "%(exec)s %(dbgclient)s %(dbgopt)s -- %(app)s; echo; echo -e \"Script finished\"; " \
+                      "%(shell)s' &",
     'gnome-terminal': "gnome-terminal --disable-factory -x %(shell)s -c " \
                       "'%(exec)s %(fb)s %(fbport)d $PPID; cd %(wdir)s; " \
-                      "%(exec)s %(dbgclient)s %(dbgopt)s -- %(app)s; CDM_RES=$?; echo; echo -e \"Script finished with exit code $CDM_RES\"; " \
-                      "%(exit_if_ok)s %(shell)s' &",
+                      "%(exec)s %(dbgclient)s %(dbgopt)s -- %(app)s; echo; echo -e \"Script finished\"; " \
+                      "%(shell)s' &",
                     }
 
 
@@ -343,9 +346,10 @@ def getTerminalCommandToDebug( fileName, workingDir, arguments,
     if debugSettings.traceInterpreter:
         dbgopt += " -t"
     if debugSettings.autofork:
-        pass    # TODO: not used now?
-    if debugSettings.followChild:
-        pass    # TODO: not used now?
+        if debugSettings.followChild:
+            dbgopt += " --fork-child"
+        else:
+            dbgopt += " --fork-parent"
 
 
     # Here: all the parameters are prepared, need to combine the command line
@@ -358,8 +362,7 @@ def getTerminalCommandToDebug( fileName, workingDir, arguments,
                                                          'fbport':     procFeedbackPort,
                                                          'tcpport':    tcpServerPort,
                                                          'dbgclient':  debugClientPath,
-                                                         'dbgopt':     dbgopt,
-                                                         'exit_if_ok': exit_if_ok }
+                                                         'dbgopt':     dbgopt }
     return __osSpawnForDebug[ os.name ] % { 'term':       terminalStartCmd,
                                             'shell':      shell,
                                             'wdir':       workingDir,
@@ -369,8 +372,7 @@ def getTerminalCommandToDebug( fileName, workingDir, arguments,
                                             'fbport':     procFeedbackPort,
                                             'tcpport':    tcpServerPort,
                                             'dbgclient':  debugClientPath,
-                                            'dbgopt':     dbgopt,
-                                            'exit_if_ok': exit_if_ok }
+                                            'dbgopt':     dbgopt }
 
 
 def parseCommandLineArguments( cmdLine ):
