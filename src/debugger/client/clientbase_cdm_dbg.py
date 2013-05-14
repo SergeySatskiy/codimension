@@ -2037,10 +2037,29 @@ class DebugClientBase( object ):
         Public method implementing a fork routine deciding
         which branch to follow.
         """
-        if not self.fork_auto:
+
+        # It does not make sense to follow something which was run via the
+        # subprocess module. The subprocess module uses fork() internally,
+        # so let's analyze it and do auto follow parent even if it was not
+        # required explicitly.
+        isPopen = False
+        stackFrames = traceback.extract_stack()
+        for stackFrame in stackFrames:
+            if stackFrame[ 2 ] == '_execute_child':
+                if stackFrame[ 0 ].endswith( os.path.sep + 'subprocess.py' ):
+                    isPopen = True
+
+
+        if not self.fork_auto and not isPopen:
             self.write( RequestForkTo + '\n' )
             self.eventLoop( True )
         pid = DebugClientOrigFork()
+
+        if isPopen:
+            # Switch to following parent
+            oldFollow = self.fork_child
+            self.fork_child = False
+
         if pid == 0:
             # child
             if not self.fork_child:
@@ -2053,6 +2072,10 @@ class DebugClientBase( object ):
                 sys.settrace( None )
                 sys.setprofile( None )
                 self.sessionClose( 0 )
+
+        if isPopen:
+            # Switch to what it was before
+            self.fork_child = oldFollow
         return pid
 
     def close( self, fdescriptor ):
