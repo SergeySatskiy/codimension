@@ -157,7 +157,7 @@ class DebuggerSettings:
         self.traceInterpreter = True
         self.stopAtFirstLine = True
         self.autofork = False
-        self.followChild = True
+        self.followChild = False
         return
 
     def __eq__( self, other ):
