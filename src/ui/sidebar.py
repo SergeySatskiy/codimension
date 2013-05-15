@@ -29,7 +29,7 @@
 """ sidebar implementation """
 
 from PyQt4.QtCore import SIGNAL,  SLOT, QEvent, QSize, Qt
-from PyQt4.QtGui  import QTabBar, QWidget, QStackedWidget, QBoxLayout
+from PyQt4.QtGui  import QTabBar, QWidget, QStackedWidget, QBoxLayout, QSizePolicy
 
 
 class SideBar( QWidget ):
@@ -91,6 +91,14 @@ class SideBar( QWidget ):
         if self.__minimized:
             return
 
+        if self.splitter.count() == 3:
+            myIndex = self.splitter.indexOf( self )
+            otherIndex = 2 - myIndex
+            otherWidget = self.splitter.widget( otherIndex )
+            otherSizePolicy = otherWidget.sizePolicy()
+            otherWidget.setSizePolicy( QSizePolicy.Fixed,
+                                       QSizePolicy.Fixed )
+
         self.__minimized = True
         self.__bigSize = self.size()
         if self.__orientation in [ SideBar.North, SideBar.South ]:
@@ -107,12 +115,23 @@ class SideBar( QWidget ):
             self.setFixedHeight( self.__tabBar.minimumSizeHint().height() )
         else:
             self.setFixedWidth( self.__tabBar.minimumSizeHint().width() )
+
+        if self.splitter.count() == 3:
+            otherWidget.setSizePolicy( otherSizePolicy )
         return
 
     def expand( self ):
         """ Expand the sidebar """
         if not self.__minimized:
             return
+
+        if self.splitter.count() == 3:
+            myIndex = self.splitter.indexOf( self )
+            otherIndex = 2 - myIndex
+            otherWidget = self.splitter.widget( otherIndex )
+            otherSizePolicy = otherWidget.sizePolicy()
+            otherWidget.setSizePolicy( QSizePolicy.Fixed,
+                                       QSizePolicy.Fixed )
 
         self.__minimized = False
         self.__stackedWidget.show()
@@ -124,6 +143,9 @@ class SideBar( QWidget ):
             self.setMinimumWidth( self.__minSize )
             self.setMaximumWidth( self.__maxSize )
         self.splitter.setSizes( self.splitterSizes )
+
+        if self.splitter.count() == 3:
+            otherWidget.setSizePolicy( otherSizePolicy )
         return
 
     def isMinimized( self ):
