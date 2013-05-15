@@ -132,7 +132,7 @@ class IgnoredExceptionsViewer( QWidget ):
         self.connect( self.__excTypeEdit, SIGNAL( 'returnPressed()' ),
                       self.__onAddExceptionFilter )
         self.__addButton = QPushButton( "Add" )
-        self.__addButton.setFocusPolicy( Qt.NoFocus )
+        # self.__addButton.setFocusPolicy( Qt.NoFocus )
         self.__addButton.setEnabled( False )
         self.connect( self.__addButton, SIGNAL( 'clicked()' ),
                       self.__onAddExceptionFilter )
