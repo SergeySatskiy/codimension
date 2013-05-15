@@ -94,10 +94,7 @@ class SideBar( QWidget ):
         if self.splitter.count() == 3:
             myIndex = self.splitter.indexOf( self )
             otherIndex = 2 - myIndex
-            otherWidget = self.splitter.widget( otherIndex )
-            otherSizePolicy = otherWidget.sizePolicy()
-            otherWidget.setSizePolicy( QSizePolicy.Fixed,
-                                       QSizePolicy.Fixed )
+            sizes = self.splitter.sizes()
 
         self.__minimized = True
         self.__bigSize = self.size()
@@ -117,7 +114,9 @@ class SideBar( QWidget ):
             self.setFixedWidth( self.__tabBar.minimumSizeHint().width() )
 
         if self.splitter.count() == 3:
-            otherWidget.setSizePolicy( otherSizePolicy )
+            newSizes = self.splitter.sizes()
+            newSizes[ otherIndex ] = sizes[ otherIndex ]
+            self.splitter.setSizes( newSizes )
         return
 
     def expand( self ):
@@ -128,10 +127,7 @@ class SideBar( QWidget ):
         if self.splitter.count() == 3:
             myIndex = self.splitter.indexOf( self )
             otherIndex = 2 - myIndex
-            otherWidget = self.splitter.widget( otherIndex )
-            otherSizePolicy = otherWidget.sizePolicy()
-            otherWidget.setSizePolicy( QSizePolicy.Fixed,
-                                       QSizePolicy.Fixed )
+            sizes = self.splitter.sizes()
 
         self.__minimized = False
         self.__stackedWidget.show()
@@ -142,10 +138,10 @@ class SideBar( QWidget ):
         else:
             self.setMinimumWidth( self.__minSize )
             self.setMaximumWidth( self.__maxSize )
-        self.splitter.setSizes( self.splitterSizes )
 
         if self.splitter.count() == 3:
-            otherWidget.setSizePolicy( otherSizePolicy )
+            self.splitterSizes[ otherIndex ] = sizes[ otherIndex ]
+        self.splitter.setSizes( self.splitterSizes )
         return
 
     def isMinimized( self ):
