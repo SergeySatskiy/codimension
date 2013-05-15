@@ -28,13 +28,14 @@ import errno
 import time
 from subprocess import Popen
 from PyQt4.QtCore import SIGNAL, QTimer, QObject, Qt, QTextCodec, QString, QModelIndex
-from PyQt4.QtGui import QApplication, QCursor, QInputDialog, QDialog
+from PyQt4.QtGui import QApplication, QCursor, QMessageBox, QDialog
 from PyQt4.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
 
 from utils.globals import GlobalData
 from utils.run import getCwdCmdEnv, CMD_TYPE_DEBUG
 from utils.settings import Settings
 from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
+from utils.pixmapcache import PixmapCache
 from client.protocol_cdm_dbg import ( EOT, RequestStep, RequestStepOver, RequestStepOut,
                                       RequestShutdown, ResponseLine, ResponseStack,
                                       RequestContinue, RequestThreadList,
@@ -585,12 +586,23 @@ class CodimensionDebugger( QObject ):
 
     def __askForkTo( self ):
         " Asks what to follow, a parent or a child "
-        selections = [ "Parent Process", "Child process" ]
-        res, ok = QInputDialog.getItem( None,
-                                        "Client forking",
-                                        "Select the fork branch to follow.",
-                                        selections, 0, False )
-        if not ok or res == selections[ 0 ]:
+        dlg = QMessageBox( QMessageBox.Question, "Client forking",
+                           "Select the fork branch to follow" )
+        dlg.addButton( QMessageBox.Ok )
+        dlg.addButton( QMessageBox.Cancel )
+
+        btn1 = dlg.button( QMessageBox.Ok )
+        btn1.setText( "&Child process" )
+        btn1.setIcon( PixmapCache().getIcon( '' ) )
+
+        btn2 = dlg.button( QMessageBox.Cancel )
+        btn2.setText( "&Parent process" )
+        btn2.setIcon( PixmapCache().getIcon( '' ) )
+
+        dlg.setDefaultButton( QMessageBox.Cancel )
+        res = dlg.exec_()
+
+        if res == QMessageBox.Cancel:
             self.__sendCommand( ResponseForkTo + 'parent\n' )
         else:
             self.__sendCommand( ResponseForkTo + 'child\n' )
