@@ -29,7 +29,7 @@
 """ sidebar implementation """
 
 from PyQt4.QtCore import SIGNAL,  SLOT, QEvent, QSize, Qt
-from PyQt4.QtGui  import QTabBar, QWidget, QStackedWidget, QBoxLayout, QSizePolicy
+from PyQt4.QtGui  import QTabBar, QWidget, QStackedWidget, QBoxLayout
 
 
 class SideBar( QWidget ):
@@ -69,7 +69,6 @@ class SideBar( QWidget ):
         self.__bigSize = QSize()
 
         self.splitter = None
-        self.splitterSizes = []
 
         self.__tabBar.installEventFilter( self )
 
@@ -82,19 +81,27 @@ class SideBar( QWidget ):
 
     def setSplitter( self, splitter ):
         """ Set the splitter managing the sidebar """
-
         self.splitter = splitter
         return
+
+    def __getIndex( self ):
+        " Provides the widget index in splitters "
+        if self.__orientation == SideBar.West:
+            return 0
+        if self.__orientation == SideBar.East:
+            return 2
+        if self.__orientation == SideBar.South:
+            return 1
+        return 0
+
+    def __getWidget( self ):
+        " Provides a reference to the widget "
+        return self.splitter.widget( self.__getIndex() )
 
     def shrink( self ):
         """ Shrink the sidebar """
         if self.__minimized:
             return
-
-        if self.splitter.count() == 3:
-            myIndex = self.splitter.indexOf( self )
-            otherIndex = 2 - myIndex
-            sizes = self.splitter.sizes()
 
         self.__minimized = True
         self.__bigSize = self.size()
@@ -104,19 +111,31 @@ class SideBar( QWidget ):
         else:
             self.__minSize = self.minimumWidth()
             self.__maxSize = self.maximumWidth()
-        self.splitterSizes = self.splitter.sizes()
 
         self.__stackedWidget.hide()
 
-        if self.__orientation in [ SideBar.North, SideBar.South ]:
-            self.setFixedHeight( self.__tabBar.minimumSizeHint().height() )
-        else:
-            self.setFixedWidth( self.__tabBar.minimumSizeHint().width() )
+        sizes = self.splitter.sizes()
+        selfIndex = self.__getIndex()
 
-        if self.splitter.count() == 3:
-            newSizes = self.splitter.sizes()
-            newSizes[ otherIndex ] = sizes[ otherIndex ]
-            self.splitter.setSizes( newSizes )
+        if self.__orientation in [ SideBar.North, SideBar.South ]:
+            newHeight = self.__tabBar.minimumSizeHint().height()
+            self.setFixedHeight( newHeight )
+
+            diff = sizes[ selfIndex ] - newHeight
+            sizes[ selfIndex ] = newHeight
+        else:
+            newWidth = self.__tabBar.minimumSizeHint().width()
+            self.setFixedWidth( newWidth )
+
+            diff = sizes[ selfIndex ] - newWidth
+            sizes[ selfIndex ] = newWidth
+
+        if selfIndex == 0:
+            sizes[ 1 ] += diff
+        else:
+            sizes[ selfIndex - 1 ] += diff
+
+        self.splitter.setSizes( sizes )
         return
 
     def expand( self ):
@@ -124,29 +143,36 @@ class SideBar( QWidget ):
         if not self.__minimized:
             return
 
-        if self.splitter.count() == 3:
-            myIndex = self.splitter.indexOf( self )
-            otherIndex = 2 - myIndex
-            sizes = self.splitter.sizes()
-
         self.__minimized = False
         self.__stackedWidget.show()
         self.resize( self.__bigSize )
+
+        sizes = self.splitter.sizes()
+        selfIndex = self.__getIndex()
+
         if self.__orientation in [ SideBar.North, SideBar.South ]:
             self.setMinimumHeight( self.__minSize )
             self.setMaximumHeight( self.__maxSize )
+
+            diff = self.__bigSize.height() - sizes[ selfIndex ]
+            sizes[ selfIndex ] = self.__bigSize.height()
         else:
             self.setMinimumWidth( self.__minSize )
             self.setMaximumWidth( self.__maxSize )
 
-        if self.splitter.count() == 3:
-            self.splitterSizes[ otherIndex ] = sizes[ otherIndex ]
-        self.splitter.setSizes( self.splitterSizes )
+            diff = self.__bigSize.width() - sizes[ selfIndex ]
+            sizes[ selfIndex ] = self.__bigSize.width()
+
+        if selfIndex == 0:
+            sizes[ 1 ] -= diff
+        else:
+            sizes[ selfIndex - 1 ] -= diff
+
+        self.splitter.setSizes( sizes )
         return
 
     def isMinimized( self ):
         """ Provides the minimized state """
-
         return self.__minimized
 
     def eventFilter( self, obj, evt ):

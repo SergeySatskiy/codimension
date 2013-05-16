@@ -434,8 +434,19 @@ class CodimensionMainWindow( QMainWindow ):
         self.__horizontalSplitter.addWidget( self.editorsManagerWidget )
         self.__horizontalSplitter.addWidget( self.__rightSideBar )
 
+        # This prevents changing the size of the side panels
+        self.__horizontalSplitter.setCollapsible( 0, False )
+        self.__horizontalSplitter.setCollapsible( 2, False )
+        self.__horizontalSplitter.setStretchFactor( 0, 0 )
+        self.__horizontalSplitter.setStretchFactor( 1, 1 )
+        self.__horizontalSplitter.setStretchFactor( 2, 0 )
+
         self.__verticalSplitter.addWidget( self.__horizontalSplitter )
         self.__verticalSplitter.addWidget( self.__bottomSideBar )
+        # This prevents changing the size of the side panels
+        self.__verticalSplitter.setCollapsible( 1, False )
+        self.__verticalSplitter.setStretchFactor( 0, 1 )
+        self.__verticalSplitter.setStretchFactor( 1, 1 )
 
         self.setCentralWidget( self.__verticalSplitter )
 
