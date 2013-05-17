@@ -884,6 +884,52 @@ class CodimensionMainWindow( QMainWindow ):
                 PixmapCache().getIcon( 'profile.png' ),
                 'Profile tab script...', self.__onProfileTabDlg )
 
+        # The Debug menu
+        self.__debugMenu = QMenu( "Debu&g", self )
+        self.connect( self.__debugMenu, SIGNAL( "aboutToShow()" ),
+                      self.__debugAboutToShow )
+        self.__prjDebugAct = self.__debugMenu.addAction(
+                PixmapCache().getIcon( 'debugger.png' ),
+                'Debug &project main script', self.__onDebugProject )
+        self.__prjDebugDlgAct = self.__debugMenu.addAction(
+                PixmapCache().getIcon( 'detailsdlg.png' ),
+                'Debug p&roject main script...', self.__onDebugProjectSettings )
+        self.__tabDebugAct = self.__debugMenu.addAction(
+                PixmapCache().getIcon( 'debugger.png' ),
+                'Debug &tab script', self.__onDebugTab )
+        self.__tabDebugDlgAct = self.__debugMenu.addAction(
+                PixmapCache().getIcon( 'detailsdlg.png' ),
+                'Debug t&ab script...', self.__onDebugTabDlg )
+        self.__debugMenu.addSeparator()
+        self.__debugStopBrutalAct = self.__debugMenu.addAction(
+                PixmapCache().getIcon( 'dbgstopbrutal.png' ),
+                'Stop session and kill console', self.__onBrutalStopDbgSession )
+        self.__debugStopAct = self.__debugMenu.addAction(
+                PixmapCache().getIcon( 'dbgstop.png' ),
+                'Stop session and keep console', self.__onStopDbgSession )
+        self.__debugRestartAct = self.__debugMenu.addAction(
+                PixmapCache().getIcon( 'dbgrestart.png' ),
+                'Restart session', __onRestartDbgSession )
+        self.__debugMenu.addSeparator()
+        self.__debugContinueAct = self.__debugMenu.addAction(
+                PixmapCache().getIcon( 'dbggo.png' ),
+                'Continue', self.__onDbgGo )
+        self.__debugStepOverAct = self.__debugMenu.addAction(
+                PixmapCache().getIcon( 'dbgnext.png' ),
+                'Step over', self.__onDbgNext )
+        self.__debugStepInAct = self.__debugMenu.addAction(
+                PixmapCache().getIcon( 'dbgstepinto.png' ),
+                'Step in', self.__onDbgStepInto )
+        self.__debugRunToCursorAct = self.__debugMenu.addAction(
+                PixmapCache().getIcon( 'dbgruntoline.png' ),
+                'Run to cursor', self.__onDbgRunToLine )
+        self.__debugStepOutAct = self.__debugMenu.addAction(
+                PixmapCache().getIcon( 'dbgreturn.png' ),
+                'Step out', self.__onDbgReturn )
+        self.__debugJumpToCurrentAct = self.__debugMenu.addAction(
+                PixmapCache().getIcon( 'dbgtocurrent.png' ),
+                'Jump to current line', self.__onDbgJumpToCurrent )
+
         # The Diagrams menu
         self.__diagramsMenu = QMenu( "&Diagrams", self )
         self.connect( self.__diagramsMenu, SIGNAL( "aboutToShow()" ),
@@ -3155,6 +3201,10 @@ class CodimensionMainWindow( QMainWindow ):
         currentWidget.onRunScript()
         return
 
+    def __onDebugTab( self ):
+        " Triggered when debug tab is requested "
+        return
+
     def __onProfileTab( self ):
         " Triggered when profile script is requested "
         editorsManager = self.editorsManagerWidget.editorsManager
@@ -3167,6 +3217,10 @@ class CodimensionMainWindow( QMainWindow ):
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.onRunScriptSettings()
+        return
+
+    def __onDebugTabDlg( self ):
+        " Triggered when debug tab script dialog is requested "
         return
 
     def __onProfileTabDlg( self ):
@@ -3629,6 +3683,10 @@ class CodimensionMainWindow( QMainWindow ):
         self.__prjProfileDlgAct.setEnabled( projectLoaded and prjScriptValid )
         self.__tabProfileAct.setEnabled( isPythonBuffer )
         self.__tabProfileDlgAct.setEnabled( isPythonBuffer )
+        return
+
+    def __debugAboutToShow( self ):
+        " Triggered when the debug menu is about to show "
         return
 
     def __toolsAboutToShow( self ):
