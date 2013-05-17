@@ -2229,7 +2229,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
                                 'Set run/debug parameters' )
         self.connect( debugScriptDlgAct, SIGNAL( 'triggered()' ),
-                      self.__onDebugScriptSettings )
+                      self.onDebugScriptSettings )
         self.debugScriptButton = QToolButton( self )
         self.debugScriptButton.setIcon( \
                             PixmapCache().getIcon( 'debugger.png' ) )
@@ -2238,7 +2238,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.debugScriptButton.setMenu( debugScriptMenu )
         self.debugScriptButton.setFocusPolicy( Qt.NoFocus )
         self.connect( self.debugScriptButton, SIGNAL( 'clicked(bool)' ),
-                      self.__onDebugScript )
+                      self.onDebugScript )
         self.debugScriptButton.setEnabled( False )
 
         spacer = QWidget()
@@ -2486,6 +2486,10 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.profileScriptButton.setEnabled( self.runScriptButton.isEnabled() )
         self.debugScriptButton.setEnabled( self.runScriptButton.isEnabled() )
         return
+
+    def isDebugEnabled( self ):
+        " Returns True if the debug button is enabled "
+        return self.debugScriptButton.isEnabled()
 
     def onPythonTidy( self ):
         " Triggered when python tidy should be called "
@@ -2857,7 +2861,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             logging.error( str( exc ) )
         return
 
-    def __onDebugScriptSettings( self ):
+    def onDebugScriptSettings( self ):
         " Shows the debug parameters dialogue "
         if self.__checkDebugPrerequisites() == False:
             return
@@ -2875,10 +2879,10 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                 Settings().terminalType = dlg.termType
             if dlg.debuggerParams != debuggerParams:
                 Settings().setDebuggerSettings( dlg.debuggerParams )
-            self.__onDebugScript()
+            self.onDebugScript()
         return
 
-    def __onDebugScript( self ):
+    def onDebugScript( self ):
         " Starts debugging "
         if self.__checkDebugPrerequisites() == False:
             return
