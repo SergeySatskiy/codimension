@@ -2378,20 +2378,14 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                                     self.importsDiagramButton.isEnabled() )
         self.__editor.importsDgmParamAct.setEnabled(
                                     self.importsDiagramButton.isEnabled() )
-        self.runScriptButton.setEnabled( isPythonFile and
-                                         self.isModified() == False and
-                                         os.path.isabs( self.__fileName ) )
-        self.profileScriptButton.setEnabled( self.runScriptButton.isEnabled() )
         self.__editor.runAct.setEnabled( self.runScriptButton.isEnabled() )
         self.__editor.runParamAct.setEnabled( self.runScriptButton.isEnabled() )
         self.__editor.profileAct.setEnabled( self.runScriptButton.isEnabled() )
         self.__editor.profileParamAct.setEnabled(
                                     self.runScriptButton.isEnabled() )
-        self.debugScriptButton.setEnabled( isPythonFile and
-                                    self.isModified() == False and
-                                    os.path.isabs( self.__fileName ) )
         self.pythonTidyButton.setEnabled( isPythonFile )
         self.lineCounterButton.setEnabled( isPythonFile )
+        self.__updateRunDebugButtons()
         return
 
     def onPylint( self ):
@@ -2479,17 +2473,24 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def __updateRunDebugButtons( self ):
         " Enables/disables the run and debug buttons as required "
-        self.runScriptButton.setEnabled( self.__fileType == PythonFileType and \
-                                         self.isModified() == False and \
-                                         self.__debugMode == False and \
-                                         os.path.isabs( self.__fileName ) )
-        self.profileScriptButton.setEnabled( self.runScriptButton.isEnabled() )
-        self.debugScriptButton.setEnabled( self.runScriptButton.isEnabled() )
+        enable = self.__fileType == PythonFileType and \
+                 self.isModified() == False and \
+                 self.__debugMode == False and \
+                 os.path.isabs( self.__fileName )
+
+        if enable == self.runScriptButton.setEnabled.isEnabled():
+            # No change
+            return
+
+        self.runScriptButton.setEnabled( enable )
+        self.profileScriptButton.setEnabled( enable )
+        self.debugScriptButton.setEnabled( enable )
+        self.emit( SIGNAL( "TabRunChanged" ), enable )
         return
 
-    def isDebugEnabled( self ):
-        " Returns True if the debug button is enabled "
-        return self.debugScriptButton.isEnabled()
+    def isTabRunEnabled( self ):
+        " Tells the status of run-like buttons "
+        return self.runScriptButton.setEnabled.isEnabled()
 
     def onPythonTidy( self ):
         " Triggered when python tidy should be called "

@@ -483,6 +483,8 @@ class EditorsManager( QTabWidget ):
                       self.onReload )
         self.connect( newWidget, SIGNAL( 'ReloadAllNonModifiedRequest' ),
                       self.onReloadAllNonModified )
+        self.connect( newWidget, SIGNAL( 'TabRunChanged' ),
+                      self.onTabRunChanged )
         editor = newWidget.getEditor()
         if shortName is None:
             newWidget.setShortName( self.getNewName() )
@@ -777,6 +779,7 @@ class EditorsManager( QTabWidget ):
     def __currentChanged( self, index ):
         " Handles the currentChanged signal "
         if index == -1:
+            self.emit( SIGNAL( "TabRunChanged" ), False )
             return
 
         self._updateIconAndTooltip( self.currentIndex() )
@@ -786,7 +789,8 @@ class EditorsManager( QTabWidget ):
         self.findWidget.updateStatus()
         self.replaceWidget.updateStatus()
 
-        self.currentWidget().setFocus()
+        widget = self.currentWidget()
+        widget.setFocus()
 
         # Update history
         if not self.__skipHistoryUpdate:
@@ -795,13 +799,18 @@ class EditorsManager( QTabWidget ):
                 self.history.updateForCurrentIndex()
                 self.history.addCurrent()
 
-        if self.currentWidget().doesFileExist():
-            if self.currentWidget().isDiskFileModified():
-                if not self.currentWidget().getReloadDialogShown():
-                    self.currentWidget().showOutsideChangesBar( \
+        if widget.doesFileExist():
+            if widget.isDiskFileModified():
+                if not widget.getReloadDialogShown():
+                    widget.showOutsideChangesBar(
                                     self.__countDiskModifiedUnchanged() > 1 )
                     # Just in case check the other tabs
                     self.checkOutsideFileChanges()
+
+        if widget.getType() != MainWindowTabWidgetBase.PlainTextEditor:
+            self.emit( SIGNAL( "TabRunChanged" ), False )
+        else:
+            self.emit( SIGNAL( "TabRunChanged" ), widget.isTabRunEnabled() )
         return
 
     def onHelp( self ):
@@ -1097,6 +1106,8 @@ class EditorsManager( QTabWidget ):
                           self.onReload )
             self.connect( newWidget, SIGNAL( 'ReloadAllNonModifiedRequest' ),
                           self.onReloadAllNonModified )
+            self.connect( newWidget, SIGNAL( 'TabRunChanged' ),
+                          self.onTabRunChanged )
             editor = newWidget.getEditor()
             newWidget.readFile( fileName )
 
@@ -2020,6 +2031,11 @@ class EditorsManager( QTabWidget ):
     def onReload( self ):
         " Called when the current tab file should be reloaded "
         self.reloadTab( self.currentIndex() )
+        return
+
+    def onTabRunChanged( self, enabled ):
+        " Triggered when an editor informs about changes of the run buttons "
+        self.emit( SIGNAL( 'TabRunChanged' ), enabled )
         return
 
     def reloadTab( self, index ):

@@ -271,6 +271,10 @@ class CodimensionMainWindow( QMainWindow ):
         """ creates the UI layout """
 
         self.editorsManagerWidget = EditorsManagerWidget( self, self.__debugger )
+        self.connect( self.editorsManagerWidget.editorsManager,
+                      SIGNAL( 'TabRunChanged' ),
+                      self.setDebugTabAvailable )
+
         self.editorsManagerWidget.findWidget.hide()
         self.editorsManagerWidget.replaceWidget.hide()
         self.editorsManagerWidget.gotoLineWidget.hide()
@@ -909,7 +913,6 @@ class CodimensionMainWindow( QMainWindow ):
                 PixmapCache().getIcon( 'dbgstop.png' ),
                 'Stop session and keep console', self.__onStopDbgSession, "F10" )
         self.__debugStopAct.setEnabled( False )
-        self.__debugMenu.addSeparator()
         self.__debugRestartAct = self.__debugMenu.addAction(
                 PixmapCache().getIcon( 'dbgrestart.png' ),
                 'Restart session', self.__onRestartDbgSession, "F4" )
@@ -919,25 +922,25 @@ class CodimensionMainWindow( QMainWindow ):
                 PixmapCache().getIcon( 'dbggo.png' ),
                 'Continue', self.__onDbgGo, "F6" )
         self.__debugContinueAct.setEnabled( False )
-        self.__debugStepOverAct = self.__debugMenu.addAction(
-                PixmapCache().getIcon( 'dbgnext.png' ),
-                'Step over', self.__onDbgNext, "F8" )
-        self.__debugStepOverAct.setEnabled( False )
         self.__debugStepInAct = self.__debugMenu.addAction(
                 PixmapCache().getIcon( 'dbgstepinto.png' ),
                 'Step in', self.__onDbgStepInto, "F7" )
         self.__debugStepInAct.setEnabled( False )
-        self.__debugRunToCursorAct = self.__debugMenu.addAction(
-                PixmapCache().getIcon( 'dbgruntoline.png' ),
-                'Run to cursor', self.__onDbgRunToLine, "Shift+F6" )
-        self.__debugRunToCursorAct.setEnabled( False )
+        self.__debugStepOverAct = self.__debugMenu.addAction(
+                PixmapCache().getIcon( 'dbgnext.png' ),
+                'Step over', self.__onDbgNext, "F8" )
+        self.__debugStepOverAct.setEnabled( False )
         self.__debugStepOutAct = self.__debugMenu.addAction(
                 PixmapCache().getIcon( 'dbgreturn.png' ),
                 'Step out', self.__onDbgReturn, "F9" )
         self.__debugStepOutAct.setEnabled( False )
+        self.__debugRunToCursorAct = self.__debugMenu.addAction(
+                PixmapCache().getIcon( 'dbgruntoline.png' ),
+                'Run to cursor', self.__onDbgRunToLine, "Shift+F6" )
+        self.__debugRunToCursorAct.setEnabled( False )
         self.__debugJumpToCurrentAct = self.__debugMenu.addAction(
                 PixmapCache().getIcon( 'dbgtocurrent.png' ),
-                'Jump to current line', self.__onDbgJumpToCurrent, "Ctrl+W" )
+                'Show current line', self.__onDbgJumpToCurrent, "Ctrl+W" )
         self.__debugJumpToCurrentAct.setEnabled( False )
 
         # The Diagrams menu
@@ -1416,12 +1419,12 @@ class CodimensionMainWindow( QMainWindow ):
         # Debugger buttons
         self.__dbgStopBrutal = QAction( PixmapCache().getIcon( 'dbgstopbrutal.png' ),
                                        'Stop debugging session and '
-                                       'close debugged program terminal (Ctrl+F10)', self )
+                                       'kill console (Ctrl+F10)', self )
         self.connect( self.__dbgStopBrutal, SIGNAL( "triggered()" ),
                       self.__onBrutalStopDbgSession )
         self.__dbgStopBrutal.setVisible( False )
         self.__dbgStop = QAction( PixmapCache().getIcon( 'dbgstop.png' ),
-                                  'Stop debugging session (F10)', self )
+                                  'Stop debugging session and keep console (F10)', self )
         self.connect( self.__dbgStop, SIGNAL( "triggered()" ),
                       self.__onStopDbgSession )
         self.__dbgStop.setVisible( False )
@@ -1446,7 +1449,7 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onDbgStepInto )
         self.__dbgStepInto.setVisible( False )
         self.__dbgRunToLine = QAction(
-            PixmapCache().getIcon( 'dbgruntoline.png' ), 'Run to cursor line (Shift+F6)', self )
+            PixmapCache().getIcon( 'dbgruntoline.png' ), 'Run to cursor (Shift+F6)', self )
         self.connect( self.__dbgRunToLine, SIGNAL( "triggered()" ),
                       self.__onDbgRunToLine )
         self.__dbgRunToLine.setVisible( False )
@@ -1456,7 +1459,7 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onDbgReturn )
         self.__dbgReturn.setVisible( False )
         self.__dbgJumpToCurrent = QAction( PixmapCache().getIcon( 'dbgtocurrent.png' ),
-                                           'Jump to the current debugger line (Ctrl+W)', self )
+                                           'Show current debugger line (Ctrl+W)', self )
         self.connect( self.__dbgJumpToCurrent, SIGNAL( "triggered()" ),
                       self.__onDbgJumpToCurrent )
         self.__dbgJumpToCurrent.setVisible( False )
@@ -1494,8 +1497,8 @@ class CodimensionMainWindow( QMainWindow ):
         toolbar.addAction( self.__dbgStop )
         toolbar.addAction( self.__dbgRestart )
         toolbar.addAction( self.__dbgGo )
-        toolbar.addAction( self.__dbgNext )
         toolbar.addAction( self.__dbgStepInto )
+        toolbar.addAction( self.__dbgNext )
         toolbar.addAction( self.__dbgRunToLine )
         toolbar.addAction( self.__dbgReturn )
         toolbar.addAction( self.__dbgJumpToCurrent )
@@ -3261,6 +3264,9 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onDebugTab( self ):
         " Triggered when debug tab is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.onDebugScript()
         return
 
     def __onProfileTab( self ):
@@ -3279,6 +3285,9 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onDebugTabDlg( self ):
         " Triggered when debug tab script dialog is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.onDebugScriptSettings()
         return
 
     def __onProfileTabDlg( self ):
@@ -3730,17 +3739,12 @@ class CodimensionMainWindow( QMainWindow ):
         " Triggered when the run menu is about to show "
         projectLoaded = GlobalData().project.isLoaded()
         prjScriptValid = GlobalData().isProjectScriptValid()
-        isPythonBuffer = self.__isPythonBuffer()
 
         self.__prjRunAct.setEnabled( projectLoaded and prjScriptValid )
         self.__prjRunDlgAct.setEnabled( projectLoaded and prjScriptValid )
-        self.__tabRunAct.setEnabled( isPythonBuffer )
-        self.__tabRunDlgAct.setEnabled( isPythonBuffer )
 
         self.__prjProfileAct.setEnabled( projectLoaded and prjScriptValid )
         self.__prjProfileDlgAct.setEnabled( projectLoaded and prjScriptValid )
-        self.__tabProfileAct.setEnabled( isPythonBuffer )
-        self.__tabProfileDlgAct.setEnabled( isPythonBuffer )
         return
 
     def __debugAboutToShow( self ):
@@ -4034,13 +4038,14 @@ class CodimensionMainWindow( QMainWindow ):
         return
 
     def setDebugTabAvailable( self, enabled ):
-        " Sets a new status when a tab is changed "
-        if self.debugMode:
-            self.__tabDebugAct.setEnabled( False )
-            self.__tabDebugDlgAct.setEnabled( False )
-            return
-
+        " Sets a new status when a tab is changed or a content has been changed "
         self.__tabDebugAct.setEnabled( enabled )
         self.__tabDebugDlgAct.setEnabled( enabled )
+
+        self.__tabRunAct.setEnabled( enabled )
+        self.__tabRunDlgAct.setEnabled( enabled )
+
+        self.__tabProfileAct.setEnabled( enabled )
+        self.__tabProfileDlgAct.setEnabled( enabled )
         return
 
