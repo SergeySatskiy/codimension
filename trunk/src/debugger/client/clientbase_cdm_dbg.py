@@ -53,7 +53,7 @@ from protocol_cdm_dbg import ( ResponseOK, RequestOK, RequestVariable,
                                RequestForkTo, RequestEval, ResponseBPConditionError,
                                ResponseWPConditionError, RequestWatchEnable,
                                RequestWatchIgnore, RequestExec,
-                               RequestSetFilter, ResponseForkTo,
+                               ResponseForkTo,
                                RequestForkMode, ResponseContinue, ResponseExit,
                                ResponseVariables, DebugAddress,
                                ResponseVariable, PassiveStartup,
@@ -814,11 +814,6 @@ class DebugClientBase( object ):
                     map( self.write, _list )
                     self.write( ResponseExecError + '\n' )
 
-                return
-
-            if cmd == RequestSetFilter:
-                scope, filterString = eval(arg)
-                self.__generateFilterObjects(int(scope), filterString)
                 return
 
             if cmd == ResponseForkTo:
@@ -1729,23 +1724,6 @@ class DebugClientBase( object ):
             varlist.append( ( key, valtype, rvalue ) )
 
         return varlist
-
-    def __generateFilterObjects( self, scope, filterString ):
-        """
-        Private slot to convert a filter string to a list of filter objects.
-
-        @param scope 1 to generate filter for global variables, 0 for local
-            variables (int)
-        @param filterString string of filter patterns separated by ';'
-        """
-        patternFilterObjects = []
-        for pattern in filterString.split( ';' ):
-            patternFilterObjects.append( re.compile( '^%s$' % pattern ) )
-        if scope:
-            self.globalsFilterObjects = patternFilterObjects[ : ]
-        else:
-            self.localsFilterObjects = patternFilterObjects[ : ]
-        return
 
     def startDebugger( self, filename = None, host = None, port = None,
                        enableTrace = 1, exceptions = 1,
