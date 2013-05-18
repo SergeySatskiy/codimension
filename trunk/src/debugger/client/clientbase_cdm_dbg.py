@@ -49,7 +49,7 @@ from protocol_cdm_dbg import ( ResponseOK, RequestOK, RequestVariable,
                                RequestStepQuit, RequestShutdown, RequestBreak,
                                ResponseThreadList, ResponseRaw, ResponseException,
                                RequestContinue, RequestBreakIgnore,
-                               RequestBreakEnable, RequestWatch, RequestLoad,
+                               RequestBreakEnable, RequestWatch,
                                RequestForkTo, RequestEval, ResponseBPConditionError,
                                ResponseWPConditionError, RequestWatchEnable,
                                RequestWatchIgnore, RequestExec,
@@ -520,52 +520,6 @@ class DebugClientBase( object ):
             if cmd == RequestOK:
                 self.write(self.pendingResponse + '\n')
                 self.pendingResponse = ResponseOK
-                return
-
-            if cmd == RequestLoad:
-                self._fncache = {}
-                self.dircache = []
-                sys.argv = []
-                wdir, fname, args, tracePython = arg.split('|')
-                self.__setCoding( fname )
-                setDefaultEncoding( self.__coding )
-                sys.argv.append( fname )
-                sys.argv.extend( eval( args ) )
-                sys.path = self.__getSysPath(os.path.dirname(sys.argv[0]))
-                if wdir == '':
-                    os.chdir(sys.path[1])
-                else:
-                    os.chdir(wdir)
-                tracePython = int(tracePython)
-                self.running = sys.argv[0]
-                self.mainFrame = None
-                self.inRawMode = 0
-                self.debugging = 1
-
-                self.threads.clear()
-                self.attachThread(mainThread = 1)
-
-                # set the system exception handling function to ensure, that
-                # we report on all unhandled exceptions
-                sys.excepthook = self.__unhandled_exception
-
-                # clear all old breakpoints,
-                # they'll get set after we have started
-                self.mainThread.clear_all_breaks()
-
-                self.mainThread.tracePython = tracePython
-
-                # This will eventually enter a local event loop.
-                # Note the use of backquotes to cause a repr of self.running.
-                # The need for this is on Windows os where backslash is the
-                # path separator. They will get inadvertantly stripped away
-                # during the eval causing IOErrors, if self.running is
-                # passed as a normal str.
-                self.debugMod.__dict__['__file__'] = self.running
-                sys.modules['__main__'] = self.debugMod
-                res = self.mainThread.run('execfile(' + `self.running` + ')',
-                                          self.debugMod.__dict__)
-                self.progTerminated(res)
                 return
 
             if cmd == RequestShutdown:
