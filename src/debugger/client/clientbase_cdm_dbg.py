@@ -52,8 +52,8 @@ from protocol_cdm_dbg import ( ResponseOK, RequestOK, RequestEnv, RequestVariabl
                                RequestBreakEnable, RequestWatch, RequestLoad,
                                RequestForkTo, RequestEval, ResponseBPConditionError,
                                ResponseWPConditionError, RequestWatchEnable,
-                               RequestWatchIgnore, RequestExec, RequestBanner,
-                               ResponseBanner, RequestSetFilter, ResponseForkTo,
+                               RequestWatchIgnore, RequestExec,
+                               RequestSetFilter, ResponseForkTo,
                                RequestForkMode, ResponseContinue, ResponseExit,
                                ResponseVariables, DebugAddress,
                                ResponseVariable, PassiveStartup,
@@ -826,12 +826,6 @@ class DebugClientBase( object ):
                     map( self.write, _list )
                     self.write( ResponseExecError + '\n' )
 
-                return
-
-            if cmd == RequestBanner:
-                self.write('%s%s\n' % (ResponseBanner,
-                    unicode(("Python %s" % sys.version, socket.gethostname(),
-                             self.variant))))
                 return
 
             if cmd == RequestSetFilter:
