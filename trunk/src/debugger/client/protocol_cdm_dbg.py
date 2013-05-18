@@ -37,7 +37,6 @@ DebugAddress = '127.0.0.1'
 # The protocol "words".
 RequestOK =                '>OK?<'
 RequestLoad =              '>Load<'
-RequestRun =               '>Run<'
 RequestContinue =          '>Continue<'
 RequestStep =              '>Step<'
 RequestStepOver =          '>StepOver<'

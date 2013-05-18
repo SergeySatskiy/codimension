@@ -48,7 +48,7 @@ from protocol_cdm_dbg import ( ResponseOK, RequestOK, RequestVariable,
                                RequestStep, RequestStepOver, RequestStepOut,
                                RequestStepQuit, RequestShutdown, RequestBreak,
                                ResponseThreadList, ResponseRaw, ResponseException,
-                               RequestContinue, RequestRun, RequestBreakIgnore,
+                               RequestContinue, RequestBreakIgnore,
                                RequestBreakEnable, RequestWatch, RequestLoad,
                                RequestForkTo, RequestEval, ResponseBPConditionError,
                                ResponseWPConditionError, RequestWatchEnable,
@@ -566,39 +566,6 @@ class DebugClientBase( object ):
                 res = self.mainThread.run('execfile(' + `self.running` + ')',
                                           self.debugMod.__dict__)
                 self.progTerminated(res)
-                return
-
-            if cmd == RequestRun:
-                sys.argv = []
-                wdir, fname, args = arg.split('|')
-                self.__setCoding( fname )
-                setDefaultEncoding( self.__coding )
-                sys.argv.append(fname)
-                sys.argv.extend(eval(args))
-                sys.path = self.__getSysPath(os.path.dirname(sys.argv[0]))
-                if wdir == '':
-                    os.chdir(sys.path[1])
-                else:
-                    os.chdir(wdir)
-
-                self.running = sys.argv[0]
-                self.mainFrame = None
-                self.botframe = None
-                self.inRawMode = 0
-
-                self.threads.clear()
-                self.attachThread(mainThread = 1)
-
-                # set the system exception handling function to ensure, that
-                # we report on all unhandled exceptions
-                sys.excepthook = self.__unhandled_exception
-
-                self.mainThread.tracePython = 0
-
-                self.debugMod.__dict__['__file__'] = sys.argv[0]
-                sys.modules['__main__'] = self.debugMod
-                execfile(sys.argv[0], self.debugMod.__dict__)
-                self.writestream.flush()
                 return
 
             if cmd == RequestShutdown:
