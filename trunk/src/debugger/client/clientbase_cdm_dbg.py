@@ -54,7 +54,7 @@ from protocol_cdm_dbg import ( ResponseOK, RequestOK, RequestVariable,
                                ResponseWPConditionError, RequestWatchEnable,
                                RequestWatchIgnore, RequestExec,
                                ResponseForkTo,
-                               RequestForkMode, ResponseContinue, ResponseExit,
+                               ResponseContinue, ResponseExit,
                                ResponseVariables, DebugAddress,
                                ResponseVariable, PassiveStartup,
                                ResponseEval, ResponseEvalOK, ResponseEvalError,
@@ -820,10 +820,6 @@ class DebugClientBase( object ):
                 # this results from a separate event loop
                 self.fork_child = (arg == 'child')
                 self.eventExit = 1
-                return
-
-            if cmd == RequestForkMode:
-                self.fork_auto, self.fork_child = eval(arg)
                 return
 
         # If we are handling raw mode input then reset the mode and break out
