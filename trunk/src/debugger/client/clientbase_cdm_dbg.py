@@ -64,9 +64,6 @@ from config_cdm_dbg import ConfigVarTypeStrings
 from asyncfile_cdm_dbg import AsyncFile, AsyncPendingWrite
 
 
-CODIMENSION_DEFAULT_DBG_HOST = 'localhost'
-CODIMENSION_DEFAULT_DBG_PORT = 9360
-
 
 def setDefaultEncoding( encoding ):
     " Sets the default encoding "
