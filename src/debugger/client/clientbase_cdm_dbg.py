@@ -42,19 +42,19 @@ import imp
 import re
 
 
-from protocol_cdm_dbg import ( ResponseOK, RequestOK, RequestVariable,
+from protocol_cdm_dbg import ( ResponseOK, RequestOK, RequestEnv, RequestVariable,
                                RequestThreadList, RequestThreadSet, RequestStack,
                                ResponseThreadSet, RequestVariables, ResponseStack,
                                RequestStep, RequestStepOver, RequestStepOut,
                                RequestStepQuit, RequestShutdown, RequestBreak,
-                               ResponseThreadList, ResponseException,
-                               RequestContinue, RequestBreakIgnore,
-                               RequestBreakEnable, RequestWatch,
+                               ResponseThreadList, ResponseRaw, ResponseException,
+                               RequestContinue, RequestRun, RequestBreakIgnore,
+                               RequestBreakEnable, RequestWatch, RequestLoad,
                                RequestForkTo, RequestEval, ResponseBPConditionError,
                                ResponseWPConditionError, RequestWatchEnable,
-                               RequestWatchIgnore, RequestExec,
-                               ResponseForkTo,
-                               ResponseContinue, ResponseExit,
+                               RequestWatchIgnore, RequestExec, RequestBanner,
+                               ResponseBanner, RequestSetFilter, ResponseForkTo,
+                               RequestForkMode, ResponseContinue, ResponseExit,
                                ResponseVariables, DebugAddress,
                                ResponseVariable, PassiveStartup,
                                ResponseEval, ResponseEvalOK, ResponseEvalError,
@@ -63,6 +63,9 @@ from base_cdm_dbg import setRecursionLimit
 from config_cdm_dbg import ConfigVarTypeStrings
 from asyncfile_cdm_dbg import AsyncFile, AsyncPendingWrite
 
+
+CODIMENSION_DEFAULT_DBG_HOST = 'localhost'
+CODIMENSION_DEFAULT_DBG_PORT = 9360
 
 
 def setDefaultEncoding( encoding ):
@@ -82,6 +85,55 @@ def setDefaultEncoding( encoding ):
 
 
 DebugClientInstance = None
+
+#############################################################################
+
+def debugClientRawInput( prompt = "", echo = 1 ):
+    """
+    Replacement for the standard raw_input builtin.
+
+    This function works with the split debugger.
+
+    @param prompt The prompt to be shown. (string)
+    @param echo Flag indicating echoing of the input (boolean)
+    """
+    if DebugClientInstance is None or DebugClientInstance.redirect == 0:
+        return DebugClientOrigRawInput( prompt )
+
+    return DebugClientInstance.raw_input( prompt, echo )
+
+# Use our own raw_input().
+try:
+    DebugClientOrigRawInput = __builtins__.__dict__[ 'raw_input' ]
+    __builtins__.__dict__[ 'raw_input' ] = debugClientRawInput
+except ( AttributeError, KeyError ):
+    import __main__
+    DebugClientOrigRawInput = __main__.__builtins__.__dict__[ 'raw_input' ]
+    __main__.__builtins__.__dict__[ 'raw_input' ] = debugClientRawInput
+
+#############################################################################
+
+def debugClientInput( prompt = "" ):
+    """
+    Replacement for the standard input builtin.
+
+    This function works with the split debugger.
+
+    @param prompt The prompt to be shown. (string)
+    """
+    if DebugClientInstance is None or DebugClientInstance.redirect == 0:
+        return DebugClientOrigInput( prompt )
+
+    return DebugClientInstance.input( prompt )
+
+# Use our own input().
+try:
+    DebugClientOrigInput = __builtins__.__dict__[ 'input' ]
+    __builtins__.__dict__[ 'input' ] = debugClientInput
+except ( AttributeError, KeyError ):
+    import __main__
+    DebugClientOrigInput = __main__.__builtins__.__dict__[ 'input' ]
+    __main__.__builtins__.__dict__[ 'input' ] = debugClientInput
 
 #############################################################################
 
@@ -324,6 +376,28 @@ class DebugClientBase( object ):
                                  unicode( ( currentId, threadList ) ) ) )
         return
 
+    def raw_input( self, prompt, echo ):
+        """
+        Public method to implement raw_input() using the event loop.
+
+        @param prompt the prompt to be shown (string)
+        @param echo Flag indicating echoing of the input (boolean)
+        @return the entered string
+        """
+        self.write( "%s%s\n" % (ResponseRaw, unicode((prompt, echo))) )
+        self.inRawMode = 1
+        self.eventLoop( True )
+        return self.rawLine
+
+    def input( self, prompt ):
+        """
+        Public method to implement input() using the event loop.
+
+        @param prompt the prompt to be shown (string)
+        @return the entered string evaluated as a Python expresion
+        """
+        return eval( self.raw_input( prompt, 1 ) )
+
     def __exceptionRaised( self ):
         """
         Private method called in the case of an exception
@@ -446,6 +520,97 @@ class DebugClientBase( object ):
             if cmd == RequestOK:
                 self.write(self.pendingResponse + '\n')
                 self.pendingResponse = ResponseOK
+                return
+
+            if cmd == RequestEnv:
+                env = eval(arg)
+                for key, value in env.items():
+                    if key.endswith("+"):
+                        if os.environ.has_key(key[:-1]):
+                            os.environ[key[:-1]] += value
+                        else:
+                            os.environ[key[:-1]] = value
+                    else:
+                        os.environ[key] = value
+                return
+
+            if cmd == RequestLoad:
+                self._fncache = {}
+                self.dircache = []
+                sys.argv = []
+                wdir, fname, args, tracePython = arg.split('|')
+                self.__setCoding( fname )
+                setDefaultEncoding( self.__coding )
+                sys.argv.append( fname )
+                sys.argv.extend( eval( args ) )
+                sys.path = self.__getSysPath(os.path.dirname(sys.argv[0]))
+                if wdir == '':
+                    os.chdir(sys.path[1])
+                else:
+                    os.chdir(wdir)
+                tracePython = int(tracePython)
+                self.running = sys.argv[0]
+                self.mainFrame = None
+                self.inRawMode = 0
+                self.debugging = 1
+
+                self.threads.clear()
+                self.attachThread(mainThread = 1)
+
+                # set the system exception handling function to ensure, that
+                # we report on all unhandled exceptions
+                sys.excepthook = self.__unhandled_exception
+
+                # clear all old breakpoints,
+                # they'll get set after we have started
+                self.mainThread.clear_all_breaks()
+
+                self.mainThread.tracePython = tracePython
+
+                # This will eventually enter a local event loop.
+                # Note the use of backquotes to cause a repr of self.running.
+                # The need for this is on Windows os where backslash is the
+                # path separator. They will get inadvertantly stripped away
+                # during the eval causing IOErrors, if self.running is
+                # passed as a normal str.
+                self.debugMod.__dict__['__file__'] = self.running
+                sys.modules['__main__'] = self.debugMod
+                res = self.mainThread.run('execfile(' + `self.running` + ')',
+                                          self.debugMod.__dict__)
+                self.progTerminated(res)
+                return
+
+            if cmd == RequestRun:
+                sys.argv = []
+                wdir, fname, args = arg.split('|')
+                self.__setCoding( fname )
+                setDefaultEncoding( self.__coding )
+                sys.argv.append(fname)
+                sys.argv.extend(eval(args))
+                sys.path = self.__getSysPath(os.path.dirname(sys.argv[0]))
+                if wdir == '':
+                    os.chdir(sys.path[1])
+                else:
+                    os.chdir(wdir)
+
+                self.running = sys.argv[0]
+                self.mainFrame = None
+                self.botframe = None
+                self.inRawMode = 0
+
+                self.threads.clear()
+                self.attachThread(mainThread = 1)
+
+                # set the system exception handling function to ensure, that
+                # we report on all unhandled exceptions
+                sys.excepthook = self.__unhandled_exception
+
+                self.mainThread.tracePython = 0
+
+                self.debugMod.__dict__['__file__'] = sys.argv[0]
+                sys.modules['__main__'] = self.debugMod
+                execfile(sys.argv[0], self.debugMod.__dict__)
+                self.writestream.flush()
                 return
 
             if cmd == RequestShutdown:
@@ -663,10 +828,25 @@ class DebugClientBase( object ):
 
                 return
 
+            if cmd == RequestBanner:
+                self.write('%s%s\n' % (ResponseBanner,
+                    unicode(("Python %s" % sys.version, socket.gethostname(),
+                             self.variant))))
+                return
+
+            if cmd == RequestSetFilter:
+                scope, filterString = eval(arg)
+                self.__generateFilterObjects(int(scope), filterString)
+                return
+
             if cmd == ResponseForkTo:
                 # this results from a separate event loop
                 self.fork_child = (arg == 'child')
                 self.eventExit = 1
+                return
+
+            if cmd == RequestForkMode:
+                self.fork_auto, self.fork_child = eval(arg)
                 return
 
         # If we are handling raw mode input then reset the mode and break out
@@ -1568,6 +1748,86 @@ class DebugClientBase( object ):
 
         return varlist
 
+    def __generateFilterObjects( self, scope, filterString ):
+        """
+        Private slot to convert a filter string to a list of filter objects.
+
+        @param scope 1 to generate filter for global variables, 0 for local
+            variables (int)
+        @param filterString string of filter patterns separated by ';'
+        """
+        patternFilterObjects = []
+        for pattern in filterString.split( ';' ):
+            patternFilterObjects.append( re.compile( '^%s$' % pattern ) )
+        if scope:
+            self.globalsFilterObjects = patternFilterObjects[ : ]
+        else:
+            self.localsFilterObjects = patternFilterObjects[ : ]
+        return
+
+    def startDebugger( self, filename = None, host = None, port = None,
+                       enableTrace = 1, exceptions = 1,
+                       tracePython = 0, redirect = 1 ):
+        """
+        Public method used to start the remote debugger.
+
+        @param filename the program to be debugged (string)
+        @param host hostname of the debug server (string)
+        @param port portnumber of the debug server (int)
+        @param enableTrace flag to enable the tracing
+               function (boolean)
+        @param exceptions flag to enable exception reporting of
+               the IDE (boolean)
+        @param tracePython flag to enable tracing into the
+               Python library (boolean)
+        @param redirect flag indicating redirection of stdin,
+               stdout and stderr (boolean)
+        """
+        global debugClient
+        if host is None:
+            host = os.getenv( 'CODIMENSION_HOST',
+                              CODIMENSION_DEFAULT_DBG_HOST )
+        if port is None:
+            port = os.getenv( 'CODIMENSION_PORT',
+                              CODIMENSION_DEFAULT_DBG_PORT )
+
+        remoteAddress = self.__resolveHost( host )
+        self.connectDebugger( port, remoteAddress, redirect )
+        if filename is not None:
+            self.running = os.path.abspath( filename )
+        else:
+            try:
+                self.running = os.path.abspath( sys.argv[ 0 ] )
+            except IndexError:
+                self.running = None
+        if self.running:
+            self.__setCoding( self.running )
+            setDefaultEncoding( self.defaultCoding )
+
+        self.passive = 1
+        self.write( "%s%s|%d\n" % ( PassiveStartup,
+                                    self.running, exceptions ) )
+        self.__interact()
+
+        # setup the debugger variables
+        self._fncache = {}
+        self.dircache = []
+        self.mainFrame = None
+        self.inRawMode = 0
+        self.debugging = 1
+
+        self.attachThread(mainThread = 1)
+        self.mainThread.tracePython = tracePython
+
+        # set the system exception handling function to ensure, that
+        # we report on all unhandled exceptions
+        sys.excepthook = self.__unhandled_exception
+
+        # now start debugging
+        if enableTrace:
+            self.mainThread.set_trace()
+        return
+
     def startProgInDebugger( self, progargs, wd, host,
                              port, exceptions = 1,
                              tracePython = 0, redirect = 1 ):
@@ -1628,6 +1888,20 @@ class DebugClientBase( object ):
                                    self.debugMod.__dict__ )
         self.progTerminated( res )
         return
+
+    def run_call( self, scriptname, func, *args ):
+        """
+        Public method used to start the remote debugger and call a function.
+
+        @param scriptname name of the script to be debugged (string)
+        @param func function to be called
+        @param *args arguments being passed to func
+        @return result of the function call
+        """
+        self.startDebugger( scriptname, enableTrace = 0 )
+        res = self.mainThread.runcall( func, *args )
+        self.progTerminated( res )
+        return res
 
     @staticmethod
     def __resolveHost( host ):
@@ -1793,4 +2067,3 @@ class DebugClientBase( object ):
         sysPath.insert( 0, firstEntry )
         sysPath.insert( 0, '' )
         return sysPath
-
