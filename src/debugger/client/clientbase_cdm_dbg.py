@@ -476,7 +476,7 @@ class DebugClientBase( object ):
 
             if cmd == RequestStack:
                 stack = self.currentThread.getStack()
-                self.write('%s%s\n' % (ResponseStack, unicode(stack)))
+                self.write( '%s%s\n' % ( ResponseStack, unicode( stack ) ) )
                 return
 
             if cmd == RequestThreadSet:
@@ -485,16 +485,16 @@ class DebugClientBase( object ):
                     self.setCurrentThread( tid )
                     self.write( ResponseThreadSet + '\n' )
                     stack = self.currentThread.getStack()
-                    self.write('%s%s\n' % (ResponseStack, unicode(stack)))
+                    self.write( '%s%s\n' % ( ResponseStack, unicode( stack ) ) )
                 return
 
             if cmd == RequestStep:
-                self.currentThread.step(1)
+                self.currentThread.step( 1 )
                 self.eventExit = 1
                 return
 
             if cmd == RequestStepOver:
-                self.currentThread.step(0)
+                self.currentThread.step( 0 )
                 self.eventExit = 1
                 return
 
@@ -505,20 +505,20 @@ class DebugClientBase( object ):
 
             if cmd == RequestStepQuit:
                 if self.passive:
-                    self.progTerminated(42)
+                    self.progTerminated( 42 )
                 else:
                     self.set_quit()
                     self.eventExit = 1
                 return
 
             if cmd == RequestContinue:
-                special = int(arg)
-                self.currentThread.go(special)
+                special = int( arg )
+                self.currentThread.go( special )
                 self.eventExit = 1
                 return
 
             if cmd == RequestOK:
-                self.write(self.pendingResponse + '\n')
+                self.write( self.pendingResponse + '\n' )
                 self.pendingResponse = ResponseOK
                 return
 
@@ -527,7 +527,7 @@ class DebugClientBase( object ):
                 return
 
             if cmd == RequestBreak:
-                fname, line, temporary, _set, cond = arg.split('@@')
+                fname, line, temporary, _set, cond = arg.split( '@@' )
                 line = int( line )
                 _set = int( _set )
                 temporary = int( temporary )
@@ -537,14 +537,14 @@ class DebugClientBase( object ):
                         cond = None
                     else:
                         try:
-                            compile(cond, '<string>', 'eval')
+                            compile( cond, '<string>', 'eval' )
                         except SyntaxError:
-                            self.write('%s%s,%d\n' % \
-                                (ResponseBPConditionError, fname, line))
+                            self.write( '%s%s,%d\n' % \
+                                ( ResponseBPConditionError, fname, line ) )
                             return
-                    self.mainThread.set_break(fname, line, temporary, cond)
+                    self.mainThread.set_break( fname, line, temporary, cond )
                 else:
-                    self.mainThread.clear_break(fname, line)
+                    self.mainThread.clear_break( fname, line )
 
                 return
 
@@ -1642,69 +1642,6 @@ class DebugClientBase( object ):
 
         return varlist
 
-    def startDebugger( self, filename = None, host = None, port = None,
-                       enableTrace = 1, exceptions = 1,
-                       tracePython = 0, redirect = 1 ):
-        """
-        Public method used to start the remote debugger.
-
-        @param filename the program to be debugged (string)
-        @param host hostname of the debug server (string)
-        @param port portnumber of the debug server (int)
-        @param enableTrace flag to enable the tracing
-               function (boolean)
-        @param exceptions flag to enable exception reporting of
-               the IDE (boolean)
-        @param tracePython flag to enable tracing into the
-               Python library (boolean)
-        @param redirect flag indicating redirection of stdin,
-               stdout and stderr (boolean)
-        """
-        global debugClient
-        if host is None:
-            host = os.getenv( 'CODIMENSION_HOST',
-                              CODIMENSION_DEFAULT_DBG_HOST )
-        if port is None:
-            port = os.getenv( 'CODIMENSION_PORT',
-                              CODIMENSION_DEFAULT_DBG_PORT )
-
-        remoteAddress = self.__resolveHost( host )
-        self.connectDebugger( port, remoteAddress, redirect )
-        if filename is not None:
-            self.running = os.path.abspath( filename )
-        else:
-            try:
-                self.running = os.path.abspath( sys.argv[ 0 ] )
-            except IndexError:
-                self.running = None
-        if self.running:
-            self.__setCoding( self.running )
-            setDefaultEncoding( self.defaultCoding )
-
-        self.passive = 1
-        self.write( "%s%s|%d\n" % ( PassiveStartup,
-                                    self.running, exceptions ) )
-        self.__interact()
-
-        # setup the debugger variables
-        self._fncache = {}
-        self.dircache = []
-        self.mainFrame = None
-        self.inRawMode = 0
-        self.debugging = 1
-
-        self.attachThread(mainThread = 1)
-        self.mainThread.tracePython = tracePython
-
-        # set the system exception handling function to ensure, that
-        # we report on all unhandled exceptions
-        sys.excepthook = self.__unhandled_exception
-
-        # now start debugging
-        if enableTrace:
-            self.mainThread.set_trace()
-        return
-
     def startProgInDebugger( self, progargs, wd, host,
                              port, exceptions = 1,
                              tracePython = 0, redirect = 1 ):
@@ -1765,20 +1702,6 @@ class DebugClientBase( object ):
                                    self.debugMod.__dict__ )
         self.progTerminated( res )
         return
-
-    def run_call( self, scriptname, func, *args ):
-        """
-        Public method used to start the remote debugger and call a function.
-
-        @param scriptname name of the script to be debugged (string)
-        @param func function to be called
-        @param *args arguments being passed to func
-        @return result of the function call
-        """
-        self.startDebugger( scriptname, enableTrace = 0 )
-        res = self.mainThread.runcall( func, *args )
-        self.progTerminated( res )
-        return res
 
     @staticmethod
     def __resolveHost( host ):
