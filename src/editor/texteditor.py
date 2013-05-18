@@ -2478,7 +2478,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                  self.__debugMode == False and \
                  os.path.isabs( self.__fileName )
 
-        if enable == self.runScriptButton.setEnabled.isEnabled():
+        if enable == self.runScriptButton.isEnabled():
             # No change
             return
 
@@ -2490,7 +2490,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def isTabRunEnabled( self ):
         " Tells the status of run-like buttons "
-        return self.runScriptButton.setEnabled.isEnabled()
+        return self.runScriptButton.isEnabled()
 
     def onPythonTidy( self ):
         " Triggered when python tidy should be called "

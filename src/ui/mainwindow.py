@@ -1639,6 +1639,8 @@ class CodimensionMainWindow( QMainWindow ):
             self.runProjectButton.setToolTip( "Run project" )
             self.debugProjectButton.setEnabled( False )
             self.debugProjectButton.setToolTip( "Debug project" )
+            self.__prjDebugAct.setEnabled( False )
+            self.__prjDebugDlgAct.setEnabled( False )
             self.profileProjectButton.setEnabled( False )
             self.profileProjectButton.setToolTip( "Profile project" )
             return
@@ -3749,6 +3751,11 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __debugAboutToShow( self ):
         " Triggered when the debug menu is about to show "
+        projectLoaded = GlobalData().project.isLoaded()
+        prjScriptValid = GlobalData().isProjectScriptValid()
+
+        self.__prjDebugAct.setEnabled( projectLoaded and prjScriptValid )
+        self.__prjDebugDlgAct.setEnabled( projectLoaded and prjScriptValid )
         return
 
     def __toolsAboutToShow( self ):
