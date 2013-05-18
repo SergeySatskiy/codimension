@@ -57,7 +57,6 @@ RequestEval =              '>Eval<'
 RequestExec =              '>Exec<'
 RequestShutdown =          '>Shutdown<'
 RequestForkTo =            '>ForkTo<'
-RequestForkMode =          '>ForkMode<'
 RequestStack =             '>CurrentStack<'
 
 ResponseOK =               '>OK<'
