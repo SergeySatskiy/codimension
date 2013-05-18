@@ -42,7 +42,7 @@ import imp
 import re
 
 
-from protocol_cdm_dbg import ( ResponseOK, RequestOK, RequestEnv, RequestVariable,
+from protocol_cdm_dbg import ( ResponseOK, RequestOK, RequestVariable,
                                RequestThreadList, RequestThreadSet, RequestStack,
                                ResponseThreadSet, RequestVariables, ResponseStack,
                                RequestStep, RequestStepOver, RequestStepOut,
@@ -520,18 +520,6 @@ class DebugClientBase( object ):
             if cmd == RequestOK:
                 self.write(self.pendingResponse + '\n')
                 self.pendingResponse = ResponseOK
-                return
-
-            if cmd == RequestEnv:
-                env = eval(arg)
-                for key, value in env.items():
-                    if key.endswith("+"):
-                        if os.environ.has_key(key[:-1]):
-                            os.environ[key[:-1]] += value
-                        else:
-                            os.environ[key[:-1]] = value
-                    else:
-                        os.environ[key] = value
                 return
 
             if cmd == RequestLoad:
