@@ -59,7 +59,6 @@ from protocol_cdm_dbg import ( ResponseOK, RequestOK, RequestVariable,
                                ResponseEval, ResponseEvalOK, ResponseEvalError,
                                ResponseExec, ResponseExecError )
 from base_cdm_dbg import setRecursionLimit
-from config_cdm_dbg import ConfigVarTypeStrings
 from asyncfile_cdm_dbg import AsyncFile, AsyncPendingWrite
 
 
