@@ -47,10 +47,10 @@ from protocol_cdm_dbg import ( ResponseOK, RequestOK, RequestVariable,
                                ResponseThreadSet, RequestVariables, ResponseStack,
                                RequestStep, RequestStepOver, RequestStepOut,
                                RequestStepQuit, RequestShutdown, RequestBreak,
-                               ResponseThreadList, ResponseRaw, ResponseException,
-                               RequestContinue, RequestBreakIgnore,
-                               RequestBreakEnable, RequestWatch,
-                               RequestForkTo, RequestEval, ResponseBPConditionError,
+                               ResponseThreadList, ResponseException,
+                               RequestContinue, RequestBreakIgnore, RequestEval,
+                               RequestBreakEnable, RequestWatch, ResponseRaw,
+                               RequestForkTo, ResponseBPConditionError,
                                ResponseWPConditionError, RequestWatchEnable,
                                RequestWatchIgnore, RequestExec,
                                ResponseForkTo, ResponseContinue, ResponseExit,
@@ -628,7 +628,8 @@ class DebugClientBase( object ):
                     # Generic way below reports nothing in case of a syntax
                     # error
                     _list = [ "Traceback (innermost last):\n" ]
-                    _list += traceback.format_exception_only( SyntaxError, excpt )
+                    _list += traceback.format_exception_only( SyntaxError,
+                                                              excpt )
 
                     self.write( ResponseEval + '\n' )
                     map( self.write, _list )
@@ -695,7 +696,8 @@ class DebugClientBase( object ):
                     # Generic way below reports nothing in case of a syntax
                     # error
                     _list = [ "Traceback (innermost last):\n" ]
-                    _list += traceback.format_exception_only( SyntaxError, excpt )
+                    _list += traceback.format_exception_only( SyntaxError,
+                                                              excpt )
 
                     self.write( ResponseEval + '\n' )
                     map( self.write, _list )
@@ -1525,18 +1527,12 @@ class DebugClientBase( object ):
         """
         Private method to produce a formated variables list.
 
-        The dictionary passed in to it is scanned. Variables are
-        only added to the list, if their type is not contained
-        in the filter list and their name doesn't match any of the
-        filter expressions. The formated variables list (a list of tuples
-        of 3 values) is returned.
+        The dictionary passed in to it is scanned. The formated variables
+        list (a list of tuples of 3 values) is returned.
 
         @param keylist keys of the dictionary
         @param dict the dictionary to be scanned
-        @param scope 1 to filter using the globals filter, 0 using the locals
-            filter (int).
-            Variables are only added to the list, if their name do not match
-            any of the filter expressions.
+        @param scope 1 globals, 0 locals
         @param formatSequences flag indicating, that sequence or dictionary
             variables should be formatted. If it is 0 (or false), just the
             number of items contained in these variables is returned (boolean)
