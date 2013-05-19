@@ -53,8 +53,7 @@ from protocol_cdm_dbg import ( ResponseOK, RequestOK, RequestVariable,
                                RequestForkTo, RequestEval, ResponseBPConditionError,
                                ResponseWPConditionError, RequestWatchEnable,
                                RequestWatchIgnore, RequestExec,
-                               ResponseForkTo,
-                               ResponseContinue, ResponseExit,
+                               ResponseForkTo, ResponseContinue, ResponseExit,
                                ResponseVariables, DebugAddress,
                                ResponseVariable, PassiveStartup,
                                ResponseEval, ResponseEvalOK, ResponseEvalError,
@@ -249,10 +248,6 @@ class DebugClientBase( object ):
 
         # The list of complete lines to execute.
         self.buffer = ''
-
-        # The list of regexp objects to filter variables against
-        self.globalsFilterObjects = []
-        self.localsFilterObjects = []
 
         self.pendingResponse = ResponseOK
         self._fncache = {}
@@ -1562,20 +1557,8 @@ class DebugClientBase( object ):
             its type and value.
         """
         varlist = []
-        if scope:
-            patternFilterObjects = self.globalsFilterObjects
-        else:
-            patternFilterObjects = self.localsFilterObjects
 
         for key in keylist:
-            # filter based on the filter pattern
-            matched = 0
-            for pat in patternFilterObjects:
-                if pat.match( unicode( key ) ):
-                    matched = 1
-                    break
-            if matched:
-                continue
 
             # filter hidden attributes (filter #0)
             if 0 in fltr and unicode( key )[ : 2 ] == '__':
@@ -1712,7 +1695,7 @@ class DebugClientBase( object ):
             host, version = host.split( "@@" )
             family = socket.AF_INET6
         except ValueError:
-            version = 'v4'
+            # version = 'v4'
             family = socket.AF_INET
 
         return socket.getaddrinfo( host, None, family,
