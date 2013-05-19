@@ -450,16 +450,12 @@ class DebugClientBase( object ):
 
             if cmd == RequestVariables:
                 frmnr, scope = eval( arg )
-                # No need in filter, it'll be done on the server side
-                fltr = []
-                self.__dumpVariables( int( frmnr ), int( scope ), fltr )
+                self.__dumpVariables( int( frmnr ), int( scope ) )
                 return
 
             if cmd == RequestVariable:
                 var, frmnr, scope = eval( arg )
-                # No need in filter, it'll be done on the server side
-                fltr = []
-                self.__dumpVariable( var, int( frmnr ), int( scope ), fltr )
+                self.__dumpVariable( var, int( frmnr ), int( scope ) )
                 return
 
             if cmd == RequestThreadList:
@@ -1072,13 +1068,12 @@ class DebugClientBase( object ):
         setDefaultEncoding( self.defaultCoding )
         return
 
-    def __dumpVariables( self, frmnr, scope, fltr ):
+    def __dumpVariables( self, frmnr, scope ):
         """
         Private method to return the variables of a frame to the debug server.
 
         @param frmnr distance of frame reported on. 0 is the current frame (int)
         @param scope 1 to report global variables, 0 for local variables (int)
-        @param fltr the indices of variable types to be filtered (list of int)
         """
         if self.currentThread is None:
             return
@@ -1111,21 +1106,19 @@ class DebugClientBase( object ):
         if scope != -1:
             keylist = varDict.keys()
 
-            vlist = self.__formatVariablesList( keylist, varDict,
-                                                scope, fltr )
+            vlist = self.__formatVariablesList( keylist, varDict, scope )
             varlist.extend( vlist )
 
         self.write( '%s%s\n' % ( ResponseVariables, unicode( varlist ) ) )
         return
 
-    def __dumpVariable( self, var, frmnr, scope, fltr ):
+    def __dumpVariable( self, var, frmnr, scope ):
         """
         Private method to return the variables of a frame to the debug server.
 
         @param var list encoded name of the requested variable (list of strings)
         @param frmnr distance of frame reported on. 0 is the current frame (int)
         @param scope 1 to report global variables, 0 for local variables (int)
-        @param fltr the indices of variable types to be filtered (list of int)
         """
         if self.currentThread is None:
             return
@@ -1344,8 +1337,7 @@ class DebugClientBase( object ):
                         else:
                             dictkeys = range(len(dict))
                     vlist = self.__formatVariablesList( dictkeys, dict,
-                                                        scope, fltr,
-                                                        formatSequences )
+                                                        scope, formatSequences )
             varlist.extend(vlist)
 
             if obj is not None and not formatSequences:
@@ -1529,7 +1521,7 @@ class DebugClientBase( object ):
 
         return varlist
 
-    def __formatVariablesList( self, keylist, dict, scope, fltr = [],
+    def __formatVariablesList( self, keylist, dict, scope,
                                formatSequences = 0 ):
         """
         Private method to produce a formated variables list.
@@ -1546,9 +1538,6 @@ class DebugClientBase( object ):
             filter (int).
             Variables are only added to the list, if their name do not match
             any of the filter expressions.
-        @param fltr the indices of variable types to be filtered. Variables
-            are only added to the list, if their type is not contained in the
-            filter list.
         @param formatSequences flag indicating, that sequence or dictionary
             variables should be formatted. If it is 0 (or false), just the
             number of items contained in these variables is returned (boolean)
@@ -1560,10 +1549,6 @@ class DebugClientBase( object ):
 
         for key in keylist:
 
-            # filter hidden attributes (filter #0)
-            if 0 in fltr and unicode( key )[ : 2 ] == '__':
-                continue
-
             # special handling for '__builtins__' (it's way too big)
             if key == '__builtins__':
                 rvalue = '<module __builtin__ (built-in)>'
@@ -1574,30 +1559,9 @@ class DebugClientBase( object ):
 
                 if valtypestr.split( ' ', 1 )[ 0 ] == 'class':
                     # handle new class type of python 2.2+
-                    if ConfigVarTypeStrings.index( 'instance' ) in fltr:
-                        continue
                     valtype = valtypestr
                 else:
                     valtype = valtypestr[ 6 : -1 ]
-                    try:
-                        if ConfigVarTypeStrings.index( valtype ) in fltr:
-                            continue
-                    except ValueError:
-                        if valtype == "classobj":
-                            if ConfigVarTypeStrings.index( \
-                                                'instance' ) in fltr:
-                                continue
-                        elif valtype == "sip.methoddescriptor":
-                            if ConfigVarTypeStrings.index( \
-                                                'instance method' ) in fltr:
-                                continue
-                        elif valtype == "sip.enumtype":
-                            if ConfigVarTypeStrings.index( \
-                                                'class' ) in fltr:
-                                continue
-                        elif not valtype.startswith( "PySide" ) and \
-                             ConfigVarTypeStrings.index( 'other' ) in fltr:
-                            continue
 
                 try:
                     if valtype not in [ 'list', 'tuple', 'dict' ]:
@@ -1823,8 +1787,8 @@ class DebugClientBase( object ):
         @param fd file descriptor to be closed (integer)
         """
         if fdescriptor in [ self.readstream.fileno(),
-                           self.writestream.fileno(),
-                           self.errorstream.fileno() ]:
+                            self.writestream.fileno(),
+                            self.errorstream.fileno() ]:
             return
 
         DebugClientOrigClose( fdescriptor )
