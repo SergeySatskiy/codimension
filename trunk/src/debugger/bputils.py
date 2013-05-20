@@ -74,6 +74,7 @@ def getBreakpointLine( userLine, isEmptyLine, srcCode ):
 
 def clearValidBreakpointLinesCache():
     " Resets the cache "
+    global validBreakPointLinesCache
     validBreakPointLinesCache = {}
     return
 

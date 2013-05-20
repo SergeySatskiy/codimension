@@ -105,6 +105,9 @@ class TextEditor( ScintillaWrapper ):
                       self.__onDwellStart )
         self.connect( self, SIGNAL( 'SCN_DWELLEND(int,int,int)' ),
                       self.__onDwellEnd )
+
+        self.connect( self, SIGNAL( 'SCN_MODIFIED(int,int,const char*,int,int,int,int,int,int,int)' ),
+                      self.__onSceneModified )
         self.__skipChangeCursor = False
 
         skin = GlobalData().skin
@@ -2083,6 +2086,14 @@ class TextEditor( ScintillaWrapper ):
                                self.__debugger.getBreakPointModel().rowCount() - 1 )
         return
 
+    def __onSceneModified( self, position, modificationType, text,
+                                 length, linesAdded, line, foldLevelNow,
+                                 foldLevelPrev, token, annotationLinesAdded ):
+#        if linesAdded < 0:
+#            print "Deleted lines: " + str( abs( linesAdded ) )
+        pass
+
+
 
 class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     " Plain text editor tab widget "
@@ -3083,6 +3094,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__breakableLines = getBreakpointLines( self.getFileName(),
                                                     str( self.__editor.text() ),
                                                     enforceRecalc )
+
         if self.__breakableLines is None :
             if enforceSure == False:
                 # Be on the safe side - if there is a problem of
