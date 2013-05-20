@@ -168,6 +168,55 @@ class QuickHelpWidget( HTMLTabWidget ):
       </table>
     </p>
 
+    <h3 style="color: #666">Debugger</h3>
+    <p align="center">
+      <table border="1" cellspacing="0"
+             cellpadding="1" width="95%" align="center">
+        <tr>
+          <td width="15%">Shift+F5</td>
+          <td width="35%">Start debugging the project main script with saved settings</td>
+          <td width="15%">F5</td>
+          <td width="35%">Start debugging the current tab script with saved settings</td>
+        </tr>
+        <tr>
+          <td>Ctrl+Shift+F5</td>
+          <td>Edit debugger settings and start debugging the project main script</td>
+          <td>Ctrl+F5</td>
+          <td>Edit debugger settings and start debugging the current tab script</td>
+        </tr>
+        <tr>
+          <td>Ctrl+F10</td>
+          <td>Stop the debugging session and kill the i/o console</td>
+          <td>F10</td>
+          <td>Stop the debugging session and keep the i/o console</td>
+        </tr>
+        <tr>
+          <td>F4</td>
+          <td>Restart the debugging session</td>
+          <td>F6</td>
+          <td>Continue</td>
+        </tr>
+        <tr>
+          <td>F7</td>
+          <td>Step in</td>
+          <td>F8</td>
+          <td>Step over</td>
+        </tr>
+        <tr>
+          <td>F9</td>
+          <td>Step out</td>
+          <td>Shift F6</td>
+          <td>Run to cursor</td>
+        </tr>
+        <tr>
+          <td>Ctrl+W</td>
+          <td>Show the current debugger line</td>
+          <td></td>
+          <td></td>
+        </tr>
+      </table>
+    </p>
+
     <p>
         The industry common hot keys are not shown above. Please refer to
         <a href="http://satsky.spb.ru/codimension/keyBindingsEng.php">
