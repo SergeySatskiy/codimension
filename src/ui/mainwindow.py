@@ -3042,7 +3042,10 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onRestartDbgSession( self ):
         " Debugger restart session clicked "
-        pass
+        fileName = self.__debugger.getScriptPath()
+        self.__onBrutalStopDbgSession()
+        self.__debugger.startDebugging( fileName )
+        return
 
     def __onDbgGo( self ):
         " Debugger continue clicked "
