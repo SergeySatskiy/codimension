@@ -47,6 +47,8 @@ class DebuggerContext( QWidget ):
                       self.__onClientVariables )
         self.connect( self.__debugger, SIGNAL( 'ClientVariable' ),
                       self.__onClientVariable )
+        self.connect( self.__debugger, SIGNAL( 'ClientThreadSet' ),
+                      self.__onClientThreadSet )
 
         self.currentStack = None
         self.__createLayout()
@@ -117,6 +119,12 @@ class DebuggerContext( QWidget ):
             self.__variablesViewer.updateVariable( False, variables )
         else:
             self.__variablesViewer.updateVariable( True, variables )
+        return
+
+    def __onClientThreadSet( self ):
+        " Handles the event of setting the current thread by the client "
+        self.__debugger.remoteClientVariables( 1, 0 )   # globals
+        self.__debugger.remoteClientVariables( 0, 0 )   # locals
         return
 
     def switchControl( self, isInIDE ):
