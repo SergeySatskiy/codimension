@@ -33,7 +33,14 @@ Module implementing the multithreaded version of the debug client.
 
 import thread
 import sys
-from clientbase_cdm_dbg import DebugClientBase, DebugClientInstance
+
+# NB: importing the global variable DebugClientInstance explicitly as
+# from clientbase_cdm_dbg import DebugClientInstance
+# does not work here. The variable is updated later however here it stays
+# None forever. I have no ideas why. Importing the whole module and then
+# referring to the variable as clientbase_cdm_dbg.DebugClientInstance
+# fixes the problem.
+import clientbase_cdm_dbg
 from debugthread_cdm_dbg import DebugThread
 from asyncio_cdm_dbg import AsyncIO
 
@@ -57,8 +64,10 @@ def _debugclient_start_new_thread( target, args, kwargs = {} ):
     @param kwargs keyword arguments to pass to target
     @return The identifier of the created thread
     """
-    if DebugClientInstance is not None:
-        return DebugClientInstance.attachThread( target, args, kwargs )
+    if clientbase_cdm_dbg.DebugClientInstance is not None:
+        return clientbase_cdm_dbg.DebugClientInstance.attachThread( target,
+                                                                    args,
+                                                                    kwargs )
     return _original_start_thread( target, args, kwargs )
 
 # make thread hooks available to system
@@ -69,7 +78,7 @@ thread.start_new_thread = _debugclient_start_new_thread
 # thread._start_new_thread.
 from threading import RLock
 
-class DebugClientThreads( DebugClientBase, AsyncIO ):
+class DebugClientThreads( clientbase_cdm_dbg.DebugClientBase, AsyncIO ):
     """
     Class implementing the client side of the debugger.
 
@@ -81,7 +90,7 @@ class DebugClientThreads( DebugClientBase, AsyncIO ):
         Constructor
         """
         AsyncIO.__init__( self )
-        DebugClientBase.__init__( self )
+        clientbase_cdm_dbg.DebugClientBase.__init__( self )
 
         # protection lock for synchronization
         self.clientLock = RLock()
@@ -191,7 +200,7 @@ class DebugClientThreads( DebugClientBase, AsyncIO ):
         # make sure we set the current thread appropriately
         threadid = thread.get_ident()
         self.setCurrentThread( threadid )
-        DebugClientBase.eventLoop( self, disablePolling )
+        clientbase_cdm_dbg.DebugClientBase.eventLoop( self, disablePolling )
         self.setCurrentThread( None )
         return
 
