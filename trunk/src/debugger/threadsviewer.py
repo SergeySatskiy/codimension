@@ -231,5 +231,14 @@ class ThreadsViewer( QWidget ):
         " Triggered when a thread is clicked "
         if item.isCurrent():
             return
+
+        for index in xrange( self.__threadsList.topLevelItemCount() ):
+            listItem = self.__threadsList.topLevelItem( index )
+            if listItem.isCurrent():
+                listItem.setCurrent( False )
+                break
+        item.setCurrent( True )
+
         self.__debugger.remoteSetThread( item.getTID() )
         return
+
