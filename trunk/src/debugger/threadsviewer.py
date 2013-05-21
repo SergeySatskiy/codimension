@@ -46,7 +46,7 @@ class ThreadItem( QTreeWidgetItem ):
 
     def __setTooltip( self ):
         " Sets the tooltip "
-        tooltip = "Current: " + str( self.__isCurrent ) "\n" \
+        tooltip = "Current: " + str( self.__isCurrent ) + "\n" \
                   "Name: " + self.getName() + "\n" \
                   "State: " + self.getState() + "\n" \
                   "TID: " + str( self.getTID() )
