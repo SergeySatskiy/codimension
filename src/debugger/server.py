@@ -49,7 +49,7 @@ from client.protocol_cdm_dbg import ( EOT, RequestStep, RequestStepOver, Request
                                       ResponseBPConditionError, ResponseEval,
                                       ResponseEvalOK, ResponseEvalError,
                                       ResponseExec, ResponseExecError,
-                                      RequestThreadSet )
+                                      RequestThreadSet, ResponseThreadSet )
 
 from breakpointmodel import BreakPointModel
 from watchpointmodel import WatchPointModel
@@ -437,6 +437,10 @@ class CodimensionDebugger( QObject ):
                 if resp == PassiveStartup:
                     self.__sendBreakpoints()
                     self.__sendWatchpoints()
+                    continue
+
+                if resp == ResponseThreadSet:
+                    self.emit( SIGNAL( 'ClientThreadSet' ) )
                     continue
 
                 if resp == ResponseClearBreak:
