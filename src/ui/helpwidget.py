@@ -205,7 +205,7 @@ class QuickHelpWidget( HTMLTabWidget ):
         <tr>
           <td>F9</td>
           <td>Step out</td>
-          <td>Shift F6</td>
+          <td>Shift+F6</td>
           <td>Run to cursor</td>
         </tr>
         <tr>
