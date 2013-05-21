@@ -63,7 +63,7 @@ class ThreadItem( QTreeWidgetItem ):
         if value:
             self.setIcon( 0, PixmapCache().getIcon( 'currentthread.png' ) )
         else:
-            self.setIcon( 0, None )
+            self.setIcon( 0, PixmapCache().getIcon( 'empty.png' ) )
         self.__setTooltip()
         return
 
