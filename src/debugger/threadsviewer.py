@@ -41,31 +41,43 @@ class ThreadItem( QTreeWidgetItem ):
                 QStringList() << "" << name << state << str( tid ) )
 
         self.__isCurrent = False
+        self.__setTooltip()
+        return
 
+    def __setTooltip( self ):
+        " Sets the tooltip "
+        tooltip = "Current: " + str( self.__isCurrent ) "\n" \
+                  "Name: " + self.getName() + "\n" \
+                  "State: " + self.getState() + "\n" \
+                  "TID: " + str( self.getTID() )
         for index in xrange( 4 ):
-            self.setToolTip( index, state )
+            self.setToolTip( index, tooltip )
         return
 
     def setCurrent( self, value ):
         """ Mark the current thread with an icon if so """
+        if self.__isCurrent == value:
+            return
+
         self.__isCurrent = value
         if value:
             self.setIcon( 0, PixmapCache().getIcon( 'currentthread.png' ) )
         else:
             self.setIcon( 0, None )
+        self.__setTooltip()
         return
 
     def getTID( self ):
         """ Provides the thread ID """
-        return int( self.text( 1 ) )
+        return int( self.text( 3 ) )
 
     def getName( self ):
         " Provides the thread name "
-        return str( self.text( 2 ) )
+        return str( self.text( 1 ) )
 
     def getState( self ):
         " Provides the thread state "
-        return str( self.text( 3 ) )
+        return str( self.text( 2 ) )
 
     def isCurrent( self ):
         " True if the project is current "
