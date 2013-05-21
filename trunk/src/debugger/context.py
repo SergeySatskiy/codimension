@@ -63,7 +63,7 @@ class DebuggerContext( QWidget ):
         self.__variablesViewer = VariablesViewer( self.__debugger,
                                                   self.splitter )
         self.__stackViewer = StackViewer( self.__debugger, self.splitter )
-        self.__threadsViewer = ThreadsViewer( self.splitter )
+        self.__threadsViewer = ThreadsViewer( self.__debugger, self.splitter )
 
         self.splitter.addWidget( self.__variablesViewer )
         self.splitter.addWidget( self.__stackViewer )

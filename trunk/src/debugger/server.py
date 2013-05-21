@@ -48,7 +48,8 @@ from client.protocol_cdm_dbg import ( EOT, RequestStep, RequestStepOver, Request
                                       RequestBreakIgnore, ResponseClearBreak,
                                       ResponseBPConditionError, ResponseEval,
                                       ResponseEvalOK, ResponseEvalError,
-                                      ResponseExec, ResponseExecError )
+                                      ResponseExec, ResponseExecError,
+                                      RequestThreadSet )
 
 from breakpointmodel import BreakPointModel
 from watchpointmodel import WatchPointModel
@@ -791,4 +792,7 @@ class CodimensionDebugger( QObject ):
                             str( condition ) + "\n" )
         return
 
-
+    def remoteSetThread( self, tid ):
+        " Sets the given thread as the current "
+        self.__sendCommand( RequestThreadSet + str( tid ) + "\n" )
+        return

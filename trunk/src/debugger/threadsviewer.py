@@ -76,9 +76,10 @@ class ThreadItem( QTreeWidgetItem ):
 class ThreadsViewer( QWidget ):
     " Implements the threads viewer for a debugger "
 
-    def __init__( self, parent = None ):
+    def __init__( self, debugger, parent = None ):
         QWidget.__init__( self, parent )
 
+        self.__debugger = debugger
         self.__createLayout()
 
         if Settings().showThreadViewer == False:
@@ -141,11 +142,8 @@ class ThreadsViewer( QWidget ):
         self.__threadsList.setFocusPolicy( Qt.NoFocus )
 
         self.connect( self.__threadsList,
-                      SIGNAL( "clicked(const QModelIndex&)" ),
+                      SIGNAL( "itemClicked(QTreeWidgetItem*,int)" ),
                       self.__onThreadClicked )
-        self.connect( self.__threadsList,
-                      SIGNAL( "doubleClicked(const QModelIndex&)" ),
-                      self.__onThreadDoubleClicked )
 
         headerLabels = QStringList() << "" << "Name" << "State" << "TID"
         self.__threadsList.setHeaderLabels( headerLabels )
@@ -217,10 +215,9 @@ class ThreadsViewer( QWidget ):
         self.__threadsList.setEnabled( isInIDE )
         return
 
-    def __onThreadClicked( self, index ):
+    def __onThreadClicked( self, item, column ):
         " Triggered when a thread is clicked "
-        print "Thread clicked"
-
-    def __onThreadDoubleClicked( self, index ):
-        " Triggered when a thread is double clicked "
-        print "Thread double clicked"
+        if item.isCurrent():
+            return
+        self.__debugger.remoteSetThread( item.getTID() )
+        return
