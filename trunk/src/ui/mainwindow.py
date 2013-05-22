@@ -1853,6 +1853,9 @@ class CodimensionMainWindow( QMainWindow ):
 
         if editorsManager.closeEvent( event ):
             # The IDE is going to be closed just now
+            if self.debugMode:
+                self.__onBrutalStopDbgSession()
+
             project = GlobalData().project
             project.fileBrowserPaths = self.getProjectExpandedPaths()
             project.unloadProject( False )
