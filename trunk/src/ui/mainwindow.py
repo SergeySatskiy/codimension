@@ -2756,8 +2756,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.updateRunDebugButtons()
 
         # Tabs at the right
-        self.__rightSideBar.setTabEnabled( 1, newState )    # vars etc.
         if newState == True:
+            self.__rightSideBar.setTabEnabled( 1, True )    # vars etc.
             self.__debuggerContext.clear()
             self.__debuggerExceptions.clear()
             self.__rightSideBar.setTabText( 2, "Exceptions" )
@@ -2765,6 +2765,11 @@ class CodimensionMainWindow( QMainWindow ):
             self.__rightSideBar.setCurrentWidget( self.__debuggerContext )
             self.__rightSideBar.raise_()
             self.__lastDebugAction = None
+        else:
+            if not self.__rightSideBar.isMinimized():
+                if self.__rightSideBar.currentIndex() == 1:
+                    self.__rightSideBar.setCurrentWidget( self.__outlineViewer )
+            self.__rightSideBar.setTabEnabled( 1, False )    # vars etc.
 
         self.emit( SIGNAL( 'debugModeChanged' ), newState )
         return
