@@ -32,7 +32,7 @@ from PyQt4.QtCore import ( Qt, QFileInfo, SIGNAL, QSize, QUrl,
 from PyQt4.QtGui import ( QApplication, QCursor, QFontMetrics, QToolBar,
                           QActionGroup, QHBoxLayout, QWidget, QAction, QMenu,
                           QSizePolicy, QToolButton, QDialog, QToolTip,
-                          QDesktopServices, QColor )
+                          QDesktopServices )
 from PyQt4.Qsci import QsciScintilla, QsciLexerPython
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.fileutils import ( detectFileType, DesignerFileType,
@@ -767,6 +767,8 @@ class TextEditor( ScintillaWrapper ):
     def writeFile( self, fileName ):
         " Writes the text to a file "
 
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+
         if Settings().removeTrailingOnSave:
             self.removeTrailingWhitespaces()
         txt = unicode( self.text() )
@@ -787,6 +789,7 @@ class TextEditor( ScintillaWrapper ):
                                        fileType in [ DesignerFileType,
                                                      LinguistFileType ] )
         except CodingError, exc:
+            QApplication.restoreOverrideCursor()
             logging.critical( "Cannot save " + fileName + \
                               ". Reason: " + str( exc ) )
             return False
@@ -798,6 +801,7 @@ class TextEditor( ScintillaWrapper ):
             f.write( txt )
             f.close()
         except IOError, why:
+            QApplication.restoreOverrideCursor()
             logging.critical( "Cannot save " + fileName + \
                               ". Reason: " + str( why ) )
             return False
@@ -805,6 +809,7 @@ class TextEditor( ScintillaWrapper ):
         self.setEncoding( self.getFileEncoding( fileName, fileType ) )
         self.parent().updateModificationTime( fileName )
         self.parent().setReloadDialogShown( False )
+        QApplication.restoreOverrideCursor()
         return True
 
     def clearSearchIndicators( self ):
