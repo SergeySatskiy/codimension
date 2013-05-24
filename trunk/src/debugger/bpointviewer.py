@@ -534,8 +534,9 @@ class BreakPointViewer( QWidget ):
             else:
                 logging.warning( "Breakpoint at " + fileName + ":" +
                                  str( line ) + " does not point to a breakable "
-                                 "line anymore (the file was modified outside of the "
-                                 "IDE). The breakpoint is deleted." )
+                                 "line anymore (the file is invalid or was "
+                                 "modified outside of the "
+                                 "IDE etc.). The breakpoint is deleted." )
         return
 
     def __onProjectAboutToUnload( self ):
