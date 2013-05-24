@@ -26,6 +26,7 @@ import socket
 import logging
 import errno
 import time
+import os.path
 from subprocess import Popen
 from PyQt4.QtCore import SIGNAL, QTimer, QObject, Qt, QTextCodec, QString, QModelIndex
 from PyQt4.QtGui import QApplication, QCursor, QMessageBox, QDialog
@@ -51,6 +52,7 @@ from client.protocol_cdm_dbg import ( EOT, RequestStep, RequestStepOver, Request
                                       ResponseExec, ResponseExecError,
                                       RequestThreadSet, ResponseThreadSet )
 
+from bputils import getBreakpointLines
 from breakpointmodel import BreakPointModel
 from watchpointmodel import WatchPointModel
 from editbreakpoint import BreakpointEditDialog
@@ -613,8 +615,46 @@ class CodimensionDebugger( QObject ):
             self.__sendCommand( ResponseForkTo + 'child\n' )
         return
 
+    def __validateBreakpoints( self ):
+        " Checks all the breakpoints validity and deletes invalid "
+        # It is excepted that the method is called when all the files are
+        # saved, e.g. when a new debugging session is started.
+        for row in xrange( 0, self.__breakpointModel.rowCount() ):
+            index = self.__breakpointModel.index( row, 0, QModelIndex() )
+            bpoint = self.__breakpointModel.getBreakPointByIndex( index )
+            fileName = bpoint.getAbsoluteFileName()
+            line = bpoint.getLineNumber()
+
+            if not os.path.exists( fileName ):
+                logging.warning( "Breakpoint at " + fileName + ":" +
+                                 str( line ) + " is invalid (the file "
+                                 "disappeared from the filesystem). "
+                                 "The breakpoint is deleted." )
+                self.__breakpointModel.deleteBreakPointByIndex( index )
+                continue
+
+            breakableLines = getBreakpointLines( fileName, None, True )
+            if breakableLines is None:
+                logging.warning( "Breakpoint at " + fileName + ":" +
+                                 str( line ) + " does not point to a breakable "
+                                 "line (the file could not be compiled). "
+                                 "The breakpoint is deleted." )
+                self.__breakpointModel.deleteBreakPointByIndex( index )
+                continue
+            if line not in breakableLines:
+                logging.warning( "Breakpoint at " + fileName + ":" +
+                                 str( line ) + " does not point to a breakable "
+                                 "line (the file was modified). "
+                                 "The breakpoint is deleted." )
+                self.__breakpointModel.deleteBreakPointByIndex( index )
+                continue
+
+            # The breakpoint is OK, keep it
+        return
+
     def __sendBreakpoints( self ):
         " Sends the breakpoints to the debugged program "
+        self.__validateBreakpoints()
         self.__addBreakPoints( QModelIndex(), 0,
                                self.__breakpointModel.rowCount() - 1 )
         return
