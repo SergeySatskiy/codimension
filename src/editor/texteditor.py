@@ -2057,13 +2057,12 @@ class TextEditor( ScintillaWrapper ):
     def __linesChanged( self ):
         " Tracks text changes "
         if self.__breakpoints:
+            self.ignoreBufferChangedSignal = True
             bpointModel = self.__debugger.getBreakPointModel()
             bps = []    # list of breakpoints
             for handle, bpoint in self.__breakpoints.items():
                 line = self.markerLine( handle ) + 1
-                self.ignoreBufferChangedSignal = True
                 self.markerDeleteHandle( handle )
-                self.ignoreBufferChangedSignal = False
 
                 breakable = self.parent().isLineBreakable( line, True, True )
                 if not breakable:
@@ -2072,6 +2071,7 @@ class TextEditor( ScintillaWrapper ):
                     bpointModel.deleteBreakPointByIndex( index )
                 else:
                     bps.append( ( bpoint, line ) )
+                bps.append( ( bpoint, line ) )
 
             self.__breakpoints = {}
             self.__inLinesChanged = True
@@ -2080,7 +2080,12 @@ class TextEditor( ScintillaWrapper ):
                                                         bp.getLineNumber() )
                 bpointModel.updateLineNumberByIndex( index, newLineNumber )
             self.__inLinesChanged = False
+            self.ignoreBufferChangedSignal = False
         return
+
+    def isLineEmpty( self, line ):
+        " Returns True if the line is empty. Line is 1 based. "
+        return str( self.text( line + 1 ) ) == ""
 
     def restoreBreakpoints( self ):
         " Restores the breakpoints "
@@ -2094,9 +2099,27 @@ class TextEditor( ScintillaWrapper ):
     def __onSceneModified( self, position, modificationType, text,
                                  length, linesAdded, line, foldLevelNow,
                                  foldLevelPrev, token, annotationLinesAdded ):
-#        if linesAdded < 0:
-#            print "Deleted lines: " + str( abs( linesAdded ) )
-        pass
+        if linesAdded == 0:
+            return
+
+        opLine, opIndex = self.lineIndexFromPosition( position )
+
+        # We are interested in inserted or deleted lines
+        if linesAdded < 0:
+            # Some lines were deleted
+            linesDeleted = abs( linesAdded )
+            if opIndex != 0:
+                linesDeleted -= 1
+                if linesDeleted == 0:
+                    return
+                opLine += 1
+#            print "Lines fully deleted starting from: " + str( opLine + 1 ) + " count: " + str( linesDeleted )
+
+        else:
+            # Some lines were added
+#            print "Lines added starting from: " + str( opLine + 1 ) + " count: " + str( linesAdded )
+            pass
+        return
 
 
 
