@@ -2056,6 +2056,7 @@ class TextEditor( ScintillaWrapper ):
 
     def __linesChanged( self ):
         " Tracks text changes "
+        return
         if self.__breakpoints:
             self.ignoreBufferChangedSignal = True
             bpointModel = self.__debugger.getBreakPointModel()
@@ -2085,13 +2086,15 @@ class TextEditor( ScintillaWrapper ):
 
     def isLineEmpty( self, line ):
         " Returns True if the line is empty. Line is 1 based. "
-        return str( self.text( line + 1 ) ) == ""
+        return str( self.text( line - 1 ) ).strip() == ""
 
     def restoreBreakpoints( self ):
         " Restores the breakpoints "
+        self.ignoreBufferChangedSignal = True
         self.markerDeleteAll( self.__bpointMarker )
         self.markerDeleteAll( self.__tempbpointMarker )
         self.markerDeleteAll( self.__disbpointMarker )
+        self.ignoreBufferChangedSignal = False
         self.__addBreakPoints( QModelIndex(), 0,
                                self.__debugger.getBreakPointModel().rowCount() - 1 )
         return
@@ -2099,10 +2102,15 @@ class TextEditor( ScintillaWrapper ):
     def __onSceneModified( self, position, modificationType, text,
                                  length, linesAdded, line, foldLevelNow,
                                  foldLevelPrev, token, annotationLinesAdded ):
-        if linesAdded == 0:
+        if not self.__breakpoints:
             return
 
         opLine, opIndex = self.lineIndexFromPosition( position )
+
+        if linesAdded == 0:
+            if self.isLineEmpty( opLine + 1 ):
+                self.__deleteBreakPointsInLineRange( opLine + 1, 1 )
+            return
 
         # We are interested in inserted or deleted lines
         if linesAdded < 0:
@@ -2110,16 +2118,65 @@ class TextEditor( ScintillaWrapper ):
             linesDeleted = abs( linesAdded )
             if opIndex != 0:
                 linesDeleted -= 1
+                if self.isLineEmpty( opLine + 1 ):
+                    self.__deleteBreakPointsInLineRange( opLine + 1, 1 )
                 if linesDeleted == 0:
                     return
                 opLine += 1
-#            print "Lines fully deleted starting from: " + str( opLine + 1 ) + " count: " + str( linesDeleted )
 
+            # Some lines were fully deleted
+            self.__deleteBreakPointsInLineRange( opLine + 1, linesDeleted )
+            self.__onLinesChanged( opLine + 1 )
         else:
             # Some lines were added
-#            print "Lines added starting from: " + str( opLine + 1 ) + " count: " + str( linesAdded )
-            pass
+            self.__onLinesChanged( opLine + 1 )
         return
+
+    def __deleteBreakPointsInLineRange( self, startFrom, count ):
+        " Deletes breakpoints which fall into the given lines range "
+        toBeDeleted = []
+        limit = startFrom + count - 1
+        for handle, bpoint in self.__breakpoints.items():
+            bpointLine = bpoint.getLineNumber()
+            if bpointLine >= startFrom and bpointLine <= limit:
+                toBeDeleted.append( bpointLine )
+
+        if not toBeDeleted:
+            return
+
+        model = self.__debugger.getBreakPointModel()
+        fileName = self.parent().getFileName()
+        for line in toBeDeleted:
+            index = model.getBreakPointIndex( fileName, line )
+            model.deleteBreakPointByIndex( index )
+        return
+
+    def __onLinesChanged( self, startFrom ):
+        " Tracks breakpoints when some lines were inserted. startFrom is 1 based. "
+        if self.__breakpoints:
+            self.ignoreBufferChangedSignal = True
+
+            bpointModel = self.__debugger.getBreakPointModel()
+            bps = []    # list of breakpoints
+            for handle, bpoint in self.__breakpoints.items():
+                line = self.markerLine( handle ) + 1
+                if line < startFrom:
+                    continue
+
+                self.markerDeleteHandle( handle )
+                bps.append( ( bpoint, line, handle ) )
+
+            self.__inLinesChanged = True
+            for bp, newLineNumber, oldHandle in bps:
+                del self.__breakpoints[ oldHandle ]
+
+                index = bpointModel.getBreakPointIndex( bp.getAbsoluteFileName(),
+                                                        bp.getLineNumber() )
+                bpointModel.updateLineNumberByIndex( index, newLineNumber )
+            self.__inLinesChanged = False
+            self.ignoreBufferChangedSignal = False
+        return
+
 
 
 
