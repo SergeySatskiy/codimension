@@ -173,7 +173,6 @@ class TextEditor( ScintillaWrapper ):
         self.connect( bpointModel,
                       SIGNAL( "rowsInserted(const QModelIndex &, int, int)" ),
                       self.__addBreakPoints )
-        self.connect( self, SIGNAL( "linesChanged()" ), self.__linesChanged )
 
         self.installEventFilter( self )
         return
@@ -323,7 +322,7 @@ class TextEditor( ScintillaWrapper ):
     def __marginClicked( self, margin, line, modifiers ):
         " Triggered when a margin is clicked "
         if margin == self.BPOINT_MARGIN:
-            self.__toggleBreakpoint( line + 1 )
+            self.__breakpointMarginClicked( line + 1 )
         return
 
     def __initEncodingMenu( self ):
@@ -735,6 +734,8 @@ class TextEditor( ScintillaWrapper ):
         f.close()
         fileEol = self.detectEolString( txt )
 
+        # Hack to avoid breakpoints reset when a file is reload
+        self.__breakpoints = {}
         self.setText( txt )
 
         # perform automatic eol conversion
@@ -1955,6 +1956,83 @@ class TextEditor( ScintillaWrapper ):
 
     ## Break points support
 
+    def __breakpointMarginClicked( self, line ):
+        " Margin has been clicked. Line is 1 - based "
+        for handle, bpoint in self.__breakpoints.items():
+            if self.markerLine( handle ) == line - 1:
+                # Breakpoint marker is set for this line already
+                self.__toggleBreakpoint( line )
+                return
+
+        # Check if it is a python file
+        if self.parent().getFileType() not in [ PythonFileType,
+                                                Python3FileType ]:
+            return
+
+        fileName = self.parent().getFileName()
+        if fileName is None or fileName == "" or not os.path.isabs( fileName ):
+            logging.warning( "The buffer has to be saved "
+                             "before breakpoints could be set." )
+            return
+
+
+        breakableLines = getBreakpointLines( "", str( self.text() ),
+                                             True, False )
+        if breakableLines is None:
+            logging.warning( "The breakable lines could not be identified "
+                             "due to the file compilation errors. Fix the code "
+                             "first and try again." )
+            return
+
+        breakableLines = list( breakableLines )
+        breakableLines.sort()
+        if not breakableLines:
+            # There are no breakable lines
+            return
+
+        if line in breakableLines:
+            self.__toggleBreakpoint( line )
+            return
+
+        # There are breakable lines however the user requested a line which
+        # is not breakable
+        candidateLine = breakableLines[ 0 ]
+        if line < breakableLines[ 0 ]:
+            candidateLine = breakableLines[ 0 ]
+        elif line > breakableLines[ -1 ]:
+            candidateLine = breakableLines[ -1 ]
+        else:
+            direction = 0
+            if self.isInStringLiteral( line - 1 ):
+                direction = 1
+            elif self.isLineEmpty( line ):
+                direction = 1
+            else:
+                direction = -1
+
+            for breakableLine in breakableLines[ 1 : ]:
+                if direction > 0:
+                    if breakableLine > line:
+                        candidateLine = breakableLine
+                        break
+                else:
+                    if breakableLine < line:
+                        candidateLine = breakableLine
+                    else:
+                        break
+
+        if not self.isLineOnScreen( candidateLine - 1 ):
+            # The redirected breakpoint line is not on the screen, scroll it
+            self.ensureLineVisible( candidateLine - 1 )
+            currentFirstVisible = self.firstVisibleLine()
+            requiredVisible = candidateLine - 2
+            if requiredVisible < 0:
+                requiredVisible = 0
+            self.scrollVertical( requiredVisible - currentFirstVisible )
+        self.__toggleBreakpoint( candidateLine )
+        return
+
+
     def __toggleBreakpoint( self, line, temporary = False ):
         " Toggles the line breakpoint "
         fileName = self.parent().getFileName()
@@ -2054,36 +2132,6 @@ class TextEditor( ScintillaWrapper ):
             self.__breakpoints[ handle ] = bpoint
         return
 
-    def __linesChanged( self ):
-        " Tracks text changes "
-        return
-        if self.__breakpoints:
-            self.ignoreBufferChangedSignal = True
-            bpointModel = self.__debugger.getBreakPointModel()
-            bps = []    # list of breakpoints
-            for handle, bpoint in self.__breakpoints.items():
-                line = self.markerLine( handle ) + 1
-                self.markerDeleteHandle( handle )
-
-                breakable = self.parent().isLineBreakable( line, True, True )
-                if not breakable:
-                    index = bpointModel.getBreakPointIndex( bpoint.getAbsoluteFileName(),
-                                                            bpoint.getLineNumber() )
-                    bpointModel.deleteBreakPointByIndex( index )
-                else:
-                    bps.append( ( bpoint, line ) )
-                bps.append( ( bpoint, line ) )
-
-            self.__breakpoints = {}
-            self.__inLinesChanged = True
-            for bp, newLineNumber in bps:
-                index = bpointModel.getBreakPointIndex( bp.getAbsoluteFileName(),
-                                                        bp.getLineNumber() )
-                bpointModel.updateLineNumberByIndex( index, newLineNumber )
-            self.__inLinesChanged = False
-            self.ignoreBufferChangedSignal = False
-        return
-
     def isLineEmpty( self, line ):
         " Returns True if the line is empty. Line is 1 based. "
         return str( self.text( line - 1 ) ).strip() == ""
@@ -2121,6 +2169,7 @@ class TextEditor( ScintillaWrapper ):
                 if self.isLineEmpty( opLine + 1 ):
                     self.__deleteBreakPointsInLineRange( opLine + 1, 1 )
                 if linesDeleted == 0:
+                    self.__onLinesChanged( opLine + 1 )
                     return
                 opLine += 1
 
@@ -2141,14 +2190,48 @@ class TextEditor( ScintillaWrapper ):
             if bpointLine >= startFrom and bpointLine <= limit:
                 toBeDeleted.append( bpointLine )
 
-        if not toBeDeleted:
+        if toBeDeleted:
+            model = self.__debugger.getBreakPointModel()
+            fileName = self.parent().getFileName()
+            for line in toBeDeleted:
+                index = model.getBreakPointIndex( fileName, line )
+                model.deleteBreakPointByIndex( index )
+        return
+
+    def deleteAllBreakpoints( self ):
+        " Deletes all the breakpoints in the buffer "
+        self.__deleteBreakPointsInLineRange( 1, self.lines() )
+        return
+
+    def validateBreakpoints( self ):
+        " Checks breakpoints and deletes those which are invalid "
+        if not self.__breakpoints:
             return
 
-        model = self.__debugger.getBreakPointModel()
         fileName = self.parent().getFileName()
-        for line in toBeDeleted:
-            index = model.getBreakPointIndex( fileName, line )
-            model.deleteBreakPointByIndex( index )
+        breakableLines = getBreakpointLines( fileName, str( self.text() ),
+                                             True, False )
+
+        toBeDeleted = []
+        for handle, bpoint in self.__breakpoints.items():
+            bpointLine = bpoint.getLineNumber()
+            if breakableLines is None or bpointLine not in breakableLines:
+                toBeDeleted.append( bpointLine )
+
+        if toBeDeleted:
+            model = self.__debugger.getBreakPointModel()
+            for line in toBeDeleted:
+                if breakableLines is None:
+                    logging.warning( "Breakpoint at " + fileName + ":" +
+                                     str( line ) + " does not point to a "
+                                     "breakable line (file is not compilable). "
+                                     "The breakpoint is deleted." )
+                else:
+                    logging.warning( "Breakpoint at " + fileName + ":" +
+                                     str( line ) + " does not point to a breakable "
+                                     "line anymore. The breakpoint is deleted." )
+                index = model.getBreakPointIndex( fileName, line )
+                model.deleteBreakPointByIndex( index )
         return
 
     def __onLinesChanged( self, startFrom ):

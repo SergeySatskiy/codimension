@@ -237,6 +237,7 @@ class EditorsManager( QTabWidget ):
             self.__copyFullPathAct.setEnabled( fName != "" )
             self.__copyDirPathAct.setEnabled( fName != "" )
             self.__copyFileNameAct.setEnabled( fName != "" )
+            self.__delCurrentAct.setEnabled( fName != "" )
             self.__highlightInPrjAct.setEnabled(
                                     self.isHighlightInPrjAvailable() )
             self.__highlightInFSAct.setEnabled(
@@ -302,6 +303,9 @@ class EditorsManager( QTabWidget ):
 
         try:
             if os.path.exists( fileName ):
+                # Before deleting the file, remove all breakpoints if so
+                if widget.getType() == MainWindowTabWidgetBase.PlainTextEditor:
+                    widget.getEditor().deleteAllBreakpoints()
                 os.remove( fileName )
             else:
                 logging.info( "Could not find " + fileName +
@@ -543,6 +547,9 @@ class EditorsManager( QTabWidget ):
     def __onCloseRequest( self, index, enforced = False ):
         " Close tab handler "
 
+        # Note: it is not called when an IDE is closed
+        #       but called when a project is changed
+
         wasDiscard = False
         if self.widget( index ).isModified() and enforced == False:
             # Ask the user if the changes should be discarded
@@ -599,6 +606,11 @@ class EditorsManager( QTabWidget ):
         # - the user decided to discard changes
         # - the changes were saved successfully
         # - there were no changes
+
+        if self.widget( index ).getType() == \
+            MainWindowTabWidgetBase.PlainTextEditor:
+            # Check the breakpoints validity
+            self.widget( index ).getEditor().validateBreakpoints()
 
         closingUUID = self.widget( index ).getUUID()
         if not wasDiscard and not enforced:
