@@ -79,8 +79,10 @@ def clearValidBreakpointLinesCache():
     return
 
 
-def getBreakpointLines( fileName, srcCode, enforceRecalc = False ):
+def getBreakpointLines( fileName, srcCode,
+                        enforceRecalc = False, saveToCache = True ):
     " Provides a set of breakable lines "
+    global validBreakPointLinesCache
     if enforceRecalc == False:
         if validBreakPointLinesCache.has_key( fileName ):
             return validBreakPointLinesCache[ fileName ]
@@ -91,7 +93,8 @@ def getBreakpointLines( fileName, srcCode, enforceRecalc = False ):
             srcCode = f.read()
             f.close()
         lines = calcBreakpointLines( srcCode )
-        validBreakPointLinesCache[ fileName ] = lines
+        if saveToCache:
+            validBreakPointLinesCache[ fileName ] = lines
         return lines
     except:
         return None
