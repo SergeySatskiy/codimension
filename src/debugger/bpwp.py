@@ -52,6 +52,8 @@ class DebuggerBreakWatchPoints( QWidget ):
                                                     self.__debugger.getBreakPointModel() )
         self.__watchPointViewer = WatchPointViewer( self.splitter,
                                                     self.__debugger.getWatchPointModel() )
+        # TODO: temporary
+        self.__watchPointViewer.setVisible( False )
 
         self.splitter.addWidget( self.__breakPointViewer )
         self.splitter.addWidget( self.__watchPointViewer )
