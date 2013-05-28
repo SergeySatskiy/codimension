@@ -1,5 +1,7 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Release 1.9
+* Initial implementation of the debugger.
 * Project viewer restores the previous session expanded directories at the
   start automatically.
 * More bound scintilla lexers
@@ -31,6 +33,7 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * New feature: tab context menu and current path label context menu on the
   status bar are extended with copying directory path and copying file name
   options.
+* Minor bug fixes and improvements.
 
 
 2013 Jan 20 Sergey Satskiy <sergey.satskiy@gmail.com>
