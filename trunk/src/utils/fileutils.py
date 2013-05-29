@@ -69,6 +69,7 @@ PerlFileType                = 29
 TCLFileType                 = 30
 PropsFileType               = 31
 TexFileType                 = 32
+UnknownELFFileType          = 33
 
 BrokenSymlinkFileType       = 50
 
@@ -144,6 +145,8 @@ _fileTypes = {
         [ PixmapCache().getIcon( 'fileprops.png' ), 'Properties' ],
     TexFileType:
         [ PixmapCache().getIcon( 'filetex.png' ), 'TeX' ],
+    UnknownELFFileType:
+        [ PixmapCache().getIcon( 'filemisc.png' ), 'Unknown' ],
 }
 
 
@@ -268,6 +271,9 @@ def detectFileType( path, checkForBrokenLink = True, skipCache = False ):
                 if 'shared object' in output:
                     __cachedFileTypes[ path ] = SOFileType
                     return SOFileType
+                # Could be a core dump
+                __cachedFileTypes[ path ] = UnknownELFFileType
+                return UnknownELFFileType
             else:
                 if 'python ' in output:
                     __cachedFileTypes[ path ] = PythonFileType

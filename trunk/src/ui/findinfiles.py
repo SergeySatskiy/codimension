@@ -26,23 +26,20 @@
 
 import os, os.path, re, time, logging
 from os.path import sep
-from PyQt4.QtCore                import Qt, SIGNAL
-from PyQt4.QtGui                 import QDialog, QDialogButtonBox, \
-                                        QVBoxLayout, QSizePolicy, QLabel, \
-                                        QProgressBar, QApplication, \
-                                        QComboBox, QGridLayout, QHBoxLayout, \
-                                        QCheckBox, QRadioButton, QGroupBox, \
-                                        QPushButton, QFileDialog, QCursor
-from fitlabel                    import FitPathLabel
-from utils.globals               import GlobalData
-from utils.settings              import Settings
-from utils.fileutils             import detectFileType, PixmapFileType, \
-                                        PythonCompiledFileType, ELFFileType, \
-                                        SOFileType, PDFFileType, \
-                                        BrokenSymlinkFileType
-from mainwindowtabwidgetbase     import MainWindowTabWidgetBase
-from cdmbriefparser              import getBriefModuleInfoFromMemory
-from autocomplete.listmodules    import resolveLink
+from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout, QSizePolicy,
+                          QLabel, QProgressBar, QApplication, QComboBox,
+                          QGridLayout, QHBoxLayout, QCheckBox, QRadioButton,
+                          QGroupBox, QPushButton, QFileDialog, QCursor )
+from fitlabel import FitPathLabel
+from utils.globals import GlobalData
+from utils.settings import Settings
+from utils.fileutils import ( detectFileType, PixmapFileType, PDFFileType,
+                              PythonCompiledFileType, ELFFileType, SOFileType,
+                              BrokenSymlinkFileType, UnknownELFFileType )
+from mainwindowtabwidgetbase import MainWindowTabWidgetBase
+from cdmbriefparser import getBriefModuleInfoFromMemory
+from autocomplete.listmodules import resolveLink
 
 
 
@@ -697,7 +694,8 @@ class FindInFilesDialog( QDialog, object ):
                     fileType = detectFileType( fname, False )
                     if fileType not in [ PythonCompiledFileType, PixmapFileType,
                                          ELFFileType, SOFileType, PDFFileType,
-                                         BrokenSymlinkFileType ]:
+                                         BrokenSymlinkFileType,
+                                         UnknownELFFileType ]:
                         files.append( ItemToSearchIn( fname, "" ) )
                 else:
                     if widget.getType() in \
