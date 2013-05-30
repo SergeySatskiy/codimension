@@ -1077,6 +1077,12 @@ class DebugClientBase( object ):
         @param scope 1 to report global variables, 0 for local variables (int)
         """
         if self.currentThread is None:
+            # It rather happens while debugging multithreaded scripts.
+            # If nothing was sent then the variable window holds another
+            # thread variables which is wrong. It's better to send an empty
+            # list to avoid confusion.
+            varlist = [ scope ]
+            self.write( '%s%s\n' % ( ResponseVariables, varlist ) )
             return
 
         # The original version did not change the frame number for the global
@@ -1092,6 +1098,12 @@ class DebugClientBase( object ):
             frmnr -= 1
 
         if f is None:
+            # It rather happens while debugging multithreaded scripts.
+            # If nothing was sent then the variable window holds another
+            # thread variables which is wrong. It's better to send an empty
+            # list to avoid confusion.
+            varlist = [ scope ]
+            self.write( '%s%s\n' % ( ResponseVariables, varlist ) )
             return
 
         if scope:
