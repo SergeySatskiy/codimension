@@ -92,6 +92,9 @@ def codimensionMain():
     parser.add_option( "--debug",
                        action="store_true", dest="debug", default=False,
                        help="switch on debug and info messages (default: Off)" )
+    parser.add_option( "--clean-start",
+                       action="store_true", dest="cleanStart", default=False,
+                       help="do not restore previous IDE state (default: Off)" )
 
     options, args = parser.parse_args()
 
@@ -116,7 +119,7 @@ def codimensionMain():
 
     # Load the skin
     globalData.skin = Skin()
-    globalData.skin.load( settingsDir + "skins" + \
+    globalData.skin.load( settingsDir + "skins" +
                           os.path.sep + settings.skin )
 
     # QT on UBUNTU has a bug - the main menu bar does not generate the
@@ -175,7 +178,12 @@ def codimensionMain():
                             codimensionApp, SLOT( "quit()" ) )
 
     # Loading project if given or the recent one
-    if projectFile != "":
+    if options.cleanStart:
+        # Codimension will not load anything.
+        # Fake signal for triggering browsers layout
+        globalData.project.emit( SIGNAL( 'projectChanged' ),
+                                 CodimensionProject.CompleteProject )
+    elif projectFile != "":
         splash.showMessage( "Loading project..." )
         globalData.project.loadProject( projectFile )
     elif len( args ) != 0:
@@ -189,21 +197,24 @@ def codimensionMain():
                                  CodimensionProject.CompleteProject )
     elif settings.projectLoaded:
         if len( settings.recentProjects ) == 0:
-            return      # Some project was loaded but now it is not available
-
-        splash.showMessage( " Loading recent project..." )
-        if os.path.exists( settings.recentProjects[ 0 ] ):
-            globalData.project.loadProject( settings.recentProjects[ 0 ] )
-        else:
-            global __delayedWarnings
-            __delayedWarnings.append( "Cannot open the most recent project: " + \
-                                      settings.recentProjects[ 0 ] + \
-                                      ". Ignore and continue." )
+            # Some project was loaded but now it is not available.
             # Fake signal for triggering browsers layout
             globalData.project.emit( SIGNAL( 'projectChanged' ),
                                      CodimensionProject.CompleteProject )
+        else:
+            splash.showMessage( " Loading recent project..." )
+            if os.path.exists( settings.recentProjects[ 0 ] ):
+                globalData.project.loadProject( settings.recentProjects[ 0 ] )
+            else:
+                global __delayedWarnings
+                __delayedWarnings.append( "Cannot open the most recent project: " +
+                                          settings.recentProjects[ 0 ] +
+                                          ". Ignore and continue." )
+                # Fake signal for triggering browsers layout
+                globalData.project.emit( SIGNAL( 'projectChanged' ),
+                                         CodimensionProject.CompleteProject )
     else:
-        mainWindow.editorsManagerWidget.editorsManager.restoreTabs( \
+        mainWindow.editorsManagerWidget.editorsManager.restoreTabs(
                                                     settings.tabsStatus )
         # Fake signal for triggering browsers layout
         globalData.project.emit( SIGNAL( 'projectChanged' ),
@@ -249,9 +260,9 @@ def launchUserInterface():
             if float( values[ "LatestVersion" ] ) > float( globalData.version ):
                 # Newer version is available
                 if not Settings().newerVerShown:
-                    logging.info( "Newer codimension version " + \
-                                  values[ "LatestVersion" ] + \
-                                  " is available. Please visit " \
+                    logging.info( "Newer codimension version " +
+                                  values[ "LatestVersion" ] +
+                                  " is available. Please visit "
                                   "http://satsky.spb.ru/codimension/codimensionEng.php" )
                     Settings().newerVerShown = True
 
@@ -316,8 +327,8 @@ def processCommandLineArgs( args ):
     for fName in args:
         fileType = detectFileType( fName )
         if fileType == CodimensionProjectFileType:
-            raise Exception( "Codimension project file (" + \
-                             fName + ") must not come " \
+            raise Exception( "Codimension project file (" +
+                             fName + ") must not come "
                              "together with python files" )
     return ""
 
@@ -340,16 +351,16 @@ def copySkin():
         try:
             shutil.copytree( skinDir, localSkinDir )
         except Exception, exc:
-            logging.error( "Could not create the user skin directory. " \
+            logging.error( "Could not create the user skin directory. "
                            "Continue without a skin." )
             logging.error( str( exc ) )
         return
 
     # The configured skin dir has not been found anywhere.
     # Try to get back to default.
-    logging.warning( "The configured skin '" + Settings().skin + \
-                     "' has not been found neither in the codimension " \
-                     "installation nor in the user local tree. " \
+    logging.warning( "The configured skin '" + Settings().skin +
+                     "' has not been found neither in the codimension "
+                     "installation nor in the user local tree. "
                      "Trying to fallback to the 'default' skin." )
 
     Settings().skin = 'default'
@@ -358,13 +369,13 @@ def copySkin():
         try:
             shutil.copytree( skinDir, localSkinDir )
         except Exception, exc:
-            logging.error( "Could not create the user skin directory. " \
+            logging.error( "Could not create the user skin directory. "
                            "Continue without a skin." )
             logging.error( str( exc ) )
         return
 
     # No bloody good - there will be no skin
-    logging.error( "Cannot find the 'default' skin. " \
+    logging.error( "Cannot find the 'default' skin. "
                    "Please check codimension installation." )
     return
 
