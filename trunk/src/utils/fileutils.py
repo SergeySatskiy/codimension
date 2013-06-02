@@ -70,6 +70,8 @@ TCLFileType                 = 30
 PropsFileType               = 31
 TexFileType                 = 32
 UnknownELFFileType          = 33
+UTF8TextFile                = 34
+ASCIITextFile               = 35
 
 BrokenSymlinkFileType       = 50
 
@@ -147,6 +149,10 @@ _fileTypes = {
         [ PixmapCache().getIcon( 'filetex.png' ), 'TeX' ],
     UnknownELFFileType:
         [ PixmapCache().getIcon( 'filemisc.png' ), 'Unknown' ],
+    UTF8TextFile:
+        [ PixmapCache().getIcon( 'filetext.png' ), 'Text' ],
+    ASCIITextFile:
+        [ PixmapCache().getIcon( 'filetext.png' ), 'Text' ],
 }
 
 
@@ -284,6 +290,12 @@ def detectFileType( path, checkForBrokenLink = True, skipCache = False ):
                 if 'posix shell' in output:
                     __cachedFileTypes[ path ] = ShellFileType
                     return ShellFileType
+                if 'utf-8 ' in output and 'text' in output:
+                    __cachedFileTypes[ path ] = UTF8TextFile
+                    return UTF8TextFile
+                if 'ascii text' in output:
+                    __cachedFileTypes[ path ] = ASCIITextFile
+                    return ASCIITextFile
         except:
             pass
 
