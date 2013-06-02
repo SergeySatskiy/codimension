@@ -31,7 +31,6 @@
 
 
 from PyQt4.QtCore    import QStringList
-from PyQt4.QtGui     import QApplication
 from utils.fileutils import ( PythonFileType, Python3FileType, RubyFileType,
                               DesignerFileType, DesignerHeaderFileType,
                               LinguistFileType, QTResourceFileType,
@@ -42,7 +41,7 @@ from utils.fileutils import ( PythonFileType, Python3FileType, RubyFileType,
                               MakefileType, ShellFileType, JavascriptFileType,
                               DiffFileType, JavaFileType, PascalFileType,
                               PerlFileType, TCLFileType, PropsFileType,
-                              TexFileType )
+                              TexFileType, UTF8TextFile, ASCIITextFile )
 
 
 # The lexer registry
@@ -138,7 +137,6 @@ from lexerjava import LexerJava
 from lexerpascal import LexerPascal
 from lexerperl import LexerPerl
 from lexertcl import LexerTCL
-from lexerproperties import LexerProperties
 from lexertex import LexerTeX
 
 __lexers = { PythonFileType             : LexerPython(),
@@ -177,7 +175,10 @@ def getLexerByType( fileType, fileName, parent = None ):
     try:
         return __lexers[ fileType ]
     except:
-        lexer = __getPygmentsLexerByFileName( parent, fileName )
+        if fileType in [ UTF8TextFile, ASCIITextFile ]:
+            lexer = __getPygmentsLexer( parent, "Text only" )
+        else:
+            lexer = __getPygmentsLexerByFileName( parent, fileName )
         if lexer is not None:
             updateLexerStyle( lexer, _skin.getLexerStyles( "Guessed" ).styles )
         return lexer
