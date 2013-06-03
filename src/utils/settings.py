@@ -133,7 +133,8 @@ CDM_SETTINGS = {
     CDMSetting( "hSplitterSizes", CDMSetting.TYPE_INT_LST,
                 _H_SPLITTER_SIZES_DEFAULT ),
     CDMSetting( "vSplitterSizes", CDMSetting.TYPE_INT_LST,
-                _V_SPLITTER_SIZES_DEFAULT )
+                _V_SPLITTER_SIZES_DEFAULT ),
+    CDMSetting( "style", CDMSetting.TYPE_STR, "plastique" ),
            ],
 "recentProjects" : [
     CDMSetting( "project", CDMSetting.TYPE_STR_LST, [] )
