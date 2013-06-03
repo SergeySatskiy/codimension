@@ -32,9 +32,9 @@ from utils.globals      import GlobalData
 class CodimensionApplication( QApplication ):
     """ codimension application class """
 
-    def __init__( self, argv ):
+    def __init__( self, argv, style ):
+        QApplication.setStyle( style )
         QApplication.__init__( self, argv )
-        QApplication.setStyle( 'plastique' )
 
         self.mainWindow = None
         self.__lastFocus = None

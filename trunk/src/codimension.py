@@ -129,7 +129,7 @@ def codimensionMain():
     os.environ[ "QT_X11_NO_NATIVE_MENUBAR" ] = "1"
 
     # Create QT application
-    codimensionApp = CodimensionApplication( sys.argv )
+    codimensionApp = CodimensionApplication( sys.argv, settings.style )
     globalData.application = codimensionApp
 
     logging.debug( "Starting codimension v." + __version__ )

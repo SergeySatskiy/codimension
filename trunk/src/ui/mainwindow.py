@@ -30,7 +30,7 @@ from PyQt4.QtGui import ( QLabel, QToolBar, QWidget, QMessageBox,
                           QAction, QMainWindow, QShortcut, QFrame,
                           QApplication, QCursor, QMenu, QToolButton,
                           QToolTip, QPalette, QColor, QFileDialog, QDialog,
-                          QDesktopServices )
+                          QDesktopServices, QStyleFactory )
 from fitlabel import FitPathLabel
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
@@ -1234,6 +1234,18 @@ class CodimensionMainWindow( QMainWindow ):
                 themeAct.setFont( font )
         self.connect( themesMenu, SIGNAL( "triggered(QAction*)" ),
                       self.__onTheme )
+
+        styleMenu = self.__optionsMenu.addMenu( "Styles" )
+        availableStyles = QStyleFactory.keys()
+        self.__styles = []
+        for style in availableStyles:
+            styleAct = styleMenu.addAction( style )
+            styleAct.setData( QVariant( style ) )
+            self.__styles.append( ( str( style ), styleAct ) )
+        self.connect( styleMenu, SIGNAL( 'triggered(QAction*)' ),
+                      self.__onStyle )
+        self.connect( styleMenu, SIGNAL( "aboutToShow()" ),
+                      self.__styleAboutToShow )
 
         # The Help menu
         self.__helpMenu = QMenu( "&Help", self )
@@ -2654,6 +2666,25 @@ class CodimensionMainWindow( QMainWindow ):
 
         logging.info( "Please restart codimension to apply the new theme" )
         Settings().skin = skinSubdir
+        return
+
+    def __styleAboutToShow( self ):
+        " Style menu is about to show "
+        currentStyle = Settings().style.lower()
+        for item in self.__styles:
+            font = item[ 1 ].font()
+            if item[ 0 ].lower() == currentStyle:
+                font.setBold( True )
+            else:
+                font.setBold( False )
+            item[ 1 ].setFont( font )
+        return
+
+    def __onStyle( self, act ):
+        " Sets the selected style "
+        styleName = str( act.data().toString() )
+        QApplication.setStyle( styleName )
+        Settings().style = styleName.lower()
         return
 
     def showStatusBarMessage( self, msg, timeout = 10000 ):
