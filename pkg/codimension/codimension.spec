@@ -1,5 +1,5 @@
 Name: codimension
-Version: 1.8
+Version: 1.9
 Release: 1
 License: GPLv3+
 Group: Development/Tools/IDE
@@ -76,6 +76,42 @@ update-desktop-database -q
 %{_datadir}/pixmaps/*.xpm
 
 %changelog
+* Tue Jun 05 2013 Ilya Loginov <isloginov@gmail.com> - 1.9-2
+- Upstream changes for release 1.9:
+- Initial implementation of the debugger.
+- Project viewer restores the previous session expanded directories at the
+  start automatically.
+- More bound scintilla lexers
+- Unhandled exceptions hook now saves the trace back and the log window
+  content in a file.
+- Some autocomplete improvements
+- Allow explicit reloading even if a buffer is not modified.
+- File outside modification detection now includes a file size.
+- Files deleted via IDE UI are removed from the recent files list as well.
+- Bug fix: respect multibyte chars when search incrementally
+- Bug fix: autocomplition for non-ascii text did not work.
+- Main menu and the text editor context menu now have 'open in browser'
+  item.
+- Main menu and the text editor context menu now have 'downdload and show'
+  item.
+- Main menu 'tab' now has 'highlight in...' items.
+- Bug fix: 'highlight in file system browser' did not work if it was not a
+  project file.
+- Basic pyflakes support.
+- Python .cgi support in outline browser.
+- Bash/sh file type recognition added.
+- Pylint and other tools support for python .cgi files.
+- Bug fix: improper tooltips and text in similarities pylint sections
+  if contained html.
+- Bug fix: double slashes in full file names when opened via Ctrl+I.
+- New feature: access to the project rope settings file via the Project menu.
+- Better dialogs for the cases when both the disk version and the buffer
+  content were modified and the user closes the tab or saves the tab content.
+- New feature: tab context menu and current path label context menu on the
+  status bar are extended with copying directory path and copying file name
+  options.
+- Minor bug fixes and improvements.
+
 * Sun Jan 20 2013 Sergey Satskiy <sergey.satskiy@gmail.com> - 1.8-1
 - Upstream changes for release 1.8:
 - Bug fix: running python tidy with settings led to an exception.
