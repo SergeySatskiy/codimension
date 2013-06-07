@@ -25,7 +25,7 @@
 #include "pythonbriefLexer.h"
 #include "pythonbriefParser.h"
 
-#include <regex.h>
+#include <string.h>
 
 #ifndef CDM_PY_PARSER_VERSION
 #define CDM_PY_PARSER_VERSION       "trunk"
@@ -723,17 +723,15 @@ void  searchForCoding( ppythonbriefLexer  ctx,
     if ( ctx->onEncoding == NULL )
         return; /* Analysis is disabled after first found encoding */
 
-    /* prepare regexp
-     * I don't know why the original expression does not work here:
-     * coding[=:]\s*([-\w.]+)
+    /* There were two version of this functions before which used regexps.
+     * The first version used this regexp: coding[=:]\s*([-\w.]+)
+     * I could not make it working at all.
+     * The second version used this: coding[=:]\\s*
+     * It worked fine on Linux however introduced problems on Windows and
+     * CygWin. So it was decided to get rid of regexps completely and to use
+     * dumb plain string search. A side effect of it is reducing dependencies
+     * in general.
      */
-    char *      pattern = "coding[=:]\\s*";
-    regex_t     preg;
-    regmatch_t  pmatch[1];
-
-    if ( regcomp( &preg, pattern, 0 ) != 0 )
-        return; /* Compile error */
-
 
     /* Find the end of the line and put \0 there */
     char *      endofline = lineStart;
@@ -749,15 +747,19 @@ void  searchForCoding( ppythonbriefLexer  ctx,
     /* replace the endofline char with '\0' */
     *endofline = '\0';
 
-    /* check if the regexp matched */
-    if ( regexec( &preg, lineStart, 1, pmatch, 0 ) == 0 )
+    char *      begin = strstr( lineStart, "coding" );
+    if ( begin != NULL )
     {
-        /* The first char after the match is the first encoding char */
-        char *  begin = lineStart + pmatch[0].rm_eo;
-        char *  end = begin;
-        char    last;
+        /* The beginning has been found. Check the first character after. */
+        begin += 6;     /* len( 'coding' ) */
+        if ( *begin == ':' || *begin == '=' )
+            ++begin;
+        while ( isspace( *begin ) )
+            ++begin;
 
-        /* Advance the end pointer */
+        char *      end = begin;
+        char        last;
+
         for ( ; ; ++end )
         {
             last = *end;
@@ -773,7 +775,6 @@ void  searchForCoding( ppythonbriefLexer  ctx,
         *end = last;
         ctx->onEncoding = NULL;
     }
-    regfree( &preg );
 
     /* revert back the last line symbol */
     *endofline = current;

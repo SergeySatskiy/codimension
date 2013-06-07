@@ -1,3 +1,8 @@
+XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Regexp based coding search is replaced with string serach to avoid problems
+  on cygwin and eliminate dependency on windows.
+
 2013 Jan 18  Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Prepared for release v.1.6
