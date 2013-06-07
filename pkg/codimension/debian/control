@@ -39,3 +39,5 @@ Description: Python IDE with emphasis on graphical representation
    * Simple line counter
    * McCabe cyclomatic complexity for a file or many files
    * New file templates
+   * Pyflakes integration
+   * Python debugger
