@@ -1,6 +1,6 @@
 Name: codimension
-Version: 1.9
-Release: 1
+Version: 2.0
+Release: 2
 License: GPLv3+
 Group: Development/Tools/IDE
 Summary: Python IDE with emphasis on graphical representation
@@ -14,7 +14,7 @@ Source3: %{name}.desktop
 Requires: python
 Requires: codimension-parser >= 1.6
 Requires: PyQt4 qscintilla-python
-Requires: pylint python-chardet graphviz
+Requires: pylint python-pygments python-chardet graphviz
 
 BuildRequires: desktop-file-utils
 
@@ -41,6 +41,8 @@ Features:
 * Simple line counter
 * McCabe cyclomatic complexity for a file or many files
 * New file templates
+* Pyflakes integration
+* Python debugger
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -76,8 +78,8 @@ update-desktop-database -q
 %{_datadir}/pixmaps/*.xpm
 
 %changelog
-* Tue Jun 05 2013 Ilya Loginov <isloginov@gmail.com> - 1.9-2
-- Upstream changes for release 1.9:
+* Tue Jun 05 2013 Ilya Loginov <isloginov@gmail.com> - 2.0-1
+- Upstream changes for release 2.0:
 - Initial implementation of the debugger.
 - Project viewer restores the previous session expanded directories at the
   start automatically.

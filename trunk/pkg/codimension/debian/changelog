@@ -1,4 +1,4 @@
-codimension (1.9-2) precise; urgency=low
+codimension (2.0-1) precise; urgency=low
 
   * Initial implementation of the debugger.
   * Project viewer restores the previous session expanded directories at the

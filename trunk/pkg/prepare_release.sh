@@ -155,7 +155,9 @@ thirdparty
 thirdparty/__init__.py thirdparty/__init__.py
 thirdparty/diff2html thirdparty/diff2html
 thirdparty/gprof2dot thirdparty/gprof2dot
+thirdparty/pyflakes thirdparty/pyflakes
 thirdparty/pymetrics-0.8.1 thirdparty/pymetrics
+thirdparty/rope-0.9.4 thirdparty/rope
 thirdparty/pythontidy thirdparty/pythontidy
 pkg/codimension/debian debian
 pkg/codimension/codimension.spec codimension.spec
