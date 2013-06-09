@@ -1,6 +1,11 @@
+XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Replacing the 'file' utilities calls with magic module included in thirdparty
+  directory.
+
 2013 Jun 02 Sergey Satskiy <sergey.satskiy@gmail.com>
 
-* Release 1.9
+* Release 2.0
 * Initial implementation of the debugger.
 * Project viewer restores the previous session expanded directories at the
   start automatically.

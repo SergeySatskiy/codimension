@@ -77,7 +77,7 @@ class GlobalData( object ):
                 self.runParamsCache.deserialize( settingsDir + \
                                                  "runparamscache" )
 
-            self.fileAvailable = self.__checkFile()
+            self.magicAvailable = self.__checkMagic()
             self.pylintAvailable = self.__checkPylint()
             self.graphvizAvailable = self.__checkGraphviz()
             return
@@ -246,12 +246,16 @@ class GlobalData( object ):
             return self.briefModinfoCache.get( path )
 
         @staticmethod
-        def __checkFile():
-            " Checks if the file utility available "
+        def __checkMagic():
+            " Checks if the magic module is able to be loaded "
 
-            if 'win' in sys.platform.lower():
-                return os.system( 'which file > /NUL 2>&1' ) == 0
-            return os.system( 'which file > /dev/null 2>&1' ) == 0
+            try:
+                import magic
+                m = magic.Magic()
+                m.close()
+                return True
+            except:
+                return False
 
         @staticmethod
         def __checkGraphviz():

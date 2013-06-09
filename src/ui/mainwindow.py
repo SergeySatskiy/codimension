@@ -58,9 +58,8 @@ from gotolinewidget import GotoLineWidget
 from pylintviewer import PylintViewer
 from pylintparser.pylintparser import Pylint
 from utils.fileutils import ( PythonFileType, Python3FileType, detectFileType,
-                              PixmapFileType, SOFileType, ELFFileType,
-                              PDFFileType, PythonCompiledFileType,
-                              CodimensionProjectFileType )
+                              PixmapFileType, CodimensionProjectFileType,
+                              closeMagicLibrary, isFileTypeSearchable )
 from pymetricsviewer import PymetricsViewer
 from pymetricsparser.pymetricsparser import PyMetrics
 from findinfiles import FindInFilesDialog
@@ -71,7 +70,7 @@ from mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from diagram.importsdgm import ( ImportsDiagramDialog, ImportsDiagramProgress,
                                  ImportDiagramOptions )
 from runparams import RunDialog
-from utils.run import getCwdCmdEnv, CMD_TYPE_RUN, CMD_TYPE_DEBUG
+from utils.run import getCwdCmdEnv, CMD_TYPE_RUN
 from debugger.context import DebuggerContext
 from debugger.modifiedunsaved import ModifiedUnsavedDialog
 from debugger.server import CodimensionDebugger
@@ -483,11 +482,11 @@ class CodimensionMainWindow( QMainWindow ):
         " Prints third party tools availability "
 
         globalData = GlobalData()
-        if globalData.fileAvailable:
-            logging.debug( "The 'file' utility is available" )
+        if globalData.magicAvailable:
+            logging.debug( "The magic module loaded OK" )
         else:
-            logging.warning( "The 'file' utility is not found. "
-                             "Some functionality will not be available." )
+            logging.warning( "The magic module (file type detection) is not "
+                             "found. Some functionality will not be available." )
 
         if globalData.pylintAvailable:
             logging.debug( "The 'pylint' utility is available" )
@@ -1781,8 +1780,8 @@ class CodimensionMainWindow( QMainWindow ):
         if fileType == PixmapFileType:
             self.openPixmapFile( path )
             return
-        if fileType in [ ELFFileType, SOFileType, PDFFileType ]:
-            logging.error( "Cannot open binary file for editing" )
+        if not isFileTypeSearchable( fileType ):
+            logging.error( "Cannot open non-text file for editing" )
             return
 
         self.openFile( path, lineNo )
@@ -1871,6 +1870,10 @@ class CodimensionMainWindow( QMainWindow ):
             project = GlobalData().project
             project.fileBrowserPaths = self.getProjectExpandedPaths()
             project.unloadProject( False )
+
+            # Close the magic library nicely to avoid complaining on implicit
+            # DB unloading
+            closeMagicLibrary()
 
         return
 
@@ -3222,18 +3225,7 @@ class CodimensionMainWindow( QMainWindow ):
         fileNames = dialog.selectedFiles()
         fileName = os.path.realpath( str( fileNames[0] ) )
 
-        fileType = detectFileType( fileName )
-
-        if fileType == PixmapFileType:
-            editorsManager.openPixmapFile( fileName )
-        # Just a few file types
-        elif fileType in [ SOFileType, ELFFileType,
-                           PDFFileType, PythonCompiledFileType ] or \
-             fileName.endswith( ".bz2" ) or fileName.endswith( ".zip" ) or \
-             fileName.endswith( ".tar" ):
-            logging.warning( "No viewer for binary files is available" )
-        else:
-            editorsManager.openFile( fileName, -1 )
+        self.detectTypeAndOpenFile( fileName )
         return
 
     def __isPlainTextBuffer( self ):

@@ -51,8 +51,9 @@ if not srcDir in sys.path:
 ropeDir = srcDir + os.path.sep + "thirdparty" + os.path.sep + "rope"
 if not ropeDir in sys.path:
     sys.path.insert( 0, ropeDir )
-
-
+filemagicDir = srcDir + os.path.sep + "thirdparty" + os.path.sep + "filemagic"
+if not filemagicDir in sys.path:
+    sys.path.insert( 0, filemagicDir )
 
 import traceback, logging, shutil, time, datetime
 from PyQt4 import QtGui

@@ -34,9 +34,7 @@ from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout, QSizePolicy,
 from fitlabel import FitPathLabel
 from utils.globals import GlobalData
 from utils.settings import Settings
-from utils.fileutils import ( detectFileType, PixmapFileType, PDFFileType,
-                              PythonCompiledFileType, ELFFileType, SOFileType,
-                              BrokenSymlinkFileType, UnknownELFFileType )
+from utils.fileutils import isFileSearchable
 from mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from cdmbriefparser import getBriefModuleInfoFromMemory
 from autocomplete.listmodules import resolveLink
@@ -691,11 +689,7 @@ class FindInFilesDialog( QDialog, object ):
                 widget = mainWindow.getWidgetForFileName( fname )
                 if widget is None:
                     # Do not check for broken symlinks
-                    fileType = detectFileType( fname, False )
-                    if fileType not in [ PythonCompiledFileType, PixmapFileType,
-                                         ELFFileType, SOFileType, PDFFileType,
-                                         BrokenSymlinkFileType,
-                                         UnknownELFFileType ]:
+                    if isFileSearchable( fname, False ):
                         files.append( ItemToSearchIn( fname, "" ) )
                 else:
                     if widget.getType() in \
@@ -752,11 +746,7 @@ class FindInFilesDialog( QDialog, object ):
                     mainWindow = GlobalData().mainWindow
                     widget = mainWindow.getWidgetForFileName( realItem )
                     if widget is None:
-                        fileType = detectFileType( realItem )
-                        if fileType not in [ PythonCompiledFileType,
-                                             PixmapFileType, ELFFileType,
-                                             SOFileType, PDFFileType,
-                                             BrokenSymlinkFileType ]:
+                        if isFileSearchable( realItem ):
                             files.append( ItemToSearchIn( realItem, "" ) )
                     else:
                         if widget.getType() in \
