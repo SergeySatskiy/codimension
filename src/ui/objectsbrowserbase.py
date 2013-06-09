@@ -65,9 +65,11 @@ class ObjectsBrowserSortFilterProxyModel( QSortFilterProxyModel ):
 
     def lessThan( self, left, right ):
         " Sorts the displayed items "
-        lhs = left.model() and left.model().item( left ) or None
+        lmodel = left.model()
+        lhs = lmodel and lmodel.item( left ) or None
         if lhs:
-            rhs = right.model() and right.model().item( right ) or None
+            rmodel = right.model()
+            rhs = rmodel and rmodel.item( right ) or None
             if rhs:
                 return lhs.lessThan( rhs, self.__sortColumn, self.__sortOrder )
         return False
