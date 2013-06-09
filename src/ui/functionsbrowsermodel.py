@@ -48,8 +48,6 @@ class FunctionsBrowserModel( BrowserModelBase ):
                                            QVariant( "File name" ),
                                            QVariant( "Line" ) ], parent )
         self.setTooltips( Settings().functionsTooltips )
-        self.__populateModel()
-
         self.connect( self.globalData.project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
         return
