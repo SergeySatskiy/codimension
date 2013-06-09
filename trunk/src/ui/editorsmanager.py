@@ -2023,10 +2023,14 @@ class EditorsManager( QTabWidget ):
         for index in xrange( self.count() ):
             self._updateIconAndTooltip( index )
 
-        if self.currentWidget().doesFileExist():
-            if self.currentWidget().isDiskFileModified():
-                if not self.currentWidget().getReloadDialogShown():
-                    self.currentWidget().showOutsideChangesBar( \
+        currentWidget = self.currentWidget()
+        if currentWidget is None:
+            return
+
+        if currentWidget.doesFileExist():
+            if currentWidget.isDiskFileModified():
+                if not currentWidget.getReloadDialogShown():
+                    currentWidget.showOutsideChangesBar( \
                                     self.__countDiskModifiedUnchanged() > 1 )
         return
 
