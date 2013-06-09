@@ -28,8 +28,7 @@
 
 """ file related utils """
 
-from os import popen
-from os.path import islink, exists, split, join
+from os.path import islink, exists, split, join, sep, basename
 from PyQt4.QtGui        import QImageReader
 from globals            import GlobalData
 from utils.pixmapcache  import PixmapCache
@@ -72,8 +71,12 @@ TexFileType                 = 32
 UnknownELFFileType          = 33
 UTF8TextFile                = 34
 ASCIITextFile               = 35
+ObjectFileType              = 36
+ArchiveFileType             = 37
+TarFileType                 = 38
 
 BrokenSymlinkFileType       = 50
+DirectoryFileType           = 51
 
 
 _fileTypes = {
@@ -117,6 +120,8 @@ _fileTypes = {
         [ PixmapCache().getIcon( 'filebinary.png' ), 'Binary' ],
     SOFileType:
         [ PixmapCache().getIcon( 'fileso.png' ), 'Binary' ],
+    ObjectFileType:
+        [ PixmapCache().getIcon( 'fileso.png' ), 'Binary' ],
     PDFFileType:
         [ PixmapCache().getIcon( 'filepdf.png' ), 'PDF' ],
     HTMLFileType:
@@ -153,6 +158,12 @@ _fileTypes = {
         [ PixmapCache().getIcon( 'filetext.png' ), 'Text' ],
     ASCIITextFile:
         [ PixmapCache().getIcon( 'filetext.png' ), 'Text' ],
+    DirectoryFileType:
+        [ PixmapCache().getIcon( 'dirclosed.png' ), '' ],
+    ArchiveFileType:
+        [ PixmapCache().getIcon( 'filearchive.png' ), 'Archive' ],
+    TarFileType:
+        [ PixmapCache().getIcon( 'filetar.png' ), 'Tar' ],
 }
 
 
@@ -176,9 +187,13 @@ _extType = {
     'di'    :   DFileType,
     'c'     :   CFileType,
     'cpp'   :   CPPFileType,
+    'cc'    :   CPPFileType,
     'cxx'   :   CPPFileType,
+    'c++'   :   CPPFileType,
     'hpp'   :   CPPHeaderFileType,
     'hxx'   :   CPPHeaderFileType,
+    'h++'   :   CPPHeaderFileType,
+    'hh'    :   CPPHeaderFileType,
     'pdf'   :   PDFFileType,
     'htm'   :   HTMLFileType,
     'html'  :   HTMLFileType,
@@ -187,6 +202,7 @@ _extType = {
     'xsl'   :   XMLFileType,
     'xslt'  :   XMLFileType,
     'so'    :   SOFileType,
+    'o'     :   ObjectFileType,
     'bash'  :   ShellFileType,
     'sh'    :   ShellFileType,
     'js'    :   JavascriptFileType,
@@ -215,24 +231,40 @@ _extType = {
     'sty'   :   TexFileType,
     'tex'   :   TexFileType,
     'toc'   :   TexFileType,
+    'txt'   :   UTF8TextFile,
+    'tar'   :   TarFileType,
+    'gz'    :   ArchiveFileType,
+    'bz2'   :   ArchiveFileType,
+    'gzip'  :   ArchiveFileType,
+    'zip'   :   ArchiveFileType,
+    'xz'    :   ArchiveFileType,
+    'tgz'   :   ArchiveFileType,
     'properties':   PropsFileType,
 }
 
 
 __cachedFileTypes = {}
+__magicModule = None
 __QTSupportedImageFormats = [ str( fmt ) for fmt in
                               QImageReader.supportedImageFormats() ]
 
 # Cached value to avoid unnecessary searches for a name
-fileAvailable = GlobalData().fileAvailable
+magicAvailable = GlobalData().magicAvailable
 
-
+ 
 
 def detectFileType( path, checkForBrokenLink = True, skipCache = False ):
     " Detects file type - must work for both existed and not existed files "
 
+    global __cachedFileTypes
+    global __magicModule
+
     if not path:
         return UnknownFileType
+
+    if path.endswith( sep ):
+        __cachedFileTypes[ path ] = DirectoryFileType
+        return DirectoryFileType
 
     if checkForBrokenLink and islink( path ):
         if not exists( path ):
@@ -262,14 +294,17 @@ def detectFileType( path, checkForBrokenLink = True, skipCache = False ):
         __cachedFileTypes[ path ] = PixmapFileType
         return PixmapFileType
 
-    if path.lower().endswith( 'makefile' ):
+    if 'makefile' in basename( path ).lower():
         __cachedFileTypes[ path ] = MakefileType
         return MakefileType
 
-    if fileAvailable:
+    if magicAvailable:
         try:
-            # It is safe to do it even for a not existing file
-            output = popen( 'file -b ' + path ).read().lower()
+            if __magicModule is None:
+                import magic
+                __magicModule = magic.Magic()
+
+            output = __magicModule.id_filename( path ).lower()
             if 'elf ' in output:
                 if 'executable' in output:
                     __cachedFileTypes[ path ] = ELFFileType
@@ -280,27 +315,51 @@ def detectFileType( path, checkForBrokenLink = True, skipCache = False ):
                 # Could be a core dump
                 __cachedFileTypes[ path ] = UnknownELFFileType
                 return UnknownELFFileType
+            elif 'text' in output:
+                if 'utf-8 ' in output:
+                    __cachedFileTypes[ path ] = UTF8TextFile
+                    return UTF8TextFile
+                if 'ascii ' in output:
+                    __cachedFileTypes[ path ] = ASCIITextFile
+                    return ASCIITextFile
+                if 'xml ' in output:
+                    __cachedFileTypes[ path ] = XMLFileType
+                    return XMLFileType
+                __cachedFileTypes[ path ] = UTF8TextFile
+                return UTF8TextFile
             else:
                 if 'python ' in output:
                     __cachedFileTypes[ path ] = PythonFileType
                     return PythonFileType
-                if 'bourne-again shell' in output:
+                if ' shell' in output:
                     __cachedFileTypes[ path ] = ShellFileType
                     return ShellFileType
-                if 'posix shell' in output:
-                    __cachedFileTypes[ path ] = ShellFileType
-                    return ShellFileType
-                if 'utf-8 ' in output and 'text' in output:
-                    __cachedFileTypes[ path ] = UTF8TextFile
-                    return UTF8TextFile
-                if 'ascii text' in output:
-                    __cachedFileTypes[ path ] = ASCIITextFile
-                    return ASCIITextFile
         except:
             pass
 
     __cachedFileTypes[ path ] = UnknownFileType
     return UnknownFileType
+
+
+def closeMagicLibrary():
+    global __magicModule
+    if __magicModule is not None:
+        __magicModule.close()
+        __magicModule = None
+    return
+
+def isFileSearchable( fileName, checkForBrokenLink = True ):
+    " Returns True if it makes sense to search for text in that file "
+    return isFileTypeSearchable( detectFileType( fileName,
+                                                 checkForBrokenLink ) )
+
+def isFileTypeSearchable( fileType ):
+    " Returns True if it makes sense to search for text in that file "
+    return fileType not in [ PythonCompiledFileType, PixmapFileType,
+                             ELFFileType, SOFileType, PDFFileType,
+                             UnknownELFFileType, ObjectFileType,
+                             BrokenSymlinkFileType, DirectoryFileType,
+                             TarFileType, ArchiveFileType ]
 
 
 def getFileIcon( fileType ):
