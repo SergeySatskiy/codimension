@@ -47,8 +47,6 @@ class ClassesBrowserModel( BrowserModelBase ):
                                            QVariant( "File name" ),
                                            QVariant( "Line" ) ], parent )
         self.setTooltips( Settings().classesTooltips )
-        self.__populateModel()
-
         self.connect( self.globalData.project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
         return

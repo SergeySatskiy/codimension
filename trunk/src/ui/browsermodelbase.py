@@ -133,17 +133,16 @@ class BrowserModelBase( QAbstractItemModel ):
            column >= self.columnCount( parent ):
             return QModelIndex()
 
-        if not parent.isValid():
-            parentItem = self.rootItem
-        else:
+        if parent.isValid():
             parentItem = parent.internalPointer()
+        else:
+            parentItem = self.rootItem
 
         try:
             if not parentItem.populated:
                 self.populateItem( parentItem )
             childItem = parentItem.child( row )
         except IndexError:
-            childItem = None
             return QModelIndex()
 
         if childItem:
