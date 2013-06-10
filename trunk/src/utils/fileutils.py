@@ -315,6 +315,12 @@ def detectFileType( path, checkForBrokenLink = True, skipCache = False ):
                 # Could be a core dump
                 __cachedFileTypes[ path ] = UnknownELFFileType
                 return UnknownELFFileType
+            elif 'python ' in output:
+                __cachedFileTypes[ path ] = PythonFileType
+                return PythonFileType
+            elif ' shell' in output:
+                __cachedFileTypes[ path ] = ShellFileType
+                return ShellFileType
             elif 'text' in output:
                 if 'utf-8 ' in output:
                     __cachedFileTypes[ path ] = UTF8TextFile
@@ -327,13 +333,6 @@ def detectFileType( path, checkForBrokenLink = True, skipCache = False ):
                     return XMLFileType
                 __cachedFileTypes[ path ] = UTF8TextFile
                 return UTF8TextFile
-            else:
-                if 'python ' in output:
-                    __cachedFileTypes[ path ] = PythonFileType
-                    return PythonFileType
-                if ' shell' in output:
-                    __cachedFileTypes[ path ] = ShellFileType
-                    return ShellFileType
         except:
             pass
 
