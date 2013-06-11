@@ -34,7 +34,7 @@
 
 
 /* copied (and modified) from libantlr3 to avoid indirect function calls */
-static inline ANTLR3_UINT32 getType( pANTLR3_BASE_TREE tree )
+static ANTLR3_UINT32 getType( pANTLR3_BASE_TREE tree )
 {
     pANTLR3_COMMON_TREE    theTree = (pANTLR3_COMMON_TREE)(tree->super);
 
@@ -42,7 +42,7 @@ static inline ANTLR3_UINT32 getType( pANTLR3_BASE_TREE tree )
         return 0;
     return theTree->token->getType(theTree->token);
 }
-static inline void *  vectorGet( pANTLR3_VECTOR vector, ANTLR3_UINT32 entry )
+static void *  vectorGet( pANTLR3_VECTOR vector, ANTLR3_UINT32 entry )
 {
     if ( entry < vector->count )
         return vector->elements[entry].element;
@@ -162,7 +162,7 @@ static pANTLR3_COMMON_TOKEN  getDottedName( pANTLR3_BASE_TREE  tree,
 static size_t getStringLiteralPrefixLength( pANTLR3_COMMON_TOKEN  token )
 {
     char *      firstChar = (char *)token->start;
-    char *      lastChar = (char *)token->stop;
+    // char *      lastChar = (char *)token->stop;
 
     if ( strncmp( firstChar, "\"\"\"", 3 ) == 0 )
         return 3;
@@ -329,8 +329,8 @@ static const char *  processArguments( pANTLR3_BASE_TREE    tree,
                 break;
             case STAR_ARG:
                 {
+                    char            augName[ MAX_DOTTED_NAME_LENGTH ];
                     const char *    name = (const char *)(arg->toString( arg )->chars);
-                    char            augName[ strlen( name ) + 2 ];
                     augName[0] = '*';
                     strcpy( augName + 1, name );
                     PyObject_CallFunction( onArg, "s", augName );
@@ -338,8 +338,8 @@ static const char *  processArguments( pANTLR3_BASE_TREE    tree,
                 break;
             case DBL_STAR_ARG:
                 {
+                    char            augName[ MAX_DOTTED_NAME_LENGTH ];
                     const char *    name = (const char *)(arg->toString( arg )->chars);
-                    char            augName[ strlen( name ) + 3 ];
                     augName[0] = '*';
                     augName[1] = '*';
                     strcpy( augName + 2, name );
