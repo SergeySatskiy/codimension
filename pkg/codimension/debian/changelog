@@ -1,5 +1,6 @@
 codimension (2.0-1) precise; urgency=low
 
+  * Replacing the 'file' utility calls with filemagic module
   * Initial implementation of the debugger.
   * Project viewer restores the previous session expanded directories at the
     start automatically.
