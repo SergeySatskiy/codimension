@@ -24,9 +24,10 @@
 
 
 import os.path, sys
-from htmltabwidget      import HTMLTabWidget
-from utils.globals      import GlobalData
-from utils.latestver    import getLatestVersionFile
+from htmltabwidget import HTMLTabWidget
+from utils.globals import GlobalData
+from utils.latestver import getLatestVersionFile
+from distutils.version import StrictVersion
 
 
 class WelcomeWidget( HTMLTabWidget ):
@@ -48,8 +49,8 @@ class WelcomeWidget( HTMLTabWidget ):
         newerVersion = ""
         success, values = getLatestVersionFile()
         if success:
-            if float( values[ "LatestVersion" ] ) > \
-               float( GlobalData().version ):
+            if StrictVersion( values[ "LatestVersion" ] ) > \
+               StrictVersion( GlobalData().version ):
                 newerVersion = "<p aligh='left'>" \
                                "<b>Note</b>: version " + \
                                values[ "LatestVersion" ] + " is <a href='" + \

@@ -68,6 +68,7 @@ from utils.pixmapcache import PixmapCache
 from utils.project import CodimensionProject
 from utils.skin import Skin
 from utils.briefmodinfocache import validateBriefModuleInfoCache
+from distutils.version import StrictVersion
 
 
 # Saving the root logging handlers
@@ -258,7 +259,7 @@ def launchUserInterface():
             Settings().lastSuccessVerCheck = int( time.time() )
 
             # The file has been read from the web site
-            if float( values[ "LatestVersion" ] ) > float( globalData.version ):
+            if StrictVersion( values[ "LatestVersion" ] ) > StrictVersion( globalData.version ):
                 # Newer version is available
                 if not Settings().newerVerShown:
                     logging.info( "Newer codimension version " +
