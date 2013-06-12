@@ -40,7 +40,7 @@ static ANTLR3_UINT32 getType( pANTLR3_BASE_TREE tree )
 
     if (theTree->token == NULL)
         return 0;
-    return theTree->token->getType(theTree->token);
+    return theTree->token->type;
 }
 static void *  vectorGet( pANTLR3_VECTOR vector, ANTLR3_UINT32 entry )
 {
@@ -48,8 +48,10 @@ static void *  vectorGet( pANTLR3_VECTOR vector, ANTLR3_UINT32 entry )
         return vector->elements[entry].element;
     return NULL;
 }
-
-
+static pANTLR3_COMMON_TOKEN getToken( pANTLR3_BASE_TREE  tree )
+{
+    return  ((pANTLR3_COMMON_TREE)(tree->super))->token;
+}
 
 
 
@@ -150,7 +152,7 @@ static pANTLR3_COMMON_TOKEN  getDottedName( pANTLR3_BASE_TREE  tree,
         if ( k != 0 )
             name[ len++ ] = '.';
         else
-            firstToken = child->getToken( child );
+            firstToken = getToken( child );
         tail = (const char *)(child->toString( child )->chars);
         strcpy( name + len, tail );
     }
@@ -204,7 +206,7 @@ static void checkForDocstring( pANTLR3_BASE_TREE             tree,
         while ( index < tree->children->count )
         {
             currentPart = vectorGet( tree->children, index );
-            currentToken = currentPart->getToken( currentPart );
+            currentToken = getToken( currentPart );
             charsToSkip = getStringLiteralPrefixLength( currentToken );
             charsToCopy = (char *)currentToken->stop -
                           (char *)currentToken->start - 2 * charsToSkip + 1;
@@ -254,7 +256,7 @@ static void  processWhat( pANTLR3_BASE_TREE            tree,
         else
         {
             /* Otherwise it is what is imported */
-            pANTLR3_COMMON_TOKEN    token = child->getToken( child );
+            pANTLR3_COMMON_TOKEN    token = getToken( child );
 
             PyObject_CallFunction( callbacks->onWhat, "siii",
                                    (const char *)(child->toString( child )->chars),
@@ -289,19 +291,16 @@ static void  processImport( pANTLR3_BASE_TREE            tree,
                                    token->charPosition + 1, /* Make it 1-based */
                                    (void *)(token->start) - token->input->data );
         }
-
-        if ( getType( t ) == WHAT )
+        else if ( getType( t ) == WHAT )
         {
             processWhat( t, callbacks );
         }
-
-        if ( getType( t ) == AS )
+        else if ( getType( t ) == AS )
         {
             pANTLR3_BASE_TREE  asChild = vectorGet( t->children, 0 );
             PyObject_CallFunction( callbacks->onAs, "s",
                                    (const char *)(asChild->toString( asChild )->chars) );
         }
-
     }
     return;
 }
@@ -313,11 +312,12 @@ static const char *  processArguments( pANTLR3_BASE_TREE    tree,
     const char *    firstArgument = NULL;   /* For non-static class members only,
                                                so it cannot be * or ** */
 
-    ANTLR3_UINT32   i;
-    ANTLR3_UINT32   n = tree->children->count;
+    ANTLR3_UINT32       i;
+    ANTLR3_UINT32       n = tree->children->count;
+    pANTLR3_BASE_TREE   arg;
     for ( i = 0; i < n; ++i )
     {
-        pANTLR3_BASE_TREE   arg = vectorGet( tree->children, i );
+        arg = vectorGet( tree->children, i );
         switch ( getType( arg ) )
         {
             case NAME_ARG:
@@ -391,7 +391,7 @@ static void  processClassDefinition( pANTLR3_BASE_TREE            tree,
     pANTLR3_BASE_TREE       nameChild = vectorGet( tree->children, 0 );
     ANTLR3_UINT32           n = tree->children->count;
     ANTLR3_UINT32           k;
-    pANTLR3_COMMON_TOKEN    token = nameChild->getToken( nameChild );
+    pANTLR3_COMMON_TOKEN    token = getToken( nameChild );
 
     /*
      * Positions of the 'def' keyword and the function name are saved in one 32
@@ -452,7 +452,7 @@ static void  processFuncDefinition( pANTLR3_BASE_TREE            tree,
     ANTLR3_UINT32           k;
     int                     isStaticMethod = 0;
     const char *            firstArgumentName = NULL; /* for class methods only */
-    pANTLR3_COMMON_TOKEN    token = nameChild->getToken( nameChild );
+    pANTLR3_COMMON_TOKEN    token = getToken( nameChild );
 
 
     /*
@@ -538,7 +538,7 @@ static void processAssign( pANTLR3_BASE_TREE   tree,
             if ( i == (n-1) )
             {
                 child = vectorGet( child->children, 0 );
-                token = child->getToken( child );
+                token = getToken( child );
                 PyObject_CallFunction( onVariable, "siiii",
                                        (child->toString( child ))->chars,
                                        token->line,
@@ -554,7 +554,7 @@ static void processAssign( pANTLR3_BASE_TREE   tree,
                 if ( getType( nextChild ) == HEAD_NAME )
                 {
                     child = vectorGet( child->children, 0 );
-                    token = child->getToken( child );
+                    token = getToken( child );
                     PyObject_CallFunction( onVariable, "siiii",
                                            (child->toString( child ))->chars,
                                            token->line,
@@ -618,7 +618,7 @@ static void processInstanceMember( pANTLR3_BASE_TREE           tree,
         {
             /* There is no more. Do the callback. */
             child = vectorGet( child->children, 0 );
-            token = child->getToken( child );
+            token = getToken( child );
             PyObject_CallFunction( callbacks->onInstanceAttribute, "siiii",
                                    (child->toString( child ))->chars,
                                    token->line,
@@ -635,7 +635,7 @@ static void processInstanceMember( pANTLR3_BASE_TREE           tree,
 
         /* Here it is, we should get it */
         child = vectorGet( child->children, 0 );
-        token = child->getToken( child );
+        token = getToken( child );
         PyObject_CallFunction( callbacks->onInstanceAttribute, "siiii",
                                (child->toString( child ))->chars,
                                token->line,
