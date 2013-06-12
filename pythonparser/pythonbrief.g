@@ -364,7 +364,7 @@ dotted_name     : NAME ( DOT NAME )*
                 ;
 
 global_stmt     : 'global' NAME ( options { k = 2; } : COMMA NAME )*
-                    -> ^( GLOBAL_STMT  NAME )+
+                    -> GLOBAL_STMT
                 ;
 
 exec_stmt       : 'exec' expr ( 'in' test ( COMMA test )? )?
