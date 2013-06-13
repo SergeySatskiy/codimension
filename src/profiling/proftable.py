@@ -476,7 +476,10 @@ class ProfileTableViewer( QWidget ):
         else:
             values << str( actualCalls ) + "/" + str( primitiveCalls )
 
-        values << FLOAT_FORMAT % totalTime + " \t(%3.2f%%)" % (totalTime / totalCPUTime * 100)
+        if totalCPUTime == 0.0:
+            values << FLOAT_FORMAT % totalTime
+        else:
+            values << FLOAT_FORMAT % totalTime + " \t(%3.2f%%)" % (totalTime / totalCPUTime * 100)
         values << FLOAT_FORMAT % timePerCall
         values << FLOAT_FORMAT % cumulativeTime
         values << FLOAT_FORMAT % cumulativeTimePerCall
