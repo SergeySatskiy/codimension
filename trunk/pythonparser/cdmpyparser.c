@@ -262,7 +262,7 @@ static void  processWhat( pANTLR3_BASE_TREE            tree,
                                    (const char *)(child->toString( child )->chars),
                                    token->line,
                                    token->charPosition + 1, /* Make it 1-based */
-                                   (void *)token->start - token->input->data );
+                                   (char *)token->start - (char *)token->input->data );
         }
     }
     return;
@@ -289,7 +289,7 @@ static void  processImport( pANTLR3_BASE_TREE            tree,
                                    name,
                                    token->line,
                                    token->charPosition + 1, /* Make it 1-based */
-                                   (void *)(token->start) - token->input->data );
+                                   (char *)(token->start) - (char *)token->input->data );
         }
         else if ( getType( t ) == WHAT )
         {
@@ -364,7 +364,7 @@ static int processDecor( pANTLR3_BASE_TREE            tree,
                            name,
                            token->line,
                            token->charPosition + 1, /* Make it 1-based */
-                           (void *)token->start - token->input->data );
+                           (char *)token->start - (char *)token->input->data );
     if ( strcmp( name, "staticmethod" ) == 0 )
     {
         isStaticMethod = 1;
@@ -405,7 +405,7 @@ static void  processClassDefinition( pANTLR3_BASE_TREE            tree,
                            /* Function name line and pos */
                            token->line & 0xFFFF,
                            (token->charPosition & 0xFFFF) + 1, /* To make it 1-based */
-                           (void *)token->start - token->input->data,
+                           (char *)token->start - (char *)token->input->data,
                            /* Keyword 'def' line and pos */
                            token->line >> 16,
                            (token->charPosition >> 16) + 1,    /* To make it 1-based */
@@ -467,7 +467,7 @@ static void  processFuncDefinition( pANTLR3_BASE_TREE            tree,
                            /* Function name line and pos */
                            token->line & 0xFFFF,
                            (token->charPosition & 0xFFFF) + 1, /* To make it 1-based */
-                           (void *)token->start - token->input->data,
+                           (char *)token->start - (char *)token->input->data,
                            /* Keyword 'def' line and pos */
                            token->line >> 16,
                            (token->charPosition >> 16) + 1,    /* To make it 1-based */
@@ -543,7 +543,7 @@ static void processAssign( pANTLR3_BASE_TREE   tree,
                                        (child->toString( child ))->chars,
                                        token->line,
                                        token->charPosition + 1, /* Make it 1-based */
-                                       (void *)token->start - token->input->data,
+                                       (char *)token->start - (char *)token->input->data,
                                        objectsLevel );
                 return;
             }
@@ -559,7 +559,7 @@ static void processAssign( pANTLR3_BASE_TREE   tree,
                                            (child->toString( child ))->chars,
                                            token->line,
                                            token->charPosition + 1, /* Make it 1-based */
-                                           (void *)token->start - token->input->data,
+                                           (char *)token->start - (char *)token->input->data,
                                            objectsLevel );
                 }
             }
@@ -623,7 +623,7 @@ static void processInstanceMember( pANTLR3_BASE_TREE           tree,
                                    (child->toString( child ))->chars,
                                    token->line,
                                    token->charPosition + 1, /* Make it 1-based */
-                                   (void *)token->start - token->input->data,
+                                   (char *)token->start - (char *)token->input->data,
                                    objectsLevel );
             return;
         }
@@ -640,7 +640,7 @@ static void processInstanceMember( pANTLR3_BASE_TREE           tree,
                                (child->toString( child ))->chars,
                                token->line,
                                token->charPosition + 1, /* Make it 1-based */
-                               (void *)token->start - token->input->data,
+                               (char *)token->start - (char *)token->input->data,
                                objectsLevel );
     }
     return;
