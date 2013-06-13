@@ -64,6 +64,10 @@ def cdmpyparserTest( files ):
     return
 
 
+def deltaToFloat( delta ):
+    return delta.seconds + delta.microseconds / 1E6 + delta.days * 86400
+
+
 print "Speed test compares the time required for " \
       "cdmpyparser and the standard pyclbr modules to collect module info."
 print ""
@@ -86,25 +90,29 @@ else:
     print "Collected " + str(len(pythonFiles)) + " files from " + startDir
 
 
-# timing for cdmpyparser
-start = datetime.datetime.now()
-cdmpyparserTest( pythonFiles )
-end = datetime.datetime.now()
-
-print "cdmpyparser timing:"
-print "Start: " + str( start )
-print "End:   " + str( end )
-print "Delta: " + str( end - start )
-
-print ""
-
 # timing for pyclbr
 start = datetime.datetime.now()
 pyclbrTest( pythonFiles )
 end = datetime.datetime.now()
+delta = end - start
 
 print "pyclbr timing:"
 print "Start: " + str( start )
 print "End:   " + str( end )
-print "Delta: " + str( end - start )
+print "Delta: " + str( delta ) + " as float: " + str( deltaToFloat( delta ) )
+
+print ""
+
+# timing for cdmpyparser
+start = datetime.datetime.now()
+cdmpyparserTest( pythonFiles )
+end = datetime.datetime.now()
+delta2 = end - start
+
+print "cdmpyparser timing:"
+print "Start: " + str( start )
+print "End:   " + str( end )
+print "Delta: " + str( delta2 ) + " as float: " + str( deltaToFloat( delta2 ) )
+
+print "\nRatio: " + str( deltaToFloat( delta ) / deltaToFloat( delta2 ) )
 
