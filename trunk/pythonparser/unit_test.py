@@ -216,6 +216,25 @@ class CDMBriefParserTest( unittest.TestCase ):
                          "wrong indent test failed" )
         return
 
+    def test_wrong_stop( self ):
+        " Test wrong stop of the parser "
+
+        pythonFile = self.dir + "wrong_stop.py"
+        info = cdmbriefparser.getBriefModuleInfoFromFile( pythonFile )
+        self.failUnless( info.isOK != True )
+
+        outFileName = pythonFile.replace( ".py", ".out" )
+        outFile = open( outFileName, "w" )
+        outFile.write( info.niceStringify() )
+        for item in info.errors:
+            outFile.write( "\n" + item )
+        outFile.close()
+
+        okFileName = pythonFile.replace( ".py", ".ok" )
+        self.failUnless( files_equal( outFileName, okFileName ),
+                         "wrong stop of the parser test failed" )
+        return
+
     def test_one_comment( self ):
         " Test for a file which consists of a single comment line "
 

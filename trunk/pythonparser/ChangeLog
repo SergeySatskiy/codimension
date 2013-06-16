@@ -1,5 +1,6 @@
 XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Bug fix: parser did not report errors if didn't reach the end
 * Increased performance due to fixed size arrays
 * Regexp based coding search is replaced with string serach to avoid problems
   on cygwin and eliminate dependency on windows.
