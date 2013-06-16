@@ -228,6 +228,8 @@ class CDMBriefParserTest( unittest.TestCase ):
         outFile.write( info.niceStringify() )
         for item in info.errors:
             outFile.write( "\n" + item )
+        for item in info.lexerErrors:
+            outFile.write( "\n" + item )
         outFile.close()
 
         okFileName = pythonFile.replace( ".py", ".ok" )
