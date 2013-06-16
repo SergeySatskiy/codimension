@@ -1362,7 +1362,7 @@ parse_input( pANTLR3_INPUT_STREAM           input,
 
         sprintf( message, "Cannot match to any predicted input near line %d",
                           token->line );
-        PyObject_CallFunction( callbacks->onError, "s",
+        PyObject_CallFunction( callbacks->onLexerError, "s",
                                message );
     }
 
