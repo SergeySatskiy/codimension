@@ -139,23 +139,25 @@ static pANTLR3_COMMON_TOKEN  getDottedName( pANTLR3_BASE_TREE  tree,
     ANTLR3_UINT32           n = tree->children->count;
     ANTLR3_UINT32           k;
     int                     len = 0;
-    const char *            tail = "";
     pANTLR3_COMMON_TOKEN    firstToken = NULL;
+    pANTLR3_COMMON_TOKEN    currentToken;
     pANTLR3_BASE_TREE       child;
+    int                     partLen;
 
-    name[ 0 ] = '\0';
     for ( k = 0; k < n; ++k )
     {
         child = vectorGet( tree->children, k );
 
-        len += strlen( tail );
+        currentToken = getToken( child );
         if ( k != 0 )
             name[ len++ ] = '.';
         else
-            firstToken = getToken( child );
-        tail = (const char *)(child->toString( child )->chars);
-        strcpy( name + len, tail );
+            firstToken = currentToken;
+        partLen = (char *)(currentToken->stop) - (char *)(currentToken->start) + 1;
+        memcpy( name + len, (char *)(currentToken->start), partLen );
+        len += partLen;
     }
+    name[ len ] = '\0';
     return firstToken;
 }
 
@@ -213,24 +215,24 @@ static void checkForDocstring( pANTLR3_BASE_TREE             tree,
 
             if ( collected + charsToCopy + 1 > MAX_DOCSTRING_SIZE )
             {
-                strncpy( buffer + collected,
-                         (char *)currentToken->start + charsToSkip,
-                         MAX_DOCSTRING_SIZE - collected - charsToCopy - 1 );
+                memcpy( buffer + collected,
+                        (char *)currentToken->start + charsToSkip,
+                        MAX_DOCSTRING_SIZE - collected - charsToCopy - 1 );
                 collected = MAX_DOCSTRING_SIZE - 1;
                 break;
             }
 
-            strncpy( buffer + collected,
-                     (char *)currentToken->start + charsToSkip,
-                     charsToCopy );
+            memcpy( buffer + collected,
+                    (char *)currentToken->start + charsToSkip,
+                    charsToCopy );
             collected += charsToCopy;
             ++index;
         }
 
         buffer[ collected ] = 0;
 
-        PyObject_CallFunction( callbacks->onDocstring, "si",
-                               buffer,
+        PyObject_CallFunction( callbacks->onDocstring, "s#i",
+                               buffer, collected,
                                tree->getLine( tree ) );
     }
     return;
@@ -242,6 +244,7 @@ static void  processWhat( pANTLR3_BASE_TREE            tree,
 {
     ANTLR3_UINT32   n = tree->children->count;
     ANTLR3_UINT32   k;
+    pANTLR3_STRING  s;
 
     for ( k = 0; k < n; ++k )
     {
@@ -250,16 +253,18 @@ static void  processWhat( pANTLR3_BASE_TREE            tree,
         if ( getType( child ) == AS )
         {
             pANTLR3_BASE_TREE  asChild = vectorGet( child->children, 0 );
-            PyObject_CallFunction( callbacks->onAs, "s",
-                                   (const char *)(asChild->toString( asChild )->chars) );
+            s = asChild->toString( asChild );
+            PyObject_CallFunction( callbacks->onAs, "s#",
+                                   s->chars, s->len );
         }
         else
         {
             /* Otherwise it is what is imported */
             pANTLR3_COMMON_TOKEN    token = getToken( child );
 
-            PyObject_CallFunction( callbacks->onWhat, "siii",
-                                   (const char *)(child->toString( child )->chars),
+            s = child->toString( child );
+            PyObject_CallFunction( callbacks->onWhat, "s#iii",
+                                   s->chars, s->len,
                                    token->line,
                                    token->charPosition + 1, /* Make it 1-based */
                                    (char *)token->start - (char *)token->input->data );
@@ -274,13 +279,13 @@ static void  processImport( pANTLR3_BASE_TREE            tree,
 {
     ANTLR3_UINT32   n = tree->children->count;
     ANTLR3_UINT32   k;
+    char            name[ MAX_DOTTED_NAME_LENGTH ];
 
     /* There could be many imports in a single import statement */
     for ( k = 0; k < n; ++k )
     {
         /* The children must be the dotted name or what exported */
         pANTLR3_BASE_TREE   t = vectorGet( tree->children, k );
-        char                name[ MAX_DOTTED_NAME_LENGTH ];
 
         if ( getType( t ) == DOTTED_NAME )
         {
@@ -297,9 +302,10 @@ static void  processImport( pANTLR3_BASE_TREE            tree,
         }
         else if ( getType( t ) == AS )
         {
-            pANTLR3_BASE_TREE  asChild = vectorGet( t->children, 0 );
-            PyObject_CallFunction( callbacks->onAs, "s",
-                                   (const char *)(asChild->toString( asChild )->chars) );
+            pANTLR3_BASE_TREE   asChild = vectorGet( t->children, 0 );
+            pANTLR3_STRING      s = asChild->toString( asChild );
+            PyObject_CallFunction( callbacks->onAs, "s#",
+                                   s->chars, s->len );
         }
     }
     return;
@@ -315,35 +321,38 @@ static const char *  processArguments( pANTLR3_BASE_TREE    tree,
     ANTLR3_UINT32       i;
     ANTLR3_UINT32       n = tree->children->count;
     pANTLR3_BASE_TREE   arg;
+    pANTLR3_STRING      s;
+
     for ( i = 0; i < n; ++i )
     {
         arg = vectorGet( tree->children, i );
+        s = arg->toString( arg );
         switch ( getType( arg ) )
         {
             case NAME_ARG:
                 {
-                    const char *    name = (const char *)(arg->toString( arg )->chars);
-                    PyObject_CallFunction( onArg, "s", name );
-                    if ( i == 0 ) firstArgument = name;
+                    PyObject_CallFunction( onArg, "s#", s->chars, s->len );
+                    if ( i == 0 )
+                        firstArgument = (const char *)(s->chars);
                 }
                 break;
             case STAR_ARG:
                 {
                     char            augName[ MAX_DOTTED_NAME_LENGTH ];
-                    const char *    name = (const char *)(arg->toString( arg )->chars);
+
                     augName[0] = '*';
-                    strcpy( augName + 1, name );
-                    PyObject_CallFunction( onArg, "s", augName );
+                    memcpy( augName + 1, s->chars, s->len );
+                    PyObject_CallFunction( onArg, "s#", augName, s->len + 1 );
                 }
                 break;
             case DBL_STAR_ARG:
                 {
                     char            augName[ MAX_DOTTED_NAME_LENGTH ];
-                    const char *    name = (const char *)(arg->toString( arg )->chars);
+
                     augName[0] = '*';
                     augName[1] = '*';
-                    strcpy( augName + 2, name );
-                    PyObject_CallFunction( onArg, "s", augName );
+                    memcpy( augName + 2, s->chars, s->len );
+                    PyObject_CallFunction( onArg, "s#", augName, s->len + 2 );
                 }
                 break;
         }
@@ -392,6 +401,7 @@ static void  processClassDefinition( pANTLR3_BASE_TREE            tree,
     ANTLR3_UINT32           n = tree->children->count;
     ANTLR3_UINT32           k;
     pANTLR3_COMMON_TOKEN    token = getToken( nameChild );
+    pANTLR3_STRING          s;
 
     /*
      * Positions of the 'def' keyword and the function name are saved in one 32
@@ -400,8 +410,8 @@ static void  processClassDefinition( pANTLR3_BASE_TREE            tree,
      */
 
     ++objectsLevel;
-    PyObject_CallFunction( callbacks->onClass, "siiiiii",
-                           (nameChild->toString( nameChild ))->chars,
+    PyObject_CallFunction( callbacks->onClass, "s#iiiiii",
+                           token->start, (char *)token->stop - (char *)token->start + 1,
                            /* Function name line and pos */
                            token->line & 0xFFFF,
                            (token->charPosition & 0xFFFF) + 1, /* To make it 1-based */
@@ -426,8 +436,9 @@ static void  processClassDefinition( pANTLR3_BASE_TREE            tree,
                     for ( k = 0; k < n; ++k )
                     {
                         pANTLR3_BASE_TREE   base = vectorGet( t->children, k );
-                        PyObject_CallFunction( callbacks->onBaseClass, "s",
-                                               (const char *)(base->toString( base )->chars) );
+                        s = base->toString( base );
+                        PyObject_CallFunction( callbacks->onBaseClass, "s#",
+                                               s->chars, s->len );
                     }
                 }
                 continue;
@@ -462,8 +473,8 @@ static void  processFuncDefinition( pANTLR3_BASE_TREE            tree,
      */
 
     ++objectsLevel;
-    PyObject_CallFunction( callbacks->onFunction, "siiiiii",
-                           (nameChild->toString( nameChild ))->chars,
+    PyObject_CallFunction( callbacks->onFunction, "s#iiiiii",
+                           token->start, (char *)token->stop - (char *)token->start + 1,
                            /* Function name line and pos */
                            token->line & 0xFFFF,
                            (token->charPosition & 0xFFFF) + 1, /* To make it 1-based */
@@ -518,6 +529,7 @@ static void processAssign( pANTLR3_BASE_TREE   tree,
 {
     ANTLR3_UINT32   i;
     ANTLR3_UINT32   n;
+    pANTLR3_STRING  s;
 
 
     if ( tree->children->count == 0 )
@@ -539,8 +551,9 @@ static void processAssign( pANTLR3_BASE_TREE   tree,
             {
                 child = vectorGet( child->children, 0 );
                 token = getToken( child );
-                PyObject_CallFunction( onVariable, "siiii",
-                                       (child->toString( child ))->chars,
+                s = child->toString( child );
+                PyObject_CallFunction( onVariable, "s#iiii",
+                                       s->chars, s->len,
                                        token->line,
                                        token->charPosition + 1, /* Make it 1-based */
                                        (char *)token->start - (char *)token->input->data,
@@ -555,8 +568,9 @@ static void processAssign( pANTLR3_BASE_TREE   tree,
                 {
                     child = vectorGet( child->children, 0 );
                     token = getToken( child );
-                    PyObject_CallFunction( onVariable, "siiii",
-                                           (child->toString( child ))->chars,
+                    s = child->toString( child );
+                    PyObject_CallFunction( onVariable, "s#iiii",
+                                           s->chars, s->len,
                                            token->line,
                                            token->charPosition + 1, /* Make it 1-based */
                                            (char *)token->start - (char *)token->input->data,
@@ -577,6 +591,7 @@ static void processInstanceMember( pANTLR3_BASE_TREE           tree,
     ANTLR3_UINT32           n;
     pANTLR3_COMMON_TOKEN    token;
     pANTLR3_BASE_TREE       lookAhead;
+    pANTLR3_STRING          s;
 
 
     if ( firstArgName == NULL )         return;
@@ -619,8 +634,9 @@ static void processInstanceMember( pANTLR3_BASE_TREE           tree,
             /* There is no more. Do the callback. */
             child = vectorGet( child->children, 0 );
             token = getToken( child );
-            PyObject_CallFunction( callbacks->onInstanceAttribute, "siiii",
-                                   (child->toString( child ))->chars,
+            s = child->toString( child );
+            PyObject_CallFunction( callbacks->onInstanceAttribute, "s#iiii",
+                                   s->chars, s->len,
                                    token->line,
                                    token->charPosition + 1, /* Make it 1-based */
                                    (char *)token->start - (char *)token->input->data,
@@ -636,8 +652,9 @@ static void processInstanceMember( pANTLR3_BASE_TREE           tree,
         /* Here it is, we should get it */
         child = vectorGet( child->children, 0 );
         token = getToken( child );
-        PyObject_CallFunction( callbacks->onInstanceAttribute, "siiii",
-                               (child->toString( child ))->chars,
+        s = child->toString( child );
+        PyObject_CallFunction( callbacks->onInstanceAttribute, "s#iiii",
+                               s->chars, s->len,
                                token->line,
                                token->charPosition + 1, /* Make it 1-based */
                                (char *)token->start - (char *)token->input->data,
@@ -798,6 +815,7 @@ void  searchForCoding( ppythonbriefLexer  ctx,
 
 
 static int      unknownError = 0;
+static int      errorCount = 0;
 
 // The code is taken from the libantlr3 and modified to collect the message
 // in a buffer and then call the python onError callback
@@ -822,6 +840,7 @@ void onError( pANTLR3_BASE_RECOGNIZER    recognizer,
     ex    = recognizer->state->exception;
     ttext = NULL;
 
+    errorCount += 1;
 
     // See if there is a 'filename' we can use
     if ( ex->streamName == NULL )
@@ -1173,6 +1192,8 @@ onLexerError( pANTLR3_BASE_RECOGNIZER   recognizer,
     char                    buffer[ 4096 ];
     size_t                  length = 0;
 
+    errorCount += 1;
+
     lexer = (pANTLR3_LEXER)(recognizer->super);
     ex    = lexer->rec->state->exception;
 
@@ -1265,6 +1286,8 @@ parse_input( pANTLR3_INPUT_STREAM           input,
     ppythonbriefParser              psr;
     pANTLR3_BASE_TREE               tree;
 
+    unknownError = 0;
+    errorCount = 0;
     if ( input == NULL )
     {
         PyErr_SetString( PyExc_RuntimeError, "Cannot open file/memory buffer" );
@@ -1328,6 +1351,21 @@ parse_input( pANTLR3_INPUT_STREAM           input,
     /* Walk the tree and populate the python structures */
     walk( tree, callbacks, -1, GLOBAL_SCOPE, NULL, 0 );
 
+    /* Check that the parser consumed all the tokens */
+    if ( errorCount == 0 &&
+         tstream->p != tstream->tokens->size( tstream->tokens ) )
+    {
+        /* The parser stopped somewhere in a middle */
+        char                    message[ 4096 ];
+        pANTLR3_COMMON_TOKEN    token = (pANTLR3_COMMON_TOKEN)(vectorGet( tstream->tokens,
+                                                                          tstream->p ));
+
+        sprintf( message, "Cannot match to any predicted input near line %d",
+                          token->line );
+        PyObject_CallFunction( callbacks->onError, "s",
+                               message );
+    }
+
     /* cleanup */
     psr->free( psr );
     tstream->free( tstream );
@@ -1338,7 +1376,7 @@ parse_input( pANTLR3_INPUT_STREAM           input,
     {
         // This is a fallback which should not happened
         PyObject_CallFunction( callbacks->onError, "s",
-                               "Unknown error." );
+                               "Unknown error" );
         unknownError = 0;
     }
 
