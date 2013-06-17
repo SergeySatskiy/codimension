@@ -176,8 +176,8 @@ static size_t getStringLiteralPrefixLength( pANTLR3_COMMON_TOKEN  token )
 }
 
 
-/* I saw some files which have bigger than 20kb docstrings! */
-#define MAX_DOCSTRING_SIZE      32768
+/* I saw some files which have bigger than 32kb docstrings! */
+#define MAX_DOCSTRING_SIZE      65535
 
 static void checkForDocstring( pANTLR3_BASE_TREE             tree,
                                struct instanceCallbacks *    callbacks )
