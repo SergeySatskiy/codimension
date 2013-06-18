@@ -40,6 +40,12 @@ find $RPM_BUILD_ROOT -name "*.la" -exec rm -f {} ';'
 %{python_sitearch}/*.egg-info
 
 %changelog
+* Tue Jun 18 2013 Sergey Satskiy <sergey.satskiy@gmail.com> - 1.6.1-2
+- Bug fix: parser did not report errors if didn't reach the end
+- Increased performance due to fixed size arrays
+- Regexp based coding search is replaced with string search to avoid problems
+  on cygwin and eliminate dependency on windows.
+
 * Fri Jan 18 2013 Sergey Satskiy <sergey.satskiy@gmail.com> - 1.6-1
 - Fix: docstrings comprised of many string literal parts are properly
   recognized.
