@@ -1,5 +1,5 @@
 Name: codimension-parser
-Version: 1.6
+Version: 1.6.1
 Release: 1
 License: GPLv3+
 Group: Development/Languages
