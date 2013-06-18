@@ -193,7 +193,7 @@ maketar()
 
     if test -z "$version"; then
         version="`head -n1 "$script_dir/$component/debian/changelog" | \
-            sed 's/.*\([0-9]\+\.[0-9.]\+\).*/\1/'`"
+            sed 's/[^.]*\([0-9]\+\(\.[0-9.]\+\)\+\)[^.]*/\1/'`"
         use_trunk=yes
     fi
     pkg_name="$pkg_basename-$version"
