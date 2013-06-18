@@ -1,3 +1,12 @@
+codimension-parser (1.6.1-2) precise; urgency=low
+
+  * Bug fix: parser did not report errors if didn't reach the end
+  * Increased performance due to fixed size arrays
+  * Regexp based coding search is replaced with string search to avoid problems
+    on cygwin and eliminate dependency on windows.
+
+ -- Sergey <sergey.satskiy@gmail.com>  Tue, 18 Jun 2013 23:23:15 +0400
+
 codimension-parser (1.6-2) precise; urgency=low
 
   * Release for precise series.

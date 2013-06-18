@@ -1,8 +1,8 @@
-XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
+2013 Jun 18  Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Bug fix: parser did not report errors if didn't reach the end
 * Increased performance due to fixed size arrays
-* Regexp based coding search is replaced with string serach to avoid problems
+* Regexp based coding search is replaced with string search to avoid problems
   on cygwin and eliminate dependency on windows.
 
 2013 Jan 18  Sergey Satskiy <sergey.satskiy@gmail.com>
