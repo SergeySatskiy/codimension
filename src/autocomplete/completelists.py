@@ -227,23 +227,24 @@ def _getRopeCompletion( fileName, text, editor, prefix ):
         if os.path.isabs( fileName ):
             resource = path_to_resource( ropeProject, fileName )
             proposals = code_assist( ropeProject, text, position,
-                                     resource, None, 2 )
+                                     resource, None, maxfixes = 7 )
         else:
             # The file does not exist
             proposals = code_assist( ropeProject, text, position,
-                                     None, None, 2 )
+                                     None, None, maxfixes = 7 )
         return proposals, True
     except:
         # Rope may throw exceptions e.g. in case of syntax errors
         return [], False
 
 
-def getCalltipAndDoc( fileName, editor ):
+def getCalltipAndDoc( fileName, editor, position = None ):
     " Provides a calltip and docstring "
     try:
         GlobalData().validateRopeProject()
         ropeProject = GlobalData().getRopeProject( fileName )
-        position = editor.currentPosition()
+        if position is None:
+            position = editor.currentPosition()
         text = str( editor.text() )
 
         calltip = None
@@ -253,10 +254,18 @@ def getCalltipAndDoc( fileName, editor ):
         if os.path.isabs( fileName ):
             resource = path_to_resource( ropeProject, fileName )
 
-        calltip = get_calltip( ropeProject, text, position, resource, 2 )
+        calltip = get_calltip( ropeProject, text, position, resource,
+                               ignore_unknown = False,
+                               remove_self = True, maxfixes = 7 )
         if calltip is not None:
+            while '..' in calltip:
+                calltip = calltip.replace( '..', '.' )
+            if '(.)' in calltip:
+                calltip = calltip.replace( '(.)', '(...)' )
+            calltip = calltip.replace( '.__init__', '' )
             try:
-                docstring = get_doc( ropeProject, text, position, resource, 2 )
+                docstring = get_doc( ropeProject, text, position, resource,
+                                     maxfixes = 7 )
             except:
                 pass
 
