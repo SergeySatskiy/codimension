@@ -33,7 +33,7 @@ from PyQt4.QtGui import ( QApplication, QCursor, QFontMetrics, QToolBar,
                           QActionGroup, QHBoxLayout, QWidget, QAction, QMenu,
                           QSizePolicy, QToolButton, QDialog, QToolTip,
                           QDesktopServices )
-from PyQt4.Qsci import QsciScintilla, QsciLexerPython
+from PyQt4.Qsci import QsciScintilla
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.fileutils import ( detectFileType, DesignerFileType,
                               LinguistFileType, MakefileType, getFileLanguage,
@@ -52,7 +52,8 @@ from utils.importutils import ( getImportsList, getImportsInLine, resolveImport,
 from ui.importlist import ImportListWidget
 from ui.outsidechanges import OutsideChangeWidget
 from autocomplete.bufferutils import ( getContext, getPrefixAndObject,
-                                       getEditorTags )
+                                       getEditorTags, isImportLine,
+                                       isStringLiteral )
 from autocomplete.completelists import ( getCompletionList, getCalltipAndDoc,
                                          getDefinitionLocation, getOccurrences )
 from cdmbriefparser import getBriefModuleInfoFromMemory
@@ -430,8 +431,8 @@ class TextEditor( ScintillaWrapper ):
 
     def openAsFileAvailable( self ):
         " True if there is something to try to open as a file "
-        isImportLine, line = self.isImportLine()
-        if isImportLine:
+        importLine, line = isImportLine( self )
+        if importLine:
             return False
         selectedText = str( self.selectedText() ).strip()
         if selectedText:
@@ -443,8 +444,8 @@ class TextEditor( ScintillaWrapper ):
 
     def downloadAndShowAvailable( self ):
         " True if download and show available "
-        isImportLine, line = self.isImportLine()
-        if isImportLine:
+        importLine, line = isImportLine( self )
+        if importLine:
             return False
         selectedText = str( self.selectedText() ).strip()
         if not selectedText:
@@ -732,7 +733,7 @@ class TextEditor( ScintillaWrapper ):
             txt, self.encoding = decode( content )
 
         f.close()
-        fileEol = self.detectEolString( txt )
+        self.detectEolString( txt )
 
         # Hack to avoid breakpoints reset when a file is reload
         self.__breakpoints = {}
@@ -1547,20 +1548,20 @@ class TextEditor( ScintillaWrapper ):
         return True
 
     def onOccurences( self ):
-        " The user requested a list of occurances "
+        " The user requested a list of occurences "
         if self.parent().getFileType() not in [ PythonFileType,
                                                 Python3FileType ]:
             return True
         if not os.path.isabs( self.parent().getFileName() ):
-            GlobalData().mainWindow.showStatusBarMessage( \
+            GlobalData().mainWindow.showStatusBarMessage(
                                             "Save the buffer first" )
             return True
         if self.isModified():
             # Check that the directory is writable for a temporary file
             dirName = os.path.dirname( self.parent().getFileName() )
             if not os.access( dirName, os.W_OK ):
-                GlobalData().mainWindow.showStatusBarMessage( \
-                                "File directory is not writable. " \
+                GlobalData().mainWindow.showStatusBarMessage(
+                                "File directory is not writable. "
                                 "Cannot run rope." )
                 return True
 
@@ -1569,7 +1570,7 @@ class TextEditor( ScintillaWrapper ):
         name, locations = getOccurrences( self.parent().getFileName(), self )
         if len( locations ) == 0:
             QApplication.restoreOverrideCursor()
-            GlobalData().mainWindow.showStatusBarMessage( \
+            GlobalData().mainWindow.showStatusBarMessage(
                                         "No occurances of " + name + " found" )
             return True
 
@@ -1624,157 +1625,6 @@ class TextEditor( ScintillaWrapper ):
     def utf8len( txt ):
         " Calculates lenght in bytes "
         return len( str( txt ).encode( 'utf-8' ) )
-
-    def isImportLine( self ):
-        " Returns True if the current line is a part of an import line "
-        if self.isInStringLiteral():
-            return False, -1
-
-        line, pos = self.getCursorPosition()
-        pos = pos   # Makes pylint happy
-
-        # Find the beginning of the line
-        while True:
-            if line == 0:
-                break
-            prevLine = self.text( line - 1 ).trimmed()
-            if not prevLine.endsWith( '\\' ) and not prevLine.endsWith( ',' ):
-                break
-            line -= 1
-
-        text = str( self.text( line ) ).lstrip()
-        if text.startswith( "import " ) or text.startswith( "from " ) or \
-           text.startswith( "import\\" ) or text.startswith( "from\\" ):
-            if not self.isInStringLiteral( line, 0 ):
-                return True, line
-
-        return False, -1
-
-
-    def isOnSomeImport( self ):
-        """ Returns 3 values:
-            bool   - this is an import line
-            bool   - a list of modules should be provided
-            string - module name from which an object is to be imported
-        """
-        # There are two case:
-        # import BLA1, BLA2 as WHATEVER2, BLA3
-        # from BLA import X, Y as y, Z
-        isImport, line = self.isImportLine()
-        if isImport == False:
-            return False, False, ""
-
-        charsToSkip = [ ' ', '\\', '\r', '\n', '\t' ]
-
-        text = self.text( line ).trimmed()
-        if text.startsWith( "import" ):
-            currentWord = self.getCurrentWord()
-            if currentWord in [ "import", "as" ]:
-                # It is an import line, but no need to complete
-                return True, False, ""
-            # Search for the first non space character before the current word
-            position = self.currentPosition() - 1
-            while self.charAt( position ) not in charsToSkip:
-                position -= 1
-            while self.charAt( position ) in charsToSkip:
-                position -= 1
-            previousChar = self.charAt( position )
-            if previousChar in [ ',', '(' ]:
-                # It's an import line and need to complete
-                return True, True, ""
-
-            line, pos = self.lineIndexFromPosition( position )
-            previousWord = self.getWord( line, pos )
-            if previousWord == "import":
-                # It's an import line and need to complete
-                return True, True, ""
-            # It;s an import line but no need to complete
-            return True, False, ""
-
-        # Here: this is the from x import bla as ... statement
-        currentWord = self.getCurrentWord()
-        if currentWord in [ "from", "import", "as" ]:
-            return True, False, ""
-        # Search for the first non space character before the current word
-        position = self.currentPosition() - 1
-        while self.charAt( position ) not in charsToSkip:
-            position -= 1
-        while self.charAt( position ) in charsToSkip:
-            position -= 1
-
-        wordLine, pos = self.lineIndexFromPosition( position )
-        previousWord = self.getWord( wordLine, pos )
-        if previousWord == "as":
-            # Nothing should be completed
-            return True, False, ""
-        if previousWord == "from":
-            # Completing a module
-            return True, True, ""
-        previousChar = self.charAt( position )
-        if previousWord == "import" or previousChar in [ ',', '(' ]:
-            # Need to complete an imported object
-            position = self.positionFromLineIndex( line, 0 )
-            while self.charAt( position ) in [ ' ', '\t' ]:
-                position += 1
-            # Expected 'from' at this position
-            wordLine, pos = self.lineIndexFromPosition( position )
-            word = self.getWord( wordLine, pos )
-            if word != 'from':
-                return True, False, ""
-            # Next is a module name
-            position += len( 'from' )
-            while self.charAt( position ) in charsToSkip:
-                position += 1
-            wordLine, pos = self.lineIndexFromPosition( position )
-            moduleName = self.getWord( wordLine, pos, 0, True, "." )
-            if moduleName == "":
-                return True, False, ""
-            # Sanity check - there is 'import' after that
-            position += len( moduleName )
-            while self.charAt( position ) in charsToSkip:
-                position += 1
-            wordLine, pos = self.lineIndexFromPosition( position )
-            word = self.getWord( wordLine, pos )
-            if word != 'import':
-                return True, False, ""
-            # Finally, this is a completion for an imported object
-            return True, True, moduleName
-
-        return True, False, ""
-
-
-    def isRemarkLine( self, line = -1, pos = -1 ):
-        " Returns true if the current line is a remark one "
-        if self.parent().getFileType() not in [ PythonFileType,
-                                                Python3FileType ]:
-            return False
-
-        if line == -1 or pos == -1:
-            cursorPosition = self.currentPosition()
-        else:
-            cursorPosition = self.positionFromLineIndex( line, pos )
-        return self.styleAt( cursorPosition ) in \
-                            [ QsciLexerPython.Comment,
-                              QsciLexerPython.CommentBlock ]
-
-
-    def isInStringLiteral( self, line = -1, pos = -1 ):
-        " Returns True if the current cursor position is in a string literal "
-        if self.parent().getFileType() not in [ PythonFileType,
-                                                Python3FileType ]:
-            return False
-
-        if line == -1 or pos == -1:
-            cursorPosition = self.currentPosition()
-        else:
-            cursorPosition = self.positionFromLineIndex( line, pos )
-        return self.styleAt( cursorPosition ) in \
-                            [ QsciLexerPython.TripleDoubleQuotedString,
-                              QsciLexerPython.TripleSingleQuotedString,
-                              QsciLexerPython.DoubleQuotedString,
-                              QsciLexerPython.SingleQuotedString,
-                              QsciLexerPython.UnclosedString ]
-
 
     def hideCompleter( self ):
         " Hides the completer if visible "
@@ -1908,7 +1758,6 @@ class TextEditor( ScintillaWrapper ):
     def gotoLine( self, line, pos = None, firstVisible = None ):
         """ Jumps to the given position and scrolls if needed.
             line and pos and firstVisible are 1-based. """
-
         # Normalize editor line and pos
         editorLine = line - 1
         if editorLine < 0:
@@ -2003,7 +1852,8 @@ class TextEditor( ScintillaWrapper ):
             candidateLine = breakableLines[ -1 ]
         else:
             direction = 0
-            if self.isInStringLiteral( line - 1 ):
+            if isStringLiteral( self,
+                                self.positionFromLineIndex( line - 1, 0 ) ):
                 direction = 1
             elif self.isLineEmpty( line ):
                 direction = 1
@@ -2134,7 +1984,7 @@ class TextEditor( ScintillaWrapper ):
 
     def isLineEmpty( self, line ):
         " Returns True if the line is empty. Line is 1 based. "
-        return str( self.text( line - 1 ) ).strip() == ""
+        return self.text( line - 1 ).trimmed() == ""
 
     def restoreBreakpoints( self ):
         " Restores the breakpoints "
@@ -2859,15 +2709,14 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def onOpenImport( self ):
         " Triggered when Ctrl+I is received "
-
         if self.__fileType not in [ PythonFileType, Python3FileType ]:
             return True
 
         # Python file, we may continue
-        isImportLine, lineNo = self.__editor.isImportLine()
+        importLine, lineNo = isImportLine( self.__editor )
         basePath = os.path.dirname( self.__fileName )
 
-        if isImportLine:
+        if importLine:
             lineImports, importWhat = getImportsInLine( self.__editor.text(),
                                                         lineNo + 1 )
             currentWord = str( self.__editor.getCurrentWord( "." ) )
@@ -2925,6 +2774,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     def __onImportList( self, basePath, imports ):
         " Works with a list of imports "
 
+        # It has already been checked that the file is a Python one
         resolvedList = resolveImports( basePath, imports )
         if not resolvedList:
             GlobalData().mainWindow.showStatusBarMessage(
@@ -3271,4 +3121,3 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             return False
 
         return line in self.__breakableLines
-

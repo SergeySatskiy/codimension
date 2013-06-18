@@ -24,7 +24,8 @@
 
 from cdmbriefparser import ( getBriefModuleInfoFromMemory,
                              getBriefModuleInfoFromFile )
-from bufferutils import getEditorTags
+from bufferutils import ( getEditorTags, isRemarkLine, isStringLiteral,
+                          isOnSomeImport )
 from utils.globals import GlobalData
 from listmodules import getSysModules, getModules
 import os, imp
@@ -434,9 +435,9 @@ def getCompletionList( fileName, scope, obj, prefix,
                        editor, text, info = None ):
     """ High level function. It provides a list of suggestions for
         autocompletion depending on the text cursor scope and the
-        object the user wants competion for """
+        object the user wants completion for """
 
-    onImportModule, needToComplete, moduleName = editor.isOnSomeImport()
+    onImportModule, needToComplete, moduleName = isOnSomeImport( editor )
     if onImportModule:
         if not needToComplete:
             # No need to complete
@@ -446,9 +447,9 @@ def getCompletionList( fileName, scope, obj, prefix,
         # Need to complete a module name
         return list( __getModuleNames( fileName ) ), True
 
-    if editor.isRemarkLine():
+    if isRemarkLine( editor ):
         return list( getEditorTags( editor, prefix, True ) ), False
-    if editor.isInStringLiteral():
+    if isStringLiteral( editor ):
         return list( getEditorTags( editor, prefix, True ) ), False
     if obj == "" and prefix == "":
         return list( getEditorTags( editor, prefix, True ) ), False

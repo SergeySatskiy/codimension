@@ -252,7 +252,7 @@ def _skipSpacesBack( editor, line, col ):
                 return -1, -1   # Reached the beginning of the doc
             txt = editor.text( line )
             col = len( txt ) - 2    # \r or \n at the end
-            if not txt[ col ] == '\\':
+            if txt[ col ] != '\\':
                 return -1, -1   # Reached the beginning of the line
             col -= 1
         if txt[ col ] in [ ' ', '\t' ]:
@@ -332,3 +332,196 @@ def getEditorTags( editor, exclude = "", excludePythonKeywords = False ):
     result.discard( currentWord )
     return result
 
+
+def isStringLiteral( editor, pos = None ):
+    """ Returns True if the position is inside a string literal.
+        It is supposed that the file type is Python """
+    if pos is None:
+        pos = editor.currentPosition()
+    return editor.styleAt( pos ) in \
+                    [ QsciLexerPython.TripleDoubleQuotedString,
+                      QsciLexerPython.TripleSingleQuotedString,
+                      QsciLexerPython.DoubleQuotedString,
+                      QsciLexerPython.SingleQuotedString,
+                      QsciLexerPython.UnclosedString ]
+
+
+def isRemarkLine( editor, pos = None):
+    """ Returns True if the position is inside a remark.
+        It is supposed that the file type is Python """
+    if pos is None:
+        pos = editor.currentPosition()
+    return editor.styleAt( pos ) in \
+                    [ QsciLexerPython.Comment,
+                      QsciLexerPython.CommentBlock ]
+
+
+def isImportLine( editor, pos = None ):
+    """ Returns True if the current line is a part of an import line.
+        It is supposed that the file type is Python """
+    if pos is None:
+        pos = editor.currentPosition()
+    if isStringLiteral( editor, pos ):
+        return False, -1
+
+    line, index = editor.lineIndexFromPosition( pos )
+    # Find the beginning of the line
+    while True:
+        if line == 0:
+            break
+        prevLine = editor.text( line - 1 ).trimmed()
+        if not prevLine.endsWith( '\\' ) and not prevLine.endsWith( ',' ):
+            break
+        line -= 1
+
+    text = editor.text( line ).trimmed()
+    if text.startsWith( "import " ) or text.startsWith( "from " ) or \
+       text.startsWith( "import\\" ) or text.startsWith( "from\\" ):
+        if not isStringLiteral( editor,
+                                editor.positionFromLineIndex( line, 0 ) ):
+            return True, line
+    return False, -1
+
+def getWordAtPosition( editor, position, direction = 0,
+                       useWordChars = True, addChars = "" ):
+    " Provides a word at position "
+    wordLine, pos = editor.lineIndexFromPosition( position )
+    return editor.getWord( wordLine, pos, direction, useWordChars, addChars )
+
+def isOnSomeImport( editor ):
+    """ Returns 3 values:
+        bool   - this is an import line
+        bool   - a list of modules should be provided
+        string - module name from which an object is to be imported
+    """
+    # There are two case:
+    # import BLA1, BLA2 as WHATEVER2, BLA3
+    # from BLA import X, Y as y, Z
+    isImport, line = isImportLine( editor )
+    if isImport == False:
+        return False, False, ""
+
+    charsToSkip = [ ' ', '\\', '\r', '\n', '\t' ]
+
+    text = editor.text( line ).trimmed()
+    if text.startsWith( "import" ):
+        currentWord = editor.getCurrentWord()
+        if currentWord in [ "import", "as" ]:
+            # It is an import line, but no need to complete
+            return True, False, ""
+        # Search for the first non space character before the current word
+        position = editor.positionBefore( editor.currentPosition() )
+        while editor.charAt( position ) not in charsToSkip:
+            position = editor.positionBefore( position )
+        while editor.charAt( position ) in charsToSkip:
+            position = editor.positionBefore( position )
+        if editor.charAt( position ) in [ ',', '(' ]:
+            # It's an import line and need to complete
+            return True, True, ""
+
+        if getWordAtPosition( editor, position ) == "import":
+            # It's an import line and need to complete
+            return True, True, ""
+        # It;s an import line but no need to complete
+        return True, False, ""
+
+    # Here: this is the from x import bla as ... statement
+    currentWord = editor.getCurrentWord()
+    if currentWord in [ "from", "import", "as" ]:
+        return True, False, ""
+    # Search for the first non space character before the current word
+    position = editor.positionBefore( editor.currentPosition() )
+    while editor.charAt( position ) not in charsToSkip:
+        position = editor.positionBefore( position )
+    while editor.charAt( position ) in charsToSkip:
+        position = editor.positionBefore( position )
+
+    previousWord = getWordAtPosition( editor, position )
+    if previousWord == "as":
+        # Nothing should be completed
+        return True, False, ""
+    if previousWord == "from":
+        # Completing a module
+        return True, True, ""
+    if previousWord == "import" or editor.charAt( position ) in [ ',', '(' ]:
+        # Need to complete an imported object
+        position = editor.positionFromLineIndex( line, 0 )
+        while editor.charAt( position ) in [ ' ', '\t' ]:
+            position = editor.positionAfter()
+        # Expected 'from' at this position
+        if getWordAtPosition( editor, position ) != 'from':
+            return True, False, ""
+        # Next is a module name
+        position += len( 'from' )
+        while editor.charAt( position ) in charsToSkip:
+            position = editor.positionAfter()
+        moduleName = getWordAtPosition( editor, position, 0, True, "." )
+        if moduleName == "":
+            return True, False, ""
+        # Sanity check - there is 'import' after that
+        position += len( moduleName )
+        while editor.charAt( position ) in charsToSkip:
+            position = editor.positionAfter()
+        if getWordAtPosition( editor, position ) != 'import':
+            return True, False, ""
+        # Finally, this is a completion for an imported object
+        return True, True, moduleName
+
+    return True, False, ""
+
+
+def getCallPositionAndCommas( editor ):
+    """ It is going to be used for calltips. It provides a tuple - position
+        of where the function name is (or None if not found) and the number
+        of commas at the current level of nesting (used to highlight the
+        current parameter in a calltip """
+    commas = 0
+    level = 0
+
+    pos = editor.currentPosition()
+    startLine, _ = editor.lineIndexFromPosition( pos )
+    while pos > 0:
+        if isStringLiteral( editor, pos ):
+            pos = editor.positionBefore( pos )
+            continue
+        ch = editor.charAt( pos )
+        if ch == ')':
+            level += 1
+        elif ch == ',':
+            if level == 0:
+                commas += 1
+        elif ch == '(':
+            if level == 0:
+                break
+            level -= 1
+        elif ch in [ '\n', '\r' ]:
+            # It makes sense to check if it is a time to stop searching
+            curLine, _ = editor.lineIndexFromPosition( pos )
+            if curLine < startLine:
+                lineContent = editor.text( curLine + 1 ).trimmed()
+                if lineContent.startsWith( "def " ) or \
+                   lineContent.startsWith( "class " ) or \
+                   lineContent.startsWith( "def\\" ) or \
+                   lineContent.startsWith( "class\\" ):
+                    # It does not make sense to search beyond a class or
+                    # a function definition
+                    return None, 0
+        pos = editor.positionBefore( pos )
+
+    if pos <= 0:
+        # pos points to '(' or 0. Even if '(' is at position 0,
+        # there is nothing to provide calltip for
+        return None, 0
+
+    # Now, find out where the first non-space character is to get the object
+    # name position.
+    pos = editor.positionBefore( pos )
+    while pos > 0:
+        ch = editor.charAt( pos )
+        if ch in [ ' ', '\t', '\r', '\n', '\\' ]:
+            pos = editor.positionBefore( pos )
+            continue
+        if ch.isalnum():
+            return pos, commas
+        return None, 0
+    return None, 0

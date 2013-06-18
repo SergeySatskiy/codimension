@@ -39,7 +39,6 @@ class ScintillaWrapper( QsciScintilla ):
     """ QsciScintilla wrapper implementation """
 
     def __init__( self, parent = None ):
-
         QsciScintilla.__init__( self, parent )
 
         self.SendScintilla( self.SCI_SETLAYOUTCACHE, self.SC_CACHE_DOCUMENT )
@@ -57,7 +56,6 @@ class ScintillaWrapper( QsciScintilla ):
 
     def setLexer( self, lex = None ):
         """ Sets the new lexer or resets if None """
-
         QsciScintilla.setLexer( self, lex )
         if lex is None:
             self.clearStyles()
@@ -67,7 +65,6 @@ class ScintillaWrapper( QsciScintilla ):
 
     def clearStyles( self ):
         """ Sets the styles according the selected Qt style """
-
         palette = QApplication.palette()
         self.SendScintilla( self.SCI_STYLESETFORE, self.STYLE_DEFAULT,
                             palette.color( QPalette.Text ) )
@@ -79,7 +76,6 @@ class ScintillaWrapper( QsciScintilla ):
 
     def monospacedStyles( self, font ):
         """ Sets the current style to be monospaced """
-
         try:
             rangeLow = range( self.STYLE_DEFAULT )
         except AttributeError:
@@ -141,7 +137,6 @@ class ScintillaWrapper( QsciScintilla ):
     def lineAt( self, pos ):
         """ Calculates the line at a position. pos is int or QPoint.
             Returns -1 if there is no line at pos """
-
         if type( pos ) == type( 1 ):
             scipos = pos
         else:
@@ -235,7 +230,6 @@ class ScintillaWrapper( QsciScintilla ):
 
     def rawCharAt( self, pos ):
         """ Provides the raw character at the pos in the text """
-
         character = self.SendScintilla( self.SCI_GETCHARAT, pos )
         if character == 0:
             return ""
@@ -245,43 +239,36 @@ class ScintillaWrapper( QsciScintilla ):
 
     def foldLevelAt( self, line ):
         """ Provides the fold level for the line in the document """
-
         level = self.SendScintilla( self.SCI_GETFOLDLEVEL, line )
         return (level & self.SC_FOLDLEVELNUMBERMASK) - self.SC_FOLDLEVELBASE
 
     def foldFlagsAt( self, line ):
         """ Provides the fold flags for the line in the document """
-
         level = self.SendScintilla( self.SCI_GETFOLDLEVEL, line )
         return level & ~self.SC_FOLDLEVELNUMBERMASK
 
     def foldHeaderAt( self, line ):
         """ Determines if the line in the document is a fold header line """
-
         level = self.SendScintilla( self.SCI_GETFOLDLEVEL, line )
         return level & self.SC_FOLDLEVELHEADERFLAG
 
     def foldExpandedAt( self, line ):
         """ Determines if a fold is expanded """
-
         return self.SendScintilla( self.SCI_GETFOLDEXPANDED, line )
 
     def setIndentationGuideView( self, view ):
         """ Sets the view of the indentation guides """
-
         self.SendScintilla( self.SCI_SETINDENTATIONGUIDES, view )
         return
 
     def indentationGuideView( self ):
         """ Provides the indentation guide view """
-
         return self.SendScintilla( self.SCI_GETINDENTATIONGUIDES )
 
     # methods below are missing from QScintilla
 
     def zoomIn( self, zoom = 1 ):
         """ Increases the zoom factor """
-
         self.zoom += zoom
         QsciScintilla.zoomIn( self, zoom )
         self._charWidth = -1
@@ -290,7 +277,6 @@ class ScintillaWrapper( QsciScintilla ):
 
     def zoomOut( self, zoom = 1 ):
         """ Decreases the zoom factor """
-
         self.zoom -= zoom
         QsciScintilla.zoomOut( self, zoom )
         self._charWidth = -1
@@ -316,43 +302,36 @@ class ScintillaWrapper( QsciScintilla ):
 
     def scrollVertical( self, lines ):
         """ Scroll the text area the given lines up or down """
-
         self.SendScintilla( self.SCI_LINESCROLL, 0, lines )
         return
 
     def moveCursorToEOL( self ):
         """ Moves the cursor to the end of line """
-
         self.SendScintilla( self.SCI_LINEEND )
         return
 
     def moveCursorLeft( self ):
         """ Moves the cursor left """
-
         self.SendScintilla( self.SCI_CHARLEFT )
         return
 
     def moveCursorRight( self ):
         """ Moves the cursor right """
-
         self.SendScintilla( self.SCI_CHARRIGHT )
         return
 
     def moveCursorWordLeft( self ):
         """ Moves the cursor one word left """
-
         self.SendScintilla( self.SCI_WORDLEFT )
         return
 
     def moveCursorWordRight( self ):
         """ Moves the cursor one word right """
-
         self.SendScintilla( self.SCI_WORDRIGHT )
         return
 
     def newLineBelow( self ):
         """ Inserts a new line below the current one """
-
         self.SendScintilla( self.SCI_LINEEND )
         self.SendScintilla( self.SCI_NEWLINE )
         return
@@ -364,73 +343,61 @@ class ScintillaWrapper( QsciScintilla ):
 
     def deleteBack( self ):
         """ Deletes the character to the left of the cursor """
-
         self.SendScintilla( self.SCI_DELETEBACK )
         return
 
     def delete( self ):
         """ Deletes the character to the right of the cursor """
-
         self.SendScintilla( self.SCI_CLEAR )
         return
 
     def deleteWordLeft( self ):
         """ Deletes the word to the left of the cursor """
-
         self.SendScintilla( self.SCI_DELWORDLEFT )
         return
 
     def deleteWordRight( self ):
         """ Deletes the word to the right of the cursor """
-
         self.SendScintilla( self.SCI_DELWORDRIGHT )
         return
 
     def deleteLineLeft( self ):
         """ Deletes the line to the left of the cursor """
-
         self.SendScintilla( self.SCI_DELLINELEFT )
         return
 
     def deleteLineRight( self ):
         """ Deletes the line to the right of the cursor """
-
         self.SendScintilla( self.SCI_DELLINERIGHT )
         return
 
     def extendSelectionLeft( self ):
         """ Extends the selection one character to the left """
-
         self.SendScintilla( self.SCI_CHARLEFTEXTEND )
         return
 
     def extendSelectionRight( self ):
         """ Extends the selection one character to the right """
-
         self.SendScintilla( self.SCI_CHARRIGHTEXTEND )
         return
 
     def extendSelectionWordLeft( self ):
         """ Extends the selection one word to the left """
-
         self.SendScintilla( self.SCI_WORDLEFTEXTEND )
         return
 
     def extendSelectionWordRight( self ):
         """ Extends the selection one word to the right """
-
         self.SendScintilla( self.SCI_WORDRIGHTEXTEND )
         return
 
     def extendSelectionToBOL( self ):
         """ Extends the selection to the beginning of the line """
-
         self.SendScintilla( self.SCI_VCHOMEEXTEND )
         return
 
     def extendSelectionToEOL( self ):
         """ Extends the selection to the end of the line """
-
         self.SendScintilla( self.SCI_LINEENDEXTEND )
         return
 
@@ -455,7 +422,6 @@ class ScintillaWrapper( QsciScintilla ):
 
     def getLineSeparator( self ):
         """ Provides the line separator for the current eol mode """
-
         mode = self.eolMode()
         if mode == QsciScintilla.EolWindows:
             return '\r\n'
@@ -467,7 +433,6 @@ class ScintillaWrapper( QsciScintilla ):
 
     def getEolIndicator( self ):
         """ Provides the eol indicator for the current eol mode """
-
         mode = self.eolMode()
         if mode == QsciScintilla.EolWindows:
             return 'CRLF'
@@ -479,7 +444,6 @@ class ScintillaWrapper( QsciScintilla ):
 
     def setEolModeByEolString( self, eolStr ):
         """ Sets the eol mode by the eol string """
-
         if eolStr == '\n':
             self.setEolMode( self.EolMode( self.EolUnix ) )
             return
@@ -495,7 +459,6 @@ class ScintillaWrapper( QsciScintilla ):
     @staticmethod
     def detectEolString( txt ):
         """ Determines the eol string """
-
         utxt = unicode( txt )
         if len( utxt.split( "\r\n", 1 ) ) == 2:
             return '\r\n'
@@ -509,25 +472,21 @@ class ScintillaWrapper( QsciScintilla ):
 
     def positionFromPoint( self, point ):
         """ Calculates the scintilla position from a point in the window """
-
         return self.SendScintilla( self.SCI_POSITIONFROMPOINTCLOSE,
                                    point.x(), point.y() )
 
     def positionBefore( self, pos ):
         """ Provides the position before the given position taking into account
             multibyte characters """
-
         return self.SendScintilla( self.SCI_POSITIONBEFORE, pos )
 
     def positionAfter( self, pos ):
         """ Provides the position after the given position taking into account
             multibyte characters """
-
         return self.SendScintilla( self.SCI_POSITIONAFTER, pos )
 
     def positionFromLineIndex( self, line, index ):
         """ Converts line and index to an absolute position """
-
         pos = self.SendScintilla( self.SCI_POSITIONFROMLINE, line )
 
         # Allow for multi-byte characters
@@ -537,7 +496,6 @@ class ScintillaWrapper( QsciScintilla ):
 
     def lineIndexFromPosition( self, pos ):
         """ Converts an absolute position to line and index """
-
         lin = self.SendScintilla( self.SCI_LINEFROMPOSITION, pos )
         linpos = self.SendScintilla( self.SCI_POSITIONFROMLINE, lin )
         index = 0
@@ -559,12 +517,10 @@ class ScintillaWrapper( QsciScintilla ):
 
     def lineEndPosition( self, line ):
         """ Determines the line end position of the given line """
-
         return self.SendScintilla( self.SCI_GETLINEENDPOSITION, line )
 
     def __doSearchTarget( self ):
         """ Searches in target """
-
         if self.__targetSearchStart == self.__targetSearchEnd:
             self.__targetSearchActive = False
             return False
@@ -651,7 +607,6 @@ class ScintillaWrapper( QsciScintilla ):
 
     def replaceTarget( self, replaceStr ):
         """ Replaces the string found by the last search in target """
-
         if not self.__targetSearchActive:
             return
 
@@ -685,7 +640,6 @@ class ScintillaWrapper( QsciScintilla ):
 
     def __checkIndicator( self, indicator ):
         """ Checks the indicator value """
-
         if indicator < self.INDIC_CONTAINER or \
            indicator > self.INDIC_MAX:
             raise ValueError( "indicator number out of range" )
@@ -693,7 +647,6 @@ class ScintillaWrapper( QsciScintilla ):
 
     def indicatorDefine( self, indicator, style, color ):
         """ Defines the indicator appearance """
-
         self.__checkIndicator( indicator )
 
         if style < self.INDIC_PLAIN or style > self.INDIC_ROUNDBOX:
@@ -721,7 +674,6 @@ class ScintillaWrapper( QsciScintilla ):
 
     def setIndicator( self, indicator, sline, sindex, eline, eindex ):
         """ Sets the indicator for the given range """
-
         spos = self.positionFromLineIndex( sline, sindex )
         epos = self.positionFromLineIndex( eline, eindex )
         self.setIndicatorRange( indicator, spos, epos - spos )
@@ -729,14 +681,12 @@ class ScintillaWrapper( QsciScintilla ):
 
     def clearIndicatorRange( self, indicator, spos, length ):
         """ Clears the indicator for the given range """
-
         self.setCurrentIndicator( indicator )
         self.SendScintilla( self.SCI_INDICATORCLEARRANGE, spos, length )
         return
 
     def clearIndicator( self, indicator, sline, sindex, eline, eindex ):
         """ Clears the indicator for the given range """
-
         spos = self.positionFromLineIndex( sline, sindex )
         epos = self.positionFromLineIndex( eline, eindex )
         self.clearIndicatorRange( indicator, spos, epos - spos )
@@ -749,14 +699,12 @@ class ScintillaWrapper( QsciScintilla ):
 
     def hasIndicator( self, indicator, pos ):
         """ Tests for the existence of the indicator """
-
         return self.SendScintilla( self.SCI_INDICATORVALUEAT, indicator, pos )
 
     # interface methods to the standard keyboard command set
 
     def clearKeys( self ):
         """ Clears the key commands """
-
         # call into the QsciCommandSet
         self.standardCommands().clearKeys()
         return
@@ -809,7 +757,6 @@ class ScintillaWrapper( QsciScintilla ):
 
     def getSearchText( self, selectionOnly = False ):
         " Provides the guessed text for searching "
-
         if self.hasSelectedText():
             text = self.selectedText()
             if text.contains( '\r' ) or text.contains( '\n' ):
@@ -826,7 +773,6 @@ class ScintillaWrapper( QsciScintilla ):
 
     def getCurrentWord( self, addChars = "" ):
         " Provides the word at the current position "
-
         line, col = self.getCursorPosition()
         return self.getWord( line, col, 0, True, addChars )
 
@@ -879,3 +825,17 @@ class ScintillaWrapper( QsciScintilla ):
         text = self.text( line )
         return text.mid( col, length )
 
+    def hideCalltip( self ):
+        " Hides a calltip if shown "
+        self.SendScintilla( self.SCI_CALLTIPCANCEL )
+        return
+
+    def setCalltipHighlight( self, startPos, endPos ):
+        " Sets a portion of a calltip highlighted "
+        self.SendScintilla( self.SCI_CALLTIPSETHLT, startPos, endPos )
+        return
+
+    def showCalltip( self, pos, text ):
+        " Shows the calltip at the given position "
+        self.SendScintilla( self.SCI_CALLTIPSHOW, pos, text )
+        return
