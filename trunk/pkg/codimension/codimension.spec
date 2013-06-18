@@ -1,5 +1,5 @@
 Name: codimension
-Version: 2.0
+Version: 2.0.1
 Release: 2
 License: GPLv3+
 Group: Development/Tools/IDE
@@ -78,6 +78,11 @@ update-desktop-database -q
 %{_datadir}/pixmaps/*.xpm
 
 %changelog
+* Tue Jun 18 2013 Ilya Loginov <isloginov@gmail.com> - 2.0.1-1
+- Upstream changes for release 2.0.1:
+- Replacing the 'file' utilities calls with magic module included in thirdparty
+  directory.
+
 * Tue Jun 05 2013 Ilya Loginov <isloginov@gmail.com> - 2.0-1
 - Upstream changes for release 2.0:
 - Initial implementation of the debugger.

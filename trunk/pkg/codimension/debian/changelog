@@ -1,6 +1,12 @@
+codimension (2.0.1-1) precise; urgency=low
+  
+  * Replacing the 'file' utilities calls with magic module included in thirdparty
+    directory.
+
+ -- Ilya Loginov <isloginov@gmail.com>  Tue, 18 Jun 2013 23:44:46 +0400
+
 codimension (2.0-1) precise; urgency=low
 
-  * Replacing the 'file' utility calls with filemagic module
   * Initial implementation of the debugger.
   * Project viewer restores the previous session expanded directories at the
     start automatically.
