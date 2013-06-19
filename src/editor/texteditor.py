@@ -213,6 +213,8 @@ class TextEditor( ScintillaWrapper ):
                     return self.onGotoDefinition()
                 if key == Qt.Key_BracketRight:
                     return self.onOccurences()
+                if key == Qt.Key_Slash:
+                    return self.onShowCalltip()
                 if key == Qt.Key_Minus:
                     return self.parent().onZoomOut()
                 if key == Qt.Key_Equal:
@@ -1547,6 +1549,13 @@ class TextEditor( ScintillaWrapper ):
             GlobalData().mainWindow.jumpToLine( context.getLastScopeLine() )
         return True
 
+    def onShowCalltip( self ):
+        " The user requested show calltip "
+        if self.parent().getFileType() not in [ PythonFileType,
+                                                Python3FileType ]:
+            return True
+
+
     def onOccurences( self ):
         " The user requested a list of occurences "
         if self.parent().getFileType() not in [ PythonFileType,
@@ -1571,7 +1580,7 @@ class TextEditor( ScintillaWrapper ):
         if len( locations ) == 0:
             QApplication.restoreOverrideCursor()
             GlobalData().mainWindow.showStatusBarMessage(
-                                        "No occurances of " + name + " found" )
+                                        "No occurences of " + name + " found" )
             return True
 
         # There are found items

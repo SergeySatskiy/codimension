@@ -126,6 +126,7 @@ CDM_SETTINGS = {
     CDMSetting( "findNameTooltips", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "findFileTooltips", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "editorTooltips", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "editorCalltips", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "leftBarMinimized", CDMSetting.TYPE_BOOL, False ),
     CDMSetting( "bottomBarMinimized", CDMSetting.TYPE_BOOL, False ),
     CDMSetting( "rightBarMinimized", CDMSetting.TYPE_BOOL, False ),

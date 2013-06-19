@@ -811,6 +811,10 @@ class CodimensionMainWindow( QMainWindow ):
         self.__goToLineAct = self.__searchMenu.addAction(
                 PixmapCache().getIcon( 'gotoline.png' ),
                 '&Go to line...', self.__onGoToLine )
+        self.__searchMenu.addSeparator()
+        self.__calltipAct = self.__searchMenu.addAction(
+                PixmapCache().getIcon( 'calltip.png' ),
+                'Show &calltip', self.__onShowCalltip )
 
         # The Tools menu
         self.__toolsMenu = QMenu( "T&ools", self )
@@ -1171,6 +1175,11 @@ class CodimensionMainWindow( QMainWindow ):
                                     self.settings.removeTrailingOnSave )
         self.connect( removeTrailingOnSpaceAct, SIGNAL( 'changed()' ),
                       self.__removeTrailingChanged )
+        editorCalltipsAct = self.__optionsMenu.addAction( 'Editor calltips' )
+        editorCalltipsAct.setCheckable( True )
+        editorCalltipsAct.setChecked( self.settings.editorCalltips )
+        self.connect( editorCalltipsAct, SIGNAL( 'changed()' ),
+                      self.__editorCalltipsChanged )
         self.__optionsMenu.addSeparator()
         tooltipsMenu = self.__optionsMenu.addMenu( "Tooltips" )
         projectTooltipsAct = tooltipsMenu.addAction( "&Project tab" )
@@ -1217,8 +1226,7 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__findFileTooltipsChanged )
         editorTooltipsAct = tooltipsMenu.addAction( "&Editor tabs" )
         editorTooltipsAct.setCheckable( True )
-        editorTooltipsAct.setChecked(
-                                    self.settings.editorTooltips )
+        editorTooltipsAct.setChecked( self.settings.editorTooltips )
         self.connect( editorTooltipsAct, SIGNAL( 'changed()' ),
                       self.__editorTooltipsChanged )
         self.__optionsMenu.addSeparator()
@@ -2542,6 +2550,11 @@ class CodimensionMainWindow( QMainWindow ):
                                 not self.settings.removeTrailingOnSave
         return
 
+    def __editorCalltipsChanged( self ):
+        " Editor calltips changed "
+        self.settings.editorCalltips = not self.settings.editorCalltips
+        return
+
     def __projectTooltipsChanged( self ):
         " Tooltips setting changed "
         self.settings.projectTooltips = \
@@ -3515,6 +3528,13 @@ class CodimensionMainWindow( QMainWindow ):
         currentWidget.onOpenImport()
         return
 
+    def __onShowCalltip( self ):
+        " Triggered when show calltip is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.getEditor().onShowCalltip()
+        return
+
     def __onOpenAsFile( self ):
         " Triggered when open as file is requested "
         editorsManager = self.editorsManagerWidget.editorsManager
@@ -3747,7 +3767,9 @@ class CodimensionMainWindow( QMainWindow ):
     def __searchAboutToShow( self ):
         " Triggered when search menu is about to show "
         isPlainTextBuffer = self.__isPlainTextBuffer()
-        self.__findOccurencesAct.setEnabled( self.__isPythonBuffer() )
+        isPythonBuffer = self.__isPythonBuffer()
+        self.__findOccurencesAct.setEnabled( isPythonBuffer )
+        self.__calltipAct.setEnabled( isPythonBuffer )
         self.__goToLineAct.setEnabled( isPlainTextBuffer )
         self.__findAct.setEnabled( isPlainTextBuffer )
         self.__findCurrentAct.setEnabled( isPlainTextBuffer )
@@ -3756,6 +3778,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__findPrevAct.setEnabled( isPlainTextBuffer )
 
         self.__findOccurencesAct.setShortcut( "Ctrl+]" )
+        self.__calltipAct.setShortcut( "Ctrl+/" )
         self.__goToLineAct.setShortcut( "Ctrl+G" )
         self.__findAct.setShortcut( "Ctrl+F" )
         self.__findCurrentAct.setShortcut( "Ctrl+F3" )
@@ -3888,6 +3911,7 @@ class CodimensionMainWindow( QMainWindow ):
     def __searchAboutToHide( self ):
         " Triggered when search menu is about to hide "
         self.__findOccurencesAct.setShortcut( "" )
+        self.__calltipAct.setShortcut( "" )
         self.__goToLineAct.setShortcut( "" )
         self.__findAct.setShortcut( "" )
         self.__findCurrentAct.setShortcut( "" )
