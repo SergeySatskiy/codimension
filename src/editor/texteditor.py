@@ -53,7 +53,8 @@ from ui.importlist import ImportListWidget
 from ui.outsidechanges import OutsideChangeWidget
 from autocomplete.bufferutils import ( getContext, getPrefixAndObject,
                                        getEditorTags, isImportLine,
-                                       isStringLiteral )
+                                       isStringLiteral, getCallPosition,
+                                       getCommaCount )
 from autocomplete.completelists import ( getCompletionList, getCalltipAndDoc,
                                          getDefinitionLocation, getOccurrences )
 from cdmbriefparser import getBriefModuleInfoFromMemory
@@ -1555,6 +1556,25 @@ class TextEditor( ScintillaWrapper ):
                                                 Python3FileType ]:
             return True
 
+        callPosition = getCallPosition( self )
+        if callPosition is None:
+            GlobalData().mainWindow.showStatusBarMessage( "Not a function call" )
+            return True
+
+        calltip, docstring = getCalltipAndDoc( self.parent().getFileName(),
+                                               self, callPosition )
+        if calltip is None:
+            GlobalData().mainWindow.showStatusBarMessage( "Calltip is not found" )
+            return True
+
+        commas = getCommaCount( self, callPosition, self.currentPosition() )
+        self.setCallTipsStyle( QsciScintilla.CallTipsContext )
+        self.showCalltip( self.currentPosition(), str( calltip ) )
+
+        
+        print "Rope responded calltip: " + str( calltip )
+        print "Rope responded docstring: " + str( docstring )
+        return True
 
     def onOccurences( self ):
         " The user requested a list of occurences "
