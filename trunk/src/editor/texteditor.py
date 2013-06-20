@@ -164,6 +164,7 @@ class TextEditor( ScintillaWrapper ):
         self.__callPosition = None
         self.__calltip = None
         self.__commas = None
+        self.__line = None
         self.__initCalltips()
 
         # Breakpoint support
@@ -1517,6 +1518,7 @@ class TextEditor( ScintillaWrapper ):
         if self._lineHeight <= 0:
             self.__detectLineHeight()
 
+        self.__resetCalltip()
         # All the X Servers I tried have a problem with the line height, so I
         # have some spare points in the height
         cursorRectangle = QRect( xPos, yPos - 2,
@@ -1588,9 +1590,11 @@ class TextEditor( ScintillaWrapper ):
         calltip = str( calltip )
 
         # Memorize how the tooltip was shown
+        line, _ = self.lineIndexFromPosition( currentPos )
         self.__callPosition = callPosition
         self.__calltip = calltip
         self.__commas = commas
+        self.__line = line
 
         self.showCalltip( currentPos, calltip )
         self.__highlightCalltipArgument( commas )
@@ -1657,6 +1661,7 @@ class TextEditor( ScintillaWrapper ):
         self.__callPosition = None
         self.__calltip = None
         self.__commas = None
+        self.__line = None
         return
 
     def onOccurences( self ):
