@@ -239,7 +239,7 @@ def _getRopeCompletion( fileName, text, editor, prefix ):
         return [], False
 
 
-def getCalltipAndDoc( fileName, editor, position = None ):
+def getCalltipAndDoc( fileName, editor, position = None, tryQt = False ):
     " Provides a calltip and docstring "
     try:
         GlobalData().validateRopeProject()
@@ -259,6 +259,7 @@ def getCalltipAndDoc( fileName, editor, position = None ):
                                ignore_unknown = False,
                                remove_self = True, maxfixes = 7 )
         if calltip is not None:
+            calltip = calltip.strip()
             while '..' in calltip:
                 calltip = calltip.replace( '..', '.' )
             if '(.)' in calltip:
@@ -269,6 +270,19 @@ def getCalltipAndDoc( fileName, editor, position = None ):
                                      maxfixes = 7 )
             except:
                 pass
+
+        if tryQt and calltip is not None and docstring is not None:
+            # try to extract signatures from the QT docstring
+            if calltip.startswith( 'QtCore.' ) or calltip.startswith( 'QtGui.' ):
+                pattern = calltipl[ calltip.index( '.' ) + 1 :
+                                    calltip.index( '(' ) + 1 ]
+                signatures = []
+                for line in docstring.splitlines():
+                    line = line.strip()
+                    if line.startswith( pattern ):
+                        signatures.append( line )
+                if signatures:
+                    calltip = '\n'.join( signatures )
 
         return calltip, docstring
     except:
@@ -287,7 +301,8 @@ def getDefinitionLocation( fileName, editor ):
         if os.path.isabs( fileName ):
             resource = path_to_resource( ropeProject, fileName )
 
-        return find_definition( ropeProject, text, position, resource, 2 )
+        return find_definition( ropeProject, text, position,
+                                resource, maxfixes = 7 )
     except:
         return None
 
