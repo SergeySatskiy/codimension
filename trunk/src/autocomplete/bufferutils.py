@@ -470,6 +470,88 @@ def isOnSomeImport( editor ):
     return True, False, ""
 
 
+def getCallPosition( editor, pos = None ):
+    """ It is going to be used for calltips. It provides a position
+        of the last character of the function name is (or None if not found) """
+    if pos is None:
+        pos = editor.currentPosition()
+
+    if editor.charAt( pos ) in [ ')', '(' ]:
+        pos = editor.positionBefore( pos )
+        if pos <= 0:
+            return None
+
+    level = 0
+    startLine, _ = editor.lineIndexFromPosition( pos )
+    while pos > 0:
+        if isStringLiteral( editor, pos ):
+            pos = editor.positionBefore( pos )
+            continue
+        ch = editor.charAt( pos )
+        if ch == ')':
+            level += 1
+        elif ch == '(':
+            if level == 0:
+                break
+            level -= 1
+        elif ch in [ '\n', '\r' ]:
+            # It makes sense to check if it is a time to stop searching
+            curLine, _ = editor.lineIndexFromPosition( pos )
+            if curLine < startLine:
+                lineContent = editor.text( curLine + 1 ).trimmed()
+                if lineContent.startsWith( "def " ) or \
+                   lineContent.startsWith( "class " ) or \
+                   lineContent.startsWith( "def\\" ) or \
+                   lineContent.startsWith( "class\\" ):
+                    # It does not make sense to search beyond a class or
+                    # a function definition
+                    return None
+        pos = editor.positionBefore( pos )
+
+    if pos <= 0:
+        # pos points to '(' or 0. Even if '(' is at position 0,
+        # there is nothing to provide calltip for
+        return None
+
+    # Now, find out where the first non-space character is to get the object
+    # name position.
+    pos = editor.positionBefore( pos )
+    while pos >= 0:
+        ch = editor.charAt( pos )
+        if ch in [ ' ', '\t', '\r', '\n', '\\' ]:
+            pos = editor.positionBefore( pos )
+            continue
+        if ch.isalnum():
+            return pos
+        return None
+    return None
+
+
+def getCommaCount( editor, startPos, endPos ):
+    " Used for calltips. Provides the number of commas before the end position "
+    commas = 0
+    level = 0
+
+    while editor.charAt( startPos ) != '(':
+        startPos = editor.positionAfter( startPos )
+    # Step to the first character inside the call brackets
+    startPos = editor.positionAfter( startPos )
+
+    while startPos < endPos:
+        if isStringLiteral( editor, startPos ):
+            startPos = editor.positionAfter( startPos )
+            continue
+        ch = editor.charAt( startPos )
+        if ch in [ '(', '[', '{' ]:
+            level += 1
+        elif ch in [ ')', ']', '}' ]:
+            level -= 1
+        elif ch == ',' and level == 0:
+            commas += 1
+        startPos = editor.positionAfter( startPos )
+    return commas
+
+
 def getCallPositionAndCommas( editor ):
     """ It is going to be used for calltips. It provides a tuple - position
         of where the function name is (or None if not found) and the number
