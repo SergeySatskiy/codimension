@@ -1562,7 +1562,7 @@ class TextEditor( ScintillaWrapper ):
             return True
 
         calltip, docstring = getCalltipAndDoc( self.parent().getFileName(),
-                                               self, callPosition )
+                                               self, callPosition, True )
         if calltip is None:
             GlobalData().mainWindow.showStatusBarMessage( "Calltip is not found" )
             return True

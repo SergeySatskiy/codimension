@@ -114,7 +114,7 @@ class TagHelpViewer( QWidget ):
         toolbar.addWidget( spacer )
         toolbar.addAction( self.__clearButton )
 
-        self.__header = QLabel( "Object: none" )
+        self.__header = QLabel( "Signature: none" )
         self.__header.setFrameStyle( QFrame.StyledPanel )
         self.__header.setAutoFillBackground( True )
         headerPalette = self.__header.palette()
@@ -160,9 +160,9 @@ class TagHelpViewer( QWidget ):
                 self.__isEmpty = True
 
         if calltip is not None and calltip != "":
-            self.__header.setText( "Object: " + calltip )
+            self.__header.setText( "Signature: " + calltip )
         else:
-            self.__header.setText( "Object: none" )
+            self.__header.setText( "Signature: none" )
         if docstring is not None and docstring != "":
             self.__textEdit.insertPlainText( docstring )
 
@@ -182,7 +182,7 @@ class TagHelpViewer( QWidget ):
         " Triggers when the clear function is selected "
         self.__isEmpty = True
         self.__copyAvailable = False
-        self.__header.setText( "Object: none" )
+        self.__header.setText( "Signature: none" )
         self.__textEdit.clear()
         self.__updateToolbarButtons()
         return
