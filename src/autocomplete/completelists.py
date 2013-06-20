@@ -274,12 +274,12 @@ def getCalltipAndDoc( fileName, editor, position = None, tryQt = False ):
         if tryQt and calltip is not None and docstring is not None:
             # try to extract signatures from the QT docstring
             if calltip.startswith( 'QtCore.' ) or calltip.startswith( 'QtGui.' ):
-                pattern = calltipl[ calltip.index( '.' ) + 1 :
-                                    calltip.index( '(' ) + 1 ]
+                pattern = calltip[ calltip.index( '.' ) + 1 :
+                                   calltip.index( '(' ) + 1 ]
                 signatures = []
                 for line in docstring.splitlines():
                     line = line.strip()
-                    if line.startswith( pattern ):
+                    if line.startswith( pattern ) and not line.endswith( ':' ):
                         signatures.append( line )
                 if signatures:
                     calltip = '\n'.join( signatures )
