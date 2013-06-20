@@ -152,6 +152,10 @@ class Skin:
         self.debugExcptLineMarkerPaper = None
         self.debugExcptLineMarkerColor = None
 
+        self.calltipPaper = None
+        self.calltipColor = None
+        self.calltipHighColor = None
+
         self.__reset()
         return
 
@@ -206,6 +210,10 @@ class Skin:
         self.debugCurrentLineMarkerColor = QColor( 0, 0, 255, 255 )
         self.debugExcptLineMarkerPaper = QColor( 255, 64, 64, 255 )
         self.debugExcptLineMarkerColor = QColor( 255, 255, 127, 255 )
+
+        self.calltipPaper = QColor( 220, 255, 220, 255 )
+        self.calltipColor = QColor( 0, 0, 0, 255 )
+        self.calltipHighColor = QColor( 250, 89, 68, 255 )
         return
 
 
@@ -393,6 +401,16 @@ class Skin:
         val = self.__getColor( config, "general", "debugexcptlinemarkercolor" )
         if val is not None:
             self.debugExcptLineMarkerColor = val
+
+        val = self.__getColor( config, "general", "calltippaper" )
+        if val is not None:
+            self.calltipPaper = val
+        val = self.__getColor( config, "general", "calltipcolor" )
+        if val is not None:
+            self.calltipColor = val
+        val = self.__getColor( config, "general", "calltiphighcolor" )
+        if val is not None:
+            self.calltipHighColor = val
         return self.__isOK
 
     def __loadLexers( self, fName ):
@@ -466,12 +484,16 @@ class Skin:
             f.write( "unmatchedbracecolor=" + colorAsString( self.unmatchedBraceColor ) + "\n\n" )
 
             f.write( "indentguidepaper=" + colorAsString( self.indentGuidePaper ) + "\n" )
-            f.write( "indentguidecolor=" + colorAsString( self.indentGuideColor ) + "\n" )
+            f.write( "indentguidecolor=" + colorAsString( self.indentGuideColor ) + "\n\n" )
 
             f.write( "debugcurrentlinemarkerpaper=" + colorAsString( self.debugCurrentLineMarkerPaper ) + "\n" )
             f.write( "debugcurrentlinemarkercolor=" + colorAsString( self.debugCurrentLineMarkerColor ) + "\n" )
             f.write( "debugexcptlinemarkerpaper=" + colorAsString( self.debugExcptLineMarkerPaper ) + "\n" )
-            f.write( "debugexcptlinemarkercolor=" + colorAsString( self.debugExcptLineMarkerColor ) + "\n" )
+            f.write( "debugexcptlinemarkercolor=" + colorAsString( self.debugExcptLineMarkerColor ) + "\n\n" )
+
+            f.write( "calltippaper=" + colorAsString( self.calltipPaper ) + "\n" )
+            f.write( "calltipcolor=" + colorAsString( self.calltipColor ) + "\n" )
+            f.write( "calltiphighcolor=" + colorAsString( self.calltipHighColor ) + "\n" )
 
             f.close()
         except:

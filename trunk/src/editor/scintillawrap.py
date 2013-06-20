@@ -839,3 +839,7 @@ class ScintillaWrapper( QsciScintilla ):
         " Shows the calltip at the given position "
         self.SendScintilla( self.SCI_CALLTIPSHOW, pos, text )
         return
+
+    def isCalltipShown( self ):
+        " True is a calltip is displayed "
+        return self.SendScintilla( self.SCI_CALLTIPACTIVE ) == 1

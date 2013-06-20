@@ -63,3 +63,6 @@ debugcurrentlinemarkercolor=0,0,255,255
 debugexcptlinemarkerpaper=255,64,64,255
 debugexcptlinemarkercolor=255,255,127,255
 
+calltippaper=220,255,220,255
+calltipcolor=0,0,0,255
+calltiphighcolor=250,89,68,255

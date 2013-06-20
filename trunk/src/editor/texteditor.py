@@ -160,6 +160,12 @@ class TextEditor( ScintillaWrapper ):
                       SIGNAL( 'marginClicked(int, int, Qt::KeyboardModifiers)' ),
                       self.__marginClicked )
 
+        # Calltip support
+        self.__callPosition = None
+        self.__calltip = None
+        self.__commas = None
+        self.__initCalltips()
+
         # Breakpoint support
         self.__inLinesChanged = False
         bpointModel = self.__debugger.getBreakPointModel()
@@ -398,6 +404,14 @@ class TextEditor( ScintillaWrapper ):
                                 self.parent().onImportDgmTuned )
         return self.diagramsMenu
 
+    def __initCalltips( self ):
+        " Initialize calltips "
+        self.setCallTipsBackgroundColor( GlobalData().skin.calltipPaper )
+        self.setCallTipsForegroundColor( GlobalData().skin.calltipColor )
+        self.setCallTipsHighlightColor( GlobalData().skin.calltipHighColor )
+        self.setCallTipsStyle( QsciScintilla.CallTipsNoContext )
+        return
+
     def contextMenuEvent( self, event ):
         " Called just before showing a context menu "
         event.accept()
@@ -472,6 +486,7 @@ class TextEditor( ScintillaWrapper ):
     def focusOutEvent( self, event ):
         " Disable Shift+Tab when the focus is lost "
         self.__completer.hide()
+        self.__resetCalltip()
         return ScintillaWrapper.focusOutEvent( self, event )
 
     def updateSettings( self ):
@@ -1014,6 +1029,7 @@ class TextEditor( ScintillaWrapper ):
             self.__openedLine = -1
 
         elif key == Qt.Key_Escape:
+            self.__resetCalltip()
             self.emit( SIGNAL('ESCPressed') )
             event.accept()
 
@@ -1567,14 +1583,81 @@ class TextEditor( ScintillaWrapper ):
             GlobalData().mainWindow.showStatusBarMessage( "Calltip is not found" )
             return True
 
-        commas = getCommaCount( self, callPosition, self.currentPosition() )
-        self.setCallTipsStyle( QsciScintilla.CallTipsContext )
-        self.showCalltip( self.currentPosition(), str( calltip ) )
+        currentPos = self.currentPosition()
+        commas = getCommaCount( self, callPosition, currentPos )
+        calltip = str( calltip )
 
-        
-        print "Rope responded calltip: " + str( calltip )
-        print "Rope responded docstring: " + str( docstring )
+        # Memorize how the tooltip was shown
+        self.__callPosition = callPosition
+        self.__calltip = calltip
+        self.__commas = commas
+
+        self.showCalltip( currentPos, calltip )
+        self.__highlightCalltipArgument( commas )
         return True
+
+    def __highlightCalltipArgument( self, commaNumber ):
+        " Highlights the certain argument in the calltip "
+        if self.__calltip is None:
+            return
+        if not self.isCalltipShown():
+            return
+        if '\n' in self.__calltip:
+            return
+
+        try:
+            hlStart = self.__calltip.index( '(' ) + 1
+            if commaNumber > 0:
+                level = 0
+                singleQuote = False
+                doubleQuote = False
+                for hlStart in xrange( hlStart, len( self.__calltip ) ):
+                    ch = self.__calltip[ hlStart ]
+                    if ch == "'" and singleQuote:
+                        singleQuote = False
+                    elif ch == '"' and doubleQuote:
+                        doubleQuote = False
+                    elif ch == "'":
+                        singleQuote = True
+                    elif ch == '"':
+                        doubleQuote = True
+                    elif ch == ',' and level == 0:
+                        commaNumber -= 1
+                        if commaNumber == 0:
+                            break
+                    elif ch in [ '(', '[', '{' ]:
+                        level += 1
+                    elif ch in [ ')', ']', '}' ]:
+                        level -= 1
+                hlStart += 1
+
+            level = 0
+            for hlEnd in xrange( hlStart + 1, len( self.__calltip ) ):
+                ch = self.__calltip[ hlEnd ]
+                if ch == ',' and level == 0:
+                    break
+                if ch in [ '(', '[', '{' ]:
+                    level += 1
+                elif ch == ')':
+                    if level == 0:
+                        break
+                    level -= 1
+                elif ch in [ ']', '}' ]:
+                    level -= 1
+
+            if hlStart != hlEnd:
+                self.setCalltipHighlight( hlStart, hlEnd )
+        except:
+            return
+        return
+
+    def __resetCalltip( self ):
+        " Hides the calltip and resets how it was shown "
+        self.hideCalltip()
+        self.__callPosition = None
+        self.__calltip = None
+        self.__commas = None
+        return
 
     def onOccurences( self ):
         " The user requested a list of occurences "
