@@ -64,7 +64,7 @@ class ProjectPropertiesDialog( QDialog, object ):
             self.lastProjectName = ""
 
             if userRecord[ 4 ] != "":
-                self.authorEdit.setText( userRecord[ 4 ] )
+                self.authorEdit.setText( userRecord[ 4 ].split( ',' )[ 0 ].strip() )
             else:
                 self.authorEdit.setText( userRecord[ 0 ] )
 
