@@ -1,3 +1,8 @@
+XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Fix: Extra commas in the 'author' field when a new project is created on
+  Ubuntu. Issue #387
+
 2013 Jun 18 Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Release 2.0.1
