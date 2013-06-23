@@ -23,10 +23,9 @@
 """ The tag help viewer implementation """
 
 from PyQt4.QtCore import Qt, SIGNAL, QSize
-from PyQt4.QtGui import QTextEdit, QMenu, QPalette, \
-                        QApplication, QCursor, \
-                        QHBoxLayout, QWidget, QAction, QToolBar, \
-                        QSizePolicy, QLabel, QVBoxLayout, QFrame
+from PyQt4.QtGui import ( QTextEdit, QMenu, QPalette, QApplication, QCursor,
+                          QHBoxLayout, QWidget, QAction, QToolBar,
+                          QSizePolicy, QLabel, QVBoxLayout, QFrame )
 from utils.pixmapcache import PixmapCache
 
 
@@ -47,14 +46,14 @@ class TagHelpViewer( QWidget ):
 
         # create the context menu
         self.__menu = QMenu( self )
-        self.__selectAllMenuItem = self.__menu.addAction( \
+        self.__selectAllMenuItem = self.__menu.addAction(
                             PixmapCache().getIcon( 'selectall.png' ),
                             'Select All', self.__textEdit.selectAll )
-        self.__copyMenuItem = self.__menu.addAction( \
+        self.__copyMenuItem = self.__menu.addAction(
                             PixmapCache().getIcon( 'copytoclipboard.png' ),
                             'Copy', self.__textEdit.copy )
         self.__menu.addSeparator()
-        self.__clearMenuItem = self.__menu.addAction( \
+        self.__clearMenuItem = self.__menu.addAction(
                             PixmapCache().getIcon( 'trash.png' ),
                             'Clear', self.__clear )
 
@@ -83,19 +82,19 @@ class TagHelpViewer( QWidget ):
         # self.__textEdit.setFontPointSize( 12.0 )
 
         # Buttons
-        self.__selectAllButton = QAction( \
+        self.__selectAllButton = QAction(
             PixmapCache().getIcon( 'selectall.png' ),
             'Select all', self )
         self.connect( self.__selectAllButton, SIGNAL( "triggered()" ),
                       self.__textEdit.selectAll )
-        self.__copyButton = QAction( \
+        self.__copyButton = QAction(
             PixmapCache().getIcon( 'copytoclipboard.png' ),
             'Copy to clipboard', self )
         self.connect( self.__copyButton, SIGNAL( "triggered()" ),
                       self.__textEdit.copy )
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
-        self.__clearButton = QAction( \
+        self.__clearButton = QAction(
             PixmapCache().getIcon( 'trash.png' ),
             'Clear all', self )
         self.connect( self.__clearButton, SIGNAL( "triggered()" ),
@@ -116,6 +115,7 @@ class TagHelpViewer( QWidget ):
 
         self.__header = QLabel( "Signature: none" )
         self.__header.setFrameStyle( QFrame.StyledPanel )
+        self.__header.setSizePolicy( QSizePolicy.Ignored, QSizePolicy.Fixed )
         self.__header.setAutoFillBackground( True )
         headerPalette = self.__header.palette()
         headerBackground = headerPalette.color( QPalette.Background )
