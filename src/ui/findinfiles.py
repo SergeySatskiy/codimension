@@ -401,6 +401,7 @@ class FindInFilesDialog( QDialog, object ):
 
         # File label
         self.fileLabel = FitPathLabel( self )
+        self.fileLabel.setSizePolicy( QSizePolicy.Ignored, QSizePolicy.Fixed )
         verticalLayout.addWidget( self.fileLabel )
 
         # Progress bar
