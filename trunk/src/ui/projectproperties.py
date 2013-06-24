@@ -27,7 +27,8 @@
 from PyQt4.QtCore import Qt, SIGNAL, QEvent, QObject
 from PyQt4.QtGui import ( QDialog, QLineEdit, QGridLayout, QLabel, QTextEdit,
                           QDialogButtonBox, QVBoxLayout, QPushButton,
-                          QFileDialog, QMessageBox, QListWidget, QAbstractItemView )
+                          QFileDialog, QMessageBox, QListWidget, QAbstractItemView,
+                          QApplication )
 from completers import DirCompleter, FileCompleter
 import os, pwd, socket, datetime, logging
 from utils.project import getProjectProperties
