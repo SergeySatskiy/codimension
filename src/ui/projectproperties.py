@@ -34,6 +34,7 @@ from utils.project import getProjectProperties
 from itemdelegates import NoOutlineHeightDelegate
 from utils.compatibility import relpath
 from utils.misc import getLocaleDate
+from utils.settings import settingsDir
 
 
 class ProjectPropertiesDialog( QDialog, object ):
@@ -105,7 +106,8 @@ class ProjectPropertiesDialog( QDialog, object ):
             self.copyrightEdit.setText( copy_right )
             self.descriptionEdit.setText( description )
             self.creationDateEdit.setText( creationDate )
-            self.uuidEdit.setText( uuid )
+            self.uuidEdit.setText( str( uuid ) )
+            self.uuidEdit.setToolTip( settingsDir + str( uuid ) + os.path.sep )
 
             for item in importDirs:
                 self.importDirList.addItem( item )
@@ -127,6 +129,7 @@ class ProjectPropertiesDialog( QDialog, object ):
             self.descriptionEdit.setText( project.description )
             self.creationDateEdit.setText( project.creationDate )
             self.uuidEdit.setText( str( project.uuid ) )
+            self.uuidEdit.setToolTip( project.userProjectDir )
             self.setReadOnly()
 
             for item in project.importDirs:
