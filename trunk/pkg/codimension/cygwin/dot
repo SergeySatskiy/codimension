@@ -1,0 +1,6 @@
+#!/bin/bash
+# stub file to run dot.exe from under cygwin
+# allows "dot <single option> filename"
+
+"/cygdrive/c/Program Files (x86)/Graphviz2.30/bin/dot" "$1" $(cygpath -wa "$2")
+
