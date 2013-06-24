@@ -113,18 +113,22 @@ class FitPathLabel( QLabel ):
 class FramedLabelWithDoubleClick( QLabel ):
     " A label with a nice frame and double click for copy content to clipboard "
 
-    def __init__( self, text = None, parent = None ):
+    def __init__( self, text = None, callback = None, parent = None ):
         QLabel.__init__( self, parent )
         self.setFrameStyle( QFrame.StyledPanel )
         if text is not None:
             self.setText( text )
+        self.__callback = callback
         return
 
     def mouseDoubleClickEvent( self, event ):
         if event.button() == Qt.LeftButton:
-            txt = str( self.text() ).strip()
-            if txt:
-                QApplication.clipboard().setText( txt )
+            if self.__callback is None:
+                txt = str( self.text() ).strip()
+                if txt:
+                    QApplication.clipboard().setText( txt )
+            else:
+                self.__callback()
         QLabel.mouseDoubleClickEvent( self, event )
         return
 
