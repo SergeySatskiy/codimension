@@ -25,9 +25,9 @@
 
 
 from PyQt4.QtCore import Qt, SIGNAL, QEvent, QObject
-from PyQt4.QtGui import QDialog, QLineEdit, QGridLayout, QLabel, QTextEdit, \
-                        QDialogButtonBox, QVBoxLayout, QPushButton, \
-                        QFileDialog, QMessageBox, QListWidget, QAbstractItemView
+from PyQt4.QtGui import ( QDialog, QLineEdit, QGridLayout, QLabel, QTextEdit,
+                          QDialogButtonBox, QVBoxLayout, QPushButton,
+                          QFileDialog, QMessageBox, QListWidget, QAbstractItemView )
 from completers import DirCompleter, FileCompleter
 import os, pwd, socket, datetime, logging
 from utils.project import getProjectProperties
@@ -98,7 +98,9 @@ class ProjectPropertiesDialog( QDialog, object ):
                                                os.path.sep + scriptName )
 
             self.nameEdit.setText( os.path.basename( project ) )
+            self.nameEdit.setToolTip( "" )
             self.dirEdit.setText( os.path.dirname( project ) )
+            self.dirEdit.setToolTip( "" )
             self.scriptEdit.setText( scriptName )
             self.versionEdit.setText( version )
             self.authorEdit.setText( author )
@@ -108,7 +110,8 @@ class ProjectPropertiesDialog( QDialog, object ):
             self.descriptionEdit.setText( description )
             self.creationDateEdit.setText( creationDate )
             self.uuidEdit.setText( str( uuid ) )
-            self.uuidEdit.setToolTip( settingsDir + str( uuid ) + os.path.sep )
+            self.uuidEdit.setToolTip( settingsDir + str( uuid ) + os.path.sep +
+                                      " (double click to copy path)"  )
 
             for item in importDirs:
                 self.importDirList.addItem( item )
@@ -120,7 +123,9 @@ class ProjectPropertiesDialog( QDialog, object ):
 
             # This is editing the loaded project
             self.nameEdit.setText( os.path.basename( project.fileName ) )
+            self.nameEdit.setToolTip( "" )
             self.dirEdit.setText( project.getProjectDir() )
+            self.dirEdit.setToolTip( "" )
             self.scriptEdit.setText( project.getProjectScript() )
             self.versionEdit.setText( project.version )
             self.authorEdit.setText( project.author )
@@ -130,7 +135,8 @@ class ProjectPropertiesDialog( QDialog, object ):
             self.descriptionEdit.setText( project.description )
             self.creationDateEdit.setText( project.creationDate )
             self.uuidEdit.setText( str( project.uuid ) )
-            self.uuidEdit.setToolTip( project.userProjectDir )
+            self.uuidEdit.setToolTip( project.userProjectDir +
+                                      " (double click to copy path)" )
             self.setReadOnly()
 
             for item in project.importDirs:
@@ -177,7 +183,7 @@ class ProjectPropertiesDialog( QDialog, object ):
         mainScriptLabel = QLabel( "Main script:", self )
         gridLayout.addWidget( mainScriptLabel, 2, 0, 1, 1 )
         self.scriptEdit = QLineEdit( self )
-        self.scriptEdit.setToolTip( "Project main script, " \
+        self.scriptEdit.setToolTip( "Project main script, "
                                     "used when the project is run" )
         gridLayout.addWidget( self.scriptEdit, 2, 1, 1, 1 )
         self.scriptButton = QPushButton( "...", self )
@@ -194,7 +200,7 @@ class ProjectPropertiesDialog( QDialog, object ):
         self.importDirList.setSelectionMode( QAbstractItemView.SingleSelection )
         self.importDirList.setSelectionBehavior( QAbstractItemView.SelectRows )
         self.importDirList.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
-        self.importDirList.setToolTip( "Directories where to look for " \
+        self.importDirList.setToolTip( "Directories where to look for "
                                        "project specific imports" )
         gridLayout.addWidget( self.importDirList, 3, 1, 1, 1 )
 
@@ -258,21 +264,15 @@ class ProjectPropertiesDialog( QDialog, object ):
         creationDateLabel = QLabel( self )
         creationDateLabel.setText( "Creation date:" )
         gridLayout.addWidget( creationDateLabel, 10, 0, 1, 1 )
-        self.creationDateEdit = QLineEdit( self )
-        self.creationDateEdit.setReadOnly( True )
-        self.creationDateEdit.setFocusPolicy( Qt.NoFocus )
-        self.creationDateEdit.setDisabled( True )
+        self.creationDateEdit = FramedLabelWithDoubleClick()
+        self.creationDateEdit.setToolTip( "Double click to copy" )
         gridLayout.addWidget( self.creationDateEdit, 10, 1, 1, 1 )
 
         # Project UUID
         uuidLabel = QLabel( self )
         uuidLabel.setText( "UUID:" )
         gridLayout.addWidget( uuidLabel, 11, 0, 1, 1 )
-        self.uuidEdit = FramedLabelWithDoubleClick( "" )
-#        self.uuidEdit = QLineEdit( self )
-#        self.uuidEdit.setReadOnly( True )
-#        self.uuidEdit.setFocusPolicy( Qt.NoFocus )
-#        self.uuidEdit.setDisabled( True )
+        self.uuidEdit = FramedLabelWithDoubleClick( "", self.__copyProjectPath )
         gridLayout.addWidget( self.uuidEdit, 11, 1, 1, 1 )
 
         verticalLayout.addLayout( gridLayout )
@@ -391,7 +391,7 @@ class ProjectPropertiesDialog( QDialog, object ):
         while index < self.importDirList.count():
             if self.importDirList.item( index ).text() == dirToInsert:
                 logging.warning( "The directory '" + dirName +
-                                 "' is already in the list of " \
+                                 "' is already in the list of "
                                  "imported directories and is not added." )
                 return
             index += 1
@@ -431,7 +431,7 @@ class ProjectPropertiesDialog( QDialog, object ):
             return
         if os.path.sep in str( self.nameEdit.text() ):
             QMessageBox.critical( self, "Error",
-                                  "The project name must not " \
+                                  "The project name must not "
                                   "contain path separators" )
             return
 
@@ -469,13 +469,13 @@ class ProjectPropertiesDialog( QDialog, object ):
                 return
             if not os.path.isdir( dirName ):
                 QMessageBox.critical( self, "Error",
-                                      "The project directory " \
+                                      "The project directory "
                                       "may not be a file" )
                 return
             # Check that the dir is writable
             if not os.access( dirName, os.W_OK ):
                 QMessageBox.critical( self, "Error",
-                                      "You don't have write permissions on " + \
+                                      "You don't have write permissions on " +
                                       dirName )
                 return
         else:
@@ -536,7 +536,13 @@ class ProjectPropertiesDialog( QDialog, object ):
         self.licenseEdit.setDisabled( True )
         self.copyrightEdit.setDisabled( True )
         self.descriptionEdit.setDisabled( True )
-        self.creationDateEdit.setDisabled( True )
-#        self.uuidEdit.setDisabled( True )
+        return
+
+    def __copyProjectPath( self ):
+        " Copies the project path when a label is double clicked "
+        text = str( self.uuidEdit.text() ).strip()
+        if text:
+            path = settingsDir + text + os.path.sep
+            QApplication.clipboard().setText( path )
         return
 
