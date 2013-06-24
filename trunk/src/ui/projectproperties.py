@@ -35,6 +35,7 @@ from itemdelegates import NoOutlineHeightDelegate
 from utils.compatibility import relpath
 from utils.misc import getLocaleDate
 from utils.settings import settingsDir
+from fitlabel import FramedLabelWithDoubleClick
 
 
 class ProjectPropertiesDialog( QDialog, object ):
@@ -70,15 +71,15 @@ class ProjectPropertiesDialog( QDialog, object ):
                 self.authorEdit.setText( userRecord[ 0 ] )
 
             try:
-                self.emailEdit.setText( userRecord[ 0 ] + \
+                self.emailEdit.setText( userRecord[ 0 ] +
                                         "@" + socket.gethostname() )
             except:
                 pass
 
             self.versionEdit.setText( "0.0.1" )
             self.licenseEdit.setText( "GPL v3" )
-            self.copyrightEdit.setText( "Copyright (c) " + \
-                                        self.authorEdit.text() + ", " + \
+            self.copyrightEdit.setText( "Copyright (c) " +
+                                        self.authorEdit.text() + ", " +
                                         str( datetime.date.today().year ) )
             self.creationDateEdit.setText( getLocaleDate() )
             self.nameEdit.setFocus()
@@ -93,7 +94,7 @@ class ProjectPropertiesDialog( QDialog, object ):
             version, email, uuid = getProjectProperties( project )
 
             if not os.path.isabs( scriptName ) and scriptName != "":
-                scriptName = os.path.normpath( os.path.dirname( project ) + \
+                scriptName = os.path.normpath( os.path.dirname( project ) +
                                                os.path.sep + scriptName )
 
             self.nameEdit.setText( os.path.basename( project ) )
@@ -267,10 +268,11 @@ class ProjectPropertiesDialog( QDialog, object ):
         uuidLabel = QLabel( self )
         uuidLabel.setText( "UUID:" )
         gridLayout.addWidget( uuidLabel, 11, 0, 1, 1 )
-        self.uuidEdit = QLineEdit( self )
-        self.uuidEdit.setReadOnly( True )
-        self.uuidEdit.setFocusPolicy( Qt.NoFocus )
-        self.uuidEdit.setDisabled( True )
+        self.uuidEdit = FramedLabelWithDoubleClick( "" )
+#        self.uuidEdit = QLineEdit( self )
+#        self.uuidEdit.setReadOnly( True )
+#        self.uuidEdit.setFocusPolicy( Qt.NoFocus )
+#        self.uuidEdit.setDisabled( True )
         gridLayout.addWidget( self.uuidEdit, 11, 1, 1, 1 )
 
         verticalLayout.addLayout( gridLayout )
@@ -535,6 +537,6 @@ class ProjectPropertiesDialog( QDialog, object ):
         self.copyrightEdit.setDisabled( True )
         self.descriptionEdit.setDisabled( True )
         self.creationDateEdit.setDisabled( True )
-        self.uuidEdit.setDisabled( True )
+#        self.uuidEdit.setDisabled( True )
         return
 
