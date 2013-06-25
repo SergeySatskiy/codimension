@@ -447,21 +447,21 @@ def isOnSomeImport( editor ):
         # Need to complete an imported object
         position = editor.positionFromLineIndex( line, 0 )
         while editor.charAt( position ) in [ ' ', '\t' ]:
-            position = editor.positionAfter()
+            position = editor.positionAfter( position )
         # Expected 'from' at this position
         if getWordAtPosition( editor, position ) != 'from':
             return True, False, ""
         # Next is a module name
         position += len( 'from' )
         while editor.charAt( position ) in charsToSkip:
-            position = editor.positionAfter()
+            position = editor.positionAfter( position )
         moduleName = getWordAtPosition( editor, position, 0, True, "." )
         if moduleName == "":
             return True, False, ""
         # Sanity check - there is 'import' after that
         position += len( moduleName )
         while editor.charAt( position ) in charsToSkip:
-            position = editor.positionAfter()
+            position = editor.positionAfter( position )
         if getWordAtPosition( editor, position ) != 'import':
             return True, False, ""
         # Finally, this is a completion for an imported object
