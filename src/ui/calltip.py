@@ -23,9 +23,8 @@
 " Custom calltips "
 
 
-from PyQt4.QtCore import Qt, SIGNAL, QEventLoop
-from PyQt4.QtGui import ( QSizePolicy, QFrame, QLabel, QPushButton, QColor,
-                          QApplication, QGridLayout, QFontMetrics )
+from PyQt4.QtCore import Qt, QEventLoop
+from PyQt4.QtGui import QSizePolicy, QFrame, QLabel, QApplication, QGridLayout
 from utils.globals import GlobalData
 
 
@@ -47,6 +46,9 @@ class Calltip( QFrame ):
 
         # Keep pylint happy
         self.__calltipLabel = None
+        self.__text = None
+        self.__paramPositions = None
+        self.__highlightedParam = None
 
         self.__createLayout()
         QFrame.hide( self )
@@ -98,13 +100,72 @@ class Calltip( QFrame ):
         self.move( 5, vPos - 2 )
         return
 
-    def showCalltip( self, message ):
+    def showCalltip( self, message, paramNumber = None ):
         " Brings up the panel with the required text "
+        self.__text = str( message )
+        self.__calcParamPositions()
         self.__calltipLabel.setText( message )
         QApplication.processEvents( QEventLoop.ExcludeUserInputEvents )
 
         self.resize()
         self.show()
+        return
+
+    def highlightParameter( self, number ):
+        " Hightlights the given parameter number, 0 - based "
+        if self.__text is None:
+            return
+        if number == self.__highlightedParam:
+            return
+        if self.__paramPositions is None:
+            return
+        
+
+    def __calcParamPositions( self ):
+        " Calculates the parameter positions in the calltip text "
+        if self.__text is None or '\n' in self.__text:
+            self.__paramPositions = None
+            return
+
+        self.__paramPositions = []
+
+        begin = self.__text.index( '(' ) + 1
+        lastIndex = len( self.__text ) - 1
+        index = begin
+        level = 0
+        singleQuote = False
+        doubleQuote = False
+        while index <= lastIndex:
+            ch = self.__text[ index ]
+            if ch == "'" and singleQuote:
+                singleQuote = False
+            elif ch == '"' and doubleQuote:
+                doubleQuote = False
+            elif ch == "'":
+                singleQuote = False
+            elif ch == '"':
+                doubleQuote = False
+            elif ch == ',' and level == 0:
+                self.__paramPositions.append( (begin, index - 1) )
+                # Skip till the beginning of the next parameter - it must be there
+                index += 1
+                while self.__text[ index ].isspace():
+                    index += 1
+                begin = index
+                continue
+            elif ch in [ '(', '[', '{' ]:
+                level += 1
+            elif ch in [ ')', ']', '}' ]:
+                level -= 1
+                if level == -1:
+                    # Closing bracket
+                    if index > begin:
+                        self.__paramPositions.append( (begin, index - 1) )
+                    break
+            index += 1
+
+        if len( self.__paramPositions ) == 0:
+            self.__paramPositions = None
         return
 
     def keyPressEvent( self, event ):
@@ -121,5 +182,10 @@ class Calltip( QFrame ):
     def hide( self ):
         " Handles the hiding of the panel and markers "
         QFrame.hide( self )
+        self.__text = None
+        self.__paramPositions = None
+        self.__highlightedParam = None
+        self.__calltipLabel.setText( "" )
+
         self.parent().setFocus()
         return

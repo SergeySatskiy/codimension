@@ -162,9 +162,6 @@ class TextEditor( ScintillaWrapper ):
 
         # Calltip support
         self.__callPosition = None
-        self.__calltip = None
-        self.__commas = None
-        self.__line = None
         self.__initCalltips()
 
         # Breakpoint support
@@ -1590,78 +1587,15 @@ class TextEditor( ScintillaWrapper ):
         calltip = str( calltip )
 
         # Memorize how the tooltip was shown
-        line, _ = self.lineIndexFromPosition( currentPos )
         self.__callPosition = callPosition
-        self.__calltip = calltip
-        self.__commas = commas
-        self.__line = line
 
         self.showCalltip( currentPos, calltip )
-        self.__highlightCalltipArgument( commas )
         return True
-
-    def __highlightCalltipArgument( self, commaNumber ):
-        " Highlights the certain argument in the calltip "
-        if self.__calltip is None:
-            return
-        if not self.isCalltipShown():
-            return
-        if '\n' in self.__calltip:
-            return
-
-        try:
-            hlStart = self.__calltip.index( '(' ) + 1
-            if commaNumber > 0:
-                level = 0
-                singleQuote = False
-                doubleQuote = False
-                for hlStart in xrange( hlStart, len( self.__calltip ) ):
-                    ch = self.__calltip[ hlStart ]
-                    if ch == "'" and singleQuote:
-                        singleQuote = False
-                    elif ch == '"' and doubleQuote:
-                        doubleQuote = False
-                    elif ch == "'":
-                        singleQuote = True
-                    elif ch == '"':
-                        doubleQuote = True
-                    elif ch == ',' and level == 0:
-                        commaNumber -= 1
-                        if commaNumber == 0:
-                            break
-                    elif ch in [ '(', '[', '{' ]:
-                        level += 1
-                    elif ch in [ ')', ']', '}' ]:
-                        level -= 1
-                hlStart += 1
-
-            level = 0
-            for hlEnd in xrange( hlStart + 1, len( self.__calltip ) ):
-                ch = self.__calltip[ hlEnd ]
-                if ch == ',' and level == 0:
-                    break
-                if ch in [ '(', '[', '{' ]:
-                    level += 1
-                elif ch == ')':
-                    if level == 0:
-                        break
-                    level -= 1
-                elif ch in [ ']', '}' ]:
-                    level -= 1
-
-            if hlStart != hlEnd:
-                self.setCalltipHighlight( hlStart, hlEnd )
-        except:
-            return
-        return
 
     def __resetCalltip( self ):
         " Hides the calltip and resets how it was shown "
         self.hideCalltip()
         self.__callPosition = None
-        self.__calltip = None
-        self.__commas = None
-        self.__line = None
         return
 
     def onOccurences( self ):
