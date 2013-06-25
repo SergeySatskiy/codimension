@@ -1,9 +1,11 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
-* Fix: Extra commas in the 'author' field when a new project is created on
-  Ubuntu. Issue #387
+* Fix: crash on Ubuntu 12.04 (possibly on other platforms too) in case of some
+  styles. Issue #388.
+* Fix: extra commas in the 'author' field when a new project is created on
+  Ubuntu. Issue #387.
 * Fix: extra long signatures in a context help do not limit min window width.
-  Issue #386
+  Issue #386.
 
 2013 Jun 18 Sergey Satskiy <sergey.satskiy@gmail.com>
 
