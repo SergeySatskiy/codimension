@@ -33,8 +33,15 @@ class CodimensionApplication( QApplication ):
     """ codimension application class """
 
     def __init__( self, argv, style ):
-        QApplication.setStyle( style )
         QApplication.__init__( self, argv )
+
+        # Sick! The QT doc recommends the following:
+        # "To ensure that the application's style is set correctly, it is best
+        # to call this function before the QApplication constructor, if
+        # possible". However if I do it before QApplication.__init__() then
+        # there is a crash! At least with some styles on Ubuntu 12.04 64 bit.
+        # So I have to call the initialization after the __init__ call.
+        QApplication.setStyle( style )
 
         self.mainWindow = None
         self.__lastFocus = None
