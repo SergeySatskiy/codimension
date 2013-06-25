@@ -23,13 +23,10 @@
 " UI support for detected outside changes of files "
 
 
-from PyQt4.QtCore       import Qt, SIGNAL, QEventLoop
-from PyQt4.QtGui        import QSizePolicy, QFrame, \
-                               QApplication, QLabel, QPushButton, \
-                               QApplication, QColor, \
-                               QSizePolicy, QGridLayout, \
-                               QFontMetrics
-from utils.globals      import GlobalData
+from PyQt4.QtCore import Qt, SIGNAL, QEventLoop
+from PyQt4.QtGui import ( QSizePolicy, QFrame, QLabel, QPushButton, QColor,
+                          QApplication, QGridLayout, QFontMetrics )
+from utils.globals import GlobalData
 
 
 class OutsideChangeWidget( QFrame ):
@@ -64,8 +61,8 @@ class OutsideChangeWidget( QFrame ):
     def __createLayout( self ):
         " Creates the widget layout "
 
-        self.__messageLabel = QLabel( "This file has been modified " \
-                                      "outside of codimension. What " \
+        self.__messageLabel = QLabel( "This file has been modified "
+                                      "outside of codimension. What "
                                       "would you like to do?" )
         self.__messageLabel.setWordWrap( True )
         self.__messageLabel.setAlignment( Qt.AlignHCenter )
