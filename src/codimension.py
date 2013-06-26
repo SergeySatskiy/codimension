@@ -64,7 +64,6 @@ from utils.settings import Settings, settingsDir
 from utils.globals import GlobalData
 from ui.application import CodimensionApplication
 from ui.splashscreen import SplashScreen
-from utils.pixmapcache import PixmapCache
 from utils.project import CodimensionProject
 from utils.skin import Skin
 from utils.briefmodinfocache import validateBriefModuleInfoCache
@@ -110,9 +109,6 @@ def codimensionMain():
     # It's unlikely to throw any exceptions.
     globalData = GlobalData()
     globalData.version = __version__
-
-    # Create pixmap cache singleton
-    pixmapCache = PixmapCache()
 
     # Loading settings - they have to be loaded before the application is
     # created. This is because the skin name is saved there.
