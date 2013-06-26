@@ -470,6 +470,23 @@ def isOnSomeImport( editor ):
     return True, False, ""
 
 
+def _skipSpacesBackAtPos( editor, pos ):
+    while pos >= 0:
+        if editor.charAt( pos ) in [ ' ', '\t', '\r', '\n', '\\' ]:
+            pos = editor.positionBefore( pos )
+            continue
+        return pos
+    return pos
+
+def _skipIdentifierBackAtPos( editor, pos ):
+    while pos >= 0:
+        ch = editor.charAt( pos )
+        if ch.isalnum() or ch == '_':
+            pos = editor.positionBefore( pos )
+            continue
+        return pos
+    return pos
+
 def getCallPosition( editor, pos = None ):
     """ It is going to be used for calltips. It provides a position
         of the last character of the function name is (or None if not found) """
@@ -492,7 +509,39 @@ def getCallPosition( editor, pos = None ):
             level += 1
         elif ch == '(':
             if level == 0:
-                break
+                # It could be the beginning of a tuple parameter, so check the
+                # previous char. If it is a comma, then we need to continue.
+                checkPos = _skipSpacesBackAtPos( editor,
+                                                 editor.positionBefore( pos ) )
+                if checkPos <= 0:
+                    return None
+
+                # Found first meaningful character before the bracket
+                ch = editor.charAt( checkPos )
+                if ch.isalnum() or ch == '_':
+                    if __isDefinition( editor, checkPos ):
+                        return None
+                    return checkPos
+
+                # There are a few options here:
+                # , => need to continue
+                # = => could be a keyworded parameter value
+                # ( => tuple in a tuple
+                # The rest is bad syntax
+                if ch in [ ',', '(' ]:
+                    pos = checkPos
+                    continue
+                if ch == '=':
+                    checkPos = _skipSpacesBackAtPos( editor,
+                                                     editor.positionBefore( checkPos ) )
+                    checkPos = _skipIdentifierBackAtPos( editor, checkPos )
+                    checkPos = _skipSpacesBackAtPos( editor, checkPos )
+                    if checkPos <= 0:
+                        return None
+                    if editor.charAt( checkPos ) in [ ',', '(' ]:
+                        pos = checkPos
+                        continue
+                return None
             level -= 1
         elif ch in [ '\n', '\r' ]:
             # It makes sense to check if it is a time to stop searching
@@ -508,24 +557,6 @@ def getCallPosition( editor, pos = None ):
                     return None
         pos = editor.positionBefore( pos )
 
-    if pos <= 0:
-        # pos points to '(' or 0. Even if '(' is at position 0,
-        # there is nothing to provide calltip for
-        return None
-
-    # Now, find out where the first non-space character is to get the object
-    # name position.
-    pos = editor.positionBefore( pos )
-    while pos >= 0:
-        ch = editor.charAt( pos )
-        if ch in [ ' ', '\t', '\r', '\n', '\\' ]:
-            pos = editor.positionBefore( pos )
-            continue
-        if ch.isalnum() or ch == '_':
-            if __isDefinition( editor, pos ):
-                return None
-            return pos
-        return None
     return None
 
 
