@@ -52,6 +52,7 @@ class Calltip( QFrame ):
 
         self.__createLayout()
         QFrame.hide( self )
+        self.setFocusPolicy( Qt.NoFocus )
         return
 
     def __createLayout( self ):
@@ -182,17 +183,6 @@ class Calltip( QFrame ):
             self.__paramPositions = None
         return
 
-    def keyPressEvent( self, event ):
-        " Handles the key press events "
-        if event.key() == Qt.Key_Escape:
-            editorsManager = GlobalData().mainWindow.editorsManager()
-            activeWindow = editorsManager.currentWidget()
-            if activeWindow:
-                activeWindow.setFocus()
-            event.accept()
-            self.hide()
-        return
-
     def hide( self ):
         " Handles the hiding of the panel and markers "
         QFrame.hide( self )
@@ -200,6 +190,4 @@ class Calltip( QFrame ):
         self.__paramPositions = None
         self.__highlightedParam = None
         self.__calltipLabel.setText( "" )
-
-        self.parent().setFocus()
         return
