@@ -81,10 +81,10 @@ class QuickHelpWidget( HTMLTabWidget ):
           <td width="35%">Shrink sidebars</td>
         </tr>
         <tr>
-          <td>Alt+PgUp / Down</td>
-          <td>Forward / back in editing history</td>
-          <td>Ctrl+PgUp / Down</td>
-          <td>Next / previous tab</td>
+          <td>Alt+PgUp or Down</td>
+          <td>Forward or back in editing history</td>
+          <td>Ctrl+PgUp or Down</td>
+          <td>Next or previous tab</td>
         </tr>
         <tr>
           <td>Ctrl+TAB</td>
@@ -100,28 +100,28 @@ class QuickHelpWidget( HTMLTabWidget ):
       <table border="1" cellspacing="0"
              cellpadding="1" width="95%" align="center">
         <tr>
-          <td width="15%">Ctrl+Up / Down</td>
-          <td width="35%">Scrolling up / down without changing cursor position</td>
-          <td width="15%">Alt+Up / Down</td>
-          <td width="35%">Move cursor one paragraph up / down</td>
+          <td width="15%">Ctrl+Up or Down</td>
+          <td width="35%">Scrolling up or down without changing cursor position</td>
+          <td width="15%">Alt+Up or Down</td>
+          <td width="35%">Move cursor one paragraph up or down</td>
         </tr>
         <tr>
-          <td>Alt+Left / Right</td>
-          <td>Move cursor word part left / right</td>
-          <td>Alt+Shift+Up / Down</td>
-          <td>Select till the beginning / end of a paragraph</td>
+          <td>Alt+Left or Right</td>
+          <td>Move cursor word part left or right</td>
+          <td>Alt+Shift+Up or Down</td>
+          <td>Select till the beginning or end of a paragraph</td>
         </tr>
         <tr>
-          <td>Alt+Shift+Left / Right</td>
+          <td>Alt+Shift+Left or Right</td>
           <td>Select word part</td>
-          <td>Ctrl+Z / Ctrl+Shift+Z</td>
-          <td>Undo / Redo</td>
+          <td>Ctrl+Z or Ctrl+Shift+Z</td>
+          <td>Undo or Redo</td>
         </tr>
         <tr>
           <td>Shift+Del</td>
           <td>Copy to buffer and delete selected text (if so) or current line</td>
-          <td>Ctrl+= / -</td>
-          <td>Zoom in / out</td>
+          <td>Ctrl+= or -</td>
+          <td>Zoom in or out</td>
         </tr>
         <tr>
           <td>Ctrl+0</td>
@@ -136,16 +136,16 @@ class QuickHelpWidget( HTMLTabWidget ):
           <td>Replace in buffer</td>
         </tr>
         <tr>
-          <td>F3 / Shift+F3</td>
-          <td>Search next / previous</td>
+          <td>F3 or Shift+F3</td>
+          <td>Search next or previous</td>
           <td>Ctrl+'</td>
           <td>Highlight current word and iterate over matches</td>
         </tr>
         <tr>
-          <td>Ctrl+, / .</td>
-          <td>Move to the previous / next highlighted word</td>
+          <td>Ctrl+, or .</td>
+          <td>Move to the previous or next highlighted word</td>
           <td>Ctrl+M</td>
-          <td>Comment / uncomment a line or selected lines</td>
+          <td>Comment or uncomment a line or selected lines</td>
         </tr>
         <tr>
           <td>Ctrl+Space, TAB</td>
@@ -154,16 +154,22 @@ class QuickHelpWidget( HTMLTabWidget ):
           <td>Context help</td>
         </tr>
         <tr>
-          <td>Ctrl+\\</td>
+          <td>Ctrl+back slash</td>
           <td>Goto definition</td>
           <td>Ctrl+F3</td>
-          <td>Initiate search of the current word / selection without showing find dialog</td>
+          <td>Initiate search of the current word or selection without showing find dialog</td>
         </tr>
         <tr>
           <td>Ctrl+]</td>
           <td>Find occurrences of the current word</td>
           <td>Alt+U</td>
           <td>Jump to the beginning of the current function or class</td>
+        </tr>
+        <tr>
+          <td>Ctrl+forward slash</td>
+          <td>Show or hide a calltip</td>
+          <td></td>
+          <td></td>
         </tr>
       </table>
     </p>
