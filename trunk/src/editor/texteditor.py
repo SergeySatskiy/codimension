@@ -154,6 +154,7 @@ class TextEditor( ScintillaWrapper ):
         self.__completionLine = -1
         self.__completionPos = -1
         self.__completer = CodeCompleter( self )
+        self.__inCompletion = False
         self.connect( self.__completer, SIGNAL( "activated(const QString &)" ),
                       self.insertCompletion )
 
@@ -480,7 +481,8 @@ class TextEditor( ScintillaWrapper ):
     def focusOutEvent( self, event ):
         " Disable Shift+Tab when the focus is lost "
         self.__completer.hide()
-        self.__resetCalltip()
+        if not self.__inCompletion:
+            self.__resetCalltip()
         return ScintillaWrapper.focusOutEvent( self, event )
 
     def updateSettings( self ):
@@ -1460,6 +1462,7 @@ class TextEditor( ScintillaWrapper ):
     def onAutoComplete( self ):
         " Triggered when ctrl+space or TAB is clicked "
 
+        self.__inCompletion = True
         self.__completionObject, \
         self.__completionPrefix = getPrefixAndObject( self )
 
@@ -1482,6 +1485,7 @@ class TextEditor( ScintillaWrapper ):
 
         if len( words ) == 0:
             self.setFocus()
+            self.__inCompletion = False
             return True
 
         line, pos = self.getCursorPosition()
@@ -1498,6 +1502,7 @@ class TextEditor( ScintillaWrapper ):
         count = self.__completer.completionCount()
         if count == 0:
             self.setFocus()
+            self.__inCompletion = False
             return True
 
         # Make sure the line is visible
@@ -1509,6 +1514,7 @@ class TextEditor( ScintillaWrapper ):
 
         if count == 1:
             self.insertCompletion( self.__completer.currentCompletion() )
+            self.__inCompletion = False
             return True
 
         if self._charWidth <= 0:
@@ -1516,12 +1522,12 @@ class TextEditor( ScintillaWrapper ):
         if self._lineHeight <= 0:
             self.__detectLineHeight()
 
-        self.__resetCalltip()
         # All the X Servers I tried have a problem with the line height, so I
         # have some spare points in the height
         cursorRectangle = QRect( xPos, yPos - 2,
                                  self._charWidth, self._lineHeight + 8 )
         self.__completer.complete( cursorRectangle )
+        self.__inCompletion = False
         return True
 
     def onTagHelp( self ):
