@@ -41,7 +41,6 @@ class Calltip( QFrame ):
         self.setPalette( palette )
 
         self.setFrameShape( QFrame.StyledPanel )
-        self.setFrameShadow( QFrame.Raised )
         self.setLineWidth( 2 )
         self.setAutoFillBackground( True )
 
@@ -93,12 +92,12 @@ class Calltip( QFrame ):
         # Panel
         width = self.parent().width()
         height = self.parent().height()
-        widgetWidth = width - scrollWidth - 10 - 1
+        widgetWidth = width - scrollWidth - 6 - 1
 
         self.setFixedWidth( widgetWidth )
 
         vPos = height - self.height() - scrollHeight
-        self.move( 5, vPos - 3 )
+        self.move( 3, vPos - 3 )
         return
 
     def showCalltip( self, message, paramNumber ):
@@ -110,6 +109,12 @@ class Calltip( QFrame ):
 
         self.resize()
         self.show()
+
+        # I have to do resize() twice because the self.height() value is
+        # calculated in a different way before the frame is shown and after.
+        # So the first call moves the widget to the nearly right location
+        # and the second to the precise one
+        self.resize()
         return
 
     def highlightParameter( self, number ):
