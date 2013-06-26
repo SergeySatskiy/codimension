@@ -27,7 +27,7 @@ import os.path, logging, urllib2, socket
 from subprocess import Popen
 import lexer
 from scintillawrap import ScintillaWrapper
-from PyQt4.QtCore import ( Qt, QFileInfo, SIGNAL, QSize, QUrl,
+from PyQt4.QtCore import ( Qt, QFileInfo, SIGNAL, QSize, QUrl, QTimer,
                            QVariant, QRect, QEvent, QPoint, QModelIndex )
 from PyQt4.QtGui import ( QApplication, QCursor, QFontMetrics, QToolBar,
                           QActionGroup, QHBoxLayout, QWidget, QAction, QMenu,
@@ -164,6 +164,9 @@ class TextEditor( ScintillaWrapper ):
         # Calltip support
         self.__calltip = None
         self.__callPosition = None
+        self.__calltipTimer = QTimer( self )
+        self.__calltipTimer.setSingleShot( True )
+        self.connect( self.__calltipTimer, SIGNAL( 'timeout()' ), self.__onCalltipTimer )
 
         # Breakpoint support
         self.__inLinesChanged = False
@@ -1051,6 +1054,11 @@ class TextEditor( ScintillaWrapper ):
 
     def __onCursorPositionChanged( self, line, pos ):
         " Triggered when the cursor changed the position "
+        if self.__calltip:
+            if self.__calltipTimer.isActive():
+                self.__calltipTimer.stop()
+            self.__calltipTimer.start( 500 )
+
         if self.__skipChangeCursor:
             return
 
@@ -1591,6 +1599,7 @@ class TextEditor( ScintillaWrapper ):
 
     def __resetCalltip( self ):
         " Hides the calltip and resets how it was shown "
+        self.__calltipTimer.stop()
         if self.__calltip is not None:
             self.__calltip.hide()
             self.__calltip = None
@@ -1601,6 +1610,22 @@ class TextEditor( ScintillaWrapper ):
         " Resizes the calltip if so "
         if self.__calltip:
             self.__calltip.resize()
+        return
+
+    def __onCalltipTimer( self ):
+        " Handles the calltip update timer "
+        if self.__calltip:
+            currentPos = self.currentPosition()
+            if currentPos < self.__callPosition:
+                self.__resetCalltip()
+                return
+            callPosition = getCallPosition( self )
+            if callPosition != self.__callPosition:
+                self.__resetCalltip()
+                return
+            # It is still the same call, check the commas
+            commas = getCommaCount( self, callPosition, currentPos )
+            self.__calltip.highlightParameter( commas )
         return
 
     def onOccurences( self ):
