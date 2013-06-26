@@ -41,6 +41,7 @@ class Calltip( QFrame ):
         self.setPalette( palette )
 
         self.setFrameShape( QFrame.StyledPanel )
+        self.setFrameShadow( QFrame.Raised )
         self.setLineWidth( 2 )
         self.setAutoFillBackground( True )
 
@@ -89,7 +90,7 @@ class Calltip( QFrame ):
         else:
             scrollHeight = 0
 
-        # Dialogue
+        # Panel
         width = self.parent().width()
         height = self.parent().height()
         widgetWidth = width - scrollWidth - 10 - 1
@@ -97,14 +98,14 @@ class Calltip( QFrame ):
         self.setFixedWidth( widgetWidth )
 
         vPos = height - self.height() - scrollHeight
-        self.move( 5, vPos - 2 )
+        self.move( 5, vPos - 3 )
         return
 
-    def showCalltip( self, message, paramNumber = None ):
+    def showCalltip( self, message, paramNumber ):
         " Brings up the panel with the required text "
-        self.__text = str( message )
+        self.__text = message
         self.__calcParamPositions()
-        self.__calltipLabel.setText( message )
+        self.highlightParameter( paramNumber )
         QApplication.processEvents( QEventLoop.ExcludeUserInputEvents )
 
         self.resize()
@@ -113,13 +114,21 @@ class Calltip( QFrame ):
 
     def highlightParameter( self, number ):
         " Hightlights the given parameter number, 0 - based "
-        if self.__text is None:
-            return
         if number == self.__highlightedParam:
             return
         if self.__paramPositions is None:
+            self.__calltipLabel.setText( self.__text )
             return
-        
+        if number >= len( self.__paramPositions ):
+            self.__calltipLabel.setText( self.__text )
+            return
+        positions = self.__paramPositions[ number ]
+        highlight = self.__text[ 0 : positions[ 0 ] ] + "<font color='" + \
+                    GlobalData().skin.calltipHighColor.name() + "'>" + \
+                    self.__text[ positions[ 0 ] : positions[ 1 ] + 1 ] + \
+                    "</font>" + self.__text[ positions[ 1 ] + 1 : ]
+        self.__calltipLabel.setText( highlight )
+        return
 
     def __calcParamPositions( self ):
         " Calculates the parameter positions in the calltip text "

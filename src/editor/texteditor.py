@@ -70,6 +70,7 @@ from pythontidy.tidysettingsdlg import TidySettingsDialog
 from profiling.profui import ProfilingProgressDialog
 from debugger.bputils import getBreakpointLines
 from debugger.breakpoint import Breakpoint
+from ui.calltip import Calltip
 
 
 class TextEditor( ScintillaWrapper ):
@@ -161,8 +162,8 @@ class TextEditor( ScintillaWrapper ):
                       self.__marginClicked )
 
         # Calltip support
+        self.__calltip = None
         self.__callPosition = None
-        self.__initCalltips()
 
         # Breakpoint support
         self.__inLinesChanged = False
@@ -401,14 +402,6 @@ class TextEditor( ScintillaWrapper ):
                                 'Fine tuned imports diagram',
                                 self.parent().onImportDgmTuned )
         return self.diagramsMenu
-
-    def __initCalltips( self ):
-        " Initialize calltips "
-        self.setCallTipsBackgroundColor( GlobalData().skin.calltipPaper )
-        self.setCallTipsForegroundColor( GlobalData().skin.calltipColor )
-        self.setCallTipsHighlightColor( GlobalData().skin.calltipHighColor )
-        self.setCallTipsStyle( QsciScintilla.CallTipsNoContext )
-        return
 
     def contextMenuEvent( self, event ):
         " Called just before showing a context menu "
@@ -1567,35 +1560,47 @@ class TextEditor( ScintillaWrapper ):
 
     def onShowCalltip( self ):
         " The user requested show calltip "
+        if self.__calltip is not None:
+            self.__resetCalltip()
+            return True
         if self.parent().getFileType() not in [ PythonFileType,
                                                 Python3FileType ]:
             return True
 
         callPosition = getCallPosition( self )
         if callPosition is None:
+            self.__resetCalltip()
             GlobalData().mainWindow.showStatusBarMessage( "Not a function call" )
             return True
 
         calltip, docstring = getCalltipAndDoc( self.parent().getFileName(),
                                                self, callPosition, True )
         if calltip is None:
+            self.__resetCalltip()
             GlobalData().mainWindow.showStatusBarMessage( "Calltip is not found" )
             return True
 
         currentPos = self.currentPosition()
         commas = getCommaCount( self, callPosition, currentPos )
-        calltip = str( calltip )
+        self.__calltip = Calltip( self )
+        self.__calltip.showCalltip( str( calltip ), commas )
 
         # Memorize how the tooltip was shown
         self.__callPosition = callPosition
-
-        self.showCalltip( currentPos, calltip )
         return True
 
     def __resetCalltip( self ):
         " Hides the calltip and resets how it was shown "
-        self.hideCalltip()
+        if self.__calltip is not None:
+            self.__calltip.hide()
+            self.__calltip = None
         self.__callPosition = None
+        return
+
+    def resizeCalltip( self ):
+        " Resizes the calltip if so "
+        if self.__calltip:
+            self.__calltip.resize()
         return
 
     def onOccurences( self ):
@@ -2849,6 +2854,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             self.__importsBar.resize()
         if not self.__outsideChangesBar.isHidden():
             self.__outsideChangesBar.resize()
+        self.__editor.resizeCalltip()
         return
 
     def showOutsideChangesBar( self, allEnabled ):
