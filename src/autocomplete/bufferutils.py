@@ -564,34 +564,8 @@ def __isDefinition( editor, pos ):
     """ Used as a sanity check together with getCallPosition(...).
         It could be the case that the detected call is a definition of a
         class or a function and thus they should not have a calltip """
-    pos = editor.positionBefore( pos )
-    while pos >= 0:
-        ch = editor.charAt( pos )
-        if ch.isalnum() or ch == '_':
-            pos = editor.positionBefore( pos )
-            continue
-        break
-
-    if pos <= 0:
-        return False
-
-    # Here name skipped. Now skip the whitespaces
-    while pos >= 0:
-        ch = editor.charAt( pos )
-        if ch in [ ' ', '\t', '\n', '\r', '\\' ]:
-            pos = editor.positionBefore( pos )
-            continue
-        break
-
-    if pos <= 0:
-        return False
-
-    # Here: pos points to the last character of something before the identifier
-    # Test that it is not a 'class' or 'def'
-    word = getWordAtPosition( editor, pos )
-    if word == 'def' or  word == 'class':
-        return True
-    return False
+    return editor.styleAt( pos ) in [ QsciLexerPython.ClassName,
+                                      QsciLexerPython.FunctionMethodName ]
 
 
 def getCommaCount( editor, startPos, endPos ):
