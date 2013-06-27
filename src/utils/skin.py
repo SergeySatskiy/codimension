@@ -23,7 +23,7 @@
 " Skins support "
 
 import logging, os, ConfigParser
-from PyQt4.QtGui import QColor, QFont
+from PyQt4.QtGui import QColor, QFont, QFontComboBox
 from csscache import parseSingleCSS
 
 
@@ -51,6 +51,16 @@ def buildFont( fontAsString ):
     font = QFont()
     font.fromString( fontAsString )
     return font
+
+
+def getMonospaceFontList():
+    " Provides a list of strings with the system installed monospace fonts "
+    result = []
+    combo = QFontComboBox()
+    combo.setFontFilters( QFontComboBox.MonospacedFonts )
+    for index in xrange( combo.count() ):
+        result.append( str( combo.itemText( index ) ) )
+    return result
 
 
 class StyleParameters:
