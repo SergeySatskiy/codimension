@@ -1581,8 +1581,10 @@ class TextEditor( ScintillaWrapper ):
                                                 Python3FileType ]:
             return True
 
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         callPosition = getCallPosition( self )
         if callPosition is None:
+            QApplication.restoreOverrideCursor()
             self.__resetCalltip()
             GlobalData().mainWindow.showStatusBarMessage( "Not a function call" )
             return True
@@ -1590,6 +1592,7 @@ class TextEditor( ScintillaWrapper ):
         calltip, docstring = getCalltipAndDoc( self.parent().getFileName(),
                                                self, callPosition, True )
         if calltip is None:
+            QApplication.restoreOverrideCursor()
             self.__resetCalltip()
             GlobalData().mainWindow.showStatusBarMessage( "Calltip is not found" )
             return True
@@ -1598,6 +1601,7 @@ class TextEditor( ScintillaWrapper ):
         commas = getCommaCount( self, callPosition, currentPos )
         self.__calltip = Calltip( self )
         self.__calltip.showCalltip( str( calltip ), commas )
+        QApplication.restoreOverrideCursor()
 
         # Memorize how the tooltip was shown
         self.__callPosition = callPosition
@@ -1625,13 +1629,15 @@ class TextEditor( ScintillaWrapper ):
             if currentPos < self.__callPosition:
                 self.__resetCalltip()
                 return
-            callPosition = getCallPosition( self )
+            QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+            callPosition = getCallPosition( self, currentPos )
             if callPosition != self.__callPosition:
                 self.__resetCalltip()
-                return
-            # It is still the same call, check the commas
-            commas = getCommaCount( self, callPosition, currentPos )
-            self.__calltip.highlightParameter( commas )
+            else:
+                # It is still the same call, check the commas
+                commas = getCommaCount( self, callPosition, currentPos )
+                self.__calltip.highlightParameter( commas )
+            QApplication.restoreOverrideCursor()
         return
 
     def onOccurences( self ):
