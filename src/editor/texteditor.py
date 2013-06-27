@@ -26,6 +26,7 @@
 import os.path, logging, urllib2, socket
 from subprocess import Popen
 import lexer
+from PyQt4.Qsci import QsciLexerPython
 from scintillawrap import ScintillaWrapper
 from PyQt4.QtCore import ( Qt, QFileInfo, SIGNAL, QSize, QUrl, QTimer,
                            QVariant, QRect, QEvent, QPoint, QModelIndex )
@@ -1045,6 +1046,12 @@ class TextEditor( ScintillaWrapper ):
             int( event.modifiers() ) == (Qt.ControlModifier + Qt.ShiftModifier):
             event.accept()
 
+        elif key == Qt.Key_ParenLeft:
+            if Settings().editorCalltips:
+                ScintillaWrapper.keyPressEvent( self, event )
+                self.onShowCalltip( False, False )
+            else:
+                ScintillaWrapper.keyPressEvent( self, event )
         else:
             # Special keyboard keys are delivered as 0 values
             if key != 0:
@@ -1548,7 +1555,7 @@ class TextEditor( ScintillaWrapper ):
                                           self )
         QApplication.restoreOverrideCursor()
         if location is None:
-            GlobalData().mainWindow.showStatusBarMessage( \
+            GlobalData().mainWindow.showStatusBarMessage(
                                             "Definition is not found" )
         else:
             if location.resource is None:
@@ -1572,7 +1579,7 @@ class TextEditor( ScintillaWrapper ):
             GlobalData().mainWindow.jumpToLine( context.getLastScopeLine() )
         return True
 
-    def onShowCalltip( self ):
+    def onShowCalltip( self, showMessage = True, showKeyword = True ):
         " The user requested show calltip "
         if self.__calltip is not None:
             self.__resetCalltip()
@@ -1586,7 +1593,14 @@ class TextEditor( ScintillaWrapper ):
         if callPosition is None:
             QApplication.restoreOverrideCursor()
             self.__resetCalltip()
-            GlobalData().mainWindow.showStatusBarMessage( "Not a function call" )
+            if showMessage:
+                GlobalData().mainWindow.showStatusBarMessage( "Not a function call" )
+            return True
+
+        if not showKeyword and \
+           self.styleAt( callPosition ) == QsciLexerPython. Keyword:
+            QApplication.restoreOverrideCursor()
+            self.__resetCalltip()
             return True
 
         calltip, docstring = getCalltipAndDoc( self.parent().getFileName(),
@@ -1594,7 +1608,8 @@ class TextEditor( ScintillaWrapper ):
         if calltip is None:
             QApplication.restoreOverrideCursor()
             self.__resetCalltip()
-            GlobalData().mainWindow.showStatusBarMessage( "Calltip is not found" )
+            if showMessage:
+                GlobalData().mainWindow.showStatusBarMessage( "Calltip is not found" )
             return True
 
         currentPos = self.currentPosition()
