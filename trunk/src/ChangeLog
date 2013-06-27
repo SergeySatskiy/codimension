@@ -1,5 +1,7 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* New feature: editor calltips (Ctrl+/) and auto calltips (switchable via the
+  Options menu) when '(' is entered.
 * Fix: crash on Ubuntu 12.04 (possibly on other platforms too) in case of some
   styles. Issue #388.
 * Fix: extra commas in the 'author' field when a new project is created on
