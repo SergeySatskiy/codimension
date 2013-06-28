@@ -274,7 +274,9 @@ augassign       : '+='
                 | '//='
                 ;
 
-print_stmt      : 'print' ( printlist | '>>' printlist )?
+// Python 3 (or python 2 with future imported) can have print as a function
+// so allow both of them.
+print_stmt      : 'print' ( (( printlist | '>>' printlist )?) | (LPAREN arglist? RPAREN) )
                     -> PRINT_STMT
                 ;
 

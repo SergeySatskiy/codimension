@@ -237,6 +237,21 @@ class CDMBriefParserTest( unittest.TestCase ):
                          "wrong stop of the parser test failed" )
         return
 
+    def test_print( self ):
+        " Test print statements "
+        pythonFile = self.dir + "print.py"
+        info = cdmbriefparser.getBriefModuleInfoFromFile( pythonFile )
+        if not info.isOK:
+            outFileName = pythonFile.replace( ".py", ".out" )
+            outFile = open( outFileName, "w" )
+            for item in info.errors:
+                outFile.write( "\n" + item )
+            for item in info.lexerErrors:
+                outFile.write( "\n" + item )
+            outFile.close()
+        self.failUnless( info.isOK == True )
+        return
+
     def test_one_comment( self ):
         " Test for a file which consists of a single comment line "
 
