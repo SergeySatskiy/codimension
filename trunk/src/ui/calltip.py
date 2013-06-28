@@ -142,12 +142,16 @@ class Calltip( QFrame ):
             self.__paramPositions = None
             return
 
-        self.__paramPositions = []
+        try:
+            begin = self.__text.index( '(' ) + 1
+        except:
+            self.__paramPositions = None
+            return
 
-        begin = self.__text.index( '(' ) + 1
+        self.__paramPositions = []
         lastIndex = len( self.__text ) - 1
         index = begin
-        level = 0
+        level = 0               # Unconditional skip of commas
         singleQuote = False
         doubleQuote = False
         while index <= lastIndex:
@@ -160,23 +164,81 @@ class Calltip( QFrame ):
                 singleQuote = False
             elif ch == '"':
                 doubleQuote = False
-            elif ch == ',' and level == 0:
-                self.__paramPositions.append( (begin, index - 1) )
-                # Skip till the beginning of the next parameter - it must be there
-                index += 1
-                while self.__text[ index ].isspace():
-                    index += 1
-                begin = index
-                continue
-            elif ch in [ '(', '[', '{' ]:
+            elif ch in [ '(', '{' ]:
                 level += 1
-            elif ch in [ ')', ']', '}' ]:
+            elif ch in [ ')', '}' ]:
                 level -= 1
                 if level == -1:
                     # Closing bracket
                     if index > begin:
                         self.__paramPositions.append( (begin, index - 1) )
                     break
+            elif ch == '[':
+                if level > 0:
+                    index += 1
+                    continue
+                # if a previous char is '=' then it is a default paam
+                checkIndex = index - 1
+                while self.__text[ checkIndex ].isspace():
+                    checkIndex -= 1
+                if self.__text[ checkIndex ] == '=':
+                    level += 1
+                    index += 1
+                    continue
+
+                if self.__text[ checkIndex ] == '(':
+                    # The very first round bracket
+                    index = index + 1
+                    begin = index
+                    continue
+
+                # '[' after a parameter name
+                if index > begin:
+                    self.__paramPositions.append( (begin, index - 1) )
+                    # The next meaningfull character is comma or an identifier
+                    index += 1
+                    while index <= lastIndex and self.__text[ index ].isspace():
+                        index += 1
+                    if self.__text[ index ] == ',':
+                        index += 1
+                    index += 1
+                    begin = index
+                    continue
+
+                # I don't know what it is
+                self.__paramPositions = None
+                return
+
+            elif ch == ']':
+                if level > 0:
+                    level -= 1
+                    index += 1
+                    continue
+
+                # This must be an optional argument closing bracket
+                checkIndex = index - 1
+                while self.__text[ checkIndex ].isspace():
+                    checkIndex -= 1
+
+                if self.__text[ checkIndex ] == ']':
+                    index += 1
+                    continue
+
+                # Need to add and this is the last parameter
+                if index > begin:
+                    self.__paramPositions.append( (begin, index - 1) )
+                break
+
+            elif ch == ',':
+                if level == 0:
+                   self.__paramPositions.append( (begin, index - 1) )
+                # Skip till the beginning of the next parameter - it must be there
+                index += 1
+                while index <= lastIndex and self.__text[ index ].isspace():
+                    index += 1
+                begin = index
+                continue
+
             index += 1
 
         if len( self.__paramPositions ) == 0:
