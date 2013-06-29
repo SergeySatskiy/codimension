@@ -148,6 +148,11 @@ class Calltip( QFrame ):
             self.__paramPositions = None
             return
 
+        if self.__text[ begin ] == '.':
+            # Special case for f(...)
+            self.__paramPositions = None
+            return
+
         self.__paramPositions = []
         lastIndex = len( self.__text ) - 1
         index = begin
