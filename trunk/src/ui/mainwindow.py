@@ -294,7 +294,7 @@ class CodimensionMainWindow( QMainWindow ):
         # replace logging streamer to self.stdout
         logging.root.handlers = []
         handler = logging.StreamHandler( sys.stdout )
-        handler.setFormatter( \
+        handler.setFormatter(
             logging.Formatter( "%(levelname) -10s %(asctime)s %(message)s",
             None ) )
         logging.root.addHandler( handler )
@@ -1075,12 +1075,12 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__optionsAboutToShow )
 
         self.__ideTemplateMenu = QMenu( "IDE-wide &template", self )
-        self.__ideCreateTemplateAct = self.__ideTemplateMenu.addAction( \
+        self.__ideCreateTemplateAct = self.__ideTemplateMenu.addAction(
                                     PixmapCache().getIcon( 'generate.png' ),
                                     '&Create' )
         self.connect( self.__ideCreateTemplateAct, SIGNAL( 'triggered()' ),
                       self.__onCreateIDETemplate )
-        self.__ideEditTemplateAct = self.__ideTemplateMenu.addAction( \
+        self.__ideEditTemplateAct = self.__ideTemplateMenu.addAction(
                                     PixmapCache().getIcon( 'edit.png' ),
                                     '&Edit' )
         self.connect( self.__ideEditTemplateAct, SIGNAL( 'triggered()' ),
@@ -1293,13 +1293,13 @@ class CodimensionMainWindow( QMainWindow ):
 
         # Imports diagram button and its menu
         importsMenu = QMenu( self )
-        importsDlgAct = importsMenu.addAction( \
+        importsDlgAct = importsMenu.addAction(
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
                                 'Fine tuned imports diagram' )
         self.connect( importsDlgAct, SIGNAL( 'triggered()' ),
                       self.__onImportDgmTuned )
         self.importsDiagramButton = QToolButton( self )
-        self.importsDiagramButton.setIcon( \
+        self.importsDiagramButton.setIcon(
                             PixmapCache().getIcon( 'importsdiagram.png' ) )
         self.importsDiagramButton.setToolTip( 'Generate imports diagram' )
         self.importsDiagramButton.setPopupMode( QToolButton.DelayedPopup )
@@ -1310,13 +1310,13 @@ class CodimensionMainWindow( QMainWindow ):
 
         # Run project button and its menu
         runProjectMenu = QMenu( self )
-        runProjectAct = runProjectMenu.addAction( \
+        runProjectAct = runProjectMenu.addAction(
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
                                 'Set run parameters' )
         self.connect( runProjectAct, SIGNAL( 'triggered()' ),
                       self.__onRunProjectSettings )
         self.runProjectButton = QToolButton( self )
-        self.runProjectButton.setIcon( \
+        self.runProjectButton.setIcon(
                             PixmapCache().getIcon( 'run.png' ) )
         self.runProjectButton.setToolTip( 'Project is not loaded' )
         self.runProjectButton.setPopupMode( QToolButton.DelayedPopup )
@@ -1327,13 +1327,13 @@ class CodimensionMainWindow( QMainWindow ):
 
         # profile project button and its menu
         profileProjectMenu = QMenu( self )
-        profileProjectAct = profileProjectMenu.addAction( \
+        profileProjectAct = profileProjectMenu.addAction(
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
                                 'Set profile parameters' )
         self.connect( profileProjectAct, SIGNAL( 'triggered()' ),
                       self.__onProfileProjectSettings )
         self.profileProjectButton = QToolButton( self )
-        self.profileProjectButton.setIcon( \
+        self.profileProjectButton.setIcon(
                             PixmapCache().getIcon( 'profile.png' ) )
         self.profileProjectButton.setToolTip( 'Project is not loaded' )
         self.profileProjectButton.setPopupMode( QToolButton.DelayedPopup )
@@ -1345,13 +1345,13 @@ class CodimensionMainWindow( QMainWindow ):
 
         # Debug project button and its menu
         debugProjectMenu = QMenu( self )
-        debugProjectAct = debugProjectMenu.addAction( \
+        debugProjectAct = debugProjectMenu.addAction(
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
                                 'Set debug parameters' )
         self.connect( debugProjectAct, SIGNAL( 'triggered()' ),
                       self.__onDebugProjectSettings )
         self.debugProjectButton = QToolButton( self )
-        self.debugProjectButton.setIcon( \
+        self.debugProjectButton.setIcon(
                             PixmapCache().getIcon( 'debugger.png' ) )
         self.debugProjectButton.setToolTip( 'Project is not loaded' )
         self.debugProjectButton.setPopupMode( QToolButton.DelayedPopup )
@@ -1361,17 +1361,17 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onDebugProject )
         self.debugProjectButton.setVisible( True )
 
-        packageDiagramButton = QAction( \
+        packageDiagramButton = QAction(
                 PixmapCache().getIcon( 'packagediagram.png' ),
                 'Generate package diagram', self )
         packageDiagramButton.setEnabled( False )
         packageDiagramButton.setVisible( False )
-        applicationDiagramButton = QAction( \
+        applicationDiagramButton = QAction(
                 PixmapCache().getIcon( 'applicationdiagram.png' ),
                 'Generate application diagram', self )
         applicationDiagramButton.setEnabled( False )
         applicationDiagramButton.setVisible( False )
-        neverUsedButton = QAction( \
+        neverUsedButton = QAction(
                 PixmapCache().getIcon( 'neverused.png' ),
                 'Analysis for never used variables, functions, classes', self )
         neverUsedButton.setEnabled( False )
@@ -1379,18 +1379,18 @@ class CodimensionMainWindow( QMainWindow ):
 
         # pylint button
         self.__existentPylintRCMenu = QMenu( self )
-        editAct = self.__existentPylintRCMenu.addAction( \
+        editAct = self.__existentPylintRCMenu.addAction(
                                     PixmapCache().getIcon( 'edit.png' ),
                                     'Edit project-specific pylintrc' )
         self.connect( editAct, SIGNAL( 'triggered()' ), self.__onEditPylintRC )
         self.__existentPylintRCMenu.addSeparator()
-        delAct = self.__existentPylintRCMenu.addAction( \
+        delAct = self.__existentPylintRCMenu.addAction(
                                     PixmapCache().getIcon( 'trash.png' ),
                                     'Delete project-specific pylintrc' )
         self.connect( delAct, SIGNAL( 'triggered()' ), self.__onDelPylintRC )
 
         self.__absentPylintRCMenu = QMenu( self )
-        genAct = self.__absentPylintRCMenu.addAction( \
+        genAct = self.__absentPylintRCMenu.addAction(
                                     PixmapCache().getIcon( 'generate.png' ),
                                     'Create project-specific pylintrc' )
         self.connect( genAct, SIGNAL( 'triggered()' ), self.__onGenPylintRC )
@@ -1405,31 +1405,31 @@ class CodimensionMainWindow( QMainWindow ):
                       self.pylintButtonClicked )
 
         # pymetrics button
-        self.__pymetricsButton = QAction( \
+        self.__pymetricsButton = QAction(
                                     PixmapCache().getIcon( 'metrics.png' ),
                                     'Project metrics', self )
         self.connect( self.__pymetricsButton, SIGNAL( 'triggered()' ),
                       self.pymetricsButtonClicked )
 
-        self.linecounterButton = QAction( \
+        self.linecounterButton = QAction(
                                     PixmapCache().getIcon( 'linecounter.png' ),
                                     'Project line counter', self )
         self.connect( self.linecounterButton, SIGNAL( 'triggered()' ),
                       self.linecounterButtonClicked )
 
-        self.__findInFilesButton = QAction( \
+        self.__findInFilesButton = QAction(
                                     PixmapCache().getIcon( 'findindir.png' ),
                                     'Find in files (Ctrl+Shift+F)', self )
         self.connect( self.__findInFilesButton, SIGNAL( 'triggered()' ),
                       self.findInFilesClicked )
 
-        self.__findNameButton = QAction( \
+        self.__findNameButton = QAction(
                                     PixmapCache().getIcon( 'findname.png' ),
                                     'Find name in project (Alt+Shift+S)', self )
         self.connect( self.__findNameButton, SIGNAL( 'triggered()' ),
                       self.findNameClicked )
 
-        self.__findFileButton = QAction( \
+        self.__findFileButton = QAction(
                                     PixmapCache().getIcon( 'findfile.png' ),
                                     'Find project file (Alt+Shift+O)', self )
         self.connect( self.__findFileButton, SIGNAL( 'triggered()' ),
@@ -1628,7 +1628,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.linecounterButton.setEnabled( projectLoaded )
         self.__pylintButton.setEnabled( projectLoaded and
                                         GlobalData().pylintAvailable )
-        self.importsDiagramButton.setEnabled( projectLoaded and \
+        self.importsDiagramButton.setEnabled( projectLoaded and
                                               GlobalData().graphvizAvailable )
         self.__pymetricsButton.setEnabled( projectLoaded )
         self.__findNameButton.setEnabled( projectLoaded )
@@ -1828,7 +1828,7 @@ class CodimensionMainWindow( QMainWindow ):
         prj.setTabsStatus( editorsManager.getTabsStatus() )
         editorsManager.closeAll()
 
-        GlobalData().project.createNew( \
+        GlobalData().project.createNew(
                         dialog.absProjectFileName,
                         str( dialog.scriptEdit.text() ).strip(),
                         importDirs,
@@ -2015,11 +2015,31 @@ class CodimensionMainWindow( QMainWindow ):
         self.__bottomSideBar.raise_()
         return
 
+    def __calltipDisplayable( self, calltip ):
+        " True if calltip is displayable "
+        if calltip is None:
+            return False
+        if calltip.strip() == "":
+            return False
+        return True
+
+    def __docstringDisplayable( self, docstring ):
+        " True if docstring is displayable "
+        if docstring is None:
+            return False
+        if isinstance( docstring, dict ):
+            if docstring[ "docstring" ].strip() == "":
+                return False
+            return True
+        if docstring.strip() == "":
+            return False
+        return True
+
     def showTagHelp( self, calltip, docstring ):
         " Shows a tag help "
-        if calltip is None or calltip == "":
-            if docstring is None or docstring == "":
-                return
+        if not self.__calltipDisplayable( calltip ) and \
+           not self.__docstringDisplayable( docstring ):
+            return
 
         self.__bottomSideBar.show()
         self.__bottomSideBar.setCurrentWidget( self.__tagHelpViewer )
@@ -2258,7 +2278,7 @@ class CodimensionMainWindow( QMainWindow ):
         " Triggered to edit IDE pylint "
         fileName = getIDEPylintFile()
         if not os.path.exists( fileName ):
-            logging.error( "Cannot find the IDE-wide pylintrc (" + \
+            logging.error( "Cannot find the IDE-wide pylintrc (" +
                            fileName + ")" )
             return
         self.openFile( fileName, -1 )
@@ -2431,7 +2451,7 @@ class CodimensionMainWindow( QMainWindow ):
             return
 
         try:
-            dlg = ProfilingProgressDialog( \
+            dlg = ProfilingProgressDialog(
                         GlobalData().project.getProjectScript(), self )
             dlg.exec_()
         except Exception, exc:
@@ -2471,8 +2491,8 @@ class CodimensionMainWindow( QMainWindow ):
         " Checks and logs error message if so. Returns True if all is OK "
         if not GlobalData().isProjectScriptValid():
             self.updateRunDebugButtons()
-            logging.error( "Invalid project script. " \
-                           "Use project properties dialog to " \
+            logging.error( "Invalid project script. "
+                           "Use project properties dialog to "
                            "select existing python script." )
             return False
         return True
