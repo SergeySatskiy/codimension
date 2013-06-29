@@ -26,13 +26,120 @@ it breaks the work of Sphinx on the Object Inspector.
 
 import inspect
 import rope
+import re
 from rope.base import pycore
 from rope.base import builtins, libutils, pyobjects
 import os.path as osp
 from rope.contrib import codeassist
-from spyderlib.utils.dochelpers import getdoc
 from rope.base import exceptions
 
+
+
+def getsignaturesfromtext(text, objname):
+    """Get object signatures from text (object documentation)
+    Return a list containing a single string in most cases
+    Example of multiple signatures: PyQt4 objects"""
+    #FIXME: the following regexp is not working with this example of docstring:
+    # QObject.connect(QObject, SIGNAL(), QObject, SLOT(), Qt.ConnectionType=Qt.AutoConnection) -> bool QObject.connect(QObject, SIGNAL(), callable, Qt.ConnectionType=Qt.AutoConnection) -> bool QObject.connect(QObject, SIGNAL(), SLOT(), Qt.ConnectionType=Qt.AutoConnection) -> bool
+
+    # Note: codimension does not use this function for PyQt objects and
+    #       functions. Instead it redirects the calltip requests to the
+    #       original rope code and then extracts signatures from there.
+    # The rest of the cases, e.g. numpy is handled here.
+    if isinstance(text, dict):
+        text = text.get('docstring', '')
+    return re.findall(objname+r'\([^\)]+\)', text)
+
+
+def getdoc( obj ):
+    """
+    Return text documentation from an object. This comes in a form of
+    dictionary with four keys:
+
+    name:
+      The name of the inspected object
+    argspec:
+      It's argspec
+    note:
+      A phrase describing the type of object (function or method) we are
+      inspecting, and the module it belongs to.
+    docstring:
+      It's docstring
+    """
+   
+    docstring = inspect.getdoc( obj ) or inspect.getcomments( obj ) or ''
+   
+    # Most of the time doc will only contain ascii characters, but there are
+    # some docstrings that contain non-ascii characters. Not all source files
+    # declare their encoding in the first line, so querying for that might not
+    # yield anything, either. So assume the most commonly used
+    # multi-byte file encoding (which also covers ascii).
+    try:
+        docstring = unicode( docstring )
+    except:
+        pass
+   
+    # Doc dict keys
+    doc = { 'name': '',
+            'argspec': '',
+            'note': '',
+            'docstring': docstring}
+   
+    if callable( obj ):
+        try:
+            name = obj.__name__
+        except AttributeError:
+            doc[ 'docstring' ] = docstring
+            return doc
+        if inspect.ismethod( obj ):
+            imclass = obj.im_class
+            if obj.im_self is not None:
+                doc[ 'note' ] = 'Method of %s instance' \
+                                % obj.im_self.__class__.__name__
+            else:
+                doc[ 'note' ] = 'Unbound %s method' % imclass.__name__
+            obj = obj.im_func
+        elif hasattr( obj, '__module__' ):
+            doc[ 'note' ] = 'Function of %s module' % obj.__module__
+        else:
+            doc[ 'note' ] = 'Function'
+        doc[ 'name' ] = obj.__name__
+        if inspect.isfunction( obj ):
+            args, varargs, varkw, defaults = inspect.getargspec( obj )
+            doc[ 'argspec' ] = inspect.formatargspec( args, varargs, varkw,
+                                                      defaults,
+                                                      formatvalue = lambda o:'='+repr(o))
+            if name == '<lambda>':
+                doc[ 'name' ] = name + ' lambda '
+                doc[ 'argspec' ] = doc[ 'argspec' ][ 1 : -1 ] # remove parentheses
+        else:
+            # Try to extract the argspec from the first docstring line
+            docstring_lines = doc[ 'docstring' ].split( "\n" )
+            first_line = docstring_lines[ 0 ].strip()
+            argspec = getsignaturesfromtext( first_line, '' )
+            if argspec:
+                doc[ 'argspec' ] = argspec[ 0 ]
+                # Many scipy and numpy docstrings begin with a function
+                # signature on the first line. This ends up begin redundant
+                # when we are using title and argspec to create the
+                # rich text "Definition:" field. We'll carefully remove this
+                # redundancy but only under a strict set of conditions:
+                # Remove the starting charaters of the 'doc' portion *iff*
+                # the non-whitespace characters on the first line
+                # match *exactly* the combined function title
+                # and argspec we determined above.
+                name_and_argspec = doc[ 'name' ] + doc[ 'argspec' ]
+                if first_line == name_and_argspec:
+                    doc[ 'docstring' ] = doc[ 'docstring' ].replace(
+                                              name_and_argspec, '', 1 ).lstrip()
+            else:
+                doc[ 'argspec' ] = '(...)'
+       
+        # Remove self from argspec
+        argspec = doc[ 'argspec' ]
+        doc[ 'argspec' ] = argspec.replace( '(self)', '()' ).replace( '(self, ', '(' )
+       
+    return doc
 
 def applyRopePatch():
     """Monkey patching rope for better performance"""
@@ -90,7 +197,7 @@ def applyRopePatch():
             if not inspect.isbuiltin(self.pyobject):
                 _lines, lineno = inspect.getsourcelines(self.pyobject.builtin)
                 path = inspect.getfile(self.pyobject.builtin)
-                if path.endswith('pyc') and osp.isfile(path[:-1]):
+                if (path.endswith('pyc') or path.endswith('pyo')) and osp.isfile(path[:-1]):
                     path = path[:-1]
                 pycore = self._pycore()
                 if pycore and pycore.project:
@@ -119,11 +226,22 @@ def applyRopePatch():
             buitin = pyobject.builtin
             return getdoc(buitin)
 
+        def __isPyQtObject( self, pyobject ):
+            "Returns True if it was a PyQt object "
+            try:
+                currentObject = pyobject
+                while hasattr( currentObject, "_parent" ):
+                    currentObject = currentObject._parent
+                return currentObject.name.startswith( "PyQt" )
+            except:
+                return False
+
         def get_doc(self, pyobject):
             if hasattr(pyobject, 'builtin'):
-                doc = self.get_builtin_doc(pyobject)
-                return doc
-            elif isinstance(pyobject, builtins.BuiltinModule):
+                if not self.__isPyQtObject( pyobject ):
+                    doc = self.get_builtin_doc(pyobject)
+                    return doc
+            if isinstance(pyobject, builtins.BuiltinModule):
                 docstring = pyobject.get_doc()
                 if docstring is not None:
                     docstring = self._trim_docstring(docstring)
@@ -138,20 +256,21 @@ def applyRopePatch():
                        'docstring': docstring
                        }
                 return doc
-            elif isinstance(pyobject, pyobjects.AbstractFunction):
+            if isinstance(pyobject, pyobjects.AbstractFunction):
                 return self._get_function_docstring(pyobject)
-            elif isinstance(pyobject, pyobjects.AbstractClass):
+            if isinstance(pyobject, pyobjects.AbstractClass):
                 return self._get_class_docstring(pyobject)
-            elif isinstance(pyobject, pyobjects.AbstractModule):
+            if isinstance(pyobject, pyobjects.AbstractModule):
                 return self._trim_docstring(pyobject.get_doc())
-            elif pyobject.get_doc() is not None:  # Spyder patch
+            if pyobject.get_doc() is not None:  # Spyder patch
                 return self._trim_docstring(pyobject.get_doc())
             return None
 
         def get_calltip(self, pyobject, ignore_unknown=False, remove_self=False):
             if hasattr(pyobject, 'builtin'):
-                doc = self.get_builtin_doc(pyobject)
-                return doc['name'] + doc['argspec']
+                if not self.__isPyQtObject( pyobject ):
+                    doc = self.get_builtin_doc(pyobject)
+                    return doc['name'] + doc['argspec']
             try:
                 if isinstance(pyobject, pyobjects.AbstractClass):
                     pyobject = pyobject['__init__'].get_object()
