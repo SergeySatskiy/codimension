@@ -124,7 +124,8 @@ def __getImportedObjects( moduleName, fileName ):
     moduleName = str( moduleName )
     if moduleName in __systemwideModules:
         modulePath = __systemwideModules[ moduleName ]
-        if modulePath is None or moduleName in [ "os", "sys", "numpy" ]:
+        if modulePath is None or moduleName in [ "os", "sys",
+                                                 "numpy", "scipy" ]:
             # it could be a built-in module
             return getImportNames( moduleName )
     else:

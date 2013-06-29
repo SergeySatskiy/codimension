@@ -9,7 +9,7 @@
   Ubuntu. Issue #387.
 * Fix: extra long signatures in a context help do not limit min window width.
   Issue #386.
-* Better completion for numpy names
+* Better completion for numpy and scipy names
 * Including scipy for better rope help
 
 2013 Jun 18 Sergey Satskiy <sergey.satskiy@gmail.com>
