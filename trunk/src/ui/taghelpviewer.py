@@ -150,20 +150,46 @@ class TagHelpViewer( QWidget ):
         self.__menu.popup( QCursor.pos() )
         return
 
+    def __calltipDisplayable( self, calltip ):
+        " True if calltip is displayable "
+        if calltip is None:
+            return False
+        if calltip.strip() == "":
+            return False
+        return True
+
+    def __docstringDisplayable( self, docstring ):
+        " True if docstring is displayable "
+        if docstring is None:
+            return False
+        if isinstance( docstring, dict ):
+            if docstring[ "docstring" ].strip() == "":
+                return False
+            return True
+        if docstring.strip() == "":
+            return False
+        return True
+
     def display( self, calltip, docstring ):
         " Displays the given help information "
-        self.__textEdit.clear()
 
-        self.__isEmpty = False
-        if calltip is None or calltip == "":
-            if docstring is None or docstring == "":
-                self.__isEmpty = True
+        calltipDisplayable = self.__calltipDisplayable( calltip )
+        docstringDisplayable = self.__docstringDisplayable( docstring )
+        self.__isEmpty = True
+        if calltipDisplayable or docstringDisplayable:
+            self.__isEmpty = False
 
-        if calltip is not None and calltip != "":
-            self.__header.setText( "Signature: " + calltip )
+        if calltipDisplayable:
+            if '\n' in calltip:
+                calltip = calltip.split( '\n' )[ 0 ]
+            self.__header.setText( "Signature: " + calltip.strip() )
         else:
-            self.__header.setText( "Signature: none" )
-        if docstring is not None and docstring != "":
+            self.__header.setText( "Signature: n/a" )
+
+        self.__textEdit.clear()
+        if docstringDisplayable:
+            if isinstance( docstring, dict ):
+                docstring = docstring[ "docstring" ]
             self.__textEdit.insertPlainText( docstring )
 
         self.__updateToolbarButtons()
