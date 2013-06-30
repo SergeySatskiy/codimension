@@ -1,5 +1,5 @@
 Name: codimension
-Version: 2.0.1
+Version: 2.0.2
 Release: 2
 License: GPLv3+
 Group: Development/Tools/IDE
@@ -78,6 +78,19 @@ update-desktop-database -q
 %{_datadir}/pixmaps/*.xpm
 
 %changelog
+* Sun Jun 30 2013 Ilya Loginov <isloginov@gmail.com> - 2.0.2-2
+- Release 2.0.2
+- New feature: editor calltips (Ctrl+/) and auto calltips (switchable via the
+  Options menu) when '(' is entered.
+- Fix: crash on Ubuntu 12.04 (possibly on other platforms too) in case of some
+  styles. Issue #388.
+- Fix: extra commas in the 'author' field when a new project is created on
+  Ubuntu. Issue #387.
+- Fix: extra long signatures in a context help do not limit min window width.
+  Issue #386.
+- Better completion for numpy and scipy names
+- Including scipy for better rope help
+
 * Tue Jun 18 2013 Ilya Loginov <isloginov@gmail.com> - 2.0.1-1
 - Upstream changes for release 2.0.1:
 - Replacing the 'file' utilities calls with magic module included in thirdparty
