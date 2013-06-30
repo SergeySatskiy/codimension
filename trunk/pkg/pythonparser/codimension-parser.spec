@@ -1,5 +1,5 @@
 Name: codimension-parser
-Version: 1.6.1
+Version: 1.6.2
 Release: 1
 License: GPLv3+
 Group: Development/Languages
@@ -40,6 +40,10 @@ find $RPM_BUILD_ROOT -name "*.la" -exec rm -f {} ';'
 %{python_sitearch}/*.egg-info
 
 %changelog
+* Sun Jun 30 2013 Sergey Satskiy <sergey.satskiy@gmail.com> - 1.6.2-1
+- Prepared for release v.1.6.2
+- Bug fix: parser was not able to parse python 3 style print() functions
+
 * Tue Jun 18 2013 Sergey Satskiy <sergey.satskiy@gmail.com> - 1.6.1-2
 - Bug fix: parser did not report errors if didn't reach the end
 - Increased performance due to fixed size arrays

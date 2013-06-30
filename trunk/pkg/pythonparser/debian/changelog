@@ -1,3 +1,10 @@
+codimension-parser (1.6.2-2) precise; urgency=low
+
+ * Prepared for release v.1.6.2
+ * Bug fix: parser was not able to parse python 3 style print() functions
+
+ -- Sergey <sergey.satskiy@gmail.com>  Sun, 30 Jun 2013 21:25:00 +0400
+
 codimension-parser (1.6.1-2) precise; urgency=low
 
   * Bug fix: parser did not report errors if didn't reach the end
