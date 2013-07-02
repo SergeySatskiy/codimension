@@ -241,6 +241,21 @@ class PyMetrics( object ):
         self.__metric = None
         return
 
+    def getVersion( self ):
+        " Provides the pymetrics version "
+        try:
+            for line in self.__run( [ self.pymetricsElf,
+                                      '--version' ] ).split( '\n' ):
+                line = line.strip()
+                if line:
+                    parts = line.split()
+                    if len( parts ) == 2 and \
+                       parts[ 0 ].startswith( 'pymetrics' ) and \
+                       parts[ 1 ][ 0 ].isdigit():
+                        return parts[ 1 ]
+        except:
+            pass
+        return None
 
     def analyzeFile( self, path ):
         " run pymetrics for a certain file or files list "
