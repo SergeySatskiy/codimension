@@ -23,7 +23,7 @@
 
 """ codimension settings """
 
-import os, os.path, ConfigParser, logging
+import os, os.path, ConfigParser, logging, sys
 from PyQt4.QtCore import QObject, SIGNAL, QDir
 from filepositions import FilesPositions
 from run import TERM_AUTO
@@ -31,6 +31,8 @@ from run import TERM_AUTO
 
 settingsDir = os.path.normpath( str( QDir.homePath() ) ) + \
               os.path.sep + ".codimension" + os.path.sep
+thirdpartyDir = os.path.dirname( os.path.abspath( sys.argv[ 0 ] ) ) + \
+                os.path.sep + "thirdparty" + os.path.sep
 
 _H_SPLITTER_SIZES_DEFAULT = [ 200, 450, 575 ]
 _V_SPLITTER_SIZES_DEFAULT = [ 400, 150 ]
