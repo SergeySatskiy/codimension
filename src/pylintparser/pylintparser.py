@@ -290,6 +290,22 @@ class Pylint( object ):
 
         return
 
+    def getVersion( self ):
+        " Provides the pylint version "
+        try:
+            for line in self.__run( [ 'pylint', '--version' ],
+                                    os.getcwd() ).split( '\n' ):
+                line = line.strip()
+                if line:
+                    parts = line.split()
+                    if len( parts ) == 2 and \
+                       parts[ 0 ].startswith( 'pylint' ) and \
+                       parts[ 1 ][ 0 ].isdigit():
+                        return parts[ 1 ].replace( ",", "" )
+        except:
+            pass
+        return None
+
     def analyzeFile( self, path, pylintrc = "",
                      importDirs = [], workingDir = "" ):
         " run pylint for a certain file or files list "
@@ -375,7 +391,7 @@ class Pylint( object ):
             # Final section parsing
             self.__parseCurrentSection( path )
 
-        except Exception, exc:
+        except Exception:
             if pylintrc != "" and not os.path.exists( pylintrc ):
                 os.unlink( tempFileName )
                 os.rmdir( tempDirName )
@@ -407,7 +423,7 @@ class Pylint( object ):
         # Run pylint
         try:
             self.analyzeFile( tempFileName, pylintrc, importDirs, workingDir )
-        except Exception, exc:
+        except Exception:
             os.unlink( tempFileName )
             os.rmdir( tempDirName )
             raise
