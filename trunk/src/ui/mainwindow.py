@@ -52,7 +52,7 @@ from pyflakesviewer import PyflakesViewer
 from editorsmanager import EditorsManager
 from linecounter import LineCounterDialog
 from projectproperties import ProjectPropertiesDialog
-from utils.settings import Settings
+from utils.settings import Settings, thirdpartyDir
 from findreplacewidget import FindWidget, ReplaceWidget
 from gotolinewidget import GotoLineWidget
 from pylintviewer import PylintViewer
@@ -1975,13 +1975,11 @@ class CodimensionMainWindow( QMainWindow ):
                                    displayName, uuid ):
         " Passes data to the pymetrics viewer "
 
-        # This is a python file, let's pylint it
+        # This is a python file, let's pymetric it
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
 
         try:
-            path = os.path.dirname( os.path.abspath( sys.argv[ 0 ] ) ) + \
-                   os.path.sep + "thirdparty" + os.path.sep + "pymetrics" + \
-                   os.path.sep + "pymetrics.py"
+            path = thirdpartyDir + "pymetrics" + os.path.sep + "pymetrics.py"
             if os.path.exists( path ):
                 metrics = PyMetrics( path )
             else:
