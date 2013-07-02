@@ -22,7 +22,7 @@
 
 " Profiling results as a graph "
 
-import sys, os, os.path, math
+import os, os.path, math
 from PyQt4.QtCore import Qt, SIGNAL, QPointF
 from PyQt4.QtGui import QWidget, QLabel, QFrame, QPalette, QVBoxLayout, \
                         QGraphicsScene, QGraphicsPathItem, QPainterPath, \
@@ -30,7 +30,7 @@ from PyQt4.QtGui import QWidget, QLabel, QFrame, QPalette, QVBoxLayout, \
                         QFont, QFontMetrics, QStyleOptionGraphicsItem, \
                         QStyle, QGraphicsItem, QGraphicsRectItem
 from utils.misc import safeRun
-from utils.settings import Settings
+from utils.settings import Settings, thirdpartyDir
 from utils.globals import GlobalData
 from utils.pixmapcache import PixmapCache
 from diagram.plaindotparser import getGraphFromPlainDotData
@@ -327,9 +327,7 @@ class ProfileGraphViewer( QWidget ):
             index += 1
 
         # First step is to run grpof2dot
-        gprof2dot = os.path.dirname( sys.argv[ 0 ] ) + os.path.sep + \
-                    "thirdparty" + os.path.sep + "gprof2dot" + \
-                    os.path.sep + "gprof2dot.py"
+        gprof2dot = thirdpartyDir + "gprof2dot" + os.path.sep + "gprof2dot.py"
         outputFile = self.__dataFile + ".dot"
         nodeLimit = Settings().profileNodeLimit
         edgeLimit = Settings().profileEdgeLimit
