@@ -1,6 +1,7 @@
 2013 XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
-* Better calltips for PyQt objects
+* Better calltips for PyQt objects.
+* About dialog added.
 
 
 2013 Jun 29 Sergey Satskiy <sergey.satskiy@gmail.com>
