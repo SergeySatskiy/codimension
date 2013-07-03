@@ -23,21 +23,19 @@
 """ The file outline viewer implementation """
 
 import os.path, logging
-from PyQt4.QtCore               import Qt, SIGNAL, QSize, QTimer
-from PyQt4.QtGui                import QMenu, QWidget, QAction, QVBoxLayout, \
-                                       QToolBar, QCursor, QFrame, QLabel
-from utils.pixmapcache          import PixmapCache
-from utils.globals              import GlobalData
-from utils.settings             import Settings
-from outlinebrowser             import OutlineBrowser
-from viewitems                  import FunctionItemType, \
-                                       ClassItemType, AttributeItemType, \
-                                       GlobalItemType
-from utils.fileutils            import PythonFileType, Python3FileType, \
-                                       detectFileType
-from cdmbriefparser             import getBriefModuleInfoFromMemory
-from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
-from parsererrors               import ParserErrorsDialog
+from PyQt4.QtCore import Qt, SIGNAL, QSize, QTimer
+from PyQt4.QtGui import ( QMenu, QWidget, QAction, QVBoxLayout, QToolBar,
+                          QCursor, QFrame, QLabel )
+from utils.pixmapcache import PixmapCache
+from utils.globals import GlobalData
+from utils.settings import Settings
+from outlinebrowser import OutlineBrowser
+from viewitems import ( FunctionItemType, ClassItemType, AttributeItemType,
+                        GlobalItemType )
+from utils.fileutils import PythonFileType, Python3FileType, detectFileType
+from cdmbriefparser import getBriefModuleInfoFromMemory
+from mainwindowtabwidgetbase import MainWindowTabWidgetBase
+from parsererrors import ParserErrorsDialog
 
 
 
@@ -81,9 +79,11 @@ class FileOutlineViewer( QWidget ):
         self.outlineViewer = None
         self.__createLayout()
 
+        self.__modifiedFormat = Settings().modifiedFormat
+
         # create the context menu
         self.__menu = QMenu( self )
-        self.__findMenuItem = self.__menu.addAction( \
+        self.__findMenuItem = self.__menu.addAction(
                                 PixmapCache().getIcon( 'findusage.png' ),
                                 'Find where used', self.__findWhereUsed )
         return
@@ -110,13 +110,13 @@ class FileOutlineViewer( QWidget ):
         " Helper to create the viewer layout "
 
         # Toolbar part - buttons
-        self.findButton = QAction( \
+        self.findButton = QAction(
                 PixmapCache().getIcon( 'findusage.png' ),
                 'Find where highlighted item is used', self )
         self.findButton.setVisible( False )
         self.connect( self.findButton, SIGNAL( "triggered()" ),
                       self.__findWhereUsed )
-        self.showParsingErrorsButton = QAction( \
+        self.showParsingErrorsButton = QAction(
                 PixmapCache().getIcon( 'showparsingerrors.png' ),
                 'Show lexer/parser errors', self )
         self.connect( self.showParsingErrorsButton, SIGNAL( "triggered()" ),
@@ -155,7 +155,7 @@ class FileOutlineViewer( QWidget ):
             self.__outlineBrowsers[ self.__currentUUID ].contentItem = None
         else:
             self.__outlineBrowsers[ self.__currentUUID ].contentItem = \
-                self.__outlineBrowsers[ \
+                self.__outlineBrowsers[
                         self.__currentUUID ].browser.model().item( index )
 
         self.__updateButtons()
@@ -185,7 +185,7 @@ class FileOutlineViewer( QWidget ):
         " Jump to definition context menu handler "
         contextItem = self.__outlineBrowsers[ self.__currentUUID ].contentItem
         if contextItem is not None:
-            self.__outlineBrowsers[ \
+            self.__outlineBrowsers[
                         self.__currentUUID ].browser.openItem( contextItem )
         return
 
@@ -193,7 +193,7 @@ class FileOutlineViewer( QWidget ):
         """ Find where used context menu handler """
         contextItem = self.__outlineBrowsers[ self.__currentUUID ].contentItem
         if contextItem is not None:
-            GlobalData().mainWindow.findWhereUsed( \
+            GlobalData().mainWindow.findWhereUsed(
                     contextItem.getPath(),
                     contextItem.sourceObj )
         return
@@ -280,7 +280,7 @@ class FileOutlineViewer( QWidget ):
         self.showParsingErrorsButton.setEnabled( info.isOK != True )
 
         shortFileName = widget.getShortName()
-        browser = OutlineBrowser( uuid, shortFileName, info )
+        browser = OutlineBrowser( uuid, shortFileName, info, self )
         self.__connectOutlineBrowser( browser )
         self.__layout.addWidget( browser )
         if self.__currentUUID is not None:
@@ -329,7 +329,7 @@ class FileOutlineViewer( QWidget ):
                 self.__outlineBrowsers[ self.__currentUUID ].changed = True
                 browser = self.__outlineBrowsers[ self.__currentUUID ].browser
                 fName = self.__outlineBrowsers[ self.__currentUUID ].shortFileName
-                title = Settings().modifiedFormat % fName
+                title = self.__modifiedFormat % fName
                 browser.model().sourceModel().updateRootData( 0, title )
         self.__updateTimer.start( 1500 )
         return
@@ -339,8 +339,7 @@ class FileOutlineViewer( QWidget ):
         self.__updateTimer.stop()
         if self.__currentUUID is None:
             return
-        widget = self.__editorsManager.getWidgetByUUID( \
-                                        self.__currentUUID )
+        widget = self.__editorsManager.getWidgetByUUID( self.__currentUUID )
         if widget is None:
             return
 
@@ -350,8 +349,8 @@ class FileOutlineViewer( QWidget ):
         browser = self.__outlineBrowsers[ self.__currentUUID ].browser
         fName = self.__outlineBrowsers[ self.__currentUUID ].shortFileName
 
-        if info.lexerErrors:
-            title = Settings().modifiedFormat % fName
+        if not info.isOK:
+            title = self.__modifiedFormat % fName
             browser.model().sourceModel().updateRootData( 0, title )
             return
 
@@ -393,7 +392,7 @@ class FileOutlineViewer( QWidget ):
             browser = self.__outlineBrowsers[ uuid ].browser
             self.__outlineBrowsers[ uuid ].shortFileName = baseName
             if self.__outlineBrowsers[ uuid ].changed:
-                title = Settings().modifiedFormat % baseName
+                title = self.__modifiedFormat % baseName
             else:
                 title = baseName
             browser.model().sourceModel().updateRootData( 0, title )
