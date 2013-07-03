@@ -65,7 +65,7 @@ class AboutDialog( QDialog ):
         versioning = self.__createVersioning()
         tabWidget.addTab( versioning, "Versions and licenses" )
         authors = self.__createAuthors()
-        tabWidget.addTab( authors, "Authors" )
+        tabWidget.addTab( authors, "Contributors" )
         vboxLayout.addWidget( tabWidget )
 
         # Button at the bottom
@@ -82,13 +82,14 @@ class AboutDialog( QDialog ):
         browser = QTextBrowser()
         browser.setHtml( """
 <p align="justify">
-Codimension is yet another free experimental Python IDE licensed under GPL v3.
+Codimension is a free experimental Python IDE.
 </p>
 <p align="justify">
 Codimension aims to provide an integrated system for:
 <ul>
 <li>traditional text-based code editing, and</li>
-<li>diagram-based code analysis.</li>
+<li>diagram-based code analysis (e.g. imports and classes diagrams,
+    profiling results etc).</li>
 </ul>
 </p>
 
@@ -97,25 +98,17 @@ Many Python developers will find codimension useful as-is, even though not all
 of its features have been implemented yet.
 </p>
 <p align="justify">
-Codimension will eventually include several graphics-based features. Diagrams
-will be generated for imports and classes. The results from some tools, such as
-a profiler, will be represented graphically. Graphical features will be
-interactive and if you double click on a class box in a diagram, for example,
-the corresponding source code file will be opened and the cursor will jump
-to the appropriate line. A major objective is to provide an editor which is
-capable of working simultaneously with textual and graphical representations
-of the code. With this feature in place, changing the text will automatically
-update the graphics and vice versa. Finally, the editor will support the
-grouping and traversal of code blocks, which should greatly simplify the
-analysis of unfamiliar code.
-</p>""" )
+More information could be found on <a href='http://satsky.spb.ru/codimension/'>
+Codimension home page</a>.<br> Happy coding with Codimension!
+</p>
+""" )
         browser.setOpenExternalLinks( True )
         return browser
 
     def __createVersioning( self ):
         " Creates the versioning section "
         components = getComponentInfo()
-        text = "<p>The major codimension components are listed below:</p>" \
+        text = "<p>The major Codimension components are listed below:</p>" \
                "<ul>"
         for (prettyName, version, homeURL,
              patched, license, licenseLink) in components:
@@ -125,8 +118,10 @@ analysis of unfamiliar code.
                 text += version
             elif version is not None and version.lower() == "not installed":
                 text += version.lower()
-            else:
+            elif version is None:
                 text += "n/a"
+            else:
+                text += str( version )
             if patched:
                 text += " (patched for codimension)"
             text += "<br>"
@@ -147,10 +142,10 @@ analysis of unfamiliar code.
         addr1 = "<a href='mailto:sergey.satskiy@gmail.com'>sergey.satskiy@gmail.com</a>"
         addr2 = "<a href='mailto:isloginov@gmail.com'>isloginov@gmail.com</a>"
         addr3 = "<a href='mailto:him@revl.org'>him@revl.org</a>"
-        text = "<p>Develoment: Sergey Satskiy &lt;" + addr1 + "&gt;</p>" \
+        text = "<p>Author: Sergey Satskiy &lt;" + addr1 + "&gt;</p>" \
                "<p>Packaging: Ilya Loginov &lt;" + addr2 + "&gt;</p>" \
                "<p>Initial packaging and logo: Dmitry Kazimirov &lt;" + addr3 + "&gt;</p>" \
-               "<p align='justify'>Special thanks: Detlev Offenbach – the author of the Eric Python IDE." \
+               "<p align='justify'>Special thanks: Detlev Offenbach - the author of the Eric Python IDE." \
                " Codimension borrows some code and some ideas from Eric 4.</p>"
         browser = QTextBrowser()
         browser.setHtml( text )
