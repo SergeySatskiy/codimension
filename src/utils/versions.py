@@ -79,7 +79,7 @@ def getPyMetricsVersion():
         version = metrics.getVersion()
         if version:
             return version
-        return "Could not determine"
+        return "could not determine"
     except:
         return "Not installed"
 
@@ -95,7 +95,7 @@ def getPyLintVersion():
         version = lint.getVersion()
         if version:
             return version
-        return "Could not determine"
+        return "could not determine"
     except:
         return "Not installed"
 
@@ -113,9 +113,10 @@ def getGraphvizVersion():
     if not GlobalData().graphvizAvailable:
         return "Not installed"
 
-    from misc import safeRun
+    from misc import safeRunWithStderr
     try:
-        for line in safeRun( [ "dot", "-V" ] ).splitlines():
+        stdOut, stdErr = safeRunWithStderr( [ "dot", "-V" ] )
+        for line in stdErr.splitlines():
             # E.g. dot - graphviz version 2.26.3 (20100126.1600)
             line = line.strip()
             if line.startswith( "dot - graphviz version " ):
@@ -125,7 +126,7 @@ def getGraphvizVersion():
                     return parts[ 0 ]
     except:
         return "Not installed"
-    return "Could not determine"
+    return "could not determine"
 
 def getGprof2dotVersion():
     " Provides gprof2dot version "
@@ -140,10 +141,10 @@ def getGprof2dotVersion():
             if line.startswith( "gprof2dot" ):
                 parts = line.split( " " )
                 if len( parts ) == 2 and parts[ 1 ][ 0 ].isdigit():
-                    return parts[ 0 ]
+                    return parts[ 1 ]
     except:
         return "Not installed"
-    return "Could not determine"
+    return "could not determine"
 
 def getPythonTidyVersion():
     " Provides PythonTidy version "
@@ -198,7 +199,7 @@ def getComponentInfo():
                         "GPL-2.0", "http://www.gnu.org/licenses/gpl-2.0.html") )
     components.append( ("pyflakes", getPyFlakesVersion(),
                         "https://pypi.python.org/pypi/pyflakes", None,
-                        "Pyflakes license", "see the package") )
+                        "pyflakes license", "see the package") )
     components.append( ("pymetrics", getPyMetricsVersion(),
                         "http://pymetrics.sourceforge.net/", None,
                         "GPL-2.0", "http://www.gnu.org/licenses/gpl-2.0.html") )
