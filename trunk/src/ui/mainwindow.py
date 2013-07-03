@@ -84,6 +84,7 @@ from findinfiles import ItemToSearchIn, getSearchItemIndex
 from profiling.profui import ProfilingProgressDialog
 from profiling.disasm import getDisassembled
 from debugger.bputils import clearValidBreakpointLinesCache
+from about import AboutDialog
 
 
 class EditorsManagerWidget( QWidget ):
@@ -1273,6 +1274,10 @@ class CodimensionMainWindow( QMainWindow ):
         self.__homePageAct = self.__helpMenu.addAction(
             PixmapCache().getIcon( 'homepagemenu.png' ),
             'Codimension &home page', self.__onHomePage )
+        self.__helpMenu.addSeparator()
+        aboutAct = self.__helpMenu.addAction(
+            PixmapCache().getIcon( "logo.png" ),
+            "A&bout codimension", self.__onAbout )
 
         menuBar = self.menuBar()
         menuBar.addMenu( self.__projectMenu )
@@ -3382,6 +3387,12 @@ class CodimensionMainWindow( QMainWindow ):
         " Triggered when opening key bindings page is requested"
         QDesktopServices.openUrl(
             QUrl( "http://satsky.spb.ru/codimension/keyBindingsEng.php" ) )
+        return
+
+    def __onAbout( self ):
+        " Triggered when 'About' info is requested "
+        dlg = AboutDialog( self )
+        dlg.exec_()
         return
 
     def __activateSideTab( self, act ):
