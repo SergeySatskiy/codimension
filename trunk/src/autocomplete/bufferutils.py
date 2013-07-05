@@ -22,9 +22,9 @@
 " Various editor buffer related utilities "
 
 
-from PyQt4.Qsci         import QsciLexerPython
-from PyQt4.QtCore       import QString, QRegExp
-from cdmbriefparser     import getBriefModuleInfoFromMemory
+from PyQt4.Qsci import QsciLexerPython
+from PyQt4.QtCore import QString, QRegExp
+from cdmbriefparser import getBriefModuleInfoFromMemory
 
 
 class TextCursorContext:
@@ -591,3 +591,50 @@ def getCommaCount( editor, startPos, endPos ):
             commas += 1
         startPos = editor.positionAfter( startPos )
     return commas
+
+
+def getItemForDisplayPath( info, displayPath ):
+    """ Info is what the parser provides.
+        displayPath is a list of what displayed in a tree.
+        The method provides the certain item from the info if it is still there
+    """
+    # Ugly but helps to avoid initialization obstacles
+    from ui.viewitems import ( FunctionItemType, ClassesItemType,
+                               FunctionsItemType, ImportsItemType,
+                               InstanceAttributesItemType,
+                               StaticAttributesItemType, GlobalsItemType,
+                               CodingItemType, ImportWhatItemType,
+                               DecoratorItemType )
+    for (itemType, pathItem) in displayPath:
+        if itemType == ClassesItemType:
+            info = info.classes
+        elif itemType == FunctionsItemType:
+            info = info.functions
+        elif itemType == ImportsItemType:
+            info = info.imports
+        elif itemType == InstanceAttributesItemType:
+            info = info.instanceAttributes
+        elif itemType == StaticAttributesItemType:
+            info = info.classAttributes
+        elif itemType == GlobalsItemType:
+            info = info.globals
+        elif itemType == CodingItemType:
+            return info.encoding
+        else:
+            # That's a name, find it in the container
+            if itemType == ImportWhatItemType:
+                info = info.what
+            elif itemType == FunctionItemType:
+                info = info.functions
+            elif itemType == DecoratorItemType:
+                info = info.decorators
+            found = False
+            for item in info:
+                if item.getDisplayName() == pathItem:
+                    found = True
+                    info = item
+                    break
+            if found:
+                continue
+            return None
+    return info
