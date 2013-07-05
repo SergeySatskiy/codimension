@@ -194,6 +194,9 @@ class TextEditor( ScintillaWrapper ):
         if event.type() == QEvent.KeyPress:
             key = event.key()
             modifiers = event.modifiers()
+            if modifiers == Qt.ShiftModifier | Qt.ControlModifier:
+                if key == Qt.Key_F1:
+                    return self.onCallHelp()
             if modifiers == Qt.ShiftModifier:
                 if key == Qt.Key_Delete:
                     return self.onShiftDel()
@@ -1539,8 +1542,35 @@ class TextEditor( ScintillaWrapper ):
 
     def onTagHelp( self ):
         " Provides help for an item if available "
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         calltip, docstring = getCalltipAndDoc( self.parent().getFileName(),
                                                self )
+        if calltip is None and docstring is None:
+            QApplication.restoreOverrideCursor()
+            GlobalData().mainWindow.showStatusBarMessage( "Doc is not found" )
+            return True
+
+        QApplication.restoreOverrideCursor()
+        GlobalData().mainWindow.showTagHelp( calltip, docstring )
+        return True
+
+    def onCallHelp( self ):
+        " Provides help for the current call "
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+        callPosition = getCallPosition( self )
+        if callPosition is None:
+            QApplication.restoreOverrideCursor()
+            GlobalData().mainWindow.showStatusBarMessage( "Not a function call" )
+            return True
+
+        calltip, docstring = getCalltipAndDoc( self.parent().getFileName(),
+                                               self, callPosition )
+        if calltip is None and docstring is None:
+            QApplication.restoreOverrideCursor()
+            GlobalData().mainWindow.showStatusBarMessage( "Doc is not found" )
+            return True
+
+        QApplication.restoreOverrideCursor()
         GlobalData().mainWindow.showTagHelp( calltip, docstring )
         return True
 
