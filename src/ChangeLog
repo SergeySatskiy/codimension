@@ -2,7 +2,10 @@
 
 * Better calltips for PyQt objects.
 * About dialog added.
-
+* Ctrl+Shift+F1 added for the current call help.
+* Better handling of the outline window redrawing - no redraw if syntax is broken.
+* Better jumps from the outline window. Last good and the current parsed
+  info are taken into account.
 
 2013 Jun 29 Sergey Satskiy <sergey.satskiy@gmail.com>
 

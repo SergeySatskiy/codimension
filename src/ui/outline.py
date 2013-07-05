@@ -77,6 +77,7 @@ class FileOutlineViewer( QWidget ):
 
         self.findButton = None
         self.outlineViewer = None
+        self.toolbar = None
         self.__createLayout()
 
         self.__modifiedFormat = Settings().modifiedFormat
@@ -123,14 +124,14 @@ class FileOutlineViewer( QWidget ):
                       self.__showParserError )
         self.showParsingErrorsButton.setEnabled( False )
 
-        toolbar = QToolBar( self )
-        toolbar.setMovable( False )
-        toolbar.setAllowedAreas( Qt.TopToolBarArea )
-        toolbar.setIconSize( QSize( 16, 16 ) )
-        toolbar.setFixedHeight( 28 )
-        toolbar.setContentsMargins( 0, 0, 0, 0 )
-        toolbar.addAction( self.findButton )
-        toolbar.addAction( self.showParsingErrorsButton )
+        self.toolbar = QToolBar( self )
+        self.toolbar.setMovable( False )
+        self.toolbar.setAllowedAreas( Qt.TopToolBarArea )
+        self.toolbar.setIconSize( QSize( 16, 16 ) )
+        self.toolbar.setFixedHeight( 28 )
+        self.toolbar.setContentsMargins( 0, 0, 0, 0 )
+        self.toolbar.addAction( self.findButton )
+        self.toolbar.addAction( self.showParsingErrorsButton )
 
         # Prepare members for reuse
         self.__noneLabel = QLabel( "\nNot a python file" )
@@ -143,7 +144,7 @@ class FileOutlineViewer( QWidget ):
         self.__layout = QVBoxLayout()
         self.__layout.setContentsMargins( 0, 0, 0, 0 )
         self.__layout.setSpacing( 0 )
-        self.__layout.addWidget( toolbar )
+        self.__layout.addWidget( self.toolbar )
         self.__layout.addWidget( self.__noneLabel )
 
         self.setLayout( self.__layout )
@@ -281,6 +282,7 @@ class FileOutlineViewer( QWidget ):
 
         shortFileName = widget.getShortName()
         browser = OutlineBrowser( uuid, shortFileName, info, self )
+        browser.setHeaderHighlight( info.isOK != True )
         self.__connectOutlineBrowser( browser )
         self.__layout.addWidget( browser )
         if self.__currentUUID is not None:
@@ -299,6 +301,12 @@ class FileOutlineViewer( QWidget ):
         self.__outlineBrowsers[ self.__currentUUID ] = attributes
         self.__outlineBrowsers[ self.__currentUUID ].browser.show()
         return
+
+    def getCurrentUsedInfo( self ):
+        " Provides the info used to show the current outline window "
+        if self.__currentUUID in self.__outlineBrowsers:
+            return self.__outlineBrowsers[ self.__currentUUID ].info
+        return None
 
     def __cursorPositionChanged( self, xpos, ypos ):
         " Triggered when a cursor position is changed "
@@ -337,17 +345,14 @@ class FileOutlineViewer( QWidget ):
     def __updateView( self ):
         " Updates the view when a file is changed "
         self.__updateTimer.stop()
-        if self.__currentUUID is None:
-            return
-        widget = self.__editorsManager.getWidgetByUUID( self.__currentUUID )
-        if widget is None:
+        info = self.getCurrentBufferInfo()
+        if info is None:
             return
 
-        editor = widget.getEditor()
-        info = getBriefModuleInfoFromMemory( str( editor.text() ) )
         self.showParsingErrorsButton.setEnabled( info.isOK != True )
         browser = self.__outlineBrowsers[ self.__currentUUID ].browser
         fName = self.__outlineBrowsers[ self.__currentUUID ].shortFileName
+        browser.setHeaderHighlight( info.isOK != True )
 
         if not info.isOK:
             title = self.__modifiedFormat % fName
@@ -361,6 +366,18 @@ class FileOutlineViewer( QWidget ):
         self.__outlineBrowsers[ self.__currentUUID ].info = info
 
         return
+
+    def getCurrentBufferInfo( self ):
+        " Provides the current buffer parsed info "
+        if self.__currentUUID is None:
+            return None
+        widget = self.__editorsManager.getWidgetByUUID( self.__currentUUID )
+        if widget is None:
+            return None
+
+        editor = widget.getEditor()
+        info = getBriefModuleInfoFromMemory( str( editor.text() ) )
+        return info
 
     def __onTabClosed( self, uuid ):
         " Triggered when a tab is closed "

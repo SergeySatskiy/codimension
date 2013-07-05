@@ -23,7 +23,7 @@
 " File outline browser and its model "
 
 
-from PyQt4.QtGui import QTreeView
+from PyQt4.QtGui import QTreeView, QPalette
 from PyQt4.QtCore import QVariant
 from utils.globals import GlobalData
 from browsermodelbase import BrowserModelBase
@@ -38,6 +38,7 @@ from viewitems import ( DirectoryItemType, SysPathItemType, GlobalsItemType,
                         TreeViewGlobalsItem, TreeViewImportsItem,
                         TreeViewFunctionsItem, TreeViewClassesItem )
 from utils.settings import Settings
+from autocomplete.bufferutils import getItemForDisplayPath
 
 
 
@@ -75,9 +76,47 @@ class OutlineBrowser( FilesBrowser ):
                                False, parent )
 
         self.__bufferUUID = uuid
+        self.__bufferBroken = False
+
+        self.header().setAutoFillBackground( True )
+        self.__origHeaderBackground = self.__getOriginalHeaderBackground()
+        self.setHeaderHighlight( False )
 
         self.setWindowTitle( 'File outline' )
         self.setWindowIcon( PixmapCache().getIcon( 'icon.png' ) )
+        return
+
+    @staticmethod
+    def __converttohex( value ):
+        " Converts to a 2 digits representation "
+        result = hex( value ).replace( "0x", "" )
+        if len( result ) == 1:
+            return "0" + result
+        return result
+
+    def __getOriginalHeaderBackground( self ):
+        " Retrieves the original header color as a string useful for CSS "
+        headerPalette = self.header().palette()
+        backgroundColor = headerPalette.color( QPalette.Background )
+        r, g, b, a = backgroundColor.getRgb()
+        return "#" + self.__converttohex( r ) + self.__converttohex( g ) + \
+                     self.__converttohex( b )
+
+    def setHeaderHighlight( self, on ):
+        " Sets or removes the header highlight "
+        if on:
+            color = "#ffe3e3"
+            self.__bufferBroken = True
+        else:
+            color = self.__origHeaderBackground
+            self.__bufferBroken = False
+
+        self.header().setStyleSheet(
+            'QHeaderView[highlightHeader="true"] '
+            '{ background-color: ' + color + ' }' )
+        self.header().setProperty( "highlightHeader", True )
+        self.header().style().unpolish( self.header() )
+        self.header().style().polish( self.header() )
         return
 
     def setTooltips( self, switchOn ):
@@ -125,7 +164,25 @@ class OutlineBrowser( FilesBrowser ):
                               ClassItemType, DecoratorItemType,
                               AttributeItemType, GlobalItemType,
                               ImportWhatItemType ]:
+            # Check if the used info has no errors
+            if not self.__bufferBroken:
+                GlobalData().mainWindow.gotoInBuffer( self.__bufferUUID,
+                                                      item.sourceObj.line )
+                return
+
+            # The info has errors, try to reparse the current buffer and see
+            # if an item has changed the position
+            currentInfo = self.parent().getCurrentBufferInfo()
+            displayPath = item.getDisplayDataPath()
+            infoItem = getItemForDisplayPath( currentInfo, displayPath )
+            if infoItem is None:
+                # Not found, try luck with the old info
+                GlobalData().mainWindow.gotoInBuffer( self.__bufferUUID,
+                                                      item.sourceObj.line )
+                return
+            # Found in the new parsed info - use the new line
             GlobalData().mainWindow.gotoInBuffer( self.__bufferUUID,
-                                                  item.sourceObj.line )
+                                                  infoItem.line )
+
         return
 
