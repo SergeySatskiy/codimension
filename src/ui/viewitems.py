@@ -286,6 +286,15 @@ class TreeViewItem( object ):
                     break
         return rowPath
 
+    def getDisplayDataPath( self ):
+        " Provides the diplayed path for the item "
+        result = []
+        current = self
+        while current.parentItem is not None:
+            result.insert( 0, (current.itemType, current.data( 0 )) )
+            current = current.parentItem
+        return result
+
 
 
 class TreeViewDirectoryItem( TreeViewItem ):
