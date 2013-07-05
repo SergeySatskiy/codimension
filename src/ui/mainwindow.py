@@ -702,6 +702,9 @@ class CodimensionMainWindow( QMainWindow ):
         self.__tabJumpToDefAct = self.__tabMenu.addAction(
                 PixmapCache().getIcon( 'definition.png' ),
                 "&Jump to definition", self.__onTabJumpToDef )
+        self.__calltipAct = self.__tabMenu.addAction(
+                PixmapCache().getIcon( 'calltip.png' ),
+                'Show &calltip', self.__onShowCalltip )
         self.__tabJumpToScopeBeginAct = self.__tabMenu.addAction(
                 PixmapCache().getIcon( 'jumpupscopemenu.png' ),
                 'Jump to scope &begin', self.__onTabJumpToScopeBegin )
@@ -812,10 +815,6 @@ class CodimensionMainWindow( QMainWindow ):
         self.__goToLineAct = self.__searchMenu.addAction(
                 PixmapCache().getIcon( 'gotoline.png' ),
                 '&Go to line...', self.__onGoToLine )
-        self.__searchMenu.addSeparator()
-        self.__calltipAct = self.__searchMenu.addAction(
-                PixmapCache().getIcon( 'calltip.png' ),
-                'Show &calltip', self.__onShowCalltip )
 
         # The Tools menu
         self.__toolsMenu = QMenu( "T&ools", self )
@@ -1267,6 +1266,9 @@ class CodimensionMainWindow( QMainWindow ):
         self.__contextHelpAct = self.__helpMenu.addAction(
             PixmapCache().getIcon( 'helpviewer.png' ),
             'Current &word help', self.__onContextHelp )
+        self.__callHelpAct = self.__helpMenu.addAction(
+            PixmapCache().getIcon( 'helpviewer.png' ),
+            '&Current call help', self.__onCallHelp )
         self.__helpMenu.addSeparator()
         self.__allShotcutsAct = self.__helpMenu.addAction(
             PixmapCache().getIcon( 'allshortcutsmenu.png' ),
@@ -3376,6 +3378,14 @@ class CodimensionMainWindow( QMainWindow ):
         currentWidget.getEditor().onTagHelp()
         return
 
+    def __onCallHelp( self ):
+        " Triggered when a context help for the current call is requested "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.getEditor().onCallHelp()
+        return
+
+
     @staticmethod
     def __onHomePage():
         " Triggered when opening the home page is requested "
@@ -3755,6 +3765,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__saveFileAsAct.setEnabled( plainTextBuffer or isGeneratedDiagram )
         self.__closeTabAct.setEnabled( editorsManager.isTabClosable() )
         self.__tabJumpToDefAct.setEnabled( isPythonBuffer )
+        self.__calltipAct.setEnabled( isPythonBuffer )
         self.__tabJumpToScopeBeginAct.setEnabled( isPythonBuffer )
         self.__tabOpenImportAct.setEnabled( isPythonBuffer )
         if plainTextBuffer:
@@ -3778,6 +3789,7 @@ class CodimensionMainWindow( QMainWindow ):
 
         self.__closeTabAct.setShortcut( "Ctrl+F4" )
         self.__tabJumpToDefAct.setShortcut( "Ctrl+\\" )
+        self.__calltipAct.setShortcut( "Ctrl+/" )
         self.__tabJumpToScopeBeginAct.setShortcut( "Alt+U" )
         self.__tabOpenImportAct.setShortcut( "Ctrl+I" )
 
@@ -3798,7 +3810,6 @@ class CodimensionMainWindow( QMainWindow ):
         isPlainTextBuffer = self.__isPlainTextBuffer()
         isPythonBuffer = self.__isPythonBuffer()
         self.__findOccurencesAct.setEnabled( isPythonBuffer )
-        self.__calltipAct.setEnabled( isPythonBuffer )
         self.__goToLineAct.setEnabled( isPlainTextBuffer )
         self.__findAct.setEnabled( isPlainTextBuffer )
         self.__findCurrentAct.setEnabled( isPlainTextBuffer )
@@ -3807,7 +3818,6 @@ class CodimensionMainWindow( QMainWindow ):
         self.__findPrevAct.setEnabled( isPlainTextBuffer )
 
         self.__findOccurencesAct.setShortcut( "Ctrl+]" )
-        self.__calltipAct.setShortcut( "Ctrl+/" )
         self.__goToLineAct.setShortcut( "Ctrl+G" )
         self.__findAct.setShortcut( "Ctrl+F" )
         self.__findCurrentAct.setShortcut( "Ctrl+F3" )
@@ -3908,9 +3918,12 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __helpAboutToShow( self ):
         " Triggered when help menu is about to show "
-        self.__contextHelpAct.setEnabled( self.__isPythonBuffer() )
+        isPythonBuffer = self.__isPythonBuffer()
+        self.__contextHelpAct.setEnabled( isPythonBuffer )
+        self.__callHelpAct.setEnabled( isPythonBuffer )
 
         self.__contextHelpAct.setShortcut( "Ctrl+F1" )
+        self.__callHelpAct.setShortcut( "Ctrl+Shift+F1" )
         return
 
     def __editAboutToHide( self ):
@@ -3930,6 +3943,7 @@ class CodimensionMainWindow( QMainWindow ):
         " Triggered when tab menu is about to hide "
         self.__closeTabAct.setShortcut( "" )
         self.__tabJumpToDefAct.setShortcut( "" )
+        self.__calltipAct.setShortcut( "" )
         self.__tabJumpToScopeBeginAct.setShortcut( "" )
         self.__tabOpenImportAct.setShortcut( "" )
 
@@ -3940,7 +3954,6 @@ class CodimensionMainWindow( QMainWindow ):
     def __searchAboutToHide( self ):
         " Triggered when search menu is about to hide "
         self.__findOccurencesAct.setShortcut( "" )
-        self.__calltipAct.setShortcut( "" )
         self.__goToLineAct.setShortcut( "" )
         self.__findAct.setShortcut( "" )
         self.__findCurrentAct.setShortcut( "" )
@@ -3965,6 +3978,7 @@ class CodimensionMainWindow( QMainWindow ):
     def __helpAboutToHide( self ):
         " Triggered when help menu is about to hide "
         self.__contextHelpAct.setShortcut( "" )
+        self.__callHelpAct.setShortcut( "" )
         return
 
     @staticmethod
