@@ -29,7 +29,8 @@ import lexer
 from PyQt4.Qsci import QsciLexerPython
 from scintillawrap import ScintillaWrapper
 from PyQt4.QtCore import ( Qt, QFileInfo, SIGNAL, QSize, QUrl, QTimer,
-                           QVariant, QRect, QEvent, QPoint, QModelIndex )
+                           QVariant, QRect, QEvent, QPoint, QModelIndex,
+                           QEventLoop )
 from PyQt4.QtGui import ( QApplication, QCursor, QFontMetrics, QToolBar,
                           QActionGroup, QHBoxLayout, QWidget, QAction, QMenu,
                           QSizePolicy, QToolButton, QDialog, QToolTip,
@@ -993,15 +994,16 @@ class TextEditor( ScintillaWrapper ):
                     self.__completer.hide()
                     self.setFocus()
         elif key in [ Qt.Key_Enter, Qt.Key_Return ]:
+            QApplication.processEvents()
             line, pos = self.getCursorPosition()
-            lineToTrim = -1
-            if line == self.__openedLine:
-                lineToTrim = line
 
+            self.beginUndoAction()
             ScintillaWrapper.keyPressEvent( self, event )
             QApplication.processEvents()
 
-            self.__removeLine( lineToTrim )
+            if line == self.__openedLine:
+                self.__removeLine( line )
+            self.endUndoAction()
 
             # If the new line has one or more spaces then it is a candidate for
             # automatic trimming
@@ -1018,6 +1020,7 @@ class TextEditor( ScintillaWrapper ):
             if line == self.__openedLine:
                 lineToTrim = line
 
+            self.beginUndoAction()
             ScintillaWrapper.keyPressEvent( self, event )
             QApplication.processEvents()
 
@@ -1026,6 +1029,7 @@ class TextEditor( ScintillaWrapper ):
                 if line != lineToTrim:
                     # The cursor was really moved to another line
                     self.__removeLine( lineToTrim )
+            self.endUndoAction()
             self.__openedLine = -1
 
         elif key == Qt.Key_Escape:
@@ -1079,7 +1083,9 @@ class TextEditor( ScintillaWrapper ):
             return
 
         self.__skipChangeCursor = True
+        self.beginUndoAction()
         self.__removeLine( self.__openedLine )
+        self.endUndoAction()
         self.__skipChangeCursor = False
         self.__openedLine = -1
         return
@@ -1090,14 +1096,9 @@ class TextEditor( ScintillaWrapper ):
             return
 
         currentLine, currentPos = self.getCursorPosition()
-        oldBuffer = QApplication.clipboard().text()
-        self.beginUndoAction()
         self.setCursorPosition( line, 0 )
-        self.extendSelectionToEOL()
-        self.removeSelectedText()
+        self.deleteLineRight()
         self.setCursorPosition( currentLine, currentPos )
-        self.endUndoAction()
-        QApplication.clipboard().setText( oldBuffer )
         QApplication.processEvents()
         return
 
