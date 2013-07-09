@@ -6,6 +6,7 @@
 * Better handling of the outline window redrawing - no redraw if syntax is broken.
 * Better jumps from the outline window. Last good and the current parsed
   info are taken into account.
+* Better undo of the automatically trimmed empty opened lines.
 
 2013 Jun 29 Sergey Satskiy <sergey.satskiy@gmail.com>
 
