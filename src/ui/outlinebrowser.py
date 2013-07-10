@@ -105,7 +105,7 @@ class OutlineBrowser( FilesBrowser ):
     def setHeaderHighlight( self, on ):
         " Sets or removes the header highlight "
         if on:
-            color = "#ffe3e3"
+            color = "#ff6666"
             self.__bufferBroken = True
         else:
             color = self.__origHeaderBackground
