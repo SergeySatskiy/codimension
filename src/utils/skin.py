@@ -118,62 +118,83 @@ class LexerStyles:
         return
 
 
-class Skin:
-    " Holds the definitions for a skin "
+class GeneralSkinSetting:
+    " Holds a single setting from a general skin config file "
+    TYPE_INT = 0
+    TYPE_COLOR = 1
+    TYPE_FONT = 2
+
+    def __init__( self, name, sType, default ):
+        self.name = name
+        self.sType = sType
+        self.default = default
+        return
+
+
+SKIN_SETTINGS = [
+    GeneralSkinSetting( "marginPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 228, 228, 228, 255 ) ),
+    GeneralSkinSetting( "marginPaperDebug", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 228, 228, 255 ) ),
+    GeneralSkinSetting( "marginColor", GeneralSkinSetting.TYPE_COLOR, QColor( 128, 128, 128, 255 ) ),
+    GeneralSkinSetting( "marginColorDebug", GeneralSkinSetting.TYPE_COLOR, QColor( 128, 128, 128, 255 ) ),
+    GeneralSkinSetting( "lineNumFont", GeneralSkinSetting.TYPE_FONT, buildFont( "Sans Serif,12,-1,5,50,0,0,0,0,0" ) ),
+    GeneralSkinSetting( "foldingPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 255, 255, 255 ) ),
+    GeneralSkinSetting( "foldingColor", GeneralSkinSetting.TYPE_COLOR, QColor( 230, 230, 230, 255 ) ),
+    GeneralSkinSetting( "searchMarkColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 255, 0, 255 ) ),
+    GeneralSkinSetting( "searchMarkAlpha", GeneralSkinSetting.TYPE_INT, 100 ),
+    GeneralSkinSetting( "matchMarkColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 255, 255 ) ),
+    GeneralSkinSetting( "matchMarkAlpha", GeneralSkinSetting.TYPE_INT, 100 ),
+    GeneralSkinSetting( "spellingMarkColor", GeneralSkinSetting.TYPE_COLOR, QColor( 139, 0, 0, 255 ) ),
+    GeneralSkinSetting( "spellingMarkAlpha", GeneralSkinSetting.TYPE_INT, 100 ),
+    GeneralSkinSetting( "nolexerPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 255, 230, 255 ) ),
+    GeneralSkinSetting( "nolexerColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
+    GeneralSkinSetting( "nolexerFont", GeneralSkinSetting.TYPE_FONT, buildFont( "Monospace,14,-1,5,50,0,0,0,0,0" ) ),
+    GeneralSkinSetting( "currentLinePaper", GeneralSkinSetting.TYPE_COLOR, QColor( 232, 232, 255, 255 ) ),
+    GeneralSkinSetting( "edgeColor", GeneralSkinSetting.TYPE_COLOR, QColor( 127, 127, 127, 255 ) ),
+    GeneralSkinSetting( "matchedBracePaper", GeneralSkinSetting.TYPE_COLOR, QColor( 132, 117, 245, 255 ) ),
+    GeneralSkinSetting( "matchedBraceColor", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 255, 255, 255 ) ),
+    GeneralSkinSetting( "unmatchedBracePaper", GeneralSkinSetting.TYPE_COLOR, QColor( 250, 89, 68, 255 ) ),
+    GeneralSkinSetting( "unmatchedBraceColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 255, 255 ) ),
+    GeneralSkinSetting( "indentGuidePaper", GeneralSkinSetting.TYPE_COLOR, QColor( 230, 230, 230, 255 ) ),
+    GeneralSkinSetting( "indentGuideColor", GeneralSkinSetting.TYPE_COLOR, QColor( 127, 127, 127, 255 ) ),
+    GeneralSkinSetting( "debugCurrentLineMarkerPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 255, 127, 255 ) ),
+    GeneralSkinSetting( "debugCurrentLineMarkerColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 255, 255 ) ),
+    GeneralSkinSetting( "debugExcptLineMarkerPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 64, 64, 255 ) ),
+    GeneralSkinSetting( "debugExcptLineMarkerColor", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 255, 127, 255 ) ),
+    GeneralSkinSetting( "calltipPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 220, 255, 220, 255 ) ),
+    GeneralSkinSetting( "calltipColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
+    GeneralSkinSetting( "calltipHighColor", GeneralSkinSetting.TYPE_COLOR, QColor( 250, 89, 68, 255 ) ),
+                ]
+
+
+class SkinData:
+    " Bad excuse to have it due to __getattr__/__setattr__ in the Skin class "
 
     def __init__( self ):
-        self.__isOK = True
+        self.isOK = True
+        self.dirName = None
         self.name = ""
         self.lexerStyles = {}   # name -> LexerStyles
         self.appCSS = ""
 
-        self.marginPaper = None
-        self.marginPaperDebug = None
-        self.marginColor = None
-        self.marginColorDebug = None
-        self.lineNumFont = None
+        self.values = {}
+        return
 
-        self.foldingPaper = None
-        self.foldingColor = None
 
-        self.searchMarkColor = None
-        self.searchMarkAlpha = 0
-        self.matchMarkColor = None
-        self.matchMarkAlpha = 0
-        self.spellingMarkColor = None
-        self.spellingMarkAlpha = 0
 
-        self.nolexerPaper = None
-        self.nolexerColor = None
-        self.nolexerFont = None
+class Skin:
+    " Holds the definitions for a skin "
 
-        self.currentLinePaper = None
-        self.edgeColor = None
-
-        self.matchedBracePaper = None
-        self.matchedBraceColor = None
-        self.unmatchedBracePaper = None
-        self.unmatchedBraceColor = None
-        self.indentGuidePaper = None
-        self.indentGuideColor = None
-
-        self.debugCurrentLineMarkerPaper = None
-        self.debugCurrentLineMarkerColor = None
-        self.debugExcptLineMarkerPaper = None
-        self.debugExcptLineMarkerColor = None
-
-        self.calltipPaper = None
-        self.calltipColor = None
-        self.calltipHighColor = None
-
+    def __init__( self ):
+        # That's a trick to be able to implement getattr/setattr
+        self.__dict__[ "data" ] = SkinData()
         self.__reset()
         return
 
     def __reset( self ):
         " Resets all the values to the default "
-        self.name = "default"
-        self.lexerStyles = {}
-        self.appCSS = """
+        self.data.name = "default"
+        self.data.lexerStyles = {}
+        self.data.appCSS = """
             QStatusBar::item
             { border: 0px solid black }
             QToolTip
@@ -185,70 +206,33 @@ class Skin:
             QTreeView
             { alternate-background-color: #eef0f1; } """
 
-        self.marginPaper = QColor( 228, 228, 228, 255 )
-        self.marginPaperDebug = QColor( 255, 228, 228, 255 )
-        self.marginColor = QColor( 128, 128, 128, 255 )
-        self.marginColorDebug = QColor( 128, 128, 128, 255 )
-        self.lineNumFont = buildFont( "Sans Serif,12,-1,5,50,0,0,0,0,0" )
-
-        self.foldingPaper = QColor( 255, 255, 255, 255 )
-        self.foldingColor = QColor( 230, 230, 230, 255 )
-
-        self.searchMarkColor = QColor( 0, 255, 0, 255 )
-        self.searchMarkAlpha = 100
-        self.matchMarkColor = QColor( 0, 0, 255, 255 )
-        self.matchMarkAlpha = 100
-        self.spellingMarkColor = QColor( 139, 0, 0, 255 )
-        self.spellingMarkAlpha = 100
-
-        self.nolexerPaper = QColor( 255, 255, 230, 255 )
-        self.nolexerColor = QColor( 0, 0, 0, 255 )
-        self.nolexerFont = buildFont( "Monospace,14,-1,5,50,0,0,0,0,0" )
-
-        self.currentLinePaper = QColor( 232, 232, 255, 255 )
-        self.edgeColor = QColor( 127, 127, 127, 255 )
-
-        self.matchedBracePaper = QColor( 132, 117, 245, 255 )
-        self.matchedBraceColor = QColor( 255, 255, 255, 255 )
-        self.unmatchedBracePaper = QColor( 250, 89, 68, 255 )
-        self.unmatchedBraceColor = QColor( 0, 0, 255, 255 )
-
-        self.indentGuidePaper = QColor( 230, 230, 230, 255 )
-        self.indentGuideColor = QColor( 127, 127, 127, 255 )
-
-        self.debugCurrentLineMarkerPaper = QColor( 255, 255, 127, 255 )
-        self.debugCurrentLineMarkerColor = QColor( 0, 0, 255, 255 )
-        self.debugExcptLineMarkerPaper = QColor( 255, 64, 64, 255 )
-        self.debugExcptLineMarkerColor = QColor( 255, 255, 127, 255 )
-
-        self.calltipPaper = QColor( 220, 255, 220, 255 )
-        self.calltipColor = QColor( 0, 0, 0, 255 )
-        self.calltipHighColor = QColor( 250, 89, 68, 255 )
+        for setting in SKIN_SETTINGS:
+            self.data.values[ setting.name ] = setting.default
         return
 
 
     def load( self, dirName ):
         " Loads the skin description from the given directory "
-        dirName = os.path.abspath( dirName )
-        self.name = os.path.basename( dirName )
+        self.data.dirName = os.path.abspath( dirName )
+        self.data.name = os.path.basename( dirName )
 
         # Load the skin description
-        dirName += os.path.sep
-        appFile = dirName + "application.css"
+        self.data.dirName += os.path.sep
+        appFile = self.data.dirName + "application.css"
         if not os.path.exists( appFile ):
             logging.warning( "Cannot find " + appFile + \
                              ". Default skin will be used." )
             self.__reset()
             return False
 
-        generalFile = dirName + "general"
+        generalFile = self.data.dirName + "general"
         if not os.path.exists( generalFile ):
             logging.warning( "Cannot find " + generalFile + \
                              ". Default skin will be used." )
             self.__reset()
             return False
 
-        lexersFile = dirName + "lexers"
+        lexersFile = self.data.dirName + "lexers"
         if not os.path.exists( lexersFile ):
             logging.warning( "Cannot find " + lexersFile + \
                              ". Default skin will be used." )
@@ -271,7 +255,7 @@ class Skin:
         try:
             content = []
             parseSingleCSS( fName, content )
-            self.appCSS = "".join( content )
+            self.data.appCSS = "".join( content )
         except:
             logging.warning( "Cannot read application CSS from " + fName + \
                              ". The file will be updated with a default CSS." )
@@ -286,7 +270,7 @@ class Skin:
             logging.warning( "Cannot read the [" + section + "]/" + \
                              value + " value from the skin file. " \
                              "The file will be updated with a default value." )
-            self.__isOK = False
+            self.data.isOK = False
             return None
 
     def __getFont( self, config, section, value ):
@@ -297,7 +281,7 @@ class Skin:
             logging.warning( "Cannot read the [" + section + "]/" + \
                              value + " value from the skin file. " \
                              "The file will be updated with a default value." )
-            self.__isOK = False
+            self.data.isOK = False
             return None
 
     def __getInt( self, config, section, value ):
@@ -308,7 +292,7 @@ class Skin:
             logging.warning( "Cannot read the [" + section + "]/" + \
                              value + " value from the skin file. " \
                              "The file will be updated with a default value." )
-            self.__isOK = False
+            self.data.isOK = False
             return None
 
     def __loadGeneral( self, fName ):
@@ -321,107 +305,23 @@ class Skin:
                              ". The file will be updated with default values." )
             return False
 
-        val = self.__getColor( config, "general", "marginpaper" )
-        if val is not None:
-            self.marginPaper = val
-        val = self.__getColor( config, "general", "marginpaperdebug" )
-        if val is not None:
-            self.marginPaperDebug = val
-        val = self.__getColor( config, "general", "margincolor" )
-        if val is not None:
-            self.marginColor = val
-        val = self.__getColor( config, "general", "margincolordebug" )
-        if val is not None:
-            self.marginColorDebug = val
-        val = self.__getFont( config, "general", "linenumfont" )
-        if val is not None:
-            self.lineNumFont = val
-
-        val = self.__getColor( config, "general", "foldingpaper" )
-        if val is not None:
-            self.foldingPaper = val
-        val = self.__getColor( config, "general", "foldingcolor" )
-        if val is not None:
-            self.foldingColor = val
-
-        val = self.__getColor( config, "general", "searchmarkcolor" )
-        if val is not None:
-            self.searchMarkColor = val
-        val = self.__getInt( config, "general", "searchmarkalpha" )
-        if val is not None:
-            self.searchMarkAlpha = val
-        val = self.__getColor( config, "general", "matchmarkcolor" )
-        if val is not None:
-            self.matchMarkColor = val
-        val = self.__getInt( config, "general", "matchmarkalpha" )
-        if val is not None:
-            self.matchMarkAlpha = val
-        val = self.__getColor( config, "general", "spellingmarkcolor" )
-        if val is not None:
-            self.spellingMarkColor = val
-        val = self.__getInt( config, "general", "spellingmarkalpha" )
-        if val is not None:
-            self.spellingMarkAlpha = val
-
-        val = self.__getColor( config, "general", "nolexerpaper" )
-        if val is not None:
-            self.nolexerPaper = val
-        val = self.__getColor( config, "general", "nolexercolor" )
-        if val is not None:
-            self.nolexerColor = val
-        val = self.__getFont( config, "general", "nolexerfont" )
-        if val is not None:
-            self.nolexerFont = val
-
-        val = self.__getColor( config, "general", "currentlinepaper" )
-        if val is not None:
-            self.currentLinePaper = val
-        val = self.__getColor( config, "general", "edgecolor" )
-        if val is not None:
-            self.edgeColor = val
-        val = self.__getColor( config, "general", "matchedbracepaper" )
-        if val is not None:
-            self.matchedBracePaper = val
-        val = self.__getColor( config, "general", "matchedbracecolor" )
-        if val is not None:
-            self.matchedBraceColor = val
-        val = self.__getColor( config, "general", "unmatchedbracepaper" )
-        if val is not None:
-            self.unmatchedBracePaper = val
-        val = self.__getColor( config, "general", "unmatchedbracecolor" )
-        if val is not None:
-            self.unmatchedBraceColor = val
-
-        val = self.__getColor( config, "general", "indentguidepaper" )
-        if val is not None:
-            self.indentGuidePaper = val
-        val = self.__getColor( config, "general", "indentguidecolor" )
-        if val is not None:
-            self.indentGuideColor = val
-
-        val = self.__getColor( config, "general", "debugcurrentlinemarkerpaper" )
-        if val is not None:
-            self.debugCurrentLineMarkerPaper = val
-        val = self.__getColor( config, "general", "debugcurrentlinemarkercolor" )
-        if val is not None:
-            self.debugCurrentLineMarkerColor = val
-        val = self.__getColor( config, "general", "debugexcptlinemarkerpaper" )
-        if val is not None:
-            self.debugExcptLineMarkerPaper = val
-        val = self.__getColor( config, "general", "debugexcptlinemarkercolor" )
-        if val is not None:
-            self.debugExcptLineMarkerColor = val
-
-        val = self.__getColor( config, "general", "calltippaper" )
-        if val is not None:
-            self.calltipPaper = val
-        val = self.__getColor( config, "general", "calltipcolor" )
-        if val is not None:
-            self.calltipColor = val
-        val = self.__getColor( config, "general", "calltiphighcolor" )
-        if val is not None:
-            self.calltipHighColor = val
-        return self.__isOK
+        for setting in SKIN_SETTINGS:
+            if setting.sType == GeneralSkinSetting.TYPE_INT:
+                val = self.__getInt( config, "general", setting.name.lower() )
+                if val is not None:
+                    self.data.values[ setting.name ] = val
+            elif setting.sType == GeneralSkinSetting.TYPE_COLOR:
+                val = self.__getColor( config, "general", setting.name.lower() )
+                if val is not None:
+                    self.data.values[ setting.name ] = val
+            elif setting.sType == GeneralSkinSetting.TYPE_FONT:
+                val = self.__getFont( config, "general", setting.name.lower() )
+                if val is not None:
+                    self.data.values[ setting.name ] = val
+            else:
+                raise Exception( "Unsupported setting type: " +
+                                 str( setting.sType ) )
+        return self.data.isOK
 
     def __loadLexers( self, fName ):
         " Loads the lexers settings file "
@@ -435,13 +335,13 @@ class Skin:
         for section in config.sections():
             lexerStyles = LexerStyles()
             lexerStyles.load( config, section )
-            self.lexerStyles[ section ] = lexerStyles
+            self.data.lexerStyles[ section ] = lexerStyles
         return True
 
     def getLexerStyles( self, name ):
         " Provides the lexer style "
         try:
-            return self.lexerStyles[ name ]
+            return self.data.lexerStyles[ name ]
         except KeyError:
             # could not find the style, provide a substitute
             pass
@@ -452,7 +352,7 @@ class Skin:
 
     def clearLexerStyles( self ):
         " Cleans up memory taken by the lexer styles "
-        self.lexerStyles = {}
+        self.data.lexerStyles = {}
         return
 
     def __saveGeneral( self, fName ):
@@ -461,49 +361,21 @@ class Skin:
             f = open( fName, "w" )
             f.write( "# Automatically updated due to missed or corrupted values\n" )
             f.write( "[general]\n" )
-            f.write( "name=" + self.name + "\n\n" )
+            f.write( "name=" + self.data.name + "\n\n" )
 
-            f.write( "marginpaper=" + colorAsString( self.marginPaper ) + "\n" )
-            f.write( "marginpaperdebug=" + colorAsString( self.marginPaperDebug ) + "\n" )
-            f.write( "margincolor=" + colorAsString( self.marginColor ) + "\n" )
-            f.write( "margincolordebug=" + colorAsString( self.marginColorDebug ) + "\n" )
-            f.write( "linenumfont=" + self.lineNumFont.toString() + "\n\n" )
-
-            f.write( "foldingpaper=" + colorAsString( self.foldingPaper ) + "\n" )
-            f.write( "foldingcolor=" + colorAsString( self.foldingColor ) + "\n" )
-
-            f.write( "searchmarkcolor=" + colorAsString( self.searchMarkColor ) + "\n" )
-            f.write( "searchmarkalpha=" + str( self.searchMarkAlpha ) + "\n\n" )
-
-            f.write( "matchmarkcolor=" + colorAsString( self.matchMarkColor ) + "\n" )
-            f.write( "matchmarkalpha=" + str( self.matchMarkAlpha ) + "\n\n" )
-
-            f.write( "spellingmarkcolor=" + colorAsString( self.spellingMarkColor ) + "\n" )
-            f.write( "spellingmarkalpha=" + str( self.spellingMarkAlpha ) + "\n\n" )
-
-            f.write( "nolexerpaper=" + colorAsString( self.nolexerPaper ) + "\n" )
-            f.write( "nolexercolor=" + colorAsString( self.nolexerColor ) + "\n" )
-            f.write( "nolexerfont=" + self.nolexerFont.toString() + "\n\n" )
-
-            f.write( "currentlinepaper=" + colorAsString( self.currentLinePaper ) + "\n" )
-            f.write( "edgecolor=" + colorAsString( self.edgeColor ) + "\n\n" )
-
-            f.write( "matchedbracepaper=" + colorAsString( self.matchedBracePaper ) + "\n" )
-            f.write( "matchedbracecolor=" + colorAsString( self.matchedBraceColor ) + "\n" )
-            f.write( "unmatchedbracepaper=" + colorAsString( self.unmatchedBracePaper ) + "\n" )
-            f.write( "unmatchedbracecolor=" + colorAsString( self.unmatchedBraceColor ) + "\n\n" )
-
-            f.write( "indentguidepaper=" + colorAsString( self.indentGuidePaper ) + "\n" )
-            f.write( "indentguidecolor=" + colorAsString( self.indentGuideColor ) + "\n\n" )
-
-            f.write( "debugcurrentlinemarkerpaper=" + colorAsString( self.debugCurrentLineMarkerPaper ) + "\n" )
-            f.write( "debugcurrentlinemarkercolor=" + colorAsString( self.debugCurrentLineMarkerColor ) + "\n" )
-            f.write( "debugexcptlinemarkerpaper=" + colorAsString( self.debugExcptLineMarkerPaper ) + "\n" )
-            f.write( "debugexcptlinemarkercolor=" + colorAsString( self.debugExcptLineMarkerColor ) + "\n\n" )
-
-            f.write( "calltippaper=" + colorAsString( self.calltipPaper ) + "\n" )
-            f.write( "calltipcolor=" + colorAsString( self.calltipColor ) + "\n" )
-            f.write( "calltiphighcolor=" + colorAsString( self.calltipHighColor ) + "\n" )
+            for setting in SKIN_SETTINGS:
+                if setting.sType == GeneralSkinSetting.TYPE_INT:
+                    f.write( setting.name.lower() + "=" +
+                             str( self.data.values[ setting.name ] ) + "\n" )
+                elif setting.sType == GeneralSkinSetting.TYPE_COLOR:
+                    f.write( setting.name.lower() + "=" +
+                             colorAsString( self.data.values[ setting.name ] ) + "\n" )
+                elif setting.sType == GeneralSkinSetting.TYPE_FONT:
+                    f.write( setting.name.lower() + "=" +
+                             self.data.values[ setting.name ].toString() + "\n" )
+                else:
+                    raise Exception( "Unsupported setting type: " +
+                                     str( setting.sType ) )
 
             f.close()
         except:
@@ -514,9 +386,91 @@ class Skin:
         " Writes the application CSS "
         try:
             f = open( appFile, "w" )
-            f.write( self.appCSS + "\n" )
+            f.write( self.data.appCSS + "\n" )
             f.close()
         except:
             logging.warning( "Could not write skin CSS file " + appFile )
+        return
+
+    def setMainEditorFont( self, font ):
+        """ Updates what is stored in the lexers and general settings.
+            The only font family and font size are respected """
+
+        def replaceFontWith( line, family, size ):
+            " Replaces the font face and size in line from a config file "
+            parts = line.split( '=' )
+            identifier = parts[ 0 ]
+            value = parts[ 1 ]
+
+            parts = value.split( ',' )
+            parts[ 0 ] = family
+            parts[ 1 ] = size
+
+            return identifier + '=' + ','.join( parts )
+
+
+        if self.data.dirName is None:
+            raise Exception( "The skin is not loaded" )
+
+        lexersFile = self.data.dirName + "lexers"
+        if not os.path.exists( lexersFile ):
+            raise Exception( "Cannot find the lexers file. Expected here: " +
+                             lexersFile )
+
+        f = open( lexersFile, "r" )
+        content = f.read()
+        f.close()
+
+        fontAsString = str( font.toString() ).split( "," )
+        family = fontAsString[ 0 ]
+        size = fontAsString[ 1 ]
+
+        updatedContent = []
+        for line in content.splitlines():
+            line = line.strip()
+            if line.startswith( "font" ):
+                updatedContent.append( replaceFontWith( line, family, size ) )
+            else:
+                updatedContent.append( line )
+
+        f = open( lexersFile, "w" )
+        f.write( "\n".join( updatedContent ) )
+        f.close()
+        f = None
+
+        generalFile = self.data.dirName + "general"
+        if not os.path.exists( generalFile ):
+            raise Exception( "Cannot find the general skin file. Expected here: " +
+                             generalFile )
+
+        f = open( generalFile, "r" )
+        content = f.read()
+        f.close()
+
+        updatedContent = []
+        for line in content.splitlines():
+            line = line.strip()
+            if line.startswith( "nolexerfont" ):
+                updatedContent.append( replaceFontWith( line, family, size ) )
+            else:
+                updatedContent.append( line )
+
+        f = open( generalFile, "w" )
+        f.write( "\n".join( updatedContent ) )
+        f.close()
+        f = None
+
+        return
+
+    def __getattr__( self, aAttr ):
+        if hasattr( self.data, aAttr ):
+            return getattr( self.data, aAttr )
+        return self.data.values[ aAttr ]
+
+    def __setattr__( self, aAttr, aValue ):
+        if hasattr( self.data, aAttr ):
+            setattr( self.data, aAttr, aValue )
+        else:
+            self.data.values[ aAttr ] = aValue
         return
 
