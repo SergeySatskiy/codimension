@@ -625,7 +625,8 @@ def getItemForDisplayPath( info, displayPath ):
             if itemType == ImportWhatItemType:
                 info = info.what
             elif itemType == FunctionItemType:
-                info = info.functions
+                if type( info ) != list:
+                    info = info.functions
             elif itemType == DecoratorItemType:
                 info = info.decorators
             found = False
