@@ -80,6 +80,7 @@ class OutlineBrowser( FilesBrowser ):
 
         self.header().setAutoFillBackground( True )
         self.__origHeaderBackground = self.__getOriginalHeaderBackground()
+        self.__brokenHeaderBackground = self.__getBrokenHeaderBackground()
         self.setHeaderHighlight( False )
 
         self.setWindowTitle( 'File outline' )
@@ -102,10 +103,16 @@ class OutlineBrowser( FilesBrowser ):
         return "#" + self.__converttohex( r ) + self.__converttohex( g ) + \
                      self.__converttohex( b )
 
+    def __getBrokenHeaderBackground( self ):
+        " Returns thr broken header background color as a string useful for CSS "
+        r, g, b, a = GlobalData().skin.outdatedOutlineColor.getRgb()
+        return "#" + self.__converttohex( r ) + self.__converttohex( g ) + \
+                     self.__converttohex( b )
+
     def setHeaderHighlight( self, on ):
         " Sets or removes the header highlight "
         if on:
-            color = "#ff6666"
+            color = self.__brokenHeaderBackground
             self.__bufferBroken = True
         else:
             color = self.__origHeaderBackground
