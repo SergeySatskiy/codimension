@@ -163,6 +163,7 @@ SKIN_SETTINGS = [
     GeneralSkinSetting( "calltipPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 220, 255, 220, 255 ) ),
     GeneralSkinSetting( "calltipColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
     GeneralSkinSetting( "calltipHighColor", GeneralSkinSetting.TYPE_COLOR, QColor( 250, 89, 68, 255 ) ),
+    GeneralSkinSetting( "outdatedOutlineColor", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 42, 42, 255 ) ),
                 ]
 
 
