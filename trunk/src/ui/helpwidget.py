@@ -84,7 +84,7 @@ class QuickHelpWidget( HTMLTabWidget ):
           <td>Alt+PgUp or Down</td>
           <td>Forward or back in editing history</td>
           <td>Ctrl+PgUp or Down</td>
-          <td>Next or previous tab</td>
+          <td>Previous or next tab</td>
         </tr>
         <tr>
           <td>Ctrl+TAB</td>

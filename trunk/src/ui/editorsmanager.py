@@ -407,13 +407,13 @@ class EditorsManager( QTabWidget ):
                       self.onCloseTab )
         nextTabAction = QShortcut( 'Ctrl+PgUp', self )
         self.connect( nextTabAction, SIGNAL( 'activated()' ),
-                      self.__onNextTab )
+                      self.__onPrevTab )
         flipTabAction = QShortcut( 'Ctrl+Tab', self )
         self.connect( flipTabAction, SIGNAL( 'activated()' ),
                       self.__onFlipTab )
         prevTabAction = QShortcut( 'Ctrl+PgDown', self )
         self.connect( prevTabAction, SIGNAL( 'activated()' ),
-                      self.__onPrevTab )
+                      self.__onNextTab )
         gotoAction = QShortcut( 'Ctrl+G', self )
         self.connect( gotoAction, SIGNAL( 'activated()' ),
                       self.onGoto )
