@@ -630,24 +630,61 @@ class TextEditor( ScintillaWrapper ):
         self.markerDeleteAll( self.__excptMarker )
         return
 
+    def __convertIndicator( self, value ):
+        " Converts an indicator style from a config file to the scintilla constant "
+        indicatorStyles = { 0:  self.INDIC_PLAIN,
+                            1:  self.INDIC_SQUIGGLE,
+                            2:  self.INDIC_TT,
+                            3:  self.INDIC_DIAGONAL,
+                            4:  self.INDIC_STRIKE,
+                            5:  self.INDIC_HIDDEN,
+                            6:  self.INDIC_BOX,
+                            7:  self.INDIC_ROUNDBOX }
+        # Sick! Some scintilla versions are so old that they don't have the
+        # indicators below...
+        if hasattr( self, "INDIC_STRAIGHTBOX" ):
+            indicatorStyles[ 8 ] = self.INDIC_STRAIGHTBOX
+        if hasattr( self, "INDIC_DASH" ):
+            indicatorStyles[ 9 ] = self.INDIC_DASH
+        if hasattr( self, "INDIC_DOTS" ):
+            indicatorStyles[ 10 ] = self.INDIC_DOTS
+        if hasattr( self, "INDIC_SQUIGGLELOW" ):
+            indicatorStyles[ 11 ] = self.INDIC_SQUIGGLELOW
+        if hasattr( self, "INDIC_DOTBOX" ):
+            indicatorStyles[ 12 ] = self.INDIC_DOTBOX
+        if hasattr( self, "INDIC_SQUIGGLEPIXMAP" ):
+            indicatorStyles[ 13 ] = self.INDIC_SQUIGGLEPIXMAP
+        if hasattr( self, "INDIC_COMPOSITIONTHICK" ):
+            indicatorStyles[ 14 ] = self.INDIC_COMPOSITIONTHICK
+
+        if value in indicatorStyles:
+            return indicatorStyles[ value ]
+        return self.INDIC_ROUNDBOX
+
     def __initIndicators( self ):
         " Initialises indicators "
         skin = GlobalData().skin
 
         # Search indicator
         self.SendScintilla( self.SCI_INDICSETSTYLE, self.searchIndicator,
-                            self.INDIC_ROUNDBOX )
+                            self.__convertIndicator( skin.searchMarkStyle ) )
         self.SendScintilla( self.SCI_INDICSETALPHA, self.searchIndicator,
                             skin.searchMarkAlpha )
+        if hasattr( self, "SCI_INDICSETOUTLINEALPHA" ):
+            self.SendScintilla( self.SCI_INDICSETOUTLINEALPHA, self.searchIndicator,
+                                skin.searchMarkOutlineAlpha )
         self.SendScintilla( self.SCI_INDICSETUNDER, self.searchIndicator,
                             True )
         self.SendScintilla( self.SCI_INDICSETFORE, self.searchIndicator,
                             skin.searchMarkColor )
 
         self.SendScintilla( self.SCI_INDICSETSTYLE, self.matchIndicator,
-                            self.INDIC_ROUNDBOX )
+                            self.__convertIndicator( skin.matchMarkStyle ) )
         self.SendScintilla( self.SCI_INDICSETALPHA, self.matchIndicator,
                             skin.matchMarkAlpha )
+        if hasattr( self, "SCI_INDICSETOUTLINEALPHA" ):
+            self.SendScintilla( self.SCI_INDICSETOUTLINEALPHA, self.matchIndicator,
+                                skin.matchMarkOutlineAlpha )
         self.SendScintilla( self.SCI_INDICSETUNDER, self.matchIndicator,
                             True )
         self.SendScintilla( self.SCI_INDICSETFORE, self.matchIndicator,
