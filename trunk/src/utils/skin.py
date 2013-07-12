@@ -141,8 +141,12 @@ SKIN_SETTINGS = [
     GeneralSkinSetting( "foldingColor", GeneralSkinSetting.TYPE_COLOR, QColor( 230, 230, 230, 255 ) ),
     GeneralSkinSetting( "searchMarkColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 255, 0, 255 ) ),
     GeneralSkinSetting( "searchMarkAlpha", GeneralSkinSetting.TYPE_INT, 100 ),
+    GeneralSkinSetting( "searchMarkOutlineAlpha", GeneralSkinSetting.TYPE_INT, 100 ),
+    GeneralSkinSetting( "searchMarkStyle", GeneralSkinSetting.TYPE_INT, 8 ),
     GeneralSkinSetting( "matchMarkColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 255, 255 ) ),
     GeneralSkinSetting( "matchMarkAlpha", GeneralSkinSetting.TYPE_INT, 100 ),
+    GeneralSkinSetting( "matchMarkOutlineAlpha", GeneralSkinSetting.TYPE_INT, 100 ),
+    GeneralSkinSetting( "matchMarkStyle", GeneralSkinSetting.TYPE_INT, 8 ),
     GeneralSkinSetting( "spellingMarkColor", GeneralSkinSetting.TYPE_COLOR, QColor( 139, 0, 0, 255 ) ),
     GeneralSkinSetting( "spellingMarkAlpha", GeneralSkinSetting.TYPE_INT, 100 ),
     GeneralSkinSetting( "nolexerPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 255, 230, 255 ) ),
@@ -361,6 +365,9 @@ class Skin:
         try:
             f = open( fName, "w" )
             f.write( "# Automatically updated due to missed or corrupted values\n" )
+            f.write( "#\n" )
+            f.write( "# Note: indicator style values (searchMarkStyle, matchMarkStyle) are described here:\n" )
+            f.write( "# http://www.scintilla.org/ScintillaDoc.html#SCI_INDICSETSTYLE\n" )
             f.write( "[general]\n" )
             f.write( "name=" + self.data.name + "\n\n" )
 
