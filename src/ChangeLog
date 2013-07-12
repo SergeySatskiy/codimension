@@ -8,6 +8,7 @@
   info are taken into account.
 * Better undo of the automatically trimmed empty opened lines.
 * Search indicators are configurable now per skin.
+* Make Ctrl+PgUp going to the previous tab while Ctrl+PgDwn to the next
 
 2013 Jun 29 Sergey Satskiy <sergey.satskiy@gmail.com>
 
