@@ -27,6 +27,7 @@ from PyQt4.QtGui import ( QTextEdit, QMenu, QPalette, QApplication, QCursor,
                           QHBoxLayout, QWidget, QAction, QToolBar,
                           QSizePolicy, QLabel, QVBoxLayout, QFrame )
 from utils.pixmapcache import PixmapCache
+from utils.globals import GlobalData
 
 
 class TagHelpViewer( QWidget ):
@@ -74,7 +75,7 @@ class TagHelpViewer( QWidget ):
         self.__textEdit = QTextEdit( parent )
         self.__textEdit.setAcceptRichText( False )
         self.__textEdit.setLineWrapMode( QTextEdit.NoWrap )
-        self.__textEdit.setFontFamily( "Monospace" )
+        self.__textEdit.setFontFamily( GlobalData().skin.baseMonoFontFace )
         self.__textEdit.setReadOnly( True )
 
         # Default font size is good enough for most of the systems.

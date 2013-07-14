@@ -80,7 +80,7 @@ class Tooltip( QFrame ):
         self.info = QLabel()
         self.info.setAutoFillBackground( True )
         font = self.info.font()
-        font.setFamily( "Monospace" )
+        font.setFamily( GlobalData().skin.baseMonoFontFace )
         self.info.setFont( font )
         self.info.setFrameShape( QFrame.StyledPanel )
         verticalLayout.addWidget( self.info )

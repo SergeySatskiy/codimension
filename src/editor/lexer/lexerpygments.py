@@ -38,6 +38,8 @@ from PyQt4.QtCore        import QString
 from PyQt4.QtGui         import QColor, QFont
 from lexercontainer      import LexerContainer
 
+from utils.globals import GlobalData
+
 
 PYGMENTS_DEFAULT, \
 PYGMENTS_COMMENT, \
@@ -258,13 +260,13 @@ class LexerPygments( LexerContainer ):
         """ Provides the default font for a style """
 
         if style in [ PYGMENTS_COMMENT, PYGMENTS_PREPROCESSOR ]:
-            f = QFont( "Monospace", 14 )
+            f = GlobalData().skin.nolexerFont
             if style == PYGMENTS_PREPROCESSOR:
                 f.setItalic( True )
             return f
 
         if style in [ PYGMENTS_STRING ]:
-            return QFont( "Monospace", 14 )
+            return GlobalData().skin.nolexerFont
 
         if style in [ PYGMENTS_KEYWORD, PYGMENTS_OPERATOR,  PYGMENTS_WORD,
                       PYGMENTS_BUILTIN, PYGMENTS_ATTRIBUTE, PYGMENTS_FUNCTION,

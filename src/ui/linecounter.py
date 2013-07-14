@@ -87,7 +87,7 @@ class LineCounterDialog( QDialog, object ):
         self.resultEdit.setTabChangesFocus( False )
         self.resultEdit.setAcceptRichText( False )
         self.resultEdit.setReadOnly( True )
-        self.resultEdit.setFontFamily( "Monospace" )
+        self.resultEdit.setFontFamily( GlobalData().skin.baseMonoFontFace )
         font = self.resultEdit.font()
 
         # Calculate the vertical size

@@ -29,6 +29,7 @@ from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout,
                           QLabel, QGridLayout, QTextEdit )
 from utils.pixmapcache import PixmapCache
 from ui.fitlabel import FramedLabelWithDoubleClick
+from utils.globals import GlobalData
 
 
 
@@ -72,7 +73,7 @@ class ViewVariableDialog( QDialog ):
         varNameValue = FramedLabelWithDoubleClick( varName )
         varNameValue.setToolTip( "Double click to copy" )
         font = varNameValue.font()
-        font.setFamily( "Monospace" )
+        font.setFamily( GlobalData().skin.baseMonoFontFace )
         varNameValue.setFont( font )
         gridLayout.addWidget( varNameValue, 1, 1 )
         varTypeLabel = QLabel( "Type:" )
@@ -85,7 +86,7 @@ class ViewVariableDialog( QDialog ):
         gridLayout.addWidget( varValueLabel, 3, 0, Qt.AlignTop )
         varValueValue = QTextEdit()
         varValueValue.setReadOnly( True )
-        varValueValue.setFontFamily( "Monospace" )
+        varValueValue.setFontFamily( GlobalData().skin.baseMonoFontFace )
         # varValueValue.setLineWrapMode( QTextEdit.NoWrap )
         varValueValue.setAcceptRichText( False )
         varValueValue.setPlainText( varValue )
