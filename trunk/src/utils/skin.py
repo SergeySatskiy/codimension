@@ -123,6 +123,7 @@ class GeneralSkinSetting:
     TYPE_INT = 0
     TYPE_COLOR = 1
     TYPE_FONT = 2
+    TYPE_STRING = 3
 
     def __init__( self, name, sType, default ):
         self.name = name
@@ -168,6 +169,7 @@ SKIN_SETTINGS = [
     GeneralSkinSetting( "calltipColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
     GeneralSkinSetting( "calltipHighColor", GeneralSkinSetting.TYPE_COLOR, QColor( 250, 89, 68, 255 ) ),
     GeneralSkinSetting( "outdatedOutlineColor", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 42, 42, 255 ) ),
+    GeneralSkinSetting( "baseMonoFontFace", GeneralSkinSetting.TYPE_STRING, "Monospace" ),
                 ]
 
 
@@ -300,6 +302,17 @@ class Skin:
             self.data.isOK = False
             return None
 
+    def __getString( self, config, section, value ):
+        " Reads a string value from the given section "
+        try:
+            return config.get( section, value )
+        except:
+            logging.warning( "Cannot read the [" + section + "]/" + \
+                             value + " value from the skin file. " \
+                             "The file will be updated with a default value." )
+            self.data.isOK = False
+            return None
+
     def __loadGeneral( self, fName ):
         " Loads the general settings file "
         config = ConfigParser.ConfigParser()
@@ -321,6 +334,10 @@ class Skin:
                     self.data.values[ setting.name ] = val
             elif setting.sType == GeneralSkinSetting.TYPE_FONT:
                 val = self.__getFont( config, "general", setting.name.lower() )
+                if val is not None:
+                    self.data.values[ setting.name ] = val
+            elif setting.sType == GeneralSkinSetting.TYPE_STRING:
+                val = self.__getString( config, "general", setting.name.lower() )
                 if val is not None:
                     self.data.values[ setting.name ] = val
             else:
@@ -381,6 +398,9 @@ class Skin:
                 elif setting.sType == GeneralSkinSetting.TYPE_FONT:
                     f.write( setting.name.lower() + "=" +
                              self.data.values[ setting.name ].toString() + "\n" )
+                elif setting.sType == GeneralSkinSetting.TYPE_STRING:
+                    f.write( setting.name.lower() + "=" +
+                             self.data.values[ setting.name ] + "\n" )
                 else:
                     raise Exception( "Unsupported setting type: " +
                                      str( setting.sType ) )

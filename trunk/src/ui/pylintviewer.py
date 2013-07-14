@@ -370,7 +370,7 @@ class PylintViewer( QWidget ):
         fragmentLabel.setAutoFillBackground( True )
 
         labelFont = fragmentLabel.font()
-        labelFont.setFamily( "Monospace" )
+        labelFont.setFamily( GlobalData().skin.baseMonoFontFace )
         fragmentLabel.setFont( labelFont )
 
         self.__vLayout.addWidget( fragmentLabel )

@@ -24,12 +24,12 @@
 """ PythonTidy settings dialog """
 
 import logging
-from PyQt4.QtCore                import Qt, SIGNAL
-from PyQt4.QtGui                 import QDialog, QDialogButtonBox, \
-                                        QVBoxLayout, QLabel, QFontMetrics, \
-                                        QLineEdit, QHBoxLayout, \
-                                        QGridLayout, QTextEdit, QCheckBox, \
-                                        QGroupBox, QSizePolicy, QRadioButton
+from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
+                          QFontMetrics, QLineEdit, QHBoxLayout, QGridLayout,
+                          QTextEdit, QCheckBox, QGroupBox, QSizePolicy,
+                          QRadioButton )
+from utils.globals import GlobalData
 
 
 class TidySettingsDialog( QDialog ):
@@ -65,7 +65,7 @@ class TidySettingsDialog( QDialog ):
         gridLayout.addWidget( colsLabel, 0, 0, 1, 1 )
         gridLayout.addWidget( self.__colsEdit, 0, 1, 1, 1 )
         font = self.__colsEdit.font()
-        font.setFamily( "Monospace" )
+        font.setFamily( GlobalData().skin.baseMonoFontFace )
         self.__colsEdit.setFont( font )
 
         # Assignment

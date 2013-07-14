@@ -79,8 +79,7 @@ class ParserErrorsDialog( QDialog, object ):
         resultEdit.setTabChangesFocus( False )
         resultEdit.setAcceptRichText( False )
         resultEdit.setReadOnly( True )
-        resultEdit.setFontFamily( "Monospace" )
-        # resultEdit.setFontPointSize( 12.0 )
+        resultEdit.setFontFamily( GlobalData().skin.baseMonoFontFace )
         if info is not None:
             modInfo = info
         else:

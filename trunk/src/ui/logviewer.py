@@ -34,6 +34,7 @@ from PyQt4.QtGui import QTextEdit, QColor, QBrush, QMenu, \
                         QHBoxLayout, QWidget, QAction, QToolBar, \
                         QSizePolicy
 from utils.pixmapcache import PixmapCache
+from utils.globals import GlobalData
 
 
 class LogViewer( QWidget ):
@@ -83,7 +84,7 @@ class LogViewer( QWidget ):
         self.messages = QTextEdit( parent )
         self.messages.setAcceptRichText( False )
         self.messages.setLineWrapMode( QTextEdit.NoWrap )
-        self.messages.setFontFamily( "Monospace" )
+        self.messages.setFontFamily( GlobalData().skin.baseMonoFontFace )
         self.messages.setReadOnly( True )
 
         # Default font size is good enough for most of the systems.

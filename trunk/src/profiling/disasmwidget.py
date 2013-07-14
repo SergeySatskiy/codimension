@@ -29,6 +29,7 @@ from PyQt4.QtGui import QWidget, QToolBar, QHBoxLayout, QAction, \
                         QLabel, QFrame, QPalette, QVBoxLayout, \
                         QTextEdit
 from utils.pixmapcache import PixmapCache
+from utils.globals import GlobalData
 
 
 
@@ -89,7 +90,7 @@ class DisassemblerResultsWidget( QWidget, MainWindowTabWidgetBase ):
         self.__text = QTextEdit( self )
         self.__text.setAcceptRichText( False )
         self.__text.setLineWrapMode( QTextEdit.NoWrap )
-        self.__text.setFontFamily( "Monospace" )
+        self.__text.setFontFamily( GlobalData().skin.baseMonoFontFace )
         self.__text.setReadOnly( True )
         self.__text.setPlainText( code )
 
