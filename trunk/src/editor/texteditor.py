@@ -29,12 +29,11 @@ import lexer
 from PyQt4.Qsci import QsciLexerPython
 from scintillawrap import ScintillaWrapper
 from PyQt4.QtCore import ( Qt, QFileInfo, SIGNAL, QSize, QUrl, QTimer,
-                           QVariant, QRect, QEvent, QPoint, QModelIndex,
-                           QEventLoop )
+                           QVariant, QRect, QEvent, QPoint, QModelIndex )
 from PyQt4.QtGui import ( QApplication, QCursor, QFontMetrics, QToolBar,
                           QActionGroup, QHBoxLayout, QWidget, QAction, QMenu,
                           QSizePolicy, QToolButton, QDialog, QToolTip,
-                          QDesktopServices )
+                          QDesktopServices, QFont )
 from PyQt4.Qsci import QsciScintilla
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.fileutils import ( detectFileType, DesignerFileType,
@@ -532,6 +531,23 @@ class TextEditor( ScintillaWrapper ):
                                       GlobalData().skin.currentLinePaper )
         return
 
+    def detectLineNumMarginWidth( self ):
+        """ Caculates the margin width depending on
+            the margin font and the current zoom """
+        skin = GlobalData().skin
+        font = QFont( skin.lineNumFont )
+        font.setPointSize( font.pointSize() + self.zoom )
+        fontMetrics = QFontMetrics( font )
+        # I actually need space for 4 digits however if I put 8888 here - the
+        # width is not enough for 4 digits. I have no ideas why.
+        return fontMetrics.width( '888888' )
+
+    def setLineNumMarginWidth( self ):
+        " Called when zooming is done to keep the width enough for 4 digits "
+        self.setMarginWidth( self.LINENUM_MARGIN,
+                             self.detectLineNumMarginWidth() )
+        return
+
     def __initMargins( self ):
         " Initializes the editor margins "
 
@@ -551,9 +567,6 @@ class TextEditor( ScintillaWrapper ):
         # Set margin 0 for line numbers
         self.setMarginsFont( skin.lineNumFont )
         self.setMarginLineNumbers( self.LINENUM_MARGIN, True )
-        fontMetrics = QFontMetrics( skin.lineNumFont )
-        self.setMarginWidth( self.LINENUM_MARGIN,
-                             fontMetrics.width( ' 8888' ) )
 
         # Setup break point margin
         self.setMarginWidth( self.BPOINT_MARGIN, 16 )

@@ -25,7 +25,7 @@
 import os, os.path, sys, logging, ConfigParser
 from subprocess import Popen
 from PyQt4.QtCore import SIGNAL, Qt, QSize, QTimer, QDir, QVariant, QUrl
-from PyQt4.QtGui import ( QLabel, QToolBar, QWidget, QMessageBox,
+from PyQt4.QtGui import ( QLabel, QToolBar, QWidget, QMessageBox, QFont,
                           QVBoxLayout, QSplitter, QSizePolicy,
                           QAction, QMainWindow, QShortcut, QFrame,
                           QApplication, QCursor, QMenu, QToolButton,
@@ -85,6 +85,7 @@ from profiling.profui import ProfilingProgressDialog
 from profiling.disasm import getDisassembled
 from debugger.bputils import clearValidBreakpointLinesCache
 from about import AboutDialog
+from utils.skin import getMonospaceFontList
 
 
 class EditorsManagerWidget( QWidget ):
@@ -1253,6 +1254,16 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onStyle )
         self.connect( styleMenu, SIGNAL( "aboutToShow()" ),
                       self.__styleAboutToShow )
+
+        fontFaceMenu = self.__optionsMenu.addMenu( "Mono font face" )
+        for fontFace in getMonospaceFontList():
+            faceAct = fontFaceMenu.addAction( fontFace )
+            faceAct.setData( QVariant( fontFace ) )
+            f = faceAct.font()
+            f.setFamily( fontFace )
+            faceAct.setFont( f )
+        self.connect( fontFaceMenu, SIGNAL( 'triggered(QAction*)' ),
+                      self.__onMonoFont )
 
         # The Help menu
         self.__helpMenu = QMenu( "&Help", self )
@@ -2726,6 +2737,21 @@ class CodimensionMainWindow( QMainWindow ):
         styleName = str( act.data().toString() )
         QApplication.setStyle( styleName )
         Settings().style = styleName.lower()
+        return
+
+    def __onMonoFont( self, act ):
+        " Sets the new mono font "
+        fontFace = str( act.data().toString() )
+        try:
+            font = QFont()
+            font.setFamily( fontFace )
+            GlobalData().skin.setMainEditorFont( font )
+            GlobalData().skin.setBaseMonoFontFace( fontFace )
+        except Exception as exc:
+            logging.error( str( exc ) )
+            return
+
+        logging.info( "Please restart codimension to apply the new font" )
         return
 
     def showStatusBarMessage( self, msg, timeout = 10000 ):

@@ -59,7 +59,9 @@ def getMonospaceFontList():
     combo = QFontComboBox()
     combo.setFontFilters( QFontComboBox.MonospacedFonts )
     for index in xrange( combo.count() ):
-        result.append( str( combo.itemText( index ) ) )
+        face = str( combo.itemText( index ) )
+        if face.lower() != "webdings":
+            result.append( face )
     return result
 
 
@@ -480,6 +482,8 @@ class Skin:
             line = line.strip()
             if line.startswith( "nolexerfont" ):
                 updatedContent.append( replaceFontWith( line, family, size ) )
+            elif line.startswith( "linenumfont" ):
+                updatedContent.append( replaceFontWith( line, family, size ) )
             else:
                 updatedContent.append( line )
 
@@ -487,7 +491,34 @@ class Skin:
         f.write( "\n".join( updatedContent ) )
         f.close()
         f = None
+        return
 
+    def setBaseMonoFontFace( self, fontFace ):
+        " Updates the base mono font face "
+        if self.data.dirName is None:
+            raise Exception( "The skin is not loaded" )
+
+        generalFile = self.data.dirName + "general"
+        if not os.path.exists( generalFile ):
+            raise Exception( "Cannot find the general skin file. Expected here: " +
+                             generalFile )
+
+        f = open( generalFile, "r" )
+        content = f.read()
+        f.close()
+
+        updatedContent = []
+        for line in content.splitlines():
+            line = line.strip()
+            if line.startswith( "basemonofontface" ):
+                updatedContent.append( "basemonofontface=" +fontFace )
+            else:
+                updatedContent.append( line )
+
+        f = open( generalFile, "w" )
+        f.write( "\n".join( updatedContent ) )
+        f.close()
+        f = None
         return
 
     def __getattr__( self, aAttr ):
