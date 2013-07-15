@@ -1,0 +1,43 @@
+Codimension plugins subsystem.
+
+There are two places where codimension looks for plugins:
+- system wide: <installation path>/codimension/plugins/
+- user: ~/.codimension/plugins/
+
+Codimension expects that each plugin occupies a designated directory and there
+are at least 3 files in each directory:
+- file.yapsy-plugin -> plugin description
+- file.py -> plugin implementation
+- __init__.py
+
+There no limits neither on the number of plugins nor the number of filies in a
+plugin directory.
+
+Each plugin could be enabled or disabled. By default a plugin is enabled however
+it could be disabled by the user or by codimension (if codimension detects poor
+implementation or a conflict).
+
+Each plugin must provide information at least about its name and its version
+(goes to file.yapsy-plugin).
+In case if the same name plugin is found both in the system wide location and in
+the user directory the priority is given to the user plugin and the system one is
+automatically disabled. If the same name plugins are located in the system wide
+directory or in the user directory then the priority is given to the higher plugin
+version and the lower plugin version is automatically disabled.
+
+Each plugin must belong to a predefined plugin category. Depending on the category
+codimension expects a certain communication protocol.
+
+Implementation of a plugin basically includes inheriting from a plugin category
+base class and implementing the required methods of the base class.
+
+
+Revision control system category.
+class IRevisionControlSystemPlugin( IPlugin ):
+
+    def __init__( self ):
+        return
+
+    def 
+
+
