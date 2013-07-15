@@ -287,6 +287,7 @@ class ScintillaWrapper( QsciScintilla ):
         """ Zooms to the specific zoom factor """
         self.zoom = zoom
         QsciScintilla.zoomTo( self, zoom )
+        self.setLineNumMarginWidth()
         self._charWidth = -1
         self._lineHeight = -1
         return
