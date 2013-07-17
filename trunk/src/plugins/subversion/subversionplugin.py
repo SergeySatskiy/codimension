@@ -20,40 +20,29 @@
 # $Id$
 #
 
-" Version control system plugin interface "
+" Codimension SVN plugin implementation "
 
 
-from yapsy.IPlugin import IPlugin
+from vcsiface import VersionControlSystemInterface
 
-
-class VersionControlSystemInterface( IPlugin ):
-    """ Version control system plugin interface """
+class SubversionPlugin( VersionControlSystemInterface ):
+    """ Codimension subversion plugin """
 
     def __init__( self ):
-        """ The plugin class is instantiated with no arguments """
-        IPlugin.__init__( self )
+        VersionControlSystemInterface.__init__( self )
         return
-
-    def getInterfaceVersion( self ):
-        """ Do not override this method. Codimension uses it
-            to detect the protocol version conformance. """
-        return "1.0.0"
-
-
-    # Member functions below could or should be implemented by the pugin.
-    # See docstrings for the detailed description.
 
     @staticmethod
     def getVCSName():
         """ Should provide the specific version control name, e.g. SVN """
-        raise Exception( "getVCSName() must be overridden" )
+        return "SVN"
 
     def activate( self ):
         """ The plugin may override the method to do specific
             plugin activation handling.
             Note: if overriden do not forget to call the
                   base class activate() """
-        IPlugin.activate( self )
+        VersionControlSystemInterface.activate( self )
         return
 
     def deactivate( self ):
@@ -61,7 +50,7 @@ class VersionControlSystemInterface( IPlugin ):
             plugin deactivation handling.
             Note: if overriden do not forget to call the
                   base class deactivate() """
-        IPlugin.deactivate( self )
+        VersionControlSystemInterface.deactivate( self )
         return
 
     def setEnvironment( self, ideSettings, ideGlobalData ):
@@ -106,4 +95,5 @@ class VersionControlSystemInterface( IPlugin ):
 
     def getRepositoryVersion( self, path, revision = None ):
         raise Exception( "getRepositoryVersion() must be overridden" )
+
 

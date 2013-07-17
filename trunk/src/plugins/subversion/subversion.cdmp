@@ -1,0 +1,9 @@
+[Core]
+Name = Subversion
+Module = subversionplugin
+
+[Documentation]
+Author = Sergey Satskiy
+Version = 1.0.0
+Website = http://satsky.spb.ru/codimension
+Description = Codimension subversion plugin
