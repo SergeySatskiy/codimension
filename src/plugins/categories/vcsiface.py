@@ -40,8 +40,17 @@ class VersionControlSystemInterface( IPlugin ):
         return "1.0.0"
 
 
-    # Member functions below could or should be implemented by the pugin.
+    # Member functions below could or should be implemented by a plugin.
     # See docstrings for the detailed description.
+
+    @staticmethod
+    def isIDEVersionCompatible( ideVersion ):
+        """ Codimension makes this call before activating a plugin.
+            The passed ideVersion is a string representing
+            the current IDE version.
+            True should be returned if the plugin is compatible with the IDE.
+        """
+        raise Exception( "isIDEVersionCompatible() must be overridden" )
 
     @staticmethod
     def getVCSName():
@@ -105,5 +114,7 @@ class VersionControlSystemInterface( IPlugin ):
         raise Exception( "getInfo() must be overridden" )
 
     def getRepositoryVersion( self, path, revision = None ):
+        """ Should provide the content of the file at path from the VCS.
+            If revision is not specified then it must be the latest version """
         raise Exception( "getRepositoryVersion() must be overridden" )
 
