@@ -25,12 +25,24 @@
 
 from vcsiface import VersionControlSystemInterface
 
+
+
 class SubversionPlugin( VersionControlSystemInterface ):
     """ Codimension subversion plugin """
 
     def __init__( self ):
         VersionControlSystemInterface.__init__( self )
+        print "Instantiated"
         return
+
+    @staticmethod
+    def isIDEVersionCompatible( ideVersion ):
+        """ Codimension makes this call before activating a plugin.
+            The passed ideVersion is a string representing
+            the current IDE version.
+            True should be returned if the plugin is compatible with the IDE.
+        """
+        return True
 
     @staticmethod
     def getVCSName():
@@ -43,6 +55,7 @@ class SubversionPlugin( VersionControlSystemInterface ):
             Note: if overriden do not forget to call the
                   base class activate() """
         VersionControlSystemInterface.activate( self )
+        print "Activated"
         return
 
     def deactivate( self ):
@@ -51,6 +64,7 @@ class SubversionPlugin( VersionControlSystemInterface ):
             Note: if overriden do not forget to call the
                   base class deactivate() """
         VersionControlSystemInterface.deactivate( self )
+        print "Deactivated"
         return
 
     def setEnvironment( self, ideSettings, ideGlobalData ):
@@ -64,6 +78,7 @@ class SubversionPlugin( VersionControlSystemInterface ):
 
             No return value is expected
         """
+        print "Set environment"
         return
 
     def populateMainMenu( self, parentMenu ):
