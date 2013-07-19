@@ -149,7 +149,10 @@ CDM_SETTINGS = {
                         ],
 "ignoredExceptions" : [
     CDMSetting( "exceptiontype", CDMSetting.TYPE_STR_LST, [] )
-                      ]
+                      ],
+"disabledPlugins" : [
+    CDMSetting( "disabledplugins", CDMSetting.TYPE_STR_LST, [] )
+                    ],
                }
 
 
