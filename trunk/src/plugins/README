@@ -3,8 +3,8 @@ Codimension plugins subsystem.
 Codimension plugins sybsystem is built on top of the yapsy library:
 http://yapsy.sourceforge.net/ released under simplified BSD license.
 So some terms (e.g. plugin category) and file formats (e.g. plugin
-description file format) are induced by the library and the description
-could be found on the library web site.
+description file format) are borrowed from the library and their
+description could be found on the library web site.
 
 
 
@@ -14,13 +14,15 @@ There are two places where codimension looks for plugins:
   in order to simplfy plugins packaging for the developers
 - user: ~/.codimension/plugins/
 
-Codimension expects that each plugin occupies a designated directory and there
-are at least 3 files in each directory:
-- file.cdmp -> plugin description
-- file.py -> plugin implementation
-- __init__.py
+Codimension expects that each plugin provides a plugin description file with the
+".cdmp" extension. This file must be located at the user or system-wide plugins
+location. The format of the file can be found in yapsy documentation.
 
-There no limits neither on the number of plugins nor the number of filies in a
+The plugin implementation must reside in a separate directory and the directory
+must be a python package i.e. it must have __init__.py file. The implementation
+directory must reside in the same location as the plugin description file.
+
+There are no limits neither on the number of plugins nor the number of files in a
 plugin directory.
 
 Each plugin could be enabled or disabled. By default a plugin is enabled however
@@ -32,7 +34,7 @@ resolved.
 Each plugin must provide information at least about its name and its version
 (goes to file.cdmp).
 In case if the same name plugin is found both in the system wide location and in
-the user directory the priority is given to the user plugin and the system one is
+the user directory then the priority is given to the user plugin and the system one is
 automatically disabled. If the same name plugins are located in the system wide
 directory or in the user directory then the priority is given to the higher plugin
 version and the lower plugin version is automatically disabled.
@@ -45,19 +47,21 @@ interface class and implementing the required methods. The supported interface
 classes are located at codimension/src/plugins/categories/ directory.
 
 A plugin developer should follow the steps below:
-- Create a separate directory for a new plugin with an appropriate name.
-- Make sure that __init__.py is in the plugin directory.
+- Create a separate directory for a new plugin implementation files with an
+  appropriate name.
+- Create a plugin description file .cdmp in the plugin directory and populate
+  it with the appropriate information. Note: the [Core].Module parameter must
+  refer to the plugin directory name.
 - Make a choice of a plugin category by analysis of the supported categories
   at the codimension/src/plugins/categories/ directory.
 - Copy the chosen interface base class to the plugin directory.
 - Create a plugin implementing class which derives from the interface base
-  class. Preferably the plugin implementing file resides in a separate file.
+  class. The implementing class must reside in the plugin __init__.py file.
 - Implement all the mandatory interface class methods.
-- Create a plugin description file .cdmp in the plugin directory and populate
-  it with the appropriate information.
 - The installation of the plugin is copying the plugin directory with all its
-  files to a system wide plugins location or to the user plugins location. Next
-  time codimension starts it will pick up and activate the new plugin.
+  files to a system wide plugins location or to the user plugins location and
+  copying .cdmp file to the same location.
+  Next time codimension starts it will pick up and activate the new plugin.
 
 Currently supported plugin categories:
 - Version control system (see categories/vcsiface.py)
