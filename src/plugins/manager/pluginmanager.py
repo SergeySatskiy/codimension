@@ -100,10 +100,12 @@ class CDMPluginManager( PluginManager ):
 
     def __activatePlugins( self, collectedPlugins ):
         " Activating the plugins "
+        from utils.globals import GlobalData
+
         for category in collectedPlugins:
             for plugin in collectedPlugins[ category ]:
                 try:
-                    plugin.getObject().activate()
+                    plugin.getObject().activate( Settings(), GlobalData() )
                     if category in self.activePlugins:
                         self.activePlugins[ category ].append( plugin )
                     else:
