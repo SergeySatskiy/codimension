@@ -125,6 +125,7 @@ class PymetricsViewer( QWidget ):
         #printButton.setShortcut( 'Ctrl+' )
         self.connect( self.printButton, SIGNAL( 'triggered()' ),
                       self.__onPrint )
+        self.printButton.setVisible( False )
 
         self.printPreviewButton = QAction( \
                 PixmapCache().getIcon( 'printpreview.png' ),
@@ -132,6 +133,7 @@ class PymetricsViewer( QWidget ):
         #printPreviewButton.setShortcut( 'Ctrl+' )
         self.connect( self.printPreviewButton, SIGNAL( 'triggered()' ),
                       self.__onPrintPreview )
+        self.printPreviewButton.setVisible( False )
 
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
