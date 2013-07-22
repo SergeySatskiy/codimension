@@ -34,16 +34,18 @@ class CDMPluginManager( PluginManager ):
 
     NO_CONFLICT = 0
     SYSTEM_USER_CONFLICT = 1                # Same name plugin in system and user locations
-    POOR_IMPLEMENTATION_CONFLICT = 2        # Bad plugin interface
-    INCOMPATIBLE_IDE_VERSION_CONFLICT = 3   # Plugin required incompatible version
-    VERSION_CONFLICT = 4                    # Newer version of the same name plugin
-    ACTIVATE_CONFLICT = 5                   # Exception on activation
-    BAD_BASE_CLASS = 6                      # Does not derive from any supported interface
+    INCOMPATIBLE_IDE_VERSION_CONFLICT = 2   # Plugin required incompatible version
+    VERSION_CONFLICT = 3                    # Newer version of the same name plugin
+    ACTIVATE_CONFLICT = 4                   # Exception on activation
+    BAD_BASE_CLASS = 5                      # Does not derive from any supported interface
+    BAD_ACTIVATION = 6                      # The plugin raised exception during activation
+    BAD_INTERFACE = 7                       # Exception on basic methods
+    USER_DISABLED = 8
 
     def __init__( self ):
         PluginManager.__init__( self, None,
                                 [ settingsDir + "plugins",
-                                "/usr/share/codimension-plugins" ],
+                                  "/usr/share/codimension-plugins" ],
                                 "cdmp" )
 
         self.inactivePlugins = {}   # Categorized inactive plugins
@@ -53,15 +55,24 @@ class CDMPluginManager( PluginManager ):
 
     def load( self ):
         " Loads the found plugins "
+        # Now, let's check the plugins. They must be of known category.
+        collectedPlugins = self.__collect()
+        self.__applyDisabledPlugins( collectedPlugins )
+
+        self.__checkIDECompatibility( collectedPlugins )
+        self.__sysVsUserConflicts( collectedPlugins )
+        self.__categoryConflicts( collectedPlugins )
+        self.__activatePlugins( collectedPlugins )
+
+        self.__saveDisabledPlugins()
+        return
+
+    def __collect( self ):
+        " Checks that the plugins belong to what is known "
         self.locatePlugins()
         self.collectPlugins()
 
-        print "All plugins"
-        for plugin in self.getAllPlugins():
-            print "Plugin: " + plugin.name + " Version: " + str( plugin.version )
-
-        # Now, let's check the plugins. They must be of known category.
-        # Put all the collected to inactive list first
+        collectedPlugins = {}
         for plugin in self.getAllPlugins():
             recognised = False
             baseClasses = getBaseClassNames( plugin.plugin_object )
@@ -70,32 +81,157 @@ class CDMPluginManager( PluginManager ):
                     # OK, this plugin base has been recognised
                     recognised = True
                     newPlugin = CDMPluginInfo( plugin )
-                    if self.inactivePlugins.has_key( category ):
-                        self.inactivePlugins[ category ] = [ newPlugin ]
+                    if collectedPlugins.has_key( category ):
+                        collectedPlugins[ category ].append( newPlugin )
                     else:
-                        self.inactivePlugins[ category ].append( newPlugin )
+                        collectedPlugins[ category ] = [ newPlugin ]
                     break
 
             if not recognised:
                 logging.warning( "Plugin of an unknown category is found at: " +
-                                 plugin.path + ". The plugin is ignored." )
+                                 plugin.path + ". The plugin is disabled." )
                 newPlugin = CDMPluginInfo( plugin )
                 newPlugin.conflictType = CDMPluginManager.BAD_BASE_CLASS
                 newPlugin.conflictMessage = "The plugin does not derive any " \
                                             "known plugin category interface"
                 self.unknownPlugins.append( newPlugin )
 
-        # Check settings for the disabled plugins
+        return collectedPlugins
+
+    def __activatePlugins( self, collectedPlugins ):
+        " Activating the plugins "
+        for category in collectedPlugins:
+            for plugin in collectedPlugins[ category ]:
+                try:
+                    plugin.getObject().activate()
+                    if category in self.activePlugins:
+                        self.activePlugins[ category ].append( plugin )
+                    else:
+                        self.activePlugins[ category ] = [ plugin ]
+                except Exception as excpt:
+                    logging.error( "Error activating plugin at " +
+                                   plugin.getPath() +
+                                   ". The plugin disabled. Error message: \n" +
+                                   str( excpt ) )
+                    plugin.conflictType = CDMPluginManager.BAD_ACTIVATION
+                    plugin.conflictMessage = "Error activating the plugin"
+                    if category in self.inactivePlugins:
+                        self.inactivePlugins[ category ].append( plugin )
+                    else:
+                        self.inactivePlugins[ category ] = [ plugin ]
+        return
 
 
+    def __checkIDECompatibility( self, collectedPlugins ):
+        " Checks that the plugins can be used with the current IDE "
+        from utils.globals import GlobalData
 
+        toBeRemoved = []
+        for category in collectedPlugins:
+            for plugin in collectedPlugins[ category ]:
+                try:
+                    if not plugin.getObject().isIDEVersionCompatible(
+                                GlobalData().version ):
+                        # The plugin is incompatible. Disable it
+                        logging.warning( "Plugin of an incompatible version "
+                                         "is found at: " + plugin.getPath() +
+                                         ". The plugin is disabled." )
+                        plugin.conflictType = CDMPluginManager.INCOMPATIBLE_IDE_VERSION_CONFLICT
+                        plugin.conflictMessage = "The IDE version does not meet " \
+                                                 "the plugin requirements."
+                        self.unknownPlugins.append( plugin )
+                        toBeRemoved.append( plugin.getPath() )
+                except Exception as excpt:
+                    # Could not successfully call the interface method
+                    logging.error( "Error checking IDE version compatibility of plugin at " +
+                                   plugin.getPath() +
+                                   ". The plugin disabled. Error message: \n" +
+                                   str( excpt ) )
+                    plugin.conflictType = CDMPluginManager.BAD_INTERFACE
+                    plugin.conflictMessage = "Error checking IDE version compatibility"
+                    if category in self.inactivePlugins:
+                        self.inactivePlugins[ category ].append( plugin )
+                    else:
+                        self.inactivePlugins[ category ] = [ plugin ]
+                    toBeRemoved.append( plugin.getPath() )
 
-
-
-        # Update settings with the disabled plugins
-
+        for path in toBeRemoved:
+            for category in collectedPlugins:
+                for plugin in collectedPlugins[ category ]:
+                    if plugin.getPath() == path:
+                        collectedPlugins.remove( plugin )
+                        break
 
         return
+
+    def __applyDisabledPlugins( self, collectedPlugins ):
+        """ Takes the disabled plugins from settings and marks
+            collected plugins accordingly """
+        for disabledPlugin in Settings().disabledPlugins:
+            # Parse the record
+            try:
+                conflictType, \
+                path, \
+                conflictMessage = CDMPluginInfo.parseDisabledLine( disabledPlugin )
+            except Exception as excpt:
+                logging.warning( str( excpt ) )
+                continue
+
+            found = False
+            for category in collectedPlugins:
+                for plugin in collectedPlugins[ category ]:
+                    if plugin.getPath() == path:
+                        found = True
+                        plugin.conflictType = conflictType
+                        plugin.conflictMessage = conflictMessage
+                        if self.inactivePlugins.has_key( category ):
+                            self.inactivePlugins[ category ].append( plugin )
+                        else:
+                            self.inactivePlugins[ category ] = [ plugin ]
+                        collectedPlugins[ category ].remove( plugin )
+                        break
+                if found:
+                    break
+
+            if not found:
+                # Second try - search through the unknown plugins
+                for plugin in self.unknownPlugins:
+                    if plugin.getPath() == path:
+                        found = True
+                        plugin.conflictType = conflictType
+                        plugin.conflictMessage = conflictMessage
+                        break
+
+            if not found:
+                logging.warning( "The disabled plugin at " + path +
+                                 " has not been found. The information that "
+                                 " the plugin is disabled will be deleted." )
+
+        return
+
+    def __sysVsUserConflicts( self, collectedPlugins ):
+        " Checks for the system vs user plugin conflicts "
+        return
+
+    def __categoryConflicts( self, collectPlugins ):
+        " Checks for version conflicts within the category "
+        return
+
+    def __saveDisabledPlugins( self ):
+        """ Saves the disabled plugins info into the settings """
+        value = []
+        for category in self.inactivePlugins:
+            for plugin in self.inactivePlugins[ category ]:
+                line = plugin.getDisabledLine()
+                if line is not None:
+                    value.append( line )
+        for plugin in self.unknownPlugins:
+            line = plugin.getDisabledLine()
+            if line is not None:
+                value.append( line )
+        Settings().disabledPlugins = value
+        return
+
 
 
 
@@ -113,6 +249,9 @@ class CDMPluginInfo:
 
     def __isUserPlugin( self, plugin ):
         " True if it is a user plugin "
+        dir( plugin )
+        type( plugin )
+        print plugin.path
         return plugin.path.startswith( "settingsDir" )
 
     def getDisabledLine( self ):
@@ -136,6 +275,10 @@ class CDMPluginInfo:
     def getObject( self ):
         " Provides a reference to the plugin object "
         return self.info.plugin_object
+
+    def getPath( self ):
+        " Provides the plugin path "
+        return self.info.path
 
     def disable( self, conflictType = CDMPluginManager.NO_CONFLICT,
                        conflictMessage = "" ):
