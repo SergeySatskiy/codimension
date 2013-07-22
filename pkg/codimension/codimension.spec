@@ -10,6 +10,7 @@ Source0: %{name}-%{version}.tar.gz
 Source1: %{name}.xpm
 Source2: %{name}.sharedmimeinfo
 Source3: %{name}.desktop
+Source4: %{name}.png
 
 Requires: python
 Requires: codimension-parser >= 1.6
@@ -57,6 +58,7 @@ mkdir -p $RPM_BUILD_ROOT/%{_bindir}
 ln -s ../share/codimension/codimension.py $RPM_BUILD_ROOT/%{_bindir}/%{name}
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/pixmaps
 cp -p %{SOURCE1} $RPM_BUILD_ROOT%{_datadir}/pixmaps/%{name}.xpm
+cp -p %{SOURCE4} $RPM_BUILD_ROOT%{_datadir}/pixmaps/%{name}.png
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/mime/packages
 cp -p %{SOURCE2} $RPM_BUILD_ROOT%{_datadir}/mime/packages/%{name}.xml
 desktop-file-install --dir $RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE3}
