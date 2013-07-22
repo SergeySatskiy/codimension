@@ -278,23 +278,23 @@ class TextEditor( ScintillaWrapper ):
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
 
         self.__menu = QMenu( self )
-        self.__menuUndo = self.__menu.addAction( \
+        self.__menuUndo = self.__menu.addAction(
                                     PixmapCache().getIcon( 'undo.png' ),
                                     '&Undo', self.onUndo, "Ctrl+Z" )
-        self.__menuRedo = self.__menu.addAction( \
+        self.__menuRedo = self.__menu.addAction(
                                     PixmapCache().getIcon( 'redo.png' ),
                                     '&Redo', self.onRedo, "Ctrl+Shift+Z" )
         self.__menu.addSeparator()
-        self.__menuCut = self.__menu.addAction( \
+        self.__menuCut = self.__menu.addAction(
                                     PixmapCache().getIcon( 'cutmenu.png' ),
                                     'Cu&t', self.onShiftDel, "Ctrl+X" )
-        self.__menuCopy = self.__menu.addAction( \
+        self.__menuCopy = self.__menu.addAction(
                                     PixmapCache().getIcon( 'copymenu.png' ),
                                     '&Copy', self.onCtrlC, "Ctrl+C" )
-        self.__menuPaste = self.__menu.addAction( \
+        self.__menuPaste = self.__menu.addAction(
                                     PixmapCache().getIcon( 'pastemenu.png' ),
                                     '&Paste', self.paste, "Ctrl+V" )
-        self.__menuSelectAll = self.__menu.addAction( \
+        self.__menuSelectAll = self.__menu.addAction(
                                 PixmapCache().getIcon( 'selectallmenu.png' ),
                                 'Select &all', self.selectAll, "Ctrl+A" )
         self.__menu.addSeparator()
@@ -373,26 +373,26 @@ class TextEditor( ScintillaWrapper ):
     def __initToolsMenu( self ):
         " Creates the tools menu "
         self.toolsMenu = QMenu( "Too&ls" )
-        self.pylintAct = self.toolsMenu.addAction( \
+        self.pylintAct = self.toolsMenu.addAction(
                             PixmapCache().getIcon( 'pylint.png' ),
                             'pylint', self.parent().onPylint, "Ctrl+L" )
         self.pylintAct.setEnabled( False )
-        self.pymetricsAct = self.toolsMenu.addAction( \
+        self.pymetricsAct = self.toolsMenu.addAction(
                             PixmapCache().getIcon( 'metrics.png' ),
                             'pymetrics', self.parent().onPymetrics, "Ctrl+K" )
         self.toolsMenu.addSeparator()
-        self.runAct = self.toolsMenu.addAction( \
+        self.runAct = self.toolsMenu.addAction(
                             PixmapCache().getIcon( 'run.png' ),
                             'Run script', self.parent().onRunScript )
-        self.runParamAct = self.toolsMenu.addAction( \
+        self.runParamAct = self.toolsMenu.addAction(
                             PixmapCache().getIcon( 'paramsmenu.png' ),
                             'Set parameters and run',
                             self.parent().onRunScriptSettings )
         self.toolsMenu.addSeparator()
-        self.profileAct = self.toolsMenu.addAction( \
+        self.profileAct = self.toolsMenu.addAction(
                             PixmapCache().getIcon( 'profile.png' ),
                             'Profile script', self.parent().onProfileScript )
-        self.profileParamAct = self.toolsMenu.addAction( \
+        self.profileParamAct = self.toolsMenu.addAction(
                             PixmapCache().getIcon( 'paramsmenu.png' ),
                             'Set parameters and profile',
                             self.parent().onProfileScriptSettings )
@@ -401,11 +401,11 @@ class TextEditor( ScintillaWrapper ):
     def __initDiagramsMenu( self ):
         " Creates the diagrams menu "
         self.diagramsMenu = QMenu( "&Diagrams" )
-        self.importsDgmAct = self.diagramsMenu.addAction( \
+        self.importsDgmAct = self.diagramsMenu.addAction(
                                 PixmapCache().getIcon( 'importsdiagram.png' ),
                                 'Imports diagram',
                                 self.parent().onImportDgm )
-        self.importsDgmParamAct = self.diagramsMenu.addAction( \
+        self.importsDgmParamAct = self.diagramsMenu.addAction(
                                 PixmapCache().getIcon( 'paramsmenu.png' ),
                                 'Fine tuned imports diagram',
                                 self.parent().onImportDgmTuned )
@@ -771,9 +771,9 @@ class TextEditor( ScintillaWrapper ):
 
         encoding = self.__normalizeEncoding( newEncoding )
         if encoding not in supportedCodecs:
-            logging.warning( "Cannot change encoding to '" + \
-                             newEncoding + "'. " \
-                             "Supported encodings are: " + \
+            logging.warning( "Cannot change encoding to '" +
+                             newEncoding + "'. "
+                             "Supported encodings are: " +
                              ", ".join( sorted( supportedCodecs ) ) )
             return
 
@@ -861,7 +861,7 @@ class TextEditor( ScintillaWrapper ):
                                                      LinguistFileType ] )
         except CodingError, exc:
             QApplication.restoreOverrideCursor()
-            logging.critical( "Cannot save " + fileName + \
+            logging.critical( "Cannot save " + fileName +
                               ". Reason: " + str( exc ) )
             return False
 
@@ -873,7 +873,7 @@ class TextEditor( ScintillaWrapper ):
             f.close()
         except IOError, why:
             QApplication.restoreOverrideCursor()
-            logging.critical( "Cannot save " + fileName + \
+            logging.critical( "Cannot save " + fileName +
                               ". Reason: " + str( why ) )
             return False
 
@@ -2362,25 +2362,27 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         # Buttons
         printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
                                'Print', self )
-        printButton.setEnabled( False )
         self.connect( printButton, SIGNAL( 'triggered()' ),
                       self.__onPrint )
+        printButton.setEnabled( False )
+        printButton.setVisible( False )
 
-        printPreviewButton = QAction( \
+        printPreviewButton = QAction(
                 PixmapCache().getIcon( 'printpreview.png' ),
                 'Print preview', self )
-        printPreviewButton.setEnabled( False )
         self.connect( printPreviewButton, SIGNAL( 'triggered()' ),
                       self.__onPrintPreview )
+        printPreviewButton.setEnabled( False )
+        printPreviewButton.setVisible( False )
 
-        self.pylintButton = QAction( \
+        self.pylintButton = QAction(
             PixmapCache().getIcon( 'pylint.png' ),
             'Analyse the file (Ctrl+L)', self )
         self.connect( self.pylintButton, SIGNAL( 'triggered()' ),
                       self.onPylint )
         self.pylintButton.setEnabled( False )
 
-        self.pymetricsButton = QAction( \
+        self.pymetricsButton = QAction(
             PixmapCache().getIcon( 'metrics.png' ),
             'Calculate the file metrics (Ctrl+K)', self )
         self.connect( self.pymetricsButton, SIGNAL( 'triggered()' ),
@@ -2389,13 +2391,13 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         # Imports diagram and its menu
         importsMenu = QMenu( self )
-        importsDlgAct = importsMenu.addAction( \
+        importsDlgAct = importsMenu.addAction(
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
                                 'Fine tuned imports diagram' )
         self.connect( importsDlgAct, SIGNAL( 'triggered()' ),
                       self.onImportDgmTuned )
         self.importsDiagramButton = QToolButton( self )
-        self.importsDiagramButton.setIcon( \
+        self.importsDiagramButton.setIcon(
                             PixmapCache().getIcon( 'importsdiagram.png' ) )
         self.importsDiagramButton.setToolTip( 'Generate imports diagram' )
         self.importsDiagramButton.setPopupMode( QToolButton.DelayedPopup )
@@ -2407,13 +2409,13 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         # Run script and its menu
         runScriptMenu = QMenu( self )
-        runScriptDlgAct = runScriptMenu.addAction( \
+        runScriptDlgAct = runScriptMenu.addAction(
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
                                 'Set run/debug parameters' )
         self.connect( runScriptDlgAct, SIGNAL( 'triggered()' ),
                       self.onRunScriptSettings )
         self.runScriptButton = QToolButton( self )
-        self.runScriptButton.setIcon( \
+        self.runScriptButton.setIcon(
                             PixmapCache().getIcon( 'run.png' ) )
         self.runScriptButton.setToolTip( 'Run script' )
         self.runScriptButton.setPopupMode( QToolButton.DelayedPopup )
@@ -2425,13 +2427,13 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         # Profile script and its menu
         profileScriptMenu = QMenu( self )
-        profileScriptDlgAct = profileScriptMenu.addAction( \
+        profileScriptDlgAct = profileScriptMenu.addAction(
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
                                 'Set profile parameters' )
         self.connect( profileScriptDlgAct, SIGNAL( 'triggered()' ),
                       self.onProfileScriptSettings )
         self.profileScriptButton = QToolButton( self )
-        self.profileScriptButton.setIcon( \
+        self.profileScriptButton.setIcon(
                             PixmapCache().getIcon( 'profile.png' ) )
         self.profileScriptButton.setToolTip( 'Profile script' )
         self.profileScriptButton.setPopupMode( QToolButton.DelayedPopup )
@@ -2443,13 +2445,13 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         # Debug script and its menu
         debugScriptMenu = QMenu( self )
-        debugScriptDlgAct = debugScriptMenu.addAction( \
+        debugScriptDlgAct = debugScriptMenu.addAction(
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
                                 'Set run/debug parameters' )
         self.connect( debugScriptDlgAct, SIGNAL( 'triggered()' ),
                       self.onDebugScriptSettings )
         self.debugScriptButton = QToolButton( self )
-        self.debugScriptButton.setIcon( \
+        self.debugScriptButton.setIcon(
                             PixmapCache().getIcon( 'debugger.png' ) )
         self.debugScriptButton.setToolTip( 'Debug script' )
         self.debugScriptButton.setPopupMode( QToolButton.DelayedPopup )
@@ -2462,14 +2464,14 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
 
-        self.__undoButton = QAction( \
+        self.__undoButton = QAction(
             PixmapCache().getIcon( 'undo.png' ), 'Undo (Ctrl+Z)', self )
         self.__undoButton.setShortcut( 'Ctrl+Z' )
         self.connect( self.__undoButton, SIGNAL( 'triggered()' ),
                       self.__editor.onUndo )
         self.__undoButton.setEnabled( False )
 
-        self.__redoButton = QAction( \
+        self.__redoButton = QAction(
             PixmapCache().getIcon( 'redo.png' ), 'Redo (Ctrl+Shift+Z)', self )
         self.__redoButton.setShortcut( 'Ctrl+Shift+Z' )
         self.connect( self.__redoButton, SIGNAL( 'triggered()' ),
@@ -2478,15 +2480,15 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         # Python tidy script button and its menu
         pythonTidyMenu = QMenu( self )
-        pythonTidyDlgAct = pythonTidyMenu.addAction( \
+        pythonTidyDlgAct = pythonTidyMenu.addAction(
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
                                 'Set python tidy parameters' )
         self.connect( pythonTidyDlgAct, SIGNAL( 'triggered()' ),
                       self.onPythonTidySettings )
         self.pythonTidyButton = QToolButton( self )
-        self.pythonTidyButton.setIcon( \
+        self.pythonTidyButton.setIcon(
                       PixmapCache().getIcon( 'pythontidy.png' ) )
-        self.pythonTidyButton.setToolTip( 'Python tidy (code must be ' \
+        self.pythonTidyButton.setToolTip( 'Python tidy (code must be '
                                           'syntactically valid)' )
         self.pythonTidyButton.setPopupMode( QToolButton.DelayedPopup )
         self.pythonTidyButton.setMenu( pythonTidyMenu )
@@ -2495,18 +2497,18 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                       self.onPythonTidy )
         self.pythonTidyButton.setEnabled( False )
 
-        self.lineCounterButton = QAction( \
+        self.lineCounterButton = QAction(
             PixmapCache().getIcon( 'linecounter.png' ),
             'Line counter', self )
         self.connect( self.lineCounterButton, SIGNAL( 'triggered()' ),
                       self.onLineCounter )
 
-        self.removeTrailingSpacesButton = QAction( \
+        self.removeTrailingSpacesButton = QAction(
             PixmapCache().getIcon( 'trailingws.png' ),
             'Remove trailing spaces', self )
         self.connect( self.removeTrailingSpacesButton, SIGNAL( 'triggered()' ),
                       self.onRemoveTrailingWS )
-        self.expandTabsButton = QAction( \
+        self.expandTabsButton = QAction(
             PixmapCache().getIcon( 'expandtabs.png' ),
             'Expand tabs (4 spaces)', self )
         self.connect( self.expandTabsButton, SIGNAL( 'triggered()' ),
@@ -2923,8 +2925,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             if len( lineImports ) == 1:
                 path = resolveImport( basePath, lineImports[ 0 ] )
                 if path == '':
-                    GlobalData().mainWindow.showStatusBarMessage( \
-                        "The import '" + lineImports[ 0 ] + \
+                    GlobalData().mainWindow.showStatusBarMessage(
+                        "The import '" + lineImports[ 0 ] +
                         "' is not resolved." )
                     return True
                 # The import is resolved. Check where we are.
