@@ -213,7 +213,54 @@ class CDMPluginManager( PluginManager ):
 
     def __sysVsUserConflicts( self, collectedPlugins ):
         " Checks for the system vs user plugin conflicts "
+        for category in collectedPlugins:
+            self.__sysVsUserCategoryConflicts( category,
+                                               collectedPlugins[ category ] )
         return
+
+    def __sysVsUserCategoryConflicts( self, category, plugins ):
+        " Checks for the system vs user conflicts within one category "
+        def findIndexesByName( plugins, name ):
+            result = []
+            for index in xrange( len( plugins ) ):
+                if plugins[ index ].getName() == name:
+                    result.append( index )
+            return result
+
+        def hasUserPlugin( plugins, indexes ):
+            for index in indexes:
+                if plugins[ index ].isUser:
+                    return True
+            return False
+
+        index = 0
+        while index < len( plugins ):
+            name = plugins[ index ].getName()
+            sameNamePluginIndexes = findIndexesByName( plugins, name )
+            if hasUserPlugin( plugins, sameNamePluginIndexes ):
+                # There is at least one user plugin
+                # Disable all system plugins
+                sameNamePluginIndexes.reverse()
+                for checkIndex in sameNamePluginIndexes:
+                    if not plugins[ checkIndex ].isUser:
+                        logging.warning( "The system wide plugin '" + name +
+                                         "' at " + plugins[ checkIndex ].getPath() +
+                                         " conflicts with a user plugin with the "
+                                         "same name. The system wide plugin is "
+                                         "automatically disabled." )
+                        plugins[ checkIndex ].conflictType = CDMPluginManager.SYSTEM_USER_CONFLICT
+                        plugins[ checkIndex ].conflictMessage = "It conflicts with a user plugin of the same name"
+                        if category in self.inactivePlugins:
+                            self.inactivePlugins[ category ].append( plugins[ checkIndex ] )
+                        else:
+                            self.inactivePlugins[ category ] = [ plugins[ checkIndex ] ]
+                        del plugins[ checkIndex ]
+                if plugins[ index ].getName() == name:
+                    index += 1
+            else:
+                index += 1
+        return
+
 
     def __categoryConflicts( self, collectPlugins ):
         " Checks for version conflicts within the category "
@@ -281,6 +328,10 @@ class CDMPluginInfo:
     def getPath( self ):
         " Provides the plugin path "
         return self.info.path
+
+    def getName( self ):
+        " Provides the plugin name "
+        return self.info.name
 
     def disable( self, conflictType = CDMPluginManager.NO_CONFLICT,
                        conflictMessage = "" ):
