@@ -262,8 +262,34 @@ class CDMPluginManager( PluginManager ):
         return
 
 
-    def __categoryConflicts( self, collectPlugins ):
+    def __categoryConflicts( self, collectedPlugins ):
         " Checks for version conflicts within the category "
+        for category in collectedPlugins:
+            self.__singleCategoryConflicts( category,
+                                            collectedPlugins[ category ] )
+        return
+
+    def __singleCategoryConflicts( self, category, plugins ):
+        " Checks a single category for name conflicts "
+
+        def findIndexesByName( plugins, name ):
+            result = []
+            for index in xrange( len( plugins ) ):
+                if plugins[ index ].getName() == name:
+                    result.append( index )
+            return result
+
+        index = 0
+        while index < len( plugins ):
+            name = plugins[ index ].getName()
+            sameNamePluginIndexes = findIndexesByName( plugins, name )
+            if len( sameNamePluginIndexes ) == 1:
+                # The only plugin of the type. Keep it.
+                index += 1
+            else:
+                # There are many. Check the versions and decide which to remove
+                pass
+
         return
 
     def __saveDisabledPlugins( self ):
