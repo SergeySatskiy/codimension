@@ -41,6 +41,8 @@ class AboutDialog( QDialog ):
     def __createLayout( self ):
         " Creates the dialog layout "
         self.resize( 640, 480 )
+        self.setSizeGripEnabled( True )
+
         vboxLayout = QVBoxLayout( self )
         hboxLayout = QHBoxLayout()
         iconLabel = QLabel()
