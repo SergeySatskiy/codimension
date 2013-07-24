@@ -26,12 +26,35 @@ from PyQt4.QtCore import Qt, SIGNAL, QStringList
 from PyQt4.QtGui import ( QDialog, QTreeWidgetItem, QTreeWidget, QVBoxLayout,
                           QTextEdit, QDialogButtonBox, QLabel, QFontMetrics )
 from ui.itemdelegates import NoOutlineHeightDelegate
+from utils.pixmapcache import PixmapCache
+
 
 
 class PluginItem( QTreeWidgetItem ):
     " Single plugin item "
 
-    def __init__( self, cdmPligin ):
+    def __init__( self, cdmPligin, active, category ):
+        self.plugin = cdmPlugin
+        self.active = active
+        self.category = category
+
+        QTreeWidgetItem.__init__( self,
+            QStringList() << "" << "" << "" << selp.plugin.getName() << self.plugin.getVersion() )
+
+        if not self.plugin.conflictType in [ self.plugin.NO_CONFLICT,
+                                             self.plugin.USER_DISABLED ]:
+            self.setIcon( 0, PixmapCache().getIcon( 'pluginconflict.png' ) )
+            self.setToolTip( 0, self.plugin.conflictMessage )
+
+        if self.plugin.isUser:
+            self.setIcon( 1, PixmapCache().getIcon( 'pluginuser.png' ) )
+            self.setToolTip( 1, "User plugin" )
+        else:
+            self.setIcon( 1, PixmapCache().getIcon( 'pluginsystem.png' ) )
+            self.setToolTip( 1, "System wide plugin" )
+
+        self.setFlags( self.flags() | Qt.ItemIsUserCheckable )
+        self.setCheckState( 2, active )
         return
 
 
@@ -63,10 +86,17 @@ class PluginsDialog( QDialog ):
         self.__pluginsView.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         self.__pluginsView.setUniformRowHeights( True )
 
+        # Alert | system/user | Enable | Name | Version
         self.__pluginsHeader = QTreeWidgetItem(
-                QStringList() << "Alert" << "System/user" << "Enable" << "Name" << "Version" )
+                QStringList() << "" << "" << "Enable" << "Name" << "Version" )
         self.__pluginsView.setHeaderItem( self.__pluginsHeader )
-        self.__pluginsView.header().setSortIndicator( 2, Qt.AscendingOrder )
+        self.__pluginsView.header().setSortIndicator( 3, Qt.AscendingOrder )
+        self.connect( self.__pluginsView,
+                      SIGNAL( "itemSelectionChanged()" ),
+                      self.__pluginSelectionChanged )
+        self.connect( self.__pluginsView,
+                      SIGNAL( "itemChanged(QTreeWidgetItem*,int)" ),
+                      self.__onItemChanged )
 
         layout.addWidget( self.__pluginsView )
 
@@ -107,5 +137,75 @@ class PluginsDialog( QDialog ):
 
     def __populate( self ):
         " Populates the list with the plugins "
+        for category in self.__pluginManager.activePlugins:
+            for cdmPlugin in self.__pluginManager.activePlugins[ category ]:
+                newItem = PluginItem( cdmPlugin, True, category )
+                self.__pluginsView.addTopLevelItem( newItem )
+
+        for category in self.__pluginManager.inactivePlugins:
+            for cdmPlugin in self.__pluginManager.inactivePlugins[ category ]:
+                newItem = PluginItem( cdmPlugin, False, category )
+                self.__pluginsView.addTopLevelItem( newItem )
+
+        for cdmPlugin in self.__pluginManager.unknownPlugins:
+            newItem = PluginItem( cdmPlugin, False, None )
+            self.__pluginsView.addTopLevelItem( newItem )
+
+        self.__sortPlugins()
+        self.__resizePlugins()
+        return
+
+
+    def __sortPlugins( self ):
+        " Sorts the plugins table "
+        self.__pluginsView.sortItems(
+                    self.__pluginsView.sortColumn(),
+                    self.__pluginsView.header().sortIndicatorOrder() )
+        return
+
+    def __resizePlugins( self ):
+        " Resizes the plugins table "
+        self.__pluginsView.header().setStretchLastSection( True )
+        self.__pluginsView.header().resizeSections(
+                                        QHeaderView.ResizeToContents )
+        self.__pluginsView.header().resizeSection( 0, 22 )
+        self.__pluginsView.header().setResizeMode( 0, QHeaderView.Fixed )
+        self.__pluginsView.header().resizeSection( 1, 22 )
+        self.__pluginsView.header().setResizeMode( 1, QHeaderView.Fixed )
+        return
+
+    def __pluginSelectionChanged( self ):
+        " Triggered when an item is selected "
+        selected = list( self.__pluginsView.selectedItems() )
+        if selected:
+            self.__updateDetails( selected[ 0 ] )
+        else:
+            self.__updateDetails( None )
+        return
+
+    def __updateDetails( self, item ):
+        " Updates the content of the details and the error boxes "
+        if item is None:
+            self.__detailsText.setText( "" )
+            self.__errorsText.setText( "" )
+            return
+
+        self.__detailsText.setText( "Author: " + item.plugin.getAuthor() + "\n"
+                                    "Path: " + item.plugin.getPath() + "\n"
+                                    "Description: " + item.plugin.getDescription() + "\n"
+                                    "Web site: " + item.plugin.getWebsite() )
+
+        self.__errorsText.setText( item.plugin.conflictMessage )
+        return
+
+    def __onItemChanged( self, item, column ):
+        " Triggered when an item is changed "
+        if item.checkState( 2 ) == item.active:
+            return
+
+        if item.active:
+            print "Need to disable"
+        else:
+            print "Need to enable"
         return
 

@@ -399,12 +399,24 @@ class CDMPluginInfo:
         " Provides the plugin version "
         return self.info.version
 
-    def disable( self, conflictType = CDMPluginManager.NO_CONFLICT,
+    def getAuthor( self ):
+        " Provides the author name "
+        return self.info.author
+
+    def getDescription( self ):
+        " Provides the description "
+        return self.info.description
+
+    def getWebsite( self ):
+        " Provides the website "
+        return self.info.website
+
+    def disable( self, conflictType = CDMPluginManager.USER_DISABLED,
                        conflictMessage = "" ):
         " Disables the plugin "
         self.isEnabled = False
         self.conflictType = conflictType
-        self.conflictMessage = ""
+        self.conflictMessage = conflictMessage
 
         if self.getObject().isActivated():
             self.getObject().deactivate()
@@ -415,6 +427,9 @@ class CDMPluginInfo:
         self.isEnabled = True
         self.conflictType = CDMPluginManager.NO_CONFLICT
         self.conflictMessage = ""
+
+        if not self.getObject().isActivated():
+            self.getObject().activate()
         return
 
 
