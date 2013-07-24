@@ -23,6 +23,8 @@
 import logging
 from yapsy.PluginManager import PluginManager
 from utils.settings import settingsDir, Settings
+from distutils.version import StrictVersion
+
 
 # List of the supported plugin categories, i.e. base class names
 CATEGORIES = [ "VersionControlSystemInterface" ]
@@ -36,11 +38,10 @@ class CDMPluginManager( PluginManager ):
     SYSTEM_USER_CONFLICT = 1                # Same name plugin in system and user locations
     INCOMPATIBLE_IDE_VERSION_CONFLICT = 2   # Plugin required incompatible version
     VERSION_CONFLICT = 3                    # Newer version of the same name plugin
-    ACTIVATE_CONFLICT = 4                   # Exception on activation
-    BAD_BASE_CLASS = 5                      # Does not derive from any supported interface
-    BAD_ACTIVATION = 6                      # The plugin raised exception during activation
-    BAD_INTERFACE = 7                       # Exception on basic methods
-    USER_DISABLED = 8
+    BAD_BASE_CLASS = 4                      # Does not derive from any supported interface
+    BAD_ACTIVATION = 5                      # The plugin raised exception during activation
+    BAD_INTERFACE = 6                       # Exception on basic methods
+    USER_DISABLED = 7
 
     def __init__( self ):
         PluginManager.__init__( self, None,
@@ -288,7 +289,42 @@ class CDMPluginManager( PluginManager ):
                 index += 1
             else:
                 # There are many. Check the versions and decide which to remove
-                pass
+                self.__resolveConflictByVersion( category, plugins,
+                                                 sameNamePluginIndexes )
+        return
+
+    def __resolveConflictByVersion( self, category, plugins, indexes ):
+        " Resolves a single version conflict "
+        indexVersion = []
+        for index in indexes:
+            indexVersion.append( (index, StrictVersion( plugins[ index ].getVersion() ) ) )
+
+        # Sort basing on version
+        indexVersion.sort( key = lambda indexVer : indexVer[ 1 ] )
+
+        # Disable everything except the last
+        highVersion = indexVersion[ -1 ][ 1 ]
+        toBeDisabled = []
+        for index in xrange( len( indexVersion ) - 1 ):
+            logging.warning( "The plugin '" + plugins[ index ].getName() +
+                             "' v." + plugins[ index ].getVersion() +
+                             " at " + plugins[ index ].getPath() +
+                             " conflicts with another plugin of the same name "
+                             "and version " + str( highVersion ) +
+                             ". The former is disabled automatically." )
+            toBeDisabled.append( index )
+
+        # Move the disabled to the inactive list
+        toBeDisabled.sort()
+        toBeDisabled.reverse()
+        for index in toBeDisabled:
+            plugins[ index ].conflictType = CDMPluginManager.VERSION_CONFLICT
+            plugins[ index ].conflictMessage = "It conflicts with another plugin of the same name"
+            if category in self.inactivePlugins:
+                self.inactivePlugins[ category ].append( plugins[ index ] )
+            else:
+                self.inactivePlugins[ category ] = [ plugins[ index ] ]
+            del plugins[ index ]
 
         return
 
@@ -358,6 +394,10 @@ class CDMPluginInfo:
     def getName( self ):
         " Provides the plugin name "
         return self.info.name
+
+    def getVersion( self ):
+        " Provides the plugin version "
+        return self.info.version
 
     def disable( self, conflictType = CDMPluginManager.NO_CONFLICT,
                        conflictMessage = "" ):
