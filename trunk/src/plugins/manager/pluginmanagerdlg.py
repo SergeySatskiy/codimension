@@ -24,7 +24,8 @@
 
 from PyQt4.QtCore import Qt, SIGNAL, QStringList
 from PyQt4.QtGui import ( QDialog, QTreeWidgetItem, QTreeWidget, QVBoxLayout,
-                          QTextEdit, QDialogButtonBox, QLabel, QFontMetrics )
+                          QTextEdit, QDialogButtonBox, QLabel, QFontMetrics,
+                          QHeaderView )
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import PixmapCache
 
@@ -33,16 +34,16 @@ from utils.pixmapcache import PixmapCache
 class PluginItem( QTreeWidgetItem ):
     " Single plugin item "
 
-    def __init__( self, cdmPligin, active, category ):
+    def __init__( self, pluginManager, cdmPlugin, active, category ):
         self.plugin = cdmPlugin
         self.active = active
         self.category = category
 
         QTreeWidgetItem.__init__( self,
-            QStringList() << "" << "" << "" << selp.plugin.getName() << self.plugin.getVersion() )
+            QStringList() << "" << "" << "" << self.plugin.getName() << self.plugin.getVersion() )
 
-        if not self.plugin.conflictType in [ self.plugin.NO_CONFLICT,
-                                             self.plugin.USER_DISABLED ]:
+        if not self.plugin.conflictType in [ pluginManager.NO_CONFLICT,
+                                             pluginManager.USER_DISABLED ]:
             self.setIcon( 0, PixmapCache().getIcon( 'pluginconflict.png' ) )
             self.setToolTip( 0, self.plugin.conflictMessage )
 
@@ -139,16 +140,16 @@ class PluginsDialog( QDialog ):
         " Populates the list with the plugins "
         for category in self.__pluginManager.activePlugins:
             for cdmPlugin in self.__pluginManager.activePlugins[ category ]:
-                newItem = PluginItem( cdmPlugin, True, category )
+                newItem = PluginItem( self.__pluginManager, cdmPlugin, True, category )
                 self.__pluginsView.addTopLevelItem( newItem )
 
         for category in self.__pluginManager.inactivePlugins:
             for cdmPlugin in self.__pluginManager.inactivePlugins[ category ]:
-                newItem = PluginItem( cdmPlugin, False, category )
+                newItem = PluginItem( self.__pluginManager, cdmPlugin, False, category )
                 self.__pluginsView.addTopLevelItem( newItem )
 
         for cdmPlugin in self.__pluginManager.unknownPlugins:
-            newItem = PluginItem( cdmPlugin, False, None )
+            newItem = PluginItem( self.__pluginManager, cdmPlugin, False, None )
             self.__pluginsView.addTopLevelItem( newItem )
 
         self.__sortPlugins()

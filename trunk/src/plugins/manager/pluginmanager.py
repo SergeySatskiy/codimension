@@ -70,7 +70,6 @@ class CDMPluginManager( PluginManager ):
 
     def __collect( self ):
         " Checks that the plugins belong to what is known "
-        self.locatePlugins()
         self.collectPlugins()
 
         collectedPlugins = {}
@@ -360,10 +359,7 @@ class CDMPluginInfo:
 
     def __isUserPlugin( self, plugin ):
         " True if it is a user plugin "
-        dir( plugin )
-        type( plugin )
-        print plugin.path
-        return plugin.path.startswith( "settingsDir" )
+        return str( plugin.path ).startswith( settingsDir )
 
     def getDisabledLine( self ):
         " Used for the setting file "
@@ -389,27 +385,27 @@ class CDMPluginInfo:
 
     def getPath( self ):
         " Provides the plugin path "
-        return self.info.path
+        return str( self.info.path )
 
     def getName( self ):
         " Provides the plugin name "
-        return self.info.name
+        return str( self.info.name )
 
     def getVersion( self ):
         " Provides the plugin version "
-        return self.info.version
+        return str( self.info.version )
 
     def getAuthor( self ):
         " Provides the author name "
-        return self.info.author
+        return str( self.info.author )
 
     def getDescription( self ):
         " Provides the description "
-        return self.info.description
+        return str( self.info.description )
 
     def getWebsite( self ):
         " Provides the website "
-        return self.info.website
+        return str( self.info.website )
 
     def disable( self, conflictType = CDMPluginManager.USER_DISABLED,
                        conflictMessage = "" ):
