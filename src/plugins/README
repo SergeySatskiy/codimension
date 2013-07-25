@@ -14,13 +14,24 @@ There are two places where codimension looks for plugins:
   in order to simplfy plugins packaging for the developers
 - user: ~/.codimension/plugins/
 
-Codimension expects that each plugin provides a plugin description file with the
-".cdmp" extension. This file must be located at the user or system-wide plugins
-location. The format of the file can be found in yapsy documentation.
+Each plugin occupies a designated directory. The directory must reside at one of
+the locations described above. The directory contains a plugin description
+file with .cdmp extension and the plugin implementation files. The format of the
+plugin description file can be found in yapsy documentation. Here is an example of
+a description file:
 
-The plugin implementation must reside in a separate directory and the directory
-must be a python package i.e. it must have __init__.py file. The implementation
-directory must reside in the same location as the plugin description file.
+[Core]
+Name = Subversion
+# The Module value must be '.'
+Module = .
+
+[Documentation]
+Author = Sergey Satskiy <sergey.satskiy@gmail.com>
+Version = 1.0.0
+Website = http://satsky.spb.ru/codimension
+Description = Codimension subversion plugin
+
+The plugin directory must be a python package i.e. it must have __init__.py file.
 
 There are no limits neither on the number of plugins nor the number of files in a
 plugin directory.
@@ -32,7 +43,7 @@ detected conflict then the user will be able to enable it when a conflict is
 resolved.
 
 Each plugin must provide information at least about its name and its version
-(goes to file.cdmp).
+(goes into a .cdmp file).
 In case if the same name plugin is found both in the system wide location and in
 the user directory then the priority is given to the user plugin and the system one is
 automatically disabled. If the same name plugins are located in the system wide
@@ -43,24 +54,23 @@ Each plugin must belong to a predefined plugin category. Depending on the catego
 codimension expects a certain communication protocol.
 
 Implementation wise a plugin category means deriving from a plugin category
-interface class and implementing the required methods. The supported interface
-classes are located at codimension/src/plugins/categories/ directory.
+interface class and implementing the required methods. A plugin from codimension
+point of view is an instance of class which belongs to a supported plugin category.
+The supported interface classes are located at
+codimension/src/plugins/categories/ directory.
 
-A plugin developer should follow the steps below:
-- Create a separate directory for a new plugin implementation files with an
-  appropriate name.
+A plugin developer could follow the steps below:
+- Create a separate directory for a new plugin with an appropriate name.
 - Create a plugin description file .cdmp in the plugin directory and populate
-  it with the appropriate information. Note: the [Core].Module parameter must
-  refer to the plugin directory name.
+  it with the appropriate information.
+  Note: the [Core].Module parameter value must be '.' (without quotas).
 - Make a choice of a plugin category by analysis of the supported categories
   at the codimension/src/plugins/categories/ directory.
-- Copy the chosen interface base class to the plugin directory.
 - Create a plugin implementing class which derives from the interface base
   class. The implementing class must reside in the plugin __init__.py file.
 - Implement all the mandatory interface class methods.
 - The installation of the plugin is copying the plugin directory with all its
-  files to a system wide plugins location or to the user plugins location and
-  copying .cdmp file to the same location.
+  files to a system wide plugins location or to the user plugins location.
   Next time codimension starts it will pick up and activate the new plugin.
 
 Currently supported plugin categories:
