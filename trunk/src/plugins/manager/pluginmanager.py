@@ -393,19 +393,19 @@ class CDMPluginInfo:
 
     def getVersion( self ):
         " Provides the plugin version "
-        return str( self.info.version )
+        return self.info.details.get( "Documentation", "Version" )
 
     def getAuthor( self ):
         " Provides the author name "
-        return str( self.info.author )
+        return self.info.details.get( "Documentation", "Author" )
 
     def getDescription( self ):
         " Provides the description "
-        return str( self.info.description )
+        return self.info.details.get( "Documentation", "Description" )
 
     def getWebsite( self ):
         " Provides the website "
-        return str( self.info.website )
+        return self.info.details.get( "Documentation", "Website" )
 
     def disable( self, conflictType = CDMPluginManager.USER_DISABLED,
                        conflictMessage = "" ):
