@@ -404,7 +404,7 @@ class PluginFileLocator(IPluginLocator):
 				continue
 			if self.recursive:
 				debug_txt_mode = "recursively"
-				walk_iter = os.walk(directory)
+				walk_iter = os.walk(directory, followlinks=True)
 			else:
 				debug_txt_mode = "non-recursively"
 				walk_iter = [(directory,[],os.listdir(directory))]				
