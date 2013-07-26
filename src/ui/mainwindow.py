@@ -86,6 +86,7 @@ from profiling.disasm import getDisassembled
 from debugger.bputils import clearValidBreakpointLinesCache
 from about import AboutDialog
 from utils.skin import getMonospaceFontList
+from plugins.manager.pluginmanagerdlg import PluginsDialog
 
 
 class EditorsManagerWidget( QWidget ):
@@ -1265,6 +1266,12 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( fontFaceMenu, SIGNAL( 'triggered(QAction*)' ),
                       self.__onMonoFont )
 
+        # The plugins menu
+        self.__pluginsMenu = QMenu( "Pl&ugins", self )
+        self.__pluginManagerAct = self.__pluginsMenu.addAction(
+            PixmapCache().getIcon( 'pluginmanagermenu.png' ),
+            'Plugin &manager', self.__onPluginManager )
+
         # The Help menu
         self.__helpMenu = QMenu( "&Help", self )
         self.connect( self.__helpMenu, SIGNAL( "aboutToShow()" ),
@@ -1303,6 +1310,7 @@ class CodimensionMainWindow( QMainWindow ):
         menuBar.addMenu( self.__diagramsMenu )
         menuBar.addMenu( self.__viewMenu )
         menuBar.addMenu( self.__optionsMenu )
+        menuBar.addMenu( self.__pluginsMenu )
         menuBar.addMenu( self.__helpMenu )
         return
 
@@ -3395,6 +3403,12 @@ class CodimensionMainWindow( QMainWindow ):
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.onProfileScriptSettings()
+        return
+
+    def __onPluginManager( self ):
+        " Triggered when a plugin manager dialog is requested "
+        dlg = PluginsDialog( GlobalData().pluginManager, self )
+        dlg.exec_()
         return
 
     def __onContextHelp( self ):

@@ -30,6 +30,7 @@ from runparamscache import RunParametersCache
 from settings import ropePreferences, settingsDir
 from PyQt4.QtCore import QDir
 from compatibility import relpath
+from plugins.manager.pluginmanager import CDMPluginManager
 
 
 # This function needs to have a rope project built smart
@@ -71,10 +72,13 @@ class GlobalData( object ):
             self.screenHeight = 0
             self.version = "unknown"
             self.project = CodimensionProject()
+
+            self.pluginManager = CDMPluginManager()
+
             self.briefModinfoCache = BriefModuleInfoCache()
             self.runParamsCache = RunParametersCache()
             if os.path.isfile( settingsDir + "runparamscache" ):
-                self.runParamsCache.deserialize( settingsDir + \
+                self.runParamsCache.deserialize( settingsDir +
                                                  "runparamscache" )
 
             self.magicAvailable = self.__checkMagic()
@@ -193,16 +197,16 @@ class GlobalData( object ):
             scriptName = os.path.realpath( scriptName )
             if not os.path.isfile( scriptName ):
                 return False
-            if not scriptName.endswith( ".py" ) and \
-               not scriptName.endswith( ".py3" ) and \
-               not scriptName.endswith( ".pyw" ):
-                return False
-            return True
+            if scriptName.endswith( ".py" ) or \
+               scriptName.endswith( ".py3" ) or \
+               scriptName.endswith( ".pyw" ):
+                return True
+            return False
 
         def getFileLineDocstring( self, fName, line ):
             " Provides a docstring if so for the given file and line "
-            if not ( fName.endswith( '.py' ) or \
-                     fName.endswith( '.py3' ) or \
+            if not ( fName.endswith( '.py' ) or
+                     fName.endswith( '.py3' ) or
                      fName.endswith( '.pyw' ) ):
                 return ""
 
@@ -235,10 +239,10 @@ class GlobalData( object ):
 
         def getModInfo( self, path ):
             " Provides a module info for the given file "
-            if not ( path.endswith( '.py' ) or \
-                     path.endswith( '.py3' ) or \
+            if not ( path.endswith( '.py' ) or
+                     path.endswith( '.py3' ) or
                      path.endswith( '.pyw' ) ):
-                raise Exception( "Trying to parse non-python file: " + path + \
+                raise Exception( "Trying to parse non-python file: " + path +
                                  ". Expected extensions .py or .py3 or .pyw" )
 
             if self.project.isLoaded():
