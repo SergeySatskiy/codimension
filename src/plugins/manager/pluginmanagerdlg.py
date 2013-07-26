@@ -55,7 +55,10 @@ class PluginItem( QTreeWidgetItem ):
             self.setToolTip( 1, "System wide plugin" )
 
         self.setFlags( self.flags() | Qt.ItemIsUserCheckable )
-        self.setCheckState( 2, active )
+        if active:
+            self.setCheckState( 2, Qt.Checked )
+        else:
+            self.setCheckState( 2, Qt.Unchecked )
         return
 
 
