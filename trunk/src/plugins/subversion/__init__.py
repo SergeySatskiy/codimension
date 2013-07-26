@@ -23,7 +23,7 @@
 " Codimension SVN plugin implementation "
 
 
-from vcsiface import VersionControlSystemInterface
+from plugins.categories.vcsiface import VersionControlSystemInterface
 
 
 
