@@ -34,6 +34,8 @@
 
 
 import sys, re, htmlentitydefs, getopt, StringIO
+from utils.globals import GlobalData
+
 
 # minimum line size, we add a zero-sized breakable space every
 # LINESIZE characters
@@ -41,13 +43,15 @@ linesize = 20
 tabsize = 4
 show_CR = False
 
+fontFace = GlobalData().skin.baseMonoFontFace
+
 
 html_hdr = """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
             <html><head>
 		<meta name="generator" content="diff2html.rb" />
 		<title>HTML Diff</title>
 		<style>
-			table { border:0px; border-collapse:collapse; width: 98%; font-size: 100%; font-family: Monospace }
+			table { border:0px; border-collapse:collapse; width: 98%; font-size: 100%; font-family: """ + fontFace + """ }
 			td.line { color:#8080a0 }
 			th { background: black; color: white }
 			tr.diffunmodified td { background: #D0D0E0 }
