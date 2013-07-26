@@ -1,6 +1,6 @@
 [Core]
 Name = Subversion
-Module = subversion
+Module = .
 
 [Documentation]
 Author = Sergey Satskiy <sergey.satskiy@gmail.com>
