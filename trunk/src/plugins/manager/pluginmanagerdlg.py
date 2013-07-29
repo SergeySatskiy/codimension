@@ -28,7 +28,12 @@ from PyQt4.QtGui import ( QDialog, QTreeWidgetItem, QTreeWidget, QVBoxLayout,
                           QHeaderView )
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import PixmapCache
+import os.path
 
+
+CONFLICT_COL = 0    # Exclamation sign
+TYPE_COL = 1        # Sys/user
+STATE_COL = 2       # Enabled/disabled
 
 
 class PluginItem( QTreeWidgetItem ):
@@ -39,26 +44,28 @@ class PluginItem( QTreeWidgetItem ):
         self.active = active
         self.category = category
 
+        name = self.plugin.getName()
+        ver = self.plugin.getVersion()
         QTreeWidgetItem.__init__( self,
-            QStringList() << "" << "" << "" << self.plugin.getName() << self.plugin.getVersion() )
+            QStringList() << "" << "" << "" << name << ver )
 
         if not self.plugin.conflictType in [ pluginManager.NO_CONFLICT,
                                              pluginManager.USER_DISABLED ]:
-            self.setIcon( 0, PixmapCache().getIcon( 'pluginconflict.png' ) )
-            self.setToolTip( 0, self.plugin.conflictMessage )
+            self.setIcon( CONFLICT_COL, PixmapCache().getIcon( 'pluginconflict.png' ) )
+            self.setToolTip( CONFLICT_COL, self.plugin.conflictMessage )
 
-        if self.plugin.isUser:
-            self.setIcon( 1, PixmapCache().getIcon( 'pluginuser.png' ) )
-            self.setToolTip( 1, "User plugin" )
+        if self.plugin.isUser():
+            self.setIcon( TYPE_COL, PixmapCache().getIcon( 'pluginuser.png' ) )
+            self.setToolTip( TYPE_COL, "User plugin" )
         else:
-            self.setIcon( 1, PixmapCache().getIcon( 'pluginsystem.png' ) )
-            self.setToolTip( 1, "System wide plugin" )
+            self.setIcon( TYPE_COL, PixmapCache().getIcon( 'pluginsystem.png' ) )
+            self.setToolTip( TYPE_COL, "System wide plugin" )
 
         self.setFlags( self.flags() | Qt.ItemIsUserCheckable )
         if active:
-            self.setCheckState( 2, Qt.Checked )
+            self.setCheckState( STATE_COL, Qt.Checked )
         else:
-            self.setCheckState( 2, Qt.Unchecked )
+            self.setCheckState( STATE_COL, Qt.Unchecked )
         return
 
 
@@ -72,6 +79,7 @@ class PluginsDialog( QDialog ):
         self.__createLayout()
         self.__populate()
         self.__pluginsView.setFocus()
+        self.__inItemChange = False
         return
 
     def __createLayout( self ):
@@ -107,13 +115,22 @@ class PluginsDialog( QDialog ):
         # Detailed information
         detailsLabel = QLabel( "Detailed information" )
         layout.addWidget( detailsLabel )
-        self.__detailsText = QTextEdit()
-        self.__detailsText.setReadOnly( True )
-        self.__detailsText.setAcceptRichText( False )
-        metrics = QFontMetrics( self.__detailsText.font() )
+        self.__details = QTreeWidget()
+        self.__details.setAlternatingRowColors( False )
+        self.__details.setRootIsDecorated( False )
+        self.__details.setItemsExpandable( False )
+        self.__details.setSortingEnabled( False )
+        self.__details.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
+        self.__details.setUniformRowHeights( True )
+
+        detailsHeader = QTreeWidgetItem( QStringList() << "" << "" )
+        self.__details.setHeaderItem( detailsHeader )
+        self.__details.setHeaderHidden( True )
+
+        metrics = QFontMetrics( self.__details.font() )
         rect = metrics.boundingRect( "X" )
-        self.__detailsText.setFixedHeight( rect.height() * 6 + 5 )
-        layout.addWidget( self.__detailsText )
+        self.__details.setFixedHeight( rect.height() * 6 + 5 )
+        layout.addWidget( self.__details )
 
         # Errors/warnings
         errorsLabel = QLabel( "Errors / warnings" )
@@ -172,10 +189,10 @@ class PluginsDialog( QDialog ):
         self.__pluginsView.header().setStretchLastSection( True )
         self.__pluginsView.header().resizeSections(
                                         QHeaderView.ResizeToContents )
-        self.__pluginsView.header().resizeSection( 0, 22 )
-        self.__pluginsView.header().setResizeMode( 0, QHeaderView.Fixed )
-        self.__pluginsView.header().resizeSection( 1, 22 )
-        self.__pluginsView.header().setResizeMode( 1, QHeaderView.Fixed )
+        self.__pluginsView.header().resizeSection( CONFLICT_COL, 22 )
+        self.__pluginsView.header().setResizeMode( CONFLICT_COL, QHeaderView.Fixed )
+        self.__pluginsView.header().resizeSection( TYPE_COL, 22 )
+        self.__pluginsView.header().setResizeMode( TYPE_COL, QHeaderView.Fixed )
         return
 
     def __pluginSelectionChanged( self ):
@@ -189,27 +206,82 @@ class PluginsDialog( QDialog ):
 
     def __updateDetails( self, item ):
         " Updates the content of the details and the error boxes "
+        self.__details.clear()
+        self.__errorsText.setText( "" )
+
         if item is None:
-            self.__detailsText.setText( "" )
-            self.__errorsText.setText( "" )
             return
 
-        self.__detailsText.setText( "Author: " + item.plugin.getAuthor() + "\n"
-                                    "Path: " + item.plugin.getPath() + "\n"
-                                    "Description: " + item.plugin.getDescription() + "\n"
-                                    "Web site: " + item.plugin.getWebsite() )
+        self.__details.addTopLevelItem(
+                    QTreeWidgetItem( QStringList() << "Author" << item.plugin.getAuthor() ) )
+        self.__details.addTopLevelItem(
+                    QTreeWidgetItem( QStringList() << "Path" << os.path.normpath( item.plugin.getPath() ) ) )
+        self.__details.addTopLevelItem(
+                    QTreeWidgetItem( QStringList() << "Description" << item.plugin.getDescription() ) )
+        self.__details.addTopLevelItem(
+                    QTreeWidgetItem( QStringList() << "Web site" << item.plugin.getWebsite() ) )
+
+        copyright = item.plugin.getCopyright()
+        if copyright is not None:
+            if copyright.lower() != "unknown":
+                self.__details.addTopLevelItem(
+                    QTreeWidgetItem( QStringList() << "Copyright" << copyright ) )
+
+        for name in item.plugin.getDetails():
+            value = item.plugin.getDetails()[ name ]
+            self.__details.addTopLevelItem(
+                    QTreeWidgetItem( QStringList() << name << value ) )
 
         self.__errorsText.setText( item.plugin.conflictMessage )
         return
 
     def __onItemChanged( self, item, column ):
         " Triggered when an item is changed "
-        if item.checkState( 2 ) == item.active:
+
+        if self.__inItemChange:
             return
 
         if item.active:
-            print "Need to disable"
-        else:
-            print "Need to enable"
+            if item.checkState( STATE_COL ) == Qt.Checked:
+                return
+
+            self.__inItemChange = True
+            item.plugin.disable()
+            item.active = False
+            if item.category in self.__pluginManager.inactivePlugins:
+                self.__pluginManager.inactivePlugins[ item.category ].append( item.plugin )
+            else:
+                self.__pluginManager.inactivePlugins[ item.category ] = [ item.plugin ]
+            self.__pluginManager.activePlugins[ item.category ].remove( item.plugin )
+            self.__pluginManager.saveDisabledPlugins()
+            self.__inItemChange = False
+            return
+
+        if item.checkState( STATE_COL ) == Qt.Unchecked:
+            return
+
+        self.__inItemChange = True
+        message = self.__pluginManager.checkConflict( item.plugin )
+        if message is not None:
+            item.setCheckState( STATE_COL, Qt.Unchecked )
+            self.__errorsText.setText( message )
+            self.__inItemChange = False
+            return
+
+        try:
+            item.plugin.enable()
+            item.active = True
+            if item.category in self.__pluginManager.activePlugins:
+                self.__pluginManager.activePlugins[ item.category ].append( item.plugin )
+            else:
+                self.__pluginManager.activePlugins[ item.category ] = [ item.plugin ]
+            self.__pluginManager.inactivePlugins[ item.category ].remove( item.plugin )
+            self.__pluginManager.saveDisabledPlugins()
+            self.__errorsText.setText( "" )
+        except:
+            item.setCheckState( STATE_COL, Qt.Unchecked )
+            self.__errorsText.setText( "Error activating the plugin - exception is generated" )
+
+        self.__inItemChange = False
         return
 

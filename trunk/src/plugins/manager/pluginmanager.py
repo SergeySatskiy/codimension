@@ -21,6 +21,7 @@
 #
 
 import logging
+import os.path
 from yapsy.PluginManager import PluginManager
 from utils.settings import settingsDir, Settings
 from distutils.version import StrictVersion
@@ -65,7 +66,7 @@ class CDMPluginManager( PluginManager ):
         self.__categoryConflicts( collectedPlugins )
         self.__activatePlugins( collectedPlugins )
 
-        self.__saveDisabledPlugins()
+        self.saveDisabledPlugins()
         return
 
     def __collect( self ):
@@ -229,7 +230,7 @@ class CDMPluginManager( PluginManager ):
 
         def hasUserPlugin( plugins, indexes ):
             for index in indexes:
-                if plugins[ index ].isUser:
+                if plugins[ index ].isUser():
                     return True
             return False
 
@@ -242,7 +243,7 @@ class CDMPluginManager( PluginManager ):
                 # Disable all system plugins
                 sameNamePluginIndexes.reverse()
                 for checkIndex in sameNamePluginIndexes:
-                    if not plugins[ checkIndex ].isUser:
+                    if not plugins[ checkIndex ].isUser():
                         logging.warning( "The system wide plugin '" + name +
                                          "' at " + plugins[ checkIndex ].getPath() +
                                          " conflicts with a user plugin with the "
@@ -296,7 +297,7 @@ class CDMPluginManager( PluginManager ):
         " Resolves a single version conflict "
         indexVersion = []
         for index in indexes:
-            indexVersion.append( (index, StrictVersion( plugins[ index ].getVersion() ) ) )
+            indexVersion.append( (index, StrictVersion( plugins[ index ].getVersion() )) )
 
         # Sort basing on version
         indexVersion.sort( key = lambda indexVer : indexVer[ 1 ] )
@@ -305,13 +306,14 @@ class CDMPluginManager( PluginManager ):
         highVersion = indexVersion[ -1 ][ 1 ]
         toBeDisabled = []
         for index in xrange( len( indexVersion ) - 1 ):
-            logging.warning( "The plugin '" + plugins[ index ].getName() +
-                             "' v." + plugins[ index ].getVersion() +
-                             " at " + plugins[ index ].getPath() +
+            pluginIndex = indexVersion[ index ][ 0 ]
+            logging.warning( "The plugin '" + plugins[ pluginIndex ].getName() +
+                             "' v." + plugins[ pluginIndex ].getVersion() +
+                             " at " + os.path.normpath( plugins[ pluginIndex ].getPath() ) +
                              " conflicts with another plugin of the same name "
                              "and version " + str( highVersion ) +
                              ". The former is disabled automatically." )
-            toBeDisabled.append( index )
+            toBeDisabled.append( pluginIndex )
 
         # Move the disabled to the inactive list
         toBeDisabled.sort()
@@ -327,7 +329,7 @@ class CDMPluginManager( PluginManager ):
 
         return
 
-    def __saveDisabledPlugins( self ):
+    def saveDisabledPlugins( self ):
         """ Saves the disabled plugins info into the settings """
         value = []
         for category in self.inactivePlugins:
@@ -342,7 +344,37 @@ class CDMPluginManager( PluginManager ):
         Settings().disabledPlugins = value
         return
 
+    def checkConflict( self, cdmPlugin ):
+        """ Checks for the conflict and returns a message if so.
+            If there is no conflict then returns None """
 
+        # First, check the base class
+        baseClasses = getBaseClassNames( cdmPlugin.getObject() )
+        category = None
+        for registeredCategory in CATEGORIES:
+            if registeredCategory in baseClasses:
+                category = registeredCategory
+                break
+        if category is None:
+            return "Plugin category is not recognised"
+
+        # Second, IDE version compatibility
+        from utils.globals import GlobalData
+        try:
+            if not cdmPlugin.getObject().isIDEVersionCompatible(
+                                GlobalData().version ):
+                return "Plugin requires the other IDE version"
+        except:
+            # Could not successfully call the interface method
+            return "Error checking IDE version compatibility"
+
+        # Third, the other plugin with the same name is active
+        if category in self.activePlugins:
+            for plugin in self.activePlugins[ category ]:
+                if plugin.getName() == cdmPlugin.getName():
+                    return "Another plugin of the same name is active"
+
+        return None
 
 
 class CDMPluginInfo:
@@ -350,23 +382,27 @@ class CDMPluginInfo:
 
     def __init__( self, pluginInfo ):
         " The pluginInfo comes from yapsy "
-        self.info = pluginInfo                              # yapsy.PluginInfo
-        self.isUser = self.__isUserPlugin( self.info )      # True/False
+        self.__info = pluginInfo                            # yapsy.PluginInfo
+        self.__isUser = self.__isUserPlugin()
         self.isEnabled = False                              # True/False
         self.conflictType = CDMPluginManager.NO_CONFLICT    # See CDMPluginManager constants
         self.conflictMessage = ""                           # One line message for UI/log
         return
 
-    def __isUserPlugin( self, plugin ):
+    def isUser( self ):
         " True if it is a user plugin "
-        return str( plugin.path ).startswith( settingsDir )
+        return self.__isUser
+
+    def __isUserPlugin( self ):
+        " True if it is a user plugin "
+        return self.getPath().startswith( settingsDir )
 
     def getDisabledLine( self ):
         " Used for the setting file "
         if self.isEnabled is None or self.isEnabled == True:
             return None
         return str( self.conflictType ) + ":::" + \
-               self.info.path + ":::" + \
+               self.__info.path + ":::" + \
                self.conflictMessage
 
     @staticmethod
@@ -377,35 +413,49 @@ class CDMPluginInfo:
             raise ValueError( "Incorrect disabled plugin description: " +
                               configLine )
         # (conflictType, path, conflictMessage)
-        return ( parts[ 0 ], parts[ 1 ], parts[ 2 ] )
+        return ( int( parts[ 0 ] ), parts[ 1 ], parts[ 2 ] )
 
     def getObject( self ):
         " Provides a reference to the plugin object "
-        return self.info.plugin_object
+        return self.__info.plugin_object
 
     def getPath( self ):
         " Provides the plugin path "
-        return str( self.info.path )
+        return str( self.__info.path )
 
     def getName( self ):
         " Provides the plugin name "
-        return str( self.info.name )
+        return str( self.__info.name )
 
     def getVersion( self ):
         " Provides the plugin version "
-        return self.info.details.get( "Documentation", "Version" )
+        return self.__info.details.get( "Documentation", "Version" )
 
     def getAuthor( self ):
         " Provides the author name "
-        return self.info.details.get( "Documentation", "Author" )
+        return self.__info.details.get( "Documentation", "Author" )
 
     def getDescription( self ):
         " Provides the description "
-        return self.info.details.get( "Documentation", "Description" )
+        return self.__info.details.get( "Documentation", "Description" )
 
     def getWebsite( self ):
         " Provides the website "
-        return self.info.details.get( "Documentation", "Website" )
+        return self.__info.details.get( "Documentation", "Website" )
+
+    def getCopyright( self ):
+        " Provides the copyright "
+        return self.__info.details.get( "Documentation", "Copyright" )
+
+    def getDetails( self ):
+        " Provides additional values from from the description section "
+        result = {}
+        for name, value in self.__info.details.items( "Documentation" ):
+            if name.lower() in [ "version", "author", "description",
+                                 "website", "copyright" ]:
+                continue
+            result[ name ] = value
+        return result
 
     def disable( self, conflictType = CDMPluginManager.USER_DISABLED,
                        conflictMessage = "" ):
@@ -414,18 +464,19 @@ class CDMPluginInfo:
         self.conflictType = conflictType
         self.conflictMessage = conflictMessage
 
-        if self.getObject().isActivated():
+        if self.getObject().is_activated:
             self.getObject().deactivate()
         return
 
     def enable( self ):
         " Enables the plugin "
+        if not self.getObject().is_activated:
+            from utils.globals import GlobalData
+            self.getObject().activate( Settings(), GlobalData() )
+
         self.isEnabled = True
         self.conflictType = CDMPluginManager.NO_CONFLICT
         self.conflictMessage = ""
-
-        if not self.getObject().isActivated():
-            self.getObject().activate()
         return
 
 
