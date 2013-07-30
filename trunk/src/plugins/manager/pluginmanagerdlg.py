@@ -25,7 +25,7 @@
 from PyQt4.QtCore import Qt, SIGNAL, QStringList
 from PyQt4.QtGui import ( QDialog, QTreeWidgetItem, QTreeWidget, QVBoxLayout,
                           QTextEdit, QDialogButtonBox, QLabel, QFontMetrics,
-                          QHeaderView )
+                          QHeaderView, QPushButton )
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import PixmapCache
 import os.path
@@ -34,7 +34,9 @@ import os.path
 STATE_COL = 0       # Enabled/disabled
 CONFLICT_COL = 1    # Exclamation sign
 TYPE_COL = 2        # Sys/user
-
+NAME_COL = 3
+VERSION_COL = 4
+SETTINGS_COL = 5    # Settings button
 
 class PluginItem( QTreeWidgetItem ):
     " Single plugin item "
@@ -53,6 +55,9 @@ class PluginItem( QTreeWidgetItem ):
                                              pluginManager.USER_DISABLED ]:
             self.setIcon( CONFLICT_COL, PixmapCache().getIcon( 'pluginconflict.png' ) )
             self.setToolTip( CONFLICT_COL, self.plugin.conflictMessage )
+
+        self.setToolTip( STATE_COL, "Enable / disable" )
+        self.setToolTip( CONFLICT_COL, "Conflict" )
 
         if self.plugin.isUser():
             self.setIcon( TYPE_COL, PixmapCache().getIcon( 'pluginuser.png' ) )
@@ -100,7 +105,7 @@ class PluginsDialog( QDialog ):
 
         # Alert | system/user | Enable | Name | Version
         self.__pluginsHeader = QTreeWidgetItem(
-                QStringList() << "" << "" << "" << "Name" << "Version" )
+                QStringList() << "" << "" << "" << "Name" << "Version" << "" )
         self.__pluginsView.setHeaderItem( self.__pluginsHeader )
         self.__pluginsView.header().setSortIndicator( 3, Qt.AscendingOrder )
         self.connect( self.__pluginsView,
@@ -162,15 +167,32 @@ class PluginsDialog( QDialog ):
             for cdmPlugin in self.__pluginManager.activePlugins[ category ]:
                 newItem = PluginItem( self.__pluginManager, cdmPlugin, True, category )
                 self.__pluginsView.addTopLevelItem( newItem )
+                settingsButton = QPushButton( PixmapCache().getIcon( 'pluginmanagermenu.png' ), "" )
+                settingsButton.setFixedSize( 24, 24 )
+                settingsButton.setToolTip( "Click to configure" )
+                settingsButton.setFocusPolicy( Qt.NoFocus )
+                self.__pluginsView.setItemWidget( newItem, SETTINGS_COL, settingsButton )
 
         for category in self.__pluginManager.inactivePlugins:
             for cdmPlugin in self.__pluginManager.inactivePlugins[ category ]:
                 newItem = PluginItem( self.__pluginManager, cdmPlugin, False, category )
                 self.__pluginsView.addTopLevelItem( newItem )
+                settingsButton = QPushButton( PixmapCache().getIcon( 'pluginmanagermenu.png' ), "" )
+                settingsButton.setFixedSize( 24, 24 )
+                settingsButton.setToolTip( "Enable plugin and then click to configure" )
+                settingsButton.setFocusPolicy( Qt.NoFocus )
+                settingsButton.setEnabled( False )
+                self.__pluginsView.setItemWidget( newItem, SETTINGS_COL, settingsButton )
 
         for cdmPlugin in self.__pluginManager.unknownPlugins:
             newItem = PluginItem( self.__pluginManager, cdmPlugin, False, None )
             self.__pluginsView.addTopLevelItem( newItem )
+            settingsButton = QPushButton( PixmapCache().getIcon( 'pluginmanagermenu.png' ), "" )
+            settingsButton.setFixedSize( 24, 24 )
+            settingsButton.setToolTip( "Unknown plugins are configurable" )
+            settingsButton.setFocusPolicy( Qt.NoFocus )
+            settingsButton.setEnabled( False )
+            self.__pluginsView.setItemWidget( newItem, SETTINGS_COL, settingsButton )
 
         self.__sortPlugins()
         self.__resizePlugins()
@@ -186,7 +208,7 @@ class PluginsDialog( QDialog ):
 
     def __resizePlugins( self ):
         " Resizes the plugins table "
-        self.__pluginsView.header().setStretchLastSection( True )
+        self.__pluginsView.header().setStretchLastSection( False )
         self.__pluginsView.header().resizeSections(
                                         QHeaderView.ResizeToContents )
         self.__pluginsView.header().resizeSection( STATE_COL, 28 )
@@ -195,6 +217,10 @@ class PluginsDialog( QDialog ):
         self.__pluginsView.header().setResizeMode( CONFLICT_COL, QHeaderView.Fixed )
         self.__pluginsView.header().resizeSection( TYPE_COL, 28 )
         self.__pluginsView.header().setResizeMode( TYPE_COL, QHeaderView.Fixed )
+
+        self.__pluginsView.header().setResizeMode( VERSION_COL, QHeaderView.Stretch )
+        self.__pluginsView.header().resizeSection( SETTINGS_COL, 24 )
+        self.__pluginsView.header().setResizeMode( SETTINGS_COL, QHeaderView.Fixed )
         return
 
     def __pluginSelectionChanged( self ):
