@@ -31,9 +31,9 @@ from utils.pixmapcache import PixmapCache
 import os.path
 
 
-CONFLICT_COL = 0    # Exclamation sign
-TYPE_COL = 1        # Sys/user
-STATE_COL = 2       # Enabled/disabled
+STATE_COL = 0       # Enabled/disabled
+CONFLICT_COL = 1    # Exclamation sign
+TYPE_COL = 2        # Sys/user
 
 
 class PluginItem( QTreeWidgetItem ):
@@ -100,7 +100,7 @@ class PluginsDialog( QDialog ):
 
         # Alert | system/user | Enable | Name | Version
         self.__pluginsHeader = QTreeWidgetItem(
-                QStringList() << "" << "" << "Enable" << "Name" << "Version" )
+                QStringList() << "" << "" << "" << "Name" << "Version" )
         self.__pluginsView.setHeaderItem( self.__pluginsHeader )
         self.__pluginsView.header().setSortIndicator( 3, Qt.AscendingOrder )
         self.connect( self.__pluginsView,
@@ -189,9 +189,11 @@ class PluginsDialog( QDialog ):
         self.__pluginsView.header().setStretchLastSection( True )
         self.__pluginsView.header().resizeSections(
                                         QHeaderView.ResizeToContents )
-        self.__pluginsView.header().resizeSection( CONFLICT_COL, 22 )
+        self.__pluginsView.header().resizeSection( STATE_COL, 28 )
+        self.__pluginsView.header().setResizeMode( STATE_COL, QHeaderView.Fixed )
+        self.__pluginsView.header().resizeSection( CONFLICT_COL, 28 )
         self.__pluginsView.header().setResizeMode( CONFLICT_COL, QHeaderView.Fixed )
-        self.__pluginsView.header().resizeSection( TYPE_COL, 22 )
+        self.__pluginsView.header().resizeSection( TYPE_COL, 28 )
         self.__pluginsView.header().setResizeMode( TYPE_COL, QHeaderView.Fixed )
         return
 
