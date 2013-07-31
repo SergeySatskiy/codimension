@@ -30,15 +30,14 @@ class VersionControlSystemInterface( CDMPluginBase ):
     """ Version control system plugin interface """
 
     def __init__( self ):
-        """ The plugin class is instantiated with no arguments """
+        """ The plugin class is instantiated with no arguments.
+            Instantiating is done regardless wheather a plugin is
+            enabled or disabled. So it is recommended to have the
+            resource allocation in the activate(...) method and
+            deallocation of them in the deactivate(...) method.
+        """
         CDMPluginBase.__init__( self )
         return
-
-    def getInterfaceVersion( self ):
-        """ Do not override this method. Codimension uses it
-            to detect the protocol version conformance. """
-        return "1.0.0"
-
 
     # Member functions below could or should be implemented by a plugin.
     # See docstrings for the detailed description.
