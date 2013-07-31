@@ -70,9 +70,19 @@ class SubversionPlugin( VersionControlSystemInterface ):
             plugin deactivation handling.
             Note: if overriden do not forget to call the
                   base class deactivate() """
-        VersionControlSystemInterface.deactivate( self )
         print "Deactivated"
+        VersionControlSystemInterface.deactivate( self )
         return
+
+    def getConfigFunction( self ):
+        """ The plugin can provide a function which will be called when the
+            user requests plugin configuring.
+            If a plugin does not require any config parameters then None
+            should be returned.
+            By default no configuring is required.
+        """
+        print "Config function provided"
+        return self.configure
 
     def populateMainMenu( self, parentMenu ):
         """ The main menu looks as follows:
@@ -168,4 +178,6 @@ class SubversionPlugin( VersionControlSystemInterface ):
             If revision is not specified then it must be the latest version """
         raise Exception( "getRepositoryVersion() must be overridden" )
 
-
+    def configure( self ):
+        " Configures the SVN plugin "
+        print "Configure called"
