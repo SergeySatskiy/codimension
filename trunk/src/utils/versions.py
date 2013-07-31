@@ -161,6 +161,11 @@ def getPygmentsVersion():
     import pygments
     return pygments.__version__
 
+def getYapsyVersion():
+    " Provides yapsy version "
+    import yapsy
+    return yapsy.__version__
+
 
 def getComponentInfo():
     " Provides major codimension components information "
@@ -226,6 +231,10 @@ def getComponentInfo():
                         "http://www.riverbankcomputing.com/software/qscintilla/license") )
     components.append( ("pygments", getPygmentsVersion(),
                         "http://pygments.org/", None,
+                        "BSD License",
+                        "http://opensource.org/licenses/bsd-license.php") )
+    components.append( ("yapsy", getYapsyVersion(),
+                        "http://yapsy.sourceforge.net", True,
                         "BSD License",
                         "http://opensource.org/licenses/bsd-license.php") )
     return components
