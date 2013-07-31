@@ -23,15 +23,15 @@
 " Version control system plugin interface "
 
 
-from yapsy.IPlugin import IPlugin
+from cdmpluginbase import CDMPluginBase
 
 
-class VersionControlSystemInterface( IPlugin ):
+class VersionControlSystemInterface( CDMPluginBase ):
     """ Version control system plugin interface """
 
     def __init__( self ):
         """ The plugin class is instantiated with no arguments """
-        IPlugin.__init__( self )
+        CDMPluginBase.__init__( self )
         return
 
     def getInterfaceVersion( self ):
@@ -66,18 +66,30 @@ class VersionControlSystemInterface( IPlugin ):
             ideGlobalData - reference to the IDE global settings
                             see codimension/src/utils/globals.py
 
-            Note: if overriden do not forget to call the
-                  base class activate() """
-        IPlugin.activate( self )
+            Note: if overriden then call the base class activate() first.
+                  Plugin specific activation handling should follow it.
+        """
+        CDMPluginBase.activate( self, ideSettings, ideGlobalData )
         return
 
     def deactivate( self ):
         """ The plugin may override the method to do specific
             plugin deactivation handling.
-            Note: if overriden do not forget to call the
-                  base class deactivate() """
-        IPlugin.deactivate( self )
+
+            Note: if overriden then first do the plugin specific deactivation
+                  handling and then call the base class deactivate()
+        """
+        CDMPluginBase.deactivate( self )
         return
+
+    def getConfigFunction( self ):
+        """ The plugin can provide a function which will be called when the
+            user requests plugin configuring.
+            If a plugin does not require any config parameters then None
+            should be returned.
+            By default no configuring is required.
+        """
+        return CDMPluginBase.getConfigFunction( self )
 
     def populateMainMenu( self, parentMenu ):
         """ The main menu looks as follows:

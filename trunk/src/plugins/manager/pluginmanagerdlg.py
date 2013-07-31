@@ -169,7 +169,15 @@ class PluginsDialog( QDialog ):
                 self.__pluginsView.addTopLevelItem( newItem )
                 settingsButton = QPushButton( PixmapCache().getIcon( 'pluginmanagermenu.png' ), "" )
                 settingsButton.setFixedSize( 24, 24 )
-                settingsButton.setToolTip( "Click to configure" )
+                configFunction = cdmPlugin.getObject().getConfigFunction()
+                if configFunction is None:
+                    settingsButton.setToolTip( "Plugin does not need configuring" )
+                    settingsButton.setEnabled( False )
+                else:
+                    settingsButton.setToolTip( "Click to configure" )
+                    self.connect( settingsButton, SIGNAL( 'clicked()' ),
+                                  configFunction )
+
                 settingsButton.setFocusPolicy( Qt.NoFocus )
                 self.__pluginsView.setItemWidget( newItem, SETTINGS_COL, settingsButton )
 
@@ -179,7 +187,13 @@ class PluginsDialog( QDialog ):
                 self.__pluginsView.addTopLevelItem( newItem )
                 settingsButton = QPushButton( PixmapCache().getIcon( 'pluginmanagermenu.png' ), "" )
                 settingsButton.setFixedSize( 24, 24 )
-                settingsButton.setToolTip( "Enable plugin and then click to configure" )
+                configFunction = cdmPlugin.getObject().getConfigFunction()
+                if configFunction is None:
+                    settingsButton.setToolTip( "Plugin does not need configuring" )
+                else:
+                    settingsButton.setToolTip( "Enable plugin and then click to configure" )
+                    self.connect( settingsButton, SIGNAL( 'clicked()' ),
+                                  configFunction )
                 settingsButton.setFocusPolicy( Qt.NoFocus )
                 settingsButton.setEnabled( False )
                 self.__pluginsView.setItemWidget( newItem, SETTINGS_COL, settingsButton )
@@ -189,7 +203,7 @@ class PluginsDialog( QDialog ):
             self.__pluginsView.addTopLevelItem( newItem )
             settingsButton = QPushButton( PixmapCache().getIcon( 'pluginmanagermenu.png' ), "" )
             settingsButton.setFixedSize( 24, 24 )
-            settingsButton.setToolTip( "Unknown plugins are configurable" )
+            settingsButton.setToolTip( "Unknown plugins are not configurable" )
             settingsButton.setFocusPolicy( Qt.NoFocus )
             settingsButton.setEnabled( False )
             self.__pluginsView.setItemWidget( newItem, SETTINGS_COL, settingsButton )
@@ -270,12 +284,15 @@ class PluginsDialog( QDialog ):
             return
 
         if item.active:
-            if item.checkState( STATE_COL ) == Qt.Checked:
-                return
-
             self.__inItemChange = True
             item.plugin.disable()
             item.active = False
+
+            settingsButton = self.__pluginsView.itemWidget( item, SETTINGS_COL )
+            settingsButton.setEnabled( False )
+            if item.plugin.getObject().getConfigFunction() is not None:
+                settingsButton.setToolTip( "Enable plugin and then click to configure" )
+
             if item.category in self.__pluginManager.inactivePlugins:
                 self.__pluginManager.inactivePlugins[ item.category ].append( item.plugin )
             else:
@@ -283,9 +300,6 @@ class PluginsDialog( QDialog ):
             self.__pluginManager.activePlugins[ item.category ].remove( item.plugin )
             self.__pluginManager.saveDisabledPlugins()
             self.__inItemChange = False
-            return
-
-        if item.checkState( STATE_COL ) == Qt.Unchecked:
             return
 
         self.__inItemChange = True
@@ -306,6 +320,11 @@ class PluginsDialog( QDialog ):
             self.__pluginManager.inactivePlugins[ item.category ].remove( item.plugin )
             self.__pluginManager.saveDisabledPlugins()
             self.__errorsText.setText( "" )
+
+            settingsButton = self.__pluginsView.itemWidget( item, SETTINGS_COL )
+            if item.plugin.getObject().getConfigFunction() is not None:
+                settingsButton.setToolTip( "Click to configure" )
+                settingsButton.setEnabled( True )
         except:
             item.setCheckState( STATE_COL, Qt.Unchecked )
             self.__errorsText.setText( "Error activating the plugin - exception is generated" )
