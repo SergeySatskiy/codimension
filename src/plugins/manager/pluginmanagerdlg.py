@@ -28,7 +28,7 @@ from PyQt4.QtGui import ( QDialog, QTreeWidgetItem, QTreeWidget, QVBoxLayout,
                           QHeaderView, QPushButton )
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import PixmapCache
-import os.path
+import os.path, logging
 
 
 STATE_COL = 0       # Enabled/disabled
@@ -37,6 +37,27 @@ TYPE_COL = 2        # Sys/user
 NAME_COL = 3
 VERSION_COL = 4
 SETTINGS_COL = 5    # Settings button
+
+
+class SettingsButton( QPushButton ):
+    " Custom settings button "
+
+    def __init__( self ):
+        QPushButton.__init__( self,
+                              PixmapCache().getIcon( 'pluginsettings.png' ),
+                              "" )
+        self.setFixedSize( 24, 24 )
+        self.setFocusPolicy( Qt.NoFocus )
+
+        self.index = -1
+        self.connect( self, SIGNAL( "clicked()" ), self.onClick )
+        return
+
+    def onClick( self ):
+        " Emits a signal with the button index "
+        self.emit( SIGNAL( "CustomClick" ), self.index )
+        return
+
 
 class PluginItem( QTreeWidgetItem ):
     " Single plugin item "
@@ -81,8 +102,11 @@ class PluginsDialog( QDialog ):
     def __init__( self, pluginManager, parent = None ):
         QDialog.__init__( self, parent )
         self.__pluginManager = pluginManager
+        self.__configFuncs = {} # int -> callable
+
         self.__createLayout()
         self.__populate()
+
         self.__pluginsView.setFocus()
         self.__inItemChange = False
         return
@@ -161,50 +185,69 @@ class PluginsDialog( QDialog ):
         self.setLayout( layout )
         return
 
+    def __createConfigButton( self ):
+        " Creates a configure button for a plugin "
+        button = SettingsButton()
+        self.connect( button, SIGNAL( 'CustomClick' ), self.onPluginSettings )
+        return button
+
     def __populate( self ):
         " Populates the list with the plugins "
+        index = 0
+
         for category in self.__pluginManager.activePlugins:
             for cdmPlugin in self.__pluginManager.activePlugins[ category ]:
                 newItem = PluginItem( self.__pluginManager, cdmPlugin, True, category )
                 self.__pluginsView.addTopLevelItem( newItem )
-                settingsButton = QPushButton( PixmapCache().getIcon( 'pluginmanagermenu.png' ), "" )
-                settingsButton.setFixedSize( 24, 24 )
-                configFunction = cdmPlugin.getObject().getConfigFunction()
-                if configFunction is None:
-                    settingsButton.setToolTip( "Plugin does not need configuring" )
-                    settingsButton.setEnabled( False )
-                else:
-                    settingsButton.setToolTip( "Click to configure" )
-                    self.connect( settingsButton, SIGNAL( 'clicked()' ),
-                                  configFunction )
+                settingsButton = self.__createConfigButton()
 
-                settingsButton.setFocusPolicy( Qt.NoFocus )
+                try:
+                    configFunction = cdmPlugin.getObject().getConfigFunction()
+                    if configFunction is None:
+                        settingsButton.setToolTip( "Plugin does not need configuring" )
+                        settingsButton.setEnabled( False )
+                    else:
+                        settingsButton.setToolTip( "Click to configure" )
+                        settingsButton.setEnabled( True )
+                        self.__configFuncs[ index ] = configFunction
+                        settingsButton.index = index
+                        index += 1
+                except Exception, exc:
+                    settingsButton.setToolTip( "Bad plugin interface. No "
+                                               "configuration function received." )
+                    settingsButton.setEnabled( False )
+
                 self.__pluginsView.setItemWidget( newItem, SETTINGS_COL, settingsButton )
 
         for category in self.__pluginManager.inactivePlugins:
             for cdmPlugin in self.__pluginManager.inactivePlugins[ category ]:
                 newItem = PluginItem( self.__pluginManager, cdmPlugin, False, category )
                 self.__pluginsView.addTopLevelItem( newItem )
-                settingsButton = QPushButton( PixmapCache().getIcon( 'pluginmanagermenu.png' ), "" )
-                settingsButton.setFixedSize( 24, 24 )
-                configFunction = cdmPlugin.getObject().getConfigFunction()
-                if configFunction is None:
-                    settingsButton.setToolTip( "Plugin does not need configuring" )
-                else:
-                    settingsButton.setToolTip( "Enable plugin and then click to configure" )
-                    self.connect( settingsButton, SIGNAL( 'clicked()' ),
-                                  configFunction )
-                settingsButton.setFocusPolicy( Qt.NoFocus )
-                settingsButton.setEnabled( False )
+                settingsButton = self.__createConfigButton()
+
+                try:
+                    configFunction = cdmPlugin.getObject().getConfigFunction()
+                    if configFunction is None:
+                        settingsButton.setToolTip( "Plugin does not need configuring" )
+                        settingsButton.setEnabled( False )
+                    else:
+                        settingsButton.setToolTip( "Enable plugin and then click to configure" )
+                        settingsButton.setEnabled( False )
+                        self.__configFuncs[ index ] = configFunction
+                        settingsButton.index = index
+                        index += 1
+                except:
+                    settingsButton.setToolTip( "Bad plugin interface. No "
+                                               "configuration function received." )
+                    settingsButton.setEnabled( False )
+
                 self.__pluginsView.setItemWidget( newItem, SETTINGS_COL, settingsButton )
 
         for cdmPlugin in self.__pluginManager.unknownPlugins:
             newItem = PluginItem( self.__pluginManager, cdmPlugin, False, None )
             self.__pluginsView.addTopLevelItem( newItem )
-            settingsButton = QPushButton( PixmapCache().getIcon( 'pluginmanagermenu.png' ), "" )
-            settingsButton.setFixedSize( 24, 24 )
+            settingsButton = self.__createConfigButton()
             settingsButton.setToolTip( "Unknown plugins are not configurable" )
-            settingsButton.setFocusPolicy( Qt.NoFocus )
             settingsButton.setEnabled( False )
             self.__pluginsView.setItemWidget( newItem, SETTINGS_COL, settingsButton )
 
@@ -290,7 +333,7 @@ class PluginsDialog( QDialog ):
 
             settingsButton = self.__pluginsView.itemWidget( item, SETTINGS_COL )
             settingsButton.setEnabled( False )
-            if item.plugin.getObject().getConfigFunction() is not None:
+            if settingsButton.index != -1:
                 settingsButton.setToolTip( "Enable plugin and then click to configure" )
 
             if item.category in self.__pluginManager.inactivePlugins:
@@ -322,7 +365,7 @@ class PluginsDialog( QDialog ):
             self.__errorsText.setText( "" )
 
             settingsButton = self.__pluginsView.itemWidget( item, SETTINGS_COL )
-            if item.plugin.getObject().getConfigFunction() is not None:
+            if settingsButton.index != -1:
                 settingsButton.setToolTip( "Click to configure" )
                 settingsButton.setEnabled( True )
         except:
@@ -330,5 +373,17 @@ class PluginsDialog( QDialog ):
             self.__errorsText.setText( "Error activating the plugin - exception is generated" )
 
         self.__inItemChange = False
+        return
+
+    def onPluginSettings( self, index ):
+        " Triggered when a configuring function is called "
+        if index not in self.__configFuncs:
+            return
+
+        try:
+            self.__configFuncs[ index ]()
+        except Exception, exc:
+            logging.error( "Error calling the plugin configuration function. "
+                           "Message: " + str( exc ) )
         return
 
