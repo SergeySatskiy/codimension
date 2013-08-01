@@ -122,7 +122,7 @@ class ProjectPropertiesDialog( QDialog, object ):
         else:
             self.setWindowTitle( "Editing Project Properties" )
 
-            # This is editing the loaded project
+            # This is editing the loaded project.
             self.nameEdit.setText( os.path.basename( project.fileName ) )
             self.nameEdit.setToolTip( "" )
             self.dirEdit.setText( project.getProjectDir() )
@@ -146,7 +146,14 @@ class ProjectPropertiesDialog( QDialog, object ):
                 self.importDirList.setCurrentRow( 0 )
                 self.delImportDirButton.setEnabled( True )
 
-            self.scriptEdit.setFocus()
+            # The project could be the one belonging to another user
+            # so there might be no write permissions.
+            if not os.access( project.fileName, os.W_OK ):
+                # Disable editing
+                self.setWindowTitle( "Viewing Project Properties (no write permissions)" )
+                self.disableEditing()
+            else:
+                self.scriptEdit.setFocus()
 
         return
 
