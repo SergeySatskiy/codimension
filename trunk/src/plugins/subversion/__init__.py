@@ -24,6 +24,8 @@
 
 
 from plugins.categories.vcsiface import VersionControlSystemInterface
+from menu import ( populateMainMenu, populateFileContextMenu,
+                   populateDirectoryContextMenu, populateBufferContextMenu )
 
 
 
@@ -95,7 +97,9 @@ class SubversionPlugin( VersionControlSystemInterface ):
             <Plugin #N name> menu item shown.
             It is suggested to insert plugin configuration item here if so.
         """
-        raise Exception( "populateMainMenu() must be overridden" )
+        print "populateMainMenu() called"
+        populateMainMenu( self, parentMenu )
+        return
 
     def populateFileContextMenu( self, parentMenu ):
         """ The file context menu shown in the project viewer window will have
@@ -105,7 +109,9 @@ class SubversionPlugin( VersionControlSystemInterface ):
             When a callback is called the corresponding menu item will have
             attached data with an absolute path to the item.
         """
-        raise Exception( "populateFileContextMenu() must be overridden" )
+        print "populateFileContextMenu() called"
+        populateFileContextMenu( self, parentMenu )
+        return
 
     def populateDirectoryContextMenu( self, parentMenu ):
         """ The directory context menu shown in the project viewer window will have
@@ -115,7 +121,9 @@ class SubversionPlugin( VersionControlSystemInterface ):
             When a callback is called the corresponding menu item will have
             attached data with an absolute path to the directory.
         """
-        raise Exception( "populateDirectoryContextMenu() must be overridden" )
+        print "populateDirectoryContextMenu() called"
+        populateDirectoryContextMenu( self, parentMenu )
+        return
 
     def populateBufferContextMenu( self, parentMenu ):
         """ The buffer context menu shown for the current edited/viewed file
@@ -125,7 +133,9 @@ class SubversionPlugin( VersionControlSystemInterface ):
             When a callback is called the corresponding menu item will have
             attached data with the buffer UUID.
         """
-        raise Exception( "populateBufferContextMenu() must be overridden" )
+        print "populateBufferContextMenu() called"
+        populateBufferContextMenu( self, parentMenu )
+        return
 
     def isUnderVCS( self, path ):
         """ 'path' is an absolute path to a directory or to a file.
@@ -181,3 +191,4 @@ class SubversionPlugin( VersionControlSystemInterface ):
     def configure( self ):
         " Configures the SVN plugin "
         print "Configure called"
+
