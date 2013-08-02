@@ -269,11 +269,21 @@ class CodimensionProject( QObject ):
                          "email=" + self.email + "\n" \
                          "uuid=" + self.uuid + "\n"
 
-        f = open( self.fileName, "w" )
-        self.__writeHeader( f )
-        self.__writeList( f, "importdirs", "dir", self.importDirs )
-        f.write( propertiesPart + "\n\n\n" )
-        f.close()
+        # It could be another user project file without write permissions
+        skipProjectFile = False
+        if os.path.exists( self.fileName ):
+            if not os.access( self.fileName, os.W_OK ):
+                skipProjectFile = True
+        else:
+            if not os.access( os.path.dirname( self.fileName ), os.W_OK ):
+                skipProjectFile = True
+
+        if not skipProjectFile:
+            f = open( self.fileName, "w" )
+            self.__writeHeader( f )
+            self.__writeList( f, "importdirs", "dir", self.importDirs )
+            f.write( propertiesPart + "\n\n\n" )
+            f.close()
 
         # Save brief cache
         self.serializeModinfoCache()
@@ -901,7 +911,12 @@ class CodimensionProject( QObject ):
             # No need to send a signal e.g. if IDE is closing
             self.emit( SIGNAL( 'projectChanged' ), self.CompleteProject )
         if self.__ropeProject is not None:
-            self.__ropeProject.close()
+            try:
+                # If the project directory is read only then closing the
+                # rope project generates exception
+                self.__ropeProject.close()
+            except:
+                pass
         self.__ropeProject = None
         self.__ropeSourceDirs = []
         return
