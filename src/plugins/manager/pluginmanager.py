@@ -207,7 +207,7 @@ class CDMPluginManager( PluginManager ):
 
             if not found:
                 logging.warning( "The disabled plugin at " + path +
-                                 " has not been found. The information that "
+                                 " has not been found. The information that"
                                  " the plugin is disabled will be deleted." )
 
         return

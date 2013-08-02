@@ -24,8 +24,8 @@
 
 
 from plugins.categories.vcsiface import VersionControlSystemInterface
-from menu import ( populateMainMenu, populateFileContextMenu,
-                   populateDirectoryContextMenu, populateBufferContextMenu )
+from menus import ( populateMainMenu, populateFileContextMenu,
+                    populateDirectoryContextMenu, populateBufferContextMenu )
 
 
 

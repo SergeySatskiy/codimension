@@ -363,6 +363,8 @@ class PluginsDialog( QDialog ):
             self.__pluginManager.inactivePlugins[ item.category ].remove( item.plugin )
             self.__pluginManager.saveDisabledPlugins()
             self.__errorsText.setText( "" )
+            item.setIcon( CONFLICT_COL, PixmapCache().getIcon( 'empty.png' ) )
+            item.setToolTip( CONFLICT_COL, "" )
 
             settingsButton = self.__pluginsView.itemWidget( item, SETTINGS_COL )
             if settingsButton.index != -1:
