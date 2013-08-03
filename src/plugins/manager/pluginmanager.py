@@ -25,6 +25,7 @@ import os.path
 from yapsy.PluginManager import PluginManager
 from utils.settings import settingsDir, Settings
 from distutils.version import StrictVersion
+from PyQt4.QtCore import QObject, SIGNAL
 
 
 # List of the supported plugin categories, i.e. base class names
@@ -32,7 +33,7 @@ CATEGORIES = [ "VersionControlSystemInterface" ]
 
 
 
-class CDMPluginManager( PluginManager ):
+class CDMPluginManager( PluginManager, QObject ):
     " Implements the codimension plugin manager "
 
     NO_CONFLICT = 0
@@ -45,6 +46,7 @@ class CDMPluginManager( PluginManager ):
     USER_DISABLED = 7
 
     def __init__( self ):
+        QObject.__init__( self )
         PluginManager.__init__( self, None,
                                 [ settingsDir + "plugins",
                                   "/usr/share/codimension-plugins" ],
@@ -111,6 +113,7 @@ class CDMPluginManager( PluginManager ):
                         self.activePlugins[ category ].append( plugin )
                     else:
                         self.activePlugins[ category ] = [ plugin ]
+                    self.sendPluginActivated( plugin )
                 except Exception as excpt:
                     logging.error( "Error activating plugin at " +
                                    plugin.getPath() +
@@ -375,6 +378,16 @@ class CDMPluginManager( PluginManager ):
                     return "Another plugin of the same name is active"
 
         return None
+
+    def sendPluginActivated( self, plugin ):
+        " Emits the signal with the corresponding plugin "
+        self.emit( SIGNAL( 'PluginActivated' ), plugin )
+        return
+
+    def sendPluginDeactivated( self, plugin ):
+        " Emits the signal with the corresponding plugin "
+        self.emit( SIGNAL( 'PluginDeactivated' ), plugin )
+        return
 
 
 class CDMPluginInfo:
