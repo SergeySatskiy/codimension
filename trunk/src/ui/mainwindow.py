@@ -22,7 +22,7 @@
 
 """ codimension main window """
 
-import os, os.path, sys, logging, ConfigParser
+import os, os.path, sys, logging, ConfigParser, gc
 from subprocess import Popen
 from PyQt4.QtCore import SIGNAL, Qt, QSize, QTimer, QDir, QVariant, QUrl
 from PyQt4.QtGui import ( QLabel, QToolBar, QWidget, QMessageBox, QFont,
@@ -1911,6 +1911,14 @@ class CodimensionMainWindow( QMainWindow ):
             # Close the magic library nicely to avoid complaining on implicit
             # DB unloading
             closeMagicLibrary()
+
+            # On ubuntu codimension produces core dumps coming from QT when:
+            # - a new project is created
+            # - the IDE is closed via Alt+F4
+            # It seems that python GC conflicts with QT at finishing. Explicit
+            # call of GC resolves the problem.
+            while gc.collect():
+                pass
 
         return
 
