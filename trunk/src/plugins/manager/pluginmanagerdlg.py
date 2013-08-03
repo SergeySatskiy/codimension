@@ -343,6 +343,7 @@ class PluginsDialog( QDialog ):
             self.__pluginManager.activePlugins[ item.category ].remove( item.plugin )
             self.__pluginManager.saveDisabledPlugins()
             self.__inItemChange = False
+            self.__pluginManager.sendPluginDeactivated( item.plugin )
             return
 
         self.__inItemChange = True
@@ -370,6 +371,7 @@ class PluginsDialog( QDialog ):
             if settingsButton.index != -1:
                 settingsButton.setToolTip( "Click to configure" )
                 settingsButton.setEnabled( True )
+            self.__pluginManager.sendPluginActivated( item.plugin )
         except:
             item.setCheckState( STATE_COL, Qt.Unchecked )
             self.__errorsText.setText( "Error activating the plugin - exception is generated" )
