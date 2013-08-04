@@ -27,7 +27,7 @@ It performs necessery initialization and starts the Qt main loop.
 
 __version__ = "0.0.0"
 
-import sys, os, os.path
+import sys, os, os.path, gc
 from PyQt4.QtCore import SIGNAL, SLOT, QTimer, QDir, QTextCodec
 
 try:
@@ -283,6 +283,9 @@ def launchUserInterface():
 
     # Additional checks may come here
 
+    # Some startup time objects could be collected here. In my test runs
+    # there were around 700 objects.
+    gc.collect()
     return
 
 
@@ -476,4 +479,3 @@ if __name__ == '__main__':
 
     logging.debug( "Exiting codimension" )
     sys.exit( retCode )
-
