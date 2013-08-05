@@ -145,19 +145,19 @@ class PymetricsViewer( QWidget ):
                       self.__clear )
 
         # The toolbar
-        toolbar = QToolBar( self )
-        toolbar.setOrientation( Qt.Vertical )
-        toolbar.setMovable( False )
-        toolbar.setAllowedAreas( Qt.RightToolBarArea )
-        toolbar.setIconSize( QSize( 16, 16 ) )
-        toolbar.setFixedWidth( 28 )
-        toolbar.setContentsMargins( 0, 0, 0, 0 )
+        self.toolbar = QToolBar( self )
+        self.toolbar.setOrientation( Qt.Vertical )
+        self.toolbar.setMovable( False )
+        self.toolbar.setAllowedAreas( Qt.RightToolBarArea )
+        self.toolbar.setIconSize( QSize( 16, 16 ) )
+        self.toolbar.setFixedWidth( 28 )
+        self.toolbar.setContentsMargins( 0, 0, 0, 0 )
 
-        toolbar.addAction( self.__mcCabeButton )
-        toolbar.addAction( self.printPreviewButton )
-        toolbar.addAction( self.printButton )
-        toolbar.addWidget( spacer )
-        toolbar.addAction( self.clearButton )
+        self.toolbar.addAction( self.__mcCabeButton )
+        self.toolbar.addAction( self.printPreviewButton )
+        self.toolbar.addAction( self.printButton )
+        self.toolbar.addWidget( spacer )
+        self.toolbar.addAction( self.clearButton )
 
         self.__totalResultsTree = QTreeWidget()
         self.__totalResultsTree.setAlternatingRowColors( True )
@@ -194,13 +194,21 @@ class PymetricsViewer( QWidget ):
         self.__hLayout = QHBoxLayout()
         self.__hLayout.setContentsMargins( 0, 0, 0, 0 )
         self.__hLayout.setSpacing( 0 )
-        self.__hLayout.addWidget( toolbar )
+        self.__hLayout.addWidget( self.toolbar )
         self.__hLayout.addWidget( self.__noneLabel )
         self.__hLayout.addWidget( self.__totalResultsTree )
         self.__hLayout.addWidget( self.__mcCabeTable )
 
         self.setLayout( self.__hLayout )
         return
+
+    def getTotalResultsWidget( self ):
+        " Provides a reference to the total results widget "
+        return self.__totalResultsTree
+
+    def getMcCabeResultsWidget( self ):
+        " Provides a reference to the McCabe results widget "
+        return self.__mcCabeTable
 
     def __updateButtonsStatus( self ):
         " Updates the buttons status "

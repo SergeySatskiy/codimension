@@ -361,28 +361,32 @@ class RecentProjectsViewer( QWidget ):
         self.connect( self.trashFileButton, SIGNAL( "triggered()" ),
                       self.__deleteFile )
 
-        upperToolbar = QToolBar()
-        upperToolbar.setMovable( False )
-        upperToolbar.setAllowedAreas( Qt.TopToolBarArea )
-        upperToolbar.setIconSize( QSize( 16, 16 ) )
-        upperToolbar.setFixedHeight( 28 )
-        upperToolbar.setContentsMargins( 0, 0, 0, 0 )
-        upperToolbar.addAction( self.openFileButton )
-        upperToolbar.addAction( self.copyFilePathButton )
-        upperToolbar.addWidget( spacer )
-        upperToolbar.addAction( self.trashFileButton )
+        self.upperToolbar = QToolBar()
+        self.upperToolbar.setMovable( False )
+        self.upperToolbar.setAllowedAreas( Qt.TopToolBarArea )
+        self.upperToolbar.setIconSize( QSize( 16, 16 ) )
+        self.upperToolbar.setFixedHeight( 28 )
+        self.upperToolbar.setContentsMargins( 0, 0, 0, 0 )
+        self.upperToolbar.addAction( self.openFileButton )
+        self.upperToolbar.addAction( self.copyFilePathButton )
+        self.upperToolbar.addWidget( spacer )
+        self.upperToolbar.addAction( self.trashFileButton )
 
         recentFilesLayout = QVBoxLayout()
         recentFilesLayout.setContentsMargins( 0, 0, 0, 0 )
         recentFilesLayout.setSpacing( 0 )
         recentFilesLayout.addWidget( headerFrame )
-        recentFilesLayout.addWidget( upperToolbar )
+        recentFilesLayout.addWidget( self.upperToolbar )
         recentFilesLayout.addWidget( self.recentFilesView )
 
         upperContainer = QWidget()
         upperContainer.setContentsMargins( 0, 0, 0, 0 )
         upperContainer.setLayout( recentFilesLayout )
         return upperContainer
+
+    def getRecentFilesToolbar( self ):
+        " Provides a reference to the recent files toolbar "
+        return self.upperToolbar
 
     def __createRecentProjectsLayout( self ):
         " Creates the bottom layout "
@@ -485,6 +489,10 @@ class RecentProjectsViewer( QWidget ):
         lowerContainer.setContentsMargins( 0, 0, 0, 0 )
         lowerContainer.setLayout( recentProjectsLayout )
         return lowerContainer
+
+    def getRecentProjectsToolbar( self ):
+        " Provides a reference to the projects toolbar "
+        return self.lowerToolbar
 
     def __projectSelectionChanged( self ):
         " Handles the projects changed selection "

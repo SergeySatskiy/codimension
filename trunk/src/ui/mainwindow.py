@@ -206,7 +206,7 @@ class CodimensionMainWindow( QMainWindow ):
 
         self.__horizontalSplitter = None
         self.__verticalSplitter = None
-        self.__logViewer = None
+        self.logViewer = None
         self.__createLayout( settings )
 
         splash.showMessage( "Initializing main menu bar..." )
@@ -287,8 +287,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.__rightSideBar = SideBar( SideBar.East, self )
 
         # Create tabs on bars
-        self.__logViewer = LogViewer()
-        self.__bottomSideBar.addTab( self.__logViewer,
+        self.logViewer = LogViewer()
+        self.__bottomSideBar.addTab( self.logViewer,
                                      PixmapCache().getIcon( 'logviewer.png' ),
                                      'Log' )
         self.connect( sys.stdout, SIGNAL('appendToStdout'), self.toStdout )
@@ -354,17 +354,17 @@ class CodimensionMainWindow( QMainWindow ):
         self.__bottomSideBar.setTabEnabled( 1, False )
 
         # Create pylint viewer
-        self.__pylintViewer = PylintViewer()
-        self.__bottomSideBar.addTab( self.__pylintViewer,
+        self.pylintViewer = PylintViewer()
+        self.__bottomSideBar.addTab( self.pylintViewer,
                                      PixmapCache().getIcon( 'pylint.png' ),
                                      'Pylint viewer' )
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( 'fileUpdated' ),
-                      self.__pylintViewer.onFileUpdated )
+                      self.pylintViewer.onFileUpdated )
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( 'bufferSavedAs' ),
-                      self.__pylintViewer.onFileUpdated )
-        self.connect( self.__pylintViewer, SIGNAL( 'updatePylintTooltip' ),
+                      self.pylintViewer.onFileUpdated )
+        self.connect( self.pylintViewer, SIGNAL( 'updatePylintTooltip' ),
                       self.__onPylintTooltip )
         if GlobalData().pylintAvailable:
             self.__onPylintTooltip( "No results available" )
@@ -372,28 +372,28 @@ class CodimensionMainWindow( QMainWindow ):
             self.__onPylintTooltip( "Pylint is not available" )
 
         # Create pymetrics viewer
-        self.__pymetricsViewer = PymetricsViewer()
-        self.__bottomSideBar.addTab( self.__pymetricsViewer,
+        self.pymetricsViewer = PymetricsViewer()
+        self.__bottomSideBar.addTab( self.pymetricsViewer,
                 PixmapCache().getIcon( 'metrics.png' ), 'Metrics viewer' )
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( 'fileUpdated' ),
-                      self.__pymetricsViewer.onFileUpdated )
+                      self.pymetricsViewer.onFileUpdated )
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( 'bufferSavedAs' ),
-                      self.__pymetricsViewer.onFileUpdated )
-        self.connect( self.__pymetricsViewer,
+                      self.pymetricsViewer.onFileUpdated )
+        self.connect( self.pymetricsViewer,
                       SIGNAL( 'updatePymetricsTooltip' ),
                       self.__onPymetricsTooltip )
         self.__onPymetricsTooltip( "No results available" )
 
         # Create search results viewer
-        self.__findInFilesViewer = FindInFilesViewer()
-        self.__bottomSideBar.addTab( self.__findInFilesViewer,
+        self.findInFilesViewer = FindInFilesViewer()
+        self.__bottomSideBar.addTab( self.findInFilesViewer,
                 PixmapCache().getIcon( 'findindir.png' ), 'Search results' )
 
         # Create tag help viewer
-        self.__tagHelpViewer = TagHelpViewer()
-        self.__bottomSideBar.addTab( self.__tagHelpViewer,
+        self.tagHelpViewer = TagHelpViewer()
+        self.__bottomSideBar.addTab( self.tagHelpViewer,
                 PixmapCache().getIcon( 'helpviewer.png' ), 'Context help' )
         self.__bottomSideBar.setTabToolTip( 5, "Ctrl+F1 in python file" )
 
@@ -1742,19 +1742,19 @@ class CodimensionMainWindow( QMainWindow ):
     def toStdout( self, txt ):
         " Triggered when a new message comes "
         self.showLogTab()
-        self.__logViewer.append( txt )
+        self.logViewer.append( txt )
         return
 
     def toStderr( self, txt ):
         " Triggered when a new message comes "
         self.showLogTab()
-        self.__logViewer.appendError( txt )
+        self.logViewer.appendError( txt )
         return
 
     def showLogTab( self ):
         " Makes sure that the log tab is visible "
         self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget( self.__logViewer )
+        self.__bottomSideBar.setCurrentWidget( self.logViewer )
         self.__bottomSideBar.raise_()
         return
 
@@ -1993,7 +1993,7 @@ class CodimensionMainWindow( QMainWindow ):
             return
 
         QApplication.restoreOverrideCursor()
-        self.__pylintViewer.showReport( lint, reportOption,
+        self.pylintViewer.showReport( lint, reportOption,
                                         displayName, uuid )
 
         if self.__bottomSideBar.height() == 0:
@@ -2004,7 +2004,7 @@ class CodimensionMainWindow( QMainWindow ):
             self.__verticalSplitter.setSizes( splitterSizes )
 
         self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget( self.__pylintViewer )
+        self.__bottomSideBar.setCurrentWidget( self.pylintViewer )
         self.__bottomSideBar.raise_()
         return
 
@@ -2035,7 +2035,7 @@ class CodimensionMainWindow( QMainWindow ):
             return
 
         QApplication.restoreOverrideCursor()
-        self.__pymetricsViewer.showReport( metrics, reportOption,
+        self.pymetricsViewer.showReport( metrics, reportOption,
                                            displayName, uuid )
 
         if self.__bottomSideBar.height() == 0:
@@ -2046,7 +2046,7 @@ class CodimensionMainWindow( QMainWindow ):
             self.__verticalSplitter.setSizes( splitterSizes )
 
         self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget( self.__pymetricsViewer )
+        self.__bottomSideBar.setCurrentWidget( self.pymetricsViewer )
         self.__bottomSideBar.raise_()
         return
 
@@ -2077,10 +2077,10 @@ class CodimensionMainWindow( QMainWindow ):
             return
 
         self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget( self.__tagHelpViewer )
+        self.__bottomSideBar.setCurrentWidget( self.tagHelpViewer )
         self.__bottomSideBar.raise_()
 
-        self.__tagHelpViewer.display( calltip, docstring )
+        self.tagHelpViewer.display( calltip, docstring )
         return
 
     def showDiff( self, diff, tooltip ):
@@ -2342,7 +2342,7 @@ class CodimensionMainWindow( QMainWindow ):
 
     def displayFindInFiles( self, searchRegexp, searchResults ):
         " Displays the results on a tab "
-        self.__findInFilesViewer.showReport( searchRegexp, searchResults )
+        self.findInFilesViewer.showReport( searchRegexp, searchResults )
 
         if self.__bottomSideBar.height() == 0:
             # It was hidden completely, so need to move the slider
@@ -2352,7 +2352,7 @@ class CodimensionMainWindow( QMainWindow ):
             self.__verticalSplitter.setSizes( splitterSizes )
 
         self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget( self.__findInFilesViewer )
+        self.__bottomSideBar.setCurrentWidget( self.findInFilesViewer )
         self.__bottomSideBar.raise_()
         return
 
@@ -3497,23 +3497,23 @@ class CodimensionMainWindow( QMainWindow ):
             self.__rightSideBar.raise_()
         elif name == "log":
             self.__bottomSideBar.show()
-            self.__bottomSideBar.setCurrentWidget( self.__logViewer )
+            self.__bottomSideBar.setCurrentWidget( self.logViewer )
             self.__bottomSideBar.raise_()
         elif name == "pylint":
             self.__bottomSideBar.show()
-            self.__bottomSideBar.setCurrentWidget( self.__pylintViewer )
+            self.__bottomSideBar.setCurrentWidget( self.pylintViewer )
             self.__bottomSideBar.raise_()
         elif name == "pymetrics":
             self.__bottomSideBar.show()
-            self.__bottomSideBar.setCurrentWidget( self.__pymetricsViewer )
+            self.__bottomSideBar.setCurrentWidget( self.pymetricsViewer )
             self.__bottomSideBar.raise_()
         elif name == "search":
             self.__bottomSideBar.show()
-            self.__bottomSideBar.setCurrentWidget( self.__findInFilesViewer )
+            self.__bottomSideBar.setCurrentWidget( self.findInFilesViewer )
             self.__bottomSideBar.raise_()
         elif name == "contexthelp":
             self.__bottomSideBar.show()
-            self.__bottomSideBar.setCurrentWidget( self.__tagHelpViewer )
+            self.__bottomSideBar.setCurrentWidget( self.tagHelpViewer )
             self.__bottomSideBar.raise_()
         elif name == 'diff':
             self.__bottomSideBar.show()
@@ -4160,7 +4160,7 @@ class CodimensionMainWindow( QMainWindow ):
 
     def getLogViewerContent( self ):
         " Provides the log viewer window content as a plain text "
-        return self.__logViewer.getText()
+        return self.logViewer.getText()
 
     def getCurrentFrameNumber( self ):
         " Provides the current stack frame number "

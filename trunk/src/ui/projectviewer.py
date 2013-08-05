@@ -199,19 +199,19 @@ class ProjectViewer( QWidget ):
         self.connect( self.prjPymetricsButton, SIGNAL( 'triggered()' ),
                       self.__pymetricsRequest )
 
-        upperToolbar = QToolBar()
-        upperToolbar.setMovable( False )
-        upperToolbar.setAllowedAreas( Qt.TopToolBarArea )
-        upperToolbar.setIconSize( QSize( 16, 16 ) )
-        upperToolbar.setFixedHeight( 28 )
-        upperToolbar.setContentsMargins( 0, 0, 0, 0 )
-        upperToolbar.addAction( self.prjFindWhereUsedButton )
-        upperToolbar.addAction( self.prjFindInDirButton )
-        upperToolbar.addAction( self.prjShowParsingErrorsButton )
-        upperToolbar.addAction( self.prjNewDirButton )
-        upperToolbar.addAction( self.prjCopyToClipboardButton )
-        upperToolbar.addAction( self.prjPylintButton )
-        upperToolbar.addAction( self.prjPymetricsButton )
+        self.upperToolbar = QToolBar()
+        self.upperToolbar.setMovable( False )
+        self.upperToolbar.setAllowedAreas( Qt.TopToolBarArea )
+        self.upperToolbar.setIconSize( QSize( 16, 16 ) )
+        self.upperToolbar.setFixedHeight( 28 )
+        self.upperToolbar.setContentsMargins( 0, 0, 0, 0 )
+        self.upperToolbar.addAction( self.prjFindWhereUsedButton )
+        self.upperToolbar.addAction( self.prjFindInDirButton )
+        self.upperToolbar.addAction( self.prjShowParsingErrorsButton )
+        self.upperToolbar.addAction( self.prjNewDirButton )
+        self.upperToolbar.addAction( self.prjCopyToClipboardButton )
+        self.upperToolbar.addAction( self.prjPylintButton )
+        self.upperToolbar.addAction( self.prjPymetricsButton )
 
         self.connect( self.projectTreeView,
                       SIGNAL( 'firstSelectedItem' ),
@@ -225,13 +225,17 @@ class ProjectViewer( QWidget ):
         pLayout.setContentsMargins( 0, 0, 0, 0 )
         pLayout.setSpacing( 0 )
         pLayout.addWidget( headerFrame )
-        pLayout.addWidget( upperToolbar )
+        pLayout.addWidget( self.upperToolbar )
         pLayout.addWidget( self.projectTreeView )
 
         upperContainer = QWidget()
         upperContainer.setContentsMargins( 0, 0, 0, 0 )
         upperContainer.setLayout( pLayout )
         return upperContainer
+
+    def getProjectToolbar( self ):
+        " Provides a reference to the project toolbar "
+        return self.upperToolbar
 
     def __createProjectPopupMenu( self ):
         " Generates the various popup menus for the project browser "
@@ -426,6 +430,10 @@ class ProjectViewer( QWidget ):
         lowerContainer.setContentsMargins( 0, 0, 0, 0 )
         lowerContainer.setLayout( fsLayout )
         return lowerContainer
+
+    def getFileSystemToolbar( self ):
+        " Provides a reference to the file system part toolbar "
+        return self.lowerToolbar
 
     def __createFilesystemPopupMenu( self ):
         " Generates the various popup menus for the FS browser "
