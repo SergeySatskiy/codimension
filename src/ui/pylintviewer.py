@@ -131,18 +131,18 @@ class PylintViewer( QWidget ):
                       self.__clear )
 
         # The toolbar
-        toolbar = QToolBar( self )
-        toolbar.setOrientation( Qt.Vertical )
-        toolbar.setMovable( False )
-        toolbar.setAllowedAreas( Qt.RightToolBarArea )
-        toolbar.setIconSize( QSize( 16, 16 ) )
-        toolbar.setFixedWidth( 28 )
-        toolbar.setContentsMargins( 0, 0, 0, 0 )
+        self.toolbar = QToolBar( self )
+        self.toolbar.setOrientation( Qt.Vertical )
+        self.toolbar.setMovable( False )
+        self.toolbar.setAllowedAreas( Qt.RightToolBarArea )
+        self.toolbar.setIconSize( QSize( 16, 16 ) )
+        self.toolbar.setFixedWidth( 28 )
+        self.toolbar.setContentsMargins( 0, 0, 0, 0 )
 
-        toolbar.addAction( self.printPreviewButton )
-        toolbar.addAction( self.printButton )
-        toolbar.addWidget( spacer )
-        toolbar.addAction( self.clearButton )
+        self.toolbar.addAction( self.printPreviewButton )
+        self.toolbar.addAction( self.printButton )
+        self.toolbar.addWidget( spacer )
+        self.toolbar.addAction( self.clearButton )
 
         self.__vLayout = QVBoxLayout()
         self.__vLayout.setContentsMargins( 5, 5, 5, 5 )
@@ -163,7 +163,7 @@ class PylintViewer( QWidget ):
         self.__hLayout = QHBoxLayout()
         self.__hLayout.setContentsMargins( 0, 0, 0, 0 )
         self.__hLayout.setSpacing( 0 )
-        self.__hLayout.addWidget( toolbar )
+        self.__hLayout.addWidget( self.toolbar )
         self.__hLayout.addWidget( self.bodyWidget )
 
         self.setLayout( self.__hLayout )
