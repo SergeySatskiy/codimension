@@ -92,8 +92,8 @@ class IDEAccess( object ):
 
     def deactivate( self ):
         " Resets the references to the IDE settings and global data "
-        self.ideSettings = None
-        self.ideGlobalData = None
+        self.settings = None
+        self.globalData = None
         return
 
     def showStatusBarMessage( self, message, timeout = 10000 ):
@@ -105,25 +105,25 @@ class IDEAccess( object ):
     def application( self ):
         """ Reference to the codimension application.
             See details in src/ui/application.py """
-        if self.ideGlobalData is None:
+        if self.globalData is None:
             raise Exception( "Plugin is not active" )
-        return self.ideGlobalData.application
+        return self.globalData.application
 
     @property
     def mainWindow( self ):
         """ Reference to the application main window.
             See details in src/ui/mainwindow.py """
-        if self.ideGlobalData is None:
+        if self.globalData is None:
             raise Exception( "Plugin is not active" )
-        return self.ideGlobalData.mainWindow
+        return self.globalData.mainWindow
 
     @property
     def skin( self ):
         """ Reference to the current skin.
             See details in src/utils/skin.py """
-        if self.ideGlobalData is None:
+        if self.globalData is None:
             raise Exception( "Plugin is not active" )
-        return self.ideGlobalData.skin
+        return self.globalData.skin
 
     @property
     def project( self ):
@@ -133,9 +133,9 @@ class IDEAccess( object ):
                   To check if a project is loaded use
                   getProject().isLoaded()
         """
-        if self.ideGlobalData is None:
+        if self.globalData is None:
             raise Exception( "Plugin is not active" )
-        return self.ideGlobalData.project
+        return self.globalData.project
 
     @property
     def settingsDir( self ):

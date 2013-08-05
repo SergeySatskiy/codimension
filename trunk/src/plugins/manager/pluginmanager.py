@@ -29,7 +29,8 @@ from PyQt4.QtCore import QObject, SIGNAL
 
 
 # List of the supported plugin categories, i.e. base class names
-CATEGORIES = [ "VersionControlSystemInterface" ]
+CATEGORIES = [ "VersionControlSystemInterface",
+               "WizardInterface" ]
 
 
 
