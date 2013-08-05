@@ -226,6 +226,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( GlobalData().project, SIGNAL( 'fsChanged' ),
                       self.__onFSChanged )
 
+        self.__initPluginSupport()
 
         # 0 does not work, the window must be properly
         # drawn before restoring the old position
@@ -4206,5 +4207,41 @@ class CodimensionMainWindow( QMainWindow ):
 
         self.__tabProfileAct.setEnabled( enabled )
         self.__tabProfileDlgAct.setEnabled( enabled )
+        return
+
+    def __initPluginSupport( self ):
+        " Initializes the main window plugin support "
+        self.__pluginMenus = {}
+        self.connect( GlobalData().pluginManager, SIGNAL( 'PluginActivated' ),
+                      self.__onPluginActivated )
+        self.connect( GlobalData().pluginManager, SIGNAL( 'PluginDeactivated' ),
+                      self.__onPluginDeactivated )
+        return
+
+    def __onPluginActivated( self, plugin ):
+        " Triggered when a plugin is activated "
+        try:
+            pluginName = plugin.getName()
+        except:
+            logging.error( "Error populating a plugin main menu. Ignore and continue." )
+            return
+
+        try:
+            pluginMenu = QMenu( pluginName, self )
+            plugin.getObject().populateMainMenu( pluginMenu )
+            if len( pluginMenu.children() ) == 0:
+                print "No items added"
+                pluginMenu = None
+                return
+            self.__pluginsMenu.addMenu( pluginMenu )
+            self.__pluginMenus[ plugin.getPath() ] = pluginMenu
+        except Exception, exc:
+            logging.error( "Error populating " + pluginName + " plugin main menu: " +
+                           str( exc ) + ". Ignore and continue." )
+        return
+
+    def __onPluginDeactivated( self, plugin ):
+        " Triggered when a plugin is deactivated "
+
         return
 
