@@ -54,7 +54,7 @@ class GCPluginConfigDialog( QDialog ):
     def __createLayout( self ):
         """ Creates the dialog layout """
 
-        self.resize( 300, 150 )
+        self.resize( 450, 150 )
         self.setSizeGripEnabled( True )
 
         verticalLayout = QVBoxLayout( self )
