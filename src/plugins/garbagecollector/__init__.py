@@ -103,8 +103,8 @@ class GCPlugin( WizardInterface ):
             <Plugin #N name> menu item shown.
             It is suggested to insert plugin configuration item here if so.
         """
-        print "GC populateMainMenu() called"
         parentMenu.addAction( "Configure", self.configure )
+        parentMenu.addAction( "Collect garbage", self.__collectGarbage )
         return
 
     def populateFileContextMenu( self, parentMenu ):
@@ -194,7 +194,7 @@ class GCPlugin( WizardInterface ):
             return
 
         message = "Collected " + str( collected ) + " objects in " + \
-                  str( iterCount ) + " iterations"
+                  str( iterCount ) + " iteration(s)"
         if self.__where == GCPluginConfigDialog.STATUS_BAR:
             # Display it for 5 seconds
             self.ide.showStatusBarMessage( message, 5000 )

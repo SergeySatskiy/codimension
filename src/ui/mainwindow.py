@@ -210,6 +210,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__createLayout( settings )
 
         splash.showMessage( "Initializing main menu bar..." )
+        self.__initPluginSupport()
         self.__initMainMenu()
 
         self.updateWindowTitle()
@@ -225,8 +226,6 @@ class CodimensionMainWindow( QMainWindow ):
         # Needs for a proper update of the pylint menu
         self.connect( GlobalData().project, SIGNAL( 'fsChanged' ),
                       self.__onFSChanged )
-
-        self.__initPluginSupport()
 
         # 0 does not work, the window must be properly
         # drawn before restoring the old position
@@ -1269,9 +1268,7 @@ class CodimensionMainWindow( QMainWindow ):
 
         # The plugins menu
         self.__pluginsMenu = QMenu( "Pl&ugins", self )
-        self.__pluginManagerAct = self.__pluginsMenu.addAction(
-            PixmapCache().getIcon( 'pluginmanagermenu.png' ),
-            'Plugin &manager', self.__onPluginManager )
+        self.__recomposePluginMenu()
 
         # The Help menu
         self.__helpMenu = QMenu( "&Help", self )
@@ -4229,19 +4226,37 @@ class CodimensionMainWindow( QMainWindow ):
         try:
             pluginMenu = QMenu( pluginName, self )
             plugin.getObject().populateMainMenu( pluginMenu )
-            if len( pluginMenu.children() ) == 0:
-                print "No items added"
+            if pluginMenu.isEmpty():
                 pluginMenu = None
                 return
-            self.__pluginsMenu.addMenu( pluginMenu )
             self.__pluginMenus[ plugin.getPath() ] = pluginMenu
+            self.__recomposePluginMenu()
         except Exception, exc:
             logging.error( "Error populating " + pluginName + " plugin main menu: " +
                            str( exc ) + ". Ignore and continue." )
         return
 
-    def __onPluginDeactivated( self, plugin ):
-        " Triggered when a plugin is deactivated "
-
+    def __recomposePluginMenu( self ):
+        " Recomposes the plugin menu "
+        self.__pluginsMenu.clear()
+        self.__pluginsMenu.addAction(
+            PixmapCache().getIcon( 'pluginmanagermenu.png' ),
+            'Plugin &manager', self.__onPluginManager )
+        if self.__pluginMenus:
+            self.__pluginsMenu.addSeparator()
+        for path in self.__pluginMenus:
+            self.__pluginsMenu.addMenu( self.__pluginMenus[ path ] )
         return
 
+    def __onPluginDeactivated( self, plugin ):
+        " Triggered when a plugin is deactivated "
+        try:
+            path = plugin.getPath()
+            if path in self.__pluginMenus:
+                del self.__pluginMenus[ path ]
+                self.__recomposePluginMenu()
+        except Exception, exc:
+            pluginName = plugin.getName()
+            logging.error( "Error removing " + pluginName + " plugin menu: " +
+                           str( exc ) + ". Ignore and continue." )
+        return
