@@ -76,10 +76,11 @@ A plugin developer could follow the steps below:
 Currently supported plugin categories:
 - Version control system (see categories/vcsiface.py)
   Serves various version control systems e.g. SVN
+- Wizard (see categories/wizardiface.py)
+  Serves utility functions which could be run from the IDE UI or
+  interfaceless utilities
 
 Planned plugin categories:
-- Wizard (see categories/wizardiface.py)
-  Serves utility functions which could be run from the IDE UI
 - Exporter (see categories/exporteriface.py)
   Serves exporting buffer/file/directory/project content to another format
   e.g. pdf.

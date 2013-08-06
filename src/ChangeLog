@@ -11,6 +11,7 @@
 * Make Ctrl+PgUp going to the previous tab while Ctrl+PgDwn to the next
 * New feature: ui configurable monospaced font
 * Fix: opening another user (read only) project now works
+* New feature: garbage collector plugin
 
 2013 Jun 29 Sergey Satskiy <sergey.satskiy@gmail.com>
 
