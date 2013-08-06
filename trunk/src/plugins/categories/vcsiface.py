@@ -93,13 +93,13 @@ class VersionControlSystemInterface( CDMPluginBase ):
     def populateMainMenu( self, parentMenu ):
         """ The main menu looks as follows:
             Plugins
-                - Mange plugins (fixed item)
-                - Separator (fixed item)
+                - Plugin manager (fixed item)
+                - Separator (visible if at lease one plugin provided its main menu)
                 - <Plugin #1 name> (this is the parentMenu passed)
                 ...
             If no items were populated by the plugin then there will be no
             <Plugin #N name> menu item shown.
-            It is suggested to insert plugin configuration item here if so.
+            Codimension will remove the populated menu when a plugin is disabled.
         """
         raise Exception( "populateMainMenu() must be overridden" )
 
@@ -110,6 +110,7 @@ class VersionControlSystemInterface( CDMPluginBase ):
             shown.
             When a callback is called the corresponding menu item will have
             attached data with an absolute path to the item.
+            Codimension will remove the populated menu when a plugin is disabled.
         """
         raise Exception( "populateFileContextMenu() must be overridden" )
 
@@ -120,6 +121,7 @@ class VersionControlSystemInterface( CDMPluginBase ):
             shown.
             When a callback is called the corresponding menu item will have
             attached data with an absolute path to the directory.
+            Codimension will remove the populated menu when a plugin is disabled.
         """
         raise Exception( "populateDirectoryContextMenu() must be overridden" )
 
@@ -130,6 +132,7 @@ class VersionControlSystemInterface( CDMPluginBase ):
             shown.
             When a callback is called the corresponding menu item will have
             attached data with the buffer UUID.
+            Codimension will remove the populated menu when a plugin is disabled.
         """
         raise Exception( "populateBufferContextMenu() must be overridden" )
 

@@ -181,7 +181,7 @@ class IDEAccess( object ):
 
     @property
     def currentEditorWidget( self ):
-        """ Reference to the current widget.
+        """ Reference to the current main area widget.
             Note: the widget could be of various types e.g. pixmap viewer, html viewer,
                   text editor etc. All of them derive from MainWindowTabWidgetBase (see
                   details in src/ui/mainwindowtabwidgetbase.py)
@@ -200,7 +200,7 @@ class IDEAccess( object ):
 
     @property
     def sidePanels( self ):
-        """ Reference to a side panel widget and its toolbar map, i.e. a plugin
+        """ Reference to a side panel widget and its toolbar map, i.e. a plugin class
             can use the following code:
             self.sidePanels[ "project" ].widget
             self.sidePanels[ "project" ].toolbar
