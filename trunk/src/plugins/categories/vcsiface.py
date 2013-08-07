@@ -130,9 +130,19 @@ class VersionControlSystemInterface( CDMPluginBase ):
             will have an item with a plugin name and subitems which are populated here.
             If no items were populated then the plugin menu item will not be
             shown.
-            When a callback is called the corresponding menu item will have
-            attached data with the buffer UUID.
             Codimension will remove the populated menu when a plugin is disabled.
+            Note: when a buffer context menu is selected by the user it always
+                  refers to the current widget. To get access to the current
+                  editing widget the plugin can use:
+                  self.ide.currentEditorWidget
+                  The widget could be of different types and some circumstances should
+                  be considered, e.g.:
+                  - it could be a new file which has not been saved yet
+                  - it could be modified
+                  - it could be that the disk file has already been deleted
+                  - etc.
+                  Having the current widget reference the plugin is able to retrieve
+                  the infirmation it needs.
         """
         raise Exception( "populateBufferContextMenu() must be overridden" )
 
