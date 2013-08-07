@@ -4217,12 +4217,7 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onPluginActivated( self, plugin ):
         " Triggered when a plugin is activated "
-        try:
-            pluginName = plugin.getName()
-        except:
-            logging.error( "Error populating a plugin main menu. Ignore and continue." )
-            return
-
+        pluginName = plugin.getName()
         try:
             pluginMenu = QMenu( pluginName, self )
             plugin.getObject().populateMainMenu( pluginMenu )
@@ -4257,6 +4252,7 @@ class CodimensionMainWindow( QMainWindow ):
                 self.__recomposePluginMenu()
         except Exception, exc:
             pluginName = plugin.getName()
-            logging.error( "Error removing " + pluginName + " plugin menu: " +
+            logging.error( "Error removing " + pluginName + " plugin main menu: " +
                            str( exc ) + ". Ignore and continue." )
         return
+

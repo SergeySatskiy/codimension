@@ -72,6 +72,7 @@ class ClickableTabBar( QTabBar ):
     def focusInEvent( self, event ):
         " Passes focus to the current tab "
         self.parent().setFocus()
+        return
 
 
 class EditorsManager( QTabWidget ):
@@ -180,6 +181,13 @@ class EditorsManager( QTabWidget ):
                       self.__showTabContextMenu )
         self.connect( self.tabBar(), SIGNAL( 'currentTabClicked' ),
                       self.__currentTabClicked )
+
+        # Plugins context menus support
+        self.__pluginMenus = {}
+        self.connect( GlobalData().pluginManager, SIGNAL( 'PluginActivated' ),
+                      self.__onPluginActivated )
+        self.connect( GlobalData().pluginManager, SIGNAL( 'PluginDeactivated' ),
+                      self.__onPluginDeactivated )
         return
 
     def __currentTabClicked( self ):
@@ -2243,4 +2251,39 @@ class EditorsManager( QTabWidget ):
             if widgetType == MainWindowTabWidgetBase.PlainTextEditor:
                 self._updateIconAndTooltip( index )
         return
+
+    def __onPluginActivated( self, plugin ):
+        " Triggered when a plugin is activated "
+        pluginName = plugin.getName()
+        try:
+            menu = QMenu( pluginName, self )
+            plugin.getObject().populateBufferContextMenu( menu )
+            if menu.isEmpty():
+                menu = None
+                return
+            self.__pluginMenus[ plugin.getPath() ] = menu
+            self.emit( SIGNAL( 'PluginContextMenuAdded' ), menu, len( self.__pluginMenus ) )
+        except Exception, exc:
+            logging.error( "Error populating " + pluginName + " plugin buffer context menu: " +
+                           str( exc ) + ". Ignore and continue." )
+        return
+
+    def __onPluginDeactivated( self, plugin ):
+        " Triggered when a plugin is deactivated "
+        try:
+            path = plugin.getPath()
+            if path in self.__pluginMenus:
+                menu = self.__pluginMenus[ path ]
+                del self.__pluginMenus[ path ]
+                self.emit( SIGNAL( 'PluginContextMenuRemoved' ), menu, len( self.__pluginMenus ) )
+                menu = None
+        except Exception, exc:
+            pluginName = plugin.getName()
+            logging.error( "Error removing " + pluginName + " plugin buffer context menu: " +
+                           str( exc ) + ". Ignore and continue." )
+        return
+
+    def getPluginMenus( self ):
+        " Provides a reference to the registered plugin menus map "
+        return self.__pluginMenus
 

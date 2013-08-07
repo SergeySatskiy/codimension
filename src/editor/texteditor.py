@@ -325,6 +325,33 @@ class TextEditor( ScintillaWrapper ):
                                 PixmapCache().getIcon( "highlightmenu.png" ),
                                 "H&ighlight in file system browser",
                                 editorsManager.onHighlightInFS )
+
+        # Plugins support
+        self.__pluginMenuSeparator = self.__menu.addSeparator()
+        editorsManager = self.parent().parent()
+        registeredMenus = editorsManager.getPluginMenus()
+        if registeredMenus:
+            for path in registeredMenus:
+                self.__menu.addMenu( registeredMenus[ path ] )
+        else:
+            self.__pluginMenuSeparator.setVisible( False )
+
+        self.connect( editorsManager, SIGNAL( 'PluginContextMenuAdded' ),
+                      self.__onPluginMenuAdded )
+        self.connect( editorsManager, SIGNAL( 'PluginContextMenuRemoved' ),
+                      self.__onPluginMenuRemoved )
+        return
+
+    def __onPluginMenuAdded( self, menu, count ):
+        " Triggered when a new menu was added "
+        self.__menu.addMenu( menu )
+        self.__pluginMenuSeparator.setVisible( True )
+        return
+
+    def __onPluginMenuRemoved( self, menu, count ):
+        " Triggered when a menu was deleted "
+        self.__menu.removeAction( menu.menuAction() )
+        self.__pluginMenuSeparator.setVisible( count != 0 )
         return
 
     def __marginNumber( self, xPos ):
