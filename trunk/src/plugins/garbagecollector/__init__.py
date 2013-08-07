@@ -137,7 +137,8 @@ class GCPlugin( WizardInterface ):
             When a callback is called the corresponding menu item will have
             attached data with the buffer UUID.
         """
-        # No buffer context menu is required
+        parentMenu.addAction( "Configure", self.configure )
+        parentMenu.addAction( "Collect garbage", self.__collectGarbage )
         return
 
 
