@@ -97,6 +97,14 @@ class ProjectViewer( QWidget ):
         self.connect( parent, SIGNAL( 'debugModeChanged' ),
                       self.filesystemView.onDebugMode )
 
+        # Plugin context menu support
+        self.__pluginFileMenus = {}
+        self.__pluginDirMenus = {}
+        self.connect( GlobalData().pluginManager, SIGNAL( 'PluginActivated' ),
+                      self.__onPluginActivated )
+        self.connect( GlobalData().pluginManager, SIGNAL( 'PluginDeactivated' ),
+                      self.__onPluginDeactivated )
+
         # At the beginning the FS viewer is shown, so hide it if needed
         if Settings().showFSViewer == False:
             self.__onShowHide( True )
@@ -242,79 +250,83 @@ class ProjectViewer( QWidget ):
 
         # popup menu for python files content
         self.prjPythonMenu = QMenu( self )
-        self.prjUsageAct = self.prjPythonMenu.addAction( \
+        self.prjUsageAct = self.prjPythonMenu.addAction(
             PixmapCache().getIcon( 'findusage.png' ),
             'Find occurences', self.__findWhereUsed )
         self.prjPythonMenu.addSeparator()
-        self.__disasmMenuItem = self.prjPythonMenu.addAction( \
+        self.__disasmMenuItem = self.prjPythonMenu.addAction(
             PixmapCache().getIcon( 'disasmmenu.png' ),
             'Disassemble', self.__onPrjDisassemble )
         self.prjPythonMenu.addSeparator()
-        self.prjCopyAct = self.prjPythonMenu.addAction( \
+        self.prjCopyAct = self.prjPythonMenu.addAction(
             PixmapCache().getIcon( 'copytoclipboard.png' ),
             'Copy path to clipboard', self.projectTreeView.copyToClipboard )
 
         # popup menu for directories
         self.prjDirMenu = QMenu( self )
-        self.prjDirPylintAct = self.prjDirMenu.addAction( \
+        self.prjDirPylintAct = self.prjDirMenu.addAction(
                 PixmapCache().getIcon( 'pylint.png' ),
                 'Run pylint for the directory recursively',
                 self.__pylintRequest )
-        self.prjDirPymetricsAct = self.prjDirMenu.addAction( \
+        self.prjDirPymetricsAct = self.prjDirMenu.addAction(
                 PixmapCache().getIcon( 'metrics.png' ),
                 'Run pymetrics for the directory recursively',
                 self.__pymetricsRequest )
         self.prjDirMenu.addSeparator()
-        self.prjDirImportDgmAct = self.prjDirMenu.addAction( \
+        self.prjDirImportDgmAct = self.prjDirMenu.addAction(
                 PixmapCache().getIcon( 'importsdiagram.png' ),
                 "Imports diagram", self.__onImportDiagram )
-        self.prjDirImportDgmTunedAct = self.prjDirMenu.addAction( \
+        self.prjDirImportDgmTunedAct = self.prjDirMenu.addAction(
                 PixmapCache().getIcon( 'detailsdlg.png' ),
                 'Fine tuned imports diagram', self.__onImportDgmTuned )
         self.prjDirMenu.addSeparator()
-        self.prjDirNewDirAct = self.prjDirMenu.addAction( \
+        self.prjDirNewDirAct = self.prjDirMenu.addAction(
                 PixmapCache().getIcon( 'newdir.png' ),
                 'Create nested directory', self.__createDir )
         self.prjDirMenu.addSeparator()
-        self.prjDirFindAct = self.prjDirMenu.addAction( \
+        self.prjDirFindAct = self.prjDirMenu.addAction(
                 PixmapCache().getIcon( 'findindir.png' ),
                 'Find in this directory', self.projectTreeView.findInDirectory )
-        self.prjDirCopyPathAct = self.prjDirMenu.addAction( \
+        self.prjDirCopyPathAct = self.prjDirMenu.addAction(
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
                 'Copy path to clipboard', self.projectTreeView.copyToClipboard )
         self.prjDirMenu.addSeparator()
-        self.prjDirRemoveFromDiskAct = self.prjDirMenu.addAction( \
+        self.prjDirRemoveFromDiskAct = self.prjDirMenu.addAction(
                 PixmapCache().getIcon( 'trash.png' ),
                 'Remove directory from the disk recursively',
                 self.__removePrj )
+        self.__prjDirPluginSeparator = self.prjDirMenu.addSeparator()
+        self.__prjDirPluginSeparator.setVisible( False )
 
         # popup menu for files
         self.prjFileMenu = QMenu( self )
-        self.prjFilePylintAct = self.prjFileMenu.addAction( \
+        self.prjFilePylintAct = self.prjFileMenu.addAction(
                 PixmapCache().getIcon( 'pylint.png' ),
                 'Run pylint for the file', self.__pylintRequest )
-        self.prjFilePymetricsAct = self.prjFileMenu.addAction( \
+        self.prjFilePymetricsAct = self.prjFileMenu.addAction(
                 PixmapCache().getIcon( 'metrics.png' ),
                 'Run pymetrics for the file', self.__pymetricsRequest )
         self.prjFileMenu.addSeparator()
-        self.prjFileImportDgmAct = self.prjFileMenu.addAction( \
+        self.prjFileImportDgmAct = self.prjFileMenu.addAction(
                 PixmapCache().getIcon( 'importsdiagram.png' ),
                 "Imports diagram", self.__onImportDiagram )
-        self.prjFileImportDgmTunedAct = self.prjFileMenu.addAction( \
+        self.prjFileImportDgmTunedAct = self.prjFileMenu.addAction(
                 PixmapCache().getIcon( 'detailsdlg.png' ),
                 'Fine tuned imports diagram', self.__onImportDgmTuned )
         self.prjFileMenu.addSeparator()
-        self.prjFileCopyPathAct = self.prjFileMenu.addAction( \
+        self.prjFileCopyPathAct = self.prjFileMenu.addAction(
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
                 'Copy path to clipboard', self.projectTreeView.copyToClipboard )
-        self.prjFileShowErrorsAct = self.prjFileMenu.addAction( \
+        self.prjFileShowErrorsAct = self.prjFileMenu.addAction(
                 PixmapCache().getIcon( 'showparsingerrors.png' ),
                 'Show lexer/parser errors', self.showPrjParserError )
         self.prjFileMenu.addSeparator()
-        self.prjFileRemoveFromDiskAct = self.prjFileMenu.addAction( \
+        self.prjFileRemoveFromDiskAct = self.prjFileMenu.addAction(
                 PixmapCache().getIcon( 'trash.png' ),
                 'Remove file from the disk',
                 self.__removePrj )
+        self.__prjFilePluginSeparator = self.prjFileMenu.addSeparator()
+        self.__prjFilePluginSeparator.setVisible( False )
 
         # Popup menu for broken symlinks
         self.prjBrokenLinkMenu = QMenu( self )
@@ -440,37 +452,41 @@ class ProjectViewer( QWidget ):
 
         # create the popup menu for files
         self.fsFileMenu = QMenu( self )
-        self.fsFileCopyPathAct = self.fsFileMenu.addAction( \
+        self.fsFileCopyPathAct = self.fsFileMenu.addAction(
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
                 'Copy path to clipboard', self.filesystemView.copyToClipboard )
-        self.fsFileShowErrorsAct = self.fsFileMenu.addAction( \
+        self.fsFileShowErrorsAct = self.fsFileMenu.addAction(
                 PixmapCache().getIcon( 'showparsingerrors.png' ),
                 'Show lexer/parser errors', self.showFsParserError )
         self.fsFileMenu.addSeparator()
-        self.fsFileRemoveAct = self.fsFileMenu.addAction( \
+        self.fsFileRemoveAct = self.fsFileMenu.addAction(
                 PixmapCache().getIcon( 'trash.png' ),
                 'Remove file from the disk', self.__removeFs )
+        self.__fsFilePluginSeparator = self.fsFileMenu.addSeparator()
+        self.__fsFilePluginSeparator.setVisible( False )
 
         # create the directory menu
         self.fsDirMenu = QMenu( self )
-        self.fsDirAddAsTopLevelAct = self.fsDirMenu.addAction( \
+        self.fsDirAddAsTopLevelAct = self.fsDirMenu.addAction(
                 PixmapCache().getIcon( 'addtopleveldir.png' ),
                 'Add as top level directory',
                 self.addToplevelDir )
-        self.fsDirRemoveFromToplevelAct = self.fsDirMenu.addAction( \
+        self.fsDirRemoveFromToplevelAct = self.fsDirMenu.addAction(
                 PixmapCache().getIcon( 'removetopleveldir.png' ),
                 'Remove from top level', self.removeToplevelDir )
         self.fsDirMenu.addSeparator()
-        self.fsDirFindAct = self.fsDirMenu.addAction( \
+        self.fsDirFindAct = self.fsDirMenu.addAction(
                 PixmapCache().getIcon( 'findindir.png' ),
                 'Find in this directory', self.filesystemView.findInDirectory )
-        self.fsDirCopyPathAct = self.fsDirMenu.addAction( \
+        self.fsDirCopyPathAct = self.fsDirMenu.addAction(
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
                 'Copy path to clipboard', self.filesystemView.copyToClipboard )
         self.fsDirMenu.addSeparator()
-        self.fsDirRemoveAct = self.fsDirMenu.addAction( \
+        self.fsDirRemoveAct = self.fsDirMenu.addAction(
                 PixmapCache().getIcon( 'trash.png' ),
                 'Remove directory from the disk recursively', self.__removeFs )
+        self.__fsDirPluginSeparator = self.fsDirMenu.addSeparator()
+        self.__fsDirPluginSeparator.setVisible( False )
 
         # create menu for broken symlink
         self.fsBrokenLinkMenu = QMenu( self )
@@ -1268,3 +1284,70 @@ class ProjectViewer( QWidget ):
                 self.__onShowHide()
         return result
 
+    def __onPluginActivated( self, plugin ):
+        " Triggered when a plugin is activated "
+        pluginName = plugin.getName()
+        try:
+            fMenu = QMenu( pluginName, self )
+            plugin.getObject().populateFileContextMenu( fMenu )
+            if fMenu.isEmpty():
+                fMenu = None
+            else:
+                self.__pluginFileMenus[ plugin.getPath() ] = fMenu
+                self.prjFileMenu.addMenu( fMenu )
+                self.__prjFilePluginSeparator.setVisible( True )
+                self.fsFileMenu.addMenu( fMenu )
+                self.__fsFilePluginSeparator.setVisible( True )
+        except Exception, exc:
+            logging.error( "Error populating " + pluginName + " plugin file context menu: " +
+                           str( exc ) + ". Ignore and continue." )
+
+        try:
+            dMenu = QMenu( pluginName, self )
+            plugin.getObject().populateDirectoryContextMenu( dMenu )
+            if dMenu.isEmpty():
+                dMenu = None
+            else:
+                self.__pluginDirMenus[ plugin.getPath() ] = dMenu
+                self.prjDirMenu.addMenu( dMenu )
+                self.__prjDirPluginSeparator.setVisible( True )
+                self.fsDirMenu.addMenu( dMenu )
+                self.__fsDirPluginSeparator.setVisible( True )
+        except Exception, exc:
+            logging.error( "Error populating " + pluginName + " plugin directory context menu: " +
+                           str( exc ) + ". Ignore and continue." )
+
+        return
+
+    def __onPluginDeactivated( self, plugin ):
+        " Triggered when a plugin is deactivated "
+        try:
+            path = plugin.getPath()
+            if path in self.__pluginFileMenus:
+                fMenu = self.__pluginFileMenus[ path ]
+                del self.__pluginFileMenus[ path ]
+                self.prjFileMenu.removeAction( fMenu.menuAction() )
+                self.__prjFilePluginSeparator.setVisible( len( self.__pluginFileMenus ) > 0 )
+                self.fsFileMenu.removeAction( fMenu.menuAction() )
+                self.__fsFilePluginSeparator.setVisible( len( self.__pluginFileMenus ) > 0 )
+                fMenu = None
+        except Exception, exc:
+            pluginName = plugin.getName()
+            logging.error( "Error removing " + pluginName + " plugin file context menu: " +
+                           str( exc ) + ". Ignore and continue." )
+
+        try:
+            path = plugin.getPath()
+            if path in self.__pluginDirMenus:
+                dMenu = self.__pluginDirMenus[ path ]
+                del self.__pluginDirMenus[ path ]
+                self.prjDirMenu.removeAction( dMenu.menuAction() )
+                self.__prjDirPluginSeparator.setVisible( len( self.__pluginDirMenus ) > 0 )
+                self.fsDirMenu.removeAction( dMenu.menuAction() )
+                self.__fsDirPluginSeparator.setVisible( len( self.__pluginDirMenus ) > 0 )
+                dMenu = None
+        except Exception, exc:
+            pluginName = plugin.getName()
+            logging.error( "Error removing " + pluginName + " plugin directory context menu: " +
+                           str( exc ) + ". Ignore and continue." )
+        return
