@@ -12,6 +12,8 @@
 * New feature: ui configurable monospaced font
 * Fix: opening another user (read only) project now works
 * New feature: garbage collector plugin
+* Bug fix: pyflakes analysis crashed if there was an invalid escape character
+  or null characters in the file (Issue #399)
 
 2013 Jun 29 Sergey Satskiy <sergey.satskiy@gmail.com>
 

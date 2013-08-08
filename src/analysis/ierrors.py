@@ -39,15 +39,25 @@ def getFileErrors( sourceCode ):
         if value.text is None:
             return []
         return [ ( value.args[0], value.lineno ) ]
-    else:
-        # Okay, it's syntactically valid.  Now check it.
-        w = Checker( tree, "<string>" )
-        w.messages.sort( lambda a, b: cmp( a.lineno, b.lineno ) )
-        results = []
-        lines = sourceCode.splitlines()
-        for warning in w.messages:
-            if 'analysis:ignore' not in lines[ warning.lineno - 1 ]:
-                results.append( ( warning.message % warning.message_args,
-                                  warning.lineno ) )
-        return results
+    except ( ValueError, TypeError ):
+        # May happened in case of invalid \x escape character
+        # E.g. http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=674797
+        # May happened in case of null characters in a file
+        # E.g. http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=674796
+        return []
 
+    # Okay, it's syntactically valid.  Now check it.
+    w = Checker( tree, "<string>" )
+    results = []
+    lines = sourceCode.splitlines()
+    for warning in w.messages:
+        if type( warning.lineno ) == int:
+            lineno = warning.lineno
+        else:
+            # By some reasons I see ast NAME node here (pyflakes 0.7.3)
+            lineno = warning.lineno.lineno
+        if 'analysis:ignore' not in lines[ lineno - 1 ]:
+            results.append( ( warning.message % warning.message_args,
+                              lineno ) )
+    results.sort( key = lambda x: x[ 1 ] )
+    return results
