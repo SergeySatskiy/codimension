@@ -40,9 +40,9 @@ def getFileErrors( sourceCode ):
             return []
         return [ ( value.args[0], value.lineno ) ]
     except ( ValueError, TypeError ):
-        # May happened in case of invalid \x escape character
+        # ValueError may happened in case of invalid \x escape character
         # E.g. http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=674797
-        # May happened in case of null characters in a file
+        # TypeError may happened in case of null characters in a file
         # E.g. http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=674796
         return []
 
