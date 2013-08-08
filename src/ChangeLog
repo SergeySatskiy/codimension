@@ -14,6 +14,7 @@
 * New feature: garbage collector plugin
 * Bug fix: pyflakes analysis crashed if there was an invalid escape character
   or null characters in the file (Issue #399)
+* Bug fix: pylint fails to run on files in projects which have no import dirs
 
 2013 Jun 29 Sergey Satskiy <sergey.satskiy@gmail.com>
 

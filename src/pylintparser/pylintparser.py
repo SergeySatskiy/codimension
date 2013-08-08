@@ -346,6 +346,7 @@ class Pylint( object ):
                     rcArg = [ "--rcfile=" + tempFileName ]
 
             initHook = [ "--init-hook" ]
+            code = ""
             if importDirs:
                 code = "import sys"
                 for dirName in importDirs:
