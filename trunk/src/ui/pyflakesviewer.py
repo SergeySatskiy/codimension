@@ -238,6 +238,15 @@ class PyflakesViewer( QObject ):
         if not messages:
             return
 
+        # Check that there is at least one non -1 lineno message
+        foundLinedMessage = False
+        for item in messages:
+            if item[ 1 ] != -1:
+                foundLinedMessage = True
+                break
+        if not foundLinedMessage:
+            return
+
         # OK, we have something to show
         contextMenu = QMenu( self.__uiLabel )
         for item in messages:
@@ -280,7 +289,14 @@ class PyflakesViewer( QObject ):
         if widget is None:
             return
 
-        self.__editorsManager.jumpToLine( messages[ 0 ][ 1 ] )
+        linedIndex = -1
+        for index in xrange( len( messages ) ):
+            if messages[ index ][ 1 ] != -1:
+                linedIndex = index
+                break
+
+        if linedIndex != -1:
+            self.__editorsManager.jumpToLine( messages[ linedIndex ][ 1 ] )
         return
 
     @staticmethod
@@ -305,10 +321,18 @@ class PyflakesViewer( QObject ):
             for item in results:
                 if complains:
                     complains += "<br>"
-                complains += "Line " + str( item[ 1 ] ) + ": " + \
-                             PyflakesViewer.__htmlEncode( item[ 0 ] )
-                if editor is not None:
-                    editor.addPyflakesMessage( item[ 1 ], item[ 0 ] )
+                msg = item[ 0 ]
+                lineno = item[ 1 ]
+                if lineno == -1:
+                    # Special case: compilation error
+                    complains += PyflakesViewer.__htmlEncode( msg )
+                else:
+                    complains += "Line " + str( lineno ) + ": " + \
+                                 PyflakesViewer.__htmlEncode( msg )
+                if editor is not None and lineno != -1:
+                    # item[ 1 ] -> lineno, -1 is a special case for the
+                    # buffer compilation problems
+                    editor.addPyflakesMessage( lineno, msg )
             label.setToolTip( complains.replace( " ", "&nbsp;" ) )
             label.setPixmap( PixmapCache().getPixmap( 'flakeserrors.png' ) )
         else:
