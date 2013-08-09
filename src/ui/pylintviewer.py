@@ -78,25 +78,22 @@ class PylintViewer( QWidget ):
 
         # Prepare members for reuse
         if GlobalData().pylintAvailable:
-            self.__noneLabel = QLabel( "No results available" )
+            self.__noneLabel = QLabel( "\nNo results available" )
         else:
-            self.__noneLabel = QLabel( "Pylint is not available" )
+            self.__noneLabel = QLabel( "\nPylint is not available" )
         self.__noneLabel.setAutoFillBackground( True )
         noneLabelPalette = self.__noneLabel.palette()
         noneLabelPalette.setColor( QPalette.Background,
                                    GlobalData().skin.nolexerPaper )
         self.__noneLabel.setPalette( noneLabelPalette )
 
-#        self.__noneLabel.setFrameShape( QFrame.StyledPanel )
-        self.__noneLabel.setFrameShape( QFrame.NoFrame )
+        self.__noneLabel.setFrameShape( QFrame.StyledPanel )
         self.__noneLabel.setAlignment( Qt.AlignHCenter )
         self.__headerFont = self.__noneLabel.font()
         self.__headerFont.setPointSize( self.__headerFont.pointSize() + 4 )
         self.__noneLabel.setFont( self.__headerFont )
 
         self.__createLayout( parent )
-
-        self.__vLayout.addWidget( self.__noneLabel )
 
         self.__updateButtonsStatus()
         self.resizeEvent()
@@ -159,11 +156,13 @@ class PylintViewer( QWidget ):
         self.bodyWidget = QScrollArea( self )
         self.bodyWidget.setFocusPolicy( Qt.NoFocus )
         self.bodyWidget.setWidget( self.__bodyFrame )
+        self.bodyWidget.hide()
 
         self.__hLayout = QHBoxLayout()
         self.__hLayout.setContentsMargins( 0, 0, 0, 0 )
         self.__hLayout.setSpacing( 0 )
         self.__hLayout.addWidget( self.toolbar )
+        self.__hLayout.addWidget( self.__noneLabel )
         self.__hLayout.addWidget( self.bodyWidget )
 
         self.setLayout( self.__hLayout )
@@ -195,6 +194,7 @@ class PylintViewer( QWidget ):
             return
 
         self.__removeAll()
+        self.bodyWidget.hide()
         self.__noneLabel.show()
 
         self.__report = None
@@ -489,6 +489,7 @@ class PylintViewer( QWidget ):
             self.__addGenericTableTitle( table )
             self.__addGenericTable( table )
 
+        self.bodyWidget.show()
         self.bodyWidget.ensureVisible( 0, 0, 0, 0 )
         self.__reportShown = True
         self.__updateButtonsStatus()
