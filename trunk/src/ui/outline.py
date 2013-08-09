@@ -25,7 +25,7 @@
 import os.path, logging
 from PyQt4.QtCore import Qt, SIGNAL, QSize, QTimer
 from PyQt4.QtGui import ( QMenu, QWidget, QAction, QVBoxLayout, QToolBar,
-                          QCursor, QFrame, QLabel )
+                          QCursor, QFrame, QLabel, QPalette )
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 from utils.settings import Settings
@@ -140,6 +140,11 @@ class FileOutlineViewer( QWidget ):
         headerFont = self.__noneLabel.font()
         headerFont.setPointSize( headerFont.pointSize() + 2 )
         self.__noneLabel.setFont( headerFont )
+        self.__noneLabel.setAutoFillBackground( True )
+        noneLabelPalette = self.__noneLabel.palette()
+        noneLabelPalette.setColor( QPalette.Background,
+                                   GlobalData().skin.nolexerPaper )
+        self.__noneLabel.setPalette( noneLabelPalette )
 
         self.__layout = QVBoxLayout()
         self.__layout.setContentsMargins( 0, 0, 0, 0 )
