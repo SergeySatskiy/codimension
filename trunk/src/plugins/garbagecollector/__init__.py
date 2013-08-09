@@ -116,8 +116,6 @@ class GCPlugin( WizardInterface ):
             attached data with an absolute path to the item.
         """
         # No file context menu is required
-        parentMenu.addAction( "Configure", self.configure )
-        parentMenu.addAction( "Collect garbage", self.__collectGarbage )
         return
 
     def populateDirectoryContextMenu( self, parentMenu ):
@@ -129,8 +127,6 @@ class GCPlugin( WizardInterface ):
             attached data with an absolute path to the directory.
         """
         # No directory context menu is required
-        parentMenu.addAction( "Configure", self.configure )
-        parentMenu.addAction( "Collect garbage", self.__collectGarbage )
         return
 
     def populateBufferContextMenu( self, parentMenu ):
@@ -151,8 +147,6 @@ class GCPlugin( WizardInterface ):
                   Having the current widget reference the plugin is able to retrieve
                   the infirmation it needs.
         """
-        parentMenu.addAction( "Configure", self.configure )
-        parentMenu.addAction( "Collect garbage", self.__collectGarbage )
         return
 
 
