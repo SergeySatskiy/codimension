@@ -22,18 +22,15 @@
 
 " Find in files viewer implementation "
 
-from PyQt4.QtCore       import Qt, SIGNAL, QSize, QTimer, QStringList
-from PyQt4.QtGui        import QToolBar, QCursor, QBrush, \
-                               QHBoxLayout, QWidget, QAction, \
-                               QSizePolicy, QLabel, \
-                               QSizePolicy, QFrame, \
-                               QTreeWidget, QApplication, \
-                               QTreeWidgetItem, QHeaderView, QToolTip, \
-                               QPalette, QColor, QVBoxLayout
-from utils.pixmapcache  import PixmapCache
-from utils.globals      import GlobalData
-from itemdelegates      import NoOutlineHeightDelegate
-from utils.fileutils    import getFileIcon, detectFileType
+from PyQt4.QtCore import Qt, SIGNAL, QSize, QTimer, QStringList
+from PyQt4.QtGui import ( QToolBar, QCursor, QBrush, QHBoxLayout, QWidget,
+                          QAction, QLabel, QSizePolicy, QFrame,
+                          QTreeWidget, QApplication, QTreeWidgetItem,
+                          QHeaderView, QToolTip, QPalette, QColor, QVBoxLayout )
+from utils.pixmapcache import PixmapCache
+from utils.globals import GlobalData
+from itemdelegates import NoOutlineHeightDelegate
+from utils.fileutils import getFileIcon, detectFileType
 
 
 cellHeight = 20     # default
@@ -343,6 +340,11 @@ class FindInFilesViewer( QWidget ):
         self.__headerFont = self.__noneLabel.font()
         self.__headerFont.setPointSize( self.__headerFont.pointSize() + 4 )
         self.__noneLabel.setFont( self.__headerFont )
+        self.__noneLabel.setAutoFillBackground( True )
+        noneLabelPalette = self.__noneLabel.palette()
+        noneLabelPalette.setColor( QPalette.Background,
+                                   GlobalData().skin.nolexerPaper )
+        self.__noneLabel.setPalette( noneLabelPalette )
 
         # Keep pylint happy
         self.printButton = None
@@ -376,7 +378,7 @@ class FindInFilesViewer( QWidget ):
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
 
-        self.clearButton = QAction( \
+        self.clearButton = QAction(
             PixmapCache().getIcon( 'trash.png' ),
             'Clear', self )
         self.connect( self.clearButton, SIGNAL( 'triggered()' ),
@@ -513,7 +515,7 @@ class FindInFilesViewer( QWidget ):
         self.__resultsTree.setHeaderLabels( headerLabels )
 
         # Resizing the table
-        self.__resultsTree.header().resizeSections( \
+        self.__resultsTree.header().resizeSections(
                                             QHeaderView.ResizeToContents )
 
         # Show the complete information
