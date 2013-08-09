@@ -23,12 +23,12 @@
 " Ignored exceptions viewer "
 
 
-from PyQt4.QtCore import Qt, SIGNAL, QStringList
+from PyQt4.QtCore import Qt, SIGNAL, QStringList, QSize
 from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeWidget, QToolButton,
-                          QTreeWidgetItem, QVBoxLayout,
+                          QTreeWidgetItem, QVBoxLayout, QToolBar,
                           QLabel, QWidget, QAbstractItemView, QMenu,
                           QSpacerItem, QHBoxLayout, QPalette, QCursor,
-                          QLineEdit, QPushButton )
+                          QLineEdit, QPushButton, QAction )
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
@@ -137,32 +137,38 @@ class IgnoredExceptionsViewer( QWidget ):
         self.connect( self.__addButton, SIGNAL( 'clicked()' ),
                       self.__onAddExceptionFilter )
 
-        expandingSpacer2 = QSpacerItem( 1, 1, QSizePolicy.Expanding )
-        self.__removeButton = QToolButton()
-        self.__removeButton.setIcon( PixmapCache().getIcon( 'ignexcptdel.png' ) )
-        self.__removeButton.setFixedSize( 24, 24 )
-        self.__removeButton.setToolTip( "Remove from the ignored exception type list" )
-        self.__removeButton.setFocusPolicy( Qt.NoFocus )
-        self.__removeButton.setEnabled( False )
-        self.connect( self.__removeButton, SIGNAL( 'clicked()' ),
+        expandingSpacer2 = QWidget()
+        expandingSpacer2.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
+
+        self.__removeButton = QAction(
+            PixmapCache().getIcon( 'ignexcptdel.png' ),
+            "Remove from the ignored exception type list", self )
+        self.connect( self.__removeButton, SIGNAL( "triggered()" ),
                       self.__onRemoveFromIgnore )
+        self.__removeButton.setEnabled( False )
 
-        fixedSpacer1 = QSpacerItem( 5, 5 )
+        fixedSpacer1 = QWidget()
+        fixedSpacer1.setFixedWidth( 5 )
 
-        self.__removeAllButton = QToolButton()
-        self.__removeAllButton.setIcon( PixmapCache().getIcon( 'ignexcptdelall.png' ) )
-        self.__removeAllButton.setFixedSize( 24, 24 )
-        self.__removeAllButton.setToolTip( "Remove all the ignored exception types" )
-        self.__removeAllButton.setFocusPolicy( Qt.NoFocus )
-        self.__removeAllButton.setEnabled( False )
-        self.connect( self.__removeAllButton, SIGNAL( 'clicked()' ),
+        self.__removeAllButton = QAction(
+            PixmapCache().getIcon( 'ignexcptdelall.png' ),
+            "Remove all the ignored exception types", self )
+        self.connect( self.__removeAllButton, SIGNAL( "triggered()" ),
                       self.__onRemoveAllFromIgnore )
+        self.__removeAllButton.setEnabled( False )
 
-        toolbarLayout = QHBoxLayout()
-        toolbarLayout.addSpacerItem( expandingSpacer2 )
-        toolbarLayout.addWidget( self.__removeButton )
-        toolbarLayout.addSpacerItem( fixedSpacer1 )
-        toolbarLayout.addWidget( self.__removeAllButton )
+
+        self.toolbar = QToolBar()
+        self.toolbar.setOrientation( Qt.Horizontal )
+        self.toolbar.setMovable( False )
+        self.toolbar.setAllowedAreas( Qt.TopToolBarArea )
+        self.toolbar.setIconSize( QSize( 16, 16 ) )
+        self.toolbar.setFixedHeight( 28 )
+        self.toolbar.setContentsMargins( 0, 0, 0, 0 )
+        self.toolbar.addWidget( expandingSpacer2 )
+        self.toolbar.addAction( self.__removeButton )
+        self.toolbar.addWidget( fixedSpacer1 )
+        self.toolbar.addAction( self.__removeAllButton )
 
         addLayout = QHBoxLayout()
         addLayout.setContentsMargins( 1, 1, 1, 1 )
@@ -171,7 +177,7 @@ class IgnoredExceptionsViewer( QWidget ):
         addLayout.addWidget( self.__addButton )
 
         verticalLayout.addWidget( self.headerFrame )
-        verticalLayout.addLayout( toolbarLayout )
+        verticalLayout.addWidget( self.toolbar )
         verticalLayout.addWidget( self.__exceptionsList )
         verticalLayout.addLayout( addLayout )
         return

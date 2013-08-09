@@ -23,12 +23,12 @@
 " Break points viewer "
 
 import logging
-from PyQt4.QtCore import Qt, SIGNAL
-from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeView, QToolButton,
+from PyQt4.QtCore import Qt, SIGNAL, QSize
+from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeView,
                           QHeaderView, QVBoxLayout, QSortFilterProxyModel,
                           QLabel, QWidget, QAbstractItemView, QMenu,
                           QSpacerItem, QHBoxLayout, QPalette, QCursor,
-                          QItemSelectionModel, QDialog )
+                          QItemSelectionModel, QDialog, QToolBar, QAction )
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
@@ -380,108 +380,97 @@ class BreakPointViewer( QWidget ):
 
         self.__bpointsList = BreakPointView( self, bpointsModel )
 
-        self.__editButton = QToolButton()
-        self.__editButton.setIcon( PixmapCache().getIcon( 'bpprops.png' ) )
-        self.__editButton.setFixedSize( 24, 24 )
-        self.__editButton.setToolTip( "Edit breakpoint properties" )
-        self.__editButton.setFocusPolicy( Qt.NoFocus )
-        self.__editButton.setEnabled( False )
-        self.connect( self.__editButton, SIGNAL( 'clicked()' ),
+        self.__editButton = QAction(
+            PixmapCache().getIcon( 'bpprops.png' ),
+            "Edit breakpoint properties", self )
+        self.connect( self.__editButton, SIGNAL( "triggered()" ),
                       self.__onEdit )
+        self.__editButton.setEnabled( False )
 
-        self.__enableButton = QToolButton()
-        self.__enableButton.setIcon( PixmapCache().getIcon( 'bpenable.png' ) )
-        self.__enableButton.setFixedSize( 24, 24 )
-        self.__enableButton.setToolTip( "Enable the breakpoint" )
-        self.__enableButton.setFocusPolicy( Qt.NoFocus )
-        self.__enableButton.setEnabled( False )
-        self.connect( self.__enableButton,
-                      SIGNAL( 'clicked()' ),
-                      self.__onEnableDisable )
-
-        self.__disableButton = QToolButton()
-        self.__disableButton.setIcon( PixmapCache().getIcon( 'bpdisable.png' ) )
-        self.__disableButton.setFixedSize( 24, 24 )
-        self.__disableButton.setToolTip( "Disable the breakpoint" )
-        self.__disableButton.setFocusPolicy( Qt.NoFocus )
-        self.__disableButton.setEnabled( False )
-        self.connect( self.__disableButton,
-                      SIGNAL( 'clicked()' ),
-                      self.__onEnableDisable )
-
-        self.__enableAllButton = QToolButton()
-        self.__enableAllButton.setIcon( PixmapCache().getIcon( 'bpenableall.png' ) )
-        self.__enableAllButton.setFixedSize( 24, 24 )
-        self.__enableAllButton.setToolTip( "Enable all the breakpoint" )
-        self.__enableAllButton.setFocusPolicy( Qt.NoFocus )
-        self.__enableAllButton.setEnabled( False )
-        self.connect( self.__enableAllButton,
-                      SIGNAL( 'clicked()' ),
-                      self.__onEnableAll )
-
-        self.__disableAllButton = QToolButton()
-        self.__disableAllButton.setIcon( PixmapCache().getIcon( 'bpdisableall.png' ) )
-        self.__disableAllButton.setFixedSize( 24, 24 )
-        self.__disableAllButton.setToolTip( "Disable all the breakpoint" )
-        self.__disableAllButton.setFocusPolicy( Qt.NoFocus )
-        self.__disableAllButton.setEnabled( False )
-        self.connect( self.__disableAllButton,
-                      SIGNAL( 'clicked()' ),
-                      self.__onDisableAll )
-
-        self.__jumpToCodeButton = QToolButton()
-        self.__jumpToCodeButton.setIcon( PixmapCache().getIcon( 'gotoline.png' ) )
-        self.__jumpToCodeButton.setFixedSize( 24, 24 )
-        self.__jumpToCodeButton.setToolTip( "Jump to the code" )
-        self.__jumpToCodeButton.setFocusPolicy( Qt.NoFocus )
-        self.__jumpToCodeButton.setEnabled( False )
-        self.connect( self.__jumpToCodeButton,
-                      SIGNAL( 'clicked()' ),
+        self.__jumpToCodeButton = QAction(
+            PixmapCache().getIcon( 'gotoline.png' ),
+            "Jump to the code", self )
+        self.connect( self.__jumpToCodeButton, SIGNAL( "triggered()" ),
                       self.__onJumpToCode )
+        self.__jumpToCodeButton.setEnabled( False )
 
-        self.__delButton = QToolButton()
-        self.__delButton.setIcon( PixmapCache().getIcon( 'bpdel.png' ) )
-        self.__delButton.setFixedSize( 24, 24 )
-        self.__delButton.setToolTip( "Delete the breakpoint" )
-        self.__delButton.setFocusPolicy( Qt.NoFocus )
-        self.__delButton.setEnabled( False )
-        self.connect( self.__delButton,
-                      SIGNAL( 'clicked()' ),
+        self.__enableButton = QAction(
+            PixmapCache().getIcon( 'bpenable.png' ),
+            "Enable the breakpoint", self )
+        self.connect( self.__enableButton, SIGNAL( "triggered()" ),
+                      self.__onEnableDisable )
+        self.__enableButton.setEnabled( False )
+
+        self.__disableButton = QAction(
+            PixmapCache().getIcon( 'bpdisable.png' ),
+            "Disable the breakpoint", self )
+        self.connect( self.__disableButton, SIGNAL( "triggered()" ),
+                      self.__onEnableDisable )
+        self.__disableButton.setEnabled( False )
+
+        self.__enableAllButton = QAction(
+            PixmapCache().getIcon( 'bpenableall.png' ),
+            "Enable all the breakpoint", self )
+        self.connect( self.__enableAllButton, SIGNAL( "triggered()" ),
+                      self.__onEnableAll )
+        self.__enableAllButton.setEnabled( False )
+
+        self.__disableAllButton = QAction(
+            PixmapCache().getIcon( 'bpdisableall.png' ),
+            "Disable all the breakpoint", self )
+        self.connect( self.__disableAllButton, SIGNAL( "triggered()" ),
+                      self.__onDisableAll )
+        self.__disableAllButton.setEnabled( False )
+
+        self.__delButton = QAction(
+            PixmapCache().getIcon( 'bpdel.png' ),
+            "Delete the breakpoint", self )
+        self.connect( self.__delButton, SIGNAL( "triggered()" ),
                       self.__onDel )
+        self.__delButton.setEnabled( False )
 
-        self.__delAllButton = QToolButton()
-        self.__delAllButton.setIcon( PixmapCache().getIcon( 'bpdelall.png' ) )
-        self.__delAllButton.setFixedSize( 24, 24 )
-        self.__delAllButton.setToolTip( "Delete all the breakpoint" )
-        self.__delAllButton.setFocusPolicy( Qt.NoFocus )
-        self.__delAllButton.setEnabled( False )
-        self.connect( self.__delAllButton,
-                      SIGNAL( 'clicked()' ),
+        self.__delAllButton = QAction(
+            PixmapCache().getIcon( 'bpdelall.png' ),
+            "Delete all the breakpoint", self )
+        self.connect( self.__delAllButton, SIGNAL( "triggered()" ),
                       self.__onDelAll )
+        self.__delAllButton.setEnabled( False )
 
 
-        toolbarLayout = QHBoxLayout()
-        toolbarLayout.addWidget( self.__editButton )
-        toolbarLayout.addWidget( self.__jumpToCodeButton )
-        fixedSpacer2 = QSpacerItem( 5, 5 )
-        toolbarLayout.addSpacerItem( fixedSpacer2 )
-        toolbarLayout.addWidget( self.__enableButton )
-        toolbarLayout.addWidget( self.__enableAllButton )
-        fixedSpacer3 = QSpacerItem( 5, 5 )
-        toolbarLayout.addSpacerItem( fixedSpacer3 )
-        toolbarLayout.addWidget( self.__disableButton )
-        toolbarLayout.addWidget( self.__disableAllButton )
-        expandingSpacer = QSpacerItem( 10, 10, QSizePolicy.Expanding )
-        fixedSpacer4 = QSpacerItem( 5, 5 )
-        toolbarLayout.addSpacerItem( fixedSpacer4 )
-        toolbarLayout.addSpacerItem( expandingSpacer )
-        toolbarLayout.addWidget( self.__delButton )
-        fixedSpacer5 = QSpacerItem( 5, 5 )
-        toolbarLayout.addSpacerItem( fixedSpacer5 )
-        toolbarLayout.addWidget( self.__delAllButton )
+        # Toolbar
+        self.toolbar = QToolBar()
+        self.toolbar.setOrientation( Qt.Horizontal )
+        self.toolbar.setMovable( False )
+        self.toolbar.setAllowedAreas( Qt.TopToolBarArea )
+        self.toolbar.setIconSize( QSize( 16, 16 ) )
+        self.toolbar.setFixedHeight( 28 )
+        self.toolbar.setContentsMargins( 0, 0, 0, 0 )
+        self.toolbar.addAction( self.__editButton )
+        self.toolbar.addAction( self.__jumpToCodeButton )
+        fixedSpacer2 = QWidget()
+        fixedSpacer2.setFixedWidth( 5 )
+        self.toolbar.addWidget( fixedSpacer2 )
+        self.toolbar.addAction( self.__enableButton )
+        self.toolbar.addAction( self.__enableAllButton )
+        fixedSpacer3 = QWidget()
+        fixedSpacer3.setFixedWidth( 5 )
+        self.toolbar.addWidget( fixedSpacer3 )
+        self.toolbar.addAction( self.__disableButton )
+        self.toolbar.addAction( self.__disableAllButton )
+        expandingSpacer = QWidget()
+        expandingSpacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
+        fixedSpacer4 = QWidget()
+        fixedSpacer4.setFixedWidth( 5 )
+        self.toolbar.addWidget( fixedSpacer4 )
+        self.toolbar.addWidget( expandingSpacer )
+        self.toolbar.addAction( self.__delButton )
+        fixedSpacer5 = QWidget()
+        fixedSpacer5.setFixedWidth( 5 )
+        self.toolbar.addWidget( fixedSpacer5 )
+        self.toolbar.addAction( self.__delAllButton )
 
         verticalLayout.addWidget( self.headerFrame )
-        verticalLayout.addLayout( toolbarLayout )
+        verticalLayout.addWidget( self.toolbar )
         verticalLayout.addWidget( self.__bpointsList )
         return
 
