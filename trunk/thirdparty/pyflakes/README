@@ -1,4 +1,4 @@
-This directory is an excerpt from pyflakes 0.6.1.
+This directory is an excerpt from pyflakes 0.7.3 (minor patched for codimension).
 See the project web page at http://pypi.python.org/pypi/pyflakes
 
 The primary reasons for having this excerpt are:
