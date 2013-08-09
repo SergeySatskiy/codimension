@@ -39,12 +39,15 @@ def getFileErrors( sourceCode ):
         if value.text is None:
             return []
         return [ ( value.args[0], value.lineno ) ]
-    except ( ValueError, TypeError ):
+    except ( ValueError, TypeError ), value:
         # ValueError may happened in case of invalid \x escape character
         # E.g. http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=674797
         # TypeError may happened in case of null characters in a file
         # E.g. http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=674796
-        return []
+        msg = str( value )
+        if msg == "":
+            return [ ( "Could not compile buffer: unknown error", -1 ) ]
+        return [ ( "Could not compile buffer: " + msg, -1 ) ]
 
     # Okay, it's syntactically valid.  Now check it.
     w = Checker( tree, "<string>" )
