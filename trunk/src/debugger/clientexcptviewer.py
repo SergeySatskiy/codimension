@@ -23,11 +23,12 @@
 " Client exceptions viewer "
 
 
-from PyQt4.QtCore import Qt, SIGNAL, QStringList
-from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeWidget, QToolButton,
+from PyQt4.QtCore import Qt, SIGNAL, QStringList, QSize
+from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeWidget,
                           QTreeWidgetItem, QHeaderView, QVBoxLayout,
                           QLabel, QWidget, QAbstractItemView, QMenu,
-                          QSpacerItem, QHBoxLayout, QPalette, QCursor )
+                          QSpacerItem, QHBoxLayout, QPalette, QCursor,
+                          QAction, QToolBar )
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
@@ -215,43 +216,42 @@ class ClientExceptionsViewer( QWidget ):
         self.__exceptionsList.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         self.__exceptionsList.setContextMenuPolicy( Qt.CustomContextMenu )
 
-        self.__addToIgnoreButton = QToolButton()
-        self.__addToIgnoreButton.setIcon( PixmapCache().getIcon( 'add.png' ) )
-        self.__addToIgnoreButton.setFixedSize( 24, 24 )
-        self.__addToIgnoreButton.setToolTip( "Add exception to the list of ignored" )
-        self.__addToIgnoreButton.setFocusPolicy( Qt.NoFocus )
-        self.__addToIgnoreButton.setEnabled( False )
-        self.connect( self.__addToIgnoreButton,
-                      SIGNAL( 'clicked()' ),
+        self.__addToIgnoreButton = QAction(
+            PixmapCache().getIcon( 'add.png' ),
+            "Add exception to the list of ignored", self )
+        self.connect( self.__addToIgnoreButton, SIGNAL( "triggered()" ),
                       self.__onAddToIgnore )
+        self.__addToIgnoreButton.setEnabled( False )
 
-        expandingSpacer = QSpacerItem( 10, 10, QSizePolicy.Expanding )
 
-        self.__jumpToCodeButton = QToolButton()
-        self.__jumpToCodeButton.setIcon( PixmapCache().getIcon( 'gotoline.png' ) )
-        self.__jumpToCodeButton.setFixedSize( 24, 24 )
-        self.__jumpToCodeButton.setToolTip( "Jump to the code" )
-        self.__jumpToCodeButton.setFocusPolicy( Qt.NoFocus )
-        self.__jumpToCodeButton.setEnabled( False )
-        self.connect( self.__jumpToCodeButton,
-                      SIGNAL( 'clicked()' ),
+        expandingSpacer = QWidget()
+        expandingSpacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
+
+        self.__jumpToCodeButton = QAction(
+            PixmapCache().getIcon( 'gotoline.png' ),
+            "Jump to the code", self )
+        self.connect( self.__jumpToCodeButton, SIGNAL( "triggered()" ),
                       self.__onJumpToCode )
+        self.__jumpToCodeButton.setEnabled( False )
 
-        self.__delAllButton = QToolButton()
-        self.__delAllButton.setIcon( PixmapCache().getIcon( 'trash.png' ) )
-        self.__delAllButton.setFixedSize( 24, 24 )
-        self.__delAllButton.setToolTip( "Delete all the client exceptions" )
-        self.__delAllButton.setFocusPolicy( Qt.NoFocus )
-        self.__delAllButton.setEnabled( False )
-        self.connect( self.__delAllButton,
-                      SIGNAL( 'clicked()' ),
+        self.__delAllButton = QAction(
+            PixmapCache().getIcon( 'trash.png' ),
+            "Delete all the client exceptions", self )
+        self.connect( self.__delAllButton, SIGNAL( "triggered()" ),
                       self.__onDelAll )
+        self.__delAllButton.setEnabled( False )
 
-        toolbarLayout = QHBoxLayout()
-        toolbarLayout.addWidget( self.__addToIgnoreButton )
-        toolbarLayout.addWidget( self.__jumpToCodeButton )
-        toolbarLayout.addSpacerItem( expandingSpacer )
-        toolbarLayout.addWidget( self.__delAllButton )
+        self.toolbar = QToolBar()
+        self.toolbar.setOrientation( Qt.Horizontal )
+        self.toolbar.setMovable( False )
+        self.toolbar.setAllowedAreas( Qt.TopToolBarArea )
+        self.toolbar.setIconSize( QSize( 16, 16 ) )
+        self.toolbar.setFixedHeight( 28 )
+        self.toolbar.setContentsMargins( 0, 0, 0, 0 )
+        self.toolbar.addAction( self.__addToIgnoreButton )
+        self.toolbar.addAction( self.__jumpToCodeButton )
+        self.toolbar.addWidget( expandingSpacer )
+        self.toolbar.addAction( self.__delAllButton )
 
         self.connect( self.__exceptionsList,
                       SIGNAL( "itemDoubleClicked(QTreeWidgetItem*,int)" ),
@@ -268,7 +268,7 @@ class ClientExceptionsViewer( QWidget ):
         self.__exceptionsList.setHeaderLabels( headerLabels )
 
         verticalLayout.addWidget( self.headerFrame )
-        verticalLayout.addLayout( toolbarLayout )
+        verticalLayout.addWidget( self.toolbar )
         verticalLayout.addWidget( self.__exceptionsList )
         return
 
