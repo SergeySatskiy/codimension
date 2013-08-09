@@ -34,7 +34,6 @@ class SubversionPlugin( VersionControlSystemInterface ):
 
     def __init__( self ):
         VersionControlSystemInterface.__init__( self )
-        print "Instantiated"
         return
 
     @staticmethod
@@ -64,7 +63,6 @@ class SubversionPlugin( VersionControlSystemInterface ):
                   base class activate() """
         VersionControlSystemInterface.activate( self, ideSettings,
                                                       ideGlobalData )
-        print "Activated"
         return
 
     def deactivate( self ):
@@ -72,7 +70,6 @@ class SubversionPlugin( VersionControlSystemInterface ):
             plugin deactivation handling.
             Note: if overriden do not forget to call the
                   base class deactivate() """
-        print "Deactivated"
         VersionControlSystemInterface.deactivate( self )
         return
 
@@ -83,7 +80,6 @@ class SubversionPlugin( VersionControlSystemInterface ):
             should be returned.
             By default no configuring is required.
         """
-        print "Config function provided"
         return self.configure
 
     def populateMainMenu( self, parentMenu ):
@@ -97,7 +93,6 @@ class SubversionPlugin( VersionControlSystemInterface ):
             <Plugin #N name> menu item shown.
             It is suggested to insert plugin configuration item here if so.
         """
-        print "populateMainMenu() called"
         populateMainMenu( self, parentMenu )
         return
 
@@ -109,7 +104,6 @@ class SubversionPlugin( VersionControlSystemInterface ):
             When a callback is called the corresponding menu item will have
             attached data with an absolute path to the item.
         """
-        print "populateFileContextMenu() called"
         populateFileContextMenu( self, parentMenu )
         return
 
@@ -121,7 +115,6 @@ class SubversionPlugin( VersionControlSystemInterface ):
             When a callback is called the corresponding menu item will have
             attached data with an absolute path to the directory.
         """
-        print "populateDirectoryContextMenu() called"
         populateDirectoryContextMenu( self, parentMenu )
         return
 
@@ -133,7 +126,6 @@ class SubversionPlugin( VersionControlSystemInterface ):
             When a callback is called the corresponding menu item will have
             attached data with the buffer UUID.
         """
-        print "populateBufferContextMenu() called"
         populateBufferContextMenu( self, parentMenu )
         return
 
@@ -190,5 +182,5 @@ class SubversionPlugin( VersionControlSystemInterface ):
 
     def configure( self ):
         " Configures the SVN plugin "
-        print "Configure called"
+        return
 
