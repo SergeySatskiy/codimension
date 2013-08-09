@@ -672,7 +672,7 @@ class ProjectViewer( QWidget ):
             self.prjPymetricsButton.setEnabled( True )
 
             # if it is a top level and not the project file containing dir then
-            # the del butten should be enabled
+            # the del button should be enabled
             if self.__prjContextItem.parentItem.itemType == NoItemType:
                 projectDir = os.path.dirname(GlobalData().project.fileName) + \
                              os.path.sep

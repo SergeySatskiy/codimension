@@ -23,21 +23,17 @@
 " Pymetrics viewer implementation "
 
 import os.path, logging
-from PyQt4.QtCore                       import Qt, SIGNAL, QSize, \
-                                               QStringList
-from PyQt4.QtGui                        import QToolBar, \
-                                               QHBoxLayout, QWidget, QAction, \
-                                               QSizePolicy, QLabel, \
-                                               QSizePolicy, QFrame, \
-                                               QTreeWidget, QApplication, \
-                                               QTreeWidgetItem, QHeaderView
-from utils.pixmapcache                  import PixmapCache
-from utils.globals                      import GlobalData
-from itemdelegates                      import NoOutlineHeightDelegate
-from pymetricsparser.pymetricsparser    import BasicMetrics
-from cdmbriefparser                     import getBriefModuleInfoFromFile, \
-                                               getBriefModuleInfoFromMemory
-from utils.misc                         import splitThousands
+from PyQt4.QtCore import Qt, SIGNAL, QSize, QStringList
+from PyQt4.QtGui import ( QToolBar, QHBoxLayout, QWidget, QAction, QPalette,
+                          QLabel, QSizePolicy, QFrame, QTreeWidget,
+                          QApplication, QTreeWidgetItem, QHeaderView )
+from utils.pixmapcache import PixmapCache
+from utils.globals import GlobalData
+from itemdelegates import NoOutlineHeightDelegate
+from pymetricsparser.pymetricsparser import BasicMetrics
+from cdmbriefparser import ( getBriefModuleInfoFromFile,
+                             getBriefModuleInfoFromMemory )
+from utils.misc import splitThousands
 
 
 class McCabeTableItem( QTreeWidgetItem ):
@@ -103,6 +99,11 @@ class PymetricsViewer( QWidget ):
         self.__headerFont = self.__noneLabel.font()
         self.__headerFont.setPointSize( self.__headerFont.pointSize() + 4 )
         self.__noneLabel.setFont( self.__headerFont )
+        self.__noneLabel.setAutoFillBackground( True )
+        noneLabelPalette = self.__noneLabel.palette()
+        noneLabelPalette.setColor( QPalette.Background,
+                                   GlobalData().skin.nolexerPaper )
+        self.__noneLabel.setPalette( noneLabelPalette )
 
         self.__createLayout( parent )
 
@@ -127,7 +128,7 @@ class PymetricsViewer( QWidget ):
                       self.__onPrint )
         self.printButton.setVisible( False )
 
-        self.printPreviewButton = QAction( \
+        self.printPreviewButton = QAction(
                 PixmapCache().getIcon( 'printpreview.png' ),
                 'Print preview', self )
         #printPreviewButton.setShortcut( 'Ctrl+' )
@@ -138,7 +139,7 @@ class PymetricsViewer( QWidget ):
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
 
-        self.clearButton = QAction( \
+        self.clearButton = QAction(
             PixmapCache().getIcon( 'trash.png' ),
             'Clear', self )
         self.connect( self.clearButton, SIGNAL( 'triggered()' ),
@@ -220,7 +221,7 @@ class PymetricsViewer( QWidget ):
 
     def __onResultsExpanded( self, item ):
         " An item has been expanded, so the column width should be adjusted "
-        self.__totalResultsTree.header().resizeSections( \
+        self.__totalResultsTree.header().resizeSections(
                                             QHeaderView.ResizeToContents )
         return
 
@@ -241,14 +242,14 @@ class PymetricsViewer( QWidget ):
         if state:
             self.__totalResultsTree.hide()
             self.__mcCabeTable.show()
-            self.__mcCabeButton.setIcon( \
+            self.__mcCabeButton.setIcon(
                             PixmapCache().getIcon( 'treeview.png' ) )
-            self.__mcCabeButton.setToolTip( "Switch to complete " \
+            self.__mcCabeButton.setToolTip( "Switch to complete "
                                             "results tree view" )
         else:
             self.__mcCabeTable.hide()
             self.__totalResultsTree.show()
-            self.__mcCabeButton.setIcon( \
+            self.__mcCabeButton.setIcon(
                             PixmapCache().getIcon( 'tableview.png' ) )
             self.__mcCabeButton.setToolTip( "Switch to McCabe only table view" )
         return
@@ -395,7 +396,7 @@ class PymetricsViewer( QWidget ):
 
 
         # Resizing the table
-        self.__totalResultsTree.header().resizeSections( \
+        self.__totalResultsTree.header().resizeSections(
                                             QHeaderView.ResizeToContents )
 
 
@@ -414,7 +415,7 @@ class PymetricsViewer( QWidget ):
         self.__mcCabeTable.header().setSortIndicator( 3, Qt.DescendingOrder )
         self.__mcCabeTable.sortItems( 3,
                           self.__mcCabeTable.header().sortIndicatorOrder() )
-        self.__mcCabeTable.header().resizeSections( \
+        self.__mcCabeTable.header().resizeSections(
                           QHeaderView.ResizeToContents )
 
         # Show the complete information
@@ -477,14 +478,14 @@ class PymetricsViewer( QWidget ):
             message = str( item.text( 0 ) )
             pos = message.find( "at line" )
             if pos == -1:
-                logging.error( "Unknown format of the message. " \
+                logging.error( "Unknown format of the message. "
                                "Please inform the developers." )
                 return
             parts = message[ pos: ].split()
             try:
                 lineNumber = int( parts[ 2 ].replace( ',', '' ) )
             except:
-                logging.error( "Unknown format of the message. " \
+                logging.error( "Unknown format of the message. "
                                "Please inform the developers." )
                 return
 

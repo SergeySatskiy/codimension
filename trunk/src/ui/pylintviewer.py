@@ -23,19 +23,14 @@
 " Pylint viewer implementation "
 
 import os.path, logging
-from PyQt4.QtCore               import Qt, SIGNAL, QSize, \
-                                       QStringList
-from PyQt4.QtGui                import QFont, QColor, QToolBar, \
-                                       QHBoxLayout, QWidget, QAction, \
-                                       QSizePolicy, QPalette, \
-                                       QVBoxLayout, QLabel, \
-                                       QScrollArea, QSizePolicy, QFrame, \
-                                       QLayout, QTreeWidget, \
-                                       QTreeWidgetItem, QHeaderView, \
-                                       QApplication
-from utils.pixmapcache          import PixmapCache
-from utils.globals              import GlobalData
-from itemdelegates              import NoOutlineHeightDelegate
+from PyQt4.QtCore import Qt, SIGNAL, QSize, QStringList
+from PyQt4.QtGui import ( QColor, QToolBar, QHBoxLayout, QWidget, QAction,
+                          QPalette, QVBoxLayout, QLabel, QScrollArea,
+                          QSizePolicy, QFrame, QLayout, QTreeWidget,
+                          QTreeWidgetItem, QHeaderView, QApplication )
+from utils.pixmapcache import PixmapCache
+from utils.globals import GlobalData
+from itemdelegates import NoOutlineHeightDelegate
 
 
 
@@ -86,6 +81,11 @@ class PylintViewer( QWidget ):
             self.__noneLabel = QLabel( "No results available" )
         else:
             self.__noneLabel = QLabel( "Pylint is not available" )
+        self.__noneLabel.setAutoFillBackground( True )
+        noneLabelPalette = self.__noneLabel.palette()
+        noneLabelPalette.setColor( QPalette.Background,
+                                   GlobalData().skin.nolexerPaper )
+        self.__noneLabel.setPalette( noneLabelPalette )
 
 #        self.__noneLabel.setFrameShape( QFrame.StyledPanel )
         self.__noneLabel.setFrameShape( QFrame.NoFrame )
@@ -113,7 +113,7 @@ class PylintViewer( QWidget ):
                       self.__onPrint )
         self.printButton.setVisible( False )
 
-        self.printPreviewButton = QAction( \
+        self.printPreviewButton = QAction(
                 PixmapCache().getIcon( 'printpreview.png' ),
                 'Print preview', self )
         #printPreviewButton.setShortcut( 'Ctrl+' )
@@ -124,7 +124,7 @@ class PylintViewer( QWidget ):
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
 
-        self.clearButton = QAction( \
+        self.clearButton = QAction(
             PixmapCache().getIcon( 'trash.png' ),
             'Clear', self )
         self.connect( self.clearButton, SIGNAL( 'triggered()' ),
