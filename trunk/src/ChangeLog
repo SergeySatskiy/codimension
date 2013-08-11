@@ -7,14 +7,14 @@
 * Better jumps from the outline window. Last good and the current parsed
   info are taken into account.
 * Better undo of the automatically trimmed empty opened lines.
-* Search indicators are configurable now per skin.
-* Make Ctrl+PgUp going to the previous tab while Ctrl+PgDwn to the next
-* New feature: ui configurable monospaced font
-* Fix: opening another user (read only) project now works
-* New feature: garbage collector plugin
+* Search indicators are now configurable (per skin).
+* Make Ctrl+PgUp going to the previous tab while Ctrl+PgDwn to the next one.
+* New feature: ui configurable monospaced font.
+* Fix: opening another user (read only) project now works.
+* New feature: garbage collector plugin.
 * Bug fix: pyflakes analysis crashed if there was an invalid escape character
-  or null characters in the file (Issue #399)
-* Bug fix: pylint fails to run on files in projects which have no import dirs
+  or null characters in the buffer (Issue #399)
+* Bug fix: pylint fails to run on files in projects which have no import dirs.
 * Updating pyflakes to 0.7.3
 
 2013 Jun 29 Sergey Satskiy <sergey.satskiy@gmail.com>
