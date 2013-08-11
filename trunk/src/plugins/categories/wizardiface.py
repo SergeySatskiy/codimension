@@ -103,8 +103,15 @@ class WizardInterface( CDMPluginBase ):
             an item with a plugin name and subitems which are populated here.
             If no items were populated then the plugin menu item will not be
             shown.
-            When a callback is called the corresponding menu item will have
-            attached data with an absolute path to the item.
+            When a callback is called the parentMenu data will be set to the
+            absolute path of the selected item. So the plugin will be able
+            to retrieve the selected path as follows:
+            # In this method
+            self.fileParentMenu = parentMenu
+            ...
+            # In a menu item handler
+            path = str( self.fileParentMenu.menuAction().data().toString() )
+
             Codimension will remove the populated menu when a plugin is disabled.
         """
         raise Exception( "populateFileContextMenu() must be overridden" )
@@ -114,8 +121,15 @@ class WizardInterface( CDMPluginBase ):
             an item with a plugin name and subitems which are populated here.
             If no items were populated then the plugin menu item will not be
             shown.
-            When a callback is called the corresponding menu item will have
-            attached data with an absolute path to the directory.
+            When a callback is called the parentMenu data will be set to the
+            absolute path of the selected item. So the plugin will be able
+            to retrieve the selected path as follows:
+            # In this method
+            self.dirParentMenu = parentMenu
+            ...
+            # In a menu item handler
+            path = str( self.dirParentMenu.menuAction().data().toString() )
+
             Codimension will remove the populated menu when a plugin is disabled.
         """
         raise Exception( "populateDirectoryContextMenu() must be overridden" )
