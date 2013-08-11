@@ -24,37 +24,32 @@
 
 
 import os, os.path, logging, shutil
-from PyQt4.QtCore       import SIGNAL, QSize, Qt
-from PyQt4.QtGui        import QWidget, QVBoxLayout, \
-                               QSplitter, QToolBar, QAction, \
-                               QToolButton, QHBoxLayout, \
-                               QLabel, QSpacerItem, QSizePolicy, QDialog, \
-                               QMenu, QCursor, QFrame, QApplication, \
-                               QMessageBox, QPalette
-from utils.pixmapcache  import PixmapCache
-from utils.globals      import GlobalData
-from utils.settings     import Settings
-from projectproperties  import ProjectPropertiesDialog
-from utils.project      import CodimensionProject
-from filesystembrowser  import FileSystemBrowser
-from projectbrowser     import ProjectBrowser
-from viewitems          import NoItemType, DirectoryItemType, SysPathItemType, \
-                               FileItemType, GlobalsItemType, \
-                               ImportsItemType, FunctionsItemType, \
-                               ClassesItemType, StaticAttributesItemType, \
-                               InstanceAttributesItemType, \
-                               CodingItemType, ImportItemType, \
-                               FunctionItemType, ClassItemType, \
-                               DecoratorItemType, AttributeItemType, \
-                               GlobalItemType, ImportWhatItemType
-from utils.fileutils    import BrokenSymlinkFileType, PythonFileType, \
-                               Python3FileType, detectFileType
-from pylintviewer       import PylintViewer
-from pymetricsviewer    import PymetricsViewer
-from newnesteddir       import NewProjectDirDialog
-from diagram.importsdgm import ImportsDiagramDialog, \
-                               ImportDiagramOptions, \
-                               ImportsDiagramProgress
+from PyQt4.QtCore import SIGNAL, QSize, Qt, QVariant
+from PyQt4.QtGui import ( QWidget, QVBoxLayout, QSplitter, QToolBar, QAction,
+                          QToolButton, QHBoxLayout, QLabel, QSpacerItem,
+                          QSizePolicy, QDialog, QMenu, QCursor, QFrame,
+                          QApplication, QMessageBox, QPalette )
+from utils.pixmapcache import PixmapCache
+from utils.globals import GlobalData
+from utils.settings import Settings
+from projectproperties import ProjectPropertiesDialog
+from utils.project import CodimensionProject
+from filesystembrowser import FileSystemBrowser
+from projectbrowser import ProjectBrowser
+from viewitems import ( NoItemType, DirectoryItemType, SysPathItemType,
+                        FileItemType, GlobalsItemType, ImportsItemType,
+                        FunctionsItemType, ClassesItemType,
+                        StaticAttributesItemType, InstanceAttributesItemType,
+                        CodingItemType, ImportItemType, FunctionItemType,
+                        ClassItemType, DecoratorItemType, AttributeItemType,
+                        GlobalItemType, ImportWhatItemType )
+from utils.fileutils import ( BrokenSymlinkFileType, PythonFileType,
+                              Python3FileType, detectFileType )
+from pylintviewer import PylintViewer
+from pymetricsviewer import PymetricsViewer
+from newnesteddir import NewProjectDirDialog
+from diagram.importsdgm import ( ImportsDiagramDialog, ImportDiagramOptions,
+                                 ImportsDiagramProgress )
 from utils.compatibility import relpath
 
 
@@ -1298,6 +1293,8 @@ class ProjectViewer( QWidget ):
                 self.__prjFilePluginSeparator.setVisible( True )
                 self.fsFileMenu.addMenu( fMenu )
                 self.__fsFilePluginSeparator.setVisible( True )
+                self.connect( fMenu, SIGNAL( 'aboutToShow()' ),
+                              self.__onShowingPluginMenu )
         except Exception, exc:
             logging.error( "Error populating " + pluginName + " plugin file context menu: " +
                            str( exc ) + ". Ignore and continue." )
@@ -1313,6 +1310,8 @@ class ProjectViewer( QWidget ):
                 self.__prjDirPluginSeparator.setVisible( True )
                 self.fsDirMenu.addMenu( dMenu )
                 self.__fsDirPluginSeparator.setVisible( True )
+                self.connect( dMenu, SIGNAL( 'aboutToShow()' ),
+                              self.__onShowingPluginMenu )
         except Exception, exc:
             logging.error( "Error populating " + pluginName + " plugin directory context menu: " +
                            str( exc ) + ". Ignore and continue." )
@@ -1330,6 +1329,8 @@ class ProjectViewer( QWidget ):
                 self.__prjFilePluginSeparator.setVisible( len( self.__pluginFileMenus ) > 0 )
                 self.fsFileMenu.removeAction( fMenu.menuAction() )
                 self.__fsFilePluginSeparator.setVisible( len( self.__pluginFileMenus ) > 0 )
+                self.disconnect( fMenu, SIGNAL( 'aboutToShow()' ),
+                                 self.__onShowingPluginMenu )
                 fMenu = None
         except Exception, exc:
             pluginName = plugin.getName()
@@ -1345,9 +1346,26 @@ class ProjectViewer( QWidget ):
                 self.__prjDirPluginSeparator.setVisible( len( self.__pluginDirMenus ) > 0 )
                 self.fsDirMenu.removeAction( dMenu.menuAction() )
                 self.__fsDirPluginSeparator.setVisible( len( self.__pluginDirMenus ) > 0 )
+                self.disconnect( dMenu, SIGNAL( 'aboutToShow()' ),
+                                 self.__onShowingPluginMenu )
                 dMenu = None
         except Exception, exc:
             pluginName = plugin.getName()
             logging.error( "Error removing " + pluginName + " plugin directory context menu: " +
                            str( exc ) + ". Ignore and continue." )
+        return
+
+    def __onShowingPluginMenu( self ):
+        " Triggered when a plugin menu is about to show "
+        if self.projectTreeView.hasFocus():
+            value = self.__prjContextItem.getPath()
+        else:
+            value = self.__fsContextItem.getPath()
+
+        for path in self.__pluginFileMenus:
+            menu = self.__pluginFileMenus[ path ]
+            menu.menuAction().setData( QVariant( value ) )
+        for path in self.__pluginDirMenus:
+            menu = self.__pluginDirMenus[ path ]
+            menu.menuAction().setData( QVariant( value ) )
         return
