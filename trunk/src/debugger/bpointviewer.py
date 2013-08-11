@@ -336,7 +336,7 @@ class BreakPointViewer( QWidget ):
                       self.__onProjectChanged )
         self.connect( GlobalData().project, SIGNAL( 'projectAboutToUnload' ),
                       self.__onProjectAboutToUnload )
-        self.connect( self.__bpointsList,
+        self.connect( self.bpointsList,
                       SIGNAL( "selectionChanged" ),
                       self.__onSelectionChanged )
         self.connect( bpointsModel,
@@ -346,7 +346,7 @@ class BreakPointViewer( QWidget ):
 
     def setFocus( self ):
         " Sets the widget focus "
-        self.__bpointsList.setFocus()
+        self.bpointsList.setFocus()
         return
 
     def __createLayout( self, bpointsModel ):
@@ -378,7 +378,7 @@ class BreakPointViewer( QWidget ):
         headerLayout.addWidget( self.__breakpointLabel )
         self.headerFrame.setLayout( headerLayout )
 
-        self.__bpointsList = BreakPointView( self, bpointsModel )
+        self.bpointsList = BreakPointView( self, bpointsModel )
 
         self.__editButton = QAction(
             PixmapCache().getIcon( 'bpprops.png' ),
@@ -471,7 +471,7 @@ class BreakPointViewer( QWidget ):
 
         verticalLayout.addWidget( self.headerFrame )
         verticalLayout.addWidget( self.toolbar )
-        verticalLayout.addWidget( self.__bpointsList )
+        verticalLayout.addWidget( self.bpointsList )
         return
 
     def clear( self ):
@@ -484,7 +484,7 @@ class BreakPointViewer( QWidget ):
     def __updateBreakpointsLabel( self ):
         " Updates the breakpoints header label "
         enableCount, \
-        disableCount = self.__bpointsList.model().sourceModel().getCounts()
+        disableCount = self.bpointsList.model().sourceModel().getCounts()
         total = enableCount + disableCount
         if total > 0:
             self.__breakpointLabel.setText( "Breakpoints (total: " +
@@ -499,7 +499,7 @@ class BreakPointViewer( QWidget ):
             return
 
         self.clear()
-        model = self.__bpointsList.model().sourceModel()
+        model = self.bpointsList.model().sourceModel()
         project = GlobalData().project
         if project.isLoaded():
             bpoints = project.breakpoints
@@ -530,7 +530,7 @@ class BreakPointViewer( QWidget ):
 
     def __onProjectAboutToUnload( self ):
         " Triggered before the project is unloaded "
-        model = self.__bpointsList.model().sourceModel()
+        model = self.bpointsList.model().sourceModel()
 
         project = GlobalData().project
         if project.isLoaded():
@@ -544,8 +544,8 @@ class BreakPointViewer( QWidget ):
         if index is None:
             self.__currentItem = None
         else:
-            srcModel = self.__bpointsList.model().sourceModel()
-            sindex = self.__bpointsList.toSourceIndex( index )
+            srcModel = self.bpointsList.model().sourceModel()
+            sindex = self.bpointsList.toSourceIndex( index )
             self.__currentItem = srcModel.getBreakPointByIndex( sindex )
         self.__updateButtons()
         return
@@ -554,7 +554,7 @@ class BreakPointViewer( QWidget ):
         " Updates the buttons status "
 
         enableCount, \
-        disableCount = self.__bpointsList.model().sourceModel().getCounts()
+        disableCount = self.bpointsList.model().sourceModel().getCounts()
 
         if self.__currentItem is None:
             self.__editButton.setEnabled( False )
@@ -580,9 +580,9 @@ class BreakPointViewer( QWidget ):
             return
 
         if self.__currentItem.isEnabled():
-            self.__bpointsList.disableBreak()
+            self.bpointsList.disableBreak()
         else:
-            self.__bpointsList.enableBreak()
+            self.bpointsList.enableBreak()
         return
 
     def __onEdit( self ):
@@ -595,46 +595,46 @@ class BreakPointViewer( QWidget ):
             newBpoint = dlg.getData()
             if newBpoint == self.__currentItem:
                 return
-            model = self.__bpointsList.model().sourceModel()
+            model = self.bpointsList.model().sourceModel()
             index = model.getBreakPointIndex( self.__currentItem.getAbsoluteFileName(),
                                               self.__currentItem.getLineNumber() )
             model.setBreakPointByIndex( index, newBpoint )
-            self.__bpointsList.layoutDisplay()
+            self.bpointsList.layoutDisplay()
         return
 
     def __onJumpToCode( self ):
         " Triggered when should jump to source "
         if self.__currentItem is None:
             return
-        self.__bpointsList.jumpToCode( self.__currentItem.getAbsoluteFileName(),
-                                       self.__currentItem.getLineNumber() )
+        self.bpointsList.jumpToCode( self.__currentItem.getAbsoluteFileName(),
+                                     self.__currentItem.getLineNumber() )
         return
 
     def __onEnableAll( self ):
         " Triggered when all the breakpoints should be enabled "
-        self.__bpointsList.enableAllBreaks()
+        self.bpointsList.enableAllBreaks()
         return
 
     def __onDisableAll( self ):
         " Triggered when all the breakpoints should be disabled "
-        self.__bpointsList.disableAllBreaks()
+        self.bpointsList.disableAllBreaks()
         return
 
     def __onDel( self ):
         " Triggered when a breakpoint should be deleted "
         if self.__currentItem is None:
             return
-        self.__bpointsList.deleteBreak()
+        self.bpointsList.deleteBreak()
         return
 
     def __onDelAll( self ):
         " Triggered when all the breakpoints should be deleted "
-        self.__bpointsList.deleteAllBreaks()
+        self.bpointsList.deleteAllBreaks()
         return
 
     def __onModelChanged( self ):
         " Triggered when something has changed in any of the breakpoints "
         self.__updateBreakpointsLabel()
         self.__updateButtons()
-        self.__bpointsList.layoutDisplay()
+        self.bpointsList.layoutDisplay()
         return

@@ -398,16 +398,16 @@ class CodimensionMainWindow( QMainWindow ):
         self.__bottomSideBar.setTabToolTip( 5, "Ctrl+F1 in python file" )
 
         # Create diff viewer
-        self.__diffViewer = DiffViewer()
-        self.__bottomSideBar.addTab( self.__diffViewer,
+        self.diffViewer = DiffViewer()
+        self.__bottomSideBar.addTab( self.diffViewer,
                 PixmapCache().getIcon( 'diffviewer.png' ), 'Diff viewer' )
         self.__bottomSideBar.setTabToolTip( 6, 'No diff shown' )
 
         # Create outline viewer
-        self.__outlineViewer = FileOutlineViewer(
+        self.outlineViewer = FileOutlineViewer(
                                     self.editorsManagerWidget.editorsManager,
                                     self )
-        self.__rightSideBar.addTab( self.__outlineViewer,
+        self.__rightSideBar.addTab( self.outlineViewer,
                 PixmapCache().getIcon( '' ), 'File outline' )
 
         # Create the pyflakes viewer
@@ -415,21 +415,21 @@ class CodimensionMainWindow( QMainWindow ):
                                     self.editorsManagerWidget.editorsManager,
                                     self.sbPyflakes, self )
 
-        self.__debuggerContext = DebuggerContext( self.__debugger )
-        self.__rightSideBar.addTab( self.__debuggerContext,
+        self.debuggerContext = DebuggerContext( self.__debugger )
+        self.__rightSideBar.addTab( self.debuggerContext,
                 PixmapCache().getIcon( '' ), 'Debugger' )
         self.__rightSideBar.setTabEnabled( 1, False )
 
-        self.__debuggerExceptions = DebuggerExceptions()
-        self.__rightSideBar.addTab( self.__debuggerExceptions,
+        self.debuggerExceptions = DebuggerExceptions()
+        self.__rightSideBar.addTab( self.debuggerExceptions,
                 PixmapCache().getIcon( '' ), 'Exceptions' )
-        self.connect( self.__debuggerExceptions,
+        self.connect( self.debuggerExceptions,
                       SIGNAL( 'ClientExceptionsCleared' ),
                       self.__onClientExceptionsCleared )
 
-        self.__debuggerBreakWatchPoints = DebuggerBreakWatchPoints( self,
-                                                                    self.__debugger )
-        self.__rightSideBar.addTab( self.__debuggerBreakWatchPoints,
+        self.debuggerBreakWatchPoints = DebuggerBreakWatchPoints( self,
+                                                                  self.__debugger )
+        self.__rightSideBar.addTab( self.debuggerBreakWatchPoints,
                 PixmapCache().getIcon( '' ), 'Breakpoints' )
 
         # Create splitters
@@ -2085,13 +2085,13 @@ class CodimensionMainWindow( QMainWindow ):
         " Shows the diff "
 
         self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget( self.__diffViewer )
+        self.__bottomSideBar.setCurrentWidget( self.diffViewer )
         self.__bottomSideBar.raise_()
 
         try:
             self.__bottomSideBar.setTabToolTip( 6, tooltip )
-            self.__diffViewer.setHTML( parse_from_memory( diff, False, True ),
-                                       tooltip )
+            self.diffViewer.setHTML( parse_from_memory( diff, False, True ),
+                                     tooltip )
         except Exception, exc:
             logging.error( "Error showing diff: " + str( exc ) )
         return
@@ -2640,7 +2640,7 @@ class CodimensionMainWindow( QMainWindow ):
         " Tooltips setting changed "
         self.settings.outlineTooltips = \
                                 not self.settings.outlineTooltips
-        self.__outlineViewer.setTooltips( self.settings.outlineTooltips )
+        self.outlineViewer.setTooltips( self.settings.outlineTooltips )
         return
 
     def __findNameTooltipsChanged( self ):
@@ -2876,17 +2876,17 @@ class CodimensionMainWindow( QMainWindow ):
         # Tabs at the right
         if newState == True:
             self.__rightSideBar.setTabEnabled( 1, True )    # vars etc.
-            self.__debuggerContext.clear()
-            self.__debuggerExceptions.clear()
+            self.debuggerContext.clear()
+            self.debuggerExceptions.clear()
             self.__rightSideBar.setTabText( 2, "Exceptions" )
             self.__rightSideBar.show()
-            self.__rightSideBar.setCurrentWidget( self.__debuggerContext )
+            self.__rightSideBar.setCurrentWidget( self.debuggerContext )
             self.__rightSideBar.raise_()
             self.__lastDebugAction = None
         else:
             if not self.__rightSideBar.isMinimized():
                 if self.__rightSideBar.currentIndex() == 1:
-                    self.__rightSideBar.setCurrentWidget( self.__outlineViewer )
+                    self.__rightSideBar.setCurrentWidget( self.outlineViewer )
             self.__rightSideBar.setTabEnabled( 1, False )    # vars etc.
 
         self.emit( SIGNAL( 'debugModeChanged' ), newState )
@@ -2896,9 +2896,9 @@ class CodimensionMainWindow( QMainWindow ):
         " Triggered when the debugger reported its state changed "
         if newState != CodimensionDebugger.STATE_IN_IDE:
             self.__removeCurrenDebugLineHighlight()
-            self.__debuggerContext.switchControl( False )
+            self.debuggerContext.switchControl( False )
         else:
-            self.__debuggerContext.switchControl( True )
+            self.debuggerContext.switchControl( True )
 
         if newState == CodimensionDebugger.STATE_STOPPED:
             self.__dbgStopBrutal.setEnabled( False )
@@ -2970,9 +2970,9 @@ class CodimensionMainWindow( QMainWindow ):
     def __onDebuggerClientException( self, excType, excMessage, excStackTrace ):
         " Debugged program exception handler "
 
-        self.__debuggerExceptions.addException( excType, excMessage,
-                                                excStackTrace )
-        count = self.__debuggerExceptions.getTotalClientExceptionCount()
+        self.debuggerExceptions.addException( excType, excMessage,
+                                              excStackTrace )
+        count = self.debuggerExceptions.getTotalClientExceptionCount()
         self.__rightSideBar.setTabText( 2, "Exceptions (" + str( count ) + ")" )
 
         # The information about the exception is stored in the exception window
@@ -2982,7 +2982,7 @@ class CodimensionMainWindow( QMainWindow ):
 
         if excType is None or excType.startswith( "unhandled" ) or not excStackTrace:
             self.__rightSideBar.show()
-            self.__rightSideBar.setCurrentWidget( self.__debuggerExceptions )
+            self.__rightSideBar.setCurrentWidget( self.debuggerExceptions )
             self.__rightSideBar.raise_()
 
             if not excStackTrace:
@@ -3012,11 +3012,11 @@ class CodimensionMainWindow( QMainWindow ):
                 QTimer.singleShot( 0, self.__onStopDbgSession )
             else:
                 QTimer.singleShot( 0, self.__onBrutalStopDbgSession )
-            self.__debuggerExceptions.setFocus()
+            self.debuggerExceptions.setFocus()
             return
 
 
-        if self.__debuggerExceptions.isIgnored( str( excType ) ):
+        if self.debuggerExceptions.isIgnored( str( excType ) ):
             # Continue the last action
             if self.__lastDebugAction is None:
                 self.__debugger.remoteContinue()
@@ -3034,7 +3034,7 @@ class CodimensionMainWindow( QMainWindow ):
 
         # Should stop at the exception
         self.__rightSideBar.show()
-        self.__rightSideBar.setCurrentWidget( self.__debuggerExceptions )
+        self.__rightSideBar.setCurrentWidget( self.debuggerExceptions )
         self.__rightSideBar.raise_()
 
         fileName = excStackTrace[ 0 ][ 0 ]
@@ -3045,11 +3045,11 @@ class CodimensionMainWindow( QMainWindow ):
         # If a stack is explicitly requested then the only deepest frame
         # is reported. It is better to stick with the exception stack
         # for the time beeing.
-        self.__debuggerContext.onClientStack( excStackTrace )
+        self.debuggerContext.onClientStack( excStackTrace )
 
         self.__debugger.remoteClientVariables( 1, 0 ) # globals
         self.__debugger.remoteClientVariables( 0, 0 ) # locals
-        self.__debuggerExceptions.setFocus()
+        self.debuggerExceptions.setFocus()
         return
 
     def __onDebuggerClientSyntaxError( self, errMessage, fileName, lineNo, charNo ):
@@ -3479,19 +3479,19 @@ class CodimensionMainWindow( QMainWindow ):
             self.__leftSideBar.raise_()
         elif name == "outline":
             self.__rightSideBar.show()
-            self.__rightSideBar.setCurrentWidget( self.__outlineViewer )
+            self.__rightSideBar.setCurrentWidget( self.outlineViewer )
             self.__rightSideBar.raise_()
         elif name == "debug":
             self.__rightSideBar.show()
-            self.__rightSideBar.setCurrentWidget( self.__debuggerContext )
+            self.__rightSideBar.setCurrentWidget( self.debuggerContext )
             self.__rightSideBar.raise_()
         elif name == "excpt":
             self.__rightSideBar.show()
-            self.__rightSideBar.setCurrentWidget( self.__debuggerExceptions )
+            self.__rightSideBar.setCurrentWidget( self.debuggerExceptions )
             self.__rightSideBar.raise_()
         elif name == "bpoint":
             self.__rightSideBar.show()
-            self.__rightSideBar.setCurrentWidget( self.__debuggerBreakWatchPoints )
+            self.__rightSideBar.setCurrentWidget( self.debuggerBreakWatchPoints )
             self.__rightSideBar.raise_()
         elif name == "log":
             self.__bottomSideBar.show()
@@ -3515,7 +3515,7 @@ class CodimensionMainWindow( QMainWindow ):
             self.__bottomSideBar.raise_()
         elif name == 'diff':
             self.__bottomSideBar.show()
-            self.__bottomSideBar.setCurrentWidget( self.__diffViewer )
+            self.__bottomSideBar.setCurrentWidget( self.diffViewer )
             self.__bottomSideBar.raise_()
         return
 
@@ -4162,7 +4162,7 @@ class CodimensionMainWindow( QMainWindow ):
 
     def getCurrentFrameNumber( self ):
         " Provides the current stack frame number "
-        return self.__debuggerContext.getCurrentFrameNumber()
+        return self.debuggerContext.getCurrentFrameNumber()
 
     def __onClientExceptionsCleared( self ):
         " Triggered when the user cleared the client exceptions "

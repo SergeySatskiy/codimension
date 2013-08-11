@@ -38,7 +38,7 @@ class DiffViewer( QWidget ):
     def __init__( self, parent = None ):
         QWidget.__init__( self, parent )
 
-        self.__viewer = None
+        self.viewer = None
         self.__clearButton = None
         self.__sendUpButton = None
         self.__createLayout()
@@ -46,51 +46,51 @@ class DiffViewer( QWidget ):
         self.__tooltip = ""
         self.__inClear = False
 
-        self.__viewer.setHTML( self.NODIFF )
+        self.viewer.setHTML( self.NODIFF )
         self.__updateToolbarButtons()
         return
 
     def __createLayout( self ):
         " Helper to create the viewer layout "
 
-        self.__viewer = HTMLTabWidget()
+        self.viewer = HTMLTabWidget()
 
         # Buttons
-        self.__sendUpButton = QAction( \
+        self.__sendUpButton = QAction(
             PixmapCache().getIcon( 'senddiffup.png' ),
             'Send to Main Editing Area', self )
         self.connect( self.__sendUpButton, SIGNAL( "triggered()" ),
                       self.__sendUp )
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
-        self.__clearButton = QAction( \
+        self.__clearButton = QAction(
             PixmapCache().getIcon( 'trash.png' ),
             'Clear Generated Diff', self )
         self.connect( self.__clearButton, SIGNAL( "triggered()" ),
                       self.__clear )
 
         # Toolbar
-        toolbar = QToolBar()
-        toolbar.setOrientation( Qt.Vertical )
-        toolbar.setMovable( False )
-        toolbar.setAllowedAreas( Qt.LeftToolBarArea )
-        toolbar.setIconSize( QSize( 16, 16 ) )
-        toolbar.setFixedWidth( 28 )
-        toolbar.setContentsMargins( 0, 0, 0, 0 )
-        toolbar.addAction( self.__sendUpButton )
-        toolbar.addWidget( spacer )
-        toolbar.addAction( self.__clearButton )
+        self.toolbar = QToolBar()
+        self.toolbar.setOrientation( Qt.Vertical )
+        self.toolbar.setMovable( False )
+        self.toolbar.setAllowedAreas( Qt.LeftToolBarArea )
+        self.toolbar.setIconSize( QSize( 16, 16 ) )
+        self.toolbar.setFixedWidth( 28 )
+        self.toolbar.setContentsMargins( 0, 0, 0, 0 )
+        self.toolbar.addAction( self.__sendUpButton )
+        self.toolbar.addWidget( spacer )
+        self.toolbar.addAction( self.__clearButton )
 
         verticalLayout = QVBoxLayout()
         verticalLayout.setContentsMargins( 2, 2, 2, 2 )
         verticalLayout.setSpacing( 2 )
-        verticalLayout.addWidget( self.__viewer )
+        verticalLayout.addWidget( self.viewer )
 
         # layout
         layout = QHBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0 )
         layout.setSpacing( 0 )
-        layout.addWidget( toolbar )
+        layout.addWidget( self.toolbar )
         layout.addLayout( verticalLayout )
 
         self.setLayout( layout )
@@ -99,13 +99,13 @@ class DiffViewer( QWidget ):
     def setHTML( self, content, tooltip ):
         """ Shows the given content """
         if self.__inClear:
-            self.__viewer.setHTML( content )
+            self.viewer.setHTML( content )
             return
 
         if content == '' or content is None:
             self.__clear()
         else:
-            self.__viewer.setHTML( content )
+            self.viewer.setHTML( content )
             self.__isEmpty = False
             self.__updateToolbarButtons()
             self.__tooltip = tooltip
@@ -115,7 +115,7 @@ class DiffViewer( QWidget ):
         """ Triggered when the content should be sent
             to the main editor area """
         if not self.__isEmpty:
-            GlobalData().mainWindow.showDiffInMainArea( self.__viewer.getHTML(),
+            GlobalData().mainWindow.showDiffInMainArea( self.viewer.getHTML(),
                                                         self.__tooltip )
         return
 
@@ -124,7 +124,7 @@ class DiffViewer( QWidget ):
         self.__inClear = True
         # Dirty hack - reset the tooltip
         GlobalData().mainWindow.showDiff( "", "No diff shown" )
-        self.__viewer.setHTML( DiffViewer.NODIFF )
+        self.viewer.setHTML( DiffViewer.NODIFF )
         self.__inClear = False
 
         self.__isEmpty = True

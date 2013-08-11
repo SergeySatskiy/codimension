@@ -105,25 +105,25 @@ class IgnoredExceptionsViewer( QWidget ):
         headerLayout.addWidget( self.__showHideButton )
         self.headerFrame.setLayout( headerLayout )
 
-        self.__exceptionsList = QTreeWidget( self )
-        self.__exceptionsList.setSortingEnabled( False )
-        self.__exceptionsList.setAlternatingRowColors( True )
-        self.__exceptionsList.setRootIsDecorated( False )
-        self.__exceptionsList.setItemsExpandable( True )
-        self.__exceptionsList.setUniformRowHeights( True )
-        self.__exceptionsList.setSelectionMode( QAbstractItemView.SingleSelection )
-        self.__exceptionsList.setSelectionBehavior( QAbstractItemView.SelectRows )
-        self.__exceptionsList.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
-        self.__exceptionsList.setContextMenuPolicy( Qt.CustomContextMenu )
+        self.exceptionsList = QTreeWidget( self )
+        self.exceptionsList.setSortingEnabled( False )
+        self.exceptionsList.setAlternatingRowColors( True )
+        self.exceptionsList.setRootIsDecorated( False )
+        self.exceptionsList.setItemsExpandable( True )
+        self.exceptionsList.setUniformRowHeights( True )
+        self.exceptionsList.setSelectionMode( QAbstractItemView.SingleSelection )
+        self.exceptionsList.setSelectionBehavior( QAbstractItemView.SelectRows )
+        self.exceptionsList.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
+        self.exceptionsList.setContextMenuPolicy( Qt.CustomContextMenu )
 
-        self.connect( self.__exceptionsList,
+        self.connect( self.exceptionsList,
                       SIGNAL( "customContextMenuRequested(const QPoint &)" ),
                       self.__showContextMenu )
-        self.connect( self.__exceptionsList, SIGNAL( "itemSelectionChanged()" ),
+        self.connect( self.exceptionsList, SIGNAL( "itemSelectionChanged()" ),
                       self.__onSelectionChanged )
 
         headerLabels = QStringList() << "Exception type"
-        self.__exceptionsList.setHeaderLabels( headerLabels )
+        self.exceptionsList.setHeaderLabels( headerLabels )
 
         self.__excTypeEdit = QLineEdit()
         self.__excTypeEdit.setFixedHeight( 26 )
@@ -178,13 +178,13 @@ class IgnoredExceptionsViewer( QWidget ):
 
         verticalLayout.addWidget( self.headerFrame )
         verticalLayout.addWidget( self.toolbar )
-        verticalLayout.addWidget( self.__exceptionsList )
+        verticalLayout.addWidget( self.exceptionsList )
         verticalLayout.addLayout( addLayout )
         return
 
     def clear( self ):
         " Clears the content "
-        self.__exceptionsList.clear()
+        self.exceptionsList.clear()
         self.__excTypeEdit.clear()
         self.__addButton.setEnabled( False )
         self.__updateTitle()
@@ -193,8 +193,8 @@ class IgnoredExceptionsViewer( QWidget ):
 
     def __onShowHide( self, startup = False ):
         " Triggered when show/hide button is clicked "
-        if startup or self.__exceptionsList.isVisible():
-            self.__exceptionsList.setVisible( False )
+        if startup or self.exceptionsList.isVisible():
+            self.exceptionsList.setVisible( False )
             self.__excTypeEdit.setVisible( False )
             self.__addButton.setVisible( False )
             self.__removeButton.setVisible( False )
@@ -210,7 +210,7 @@ class IgnoredExceptionsViewer( QWidget ):
 
             Settings().showIgnoredExcViewer = False
         else:
-            self.__exceptionsList.setVisible( True )
+            self.exceptionsList.setVisible( True )
             self.__excTypeEdit.setVisible( True )
             self.__addButton.setVisible( True )
             self.__removeButton.setVisible( True )
@@ -226,7 +226,7 @@ class IgnoredExceptionsViewer( QWidget ):
 
     def __onSelectionChanged( self ):
         " Triggered when the current item is changed "
-        selected = list( self.__exceptionsList.selectedItems() )
+        selected = list( self.exceptionsList.selectedItems() )
         if selected:
             self.__currentItem = selected[ 0 ]
             self.__removeButton.setEnabled( True )
@@ -237,7 +237,7 @@ class IgnoredExceptionsViewer( QWidget ):
 
     def __showContextMenu( self, coord ):
         " Shows the frames list context menu "
-        contextItem = self.__exceptionsList.itemAt( coord )
+        contextItem = self.exceptionsList.itemAt( coord )
         if contextItem is not None:
             self.__currentItem = contextItem
             self.__excptMenu.popup( QCursor.pos() )
@@ -245,7 +245,7 @@ class IgnoredExceptionsViewer( QWidget ):
 
     def __updateTitle( self ):
         " Updates the section title "
-        count = self.__exceptionsList.topLevelItemCount()
+        count = self.exceptionsList.topLevelItemCount()
         if count == 0:
             self.__excptLabel.setText( "Ignored exception types" )
         else:
@@ -267,7 +267,7 @@ class IgnoredExceptionsViewer( QWidget ):
             self.__ignored = list( Settings().ignoredExceptions )
 
         for exceptionType in self.__ignored:
-            item = QTreeWidgetItem( self.__exceptionsList )
+            item = QTreeWidgetItem( self.exceptionsList )
             item.setText( 0, exceptionType )
         self.__updateTitle()
         return
@@ -303,7 +303,7 @@ class IgnoredExceptionsViewer( QWidget ):
         if excType in self.__ignored:
             return
 
-        item = QTreeWidgetItem( self.__exceptionsList )
+        item = QTreeWidgetItem( self.exceptionsList )
         item.setText( 0, excType )
 
         project = GlobalData().project
@@ -326,8 +326,8 @@ class IgnoredExceptionsViewer( QWidget ):
         # Find the item index and remove it
         index = 0
         while True:
-            if self.__exceptionsList.topLevelItem( index ).text( 0 ) == text:
-                self.__exceptionsList.takeTopLevelItem( index )
+            if self.exceptionsList.topLevelItem( index ).text( 0 ) == text:
+                self.exceptionsList.takeTopLevelItem( index )
                 break
             index += 1
 

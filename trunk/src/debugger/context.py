@@ -62,14 +62,14 @@ class DebuggerContext( QWidget ):
 
         self.splitter = QSplitter( Qt.Vertical )
 
-        self.__variablesViewer = VariablesViewer( self.__debugger,
+        self.variablesViewer = VariablesViewer( self.__debugger,
                                                   self.splitter )
-        self.__stackViewer = StackViewer( self.__debugger, self.splitter )
-        self.__threadsViewer = ThreadsViewer( self.__debugger, self.splitter )
+        self.stackViewer = StackViewer( self.__debugger, self.splitter )
+        self.threadsViewer = ThreadsViewer( self.__debugger, self.splitter )
 
-        self.splitter.addWidget( self.__variablesViewer )
-        self.splitter.addWidget( self.__stackViewer )
-        self.splitter.addWidget( self.__threadsViewer )
+        self.splitter.addWidget( self.variablesViewer )
+        self.splitter.addWidget( self.stackViewer )
+        self.splitter.addWidget( self.threadsViewer )
 
         self.splitter.setCollapsible( 0, False )
         self.splitter.setCollapsible( 1, False )
@@ -80,9 +80,9 @@ class DebuggerContext( QWidget ):
 
     def clear( self ):
         " Clears everything "
-        self.__variablesViewer.clear()
-        self.__stackViewer.clear()
-        self.__threadsViewer.clear()
+        self.variablesViewer.clear()
+        self.stackViewer.clear()
+        self.threadsViewer.clear()
         return
 
     def __onClientLine( self, fileName, line, forStack ):
@@ -95,30 +95,30 @@ class DebuggerContext( QWidget ):
 
     def onClientStack( self, stack ):
         " Handles the signal from the debugged program "
-        self.__stackViewer.populate( stack )
+        self.stackViewer.populate( stack )
         return
 
     def __onClientThreadList( self, currentThreadID, threadList ):
         " Handles the thread list from the remote client "
-        self.__threadsViewer.populate( currentThreadID, threadList )
+        self.threadsViewer.populate( currentThreadID, threadList )
         return
 
     def __onClientVariables( self, scope, variables ):
         " Handles the client variables lists "
-        frameNumber = self.__stackViewer.getFrameNumber()
+        frameNumber = self.stackViewer.getFrameNumber()
         if scope in [ -1, 0 ]:
             # Empty list for local variables
-            self.__variablesViewer.updateVariables( False, frameNumber, variables )
+            self.variablesViewer.updateVariables( False, frameNumber, variables )
         else:
-            self.__variablesViewer.updateVariables( True, frameNumber, variables )
+            self.variablesViewer.updateVariables( True, frameNumber, variables )
         return
 
     def __onClientVariable( self, scope, variables ):
         " Handles the client variable list "
         if scope in [ -1, 0 ]:
-            self.__variablesViewer.updateVariable( False, variables )
+            self.variablesViewer.updateVariable( False, variables )
         else:
-            self.__variablesViewer.updateVariable( True, variables )
+            self.variablesViewer.updateVariable( True, variables )
         return
 
     def __onClientThreadSet( self ):
@@ -129,12 +129,12 @@ class DebuggerContext( QWidget ):
 
     def switchControl( self, isInIDE ):
         " Switches the UI depending where the control flow is "
-        self.__variablesViewer.switchControl( isInIDE )
-        self.__stackViewer.switchControl( isInIDE )
-        self.__threadsViewer.switchControl( isInIDE )
+        self.variablesViewer.switchControl( isInIDE )
+        self.stackViewer.switchControl( isInIDE )
+        self.threadsViewer.switchControl( isInIDE )
         return
 
     def getCurrentFrameNumber( self ):
         " Provides the current frame number "
-        return self.__stackViewer.getFrameNumber()
+        return self.stackViewer.getFrameNumber()
 
