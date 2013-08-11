@@ -48,14 +48,14 @@ class DebuggerBreakWatchPoints( QWidget ):
 
         self.splitter = QSplitter( Qt.Vertical )
 
-        self.__breakPointViewer = BreakPointViewer( self.splitter,
+        self.breakPointViewer = BreakPointViewer( self.splitter,
                                                     self.__debugger.getBreakPointModel() )
         self.__watchPointViewer = WatchPointViewer( self.splitter,
                                                     self.__debugger.getWatchPointModel() )
         # TODO: temporary
         self.__watchPointViewer.setVisible( False )
 
-        self.splitter.addWidget( self.__breakPointViewer )
+        self.splitter.addWidget( self.breakPointViewer )
         self.splitter.addWidget( self.__watchPointViewer )
 
         self.splitter.setCollapsible( 0, False )
@@ -66,11 +66,11 @@ class DebuggerBreakWatchPoints( QWidget ):
 
     def clear( self ):
         " Clears everything "
-        self.__breakPointViewer.clear()
+        self.breakPointViewer.clear()
         self.__watchPointViewer.clear()
         return
 
     def setFocus( self ):
         " Sets the focus to the break points window "
-        self.__breakPointViewer.setFocus()
+        self.breakPointViewer.setFocus()
         return

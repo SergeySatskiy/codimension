@@ -164,7 +164,7 @@ class ClientExceptionsViewer( QWidget ):
 
     def setFocus( self ):
         " Sets the widget focus "
-        self.__exceptionsList.setFocus()
+        self.exceptionsList.setFocus()
         return
 
     def __createPopupMenu( self ):
@@ -205,16 +205,16 @@ class ClientExceptionsViewer( QWidget ):
         headerLayout.addWidget( self.__excptLabel )
         self.headerFrame.setLayout( headerLayout )
 
-        self.__exceptionsList = QTreeWidget( self )
-        self.__exceptionsList.setSortingEnabled( False )
-        self.__exceptionsList.setAlternatingRowColors( True )
-        self.__exceptionsList.setRootIsDecorated( True )
-        self.__exceptionsList.setItemsExpandable( True )
-        self.__exceptionsList.setUniformRowHeights( True )
-        self.__exceptionsList.setSelectionMode( QAbstractItemView.SingleSelection )
-        self.__exceptionsList.setSelectionBehavior( QAbstractItemView.SelectRows )
-        self.__exceptionsList.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
-        self.__exceptionsList.setContextMenuPolicy( Qt.CustomContextMenu )
+        self.exceptionsList = QTreeWidget( self )
+        self.exceptionsList.setSortingEnabled( False )
+        self.exceptionsList.setAlternatingRowColors( True )
+        self.exceptionsList.setRootIsDecorated( True )
+        self.exceptionsList.setItemsExpandable( True )
+        self.exceptionsList.setUniformRowHeights( True )
+        self.exceptionsList.setSelectionMode( QAbstractItemView.SingleSelection )
+        self.exceptionsList.setSelectionBehavior( QAbstractItemView.SelectRows )
+        self.exceptionsList.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
+        self.exceptionsList.setContextMenuPolicy( Qt.CustomContextMenu )
 
         self.__addToIgnoreButton = QAction(
             PixmapCache().getIcon( 'add.png' ),
@@ -253,28 +253,28 @@ class ClientExceptionsViewer( QWidget ):
         self.toolbar.addWidget( expandingSpacer )
         self.toolbar.addAction( self.__delAllButton )
 
-        self.connect( self.__exceptionsList,
+        self.connect( self.exceptionsList,
                       SIGNAL( "itemDoubleClicked(QTreeWidgetItem*,int)" ),
                       self.__onExceptionDoubleClicked )
-        self.connect( self.__exceptionsList,
+        self.connect( self.exceptionsList,
                       SIGNAL( "customContextMenuRequested(const QPoint &)" ),
                       self.__showContextMenu )
-        self.connect( self.__exceptionsList,
+        self.connect( self.exceptionsList,
                       SIGNAL( "itemSelectionChanged()" ),
                       self.__onSelectionChanged )
 
 
         headerLabels = QStringList() << "Exception"
-        self.__exceptionsList.setHeaderLabels( headerLabels )
+        self.exceptionsList.setHeaderLabels( headerLabels )
 
         verticalLayout.addWidget( self.headerFrame )
         verticalLayout.addWidget( self.toolbar )
-        verticalLayout.addWidget( self.__exceptionsList )
+        verticalLayout.addWidget( self.exceptionsList )
         return
 
     def clear( self ):
         " Clears the content "
-        self.__exceptionsList.clear()
+        self.exceptionsList.clear()
         self.__updateExceptionsLabel()
         self.__addToIgnoreButton.setEnabled( False )
         self.__jumpToCodeButton.setEnabled( False )
@@ -297,7 +297,7 @@ class ClientExceptionsViewer( QWidget ):
 
     def __showContextMenu( self, coord ):
         " Shows the frames list context menu "
-        self.__contextItem = self.__exceptionsList.itemAt( coord )
+        self.__contextItem = self.exceptionsList.itemAt( coord )
 
         self.__addToIgnoreMenuItem.setEnabled( self.__addToIgnoreButton.isEnabled() )
         self.__jumpToCodeMenuItem.setEnabled( self.__jumpToCodeButton.isEnabled() )
@@ -337,19 +337,19 @@ class ClientExceptionsViewer( QWidget ):
     def addException( self, exceptionType, exceptionMessage,
                             stackTrace ):
         " Adds the exception to the view "
-        for index in xrange( self.__exceptionsList.topLevelItemCount() ):
-            item = self.__exceptionsList.topLevelItem( index )
+        for index in xrange( self.exceptionsList.topLevelItemCount() ):
+            item = self.exceptionsList.topLevelItem( index )
             if item.equal( exceptionType, exceptionMessage, stackTrace ):
                 item.incrementCounter()
-                self.__exceptionsList.clearSelection()
-                self.__exceptionsList.setCurrentItem( item )
+                self.exceptionsList.clearSelection()
+                self.exceptionsList.setCurrentItem( item )
                 self.__updateExceptionsLabel()
                 return
 
-        item = ExceptionItem( self.__exceptionsList, exceptionType,
+        item = ExceptionItem( self.exceptionsList, exceptionType,
                               exceptionMessage, stackTrace )
-        self.__exceptionsList.clearSelection()
-        self.__exceptionsList.setCurrentItem( item )
+        self.exceptionsList.clearSelection()
+        self.exceptionsList.setCurrentItem( item )
         self.__updateExceptionsLabel()
         self.__delAllButton.setEnabled( True )
         return
@@ -367,8 +367,8 @@ class ClientExceptionsViewer( QWidget ):
     def getTotalCount( self ):
         " Provides the total number of exceptions "
         count = 0
-        for index in xrange( self.__exceptionsList.topLevelItemCount() ):
-            count += self.__exceptionsList.topLevelItem( index ).getCount()
+        for index in xrange( self.exceptionsList.topLevelItemCount() ):
+            count += self.exceptionsList.topLevelItem( index ).getCount()
         return count
 
     def __onProjectChanged( self, what ):
@@ -379,7 +379,7 @@ class ClientExceptionsViewer( QWidget ):
 
     def __onSelectionChanged( self ):
         " Triggered when the current item is changed "
-        selected = list( self.__exceptionsList.selectedItems() )
+        selected = list( self.exceptionsList.selectedItems() )
         if selected:
             self.__currentItem = selected[ 0 ]
             if self.__currentItem.getType() == STACK_FRAME_ITEM:

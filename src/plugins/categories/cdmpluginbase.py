@@ -62,13 +62,20 @@ class CDMPluginBase( IPlugin, QObject ):
         return None
 
 
+class ViewAndToolbar():
+    " Incapsulates access to a certain view widget inside a side panel "
+
+    def __init__( self, widget, toolbar ):
+        self.widget = widget
+        self.toolbar = toolbar
+        return
+
 class SidePanel():
     " Incapsulates access to a side panel widget and its toolbar "
 
-    def __init__( self, widget = None, toolbar = None ):
+    def __init__( self, widget ):
         self.widget = widget
-        self.secondaryWidget = None
-        self.toolbar = toolbar
+        self.views = {}         # view name (string) -> ViewAndToolbar instance
         return
 
 
@@ -200,18 +207,21 @@ class IDEAccess( object ):
 
     @property
     def sidePanels( self ):
-        """ Reference to a side panel widget and its toolbar map, i.e. a plugin class
-            can use the following code:
+        """ Reference to a side panel widget map, i.e. a plugin class
+            can use e.g. the following code:
             self.sidePanels[ "project" ].widget
-            self.sidePanels[ "project" ].toolbar
             A side panel is identified by its string identifier.
 
             Supported panel names are (case sensitive):
-            project, fileSystem, recentFiles, recentProjects,
-            classes, functions, globals, log, pylint, pymetrics,
-            search, contextHelp, diff, fileOutline, debugVariables,
-            debugStack, debugThreads, exceptions, ignoredExceptions,
-            breakpoints.
+            project, recent, classes, functions, globals, log, pylint, pymetrics,
+            search, contextHelp, diff, debuger,
+            exceptions, breakpoints.
+
+            Each side panel contains one or more views with thier toolbars. To get
+            access to them a plugin class can use e.g. the following code:
+            self.sidePanels[ "recent" ].views[ "files" ].widget
+            self.sidePanels[ "recent" ].views[ "files" ].toolbar
+            The names of views depend on the side panel.
         """
         if self.__sidePanels is None:
             self.__initializeSidePanels()
@@ -220,61 +230,101 @@ class IDEAccess( object ):
     def __initializeSidePanels( self ):
         " Initializes the side panels map "
         self.__sidePanels = {}
-        self.__sidePanels[ "project" ] = \
-                SidePanel( self.mainWindow.projectViewer.projectTreeView,
-                           self.mainWindow.projectViewer.getProjectToolbar() )
-        self.__sidePanels[ "fileSystem" ] = \
-                SidePanel( self.mainWindow.projectViewer.filesystemView,
-                           self.mainWindow.projectViewer.getFileSystemToolbar() )
-        self.__sidePanels[ "recentFiles" ] = \
-                SidePanel( self.mainWindow.recentProjectsViewer.recentFilesView,
-                           self.mainWindow.recentProjectsViewer.getRecentFilesToolbar() )
-        self.__sidePanels[ "recentProjects" ] = \
-                SidePanel( self.mainWindow.recentProjectsViewer.projectsView,
-                           self.mainWindow.recentProjectsViewer.getRecentProjectsToolbar() )
-        self.__sidePanels[ "classes" ] = \
-                SidePanel( self.mainWindow.classesViewer.clViewer,
-                           self.mainWindow.classesViewer.toolbar )
-        self.__sidePanels[ "functions" ] = \
-                SidePanel( self.mainWindow.functionsViewer.funcViewer,
-                           self.mainWindow.functionsViewer.toolbar )
-        self.__sidePanels[ "globals" ] = \
-                SidePanel( self.mainWindow.globalsViewer.globalsViewer,
-                           self.mainWindow.globalsViewer.toolbar )
-        self.__sidePanels[ "log" ] = \
-                SidePanel( self.mainWindow.logViewer.messages,
-                           self.mainWindow.logViewer.toolbar )
-        self.__sidePanels[ "pylint" ] = \
-                SidePanel( self.mainWindow.pylintViewer.bodyWidget,
-                           self.mainWindow.pylintViewer.toolbar )
-        self.__sidePanels[ "pymetrics" ] = \
-                SidePanel( self.mainWindow.pymetricsViewer.getTotalResultsWidget(),
-                           self.mainWindow.pymetricsViewer.toolbar )
-        self.__sidePanels[ "pymetrics"].secondaryWidget = \
-                self.mainWindow.pymetricsViewer.getMcCabeResultsWidget()
-        self.__sidePanels[ "search" ] = \
-                SidePanel( self.mainWindow.findInFilesViewer.getResultsTree(),
-                           self.mainWindow.findInFilesViewer.toolbar )
-        self.__sidePanels[ "contextHelp" ] = \
-                SidePanel( self.mainWindow.tagHelpViewer.widget,
-                           self.mainWindow.tagHelpViewer.toolbar )
-        self.__sidePanels[ "diff" ] = \
-                SidePanel()
-        self.__sidePanels[ "fileOutline" ] = \
-                SidePanel()
-        self.__sidePanels[ "debugVariables" ] = \
-                SidePanel()
-        self.__sidePanels[ "debugStack" ] = \
-                SidePanel()
-        self.__sidePanels[ "debugThreads" ] = \
-                SidePanel()
-        self.__sidePanels[ "exceptions" ] = \
-                SidePanel()
-        self.__sidePanels[ "ignoredExceptions" ] = \
-                SidePanel()
-        self.__sidePanels[ "breakpoints" ] = \
-                SidePanel()
+
+        # Project
+        projectPanel = SidePanel( self.mainWindow.projectViewer )
+        projectPanel.views[ "project" ] = ViewAndToolbar( projectPanel.widget.projectTreeView,
+                                                          projectPanel.widget.getProjectToolbar() )
+        projectPanel.views[ "fileSystem" ] = ViewAndToolbar( projectPanel.widget.filesystemView,
+                                                             projectPanel.widget.getFileSystemToolbar() )
+        self.__sidePanels[ "project" ] = projectPanel
+
+        # Recent
+        recentPanel = SidePanel( self.mainWindow.recentProjectsViewer )
+        recentPanel.views[ "files" ] = ViewAndToolbar( recentPanel.widget.recentFilesView,
+                                                       recentPanel.widget.getRecentFilesToolbar() )
+        recentPanel.views[ "projects" ] = ViewAndToolbar( recentPanel.widget.projectsView,
+                                                          recentPanel.widget.getRecentProjectsToolbar() )
+        self.__sidePanels[ "recent" ] = recentPanel
+
+        # Classes
+        classesPanel = SidePanel( self.mainWindow.classesViewer )
+        classesPanel.views[ "classes" ] = ViewAndToolbar( classesPanel.widget.clViewer,
+                                                          classesPanel.widget.toolbar )
+        self.__sidePanels[ "classes" ] = classesPanel
+
+        # Functions
+        funcPanel = SidePanel( self.mainWindow.functionsViewer )
+        funcPanel.views[ "functions" ] = ViewAndToolbar( funcPanel.widget.funcViewer,
+                                                         funcPanel.widget.toolbar )
+        self.__sidePanels[ "functions" ] = funcPanel
+
+        # Globals
+        globPanel = SidePanel( self.mainWindow.globalsViewer )
+        globPanel.views[ "globals" ] = ViewAndToolbar( globPanel.widget.globalsViewer,
+                                                       globPanel.widget.toolbar )
+        self.__sidePanels[ "globals" ] = globPanel
+
+        # Log
+        logPanel = SidePanel( self.mainWindow.logViewer )
+        logPanel.views[ "log" ] = ViewAndToolbar( logPanel.widget.messages,
+                                                  logPanel.widget.toolbar )
+        self.__sidePanels[ "log" ] = logPanel
+
+        # Pylint
+        lintPanel = SidePanel( self.mainWindow.pylintViewer )
+        lintPanel.views[ "pylint" ] = ViewAndToolbar( lintPanel.widget.bodyWidget,
+                                                      lintPanel.widget.toolbar )
+        self.__sidePanels[ "pylint" ] = lintPanel
+
+        # Pymetrics
+        metricsPanel = SidePanel( self.mainWindow.pymetricsViewer )
+        metricsPanel.views[ "total" ] = ViewAndToolbar( metricsPanel.widget.getTotalResultsWidget(),
+                                                        metricsPanel.widget.toolbar )
+        metricsPanel.views[ "mccabe" ] = ViewAndToolbar( metricsPanel.widget.getMcCabeResultsWidget(),
+                                                         metricsPanel.widget.toolbar )
+        self.__sidePanels[ "pymetrics" ] = metricsPanel
+
+        # Search
+        searchPanel = SidePanel( self.mainWindow.findInFilesViewer )
+        searchPanel.views[ "search" ] = ViewAndToolbar( searchPanel.widget.getResultsTree(),
+                                                        searchPanel.widget.toolbar )
+        self.__sidePanels[ "search" ] = searchPanel
+
+        # Context help
+        ctxHelpPanel = SidePanel( self.mainWindow.tagHelpViewer )
+        ctxHelpPanel.views[ "contextHelp" ] = ViewAndToolbar( ctxHelpPanel.widget.widget, 
+                                                              ctxHelpPanel.widget.toolbar )
+        self.__sidePanels[ "contextHelp" ] = ctxHelpPanel
+
+        # Diff
+        diffPanel = SidePanel( self.mainWindow.diffViewer )
+        diffPanel.views[ "diff" ] = ViewAndToolbar( diffPanel.widget.viewer,
+                                                    diffPanel.widget.toolbar )
+        self.__sidePanels[ "diff" ] = diffPanel
+
+        # Debugger
+        dbgPanel = SidePanel( self.mainWindow.debuggerContext )
+        dbgPanel.views[ "variables" ] = ViewAndToolbar( dbgPanel.widget.variablesViewer,
+                                                        None )
+        dbgPanel.views[ "stack" ] = ViewAndToolbar( dbgPanel.widget.stackViewer,
+                                                    None )
+        dbgPanel.views[ "threads" ] = ViewAndToolbar( dbgPanel.widget.threadsViewer,
+                                                      None )
+        self.__sidePanels[ "debugger" ] = dbgPanel
+
+        # Exceptions
+        excptPanel = SidePanel( self.mainWindow.debuggerExceptions )
+        excptPanel.views[ "exceptions" ] = ViewAndToolbar( excptPanel.widget.clientExcptViewer.exceptionsList,
+                                                           excptPanel.widget.clientExcptViewer.toolbar )
+        excptPanel.views[ "ignoredExceptions" ] = ViewAndToolbar( excptPanel.widget.ignoredExcptViewer.exceptionsList,
+                                                                  excptPanel.widget.ignoredExcptViewer.toolbar )
+        self.__sidePanels[ "exceptions" ] = excptPanel
+
+        # Breakpoints
+        bpointPanel = SidePanel( self.mainWindow.debuggerBreakWatchPoints )
+        bpointPanel.views[ "breakpoints" ] = ViewAndToolbar( bpointPanel.widget.breakPointViewer.bpointsList,
+                                                             bpointPanel.widget.breakPointViewer.toolbar )
+        self.__sidePanels[ "breakpoints" ] = bpointPanel
         return
-
-
 

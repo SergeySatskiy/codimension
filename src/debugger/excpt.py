@@ -37,7 +37,7 @@ class DebuggerExceptions( QWidget ):
         QWidget.__init__( self, parent )
 
         self.__createLayout()
-        self.connect( self.__clientExcptViewer,
+        self.connect( self.clientExcptViewer,
                       SIGNAL( 'ClientExceptionsCleared' ),
                       self.__onClientExceptionsCleared )
         return
@@ -50,12 +50,12 @@ class DebuggerExceptions( QWidget ):
 
         self.splitter = QSplitter( Qt.Vertical )
 
-        self.__ignoredExcptViewer = IgnoredExceptionsViewer( self.splitter )
-        self.__clientExcptViewer = ClientExceptionsViewer( self.splitter,
-                                                           self.__ignoredExcptViewer )
+        self.ignoredExcptViewer = IgnoredExceptionsViewer( self.splitter )
+        self.clientExcptViewer = ClientExceptionsViewer( self.splitter,
+                                                           self.ignoredExcptViewer )
 
-        self.splitter.addWidget( self.__clientExcptViewer )
-        self.splitter.addWidget( self.__ignoredExcptViewer )
+        self.splitter.addWidget( self.clientExcptViewer )
+        self.splitter.addWidget( self.ignoredExcptViewer )
 
         self.splitter.setCollapsible( 0, False )
         self.splitter.setCollapsible( 1, False )
@@ -65,28 +65,28 @@ class DebuggerExceptions( QWidget ):
 
     def clear( self ):
         " Clears everything "
-        self.__clientExcptViewer.clear()
+        self.clientExcptViewer.clear()
         return
 
     def addException( self, exceptionType, exceptionMessage,
                             stackTrace ):
         " Adds the exception to the view "
-        self.__clientExcptViewer.addException( exceptionType, exceptionMessage,
-                                               stackTrace )
+        self.clientExcptViewer.addException( exceptionType, exceptionMessage,
+                                             stackTrace )
         return
 
     def isIgnored( self, exceptionType ):
         " Returns True if this exception type should be ignored "
-        return self.__ignoredExcptViewer.isIgnored( exceptionType )
+        return self.ignoredExcptViewer.isIgnored( exceptionType )
 
     def setFocus( self ):
         " Sets the focus to the client exception window "
-        self.__clientExcptViewer.setFocus()
+        self.clientExcptViewer.setFocus()
         return
 
     def getTotalClientExceptionCount( self ):
         " Provides the total number of the client exceptions "
-        return self.__clientExcptViewer.getTotalCount()
+        return self.clientExcptViewer.getTotalCount()
 
     def __onClientExceptionsCleared( self ):
         " Triggered when the user cleared exceptions "
