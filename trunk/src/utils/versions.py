@@ -203,7 +203,7 @@ def getComponentInfo():
                         True,
                         "GPL-2.0", "http://www.gnu.org/licenses/gpl-2.0.html") )
     components.append( ("pyflakes", getPyFlakesVersion(),
-                        "https://pypi.python.org/pypi/pyflakes", None,
+                        "https://pypi.python.org/pypi/pyflakes", True,
                         "pyflakes license", "see the package") )
     components.append( ("pymetrics", getPyMetricsVersion(),
                         "http://pymetrics.sourceforge.net/", None,
