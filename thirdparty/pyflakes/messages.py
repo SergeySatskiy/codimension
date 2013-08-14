@@ -33,7 +33,10 @@ class RedefinedWhileUnused(Message):
 
     def __init__(self, filename, loc, name, orig_loc):
         Message.__init__(self, filename, loc)
-        self.message_args = (name, orig_loc.lineno)
+        if type( orig_loc ) == int:
+            self.message_args = (name, orig_loc)
+        else:
+            self.message_args = (name, orig_loc.lineno)
 
 
 class RedefinedInListComp(Message):
@@ -41,7 +44,10 @@ class RedefinedInListComp(Message):
 
     def __init__(self, filename, loc, name, orig_loc):
         Message.__init__(self, filename, loc)
-        self.message_args = (name, orig_loc.lineno)
+        if type( orig_loc ) == int:
+            self.message_args = (name, orig_loc)
+        else:
+            self.message_args = (name, orig_loc.lineno)
 
 
 class ImportShadowedByLoopVar(Message):
@@ -49,7 +55,10 @@ class ImportShadowedByLoopVar(Message):
 
     def __init__(self, filename, loc, name, orig_loc):
         Message.__init__(self, filename, loc)
-        self.message_args = (name, orig_loc.lineno)
+        if type( orig_loc ) == int:
+            self.message_args = (name, orig_loc)
+        else:
+            self.message_args = (name, orig_loc.lineno)
 
 
 class ImportStarUsed(Message):
@@ -75,6 +84,8 @@ class DoctestSyntaxError(Message):
         Message.__init__(self, filename, loc)
         if position:
             (self.lineno, self.col) = position
+            if type( self.lineno ) != int:
+                self.lineno = self.lineno.lineno
         self.message_args = ()
 
 
@@ -92,7 +103,10 @@ class UndefinedLocal(Message):
 
     def __init__(self, filename, loc, name, orig_loc):
         Message.__init__(self, filename, loc)
-        self.message_args = (name, orig_loc.lineno)
+        if type( orig_loc ) == int:
+            self.message_args = (name, orig_loc)
+        else:
+            self.message_args = (name, orig_loc.lineno)
 
 
 class DuplicateArgument(Message):
@@ -108,7 +122,10 @@ class Redefined(Message):
 
     def __init__(self, filename, loc, name, orig_loc):
         Message.__init__(self, filename, loc)
-        self.message_args = (name, orig_loc.lineno)
+        if type( orig_loc ) == int:
+            self.message_args = (name, orig_loc)
+        else:
+            self.message_args = (name, orig_loc.lineno)
 
 
 class LateFutureImport(Message):
