@@ -271,6 +271,8 @@ def getCalltipAndDoc( fileName, editor, position = None, tryQt = False ):
                                      maxfixes = 7 )
             except:
                 pass
+            if not calltip:
+                calltip = None
 
         if tryQt and calltip is not None and docstring is not None:
             # try to extract signatures from the QT docstring
