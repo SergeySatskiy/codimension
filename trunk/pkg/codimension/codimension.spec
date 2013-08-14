@@ -1,5 +1,5 @@
 Name: codimension
-Version: 2.0.2
+Version: 2.1.0
 Release: 2
 License: GPLv3+
 Group: Development/Tools/IDE
@@ -80,6 +80,26 @@ update-desktop-database -q
 %{_datadir}/pixmaps/*.xpm
 
 %changelog
+* Wed Aug 14 2013 Ilya Loginov <isloginov@gmail.com> - 2.1.0-2
+- Release 2.1.0
+- Better calltips for PyQt objects.
+- About dialog added.
+- Ctrl+Shift+F1 added for the current call help.
+- Better handling of the outline window redrawing - no redraw if syntax is broken.
+- Better jumps from the outline window. Last good and the current parsed
+  info are taken into account.
+- Better undo of the automatically trimmed empty opened lines.
+- Search indicators are now configurable (per skin).
+- Make Ctrl+PgUp going to the previous tab while Ctrl+PgDwn to the next one.
+- New feature: ui configurable monospaced font.
+- Fix: opening another user (read only) project now works.
+- New feature: plugin interface.
+- New feature: garbage collector plugin.
+- Bug fix: pyflakes analysis crashed if there was an invalid escape character
+  or null characters in the buffer (Issue #399)
+- Bug fix: pylint fails to run on files in projects which have no import dirs.
+- Updating pyflakes to 0.7.3
+
 * Sun Jun 30 2013 Ilya Loginov <isloginov@gmail.com> - 2.0.2-2
 - Release 2.0.2
 - New feature: editor calltips (Ctrl+/) and auto calltips (switchable via the

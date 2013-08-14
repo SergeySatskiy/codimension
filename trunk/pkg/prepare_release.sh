@@ -160,6 +160,7 @@ thirdparty/filemagic-1.6 thirdparty/filemagic
 thirdparty/pymetrics-0.8.1 thirdparty/pymetrics
 thirdparty/rope-0.9.4 thirdparty/rope
 thirdparty/pythontidy thirdparty/pythontidy
+thirdparty/Yapsy-1.10.2-pythons2n3 thirdparty/yapsy
 pkg/codimension/debian debian
 pkg/codimension/codimension.spec codimension.spec
 EOF
@@ -181,7 +182,8 @@ patch_codimension()
     sed -i "s/^__version__.*/__version__ = '$version'/" \
         "$pkg_dir/src/codimension.py"
     test "x$pkgtype" = 'xdeb' && \
-        rm -rf "$pkg_dir/thirdparty/pymetrics" "$pkg_dir/src/COPYING"
+        rm -rf "$pkg_dir/thirdparty/pymetrics" "$pkg_dir/src/COPYING" \
+		"$pkg_dir/thirdparty/yapsy"
 }
 
 maketar()
