@@ -54,6 +54,7 @@ Features:
 mkdir -p $RPM_BUILD_ROOT/%{_datadir}
 cp -pr src $RPM_BUILD_ROOT%{_datadir}/%{name}
 cp -pr thirdparty $RPM_BUILD_ROOT%{_datadir}/%{name}/
+cp -pr plugins $RPM_BUILD_ROOT%{_datadir}/%{name}-plugins
 mkdir -p $RPM_BUILD_ROOT/%{_bindir}
 ln -s ../share/codimension/codimension.py $RPM_BUILD_ROOT/%{_bindir}/%{name}
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/pixmaps

@@ -15,4 +15,5 @@
 override_dh_install:
 	dh_install src/* $(DESTDIR)usr/share/codimension/
 	dh_install thirdparty $(DESTDIR)usr/share/codimension/
+	dh_install plugins/* $(DESTDIR)usr/share/codimension-plugins/
 	dh_install
