@@ -151,6 +151,7 @@ act_on_codimension()
 {
     $1 <<EOF
 src src
+plugins plugins
 thirdparty
 thirdparty/__init__.py thirdparty/__init__.py
 thirdparty/diff2html thirdparty/diff2html
