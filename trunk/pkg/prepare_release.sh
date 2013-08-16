@@ -161,7 +161,7 @@ thirdparty/filemagic-1.6 thirdparty/filemagic
 thirdparty/pymetrics-0.8.1 thirdparty/pymetrics
 thirdparty/rope-0.9.4 thirdparty/rope
 thirdparty/pythontidy thirdparty/pythontidy
-thirdparty/Yapsy-1.10.2-pythons2n3 thirdparty/yapsy
+thirdparty/Yapsy-1.10.2-pythons2n3/src2/package/yapsy thirdparty/yapsy
 pkg/codimension/debian debian
 pkg/codimension/codimension.spec codimension.spec
 EOF
