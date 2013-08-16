@@ -101,6 +101,8 @@ class PluginsDialog( QDialog ):
 
     def __init__( self, pluginManager, parent = None ):
         QDialog.__init__( self, parent )
+        self.setWindowTitle( "Plugin Manager" )
+
         self.__pluginManager = pluginManager
         self.__configFuncs = {} # int -> callable
 
