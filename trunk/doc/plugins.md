@@ -75,17 +75,13 @@ is needed. The manual control of plugin states is done in the plugin manager.
 The manager user interface is available via main menu **Options->Plugin 
 Manager** menu item as shown below.
 
-~~~
-    Screenshot with the plugin manager
-~~~
+![Plugin Manager](PluginManager.png "Plugin Manager")
 
 Each plugin can move between the enabled and disabled state an arbitrary number
 of times within a single Codimension session. This could be illustrated as
 follows.
 
-~~~
-    Diagram with IDE and plugin states
-~~~
+![Plugin States](PluginStates.png "Plugin States")
 
 The last term Codimension intriduces for plugins is a plugin category. Plugins
 could require different support on the IDE side and a plugin category is the way
@@ -164,15 +160,7 @@ It was mentioned in the previous section that a plugin class must derive from
 one of the predefined plugin category base class. So a part of the PDF exporter
 plugin class hierarchy may look as follows:
 
-~~~
-       PDFExporterPlugin
-
-       WizardInterface
-
-       CDMPluginBase
-
-     IPlugin      QObject
-~~~
+![Plugin Base Classes](PluginBases.png "Plugin Base Classes")
 
 The `PDFExporterPlugin` class must reside in the `__init__.py` file. This is the
 class which implements the plugin interface. The plugin developer does not need
@@ -345,9 +333,7 @@ The GC plugin needs some configuring. The user should be able to instruct the
 plugin where the garbage collection information should be displayed. It is going
 to be a modal graphics dialog with three radio buttons:
 
-~~~
-    Screenshot with the configuration dialog
-~~~
+![GC Plugin Configuration Dialog](GCConfigDialog.png "GC Plugin Configuration Dialog")
 
 Let's place the dialog code into a separate file `configdlg.py`. Three integer
 constants will be defined in the file as well. These constants identify the
@@ -526,11 +512,11 @@ in the `activate` method.
 The configuration dialog code is not discussed here because it is pure PyQt code and
 is not specific to the Codimension plugin subsystem.
 
-Full plugin code is available here:
+Full plugin source code is available here:
 
-* `__init__.py` http://code.google.com/p/codimension/source/browse/trunk/plugins/garbagecollector/__init__.py
-* `configdlg.py` http://code.google.com/p/codimension/source/browse/trunk/plugins/garbagecollector/configdlg.py
-* `garbagecollector.cdmp` http://code.google.com/p/codimension/source/browse/trunk/plugins/garbagecollector/garbagecollector.cdmp
+* [garbagecollector.cdmp](http://code.google.com/p/codimension/source/browse/trunk/plugins/garbagecollector/garbagecollector.cdmp)
+* [__init__.py](http://code.google.com/p/codimension/source/browse/trunk/plugins/garbagecollector/__init__.py)
+* [configdlg.py](http://code.google.com/p/codimension/source/browse/trunk/plugins/garbagecollector/configdlg.py)
 
 
 
@@ -540,7 +526,7 @@ Miscellaneous
 ###Printing and Logging
 Plugins are running in Codimension context so everything what is done in
 Codimension for the IDE is applicable to plugins. In particular Codimension
-intercepts printing to stdout and to stderr. If a plugin prints on stdout:
+intercepts printing to **stdout** and to **stderr**. If a plugin prints on **stdout**:
 
 ~~~{.python}
 print "Hi from plugin"
@@ -578,7 +564,8 @@ logging.debug( "Debug message" )    # Will be shown only if Codimension started 
 ###Globals and Settings
 When a plugin is activated references to the IDE global data singleton and to
 the IDE settings singleton are passed to the plugin. Using these sinletons a
-plugin can get access to pretty much everything in the IDE. It is also possible to cause Codimension crash if important data are misproperly modified.
+plugin can get access to pretty much everything in the IDE. It is also possible
+to cause Codimension crash if important data are misproperly modified.
 
 The `CDMPluginBase` class provides syntactic shugar to simplify access to the
 most important IDE objects. The other IDE objects could be accessible using
