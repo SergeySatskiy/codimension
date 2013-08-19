@@ -278,7 +278,260 @@ License = GPL v.3
 
 The GC plugin will belong to the wizard plugin category so it must derive from
 the `WizardInterface` class. The definition of the class must be in the
-`__init__.py` file.
+`__init__.py` file:
+
+
+~~~{.python}
+from plugins.categories.wizardiface import WizardInterface
+
+class GCPlugin( WizardInterface ):
+    def __init__( self ):
+        WizardInterface.__init__( self )
+        return
+~~~
+
+Codimension instantiates all the found plugins regardless whether they are activated
+or not. So the GC plugin `__init__` does not do any significant resource consuming
+initializations.
+
+One of the first things Codimension does before a plugin is initialized, it asks
+the plugin if the current IDE version is supported by the plugin. Codimension
+passes the current version as a string, e.g. `"2.1.0"`. The method must be implemented
+by the plugin and for the GC plugin it is trivial, all the versions are supported:
+
+~~~{.python}
+    @staticmethod
+    def isIDEVersionCompatible( ideVersion ):
+        return True
+~~~
+
+
+The next pair of methods which must be implemented in a plugin is `activate` and
+`deactivate`. The `activate` method will be called when a plugin is activated. It
+may happened at the start time automatically or when a user activates previously
+deactivated plugin. Therefore it is generally a good idea to have plugin data
+allocated and deallocated in these two methods respectively.
+
+The first thing to be done in the `activate` method is to call `activate` of the
+interface base class. If this call is forgotten then `self.ide.` statements will
+not work at all and the plugin management system may also be confused. Respectively,
+the `deactivate` method should call `deactivate` of the interface base class as the
+last thing to do.
+
+The GC plugin initialization is basically connecting a few IDE signals with the
+plugin members. When the plugin is deactivated the signals should be disconnected.
+
+~~~{.python}
+    def activate( self, ideSettings, ideGlobalData ):
+        WizardInterface.activate( self, ideSettings, ideGlobalData )
+
+        self.connect( self.ide.editorsManager, SIGNAL( 'tabClosed' ),
+                      self.__collectGarbage )
+        self.connect( self.ide.project, SIGNAL( 'projectChanged' ),
+                      self.__collectGarbage )
+        return
+
+    def deactivate( self ):
+        self.disconnect( self.ide.project, SIGNAL( 'projectChanged' ),
+                         self.__collectGarbage )
+        self.disconnect( self.ide.editorsManager, SIGNAL( 'tabClosed' ),
+                         self.__collectGarbage )
+
+        WizardInterface.deactivate( self )
+        return
+~~~
+
+The GC plugin needs some configuring. The user should be able to instruct the
+plugin where the garbage collection information should be displayed. It is going
+to be a modal graphics dialog with three radio buttons:
+
+~~~
+    Screenshot with the configuration dialog
+~~~
+
+Let's place the dialog code into a separate file `configdlg.py`. Three integer
+constants will be defined in the file as well. These constants identify the
+GC plugin information message destination.
+
+Codimension provides a unified way to call plugin configuration dialogs. Look
+at the plugin manager screenshot above. There is a button with a wrench on it
+for each found plugin. If a plugin needs configuring then its button will be
+enabled.
+
+In order to tell Codimension if a plugin needs configuring there is an interface
+method which should return a python callable or None if no configuring is required.
+The GC plugin needs configuring so the implementation will look as follows:
+
+~~~{.python}
+from configdlg import GCPluginConfigDialog
+
+# ...
+
+    def getConfigFunction( self ):
+        return self.configure
+
+    def configure( self ):
+        dlg = GCPluginConfigDialog( ... )       # Will be discussed below
+        if dlg.exec_() == QDialog.Accepted:
+            # Will be discussed below
+            pass
+        return
+~~~
+
+The user choice should be stored to be used next time Codimension starts. There are many
+options how to do it however only one of them is considered here. The user choice
+will be stored in file `gc.plugin.conf` which uses an industry standard ini files format.
+Where to keep this file? This choice does not depend on a certain project so it does not
+make sense to store it in a project specific data directory. It makes sense to store the
+file where IDE stores its settings. We'll need a few member functionss to deal with the user
+choice and one member variable. The member variable will be initialized in the plugin
+class constructor to "do not show anything".
+
+~~~{.python}
+import ConfigParser
+
+class GCPlugin( WizardInterface ):
+
+    def __init__( self ):
+        WizardInterface.__init__( self )
+        self.__where = GCPluginConfigDialog.SILENT
+        return
+
+    def __getConfigFile( self ):
+        return self.ide.settingsDir + "gc.plugin.conf"
+
+    def __getConfiguredWhere( self ):
+        try:
+            config = ConfigParser.ConfigParser()
+            config.read( [ self.__getConfigFile() ] )
+            value = int( config.get( "general", "where" ) )
+            if value < GCPluginConfigDialog.SILENT or \
+               value > GCPluginConfigDialog.LOG:
+                return GCPluginConfigDialog.SILENT
+            return value
+        except:
+            return GCPluginConfigDialog.SILENT
+
+    def __saveConfiguredWhere( self ):
+        try:
+            f = open( self.__getConfigFile(), "w" )
+            f.write( "# Autogenerated GC plugin config file\n"
+                     "[general]\n"
+                     "where=" + str( self.__where ) + "\n" )
+            f.close()
+        except:
+            pass
+~~~
+
+At the time of the plugin activation the saved value should be restored so we
+need to insert into the `activate` method (after initializing the plugin base class)
+the following:
+
+~~~{.python}
+        self.__where = self.__getConfiguredWhere()
+~~~
+
+Now we can complete implementation of the configuration function:
+
+
+~~~{.python}
+    def configure( self ):
+        dlg = GCPluginConfigDialog( self.__where )
+        if dlg.exec_() == QDialog.Accepted:
+            newWhere = dlg.getCheckedOption()
+            if newWhere != self.__where:
+                self.__where = newWhere
+                self.__saveConfiguredWhere()
+        return
+~~~
+
+Having the destination of the information message at hand we can implement
+the `__collectGarbage` method:
+
+~~~{.python}
+import logging
+
+# ...
+
+    def __collectGarbage( self, ignored = None ):
+        iterCount = 0
+        collected = 0
+
+        currentCollected = gc.collect()
+        while currentCollected > 0:
+            iterCount += 1
+            collected += currentCollected
+            currentCollected = gc.collect()
+
+        if self.__where == GCPluginConfigDialog.SILENT:
+            return
+
+        message = "Collected " + str( collected ) + " objects in " + \
+                  str( iterCount ) + " iteration(s)"
+        if self.__where == GCPluginConfigDialog.STATUS_BAR:
+            # Display it for 5 seconds
+            self.ide.showStatusBarMessage( message, 5000 )
+        else:
+            logging.info( message )
+        return
+~~~
+
+The last piece we need to discuss is menus. Codimension provides
+four convenient places where a plugin can inject its menus:
+
+* main menu. If a plugin provides a main menu item then it is shown in the
+  Codimension main menu under the `plugin manager` menu item. The name of the
+  plugin menu item is set by default to the plugin name from the description file
+  however the plugin can change it.
+* editing buffer context menu. If a plugin provides an editing buffer context
+  menu then it is shown at the bottom of the standard context menu. The plugin menu
+  item name policy is the same as for the main menu.
+* project / file system context menu appeared for a file. Works similar to the
+  editing buffer context menu.
+* project / file system context menu appeared for a directory. Works similar to
+  the editing buffer context menu.
+
+In all the cases Codimension provides an already created parent menu item in which
+a plugin can populate its menu items. If nothing is populated then Codimension
+will not display the corresponding menu item. All the menu populating members must
+be implemnted by a plugin.
+
+The GC plugin will have only the main menu. The enties will be for collecting
+garbage immediately and for an alternative way to run the plugin configuration
+dialog:
+
+~~~{.python}
+    def populateMainMenu( self, parentMenu ):
+        parentMenu.addAction( "Configure", self.configure )
+        parentMenu.addAction( "Collect garbage", self.__collectGarbage )
+        return
+
+    def populateFileContextMenu( self, parentMenu ):
+        # No file context menu is required
+        return
+
+    def populateDirectoryContextMenu( self, parentMenu ):
+        # No directory context menu is required
+        return
+
+    def populateBufferContextMenu( self, parentMenu ):
+        return
+~~~
+
+The methods above is a convenient way to deal with context menus for most of the
+cases. Generally speaking plugins are not limited with what they can do because
+all the IDE objects are available via the global data and settings objects passed
+in the `activate` method.
+
+The configuration dialog code is not discussed here because it is pure PyQt code and
+is not specific to the Codimension plugin subsystem.
+
+Full plugin code is available here:
+
+* `__init__.py` http://code.google.com/p/codimension/source/browse/trunk/plugins/garbagecollector/__init__.py
+* `configdlg.py` http://code.google.com/p/codimension/source/browse/trunk/plugins/garbagecollector/configdlg.py
+* `garbagecollector.cdmp` http://code.google.com/p/codimension/source/browse/trunk/plugins/garbagecollector/garbagecollector.cdmp
+
 
 
 Miscellaneous
