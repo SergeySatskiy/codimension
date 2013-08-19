@@ -67,19 +67,22 @@ def getSystemWideModules():
     return __systemwideModules
 
 
-def getProjectSpecificModules( path = "" ):
+def getProjectSpecificModules( path = "", onlySpecified = False ):
     " Provides a dictionary of the project specific modules "
     specificModules = {}
-    importDirs = GlobalData().getProjectImportDirs()
-    for importPath in importDirs:
-        specificModules.update( getModules( importPath ) )
+    importDirs = []
 
-    projectFile = GlobalData().project.fileName
-    if projectFile != "":
-        basedir = os.path.dirname( projectFile )
-        if basedir not in importDirs:
-            importDirs.append( basedir )
-            specificModules.update( getModules( basedir ) )
+    if not onlySpecified:
+        importDirs = GlobalData().getProjectImportDirs()
+        for importPath in importDirs:
+            specificModules.update( getModules( importPath ) )
+
+        projectFile = GlobalData().project.fileName
+        if projectFile != "":
+            basedir = os.path.dirname( projectFile )
+            if basedir not in importDirs:
+                importDirs.append( basedir )
+                specificModules.update( getModules( basedir ) )
 
     if path and os.path.isabs( path ):
         path = os.path.normpath( path )
@@ -131,7 +134,23 @@ def __getImportedObjects( moduleName, fileName ):
     else:
         # Not a system wide, try search in the project
         # or current directories
-        specificModules = getProjectSpecificModules( fileName )
+        if moduleName.startswith( "." ):
+            # That's a relative import
+            if not fileName:
+                # File name must be known for a relative import
+                return set()
+            dotCount = 0
+            while moduleName.startswith( "." ):
+                dotCount += 1
+                moduleName = moduleName[ 1: ]
+            # Strip as many paths as dots instruct
+            baseDir = os.path.dirname( fileName )
+            while dotCount > 1:
+                baseDir = os.path.dirname( baseDir )
+                dotCount -= 1
+            specificModules = getProjectSpecificModules( baseDir, True )
+        else:
+            specificModules = getProjectSpecificModules( fileName )
         if moduleName in specificModules:
             modulePath = specificModules[ moduleName ]
 
