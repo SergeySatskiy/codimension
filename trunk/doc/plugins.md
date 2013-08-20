@@ -567,7 +567,7 @@ logging.debug( "Debug message" )    # Will be shown only if Codimension started 
 When a plugin is activated references to the IDE global data singleton and to
 the IDE settings singleton are passed to the plugin. Using these singletons a
 plugin can get access to pretty much everything in the IDE. It is also possible
-to cause Codimension crash if important data are misproperly modified.
+to cause Codimension crash if important data are improperly modified.
 
 The `CDMPluginBase` class provides syntactic shugar to simplify access to the
 most important IDE objects. The other IDE objects could be accessible using
