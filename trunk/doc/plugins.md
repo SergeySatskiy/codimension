@@ -13,7 +13,7 @@ follows: a Codimension plugin is a Python class implemented in a certain way.
 Codimension is written in Python and thus its plugins should also be written in
 Python.
 
-Before some implementation details come up however it makes sense to discuss a
+Before the implementation details are discussed it makes sense to introduce a
 few terms Codimension uses while it works with plugins.
 
 At the start time Codimension looks for plugins in two places. The first one is
@@ -36,8 +36,8 @@ may look as follows:
 
 Depending on a plugin location Codimension splits all the found plugins into two
 groups: system wide plugins and user plugins. So in the example above `plugin1`,
-`plugin2` and `plugin3` are system wide plugins while `plugin4`, `plugin5` and
-`plugin6` are user plugins.
+`plugin2` and `plugin3` are **system wide** plugins while `plugin4`, `plugin5` and
+`plugin6` are **user** plugins.
 
 The next pieces which are important for Codimension are a plugin name and a
 plugin version. A name and a version are stored in a plugin description file 
@@ -56,7 +56,7 @@ are used for automatic conflict resolution:
 *   If there is a user and a system wide plugin with the same name then the user
     plugin wins.
 *   If there are two plugins with the same name and both of them are either user
-    or system wide then their version is taken into consideration. The higher
+    or system wide then their versions are taken into consideration. The higher
     version wins.
 *   If names, vaersions and locations of two plugins match then an arbitrary one
     wins.
@@ -65,9 +65,9 @@ There are a few other cases when Codimension disables a plugin automatically. A
 good example of such a case is when a plugin does not implement the required
 interface.
 
-An important detail here could be that regardless whether a plugin is enabled or
-disabled it is instantiated. The plugin class instance will stay in memory till
-Codimension is closed.
+An important detail on the plugin initialization stage is that regardless whether
+a plugin is enabled or disabled it is instantiated. The plugin class instance will
+stay in memory till Codimension is closed.
 
 The user is always able to enable or disable plugins manually and in particular
 resolve detected conflicts the required way if automatic resolution is not what
@@ -83,7 +83,7 @@ follows.
 
 ![Plugin States](PluginStates.png "Plugin States")
 
-The last term Codimension intriduces for plugins is a plugin category. Plugins
+The last term Codimension introduces for plugins is a plugin category. Plugins
 could require different support on the IDE side and a plugin category is the way
 how to distinguish the required support. For example, a spell checker plugin
 might need certain support targeted to text editing while a plugin which
@@ -107,9 +107,9 @@ follows.
                                             config_dialog.py
 ~~~
 
-The `pdfexporter.cdmp` file contains textual plugin description. The name of the
+The `pdfexporter.cdmp` file contains a textual plugin description. The name of the
 file does not matter, Codimension looks for the .cdmp file extensions. A
-content of pdfexporter.cdmp file may be similar to the following.
+content of the pdfexporter.cdmp file may be similar to the following.
 
 ~~~
 [Core]
@@ -129,7 +129,7 @@ relatively sort. The `[Core].Module` value is a directory path where
 Codimension plugin resides. It is recommended that all the plugin files are
 sitting in a designated directory including the plugin description file and 
 therefore the `[Core].Module` value refers to the very directory it is sitting
-in. The '.' value is the recommended value for all Codimension plugins.
+in. The '.' value is the recommended value for all the Codimension plugins.
 
 The `[Documentation]` section has self explanatory values. A plugin can add any
 values to this section and all of them will be displayed in the **Detailed 
@@ -137,9 +137,9 @@ information** box in the plugin manager dialog when a plugin is selected.
 
 The `__init__.py` file is the one where a plugin class definition must reside.
 In the example above the plugin also has some utility functions in the
-`util_functions.py` and a configuration dialog in a separate files. The import
-these modules from `__init__.py` there is no need in relative import. The
-`__init__.py` can simply use:
+`util_functions.py` and a configuration dialog in separate files. To import
+`util_functions` and `config_dialog` modules in `__init__.py` there is no need
+to use relative imports. The `__init__.py` can simply use:
 
 ~~~{.python}
 # The plugin modules do not require relative import
@@ -164,7 +164,7 @@ plugin class hierarchy may look as follows:
 
 The `PDFExporterPlugin` class must reside in the `__init__.py` file. This is the
 class which implements the plugin interface. The plugin developer does not need
-and should not make any changes in any other classes mentioned on the diagram.
+and should not make any changes in any other classes shown on the diagram.
 
 The `WizardInterface` class is a Codimension provided plugin category base
 class. The class is defined in `codimension/src/plugins/categories/wizardiface.py`.
@@ -204,7 +204,7 @@ provided IDE objects.
 Codimension uses thirdparty library called
 [yapsy](http://yapsy.sourceforge.net/) to build plugin support on top of it.
 Yapsy needs to have IPlugin in the plugin class hierarchy and so it is here.
-A plugin developer should not need to deal with this class however.
+A plugin developer should not need to deal with this class directly however.
 
 The `QObject` class is a PyQt provided class. The class is included into the
 hierarchy for convenience. Codimension uses QT library for the user interface
@@ -224,14 +224,14 @@ Plugin Example: Garbage Collector Plugin
 The idea of an example plugin is quite simple. The Python garbage collector
 triggers objects collection at pretty much unknown moments and the plugin will
 make it more predictable. The garbage collector plugin (GC plugin) will call
-the `collect()` method of the gc Python module when:
+the `collect()` method of the `gc` Python module when:
 *   a tab is closed
 *   a project is changed
 *   new files appeared in a project
 *   some files are deleted from a project
 
 The `gc.collect()` call provides an information of how many objects were
-collected as its return value and this could be interesting to see. So a
+collected and this could be interesting to see. So a
 message should be shown somewhere. To make it more user friendly the GC plugin
 should provide a configuration dialog with options where to show the message:
 *   in the log tab
@@ -282,7 +282,7 @@ Codimension instantiates all the found plugins regardless whether they are activ
 or not. So the GC plugin `__init__` does not do any significant resource consuming
 initializations.
 
-One of the first things Codimension does before a plugin is initialized, it asks
+One of the first things Codimension does before a plugin is acivated, it asks
 the plugin if the current IDE version is supported by the plugin. Codimension
 passes the current version as a string, e.g. `"2.1.0"`. The method must be implemented
 by the plugin and for the GC plugin it is trivial, all the versions are supported:
@@ -295,7 +295,7 @@ by the plugin and for the GC plugin it is trivial, all the versions are supporte
 
 
 The next pair of methods which must be implemented in a plugin is `activate` and
-`deactivate`. The `activate` method will be called when a plugin is activated. It
+`deactivate`. Obviously, the `activate` method will be called when a plugin is activated. It
 may happened at the start time automatically or when a user activates previously
 deactivated plugin. Therefore it is generally a good idea to have plugin data
 allocated and deallocated in these two methods respectively.
@@ -307,7 +307,7 @@ the `deactivate` method should call `deactivate` of the interface base class as 
 last thing to do.
 
 The GC plugin initialization is basically connecting a few IDE signals with the
-plugin members. When the plugin is deactivated the signals should be disconnected.
+plugin member functions. When the plugin is deactivated the signals should be disconnected.
 
 ~~~{.python}
     def activate( self, ideSettings, ideGlobalData ):
@@ -365,13 +365,14 @@ from configdlg import GCPluginConfigDialog
 ~~~
 
 The user choice should be stored to be used next time Codimension starts. There are many
-options how to do it however only one of them is considered here. The user choice
+options how to do it and only one of them is considered here. The user choice
 will be stored in file `gc.plugin.conf` which uses an industry standard ini files format.
-Where to keep this file? This choice does not depend on a certain project so it does not
-make sense to store it in a project specific data directory. It makes sense to store the
-file where IDE stores its settings. We'll need a few member functionss to deal with the user
+Where to keep this file? The plugin message destination choice does not depend on a
+project so it does not make sense to store `gc.plugin.conf` in a project specific data
+directory. It makes sense to store the file where IDE stores its settings.
+We'll need a few member functions to deal with the user
 choice and one member variable. The member variable will be initialized in the plugin
-class constructor to "do not show anything".
+class constructor with "do not show anything".
 
 ~~~{.python}
 import ConfigParser
@@ -463,7 +464,7 @@ import logging
 ~~~
 
 The last piece we need to discuss is menus. Codimension provides
-four convenient places where a plugin can inject its menus:
+four convenient places where a plugin can inject its menu items:
 
 * main menu. If a plugin provides a main menu item then it is shown in the
   Codimension main menu under the `plugin manager` menu item. The name of the
@@ -472,17 +473,17 @@ four convenient places where a plugin can inject its menus:
 * editing buffer context menu. If a plugin provides an editing buffer context
   menu then it is shown at the bottom of the standard context menu. The plugin menu
   item name policy is the same as for the main menu.
-* project / file system context menu appeared for a file. Works similar to the
+* project / file system context menu appeared for a file. It works similar to the
   editing buffer context menu.
-* project / file system context menu appeared for a directory. Works similar to
+* project / file system context menu appeared for a directory. It works similar to
   the editing buffer context menu.
 
 In all the cases Codimension provides an already created parent menu item in which
 a plugin can populate its menu items. If nothing is populated then Codimension
-will not display the corresponding menu item. All the menu populating members must
+will not display the plugin menu. All the menu populating members must
 be implemnted by a plugin.
 
-The GC plugin will have only the main menu. The enties will be for collecting
+The GC plugin will have only the main menu. The entries will be for collecting
 garbage immediately and for an alternative way to run the plugin configuration
 dialog:
 
@@ -514,9 +515,9 @@ is not specific to the Codimension plugin subsystem.
 
 Full plugin source code is available here:
 
-* [garbagecollector.cdmp](http://code.google.com/p/codimension/source/browse/trunk/plugins/garbagecollector/garbagecollector.cdmp)
-* [__init__.py](http://code.google.com/p/codimension/source/browse/trunk/plugins/garbagecollector/__init__.py)
-* [configdlg.py](http://code.google.com/p/codimension/source/browse/trunk/plugins/garbagecollector/configdlg.py)
+* [`garbagecollector.cdmp`](http://code.google.com/p/codimension/source/browse/trunk/plugins/garbagecollector/garbagecollector.cdmp)
+* [`__init__.py`](http://code.google.com/p/codimension/source/browse/trunk/plugins/garbagecollector/__init__.py)
+* [`configdlg.py`](http://code.google.com/p/codimension/source/browse/trunk/plugins/garbagecollector/configdlg.py)
 
 
 
@@ -563,7 +564,7 @@ logging.debug( "Debug message" )    # Will be shown only if Codimension started 
 
 ###Globals and Settings
 When a plugin is activated references to the IDE global data singleton and to
-the IDE settings singleton are passed to the plugin. Using these sinletons a
+the IDE settings singleton are passed to the plugin. Using these singletons a
 plugin can get access to pretty much everything in the IDE. It is also possible
 to cause Codimension crash if important data are misproperly modified.
 
