@@ -125,7 +125,7 @@ License = GPL v.3
 ~~~
 
 The `[Core].Name` value is an arbitrary string however it is better to keep it
-relatively sort. The `[Core].Module` value is a directory path where
+relatively short. The `[Core].Module` value is a directory path where
 Codimension plugin resides. It is recommended that all the plugin files are
 sitting in a designated directory including the plugin description file and 
 therefore the `[Core].Module` value refers to the very directory it is sitting
@@ -482,7 +482,7 @@ four convenient places where a plugin can inject its menu items:
 In all the cases Codimension provides an already created parent menu item in which
 a plugin can populate its menu items. If nothing is populated then Codimension
 will not display the plugin menu. All the menu populating members must
-be implemnted by a plugin.
+be implemented by a plugin.
 
 The GC plugin will have only the main menu. The entries will be for collecting
 garbage immediately and for an alternative way to run the plugin configuration
@@ -559,7 +559,7 @@ log messages are suppressed. E.g.
 import logging
 logging.error( "Error message" )    # Will be shown regardless of the startup options
 logging.debug( "Debug message" )    # Will be shown only if Codimension started as:
-                                    # >codimension --debug
+                                    # > codimension --debug
 ~~~
 
 
