@@ -351,6 +351,7 @@ The GC plugin will have only the main menu. The entries will be for collecting g
         return
 
     def populateBufferContextMenu( self, parentMenu ):
+        # No buffer context menu is required
         return
 </code>
 
