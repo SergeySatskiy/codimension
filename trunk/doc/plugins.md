@@ -481,8 +481,7 @@ four convenient places where a plugin can inject its menu items:
 
 In all the cases Codimension provides an already created parent menu item in which
 a plugin can populate its menu items. If nothing is populated then Codimension
-will not display the plugin menu. All the menu populating members must
-be implemented by a plugin.
+will not display the plugin menu.
 
 The GC plugin will have only the main menu. The entries will be for collecting
 garbage immediately and for an alternative way to run the plugin configuration
