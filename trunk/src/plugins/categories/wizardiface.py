@@ -96,7 +96,7 @@ class WizardInterface( CDMPluginBase ):
             <Plugin #N name> menu item shown.
             Codimension will remove the populated menu when a plugin is disabled.
         """
-        raise Exception( "populateMainMenu() must be overridden" )
+        return
 
     def populateFileContextMenu( self, parentMenu ):
         """ The file context menu shown in the project viewer window will have
@@ -114,7 +114,7 @@ class WizardInterface( CDMPluginBase ):
 
             Codimension will remove the populated menu when a plugin is disabled.
         """
-        raise Exception( "populateFileContextMenu() must be overridden" )
+        return
 
     def populateDirectoryContextMenu( self, parentMenu ):
         """ The directory context menu shown in the project viewer window will have
@@ -132,7 +132,7 @@ class WizardInterface( CDMPluginBase ):
 
             Codimension will remove the populated menu when a plugin is disabled.
         """
-        raise Exception( "populateDirectoryContextMenu() must be overridden" )
+        return
 
     def populateBufferContextMenu( self, parentMenu ):
         """ The buffer context menu shown for the current edited/viewed file
@@ -151,8 +151,7 @@ class WizardInterface( CDMPluginBase ):
                   - it could be that the disk file has already been deleted
                   - etc.
                   Having the current widget reference the plugin is able to retrieve
-                  the infirmation it needs.
+                  the information it needs.
         """
-        raise Exception( "populateBufferContextMenu() must be overridden" )
-
+        return
 
