@@ -29,6 +29,18 @@ from cdmpluginbase import CDMPluginBase
 class VersionControlSystemInterface( CDMPluginBase ):
     """ Version control system plugin interface """
 
+    # Standard indicators
+    VCS_NOT_WORKING_COPY = 0    # The directory is not a VCS checkout.
+    VCS_LOCAL_ONLY = 1          # The directory is a VCS checkout
+                                #   while an item is not.
+    VCS_UPTODATE = 2            # The item is the same as in the repository.
+    VCS_LOCAL_MODIFIED = 3      # The item is locally modified.
+    VCS_REMOTE_MODIFIED = 4     # The item is updated in the repository.
+    VCS_CONFLICT = 5            # The item is updated both locally
+                                #   and in the repository.
+    VCS_UNKNOWN = 6             # The item status is unknown, e.g. due to
+                                #   repository communication errors.
+
     def __init__( self ):
         """ The plugin class is instantiated with no arguments.
             Instantiating is done regardless wheather a plugin is
@@ -101,7 +113,7 @@ class VersionControlSystemInterface( CDMPluginBase ):
             <Plugin #N name> menu item shown.
             Codimension will remove the populated menu when a plugin is disabled.
         """
-        raise Exception( "populateMainMenu() must be overridden" )
+        return
 
     def populateFileContextMenu( self, parentMenu ):
         """ The file context menu shown in the project viewer window will have
@@ -119,7 +131,7 @@ class VersionControlSystemInterface( CDMPluginBase ):
 
             Codimension will remove the populated menu when a plugin is disabled.
         """
-        raise Exception( "populateFileContextMenu() must be overridden" )
+        return
 
     def populateDirectoryContextMenu( self, parentMenu ):
         """ The directory context menu shown in the project viewer window will have
@@ -137,7 +149,7 @@ class VersionControlSystemInterface( CDMPluginBase ):
 
             Codimension will remove the populated menu when a plugin is disabled.
         """
-        raise Exception( "populateDirectoryContextMenu() must be overridden" )
+        return
 
     def populateBufferContextMenu( self, parentMenu ):
         """ The buffer context menu shown for the current edited/viewed file
@@ -156,58 +168,35 @@ class VersionControlSystemInterface( CDMPluginBase ):
                   - it could be that the disk file has already been deleted
                   - etc.
                   Having the current widget reference the plugin is able to retrieve
-                  the infirmation it needs.
+                  the information it needs.
         """
-        raise Exception( "populateBufferContextMenu() must be overridden" )
+        return
 
-    def isUnderVCS( self, path ):
-        """ 'path' is an absolute path to a directory or to a file.
-            Return value must be True if the given path is under the
-            revision control system type, or False otherwise. """
-        raise Exception( "isUnderVCS() must be overridden" )
-
-    def isChangedLocally( self, path, recursive = False ):
-        """ 'path' is an absolute path to a directory or to a file.
-            If the path is a directory then the 'recursive' argument
-            could be set to True. If the path is a file then the
-            'recursive' argument should be ignored.
-
-            The expected return value is a list of tuples:
-            [ (relpath, bool), (relpath, bool)... ]
-            where relpath is a relative path to the item (empty string for a file)
-            and bool is True if the item changed locally
+    def getCustomIndicators( self ):
+        """ A plugin can provide a list of its custom indicators.
+            Each indicator is a tuple:
+            (id, what, foreground, background)
+            id - integer value which must be >= 64. 0 - 63 are reserved for standard
+                 indicators
+            what - string or QPixmap. If it is a pixmap it should be 16x16, if larger
+                   then the pixmap will be scaled.
+                   If it is a string then it must be no longer than 2 characters. The
+                   extra characters will be stripped.
+            foreground - QColor or None. It is taken into consideration only if the
+                         second value in the tuple is a string. The color will be
+                         used for the text font.
+            background - QColor or None. It is taken into consideration only if the
+                         second value in the tuple is a string. The color will be used
+                         to fill the indicator background.
         """
-        raise Exception( "isChangedLocally() must be overridden" )
+        return []
 
-    def isChangedRemotely( self, path, recursive = False ):
-        """ 'path' is an absolute path to a directory or to a file.
-            If the path is a directory then the 'recursive' argument
-            could be set to True. If the path is a file then the
-            'recursive' argument should be ignored.
-
-            The expected return value is a list of tuples:
-            [ (relpath, bool), (relpath, bool)... ]
-            where relpath is a relative path to the item (empty string for a file)
-            and bool is True if the item changed in the repository
+    def getStatus( self, basePath, recursive = None, items = None ):
+        """ A plugin should provide VCS statuses for the items.
+            basePath  - always a directory path (string)
+            items     - list of items in the basePath to be checked (list of strings)
+                        if the list is empty then the request is about the basePath
+            recursive - should the basePath expanded recursively
         """
-        raise Exception( "isChangedRemotely() must be overridden" )
-
-    def getInfo( self, path, recursive = False ):
-        """ 'path' is an absolute path to a directory or to a file.
-            If the path is a directory then the 'recursive' argument
-            could be set to True. If the path is a file then the
-            'recursive' argument should be ignored.
-
-            The expected return value is a list of tuples:
-            [ (relpath, string), (relpath, string)... ]
-            where relpath is a relative path to the item (empty string for a file)
-            and string is the textual description of what the VCS can tell about
-            the item.
-        """
-        raise Exception( "getInfo() must be overridden" )
-
-    def getRepositoryVersion( self, path, revision = None ):
-        """ Should provide the content of the file at path from the VCS.
-            If revision is not specified then it must be the latest version """
-        raise Exception( "getRepositoryVersion() must be overridden" )
+        return
 
