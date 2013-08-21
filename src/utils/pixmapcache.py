@@ -50,7 +50,10 @@ class PixmapCache( object ):
             try:
                 return self.__cache[ name ]
             except KeyError:
-                path = self.__searchPath + name
+                if os.path.isabs( name ):
+                    path = name
+                else:
+                    path = self.__searchPath + name
                 if not os.path.exists( path ):
                     pixmap = QPixmap()
                     self.__cache[ name ] = pixmap
