@@ -59,7 +59,10 @@ class PixmapCache( object ):
                     self.__cache[ name ] = pixmap
                     return pixmap
 
-                pixmap = QPixmap( path )
+                try:
+                    pixmap = QPixmap( path )
+                except:
+                    pixmap = QPixmap()
                 self.__cache[ name ] = pixmap
                 return pixmap
 
