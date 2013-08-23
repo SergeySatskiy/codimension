@@ -60,7 +60,7 @@ class WizardInterface( CDMPluginBase ):
             ideGlobalData - reference to the IDE global settings
                             see codimension/src/utils/globals.py
 
-            Note: if overriden then call the base class activate() first.
+            Note: if overridden then call the base class activate() first.
                   Plugin specific activation handling should follow it.
         """
         CDMPluginBase.activate( self, ideSettings, ideGlobalData )
@@ -70,7 +70,7 @@ class WizardInterface( CDMPluginBase ):
         """ The plugin may override the method to do specific
             plugin deactivation handling.
 
-            Note: if overriden then first do the plugin specific deactivation
+            Note: if overridden then first do the plugin specific deactivation
                   handling and then call the base class deactivate()
         """
         CDMPluginBase.deactivate( self )

@@ -22,8 +22,9 @@
 
 """ Base class for all codimension plugins """
 
+import logging
 from yapsy.IPlugin import IPlugin
-from PyQt4.QtCore import QObject
+from PyQt4.QtCore import QObject, SIGNAL
 
 from utils.settings import settingsDir
 
@@ -35,7 +36,7 @@ class CDMPluginBase( IPlugin, QObject ):
         IPlugin.__init__( self )
         QObject.__init__( self )
 
-        self.ide = IDEAccess()
+        self.ide = IDEAccess( self )
         return
 
     def activate( self, ideSettings, ideGlobalData ):
@@ -83,12 +84,13 @@ class SidePanel():
 class IDEAccess( object ):
     " Incapsulates access to the various IDE parts "
 
-    def __init__( self ):
+    def __init__( self, parent ):
         # The members below are initialized after
         # the 'activate' method is called
         self.settings = None
         self.globalData = None
         self.__sidePanels = None
+        self.__parent = parent
         return
 
     def activate( self, ideSettings, ideGlobalData ):
@@ -327,4 +329,25 @@ class IDEAccess( object ):
                                                              bpointPanel.widget.breakPointViewer.toolbar )
         self.__sidePanels[ "breakpoints" ] = bpointPanel
         return
+
+    def sendLogMessage( self, level, msg, *args ):
+        """ Sends a log message asynchronously.
+            The method could be used safely from a non-GUI thread.
+
+            level => integer, one of those found in logging:
+                              logging.CRITICAL
+                              logging.ERROR
+                              logging.WARNING
+                              logging.INFO
+                              logging.DEBUG
+            msg => message
+            args => message arguments to be substituted (mgs % args)
+        """
+        try:
+            self.__parent.emit( SIGNAL( 'pluginLogMessage(int, str)' ), level, msg % args )
+        except Exception, exc:
+            self.__parent.emit( SIGNAL( 'pluginLogMessage(int, str)' ), logging.ERROR,
+                                "Error sending a plugin log message. Error: " + str( exc ) )
+        return
+
 
