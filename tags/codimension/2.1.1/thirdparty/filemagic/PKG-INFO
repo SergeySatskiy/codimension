@@ -1,0 +1,169 @@
+Metadata-Version: 1.1
+Name: filemagic
+Version: 1.6
+Summary: A Python API for libmagic, the library behind the Unix file command
+Home-page: http://filemagic.readthedocs.org
+Author: Aaron Iles
+Author-email: aaron.iles@gmail.com
+License: ASL
+Description: .. _background:
+        
+        Background
+        ----------
+        
+        `libmagic <http://www.darwinsys.com/file/>`_ is the library that commonly
+        supports the *file* command on Unix system, other than Max OSX which has its
+        own implementation. The library handles the loading of *database* files that
+        describe the magic numbers used to identify various file types, as well as the
+        associated mime types. The library also handles character set detections.
+        
+        .. _installation:
+        
+        Installation
+        ------------
+        
+        Before installing *filemagic*, the *libmagic* library will need to be
+        availabile.  To test this is the check for the presence of the *file* command
+        and/or the *libmagic* man page. ::
+        
+            $ which file
+            $ man libmagic
+        
+        On Mac OSX, Apple has implemented their own version of the file command.
+        However, *libmagic* can be installed using `homebrew
+        <https://github.com/mxcl/homebrew>`_ ::
+        
+            $ brew install libmagic
+        
+        After *brew* finished installing, the test for the *libmagic* man page should
+        pass.
+        
+        Now that the presence of *libmagic* has been confirmed, use `pip
+        <http://pypi.python.org/pypi/pip>`_ to install filemagic. ::
+        
+            $ pip install filemagic
+        
+        The *magic* module should now be availabe from the Python shell. ::
+        
+            >>> import magic
+        
+        The next section will describe how to use the *magic.Magic* class to
+        identify file types.
+        
+        .. _usage:
+        
+        Usage
+        -----
+        
+        The *magic* module uses `ctypes
+        <http://docs.python.org/dev/library/ctypes.html>`_ to wrap the primitives from
+        *libmagic* in the more user friendly *magic.Magic* class. This class
+        handles initialization, loading databases and the release of resources. ::
+        
+            >>> import magic
+        
+        To ensure that resources are correctly released by *magic.Magic*, it's
+        necessary to either explicitly call *magic.Magic.close* on instances,
+        or use ``with`` statement. ::
+        
+            >>> with magic.Magic as m:
+            ...     pass
+            ...
+        
+        *magic.Magic* supports context managers which ensures resources are
+        correctly released at the end of the ``with`` statements irrespective of any
+        exceptions.
+        
+        To identify a file from it's filename, use the
+        *magic.Magic.id_filename()* method. ::
+        
+            >>> with magic.Magic as m:
+            ...     m.id_filename('setup.py')
+            ...
+            'Python script, ASCII text executable'
+        
+        Similarily to identify a file from a string that has already been read, use the
+        *magic.Magic.id_buffer* method. ::
+        
+            >>> with magic.Magic as m:
+            ...     m.id_buffer('#!/usr/bin/python\n')
+            ...
+            'Python script, ASCII text executable'
+        
+        To identify with mime type, rather than a textual description, pass the
+        *magic.MAGIC_MIME_TYPE* flag when creating the *magic.Magic*
+        instance.  ::
+        
+            >>> with magic.Magic(flags=magic.MAGIC_MIME_TYPE) as m:
+            ...     m.id_filename('setup.py')
+            ...
+            'text/x-python'
+        
+        Similarily, *magic.MAGIC_MIME_ENCODING* can be passed to return the
+        encoding type. ::
+        
+            >>> with magic.Magic(flags=magic.MAGIC_MIME_ENCODING) as m:
+            ...     m.id_filename('setup.py')
+            ...
+            'us-ascii'
+        
+        .. _unicode:
+        
+        Memory management
+        -----------------
+        
+        The *libmagic* library allocates memory for its own use outside that Python.
+        This memory needs to be released when a *magic.Magic* instance is no
+        longer needed. The preferred way to doing this is to explicitly call the
+        *magic.Magic.close* method or use the ``with`` statement, as
+        described above.
+        
+        Starting with version 1.4 *magic.Magic* this memory will be
+        automatically cleaned up when the instance is garbage collected. However,
+        unlike CPython, some Python interpreters such as `PyPy <http://pypy.org>`_,
+        `Jython <http://jython.org>`_ and `IronPython <http://ironpython.net>`_ do
+        not have deterministic garbage collection. Because of this, *filemagic* will
+        issue a warning if it automatically cleans up resources.
+        
+        Unicode and filemagic
+        ---------------------
+        
+        On both Python2 and Python3, *magic.Magic*'s methods will encode any
+        unicode objects (the default string type for Python3) to byte strings before
+        being passed to *libmagic*. On Python3, returned strings will be decoded to
+        unicode using the default encoding type. The user **should not** be concerned
+        whether unicode or bytes are passed to *magic.Magic* methods. However,
+        the user **will** need to be aware that returned strings are always unicode on
+        Python3 and byte strings on Python2.
+        
+        .. _issues:
+        
+        Reporting issues
+        ----------------
+        
+        The source code for *filemagic* is hosted on
+        `Github <https://github.com/aliles/filemagic>`_.
+        Problems can be reported using Github's
+        `issues tracking <https://github.com/aliles/filemagic/issues>`_ system.
+        
+        *filemagic* has been tested against *libmagic* 5.11. Continuous integration
+        is provided by `Travis CI <http://travis-ci.org>`_. The current build status
+        is |build_status|.
+        
+        .. |build_status| image:: https://secure.travis-ci.org/aliles/filemagic.png?branch=master
+           :target: http://travis-ci.org/#!/aliles/filemagic
+        
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.6
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.2
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
