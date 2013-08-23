@@ -1,5 +1,5 @@
 Name: codimension
-Version: 2.1.0
+Version: 2.1.1
 Release: 2
 License: GPLv3+
 Group: Development/Tools/IDE
@@ -10,7 +10,7 @@ Source0: %{name}-%{version}.tar.gz
 Source1: %{name}.xpm
 Source2: %{name}.sharedmimeinfo
 Source3: %{name}.desktop
-Source4: %{name}.png
+ource4: %{name}.png
 
 Requires: python
 Requires: codimension-parser >= 1.6
@@ -81,6 +81,10 @@ update-desktop-database -q
 %{_datadir}/pixmaps/*.xpm
 
 %changelog
+* Wed Aug 23 2013 Ilya Loginov <isloginov@gmail.com> - 2.1.1-2
+- Version 2.1.1
+- Fix: completion did not offer anything for relative imports. Issue #402.
+
 * Wed Aug 14 2013 Ilya Loginov <isloginov@gmail.com> - 2.1.0-2
 - Release 2.1.0
 - Better calltips for PyQt objects.

@@ -1,5 +1,6 @@
-XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
+2013 Aug 23 Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Version 2.1.1
 * Fix: completion did not offer anything for relative imports. Issue #402.
 
 2013 Aug 12 Sergey Satskiy <sergey.satskiy@gmail.com>
