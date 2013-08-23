@@ -77,7 +77,7 @@ class VersionControlSystemInterface( CDMPluginBase ):
             ideGlobalData - reference to the IDE global settings
                             see codimension/src/utils/globals.py
 
-            Note: if overriden then call the base class activate() first.
+            Note: if overridden then call the base class activate() first.
                   Plugin specific activation handling should follow it.
         """
         CDMPluginBase.activate( self, ideSettings, ideGlobalData )
@@ -87,7 +87,7 @@ class VersionControlSystemInterface( CDMPluginBase ):
         """ The plugin may override the method to do specific
             plugin deactivation handling.
 
-            Note: if overriden then first do the plugin specific deactivation
+            Note: if overridden then first do the plugin specific deactivation
                   handling and then call the base class deactivate()
         """
         CDMPluginBase.deactivate( self )
@@ -191,12 +191,36 @@ class VersionControlSystemInterface( CDMPluginBase ):
         """
         return []
 
-    def getStatus( self, basePath, recursive = None, items = None ):
+
+    # flag argement values for the getStatus() method
+    REQUEST_ITEM_ONLY = 0
+    REQUEST_DIRECTORY = 1
+    REQUEST_RECURSIVE = 2
+
+    def getStatus( self, path, flag ):
         """ A plugin should provide VCS statuses for the items.
-            basePath  - always a directory path (string)
-            items     - list of items in the basePath to be checked (list of strings)
-                        if the list is empty then the request is about the basePath
-            recursive - should the basePath expanded recursively
+            path - absolute path (string)
+            flag - tells what is requested. It is one of the following:
+              - REQUEST_ITEM_ONLY => the status of the path is requested
+              - REQUEST_DIRECTORY => the path is a directory and the status of
+                                     each item in the directory is requested
+              - REQUEST_RECURSIVE => the path is a directory and the status of
+                                     each item recursively is requested
+
+            Return value:
+              list of tuples for each reported item
+              (rest-of-item-path, status, message) where
+                  - rest-of-item-path => the received path + this value
+                                         must make the full item path
+                  - status => integer, whether a standard VCS_... constant or
+                              a custom indicator identifier
+                  - message => message if so (string) or None. If a message
+                               is supplied then it will appear as a tooltip
+                               over the item indicator
+
+            ATTENTION: no IDE functions must be called from this method. This
+                       method is running in a separate thread and updating UI from
+                       non-UI thread can cause the IDE crash.
         """
-        return
+        raise Exception( "getStatus() must be overridden" )
 
