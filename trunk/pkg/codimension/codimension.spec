@@ -10,7 +10,7 @@ Source0: %{name}-%{version}.tar.gz
 Source1: %{name}.xpm
 Source2: %{name}.sharedmimeinfo
 Source3: %{name}.desktop
-ource4: %{name}.png
+Source4: %{name}.png
 
 Requires: python
 Requires: codimension-parser >= 1.6
@@ -76,12 +76,14 @@ update-desktop-database -q
 %defattr(-,root,root,-)
 %{_bindir}/*
 %{_datadir}/%{name}
+%{_datadir}/%{name}-plugins
 %{_datadir}/applications/*.desktop
 %{_datadir}/mime/packages/*.xml
 %{_datadir}/pixmaps/*.xpm
+%{_datadir}/pixmaps/*.png
 
 %changelog
-* Wed Aug 23 2013 Ilya Loginov <isloginov@gmail.com> - 2.1.1-2
+* Fri Aug 23 2013 Ilya Loginov <isloginov@gmail.com> - 2.1.1-2
 - Version 2.1.1
 - Fix: completion did not offer anything for relative imports. Issue #402.
 
@@ -123,7 +125,7 @@ update-desktop-database -q
 - Replacing the 'file' utilities calls with magic module included in thirdparty
   directory.
 
-* Tue Jun 05 2013 Ilya Loginov <isloginov@gmail.com> - 2.0-1
+* Wed Jun 05 2013 Ilya Loginov <isloginov@gmail.com> - 2.0-1
 - Upstream changes for release 2.0:
 - Initial implementation of the debugger.
 - Project viewer restores the previous session expanded directories at the
