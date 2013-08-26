@@ -175,7 +175,7 @@ class VersionControlSystemInterface( CDMPluginBase ):
     def getCustomIndicators( self ):
         """ A plugin can provide a list of its custom indicators.
             Each indicator is a tuple:
-            (id, what, foreground, background)
+            (id, what, foreground, background, defaultTooltip)
             id - integer value which must be >= 64. 0 - 63 are reserved for standard
                  indicators
             what - string or QPixmap. If it is a pixmap it should be 16x16, if larger
@@ -188,6 +188,9 @@ class VersionControlSystemInterface( CDMPluginBase ):
             background - QColor or None. It is taken into consideration only if the
                          second value in the tuple is a string. The color will be used
                          to fill the indicator background.
+            defaultTooltip - string or None. If provided and the getStatus(...)
+                             call did not provide a message then this one is
+                             displayed
         """
         return []
 
