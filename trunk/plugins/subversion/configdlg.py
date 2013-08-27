@@ -23,7 +23,7 @@
 " Codimension SVN plugin config dialog "
 
 
-import os.path
+import os.path, logging, ConfigParser, string, copy, stat
 from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui import ( QDialog, QVBoxLayout, QGroupBox, QSizePolicy,
                           QRadioButton, QDialogButtonBox, QPixmap,
@@ -53,19 +53,99 @@ class SVNSettings:
         return
 
 
+def caesar( s, k, decode ):
+    " Taken from here: http://rosettacode.org/wiki/Caesar_cipher "
+    if decode:
+        k = 26 - k
+    return s.translate( string.maketrans(
+            string.ascii_uppercase + string.ascii_lowercase,
+            string.ascii_uppercase[k:] + string.ascii_uppercase[:k] +
+            string.ascii_lowercase[k:] + string.ascii_lowercase[:k] ) )
+
+
+def saveSVNSettings( settings, fName ):
+    " Saves settings to the file "
+    try:
+        userNameValue = ""
+        passwordValue = ""
+        if settings.userName:
+            userNameValue = caesar( settings.userName, 7, False )
+        if settings.password:
+            passwordValue = caesar( settings.password, 7, False )
+
+        f = open( fName, "w" )
+        f.write( "# Automatically generated\n"
+                 "[svnplugin]\n"
+                 "authkind=" + str( settings.authKind ) + "\n"
+                 "username=" + userNameValue + "\n"
+                 "password=" + passwordValue + "\n"
+                 "updatekind=" + str( settings.updateKind ) + "\n"
+                 "updateinterval=" + str( settings.updateInterval ) + "\n" )
+        f.close()
+        os.chmod( fName, stat.S_IRUSR | stat.S_IWUSR )
+    except Exception, exc:
+        logging.error( "Error saving SVN plugin settings into " + fName + ".\n"
+                       "Exception: " + str( exc ) )
+    return
+
+
+def getSettings( fName ):
+    """ Reads settings from the file.
+        If the file does not exist - creates default """
+    try:
+        settings = SVNSettings()
+        if os.path.exists( fName ):
+            # File exists, read it
+            config = ConfigParser.ConfigParser()
+            config.read( [ fName ] )
+            value = int( config.get( "svnplugin", "authkind" ) )
+            if value in [ AUTH_EXTERNAL, AUTH_PASSWD ]:
+                settings.authKind = value
+                settings.userName = caesar( config.get( "svnplugin", "username" ), 7, True )
+                settings.password = caesar( config.get( "svnplugin", "password" ), 7, True )
+            else:
+                settings.authKind = AUTH_EXTERNAL
+                settings.userName = None
+                settings.password = None
+
+            value = int( config.get( "svnplugin", "updatekind" ) )
+            if value in [ UPDATE_LOCAL_ONLY, UPDATE_REPOSITORY ]:
+                settings.updateKind = value
+            else:
+                settings.updateKind = UPDATE_REPOSITORY
+
+            value = int( config.get( "svnplugin", "updateinterval" ) )
+            if value >= 1:
+                settings.updateInterval = value
+            else:
+                settings.updateInterval = UPDATE_INTERVAL_DEFAULT
+        else:
+            # File does not exist - create default settings
+            saveSVNSettings( settings, fName )
+        return settings
+    except Exception, exc:
+        logging.error( "Error retrieving SVN plugin settings from " + fName +
+                       ". Using default settings.\nException: " + str( exc ) )
+        return SVNSettings()
+
+
+
 class SVNPluginConfigDialog( QDialog ):
     " SVN Plugin config dialog "
 
-    def __init__( self, sysWideSettings, projectSettings, parent = None ):
+    def __init__( self, ideWideSettings, projectSettings, parent = None ):
         QDialog.__init__( self, parent )
         self.__createLayout()
         self.setWindowTitle( "SVN plugin configuration" )
 
-        self.sysWideSettings = sysWideSettings
-        self.projectSettings = projectSettings
+        self.ideWideSettings = copy.deepcopy( ideWideSettings )
+        if projectSettings is None:
+            self.projectSettings = None
+        else:
+            self.projectSettings = copy.deepcopy( projectSettings )
 
         # Set the values
-        self.__setSyswideValues()
+        self.__setIDEWideValues()
         if projectSettings is None:
             self.__tabWidget.setTabEnabled( 1, False )
         else:
@@ -73,31 +153,39 @@ class SVNPluginConfigDialog( QDialog ):
             self.__tabWidget.setCurrentIndex( 1 )
         self.__updateOKStatus()
 
-        self.connect( self.__syswideUser, SIGNAL( "textChanged(const QString&)" ),
+        self.connect( self.__idewideUser,
+                      SIGNAL( "textChanged(const QString&)" ),
                       self.__updateOKStatus )
-        self.connect( self.__projectUser, SIGNAL( "textChanged(const QString&)" ),
+        self.connect( self.__projectUser,
+                      SIGNAL( "textChanged(const QString&)" ),
+                      self.__updateOKStatus )
+        self.connect( self.__idewideIntervalEdit,
+                      SIGNAL( "textChanged(const QString&)" ),
+                      self.__updateOKStatus )
+        self.connect( self.__projectIntervalEdit,
+                      SIGNAL( "textChanged(const QString&)" ),
                       self.__updateOKStatus )
         return
 
-    def __setSyswideValues( self ):
-        " Sets the values in the system wide tab "
-        if self.sysWideSettings.authKind == AUTH_EXTERNAL:
-            self.__syswideAuthExtRButton.setChecked( True )
-            self.__syswideUser.setEnabled( False )
-            self.__syswidePasswd.setEnabled( False )
+    def __setIDEWideValues( self ):
+        " Sets the values in the IDE wide tab "
+        if self.ideWideSettings.authKind == AUTH_EXTERNAL:
+            self.__idewideAuthExtRButton.setChecked( True )
+            self.__idewideUser.setEnabled( False )
+            self.__idewidePasswd.setEnabled( False )
         else:
-            self.__syswideAuthPasswdRButton.setChecked( True )
-            if self.sysWideSettings.userName:
-                self.__syswideUser.setText( self.sysWideSettings.userName )
-            if self.sysWideSettings.password:
-                self.__syswidePasswd.setText( self.sysWideSettings.password )
+            self.__idewideAuthPasswdRButton.setChecked( True )
+            if self.ideWideSettings.userName:
+                self.__idewideUser.setText( self.ideWideSettings.userName )
+            if self.ideWideSettings.password:
+                self.__idewidePasswd.setText( self.ideWideSettings.password )
 
-        if self.sysWideSettings.updateKind == UPDATE_REPOSITORY:
-            self.__syswideReposRButton.setChecked( True )
+        if self.ideWideSettings.updateKind == UPDATE_REPOSITORY:
+            self.__idewideReposRButton.setChecked( True )
         else:
-            self.__syswideLocalRButton.setChecked( True )
+            self.__idewideLocalRButton.setChecked( True )
 
-        self.__syswideIntervalEdit.setText( str( self.sysWideSettings.updateInterval ) )
+        self.__idewideIntervalEdit.setText( str( self.ideWideSettings.updateInterval ) )
         return
 
     def __setProjectValues( self ):
@@ -147,8 +235,8 @@ class SVNPluginConfigDialog( QDialog ):
         self.__tabWidget = QTabWidget( self )
         self.__tabWidget.setFocusPolicy( Qt.NoFocus )
 
-        systemWide = self.__createSystemWide()
-        self.__tabWidget.addTab( systemWide, "System Wide" )
+        ideWide = self.__createIDEWide()
+        self.__tabWidget.addTab( ideWide, "IDE Wide" )
         projectSpecific = self.__createProjectSpecific()
         self.__tabWidget.addTab( projectSpecific, "Project Specific" )
         vboxLayout.addWidget( self.__tabWidget )
@@ -163,8 +251,8 @@ class SVNPluginConfigDialog( QDialog ):
         vboxLayout.addWidget( self.__buttonBox )
         return
 
-    def __createSystemWide( self ):
-        " Creates the system wide part "
+    def __createIDEWide( self ):
+        " Creates the IDE wide part "
         widget = QWidget()
 
         verticalLayout = QVBoxLayout( widget )
@@ -183,30 +271,30 @@ class SVNPluginConfigDialog( QDialog ):
         authGroupbox.setSizePolicy( sizePolicy )
 
         layoutAuth = QVBoxLayout( authGroupbox )
-        self.__syswideAuthExtRButton = QRadioButton( "External", authGroupbox )
-        self.connect( self.__syswideAuthExtRButton, SIGNAL( "clicked()" ),
-                      self.__syswideAuthChanged )
-        layoutAuth.addWidget( self.__syswideAuthExtRButton )
-        self.__syswideAuthPasswdRButton = QRadioButton(
+        self.__idewideAuthExtRButton = QRadioButton( "External", authGroupbox )
+        self.connect( self.__idewideAuthExtRButton, SIGNAL( "clicked()" ),
+                      self.__idewideAuthChanged )
+        layoutAuth.addWidget( self.__idewideAuthExtRButton )
+        self.__idewideAuthPasswdRButton = QRadioButton(
                     "Use user name / password", authGroupbox )
-        self.connect( self.__syswideAuthPasswdRButton, SIGNAL( "clicked()" ),
-                      self.__syswideAuthChanged )
-        layoutAuth.addWidget( self.__syswideAuthPasswdRButton )
+        self.connect( self.__idewideAuthPasswdRButton, SIGNAL( "clicked()" ),
+                      self.__idewideAuthChanged )
+        layoutAuth.addWidget( self.__idewideAuthPasswdRButton )
 
         upLayout = QGridLayout()
-        self.__syswideUser = QLineEdit()
-        self.__syswideUser.setToolTip( "Attention: user name is "
+        self.__idewideUser = QLineEdit()
+        self.__idewideUser.setToolTip( "Attention: user name is "
                                        "saved unencrypted" )
-        self.__syswidePasswd = QLineEdit()
-        self.__syswidePasswd.setToolTip( "Attention: password is "
+        self.__idewidePasswd = QLineEdit()
+        self.__idewidePasswd.setToolTip( "Attention: password is "
                                          "saved unencrypted" )
         spacer = QWidget()
         spacer.setFixedWidth( 16 )
         upLayout.addWidget( spacer, 0, 0 )
         upLayout.addWidget( QLabel( "User name" ), 0, 1 )
-        upLayout.addWidget( self.__syswideUser, 0, 2 )
+        upLayout.addWidget( self.__idewideUser, 0, 2 )
         upLayout.addWidget( QLabel( "Password" ), 1, 1 )
-        upLayout.addWidget( self.__syswidePasswd, 1, 2 )
+        upLayout.addWidget( self.__idewidePasswd, 1, 2 )
         layoutAuth.addLayout( upLayout )
 
         # Update status group box
@@ -220,19 +308,19 @@ class SVNPluginConfigDialog( QDialog ):
         updateGroupbox.setSizePolicy( sizePolicy )
 
         layoutUpdate = QVBoxLayout( updateGroupbox )
-        self.__syswideReposRButton = QRadioButton( "Check repository",
+        self.__idewideReposRButton = QRadioButton( "Check repository",
                                                    updateGroupbox )
-        layoutUpdate.addWidget( self.__syswideReposRButton )
-        self.__syswideLocalRButton = QRadioButton( "Local only",
+        layoutUpdate.addWidget( self.__idewideReposRButton )
+        self.__idewideLocalRButton = QRadioButton( "Local only",
                                                    updateGroupbox )
-        layoutUpdate.addWidget( self.__syswideLocalRButton )
+        layoutUpdate.addWidget( self.__idewideLocalRButton )
 
         # Update interval
         intervalLayout = QHBoxLayout()
         intervalLayout.addWidget( QLabel( "Update interval, sec." ) )
-        self.__syswideIntervalEdit = QLineEdit()
-        self.__syswideIntervalEdit.setValidator( QIntValidator( 1, 3600, self ) )
-        intervalLayout.addWidget( self.__syswideIntervalEdit )
+        self.__idewideIntervalEdit = QLineEdit()
+        self.__idewideIntervalEdit.setValidator( QIntValidator( 1, 3600, self ) )
+        intervalLayout.addWidget( self.__idewideIntervalEdit )
 
         verticalLayout.addWidget( authGroupbox )
         verticalLayout.addWidget( updateGroupbox )
@@ -240,15 +328,15 @@ class SVNPluginConfigDialog( QDialog ):
 
         return widget
 
-    def __syswideAuthChanged( self ):
+    def __idewideAuthChanged( self ):
         " Triggered when authorization has been changed "
-        if self.__syswideAuthExtRButton.isChecked():
-            self.__syswideUser.setEnabled( False )
-            self.__syswidePasswd.setEnabled( False )
+        if self.__idewideAuthExtRButton.isChecked():
+            self.__idewideUser.setEnabled( False )
+            self.__idewidePasswd.setEnabled( False )
         else:
-            self.__syswideUser.setEnabled( True )
-            self.__syswidePasswd.setEnabled( True )
-            self.__syswideUser.setFocus()
+            self.__idewideUser.setEnabled( True )
+            self.__idewidePasswd.setEnabled( True )
+            self.__idewideUser.setFocus()
         self.__updateOKStatus()
         return
 
@@ -343,22 +431,22 @@ class SVNPluginConfigDialog( QDialog ):
 
     def userAccept( self ):
         " Triggered when the user clicks OK "
-        # Collect system-wide values
-        if self.__syswideAuthExtRButton.isChecked():
-            self.sysWideSettings.authKind = AUTH_EXTERNAL
-            self.sysWideSettings.userName = None
-            self.sysWideSettings.password = None
+        # Collect IDE-wide values
+        if self.__idewideAuthExtRButton.isChecked():
+            self.ideWideSettings.authKind = AUTH_EXTERNAL
+            self.ideWideSettings.userName = None
+            self.ideWideSettings.password = None
         else:
-            self.sysWideSettings.authKind = AUTH_PASSWD
-            self.sysWideSettings.userName = str( self.__syswideUser.text() ).strip()
-            self.sysWideSettings.password = str( self.__syswidePasswd.text() ).strip()
+            self.ideWideSettings.authKind = AUTH_PASSWD
+            self.ideWideSettings.userName = str( self.__idewideUser.text() ).strip()
+            self.ideWideSettings.password = str( self.__idewidePasswd.text() ).strip()
 
-        if self.__syswideReposRButton.isChecked():
-            self.sysWideSettings.updateKind = UPDATE_REPOSITORY
+        if self.__idewideReposRButton.isChecked():
+            self.ideWideSettings.updateKind = UPDATE_REPOSITORY
         else:
-            self.sysWideSettings.updateKind = UPDATE_LOCAL_ONLY
+            self.ideWideSettings.updateKind = UPDATE_LOCAL_ONLY
 
-        self.sysWideSettings.updateInterval = int( str( self.__syswideIntervalEdit.text() ) )
+        self.ideWideSettings.updateInterval = int( str( self.__idewideIntervalEdit.text() ) )
 
         if self.projectSettings is not None:
             if self.__projectAuthExtRButton.isChecked():
@@ -383,19 +471,32 @@ class SVNPluginConfigDialog( QDialog ):
     def __updateOKStatus( self ):
         " Updates the OK button status "
         okButton = self.__buttonBox.button( QDialogButtonBox.Ok )
-        if self.__syswideAuthPasswdRButton.isChecked():
-            userName = str( self.__syswideUser.text() ).strip()
+        if self.__idewideAuthPasswdRButton.isChecked():
+            userName = str( self.__idewideUser.text() ).strip()
             if not userName:
                 okButton.setEnabled( False )
-                okButton.setToolTip( "System wide SVN user name cannot be empty" )
+                okButton.setToolTip( "IDE wide SVN user name cannot be empty" )
                 return
         if self.projectSettings is not None:
             if self.__projectAuthPasswdRButton.isChecked():
                 userName = str( self.__projectUser.text() ).strip()
                 if not userName:
                     okButton.setEnabled( False )
-                    okButton.setToolTip( "Project specific SVN user name cannot be empty" )
+                    okButton.setToolTip( "Project specific SVN "
+                                         "user name cannot be empty" )
                     return
+
+        if str( self.__idewideIntervalEdit.text() ) == "":
+            okButton.setEnabled( False )
+            okButton.setToolTip( "IDE wide update interval must be defined" )
+            return
+
+        if self.projectSettings is not None:
+            if str( self.__projectIntervalEdit.text() ) == "":
+                okButton.setEnabled( False )
+                okButton.setToolTip( "Project specific update "
+                                     "interval must be defined" )
+                return
 
         okButton.setEnabled( True )
         okButton.setToolTip( "" )

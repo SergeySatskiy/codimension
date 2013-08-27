@@ -23,10 +23,12 @@
 " Codimension SVN plugin implementation "
 
 
+from PyQt4.QtCore import SIGNAL
+from PyQt4.QtGui import QDialog
 from plugins.categories.vcsiface import VersionControlSystemInterface
 from menus import ( populateMainMenu, populateFileContextMenu,
                     populateDirectoryContextMenu, populateBufferContextMenu )
-from configdlg import SVNPluginConfigDialog, SVNSettings
+from configdlg import SVNPluginConfigDialog, saveSVNSettings, getSettings
 
 
 
@@ -35,15 +37,14 @@ class SubversionPlugin( VersionControlSystemInterface ):
 
     def __init__( self ):
         VersionControlSystemInterface.__init__( self )
+
+        self.projectSettings = None
+        self.ideWideSettings = None
         return
 
     @staticmethod
     def isIDEVersionCompatible( ideVersion ):
-        """ Codimension makes this call before activating a plugin.
-            The passed ideVersion is a string representing
-            the current IDE version.
-            True should be returned if the plugin is compatible with the IDE.
-        """
+        " SVN Plugin is compatible with any IDE version "
         return True
 
     @staticmethod
@@ -52,87 +53,85 @@ class SubversionPlugin( VersionControlSystemInterface ):
         return "SVN"
 
     def activate( self, ideSettings, ideGlobalData ):
-        """ The plugin may override the method to do specific
-            plugin activation handling.
-
-            ideSettings - reference to the IDE Settings singleton
-                          see codimension/src/utils/settings.py
-            ideGlobalData - reference to the IDE global settings
-                            see codimension/src/utils/globals.py
-
-            Note: if overriden do not forget to call the
-                  base class activate() """
+        " Called when the plugin is activated "
         VersionControlSystemInterface.activate( self, ideSettings,
                                                       ideGlobalData )
+
+        # Read the settings
+        self.ideWideSettings = getSettings( self.__getIDEConfigFile() )
+        if self.ide.project.isLoaded():
+            self.projectSettings = getSettings( self.__getProjectConfigFile() )
+        self.connect( self.ide.project, SIGNAL( 'projectChanged' ),
+                      self.__onProjectChanged )
         return
 
     def deactivate( self ):
-        """ The plugin may override the method to do specific
-            plugin deactivation handling.
-            Note: if overriden do not forget to call the
-                  base class deactivate() """
+        " Called when the plugin is deactivated "
+        self.disconnect( self.ide.project, SIGNAL( 'projectChanged' ),
+                         self.__onProjectChanged )
+
+        self.projectSettings = None
+        self.ideWideSettings = None
+
         VersionControlSystemInterface.deactivate( self )
         return
 
     def getConfigFunction( self ):
-        """ The plugin can provide a function which will be called when the
-            user requests plugin configuring.
-            If a plugin does not require any config parameters then None
-            should be returned.
-            By default no configuring is required.
-        """
+        " SVN plugin requires configuring "
         return self.configure
 
     def populateMainMenu( self, parentMenu ):
-        """ The main menu looks as follows:
-            Plugins
-                - Mange plugins (fixed item)
-                - Separator (fixed item)
-                - <Plugin #1 name> (this is the parentMenu passed)
-                ...
-            If no items were populated by the plugin then there will be no
-            <Plugin #N name> menu item shown.
-            It is suggested to insert plugin configuration item here if so.
-        """
+        " Called to build main menu "
         populateMainMenu( self, parentMenu )
         return
 
     def populateFileContextMenu( self, parentMenu ):
-        """ The file context menu shown in the project viewer window will have
-            an item with a plugin name and subitems which are populated here.
-            If no items were populated then the plugin menu item will not be
-            shown.
-            When a callback is called the corresponding menu item will have
-            attached data with an absolute path to the item.
-        """
+        " Called to build a file context menu in the project and FS browsers "
         populateFileContextMenu( self, parentMenu )
         return
 
     def populateDirectoryContextMenu( self, parentMenu ):
-        """ The directory context menu shown in the project viewer window will have
-            an item with a plugin name and subitems which are populated here.
-            If no items were populated then the plugin menu item will not be
-            shown.
-            When a callback is called the corresponding menu item will have
-            attached data with an absolute path to the directory.
-        """
+        " Called to build a dir context menu in the project and FS browsers "
         populateDirectoryContextMenu( self, parentMenu )
         return
 
     def populateBufferContextMenu( self, parentMenu ):
-        """ The buffer context menu shown for the current edited/viewed file
-            will have an item with a plugin name and subitems which are populated here.
-            If no items were populated then the plugin menu item will not be
-            shown.
-            When a callback is called the corresponding menu item will have
-            attached data with the buffer UUID.
-        """
+        " Called to build a buffer context menu "
         populateBufferContextMenu( self, parentMenu )
         return
 
+    def __getIDEConfigFile( self ):
+        " Provides a name of the IDE wide config file "
+        return self.ide.settingsDir + "svn.plugin.conf"
+
+    def __getProjectConfigFile( self ):
+        " Provides a name of the project config file "
+        return self.ide.projectSettingsDir + "svn.plugin.conf"
+
     def configure( self ):
         " Configures the SVN plugin "
-        dlg = SVNPluginConfigDialog( SVNSettings(), None )
-        dlg.exec_()
+        dlg = SVNPluginConfigDialog( self.ideWideSettings,
+                                     self.projectSettings )
+        if dlg.exec_() == QDialog.Accepted:
+            # Save the settings if they have changed
+            if self.ideWideSettings != dlg.ideWideSettings:
+                self.ideWideSettings = dlg.ideWideSettings
+                saveSVNSettings( self.ideWideSettings,
+                                 self.__getIDEConfigFile() )
+            if self.projectSettings is not None:
+                if self.projectSettings != dlg.projectSettings:
+                    self.projectSettings = dlg.projectSettings
+                    saveSVNSettings( self.projectSettings,
+                                     self.__getProjectConfigFile() )
         return
 
+    def __onProjectChanged( self, what ):
+        " Triggers when a project has changed "
+        if what != self.ide.project.CompleteProject:
+            return
+
+        if self.ide.project.isLoaded():
+            self.projectSettings = getSettings( self.__getProjectConfigFile() )
+        else:
+            self.projectSettings = None
+        return
