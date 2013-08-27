@@ -25,6 +25,7 @@
 
 def populateMainMenu( plugin, parentMenu ):
     " Populates subversion plugin main menu "
+    parentMenu.addAction( "Configure", plugin.configure )
     return
 
 def populateFileContextMenu( plugin, parentMenu ):

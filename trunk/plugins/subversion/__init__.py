@@ -26,6 +26,7 @@
 from plugins.categories.vcsiface import VersionControlSystemInterface
 from menus import ( populateMainMenu, populateFileContextMenu,
                     populateDirectoryContextMenu, populateBufferContextMenu )
+from configdlg import SVNPluginConfigDialog, SVNSettings
 
 
 
@@ -129,58 +130,9 @@ class SubversionPlugin( VersionControlSystemInterface ):
         populateBufferContextMenu( self, parentMenu )
         return
 
-    def isUnderVCS( self, path ):
-        """ 'path' is an absolute path to a directory or to a file.
-            Return value must be True if the given path is under the
-            revision control system type, or False otherwise. """
-        raise Exception( "isUnderVCS() must be overridden" )
-
-    def isChangedLocally( self, path, recursively = False ):
-        """ 'path' is an absolute path to a directory or to a file.
-            If the path is a directory then the 'recursive' argument
-            could be set to True. If the path is a file then the
-            'recursive' argument should be ignored.
-
-            The expected return value is a list of tuples:
-            [ (relpath, bool), (relpath, bool)... ]
-            where relpath is a relative path to the item (empty string for a file)
-            and bool is True if the item changed locally
-        """
-        raise Exception( "isChangedLocally() must be overridden" )
-
-    def isChangedRemotely( self, path, recursively = False ):
-        """ 'path' is an absolute path to a directory or to a file.
-            If the path is a directory then the 'recursive' argument
-            could be set to True. If the path is a file then the
-            'recursive' argument should be ignored.
-
-            The expected return value is a list of tuples:
-            [ (relpath, bool), (relpath, bool)... ]
-            where relpath is a relative path to the item (empty string for a file)
-            and bool is True if the item changed in the repository
-        """
-        raise Exception( "isChangedRemotely() must be overridden" )
-
-    def getInfo( self, path, recursively = False ):
-        """ 'path' is an absolute path to a directory or to a file.
-            If the path is a directory then the 'recursive' argument
-            could be set to True. If the path is a file then the
-            'recursive' argument should be ignored.
-
-            The expected return value is a list of tuples:
-            [ (relpath, string), (relpath, string)... ]
-            where relpath is a relative path to the item (empty string for a file)
-            and string is the textual description of what the VCS can tell about
-            the item.
-        """
-        raise Exception( "getInfo() must be overridden" )
-
-    def getRepositoryVersion( self, path, revision = None ):
-        """ Should provide the content of the file at path from the VCS.
-            If revision is not specified then it must be the latest version """
-        raise Exception( "getRepositoryVersion() must be overridden" )
-
     def configure( self ):
         " Configures the SVN plugin "
+        dlg = SVNPluginConfigDialog( SVNSettings(), None )
+        dlg.exec_()
         return
 
