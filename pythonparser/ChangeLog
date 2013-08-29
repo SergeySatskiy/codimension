@@ -1,3 +1,8 @@
+2013 Aug 29  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for release v.1.6.3
+* Bug fix: core dump in case of import without anything following it
+
 2013 Jun 27  Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Prepared for release v.1.6.2

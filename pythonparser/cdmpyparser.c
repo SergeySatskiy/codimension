@@ -153,6 +153,21 @@ static pANTLR3_COMMON_TOKEN  getDottedName( pANTLR3_BASE_TREE  tree,
             name[ len++ ] = '.';
         else
             firstToken = currentToken;
+
+        /* It is possible by some reasons that a DOTTED_NAME node is formed
+         * of length 1 however the first token start and stop is NULL. That
+         * happens when there is no actual name after a syntax construction
+         * found, e.g.:
+         * import
+         * So there is an explicit check here.
+         * I have no ideas why the DOTTED_NAME is formed at all...
+         */
+        if ( currentToken->start == 0 )
+        {
+            name[ len ] = '\0';
+            return firstToken;
+        }
+
         partLen = (char *)(currentToken->stop) - (char *)(currentToken->start) + 1;
         memcpy( name + len, (char *)(currentToken->start), partLen );
         len += partLen;
@@ -290,11 +305,12 @@ static void  processImport( pANTLR3_BASE_TREE            tree,
         if ( getType( t ) == DOTTED_NAME )
         {
             pANTLR3_COMMON_TOKEN    token = getDottedName( t, name );
-            PyObject_CallFunction( callbacks->onImport, "siii",
-                                   name,
-                                   token->line,
-                                   token->charPosition + 1, /* Make it 1-based */
-                                   (char *)(token->start) - (char *)token->input->data );
+            if ( token->start != 0 )
+                PyObject_CallFunction( callbacks->onImport, "siii",
+                                       name,
+                                       token->line,
+                                       token->charPosition + 1, /* Make it 1-based */
+                                       (char *)(token->start) - (char *)token->input->data );
         }
         else if ( getType( t ) == WHAT )
         {
@@ -369,11 +385,12 @@ static int processDecor( pANTLR3_BASE_TREE            tree,
 
     pANTLR3_COMMON_TOKEN    token = getDottedName( tree->children->get( tree->children, 0 ),
                                                    name );
-    PyObject_CallFunction( callbacks->onDecorator, "siii",
-                           name,
-                           token->line,
-                           token->charPosition + 1, /* Make it 1-based */
-                           (char *)token->start - (char *)token->input->data );
+    if ( token->start != 0 )
+        PyObject_CallFunction( callbacks->onDecorator, "siii",
+                               name,
+                               token->line,
+                               token->charPosition + 1, /* Make it 1-based */
+                               (char *)token->start - (char *)token->input->data );
     if ( strcmp( name, "staticmethod" ) == 0 )
     {
         isStaticMethod = 1;
