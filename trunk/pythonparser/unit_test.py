@@ -278,6 +278,21 @@ class CDMBriefParserTest( unittest.TestCase ):
                    "empty brackets test failed" )
         return
 
+    def test_lone_import( self ):
+        " Test for lone import keyword "
+
+        pythonFile = self.dir + "loneimport.py"
+        info = cdmbriefparser.getBriefModuleInfoFromFile( pythonFile )
+        self.failUnless( info.isOK != True )
+
+        f = open( pythonFile )
+        content = f.read()
+        f.close()
+
+        info = cdmbriefparser.getBriefModuleInfoFromMemory( content )
+        self.failUnless( info.isOK != True )
+        return
+
 
 # Run the unit tests
 if __name__ == '__main__':
