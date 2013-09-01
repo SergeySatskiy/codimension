@@ -1,3 +1,10 @@
+codimension-parser (1.6.3-2) precise; urgency=low
+
+ * Prepared for release v.1.6.3
+ * Bug fix: core dump in case of import without anything following it
+
+ -- Sergey <sergey.satskiy@gmail.com>  Thu, 29 Aug 2013 00:07:00 +0400
+
 codimension-parser (1.6.2-2) precise; urgency=low
 
  * Prepared for release v.1.6.2
