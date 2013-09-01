@@ -1,5 +1,5 @@
 Name: codimension-parser
-Version: 1.6.2
+Version: 1.6.3
 Release: 1
 License: GPLv3+
 Group: Development/Languages
@@ -40,6 +40,10 @@ find $RPM_BUILD_ROOT -name "*.la" -exec rm -f {} ';'
 %{python_sitearch}/*.egg-info
 
 %changelog
+* Thu Aug 29 2013 Sergey Satskiy <sergey.satskiy@gmail.com> - 1.6.3-1
+- Prepared for release v.1.6.3
+- Bug fix: core dump in case of import without anything following it
+
 * Sun Jun 30 2013 Sergey Satskiy <sergey.satskiy@gmail.com> - 1.6.2-1
 - Prepared for release v.1.6.2
 - Bug fix: parser was not able to parse python 3 style print() functions
