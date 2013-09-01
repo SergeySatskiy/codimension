@@ -2,7 +2,7 @@
 
 src_dir="`dirname "$0"`"
 
-case "$DEB_BUILD_ARCH_BITS-$RPM_ARCH" in
+case "$DEB_HOST_ARCH_BITS-$RPM_ARCH" in
 64-)
     arch_bits_opt='--enable-64bit'
     install_layout_opt=' --install-layout=deb'
