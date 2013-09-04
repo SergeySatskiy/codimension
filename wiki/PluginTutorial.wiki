@@ -43,7 +43,7 @@ The user is always able to enable or disable plugins manually and in particular 
 
 <table width="100%">
 <tr align="middle"><td aligh="middle">
-http://satsky.spb.ru/codimension/doc/PluginManager.png
+http://codimension.googlecode.com/svn/wiki/images/PluginManager.png
 </td></tr>
 </table>
 
@@ -52,7 +52,7 @@ Each plugin can move between the enabled and disabled state an arbitrary number 
 
 <table width="100%">
 <tr align="middle"><td aligh="middle">
-http://satsky.spb.ru/codimension/doc/PluginStates.png
+http://codimension.googlecode.com/svn/wiki/images/PluginStates.png
 </td></tr>
 </table>
 
@@ -230,7 +230,7 @@ The GC plugin needs some configuring. The user should be able to instruct the pl
 
 <table width="100%">
 <tr align="middle"><td aligh="middle">
-http://satsky.spb.ru/codimension/doc/GCConfigDialog.png
+http://codimension.googlecode.com/svn/wiki/images/GCConfigDialog.png
 </td></tr>
 </table>
 
