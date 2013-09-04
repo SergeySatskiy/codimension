@@ -28,7 +28,7 @@ from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui import ( QDialog, QVBoxLayout, QGroupBox, QSizePolicy,
                           QRadioButton, QDialogButtonBox, QPixmap,
                           QHBoxLayout, QLabel, QTabWidget, QWidget, QGridLayout,
-                          QLineEdit, QIntValidator )
+                          QLineEdit )
 
 
 AUTH_EXTERNAL = 0               # No user/password or external authorization
@@ -36,8 +36,6 @@ AUTH_PASSWD = 1                 # The user name and password are used
 
 UPDATE_LOCAL_ONLY = 0           # Checks only the local status
 UPDATE_REPOSITORY = 1           # Checks both local status and the repository
-
-UPDATE_INTERVAL_DEFAULT = 30    # 30 seconds
 
 
 
@@ -49,7 +47,6 @@ class SVNSettings:
         self.userName = None
         self.password = None
         self.updateKind = UPDATE_REPOSITORY
-        self.updateInterval = UPDATE_INTERVAL_DEFAULT
         return
 
 
@@ -79,8 +76,7 @@ def saveSVNSettings( settings, fName ):
                  "authkind=" + str( settings.authKind ) + "\n"
                  "username=" + userNameValue + "\n"
                  "password=" + passwordValue + "\n"
-                 "updatekind=" + str( settings.updateKind ) + "\n"
-                 "updateinterval=" + str( settings.updateInterval ) + "\n" )
+                 "updatekind=" + str( settings.updateKind ) + "\n" )
         f.close()
         os.chmod( fName, stat.S_IRUSR | stat.S_IWUSR )
     except Exception, exc:
@@ -113,12 +109,6 @@ def getSettings( fName ):
                 settings.updateKind = value
             else:
                 settings.updateKind = UPDATE_REPOSITORY
-
-            value = int( config.get( "svnplugin", "updateinterval" ) )
-            if value >= 1:
-                settings.updateInterval = value
-            else:
-                settings.updateInterval = UPDATE_INTERVAL_DEFAULT
         else:
             # File does not exist - create default settings
             saveSVNSettings( settings, fName )
@@ -159,12 +149,6 @@ class SVNPluginConfigDialog( QDialog ):
         self.connect( self.__projectUser,
                       SIGNAL( "textChanged(const QString&)" ),
                       self.__updateOKStatus )
-        self.connect( self.__idewideIntervalEdit,
-                      SIGNAL( "textChanged(const QString&)" ),
-                      self.__updateOKStatus )
-        self.connect( self.__projectIntervalEdit,
-                      SIGNAL( "textChanged(const QString&)" ),
-                      self.__updateOKStatus )
         return
 
     def __setIDEWideValues( self ):
@@ -184,8 +168,6 @@ class SVNPluginConfigDialog( QDialog ):
             self.__idewideReposRButton.setChecked( True )
         else:
             self.__idewideLocalRButton.setChecked( True )
-
-        self.__idewideIntervalEdit.setText( str( self.ideWideSettings.updateInterval ) )
         return
 
     def __setProjectValues( self ):
@@ -205,8 +187,6 @@ class SVNPluginConfigDialog( QDialog ):
             self.__projectReposRButton.setChecked( True )
         else:
             self.__projectLocalRButton.setChecked( True )
-
-        self.__projectIntervalEdit.setText( str( self.projectSettings.updateInterval ) )
         return
 
     def __createLayout( self ):
@@ -315,16 +295,8 @@ class SVNPluginConfigDialog( QDialog ):
                                                    updateGroupbox )
         layoutUpdate.addWidget( self.__idewideLocalRButton )
 
-        # Update interval
-        intervalLayout = QHBoxLayout()
-        intervalLayout.addWidget( QLabel( "Update interval, sec." ) )
-        self.__idewideIntervalEdit = QLineEdit()
-        self.__idewideIntervalEdit.setValidator( QIntValidator( 1, 3600, self ) )
-        intervalLayout.addWidget( self.__idewideIntervalEdit )
-
         verticalLayout.addWidget( authGroupbox )
         verticalLayout.addWidget( updateGroupbox )
-        verticalLayout.addLayout( intervalLayout )
 
         return widget
 
@@ -404,16 +376,8 @@ class SVNPluginConfigDialog( QDialog ):
                                                    updateGroupbox )
         layoutUpdate.addWidget( self.__projectLocalRButton )
 
-        # Update interval
-        intervalLayout = QHBoxLayout()
-        intervalLayout.addWidget( QLabel( "Update interval, sec." ) )
-        self.__projectIntervalEdit = QLineEdit()
-        self.__projectIntervalEdit.setValidator( QIntValidator( 1, 3600, self ) )
-        intervalLayout.addWidget( self.__projectIntervalEdit )
-
         verticalLayout.addWidget( authGroupbox )
         verticalLayout.addWidget( updateGroupbox )
-        verticalLayout.addLayout( intervalLayout )
 
         return widget
 
@@ -446,8 +410,6 @@ class SVNPluginConfigDialog( QDialog ):
         else:
             self.ideWideSettings.updateKind = UPDATE_LOCAL_ONLY
 
-        self.ideWideSettings.updateInterval = int( str( self.__idewideIntervalEdit.text() ) )
-
         if self.projectSettings is not None:
             if self.__projectAuthExtRButton.isChecked():
                 self.projectSettings.authKind = AUTH_EXTERNAL
@@ -462,8 +424,6 @@ class SVNPluginConfigDialog( QDialog ):
                 self.projectSettings.updateKind = UPDATE_REPOSITORY
             else:
                 self.projectSettings.updateKind = UPDATE_LOCAL_ONLY
-
-            self.projectSettings.updateInterval = int( str( self.__projectIntervalEdit.text() ) )
 
         self.accept()
         return
@@ -485,18 +445,6 @@ class SVNPluginConfigDialog( QDialog ):
                     okButton.setToolTip( "Project specific SVN "
                                          "user name cannot be empty" )
                     return
-
-        if str( self.__idewideIntervalEdit.text() ) == "":
-            okButton.setEnabled( False )
-            okButton.setToolTip( "IDE wide update interval must be defined" )
-            return
-
-        if self.projectSettings is not None:
-            if str( self.__projectIntervalEdit.text() ) == "":
-                okButton.setEnabled( False )
-                okButton.setToolTip( "Project specific update "
-                                     "interval must be defined" )
-                return
 
         okButton.setEnabled( True )
         okButton.setToolTip( "" )
