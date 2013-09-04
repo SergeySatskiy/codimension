@@ -41,11 +41,20 @@ An important detail on the plugin initialization stage is that regardless whethe
 
 The user is always able to enable or disable plugins manually and in particular resolve detected conflicts the required way if automatic resolution is not what is needed. The manual control of plugin states is done in the plugin manager. The manager user interface is available via main menu '''Options->Plugin Manager''' menu item as shown below.
 
+<table width="100%">
+<tr align="middle"><td aligh="middle">
 http://satsky.spb.ru/codimension/doc/PluginManager.png
+</td></tr>
+</table>
+
 
 Each plugin can move between the enabled and disabled state an arbitrary number of times within a single Codimension session. This could be illustrated as follows.
 
+<table width="100%">
+<tr align="middle"><td aligh="middle">
 http://satsky.spb.ru/codimension/doc/PluginStates.png
+</td></tr>
+</table>
 
 
 The last term Codimension introduces for plugins is a plugin category. Plugins could require different support on the IDE side and a plugin category is the way how to distinguish the required support. For example, a spell checker plugin might need certain support targeted to text editing while a plugin which implements a regular expression visual testing facility does not need text editing support at all. A plugin category defines an interface variation between Codimension and a plugin. The categories come in a form of predefined base classes and each plugin must derive from one of them.
@@ -97,7 +106,12 @@ codimensionLogo = PixmapCache().getPixmap( 'logo.png' )
 
 It was mentioned in the previous section that a plugin class must derive from one of the predefined plugin category base class. So a part of the PDF exporter plugin class hierarchy may look as follows:
 
-http://satsky.spb.ru/codimension/doc/PluginBases.png
+<table width="100%">
+<tr align="middle"><td aligh="middle">
+http://codimension.googlecode.com/svn/wiki/images/PluginBases.png
+</td></tr>
+</table>
+
 
 The `PDFExporterPlugin` class must reside in the `__init__.py` file. This is the class which implements the plugin interface. The plugin developer does not need and should not make any changes in any other classes shown on the diagram.
 
@@ -214,7 +228,12 @@ The GC plugin initialization is basically connecting a few IDE signals with the 
 
 The GC plugin needs some configuring. The user should be able to instruct the plugin where the garbage collection information should be displayed. It is going to be a modal graphics dialog with three radio buttons:
 
+<table width="100%">
+<tr align="middle"><td aligh="middle">
 http://satsky.spb.ru/codimension/doc/GCConfigDialog.png
+</td></tr>
+</table>
+
 
 Let's place the dialog code into a separate file `configdlg.py`. Three integer constants will be defined in the file as well. These constants identify the GC plugin information message destination.
 
