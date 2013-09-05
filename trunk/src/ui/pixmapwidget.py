@@ -24,14 +24,13 @@
 
 
 import os.path
-from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
-from PyQt4.QtGui                import QPalette, QSizePolicy, QScrollArea, \
-                                       QImage, QPixmap, QAction, \
-                                       QLabel, QToolBar, QWidget, \
-                                       QHBoxLayout, QApplication
-from PyQt4.QtCore               import Qt, SIGNAL, QSize
-from utils.pixmapcache          import PixmapCache
-from outsidechanges             import OutsideChangeWidget
+from mainwindowtabwidgetbase import MainWindowTabWidgetBase
+from PyQt4.QtGui import ( QPalette, QSizePolicy, QScrollArea, QImage, QPixmap,
+                          QAction, QLabel, QToolBar, QWidget, QHBoxLayout,
+                          QApplication )
+from PyQt4.QtCore import Qt, SIGNAL, QSize
+from utils.pixmapcache import PixmapCache
+from outsidechanges import OutsideChangeWidget
 
 
 
@@ -286,6 +285,17 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__viewer.doZoom( 0.8 )
         QApplication.processEvents()
         self.resizeBars()
+        return
+
+    def wheelEvent( self, event ):
+        """ Mouse wheel event """
+        if QApplication.keyboardModifiers() == Qt.ControlModifier:
+            if event.delta() > 0:
+                self.onZoomIn()
+            else:
+                self.onZoomOut()
+        else:
+            QWidget.wheelEvent( self, event )
         return
 
     def onZoomReset( self ):
