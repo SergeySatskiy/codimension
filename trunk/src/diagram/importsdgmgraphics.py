@@ -24,17 +24,15 @@
 """ imports diagram graphics objects """
 
 import math
-from PyQt4.QtGui                import QGraphicsRectItem, QGraphicsPathItem, \
-                                       QWidget, QGraphicsView, QFont, QPen, \
-                                       QToolBar, QHBoxLayout, QColor, \
-                                       QAction, QGraphicsItem, \
-                                       QPainterPath, QGraphicsTextItem, \
-                                       QFontMetrics, QStyleOptionGraphicsItem, \
-                                       QPainter, QStyle, QImage, QApplication
-from PyQt4.QtCore               import Qt, SIGNAL, QSize, QPointF, QRectF
+from PyQt4.QtGui import ( QGraphicsRectItem, QGraphicsPathItem, QWidget,
+                          QGraphicsView, QFont, QPen, QToolBar, QHBoxLayout,
+                          QColor, QAction, QGraphicsItem, QPainterPath,
+                          QGraphicsTextItem, QFontMetrics, QApplication,
+                          QStyleOptionGraphicsItem, QPainter, QStyle, QImage )
+from PyQt4.QtCore import Qt, SIGNAL, QSize, QPointF, QRectF
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from utils.pixmapcache          import PixmapCache
-from utils.globals              import GlobalData
+from utils.pixmapcache import PixmapCache
+from utils.globals import GlobalData
 
 
 
@@ -581,8 +579,11 @@ class DiagramWidget( QGraphicsView ):
 
     def wheelEvent( self, event ):
         """ Mouse wheel event """
-        factor = 1.41 ** ( -event.delta() / 240.0 )
-        self.scale( factor, factor )
+        if QApplication.keyboardModifiers() == Qt.ControlModifier:
+            factor = 1.41 ** ( -event.delta() / 240.0 )
+            self.scale( factor, factor )
+        else:
+            QGraphicsView.wheelEvent( self, event )
         return
 
     def __getImage( self ):
@@ -668,9 +669,9 @@ class ImportDgmTabWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.setIconSize( QSize( 16, 16 ) )
         toolbar.setFixedWidth( 28 )
         toolbar.setContentsMargins( 0, 0, 0, 0 )
-        toolbar.addAction( printPreviewButton )
-        toolbar.addAction( printButton )
-        toolbar.addWidget( fixedSpacer )
+        #toolbar.addAction( printPreviewButton )
+        #toolbar.addAction( printButton )
+        #toolbar.addWidget( fixedSpacer )
         toolbar.addAction( zoomInButton )
         toolbar.addAction( zoomOutButton )
         toolbar.addAction( zoomResetButton )
