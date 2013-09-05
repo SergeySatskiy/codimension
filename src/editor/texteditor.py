@@ -272,6 +272,17 @@ class TextEditor( ScintillaWrapper ):
 
         return ScintillaWrapper.eventFilter( self, obj, event )
 
+    def wheelEvent( self, event ):
+        " Mouse wheel event "
+        if QApplication.keyboardModifiers() == Qt.ControlModifier:
+            if event.delta() > 0:
+                self.parent().onZoomIn()
+            else:
+                self.parent().onZoomOut()
+        else:
+            ScintillaWrapper.wheelEvent( self, event )
+        return
+
     def __initContextMenu( self ):
         " Initializes the context menu "
         mainWindow = GlobalData().mainWindow
