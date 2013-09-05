@@ -167,3 +167,8 @@ class GotoLineWidget( QWidget ):
         self.__onGo()
         return
 
+    def selectAll( self ):
+        " Selects the line edit content "
+        self.linenumberEdit.lineEdit().selectAll()
+        return
+
