@@ -23,7 +23,7 @@
 
 """ codimension settings """
 
-import os, os.path, ConfigParser, logging, sys
+import os, os.path, ConfigParser, sys, datetime
 from PyQt4.QtCore import QObject, SIGNAL, QDir
 from filepositions import FilesPositions
 from run import TERM_AUTO
@@ -235,8 +235,8 @@ class Settings( object ):
             except:
                 # Bad error - save default
                 self.__config = None
-                logging.warning( "Bad format of settings detected. " \
-                                 "Overwriting the settings file..." )
+                self.__saveErrors( "Bad format of settings detected. "
+                                   "Overwriting the settings file..." )
                 self.flushSettings()
                 return
 
@@ -285,11 +285,21 @@ class Settings( object ):
 
             # If format is bad then overwrite the file
             if self.__readErrors:
-                for message in self.__readErrors:
-                    logging.info( message )
-                    logging.info( "Restoring missed or broken values..." )
+                self.__saveErrors( "\n".join( self.__readErrors ) )
                 self.flushSettings()
             return
+
+        def __saveErrors( self, message ):
+            fileName = settingsDir + "startupmessages.log"
+            try:
+                f = open( fileName, "a" )
+                f.write( "------ Startup report at " +
+                         str( datetime.datetime.now() ) + "\n" )
+                f.write( message )
+                f.write( "\n------\n\n" )
+                f.close()
+            except:
+                pass
 
         def __setDefaultValues( self ):
             " Sets the default values to the members "
@@ -354,16 +364,9 @@ class Settings( object ):
 
         def __getStrList( self, sec, key, default ):
             " Helper to read a list of string values "
-            values = []
             try:
-                index = 0
-                while True:
-                    values.append( self.__config.get( sec,
-                                        key + str( index ) ).strip() )
-                    index += 1
-            except ConfigParser.NoOptionError:
-                # Just continue
-                return values
+                return [ value for name, value in self.__config.items( sec )
+                               if name.startswith( key ) ]
             except ConfigParser.NoSectionError:
                 self.__readErrors.append( "Section [" + sec + "] is not found. "
                                           "Using default values: " +
@@ -487,21 +490,13 @@ class Settings( object ):
         @staticmethod
         def __loadListSection( config, section, listPrefix ):
             " Loads a list off the given section from the given file "
-            items = []
-            index = 0
-            try:
-                while True:
-                    item = config.get( section,
-                                       listPrefix + str( index ) ).strip()
-                    index += 1
-                    items.append( item )
-            except:
-                pass
-            return items
+            if config.has_section( section):
+                return [ value for name, value in config.items( section )
+                               if name.startswith( listPrefix ) ]
+            return []
 
         def __loadTabsStatus( self ):
             " Loads the last saved tabs statuses "
-
             config = ConfigParser.ConfigParser()
             try:
                 config.read( settingsDir + "tabsstatus" )
