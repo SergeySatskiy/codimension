@@ -1545,6 +1545,7 @@ class EditorsManager( QTabWidget ):
         if self.gotoWidget.isHidden():
             self.gotoWidget.show()
         self.gotoWidget.setFocus()
+        self.gotoWidget.selectAll()
         return
 
     def findNext( self ):
