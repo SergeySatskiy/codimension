@@ -36,6 +36,7 @@ class AboutDialog( QDialog ):
     def __init__( self, parent = None ):
         QDialog.__init__( self, parent )
         self.__createLayout()
+        self.setWindowTitle( "About Codimension" )
         return
 
     def __createLayout( self ):
