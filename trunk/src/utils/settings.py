@@ -50,7 +50,7 @@ ropePreferences = { 'ignore_syntax_errors': True,
                         "sys", "os", "os.path", "time", "datetime",
                         "thread", "errno", "inspect", "math", "cmath",
                         "socket", "re", "zlib", "shutil",
-                        "configParser", "urllib", "urllib2", "xml",
+                        "ConfigParser", "urllib", "urllib2", "xml",
                         "numpy", "scipy", "collections", "cPickle", "gc",
                         "exceptions", "signal", "imp", "operator",
                         "strop", "zipimport",
@@ -153,6 +153,10 @@ CDM_SETTINGS = {
 "disabledPlugins" : [
     CDMSetting( "disabledplugins", CDMSetting.TYPE_STR_LST, [] )
                     ],
+"dirSafeModules" : [
+    CDMSetting( "module", CDMSetting.TYPE_STR_LST, [ "os", "sys", "xml", "collections",
+                                                     "numpy", "scipy", "unittest" ] )
+                   ],
                }
 
 

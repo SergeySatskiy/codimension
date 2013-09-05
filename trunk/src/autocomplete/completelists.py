@@ -27,6 +27,7 @@ from cdmbriefparser import ( getBriefModuleInfoFromMemory,
 from bufferutils import ( getEditorTags, isRemarkLine, isStringLiteral,
                           isOnSomeImport )
 from utils.globals import GlobalData
+from utils.settings import Settings
 from listmodules import getSysModules, getModules
 import os, imp
 from rope.base.libutils import path_to_resource
@@ -127,8 +128,7 @@ def __getImportedObjects( moduleName, fileName ):
     moduleName = str( moduleName )
     if moduleName in __systemwideModules:
         modulePath = __systemwideModules[ moduleName ]
-        if modulePath is None or moduleName in [ "os", "sys",
-                                                 "numpy", "scipy", "unittest" ]:
+        if modulePath is None or moduleName in Settings().dirSafeModules:
             # it could be a built-in module
             return getImportNames( moduleName )
     else:
