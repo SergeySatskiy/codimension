@@ -344,9 +344,9 @@ class IDEAccess( object ):
             args => message arguments to be substituted (mgs % args)
         """
         try:
-            self.__parent.emit( SIGNAL( 'pluginLogMessage(int, str)' ), level, msg % args )
+            self.__parent.emit( SIGNAL( 'pluginLogMessage(int, QString)' ), level, msg % args )
         except Exception, exc:
-            self.__parent.emit( SIGNAL( 'pluginLogMessage(int, str)' ), logging.ERROR,
+            self.__parent.emit( SIGNAL( 'pluginLogMessage(int, QString)' ), logging.ERROR,
                                 "Error sending a plugin log message. Error: " + str( exc ) )
         return
 
