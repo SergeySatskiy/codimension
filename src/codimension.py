@@ -349,49 +349,57 @@ def processCommandLineArgs( args ):
 
 
 def copySkin():
-    " Tests if the configured skin is in place. Copies the default if not. "
-    localSkinDir = os.path.normpath( str( QDir.homePath() ) ) + \
+    """ Copies the new system-wide skins to the user settings dir.
+        Tests if the configured skin is in place. Sets the default if not. """
+    systemWideSkinsDir = srcDir + os.path.sep + "skins" + os.path.sep
+    userSkinsDir = os.path.normpath( str( QDir.homePath() ) ) + \
                    os.path.sep + ".codimension" + os.path.sep + "skins" + \
-                   os.path.sep + Settings().skin
-    if os.path.exists( localSkinDir ) and os.path.isdir( localSkinDir ):
+                   os.path.sep
+
+    for item in os.listdir( systemWideSkinsDir ):
+        candidate = systemWideSkinsDir + item
+        if os.path.isdir( candidate ):
+            userCandidate = userSkinsDir + item
+            if not os.path.exists( userCandidate ):
+                try:
+                    shutil.copytree( candidate, userCandidate )
+                except Exception, exc:
+                    logging.error( "Could not copy system wide skin from " +
+                                   candidate + " to the user skin to " +
+                                   userCandidate + ". Continue without copying skin." )
+                    logging.error( str( exc ) )
+
+    # Check that the configured skin is in place
+    userSkinDir = userSkinsDir + Settings().skin
+    if os.path.exists( userSkinDir ) and os.path.isdir( userSkinDir ):
         # That's just fine
         return
 
-    # The configured skin has not been found in the user directory,
-    # try to find it in the codimension installation and copy it to the
-    # user local dir
-    skinDir = srcDir + os.path.sep + "skins" + os.path.sep + Settings().skin
-    if os.path.exists( skinDir ) and os.path.isdir( skinDir ):
-        # OK, copy it for the user
-        try:
-            shutil.copytree( skinDir, localSkinDir )
-        except Exception, exc:
-            logging.error( "Could not create the user skin directory. "
-                           "Continue without a skin." )
-            logging.error( str( exc ) )
+    # Here: the configured skin is not found in the user dir.
+    # Try to set the default.
+    if os.path.exists( userSkinsDir + 'default' ) and os.path.isdir( userSkinsDir + 'default' ):
+        logging.warning( "The configured skin '" + Settings().skin +
+                         "' has not been found. Fallback to the 'default' skin." )
+        Settings().skin = 'default'
         return
 
-    # The configured skin dir has not been found anywhere.
-    # Try to get back to default.
+    # Default is not there. Try to pick any.
+    anySkinName = None
+    for item in os.listdir( userSkinsDir ):
+        if os.path.isdir( userSkinsDir + item ):
+            anySkinName = item
+            break
+
+    if anySkinName is None:
+        # Really bad situation. No system wide skins, no local skins.
+        logging.error( "Cannot find the any Codimension skin. "
+                       "Please check Codimension installation." )
+        return
+
+    # Here: last resort - fallback to the first found skin
     logging.warning( "The configured skin '" + Settings().skin +
-                     "' has not been found neither in the codimension "
-                     "installation nor in the user local tree. "
-                     "Trying to fallback to the 'default' skin." )
-
-    Settings().skin = 'default'
-    if os.path.exists( skinDir ) and os.path.isdir( skinDir ):
-        # OK, copy it for the user
-        try:
-            shutil.copytree( skinDir, localSkinDir )
-        except Exception, exc:
-            logging.error( "Could not create the user skin directory. "
-                           "Continue without a skin." )
-            logging.error( str( exc ) )
-        return
-
-    # No bloody good - there will be no skin
-    logging.error( "Cannot find the 'default' skin. "
-                   "Please check codimension installation." )
+                     "' has not been found. Fallback to the '" + anySkinName + "' skin." )
+    Settings().skin = anySkinName
     return
 
 
