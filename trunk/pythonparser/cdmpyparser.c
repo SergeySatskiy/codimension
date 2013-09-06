@@ -232,7 +232,7 @@ static void checkForDocstring( pANTLR3_BASE_TREE             tree,
             {
                 memcpy( buffer + collected,
                         (char *)currentToken->start + charsToSkip,
-                        MAX_DOCSTRING_SIZE - collected - charsToCopy - 1 );
+                        MAX_DOCSTRING_SIZE - collected - 1 );
                 collected = MAX_DOCSTRING_SIZE - 1;
                 break;
             }
