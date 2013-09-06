@@ -192,7 +192,7 @@ class SVNPluginConfigDialog( QDialog ):
     def __createLayout( self ):
         " Creates the dialog layout "
 
-        self.resize( 640, 450 )
+        self.resize( 640, 420 )
         self.setSizeGripEnabled( True )
 
         vboxLayout = QVBoxLayout( self )
