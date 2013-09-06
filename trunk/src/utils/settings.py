@@ -60,6 +60,15 @@ ropePreferences = { 'ignore_syntax_errors': True,
                         "*.pyo", "*.pyc", "*~", ".ropeproject",
                         ".hg", ".svn", "_svn", ".git", ".cvs" ] }
 
+DEFAULT_VCS_INDICATORS = [
+    "0:::?:::0,0,0,255:::255,255,255,255:::Not a working copy",     # VCS_NOT_WORKING_COPY
+    "1:::LO:::0,0,0,255:::255,255,255,255:::Local only",            # VCS_LOCAL_ONLY
+    "2:::OK:::0,0,0,255:::255,255,255,255:::Up to date",            # VCS_UPTODATE
+    "3:::LM:::0,0,0,255:::255,255,255,255:::Locally modified",      # VCS_LOCAL_MODIFIED
+    "4:::RM:::0,0,0,255:::255,255,255,255:::Remotely modified",     # VCS_REMOTE_MODIFIED
+    "5:::C:::0,0,0,255:::255,255,255,255:::Conflict",               # VCS_CONFLICT
+    "6:::!0,0,0,255:::255,255,255,255:::Unknown status",            # VCS_UNKNOWN
+]
 
 class CDMSetting:
     " Holds a single CDM setting description "
@@ -224,6 +233,7 @@ class Settings( object ):
             self.values[ "findFileHistory" ] = self.__loadFindFileHistory()
             self.values[ "breakpoints" ] = self.__loadBreakpoints()
             self.values[ "watchpoints" ] = self.__loadWatchpoints()
+            self.values[ "vcsindicators" ] = self.__loadVCSIndicators()
 
             # Create file if does not exist
             if not os.path.exists( self.fullFileName ):
@@ -569,6 +579,14 @@ class Settings( object ):
             " Loads the saved watchpoints "
             return self.__loadStringSectionFromFile( "watchpoints",
                                                      "watchpoints", "wpoint" )
+
+        def __loadVCSIndicators( self ):
+            " Loads tbe VCS indicators "
+            indicators = self.__loadStringSectionFromFile( "vcsindicators",
+                                                           "indicators", "indicator" )
+            if indicators:
+                return indicators
+            return DEFAULT_VCS_INDICATORS
 
         def __saveFindFilesHistory( self ):
             " Saves the find in files dialog history "
