@@ -27,7 +27,7 @@ import os.path
 from mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from PyQt4.QtGui import ( QPalette, QSizePolicy, QScrollArea, QImage, QPixmap,
                           QAction, QLabel, QToolBar, QWidget, QHBoxLayout,
-                          QApplication )
+                          QApplication, QMenu, QCursor )
 from PyQt4.QtCore import Qt, SIGNAL, QSize
 from utils.pixmapcache import PixmapCache
 from outsidechanges import OutsideChangeWidget
@@ -151,17 +151,21 @@ class PixmapWidget( QScrollArea ):
 class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
     " Pixmap viewer tab widget "
 
-    def __init__( self, parent = None ):
+    def __init__( self, parent ):
 
         MainWindowTabWidgetBase.__init__( self )
         QWidget.__init__( self, parent )
 
+        self.__editorsManager = parent
         self.__viewer = PixmapWidget()
         self.__fileName = ""
         self.__shortName = ""
 
         self.connect( self.__viewer, SIGNAL( 'ESCPressed' ),
                       self.__onEsc )
+        self.__viewer.setContextMenuPolicy( Qt.CustomContextMenu )
+        self.connect( self.__viewer, SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
+                      self.__onContextMenu )
 
         self.__createLayout()
 
@@ -296,6 +300,17 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
                 self.onZoomOut()
         else:
             QWidget.wheelEvent( self, event )
+        return
+
+    def __onContextMenu( self, pos ):
+        " Triggered when a context menu is requested "
+        pluginMenus = self.__editorsManager.getPluginMenus()
+        if pluginMenus:
+            contextMenu = QMenu()
+            for pluginPath, pluginMenu in pluginMenus.iteritems():
+                contextMenu.addMenu( pluginMenu )
+            contextMenu.exec_( QCursor.pos() )
+            del contextMenu
         return
 
     def onZoomReset( self ):
