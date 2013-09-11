@@ -945,7 +945,7 @@ class EditorsManager( QTabWidget ):
                     self.activateTab( index )
                     return True
             # Not found - create a new one
-            newWidget = PixmapTabWidget()
+            newWidget = PixmapTabWidget( self )
             self.connect( newWidget, SIGNAL( 'ESCPressed' ),
                           self.__onESC )
             self.connect( newWidget, SIGNAL( 'ReloadRequest' ),
