@@ -87,6 +87,7 @@ from debugger.bputils import clearValidBreakpointLinesCache
 from about import AboutDialog
 from utils.skin import getMonospaceFontList
 from plugins.manager.pluginmanagerdlg import PluginsDialog
+from plugins.vcssupport.vcsmanager import VCSManager
 
 
 class EditorsManagerWidget( QWidget ):
@@ -136,6 +137,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.__lastDebugLineNumber = None
         self.__lastDebugAsException = None
         self.__lastDebugAction = None
+
+        self.__vcsManager = VCSManager()
 
         self.__debugger = CodimensionDebugger( self )
         self.connect( self.__debugger, SIGNAL( "DebuggerStateChanged" ),

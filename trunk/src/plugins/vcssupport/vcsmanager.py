@@ -25,14 +25,45 @@ VCS plugin support: manager to keep track of the VCS plugins and file status
 """
 
 from statuscache import VCSStatusCache
+from utils.settings import Settings
+from indicator import VCSIndicator
+
+
+class VCSPluginDescriptor:
+    " Holds information about a single active plugin "
+
+    def __init__( self ):
+        self.pluginName = None
+        self.thread = None                  # VCS plugin service thread
+        self.indicators = None              # ID -> VCSIndicator
+        return
+
 
 
 class VCSManager:
     " Manages the VCS plugins "
 
     def __init__( self ):
-        self.dirCache = VCSStatusCache()
-        self.fileCache = VCSStatusCache()
+        self.dirCache = VCSStatusCache()    # Path -> VCSStatus
+        self.fileCache = VCSStatusCache()   # Path -> VCSStatus
+        self.activePlugins = {}             # Plugin ID -> VCSPluginDescriptor
+        self.systemIndicators = {}          # ID -> VCSIndicator
+
+        self.__firstFreeIndex = 0
+
+        self.__readSettingsIndicators()
         return
 
+    def __getNewPluginIndex( self ):
+        " Provides a new plugin index "
+        index = self.__firstFreeIndex
+        self.__firstFreeIndex += 1
+        return index
+
+    def __readSettingsIndicators( self ):
+        " Reads the system indicators "
+        for indicLine in Settings().vcsindicators:
+            indicator = VCSIndicator( indicLine )
+            self.systemIndicators[ indicator.identifier ] = indicator
+        return
 

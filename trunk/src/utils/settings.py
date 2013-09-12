@@ -67,7 +67,7 @@ DEFAULT_VCS_INDICATORS = [
     "3:::LM:::0,0,0,255:::255,255,255,255:::Locally modified",      # VCS_LOCAL_MODIFIED
     "4:::RM:::0,0,0,255:::255,255,255,255:::Remotely modified",     # VCS_REMOTE_MODIFIED
     "5:::C:::0,0,0,255:::255,255,255,255:::Conflict",               # VCS_CONFLICT
-    "6:::!0,0,0,255:::255,255,255,255:::Unknown status",            # VCS_UNKNOWN
+    "6:::!:::0,0,0,255:::255,255,255,255:::Unknown status",         # VCS_UNKNOWN
 ]
 
 class CDMSetting:
