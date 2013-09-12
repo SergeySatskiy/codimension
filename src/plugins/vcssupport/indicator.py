@@ -55,7 +55,7 @@ class VCSIndicator:
 
     def __init__( self, configLine ):
         """ Config line looks as follows:
-            id:::pathOrString:::ForegroudColor:::BackgroundColor:::Tooltip
+            id:::pathOrString:::ForegroundColor:::BackgroundColor:::Tooltip
             It comes from a config file or from a plugin
         """
         self.identifier = None

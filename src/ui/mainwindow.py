@@ -1913,6 +1913,9 @@ class CodimensionMainWindow( QMainWindow ):
             # DB unloading
             closeMagicLibrary()
 
+            # Stop the VCS manager threads
+            self.__vcsManager.dismissAllPlugins()
+
             # On ubuntu codimension produces core dumps coming from QT when:
             # - a new project is created
             # - the IDE is closed via Alt+F4
