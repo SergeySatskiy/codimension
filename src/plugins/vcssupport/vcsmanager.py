@@ -38,6 +38,13 @@ class VCSPluginDescriptor:
         self.indicators = None              # ID -> VCSIndicator
         return
 
+    def stopThread( self ):
+        " Stops the plugin thread synchronously "
+        pass
+
+    def requestStatus( self, path ):
+        " Requests the item status asynnchronously "
+        pass
 
 
 class VCSManager:
@@ -67,3 +74,18 @@ class VCSManager:
             self.systemIndicators[ indicator.identifier ] = indicator
         return
 
+    def __populateProjectDirectories( self ):
+        " Populates the project directories in the dirCache "
+        pass
+
+    def dismissPlugin( self, pluginName ):
+        " Stops the plugin thread and cleans the plugin data "
+        pass
+
+    def requestStatus( self, path ):
+        " Provides the path status asynchronously via sending a signal"
+        pass
+
+    def setLocallyModified( self, path ):
+        " Sets the item status as locally modified "
+        pass
