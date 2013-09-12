@@ -85,6 +85,7 @@ class CDMPluginManager( PluginManager, QObject ):
                     # OK, this plugin base has been recognised
                     recognised = True
                     newPlugin = CDMPluginInfo( plugin )
+                    newPlugin.categoryName = category
                     if collectedPlugins.has_key( category ):
                         collectedPlugins[ category ].append( newPlugin )
                     else:
@@ -411,6 +412,7 @@ class CDMPluginInfo:
         self.isEnabled = False                              # True/False
         self.conflictType = CDMPluginManager.NO_CONFLICT    # See CDMPluginManager constants
         self.conflictMessage = ""                           # One line message for UI/log
+        self.categoryName = None
         return
 
     def isUser( self ):
