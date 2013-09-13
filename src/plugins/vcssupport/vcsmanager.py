@@ -31,6 +31,7 @@ from indicator import VCSIndicator
 from utils.project import CodimensionProject
 from PyQt4.QtCore import QObject, SIGNAL
 from vcspluginthread import VCSPluginThread
+import logging
 
 
 class VCSPluginDescriptor:
@@ -57,8 +58,36 @@ class VCSPluginDescriptor:
         self.thread.addRequest( path, urgent )
         return
 
+    def __getPluginName( self ):
+        " Safe plugin name "
+        try:
+            return self.plugin.getName()
+        except:
+            return "Unknown (could not retrieve)"
+
     def __getPluginIndicators( self ):
         " Retrieves indicators from the plugin "
+        try:
+            for indicator in self.plugin.getObject().getCustomIndicators():
+                try:
+                    indicator = VCSIndicator( indicator )
+                    if indicator.identifier <= 63:
+                        logging.error( "Custom VCS plugin '" +
+                                       self.__getPluginName() +
+                                       "' indicator identifier " +
+                                       str( indicator.identifier ) +
+                                       " is invalid. It must be >= 64. "
+                                       "Ignore and continue." )
+                    else:
+                        self.indicators[ indicator.identifier ] = indicator
+                except Exception, exc:
+                    logging.error( "Error getting custom VCS plugin '" +
+                                   self.__getPluginName() +
+                                   "' indicator: " + str( exc ) )
+        except Exception, exc:
+            logging.error( "Error getting custom indicators for a VCS plugin " +
+                           self.__getPluginName() + ". Exception: " +
+                           str( exc ) )
         return
 
 
