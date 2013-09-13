@@ -960,7 +960,7 @@ class ReplaceWidget( FindReplaceBase ):
                                               isRegexp, isCase, isWord, 0, 0 )
         if not found:
             GlobalData().mainWindow.showStatusBarMessage( \
-                "No occurances of '" + text + "' found. Nothing is replaced." )
+                "No occurrences of '" + text + "' found. Nothing is replaced." )
             return
 
         # There is something matching
@@ -979,11 +979,11 @@ class ReplaceWidget( FindReplaceBase ):
         if count > 1:
             suffix = "s"
         GlobalData().mainWindow.showStatusBarMessage( \
-            str( count ) + " occurance" + suffix + " replaced" )
+            str( count ) + " occurrence" + suffix + " replaced" )
         return
 
     def __onReplace( self ):
-        " Triggered when replace current occurance button is clicked "
+        " Triggered when replace current occurrence button is clicked "
         replaceText = self.replaceCombo.currentText()
         text = self.findtextCombo.currentText()
         isRegexp = self.regexpCheckBox.isChecked()
@@ -998,7 +998,7 @@ class ReplaceWidget( FindReplaceBase ):
                                               searchAttributes.match[ 1 ] )
         if found:
             if self._editor.replaceTarget( str( replaceText ) ):
-                GlobalData().mainWindow.showStatusBarMessage( "1 occurance "
+                GlobalData().mainWindow.showStatusBarMessage( "1 occurrence "
                                                               "replaced" )
                 # Positioning cursor to the end of the replaced text helps
                 # to avoid problems of replacing 'text' with 'prefix_text'
@@ -1008,7 +1008,7 @@ class ReplaceWidget( FindReplaceBase ):
                 self.replaceButton.setEnabled( False )
                 self.replaceAndMoveButton.setEnabled( False )
             else:
-                GlobalData().mainWindow.showStatusBarMessage( "No occurance "
+                GlobalData().mainWindow.showStatusBarMessage( "No occurrences "
                                                               "replaced" )
             # This will prevent highlighting the improper editor positions
             searchAttributes.match = [ -1, -1, -1 ]
