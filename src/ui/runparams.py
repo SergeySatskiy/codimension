@@ -260,7 +260,7 @@ class RunDialog( QDialog ):
         layout = QVBoxLayout( self )
 
         # Cmd line arguments
-        argsLabel = QLabel( "Command line &arguments" )
+        argsLabel = QLabel( "Command line arguments" )
         self.__argsEdit = QLineEdit()
         self.connect( self.__argsEdit,
                       SIGNAL( 'textChanged(const QString &)' ),
