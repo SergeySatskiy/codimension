@@ -801,7 +801,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__searchMenu.addSeparator()
         self.__findOccurencesAct = self.__searchMenu.addAction(
                 PixmapCache().getIcon( 'findindir.png' ),
-                'Find &occurences', self.__onFindOccurences )
+                'Find &occurrences', self.__onFindOccurences )
         self.__findAct = self.__searchMenu.addAction(
                 PixmapCache().getIcon( 'findindir.png' ),
                 '&Find...', self.__onFind )
@@ -3591,7 +3591,7 @@ class CodimensionMainWindow( QMainWindow ):
         locations = getOccurrences( fileName, item.absPosition, False )
         if len( locations ) == 0:
             QApplication.restoreOverrideCursor()
-            self.showStatusBarMessage( "No occurances of " +
+            self.showStatusBarMessage( "No occurrences of " +
                                        item.name + " found" )
             return
 
