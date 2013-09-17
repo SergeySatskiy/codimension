@@ -491,6 +491,9 @@ class CDMPluginInfo:
         self.conflictMessage = conflictMessage
 
         if self.getObject().is_activated:
+            if self.categoryName == "VersionControlSystemInterface":
+                from utils.globals import GlobalData
+                GlobalData().mainWindow.dismissVCSPlugin( self )
             self.getObject().deactivate()
         return
 
