@@ -58,7 +58,7 @@ class VCSPluginDescriptor:
         self.thread.addRequest( path, urgent )
         return
 
-    def __getPluginName( self ):
+    def getPluginName( self ):
         " Safe plugin name "
         try:
             return self.plugin.getName()
@@ -73,7 +73,7 @@ class VCSPluginDescriptor:
                     indicator = VCSIndicator( indicator )
                     if indicator.identifier <= 63:
                         logging.error( "Custom VCS plugin '" +
-                                       self.__getPluginName() +
+                                       self.getPluginName() +
                                        "' indicator identifier " +
                                        str( indicator.identifier ) +
                                        " is invalid. It must be >= 64. "
@@ -82,11 +82,11 @@ class VCSPluginDescriptor:
                         self.indicators[ indicator.identifier ] = indicator
                 except Exception, exc:
                     logging.error( "Error getting custom VCS plugin '" +
-                                   self.__getPluginName() +
+                                   self.getPluginName() +
                                    "' indicator: " + str( exc ) )
         except Exception, exc:
             logging.error( "Error getting custom indicators for a VCS plugin " +
-                           self.__getPluginName() + ". Exception: " +
+                           self.getPluginName() + ". Exception: " +
                            str( exc ) )
         return
 
@@ -153,17 +153,47 @@ class VCSManager( QObject ):
         " Stops all the plugin threads "
         for identifier, descriptor in self.activePlugins.iteritems():
             descriptor.stopThread()
+
+        self.dirCache.clear()
+        self.fileCache.clear()
+        self.activePlugins = {}
         return
 
     def dismissPlugin( self, plugin ):
         " Stops the plugin thread and cleans the plugin data "
-        pass
+        pluginID = None
+        for identifier, descriptor in self.activePlugins.iteritems():
+            if descriptor.getPluginName() == plugin.getName():
+                pluginID = identifier
+                descriptor.stopThread()
+                self.fileCache.dismissPlugin( pluginID,
+                                              self.sendStatusNotification )
+                self.dirCache.dismissPlugin( pluginID,
+                                             self.sendStatusNotification )
+
+        if pluginID:
+            del self.activePlugins[ identifier ]
+        return
 
     def requestStatus( self, path ):
-        " Provides the path status asynchronously via sending a signal"
-        pass
+        " Provides the path status asynchronously via sending a signal "
+        status = self.dirCache.getStatus( path )
+        if not status:
+            status = self.fileCache.getStatus( path )
+        if status:
+            self.sendStatusNotification( path, status.pluginID,
+                                         status.indicatorID, status.message )
+        else:
+            for _, descriptor in self.activePlugins.iteritems():
+                descriptor.requestStatus( path, True )
+        return
 
     def setLocallyModified( self, path ):
         " Sets the item status as locally modified "
         pass
+
+    def sendStatusNotification( self, path, pluginID, indicatorID, message ):
+        " Sends a signal that about a status of the path "
+        self.emit( SIGNAL( "VCSStatus" ), path, pluginID, indicatorID, message )
+        return
 

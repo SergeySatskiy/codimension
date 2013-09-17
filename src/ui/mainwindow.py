@@ -1926,6 +1926,11 @@ class CodimensionMainWindow( QMainWindow ):
 
         return
 
+    def dismissVCSPlugin( self, plugin ):
+        " Dismisses the given VCS plugin "
+        self.__vcsManager.dismissPlugin( plugin )
+        return
+
     def getProjectExpandedPaths( self ):
         " Provides a list of expanded project directories "
         project = GlobalData().project

@@ -76,11 +76,17 @@ class VCSStatusCache:
         self.__cache = {}
         return
 
-    def discardPlugin( self, pluginID ):
+    def dismissPlugin( self, pluginID, callback ):
         " Removes all the certain plugin entries from the cache "
-        self.__cache = { path: status
-                         for path, status in self.__cache.iteritems()
-                            if status.pluginID != pluginID }
+        for path, status in self.__cache.iteritems():
+            if status.pluginID == pluginID:
+                status.lastUpdate = None
+                status.pluginID = None
+                status.message = None
+                oldIndicator = status.indicatorID
+                status.indicatorID = None
+                if oldIndicator:
+                    callback( path, None, None, None )
         return
 
 
