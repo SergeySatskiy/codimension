@@ -24,6 +24,8 @@
 VCS plugin support: manager to keep track of the VCS plugins and file status
 """
 
+import os.path
+import logging
 from statuscache import VCSStatusCache
 from utils.settings import Settings
 from utils.globals import GlobalData
@@ -31,7 +33,7 @@ from indicator import VCSIndicator
 from utils.project import CodimensionProject
 from PyQt4.QtCore import QObject, SIGNAL
 from vcspluginthread import VCSPluginThread
-import logging
+from plugins.categories.vcsiface import VersionControlSystemInterface
 
 
 class VCSPluginDescriptor:
@@ -53,9 +55,9 @@ class VCSPluginDescriptor:
         self.thread.wait()  # Joins the thread
         return
 
-    def requestStatus( self, path, urgent = False ):
+    def requestStatus( self, path, flag, urgent = False ):
         " Requests the item status asynchronously "
-        self.thread.addRequest( path, urgent )
+        self.thread.addRequest( path, flag, urgent )
         return
 
     def getPluginName( self ):
@@ -135,18 +137,37 @@ class VCSManager( QObject ):
 
         newPluginIndex = self.__getNewPluginIndex()
         self.activePlugins[ newPluginIndex ] = VCSPluginDescriptor( plugin )
-        return
 
+        if len( self.activePlugins ) == 1 and GlobalData().project.isLoaded():
+            # This is the first plugin and a projecct is there
+            self.__populateProjectDirectories()
+        return
 
     def __populateProjectDirectories( self ):
         " Populates the project directories in the dirCache "
-        pass
+        project = GlobalData().project
+        for path in project.filesList:
+            if path.endswith( os.path.sep ):
+                self.dirCache.updateStatus( path, None, None, None )
+        return
 
     def __onProjectChanged( self, what ):
         " Triggered when a project has changed "
         if what == CodimensionProject.CompleteProject:
-            pass
+            self.dirCache.clear()
+            self.fileCache.clear()
+            if len( self.activePlugins ) == 0:
+                return
 
+            # There are some plugins
+            if not GlobalData().project.isLoaded():
+                return
+
+            self.__populateProjectDirectories()
+            return
+
+        # Here: files or directories have changed
+        return
 
 
     def dismissAllPlugins( self ):
@@ -175,7 +196,8 @@ class VCSManager( QObject ):
             del self.activePlugins[ identifier ]
         return
 
-    def requestStatus( self, path ):
+    def requestStatus( self, path,
+                       flag = VersionControlSystemInterface.REQUEST_ITEM_ONLY ):
         " Provides the path status asynchronously via sending a signal "
         status = self.dirCache.getStatus( path )
         if not status:
@@ -185,7 +207,7 @@ class VCSManager( QObject ):
                                          status.indicatorID, status.message )
         else:
             for _, descriptor in self.activePlugins.iteritems():
-                descriptor.requestStatus( path, True )
+                descriptor.requestStatus( path, flag, True )
         return
 
     def setLocallyModified( self, path ):
