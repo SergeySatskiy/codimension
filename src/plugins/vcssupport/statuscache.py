@@ -43,20 +43,20 @@ class VCSStatusCache:
     " Caches the file statuses which came from various plugins "
 
     def __init__( self ):
-        self.__cache = {}   # path -> VCSStatus
+        self.cache = {}   # path -> VCSStatus
         return
 
     def getStatus( self, path ):
         " Provides the status if it is in the cache "
-        if path in self.__cache:
-            return self.__cache[ path ]
+        if path in self.cache:
+            return self.cache[ path ]
         return None
 
     def updateStatus( self, path, pluginID,
                             indicatorID, message ):
         " Updates the status in the cache "
-        if path in self.__cache:
-            item = self.__cache[ path ]
+        if path in self.cache:
+            item = self.cache[ path ]
             item.pluginID = pluginID
             item.indicatorID = indicatorID
             item.message = message
@@ -68,17 +68,17 @@ class VCSStatusCache:
         item.indicatorID = indicatorID
         item.message = message
         item.lastUpdate = datetime.datetime.now()
-        self.__cache[ path ] = item
+        self.cache[ path ] = item
         return
 
     def clear( self ):
         " Purges the cache "
-        self.__cache = {}
+        self.cache = {}
         return
 
     def dismissPlugin( self, pluginID, callback ):
         " Removes all the certain plugin entries from the cache "
-        for path, status in self.__cache.iteritems():
+        for path, status in self.cache.iteritems():
             if status.pluginID == pluginID:
                 status.lastUpdate = None
                 status.pluginID = None
