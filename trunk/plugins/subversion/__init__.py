@@ -27,6 +27,7 @@ from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QDialog
 from threading import Lock
 from copy import deepcopy
+import logging
 import pysvn
 from plugins.categories.vcsiface import VersionControlSystemInterface
 from menus import ( populateMainMenu, populateFileContextMenu,
@@ -68,6 +69,7 @@ class SubversionPlugin( VersionControlSystemInterface ):
             self.projectSettings = getSettings( self.__getProjectConfigFile() )
         self.connect( self.ide.project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
+        print "SVN Plugin activated"
         return
 
     def deactivate( self ):
@@ -167,12 +169,46 @@ class SubversionPlugin( VersionControlSystemInterface ):
     def getSVNClient( self, settings ):
         " Creates the SVN client object "
         client = pysvn.Client()
-        client.client.exception_style = 1   # In order to get error codes
+        client.exception_style = 1   # In order to get error codes
 
         if settings.authKind == AUTH_PASSWD:
             client.set_default_username( settings.userName )
             client.set_default_password( settings.password )
         return client
+
+    @staticmethod
+    def __convertSVNStatus( status ):
+        " Converts the status between the SVN and VCS plugin supported values "
+        if status.text_status == pysvn.wc_status_kind.added:
+            return 0
+        if status.text_status == pysvn.wc_status_kind.deleted:
+            return 0
+        if status.text_status == pysvn.wc_status_kind.ignored:
+            return 0
+        if status.text_status == pysvn.wc_status_kind.merged:
+            return 0
+        if status.text_status == pysvn.wc_status_kind.modified:
+            return 0
+        if status.text_status == pysvn.wc_status_kind.normal:
+            return 0
+        if status.text_status == pysvn.wc_status_kind.replaced:
+            return 0
+        if status.text_status == pysvn.wc_status_kind.conflicted:
+            return 0
+        if status.text_status == pysvn.wc_status_kind.external:
+            return 0
+        if status.text_status == pysvn.wc_status_kind.incomplete:
+            return 0
+        if status.text_status == pysvn.wc_status_kind.missing:
+            return 0
+        if status.text_status == pysvn.wc_status_kind.none:
+            return 0
+        if status.text_status == pysvn.wc_status_kind.obstructed:
+            return 0
+        if status.text_status == pysvn.wc_status_kind.unversioned:
+            return 0
+
+        return 0
 
     def getStatus( self, path, flag ):
         " Provides VCS statuses for the path "
@@ -183,7 +219,7 @@ class SubversionPlugin( VersionControlSystemInterface ):
         if flag == VersionControlSystemInterface.REQUEST_RECURSIVE:
             clientRecurse = True
             clientGetAll = True
-        else flag == VersionControlSystemInterface.REQUEST_ITEM_ONLY:
+        elif flag == VersionControlSystemInterface.REQUEST_ITEM_ONLY:
             clientRecurse = False
             clientGetAll = False
         else:
@@ -194,13 +230,19 @@ class SubversionPlugin( VersionControlSystemInterface ):
             statusList = client.status( path, recurse = clientRecurse,
                                         get_all = clientGetAll,
                                         update = clientUpdate )
-            print "Statuses for request: " + path
+            result = []
             for status in statusList:
-                print status
+                result.append( (status.path.replace( path, "" ),
+                               self.__convertSVNStatus( status ), None) )
+            return result
         except pysvn.ClientError, exc:
-            message = exc.args[ 0 ]
             errorCode = exc.args[ 1 ]
             if errorCode == pysvn.svn_err.wc_not_working_copy:
-                print "Path " + path + " is not a working copy"
-        return
+                return ( ("", VersionControlSystemInterface.VCS_NOT_WORKING_COPY, None), )
+            message = exc.args[ 0 ]
+            return ( ("", VersionControlSystemInterface.VCS_UNKNOWN, message), )
+        except Exception, exc:
+            return ( ("", VersionControlSystemInterface.VCS_UNKNOWN, "Error: " + str( exc )), )
+        except:
+            return ( ("", VersionControlSystemInterface.VCS_UNKNOWN, "Unknown error"), )
 
