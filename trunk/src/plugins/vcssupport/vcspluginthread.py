@@ -26,6 +26,7 @@ VCS plugin support: plugin thread
 
 from PyQt4.QtCore import QThread, QMutex, QMutexLocker, QWaitCondition, SIGNAL
 from collections import deque
+from plugins.categories.vcsiface import VersionControlSystemInterface
 
 
 class VCSPluginThread( QThread ):
@@ -47,9 +48,9 @@ class VCSPluginThread( QThread ):
         while not self.__stopRequest:
             self.__lock.lock()
             while self.__requestQueue:
-                request = self.__requestQueue.pop()
+                path, flag = self.__requestQueue.pop()
                 self.__lock.unlock()
-                self.__processRequest( request )
+                self.__processRequest( path, flag )
                 if self.__stopRequest:
                     break
                 self.__lock.lock()
@@ -60,18 +61,30 @@ class VCSPluginThread( QThread ):
             self.__lock.unlock()
         return
 
-    def __processRequest( self, request ):
+    def __processRequest( self, path, flag ):
         " Processes a single request. It must be exception safe. "
-        pass
+        try:
+            for status in self.__plugin.getObject().getStatus( path, flag ):
+                if len( status ) == 3:
+                    self.emit( SIGNAL( "VCSStatus" ), path + status[ 0 ],
+                               status[ 1 ], status[ 2 ] )
+                else:
+                    # The plugin does not follow the interface agreement
+                    pass
+        except Exception, exc:
+            self.emit( SIGNAL( "VCSStatus" ), path,
+                       VersionControlSystemInterface.VCS_UNKNOWN,
+                       "Exception in plugin while retrieving VCS status for " +
+                       path + ": " + str( exc ) )
+        return
 
-
-    def addRequest( self, request, urgent = False ):
+    def addRequest( self, path, flag, urgent = False ):
         " Adds a request to the queue "
         self.__lock.lock()
         if urgent:
-            self.__requestQueue.append( request )
+            self.__requestQueue.append( (path, flag) )
         else:
-            self.__requestQueue.appendleft( request )
+            self.__requestQueue.appendleft( (path, flag) )
         self.__lock.unlock()
         self.__condition.wakeAll()
         return
