@@ -139,8 +139,9 @@ class VCSManager( QObject ):
         self.activePlugins[ newPluginIndex ] = VCSPluginDescriptor( plugin )
 
         if len( self.activePlugins ) == 1 and GlobalData().project.isLoaded():
-            # This is the first plugin and a projecct is there
+            # This is the first plugin and a project is there
             self.__populateProjectDirectories()
+        self.__sendDirectoryRequests( newPluginIndex )
         return
 
     def __populateProjectDirectories( self ):
@@ -163,12 +164,20 @@ class VCSManager( QObject ):
             if not GlobalData().project.isLoaded():
                 return
 
-            self.__populateProjectDirectories()
+            for pluginID in self.activePlugins.keys():
+                self.__populateProjectDirectories( pluginID )
             return
 
         # Here: files or directories have changed
         return
 
+    def __sendDirectoryRequests( self, pluginID ):
+        " Sends the directory requests to the given plugins "
+        descriptor = self.activePlugins[ pluginID ]
+        for path in self.dirCache.cache.keys():
+            descriptor.requestStatus( path,
+                                      VersionControlSystemInterface.REQUEST_DIRECTORY )
+        return
 
     def dismissAllPlugins( self ):
         " Stops all the plugin threads "

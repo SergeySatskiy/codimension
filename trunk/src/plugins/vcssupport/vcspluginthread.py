@@ -64,6 +64,7 @@ class VCSPluginThread( QThread ):
     def __processRequest( self, path, flag ):
         " Processes a single request. It must be exception safe. "
         try:
+            print "Thread: processing request for " + path
             for status in self.__plugin.getObject().getStatus( path, flag ):
                 if len( status ) == 3:
                     self.emit( SIGNAL( "VCSStatus" ), path + status[ 0 ],
@@ -72,6 +73,7 @@ class VCSPluginThread( QThread ):
                     # The plugin does not follow the interface agreement
                     pass
         except Exception, exc:
+            print "Exception: " + str( exc )
             self.emit( SIGNAL( "VCSStatus" ), path,
                        VersionControlSystemInterface.VCS_UNKNOWN,
                        "Exception in plugin while retrieving VCS status for " +
