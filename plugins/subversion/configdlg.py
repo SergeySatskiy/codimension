@@ -34,8 +34,8 @@ from PyQt4.QtGui import ( QDialog, QVBoxLayout, QGroupBox, QSizePolicy,
 AUTH_EXTERNAL = 0               # No user/password or external authorization
 AUTH_PASSWD = 1                 # The user name and password are used
 
-UPDATE_LOCAL_ONLY = 0           # Checks only the local status
-UPDATE_REPOSITORY = 1           # Checks both local status and the repository
+STATUS_LOCAL_ONLY = 0           # Checks only the local status
+STATUS_REPOSITORY = 1           # Checks both local status and the repository
 
 
 
@@ -46,7 +46,7 @@ class SVNSettings:
         self.authKind = AUTH_EXTERNAL
         self.userName = None
         self.password = None
-        self.updateKind = UPDATE_REPOSITORY
+        self.statusKind = STATUS_REPOSITORY
         return
 
 
@@ -76,7 +76,7 @@ def saveSVNSettings( settings, fName ):
                  "authkind=" + str( settings.authKind ) + "\n"
                  "username=" + userNameValue + "\n"
                  "password=" + passwordValue + "\n"
-                 "updatekind=" + str( settings.updateKind ) + "\n" )
+                 "statuskind=" + str( settings.statusKind ) + "\n" )
         f.close()
         os.chmod( fName, stat.S_IRUSR | stat.S_IWUSR )
     except Exception, exc:
@@ -104,11 +104,11 @@ def getSettings( fName ):
                 settings.userName = None
                 settings.password = None
 
-            value = int( config.get( "svnplugin", "updatekind" ) )
-            if value in [ UPDATE_LOCAL_ONLY, UPDATE_REPOSITORY ]:
-                settings.updateKind = value
+            value = int( config.get( "svnplugin", "statuskind" ) )
+            if value in [ STATUS_LOCAL_ONLY, STATUS_REPOSITORY ]:
+                settings.statusKind = value
             else:
-                settings.updateKind = UPDATE_REPOSITORY
+                settings.statusKind = STATUS_REPOSITORY
         else:
             # File does not exist - create default settings
             saveSVNSettings( settings, fName )
@@ -164,7 +164,7 @@ class SVNPluginConfigDialog( QDialog ):
             if self.ideWideSettings.password:
                 self.__idewidePasswd.setText( self.ideWideSettings.password )
 
-        if self.ideWideSettings.updateKind == UPDATE_REPOSITORY:
+        if self.ideWideSettings.statusKind == STATUS_REPOSITORY:
             self.__idewideReposRButton.setChecked( True )
         else:
             self.__idewideLocalRButton.setChecked( True )
@@ -183,7 +183,7 @@ class SVNPluginConfigDialog( QDialog ):
             if self.projectSettings.password:
                 self.__projectPasswd.setText( self.projectSettings.password )
 
-        if self.projectSettings.updateKind == UPDATE_REPOSITORY:
+        if self.projectSettings.statusKind == STATUS_REPOSITORY:
             self.__projectReposRButton.setChecked( True )
         else:
             self.__projectLocalRButton.setChecked( True )
@@ -406,9 +406,9 @@ class SVNPluginConfigDialog( QDialog ):
             self.ideWideSettings.password = str( self.__idewidePasswd.text() ).strip()
 
         if self.__idewideReposRButton.isChecked():
-            self.ideWideSettings.updateKind = UPDATE_REPOSITORY
+            self.ideWideSettings.statusKind = STATUS_REPOSITORY
         else:
-            self.ideWideSettings.updateKind = UPDATE_LOCAL_ONLY
+            self.ideWideSettings.statusKind = STATUS_LOCAL_ONLY
 
         if self.projectSettings is not None:
             if self.__projectAuthExtRButton.isChecked():
@@ -421,9 +421,9 @@ class SVNPluginConfigDialog( QDialog ):
                 self.projectSettings.password = str( self.__projectPasswd.text() ).strip()
 
             if self.__projectReposRButton.isChecked():
-                self.projectSettings.updateKind = UPDATE_REPOSITORY
+                self.projectSettings.statusKind = STATUS_REPOSITORY
             else:
-                self.projectSettings.updateKind = UPDATE_LOCAL_ONLY
+                self.projectSettings.statusKind = STATUS_LOCAL_ONLY
 
         self.accept()
         return

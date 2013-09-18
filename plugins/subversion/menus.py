@@ -38,5 +38,6 @@ def populateDirectoryContextMenu( plugin, parentMenu ):
 
 def populateBufferContextMenu( plugin, parentMenu ):
     " Populates a context menu used for a text editor or a viewer "
+    parentMenu.addAction( "Configure", plugin.configure )
     return
 
