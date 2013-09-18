@@ -25,10 +25,14 @@
 
 from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QDialog
+from threading import Lock
+from copy import deepcopy
+import pysvn
 from plugins.categories.vcsiface import VersionControlSystemInterface
 from menus import ( populateMainMenu, populateFileContextMenu,
                     populateDirectoryContextMenu, populateBufferContextMenu )
-from configdlg import SVNPluginConfigDialog, saveSVNSettings, getSettings
+from configdlg import ( SVNPluginConfigDialog, saveSVNSettings, getSettings,
+                        AUTH_PASSWD, STATUS_LOCAL_ONLY )
 
 
 
@@ -40,6 +44,7 @@ class SubversionPlugin( VersionControlSystemInterface ):
 
         self.projectSettings = None
         self.ideWideSettings = None
+        self.__settingsLock = Lock()
         return
 
     @staticmethod
@@ -114,6 +119,7 @@ class SubversionPlugin( VersionControlSystemInterface ):
                                      self.projectSettings )
         if dlg.exec_() == QDialog.Accepted:
             # Save the settings if they have changed
+            self.__settingsLock.acquire()
             if self.ideWideSettings != dlg.ideWideSettings:
                 self.ideWideSettings = dlg.ideWideSettings
                 saveSVNSettings( self.ideWideSettings,
@@ -123,6 +129,7 @@ class SubversionPlugin( VersionControlSystemInterface ):
                     self.projectSettings = dlg.projectSettings
                     saveSVNSettings( self.projectSettings,
                                      self.__getProjectConfigFile() )
+            self.__settingsLock.release()
         return
 
     def __onProjectChanged( self, what ):
@@ -131,7 +138,69 @@ class SubversionPlugin( VersionControlSystemInterface ):
             return
 
         if self.ide.project.isLoaded():
+            self.__settingsLock.acquire()
             self.projectSettings = getSettings( self.__getProjectConfigFile() )
+            self.__settingsLock.release()
         else:
+            self.__settingsLock.acquire()
             self.projectSettings = None
+            self.__settingsLock.release()
         return
+
+    def getCustomIndicators( self ):
+        " Provides custom indicators if needed "
+        return []
+
+    def getSettings( self ):
+        " Thread safe settings copy "
+        if self.ide.project.isLoaded():
+            self.__settingsLock.acquire()
+            settings = deepcopy( self.projectSettings )
+            self.__settingsLock.release()
+            return settings
+
+        self.__settingsLock.acquire()
+        settings = deepcopy( self.ideWideSettings )
+        self.__settingsLock.release()
+        return settings
+
+    def getSVNClient( self, settings ):
+        " Creates the SVN client object "
+        client = pysvn.Client()
+        client.client.exception_style = 1   # In order to get error codes
+
+        if settings.authKind == AUTH_PASSWD:
+            client.set_default_username( settings.userName )
+            client.set_default_password( settings.password )
+        return client
+
+    def getStatus( self, path, flag ):
+        " Provides VCS statuses for the path "
+        settings = self.getSettings()
+        client = self.getSVNClient( settings )
+
+        clientUpdate = settings.statusKind != STATUS_LOCAL_ONLY
+        if flag == VersionControlSystemInterface.REQUEST_RECURSIVE:
+            clientRecurse = True
+            clientGetAll = True
+        else flag == VersionControlSystemInterface.REQUEST_ITEM_ONLY:
+            clientRecurse = False
+            clientGetAll = False
+        else:
+            clientRecurse = False
+            clientGetAll = True
+
+        try:
+            statusList = client.status( path, recurse = clientRecurse,
+                                        get_all = clientGetAll,
+                                        update = clientUpdate )
+            print "Statuses for request: " + path
+            for status in statusList:
+                print status
+        except pysvn.ClientError, exc:
+            message = exc.args[ 0 ]
+            errorCode = exc.args[ 1 ]
+            if errorCode == pysvn.svn_err.wc_not_working_copy:
+                print "Path " + path + " is not a working copy"
+        return
+
