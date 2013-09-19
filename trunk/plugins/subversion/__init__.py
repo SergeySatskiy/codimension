@@ -27,13 +27,15 @@ from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QDialog
 from threading import Lock
 from copy import deepcopy
-import logging
 import pysvn
 from plugins.categories.vcsiface import VersionControlSystemInterface
 from menus import ( populateMainMenu, populateFileContextMenu,
                     populateDirectoryContextMenu, populateBufferContextMenu )
 from configdlg import ( SVNPluginConfigDialog, saveSVNSettings, getSettings,
                         AUTH_PASSWD, STATUS_LOCAL_ONLY )
+from svnindicators import ( IND_ADDED, IND_ERROR, IND_DELETED, IND_IGNORED,
+                            IND_MERGED,
+                            IND_DESCRIPTION )
 
 
 
@@ -151,7 +153,7 @@ class SubversionPlugin( VersionControlSystemInterface ):
 
     def getCustomIndicators( self ):
         " Provides custom indicators if needed "
-        return []
+        return IND_DESCRIPTION
 
     def getSettings( self ):
         " Thread safe settings copy "
@@ -178,15 +180,15 @@ class SubversionPlugin( VersionControlSystemInterface ):
 
     @staticmethod
     def __convertSVNStatus( status ):
-        " Converts the status between the SVN and VCS plugin supported values "
+        " Converts the status between the SVN and the plugin supported values "
         if status.text_status == pysvn.wc_status_kind.added:
-            return 0
+            return IND_ADDED
         if status.text_status == pysvn.wc_status_kind.deleted:
-            return 0
+            return IND_DELETED
         if status.text_status == pysvn.wc_status_kind.ignored:
-            return 0
+            return IND_IGNORED
         if status.text_status == pysvn.wc_status_kind.merged:
-            return 0
+            return IND_MERGED
         if status.text_status == pysvn.wc_status_kind.modified:
             return 0
         if status.text_status == pysvn.wc_status_kind.normal:
@@ -216,10 +218,10 @@ class SubversionPlugin( VersionControlSystemInterface ):
         client = self.getSVNClient( settings )
 
         clientUpdate = settings.statusKind != STATUS_LOCAL_ONLY
-        if flag == VersionControlSystemInterface.REQUEST_RECURSIVE:
+        if flag == self.REQUEST_RECURSIVE:
             clientRecurse = True
             clientGetAll = True
-        elif flag == VersionControlSystemInterface.REQUEST_ITEM_ONLY:
+        elif flag == self.REQUEST_ITEM_ONLY:
             clientRecurse = False
             clientGetAll = False
         else:
@@ -238,11 +240,10 @@ class SubversionPlugin( VersionControlSystemInterface ):
         except pysvn.ClientError, exc:
             errorCode = exc.args[ 1 ]
             if errorCode == pysvn.svn_err.wc_not_working_copy:
-                return ( ("", VersionControlSystemInterface.VCS_NOT_WORKING_COPY, None), )
+                return ( ("", self.NOT_UNDER_VCS, None), )
             message = exc.args[ 0 ]
-            return ( ("", VersionControlSystemInterface.VCS_UNKNOWN, message), )
+            return ( ("", IND_ERROR, message), )
         except Exception, exc:
-            return ( ("", VersionControlSystemInterface.VCS_UNKNOWN, "Error: " + str( exc )), )
+            return ( ("", IND_ERROR, "Error: " + str( exc )), )
         except:
-            return ( ("", VersionControlSystemInterface.VCS_UNKNOWN, "Unknown error"), )
-
+            return ( ("", IND_ERROR, "Unknown error"), )
