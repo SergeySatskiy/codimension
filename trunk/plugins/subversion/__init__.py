@@ -28,13 +28,17 @@ from PyQt4.QtGui import QDialog
 from threading import Lock
 from copy import deepcopy
 import pysvn
+import os.path
 from plugins.categories.vcsiface import VersionControlSystemInterface
 from menus import ( populateMainMenu, populateFileContextMenu,
                     populateDirectoryContextMenu, populateBufferContextMenu )
 from configdlg import ( SVNPluginConfigDialog, saveSVNSettings, getSettings,
                         AUTH_PASSWD, STATUS_LOCAL_ONLY )
 from svnindicators import ( IND_ADDED, IND_ERROR, IND_DELETED, IND_IGNORED,
-                            IND_MERGED,
+                            IND_MERGED, IND_MODIFIED_LR, IND_MODIFIED_L,
+                            IND_MODIFIED_R, IND_UPTODATE, IND_REPLACED,
+                            IND_CONFLICTED, IND_EXTERNAL, IND_INCOMPLETE,
+                            IND_MISSING, IND_OBSTRUCTED, IND_UNKNOWN,
                             IND_DESCRIPTION )
 
 
@@ -71,7 +75,6 @@ class SubversionPlugin( VersionControlSystemInterface ):
             self.projectSettings = getSettings( self.__getProjectConfigFile() )
         self.connect( self.ide.project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
-        print "SVN Plugin activated"
         return
 
     def deactivate( self ):
@@ -178,8 +181,7 @@ class SubversionPlugin( VersionControlSystemInterface ):
             client.set_default_password( settings.password )
         return client
 
-    @staticmethod
-    def __convertSVNStatus( status ):
+    def __convertSVNStatus( self, status ):
         " Converts the status between the SVN and the plugin supported values "
         if status.text_status == pysvn.wc_status_kind.added:
             return IND_ADDED
@@ -190,27 +192,31 @@ class SubversionPlugin( VersionControlSystemInterface ):
         if status.text_status == pysvn.wc_status_kind.merged:
             return IND_MERGED
         if status.text_status == pysvn.wc_status_kind.modified:
-            return 0
+            if status.repos_text_status == pysvn.wc_status_kind.modified:
+                return IND_MODIFIED_LR
+            return IND_MODIFIED_L
         if status.text_status == pysvn.wc_status_kind.normal:
-            return 0
+            if status.repos_text_status == pysvn.wc_status_kind.modified:
+                return IND_MODIFIED_R
+            return IND_UPTODATE
         if status.text_status == pysvn.wc_status_kind.replaced:
-            return 0
+            return IND_REPLACED
         if status.text_status == pysvn.wc_status_kind.conflicted:
-            return 0
+            return IND_CONFLICTED
         if status.text_status == pysvn.wc_status_kind.external:
-            return 0
+            return IND_EXTERNAL
         if status.text_status == pysvn.wc_status_kind.incomplete:
-            return 0
+            return IND_INCOMPLETE
         if status.text_status == pysvn.wc_status_kind.missing:
-            return 0
+            return IND_MISSING
         if status.text_status == pysvn.wc_status_kind.none:
-            return 0
+            return self.NOT_UNDER_VCS
         if status.text_status == pysvn.wc_status_kind.obstructed:
-            return 0
+            return IND_OBSTRUCTED
         if status.text_status == pysvn.wc_status_kind.unversioned:
-            return 0
+            return self.NOT_UNDER_VCS
 
-        return 0
+        return IND_UNKNOWN
 
     def getStatus( self, path, flag ):
         " Provides VCS statuses for the path "
@@ -234,8 +240,19 @@ class SubversionPlugin( VersionControlSystemInterface ):
                                         update = clientUpdate )
             result = []
             for status in statusList:
-                result.append( (status.path.replace( path, "" ),
-                               self.__convertSVNStatus( status ), None) )
+                if status.path.endswith( os.path.sep ):
+                    reportPath = status.path.replace( path, "" )
+                elif status.entry is None:
+                    if os.path.isdir( status.path ):
+                        reportPath = status.path + os.path.sep
+                        reportPath = reportPath.replace( path, "" )
+                elif status.entry.kind == pysvn.node_kind.dir:
+                    reportPath = status.path + os.path.sep
+                    reportPath = reportPath.replace( path, "" )
+                else:
+                    reportPath = status.path.replace( path, "" )
+                result.append( (reportPath, self.__convertSVNStatus( status ),
+                                None) )
             return result
         except pysvn.ClientError, exc:
             errorCode = exc.args[ 1 ]
@@ -247,3 +264,4 @@ class SubversionPlugin( VersionControlSystemInterface ):
             return ( ("", IND_ERROR, "Error: " + str( exc )), )
         except:
             return ( ("", IND_ERROR, "Unknown error"), )
+
