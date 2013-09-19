@@ -70,7 +70,7 @@ class VCSIndicator:
 
     def __parseConfigLine( self, configLine ):
         " Fills the members "
-        if type( configLine ) == tuple:
+        if type( configLine ) == tuple or type( configLine ) == list:
             # Came from a plugin
             self.__parsePluginProvidedTuple( configLine )
         else:
@@ -164,13 +164,19 @@ class VCSIndicator:
         if pluginIndicator[ 2 ] is None:
             self.backgroundColor = None
         else:
-            self.backgroundColor = QColor( pluginIndicator[ 2 ] )
+            if type( pluginIndicator[ 2 ] ) == str:
+                self.backgroundColor = buildColor( pluginIndicator[ 2 ] )
+            else:
+                self.backgroundColor = QColor( pluginIndicator[ 2 ] )
 
         # Background color
         if pluginIndicator[ 3 ] is None:
             self.foregroundColor = None
         else:
-            self.foregroundColor = QColor( pluginIndicator[ 3 ] )
+            if type( pluginIndicator[ 3 ] ) == str:
+                self.foregroundColor = buildColor( pluginIndicator[ 3 ] )
+            else:
+                self.foregroundColor = QColor( pluginIndicator[ 3 ] )
 
         # Default tooltip
         if pluginIndicator[ 4 ] is None:

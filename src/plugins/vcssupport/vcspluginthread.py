@@ -26,7 +26,10 @@ VCS plugin support: plugin thread
 
 from PyQt4.QtCore import QThread, QMutex, QMutexLocker, QWaitCondition, SIGNAL
 from collections import deque
-from plugins.categories.vcsiface import VersionControlSystemInterface
+
+
+# Indicator used by IDE to display errors while retrieving item status
+IND_VCS_ERROR = -2
 
 
 class VCSPluginThread( QThread ):
@@ -64,20 +67,19 @@ class VCSPluginThread( QThread ):
     def __processRequest( self, path, flag ):
         " Processes a single request. It must be exception safe. "
         try:
-            print "Thread: processing request for " + path
             for status in self.__plugin.getObject().getStatus( path, flag ):
                 if len( status ) == 3:
                     self.emit( SIGNAL( "VCSStatus" ), path + status[ 0 ],
                                status[ 1 ], status[ 2 ] )
                 else:
-                    # The plugin does not follow the interface agreement
-                    pass
+                    self.emit( SIGNAL( "VCSStatus" ), path, IND_VCS_ERROR,
+                               "The " + self.__plugin.getName() + " plugin "
+                               "does not follow the getStatus() interface "
+                               "agreement" )
         except Exception, exc:
-            print "Exception: " + str( exc )
-            self.emit( SIGNAL( "VCSStatus" ), path,
-                       VersionControlSystemInterface.VCS_UNKNOWN,
-                       "Exception in plugin while retrieving VCS status for " +
-                       path + ": " + str( exc ) )
+            self.emit( SIGNAL( "VCSStatus" ), path, IND_VCS_ERROR,
+                       "Exception in " + self.__plugin.getName() +
+                       " plugin while retrieving VCS status: " + str( exc ) )
         return
 
     def addRequest( self, path, flag, urgent = False ):
