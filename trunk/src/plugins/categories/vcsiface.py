@@ -29,17 +29,9 @@ from cdmpluginbase import CDMPluginBase
 class VersionControlSystemInterface( CDMPluginBase ):
     """ Version control system plugin interface """
 
-    # Standard indicators
-    VCS_NOT_WORKING_COPY = 0    # The directory is not a VCS checkout.
-    VCS_LOCAL_ONLY = 1          # The directory is a VCS checkout
-                                #   while an item is not.
-    VCS_UPTODATE = 2            # The item is the same as in the repository.
-    VCS_LOCAL_MODIFIED = 3      # The item is locally modified.
-    VCS_REMOTE_MODIFIED = 4     # The item is updated in the repository.
-    VCS_CONFLICT = 5            # The item is updated both locally
-                                #   and in the repository.
-    VCS_UNKNOWN = 6             # The item status is unknown, e.g. due to
-                                #   repository communication errors.
+    # Indicator for a non VCS item. It must be used in the getStatus(...)
+    # report if the item is not under VCS control.
+    NOT_UNDER_VCS = -1
 
     def __init__( self ):
         """ The plugin class is instantiated with no arguments.
@@ -176,8 +168,8 @@ class VersionControlSystemInterface( CDMPluginBase ):
         """ A plugin can provide a list of its custom indicators.
             Each indicator is a tuple:
             (id, what, foreground, background, defaultTooltip)
-            id - integer value which must be >= 64. 0 - 63 are reserved for standard
-                 indicators
+            id - integer value which must be >= 0. Negative values are reserved
+                 for common indicators
             what - string or QPixmap. If it is a pixmap it should be 16x16, if larger
                    then the pixmap will be scaled.
                    If it is a string then it must be no longer than 2 characters. The
@@ -192,7 +184,7 @@ class VersionControlSystemInterface( CDMPluginBase ):
                              call did not provide a message then this one is
                              displayed
         """
-        return []
+        raise Exception( "getCustomIndicators() must be overridden" )
 
 
     # flag argement values for the getStatus() method
@@ -215,7 +207,7 @@ class VersionControlSystemInterface( CDMPluginBase ):
               (rest-of-item-path, status, message) where
                   - rest-of-item-path => the received path + this value
                                          must make the full item path
-                  - status => integer, whether a standard VCS_... constant or
+                  - status => integer, whether NOT_UNDER_VCS or
                               a custom indicator identifier
                   - message => message if so (string) or None. If a message
                                is supplied then it will appear as a tooltip
