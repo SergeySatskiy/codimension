@@ -36,14 +36,12 @@ from vcspluginthread import VCSPluginThread
 from plugins.categories.vcsiface import VersionControlSystemInterface
 
 
-# Indicator used by IDE to display errors while retrieving item status
-IND_VCS_ERROR = -2
-
-
-class VCSPluginDescriptor:
+class VCSPluginDescriptor( QObject ):
     " Holds information about a single active plugin "
 
     def __init__( self, plugin ):
+        QObject.__init__( self )
+
         self.plugin = plugin
         self.thread = None                  # VCSPluginThread
         self.indicators = {}                # ID -> VCSIndicator
@@ -51,6 +49,9 @@ class VCSPluginDescriptor:
         self.__getPluginIndicators()
         self.thread = VCSPluginThread( plugin )
         self.thread.start()
+
+        self.connect( self.thread, SIGNAL( "VCSStatus" ),
+                      self.__onStatus )
         return
 
     def stopThread( self ):
@@ -96,10 +97,19 @@ class VCSPluginDescriptor:
                            str( exc ) )
         return
 
+    def __onStatus( self, path, indicatorId, message ):
+        " Triggered when the thread reported a status "
+        print "Status of " + path + " is " + str( indicatorId ) + " Message: " + str( message )
+
 
 
 class VCSManager( QObject ):
-    " Manages the VCS plugins "
+    """ Manages the VCS plugins.
+        It sends two signals:
+        VCSFileStatus -> path, pluginID, indicatorID, message
+        VCSDirStatus -> path, pluginID, indicatorID, message
+            The pluginID, indicatorID, message could be None
+    """
 
     def __init__( self ):
         QObject.__init__( self )
@@ -115,6 +125,8 @@ class VCSManager( QObject ):
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
+        self.connect( GlobalData().project, SIGNAL( 'fsChanged' ),
+                      self.__onFSChanged )
         self.connect( GlobalData().pluginManager, SIGNAL( 'PluginActivated' ),
                       self.__onPluginActivated )
 
@@ -165,22 +177,49 @@ class VCSManager( QObject ):
                 return
 
             # There are some plugins
-            if not GlobalData().project.isLoaded():
-                return
-
-            for pluginID in self.activePlugins.keys():
-                self.__populateProjectDirectories( pluginID )
+            if GlobalData().project.isLoaded():
+                self.__populateProjectDirectories()
             return
 
-        # Here: files or directories have changed
+    def __onFSChanged( self, items ):
+        " Triggered when files/dirs in the project are changed "
+        for item in items:
+            item = str( item )
+            if item.startswith( '-' ):
+                item = item[ 1: ]
+                if item.endswith( os.path.sep ):
+                    # Directory removed
+                    if item in self.dirCache.cache:
+                        print "Path " + item + " is going to be deleted from cache"
+                        del self.dirCache.cache[ item ]
+                        print "Path " + item + " deleted from cache"
+                else:
+                    # File deleted
+                    pass
+            else:
+                item = item[ 1: ]
+                if item.endswith( os.path.sep ):
+                    # Directory added
+                    if item not in self.dirCache.cache:
+                        print "Path " + item + " is going to be added into cache"
+                        self.dirCache.updateStatus( item, None, None, None )
+                        print "Path " + item + " added into cache"
+                    for _, descriptor in self.activePlugins.iteritems():
+                        descriptor.requestStatus( item,
+                            VersionControlSystemInterface.REQUEST_DIRECTORY )
+                else:
+                    # File added
+                    pass
         return
 
     def __sendDirectoryRequests( self, pluginID ):
         " Sends the directory requests to the given plugins "
         descriptor = self.activePlugins[ pluginID ]
-        for path in self.dirCache.cache.keys():
-            descriptor.requestStatus( path,
-                                      VersionControlSystemInterface.REQUEST_DIRECTORY )
+        for path, status in self.dirCache.cache.iteritems():
+            if status.indicatorID in [ None,
+                            VersionControlSystemInterface.NOT_UNDER_VCS ]:
+                descriptor.requestStatus( path,
+                            VersionControlSystemInterface.REQUEST_DIRECTORY )
         return
 
     def dismissAllPlugins( self ):
@@ -201,9 +240,9 @@ class VCSManager( QObject ):
                 pluginID = identifier
                 descriptor.stopThread()
                 self.fileCache.dismissPlugin( pluginID,
-                                              self.sendStatusNotification )
+                                              self.sendDirStatusNotification )
                 self.dirCache.dismissPlugin( pluginID,
-                                             self.sendStatusNotification )
+                                             self.sendFileStatusNotification )
 
         if pluginID:
             del self.activePlugins[ identifier ]
@@ -213,22 +252,37 @@ class VCSManager( QObject ):
                        flag = VersionControlSystemInterface.REQUEST_ITEM_ONLY ):
         " Provides the path status asynchronously via sending a signal "
         status = self.dirCache.getStatus( path )
-        if not status:
-            status = self.fileCache.getStatus( path )
         if status:
-            self.sendStatusNotification( path, status.pluginID,
-                                         status.indicatorID, status.message )
-        else:
-            for _, descriptor in self.activePlugins.iteritems():
-                descriptor.requestStatus( path, flag, True )
+            self.sendDirStatusNotification( path, status.pluginID,
+                                            status.indicatorID,
+                                            status.message )
+            return
+
+        status = self.fileCache.getStatus( path )
+        if status:
+            self.sendFileStatusNotification( path, status.pluginID,
+                                             status.indicatorID,
+                                             status.message )
+            return
+
+        for _, descriptor in self.activePlugins.iteritems():
+            descriptor.requestStatus( path, flag, True )
         return
 
     def setLocallyModified( self, path ):
         " Sets the item status as locally modified "
         pass
 
-    def sendStatusNotification( self, path, pluginID, indicatorID, message ):
-        " Sends a signal that about a status of the path "
-        self.emit( SIGNAL( "VCSStatus" ), path, pluginID, indicatorID, message )
+    def sendDirStatusNotification( self, path, pluginID, indicatorID, message ):
+        " Sends a signal that a status of the directory is changed "
+        self.emit( SIGNAL( "VCSDirStatus" ), path, pluginID,
+                                             indicatorID, message )
         return
+
+    def sendFileStatusNotification( self, path, pluginID,
+                                          indicatorID, message ):
+        " Sends a signal that a status of the file is changed "
+        self.emit( SIGNAL( "VCSFileStatus" ), path, pluginID,
+                                              indicatorID, message )
+
 

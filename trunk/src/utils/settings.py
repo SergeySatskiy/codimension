@@ -60,10 +60,10 @@ ropePreferences = { 'ignore_syntax_errors': True,
                         "*.pyo", "*.pyc", "*~", ".ropeproject",
                         ".hg", ".svn", "_svn", ".git", ".cvs" ] }
 
-DEFAULT_VCS_INDICATORS = [
-    "-1:::?:::0,0,0,255:::255,255,255,255:::Not a working copy",    # VCS_NOT_WORKING_COPY
+DEFAULT_VCS_INDICATORS = (
+    "-1:::?:::0,0,0,255:::255,255,255,255:::Not under VCS control",
     "-2:::E:::0,0,0,255:::255,255,255,255:::Error getting status",
-]
+)
 
 class CDMSetting:
     " Holds a single CDM setting description "
