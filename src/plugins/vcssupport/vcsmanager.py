@@ -36,13 +36,17 @@ from vcspluginthread import VCSPluginThread
 from plugins.categories.vcsiface import VersionControlSystemInterface
 
 
+# Indicator used by IDE to display errors while retrieving item status
+IND_VCS_ERROR = -2
+
+
 class VCSPluginDescriptor:
     " Holds information about a single active plugin "
 
     def __init__( self, plugin ):
         self.plugin = plugin
         self.thread = None                  # VCSPluginThread
-        self.indicators = None              # ID -> VCSIndicator
+        self.indicators = {}                # ID -> VCSIndicator
 
         self.__getPluginIndicators()
         self.thread = VCSPluginThread( plugin )
@@ -70,15 +74,15 @@ class VCSPluginDescriptor:
     def __getPluginIndicators( self ):
         " Retrieves indicators from the plugin "
         try:
-            for indicator in self.plugin.getObject().getCustomIndicators():
+            for indicatorDesc in self.plugin.getObject().getCustomIndicators():
                 try:
-                    indicator = VCSIndicator( indicator )
-                    if indicator.identifier <= 63:
+                    indicator = VCSIndicator( indicatorDesc )
+                    if indicator.identifier < 0:
                         logging.error( "Custom VCS plugin '" +
                                        self.getPluginName() +
                                        "' indicator identifier " +
                                        str( indicator.identifier ) +
-                                       " is invalid. It must be >= 64. "
+                                       " is invalid. It must be >= 0. "
                                        "Ignore and continue." )
                     else:
                         self.indicators[ indicator.identifier ] = indicator

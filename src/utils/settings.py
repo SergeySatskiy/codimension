@@ -61,13 +61,8 @@ ropePreferences = { 'ignore_syntax_errors': True,
                         ".hg", ".svn", "_svn", ".git", ".cvs" ] }
 
 DEFAULT_VCS_INDICATORS = [
-    "0:::?:::0,0,0,255:::255,255,255,255:::Not a working copy",     # VCS_NOT_WORKING_COPY
-    "1:::LO:::0,0,0,255:::255,255,255,255:::Local only",            # VCS_LOCAL_ONLY
-    "2:::OK:::0,0,0,255:::255,255,255,255:::Up to date",            # VCS_UPTODATE
-    "3:::LM:::0,0,0,255:::255,255,255,255:::Locally modified",      # VCS_LOCAL_MODIFIED
-    "4:::RM:::0,0,0,255:::255,255,255,255:::Remotely modified",     # VCS_REMOTE_MODIFIED
-    "5:::C:::0,0,0,255:::255,255,255,255:::Conflict",               # VCS_CONFLICT
-    "6:::!:::0,0,0,255:::255,255,255,255:::Unknown status",         # VCS_UNKNOWN
+    "-1:::?:::0,0,0,255:::255,255,255,255:::Not a working copy",    # VCS_NOT_WORKING_COPY
+    "-2:::E:::0,0,0,255:::255,255,255,255:::Error getting status",
 ]
 
 class CDMSetting:
