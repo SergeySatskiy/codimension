@@ -60,6 +60,7 @@ ropePreferences = { 'ignore_syntax_errors': True,
                         "*.pyo", "*.pyc", "*~", ".ropeproject",
                         ".hg", ".svn", "_svn", ".git", ".cvs" ] }
 
+VCS_STATUS_UPDATE_INTERVAL_DEFAULT = 30     # seconds
 DEFAULT_VCS_INDICATORS = (
     "-1:::?:::0,0,0,255:::255,255,255,255:::Not under VCS control",
     "-2:::E:::0,0,0,255:::255,255,255,255:::Error getting status",
@@ -142,6 +143,8 @@ CDM_SETTINGS = {
     CDMSetting( "vSplitterSizes", CDMSetting.TYPE_INT_LST,
                 _V_SPLITTER_SIZES_DEFAULT ),
     CDMSetting( "style", CDMSetting.TYPE_STR, "plastique" ),
+    CDMSetting( "vcsstatusupdateinterval", CDMSetting.TYPE_INT, 
+                VCS_STATUS_UPDATE_INTERVAL_DEFAULT ),
            ],
 "recentProjects" : [
     CDMSetting( "project", CDMSetting.TYPE_STR_LST, [] )
