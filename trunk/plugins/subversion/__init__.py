@@ -240,22 +240,20 @@ class SubversionPlugin( VersionControlSystemInterface ):
                                         update = clientUpdate )
             result = []
             for status in statusList:
-                if status.path.endswith( os.path.sep ):
-                    reportPath = status.path.replace( path, "" )
-                elif status.entry is None:
-                    if os.path.isdir( status.path ):
-                        reportPath = status.path + os.path.sep
-                        reportPath = reportPath.replace( path, "" )
-                elif status.entry.kind == pysvn.node_kind.dir:
-                    reportPath = status.path + os.path.sep
-                    reportPath = reportPath.replace( path, "" )
-                else:
-                    reportPath = status.path.replace( path, "" )
-                result.append( (reportPath, self.__convertSVNStatus( status ),
+                reportPath = status.path
+                if not status.path.endswith( os.path.sep ):
+                    if status.entry is None:
+                        if os.path.isdir( status.path ):
+                            reportPath += os.path.sep
+                    elif status.entry.kind == pysvn.node_kind.dir:
+                        reportPath += os.path.sep
+
+                result.append( (reportPath.replace( path, "" ),
+                                self.__convertSVNStatus( status ),
                                 None) )
             return result
         except pysvn.ClientError, exc:
-            errorCode = exc.args[ 1 ]
+            errorCode = exc.args[ 1 ][ 0 ][ 1 ]
             if errorCode == pysvn.svn_err.wc_not_working_copy:
                 return ( ("", self.NOT_UNDER_VCS, None), )
             message = exc.args[ 0 ]
