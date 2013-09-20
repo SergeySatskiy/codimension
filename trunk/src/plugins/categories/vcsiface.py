@@ -213,6 +213,9 @@ class VersionControlSystemInterface( CDMPluginBase ):
                                is supplied then it will appear as a tooltip
                                over the item indicator
 
+            ATTENTION: the reported path MUST end with os.path.sep if it
+                       was a directory.
+
             ATTENTION: no IDE functions must be called from this method. This
                        method is running in a separate thread and updating UI from
                        non-UI thread can cause the IDE crash.
