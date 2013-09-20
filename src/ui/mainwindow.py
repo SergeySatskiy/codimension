@@ -294,8 +294,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.__bottomSideBar.addTab( self.logViewer,
                                      PixmapCache().getIcon( 'logviewer.png' ),
                                      'Log' )
-        self.connect( sys.stdout, SIGNAL('appendToStdout'), self.toStdout )
-        self.connect( sys.stderr, SIGNAL('appendToStderr'), self.toStderr )
+        self.connect( sys.stdout, SIGNAL( 'appendToStdout(QString)' ), self.toStdout )
+        self.connect( sys.stderr, SIGNAL( 'appendToStderr(QString)' ), self.toStderr )
 
         # replace logging streamer to self.stdout
         logging.root.handlers = []
@@ -1743,13 +1743,13 @@ class CodimensionMainWindow( QMainWindow ):
     def toStdout( self, txt ):
         " Triggered when a new message comes "
         self.showLogTab()
-        self.logViewer.append( txt )
+        self.logViewer.append( str( txt ) )
         return
 
     def toStderr( self, txt ):
         " Triggered when a new message comes "
         self.showLogTab()
-        self.logViewer.appendError( txt )
+        self.logViewer.appendError( str( txt ) )
         return
 
     def showLogTab( self ):

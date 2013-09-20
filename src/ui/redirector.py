@@ -33,51 +33,26 @@ from PyQt4.QtCore import QObject, SIGNAL
 
 
 class Redirector( QObject ):
-    """ Helper class used to redirect stdout and stderr to the log window """
+    " Helper class used to redirect stdout and stderr to the log window "
 
     def __init__( self, isStdout ):
         QObject.__init__( self )
-        self.isStdout = isStdout
-        self.buffer = ''
+        self.__isStdout = isStdout
         return
-
-    def __del__( self ):
-        self.flush()
-        return
-
-    def __nWrite( self, nBytes ):
-        """ Writes n bytes of data """
-
-        if nBytes > 0:
-            line = self.buffer[ :nBytes ]
-            if self.isStdout:
-                self.emit( SIGNAL('appendToStdout'), line )
-            else:
-                self.emit( SIGNAL('appendToStderr'), line )
-            self.buffer = self.buffer[ nBytes: ]
-        return
-
-    def __bytesToWrite( self ):
-        """ Provides the number of characters to write """
-
-        return self.buffer.rfind( '\n' ) + 1
 
     def flush( self ):
-        """ Flushes the buffered data """
-
-        self.__nWrite( len( self.buffer ) )
+        " Flushes the buffered data - to conform the interface "
         return
 
     def write( self, message ):
-        """ Writes the given data """
+        " Writes the given data "
 
         while message.endswith( '\n' ):
-            message = message[ :-1 ]
-        if self.isStdout:
-            self.emit( SIGNAL('appendToStdout'), message )
+            message = message[ : -1 ]
+
+        if self.__isStdout:
+            self.emit( SIGNAL( 'appendToStdout(QString)' ), message )
         else:
-            self.emit( SIGNAL('appendToStderr'), message )
-#        self.buffer = self.buffer + unicode( message )
-#        self.__nWrite( self.__bytesToWrite() )
-#        return
+            self.emit( SIGNAL( 'appendToStderr(QString)' ), message )
+        return
 
