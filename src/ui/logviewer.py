@@ -167,14 +167,14 @@ class LogViewer( QWidget ):
         " Append the regular message "
 
         self.__appendText( txt, False )
-        QApplication.processEvents()
+        #QApplication.processEvents()
         return
 
     def appendError( self, txt ):
         " Append the error message "
 
         self.__appendText( txt, True )
-        QApplication.processEvents()
+        #QApplication.processEvents()
         return
 
     def append( self, txt ):
