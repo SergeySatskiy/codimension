@@ -78,7 +78,7 @@ class OutsideChangeWidget( QFrame ):
         self.connect( self.__reloadButton, SIGNAL( 'clicked()' ),
                       self.__reload )
 
-        txt = "Reload all non-modified files"
+        txt = "Reload all non-modified buffers"
         self.__reloadAllNonChangedButton = QPushButton( txt, self )
         self.connect( self.__reloadAllNonChangedButton, SIGNAL( 'clicked()' ),
                       self.__reloadAllNonModified )
