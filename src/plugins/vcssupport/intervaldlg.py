@@ -26,8 +26,6 @@ from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui import ( QDialog, QVBoxLayout, QDialogButtonBox,
                           QHBoxLayout, QLabel, QLineEdit, QIntValidator )
 
-UPDATE_INTERVAL_DEFAULT = 30    # in seconds
-
 
 class VCSUpdateIntervalConfigDialog( QDialog ):
     " Dialog to configure update interval "
@@ -56,7 +54,7 @@ class VCSUpdateIntervalConfigDialog( QDialog ):
         vboxLayout = QVBoxLayout( self )
 
         hboxLayout = QHBoxLayout()
-        hboxLayout.addWidget( QLabel( "Update interval, sec." ) )
+        hboxLayout.addWidget( QLabel( "Status update interval, sec." ) )
         self.__intervalEdit = QLineEdit()
         self.__intervalEdit.setValidator( QIntValidator( 1, 3600, self ) )
         hboxLayout.addWidget( self.__intervalEdit )
