@@ -53,14 +53,19 @@ class VCSStatusCache:
         return None
 
     def updateStatus( self, path, pluginID,
-                            indicatorID, message ):
+                            indicatorID, message, callback ):
         " Updates the status in the cache "
         if path in self.cache:
             item = self.cache[ path ]
-            item.pluginID = pluginID
-            item.indicatorID = indicatorID
-            item.message = message
             item.lastUpdate = datetime.datetime.now()
+            if item.pluginID != pluginID or \
+               item.indicatorID != indicatorID or \
+               item.message != message:
+                item.pluginID = pluginID
+                item.indicatorID = indicatorID
+                item.message = message
+                if callback:
+                    callback( path, pluginID, indicatorID, message )
             return
 
         item = VCSStatus()
@@ -69,6 +74,9 @@ class VCSStatusCache:
         item.message = message
         item.lastUpdate = datetime.datetime.now()
         self.cache[ path ] = item
+
+        if callback:
+            callback( path, pluginID, indicatorID, message )
         return
 
     def clear( self ):

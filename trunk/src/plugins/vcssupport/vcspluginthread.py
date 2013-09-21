@@ -99,3 +99,11 @@ class VCSPluginThread( QThread ):
         self.__condition.wakeAll()
         return
 
+    def clearRequestQueue( self ):
+        " Clears the thread request queue "
+        self.__lock.lock()
+        self.__requestQueue.clear()
+        self.__lock.unlock()
+        return
+
+
