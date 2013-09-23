@@ -166,6 +166,11 @@ class VCSManager( QObject ):
                                                                     newPluginIndex,
                                                                     plugin )
 
+        # Need to send requests for the opened TAB files
+        mainWindow = GlobalData().mainWindow
+        editorsManager = mainWindow.editorsManagerWidget.editorsManager
+        editorsManager.sendAllTabsVCSStatusRequest()
+
         if len( self.activePlugins ) == 1 and GlobalData().project.isLoaded():
             # This is the first plugin and a project is there
             self.__populateProjectDirectories()

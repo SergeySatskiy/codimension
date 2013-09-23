@@ -2331,3 +2331,16 @@ class EditorsManager( QTabWidget ):
                     break
         return
 
+
+    def sendAllTabsVCSStatusRequest( self ):
+        " Sends the status requests for all the opened TABS (text/picture) "
+        for index in xrange( self.count() ):
+            widget = self.widget( index )
+            if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
+                                     MainWindowTabWidgetBase.PictureViewer,
+                                     MainWindowTabWidgetBase.PythonGraphicsEditor ]:
+                fileName = widget.getFileName()
+                if os.path.isabs( fileName ):
+                    self.__mainWindow.vcsManager.requestStatus( fileName )
+        return
+
