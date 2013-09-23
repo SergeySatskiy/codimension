@@ -1635,15 +1635,24 @@ class CodimensionMainWindow( QMainWindow ):
 
             self.settings.projectLoaded = projectLoaded
             if projectLoaded:
-                editorsManager = self.editorsManagerWidget.editorsManager
-                editorsManager.restoreTabs( GlobalData().project.tabsStatus )
-
                 if os.path.exists( self.__getPylintRCFileName() ):
                     self.__pylintButton.setMenu( self.__existentPylintRCMenu )
                 else:
                     self.__pylintButton.setMenu( self.__absentPylintRCMenu )
 
+                # The editor tabs must be loaded after a VCS plugin has a
+                # chance to receive projectChanged signal where it reads
+                # the plugin configuration
+                QTimer.singleShot( 0, self.__delayedEditorsTabRestore )
+
+
         self.updateRunDebugButtons()
+        return
+
+    def __delayedEditorsTabRestore( self ):
+        " Delayed restore editor tabs "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        editorsManager.restoreTabs( GlobalData().project.tabsStatus )
         return
 
     def updateWindowTitle( self ):
