@@ -24,7 +24,7 @@
 VCS plugin support: plugin thread
 """
 
-from PyQt4.QtCore import QThread, QMutex, QMutexLocker, QWaitCondition, SIGNAL
+from PyQt4.QtCore import QThread, QMutex, QWaitCondition, SIGNAL
 from collections import deque
 
 
@@ -67,7 +67,8 @@ class VCSPluginThread( QThread ):
     def __processRequest( self, path, flag ):
         " Processes a single request. It must be exception safe. "
         try:
-            for status in self.__plugin.getObject().getStatus( path, flag ):
+            statuses = self.__plugin.getObject().getStatus( path, flag )
+            for status in statuses:
                 if len( status ) == 3:
                     self.emit( SIGNAL( "VCSStatus" ), path + status[ 0 ],
                                status[ 1 ], status[ 2 ] )
@@ -80,6 +81,10 @@ class VCSPluginThread( QThread ):
             self.emit( SIGNAL( "VCSStatus" ), path, IND_VCS_ERROR,
                        "Exception in " + self.__plugin.getName() +
                        " plugin while retrieving VCS status: " + str( exc ) )
+        except:
+            self.emit( SIGNAL( "VCSStatus" ), path, IND_VCS_ERROR,
+                       "Unknown exception in " + self.__plugin.getName() +
+                       " plugin while retrieving VCS status" )
         return
 
     def addRequest( self, path, flag, urgent = False ):
@@ -105,5 +110,3 @@ class VCSPluginThread( QThread ):
         self.__requestQueue.clear()
         self.__lock.unlock()
         return
-
-

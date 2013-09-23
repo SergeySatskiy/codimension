@@ -27,13 +27,13 @@ VCS plugin support: manager to keep track of the VCS plugins and file status
 import os.path
 import logging
 import datetime
-from statuscache import VCSStatusCache
+from statuscache import VCSStatusCache, VCSStatus
 from utils.settings import Settings
 from utils.globals import GlobalData
 from indicator import VCSIndicator
 from utils.project import CodimensionProject
 from PyQt4.QtCore import QObject, SIGNAL
-from vcspluginthread import VCSPluginThread
+from vcspluginthread import VCSPluginThread, IND_VCS_ERROR
 from plugins.categories.vcsiface import VersionControlSystemInterface
 
 
@@ -270,9 +270,9 @@ class VCSManager( QObject ):
                 pluginID = identifier
                 descriptor.stopThread()
                 self.fileCache.dismissPlugin( pluginID,
-                                              self.sendDirStatusNotification )
+                                              self.sendFileStatusNotification )
                 self.dirCache.dismissPlugin( pluginID,
-                                             self.sendFileStatusNotification )
+                                             self.sendDirStatusNotification )
 
         if pluginID:
             del self.activePlugins[ pluginID ]
@@ -285,21 +285,15 @@ class VCSManager( QObject ):
         if path.endswith( os.path.sep ):
             status = self.dirCache.getStatus( path )
             if status:
-                self.sendDirStatusNotification( path, status.pluginID,
-                                                status.indicatorID,
-                                                status.message )
+                self.sendDirStatusNotification( path, status )
             else:
-                self.sendDirStatusNotification( path, None,
-                                                None, None )
+                self.sendDirStatusNotification( path, VCSStatus() )
         else:
             status = self.fileCache.getStatus( path )
             if status:
-                self.sendFileStatusNotification( path, status.pluginID,
-                                                 status.indicatorID,
-                                                 status.message )
+                self.sendFileStatusNotification( path, status )
             else:
-                self.sendFileStatusNotification( path, None,
-                                                 None, None )
+                self.sendFileStatusNotification( path, VCSStatus() )
 
 
         if status is None:
@@ -309,7 +303,7 @@ class VCSManager( QObject ):
             if status.indicatorID is None or \
                status.lastUpdate is None or \
                datetime.datetime.now() - status.lastUpdate > delta:
-                # Outdated or naver been received
+                # Outdated or never been received
                 if status.pluginID in self.activePlugins:
                     # Path is claimed by a plugin
                     descriptor = self.activePlugins[ status.pluginID ]
@@ -327,17 +321,14 @@ class VCSManager( QObject ):
                     VersionControlSystemInterface.REQUEST_ITEM_ONLY )
         return
 
-    def sendDirStatusNotification( self, path, pluginID, indicatorID, message ):
+    def sendDirStatusNotification( self, path, status ):
         " Sends a signal that a status of the directory is changed "
-        self.emit( SIGNAL( "VCSDirStatus" ), path, pluginID,
-                                             indicatorID, message )
+        self.emit( SIGNAL( "VCSDirStatus" ), path, status )
         return
 
-    def sendFileStatusNotification( self, path, pluginID,
-                                          indicatorID, message ):
+    def sendFileStatusNotification( self, path, status ):
         " Sends a signal that a status of the file is changed "
-        self.emit( SIGNAL( "VCSFileStatus" ), path, pluginID,
-                                              indicatorID, message )
+        self.emit( SIGNAL( "VCSFileStatus" ), path, status )
         return
 
     def updateStatus( self, path, pluginID,
@@ -349,6 +340,47 @@ class VCSManager( QObject ):
         else:
             self.fileCache.updateStatus( path, pluginID, indicatorID, message,
                                          self.sendFileStatusNotification )
-        print "Status of " + path + " is " + str( indicatorID ) + " Message: " + str( message ) + " Plugin ID: " + str( pluginID )
+        #print "Status of " + path + " is " + str( indicatorID ) + " Message: " + str( message ) + " Plugin ID: " + str( pluginID )
+        return
+
+    def activePluginCount( self ):
+        " Returns the number of active VCS plugins "
+        return len( self.activePlugins )
+
+    def drawStatus( self, vcsLabel, status ):
+        " Draw the VCS status "
+        if status.pluginID not in self.activePlugins:
+            vcsLabel.setVisible( False )
+            return
+
+        descriptor = self.activePlugins[ status.pluginID ]
+        if status.indicatorID not in descriptor.indicators:
+            # Check the standard indicator
+            if status.indicatorID in self.systemIndicators:
+                indicator = self.systemIndicators[ status.indicatorID ]
+                indicator.draw( vcsLabel )
+                if status.message:
+                    vcsLabel.setToolTip( status.message )
+                else:
+                    vcsLabel.setToolTip( indicator.defaultTooltip )
+            else:
+                # Neither plugin, no standard indicator
+                try:
+                    indicator = self.systemIndicators[ IND_VCS_ERROR ]
+                    indicator.draw( vcsLabel )
+                    vcsLabel.setToolTip( "VCS plugin provided undefined "
+                                         "indicator (id is " +
+                                         str( status.indicatorID ) + ")" )
+                except:
+                    # No way to display indicator
+                    vcsLabel.setVisible( False )
+            return
+
+        indicator = descriptor.indicators[ status.indicatorID ]
+        indicator.draw( vcsLabel )
+        if status.message:
+            vcsLabel.setToolTip( status.message )
+        else:
+            vcsLabel.setToolTip( indicator.defaultTooltip )
         return
 

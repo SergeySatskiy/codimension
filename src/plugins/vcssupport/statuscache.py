@@ -65,7 +65,7 @@ class VCSStatusCache:
                 item.indicatorID = indicatorID
                 item.message = message
                 if callback:
-                    callback( path, pluginID, indicatorID, message )
+                    callback( path, item )
             return
 
         item = VCSStatus()
@@ -76,7 +76,7 @@ class VCSStatusCache:
         self.cache[ path ] = item
 
         if callback:
-            callback( path, pluginID, indicatorID, message )
+            callback( path, item )
         return
 
     def clear( self ):
@@ -94,7 +94,7 @@ class VCSStatusCache:
                 oldIndicator = status.indicatorID
                 status.indicatorID = None
                 if oldIndicator:
-                    callback( path, None, None, None )
+                    callback( path, status )
         return
 
 
