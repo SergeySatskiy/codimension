@@ -226,17 +226,13 @@ class SubversionPlugin( VersionControlSystemInterface ):
         clientUpdate = settings.statusKind != STATUS_LOCAL_ONLY
         if flag == self.REQUEST_RECURSIVE:
             clientRecurse = True
-            clientGetAll = True
         elif flag == self.REQUEST_ITEM_ONLY:
             clientRecurse = False
-            clientGetAll = False
         else:
             clientRecurse = False
-            clientGetAll = True
 
         try:
             statusList = client.status( path, recurse = clientRecurse,
-                                        get_all = clientGetAll,
                                         update = clientUpdate )
             result = []
             for status in statusList:
