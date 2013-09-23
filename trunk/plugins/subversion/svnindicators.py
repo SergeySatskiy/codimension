@@ -22,6 +22,10 @@
 
 " Subversion plugin indicators "
 
+import os.path
+from PyQt4.QtGui import QPixmap, QColor
+
+
 IND_ADDED       = 0
 IND_DELETED     = 1
 IND_IGNORED     = 2
@@ -41,23 +45,72 @@ IND_UNKNOWN     = 14
 IND_ERROR       = 100
 
 
+pluginHomeDir = os.path.dirname( os.path.abspath( __file__ ) ) + os.path.sep 
+
 IND_DESCRIPTION = (
-( IND_ADDED,       "A",  "0,0,0,255", "255,255,255,255", "Added" ),
-( IND_DELETED,     "D",  "0,0,0,255", "255,255,255,255", "Deleted" ),
-( IND_IGNORED,     "I",  "0,0,0,255", "255,255,255,255", "Ignored" ),
-( IND_MERGED,      "G",  "0,0,0,255", "255,255,255,255", "Local modifications received repository modifications" ),
-( IND_MODIFIED_LR, "M*", "0,0,0,255", "255,255,255,255", "Modified locally and in repository" ),
-( IND_MODIFIED_L,  "M",  "0,0,0,255", "255,255,255,255", "Modified locally" ),
-( IND_MODIFIED_R,  "*",  "0,0,0,255", "255,255,255,255", "Repository version updated" ),
-( IND_UPTODATE,    "OK", "0,0,0,255", "255,255,255,255", "Up to date" ),
-( IND_REPLACED,    "R",  "0,0,0,255", "255,255,255,255", "Deleted and then re-added" ),
-( IND_CONFLICTED,  "C",  "0,0,0,255", "255,255,255,255", "Conflicted" ),
-( IND_EXTERNAL,    "X",  "0,0,0,255", "255,255,255,255", "External" ),
-( IND_INCOMPLETE,  "P",  "0,0,0,255", "255,255,255,255", "Directory does not contain a complete entries list" ),
-( IND_MISSING,     "!",  "0,0,0,255", "255,255,255,255", "Missing" ),
-( IND_OBSTRUCTED,  "~",  "0,0,0,255", "255,255,255,255", "Versioned item obstructed by some item of a different kind" ),
-( IND_UNKNOWN,     "U",  "0,0,0,255", "255,255,255,255", "Unknown status" ),
+( IND_ADDED,
+  QPixmap( pluginHomeDir + "status-added.png" ),
+  QColor( 0, 0 , 0,255 ), QColor( 255, 255, 255, 255 ),
+  "Added to SVN repository" ),
+( IND_DELETED,
+  QPixmap( pluginHomeDir + "status-deleted.png" ),
+  QColor( 0, 0, 0, 255 ), QColor( 255, 255, 255, 255 ),
+  "Deleted from SVN repository" ),
+( IND_IGNORED,
+  QPixmap( pluginHomeDir + "status-ignored.png" ),
+  QColor( 0, 0, 0, 255 ), QColor( 255, 255, 255, 255 ),
+  "Ignored" ),
+( IND_MERGED,
+  QPixmap( pluginHomeDir + "status-merged.png" ),
+  QColor( 0, 0, 0, 255 ), QColor( 255, 255, 255, 255 ),
+  "Local modifications received SVN repository modifications" ),
+( IND_MODIFIED_LR,
+  QPixmap( pluginHomeDir + "status-locally-repos-modified.png" ),
+  QColor( 0, 0, 0, 255 ), QColor( 255, 255, 255, 255 ),
+  "Modified locally and in SVN repository" ),
+( IND_MODIFIED_L,
+  QPixmap( pluginHomeDir + "status-locally-modified.png" ),
+  QColor( 0, 0, 0, 255 ), QColor( 255, 255, 255, 255 ),
+  "Modified locally" ),
+( IND_MODIFIED_R,
+  QPixmap( pluginHomeDir + "status-repos-modified.png" ),
+  QColor( 0, 0, 0, 255 ), QColor( 255, 255, 255, 255 ),
+  "SVN repository version updated" ),
+( IND_UPTODATE,
+  QPixmap( pluginHomeDir + "status-uptodate.png" ),
+  QColor( 0, 0, 0, 255 ), QColor( 255, 255, 255, 255 ),
+  "Up to date" ),
+( IND_REPLACED,
+  QPixmap( pluginHomeDir + "status-replaced.png" ),
+  QColor( 0, 0, 0, 255 ), QColor( 255, 255, 255, 255 ),
+  "Deleted and then re-added" ),
+( IND_CONFLICTED,
+  QPixmap( pluginHomeDir + "status-conflict.png" ),
+  QColor( 0, 0, 0, 255 ), QColor( 255, 255, 255, 255 ),
+  "Conflicted" ),
+( IND_EXTERNAL,
+  QPixmap( pluginHomeDir + "status-external.png" ),
+  QColor( 0, 0, 0, 255 ), QColor( 255, 255, 255, 255 ),
+  "External" ),
+( IND_INCOMPLETE,
+  QPixmap( pluginHomeDir + "status-incomplete.png" ),
+  QColor( 0, 0, 0, 255 ), QColor( 255, 255, 255, 255 ),
+  "Directory does not contain a complete entries list" ),
+( IND_MISSING,
+  QPixmap( pluginHomeDir + "status-missing.png" ),
+  QColor( 0, 0, 0, 255 ), QColor( 255, 255, 255, 255 ),
+  "Missing" ),
+( IND_OBSTRUCTED,
+  QPixmap( pluginHomeDir + "status-obstructed.png" ),
+  QColor( 0, 0, 0, 255 ), QColor( 255, 255, 255, 255 ),
+  "Versioned item obstructed by some item of a different kind" ),
+( IND_UNKNOWN,
+  QPixmap( pluginHomeDir + "status-unknown.png" ),
+  QColor( 0, 0, 0, 255 ), QColor( 255, 255, 255, 255 ),
+  "Unknown status" ),
 
-( IND_ERROR,       "E",  "0,0,0,255", "220,0,0,255",     "Generic error" ),
+( IND_ERROR,
+  QPixmap( pluginHomeDir + "status-error.png" ),
+  QColor( 0, 0, 0, 255 ), QColor( 220, 0, 0, 255 ),
+  "Generic error" ),
 )
-
