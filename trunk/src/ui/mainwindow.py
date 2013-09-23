@@ -138,7 +138,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__lastDebugAsException = None
         self.__lastDebugAction = None
 
-        self.__vcsManager = VCSManager()
+        self.vcsManager = VCSManager()
 
         self.__debugger = CodimensionDebugger( self )
         self.connect( self.__debugger, SIGNAL( "DebuggerStateChanged" ),
@@ -535,6 +535,11 @@ class CodimensionMainWindow( QMainWindow ):
         font = self.__statusBar.font()
         font.setItalic( True )
         self.__statusBar.setFont( font )
+
+        self.sbVCSStatus = QLabel( "", self.__statusBar )
+        self.sbVCSStatus.setFrameStyle( QFrame.StyledPanel )
+        self.__statusBar.addPermanentWidget( self.sbVCSStatus )
+        self.sbVCSStatus.setVisible( False )
 
         self.dbgState = QLabel( "Debugger: unknown", self.__statusBar )
         self.dbgState.setFrameStyle( QFrame.StyledPanel )
@@ -1914,7 +1919,7 @@ class CodimensionMainWindow( QMainWindow ):
             closeMagicLibrary()
 
             # Stop the VCS manager threads
-            self.__vcsManager.dismissAllPlugins()
+            self.vcsManager.dismissAllPlugins()
 
             # On ubuntu codimension produces core dumps coming from QT when:
             # - a new project is created
@@ -1928,7 +1933,7 @@ class CodimensionMainWindow( QMainWindow ):
 
     def dismissVCSPlugin( self, plugin ):
         " Dismisses the given VCS plugin "
-        self.__vcsManager.dismissPlugin( plugin )
+        self.vcsManager.dismissPlugin( plugin )
         return
 
     def getProjectExpandedPaths( self ):

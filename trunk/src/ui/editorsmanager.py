@@ -188,6 +188,9 @@ class EditorsManager( QTabWidget ):
                       self.__onPluginActivated )
         self.connect( GlobalData().pluginManager, SIGNAL( 'PluginDeactivated' ),
                       self.__onPluginDeactivated )
+
+        self.connect( self.__mainWindow.vcsManager,
+                      SIGNAL( "VCSFileStatus" ), self.__onVCSStatus )
         return
 
     def __currentTabClicked( self ):
@@ -1748,12 +1751,12 @@ class EditorsManager( QTabWidget ):
         mainWindow.sbEol.setText( currentWidget.getEol() )
 
         cPos = currentWidget.getPos()
-        if type( cPos ) == type( 0 ):
+        if type( cPos ) == int:
             mainWindow.sbPos.setText( "Pos: " + str( cPos + 1 ) )
         else:
             mainWindow.sbPos.setText( "Pos: " + cPos )
         cLine = currentWidget.getLine()
-        if type( cLine ) == type( 0 ):
+        if type( cLine ) == int:
             mainWindow.sbLine.setText( "Line: " + str( cLine + 1 ) )
         else:
             mainWindow.sbLine.setText( "Line: " + cLine )
@@ -1762,10 +1765,32 @@ class EditorsManager( QTabWidget ):
         if currentWidget.getFileName() == "":
             mainWindow.sbFile.setPath( "File: N/A" )
         else:
-            mainWindow.sbFile.setPath( "File: " + \
+            mainWindow.sbFile.setPath( "File: " +
                                        currentWidget.getFileName() )
         if self.__debugMode:
             mainWindow.setRunToLineButtonState()
+
+        # Update the VCS indicator
+        vcsManager = mainWindow.vcsManager
+        if vcsManager.activePluginCount() == 0:
+            mainWindow.sbVCSStatus.setVisible( False )
+            return
+
+        currentVCSStatus = currentWidget.getVCSStatus()
+        if currentVCSStatus is None:
+            mainWindow.sbVCSStatus.setVisible( False )
+        else:
+            # Draw the status
+            mainWindow.sbVCSStatus.setVisible( True )
+            vcsManager.drawStatus( mainWindow.sbVCSStatus, currentVCSStatus )
+
+        if currentWidget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
+                                        MainWindowTabWidgetBase.PictureViewer,
+                                        MainWindowTabWidgetBase.PythonGraphicsEditor ]:
+            fileName = currentWidget.getFileName()
+            if fileName.startswith( os.path.sep ):
+                # File exists
+                vcsManager.requestStatus( fileName )
         return
 
     def getUnsavedCount( self ):
@@ -2287,4 +2312,20 @@ class EditorsManager( QTabWidget ):
     def getPluginMenus( self ):
         " Provides a reference to the registered plugin menus map "
         return self.__pluginMenus
+
+    def __onVCSStatus( self, path, status ):
+        " Triggered when a status was updated "
+        for index in xrange( self.count() ):
+            widget = self.widget( index )
+            if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
+                                     MainWindowTabWidgetBase.PictureViewer,
+                                     MainWindowTabWidgetBase.PythonGraphicsEditor ]:
+                if widget.getFileName() == path:
+                    widget.setVCSStatus( status )
+                    if self.currentIndex() == index:
+                        self.__mainWindow.sbVCSStatus.setVisible( True )
+                        self.__mainWindow.vcsManager.drawStatus( self.__mainWindow.sbVCSStatus,
+                                                                 status )
+                    break
+        return
 

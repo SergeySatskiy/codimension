@@ -172,6 +172,8 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__diskModTime = None
         self.__diskSize = None
         self.__reloadDlgShown = False
+
+        self.__vcsStatus = None
         return
 
     def __createLayout( self ):
@@ -457,3 +459,11 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__diskSize = os.path.getsize( path )
         return
 
+    def getVCSStatus( self ):
+        " Provides the VCS status "
+        return self.__vcsStatus
+
+    def setVCSStatus( self, newStatus ):
+        " Sets the new VCS status "
+        self.__vcsStatus = newStatus
+        return

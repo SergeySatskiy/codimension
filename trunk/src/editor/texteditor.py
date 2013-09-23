@@ -2365,6 +2365,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         self.__debugMode = False
         self.__breakableLines = None
+
+        self.__vcsStatus = None
         return
 
     def shouldAcceptFocus( self ):
@@ -3351,3 +3353,12 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             return False
 
         return line in self.__breakableLines
+
+    def getVCSStatus( self ):
+        " Provides the VCS status "
+        return self.__vcsStatus
+
+    def setVCSStatus( self, newStatus ):
+        " Sets the new VCS status "
+        self.__vcsStatus = newStatus
+        return

@@ -139,3 +139,6 @@ class MainWindowTabWidgetBase():
         " Switches the widget to debug mode and back "
         return
 
+    def getVCSStatus( self ):
+        " Provides the content VCS status "
+        return None
