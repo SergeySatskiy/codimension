@@ -1268,6 +1268,7 @@ class EditorsManager( QTabWidget ):
                 # Otherwise the FS watcher will signal the chages
                 self.emit( SIGNAL( 'fileUpdated' ), fileName,
                            widget.getUUID() )
+            self.__mainWindow.vcsManager.setLocallyModified( fileName )
             return True
 
         # This is the new one - call Save As
@@ -1394,6 +1395,7 @@ class EditorsManager( QTabWidget ):
         widget.updateStatus()
         self.__updateStatusBar()
         self.__mainWindow.updateRunDebugButtons()
+        self.__mainWindow.vcsManager.setLocallyModified( fileName )
         return True
 
     def onSaveDiagramAs( self ):
