@@ -41,6 +41,7 @@ from svnindicators import ( IND_ADDED, IND_ERROR, IND_DELETED, IND_IGNORED,
                             IND_MISSING, IND_OBSTRUCTED, IND_UNKNOWN,
                             IND_DESCRIPTION )
 from svninfo import getSVNInfo
+from strconvert import statusToString
 
 
 
@@ -293,9 +294,19 @@ class SubversionPlugin( VersionControlSystemInterface ):
         " Implementation of the info command for a file "
         settings = self.getSettings()
         client = self.getSVNClient( settings )
+        statusInfo = self.getStatus( path, self.REQUEST_ITEM_ONLY )
+        if not statusInfo or statusInfo[ 0 ][ 1 ] == IND_ERROR:
+            logging.error( "Error getting status of " + path )
+            return
+        if statusInfo[ 0 ][ 1 ] == self.NOT_UNDER_VCS:
+            logging.info( "Status: " + statusToString( statusInfo[ 0 ][ 1 ] ) )
+            return
 
         info = getSVNInfo( client, path )
+        message = "\n    Status: " + statusToString( statusInfo[ 0 ][ 1 ] )
         for item in info:
-            logging.info( item[ 0 ] + ": " + item[ 1 ] )
+            message = message + "\n    " + item[ 0 ] + ": " + item[ 1 ]
+        logging.info( message )
         client = None
         return
+
