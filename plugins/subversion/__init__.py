@@ -23,12 +23,12 @@
 " Codimension SVN plugin implementation "
 
 
-from PyQt4.QtCore import SIGNAL
+from PyQt4.QtCore import SIGNAL, QMutex
 from PyQt4.QtGui import QDialog
-from threading import Lock
 from copy import deepcopy
 import pysvn
 import os.path
+import logging
 from plugins.categories.vcsiface import VersionControlSystemInterface
 from menus import ( populateMainMenu, populateFileContextMenu,
                     populateDirectoryContextMenu, populateBufferContextMenu )
@@ -40,6 +40,7 @@ from svnindicators import ( IND_ADDED, IND_ERROR, IND_DELETED, IND_IGNORED,
                             IND_CONFLICTED, IND_EXTERNAL, IND_INCOMPLETE,
                             IND_MISSING, IND_OBSTRUCTED, IND_UNKNOWN,
                             IND_DESCRIPTION )
+from svninfo import getSVNInfo
 
 
 
@@ -51,7 +52,10 @@ class SubversionPlugin( VersionControlSystemInterface ):
 
         self.projectSettings = None
         self.ideWideSettings = None
-        self.__settingsLock = Lock()
+        self.__settingsLock = QMutex()
+
+        self.fileParentMenu = None
+        self.dirParentMenu = None
         return
 
     @staticmethod
@@ -126,7 +130,7 @@ class SubversionPlugin( VersionControlSystemInterface ):
                                      self.projectSettings )
         if dlg.exec_() == QDialog.Accepted:
             # Save the settings if they have changed
-            self.__settingsLock.acquire()
+            self.__settingsLock.lock()
             if self.ideWideSettings != dlg.ideWideSettings:
                 self.ideWideSettings = dlg.ideWideSettings
                 saveSVNSettings( self.ideWideSettings,
@@ -136,7 +140,7 @@ class SubversionPlugin( VersionControlSystemInterface ):
                     self.projectSettings = dlg.projectSettings
                     saveSVNSettings( self.projectSettings,
                                      self.__getProjectConfigFile() )
-            self.__settingsLock.release()
+            self.__settingsLock.unlock()
         return
 
     def __onProjectChanged( self, what ):
@@ -145,13 +149,13 @@ class SubversionPlugin( VersionControlSystemInterface ):
             return
 
         if self.ide.project.isLoaded():
-            self.__settingsLock.acquire()
+            self.__settingsLock.lock()
             self.projectSettings = getSettings( self.__getProjectConfigFile() )
-            self.__settingsLock.release()
+            self.__settingsLock.unlock()
         else:
-            self.__settingsLock.acquire()
+            self.__settingsLock.lock()
             self.projectSettings = None
-            self.__settingsLock.release()
+            self.__settingsLock.unlock()
         return
 
     def getCustomIndicators( self ):
@@ -161,14 +165,14 @@ class SubversionPlugin( VersionControlSystemInterface ):
     def getSettings( self ):
         " Thread safe settings copy "
         if self.ide.project.isLoaded():
-            self.__settingsLock.acquire()
+            self.__settingsLock.lock()
             settings = deepcopy( self.projectSettings )
-            self.__settingsLock.release()
+            self.__settingsLock.unlock()
             return settings
 
-        self.__settingsLock.acquire()
+        self.__settingsLock.lock()
         settings = deepcopy( self.ideWideSettings )
-        self.__settingsLock.release()
+        self.__settingsLock.unlock()
         return settings
 
     def getSVNClient( self, settings ):
@@ -247,15 +251,51 @@ class SubversionPlugin( VersionControlSystemInterface ):
                 result.append( (reportPath.replace( path, "" ),
                                 self.__convertSVNStatus( status ),
                                 None) )
+            client = None
             return result
         except pysvn.ClientError, exc:
             errorCode = exc.args[ 1 ][ 0 ][ 1 ]
             if errorCode == pysvn.svn_err.wc_not_working_copy:
+                client = None
                 return ( ("", self.NOT_UNDER_VCS, None), )
             message = exc.args[ 0 ]
+            client = None
             return ( ("", IND_ERROR, message), )
         except Exception, exc:
+            client = None
             return ( ("", IND_ERROR, "Error: " + str( exc )), )
         except:
+            client = None
             return ( ("", IND_ERROR, "Unknown error"), )
 
+    def bufferInfo( self ):
+        " Called when info requested for a buffer "
+        fileName = self.ide.currentEditorWidget.getFileName()
+        if not os.path.isabs( fileName ):
+            logging.info( "SVN info is not applicable for an unsaved buffer" )
+            return
+        self.__svnInfo( fileName )
+        return
+
+    def dirInfo( self ):
+        " Called when info requested for a directory via context menu "
+        path = str( self.dirParentMenu.menuAction().data().toString() )
+        self.__svnInfo( path )
+        return
+
+    def fileInfo( self ):
+        " Called when info requested for a file via context menu "
+        path = str( self.fileParentMenu.menuAction().data().toString() )
+        self.__svnInfo( path )
+        return
+
+    def __svnInfo( self, path ):
+        " Implementation of the info command for a file "
+        settings = self.getSettings()
+        client = self.getSVNClient( settings )
+
+        info = getSVNInfo( client, path )
+        for item in info:
+            logging.info( item[ 0 ] + ": " + item[ 1 ] )
+        client = None
+        return

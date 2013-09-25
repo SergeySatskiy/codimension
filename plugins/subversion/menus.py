@@ -30,14 +30,20 @@ def populateMainMenu( plugin, parentMenu ):
 
 def populateFileContextMenu( plugin, parentMenu ):
     " Populates a context menu used for a file in a project browser "
+    plugin.fileParentMenu = parentMenu
+    parentMenu.addAction( "Info", plugin.fileInfo )
     return
 
 def populateDirectoryContextMenu( plugin, parentMenu ):
     " Populates a context menu used for a directory in a project browser "
+    plugin.dirParentMenu = parentMenu
+    parentMenu.addAction( "Info", plugin.dirInfo )
     return
 
 def populateBufferContextMenu( plugin, parentMenu ):
     " Populates a context menu used for a text editor or a viewer "
     parentMenu.addAction( "Configure", plugin.configure )
+    parentMenu.addSeparator()
+    parentMenu.addAction( "Info", plugin.bufferInfo )
     return
 
