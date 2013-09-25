@@ -31,7 +31,9 @@ import os.path
 import logging
 from plugins.categories.vcsiface import VersionControlSystemInterface
 from menus import ( populateMainMenu, populateFileContextMenu,
-                    populateDirectoryContextMenu, populateBufferContextMenu )
+                    populateDirectoryContextMenu, populateBufferContextMenu,
+                    fileContextMenuAboutToShow, mainMenuAboutToShow,
+                    directoryContextMenuAboutToShow, bufferContextMenuAboutToshow )
 from configdlg import ( SVNPluginConfigDialog, saveSVNSettings, getSettings,
                         AUTH_PASSWD, STATUS_LOCAL_ONLY )
 from svnindicators import ( IND_ADDED, IND_ERROR, IND_DELETED, IND_IGNORED,
@@ -269,6 +271,27 @@ class SubversionPlugin( VersionControlSystemInterface ):
             client = None
             return ( ("", IND_ERROR, "Unknown error"), )
 
+    def getLocalStatus( self, path ):
+        " Provides quick local SVN status for the item itself "
+        client = self.getSVNClient( self.getSettings() )
+        try:
+            statusList = client.status( path, update = False, depth = pysvn.depth.empty )
+            if len( statusList ) != 1:
+                return IND_ERROR
+            return self.__convertSVNStatus( statusList[ 0 ] )
+        except pysvn.ClientError, exc:
+            errorCode = exc.args[ 1 ][ 0 ][ 1 ]
+            if errorCode == pysvn.svn_err.wc_not_working_copy:
+                return self.NOT_UNDER_VCS
+            message = exc.args[ 0 ]
+            print message
+            return IND_ERROR
+        except Exception, exc:
+            print str(exc)
+            return IND_ERROR
+        except:
+            return IND_ERROR
+
     def bufferInfo( self ):
         " Called when info requested for a buffer "
         fileName = self.ide.currentEditorWidget.getFileName()
@@ -292,21 +315,38 @@ class SubversionPlugin( VersionControlSystemInterface ):
 
     def __svnInfo( self, path ):
         " Implementation of the info command for a file "
-        settings = self.getSettings()
-        client = self.getSVNClient( settings )
-        statusInfo = self.getStatus( path, self.REQUEST_ITEM_ONLY )
-        if not statusInfo or statusInfo[ 0 ][ 1 ] == IND_ERROR:
+        status = self.getLocalStatus( path )
+        if status == IND_ERROR:
             logging.error( "Error getting status of " + path )
             return
-        if statusInfo[ 0 ][ 1 ] == self.NOT_UNDER_VCS:
-            logging.info( "Status: " + statusToString( statusInfo[ 0 ][ 1 ] ) )
+        if status == self.NOT_UNDER_VCS:
+            logging.info( "Status: " + statusToString( status ) )
             return
 
+        client = self.getSVNClient( self.getSettings() )
         info = getSVNInfo( client, path )
-        message = "\n    Status: " + statusToString( statusInfo[ 0 ][ 1 ] )
+        message = "\n    Status: " + statusToString( status )
         for item in info:
             message = message + "\n    " + item[ 0 ] + ": " + item[ 1 ]
         logging.info( message )
         client = None
+        return
+
+    # Menu dispatching
+
+    def onMainMenuAboutToShow( self ):
+        mainMenuAboutToShow( self )
+        return
+
+    def onFileContextMenuAboutToShow( self ):
+        fileContextMenuAboutToShow( self )
+        return
+
+    def onDirectoryContextMenuAboutToShow( self ):
+        directoryContextMenuAboutToShow( self )
+        return
+
+    def onBufferContextMenuAboutToshow( self ):
+        bufferContextMenuAboutToshow( self )
         return
 
