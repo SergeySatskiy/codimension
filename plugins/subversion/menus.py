@@ -42,6 +42,7 @@ def populateFileContextMenu( plugin, parentMenu ):
     plugin.connect( parentMenu, SIGNAL( "aboutToShow()" ),
                     plugin.onFileContextMenuAboutToShow )
     plugin.fileContextInfoAct = parentMenu.addAction( "&Info", plugin.fileInfo )
+    plugin.fileContextUpdateAct = parentMenu.addAction( "&Update", plugin.fileUpdate )
     return
 
 def populateDirectoryContextMenu( plugin, parentMenu ):
@@ -50,6 +51,7 @@ def populateDirectoryContextMenu( plugin, parentMenu ):
     plugin.connect( parentMenu, SIGNAL( "aboutToShow()" ),
                     plugin.onDirectoryContextMenuAboutToShow )
     plugin.dirContextInfoAct = parentMenu.addAction( "&Info", plugin.dirInfo )
+    plugin.dirContextUpdateAct = parentMenu.addAction( "&Update", plugin.dirUpdate )
     return
 
 def populateBufferContextMenu( plugin, parentMenu ):
@@ -57,8 +59,7 @@ def populateBufferContextMenu( plugin, parentMenu ):
     plugin.connect( parentMenu, SIGNAL( "aboutToShow()" ),
                     plugin.onBufferContextMenuAboutToshow )
     plugin.bufContextInfoAct = parentMenu.addAction( "&Info", plugin.bufferInfo )
-    parentMenu.addSeparator()
-    parentMenu.addAction( "Configure", plugin.configure )
+    plugin.bufContextUpdateAct = parentMenu.addAction( "&Update", plugin.bufferUpdate )
     return
 
 
@@ -73,9 +74,11 @@ def fileContextMenuAboutToShow( plugin ):
     if plugin.getLocalStatus( path ) in [ plugin.NOT_UNDER_VCS,
                                           IND_ERROR ]:
         plugin.fileContextInfoAct.setEnabled( False )
+        plugin.fileContextUpdateAct.setEnabled( False )
         return
 
     plugin.fileContextInfoAct.setEnabled( True )
+    plugin.fileContextUpdateAct.setEnabled( True )
     return
 
 def directoryContextMenuAboutToShow( plugin ):
@@ -84,9 +87,11 @@ def directoryContextMenuAboutToShow( plugin ):
     if plugin.getLocalStatus( path ) in [ plugin.NOT_UNDER_VCS,
                                           IND_ERROR ]:
         plugin.dirContextInfoAct.setEnabled( False )
+        plugin.dirContextUpdateAct.setEnabled( False )
         return
 
     plugin.dirContextInfoAct.setEnabled( True )
+    plugin.dirContextUpdateAct.setEnabled( True )
     return
 
 def bufferContextMenuAboutToshow( plugin ):
@@ -98,8 +103,10 @@ def bufferContextMenuAboutToshow( plugin ):
     if plugin.getLocalStatus( path ) in [ plugin.NOT_UNDER_VCS,
                                           IND_ERROR ]:
         plugin.bufContextInfoAct.setEnabled( False )
+        plugin.bufContextUpdateAct.setEnabled( False )
         return
 
     plugin.bufContextInfoAct.setEnabled( True )
+    plugin.bufContextUpdateAct.setEnabled( True )
     return
 

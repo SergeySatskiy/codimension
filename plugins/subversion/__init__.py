@@ -234,7 +234,12 @@ class SubversionPlugin( VersionControlSystemInterface ):
         if flag == self.REQUEST_RECURSIVE:
             clientDepth = pysvn.depth.infinity
         elif flag == self.REQUEST_ITEM_ONLY:
-            clientDepth = pysvn.depth.empty
+            # Heck! By some reasons if depth empty AND update is True
+            # the request returns nothing
+            if path.endswith( os.path.sep ):
+                clientDepth = pysvn.depth.empty
+            else:
+                clientDepth = pysvn.depth.unknown
         else:
             clientDepth = pysvn.depth.files
 
@@ -293,13 +298,10 @@ class SubversionPlugin( VersionControlSystemInterface ):
         except:
             return IND_ERROR
 
-    def bufferInfo( self ):
-        " Called when info requested for a buffer "
-        fileName = self.ide.currentEditorWidget.getFileName()
-        if not os.path.isabs( fileName ):
-            logging.info( "SVN info is not applicable for an unsaved buffer" )
-            return
-        self.__svnInfo( fileName )
+    def fileInfo( self ):
+        " Called when info requested for a file via context menu "
+        path = str( self.fileParentMenu.menuAction().data().toString() )
+        self.__svnInfo( path )
         return
 
     def dirInfo( self ):
@@ -308,9 +310,12 @@ class SubversionPlugin( VersionControlSystemInterface ):
         self.__svnInfo( path )
         return
 
-    def fileInfo( self ):
-        " Called when info requested for a file via context menu "
-        path = str( self.fileParentMenu.menuAction().data().toString() )
+    def bufferInfo( self ):
+        " Called when info requested for a buffer "
+        path = self.ide.currentEditorWidget.getFileName()
+        if not os.path.isabs( path ):
+            logging.info( "SVN info is not applicable for never saved buffer" )
+            return
         self.__svnInfo( path )
         return
 
@@ -331,6 +336,39 @@ class SubversionPlugin( VersionControlSystemInterface ):
             message = message + "\n    " + item[ 0 ] + ": " + item[ 1 ]
         logging.info( message )
         client = None
+        return
+
+    def fileUpdate( self ):
+        " Called when update for a file is requested "
+        path = str( self.fileParentMenu.menuAction().data().toString() )
+        self.__svnUpdate( path, False )
+        return
+
+    def dirUpdate( self ):
+        " Called when update for a directory is requested "
+        path = str( self.dirParentMenu.menuAction().data().toString() )
+        self.__svnUpdate( path, True )
+        return
+
+    def bufferUpdate( self ):
+        " Called when update for a buffer is requested "
+        path = self.ide.currentEditorWidget.getFileName()
+        if not os.path.isabs( path ):
+            logging.info( "SVN update is not applicable for never saved buffer" )
+            return
+        self.__svnUpdate( path, False )
+        return
+
+    def __svnUpdate( self, path, recursively ):
+        " Does SVN update "
+        client = self.getSVNClient( self.getSettings() )
+        try:
+            newRevision = client.update( path, recurse = recursively )
+        except Exception, exc:
+            logging.error( "Error updating " + path + ":\n" + str( exc ) )
+            return
+        logging.info( path + " updated to revision " +
+                      str( newRevision[ 0 ].number ) )
         return
 
     # Menu dispatching

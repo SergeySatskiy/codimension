@@ -26,13 +26,17 @@ import pysvn
 from strconvert import nodeKindToString, scheduleToString, timestampToString
 
 
-def getSVNInfo( client, path,
-                repRevision = pysvn.Revision( pysvn.opt_revision_kind.unspecified ),
-                pegRevision = pysvn.Revision( pysvn.opt_revision_kind.unspecified ) ):
+def getSVNInfo( client, path, repRevision = None, pegRevision = None ):
     " Provides info for the given path "
+    if repRevision is None:
+        repRevision = pysvn.Revision( pysvn.opt_revision_kind.unspecified )
+    if pegRevision is None:
+        pegRevision = pysvn.Revision( pysvn.opt_revision_kind.unspecified )
+
     result = []
     try:
-        entries = client.info2( path, repRevision, pegRevision, recurse = False )
+        entries = client.info2( path, repRevision, pegRevision,
+                                recurse = False )
         if len( entries ) != 1:
             raise Exception( "Unexpected number of entries for the path. "
                              "Expected 1, received " + str( len( entries ) ) )
@@ -47,12 +51,15 @@ def getSVNInfo( client, path,
         if 'repos_UUID' in info and info[ 'repos_UUID' ]:
             result.append( ("Repository UUID", info[ 'repos_UUID' ]) )
         if 'last_changed_author' in info and info[ 'last_changed_author' ]:
-            result.append( ("Author of the last changes", info[ 'last_changed_author' ]) )
+            result.append( ("Author of the last changes",
+                            info[ 'last_changed_author' ]) )
         if 'last_changed_date' in info and info[ 'last_changed_date' ]:
-            result.append( ("Date of the last changes", timestampToString( info[ 'last_changed_date' ] )) )
+            result.append( ("Date of the last changes",
+                            timestampToString( info[ 'last_changed_date' ] )) )
         if 'last_changed_rev' in info and info[ 'last_changed_rev' ] and \
            info[ 'last_changed_rev' ].kind == pysvn.opt_revision_kind.number:
-            result.append( ("Revision of the last changes", str( info[ 'last_changed_rev' ].number )) )
+            result.append( ("Revision of the last changes",
+                            str( info[ 'last_changed_rev' ].number )) )
         if 'kind' in info and info[ 'kind' ]:
             result.append( ("Node kind", nodeKindToString( info[ 'kind' ] )) )
         if 'lock' in info and info[ 'lock' ]:
@@ -64,12 +71,14 @@ def getSVNInfo( client, path,
                     result.append( ("Lock owner", "unknown") )
             if 'creation_date' in lockInfo:
                 if lockInfo[ 'creation_date' ]:
-                    result.append( ("Lock creation date", timestampToString( lockInfo[ 'creation_date' ] )) )
+                    result.append( ("Lock creation date",
+                                    timestampToString( lockInfo[ 'creation_date' ] )) )
                 else:
                     result.append( ("Lock creation date", "unknown") )
             if 'expiration_date' in lockInfo:
                 if lockInfo[ 'expiration_date' ]:
-                    result.append( ("Lock expiration date", timestampToString( lockInfo[ 'expiration_date' ] )) )
+                    result.append( ("Lock expiration date",
+                                    timestampToString( lockInfo[ 'expiration_date' ] )) )
                 else:
                     result.append( ("Lock expiration date", "unknown") )
             if 'token' in lockInfo:
@@ -85,16 +94,21 @@ def getSVNInfo( client, path,
         if 'wc_info' in info and info[ 'wc_info' ]:
             wcInfo = info[ 'wc_info' ]
             if 'schedule' in wcInfo and wcInfo[ 'schedule' ]:
-                result.append( ("Schedule", scheduleToString( wcInfo[ 'schedule' ] )) )
+                result.append( ("Schedule",
+                                scheduleToString( wcInfo[ 'schedule' ] )) )
             if 'copyfrom_url' in wcInfo and wcInfo[ 'copyfrom_url' ]:
                 result.append( ("Copied from URL", wcInfo[ 'copyfrom_url' ]) )
-            if 'copyfrom_rev' in wcInfo and wcInfo[ 'copyfrom_rev' ] and \
-                wcInfo[ 'copyfrom_rev' ].kind == pysvn.opt_revision_kind.number:
-                result.append( ("Copied from revision", str( wcInfo[ 'copyfrom_rev' ].number )) )
+            if 'copyfrom_rev' in wcInfo and wcInfo[ 'copyfrom_rev' ]:
+                if wcInfo[ 'copyfrom_rev' ].kind == pysvn.opt_revision_kind.number:
+                    if wcInfo[ 'copyfrom_rev' ].number != -1:
+                        result.append( ("Copied from revision",
+                                        str( wcInfo[ 'copyfrom_rev' ].number )) )
             if 'text_time' in wcInfo and wcInfo[ 'text_time' ]:
-                result.append( ("Last time content updated", timestampToString( wcInfo[ 'text_time' ] )) )
+                result.append( ("Last time content updated",
+                                timestampToString( wcInfo[ 'text_time' ] )) )
             if 'prop_time' in wcInfo and wcInfo[ 'prop_time' ]:
-                result.append( ("Last time properties updated", timestampToString( wcInfo[ 'prop_time' ] )) )
+                result.append( ("Last time properties updated",
+                                timestampToString( wcInfo[ 'prop_time' ] )) )
             if 'checksum' in wcInfo and wcInfo[ 'checksum' ]:
                 result.append( ("Checksum", wcInfo[ 'checksum' ]) )
         return result
@@ -110,4 +124,3 @@ def getSVNInfo( client, path,
         return ( ("Error ", str( exc )), )
     except:
         return ( ("Error", "Unknown error"), )
-
