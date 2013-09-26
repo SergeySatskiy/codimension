@@ -259,6 +259,8 @@ class ProjectViewer( QWidget ):
 
         # popup menu for directories
         self.prjDirMenu = QMenu( self )
+        self.connect( self.prjDirMenu, SIGNAL( 'aboutToShow()' ),
+                      self.__updatePluginMenuData )
         self.prjDirPylintAct = self.prjDirMenu.addAction(
                 PixmapCache().getIcon( 'pylint.png' ),
                 'Run pylint for the directory recursively',
@@ -295,6 +297,8 @@ class ProjectViewer( QWidget ):
 
         # popup menu for files
         self.prjFileMenu = QMenu( self )
+        self.connect( self.prjFileMenu, SIGNAL( 'aboutToShow()' ),
+                      self.__updatePluginMenuData )
         self.prjFilePylintAct = self.prjFileMenu.addAction(
                 PixmapCache().getIcon( 'pylint.png' ),
                 'Run pylint for the file', self.__pylintRequest )
@@ -447,6 +451,8 @@ class ProjectViewer( QWidget ):
 
         # create the popup menu for files
         self.fsFileMenu = QMenu( self )
+        self.connect( self.fsFileMenu, SIGNAL( 'aboutToShow()' ),
+                      self.__updatePluginMenuData )
         self.fsFileCopyPathAct = self.fsFileMenu.addAction(
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
                 'Copy path to clipboard', self.filesystemView.copyToClipboard )
@@ -462,6 +468,8 @@ class ProjectViewer( QWidget ):
 
         # create the directory menu
         self.fsDirMenu = QMenu( self )
+        self.connect( self.fsDirMenu, SIGNAL( 'aboutToShow()' ),
+                      self.__updatePluginMenuData )
         self.fsDirAddAsTopLevelAct = self.fsDirMenu.addAction(
                 PixmapCache().getIcon( 'addtopleveldir.png' ),
                 'Add as top level directory',
@@ -1293,8 +1301,6 @@ class ProjectViewer( QWidget ):
                 self.__prjFilePluginSeparator.setVisible( True )
                 self.fsFileMenu.addMenu( fMenu )
                 self.__fsFilePluginSeparator.setVisible( True )
-                self.connect( fMenu, SIGNAL( 'aboutToShow()' ),
-                              self.__onShowingPluginMenu )
         except Exception, exc:
             logging.error( "Error populating " + pluginName + " plugin file context menu: " +
                            str( exc ) + ". Ignore and continue." )
@@ -1310,8 +1316,6 @@ class ProjectViewer( QWidget ):
                 self.__prjDirPluginSeparator.setVisible( True )
                 self.fsDirMenu.addMenu( dMenu )
                 self.__fsDirPluginSeparator.setVisible( True )
-                self.connect( dMenu, SIGNAL( 'aboutToShow()' ),
-                              self.__onShowingPluginMenu )
         except Exception, exc:
             logging.error( "Error populating " + pluginName + " plugin directory context menu: " +
                            str( exc ) + ". Ignore and continue." )
@@ -1329,8 +1333,6 @@ class ProjectViewer( QWidget ):
                 self.__prjFilePluginSeparator.setVisible( len( self.__pluginFileMenus ) > 0 )
                 self.fsFileMenu.removeAction( fMenu.menuAction() )
                 self.__fsFilePluginSeparator.setVisible( len( self.__pluginFileMenus ) > 0 )
-                self.disconnect( fMenu, SIGNAL( 'aboutToShow()' ),
-                                 self.__onShowingPluginMenu )
                 fMenu = None
         except Exception, exc:
             pluginName = plugin.getName()
@@ -1346,8 +1348,6 @@ class ProjectViewer( QWidget ):
                 self.__prjDirPluginSeparator.setVisible( len( self.__pluginDirMenus ) > 0 )
                 self.fsDirMenu.removeAction( dMenu.menuAction() )
                 self.__fsDirPluginSeparator.setVisible( len( self.__pluginDirMenus ) > 0 )
-                self.disconnect( dMenu, SIGNAL( 'aboutToShow()' ),
-                                 self.__onShowingPluginMenu )
                 dMenu = None
         except Exception, exc:
             pluginName = plugin.getName()
@@ -1355,8 +1355,8 @@ class ProjectViewer( QWidget ):
                            str( exc ) + ". Ignore and continue." )
         return
 
-    def __onShowingPluginMenu( self ):
-        " Triggered when a plugin menu is about to show "
+    def __updatePluginMenuData( self ):
+        " Triggered when a file or dir menu is about to show "
         if self.projectTreeView.hasFocus():
             value = self.__prjContextItem.getPath()
         else:
