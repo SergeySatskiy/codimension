@@ -232,15 +232,15 @@ class SubversionPlugin( VersionControlSystemInterface ):
 
         clientUpdate = settings.statusKind != STATUS_LOCAL_ONLY
         if flag == self.REQUEST_RECURSIVE:
-            clientRecurse = True
+            clientDepth = pysvn.depth.infinity
         elif flag == self.REQUEST_ITEM_ONLY:
-            clientRecurse = False
+            clientDepth = pysvn.depth.empty
         else:
-            clientRecurse = False
+            clientDepth = pysvn.depth.files
 
         try:
-            statusList = client.status( path, recurse = clientRecurse,
-                                        update = clientUpdate )
+            statusList = client.status( path, update = clientUpdate,
+                                        depth = clientDepth )
             result = []
             for status in statusList:
                 reportPath = status.path
@@ -275,7 +275,8 @@ class SubversionPlugin( VersionControlSystemInterface ):
         " Provides quick local SVN status for the item itself "
         client = self.getSVNClient( self.getSettings() )
         try:
-            statusList = client.status( path, update = False, depth = pysvn.depth.empty )
+            statusList = client.status( path, update = False,
+                                        depth = pysvn.depth.empty )
             if len( statusList ) != 1:
                 return IND_ERROR
             return self.__convertSVNStatus( statusList[ 0 ] )
