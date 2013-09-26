@@ -1991,6 +1991,8 @@ class EditorsManager( QTabWidget ):
         self.history.clear()
         self.history.addCurrent()
         self.__restoringTabs = False
+
+        self.sendAllTabsVCSStatusRequest()
         return
 
     def __onZoom( self, zoomValue ):
@@ -2330,7 +2332,6 @@ class EditorsManager( QTabWidget ):
                                                                  status )
                     break
         return
-
 
     def sendAllTabsVCSStatusRequest( self ):
         " Sends the status requests for all the opened TABS (text/picture) "
