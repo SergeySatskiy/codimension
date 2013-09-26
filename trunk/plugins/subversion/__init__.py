@@ -34,8 +34,8 @@ from svnmenus import ( populateMainMenu, populateFileContextMenu,
                        populateDirectoryContextMenu, populateBufferContextMenu,
                        fileContextMenuAboutToShow, mainMenuAboutToShow,
                        directoryContextMenuAboutToShow, bufferContextMenuAboutToshow )
-from configdlg import ( SVNPluginConfigDialog, saveSVNSettings, getSettings,
-                        AUTH_PASSWD, STATUS_LOCAL_ONLY )
+from svnconfigdlg import ( SVNPluginConfigDialog, saveSVNSettings, getSettings,
+                           AUTH_PASSWD, STATUS_LOCAL_ONLY )
 from svnindicators import ( IND_ADDED, IND_ERROR, IND_DELETED, IND_IGNORED,
                             IND_MERGED, IND_MODIFIED_LR, IND_MODIFIED_L,
                             IND_MODIFIED_R, IND_UPTODATE, IND_REPLACED,
