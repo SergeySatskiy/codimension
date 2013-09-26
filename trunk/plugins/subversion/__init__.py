@@ -30,10 +30,10 @@ import pysvn
 import os.path
 import logging
 from plugins.categories.vcsiface import VersionControlSystemInterface
-from menus import ( populateMainMenu, populateFileContextMenu,
-                    populateDirectoryContextMenu, populateBufferContextMenu,
-                    fileContextMenuAboutToShow, mainMenuAboutToShow,
-                    directoryContextMenuAboutToShow, bufferContextMenuAboutToshow )
+from svnmenus import ( populateMainMenu, populateFileContextMenu,
+                       populateDirectoryContextMenu, populateBufferContextMenu,
+                       fileContextMenuAboutToShow, mainMenuAboutToShow,
+                       directoryContextMenuAboutToShow, bufferContextMenuAboutToshow )
 from configdlg import ( SVNPluginConfigDialog, saveSVNSettings, getSettings,
                         AUTH_PASSWD, STATUS_LOCAL_ONLY )
 from svnindicators import ( IND_ADDED, IND_ERROR, IND_DELETED, IND_IGNORED,
