@@ -23,7 +23,7 @@
 " Codimension SVN plugin INFO command implementation "
 
 import pysvn
-from strconvert import nodeKindToString, scheduleToString, timestampToString
+from svnstrconvert import nodeKindToString, scheduleToString, timestampToString
 
 
 def getSVNInfo( client, path, repRevision = None, pegRevision = None ):

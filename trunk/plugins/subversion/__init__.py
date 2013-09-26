@@ -43,7 +43,7 @@ from svnindicators import ( IND_ADDED, IND_ERROR, IND_DELETED, IND_IGNORED,
                             IND_MISSING, IND_OBSTRUCTED, IND_UNKNOWN,
                             IND_DESCRIPTION )
 from svninfo import getSVNInfo
-from strconvert import statusToString
+from svnstrconvert import statusToString
 
 
 
