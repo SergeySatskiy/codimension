@@ -3483,9 +3483,7 @@ class CodimensionMainWindow( QMainWindow ):
         " Triggered when a side bar should be activated "
         name = str( act.data().toString() )
         if name == "prj":
-            self.__leftSideBar.show()
-            self.__leftSideBar.setCurrentWidget( self.projectViewer )
-            self.__leftSideBar.raise_()
+            self.activateProjectTab()
         elif name == "recent":
             self.__leftSideBar.show()
             self.__leftSideBar.setCurrentWidget( self.recentProjectsViewer )
@@ -4166,9 +4164,7 @@ class CodimensionMainWindow( QMainWindow ):
         if not GlobalData().project.isProjectFile( path ):
             return
         if self.projectViewer.highlightPrjItem( path ):
-            self.__leftSideBar.show()
-            self.__leftSideBar.setCurrentWidget( self.projectViewer )
-            self.__leftSideBar.raise_()
+            self.activateProjectTab()
         return
 
     def highlightInFS( self, path ):
@@ -4176,9 +4172,7 @@ class CodimensionMainWindow( QMainWindow ):
         if not os.path.isabs( path ):
             return
         if self.projectViewer.highlightFSItem( path ):
-            self.__leftSideBar.show()
-            self.__leftSideBar.setCurrentWidget( self.projectViewer )
-            self.__leftSideBar.raise_()
+            self.activateProjectTab()
         return
 
     def getLogViewerContent( self ):
@@ -4280,4 +4274,12 @@ class CodimensionMainWindow( QMainWindow ):
             logging.error( "Error removing " + pluginName + " plugin main menu: " +
                            str( exc ) + ". Ignore and continue." )
         return
+
+    def activateProjectTab( self ):
+        " Activates the project tab "
+        self.__leftSideBar.show()
+        self.__leftSideBar.setCurrentWidget( self.projectViewer )
+        self.__leftSideBar.raise_()
+        return
+
 
