@@ -681,6 +681,7 @@ class RecentProjectsViewer( QWidget ):
                 prj.setTabsStatus( editorsManager.getTabsStatus() )
                 editorsManager.closeAll()
                 prj.loadProject( projectFileName )
+                mainWin.activateProjectTab()
         else:
             logging.error( "The project " + \
                            os.path.basename( projectFileName ) + \
