@@ -86,11 +86,12 @@ class FitPathLabel( QLabel ):
     def paintEvent( self, event ):
         """ Called when painting is required """
 
+        sparePixels = 5
         metric = self.fontMetrics()
-        if metric.width( self.__path ) > self.contentsRect().width():
+        if metric.width( self.__path ) > self.contentsRect().width() - sparePixels:
             QLabel.setText( self,
                 compactPath( self.__path,
-                             self.contentsRect().width(),
+                             self.contentsRect().width() - sparePixels,
                              self.length ) )
         else:
             QLabel.setText( self, self.__path )
