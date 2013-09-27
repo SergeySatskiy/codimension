@@ -87,7 +87,7 @@ class EditorsManager( QTabWidget ):
         self.setTabBar( ClickableTabBar( self ) )
         self.setMovable( True )
 
-        self.newIndex = -1
+        self.__newIndex = -1
         self.newCloneIndex = -1
         self.newDiffIndex = -1
         self.__mainWindow = parent
@@ -439,8 +439,15 @@ class EditorsManager( QTabWidget ):
 
     def getNewName( self ):
         " Provides a dummy name for the new tab file "
-        self.newIndex += 1
-        return "unnamed" + str( self.newIndex ) + ".py"
+        dirName = str( self.__getDefaultSaveDir() )
+        if not dirName.endswith( os.path.sep ):
+            dirName += os.path.sep
+
+        while True:
+            self.__newIndex += 1
+            candidate = "unnamed" + str( self.__newIndex ) + ".py"
+            if not os.path.exists( dirName + candidate ):
+                return candidate
 
     def getNewCloneName( self, shortName ):
         " Provides a new name for a cloned file "
@@ -1274,6 +1281,13 @@ class EditorsManager( QTabWidget ):
         # This is the new one - call Save As
         return self.onSaveAs( index )
 
+    def __getDefaultSaveDir( self ):
+        " Provides the default directory to save files to "
+        project = GlobalData().project
+        if project.isLoaded():
+            return project.getProjectDir()
+        return QDir.currentPath()
+
     def onSaveAs( self, index = -1 ):
         " Triggered when Ctrl+Shift+S is received "
         if index == -1:
@@ -1310,10 +1324,7 @@ class EditorsManager( QTabWidget ):
             dialog.setDirectory( os.path.dirname( widget.getFileName() ) )
             dialog.selectFile( os.path.basename( widget.getFileName() ) )
         else:
-            if project.isLoaded():
-                dialog.setDirectory( project.getProjectDir() )
-            else:
-                dialog.setDirectory( QDir.currentPath() )
+            dialog.setDirectory( self.__getDefaultSaveDir() )
             dialog.selectFile( widget.getShortName() )
 
         dialog.setOption( QFileDialog.DontConfirmOverwrite, False )
@@ -1422,10 +1433,7 @@ class EditorsManager( QTabWidget ):
             urls.append( QUrl.fromLocalFile( project.getProjectDir() ) )
         dialog.setSidebarUrls( urls )
 
-        if project.isLoaded():
-            dialog.setDirectory( project.getProjectDir() )
-        else:
-            dialog.setDirectory( QDir.currentPath() )
+        dialog.setDirectory( self.__getDefaultSaveDir() )
 
         if widgetType == MainWindowTabWidgetBase.GeneratedDiagram:
             dialog.selectFile( "imports-diagram.png" )
@@ -1929,8 +1937,8 @@ class EditorsManager( QTabWidget ):
                 activeIndex = index
                 parts = parts[ 1: ]
             if len( parts ) != 4:
-                logging.warning( 'Cannot restore last session tab. ' \
-                                 'Unknown status format (' + \
+                logging.warning( 'Cannot restore last session tab. '
+                                 'Unknown status format (' +
                                  status[ index ] + ')' )
                 continue
             fileName = parts[ 0 ]
@@ -1955,8 +1963,8 @@ class EditorsManager( QTabWidget ):
                 fileName = os.path.abspath( prjDir + os.path.sep + fileName )
 
             if not os.path.exists( fileName ):
-                logging.warning( 'Cannot restore last session tab. ' \
-                                 'File is not found (' + \
+                logging.warning( 'Cannot restore last session tab. '
+                                 'File is not found (' +
                                  fileName + ')' )
                 continue
 
@@ -1970,6 +1978,10 @@ class EditorsManager( QTabWidget ):
             if self.openFile( fileName, line ):
                 self.widget( 0 ).getEditor().gotoLine( line + 1, pos + 1,
                                                        firstLine + 1)
+
+        # This call happens when a project is loaded, so it makes sense to
+        # reset a new file index
+        self.__newIndex = -1
 
         # Switch to the last active tab
         if self.count() == 0:
