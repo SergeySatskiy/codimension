@@ -43,6 +43,7 @@ from svnindicators import ( IND_ADDED, IND_ERROR, IND_DELETED, IND_IGNORED,
                             IND_MISSING, IND_OBSTRUCTED, IND_UNKNOWN,
                             IND_DESCRIPTION )
 from svninfo import getSVNInfo
+from svnupdate import doSVNUpdate
 from svnstrconvert import statusToString
 
 
@@ -362,13 +363,7 @@ class SubversionPlugin( VersionControlSystemInterface ):
     def __svnUpdate( self, path, recursively ):
         " Does SVN update "
         client = self.getSVNClient( self.getSettings() )
-        try:
-            newRevision = client.update( path, recurse = recursively )
-        except Exception, exc:
-            logging.error( "Error updating " + path + ":\n" + str( exc ) )
-            return
-        logging.info( path + " updated to revision " +
-                      str( newRevision[ 0 ].number ) )
+        doSVNUpdate( client, path, recursively )
         return
 
     # Menu dispatching
