@@ -20,7 +20,7 @@
 # $Id$
 #
 
-" Codimension SVN plugin UPDATE command implementation "
+" Codimension SVN plugin ANNOTATE command implementation "
 
 import pysvn
 import logging
@@ -32,33 +32,43 @@ from svnstrconvert import notifyActionToString
 
 
 
-def doSVNUpdate( client, path, recursively, rev = None ):
-    " Performs the SVN Update for the given path "
+def doSVNAnnotate( client, path,
+                   revStart = None, revEnd = None, revPeg = None ):
+    " Performs the SVN annotate for the given path "
+    if revStart is None:
+        revStart = pysvn.Revision( opt_revision_kind.number, 0 )
+    if revEnd is None:
+        revEnd = pysvn.Revision( opt_revision_kind.head )
+    if revPeg is None:
+        revPeg = pysvn.Revision( opt_revision_kind.unspecified )
 
-    if rev is None:
-        rev = pysvn.Revision( pysvn.opt_revision_kind.head )
-    progressDialog = SVNUpdateProgress( client, path, recursively, rev )
+    progressDialog = SVNAnnotateProgress( client, path,
+                                          revStart, revEnd, revPeg )
     QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
-    progressDialog.exec_()
+    res = progressDialog.exec_()
     QApplication.restoreOverrideCursor()
     return
 
 
-class SVNUpdateProgress( QDialog ):
-    " Progress of the svn update command "
+class SVNAnnotateProgress( QDialog ):
+    " Minimalistic progress dialog "
 
-    def __init__( self, client, path, recursively, rev, parent = None ):
+    def __init__( self, client, path, revStart, revEnd, revPeg, parent = None ):
         QDialog.__init__( self, parent )
         self.__cancelRequest = False
         self.__inProcess = False
 
         self.__client = client
         self.__path = path
-        self.__recursively = recursively
-        self.__rev = rev
+        self.__revStart = revStart
+        self.__revEnd = revEnd
+        self.__revPeg = revPeg
+
+        # Transition data
+        self.annotation = None
 
         self.__createLayout()
-        self.setWindowTitle( "SVN Update" )
+        self.setWindowTitle( "SVN Annotate" )
         QTimer.singleShot( 0, self.__process )
         return
 
@@ -75,9 +85,7 @@ class SVNUpdateProgress( QDialog ):
         self.resize( 450, 20 )
         self.setSizeGripEnabled( True )
 
-        verticalLayout = QVBoxLayout( self )
-        verticalLayout.addWidget( QLabel( "Updating '" + self.__path + "':" ) )
-        self.__infoLabel = QLabel( self )
+        self.__infoLabel = QLabel( "Getting annotated file " + self.__path + "..." )
         verticalLayout.addWidget( self.__infoLabel )
 
         buttonBox = QDialogButtonBox( self )
@@ -114,11 +122,7 @@ class SVNUpdateProgress( QDialog ):
     def __notifyCallback( self, event ):
         " Called by pysvn. event is a dictionary "
         message = None
-        if event[ 'action' ] == pysvn.wc_notify_action.update_completed:
-            message = "Updated to revision " + str( event[ 'revision' ].number )
-        elif event[ 'action' ] == pysvn.wc_notify_action.update_started:
-            message = "Updating '" + event[ 'path' ] + "':"
-        elif event[ 'path' ]:
+        if event[ 'path' ]:
             action = notifyActionToString( event[ 'action' ] )
             if action is not None and action != "unknown":
                 message = action + " " + event[ 'path' ]
@@ -138,13 +142,15 @@ class SVNUpdateProgress( QDialog ):
 
         try:
             self.__inProcess = True
-            self.__client.update( self.__path, self.__recursively,
-                                  self.__rev )
+            self.annotation = self.__client.annotate( self.__path,
+                                                      self.__revStart,
+                                                      self.__revEnd,
+                                                      self.__revPeg )
             self.__inProcess = False
         except pysvn.ClientError, exc:
             errorCode = exc.args[ 1 ][ 0 ][ 1 ]
             if errorCode == pysvn.svn_err.cancelled:
-                logging.info( "Updating cancelled" )
+                logging.info( "Annotating cancelled" )
             else:
                 message = exc.args[ 0 ]
                 logging.error( message )
@@ -167,4 +173,6 @@ class SVNUpdateProgress( QDialog ):
         else:
             self.accept()
         return
+
+
 
