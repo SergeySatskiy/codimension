@@ -26,6 +26,7 @@
 from PyQt4.QtCore import SIGNAL
 import os.path
 from svnindicators import IND_ERROR
+from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
 
@@ -43,6 +44,7 @@ def populateFileContextMenu( plugin, parentMenu ):
                     plugin.onFileContextMenuAboutToShow )
     plugin.fileContextInfoAct = parentMenu.addAction( "&Info", plugin.fileInfo )
     plugin.fileContextUpdateAct = parentMenu.addAction( "&Update", plugin.fileUpdate )
+    plugin.fileContextAnnotateAct = parentMenu.addAction( "&Annotate", plugin.fileAnnotate )
     return
 
 def populateDirectoryContextMenu( plugin, parentMenu ):
@@ -60,6 +62,7 @@ def populateBufferContextMenu( plugin, parentMenu ):
                     plugin.onBufferContextMenuAboutToshow )
     plugin.bufContextInfoAct = parentMenu.addAction( "&Info", plugin.bufferInfo )
     plugin.bufContextUpdateAct = parentMenu.addAction( "&Update", plugin.bufferUpdate )
+    plugin.bufContextAnnotateAct = parentMenu.addAction( "&Annotate", plugin.bufferAnnotate )
     return
 
 
@@ -75,10 +78,12 @@ def fileContextMenuAboutToShow( plugin ):
                                           IND_ERROR ]:
         plugin.fileContextInfoAct.setEnabled( False )
         plugin.fileContextUpdateAct.setEnabled( False )
+        plugin.fileContextAnnotateAct.setEnabled( False )
         return
 
     plugin.fileContextInfoAct.setEnabled( True )
     plugin.fileContextUpdateAct.setEnabled( True )
+    plugin.fileContextAnnotateAct.setEnabled( True )
     return
 
 def directoryContextMenuAboutToShow( plugin ):
@@ -99,14 +104,25 @@ def bufferContextMenuAboutToshow( plugin ):
     path = plugin.ide.currentEditorWidget.getFileName()
     if not os.path.isabs( path ):
         plugin.bufContextInfoAct.setEnabled( False )
+        plugin.bufContextUpdateAct.setEnabled( False )
+        plugin.bufContextAnnotateAct.setEnabled( False )
         return
     if plugin.getLocalStatus( path ) in [ plugin.NOT_UNDER_VCS,
                                           IND_ERROR ]:
         plugin.bufContextInfoAct.setEnabled( False )
         plugin.bufContextUpdateAct.setEnabled( False )
+        plugin.bufContextAnnotateAct.setEnabled( False )
         return
 
     plugin.bufContextInfoAct.setEnabled( True )
     plugin.bufContextUpdateAct.setEnabled( True )
+
+    widgetType = plugin.ide.currentEditorWidget.getType()
+    if widgetType in [ MainWindowTabWidgetBase.PlainTextEditor,
+                       MainWindowTabWidgetBase.PythonGraphicsEditor ]:
+        plugin.bufContextAnnotateAct.setEnabled( True )
+    else:
+        plugin.bufContextAnnotateAct.setEnabled( False )
+
     return
 

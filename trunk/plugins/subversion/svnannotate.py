@@ -36,17 +36,23 @@ def doSVNAnnotate( client, path,
                    revStart = None, revEnd = None, revPeg = None ):
     " Performs the SVN annotate for the given path "
     if revStart is None:
-        revStart = pysvn.Revision( opt_revision_kind.number, 0 )
+        revStart = pysvn.Revision( pysvn.opt_revision_kind.number, 0 )
     if revEnd is None:
-        revEnd = pysvn.Revision( opt_revision_kind.head )
+        revEnd = pysvn.Revision( pysvn.opt_revision_kind.head )
     if revPeg is None:
-        revPeg = pysvn.Revision( opt_revision_kind.unspecified )
+        revPeg = pysvn.Revision( pysvn.opt_revision_kind.unspecified )
 
     progressDialog = SVNAnnotateProgress( client, path,
                                           revStart, revEnd, revPeg )
     QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
     res = progressDialog.exec_()
     QApplication.restoreOverrideCursor()
+
+    if res == QDialog.Accepted:
+        print "Annotation is done"
+        print progressDialog.annotation
+    else:
+        print "Error annotating"
     return
 
 
@@ -66,6 +72,7 @@ class SVNAnnotateProgress( QDialog ):
 
         # Transition data
         self.annotation = None
+        self.revisionsInfo = None
 
         self.__createLayout()
         self.setWindowTitle( "SVN Annotate" )
@@ -85,7 +92,8 @@ class SVNAnnotateProgress( QDialog ):
         self.resize( 450, 20 )
         self.setSizeGripEnabled( True )
 
-        self.__infoLabel = QLabel( "Getting annotated file " + self.__path + "..." )
+        verticalLayout = QVBoxLayout( self )
+        self.__infoLabel = QLabel( "Annotating '" + self.__path + "'..." )
         verticalLayout.addWidget( self.__infoLabel )
 
         buttonBox = QDialogButtonBox( self )
@@ -146,6 +154,7 @@ class SVNAnnotateProgress( QDialog ):
                                                       self.__revStart,
                                                       self.__revEnd,
                                                       self.__revPeg )
+            self.__collectRevisionInfo()
             self.__inProcess = False
         except pysvn.ClientError, exc:
             errorCode = exc.args[ 1 ][ 0 ][ 1 ]
@@ -174,5 +183,35 @@ class SVNAnnotateProgress( QDialog ):
             self.accept()
         return
 
+    def __collectRevisionInfo( self ):
+        " Collects information about revision messages "
+        self.__infoLabel.setText( "Collecting revision messages..." )
+        QApplication.processEvents()
+        revisions = set()
+        for item in self.annotation:
+            if item[ 'revision' ].kind == pysvn.opt_revision_kind.number:
+                revisions.add( item[ 'revision' ].number )
 
+        self.revisionsInfo = {}
+        itemNumber = 1
+        total = str( len( revisions ) )
+        for revision in revisions:
+            self.__infoLabel.setText( "Getting message for revision " +
+                                      str( revision ) + " (" +
+                                      str( itemNumber ) + " out of " +
+                                      total + ")" )
+            QApplication.processEvents()
+            if self.__cancelRequest:
+                break
 
+            rev = pysvn.Revision( pysvn.opt_revision_kind.number, revision )
+            logMessage = self.__client.log( self.__path,
+                                            revision_start = rev,
+                                            limit = 1 )
+            if len( logMessage ) != 1:
+                print "Unexpected log messages"
+            else:
+                print str( revision ) + " message: " + str( logMessage[ 0 ].message )
+            self.revisionsInfo[ rev ] = logMessage
+            itemNumber += 1
+        return

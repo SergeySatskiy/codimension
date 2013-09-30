@@ -44,6 +44,7 @@ from svnindicators import ( IND_ADDED, IND_ERROR, IND_DELETED, IND_IGNORED,
                             IND_DESCRIPTION )
 from svninfo import getSVNInfo
 from svnupdate import doSVNUpdate
+from svnannotate import doSVNAnnotate
 from svnstrconvert import statusToString
 
 
@@ -365,6 +366,28 @@ class SubversionPlugin( VersionControlSystemInterface ):
         client = self.getSVNClient( self.getSettings() )
         doSVNUpdate( client, path, recursively )
         return
+
+    def fileAnnotate( self ):
+        " Called when annotate for a file is requested "
+        path = str( self.fileParentMenu.menuAction().data().toString() )
+        self.__svnAnnotate( path )
+        return
+
+    def bufferAnnotate( self ):
+        " Called when annotate for a buffer is requested "
+        path = self.ide.currentEditorWidget.getFileName()
+        if not os.path.isabs( path ):
+            logging.info( "SVN annotate is not applicable for never saved buffer" )
+            return
+        self.__svnAnnotate( path )
+        return
+
+    def __svnAnnotate( self, path ):
+        " Does SVN annotate "
+        client = self.getSVNClient( self.getSettings() )
+        doSVNAnnotate( client, path )
+        return
+
 
     # Menu dispatching
 
