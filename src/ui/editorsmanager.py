@@ -1389,6 +1389,7 @@ class EditorsManager( QTabWidget ):
         if newType != oldType or newType == UnknownFileType:
             widget.setFileType( newType )
             widget.getEditor().bindLexer( fileName, newType )
+            widget.getEditor().clearPyflakesMessages()
             self.emit( SIGNAL( 'fileTypeChanged' ), fileName,
                        widget.getUUID(), newType )
         self._updateIconAndTooltip( index, newType )
