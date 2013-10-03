@@ -37,6 +37,7 @@ class MainWindowTabWidgetBase():
     GeneratedDiagram     = 4
     ProfileViewer        = 5
     DisassemblerViewer   = 6
+    VCSAnnotateViewer    = 7
 
     def __init__( self ):
         self.__uuid = uuid.uuid1()
