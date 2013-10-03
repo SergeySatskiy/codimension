@@ -106,9 +106,9 @@ class TextEditor( ScintillaWrapper ):
                       self.__onCursorPositionChanged )
 
         self.connect( self, SIGNAL( 'SCN_DWELLSTART(int,int,int)' ),
-                      self.__onDwellStart )
+                      self._onDwellStart )
         self.connect( self, SIGNAL( 'SCN_DWELLEND(int,int,int)' ),
-                      self.__onDwellEnd )
+                      self._onDwellEnd )
 
         self.connect( self, SIGNAL( 'SCN_MODIFIED(int,int,const char*,int,int,int,int,int,int,int)' ),
                       self.__onSceneModified )
@@ -161,7 +161,7 @@ class TextEditor( ScintillaWrapper ):
 
         self.connect( self,
                       SIGNAL( 'marginClicked(int, int, Qt::KeyboardModifiers)' ),
-                      self.__marginClicked )
+                      self._marginClicked )
 
         # Calltip support
         self.__calltip = None
@@ -366,7 +366,7 @@ class TextEditor( ScintillaWrapper ):
         self.__pluginMenuSeparator.setVisible( count != 0 )
         return
 
-    def __marginNumber( self, xPos ):
+    def _marginNumber( self, xPos ):
         " Calculates the margin number based on a x position "
         width = 0
         for margin in xrange( 5 ):
@@ -375,7 +375,7 @@ class TextEditor( ScintillaWrapper ):
                 return margin
         return None
 
-    def __marginClicked( self, margin, line, modifiers ):
+    def _marginClicked( self, margin, line, modifiers ):
         " Triggered when a margin is clicked "
         if margin == self.BPOINT_MARGIN:
             self.__breakpointMarginClicked( line + 1 )
@@ -453,7 +453,7 @@ class TextEditor( ScintillaWrapper ):
     def contextMenuEvent( self, event ):
         " Called just before showing a context menu "
         event.accept()
-        if self.__marginNumber( event.x() ) is None:
+        if self._marginNumber( event.x() ) is None:
             self.__menuUndo.setEnabled( self.isUndoAvailable() )
             self.__menuRedo.setEnabled( self.isRedoAvailable() )
             self.__menuPaste.setEnabled( QApplication.clipboard().text() != "" )
@@ -1216,11 +1216,11 @@ class TextEditor( ScintillaWrapper ):
         self.highlightWord( text )
         return
 
-    def __onDwellStart( self, position, x, y ):
+    def _onDwellStart( self, position, x, y ):
         " Triggered when mouse started to dwell "
         if not self.underMouse():
             return
-        marginNumber = self.__marginNumber( x )
+        marginNumber = self._marginNumber( x )
         if marginNumber != self.MESSAGES_MARGIN:
             return
         if not self.__pyflakesMessages:
@@ -1249,7 +1249,7 @@ class TextEditor( ScintillaWrapper ):
                 return handle
         return -1
 
-    def __onDwellEnd( self, position, x, y ):
+    def _onDwellEnd( self, position, x, y ):
         " Triggered when mouse ended to dwell "
         if self.__pyflakesTooltipShown:
             self.__pyflakesTooltipShown = False
@@ -1925,7 +1925,7 @@ class TextEditor( ScintillaWrapper ):
         self.markerDeleteAll( self.__pyflakesMsgMarker )
         self.__pyflakesMessages = {}
         self.ignoreBufferChangedSignal = False
-        self.__updateDwellingTime()
+        self._updateDwellingTime()
         return
 
     def addPyflakesMessage( self, line, message ):
@@ -1937,7 +1937,7 @@ class TextEditor( ScintillaWrapper ):
         handle = self.markerAdd( line - 1, self.__pyflakesMsgMarker )
         self.__pyflakesMessages[ handle ] = message
         self.ignoreBufferChangedSignal = False
-        self.__updateDwellingTime()
+        self._updateDwellingTime()
         return
 
     def downloadAndShow( self ):
@@ -1974,7 +1974,7 @@ class TextEditor( ScintillaWrapper ):
         QDesktopServices.openUrl( QUrl( url ) )
         return
 
-    def __updateDwellingTime( self ):
+    def _updateDwellingTime( self ):
         " Updates the dwelling time as necessary "
         if self.__pyflakesMessages:
             self.SendScintilla( self.SCI_SETMOUSEDWELLTIME, 250 )
