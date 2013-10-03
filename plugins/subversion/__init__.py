@@ -377,7 +377,8 @@ class SubversionPlugin( VersionControlSystemInterface ):
         " Called when annotate for a buffer is requested "
         path = self.ide.currentEditorWidget.getFileName()
         if not os.path.isabs( path ):
-            logging.info( "SVN annotate is not applicable for never saved buffer" )
+            logging.info( "SVN annotate is not "
+                          "applicable for never saved buffer" )
             return
         self.__svnAnnotate( path )
         return
@@ -385,7 +386,12 @@ class SubversionPlugin( VersionControlSystemInterface ):
     def __svnAnnotate( self, path ):
         " Does SVN annotate "
         client = self.getSVNClient( self.getSettings() )
-        doSVNAnnotate( client, path )
+        fullText, revisionPerLine, revisionsInfo = doSVNAnnotate( client, path )
+        if fullText is not None and revisionPerLine is not None and \
+            revisionsInfo is not None:
+            self.ide.editorsManager.showAnnotated( path, fullText,
+                                                   revisionPerLine,
+                                                   revisionsInfo )
         return
 
 
@@ -406,4 +412,3 @@ class SubversionPlugin( VersionControlSystemInterface ):
     def onBufferContextMenuAboutToshow( self ):
         bufferContextMenuAboutToshow( self )
         return
-
