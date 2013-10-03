@@ -113,8 +113,8 @@ class LexerStyles:
                 self.styles.append( parameters )
 
             except ConfigParser.NoOptionError:
-                logging.error( "Lexer skin description inconsistence " \
-                               "detected. Absent entries for index " + index + \
+                logging.error( "Lexer skin description inconsistence "
+                               "detected. Absent entries for index " + index +
                                " in section " + sec )
                 continue
         return
@@ -139,7 +139,10 @@ SKIN_SETTINGS = [
     GeneralSkinSetting( "marginPaperDebug", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 228, 228, 255 ) ),
     GeneralSkinSetting( "marginColor", GeneralSkinSetting.TYPE_COLOR, QColor( 128, 128, 128, 255 ) ),
     GeneralSkinSetting( "marginColorDebug", GeneralSkinSetting.TYPE_COLOR, QColor( 128, 128, 128, 255 ) ),
-    GeneralSkinSetting( "lineNumFont", GeneralSkinSetting.TYPE_FONT, buildFont( "Sans Serif,12,-1,5,50,0,0,0,0,0" ) ),
+    GeneralSkinSetting( "revisionMarginPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 228, 228, 228, 255 ) ),
+    GeneralSkinSetting( "revisionMarginColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 128, 0, 255 ) ),
+    GeneralSkinSetting( "revisionAlterPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 238, 240, 241, 255 ) ),
+    GeneralSkinSetting( "lineNumFont", GeneralSkinSetting.TYPE_FONT, buildFont( "Monospace,12,-1,5,50,0,0,0,0,0" ) ),
     GeneralSkinSetting( "foldingPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 255, 255, 255 ) ),
     GeneralSkinSetting( "foldingColor", GeneralSkinSetting.TYPE_COLOR, QColor( 230, 230, 230, 255 ) ),
     GeneralSkinSetting( "searchMarkColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 255, 0, 255 ) ),
@@ -229,21 +232,21 @@ class Skin:
         self.data.dirName += os.path.sep
         appFile = self.data.dirName + "application.css"
         if not os.path.exists( appFile ):
-            logging.warning( "Cannot find " + appFile + \
+            logging.warning( "Cannot find " + appFile +
                              ". Default skin will be used." )
             self.__reset()
             return False
 
         generalFile = self.data.dirName + "general"
         if not os.path.exists( generalFile ):
-            logging.warning( "Cannot find " + generalFile + \
+            logging.warning( "Cannot find " + generalFile +
                              ". Default skin will be used." )
             self.__reset()
             return False
 
         lexersFile = self.data.dirName + "lexers"
         if not os.path.exists( lexersFile ):
-            logging.warning( "Cannot find " + lexersFile + \
+            logging.warning( "Cannot find " + lexersFile +
                              ". Default skin will be used." )
             self.__reset()
             return False
@@ -266,7 +269,7 @@ class Skin:
             parseSingleCSS( fName, content )
             self.data.appCSS = "".join( content )
         except:
-            logging.warning( "Cannot read application CSS from " + fName + \
+            logging.warning( "Cannot read application CSS from " + fName +
                              ". The file will be updated with a default CSS." )
             return False
         return True
@@ -276,9 +279,6 @@ class Skin:
         try:
             return buildColor( config.get( section, value ) )
         except:
-            logging.warning( "Cannot read the [" + section + "]/" + \
-                             value + " value from the skin file. " \
-                             "The file will be updated with a default value." )
             self.data.isOK = False
             return None
 
@@ -287,9 +287,6 @@ class Skin:
         try:
             return buildFont( config.get( section, value ) )
         except:
-            logging.warning( "Cannot read the [" + section + "]/" + \
-                             value + " value from the skin file. " \
-                             "The file will be updated with a default value." )
             self.data.isOK = False
             return None
 
@@ -298,9 +295,6 @@ class Skin:
         try:
             return config.getint( section, value )
         except:
-            logging.warning( "Cannot read the [" + section + "]/" + \
-                             value + " value from the skin file. " \
-                             "The file will be updated with a default value." )
             self.data.isOK = False
             return None
 
@@ -309,9 +303,6 @@ class Skin:
         try:
             return config.get( section, value )
         except:
-            logging.warning( "Cannot read the [" + section + "]/" + \
-                             value + " value from the skin file. " \
-                             "The file will be updated with a default value." )
             self.data.isOK = False
             return None
 
@@ -321,7 +312,7 @@ class Skin:
         try:
             config.read( [ fName ] )
         except:
-            logging.warning( "Cannot read the skin file " + fName + \
+            logging.warning( "Cannot read the skin file " + fName +
                              ". The file will be updated with default values." )
             return False
 
