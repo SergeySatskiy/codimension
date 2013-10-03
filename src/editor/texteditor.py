@@ -172,19 +172,20 @@ class TextEditor( ScintillaWrapper ):
 
         # Breakpoint support
         self.__inLinesChanged = False
-        bpointModel = self.__debugger.getBreakPointModel()
-        self.connect( bpointModel,
-                      SIGNAL( "rowsAboutToBeRemoved(const QModelIndex &, int, int)" ),
-                      self.__deleteBreakPoints )
-        self.connect( bpointModel,
-                      SIGNAL( "dataAboutToBeChanged(const QModelIndex &, const QModelIndex &)" ),
-                      self.__breakPointDataAboutToBeChanged )
-        self.connect( bpointModel,
-                      SIGNAL( "dataChanged(const QModelIndex &, const QModelIndex &)" ),
-                      self.__changeBreakPoints )
-        self.connect( bpointModel,
-                      SIGNAL( "rowsInserted(const QModelIndex &, int, int)" ),
-                      self.__addBreakPoints )
+        if self.__debugger:
+            bpointModel = self.__debugger.getBreakPointModel()
+            self.connect( bpointModel,
+                          SIGNAL( "rowsAboutToBeRemoved(const QModelIndex &, int, int)" ),
+                          self.__deleteBreakPoints )
+            self.connect( bpointModel,
+                          SIGNAL( "dataAboutToBeChanged(const QModelIndex &, const QModelIndex &)" ),
+                          self.__breakPointDataAboutToBeChanged )
+            self.connect( bpointModel,
+                          SIGNAL( "dataChanged(const QModelIndex &, const QModelIndex &)" ),
+                          self.__changeBreakPoints )
+            self.connect( bpointModel,
+                          SIGNAL( "rowsInserted(const QModelIndex &, int, int)" ),
+                          self.__addBreakPoints )
 
         self.installEventFilter( self )
         return
@@ -575,10 +576,10 @@ class TextEditor( ScintillaWrapper ):
         skin = GlobalData().skin
         font = QFont( skin.lineNumFont )
         font.setPointSize( font.pointSize() + self.zoom )
-        fontMetrics = QFontMetrics( font )
-        # I actually need space for 4 digits however if I put 8888 here - the
-        # width is not enough for 4 digits. I have no ideas why.
-        return fontMetrics.width( '888888' )
+        # The second parameter of the QFontMetrics is essential!
+        # If it is not there then the width is not calculated properly.
+        fontMetrics = QFontMetrics( font, self )
+        return fontMetrics.width( '8888' ) + 5
 
     def setLineNumMarginWidth( self ):
         " Called when zooming is done to keep the width enough for 4 digits "
