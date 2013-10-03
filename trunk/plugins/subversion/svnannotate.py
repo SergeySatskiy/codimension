@@ -24,6 +24,7 @@
 
 import pysvn
 import logging
+from copy import deepcopy
 from PyQt4.QtCore import Qt, SIGNAL, QTimer
 from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
                           QApplication, QCursor )
@@ -49,11 +50,22 @@ def doSVNAnnotate( client, path,
     QApplication.restoreOverrideCursor()
 
     if res == QDialog.Accepted:
-        print "Annotation is done"
-        print progressDialog.annotation
-    else:
-        print "Error annotating"
-    return
+        fullText = "\n".join( [ lineInfo[ 'line' ]
+                                for lineInfo in progressDialog.annotation ] )
+
+        revisions = deepcopy( progressDialog.revisionsInfo.keys() )
+        revisionPerLine = []
+        for lineInfo in progressDialog.annotation:
+            revNumber = lineInfo[ 'revision' ].number
+            revisionPerLine.append( revNumber )
+            if revNumber in revisions:
+                progressDialog.revisionsInfo[ revNumber ][ 'date' ] = lineInfo[ 'date' ]
+                progressDialog.revisionsInfo[ revNumber ][ 'author' ] = lineInfo[ 'author' ]
+                revisions.remove( revNumber )
+
+        return fullText, revisionPerLine, progressDialog.revisionsInfo
+
+    return None, None, None
 
 
 class SVNAnnotateProgress( QDialog ):
@@ -139,7 +151,6 @@ class SVNAnnotateProgress( QDialog ):
 
         if message:
             self.__infoLabel.setText( message )
-            logging.info( message )
         QApplication.processEvents()
         return
 
@@ -159,7 +170,7 @@ class SVNAnnotateProgress( QDialog ):
         except pysvn.ClientError, exc:
             errorCode = exc.args[ 1 ][ 0 ][ 1 ]
             if errorCode == pysvn.svn_err.cancelled:
-                logging.info( "Annotating cancelled" )
+                logging.info( "Annotating of '" + self.__path + "' cancelled" )
             else:
                 message = exc.args[ 0 ]
                 logging.error( message )
@@ -208,10 +219,7 @@ class SVNAnnotateProgress( QDialog ):
             logMessage = self.__client.log( self.__path,
                                             revision_start = rev,
                                             limit = 1 )
-            if len( logMessage ) != 1:
-                print "Unexpected log messages"
-            else:
-                print str( revision ) + " message: " + str( logMessage[ 0 ].message )
-            self.revisionsInfo[ rev ] = logMessage
+            self.revisionsInfo[ revision ] = { 'message' :
+                                                    logMessage[ 0 ].message }
             itemNumber += 1
         return
