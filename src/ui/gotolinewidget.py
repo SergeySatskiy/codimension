@@ -23,12 +23,11 @@
 
 """ Goto line widget implementation """
 
-from PyQt4.QtGui                import QHBoxLayout, QToolButton, QLabel, \
-                                       QSizePolicy, QComboBox, QWidget, \
-                                       QIntValidator
-from utils.pixmapcache          import PixmapCache
-from PyQt4.QtCore               import SIGNAL, Qt, QStringList
-from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
+from PyQt4.QtGui import ( QHBoxLayout, QToolButton, QLabel, QSizePolicy,
+                          QComboBox, QWidget, QIntValidator )
+from utils.pixmapcache import PixmapCache
+from PyQt4.QtCore import SIGNAL, Qt, QStringList
+from mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
 
@@ -61,7 +60,7 @@ class GotoLineWidget( QWidget ):
         sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Fixed )
         sizePolicy.setHorizontalStretch( 0 )
         sizePolicy.setVerticalStretch( 0 )
-        sizePolicy.setHeightForWidth( \
+        sizePolicy.setHeightForWidth(
                 self.linenumberEdit.sizePolicy().hasHeightForWidth() )
         self.linenumberEdit.setSizePolicy( sizePolicy )
         self.validator = QIntValidator( 1, 100000, self )
@@ -131,9 +130,10 @@ class GotoLineWidget( QWidget ):
         " Triggered when the current tab is changed "
         currentWidget = self.editorsManager.currentWidget()
         status = currentWidget.getType() in \
-                    [ MainWindowTabWidgetBase.PlainTextEditor ]
+                    [ MainWindowTabWidgetBase.PlainTextEditor,
+                      MainWindowTabWidgetBase.VCSAnnotateViewer ]
         self.linenumberEdit.setEnabled( status )
-        self.goButton.setEnabled( status and \
+        self.goButton.setEnabled( status and
                                   self.linenumberEdit.currentText() != "" )
         return
 
@@ -144,7 +144,8 @@ class GotoLineWidget( QWidget ):
 
         currentWidget = self.editorsManager.currentWidget()
         if not currentWidget.getType() in \
-                    [ MainWindowTabWidgetBase.PlainTextEditor ]:
+                    [ MainWindowTabWidgetBase.PlainTextEditor,
+                      MainWindowTabWidgetBase.VCSAnnotateViewer ]:
             return
 
         txt = self.linenumberEdit.currentText()

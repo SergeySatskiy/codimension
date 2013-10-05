@@ -54,6 +54,8 @@ class VCSAnnotateViewer( TextEditor ):
     MESSAGES_MARGIN = 3     # Matches the text editor
 
     def __init__( self, parent ):
+        self.__maxLength = None
+
         TextEditor.__init__( self, parent, None )
         self.__revisionTooltipShown = False
         self.__initAlterRevisionMarker()
@@ -72,7 +74,7 @@ class VCSAnnotateViewer( TextEditor ):
         self.__lineRevisions = lineRevisions
         self.__revisionInfo = revisionInfo
 
-        fileType = detectFileType( shortName )
+        fileType = self.parent().getFileType()
         if fileType in [ DesignerFileType, LinguistFileType ]:
             # special treatment for Qt-Linguist and Qt-Designer files
             self.encoding = 'latin-1'
@@ -145,8 +147,11 @@ class VCSAnnotateViewer( TextEditor ):
 
     def setRevisionMarginWidth( self ):
         " Called when zooming is done to keep the width wide enough "
-        self.setMarginWidth( self.REVISION_MARGIN,
-                             self.detectRevisionMarginWidth() )
+        if self.__maxLength:
+            self.setMarginWidth( self.REVISION_MARGIN,
+                                 self.detectRevisionMarginWidth() )
+        else:
+            self.setMarginWidth( self.REVISION_MARGIN, 0 )
         return
 
     def __initAnnotateMargins( self ):
@@ -157,6 +162,9 @@ class VCSAnnotateViewer( TextEditor ):
         # Together with overriding _marginClicked(...) this
         # prevents selecting a line when the margin is clicked.
         self.setMarginSensitivity( self.REVISION_MARGIN, True )
+        return
+
+    def _marginClicked( self, margin, line, modifiers ):
         return
 
     def __getRevisionMarginTooltip( self, lineNumber ):
@@ -211,7 +219,9 @@ class VCSAnnotateViewer( TextEditor ):
             QToolTip.hideText()
         return
 
-    def _marginClicked( self, margin, line, modifiers ):
+    def setLineNumMarginWidth( self ):
+        TextEditor.setLineNumMarginWidth( self )
+        self.setRevisionMarginWidth()
         return
 
 
@@ -471,6 +481,12 @@ class VCSAnnotateViewerTabWidget( QWidget, MainWindowTabWidgetBase ):
                                            lineRevisions, revisionInfo )
         return
 
+    def writeFile( self, fileName ):
+        " Writes the text to a file "
+        return self.__viewer.writeFile( fileName )
+
+    def updateModificationTime( self, fileName ):
+        return
 
     # Mandatory interface part is below
 

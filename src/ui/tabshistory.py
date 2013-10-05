@@ -24,7 +24,7 @@
 
 import os.path
 from mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from PyQt4.QtCore            import QObject, SIGNAL
+from PyQt4.QtCore import QObject, SIGNAL
 
 
 class TabHistoryEntry:
@@ -91,11 +91,12 @@ class TabsHistory( QObject ):
         newEntry.tabType = currentWidget.getType()
         newEntry.displayName = currentWidget.getShortName()
 
-        newEntry.icon = self.__editorsManger.tabIcon( \
+        newEntry.icon = self.__editorsManger.tabIcon(
                                     self.__editorsManger.currentIndex() )
         newEntry.uuid = currentWidget.getUUID()
 
-        if newEntry.tabType in [ MainWindowTabWidgetBase.PlainTextEditor ]:
+        if newEntry.tabType in [ MainWindowTabWidgetBase.PlainTextEditor,
+                                 MainWindowTabWidgetBase.VCSAnnotateViewer ]:
             newEntry.line = currentWidget.getLine()
             newEntry.pos = currentWidget.getPos()
             newEntry.firstVisible = currentWidget.getEditor().firstVisibleLine()
@@ -157,7 +158,8 @@ class TabsHistory( QObject ):
         self.__history[ self.__index ].displayName = widget.getShortName()
 
         if self.__history[ self.__index ].tabType in \
-                            [ MainWindowTabWidgetBase.PlainTextEditor ]:
+                            [ MainWindowTabWidgetBase.PlainTextEditor,
+                              MainWindowTabWidgetBase.VCSAnnotateViewer ]:
             self.__history[ self.__index ].line = widget.getLine()
             self.__history[ self.__index ].pos = widget.getPos()
             self.__history[ self.__index ].firstVisible = \
@@ -253,14 +255,14 @@ class TabsHistory( QObject ):
     def getEntry( self, index ):
         " Provides the required history entry "
         if index < 0 or index >= len( self.__history ):
-            raise Exception( "Invalid history index to set (" + \
+            raise Exception( "Invalid history index to set (" +
                              str( index ) + ")" )
         return self.__history[ index ]
 
     def setCurrentIndex( self, index ):
         " Sets the given history index as current "
         if index < 0 or index >= len( self.__history ):
-            raise Exception( "Invalid history index to set (" + \
+            raise Exception( "Invalid history index to set (" +
                              str( index ) + ")" )
         if self.__index != index:
             self.__index = index
@@ -271,7 +273,7 @@ class TabsHistory( QObject ):
     def getCurrentEntry( self ):
         " Provides the current history entry "
         if self.__index == -1 or self.__index >= len( self.__history ):
-            raise Exception( "No current history entry (index=" + \
+            raise Exception( "No current history entry (index=" +
                              str( self.__index ) + ")" )
         return self.__history[ self.__index ]
 
@@ -317,4 +319,3 @@ class TabsHistory( QObject ):
             if item.uuid == uuid:
                 item.icon = icon
         return
-

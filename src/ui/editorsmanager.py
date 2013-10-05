@@ -1108,6 +1108,7 @@ class EditorsManager( QTabWidget ):
             tooltip = "Annotated file: " + fileName
 
             newWidget = VCSAnnotateViewerTabWidget( self )
+            newWidget.setFileType( detectFileType( fileName ) )
             self.connect( newWidget, SIGNAL( 'ESCPressed' ),
                           self.__onESC )
 
@@ -1123,12 +1124,13 @@ class EditorsManager( QTabWidget ):
             newWidget.setTooltip( tooltip )
             self.activateTab( 0 )
             self.__updateControls()
+            self.__connectEditorWidget( newWidget )
             self.__updateStatusBar()
             newWidget.setFocus()
+            newWidget.getEditor().gotoLine( 1, 1 )
             self.saveTabsStatus()
         except Exception, exc:
             logging.error( str( exc ) )
-            raise
         return
 
     def jumpToLine( self, lineNo ):
@@ -1235,8 +1237,12 @@ class EditorsManager( QTabWidget ):
                 return self.onSaveDiagramAs()
         else:
             widget = self.widget( index )
+            widgetType = widget.getType()
 
-        if widget.getType() != MainWindowTabWidgetBase.PlainTextEditor:
+        if widgetType == MainWindowTabWidgetBase.VCSAnnotateViewer:
+            return self.onSaveAs( index )
+
+        if widgetType != MainWindowTabWidgetBase.PlainTextEditor:
             return True
 
         # This is a text editor
@@ -1332,8 +1338,10 @@ class EditorsManager( QTabWidget ):
                 return self.onSaveDiagramAs()
         else:
             widget = self.widget( index )
+            widgetType = widget.getType()
 
-        if widget.getType() != MainWindowTabWidgetBase.PlainTextEditor:
+        if widgetType not in [ MainWindowTabWidgetBase.PlainTextEditor,
+                               MainWindowTabWidgetBase.VCSAnnotateViewer ]:
             return True
 
         if index != self.currentIndex():
@@ -1351,7 +1359,7 @@ class EditorsManager( QTabWidget ):
             urls.append( QUrl.fromLocalFile( project.getProjectDir() ) )
         dialog.setSidebarUrls( urls )
 
-        if widget.getFileName() != "":
+        if widget.getFileName() not in [ "", "N/A" ]:
             dialog.setDirectory( os.path.dirname( widget.getFileName() ) )
             dialog.selectFile( os.path.basename( widget.getFileName() ) )
         else:
@@ -1415,15 +1423,16 @@ class EditorsManager( QTabWidget ):
             # Failed to write, inform and exit
             return False
 
-        widget.getEditor().setModified( False )
-        newType = detectFileType( fileName, True, True )
-        if newType != oldType or newType == UnknownFileType:
-            widget.setFileType( newType )
-            widget.getEditor().bindLexer( fileName, newType )
-            widget.getEditor().clearPyflakesMessages()
-            self.emit( SIGNAL( 'fileTypeChanged' ), fileName,
-                       widget.getUUID(), newType )
-        self._updateIconAndTooltip( index, newType )
+        if widgetType != MainWindowTabWidgetBase.PlainTextEditor:
+            widget.getEditor().setModified( False )
+            newType = detectFileType( fileName, True, True )
+            if newType != oldType or newType == UnknownFileType:
+                widget.setFileType( newType )
+                widget.getEditor().bindLexer( fileName, newType )
+                widget.getEditor().clearPyflakesMessages()
+                self.emit( SIGNAL( 'fileTypeChanged' ), fileName,
+                           widget.getUUID(), newType )
+            self._updateIconAndTooltip( index, newType )
 
         if GlobalData().project.fileName == fileName:
             GlobalData().project.onProjectFileUpdated()
@@ -1432,12 +1441,15 @@ class EditorsManager( QTabWidget ):
         if existedBefore:
             self.emit( SIGNAL( 'fileUpdated' ), fileName, uuid )
         else:
-            self.emit( SIGNAL( 'bufferSavedAs' ), fileName, uuid )
-            GlobalData().project.addRecentFile( fileName )
-        self.history.updateFileNameForTab( uuid, fileName )
-        widget.updateStatus()
-        self.__updateStatusBar()
-        self.__mainWindow.updateRunDebugButtons()
+            if widgetType != MainWindowTabWidgetBase.PlainTextEditor:
+                self.emit( SIGNAL( 'bufferSavedAs' ), fileName, uuid )
+                GlobalData().project.addRecentFile( fileName )
+
+        if widgetType != MainWindowTabWidgetBase.PlainTextEditor:
+            self.history.updateFileNameForTab( uuid, fileName )
+            widget.updateStatus()
+            self.__updateStatusBar()
+            self.__mainWindow.updateRunDebugButtons()
         self.__mainWindow.vcsManager.setLocallyModified( fileName )
         return True
 
@@ -1523,7 +1535,8 @@ class EditorsManager( QTabWidget ):
     def onFind( self ):
         " Triggered when Ctrl+F is received "
         if self.currentWidget().getType() not in \
-                [ MainWindowTabWidgetBase.PlainTextEditor ]:
+                [ MainWindowTabWidgetBase.PlainTextEditor,
+                  MainWindowTabWidgetBase.VCSAnnotateViewer ]:
             return
 
         if self.replaceWidget.isVisible():
@@ -1544,7 +1557,8 @@ class EditorsManager( QTabWidget ):
     def onHiddenFind( self ):
         " Triggered when Ctrl+F3 is received "
         if self.currentWidget().getType() not in \
-                [ MainWindowTabWidgetBase.PlainTextEditor ]:
+                [ MainWindowTabWidgetBase.PlainTextEditor,
+                  MainWindowTabWidgetBase.VCSAnnotateViewer ]:
             return
 
         searchText = str( self.currentWidget().getEditor().getSearchText() )
@@ -1580,7 +1594,8 @@ class EditorsManager( QTabWidget ):
     def onGoto( self ):
         " Triggered when Ctrl+G is received "
         if self.currentWidget().getType() not in \
-                [ MainWindowTabWidgetBase.PlainTextEditor ]:
+                [ MainWindowTabWidgetBase.PlainTextEditor,
+                  MainWindowTabWidgetBase.VCSAnnotateViewer ]:
             return
 
         if self.replaceWidget.isVisible():
@@ -1637,7 +1652,8 @@ class EditorsManager( QTabWidget ):
         " Prepares the history menu item "
         entry = self.history.getEntry( index )
         text = entry.displayName
-        if entry.tabType in [ MainWindowTabWidgetBase.PlainTextEditor ]:
+        if entry.tabType in [ MainWindowTabWidgetBase.PlainTextEditor,
+                              MainWindowTabWidgetBase.VCSAnnotateViewer ]:
             text += ", " + str( entry.line + 1 ) + ":" + str( entry.pos + 1 )
         act = menu.addAction( entry.icon, text )
         act.setData( QVariant( index ) )
@@ -1681,7 +1697,8 @@ class EditorsManager( QTabWidget ):
         index = self.getIndexByUUID( entry.uuid )
         widget = self.getWidgetByUUID( entry.uuid )
         self.activateTab( index )
-        if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
+        if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
+                                 MainWindowTabWidgetBase.VCSAnnotateViewer ]:
             if widget.getLine() != entry.line or \
                widget.getPos() != entry.pos or \
                widget.getEditor().firstVisibleLine() != entry.firstVisible:
@@ -1770,7 +1787,8 @@ class EditorsManager( QTabWidget ):
         # No aux on screen, remove the indicators then if it is an editor
         # widget
         widget = self.currentWidget()
-        if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
+        if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
+                                 MainWindowTabWidgetBase.VCSAnnotateViewer ]:
             widget.getEditor().clearSearchIndicators()
         return
 
@@ -1858,7 +1876,7 @@ class EditorsManager( QTabWidget ):
             return True
 
         # There are not saved files
-        logging.error( "Please close or save the modified files first (" + \
+        logging.error( "Please close or save the modified files first (" +
                        ", ".join( notSaved ) + ")" )
         self.activateTab( firstIndex )
         return False
@@ -2045,7 +2063,8 @@ class EditorsManager( QTabWidget ):
 
         for index in xrange( self.count() ):
             item = self.widget( index )
-            if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
+            if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
+                                   MainWindowTabWidgetBase.VCSAnnotateViewer ]:
                 item.getEditor().zoomTo( zoomValue )
         return
 
@@ -2062,7 +2081,8 @@ class EditorsManager( QTabWidget ):
         " makes all the text editors updating settings "
         for index in xrange( self.count() ):
             item = self.widget( index )
-            if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
+            if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
+                                   MainWindowTabWidgetBase.VCSAnnotateViewer ]:
                 item.getEditor().updateSettings()
                 if item.isDiskFileModified():
                     # This will make the modification markers re-drawn
@@ -2259,6 +2279,7 @@ class EditorsManager( QTabWidget ):
         " Called if main menu item is selected "
         widget = self.currentWidget()
         if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
+                                 MainWindowTabWidgetBase.VCSAnnotateViewer,
                                  MainWindowTabWidgetBase.PictureViewer,
                                  MainWindowTabWidgetBase.GeneratedDiagram,
                                  MainWindowTabWidgetBase.ProfileViewer ]:
@@ -2269,6 +2290,7 @@ class EditorsManager( QTabWidget ):
         " Called if main menu item is selected "
         widget = self.currentWidget()
         if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
+                                 MainWindowTabWidgetBase.VCSAnnotateViewer,
                                  MainWindowTabWidgetBase.PictureViewer,
                                  MainWindowTabWidgetBase.GeneratedDiagram,
                                  MainWindowTabWidgetBase.ProfileViewer ]:
@@ -2279,6 +2301,7 @@ class EditorsManager( QTabWidget ):
         " Called if main menu item is selected "
         widget = self.currentWidget()
         if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
+                                 MainWindowTabWidgetBase.VCSAnnotateViewer,
                                  MainWindowTabWidgetBase.PictureViewer,
                                  MainWindowTabWidgetBase.GeneratedDiagram,
                                  MainWindowTabWidgetBase.ProfileViewer ]:
@@ -2289,7 +2312,8 @@ class EditorsManager( QTabWidget ):
         " Checks if Ctrl+C works for the current widget "
         widget = self.currentWidget()
         widgetType = widget.getType()
-        if widgetType == MainWindowTabWidgetBase.PlainTextEditor:
+        if widgetType in [ MainWindowTabWidgetBase.PlainTextEditor,
+                           MainWindowTabWidgetBase.VCSAnnotateViewer ]:
             return True
         if widgetType == MainWindowTabWidgetBase.HTMLViewer:
             return widget.getViewer().selectedText() != ""
@@ -2303,7 +2327,8 @@ class EditorsManager( QTabWidget ):
         " Called when Ctrl+C is selected via main menu "
         widget = self.currentWidget()
         widgetType = widget.getType()
-        if widgetType == MainWindowTabWidgetBase.PlainTextEditor:
+        if widgetType in [ MainWindowTabWidgetBase.PlainTextEditor,
+                           MainWindowTabWidgetBase.VCSAnnotateViewer ]:
             widget.getEditor().onCtrlC()
             return
         if widgetType == MainWindowTabWidgetBase.HTMLViewer:

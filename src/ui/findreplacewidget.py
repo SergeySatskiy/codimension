@@ -29,15 +29,14 @@
 
 """ Find and replace widgets implementation """
 
-from PyQt4.QtGui                import QHBoxLayout, QToolButton, QLabel, \
-                                       QSizePolicy, QComboBox, \
-                                       QGridLayout, QWidget, QCheckBox, \
-                                       QKeySequence
-from utils.pixmapcache          import PixmapCache
-from PyQt4.QtCore               import SIGNAL, Qt, QSize, QEvent
-from mainwindowtabwidgetbase    import MainWindowTabWidgetBase
-from utils.globals              import GlobalData
-from utils.project              import CodimensionProject
+from PyQt4.QtGui import ( QHBoxLayout, QToolButton, QLabel, QSizePolicy,
+                          QComboBox, QGridLayout, QWidget, QCheckBox,
+                          QKeySequence )
+from utils.pixmapcache import PixmapCache
+from PyQt4.QtCore import SIGNAL, Qt, QSize, QEvent
+from mainwindowtabwidgetbase import MainWindowTabWidgetBase
+from utils.globals import GlobalData
+from utils.project import CodimensionProject
 
 
 
@@ -256,7 +255,8 @@ class FindReplaceBase( QWidget ):
         # Memorize the current environment
         self._currentWidget = self.editorsManager.currentWidget()
         self._isTextEditor = self._currentWidget.getType() in \
-                                [ MainWindowTabWidgetBase.PlainTextEditor ]
+                                [ MainWindowTabWidgetBase.PlainTextEditor,
+                                  MainWindowTabWidgetBase.VCSAnnotateViewer ]
         if self._isTextEditor:
             self._editor = self._currentWidget.getEditor()
             self._editorUUID = self._currentWidget.getUUID()
@@ -416,7 +416,6 @@ class FindReplaceBase( QWidget ):
         self._searchSupport.add( uuid, searchAttributes )
         return
 
-
     def _advanceMatchIndicator( self, uuid, newLine, newPos, newLength ):
         " Advances the current match indicator for the given editor "
 
@@ -479,8 +478,8 @@ class FindReplaceBase( QWidget ):
 
         self._findBackward = True
         if not self.__findNextPrev():
-            GlobalData().mainWindow.showStatusBarMessage( \
-                    "The '" + self.findtextCombo.currentText() + \
+            GlobalData().mainWindow.showStatusBarMessage(
+                    "The '" + self.findtextCombo.currentText() +
                     "' was not found" )
             self.emit( SIGNAL( 'incSearchDone' ), False )
         else:
@@ -496,7 +495,8 @@ class FindReplaceBase( QWidget ):
 
         currentWidget = self.editorsManager.currentWidget()
         if currentWidget.getType() not in \
-                    [ MainWindowTabWidgetBase.PlainTextEditor ]:
+                    [ MainWindowTabWidgetBase.PlainTextEditor,
+                      MainWindowTabWidgetBase.VCSAnnotateViewer ]:
             return False
 
         return True
@@ -581,14 +581,14 @@ class FindReplaceBase( QWidget ):
             targets = self._editor.getTargets( text, isRegexp, isCase, isWord,
                                                startLine, startPos, -1, -1 )
             if len( targets ) == 0:
-                GlobalData().mainWindow.showStatusBarMessage( \
-                        "Reached the end of the document. " \
+                GlobalData().mainWindow.showStatusBarMessage(
+                        "Reached the end of the document. "
                         "Searching from the beginning..." )
                 targets = self._editor.getTargets( text,
                                                    isRegexp, isCase, isWord,
                                                    0, 0, startLine, startPos )
                 if len( targets ) == 0:
-                    searchAttributes = self._searchSupport.get( \
+                    searchAttributes = self._searchSupport.get(
                                                         self._editorUUID )
                     searchAttributes.match = [ -1, -1, -1 ]
                     self._searchSupport.add( self._editorUUID,
@@ -608,8 +608,8 @@ class FindReplaceBase( QWidget ):
         targets = self._editor.getTargets( text, isRegexp, isCase, isWord,
                                            0, 0, startLine, startPos )
         if len( targets ) == 0:
-            GlobalData().mainWindow.showStatusBarMessage( \
-                    "Reached the beginning of the document. " \
+            GlobalData().mainWindow.showStatusBarMessage(
+                    "Reached the beginning of the document. "
                     "Searching from the end..." )
             targets = self._editor.getTargets( text, isRegexp, isCase, isWord,
                                                startLine, startPos, -1, -1 )
@@ -749,7 +749,7 @@ class ReplaceWidget( FindReplaceBase ):
         sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Fixed )
         sizePolicy.setHorizontalStretch( 0 )
         sizePolicy.setVerticalStretch( 0 )
-        sizePolicy.setHeightForWidth( \
+        sizePolicy.setHeightForWidth(
                 self.replaceCombo.sizePolicy().hasHeightForWidth() )
         self.replaceCombo.setSizePolicy( sizePolicy )
         self.replaceCombo.setEditable( True )
@@ -768,7 +768,7 @@ class ReplaceWidget( FindReplaceBase ):
 
         self.replaceAllButton = QToolButton( self )
         self.replaceAllButton.setToolTip( "Replace all occurrences" )
-        self.replaceAllButton.setIcon( \
+        self.replaceAllButton.setIcon(
                 PixmapCache().getIcon( "replace-all.png" ) )
         self.replaceAllButton.setIconSize( QSize( 24, 16 ) )
         self.replaceAllButton.setEnabled( False )
@@ -776,9 +776,9 @@ class ReplaceWidget( FindReplaceBase ):
                       self.__onReplaceAll )
 
         self.replaceAndMoveButton = QToolButton( self )
-        self.replaceAndMoveButton.setToolTip( \
+        self.replaceAndMoveButton.setToolTip(
                 "Replace current occurrence and move to the next match" )
-        self.replaceAndMoveButton.setIcon( \
+        self.replaceAndMoveButton.setIcon(
                 PixmapCache().getIcon( "replace-move.png" ) )
         self.replaceAndMoveButton.setIconSize( QSize( 24, 16 ) )
         self.replaceAndMoveButton.setEnabled( False )
@@ -836,6 +836,18 @@ class ReplaceWidget( FindReplaceBase ):
         " Triggered when the current tab is changed "
 
         FindReplaceBase.updateStatus( self )
+        if self._currentWidget.getType() == MainWindowTabWidgetBase.VCSAnnotateViewer:
+            self.findtextCombo.setEnabled( False )
+            self.findPrevButton.setEnabled( False )
+            self.findNextButton.setEnabled( False )
+            self.caseCheckBox.setEnabled( False )
+            self.wordCheckBox.setEnabled( False )
+            self.regexpCheckBox.setEnabled( False )
+            self.replaceCombo.setEnabled( False )
+            self.replaceAllButton.setEnabled( False )
+            self.replaceButton.setEnabled( False )
+            self.replaceAndMoveButton.setEnabled( False )
+            return
 
         self.__updateReplaceAllButtonStatus()
 
@@ -906,9 +918,9 @@ class ReplaceWidget( FindReplaceBase ):
     def __onReplaceTextChanged( self, text ):
         " Triggered when replace with text is changed "
         self.__updateReplaceAllButtonStatus()
-        self.replaceButton.setEnabled( self.__replaceCouldBeEnabled and \
+        self.replaceButton.setEnabled( self.__replaceCouldBeEnabled and
                                        text != "" )
-        self.replaceAndMoveButton.setEnabled( self.__replaceCouldBeEnabled and \
+        self.replaceAndMoveButton.setEnabled( self.__replaceCouldBeEnabled and
                                               text != "" )
         return
 
@@ -959,7 +971,7 @@ class ReplaceWidget( FindReplaceBase ):
         found = self._editor.findFirstTarget( text,
                                               isRegexp, isCase, isWord, 0, 0 )
         if not found:
-            GlobalData().mainWindow.showStatusBarMessage( \
+            GlobalData().mainWindow.showStatusBarMessage(
                 "No occurrences of '" + text + "' found. Nothing is replaced." )
             return
 
@@ -978,7 +990,7 @@ class ReplaceWidget( FindReplaceBase ):
         suffix = ""
         if count > 1:
             suffix = "s"
-        GlobalData().mainWindow.showStatusBarMessage( \
+        GlobalData().mainWindow.showStatusBarMessage(
             str( count ) + " occurrence" + suffix + " replaced" )
         return
 
