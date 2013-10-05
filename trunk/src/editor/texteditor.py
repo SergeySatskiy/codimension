@@ -1386,6 +1386,8 @@ class TextEditor( ScintillaWrapper ):
 
     def onCommentUncomment( self ):
         " Triggered when Ctrl+M is received "
+        if self.isReadOnly():
+            return True
         if self.lexer_ is None or not self.lexer_.canBlockComment():
             return True
 
@@ -1561,6 +1563,8 @@ class TextEditor( ScintillaWrapper ):
 
     def onAutoComplete( self ):
         " Triggered when ctrl+space or TAB is clicked "
+        if self.isReadOnly():
+            return True
 
         self.__inCompletion = True
         self.__completionObject, \
@@ -1779,6 +1783,8 @@ class TextEditor( ScintillaWrapper ):
         " The user requested a list of occurences "
         if self.parent().getFileType() not in [ PythonFileType,
                                                 Python3FileType ]:
+            return True
+        if self.parent().getType() in [ MainWindowTabWidgetBase.VCSAnnotateViewer ]:
             return True
         if not os.path.isabs( self.parent().getFileName() ):
             GlobalData().mainWindow.showStatusBarMessage(
