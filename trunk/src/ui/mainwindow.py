@@ -3916,8 +3916,13 @@ class CodimensionMainWindow( QMainWindow ):
     def __diagramsAboutToShow( self ):
         " Triggered when the diagrams menu is about to show "
         isPythonBuffer = self.__isPythonBuffer()
-        self.__tabImportDgmAct.setEnabled( isPythonBuffer )
-        self.__tabImportDgmDlgAct.setEnabled( isPythonBuffer )
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+
+        enabled = isPythonBuffer and \
+            currentWidget.getType() != MainWindowTabWidgetBase.VCSAnnotateViewer
+        self.__tabImportDgmAct.setEnabled( enabled )
+        self.__tabImportDgmDlgAct.setEnabled( enabled )
         return
 
     def __runAboutToShow( self ):
@@ -3925,11 +3930,12 @@ class CodimensionMainWindow( QMainWindow ):
         projectLoaded = GlobalData().project.isLoaded()
         prjScriptValid = GlobalData().isProjectScriptValid()
 
-        self.__prjRunAct.setEnabled( projectLoaded and prjScriptValid )
-        self.__prjRunDlgAct.setEnabled( projectLoaded and prjScriptValid )
+        enabled = projectLoaded and prjScriptValid
+        self.__prjRunAct.setEnabled( enabled )
+        self.__prjRunDlgAct.setEnabled( enabled )
 
-        self.__prjProfileAct.setEnabled( projectLoaded and prjScriptValid )
-        self.__prjProfileDlgAct.setEnabled( projectLoaded and prjScriptValid )
+        self.__prjProfileAct.setEnabled( enabled )
+        self.__prjProfileDlgAct.setEnabled( enabled )
         return
 
     def __debugAboutToShow( self ):
@@ -3937,19 +3943,25 @@ class CodimensionMainWindow( QMainWindow ):
         projectLoaded = GlobalData().project.isLoaded()
         prjScriptValid = GlobalData().isProjectScriptValid()
 
-        self.__prjDebugAct.setEnabled( projectLoaded and prjScriptValid )
-        self.__prjDebugDlgAct.setEnabled( projectLoaded and prjScriptValid )
+        enabled = projectLoaded and prjScriptValid
+        self.__prjDebugAct.setEnabled( enabled )
+        self.__prjDebugDlgAct.setEnabled( enabled )
         return
 
     def __toolsAboutToShow( self ):
         " Triggered when tools menu is about to show "
         isPythonBuffer = self.__isPythonBuffer()
         projectLoaded = GlobalData().project.isLoaded()
-        self.__tabPylintAct.setEnabled( isPythonBuffer )
-        self.__tabPymetricsAct.setEnabled( isPythonBuffer )
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+
+        pythonBufferNonAnnotate = isPythonBuffer and \
+            currentWidget.getType() != MainWindowTabWidgetBase.VCSAnnotateViewer
+        self.__tabPylintAct.setEnabled( pythonBufferNonAnnotate )
+        self.__tabPymetricsAct.setEnabled( pythonBufferNonAnnotate )
         self.__tabLineCounterAct.setEnabled( isPythonBuffer )
-        self.__tabPythonTidyAct.setEnabled( isPythonBuffer )
-        self.__tabPythonTidyDlgAct.setEnabled( isPythonBuffer )
+        self.__tabPythonTidyAct.setEnabled( pythonBufferNonAnnotate )
+        self.__tabPythonTidyDlgAct.setEnabled( pythonBufferNonAnnotate )
 
         if projectLoaded:
             self.__unusedClassesAct.setEnabled(
