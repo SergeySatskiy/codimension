@@ -454,21 +454,21 @@ class VCSAnnotateViewerTabWidget( QWidget, MainWindowTabWidgetBase ):
         return
 
     def onPylint( self ):
-        return
+        return True
     def onPymetrics( self ):
-        return
+        return True
     def onRunScript( self, action = False ):
-        return
+        return True
     def onRunScriptSettings( self ):
-        return
+        return True
     def onProfileScript( self, action = False ):
-        return
+        return True
     def onProfileScriptSettings( self ):
-        return
+        return True
     def onImportDgm( self, action = None ):
-        return
+        return True
     def onImportDgmTuned( self ):
-        return
+        return True
     def shouldAcceptFocus( self ):
         return True
 
