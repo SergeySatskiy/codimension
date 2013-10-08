@@ -199,6 +199,9 @@ class VCSAnnotateViewer( TextEditor ):
             self.__showRevisionTooltip( position, x, y )
             return
 
+        TextEditor._onDwellStart( self, position, x, y )
+        return
+
     def __showRevisionTooltip( self, position, x, y ):
         # Calculate the line
         pos = self.SendScintilla( self.SCI_POSITIONFROMPOINT, x, y )
