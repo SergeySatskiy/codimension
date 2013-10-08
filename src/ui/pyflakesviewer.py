@@ -102,7 +102,8 @@ class PyflakesViewer( QObject ):
             self.setFlakesNotAvailable( self.__uiLabel )
             return
 
-        if widget.getType() not in [ MainWindowTabWidgetBase.PlainTextEditor ]:
+        if widget.getType() not in [ MainWindowTabWidgetBase.PlainTextEditor,
+                                     MainWindowTabWidgetBase.VCSAnnotateViewer ]:
             self.__currentUUID = None
             self.setFlakesNotAvailable( self.__uiLabel )
             return
