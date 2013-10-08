@@ -240,7 +240,8 @@ class FileOutlineViewer( QWidget ):
             self.__noneLabel.show()
             self.showParsingErrorsButton.setEnabled( False )
             return
-        if widget.getType() not in [ MainWindowTabWidgetBase.PlainTextEditor ]:
+        if widget.getType() not in [ MainWindowTabWidgetBase.PlainTextEditor,
+                                     MainWindowTabWidgetBase.VCSAnnotateViewer ]:
             if self.__currentUUID is not None:
                 self.__outlineBrowsers[ self.__currentUUID ].browser.hide()
                 self.__currentUUID = None
