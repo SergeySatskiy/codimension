@@ -45,6 +45,7 @@ def populateFileContextMenu( plugin, parentMenu ):
     plugin.fileContextInfoAct = parentMenu.addAction( "&Info", plugin.fileInfo )
     plugin.fileContextUpdateAct = parentMenu.addAction( "&Update", plugin.fileUpdate )
     plugin.fileContextAnnotateAct = parentMenu.addAction( "&Annotate", plugin.fileAnnotate )
+    plugin.fileContextAddAct = parentMenu.addAction( "A&dd to repository", plugin.fileAddToRepository )
     return
 
 def populateDirectoryContextMenu( plugin, parentMenu ):
@@ -54,6 +55,8 @@ def populateDirectoryContextMenu( plugin, parentMenu ):
                     plugin.onDirectoryContextMenuAboutToShow )
     plugin.dirContextInfoAct = parentMenu.addAction( "&Info", plugin.dirInfo )
     plugin.dirContextUpdateAct = parentMenu.addAction( "&Update", plugin.dirUpdate )
+    plugin.dirContextAddAct = parentMenu.addAction( "A&dd to repository", plugin.dirAddToRepository )
+    plugin.dirContextAddRecursiveAct = parentMenu.addAction( "Add to repository recursively", plugin.dirAddToRepositoryRecursively )
     return
 
 def populateBufferContextMenu( plugin, parentMenu ):
@@ -63,6 +66,7 @@ def populateBufferContextMenu( plugin, parentMenu ):
     plugin.bufContextInfoAct = parentMenu.addAction( "&Info", plugin.bufferInfo )
     plugin.bufContextUpdateAct = parentMenu.addAction( "&Update", plugin.bufferUpdate )
     plugin.bufContextAnnotateAct = parentMenu.addAction( "&Annotate", plugin.bufferAnnotate )
+    plugin.bufContextAddAct = parentMenu.addAction( "A&dd to repository", plugin.bufferAddToRepository )
     return
 
 
@@ -74,29 +78,63 @@ def mainMenuAboutToShow( plugin ):
 def fileContextMenuAboutToShow( plugin ):
     " Called when the plugin file context menu is about to show "
     path = str( plugin.fileParentMenu.menuAction().data().toString() )
-    if plugin.getLocalStatus( path ) in [ plugin.NOT_UNDER_VCS,
-                                          IND_ERROR ]:
+    pathStatus = plugin.getLocalStatus( path )
+    if pathStatus == IND_ERROR:
         plugin.fileContextInfoAct.setEnabled( False )
         plugin.fileContextUpdateAct.setEnabled( False )
         plugin.fileContextAnnotateAct.setEnabled( False )
+        plugin.fileContextAddAct.setEnabled( False )
+        return
+
+    if pathStatus == plugin.NOT_UNDER_VCS:
+        plugin.fileContextInfoAct.setEnabled( False )
+        plugin.fileContextUpdateAct.setEnabled( False )
+        plugin.fileContextAnnotateAct.setEnabled( False )
+
+        upperDirStatus = plugin.getLocalStatus( os.path.dirname( path ) )
+        if upperDirStatus == plugin.NOT_UNDER_VCS:
+            plugin.fileContextAddAct.setEnabled( False )
+        else:
+            plugin.fileContextAddAct.setEnabled( upperDirStatus != IND_ERROR )
         return
 
     plugin.fileContextInfoAct.setEnabled( True )
     plugin.fileContextUpdateAct.setEnabled( True )
     plugin.fileContextAnnotateAct.setEnabled( True )
+    plugin.fileContextAddAct.setEnabled( False )
     return
 
 def directoryContextMenuAboutToShow( plugin ):
     " Called when the plugin directory context manu is about to show "
     path = str( plugin.dirParentMenu.menuAction().data().toString() )
-    if plugin.getLocalStatus( path ) in [ plugin.NOT_UNDER_VCS,
-                                          IND_ERROR ]:
+    pathStatus = plugin.getLocalStatus( path )
+    if pathStatus == IND_ERROR:
         plugin.dirContextInfoAct.setEnabled( False )
         plugin.dirContextUpdateAct.setEnabled( False )
+        plugin.dirContextAddAct.setEnabled( False )
+        plugin.dirContextAddRecursiveAct.setEnabled( False )
+        return
+
+    if pathStatus == plugin.NOT_UNDER_VCS:
+        plugin.dirContextInfoAct.setEnabled( False )
+        plugin.dirContextUpdateAct.setEnabled( False )
+
+        if path.endswith( os.path.sep ):
+            upperDirStatus = plugin.getLocalStatus( os.path.dirname( path[ : -1 ] ) )
+        else:
+            upperDirStatus = plugin.getLocalStatus( os.path.dirname( path ) )
+        if upperDirStatus == plugin.NOT_UNDER_VCS:
+            plugin.dirContextAddAct.setEnabled( False )
+            plugin.dirContextAddRecursiveAct.setEnabled( False )
+        else:
+            plugin.dirContextAddAct.setEnabled( upperDirStatus != IND_ERROR )
+            plugin.dirContextAddRecursiveAct.setEnabled( upperDirStatus != IND_ERROR )
         return
 
     plugin.dirContextInfoAct.setEnabled( True )
     plugin.dirContextUpdateAct.setEnabled( True )
+    plugin.dirContextAddAct.setEnabled( False )
+    plugin.dirContextAddRecursiveAct.setEnabled( False )
     return
 
 def bufferContextMenuAboutToshow( plugin ):
@@ -106,16 +144,32 @@ def bufferContextMenuAboutToshow( plugin ):
         plugin.bufContextInfoAct.setEnabled( False )
         plugin.bufContextUpdateAct.setEnabled( False )
         plugin.bufContextAnnotateAct.setEnabled( False )
+        plugin.bufContextAddAct.setEnabled( False )
         return
-    if plugin.getLocalStatus( path ) in [ plugin.NOT_UNDER_VCS,
-                                          IND_ERROR ]:
+
+    pathStatus = plugin.getLocalStatus( path )
+    if pathStatus == IND_ERROR:
         plugin.bufContextInfoAct.setEnabled( False )
         plugin.bufContextUpdateAct.setEnabled( False )
         plugin.bufContextAnnotateAct.setEnabled( False )
+        plugin.bufContextAddAct.setEnabled( False )
+        return
+
+    if pathStatus == plugin.NOT_UNDER_VCS:
+        plugin.bufContextInfoAct.setEnabled( False )
+        plugin.bufContextUpdateAct.setEnabled( False )
+        plugin.bufContextAnnotateAct.setEnabled( False )
+
+        upperDirStatus = plugin.getLocalStatus( os.path.dirname( path ) )
+        if upperDirStatus == plugin.NOT_UNDER_VCS:
+            plugin.bufContextAddAct.setEnabled( False )
+        else:
+            plugin.bufContextAddAct.setEnabled( upperDirStatus != IND_ERROR )
         return
 
     plugin.bufContextInfoAct.setEnabled( True )
     plugin.bufContextUpdateAct.setEnabled( True )
+    plugin.bufContextAddAct.setEnabled( False )
 
     widgetType = plugin.ide.currentEditorWidget.getType()
     if widgetType in [ MainWindowTabWidgetBase.PlainTextEditor,
