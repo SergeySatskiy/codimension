@@ -37,6 +37,11 @@ class VCSStatus:
         self.lastUpdate = None      # time
         return
 
+    def __str__( self ):
+        return "Plugin ID: " + str( self.pluginID ) + \
+               " Indicator ID: " + str( self.indicatorID ) + \
+               " Message: " + str( self.message ) + \
+               " Last update: " + str( self.lastUpdate )
 
 
 class VCSStatusCache:
