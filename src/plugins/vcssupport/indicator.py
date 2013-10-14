@@ -131,7 +131,7 @@ class VCSIndicator:
         if parts[ 3 ].lower() == "none":
             self.backgroundColor = None
         else:
-            self.backgroundColor = buildColor( parts[ 2 ] )
+            self.backgroundColor = buildColor( parts[ 3 ] )
 
         # Default tooltip
         if parts[ 4 ].lower() == "none":
@@ -162,21 +162,21 @@ class VCSIndicator:
 
         # Foreground color
         if pluginIndicator[ 2 ] is None:
-            self.backgroundColor = None
+            self.foregroundColor = None
         else:
             if type( pluginIndicator[ 2 ] ) == str:
-                self.backgroundColor = buildColor( pluginIndicator[ 2 ] )
+                self.foregroundColor = buildColor( pluginIndicator[ 2 ] )
             else:
-                self.backgroundColor = QColor( pluginIndicator[ 2 ] )
+                self.foregroundColor = QColor( pluginIndicator[ 2 ] )
 
         # Background color
         if pluginIndicator[ 3 ] is None:
-            self.foregroundColor = None
+            self.backgroundColor = None
         else:
             if type( pluginIndicator[ 3 ] ) == str:
-                self.foregroundColor = buildColor( pluginIndicator[ 3 ] )
+                self.backgroundColor = buildColor( pluginIndicator[ 3 ] )
             else:
-                self.foregroundColor = QColor( pluginIndicator[ 3 ] )
+                self.backgroundColor = QColor( pluginIndicator[ 3 ] )
 
         # Default tooltip
         if pluginIndicator[ 4 ] is None:
