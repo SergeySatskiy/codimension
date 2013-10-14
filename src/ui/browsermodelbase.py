@@ -278,8 +278,14 @@ class BrowserModelBase( QAbstractItemModel ):
 
         excludes = [ '.svn', '.cvs', '.hg', '.git' ]
         items = [ itm for itm in items if itm not in excludes ]
+        if parentItem.needVCSStatus:
+            # That's the project browser. Filter out what not needed.
+            excludeFunctor = GlobalData().project.shouldExclude
+            items = [ itm for itm in items if not excludeFunctor( itm ) ]
 
         if items:
+
+            pathsToRequest = []
 
             # Pick up the modinfo source
             if self.globalData.project.isProjectDir( path ):
@@ -291,21 +297,26 @@ class BrowserModelBase( QAbstractItemModel ):
                 self.beginInsertRows( self.createIndex( parentItem.row(),
                                                         0, parentItem ),
                                       0, len( items ) - 1 )
+            path = os.path.realpath( path ) + os.path.sep
             for item in items:
-                if os.path.isdir( path + item ):
-                    node = TreeViewDirectoryItem( parentItem,
-                                                  path + item, False )
+                fullPath = path + item
+                if os.path.isdir( fullPath ):
+                    node = TreeViewDirectoryItem( parentItem, fullPath, False )
+                    if parentItem.needVCSStatus:
+                        pathsToRequest.append( fullPath + os.path.sep )
                 else:
-                    node = TreeViewFileItem( parentItem, path + item )
+                    node = TreeViewFileItem( parentItem, fullPath )
+                    if parentItem.needVCSStatus:
+                        pathsToRequest.append( fullPath )
                     if node.fileType in [ PythonFileType, Python3FileType ]:
-                        modInfo = infoSrc.get( path + item )
+                        modInfo = infoSrc.get( fullPath )
                         node.toolTip = ""
                         if modInfo.docstring is not None:
                             node.toolTip = modInfo.docstring.text
 
                         if modInfo.isOK == False:
                             # Substitute icon and change the tooltip
-                            node.icon = PixmapCache().getIcon( \
+                            node.icon = PixmapCache().getIcon(
                                                 'filepythonbroken.png' )
                             if node.toolTip != "":
                                 node.toolTip += "\n\n"
@@ -322,12 +333,19 @@ class BrowserModelBase( QAbstractItemModel ):
                             node.populated = True
                             node.lazyPopulation = False
 
+                node.needVCSStatus = parentItem.needVCSStatus
                 self._addItem( node, parentItem )
 
             if repopulate:
                 self.endInsertRows()
 
         parentItem.populated = True
+
+        # Request statuses of the populated items. The request must be sent
+        # after the items are added, otherwise the status received by the model
+        # before the items are populated thus not updated properly.
+        for path in pathsToRequest:
+            GlobalData().mainWindow.vcsManager.requestStatus( path )
         return
 
     def populateSysPathItem( self, parentItem, repopulate = False ):

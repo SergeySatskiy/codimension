@@ -28,20 +28,23 @@
 
 " Project browser with module browsing capabilities "
 
-from PyQt4.QtCore        import SIGNAL
-from utils.pixmapcache   import PixmapCache
-from utils.globals       import GlobalData
+from PyQt4.QtCore import SIGNAL
+from utils.pixmapcache import PixmapCache
+from utils.globals import GlobalData
 from projectbrowsermodel import ProjectBrowserModel
-from filesbrowserbase    import FilesBrowser
-from utils.project       import CodimensionProject
+from filesbrowserbase import FilesBrowser
+from utils.project import CodimensionProject
+from viewitems import DirectoryItemType
 
 
 class ProjectBrowser( FilesBrowser ):
     " Project tree browser "
 
-    def __init__( self, parent = None ):
+    def __init__( self, parent ):
 
-        FilesBrowser.__init__( self, ProjectBrowserModel(), True, parent )
+        self.__mainWindow = parent
+        FilesBrowser.__init__( self, ProjectBrowserModel( self.__mainWindow ),
+                               True, self.__mainWindow )
 
         self.setWindowTitle( 'Project browser' )
         self.setWindowIcon( PixmapCache().getIcon( 'icon.png' ) )
@@ -50,6 +53,14 @@ class ProjectBrowser( FilesBrowser ):
                       self.__onProjectChanged )
         self.connect( GlobalData().project, SIGNAL( 'fsChanged' ),
                       self._onFSChanged )
+
+        # VCS status support
+        self.connect( GlobalData().pluginManager, SIGNAL( 'PluginDeactivated' ),
+                      self.__onPluginDeactivated )
+        self.connect( self.__mainWindow.vcsManager,
+                      SIGNAL( "VCSFileStatus" ), self.__onVCSFileStatus )
+        self.connect( self.__mainWindow.vcsManager,
+                      SIGNAL( "VCSDirStatus" ), self.__onVCSDirStatus )
         return
 
     def __onProjectChanged( self, what ):
@@ -65,3 +76,82 @@ class ProjectBrowser( FilesBrowser ):
         self.layoutDisplay()
         return
 
+    def __onPluginDeactivated( self, plugin ):
+        " Triggered when a plugin is deactivated "
+        if self.__mainWindow.vcsManager.activePluginCount() == 0:
+            for treeItem in self.model().sourceModel().rootItem.childItems:
+                self.__resetVCSStatus( treeItem )
+        return
+
+    def __resetVCSStatus( self, treeItem ):
+        " Recursively resets the VCS status if needed "
+        if treeItem.vcsStatus:
+            treeItem.vcsStatus = None
+            self._signalItemUpdated( treeItem )
+
+        for i in treeItem.childItems:
+            if i.itemType == DirectoryItemType:
+                self.__resetVCSStatus( i )
+            else:
+                if i.vcsStatus:
+                    i.vcsStatus = None
+                    self._signalItemUpdated( i )
+        return
+
+    def __onVCSFileStatus( self, path, status ):
+        " Triggered when a status was updated "
+        for treeItem in self.model().sourceModel().rootItem.childItems:
+            self._updateVCSFileStatus( treeItem, path, status )
+        return
+
+    def _updateVCSFileStatus( self, treeItem, path, status ):
+        " Updates the VCS status of an item "
+        # Due to symbolic links the whole tree must be checked, so there is
+        # no limit here...
+        for i in treeItem.childItems:
+            if i.itemType == DirectoryItemType:
+                self._updateVCSFileStatus( i, path, status )
+            else:
+                # It is a file
+                if i.getRealPath() == path:
+                    i.vcsStatus = status
+                    self._signalItemUpdated( i )
+        return
+
+    def __onVCSDirStatus( self, path, status ):
+        " Triggered when a status is updated "
+        for treeItem in self.model().sourceModel().rootItem.childItems:
+            self._updateVCSDirStatus( treeItem, path, status )
+        return
+
+    def _updateVCSDirStatus( self, treeItem, path, status ):
+        " Updates the VCS status of an item "
+        # Due to symbolic links the whole tree must be checked, so there is
+        # no limit here...
+        if treeItem.getRealPath() == path:
+            treeItem.vcsStatus = status
+            self._signalItemUpdated( treeItem )
+
+        for i in treeItem.childItems:
+            if i.itemType == DirectoryItemType:
+                self._updateVCSDirStatus( i, path, status )
+        return
+
+    def drawBranches( self, painter, rect, index ):
+        """ Helps to draw the solid highlight line for the project browser.
+            This part is responsible for the beginning of the background line
+            till +/- icon.
+            See also the ProjectBrowserModel::data(...) method which draws
+            the rest of the background
+            http://stackoverflow.com/questions/14255224/changing-the-row-background-color-of-a-qtreeview-does-not-work
+        """
+        if index.isValid():
+            if index != self.currentIndex():
+                item = self.model().item( index )
+                if item.vcsStatus:
+                    indicator = self.__mainWindow.vcsManager.getStatusIndicator( item.vcsStatus )
+                    if indicator and indicator.backgroundColor:
+                        painter.fillRect( rect, indicator.backgroundColor )
+
+        FilesBrowser.drawBranches( self, painter, rect, index )
+        return

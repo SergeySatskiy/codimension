@@ -308,7 +308,7 @@ class FilesBrowser( QTreeView ):
                               ClassItemType, DecoratorItemType,
                               AttributeItemType, GlobalItemType,
                               ImportWhatItemType ]:
-            GlobalData().mainWindow.openFile( item.getPath(),
+            GlobalData().mainWindow.openFile( os.path.realpath( item.getPath() ),
                                               item.sourceObj.line )
         return
 
@@ -425,7 +425,7 @@ class FilesBrowser( QTreeView ):
                 if os.path.realpath( i.getPath() ) == dirname + basename:
                     # Update the link status
                     i.updateLinkStatus( i.getPath() )
-                    self.__signalItemUpdated( i )
+                    self._signalItemUpdated( i )
         return
 
 
@@ -448,7 +448,7 @@ class FilesBrowser( QTreeView ):
             if os.path.realpath( treeItem.getPath() ) == dirname + basename:
                 # Broken link now
                 treeItem.updateStatus()
-                self.__signalItemUpdated( treeItem )
+                self._signalItemUpdated( treeItem )
                 return
 
 
@@ -469,7 +469,7 @@ class FilesBrowser( QTreeView ):
                         srcModel.endRemoveRows()
                     elif os.path.realpath( i.getPath() ) == dirname + basename:
                         i.updateLinkStatus( i.getPath() )
-                        self.__signalItemUpdated( i )
+                        self._signalItemUpdated( i )
                 else:
                     # Regular final file
                     if os.path.realpath( i.getPath() ) == dirname + basename:
@@ -530,7 +530,7 @@ class FilesBrowser( QTreeView ):
 
         return
 
-    def __signalItemUpdated( self, treeItem ):
+    def _signalItemUpdated( self, treeItem ):
         " Emits a signal that an item is updated "
         srcModel = self.model().sourceModel()
         index = srcModel.buildIndex( treeItem.getRowPath() )
@@ -575,14 +575,14 @@ class FilesBrowser( QTreeView ):
                         treeItem.toolTip = info.docstring.text
                     treeItem.parsingErrors = not info.isOK
 
-                    self.__signalItemUpdated( treeItem )
+                    self._signalItemUpdated( treeItem )
 
                     # Update content if populated
                     self.updateFileItem( treeItem, info )
                 elif fileType == CodimensionProjectFileType:
                     # Tooltip update only
                     treeItem.toolTip = getProjectFileTooltip( path )
-                    self.__signalItemUpdated( treeItem )
+                    self._signalItemUpdated( treeItem )
                 elif path.endswith( ".cgi" ):
                     # It can only happened when python CGI is not a python any
                     # more. So display it a a general file.
@@ -590,7 +590,7 @@ class FilesBrowser( QTreeView ):
                     # the first branch of this if statement.
                     treeItem.setIcon( icon )
                     treeItem.toolTip = ""
-                    self.__signalItemUpdated( treeItem )
+                    self._signalItemUpdated( treeItem )
 
                     # Remove child items if so
                     while treeItem.childItems:
@@ -613,7 +613,7 @@ class FilesBrowser( QTreeView ):
                     itemsToRemove.append( fileChildItem )
                 else:
                     fileChildItem.updateData( info.encoding )
-                    self.__signalItemUpdated( fileChildItem )
+                    self._signalItemUpdated( fileChildItem )
                 continue
             elif fileChildItem.itemType == GlobalsItemType:
                 hadGlobals = True
