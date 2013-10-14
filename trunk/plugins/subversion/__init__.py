@@ -248,6 +248,13 @@ class SubversionPlugin( VersionControlSystemInterface ):
         try:
             statusList = client.status( path, update = clientUpdate,
                                         depth = clientDepth )
+            # Another heck! If a directory is not under VCS and the depth is not
+            # empty then the result set is empty! I have no ideas why.
+            if not statusList:
+                # Try again, may be it is because the depth
+                statusList = client.status( path, update = clientUpdate,
+                                            depth = pysvn.depth.empty )
+
             result = []
             for status in statusList:
                 reportPath = status.path
@@ -291,11 +298,9 @@ class SubversionPlugin( VersionControlSystemInterface ):
             errorCode = exc.args[ 1 ][ 0 ][ 1 ]
             if errorCode == pysvn.svn_err.wc_not_working_copy:
                 return self.NOT_UNDER_VCS
-            message = exc.args[ 0 ]
-            print message
+#            message = exc.args[ 0 ]
             return IND_ERROR
         except Exception, exc:
-            print str(exc)
             return IND_ERROR
         except:
             return IND_ERROR
