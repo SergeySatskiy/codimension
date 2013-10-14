@@ -167,19 +167,15 @@ class VersionControlSystemInterface( CDMPluginBase ):
     def getCustomIndicators( self ):
         """ A plugin can provide a list of its custom indicators.
             Each indicator is a tuple:
-            (id, what, foreground, background, defaultTooltip)
+            (id, pixmap, foreground, background, defaultTooltip)
             id - integer value which must be >= 0. Negative values are reserved
                  for common indicators
-            what - string or QPixmap. If it is a pixmap it should be 16x16, if larger
-                   then the pixmap will be scaled.
-                   If it is a string then it must be no longer than 2 characters. The
-                   extra characters will be stripped.
-            foreground - QColor or None. It is taken into consideration only if the
-                         second value in the tuple is a string. The color will be
-                         used for the text font.
-            background - QColor or None. It is taken into consideration only if the
-                         second value in the tuple is a string. The color will be used
-                         to fill the indicator background.
+            pixmap - QPixmap. It should be 16x16, if larger then the pixmap
+                     will be scaled. The pixmap is used at the status bar.
+            foreground - QColor or None. If not None then the color will be
+                         used in the project browser for the text.
+            background - QColor or None. If not None then the color will be used
+                         to fill the project browser item background.
             defaultTooltip - string or None. If provided and the getStatus(...)
                              call did not provide a message then this one is
                              displayed
