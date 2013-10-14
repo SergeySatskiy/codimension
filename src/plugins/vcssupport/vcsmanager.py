@@ -389,3 +389,17 @@ class VCSManager( QObject ):
             vcsLabel.setToolTip( indicator.defaultTooltip )
         return
 
+    def getStatusIndicator( self, status ):
+        """ Provides the VCS status indicator description for the given status.
+            It is mostly used for the project browser """
+        if status.pluginID not in self.activePlugins:
+            return None
+
+        descriptor = self.activePlugins[ status.pluginID ]
+        if status.indicatorID not in descriptor.indicators:
+            # Check the standard indicator
+            if status.indicatorID in self.systemIndicators:
+                return self.systemIndicators[ status.indicatorID ]
+            return None
+
+        return descriptor.indicators[ status.indicatorID ]
