@@ -62,8 +62,8 @@ ropePreferences = { 'ignore_syntax_errors': True,
 
 VCS_STATUS_UPDATE_INTERVAL_DEFAULT = 30     # seconds
 DEFAULT_VCS_INDICATORS = (
-    "-1:::vcsunversioned.png:::0,0,0,255:::255,255,255,255:::Not under VCS control",
-    "-2:::vcsstatuserror.png:::0,0,0,255:::255,255,255,255:::Error getting status",
+    "-1:::vcsunversioned.png:::none:::220,220,255,255:::Not under VCS control",
+    "-2:::vcsstatuserror.png:::none:::255,160,160,255:::Error getting status",
 )
 
 class CDMSetting:
