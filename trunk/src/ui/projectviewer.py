@@ -56,8 +56,10 @@ from utils.compatibility import relpath
 class ProjectViewer( QWidget ):
     " project viewer widget "
 
-    def __init__( self, parent = None ):
+    def __init__( self, parent ):
         QWidget.__init__( self, parent )
+
+        self.__mainWindow = parent
 
         self.__fsContextItem = None
         self.__prjContextItem = None
@@ -87,9 +89,9 @@ class ProjectViewer( QWidget ):
                       self.__onRestorePrjExpandedDirs )
 
         # Support switching to debug and back
-        self.connect( parent, SIGNAL( 'debugModeChanged' ),
+        self.connect( self.__mainWindow, SIGNAL( 'debugModeChanged' ),
                       self.projectTreeView.onDebugMode )
-        self.connect( parent, SIGNAL( 'debugModeChanged' ),
+        self.connect( self.__mainWindow, SIGNAL( 'debugModeChanged' ),
                       self.filesystemView.onDebugMode )
 
         # Plugin context menu support
@@ -114,7 +116,7 @@ class ProjectViewer( QWidget ):
     def __createProjectPartLayout( self ):
         """ Creates the upper part of the project viewer """
 
-        self.projectTreeView = ProjectBrowser()
+        self.projectTreeView = ProjectBrowser( self.__mainWindow )
 
         # Header part: label + i-button
         headerFrame = QFrame()

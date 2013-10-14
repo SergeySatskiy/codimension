@@ -1149,6 +1149,7 @@ class EditorsManager( QTabWidget ):
     def openFile( self, fileName, lineNo ):
         " Opens the required file "
         try:
+            fileName = os.path.realpath( fileName )
             # Check if the file is already opened
             for index in xrange( self.count() ):
                 if self.widget( index ).getFileName() == fileName:

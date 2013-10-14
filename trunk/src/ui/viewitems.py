@@ -36,14 +36,12 @@ Collection of items which may appear in various tree views:
 
 import os, os.path
 
-from PyQt4.QtCore           import Qt
-from utils.pixmapcache      import PixmapCache
-from utils.fileutils        import detectFileType, getFileIcon, \
-                                   PythonFileType, Python3FileType, \
-                                   LinguistFileType, \
-                                   CodimensionProjectFileType, \
-                                   BrokenSymlinkFileType
-from utils.project          import getProjectFileTooltip
+from PyQt4.QtCore import Qt
+from utils.pixmapcache import PixmapCache
+from utils.fileutils import ( detectFileType, getFileIcon, PythonFileType,
+                              Python3FileType, LinguistFileType,
+                              CodimensionProjectFileType, BrokenSymlinkFileType )
+from utils.project import getProjectFileTooltip
 
 NoItemType                  = -1
 
@@ -67,6 +65,7 @@ AttributeItemType           = 26
 GlobalItemType              = 27
 
 
+EMPTY_ICON = PixmapCache().getIcon( 'empty.png' )
 
 class TreeViewItem( object ):
     " Common data structures for tree views items "
@@ -83,13 +82,17 @@ class TreeViewItem( object ):
             self.itemData = [ data ]
             self.itemDataSize = 1
 
+        self.isLink = False
         self.parentItem = parent
         self.itemType = NoItemType
-        self.icon = PixmapCache().getIcon( 'empty.png' )
+        self.icon = EMPTY_ICON
         self.populated = True
         self.lazyPopulation = False
         self.toolTip = ""
         self.path = None
+        self.needVCSStatus = False
+
+        self.vcsStatus = None   # VCSStatus instance, if present
         return
 
     def isRoot( self ):
@@ -193,7 +196,6 @@ class TreeViewItem( object ):
 
     def getPath( self ):
         " Provides the file name or dir name depending on the item type "
-
         if self.itemType in [ SysPathItemType, NoItemType ]:
             return ""
 
@@ -201,7 +203,7 @@ class TreeViewItem( object ):
 
         # The item could be used for G/F/C viewers where the file name is
         # available in the second column
-        if self.path is not None:
+        if self.path:
             return self.path
         if self.itemDataSize >= 2:
             return self.itemData[ 1 ]
@@ -212,20 +214,75 @@ class TreeViewItem( object ):
         # skip till file or directory items
         while True:
             if current.itemType == NoItemType:
-                raise Exception( "Internal error of getting tree view " \
+                raise Exception( "Internal error of getting tree view "
                                  "item path. Please inform the developers." )
             if current.itemType in [ FileItemType, DirectoryItemType,
                                      SysPathItemType ]:
                 break
             current = current.parentItem
 
-        path = current.data( 0 )
+        path = current.itemData[ 0 ]
         while current.parentItem.itemType != NoItemType and \
               current.parentItem.itemType != SysPathItemType:
             current = current.parentItem
             path = os.path.sep + path
-            if current.data( 0 ) != os.path.sep:    # root item
-                path = current.data( 0 ) + path
+            if current.itemData[ 0 ] != os.path.sep:    # root item
+                path = current.itemData[ 0 ] + path
+
+        path = os.path.normpath( path )
+        if isDir:
+            if not path.endswith( os.path.sep ):
+                path += os.path.sep
+
+        return path
+
+    def getRealPath( self ):
+        """ Provides the file name or dir name depending on the item type.
+            All the links except of the item itself are resolved.
+        """
+        if self.itemType in [ SysPathItemType, NoItemType ]:
+            return ""
+
+        current = self
+
+        # The item could be used for G/F/C viewers where the file name is
+        # available in the second column
+        if self.path:
+            return self.path
+        if self.itemDataSize >= 2:
+            return self.itemData[ 1 ]
+
+        # Memorize if it is a directory item
+        isDir = self.itemType == DirectoryItemType
+
+        # skip till file or directory items
+        while True:
+            if current.itemType == NoItemType:
+                raise Exception( "Internal error of getting tree view "
+                                 "item path. Please inform the developers." )
+            if current.itemType in [ FileItemType, DirectoryItemType,
+                                     SysPathItemType ]:
+                break
+            current = current.parentItem
+
+        hasLinks = False
+        path = current.itemData[ 0 ]
+        while current.parentItem.itemType != NoItemType and \
+              current.parentItem.itemType != SysPathItemType:
+            current = current.parentItem
+            if current.itemType == DirectoryItemType:
+                if current.isLink:
+                    hasLinks = True
+            path = os.path.sep + path
+            if current.itemData[ 0 ] != os.path.sep:    # root item
+                path = current.itemData[ 0 ] + path
+
+        if hasLinks:
+            if self.isLink:
+                path = os.path.realpath( os.path.dirname( path ) ) + \
+                       os.path.sep + self.itemData[ 0 ]
+            else:
+                path = os.path.realpath( path )
 
         path = os.path.normpath( path )
         if isDir:

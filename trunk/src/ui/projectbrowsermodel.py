@@ -29,19 +29,20 @@
 " Project browser model "
 
 
-from PyQt4.QtCore import SIGNAL
-from PyQt4.QtCore import QVariant
+from PyQt4.QtCore import SIGNAL, Qt, QVariant
 from viewitems import TreeViewDirectoryItem
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
 from browsermodelbase import BrowserModelBase
 from utils.settings import Settings
 
+
 class ProjectBrowserModel( BrowserModelBase ):
     " Class implementing the project browser model "
 
-    def __init__( self, parent = None ):
-        BrowserModelBase.__init__( self, QVariant( "Name" ), parent )
+    def __init__( self, parent ):
+        self.__mainWindow = parent
+        BrowserModelBase.__init__( self, QVariant( "Name" ), self.__mainWindow )
         self.setTooltips( Settings().projectTooltips )
         self.populateModel()
 
@@ -51,18 +52,53 @@ class ProjectBrowserModel( BrowserModelBase ):
 
     def populateModel( self ):
         " Populates the project browser model "
-
         self.clear()
         project = self.globalData.project
         if project.isLoaded():
             projectDir = project.getProjectDir()
-            self.addItem( TreeViewDirectoryItem( self.rootItem, projectDir ) )
+            newItem = TreeViewDirectoryItem( self.rootItem, projectDir )
+            newItem.needVCSStatus = True
+            self.addItem( newItem )
         return
 
     def __onProjectChanged( self, what ):
         " Triggered when a project is changed "
-
         if what == CodimensionProject.CompleteProject:
             self.populateModel()
         return
 
+    def data( self, index, role ):
+        " Extention to modify the background and tooltips for the project browser "
+        if not index.isValid():
+            return QVariant()
+
+        item = index.internalPointer()
+        if item.vcsStatus:
+            indicator = self.__mainWindow.vcsManager.getStatusIndicator( item.vcsStatus )
+            if role == Qt.TextColorRole:
+                if indicator and indicator.foregroundColor:
+                    return QVariant( indicator.foregroundColor )
+            elif role == Qt.BackgroundColorRole:
+                if indicator and indicator.backgroundColor:
+                    return QVariant( indicator.backgroundColor )
+            elif role == Qt.ToolTipRole:
+                docstringPart = None
+                if self.showTooltips and item.toolTip != "":
+                    docstringPart = item.toolTip
+
+                vcsPart = None
+                if indicator:
+                    if item.vcsStatus.message:
+                        vcsPart = item.vcsStatus.message
+                    else:
+                        vcsPart = indicator.defaultTooltip
+
+                if docstringPart and vcsPart:
+                    return QVariant( docstringPart + "\n\nVCS status: " + vcsPart )
+                if docstringPart:
+                    return QVariant( docstringPart )
+                if vcsPart:
+                    return QVariant( "VCS status: " + vcsPart )
+                return QVariant()
+
+        return BrowserModelBase.data( self, index, role )
