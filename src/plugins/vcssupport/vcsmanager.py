@@ -32,7 +32,7 @@ from utils.settings import Settings
 from utils.globals import GlobalData
 from indicator import VCSIndicator
 from utils.project import CodimensionProject
-from PyQt4.QtCore import QObject, SIGNAL
+from PyQt4.QtCore import QObject, SIGNAL, QTimer
 from vcspluginthread import VCSPluginThread, IND_VCS_ERROR
 from plugins.categories.vcsiface import VersionControlSystemInterface
 
@@ -111,6 +111,10 @@ class VCSPluginDescriptor( QObject ):
                                    indicatorId, message )
         return
 
+    def canInitiateStatusRequestLoop( self ):
+        " Returns true if the is no jam in the request queue "
+        return self.thread.canInitiateStatusRequestLoop()
+
 
 
 class VCSManager( QObject ):
@@ -132,6 +136,10 @@ class VCSManager( QObject ):
         self.__firstFreeIndex = 0
 
         self.__readSettingsIndicators()
+        self.__dirRequestLoopTimer = QTimer( self )
+        self.__dirRequestLoopTimer.setSingleShot( True )
+        self.connect( self.__dirRequestLoopTimer, SIGNAL( 'timeout()' ),
+                      self.__onDirRequestLoopTimer )
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
@@ -171,11 +179,14 @@ class VCSManager( QObject ):
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
         editorsManager.sendAllTabsVCSStatusRequest()
 
-        if len( self.activePlugins ) == 1 and GlobalData().project.isLoaded():
+        if self.activePluginCount() == 1 and GlobalData().project.isLoaded():
             # This is the first plugin and a project is there
             self.__populateProjectDirectories()
         self.__sendDirectoryRequestsOnActivation( newPluginIndex )
         self.__sendFileRequestsOnActivation( newPluginIndex )
+
+        if self.activePluginCount() == 1:
+            self.__startDirRequestTimer()
         return
 
     def __populateProjectDirectories( self ):
@@ -257,8 +268,27 @@ class VCSManager( QObject ):
                             VersionControlSystemInterface.REQUEST_ITEM_ONLY )
         return
 
+    def __sendPeriodicDirectoryRequests( self ):
+        " Sends the directory requests periodically "
+        for path, status in self.dirCache.cache.iteritems():
+            if status.pluginID in self.activePlugins:
+                # This directory is under certain VCS, send the request
+                # only to this VCS
+                descriptor = self.activePlugins[ status.pluginID ]
+                descriptor.requestStatus( path,
+                            VersionControlSystemInterface.REQUEST_DIRECTORY )
+            else:
+                # The directory is not under any known VCS. Send the request
+                # to all the registered VCS plugins
+                for _, descriptor in self.activePlugins.iteritems():
+                    descriptor.requestStatus( path,
+                            VersionControlSystemInterface.REQUEST_DIRECTORY )
+        return
+
     def dismissAllPlugins( self ):
         " Stops all the plugin threads "
+        self.__dirRequestLoopTimer.stop()
+
         for identifier, descriptor in self.activePlugins.iteritems():
             descriptor.stopThread()
 
@@ -281,6 +311,9 @@ class VCSManager( QObject ):
 
         if pluginID:
             del self.activePlugins[ pluginID ]
+
+        if self.activePluginCount() == 0:
+            self.__dirRequestLoopTimer.stop()
         return
 
     def requestStatus( self, path,
@@ -403,3 +436,27 @@ class VCSManager( QObject ):
             return None
 
         return descriptor.indicators[ status.indicatorID ]
+
+    def __canInitiateStatusRequestLoop( self ):
+        " Returns true if the is no jam in the request queue "
+        for _, descriptor in self.activePlugins.iteritems():
+            if descriptor.canInitiateStatusRequestLoop():
+                return True
+        return False
+
+    def __onDirRequestLoopTimer( self ):
+        " Triggered when the dir request loop timer is fired "
+        self.__dirRequestLoopTimer.stop()
+        if self.activePluginCount() == 0:
+            return
+
+        if self.__canInitiateStatusRequestLoop():
+            self.__sendPeriodicDirectoryRequests()
+        self.__startDirRequestTimer()
+        return
+
+    def __startDirRequestTimer( self ):
+        " Starts the periodic request timer "
+        self.__dirRequestLoopTimer.start( Settings().vcsstatusupdateinterval *
+                                          1000 )
+        return

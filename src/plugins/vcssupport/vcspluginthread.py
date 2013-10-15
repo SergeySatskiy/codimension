@@ -26,6 +26,7 @@ VCS plugin support: plugin thread
 
 from PyQt4.QtCore import QThread, QMutex, QWaitCondition, SIGNAL
 from collections import deque
+from plugins.categories.vcsiface import VersionControlSystemInterface
 
 
 # Indicator used by IDE to display errors while retrieving item status
@@ -110,3 +111,21 @@ class VCSPluginThread( QThread ):
         self.__requestQueue.clear()
         self.__lock.unlock()
         return
+
+    def canInitiateStatusRequestLoop( self ):
+        " Returns true if the is no jam in the request queue "
+        # It is a very rough test which seems however good enough.
+        # First it is checked that there are no more than 10 (picked arbitrary)
+        # not served yet requests in the queue and then it is checked if there
+        # is at least one directory status request from a previous iteration.
+        self.__lock.lock()
+        if len( self.__requestQueue ) > 10:
+            self.__lock.unlock()
+            return False
+        for item in self.__requestQueue:
+            if item[ 1 ] == VersionControlSystemInterface.REQUEST_DIRECTORY:
+                self.__lock.unlock()
+                return False
+        self.__lock.unlock()
+        return True
+
