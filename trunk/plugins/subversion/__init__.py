@@ -30,10 +30,7 @@ import pysvn
 import os.path
 import logging
 from plugins.categories.vcsiface import VersionControlSystemInterface
-from svnmenus import ( populateMainMenu, populateFileContextMenu,
-                       populateDirectoryContextMenu, populateBufferContextMenu,
-                       fileContextMenuAboutToShow, mainMenuAboutToShow,
-                       directoryContextMenuAboutToShow, bufferContextMenuAboutToshow )
+from svnmenus import MenuMixin
 from svnconfigdlg import ( SVNPluginConfigDialog, saveSVNSettings, getSettings,
                            AUTH_PASSWD, STATUS_LOCAL_ONLY )
 from svnindicators import ( IND_ADDED, IND_ERROR, IND_DELETED, IND_IGNORED,
@@ -51,11 +48,12 @@ from svnadd import doSVNAdd
 
 
 
-class SubversionPlugin( VersionControlSystemInterface ):
+class SubversionPlugin( MenuMixin, VersionControlSystemInterface ):
     """ Codimension subversion plugin """
 
     def __init__( self ):
         VersionControlSystemInterface.__init__( self )
+        MenuMixin.__init__( self )
 
         self.projectSettings = None
         self.ideWideSettings = None
@@ -102,26 +100,6 @@ class SubversionPlugin( VersionControlSystemInterface ):
     def getConfigFunction( self ):
         " SVN plugin requires configuring "
         return self.configure
-
-    def populateMainMenu( self, parentMenu ):
-        " Called to build main menu "
-        populateMainMenu( self, parentMenu )
-        return
-
-    def populateFileContextMenu( self, parentMenu ):
-        " Called to build a file context menu in the project and FS browsers "
-        populateFileContextMenu( self, parentMenu )
-        return
-
-    def populateDirectoryContextMenu( self, parentMenu ):
-        " Called to build a dir context menu in the project and FS browsers "
-        populateDirectoryContextMenu( self, parentMenu )
-        return
-
-    def populateBufferContextMenu( self, parentMenu ):
-        " Called to build a buffer context menu "
-        populateBufferContextMenu( self, parentMenu )
-        return
 
     def __getIDEConfigFile( self ):
         " Provides a name of the IDE wide config file "
@@ -470,20 +448,27 @@ class SubversionPlugin( VersionControlSystemInterface ):
         doSVNCommit( self, client, path )
         return
 
-    # Menu dispatching
-
-    def onMainMenuAboutToShow( self ):
-        mainMenuAboutToShow( self )
+    def fileStatus( self ):
+        " Called when status is requested for a file "
+        path = str( self.fileParentMenu.menuAction().data().toString() )
+        self.__svnStatus( path )
         return
 
-    def onFileContextMenuAboutToShow( self ):
-        fileContextMenuAboutToShow( self )
+    def dirStatus( self ):
+        " Called when a status is requested for a directory "
+        path = str( self.dirParentMenu.menuAction().data().toString() )
+        self.__svnStatus( path )
         return
 
-    def onDirectoryContextMenuAboutToShow( self ):
-        directoryContextMenuAboutToShow( self )
+    def bufferStatus( self ):
+        " Called when a status is requested for the current buffer "
+        path = self.ide.currentEditorWidget.getFileName()
+        self.__svnStatus( path )
         return
 
-    def onBufferContextMenuAboutToshow( self ):
-        bufferContextMenuAboutToshow( self )
+    def __svnStatus( self, path ):
+        " Called to perform svn status "
+#        client = self.getSVNClient( self.getSettings() )
+#        doSVNStatus( client, path )
         return
+

@@ -31,178 +31,184 @@ from svnindicators import ( IND_ERROR, IND_ADDED, IND_DELETED, IND_MERGED,
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
+class MenuMixin:
+    " Adds menu functionality to the plugin class "
 
-def populateMainMenu( plugin, parentMenu ):
-    " Populates subversion plugin main menu "
-    plugin.connect( parentMenu, SIGNAL( "aboutToShow()" ),
-                    plugin.onMainMenuAboutToShow )
-    parentMenu.addAction( "Configure", plugin.configure )
-    return
-
-def populateFileContextMenu( plugin, parentMenu ):
-    " Populates a context menu used for a file in a project browser "
-    plugin.fileParentMenu = parentMenu
-    plugin.connect( parentMenu, SIGNAL( "aboutToShow()" ),
-                    plugin.onFileContextMenuAboutToShow )
-    plugin.fileContextInfoAct = parentMenu.addAction( "&Info", plugin.fileInfo )
-    plugin.fileContextUpdateAct = parentMenu.addAction( "&Update", plugin.fileUpdate )
-    plugin.fileContextAnnotateAct = parentMenu.addAction( "&Annotate", plugin.fileAnnotate )
-    plugin.fileContextAddAct = parentMenu.addAction( "A&dd to repository", plugin.fileAddToRepository )
-    plugin.fileContextCommitAct = parentMenu.addAction( "&Commit...", plugin.fileCommit )
-    return
-
-def populateDirectoryContextMenu( plugin, parentMenu ):
-    " Populates a context menu used for a directory in a project browser "
-    plugin.dirParentMenu = parentMenu
-    plugin.connect( parentMenu, SIGNAL( "aboutToShow()" ),
-                    plugin.onDirectoryContextMenuAboutToShow )
-    plugin.dirContextInfoAct = parentMenu.addAction( "&Info", plugin.dirInfo )
-    plugin.dirContextUpdateAct = parentMenu.addAction( "&Update", plugin.dirUpdate )
-    plugin.dirContextAddAct = parentMenu.addAction( "A&dd to repository", plugin.dirAddToRepository )
-    plugin.dirContextAddRecursiveAct = parentMenu.addAction( "Add to repository recursively", plugin.dirAddToRepositoryRecursively )
-    plugin.dirContextCommitAct = parentMenu.addAction( "&Commit...", plugin.dirCommit )
-    return
-
-def populateBufferContextMenu( plugin, parentMenu ):
-    " Populates a context menu used for a text editor or a viewer "
-    plugin.connect( parentMenu, SIGNAL( "aboutToShow()" ),
-                    plugin.onBufferContextMenuAboutToshow )
-    plugin.bufContextInfoAct = parentMenu.addAction( "&Info", plugin.bufferInfo )
-    plugin.bufContextUpdateAct = parentMenu.addAction( "&Update", plugin.bufferUpdate )
-    plugin.bufContextAnnotateAct = parentMenu.addAction( "&Annotate", plugin.bufferAnnotate )
-    plugin.bufContextAddAct = parentMenu.addAction( "A&dd to repository", plugin.bufferAddToRepository )
-    plugin.bufContextCommitAct = parentMenu.addAction( "&Commit...", plugin.bufferCommit )
-    return
-
-
-
-def mainMenuAboutToShow( plugin ):
-    " Called when the plugin main menu is about to show "
-    return
-
-def fileContextMenuAboutToShow( plugin ):
-    " Called when the plugin file context menu is about to show "
-    path = str( plugin.fileParentMenu.menuAction().data().toString() )
-    pathStatus = plugin.getLocalStatus( path )
-    if pathStatus == IND_ERROR:
-        plugin.fileContextInfoAct.setEnabled( False )
-        plugin.fileContextUpdateAct.setEnabled( False )
-        plugin.fileContextAnnotateAct.setEnabled( False )
-        plugin.fileContextAddAct.setEnabled( False )
-        plugin.fileContextCommitAct.setEnabled( False )
+    def __init__( self ):
         return
 
-    if pathStatus == plugin.NOT_UNDER_VCS:
-        plugin.fileContextInfoAct.setEnabled( False )
-        plugin.fileContextUpdateAct.setEnabled( False )
-        plugin.fileContextAnnotateAct.setEnabled( False )
-        plugin.fileContextCommitAct.setEnabled( False )
-
-        upperDirStatus = plugin.getLocalStatus( os.path.dirname( path ) )
-        if upperDirStatus == plugin.NOT_UNDER_VCS:
-            plugin.fileContextAddAct.setEnabled( False )
-        else:
-            plugin.fileContextAddAct.setEnabled( upperDirStatus != IND_ERROR )
+    def populateMainMenu( self, parentMenu ):
+        " Called to build main menu "
+        self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
+                      self.onMainMenuAboutToShow )
+        parentMenu.addAction( "Configure", self.configure )
         return
 
-    plugin.fileContextInfoAct.setEnabled( True )
-    plugin.fileContextUpdateAct.setEnabled( True )
-    plugin.fileContextAnnotateAct.setEnabled( True )
-    plugin.fileContextAddAct.setEnabled( False )
-    plugin.fileContextCommitAct.setEnabled( pathStatus in [
-                    IND_ADDED, IND_DELETED, IND_MERGED, IND_MODIFIED_LR,
-                    IND_MODIFIED_L, IND_REPLACED, IND_CONFLICTED ] )
-    return
-
-def directoryContextMenuAboutToShow( plugin ):
-    " Called when the plugin directory context manu is about to show "
-    path = str( plugin.dirParentMenu.menuAction().data().toString() )
-    pathStatus = plugin.getLocalStatus( path )
-    if pathStatus == IND_ERROR:
-        plugin.dirContextInfoAct.setEnabled( False )
-        plugin.dirContextUpdateAct.setEnabled( False )
-        plugin.dirContextAddAct.setEnabled( False )
-        plugin.dirContextAddRecursiveAct.setEnabled( False )
-        plugin.dirContextCommitAct.setEnabled( False )
+    def populateFileContextMenu( self, parentMenu ):
+        " Called to build a file context menu in the project and FS browsers "
+        self.fileParentMenu = parentMenu
+        self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
+                      self.onFileContextMenuAboutToShow )
+        self.fileContextInfoAct = parentMenu.addAction( "&Info", self.fileInfo )
+        self.fileContextUpdateAct = parentMenu.addAction( "&Update", self.fileUpdate )
+        self.fileContextAnnotateAct = parentMenu.addAction( "&Annotate", self.fileAnnotate )
+        self.fileContextAddAct = parentMenu.addAction( "A&dd to repository", self.fileAddToRepository )
+        self.fileContextCommitAct = parentMenu.addAction( "&Commit...", self.fileCommit )
+        self.fileContextStatusAct = parentMenu.addAction( "&Status", self.fileStatus )
         return
 
-    if pathStatus == plugin.NOT_UNDER_VCS:
-        plugin.dirContextInfoAct.setEnabled( False )
-        plugin.dirContextUpdateAct.setEnabled( False )
-        plugin.dirContextCommitAct.setEnabled( False )
-
-        if path.endswith( os.path.sep ):
-            upperDirStatus = plugin.getLocalStatus( os.path.dirname( path[ : -1 ] ) )
-        else:
-            upperDirStatus = plugin.getLocalStatus( os.path.dirname( path ) )
-        if upperDirStatus == plugin.NOT_UNDER_VCS:
-            plugin.dirContextAddAct.setEnabled( False )
-            plugin.dirContextAddRecursiveAct.setEnabled( False )
-        else:
-            plugin.dirContextAddAct.setEnabled( upperDirStatus != IND_ERROR )
-            plugin.dirContextAddRecursiveAct.setEnabled( upperDirStatus != IND_ERROR )
+    def populateDirectoryContextMenu( self, parentMenu ):
+        " Called to build a dir context menu in the project and FS browsers "
+        self.dirParentMenu = parentMenu
+        self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
+                      self.onDirectoryContextMenuAboutToShow )
+        self.dirContextInfoAct = parentMenu.addAction( "&Info", self.dirInfo )
+        self.dirContextUpdateAct = parentMenu.addAction( "&Update", self.dirUpdate )
+        self.dirContextAddAct = parentMenu.addAction( "A&dd to repository", self.dirAddToRepository )
+        self.dirContextAddRecursiveAct = parentMenu.addAction( "Add to repository recursively", self.dirAddToRepositoryRecursively )
+        self.dirContextCommitAct = parentMenu.addAction( "&Commit...", self.dirCommit )
+        self.dirContextStatusAct = parentMenu.addAction( "&Status", self.dirStatus )
         return
 
-    plugin.dirContextInfoAct.setEnabled( True )
-    plugin.dirContextUpdateAct.setEnabled( True )
-    plugin.dirContextAddAct.setEnabled( False )
-    plugin.dirContextAddRecursiveAct.setEnabled( True )
-    plugin.dirContextCommitAct.setEnabled( True )
-    return
-
-def bufferContextMenuAboutToshow( plugin ):
-    " Called when the plugin buffer context menu is about to show "
-    path = plugin.ide.currentEditorWidget.getFileName()
-    if not os.path.isabs( path ):
-        plugin.bufContextInfoAct.setEnabled( False )
-        plugin.bufContextUpdateAct.setEnabled( False )
-        plugin.bufContextAnnotateAct.setEnabled( False )
-        plugin.bufContextAddAct.setEnabled( False )
-        plugin.bufContextCommitAct.setEnabled( False )
+    def populateBufferContextMenu( self, parentMenu ):
+        " Called to build a buffer context menu "
+        self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
+                      self.onBufferContextMenuAboutToshow )
+        self.bufContextInfoAct = parentMenu.addAction( "&Info", self.bufferInfo )
+        self.bufContextUpdateAct = parentMenu.addAction( "&Update", self.bufferUpdate )
+        self.bufContextAnnotateAct = parentMenu.addAction( "&Annotate", self.bufferAnnotate )
+        self.bufContextAddAct = parentMenu.addAction( "A&dd to repository", self.bufferAddToRepository )
+        self.bufContextCommitAct = parentMenu.addAction( "&Commit...", self.bufferCommit )
+        self.bufContextStatusAct = parentMenu.addAction( "&Status", self.bufferStatus )
         return
 
-    pathStatus = plugin.getLocalStatus( path )
-    if pathStatus == IND_ERROR:
-        plugin.bufContextInfoAct.setEnabled( False )
-        plugin.bufContextUpdateAct.setEnabled( False )
-        plugin.bufContextAnnotateAct.setEnabled( False )
-        plugin.bufContextAddAct.setEnabled( False )
-        plugin.bufContextCommitAct.setEnabled( False )
+    def onMainMenuAboutToShow( self ):
+        " Called when a main menu is about to show "
         return
 
-    if pathStatus == plugin.NOT_UNDER_VCS:
-        plugin.bufContextInfoAct.setEnabled( False )
-        plugin.bufContextUpdateAct.setEnabled( False )
-        plugin.bufContextAnnotateAct.setEnabled( False )
-        plugin.bufContextCommitAct.setEnabled( False )
+    def onFileContextMenuAboutToShow( self ):
+        " Called when the plugin file context menu is about to show "
+        path = str( self.fileParentMenu.menuAction().data().toString() )
+        pathStatus = self.getLocalStatus( path )
+        if pathStatus == IND_ERROR:
+            self.fileContextInfoAct.setEnabled( False )
+            self.fileContextUpdateAct.setEnabled( False )
+            self.fileContextAnnotateAct.setEnabled( False )
+            self.fileContextAddAct.setEnabled( False )
+            self.fileContextCommitAct.setEnabled( False )
+            return
 
-        upperDirStatus = plugin.getLocalStatus( os.path.dirname( path ) )
-        if upperDirStatus == plugin.NOT_UNDER_VCS:
-            plugin.bufContextAddAct.setEnabled( False )
-        else:
-            plugin.bufContextAddAct.setEnabled( upperDirStatus != IND_ERROR )
+        if pathStatus == self.NOT_UNDER_VCS:
+            self.fileContextInfoAct.setEnabled( False )
+            self.fileContextUpdateAct.setEnabled( False )
+            self.fileContextAnnotateAct.setEnabled( False )
+            self.fileContextCommitAct.setEnabled( False )
+
+            upperDirStatus = self.getLocalStatus( os.path.dirname( path ) )
+            if upperDirStatus == self.NOT_UNDER_VCS:
+                self.fileContextAddAct.setEnabled( False )
+            else:
+                self.fileContextAddAct.setEnabled( upperDirStatus != IND_ERROR )
+            return
+
+        self.fileContextInfoAct.setEnabled( True )
+        self.fileContextUpdateAct.setEnabled( True )
+        self.fileContextAnnotateAct.setEnabled( True )
+        self.fileContextAddAct.setEnabled( False )
+        self.fileContextCommitAct.setEnabled( pathStatus in [
+                        IND_ADDED, IND_DELETED, IND_MERGED, IND_MODIFIED_LR,
+                        IND_MODIFIED_L, IND_REPLACED, IND_CONFLICTED ] )
         return
 
-    plugin.bufContextInfoAct.setEnabled( True )
-    plugin.bufContextUpdateAct.setEnabled( True )
-    plugin.bufContextAddAct.setEnabled( False )
+    def onDirectoryContextMenuAboutToShow( self ):
+        " Called when the plugin directory context manu is about to show "
+        path = str( self.dirParentMenu.menuAction().data().toString() )
+        pathStatus = self.getLocalStatus( path )
+        if pathStatus == IND_ERROR:
+            self.dirContextInfoAct.setEnabled( False )
+            self.dirContextUpdateAct.setEnabled( False )
+            self.dirContextAddAct.setEnabled( False )
+            self.dirContextAddRecursiveAct.setEnabled( False )
+            self.dirContextCommitAct.setEnabled( False )
+            return
 
-    widgetType = plugin.ide.currentEditorWidget.getType()
-    if widgetType in [ MainWindowTabWidgetBase.PlainTextEditor,
-                       MainWindowTabWidgetBase.PythonGraphicsEditor ]:
-        plugin.bufContextAnnotateAct.setEnabled( True )
-    else:
-        plugin.bufContextAnnotateAct.setEnabled( False )
+        if pathStatus == self.NOT_UNDER_VCS:
+            self.dirContextInfoAct.setEnabled( False )
+            self.dirContextUpdateAct.setEnabled( False )
+            self.dirContextCommitAct.setEnabled( False )
 
-    # Set the Commit... menu item status
-    if pathStatus not in [ IND_ADDED, IND_DELETED, IND_MERGED, IND_MODIFIED_LR,
-                           IND_MODIFIED_L, IND_REPLACED, IND_CONFLICTED ]:
-        plugin.bufContextCommitAct.setEnabled( False )
-    else:
+            if path.endswith( os.path.sep ):
+                upperDirStatus = self.getLocalStatus( os.path.dirname( path[ : -1 ] ) )
+            else:
+                upperDirStatus = self.getLocalStatus( os.path.dirname( path ) )
+            if upperDirStatus == self.NOT_UNDER_VCS:
+                self.dirContextAddAct.setEnabled( False )
+                self.dirContextAddRecursiveAct.setEnabled( False )
+            else:
+                self.dirContextAddAct.setEnabled( upperDirStatus != IND_ERROR )
+                self.dirContextAddRecursiveAct.setEnabled( upperDirStatus != IND_ERROR )
+            return
+
+        self.dirContextInfoAct.setEnabled( True )
+        self.dirContextUpdateAct.setEnabled( True )
+        self.dirContextAddAct.setEnabled( False )
+        self.dirContextAddRecursiveAct.setEnabled( True )
+        self.dirContextCommitAct.setEnabled( True )
+        return
+
+    def onBufferContextMenuAboutToshow( self ):
+        " Called when the plugin buffer context menu is about to show "
+        path = self.ide.currentEditorWidget.getFileName()
+        if not os.path.isabs( path ):
+            self.bufContextInfoAct.setEnabled( False )
+            self.bufContextUpdateAct.setEnabled( False )
+            self.bufContextAnnotateAct.setEnabled( False )
+            self.bufContextAddAct.setEnabled( False )
+            self.bufContextCommitAct.setEnabled( False )
+            return
+
+        pathStatus = self.getLocalStatus( path )
+        if pathStatus == IND_ERROR:
+            self.bufContextInfoAct.setEnabled( False )
+            self.bufContextUpdateAct.setEnabled( False )
+            self.bufContextAnnotateAct.setEnabled( False )
+            self.bufContextAddAct.setEnabled( False )
+            self.bufContextCommitAct.setEnabled( False )
+            return
+
+        if pathStatus == self.NOT_UNDER_VCS:
+            self.bufContextInfoAct.setEnabled( False )
+            self.bufContextUpdateAct.setEnabled( False )
+            self.bufContextAnnotateAct.setEnabled( False )
+            self.bufContextCommitAct.setEnabled( False )
+
+            upperDirStatus = self.getLocalStatus( os.path.dirname( path ) )
+            if upperDirStatus == self.NOT_UNDER_VCS:
+                self.bufContextAddAct.setEnabled( False )
+            else:
+                self.bufContextAddAct.setEnabled( upperDirStatus != IND_ERROR )
+            return
+
+        self.bufContextInfoAct.setEnabled( True )
+        self.bufContextUpdateAct.setEnabled( True )
+        self.bufContextAddAct.setEnabled( False )
+
+        widgetType = self.ide.currentEditorWidget.getType()
         if widgetType in [ MainWindowTabWidgetBase.PlainTextEditor,
                            MainWindowTabWidgetBase.PythonGraphicsEditor ]:
-            plugin.bufContextCommitAct.setEnabled(
-                            not plugin.ide.currentEditorWidget.isModified() )
+            self.bufContextAnnotateAct.setEnabled( True )
         else:
-            plugin.bufContextCommitAct.setEnabled( False )
-    return
+            self.bufContextAnnotateAct.setEnabled( False )
+
+        # Set the Commit... menu item status
+        if pathStatus not in [ IND_ADDED, IND_DELETED, IND_MERGED, IND_MODIFIED_LR,
+                               IND_MODIFIED_L, IND_REPLACED, IND_CONFLICTED ]:
+            self.bufContextCommitAct.setEnabled( False )
+        else:
+            if widgetType in [ MainWindowTabWidgetBase.PlainTextEditor,
+                               MainWindowTabWidgetBase.PythonGraphicsEditor ]:
+                self.bufContextCommitAct.setEnabled(
+                                not self.ide.currentEditorWidget.isModified() )
+            else:
+                self.bufContextCommitAct.setEnabled( False )
+        return
