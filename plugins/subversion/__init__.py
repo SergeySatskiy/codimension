@@ -40,7 +40,7 @@ from svnindicators import ( IND_ADDED, IND_ERROR, IND_DELETED, IND_IGNORED,
                             IND_MISSING, IND_OBSTRUCTED, IND_UNKNOWN,
                             IND_DESCRIPTION )
 from svninfo import SVNInfoMixin
-from svnupdate import doSVNUpdate
+from svnupdate import SVNUpdateMixin
 from svnannotate import doSVNAnnotate
 from svncommit import doSVNCommit
 from svnadd import doSVNAdd
@@ -48,12 +48,14 @@ from svnadd import doSVNAdd
 
 
 class SubversionPlugin( SVNMenuMixin, SVNInfoMixin,
+                        SVNUpdateMixin,
                         VersionControlSystemInterface ):
     """ Codimension subversion plugin """
 
     def __init__( self ):
         VersionControlSystemInterface.__init__( self )
         SVNInfoMixin.__init__( self )
+        SVNUpdateMixin.__init__( self )
         SVNMenuMixin.__init__( self )
 
         self.projectSettings = None
@@ -300,33 +302,6 @@ class SubversionPlugin( SVNMenuMixin, SVNInfoMixin,
             return IND_ERROR
         except:
             return IND_ERROR
-
-    def fileUpdate( self ):
-        " Called when update for a file is requested "
-        path = str( self.fileParentMenu.menuAction().data().toString() )
-        self.__svnUpdate( path, False )
-        return
-
-    def dirUpdate( self ):
-        " Called when update for a directory is requested "
-        path = str( self.dirParentMenu.menuAction().data().toString() )
-        self.__svnUpdate( path, True )
-        return
-
-    def bufferUpdate( self ):
-        " Called when update for a buffer is requested "
-        path = self.ide.currentEditorWidget.getFileName()
-        if not os.path.isabs( path ):
-            logging.info( "SVN update is not applicable for never saved buffer" )
-            return
-        self.__svnUpdate( path, False )
-        return
-
-    def __svnUpdate( self, path, recursively ):
-        " Does SVN update "
-        client = self.getSVNClient( self.getSettings() )
-        doSVNUpdate( client, path, recursively )
-        return
 
     def fileAnnotate( self ):
         " Called when annotate for a file is requested "
