@@ -22,8 +22,58 @@
 
 " Codimension SVN plugin INFO command implementation "
 
-import pysvn
-from svnstrconvert import nodeKindToString, scheduleToString, timestampToString
+import pysvn, os.path, logging
+from svnstrconvert import ( nodeKindToString, scheduleToString,
+                            timestampToString, statusToString )
+from svnindicators import IND_ERROR
+
+
+
+class SVNInfoMixin:
+
+    def __init__( self ):
+        return
+
+    def fileInfo( self ):
+        " Called when info requested for a file via context menu "
+        path = str( self.fileParentMenu.menuAction().data().toString() )
+        self.__svnInfo( path )
+        return
+
+    def dirInfo( self ):
+        " Called when info requested for a directory via context menu "
+        path = str( self.dirParentMenu.menuAction().data().toString() )
+        self.__svnInfo( path )
+        return
+
+    def bufferInfo( self ):
+        " Called when info requested for a buffer "
+        path = self.ide.currentEditorWidget.getFileName()
+        if not os.path.isabs( path ):
+            logging.info( "SVN info is not applicable for never saved buffer" )
+            return
+        self.__svnInfo( path )
+        return
+
+    def __svnInfo( self, path ):
+        " Implementation of the info command for a file "
+        status = self.getLocalStatus( path )
+        if status == IND_ERROR:
+            logging.error( "Error getting status of " + path )
+            return
+        if status == self.NOT_UNDER_VCS:
+            logging.info( "Status: " + statusToString( status ) )
+            return
+
+        client = self.getSVNClient( self.getSettings() )
+        info = getSVNInfo( client, path )
+        message = "\n    Status: " + statusToString( status )
+        for item in info:
+            message = message + "\n    " + item[ 0 ] + ": " + item[ 1 ]
+        logging.info( message )
+        client = None
+        return
+
 
 
 def getSVNInfo( client, path, repRevision = None, pegRevision = None ):

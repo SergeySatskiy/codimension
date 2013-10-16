@@ -39,20 +39,20 @@ from svnindicators import ( IND_ADDED, IND_ERROR, IND_DELETED, IND_IGNORED,
                             IND_CONFLICTED, IND_EXTERNAL, IND_INCOMPLETE,
                             IND_MISSING, IND_OBSTRUCTED, IND_UNKNOWN,
                             IND_DESCRIPTION )
-from svninfo import getSVNInfo
+from svninfo import SVNInfoMixin
 from svnupdate import doSVNUpdate
 from svnannotate import doSVNAnnotate
-from svnstrconvert import statusToString
 from svncommit import doSVNCommit
 from svnadd import doSVNAdd
 
 
 
-class SubversionPlugin( MenuMixin, VersionControlSystemInterface ):
+class SubversionPlugin( MenuMixin, SVNInfoMixin, VersionControlSystemInterface ):
     """ Codimension subversion plugin """
 
     def __init__( self ):
         VersionControlSystemInterface.__init__( self )
+        SVNInfoMixin.__init__( self )
         MenuMixin.__init__( self )
 
         self.projectSettings = None
@@ -299,46 +299,6 @@ class SubversionPlugin( MenuMixin, VersionControlSystemInterface ):
             return IND_ERROR
         except:
             return IND_ERROR
-
-    def fileInfo( self ):
-        " Called when info requested for a file via context menu "
-        path = str( self.fileParentMenu.menuAction().data().toString() )
-        self.__svnInfo( path )
-        return
-
-    def dirInfo( self ):
-        " Called when info requested for a directory via context menu "
-        path = str( self.dirParentMenu.menuAction().data().toString() )
-        self.__svnInfo( path )
-        return
-
-    def bufferInfo( self ):
-        " Called when info requested for a buffer "
-        path = self.ide.currentEditorWidget.getFileName()
-        if not os.path.isabs( path ):
-            logging.info( "SVN info is not applicable for never saved buffer" )
-            return
-        self.__svnInfo( path )
-        return
-
-    def __svnInfo( self, path ):
-        " Implementation of the info command for a file "
-        status = self.getLocalStatus( path )
-        if status == IND_ERROR:
-            logging.error( "Error getting status of " + path )
-            return
-        if status == self.NOT_UNDER_VCS:
-            logging.info( "Status: " + statusToString( status ) )
-            return
-
-        client = self.getSVNClient( self.getSettings() )
-        info = getSVNInfo( client, path )
-        message = "\n    Status: " + statusToString( status )
-        for item in info:
-            message = message + "\n    " + item[ 0 ] + ": " + item[ 1 ]
-        logging.info( message )
-        client = None
-        return
 
     def fileUpdate( self ):
         " Called when update for a file is requested "
