@@ -30,7 +30,7 @@ import pysvn
 import os.path
 import logging
 from plugins.categories.vcsiface import VersionControlSystemInterface
-from svnmenus import MenuMixin
+from svnmenus import SVNMenuMixin
 from svnconfigdlg import ( SVNPluginConfigDialog, saveSVNSettings, getSettings,
                            AUTH_PASSWD, STATUS_LOCAL_ONLY )
 from svnindicators import ( IND_ADDED, IND_ERROR, IND_DELETED, IND_IGNORED,
@@ -47,13 +47,14 @@ from svnadd import doSVNAdd
 
 
 
-class SubversionPlugin( MenuMixin, SVNInfoMixin, VersionControlSystemInterface ):
+class SubversionPlugin( SVNMenuMixin, SVNInfoMixin,
+                        VersionControlSystemInterface ):
     """ Codimension subversion plugin """
 
     def __init__( self ):
         VersionControlSystemInterface.__init__( self )
         SVNInfoMixin.__init__( self )
-        MenuMixin.__init__( self )
+        SVNMenuMixin.__init__( self )
 
         self.projectSettings = None
         self.ideWideSettings = None
