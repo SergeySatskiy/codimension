@@ -72,6 +72,7 @@ STATUS = { IND_ADDED       : "added",
            IND_MISSING     : "missing",
            IND_UNKNOWN     : "unknown",
            IND_ERROR       : "error getting status",
+           IND_OBSTRUCTED  : "obstructed by another item",
            VersionControlSystemInterface.NOT_UNDER_VCS: "not under SVN control" }
 
 def statusToString( status ):
