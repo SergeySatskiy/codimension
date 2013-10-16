@@ -41,14 +41,14 @@ from svnindicators import ( IND_ADDED, IND_ERROR, IND_DELETED, IND_IGNORED,
                             IND_DESCRIPTION )
 from svninfo import SVNInfoMixin
 from svnupdate import SVNUpdateMixin
-from svnannotate import doSVNAnnotate
+from svnannotate import SVNAnnotateMixin
 from svncommit import doSVNCommit
 from svnadd import doSVNAdd
 
 
 
 class SubversionPlugin( SVNMenuMixin, SVNInfoMixin,
-                        SVNUpdateMixin,
+                        SVNUpdateMixin, SVNAnnotateMixin,
                         VersionControlSystemInterface ):
     """ Codimension subversion plugin """
 
@@ -56,6 +56,7 @@ class SubversionPlugin( SVNMenuMixin, SVNInfoMixin,
         VersionControlSystemInterface.__init__( self )
         SVNInfoMixin.__init__( self )
         SVNUpdateMixin.__init__( self )
+        SVNAnnotateMixin.__init__( self )
         SVNMenuMixin.__init__( self )
 
         self.projectSettings = None
@@ -302,33 +303,6 @@ class SubversionPlugin( SVNMenuMixin, SVNInfoMixin,
             return IND_ERROR
         except:
             return IND_ERROR
-
-    def fileAnnotate( self ):
-        " Called when annotate for a file is requested "
-        path = str( self.fileParentMenu.menuAction().data().toString() )
-        self.__svnAnnotate( path )
-        return
-
-    def bufferAnnotate( self ):
-        " Called when annotate for a buffer is requested "
-        path = self.ide.currentEditorWidget.getFileName()
-        if not os.path.isabs( path ):
-            logging.info( "SVN annotate is not "
-                          "applicable for never saved buffer" )
-            return
-        self.__svnAnnotate( path )
-        return
-
-    def __svnAnnotate( self, path ):
-        " Does SVN annotate "
-        client = self.getSVNClient( self.getSettings() )
-        fullText, revisionPerLine, revisionsInfo = doSVNAnnotate( client, path )
-        if fullText is not None and revisionPerLine is not None and \
-            revisionsInfo is not None:
-            self.ide.editorsManager.showAnnotated( path, fullText,
-                                                   revisionPerLine,
-                                                   revisionsInfo )
-        return
 
     def fileAddToRepository( self ):
         " Called when add for a file is requested "

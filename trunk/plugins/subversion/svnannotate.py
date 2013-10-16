@@ -24,12 +24,46 @@
 
 import pysvn
 import logging
+import os.path
 from copy import deepcopy
 from PyQt4.QtCore import Qt, SIGNAL, QTimer
 from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
                           QApplication, QCursor )
 
 from svnstrconvert import notifyActionToString
+
+
+class SVNAnnotateMixin:
+
+    def __init__( self ):
+        return
+
+    def fileAnnotate( self ):
+        " Called when annotate for a file is requested "
+        path = str( self.fileParentMenu.menuAction().data().toString() )
+        self.__svnAnnotate( path )
+        return
+
+    def bufferAnnotate( self ):
+        " Called when annotate for a buffer is requested "
+        path = self.ide.currentEditorWidget.getFileName()
+        if not os.path.isabs( path ):
+            logging.info( "SVN annotate is not "
+                          "applicable for never saved buffer" )
+            return
+        self.__svnAnnotate( path )
+        return
+
+    def __svnAnnotate( self, path ):
+        " Does SVN annotate "
+        client = self.getSVNClient( self.getSettings() )
+        fullText, revisionPerLine, revisionsInfo = doSVNAnnotate( client, path )
+        if fullText is not None and revisionPerLine is not None and \
+            revisionsInfo is not None:
+            self.ide.editorsManager.showAnnotated( path, fullText,
+                                                   revisionPerLine,
+                                                   revisionsInfo )
+        return
 
 
 
