@@ -31,7 +31,7 @@ from svnindicators import ( IND_ERROR, IND_ADDED, IND_DELETED, IND_MERGED,
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
-class MenuMixin:
+class SVNMenuMixin:
     " Adds menu functionality to the plugin class "
 
     def __init__( self ):
