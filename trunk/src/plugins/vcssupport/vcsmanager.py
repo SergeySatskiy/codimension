@@ -173,6 +173,8 @@ class VCSManager( QObject ):
         self.activePlugins[ newPluginIndex ] = VCSPluginDescriptor( self,
                                                                     newPluginIndex,
                                                                     plugin )
+        self.connect( plugin.getObject(), SIGNAL( "PathChanged" ),
+                      self.__onPathChanged )
 
         # Need to send requests for the opened TAB files
         mainWindow = GlobalData().mainWindow
@@ -187,6 +189,13 @@ class VCSManager( QObject ):
 
         if self.activePluginCount() == 1:
             self.__startDirRequestTimer()
+        return
+
+    def __onPathChanged( self, path ):
+        " The way plugins signal that a path has been changed "
+        # What is essentially required is to update the status of the path.
+        # setLocallyModified(...) will do - it sends urgent request
+        self.setLocallyModified( path )
         return
 
     def __populateProjectDirectories( self ):
@@ -290,6 +299,8 @@ class VCSManager( QObject ):
         self.__dirRequestLoopTimer.stop()
 
         for identifier, descriptor in self.activePlugins.iteritems():
+            self.disconnect( descriptor.plugin.getObject(),
+                             SIGNAL( "PathChanged" ), self.__onPathChanged )
             descriptor.stopThread()
 
         self.dirCache.clear()
@@ -302,6 +313,8 @@ class VCSManager( QObject ):
         pluginID = None
         for identifier, descriptor in self.activePlugins.iteritems():
             if descriptor.getPluginName() == plugin.getName():
+                self.disconnect( descriptor.plugin.getObject(),
+                                 SIGNAL( "PathChanged" ), self.__onPathChanged )
                 pluginID = identifier
                 descriptor.stopThread()
                 self.fileCache.dismissPlugin( pluginID,
@@ -356,7 +369,7 @@ class VCSManager( QObject ):
         " Sets the item status as locally modified "
         for _, descriptor in self.activePlugins.iteritems():
             descriptor.requestStatus( path,
-                    VersionControlSystemInterface.REQUEST_ITEM_ONLY )
+                    VersionControlSystemInterface.REQUEST_ITEM_ONLY, True )
         return
 
     def sendDirStatusNotification( self, path, status ):
