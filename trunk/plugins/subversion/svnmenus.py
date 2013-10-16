@@ -25,7 +25,9 @@
 
 from PyQt4.QtCore import SIGNAL
 import os.path
-from svnindicators import IND_ERROR
+from svnindicators import ( IND_ERROR, IND_ADDED, IND_DELETED, IND_MERGED,
+                            IND_MODIFIED_LR, IND_MODIFIED_L,
+                            IND_REPLACED, IND_CONFLICTED )
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
@@ -46,6 +48,7 @@ def populateFileContextMenu( plugin, parentMenu ):
     plugin.fileContextUpdateAct = parentMenu.addAction( "&Update", plugin.fileUpdate )
     plugin.fileContextAnnotateAct = parentMenu.addAction( "&Annotate", plugin.fileAnnotate )
     plugin.fileContextAddAct = parentMenu.addAction( "A&dd to repository", plugin.fileAddToRepository )
+    plugin.fileContextCommitAct = parentMenu.addAction( "&Commit...", plugin.fileCommit )
     return
 
 def populateDirectoryContextMenu( plugin, parentMenu ):
@@ -57,6 +60,7 @@ def populateDirectoryContextMenu( plugin, parentMenu ):
     plugin.dirContextUpdateAct = parentMenu.addAction( "&Update", plugin.dirUpdate )
     plugin.dirContextAddAct = parentMenu.addAction( "A&dd to repository", plugin.dirAddToRepository )
     plugin.dirContextAddRecursiveAct = parentMenu.addAction( "Add to repository recursively", plugin.dirAddToRepositoryRecursively )
+    plugin.dirContextCommitAct = parentMenu.addAction( "&Commit...", plugin.dirCommit )
     return
 
 def populateBufferContextMenu( plugin, parentMenu ):
@@ -67,6 +71,7 @@ def populateBufferContextMenu( plugin, parentMenu ):
     plugin.bufContextUpdateAct = parentMenu.addAction( "&Update", plugin.bufferUpdate )
     plugin.bufContextAnnotateAct = parentMenu.addAction( "&Annotate", plugin.bufferAnnotate )
     plugin.bufContextAddAct = parentMenu.addAction( "A&dd to repository", plugin.bufferAddToRepository )
+    plugin.bufContextCommitAct = parentMenu.addAction( "&Commit...", plugin.bufferCommit )
     return
 
 
@@ -84,12 +89,14 @@ def fileContextMenuAboutToShow( plugin ):
         plugin.fileContextUpdateAct.setEnabled( False )
         plugin.fileContextAnnotateAct.setEnabled( False )
         plugin.fileContextAddAct.setEnabled( False )
+        plugin.fileContextCommitAct.setEnabled( False )
         return
 
     if pathStatus == plugin.NOT_UNDER_VCS:
         plugin.fileContextInfoAct.setEnabled( False )
         plugin.fileContextUpdateAct.setEnabled( False )
         plugin.fileContextAnnotateAct.setEnabled( False )
+        plugin.fileContextCommitAct.setEnabled( False )
 
         upperDirStatus = plugin.getLocalStatus( os.path.dirname( path ) )
         if upperDirStatus == plugin.NOT_UNDER_VCS:
@@ -102,6 +109,9 @@ def fileContextMenuAboutToShow( plugin ):
     plugin.fileContextUpdateAct.setEnabled( True )
     plugin.fileContextAnnotateAct.setEnabled( True )
     plugin.fileContextAddAct.setEnabled( False )
+    plugin.fileContextCommitAct.setEnabled( pathStatus in [
+                    IND_ADDED, IND_DELETED, IND_MERGED, IND_MODIFIED_LR,
+                    IND_MODIFIED_L, IND_REPLACED, IND_CONFLICTED ] )
     return
 
 def directoryContextMenuAboutToShow( plugin ):
@@ -113,11 +123,13 @@ def directoryContextMenuAboutToShow( plugin ):
         plugin.dirContextUpdateAct.setEnabled( False )
         plugin.dirContextAddAct.setEnabled( False )
         plugin.dirContextAddRecursiveAct.setEnabled( False )
+        plugin.dirContextCommitAct.setEnabled( False )
         return
 
     if pathStatus == plugin.NOT_UNDER_VCS:
         plugin.dirContextInfoAct.setEnabled( False )
         plugin.dirContextUpdateAct.setEnabled( False )
+        plugin.dirContextCommitAct.setEnabled( False )
 
         if path.endswith( os.path.sep ):
             upperDirStatus = plugin.getLocalStatus( os.path.dirname( path[ : -1 ] ) )
@@ -134,7 +146,8 @@ def directoryContextMenuAboutToShow( plugin ):
     plugin.dirContextInfoAct.setEnabled( True )
     plugin.dirContextUpdateAct.setEnabled( True )
     plugin.dirContextAddAct.setEnabled( False )
-    plugin.dirContextAddRecursiveAct.setEnabled( False )
+    plugin.dirContextAddRecursiveAct.setEnabled( True )
+    plugin.dirContextCommitAct.setEnabled( True )
     return
 
 def bufferContextMenuAboutToshow( plugin ):
@@ -145,6 +158,7 @@ def bufferContextMenuAboutToshow( plugin ):
         plugin.bufContextUpdateAct.setEnabled( False )
         plugin.bufContextAnnotateAct.setEnabled( False )
         plugin.bufContextAddAct.setEnabled( False )
+        plugin.bufContextCommitAct.setEnabled( False )
         return
 
     pathStatus = plugin.getLocalStatus( path )
@@ -153,12 +167,14 @@ def bufferContextMenuAboutToshow( plugin ):
         plugin.bufContextUpdateAct.setEnabled( False )
         plugin.bufContextAnnotateAct.setEnabled( False )
         plugin.bufContextAddAct.setEnabled( False )
+        plugin.bufContextCommitAct.setEnabled( False )
         return
 
     if pathStatus == plugin.NOT_UNDER_VCS:
         plugin.bufContextInfoAct.setEnabled( False )
         plugin.bufContextUpdateAct.setEnabled( False )
         plugin.bufContextAnnotateAct.setEnabled( False )
+        plugin.bufContextCommitAct.setEnabled( False )
 
         upperDirStatus = plugin.getLocalStatus( os.path.dirname( path ) )
         if upperDirStatus == plugin.NOT_UNDER_VCS:
@@ -178,5 +194,15 @@ def bufferContextMenuAboutToshow( plugin ):
     else:
         plugin.bufContextAnnotateAct.setEnabled( False )
 
+    # Set the Commit... menu item status
+    if pathStatus not in [ IND_ADDED, IND_DELETED, IND_MERGED, IND_MODIFIED_LR,
+                           IND_MODIFIED_L, IND_REPLACED, IND_CONFLICTED ]:
+        plugin.bufContextCommitAct.setEnabled( False )
+    else:
+        if widgetType in [ MainWindowTabWidgetBase.PlainTextEditor,
+                           MainWindowTabWidgetBase.PythonGraphicsEditor ]:
+            plugin.bufContextCommitAct.setEnabled(
+                            not plugin.ide.currentEditorWidget.isModified() )
+        else:
+            plugin.bufContextCommitAct.setEnabled( False )
     return
-
