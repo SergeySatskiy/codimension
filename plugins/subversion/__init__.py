@@ -46,6 +46,8 @@ from svninfo import getSVNInfo
 from svnupdate import doSVNUpdate
 from svnannotate import doSVNAnnotate
 from svnstrconvert import statusToString
+from svncommit import doSVNCommit
+from svnadd import doSVNAdd
 
 
 
@@ -148,6 +150,11 @@ class SubversionPlugin( VersionControlSystemInterface ):
             self.__settingsLock.unlock()
         return
 
+    def notifyPathChanged( self, path ):
+        " Sends notifications to the IDE that a path was changed "
+        self.emit( SIGNAL( 'PathChanged' ), path )
+        return
+
     def __onProjectChanged( self, what ):
         " Triggers when a project has changed "
         if what != self.ide.project.CompleteProject:
@@ -184,11 +191,15 @@ class SubversionPlugin( VersionControlSystemInterface ):
         " Creates the SVN client object "
         client = pysvn.Client()
         client.exception_style = 1   # In order to get error codes
-
-        if settings.authKind == AUTH_PASSWD:
-            client.set_default_username( settings.userName )
-            client.set_default_password( settings.password )
+        client.callback_get_login = self._getLoginCallback
         return client
+
+    def _getLoginCallback( self, realm, username, may_save ):
+        " SVN client calls it when authorization is requested "
+        settings = self.getSettings()
+        if settings.authKind == AUTH_PASSWD:
+            return ( True, settings.userName, settings.password, False )
+        return ( False, "", "", False )
 
     def __convertSVNStatus( self, status ):
         " Converts the status between the SVN and the plugin supported values "
@@ -285,15 +296,21 @@ class SubversionPlugin( VersionControlSystemInterface ):
             client = None
             return ( ("", IND_ERROR, "Unknown error"), )
 
-    def getLocalStatus( self, path ):
+    def getLocalStatus( self, path, pDepth = pysvn.depth.empty ):
         " Provides quick local SVN status for the item itself "
         client = self.getSVNClient( self.getSettings() )
         try:
-            statusList = client.status( path, update = False,
-                                        depth = pysvn.depth.empty )
-            if len( statusList ) != 1:
+            statusList = client.status( path, update = False, depth = pDepth )
+            statusCount = len( statusList )
+            if pDepth == pysvn.depth.empty and statusCount != 1:
                 return IND_ERROR
-            return self.__convertSVNStatus( statusList[ 0 ] )
+            if statusCount == 1:
+                return self.__convertSVNStatus( statusList[ 0 ] )
+            # It is a list of statuses
+            res = []
+            for status in statusList:
+                res.append( (status.path, self.__convertSVNStatus( status ) ) )
+            return res
         except pysvn.ClientError, exc:
             errorCode = exc.args[ 1 ][ 0 ][ 1 ]
             if errorCode == pysvn.svn_err.wc_not_working_copy:
@@ -426,18 +443,32 @@ class SubversionPlugin( VersionControlSystemInterface ):
     def __svnAdd( self, path, recursively ):
         " Adds the given path to the repository "
         client = self.getSVNClient( self.getSettings() )
-        try:
-            message = "Adding " + path
-            if recursively:
-                message += " recursively"
-            message += " into SVN repository..."
-            logging.info( message )
-            client.add( path, recurse = recursively )
-            logging.info( "Added" )
-        except Exception, excpt:
-            logging.error( str( excpt ) )
+        doSVNAdd( self, client, path, recursively )
         return
 
+    def fileCommit( self ):
+        " Called when a file is to be committed "
+        path = str( self.fileParentMenu.menuAction().data().toString() )
+        self.__svnCommit( path )
+        return
+
+    def dirCommit( self ):
+        " Called when a directory is to be committed "
+        path = str( self.dirParentMenu.menuAction().data().toString() )
+        self.__svnCommit( path )
+        return
+
+    def bufferCommit( self ):
+        " Called when a buffer is to be committed "
+        path = self.ide.currentEditorWidget.getFileName()
+        self.__svnCommit( path )
+        return
+
+    def __svnCommit( self, path ):
+        " Called to perform commit "
+        client = self.getSVNClient( self.getSettings() )
+        doSVNCommit( self, client, path )
+        return
 
     # Menu dispatching
 
