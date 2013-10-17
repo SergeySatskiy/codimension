@@ -38,7 +38,7 @@ class SVNPluginCommitDialog( QDialog ):
         QDialog.__init__( self, parent )
 
         self.__createLayout( pathsToCommit, pathsToIgnore )
-        self.setWindowTitle( "SVN plugin commit" )
+        self.setWindowTitle( "SVN commit" )
 
         # Fill the lists
         for item in pathsToCommit:
