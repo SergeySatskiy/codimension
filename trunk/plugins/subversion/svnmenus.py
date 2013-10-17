@@ -54,7 +54,6 @@ class SVNMenuMixin:
         self.fileContextAnnotateAct = parentMenu.addAction( "&Annotate", self.fileAnnotate )
         self.fileContextAddAct = parentMenu.addAction( "A&dd to repository", self.fileAddToRepository )
         self.fileContextCommitAct = parentMenu.addAction( "&Commit...", self.fileCommit )
-        self.fileContextStatusAct = parentMenu.addAction( "&Status", self.fileStatus )
         return
 
     def populateDirectoryContextMenu( self, parentMenu ):
@@ -67,7 +66,8 @@ class SVNMenuMixin:
         self.dirContextAddAct = parentMenu.addAction( "A&dd to repository", self.dirAddToRepository )
         self.dirContextAddRecursiveAct = parentMenu.addAction( "Add to repository recursively", self.dirAddToRepositoryRecursively )
         self.dirContextCommitAct = parentMenu.addAction( "&Commit...", self.dirCommit )
-        self.dirContextStatusAct = parentMenu.addAction( "&Status", self.dirStatus )
+        self.dirContextLocalStatusAct = parentMenu.addAction( "&Status (local only)", self.dirLocalStatus )
+        self.dirContextReposStatusAct = parentMenu.addAction( "S&tatus (repository)", self.dirRepositoryStatus )
         return
 
     def populateBufferContextMenu( self, parentMenu ):
@@ -79,7 +79,6 @@ class SVNMenuMixin:
         self.bufContextAnnotateAct = parentMenu.addAction( "&Annotate", self.bufferAnnotate )
         self.bufContextAddAct = parentMenu.addAction( "A&dd to repository", self.bufferAddToRepository )
         self.bufContextCommitAct = parentMenu.addAction( "&Commit...", self.bufferCommit )
-        self.bufContextStatusAct = parentMenu.addAction( "&Status", self.bufferStatus )
         return
 
     def onMainMenuAboutToShow( self ):
