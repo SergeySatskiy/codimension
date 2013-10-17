@@ -26,6 +26,43 @@ import logging
 import pysvn
 
 
+class SVNAddMixin:
+
+    def __init__( self ):
+        return
+
+    def fileAddToRepository( self ):
+        " Called when add for a file is requested "
+        path = str( self.fileParentMenu.menuAction().data().toString() )
+        self.__svnAdd( path, False )
+        return
+
+    def dirAddToRepository( self ):
+        " Called when add for a directory is requested "
+        path = str( self.dirParentMenu.menuAction().data().toString() )
+        self.__svnAdd( path, False )
+        return
+
+    def dirAddToRepositoryRecursively( self ):
+        " Called when add for a directory recursively is requested "
+        path = str( self.dirParentMenu.menuAction().data().toString() )
+        self.__svnAdd( path, True )
+        return
+
+    def bufferAddToRepository( self ):
+        " Called when add for a buffer is requested "
+        path = self.ide.currentEditorWidget.getFileName()
+        self.__svnAdd( path, False )
+        return
+
+    def __svnAdd( self, path, recursively ):
+        " Adds the given path to the repository "
+        client = self.getSVNClient( self.getSettings() )
+        doSVNAdd( self, client, path, recursively )
+        return
+
+
+
 def doSVNAdd( plugin, client, path, recursively ):
     " Does SVN add "
     pathList = []
