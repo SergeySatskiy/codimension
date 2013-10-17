@@ -28,7 +28,6 @@ from PyQt4.QtGui import QDialog
 from copy import deepcopy
 import pysvn
 import os.path
-import logging
 from plugins.categories.vcsiface import VersionControlSystemInterface
 from svnmenus import SVNMenuMixin
 from svnconfigdlg import ( SVNPluginConfigDialog, saveSVNSettings, getSettings,
@@ -42,12 +41,12 @@ from svnindicators import ( IND_ADDED, IND_ERROR, IND_DELETED, IND_IGNORED,
 from svninfo import SVNInfoMixin
 from svnupdate import SVNUpdateMixin
 from svnannotate import SVNAnnotateMixin
-from svncommit import doSVNCommit
-from svnadd import doSVNAdd
+from svncommit import SVNCommitMixin
+from svnadd import SVNAddMixin
 
 
 
-class SubversionPlugin( SVNMenuMixin, SVNInfoMixin,
+class SubversionPlugin( SVNMenuMixin, SVNInfoMixin, SVNAddMixin, SVNCommitMixin,
                         SVNUpdateMixin, SVNAnnotateMixin,
                         VersionControlSystemInterface ):
     """ Codimension subversion plugin """
@@ -55,6 +54,8 @@ class SubversionPlugin( SVNMenuMixin, SVNInfoMixin,
     def __init__( self ):
         VersionControlSystemInterface.__init__( self )
         SVNInfoMixin.__init__( self )
+        SVNAddMixin.__init__( self )
+        SVNCommitMixin.__init__( self )
         SVNUpdateMixin.__init__( self )
         SVNAnnotateMixin.__init__( self )
         SVNMenuMixin.__init__( self )
@@ -303,60 +304,6 @@ class SubversionPlugin( SVNMenuMixin, SVNInfoMixin,
             return IND_ERROR
         except:
             return IND_ERROR
-
-    def fileAddToRepository( self ):
-        " Called when add for a file is requested "
-        path = str( self.fileParentMenu.menuAction().data().toString() )
-        self.__svnAdd( path, False )
-        return
-
-    def dirAddToRepository( self ):
-        " Called when add for a directory is requested "
-        path = str( self.dirParentMenu.menuAction().data().toString() )
-        self.__svnAdd( path, False )
-        return
-
-    def dirAddToRepositoryRecursively( self ):
-        " Called when add for a directory recursively is requested "
-        path = str( self.dirParentMenu.menuAction().data().toString() )
-        self.__svnAdd( path, True )
-        return
-
-    def bufferAddToRepository( self ):
-        " Called when add for a buffer is requested "
-        path = self.ide.currentEditorWidget.getFileName()
-        self.__svnAdd( path, False )
-        return
-
-    def __svnAdd( self, path, recursively ):
-        " Adds the given path to the repository "
-        client = self.getSVNClient( self.getSettings() )
-        doSVNAdd( self, client, path, recursively )
-        return
-
-    def fileCommit( self ):
-        " Called when a file is to be committed "
-        path = str( self.fileParentMenu.menuAction().data().toString() )
-        self.__svnCommit( path )
-        return
-
-    def dirCommit( self ):
-        " Called when a directory is to be committed "
-        path = str( self.dirParentMenu.menuAction().data().toString() )
-        self.__svnCommit( path )
-        return
-
-    def bufferCommit( self ):
-        " Called when a buffer is to be committed "
-        path = self.ide.currentEditorWidget.getFileName()
-        self.__svnCommit( path )
-        return
-
-    def __svnCommit( self, path ):
-        " Called to perform commit "
-        client = self.getSVNClient( self.getSettings() )
-        doSVNCommit( self, client, path )
-        return
 
     def fileStatus( self ):
         " Called when status is requested for a file "

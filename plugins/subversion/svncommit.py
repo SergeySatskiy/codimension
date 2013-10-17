@@ -38,6 +38,38 @@ COMMIT_ALLOW_STATUSES = [ IND_ADDED, IND_DELETED, IND_MERGED, IND_MODIFIED_LR,
 IGNORE_STATUSES = [ IND_IGNORED ]
 
 
+class SVNCommitMixin:
+
+    def __init__( self ):
+        return
+
+    def fileCommit( self ):
+        " Called when a file is to be committed "
+        path = str( self.fileParentMenu.menuAction().data().toString() )
+        self.__svnCommit( path )
+        return
+
+    def dirCommit( self ):
+        " Called when a directory is to be committed "
+        path = str( self.dirParentMenu.menuAction().data().toString() )
+        self.__svnCommit( path )
+        return
+
+    def bufferCommit( self ):
+        " Called when a buffer is to be committed "
+        path = self.ide.currentEditorWidget.getFileName()
+        self.__svnCommit( path )
+        return
+
+    def __svnCommit( self, path ):
+        " Called to perform commit "
+        client = self.getSVNClient( self.getSettings() )
+        doSVNCommit( self, client, path )
+        return
+
+
+
+
 def doSVNCommit( plugin, client, path ):
     " Performs SVN commit "
 
