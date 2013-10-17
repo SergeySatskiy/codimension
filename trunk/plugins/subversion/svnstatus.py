@@ -25,12 +25,14 @@
 import os.path
 import pysvn
 import logging
-from svnindicators import IND_ERROR
-from PyQt4.QtCore import Qt, QTimer, SIGNAL
+from svnindicators import IND_ERROR, IND_IGNORED, getIndicatorPixmap
+from PyQt4.QtCore import Qt, QTimer, SIGNAL, QStringList
 from PyQt4.QtGui import ( QDialog, QApplication, QVBoxLayout, QLabel,
-                          QDialogButtonBox, QCursor )
+                          QDialogButtonBox, QCursor, QTreeWidget,
+                          QTreeWidgetItem, QHeaderView, QIcon )
 from svnstrconvert import notifyActionToString
-
+from ui.itemdelegates import NoOutlineHeightDelegate
+from svnstrconvert import STATUS
 
 
 class SVNStatusMixin:
@@ -68,11 +70,9 @@ class SVNStatusMixin:
             logging.error( "Error getting SVN status for '" + path + "'" )
             return
 
-        print dlg.statusList
-
+        statusDialog = SVNPluginStatusDialog( dlg.statusList )
+        statusDialog.exec_()
         return
-
-
 
 
 class SVNStatusProgress( QDialog ):
@@ -205,4 +205,106 @@ class SVNStatusProgress( QDialog ):
             self.close()
         else:
             self.accept()
+        return
+
+
+
+class SVNPluginStatusDialog( QDialog ):
+    " SVN Plugin status dialog "
+
+    def __init__( self, statusList, parent = None ):
+        QDialog.__init__( self, parent )
+
+        # Split statuses
+        paths = []
+        ignoredPaths = []
+        for status in statusList:
+            if status[ 1 ] == IND_IGNORED:
+                ignoredPaths.append( status )
+            else:
+                paths.append( status )
+
+        self.__createLayout( paths, ignoredPaths )
+        self.setWindowTitle( "SVN status" )
+
+        # Fill the lists
+        for item in paths:
+            message = ""
+            if item[ 2 ]:
+                message = item[ 2 ]
+            newItem = QTreeWidgetItem(
+                        QStringList() << "" << item[ 0 ] << STATUS[ item[ 1 ] ] << message )
+            pixmap = getIndicatorPixmap( item[ 1 ] )
+            if pixmap:
+                newItem.setIcon( 0, QIcon( pixmap ) )
+            newItem.setToolTip( 1, item[ 0 ] )
+            newItem.setToolTip( 2, STATUS[ item[ 1 ] ] )
+            if message:
+                newItem.setToolTip( 3, message )
+            self.__pathView.addTopLevelItem( newItem )
+        self.__pathView.header().resizeSections( QHeaderView.ResizeToContents )
+        self.__pathView.header().resizeSection( 0, 20 )
+        self.__pathView.header().setResizeMode( QHeaderView.Fixed )
+
+        for item in ignoredPaths:
+            newItem = QTreeWidgetItem(
+                        QStringList() << item[ 0 ] << STATUS[ item[ 1 ] ] )
+            newItem.setToolTip( 0, item[ 0 ] )
+            newItem.setToolTip( 1, STATUS[ item[ 1 ] ] )
+            self.__ignoredPathView.addTopLevelItem( newItem )
+        self.__ignoredPathView.header().resizeSections( QHeaderView.ResizeToContents )
+
+        return
+
+    def __createLayout( self, paths, ignoredPaths ):
+        " Creates the dialog layout "
+
+        self.resize( 640, 420 )
+        self.setSizeGripEnabled( True )
+
+        vboxLayout = QVBoxLayout( self )
+
+        # Paths to commit part
+        vboxLayout.addWidget( QLabel( "Paths (total: " +
+                              str( len( paths ) ) + ")" ) )
+
+        self.__pathView = QTreeWidget()
+        self.__pathView.setAlternatingRowColors( True )
+        self.__pathView.setRootIsDecorated( False )
+        self.__pathView.setItemsExpandable( False )
+        self.__pathView.setSortingEnabled( True )
+        self.__pathView.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
+        self.__pathView.setUniformRowHeights( True )
+
+        self.__pathHeader = QTreeWidgetItem(
+                QStringList() << "" << "Path" << "Status" << "Message" )
+        self.__pathView.setHeaderItem( self.__pathHeader )
+        self.__pathView.header().setSortIndicator( 1, Qt.AscendingOrder )
+        vboxLayout.addWidget( self.__pathView )
+
+        # Paths to ignore part
+        vboxLayout.addWidget( QLabel( "Ignored paths (total: " +
+                              str( len( ignoredPaths ) ) + ")" ) )
+
+        self.__ignoredPathView = QTreeWidget()
+        self.__ignoredPathView.setAlternatingRowColors( True )
+        self.__ignoredPathView.setRootIsDecorated( False )
+        self.__ignoredPathView.setItemsExpandable( False )
+        self.__ignoredPathView.setSortingEnabled( True )
+        self.__ignoredPathView.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
+        self.__ignoredPathView.setUniformRowHeights( True )
+
+        pathToIgnoreHeader = QTreeWidgetItem(
+                QStringList() << "Path" << "Status" )
+        self.__ignoredPathView.setHeaderItem( pathToIgnoreHeader )
+        self.__ignoredPathView.header().setSortIndicator( 0, Qt.AscendingOrder )
+        vboxLayout.addWidget( self.__ignoredPathView )
+
+        # Buttons at the bottom
+        buttonBox = QDialogButtonBox( self )
+        buttonBox.setOrientation( Qt.Horizontal )
+        buttonBox.setStandardButtons( QDialogButtonBox.Ok )
+        buttonBox.button( QDialogButtonBox.Ok ).setDefault( True )
+        self.connect( buttonBox, SIGNAL( "accepted()" ), self.accept )
+        vboxLayout.addWidget( buttonBox )
         return

@@ -116,3 +116,11 @@ IND_DESCRIPTION = (
   None, QColor( 255, 160, 160, 255 ),
   "Generic error" ),
 )
+
+
+def getIndicatorPixmap( indicatorID ):
+    " Provides a pixmap or None "
+    for descriptor in IND_DESCRIPTION:
+        if descriptor[ 0 ] == indicatorID:
+            return descriptor[ 1 ]
+    return None
