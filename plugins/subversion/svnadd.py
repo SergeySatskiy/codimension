@@ -100,6 +100,9 @@ def doSVNAdd( plugin, client, path, recursively ):
         else:
             # It is a single file
             client.add( path )
+
+        if pathList:
+            logging.info( "Added" )
     except Exception, excpt:
         logging.error( str( excpt ) )
 

@@ -43,11 +43,12 @@ from svnupdate import SVNUpdateMixin
 from svnannotate import SVNAnnotateMixin
 from svncommit import SVNCommitMixin
 from svnadd import SVNAddMixin
+from svnstatus import SVNStatusMixin
 
 
 
 class SubversionPlugin( SVNMenuMixin, SVNInfoMixin, SVNAddMixin, SVNCommitMixin,
-                        SVNUpdateMixin, SVNAnnotateMixin,
+                        SVNUpdateMixin, SVNAnnotateMixin, SVNStatusMixin,
                         VersionControlSystemInterface ):
     """ Codimension subversion plugin """
 
@@ -58,6 +59,7 @@ class SubversionPlugin( SVNMenuMixin, SVNInfoMixin, SVNAddMixin, SVNCommitMixin,
         SVNCommitMixin.__init__( self )
         SVNUpdateMixin.__init__( self )
         SVNAnnotateMixin.__init__( self )
+        SVNStatusMixin.__init__( self )
         SVNMenuMixin.__init__( self )
 
         self.projectSettings = None
@@ -184,7 +186,7 @@ class SubversionPlugin( SVNMenuMixin, SVNInfoMixin, SVNAddMixin, SVNCommitMixin,
             return ( True, settings.userName, settings.password, False )
         return ( False, "", "", False )
 
-    def __convertSVNStatus( self, status ):
+    def convertSVNStatus( self, status ):
         " Converts the status between the SVN and the plugin supported values "
         if status.text_status == pysvn.wc_status_kind.added:
             return IND_ADDED
@@ -227,6 +229,7 @@ class SubversionPlugin( SVNMenuMixin, SVNInfoMixin, SVNAddMixin, SVNCommitMixin,
         client = self.getSVNClient( settings )
 
         clientUpdate = settings.statusKind != STATUS_LOCAL_ONLY
+
         if flag == self.REQUEST_RECURSIVE:
             clientDepth = pysvn.depth.infinity
         elif flag == self.REQUEST_ITEM_ONLY:
@@ -260,23 +263,18 @@ class SubversionPlugin( SVNMenuMixin, SVNInfoMixin, SVNAddMixin, SVNCommitMixin,
                         reportPath += os.path.sep
 
                 result.append( (reportPath.replace( path, "" ),
-                                self.__convertSVNStatus( status ),
+                                self.convertSVNStatus( status ),
                                 None) )
-            client = None
             return result
         except pysvn.ClientError, exc:
             errorCode = exc.args[ 1 ][ 0 ][ 1 ]
             if errorCode == pysvn.svn_err.wc_not_working_copy:
-                client = None
                 return ( ("", self.NOT_UNDER_VCS, None), )
             message = exc.args[ 0 ]
-            client = None
             return ( ("", IND_ERROR, message), )
         except Exception, exc:
-            client = None
             return ( ("", IND_ERROR, "Error: " + str( exc )), )
         except:
-            client = None
             return ( ("", IND_ERROR, "Unknown error"), )
 
     def getLocalStatus( self, path, pDepth = pysvn.depth.empty ):
@@ -288,11 +286,11 @@ class SubversionPlugin( SVNMenuMixin, SVNInfoMixin, SVNAddMixin, SVNCommitMixin,
             if pDepth == pysvn.depth.empty and statusCount != 1:
                 return IND_ERROR
             if statusCount == 1:
-                return self.__convertSVNStatus( statusList[ 0 ] )
+                return self.convertSVNStatus( statusList[ 0 ] )
             # It is a list of statuses
             res = []
             for status in statusList:
-                res.append( (status.path, self.__convertSVNStatus( status ) ) )
+                res.append( (status.path, self.convertSVNStatus( status ) ) )
             return res
         except pysvn.ClientError, exc:
             errorCode = exc.args[ 1 ][ 0 ][ 1 ]
@@ -304,28 +302,3 @@ class SubversionPlugin( SVNMenuMixin, SVNInfoMixin, SVNAddMixin, SVNCommitMixin,
             return IND_ERROR
         except:
             return IND_ERROR
-
-    def fileStatus( self ):
-        " Called when status is requested for a file "
-        path = str( self.fileParentMenu.menuAction().data().toString() )
-        self.__svnStatus( path )
-        return
-
-    def dirStatus( self ):
-        " Called when a status is requested for a directory "
-        path = str( self.dirParentMenu.menuAction().data().toString() )
-        self.__svnStatus( path )
-        return
-
-    def bufferStatus( self ):
-        " Called when a status is requested for the current buffer "
-        path = self.ide.currentEditorWidget.getFileName()
-        self.__svnStatus( path )
-        return
-
-    def __svnStatus( self, path ):
-        " Called to perform svn status "
-#        client = self.getSVNClient( self.getSettings() )
-#        doSVNStatus( client, path )
-        return
-
