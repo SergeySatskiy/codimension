@@ -54,6 +54,9 @@ class SVNMenuMixin:
         self.fileContextAnnotateAct = parentMenu.addAction( "&Annotate", self.fileAnnotate )
         self.fileContextAddAct = parentMenu.addAction( "A&dd to repository", self.fileAddToRepository )
         self.fileContextCommitAct = parentMenu.addAction( "&Commit...", self.fileCommit )
+        self.fileContextDeleteAct = parentMenu.addAction( "D&elete...", self.fileDelete )
+        self.fileContextRevertAct = parentMenu.addAction( "&Revert", self.fileRevert )
+        self.fileContextDiffAct = parentMenu.addAction( "&Diff", self.fileDiff )
         return
 
     def populateDirectoryContextMenu( self, parentMenu ):
@@ -68,6 +71,8 @@ class SVNMenuMixin:
         self.dirContextCommitAct = parentMenu.addAction( "&Commit...", self.dirCommit )
         self.dirContextLocalStatusAct = parentMenu.addAction( "&Status (local only)", self.dirLocalStatus )
         self.dirContextReposStatusAct = parentMenu.addAction( "S&tatus (repository)", self.dirRepositoryStatus )
+        self.dirContextDeleteAct = parentMenu.addAction( "D&elete...", self.dirDelete )
+        self.dirContextRevertAct = parentMenu.addAction( "&Revert", self.dirRevert )
         return
 
     def populateBufferContextMenu( self, parentMenu ):
@@ -79,6 +84,9 @@ class SVNMenuMixin:
         self.bufContextAnnotateAct = parentMenu.addAction( "&Annotate", self.bufferAnnotate )
         self.bufContextAddAct = parentMenu.addAction( "A&dd to repository", self.bufferAddToRepository )
         self.bufContextCommitAct = parentMenu.addAction( "&Commit...", self.bufferCommit )
+        self.bufContextDeleteAct = parentMenu.addAction( "D&elete...", self.bufferDelete )
+        self.bufContextRevertAct = parentMenu.addAction( "&Revert", self.bufferRevert )
+        self.bufContextDiffAct = parentMenu.addAction( "&Diff", self.bufferDiff )
         return
 
     def onMainMenuAboutToShow( self ):
