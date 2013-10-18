@@ -1424,7 +1424,7 @@ class EditorsManager( QTabWidget ):
             # Failed to write, inform and exit
             return False
 
-        if widgetType != MainWindowTabWidgetBase.PlainTextEditor:
+        if widgetType != MainWindowTabWidgetBase.VCSAnnotateViewer:
             widget.getEditor().setModified( False )
             newType = detectFileType( fileName, True, True )
             if newType != oldType or newType == UnknownFileType:
@@ -1442,11 +1442,11 @@ class EditorsManager( QTabWidget ):
         if existedBefore:
             self.emit( SIGNAL( 'fileUpdated' ), fileName, uuid )
         else:
-            if widgetType != MainWindowTabWidgetBase.PlainTextEditor:
+            if widgetType != MainWindowTabWidgetBase.VCSAnnotateViewer:
                 self.emit( SIGNAL( 'bufferSavedAs' ), fileName, uuid )
                 GlobalData().project.addRecentFile( fileName )
 
-        if widgetType != MainWindowTabWidgetBase.PlainTextEditor:
+        if widgetType != MainWindowTabWidgetBase.VCSAnnotateViewer:
             self.history.updateFileNameForTab( uuid, fileName )
             widget.updateStatus()
             self.__updateStatusBar()
