@@ -44,10 +44,14 @@ from svnannotate import SVNAnnotateMixin
 from svncommit import SVNCommitMixin
 from svnadd import SVNAddMixin
 from svnstatus import SVNStatusMixin
+from svndelete import SVNDeleteMixin
+from svndiff import SVNDiffMixin
+from svnrevert import SVNRevertMixin
 
 
 
 class SubversionPlugin( SVNMenuMixin, SVNInfoMixin, SVNAddMixin, SVNCommitMixin,
+                        SVNDeleteMixin, SVNDiffMixin, SVNRevertMixin,
                         SVNUpdateMixin, SVNAnnotateMixin, SVNStatusMixin,
                         VersionControlSystemInterface ):
     """ Codimension subversion plugin """
@@ -57,6 +61,9 @@ class SubversionPlugin( SVNMenuMixin, SVNInfoMixin, SVNAddMixin, SVNCommitMixin,
         SVNInfoMixin.__init__( self )
         SVNAddMixin.__init__( self )
         SVNCommitMixin.__init__( self )
+        SVNDeleteMixin.__init__( self )
+        SVNDiffMixin.__init__( self )
+        SVNRevertMixin.__init__( self )
         SVNUpdateMixin.__init__( self )
         SVNAnnotateMixin.__init__( self )
         SVNStatusMixin.__init__( self )
