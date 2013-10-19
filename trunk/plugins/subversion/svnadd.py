@@ -68,12 +68,11 @@ def doSVNAdd( plugin, client, path, recursively ):
     " Does SVN add "
     pathList = []
     def notifyCallback( event, paths = pathList ):
-        if path in event:
-            if event[ 'path' ]:
-                action = notifyActionToString( event[ 'action' ] )
-                if action:
-                    logging.info( action + " " + event[ 'path' ] )
-                    paths.append( event[ 'path' ] )
+        if event[ 'path' ]:
+            action = notifyActionToString( event[ 'action' ] )
+            if action:
+                logging.info( action + " " + event[ 'path' ] )
+                paths.append( event[ 'path' ] )
         return
 
     try:
@@ -105,7 +104,7 @@ def doSVNAdd( plugin, client, path, recursively ):
             client.add( path )
 
         if pathList:
-            logging.info( "Added" )
+            logging.info( "Finished" )
     except Exception, excpt:
         logging.error( str( excpt ) )
 

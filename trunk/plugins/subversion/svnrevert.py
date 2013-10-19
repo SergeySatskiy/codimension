@@ -23,6 +23,9 @@
 " SVN revert functionality "
 
 import logging
+import pysvn
+from svnstrconvert import notifyActionToString
+
 
 class SVNRevertMixin:
 
@@ -31,16 +34,44 @@ class SVNRevertMixin:
 
     def fileRevert( self ):
         path = str( self.fileParentMenu.menuAction().data().toString() )
-        logging.info( "Not implemented yet" )
+        self.__svnRevert( path, False )
         return
 
     def dirRevert( self ):
         path = str( self.dirParentMenu.menuAction().data().toString() )
-        logging.info( "Not implemented yet" )
+        self.__svnRevert( path, True )
         return
 
     def bufferRevert( self ):
         path = self.ide.currentEditorWidget.getFileName()
-        logging.info( "Not implemented yet" )
+        self.__svnRevert( path, False )
         return
+
+    def __svnRevert( self, path, recursively ):
+        " Adds the given path to the repository "
+        client = self.getSVNClient( self.getSettings() )
+
+        pathList = []
+        def notifyCallback( event, paths = pathList ):
+            if event[ 'path' ]:
+                action = notifyActionToString( event[ 'action' ] )
+                if action:
+                    logging.info( action + " " + event[ 'path' ] )
+                    paths.append( event[ 'path' ] )
+            return
+
+        try:
+            client.callback_notify = notifyCallback
+            client.revert( path, recurse = recursively )
+
+            if pathList:
+                logging.info( "Finished" )
+        except Exception, excpt:
+            logging.error( str( excpt ) )
+
+        for revertedPath in pathList:
+            self.notifyPathChanged( revertedPath )
+        return
+
+
 
