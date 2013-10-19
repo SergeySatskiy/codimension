@@ -24,6 +24,7 @@
 
 import logging
 import pysvn
+from svnstrconvert import notifyActionToString
 
 
 class SVNAddMixin:
@@ -67,10 +68,12 @@ def doSVNAdd( plugin, client, path, recursively ):
     " Does SVN add "
     pathList = []
     def notifyCallback( event, paths = pathList ):
-        if event[ 'action' ] == pysvn.wc_notify_action.add:
-            paths.append( event[ 'path' ] )
-            logging.info( "Adding '" + event[ 'path' ] +
-                          "' to SVN repository..." )
+        if path in event:
+            if event[ 'path' ]:
+                action = notifyActionToString( event[ 'action' ] )
+                if action:
+                    logging.info( action + " " + event[ 'path' ] )
+                    paths.append( event[ 'path' ] )
         return
 
     try:
