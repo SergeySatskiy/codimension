@@ -162,5 +162,5 @@ def notifyActionToString( action ):
     " Converts the action to a string "
     if action in ACTION:
         return ACTION[ action ]
-    return "unknown"
+    return "unknown action"
 

@@ -27,7 +27,7 @@ from PyQt4.QtCore import SIGNAL
 import os.path
 from svnindicators import ( IND_ERROR, IND_ADDED, IND_DELETED, IND_MERGED,
                             IND_MODIFIED_LR, IND_MODIFIED_L,
-                            IND_REPLACED, IND_CONFLICTED )
+                            IND_REPLACED, IND_CONFLICTED, IND_UPTODATE )
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
@@ -50,13 +50,15 @@ class SVNMenuMixin:
         self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
                       self.onFileContextMenuAboutToShow )
         self.fileContextInfoAct = parentMenu.addAction( "&Info", self.fileInfo )
-        self.fileContextUpdateAct = parentMenu.addAction( "&Update", self.fileUpdate )
         self.fileContextAnnotateAct = parentMenu.addAction( "&Annotate", self.fileAnnotate )
-        self.fileContextAddAct = parentMenu.addAction( "A&dd to repository", self.fileAddToRepository )
-        self.fileContextCommitAct = parentMenu.addAction( "&Commit...", self.fileCommit )
-        self.fileContextDeleteAct = parentMenu.addAction( "D&elete...", self.fileDelete )
-        self.fileContextRevertAct = parentMenu.addAction( "&Revert", self.fileRevert )
         self.fileContextDiffAct = parentMenu.addAction( "&Diff", self.fileDiff )
+        parentMenu.addSeparator()
+        self.fileContextUpdateAct = parentMenu.addAction( "&Update", self.fileUpdate )
+        self.fileContextAddAct = parentMenu.addAction( "A&dd", self.fileAddToRepository )
+        self.fileContextCommitAct = parentMenu.addAction( "&Commit...", self.fileCommit )
+        self.fileContextRevertAct = parentMenu.addAction( "&Revert", self.fileRevert )
+        parentMenu.addSeparator()
+        self.fileContextDeleteAct = parentMenu.addAction( "D&elete...", self.fileDelete )
         return
 
     def populateDirectoryContextMenu( self, parentMenu ):
@@ -65,14 +67,16 @@ class SVNMenuMixin:
         self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
                       self.onDirectoryContextMenuAboutToShow )
         self.dirContextInfoAct = parentMenu.addAction( "&Info", self.dirInfo )
-        self.dirContextUpdateAct = parentMenu.addAction( "&Update", self.dirUpdate )
-        self.dirContextAddAct = parentMenu.addAction( "A&dd to repository", self.dirAddToRepository )
-        self.dirContextAddRecursiveAct = parentMenu.addAction( "Add to repository recursively", self.dirAddToRepositoryRecursively )
-        self.dirContextCommitAct = parentMenu.addAction( "&Commit...", self.dirCommit )
         self.dirContextLocalStatusAct = parentMenu.addAction( "&Status (local only)", self.dirLocalStatus )
         self.dirContextReposStatusAct = parentMenu.addAction( "S&tatus (repository)", self.dirRepositoryStatus )
-        self.dirContextDeleteAct = parentMenu.addAction( "D&elete...", self.dirDelete )
+        parentMenu.addSeparator()
+        self.dirContextUpdateAct = parentMenu.addAction( "&Update", self.dirUpdate )
+        self.dirContextAddAct = parentMenu.addAction( "A&dd", self.dirAddToRepository )
+        self.dirContextAddRecursiveAct = parentMenu.addAction( "Add recursively", self.dirAddToRepositoryRecursively )
+        self.dirContextCommitAct = parentMenu.addAction( "&Commit...", self.dirCommit )
         self.dirContextRevertAct = parentMenu.addAction( "&Revert", self.dirRevert )
+        parentMenu.addSeparator()
+        self.dirContextDeleteAct = parentMenu.addAction( "D&elete...", self.dirDelete )
         return
 
     def populateBufferContextMenu( self, parentMenu ):
@@ -80,13 +84,15 @@ class SVNMenuMixin:
         self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
                       self.onBufferContextMenuAboutToshow )
         self.bufContextInfoAct = parentMenu.addAction( "&Info", self.bufferInfo )
-        self.bufContextUpdateAct = parentMenu.addAction( "&Update", self.bufferUpdate )
         self.bufContextAnnotateAct = parentMenu.addAction( "&Annotate", self.bufferAnnotate )
-        self.bufContextAddAct = parentMenu.addAction( "A&dd to repository", self.bufferAddToRepository )
-        self.bufContextCommitAct = parentMenu.addAction( "&Commit...", self.bufferCommit )
-        self.bufContextDeleteAct = parentMenu.addAction( "D&elete...", self.bufferDelete )
-        self.bufContextRevertAct = parentMenu.addAction( "&Revert", self.bufferRevert )
+        self.bufContextUpdateAct = parentMenu.addAction( "&Update", self.bufferUpdate )
         self.bufContextDiffAct = parentMenu.addAction( "&Diff", self.bufferDiff )
+        parentMenu.addSeparator()
+        self.bufContextAddAct = parentMenu.addAction( "A&dd", self.bufferAddToRepository )
+        self.bufContextCommitAct = parentMenu.addAction( "&Commit...", self.bufferCommit )
+        self.bufContextRevertAct = parentMenu.addAction( "&Revert", self.bufferRevert )
+        parentMenu.addSeparator()
+        self.bufContextDeleteAct = parentMenu.addAction( "D&elete...", self.bufferDelete )
         return
 
     def onMainMenuAboutToShow( self ):
@@ -103,6 +109,9 @@ class SVNMenuMixin:
             self.fileContextAnnotateAct.setEnabled( False )
             self.fileContextAddAct.setEnabled( False )
             self.fileContextCommitAct.setEnabled( False )
+            self.fileContextDeleteAct.setEnabled( False )
+            self.fileContextRevertAct.setEnabled( False )
+            self.fileContextDiffAct.setEnabled( False )
             return
 
         if pathStatus == self.NOT_UNDER_VCS:
@@ -110,6 +119,9 @@ class SVNMenuMixin:
             self.fileContextUpdateAct.setEnabled( False )
             self.fileContextAnnotateAct.setEnabled( False )
             self.fileContextCommitAct.setEnabled( False )
+            self.fileContextDeleteAct.setEnabled( False )
+            self.fileContextRevertAct.setEnabled( False )
+            self.fileContextDiffAct.setEnabled( False )
 
             upperDirStatus = self.getLocalStatus( os.path.dirname( path ) )
             if upperDirStatus == self.NOT_UNDER_VCS:
@@ -125,6 +137,9 @@ class SVNMenuMixin:
         self.fileContextCommitAct.setEnabled( pathStatus in [
                         IND_ADDED, IND_DELETED, IND_MERGED, IND_MODIFIED_LR,
                         IND_MODIFIED_L, IND_REPLACED, IND_CONFLICTED ] )
+        self.fileContextDeleteAct.setEnabled( pathStatus != IND_DELETED )
+        self.fileContextRevertAct.setEnabled( pathStatus != IND_UPTODATE )
+        self.fileContextDiffAct.setEnabled( True )
         return
 
     def onDirectoryContextMenuAboutToShow( self ):
@@ -137,12 +152,20 @@ class SVNMenuMixin:
             self.dirContextAddAct.setEnabled( False )
             self.dirContextAddRecursiveAct.setEnabled( False )
             self.dirContextCommitAct.setEnabled( False )
+            self.dirContextLocalStatusAct.setEnabled( False )
+            self.dirContextReposStatusAct.setEnabled( False )
+            self.dirContextDeleteAct.setEnabled( False )
+            self.dirContextRevertAct.setEnabled( False )
             return
 
         if pathStatus == self.NOT_UNDER_VCS:
             self.dirContextInfoAct.setEnabled( False )
             self.dirContextUpdateAct.setEnabled( False )
             self.dirContextCommitAct.setEnabled( False )
+            self.dirContextLocalStatusAct.setEnabled( False )
+            self.dirContextReposStatusAct.setEnabled( False )
+            self.dirContextDeleteAct.setEnabled( False )
+            self.dirContextRevertAct.setEnabled( False )
 
             if path.endswith( os.path.sep ):
                 upperDirStatus = self.getLocalStatus( os.path.dirname( path[ : -1 ] ) )
@@ -161,6 +184,10 @@ class SVNMenuMixin:
         self.dirContextAddAct.setEnabled( False )
         self.dirContextAddRecursiveAct.setEnabled( True )
         self.dirContextCommitAct.setEnabled( True )
+        self.dirContextLocalStatusAct.setEnabled( True )
+        self.dirContextReposStatusAct.setEnabled( True )
+        self.dirContextDeleteAct.setEnabled( pathStatus != IND_DELETED )
+        self.dirContextRevertAct.setEnabled( pathStatus != IND_UPTODATE )
         return
 
     def onBufferContextMenuAboutToshow( self ):
@@ -172,6 +199,9 @@ class SVNMenuMixin:
             self.bufContextAnnotateAct.setEnabled( False )
             self.bufContextAddAct.setEnabled( False )
             self.bufContextCommitAct.setEnabled( False )
+            self.bufContextDeleteAct.setEnabled( False )
+            self.bufContextRevertAct.setEnabled( False )
+            self.bufContextDiffAct.setEnabled( False )
             return
 
         pathStatus = self.getLocalStatus( path )
@@ -181,6 +211,9 @@ class SVNMenuMixin:
             self.bufContextAnnotateAct.setEnabled( False )
             self.bufContextAddAct.setEnabled( False )
             self.bufContextCommitAct.setEnabled( False )
+            self.bufContextDeleteAct.setEnabled( False )
+            self.bufContextRevertAct.setEnabled( False )
+            self.bufContextDiffAct.setEnabled( False )
             return
 
         if pathStatus == self.NOT_UNDER_VCS:
@@ -188,6 +221,9 @@ class SVNMenuMixin:
             self.bufContextUpdateAct.setEnabled( False )
             self.bufContextAnnotateAct.setEnabled( False )
             self.bufContextCommitAct.setEnabled( False )
+            self.bufContextDeleteAct.setEnabled( False )
+            self.bufContextRevertAct.setEnabled( False )
+            self.bufContextDiffAct.setEnabled( False )
 
             upperDirStatus = self.getLocalStatus( os.path.dirname( path ) )
             if upperDirStatus == self.NOT_UNDER_VCS:
@@ -199,6 +235,9 @@ class SVNMenuMixin:
         self.bufContextInfoAct.setEnabled( True )
         self.bufContextUpdateAct.setEnabled( True )
         self.bufContextAddAct.setEnabled( False )
+        self.bufContextDeleteAct.setEnabled( pathStatus != IND_DELETED )
+        self.bufContextRevertAct.setEnabled( pathStatus != IND_UPTODATE )
+        self.bufContextDiffAct.setEnabled( True )
 
         widgetType = self.ide.currentEditorWidget.getType()
         if widgetType in [ MainWindowTabWidgetBase.PlainTextEditor,
