@@ -23,7 +23,6 @@
 " SVN revert functionality "
 
 import logging
-import pysvn
 from svnstrconvert import notifyActionToString
 
 
