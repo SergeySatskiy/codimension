@@ -23,6 +23,9 @@
 " SVN Delete functionality "
 
 import logging
+from svnstrconvert import notifyActionToString
+from PyQt4.QtGui import QMessageBox
+
 
 class SVNDeleteMixin:
 
@@ -31,16 +34,50 @@ class SVNDeleteMixin:
 
     def fileDelete( self ):
         path = str( self.fileParentMenu.menuAction().data().toString() )
-        logging.info( "Not implemented yet" )
+        self.__svnDelete( path )
         return
 
     def dirDelete( self ):
         path = str( self.dirParentMenu.menuAction().data().toString() )
-        logging.info( "Not implemented yet" )
+        self.__svnDelete( path )
         return
 
     def bufferDelete( self ):
         path = self.ide.currentEditorWidget.getFileName()
-        logging.info( "Not implemented yet" )
+        self.__svnDelete( path )
         return
 
+    def __svnDelete( self, path ):
+
+        res = QMessageBox.warning( self, "Deleting from SVN",
+                    "You are about to delete <b>" + path +
+                    "</b> from SVN and from the disk.\nAre you sure?",
+                           QMessageBox.StandardButtons(
+                                QMessageBox.Cancel | QMessageBox.Yes ),
+                           QMessageBox.Cancel )
+        if res != QMessageBox.Yes:
+            return
+
+        client = self.getSVNClient( self.getSettings() )
+
+        pathList = []
+        def notifyCallback( event, paths = pathList ):
+            if event[ 'path' ]:
+                action = notifyActionToString( event[ 'action' ] )
+                if action:
+                    logging.info( action + " " + event[ 'path' ] )
+                    paths.append( event[ 'path' ] )
+            return
+
+        try:
+            client.callback_notify = notifyCallback
+            client.remove( path )
+
+            if pathList:
+                logging.info( "Finished" )
+        except Exception, excpt:
+            logging.error( str( excpt ) )
+
+        for revertedPath in pathList:
+            self.notifyPathChanged( revertedPath )
+        return
