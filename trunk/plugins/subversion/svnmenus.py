@@ -29,6 +29,7 @@ from svnindicators import ( IND_ERROR, IND_ADDED, IND_DELETED, IND_MERGED,
                             IND_MODIFIED_LR, IND_MODIFIED_L,
                             IND_REPLACED, IND_CONFLICTED, IND_UPTODATE )
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
+from utils.fileutils import detectFileType, isFileTypeSearchable
 
 
 class SVNMenuMixin:
@@ -139,7 +140,10 @@ class SVNMenuMixin:
                         IND_MODIFIED_L, IND_REPLACED, IND_CONFLICTED ] )
         self.fileContextDeleteAct.setEnabled( pathStatus != IND_DELETED )
         self.fileContextRevertAct.setEnabled( pathStatus != IND_UPTODATE )
-        self.fileContextDiffAct.setEnabled( True )
+
+        # Diff makes sense only for text files
+        fileType = detectFileType( path )
+        self.fileContextDiffAct.setEnabled( isFileTypeSearchable( fileType ) )
         return
 
     def onDirectoryContextMenuAboutToShow( self ):
@@ -237,7 +241,10 @@ class SVNMenuMixin:
         self.bufContextAddAct.setEnabled( False )
         self.bufContextDeleteAct.setEnabled( pathStatus != IND_DELETED )
         self.bufContextRevertAct.setEnabled( pathStatus != IND_UPTODATE )
-        self.bufContextDiffAct.setEnabled( True )
+
+        # Diff makes sense only for text files
+        fileType = detectFileType( path )
+        self.bufContextDiffAct.setEnabled( isFileTypeSearchable( fileType ) )
 
         widgetType = self.ide.currentEditorWidget.getType()
         if widgetType in [ MainWindowTabWidgetBase.PlainTextEditor,
