@@ -59,8 +59,8 @@ class SVNDiffMixin:
             return
 
         # Calculate difference
-        diff = difflib.unified_diff( content.splitlines(),
-                                     repositoryVersion.splitlines() )
+        diff = difflib.unified_diff( repositoryVersion.splitlines(),
+                                     content.splitlines() )
         nodiffMessage = path + " has no difference to the " \
                                "repository at revision HEAD"
         if modified:
@@ -76,12 +76,12 @@ class SVNDiffMixin:
             return
 
         if modified:
-            source = "--- editing buffer with " + os.path.basename( path )
+            source = "+++ editing buffer with " + os.path.basename( path )
         else:
-            source = "--- local " + os.path.basename( path )
-        diffAsText = diffAsText.replace( "--- ", source, 1 )
-        diffAsText = diffAsText.replace( "+++ ",
-                                         "+++ repository at revision HEAD", 1 )
+            source = "+++ local " + os.path.basename( path )
+        diffAsText = diffAsText.replace( "+++ ", source, 1 )
+        diffAsText = diffAsText.replace( "--- ",
+                                         "--- repository at revision HEAD", 1 )
         self.ide.mainWindow.showDiff( diffAsText,
                                       "SVN diff for " + path )
         return
