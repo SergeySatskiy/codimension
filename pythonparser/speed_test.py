@@ -57,8 +57,14 @@ def cdmpyparserTest( files ):
     " Loop for the codimension parser "
     count = 0
     for item in files:
-        #print "Processing " + item + " ..."
+        # print "Processing " + item + " ..."
         tempObj = cdmbriefparser.getBriefModuleInfoFromFile( item )
+        #if not tempObj.isOK:
+        #    print "Failed to parse: " + item
+        #    for item in tempObj.errors:
+        #        print "    P: " + item
+        #    for item in tempObj.lexerErrors:
+        #        print "    L: " + item
         count += 1
     print "cdmpyparser: processed " + str(count) + " file(s)"
     return
@@ -84,7 +90,7 @@ if len( sys.argv ) > 1:
     print "Files to test: " + str(len(pythonFiles))
 else:
     print "Collecting a list of python classes..."
-    startDir = os.path.sep + "usr" + os.path.sep + "lib64" + os.path.sep + \
+    startDir = os.path.sep + "usr" + os.path.sep + "lib" + os.path.sep + \
                "python2.7" + os.path.sep
     collectFiles( startDir, pythonFiles )
     print "Collected " + str(len(pythonFiles)) + " files from " + startDir
