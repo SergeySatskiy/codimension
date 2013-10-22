@@ -28,7 +28,7 @@ import ConfigParser
 import thirdparty.pythontidy.PythonTidy as PythonTidy
 from tidysettings import TIDY_SETTINGS
 from utils.globals import GlobalData
-from utils.settings import Settings, settingsDir
+from utils.settings import settingsDir
 
 
 
