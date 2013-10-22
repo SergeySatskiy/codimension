@@ -26,9 +26,11 @@
 from PyQt4.QtCore import Qt, SIGNAL, QStringList
 from PyQt4.QtGui import ( QDialog, QVBoxLayout, QDialogButtonBox, QTextEdit,
                           QHBoxLayout, QLabel, QToolButton, QTreeWidget,
-                          QTreeWidgetItem, QFontMetrics, QHeaderView )
+                          QTreeWidgetItem, QFontMetrics, QHeaderView,
+                          QFrame, QPalette, QSpacerItem, QSizePolicy )
 from ui.itemdelegates import NoOutlineHeightDelegate
 from svnstrconvert import STATUS
+from utils.pixmapcache import PixmapCache
 
 
 class SVNPluginCommitDialog( QDialog ):
@@ -103,8 +105,39 @@ class SVNPluginCommitDialog( QDialog ):
         vboxLayout.addWidget( self.__pathToCommitView )
 
         # Paths to ignore part
-        vboxLayout.addWidget( QLabel( "Ignored paths (total: " +
-                              str( len( pathsToIgnore ) ) + ")" ) )
+        headerFrame = QFrame()
+        headerFrame.setFrameStyle( QFrame.StyledPanel )
+        headerFrame.setAutoFillBackground( True )
+        headerPalette = headerFrame.palette()
+        headerBackground = headerPalette.color( QPalette.Background )
+        headerBackground.setRgb( min( headerBackground.red() + 30, 255 ),
+                                 min( headerBackground.green() + 30, 255 ),
+                                 min( headerBackground.blue() + 30, 255 ) )
+        headerPalette.setColor( QPalette.Background, headerBackground )
+        headerFrame.setPalette( headerPalette )
+        headerFrame.setFixedHeight( 24 )
+
+        ignoreLabel = QLabel( "Ignored paths (total: " +
+                              str( len( pathsToIgnore ) ) + ")" )
+        expandingSpacer = QSpacerItem( 10, 10, QSizePolicy.Expanding )
+
+        self.__showHideIgnoredButton = QToolButton()
+        self.__showHideIgnoredButton.setAutoRaise( True )
+        self.__showHideIgnoredButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
+        self.__showHideIgnoredButton.setFixedSize( 20, 20 )
+        self.__showHideIgnoredButton.setToolTip( "Show ignored path list" )
+        self.__showHideIgnoredButton.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.__showHideIgnoredButton, SIGNAL( 'clicked()' ),
+                      self.__onShowHideIgnored )
+
+        ignoredHeaderLayout = QHBoxLayout()
+        ignoredHeaderLayout.setContentsMargins( 3, 0, 0, 0 )
+        ignoredHeaderLayout.addWidget( ignoreLabel )
+        ignoredHeaderLayout.addSpacerItem( expandingSpacer )
+        ignoredHeaderLayout.addWidget( self.__showHideIgnoredButton )
+        headerFrame.setLayout( ignoredHeaderLayout )
+
+        vboxLayout.addWidget( headerFrame )
 
         self.__pathToIgnoreView = QTreeWidget()
         self.__pathToIgnoreView.setAlternatingRowColors( True )
@@ -113,14 +146,12 @@ class SVNPluginCommitDialog( QDialog ):
         self.__pathToIgnoreView.setSortingEnabled( True )
         self.__pathToIgnoreView.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         self.__pathToIgnoreView.setUniformRowHeights( True )
+        self.__pathToIgnoreView.setVisible( False )
 
         pathToIgnoreHeader = QTreeWidgetItem(
                 QStringList() << "Path" << "Status" )
         self.__pathToIgnoreView.setHeaderItem( pathToIgnoreHeader )
         self.__pathToIgnoreView.header().setSortIndicator( 0, Qt.AscendingOrder )
-#        metrics = QFontMetrics( self.__pathToIgnoreView.font() )
-#        rect = metrics.boundingRect( "X" )
-#        self.__pathToIgnoreView.setFixedHeight( rect.height() * 5 + 5 )
         vboxLayout.addWidget( self.__pathToIgnoreView )
 
         # Message part
@@ -143,6 +174,17 @@ class SVNPluginCommitDialog( QDialog ):
         self.connect( buttonBox, SIGNAL( "accepted()" ), self.userAccept )
         self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
         vboxLayout.addWidget( buttonBox )
+        return
+
+    def __onShowHideIgnored( self ):
+        if self.__pathToIgnoreView.isVisible():
+            self.__pathToIgnoreView.setVisible( False )
+            self.__showHideIgnoredButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
+            self.__showHideIgnoredButton.setToolTip( "Show ignored path list" )
+        else:
+            self.__pathToIgnoreView.setVisible( True )
+            self.__showHideIgnoredButton.setIcon( PixmapCache().getIcon( 'more.png' ) )
+            self.__showHideIgnoredButton.setToolTip( "Hide ignored path list" )
         return
 
     def userAccept( self ):
