@@ -119,7 +119,7 @@ def doSVNCommit( plugin, client, path ):
                 if event[ 'path' ]:
                     action = notifyActionToString( event[ 'action' ] )
                     if action:
-                        logging.info( action + " " + event[ 'path' ] )
+                        logging.info( "Commit: " + action + " " + event[ 'path' ] )
                 return
 
             client.callback_get_log_message = getLogMessage
