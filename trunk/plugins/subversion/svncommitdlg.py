@@ -31,13 +31,17 @@ from PyQt4.QtGui import ( QDialog, QVBoxLayout, QDialogButtonBox, QTextEdit,
 from ui.itemdelegates import NoOutlineHeightDelegate
 from svnstrconvert import STATUS
 from utils.pixmapcache import PixmapCache
+from svnindicators import pluginHomeDir
+from ui.htmltabwidget import HTMLTabWidget
 
 
 class SVNPluginCommitDialog( QDialog ):
     " SVN Plugin commit dialog "
 
+    NODIFF = '<html><body bgcolor="#ffffe6"></body></html>'
+
     def __init__( self, pathsToCommit, pathsToIgnore, parent = None ):
-        QDialog.__init__( self, parent )
+        QDialog.__init__( self, parent, Qt.WindowTitleHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint | Qt.CustomizeWindowHint )
 
         self.__createLayout( pathsToCommit, pathsToIgnore )
         self.setWindowTitle( "SVN commit" )
@@ -70,22 +74,44 @@ class SVNPluginCommitDialog( QDialog ):
     def __createLayout( self, pathsToCommit, pathsToIgnore ):
         " Creates the dialog layout "
 
-        self.resize( 640, 420 )
+        self.resize( 640, 480 )
         self.setSizeGripEnabled( True )
 
         vboxLayout = QVBoxLayout( self )
 
         # Paths to commit part
-        hboxLayout = QHBoxLayout()
-        hboxLayout.addWidget( QLabel( "Paths to commit (total: " +
-                              str( len( pathsToCommit ) ) + ")" ) )
+        commitHeaderFrame = QFrame()
+        commitHeaderFrame.setFrameStyle( QFrame.StyledPanel )
+        commitHeaderFrame.setAutoFillBackground( True )
+        commitHeaderPalette = commitHeaderFrame.palette()
+        headerBackground = commitHeaderPalette.color( QPalette.Background )
+        headerBackground.setRgb( min( headerBackground.red() + 30, 255 ),
+                                 min( headerBackground.green() + 30, 255 ),
+                                 min( headerBackground.blue() + 30, 255 ) )
+        commitHeaderPalette.setColor( QPalette.Background, headerBackground )
+        commitHeaderFrame.setPalette( commitHeaderPalette )
+        commitHeaderFrame.setFixedHeight( 24 )
+
+        expandingCommitSpacer = QSpacerItem( 10, 10, QSizePolicy.Expanding )
 
         self.__selectAllButton = QToolButton()
-        self.__selectAllButton.setText( "Select All" )
+        self.__selectAllButton.setAutoRaise( True )
+        self.__selectAllButton.setIcon( PixmapCache().getIcon( pluginHomeDir + 'svnselectall.png' ) )
+        self.__selectAllButton.setFixedSize( 20, 20 )
+        self.__selectAllButton.setToolTip( "Select all" )
+        self.__selectAllButton.setFocusPolicy( Qt.NoFocus )
         self.connect( self.__selectAllButton, SIGNAL( 'clicked()' ),
                       self.__onSelectAll )
-        hboxLayout.addWidget( self.__selectAllButton )
-        vboxLayout.addLayout( hboxLayout )
+
+        commitHeaderLayout = QHBoxLayout()
+        commitHeaderLayout.setContentsMargins( 3, 0, 0, 0 )
+        commitHeaderLayout.addWidget( QLabel( "Paths to commit (total: " +
+                                              str( len( pathsToCommit ) ) + ")" ) )
+        commitHeaderLayout.addSpacerItem( expandingCommitSpacer )
+        commitHeaderLayout.addWidget( self.__selectAllButton )
+        commitHeaderFrame.setLayout( commitHeaderLayout )
+
+        vboxLayout.addWidget( commitHeaderFrame )
 
         self.__pathToCommitView = QTreeWidget()
         self.__pathToCommitView.setAlternatingRowColors( True )
@@ -163,6 +189,45 @@ class SVNPluginCommitDialog( QDialog ):
         self.__message.setFixedHeight( rect.height() * 4 + 5 )
         vboxLayout.addWidget( self.__message )
 
+        # Diff part
+        diffHeaderFrame = QFrame()
+        diffHeaderFrame.setFrameStyle( QFrame.StyledPanel )
+        diffHeaderFrame.setAutoFillBackground( True )
+        diffHeaderPalette = diffHeaderFrame.palette()
+        headerBackground = diffHeaderPalette.color( QPalette.Background )
+        headerBackground.setRgb( min( headerBackground.red() + 30, 255 ),
+                                 min( headerBackground.green() + 30, 255 ),
+                                 min( headerBackground.blue() + 30, 255 ) )
+        diffHeaderPalette.setColor( QPalette.Background, headerBackground )
+        diffHeaderFrame.setPalette( diffHeaderPalette )
+        diffHeaderFrame.setFixedHeight( 24 )
+
+        diffLabel = QLabel( "Diff" )
+        diffExpandingSpacer = QSpacerItem( 10, 10, QSizePolicy.Expanding )
+
+        self.__showHideDiffButton = QToolButton()
+        self.__showHideDiffButton.setAutoRaise( True )
+        self.__showHideDiffButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
+        self.__showHideDiffButton.setFixedSize( 20, 20 )
+        self.__showHideDiffButton.setToolTip( "Show diff" )
+        self.__showHideDiffButton.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.__showHideDiffButton, SIGNAL( 'clicked()' ),
+                      self.__onShowHideDiff )
+
+        diffLayout = QHBoxLayout()
+        diffLayout.setContentsMargins( 3, 0, 0, 0 )
+        diffLayout.addWidget( diffLabel )
+        diffLayout.addSpacerItem( diffExpandingSpacer )
+        diffLayout.addWidget( self.__showHideDiffButton )
+        diffHeaderFrame.setLayout( diffLayout )
+
+        self.__diffViewer = HTMLTabWidget()
+        self.__diffViewer.setHTML( self.NODIFF )
+        self.__diffViewer.setVisible( False )
+
+        vboxLayout.addWidget( diffHeaderFrame )
+        vboxLayout.addWidget( self.__diffViewer )
+
         # Buttons at the bottom
         buttonBox = QDialogButtonBox( self )
         buttonBox.setOrientation( Qt.Horizontal )
@@ -174,6 +239,17 @@ class SVNPluginCommitDialog( QDialog ):
         self.connect( buttonBox, SIGNAL( "accepted()" ), self.userAccept )
         self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
         vboxLayout.addWidget( buttonBox )
+        return
+
+    def __onShowHideDiff( self ):
+        if self.__diffViewer.isVisible():
+            self.__diffViewer.setVisible( False )
+            self.__showHideDiffButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
+            self.__showHideDiffButton.setToolTip( "Show diff" )
+        else:
+            self.__diffViewer.setVisible( True )
+            self.__showHideDiffButton.setIcon( PixmapCache().getIcon( 'more.png' ) )
+            self.__showHideDiffButton.setToolTip( "Hide diff" )
         return
 
     def __onShowHideIgnored( self ):

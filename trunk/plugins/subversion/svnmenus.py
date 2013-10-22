@@ -30,6 +30,8 @@ from svnindicators import ( IND_ERROR, IND_ADDED, IND_DELETED, IND_MERGED,
                             IND_REPLACED, IND_CONFLICTED, IND_UPTODATE )
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.fileutils import detectFileType, isFileTypeSearchable
+from utils.pixmapcache import PixmapCache
+from svnindicators import pluginHomeDir
 
 
 class SVNMenuMixin:
@@ -42,7 +44,8 @@ class SVNMenuMixin:
         " Called to build main menu "
         self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
                       self.onMainMenuAboutToShow )
-        parentMenu.addAction( "Configure", self.configure )
+        parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuconf.png' ),
+                              "Configure", self.configure )
         return
 
     def populateFileContextMenu( self, parentMenu ):
@@ -50,16 +53,24 @@ class SVNMenuMixin:
         self.fileParentMenu = parentMenu
         self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
                       self.onFileContextMenuAboutToShow )
-        self.fileContextInfoAct = parentMenu.addAction( "&Info", self.fileInfo )
-        self.fileContextAnnotateAct = parentMenu.addAction( "&Annotate", self.fileAnnotate )
-        self.fileContextDiffAct = parentMenu.addAction( "&Diff", self.fileDiff )
+        self.fileContextInfoAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuinfo.png' ),
+                                                        "&Info", self.fileInfo )
+        self.fileContextAnnotateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuannotate.png' ),
+                                                            "&Annotate", self.fileAnnotate )
+        self.fileContextDiffAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenudiff.png' ),
+                                                        "&Diff", self.fileDiff )
         parentMenu.addSeparator()
-        self.fileContextUpdateAct = parentMenu.addAction( "&Update", self.fileUpdate )
-        self.fileContextAddAct = parentMenu.addAction( "A&dd", self.fileAddToRepository )
-        self.fileContextCommitAct = parentMenu.addAction( "&Commit...", self.fileCommit )
-        self.fileContextRevertAct = parentMenu.addAction( "&Revert", self.fileRevert )
+        self.fileContextUpdateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuupdate.png' ),
+                                                          "&Update", self.fileUpdate )
+        self.fileContextAddAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuadd.png' ),
+                                                       "A&dd", self.fileAddToRepository )
+        self.fileContextCommitAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenucommit.png' ),
+                                                          "&Commit...", self.fileCommit )
+        self.fileContextRevertAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuundo.png' ),
+                                                          "&Revert", self.fileRevert )
         parentMenu.addSeparator()
-        self.fileContextDeleteAct = parentMenu.addAction( "D&elete...", self.fileDelete )
+        self.fileContextDeleteAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenudelete.png' ),
+                                                          "D&elete...", self.fileDelete )
         return
 
     def populateDirectoryContextMenu( self, parentMenu ):
@@ -67,33 +78,49 @@ class SVNMenuMixin:
         self.dirParentMenu = parentMenu
         self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
                       self.onDirectoryContextMenuAboutToShow )
-        self.dirContextInfoAct = parentMenu.addAction( "&Info", self.dirInfo )
-        self.dirContextLocalStatusAct = parentMenu.addAction( "&Status (local only)", self.dirLocalStatus )
-        self.dirContextReposStatusAct = parentMenu.addAction( "S&tatus (repository)", self.dirRepositoryStatus )
+        self.dirContextInfoAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuinfo.png' ),
+                                                       "&Info", self.dirInfo )
+        self.dirContextLocalStatusAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenustatus.png' ),
+                                                              "&Status (local only)", self.dirLocalStatus )
+        self.dirContextReposStatusAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenustatus.png' ),
+                                                              "S&tatus (repository)", self.dirRepositoryStatus )
         parentMenu.addSeparator()
-        self.dirContextUpdateAct = parentMenu.addAction( "&Update", self.dirUpdate )
-        self.dirContextAddAct = parentMenu.addAction( "A&dd", self.dirAddToRepository )
+        self.dirContextUpdateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuupdate.png' ),
+                                                         "&Update", self.dirUpdate )
+        self.dirContextAddAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuadd.png' ),
+                                                      "A&dd", self.dirAddToRepository )
         self.dirContextAddRecursiveAct = parentMenu.addAction( "Add recursively", self.dirAddToRepositoryRecursively )
-        self.dirContextCommitAct = parentMenu.addAction( "&Commit...", self.dirCommit )
-        self.dirContextRevertAct = parentMenu.addAction( "&Revert", self.dirRevert )
+        self.dirContextCommitAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenucommit.png' ),
+                                                         "&Commit...", self.dirCommit )
+        self.dirContextRevertAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuundo.png' ),
+                                                         "&Revert", self.dirRevert )
         parentMenu.addSeparator()
-        self.dirContextDeleteAct = parentMenu.addAction( "D&elete...", self.dirDelete )
+        self.dirContextDeleteAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenudelete.png' ),
+                                                         "D&elete...", self.dirDelete )
         return
 
     def populateBufferContextMenu( self, parentMenu ):
         " Called to build a buffer context menu "
         self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
                       self.onBufferContextMenuAboutToshow )
-        self.bufContextInfoAct = parentMenu.addAction( "&Info", self.bufferInfo )
-        self.bufContextAnnotateAct = parentMenu.addAction( "&Annotate", self.bufferAnnotate )
-        self.bufContextUpdateAct = parentMenu.addAction( "&Update", self.bufferUpdate )
-        self.bufContextDiffAct = parentMenu.addAction( "&Diff", self.bufferDiff )
+        self.bufContextInfoAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuinfo.png' ),
+                                                       "&Info", self.bufferInfo )
+        self.bufContextAnnotateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuannotate.png' ),
+                                                           "&Annotate", self.bufferAnnotate )
+        self.bufContextUpdateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuupdate.png' ),
+                                                         "&Update", self.bufferUpdate )
+        self.bufContextDiffAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenudiff.png' ),
+                                                       "&Diff", self.bufferDiff )
         parentMenu.addSeparator()
-        self.bufContextAddAct = parentMenu.addAction( "A&dd", self.bufferAddToRepository )
-        self.bufContextCommitAct = parentMenu.addAction( "&Commit...", self.bufferCommit )
-        self.bufContextRevertAct = parentMenu.addAction( "&Revert", self.bufferRevert )
+        self.bufContextAddAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuadd.png' ),
+                                                      "A&dd", self.bufferAddToRepository )
+        self.bufContextCommitAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenucommit.png' ),
+                                                         "&Commit...", self.bufferCommit )
+        self.bufContextRevertAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuundo.png' ),
+                                                         "&Revert", self.bufferRevert )
         parentMenu.addSeparator()
-        self.bufContextDeleteAct = parentMenu.addAction( "D&elete...", self.bufferDelete )
+        self.bufContextDeleteAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenudelete.png' ),
+                                                         "D&elete...", self.bufferDelete )
         return
 
     def onMainMenuAboutToShow( self ):
