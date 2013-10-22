@@ -444,11 +444,15 @@ class VCSManager( QObject ):
         descriptor = self.activePlugins[ status.pluginID ]
         if status.indicatorID not in descriptor.indicators:
             # Check the standard indicator
-            if status.indicatorID in self.systemIndicators:
-                return self.systemIndicators[ status.indicatorID ]
-            return None
+            return self.getSystemIndicator( status.indicatorID )
 
         return descriptor.indicators[ status.indicatorID ]
+
+    def getSystemIndicator( self, indicatorID ):
+        " Provides the IDE defined indicator if so "
+        if indicatorID in self.systemIndicators:
+            return self.systemIndicators[ indicatorID ]
+        return None
 
     def __canInitiateStatusRequestLoop( self ):
         " Returns true if the is no jam in the request queue "
