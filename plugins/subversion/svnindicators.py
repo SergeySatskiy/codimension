@@ -24,6 +24,7 @@
 
 import os.path
 from PyQt4.QtGui import QPixmap, QColor
+from utils.globals import GlobalData
 
 
 IND_ADDED       = 0
@@ -123,4 +124,10 @@ def getIndicatorPixmap( indicatorID ):
     for descriptor in IND_DESCRIPTION:
         if descriptor[ 0 ] == indicatorID:
             return descriptor[ 1 ]
+    if indicatorID < 0:
+        # It is an IDE defined indicator
+        vcsManager = GlobalData().mainWindow.vcsManager
+        systemIndicator = vcsManager.getSystemIndicator( indicatorID )
+        if systemIndicator:
+            return systemIndicator.pixmap
     return None
