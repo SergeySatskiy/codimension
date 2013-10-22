@@ -31,6 +31,7 @@ from svnindicators import ( IND_ADDED, IND_DELETED, IND_MERGED,
                             IND_REPLACED, IND_CONFLICTED, IND_IGNORED )
 from PyQt4.QtGui import QDialog, QApplication, QCursor
 from PyQt4.QtCore import Qt
+from svnstrconvert import notifyActionToString
 
 
 COMMIT_ALLOW_STATUSES = [ IND_ADDED, IND_DELETED, IND_MERGED, IND_MODIFIED_LR,
@@ -66,8 +67,6 @@ class SVNCommitMixin:
         client = self.getSVNClient( self.getSettings() )
         doSVNCommit( self, client, path )
         return
-
-
 
 
 def doSVNCommit( plugin, client, path ):
@@ -114,14 +113,17 @@ def doSVNCommit( plugin, client, path ):
 
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         try:
-            message = "Committing:"
-            for path in dlg.commitPaths:
-                message += "\n    " + path
-            logging.info( message )
-
             def getLogMessage( msg = dlg.commitMessage ):
                 return True, msg
+            def notifyCallback( event ):
+                if event[ 'path' ]:
+                    action = notifyActionToString( event[ 'action' ] )
+                    if action:
+                        logging.info( action + " " + event[ 'path' ] )
+                return
+
             client.callback_get_log_message = getLogMessage
+            client.callback_notify = notifyCallback
 
             revision = client.checkin( dlg.commitPaths,
                                        log_message = dlg.commitMessage,
@@ -139,4 +141,3 @@ def doSVNCommit( plugin, client, path ):
         QApplication.restoreOverrideCursor()
 
     return
-
