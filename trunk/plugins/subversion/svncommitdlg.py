@@ -27,12 +27,45 @@ from PyQt4.QtCore import Qt, SIGNAL, QStringList
 from PyQt4.QtGui import ( QDialog, QVBoxLayout, QDialogButtonBox, QTextEdit,
                           QHBoxLayout, QLabel, QToolButton, QTreeWidget,
                           QTreeWidgetItem, QFontMetrics, QHeaderView,
-                          QFrame, QPalette, QSpacerItem, QSizePolicy )
+                          QFrame, QPalette, QSpacerItem, QSizePolicy,
+                          QPushButton )
 from ui.itemdelegates import NoOutlineHeightDelegate
 from svnstrconvert import STATUS
 from utils.pixmapcache import PixmapCache
-from svnindicators import pluginHomeDir
+from svnindicators import pluginHomeDir, IND_REPLACED, IND_ADDED, IND_DELETED
 from ui.htmltabwidget import HTMLTabWidget
+from thirdparty.diff2html.diff2html import parse_from_memory
+import os.path
+import difflib
+import logging
+
+
+class DiffButton( QPushButton ):
+    " Custom diff button "
+
+    def __init__( self ):
+        QPushButton.__init__( self,
+                              PixmapCache().getIcon( pluginHomeDir + 'svnmenudiff.png' ),
+                              "" )
+        self.setFixedSize( 24, 24 )
+        self.setFocusPolicy( Qt.NoFocus )
+
+        self.path = ""
+        self.status = None
+        self.connect( self, SIGNAL( "clicked()" ), self.onClick )
+        return
+
+    def onClick( self ):
+        " Emits a signal with the button index "
+        self.emit( SIGNAL( "CustomClick" ), self.path, self.status )
+        return
+
+
+# Columns for the commit path list
+CHECK_COL = 0
+PATH_COL = 1
+STATUS_COL = 2
+DIFF_COL = 3
 
 
 class SVNPluginCommitDialog( QDialog ):
@@ -40,8 +73,10 @@ class SVNPluginCommitDialog( QDialog ):
 
     NODIFF = '<html><body bgcolor="#ffffe6"></body></html>'
 
-    def __init__( self, pathsToCommit, pathsToIgnore, parent = None ):
-        QDialog.__init__( self, parent, Qt.WindowTitleHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint | Qt.CustomizeWindowHint )
+    def __init__( self, plugin, pathsToCommit, pathsToIgnore, parent = None ):
+        QDialog.__init__( self, parent )
+
+        self.__plugin = plugin
 
         self.__createLayout( pathsToCommit, pathsToIgnore )
         self.setWindowTitle( "SVN commit" )
@@ -50,13 +85,24 @@ class SVNPluginCommitDialog( QDialog ):
         for item in pathsToCommit:
             newItem = QTreeWidgetItem(
                         QStringList() << "" << item[ 0 ] << STATUS[ item[ 1 ] ] )
-            newItem.setCheckState( 0, Qt.Checked )
-            newItem.setToolTip( 1, item[ 0 ] )
-            newItem.setToolTip( 2, STATUS[ item[ 1 ] ] )
+            newItem.setCheckState( CHECK_COL, Qt.Checked )
+            newItem.setToolTip( PATH_COL, item[ 0 ] )
+            newItem.setToolTip( STATUS_COL, STATUS[ item[ 1 ] ] )
             self.__pathToCommitView.addTopLevelItem( newItem )
-        self.__pathToCommitView.header().resizeSections( QHeaderView.ResizeToContents )
-        self.__pathToCommitView.header().resizeSection( 0, 20 )
-        self.__pathToCommitView.header().setResizeMode( QHeaderView.Fixed )
+
+            diffButton = self.__createDiffButton()
+            diffButton.path = item[ 0 ]
+            diffButton.status = item[ 1 ]
+            if os.path.isdir( item[ 0 ] ) or item[ 1 ] in [ IND_REPLACED ]:
+                diffButton.setEnabled( False )
+                diffButton.setToolTip( "Diff is not available" )
+            else:
+                diffButton.setEnabled( True )
+                diffButton.setToolTip( "Click to see diff" )
+            self.__pathToCommitView.setItemWidget( newItem, DIFF_COL, diffButton )
+
+        self.__resizeCommitPaths()
+        self.__sortCommitPaths()
 
         for item in pathsToIgnore:
             newItem = QTreeWidgetItem(
@@ -71,6 +117,58 @@ class SVNPluginCommitDialog( QDialog ):
         self.__message.setFocus()
         return
 
+    def __resizeCommitPaths( self ):
+        " Resizes the plugins table "
+        self.__pathToCommitView.header().setStretchLastSection( False )
+        self.__pathToCommitView.header().resizeSections(
+                                        QHeaderView.ResizeToContents )
+        self.__pathToCommitView.header().resizeSection( CHECK_COL, 28 )
+        self.__pathToCommitView.header().setResizeMode( CHECK_COL, QHeaderView.Fixed )
+
+        # By some reasons, to have PATH_COL visually adjustable the only STATUS_COL
+        # must be set to be stretchable, so there is a comment below.
+        # self.__pathToCommitView.header().setResizeMode( PATH_COL, QHeaderView.Stretch )
+        self.__pathToCommitView.header().setResizeMode( STATUS_COL, QHeaderView.Stretch )
+        self.__pathToCommitView.header().resizeSection( DIFF_COL, 24 )
+        self.__pathToCommitView.header().setResizeMode( DIFF_COL, QHeaderView.Fixed )
+        return
+
+    def __sortCommitPaths( self ):
+        " Sorts the commit paths table "
+        self.__pathToCommitView.sortItems(
+                    self.__pathToCommitView.sortColumn(),
+                    self.__pathToCommitView.header().sortIndicatorOrder() )
+        return
+
+    def __createDiffButton( self ):
+        " Creates a diff button for a path "
+        button = DiffButton()
+        self.connect( button, SIGNAL( 'CustomClick' ), self.onDiff )
+        return button
+
+    @staticmethod
+    def __setLightPalette( frame ):
+        " Creates a lighter paletter for the widget background "
+        palette = frame.palette()
+        background = palette.color( QPalette.Background )
+        background.setRgb( min( background.red() + 30, 255 ),
+                           min( background.green() + 30, 255 ),
+                           min( background.blue() + 30, 255 ) )
+        palette.setColor( QPalette.Background, background )
+        frame.setPalette( palette )
+        return
+
+    @staticmethod
+    def __configTable( table ):
+        " Sets common properties for a table "
+        table.setAlternatingRowColors( True )
+        table.setRootIsDecorated( False )
+        table.setItemsExpandable( False )
+        table.setSortingEnabled( True )
+        table.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
+        table.setUniformRowHeights( True )
+        return
+
     def __createLayout( self, pathsToCommit, pathsToIgnore ):
         " Creates the dialog layout "
 
@@ -83,13 +181,7 @@ class SVNPluginCommitDialog( QDialog ):
         commitHeaderFrame = QFrame()
         commitHeaderFrame.setFrameStyle( QFrame.StyledPanel )
         commitHeaderFrame.setAutoFillBackground( True )
-        commitHeaderPalette = commitHeaderFrame.palette()
-        headerBackground = commitHeaderPalette.color( QPalette.Background )
-        headerBackground.setRgb( min( headerBackground.red() + 30, 255 ),
-                                 min( headerBackground.green() + 30, 255 ),
-                                 min( headerBackground.blue() + 30, 255 ) )
-        commitHeaderPalette.setColor( QPalette.Background, headerBackground )
-        commitHeaderFrame.setPalette( commitHeaderPalette )
+        self.__setLightPalette( commitHeaderFrame )
         commitHeaderFrame.setFixedHeight( 24 )
 
         expandingCommitSpacer = QSpacerItem( 10, 10, QSizePolicy.Expanding )
@@ -114,17 +206,12 @@ class SVNPluginCommitDialog( QDialog ):
         vboxLayout.addWidget( commitHeaderFrame )
 
         self.__pathToCommitView = QTreeWidget()
-        self.__pathToCommitView.setAlternatingRowColors( True )
-        self.__pathToCommitView.setRootIsDecorated( False )
-        self.__pathToCommitView.setItemsExpandable( False )
-        self.__pathToCommitView.setSortingEnabled( True )
-        self.__pathToCommitView.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
-        self.__pathToCommitView.setUniformRowHeights( True )
+        self.__configTable( self.__pathToCommitView )
 
         self.__pathToCommitHeader = QTreeWidgetItem(
-                QStringList() << "" << "Path" << "Status" )
+                QStringList() << "" << "Path" << "Status" << "")
         self.__pathToCommitView.setHeaderItem( self.__pathToCommitHeader )
-        self.__pathToCommitView.header().setSortIndicator( 1, Qt.AscendingOrder )
+        self.__pathToCommitView.header().setSortIndicator( PATH_COL, Qt.AscendingOrder )
         self.connect( self.__pathToCommitView,
                       SIGNAL( "itemChanged(QTreeWidgetItem*,int)" ),
                       self.__onCommitPathChanged )
@@ -134,13 +221,7 @@ class SVNPluginCommitDialog( QDialog ):
         headerFrame = QFrame()
         headerFrame.setFrameStyle( QFrame.StyledPanel )
         headerFrame.setAutoFillBackground( True )
-        headerPalette = headerFrame.palette()
-        headerBackground = headerPalette.color( QPalette.Background )
-        headerBackground.setRgb( min( headerBackground.red() + 30, 255 ),
-                                 min( headerBackground.green() + 30, 255 ),
-                                 min( headerBackground.blue() + 30, 255 ) )
-        headerPalette.setColor( QPalette.Background, headerBackground )
-        headerFrame.setPalette( headerPalette )
+        self.__setLightPalette( headerFrame )
         headerFrame.setFixedHeight( 24 )
 
         ignoreLabel = QLabel( "Ignored paths (total: " +
@@ -166,12 +247,7 @@ class SVNPluginCommitDialog( QDialog ):
         vboxLayout.addWidget( headerFrame )
 
         self.__pathToIgnoreView = QTreeWidget()
-        self.__pathToIgnoreView.setAlternatingRowColors( True )
-        self.__pathToIgnoreView.setRootIsDecorated( False )
-        self.__pathToIgnoreView.setItemsExpandable( False )
-        self.__pathToIgnoreView.setSortingEnabled( True )
-        self.__pathToIgnoreView.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
-        self.__pathToIgnoreView.setUniformRowHeights( True )
+        self.__configTable( self.__pathToIgnoreView )
         self.__pathToIgnoreView.setVisible( False )
 
         pathToIgnoreHeader = QTreeWidgetItem(
@@ -193,13 +269,7 @@ class SVNPluginCommitDialog( QDialog ):
         diffHeaderFrame = QFrame()
         diffHeaderFrame.setFrameStyle( QFrame.StyledPanel )
         diffHeaderFrame.setAutoFillBackground( True )
-        diffHeaderPalette = diffHeaderFrame.palette()
-        headerBackground = diffHeaderPalette.color( QPalette.Background )
-        headerBackground.setRgb( min( headerBackground.red() + 30, 255 ),
-                                 min( headerBackground.green() + 30, 255 ),
-                                 min( headerBackground.blue() + 30, 255 ) )
-        diffHeaderPalette.setColor( QPalette.Background, headerBackground )
-        diffHeaderFrame.setPalette( diffHeaderPalette )
+        self.__setLightPalette( diffHeaderFrame )
         diffHeaderFrame.setFixedHeight( 24 )
 
         diffLabel = QLabel( "Diff" )
@@ -320,3 +390,43 @@ class SVNPluginCommitDialog( QDialog ):
         self.__updateOKStatus()
         return
 
+    def onDiff( self, path, status ):
+        " Triggered when diff for the path is called "
+        if not path:
+            return
+
+        # Status is one of the following:
+        # IND_ADDED, IND_DELETED, IND_MERGED, IND_MODIFIED_LR, IND_MODIFIED_L, IND_CONFLICTED
+        repositoryContent = ""
+        localContent = ""
+        if status != IND_ADDED:
+            client = self.__plugin.getSVNClient( self.__plugin.getSettings() )
+            repositoryContent = client.cat( path )
+        if status != IND_DELETED:
+            with open( path ) as f:
+                localContent = f.read()
+
+        diff = difflib.unified_diff( repositoryContent.splitlines(),
+                                     localContent.splitlines() )
+        nodiffMessage = path + " has no difference to the " \
+                               "repository at revision HEAD"
+        if diff is None:
+            logging.info( nodiffMessage )
+            return
+
+        # There are changes, so replace the text and tell about the changes
+        diffAsText = '\n'.join( list( diff ) )
+        if diffAsText.strip() == '':
+            logging.info( nodiffMessage )
+            return
+
+        source = "+++ local " + os.path.basename( path )
+        diffAsText = diffAsText.replace( "+++ ", source, 1 )
+        diffAsText = diffAsText.replace( "--- ",
+                                         "--- repository at revision HEAD", 1 )
+
+        self.__diffViewer.setHTML( parse_from_memory( diffAsText, False, True ) )
+        if not self.__diffViewer.isVisible():
+            self.__onShowHideDiff()
+
+        return
