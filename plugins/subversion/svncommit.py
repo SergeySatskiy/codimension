@@ -103,7 +103,7 @@ def doSVNCommit( plugin, client, path ):
         pathsToCommit = [ (path, status), ]
         pathsToIgnore = []
 
-    dlg = SVNPluginCommitDialog( pathsToCommit, pathsToIgnore )
+    dlg = SVNPluginCommitDialog( plugin, pathsToCommit, pathsToIgnore )
     res = dlg.exec_()
 
     if res == QDialog.Accepted:
