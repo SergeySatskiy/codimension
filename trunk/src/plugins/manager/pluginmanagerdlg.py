@@ -133,7 +133,7 @@ class PluginsDialog( QDialog ):
         self.__pluginsHeader = QTreeWidgetItem(
                 QStringList() << "" << "" << "" << "Name" << "Version" << "" )
         self.__pluginsView.setHeaderItem( self.__pluginsHeader )
-        self.__pluginsView.header().setSortIndicator( 3, Qt.AscendingOrder )
+        self.__pluginsView.header().setSortIndicator( NAME_COL, Qt.AscendingOrder )
         self.connect( self.__pluginsView,
                       SIGNAL( "itemSelectionChanged()" ),
                       self.__pluginSelectionChanged )
