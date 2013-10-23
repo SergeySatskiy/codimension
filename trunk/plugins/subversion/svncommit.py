@@ -120,6 +120,7 @@ def doSVNCommit( plugin, client, path ):
                     action = notifyActionToString( event[ 'action' ] )
                     if action:
                         logging.info( "Commit: " + action + " " + event[ 'path' ] )
+                        QApplication.processEvents()
                 return
 
             client.callback_get_log_message = getLogMessage
