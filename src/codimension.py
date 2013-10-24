@@ -230,6 +230,8 @@ def codimensionMain():
                                  CodimensionProject.CompleteProject )
 
     mainWindow.show()
+    mainWindow.restoreWindowPosition()
+    mainWindow.restoreSplitterSizes()
 
     # The editors positions can be restored properly only when the editors have
     # actually been drawn. Otherwise the first visible line is unknown.
@@ -241,7 +243,7 @@ def codimensionMain():
                         mainWindow.onProjectChanged )
 
     # Launch the user interface
-    QTimer.singleShot( 0, launchUserInterface )
+    QTimer.singleShot( 1, launchUserInterface )
 
     # Run the application main cycle
     retVal = codimensionApp.exec_()
