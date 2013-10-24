@@ -283,10 +283,8 @@ class BrowserModelBase( QAbstractItemModel ):
             excludeFunctor = GlobalData().project.shouldExclude
             items = [ itm for itm in items if not excludeFunctor( itm ) ]
 
+        pathsToRequest = []
         if items:
-
-            pathsToRequest = []
-
             # Pick up the modinfo source
             if self.globalData.project.isProjectDir( path ):
                 infoSrc = self.globalData.project.briefModinfoCache
