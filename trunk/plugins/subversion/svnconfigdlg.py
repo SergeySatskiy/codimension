@@ -28,7 +28,8 @@ from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui import ( QDialog, QVBoxLayout, QGroupBox, QSizePolicy,
                           QRadioButton, QDialogButtonBox, QPixmap,
                           QHBoxLayout, QLabel, QTabWidget, QWidget, QGridLayout,
-                          QLineEdit )
+                          QLineEdit, QTextBrowser )
+import pysvn
 
 
 AUTH_EXTERNAL = 0               # No user/password or external authorization
@@ -219,6 +220,8 @@ class SVNPluginConfigDialog( QDialog ):
         self.__tabWidget.addTab( ideWide, "IDE Wide" )
         projectSpecific = self.__createProjectSpecific()
         self.__tabWidget.addTab( projectSpecific, "Project Specific" )
+        version = self.__createVersionWidget()
+        self.__tabWidget.addTab( version, "Versions" )
         vboxLayout.addWidget( self.__tabWidget )
 
         # Buttons at the bottom
@@ -392,6 +395,31 @@ class SVNPluginConfigDialog( QDialog ):
             self.__projectUser.setFocus()
         self.__updateOKStatus()
         return
+
+    def __createVersionWidget( self ):
+        " Creates the version tab content "
+        ver = pysvn.svn_version
+        svnVersion = ".".join( [ str( ver[ 0 ] ), str( ver[ 1 ] ),
+                                 str( ver[ 2 ] ) ] )
+        ver = pysvn.version
+        pysvnVersion = ".".join( [ str( ver[ 0 ] ), str( ver[ 1 ] ),
+                                   str( ver[ 2 ] ) ] )
+
+        text = "<p>The major Codimension SVN plugin components are listed below:</p>" \
+               "<ul>" \
+               "<li><a href='http://subversion.apache.org/'>Subversion</a><br>" \
+               "Version: " + svnVersion + "<br></li>" \
+               "<li><a href='http://pysvn.tigris.org/docs/pysvn.html'>PySvn</a><br>" \
+               "Version: " + pysvnVersion + "<br>" \
+               "License: <a href='http://www.apache.org/licenses/LICENSE-1.1'>Apache License 1.1</a>" \
+               "<br></li>" \
+               "</ul>"
+
+        browser = QTextBrowser()
+        browser.setHtml( text )
+        browser.setOpenExternalLinks( True )
+        return browser
+
 
     def userAccept( self ):
         " Triggered when the user clicks OK "
