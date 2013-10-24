@@ -24,11 +24,10 @@
 
 
 import os.path
-from PyQt4.QtGui                import QWidget, QHBoxLayout, \
-                                       QDesktopServices, QMenu
+from PyQt4.QtGui import QFrame, QHBoxLayout, QDesktopServices, QMenu
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from PyQt4.QtCore               import Qt, SIGNAL
-from PyQt4.QtWebKit             import QWebView, QWebPage
+from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtWebKit import QWebView, QWebPage
 
 
 class HTMLViewer( QWebView ):
@@ -61,22 +60,22 @@ class HTMLViewer( QWebView ):
 
 
 
-class HTMLTabWidget( MainWindowTabWidgetBase, QWidget ):
+class HTMLTabWidget( MainWindowTabWidgetBase, QFrame ):
     " The widget which displays a RO HTML page "
 
     def __init__( self, parent = None ):
 
         MainWindowTabWidgetBase.__init__( self )
-        QWidget.__init__( self, parent )
+        QFrame.__init__( self, parent )
 
-        self.__editor = HTMLViewer( parent )
+        self.setFrameShape( QFrame.StyledPanel )
+        layout = QHBoxLayout( self )
+        layout.setMargin( 0 )
+
+        self.__editor = HTMLViewer( self )
         self.connect( self.__editor, SIGNAL( 'ESCPressed' ),
                       self.__onEsc )
-
-        layout = QHBoxLayout()
-        layout.setContentsMargins( 0, 0, 0, 0 )
         layout.addWidget( self.__editor )
-        self.setLayout( layout )
 
         self.__fileName = ""
         self.__shortName = ""
