@@ -53,6 +53,7 @@ class DisassemblerResultsWidget( QWidget, MainWindowTabWidgetBase ):
         self.connect( self.__printButton, SIGNAL( 'triggered()' ),
                       self.__onPrint )
         self.__printButton.setEnabled( False )
+        self.__printButton.setVisible( False )
 
         self.__printPreviewButton = QAction( \
                 PixmapCache().getIcon( 'printpreview.png' ),
@@ -60,6 +61,7 @@ class DisassemblerResultsWidget( QWidget, MainWindowTabWidgetBase ):
         self.connect( self.__printPreviewButton, SIGNAL( 'triggered()' ),
                       self.__onPrintPreview )
         self.__printPreviewButton.setEnabled( False )
+        self.__printPreviewButton.setVisible( False )
 
 
         # Toolbar
