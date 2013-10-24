@@ -52,7 +52,7 @@ from pyflakesviewer import PyflakesViewer
 from editorsmanager import EditorsManager
 from linecounter import LineCounterDialog
 from projectproperties import ProjectPropertiesDialog
-from utils.settings import Settings, thirdpartyDir
+from utils.settings import thirdpartyDir
 from findreplacewidget import FindWidget, ReplaceWidget
 from gotolinewidget import GotoLineWidget
 from pylintviewer import PylintViewer
@@ -1245,7 +1245,7 @@ class CodimensionMainWindow( QMainWindow ):
         for theme in availableThemes:
             themeAct = themesMenu.addAction( theme[ 1 ] )
             themeAct.setData( QVariant( theme[ 0 ] ) )
-            if theme[ 0 ] == Settings().skin:
+            if theme[ 0 ] == self.settings.skin:
                 font = themeAct.font()
                 font.setBold( True )
                 themeAct.setFont( font )
@@ -1885,7 +1885,7 @@ class CodimensionMainWindow( QMainWindow ):
                         str( dialog.emailEdit.text() ).strip() )
 
         QApplication.restoreOverrideCursor()
-        Settings().addRecentProject( dialog.absProjectFileName )
+        self.settings.addRecentProject( dialog.absProjectFileName )
         return
 
     def notImplementedYet( self ):
@@ -2021,7 +2021,7 @@ class CodimensionMainWindow( QMainWindow ):
 
         if self.__bottomSideBar.height() == 0:
             # It was hidden completely, so need to move the slider
-            splitterSizes = Settings().vSplitterSizes
+            splitterSizes = self.settings.vSplitterSizes
             splitterSizes[ 0 ] -= 200
             splitterSizes[ 1 ] += 200
             self.__verticalSplitter.setSizes( splitterSizes )
@@ -2063,7 +2063,7 @@ class CodimensionMainWindow( QMainWindow ):
 
         if self.__bottomSideBar.height() == 0:
             # It was hidden completely, so need to move the slider
-            splitterSizes = Settings().vSplitterSizes
+            splitterSizes = self.settings.vSplitterSizes
             splitterSizes[ 0 ] -= 200
             splitterSizes[ 1 ] += 200
             self.__verticalSplitter.setSizes( splitterSizes )
@@ -2369,7 +2369,7 @@ class CodimensionMainWindow( QMainWindow ):
 
         if self.__bottomSideBar.height() == 0:
             # It was hidden completely, so need to move the slider
-            splitterSizes = Settings().vSplitterSizes
+            splitterSizes = self.settings.vSplitterSizes
             splitterSizes[ 0 ] -= 200
             splitterSizes[ 1 ] += 200
             self.__verticalSplitter.setSizes( splitterSizes )
@@ -2431,15 +2431,15 @@ class CodimensionMainWindow( QMainWindow ):
 
         fileName = GlobalData().project.getProjectScript()
         params = GlobalData().getRunParameters( fileName )
-        termType = Settings().terminalType
-        profilerParams = Settings().getProfilerSettings()
-        debuggerParams = Settings().getDebuggerSettings()
+        termType = self.settings.terminalType
+        profilerParams = self.settings.getProfilerSettings()
+        debuggerParams = self.settings.getDebuggerSettings()
         dlg = RunDialog( fileName, params, termType,
                          profilerParams, debuggerParams, "Run" )
         if dlg.exec_() == QDialog.Accepted:
             GlobalData().addRunParams( fileName, dlg.runParams )
             if dlg.termType != termType:
-                Settings().terminalType = dlg.termType
+                self.settings.terminalType = dlg.termType
             self.__onRunProject()
         return
 
@@ -2450,17 +2450,17 @@ class CodimensionMainWindow( QMainWindow ):
 
         fileName = GlobalData().project.getProjectScript()
         params = GlobalData().getRunParameters( fileName )
-        termType = Settings().terminalType
-        profilerParams = Settings().getProfilerSettings()
-        debuggerParams = Settings().getDebuggerSettings()
+        termType = self.settings.terminalType
+        profilerParams = self.settings.getProfilerSettings()
+        debuggerParams = self.settings.getDebuggerSettings()
         dlg = RunDialog( fileName, params, termType,
                          profilerParams, debuggerParams, "Profile" )
         if dlg.exec_() == QDialog.Accepted:
             GlobalData().addRunParams( fileName, dlg.runParams )
             if dlg.termType != termType:
-                Settings().terminalType = dlg.termType
+                self.settings.terminalType = dlg.termType
             if dlg.profilerParams != profilerParams:
-                Settings().setProfilerSettings( dlg.profilerParams )
+                self.settings.setProfilerSettings( dlg.profilerParams )
             self.__onProfileProject()
         return
 
@@ -2471,17 +2471,17 @@ class CodimensionMainWindow( QMainWindow ):
 
         fileName = GlobalData().project.getProjectScript()
         params = GlobalData().getRunParameters( fileName )
-        termType = Settings().terminalType
-        profilerParams = Settings().getProfilerSettings()
-        debuggerParams = Settings().getDebuggerSettings()
+        termType = self.settings.terminalType
+        profilerParams = self.settings.getProfilerSettings()
+        debuggerParams = self.settings.getDebuggerSettings()
         dlg = RunDialog( fileName, params, termType,
                          profilerParams, debuggerParams, "Debug" )
         if dlg.exec_() == QDialog.Accepted:
             GlobalData().addRunParams( fileName, dlg.runParams )
             if dlg.termType != termType:
-                Settings().terminalType = dlg.termType
+                self.settings.terminalType = dlg.termType
             if dlg.debuggerParams != debuggerParams:
-                Settings().setDebuggerSettings( dlg.debuggerParams )
+                self.settings.setDebuggerSettings( dlg.debuggerParams )
             self.__onDebugProject()
         return
 
@@ -2494,7 +2494,7 @@ class CodimensionMainWindow( QMainWindow ):
         params = GlobalData().getRunParameters( fileName )
         workingDir, cmd, environment = getCwdCmdEnv( CMD_TYPE_RUN,
                                                      fileName, params,
-                                                     Settings().terminalType )
+                                                     self.settings.terminalType )
 
         try:
             Popen( cmd, shell = True,
@@ -2755,16 +2755,16 @@ class CodimensionMainWindow( QMainWindow ):
     def __onTheme( self, act ):
         " Triggers when a theme is selected "
         skinSubdir = str( act.data().toString() )
-        if Settings().skin == skinSubdir:
+        if self.settings.skin == skinSubdir:
             return
 
         logging.info( "Please restart codimension to apply the new theme" )
-        Settings().skin = skinSubdir
+        self.settings.skin = skinSubdir
         return
 
     def __styleAboutToShow( self ):
         " Style menu is about to show "
-        currentStyle = Settings().style.lower()
+        currentStyle = self.settings.style.lower()
         for item in self.__styles:
             font = item[ 1 ].font()
             if item[ 0 ].lower() == currentStyle:
@@ -2778,7 +2778,7 @@ class CodimensionMainWindow( QMainWindow ):
         " Sets the selected style "
         styleName = str( act.data().toString() )
         QApplication.setStyle( styleName )
-        Settings().style = styleName.lower()
+        self.settings.style = styleName.lower()
         return
 
     def __onMonoFont( self, act ):
@@ -4094,7 +4094,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__recentPrjMenu.clear()
         addedCount = 0
         currentPrj = GlobalData().project.fileName
-        for item in Settings().recentProjects:
+        for item in self.settings.recentProjects:
             if item == currentPrj:
                 continue
             addedCount += 1
