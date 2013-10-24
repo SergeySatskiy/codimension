@@ -25,6 +25,8 @@
 import logging
 import difflib
 import os.path
+from PyQt4.QtGui import QApplication, QCursor
+from PyQt4.QtCore import Qt
 
 
 class SVNDiffMixin:
@@ -33,17 +35,21 @@ class SVNDiffMixin:
         return
 
     def fileDiff( self ):
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         path = str( self.fileParentMenu.menuAction().data().toString() )
         with open( path ) as f:
             content = f.read()
         self.__svnDiff( path, content, False )
+        QApplication.restoreOverrideCursor()
         return
 
     def bufferDiff( self ):
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         editorWidget = self.ide.currentEditorWidget
         path = editorWidget.getFileName()
         content = str( self.ide.currentEditorWidget.getEditor().text() )
         self.__svnDiff( path, content, editorWidget.isModified() )
+        QApplication.restoreOverrideCursor()
         return
 
     def __svnDiff( self, path, content, modified ):
