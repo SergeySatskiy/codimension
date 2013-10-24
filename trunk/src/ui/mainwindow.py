@@ -169,7 +169,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.setContextMenuPolicy( Qt.NoContextMenu )
 
         # The size restore is done twice to avoid huge flickering
-        # This one is approximate, the one in the timer handler is precise
+        # This one is approximate, the one in restoreWindowPosition() is precise
         screenSize = GlobalData().application.desktop().screenGeometry()
         if screenSize.width() != settings.screenwidth or \
            screenSize.height() != settings.screenheight:
@@ -209,8 +209,11 @@ class CodimensionMainWindow( QMainWindow ):
 
         self.__horizontalSplitter = None
         self.__verticalSplitter = None
+        self.__horizontalSplitterSizes = list( settings.hSplitterSizes )
+        self.__verticalSplitterSizes = list( settings.vSplitterSizes )
+
         self.logViewer = None
-        self.__createLayout( settings )
+        self.__createLayout()
 
         splash.showMessage( "Initializing main menu bar..." )
         self.__initPluginSupport()
@@ -229,13 +232,9 @@ class CodimensionMainWindow( QMainWindow ):
         # Needs for a proper update of the pylint menu
         self.connect( GlobalData().project, SIGNAL( 'fsChanged' ),
                       self.__onFSChanged )
-
-        # 0 does not work, the window must be properly
-        # drawn before restoring the old position
-        QTimer.singleShot( 1, self.__restoreWindowPosition )
         return
 
-    def __restoreWindowPosition( self ):
+    def restoreWindowPosition( self ):
         " Makes sure that the window frame delta is proper "
         screenSize = GlobalData().application.desktop().screenGeometry()
         if screenSize.width() != self.settings.screenwidth or \
@@ -247,21 +246,17 @@ class CodimensionMainWindow( QMainWindow ):
             self.settings.ydelta = self.settings.ypos - self.y()
             self.settings.xpos = self.x()
             self.settings.ypos = self.y()
-
-            self.__initialisation = False
-            return
-
-
-        # Screen resolution is the same as before
-        if self.settings.xpos != self.x() or \
-           self.settings.ypos != self.y():
-            # The saved delta is incorrect, update it
-            self.settings.xdelta = self.settings.xpos - self.x() + \
-                                   self.settings.xdelta
-            self.settings.ydelta = self.settings.ypos - self.y() + \
-                                   self.settings.ydelta
-            self.settings.xpos = self.x()
-            self.settings.ypos = self.y()
+        else:
+            # Screen resolution is the same as before
+            if self.settings.xpos != self.x() or \
+                self.settings.ypos != self.y():
+                # The saved delta is incorrect, update it
+                self.settings.xdelta = self.settings.xpos - self.x() + \
+                                       self.settings.xdelta
+                self.settings.ydelta = self.settings.ypos - self.y() + \
+                                       self.settings.ydelta
+                self.settings.xpos = self.x()
+                self.settings.ypos = self.y()
         self.__initialisation = False
         return
 
@@ -272,7 +267,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__rightSideBar.shrink()
         return
 
-    def __createLayout( self, settings ):
+    def __createLayout( self ):
         """ creates the UI layout """
 
         self.editorsManagerWidget = EditorsManagerWidget( self, self.__debugger )
@@ -462,25 +457,24 @@ class CodimensionMainWindow( QMainWindow ):
         self.__leftSideBar.setSplitter( self.__horizontalSplitter )
         self.__bottomSideBar.setSplitter( self.__verticalSplitter )
         self.__rightSideBar.setSplitter( self.__horizontalSplitter )
+        return
 
-        # restore the side bar state
-        self.__horizontalSplitter.setSizes( settings.hSplitterSizes )
-        self.__verticalSplitter.setSizes( settings.vSplitterSizes )
-        if settings.leftBarMinimized:
+    def restoreSplitterSizes( self ):
+        " Restore the side bar state "
+        self.__horizontalSplitter.setSizes( self.settings.hSplitterSizes )
+        self.__verticalSplitter.setSizes( self.settings.vSplitterSizes )
+        if self.settings.leftBarMinimized:
             self.__leftSideBar.shrink()
-        if settings.bottomBarMinimized:
+        if self.settings.bottomBarMinimized:
             self.__bottomSideBar.shrink()
-        if settings.rightBarMinimized:
+        if self.settings.rightBarMinimized:
             self.__rightSideBar.shrink()
 
         # Setup splitters movement handlers
         self.connect( self.__verticalSplitter,
-                      SIGNAL( 'splitterMoved(int,int)' ),
-                      self.vSplitterMoved )
+                      SIGNAL( 'splitterMoved(int,int)' ), self.vSplitterMoved )
         self.connect( self.__horizontalSplitter,
-                      SIGNAL( 'splitterMoved(int,int)' ),
-                      self.hSplitterMoved )
-
+                      SIGNAL( 'splitterMoved(int,int)' ), self.hSplitterMoved )
         return
 
     @staticmethod
@@ -510,17 +504,27 @@ class CodimensionMainWindow( QMainWindow ):
 
     def vSplitterMoved( self, pos, index ):
         """ vertical splitter moved handler """
-        vList = list( self.__verticalSplitter.sizes() )
-        self.settings.bottomBarMinimized = self.__bottomSideBar.isMinimized()
-        self.settings.vSplitterSizes = vList
+        newSizes = list( self.__verticalSplitter.sizes() )
+
+        if not self.__bottomSideBar.isMinimized():
+            self.__verticalSplitterSizes[ 0 ] = newSizes[ 0 ]
+
+        self.__verticalSplitterSizes[ 1 ] = sum( newSizes ) - \
+                        self.__verticalSplitterSizes[ 0 ]
         return
 
     def hSplitterMoved( self, pos, index ):
         """ horizontal splitter moved handler """
-        hList = list( self.__horizontalSplitter.sizes() )
-        self.settings.leftBarMinimized = self.__leftSideBar.isMinimized()
-        self.settings.rightBarMinimized = self.__rightSideBar.isMinimized()
-        self.settings.hSplitterSizes = hList
+        newSizes = list( self.__horizontalSplitter.sizes() )
+
+        if not self.__leftSideBar.isMinimized():
+            self.__horizontalSplitterSizes[ 0 ] = newSizes[ 0 ]
+        if not self.__rightSideBar.isMinimized():
+            self.__horizontalSplitterSizes[ 2 ] = newSizes[ 2 ]
+
+        self.__horizontalSplitterSizes[ 1 ] = sum( newSizes ) - \
+                        self.__horizontalSplitterSizes[ 0 ] - \
+                        self.__horizontalSplitterSizes[ 2 ]
         return
 
     def __createStatusBar( self ):
@@ -1643,7 +1647,7 @@ class CodimensionMainWindow( QMainWindow ):
                 # The editor tabs must be loaded after a VCS plugin has a
                 # chance to receive projectChanged signal where it reads
                 # the plugin configuration
-                QTimer.singleShot( 0, self.__delayedEditorsTabRestore )
+                QTimer.singleShot( 1, self.__delayedEditorsTabRestore )
 
 
         self.updateRunDebugButtons()
@@ -1898,8 +1902,8 @@ class CodimensionMainWindow( QMainWindow ):
     def closeEvent( self, event ):
         " Triggered when the IDE is closed "
         # Save the side bars status
-        self.settings.vSplitterSizes = list( self.__verticalSplitter.sizes() )
-        self.settings.hSplitterSizes = list( self.__horizontalSplitter.sizes() )
+        self.settings.vSplitterSizes = self.__verticalSplitterSizes
+        self.settings.hSplitterSizes = self.__horizontalSplitterSizes
         self.settings.bottomBarMinimized = self.__bottomSideBar.isMinimized()
         self.settings.leftBarMinimized = self.__leftSideBar.isMinimized()
         self.settings.rightBarMinimized = self.__rightSideBar.isMinimized()
