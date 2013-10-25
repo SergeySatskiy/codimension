@@ -2955,7 +2955,7 @@ class CodimensionMainWindow( QMainWindow ):
             self.__dbgRestart.setEnabled( True )
             self.__debugRestartAct.setEnabled( True )
             self.__setDebugControlFlowButtonsState( True )
-            self.dbgState.setText( "Debugger: waiting" )
+            self.dbgState.setText( "Debugger: idle" )
         elif newState == CodimensionDebugger.STATE_IN_CLIENT:
             self.__dbgStopBrutal.setEnabled( True )
             self.__debugStopBrutalAct.setEnabled( True )
