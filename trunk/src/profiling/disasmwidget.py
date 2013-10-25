@@ -26,7 +26,7 @@ from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from PyQt4.QtCore import Qt, SIGNAL, QSize, QEvent
 from PyQt4.QtGui import ( QWidget, QToolBar, QHBoxLayout, QAction,
                           QLabel, QFrame, QPalette, QVBoxLayout,
-                          QTextEdit, QSizePolicy, QApplication )
+                          QTextEdit, QSizePolicy, QApplication, QFont )
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 from utils.settings import Settings
@@ -211,9 +211,10 @@ class DisassemblerResultsWidget( QWidget, MainWindowTabWidgetBase ):
 
     def zoomTo( self, zoomFactor ):
         " Scales the font in accordance to the given zoom factor "
-        font = GlobalData().skin.nolexerFont
+        font = QFont( GlobalData().skin.nolexerFont )
         newPointSize = font.pointSize() + zoomFactor
-        self.__text.setFontPointSize( newPointSize )
+        font.setPointSize( newPointSize )
+        self.__text.setFont( font )
         return
 
 
