@@ -22,14 +22,50 @@
 
 " Disassembler widget "
 
-from proftable import ProfileTableViewer
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from PyQt4.QtCore import Qt, SIGNAL, QSize
-from PyQt4.QtGui import QWidget, QToolBar, QHBoxLayout, QAction, \
-                        QLabel, QFrame, QPalette, QVBoxLayout, \
-                        QTextEdit
+from PyQt4.QtCore import Qt, SIGNAL, QSize, QEvent
+from PyQt4.QtGui import ( QWidget, QToolBar, QHBoxLayout, QAction,
+                          QLabel, QFrame, QPalette, QVBoxLayout,
+                          QTextEdit, QSizePolicy, QApplication )
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
+from utils.settings import Settings
+
+
+
+class DisasmWidget( QTextEdit ):
+    " Wraps QTextEdit to have a keyboard handler "
+
+    def __init__( self, parent ):
+        QTextEdit.__init__( self, parent )
+        self.installEventFilter( self )
+        return
+
+    def eventFilter( self, obj, event ):
+        " Event filter to catch shortcuts on UBUNTU "
+        if event.type() == QEvent.KeyPress:
+            key = event.key()
+            modifiers = event.modifiers()
+            if modifiers == Qt.ControlModifier:
+                if key == Qt.Key_Minus:
+                    return self.parent().onZoomOut()
+                if key == Qt.Key_Equal:
+                    return self.parent().onZoomIn()
+                if key == Qt.Key_0:
+                    return self.parent().onZoomReset()
+
+        return QTextEdit.eventFilter( self, obj, event )
+
+    def wheelEvent( self, event ):
+        " Mouse wheel event "
+        if QApplication.keyboardModifiers() == Qt.ControlModifier:
+            if event.delta() > 0:
+                self.parent().onZoomIn()
+            else:
+                self.parent().onZoomOut()
+        else:
+            QTextEdit.wheelEvent( self, event )
+        return
 
 
 
@@ -55,7 +91,7 @@ class DisassemblerResultsWidget( QWidget, MainWindowTabWidgetBase ):
         self.__printButton.setEnabled( False )
         self.__printButton.setVisible( False )
 
-        self.__printPreviewButton = QAction( \
+        self.__printPreviewButton = QAction(
                 PixmapCache().getIcon( 'printpreview.png' ),
                 'Print preview', self )
         self.connect( self.__printPreviewButton, SIGNAL( 'triggered()' ),
@@ -63,6 +99,22 @@ class DisassemblerResultsWidget( QWidget, MainWindowTabWidgetBase ):
         self.__printPreviewButton.setEnabled( False )
         self.__printPreviewButton.setVisible( False )
 
+        # Zoom buttons
+        zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
+                                'Zoom in (Ctrl+=)', self )
+        self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.onZoomIn )
+
+        zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
+                                'Zoom out (Ctrl+-)', self )
+        self.connect( zoomOutButton, SIGNAL( 'triggered()' ), self.onZoomOut )
+
+        zoomResetButton = QAction( PixmapCache().getIcon( 'zoomreset.png' ),
+                                   'Zoom reset (Ctrl+0)', self )
+        self.connect( zoomResetButton, SIGNAL( 'triggered()' ),
+                      self.onZoomReset )
+
+        spacer = QWidget()
+        spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
 
         # Toolbar
         toolbar = QToolBar( self )
@@ -75,9 +127,13 @@ class DisassemblerResultsWidget( QWidget, MainWindowTabWidgetBase ):
 
         toolbar.addAction( self.__printPreviewButton )
         toolbar.addAction( self.__printButton )
+        toolbar.addWidget( spacer )
+        toolbar.addAction( zoomInButton )
+        toolbar.addAction( zoomOutButton )
+        toolbar.addAction( zoomResetButton )
 
-        summary = QLabel( "<b>Script:</b> " + scriptName + "<br>" \
-                          "<b>Name:</b> " + name + "<br>" \
+        summary = QLabel( "<b>Script:</b> " + scriptName + "<br>"
+                          "<b>Name:</b> " + name + "<br>"
                           "<b>Disassembled at:</b> " + reportTime )
         summary.setFrameStyle( QFrame.StyledPanel )
         summary.setAutoFillBackground( True )
@@ -89,10 +145,11 @@ class DisassemblerResultsWidget( QWidget, MainWindowTabWidgetBase ):
         summaryPalette.setColor( QPalette.Background, summaryBackground )
         summary.setPalette( summaryPalette )
 
-        self.__text = QTextEdit( self )
+        self.__text = DisasmWidget( self )
         self.__text.setAcceptRichText( False )
         self.__text.setLineWrapMode( QTextEdit.NoWrap )
-        self.__text.setFontFamily( GlobalData().skin.baseMonoFontFace )
+        self.__text.setFont( GlobalData().skin.nolexerFont )
+        self.zoomTo( Settings().zoom )
         self.__text.setReadOnly( True )
         self.__text.setPlainText( code )
 
@@ -122,6 +179,27 @@ class DisassemblerResultsWidget( QWidget, MainWindowTabWidgetBase ):
         " Triggered on the 'print preview' button "
         pass
 
+    def onZoomReset( self ):
+        " Triggered when the zoom reset button is pressed "
+        zoom = Settings().zoom
+        if zoom != 0:
+            self.emit( SIGNAL( 'TextEditorZoom' ), 0 )
+        return True
+
+    def onZoomIn( self ):
+        " Triggered when the zoom in button is pressed "
+        zoom = Settings().zoom
+        if zoom < 20:
+            self.emit( SIGNAL( 'TextEditorZoom' ), zoom + 1 )
+        return True
+
+    def onZoomOut( self ):
+        " Triggered when the zoom out button is pressed "
+        zoom = Settings().zoom
+        if zoom > -10:
+            self.emit( SIGNAL( 'TextEditorZoom' ), zoom - 1 )
+        return True
+
     def keyPressEvent( self, event ):
         " Handles the key press events "
         if event.key() == Qt.Key_Escape:
@@ -129,6 +207,13 @@ class DisassemblerResultsWidget( QWidget, MainWindowTabWidgetBase ):
             event.accept()
         else:
             QWidget.keyPressEvent( self, event )
+        return
+
+    def zoomTo( self, zoomFactor ):
+        " Scales the font in accordance to the given zoom factor "
+        font = GlobalData().skin.nolexerFont
+        newPointSize = font.pointSize() + zoomFactor
+        self.__text.setFontPointSize( newPointSize )
         return
 
 
