@@ -24,6 +24,7 @@
 
 import logging
 import pysvn
+import os.path
 from svnstrconvert import notifyActionToString
 
 
@@ -68,11 +69,18 @@ def doSVNAdd( plugin, client, path, recursively ):
     " Does SVN add "
     pathList = []
     def notifyCallback( event, paths = pathList ):
-        if event[ 'path' ]:
-            action = notifyActionToString( event[ 'action' ] )
-            if action:
-                logging.info( action + " " + event[ 'path' ] )
-                paths.append( event[ 'path' ] )
+        if 'path' not in event:
+            return
+        if not event[ 'path' ]:
+            return
+
+        path = event[ 'path' ]
+        if os.path.isdir( path ) and not path.endswith( os.path.sep ):
+            path += os.path.sep
+        action = notifyActionToString( event[ 'action' ] )
+        if action:
+            logging.info( action + " " + path )
+            paths.append( path )
         return
 
     try:
@@ -111,3 +119,4 @@ def doSVNAdd( plugin, client, path, recursively ):
     for addedPath in pathList:
         plugin.notifyPathChanged( addedPath )
     return
+

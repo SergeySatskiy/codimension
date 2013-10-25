@@ -63,7 +63,7 @@ class SVNUpdateMixin:
         client = self.getSVNClient( self.getSettings() )
         if rev is None:
             rev = pysvn.Revision( pysvn.opt_revision_kind.head )
-        progressDialog = SVNUpdateProgress( client, path, recursively, rev )
+        progressDialog = SVNUpdateProgress( self, client, path, recursively, rev )
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         progressDialog.exec_()
         QApplication.restoreOverrideCursor()
@@ -74,15 +74,17 @@ class SVNUpdateMixin:
 class SVNUpdateProgress( QDialog ):
     " Progress of the svn update command "
 
-    def __init__( self, client, path, recursively, rev, parent = None ):
+    def __init__( self, plugin, client, path, recursively, rev, parent = None ):
         QDialog.__init__( self, parent )
         self.__cancelRequest = False
         self.__inProcess = False
 
+        self.__plugin = plugin
         self.__client = client
         self.__path = path
         self.__recursively = recursively
         self.__rev = rev
+        self.__updatedPaths = []
 
         self.__createLayout()
         self.setWindowTitle( "SVN Update" )
@@ -140,20 +142,29 @@ class SVNUpdateProgress( QDialog ):
 
     def __notifyCallback( self, event ):
         " Called by pysvn. event is a dictionary "
+        if 'path' not in event:
+            return
+        if not event[ 'path' ]:
+            return
+
         message = None
+        path = event[ 'path' ]
+        if os.path.isdir( path ) and not path.endswith( os.path.sep ):
+            path += os.path.sep
         if event[ 'action' ] == pysvn.wc_notify_action.update_completed:
-            message = "Updated to revision " + str( event[ 'revision' ].number )
+            message = path + " updated to revision " + str( event[ 'revision' ].number )
         elif event[ 'action' ] == pysvn.wc_notify_action.update_started:
-            message = "Updating '" + event[ 'path' ] + "':"
-        elif event[ 'path' ]:
+            message = "updating " + path + ":"
+        else:
+            self.__updatedPaths.append( path )
             action = notifyActionToString( event[ 'action' ] )
             if action is not None and action != "unknown":
-                message = action + " " + event[ 'path' ]
+                message = "  " + action + " " + path
                 if event[ 'mime_type' ] == "application/octet-stream":
                     message += " (binary)"
 
         if message:
-            self.__infoLabel.setText( message )
+            self.__infoLabel.setText( message.strip() )
             logging.info( message )
         QApplication.processEvents()
         return
@@ -188,6 +199,9 @@ class SVNUpdateProgress( QDialog ):
             self.__inProcess = False
             self.close()
             return
+
+        for updatedPath in self.__updatedPaths:
+            self.__plugin.notifyPathChanged( updatedPath )
 
         if self.__cancelRequest:
             self.close()
