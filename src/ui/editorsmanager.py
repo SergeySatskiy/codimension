@@ -1081,6 +1081,8 @@ class EditorsManager( QTabWidget ):
                                                    code, reportTime )
             self.connect( newWidget, SIGNAL( 'ESCPressed' ),
                           self.__onESC )
+            self.connect( newWidget, SIGNAL( 'TextEditorZoom' ),
+                          self.__onZoom )
 
             if self.widget( 0 ) == self.__welcomeWidget:
                 # It is the only welcome widget on the screen
@@ -2070,6 +2072,8 @@ class EditorsManager( QTabWidget ):
             if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
                                    MainWindowTabWidgetBase.VCSAnnotateViewer ]:
                 item.getEditor().zoomTo( zoomValue )
+            elif item.getType() in [ MainWindowTabWidgetBase.DisassemblerViewer ]:
+                item.zoomTo( zoomValue )
         return
 
     def getTextEditors( self ):
