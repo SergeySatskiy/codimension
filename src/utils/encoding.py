@@ -92,6 +92,14 @@ def get_coding( text ):
                 return match.group( 1 ).lower()
     return None
 
+
+CODING_SYNONIMS = { 'utf8'   : 'utf-8',
+                    'utf16'  : 'utf-16',
+                    'utf32'  : 'utf-32',
+                    'latin1' : 'latin-1',
+                    'koi8r'  : 'koi8-r',
+                    'koi8u'  : 'koi8-u' }
+
 def decode( text ):
     """ Decodes the text """
 
@@ -110,6 +118,9 @@ def decode( text ):
 
         coding = get_coding( text )
         if coding:
+            # Synonims
+            if coding in CODING_SYNONIMS:
+                coding = CODING_SYNONIMS[ coding ]
             return unicode( text, coding ), coding
 
     except ( UnicodeError, LookupError ):
@@ -253,12 +264,11 @@ def convertLineEnds( text, eol ):
     if eol == '\r\n':
         regexp = re.compile( r"(\r(?!\n)|(?<!\r)\n)" )
         return regexp.sub( lambda m, eol = '\r\n': eol, text )
-    elif eol == '\n':
+    if eol == '\n':
         regexp = re.compile( r"(\r\n|\r)" )
         return regexp.sub( lambda m, eol = '\n': eol, text )
-    elif eol == '\r':
+    if eol == '\r':
         regexp = re.compile( r"(\r\n|\n)" )
         return regexp.sub( lambda m, eol = '\r': eol, text )
-    else:
-        return text
+    return text
 
