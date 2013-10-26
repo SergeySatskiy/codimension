@@ -466,7 +466,8 @@ class TextEditor( ScintillaWrapper ):
             else:
                 self.encodingMenu.setEnabled( True )
                 encoding = self.__normalizeEncoding( self.encoding )
-                self.supportedEncodings[ encoding ].setChecked( True )
+                if encoding in self.supportedEncodings:
+                    self.supportedEncodings[ encoding ].setChecked( True )
 
             self.__menuOpenAsFile.setEnabled( self.openAsFileAvailable() )
             self.__menuDownloadAndShow.setEnabled(
