@@ -80,7 +80,7 @@ def getUserShell():
 
     try:
         s = os.getenv( 'SHELL' )
-        if s != None:
+        if s is not None:
             return s
 
         username = getpass.getuser()
