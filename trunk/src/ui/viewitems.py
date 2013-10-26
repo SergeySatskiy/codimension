@@ -97,7 +97,7 @@ class TreeViewItem( object ):
 
     def isRoot( self ):
         " True if it is the root item "
-        return self.parentItem == None
+        return self.parentItem is None
 
     def appendData( self, data ):
         " Adds more data to the item "

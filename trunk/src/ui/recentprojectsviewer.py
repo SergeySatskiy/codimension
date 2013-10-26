@@ -519,7 +519,7 @@ class RecentProjectsViewer( QWidget ):
 
     def __updateProjectToolbarButtons( self ):
         " Updates the toolbar buttons depending on the __projectContextItem "
-        if self.__projectContextItem == None:
+        if self.__projectContextItem is None:
             self.loadButton.setEnabled( False )
             self.propertiesButton.setEnabled( False )
             self.copyPrjPathButton.setEnabled( False )
@@ -530,8 +530,8 @@ class RecentProjectsViewer( QWidget ):
 
             self.propertiesButton.setEnabled( enabled )
             self.copyPrjPathButton.setEnabled( True )
-            self.loadButton.setEnabled( enabled and \
-                                        not isCurrentProject and \
+            self.loadButton.setEnabled( enabled and
+                                        not isCurrentProject and
                                         not self.__debugMode )
             self.trashButton.setEnabled( not isCurrentProject )
         return
