@@ -95,19 +95,22 @@ class OutlineBrowser( FilesBrowser ):
             return "0" + result
         return result
 
+    @staticmethod
+    def __toCSSColor( rgba ):
+        " Converts the color to the CSS format "
+        return "#" + OutlineBrowser.__converttohex( rgba[ 0 ] ) + \
+                     OutlineBrowser.__converttohex( rgba[ 1 ] ) + \
+                     OutlineBrowser.__converttohex( rgba[ 2 ] )
+
     def __getOriginalHeaderBackground( self ):
         " Retrieves the original header color as a string useful for CSS "
         headerPalette = self.header().palette()
         backgroundColor = headerPalette.color( QPalette.Background )
-        r, g, b, a = backgroundColor.getRgb()
-        return "#" + self.__converttohex( r ) + self.__converttohex( g ) + \
-                     self.__converttohex( b )
+        return self.__toCSSColor( backgroundColor.getRgb() )
 
     def __getBrokenHeaderBackground( self ):
         " Returns thr broken header background color as a string useful for CSS "
-        r, g, b, a = GlobalData().skin.outdatedOutlineColor.getRgb()
-        return "#" + self.__converttohex( r ) + self.__converttohex( g ) + \
-                     self.__converttohex( b )
+        return self.__toCSSColor( GlobalData().skin.outdatedOutlineColor.getRgb() )
 
     def setHeaderHighlight( self, on ):
         " Sets or removes the header highlight "
@@ -192,4 +195,3 @@ class OutlineBrowser( FilesBrowser ):
                                                   infoItem.line )
 
         return
-
