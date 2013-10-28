@@ -35,7 +35,8 @@ def collectFiles( path, files ):
     for item in os.listdir( path ):
         if os.path.isdir( path + item ):
             collectFiles( path + item, files )
-        if item.endswith( ".py" ):
+        if os.path.isfile( path + item ) and \
+            (item.endswith( ".py" ) or item.endswith( ".py3" )):
             if item.startswith( "__" ):
                 continue
             files.append( os.path.abspath( path + item ) )
@@ -47,8 +48,9 @@ def pyclbrTest( files ):
     " Loop for the library standard parser "
     count = 0
     for item in files:
-        tempObj = pyclbr.readmodule_ex( os.path.basename( item ).replace( ".py", "" ),
-                                        [os.path.dirname( item )] )
+        tempObj = pyclbr.readmodule_ex(
+                            os.path.basename( item ).replace( ".py", "" ),
+                            [os.path.dirname( item )] )
         count += 1
     print "pyclbr: processed " + str(count) + " files"
     return
@@ -71,6 +73,7 @@ def cdmpyparserTest( files ):
 
 
 def deltaToFloat( delta ):
+    " Converts time delta to float "
     return delta.seconds + delta.microseconds / 1E6 + delta.days * 86400
 
 
@@ -89,11 +92,15 @@ if len( sys.argv ) > 1:
         pythonFiles.append( os.path.abspath( fname ) )
     print "Files to test: " + str(len(pythonFiles))
 else:
-    print "Collecting a list of python classes..."
-    startDir = os.path.sep + "usr" + os.path.sep + "lib" + os.path.sep + \
-               "python2.7" + os.path.sep
-    collectFiles( startDir, pythonFiles )
-    print "Collected " + str(len(pythonFiles)) + " files from " + startDir
+    print "Collecting a list of python files..."
+    paths = list( sys.path )
+    if '' in paths:
+        paths.remove( '' )
+    for path in paths:
+        if os.path.isdir( path ):
+            collectFiles( path, pythonFiles )
+    pythonFiles = set( pythonFiles )
+    print "Collected " + str(len(pythonFiles))
 
 
 # timing for pyclbr
