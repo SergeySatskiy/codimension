@@ -103,7 +103,7 @@ HTML_HEADER_FORMAT = """<!DOCTYPE html>
     <meta property="dc:abstract" content="{desc}">
     {style_section}
 </head>
-<body bgcolor='""" + toCSSColor( skin.nolexerPaper ) + """'><div>
+<body bgcolor='""" + toCSSColor( skin.nolexerPaper ) + """'>
 """
 
 #HTML_FOOTER_FORMAT = """
@@ -111,7 +111,7 @@ HTML_HEADER_FORMAT = """<!DOCTYPE html>
 #</body>
 #</html>
 #"""
-HTML_FOOTER_FORMAT = """</div></body></html>"""
+HTML_FOOTER_FORMAT = """</body></html>"""
 
 
 
