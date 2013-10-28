@@ -190,6 +190,8 @@ class SVNAnnotateProgress( QDialog ):
 
     def __process( self ):
         " Update process "
+        QApplication.processEvents()
+
         self.__client.callback_cancel = self.__cancelCallback
         self.__client.callback_notify = self.__notifyCallback
 
@@ -238,22 +240,19 @@ class SVNAnnotateProgress( QDialog ):
                 revisions.add( item[ 'revision' ].number )
 
         self.revisionsInfo = {}
-        itemNumber = 1
-        total = str( len( revisions ) )
-        for revision in revisions:
-            self.__infoLabel.setText( "Getting message for revision " +
-                                      str( revision ) + " (" +
-                                      str( itemNumber ) + " out of " +
-                                      total + ")" )
-            QApplication.processEvents()
-            if self.__cancelRequest:
-                break
+        minRevision = min( revisions )
+        maxRevision = max( revisions )
 
-            rev = pysvn.Revision( pysvn.opt_revision_kind.number, revision )
-            logMessage = self.__client.log( self.__path,
-                                            revision_start = rev,
-                                            limit = 1 )
-            self.revisionsInfo[ revision ] = { 'message' :
-                                                    logMessage[ 0 ].message }
-            itemNumber += 1
+        revStart = pysvn.Revision( pysvn.opt_revision_kind.number, maxRevision )
+        revEnd = pysvn.Revision( pysvn.opt_revision_kind.number, minRevision )
+
+        revs = self.__client.log( self.__path,
+                                  revision_start = revStart,
+                                  revision_end = revEnd )
+        for rev in revs:
+            if rev[ 'revision' ].kind == pysvn.opt_revision_kind.number:
+                number = rev[ 'revision' ].number
+                if number in revisions:
+                    self.revisionsInfo[ number ] = { 'message' :
+                                            rev[ 'message' ] }
         return
