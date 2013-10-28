@@ -175,6 +175,21 @@ SKIN_SETTINGS = [
     GeneralSkinSetting( "calltipHighColor", GeneralSkinSetting.TYPE_COLOR, QColor( 250, 89, 68, 255 ) ),
     GeneralSkinSetting( "outdatedOutlineColor", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 154, 154, 255 ) ),
     GeneralSkinSetting( "baseMonoFontFace", GeneralSkinSetting.TYPE_STRING, "Monospace" ),
+
+    GeneralSkinSetting( "diffchanged2Color", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
+    GeneralSkinSetting( "diffchanged2Paper", GeneralSkinSetting.TYPE_COLOR, QColor( 247, 254, 0, 255 ) ),
+    GeneralSkinSetting( "diffponctColor", GeneralSkinSetting.TYPE_COLOR, QColor( 166, 72, 72, 255 ) ),
+    GeneralSkinSetting( "difflineColor", GeneralSkinSetting.TYPE_COLOR, QColor( 102, 102, 102, 255 ) ),
+    GeneralSkinSetting( "diffthColor", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 255, 255, 255 ) ),
+    GeneralSkinSetting( "diffthPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 102, 102, 102, 255 ) ),
+    GeneralSkinSetting( "diffaddedPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 197, 250, 175, 255 ) ),
+    GeneralSkinSetting( "diffchangedColor", GeneralSkinSetting.TYPE_COLOR, QColor( 102, 102, 102, 255 ) ),
+    GeneralSkinSetting( "diffchangedPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 244, 255, 221, 255 ) ),
+    GeneralSkinSetting( "diffdeletedPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 204, 204, 255 ) ),
+    GeneralSkinSetting( "diffhunkinfoColor", GeneralSkinSetting.TYPE_COLOR, QColor( 166, 72, 72, 255 ) ),
+    GeneralSkinSetting( "diffhunkinfoPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 255, 255, 255 ) ),
+    GeneralSkinSetting( "diffunmodifiedColor", GeneralSkinSetting.TYPE_COLOR, QColor( 102, 102, 102, 255 ) ),
+    GeneralSkinSetting( "diffunmodifiedPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 238, 238, 238, 255 ) ),
                 ]
 
 
