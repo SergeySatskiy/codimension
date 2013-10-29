@@ -38,6 +38,7 @@ from thirdparty.diff2html.diff2html import parse_from_memory
 import os.path
 import difflib
 import logging
+from utils.fileutils import detectFileType, isFileTypeSearchable
 
 
 class DiffButton( QPushButton ):
@@ -93,7 +94,11 @@ class SVNPluginCommitDialog( QDialog ):
             diffButton = self.__createDiffButton()
             diffButton.path = item[ 0 ]
             diffButton.status = item[ 1 ]
-            if os.path.isdir( item[ 0 ] ) or item[ 1 ] in [ IND_REPLACED ]:
+
+            fileType = detectFileType( item[ 0 ] )
+
+            if os.path.isdir( item[ 0 ] ) or item[ 1 ] in [ IND_REPLACED ] \
+                or not isFileTypeSearchable( fileType ):
                 diffButton.setEnabled( False )
                 diffButton.setToolTip( "Diff is not available" )
             else:
