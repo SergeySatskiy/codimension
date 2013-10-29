@@ -43,12 +43,13 @@ class VCSUpdateIntervalConfigDialog( QDialog ):
         self.connect( self.__intervalEdit,
                       SIGNAL( "textChanged(const QString&)" ),
                       self.__updateOKStatus )
+        self.__intervalEdit.setFocus()
         return
 
     def __createLayout( self ):
         " Creates the dialog layout "
 
-        self.resize( 640, 150 )
+        self.resize( 400, 80 )
         self.setSizeGripEnabled( True )
 
         vboxLayout = QVBoxLayout( self )
@@ -57,6 +58,7 @@ class VCSUpdateIntervalConfigDialog( QDialog ):
         hboxLayout.addWidget( QLabel( "Status update interval, sec." ) )
         self.__intervalEdit = QLineEdit()
         self.__intervalEdit.setValidator( QIntValidator( 1, 3600, self ) )
+        self.__intervalEdit.setAlignment( Qt.AlignRight | Qt.AlignVCenter )
         hboxLayout.addWidget( self.__intervalEdit )
 
         # Buttons at the bottom
@@ -80,6 +82,12 @@ class VCSUpdateIntervalConfigDialog( QDialog ):
             okButton.setToolTip( "Interval must be defined" )
             return
 
+        value = int( str( self.__intervalEdit.text() ) )
+        if value < 1 or value > 3600:
+            okButton.setEnabled( False )
+            okButton.setToolTip( "Interval must be within 1..3600 sec" )
+            return
+
         okButton.setEnabled( True )
         okButton.setToolTip( "" )
         return
@@ -89,4 +97,3 @@ class VCSUpdateIntervalConfigDialog( QDialog ):
         self.interval = int( str( self.__intervalEdit.text() ) )
         self.accept()
         return
-
