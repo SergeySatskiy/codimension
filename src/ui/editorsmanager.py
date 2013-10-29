@@ -2140,8 +2140,27 @@ class EditorsManager( QTabWidget ):
         if currentWidget.doesFileExist():
             if currentWidget.isDiskFileModified():
                 if not currentWidget.getReloadDialogShown():
-                    currentWidget.showOutsideChangesBar( \
+                    currentWidget.showOutsideChangesBar(
                                     self.__countDiskModifiedUnchanged() > 1 )
+        return
+
+    def checkOutsidePathChange( self, path ):
+        " Checks outside changes for a certain path "
+        if path.endswith( os.path.sep ):
+            return
+
+        for index in xrange( self.count() ):
+            widget = self.widget( index )
+            fileName = widget.getFileName()
+            if fileName == path:
+                self._updateIconAndTooltip( index )
+                currentWidget = self.currentWidget()
+                if currentWidget == widget:
+                    if widget.doesFileExist():
+                        if not widget.getReloadDialogShown():
+                            widget.showOutsideChangesBar(
+                                    self.__countDiskModifiedUnchanged() > 1 )
+                break
         return
 
     def __countDiskModifiedUnchanged( self ):

@@ -196,6 +196,11 @@ class VCSManager( QObject ):
         # What is essentially required is to update the status of the path.
         # setLocallyModified(...) will do - it sends urgent request
         self.setLocallyModified( path )
+
+        # Changed paths may change the file contents
+        mainWindow = GlobalData().mainWindow
+        editorsManager = mainWindow.editorsManagerWidget.editorsManager
+        editorsManager.checkOutsidePathChange( path )
         return
 
     def __populateProjectDirectories( self ):
