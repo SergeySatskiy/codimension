@@ -88,6 +88,7 @@ from about import AboutDialog
 from utils.skin import getMonospaceFontList
 from plugins.manager.pluginmanagerdlg import PluginsDialog
 from plugins.vcssupport.vcsmanager import VCSManager
+from plugins.vcssupport.intervaldlg import VCSUpdateIntervalConfigDialog
 
 
 class EditorsManagerWidget( QWidget ):
@@ -540,10 +541,13 @@ class CodimensionMainWindow( QMainWindow ):
         font.setItalic( True )
         self.__statusBar.setFont( font )
 
-        self.sbVCSStatus = QLabel( "", self.__statusBar )
-        self.sbVCSStatus.setFrameStyle( QFrame.StyledPanel )
+        self.sbVCSStatus = FitPathLabel( self.__statusBar )
         self.__statusBar.addPermanentWidget( self.sbVCSStatus )
         self.sbVCSStatus.setVisible( False )
+        self.sbVCSStatus.setContextMenuPolicy( Qt.CustomContextMenu )
+        self.connect( self.sbVCSStatus,
+                      SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
+                      self.__showVCSLabelContextMenu )
 
         self.dbgState = QLabel( "Debugger: unknown", self.__statusBar )
         self.dbgState.setFrameStyle( QFrame.StyledPanel )
@@ -2846,6 +2850,18 @@ class CodimensionMainWindow( QMainWindow ):
                 pass
         return
 
+    def __onVCSMonitorInterval( self ):
+        " Runs the VCS monitor interval setting dialog "
+        dlg = VCSUpdateIntervalConfigDialog(
+                            self.settings.vcsstatusupdateinterval, self )
+        if dlg.exec_() == QDialog.Accepted:
+            self.settings.vcsstatusupdateinterval = dlg.interval
+        return
+
+    def __onVCSCheckNow( self ):
+        " Initiates immediate status checking "
+        pass
+
     def __showPathLabelContextMenu( self, pos ):
         " Triggered when a context menu is requested for the path label "
         contextMenu = QMenu( self )
@@ -2860,6 +2876,19 @@ class CodimensionMainWindow( QMainWindow ):
                                "Copy file name to clipboard",
                                self.__onCopyFileNameToClipboard )
         contextMenu.popup( self.sbFile.mapToGlobal( pos ) )
+        return
+
+    def __showVCSLabelContextMenu( self, pos ):
+        " Triggered when a context menu is requested for a VCS label "
+        contextMenu = QMenu( self )
+        contextMenu.addAction( PixmapCache().getIcon( "vcsintervalmenu.png" ),
+                               "Configure monitor interval",
+                               self.__onVCSMonitorInterval )
+        contextMenu.addSeparator()
+        contextMenu.addAction( PixmapCache().getIcon( "vcsstatusnowmenu.png" ),
+                               "Check status now",
+                               self.__onVCSCheckNow )
+        contextMenu.popup( self.sbVCSStatus.mapToGlobal( pos ) )
         return
 
     def switchDebugMode( self, newState ):
