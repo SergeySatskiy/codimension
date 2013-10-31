@@ -2858,10 +2858,6 @@ class CodimensionMainWindow( QMainWindow ):
             self.settings.vcsstatusupdateinterval = dlg.interval
         return
 
-    def __onVCSCheckNow( self ):
-        " Initiates immediate status checking "
-        pass
-
     def __showPathLabelContextMenu( self, pos ):
         " Triggered when a context menu is requested for the path label "
         contextMenu = QMenu( self )
@@ -2884,10 +2880,6 @@ class CodimensionMainWindow( QMainWindow ):
         contextMenu.addAction( PixmapCache().getIcon( "vcsintervalmenu.png" ),
                                "Configure monitor interval",
                                self.__onVCSMonitorInterval )
-        contextMenu.addSeparator()
-        contextMenu.addAction( PixmapCache().getIcon( "vcsstatusnowmenu.png" ),
-                               "Check status now",
-                               self.__onVCSCheckNow )
         contextMenu.popup( self.sbVCSStatus.mapToGlobal( pos ) )
         return
 
