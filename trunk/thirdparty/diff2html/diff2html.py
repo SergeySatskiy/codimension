@@ -148,14 +148,14 @@ def process(input_file, doc):
         line = input_file.readline()
         if line == "":
             break
-        m = re.match(r'^--- ([^\s]*)', line)
+        m = re.match(r'^--- (.*)', line)
         if m:
             doc.empty_buffer(line_pairs, line_numbers, num_added_lines, num_deleted_lines)
             num_added_lines = num_deleted_lines = 0
             filename_old = m.groups()[0]
             while True:
                 line = input_file.readline()
-                m = re.match(r'^\+\+\+ ([^\s]*)', line)
+                m = re.match(r'^\+\+\+ (.*)', line)
                 if m:
                     filename_new = m.groups()[0]
                     break
