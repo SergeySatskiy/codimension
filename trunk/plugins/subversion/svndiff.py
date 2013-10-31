@@ -60,34 +60,36 @@ class SVNDiffMixin:
 
         try:
             repositoryVersion = client.cat( path )
+
+            # Calculate difference
+            diff = difflib.unified_diff( repositoryVersion.splitlines(),
+                                         content.splitlines(), n = 5 )
+            nodiffMessage = path + " has no difference to the " \
+                                   "repository at revision HEAD"
+            if modified:
+                nodiffMessage = "Editing buffer with " + nodiffMessage
+            if diff is None:
+                logging.info( nodiffMessage )
+                return
+
+            # There are changes, so replace the text and tell about the changes
+            diffAsText = '\n'.join( list( diff ) )
+            if diffAsText.strip() == '':
+                logging.info( nodiffMessage )
+                return
+
+            if modified:
+                source = "+++ editing buffer with " + os.path.basename( path )
+            else:
+                source = "+++ local " + os.path.basename( path )
+            diffAsText = diffAsText.replace( "+++ ", source, 1 )
+            diffAsText = diffAsText.replace( "--- ",
+                                             "--- repository at revision HEAD",
+                                             1 )
         except Exception, excpt:
             logging.error( str( excpt ) )
             return
 
-        # Calculate difference
-        diff = difflib.unified_diff( repositoryVersion.splitlines(),
-                                     content.splitlines() )
-        nodiffMessage = path + " has no difference to the " \
-                               "repository at revision HEAD"
-        if modified:
-            nodiffMessage = "Editing buffer with " + nodiffMessage
-        if diff is None:
-            logging.info( nodiffMessage )
-            return
-
-        # There are changes, so replace the text and tell about the changes
-        diffAsText = '\n'.join( list( diff ) )
-        if diffAsText.strip() == '':
-            logging.info( nodiffMessage )
-            return
-
-        if modified:
-            source = "+++ editing buffer with " + os.path.basename( path )
-        else:
-            source = "+++ local " + os.path.basename( path )
-        diffAsText = diffAsText.replace( "+++ ", source, 1 )
-        diffAsText = diffAsText.replace( "--- ",
-                                         "--- repository at revision HEAD", 1 )
         self.ide.mainWindow.showDiff( diffAsText,
                                       "SVN diff for " + path )
         return
