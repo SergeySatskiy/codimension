@@ -75,7 +75,8 @@ def doSVNAdd( plugin, client, path, recursively ):
             return
 
         path = event[ 'path' ]
-        if os.path.isdir( path ) and not path.endswith( os.path.sep ):
+        if os.path.isdir( path ) and not path.endswith( os.path.sep ) and \
+                                     not os.path.islink( path ):
             path += os.path.sep
         action = notifyActionToString( event[ 'action' ] )
         if action:

@@ -22,7 +22,7 @@
 
 " SVN Delete functionality "
 
-import logging
+import logging, os.path
 from svnstrconvert import notifyActionToString
 from PyQt4.QtGui import QMessageBox
 
@@ -63,10 +63,13 @@ class SVNDeleteMixin:
         pathList = []
         def notifyCallback( event, paths = pathList ):
             if event[ 'path' ]:
+                path = event[ 'path' ]
+                if os.path.isdir( path ) and not path.endswith( os.path.sep ):
+                    path += os.path.sep
                 action = notifyActionToString( event[ 'action' ] )
                 if action:
-                    logging.info( action + " " + event[ 'path' ] )
-                    paths.append( event[ 'path' ] )
+                    logging.info( action + " " + path )
+                    paths.append( path )
             return
 
         try:
