@@ -75,33 +75,44 @@ def doSVNCommit( plugin, client, path ):
     # The path could be a single file (buffer or project browser) or
     # a directory
 
-    if path.endswith( os.path.sep ):
-        # This is a directory. Path lists should be built.
-        statuses = plugin.getLocalStatus( path, pysvn.depth.infinity )
-        if type( statuses ) != list:
-            logging.error( "Error checking local SVN statuses for " + path )
-            return
+    QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+    try:
+        if path.endswith( os.path.sep ):
+            # This is a directory. Path lists should be built.
+            statuses = plugin.getLocalStatus( path, pysvn.depth.infinity )
+            if type( statuses ) != list:
+                logging.error( "Error checking local SVN statuses for " + path )
+                QApplication.restoreOverrideCursor()
+                return
 
-        pathsToCommit = []
-        pathsToIgnore = []
-        for item in statuses:
-            if item[ 1 ] in COMMIT_ALLOW_STATUSES:
-                pathsToCommit.append( item )
-            elif item[ 1 ] in IGNORE_STATUSES + [ plugin.NOT_UNDER_VCS ]:
-                pathsToIgnore.append( item )
+            pathsToCommit = []
+            pathsToIgnore = []
+            for item in statuses:
+                if item[ 1 ] in COMMIT_ALLOW_STATUSES:
+                    pathsToCommit.append( item )
+                elif item[ 1 ] in IGNORE_STATUSES + [ plugin.NOT_UNDER_VCS ]:
+                    pathsToIgnore.append( item )
 
-        if not pathsToCommit:
-            logging.info( "No paths to commit for " + path )
-            return
-    else:
-        # This is a single file
-        status = plugin.getLocalStatus( path )
-        if status not in COMMIT_ALLOW_STATUSES:
-            logging.error( "Cannot commit " + path +
-                           " due to unexpected SVN status" )
-            return
-        pathsToCommit = [ (path, status), ]
-        pathsToIgnore = []
+            if not pathsToCommit:
+                logging.info( "No paths to commit for " + path )
+                QApplication.restoreOverrideCursor()
+                return
+        else:
+            # This is a single file
+            status = plugin.getLocalStatus( path )
+            if status not in COMMIT_ALLOW_STATUSES:
+                logging.error( "Cannot commit " + path +
+                               " due to unexpected SVN status" )
+                QApplication.restoreOverrideCursor()
+                return
+            pathsToCommit = [ (path, status), ]
+            pathsToIgnore = []
+    except Exception, exc:
+        logging.error( str( exc ) )
+        QApplication.restoreOverrideCursor()
+        return
+    QApplication.restoreOverrideCursor()
+
 
     dlg = SVNPluginCommitDialog( plugin, pathsToCommit, pathsToIgnore )
     res = dlg.exec_()
