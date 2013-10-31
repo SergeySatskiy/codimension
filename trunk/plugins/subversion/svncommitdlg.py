@@ -348,7 +348,11 @@ class SVNPluginCommitDialog( QDialog ):
         while index < self.__pathToCommitView.topLevelItemCount():
             item = self.__pathToCommitView.topLevelItem( index )
             if item.checkState( 0 ) == Qt.Checked:
-                self.commitPaths.append( str( item.text( 1 ) ) )
+                path = str( item.text( 1 ) )
+                if os.path.isdir( path ) and not os.path.islink( path ) and \
+                                             not path.endswith( os.path.sep ):
+                    path += os.path.sep
+                self.commitPaths.append( path )
             index += 1
         self.accept()
         return
