@@ -29,6 +29,7 @@
 " Project browser with module browsing capabilities "
 
 from PyQt4.QtCore import SIGNAL
+from PyQt4.QtGui import QApplication
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 from projectbrowsermodel import ProjectBrowserModel
@@ -108,6 +109,7 @@ class ProjectBrowser( FilesBrowser ):
         " Updates the VCS status of an item "
         # Due to symbolic links the whole tree must be checked, so there is
         # no limit here...
+        updateSent = False
         for i in treeItem.childItems:
             if i.itemType == DirectoryItemType:
                 self._updateVCSFileStatus( i, path, status )
@@ -116,6 +118,9 @@ class ProjectBrowser( FilesBrowser ):
                 if i.getRealPath() == path:
                     i.vcsStatus = status
                     self._signalItemUpdated( i )
+                    updateSent = True
+        if updateSent:
+            self.__focusFlip()
         return
 
     def __onVCSDirStatus( self, path, status ):
@@ -128,13 +133,30 @@ class ProjectBrowser( FilesBrowser ):
         " Updates the VCS status of an item "
         # Due to symbolic links the whole tree must be checked, so there is
         # no limit here...
+        updateSent = False
         if treeItem.getRealPath() == path:
             treeItem.vcsStatus = status
             self._signalItemUpdated( treeItem )
+            updateSent = True
 
         for i in treeItem.childItems:
             if i.itemType == DirectoryItemType:
                 self._updateVCSDirStatus( i, path, status )
+
+        if updateSent:
+            self.__focusFlip()
+        return
+
+    def __focusFlip( self ):
+        " Dirty trick utility function "
+        # QT does not update the left part of the item where
+        # a tree part is drawn. It updates only the right part of the item
+        # when a signal is sent. Qt however updates the tree part when
+        # focus is received. So here is focus flipping below.
+        currentFocus = QApplication.focusWidget()
+        if currentFocus:
+            self.setFocus()
+            currentFocus.setFocus()
         return
 
     def drawBranches( self, painter, rect, index ):
