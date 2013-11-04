@@ -309,6 +309,21 @@ def getCalltipAndDoc( fileName, editor, position = None, tryQt = False ):
                         calltip = '\n'.join( signatures )
             except:
                 pass
+
+        if calltip:
+            # Sometimes rope makes a mistake and provides a calltip for the
+            # wrong function. Check the name here.
+            line, index = editor.lineIndexFromPosition( position )
+            word = str( editor.getWord( line, index ) )
+            if word and not (word.startswith( '__' ) and word.endswith( '__' )):
+                fullName = calltip.split( '(', 1 )[ 0 ].strip()
+                lastPart = fullName.split( '.' )[ -1 ]
+                if lastPart != word:
+                    # Wrong calltip
+#                    print "Wrong calltip. Asked: '" + word + "' received: '" + lastPart + "'"
+#                    print calltip
+                    return None, None
+
         return calltip, docstring
     except:
         return None, None
