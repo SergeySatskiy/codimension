@@ -90,7 +90,7 @@ class SVNLogProgress( QDialog ):
         self.logInfo = None
 
         self.__createLayout()
-        self.setWindowTitle( "SVN Status" )
+        self.setWindowTitle( "SVN Log" )
         QTimer.singleShot( 0, self.__process )
         return
 
