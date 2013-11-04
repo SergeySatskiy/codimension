@@ -57,6 +57,8 @@ class SVNMenuMixin:
                                                         "&Info", self.fileInfo )
         self.fileContextAnnotateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuannotate.png' ),
                                                             "&Annotate", self.fileAnnotate )
+        self.fileContextLogAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenulog.png' ),
+                                                       "&Log", self.fileLog )
         self.fileContextDiffAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenudiff.png' ),
                                                         "&Diff", self.fileDiff )
         parentMenu.addSeparator()
@@ -107,6 +109,8 @@ class SVNMenuMixin:
                                                        "&Info", self.bufferInfo )
         self.bufContextAnnotateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuannotate.png' ),
                                                            "&Annotate", self.bufferAnnotate )
+        self.bufContextLogAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenulog.png' ),
+                                                      "&Log", self.bufferLog )
         self.bufContextUpdateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuupdate.png' ),
                                                          "&Update", self.bufferUpdate )
         self.bufContextDiffAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenudiff.png' ),
@@ -135,6 +139,7 @@ class SVNMenuMixin:
             self.fileContextInfoAct.setEnabled( False )
             self.fileContextUpdateAct.setEnabled( False )
             self.fileContextAnnotateAct.setEnabled( False )
+            self.fileContextLogAct.setEnabled( False )
             self.fileContextAddAct.setEnabled( False )
             self.fileContextCommitAct.setEnabled( False )
             self.fileContextDeleteAct.setEnabled( False )
@@ -146,6 +151,7 @@ class SVNMenuMixin:
             self.fileContextInfoAct.setEnabled( False )
             self.fileContextUpdateAct.setEnabled( False )
             self.fileContextAnnotateAct.setEnabled( False )
+            self.fileContextLogAct.setEnabled( False )
             self.fileContextCommitAct.setEnabled( False )
             self.fileContextDeleteAct.setEnabled( False )
             self.fileContextRevertAct.setEnabled( False )
@@ -161,6 +167,7 @@ class SVNMenuMixin:
         self.fileContextInfoAct.setEnabled( True )
         self.fileContextUpdateAct.setEnabled( True )
         self.fileContextAnnotateAct.setEnabled( True )
+        self.fileContextLogAct.setEnabled( True )
         self.fileContextAddAct.setEnabled( False )
         self.fileContextCommitAct.setEnabled( pathStatus in [
                         IND_ADDED, IND_DELETED, IND_MERGED, IND_MODIFIED_LR,
@@ -228,6 +235,7 @@ class SVNMenuMixin:
             self.bufContextInfoAct.setEnabled( False )
             self.bufContextUpdateAct.setEnabled( False )
             self.bufContextAnnotateAct.setEnabled( False )
+            self.bufContextLogAct.setEnabled( False )
             self.bufContextAddAct.setEnabled( False )
             self.bufContextCommitAct.setEnabled( False )
             self.bufContextDeleteAct.setEnabled( False )
@@ -240,6 +248,7 @@ class SVNMenuMixin:
             self.bufContextInfoAct.setEnabled( False )
             self.bufContextUpdateAct.setEnabled( False )
             self.bufContextAnnotateAct.setEnabled( False )
+            self.bufContextLogAct.setEnabled( False )
             self.bufContextAddAct.setEnabled( False )
             self.bufContextCommitAct.setEnabled( False )
             self.bufContextDeleteAct.setEnabled( False )
@@ -251,6 +260,7 @@ class SVNMenuMixin:
             self.bufContextInfoAct.setEnabled( False )
             self.bufContextUpdateAct.setEnabled( False )
             self.bufContextAnnotateAct.setEnabled( False )
+            self.bufContextLogAct.setEnabled( False )
             self.bufContextCommitAct.setEnabled( False )
             self.bufContextDeleteAct.setEnabled( False )
             self.bufContextRevertAct.setEnabled( False )
@@ -277,8 +287,10 @@ class SVNMenuMixin:
         if widgetType in [ MainWindowTabWidgetBase.PlainTextEditor,
                            MainWindowTabWidgetBase.PythonGraphicsEditor ]:
             self.bufContextAnnotateAct.setEnabled( True )
+            self.bufContextLogAct.setEnabled( True )
         else:
             self.bufContextAnnotateAct.setEnabled( False )
+            self.bufContextLogAct.setEnabled( False )
 
         # Set the Commit... menu item status
         if pathStatus not in [ IND_ADDED, IND_DELETED, IND_MERGED, IND_MODIFIED_LR,
