@@ -27,9 +27,9 @@ from svnindicators import IND_ERROR
 from PyQt4.QtGui import ( QDialog, QTreeWidgetItem, QTreeWidget, QVBoxLayout,
                           QTextEdit, QDialogButtonBox, QLabel, QFontMetrics,
                           QHeaderView, QApplication, QCursor,
-                          QTimer, QHBoxLayout, QToolButton, QGroupBox,
+                          QHBoxLayout, QToolButton, QGroupBox,
                           QGridLayout, QSizePolicy, QLineEdit )
-from PyQt4.QtCore import Qt, SIGNAL, QStringList
+from PyQt4.QtCore import Qt, SIGNAL, QStringList, QTimer
 from ui.itemdelegates import NoOutlineHeightDelegate
 
 
@@ -192,6 +192,13 @@ class SVNPluginPropsDialog( QDialog ):
         self.__createLayout()
         self.setWindowTitle( "SVN Properties of " + path )
 
+        for itemPath, itemProps in properties:
+            if path == itemPath or path == itemPath + os.path.sep:
+                for name, value in itemProps.iteritems():
+                    newItem = QTreeWidgetItem(
+                        QStringList() << name << value )
+                    self.__propsView.addTopLevelItem( newItem )
+
         self.__resizePropsView()
         self.__sortPropsView()
 
@@ -239,27 +246,26 @@ class SVNPluginPropsDialog( QDialog ):
         self.__delButton.setEnabled( False )
         self.connect( self.__delButton, SIGNAL( 'clicked()' ),
                       self.__onDel )
-        hLayout.addWidget( self.__delButton )
+        hLayout.addWidget( self.__delButton, 0, Qt.AlignBottom )
         vboxLayout.addLayout( hLayout )
 
         # Set property part
         setGroupbox = QGroupBox( self )
         setGroupbox.setTitle( "Set Property" )
-        sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Preferred )
-        sizePolicy.setHorizontalStretch( 0 )
-        sizePolicy.setVerticalStretch( 0 )
-        sizePolicy.setHeightForWidth( setGroupbox.sizePolicy().hasHeightForWidth() )
-        setGroupbox.setSizePolicy( sizePolicy )
 
         setLayout = QGridLayout( setGroupbox )
-        setLayout.addWidget( QLabel( "Name" ), 0, 0 )
-        setLayout.addWidget( QLabel( "Value" ), 1, 0 )
+        setLayout.addWidget( QLabel( "Name" ), 0, 0, Qt.AlignTop | Qt.AlignRight )
+        setLayout.addWidget( QLabel( "Value" ), 1, 0, Qt.AlignTop | Qt.AlignRight )
 
         self.__nameEdit = QLineEdit()
+        self.connect( self.__nameEdit, SIGNAL( 'textChanged(const QString&)' ),
+                      self.__nameChanged )
         setLayout.addWidget( self.__nameEdit, 0, 1 )
 
         self.__valueEdit = QTextEdit()
         self.__valueEdit.setAcceptRichText( False )
+        self.connect( self.__valueEdit, SIGNAL( 'textChanged()' ),
+                      self.__valueChanged )
         metrics = QFontMetrics( self.__valueEdit.font() )
         rect = metrics.boundingRect( "X" )
         self.__valueEdit.setFixedHeight( rect.height() * 4 + 5 )
@@ -271,7 +277,13 @@ class SVNPluginPropsDialog( QDialog ):
         self.__setButton.setEnabled( False )
         self.connect( self.__setButton, SIGNAL( 'clicked()' ),
                       self.__onSet )
-        setLayout.addWidget( self.__setButton, 1, 2 )
+        setLayout.addWidget( self.__setButton, 1, 2, Qt.AlignBottom | Qt.AlignHCenter )
+        
+        sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Maximum )
+        sizePolicy.setHorizontalStretch( 0 )
+        sizePolicy.setVerticalStretch( 0 )
+        sizePolicy.setHeightForWidth( setGroupbox.sizePolicy().hasHeightForWidth() )
+        setGroupbox.setSizePolicy( sizePolicy )
         vboxLayout.addWidget( setGroupbox )
 
         # Buttons at the bottom
@@ -290,3 +302,20 @@ class SVNPluginPropsDialog( QDialog ):
     def __onDel( self ):
         " Triggered when a property del is clicked "
         pass
+
+    def __nameChanged( self, text ):
+        " Triggered when a property name to set is changed "
+        self.__updateSetButton()
+        return
+
+    def __valueChanged( self ):
+        " Triggered when a property value to set is changed "
+        self.__updateSetButton()
+        return
+
+    def __updateSetButton( self ):
+        " Updates the 'Set' button state "
+        name = str( self.__nameEdit.text() ).strip()
+        value = str( self.__valueEdit.toPlainText() ).strip()
+        self.__setButton.setEnabled( name != "" and value != "" )
+        return

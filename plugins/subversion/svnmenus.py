@@ -64,6 +64,8 @@ class SVNMenuMixin:
         parentMenu.addSeparator()
         self.fileContextUpdateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuupdate.png' ),
                                                           "&Update", self.fileUpdate )
+        self.fileContextPropsAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuprops.png' ),
+                                                         "&Properties", self.fileProps )
         self.fileContextAddAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuadd.png' ),
                                                        "A&dd", self.fileAddToRepository )
         self.fileContextCommitAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenucommit.png' ),
@@ -89,6 +91,8 @@ class SVNMenuMixin:
         parentMenu.addSeparator()
         self.dirContextUpdateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuupdate.png' ),
                                                          "&Update", self.dirUpdate )
+        self.dirContextPropsAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuprops.png' ),
+                                                        "&Properties", self.dirProps )
         self.dirContextAddAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuadd.png' ),
                                                       "A&dd", self.dirAddToRepository )
         self.dirContextAddRecursiveAct = parentMenu.addAction( "Add recursively", self.dirAddToRepositoryRecursively )
@@ -113,6 +117,8 @@ class SVNMenuMixin:
                                                       "&Log", self.bufferLog )
         self.bufContextUpdateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuupdate.png' ),
                                                          "&Update", self.bufferUpdate )
+        self.bufContextPropsAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuprops.png' ),
+                                                        "&Properties", self.bufferProps )
         self.bufContextDiffAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenudiff.png' ),
                                                        "&Diff", self.bufferDiff )
         parentMenu.addSeparator()
@@ -145,6 +151,7 @@ class SVNMenuMixin:
             self.fileContextDeleteAct.setEnabled( False )
             self.fileContextRevertAct.setEnabled( False )
             self.fileContextDiffAct.setEnabled( False )
+            self.fileContextPropsAct.setEnabled( False )
             return
 
         if pathStatus == self.NOT_UNDER_VCS:
@@ -156,6 +163,7 @@ class SVNMenuMixin:
             self.fileContextDeleteAct.setEnabled( False )
             self.fileContextRevertAct.setEnabled( False )
             self.fileContextDiffAct.setEnabled( False )
+            self.fileContextPropsAct.setEnabled( False )
 
             upperDirStatus = self.getLocalStatus( os.path.dirname( path ) )
             if upperDirStatus == self.NOT_UNDER_VCS:
@@ -169,6 +177,7 @@ class SVNMenuMixin:
         self.fileContextAnnotateAct.setEnabled( True )
         self.fileContextLogAct.setEnabled( True )
         self.fileContextAddAct.setEnabled( False )
+        self.fileContextPropsAct.setEnabled( True )
         self.fileContextCommitAct.setEnabled( pathStatus in [
                         IND_ADDED, IND_DELETED, IND_MERGED, IND_MODIFIED_LR,
                         IND_MODIFIED_L, IND_REPLACED, IND_CONFLICTED ] )
@@ -194,6 +203,7 @@ class SVNMenuMixin:
             self.dirContextReposStatusAct.setEnabled( False )
             self.dirContextDeleteAct.setEnabled( False )
             self.dirContextRevertAct.setEnabled( False )
+            self.dirContextPropsAct.setEnabled( False )
             return
 
         if pathStatus == self.NOT_UNDER_VCS:
@@ -204,6 +214,7 @@ class SVNMenuMixin:
             self.dirContextReposStatusAct.setEnabled( False )
             self.dirContextDeleteAct.setEnabled( False )
             self.dirContextRevertAct.setEnabled( False )
+            self.dirContextPropsAct.setEnabled( False )
 
             if path.endswith( os.path.sep ):
                 upperDirStatus = self.getLocalStatus( os.path.dirname( path[ : -1 ] ) )
@@ -226,6 +237,7 @@ class SVNMenuMixin:
         self.dirContextReposStatusAct.setEnabled( True )
         self.dirContextDeleteAct.setEnabled( pathStatus != IND_DELETED )
         self.dirContextRevertAct.setEnabled( pathStatus != IND_UPTODATE )
+        self.dirContextPropsAct.setEnabled( True )
         return
 
     def onBufferContextMenuAboutToshow( self ):
@@ -241,6 +253,7 @@ class SVNMenuMixin:
             self.bufContextDeleteAct.setEnabled( False )
             self.bufContextRevertAct.setEnabled( False )
             self.bufContextDiffAct.setEnabled( False )
+            self.bufContextPropsAct.setEnabled( False )
             return
 
         pathStatus = self.getLocalStatus( path )
@@ -254,6 +267,7 @@ class SVNMenuMixin:
             self.bufContextDeleteAct.setEnabled( False )
             self.bufContextRevertAct.setEnabled( False )
             self.bufContextDiffAct.setEnabled( False )
+            self.bufContextPropsAct.setEnabled( False )
             return
 
         if pathStatus == self.NOT_UNDER_VCS:
@@ -265,6 +279,7 @@ class SVNMenuMixin:
             self.bufContextDeleteAct.setEnabled( False )
             self.bufContextRevertAct.setEnabled( False )
             self.bufContextDiffAct.setEnabled( False )
+            self.bufContextPropsAct.setEnabled( False )
 
             upperDirStatus = self.getLocalStatus( os.path.dirname( path ) )
             if upperDirStatus == self.NOT_UNDER_VCS:
@@ -276,6 +291,7 @@ class SVNMenuMixin:
         self.bufContextInfoAct.setEnabled( True )
         self.bufContextUpdateAct.setEnabled( True )
         self.bufContextAddAct.setEnabled( False )
+        self.bufContextPropsAct.setEnabled( True )
         self.bufContextDeleteAct.setEnabled( pathStatus != IND_DELETED )
         self.bufContextRevertAct.setEnabled( pathStatus != IND_UPTODATE )
 
