@@ -61,7 +61,7 @@ IND_DESCRIPTION = (
   "Deleted from SVN repository" ),
 ( IND_IGNORED,
   QPixmap( pluginHomeDir + "status-ignored.png" ),
-  None, QColor( 255, 255, 160, 255 ),
+  None, QColor( 255, 160, 255, 255 ),
   "Ignored" ),
 ( IND_MERGED,
   QPixmap( pluginHomeDir + "status-merged.png" ),
