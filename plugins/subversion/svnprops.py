@@ -196,7 +196,7 @@ class SVNPluginPropsDialog( QDialog ):
             if path == itemPath or path == itemPath + os.path.sep:
                 for name, value in itemProps.iteritems():
                     newItem = QTreeWidgetItem(
-                        QStringList() << name << value )
+                        QStringList() << str( name ).strip() << str( value ).strip() )
                     self.__propsView.addTopLevelItem( newItem )
 
         self.__resizePropsView()
@@ -297,7 +297,17 @@ class SVNPluginPropsDialog( QDialog ):
 
     def __onSet( self ):
         " Triggered when propery set is clicked "
-        pass
+        name = str( self.__nameEdit.text() ).strip()
+        value = str( self.__valueEdit.toPlainText() ).strip()
+        try:
+            commitInfo = self.__client.propset( name, value, self.__path )
+            print commitInfo
+        except Exception, exc:
+            logging.error( str( exc ) )
+            return
+        except:
+            logging.error( "Unknown property setting error" )
+            return
 
     def __onDel( self ):
         " Triggered when a property del is clicked "
