@@ -54,7 +54,7 @@ class SVNMenuMixin:
         self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
                       self.onFileContextMenuAboutToShow )
         self.fileContextInfoAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuinfo.png' ),
-                                                        "&Info", self.fileInfo )
+                                                        "&Info (local)", self.fileInfo )
         self.fileContextAnnotateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuannotate.png' ),
                                                             "&Annotate", self.fileAnnotate )
         self.fileContextLogAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenulog.png' ),
@@ -83,7 +83,7 @@ class SVNMenuMixin:
         self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
                       self.onDirectoryContextMenuAboutToShow )
         self.dirContextInfoAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuinfo.png' ),
-                                                       "&Info", self.dirInfo )
+                                                       "&Info (local)", self.dirInfo )
         self.dirContextLocalStatusAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenustatus.png' ),
                                                               "&Status (local only)", self.dirLocalStatus )
         self.dirContextReposStatusAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenustatus.png' ),
@@ -110,7 +110,7 @@ class SVNMenuMixin:
         self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
                       self.onBufferContextMenuAboutToshow )
         self.bufContextInfoAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuinfo.png' ),
-                                                       "&Info", self.bufferInfo )
+                                                       "&Info (local)", self.bufferInfo )
         self.bufContextAnnotateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuannotate.png' ),
                                                            "&Annotate", self.bufferAnnotate )
         self.bufContextLogAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenulog.png' ),

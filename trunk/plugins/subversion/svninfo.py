@@ -55,6 +55,17 @@ class SVNInfoMixin:
         self.__svnInfo( path )
         return
 
+    def getLocalStatusObject( self, client, path ):
+        " Provides quick local SVN status for the item itself "
+        try:
+            statusList = client.status( path, update = False,
+                                        depth = pysvn.depth.empty )
+            if len( statusList ) != 1:
+                return None
+            return statusList[ 0 ]
+        except:
+            return None
+
     def __svnInfo( self, path ):
         " Implementation of the info command for a file "
         status = self.getLocalStatus( path )
@@ -67,7 +78,16 @@ class SVNInfoMixin:
 
         client = self.getSVNClient( self.getSettings() )
         info = getSVNInfo( client, path )
-        message = "\n    Status: " + statusToString( status )
+        statusObject = self.getLocalStatusObject( client, path )
+        message = "\n    Status: " + statusToString( status ) + \
+                  "\n    Properties status: "
+        if statusObject.prop_status == pysvn.wc_status_kind.modified:
+            message = message + "modified"
+        else:
+            message = message + "up to date"
+        message = message + "\n    Copied: " + str( bool( statusObject.is_copied ) ) + \
+                            "\n    Switched: " + str( bool( statusObject.is_switched ) ) + \
+                            "\n    Locked: " + str( bool( statusObject.is_locked ) )
         for item in info:
             message = message + "\n    " + item[ 0 ] + ": " + item[ 1 ]
         logging.info( message )
