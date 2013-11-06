@@ -208,12 +208,16 @@ class SubversionPlugin( SVNMenuMixin, SVNInfoMixin, SVNAddMixin, SVNCommitMixin,
         if status.text_status == pysvn.wc_status_kind.merged:
             return IND_MERGED
         if status.text_status == pysvn.wc_status_kind.modified:
-            if status.repos_text_status == pysvn.wc_status_kind.modified:
+            if status.repos_text_status == pysvn.wc_status_kind.modified or \
+               status.repos_prop_status == pysvn.wc_status_kind.modified:
                 return IND_MODIFIED_LR
             return IND_MODIFIED_L
         if status.text_status == pysvn.wc_status_kind.normal:
-            if status.repos_text_status == pysvn.wc_status_kind.modified:
+            if status.repos_text_status == pysvn.wc_status_kind.modified or \
+               status.repos_prop_status == pysvn.wc_status_kind.modified:
                 return IND_MODIFIED_R
+            if status.prop_status == pysvn.wc_status_kind.modified:
+                return IND_MODIFIED_L
             return IND_UPTODATE
         if status.text_status == pysvn.wc_status_kind.replaced:
             return IND_REPLACED
