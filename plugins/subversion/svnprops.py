@@ -205,6 +205,13 @@ class SVNPluginPropsDialog( QDialog ):
         self.__propsView.setFocus()
         return
 
+    def __populate( self ):
+        " Populate the properties list "
+        # Get the currently selected name
+
+
+
+
     def __resizePropsView( self ):
         " Resizes the properties table "
         self.__propsView.header().setStretchLastSection( True )
@@ -301,7 +308,10 @@ class SVNPluginPropsDialog( QDialog ):
         value = str( self.__valueEdit.toPlainText() ).strip()
         try:
             commitInfo = self.__client.propset( name, value, self.__path )
-            print commitInfo
+            if commitInfo:
+                logging.info( str( commitInfo ) )
+            self.__populate()
+            self.__plugin.notifyPathChanged( self.__path )
         except Exception, exc:
             logging.error( str( exc ) )
             return
