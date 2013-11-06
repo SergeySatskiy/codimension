@@ -28,7 +28,7 @@ from PyQt4.QtGui import ( QDialog, QVBoxLayout, QDialogButtonBox, QTextEdit,
                           QHBoxLayout, QLabel, QToolButton, QTreeWidget,
                           QTreeWidgetItem, QFontMetrics, QHeaderView,
                           QFrame, QPalette, QSpacerItem, QSizePolicy,
-                          QPushButton )
+                          QPushButton, QApplication, QCursor )
 from ui.itemdelegates import NoOutlineHeightDelegate
 from svnstrconvert import STATUS
 from utils.pixmapcache import PixmapCache
@@ -404,38 +404,49 @@ class SVNPluginCommitDialog( QDialog ):
         if not path:
             return
 
-        # Status is one of the following:
-        # IND_ADDED, IND_DELETED, IND_MERGED, IND_MODIFIED_LR, IND_MODIFIED_L, IND_CONFLICTED
-        repositoryContent = ""
-        localContent = ""
-        if status != IND_ADDED:
-            client = self.__plugin.getSVNClient( self.__plugin.getSettings() )
-            repositoryContent = client.cat( path )
-        if status != IND_DELETED:
-            with open( path ) as f:
-                localContent = f.read()
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
 
-        diff = difflib.unified_diff( repositoryContent.splitlines(),
-                                     localContent.splitlines() )
-        nodiffMessage = path + " has no difference to the " \
-                               "repository at revision HEAD"
-        if diff is None:
-            logging.info( nodiffMessage )
-            return
+        try:
+            # Status is one of the following:
+            # IND_ADDED, IND_DELETED, IND_MERGED, IND_MODIFIED_LR, IND_MODIFIED_L, IND_CONFLICTED
+            repositoryContent = ""
+            localContent = ""
+            if status != IND_ADDED:
+                client = self.__plugin.getSVNClient( self.__plugin.getSettings() )
+                repositoryContent = client.cat( path )
+            if status != IND_DELETED:
+                with open( path ) as f:
+                    localContent = f.read()
 
-        # There are changes, so replace the text and tell about the changes
-        diffAsText = '\n'.join( list( diff ) )
-        if diffAsText.strip() == '':
-            logging.info( nodiffMessage )
-            return
+            diff = difflib.unified_diff( repositoryContent.splitlines(),
+                                         localContent.splitlines() )
+            nodiffMessage = path + " has no difference to the " \
+                                   "repository at revision HEAD"
+            if diff is None:
+                QApplication.restoreOverrideCursor()
+                logging.info( nodiffMessage )
+                return
 
-        source = "+++ local " + os.path.basename( path )
-        diffAsText = diffAsText.replace( "+++ ", source, 1 )
-        diffAsText = diffAsText.replace( "--- ",
-                                         "--- repository at revision HEAD", 1 )
+            # There are changes, so replace the text and tell about the changes
+            diffAsText = '\n'.join( list( diff ) )
+            if diffAsText.strip() == '':
+                QApplication.restoreOverrideCursor()
+                logging.info( nodiffMessage )
+                return
 
-        self.__diffViewer.setHTML( parse_from_memory( diffAsText, False, True ) )
-        if not self.__diffViewer.isVisible():
-            self.__onShowHideDiff()
+            source = "+++ local " + os.path.basename( path )
+            diffAsText = diffAsText.replace( "+++ ", source, 1 )
+            diffAsText = diffAsText.replace( "--- ",
+                                             "--- repository at revision HEAD", 1 )
 
+            self.__diffViewer.setHTML( parse_from_memory( diffAsText, False, True ) )
+            if not self.__diffViewer.isVisible():
+                self.__onShowHideDiff()
+        except Exception, exc:
+            logging.error( str( exc ) )
+        except:
+            logging.error( "Unknown error while calculating difference for " +
+                           path )
+
+        QApplication.restoreOverrideCursor()
         return
