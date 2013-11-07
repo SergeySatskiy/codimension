@@ -22,7 +22,7 @@
 
 " Codimension SVN plugin properties functionality implementation "
 
-import os.path, logging
+import os.path, logging, pysvn
 from svnindicators import IND_ERROR
 from PyQt4.QtGui import ( QDialog, QTreeWidgetItem, QTreeWidget, QVBoxLayout,
                           QTextEdit, QDialogButtonBox, QLabel, QFontMetrics,
@@ -84,6 +84,9 @@ def readProperties( client, path ):
     properties  = None
     try:
         properties = client.proplist( path )
+    except pysvn.ClientError, exc:
+        message = exc.args[ 0 ]
+        logging.error( message )
     except Exception, exc:
         logging.error( str( exc ) )
     except:
@@ -246,6 +249,10 @@ class SVNPluginPropsDialog( QDialog ):
             self.__nameEdit.clear()
             self.__valueEdit.clear()
             self.__propsView.setFocus()
+        except pysvn.ClientError, exc:
+            message = exc.args[ 0 ]
+            logging.error( message )
+            return
         except Exception, exc:
             logging.error( str( exc ) )
             return
@@ -281,6 +288,10 @@ class SVNPluginPropsDialog( QDialog ):
             self.__populate()
             self.__plugin.notifyPathChanged( self.__path )
             self.__propsView.setFocus()
+        except pysvn.ClientError, exc:
+            message = exc.args[ 0 ]
+            logging.error( message )
+            return
         except Exception, exc:
             logging.error( str( exc ) )
             return
