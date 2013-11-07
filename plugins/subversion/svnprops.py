@@ -28,8 +28,8 @@ from PyQt4.QtGui import ( QDialog, QTreeWidgetItem, QTreeWidget, QVBoxLayout,
                           QTextEdit, QDialogButtonBox, QLabel, QFontMetrics,
                           QHeaderView, QApplication, QCursor,
                           QHBoxLayout, QToolButton, QGroupBox,
-                          QGridLayout, QSizePolicy, QLineEdit )
-from PyQt4.QtCore import Qt, SIGNAL, QStringList, QTimer
+                          QGridLayout, QSizePolicy, QLineEdit, QMessageBox )
+from PyQt4.QtCore import Qt, SIGNAL, QStringList
 from ui.itemdelegates import NoOutlineHeightDelegate
 
 
@@ -71,146 +71,74 @@ class SVNPropsMixin:
             return
 
         client = self.getSVNClient( self.getSettings() )
-        dlg = SVNPropsProgress( client, path )
-
-        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
-        res = dlg.exec_()
-        QApplication.restoreOverrideCursor()
-
-        if res == QDialog.Accepted:
-            if dlg.properties is None:
-                logging.info( "Error getting " + path + " properties" )
-                return
-
-            dlg = SVNPluginPropsDialog( self, client, path, dlg.properties )
-            dlg.exec_()
+        dlg = SVNPluginPropsDialog( self, client, path )
+        dlg.exec_()
         return
 
 
-class SVNPropsProgress( QDialog ):
-    " Minimalistic progress dialog "
 
-    def __init__( self, client, path, parent = None ):
-        QDialog.__init__( self, parent )
-        self.__cancelRequest = False
-        self.__inProcess = False
-
-        self.__client = client
-        self.__path = path
-
-        # Transition data
-        self.properties = None
-
-        self.__createLayout()
-        self.setWindowTitle( "SVN Properties" )
-        QTimer.singleShot( 0, self.__process )
-        return
-
-    def keyPressEvent( self, event ):
-        " Processes the ESC key specifically "
-        if event.key() == Qt.Key_Escape:
-            self.__cancelRequest = True
-            self.__infoLabel.setText( "Cancelling..." )
-            QApplication.processEvents()
-        return
-
-    def __createLayout( self ):
-        " Creates the dialog layout "
-        self.resize( 450, 20 )
-        self.setSizeGripEnabled( True )
-
-        verticalLayout = QVBoxLayout( self )
-        self.__infoLabel = QLabel( "Retrieving properties of '" +
-                                   self.__path + "'..." )
-        verticalLayout.addWidget( self.__infoLabel )
-
-        buttonBox = QDialogButtonBox( self )
-        buttonBox.setOrientation( Qt.Horizontal )
-        buttonBox.setStandardButtons( QDialogButtonBox.Close )
-        verticalLayout.addWidget( buttonBox )
-
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.__onClose )
-        return
-
-    def __onClose( self ):
-        " Triggered when the close button is clicked "
-        self.__cancelRequest = True
-        self.__infoLabel.setText( "Cancelling..." )
-        QApplication.processEvents()
-        return
-
-    def closeEvent( self, event ):
-        " Window close event handler "
-        if self.__inProcess:
-            self.__cancelRequest = True
-            self.__infoLabel.setText( "Cancelling..." )
-            QApplication.processEvents()
-            event.ignore()
-        else:
-            event.accept()
-        return
-
-    def __cancelCallback( self ):
-        " Called by pysvn regularly "
-        QApplication.processEvents()
-        return self.__cancelRequest
-
-    def __process( self ):
-        " Update process "
-        self.__client.callback_cancel = self.__cancelCallback
-
-        try:
-            self.properties = self.__client.proplist( self.__path )
-        except Exception, exc:
-            logging.error( str( exc ) )
-            self.close()
-            return
-        except:
-            logging.error( "Unknown error while retrieving properties of " +
-                           self.__path )
-            self.close()
-            return
-
-        if self.__cancelRequest:
-            self.close()
-        else:
-            self.accept()
-        return
+def readProperties( client, path ):
+    " Reads properties of the given path "
+    # Properties are always read locally so a progress dialog is not required
+    QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+    properties  = None
+    try:
+        properties = client.proplist( path )
+    except Exception, exc:
+        logging.error( str( exc ) )
+    except:
+        logging.error( "Unknown error while retrieving properties of " + path )
+    QApplication.restoreOverrideCursor()
+    return properties
 
 
 class SVNPluginPropsDialog( QDialog ):
     " SVN plugin properties dialog "
 
-    def __init__( self, plugin, client, path, properties, parent = None ):
+    def __init__( self, plugin, client, path, parent = None ):
         QDialog.__init__( self, parent )
 
         self.__plugin = plugin
         self.__client = client
         self.__path = path
-        self.__props = properties
 
         self.__createLayout()
         self.setWindowTitle( "SVN Properties of " + path )
-
-        for itemPath, itemProps in properties:
-            if path == itemPath or path == itemPath + os.path.sep:
-                for name, value in itemProps.iteritems():
-                    newItem = QTreeWidgetItem(
-                        QStringList() << str( name ).strip() << str( value ).strip() )
-                    self.__propsView.addTopLevelItem( newItem )
-
-        self.__resizePropsView()
-        self.__sortPropsView()
-
+        self.__populate()
         self.__propsView.setFocus()
         return
 
     def __populate( self ):
         " Populate the properties list "
         # Get the currently selected name
+        selectedName = None
+        selected = list( self.__propsView.selectedItems() )
+        if selected:
+            selectedName = str( selected[ 0 ].text( 0 ) )
 
+        self.__propsView.clear()
+        properties = readProperties( self.__client, self.__path )
+        if properties:
+            for itemPath, itemProps in properties:
+                if self.__path == itemPath or \
+                   self.__path == itemPath + os.path.sep:
+                    for name, value in itemProps.iteritems():
+                        name = str( name ).strip()
+                        value = str( value ).strip()
+                        newItem = QTreeWidgetItem(
+                            QStringList() << name << value )
+                        self.__propsView.addTopLevelItem( newItem )
 
+        self.__resizePropsView()
+        self.__sortPropsView()
 
+        if selectedName:
+            index = 0
+            for index in xrange( 0, self.__propsView.topLevelItemCount() ):
+                item = self.__propsView.topLevelItem( index )
+                if selectedName == item.text( 0 ):
+                    item.setSelected( True )
+        return
 
     def __resizePropsView( self ):
         " Resizes the properties table "
@@ -240,6 +168,9 @@ class SVNPluginPropsDialog( QDialog ):
         self.__propsView.setItemsExpandable( False )
         self.__propsView.setSortingEnabled( True )
         self.__propsView.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
+        self.connect( self.__propsView,
+                      SIGNAL( "itemSelectionChanged()" ),
+                      self.__propsSelectionChanged )
 
         propsViewHeader = QTreeWidgetItem(
                 QStringList() << "Property Name" << "Property Value" )
@@ -312,6 +243,9 @@ class SVNPluginPropsDialog( QDialog ):
                 logging.info( str( commitInfo ) )
             self.__populate()
             self.__plugin.notifyPathChanged( self.__path )
+            self.__nameEdit.clear()
+            self.__valueEdit.clear()
+            self.__propsView.setFocus()
         except Exception, exc:
             logging.error( str( exc ) )
             return
@@ -319,9 +253,40 @@ class SVNPluginPropsDialog( QDialog ):
             logging.error( "Unknown property setting error" )
             return
 
+    def __propsSelectionChanged( self ):
+        " Selection of a property has changed "
+        selected = list( self.__propsView.selectedItems() )
+        self.__delButton.setEnabled( len( selected ) > 0 )
+        return
+
     def __onDel( self ):
         " Triggered when a property del is clicked "
-        pass
+        selected = list( self.__propsView.selectedItems() )
+        if len( selected ) == 0:
+            self.__delButton.setEnabled( False )
+            return
+
+        name = str( selected[ 0 ].text( 0 ) )
+        res = QMessageBox.warning( self, "Deleting Property",
+                    "You are about to delete <b>" + name +
+                    "</b> SVN property from " + self.__path + ".\nAre you sure?",
+                           QMessageBox.StandardButtons(
+                                QMessageBox.Cancel | QMessageBox.Yes ),
+                           QMessageBox.Cancel )
+        if res != QMessageBox.Yes:
+            return
+
+        try:
+            self.__client.propdel( name, self.__path )
+            self.__populate()
+            self.__plugin.notifyPathChanged( self.__path )
+            self.__propsView.setFocus()
+        except Exception, exc:
+            logging.error( str( exc ) )
+            return
+        except:
+            logging.error( "Unknown property deleting error" )
+            return
 
     def __nameChanged( self, text ):
         " Triggered when a property name to set is changed "
