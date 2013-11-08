@@ -266,6 +266,12 @@ class SubversionPlugin( SVNMenuMixin, SVNInfoMixin, SVNAddMixin, SVNCommitMixin,
                 # Try again, may be it is because the depth
                 statusList = client.status( path, update = clientUpdate,
                                             depth = pysvn.depth.empty )
+            # And another heck! If a directory is not under VCS even empty depth
+            # may not help. Sometimes an empty list is returned because
+            # update is set to True. Try without update as the last resort.
+            if not statusList and clientUpdate == True:
+                statusList = client.status( path, update = False,
+                                            depth = pysvn.depth.empty )
 
             result = []
             for status in statusList:
@@ -297,6 +303,8 @@ class SubversionPlugin( SVNMenuMixin, SVNInfoMixin, SVNAddMixin, SVNCommitMixin,
         client = self.getSVNClient( self.getSettings() )
         try:
             statusList = client.status( path, update = False, depth = pDepth )
+            if pDepth != pysvn.depth.empty and len( statusList ) == 0:
+                statusList = client.status( path, update = False, depth = pysvn.depth.empty )
             statusCount = len( statusList )
             if pDepth == pysvn.depth.empty and statusCount != 1:
                 return IND_ERROR
