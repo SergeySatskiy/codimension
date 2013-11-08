@@ -174,6 +174,11 @@ class SVNStatusProgress( QDialog ):
                 statusList = self.__client.status( self.__path,
                                                    update = self.__update,
                                                    depth = pysvn.depth.empty )
+            if not statusList and self.__update == True:
+                # Try again, may be it is because of update
+                statusList = self.__client.status( self.__path,
+                                                   update = False,
+                                                   depth = pysvn.depth.empty )
 
             self.statusList = []
             for status in statusList:
