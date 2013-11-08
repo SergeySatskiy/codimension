@@ -155,8 +155,12 @@ class ProjectBrowser( FilesBrowser ):
         # focus is received. So here is focus flipping below.
         currentFocus = QApplication.focusWidget()
         if currentFocus:
-            self.setFocus()
-            currentFocus.setFocus()
+            if currentFocus == self:
+                self.__mainWindow.editorsManager().currentWidget().setFocus()
+                self.setFocus()
+            else:
+                self.setFocus()
+                currentFocus.setFocus()
         return
 
     def drawBranches( self, painter, rect, index ):
