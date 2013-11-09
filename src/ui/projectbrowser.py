@@ -156,8 +156,10 @@ class ProjectBrowser( FilesBrowser ):
         currentFocus = QApplication.focusWidget()
         if currentFocus:
             if currentFocus == self:
-                self.__mainWindow.editorsManager().currentWidget().setFocus()
-                self.setFocus()
+                currentWidget = self.__mainWindow.editorsManager().currentWidget()
+                if currentWidget:
+                    currentWidget.setFocus()
+                    self.setFocus()
             else:
                 self.setFocus()
                 currentFocus.setFocus()

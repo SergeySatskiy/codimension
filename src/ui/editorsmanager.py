@@ -2008,7 +2008,6 @@ class EditorsManager( QTabWidget ):
                     self.setTabsClosable( True )
                 shortName = self.__helpWidget.getShortName()
                 self.addTab( self.__helpWidget, shortName )
-                QApplication.processEvents()
                 continue
 
             if not fileName.startswith( os.path.sep ):
@@ -2026,14 +2025,12 @@ class EditorsManager( QTabWidget ):
             fileType = detectFileType( fileName )
             if fileType == PixmapFileType:
                 self.openPixmapFile( fileName )
-                QApplication.processEvents()
                 continue
 
             # A usual file
             if self.openFile( fileName, line ):
                 self.widget( 0 ).getEditor().gotoLine( line + 1, pos + 1,
                                                        firstLine + 1)
-                QApplication.processEvents()
 
         # This call happens when a project is loaded, so it makes sense to
         # reset a new file index
