@@ -22,6 +22,12 @@
 
 """ Performs SVN add command """
 
+from PyQt4.QtCore import Qt, SIGNAL, QStringList
+from PyQt4.QtGui import ( QDialog, QVBoxLayout, QDialogButtonBox,
+                          QLabel, QTreeWidget,
+                          QTreeWidgetItem, QHeaderView,
+                          QApplication, QCursor )
+from ui.itemdelegates import NoOutlineHeightDelegate
 import logging
 import pysvn
 import os.path
@@ -84,18 +90,24 @@ def doSVNAdd( plugin, client, path, recursively ):
             paths.append( path )
         return
 
+    needToRestoreCursor = False
     try:
         client.callback_notify = notifyCallback
         if recursively:
             # This is a dir. It could be under VCS or not
             dirStatus = plugin.getLocalStatus( path )
             if dirStatus == plugin.NOT_UNDER_VCS:
+                QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+                needToRestoreCursor = True
                 client.add( path, recurse = True )
+                QApplication.restoreOverrideCursor()
+                needToRestoreCursor = False
             else:
                 # Need to build the list manually
                 statuses = plugin.getLocalStatus( path, pysvn.depth.infinity )
                 if type( statuses ) != list:
-                    logging.error( "Error checking local SVN statuses for " + path )
+                    logging.error( "Error checking local SVN statuses for " +
+                                   path )
                     return
 
                 pathsToAdd = []
@@ -107,17 +119,165 @@ def doSVNAdd( plugin, client, path, recursively ):
                     logging.info( "No paths to add for " + path )
                     return
 
-                client.add( pathsToAdd )
+                dlg = SVNPluginAddDialog( pathsToAdd )
+                res = dlg.exec_()
+                if res == QDialog.Accepted:
+                    if len( dlg.addPaths ) == 0:
+                        return
+
+                    QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+                    needToRestoreCursor = True
+                    client.add( dlg.addPaths )
+                    QApplication.restoreOverrideCursor()
+                    needToRestoreCursor = False
         else:
             # It is a single file
+            QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+            needToRestoreCursor = True
             client.add( path )
+            QApplication.restoreOverrideCursor()
+            needToRestoreCursor = False
 
         if pathList:
             logging.info( "Finished" )
     except Exception, excpt:
+        if needToRestoreCursor:
+            QApplication.restoreOverrideCursor()
         logging.error( str( excpt ) )
 
     for addedPath in pathList:
         plugin.notifyPathChanged( addedPath )
     return
 
+
+
+# Columns for the add path list
+CHECK_COL = 0
+PATH_COL = 1
+
+class SVNPluginAddDialog( QDialog ):
+    " SVN Plugin add dialog "
+
+    def __init__( self, pathsToAdd, parent = None ):
+        QDialog.__init__( self, parent )
+
+        self.addPaths = []
+
+        self.__createLayout( pathsToAdd )
+        self.setWindowTitle( "SVN add" )
+
+        # Fill the lists
+        for item in pathsToAdd:
+            newItem = QTreeWidgetItem( QStringList() << "" << item )
+            newItem.setCheckState( CHECK_COL, Qt.Checked )
+            newItem.setToolTip( PATH_COL, item[ 0 ] )
+            self.__pathToAddView.addTopLevelItem( newItem )
+
+        self.__resizeAddPaths()
+        self.__sortAddPaths()
+
+        self.__updateOKStatus()
+        return
+
+    def __resizeAddPaths( self ):
+        " Resizes the add table "
+        self.__pathToAddView.header().setStretchLastSection( True )
+        self.__pathToAddView.header().resizeSections(
+                                        QHeaderView.ResizeToContents )
+        self.__pathToAddView.header().resizeSection( CHECK_COL, 28 )
+        self.__pathToAddView.header().setResizeMode( CHECK_COL,
+                                                     QHeaderView.Fixed )
+        return
+
+    def __sortAddPaths( self ):
+        " Sorts the commit paths table "
+        self.__pathToAddView.sortItems(
+                    self.__pathToAddView.sortColumn(),
+                    self.__pathToAddView.header().sortIndicatorOrder() )
+        return
+
+    @staticmethod
+    def __configTable( table ):
+        " Sets common properties for a table "
+        table.setAlternatingRowColors( True )
+        table.setRootIsDecorated( False )
+        table.setItemsExpandable( False )
+        table.setSortingEnabled( True )
+        table.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
+        table.setUniformRowHeights( True )
+        return
+
+    def __createLayout( self, pathsToAdd ):
+        " Creates the dialog layout "
+
+        self.resize( 640, 480 )
+        self.setSizeGripEnabled( True )
+
+        vboxLayout = QVBoxLayout( self )
+
+        # Paths to add part
+        vboxLayout.addWidget( QLabel( "Paths to add (total: " +
+                                              str( len( pathsToAdd ) ) + ")" ) )
+
+        self.__pathToAddView = QTreeWidget()
+        self.__configTable( self.__pathToAddView )
+
+        self.__pathToAddHeader = QTreeWidgetItem(QStringList() << "" << "Path")
+        self.__pathToAddView.setHeaderItem( self.__pathToAddHeader )
+        self.__pathToAddView.header().setSortIndicator( PATH_COL,
+                                                        Qt.AscendingOrder )
+        self.connect( self.__pathToAddView,
+                      SIGNAL( "itemChanged(QTreeWidgetItem*,int)" ),
+                      self.__onAddPathChanged )
+        vboxLayout.addWidget( self.__pathToAddView )
+
+        # Buttons at the bottom
+        buttonBox = QDialogButtonBox( self )
+        buttonBox.setOrientation( Qt.Horizontal )
+        buttonBox.setStandardButtons( QDialogButtonBox.Ok |
+                                      QDialogButtonBox.Cancel )
+        self.__OKButton = buttonBox.button( QDialogButtonBox.Ok )
+        self.__OKButton.setText( "Add" )
+        buttonBox.button( QDialogButtonBox.Cancel ).setDefault( True )
+        self.connect( buttonBox, SIGNAL( "accepted()" ), self.userAccept )
+        self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
+        vboxLayout.addWidget( buttonBox )
+        return
+
+    def userAccept( self ):
+        " Triggered when the user clicks OK "
+        # Collect the list of checked paths
+        self.addPaths = []
+        index = 0
+        while index < self.__pathToAddView.topLevelItemCount():
+            item = self.__pathToAddView.topLevelItem( index )
+            if item.checkState( CHECK_COL ) == Qt.Checked:
+                path = str( item.text( 1 ) )
+                if os.path.isdir( path ) and not os.path.islink( path ) and \
+                                             not path.endswith( os.path.sep ):
+                    path += os.path.sep
+                self.addPaths.append( path )
+            index += 1
+        self.accept()
+        return
+
+    def __getCheckedCount( self ):
+        " Provides the number of selected items in the add paths section "
+        index = 0
+        checkedCount = 0
+        while index < self.__pathToAddView.topLevelItemCount():
+            item = self.__pathToAddView.topLevelItem( index )
+            if item.checkState( 0 ) == Qt.Checked:
+                checkedCount += 1
+            index += 1
+        return checkedCount
+
+    def __updateOKStatus( self ):
+        " Updates the OK button status "
+        self.__OKButton.setEnabled( self.__getCheckedCount() > 0 )
+        return
+
+    def __onAddPathChanged( self, item, column ):
+        " Triggered when an item is changed "
+        self.__updateOKStatus()
+        return
