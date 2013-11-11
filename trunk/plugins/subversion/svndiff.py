@@ -25,8 +25,27 @@
 import logging
 import difflib
 import os.path
+import pysvn
 from PyQt4.QtGui import QApplication, QCursor
 from PyQt4.QtCore import Qt
+from svnindicators import IND_UPTODATE
+
+
+def getLocalRevisionNumber( client, path ):
+    " Provides the local revision number "
+    info = client.info2( path, recurse = False )
+    return int( info[ 0 ][ 1 ][ "rev" ].number )
+
+
+def getReposRevisionNumber( client, path ):
+    " Provides the repository revision number "
+    log  = client.log( path,
+               revision_start = pysvn.Revision( pysvn.opt_revision_kind.head ),
+               limit = 1 )
+    if log:
+        return int( log[ 0 ][ "revision" ].number )
+    return None
+
 
 
 class SVNDiffMixin:
@@ -59,11 +78,30 @@ class SVNDiffMixin:
         client = self.getSVNClient( self.getSettings() )
 
         try:
+            localStatus = self.getLocalStatus( path )
+            localRevisionNumber = getLocalRevisionNumber( client, path )
+            reposRevisionNumber = getReposRevisionNumber( client, path )
+
+            if reposRevisionNumber is None:
+                logging.info( "The path " + path +
+                              " does not exist in repository" )
+                return
+
+            localAtLeft = False
+            if localStatus == IND_UPTODATE:
+                if localRevisionNumber < reposRevisionNumber:
+                    localAtLeft = True
+
             repositoryVersion = client.cat( path )
 
             # Calculate difference
-            diff = difflib.unified_diff( repositoryVersion.splitlines(),
-                                         content.splitlines(), n = 5 )
+            if localAtLeft:
+                diff = difflib.unified_diff( content.splitlines(),
+                                             repositoryVersion.splitlines(),
+                                             n = 5 )
+            else:
+                diff = difflib.unified_diff( repositoryVersion.splitlines(),
+                                             content.splitlines(), n = 5 )
             nodiffMessage = path + " has no difference to the " \
                                    "repository at revision HEAD"
             if modified:
@@ -79,13 +117,20 @@ class SVNDiffMixin:
                 return
 
             if modified:
-                source = "+++ editing buffer with " + os.path.basename( path )
+                localSpec = "editing buffer with " + \
+                            os.path.basename( path ) + " based on rev." + \
+                            str( localRevisionNumber )
             else:
-                source = "+++ local " + os.path.basename( path )
-            diffAsText = diffAsText.replace( "+++ ", source, 1 )
-            diffAsText = diffAsText.replace( "--- ",
-                                             "--- repository at revision HEAD",
-                                             1 )
+                localSpec = "local " + os.path.basename( path ) + \
+                            " (rev." + str( localRevisionNumber ) + ")"
+            reposSpec = "repository at revision HEAD (rev." + \
+                        str( reposRevisionNumber ) + ")"
+            if localAtLeft:
+                diffAsText = diffAsText.replace( "--- ", "--- " + localSpec, 1 )
+                diffAsText = diffAsText.replace( "+++ ", "+++ " + reposSpec, 1 )
+            else:
+                diffAsText = diffAsText.replace( "+++ ", "+++ " + localSpec, 1 )
+                diffAsText = diffAsText.replace( "--- ", "--- " + reposSpec, 1 )
         except Exception, excpt:
             logging.error( str( excpt ) )
             return
