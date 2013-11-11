@@ -79,8 +79,8 @@ class SVNInfoMixin:
         client = self.getSVNClient( self.getSettings() )
         info = getSVNInfo( client, path )
         statusObject = self.getLocalStatusObject( client, path )
-        message = "\n    Status: " + statusToString( status ) + \
-                  "\n    Properties status: "
+        message = "\n    Local status: " + statusToString( status ) + \
+                  "\n    Local properties status: "
         if statusObject.prop_status == pysvn.wc_status_kind.modified:
             message = message + "modified"
         else:
