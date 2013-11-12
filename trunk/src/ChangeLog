@@ -1,10 +1,12 @@
-XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
+2013 Nov 12 Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Improvement: scaling of diagram and pictures is now via Ctrl + Mouse wheel
 * Improvement: scaling text editor fonts via Ctrl + Mouse wheel
 * Project tab is activated automatically when a project is loaded from the
   recent projects tab
 * Reset pyflakes labels when a file changed its type due to 'save as' action
+* New feature: SVN plugin
+* Minor improvements and bug fixes
 
 
 2013 Aug 23 Sergey Satskiy <sergey.satskiy@gmail.com>
