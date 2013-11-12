@@ -116,9 +116,10 @@ class ProjectBrowser( FilesBrowser ):
             else:
                 # It is a file
                 if i.getRealPath() == path:
-                    i.vcsStatus = status
-                    self._signalItemUpdated( i )
-                    updateSent = True
+                    if i.vcsStatus != status:
+                        i.vcsStatus = status
+                        self._signalItemUpdated( i )
+                        updateSent = True
         if updateSent:
             self.__focusFlip()
         return
@@ -135,9 +136,10 @@ class ProjectBrowser( FilesBrowser ):
         # no limit here...
         updateSent = False
         if treeItem.getRealPath() == path:
-            treeItem.vcsStatus = status
-            self._signalItemUpdated( treeItem )
-            updateSent = True
+            if treeItem.vcsStatus != status:
+                treeItem.vcsStatus = status
+                self._signalItemUpdated( treeItem )
+                updateSent = True
 
         for i in treeItem.childItems:
             if i.itemType == DirectoryItemType:
