@@ -6,6 +6,7 @@
   recent projects tab
 * Reset pyflakes labels when a file changed its type due to 'save as' action
 * New feature: SVN plugin
+* Do not show improper calltips provided by the rope library
 * Minor improvements and bug fixes
 
 
