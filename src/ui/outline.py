@@ -460,3 +460,10 @@ class FileOutlineViewer( QWidget ):
             logging.error( str( ex ) )
         return
 
+    def highlightContextItem( self, context, line ):
+        " Highlights the context item "
+        if not self.__currentUUID in self.__outlineBrowsers:
+            return False
+        browser = self.__outlineBrowsers[ self.__currentUUID ].browser
+        info = self.__outlineBrowsers[ self.__currentUUID ].info
+        return browser.highlightContextItem( context, line, info )
