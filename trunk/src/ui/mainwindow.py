@@ -4227,6 +4227,12 @@ class CodimensionMainWindow( QMainWindow ):
             self.activateProjectTab()
         return
 
+    def highlightInOutline( self, context, line ):
+        " Triggered when the given context should be highlighted in outline "
+        if self.outlineViewer.highlightContextItem( context, line ):
+            self.activateOutlineTab()
+        return
+
     def getLogViewerContent( self ):
         " Provides the log viewer window content as a plain text "
         return self.logViewer.getText()
@@ -4334,4 +4340,9 @@ class CodimensionMainWindow( QMainWindow ):
         self.__leftSideBar.raise_()
         return
 
-
+    def activateOutlineTab( self ):
+        " Activates the outline tab "
+        self.__rightSideBar.show()
+        self.__rightSideBar.setCurrentWidget( self.outlineViewer )
+        self.__rightSideBar.raise_()
+        return

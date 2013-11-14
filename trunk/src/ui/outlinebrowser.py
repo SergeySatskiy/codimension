@@ -195,3 +195,19 @@ class OutlineBrowser( FilesBrowser ):
                                                   infoItem.line )
 
         return
+
+    def highlightContextItem( self, context, line, info ):
+        " Highlights the context defined item "
+        print "HIGHLIGHT requested for line: " + str( line )
+        print context
+
+        if context.length == 0:
+            # It is a global context. Check if something matches
+            # - encoding
+            # - import
+            # - class
+            # - function
+            # - global variable
+            pass
+        return
+

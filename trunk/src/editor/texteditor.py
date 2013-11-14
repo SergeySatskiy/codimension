@@ -337,6 +337,14 @@ class TextEditor( ScintillaWrapper ):
                                 PixmapCache().getIcon( "highlightmenu.png" ),
                                 "H&ighlight in file system browser",
                                 editorsManager.onHighlightInFS )
+        self.__menuHighlightInOutline = self.__menu.addAction(
+                                PixmapCache().getIcon( "highlightmenu.png" ),
+                                "Highlight in &outline browser",
+                                self.highlightInOutline )
+        self.__menuHighlightInOutline.setVisible( False )
+
+        self.connect( self.__menu, SIGNAL( "aboutToShow()" ),
+                      self.__contextMenuAboutToShow )
 
         # Plugins support
         self.__pluginMenuSeparator = self.__menu.addSeparator()
@@ -1979,6 +1987,24 @@ class TextEditor( ScintillaWrapper ):
         if url.startswith( "www." ):
             url = "http://" + url
         QDesktopServices.openUrl( QUrl( url ) )
+        return
+
+    def __contextMenuAboutToShow( self ):
+        " Context menu is about to show "
+        if self.parent().getFileType() not in [ PythonFileType,
+                                                Python3FileType ]:
+            self.__menuHighlightInOutline.setEnabled( False )
+        else:
+            self.__menuHighlightInOutline.setEnabled( True )
+        return
+
+    def highlightInOutline( self ):
+        " Triggered when highlight in outline browser is requested "
+        text = str( self.text() )
+        info = getBriefModuleInfoFromMemory( text )
+        context = getContext( self, info, True )
+        line, pos = self.getCursorPosition()
+        GlobalData().mainWindow.highlightInOutline( context, int( line ) + 1 )
         return
 
     def _updateDwellingTime( self ):
