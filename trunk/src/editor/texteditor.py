@@ -198,6 +198,12 @@ class TextEditor( ScintillaWrapper ):
             if modifiers == Qt.ShiftModifier | Qt.ControlModifier:
                 if key == Qt.Key_F1:
                     return self.onCallHelp()
+                if key == Qt.Key_T:
+                    return self.onJumpToTop()
+                if key == Qt.Key_M:
+                    return self.onJumpToMiddle()
+                if key == Qt.Key_B:
+                    return self.onJumpToBottom()
             if modifiers == Qt.ShiftModifier:
                 if key == Qt.Key_Delete:
                     return self.onShiftDel()
@@ -1675,6 +1681,27 @@ class TextEditor( ScintillaWrapper ):
 
         QApplication.restoreOverrideCursor()
         GlobalData().mainWindow.showTagHelp( calltip, docstring )
+        return True
+
+    def onJumpToTop( self ):
+        " Jumps to the first position of the first visible line "
+        self.setCursorPosition( self.firstVisibleLine(), 0 )
+        return True
+
+    def onJumpToMiddle( self ):
+        " Jumps to the first position of the line in a middle of the editing area "
+        count = int( self.linesOnScreen() / 2 )
+        jumpTo = self.firstVisibleLine()
+        while count > 0:
+            if self.isLineVisible( jumpTo ):
+                count -= 1
+            jumpTo += 1
+        self.setCursorPosition( jumpTo, 0 )
+        return True
+
+    def onJumpToBottom( self ):
+        " Jumps to the first position of the last line "
+        self.setCursorPosition( self.lastVisibleLine(), 0 )
         return True
 
     def onGotoDefinition( self ):

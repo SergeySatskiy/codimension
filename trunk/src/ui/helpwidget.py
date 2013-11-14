@@ -38,7 +38,7 @@ class QuickHelpWidget( HTMLTabWidget ):
                      os.path.sep + 'pixmaps' + os.path.sep
         logoPath = pixmapPath + 'logo.png'
 
-        self.setHTML( \
+        self.setHTML(
 """
 <html>
 <body bgcolor="#ffffe6">
@@ -168,8 +168,8 @@ class QuickHelpWidget( HTMLTabWidget ):
         <tr>
           <td>Ctrl+forward slash</td>
           <td>Show or hide a calltip</td>
-          <td></td>
-          <td></td>
+          <td>Ctrl+Shift+T/M/B</td>
+          <td>Jump to the first position of the first visible line/line in a middle of the visible text/last visible line</td>
         </tr>
       </table>
     </p>
