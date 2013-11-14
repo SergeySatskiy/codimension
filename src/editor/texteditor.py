@@ -1690,18 +1690,38 @@ class TextEditor( ScintillaWrapper ):
 
     def onJumpToMiddle( self ):
         " Jumps to the first position of the line in a middle of the editing area "
-        count = int( self.linesOnScreen() / 2 )
-        jumpTo = self.firstVisibleLine()
-        while count > 0:
+        # Count the number of the visible line
+        count = 0
+        firstVisible = self.firstVisibleLine()
+        lastVisible = self.lastVisibleLine()
+        candidate = firstVisible
+        while candidate <= lastVisible:
+            if self.isLineVisible( candidate ):
+                count += 1
+            candidate += 1
+
+        shift = int( count / 2 )
+        jumpTo = firstVisible
+        while shift > 0:
             if self.isLineVisible( jumpTo ):
-                count -= 1
+                shift -= 1
             jumpTo += 1
         self.setCursorPosition( jumpTo, 0 )
         return True
 
     def onJumpToBottom( self ):
         " Jumps to the first position of the last line "
+        currentFirstVisible = self.firstVisibleLine()
         self.setCursorPosition( self.lastVisibleLine(), 0 )
+        if self.firstVisibleLine() == currentFirstVisible:
+            return True
+        # Here: a partially visible last line caused scrolling. So the cursor
+        # needs to be set to the previous visible line
+        self.setCursorPosition( currentFirstVisible, 0 )
+        safeLastVisible = self.lastVisibleLine() - 1
+        while not self.isLineVisible( safeLastVisible ):
+            safeLastVisible -= 1
+        self.setCursorPosition( safeLastVisible, 0 )
         return True
 
     def onGotoDefinition( self ):
