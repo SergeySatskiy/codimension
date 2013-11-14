@@ -1283,7 +1283,7 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onMonoFont )
 
         # The plugins menu
-        self.__pluginsMenu = QMenu( "Pl&ugins", self )
+        self.__pluginsMenu = QMenu( "Plugi&ns", self )
         self.__recomposePluginMenu()
 
         # The Help menu
