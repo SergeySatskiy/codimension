@@ -108,6 +108,9 @@ Codimension version: 2.0.1
 || Alt+U            || Jump to the beginning of the current function or class. ||
 || Ctrl+/           || Show or hide a calltip. ||
 || Ctrl+\           || Find the current word definition. If found then the cursor jumps to the definition. ||
+|| Ctrl+Shift+T     || Move the cursor to the first visible line. ||
+|| Ctrl+Shift+M     || Move the cursor to the line in a middle of the visible lines. ||
+|| Ctrl+Shift+B     || Move the cursor to the last visible line. ||
 
 
 
