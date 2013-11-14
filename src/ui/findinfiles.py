@@ -236,7 +236,7 @@ class ItemToSearchIn:
         end = start + ItemToSearchIn.contextLines
         if end < totalLines:
             return start, end
-        return totalLines - ItemToSearchIn.contextLines, totalLines - 1
+        return totalLines - ItemToSearchIn.contextLines, totalLines
 
 
 

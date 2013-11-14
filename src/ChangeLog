@@ -7,6 +7,7 @@
 * Reset pyflakes labels when a file changed its type due to 'save as' action
 * New feature: SVN plugin
 * Do not show improper calltips provided by the rope library
+* Bug fix: find in files crash if the found line is the last one
 * Minor improvements and bug fixes
 
 
