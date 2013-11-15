@@ -1713,15 +1713,16 @@ class TextEditor( ScintillaWrapper ):
         " Jumps to the first position of the last line "
         currentFirstVisible = self.firstVisibleLine()
         self.setCursorPosition( self.lastVisibleLine(), 0 )
-        if self.firstVisibleLine() == currentFirstVisible:
-            return True
-        # Here: a partially visible last line caused scrolling. So the cursor
-        # needs to be set to the previous visible line
-        self.setCursorPosition( currentFirstVisible, 0 )
-        safeLastVisible = self.lastVisibleLine() - 1
-        while not self.isLineVisible( safeLastVisible ):
+        safeLastVisible = self.lastVisibleLine()
+
+        while self.firstVisibleLine() != currentFirstVisible:
+            # Here: a partially visible last line caused scrolling. So the cursor
+            # needs to be set to the previous visible line
+            self.setCursorPosition( currentFirstVisible, 0 )
             safeLastVisible -= 1
-        self.setCursorPosition( safeLastVisible, 0 )
+            while not self.isLineVisible( safeLastVisible ):
+                safeLastVisible -= 1
+            self.setCursorPosition( safeLastVisible, 0 )
         return True
 
     def onGotoDefinition( self ):
