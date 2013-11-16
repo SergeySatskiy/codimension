@@ -1,6 +1,8 @@
-XXXX XXX XX  Sergey Satskiy <sergey.satskiy@gmail.com>
+2013 Nov 16  Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Prepared for release v.1.6.4
 * Bug fix: core dump in case if a docstring is longer than 65535 bytes.
+* Collect python files list from sys.path.
 
 2013 Aug 29  Sergey Satskiy <sergey.satskiy@gmail.com>
 

@@ -1,3 +1,11 @@
+codimension-parser (1.6.4-2) precise; urgency=low
+
+ * Prepared for release v.1.6.4
+ * Bug fix: core dump in case if a docstring is longer than 65535 bytes
+ * Collect python files list from sys.path
+
+ -- Sergey <sergey.satskiy@gmail.com>  Sat, 16 Nov 2013 13:28:00 +0400
+
 codimension-parser (1.6.3-2) precise; urgency=low
 
  * Prepared for release v.1.6.3
