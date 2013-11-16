@@ -1,5 +1,6 @@
-2013 Nov 12 Sergey Satskiy <sergey.satskiy@gmail.com>
+2013 Nov 16 Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Version 2.2.0
 * Improvement: scaling of diagram and pictures is now via Ctrl + Mouse wheel
 * Improvement: scaling text editor fonts via Ctrl + Mouse wheel
 * Project tab is activated automatically when a project is loaded from the
