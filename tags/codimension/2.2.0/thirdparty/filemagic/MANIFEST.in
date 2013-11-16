@@ -1,0 +1,9 @@
+recursive-include tests *.py
+recursive-include docs/source *
+include docs/Makefile
+include *.py
+include CHANGELOG
+include CONTRIBUTORS
+include LICENSE
+include MANIFEST.in
+include README.rst
