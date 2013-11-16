@@ -1,5 +1,5 @@
 Name: codimension
-Version: 2.1.1
+Version: 2.2.0
 Release: 2
 License: GPLv3+
 Group: Development/Tools/IDE
@@ -83,6 +83,20 @@ update-desktop-database -q
 %{_datadir}/pixmaps/*.png
 
 %changelog
+* Sat Nov 16 2013 Ilya Loginov <isloginov@gmail.com> - 2.2.0-2
+- Version 2.2.0
+- Improvement: scaling of diagram and pictures is now via Ctrl + Mouse wheel
+- Improvement: scaling text editor fonts via Ctrl + Mouse wheel
+- Project tab is activated automatically when a project is loaded from the recent
+  projects tab
+- Reset pyflakes labels when a file changed its type due to 'save as' action
+- New feature: SVN plugin
+- Do not show improper calltips provided by the rope library
+- Bug fix: find in files crash if the found line is the last one
+- New feature: Ctrl+Shift+T/M/B to move the text cursor to the first visible
+  line/to the line in the middle of the visible text/to the last visible line
+- Minor improvements and bug fixes
+
 * Fri Aug 23 2013 Ilya Loginov <isloginov@gmail.com> - 2.1.1-2
 - Version 2.1.1
 - Fix: completion did not offer anything for relative imports. Issue #402.
