@@ -39,6 +39,10 @@ class ViewVariableDialog( QDialog ):
     def __init__( self, varName,
                         varType, varValue, isGlobal, parent = None ):
         QDialog.__init__( self, parent )
+
+        if varName.endswith( "." ):
+            varName = varName[ : -1 ]
+
         if isGlobal:
             self.setWindowTitle( "Global variable '" + varName + "'" )
             self.setWindowIcon( PixmapCache().getIcon( "globvar.png" ) )
@@ -50,6 +54,11 @@ class ViewVariableDialog( QDialog ):
 
     def __createLayout( self, varName, varType, varValue, isGlobal ):
         """ Creates the dialog layout """
+
+        if varType.lower() in [ "string", "qstring" ]:
+            length = str( len( varValue ) )
+            lines = str( len( varValue.splitlines() ) )
+            varType += " (lines: " + lines + ", characters: " + length + ")"
 
         self.resize( 600, 250 )
         self.setSizeGripEnabled( True )
@@ -66,14 +75,15 @@ class ViewVariableDialog( QDialog ):
         else:
             varScopeValue = FramedLabelWithDoubleClick( "Local" )
         varScopeValue.setToolTip( "Double click to copy" )
+        font = varScopeValue.font()
+        font.setFamily( GlobalData().skin.baseMonoFontFace )
+        varScopeValue.setFont( font )
         gridLayout.addWidget( varScopeValue, 0, 1 )
 
         varNameLabel = QLabel( "Name:" )
         gridLayout.addWidget( varNameLabel, 1, 0, Qt.AlignTop )
         varNameValue = FramedLabelWithDoubleClick( varName )
         varNameValue.setToolTip( "Double click to copy" )
-        font = varNameValue.font()
-        font.setFamily( GlobalData().skin.baseMonoFontFace )
         varNameValue.setFont( font )
         gridLayout.addWidget( varNameValue, 1, 1 )
         varTypeLabel = QLabel( "Type:" )
