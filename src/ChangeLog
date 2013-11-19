@@ -1,3 +1,9 @@
+XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Improvement: debugger variable view displays the number of lines and the number
+  of characters for python strings and QStrings. Unnecessary '.' in the QString
+  variable name is stripped.
+
 2013 Nov 16 Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Version 2.2.0
