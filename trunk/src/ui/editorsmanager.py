@@ -1200,6 +1200,8 @@ class EditorsManager( QTabWidget ):
                             Settings().filePositions.getPosition( fileName )
                 if line != -1:
                     editor.gotoLine( line + 1, pos + 1, firstVisible + 1)
+                else:
+                    editor.gotoLine( 1, 1, 1 )
 
             self._updateIconAndTooltip( self.currentIndex(), fileType )
             self.__updateControls()
