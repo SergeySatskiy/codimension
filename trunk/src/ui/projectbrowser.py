@@ -36,7 +36,7 @@ from projectbrowsermodel import ProjectBrowserModel
 from filesbrowserbase import FilesBrowser
 from utils.project import CodimensionProject
 from viewitems import DirectoryItemType
-
+import copy
 
 class ProjectBrowser( FilesBrowser ):
     " Project tree browser "
@@ -117,7 +117,7 @@ class ProjectBrowser( FilesBrowser ):
                 # It is a file
                 if i.getRealPath() == path:
                     if i.vcsStatus != status:
-                        i.vcsStatus = status
+                        i.vcsStatus = copy.deepcopy( status )
                         self._signalItemUpdated( i )
                         updateSent = True
         if updateSent:
@@ -137,7 +137,7 @@ class ProjectBrowser( FilesBrowser ):
         updateSent = False
         if treeItem.getRealPath() == path:
             if treeItem.vcsStatus != status:
-                treeItem.vcsStatus = status
+                treeItem.vcsStatus = copy.deepcopy( status )
                 self._signalItemUpdated( treeItem )
                 updateSent = True
 

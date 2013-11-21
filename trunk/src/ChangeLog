@@ -3,6 +3,7 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * Improvement: debugger variable view displays the number of lines and the number
   of characters for python strings and QStrings. Unnecessary '.' in the QString
   variable name is stripped.
+* Bug fix: proper signalling VCS status change in the project browser
 
 2013 Nov 16 Sergey Satskiy <sergey.satskiy@gmail.com>
 
