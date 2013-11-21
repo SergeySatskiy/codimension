@@ -43,6 +43,20 @@ class VCSStatus:
                " Message: " + str( self.message ) + \
                " Last update: " + str( self.lastUpdate )
 
+    def __eq__( self, other ):
+        if other is None:
+            return False
+        return self.pluginID == other.pluginID and \
+               self.indicatorID == other.indicatorID and \
+               self.message == other.message
+
+    def __ne__( self, other ):
+        if other is None:
+            return True
+        return self.pluginID != other.pluginID or \
+               self.indicatorID != other.indicatorID or \
+               self.message != other.message
+
 
 class VCSStatusCache:
     " Caches the file statuses which came from various plugins "
