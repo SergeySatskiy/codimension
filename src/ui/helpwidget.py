@@ -108,12 +108,12 @@ class QuickHelpWidget( HTMLTabWidget ):
         <tr>
           <td>Alt+Left or Right</td>
           <td>Move cursor word part left or right</td>
-          <td>Alt+Shift+Up or Down</td>
+          <td>Ctrl+Shift+Up or Down</td>
           <td>Select till the beginning or end of a paragraph</td>
         </tr>
         <tr>
-          <td>Alt+Shift+Left or Right</td>
-          <td>Select word part</td>
+          <td>Ctrl+Shift+T/M/B</td>
+          <td>Jump to the first position of the first visible line/line in a middle of the visible text/last visible line</td>
           <td>Ctrl+Z or Ctrl+Shift+Z</td>
           <td>Undo or Redo</td>
         </tr>
@@ -168,8 +168,14 @@ class QuickHelpWidget( HTMLTabWidget ):
         <tr>
           <td>Ctrl+forward slash</td>
           <td>Show or hide a calltip</td>
-          <td>Ctrl+Shift+T/M/B</td>
-          <td>Jump to the first position of the first visible line/line in a middle of the visible text/last visible line</td>
+          <td>Alt+Shift+cursor keys</td>
+          <td>Rectangular selection</td>
+        </tr>
+        <tr>
+          <td>Ctrl+mouse selection</td>
+          <td>Rectangular selection</td>
+          <td></td>
+          <td></td>
         </tr>
       </table>
     </p>
