@@ -22,220 +22,223 @@
 
 """ Quick help screen """
 
-
-import os.path
-import sys
-from htmltabwidget  import HTMLTabWidget
+from texttabwidget import TextTabWidget
 
 
-class QuickHelpWidget( HTMLTabWidget ):
+class QuickHelpWidget( TextTabWidget ):
     """ Quick help screen """
 
     def __init__( self, parent = None ):
 
-        HTMLTabWidget.__init__( self, parent )
-        pixmapPath = os.path.dirname( os.path.abspath( sys.argv[0] ) ) + \
-                     os.path.sep + 'pixmaps' + os.path.sep
-        logoPath = pixmapPath + 'logo.png'
+        TextTabWidget.__init__( self, parent )
+        #pixmapPath = os.path.dirname( os.path.abspath( sys.argv[0] ) ) + \
+        #             os.path.sep + 'pixmaps' + os.path.sep
+        #logoPath = pixmapPath + 'logo.png'
 
         self.setHTML(
 """
 <html>
 <body bgcolor="#ffffe6">
+<div>
 
-    <h2 align="left" style="color: #666">Keyboard Shortcut Reference</h2>
+    <h2 align="center" style="color: #666">Keyboard Shortcut Reference</h2>
 
     <h3 style="color: #666">Tools</h3>
     <p align="center">
-      <table border="1" cellspacing="0"
-             cellpadding="1" width="95%" align="center">
+      <table border="0" cellspacing="1"
+             cellpadding="4" width="95%" align="center">
         <tr>
-          <td width="15%">Ctrl+L</td>
-          <td width="35%">Pylint for a file</td>
-          <td width="15%">Ctrl+K</td>
-          <td width="35%">Pymetrics for a file</td>
+          <td width="15%" bgcolor="#E9E9F3">Ctrl+L</td>
+          <td width="35%" bgcolor="#F6F4E4">Pylint for a file</td>
+          <td width="15%" bgcolor="#E9E9F3">Ctrl+K</td>
+          <td width="35%" bgcolor="#F6F4E4">Pymetrics for a file</td>
         </tr>
         <tr>
-          <td>Alt+Shift+S</td>
-          <td>Search a name</td>
-          <td>Alt+Shift+O</td>
-          <td>Search a file</td>
+          <td bgcolor="#E9E9F3">Alt+Shift+S</td>
+          <td bgcolor="#F6F4E4">Search a name</td>
+          <td bgcolor="#E9E9F3">Alt+Shift+O</td>
+          <td bgcolor="#F6F4E4">Search a file</td>
         </tr>
         <tr>
-          <td>Ctrl+I</td>
-          <td>Open import / select import to open</td>
-          <td></td>
-          <td></td>
+          <td bgcolor="#E9E9F3">Ctrl+I</td>
+          <td bgcolor="#F6F4E4">Open import / select import to open</td>
+          <td bgcolor="#E9E9F3"></td>
+          <td bgcolor="#F6F4E4"></td>
         </tr>
       </table>
     </p>
 
+    <br>
     <h3 style="color: #666">IDE</h3>
     <p align="center">
-      <table border="1" cellspacing="0"
-             cellpadding="1" width="95%" align="center">
+      <table border="0" cellspacing="1"
+             cellpadding="4" width="95%" align="center">
         <tr>
-          <td width="15%">Ctrl+N</td>
-          <td width="35%">New file</td>
-          <td width="15%">F11</td>
-          <td width="35%">Shrink sidebars</td>
+          <td width="15%" bgcolor="#E9E9F3">Ctrl+N</td>
+          <td width="35%" bgcolor="#F6F4E4">New file</td>
+          <td width="15%" bgcolor="#E9E9F3">F11</td>
+          <td width="35%" bgcolor="#F6F4E4">Shrink sidebars</td>
         </tr>
         <tr>
-          <td>Alt+PgUp or Down</td>
-          <td>Forward or back in editing history</td>
-          <td>Ctrl+PgUp or Down</td>
-          <td>Previous or next tab</td>
+          <td bgcolor="#E9E9F3">Alt+PgUp or Down</td>
+          <td bgcolor="#F6F4E4">Forward or back in editing history</td>
+          <td bgcolor="#E9E9F3">Ctrl+PgUp or Down</td>
+          <td bgcolor="#F6F4E4">Previous or next tab</td>
         </tr>
         <tr>
-          <td>Ctrl+TAB</td>
-          <td>Switching between two recent tabs</td>
-          <td>Ctrl+Shift+F</td>
-          <td>Search in files</td>
+          <td bgcolor="#E9E9F3">Ctrl+TAB</td>
+          <td bgcolor="#F6F4E4">Switching between two recent tabs</td>
+          <td bgcolor="#E9E9F3">Ctrl+Shift+F</td>
+          <td bgcolor="#F6F4E4">Search in files</td>
         </tr>
       </table>
     </p>
 
+    <br>
     <h3 style="color: #666">Editor</h3>
     <p align="center">
-      <table border="1" cellspacing="0"
-             cellpadding="1" width="95%" align="center">
+      <table border="0" cellspacing="1"
+             cellpadding="4" width="95%" align="center">
         <tr>
-          <td width="15%">Ctrl+Up or Down</td>
-          <td width="35%">Scrolling up or down without changing cursor position</td>
-          <td width="15%">Alt+Up or Down</td>
-          <td width="35%">Move cursor one paragraph up or down</td>
+          <td width="15%" bgcolor="#E9E9F3">Ctrl+Up or Down</td>
+          <td width="35%" bgcolor="#F6F4E4">Scrolling up or down without changing cursor position</td>
+          <td width="15%" bgcolor="#E9E9F3">Alt+Up or Down</td>
+          <td width="35%" bgcolor="#F6F4E4">Move cursor one paragraph up or down</td>
         </tr>
         <tr>
-          <td>Alt+Left or Right</td>
-          <td>Move cursor word part left or right</td>
-          <td>Ctrl+Shift+Up or Down</td>
-          <td>Select till the beginning or end of a paragraph</td>
+          <td bgcolor="#E9E9F3">Alt+Left or Right</td>
+          <td bgcolor="#F6F4E4">Move cursor word part left or right</td>
+          <td bgcolor="#E9E9F3">Ctrl+Shift+Up or Down</td>
+          <td bgcolor="#F6F4E4">Select till the beginning or end of a paragraph</td>
         </tr>
         <tr>
-          <td>Ctrl+Shift+T/M/B</td>
-          <td>Jump to the first position of the first visible line/line in a middle of the visible text/last visible line</td>
-          <td>Ctrl+Z or Ctrl+Shift+Z</td>
-          <td>Undo or Redo</td>
+          <td bgcolor="#E9E9F3">Ctrl+Shift+T/M/B</td>
+          <td bgcolor="#F6F4E4">Jump to the first position of the first visible line/line in a middle of the visible text/last visible line</td>
+          <td bgcolor="#E9E9F3">Ctrl+Z or Ctrl+Shift+Z</td>
+          <td bgcolor="#F6F4E4">Undo or Redo</td>
         </tr>
         <tr>
-          <td>Shift+Del</td>
-          <td>Copy to buffer and delete selected text (if so) or current line</td>
-          <td>Ctrl+= or -</td>
-          <td>Zoom in or out</td>
+          <td bgcolor="#E9E9F3">Shift+Del</td>
+          <td bgcolor="#F6F4E4">Copy to buffer and delete selected text (if so) or current line</td>
+          <td bgcolor="#E9E9F3">Ctrl+= or -</td>
+          <td bgcolor="#F6F4E4">Zoom in or out</td>
         </tr>
         <tr>
-          <td>Ctrl+0</td>
-          <td>Reset zoom</td>
-          <td>Ctrl+G</td>
-          <td>Goto line</td>
+          <td bgcolor="#E9E9F3">Ctrl+0</td>
+          <td bgcolor="#F6F4E4">Reset zoom</td>
+          <td bgcolor="#E9E9F3">Ctrl+G</td>
+          <td bgcolor="#F6F4E4">Goto line</td>
         </tr>
         <tr>
-          <td>Ctrl+F</td>
-          <td>Initiate incremental search in buffer</td>
-          <td>Ctrl+R</td>
-          <td>Replace in buffer</td>
+          <td bgcolor="#E9E9F3">Ctrl+F</td>
+          <td bgcolor="#F6F4E4">Initiate incremental search in buffer</td>
+          <td bgcolor="#E9E9F3">Ctrl+R</td>
+          <td bgcolor="#F6F4E4">Replace in buffer</td>
         </tr>
         <tr>
-          <td>F3 or Shift+F3</td>
-          <td>Search next or previous</td>
-          <td>Ctrl+'</td>
-          <td>Highlight current word and iterate over matches</td>
+          <td bgcolor="#E9E9F3">F3 or Shift+F3</td>
+          <td bgcolor="#F6F4E4">Search next or previous</td>
+          <td bgcolor="#E9E9F3">Ctrl+'</td>
+          <td bgcolor="#F6F4E4">Highlight current word and iterate over matches</td>
         </tr>
         <tr>
-          <td>Ctrl+, or .</td>
-          <td>Move to the previous or next highlighted word</td>
-          <td>Ctrl+M</td>
-          <td>Comment or uncomment a line or selected lines</td>
+          <td bgcolor="#E9E9F3">Ctrl+, or .</td>
+          <td bgcolor="#F6F4E4">Move to the previous or next highlighted word</td>
+          <td bgcolor="#E9E9F3">Ctrl+M</td>
+          <td bgcolor="#F6F4E4">Comment or uncomment a line or selected lines</td>
         </tr>
         <tr>
-          <td>Ctrl+Space, TAB</td>
-          <td>Code completion</td>
-          <td>Ctrl+F1</td>
-          <td>Context help</td>
+          <td bgcolor="#E9E9F3">Ctrl+Space, TAB</td>
+          <td bgcolor="#F6F4E4">Code completion</td>
+          <td bgcolor="#E9E9F3">Ctrl+F1</td>
+          <td bgcolor="#F6F4E4">Context help</td>
         </tr>
         <tr>
-          <td>Ctrl+back slash</td>
-          <td>Goto definition</td>
-          <td>Ctrl+F3</td>
-          <td>Initiate search of the current word or selection without showing find dialog</td>
+          <td bgcolor="#E9E9F3">Ctrl+back slash</td>
+          <td bgcolor="#F6F4E4">Goto definition</td>
+          <td bgcolor="#E9E9F3">Ctrl+F3</td>
+          <td bgcolor="#F6F4E4">Initiate search of the current word or selection without showing find dialog</td>
         </tr>
         <tr>
-          <td>Ctrl+]</td>
-          <td>Find occurrences of the current word</td>
-          <td>Alt+U</td>
-          <td>Jump to the beginning of the current function or class</td>
+          <td bgcolor="#E9E9F3">Ctrl+]</td>
+          <td bgcolor="#F6F4E4">Find occurrences of the current word</td>
+          <td bgcolor="#E9E9F3">Alt+U</td>
+          <td bgcolor="#F6F4E4">Jump to the beginning of the current function or class</td>
         </tr>
         <tr>
-          <td>Ctrl+forward slash</td>
-          <td>Show or hide a calltip</td>
-          <td>Alt+Shift+cursor keys</td>
-          <td>Rectangular selection</td>
+          <td bgcolor="#E9E9F3">Ctrl+forward slash</td>
+          <td bgcolor="#F6F4E4">Show or hide a calltip</td>
+          <td bgcolor="#E9E9F3">Alt+Shift+cursor keys</td>
+          <td bgcolor="#F6F4E4">Rectangular selection</td>
         </tr>
         <tr>
-          <td>Ctrl+mouse selection</td>
-          <td>Rectangular selection</td>
-          <td></td>
-          <td></td>
+          <td bgcolor="#E9E9F3">Ctrl+mouse selection</td>
+          <td bgcolor="#F6F4E4">Rectangular selection</td>
+          <td bgcolor="#E9E9F3"></td>
+          <td bgcolor="#F6F4E4"></td>
         </tr>
       </table>
     </p>
 
+    <br>
     <h3 style="color: #666">Debugger</h3>
     <p align="center">
-      <table border="1" cellspacing="0"
-             cellpadding="1" width="95%" align="center">
+      <table border="0" cellspacing="1"
+             cellpadding="4" width="95%" align="center">
         <tr>
-          <td width="15%">Shift+F5</td>
-          <td width="35%">Start debugging the project main script with saved settings</td>
-          <td width="15%">F5</td>
-          <td width="35%">Start debugging the current tab script with saved settings</td>
+          <td width="15%" bgcolor="#E9E9F3">Shift+F5</td>
+          <td width="35%" bgcolor="#F6F4E4">Start debugging the project main script with saved settings</td>
+          <td width="15%" bgcolor="#E9E9F3">F5</td>
+          <td width="35%" bgcolor="#F6F4E4">Start debugging the current tab script with saved settings</td>
         </tr>
         <tr>
-          <td>Ctrl+Shift+F5</td>
-          <td>Edit debugger settings and start debugging the project main script</td>
-          <td>Ctrl+F5</td>
-          <td>Edit debugger settings and start debugging the current tab script</td>
+          <td bgcolor="#E9E9F3">Ctrl+Shift+F5</td>
+          <td bgcolor="#F6F4E4">Edit debugger settings and start debugging the project main script</td>
+          <td bgcolor="#E9E9F3">Ctrl+F5</td>
+          <td bgcolor="#F6F4E4">Edit debugger settings and start debugging the current tab script</td>
         </tr>
         <tr>
-          <td>Ctrl+F10</td>
-          <td>Stop the debugging session and kill the i/o console</td>
-          <td>F10</td>
-          <td>Stop the debugging session and keep the i/o console</td>
+          <td bgcolor="#E9E9F3">Ctrl+F10</td>
+          <td bgcolor="#F6F4E4">Stop the debugging session and kill the i/o console</td>
+          <td bgcolor="#E9E9F3">F10</td>
+          <td bgcolor="#F6F4E4">Stop the debugging session and keep the i/o console</td>
         </tr>
         <tr>
-          <td>F4</td>
-          <td>Restart the debugging session</td>
-          <td>F6</td>
-          <td>Continue</td>
+          <td bgcolor="#E9E9F3">F4</td>
+          <td bgcolor="#F6F4E4">Restart the debugging session</td>
+          <td bgcolor="#E9E9F3">F6</td>
+          <td bgcolor="#F6F4E4">Continue</td>
         </tr>
         <tr>
-          <td>F7</td>
-          <td>Step in</td>
-          <td>F8</td>
-          <td>Step over</td>
+          <td bgcolor="#E9E9F3">F7</td>
+          <td bgcolor="#F6F4E4">Step in</td>
+          <td bgcolor="#E9E9F3">F8</td>
+          <td bgcolor="#F6F4E4">Step over</td>
         </tr>
         <tr>
-          <td>F9</td>
-          <td>Step out</td>
-          <td>Shift+F6</td>
-          <td>Run to cursor</td>
+          <td bgcolor="#E9E9F3">F9</td>
+          <td bgcolor="#F6F4E4">Step out</td>
+          <td bgcolor="#E9E9F3">Shift+F6</td>
+          <td bgcolor="#F6F4E4">Run to cursor</td>
         </tr>
         <tr>
-          <td>Ctrl+W</td>
-          <td>Show the current debugger line</td>
-          <td></td>
-          <td></td>
+          <td bgcolor="#E9E9F3">Ctrl+W</td>
+          <td bgcolor="#F6F4E4">Show the current debugger line</td>
+          <td bgcolor="#E9E9F3"></td>
+          <td bgcolor="#F6F4E4"></td>
         </tr>
       </table>
     </p>
 
-    <p>
-        The industry common hot keys are not shown above. Please refer to
+    <br>
+    <p align="justify">
+        The industry common keys are not shown above. Please refer to
         <a href="http://satsky.spb.ru/codimension/keyBindingsEng.php">
            http://satsky.spb.ru/codimension/keyBindingsEng.php</a> for the complete list of
            bindings.
     </p>
 
+</div>
 </body>
 </html>
 """ )
@@ -246,6 +249,6 @@ class QuickHelpWidget( HTMLTabWidget ):
 
     def setFocus( self ):
         " Sets the focus to the nested html displaying editor "
-        HTMLTabWidget.setFocus( self )
+        TextTabWidget.setFocus( self )
         return
 
