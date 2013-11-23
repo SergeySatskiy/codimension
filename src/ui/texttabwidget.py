@@ -65,7 +65,7 @@ class TextTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         self.__fileName = ""
         self.__shortName = ""
-        self.__encoding = "N/A"
+        self.__encoding = "n/a"
         return
 
     def __onEsc( self ):
@@ -115,7 +115,7 @@ class TextTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def getLanguage( self ):
         " Tells the content language "
-        return "Plain text"
+        return "n/a"
 
     def getFileName( self ):
         " Tells what file name of the widget "
@@ -129,15 +129,15 @@ class TextTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def getEol( self ):
         " Tells the EOL style "
-        return "N/A"
+        return "n/a"
 
     def getLine( self ):
         " Tells the cursor line "
-        return "N/A"
+        return "n/a"
 
     def getPos( self ):
         " Tells the cursor column "
-        return "N/A"
+        return "n/a"
 
     def getEncoding( self ):
         " Tells the content encoding "

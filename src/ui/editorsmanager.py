@@ -1364,7 +1364,7 @@ class EditorsManager( QTabWidget ):
             urls.append( QUrl.fromLocalFile( project.getProjectDir() ) )
         dialog.setSidebarUrls( urls )
 
-        if widget.getFileName() not in [ "", "N/A" ]:
+        if widget.getFileName().upper() not in [ "", "N/A" ]:
             dialog.setDirectory( os.path.dirname( widget.getFileName() ) )
             dialog.selectFile( os.path.basename( widget.getFileName() ) )
         else:
@@ -1828,7 +1828,7 @@ class EditorsManager( QTabWidget ):
         mainWindow.sbWritable.setText( currentWidget.getRWMode() )
         mainWindow.sbEncoding.setText( currentWidget.getEncoding() )
         if currentWidget.getFileName() == "":
-            mainWindow.sbFile.setPath( "File: N/A" )
+            mainWindow.sbFile.setPath( "File: n/a" )
         else:
             mainWindow.sbFile.setPath( "File: " +
                                        currentWidget.getFileName() )
