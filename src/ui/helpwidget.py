@@ -38,12 +38,11 @@ class QuickHelpWidget( TextTabWidget ):
         self.setHTML(
 """
 <html>
-<body bgcolor="#ffffe6">
 <div>
 
-    <h2 align="center" style="color: #666">Keyboard Shortcut Reference</h2>
+    <h2 align="center">Keyboard Shortcut Reference</h2>
 
-    <h3 style="color: #666">Tools</h3>
+    <h3>Tools</h3>
     <p align="center">
       <table border="0" cellspacing="1"
              cellpadding="4" width="95%" align="center">
@@ -69,7 +68,7 @@ class QuickHelpWidget( TextTabWidget ):
     </p>
 
     <br>
-    <h3 style="color: #666">IDE</h3>
+    <h3>IDE</h3>
     <p align="center">
       <table border="0" cellspacing="1"
              cellpadding="4" width="95%" align="center">
@@ -95,7 +94,7 @@ class QuickHelpWidget( TextTabWidget ):
     </p>
 
     <br>
-    <h3 style="color: #666">Editor</h3>
+    <h3>Editor</h3>
     <p align="center">
       <table border="0" cellspacing="1"
              cellpadding="4" width="95%" align="center">
@@ -181,7 +180,7 @@ class QuickHelpWidget( TextTabWidget ):
     </p>
 
     <br>
-    <h3 style="color: #666">Debugger</h3>
+    <h3>Debugger</h3>
     <p align="center">
       <table border="0" cellspacing="1"
              cellpadding="4" width="95%" align="center">
