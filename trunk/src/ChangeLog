@@ -4,6 +4,7 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
   of characters for python strings and QStrings. Unnecessary '.' in the QString
   variable name is stripped.
 * Bug fix: proper signalling VCS status change in the project browser
+* Rectangular selection: Ctrl+mouse or Alt+Shift+cursor keys
 
 2013 Nov 16 Sergey Satskiy <sergey.satskiy@gmail.com>
 

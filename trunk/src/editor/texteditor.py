@@ -96,7 +96,7 @@ class TextEditor( ScintillaWrapper ):
 
         self.__initMargins()
         self.__initIndicators()
-        self.__disableKeyBinding()
+        self.__alterKeyBinding()
         self.__initContextMenu()
         self.__initDebuggerMarkers()
 
@@ -204,6 +204,10 @@ class TextEditor( ScintillaWrapper ):
                     return self.onJumpToMiddle()
                 if key == Qt.Key_B:
                     return self.onJumpToBottom()
+                if key == Qt.Key_Up:
+                    return self.__onCtrlShiftUp()
+                if key == Qt.Key_Down:
+                    return self.__onCtrlShiftDown()
             if modifiers == Qt.ShiftModifier:
                 if key == Qt.Key_Delete:
                     return self.onShiftDel()
@@ -263,18 +267,9 @@ class TextEditor( ScintillaWrapper ):
                     return self.__onParagraphDown()
                 if key == Qt.Key_U:
                     return self.onScopeBegin()
-            if modifiers == Qt.AltModifier | Qt.ShiftModifier:
-                if key == Qt.Key_Up:
-                    return self.__onAltShiftUp()
-                if key == Qt.Key_Down:
-                    return self.__onAltShiftDown()
-                if key == Qt.Key_Left:
-                    return self.__onAlShiftLeft()
-                if key == Qt.Key_Right:
-                    return self.__onAlShiftRight()
-            if key == Qt.Key_Home:
+            if key == Qt.Key_Home and modifiers == Qt.NoModifier:
                 return self.__onHome()
-            if key == Qt.Key_End:
+            if key == Qt.Key_End and modifiers == Qt.NoModifier:
                 return self.__onEnd()
 
         return ScintillaWrapper.eventFilter( self, obj, event )
@@ -768,11 +763,18 @@ class TextEditor( ScintillaWrapper ):
                             skin.spellingMarkColor )
         return
 
-    def __disableKeyBinding( self ):
+    def __alterKeyBinding( self ):
         " Disable some unwanted key bindings "
         ctrl  = self.SCMOD_CTRL << 16
-        # shift = self.SCMOD_SHIFT << 16
+        shift = self.SCMOD_SHIFT << 16
+        alt = self.SCMOD_ALT << 16
+
+        # Disable default Ctrl+L (line deletion)
         self.SendScintilla( self.SCI_CLEARCMDKEY, ord( 'L' ) + ctrl )
+        # Set Alt+Shift+HOME to select till position 0
+        altshift = alt + shift
+        self.SendScintilla( self.SCI_ASSIGNCMDKEY,
+                            self.SCK_HOME  + altshift, self.SCI_HOMERECTEXTEND )
         return
 
     def bindLexer( self, fileName, fileType ):
@@ -1467,24 +1469,14 @@ class TextEditor( ScintillaWrapper ):
         self.SendScintilla( QsciScintilla.SCI_PARADOWN )
         return True
 
-    def __onAltShiftUp( self ):
-        " Triggered when Alt+Shift+Up is received "
+    def __onCtrlShiftUp( self ):
+        " Triggered when Ctrl+Shift+Up is received "
         self.SendScintilla( QsciScintilla.SCI_PARAUPEXTEND )
         return True
 
-    def __onAltShiftDown( self ):
-        " Triggered when Alt+Shift+Down is received "
+    def __onCtrlShiftDown( self ):
+        " Triggered when Ctrl+Shift+Down is received "
         self.SendScintilla( QsciScintilla.SCI_PARADOWNEXTEND )
-        return True
-
-    def __onAlShiftLeft( self ):
-        " Triggered when Alt+Shift+Left is received "
-        self.SendScintilla( QsciScintilla.SCI_WORDPARTLEFTEXTEND )
-        return True
-
-    def __onAlShiftRight( self ):
-        " Triggered when Alt+Shift+Right is received "
-        self.SendScintilla( QsciScintilla.SCI_WORDPARTRIGHTEXTEND )
         return True
 
     def __onHome( self ):
