@@ -492,7 +492,8 @@ class CodimensionMainWindow( QMainWindow ):
         if globalData.pylintAvailable:
             logging.debug( "The 'pylint' utility is available" )
         else:
-            logging.warning( "The 'pylint' utility is not found. "
+            logging.warning( "The 'pylint' utility is not found or pylint "
+                             "version is not recognised. "
                              "Some functionality will not be available." )
 
         if globalData.graphvizAvailable:

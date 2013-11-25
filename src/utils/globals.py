@@ -23,6 +23,8 @@
 """ global data singleton """
 
 import os, sys,  copy
+from subprocess import check_output, STDOUT
+from distutils.version import StrictVersion
 from rope.base.project import Project as RopeProject
 from project import CodimensionProject
 from briefmodinfocache import BriefModuleInfoCache
@@ -84,6 +86,12 @@ class GlobalData( object ):
             self.magicAvailable = self.__checkMagic()
             self.pylintAvailable = self.__checkPylint()
             self.graphvizAvailable = self.__checkGraphviz()
+
+            self.pylintVersion = None
+            if self.pylintAvailable:
+                self.pylintVersion = self.__getPylintVersion()
+                if self.pylintVersion is None:
+                    self.pylintAvailable = False
             return
 
         def getRunParameters( self, fileName ):
@@ -252,7 +260,6 @@ class GlobalData( object ):
         @staticmethod
         def __checkMagic():
             " Checks if the magic module is able to be loaded "
-
             try:
                 import magic
                 m = magic.Magic()
@@ -264,7 +271,6 @@ class GlobalData( object ):
         @staticmethod
         def __checkGraphviz():
             " Checks if the graphviz available "
-
             if 'win' in sys.platform.lower():
                 return os.system( 'which dot > /NUL 2>&1' ) == 0
             return os.system( 'which dot > /dev/null 2>&1' ) == 0
@@ -272,11 +278,24 @@ class GlobalData( object ):
         @staticmethod
         def __checkPylint():
             " Checks if pylint is available "
-
             if 'win' in sys.platform.lower():
                 return os.system( 'which pylint > /NUL 2>&1' ) == 0
             return os.system( 'which pylint > /dev/null 2>&1' ) == 0
 
+        @staticmethod
+        def __getPylintVersion():
+            " Provides the pylint version "
+            output = check_output( "pylint --version; exit 0",
+                                   stderr = STDOUT, shell = True )
+            for line in output.splitlines():
+                line = line.strip()
+                if line.startswith( "pylint " ):
+                    version = line.replace( "pylint", "" ).replace( ",", "" )
+                    try:
+                        return StrictVersion( version.strip() )
+                    except:
+                        return None
+            return None
 
     def __init__( self ):
         if GlobalData._iInstance is None:
