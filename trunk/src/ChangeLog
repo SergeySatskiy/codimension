@@ -6,6 +6,8 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * Bug fix: proper signalling VCS status change in the project browser
 * Rectangular selection: Ctrl+mouse or Alt+Shift+cursor keys
 * Better help widget
+* Better welcome widget
+* pylint 1.0.0 is now working
 
 2013 Nov 16 Sergey Satskiy <sergey.satskiy@gmail.com>
 
