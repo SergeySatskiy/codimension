@@ -267,6 +267,13 @@ class TextEditor( ScintillaWrapper ):
                     return self.__onParagraphDown()
                 if key == Qt.Key_U:
                     return self.onScopeBegin()
+            if modifiers == Qt.KeypadModifier | Qt.ControlModifier:
+                if key == Qt.Key_Minus:
+                    return self.parent().onZoomOut()
+                if key == Qt.Key_Plus:
+                    return self.parent().onZoomIn()
+                if key == Qt.Key_0:
+                    return self.parent().onZoomReset()
             if key == Qt.Key_Home and modifiers == Qt.NoModifier:
                 return self.__onHome()
             if key == Qt.Key_End and modifiers == Qt.NoModifier:

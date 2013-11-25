@@ -8,6 +8,7 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * Better help widget
 * Better welcome widget
 * pylint 1.0.0 is now working
+* Fix: Ctrl++, Ctrl+- on numpad did not change the font size on all tabs.
 
 2013 Nov 16 Sergey Satskiy <sergey.satskiy@gmail.com>
 
