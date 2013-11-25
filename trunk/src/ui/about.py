@@ -55,7 +55,7 @@ class AboutDialog( QDialog ):
                                "</b><p>Copyright (c) Sergey Satskiy 2010-2013</p>" )
         versionLabel.setSizePolicy( QSizePolicy.Expanding,
                                     QSizePolicy.Expanding )
-        versionLabel.setFixedHeight( 48 )
+        versionLabel.setFixedHeight( versionLabel.minimumSizeHint().height() )
         versionLabel.setAlignment( Qt.AlignCenter )
         hboxLayout.addWidget( versionLabel )
         vboxLayout.addLayout( hboxLayout )
