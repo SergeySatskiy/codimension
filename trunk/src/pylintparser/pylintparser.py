@@ -28,6 +28,8 @@ from subprocess import Popen, PIPE
 import sys, os, os.path, tempfile, re
 from optparse  import OptionParser
 import logging
+from distutils.version import StrictVersion
+from utils.globals import GlobalData
 
 
 verbose = False
@@ -270,6 +272,7 @@ class Pylint( object ):
     Message         = 0
     MessageSimilar  = 1
     SectionStart    = 2
+    Header          = 3
 
     def __init__( self ):
 
@@ -284,9 +287,11 @@ class Pylint( object ):
 
         self.__currentSection = []
         self.__messageRegexp = \
-            re.compile( "^\S+:\d+:\s*\[\S+.*\]\s*\S*" )
+            re.compile( r"^\S+:\d+:\s*\[\S+.*\]\s*\S*" )
         self.__similarRegexp = \
-            re.compile( "^\S+:\d+:\s*\[\S+.*\]\s*Similar lines in" )
+            re.compile( r"^\S+:\d+:\s*\[\S+.*\]\s*Similar lines in" )
+        self.__headerRegexp = \
+            re.compile( r"^\*\*+ Module" )
 
         return
 
@@ -360,10 +365,14 @@ class Pylint( object ):
 
             initHook.append( code )
 
+            if GlobalData().pylintVersion < StrictVersion( "1.0.0" ):
+                formatArg = [ '-f', 'parseable', '-i', 'y' ]
+            else:
+                formatArg = [ '--msg-template="{path}:{line}: [{msg_id}, {obj}] {msg}"' ]
+
             skipTillRecognised = False
-            for line in self.__run( [ 'pylint', '-f', 'parseable',
-                                      '-i', 'y'] +
-                                    initHook + rcArg +
+            for line in self.__run( [ 'pylint' ] +
+                                    formatArg + initHook + rcArg +
                                     path, workingDir ).split( '\n' ):
                 if skipTillRecognised:
                     lineType, shouldSkip = self.__detectLineType( line )
@@ -375,6 +384,8 @@ class Pylint( object ):
 
                 if verbose:
                     print str( lineType ) + " -> " + line
+                if lineType == self.Header:
+                    continue
                 if lineType == self.Message:
                     self.errorMessages.append( ErrorMessage( line,
                                                              workingDir ) )
@@ -482,6 +493,9 @@ class Pylint( object ):
 
         if self.__similarRegexp.match( line ):
             return self.MessageSimilar, False
+
+        if self.__headerRegexp.match( line ):
+            return self.Header, False
 
         if self.__messageRegexp.match( line ):
             if "Comma not followed by a space" in line or \
