@@ -32,11 +32,12 @@
 import sys, os, logging
 from PyQt4.QtCore import ( Qt, QAbstractItemModel, QVariant, QModelIndex,
                            SIGNAL )
+from PyQt4.QtGui import QApplication, QCursor
 from viewitems import ( TreeViewItem, TreeViewDirectoryItem, TreeViewFileItem,
                         TreeViewGlobalsItem, TreeViewImportsItem,
                         TreeViewFunctionsItem, TreeViewClassesItem,
                         TreeViewStaticAttributesItem, GlobalsItemType,
-                        TreeViewInstanceAttributesItem, FileItemType, 
+                        TreeViewInstanceAttributesItem, FileItemType,
                         TreeViewCodingItem, TreeViewImportItem,
                         TreeViewFunctionItem, TreeViewClassItem,
                         TreeViewDecoratorItem, TreeViewAttributeItem,
@@ -270,9 +271,11 @@ class BrowserModelBase( QAbstractItemModel ):
         if not os.path.exists( path ):
             return
 
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         try:
             items = os.listdir( path )
         except Exception, exc:
+            QApplication.restoreOverrideCursor()
             logging.error( "Cannot populate directory. " + str( exc ) )
             return
 
@@ -344,6 +347,7 @@ class BrowserModelBase( QAbstractItemModel ):
         # before the items are populated thus not updated properly.
         for path in pathsToRequest:
             GlobalData().mainWindow.vcsManager.requestStatus( path )
+        QApplication.restoreOverrideCursor()
         return
 
     def populateSysPathItem( self, parentItem, repopulate = False ):
