@@ -10,6 +10,7 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * pylint 1.0.0 is now working
 * Fix: Ctrl++, Ctrl+- on numpad did not change the font size on all tabs.
 * Fix for FC19: diff viewer font was not monospaced
+* Improvement: diff viewer font is scaled in sync with the main editor
 
 2013 Nov 16 Sergey Satskiy <sergey.satskiy@gmail.com>
 

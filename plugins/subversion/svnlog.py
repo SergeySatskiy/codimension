@@ -32,7 +32,7 @@ from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
                           QPalette, QTreeWidget, QTreeWidgetItem,
                           QHeaderView, QPushButton )
 from utils.pixmapcache import PixmapCache
-from ui.htmltabwidget import HTMLTabWidget
+from ui.difftabwidget import DiffTabWidget
 from svnindicators import pluginHomeDir
 from ui.itemdelegates import NoOutlineHeightDelegate
 from svnstrconvert import timestampToString
@@ -421,7 +421,7 @@ class SVNPluginLogDialog( QDialog ):
         diffLayout.addWidget( self.__showHideDiffButton )
         diffHeaderFrame.setLayout( diffLayout )
 
-        self.__diffViewer = HTMLTabWidget()
+        self.__diffViewer = DiffTabWidget()
         self.__diffViewer.setHTML( self.NODIFF )
         self.__diffViewer.setVisible( False )
 
