@@ -81,10 +81,8 @@ Codimension version: 2.0.1
 || Ctrl+Shift+Right || Select till the end of the current word. ||
 || Ctrl+Shift+Home  || Select till the beginning of the current visible line. ||
 || Ctrl+Shift+End   || Select till the end of the current visible line. ||
-|| Alt+Shift+Left   || Select till the beginning of the current word part. ||
-|| Alt+Shift+Right  || Select till the end of the current word part. ||
-|| Alt+Shift+Up     || Select till the beginning of the current paragraph. ||
-|| Alt+Shift+Down   || Select till the end of the the current paragraph. ||
+|| Ctrl+Shift+Up     || Select till the beginning of the current paragraph. ||
+|| Ctrl+Shift+Down   || Select till the end of the the current paragraph. ||
 || Ctrl+Z           || Undo. ||
 || Ctrl+Shift+Z     || Redo. ||
 || Ctrl+=           || Zoom in. ||
@@ -111,7 +109,11 @@ Codimension version: 2.0.1
 || Ctrl+Shift+T     || Move the cursor to the first visible line. ||
 || Ctrl+Shift+M     || Move the cursor to the line in a middle of the visible lines. ||
 || Ctrl+Shift+B     || Move the cursor to the last visible line. ||
-
+|| Alt+Shift+Left   || Rectangular selection - adding one character wide column to the left of the cursor to the current selection. ||
+|| Alt+Shift+Right  || Rectangular selection - adding one character wide column to the right of the cursor to the current selection. ||
+|| Alt+Shift+Up   || Rectangular selection - adding one line above the cursor to the current selection. ||
+|| Alt+Shift+Down  || Rectangular selection - adding one line below the cursor to the current selection. ||
+|| Ctrl+mouse selection || Rectangular selection. ||
 
 
 == Debugger ==
