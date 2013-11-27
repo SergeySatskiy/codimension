@@ -23,15 +23,16 @@
 """ The diff viewer implementation """
 
 from PyQt4.QtCore import Qt, SIGNAL, QSize
-from PyQt4.QtGui import QHBoxLayout, QWidget, QAction, QToolBar, \
-                        QSizePolicy, QVBoxLayout
+from PyQt4.QtGui import ( QHBoxLayout, QWidget, QAction, QToolBar,
+                          QSizePolicy, QVBoxLayout )
 from utils.pixmapcache import PixmapCache
-from htmltabwidget     import HTMLTabWidget
-from utils.globals     import GlobalData
+from htmltabwidget import HTMLTabWidget
+from utils.globals import GlobalData
+from utils.settings import Settings
 
 
 class DiffViewer( QWidget ):
-    """ The tag help viewer widget """
+    """ The diff viewer widget at the bottom """
 
     NODIFF = '<html><body bgcolor="#ffffe6"></body></html>'
 
@@ -100,12 +101,14 @@ class DiffViewer( QWidget ):
         """ Shows the given content """
         if self.__inClear:
             self.viewer.setHTML( content )
+            self.viewer.zoomTo( Settings().zoom )
             return
 
         if content == '' or content is None:
             self.__clear()
         else:
             self.viewer.setHTML( content )
+            self.viewer.zoomTo( Settings().zoom )
             self.__isEmpty = False
             self.__updateToolbarButtons()
             self.__tooltip = tooltip
@@ -137,4 +140,3 @@ class DiffViewer( QWidget ):
         self.__sendUpButton.setEnabled( not self.__isEmpty )
         self.__clearButton.setEnabled( not self.__isEmpty )
         return
-

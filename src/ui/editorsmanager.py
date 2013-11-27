@@ -48,7 +48,7 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from tabshistory import TabsHistory
 from diagram.importsdgmgraphics import ImportDgmTabWidget
-from htmltabwidget import HTMLTabWidget
+from difftabwidget import DiffTabWidget
 from profiling.disasmwidget import DisassemblerResultsWidget
 from editor.vcsannotateviewer import VCSAnnotateViewerTabWidget
 
@@ -1017,14 +1017,13 @@ class EditorsManager( QTabWidget ):
     def showDiff( self, content, tooltip ):
         " Shows diff (expected HTML format) "
         try:
-            newWidget = HTMLTabWidget()
+            newWidget = DiffTabWidget()
             self.connect( newWidget, SIGNAL( 'ESCPressed' ),
                           self.__onESC )
 
             newWidget.setHTML( content )
             newWidget.setFileName( "" )
             newWidget.setShortName( self.getNewDiffName() )
-            newWidget.setEncoding( "diff" )
 
             if self.widget( 0 ) == self.__welcomeWidget:
                 # It is the only welcome widget on the screen

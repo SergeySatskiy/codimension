@@ -24,10 +24,11 @@
 
 
 import os.path
-from PyQt4.QtGui import QFrame, QHBoxLayout, QDesktopServices, QMenu
+from PyQt4.QtGui import QFrame, QHBoxLayout, QDesktopServices, QMenu, QFont
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtWebKit import QWebView, QWebPage
+from utils.globals import GlobalData
 
 
 class HTMLViewer( QWebView ):
@@ -58,6 +59,16 @@ class HTMLViewer( QWebView ):
             menu.popup( self.mapToGlobal( event.pos() ) )
         return
 
+    def zoomTo( self, zoomFactor ):
+        """ Scales the font in accordance to the given zoom factor.
+            It is mostly used in diff viewers """
+        font = QFont( GlobalData().skin.nolexerFont )
+        origPointSize = font.pointSize()
+        newPointSize = origPointSize + zoomFactor
+        self.setTextSizeMultiplier( float( newPointSize ) /
+                                    float( origPointSize ) )
+        return
+
 
 
 class HTMLTabWidget( MainWindowTabWidgetBase, QFrame ):
@@ -79,7 +90,7 @@ class HTMLTabWidget( MainWindowTabWidgetBase, QFrame ):
 
         self.__fileName = ""
         self.__shortName = ""
-        self.__encoding = "N/A"
+        self.__encoding = "n/a"
         return
 
     def __onEsc( self ):
@@ -110,11 +121,15 @@ class HTMLTabWidget( MainWindowTabWidgetBase, QFrame ):
 
     def __connectPage( self ):
         " Connects the current web page to the links delegate "
-        self.__editor.page().setLinkDelegationPolicy( \
+        self.__editor.page().setLinkDelegationPolicy(
                                 QWebPage.DelegateAllLinks )
         self.connect( self.__editor,
                       SIGNAL( 'linkClicked(const QUrl &)' ),
                       QDesktopServices.openUrl )
+        return
+
+    def zoomTo( self, zoomFactor ):
+        self.__editor.zoomTo( zoomFactor )
         return
 
     def getViewer( self ):
@@ -154,15 +169,15 @@ class HTMLTabWidget( MainWindowTabWidgetBase, QFrame ):
 
     def getEol( self ):
         " Tells the EOL style "
-        return "N/A"
+        return "n/a"
 
     def getLine( self ):
         " Tells the cursor line "
-        return "N/A"
+        return "n/a"
 
     def getPos( self ):
         " Tells the cursor column "
-        return "N/A"
+        return "n/a"
 
     def getEncoding( self ):
         " Tells the content encoding "
