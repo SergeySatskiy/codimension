@@ -33,7 +33,7 @@ from ui.itemdelegates import NoOutlineHeightDelegate
 from svnstrconvert import STATUS
 from utils.pixmapcache import PixmapCache
 from svnindicators import pluginHomeDir, IND_REPLACED, IND_ADDED, IND_DELETED
-from ui.htmltabwidget import HTMLTabWidget
+from ui.difftabwidget import DiffTabWidget
 from thirdparty.diff2html.diff2html import parse_from_memory
 import os.path
 import difflib
@@ -296,7 +296,7 @@ class SVNPluginCommitDialog( QDialog ):
         diffLayout.addWidget( self.__showHideDiffButton )
         diffHeaderFrame.setLayout( diffLayout )
 
-        self.__diffViewer = HTMLTabWidget()
+        self.__diffViewer = DiffTabWidget()
         self.__diffViewer.setHTML( self.NODIFF )
         self.__diffViewer.setVisible( False )
 
