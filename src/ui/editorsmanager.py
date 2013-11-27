@@ -2070,8 +2070,10 @@ class EditorsManager( QTabWidget ):
             if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
                                    MainWindowTabWidgetBase.VCSAnnotateViewer ]:
                 item.getEditor().zoomTo( zoomValue )
-            elif item.getType() in [ MainWindowTabWidgetBase.DisassemblerViewer ]:
+            elif item.getType() in [ MainWindowTabWidgetBase.DisassemblerViewer,
+                                     MainWindowTabWidgetBase.DiffViewer ]:
                 item.zoomTo( zoomValue )
+        GlobalData().mainWindow.zoomDiff( zoomValue )
         return
 
     def getTextEditors( self ):

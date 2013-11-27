@@ -114,6 +114,11 @@ class DiffViewer( QWidget ):
             self.__tooltip = tooltip
         return
 
+    def zoomTo( self, zoomValue ):
+        " Sets the required zoom "
+        self.viewer.zoomTo( zoomValue )
+        return
+
     def __sendUp( self ):
         """ Triggered when the content should be sent
             to the main editor area """
