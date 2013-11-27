@@ -2135,6 +2135,11 @@ class CodimensionMainWindow( QMainWindow ):
         self.editorsManagerWidget.editorsManager.showDiff( content, tooltip )
         return
 
+    def zoomDiff( self, zoomValue ):
+        " Zooms the diff view at the bottom "
+        self.diffViewer.zoomTo( zoomValue )
+        return
+
     def showProfileReport( self, widget, tooltip ):
         " Shows the given profile report "
         self.editorsManagerWidget.editorsManager.showProfileReport( widget,
