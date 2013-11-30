@@ -1,3 +1,8 @@
+2013 Nov 30  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for release v.1.6.5
+* Collect line and position of the ':' character for functions and classes.
+
 2013 Nov 16  Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Prepared for release v.1.6.4

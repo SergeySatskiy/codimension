@@ -233,13 +233,16 @@ class Function( ModuleInfoBase ):
     " Holds information about a single function"
 
     def __init__( self, funcName, line, pos, absPosition,
-                        keywordLine, keywordPos ):
+                        keywordLine, keywordPos,
+                        colonLine, colonPos ):
         ModuleInfoBase.__init__( self, funcName, line, pos, absPosition )
 
         self.keywordLine = keywordLine  # line where 'def' keyword
                                         # starts (1-based).
         self.keywordPos = keywordPos    # pos where 'def' keyword
                                         # starts (1-based).
+        self.colonLine = colonLine      # line where ':' char starts (1-based)
+        self.colonPos = colonPos        # pos where ':' char starts (1-based)
 
         self.docstring = None
         self.arguments = []
@@ -261,6 +264,8 @@ class Function( ModuleInfoBase ):
         out = level * "    " + "Function[" + str(self.keywordLine) + \
                                        ":" + str(self.keywordPos) + \
                                        ":" + self._getLPA() + \
+                                       ":" + str(self.colonLine) + \
+                                       ":" + str(self.colonPos) + \
                                        "]: '" + self.name + "'"
         for item in self.arguments:
             out += '\n' + level * "    " + "Argument: '" + item + "'"
@@ -287,13 +292,16 @@ class Class( ModuleInfoBase ):
     " Holds information about a single class"
 
     def __init__( self, className, line, pos, absPosition,
-                        keywordLine, keywordPos ):
+                        keywordLine, keywordPos,
+                        colonLine, colonPos ):
         ModuleInfoBase.__init__( self, className, line, pos, absPosition )
 
         self.keywordLine = keywordLine  # line where 'def' keyword
                                         # starts (1-based).
         self.keywordPos = keywordPos    # pos where 'def' keyword
                                         # starts (1-based).
+        self.colonLine = colonLine      # line where ':' char starts (1-based)
+        self.colonPos = colonPos        # pos where ':' char starts (1-based)
 
         self.docstring = None
         self.base = []
@@ -310,6 +318,8 @@ class Class( ModuleInfoBase ):
         out = level * "    " + "Class[" + str(self.keywordLine) + \
                                     ":" + str(self.keywordPos) + \
                                     ":" + self._getLPA() + \
+                                    ":" + str(self.colonLine) + \
+                                    ":" + str(self.colonPos) + \
                                     "]: '" + self.name + "'"
         for item in self.base:
             out += '\n' + level * "    " + "Base class: '" + item + "'"
@@ -435,19 +445,23 @@ class BriefModuleInfo():
         return
 
     def _onClass( self, name, line, pos, absPosition,
-                        keywordLine, keywordPos, level ):
+                        keywordLine, keywordPos,
+                        colonLine, colonPos, level ):
         " Memorizes a class "
         self.__flushLevel( level )
         self.objectsStack.append( Class( name, line, pos, absPosition,
-                                         keywordLine, keywordPos ) )
+                                         keywordLine, keywordPos,
+                                         colonLine, colonPos ) )
         return
 
     def _onFunction( self, name, line, pos, absPosition,
-                           keywordLine, keywordPos, level ):
+                           keywordLine, keywordPos,
+                           colonLine, colonPos, level ):
         " Memorizes a function "
         self.__flushLevel( level )
         self.objectsStack.append( Function( name, line, pos, absPosition,
-                                            keywordLine, keywordPos ) )
+                                            keywordLine, keywordPos,
+                                            colonLine, colonPos ) )
         return
 
     def _onImport( self, name, line, pos, absPosition ):

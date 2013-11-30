@@ -421,21 +421,23 @@ static void  processClassDefinition( pANTLR3_BASE_TREE            tree,
     pANTLR3_STRING          s;
 
     /*
-     * Positions of the 'def' keyword and the function name are saved in one 32
-     * bit field 'charPosition'. See the grammar for details.
-     * The code below extracts them as separate values.
+     * user1 field is used for line and charPosition of the 'def' keyword.
+     * user2 field is used for line and charPosition of the ':' character.
      */
 
     ++objectsLevel;
-    PyObject_CallFunction( callbacks->onClass, "s#iiiiii",
+    PyObject_CallFunction( callbacks->onClass, "s#iiiiiiii",
                            token->start, (char *)token->stop - (char *)token->start + 1,
                            /* Function name line and pos */
-                           token->line & 0xFFFF,
-                           (token->charPosition & 0xFFFF) + 1, /* To make it 1-based */
+                           token->line,
+                           token->charPosition + 1,         /* To make it 1-based */
                            (char *)token->start - (char *)token->input->data,
                            /* Keyword 'def' line and pos */
-                           token->line >> 16,
-                           (token->charPosition >> 16) + 1,    /* To make it 1-based */
+                           token->user1 >> 16,
+                           (token->user1 & 0xFFFF) + 1,     /* To make it 1-based */
+                           /* ':' line and pos */
+                           token->user2 >> 16,
+                           (token->user2 & 0xFFFF) + 1,     /* To make it 1-based */
                            objectsLevel );
 
     for ( k = 1; k < n; ++k )
@@ -484,21 +486,23 @@ static void  processFuncDefinition( pANTLR3_BASE_TREE            tree,
 
 
     /*
-     * Positions of the 'def' keyword and the function name are saved in one 32
-     * bit field 'charPosition'. See the grammar for details.
-     * The code below extracts them as separate values.
+     * user1 field is used for line and charPosition of the 'def' keyword.
+     * user2 field is used for line and charPosition of the ':' character.
      */
 
     ++objectsLevel;
-    PyObject_CallFunction( callbacks->onFunction, "s#iiiiii",
+    PyObject_CallFunction( callbacks->onFunction, "s#iiiiiiii",
                            token->start, (char *)token->stop - (char *)token->start + 1,
                            /* Function name line and pos */
-                           token->line & 0xFFFF,
-                           (token->charPosition & 0xFFFF) + 1, /* To make it 1-based */
+                           token->line,
+                           token->charPosition + 1,         /* To make it 1-based */
                            (char *)token->start - (char *)token->input->data,
                            /* Keyword 'def' line and pos */
-                           token->line >> 16,
-                           (token->charPosition >> 16) + 1,    /* To make it 1-based */
+                           token->user1 >> 16,
+                           (token->user1 & 0xFFFF) + 1,     /* To make it 1-based */
+                           /* ':' line and pos */
+                           token->user2 >> 16,
+                           (token->user2 & 0xFFFF) + 1,     /* To make it 1-based */
                            objectsLevel );
 
     for ( k = 1; k < n; ++k )
