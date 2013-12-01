@@ -1459,6 +1459,7 @@ class EditorsManager( QTabWidget ):
 
         if self.__debugMode:
             self.__createdWithinDebugSession.append( fileName )
+            self.setWidgetDebugMode( widget )
         return True
 
     def onSaveDiagramAs( self ):
