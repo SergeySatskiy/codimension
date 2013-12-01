@@ -105,6 +105,7 @@ class EditorsManager( QTabWidget ):
 
         self.__debugMode = False
         self.__debugScript = ""     # If a single script is debugged
+        self.__createdWithinDebugSession = []
         self.connect( self.__mainWindow, SIGNAL( 'debugModeChanged' ),
                       self.__onDebugMode )
 
@@ -1363,7 +1364,7 @@ class EditorsManager( QTabWidget ):
             urls.append( QUrl.fromLocalFile( project.getProjectDir() ) )
         dialog.setSidebarUrls( urls )
 
-        if widget.getFileName().upper() not in [ "", "N/A" ]:
+        if widget.getFileName().lower() not in [ "", "n/a" ]:
             dialog.setDirectory( os.path.dirname( widget.getFileName() ) )
             dialog.selectFile( os.path.basename( widget.getFileName() ) )
         else:
@@ -1455,6 +1456,9 @@ class EditorsManager( QTabWidget ):
             self.__updateStatusBar()
             self.__mainWindow.updateRunDebugButtons()
         self.__mainWindow.vcsManager.setLocallyModified( fileName )
+
+        if self.__debugMode:
+            self.__createdWithinDebugSession.append( fileName )
         return True
 
     def onSaveDiagramAs( self ):
@@ -2277,6 +2281,7 @@ class EditorsManager( QTabWidget ):
     def __onDebugMode( self, newState ):
         " Triggered when the debug mode state is changed "
         self.__debugMode = newState
+        self.__createdWithinDebugSession = []
         if self.__debugMode:
             if not GlobalData().project.isLoaded():
                 self.__debugScript = self.currentWidget().getFileName()
@@ -2297,9 +2302,14 @@ class EditorsManager( QTabWidget ):
             return
 
         # Need to send the notification only to the python editors
-        isPrjFile = GlobalData().project.isProjectFile( fileName ) or \
-                    fileName == self.__debugScript
-        widget.setDebugMode( self.__debugMode, isPrjFile )
+        isPrjFile = GlobalData().project.isProjectFile( fileName )
+        isDbgsScript = fileName == self.__debugScript
+        justCreated = fileName in self.__createdWithinDebugSession or \
+                      fileName == ""
+
+        widget.setDebugMode( self.__debugMode, (isPrjFile or
+                                                isDbgsScript) and not
+                                               justCreated )
         return
 
     def zoomIn( self ):
