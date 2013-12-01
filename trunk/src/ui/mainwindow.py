@@ -3204,6 +3204,11 @@ class CodimensionMainWindow( QMainWindow ):
         # That's for sure a python buffer, so the widget exists
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
+        if currentWidget.getType() in [ MainWindowTabWidgetBase.VCSAnnotateViewer ]:
+            self.__dbgRunToLine.setEnabled( False )
+            self.__debugRunToCursorAct.setEnabled( False )
+            return
+
         enabled = currentWidget.isLineBreakable()
         self.__dbgRunToLine.setEnabled( enabled )
         self.__debugRunToCursorAct.setEnabled( enabled )
