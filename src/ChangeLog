@@ -12,6 +12,7 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * Fix for FC19: diff viewer font was not monospaced
 * Improvement: diff viewer font is scaled in sync with the main editor
 * Bug fix: VCS annotate in debug mode caused crash
+* Bug fix: newly opened files withing a debug session are editable
 
 2013 Nov 16 Sergey Satskiy <sergey.satskiy@gmail.com>
 
