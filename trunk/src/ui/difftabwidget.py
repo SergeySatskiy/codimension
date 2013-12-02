@@ -23,6 +23,8 @@
 """ Diff viewer tab widget """
 
 
+from PyQt4.QtCore import SIGNAL, Qt, QEvent
+from PyQt4.QtGui import QApplication
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.settings import Settings
 from htmltabwidget import HTMLTabWidget
@@ -33,6 +35,40 @@ class DiffTabWidget( HTMLTabWidget ):
 
     def __init__( self, parent = None ):
         HTMLTabWidget.__init__( self, parent )
+        self.installEventFilter( self )
+        return
+
+    def eventFilter( self, obj, event ):
+        " Event filter to catch shortcuts on UBUNTU "
+        if event.type() == QEvent.KeyPress:
+            key = event.key()
+            modifiers = event.modifiers()
+            if modifiers == Qt.ControlModifier:
+                if key == Qt.Key_Minus:
+                    return self.onZoomOut()
+                if key == Qt.Key_Equal:
+                    return self.onZoomIn()
+                if key == Qt.Key_0:
+                    return self.onZoomReset()
+            if modifiers == Qt.KeypadModifier | Qt.ControlModifier:
+                if key == Qt.Key_Minus:
+                    return self.onZoomOut()
+                if key == Qt.Key_Plus:
+                    return self.onZoomIn()
+                if key == Qt.Key_0:
+                    return self.onZoomReset()
+
+        return HTMLTabWidget.eventFilter( self, obj, event )
+
+    def wheelEvent( self, event ):
+        " Mouse wheel event "
+        if QApplication.keyboardModifiers() == Qt.ControlModifier:
+            if event.delta() > 0:
+                self.onZoomIn()
+            else:
+                self.onZoomOut()
+        else:
+            HTMLTabWidget.wheelEvent( self, event )
         return
 
     def setHTML( self, content ):
@@ -54,3 +90,21 @@ class DiffTabWidget( HTMLTabWidget ):
     def getLanguage( self ):
         " Tells the content language "
         return "diff"
+
+    def onZoomReset( self ):
+        " Triggered when the zoom reset button is pressed "
+        if Settings().zoom != 0:
+            self.emit( SIGNAL( 'TextEditorZoom' ), 0 )
+        return True
+
+    def onZoomIn( self ):
+        " Triggered when the zoom in button is pressed "
+        if Settings().zoom < 20:
+            self.emit( SIGNAL( 'TextEditorZoom' ), Settings().zoom + 1 )
+        return True
+
+    def onZoomOut( self ):
+        " Triggered when the zoom out button is pressed "
+        if Settings().zoom > -10:
+            self.emit( SIGNAL( 'TextEditorZoom' ), Settings().zoom - 1 )
+        return True
