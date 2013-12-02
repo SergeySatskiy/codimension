@@ -3430,6 +3430,14 @@ class CodimensionMainWindow( QMainWindow ):
             return False
         return currentWidget.getType() == MainWindowTabWidgetBase.ProfileViewer
 
+    def __isDiffViewer( self ):
+        " True if this is a diff viewer "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        if currentWidget is None:
+            return False
+        return currentWidget.getType() == MainWindowTabWidgetBase.DiffViewer
+
     def __onTabImportDgm( self ):
         " Triggered when tab imports diagram is requested "
         editorsManager = self.editorsManagerWidget.editorsManager
@@ -4021,8 +4029,9 @@ class CodimensionMainWindow( QMainWindow ):
         isGraphicsBuffer = self.__isGraphicsBuffer()
         isGeneratedDiagram = self.__isGeneratedDiagram()
         isProfileViewer = self.__isProfileViewer()
+        isDiffViewer = self.__isDiffViewer()
         zoomEnabled = isPlainTextBuffer or isGraphicsBuffer or \
-                      isGeneratedDiagram
+                      isGeneratedDiagram or isDiffViewer
         if zoomEnabled == False and isProfileViewer:
             editorsManager = self.editorsManagerWidget.editorsManager
             currentWidget = editorsManager.currentWidget()

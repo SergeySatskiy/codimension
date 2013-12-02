@@ -1021,6 +1021,8 @@ class EditorsManager( QTabWidget ):
             newWidget = DiffTabWidget()
             self.connect( newWidget, SIGNAL( 'ESCPressed' ),
                           self.__onESC )
+            self.connect( newWidget, SIGNAL( 'TextEditorZoom' ),
+                          self.__onZoom )
 
             newWidget.setHTML( content )
             newWidget.setFileName( "" )
@@ -2320,7 +2322,8 @@ class EditorsManager( QTabWidget ):
                                  MainWindowTabWidgetBase.VCSAnnotateViewer,
                                  MainWindowTabWidgetBase.PictureViewer,
                                  MainWindowTabWidgetBase.GeneratedDiagram,
-                                 MainWindowTabWidgetBase.ProfileViewer ]:
+                                 MainWindowTabWidgetBase.ProfileViewer,
+                                 MainWindowTabWidgetBase.DiffViewer ]:
             widget.onZoomIn()
         return
 
@@ -2331,7 +2334,8 @@ class EditorsManager( QTabWidget ):
                                  MainWindowTabWidgetBase.VCSAnnotateViewer,
                                  MainWindowTabWidgetBase.PictureViewer,
                                  MainWindowTabWidgetBase.GeneratedDiagram,
-                                 MainWindowTabWidgetBase.ProfileViewer ]:
+                                 MainWindowTabWidgetBase.ProfileViewer,
+                                 MainWindowTabWidgetBase.DiffViewer ]:
             widget.onZoomOut()
         return
 
@@ -2342,7 +2346,8 @@ class EditorsManager( QTabWidget ):
                                  MainWindowTabWidgetBase.VCSAnnotateViewer,
                                  MainWindowTabWidgetBase.PictureViewer,
                                  MainWindowTabWidgetBase.GeneratedDiagram,
-                                 MainWindowTabWidgetBase.ProfileViewer ]:
+                                 MainWindowTabWidgetBase.ProfileViewer,
+                                 MainWindowTabWidgetBase.DiffViewer ]:
             widget.onZoomReset()
         return
 
