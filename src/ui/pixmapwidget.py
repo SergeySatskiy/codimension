@@ -186,7 +186,7 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.connect( printButton, SIGNAL( 'triggered()' ),
                       self.__onPrint )
 
-        printPreviewButton = QAction( \
+        printPreviewButton = QAction(
                 PixmapCache().getIcon( 'printpreview.png' ),
                 'Print preview', self )
         #printPreviewButton.setShortcut( 'Ctrl+' )
@@ -197,8 +197,8 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         fixedSpacer.setFixedHeight( 16 )
 
         zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
-                                'Zoom in (Ctrl++)', self )
-        zoomInButton.setShortcut( 'Ctrl++' )
+                                'Zoom in (Ctrl+=)', self )
+        zoomInButton.setShortcut( 'Ctrl+=' )
         self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.onZoomIn )
 
         zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
@@ -401,15 +401,15 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def getEol( self ):
         " Tells the EOL style "
-        return "N/A"
+        return "n/a"
 
     def getLine( self ):
         " Tells the cursor line "
-        return "N/A"
+        return "n/a"
 
     def getPos( self ):
         " Tells the cursor column "
-        return "N/A"
+        return "n/a"
 
     def getEncoding( self ):
         " Tells the content encoding "
