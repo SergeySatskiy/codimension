@@ -2903,7 +2903,6 @@ class CodimensionMainWindow( QMainWindow ):
         self.sbLanguage.setVisible( not newState )
         self.sbEncoding.setVisible( not newState )
         self.sbEol.setVisible( not newState )
-        self.sbWritable.setVisible( not newState )
 
         # Toolbar buttons
         self.__dbgStopBrutal.setVisible( newState )
