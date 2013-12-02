@@ -49,7 +49,7 @@ class SVNDeleteMixin:
 
     def __svnDelete( self, path ):
 
-        res = QMessageBox.warning( self, "Deleting from SVN",
+        res = QMessageBox.warning( None, "Deleting from SVN",
                     "You are about to delete <b>" + path +
                     "</b> from SVN and from the disk.\nAre you sure?",
                            QMessageBox.StandardButtons(
