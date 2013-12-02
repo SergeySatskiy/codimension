@@ -275,21 +275,22 @@ class VCSAnnotateViewerTabWidget( QWidget, MainWindowTabWidgetBase ):
                       self.onLineCounter )
 
         # Zoom buttons
-        zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
-                                'Zoom in (Ctrl+=)', self )
-        self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.onZoomIn )
+        # It was decided these buttons should be here
+        #zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
+        #                        'Zoom in (Ctrl+=)', self )
+        #self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.onZoomIn )
 
-        zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
-                                'Zoom out (Ctrl+-)', self )
-        self.connect( zoomOutButton, SIGNAL( 'triggered()' ), self.onZoomOut )
+        #zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
+        #                        'Zoom out (Ctrl+-)', self )
+        #self.connect( zoomOutButton, SIGNAL( 'triggered()' ), self.onZoomOut )
 
-        zoomResetButton = QAction( PixmapCache().getIcon( 'zoomreset.png' ),
-                                   'Zoom reset (Ctrl+0)', self )
-        self.connect( zoomResetButton, SIGNAL( 'triggered()' ),
-                      self.onZoomReset )
+        #zoomResetButton = QAction( PixmapCache().getIcon( 'zoomreset.png' ),
+        #                           'Zoom reset (Ctrl+0)', self )
+        #self.connect( zoomResetButton, SIGNAL( 'triggered()' ),
+        #              self.onZoomReset )
 
-        fixedSpacer = QWidget()
-        fixedSpacer.setFixedHeight( 16 )
+        #fixedSpacer = QWidget()
+        #fixedSpacer.setFixedHeight( 16 )
 
         # The toolbar
         toolbar = QToolBar( self )
@@ -303,10 +304,10 @@ class VCSAnnotateViewerTabWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.addAction( printPreviewButton )
         toolbar.addAction( printButton )
         toolbar.addWidget( spacer )
-        toolbar.addAction( zoomInButton )
-        toolbar.addAction( zoomOutButton )
-        toolbar.addAction( zoomResetButton )
-        toolbar.addWidget( fixedSpacer )
+        #toolbar.addAction( zoomInButton )
+        #toolbar.addAction( zoomOutButton )
+        #toolbar.addAction( zoomResetButton )
+        #toolbar.addWidget( fixedSpacer )
         toolbar.addAction( self.lineCounterButton )
 
         self.__importsBar = ImportListWidget( self.__viewer )

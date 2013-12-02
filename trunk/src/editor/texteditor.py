@@ -2636,21 +2636,22 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                       self.onExpandTabs )
 
         # Zoom buttons
-        zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
-                                'Zoom in (Ctrl+=)', self )
-        self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.onZoomIn )
+        # It was decided that it is wrong to have these buttons here
+        #zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
+        #                        'Zoom in (Ctrl+=)', self )
+        #self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.onZoomIn )
 
-        zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
-                                'Zoom out (Ctrl+-)', self )
-        self.connect( zoomOutButton, SIGNAL( 'triggered()' ), self.onZoomOut )
+        #zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
+        #                        'Zoom out (Ctrl+-)', self )
+        #self.connect( zoomOutButton, SIGNAL( 'triggered()' ), self.onZoomOut )
 
-        zoomResetButton = QAction( PixmapCache().getIcon( 'zoomreset.png' ),
-                                   'Zoom reset (Ctrl+0)', self )
-        self.connect( zoomResetButton, SIGNAL( 'triggered()' ),
-                      self.onZoomReset )
+        #zoomResetButton = QAction( PixmapCache().getIcon( 'zoomreset.png' ),
+        #                           'Zoom reset (Ctrl+0)', self )
+        #self.connect( zoomResetButton, SIGNAL( 'triggered()' ),
+        #              self.onZoomReset )
 
-        fixedSpacer = QWidget()
-        fixedSpacer.setFixedHeight( 16 )
+        #fixedSpacer = QWidget()
+        #fixedSpacer.setFixedHeight( 16 )
 
         # The toolbar
         toolbar = QToolBar( self )
@@ -2672,10 +2673,10 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.addAction( self.__undoButton )
         toolbar.addAction( self.__redoButton )
         toolbar.addWidget( spacer )
-        toolbar.addAction( zoomInButton )
-        toolbar.addAction( zoomOutButton )
-        toolbar.addAction( zoomResetButton )
-        toolbar.addWidget( fixedSpacer )
+        #toolbar.addAction( zoomInButton )
+        #toolbar.addAction( zoomOutButton )
+        #toolbar.addAction( zoomResetButton )
+        #toolbar.addWidget( fixedSpacer )
         toolbar.addWidget( self.pythonTidyButton )
         toolbar.addAction( self.lineCounterButton )
         toolbar.addAction( self.removeTrailingSpacesButton )
