@@ -2303,16 +2303,16 @@ class EditorsManager( QTabWidget ):
             return
         if widget.getFileType() not in [ PythonFileType, Python3FileType ]:
             return
+        if fileName == "":
+            return
+        if fileName in self.__createdWithinDebugSession:
+            return
 
         # Need to send the notification only to the python editors
         isPrjFile = GlobalData().project.isProjectFile( fileName )
         isDbgsScript = fileName == self.__debugScript
-        justCreated = fileName in self.__createdWithinDebugSession or \
-                      fileName == ""
 
-        widget.setDebugMode( self.__debugMode, (isPrjFile or
-                                                isDbgsScript) and not
-                                               justCreated )
+        widget.setDebugMode( self.__debugMode, isPrjFile or isDbgsScript )
         return
 
     def zoomIn( self ):

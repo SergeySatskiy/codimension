@@ -3370,25 +3370,26 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__diskSize = os.path.getsize( path )
         return
 
-    def setDebugMode( self, mode, isProjectFile ):
+    def setDebugMode( self, mode, disableEditing ):
         " Called to switch debug/development "
         skin = GlobalData().skin
         self.__debugMode = mode
         self.__breakableLines = None
 
         if mode == True:
-            self.__editor.setMarginsBackgroundColor( skin.marginPaperDebug )
-            self.__editor.setMarginsForegroundColor( skin.marginColorDebug )
-            self.__editor.setReadOnly( isProjectFile )
+            if disableEditing:
+                self.__editor.setMarginsBackgroundColor( skin.marginPaperDebug )
+                self.__editor.setMarginsForegroundColor( skin.marginColorDebug )
+                self.__editor.setReadOnly( True )
 
-            # Undo/redo
-            if isProjectFile:
+                # Undo/redo
                 self.__undoButton.setEnabled( False )
                 self.__redoButton.setEnabled( False )
 
                 # Spaces/tabs/line
                 self.removeTrailingSpacesButton.setEnabled( False )
                 self.expandTabsButton.setEnabled( False )
+                self.pythonTidyButton.setEnabled( False )
         else:
             self.__editor.setMarginsBackgroundColor( skin.marginPaper )
             self.__editor.setMarginsForegroundColor( skin.marginColor )
@@ -3401,6 +3402,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             # Spaces/tabs
             self.removeTrailingSpacesButton.setEnabled( True )
             self.expandTabsButton.setEnabled( True )
+            self.pythonTidyButton.setEnabled( True )
 
         # Run/debug buttons
         self.__updateRunDebugButtons()
