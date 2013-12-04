@@ -114,6 +114,8 @@ int process( const char *  filename, int  count )
         if ( count == 1 )
         {
             walk( tree, 0 );
+            printf( "Next consumed: %d\n", tstream->p );
+            printf( "Size: %d\n", tstream->tokens->size( tstream->tokens ) );
         }
     }
     else
