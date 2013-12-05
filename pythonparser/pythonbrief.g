@@ -181,7 +181,7 @@ decorators      : decorator+
 decor_arglist
                 @init
                 {
-                    pANTLR3_VECTOR  args = antlr3VectorNew( ANTLR3_LIST_SIZE_HINT );
+                    pANTLR3_VECTOR  args = antlr3VectorNew( 16 );
                 }
                 @after
                 {
@@ -214,7 +214,7 @@ defparameter    : fpdef ( '=' test )?
 varargslist
                 @init
                 {
-                    pANTLR3_VECTOR  f_args = antlr3VectorNew( ANTLR3_LIST_SIZE_HINT );
+                    pANTLR3_VECTOR  f_args = antlr3VectorNew( 16 );
                 }
                 @after
                 {
@@ -592,7 +592,7 @@ classdef        : decorators? kw = 'class'
 inheritancelist
                 @init
                 {
-                    pANTLR3_VECTOR  arguments = antlr3VectorNew( ANTLR3_LIST_SIZE_HINT );
+                    pANTLR3_VECTOR  arguments = antlr3VectorNew( 16 );
                 }
                 @after
                 {
