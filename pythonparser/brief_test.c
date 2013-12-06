@@ -45,7 +45,7 @@ void walk( pANTLR3_BASE_TREE    tree,
     if ( tree->children != NULL )
     {
         ANTLR3_UINT32   i;
-        ANTLR3_UINT32   n = tree->children->size( tree->children );
+        ANTLR3_UINT32   n = tree->children->count;
         for ( i = 0; i < n; i++ )
         {
             pANTLR3_BASE_TREE   t;
@@ -113,9 +113,24 @@ int process( const char *  filename, int  count )
     {
         if ( count == 1 )
         {
+            int  nextConsumed;
+            int  streamSize;
+            int  index;
+
             walk( tree, 0 );
-            printf( "Next consumed: %d\n", tstream->p );
-            printf( "Size: %d\n", tstream->tokens->size( tstream->tokens ) );
+
+            nextConsumed = tstream->p;
+            streamSize = tstream->tokens->count;
+            printf( "Next consumed: %d\n", nextConsumed );
+            printf( "Size: %d\n", streamSize );
+
+            for ( index = nextConsumed; index < streamSize; ++index )
+            {
+                pANTLR3_STRING  s;
+                pANTLR3_COMMON_TOKEN    token = (pANTLR3_COMMON_TOKEN)( tstream->tokens->get( tstream->tokens, index ) );
+                s = token->toString( token );
+                printf( "  Non consumed token: %s\n", s->chars );
+            }
         }
     }
     else

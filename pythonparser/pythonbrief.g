@@ -599,8 +599,8 @@ inheritancelist
                 {
                     arguments->free( arguments );
                 }
-                : t1 = test { arguments->add( arguments, $t1.text->chars, NULL ); }
-                    ( options { k = 2; } : COMMA t2 = test { arguments->add( arguments, $t2.text->chars, NULL ); } )*  COMMA?
+                : t1 = test { vectorAdd( arguments, $t1.text->chars, NULL ); }
+                    ( options { k = 2; } : COMMA t2 = test { vectorAdd( arguments, $t2.text->chars, NULL ); } )*  COMMA?
                     -> { pythonbriefInsertInheritance( ctx, arguments ) }
                 ;
 

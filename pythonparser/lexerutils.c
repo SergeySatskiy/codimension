@@ -156,7 +156,7 @@ pythonbriefLexer_insertImaginaryIndentDedentTokens( ppythonbriefLexer     ctx,
                                                     pANTLR3_TOKEN_SOURCE  toksource )
 {
     pANTLR3_COMMON_TOKEN    t = pythonbriefLexer_nextTokenLowerLevelImpl( ctx, toksource );
-    ctx->tokens->add( ctx->tokens, t, NULL );
+    vectorAdd( ctx->tokens, t, NULL );
 
     // if not a NEWLINE, doesn't signal indent/dedent work; just enqueue
     if ( t->type != NEWLINE )
@@ -175,7 +175,7 @@ pythonbriefLexer_insertImaginaryIndentDedentTokens( ppythonbriefLexer     ctx,
 
         if ( t->type == COMMENT ) // Pass comments to output stream (= skip processing here)
         {
-            ctx->tokens->add( ctx->tokens, t, NULL );
+            vectorAdd( ctx->tokens, t, NULL );
             continue;
         }
 
@@ -212,9 +212,9 @@ pythonbriefLexer_insertImaginaryIndentDedentTokens( ppythonbriefLexer     ctx,
     if ( cpos > lastIndent )
     {
         ctx->identStack->push( ctx->identStack, (void *)cpos, NULL );
-        ctx->tokens->add( ctx->tokens,
-                          pythonbriefLexer_createDedentIdentToken( ctx, INDENT, lineno ),
-                          NULL );
+        vectorAdd( ctx->tokens,
+                   pythonbriefLexer_createDedentIdentToken( ctx, INDENT, lineno ),
+                   NULL );
     }
     else if (cpos < lastIndent)
     {
@@ -223,16 +223,16 @@ pythonbriefLexer_insertImaginaryIndentDedentTokens( ppythonbriefLexer     ctx,
         // generate DEDENTs for each indent level we backed up over
         while ( ctx->identStack->size( ctx->identStack ) > (prevIndex + 1) )
         {
-            ctx->tokens->add( ctx->tokens,
-                              pythonbriefLexer_createDedentIdentToken( ctx, DEDENT, lineno ),
-                              NULL );
+            vectorAdd( ctx->tokens,
+                       pythonbriefLexer_createDedentIdentToken( ctx, DEDENT, lineno ),
+                       NULL );
             ctx->identStack->pop( ctx->identStack );
         }
     }
 
     // Filter out LEADING_WS tokens
     if ( t->type != LEADING_WS )
-        ctx->tokens->add( ctx->tokens, t, NULL );
+        vectorAdd( ctx->tokens, t, NULL );
 }
 
 
@@ -329,7 +329,7 @@ void addTypedName( pANTLR3_VECTOR       v,
     struct function_argument *  item = malloc( sizeof( struct function_argument ) );
     item->name = name;
     item->type = type;
-    v->add( v, item, free );
+    vectorAdd( v, item, free );
 
     return;
 }
