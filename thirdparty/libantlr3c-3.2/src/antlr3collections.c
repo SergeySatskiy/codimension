@@ -92,7 +92,6 @@ static	void				antlr3VectorDel		(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry);
 static	void *				antlr3VectorGet		(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry);
 static	void *				antrl3VectorRemove	(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry);
 static	void				antlr3VectorClear	(pANTLR3_VECTOR vector);
-static	ANTLR3_UINT32		antlr3VectorAdd		(pANTLR3_VECTOR vector, void * element, void (ANTLR3_CDECL *freeptr)(void *));
 static	ANTLR3_UINT32		antlr3VectorSet		(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry, void * element, void (ANTLR3_CDECL *freeptr)(void *), ANTLR3_BOOLEAN freeExisting);
 static	ANTLR3_UINT32		antlr3VectorSize    (pANTLR3_VECTOR vector);
 static	ANTLR3_BOOLEAN      antlr3VectorSwap	(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry1, ANTLR3_UINT32 entry2);
@@ -1047,7 +1046,7 @@ static ANTLR3_BOOLEAN
 antlr3StackPush	(pANTLR3_STACK stack, void * element, void (ANTLR3_CDECL *freeptr)(void *))
 {
     stack->top	= element;
-    return (ANTLR3_BOOLEAN)(stack->vector->add(stack->vector, element, freeptr));
+    return (ANTLR3_BOOLEAN)(vectorAdd(stack->vector, element, freeptr));
 }
 
 ANTLR3_API  pANTLR3_VECTOR
@@ -1099,7 +1098,6 @@ antlr3SetVectorApi  (pANTLR3_VECTOR vector, ANTLR3_UINT32 sizeHint)
 
 	// Now we can install the API
 	//
-	vector->add	    = antlr3VectorAdd;
 	vector->del	    = antlr3VectorDel;
 	vector->get	    = antlr3VectorGet;
 	vector->free    = antlr3VectorFree;
@@ -1309,29 +1307,22 @@ antlr3VectorResize  (pANTLR3_VECTOR vector, ANTLR3_UINT32 hint)
 	vector->elementsSize	= newSize;
 }
 
-/// Add the supplied pointer and freeing function pointer to the list,
-/// expanding the vector if needed.
-///
-static	ANTLR3_UINT32    antlr3VectorAdd	    (pANTLR3_VECTOR vector, void * element, void (ANTLR3_CDECL *freeptr)(void *))
+ANTLR3_UINT32
+vectorAdd(pANTLR3_VECTOR vector, void * element, void (ANTLR3_CDECL *freeptr)(void *))
 {
-	// Do we need to resize the vector table?
-	//
-	if	(vector->count == vector->elementsSize)
-	{
-		antlr3VectorResize(vector, 0);	    // Give no hint, we let it add 1024 or double it
-	}
+    // Do we need to resize the vector table?
+    if (vector->count >= vector->elementsSize)
+        antlr3VectorResize(vector, 0);  // Give no hint, we let it add 1024 or double it
 
-	// Insert the new entry
-	//
+    // Insert the new entry
     ANTLR3_UINT32   cnt = vector->count;
-	vector->elements[cnt].element	= element;
-	vector->elements[cnt].freeptr	= freeptr;
+    vector->elements[cnt].element = element;
+    vector->elements[cnt].freeptr = freeptr;
 
-	//vector->count++;	    // One more element counted
-
-	return  (ANTLR3_UINT32)(++vector->count);
-
+    return  (ANTLR3_UINT32)(++vector->count);
 }
+
+
 
 /// Replace the element at the specified entry point with the supplied
 /// entry.

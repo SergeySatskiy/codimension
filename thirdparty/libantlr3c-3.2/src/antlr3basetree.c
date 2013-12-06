@@ -176,7 +176,7 @@ addChild (pANTLR3_BASE_TREE tree, pANTLR3_BASE_TREE child)
                     //
                     if (entry != NULL)
                     {
-                        tree->children->add(tree->children, entry, (void (ANTLR3_CDECL *) (void *))child->free);
+                        vectorAdd(tree->children, entry, (void (ANTLR3_CDECL *) (void *))child->free);
                     }
                 }
             }
@@ -194,7 +194,7 @@ addChild (pANTLR3_BASE_TREE tree, pANTLR3_BASE_TREE child)
 			tree->createChildrenList(tree);
 		}
 
-		tree->children->add(tree->children, child, (void (ANTLR3_CDECL *)(void *))child->free);
+		vectorAdd(tree->children, child, (void (ANTLR3_CDECL *)(void *))child->free);
 		
 	}
 }
@@ -347,7 +347,7 @@ replaceChildren		(pANTLR3_BASE_TREE parent, ANTLR3_INT32 startChildIndex, ANTLR3
 			ANTLR3_FPRINTF(stderr, "replaceChildren: out of memory!!");
 			exit(1);
 		}
-		newChildren->add(newChildren, (void *)newTree, NULL);
+		vectorAdd(newChildren, (void *)newTree, NULL);
 
 		freeNewChildren = ANTLR3_TRUE;		// We must free this memory
 	}
@@ -415,7 +415,7 @@ replaceChildren		(pANTLR3_BASE_TREE parent, ANTLR3_INT32 startChildIndex, ANTLR3
 
 		for	(j = replacingHowMany; j < replacingWithHowMany; j++)
 		{
-			parent->children->add(parent->children, newChildren->get(newChildren, j), NULL);
+			vectorAdd(parent->children, newChildren->get(newChildren, j), NULL);
 		}
 
 		parent->freshenPACIndexes(parent, startChildIndex);

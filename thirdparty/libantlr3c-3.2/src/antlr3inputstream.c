@@ -388,7 +388,7 @@ antlr3AsciiMark	(pANTLR3_INT_STREAM is)
 
 	/* Add it to the table
 	 */
-	input->markers->add(input->markers, state, ANTLR3_FREE_FUNC);	/* No special structure, just free() on delete */
+	vectorAdd(input->markers, state, ANTLR3_FREE_FUNC);	/* No special structure, just free() on delete */
     }
     else
     {
