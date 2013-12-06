@@ -50,7 +50,6 @@ static pANTLR3_LIST			getTokensType		(pANTLR3_COMMON_TOKEN_STREAM cts, ANTLR3_UI
 
 // TOKEN_STREAM API 
 //
-static pANTLR3_COMMON_TOKEN tokLT				(pANTLR3_TOKEN_STREAM ts, ANTLR3_INT32 k);
 static pANTLR3_COMMON_TOKEN dbgTokLT			(pANTLR3_TOKEN_STREAM ts, ANTLR3_INT32 k);
 static pANTLR3_COMMON_TOKEN get					(pANTLR3_TOKEN_STREAM ts, ANTLR3_UINT32 i);
 static pANTLR3_TOKEN_SOURCE getTokenSource		(pANTLR3_TOKEN_STREAM ts);
@@ -172,8 +171,6 @@ antlr3CommonTokenDebugStreamSourceNew(ANTLR3_UINT32 hint, pANTLR3_TOKEN_SOURCE s
 	//
 	stream->tstream->initialStreamState	= ANTLR3_FALSE;
 
-	stream->tstream->_LT				= dbgTokLT;
-
 	stream->tstream->istream->consume		= dbgConsume;
 	stream->tstream->istream->_LA			= dbgLA;
 	stream->tstream->istream->mark			= dbgMark;
@@ -249,7 +246,6 @@ antlr3CommonTokenStreamNew(ANTLR3_UINT32 hint)
 
     /* Install the token stream API
      */
-    stream->tstream->_LT				=  tokLT;
     stream->tstream->get				=  get;
     stream->tstream->getTokenSource		=  getTokenSource;
     stream->tstream->setTokenSource		=  setTokenSource;
@@ -287,8 +283,6 @@ setDebugListener	(pANTLR3_TOKEN_STREAM ts, pANTLR3_DEBUG_EVENT_LISTENER debugger
 	//
 	ts->initialStreamState	= ANTLR3_FALSE;
 
-	ts->_LT				= dbgTokLT;
-
 	ts->istream->consume		= dbgConsume;
 	ts->istream->_LA			= dbgLA;
 	ts->istream->mark			= dbgMark;
@@ -300,7 +294,7 @@ setDebugListener	(pANTLR3_TOKEN_STREAM ts, pANTLR3_DEBUG_EVENT_LISTENER debugger
 /** Get the ith token from the current position 1..n where k=1 is the
 *  first symbol of lookahead.
 */
-static pANTLR3_COMMON_TOKEN
+pANTLR3_COMMON_TOKEN
 tokLT  (pANTLR3_TOKEN_STREAM ts, ANTLR3_INT32 k)
 {
     pANTLR3_COMMON_TOKEN_STREAM cts = (pANTLR3_COMMON_TOKEN_STREAM)ts->super;
@@ -567,7 +561,7 @@ dbgConsume	(pANTLR3_INT_STREAM is)
 	}
 	
 	a = is->index(is);		// Where are we right now?
-	t = ts->_LT(ts, 1);		// Current token from stream
+	t = tokLT(ts, 1);		// Current token from stream
 
 	consume(is);			// Standard consumer
 
@@ -731,24 +725,15 @@ getTokensType	(pANTLR3_COMMON_TOKEN_STREAM tokenStream, ANTLR3_UINT32 start, ANT
     return  newlist;
 }
 
-static ANTLR3_UINT32	    
+static ANTLR3_UINT32
 _LA  (pANTLR3_INT_STREAM is, ANTLR3_INT32 i)
 {
-	pANTLR3_TOKEN_STREAM    ts;
-	pANTLR3_COMMON_TOKEN    tok;
+    pANTLR3_TOKEN_STREAM    ts = (pANTLR3_TOKEN_STREAM) is->super;
+    pANTLR3_COMMON_TOKEN    tok = tokLT(ts, i);
 
-	ts	    = (pANTLR3_TOKEN_STREAM)	    is->super;
-
-	tok	    =  ts->_LT(ts, i);
-
-	if	(tok != NULL)
-	{
-		return	tok->getType(tok);
-	}
-	else
-	{
-		return	ANTLR3_TOKEN_INVALID;
-	}
+    if(tok != NULL)
+        return tok->getType(tok);
+    return ANTLR3_TOKEN_INVALID;
 }
 
 /// As per _LA() but for debug mode.
