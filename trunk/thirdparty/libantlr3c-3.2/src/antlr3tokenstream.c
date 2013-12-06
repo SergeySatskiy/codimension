@@ -300,62 +300,55 @@ setDebugListener	(pANTLR3_TOKEN_STREAM ts, pANTLR3_DEBUG_EVENT_LISTENER debugger
 /** Get the ith token from the current position 1..n where k=1 is the
 *  first symbol of lookahead.
 */
-static pANTLR3_COMMON_TOKEN 
+static pANTLR3_COMMON_TOKEN
 tokLT  (pANTLR3_TOKEN_STREAM ts, ANTLR3_INT32 k)
 {
-	ANTLR3_INT32    i;
-	ANTLR3_INT32    n;
-	pANTLR3_COMMON_TOKEN_STREAM cts = (pANTLR3_COMMON_TOKEN_STREAM)ts->super;
+    pANTLR3_COMMON_TOKEN_STREAM cts = (pANTLR3_COMMON_TOKEN_STREAM)ts->super;
 
-    if	(k < 0)
-	{
-		return LB(cts, -k);
-	}
+    if (k < 0)
+        return LB(cts, -k);
 
-	if	(cts->p == -1)
-	{
-		fillBuffer(cts);
-	}
-	if	(k == 0)
-	{
-		return NULL;
-	}
+    if (cts->p == -1)
+        fillBuffer(cts);
 
-	if	((cts->p + k - 1) >= (ANTLR3_INT32)ts->istream->cachedSize)
-	{
-		pANTLR3_COMMON_TOKEN    teof = &(ts->tokenSource->eofToken);
+    if (k == 0)
+        return NULL;
 
-        teof->start = ts->istream->index(ts->istream);  /* teof->setStartIndex (teof, ts->istream->index(ts->istream)); */
-        teof->stop  = ts->istream->index(ts->istream);  /* teof->setStopIndex  (teof, ts->istream->index(ts->istream)); */
-		return  teof;
-	}
+    if ((cts->p + k - 1) >= (ANTLR3_INT32)ts->istream->cachedSize)
+    {
+        pANTLR3_COMMON_TOKEN    teof = &(ts->tokenSource->eofToken);
 
-	i	= cts->p;
-	n	= 1;
+        teof->start = ts->istream->index(ts->istream);
+        teof->stop  = ts->istream->index(ts->istream);
+        return  teof;
+    }
 
-	/* Need to find k good tokens, skipping ones that are off channel
-	*/
-	while   ( n < k)
-	{
-		/* Skip off-channel tokens */
-		i = skipOffTokenChannels(cts, i+1); /* leave p on valid token    */
-		n++;
-	}
-	if	( (ANTLR3_UINT32) i >= ts->istream->cachedSize)
-	{
-		pANTLR3_COMMON_TOKEN    teof = &(ts->tokenSource->eofToken);
+    {
+        ANTLR3_INT32    i = cts->p;
+        ANTLR3_INT32    n = 1;
 
-        teof->start = ts->istream->index(ts->istream);      /* teof->setStartIndex (teof, ts->istream->index(ts->istream)); */
-        teof->stop  = ts->istream->index(ts->istream);      /* teof->setStopIndex  (teof, ts->istream->index(ts->istream)); */
-		return  teof;
-	}
+        /* Need to find k good tokens, skipping ones that are off channel */
+        while ( n < k )
+        {
+            /* Skip off-channel tokens */
+            i = skipOffTokenChannels(cts, i+1); /* leave p on valid token */
+            n++;
+        }
+        if ( (ANTLR3_UINT32) i >= ts->istream->cachedSize)
+        {
+            pANTLR3_COMMON_TOKEN    teof = &(ts->tokenSource->eofToken);
 
-	// Here the token must be in the input vector. Rather then incut
-	// function call penalty, we jsut return the pointer directly
-	// from the vector
-	//
-	return  (pANTLR3_COMMON_TOKEN)cts->tokens->elements[i].element;
-	//return  (pANTLR3_COMMON_TOKEN)cts->tokens->get(cts->tokens, i);
+            teof->start = ts->istream->index(ts->istream);
+            teof->stop  = ts->istream->index(ts->istream);
+            return  teof;
+        }
+
+        // Here the token must be in the input vector. Rather then incut
+        // function call penalty, we just return the pointer directly
+        // from the vector
+        //
+        return  (pANTLR3_COMMON_TOKEN)cts->tokens->elements[i].element;
+    }
 }
 
 /// Debug only method to flag consumption of initial off-channel
@@ -541,20 +534,17 @@ toStringTT  (pANTLR3_TOKEN_STREAM ts, pANTLR3_COMMON_TOKEN start, pANTLR3_COMMON
  *
  *  Walk past any token not on the channel the parser is listening to.
  */
-static void		    
-consume	(pANTLR3_INT_STREAM is)
+static void
+consume(pANTLR3_INT_STREAM is)
 {
-	pANTLR3_COMMON_TOKEN_STREAM cts;
-	pANTLR3_TOKEN_STREAM	ts;
+    pANTLR3_TOKEN_STREAM        ts = (pANTLR3_TOKEN_STREAM) is->super;
+    pANTLR3_COMMON_TOKEN_STREAM cts = (pANTLR3_COMMON_TOKEN_STREAM) ts->super;
 
-	ts	    = (pANTLR3_TOKEN_STREAM)	    is->super;
-	cts	    = (pANTLR3_COMMON_TOKEN_STREAM) ts->super;
-
-	if	((ANTLR3_UINT32)cts->p < cts->tokens->count)
-	{
-		cts->p++;
-		cts->p	= skipOffTokenChannels(cts, cts->p);
-	}
+    if ((ANTLR3_UINT32)cts->p < cts->tokens->count)
+    {
+        cts->p++;
+        cts->p = skipOffTokenChannels(cts, cts->p);
+    }
 }
 
 
@@ -944,7 +934,7 @@ fillBuffer(pANTLR3_COMMON_TOKEN_STREAM tokenStream) {
             /* Add it, indicating that we will delete it and the table should not */
             tok->setTokenIndex(tok, index);
             tokenStream->p++;
-            tokenStream->tokens->add(tokenStream->tokens, (void *) tok, NULL);
+            vectorAdd(tokenStream->tokens, (void *) tok, NULL);
             index++;
         }
 

@@ -484,7 +484,7 @@ fillBuffer(pANTLR3_COMMON_TREE_NODE_STREAM ctns, pANTLR3_BASE_TREE t)
 	//
 	if	(nilNode == ANTLR3_FALSE)
 	{
-		ctns->nodes->add(ctns->nodes, t, NULL);	
+		vectorAdd(ctns->nodes, t, NULL);
 	}
 
 	// Only add a DOWN node if the tree is not a nil tree and
@@ -780,7 +780,7 @@ addNavigationNode	    (pANTLR3_COMMON_TREE_NODE_STREAM ctns, ANTLR3_UINT32 ttype
 
 	// Now add the node we decided upon.
 	//
-	ctns->nodes->add(ctns->nodes, node, NULL);
+	vectorAdd(ctns->nodes, node, NULL);
 }
 
 

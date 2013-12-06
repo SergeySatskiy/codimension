@@ -99,7 +99,7 @@ freeRS	(pANTLR3_REWRITE_RULE_ELEMENT_STREAM stream)
 	// adding the stream memory free routine so that
 	// it is thrown away when the stack vector is destroyed
 	//
-	stream->rec->state->rStreams->add(stream->rec->state->rStreams, stream, (void(*)(void *))expungeRS);
+	vectorAdd(stream->rec->state->rStreams, stream, (void(*)(void *))expungeRS);
 }
 
 /** Do special nilNode reuse detection for node streams.
@@ -168,7 +168,7 @@ freeNodeRS(pANTLR3_REWRITE_RULE_ELEMENT_STREAM stream)
 	// adding the stream memory free routine so that
 	// it is thrown away when the stack vector is destroyed
 	//
-	stream->rec->state->rStreams->add(stream->rec->state->rStreams, stream, (void(*)(void *))expungeRS);
+	vectorAdd(stream->rec->state->rStreams, stream, (void(*)(void *))expungeRS);
 }
 static void
 expungeRS(pANTLR3_REWRITE_RULE_ELEMENT_STREAM stream)
@@ -531,7 +531,7 @@ add	    (pANTLR3_REWRITE_RULE_ELEMENT_STREAM stream, void * el, void (ANTLR3_CDE
 		// We already have >1 entries in the stream. So we can just add this new element to the existing
 		// collection. 
 		//
-		stream->elements->add(stream->elements, el, freePtr);
+		vectorAdd(stream->elements, el, freePtr);
 		return;
 	}
 	if (stream->singleElement == NULL)
@@ -552,9 +552,9 @@ add	    (pANTLR3_REWRITE_RULE_ELEMENT_STREAM stream, void * el, void (ANTLR3_CDE
 		stream->freeElements	= ANTLR3_TRUE;			// We 'ummed it, so we play it son.
 	}
     
-	stream->elements->add	(stream->elements, stream->singleElement, freePtr);
-	stream->elements->add	(stream->elements, el, freePtr);
-	stream->singleElement	= NULL;
+	vectorAdd(stream->elements, stream->singleElement, freePtr);
+	vectorAdd(stream->elements, el, freePtr);
+	stream->singleElement = NULL;
 
 	return;
 }
