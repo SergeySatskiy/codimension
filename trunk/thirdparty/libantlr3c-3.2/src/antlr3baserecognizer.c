@@ -345,7 +345,7 @@ antlr3RecognitionExceptionNew(pANTLR3_BASE_RECOGNIZER recognizer)
 
 	case    ANTLR3_TOKENSTREAM:
 
-		ex->token		= cts->tstream->_LT						(cts->tstream, 1);	    /* Current input token			    */
+		ex->token		= tokLT						(cts->tstream, 1);	    /* Current input token			    */
 		ex->line		= ((pANTLR3_COMMON_TOKEN)(ex->token))->getLine			(ex->token);
 		ex->charPositionInLine	= ((pANTLR3_COMMON_TOKEN)(ex->token))->getCharPositionInLine	(ex->token);
 		ex->index		= cts->tstream->istream->index					(cts->tstream->istream);
@@ -2156,7 +2156,7 @@ reset(pANTLR3_BASE_RECOGNIZER recognizer)
 static void *				
 getCurrentInputSymbol		(pANTLR3_BASE_RECOGNIZER recognizer, pANTLR3_INT_STREAM istream)
 {
-	return ((pANTLR3_TOKEN_STREAM)istream->super)->_LT((pANTLR3_TOKEN_STREAM)istream->super, 1);
+	return tokLT((pANTLR3_TOKEN_STREAM)istream->super, 1);
 }
 
 // Default implementation is for parser and assumes a token stream as supplied by the runtime.
@@ -2180,10 +2180,10 @@ getMissingSymbol			(pANTLR3_BASE_RECOGNIZER recognizer, pANTLR3_INT_STREAM	istre
 	// Work out what to use as the current symbol to make a line and offset etc
 	// If we are at EOF, we use the token before EOF
 	//
-	current	= ts->_LT(ts, 1);
+	current	= tokLT(ts, 1);
 	if	(current->getType(current) == ANTLR3_TOKEN_EOF)
 	{
-		current = ts->_LT(ts, -1);
+		current = tokLT(ts, -1);
 	}
 
 	// Create a new empty token
