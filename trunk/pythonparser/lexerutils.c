@@ -244,7 +244,7 @@ static pANTLR3_COMMON_TOKEN  pythonbriefLexer_nextTokenImpl( pANTLR3_TOKEN_SOURC
 
     for ( ; ; )
     {
-        if ( ctx->tokens->size( ctx->tokens ) > 0 )
+        if ( ctx->tokens->count > 0 )
         {
             return (pANTLR3_COMMON_TOKEN) ctx->tokens->remove( ctx->tokens, 0 );
         }
