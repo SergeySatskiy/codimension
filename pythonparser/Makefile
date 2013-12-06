@@ -36,6 +36,7 @@ all: $(GENERATED_FILES) cdmpyparser.c lexerutils.o brief_test.c
 
 gen: pythonbrief.g
 	CLASSPATH=/home/swift/antlr/antlrworks-1.4.jar java org.antlr.Tool pythonbrief.g
+	python adjust_generated.py
 
 lexerutils.o: lexerutils.c
 	gcc -O2 -I/usr/include/python2.7/ ${FLAGS} ${INCLUDE} -c lexerutils.c
