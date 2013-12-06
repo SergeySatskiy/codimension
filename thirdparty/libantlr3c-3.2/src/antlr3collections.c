@@ -1053,17 +1053,12 @@ antlr3StackPush	(pANTLR3_STACK stack, void * element, void (ANTLR3_CDECL *freept
 ANTLR3_API  pANTLR3_VECTOR
 antlr3VectorNew	(ANTLR3_UINT32 sizeHint)
 {
-	pANTLR3_VECTOR  vector;
-
-
 	// Allocate memory for the vector structure itself
 	//
-	vector  = (pANTLR3_VECTOR) ANTLR3_MALLOC((size_t)(sizeof(ANTLR3_VECTOR)));
+	pANTLR3_VECTOR  vector = (pANTLR3_VECTOR) ANTLR3_MALLOC((size_t)(sizeof(ANTLR3_VECTOR)));
 
 	if	(vector == NULL)
-	{
 		return	(pANTLR3_VECTOR)ANTLR3_FUNC_PTR(ANTLR3_ERR_NOMEM);
-	}
 
 	// Now fill in the defaults
 	//
@@ -1093,7 +1088,7 @@ antlr3SetVectorApi  (pANTLR3_VECTOR vector, ANTLR3_UINT32 sizeHint)
     }
     else
     {
-        vector->elements    = vector->internal;
+        vector->elements = vector->internal;
     }
 
 
@@ -1111,7 +1106,6 @@ antlr3SetVectorApi  (pANTLR3_VECTOR vector, ANTLR3_UINT32 sizeHint)
 	vector->set	    = antlr3VectorSet;
 	vector->remove  = antrl3VectorRemove;
 	vector->clear	= antlr3VectorClear;
-	vector->size    = antlr3VectorSize;
     vector->swap    = antlr3VectorSwap;
 
 	// Assume that this is not a factory made vector

@@ -34,7 +34,6 @@
 // THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static void				*	getChild			(pANTLR3_BASE_TREE tree, ANTLR3_UINT32 i);
-static ANTLR3_UINT32		getChildCount		(pANTLR3_BASE_TREE tree);
 static ANTLR3_UINT32		getCharPositionInLine
 (pANTLR3_BASE_TREE tree);
 static ANTLR3_UINT32		getLine				(pANTLR3_BASE_TREE tree);
@@ -48,69 +47,26 @@ static void					replaceChildren		(pANTLR3_BASE_TREE parent, ANTLR3_INT32 startCh
 static	void				freshenPACIndexesAll(pANTLR3_BASE_TREE tree);
 static	void				freshenPACIndexes	(pANTLR3_BASE_TREE tree, ANTLR3_UINT32 offset);
 
-static void					setChild			(pANTLR3_BASE_TREE tree, ANTLR3_UINT32 i, void * child);
-static void				*	deleteChild			(pANTLR3_BASE_TREE tree, ANTLR3_UINT32 i);
 static void				*	dupTree				(pANTLR3_BASE_TREE tree);
 static pANTLR3_STRING		toStringTree		(pANTLR3_BASE_TREE tree);
 
 
-static ANTLR3_BASE_TREE  newTree =
-{
-    .children = NULL,
-    .strFactory = NULL,
-
-    .getToken =                                                     NULL,
-    .addChild = (void (*)(pANTLR3_BASE_TREE, void *))(addChild),
-    .addChildren = addChildren,
-    .createChildrenList =                                           NULL,
-    .deleteChild = deleteChild,
-    .replaceChildren = replaceChildren,
-    .dupNode =                                                      NULL,
-    .dupTree = dupTree,
-    .getCharPositionInLine = getCharPositionInLine,
-    .getChild = getChild,
-    .setChildIndex =                                                NULL,
-    .getChildIndex =                                                NULL,
-    .getChildCount = getChildCount,
-    .getParent =                                                    NULL,
-    .setParent =                                                    NULL,
-    .getType =                                                      NULL,
-    .getFirstChildWithType = (void *(*)(pANTLR3_BASE_TREE, ANTLR3_UINT32))(getFirstChildWithType),
-    .getLine = getLine,
-    .getText =                                                      NULL,
-    .isNilNode =                                                    NULL,
-    .setChild = setChild,
-    .toStringTree = toStringTree,
-    .toString =                                                     NULL,
-    .freshenPACIndexesAll = freshenPACIndexesAll,
-    .freshenPACIndexes = freshenPACIndexes,
-    .reuse =                                                        NULL,
-    .free =                                                         NULL
-};
-
 ANTLR3_API pANTLR3_BASE_TREE
 antlr3BaseTreeNew(pANTLR3_BASE_TREE  tree)
 {
-    *tree = newTree;
-    #if 0
 	/* api */
-	tree->getChild				= getChild;
-	tree->getChildCount			= getChildCount;
 	tree->addChild				= (void (*)(pANTLR3_BASE_TREE, void *))(addChild);
 	tree->addChildren			= addChildren;
-	tree->setChild				= setChild;
-	tree->deleteChild			= deleteChild;
-	tree->dupTree				= dupTree;
-	tree->toStringTree			= toStringTree;
-	tree->getCharPositionInLine	= getCharPositionInLine;
-	tree->getLine				= getLine;
 	tree->replaceChildren		= replaceChildren;
+	tree->dupTree				= dupTree;
+	tree->getCharPositionInLine	= getCharPositionInLine;
+	tree->getFirstChildWithType	= (void *(*)(pANTLR3_BASE_TREE, ANTLR3_UINT32))(getFirstChildWithType);
+	tree->getLine				= getLine;
+	tree->toStringTree			= toStringTree;
 	tree->freshenPACIndexesAll	= freshenPACIndexesAll;
 	tree->freshenPACIndexes		= freshenPACIndexes;
-	tree->getFirstChildWithType	= (void *(*)(pANTLR3_BASE_TREE, ANTLR3_UINT32))(getFirstChildWithType);
 	tree->children				= NULL;
 	tree->strFactory			= NULL;
-    #endif
 
 	/* Rest must be filled in by caller.
 	*/
@@ -137,7 +93,7 @@ getFirstChildWithType	(pANTLR3_BASE_TREE tree, ANTLR3_UINT32 type)
 	pANTLR3_BASE_TREE	t;
 	if	(tree->children != NULL)
 	{
-		cs	= tree->children->size(tree->children);
+		cs	= tree->children->count;
 		for	(i = 0; i < cs; i++)
 		{
 			t = (pANTLR3_BASE_TREE) (tree->children->get(tree->children, i));
@@ -152,29 +108,20 @@ getFirstChildWithType	(pANTLR3_BASE_TREE tree, ANTLR3_UINT32 type)
 
 
 
-static void    *
-getChild		(pANTLR3_BASE_TREE tree, ANTLR3_UINT32 i)
+void *
+getBaseTreeChild( struct ANTLR3_BASE_TREE_struct * tree, ANTLR3_UINT32 i )
 {
-	if	(      tree->children == NULL
-		|| i >= tree->children->size(tree->children))
-	{
-		return NULL;
-	}
-	return  tree->children->get(tree->children, i);
+    if ( tree->children == NULL || i >= tree->children->count)
+        return NULL;
+    return  tree->children->get(tree->children, i);
 }
 
-
-static ANTLR3_UINT32
-getChildCount	(pANTLR3_BASE_TREE tree)
+ANTLR3_UINT32
+getBaseTreeChildCount( struct ANTLR3_BASE_TREE_struct *  tree )
 {
-	if	(tree->children == NULL)
-	{
-		return 0;
-	}
-	else
-	{
-		return	tree->children->size(tree->children);
-	}
+    if (tree->children == NULL)
+        return 0;
+    return tree->children->count;
 }
 
 void	    
@@ -219,7 +166,7 @@ addChild (pANTLR3_BASE_TREE tree, pANTLR3_BASE_TREE child)
             {
                 // Need to copy the children
                 //
-                n = child->children->size(child->children);
+                n = child->children->count;
 
                 for (i = 0; i < n; i++)
                 {
@@ -269,25 +216,20 @@ addChildren	(pANTLR3_BASE_TREE tree, pANTLR3_LIST kids)
 }
 
 
-static    void
-setChild	(pANTLR3_BASE_TREE tree, ANTLR3_UINT32 i, void * child)
+void
+setBaseTreeChild(struct ANTLR3_BASE_TREE_struct * tree, ANTLR3_UINT32 i, void * child)
 {
-	if	(tree->children == NULL)
-	{
-		tree->createChildrenList(tree);
-	}
-	tree->children->set(tree->children, i, child, NULL, ANTLR3_FALSE);
+    if (tree->children == NULL)
+        tree->createChildrenList(tree);
+    tree->children->set(tree->children, i, child, NULL, ANTLR3_FALSE);
 }
 
-static void    *
-deleteChild	(pANTLR3_BASE_TREE tree, ANTLR3_UINT32 i)
+void *
+deleteBaseTreeChild(struct ANTLR3_BASE_TREE_struct * tree, ANTLR3_UINT32 i)
 {
-	if	( tree->children == NULL)
-	{
-		return	NULL;
-	}
-
-	return  tree->children->remove(tree->children, i);
+    if ( tree->children == NULL )
+        return NULL;
+    return  tree->children->remove(tree->children, i);
 }
 
 static void    *
@@ -301,7 +243,7 @@ dupTree		(pANTLR3_BASE_TREE tree)
 
 	if	(tree->children != NULL)
 	{
-		s	    = tree->children->size  (tree->children);
+		s	    = tree->children->count;
 
 		for	(i = 0; i < s; i++)
 		{
@@ -329,7 +271,7 @@ toStringTree	(pANTLR3_BASE_TREE tree)
 	ANTLR3_UINT32   n;
 	pANTLR3_BASE_TREE   t;
 
-	if	(tree->children == NULL || tree->children->size(tree->children) == 0)
+	if	(tree->children == NULL || tree->children->count == 0)
 	{
 		return	tree->toString(tree);
 	}
@@ -346,7 +288,7 @@ toStringTree	(pANTLR3_BASE_TREE tree)
 	}
 	if	(tree->children != NULL)
 	{
-		n = tree->children->size(tree->children);
+		n = tree->children->count;
 
 		for	(i = 0; i < n; i++)
 		{   
@@ -416,9 +358,9 @@ replaceChildren		(pANTLR3_BASE_TREE parent, ANTLR3_INT32 startChildIndex, ANTLR3
 	// Initialize
 	//
 	replacingHowMany		= stopChildIndex - startChildIndex + 1;
-	replacingWithHowMany	= newChildren->size(newChildren);
+	replacingWithHowMany	= newChildren->count;
 	delta					= replacingHowMany - replacingWithHowMany;
-	numNewChildren			= newChildren->size(newChildren);
+	numNewChildren			= newChildren->count;
 
 	// If it is the same number of nodes, then do a direct replacement
 	//
@@ -486,7 +428,6 @@ replaceChildren		(pANTLR3_BASE_TREE parent, ANTLR3_INT32 startChildIndex, ANTLR3
 	{
 		ANTLR3_FREE(newChildren->elements);
 		newChildren->elements = NULL;
-		newChildren->size = 0;
 		ANTLR3_FREE(newChildren);		// Will not free the nodes
 	}
 }
@@ -509,7 +450,7 @@ freshenPACIndexes	(pANTLR3_BASE_TREE tree, ANTLR3_UINT32 offset)
 	ANTLR3_UINT32	count;
 	ANTLR3_UINT32	c;
 
-	count	= tree->getChildCount(tree);		// How many children do we have 
+	count	= getBaseTreeChildCount(tree);		// How many children do we have 
 
 	// Loop from the supplied index and set the indexes and parent
 	//
@@ -517,7 +458,7 @@ freshenPACIndexes	(pANTLR3_BASE_TREE tree, ANTLR3_UINT32 offset)
 	{
 		pANTLR3_BASE_TREE	child;
 
-		child = tree->getChild(tree, c);
+		child = getBaseTreeChild(tree, c);
 
 		child->setChildIndex(child, c);
 		child->setParent(child, tree);

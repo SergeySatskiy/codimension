@@ -465,17 +465,13 @@ setTokenSource	(   pANTLR3_TOKEN_STREAM ts,
     ts->tokenSource	= tokenSource;
 }
 
-static pANTLR3_STRING	    
+static pANTLR3_STRING
 toString    (pANTLR3_TOKEN_STREAM ts)
 {
-    pANTLR3_COMMON_TOKEN_STREAM cts;
+    pANTLR3_COMMON_TOKEN_STREAM cts = (pANTLR3_COMMON_TOKEN_STREAM)ts->super;
 
-    cts	    = (pANTLR3_COMMON_TOKEN_STREAM)ts->super;
-
-    if	(cts->p == -1)
-    {
-	fillBuffer(cts);
-    }
+    if(cts->p == -1)
+        fillBuffer(cts);
 
     return  ts->toStringSS(ts, 0, ts->istream->size(ts->istream));
 }
@@ -554,7 +550,7 @@ consume	(pANTLR3_INT_STREAM is)
 	ts	    = (pANTLR3_TOKEN_STREAM)	    is->super;
 	cts	    = (pANTLR3_COMMON_TOKEN_STREAM) ts->super;
 
-	if	((ANTLR3_UINT32)cts->p < cts->tokens->size(cts->tokens))
+	if	((ANTLR3_UINT32)cts->p < cts->tokens->count)
 	{
 		cts->p++;
 		cts->p	= skipOffTokenChannels(cts, cts->p);
@@ -897,14 +893,11 @@ fillBufferExt(pANTLR3_COMMON_TOKEN_STREAM tokenStream)
 }
 static void
 fillBuffer(pANTLR3_COMMON_TOKEN_STREAM tokenStream) {
-    ANTLR3_UINT32 index;
+    ANTLR3_UINT32 index = 0; /* Start at index 0 of course */
     pANTLR3_COMMON_TOKEN tok;
     ANTLR3_BOOLEAN discard;
     void * channelI;
 
-    /* Start at index 0 of course
-     */
-    index = 0;
 
     /* Pick out the next token from the token source
      * Remember we just get a pointer (reference if you like) here
@@ -914,7 +907,7 @@ fillBuffer(pANTLR3_COMMON_TOKEN_STREAM tokenStream) {
 
     while (tok != NULL && tok->type != ANTLR3_TOKEN_EOF)
     {
-        discard = ANTLR3_FALSE; /* Assume we are not discarding	*/
+        discard = ANTLR3_FALSE; /* Assume we are not discarding */
 
         /* I employ a bit of a trick, or perhaps hack here. Rather than
          * store a pointer to a structure in the override map and discard set
@@ -935,24 +928,20 @@ fillBuffer(pANTLR3_COMMON_TOKEN_STREAM tokenStream) {
         }
         else if (tokenStream->channelOverrides != NULL)
         {
-            /* See if this type is in the override map
-             */
+            /* See if this type is in the override map */
             channelI = tokenStream->channelOverrides->get(tokenStream->channelOverrides, tok->getType(tok) + 1);
 
             if (channelI != NULL)
             {
-                /* Override found
-                 */
+                /* Override found */
                 tok->setChannel(tok, ANTLR3_UINT32_CAST(channelI) - 1);
             }
         }
 
-        /* If not discarding it, add it to the list at the current index
-         */
+        /* If not discarding it, add it to the list at the current index */
         if (discard == ANTLR3_FALSE)
         {
-            /* Add it, indicating that we will delete it and the table should not
-             */
+            /* Add it, indicating that we will delete it and the table should not */
             tok->setTokenIndex(tok, index);
             tokenStream->p++;
             tokenStream->tokens->add(tokenStream->tokens, (void *) tok, NULL);
