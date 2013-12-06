@@ -301,8 +301,9 @@ static void  processImport( pANTLR3_BASE_TREE            tree,
     {
         /* The children must be the dotted name or what exported */
         pANTLR3_BASE_TREE   t = vectorGet( tree->children, k );
+        ANTLR3_UINT32       type = getType( t );
 
-        if ( getType( t ) == DOTTED_NAME )
+        if ( type == DOTTED_NAME )
         {
             pANTLR3_COMMON_TOKEN    token = getDottedName( t, name );
             if ( token->start != 0 )
@@ -312,11 +313,11 @@ static void  processImport( pANTLR3_BASE_TREE            tree,
                                        token->charPosition + 1, /* Make it 1-based */
                                        (char *)(token->start) - (char *)token->input->data );
         }
-        else if ( getType( t ) == WHAT )
+        else if ( type == WHAT )
         {
             processWhat( t, callbacks );
         }
-        else if ( getType( t ) == AS )
+        else if ( type == AS )
         {
             pANTLR3_BASE_TREE   asChild = vectorGet( t->children, 0 );
             pANTLR3_STRING      s = asChild->toString( asChild );
