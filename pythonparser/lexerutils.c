@@ -291,7 +291,7 @@ void  pythonbriefLexer_initLexer( ppythonbriefLexer  ctx )
 pANTLR3_BASE_TREE pythonbriefInsertInheritance( struct pythonbriefParser_Ctx_struct *  ctx,
                                                 pANTLR3_VECTOR                         args )
 {
-    ANTLR3_UINT32   n = args->size( args );
+    ANTLR3_UINT32   n = args->count;
     if ( n == 0 ) return NULL;      /* No base classes, so do not create the CLASS_INHERITANCE node */
 
     pANTLR3_BASE_TREE   inheritance_root = ctx->adaptor->nilNode( ctx->adaptor );
@@ -337,7 +337,7 @@ void addTypedName( pANTLR3_VECTOR       v,
 pANTLR3_BASE_TREE pythonbriefInsertArguments( struct pythonbriefParser_Ctx_struct *  ctx,
                                               pANTLR3_VECTOR                         args )
 {
-    ANTLR3_UINT32   n = args->size( args );
+    ANTLR3_UINT32   n = args->count;
 
     if ( n == 0 )   return NULL;    /* No arguments so do not insert the ARGUMENTS node */
 

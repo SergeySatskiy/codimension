@@ -718,21 +718,6 @@ void walk( pANTLR3_BASE_TREE            tree,
             /* The other scopes are not interesting */
             return;
 
-            /* Nodes which children and not of interest */
-        case DEL_STMT:
-        case PASS_STMT:
-        case BREAK_STMT:
-        case CONTINUE_STMT:
-        case RETURN_STMT:
-        case RAISE_STMT:
-        case YIELD_STMT:
-        case PRINT_STMT:
-        case ASSERT_STMT:
-        case EXEC_STMT:
-        case GLOBAL_STMT:
-            return;
-
-            /* The rest needs to walk all the children */
         default:
             break;
     }
