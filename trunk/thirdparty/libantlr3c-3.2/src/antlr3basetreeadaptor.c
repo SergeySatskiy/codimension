@@ -642,7 +642,7 @@ becomeRoot	(pANTLR3_BASE_TREE_ADAPTOR adaptor, pANTLR3_BASE_TREE newRootTree, pA
 	 */
 	if	(newRootTree->isNilNode(newRootTree))
 	{
-		if	(newRootTree->getChildCount(newRootTree) > 1)
+		if	(getBaseTreeChildCount(newRootTree) > 1)
 		{
 			/* TODO: Handle tree exceptions 
 			 */
@@ -654,7 +654,7 @@ becomeRoot	(pANTLR3_BASE_TREE_ADAPTOR adaptor, pANTLR3_BASE_TREE newRootTree, pA
          * because if it was a Nil Node, then we can reuse it now.
 		 */
         saveRoot    = newRootTree;
-		newRootTree = newRootTree->getChild(newRootTree, 0);
+		newRootTree = getBaseTreeChild(newRootTree, 0);
 
         // Reclaim the old nilNode()
         //
@@ -712,13 +712,13 @@ static	pANTLR3_BASE_TREE
 
 	if (root != NULL && root->isNilNode(root))
 	{
-		if	(root->getChildCount(root) == 0)
+		if	(getBaseTreeChildCount(root) == 0)
 		{
 			root = NULL;
 		}
-		else if	(root->getChildCount(root) == 1)
+		else if	(getBaseTreeChildCount(root) == 1)
 		{
-			root = root->getChild(root, 0);
+			root = getBaseTreeChild(root, 0);
 			root->setParent(root, NULL);
 			root->setChildIndex(root, -1);
 

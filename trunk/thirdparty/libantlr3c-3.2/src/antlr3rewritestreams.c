@@ -750,7 +750,7 @@ static ANTLR3_BOOLEAN
 hasNext  (pANTLR3_REWRITE_RULE_ELEMENT_STREAM stream)
 {
 	if (	(stream->singleElement != NULL && stream->cursor < 1)
-		||	(stream->elements != NULL && stream->cursor < stream->elements->size(stream->elements)))
+		||	(stream->elements != NULL && stream->cursor < stream->elements->count))
 	{
 		return ANTLR3_TRUE;
 	}

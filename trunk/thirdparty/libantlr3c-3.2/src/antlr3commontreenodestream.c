@@ -490,7 +490,7 @@ fillBuffer(pANTLR3_COMMON_TREE_NODE_STREAM ctns, pANTLR3_BASE_TREE t)
 	// Only add a DOWN node if the tree is not a nil tree and
 	// the tree does have children.
 	//
-	nCount = t->getChildCount(t);
+	nCount = getBaseTreeChildCount(t);
 
 	if	(nilNode == ANTLR3_FALSE && nCount>0)
 	{
@@ -741,7 +741,7 @@ size	(pANTLR3_INT_STREAM is)
 		fillBufferRoot(ctns);
 	}
 
-	return ctns->nodes->size(ctns->nodes);
+	return ctns->nodes->count;
 }
 
 /// As we flatten the tree, we use UP, DOWN nodes to represent
@@ -855,7 +855,7 @@ toStringWork	(pANTLR3_TREE_NODE_STREAM tns, pANTLR3_BASE_TREE p, pANTLR3_BASE_TR
 		return;		/* Finished */
 	}
 
-	n = p->getChildCount(p);
+	n = getBaseTreeChildCount(p);
 
 	if	(n > 0 && ! p->isNilNode(p) )
 	{
@@ -867,7 +867,7 @@ toStringWork	(pANTLR3_TREE_NODE_STREAM tns, pANTLR3_BASE_TREE p, pANTLR3_BASE_TR
 	{
 		pANTLR3_BASE_TREE   child;
 
-		child = p->getChild(p, c);
+		child = getBaseTreeChild(p, c);
 		tns->toStringWork(tns, child, stop, buf);
 	}
 

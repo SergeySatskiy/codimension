@@ -453,24 +453,24 @@ replaceChildren
 static	pANTLR3_BASE_TREE
 getChild				(pANTLR3_BASE_TREE_ADAPTOR adaptor, pANTLR3_BASE_TREE t, ANTLR3_UINT32 i)
 {
-	return t->getChild(t, i);
+	return getBaseTreeChild(t, i);
 }
 static  void
 setChild				(pANTLR3_BASE_TREE_ADAPTOR adaptor, pANTLR3_BASE_TREE t, ANTLR3_UINT32 i, pANTLR3_BASE_TREE child)
 {
-	t->setChild(t, i, child);
+	setBaseTreeChild(t, i, child);
 }
 
 static	void
 deleteChild				(pANTLR3_BASE_TREE_ADAPTOR adaptor, pANTLR3_BASE_TREE t, ANTLR3_UINT32 i)
 {
-	t->deleteChild(t, i);
+	deleteBaseTreeChild(t, i);
 }
 
 static	ANTLR3_UINT32
 getChildCount			(pANTLR3_BASE_TREE_ADAPTOR adaptor, pANTLR3_BASE_TREE t)
 {
-	return t->getChildCount(t);
+	return getBaseTreeChildCount(t);
 }
 
 static  void
