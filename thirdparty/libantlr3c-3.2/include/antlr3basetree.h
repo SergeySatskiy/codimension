@@ -82,8 +82,6 @@ typedef	struct ANTLR3_BASE_TREE_struct
 
     void				(*addChild)			(struct ANTLR3_BASE_TREE_struct * tree, void * child);
 
-    void				(*addChildren)			(struct ANTLR3_BASE_TREE_struct * tree, pANTLR3_LIST kids);
-
     void    				(*createChildrenList)		(struct ANTLR3_BASE_TREE_struct * tree);
 
     void				(*replaceChildren)		(struct ANTLR3_BASE_TREE_struct * parent, ANTLR3_INT32 startChildIndex, ANTLR3_INT32 stopChildIndex, struct ANTLR3_BASE_TREE_struct * t);
@@ -132,6 +130,7 @@ ANTLR3_UINT32 getBaseTreeChildCount(struct ANTLR3_BASE_TREE_struct * tree);
 void *  getBaseTreeChild(struct ANTLR3_BASE_TREE_struct * tree, ANTLR3_UINT32 i);
 void setBaseTreeChild(struct ANTLR3_BASE_TREE_struct * tree, ANTLR3_UINT32 i, void * child);
 void *  deleteBaseTreeChild(struct ANTLR3_BASE_TREE_struct * tree, ANTLR3_UINT32 i);
+void addBaseTreeChildren(struct ANTLR3_BASE_TREE_struct * tree, pANTLR3_LIST kids);
 
 #ifdef __cplusplus
 }

@@ -56,7 +56,6 @@ antlr3BaseTreeNew(pANTLR3_BASE_TREE  tree)
 {
 	/* api */
 	tree->addChild				= (void (*)(pANTLR3_BASE_TREE, void *))(addChild);
-	tree->addChildren			= addChildren;
 	tree->replaceChildren		= replaceChildren;
 	tree->dupTree				= dupTree;
 	tree->getCharPositionInLine	= getCharPositionInLine;
@@ -202,17 +201,15 @@ addChild (pANTLR3_BASE_TREE tree, pANTLR3_BASE_TREE child)
 
 /// Add all elements of the supplied list as children of this node
 ///
-static void
-addChildren	(pANTLR3_BASE_TREE tree, pANTLR3_LIST kids)
+void
+addBaseTreeChildren(struct ANTLR3_BASE_TREE_struct * tree, pANTLR3_LIST kids)
 {
-	ANTLR3_UINT32    i;
-	ANTLR3_UINT32    s;
-
-	s = kids->size(kids);
-	for	(i = 0; i<s; i++)
-	{
-		tree->addChild(tree, (pANTLR3_BASE_TREE)(kids->get(kids, i+1)));
-	}
+    ANTLR3_UINT32    i;
+    ANTLR3_UINT32    s = kids->size(kids);
+    for (i = 0; i<s; i++)
+    {
+        tree->addChild(tree, (pANTLR3_BASE_TREE)(kids->get(kids, i+1)));
+    }
 }
 
 
