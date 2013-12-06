@@ -1360,7 +1360,7 @@ parse_input( pANTLR3_INPUT_STREAM           input,
 
     /* Check that the parser consumed all the tokens */
     if ( errorCount == 0 &&
-         tstream->p != tstream->tokens->size( tstream->tokens ) )
+         tstream->p != tstream->tokens->count )
     {
         /* The parser stopped somewhere in a middle */
         char                    message[ 4096 ];
