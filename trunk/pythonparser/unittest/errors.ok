@@ -5,7 +5,7 @@ Class attribute[12:13:105]: 'b'
     Argument: 'self'
     Function[10:5:10:9:77:10:12]: 'f'
 unittest/errors.py(2)  : error 10 : Missing token, at offset 7
-    near [Index: 0 (Start: 0-Stop: 0) ='<missing COLON>', type<56> Line: 2 LinePos:7]
+    near [Index: 0 (Start: 0-Stop: 0) ='<missing COLON>', type<55> Line: 2 LinePos:7]
      : Missing COLON 
 
 unittest/errors.py(12)  : error 3 : , at offset 0

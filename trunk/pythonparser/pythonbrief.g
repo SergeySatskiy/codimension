@@ -1,6 +1,6 @@
 /*
  [The 'BSD licence']
- Copyright (c) 2010 Sergey Satskiy <sergey.satskiy@gmail.com>
+ Copyright (c) 2010-2013 Sergey Satskiy <sergey.satskiy@gmail.com>
 
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions
@@ -81,8 +81,6 @@ tokens
     FOR_STMT;
     WITH_STMT;
     TEST_LIST;
-    CLASS_INHERITANCE;
-    ARGUMENTS;
     NAME_ARG;
     STAR_ARG;
     DBL_STAR_ARG;
@@ -98,7 +96,10 @@ tokens
 
     TRAILER_NAME;
     HEAD_NAME;
-    AUG_ASSIGN;
+
+    // Used in lexerutils.c
+    CLASS_INHERITANCE;
+    ARGUMENTS;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -181,7 +182,7 @@ decorators      : decorator+
 decor_arglist
                 @init
                 {
-                    pANTLR3_VECTOR  args = antlr3VectorNew( 16 );
+                    pANTLR3_VECTOR  args = antlr3VectorNew( ANTLR3_VECTOR_INTERNAL_SIZE );
                 }
                 @after
                 {
@@ -214,7 +215,7 @@ defparameter    : fpdef ( '=' test )?
 varargslist
                 @init
                 {
-                    pANTLR3_VECTOR  f_args = antlr3VectorNew( 16 );
+                    pANTLR3_VECTOR  f_args = antlr3VectorNew( ANTLR3_VECTOR_INTERNAL_SIZE );
                 }
                 @after
                 {
@@ -511,9 +512,9 @@ power           : atom  trailer*  ( options { greedy = true; } : DOUBLESTAR fact
 atom            : LPAREN RPAREN
                 | LPAREN ( yield_expr -> yield_expr | testlist_comp -> testlist_comp )? RPAREN
                 | LBRACK listmaker? RBRACK
-                    -> ^( LIST )
+                    -> LIST
                 | LCURLY dictorsetmaker? RCURLY
-                    -> ^( DICTIONARY )
+                    -> DICTIONARY
                 | '`' testlist '`'
                 | NAME
                     -> ^( HEAD_NAME  NAME )
@@ -546,7 +547,7 @@ lambdef         : 'lambda' varargslist? COLON test
 trailer         : LPAREN arglist? RPAREN
                     -> arglist?
                 | LBRACK subscriptlist RBRACK
-                    -> ^( LIST )
+                    -> LIST
                 | DOT NAME
                     -> ^( TRAILER_NAME NAME )
                 ;
@@ -592,7 +593,7 @@ classdef        : decorators? kw = 'class'
 inheritancelist
                 @init
                 {
-                    pANTLR3_VECTOR  arguments = antlr3VectorNew( 16 );
+                    pANTLR3_VECTOR  arguments = antlr3VectorNew( ANTLR3_VECTOR_INTERNAL_SIZE );
                 }
                 @after
                 {
