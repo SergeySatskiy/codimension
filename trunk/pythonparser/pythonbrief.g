@@ -158,10 +158,12 @@ tokens
 
 /////////////////////////////// PARSER /////////////////////////////////////////
 
+/* Not used in the parser
 single_input    : NEWLINE
                 | simple_stmt
                 | compound_stmt NEWLINE
                 ;
+*/
 
 file_input      : EOF
                 | ( NEWLINE | stmt )*
@@ -169,8 +171,10 @@ file_input      : EOF
                 | COMMENT EOF
                 ;
 
+/* Not used in the parser
 eval_input      : NEWLINE*  testlist  NEWLINE*
                 ;
+*/
 
 decorator       : '@' dotted_name ( LPAREN decor_arglist? RPAREN )? NEWLINE
                     -> ^( DECOR dotted_name decor_arglist? )
@@ -186,7 +190,7 @@ decor_arglist
                 }
                 @after
                 {
-                    args->free( args );
+                    vectorFree( args );
                 }
                 : ( a1 = argument { addTypedName( args, NAME_ARG, $a1.text->chars ); } COMMA )*
                 (     (a2 = argument { addTypedName( args, NAME_ARG, $a2.text->chars ); } )?
@@ -219,7 +223,7 @@ varargslist
                 }
                 @after
                 {
-                    f_args->free( f_args );
+                    vectorFree( f_args );
                 }
                 : (( d = defparameter { addTypedName( f_args, NAME_ARG, $d.text->chars ); } COMMA )*
                     ( STAR n1 = NAME { addTypedName( f_args, STAR_ARG, $n1.text->chars ); } ( COMMA DOUBLESTAR n2 = NAME { addTypedName( f_args, DBL_STAR_ARG, $n2.text->chars ); } )? | DOUBLESTAR n3 = NAME { addTypedName( f_args, DBL_STAR_ARG, $n3.text->chars ); } )
@@ -597,7 +601,7 @@ inheritancelist
                 }
                 @after
                 {
-                    arguments->free( arguments );
+                    vectorFree( arguments );
                 }
                 : t1 = test { vectorAdd( arguments, $t1.text->chars, NULL ); }
                     ( options { k = 2; } : COMMA t2 = test { vectorAdd( arguments, $t2.text->chars, NULL ); } )*  COMMA?

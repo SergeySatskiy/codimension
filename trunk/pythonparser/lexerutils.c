@@ -259,7 +259,7 @@ static pANTLR3_COMMON_TOKEN  pythonbriefLexer_nextTokenImpl( pANTLR3_TOKEN_SOURC
 
 static void  pythonbriefLexer_FreeImpl( struct pythonbriefLexer_Ctx_struct *  ctx )
 {
-    ctx->tokens->free( ctx->tokens );
+    vectorFree( ctx->tokens );
     ctx->identStack->free( ctx->identStack );
 
     ctx->origFree( ctx );
@@ -272,7 +272,7 @@ void  pythonbriefLexer_initLexer( ppythonbriefLexer  ctx )
     ctx->implicitLineJoiningLevel = 0;
     ctx->startPos = -1;
 
-    ctx->tokens = antlr3VectorNew( ANTLR3_SIZE_HINT * 4 );
+    ctx->tokens = antlr3VectorNew( 16384 );
     ctx->identStack = antlr3StackNew( ANTLR3_LIST_SIZE_HINT );
     ctx->identStack->push( ctx->identStack, (void *)FIRST_CHAR_POSITION, NULL );
 
@@ -306,7 +306,7 @@ pANTLR3_BASE_TREE pythonbriefInsertInheritance( struct pythonbriefParser_Ctx_str
 
     for ( k = 0; k < n; ++k )
     {
-        const char *        item = (const char *) (args->get( args, k ));
+        const char *        item = (const char *) (vectorGet( args, k ));
         pANTLR3_BASE_TREE   child = ctx->adaptor->createTypeText( ctx->adaptor, CLASS_INHERITANCE, (pANTLR3_UINT8) item );
 
         ctx->adaptor->addChild( ctx->adaptor, inheritance_root, child );
@@ -352,7 +352,7 @@ pANTLR3_BASE_TREE pythonbriefInsertArguments( struct pythonbriefParser_Ctx_struc
     ANTLR3_UINT32   k;
     for ( k = 0; k < n; ++k )
     {
-        struct function_argument *  item = (struct function_argument *) (args->get( args, k ));
+        struct function_argument *  item = (struct function_argument *) (vectorGet( args, k ));
         pANTLR3_BASE_TREE           child = ctx->adaptor->createTypeText( ctx->adaptor,
                                                                           item->type, item->name );
 

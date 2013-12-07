@@ -49,7 +49,7 @@ void walk( pANTLR3_BASE_TREE    tree,
         for ( i = 0; i < n; i++ )
         {
             pANTLR3_BASE_TREE   t;
-            t = (pANTLR3_BASE_TREE) tree->children->get( tree->children, i );
+            t = (pANTLR3_BASE_TREE) vectorGet( tree->children, i );
             walk( t, level + 1 );
         }
     }
@@ -127,7 +127,7 @@ int process( const char *  filename, int  count )
             for ( index = nextConsumed; index < streamSize; ++index )
             {
                 pANTLR3_STRING  s;
-                pANTLR3_COMMON_TOKEN    token = (pANTLR3_COMMON_TOKEN)( tstream->tokens->get( tstream->tokens, index ) );
+                pANTLR3_COMMON_TOKEN    token = (pANTLR3_COMMON_TOKEN)( vectorGet( tstream->tokens, index ) );
                 s = token->toString( token );
                 printf( "  Non consumed token: %s\n", s->chars );
             }
