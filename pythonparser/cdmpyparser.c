@@ -42,12 +42,6 @@ static ANTLR3_UINT32 getType( pANTLR3_BASE_TREE tree )
         return 0;
     return theTree->token->type;
 }
-static void *  vectorGet( pANTLR3_VECTOR vector, ANTLR3_UINT32 entry )
-{
-    if ( entry < vector->count )
-        return vector->elements[entry].element;
-    return NULL;
-}
 static pANTLR3_COMMON_TOKEN getToken( pANTLR3_BASE_TREE  tree )
 {
     return  ((pANTLR3_COMMON_TREE)(tree->super))->token;
@@ -384,7 +378,7 @@ static int processDecor( pANTLR3_BASE_TREE            tree,
     int     isStaticMethod = 0;
     char    name[ MAX_DOTTED_NAME_LENGTH ];     /* decor name */
 
-    pANTLR3_COMMON_TOKEN    token = getDottedName( tree->children->get( tree->children, 0 ),
+    pANTLR3_COMMON_TOKEN    token = getDottedName( vectorGet( tree->children, 0 ),
                                                    name );
     if ( token->start != 0 )
         PyObject_CallFunction( callbacks->onDecorator, "siii",
