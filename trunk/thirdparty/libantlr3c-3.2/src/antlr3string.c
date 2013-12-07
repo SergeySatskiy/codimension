@@ -778,7 +778,7 @@ closeFactory	(pANTLR3_STRING_FACTORY factory)
     /* Delete the vector we were tracking the strings with, this will
      * causes all the allocated strings to be deallocated too
      */
-    factory->strings->free(factory->strings);
+    vectorFree(factory->strings);
 
     /* Delete the space for the factory itself
      */

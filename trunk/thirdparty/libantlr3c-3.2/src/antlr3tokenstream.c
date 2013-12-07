@@ -50,7 +50,6 @@ static pANTLR3_LIST			getTokensType		(pANTLR3_COMMON_TOKEN_STREAM cts, ANTLR3_UI
 
 // TOKEN_STREAM API 
 //
-static pANTLR3_COMMON_TOKEN dbgTokLT			(pANTLR3_TOKEN_STREAM ts, ANTLR3_INT32 k);
 static pANTLR3_COMMON_TOKEN get					(pANTLR3_TOKEN_STREAM ts, ANTLR3_UINT32 i);
 static pANTLR3_TOKEN_SOURCE getTokenSource		(pANTLR3_TOKEN_STREAM ts);
 static void					setTokenSource		(pANTLR3_TOKEN_STREAM ts, pANTLR3_TOKEN_SOURCE tokenSource);
@@ -135,7 +134,7 @@ antlr3CTSFree	    (pANTLR3_COMMON_TOKEN_STREAM stream)
 	//
 	if	(stream->tokens != NULL)
 	{
-		stream->tokens->free(stream->tokens);
+		vectorFree(stream->tokens);
 		stream->tokens	= NULL;
 	}
 	if	(stream->discardSet != NULL)
@@ -367,18 +366,6 @@ consumeInitialHiddenTokens(pANTLR3_INT_STREAM is)
 
 }
 
-/// As per the normal tokLT but sends information to the debugger
-///
-static pANTLR3_COMMON_TOKEN 
-dbgTokLT  (pANTLR3_TOKEN_STREAM ts, ANTLR3_INT32 k)
-{
-	if	(ts->initialStreamState == ANTLR3_TRUE)
-	{
-		consumeInitialHiddenTokens(ts->istream);
-	}
-	return tokLT(ts, k);
-}
-
 #ifdef	ANTLR3_WINDOWS
 	/* When fully optimized VC7 complains about non reachable code.
 	 * Not yet sure if this is an optimizer bug, or a bug in the flow analysis
@@ -436,7 +423,7 @@ get (pANTLR3_TOKEN_STREAM ts, ANTLR3_UINT32 i)
 
     cts	    = (pANTLR3_COMMON_TOKEN_STREAM)ts->super;
 
-    return  (pANTLR3_COMMON_TOKEN)(cts->tokens->get(cts->tokens, i));  /* Token index is zero based but vectors are 1 based */
+    return  (pANTLR3_COMMON_TOKEN)(vectorGet(cts->tokens, i));  /* Token index is zero based but vectors are 1 based */
 }
 
 static pANTLR3_TOKEN_SOURCE 

@@ -176,7 +176,7 @@ expungeRS(pANTLR3_REWRITE_RULE_ELEMENT_STREAM stream)
 
 	if (stream->freeElements == ANTLR3_TRUE && stream->elements != NULL)
 	{
-		stream->elements->free(stream->elements);
+		vectorFree(stream->elements);
 	}
 	ANTLR3_FREE(stream);
 }
@@ -296,7 +296,7 @@ antlr3RewriteRuleElementStreamNewAEV(pANTLR3_BASE_TREE_ADAPTOR adaptor, pANTLR3_
 	//
 	if	(stream->elements != NULL && stream->elements->factoryMade == ANTLR3_FALSE && stream->freeElements == ANTLR3_TRUE )
 	{
-		stream->elements->free(stream->elements);
+		vectorFree(stream->elements);
 	}
 	stream->elements		= vector;
 	stream->freeElements	= ANTLR3_FALSE;
@@ -665,7 +665,7 @@ _next    (pANTLR3_REWRITE_RULE_ELEMENT_STREAM stream)
 	// More than just a single element so we extract it from the 
 	// vector.
 	//
-	t = stream->toTree(stream, stream->elements->get(stream->elements, stream->cursor));
+	t = stream->toTree(stream, vectorGet(stream->elements, stream->cursor));
 	stream->cursor++;
 	return t;
 }

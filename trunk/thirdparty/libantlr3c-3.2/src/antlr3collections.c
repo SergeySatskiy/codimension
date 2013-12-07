@@ -87,8 +87,6 @@ static void *			antlr3StackPeek	(pANTLR3_STACK	stack);
 
 // Interface functions for vectors
 //
-static	void ANTLR3_CDECL	antlr3VectorFree	(pANTLR3_VECTOR vector);
-static	void *				antlr3VectorGet		(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry);
 static	void *				antrl3VectorRemove	(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry);
 static	void				antlr3VectorClear	(pANTLR3_VECTOR vector);
 static	ANTLR3_UINT32		antlr3VectorSet		(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry, void * element, void (ANTLR3_CDECL *freeptr)(void *), ANTLR3_BOOLEAN freeExisting);
@@ -1005,7 +1003,7 @@ antlr3StackFree	(pANTLR3_STACK  stack)
 {
     /* Free the list that supports the stack
      */
-    stack->vector->free(stack->vector);
+    vectorFree(stack->vector);
     stack->vector   = NULL;
     stack->top	    = NULL;
 
@@ -1025,14 +1023,14 @@ antlr3StackPop	(pANTLR3_STACK	stack)
     // TODO: Review this, it is correct for follow sets which is what this was done for
     //       but is not as obvious when using it as a 'real'stack.
     //
-    stack->top = stack->vector->get(stack->vector, stack->vector->count - 1);
+    stack->top = vectorGet(stack->vector, stack->vector->count - 1);
     return stack->top;
 }
 
 static void *
 antlr3StackGet	(pANTLR3_STACK stack, ANTLR3_INTKEY key)
 {
-    return  stack->vector->get(stack->vector, (ANTLR3_UINT32)key);
+    return  vectorGet(stack->vector, (ANTLR3_UINT32)key);
 }
 
 static void *
@@ -1097,8 +1095,6 @@ antlr3SetVectorApi  (pANTLR3_VECTOR vector, ANTLR3_UINT32 sizeHint)
 
 	// Now we can install the API
 	//
-	vector->get	    = antlr3VectorGet;
-	vector->free    = antlr3VectorFree;
 	vector->set	    = antlr3VectorSet;
 	vector->remove  = antrl3VectorRemove;
 	vector->clear	= antlr3VectorClear;
@@ -1138,40 +1134,33 @@ antlr3VectorClear	(pANTLR3_VECTOR vector)
 	vector->count	= 0;
 }
 
-static	
-void	ANTLR3_CDECL	antlr3VectorFree    (pANTLR3_VECTOR vector)
+void ANTLR3_CDECL vectorFree(pANTLR3_VECTOR vector)
 {
-	ANTLR3_UINT32   entry;
-    ANTLR3_UINT32   cnt = vector->count;
+    ANTLR3_UINT32   entry;
 
-	// We must traverse every entry in the vector and if it has
-	// a pointer to a free function then we call it with the
-	// the entry pointer
-	//
-	for	(entry = 0; entry < cnt; entry++)
-	{
-		if  (vector->elements[entry].freeptr != NULL)
-		{
-			vector->elements[entry].freeptr(vector->elements[entry].element);
-		}
-		// vector->elements[entry].freeptr    = NULL;
-		// vector->elements[entry].element    = NULL;
-	}
-
-	if	(vector->factoryMade == ANTLR3_FALSE)
-	{
-		// The entries are freed, so free the element allocation
-		//
-        if  (vector->elementsSize > ANTLR3_VECTOR_INTERNAL_SIZE)
+    // We must traverse every entry in the vector and if it has
+    // a pointer to a free function then we call it with the
+    // the entry pointer
+    for (entry = 0; entry < vector->count; entry++)
+    {
+        if  (vector->elements[entry].freeptr != NULL)
         {
-            ANTLR3_FREE(vector->elements);
+            vector->elements[entry].freeptr(vector->elements[entry].element);
         }
-		// vector->elements = NULL;
+        // vector->elements[entry].freeptr    = NULL;
+        // vector->elements[entry].element    = NULL;
+    }
 
-		// Finally, free the allocation for the vector itself
-		//
-		ANTLR3_FREE(vector);
-	}
+    if (vector->factoryMade == ANTLR3_FALSE)
+    {
+        // The entries are freed, so free the element allocation
+        if  (vector->elementsSize > ANTLR3_VECTOR_INTERNAL_SIZE)
+            ANTLR3_FREE(vector->elements);
+        // vector->elements = NULL;
+
+        // Finally, free the allocation for the vector itself
+        ANTLR3_FREE(vector);
+    }
 }
 
 void vectorDel(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry)
@@ -1205,16 +1194,14 @@ void vectorDel(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry)
     vector->count--;
 }
 
-static	void *		antlr3VectorGet     (pANTLR3_VECTOR vector, ANTLR3_UINT32 entry)
+void * vectorGet(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry)
 {
-	// Ensure this is a valid request
-	//
-	if	(entry < vector->count)
-		return	vector->elements[entry].element;
+    // Ensure this is a valid request
+    if (entry < vector->count)
+        return vector->elements[entry].element;
 
     // I know nothing, Mr. Fawlty!
-    //
-    return	NULL;
+    return NULL;
 }
 
 /// Remove the entry from the vector, but do not free any entry, even if it has
@@ -1532,7 +1519,7 @@ closeVectorFactory  (pANTLR3_VECTOR_FACTORY factory)
                 // this is a factory allocated pool vector and so it won't free things it
                 // should not.
                 //
-                check->free(check);
+                vectorFree(check);
             }
         }
     }

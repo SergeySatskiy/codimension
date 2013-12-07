@@ -95,7 +95,7 @@ getFirstChildWithType	(pANTLR3_BASE_TREE tree, ANTLR3_UINT32 type)
 		cs	= tree->children->count;
 		for	(i = 0; i < cs; i++)
 		{
-			t = (pANTLR3_BASE_TREE) (tree->children->get(tree->children, i));
+			t = (pANTLR3_BASE_TREE) (vectorGet(tree->children, i));
 			if  (tree->getType(t) == type)
 			{
 				return  (pANTLR3_BASE_TREE)t;
@@ -112,7 +112,7 @@ getBaseTreeChild( struct ANTLR3_BASE_TREE_struct * tree, ANTLR3_UINT32 i )
 {
     if ( tree->children == NULL || i >= tree->children->count)
         return NULL;
-    return  tree->children->get(tree->children, i);
+    return  vectorGet(tree->children, i);
 }
 
 ANTLR3_UINT32
@@ -170,7 +170,7 @@ addChild (pANTLR3_BASE_TREE tree, pANTLR3_BASE_TREE child)
                 for (i = 0; i < n; i++)
                 {
                     pANTLR3_BASE_TREE entry;
-                    entry = child->children->get(child->children, i);
+                    entry = vectorGet(child->children, i);
 
                     // ANTLR3 lists can be sparse, unlike Array Lists
                     //
@@ -247,7 +247,7 @@ dupTree		(pANTLR3_BASE_TREE tree)
 			pANTLR3_BASE_TREE    t;
 			pANTLR3_BASE_TREE    newNode;
 
-			t   = (pANTLR3_BASE_TREE) tree->children->get(tree->children, i);
+			t   = (pANTLR3_BASE_TREE) vectorGet(tree->children, i);
 
 			if  (t!= NULL)
 			{
@@ -289,7 +289,7 @@ toStringTree	(pANTLR3_BASE_TREE tree)
 
 		for	(i = 0; i < n; i++)
 		{   
-			t   = (pANTLR3_BASE_TREE) tree->children->get(tree->children, i);
+			t   = (pANTLR3_BASE_TREE) vectorGet(tree->children, i);
 
 			if  (i > 0)
 			{
@@ -370,7 +370,7 @@ replaceChildren		(pANTLR3_BASE_TREE parent, ANTLR3_INT32 startChildIndex, ANTLR3
 		j	= 0;
 		for	(i = startChildIndex; i <= stopChildIndex; i++)
 		{
-			child = (pANTLR3_BASE_TREE) newChildren->get(newChildren, j);
+			child = (pANTLR3_BASE_TREE) vectorGet(newChildren, j);
 			parent->children->set(parent->children, i, child, NULL, ANTLR3_FALSE);
 			child->setParent(child, parent);
 			child->setChildIndex(child, i);
@@ -385,7 +385,7 @@ replaceChildren		(pANTLR3_BASE_TREE parent, ANTLR3_INT32 startChildIndex, ANTLR3
 		//
 		for	(j = 0; j < numNewChildren; j++)
 		{
-			parent->children->set(parent->children, startChildIndex + j, newChildren->get(newChildren, j), NULL, ANTLR3_FALSE);
+			parent->children->set(parent->children, startChildIndex + j, vectorGet(newChildren, j), NULL, ANTLR3_FALSE);
 		}
 
 		// We just delete the same index position until done
@@ -408,14 +408,14 @@ replaceChildren		(pANTLR3_BASE_TREE parent, ANTLR3_INT32 startChildIndex, ANTLR3
 		//
 		for	(j = 0; j < replacingHowMany; j++)
 		{
-			parent->children->set(parent->children, startChildIndex + j, newChildren->get(newChildren, j), NULL, ANTLR3_FALSE);
+			parent->children->set(parent->children, startChildIndex + j, vectorGet(newChildren, j), NULL, ANTLR3_FALSE);
 		}
 
 		numToInsert = replacingWithHowMany - replacingHowMany;
 
 		for	(j = replacingHowMany; j < replacingWithHowMany; j++)
 		{
-			vectorAdd(parent->children, newChildren->get(newChildren, j), NULL);
+			vectorAdd(parent->children, vectorGet(newChildren, j), NULL);
 		}
 
 		parent->freshenPACIndexes(parent, startChildIndex);

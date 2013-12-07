@@ -262,8 +262,6 @@ typedef struct ANTLR3_VECTOR_struct
      */
     ANTLR3_UINT32   elementsSize;
 
-    void			(ANTLR3_CDECL *free)	(struct ANTLR3_VECTOR_struct * vector);
-    void *			(*get)					(struct ANTLR3_VECTOR_struct * vector, ANTLR3_UINT32 entry);
     void *			(*remove)				(struct ANTLR3_VECTOR_struct * vector, ANTLR3_UINT32 entry);
     void			(*clear)				(struct ANTLR3_VECTOR_struct * vector);
     ANTLR3_BOOLEAN              (*swap)                 (struct ANTLR3_VECTOR_struct *, ANTLR3_UINT32 entry1, ANTLR3_UINT32 entry2);
@@ -273,8 +271,10 @@ typedef struct ANTLR3_VECTOR_struct
 
 
 
-ANTLR3_UINT32    vectorAdd(pANTLR3_VECTOR vector, void * element, void (ANTLR3_CDECL *freeptr)(void *));
-void             vectorDel(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry);
+ANTLR3_UINT32     vectorAdd(pANTLR3_VECTOR vector, void * element, void (ANTLR3_CDECL *freeptr)(void *));
+void              vectorDel(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry);
+void ANTLR3_CDECL vectorFree(pANTLR3_VECTOR vector);
+void *            vectorGet(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry);
 
 /** Default vector pool size if otherwise unspecified
  */
