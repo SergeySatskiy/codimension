@@ -278,7 +278,7 @@ void *            vectorGet(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry);
 
 /** Default vector pool size if otherwise unspecified
  */
-#define ANTLR3_FACTORY_VPOOL_SIZE 256
+#define ANTLR3_FACTORY_VPOOL_SIZE 512
 
 /** Structure that tracks vectors in a vector and auto deletes the vectors
  *  in the vector factory when closed.

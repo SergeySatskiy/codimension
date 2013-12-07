@@ -1068,42 +1068,36 @@ antlr3VectorNew	(ANTLR3_UINT32 sizeHint)
 ANTLR3_API void
 antlr3SetVectorApi  (pANTLR3_VECTOR vector, ANTLR3_UINT32 sizeHint)
 {
-	ANTLR3_UINT32   initialSize = ANTLR3_VECTOR_INTERNAL_SIZE;
-
-  	// Allow vectors to be guessed by ourselves, so input size can be zero
-	//
-	if	(sizeHint > ANTLR3_VECTOR_INTERNAL_SIZE)
-	{
-		initialSize = sizeHint;
-        vector->elements	= (pANTLR3_VECTOR_ELEMENT)ANTLR3_MALLOC((size_t)(sizeof(ANTLR3_VECTOR_ELEMENT) * initialSize));
-        if	(vector->elements == NULL)
+    // Allow vectors to be guessed by ourselves, so input size can be zero
+    if (sizeHint > ANTLR3_VECTOR_INTERNAL_SIZE)
+    {
+        vector->elements = (pANTLR3_VECTOR_ELEMENT)ANTLR3_MALLOC((size_t)(sizeof(ANTLR3_VECTOR_ELEMENT) * sizeHint));
+        if (vector->elements == NULL)
         {
             ANTLR3_FREE(vector);
             return;
         }
+        vector->elementsSize = sizeHint;
     }
     else
     {
         vector->elements = vector->internal;
+        vector->elementsSize = ANTLR3_VECTOR_INTERNAL_SIZE;
     }
 
+    // Memory allocated successfully
+    vector->count = 0;
 
-	// Memory allocated successfully
-	//
-	vector->count			= 0;			// No entries yet of course
-	vector->elementsSize    = initialSize;  // Available entries
+    // Now we can install the API
+    vector->set    = antlr3VectorSet;
+    vector->remove = antrl3VectorRemove;
+    vector->clear  = antlr3VectorClear;
+    vector->swap   = antlr3VectorSwap;
 
-	// Now we can install the API
-	//
-	vector->set	    = antlr3VectorSet;
-	vector->remove  = antrl3VectorRemove;
-	vector->clear	= antlr3VectorClear;
-    vector->swap    = antlr3VectorSwap;
-
-	// Assume that this is not a factory made vector
-	//
-	vector->factoryMade	= ANTLR3_FALSE;
+    // Assume that this is not a factory made vector
+    vector->factoryMade = ANTLR3_FALSE;
 }
+
 // Clear the entries in a vector.
 // Clearing the vector leaves its capacity the same but
 // it walks the entries first to see if any of them
