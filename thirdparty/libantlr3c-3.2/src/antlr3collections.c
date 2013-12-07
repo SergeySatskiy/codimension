@@ -88,7 +88,6 @@ static void *			antlr3StackPeek	(pANTLR3_STACK	stack);
 // Interface functions for vectors
 //
 static	void ANTLR3_CDECL	antlr3VectorFree	(pANTLR3_VECTOR vector);
-static	void				antlr3VectorDel		(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry);
 static	void *				antlr3VectorGet		(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry);
 static	void *				antrl3VectorRemove	(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry);
 static	void				antlr3VectorClear	(pANTLR3_VECTOR vector);
@@ -1018,7 +1017,7 @@ antlr3StackPop	(pANTLR3_STACK	stack)
 {
     // Delete the element that is currently at the top of the stack
     //
-    stack->vector->del(stack->vector, stack->vector->count - 1);
+    vectorDel(stack->vector, stack->vector->count - 1);
 
     // And get the element that is the now the top of the stack (if anything)
     // NOTE! This is not quite like a 'real' stack, which would normally return you
@@ -1098,7 +1097,6 @@ antlr3SetVectorApi  (pANTLR3_VECTOR vector, ANTLR3_UINT32 sizeHint)
 
 	// Now we can install the API
 	//
-	vector->del	    = antlr3VectorDel;
 	vector->get	    = antlr3VectorGet;
 	vector->free    = antlr3VectorFree;
 	vector->set	    = antlr3VectorSet;
@@ -1176,41 +1174,35 @@ void	ANTLR3_CDECL	antlr3VectorFree    (pANTLR3_VECTOR vector)
 	}
 }
 
-static	void		antlr3VectorDel	    (pANTLR3_VECTOR vector, ANTLR3_UINT32 entry)
+void vectorDel(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry)
 {
-	// Check this is a valid request first
-	//
-	if	(entry >= vector->count)
-	{
-		return;
-	}
+    // Check this is a valid request first
+    if (entry >= vector->count)
+        return;
 
-	// Valid request, check for free pointer and call it if present
-	//
-	if	(vector->elements[entry].freeptr != NULL)
-	{
-		vector->elements[entry].freeptr(vector->elements[entry].element);
+    // Valid request, check for free pointer and call it if present
+    if (vector->elements[entry].freeptr != NULL)
+    {
+        vector->elements[entry].freeptr(vector->elements[entry].element);
         // Add always set this field anyway
-		// vector->elements[entry].freeptr    = NULL;
-	}
+        // vector->elements[entry].freeptr    = NULL;
+    }
 
-	if	(entry == vector->count - 1)
-	{
-		// Ensure the pointer is never reused by accident, but otherwise just 
-		// decrement the pointer.
-		//
-		vector->elements[entry].element    = NULL;
-	}
-	else
-	{
-		// Need to shuffle trailing pointers back over the deleted entry
-		//
-		ANTLR3_MEMMOVE(vector->elements + entry, vector->elements + entry + 1, sizeof(ANTLR3_VECTOR_ELEMENT) * (vector->count - entry - 1));
-	}
+    if (entry == vector->count - 1)
+    {
+        // Ensure the pointer is never reused by accident, but otherwise just 
+        // decrement the pointer.
+        vector->elements[entry].element = NULL;
+    }
+    else
+    {
+        // Need to shuffle trailing pointers back over the deleted entry
+        ANTLR3_MEMMOVE(vector->elements + entry, vector->elements + entry + 1,
+                       sizeof(ANTLR3_VECTOR_ELEMENT) * (vector->count - entry - 1));
+    }
 
-	// One less entry in the vector now
-	//
-	vector->count--;
+    // One less entry in the vector now
+    vector->count--;
 }
 
 static	void *		antlr3VectorGet     (pANTLR3_VECTOR vector, ANTLR3_UINT32 entry)
@@ -1393,11 +1385,6 @@ antlr3VectorSwap	    (pANTLR3_VECTOR vector, ANTLR3_UINT32 entry1, ANTLR3_UINT32
 
 	return  ANTLR3_TRUE;
 
-}
-
-static	ANTLR3_UINT32   antlr3VectorSize    (pANTLR3_VECTOR vector)
-{
-    return  vector->count;
 }
 
 #ifdef ANTLR3_WINDOWS
