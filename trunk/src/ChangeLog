@@ -15,6 +15,7 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * Bug fix: newly opened files withing a debug session are editable
 * Removing zoom buttons from the text editor toolbar
 * Bug fix: SVN plugin delete warning dialog failed
+* Bug fix: do not show calltip for calls in string literals
 
 2013 Nov 16 Sergey Satskiy <sergey.satskiy@gmail.com>
 

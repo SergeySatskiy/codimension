@@ -1768,6 +1768,14 @@ class TextEditor( ScintillaWrapper ):
                                                 Python3FileType ]:
             return True
 
+        if self.styleAt( self.currentPosition() ) in [
+                                QsciLexerPython.TripleDoubleQuotedString,
+                                QsciLexerPython.TripleSingleQuotedString,
+                                QsciLexerPython.DoubleQuotedString,
+                                QsciLexerPython.SingleQuotedString,
+                                QsciLexerPython.UnclosedString ]:
+            return True
+
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         callPosition = getCallPosition( self )
         if callPosition is None:
@@ -1778,7 +1786,7 @@ class TextEditor( ScintillaWrapper ):
             return True
 
         if not showKeyword and \
-           self.styleAt( callPosition ) == QsciLexerPython. Keyword:
+           self.styleAt( callPosition ) == QsciLexerPython.Keyword:
             QApplication.restoreOverrideCursor()
             self.__resetCalltip()
             return True
