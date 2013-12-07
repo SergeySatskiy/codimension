@@ -272,7 +272,7 @@ void  pythonbriefLexer_initLexer( ppythonbriefLexer  ctx )
     ctx->implicitLineJoiningLevel = 0;
     ctx->startPos = -1;
 
-    ctx->tokens = antlr3VectorNew( ANTLR3_LIST_SIZE_HINT );
+    ctx->tokens = antlr3VectorNew( ANTLR3_SIZE_HINT * 4 );
     ctx->identStack = antlr3StackNew( ANTLR3_LIST_SIZE_HINT );
     ctx->identStack->push( ctx->identStack, (void *)FIRST_CHAR_POSITION, NULL );
 
