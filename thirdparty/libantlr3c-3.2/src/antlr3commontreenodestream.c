@@ -441,7 +441,7 @@ static	void			    antlr3CommonTreeNodeStreamFree  (pANTLR3_COMMON_TREE_NODE_STRE
 	
 	if	(ctns->nodes != NULL)
 	{
-		ctns->nodes			->free  (ctns->nodes);
+		vectorFree(ctns->nodes);
 	}
 	ctns->tnstream->istream ->free  (ctns->tnstream->istream);
     ctns->tnstream			->free  (ctns->tnstream);
@@ -560,7 +560,7 @@ LB(pANTLR3_TREE_NODE_STREAM tns, ANTLR3_INT32 k)
 		return	&(tns->ctns->INVALID_NODE.baseTree);
 	}
 
-	return tns->ctns->nodes->get(tns->ctns->nodes, tns->ctns->p - k);
+	return vectorGet(tns->ctns->nodes, tns->ctns->p - k);
 }
 
 /// Get tree node at current input pointer + i ahead where i=1 is next node.
@@ -597,7 +597,7 @@ _LT	    (pANTLR3_TREE_NODE_STREAM tns, ANTLR3_INT32 k)
 		return &(tns->ctns->EOF_NODE.baseTree);
 	}
 
-	return	tns->ctns->nodes->get(tns->ctns->nodes, tns->ctns->p + k - 1);
+	return	vectorGet(tns->ctns->nodes, tns->ctns->p + k - 1);
 }
 
 /// Where is this stream pulling nodes from?  This is not the name, but
@@ -947,7 +947,7 @@ get							(pANTLR3_TREE_NODE_STREAM tns, ANTLR3_INT32 k)
 		fillBufferRoot(tns->ctns);
 	}
 
-	return tns->ctns->nodes->get(tns->ctns->nodes, k);
+	return vectorGet(tns->ctns->nodes, k);
 }
 
 static	void

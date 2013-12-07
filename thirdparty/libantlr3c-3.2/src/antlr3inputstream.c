@@ -162,7 +162,7 @@ antlr3InputClose(pANTLR3_INPUT_STREAM input)
     //
     if	(input->markers != NULL)
     {
-		input->markers->free(input->markers);
+		vectorFree(input->markers);
 		input->markers = NULL;
     }
 
@@ -227,7 +227,7 @@ antlr3InputReset(pANTLR3_INPUT_STREAM input)
      */
     if	(input->markers != NULL)
     {
-	input->markers->free(input->markers);
+        vectorFree(input->markers);
     }
 
     /* Install a new markers table
@@ -392,7 +392,7 @@ antlr3AsciiMark	(pANTLR3_INT_STREAM is)
     }
     else
     {
-	state	= (pANTLR3_LEX_STATE)input->markers->get(input->markers, input->markDepth - 1);
+	state	= (pANTLR3_LEX_STATE)vectorGet(input->markers, input->markDepth - 1);
 
 	/* Assume no errors for speed, it will just blow up if the table failed
 	 * for some reasons, hence lots of unit tests on the tables ;-)
@@ -447,7 +447,7 @@ antlr3AsciiRewind	(pANTLR3_INT_STREAM is, ANTLR3_MARKER mark)
 
     /* Find the supplied mark state 
      */
-    state   = (pANTLR3_LEX_STATE)input->markers->get(input->markers, (ANTLR3_UINT32)(mark - 1));
+    state   = (pANTLR3_LEX_STATE)vectorGet(input->markers, (ANTLR3_UINT32)(mark - 1));
 
     /* Seek input pointer to the requested point (note we supply the void *pointer
      * to whatever is implementing the int stream to seek).

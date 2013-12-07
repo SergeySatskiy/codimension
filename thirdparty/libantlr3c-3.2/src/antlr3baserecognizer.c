@@ -224,7 +224,7 @@ freeBR	    (pANTLR3_BASE_RECOGNIZER recognizer)
 		//
 		if	(recognizer->state->rStreams != NULL)
 		{
-			recognizer->state->rStreams->free(recognizer->state->rStreams);
+			vectorFree(recognizer->state->rStreams);
 		}
 
 		// Free up any token factory we created (error recovery for instance)
