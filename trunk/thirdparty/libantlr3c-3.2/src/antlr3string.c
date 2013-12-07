@@ -628,13 +628,13 @@ destroy	(pANTLR3_STRING_FACTORY factory, pANTLR3_STRING string)
     // Record which string we are deleting
     //
     ANTLR3_UINT32 strIndex = string->index;
-    
+
     // Ensure that the string was not factory made, or we would try
     // to delete memory that wasn't allocated outside the factory
     // block.
     // Remove the specific indexed string from the vector
     //
-    factory->strings->del(factory->strings, strIndex);
+    vectorDel(factory->strings, strIndex);
 
     // One less string in the vector, so decrement the factory index
     // so that the next string allocated is indexed correctly with
