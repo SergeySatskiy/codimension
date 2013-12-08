@@ -450,7 +450,7 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def getReloadDialogShown( self ):
         " Tells if the reload dialog has already been shown "
-        return self.__reloadDlgShown
+        return self.__reloadDlgShown and not self.__outsideChangesBar.isVisible()
 
     def updateModificationTime( self, fileName ):
         " Updates the modification time "

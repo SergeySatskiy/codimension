@@ -16,6 +16,8 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * Removing zoom buttons from the text editor toolbar
 * Bug fix: SVN plugin delete warning dialog failed
 * Bug fix: do not show calltip for calls in string literals
+* Bug fix: in case if many files were modified outside one of the outside
+  modification notice dialogs did not show 'reload all' choice
 
 2013 Nov 16 Sergey Satskiy <sergey.satskiy@gmail.com>
 
