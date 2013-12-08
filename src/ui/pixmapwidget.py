@@ -27,7 +27,7 @@ import os.path
 from mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from PyQt4.QtGui import ( QPalette, QSizePolicy, QScrollArea, QImage, QPixmap,
                           QAction, QLabel, QToolBar, QWidget, QHBoxLayout,
-                          QApplication, QMenu, QCursor )
+                          QApplication, QMenu, QCursor, QShortcut )
 from PyQt4.QtCore import Qt, SIGNAL, QSize
 from utils.pixmapcache import PixmapCache
 from outsidechanges import OutsideChangeWidget
@@ -200,6 +200,8 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
                                 'Zoom in (Ctrl+=)', self )
         zoomInButton.setShortcut( 'Ctrl+=' )
         self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.onZoomIn )
+        self.__zoomInSynonim = QShortcut( "Ctrl++", self )
+        self.connect( self.__zoomInSynonim, SIGNAL( "activated()" ), self.onZoomIn )
 
         zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
                                 'Zoom out (Ctrl+-)', self )
