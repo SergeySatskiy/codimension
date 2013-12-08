@@ -185,6 +185,7 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         #printButton.setShortcut( 'Ctrl+' )
         self.connect( printButton, SIGNAL( 'triggered()' ),
                       self.__onPrint )
+        printButton.setVisible( False )
 
         printPreviewButton = QAction(
                 PixmapCache().getIcon( 'printpreview.png' ),
@@ -192,6 +193,7 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         #printPreviewButton.setShortcut( 'Ctrl+' )
         self.connect( printPreviewButton, SIGNAL( 'triggered()' ),
                       self.__onPrintPreview )
+        printPreviewButton.setVisible( False )
 
         fixedSpacer = QWidget()
         fixedSpacer.setFixedHeight( 16 )
