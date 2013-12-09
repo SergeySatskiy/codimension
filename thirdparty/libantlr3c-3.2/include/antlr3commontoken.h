@@ -241,49 +241,6 @@ typedef	struct ANTLR3_COMMON_TOKEN_struct
      */
     void	    (*setText8)(struct ANTLR3_COMMON_TOKEN_struct * token, pANTLR3_UINT8 text);
 
-    /** Pointer to a function that returns the token type of this token
-     */
-    ANTLR3_UINT32   (*getType)(struct ANTLR3_COMMON_TOKEN_struct * token);
-
-    /** Pointer to a function that sets the type of this token
-     */
-    void	    (*setType)(struct ANTLR3_COMMON_TOKEN_struct * token, ANTLR3_UINT32 ttype);
-
-    /** Pointer to a function that gets the 'line' number where this token resides
-     */
-    ANTLR3_UINT32   (*getLine)(struct ANTLR3_COMMON_TOKEN_struct * token);
-
-    /** Pointer to a function that sets the 'line' number where this token reside
-     */
-    void	    (*setLine)(struct ANTLR3_COMMON_TOKEN_struct * token, ANTLR3_UINT32 line);
-
-    /** Pointer to a function that gets the offset in the line where this token exists
-     */ 
-    ANTLR3_INT32    (*getCharPositionInLine)	(struct ANTLR3_COMMON_TOKEN_struct * token);
-
-    /** Pointer to a function that sets the offset in the line where this token exists
-     */
-    void	    (*setCharPositionInLine)	(struct ANTLR3_COMMON_TOKEN_struct * token, ANTLR3_INT32 pos);
-
-    /** Pointer to a function that gets the channel that this token was placed in (parsers
-     *  can 'tune' to these channels.
-     */
-    ANTLR3_UINT32   (*getChannel)	(struct ANTLR3_COMMON_TOKEN_struct * token);
-
-    /** Pointer to a function that sets the channel that this token should belong to
-     */
-    void	    (*setChannel)	(struct ANTLR3_COMMON_TOKEN_struct * token, ANTLR3_UINT32 channel);
-
-    /** Pointer to a function that returns an index 0...n-1 of the token in the token
-     *  input stream.
-     */
-    ANTLR3_MARKER   (*getTokenIndex)	(struct ANTLR3_COMMON_TOKEN_struct * token);
-
-    /** Pointer to a function that can set the token index of this token in the token
-     *  input stream.
-     */
-    void			(*setTokenIndex)	(struct ANTLR3_COMMON_TOKEN_struct * token, ANTLR3_MARKER);
-
     /** Pointer to a function that gets the start index in the input stream for this token.
      */
     ANTLR3_MARKER   (*getStartIndex)	(struct ANTLR3_COMMON_TOKEN_struct * token);

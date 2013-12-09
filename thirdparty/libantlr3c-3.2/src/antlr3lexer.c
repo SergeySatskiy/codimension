@@ -148,17 +148,17 @@ antlr3LexerNew(ANTLR3_UINT32 sizeHint, pANTLR3_RECOGNIZER_SHARED_STATE state)
      */
     specialT				= &(lexer->rec->state->tokSource->eofToken);
     antlr3SetTokenAPI	  (specialT);
-    specialT->setType	  (specialT, ANTLR3_TOKEN_EOF);
-    specialT->factoryMade	= ANTLR3_TRUE;					// Prevent things trying to free() it
-    specialT->strFactory    = NULL;
+    specialT->type        = ANTLR3_TOKEN_EOF;
+    specialT->factoryMade = ANTLR3_TRUE;					// Prevent things trying to free() it
+    specialT->strFactory  = NULL;
 
 	// Initialize the skip token.
 	//
     specialT				= &(lexer->rec->state->tokSource->skipToken);
     antlr3SetTokenAPI	  (specialT);
-    specialT->setType	  (specialT, ANTLR3_TOKEN_INVALID);
-    specialT->factoryMade	= ANTLR3_TRUE;					// Prevent things trying to free() it
-    specialT->strFactory    = NULL;
+    specialT->type        = ANTLR3_TOKEN_INVALID;
+    specialT->factoryMade = ANTLR3_TRUE;					// Prevent things trying to free() it
+    specialT->strFactory  = NULL;
     return  lexer;
 }
 
@@ -242,7 +242,7 @@ nextTokenStr	    (pANTLR3_TOKEN_SOURCE toksource)
 
 				teof->setStartIndex (teof, lexer->getCharIndex(lexer));
 				teof->setStopIndex  (teof, lexer->getCharIndex(lexer));
-				teof->setLine	(teof, lexer->getLine(lexer));
+				teof->line = lexer->getLine(lexer);
 				teof->factoryMade = ANTLR3_TRUE;	// This isn't really manufactured but it stops things from trying to free it
 				return  teof;
 			}

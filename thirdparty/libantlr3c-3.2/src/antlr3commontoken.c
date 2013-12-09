@@ -40,16 +40,6 @@
 static  pANTLR3_STRING	getText					(pANTLR3_COMMON_TOKEN token);
 static  void			setText					(pANTLR3_COMMON_TOKEN token, pANTLR3_STRING text);
 static  void			setText8				(pANTLR3_COMMON_TOKEN token, pANTLR3_UINT8 text);
-static	ANTLR3_UINT32   getType					(pANTLR3_COMMON_TOKEN token);
-static  void			setType					(pANTLR3_COMMON_TOKEN token, ANTLR3_UINT32 type);
-static  ANTLR3_UINT32   getLine					(pANTLR3_COMMON_TOKEN token);
-static  void			setLine					(pANTLR3_COMMON_TOKEN token, ANTLR3_UINT32 line);
-static  ANTLR3_INT32    getCharPositionInLine	(pANTLR3_COMMON_TOKEN token);
-static  void			setCharPositionInLine	(pANTLR3_COMMON_TOKEN token, ANTLR3_INT32 pos);
-static  ANTLR3_UINT32   getChannel				(pANTLR3_COMMON_TOKEN token);
-static  void			setChannel				(pANTLR3_COMMON_TOKEN token, ANTLR3_UINT32 channel);
-static  ANTLR3_MARKER   getTokenIndex			(pANTLR3_COMMON_TOKEN token);
-static  void			setTokenIndex			(pANTLR3_COMMON_TOKEN token, ANTLR3_MARKER);
 static  ANTLR3_MARKER   getStartIndex			(pANTLR3_COMMON_TOKEN token);
 static  void			setStartIndex			(pANTLR3_COMMON_TOKEN token, ANTLR3_MARKER index);
 static  ANTLR3_MARKER   getStopIndex			(pANTLR3_COMMON_TOKEN token);
@@ -72,20 +62,11 @@ static	pANTLR3_COMMON_TOKEN    newPoolToken	(pANTLR3_TOKEN_FACTORY factory);
 ANTLR3_API pANTLR3_COMMON_TOKEN
 antlr3CommonTokenNew(ANTLR3_UINT32 ttype)
 {
-	pANTLR3_COMMON_TOKEN    token;
+    pANTLR3_COMMON_TOKEN    token = newToken();
 
-	// Create a raw token with the interface installed
-	//
-	token   = newToken();
-
-	if	(token != NULL)
-	{
-		token->setType(token, ttype);
-	}
-
-	// All good
-	//
-	return  token;
+    if (token != NULL)
+        token->type = ttype;
+    return  token;
 }
 
 ANTLR3_API pANTLR3_TOKEN_FACTORY
@@ -301,17 +282,6 @@ antlr3SetTokenAPI(pANTLR3_COMMON_TOKEN token)
     token->getText					= getText;
     token->setText					= setText;
     token->setText8					= setText8;
-    token->getType					= getType;
-    token->setType					= setType;
-    token->getLine					= getLine;
-    token->setLine				    = setLine;
-    token->setLine					= setLine;
-    token->getCharPositionInLine    = getCharPositionInLine;
-    token->setCharPositionInLine    = setCharPositionInLine;
-    token->getChannel				= getChannel;
-    token->setChannel				= setChannel;
-    token->getTokenIndex			= getTokenIndex;
-    token->setTokenIndex			= setTokenIndex;
     token->getStartIndex			= getStartIndex;
     token->setStartIndex			= setStartIndex;
     token->getStopIndex				= getStopIndex;
@@ -320,22 +290,21 @@ antlr3SetTokenAPI(pANTLR3_COMMON_TOKEN token)
 
     // Set defaults
     //
-    token->setCharPositionInLine(token, -1);
-
-    token->custom		    = NULL;
-    token->freeCustom	    = NULL;
-    token->type			    = ANTLR3_TOKEN_INVALID;
-	token->textState		= ANTLR3_TEXT_NONE;
-    token->start		    = 0;
-    token->stop			    = 0;
-    token->channel		    = ANTLR3_TOKEN_DEFAULT_CHANNEL;
-    token->line			    = 0;
-    token->index		    = 0;
-    token->input		    = NULL;
-	token->user1			= 0;
-	token->user2			= 0;
-	token->user3			= 0;
-	token->custom			= NULL;
+    token->charPosition = -1;
+    token->custom       = NULL;
+    token->freeCustom   = NULL;
+    token->type         = ANTLR3_TOKEN_INVALID;
+    token->textState    = ANTLR3_TEXT_NONE;
+    token->start        = 0;
+    token->stop         = 0;
+    token->channel      = ANTLR3_TOKEN_DEFAULT_CHANNEL;
+    token->line         = 0;
+    token->index        = 0;
+    token->input        = NULL;
+    token->user1        = 0;
+    token->user2        = 0;
+    token->user3        = 0;
+    token->custom       = NULL;
 
     return;
 }
@@ -350,7 +319,6 @@ static  pANTLR3_STRING  getText			(pANTLR3_COMMON_TOKEN token)
 			// use it.
 			//
 			return	token->tokText.text;
-			break;
     
 		case ANTLR3_TEXT_CHARP:
 
@@ -364,13 +332,9 @@ static  pANTLR3_STRING  getText			(pANTLR3_COMMON_TOKEN token)
 				token->textState	= ANTLR3_TEXT_STRING;
 				return token->tokText.text;
 			}
-			else
-			{
-				// We cannot do anything here
-				//
-				return NULL;
-			}
-			break;
+            // We cannot do anything here
+            //
+            return NULL;
 
 		default:
 
@@ -400,7 +364,6 @@ static  pANTLR3_STRING  getText			(pANTLR3_COMMON_TOKEN token)
 			// Nothing to return, there is no input stream
 			//
 			return NULL;
-			break;
 	}
 }
 static  void		setText8		(pANTLR3_COMMON_TOKEN token, pANTLR3_UINT8 text)
@@ -452,56 +415,6 @@ static  void		setText			(pANTLR3_COMMON_TOKEN token, pANTLR3_STRING text)
 	return;
 }
 
-static	ANTLR3_UINT32   getType			(pANTLR3_COMMON_TOKEN token)
-{
-    return  token->type;
-}
-
-static  void		setType			(pANTLR3_COMMON_TOKEN token, ANTLR3_UINT32 type)
-{
-    token->type = type;
-}
-
-static  ANTLR3_UINT32   getLine			(pANTLR3_COMMON_TOKEN token)
-{
-    return  token->line;
-}
-
-static  void		setLine			(pANTLR3_COMMON_TOKEN token, ANTLR3_UINT32 line)
-{
-    token->line = line;
-}
-
-static  ANTLR3_INT32    getCharPositionInLine	(pANTLR3_COMMON_TOKEN token)
-{
-    return  token->charPosition;
-}
-
-static  void		setCharPositionInLine	(pANTLR3_COMMON_TOKEN token, ANTLR3_INT32 pos)
-{
-    token->charPosition = pos;
-}
-
-static  ANTLR3_UINT32   getChannel		(pANTLR3_COMMON_TOKEN token)
-{
-    return  token->channel;
-}
-
-static  void		setChannel		(pANTLR3_COMMON_TOKEN token, ANTLR3_UINT32 channel)
-{
-    token->channel  = channel;
-}
-
-static  ANTLR3_MARKER   getTokenIndex		(pANTLR3_COMMON_TOKEN token)
-{
-    return  token->index;
-}
-
-static  void		setTokenIndex		(pANTLR3_COMMON_TOKEN token, ANTLR3_MARKER index)
-{
-    token->index    = index;
-}
-
 static  ANTLR3_MARKER   getStartIndex		(pANTLR3_COMMON_TOKEN token)
 {
 	return  token->start == -1 ? (ANTLR3_MARKER)(token->input->data) : token->start;
@@ -536,7 +449,7 @@ static  pANTLR3_STRING    toString		(pANTLR3_COMMON_TOKEN token)
 
 	if	(text->factory == NULL)
 	{
-		return text;		// This usall ymeans it is the EOF token
+		return text;		// This usally means it is the EOF token
 	}
 
     /* A new empty string to assemble all the stuff in
@@ -548,7 +461,7 @@ static  pANTLR3_STRING    toString		(pANTLR3_COMMON_TOKEN token)
      * return "[@"+getTokenIndex()+","+start+":"+stop+"='"+txt+"',<"+type+">"+channelStr+","+line+":"+getCharPositionInLine()+"]";
      */
     outtext->append8(outtext, "[Index: ");
-    outtext->addi   (outtext, (ANTLR3_INT32)token->getTokenIndex(token));
+    outtext->addi   (outtext, (ANTLR3_INT32)token->index);
     outtext->append8(outtext, " (Start: ");
     outtext->addi   (outtext, (ANTLR3_INT32)token->getStartIndex(token));
     outtext->append8(outtext, "-Stop: ");
@@ -559,17 +472,17 @@ static  pANTLR3_STRING    toString		(pANTLR3_COMMON_TOKEN token)
     outtext->addi   (outtext, token->type);
     outtext->append8(outtext, "> ");
 
-    if	(token->getChannel(token) > ANTLR3_TOKEN_DEFAULT_CHANNEL)
+    if	(token->channel > ANTLR3_TOKEN_DEFAULT_CHANNEL)
     {
 	outtext->append8(outtext, "(channel = ");
-	outtext->addi	(outtext, (ANTLR3_INT32)token->getChannel(token));
+	outtext->addi	(outtext, (ANTLR3_INT32)token->channel);
 	outtext->append8(outtext, ") ");
     }
 
     outtext->append8(outtext, "Line: ");
-    outtext->addi   (outtext, (ANTLR3_INT32)token->getLine(token));
+    outtext->addi   (outtext, (ANTLR3_INT32)token->line);
     outtext->append8(outtext, " LinePos:");
-    outtext->addi   (outtext, token->getCharPositionInLine(token));
+    outtext->addi   (outtext, token->charPosition);
     outtext->addc   (outtext, ']');
 
     return  outtext;
