@@ -870,7 +870,7 @@ LEADING_WS
             {
                 if ( LTOKEN != NULL )
                 {
-                    LTOKEN->setChannel( LTOKEN, HIDDEN );
+                    LTOKEN->channel = HIDDEN;
                 }
                 else
                 {
