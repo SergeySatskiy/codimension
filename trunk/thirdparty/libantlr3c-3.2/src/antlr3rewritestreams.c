@@ -86,7 +86,7 @@ freeRS	(pANTLR3_REWRITE_RULE_ELEMENT_STREAM stream)
 			// Other vectors we clear and allow to be reused if they come off the
 			// rewrite stream free stack and are reused.
 			//
-			stream->elements->clear(stream->elements);
+			vectorClear(stream->elements);
 			stream->freeElements = ANTLR3_TRUE;
 		}
 	}
@@ -145,7 +145,7 @@ freeNodeRS(pANTLR3_REWRITE_RULE_ELEMENT_STREAM stream)
 		} 
 		else
 		{
-			stream->elements->clear(stream->elements);
+			vectorClear(stream->elements);
 			stream->freeElements = ANTLR3_TRUE;
 		}
 	}
@@ -197,7 +197,7 @@ antlr3RewriteRuleElementStreamNewAE(pANTLR3_BASE_TREE_ADAPTOR adaptor, pANTLR3_B
 		// Remove the entry from the vector. We do not
 		// cause it to be freed by using remove.
 		//
-		stream = rec->state->rStreams->remove(rec->state->rStreams, rec->state->rStreams->count - 1);
+		stream = vectorRemove(rec->state->rStreams, rec->state->rStreams->count - 1);
 
 		// We found a stream we can reuse.
 		// If the stream had a vector, then it will have been cleared

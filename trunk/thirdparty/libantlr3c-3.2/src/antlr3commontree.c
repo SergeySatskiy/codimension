@@ -153,11 +153,8 @@ newPool(pANTLR3_ARBORETUM factory)
 static	pANTLR3_BASE_TREE    
 newPoolTree	    (pANTLR3_ARBORETUM factory)
 {
-	pANTLR3_COMMON_TREE    tree;
-
     // If we have anything on the re claim stack, reuse that sucker first
-    //
-    tree = factory->nilStack->peek(factory->nilStack);
+    pANTLR3_COMMON_TREE    tree = stackPeek(factory->nilStack);
 
     if  (tree != NULL)
     {
@@ -166,7 +163,7 @@ newPoolTree	    (pANTLR3_ARBORETUM factory)
         // that will have been cleared to hold zero entries and that vector will get reused too.
         // It is the basetree pointer that is placed on the stack of course
         //
-        factory->nilStack->pop(factory->nilStack);
+        stackPop(factory->nilStack);
         return (pANTLR3_BASE_TREE)tree;
 
     }
@@ -259,7 +256,7 @@ factoryClose	    (pANTLR3_ARBORETUM factory)
 
     if  (factory->nilStack !=  NULL)
     {
-        factory->nilStack->free(factory->nilStack);
+        stackFree(factory->nilStack);
     }
 
 	// We now JUST free the pools because the C runtime CommonToken based tree
@@ -511,22 +508,14 @@ getChildIndex			(pANTLR3_BASE_TREE tree )
 /** Clean up any child vector that the tree might have, so it can be reused,
  *  then add it into the reuse stack.
  */
-static void
-reuse                   (pANTLR3_BASE_TREE tree)
+static void reuse (pANTLR3_BASE_TREE tree)
 {
-    pANTLR3_COMMON_TREE	    cTree;
-
-	cTree   = (pANTLR3_COMMON_TREE)(tree->super);
+    pANTLR3_COMMON_TREE     cTree = (pANTLR3_COMMON_TREE)(tree->super);
 
     if  (cTree->factory != NULL)
     {
-
         if  (cTree->baseTree.children != NULL)
-        {
-            
-            cTree->baseTree.children->clear(cTree->baseTree.children);
-        }
-       cTree->factory->nilStack->push(cTree->factory->nilStack, tree, NULL);
-       
+            vectorClear(cTree->baseTree.children);
+        stackPush(cTree->factory->nilStack, tree, NULL);
     }
 }

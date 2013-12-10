@@ -89,22 +89,14 @@ static pANTLR3_COMMON_TOKEN LB							(pANTLR3_COMMON_TOKEN_STREAM tokenStream, A
 ANTLR3_API pANTLR3_TOKEN_STREAM
 antlr3TokenStreamNew()
 {
-    pANTLR3_TOKEN_STREAM stream;
+    pANTLR3_TOKEN_STREAM stream = (pANTLR3_TOKEN_STREAM) ANTLR3_MALLOC(sizeof(ANTLR3_TOKEN_STREAM));
 
-    // Memory for the interface structure
-    //
-    stream  = (pANTLR3_TOKEN_STREAM) ANTLR3_MALLOC(sizeof(ANTLR3_TOKEN_STREAM));
-
-    if	(stream == NULL)
-    {
-		return	NULL;
-    }
+    if (stream == NULL)
+        return NULL;
 
     // Install basic API 
     //
-    stream->free    =  antlr3TokenStreamFree;
-
-    
+    stream->free = antlr3TokenStreamFree;
     return stream;
 }
 
@@ -114,8 +106,8 @@ antlr3TokenStreamFree(pANTLR3_TOKEN_STREAM stream)
     ANTLR3_FREE(stream);
 }
 
-static void		    
-antlr3CTSFree	    (pANTLR3_COMMON_TOKEN_STREAM stream)
+static void
+antlr3CTSFree(pANTLR3_COMMON_TOKEN_STREAM stream)
 {
 	// We only free up our subordinate interfaces if they belong
 	// to us, otherwise we let whoever owns them deal with them.
@@ -139,12 +131,12 @@ antlr3CTSFree	    (pANTLR3_COMMON_TOKEN_STREAM stream)
 	}
 	if	(stream->discardSet != NULL)
 	{
-		stream->discardSet->free(stream->discardSet);
+		listFree(stream->discardSet);
 		stream->discardSet  = NULL;
 	}
 	if	(stream->channelOverrides != NULL)
 	{
-		stream->channelOverrides->free(stream->channelOverrides);
+		listFree(stream->channelOverrides);
 		stream->channelOverrides = NULL;
 	}
 
@@ -495,17 +487,12 @@ toStringSS(pANTLR3_TOKEN_STREAM ts, ANTLR3_UINT32 start, ANTLR3_UINT32 stop)
 
 }
 
-static pANTLR3_STRING	    
+static pANTLR3_STRING
 toStringTT  (pANTLR3_TOKEN_STREAM ts, pANTLR3_COMMON_TOKEN start, pANTLR3_COMMON_TOKEN stop)
 {
-	if	(start != NULL && stop != NULL)
-	{
-		return	ts->toStringSS(ts, (ANTLR3_UINT32)start->index, (ANTLR3_UINT32)stop->index);
-	}
-	else
-	{
-		return	NULL;
-	}
+    if (start != NULL && stop != NULL)
+        return ts->toStringSS(ts, (ANTLR3_UINT32)start->index, (ANTLR3_UINT32)stop->index);
+    return NULL;
 }
 
 /** Move the input pointer to the next incoming token.  The stream
@@ -535,12 +522,10 @@ consume(pANTLR3_INT_STREAM is)
 static void
 dbgConsume	(pANTLR3_INT_STREAM is)
 {
-	pANTLR3_TOKEN_STREAM	ts;
+	pANTLR3_TOKEN_STREAM	ts = (pANTLR3_TOKEN_STREAM)is->super;
 	ANTLR3_MARKER			a;
 	ANTLR3_MARKER			b;
 	pANTLR3_COMMON_TOKEN	t;
-
-	ts	    = (pANTLR3_TOKEN_STREAM)	    is->super;
 
 	if	(ts->initialStreamState == ANTLR3_TRUE)
 	{
@@ -578,32 +563,32 @@ dbgConsume	(pANTLR3_INT_STREAM is)
  *  the stream to force all WS and NEWLINE to be a different, ignored,
  *  channel.
  */
-static void		    
+static void
 setTokenTypeChannel (pANTLR3_COMMON_TOKEN_STREAM tokenStream, ANTLR3_UINT32 ttype, ANTLR3_UINT32 channel)
 {
     if	(tokenStream->channelOverrides == NULL)
     {
-	tokenStream->channelOverrides	= antlr3ListNew(10);
+        tokenStream->channelOverrides	= antlr3ListNew(10);
     }
 
     /* We add one to the channel so we can distinguish NULL as being no entry in the
      * table for a particular token type.
      */
-    tokenStream->channelOverrides->put(tokenStream->channelOverrides, ttype, ANTLR3_FUNC_PTR((ANTLR3_UINT32)channel + 1), NULL);
+    listPut(tokenStream->channelOverrides, ttype, ANTLR3_FUNC_PTR((ANTLR3_UINT32)channel + 1), NULL);
 }
 
-static void		    
+static void
 discardTokenType    (pANTLR3_COMMON_TOKEN_STREAM tokenStream, ANTLR3_INT32 ttype)
 {
     if	(tokenStream->discardSet == NULL)
     {
-	tokenStream->discardSet	= antlr3ListNew(31);
+        tokenStream->discardSet	= antlr3ListNew(31);
     }
 
     /* We add one to the channel so we can distinguish NULL as being no entry in the
      * table for a particular token type. We could use bitsets for this I suppose too.
      */
-    tokenStream->discardSet->put(tokenStream->discardSet, ttype, ANTLR3_FUNC_PTR((ANTLR3_UINT32)ttype + 1), NULL);
+    listPut(tokenStream->discardSet, ttype, ANTLR3_FUNC_PTR((ANTLR3_UINT32)ttype + 1), NULL);
 }
 
 static void		    
@@ -612,13 +597,11 @@ discardOffChannel   (pANTLR3_COMMON_TOKEN_STREAM tokenStream, ANTLR3_BOOLEAN dis
     tokenStream->discardOffChannel  = discard;
 }
 
-static pANTLR3_VECTOR	    
+static pANTLR3_VECTOR
 getTokens   (pANTLR3_COMMON_TOKEN_STREAM tokenStream)
 {
-    if	(tokenStream->p == -1)
-    {
-	fillBuffer(tokenStream);
-    }
+    if (tokenStream->p == -1)
+        fillBuffer(tokenStream);
 
     return  tokenStream->tokens;
 }
@@ -667,15 +650,15 @@ getTokensSet	(pANTLR3_COMMON_TOKEN_STREAM tokenStream, ANTLR3_UINT32 start, ANTL
 		|| types->isMember(types, tok->type == ANTLR3_TRUE)
 	    )
 	{
-	    filteredList->put(filteredList, n++, (void *)tok, NULL);
+	    listPut(filteredList, n++, (void *)tok, NULL);
 	}
     }
     
     /* Did we get any then?
      */
-    if	(filteredList->size(filteredList) == 0)
+    if	(listSize(filteredList) == 0)
     {
-	filteredList->free(filteredList);
+	listFree(filteredList);
 	filteredList	= NULL;
     }
 
@@ -698,17 +681,13 @@ getTokensList	(pANTLR3_COMMON_TOKEN_STREAM tokenStream, ANTLR3_UINT32 start, ANT
 
 }
 
-static pANTLR3_LIST	    
-getTokensType	(pANTLR3_COMMON_TOKEN_STREAM tokenStream, ANTLR3_UINT32 start, ANTLR3_UINT32 stop, ANTLR3_UINT32 type)
+static pANTLR3_LIST
+getTokensType(pANTLR3_COMMON_TOKEN_STREAM tokenStream, ANTLR3_UINT32 start, ANTLR3_UINT32 stop, ANTLR3_UINT32 type)
 {
-    pANTLR3_BITSET  bitSet;
-    pANTLR3_LIST    newlist;
-
-    bitSet  = antlr3BitsetOf(type, -1);
-    newlist = tokenStream->getTokensSet(tokenStream, start, stop, bitSet);
+    pANTLR3_BITSET  bitSet = antlr3BitsetOf(type, -1);
+    pANTLR3_LIST    newlist = tokenStream->getTokensSet(tokenStream, start, stop, bitSet);
 
     bitSet->free(bitSet);
-
     return  newlist;
 }
 
@@ -741,10 +720,10 @@ dbgLA  (pANTLR3_INT_STREAM is, ANTLR3_INT32 i)
 }
 
 static ANTLR3_MARKER
-mark	(pANTLR3_INT_STREAM is)
+mark(pANTLR3_INT_STREAM is)
 {
     is->lastMarker = is->index(is);
-    return  is->lastMarker;
+    return is->lastMarker;
 }
 
 /// As per mark() but with a call to tell the debugger we are doing this
@@ -762,37 +741,35 @@ dbgMark	(pANTLR3_INT_STREAM is)
     return  is->lastMarker;
 }
 
-static void		    
+static void
 release	(pANTLR3_INT_STREAM is, ANTLR3_MARKER mark)
 {
     return;
 }
 
-static ANTLR3_UINT32	    
-size	(pANTLR3_INT_STREAM is)
+static ANTLR3_UINT32
+size(pANTLR3_INT_STREAM is)
 {
-    pANTLR3_COMMON_TOKEN_STREAM cts;
-    pANTLR3_TOKEN_STREAM	ts;
-
     if (is->cachedSize > 0)
-    {
-	return  is->cachedSize;
-    }
-    ts	    = (pANTLR3_TOKEN_STREAM)	    is->super;
-    cts	    = (pANTLR3_COMMON_TOKEN_STREAM) ts->super;
+        return  is->cachedSize;
 
-    is->cachedSize =  cts->tokens->count;
+    {
+        pANTLR3_COMMON_TOKEN_STREAM cts;
+        pANTLR3_TOKEN_STREAM ts;
+
+        ts = (pANTLR3_TOKEN_STREAM) is->super;
+        cts = (pANTLR3_COMMON_TOKEN_STREAM) ts->super;
+
+        is->cachedSize = cts->tokens->count;
+    }
     return  is->cachedSize;
 }
 
 static ANTLR3_MARKER   
-tindex	(pANTLR3_INT_STREAM is)
+tindex(pANTLR3_INT_STREAM is)
 {
-    pANTLR3_COMMON_TOKEN_STREAM cts;
-    pANTLR3_TOKEN_STREAM	ts;
-
-    ts	    = (pANTLR3_TOKEN_STREAM)	    is->super;
-    cts	    = (pANTLR3_COMMON_TOKEN_STREAM) ts->super;
+    pANTLR3_TOKEN_STREAM        ts = (pANTLR3_TOKEN_STREAM) is->super;
+    pANTLR3_COMMON_TOKEN_STREAM cts = (pANTLR3_COMMON_TOKEN_STREAM) ts->super;
 
     return  cts->p;
 }
@@ -830,18 +807,15 @@ dbgRewindStream	(pANTLR3_INT_STREAM is, ANTLR3_MARKER marker)
     is->seek(is, (ANTLR3_UINT32)(marker));
 }
 
-static void		    
-seek	(pANTLR3_INT_STREAM is, ANTLR3_MARKER index)
+static void
+seek(pANTLR3_INT_STREAM is, ANTLR3_MARKER index)
 {
-    pANTLR3_COMMON_TOKEN_STREAM cts;
-    pANTLR3_TOKEN_STREAM	ts;
-
-    ts	    = (pANTLR3_TOKEN_STREAM)	    is->super;
-    cts	    = (pANTLR3_COMMON_TOKEN_STREAM) ts->super;
+    pANTLR3_TOKEN_STREAM        ts = (pANTLR3_TOKEN_STREAM) is->super;
+    pANTLR3_COMMON_TOKEN_STREAM cts = (pANTLR3_COMMON_TOKEN_STREAM) ts->super;
 
     cts->p  = (ANTLR3_UINT32)index;
 }
-static void		    
+static void
 dbgSeek	(pANTLR3_INT_STREAM is, ANTLR3_MARKER index)
 {
 	// TODO: Implement seek in debugger when Ter adds it to Java
@@ -878,7 +852,7 @@ fillBuffer(pANTLR3_COMMON_TOKEN_STREAM tokenStream) {
          */
 
         if (tokenStream->discardSet != NULL
-            && tokenStream->discardSet->get(tokenStream->discardSet, tok->type) != NULL)
+            && listGet(tokenStream->discardSet, tok->type) != NULL)
         {
             discard = ANTLR3_TRUE;
         }
@@ -891,7 +865,7 @@ fillBuffer(pANTLR3_COMMON_TOKEN_STREAM tokenStream) {
         else if (tokenStream->channelOverrides != NULL)
         {
             /* See if this type is in the override map */
-            channelI = tokenStream->channelOverrides->get(tokenStream->channelOverrides, tok->type + 1);
+            channelI = listGet(tokenStream->channelOverrides, tok->type + 1);
 
             if (channelI != NULL)
             {
@@ -959,7 +933,7 @@ skipOffTokenChannelsReverse(pANTLR3_COMMON_TOKEN_STREAM tokenStream, ANTLR3_INT3
     while (x >= 0)
     {
         tok =  (pANTLR3_COMMON_TOKEN)tokenStream->tokens->elements[x].element;
-        
+
         if ((tok->channel != tokenStream->channel))
         {
             x--;

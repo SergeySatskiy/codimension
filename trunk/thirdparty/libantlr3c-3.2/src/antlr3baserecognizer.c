@@ -643,7 +643,6 @@ static	void
 mismatch(pANTLR3_BASE_RECOGNIZER recognizer, ANTLR3_UINT32 ttype, pANTLR3_BITSET_LIST follow)
 {
     pANTLR3_PARSER	    parser;
-    pANTLR3_TREE_PARSER	    tparser;
     pANTLR3_INT_STREAM	    is;
 
     // Install a mismatched token exception in the exception stack
@@ -656,7 +655,6 @@ mismatch(pANTLR3_BASE_RECOGNIZER recognizer, ANTLR3_UINT32 ttype, pANTLR3_BITSET
 		case	ANTLR3_TYPE_PARSER:
 
 			parser  = (pANTLR3_PARSER) (recognizer->super);
-			tparser	= NULL;
 			is	= parser->tstream->istream;
 
 			break;
@@ -945,14 +943,14 @@ combineFollows		    (pANTLR3_BASE_RECOGNIZER recognizer, ANTLR3_BOOLEAN exact)
     ANTLR3_UINT32	top;
     ANTLR3_UINT32	i;
 
-    top	= recognizer->state->following->size(recognizer->state->following);
+    top	= recognizer->state->following->vector->count;
 
     followSet	    = antlr3BitsetNew(0);
 	localFollowSet	= NULL;
 
     for (i = top; i>0; i--)
     {
-		localFollowSet = antlr3BitsetLoad((pANTLR3_BITSET_LIST) recognizer->state->following->get(recognizer->state->following, i-1));
+		localFollowSet = antlr3BitsetLoad((pANTLR3_BITSET_LIST) stackGet(recognizer->state->following, i-1));
 
 		if  (localFollowSet != NULL)
 		{
@@ -1001,9 +999,6 @@ combineFollows		    (pANTLR3_BASE_RECOGNIZER recognizer, ANTLR3_BOOLEAN exact)
 static void			
 displayRecognitionError	    (pANTLR3_BASE_RECOGNIZER recognizer, pANTLR3_UINT8 * tokenNames)
 {
-	pANTLR3_PARSER			parser;
-	pANTLR3_TREE_PARSER	    tparser;
-	pANTLR3_INT_STREAM	    is;
 	pANTLR3_STRING			ttext;
 	pANTLR3_STRING			ftext;
 	pANTLR3_EXCEPTION	    ex;
@@ -1053,9 +1048,6 @@ displayRecognitionError	    (pANTLR3_BASE_RECOGNIZER recognizer, pANTLR3_UINT8 *
 
 		// Prepare the knowledge we know we have
 		//
-		parser	    = (pANTLR3_PARSER) (recognizer->super);
-		tparser	    = NULL;
-		is			= parser->tstream->istream;
 		theToken    = (pANTLR3_COMMON_TOKEN)(recognizer->state->exception->token);
 		ttext	    = theToken->toString(theToken);
 
@@ -1077,9 +1069,6 @@ displayRecognitionError	    (pANTLR3_BASE_RECOGNIZER recognizer, pANTLR3_UINT8 *
 
 	case	ANTLR3_TYPE_TREE_PARSER:
 
-		tparser		= (pANTLR3_TREE_PARSER) (recognizer->super);
-		parser		= NULL;
-		is			= tparser->ctnstream->tnstream->istream;
 		theBaseTree	= (pANTLR3_BASE_TREE)(recognizer->state->exception->token);
 		ttext		= theBaseTree->toStringTree(theBaseTree);
 
@@ -2122,7 +2111,7 @@ reset(pANTLR3_BASE_RECOGNIZER recognizer)
 {
     if	(recognizer->state->following != NULL)
     {
-		recognizer->state->following->free(recognizer->state->following);
+		stackFree(recognizer->state->following);
     }
 
 	// Reset the state flags
@@ -2167,7 +2156,6 @@ getMissingSymbol			(pANTLR3_BASE_RECOGNIZER recognizer, pANTLR3_INT_STREAM	istre
 									ANTLR3_UINT32 expectedTokenType, pANTLR3_BITSET_LIST follow)
 {
 	pANTLR3_TOKEN_STREAM			ts;
-	pANTLR3_COMMON_TOKEN_STREAM		cts;
 	pANTLR3_COMMON_TOKEN			token;
 	pANTLR3_COMMON_TOKEN			current;
 	pANTLR3_STRING					text;
@@ -2175,7 +2163,6 @@ getMissingSymbol			(pANTLR3_BASE_RECOGNIZER recognizer, pANTLR3_INT_STREAM	istre
 	// Dereference the standard pointers
 	//
 	ts		= (pANTLR3_TOKEN_STREAM)istream->super;
-	cts		= (pANTLR3_COMMON_TOKEN_STREAM)ts->super;
 	
 	// Work out what to use as the current symbol to make a line and offset etc
 	// If we are at EOF, we use the token before EOF

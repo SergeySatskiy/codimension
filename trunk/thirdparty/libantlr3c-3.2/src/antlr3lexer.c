@@ -240,8 +240,8 @@ nextTokenStr	    (pANTLR3_TOKEN_SOURCE toksource)
 				//
 				pANTLR3_COMMON_TOKEN    teof = &(toksource->eofToken);
 
-				teof->setStartIndex (teof, lexer->getCharIndex(lexer));
-				teof->setStopIndex  (teof, lexer->getCharIndex(lexer));
+				teof->start = lexer->getCharIndex(lexer);
+				teof->stop = lexer->getCharIndex(lexer);
 				teof->line = lexer->getLine(lexer);
 				teof->factoryMade = ANTLR3_TRUE;	// This isn't really manufactured but it stops things from trying to free it
 				return  teof;
@@ -334,7 +334,7 @@ nextToken	    (pANTLR3_TOKEN_SOURCE toksource)
 
 		lexer   = (pANTLR3_LEXER)(toksource->super);
 
-		if  (lexer->rec->state->streams != NULL && lexer->rec->state->streams->size(lexer->rec->state->streams) > 0)
+		if  (lexer->rec->state->streams != NULL && lexer->rec->state->streams->vector->count > 0)
 		{
 			// We have another input stream in the stack so we
 			// need to revert to it, then resume the loop to check
@@ -565,7 +565,7 @@ pushCharStream  (pANTLR3_LEXER lexer,  pANTLR3_INPUT_STREAM input)
 	// into it.
 	//
 	lexer->input->istream->mark(lexer->input->istream);
-	lexer->rec->state->streams->push(lexer->rec->state->streams, lexer->input, NULL);
+	stackPush(lexer->rec->state->streams, lexer->input, NULL);
 
 	// And now we can install this new one
 	//
@@ -594,7 +594,7 @@ popCharStream   (pANTLR3_LEXER lexer)
     // If we do not have a stream stack or we are already at the
     // stack bottom, then do nothing.
     //
-    if	(lexer->rec->state->streams != NULL && lexer->rec->state->streams->size(lexer->rec->state->streams) > 0)
+    if	(lexer->rec->state->streams != NULL && lexer->rec->state->streams->vector->count > 0)
     {
 	// We just leave the current stream to its fate, we do not close
 	// it or anything as we do not know what the programmer intended
@@ -603,7 +603,7 @@ popCharStream   (pANTLR3_LEXER lexer)
 	// that now, then pop it from the stack.
 	//
 	input	= (pANTLR3_INPUT_STREAM)(lexer->rec->state->streams->top);
-	lexer->rec->state->streams->pop(lexer->rec->state->streams);
+	stackPop(lexer->rec->state->streams);
 
 	// Now install the stream as the current one.
 	//
@@ -675,7 +675,7 @@ freeLexer    (pANTLR3_LEXER lexer)
 	{
 		if	(lexer->rec->state->streams != NULL)
 		{
-			lexer->rec->state->streams->free(lexer->rec->state->streams);
+			stackFree(lexer->rec->state->streams);
 		}
 		if	(lexer->rec->state->tokFactory != NULL)
 		{

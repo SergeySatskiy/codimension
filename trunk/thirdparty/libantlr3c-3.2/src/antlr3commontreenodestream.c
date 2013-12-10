@@ -430,7 +430,7 @@ static	void			    antlr3CommonTreeNodeStreamFree  (pANTLR3_COMMON_TREE_NODE_STRE
 
 		if	(ctns->nodeStack != NULL)
 		{
-			ctns->nodeStack->free(ctns->nodeStack);
+			stackFree(ctns->nodeStack);
 		}
 
 		ANTLR3_FREE(ctns->INVALID_NODE.token);
@@ -540,7 +540,7 @@ reset	    (pANTLR3_COMMON_TREE_NODE_STREAM ctns)
     {
 		if	(ctns->nodeStack != NULL)
 		{
-			ctns->nodeStack->free(ctns->nodeStack);
+			stackFree(ctns->nodeStack);
 			ctns->nodeStack = antlr3StackNew(INITIAL_CALL_STACK_SIZE);
 		}
 	}
@@ -929,11 +929,7 @@ replaceChildren				(pANTLR3_TREE_NODE_STREAM tns, pANTLR3_BASE_TREE parent, ANTL
 {
 	if	(parent != NULL)
 	{
-		pANTLR3_BASE_TREE_ADAPTOR	adaptor;
-		pANTLR3_COMMON_TREE_ADAPTOR	cta;
-
-		adaptor	= tns->getTreeAdaptor(tns);
-		cta		= (pANTLR3_COMMON_TREE_ADAPTOR)(adaptor->super);
+		pANTLR3_BASE_TREE_ADAPTOR  adaptor = tns->getTreeAdaptor(tns);
 
 		adaptor->replaceChildren(adaptor, parent, startChildIndex, stopChildIndex, t);
 	}
@@ -950,11 +946,10 @@ get							(pANTLR3_TREE_NODE_STREAM tns, ANTLR3_INT32 k)
 	return vectorGet(tns->ctns->nodes, k);
 }
 
-static	void
-push						(pANTLR3_COMMON_TREE_NODE_STREAM ctns, ANTLR3_INT32 index)
+static void push(pANTLR3_COMMON_TREE_NODE_STREAM ctns, ANTLR3_INT32 index)
 {
-	ctns->nodeStack->push(ctns->nodeStack, ANTLR3_FUNC_PTR(ctns->p), NULL);	// Save current index
-	ctns->tnstream->istream->seek(ctns->tnstream->istream, index);
+    stackPush(ctns->nodeStack, ANTLR3_FUNC_PTR(ctns->p), NULL);     // Save current index
+    ctns->tnstream->istream->seek(ctns->tnstream->istream, index);
 }
 
 static	ANTLR3_INT32
@@ -962,7 +957,7 @@ pop							(pANTLR3_COMMON_TREE_NODE_STREAM ctns)
 {
 	ANTLR3_INT32	retVal;
 
-	retVal = ANTLR3_UINT32_CAST(ctns->nodeStack->pop(ctns->nodeStack));
+	retVal = ANTLR3_UINT32_CAST(stackPop(ctns->nodeStack));
 	ctns->tnstream->istream->seek(ctns->tnstream->istream, retVal);
 	return retVal;
 }

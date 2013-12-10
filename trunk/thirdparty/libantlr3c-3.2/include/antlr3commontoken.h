@@ -44,7 +44,7 @@
 
 /** How many tokens to allocate at once in the token factory
  */
-#define	ANTLR3_FACTORY_POOL_SIZE    1024
+#define	ANTLR3_FACTORY_POOL_SIZE    8192
 
 /* Base token types, which all lexer/parser tokens come after in sequence.
  */
@@ -241,22 +241,6 @@ typedef	struct ANTLR3_COMMON_TOKEN_struct
      */
     void	    (*setText8)(struct ANTLR3_COMMON_TOKEN_struct * token, pANTLR3_UINT8 text);
 
-    /** Pointer to a function that gets the start index in the input stream for this token.
-     */
-    ANTLR3_MARKER   (*getStartIndex)	(struct ANTLR3_COMMON_TOKEN_struct * token);
-
-    /** Pointer to a function that sets the start index in the input stream for this token.
-     */
-    void			(*setStartIndex)	(struct ANTLR3_COMMON_TOKEN_struct * token, ANTLR3_MARKER index);
-    
-    /** Pointer to a function that gets the stop index in the input stream for this token.
-     */
-    ANTLR3_MARKER   (*getStopIndex)	(struct ANTLR3_COMMON_TOKEN_struct * token);
-
-    /** Pointer to a function that sets the stop index in the input stream for this token.
-     */
-    void			(*setStopIndex)	(struct ANTLR3_COMMON_TOKEN_struct * token, ANTLR3_MARKER index);
-
     /** Pointer to a function that returns this token as a text representation that can be 
      *  printed with embedded control codes such as \n replaced with the printable sequence "\\n"
      *  This also yields a string structure that can be used more easily than the pointer to 
@@ -265,6 +249,11 @@ typedef	struct ANTLR3_COMMON_TOKEN_struct
     pANTLR3_STRING  (*toString)		(struct ANTLR3_COMMON_TOKEN_struct * token);
 }
     ANTLR3_COMMON_TOKEN;
+
+
+ANTLR3_MARKER tokenGetStartIndex(pANTLR3_COMMON_TOKEN token);
+
+
 
 /** \brief ANTLR3 Token factory interface to create lots of tokens efficiently
  *  rather than creating and freeing lots of little bits of memory.

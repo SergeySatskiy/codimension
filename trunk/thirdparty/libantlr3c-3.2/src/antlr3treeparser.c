@@ -136,7 +136,7 @@ freeParser	(pANTLR3_TREE_PARSER parser)
 		{
 			if	(parser->rec->state->following != NULL)
 			{
-				parser->rec->state->following->free(parser->rec->state->following);
+				stackFree(parser->rec->state->following);
 				parser->rec->state->following = NULL;
 			}
 		}
@@ -188,12 +188,8 @@ mismatch	    (pANTLR3_BASE_RECOGNIZER recognizer, ANTLR3_UINT32 ttype, pANTLR3_B
 static void *				
 getCurrentInputSymbol		(pANTLR3_BASE_RECOGNIZER recognizer, pANTLR3_INT_STREAM istream)
 {
-	pANTLR3_TREE_NODE_STREAM		tns;
-    pANTLR3_COMMON_TREE_NODE_STREAM	ctns;
-
-    tns	    = (pANTLR3_TREE_NODE_STREAM)(istream->super);
-    ctns    = tns->ctns;
-	return tns->_LT(tns, 1);
+    pANTLR3_TREE_NODE_STREAM  tns = (pANTLR3_TREE_NODE_STREAM)(istream->super);
+    return tns->_LT(tns, 1);
 }
 
 
