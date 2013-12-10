@@ -123,25 +123,23 @@ typedef	struct	ANTLR3_HASH_TABLE_struct
      */
     ANTLR3_BOOLEAN              doStrdup;
 
-    /** Pointer to function to completely delete this table
-     */
-    void				(*free)	    (struct ANTLR3_HASH_TABLE_struct * table);
-    
     /* String keyed hashtable functions */
     void				(*del)	    (struct ANTLR3_HASH_TABLE_struct * table, void * key);
     pANTLR3_HASH_ENTRY	(*remove)   (struct ANTLR3_HASH_TABLE_struct * table, void * key);
-    void *				(*get)	    (struct ANTLR3_HASH_TABLE_struct * table, void * key);
-    ANTLR3_INT32		(*put)	    (struct ANTLR3_HASH_TABLE_struct * table, void * key, void * element, void (ANTLR3_CDECL *freeptr)(void *));
 
     /* Integer based hash functions */
     void				(*delI)	    (struct ANTLR3_HASH_TABLE_struct * table, ANTLR3_INTKEY key);
     pANTLR3_HASH_ENTRY	(*removeI)  (struct ANTLR3_HASH_TABLE_struct * table, ANTLR3_INTKEY key);
-    void *				(*getI)	    (struct ANTLR3_HASH_TABLE_struct * table, ANTLR3_INTKEY key);
-    ANTLR3_INT32		(*putI)	    (struct ANTLR3_HASH_TABLE_struct * table, ANTLR3_INTKEY key, void * element, void (ANTLR3_CDECL *freeptr)(void *));
-
-    ANTLR3_UINT32		(*size)	    (struct ANTLR3_HASH_TABLE_struct * table);
 }
     ANTLR3_HASH_TABLE;
+
+
+ANTLR3_UINT32 hashSize(pANTLR3_HASH_TABLE table);
+void hashFree(pANTLR3_HASH_TABLE table);
+ANTLR3_INT32 hashPutI(pANTLR3_HASH_TABLE table, ANTLR3_INTKEY key, void * element, void (ANTLR3_CDECL *freeptr)(void *));
+ANTLR3_INT32 hashPut(pANTLR3_HASH_TABLE table, void * key, void * element, void (ANTLR3_CDECL *freeptr)(void *));
+void * hashGet(pANTLR3_HASH_TABLE table, void * key);
+void * hashGetI(pANTLR3_HASH_TABLE table, ANTLR3_INTKEY key);
 
 
 /** Internal structure representing an enumeration of a table.
@@ -179,41 +177,39 @@ typedef struct	ANTLR3_HASH_ENUM_struct
  */
 typedef	struct	ANTLR3_LIST_struct
 {
-    /** Hash table that is storing the list elements
-     */
+    /** Hash table that is storing the list elements */
     pANTLR3_HASH_TABLE	table;
-
-    void			(*free)		(struct ANTLR3_LIST_struct * list);
-    void			(*del)		(struct ANTLR3_LIST_struct * list, ANTLR3_INTKEY key);
-    void *			(*get)		(struct ANTLR3_LIST_struct * list, ANTLR3_INTKEY key);
-    void *			(*remove)	(struct ANTLR3_LIST_struct * list, ANTLR3_INTKEY key);
-    ANTLR3_INT32    (*add)		(struct ANTLR3_LIST_struct * list, void * element, void (ANTLR3_CDECL *freeptr)(void *));
-    ANTLR3_INT32    (*put)		(struct ANTLR3_LIST_struct * list, ANTLR3_INTKEY key, void * element, void (ANTLR3_CDECL *freeptr)(void *));
-    ANTLR3_UINT32   (*size)		(struct ANTLR3_LIST_struct * list);
-    
 }
     ANTLR3_LIST;
+
+void * listGet(pANTLR3_LIST list, ANTLR3_INTKEY key);
+ANTLR3_INT32 listPut(pANTLR3_LIST list, ANTLR3_INTKEY key, void * element, void (ANTLR3_CDECL *freeptr)(void *));
+ANTLR3_INT32 listAdd(pANTLR3_LIST list, void * element, void (ANTLR3_CDECL *freeptr)(void *));
+void * listRemove(pANTLR3_LIST list, ANTLR3_INTKEY key);
+ANTLR3_UINT32 listSize(pANTLR3_LIST list);
+void listFree(pANTLR3_LIST list);
+void listDelete(pANTLR3_LIST list, ANTLR3_INTKEY key);
+
 
 /** Structure that represents a Stack collection
  */
 typedef	struct	ANTLR3_STACK_struct
 {
-    /** List that supports the stack structure
-     */
+    /** List that supports the stack structure */
     pANTLR3_VECTOR  vector;
 
-    /** Used for quick access to the top of the stack
-     */
+    /** Used for quick access to the top of the stack */
     void *	    top;
-    void			(*free)	(struct ANTLR3_STACK_struct * stack);
-    void *			(*pop)	(struct ANTLR3_STACK_struct * stack);
-    void *			(*get)	(struct ANTLR3_STACK_struct * stack, ANTLR3_INTKEY key);
-    ANTLR3_BOOLEAN  (*push)	(struct ANTLR3_STACK_struct * stack, void * element, void (ANTLR3_CDECL *freeptr)(void *));
-    ANTLR3_UINT32   (*size)	(struct ANTLR3_STACK_struct * stack);
-    void *			(*peek)	(struct ANTLR3_STACK_struct * stack);
-
 }
     ANTLR3_STACK;
+
+
+void * stackGet(pANTLR3_STACK stack, ANTLR3_INTKEY key);
+ANTLR3_BOOLEAN stackPush(pANTLR3_STACK stack, void * element, void (ANTLR3_CDECL *freeptr)(void *));
+void * stackPop(pANTLR3_STACK stack);
+void stackFree(pANTLR3_STACK stack);
+void * stackPeek(pANTLR3_STACK stack);
+
 
 /* Structure that represents a vector element
  */
@@ -234,12 +230,10 @@ typedef struct ANTLR3_VECTOR_ELEMENT_struct
  */
 typedef struct ANTLR3_VECTOR_struct
 {
-    /** Array of pointers to vector elements
-     */
+    /** Array of pointers to vector elements */
     pANTLR3_VECTOR_ELEMENT  elements;
 
-    /** Number of entries currently in the list;
-     */
+    /** Number of entries currently in the list; */
     ANTLR3_UINT32   count;
 
     /** Many times, a vector holds just a few nodes in an AST and it
@@ -258,14 +252,8 @@ typedef struct ANTLR3_VECTOR_struct
      */
     ANTLR3_BOOLEAN  factoryMade;
 
-    /** Total number of entries in elements at any point in time
-     */
+    /** Total number of entries in elements at any point in time */
     ANTLR3_UINT32   elementsSize;
-
-    void *			(*remove)				(struct ANTLR3_VECTOR_struct * vector, ANTLR3_UINT32 entry);
-    void			(*clear)				(struct ANTLR3_VECTOR_struct * vector);
-    ANTLR3_BOOLEAN              (*swap)                 (struct ANTLR3_VECTOR_struct *, ANTLR3_UINT32 entry1, ANTLR3_UINT32 entry2);
-    ANTLR3_UINT32   (*set)					(struct ANTLR3_VECTOR_struct * vector, ANTLR3_UINT32 entry, void * element, void (ANTLR3_CDECL *freeptr)(void *), ANTLR3_BOOLEAN freeExisting);
 }
     ANTLR3_VECTOR;
 
@@ -275,6 +263,11 @@ ANTLR3_UINT32     vectorAdd(pANTLR3_VECTOR vector, void * element, void (ANTLR3_
 void              vectorDel(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry);
 void ANTLR3_CDECL vectorFree(pANTLR3_VECTOR vector);
 void *            vectorGet(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry);
+void *            vectorRemove(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry);
+void              vectorClear(pANTLR3_VECTOR vector);
+ANTLR3_UINT32     vectorSet(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry, void * element,
+                            void (ANTLR3_CDECL *freeptr)(void *), ANTLR3_BOOLEAN freeExisting);
+ANTLR3_BOOLEAN    vectorSwap(pANTLR3_VECTOR vector, ANTLR3_UINT32 entry1, ANTLR3_UINT32 entry2);
 
 /** Default vector pool size if otherwise unspecified
  */

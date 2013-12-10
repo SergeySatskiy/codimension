@@ -131,7 +131,7 @@ freeParser			    (pANTLR3_PARSER parser)
 		{
 			if	(parser->rec->state->following != NULL)
 			{
-				parser->rec->state->following->free(parser->rec->state->following);
+				stackFree(parser->rec->state->following);
 				parser->rec->state->following = NULL;
 			}
 		}

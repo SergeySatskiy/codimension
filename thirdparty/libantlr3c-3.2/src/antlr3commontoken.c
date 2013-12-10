@@ -40,10 +40,6 @@
 static  pANTLR3_STRING	getText					(pANTLR3_COMMON_TOKEN token);
 static  void			setText					(pANTLR3_COMMON_TOKEN token, pANTLR3_STRING text);
 static  void			setText8				(pANTLR3_COMMON_TOKEN token, pANTLR3_UINT8 text);
-static  ANTLR3_MARKER   getStartIndex			(pANTLR3_COMMON_TOKEN token);
-static  void			setStartIndex			(pANTLR3_COMMON_TOKEN token, ANTLR3_MARKER index);
-static  ANTLR3_MARKER   getStopIndex			(pANTLR3_COMMON_TOKEN token);
-static  void			setStopIndex			(pANTLR3_COMMON_TOKEN token, ANTLR3_MARKER index);
 static  pANTLR3_STRING  toString				(pANTLR3_COMMON_TOKEN token);
 
 /* Factory API
@@ -254,22 +250,15 @@ factoryClose	    (pANTLR3_TOKEN_FACTORY factory)
 }
 
 
-static	pANTLR3_COMMON_TOKEN	
-newToken(void)
+static pANTLR3_COMMON_TOKEN newToken(void)
 {
-    pANTLR3_COMMON_TOKEN    token;
+    /* Allocate memory for this */
+    pANTLR3_COMMON_TOKEN    token = (pANTLR3_COMMON_TOKEN) ANTLR3_MALLOC((size_t)(sizeof(ANTLR3_COMMON_TOKEN)));
 
-    /* Allocate memory for this
-     */
-    token   = (pANTLR3_COMMON_TOKEN) ANTLR3_MALLOC((size_t)(sizeof(ANTLR3_COMMON_TOKEN)));
-
-    if	(token == NULL)
-    {
-	return	NULL;
-    }
+    if (token == NULL)
+        return NULL;
 
     // Install the API
-    //
     antlr3SetTokenAPI(token);
     token->factoryMade = ANTLR3_FALSE;
 
@@ -279,17 +268,12 @@ newToken(void)
 ANTLR3_API void
 antlr3SetTokenAPI(pANTLR3_COMMON_TOKEN token)
 {
-    token->getText					= getText;
-    token->setText					= setText;
-    token->setText8					= setText8;
-    token->getStartIndex			= getStartIndex;
-    token->setStartIndex			= setStartIndex;
-    token->getStopIndex				= getStopIndex;
-    token->setStopIndex				= setStopIndex;
-    token->toString					= toString;
+    token->getText  = getText;
+    token->setText  = setText;
+    token->setText8 = setText8;
+    token->toString = toString;
 
     // Set defaults
-    //
     token->charPosition = -1;
     token->custom       = NULL;
     token->freeCustom   = NULL;
@@ -356,8 +340,8 @@ static  pANTLR3_STRING  getText			(pANTLR3_COMMON_TOKEN token)
 			{
 			
 				return	token->input->substr(	token->input, 
-												token->getStartIndex(token), 
- 												token->getStopIndex(token)
+												tokenGetStartIndex(token), 
+ 												token->stop
 											);
 			}
 
@@ -415,24 +399,9 @@ static  void		setText			(pANTLR3_COMMON_TOKEN token, pANTLR3_STRING text)
 	return;
 }
 
-static  ANTLR3_MARKER   getStartIndex		(pANTLR3_COMMON_TOKEN token)
+ANTLR3_MARKER tokenGetStartIndex(pANTLR3_COMMON_TOKEN token)
 {
-	return  token->start == -1 ? (ANTLR3_MARKER)(token->input->data) : token->start;
-}
-
-static  void		setStartIndex		(pANTLR3_COMMON_TOKEN token, ANTLR3_MARKER start)
-{
-    token->start    = start;
-}
-
-static  ANTLR3_MARKER   getStopIndex		(pANTLR3_COMMON_TOKEN token)
-{
-    return  token->stop;
-}
-
-static  void		setStopIndex		(pANTLR3_COMMON_TOKEN token, ANTLR3_MARKER stop)
-{
-    token->stop	= stop;
+    return  token->start == -1 ? (ANTLR3_MARKER)(token->input->data) : token->start;
 }
 
 static  pANTLR3_STRING    toString		(pANTLR3_COMMON_TOKEN token)
@@ -463,9 +432,9 @@ static  pANTLR3_STRING    toString		(pANTLR3_COMMON_TOKEN token)
     outtext->append8(outtext, "[Index: ");
     outtext->addi   (outtext, (ANTLR3_INT32)token->index);
     outtext->append8(outtext, " (Start: ");
-    outtext->addi   (outtext, (ANTLR3_INT32)token->getStartIndex(token));
+    outtext->addi   (outtext, (ANTLR3_INT32)tokenGetStartIndex(token));
     outtext->append8(outtext, "-Stop: ");
-    outtext->addi   (outtext, (ANTLR3_INT32)token->getStopIndex(token));
+    outtext->addi   (outtext, (ANTLR3_INT32)token->stop);
     outtext->append8(outtext, ") ='");
     outtext->appendS(outtext, text);
     outtext->append8(outtext, "', type<");
