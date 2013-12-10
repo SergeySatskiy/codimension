@@ -140,9 +140,9 @@ static STACK_INT  pythonbriefLexer_findPreviousIndent( ppythonbriefLexer  ctx,
 {
     STACK_INT   j;
 
-    for ( j = ctx->identStack->size( ctx->identStack ) - 1; j >= 0; --j )
+    for ( j = ctx->identStack->vector->count - 1; j >= 0; --j )
     {
-        STACK_INT    pos = (STACK_INT) (ctx->identStack->get( ctx->identStack, j ));
+        STACK_INT    pos = (STACK_INT) (stackGet( ctx->identStack, j ));
         if ( pos == i )
             return j;
     }
@@ -204,14 +204,14 @@ pythonbriefLexer_insertImaginaryIndentDedentTokens( ppythonbriefLexer     ctx,
             break;
     }
 
-    STACK_INT       lastIndent = (STACK_INT) ctx->identStack->peek( ctx->identStack );
+    STACK_INT       lastIndent = (STACK_INT) stackPeek( ctx->identStack );
     ANTLR3_INT32    lineno = t->line;
     if ( lineno <= 0 )
         lineno = newlineno;
 
     if ( cpos > lastIndent )
     {
-        ctx->identStack->push( ctx->identStack, (void *)cpos, NULL );
+        stackPush( ctx->identStack, (void *)cpos, NULL );
         vectorAdd( ctx->tokens,
                    pythonbriefLexer_createDedentIdentToken( ctx, INDENT, lineno ),
                    NULL );
@@ -221,12 +221,12 @@ pythonbriefLexer_insertImaginaryIndentDedentTokens( ppythonbriefLexer     ctx,
         ANTLR3_INT32 prevIndex = pythonbriefLexer_findPreviousIndent( ctx, cpos );
 
         // generate DEDENTs for each indent level we backed up over
-        while ( ctx->identStack->size( ctx->identStack ) > (prevIndex + 1) )
+        while ( ctx->identStack->vector->count > (prevIndex + 1) )
         {
             vectorAdd( ctx->tokens,
                        pythonbriefLexer_createDedentIdentToken( ctx, DEDENT, lineno ),
                        NULL );
-            ctx->identStack->pop( ctx->identStack );
+            stackPop( ctx->identStack );
         }
     }
 
@@ -246,7 +246,7 @@ static pANTLR3_COMMON_TOKEN  pythonbriefLexer_nextTokenImpl( pANTLR3_TOKEN_SOURC
     {
         if ( ctx->tokens->count > 0 )
         {
-            return (pANTLR3_COMMON_TOKEN) ctx->tokens->remove( ctx->tokens, 0 );
+            return (pANTLR3_COMMON_TOKEN) vectorRemove( ctx->tokens, 0 );
         }
 
         pythonbriefLexer_insertImaginaryIndentDedentTokens( ctx, toksource );
@@ -260,7 +260,7 @@ static pANTLR3_COMMON_TOKEN  pythonbriefLexer_nextTokenImpl( pANTLR3_TOKEN_SOURC
 static void  pythonbriefLexer_FreeImpl( struct pythonbriefLexer_Ctx_struct *  ctx )
 {
     vectorFree( ctx->tokens );
-    ctx->identStack->free( ctx->identStack );
+    stackFree( ctx->identStack );
 
     ctx->origFree( ctx );
 }
@@ -274,7 +274,7 @@ void  pythonbriefLexer_initLexer( ppythonbriefLexer  ctx )
 
     ctx->tokens = antlr3VectorNew( 16384 );
     ctx->identStack = antlr3StackNew( ANTLR3_LIST_SIZE_HINT );
-    ctx->identStack->push( ctx->identStack, (void *)FIRST_CHAR_POSITION, NULL );
+    stackPush( ctx->identStack, (void *)FIRST_CHAR_POSITION, NULL );
 
     // Override nextToken implementation by Python specific
     ctx->origNextToken = ctx->pLexer->rec->state->tokSource->nextToken;
