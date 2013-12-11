@@ -102,7 +102,7 @@ class TextCursorContext:
         " Provides the last scope line "
         if self.length == 0:
             raise Exception( "No scopes found" )
-        return self.levels[ self.length - 1 ][ 0 ].line
+        return self.levels[ self.length - 1 ][ 0 ].colonLine
 
     def stripLevels( self, nonSpacePos ):
         " Strips the levels depending on the position "
@@ -113,27 +113,52 @@ class TextCursorContext:
         return
 
 
-def _IdentifyScope( infoObject, context, cursorLine ):
+def _IdentifyScope( infoObject, context, cursorLine, cursorPos, skipDef ):
     " Searches for the hierarchy "
 
-    # Find the closest global level class definition
+    # Find the closest class definition (global level for the first call)
     nearestClassLine = -1
     nearestClassInfo = None
     for klass in infoObject.classes:
-        if klass.line > nearestClassLine and \
-           klass.line < cursorLine:
-            nearestClassLine = klass.line
-            nearestClassInfo = klass
+        onDef = _isOnDefinitionLine( klass, cursorLine, cursorPos )
+        if skipDef:
+            if onDef:
+                return
+            if klass.line > nearestClassLine and \
+               klass.line < cursorLine:
+                nearestClassLine = klass.line
+                nearestClassInfo = klass
+        else:
+            if onDef:
+                context.addClass( klass )
+                return
+            if klass.line > nearestClassLine and \
+               klass.line < cursorLine:
+                nearestClassLine = klass.line
+                nearestClassInfo = klass
 
-    # Find the closest global level function definition
+    # Find the closest function definition (global level for the first call)
     nearestFuncLine = -1
     nearestFuncInfo = None
     for func in infoObject.functions:
-        if func.line > nearestClassLine and \
-           func.line > nearestFuncLine and \
-           func.line <= cursorLine:
-            nearestFuncLine = func.line
-            nearestFuncInfo = func
+        onDef = _isOnDefinitionLine( func, cursorLine, cursorPos )
+        if skipDef:
+            if onDef:
+                return
+            if func.line > nearestClassLine and \
+               func.line > nearestFuncLine and \
+               func.line <= cursorLine:
+                nearestFuncLine = func.line
+                nearestFuncInfo = func
+        else:
+            if onDef:
+                context.addFunction( func )
+                return
+            if func.line > nearestClassLine and \
+               func.line > nearestFuncLine and \
+               func.line <= cursorLine:
+                nearestFuncLine = func.line
+                nearestFuncInfo = func
 
     if nearestClassLine == -1 and nearestFuncLine == -1:
         # No definitions before the line
@@ -142,10 +167,12 @@ def _IdentifyScope( infoObject, context, cursorLine ):
     # Check nested objects
     if nearestClassLine > nearestFuncLine:
         context.addClass( nearestClassInfo )
-        _IdentifyScope( nearestClassInfo, context, cursorLine )
+        _IdentifyScope( nearestClassInfo, context,
+                        cursorLine, cursorPos, skipDef )
     else:
         context.addFunction( nearestFuncInfo )
-        _IdentifyScope( nearestFuncInfo, context, cursorLine )
+        _IdentifyScope( nearestFuncInfo, context,
+                        cursorLine, cursorPos, skipDef )
     return
 
 
@@ -165,13 +192,17 @@ def _endsWithTripleQuotedString( editor, line, pos ):
                           QsciLexerPython.TripleSingleQuotedString ]
 
 
-def getContext( editor, info = None, readOnly = False ):
-    """ Detects the context where the text cursor is.
-        readOnly == True is used when a context is detected for search
-        purposes like jumping to the beginning of the current scope.
-        The difference is how empty lines are treated. If readOnly is set
-        then empty lines are skipped backward and the last non empty
-        line is used to detect the context. """
+def getContext( editor, info = None,
+                skipBlankLinesBack = False, skipDef = True ):
+    """ Detects the context at the text cursor position.
+        skipBlankLinesBack == False => current cursor position is used
+        skipBlankLinesBack == True => skip blank lines back and use the first 
+                                      non-blank line as the cursor position.
+        skipDef == True => treat a definition as belonging to an upper
+                           level context (not included into the context stack)
+        skipDef == False => treat a definition as starting a context level
+                            (included into the context stack as the last one)
+    """
 
     # It is expected that this is a python editor.
     # If non-python editor is given, then a global context is provided
@@ -188,19 +219,23 @@ def getContext( editor, info = None, readOnly = False ):
         info = getBriefModuleInfoFromMemory( str( editor.text() ) )
 
     line, pos = editor.getCursorPosition()
-    if readOnly == True:
+    if skipBlankLinesBack == True:
         while line >= 0:
             text = editor.text( line )
             trimmedText = text.trimmed()
             if trimmedText != "":
-                pos = len( text )
+                pos = len( str( text ).rstrip() )
                 break
             line -= 1
         if line < 0:
             line = 0
             pos = 0
 
-    _IdentifyScope( info, context, line )
+    _IdentifyScope( info, context, line + 1, pos, skipDef )
+
+    if not skipDef:
+        if _getDefinitionObject( info, line + 1, pos ) is not None:
+            return context
 
     if context.length == 0:
         return context
@@ -239,6 +274,36 @@ def getContext( editor, info = None, readOnly = False ):
         else:
             context.stripLevels( min( pos, nonSpacePos ) )
     return context
+
+
+def _isOnDefinitionLine( infoObj, line, pos ):
+    """ Returns True if the cursor is within the definition line of the
+        given object (class or function)
+        Line and pos are 1-based """
+    lowLimit = infoObj.keywordLine << 16
+    upLimit = (infoObj.colonLine << 16) + infoObj.colonPos
+    current = (line << 16) + pos
+    if current >= lowLimit and current <= upLimit:
+        return True
+    return False
+
+def _getDefinitionObject( info, line, pos ):
+    """ Returns an object (class or function) if the cursor is on the definition
+        line. None if it is not.
+        Line and pos are 1-based """
+    for cls in info.classes:
+        if _isOnDefinitionLine( cls, line, pos ):
+            return cls
+        obj = _getDefinitionObject( cls, line, pos )
+        if obj:
+            return obj
+    for func in info.functions:
+        if _isOnDefinitionLine( func, line, pos ):
+            return func
+        obj = _getDefinitionObject( func, line, pos )
+        if obj:
+            return obj
+    return None
 
 
 def _skipSpacesBack( editor, line, col ):
