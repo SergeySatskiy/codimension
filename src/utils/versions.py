@@ -51,9 +51,17 @@ def getQtVersion():
 
 def getSIPVersion():
     " Provides the SIP version "
-    from PyQt4.pyqtconfig import Configuration
-    cfg = Configuration()
-    return str( cfg.sip_version_str )
+    try:
+        import sip
+        return str( sip.SIP_VERSION_STR )
+    except:
+        try:
+            from PyQt4.pyqtconfig import Configuration
+            cfg = Configuration()
+            return str( cfg.sip_version_str )
+        except:
+            pass
+    return "unknown"
 
 def getRopeVersion():
     " Provides the rope library version "
