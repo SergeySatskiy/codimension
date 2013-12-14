@@ -1,22 +1,28 @@
+codimension-parser (1.6.5-0) precise; urgency=low
+
+  *  New upstream release.
+
+ -- Ilya Loginov <isloginov@gmail.com>  Sat, 14 Dec 2013 13:00:29 +0400
+
 codimension-parser (1.6.4-2) precise; urgency=low
 
- * Prepared for release v.1.6.4
- * Bug fix: core dump in case if a docstring is longer than 65535 bytes
- * Collect python files list from sys.path
+  *  Prepared for release v.1.6.4
+  *  Bug fix: core dump in case if a docstring is longer than 65535 bytes
+  *  Collect python files list from sys.path
 
  -- Sergey <sergey.satskiy@gmail.com>  Sat, 16 Nov 2013 13:28:00 +0400
 
 codimension-parser (1.6.3-2) precise; urgency=low
 
- * Prepared for release v.1.6.3
- * Bug fix: core dump in case of import without anything following it
+  *  Prepared for release v.1.6.3
+  *  Bug fix: core dump in case of import without anything following it
 
  -- Sergey <sergey.satskiy@gmail.com>  Thu, 29 Aug 2013 00:07:00 +0400
 
 codimension-parser (1.6.2-2) precise; urgency=low
 
- * Prepared for release v.1.6.2
- * Bug fix: parser was not able to parse python 3 style print() functions
+  *  Prepared for release v.1.6.2
+  *  Bug fix: parser was not able to parse python 3 style print() functions
 
  -- Sergey <sergey.satskiy@gmail.com>  Sun, 30 Jun 2013 21:25:00 +0400
 
