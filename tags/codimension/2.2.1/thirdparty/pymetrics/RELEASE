@@ -1,0 +1,6 @@
+Release Notes for PyMetrics 0.7.9
+=================================
+
+* Changed distribution method to use Python's standard setup.py method.
+  Thanks to Carlos Garcia Campos (carlosgc-at-gnome.org).
+
