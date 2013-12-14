@@ -1,5 +1,5 @@
 Name: codimension-parser
-Version: 1.6.4
+Version: 1.6.5
 Release: 1
 License: GPLv3+
 Group: Development/Languages
@@ -40,6 +40,9 @@ find $RPM_BUILD_ROOT -name "*.la" -exec rm -f {} ';'
 %{python_sitearch}/*.egg-info
 
 %changelog
+* Sat Dec 14 2013 Ilya Loginov <isloginov@gmail.com> - 1.6.5-0
+- New upstream release.
+
 * Sat Nov 16 2013 Sergey Satskiy <sergey.satskiy@gmail.com> - 1.6.4-1
 - Bug fix: core dump in case if a docstring is longer than 65535 bytes.
 - Collect python files list from sys.path.

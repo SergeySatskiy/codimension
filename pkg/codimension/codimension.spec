@@ -15,7 +15,7 @@ Source4: %{name}.png
 Requires: python
 Requires: codimension-parser >= 1.6
 Requires: PyQt4 qscintilla-python
-Requires: pylint python-pygments python-chardet graphviz
+Requires: pylint python-pygments python-chardet graphviz pysvn
 
 BuildRequires: desktop-file-utils
 
@@ -83,6 +83,10 @@ update-desktop-database -q
 %{_datadir}/pixmaps/*.png
 
 %changelog
+* Sat Dec 14 2013 Ilya Loginov <isloginov@gmail.com> - 2.2.1-0
+- New upstream release.
+- Add dependency from pysvn.
+
 * Sat Nov 16 2013 Ilya Loginov <isloginov@gmail.com> - 2.2.0-2
 - Version 2.2.0
 - Improvement: scaling of diagram and pictures is now via Ctrl + Mouse wheel
