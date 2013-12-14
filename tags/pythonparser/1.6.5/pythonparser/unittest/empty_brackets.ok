@@ -1,0 +1,6 @@
+Global[1:1:0]: 'a'
+Global[2:1:7]: 'b'
+Global[3:1:14]: 'c'
+Function[5:1:5:5:26:5:8]: 'f'
+Function[8:1:8:5:50:8:8]: 'g'
+Function[11:1:11:5:74:11:8]: 'h'
