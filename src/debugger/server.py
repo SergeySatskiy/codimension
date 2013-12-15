@@ -33,7 +33,7 @@ from PyQt4.QtGui import QApplication, QCursor, QMessageBox, QDialog
 from PyQt4.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
 
 from utils.globals import GlobalData
-from utils.run import getCwdCmdEnv, CMD_TYPE_DEBUG
+from utils.run import getCwdCmdEnv, CMD_TYPE_DEBUG, getUserShell
 from utils.settings import Settings
 from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
 from utils.pixmapcache import PixmapCache
@@ -202,6 +202,7 @@ class CodimensionDebugger( QObject ):
 
         # Wait for the child PID
         self.__waitChildPID()
+        self.__adjustChildPID()
 
         # Wait till the client incoming connection
         self.__waitIncomingConnection()
@@ -257,6 +258,32 @@ class CodimensionDebugger( QObject ):
                                  "error spawning process to debug" )
         return
 
+    def __adjustChildPID( self ):
+        " Detects the debugged process shell reliable "
+
+        # On some systems, e.g. recent Fedora, the way shells are spawned
+        # differs to the usual scheme. These systems have a single server which
+        # brings children up. This server fools $PPID and thus a child process
+        # PID is not detected properly. The fix is here.
+        # After a feedback message with a PID is received, we check again in
+        # /proc what is the child PID is.
+        # Later on, the feedback step can be removed completely.
+
+        for item in os.listdir( "/proc" ):
+            if item.isdigit():
+                try:
+                    f = open( "/proc/" + item + "/cmdline", "r" )
+                    content = f.read()
+                    f.close()
+
+                    if "client/client_cdm_dbg.py" in content:
+                        if str( self.__tcpServer.serverPort() ) in content:
+                            if content.startswith( getUserShell() ):
+                                self.__procPID = int( item )
+                                return
+                except:
+                    pass
+        return
 
     def __createProcfeedbackSocket( self ):
         " Creates the process feedback socket "
