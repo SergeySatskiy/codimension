@@ -196,7 +196,8 @@ class SideBar( QWidget ):
                     return True
 
                 elif self.isMinimized():
-                    self.expand()
+                    if self.isTabEnabled( index ):
+                        self.expand()
 
         return QWidget.eventFilter( self, obj, evt )
 
