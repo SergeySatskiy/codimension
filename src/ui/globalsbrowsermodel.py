@@ -54,7 +54,7 @@ class GlobalsBrowserModel( BrowserModelBase ):
 
         self.clear()
         project = self.globalData.project
-        cache = project.briefModinfoCache
+        cache = self.globalData.briefModinfoCache
         for fname in project.filesList:
             if detectFileType( fname ) in [ PythonFileType, Python3FileType ]:
                 info = cache.get( fname )
@@ -88,7 +88,7 @@ class GlobalsBrowserModel( BrowserModelBase ):
             self.removeTreeItem( item )
 
         for path in addedPythonFiles:
-            info = self.globalData.project.briefModinfoCache.get( path )
+            info = self.globalData.briefModinfoCache.get( path )
             for globalObj in info.globals:
                 needUpdate = True
                 newItem = TreeViewGlobalItem( self.rootItem, globalObj )
@@ -101,7 +101,7 @@ class GlobalsBrowserModel( BrowserModelBase ):
         " Triggered when a file was updated "
 
         # Here: python file which belongs to the project
-        info = self.globalData.project.briefModinfoCache.get( fileName )
+        info = self.globalData.briefModinfoCache.get( fileName )
 
         existingGlobals = []
         itemsToRemove = []

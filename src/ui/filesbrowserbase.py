@@ -496,16 +496,10 @@ class FilesBrowser( QTreeView ):
 
     def onFileUpdated( self, fileName, uuid ):
         " Triggered when the file is updated "
-
         fileType = detectFileType( fileName )
-
         if fileType in [ PythonFileType, Python3FileType ]:
             path = os.path.realpath( fileName )
-            if GlobalData().project.isProjectFile( path ):
-                infoSrc = GlobalData().project.briefModinfoCache
-            else:
-                infoSrc = GlobalData().briefModinfoCache
-            info = infoSrc.get( path )
+            info = GlobalData().briefModinfoCache.get( path )
             if info.isOK:
                 icon = PixmapCache().getIcon( 'filepython.png' )
             else:

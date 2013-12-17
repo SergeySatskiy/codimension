@@ -2,6 +2,9 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Bug fix: wrong brutal stop of a debug session on Fedora
 * Bug fix: side bars must not be expanded via clicking on desabled tabs
+* Improvement: get rid of serialization/deserialization of the python files
+  parser info cache
+* New feature: user selectable sorting order for the tabs in the navigation menu
 
 2013 Dec 14 Sergey Satskiy <sergey.satskiy@gmail.com>
 

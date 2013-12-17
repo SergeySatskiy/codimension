@@ -145,6 +145,7 @@ CDM_SETTINGS = {
     CDMSetting( "style", CDMSetting.TYPE_STR, "plastique" ),
     CDMSetting( "vcsstatusupdateinterval", CDMSetting.TYPE_INT, 
                 VCS_STATUS_UPDATE_INTERVAL_DEFAULT ),
+    CDMSetting( "tablistsortalpha", CDMSetting.TYPE_BOOL, True ),
            ],
 "recentProjects" : [
     CDMSetting( "project", CDMSetting.TYPE_STR_LST, [] )

@@ -30,7 +30,6 @@
 
 from os.path import islink, exists, split, join, sep, basename
 from PyQt4.QtGui        import QImageReader
-from globals            import GlobalData
 from utils.pixmapcache  import PixmapCache
 
 
@@ -248,8 +247,19 @@ __magicModule = None
 __QTSupportedImageFormats = [ str( fmt ) for fmt in
                               QImageReader.supportedImageFormats() ]
 
+
+def __isMagicAvailable():
+    " Checks if the magic module is able to be loaded "
+    try:
+        import magic
+        m = magic.Magic()
+        m.close()
+        return True
+    except:
+        return False
+
 # Cached value to avoid unnecessary searches for a name
-magicAvailable = GlobalData().magicAvailable
+MAGIC_AVAILABLE = __isMagicAvailable()
 
  
 
@@ -298,7 +308,7 @@ def detectFileType( path, checkForBrokenLink = True, skipCache = False ):
         __cachedFileTypes[ path ] = MakefileType
         return MakefileType
 
-    if magicAvailable:
+    if MAGIC_AVAILABLE:
         try:
             if __magicModule is None:
                 import magic

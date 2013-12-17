@@ -33,7 +33,8 @@ import logging, os, os.path
 from PyQt4.QtCore import Qt, SIGNAL, QVariant, QDir, QUrl
 from PyQt4.QtGui import ( QTabWidget, QDialog, QMessageBox, QWidget,
                           QHBoxLayout, QMenu, QToolButton, QShortcut,
-                          QFileDialog, QApplication, QTabBar, QIcon )
+                          QFileDialog, QApplication, QTabBar, QIcon,
+                          QActionGroup )
 from utils.pixmapcache import PixmapCache
 from welcomewidget import WelcomeWidget
 from helpwidget import QuickHelpWidget
@@ -93,6 +94,7 @@ class EditorsManager( QTabWidget ):
         self.newDiffIndex = -1
         self.__mainWindow = parent
         self.__navigationMenu = None
+        self.__navigationSortGroup = QActionGroup( self )
         self.__historyBackMenu = None
         self.__historyFwdMenu = None
         self.__skipHistoryUpdate = False
@@ -306,9 +308,9 @@ class EditorsManager( QTabWidget ):
         fileName = widget.getFileName()
 
         res = QMessageBox.warning( self, "Close tab and delete",
-                "<p>Are you sure to close the tab and delete " \
+                "<p>Are you sure to close the tab and delete "
                 "<b>" + fileName + "</b> from the disk?</p>",
-                QMessageBox.StandardButtons( QMessageBox.Cancel | \
+                QMessageBox.StandardButtons( QMessageBox.Cancel |
                                              QMessageBox.Yes ),
                 QMessageBox.Cancel )
         if res == QMessageBox.Cancel:
@@ -397,7 +399,7 @@ class EditorsManager( QTabWidget ):
 
         if notSaved:
             # There are not saved files
-            logging.error( "Please close or save the modified files " \
+            logging.error( "Please close or save the modified files "
                            "explicitly (" + ", ".join( notSaved ) + ")" )
 
         for index in toClose:
@@ -544,7 +546,7 @@ class EditorsManager( QTabWidget ):
 
     def __updateControls( self ):
         " Updates the navigation buttons status "
-        self.navigationButton.setEnabled( self.widget( 0 ) != \
+        self.navigationButton.setEnabled( self.widget( 0 ) !=
                                           self.__welcomeWidget )
         return
 
@@ -591,7 +593,7 @@ class EditorsManager( QTabWidget ):
                     "discard your changes and close the tab or "
                     "cancel closing the tab?</p>",
                         QMessageBox.StandardButtons(
-                            QMessageBox.Cancel | QMessageBox.Discard | \
+                            QMessageBox.Cancel | QMessageBox.Discard |
                             QMessageBox.Save ),
                         QMessageBox.Save )
 
@@ -611,7 +613,7 @@ class EditorsManager( QTabWidget ):
                         "discard your changes and close the tab or "
                         "cancel closing the tab?</p>",
                         QMessageBox.StandardButtons(
-                            QMessageBox.Cancel | QMessageBox.Discard | \
+                            QMessageBox.Cancel | QMessageBox.Discard |
                             QMessageBox.Save ),
                         QMessageBox.Save )
                 if res == QMessageBox.Save:
@@ -680,7 +682,7 @@ class EditorsManager( QTabWidget ):
             # Save the current cursor position
             editor = self.widget( index ).getEditor()
             line, pos = editor.getCursorPosition()
-            Settings().filePositions.updatePosition( \
+            Settings().filePositions.updatePosition(
                             self.widget( index ).getFileName(),
                             line, pos,
                             editor.firstVisibleLine() )
@@ -708,7 +710,7 @@ class EditorsManager( QTabWidget ):
         self.connect( newTabButton, SIGNAL( 'clicked()' ), self.newTabClicked )
         rightCornerWidgetLayout.addWidget( newTabButton )
         self.navigationButton = QToolButton( self )
-        self.navigationButton.setIcon( \
+        self.navigationButton.setIcon(
                 PixmapCache().getIcon( "1downarrow.png" ) )
         self.navigationButton.setToolTip( "Show a navigation menu" )
         self.navigationButton.setPopupMode( QToolButton.InstantPopup )
@@ -736,7 +738,7 @@ class EditorsManager( QTabWidget ):
         leftCornerWidgetLayout.setMargin( 0 )
         leftCornerWidgetLayout.setSpacing( 0 )
         self.historyBackButton = QToolButton( self )
-        self.historyBackButton.setIcon( \
+        self.historyBackButton.setIcon(
                 PixmapCache().getIcon( "1leftarrow.png" ) )
         self.historyBackButton.setToolTip( "Back (Alt+PgDown)" )
         self.historyBackButton.setShortcut( "Alt+PgDown" )
@@ -747,7 +749,7 @@ class EditorsManager( QTabWidget ):
                       self.historyBackClicked )
         leftCornerWidgetLayout.addWidget( self.historyBackButton )
         self.historyFwdButton = QToolButton( self )
-        self.historyFwdButton.setIcon( \
+        self.historyFwdButton.setIcon(
                 PixmapCache().getIcon( "1rightarrow.png" ) )
         self.historyFwdButton.setToolTip( "Forward (Alt+PgUp)" )
         self.historyFwdButton.setShortcut( "Alt+PgUp" )
@@ -765,13 +767,31 @@ class EditorsManager( QTabWidget ):
         " Shows the navigation button menu "
 
         self.__navigationMenu.clear()
+        alphasort = self.__navigationMenu.addAction( "Sort Alphabetically" )
+        alphasort.setData( QVariant( -1 ) )  # see __navigationMenuTriggered()
+        alphasort.setCheckable( True )
+        alphasort.setActionGroup( self.__navigationSortGroup )
+        tabsort = self.__navigationMenu.addAction( "Tab order sort" )
+        tabsort.setData( QVariant( -2 ) )    # see __navigationMenuTriggered()
+        tabsort.setCheckable( True )
+        tabsort.setActionGroup( self.__navigationSortGroup )
+        self.__navigationMenu.addSeparator()
+
+        if Settings().tablistsortalpha:
+            alphasort.setChecked( True )
+        else:
+            tabsort.setChecked( True )
 
         items = []
-        for index in range( self.count() ):
+        for index in xrange( self.count() ):
             items.append( [ self.tabIcon( index ), self.tabText( index ),
                             index ] )
 
-        items.sort( key = lambda c: c[ 1 ] )
+        if Settings().tablistsortalpha:
+            items.sort( key = lambda c: c[ 1 ] )
+        else:
+            items.sort( key = lambda c: c[ 2 ] )
+
         for item in items:
             act = self.__navigationMenu.addAction( item[ 0 ], item[ 1 ] )
             index = item[ 2 ]
@@ -787,6 +807,13 @@ class EditorsManager( QTabWidget ):
 
         index, isOK = act.data().toInt()
         if not isOK or self.currentIndex() == index:
+            return
+
+        if index < 0:
+            if index == -1:
+                Settings().tablistsortalpha = True
+            else:
+                Settings().tablistsortalpha = False
             return
 
         if index != 0:
@@ -868,17 +895,12 @@ class EditorsManager( QTabWidget ):
     @staticmethod
     def getFileDocstring( fileName ):
         " Provides the file docstring "
-
         if detectFileType( fileName ) not in [ PythonFileType,
                                                Python3FileType ]:
             return ""
 
         try:
-            if GlobalData().project.isProjectFile( fileName ):
-                infoSrc = GlobalData().project.briefModinfoCache
-            else:
-                infoSrc = GlobalData().briefModinfoCache
-            info = infoSrc.get( fileName )
+            info = GlobalData().briefModinfoCache.get( fileName )
             if info.docstring is not None:
                 return info.docstring.text
             return ""
@@ -918,12 +940,7 @@ class EditorsManager( QTabWidget ):
             return
 
         try:
-            if GlobalData().project.isProjectFile( fileName ):
-                infoSrc = GlobalData().project.briefModinfoCache
-            else:
-                infoSrc = GlobalData().briefModinfoCache
-            info = infoSrc.get( fileName )
-
+            info = GlobalData().briefModinfoCache.get( fileName )
             if info.errors  or info.lexerErrors:
                 icon = PixmapCache().getIcon( 'filepythonbroken.png' )
                 self.setTabIcon( widgetIndex, icon )
@@ -1410,7 +1427,7 @@ class EditorsManager( QTabWidget ):
             res = QMessageBox.warning(
                 self, "Save File",
                 "<p>The file <b>" + fileName + "</b> already exists.</p>",
-                QMessageBox.StandardButtons( QMessageBox.Abort | \
+                QMessageBox.StandardButtons( QMessageBox.Abort |
                                              QMessageBox.Save ),
                 QMessageBox.Abort )
             if res == QMessageBox.Abort or res == QMessageBox.Cancel:
@@ -1521,15 +1538,15 @@ class EditorsManager( QTabWidget ):
             # Check write permissions to the directory
             dirName = os.path.dirname( fileName )
             if not os.access( dirName, os.W_OK ):
-                logging.error( "There is no write permissions for the " \
+                logging.error( "There is no write permissions for the "
                                "directory " + dirName )
                 return False
 
         if os.path.exists( fileName ):
-            res = QMessageBox.warning( \
+            res = QMessageBox.warning(
                 self, "Save diagram as",
                 "<p>The file <b>" + fileName + "</b> already exists.</p>",
-                QMessageBox.StandardButtons( QMessageBox.Abort | \
+                QMessageBox.StandardButtons( QMessageBox.Abort |
                                              QMessageBox.Save ),
                 QMessageBox.Abort )
             if res == QMessageBox.Abort or res == QMessageBox.Cancel:
@@ -1577,7 +1594,7 @@ class EditorsManager( QTabWidget ):
             self.findWidget.startHiddenSearch( searchText )
             self.__lastDisplayedWasFindWidget = True
         else:
-            GlobalData().mainWindow.showStatusBarMessage( \
+            GlobalData().mainWindow.showStatusBarMessage(
                     "No current word to start searching" )
         return
 

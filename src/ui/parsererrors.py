@@ -83,14 +83,11 @@ class ParserErrorsDialog( QDialog, object ):
         if info is not None:
             modInfo = info
         else:
-            if GlobalData().project.isProjectFile( fileName ):
-                modInfo = GlobalData().project.briefModinfoCache.get( fileName )
-            else:
-                modInfo = GlobalData().briefModinfoCache.get( fileName )
+            modInfo = GlobalData().briefModinfoCache.get( fileName )
         if modInfo.isOK:
             resultEdit.setText( "No errors found" )
         else:
-            resultEdit.setText( "\n".join( modInfo.lexerErrors + \
+            resultEdit.setText( "\n".join( modInfo.lexerErrors +
                                            modInfo.errors ) )
         verticalLayout.addWidget( resultEdit )
 

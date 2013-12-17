@@ -288,11 +288,7 @@ class BrowserModelBase( QAbstractItemModel ):
 
         pathsToRequest = []
         if items:
-            # Pick up the modinfo source
-            if self.globalData.project.isProjectDir( path ):
-                infoSrc = self.globalData.project.briefModinfoCache
-            else:
-                infoSrc = self.globalData.briefModinfoCache
+            infoSrc = self.globalData.briefModinfoCache
 
             if repopulate:
                 self.beginInsertRows( self.createIndex( parentItem.row(),
@@ -379,11 +375,7 @@ class BrowserModelBase( QAbstractItemModel ):
             return
 
         parentItem.populated = True
-
-        if self.globalData.project.isProjectFile( path ):
-            modInfo = self.globalData.project.briefModinfoCache.get( path )
-        else:
-            modInfo = self.globalData.briefModinfoCache.get( path )
+        modInfo = self.globalData.briefModinfoCache.get( path )
 
         # Count the number of rows to insert
         count = 0

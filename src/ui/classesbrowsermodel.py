@@ -56,7 +56,7 @@ class ClassesBrowserModel( BrowserModelBase ):
 
         self.clear()
         project = self.globalData.project
-        cache = project.briefModinfoCache
+        cache = self.globalData.briefModinfoCache
         for fname in project.filesList:
             if detectFileType( fname ) in [ PythonFileType, Python3FileType ]:
                 info = cache.get( fname )
@@ -90,7 +90,7 @@ class ClassesBrowserModel( BrowserModelBase ):
             self.removeTreeItem( item )
 
         for path in addedPythonFiles:
-            info = self.globalData.project.briefModinfoCache.get( path )
+            info = self.globalData.briefModinfoCache.get( path )
             for classObj in info.classes:
                 needUpdate = True
                 newItem = TreeViewClassItem( self.rootItem, classObj )
@@ -103,7 +103,7 @@ class ClassesBrowserModel( BrowserModelBase ):
         " Triggered when a file was updated "
 
         # Here: python file which belongs to the project
-        info = self.globalData.project.briefModinfoCache.get( fileName )
+        info = self.globalData.briefModinfoCache.get( fileName )
 
         existingClasses = []
         itemsToRemove = []
