@@ -109,8 +109,8 @@ def getPyLintVersion():
 
 def getFileMagicVersion():
     " Provides the file magic library "
-    from globals import GlobalData
-    if not GlobalData().magicAvailable:
+    from fileutils import MAGIC_AVAILABLE
+    if not MAGIC_AVAILABLE:
         return "Not installed"
     import magic
     return magic.__version__

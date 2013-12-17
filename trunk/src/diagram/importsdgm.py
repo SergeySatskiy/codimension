@@ -657,7 +657,7 @@ class ImportsDiagramProgress( QDialog ):
             return ""
 
         try:
-            info = GlobalData().project.briefModinfoCache.get( path )
+            info = GlobalData().briefModinfoCache.get( path )
             if info.docstring is not None:
                 return info.docstring.text
             return ""
@@ -711,7 +711,7 @@ class ImportsDiagramProgress( QDialog ):
                 impBox.kind = DgmModule.OtherProjectModule
                 impBox.title = os.path.basename( importPath ).split( '.' )[ 0 ]
                 impBox.refFile = importPath
-                otherInfo = GlobalData().project.briefModinfoCache.get( importPath )
+                otherInfo = GlobalData().briefModinfoCache.get( importPath )
 
                 # It's a local or project import
                 self.__addBoxInfo( impBox, otherInfo )
@@ -781,10 +781,7 @@ class ImportsDiagramProgress( QDialog ):
                 info = getBriefModuleInfoFromMemory( str( self.__buf ) )
                 self.__addSingleFileToDataModel( info, self.__path )
             else:
-                if GlobalData().project.isLoaded():
-                    infoSrc = GlobalData().project.briefModinfoCache
-                else:
-                    infoSrc = GlobalData().briefModinfoCache
+                infoSrc = GlobalData().briefModinfoCache
                 for fName in self.__participantFiles:
                     self.progressBar.setValue( index )
                     self.infoLabel.setText( 'Analyzing ' + fName + "..." )

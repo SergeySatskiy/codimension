@@ -100,7 +100,7 @@ class ModifiedUnsavedDialog( QDialog ):
             fileType = detectFileType( fileName )
             fileItem.setIcon( 0, getFileIcon( fileType ) )
             if fileType in [ PythonFileType, Python3FileType ]:
-                infoSrc = GlobalData().project.briefModinfoCache
+                infoSrc = GlobalData().briefModinfoCache
                 info = infoSrc.get( fileName )
                 if info.docstring is not None:
                     fileItem.setToolTip( 0, info.docstring.text )

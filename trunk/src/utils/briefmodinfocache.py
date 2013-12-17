@@ -23,72 +23,15 @@
 
 """ codimension brief module info cache """
 
-import os, os.path, cPickle
-from cdmbriefparser import getBriefModuleInfoFromFile, getVersion
-from settings import settingsDir
+import os, os.path
+from cdmbriefparser import getBriefModuleInfoFromFile
 
 
-PARSER_VERSION_FILE_NAME = "parserversion"
 
-def getParserVersionFilePath():
-    " Provides absolute path of the parser version file "
-    return settingsDir + PARSER_VERSION_FILE_NAME
-
-
-def testParserVersion():
-    " True if parser is what was used last time "
-    fName = getParserVersionFilePath()
-    if not os.path.exists( fName ):
-        return False
-
-    try:
-        f = open( fName, "r" )
-        versionFromFile = f.read().strip()
-        f.close()
-        return versionFromFile == getVersion()
-    except:
-        pass
-
-    return False
-
-
-def createParserVersionFile():
-    " Creates the parser version file "
-    try:
-        f = open( getParserVersionFilePath(), "w" )
-        f.write( getVersion() )
-        f.close()
-    except:
-        pass
-    return
-
-
-def removeParserCache():
-    " Removes all the parser cache files "
-    for name in os.listdir( settingsDir ):
-        candidate = settingsDir + name
-        if os.path.isdir( candidate ):
-            if not candidate.endswith( os.path.sep ):
-                candidate += os.path.sep
-            candidate += "briefinfocache"
-            if os.path.exists( candidate ):
-                os.unlink( candidate )
-    return
-
-
-def validateBriefModuleInfoCache():
-    " Validate the cache. If it is invalid - delete the cache files "
-    if not testParserVersion():
-        removeParserCache()
-        createParserVersionFile()
-    return
-
-
-class BriefModuleInfoCache( object ):
+class BriefModuleInfoCache():
     """ Provides the module info cache """
 
     def __init__( self ):
-
         # abs file path -> [ modification time, mod info ]
         self.__cache = {}
         return
@@ -121,23 +64,12 @@ class BriefModuleInfoCache( object ):
 
     def remove( self, path ):
         " Removes one file from the map "
-
         try:
             del self.__cache[ path ]
         except KeyError:
             return
 
-    def serialize( self, path ):
-        " Saves the cache into the given file "
-        ouf = open( path, "wb" )
-        cPickle.dump( self.__cache, ouf, 1 )
-        ouf.close()
+    def clear( self ):
+        " Clears the cache "
+        self.__cache = {}
         return
-
-    def deserialize( self, path ):
-        " Loads the cache from the given file "
-        inf = open( path, "rb" )
-        self.__cache = cPickle.load( inf )
-        inf.close()
-        return
-

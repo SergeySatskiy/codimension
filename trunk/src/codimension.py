@@ -77,7 +77,6 @@ from ui.application import CodimensionApplication
 from ui.splashscreen import SplashScreen
 from utils.project import CodimensionProject
 from utils.skin import Skin
-from utils.briefmodinfocache import validateBriefModuleInfoCache
 from distutils.version import StrictVersion
 
 
@@ -175,9 +174,6 @@ def codimensionMain():
 
     splash.showMessage( "Building system wide modules list..." )
     buildSystemWideModulesList()
-
-    splash.showMessage( "Validating brief module info cache..." )
-    validateBriefModuleInfoCache()
 
     splash.showMessage( "Generating main window..." )
     mainWindow = CodimensionMainWindow( splash, settings )

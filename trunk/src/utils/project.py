@@ -26,7 +26,6 @@
 import os, os.path, ConfigParser, logging, uuid, re, copy
 from rope.base.project import Project as RopeProject
 from os.path import realpath, islink, isdir, sep
-from briefmodinfocache import BriefModuleInfoCache
 from runparamscache import RunParametersCache
 from PyQt4.QtCore import QObject, SIGNAL
 from settings import Settings, ropePreferences, settingsDir
@@ -67,7 +66,6 @@ class CodimensionProject( QObject ):
         # Coming from separate files from ~/.codimension/uuidN/
         self.todos = []
         self.bookmarks = []
-        self.briefModinfoCache = BriefModuleInfoCache()
         self.runParamsCache = RunParametersCache()
         self.topLevelDirs = []
         self.findHistory = []
@@ -131,7 +129,6 @@ class CodimensionProject( QObject ):
         # Coming from separate files from ~/.codimension/uuidN/
         self.todos = []
         self.bookmarks = []
-        self.briefModinfoCache = BriefModuleInfoCache()
         self.runParamsCache = RunParametersCache()
         self.topLevelDirs = []
         self.findHistory = []
@@ -229,7 +226,6 @@ class CodimensionProject( QObject ):
         self.__safeRemove( userProjectDir + "project" )
         self.__safeRemove( userProjectDir + "bookmarks" )
         self.__safeRemove( userProjectDir + "todos" )
-        self.__safeRemove( userProjectDir + "briefinfocache" )
         self.__safeRemove( userProjectDir + "searchhistory" )
         self.__safeRemove( userProjectDir + "topleveldirs" )
         self.__safeRemove( userProjectDir + "tabsstatus" )
@@ -285,9 +281,6 @@ class CodimensionProject( QObject ):
             f.write( propertiesPart + "\n\n\n" )
             f.close()
 
-        # Save brief cache
-        self.serializeModinfoCache()
-
         self.serializeRunParameters()
         self.__saveTopLevelDirs()
         self.__saveSearchHistory()
@@ -305,12 +298,6 @@ class CodimensionProject( QObject ):
     def serializeRunParameters( self ):
         " Saves the run parameters cache "
         self.runParamsCache.serialize( self.userProjectDir + "runparamscache" )
-        return
-
-    def serializeModinfoCache( self ):
-        " Saves the modules info cache "
-        self.briefModinfoCache.serialize( self.userProjectDir +
-                                          "briefinfocache" )
         return
 
     def __saveTabsStatus( self ):
@@ -522,9 +509,6 @@ class CodimensionProject( QObject ):
         self.__createProjectFile()  # ~/.codimension/uuidNN/project
         self.__generateFilesList()
 
-        if os.path.exists( self.userProjectDir + "briefinfocache" ):
-            self.briefModinfoCache.deserialize( self.userProjectDir +
-                                                "briefinfocache" )
         if os.path.exists( self.userProjectDir + "runparamscache" ):
             self.runParamsCache.deserialize( self.userProjectDir +
                                              "runparamscache" )
@@ -904,7 +888,6 @@ class CodimensionProject( QObject ):
         """ Unloads the current project if required """
         self.emit( SIGNAL( 'projectAboutToUnload' ) )
         if self.isLoaded():
-            self.serializeModinfoCache()
             self.__saveProjectBrowserExpandedDirs()
         self.__resetValues()
         if emitSignal:

@@ -129,7 +129,7 @@ class ImportListWidget( QFrame ):
             importItem.setToolTip( 0, self.__getFileTooltip( item[ 1 ] ) )
             self.__importList.addTopLevelItem( importItem )
 
-        self.__importList.header().resizeSections( \
+        self.__importList.header().resizeSections(
                                         QHeaderView.ResizeToContents )
         return
 
@@ -137,13 +137,7 @@ class ImportListWidget( QFrame ):
     def __getFileTooltip( path ):
         " Provides the python file docstring for a tooltip "
         path = os.path.normpath( path )
-
-        if GlobalData().project.isProjectFile( path ):
-            infoSrc = GlobalData().project.briefModinfoCache
-        else:
-            infoSrc = GlobalData().briefModinfoCache
-
-        modInfo = infoSrc.get( path )
+        modInfo = GlobalData().briefModinfoCache.get( path )
         if modInfo.docstring is not None:
             return modInfo.docstring.text
         return ""

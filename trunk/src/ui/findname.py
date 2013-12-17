@@ -34,6 +34,7 @@ from cdmbriefparser import getBriefModuleInfoFromMemory
 from itemdelegates import NoOutlineHeightDelegate
 from utils.settings import Settings
 from combobox import EnterSensitiveComboBox
+from utils.fileutils import detectFileType, PythonFileType, Python3FileType
 
 
 class NameItem( object ):
@@ -126,12 +127,10 @@ class FindNameModel( QAbstractItemModel ):
 
         mainWindow = GlobalData().mainWindow
         for fname in GlobalData().project.filesList:
-            if fname.endswith( '.py' ) or \
-               fname.endswith( '.py3' ) or \
-               fname.endswith( '.pyw' ):
+            if detectFileType( fname ) in [ PythonFileType, Python3FileType ]:
                 widget = mainWindow.getWidgetForFileName( fname )
                 if widget is None:
-                    info = GlobalData().project.briefModinfoCache.get( fname )
+                    info = GlobalData().briefModinfoCache.get( fname )
                 else:
                     content = str( widget.getEditor().text() )
                     info = getBriefModuleInfoFromMemory( content )

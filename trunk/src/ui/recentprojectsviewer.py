@@ -151,11 +151,7 @@ class RecentFileViewItem( QTreeWidgetItem ):
         fileType = detectFileType( fileName )
         if fileType in [ PythonFileType, Python3FileType ]:
             # The tooltip could be the file docstring
-            if GlobalData().project.isProjectFile( fileName ):
-                infoSrc = GlobalData().project.briefModinfoCache
-            else:
-                infoSrc = GlobalData().briefModinfoCache
-            info = infoSrc.get( fileName )
+            info = GlobalData().briefModinfoCache.get( fileName )
             if info.docstring is not None and Settings().recentTooltips:
                 self.setToolTip( 1, info.docstring.text )
             else:

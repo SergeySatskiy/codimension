@@ -344,11 +344,7 @@ class PymetricsViewer( QWidget ):
                 fileItem = QTreeWidgetItem( QStringList() << "Editor buffer" )
             else:
                 fileItem = QTreeWidgetItem( QStringList() << fileName )
-                if GlobalData().project.isProjectFile( fileName ):
-                    infoSrc = GlobalData().project.briefModinfoCache
-                else:
-                    infoSrc = GlobalData().briefModinfoCache
-                info = infoSrc.get( fileName )
+                info = GlobalData().briefModinfoCache.get( fileName )
                 if info.docstring is not None:
                     fileItem.setToolTip( 0, info.docstring.text )
                 else:

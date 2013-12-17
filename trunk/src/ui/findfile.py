@@ -165,7 +165,7 @@ class FindFileModel( QAbstractItemModel ):
             if showTooltips and fileType in [ PythonFileType, Python3FileType ]:
                 widget = mainWindow.getWidgetForFileName( fname )
                 if widget is None:
-                    info = GlobalData().project.briefModinfoCache.get( fname )
+                    info = GlobalData().briefModinfoCache.get( fname )
                 else:
                     content = str( widget.getEditor().text() )
                     info = getBriefModuleInfoFromMemory( content )

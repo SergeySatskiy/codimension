@@ -89,6 +89,7 @@ from utils.skin import getMonospaceFontList
 from plugins.manager.pluginmanagerdlg import PluginsDialog
 from plugins.vcssupport.vcsmanager import VCSManager
 from plugins.vcssupport.intervaldlg import VCSUpdateIntervalConfigDialog
+from utils.fileutils import MAGIC_AVAILABLE
 
 
 class EditorsManagerWidget( QWidget ):
@@ -483,7 +484,7 @@ class CodimensionMainWindow( QMainWindow ):
         " Prints third party tools availability "
 
         globalData = GlobalData()
-        if globalData.magicAvailable:
+        if MAGIC_AVAILABLE:
             logging.debug( "The magic module loaded OK" )
         else:
             logging.warning( "The magic module (file type detection) is not "

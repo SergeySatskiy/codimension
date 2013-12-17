@@ -83,7 +83,6 @@ class GlobalData( object ):
                 self.runParamsCache.deserialize( settingsDir +
                                                  "runparamscache" )
 
-            self.magicAvailable = self.__checkMagic()
             self.pylintAvailable = self.__checkPylint()
             self.graphvizAvailable = self.__checkGraphviz()
 
@@ -173,9 +172,10 @@ class GlobalData( object ):
             # one day. So the fileName argument is ignored by now and the whole
             # project is invalidated.
             if fileName != "":
-                if not fileName.endswith( ".py" ) and \
-                   not fileName.endswith( ".py3" ) and \
-                   not fileName.endswith( ".pyw" ):
+                from fileutils import ( detectFileType, PythonFileType,
+                                        Python3FileType )
+                fileType = detectFileType( fileName )
+                if fileType not in [ PythonFileType, Python3FileType ]:
                     return
             self.project.validateRopeProject( fileName )
             return
@@ -205,23 +205,23 @@ class GlobalData( object ):
             scriptName = os.path.realpath( scriptName )
             if not os.path.isfile( scriptName ):
                 return False
-            if scriptName.endswith( ".py" ) or \
-               scriptName.endswith( ".py3" ) or \
-               scriptName.endswith( ".pyw" ):
+
+            from fileutils import ( detectFileType, PythonFileType,
+                                    Python3FileType )
+            if detectFileType( scriptName ) in [ PythonFileType,
+                                                 Python3FileType ]:
                 return True
             return False
 
         def getFileLineDocstring( self, fName, line ):
             " Provides a docstring if so for the given file and line "
-            if not ( fName.endswith( '.py' ) or
-                     fName.endswith( '.py3' ) or
-                     fName.endswith( '.pyw' ) ):
+            from fileutils import ( detectFileType, PythonFileType,
+                                    Python3FileType )
+            if detectFileType( fName ) not in [ PythonFileType,
+                                                Python3FileType ]:
                 return ""
 
-            if self.project.isLoaded():
-                infoCache = self.project.briefModinfoCache
-            else:
-                infoCache = self.briefModinfoCache
+            infoCache = self.briefModinfoCache
 
             def checkFuncObject( obj, line ):
                 " Checks docstring for a function or a class "
@@ -247,26 +247,12 @@ class GlobalData( object ):
 
         def getModInfo( self, path ):
             " Provides a module info for the given file "
-            if not ( path.endswith( '.py' ) or
-                     path.endswith( '.py3' ) or
-                     path.endswith( '.pyw' ) ):
-                raise Exception( "Trying to parse non-python file: " + path +
-                                 ". Expected extensions .py or .py3 or .pyw" )
-
-            if self.project.isLoaded():
-                return self.project.briefModinfoCache.get( path )
+            from fileutils import ( detectFileType, PythonFileType,
+                                    Python3FileType )
+            if detectFileType( path ) not in [ PythonFileType,
+                                               Python3FileType ]:
+                raise Exception( "Trying to parse non-python file: " + path )
             return self.briefModinfoCache.get( path )
-
-        @staticmethod
-        def __checkMagic():
-            " Checks if the magic module is able to be loaded "
-            try:
-                import magic
-                m = magic.Magic()
-                m.close()
-                return True
-            except:
-                return False
 
         @staticmethod
         def __checkGraphviz():

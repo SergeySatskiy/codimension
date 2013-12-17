@@ -54,10 +54,9 @@ class FunctionsBrowserModel( BrowserModelBase ):
 
     def __populateModel( self ):
         " Populates the project browser model "
-
         self.clear()
         project = self.globalData.project
-        cache = project.briefModinfoCache
+        cache = self.globalData.briefModinfoCache
         for fname in project.filesList:
             if detectFileType( fname ) in [ PythonFileType, Python3FileType ]:
                 info = cache.get( fname )
@@ -91,7 +90,7 @@ class FunctionsBrowserModel( BrowserModelBase ):
             self.removeTreeItem( item )
 
         for path in addedPythonFiles:
-            info = self.globalData.project.briefModinfoCache.get( path )
+            info = self.globalData.briefModinfoCache.get( path )
             for funcObj in info.functions:
                 needUpdate = True
                 newItem = TreeViewFunctionItem( self.rootItem, funcObj )
@@ -104,7 +103,7 @@ class FunctionsBrowserModel( BrowserModelBase ):
         " Triggered when a file was updated "
 
         # Here: python file which belongs to the project
-        info = self.globalData.project.briefModinfoCache.get( fileName )
+        info = self.globalData.briefModinfoCache.get( fileName )
 
         existingFunctions = []
         itemsToRemove = []
