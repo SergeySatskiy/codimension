@@ -712,7 +712,7 @@ class EditorsManager( QTabWidget ):
         self.navigationButton = QToolButton( self )
         self.navigationButton.setIcon(
                 PixmapCache().getIcon( "1downarrow.png" ) )
-        self.navigationButton.setToolTip( "Show a navigation menu" )
+        self.navigationButton.setToolTip( "List the open tabs" )
         self.navigationButton.setPopupMode( QToolButton.InstantPopup )
         self.navigationButton.setMenu( self.__navigationMenu )
         self.navigationButton.setEnabled( False )
