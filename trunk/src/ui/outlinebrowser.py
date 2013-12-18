@@ -196,18 +196,150 @@ class OutlineBrowser( FilesBrowser ):
 
         return
 
-    def highlightContextItem( self, context, line, info ):
-        " Highlights the context defined item "
-        print "HIGHLIGHT requested for line: " + str( line )
-        print context
-
-        if context.length == 0:
-            # It is a global context. Check if something matches
-            # - encoding
-            # - import
-            # - class
-            # - function
-            # - global variable
-            pass
+    def __expandItem( self, item ):
+        " Expands the given item "
+        srcModel = self.model().sourceModel()
+        index = srcModel.buildIndex( item.getRowPath() )
+        self.setExpanded( self.model().mapFromSource( index ), True )
         return
 
+    def __selectItem( self, item ):
+        " Selects the item "
+        srcModel = self.model().sourceModel()
+        index = srcModel.buildIndex( item.getRowPath() )
+        self.setCurrentIndex( self.model().mapFromSource( index ) )
+        self.setFocus()
+        return
+
+    @staticmethod
+    def __importMatch( impObj, line ):
+        " Returns True if the importobject matches "
+        minLine = impObj.line
+        maxLine = impObj.line
+        for what in impObj.what:
+            if what.line > maxLine:
+                maxLine = what.line
+        return line >= minLine and line <= maxLine
+
+    @staticmethod
+    def __funcMatch( funcObj, line ):
+        " Returns True if the function object matches "
+        minLine = funcObj.keywordLine
+        maxLine = funcObj.colonLine
+        for decor in funcObj.decorators:
+            if decor.line < minLine:
+                minLine = decor.line
+        return line >= minLine and line <= maxLine
+
+    @staticmethod
+    def __classMatch( classObj, line ):
+        " Returns True if the class object matches "
+        minLine = classObj.keywordLine
+        maxLine = classObj.colonLine
+        for decor in classObj.decorators:
+            if decor.line < minLine:
+                minLine = decor.line
+        return line >= minLine and line <= maxLine
+
+    def highlightContextItem( self, context, line, info ):
+        " Highlights the context defined item "
+
+        srcModel = self.model().sourceModel()
+        if context.length == 0:
+            # It is a global context. Check if something matches
+            # Encoding
+            if info.encoding:
+                if info.encoding.line == line:
+                    for item in srcModel.rootItem.childItems:
+                        if item.itemType == CodingItemType:
+                            self.__selectItem( item )
+                            return True
+                    return False
+            # Globals
+            for glob in info.globals:
+                if glob.line == line:
+                    for item in srcModel.rootItem.childItems:
+                        if item.itemType == GlobalsItemType:
+                            self.__expandItem( item )
+                            for item in item.childItems:
+                                if item.sourceObj.line == line:
+                                    self.__selectItem( item )
+                                    return True
+                    return False
+            # Imports
+            for imp in info.imports:
+                if self.__importMatch( imp, line ):
+                    for item in srcModel.rootItem.childItems:
+                        if item.itemType == ImportsItemType:
+                            self.__expandItem( item )
+                            for item in item.childItems:
+                                if self.__importMatch( item.sourceObj, line ):
+                                    self.__selectItem( item )
+                                    return True
+                    return False
+
+            # No match has been found in global context
+            return False
+
+        # This is something nested
+        currentItem = srcModel.rootItem
+        for level in context.levels:
+            scopeType = level[ 1 ]
+            scopeObj = level[ 0 ]
+            if scopeType == context.FunctionScope:
+                # Search for 'functions' item type and expand it
+                if currentItem is not srcModel.rootItem:
+                    self.__expandItem( currentItem )
+                found = False
+                for item in currentItem.childItems:
+                    if item.itemType == FunctionsItemType:
+                        self.__expandItem( item )
+                        for item in item.childItems:
+                            if self.__funcMatch( item.sourceObj,
+                                                 scopeObj.line ):
+                                self.__selectItem( item )
+                                currentItem = item
+                                found = True
+                                break
+                        if found:
+                            break
+                if found:
+                    continue
+                return False
+            if scopeType == context.ClassScope:
+                # Search for 'classes' item type and expand it
+                if currentItem is not srcModel.rootItem:
+                    self.__expandItem( currentItem )
+                found = False
+                for item in currentItem.childItems:
+                    if item.itemType == ClassesItemType:
+                        self.__expandItem( item )
+                        for item in item.childItems:
+                            if self.__classMatch( item.sourceObj,
+                                                  scopeObj.line ):
+                                self.__selectItem( item )
+                                currentItem = item
+                                found = True
+                                break
+                        if found:
+                            break
+                if found:
+                    continue
+                return False
+            if scopeType == context.ClassMethodScope:
+                # Search for 'function' item type
+                if currentItem is not srcModel.rootItem:
+                    self.__expandItem( currentItem )
+                found = False
+                for item in item.childItems:
+                    if self.__funcMatch( item.sourceObj,
+                                         scopeObj.line ):
+                        self.__selectItem( item )
+                        currentItem = item
+                        found = True
+                        break
+                if found:
+                    continue
+                return False
+
+        return True

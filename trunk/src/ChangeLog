@@ -5,6 +5,7 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * Improvement: get rid of serialization/deserialization of the python files
   parser info cache
 * New feature: user selectable sorting order for the tabs in the navigation menu
+* New feature: editor 'highlight in outline browser' context menu item
 
 2013 Dec 14 Sergey Satskiy <sergey.satskiy@gmail.com>
 
