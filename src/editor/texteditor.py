@@ -535,14 +535,16 @@ class TextEditor( ScintillaWrapper ):
         if not self.parent().shouldAcceptFocus():
             self.parent().setFocus()
             return
-        return ScintillaWrapper.focusInEvent( self, event )
+        ScintillaWrapper.focusInEvent( self, event )
+        return
 
     def focusOutEvent( self, event ):
         " Disable Shift+Tab when the focus is lost "
         self.__completer.hide()
         if not self.__inCompletion:
             self.__resetCalltip()
-        return ScintillaWrapper.focusOutEvent( self, event )
+        ScintillaWrapper.focusOutEvent( self, event )
+        return
 
     def updateSettings( self ):
         " Updates the editor settings "
@@ -2059,6 +2061,7 @@ class TextEditor( ScintillaWrapper ):
         context = getContext( self, info, True, False )
         line, pos = self.getCursorPosition()
         GlobalData().mainWindow.highlightInOutline( context, int( line ) + 1 )
+        self.setFocus()
         return
 
     def _updateDwellingTime( self ):
