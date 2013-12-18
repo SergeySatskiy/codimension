@@ -102,6 +102,10 @@ class ProjectViewer( QWidget ):
         self.connect( GlobalData().pluginManager, SIGNAL( 'PluginDeactivated' ),
                       self.__onPluginDeactivated )
 
+        # Keep the min and max height of the FS part initialized
+        self.__minH = self.lower.minimumHeight()
+        self.__maxH = self.lower.maximumHeight()
+
         # At the beginning the FS viewer is shown, so hide it if needed
         if Settings().showFSViewer == False:
             self.__onShowHide( True )

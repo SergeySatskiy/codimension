@@ -6,6 +6,7 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
   parser info cache
 * New feature: user selectable sorting order for the tabs in the navigation menu
 * New feature: editor 'highlight in outline browser' context menu item
+* Bug fix: exception in some cases when 'highlight in FS browser' is selected
 
 2013 Dec 14 Sergey Satskiy <sergey.satskiy@gmail.com>
 
