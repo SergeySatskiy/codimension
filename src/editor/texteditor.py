@@ -256,6 +256,8 @@ class TextEditor( ScintillaWrapper ):
                     return self.onFirstChar()
                 if key == Qt.Key_End:
                     return self.onLastChar()
+                if key == Qt.Key_B:
+                    return self.highlightInOutline()
             if modifiers == Qt.AltModifier:
                 if key == Qt.Key_Left:
                     return self.__onWordPartLeft()
@@ -348,7 +350,7 @@ class TextEditor( ScintillaWrapper ):
         self.__menuHighlightInOutline = self.__menu.addAction(
                                 PixmapCache().getIcon( "highlightmenu.png" ),
                                 "Highlight in &outline browser",
-                                self.highlightInOutline )
+                                self.highlightInOutline, 'Ctrl+B' )
 
         self.connect( self.__menu, SIGNAL( "aboutToShow()" ),
                       self.__contextMenuAboutToShow )
@@ -2062,7 +2064,7 @@ class TextEditor( ScintillaWrapper ):
         line, pos = self.getCursorPosition()
         GlobalData().mainWindow.highlightInOutline( context, int( line ) + 1 )
         self.setFocus()
-        return
+        return True
 
     def _updateDwellingTime( self ):
         " Updates the dwelling time as necessary "
