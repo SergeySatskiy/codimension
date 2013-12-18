@@ -349,7 +349,6 @@ class TextEditor( ScintillaWrapper ):
                                 PixmapCache().getIcon( "highlightmenu.png" ),
                                 "Highlight in &outline browser",
                                 self.highlightInOutline )
-        self.__menuHighlightInOutline.setVisible( False )
 
         self.connect( self.__menu, SIGNAL( "aboutToShow()" ),
                       self.__contextMenuAboutToShow )
@@ -2057,7 +2056,7 @@ class TextEditor( ScintillaWrapper ):
         " Triggered when highlight in outline browser is requested "
         text = str( self.text() )
         info = getBriefModuleInfoFromMemory( text )
-        context = getContext( self, info, True )
+        context = getContext( self, info, True, False )
         line, pos = self.getCursorPosition()
         GlobalData().mainWindow.highlightInOutline( context, int( line ) + 1 )
         return
