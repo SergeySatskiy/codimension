@@ -30,7 +30,7 @@ from PyQt4.QtGui import ( QLabel, QToolBar, QWidget, QMessageBox, QFont,
                           QAction, QMainWindow, QShortcut, QFrame,
                           QApplication, QCursor, QMenu, QToolButton,
                           QToolTip, QPalette, QColor, QFileDialog, QDialog,
-                          QDesktopServices, QStyleFactory )
+                          QDesktopServices, QStyleFactory, QActionGroup )
 from fitlabel import FitPathLabel
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
@@ -1249,6 +1249,32 @@ class CodimensionMainWindow( QMainWindow ):
         editorTooltipsAct.setChecked( self.settings.editorTooltips )
         self.connect( editorTooltipsAct, SIGNAL( 'changed()' ),
                       self.__editorTooltipsChanged )
+
+        openTabsMenu = self.__optionsMenu.addMenu( "Open tabs button" )
+        self.__navigationSortGroup = QActionGroup( self )
+        self.__alphasort = openTabsMenu.addAction( "Sort alphabetically" )
+        self.__alphasort.setCheckable( True )
+        self.__alphasort.setData( QVariant( -1 ) )
+        self.__alphasort.setActionGroup( self.__navigationSortGroup )
+        self.__tabsort = openTabsMenu.addAction( "Tab order sort" )
+        self.__tabsort.setCheckable( True )
+        self.__tabsort.setData( QVariant( -2 ) )
+        self.__tabsort.setActionGroup( self.__navigationSortGroup )
+        if self.settings.tablistsortalpha:
+            self.__alphasort.setChecked( True )
+        else:
+            self.__tabsort.setChecked( True )
+        openTabsMenu.addSeparator()
+        tabOrderPreservedAct = openTabsMenu.addAction(
+                                    "Tab order preserved on selection" )
+        tabOrderPreservedAct.setCheckable( True )
+        tabOrderPreservedAct.setData( QVariant( 0 ) )
+        tabOrderPreservedAct.setChecked( self.settings.taborderpreserved )
+        self.connect( tabOrderPreservedAct, SIGNAL( 'changed()' ),
+                      self.__tabOrderPreservedChanged )
+        self.connect( openTabsMenu, SIGNAL( "triggered(QAction*)" ),
+                      self.__openTabsMenuTriggered )
+
         self.__optionsMenu.addSeparator()
         themesMenu = self.__optionsMenu.addMenu( "Themes" )
         availableThemes = self.__buildThemesList()
@@ -2701,6 +2727,26 @@ class CodimensionMainWindow( QMainWindow ):
                                 not self.settings.editorTooltips
         self.editorsManagerWidget.editorsManager.setTooltips(
                         self.settings.editorTooltips )
+        return
+
+    def __tabOrderPreservedChanged( self ):
+        " Tab order preserved option changed "
+        self.settings.taborderpreserved = \
+                                not self.settings.taborderpreserved
+        return
+
+    def __openTabsMenuTriggered( self, act ):
+        " Tab list settings menu triggered "
+        value, isOK = act.data().toInt()
+        if isOK:
+            if value == -1:
+                self.settings.tablistsortalpha = True
+                self.__alphasort.setChecked( True )
+                self.__tabsort.setChecked( False )
+            elif value == -2:
+                self.settings.tablistsortalpha = False
+                self.__alphasort.setChecked( False )
+                self.__tabsort.setChecked( True )
         return
 
     @staticmethod
