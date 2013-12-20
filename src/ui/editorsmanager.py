@@ -33,8 +33,7 @@ import logging, os, os.path
 from PyQt4.QtCore import Qt, SIGNAL, QVariant, QDir, QUrl
 from PyQt4.QtGui import ( QTabWidget, QDialog, QMessageBox, QWidget,
                           QHBoxLayout, QMenu, QToolButton, QShortcut,
-                          QFileDialog, QApplication, QTabBar, QIcon,
-                          QActionGroup )
+                          QFileDialog, QApplication, QTabBar, QIcon )
 from utils.pixmapcache import PixmapCache
 from welcomewidget import WelcomeWidget
 from helpwidget import QuickHelpWidget
@@ -94,7 +93,6 @@ class EditorsManager( QTabWidget ):
         self.newDiffIndex = -1
         self.__mainWindow = parent
         self.__navigationMenu = None
-        self.__navigationSortGroup = QActionGroup( self )
         self.__historyBackMenu = None
         self.__historyFwdMenu = None
         self.__skipHistoryUpdate = False
@@ -767,21 +765,6 @@ class EditorsManager( QTabWidget ):
         " Shows the navigation button menu "
 
         self.__navigationMenu.clear()
-        alphasort = self.__navigationMenu.addAction( "Sort Alphabetically" )
-        alphasort.setData( QVariant( -1 ) )  # see __navigationMenuTriggered()
-        alphasort.setCheckable( True )
-        alphasort.setActionGroup( self.__navigationSortGroup )
-        tabsort = self.__navigationMenu.addAction( "Tab order sort" )
-        tabsort.setData( QVariant( -2 ) )    # see __navigationMenuTriggered()
-        tabsort.setCheckable( True )
-        tabsort.setActionGroup( self.__navigationSortGroup )
-        self.__navigationMenu.addSeparator()
-
-        if Settings().tablistsortalpha:
-            alphasort.setChecked( True )
-        else:
-            tabsort.setChecked( True )
-
         items = []
         for index in xrange( self.count() ):
             items.append( [ self.tabIcon( index ), self.tabText( index ),
@@ -809,30 +792,25 @@ class EditorsManager( QTabWidget ):
         if not isOK or self.currentIndex() == index:
             return
 
-        if index < 0:
-            if index == -1:
-                Settings().tablistsortalpha = True
-            else:
-                Settings().tablistsortalpha = False
-            return
+        if Settings().taborderpreserved:
+            self.activateTab( index )
+        else:
+            if index != 0:
+                # Memorize the tab attributes
+                tooltip = self.tabToolTip( index )
+                text = self.tabText( index )
+                icon = self.tabIcon( index )
+                whatsThis = self.tabWhatsThis( index )
+                widget = self.widget( index )
 
-        if index != 0:
-            # Memorize the tab attributes
-            tooltip = self.tabToolTip( index )
-            text = self.tabText( index )
-            icon = self.tabIcon( index )
-            whatsThis = self.tabWhatsThis( index )
-            widget = self.widget( index )
+                # Remove the tab from the old position
+                self.removeTab( index )
 
-            # Remove the tab from the old position
-            self.removeTab( index )
-
-            # Insert the tab at position 0
-            self.insertTab( 0, widget, icon, text )
-            self.setTabToolTip( 0, tooltip )
-            self.setTabWhatsThis( 0, whatsThis )
-
-        self.activateTab( 0 )
+                # Insert the tab at position 0
+                self.insertTab( 0, widget, icon, text )
+                self.setTabToolTip( 0, tooltip )
+                self.setTabWhatsThis( 0, whatsThis )
+            self.activateTab( 0 )
         return
 
     def __currentChanged( self, index ):

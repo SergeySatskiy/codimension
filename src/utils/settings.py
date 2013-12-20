@@ -146,6 +146,7 @@ CDM_SETTINGS = {
     CDMSetting( "vcsstatusupdateinterval", CDMSetting.TYPE_INT, 
                 VCS_STATUS_UPDATE_INTERVAL_DEFAULT ),
     CDMSetting( "tablistsortalpha", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "taborderpreserved", CDMSetting.TYPE_BOOL, False ),
            ],
 "recentProjects" : [
     CDMSetting( "project", CDMSetting.TYPE_STR_LST, [] )
