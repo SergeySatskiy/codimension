@@ -9,6 +9,8 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * Bug fix: exception in some cases when 'highlight in FS browser' is selected
 * New feature: user selectable behavior - to preserve or not the tab order upon
   selection a tab in the tab list button menu
+* Bug fix: on some systems find/replace comboboxes expanded too much in case of
+  long patterns
 
 2013 Dec 14 Sergey Satskiy <sergey.satskiy@gmail.com>
 

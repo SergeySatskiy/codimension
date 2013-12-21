@@ -45,6 +45,7 @@ class ComboBoxNoUndo( QComboBox ):
 
     def __init__( self, parent = None ):
         QComboBox.__init__( self, parent )
+        self.setSizeAdjustPolicy( QComboBox.AdjustToMinimumContentsLength )
         return
 
     def event( self, event):
