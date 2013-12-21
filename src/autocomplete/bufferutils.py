@@ -283,6 +283,10 @@ def _isOnDefinitionLine( infoObj, line, pos ):
     lowLimit = infoObj.keywordLine << 16
     upLimit = (infoObj.colonLine << 16) + infoObj.colonPos
     current = (line << 16) + pos
+    for decor in infoObj.decorators:
+        candidate = (decor.line << 16) + decor.pos
+        if candidate < lowLimit:
+            lowLimit = candidate
     if current >= lowLimit and current <= upLimit:
         return True
     return False
