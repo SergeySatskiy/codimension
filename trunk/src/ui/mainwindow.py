@@ -749,6 +749,10 @@ class CodimensionMainWindow( QMainWindow ):
                 PixmapCache().getIcon( 'highlightmenu.png' ),
                 'Highlight in file system browser',
                 editorsManager.onHighlightInFS )
+        self.__highlightInOutlineAct = self.__tabMenu.addAction(
+                PixmapCache().getIcon( 'highlightmenu.png' ),
+                'Highlight in outline browser',
+                self.__onHighlightInOutline )
         self.__tabMenu.addSeparator()
         self.__recentFilesMenu = QMenu( "&Recent files", self )
         self.connect( self.__recentFilesMenu, SIGNAL( "triggered(QAction*)" ),
@@ -3761,11 +3765,18 @@ class CodimensionMainWindow( QMainWindow ):
         currentWidget.getEditor().downloadAndShow()
         return
 
-    def __onOpenInBrowser ( self ):
+    def __onOpenInBrowser( self ):
         " Triggered when a selected url should be opened in a browser "
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
         currentWidget.getEditor().openInBrowser()
+        return
+
+    def __onHighlightInOutline( self ):
+        " Triggered to highlight the current context in the outline browser "
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        currentWidget.getEditor().highlightInOutline()
         return
 
     def __onUndo( self ):
@@ -3958,12 +3969,14 @@ class CodimensionMainWindow( QMainWindow ):
                 editorsManager.isHighlightInPrjAvailable() )
         self.__highlightInFSAct.setEnabled(
                 editorsManager.isHighlightInFSAvailable() )
+        self.__highlightInOutlineAct.setEnabled( isPythonBuffer )
 
         self.__closeTabAct.setShortcut( "Ctrl+F4" )
         self.__tabJumpToDefAct.setShortcut( "Ctrl+\\" )
         self.__calltipAct.setShortcut( "Ctrl+/" )
         self.__tabJumpToScopeBeginAct.setShortcut( "Alt+U" )
         self.__tabOpenImportAct.setShortcut( "Ctrl+I" )
+        self.__highlightInOutlineAct.setShortcut( "Ctrl+B" )
 
         self.__recentFilesMenu.clear()
         addedCount = 0
@@ -4136,6 +4149,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__calltipAct.setShortcut( "" )
         self.__tabJumpToScopeBeginAct.setShortcut( "" )
         self.__tabOpenImportAct.setShortcut( "" )
+        self.__highlightInOutlineAct.setShortcut( "" )
 
         self.__saveFileAct.setEnabled( True )
         self.__saveFileAsAct.setEnabled( True )
