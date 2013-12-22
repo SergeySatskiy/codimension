@@ -4,21 +4,62 @@
 # I made some small fixes, improved some small parts and added a Session class
 # which can be used by the widget.
 # License: GPL2
+
 import sys
 import os
 import fcntl
 import array
 import threading
 import time
-import termios
+from termios import TIOCSWINSZ
 import pty
-import signal
+from signal import signal, SIGCHLD, SIG_IGN, SIGTERM
 import struct
-import select
-import subprocess
+from select import select
+from subprocess import Popen
 
 
 __version__ = "0.1"
+
+
+VT100_CHARSET_GRAPH = ( 0x25ca, 0x2026, 0x2022, 0x3f,
+                        0xb6,   0x3f,   0xb0,   0xb1,
+                        0x3f,   0x3f,   0x2b,   0x2b,
+                        0x2b,   0x2b,   0x2b,   0xaf,
+                        0x2014, 0x2014, 0x2014, 0x5f,
+                        0x2b,   0x2b,   0x2b,   0x2b,
+                        0x7c,   0x2264, 0x2265, 0xb6,
+                        0x2260, 0xa3,   0xb7,   0x7f  )
+
+VT100_KEYFILTER_ANSIKEYS = {
+    '~': '~',           'A': '\x1b[A',
+    'B': '\x1b[B',      'C': '\x1b[C',
+    'D': '\x1b[D',      'F': '\x1b[F',
+    'H': '\x1b[H',      '1': '\x1b[5~',
+    '2': '\x1b[6~',     '3': '\x1b[2~',
+    '4': '\x1b[3~',     'a': '\x1bOP',
+    'b': '\x1bOQ',      'c': '\x1bOR',
+    'd': '\x1bOS',      'e': '\x1b[15~',
+    'f': '\x1b[17~',    'g': '\x1b[18~',
+    'h': '\x1b[19~',    'i': '\x1b[20~',
+    'j': '\x1b[21~',    'k': '\x1b[23~',
+    'l': '\x1b[24~',
+        }
+
+VT100_KEYFILTER_APPKEYS = {
+    '~': '~',           'A': '\x1bOA',
+    'B': '\x1bOB',      'C': '\x1bOC',
+    'D': '\x1bOD',      'F': '\x1bOF',
+    'H': '\x1bOH',      '1': '\x1b[5~',
+    '2': '\x1b[6~',     '3': '\x1b[2~',
+    '4': '\x1b[3~',     'a': '\x1bOP',
+    'b': '\x1bOQ',      'c': '\x1bOR',
+    'd': '\x1bOS',      'e': '\x1b[15~',
+    'f': '\x1b[17~',    'g': '\x1b[18~',
+    'h': '\x1b[19~',    'i': '\x1b[20~',
+    'j': '\x1b[21~',    'k': '\x1b[23~',
+    'l': '\x1b[24~',
+        }
 
 
 class Terminal(object):
@@ -26,147 +67,87 @@ class Terminal(object):
     def __init__(self, w, h):
         self.w = w
         self.h = h
-        self.vt100_charset_graph = [
-            0x25ca, 0x2026, 0x2022, 0x3f,
-            0xb6, 0x3f, 0xb0, 0xb1,
-            0x3f, 0x3f, 0x2b, 0x2b,
-            0x2b, 0x2b, 0x2b, 0xaf,
-            0x2014, 0x2014, 0x2014, 0x5f,
-            0x2b, 0x2b, 0x2b, 0x2b,
-            0x7c, 0x2264, 0x2265, 0xb6,
-            0x2260, 0xa3, 0xb7, 0x7f
-        ]
         self.vt100_esc = {
-            '#8':	self.esc_DECALN,
-            '(A':	self.esc_G0_0,
-            '(B':	self.esc_G0_1,
-            '(0':	self.esc_G0_2,
-            '(1':	self.esc_G0_3,
-            '(2':	self.esc_G0_4,
-            ')A':	self.esc_G1_0,
-            ')B':	self.esc_G1_1,
-            ')0':	self.esc_G1_2,
-            ')1':	self.esc_G1_3,
-            ')2':	self.esc_G1_4,
-            '7':	self.esc_DECSC,
-            '8':	self.esc_DECRC,
-            '=':	self.esc_DECKPAM,
-            '>':	self.esc_DECKPNM,
-            'D':	self.esc_IND,
-            'E':	self.esc_NEL,
-            'H':	self.esc_HTS,
-            'M':	self.esc_RI,
-            'N':	self.esc_SS2,
-            'O':	self.esc_SS3,
-            'P':	self.esc_DCS,
-            'X':	self.esc_SOS,
-            'Z':	self.esc_DECID,
-            '[':	self.esc_CSI,
-            '\\':	self.esc_ST,
-            ']':	self.esc_OSC,
-            '^':	self.esc_PM,
-            '_':	self.esc_APC,
-            'c':	self.reset_hard,
+            '#8':    self.esc_DECALN,
+            '(A':    self.esc_G0_0,
+            '(B':    self.esc_G0_1,
+            '(0':    self.esc_G0_2,
+            '(1':    self.esc_G0_3,
+            '(2':    self.esc_G0_4,
+            ')A':    self.esc_G1_0,
+            ')B':    self.esc_G1_1,
+            ')0':    self.esc_G1_2,
+            ')1':    self.esc_G1_3,
+            ')2':    self.esc_G1_4,
+            '7':     self.esc_DECSC,
+            '8':     self.esc_DECRC,
+            '=':     self.esc_DECKPAM,
+            '>':     self.esc_DECKPNM,
+            'D':     self.esc_IND,
+            'E':     self.esc_NEL,
+            'H':     self.esc_HTS,
+            'M':     self.esc_RI,
+            'N':     self.esc_SS2,
+            'O':     self.esc_SS3,
+            'P':     self.esc_DCS,
+            'X':     self.esc_SOS,
+            'Z':     self.esc_DECID,
+            '[':     self.esc_CSI,
+            '\\':    self.esc_ST,
+            ']':     self.esc_OSC,
+            '^':     self.esc_PM,
+            '_':     self.esc_APC,
+            'c':     self.reset_hard,
         }
         self.vt100_csi = {
-            '@':	self.csi_ICH,
-            'A':	self.csi_CUU,
-            'B':	self.csi_CUD,
-            'C':	self.csi_CUF,
-            'D':	self.csi_CUB,
-            'E':	self.csi_CNL,
-            'F':	self.csi_CPL,
-            'G':	self.csi_CHA,
-            'H':	self.csi_CUP,
-            'I':	self.csi_CHT,
-            'J':	self.csi_ED,
-            'K':	self.csi_EL,
-            'L':	self.csi_IL,
-            'M':	self.csi_DL,
-            'P':	self.csi_DCH,
-            'S':	self.csi_SU,
-            'T':	self.csi_SD,
-            'W':	self.csi_CTC,
-            'X':	self.csi_ECH,
-            'Z':	self.csi_CBT,
-            '`':	self.csi_HPA,
-            'a':	self.csi_HPR,
-            'b':	self.csi_REP,
-            'c':	self.csi_DA,
-            'd':	self.csi_VPA,
-            'e':	self.csi_VPR,
-            'f':	self.csi_HVP,
-            'g':	self.csi_TBC,
-            'h':	self.csi_SM,
-            'l':	self.csi_RM,
-            'm':	self.csi_SGR,
-            'n':	self.csi_DSR,
-            'r':	self.csi_DECSTBM,
-            's':	self.csi_SCP,
-            'u':	self.csi_RCP,
-            'x':	self.csi_DECREQTPARM,
-            '!p':	self.csi_DECSTR,
-        }
-        self.vt100_keyfilter_ansikeys = {
-            '~': '~',
-            'A': '\x1b[A',
-            'B': '\x1b[B',
-            'C': '\x1b[C',
-            'D': '\x1b[D',
-            'F': '\x1b[F',
-            'H': '\x1b[H',
-            '1': '\x1b[5~',
-            '2': '\x1b[6~',
-            '3': '\x1b[2~',
-            '4': '\x1b[3~',
-            'a': '\x1bOP',
-            'b': '\x1bOQ',
-            'c': '\x1bOR',
-            'd': '\x1bOS',
-            'e': '\x1b[15~',
-            'f': '\x1b[17~',
-            'g': '\x1b[18~',
-            'h': '\x1b[19~',
-            'i': '\x1b[20~',
-            'j': '\x1b[21~',
-            'k': '\x1b[23~',
-            'l': '\x1b[24~',
-        }
-        self.vt100_keyfilter_appkeys = {
-            '~': '~',
-            'A': '\x1bOA',
-            'B': '\x1bOB',
-            'C': '\x1bOC',
-            'D': '\x1bOD',
-            'F': '\x1bOF',
-            'H': '\x1bOH',
-            '1': '\x1b[5~',
-            '2': '\x1b[6~',
-            '3': '\x1b[2~',
-            '4': '\x1b[3~',
-            'a': '\x1bOP',
-            'b': '\x1bOQ',
-            'c': '\x1bOR',
-            'd': '\x1bOS',
-            'e': '\x1b[15~',
-            'f': '\x1b[17~',
-            'g': '\x1b[18~',
-            'h': '\x1b[19~',
-            'i': '\x1b[20~',
-            'j': '\x1b[21~',
-            'k': '\x1b[23~',
-            'l': '\x1b[24~',
+            '@':     self.csi_ICH,
+            'A':     self.csi_CUU,
+            'B':     self.csi_CUD,
+            'C':     self.csi_CUF,
+            'D':     self.csi_CUB,
+            'E':     self.csi_CNL,
+            'F':     self.csi_CPL,
+            'G':     self.csi_CHA,
+            'H':     self.csi_CUP,
+            'I':     self.csi_CHT,
+            'J':     self.csi_ED,
+            'K':     self.csi_EL,
+            'L':     self.csi_IL,
+            'M':     self.csi_DL,
+            'P':     self.csi_DCH,
+            'S':     self.csi_SU,
+            'T':     self.csi_SD,
+            'W':     self.csi_CTC,
+            'X':     self.csi_ECH,
+            'Z':     self.csi_CBT,
+            '`':     self.csi_HPA,
+            'a':     self.csi_HPR,
+            'b':     self.csi_REP,
+            'c':     self.csi_DA,
+            'd':     self.csi_VPA,
+            'e':     self.csi_VPR,
+            'f':     self.csi_HVP,
+            'g':     self.csi_TBC,
+            'h':     self.csi_SM,
+            'l':     self.csi_RM,
+            'm':     self.csi_SGR,
+            'n':     self.csi_DSR,
+            'r':     self.csi_DECSTBM,
+            's':     self.csi_SCP,
+            'u':     self.csi_RCP,
+            'x':     self.csi_DECREQTPARM,
+            '!p':    self.csi_DECSTR,
         }
         self.reset_hard()
 
     # Reset functions
     def reset_hard(self):
         # Attribute mask: 0x0XFB0000
-        #	X:	Bit 0 - Underlined
-        #		Bit 1 - Negative
-        #		Bit 2 - Concealed
-        #	F:	Foreground
-        #	B:	Background
+        #    X:    Bit 0 - Underlined
+        #        Bit 1 - Negative
+        #        Bit 2 - Concealed
+        #    F:    Foreground
+        #    B:    Background
         self.attr = 0x00fe0000
         # UTF-8 decoder
         self.utf8_units_count = 0
@@ -189,11 +170,11 @@ class Terminal(object):
 
     def reset_soft(self):
         # Attribute mask: 0x0XFB0000
-        #	X:	Bit 0 - Underlined
-        #		Bit 1 - Negative
-        #		Bit 2 - Concealed
-        #	F:	Foreground
-        #	B:	Background
+        #    X:    Bit 0 - Underlined
+        #        Bit 1 - Negative
+        #        Bit 2 - Concealed
+        #    F:    Foreground
+        #    B:    Background
         self.attr = 0x00fe0000
         # Scroll parameters
         self.scroll_area_y0 = 0
@@ -267,11 +248,11 @@ class Terminal(object):
                     o += '?'
         return o
 
-    def utf8_charwidth(self, char):
+    @staticmethod
+    def utf8_charwidth(char):
         if char >= 0x2e80:
             return 2
-        else:
-            return 1
+        return 1
 
     # Low-level terminal functions
     def peek(self, y0, x0, y1, x1):
@@ -322,7 +303,7 @@ class Terminal(object):
     def cursor_line_width(self, next_char):
         wx = self.utf8_charwidth(next_char)
         lx = 0
-        for x in range(min(self.cx, self.w)):
+        for x in xrange(min(self.cx, self.w)):
             char = self.peek(self.cy, x, self.cy + 1, x + 1)[0] & 0xffff
             wx += self.utf8_charwidth(char)
             lx += 1
@@ -362,7 +343,7 @@ class Terminal(object):
         if n <= 0 and self.cx == 0:
             return
         ts = 0
-        for i in range(len(self.tab_stops)):
+        for i in xrange(len(self.tab_stops)):
             if self.cx >= self.tab_stops[i]:
                 ts = i
         ts += n
@@ -410,7 +391,7 @@ class Terminal(object):
         if self.vt100_charset_is_single_shift:
             self.vt100_charset_is_single_shift = False
         elif self.vt100_charset_is_graphical and (char & 0xffe0) == 0x0060:
-            char = self.vt100_charset_graph[char - 0x60]
+            char = VT100_CHARSET_GRAPH[char - 0x60]
         self.poke(self.cy, self.cx, array.array('i', [self.attr | char]))
         self.cursor_set_x(self.cx + 1)
 
@@ -719,13 +700,9 @@ class Terminal(object):
         p = self.vt100_parse_params(p, ['0'], False)
         for m in p:
             if m == '0':
-                try:
-                    ts = self.tab_stops.index(self.cx)
-                except ValueError:
-                    tab_stops = self.tab_stops
-                    tab_stops.append(self.cx)
-                    tab_stops.sort()
-                    self.tab_stops = tab_stops
+                if self.cx not in self.tab_stops:
+                    self.tab_stops.append(self.cx)
+                    self.tab_stops.sort()
             elif m == '2':
                 try:
                     self.tab_stops.remove(self.cx)
@@ -902,7 +879,7 @@ class Terminal(object):
         # Process parameters (params p with defaults d)
         # Add prefix to all parameters
         prefix = ''
-        if len(p) > 0:
+        if p:
             if p[0] >= '<' and p[0] <= '?':
                 prefix = p[0]
                 p = p[1:]
@@ -912,7 +889,7 @@ class Terminal(object):
         # Process parameters
         n = max(len(p), len(d))
         o = []
-        for i in range(n):
+        for i in xrange(n):
             value_def = False
             if i < len(p):
                 value = prefix + p[i]
@@ -1033,9 +1010,9 @@ class Terminal(object):
                 self.vt100_keyfilter_escape = False
                 try:
                     if self.vt100_mode_cursorkey:
-                        o += self.vt100_keyfilter_appkeys[c]
+                        o += VT100_KEYFILTER_APPKEYS[c]
                     else:
-                        o += self.vt100_keyfilter_ansikeys[c]
+                        o += VT100_KEYFILTER_ANSIKEYS[c]
                 except KeyError:
                     pass
             elif c == '~':
@@ -1055,10 +1032,10 @@ class Terminal(object):
         screen = []
         attr_ = -1
         cx, cy = min(self.cx, self.w - 1), self.cy
-        for y in range(0, self.h):
+        for y in xrange(0, self.h):
             wx = 0
             line = [""]
-            for x in range(0, self.w):
+            for x in xrange(0, self.w):
                 d = self.screen[y * self.w + x]
                 char = d & 0xffff
                 attr = d >> 16
@@ -1115,7 +1092,7 @@ class Multiplexer(object):
     def __init__(self, cmd="/bin/bash", env_term="xterm-color", timeout=60 * 60 * 24):
         # Set Linux signal handler
         if sys.platform in ("linux2", "linux3"):
-            self.sigchldhandler = signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+            self.sigchldhandler = signal(SIGCHLD, SIG_IGN)
         # Session
         self.session = {}
         self.cmd = cmd
@@ -1138,7 +1115,7 @@ class Multiplexer(object):
         try:
             fcntl.ioctl(fd,
                         struct.unpack('i',
-                                      struct.pack('I', termios.TIOCSWINSZ)
+                                      struct.pack('I', TIOCSWINSZ)
                                       )[0],
                         struct.pack("HHHH", h, w, 0, 0))
         except (IOError, OSError):
@@ -1152,20 +1129,19 @@ class Multiplexer(object):
         if not sid in self.session:
             # Start a new session
             self.session[sid] = {
-                'state': 'unborn',
-                'term':	Terminal(w, h),
-                'time':	time.time(),
-                'w':	w,
-                'h':	h}
+                'state':    'unborn',
+                'term':     Terminal(w, h),
+                'time':     time.time(),
+                'w':        w,
+                'h':        h }
             return self.proc_spawn(sid, cmd)
-        elif self.session[sid]['state'] == 'alive':
+        if self.session[sid]['state'] == 'alive':
             self.session[sid]['time'] = time.time()
             # Update terminal size
             if self.session[sid]['w'] != w or self.session[sid]['h'] != h:
                 self.proc_resize(sid, w, h)
             return True
-        else:
-            return False
+        return False
 
     def proc_spawn(self, sid, cmd=None):
         # Session
@@ -1193,9 +1169,9 @@ class Multiplexer(object):
                 os.putenv('PATH', os.environ['PATH'])
                 os.putenv('LANG', ls[0] + '.UTF-8')
                 # os.system(cmd)
-                p = subprocess.Popen(cmd, shell=False)
-                # print "called with subprocess", p.pid
-                child_pid, sts = os.waitpid(p.pid, 0)
+                proc = Popen(cmd, shell=False)
+                # print "called with subprocess", proc.pid
+                child_pid, sts = os.waitpid(proc.pid, 0)
                 # print "child_pid", child_pid, sts
             except (IOError, OSError):
                 pass
@@ -1232,7 +1208,7 @@ class Multiplexer(object):
     def proc_bury(self, sid):
         if self.session[sid]['state'] == 'alive':
             try:
-                os.kill(self.session[sid]['pid'], signal.SIGTERM)
+                os.kill(self.session[sid]['pid'], SIGTERM)
             except (IOError, OSError):
                 pass
         self.proc_waitfordeath(sid)
@@ -1278,12 +1254,10 @@ class Multiplexer(object):
 
     @synchronized
     def proc_write(self, sid, d):
-        """
-        Write to process
-        """
+        " Write to process "
         if sid not in self.session:
             return False
-        elif self.session[sid]['state'] != 'alive':
+        if self.session[sid]['state'] != 'alive':
             return False
         try:
             term = self.session[sid]['term']
@@ -1296,9 +1270,7 @@ class Multiplexer(object):
 
     @synchronized
     def proc_dump(self, sid):
-        """
-        Dump terminal output
-        """
+        " Dump terminal output "
         if sid not in self.session:
             return False
         return self.session[sid]['term'].dump()
@@ -1329,7 +1301,7 @@ class Multiplexer(object):
             # Read fds
             (fds, fd2sid) = self.proc_getalive()
             try:
-                i, o, e = select.select(fds, [], [], 1.0)
+                i, o, e = select(fds, [], [], 1.0)
             except (IOError, OSError):
                 i = []
             for fd in i:
@@ -1406,10 +1378,10 @@ if __name__ == "__main__":
     w, h = (80, 24)
     cmd = "/bin/ls --color=yes"
     multiplex = Multiplexer(cmd)
-    sid = "session-id-%s"
-    if multiplex.proc_keepalive(sid, w, h):
-        #multiplex.proc_write(sid, k)
+    sessionID = "session-id-%s"
+    if multiplex.proc_keepalive(sessionID, w, h):
+        #multiplex.proc_write(sessionID, k)
         time.sleep(1)
-        # print multiplex.proc_dump(sid)
-        print "Output:", multiplex.proc_dump(sid)
+        # print multiplex.proc_dump(sessionID)
+        print "Output:", multiplex.proc_dump(sessionID)
     multiplex.stop()
