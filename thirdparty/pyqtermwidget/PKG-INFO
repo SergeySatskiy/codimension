@@ -1,0 +1,11 @@
+Metadata-Version: 1.0
+Name: pyqterm
+Version: 0.2
+Summary: Simple terminal/console widget for PyQt4 with vt100 support
+Home-page: https://bitbucket.org/henning/pyqtermwidget
+Author: Henning Schroeder
+Author-email: henning.schroeder@gmail.com
+License: GPL2
+Description: UNKNOWN
+Keywords: pyqt pyqt4 console terminal shell vt100 widget
+Platform: UNKNOWN
