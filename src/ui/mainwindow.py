@@ -1090,7 +1090,7 @@ class CodimensionMainWindow( QMainWindow ):
                 'Zoom r&eset', self.__onZoomReset )
 
         # Options menu
-        self.__optionsMenu = QMenu( "&Options", self )
+        self.__optionsMenu = QMenu( "Optio&ns", self )
         self.connect( self.__optionsMenu, SIGNAL( "aboutToShow()" ),
                       self.__optionsAboutToShow )
 
@@ -1311,7 +1311,7 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onMonoFont )
 
         # The plugins menu
-        self.__pluginsMenu = QMenu( "Plugi&ns", self )
+        self.__pluginsMenu = QMenu( "P&lugins", self )
         self.__recomposePluginMenu()
 
         # The Help menu
