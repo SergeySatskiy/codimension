@@ -11,6 +11,7 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
   selection a tab in the tab list button menu
 * Bug fix: on some systems find/replace comboboxes expanded too much in case of
   long patterns
+* Bug fix: SVN plugin log window - incorrect revision number based sorting
 
 2013 Dec 14 Sergey Satskiy <sergey.satskiy@gmail.com>
 
