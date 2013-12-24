@@ -141,6 +141,7 @@ class SVNMenuMixin:
         " Called when the plugin file context menu is about to show "
         path = str( self.fileParentMenu.menuAction().data().toString() )
         pathStatus = self.getLocalStatus( path )
+        debugMode = self.ide.mainWindow.debugMode
         if pathStatus == IND_ERROR:
             self.fileContextInfoAct.setEnabled( False )
             self.fileContextUpdateAct.setEnabled( False )
@@ -169,20 +170,24 @@ class SVNMenuMixin:
             if upperDirStatus == self.NOT_UNDER_VCS:
                 self.fileContextAddAct.setEnabled( False )
             else:
-                self.fileContextAddAct.setEnabled( upperDirStatus != IND_ERROR )
+                self.fileContextAddAct.setEnabled( upperDirStatus != IND_ERROR
+                                                   and not debugMode )
             return
 
         self.fileContextInfoAct.setEnabled( True )
-        self.fileContextUpdateAct.setEnabled( True )
+        self.fileContextUpdateAct.setEnabled( not debugMode )
         self.fileContextAnnotateAct.setEnabled( True )
         self.fileContextLogAct.setEnabled( True )
         self.fileContextAddAct.setEnabled( False )
-        self.fileContextPropsAct.setEnabled( True )
+        self.fileContextPropsAct.setEnabled( not debugMode )
         self.fileContextCommitAct.setEnabled( pathStatus in [
                         IND_ADDED, IND_DELETED, IND_MERGED, IND_MODIFIED_LR,
-                        IND_MODIFIED_L, IND_REPLACED, IND_CONFLICTED ] )
-        self.fileContextDeleteAct.setEnabled( pathStatus != IND_DELETED )
-        self.fileContextRevertAct.setEnabled( pathStatus != IND_UPTODATE )
+                        IND_MODIFIED_L, IND_REPLACED, IND_CONFLICTED ] and
+                        not debugMode )
+        self.fileContextDeleteAct.setEnabled( pathStatus != IND_DELETED and
+                                              not debugMode )
+        self.fileContextRevertAct.setEnabled( pathStatus != IND_UPTODATE and
+                                              not debugMode )
 
         # Diff makes sense only for text files
         fileType = detectFileType( path )
@@ -193,6 +198,7 @@ class SVNMenuMixin:
         " Called when the plugin directory context manu is about to show "
         path = str( self.dirParentMenu.menuAction().data().toString() )
         pathStatus = self.getLocalStatus( path )
+        debugMode = self.ide.mainWindow.debugMode
         if pathStatus == IND_ERROR:
             self.dirContextInfoAct.setEnabled( False )
             self.dirContextUpdateAct.setEnabled( False )
@@ -224,25 +230,30 @@ class SVNMenuMixin:
                 self.dirContextAddAct.setEnabled( False )
                 self.dirContextAddRecursiveAct.setEnabled( False )
             else:
-                self.dirContextAddAct.setEnabled( upperDirStatus != IND_ERROR )
-                self.dirContextAddRecursiveAct.setEnabled( upperDirStatus != IND_ERROR )
+                self.dirContextAddAct.setEnabled( upperDirStatus != IND_ERROR
+                                                  and not debugMode )
+                self.dirContextAddRecursiveAct.setEnabled( upperDirStatus != IND_ERROR
+                                                  and not debugMode )
             return
 
         self.dirContextInfoAct.setEnabled( True )
-        self.dirContextUpdateAct.setEnabled( True )
+        self.dirContextUpdateAct.setEnabled( not debugMode )
         self.dirContextAddAct.setEnabled( False )
-        self.dirContextAddRecursiveAct.setEnabled( True )
-        self.dirContextCommitAct.setEnabled( True )
+        self.dirContextAddRecursiveAct.setEnabled( not debugMode )
+        self.dirContextCommitAct.setEnabled( not debugMode )
         self.dirContextLocalStatusAct.setEnabled( True )
         self.dirContextReposStatusAct.setEnabled( True )
-        self.dirContextDeleteAct.setEnabled( pathStatus != IND_DELETED )
-        self.dirContextRevertAct.setEnabled( pathStatus != IND_UPTODATE )
-        self.dirContextPropsAct.setEnabled( True )
+        self.dirContextDeleteAct.setEnabled( pathStatus != IND_DELETED and
+                                             not debugMode )
+        self.dirContextRevertAct.setEnabled( pathStatus != IND_UPTODATE and
+                                             not debugMode )
+        self.dirContextPropsAct.setEnabled( not debugMode )
         return
 
     def onBufferContextMenuAboutToshow( self ):
         " Called when the plugin buffer context menu is about to show "
         path = self.ide.currentEditorWidget.getFileName()
+        debugMode = self.ide.mainWindow.debugMode
         if not os.path.isabs( path ):
             self.bufContextInfoAct.setEnabled( False )
             self.bufContextUpdateAct.setEnabled( False )
@@ -285,15 +296,18 @@ class SVNMenuMixin:
             if upperDirStatus == self.NOT_UNDER_VCS:
                 self.bufContextAddAct.setEnabled( False )
             else:
-                self.bufContextAddAct.setEnabled( upperDirStatus != IND_ERROR )
+                self.bufContextAddAct.setEnabled( upperDirStatus != IND_ERROR
+                                                  and not debugMode )
             return
 
         self.bufContextInfoAct.setEnabled( True )
-        self.bufContextUpdateAct.setEnabled( True )
+        self.bufContextUpdateAct.setEnabled( not debugMode )
         self.bufContextAddAct.setEnabled( False )
-        self.bufContextPropsAct.setEnabled( True )
-        self.bufContextDeleteAct.setEnabled( pathStatus != IND_DELETED )
-        self.bufContextRevertAct.setEnabled( pathStatus != IND_UPTODATE )
+        self.bufContextPropsAct.setEnabled( not debugMode )
+        self.bufContextDeleteAct.setEnabled( pathStatus != IND_DELETED and
+                                             not debugMode )
+        self.bufContextRevertAct.setEnabled( pathStatus != IND_UPTODATE and
+                                             not debugMode )
 
         # Diff makes sense only for text files
         fileType = detectFileType( path )
@@ -316,7 +330,8 @@ class SVNMenuMixin:
             if widgetType in [ MainWindowTabWidgetBase.PlainTextEditor,
                                MainWindowTabWidgetBase.PythonGraphicsEditor ]:
                 self.bufContextCommitAct.setEnabled(
-                                not self.ide.currentEditorWidget.isModified() )
+                                not self.ide.currentEditorWidget.isModified() and
+                                not debugMode )
             else:
                 self.bufContextCommitAct.setEnabled( False )
         return
