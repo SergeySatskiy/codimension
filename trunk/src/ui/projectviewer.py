@@ -93,6 +93,8 @@ class ProjectViewer( QWidget ):
                       self.projectTreeView.onDebugMode )
         self.connect( self.__mainWindow, SIGNAL( 'debugModeChanged' ),
                       self.filesystemView.onDebugMode )
+        self.connect( self.__mainWindow, SIGNAL( 'debugModeChanged' ),
+                      self.onDebugMode )
 
         # Plugin context menu support
         self.__pluginFileMenus = {}
@@ -1374,4 +1376,10 @@ class ProjectViewer( QWidget ):
         for path in self.__pluginDirMenus:
             menu = self.__pluginDirMenus[ path ]
             menu.menuAction().setData( QVariant( value ) )
+        return
+
+    def onDebugMode( self, newState ):
+        " Triggered when a debug mode is changed "
+        self.unloadButton.setEnabled( GlobalData().project.isLoaded() and
+                                      not newState )
         return
