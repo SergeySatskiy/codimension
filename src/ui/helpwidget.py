@@ -173,8 +173,8 @@ class QuickHelpWidget( TextTabWidget ):
         <tr>
           <td bgcolor="#E9E9F3">Ctrl+mouse selection</td>
           <td bgcolor="#F6F4E4">Rectangular selection</td>
-          <td bgcolor="#E9E9F3"></td>
-          <td bgcolor="#F6F4E4"></td>
+          <td bgcolor="#E9E9F3">Ctrl+B</td>
+          <td bgcolor="#F6F4E4">Highlight the current text cursor context in the outline browser without moving the focus</td>
         </tr>
       </table>
     </p>
