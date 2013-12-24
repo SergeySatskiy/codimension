@@ -228,6 +228,16 @@ class LogItem( QTreeWidgetItem ):
         self.setToolTip( MESSAGE_COL, message )
         return
 
+    def __lt__( self, otherItem ):
+        " Provides the custom sorting "
+        col = self.treeWidget().sortColumn()
+        try:
+            if col == REVISION_COL:
+                return int( self.text( col ) ) > int( otherItem.text( col ) )
+        except ValueError:
+            pass
+        return self.text( col ) > otherItem.text( col )
+
 
 
 class SVNPluginLogDialog( QDialog ):
@@ -388,7 +398,7 @@ class SVNPluginLogDialog( QDialog ):
         self.__logViewHeader = QTreeWidgetItem(
                 QStringList() << "" << "" << "Revision" << "Date" << "Author" << "Message" )
         self.__logView.setHeaderItem( self.__logViewHeader )
-        self.__logView.header().setSortIndicator( 2, Qt.DescendingOrder )
+        self.__logView.header().setSortIndicator( REVISION_COL, Qt.AscendingOrder )
         self.connect( self.__logView,
                       SIGNAL( "itemChanged(QTreeWidgetItem*,int)" ),
                       self.__onLogViewChanged )
