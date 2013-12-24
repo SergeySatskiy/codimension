@@ -473,7 +473,9 @@ class TextEditor( ScintillaWrapper ):
         if self._marginNumber( event.x() ) is None:
             self.__menuUndo.setEnabled( self.isUndoAvailable() )
             self.__menuRedo.setEnabled( self.isRedoAvailable() )
-            self.__menuPaste.setEnabled( QApplication.clipboard().text() != "" )
+            self.__menuCut.setEnabled( not self.isReadOnly() )
+            self.__menuPaste.setEnabled( QApplication.clipboard().text() != ""
+                                         and not self.isReadOnly() )
 
             # Check the proper encoding in the menu
             fileType = self.parent().getFileType()
@@ -496,6 +498,7 @@ class TextEditor( ScintillaWrapper ):
                         GlobalData().project.isLoaded() and
                         GlobalData().project.isProjectFile( fileName ) )
             self.__menuHighlightInFS.setEnabled( os.path.isabs( fileName ) )
+            self.__menuHighlightInOutline.setEnabled( fileType == PythonFileType )
             self.__menu.popup( event.globalPos() )
         else:
             # Menu for a margin
@@ -2054,10 +2057,20 @@ class TextEditor( ScintillaWrapper ):
             self.__menuHighlightInOutline.setEnabled( False )
         else:
             self.__menuHighlightInOutline.setEnabled( True )
+
+        self.runAct.setEnabled( self.parent().runScriptButton.isEnabled() )
+        self.runParamAct.setEnabled( self.parent().runScriptButton.isEnabled() )
+        self.profileAct.setEnabled( self.parent().runScriptButton.isEnabled() )
+        self.profileParamAct.setEnabled(
+                                    self.parent().runScriptButton.isEnabled() )
         return
 
     def highlightInOutline( self ):
         " Triggered when highlight in outline browser is requested "
+        if self.lexer_ is None or not isinstance( self.lexer_, QsciLexerPython ):
+            # It is not a python file at all
+            return True
+
         text = str( self.text() )
         info = getBriefModuleInfoFromMemory( text )
         context = getContext( self, info, True, False )
@@ -2717,6 +2730,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def updateStatus( self ):
         " Updates the toolbar buttons status "
+        self.__updateRunDebugButtons()
         if self.__fileType == UnknownFileType:
             self.__fileType = self.getFileType()
         isPythonFile = self.__fileType in [ PythonFileType, Python3FileType ]
@@ -2739,7 +2753,6 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                                     self.runScriptButton.isEnabled() )
         self.pythonTidyButton.setEnabled( isPythonFile )
         self.lineCounterButton.setEnabled( isPythonFile )
-        self.__updateRunDebugButtons()
         return
 
     def onPylint( self ):

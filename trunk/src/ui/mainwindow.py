@@ -638,6 +638,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.__projectMenu = QMenu( "&Project", self )
         self.connect( self.__projectMenu, SIGNAL( "aboutToShow()" ),
                       self.__prjAboutToShow )
+        self.connect( self.__projectMenu, SIGNAL( "aboutToHide()" ),
+                      self.__prjAboutToHide )
         self.__newProjectAct = self.__projectMenu.addAction(
                 PixmapCache().getIcon( 'createproject.png' ),
                 "&New project", self.__createNewProject, 'Ctrl+Shift+N' )
@@ -2563,12 +2565,16 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onDebugProject( self, action = False ):
         " Debugging is requested "
+        if self.debugMode:
+            return
         if self.__checkDebugPrerequisites():
             self.debugScript( GlobalData().project.getProjectScript() )
         return
 
     def debugScript( self, fileName ):
         " Runs a script to debug "
+        if self.debugMode:
+            return
         self.__debugger.startDebugging( fileName )
         return
 
@@ -3341,6 +3347,8 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __openProject( self ):
         " Shows up a dialog to open a project "
+        if self.debugMode:
+            return
         dialog = QFileDialog( self, 'Open project' )
         dialog.setFileMode( QFileDialog.ExistingFile )
         dialog.setNameFilter( "Codimension project files (*.cdm)" )
@@ -4033,7 +4041,7 @@ class CodimensionMainWindow( QMainWindow ):
         projectLoaded = GlobalData().project.isLoaded()
         prjScriptValid = GlobalData().isProjectScriptValid()
 
-        enabled = projectLoaded and prjScriptValid
+        enabled = projectLoaded and prjScriptValid and not self.debugMode
         self.__prjRunAct.setEnabled( enabled )
         self.__prjRunDlgAct.setEnabled( enabled )
 
@@ -4046,7 +4054,7 @@ class CodimensionMainWindow( QMainWindow ):
         projectLoaded = GlobalData().project.isLoaded()
         prjScriptValid = GlobalData().isProjectScriptValid()
 
-        enabled = projectLoaded and prjScriptValid
+        enabled = projectLoaded and prjScriptValid and not self.debugMode
         self.__prjDebugAct.setEnabled( enabled )
         self.__prjDebugDlgAct.setEnabled( enabled )
         return
@@ -4063,8 +4071,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.__tabPylintAct.setEnabled( pythonBufferNonAnnotate )
         self.__tabPymetricsAct.setEnabled( pythonBufferNonAnnotate )
         self.__tabLineCounterAct.setEnabled( isPythonBuffer )
-        self.__tabPythonTidyAct.setEnabled( pythonBufferNonAnnotate )
-        self.__tabPythonTidyDlgAct.setEnabled( pythonBufferNonAnnotate )
+        self.__tabPythonTidyAct.setEnabled( pythonBufferNonAnnotate and not self.debugMode )
+        self.__tabPythonTidyDlgAct.setEnabled( pythonBufferNonAnnotate and not self.debugMode )
 
         if projectLoaded:
             self.__unusedClassesAct.setEnabled(
@@ -4142,6 +4150,11 @@ class CodimensionMainWindow( QMainWindow ):
         self.__autocompleteAct.setShortcut( "" )
         return
 
+    def __prjAboutToHide( self ):
+        self.__newProjectAct.setEnabled( True )
+        self.__openProjectAct.setEnabled( True )
+        return
+
     def __tabAboutToHide( self ):
         " Triggered when tab menu is about to hide "
         self.__closeTabAct.setShortcut( "" )
@@ -4194,6 +4207,9 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __prjAboutToShow( self ):
         " Triggered when project menu is about to show "
+        self.__newProjectAct.setEnabled( not self.debugMode )
+        self.__openProjectAct.setEnabled( not self.debugMode )
+        self.__unloadProjectAct.setEnabled( not self.debugMode )
 
         # Recent projects part
         self.__recentPrjMenu.clear()
@@ -4207,6 +4223,7 @@ class CodimensionMainWindow( QMainWindow ):
                                 self.__getAccelerator( addedCount ) +
                                 os.path.basename( item ).replace( ".cdm", "" ) )
             act.setData( QVariant( item ) )
+            act.setEnabled( not self.debugMode )
 
         self.__recentPrjMenu.setEnabled( addedCount > 0 )
 
