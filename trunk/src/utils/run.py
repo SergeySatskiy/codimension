@@ -457,10 +457,7 @@ def getCwdCmdEnv( cmdType, path, params, terminalType,
     """ Provides the working directory, command line and environment
         for running/debugging a script """
 
-    if params.useScriptLocation:
-        workingDir = os.path.dirname( path )
-    else:
-        workingDir = params.specificDir
+    workingDir = getWorkingDir( path, params )
 
     # The arguments parsing is going to pass OK because it
     # was checked in the run parameters dialogue
@@ -480,22 +477,30 @@ def getCwdCmdEnv( cmdType, path, params, terminalType,
         raise Exception( "Unknown command requested. "
                          "Supported command types are: run, profile, debug." )
 
-    if params.envType == params.InheritParentEnv:
-        # 'None' does not work here: popen stores last env somewhere and
-        # uses it inappropriately
-        environment = os.environ.copy()
-    elif params.envType == params.InheritParentEnvPlus:
-        environment = os.environ.copy()
-        environment.update( params.additionToParentEnv )
-    else:
-        environment = params.specificEnv.copy()
-
+    environment = getNoArgsEnvironment( params )
     for index in xrange( len( arguments ) ):
         environment[ 'CDM_ARG' + str( index ) ] = arguments[ index ]
 
     return workingDir, cmd, environment
 
 
+def getWorkingDir( path, params ):
+    " Provides the working directory "
+    if params.useScriptLocation:
+        return os.path.dirname( path )
+    return params.specificDir
+
+def getNoArgsEnvironment( params ):
+    " Provides a copy of the environment "
+    if params.envType == params.InheritParentEnv:
+        # 'None' does not work here: popen stores last env somewhere and
+        # uses it inappropriately
+        return os.environ.copy()
+    if params.envType == params.InheritParentEnvPlus:
+        environment = os.environ.copy()
+        environment.update( params.additionToParentEnv )
+        return environment
+    return params.specificEnv.copy()
 
 
 if __name__ == '__main__':
