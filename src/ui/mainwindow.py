@@ -70,7 +70,9 @@ from mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from diagram.importsdgm import ( ImportsDiagramDialog, ImportsDiagramProgress,
                                  ImportDiagramOptions )
 from runparams import RunDialog
-from utils.run import getCwdCmdEnv, CMD_TYPE_RUN
+from utils.run import ( getCwdCmdEnv, CMD_TYPE_RUN, getWorkingDir,
+                        parseCommandLineArguments, getNoArgsEnvironment,
+                        TERM_AUTO, TERM_KONSOLE, TERM_GNOME, TERM_XTERM )
 from debugger.context import DebuggerContext
 from debugger.modifiedunsaved import ModifiedUnsavedDialog
 from debugger.server import CodimensionDebugger
@@ -1557,6 +1559,22 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onDbgJumpToCurrent )
         self.__dbgJumpToCurrent.setVisible( False )
 
+        dumpDebugSettingsMenu = QMenu( self )
+        dumpDebugSettingsAct = dumpDebugSettingsMenu.addAction(
+                                PixmapCache().getIcon( 'detailsdlg.png' ),
+                                'Dump settings with complete environment' )
+        self.connect( dumpDebugSettingsAct, SIGNAL( 'triggered()' ),
+                      self.__onDumpFullDebugSettings )
+        self.__dbgDumpSettingsButton = QToolButton( self )
+        self.__dbgDumpSettingsButton.setIcon(
+                            PixmapCache().getIcon( 'dbgsettings.png' ) )
+        self.__dbgDumpSettingsButton.setToolTip( 'Dump debug session settings' )
+        self.__dbgDumpSettingsButton.setPopupMode( QToolButton.DelayedPopup )
+        self.__dbgDumpSettingsButton.setMenu( dumpDebugSettingsMenu )
+        self.__dbgDumpSettingsButton.setFocusPolicy( Qt.NoFocus )
+        self.connect( self.__dbgDumpSettingsButton, SIGNAL( 'clicked(bool)' ),
+                      self.__onDumpDebugSettings )
+
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
 
@@ -1595,6 +1613,11 @@ class CodimensionMainWindow( QMainWindow ):
         self.__toolbar.addAction( self.__dbgRunToLine )
         self.__toolbar.addAction( self.__dbgReturn )
         self.__toolbar.addAction( self.__dbgJumpToCurrent )
+        self.__dbgDumpSettingsAct = self.__toolbar.addWidget(
+                                                self.__dbgDumpSettingsButton )
+
+        # Heck! The only QAction can be hidden
+        self.__dbgDumpSettingsAct.setVisible( False )
         # Debugger part end
 
         self.addToolBar( self.__toolbar )
@@ -2971,6 +2994,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__dbgRunToLine.setVisible( newState )
         self.__dbgReturn.setVisible( newState )
         self.__dbgJumpToCurrent.setVisible( newState )
+        self.__dbgDumpSettingsAct.setVisible( newState )
 
         if newState == False:
             self.__debugStopBrutalAct.setEnabled( False )
@@ -4442,4 +4466,72 @@ class CodimensionMainWindow( QMainWindow ):
         self.__rightSideBar.show()
         self.__rightSideBar.setCurrentWidget( self.outlineViewer )
         self.__rightSideBar.raise_()
+        return
+
+    def __dumpDebugSettings( self, fullEnvironment ):
+        " Provides common settings except the environment "
+        fileName = self.__debugger.getScriptPath()
+        runParameters = GlobalData().getRunParameters( fileName )
+        debugSettings = self.settings.getDebuggerSettings()
+        workingDir = getWorkingDir( fileName, runParameters )
+        arguments = parseCommandLineArguments( runParameters.arguments )
+        environment = getNoArgsEnvironment( runParameters )
+
+        env = "Environment: "
+        if runParameters.envType == runParameters.InheritParentEnv:
+            env += "inherit parent"
+        elif runParameters.envType == runParameters.InheritParentEnvPlus:
+            env += "inherit parent and add/modify"
+        else:
+            env += "specific"
+
+        if fullEnvironment:
+            keys = environment.keys()
+            keys.sort()
+            for key in keys:
+                env += "\n    " + key + " = " + environment[ key ]
+        else:
+            if runParameters.envType == runParameters.InheritParentEnvPlus:
+                keys = runParameters.additionToParentEnv.keys()
+                keys.sort()
+                for key in keys:
+                    env += "\n    " + key + " = " + runParameters.additionToParentEnv[ key ]
+            elif runParameters.envType == runParameters.SpecificEnvironment:
+                keys = runParameters.specificEnv.keys()
+                keys.sort()
+                for key in keys():
+                    env += "\n    " + key + " = " + runParameters.specificEnv[ key ]
+
+        terminal = "Terminal to run in: "
+        if self.settings.terminalType == TERM_AUTO:
+            terminal += "auto detection"
+        elif self.settings.terminalType == TERM_KONSOLE:
+            terminal += "default KDE konsole"
+        elif self.settings.terminalType == TERM_GNOME:
+            terminal += "gnome-terminal"
+        elif self.settings.terminalType == TERM_XTERM:
+            terminal += "xterm"
+
+        logging.info( "\n".join(
+            [ "Current debug session settings",
+              "Script: " + fileName,
+              "Arguments: " + " ".join( arguments ),
+              "Working directory: " + workingDir,
+              env, terminal,
+              "Report exceptions: " + str( debugSettings.reportExceptions ),
+              "Trace interpreter libs: " + str( debugSettings.traceInterpreter ),
+              "Stop at first line: " + str( debugSettings.stopAtFirstLine ),
+              "Fork without asking: " + str( debugSettings.autofork ),
+              "Debug child process: " + str( debugSettings.followChild ),
+              "Close terminal upon successfull completion: " + str( runParameters.closeTerminal ) ] ) )
+        return
+
+    def __onDumpDebugSettings( self, action = None ):
+        " Triggered when dumping visible settings was requested "
+        self.__dumpDebugSettings( False )
+        return
+
+    def __onDumpFullDebugSettings( self ):
+        " Triggered when dumping complete settings is requested "
+        self.__dumpDebugSettings( True )
         return
