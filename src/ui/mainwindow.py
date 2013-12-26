@@ -3954,7 +3954,7 @@ class CodimensionMainWindow( QMainWindow ):
 
         self.__undoAct.setShortcut( "Ctrl+Z" )
         self.__undoAct.setEnabled( isPlainBuffer and editor.isUndoAvailable() )
-        self.__redoAct.setShortcut( "Ctrl+Shift+Z" )
+        self.__redoAct.setShortcut( "Ctrl+Y" )
         self.__redoAct.setEnabled( isPlainBuffer and editor.isRedoAvailable() )
         self.__cutAct.setShortcut( "Ctrl+X" )
         self.__cutAct.setEnabled( isPlainBuffer and not editor.isReadOnly() )

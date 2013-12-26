@@ -13,6 +13,7 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
   long patterns
 * Bug fix: SVN plugin log window - incorrect revision number based sorting
 * New feature: debug session button added to dump debug session settings
+* Replacing redo shortcut Ctrl+Shift+Z with Ctrl+Y
 
 2013 Dec 14 Sergey Satskiy <sergey.satskiy@gmail.com>
 

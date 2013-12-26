@@ -305,7 +305,7 @@ class TextEditor( ScintillaWrapper ):
                                     '&Undo', self.onUndo, "Ctrl+Z" )
         self.__menuRedo = self.__menu.addAction(
                                     PixmapCache().getIcon( 'redo.png' ),
-                                    '&Redo', self.onRedo, "Ctrl+Shift+Z" )
+                                    '&Redo', self.onRedo, "Ctrl+Y" )
         self.__menu.addSeparator()
         self.__menuCut = self.__menu.addAction(
                                     PixmapCache().getIcon( 'cutmenu.png' ),
@@ -2618,8 +2618,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__undoButton.setEnabled( False )
 
         self.__redoButton = QAction(
-            PixmapCache().getIcon( 'redo.png' ), 'Redo (Ctrl+Shift+Z)', self )
-        self.__redoButton.setShortcut( 'Ctrl+Shift+Z' )
+            PixmapCache().getIcon( 'redo.png' ), 'Redo (Ctrl+Y)', self )
+        self.__redoButton.setShortcut( 'Ctrl+Y' )
         self.connect( self.__redoButton, SIGNAL( 'triggered()' ),
                       self.__editor.onRedo )
         self.__redoButton.setEnabled( False )
