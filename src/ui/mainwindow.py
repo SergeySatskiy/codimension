@@ -973,6 +973,17 @@ class CodimensionMainWindow( QMainWindow ):
                 PixmapCache().getIcon( 'dbgtocurrent.png' ),
                 'Show current line', self.__onDbgJumpToCurrent, "Ctrl+W" )
         self.__debugJumpToCurrentAct.setEnabled( False )
+        self.__debugMenu.addSeparator()
+        self.__debugDumpSettingsAct = self.__debugMenu.addAction(
+                PixmapCache().getIcon( 'dbgsettings.png' ),
+                'Dump debug session settings',
+                self.__onDumpDebugSettings )
+        self.__debugDumpSettingsAct.setEnabled( False )
+        self.__debugDumpSettingsEnvAct = self.__debugMenu.addAction(
+                PixmapCache().getIcon( 'dbgsettings.png' ),
+                'Dump settings with complete environment',
+                self.__onDumpFullDebugSettings )
+        self.__debugDumpSettingsEnvAct.setEnabled( False )
 
         # The Diagrams menu
         self.__diagramsMenu = QMenu( "&Diagrams", self )
@@ -1345,7 +1356,7 @@ class CodimensionMainWindow( QMainWindow ):
             PixmapCache().getIcon( 'homepagemenu.png' ),
             'Codimension &home page', self.__onHomePage )
         self.__helpMenu.addSeparator()
-        aboutAct = self.__helpMenu.addAction(
+        self.__aboutAct = self.__helpMenu.addAction(
             PixmapCache().getIcon( "logo.png" ),
             "A&bout codimension", self.__onAbout )
 
@@ -3006,6 +3017,8 @@ class CodimensionMainWindow( QMainWindow ):
             self.__debugStepOutAct.setEnabled( False )
             self.__debugRunToCursorAct.setEnabled( False )
             self.__debugJumpToCurrentAct.setEnabled( False )
+            self.__debugDumpSettingsAct.setEnabled( False )
+            self.__debugDumpSettingsEnvAct.setEnabled( False )
 
         self.updateRunDebugButtons()
 
@@ -3019,6 +3032,8 @@ class CodimensionMainWindow( QMainWindow ):
             self.__rightSideBar.setCurrentWidget( self.debuggerContext )
             self.__rightSideBar.raise_()
             self.__lastDebugAction = None
+            self.__debugDumpSettingsAct.setEnabled( True )
+            self.__debugDumpSettingsEnvAct.setEnabled( True )
         else:
             if not self.__rightSideBar.isMinimized():
                 if self.__rightSideBar.currentIndex() == 1:
