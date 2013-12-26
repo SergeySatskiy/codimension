@@ -1029,8 +1029,12 @@ class ReplaceWidget( FindReplaceBase ):
 
     def __onReplaceAndMove( self ):
         " Triggered when replace-and-move button is clicked "
+        buttonFocused = self.replaceAndMoveButton.hasFocus()
         self.__onReplace()
         self.onNext()
+
+        if buttonFocused:
+            self.replaceAndMoveButton.setFocus()
         return
 
     def __updateReplaceHistory( self, text, replaceText ):
