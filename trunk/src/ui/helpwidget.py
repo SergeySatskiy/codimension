@@ -113,7 +113,7 @@ class QuickHelpWidget( TextTabWidget ):
         <tr>
           <td bgcolor="#E9E9F3">Ctrl+Shift+T/M/B</td>
           <td bgcolor="#F6F4E4">Jump to the first position of the first visible line/line in a middle of the visible text/last visible line</td>
-          <td bgcolor="#E9E9F3">Ctrl+Z or Ctrl+Shift+Z</td>
+          <td bgcolor="#E9E9F3">Ctrl+Z or Ctrl+Y</td>
           <td bgcolor="#F6F4E4">Undo or Redo</td>
         </tr>
         <tr>
