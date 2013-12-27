@@ -4500,22 +4500,40 @@ class CodimensionMainWindow( QMainWindow ):
         else:
             env += "specific"
 
+        pathVariables = []
+        container = None
         if fullEnvironment:
+            container = environment
             keys = environment.keys()
             keys.sort()
             for key in keys:
                 env += "\n    " + key + " = " + environment[ key ]
+                if 'PATH' in key:
+                    pathVariables.append( key )
         else:
             if runParameters.envType == runParameters.InheritParentEnvPlus:
+                container = runParameters.additionToParentEnv
                 keys = runParameters.additionToParentEnv.keys()
                 keys.sort()
                 for key in keys:
                     env += "\n    " + key + " = " + runParameters.additionToParentEnv[ key ]
+                    if 'PATH' in key:
+                        pathVariables.append( key )
             elif runParameters.envType == runParameters.SpecificEnvironment:
+                container = runParameters.specificEnv
                 keys = runParameters.specificEnv.keys()
                 keys.sort()
                 for key in keys():
                     env += "\n    " + key + " = " + runParameters.specificEnv[ key ]
+                    if 'PATH' in key:
+                        pathVariables.append( key )
+
+        if pathVariables:
+            env += "\nDetected PATH-containing variables:"
+            for key in pathVariables:
+                env += "\n    " + key
+                for item in container[ key ].split( ':' ):
+                    env += "\n        " + item
 
         terminal = "Terminal to run in: "
         if self.settings.terminalType == TERM_AUTO:
