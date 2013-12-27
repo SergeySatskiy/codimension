@@ -919,10 +919,8 @@ class ReplaceWidget( FindReplaceBase ):
     def __onReplaceTextChanged( self, text ):
         " Triggered when replace with text is changed "
         self.__updateReplaceAllButtonStatus()
-        self.replaceButton.setEnabled( self.__replaceCouldBeEnabled and
-                                       text != "" )
-        self.replaceAndMoveButton.setEnabled( self.__replaceCouldBeEnabled and
-                                              text != "" )
+        self.replaceButton.setEnabled( self.__replaceCouldBeEnabled )
+        self.replaceAndMoveButton.setEnabled( self.__replaceCouldBeEnabled )
         return
 
     def __subscribeToCursorChangePos( self ):
