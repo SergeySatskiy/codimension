@@ -980,7 +980,7 @@ class CodimensionMainWindow( QMainWindow ):
                 self.__onDumpDebugSettings )
         self.__debugDumpSettingsAct.setEnabled( False )
         self.__debugDumpSettingsEnvAct = self.__debugMenu.addAction(
-                PixmapCache().getIcon( 'dbgsettings.png' ),
+                PixmapCache().getIcon( 'detailsdlg.png' ),
                 'Dump settings with complete environment',
                 self.__onDumpFullDebugSettings )
         self.__debugDumpSettingsEnvAct.setEnabled( False )
