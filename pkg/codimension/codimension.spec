@@ -1,5 +1,5 @@
 Name: codimension
-Version: 2.2.1
+Version: 2.2.2
 Release: 2
 License: GPLv3+
 Group: Development/Tools/IDE
@@ -83,6 +83,9 @@ update-desktop-database -q
 %{_datadir}/pixmaps/*.png
 
 %changelog
+* Fri Dec 27 2013 Ilya Loginov <isloginov@gmail.com> - 2.2.2-0
+- New upstream release.
+
 * Sat Dec 14 2013 Ilya Loginov <isloginov@gmail.com> - 2.2.1-0
 - New upstream release.
 - Add dependency from pysvn.
