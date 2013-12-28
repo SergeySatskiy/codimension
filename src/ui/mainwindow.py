@@ -3432,7 +3432,7 @@ class CodimensionMainWindow( QMainWindow ):
         " Triggers when Ctrl+O is pressed "
 
         dialog = QFileDialog( self, 'Open file' )
-        dialog.setFileMode( QFileDialog.ExistingFile )
+        dialog.setFileMode( QFileDialog.ExistingFiles )
         urls = []
         for dname in QDir.drives():
             urls.append( QUrl.fromLocalFile( dname.absoluteFilePath() ) )
@@ -3461,10 +3461,8 @@ class CodimensionMainWindow( QMainWindow ):
         if dialog.exec_() != QDialog.Accepted:
             return
 
-        fileNames = dialog.selectedFiles()
-        fileName = os.path.realpath( str( fileNames[0] ) )
-
-        self.detectTypeAndOpenFile( fileName )
+        for fileName in dialog.selectedFiles():
+            self.detectTypeAndOpenFile( os.path.realpath( str( fileName ) ) )
         return
 
     def __isPlainTextBuffer( self ):
