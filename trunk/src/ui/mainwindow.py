@@ -3462,7 +3462,10 @@ class CodimensionMainWindow( QMainWindow ):
             return
 
         for fileName in dialog.selectedFiles():
-            self.detectTypeAndOpenFile( os.path.realpath( str( fileName ) ) )
+            try:
+                self.detectTypeAndOpenFile( os.path.realpath( str( fileName ) ) )
+            except Exception, exc:
+                logging.error( str( exc ) )
         return
 
     def __isPlainTextBuffer( self ):
