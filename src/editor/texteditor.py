@@ -860,29 +860,32 @@ class TextEditor( ScintillaWrapper ):
             raise Exception( "Cannot open file " + fileName )
 
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+        try:
+            fileType = detectFileType( fileName )
+            if fileType in [ DesignerFileType, LinguistFileType ]:
+                # special treatment for Qt-Linguist and Qt-Designer files
+                txt = f.read()
+                self.encoding = 'latin-1'
+            else:
+                content = f.read()
+                txt, self.encoding = decode( content )
 
-        fileType = detectFileType( fileName )
-        if fileType in [ DesignerFileType, LinguistFileType ]:
-            # special treatment for Qt-Linguist and Qt-Designer files
-            txt = f.read()
-            self.encoding = 'latin-1'
-        else:
-            content = f.read()
-            txt, self.encoding = decode( content )
+            f.close()
+            self.detectEolString( txt )
 
-        f.close()
-        self.detectEolString( txt )
+            # Hack to avoid breakpoints reset when a file is reload
+            self.__breakpoints = {}
+            self.setText( txt )
 
-        # Hack to avoid breakpoints reset when a file is reload
-        self.__breakpoints = {}
-        self.setText( txt )
+            # perform automatic eol conversion
+            self.convertEols( self.eolMode() )
+            self.setModified( False )
 
-        # perform automatic eol conversion
-        self.convertEols( self.eolMode() )
-        self.setModified( False )
-
-        # self.extractTasks()
-        # self.extractBookmarks()
+            # self.extractTasks()
+            # self.extractBookmarks()
+        except Exception:
+            QApplication.restoreOverrideCursor()
+            raise
 
         QApplication.restoreOverrideCursor()
         return
