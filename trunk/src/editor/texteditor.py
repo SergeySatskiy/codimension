@@ -980,6 +980,9 @@ class TextEditor( ScintillaWrapper ):
         foundTargets = []
         while found:
             tgtPos, tgtLen = self.getFoundTarget()
+            if tgtLen == 0:
+                # Strange, the target must not be of zero length
+                break
             line, pos = self.lineIndexFromPosition( tgtPos )
             foundTargets.append( [ line, pos, tgtLen ] )
             self.setIndicatorRange( indicator, tgtPos, tgtLen )

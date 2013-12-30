@@ -569,6 +569,7 @@ class ScintillaWrapper( QsciScintilla ):
         self.__targetSearchFlags = 0
         if isRegexp:
             self.__targetSearchFlags |= self.SCFIND_REGEXP
+            self.__targetSearchFlags |= self.SCFIND_POSIX
         if isCasesensitive:
             self.__targetSearchFlags |= self.SCFIND_MATCHCASE
         if isWordonly:
@@ -577,17 +578,17 @@ class ScintillaWrapper( QsciScintilla ):
             self.__targetSearchFlags |= self.SCFIND_WORDSTART
 
         if begline < 0 or begindex < 0:
-            self.__targetSearchStart = self.SendScintilla( \
+            self.__targetSearchStart = self.SendScintilla(
                                             self.SCI_GETCURRENTPOS )
         else:
-            self.__targetSearchStart = self.positionFromLineIndex( \
+            self.__targetSearchStart = self.positionFromLineIndex(
                                             begline, begindex )
 
         if endline < 0 or endindex < 0:
-            self.__targetSearchEnd = self.SendScintilla( \
+            self.__targetSearchEnd = self.SendScintilla(
                                           self.SCI_GETTEXTLENGTH )
         else:
-            self.__targetSearchEnd = self.positionFromLineIndex( \
+            self.__targetSearchEnd = self.positionFromLineIndex(
                                           endline, endindex )
 
         if self.isUtf8():
