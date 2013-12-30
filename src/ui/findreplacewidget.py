@@ -163,7 +163,7 @@ class FindReplaceBase( QWidget ):
 
         self.findNextButton = QToolButton( self )
         self.findNextButton.setToolTip( "Next occurrence (F3)" )
-        self.findNextButton.setIcon( \
+        self.findNextButton.setIcon(
                     PixmapCache().getIcon( "1rightarrow.png" ) )
         self.findNextButton.setIconSize( QSize( 24, 16 ) )
         self.findNextButton.setFocusPolicy( Qt.NoFocus )
@@ -464,8 +464,8 @@ class FindReplaceBase( QWidget ):
 
         self._findBackward = False
         if not self.__findNextPrev():
-            GlobalData().mainWindow.showStatusBarMessage( \
-                    "The '" + self.findtextCombo.currentText() + \
+            GlobalData().mainWindow.showStatusBarMessage(
+                    "The '" + self.findtextCombo.currentText() +
                     "' was not found" )
             self.emit( SIGNAL( 'incSearchDone' ), False )
         else:
@@ -513,7 +513,7 @@ class FindReplaceBase( QWidget ):
     def __findNextPrev( self ):
         " Finds the next occurrence of the search text "
         if not self._isTextEditor:
-            return
+            return False
 
         # Identify the search start point
         startLine = self._currentWidget.getLine()
