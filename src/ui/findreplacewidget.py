@@ -595,6 +595,9 @@ class FindReplaceBase( QWidget ):
                     self._searchSupport.add( self._editorUUID,
                                              searchAttributes )
                     return False    # Nothing has matched
+            else:
+                # Hide the 'reached the end of ...' message
+                GlobalData().mainWindow.showStatusBarMessage( "" )
 
             # Move the highlight and the cursor to the new match and
             # memorize a new match
@@ -619,6 +622,9 @@ class FindReplaceBase( QWidget ):
                 searchAttributes.match = [ -1, -1, -1 ]
                 self._searchSupport.add( self._editorUUID, searchAttributes )
                 return False    # Nothing has matched
+        else:
+            # Hide the 'reached the beginning of ...' message
+            GlobalData().mainWindow.showStatusBarMessage( "" )
 
         # Move the highlight and the cursor to the new match and
         # memorize a new match
