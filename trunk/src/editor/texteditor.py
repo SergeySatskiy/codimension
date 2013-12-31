@@ -959,6 +959,9 @@ class TextEditor( ScintillaWrapper ):
         " Hides the search indicator "
         self.clearAllIndicators( self.searchIndicator )
         self.clearAllIndicators( self.matchIndicator )
+
+        # Removes the 'highlighted occurences: ...' if so
+        GlobalData().mainWindow.showStatusBarMessage( "" )
         return
 
     def setSearchIndicator( self, startPos, indicLength ):
@@ -990,6 +993,10 @@ class TextEditor( ScintillaWrapper ):
             foundTargets.append( [ line, pos, tgtLen ] )
             self.setIndicatorRange( indicator, tgtPos, tgtLen )
             found = self.findNextTarget()
+
+        # Show it for 5 seconds
+        GlobalData().mainWindow.showStatusBarMessage(
+                "Highlighted occurences: " + str( len( foundTargets ) ), 5000 )
         return foundTargets
 
     def getTargets( self, txt,
