@@ -961,7 +961,7 @@ class TextEditor( ScintillaWrapper ):
         self.clearAllIndicators( self.matchIndicator )
 
         # Removes the 'highlighted occurences: ...' if so
-        GlobalData().mainWindow.showStatusBarMessage( "" )
+        GlobalData().mainWindow.statusBarSlots.clearMessage( 1 )
         return
 
     def setSearchIndicator( self, startPos, indicLength ):
@@ -996,7 +996,8 @@ class TextEditor( ScintillaWrapper ):
 
         # Show it for 5 seconds
         GlobalData().mainWindow.showStatusBarMessage(
-                "Highlighted occurences: " + str( len( foundTargets ) ), 5000 )
+                "Highlighted occurences: " + str( len( foundTargets ) ) + ".",
+                1, 5000 )
         return foundTargets
 
     def getTargets( self, txt,
@@ -1677,7 +1678,7 @@ class TextEditor( ScintillaWrapper ):
                                                self )
         if calltip is None and docstring is None:
             QApplication.restoreOverrideCursor()
-            GlobalData().mainWindow.showStatusBarMessage( "Doc is not found" )
+            GlobalData().mainWindow.showStatusBarMessage( "Doc is not found.", 0 )
             return True
 
         QApplication.restoreOverrideCursor()
@@ -1690,14 +1691,14 @@ class TextEditor( ScintillaWrapper ):
         callPosition = getCallPosition( self )
         if callPosition is None:
             QApplication.restoreOverrideCursor()
-            GlobalData().mainWindow.showStatusBarMessage( "Not a function call" )
+            GlobalData().mainWindow.showStatusBarMessage( "Not a function call.", 0 )
             return True
 
         calltip, docstring = getCalltipAndDoc( self.parent().getFileName(),
                                                self, callPosition )
         if calltip is None and docstring is None:
             QApplication.restoreOverrideCursor()
-            GlobalData().mainWindow.showStatusBarMessage( "Doc is not found" )
+            GlobalData().mainWindow.showStatusBarMessage( "Doc is not found.", 0 )
             return True
 
         QApplication.restoreOverrideCursor()
@@ -1758,7 +1759,7 @@ class TextEditor( ScintillaWrapper ):
         QApplication.restoreOverrideCursor()
         if location is None:
             GlobalData().mainWindow.showStatusBarMessage(
-                                            "Definition is not found" )
+                                            "Definition is not found.", 0 )
         else:
             if location.resource is None:
                 # That was an unsaved yet buffer, but something has been found
@@ -1804,7 +1805,7 @@ class TextEditor( ScintillaWrapper ):
             QApplication.restoreOverrideCursor()
             self.__resetCalltip()
             if showMessage:
-                GlobalData().mainWindow.showStatusBarMessage( "Not a function call" )
+                GlobalData().mainWindow.showStatusBarMessage( "Not a function call.", 0 )
             return True
 
         if not showKeyword and \
@@ -1819,7 +1820,7 @@ class TextEditor( ScintillaWrapper ):
             QApplication.restoreOverrideCursor()
             self.__resetCalltip()
             if showMessage:
-                GlobalData().mainWindow.showStatusBarMessage( "Calltip is not found" )
+                GlobalData().mainWindow.showStatusBarMessage( "Calltip is not found.", 0 )
             return True
 
         currentPos = self.currentPosition()
@@ -1874,7 +1875,7 @@ class TextEditor( ScintillaWrapper ):
             return True
         if not os.path.isabs( self.parent().getFileName() ):
             GlobalData().mainWindow.showStatusBarMessage(
-                                            "Save the buffer first" )
+                                            "Save the buffer first.", 0 )
             return True
         if self.isModified():
             # Check that the directory is writable for a temporary file
@@ -1882,7 +1883,7 @@ class TextEditor( ScintillaWrapper ):
             if not os.access( dirName, os.W_OK ):
                 GlobalData().mainWindow.showStatusBarMessage(
                                 "File directory is not writable. "
-                                "Cannot run rope." )
+                                "Cannot run rope.", 0 )
                 return True
 
         # Prerequisites were checked, run the rope library
@@ -1891,7 +1892,7 @@ class TextEditor( ScintillaWrapper ):
         if len( locations ) == 0:
             QApplication.restoreOverrideCursor()
             GlobalData().mainWindow.showStatusBarMessage(
-                                        "No occurences of " + name + " found" )
+                                        "No occurences of " + name + " found.", 0 )
             return True
 
         # There are found items
@@ -2897,7 +2898,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         diff = tidy.getDiff()
         if diff is None:
             GlobalData().mainWindow.showStatusBarMessage(
-                    "PythonTidy did no changes." )
+                    "PythonTidy did no changes.", 0 )
             return
 
         # There are changes, so replace the text and tell about the changes
@@ -2943,7 +2944,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         diff = tidy.getDiff()
         if diff is None:
             GlobalData().mainWindow.showStatusBarMessage(
-                    "PythonTidy did no changes." )
+                    "PythonTidy did no changes.", 0 )
             return
 
         # There are changes, so replace the text and tell about the changes
@@ -3081,7 +3082,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                     GlobalData().mainWindow.openFile( path, -1 )
                     return True
                 GlobalData().mainWindow.showStatusBarMessage(
-                        "The import '" + currentWord + "' is not resolved." )
+                        "The import '" + currentWord + "' is not resolved.", 0 )
                 return True
             # We are not on a certain import.
             # Check if it is a line with exactly one import
@@ -3090,7 +3091,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                 if path == '':
                     GlobalData().mainWindow.showStatusBarMessage(
                         "The import '" + lineImports[ 0 ] +
-                        "' is not resolved." )
+                        "' is not resolved.", 0 )
                     return True
                 # The import is resolved. Check where we are.
                 if currentWord in importWhat:
@@ -3111,13 +3112,13 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         fileImports = getImportsList( self.__editor.text() )
         if not fileImports:
             GlobalData().mainWindow.showStatusBarMessage(
-                                            "There are no imports" )
+                                            "There are no imports.", 0 )
             return True
         if len( fileImports ) == 1:
             path = resolveImport( basePath, fileImports[ 0 ] )
             if path == '':
                 GlobalData().mainWindow.showStatusBarMessage(
-                    "The import '" + fileImports[ 0 ] + "' is not resolved." )
+                    "The import '" + fileImports[ 0 ] + "' is not resolved.", 0 )
                 return True
             GlobalData().mainWindow.openFile( path, -1 )
             return True
@@ -3132,7 +3133,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         resolvedList = resolveImports( basePath, imports )
         if not resolvedList:
             GlobalData().mainWindow.showStatusBarMessage(
-                                            "No imports are resolved" )
+                                            "No imports are resolved.", 0 )
             return
 
         # Display the import selection widget

@@ -1573,7 +1573,7 @@ class EditorsManager( QTabWidget ):
             self.__lastDisplayedWasFindWidget = True
         else:
             GlobalData().mainWindow.showStatusBarMessage(
-                    "No current word to start searching" )
+                    "No current word to start searching.", 0 )
         return
 
     def onReplace( self ):

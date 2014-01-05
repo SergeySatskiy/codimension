@@ -386,7 +386,7 @@ class VCSAnnotateViewerTabWidget( QWidget, MainWindowTabWidgetBase ):
                     GlobalData().mainWindow.openFile( path, -1 )
                     return True
                 GlobalData().mainWindow.showStatusBarMessage(
-                        "The import '" + currentWord + "' is not resolved." )
+                        "The import '" + currentWord + "' is not resolved.", 0 )
                 return True
             # We are not on a certain import.
             # Check if it is a line with exactly one import
@@ -395,7 +395,7 @@ class VCSAnnotateViewerTabWidget( QWidget, MainWindowTabWidgetBase ):
                 if path == '':
                     GlobalData().mainWindow.showStatusBarMessage(
                         "The import '" + lineImports[ 0 ] +
-                        "' is not resolved." )
+                        "' is not resolved.", 0 )
                     return True
                 # The import is resolved. Check where we are.
                 if currentWord in importWhat:
@@ -416,13 +416,13 @@ class VCSAnnotateViewerTabWidget( QWidget, MainWindowTabWidgetBase ):
         fileImports = getImportsList( self.__viewer.text() )
         if not fileImports:
             GlobalData().mainWindow.showStatusBarMessage(
-                                            "There are no imports" )
+                                            "There are no imports.", 0 )
             return True
         if len( fileImports ) == 1:
             path = resolveImport( basePath, fileImports[ 0 ] )
             if path == '':
                 GlobalData().mainWindow.showStatusBarMessage(
-                    "The import '" + fileImports[ 0 ] + "' is not resolved." )
+                    "The import '" + fileImports[ 0 ] + "' is not resolved.", 0 )
                 return True
             GlobalData().mainWindow.openFile( path, -1 )
             return True
@@ -437,7 +437,7 @@ class VCSAnnotateViewerTabWidget( QWidget, MainWindowTabWidgetBase ):
         resolvedList = resolveImports( basePath, imports )
         if not resolvedList:
             GlobalData().mainWindow.showStatusBarMessage(
-                                            "No imports are resolved" )
+                                            "No imports are resolved.", 0 )
             return
 
         # Display the import selection widget

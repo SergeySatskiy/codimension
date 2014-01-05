@@ -457,31 +457,31 @@ class FindReplaceBase( QWidget ):
         editor.ensureLineVisible( newLine )
         return
 
-    def onNext( self ):
+    def onNext( self, clearSBMessage = True ):
         " Triggered when the find next is clicked "
         if not self.onPrevNext():
             return
 
         self._findBackward = False
-        if not self.__findNextPrev():
+        if not self.__findNextPrev( clearSBMessage ):
             GlobalData().mainWindow.showStatusBarMessage(
                     "The '" + self.findtextCombo.currentText() +
-                    "' was not found" )
+                    "' was not found.", 0 )
             self.emit( SIGNAL( 'incSearchDone' ), False )
         else:
             self.emit( SIGNAL( 'incSearchDone' ), True )
         return
 
-    def onPrev( self ):
+    def onPrev( self, clearSBMessage = True ):
         " Triggered when the find prev is clicked "
         if not self.onPrevNext():
             return
 
         self._findBackward = True
-        if not self.__findNextPrev():
+        if not self.__findNextPrev( clearSBMessage ):
             GlobalData().mainWindow.showStatusBarMessage(
                     "The '" + self.findtextCombo.currentText() +
-                    "' was not found" )
+                    "' was not found.", 0 )
             self.emit( SIGNAL( 'incSearchDone' ), False )
         else:
             self.emit( SIGNAL( 'incSearchDone' ), True )
@@ -510,7 +510,7 @@ class FindReplaceBase( QWidget ):
             self.onNext()
         return
 
-    def __findNextPrev( self ):
+    def __findNextPrev( self, clearSBMessage = True ):
         " Finds the next occurrence of the search text "
         if not self._isTextEditor:
             return False
@@ -554,7 +554,7 @@ class FindReplaceBase( QWidget ):
             self._searchSupport.add( self._editorUUID, searchAttributes )
 
         # Here: start point has been identified
-        if self.__searchFrom( startLine, startPos ):
+        if self.__searchFrom( startLine, startPos, clearSBMessage ):
             # Something new has been found - change the start pos
             searchAttributes = self._searchSupport.get( self._editorUUID )
             searchAttributes.line = self._currentWidget.getLine()
@@ -565,7 +565,7 @@ class FindReplaceBase( QWidget ):
 
         return False
 
-    def __searchFrom( self, startLine, startPos ):
+    def __searchFrom( self, startLine, startPos, clearSBMessage = True ):
         " Searches starting from the given position "
 
         # Memorize the search arguments
@@ -584,7 +584,7 @@ class FindReplaceBase( QWidget ):
             if len( targets ) == 0:
                 GlobalData().mainWindow.showStatusBarMessage(
                         "Reached the end of the document. "
-                        "Searching from the beginning..." )
+                        "Searching from the beginning...", 0 )
                 targets = self._editor.getTargets( text,
                                                    isRegexp, isCase, isWord,
                                                    0, 0, startLine, startPos )
@@ -596,8 +596,9 @@ class FindReplaceBase( QWidget ):
                                              searchAttributes )
                     return False    # Nothing has matched
             else:
-                # Hide the 'reached the end of ...' message
-                GlobalData().mainWindow.showStatusBarMessage( "" )
+                if clearSBMessage:
+                    # Hide the 'reached the end of ...' message
+                    GlobalData().mainWindow.statusBarSlots.clearMessage( 0 )
 
             # Move the highlight and the cursor to the new match and
             # memorize a new match
@@ -614,7 +615,7 @@ class FindReplaceBase( QWidget ):
         if len( targets ) == 0:
             GlobalData().mainWindow.showStatusBarMessage(
                     "Reached the beginning of the document. "
-                    "Searching from the end..." )
+                    "Searching from the end...", 0 )
             targets = self._editor.getTargets( text, isRegexp, isCase, isWord,
                                                startLine, startPos, -1, -1 )
             if len( targets ) == 0:
@@ -623,8 +624,9 @@ class FindReplaceBase( QWidget ):
                 self._searchSupport.add( self._editorUUID, searchAttributes )
                 return False    # Nothing has matched
         else:
-            # Hide the 'reached the beginning of ...' message
-            GlobalData().mainWindow.showStatusBarMessage( "" )
+            if clearSBMessage:
+                # Hide the 'reached the beginning of ...' message
+                GlobalData().mainWindow.statusBarSlots.clearMessage( 0 )
 
         # Move the highlight and the cursor to the new match and
         # memorize a new match
@@ -977,7 +979,7 @@ class ReplaceWidget( FindReplaceBase ):
                                               isRegexp, isCase, isWord, 0, 0 )
         if not found:
             GlobalData().mainWindow.showStatusBarMessage(
-                "No occurrences of '" + text + "' found. Nothing is replaced." )
+                "No occurrences of '" + text + "' found. Nothing is replaced.", 0 )
             return
 
         # There is something matching
@@ -996,7 +998,7 @@ class ReplaceWidget( FindReplaceBase ):
         if count > 1:
             suffix = "s"
         GlobalData().mainWindow.showStatusBarMessage(
-            str( count ) + " occurrence" + suffix + " replaced" )
+            str( count ) + " occurrence" + suffix + " replaced.", 0 )
         return
 
     def __onReplace( self ):
@@ -1016,7 +1018,7 @@ class ReplaceWidget( FindReplaceBase ):
         if found:
             if self._editor.replaceTarget( str( replaceText ) ):
                 GlobalData().mainWindow.showStatusBarMessage( "1 occurrence "
-                                                              "replaced" )
+                                                              "replaced.", 0 )
                 # Positioning cursor to the end of the replaced text helps
                 # to avoid problems of replacing 'text' with 'prefix_text'
                 searchAttributes.match[1] += len( replaceText )
@@ -1026,7 +1028,7 @@ class ReplaceWidget( FindReplaceBase ):
                 self.replaceAndMoveButton.setEnabled( False )
             else:
                 GlobalData().mainWindow.showStatusBarMessage( "No occurrences "
-                                                              "replaced" )
+                                                              "replaced.", 0 )
             # This will prevent highlighting the improper editor positions
             searchAttributes.match = [ -1, -1, -1 ]
         return
@@ -1035,7 +1037,7 @@ class ReplaceWidget( FindReplaceBase ):
         " Triggered when replace-and-move button is clicked "
         buttonFocused = self.replaceAndMoveButton.hasFocus()
         self.__onReplace()
-        self.onNext()
+        self.onNext( False )
 
         if buttonFocused:
             self.replaceAndMoveButton.setFocus()
@@ -1053,14 +1055,14 @@ class ReplaceWidget( FindReplaceBase ):
             prj.setReplaceHistory( self.findHistory, self.replaceHistory )
         return
 
-    def onNext( self ):
+    def onNext( self, clearSBMessage = True ):
         " Triggered when the find next button is clicked "
         oldLine = self._currentWidget.getLine()
         oldPos = self._currentWidget.getPos()
-        FindReplaceBase.onNext( self )
+        FindReplaceBase.onNext( self, clearSBMessage )
         if oldLine == self._currentWidget.getLine() and \
            oldPos == self._currentWidget.getPos():
-            FindReplaceBase.onNext( self )
+            FindReplaceBase.onNext( self, clearSBMessage )
 
         self.__updateReplaceHistory( self.findtextCombo.currentText(),
                                      self.replaceCombo.currentText() )

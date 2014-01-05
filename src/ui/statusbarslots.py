@@ -42,6 +42,9 @@ class SlotMessage:
             return True
         return datetime.now() > self.till
 
+    def __str__( self ):
+        return "Msg: '" + str( self.msg ) + "' Till: " + str( self.till )
+
 
 class StatusBarSlots:
     " Wraps logical slots for the status bar "
@@ -61,7 +64,8 @@ class StatusBarSlots:
             newMsg = SlotMessage( None, None )
             self.__slots.append( newMsg )
 
-        self.__slots[ slot ].msg = SlotMessage( msg, timeout )
+        newMsg = SlotMessage( msg, timeout )
+        self.__slots[ slot ] = newMsg
         self.__display()
         return
 
@@ -89,19 +93,21 @@ class StatusBarSlots:
         message = ""
         till = None
         for item in self.__slots:
-            if message != "":
-                message += " "
-            message += item.msg
+            if item.msg:
+                if message != "":
+                    message += " "
+                message += item.msg
             if till is None:
                 till = item.till
             else:
                 if item.till > till:
                     till = item.till
-        if not message or till is None:
+
+        if message == "" or till is None:
             return None, None
 
         delta = till - datetime.now()
-        delta = int(delta.microseconds / 1000)
+        delta = int(delta.total_seconds() * 1000)
         if delta <= 0:
             return None, None
         return message, delta
@@ -111,7 +117,7 @@ class StatusBarSlots:
         count = len( self.__slots )
         for index in xrange( count - 1, -1, -1 ):
             if not self.__slots[ index ].msg or self.__slots[ index ].expired():
-                if index - 1 == len( self.__slots ):
+                if index + 1 == len( self.__slots ):
                     # The last one
                     del self.__slots[ index ]
                 else:
