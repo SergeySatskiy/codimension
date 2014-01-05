@@ -92,6 +92,7 @@ from plugins.manager.pluginmanagerdlg import PluginsDialog
 from plugins.vcssupport.vcsmanager import VCSManager
 from plugins.vcssupport.intervaldlg import VCSUpdateIntervalConfigDialog
 from utils.fileutils import MAGIC_AVAILABLE
+from statusbarslots import StatusBarSlots
 
 
 class EditorsManagerWidget( QWidget ):
@@ -536,6 +537,7 @@ class CodimensionMainWindow( QMainWindow ):
         """ creates status bar """
 
         self.__statusBar = self.statusBar()
+        self.statusBarSlots = StatusBarSlots( self.__statusBar )
         self.__statusBar.setSizeGripEnabled( True )
 
         sbPalette = QPalette( self.__statusBar.palette() )
@@ -2901,9 +2903,9 @@ class CodimensionMainWindow( QMainWindow ):
         logging.info( "Please restart codimension to apply the new font" )
         return
 
-    def showStatusBarMessage( self, msg, timeout = 10000 ):
+    def showStatusBarMessage( self, msg, slot, timeout = 10000 ):
         " Shows a temporary status bar message, default 10sec "
-        self.statusBar().showMessage( msg, timeout )
+        self.statusBarSlots.showMessage( msg, slot, timeout )
         return
 
     def checkOutsideFileChanges( self ):
@@ -3762,7 +3764,7 @@ class CodimensionMainWindow( QMainWindow ):
         if len( locations ) == 0:
             QApplication.restoreOverrideCursor()
             self.showStatusBarMessage( "No occurrences of " +
-                                       item.name + " found" )
+                                       item.name + " found.", 0 )
             return
 
         # Process locations for find results window

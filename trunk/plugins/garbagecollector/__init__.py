@@ -206,7 +206,7 @@ class GCPlugin( WizardInterface ):
                   str( iterCount ) + " iteration(s)"
         if self.__where == GCPluginConfigDialog.STATUS_BAR:
             # Display it for 5 seconds
-            self.ide.showStatusBarMessage( message, 5000 )
+            self.ide.showStatusBarMessage( message, 0, 5000 )
         else:
             logging.info( message )
         return

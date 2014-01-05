@@ -105,9 +105,9 @@ class IDEAccess( object ):
         self.globalData = None
         return
 
-    def showStatusBarMessage( self, message, timeout = 10000 ):
+    def showStatusBarMessage( self, message, slot = 0, timeout = 10000 ):
         """ Shows a temporary status bar message, default for 10sec """
-        self.statusBar.showMessage( message, timeout )
+        self.mainWindow.showStatusBarMessage( message, slot, timeout )
         return
 
     @property
