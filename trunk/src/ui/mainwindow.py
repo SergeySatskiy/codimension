@@ -2908,6 +2908,11 @@ class CodimensionMainWindow( QMainWindow ):
         self.statusBarSlots.showMessage( msg, slot, timeout )
         return
 
+    def clearStatusBarMessage( self, slot ):
+        " Clears the status bar message in the given slot "
+        self.statusBarSlots.clearMessage( slot )
+        return
+
     def checkOutsideFileChanges( self ):
         """ Checks if there are changes in the files
             currently loaded by codimension """
