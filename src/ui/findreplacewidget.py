@@ -598,7 +598,7 @@ class FindReplaceBase( QWidget ):
             else:
                 if clearSBMessage:
                     # Hide the 'reached the end of ...' message
-                    GlobalData().mainWindow.statusBarSlots.clearMessage( 0 )
+                    GlobalData().mainWindow.clearStatusBarMessage( 0 )
 
             # Move the highlight and the cursor to the new match and
             # memorize a new match
@@ -626,7 +626,7 @@ class FindReplaceBase( QWidget ):
         else:
             if clearSBMessage:
                 # Hide the 'reached the beginning of ...' message
-                GlobalData().mainWindow.statusBarSlots.clearMessage( 0 )
+                GlobalData().mainWindow.clearStatusBarMessage( 0 )
 
         # Move the highlight and the cursor to the new match and
         # memorize a new match

@@ -961,7 +961,7 @@ class TextEditor( ScintillaWrapper ):
         self.clearAllIndicators( self.matchIndicator )
 
         # Removes the 'highlighted occurences: ...' if so
-        GlobalData().mainWindow.statusBarSlots.clearMessage( 1 )
+        GlobalData().mainWindow.clearStatusBarMessage( 1 )
         return
 
     def setSearchIndicator( self, startPos, indicLength ):

@@ -106,8 +106,15 @@ class IDEAccess( object ):
         return
 
     def showStatusBarMessage( self, message, slot = 0, timeout = 10000 ):
-        """ Shows a temporary status bar message, default for 10sec """
+        """ Shows a temporary status bar message
+            default for 10sec in virtual message slot #0 """
         self.mainWindow.showStatusBarMessage( message, slot, timeout )
+        return
+
+    def clearStatusBarMessage( self, slot = 0 ):
+        """ Clears a temporary status bar message
+            in the given virtual message slot """
+        self.mainWindow.clearStatusBarMessage( slot )
         return
 
     @property
