@@ -23,8 +23,8 @@
 
 """ definition of the codimension QT based application class """
 
-from PyQt4.QtCore       import Qt, QEvent, QTimer, SIGNAL
-from PyQt4.QtGui        import QApplication
+from PyQt4.QtCore       import Qt, QEvent, SIGNAL
+from PyQt4.QtGui        import QApplication, QMenuBar
 from utils.pixmapcache  import PixmapCache
 from utils.globals      import GlobalData
 
@@ -45,19 +45,19 @@ class CodimensionApplication( QApplication ):
 
         self.mainWindow = None
         self.__lastFocus = None
+        self.__beforeMenuBar = None
 
         # Sick! It seems that QT sends Activate/Deactivate signals every time
         # a dialog window is opened/closed. This happens very quickly (and
-        # totally unexpected!). The last focus window must not be memorized
-        # for these cases. The timer before helps to handle this wierd
-        # behavior. Without the timer clicking 'Cancel' in a dialog box leads
-        # to a core dump.
-        self.__deactivateTimer = QTimer( self )
-        self.__deactivateTimer.setSingleShot( True )
-        self.connect( self.__deactivateTimer, SIGNAL( 'timeout()' ),
-                                              self.__onDeactivate )
+        # totally unexpected!). So the last focus widget must not be focused
+        # unconditionally as the last focus may come from a dialog which has
+        # already been destroyed. Without checking that a widget is still alive
+        # (e.g. clicking 'Cancel' in a dialog box) leads to a core dump.
 
         QApplication.setWindowIcon( PixmapCache().getIcon( 'icon.png' ) )
+
+        self.connect( self, SIGNAL( "focusChanged(QWidget*, QWidget*)" ),
+                      self.__onFocusChanged )
 
         # Avoid having rectabgular frames on the status bar
         appCSS = GlobalData().skin.appCSS
@@ -67,17 +67,16 @@ class CodimensionApplication( QApplication ):
         self.installEventFilter( self )
         return
 
-    def __onDeactivate( self ):
-        " Triggered when timer fires "
-        if self.__deactivateTimer.isActive():
-            self.__deactivateTimer.stop()
-        self.__lastFocus = QApplication.focusWidget()
-        return
-
     def setMainWindow( self, window ):
         " Memorizes the new window reference "
         self.mainWindow = window
         return
+
+    def isWidgetAlive( self, widget ):
+        for item in QApplication.allWidgets():
+            if item == widget:
+                return True
+        return False
 
     def eventFilter( self, obj, event ):
         " Event filter to catch ESC application wide "
@@ -88,17 +87,18 @@ class CodimensionApplication( QApplication ):
                     if self.mainWindow is not None:
                         self.mainWindow.hideTooltips()
             elif eventType == QEvent.ApplicationActivate:
-                if self.__deactivateTimer.isActive():
-                    self.__deactivateTimer.stop()
-                if self.__lastFocus is not None:
-                    self.__lastFocus.setFocus()
-                    self.__lastFocus = None
+                if self.isWidgetAlive( self.__lastFocus ):
+                    if isinstance( self.__lastFocus, QMenuBar ):
+                        if self.isWidgetAlive( self.__beforeMenuBar ):
+                            self.__beforeMenuBar.setFocus()
+                self.__lastFocus = None
                 if self.mainWindow is not None:
                     self.mainWindow.checkOutsideFileChanges()
             elif eventType == QEvent.ApplicationDeactivate:
-                if self.__deactivateTimer.isActive():
-                    self.__deactivateTimer.stop()
-                self.__deactivateTimer.start( 25 )
+                if QApplication.activeModalWidget() is not None:
+                    self.__lastFocus = None
+                else:
+                    self.__lastFocus = QApplication.focusWidget()
         except:
             pass
 
@@ -106,3 +106,10 @@ class CodimensionApplication( QApplication ):
             return QApplication.eventFilter( self, obj, event )
         except:
             return True
+
+    def __onFocusChanged( self, fromWidget, toWidget ):
+        " Triggered when a focus is passed from one widget to another "
+        if isinstance( toWidget, QMenuBar ):
+            self.__beforeMenuBar = fromWidget
+        return
+
