@@ -147,6 +147,8 @@ class GCPlugin( WizardInterface ):
                   Having the current widget reference the plugin is able to retrieve
                   the infirmation it needs.
         """
+        parentMenu.addAction( "Configure", self.configure )
+        parentMenu.addAction( "Collect garbage", self.__collectGarbage )
         return
 
 
