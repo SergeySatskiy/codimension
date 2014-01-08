@@ -190,6 +190,18 @@ SKIN_SETTINGS = [
     GeneralSkinSetting( "diffhunkinfoPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 255, 255, 255 ) ),
     GeneralSkinSetting( "diffunmodifiedColor", GeneralSkinSetting.TYPE_COLOR, QColor( 102, 102, 102, 255 ) ),
     GeneralSkinSetting( "diffunmodifiedPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 238, 238, 238, 255 ) ),
+
+    GeneralSkinSetting( "ioconsolePaper", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 255, 230, 255 ) ),
+    GeneralSkinSetting( "ioconsoleStdoutPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 255, 230, 255 ) ),
+    GeneralSkinSetting( "ioconsoleStdoutColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
+    GeneralSkinSetting( "ioconsoleStdinPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 232, 232, 255, 255 ) ),
+    GeneralSkinSetting( "ioconsoleStdinColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
+    GeneralSkinSetting( "ioconsoleStderrPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 228, 228, 255 ) ),
+    GeneralSkinSetting( "ioconsoleStderrColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
+    GeneralSkinSetting( "ioconsoleIDEMsgPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 132, 117, 245, 255 ) ),
+    GeneralSkinSetting( "ioconsoleIDEMsgColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
+    GeneralSkinSetting( "ioconsolemarginPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 228, 228, 228, 255 ) ),
+    GeneralSkinSetting( "ioconsolemarginColor", GeneralSkinSetting.TYPE_COLOR, QColor( 128, 128, 128, 255 ) ),
                 ]
 
 
