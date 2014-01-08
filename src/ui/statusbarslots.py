@@ -95,7 +95,7 @@ class StatusBarSlots:
         for item in self.__slots:
             if item.msg:
                 if message != "":
-                    message += " "
+                    message += "  |  "
                 message += item.msg
             if till is None:
                 till = item.till
