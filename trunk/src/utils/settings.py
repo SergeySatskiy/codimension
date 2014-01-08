@@ -26,7 +26,7 @@
 import os, os.path, ConfigParser, sys, datetime
 from PyQt4.QtCore import QObject, SIGNAL, QDir
 from filepositions import FilesPositions
-from run import TERM_AUTO
+from run import TERM_REDIRECT
 
 
 settingsDir = os.path.normpath( str( QDir.homePath() ) ) + \
@@ -114,7 +114,7 @@ CDM_SETTINGS = {
     CDMSetting( "showThreadViewer", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "showIgnoredExcViewer", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "showWatchPointViewer", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "terminalType", CDMSetting.TYPE_INT, TERM_AUTO ),
+    CDMSetting( "terminalType", CDMSetting.TYPE_INT, TERM_REDIRECT ),
     CDMSetting( "profileNodeLimit", CDMSetting.TYPE_FLOAT, 1.0 ),
     CDMSetting( "profileEdgeLimit", CDMSetting.TYPE_FLOAT, 1.0 ),
     CDMSetting( "debugReportExceptions", CDMSetting.TYPE_BOOL, True ),
@@ -147,6 +147,18 @@ CDM_SETTINGS = {
                 VCS_STATUS_UPDATE_INTERVAL_DEFAULT ),
     CDMSetting( "tablistsortalpha", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "taborderpreserved", CDMSetting.TYPE_BOOL, False ),
+
+    # The IO redirect console
+    CDMSetting( "ioconsolemaxmsgs", CDMSetting.TYPE_INT, 10000 ),
+    CDMSetting( "ioconsoledelchunk", CDMSetting.TYPE_INT, 512 ),
+    CDMSetting( "ioconsolelinewrap", CDMSetting.TYPE_BOOL, False ),
+    CDMSetting( "ioconsoleshoweol", CDMSetting.TYPE_BOOL, False ),
+    CDMSetting( "ioconsoleshowspaces", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "ioconsoleautoscroll", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "ioconsoleshowmargin", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "ioconsoleshowstdin", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "ioconsoleshowstdout", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "ioconsoleshowstderr", CDMSetting.TYPE_BOOL, True ),
            ],
 "recentProjects" : [
     CDMSetting( "project", CDMSetting.TYPE_STR_LST, [] )
