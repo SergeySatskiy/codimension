@@ -88,4 +88,3 @@ class RunParametersCache( object ):
         self.__cache = cPickle.load( inf )
         inf.close()
         return
-

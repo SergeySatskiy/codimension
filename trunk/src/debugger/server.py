@@ -33,7 +33,7 @@ from PyQt4.QtGui import QApplication, QCursor, QMessageBox, QDialog
 from PyQt4.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
 
 from utils.globals import GlobalData
-from utils.run import getCwdCmdEnv, CMD_TYPE_DEBUG, getUserShell
+from utils.run import getCwdCmdEnv, CMD_TYPE_DEBUG, getUserShell, TERM_REDIRECT
 from utils.settings import Settings
 from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
 from utils.pixmapcache import PixmapCache
@@ -88,6 +88,12 @@ class CodimensionDebugger( QObject ):
         self.__disconnectReceived = None
         self.__stopAtFirstLine = None
         self.__translatePath = None
+
+        # Redirect stdout/stderr support
+        self.__stdoutServer = None
+        self.__clientStdoutSocket = None
+        self.__stderrServer = None
+        self.__clientStderrSocket = None
 
         # Support collecting message parts for Eval and Exec
         self.__msgParts = []
@@ -163,6 +169,17 @@ class CodimensionDebugger( QObject ):
             QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
             self.__initiatePrologue( fileName )
             QApplication.restoreOverrideCursor()
+            if self.__clientStdoutSocket is not None:
+                self.connect( self.__clientStdoutSocket,
+                              SIGNAL( 'readyRead()' ),
+                              self.__clientStdoutReady )
+                self.__clientStdoutReady()
+            if self.__clientStderrSocket is not None:
+                self.connect( self.__clientStderrSocket,
+                              SIGNAL( 'readyRead()' ),
+                              self.__clientStderrReady )
+                self.__clientStderrReady()
+
             self.connect( self.__clientSocket, SIGNAL( 'readyRead()' ),
                           self.__parseClientLine )
             self.__parseClientLine()
@@ -182,17 +199,26 @@ class CodimensionDebugger( QObject ):
         self.__translatePath = self.__noPathTranslation
 
         self.__mainWindow.switchDebugMode( True )
+        terminalType = Settings().terminalType
 
         self.__createProcfeedbackSocket()
-        self.__createTCPServer()
+        self.__createTCPServer( terminalType == TERM_REDIRECT )
+
+        stdoutPort = None
+        if self.__stdoutServer is not None:
+            stdoutPort = self.__stdoutServer.serverPort()
+        stderrPort = None
+        if self.__stderrServer is not None:
+            stderrPort = self.__stderrServer.serverPort()
 
         self.__runParameters = GlobalData().getRunParameters( fileName )
         workingDir, cmd, environment = getCwdCmdEnv(
                                             CMD_TYPE_DEBUG,
                                             fileName, self.__runParameters,
-                                            Settings().terminalType,
+                                            terminalType,
                                             self.__procFeedbackPort,
-                                            self.__tcpServer.serverPort() )
+                                            self.__tcpServer.serverPort(),
+                                            stdoutPort, stderrPort )
 
         self.__debugSettings = Settings().getDebuggerSettings()
         self.__stopAtFirstLine = self.__debugSettings.stopAtFirstLine
@@ -295,14 +321,26 @@ class CodimensionDebugger( QObject ):
         self.__procFeedbackPort = self.__procFeedbackSocket.getsockname()[ 1 ]
         return
 
-    def __createTCPServer( self ):
+    def __createTCPServer( self, redirected ):
         " Creates the TCP server for the commands exchange "
         self.__tcpServer = QTcpServer()
         self.connect( self.__tcpServer, SIGNAL( "newConnection()" ),
                       self.__newConnection )
 
+        if redirected:
+            self.__stdoutServer = QTcpServer()
+            self.connect( self.__stdoutServer, SIGNAL( "newConnection()" ),
+                          self.__newStdoutConnection )
+            self.__stderrServer = QTcpServer()
+            self.connect( self.__stderrServer, SIGNAL( "newConnection()" ),
+                          self.__newStderrConnection )
+
         # Port will be assigned automatically
         self.__tcpServer.listen( QHostAddress.LocalHost )
+
+        if redirected:
+            self.__stdoutServer.listen( QHostAddress.LocalHost )
+            self.__stderrServer.listen( QHostAddress.LocalHost )
         return
 
     def __getProcfeedbackData( self ):
@@ -337,6 +375,48 @@ class CodimensionDebugger( QObject ):
         # self.connect( self.__clientSocket, SIGNAL( 'readyRead()' ),
         #               self.__parseClientLine )
 
+        self.__changeStateWhenReady()
+        return
+
+    def __newStdoutConnection( self ):
+        " Handles new incoming stdout connection "
+        sock = self.__stdoutServer.nextPendingConnection()
+        if self.__state != self.STATE_PROLOGUE or \
+           self.__clientStdoutSocket is not None:
+            sock.abort()
+            return
+
+        self.__clientStdoutSocket = sock
+        self.__clientStdoutSocket.setSocketOption(
+                        QAbstractSocket.KeepAliveOption, 1 )
+        self.__changeStateWhenReady()
+        return
+
+    def __newStderrConnection( self ):
+        " Handles new incoming stderr connection "
+        sock = self.__stderrServer.nextPendingConnection()
+        if self.__state != self.STATE_PROLOGUE or \
+           self.__clientStderrSocket is not None:
+            sock.abort()
+            return
+
+        self.__clientStderrSocket = sock
+        self.__clientStderrSocket.setSocketOption(
+                        QAbstractSocket.KeepAliveOption, 1 )
+        self.__changeStateWhenReady()
+        return
+
+    def __changeStateWhenReady( self ):
+        """ Changes the debugger state from prologue to in client when
+            all the required connections are ready """
+        if self.__clientSocket is None:
+            return
+        if self.__stdoutServer is not None and self.__clientStdoutSocket is None:
+            return
+        if self.__stderrServer is not None and self.__clientStderrSocket is None:
+            return
+
+        # All the conditions are met, the state can be changed
         self.__changeDebuggerState( self.STATE_IN_CLIENT )
         return
 
@@ -529,6 +609,24 @@ class CodimensionDebugger( QObject ):
 
         return
 
+    def __clientStderrReady( self ):
+        " Triggered when stderr received "
+        while self.__clientStderrSocket and \
+              self.__clientStderrSocket.bytesAvailable() > 0:
+            data = str( self.__clientStderrSocket.readAll() )
+            self.emit( SIGNAL( 'ClientStderr' ), data )
+            print "STDERR: '" + data + "'"
+        return
+
+    def __clientStdoutReady( self ):
+        " Triggered when stdout received "
+        while self.__clientStdoutSocket and \
+              self.__clientStdoutSocket.bytesAvailable() > 0:
+            data = str( self.__clientStdoutSocket.readAll() )
+            self.emit( SIGNAL( 'ClientStdout' ), data )
+            print "STDOUT: '" + data + "'"
+        return
+
     def __disconnected( self ):
         " Triggered when the client closed the connection "
         # Note: if the stopDebugging call is done synchronously - you've got
@@ -582,12 +680,35 @@ class CodimensionDebugger( QObject ):
             self.__clientSocket.close()
         self.__clientSocket = None
 
+        if self.__clientStdoutSocket is not None:
+            self.disconnect( self.__clientStdoutSocket, SIGNAL( 'readyRead()' ),
+                             self.__clientStdoutReady )
+            self.__clientStdoutSocket.close()
+            self.__clientStdoutSocket = None
+        if self.__clientStderrSocket is not None:
+            self.disconnect( self.__clientStderrSocket, SIGNAL( 'readyRead()' ),
+                             self.__clientStderrReady )
+            self.__clientStderrSocket.close()
+            self.__clientStderrSocket = None
+
         # Close the TCP server if so
         if self.__tcpServer is not None:
             self.disconnect( self.__tcpServer, SIGNAL( "newConnection()" ),
                              self.__newConnection )
             self.__tcpServer.close()
         self.__tcpServer = None
+
+        if self.__stdoutServer is not None:
+            self.disconnect( self.__stdoutServer, SIGNAL( "newConnection()" ),
+                             self.__newStdoutConnection )
+            self.__stdoutServer.close()
+        self.__stdoutServer = None
+
+        if self.__stderrServer is not None:
+            self.disconnect( self.__stderrServer, SIGNAL( "newConnection()" ),
+                             self.__newStderrConnection )
+            self.__stderrServer.close()
+        self.__stderrServer = None
 
         # Deal with the process if so
         if self.__procPID is not None:

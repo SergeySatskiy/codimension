@@ -25,15 +25,16 @@
 
 
 import os, os.path, copy
-from PyQt4.QtCore   import Qt, SIGNAL, QStringList
-from PyQt4.QtGui    import QDialog, QDialogButtonBox, QVBoxLayout, \
-                           QSizePolicy, QLabel, QGridLayout, QHBoxLayout, \
-                           QRadioButton, QGroupBox, QPushButton, QFileDialog, \
-                           QLineEdit, QTreeWidget, QAbstractItemView, \
-                           QTreeWidgetItem, QCheckBox, QDoubleValidator
-from itemdelegates  import NoOutlineHeightDelegate
-from utils.run      import RunParameters, parseCommandLineArguments, \
-                           TERM_AUTO, TERM_GNOME, TERM_KONSOLE, TERM_XTERM
+from PyQt4.QtCore import Qt, SIGNAL, QStringList
+from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout,
+                          QSizePolicy, QLabel, QGridLayout, QHBoxLayout,
+                          QRadioButton, QGroupBox, QPushButton, QFileDialog,
+                          QLineEdit, QTreeWidget, QAbstractItemView,
+                          QTreeWidgetItem, QCheckBox, QDoubleValidator )
+from itemdelegates import NoOutlineHeightDelegate
+from utils.run import ( RunParameters, parseCommandLineArguments,
+                        TERM_AUTO, TERM_GNOME, TERM_KONSOLE, TERM_XTERM,
+                        TERM_REDIRECT )
 
 
 class EnvVarDialog( QDialog ):
@@ -186,7 +187,9 @@ class RunDialog( QDialog ):
             self.__setEnabledInheritedPlusEnv( False )
 
         # Terminal
-        if self.termType == TERM_AUTO:
+        if self.termType == TERM_REDIRECT:
+            self.__redirectRButton.setChecked( True )
+        elif self.termType == TERM_AUTO:
             self.__autoRButton.setChecked( True )
         elif self.termType == TERM_KONSOLE:
             self.__konsoleRButton.setChecked( True )
@@ -427,6 +430,9 @@ class RunDialog( QDialog ):
         termGroupbox.setSizePolicy( sizePolicy )
 
         layoutTerm = QVBoxLayout( termGroupbox )
+        self.__redirectRButton = QRadioButton( termGroupbox )
+        self.__redirectRButton.setText( "&Redirect to IDE" )
+        layoutTerm.addWidget( self.__redirectRButton )
         self.__autoRButton = QRadioButton( termGroupbox )
         self.__autoRButton.setText( "Aut&o detection" )
         layoutTerm.addWidget( self.__autoRButton )
@@ -845,7 +851,9 @@ class RunDialog( QDialog ):
 
     def onAccept( self ):
         " Saves the selected terminal and profiling values "
-        if self.__autoRButton.isChecked():
+        if self.__redirectRButton.isChecked():
+            self.termType = TERM_REDIRECT
+        elif self.__autoRButton.isChecked():
             self.termType = TERM_AUTO
         elif self.__konsoleRButton.isChecked():
             self.termType = TERM_KONSOLE
