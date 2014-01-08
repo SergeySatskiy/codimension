@@ -65,7 +65,7 @@ class SVNMenuMixin:
         self.fileContextUpdateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuupdate.png' ),
                                                           "&Update", self.fileUpdate )
         self.fileContextPropsAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuprops.png' ),
-                                                         "&Properties", self.fileProps )
+                                                         "&Properties...", self.fileProps )
         self.fileContextAddAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuadd.png' ),
                                                        "A&dd", self.fileAddToRepository )
         self.fileContextCommitAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenucommit.png' ),
@@ -92,7 +92,7 @@ class SVNMenuMixin:
         self.dirContextUpdateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuupdate.png' ),
                                                          "&Update", self.dirUpdate )
         self.dirContextPropsAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuprops.png' ),
-                                                        "&Properties", self.dirProps )
+                                                        "&Properties...", self.dirProps )
         self.dirContextAddAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuadd.png' ),
                                                       "A&dd", self.dirAddToRepository )
         self.dirContextAddRecursiveAct = parentMenu.addAction( "Add recursively", self.dirAddToRepositoryRecursively )
@@ -118,7 +118,7 @@ class SVNMenuMixin:
         self.bufContextUpdateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuupdate.png' ),
                                                          "&Update", self.bufferUpdate )
         self.bufContextPropsAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuprops.png' ),
-                                                        "&Properties", self.bufferProps )
+                                                        "&Properties...", self.bufferProps )
         self.bufContextDiffAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenudiff.png' ),
                                                        "&Diff", self.bufferDiff )
         parentMenu.addSeparator()
