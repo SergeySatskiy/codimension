@@ -192,6 +192,7 @@ SKIN_SETTINGS = [
     GeneralSkinSetting( "diffunmodifiedPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 238, 238, 238, 255 ) ),
 
     GeneralSkinSetting( "ioconsolePaper", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 255, 230, 255 ) ),
+    GeneralSkinSetting( "ioconsoleColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
     GeneralSkinSetting( "ioconsoleStdoutPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 255, 230, 255 ) ),
     GeneralSkinSetting( "ioconsoleStdoutColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
     GeneralSkinSetting( "ioconsoleStdinPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 232, 232, 255, 255 ) ),
