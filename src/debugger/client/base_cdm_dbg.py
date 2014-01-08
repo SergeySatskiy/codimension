@@ -147,7 +147,7 @@ class DebugBase( bdb.Bdb ):
     def setRecursionDepth( self, frame ):
         """
         Determines the current recursion depth
-        
+
         @param frame The current stack frame.
         """
         self.__recursionDepth = 0
@@ -172,7 +172,7 @@ class DebugBase( bdb.Bdb ):
             self.cFrame = frame
             self.__recursionDepth += 1
             if self.__recursionDepth > RECURSION_LIMIT:
-                raise RuntimeError( \
+                raise RuntimeError(
                         'maximum recursion depth exceeded\n'
                         '(offending frame is two down the stack)' )
         return
@@ -184,7 +184,7 @@ class DebugBase( bdb.Bdb ):
         This specialty is to check the connection to the debug server
         for new events (i.e. new breakpoints) while we are going through
         the code.
-        
+
         @param frame The current stack frame.
         @param event The trace event (string)
         @param arg The arguments
@@ -224,7 +224,7 @@ class DebugBase( bdb.Bdb ):
         This speciality is to check the connection to the debug server
         for new events (i.e. new breakpoints) while we are going through
         the code.
-        
+
         @param frame The current stack frame.
         @return local trace function
         """
@@ -237,7 +237,7 @@ class DebugBase( bdb.Bdb ):
     def dispatch_return( self, frame, arg ):
         """
         Reimplemented from bdb.py to handle passive mode cleanly.
-        
+
         @param frame The current stack frame.
         @param arg The arguments
         @return local trace function
@@ -251,7 +251,7 @@ class DebugBase( bdb.Bdb ):
     def dispatch_exception( self, frame, arg ):
         """
         Reimplemented from bdb.py to always call user_exception.
-        
+
         @param frame The current stack frame.
         @param arg The arguments
         @return local trace function
@@ -265,7 +265,7 @@ class DebugBase( bdb.Bdb ):
     def set_trace( self, frame = None ):
         """
         Overridden method of bdb.py to do some special setup.
-        
+
         @param frame frame to start debugging from
         """
         bdb.Bdb.set_trace( self, frame )
@@ -275,7 +275,7 @@ class DebugBase( bdb.Bdb ):
     def set_continue( self, special ):
         """
         Reimplemented from bdb.py to always get informed of exceptions.
-        
+
         @param special flag indicating a special continue operation
         """
         # Modified version of the one found in bdb.py
@@ -288,8 +288,8 @@ class DebugBase( bdb.Bdb ):
 
     def set_quit( self ):
         """
-        Public method to quit. 
-        
+        Public method to quit.
+
         It wraps call to bdb to clear the current frame properly.
         """
         self.currentFrame = None
@@ -315,10 +315,10 @@ class DebugBase( bdb.Bdb ):
         @param frame the frame object
         """
         # get module name from __file__
-        if frame.f_globals.has_key('__file__') and \
-           frame.f_globals['__file__'] and \
-           frame.f_globals['__file__'] == frame.f_code.co_filename:
-            root, ext = os.path.splitext(frame.f_globals['__file__'])
+        if frame.f_globals.has_key( '__file__' ) and \
+           frame.f_globals[ '__file__' ] and \
+           frame.f_globals[ '__file__' ] == frame.f_code.co_filename:
+            root, ext = os.path.splitext( frame.f_globals[ '__file__' ] )
             if ext in [ '.pyc', '.py', '.pyo' ]:
                 fixedName = root + '.py'
                 if os.path.exists( fixedName ):
@@ -329,7 +329,7 @@ class DebugBase( bdb.Bdb ):
     def set_watch( self, cond, temporary = 0 ):
         """
         Public method to set a watch expression
-        
+
         @param cond expression of the watch expression (string)
         @param temporary flag indicating a temporary watch expression (boolean)
         """
@@ -349,7 +349,7 @@ class DebugBase( bdb.Bdb ):
     def clear_watch( self, cond ):
         """
         Public method to clear a watch expression
-        
+
         @param cond expression of the watch expression to be cleared (string)
         """
         try:
@@ -369,7 +369,7 @@ class DebugBase( bdb.Bdb ):
     def get_watch( self, cond ):
         """
         Public method to get a watch expression
-        
+
         @param cond expression of the watch expression to be cleared (string)
         """
         possibles = bdb.Breakpoint.bplist[ "Watch", 0 ]
@@ -382,7 +382,7 @@ class DebugBase( bdb.Bdb ):
     def __do_clearWatch( self, cond ):
         """
         Private method called to clear a temporary watch expression
-        
+
         @param cond expression of the watch expression to be cleared (string)
         """
         self.clear_watch( cond )
@@ -392,7 +392,7 @@ class DebugBase( bdb.Bdb ):
     def __effective( self, frame ):
         """
         Determines if a watch expression is effective
-        
+
         @param frame the current execution frame
         @return tuple of watch expression and a flag to indicate, that a temporary
             watch expression may be deleted (bdb.Breakpoint, boolean)
@@ -445,9 +445,9 @@ class DebugBase( bdb.Bdb ):
 
     def break_here( self, frame ):
         """ Reimplemented from bdb.py to fix the filename from the frame
-        
+
         See fix_frame_filename for more info.
-        
+
         @param frame the frame object
         @return flag indicating the break status (boolean)
         """
@@ -484,7 +484,7 @@ class DebugBase( bdb.Bdb ):
 
         These speciality is to fix the filename from the frame
         (see fix_frame_filename for more info).
-        
+
         @param frame the frame object
         @return flag indicating the break status (boolean)
         """
@@ -499,7 +499,7 @@ class DebugBase( bdb.Bdb ):
 
         Only one breakpoint per line is supported so this overwritten
         method will return this one and only breakpoint.
-        
+
         @param filename the filename of the bp to retrieve (string)
         @param ineno the linenumber of the bp to retrieve (integer)
         @return breakpoint or None, if there is no bp
@@ -512,7 +512,7 @@ class DebugBase( bdb.Bdb ):
     def __do_clear( self, filename, lineno ):
         """
         Clears a temporary breakpoint
-        
+
         @param filename name of the file the bp belongs to
         @param lineno linenumber of the bp
         """
@@ -524,7 +524,7 @@ class DebugBase( bdb.Bdb ):
     def getStack( self ):
         """
         Provides the stack
-        
+
         @return list of lists with file name (string), line number (integer)
             and function name (string)
         """
@@ -606,7 +606,7 @@ class DebugBase( bdb.Bdb ):
                         unhandled = 0 ):
         """
         Reimplemented to report an exception to the debug server
-        
+
         @param frame the frame object
         @param exctype the type of the exception
         @param excval data about the exception
@@ -651,7 +651,7 @@ class DebugBase( bdb.Bdb ):
                 exctypetxt = unicode( exctype )
             try:
                 exclist = [ exctypetxt,
-                            unicode( excval ).encode( \
+                            unicode( excval ).encode(
                                             self._dbgClient.getCoding() ) ]
             except TypeError:
                 exclist = [ exctypetxt, str( excval ) ]
@@ -665,7 +665,7 @@ class DebugBase( bdb.Bdb ):
                 # remember the locals because it is reinitialized when accessed
 
                 for fr in frlist:
-                    filename = self._dbgClient.absPath( \
+                    filename = self._dbgClient.absPath(
                                             self.fix_frame_filename( fr ) )
                     linenr = fr.f_lineno
 
@@ -688,7 +688,7 @@ class DebugBase( bdb.Bdb ):
     def __extract_stack( self, exctb ):
         """
         Provides a list of stack frames
-        
+
         @param exctb exception traceback
         @return list of stack frames
         """
@@ -703,7 +703,7 @@ class DebugBase( bdb.Bdb ):
     def user_return( self, frame, retval ):
         """
         Reimplemented to report program termination to the debug server.
-        
+
         @param frame the frame object
         @param retval the return value of the program
         """
