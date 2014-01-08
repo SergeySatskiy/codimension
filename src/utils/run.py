@@ -29,10 +29,11 @@
 import sys, os, os.path, getpass, commands
 
 
-TERM_AUTO    = 0
-TERM_KONSOLE = 1
-TERM_GNOME   = 2
-TERM_XTERM   = 3
+TERM_REDIRECT = -1
+TERM_AUTO     = 0
+TERM_KONSOLE  = 1
+TERM_GNOME    = 2
+TERM_XTERM    = 3
 
 
 CMD_TYPE_RUN     = 0
@@ -307,7 +308,8 @@ def getTerminalCommandToProfile( fileName, workingDir, arguments,
 
 def getTerminalCommandToDebug( fileName, workingDir, arguments,
                                terminalType, closeTerminal,
-                               procFeedbackPort, tcpServerPort ):
+                               procFeedbackPort, tcpServerPort,
+                               stdoutPort, stderrPort ):
     " Provides a command line to debug in a separate shell terminal "
 
     if os.name != 'posix':
@@ -340,7 +342,7 @@ def getTerminalCommandToDebug( fileName, workingDir, arguments,
     debugSettings = Settings().getDebuggerSettings()
 
     # Form the debug client options
-    dbgopt = "-n -h localhost -p " + str( tcpServerPort ) + " -w " + workingDir
+    dbgopt = "-h localhost -p " + str( tcpServerPort ) + " -w " + workingDir
     if not debugSettings.reportExceptions:
         dbgopt += " -e"
     if debugSettings.traceInterpreter:
@@ -350,6 +352,12 @@ def getTerminalCommandToDebug( fileName, workingDir, arguments,
             dbgopt += " --fork-child"
         else:
             dbgopt += " --fork-parent"
+    if stdoutPort is None and stderrPort is None:
+        dbgopt += " -n"
+    else:
+        dbgopt += " --stdout-port " + str( stdoutPort ) + \
+                  " --stderr-port " + str( stderrPort )
+
 
 
     # Here: all the parameters are prepared, need to combine the command line
@@ -453,7 +461,8 @@ def parseCommandLineArguments( cmdLine ):
 
 
 def getCwdCmdEnv( cmdType, path, params, terminalType,
-                  procFeedbackPort = None, tcpServerPort = None ):
+                  procFeedbackPort = None, tcpServerPort = None,
+                  stdoutPort = None, stderrPort = None ):
     """ Provides the working directory, command line and environment
         for running/debugging a script """
 
@@ -472,7 +481,8 @@ def getCwdCmdEnv( cmdType, path, params, terminalType,
     elif cmdType == CMD_TYPE_DEBUG:
         cmd = getTerminalCommandToDebug( path, workingDir, arguments,
                                          terminalType, params.closeTerminal,
-                                         procFeedbackPort, tcpServerPort )
+                                         procFeedbackPort, tcpServerPort,
+                                         stdoutPort, stderrPort )
     else:
         raise Exception( "Unknown command requested. "
                          "Supported command types are: run, profile, debug." )
