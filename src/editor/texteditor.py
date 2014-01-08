@@ -299,69 +299,69 @@ class TextEditor( ScintillaWrapper ):
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
 
-        self.__menu = QMenu( self )
-        self.__menuUndo = self.__menu.addAction(
+        self._menu = QMenu( self )
+        self.__menuUndo = self._menu.addAction(
                                     PixmapCache().getIcon( 'undo.png' ),
                                     '&Undo', self.onUndo, "Ctrl+Z" )
-        self.__menuRedo = self.__menu.addAction(
+        self.__menuRedo = self._menu.addAction(
                                     PixmapCache().getIcon( 'redo.png' ),
                                     '&Redo', self.onRedo, "Ctrl+Y" )
-        self.__menu.addSeparator()
-        self.__menuCut = self.__menu.addAction(
+        self._menu.addSeparator()
+        self.__menuCut = self._menu.addAction(
                                     PixmapCache().getIcon( 'cutmenu.png' ),
                                     'Cu&t', self.onShiftDel, "Ctrl+X" )
-        self.__menuCopy = self.__menu.addAction(
+        self.__menuCopy = self._menu.addAction(
                                     PixmapCache().getIcon( 'copymenu.png' ),
                                     '&Copy', self.onCtrlC, "Ctrl+C" )
-        self.__menuPaste = self.__menu.addAction(
+        self.__menuPaste = self._menu.addAction(
                                     PixmapCache().getIcon( 'pastemenu.png' ),
                                     '&Paste', self.paste, "Ctrl+V" )
-        self.__menuSelectAll = self.__menu.addAction(
+        self.__menuSelectAll = self._menu.addAction(
                                 PixmapCache().getIcon( 'selectallmenu.png' ),
                                 'Select &all', self.selectAll, "Ctrl+A" )
-        self.__menu.addSeparator()
-        menu = self.__menu.addMenu( self.__initEncodingMenu() )
+        self._menu.addSeparator()
+        menu = self._menu.addMenu( self.__initEncodingMenu() )
         menu.setIcon( PixmapCache().getIcon( 'textencoding.png' ) )
-        self.__menu.addSeparator()
-        menu = self.__menu.addMenu( self.__initToolsMenu() )
+        self._menu.addSeparator()
+        menu = self._menu.addMenu( self.__initToolsMenu() )
         menu.setIcon( PixmapCache().getIcon( 'toolsmenu.png' ) )
-        self.__menu.addSeparator()
-        menu = self.__menu.addMenu( self.__initDiagramsMenu() )
+        self._menu.addSeparator()
+        menu = self._menu.addMenu( self.__initDiagramsMenu() )
         menu.setIcon( PixmapCache().getIcon( 'diagramsmenu.png' ) )
-        self.__menu.addSeparator()
-        self.__menuOpenAsFile = self.__menu.addAction(
+        self._menu.addSeparator()
+        self.__menuOpenAsFile = self._menu.addAction(
                                 PixmapCache().getIcon( 'filemenu.png' ),
                                 'O&pen as file', self.openAsFile )
-        self.__menuDownloadAndShow = self.__menu.addAction(
+        self.__menuDownloadAndShow = self._menu.addAction(
                                 PixmapCache().getIcon( 'filemenu.png' ),
                                 'Do&wnload and show', self.downloadAndShow )
-        self.__menuOpenInBrowser = self.__menu.addAction(
+        self.__menuOpenInBrowser = self._menu.addAction(
                                 PixmapCache().getIcon( 'homepagemenu.png' ),
                                 'Open in browser', self.openInBrowser )
-        self.__menu.addSeparator()
-        self.__menuHighlightInPrj = self.__menu.addAction(
+        self._menu.addSeparator()
+        self.__menuHighlightInPrj = self._menu.addAction(
                                 PixmapCache().getIcon( "highlightmenu.png" ),
                                 "&Highlight in project browser",
                                 editorsManager.onHighlightInPrj )
-        self.__menuHighlightInFS = self.__menu.addAction(
+        self.__menuHighlightInFS = self._menu.addAction(
                                 PixmapCache().getIcon( "highlightmenu.png" ),
                                 "H&ighlight in file system browser",
                                 editorsManager.onHighlightInFS )
-        self.__menuHighlightInOutline = self.__menu.addAction(
+        self._menuHighlightInOutline = self._menu.addAction(
                                 PixmapCache().getIcon( "highlightmenu.png" ),
                                 "Highlight in &outline browser",
                                 self.highlightInOutline, 'Ctrl+B' )
 
-        self.connect( self.__menu, SIGNAL( "aboutToShow()" ),
-                      self.__contextMenuAboutToShow )
+        self.connect( self._menu, SIGNAL( "aboutToShow()" ),
+                      self._contextMenuAboutToShow )
 
         # Plugins support
-        self.__pluginMenuSeparator = self.__menu.addSeparator()
+        self.__pluginMenuSeparator = self._menu.addSeparator()
         editorsManager = self.parent().parent()
         registeredMenus = editorsManager.getPluginMenus()
         if registeredMenus:
             for path in registeredMenus:
-                self.__menu.addMenu( registeredMenus[ path ] )
+                self._menu.addMenu( registeredMenus[ path ] )
         else:
             self.__pluginMenuSeparator.setVisible( False )
 
@@ -373,13 +373,13 @@ class TextEditor( ScintillaWrapper ):
 
     def __onPluginMenuAdded( self, menu, count ):
         " Triggered when a new menu was added "
-        self.__menu.addMenu( menu )
+        self._menu.addMenu( menu )
         self.__pluginMenuSeparator.setVisible( True )
         return
 
     def __onPluginMenuRemoved( self, menu, count ):
         " Triggered when a menu was deleted "
-        self.__menu.removeAction( menu.menuAction() )
+        self._menu.removeAction( menu.menuAction() )
         self.__pluginMenuSeparator.setVisible( count != 0 )
         return
 
@@ -498,8 +498,8 @@ class TextEditor( ScintillaWrapper ):
                         GlobalData().project.isLoaded() and
                         GlobalData().project.isProjectFile( fileName ) )
             self.__menuHighlightInFS.setEnabled( os.path.isabs( fileName ) )
-            self.__menuHighlightInOutline.setEnabled( fileType == PythonFileType )
-            self.__menu.popup( event.globalPos() )
+            self._menuHighlightInOutline.setEnabled( fileType == PythonFileType )
+            self._menu.popup( event.globalPos() )
         else:
             # Menu for a margin
             pass
@@ -2067,13 +2067,13 @@ class TextEditor( ScintillaWrapper ):
         QDesktopServices.openUrl( QUrl( url ) )
         return
 
-    def __contextMenuAboutToShow( self ):
+    def _contextMenuAboutToShow( self ):
         " Context menu is about to show "
         if self.parent().getFileType() not in [ PythonFileType,
                                                 Python3FileType ]:
-            self.__menuHighlightInOutline.setEnabled( False )
+            self._menuHighlightInOutline.setEnabled( False )
         else:
-            self.__menuHighlightInOutline.setEnabled( True )
+            self._menuHighlightInOutline.setEnabled( True )
 
         self.runAct.setEnabled( self.parent().runScriptButton.isEnabled() )
         self.runParamAct.setEnabled( self.parent().runScriptButton.isEnabled() )

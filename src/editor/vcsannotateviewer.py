@@ -227,6 +227,19 @@ class VCSAnnotateViewer( TextEditor ):
         self.setRevisionMarginWidth()
         return
 
+    def _contextMenuAboutToShow( self ):
+        if self.parent().getFileType() not in [ PythonFileType,
+                                                Python3FileType ]:
+            self._menuHighlightInOutline.setEnabled( False )
+        else:
+            self._menuHighlightInOutline.setEnabled( True )
+
+        self.runAct.setEnabled( False )
+        self.runParamAct.setEnabled( False )
+        self.profileAct.setEnabled( False )
+        self.profileParamAct.setEnabled( False )
+        return
+
 
 
 class VCSAnnotateViewerTabWidget( QWidget, MainWindowTabWidgetBase ):
@@ -533,7 +546,7 @@ class VCSAnnotateViewerTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def getFileName( self ):
         " Tells what file name of the widget content "
-        return "N/A"
+        return "n/a"
 
     def setFileName( self, name ):
         " Sets the file name "
