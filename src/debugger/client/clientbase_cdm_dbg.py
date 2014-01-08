@@ -60,6 +60,7 @@ from protocol_cdm_dbg import ( ResponseOK, RequestOK, RequestVariable,
                                ResponseExec, ResponseExecError )
 from base_cdm_dbg import setRecursionLimit
 from asyncfile_cdm_dbg import AsyncFile, AsyncPendingWrite
+from outredir_cdm_dbg import OutStreamRedirector
 
 
 
@@ -923,7 +924,8 @@ class DebugClientBase( object ):
             self.writeReady( self.errorstream.fileno() )
         return
 
-    def connectDebugger( self, port, remoteAddress = None, redirect = 1 ):
+    def connectDebugger( self, port, remoteAddress = None, redirect = 1,
+                               stdoutPort = None, stderrPort = None ):
         """
         Public method to establish a session with the debugger.
 
@@ -937,7 +939,15 @@ class DebugClientBase( object ):
         @param redirect flag indicating redirection of stdin, stdout and
                stderr (boolean)
         """
+        stdoutSock = None
+        stderrSock = None
         if remoteAddress is None:                    # default: 127.0.0.1
+            if stdoutPort is not None:
+                stdoutSock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+                stdoutSock.connect( ( DebugAddress, stdoutPort ) )
+            if stderrPort is not None:
+                stderrSock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+                stderrSock.connect( ( DebugAddress, stderrPort ) )
             sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
             sock.connect( ( DebugAddress, port ) )
         else:
@@ -948,10 +958,28 @@ class DebugClientBase( object ):
             if ":" in remoteAddress:                              # IPv6
                 sockaddr = socket.getaddrinfo( remoteAddress, port, 0, 0,
                                                socket.SOL_TCP )[ 0 ][ -1 ]
+                if stdoutPort is not None:
+                    stdoutSock = socket.socket( socket.AF_INET6,
+                                                socket.SOCK_STREAM )
+                    sockaddr = sockaddr[ : -1 ] + ( int( index ), )
+                    stdoutSock.connect( sockaddr )
+                if stderrPort is not None:
+                    stderrSock = socket.socket( socket.AF_INET6,
+                                                socket.SOCK_STREAM )
+                    sockaddr = sockaddr[ : -1 ] + ( int( index ), )
+                    stderrSock.connect( sockaddr )
                 sock = socket.socket( socket.AF_INET6, socket.SOCK_STREAM )
                 sockaddr = sockaddr[ : -1 ] + ( int( index ), )
                 sock.connect( sockaddr )
             else:                                                   # IPv4
+                if stdoutPort is not None:
+                    stdoutSock = socket.socket( socket.AF_INET,
+                                                socket.SOCK_STREAM )
+                    stdoutSock.connect( ( remoteAddress, stdoutPort ) )
+                if stderrPort is not None:
+                    stderrSock = socket.socket( socket.AF_INET,
+                                                socket.SOCK_STREAM )
+                    stderrSock.connect( ( remoteAddress, stderrPort ) )
                 sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
                 sock.connect( ( remoteAddress, port ) )
 
@@ -960,9 +988,9 @@ class DebugClientBase( object ):
         self.errorstream = AsyncFile( sock, sys.stderr.mode, sys.stderr.name )
 
         if redirect:
+            sys.stdout = OutStreamRedirector( stdoutSock )
+            sys.stderr = OutStreamRedirector( stderrSock )
             sys.stdin = self.readstream
-            sys.stdout = self.writestream
-            sys.stderr = self.errorstream
         self.redirect = redirect
 
         # attach to the main thread here
@@ -1595,7 +1623,8 @@ class DebugClientBase( object ):
 
     def startProgInDebugger( self, progargs, wd, host,
                              port, exceptions = 1,
-                             tracePython = 0, redirect = 1 ):
+                             tracePython = 0, redirect = 1,
+                             stdoutPort = None, stderrPort = None ):
         """
         Public method used to start the remote debugger.
 
@@ -1612,7 +1641,8 @@ class DebugClientBase( object ):
                and stderr (boolean)
         """
         remoteAddress = self.__resolveHost( host )
-        self.connectDebugger( port, remoteAddress, redirect )
+        self.connectDebugger( port, remoteAddress, redirect,
+                              stdoutPort, stderrPort )
 
         self._fncache = {}
         self.dircache = []
@@ -1680,6 +1710,8 @@ class DebugClientBase( object ):
             args = sys.argv[ 1 : ]
             host = None
             port = None
+            stdoutPort = None
+            stderrPort = None
             wdir = ''
             tracePython = 0
             exceptions = 1
@@ -1691,6 +1723,14 @@ class DebugClientBase( object ):
                     del args[0]
                 elif args[0] == '-p':
                     port = int(args[1])
+                    del args[0]
+                    del args[0]
+                elif args[ 0 ] == '--stdout-port':
+                    stdoutPort = int( args[ 1 ] )
+                    del args[0]
+                    del args[0]
+                elif args[ 0 ] == '--stderr-port':
+                    stderrPort = int( args[ 1 ] )
                     del args[0]
                     del args[0]
                 elif args[0] == '-w':
@@ -1726,6 +1766,9 @@ class DebugClientBase( object ):
                 print "No program given. Aborting..."
             elif port is None or host is None:
                 print "Network address is not provided. Aborting..."
+            elif redirect == 1 and (stdoutPort is None or stderrPort is None):
+                print "If redirected stdout and stderr " \
+                      "ports must be provided. Aborting..."
             else:
                 if not self.noencoding:
                     self.__coding = self.defaultCoding
@@ -1733,7 +1776,9 @@ class DebugClientBase( object ):
                 self.startProgInDebugger( args, wdir, host, port,
                                           exceptions = exceptions,
                                           tracePython = tracePython,
-                                          redirect = redirect )
+                                          redirect = redirect,
+                                          stdoutPort = stdoutPort,
+                                          stderrPort = stderrPort )
         else:
             print "No script to debug. Aborting..."
         return
