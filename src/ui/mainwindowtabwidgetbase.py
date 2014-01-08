@@ -39,6 +39,7 @@ class MainWindowTabWidgetBase():
     DisassemblerViewer   = 6
     VCSAnnotateViewer    = 7
     DiffViewer           = 8
+    IOConsole            = 9
 
     def __init__( self ):
         self.__uuid = uuid.uuid1()
@@ -51,7 +52,7 @@ class MainWindowTabWidgetBase():
 
     def getRWMode( self ):
         """ Tells the read/write mode
-            Should return 'N/A', 'RW' or 'RO'
+            Should return 'n/a', 'RW' or 'RO'
         """
         raise Exception( "getRWMode() is not implemented" )
 
