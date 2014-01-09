@@ -164,3 +164,25 @@ def notifyActionToString( action ):
         return ACTION[ action ]
     return "unknown action"
 
+
+RAW_STATUS = {
+    pysvn.wc_status_kind.none:        "not existing",
+    pysvn.wc_status_kind.unversioned: "not under SVN control",
+    pysvn.wc_status_kind.normal:      "up to date",
+    pysvn.wc_status_kind.added:       "added",
+    pysvn.wc_status_kind.missing:     "missing",
+    pysvn.wc_status_kind.deleted:     "deleted",
+    pysvn.wc_status_kind.replaced:    "replaced",
+    pysvn.wc_status_kind.modified:    "modified",
+    pysvn.wc_status_kind.merged:      "merged",
+    pysvn.wc_status_kind.conflicted:  "conflicted",
+    pysvn.wc_status_kind.ignored:     "ignored",
+    pysvn.wc_status_kind.obstructed:  "obstructed",
+    pysvn.wc_status_kind.external:    "external",
+    pysvn.wc_status_kind.incomplete:  "incomplete" }
+
+def rawStatusToString( status ):
+    " Converts status to string "
+    if status in RAW_STATUS:
+        return RAW_STATUS[ status ]
+    return "unknown"

@@ -24,9 +24,10 @@
 
 import pysvn, os.path, logging
 from svnstrconvert import ( nodeKindToString, scheduleToString,
-                            timestampToString, statusToString )
+                            timestampToString, statusToString, rawStatusToString )
 from svnindicators import IND_ERROR
-
+from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QApplication, QCursor
 
 
 class SVNInfoMixin:
@@ -37,13 +38,23 @@ class SVNInfoMixin:
     def fileInfo( self ):
         " Called when info requested for a file via context menu "
         path = str( self.fileParentMenu.menuAction().data().toString() )
-        self.__svnInfo( path )
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+        try:
+            self.__svnInfo( path )
+        except Exception, exc:
+            logging.error( str( exc ) )
+        QApplication.restoreOverrideCursor()
         return
 
     def dirInfo( self ):
         " Called when info requested for a directory via context menu "
         path = str( self.dirParentMenu.menuAction().data().toString() )
-        self.__svnInfo( path )
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+        try:
+            self.__svnInfo( path )
+        except Exception, exc:
+            logging.error( str( exc ) )
+        QApplication.restoreOverrideCursor()
         return
 
     def bufferInfo( self ):
@@ -52,7 +63,13 @@ class SVNInfoMixin:
         if not os.path.isabs( path ):
             logging.info( "SVN info is not applicable for never saved buffer" )
             return
-        self.__svnInfo( path )
+
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+        try:
+            self.__svnInfo( path )
+        except Exception, exc:
+            logging.error( str( exc ) )
+        QApplication.restoreOverrideCursor()
         return
 
     def getLocalStatusObject( self, client, path ):
@@ -62,6 +79,20 @@ class SVNInfoMixin:
                                         depth = pysvn.depth.empty )
             if len( statusList ) != 1:
                 return None
+            return statusList[ 0 ]
+        except:
+            return None
+
+    def getServerStatusObject( self, client, path ):
+        " Provides SVN server status for the item itself "
+        try:
+            statusList = client.status( path, update = True,
+                                        depth = pysvn.depth.empty )
+            if len( statusList ) != 1:
+                statusList = client.status( path, update = True,
+                                            depth = pysvn.depth.unknown )
+                if len( statusList ) != 1:
+                    return None
             return statusList[ 0 ]
         except:
             return None
@@ -79,12 +110,27 @@ class SVNInfoMixin:
         client = self.getSVNClient( self.getSettings() )
         info = getSVNInfo( client, path )
         statusObject = self.getLocalStatusObject( client, path )
-        message = "\n    Local status: " + statusToString( status ) + \
-                  "\n    Local properties status: "
-        if statusObject.prop_status == pysvn.wc_status_kind.modified:
-            message = message + "modified"
+        serverStatusObject = self.getServerStatusObject( client, path )
+        message = "\n    Local content status: " + \
+                        rawStatusToString( statusObject.text_status ) + \
+                  "\n    Local properties status: " + \
+                        rawStatusToString( statusObject.prop_status )
+
+        if serverStatusObject is None:
+            message += "\n    Server status: could not get"
         else:
-            message = message + "up to date"
+            if serverStatusObject.repos_text_status == pysvn.wc_status_kind.none:
+                serverContentStatus = "non modified"
+            else:
+                serverContentStatus = rawStatusToString( serverStatusObject.repos_text_status )
+            if serverStatusObject.repos_prop_status == pysvn.wc_status_kind.none:
+                serverPropStatus = "non modified"
+            else:
+                serverPropStatus = rawStatusToString( serverStatusObject.repos_prop_status )
+
+            message += "\n    Server content status: " + serverContentStatus + \
+                       "\n    Server properties status: " + serverPropStatus
+
         message = message + "\n    Copied: " + str( bool( statusObject.is_copied ) ) + \
                             "\n    Switched: " + str( bool( statusObject.is_switched ) ) + \
                             "\n    Locked: " + str( bool( statusObject.is_locked ) )

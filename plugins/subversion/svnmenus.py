@@ -54,11 +54,11 @@ class SVNMenuMixin:
         self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
                       self.onFileContextMenuAboutToShow )
         self.fileContextInfoAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuinfo.png' ),
-                                                        "&Info (local)", self.fileInfo )
+                                                        "Detailed &info", self.fileInfo )
         self.fileContextAnnotateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuannotate.png' ),
                                                             "&Annotate", self.fileAnnotate )
         self.fileContextLogAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenulog.png' ),
-                                                       "&Log", self.fileLog )
+                                                       "&Log...", self.fileLog )
         self.fileContextDiffAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenudiff.png' ),
                                                         "&Diff", self.fileDiff )
         parentMenu.addSeparator()
@@ -83,11 +83,11 @@ class SVNMenuMixin:
         self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
                       self.onDirectoryContextMenuAboutToShow )
         self.dirContextInfoAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuinfo.png' ),
-                                                       "&Info (local)", self.dirInfo )
+                                                       "Detailed &info ", self.dirInfo )
         self.dirContextLocalStatusAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenustatus.png' ),
-                                                              "&Status (local only)", self.dirLocalStatus )
+                                                              "&Status (local only)...", self.dirLocalStatus )
         self.dirContextReposStatusAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenustatus.png' ),
-                                                              "S&tatus (repository)", self.dirRepositoryStatus )
+                                                              "S&tatus (repository)...", self.dirRepositoryStatus )
         parentMenu.addSeparator()
         self.dirContextUpdateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuupdate.png' ),
                                                          "&Update", self.dirUpdate )
@@ -110,11 +110,11 @@ class SVNMenuMixin:
         self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
                       self.onBufferContextMenuAboutToshow )
         self.bufContextInfoAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuinfo.png' ),
-                                                       "&Info (local)", self.bufferInfo )
+                                                       "Detailed &info", self.bufferInfo )
         self.bufContextAnnotateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuannotate.png' ),
                                                            "&Annotate", self.bufferAnnotate )
         self.bufContextLogAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenulog.png' ),
-                                                      "&Log", self.bufferLog )
+                                                      "&Log...", self.bufferLog )
         self.bufContextUpdateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuupdate.png' ),
                                                          "&Update", self.bufferUpdate )
         self.bufContextPropsAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuprops.png' ),
