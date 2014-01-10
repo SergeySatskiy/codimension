@@ -97,6 +97,28 @@ class SVNInfoMixin:
         except:
             return None
 
+    def getServerRevision( self, client, info ):
+        " Returns the server revision "
+        url = None
+        for item in info:
+            if item[ 0 ] == 'URL':
+                url = item[ 1 ]
+                break
+        if url is None:
+            return None
+
+        repRevision = pysvn.Revision( pysvn.opt_revision_kind.head )
+        try:
+            entries = client.info2( url, repRevision, recurse = False )
+            if len( entries ) != 1:
+                return None
+            itemPath, info = entries[ 0 ]
+            if 'rev' in info and info[ 'rev' ]:
+                return info[ 'rev' ].number
+        except:
+            return None
+        return None
+
     def __svnInfo( self, path ):
         " Implementation of the info command for a file "
         status = self.getLocalStatus( path )
@@ -110,6 +132,7 @@ class SVNInfoMixin:
         client = self.getSVNClient( self.getSettings() )
         info = getSVNInfo( client, path )
         statusObject = self.getLocalStatusObject( client, path )
+        serverRevisionNumber = self.getServerRevision( client, info )
         serverStatusObject = self.getServerStatusObject( client, path )
         message = "\n    Local content status: " + \
                         rawStatusToString( statusObject.text_status ) + \
@@ -130,6 +153,10 @@ class SVNInfoMixin:
 
             message += "\n    Server content status: " + serverContentStatus + \
                        "\n    Server properties status: " + serverPropStatus
+        if serverRevisionNumber is None:
+            message += "\n    Server revision: could not get"
+        else:
+            message += "\n    Server revision: " + str( serverRevisionNumber )
 
         message = message + "\n    Copied: " + str( bool( statusObject.is_copied ) ) + \
                             "\n    Switched: " + str( bool( statusObject.is_switched ) ) + \
@@ -161,7 +188,7 @@ def getSVNInfo( client, path, repRevision = None, pegRevision = None ):
         if 'URL' in info and info[ 'URL' ]:
             result.append( ("URL", info[ 'URL' ]) )
         if 'rev' in info and info[ 'rev' ]:
-            result.append( ("Revision", str( info[ 'rev' ].number )) )
+            result.append( ("Local revision", str( info[ 'rev' ].number )) )
         if 'repos_root_URL' in info and info[ 'repos_root_URL' ]:
             result.append( ("Repository root URL", info[ 'repos_root_URL' ]) )
         if 'repos_UUID' in info and info[ 'repos_UUID' ]:
