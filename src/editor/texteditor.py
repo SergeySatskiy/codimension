@@ -960,7 +960,7 @@ class TextEditor( ScintillaWrapper ):
         self.clearAllIndicators( self.searchIndicator )
         self.clearAllIndicators( self.matchIndicator )
 
-        # Removes the 'highlighted occurences: ...' if so
+        # Removes the 'highlighted occurrences: ...' if so
         GlobalData().mainWindow.clearStatusBarMessage( 1 )
         return
 
@@ -996,7 +996,7 @@ class TextEditor( ScintillaWrapper ):
 
         # Show it for 5 seconds
         GlobalData().mainWindow.showStatusBarMessage(
-                "Highlighted occurences: " + str( len( foundTargets ) ) + ".",
+                "Highlighted occurrences: " + str( len( foundTargets ) ) + ".",
                 1, 5000 )
         return foundTargets
 
