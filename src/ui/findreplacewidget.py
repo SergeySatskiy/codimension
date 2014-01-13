@@ -999,6 +999,7 @@ class ReplaceWidget( FindReplaceBase ):
             suffix = "s"
         GlobalData().mainWindow.showStatusBarMessage(
             str( count ) + " occurrence" + suffix + " replaced.", 0 )
+        GlobalData().mainWindow.clearStatusBarMessage( 1 )
         return
 
     def __onReplace( self ):
@@ -1019,6 +1020,7 @@ class ReplaceWidget( FindReplaceBase ):
             if self._editor.replaceTarget( str( replaceText ) ):
                 GlobalData().mainWindow.showStatusBarMessage( "1 occurrence "
                                                               "replaced.", 0 )
+                GlobalData().mainWindow.clearStatusBarMessage( 1 )
                 # Positioning cursor to the end of the replaced text helps
                 # to avoid problems of replacing 'text' with 'prefix_text'
                 searchAttributes.match[1] += len( replaceText )
