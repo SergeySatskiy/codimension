@@ -72,7 +72,8 @@ from diagram.importsdgm import ( ImportsDiagramDialog, ImportsDiagramProgress,
 from runparams import RunDialog
 from utils.run import ( getCwdCmdEnv, CMD_TYPE_RUN, getWorkingDir,
                         parseCommandLineArguments, getNoArgsEnvironment,
-                        TERM_AUTO, TERM_KONSOLE, TERM_GNOME, TERM_XTERM )
+                        TERM_AUTO, TERM_KONSOLE, TERM_GNOME, TERM_XTERM,
+                        TERM_REDIRECT )
 from debugger.context import DebuggerContext
 from debugger.modifiedunsaved import ModifiedUnsavedDialog
 from debugger.server import CodimensionDebugger
@@ -976,16 +977,43 @@ class CodimensionMainWindow( QMainWindow ):
                 'Show current line', self.__onDbgJumpToCurrent, "Ctrl+W" )
         self.__debugJumpToCurrentAct.setEnabled( False )
         self.__debugMenu.addSeparator()
-        self.__debugDumpSettingsAct = self.__debugMenu.addAction(
+
+        self.__dumpDbgSettingsMenu = QMenu( "Dump debug settings", self )
+        self.__debugMenu.addMenu( self.__dumpDbgSettingsMenu )
+        self.__debugDumpSettingsAct = self.__dumpDbgSettingsMenu.addAction(
                 PixmapCache().getIcon( 'dbgsettings.png' ),
-                'Dump debug session settings',
+                'Debug session settings',
                 self.__onDumpDebugSettings )
         self.__debugDumpSettingsAct.setEnabled( False )
-        self.__debugDumpSettingsEnvAct = self.__debugMenu.addAction(
+        self.__debugDumpSettingsEnvAct = self.__dumpDbgSettingsMenu.addAction(
                 PixmapCache().getIcon( 'detailsdlg.png' ),
-                'Dump settings with complete environment',
+                'Session settings with complete environment',
                 self.__onDumpFullDebugSettings )
         self.__debugDumpSettingsEnvAct.setEnabled( False )
+        self.__dumpDbgSettingsMenu.addSeparator()
+        self.__debugDumpScriptSettingsAct = self.__dumpDbgSettingsMenu.addAction(
+                PixmapCache().getIcon( 'dbgsettings.png' ),
+                'Current script settings',
+                self.__onDumpScriptDebugSettings )
+        self.__debugDumpScriptSettingsAct.setEnabled( False )
+        self.__debugDumpScriptSettingsEnvAct = self.__dumpDbgSettingsMenu.addAction(
+                PixmapCache().getIcon( 'detailsdlg.png' ),
+                'Current script settings with complete environment',
+                self.__onDumpScriptFullDebugSettings )
+        self.__debugDumpScriptSettingsEnvAct.setEnabled( False )
+        self.__dumpDbgSettingsMenu.addSeparator()
+        self.__debugDumpProjectSettingsAct = self.__dumpDbgSettingsMenu.addAction(
+                PixmapCache().getIcon( 'dbgsettings.png' ),
+                'Project main script settings',
+                self.__onDumpProjectDebugSettings )
+        self.__debugDumpProjectSettingsAct.setEnabled( False )
+        self.__debugDumpProjectSettingsEnvAct = self.__dumpDbgSettingsMenu.addAction(
+                PixmapCache().getIcon( 'detailsdlg.png' ),
+                'Project script settings with complete environment',
+                self.__onDumpProjectFullDebugSettings )
+        self.__debugDumpProjectSettingsEnvAct.setEnabled( False )
+        self.connect( self.__dumpDbgSettingsMenu, SIGNAL( "aboutToShow()" ),
+                      self.__onDumpDbgSettingsAboutToShow )
 
         # The Diagrams menu
         self.__diagramsMenu = QMenu( "&Diagrams", self )
@@ -4491,9 +4519,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.__rightSideBar.raise_()
         return
 
-    def __dumpDebugSettings( self, fullEnvironment ):
+    def __dumpDebugSettings( self, fileName, fullEnvironment ):
         " Provides common settings except the environment "
-        fileName = self.__debugger.getScriptPath()
         runParameters = GlobalData().getRunParameters( fileName )
         debugSettings = self.settings.getDebuggerSettings()
         workingDir = getWorkingDir( fileName, runParameters )
@@ -4552,6 +4579,8 @@ class CodimensionMainWindow( QMainWindow ):
             terminal += "gnome-terminal"
         elif self.settings.terminalType == TERM_XTERM:
             terminal += "xterm"
+        elif self.settings.terminalType == TERM_REDIRECT:
+            terminal += "redirect to IDE"
 
         logging.info( "\n".join(
             [ "Current debug session settings",
@@ -4569,10 +4598,74 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onDumpDebugSettings( self, action = None ):
         " Triggered when dumping visible settings was requested "
-        self.__dumpDebugSettings( False )
+        self.__dumpDebugSettings( self.__debugger.getScriptPath(), False )
         return
 
     def __onDumpFullDebugSettings( self ):
         " Triggered when dumping complete settings is requested "
-        self.__dumpDebugSettings( True )
+        self.__dumpDebugSettings( self.__debugger.getScriptPath(), True )
+        return
+
+    def __onDumpScriptDebugSettings( self ):
+        " Triggered when dumping current script settings is requested "
+        if self.__dumpScriptDbgSettingsAvailable():
+            editorsManager = self.editorsManagerWidget.editorsManager
+            currentWidget = editorsManager.currentWidget()
+            self.__dumpDebugSettings( currentWidget.getFileName(), False )
+        return
+
+    def __onDumpScriptFullDebugSettings( self ):
+        " Triggered when dumping current script complete settings is requested "
+        if self.__dumpScriptDbgSettingsAvailable():
+            editorsManager = self.editorsManagerWidget.editorsManager
+            currentWidget = editorsManager.currentWidget()
+            self.__dumpDebugSettings( currentWidget.getFileName(), True )
+        return
+
+    def __onDumpProjectDebugSettings( self ):
+        " Triggered when dumping project script settings is requested "
+        if self.__dumpProjectDbgSettingsAvailable():
+            project = GlobalData().project
+            self.__dumpDebugSettings( project.getProjectScript(), False )
+        return
+
+    def __onDumpProjectFullDebugSettings( self ):
+        " Triggered when dumping project script complete settings is requested "
+        if self.__dumpProjectDbgSettingsAvailable():
+            project = GlobalData().project
+            self.__dumpDebugSettings( project.getProjectScript(), True )
+        return
+
+    def __dumpScriptDbgSettingsAvailable( self ):
+        " True if dumping debug session settings for the script is available "
+        if not self.__isPythonBuffer():
+            return False
+        editorsManager = self.editorsManagerWidget.editorsManager
+        currentWidget = editorsManager.currentWidget()
+        if currentWidget is None:
+            return False
+        fileName  = currentWidget.getFileName()
+        if os.path.isabs( fileName ) and os.path.exists( fileName ):
+            return True
+        return False
+
+    def __dumpProjectDbgSettingsAvailable( self ):
+        " True if dumping debug session settings for the project is available "
+        project = GlobalData().project
+        if not project.isLoaded():
+            return False
+        fileName = project.getProjectScript()
+        if os.path.exists( fileName ) and os.path.isabs( fileName ):
+            return True
+        return False
+
+    def __onDumpDbgSettingsAboutToShow( self ):
+        " Dump debug settings is about to show "
+        scriptAvailable = self.__dumpScriptDbgSettingsAvailable()
+        self.__debugDumpScriptSettingsAct.setEnabled( scriptAvailable )
+        self.__debugDumpScriptSettingsEnvAct.setEnabled( scriptAvailable )
+
+        projectAvailable = self.__dumpProjectDbgSettingsAvailable()
+        self.__debugDumpProjectSettingsAct.setEnabled( projectAvailable )
+        self.__debugDumpProjectSettingsEnvAct.setEnabled( projectAvailable )
         return
