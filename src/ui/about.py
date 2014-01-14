@@ -52,7 +52,7 @@ class AboutDialog( QDialog ):
         hboxLayout.addWidget( iconLabel )
         versionLabel = QLabel( "<b>Codimension IDE version " +
                                str( GlobalData().version ) +
-                               "</b><p>Copyright (c) Sergey Satskiy 2010-2013</p>" )
+                               "</b><p>Copyright (c) Sergey Satskiy 2010-2014</p>" )
         versionLabel.setSizePolicy( QSizePolicy.Expanding,
                                     QSizePolicy.Expanding )
         versionLabel.setFixedHeight( versionLabel.minimumSizeHint().height() )
