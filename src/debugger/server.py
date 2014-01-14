@@ -809,7 +809,8 @@ class CodimensionDebugger( QObject ):
 
     def __addBreakPoints( self, parentIndex, start, end ):
         " Adds breakpoints "
-        if self.__state in [ self.STATE_STOPPED,
+        if self.__state in [ self.STATE_PROLOGUE,
+                             self.STATE_STOPPED,
                              self.STATE_FINISHING,
                              self.STATE_BRUTAL_FINISHING ]:
             return
@@ -832,7 +833,8 @@ class CodimensionDebugger( QObject ):
 
     def __deleteBreakPoints( self, parentIndex, start, end ):
         " Deletes breakpoints "
-        if self.__state in [ self.STATE_STOPPED,
+        if self.__state in [ self.STATE_PROLOGUE,
+                             self.STATE_STOPPED,
                              self.STATE_FINISHING,
                              self.STATE_BRUTAL_FINISHING ]:
             return
@@ -879,7 +881,8 @@ class CodimensionDebugger( QObject ):
 
     def __clientClearBreakPoint( self, fileName, line ):
         " Handles the clientClearBreak signal "
-        if self.__state in [ self.STATE_STOPPED,
+        if self.__state in [ self.STATE_PROLOGUE,
+                             self.STATE_STOPPED,
                              self.STATE_FINISHING,
                              self.STATE_BRUTAL_FINISHING ]:
             return
