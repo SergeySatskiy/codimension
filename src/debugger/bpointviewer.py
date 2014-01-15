@@ -530,6 +530,11 @@ class BreakPointViewer( QWidget ):
 
     def __onProjectAboutToUnload( self ):
         " Triggered before the project is unloaded "
+        self.__serializeBreakpoints()
+        return
+
+    def __serializeBreakpoints( self ):
+        " Saves the breakpoints into a file "
         model = self.bpointsList.model().sourceModel()
 
         project = GlobalData().project
@@ -637,4 +642,6 @@ class BreakPointViewer( QWidget ):
         self.__updateBreakpointsLabel()
         self.__updateButtons()
         self.bpointsList.layoutDisplay()
+
+        self.__serializeBreakpoints()
         return
