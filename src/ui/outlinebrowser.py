@@ -332,12 +332,13 @@ class OutlineBrowser( FilesBrowser ):
                     self.__expandItem( currentItem )
                 found = False
                 for item in item.childItems:
-                    if self.__funcMatch( item.sourceObj,
-                                         scopeObj.line ):
-                        self.__selectItem( item )
-                        currentItem = item
-                        found = True
-                        break
+                    if item.itemType == FunctionItemType:
+                        if self.__funcMatch( item.sourceObj,
+                                             scopeObj.line ):
+                            self.__selectItem( item )
+                            currentItem = item
+                            found = True
+                            break
                 if found:
                     continue
                 return False
