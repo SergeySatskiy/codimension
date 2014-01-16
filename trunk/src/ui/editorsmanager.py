@@ -2354,7 +2354,7 @@ class EditorsManager( QTabWidget ):
                            MainWindowTabWidgetBase.VCSAnnotateViewer ]:
             return True
         if widgetType == MainWindowTabWidgetBase.HTMLViewer:
-            return widget.getViewer().selectedText() != ""
+            return widget.getViewer().isCopyAvailable()
         if widgetType == MainWindowTabWidgetBase.GeneratedDiagram:
             return True
         if widgetType == MainWindowTabWidgetBase.ProfileViewer:
@@ -2370,9 +2370,7 @@ class EditorsManager( QTabWidget ):
             widget.getEditor().onCtrlC()
             return
         if widgetType == MainWindowTabWidgetBase.HTMLViewer:
-            text = widget.getViewer().selectedText()
-            if text != "":
-                QApplication.clipboard().setText( text )
+            widget.getViewer().copy()
             return
         if widgetType in [ MainWindowTabWidgetBase.GeneratedDiagram,
                            MainWindowTabWidgetBase.ProfileViewer ]:
