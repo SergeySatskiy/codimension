@@ -35,7 +35,20 @@ class TextViewer( QTextBrowser ):
     def __init__( self, parent = None ):
         QTextBrowser.__init__( self, parent )
         self.setOpenExternalLinks( True )
+        self.copyAvailable = False
+        self.connect( self, SIGNAL( 'copyAvailable(bool)' ),
+                      self.__onCopyAvailable )
         return
+
+    def __onCopyAvailable( self, available ):
+        " Triggered when copying is available "
+        self.copyAvailable = available
+        return
+
+    def isCopyAvailable( self ):
+        " True if text copying is available "
+        return self.copyAvailable
+
 
     def keyPressEvent( self, event ):
         " Handles the key press events "
