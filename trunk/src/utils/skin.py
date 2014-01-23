@@ -203,6 +203,7 @@ SKIN_SETTINGS = [
     GeneralSkinSetting( "ioconsoleIDEMsgColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
     GeneralSkinSetting( "ioconsolemarginPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 228, 228, 228, 255 ) ),
     GeneralSkinSetting( "ioconsolemarginColor", GeneralSkinSetting.TYPE_COLOR, QColor( 128, 128, 128, 255 ) ),
+    GeneralSkinSetting( "ioconsolemarginFont", GeneralSkinSetting.TYPE_FONT, buildFont( "Monospace,12,-1,5,50,0,0,0,0,0" ) ),
                 ]
 
 

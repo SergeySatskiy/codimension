@@ -92,19 +92,19 @@ class LogViewer( QWidget ):
         # self.messages.setFontPointSize( 12.0 )
 
         # Buttons
-        self.selectAllButton = QAction( \
+        self.selectAllButton = QAction(
             PixmapCache().getIcon( 'selectall.png' ),
             'Select all', self )
         self.connect( self.selectAllButton, SIGNAL( "triggered()" ),
                       self.messages.selectAll )
-        self.copyButton = QAction( \
+        self.copyButton = QAction(
             PixmapCache().getIcon( 'copytoclipboard.png' ),
             'Copy to clipboard', self )
         self.connect( self.copyButton, SIGNAL( "triggered()" ),
                       self.messages.copy )
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
-        self.clearButton = QAction( \
+        self.clearButton = QAction(
             PixmapCache().getIcon( 'trash.png' ),
             'Clear all', self )
         self.connect( self.clearButton, SIGNAL( "triggered()" ),
