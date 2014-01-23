@@ -97,7 +97,7 @@ class TextEditor( ScintillaWrapper ):
         self.__initMargins()
         self.__initIndicators()
         self.__alterKeyBinding()
-        self.__initContextMenu()
+        self._initContextMenu()
         self.__initDebuggerMarkers()
 
         self.connect( self, SIGNAL( 'SCN_DOUBLECLICK(int,int,int)' ),
@@ -294,7 +294,7 @@ class TextEditor( ScintillaWrapper ):
             ScintillaWrapper.wheelEvent( self, event )
         return
 
-    def __initContextMenu( self ):
+    def _initContextMenu( self ):
         " Initializes the context menu "
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager

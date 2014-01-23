@@ -94,6 +94,7 @@ from plugins.vcssupport.vcsmanager import VCSManager
 from plugins.vcssupport.intervaldlg import VCSUpdateIntervalConfigDialog
 from utils.fileutils import MAGIC_AVAILABLE
 from statusbarslots import StatusBarSlots
+from editor.redirectedioconsole import IOConsoleTabWidget
 
 
 class EditorsManagerWidget( QWidget ):
@@ -4668,4 +4669,12 @@ class CodimensionMainWindow( QMainWindow ):
         projectAvailable = self.__dumpProjectDbgSettingsAvailable()
         self.__debugDumpProjectSettingsAct.setEnabled( projectAvailable )
         self.__debugDumpProjectSettingsEnvAct.setEnabled( projectAvailable )
+        return
+
+    def installRedirectedIOConsole( self ):
+        # Create redirected IO console
+        self.redirectedIOConsole = IOConsoleTabWidget( self )
+        self.__bottomSideBar.addTab( self.redirectedIOConsole,
+                PixmapCache().getIcon( 'ioconsole.png' ), 'IO console' )
+        self.__bottomSideBar.setTabToolTip( 7, 'Redirected IO console' )
         return

@@ -280,6 +280,7 @@ def launchUserInterface():
     globalData.pluginManager.load()
 
     # Additional checks may come here
+    globalData.mainWindow.installRedirectedIOConsole()
 
     # Some startup time objects could be collected here. In my test runs
     # there were around 700 objects.
