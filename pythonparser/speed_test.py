@@ -26,6 +26,7 @@ import os, os.path, sys
 import datetime
 import pyclbr
 import cdmbriefparser
+import gc
 
 
 def collectFiles( path, files ):
@@ -108,24 +109,29 @@ start = datetime.datetime.now()
 pyclbrTest( pythonFiles )
 end = datetime.datetime.now()
 delta = end - start
+count = gc.collect()
 
 print "pyclbr timing:"
 print "Start: " + str( start )
 print "End:   " + str( end )
 print "Delta: " + str( delta ) + " as float: " + str( deltaToFloat( delta ) )
+print "GC collected: " + str( count ) + " object(s)"
 
 print ""
+
 
 # timing for cdmpyparser
 start = datetime.datetime.now()
 cdmpyparserTest( pythonFiles )
 end = datetime.datetime.now()
 delta2 = end - start
+count = gc.collect()
 
 print "cdmpyparser timing:"
 print "Start: " + str( start )
 print "End:   " + str( end )
 print "Delta: " + str( delta2 ) + " as float: " + str( deltaToFloat( delta2 ) )
+print "GC collected: " + str( count ) + " object(s)"
 
 print "\nRatio: " + str( deltaToFloat( delta ) / deltaToFloat( delta2 ) )
 

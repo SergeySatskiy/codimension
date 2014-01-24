@@ -64,8 +64,10 @@ def trim_docstring( docstring ):
 
 
 
-class ModuleInfoBase():
+class ModuleInfoBase( object ):
     " Common part for the module information "
+
+    __slots__ = [ "name", "line", "pos", "absPosition" ]
 
     def __init__( self, name, line, pos, absPosition ):
         self.name = name        # Item identifier
@@ -101,6 +103,8 @@ class ModuleInfoBase():
 class Encoding( ModuleInfoBase ):
     " Holds information about encoding string "
 
+    __slots__ = []
+
     def __init__( self, encName, line, pos, absPosition ):
         ModuleInfoBase.__init__( self, encName, line, pos, absPosition )
         return
@@ -111,6 +115,8 @@ class Encoding( ModuleInfoBase ):
 
 class ImportWhat( ModuleInfoBase ):
     " Holds information about a single imported item "
+
+    __slots__ = [ "alias" ]
 
     def __init__( self, whatName, line, pos, absPosition ):
         ModuleInfoBase.__init__( self, whatName, line, pos, absPosition )
@@ -131,6 +137,8 @@ class ImportWhat( ModuleInfoBase ):
 
 class Import( ModuleInfoBase ):
     " Holds information about a single import name "
+
+    __slots__ = [ "alias", "what" ]
 
     def __init__( self, importName, line, pos, absPosition ):
         ModuleInfoBase.__init__( self, importName, line, pos, absPosition )
@@ -157,6 +165,8 @@ class Import( ModuleInfoBase ):
 class Global( ModuleInfoBase ):
     " Holds information about a single global variable "
 
+    __slots__ = []
+
     def __init__( self, globalName, line, pos, absPosition ):
         ModuleInfoBase.__init__( self, globalName, line, pos, absPosition )
         return
@@ -167,6 +177,8 @@ class Global( ModuleInfoBase ):
 
 class ClassAttribute( ModuleInfoBase ):
     " Holds information about a class attribute "
+
+    __slots__ = []
 
     def __init__( self, attrName, line, pos, absPosition ):
         ModuleInfoBase.__init__( self, attrName, line, pos, absPosition )
@@ -179,6 +191,8 @@ class ClassAttribute( ModuleInfoBase ):
 class InstanceAttribute( ModuleInfoBase ):
     " Holds information about a class instance attribute "
 
+    __slots__ = []
+
     def __init__( self, attrName, line, pos, absPosition ):
         ModuleInfoBase.__init__( self, attrName, line, pos, absPosition )
         return
@@ -189,6 +203,8 @@ class InstanceAttribute( ModuleInfoBase ):
 
 class Decorator( ModuleInfoBase ):
     " Holds information about a class/function decorator "
+
+    __slots__ = [ "arguments" ]
 
     def __init__( self, decorName, line, pos, absPosition ):
         ModuleInfoBase.__init__( self, decorName, line, pos, absPosition )
@@ -217,8 +233,10 @@ class Decorator( ModuleInfoBase ):
         return displayName
 
 
-class Docstring():
+class Docstring( object ):
     " Holds a docstring information "
+
+    __slots__ = [ "line", "text" ]
 
     def __init__( self, text, line ):
         self.line = line
@@ -231,6 +249,10 @@ class Docstring():
 
 class Function( ModuleInfoBase ):
     " Holds information about a single function"
+
+    __slots__ = [ "keywordLine", "keywordPos", "colonLine", "colonPos",
+                  "docstring", "arguments", "decorators", "functions",
+                  "classes" ]
 
     def __init__( self, funcName, line, pos, absPosition,
                         keywordLine, keywordPos,
@@ -291,6 +313,10 @@ class Function( ModuleInfoBase ):
 class Class( ModuleInfoBase ):
     " Holds information about a single class"
 
+    __slots__ = [ "keywordLine", "keywordPos", "colonLine", "colonPos",
+                  "docstring", "base", "decorators", "classAttributes",
+                  "instanceAttributes", "functions", "classes" ]
+
     def __init__( self, className, line, pos, absPosition,
                         keywordLine, keywordPos,
                         colonLine, colonPos ):
@@ -345,8 +371,12 @@ class Class( ModuleInfoBase ):
         return displayName
 
 
-class BriefModuleInfo():
+class BriefModuleInfo( object ):
     " Holds a single module content information "
+
+    __slots__ = [ "isOK", "docstring", "encoding", "imports", "globals",
+                  "functions", "classes", "errors", "lexerErrors",
+                  "objectsStack", "__lastImport" ]
 
     def __init__( self ):
         self.isOK = True
@@ -510,7 +540,7 @@ class BriefModuleInfo():
     def _onDecorator( self, name, line, pos, absPosition ):
         " Memorizes a function or a class decorator "
         # A class or a function must be on the top of the stack
-        self.objectsStack[ -1 ].decorators.append( \
+        self.objectsStack[ -1 ].decorators.append(
                                             Decorator( name, line, pos,
                                                        absPosition ) )
         return
