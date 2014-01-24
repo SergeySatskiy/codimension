@@ -1,3 +1,8 @@
+2014 Jan 23  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Fix: memory leak
+* 10% better performance
+
 2013 Nov 30  Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Prepared for release v.1.6.5
