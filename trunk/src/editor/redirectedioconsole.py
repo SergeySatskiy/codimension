@@ -209,29 +209,16 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__filterShowAllAct.setActionGroup( self.__filterGroup )
         self.connect( self.__filterShowAllAct, SIGNAL( 'triggered()' ),
                       self.__onFilterShowAll )
-        self.__filterShowStdoutAct = self.__filterMenu.addAction( "Show stdout only" )
+        self.__filterShowStdoutAct = self.__filterMenu.addAction( "Show stdin and stdout" )
         self.__filterShowStdoutAct.setCheckable( True )
         self.__filterShowStdoutAct.setActionGroup( self.__filterGroup )
         self.connect( self.__filterShowStdoutAct, SIGNAL( 'triggered()' ),
                       self.__onFilterShowStdout )
-        self.__filterShowStderrAct = self.__filterMenu.addAction( "Show stderr only" )
+        self.__filterShowStderrAct = self.__filterMenu.addAction( "Show stdin and stderr" )
         self.__filterShowStderrAct.setCheckable( True )
         self.__filterShowStderrAct.setActionGroup( self.__filterGroup )
         self.connect( self.__filterShowStderrAct, SIGNAL( 'triggered()' ),
                       self.__onFilterShowStderr )
-        self.__filterMenu.addSeparator()
-        self.__filterStdinAct = self.__filterMenu.addAction( "stdin" )
-        self.connect( self.__filterStdinAct, SIGNAL( 'triggered()' ),
-                      self.__onFilterStdin )
-        self.__filterStdinAct.setCheckable( True )
-        self.__filterStdoutAct = self.__filterMenu.addAction( "stdout" )
-        self.connect( self.__filterStdoutAct, SIGNAL( 'triggered()' ),
-                      self.__onFilterStdout )
-        self.__filterStdoutAct.setCheckable( True )
-        self.__filterStderrAct = self.__filterMenu.addAction( "stderr" )
-        self.connect( self.__filterStderrAct, SIGNAL( 'triggered()' ),
-                      self.__onFilterStderr )
-        self.__filterStderrAct.setCheckable( True )
         self.__filterButton = QToolButton( self )
         self.__filterButton.setIcon( PixmapCache().getIcon( 'iofilter.png' ) )
         self.__filterButton.setToolTip( 'Filtering settings' )
@@ -366,10 +353,6 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__filterShowAllAct.setChecked( showAll )
         self.__filterShowStdoutAct.setChecked( onlyStdout )
         self.__filterShowStderrAct.setChecked( onlyStderr )
-
-        self.__filterStdinAct.setChecked( Settings().ioconsoleshowstdin )
-        self.__filterStdoutAct.setChecked( Settings().ioconsoleshowstdout )
-        self.__filterStderrAct.setChecked( Settings().ioconsoleshowstderr )
         return
 
     def __onFilterShowAll( self ):
@@ -381,31 +364,16 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def __onFilterShowStdout( self ):
         " Triggered when filter show stdout only is clicked "
-        Settings().ioconsoleshowstdin = False
+        Settings().ioconsoleshowstdin = True
         Settings().ioconsoleshowstdout = True
         Settings().ioconsoleshowstderr = False
         return
 
     def __onFilterShowStderr( self ):
         " Triggered when filter show stderr only is clicked "
-        Settings().ioconsoleshowstdin = False
+        Settings().ioconsoleshowstdin = True
         Settings().ioconsoleshowstdout = False
         Settings().ioconsoleshowstderr = True
-        return
-
-    def __onFilterStdin( self ):
-        " Triggered when stdin is clicked "
-        Settings().ioconsoleshowstdin = not Settings().ioconsoleshowstdin
-        return
-
-    def __onFilterStdout( self ):
-        " Triggered when stdout is clicked "
-        Settings().ioconsoleshowstdout = not Settings().ioconsoleshowstdout
-        return
-
-    def __onFilterStderr( self ):
-        " Triggered when stderr is clicked "
-        Settings().ioconsoleshowstderr = not Settings().ioconsoleshowstderr
         return
 
     def __settingsAboutToShow( self ):
