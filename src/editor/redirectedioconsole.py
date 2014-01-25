@@ -34,6 +34,7 @@ from utils.fileutils import TexFileType
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 from utils.settings import Settings
+from redirectedmsg import IOConsoleMessages, IOConsoleMsg
 
 
 
@@ -160,6 +161,7 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         QWidget.__init__( self, parent )
 
         self.__viewer = RedirectedIOConsole( self )
+        self.__messages = IOConsoleMessages()
 
         self.__createLayout()
         self.__viewer.zoomTo( Settings().zoom )
