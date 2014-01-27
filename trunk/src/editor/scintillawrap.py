@@ -153,6 +153,11 @@ class ScintillaWrapper( QsciScintilla ):
         """ Provides the current cursor position """
         return self.SendScintilla( self.SCI_GETCURRENTPOS )
 
+    def getEndPosition( self ):
+        " Provides the end position "
+        line = self.lines() - 1
+        return ( line, self.text( line ).length() )
+
     def getCurrentPixelPosition( self ):
         " Provides the current text cursor position in points "
         pos = self.SendScintilla( self.SCI_GETCURRENTPOS )
@@ -846,3 +851,8 @@ class ScintillaWrapper( QsciScintilla ):
     def isCalltipShown( self ):
         " True is a calltip is displayed "
         return self.SendScintilla( self.SCI_CALLTIPACTIVE ) == 1
+
+    def clearUndoHistory( self ):
+        " Clears undo history "
+        self.SendScintilla( self.SCI_EMPTYUNDOBUFFER )
+        return
