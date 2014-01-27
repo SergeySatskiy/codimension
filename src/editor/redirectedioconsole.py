@@ -58,6 +58,17 @@ class RedirectedIOConsole( TextEditor ):
         " Sets some generic look and feel "
         skin = GlobalData().skin
 
+        self.zoomTo( Settings().zoom )
+        self.setEolVisibility( Settings().ioconsoleshoweol )
+        if Settings().ioconsolelinewrap:
+            self.setWrapMode( QsciScintilla.WrapWord )
+        else:
+            self.setWrapMode( QsciScintilla.WrapNone )
+        if Settings().ioconsoleshowspaces:
+            self.setWhitespaceVisibility( QsciScintilla.WsVisible )
+        else:
+            self.setWhitespaceVisibility( QsciScintilla.WsInvisible )
+
         self.setPaper( skin.ioconsolePaper )
         self.setColor( skin.ioconsoleColor )
 
@@ -94,9 +105,11 @@ class RedirectedIOConsole( TextEditor ):
     def __initIDEMessageMarker( self ):
         " Initializes the marker used for the IDE messages "
         skin = GlobalData().skin
-        self.__ideMessageMarker = self.markerDefine( QsciScintilla.Background )
+        self.ideMessageMarker = self.markerDefine( QsciScintilla.Background )
+        self.setMarkerForegroundColor( skin.ioconsoleIDEMsgColor,
+                                       self.ideMessageMarker )
         self.setMarkerBackgroundColor( skin.ioconsoleIDEMsgPaper,
-                                       self.__ideMessageMarker )
+                                       self.ideMessageMarker )
         return
 
     def _marginClicked( self, margin, line, modifiers ):
@@ -145,21 +158,106 @@ class RedirectedIOConsole( TextEditor ):
 
     def _initContextMenu( self ):
         " Called to initialize a context menu "
+        self._menu = QMenu( self )
+        self.__menuUndo = self._menu.addAction(
+                                    PixmapCache().getIcon( 'undo.png' ),
+                                    '&Undo', self.onUndo, "Ctrl+Z" )
+        self.__menuRedo = self._menu.addAction(
+                                    PixmapCache().getIcon( 'redo.png' ),
+                                    '&Redo', self.onRedo, "Ctrl+Y" )
+        self._menu.addSeparator()
+        self.__menuCut = self._menu.addAction(
+                                    PixmapCache().getIcon( 'cutmenu.png' ),
+                                    'Cu&t', self.onShiftDel, "Ctrl+X" )
+        self.__menuCopy = self._menu.addAction(
+                                    PixmapCache().getIcon( 'copymenu.png' ),
+                                    '&Copy', self.onCtrlC, "Ctrl+C" )
+        self.__menuPaste = self._menu.addAction(
+                                    PixmapCache().getIcon( 'pastemenu.png' ),
+                                    '&Paste', self.paste, "Ctrl+V" )
+        self.__menuSelectAll = self._menu.addAction(
+                                PixmapCache().getIcon( 'selectallmenu.png' ),
+                                'Select &all', self.selectAll, "Ctrl+A" )
+        self._menu.addSeparator()
+        self.__menuOpenAsFile = self._menu.addAction(
+                                PixmapCache().getIcon( 'filemenu.png' ),
+                                'O&pen as file', self.openAsFile )
+        self.__menuDownloadAndShow = self._menu.addAction(
+                                PixmapCache().getIcon( 'filemenu.png' ),
+                                'Do&wnload and show', self.downloadAndShow )
+        self.__menuOpenInBrowser = self._menu.addAction(
+                                PixmapCache().getIcon( 'homepagemenu.png' ),
+                                'Open in browser', self.openInBrowser )
+        self._menu.addSeparator()
+
+        self.connect( self._menu, SIGNAL( "aboutToShow()" ),
+                      self._contextMenuAboutToShow )
+
         return
 
     def setTimestampMarginWidth( self ):
+        " Sets the timestamp margin width "
+        if Settings().ioconsoleshowmargin:
+            skin = GlobalData().skin
+            font = QFont( skin.ioconsolemarginFont )
+            font.setPointSize( font.pointSize() + self.zoom )
+            # The second parameter of the QFontMetrics is essential!
+            # If it is not there then the width is not calculated properly.
+            fontMetrics = QFontMetrics( font, self )
+            width = fontMetrics.width( '17:15.123' )
+            self.setMarginWidth( self.TIMESTAMP_MARGIN, width )
+        else:
+            self.setMarginWidth( self.TIMESTAMP_MARGIN, 0 )
         return
 
+    def contextMenuEvent( self, event ):
+        " Called just before showing a context menu "
+        event.accept()
+        if self._marginNumber( event.x() ) is None:
+            # Editing area context menu
+            self._menu.popup( event.globalPos() )
+        else:
+            # Menu for a margin
+            pass
+        return
+
+    def _contextMenuAboutToShow( self ):
+        " Editor context menu is about to show "
+        # Need to make decision about menu items for modifying the input
+        return
+
+    def onUndo( self ):
+        pass
+    def onRedo( self ):
+        pass
+    def onShiftDel( self ):
+        pass
+    def onCtrlC( self ):
+        pass
+    def paste( self ):
+        pass
+    def selectAll( self ):
+        pass
+    def openAsFile( self ):
+        pass
+    def downloadAndShow( self ):
+        pass
+    def openInBrowser( self ):
+        pass
 
 
 class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
     " IO console tab widget "
+
+    MODE_OUTPUT = 0
+    MODE_INPUT = 1
 
     def __init__( self, parent ):
 
         MainWindowTabWidgetBase.__init__( self )
         QWidget.__init__( self, parent )
 
+        self.__mode = self.MODE_OUTPUT
         self.__viewer = RedirectedIOConsole( self )
         self.__messages = IOConsoleMessages()
 
@@ -190,17 +288,6 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
                                        'Send to Main Editing Area', self )
         self.connect( self.__sendUpButton, SIGNAL( "triggered()" ),
                       self.__sendUp )
-
-        self.__selectAllButton = QAction(
-                                    PixmapCache().getIcon( 'selectall.png' ),
-                                    'Select all', self )
-        self.connect( self.__selectAllButton, SIGNAL( "triggered()" ),
-                      self.__onSelectAll )
-        self.__copyButton = QAction(
-                                PixmapCache().getIcon( 'copytoclipboard.png' ),
-                                'Copy to clipboard', self )
-        self.connect( self.__copyButton, SIGNAL( "triggered()" ),
-                      self.__onCopy )
 
         self.__filterMenu = QMenu( self )
         self.connect( self.__filterMenu, SIGNAL( "aboutToShow()" ),
@@ -278,8 +365,6 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.addAction( self.__sendUpButton )
         toolbar.addAction( self.__printPreviewButton )
         toolbar.addAction( self.__printButton )
-        toolbar.addAction( self.__selectAllButton )
-        toolbar.addAction( self.__copyButton )
         toolbar.addWidget( self.__filterButton )
         toolbar.addWidget( self.__settingsButton )
         toolbar.addWidget( spacer )
@@ -333,14 +418,6 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Triggered when requested to move the console up "
         return
 
-    def __onSelectAll( self ):
-        " Triggered when select all is clicked "
-        return
-
-    def __onCopy( self ):
-        " Triggered when copy is clicked "
-        return
-
     def __filterAboutToShow( self ):
         " Triggered when filter menu is about to show "
         showAll = Settings().ioconsoleshowstdin and \
@@ -359,23 +436,41 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def __onFilterShowAll( self ):
         " Triggered when filter show all is clicked "
+        if Settings().ioconsoleshowstdin == True and \
+           Settings().ioconsoleshowstdout == True and \
+           Settings().ioconsoleshowstderr == True:
+            return
+
         Settings().ioconsoleshowstdin = True
         Settings().ioconsoleshowstdout = True
         Settings().ioconsoleshowstderr = True
+        self.renderContent()
         return
 
     def __onFilterShowStdout( self ):
         " Triggered when filter show stdout only is clicked "
+        if Settings().ioconsoleshowstdin == True and \
+           Settings().ioconsoleshowstdout == True and \
+           Settings().ioconsoleshowstderr == False:
+            return
+
         Settings().ioconsoleshowstdin = True
         Settings().ioconsoleshowstdout = True
         Settings().ioconsoleshowstderr = False
+        self.renderContent()
         return
 
     def __onFilterShowStderr( self ):
         " Triggered when filter show stderr only is clicked "
+        if Settings().ioconsoleshowstdin == True and \
+           Settings().ioconsoleshowstdout == False and \
+           Settings().ioconsoleshowstderr == True:
+            return
+
         Settings().ioconsoleshowstdin = True
         Settings().ioconsoleshowstdout = False
         Settings().ioconsoleshowstderr = True
+        self.renderContent()
         return
 
     def __settingsAboutToShow( self ):
@@ -390,16 +485,25 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
     def __onWrapLongLines( self ):
         " Triggered when long lines setting is changed "
         Settings().ioconsolelinewrap = not Settings().ioconsolelinewrap
+        if Settings().ioconsolelinewrap:
+            self.__viewer.setWrapMode( QsciScintilla.WrapWord )
+        else:
+            self.__viewer.setWrapMode( QsciScintilla.WrapNone )
         return
 
     def __onShowEOL( self ):
         " Triggered when show EOL is changed "
         Settings().ioconsoleshoweol = not Settings().ioconsoleshoweol
+        self.__viewer.setEolVisibility( Settings().ioconsoleshoweol )
         return
 
     def __onShowWhitespaces( self ):
         " Triggered when show whitespaces is changed "
         Settings().ioconsoleshowspaces = not Settings().ioconsoleshowspaces
+        if Settings().ioconsoleshowspaces:
+            self.__viewer.setWhitespaceVisibility( QsciScintilla.WsVisible )
+        else:
+            self.__viewer.setWhitespaceVisibility( QsciScintilla.WsInvisible )
         return
 
     def __onAutoscroll( self ):
@@ -410,10 +514,14 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
     def __onShowMargin( self ):
         " Triggered when show margin is changed "
         Settings().ioconsoleshowmargin = not Settings().ioconsoleshowmargin
+        self.__viewer.setTimestampMarginWidth()
         return
 
     def __clear( self ):
         " Triggered when requested to clear the console "
+        self.__messages.clear()
+        self.__viewer.clear()
+        self.__viewer.clearUndoHistory()
         return
 
 
@@ -446,6 +554,68 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def updateModificationTime( self, fileName ):
         return
+
+    def appendMessage( self, message ):
+        " Appends a new message to the console "
+        if not self.__messages.append( message ):
+            # There was no trimming of the message list
+            self.__renderMessage( message )
+        else:
+            # Some messages were stripped
+            self.renderContent()
+        return
+
+    def renderContent( self ):
+        " Regenerates the viewer content "
+        self.__clear()
+        for msg in self.__messages.msgs:
+            self.__renderMessage( msg )
+        return
+
+    def __renderMessage( self, msg ):
+        " Adds a single message "
+        if msg.msgType == IOConsoleMsg.IDE_MESSAGE:
+            # Check the text. Append \n if needed. Append the message
+            line, pos = self.__viewer.getEndPosition()
+            if pos != 0:
+                self.__viewer.append( "\n" )
+                startMarkLine = line + 1
+            else:
+                startMarkLine = line
+            self.__viewer.append( msg.msgText )
+            if not msg.msgText.endswith( "\n" ):
+                self.__viewer.append( "\n" )
+            line, pos = self.__viewer.getEndPosition()
+            for lineNo in xrange( startMarkLine, line ):
+                self.__viewer.markerAdd( lineNo,
+                                         self.__viewer.ideMessageMarker )
+            # No timestamp on the margin for the IDE message
+        elif msg.msgType == IOConsoleMsg.STDERR_MESSAGE:
+            if self.__hiddenMessage( msg ):
+                return
+
+
+        else:
+            # stdout message
+            if self.__hiddenMessage( msg ):
+                return
+
+
+        self.__viewer.clearUndoHistory()
+        if Settings().ioconsoleautoscroll:
+            self.__viewer.ensureLineVisible( self.__viewer.lines() - 1 )
+        return
+
+    def __hiddenMessage( self, msg ):
+        " Returns True if the message should not be shown "
+        if msg.msgType == IOConsoleMsg.STDERR_MESSAGE and \
+           not Settings().ioconsoleshowstderr:
+            return False
+        if msg.msgType == IOConsoleMsg.STDOUT_MESSAGE and \
+           not Settings().ioconsoleshowstdout:
+            return False
+        return True
+
 
     # Mandatory interface part is below
 

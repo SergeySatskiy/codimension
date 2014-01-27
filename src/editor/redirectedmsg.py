@@ -41,6 +41,11 @@ class IOConsoleMsg( object ):
         self.timestamp = datetime.now()
         return
 
+    def getTimestamp( self ):
+        " Provides the timestamp as a string "
+        millisecond = int( round( self.timestamp.microsecond / 1000.0 ) )
+        return self.timestamp.strftime( "%H:%M:%S." ) + str( millisecond )
+
 
 class IOConsoleMessages:
     " Holds a list of messages "
@@ -69,5 +74,3 @@ class IOConsoleMessages:
         self.msgs = []
         self.size = 0
         return
-
-
