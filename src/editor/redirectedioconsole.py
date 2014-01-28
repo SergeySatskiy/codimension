@@ -424,10 +424,10 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         showAll = Settings().ioconsoleshowstdin and \
                   Settings().ioconsoleshowstdout and \
                   Settings().ioconsoleshowstderr
-        onlyStdout = not Settings().ioconsoleshowstdin and \
+        onlyStdout = Settings().ioconsoleshowstdin and \
                      Settings().ioconsoleshowstdout and \
                      not Settings().ioconsoleshowstderr
-        onlyStderr = not Settings().ioconsoleshowstdin and \
+        onlyStderr = Settings().ioconsoleshowstdin and \
                      not Settings().ioconsoleshowstdout and \
                      Settings().ioconsoleshowstderr
         self.__filterShowAllAct.setChecked( showAll )
