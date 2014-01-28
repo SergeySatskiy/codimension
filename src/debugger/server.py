@@ -201,6 +201,8 @@ class CodimensionDebugger( QObject ):
         self.__mainWindow.switchDebugMode( True )
         terminalType = Settings().terminalType
 
+        self.emit( SIGNAL( 'ClientStart' ),
+                   "Stat debugging session for " + fileName )
         self.__createProcfeedbackSocket()
         self.__createTCPServer( terminalType == TERM_REDIRECT )
 
@@ -615,7 +617,6 @@ class CodimensionDebugger( QObject ):
               self.__clientStderrSocket.bytesAvailable() > 0:
             data = str( self.__clientStderrSocket.readAll() )
             self.emit( SIGNAL( 'ClientStderr' ), data )
-            print "STDERR: '" + data + "'"
         return
 
     def __clientStdoutReady( self ):
@@ -624,7 +625,6 @@ class CodimensionDebugger( QObject ):
               self.__clientStdoutSocket.bytesAvailable() > 0:
             data = str( self.__clientStdoutSocket.readAll() )
             self.emit( SIGNAL( 'ClientStdout' ), data )
-            print "STDOUT: '" + data + "'"
         return
 
     def __disconnected( self ):
