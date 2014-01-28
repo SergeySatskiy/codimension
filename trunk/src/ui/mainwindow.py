@@ -167,6 +167,12 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onEvalError )
         self.connect( self.__debugger, SIGNAL( 'ExecError' ),
                       self.__onExecError )
+        self.connect( self.__debugger, SIGNAL( 'ClientStdout' ),
+                      self.__onClientStdout )
+        self.connect( self.__debugger, SIGNAL( 'ClientStderr' ),
+                      self.__onClientStderr )
+        self.connect( self.__debugger, SIGNAL( 'ClientStart' ),
+                      self.__onClientStart )
 
         self.settings = settings
         self.__initialisation = True
@@ -4677,4 +4683,28 @@ class CodimensionMainWindow( QMainWindow ):
         self.__bottomSideBar.addTab( self.redirectedIOConsole,
                 PixmapCache().getIcon( 'ioconsole.png' ), 'IO console' )
         self.__bottomSideBar.setTabToolTip( 7, 'Redirected IO console' )
+        return
+
+    def __onClientStdout( self, data ):
+        " Triggered when the client reports stdout "
+        self.__bottomSideBar.show()
+        self.__bottomSideBar.setCurrentWidget( self.redirectedIOConsole )
+        self.__bottomSideBar.raise_()
+        self.redirectedIOConsole.appendStdoutMessage( data )
+        return
+
+    def __onClientStderr( self, data ):
+        " Triggered when the client reports stderr "
+        self.__bottomSideBar.show()
+        self.__bottomSideBar.setCurrentWidget( self.redirectedIOConsole )
+        self.__bottomSideBar.raise_()
+        self.redirectedIOConsole.appendStderrMessage( data )
+        return
+
+    def __onClientStart( self, data ):
+        " Triggered when the client is starting "
+        self.__bottomSideBar.show()
+        self.__bottomSideBar.setCurrentWidget( self.redirectedIOConsole )
+        self.__bottomSideBar.raise_()
+        self.redirectedIOConsole.appendIDEMessage( data )
         return

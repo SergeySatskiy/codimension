@@ -76,6 +76,7 @@ class RedirectedIOConsole( TextEditor ):
         self.setReadOnly( True )
         self.bindLexer( "", TexFileType )
 
+        self.setCurrentLineHighlight( False, None )
         self.SendScintilla( self.SCI_SETCARETSTYLE, self.CARETSTYLE_BLOCK )
         self.SendScintilla( self.SCI_SETCARETPERIOD, 750 )
         self.setEdgeMode( QsciScintilla.EdgeNone )
@@ -555,7 +556,25 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
     def updateModificationTime( self, fileName ):
         return
 
-    def appendMessage( self, message ):
+    def appendIDEMessage( self, text ):
+        " Appends an IDE message "
+        msg = IOConsoleMsg( IOConsoleMsg.IDE_MESSAGE, text )
+        self.__appendMessage( msg )
+        return
+
+    def appendStdoutMessage( self, text ):
+        " Appends an stdout message "
+        msg = IOConsoleMsg( IOConsoleMsg.STDOUT_MESSAGE, text )
+        self.__appendMessage( msg )
+        return
+
+    def appendStderrMessage( self, text ):
+        " Appends an stderr message "
+        msg = IOConsoleMsg( IOConsoleMsg.STDERR_MESSAGE, text )
+        self.__appendMessage( msg )
+        return
+
+    def __appendMessage( self, message ):
         " Appends a new message to the console "
         if not self.__messages.append( message ):
             # There was no trimming of the message list
@@ -593,13 +612,12 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         elif msg.msgType == IOConsoleMsg.STDERR_MESSAGE:
             if self.__hiddenMessage( msg ):
                 return
-
-
+            self.__viewer.append( msg.msgText )
         else:
             # stdout message
             if self.__hiddenMessage( msg ):
                 return
-
+            self.__viewer.append( msg.msgText )
 
         self.__viewer.clearUndoHistory()
         if Settings().ioconsoleautoscroll:
@@ -610,11 +628,11 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Returns True if the message should not be shown "
         if msg.msgType == IOConsoleMsg.STDERR_MESSAGE and \
            not Settings().ioconsoleshowstderr:
-            return False
+            return True
         if msg.msgType == IOConsoleMsg.STDOUT_MESSAGE and \
            not Settings().ioconsoleshowstdout:
-            return False
-        return True
+            return True
+        return False
 
 
     # Mandatory interface part is below
