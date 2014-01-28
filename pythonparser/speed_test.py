@@ -80,6 +80,7 @@ def deltaToFloat( delta ):
 
 print "Speed test compares the time required for " \
       "cdmpyparser and the standard pyclbr modules to collect module info."
+print "cdmpyparser version: " + cdmbriefparser.getVersion()
 print ""
 
 
