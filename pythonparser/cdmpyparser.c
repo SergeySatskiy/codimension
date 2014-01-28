@@ -164,15 +164,17 @@ clearCallbacks( struct instanceCallbacks *  callbacks )
  * Returns: token of the first name tokens
  */
 static pANTLR3_COMMON_TOKEN  getDottedName( pANTLR3_BASE_TREE  tree,
-                                            char *             name )
+                                            char *             name,
+                                            int *              len )
 {
     ANTLR3_UINT32           n = tree->children->count;
     ANTLR3_UINT32           k;
-    int                     len = 0;
     pANTLR3_COMMON_TOKEN    firstToken = NULL;
     pANTLR3_COMMON_TOKEN    currentToken;
     pANTLR3_BASE_TREE       child;
     int                     partLen;
+
+    *len = 0;
 
     for ( k = 0; k < n; ++k )
     {
@@ -180,7 +182,10 @@ static pANTLR3_COMMON_TOKEN  getDottedName( pANTLR3_BASE_TREE  tree,
 
         currentToken = getToken( child );
         if ( k != 0 )
-            name[ len++ ] = '.';
+        {
+            name[ *len ] = '.';
+            ++(*len);
+        }
         else
             firstToken = currentToken;
 
@@ -194,15 +199,15 @@ static pANTLR3_COMMON_TOKEN  getDottedName( pANTLR3_BASE_TREE  tree,
          */
         if ( currentToken->start == 0 )
         {
-            name[ len ] = '\0';
+            name[ *len ] = '\0';
             return firstToken;
         }
 
         partLen = (char *)(currentToken->stop) - (char *)(currentToken->start) + 1;
-        memcpy( name + len, (char *)(currentToken->start), partLen );
-        len += partLen;
+        memcpy( name + *len, (char *)(currentToken->start), partLen );
+        *len += partLen;
     }
-    name[ len ] = '\0';
+    name[ *len ] = '\0';
     return firstToken;
 }
 
@@ -344,11 +349,12 @@ static void  processImport( pANTLR3_BASE_TREE            tree,
 
         if ( type == DOTTED_NAME )
         {
-            pANTLR3_COMMON_TOKEN    token = getDottedName( t, name );
+            int                     length;
+            pANTLR3_COMMON_TOKEN    token = getDottedName( t, name, &length );
             if ( token->start != 0 )
             {
-                ret = PyObject_CallFunction( callbacks->onImport, "siii",
-                                             name,
+                ret = PyObject_CallFunction( callbacks->onImport, "s#iii",
+                                             name, length,
                                              token->line,
                                              token->charPosition + 1, /* Make it 1-based */
                                              (char *)(token->start) - (char *)token->input->data );
@@ -437,12 +443,13 @@ static int processDecor( pANTLR3_BASE_TREE            tree,
     char        name[ MAX_DOTTED_NAME_LENGTH ];     /* decor name */
     PyObject *  ret;
 
+    int                     length;
     pANTLR3_COMMON_TOKEN    token = getDottedName( vectorGet( tree->children, 0 ),
-                                                   name );
+                                                   name, & length );
     if ( token->start != 0 )
     {
-        ret = PyObject_CallFunction( callbacks->onDecorator, "siii",
-                                     name,
+        ret = PyObject_CallFunction( callbacks->onDecorator, "s#iii",
+                                     name, length,
                                      token->line,
                                      token->charPosition + 1, /* Make it 1-based */
                                      (char *)token->start - (char *)token->input->data );
