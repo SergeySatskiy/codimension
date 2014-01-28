@@ -586,7 +586,8 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def renderContent( self ):
         " Regenerates the viewer content "
-        self.__clear()
+        self.__viewer.clear()
+        self.__viewer.clearUndoHistory()
         for msg in self.__messages.msgs:
             self.__renderMessage( msg )
         return
