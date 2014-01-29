@@ -93,7 +93,7 @@ void walk( pANTLR3_BASE_TREE            tree,
     callbacks->name = PyObject_GetAttrString( instance, "_" #name );        \
     if ( (! callbacks->name) || (! PyCallable_Check(callbacks->name)) )     \
     {                                                                       \
-        PyErr_SetString( PyExc_TypeError, "Cannot get _" #name "method" );  \
+        PyErr_SetString( PyExc_TypeError, "Cannot get _" #name " method" ); \
         return 1;                                                           \
     }
 
@@ -103,8 +103,6 @@ void walk( pANTLR3_BASE_TREE            tree,
         Py_DECREF( callbacks->name );   \
     }
 
-#define RETURN_NONE         \
-    do { Py_INCREF( Py_None ); return Py_None; } while ( 0 )
 
 
 /* Helper function to extract and check method pointers */
@@ -158,6 +156,288 @@ clearCallbacks( struct instanceCallbacks *  callbacks )
     FREE_CALLBACK( onLexerError );
     return;
 }
+
+static void
+callOnEncoding( PyObject *  onEncoding, const char *  encoding_,
+                int  line_,  int  pos_,  int  absPosition_ )
+{
+    PyObject *  encoding = PyString_FromString( encoding_ );
+    PyObject *  line = PyInt_FromLong( line_ );
+    PyObject *  pos = PyInt_FromLong( pos_ );
+    PyObject *  absPos = PyInt_FromLong( absPosition_ );
+    PyObject *  ret = PyObject_CallFunctionObjArgs( onEncoding, encoding,
+                                                    line, pos, absPos,
+                                                    NULL );
+
+    if ( ret != NULL )
+        Py_DECREF( ret );
+    Py_DECREF( absPos );
+    Py_DECREF( pos );
+    Py_DECREF( line );
+    Py_DECREF( encoding );
+    return;
+}
+
+
+static void
+callOnError( PyObject *  onError_, const char *  error_ )
+{
+    PyObject *  error = PyString_FromString( error_ );
+    PyObject *  ret = PyObject_CallFunctionObjArgs( onError_, error, NULL );
+
+    if ( ret != NULL )
+        Py_DECREF( ret );
+    Py_DECREF( error );
+    return;
+}
+
+
+static void
+callOnArg( PyObject *  onArg, const char *  name, int  length )
+{
+    register PyObject *  argName = PyString_FromStringAndSize( name, length );
+    register PyObject *  ret = PyObject_CallFunctionObjArgs( onArg, argName, NULL );
+
+    if ( ret != NULL )
+        Py_DECREF( ret );
+    Py_DECREF( argName );
+    return;
+}
+
+
+static void
+callOnVariable( PyObject *  onVariable, const char *  name, int  length,
+                int  line_, int  pos_, int  absPosition_, int  objectsLevel_ )
+{
+    PyObject *  varName = PyString_FromStringAndSize( name, length );
+    PyObject *  line = PyInt_FromLong( line_ );
+    PyObject *  pos = PyInt_FromLong( pos_ );
+    PyObject *  absPos = PyInt_FromLong( absPosition_ );
+    PyObject *  objectsLevel = PyInt_FromLong( objectsLevel_ );
+    PyObject *  ret = PyObject_CallFunctionObjArgs( onVariable, varName, line, pos,
+                                                    absPos, objectsLevel, NULL );
+
+    if ( ret != NULL )
+        Py_DECREF( ret );
+    Py_DECREF( objectsLevel );
+    Py_DECREF( absPos );
+    Py_DECREF( pos );
+    Py_DECREF( line );
+    Py_DECREF( varName );
+    return;
+}
+
+
+static void
+callOnImport( PyObject *  onImport, const char *  name, int  length,
+              int  line_, int  pos_, int  absPosition_ )
+{
+    PyObject *  import = PyString_FromStringAndSize( name, length );
+    PyObject *  line = PyInt_FromLong( line_ );
+    PyObject *  pos = PyInt_FromLong( pos_ );
+    PyObject *  absPos = PyInt_FromLong( absPosition_ );
+    PyObject *  ret = PyObject_CallFunctionObjArgs( onImport, import, line, pos,
+                                                    absPos, NULL );
+
+    if ( ret != NULL )
+        Py_DECREF( ret );
+    Py_DECREF( absPos );
+    Py_DECREF( pos );
+    Py_DECREF( line );
+    Py_DECREF( import );
+    return;
+}
+
+
+static void
+callOnAs( PyObject *  onAs, const char *  name, int  length)
+{
+    PyObject *  as = PyString_FromStringAndSize( name, length );
+    PyObject *  ret = PyObject_CallFunctionObjArgs( onAs, as, NULL );
+
+    if ( ret != NULL )
+        Py_DECREF( ret );
+    Py_DECREF( as );
+    return;
+}
+
+
+static void
+callOnWhat( PyObject *  onWhat, const char *  name, int  length,
+            int  line_, int  pos_, int  absPosition_ )
+{
+    PyObject *  what = PyString_FromStringAndSize( name, length );
+    PyObject *  line = PyInt_FromLong( line_ );
+    PyObject *  pos = PyInt_FromLong( pos_ );
+    PyObject *  absPos = PyInt_FromLong( absPosition_ );
+    PyObject *  ret = PyObject_CallFunctionObjArgs( onWhat, what, line, pos,
+                                                    absPos, NULL );
+
+    if ( ret != NULL )
+        Py_DECREF( ret );
+    Py_DECREF( absPos );
+    Py_DECREF( pos );
+    Py_DECREF( line );
+    Py_DECREF( what );
+    return;
+}
+
+
+static void
+callOnDocstring( PyObject *  onDocstring, const char *  doc, int  length,
+                 int  line_ )
+{
+    PyObject *  docstring = PyString_FromStringAndSize( doc, length );
+    PyObject *  line = PyInt_FromLong( line_ );
+    PyObject *  ret = PyObject_CallFunctionObjArgs( onDocstring, docstring,
+                                                    line, NULL );
+
+    if ( ret != NULL )
+        Py_DECREF( ret );
+    Py_DECREF( line );
+    Py_DECREF( docstring );
+    return;
+}
+
+
+
+static void
+callOnDecorator( PyObject *  onDecorator,
+                 const char *  name, int  length,
+                 int  line_, int  pos_, int  absPosition_ )
+{
+    PyObject *  decorName = PyString_FromStringAndSize( name, length );
+    PyObject *  line = PyInt_FromLong( line_ );
+    PyObject *  pos = PyInt_FromLong( pos_ );
+    PyObject *  absPos = PyInt_FromLong( absPosition_ );
+    PyObject *  ret = PyObject_CallFunctionObjArgs( onDecorator, decorName,
+                                                    line, pos,
+                                                    absPos, NULL );
+
+    if ( ret != NULL )
+        Py_DECREF( ret );
+    Py_DECREF( absPos );
+    Py_DECREF( pos );
+    Py_DECREF( line );
+    Py_DECREF( decorName );
+    return;
+}
+
+
+static void
+callOnClass( PyObject *  onClass,
+             const char *  name, int  length,
+             int  line_, int  pos_, int  absPosition_,
+             int  kwLine_, int  kwPos_,
+             int  colonLine_, int  colonPos_,
+             int  objectsLevel_ )
+{
+    PyObject *  className = PyString_FromStringAndSize( name, length );
+    PyObject *  line = PyInt_FromLong( line_ );
+    PyObject *  pos = PyInt_FromLong( pos_ );
+    PyObject *  absPos = PyInt_FromLong( absPosition_ );
+    PyObject *  kwLine = PyInt_FromLong( kwLine_ );
+    PyObject *  kwPos = PyInt_FromLong( kwPos_ );
+    PyObject *  colonLine = PyInt_FromLong( colonLine_ );
+    PyObject *  colonPos = PyInt_FromLong( colonPos_ );
+    PyObject *  objectsLevel = PyInt_FromLong( objectsLevel_ );
+    PyObject *  ret = PyObject_CallFunctionObjArgs(
+                                onClass, className, line, pos,
+                                absPos, kwLine, kwPos, colonLine, colonPos,
+                                objectsLevel, NULL );
+
+    if ( ret != NULL )
+        Py_DECREF( ret );
+    Py_DECREF( objectsLevel );
+    Py_DECREF( colonPos );
+    Py_DECREF( colonLine );
+    Py_DECREF( kwPos );
+    Py_DECREF( kwLine );
+    Py_DECREF( absPos );
+    Py_DECREF( pos );
+    Py_DECREF( line );
+    Py_DECREF( className );
+    return;
+}
+
+
+static void
+callOnInstanceAttribute( PyObject *  onInstanceAttribute,
+                         const char *  name, int  length,
+                         int  line_, int  pos_, int  absPosition_,
+                         int  objectsLevel_ )
+{
+    PyObject *  attrName = PyString_FromStringAndSize( name, length );
+    PyObject *  line = PyInt_FromLong( line_ );
+    PyObject *  pos = PyInt_FromLong( pos_ );
+    PyObject *  absPos = PyInt_FromLong( absPosition_ );
+    PyObject *  objectsLevel = PyInt_FromLong( objectsLevel_ );
+    PyObject *  ret = PyObject_CallFunctionObjArgs(
+                                onInstanceAttribute, attrName,
+                                line, pos, absPos, objectsLevel, NULL );
+
+    if ( ret != NULL )
+        Py_DECREF( ret );
+    Py_DECREF( objectsLevel );
+    Py_DECREF( absPos );
+    Py_DECREF( pos );
+    Py_DECREF( line );
+    Py_DECREF( attrName );
+    return;
+}
+
+
+static void
+callOnFunction( PyObject *  onFunction,
+                const char *  name, int  length,
+                int  line_, int  pos_, int  absPosition_,
+                int  kwLine_, int  kwPos_,
+                int  colonLine_, int  colonPos_,
+                int  objectsLevel_ )
+{
+    PyObject *  funcName = PyString_FromStringAndSize( name, length );
+    PyObject *  line = PyInt_FromLong( line_ );
+    PyObject *  pos = PyInt_FromLong( pos_ );
+    PyObject *  absPos = PyInt_FromLong( absPosition_ );
+    PyObject *  kwLine = PyInt_FromLong( kwLine_ );
+    PyObject *  kwPos = PyInt_FromLong( kwPos_ );
+    PyObject *  colonLine = PyInt_FromLong( colonLine_ );
+    PyObject *  colonPos = PyInt_FromLong( colonPos_ );
+    PyObject *  objectsLevel = PyInt_FromLong( objectsLevel_ );
+    PyObject *  ret = PyObject_CallFunctionObjArgs(
+                                onFunction, funcName, line, pos,
+                                absPos, kwLine, kwPos, colonLine, colonPos,
+                                objectsLevel, NULL );
+
+    if ( ret != NULL )
+        Py_DECREF( ret );
+    Py_DECREF( objectsLevel );
+    Py_DECREF( colonPos );
+    Py_DECREF( colonLine );
+    Py_DECREF( kwPos );
+    Py_DECREF( kwLine );
+    Py_DECREF( absPos );
+    Py_DECREF( pos );
+    Py_DECREF( line );
+    Py_DECREF( funcName );
+    return;
+}
+
+
+static void
+callOnBaseClass( PyObject *  onBaseClass,
+                 const char *  name, int  length )
+{
+    PyObject *  baseClassName = PyString_FromStringAndSize( name, length );
+    PyObject *  ret = PyObject_CallFunctionObjArgs(
+                                onBaseClass, baseClassName, NULL );
+
+    if ( ret != NULL )
+        Py_DECREF( ret );
+    Py_DECREF( baseClassName );
+    return;
+}
+
 
 
 /* Fills the given buffer
@@ -254,7 +534,6 @@ static void checkForDocstring( pANTLR3_BASE_TREE             tree,
         size_t                  index = 0;
         size_t                  charsToSkip;
         size_t                  charsToCopy;
-        PyObject *              ret;
 
         while ( index < tree->children->count )
         {
@@ -281,12 +560,8 @@ static void checkForDocstring( pANTLR3_BASE_TREE             tree,
         }
 
         buffer[ collected ] = 0;
-
-        ret = PyObject_CallFunction( callbacks->onDocstring, "s#i",
-                                     buffer, collected,
-                                     tree->getLine( tree ) );
-        if ( ret != NULL )
-            Py_DECREF( ret );
+        callOnDocstring( callbacks->onDocstring, buffer, collected,
+                         tree->getLine( tree ) );
     }
     return;
 }
@@ -295,37 +570,31 @@ static void checkForDocstring( pANTLR3_BASE_TREE             tree,
 static void  processWhat( pANTLR3_BASE_TREE            tree,
                           struct instanceCallbacks *   callbacks )
 {
-    ANTLR3_UINT32   n = tree->children->count;
-    ANTLR3_UINT32   k;
-    pANTLR3_STRING  s;
-    PyObject *      ret;
+    ANTLR3_UINT32           n = tree->children->count;
+    ANTLR3_UINT32           k;
+    pANTLR3_STRING          s;
+    pANTLR3_BASE_TREE       child;
+    pANTLR3_BASE_TREE       asChild;
+    pANTLR3_COMMON_TOKEN    token;
 
     for ( k = 0; k < n; ++k )
     {
-        pANTLR3_BASE_TREE   child = vectorGet( tree->children, k );
-
+        child = vectorGet( tree->children, k );
         if ( getType( child ) == AS )
         {
-            pANTLR3_BASE_TREE  asChild = vectorGet( child->children, 0 );
+            asChild = vectorGet( child->children, 0 );
             s = asChild->toString( asChild );
-            ret = PyObject_CallFunction( callbacks->onAs, "s#",
-                                         s->chars, s->len );
-            if ( ret != NULL )
-                Py_DECREF( ret );
+            callOnAs( callbacks->onAs, (const char *)(s->chars), s->len );
         }
         else
         {
             /* Otherwise it is what is imported */
-            pANTLR3_COMMON_TOKEN    token = getToken( child );
-
+            token = getToken( child );
             s = child->toString( child );
-            ret = PyObject_CallFunction( callbacks->onWhat, "s#iii",
-                                         s->chars, s->len,
-                                         token->line,
-                                         token->charPosition + 1, /* Make it 1-based */
-                                         (char *)token->start - (char *)token->input->data );
-            if ( ret != NULL )
-                Py_DECREF( ret );
+            callOnWhat( callbacks->onWhat, (const char *)(s->chars), s->len,
+                        token->line,
+                        token->charPosition + 1, /* Make it 1-based */
+                        (char *)token->start - (char *)token->input->data );
         }
     }
     return;
@@ -335,17 +604,18 @@ static void  processWhat( pANTLR3_BASE_TREE            tree,
 static void  processImport( pANTLR3_BASE_TREE            tree,
                             struct instanceCallbacks *   callbacks )
 {
-    ANTLR3_UINT32   n = tree->children->count;
-    ANTLR3_UINT32   k;
-    char            name[ MAX_DOTTED_NAME_LENGTH ];
-    PyObject *      ret;
+    ANTLR3_UINT32       n = tree->children->count;
+    ANTLR3_UINT32       k;
+    char                name[ MAX_DOTTED_NAME_LENGTH ];
+    pANTLR3_BASE_TREE   t;
+    ANTLR3_UINT32       type;
 
     /* There could be many imports in a single import statement */
     for ( k = 0; k < n; ++k )
     {
-        /* The children must be the dotted name or what exported */
-        pANTLR3_BASE_TREE   t = vectorGet( tree->children, k );
-        ANTLR3_UINT32       type = getType( t );
+        /* The children must be a dotted name or what exported */
+        t = vectorGet( tree->children, k );
+        type = getType( t );
 
         if ( type == DOTTED_NAME )
         {
@@ -353,13 +623,9 @@ static void  processImport( pANTLR3_BASE_TREE            tree,
             pANTLR3_COMMON_TOKEN    token = getDottedName( t, name, &length );
             if ( token->start != 0 )
             {
-                ret = PyObject_CallFunction( callbacks->onImport, "s#iii",
-                                             name, length,
-                                             token->line,
-                                             token->charPosition + 1, /* Make it 1-based */
-                                             (char *)(token->start) - (char *)token->input->data );
-                if ( ret != NULL )
-                    Py_DECREF( ret );
+                callOnImport( callbacks->onImport, name, length, token->line,
+                              token->charPosition + 1, /* Make it 1-based */
+                              (char *)(token->start) - (char *)token->input->data );
             }
         }
         else if ( type == WHAT )
@@ -370,10 +636,8 @@ static void  processImport( pANTLR3_BASE_TREE            tree,
         {
             pANTLR3_BASE_TREE   asChild = vectorGet( t->children, 0 );
             pANTLR3_STRING      s = asChild->toString( asChild );
-            ret = PyObject_CallFunction( callbacks->onAs, "s#",
-                                         s->chars, s->len );
-            if ( ret != NULL )
-                Py_DECREF( ret );
+
+            callOnAs( callbacks->onAs, (const char *)(s->chars), s->len );
         }
     }
     return;
@@ -390,7 +654,7 @@ static const char *  processArguments( pANTLR3_BASE_TREE    tree,
     ANTLR3_UINT32       n = tree->children->count;
     pANTLR3_BASE_TREE   arg;
     pANTLR3_STRING      s;
-    PyObject *          ret;
+    char                augName[ MAX_DOTTED_NAME_LENGTH ];
 
     for ( i = 0; i < n; ++i )
     {
@@ -400,34 +664,24 @@ static const char *  processArguments( pANTLR3_BASE_TREE    tree,
         {
             case NAME_ARG:
                 {
-                    ret = PyObject_CallFunction( onArg, "s#", s->chars, s->len );
-                    if ( ret != NULL )
-                        Py_DECREF( ret );
+                    callOnArg( onArg, (const char *)(s->chars), s->len );
                     if ( i == 0 )
                         firstArgument = (const char *)(s->chars);
                 }
                 break;
             case STAR_ARG:
                 {
-                    char            augName[ MAX_DOTTED_NAME_LENGTH ];
-
                     augName[0] = '*';
                     memcpy( augName + 1, s->chars, s->len );
-                    ret = PyObject_CallFunction( onArg, "s#", augName, s->len + 1 );
-                    if ( ret != NULL )
-                        Py_DECREF( ret );
+                    callOnArg( onArg, augName, s->len + 1 );
                 }
                 break;
             case DBL_STAR_ARG:
                 {
-                    char            augName[ MAX_DOTTED_NAME_LENGTH ];
-
                     augName[0] = '*';
                     augName[1] = '*';
                     memcpy( augName + 2, s->chars, s->len );
-                    ret = PyObject_CallFunction( onArg, "s#", augName, s->len + 2 );
-                    if ( ret != NULL )
-                        Py_DECREF( ret );
+                    callOnArg( onArg, augName, s->len + 2 );
                 }
                 break;
         }
@@ -439,22 +693,18 @@ static const char *  processArguments( pANTLR3_BASE_TREE    tree,
 static int processDecor( pANTLR3_BASE_TREE            tree,
                          struct instanceCallbacks *   callbacks )
 {
-    int         isStaticMethod = 0;
-    char        name[ MAX_DOTTED_NAME_LENGTH ];     /* decor name */
-    PyObject *  ret;
-
+    int                     isStaticMethod = 0;
+    char                    name[ MAX_DOTTED_NAME_LENGTH ];     /* decor name */
     int                     length;
     pANTLR3_COMMON_TOKEN    token = getDottedName( vectorGet( tree->children, 0 ),
                                                    name, & length );
     if ( token->start != 0 )
     {
-        ret = PyObject_CallFunction( callbacks->onDecorator, "s#iii",
-                                     name, length,
-                                     token->line,
-                                     token->charPosition + 1, /* Make it 1-based */
-                                     (char *)token->start - (char *)token->input->data );
-        if ( ret != NULL )
-            Py_DECREF( ret );
+        callOnDecorator( callbacks->onDecorator,
+                         name, length,
+                         token->line,
+                         token->charPosition + 1, /* Make it 1-based */
+                         (char *)token->start - (char *)token->input->data );
     }
     if ( strcmp( name, "staticmethod" ) == 0 )
     {
@@ -484,7 +734,7 @@ static void  processClassDefinition( pANTLR3_BASE_TREE            tree,
     ANTLR3_UINT32           k;
     pANTLR3_COMMON_TOKEN    token = getToken( nameChild );
     pANTLR3_STRING          s;
-    PyObject *              ret;
+    pANTLR3_BASE_TREE       t;
 
     /*
      * user1 field is used for line and charPosition of the 'def' keyword.
@@ -492,25 +742,24 @@ static void  processClassDefinition( pANTLR3_BASE_TREE            tree,
      */
 
     ++objectsLevel;
-    ret = PyObject_CallFunction( callbacks->onClass, "s#iiiiiiii",
-                                 token->start, (char *)token->stop - (char *)token->start + 1,
-                                 /* Function name line and pos */
-                                 token->line,
-                                 token->charPosition + 1,         /* To make it 1-based */
-                                 (char *)token->start - (char *)token->input->data,
-                                 /* Keyword 'def' line and pos */
-                                 token->user1 >> 16,
-                                 (token->user1 & 0xFFFF) + 1,     /* To make it 1-based */
-                                 /* ':' line and pos */
-                                 token->user2 >> 16,
-                                 (token->user2 & 0xFFFF) + 1,     /* To make it 1-based */
-                                 objectsLevel );
-    if ( ret != NULL )
-        Py_DECREF( ret );
+    callOnClass( callbacks->onClass,
+                 (const char *)(token->start),
+                 (char *)token->stop - (char *)token->start + 1,
+                 /* Function name line and pos */
+                 token->line,
+                 token->charPosition + 1,         /* To make it 1-based */
+                 (char *)token->start - (char *)token->input->data,
+                 /* Keyword 'def' line and pos */
+                 token->user1 >> 16,
+                 (token->user1 & 0xFFFF) + 1,     /* To make it 1-based */
+                 /* ':' line and pos */
+                 token->user2 >> 16,
+                 (token->user2 & 0xFFFF) + 1,     /* To make it 1-based */
+                 objectsLevel );
 
     for ( k = 1; k < n; ++k )
     {
-        pANTLR3_BASE_TREE   t = vectorGet( tree->children, k );
+        t = vectorGet( tree->children, k );
         switch ( getType( t ) )
         {
             case DECOR:
@@ -518,16 +767,15 @@ static void  processClassDefinition( pANTLR3_BASE_TREE            tree,
                 continue;
             case CLASS_INHERITANCE:
                 {
-                    ANTLR3_UINT32   n = t->children->count;
-                    ANTLR3_UINT32   k;
+                    ANTLR3_UINT32       n = t->children->count;
+                    ANTLR3_UINT32       k;
+                    pANTLR3_BASE_TREE   base;
                     for ( k = 0; k < n; ++k )
                     {
-                        pANTLR3_BASE_TREE   base = vectorGet( t->children, k );
+                        base = vectorGet( t->children, k );
                         s = base->toString( base );
-                        ret = PyObject_CallFunction( callbacks->onBaseClass, "s#",
-                                                     s->chars, s->len );
-                        if ( ret != NULL )
-                            Py_DECREF( ret );
+                        callOnBaseClass( callbacks->onBaseClass,
+                                         (const char *)(s->chars), s->len );
                     }
                 }
                 continue;
@@ -553,7 +801,6 @@ static void  processFuncDefinition( pANTLR3_BASE_TREE            tree,
     int                     isStaticMethod = 0;
     const char *            firstArgumentName = NULL; /* for class methods only */
     pANTLR3_COMMON_TOKEN    token = getToken( nameChild );
-    PyObject *              ret;
 
 
     /*
@@ -562,21 +809,20 @@ static void  processFuncDefinition( pANTLR3_BASE_TREE            tree,
      */
 
     ++objectsLevel;
-    ret = PyObject_CallFunction( callbacks->onFunction, "s#iiiiiiii",
-                                 token->start, (char *)token->stop - (char *)token->start + 1,
-                                 /* Function name line and pos */
-                                 token->line,
-                                 token->charPosition + 1,         /* To make it 1-based */
-                                 (char *)token->start - (char *)token->input->data,
-                                 /* Keyword 'def' line and pos */
-                                 token->user1 >> 16,
-                                 (token->user1 & 0xFFFF) + 1,     /* To make it 1-based */
-                                 /* ':' line and pos */
-                                 token->user2 >> 16,
-                                 (token->user2 & 0xFFFF) + 1,     /* To make it 1-based */
-                                 objectsLevel );
-    if ( ret != NULL )
-        Py_DECREF( ret );
+    callOnFunction( callbacks->onFunction,
+                    (const char *)(token->start),
+                    (char *)token->stop - (char *)token->start + 1,
+                    /* Function name line and pos */
+                    token->line,
+                    token->charPosition + 1,         /* To make it 1-based */
+                    (char *)token->start - (char *)token->input->data,
+                    /* Keyword 'def' line and pos */
+                    token->user1 >> 16,
+                    (token->user1 & 0xFFFF) + 1,     /* To make it 1-based */
+                    /* ':' line and pos */
+                    token->user2 >> 16,
+                    (token->user2 & 0xFFFF) + 1,     /* To make it 1-based */
+                    objectsLevel );
 
     for ( k = 1; k < n; ++k )
     {
@@ -621,10 +867,11 @@ static void processAssign( pANTLR3_BASE_TREE   tree,
                            PyObject *          onVariable,
                            int                 objectsLevel )
 {
-    ANTLR3_UINT32   i;
-    ANTLR3_UINT32   n;
-    pANTLR3_STRING  s;
-    PyObject *      ret;
+    ANTLR3_UINT32           i;
+    ANTLR3_UINT32           n;
+    pANTLR3_STRING          s;
+    pANTLR3_BASE_TREE       child;
+    pANTLR3_COMMON_TOKEN    token;
 
 
     if ( tree->children->count == 0 )
@@ -637,9 +884,7 @@ static void processAssign( pANTLR3_BASE_TREE   tree,
     n = tree->children->count;
     for ( i = 0; i < n; ++i )
     {
-        pANTLR3_BASE_TREE       child = vectorGet( tree->children, i );
-        pANTLR3_COMMON_TOKEN    token;
-
+        child = vectorGet( tree->children, i );
         if ( getType( child ) == HEAD_NAME )
         {
             if ( i == (n-1) )
@@ -647,14 +892,12 @@ static void processAssign( pANTLR3_BASE_TREE   tree,
                 child = vectorGet( child->children, 0 );
                 token = getToken( child );
                 s = child->toString( child );
-                ret = PyObject_CallFunction( onVariable, "s#iiii",
-                                             s->chars, s->len,
-                                             token->line,
-                                             token->charPosition + 1, /* Make it 1-based */
-                                             (char *)token->start - (char *)token->input->data,
-                                             objectsLevel );
-                if ( ret != NULL )
-                    Py_DECREF( ret );
+
+                callOnVariable( onVariable, (const char *)(s->chars), s->len,
+                                token->line,
+                                token->charPosition + 1, /* Make it 1-based */
+                                (char *)token->start - (char *)token->input->data,
+                                objectsLevel );
                 return;
             }
 
@@ -666,14 +909,12 @@ static void processAssign( pANTLR3_BASE_TREE   tree,
                     child = vectorGet( child->children, 0 );
                     token = getToken( child );
                     s = child->toString( child );
-                    ret = PyObject_CallFunction( onVariable, "s#iiii",
-                                                 s->chars, s->len,
-                                                 token->line,
-                                                 token->charPosition + 1, /* Make it 1-based */
-                                                 (char *)token->start - (char *)token->input->data,
-                                                 objectsLevel );
-                    if ( ret != NULL )
-                        Py_DECREF( ret );
+
+                    callOnVariable( onVariable, (const char *)(s->chars), s->len,
+                                    token->line,
+                                    token->charPosition + 1, /* Make it 1-based */
+                                    (char *)token->start - (char *)token->input->data,
+                                    objectsLevel );
                 }
             }
         }
@@ -691,7 +932,6 @@ static void processInstanceMember( pANTLR3_BASE_TREE           tree,
     pANTLR3_COMMON_TOKEN    token;
     pANTLR3_BASE_TREE       lookAhead;
     pANTLR3_STRING          s;
-    PyObject *              ret;
 
 
     if ( firstArgName == NULL )         return;
@@ -735,14 +975,12 @@ static void processInstanceMember( pANTLR3_BASE_TREE           tree,
             child = vectorGet( child->children, 0 );
             token = getToken( child );
             s = child->toString( child );
-            ret = PyObject_CallFunction( callbacks->onInstanceAttribute, "s#iiii",
-                                         s->chars, s->len,
-                                         token->line,
-                                         token->charPosition + 1, /* Make it 1-based */
-                                         (char *)token->start - (char *)token->input->data,
-                                         objectsLevel );
-            if ( ret != NULL )
-                Py_DECREF( ret );
+            callOnInstanceAttribute( callbacks->onInstanceAttribute,
+                                     (const char *)(s->chars), s->len,
+                                     token->line,
+                                     token->charPosition + 1, /* Make it 1-based */
+                                     (char *)token->start - (char *)token->input->data,
+                                     objectsLevel );
             return;
         }
 
@@ -755,14 +993,12 @@ static void processInstanceMember( pANTLR3_BASE_TREE           tree,
         child = vectorGet( child->children, 0 );
         token = getToken( child );
         s = child->toString( child );
-        ret = PyObject_CallFunction( callbacks->onInstanceAttribute, "s#iiii",
-                                     s->chars, s->len,
-                                     token->line,
-                                     token->charPosition + 1, /* Make it 1-based */
-                                     (char *)token->start - (char *)token->input->data,
-                                     objectsLevel );
-        if ( ret != NULL )
-            Py_DECREF( ret );
+        callOnInstanceAttribute( callbacks->onInstanceAttribute,
+                                 (const char *)(s->chars), s->len,
+                                 token->line,
+                                 token->charPosition + 1, /* Make it 1-based */
+                                 (char *)token->start - (char *)token->input->data,
+                                 objectsLevel );
     }
     return;
 }
@@ -808,12 +1044,13 @@ void walk( pANTLR3_BASE_TREE            tree,
     // Walk the children
     if ( tree->children != NULL )
     {
-        ANTLR3_UINT32   i;
-        ANTLR3_UINT32   n = tree->children->count;
+        ANTLR3_UINT32       i;
+        ANTLR3_UINT32       n = tree->children->count;
+        pANTLR3_BASE_TREE   t;
 
         for ( i = 0; i < n; i++ )
         {
-            pANTLR3_BASE_TREE   t = vectorGet( tree->children, i );
+            t = vectorGet( tree->children, i );
             if ( (entryLevel == 1) && (i == 0) )
             {
                 /* This could be a module docstring */
@@ -872,7 +1109,6 @@ void  searchForCoding( ppythonbriefLexer  ctx,
         {
             char *      end;
             char        last;
-            PyObject *  ret;
 
             /* The beginning has been found. Check the first character after. */
             begin += 6;     /* len( 'coding' ) */
@@ -889,13 +1125,9 @@ void  searchForCoding( ppythonbriefLexer  ctx,
             }
 
             *end = '\0';
-            ret = PyObject_CallFunction( (PyObject*)ctx->onEncoding, "siii",
-                                         begin, lineNumber,
-                                         begin - lineStart + 1, /* Make it 1-based */
-                                         begin - (char *)ctx->pLexer->input->data );
-            if ( ret != NULL )
-                Py_DECREF( ret );
-
+            callOnEncoding( (PyObject*)ctx->onEncoding, begin, lineNumber,
+                            begin - lineStart + 1, /* Make it 1-based */
+                            begin - (char *)ctx->pLexer->input->data );
             *end = last;
             ctx->onEncoding = NULL;
         }
@@ -1031,11 +1263,7 @@ void onError( pANTLR3_BASE_RECOGNIZER    recognizer,
                                 "Base recognizer function displayRecognitionError called by unknown parser type - provide override for this function\n" );
         if ( recognizer->userData != NULL )
         {
-            PyObject *  ret;
-
-            ret = PyObject_CallFunction( (PyObject *)(recognizer->userData), "s", buffer );
-            if ( ret != NULL )
-                Py_DECREF( ret );
+            callOnError( (PyObject *)(recognizer->userData), buffer );
         }
         else
         {
@@ -1255,11 +1483,7 @@ void onError( pANTLR3_BASE_RECOGNIZER    recognizer,
 
     if ( recognizer->userData != NULL )
     {
-        PyObject *  ret;
-
-        ret = PyObject_CallFunction( (PyObject *)(recognizer->userData), "s", buffer );
-        if ( ret != NULL )
-            Py_DECREF( ret );
+        callOnError( (PyObject *)(recognizer->userData), buffer );
     }
     else
     {
@@ -1373,16 +1597,12 @@ onLexerError( pANTLR3_BASE_RECOGNIZER   recognizer,
 
     if ( recognizer->userData != NULL )
     {
-        PyObject *      ret;
-
-        ret = PyObject_CallFunction( (PyObject *)(recognizer->userData), "s", buffer );
-        if ( ret != NULL )
-            Py_DECREF( ret );
+        callOnError( (PyObject *)(recognizer->userData), buffer );
     }
 }
 
 
-static void
+static PyObject *
 parse_input( pANTLR3_INPUT_STREAM           input,
              struct instanceCallbacks *     callbacks )
 {
@@ -1396,7 +1616,7 @@ parse_input( pANTLR3_INPUT_STREAM           input,
     if ( input == NULL )
     {
         PyErr_SetString( PyExc_RuntimeError, "Cannot open file/memory buffer" );
-        return;
+        return NULL;
     }
 
     lxr = pythonbriefLexerNew( input );
@@ -1404,7 +1624,7 @@ parse_input( pANTLR3_INPUT_STREAM           input,
     {
         input->close( input );
         PyErr_SetString( PyExc_RuntimeError, "Cannot create lexer" );
-        return;
+        return NULL;
     }
 
     tstream = antlr3CommonTokenStreamSourceNew( ANTLR3_SIZE_HINT,
@@ -1414,7 +1634,7 @@ parse_input( pANTLR3_INPUT_STREAM           input,
         input->close( input );
         lxr->free( lxr );
         PyErr_SetString( PyExc_RuntimeError, "Cannot create token stream" );
-        return;
+        return NULL;
     }
     tstream->discardOffChannelToks( tstream, ANTLR3_TRUE );
 
@@ -1426,7 +1646,7 @@ parse_input( pANTLR3_INPUT_STREAM           input,
         tstream->free( tstream );
         lxr->free( lxr );
         PyErr_SetString( PyExc_RuntimeError, "Cannot create parser" );
-        return;
+        return NULL;
     }
 
     /* Memorize callbacks for coding and errors */
@@ -1450,7 +1670,7 @@ parse_input( pANTLR3_INPUT_STREAM           input,
         tstream->free( tstream );
         lxr->free( lxr );
         PyErr_SetString( PyExc_RuntimeError, "Cannot parse python code" );
-        return;
+        return NULL;
     }
 
     /* Walk the tree and populate the python structures */
@@ -1464,14 +1684,10 @@ parse_input( pANTLR3_INPUT_STREAM           input,
         char                    message[ 4096 ];
         pANTLR3_COMMON_TOKEN    token = (pANTLR3_COMMON_TOKEN)(vectorGet( tstream->tokens,
                                                                           tstream->p ));
-        PyObject *              ret;
 
         sprintf( message, "Cannot match to any predicted input near line %d",
                           token->line );
-        ret = PyObject_CallFunction( callbacks->onLexerError, "s",
-                                     message );
-        if ( ret != NULL )
-            Py_DECREF( ret );
+        callOnError( callbacks->onLexerError, message );
     }
 
     /* cleanup */
@@ -1482,17 +1698,13 @@ parse_input( pANTLR3_INPUT_STREAM           input,
 
     if ( unknownError != 0 )
     {
-        PyObject *      ret;
-
         // This is a fallback which should not happened
-        ret = PyObject_CallFunction( callbacks->onError, "s",
-                                     "Unknown error" );
-        if ( ret != NULL )
-            Py_DECREF( ret );
+        callOnError( callbacks->onError, "Unknown error" );
         unknownError = 0;
     }
 
-    return;
+    Py_INCREF( Py_None );
+    return Py_None;
 }
 
 
@@ -1506,6 +1718,7 @@ py_modinfo_from_file( PyObject *  self,     /* unused */
     char *                      fileName;
     struct instanceCallbacks    callbacks;
     pANTLR3_INPUT_STREAM        input;
+    PyObject *                  retValue;
 
     /* Parse the passed arguments */
     if ( ! PyArg_ParseTuple( args, "Os", & callbackClass, & fileName ) )
@@ -1513,19 +1726,19 @@ py_modinfo_from_file( PyObject *  self,     /* unused */
         PyErr_SetString( PyExc_TypeError, "Incorrect arguments. "
                                           "Expected: callback class "
                                           "instance and file name" );
-        RETURN_NONE;
+        return NULL;
     }
 
     /* Check the passed argument */
     if ( ! fileName )
     {
         PyErr_SetString( PyExc_TypeError, "Incorrect file name" );
-        RETURN_NONE;
+        return NULL;
     }
     if ( ! callbackClass )
     {
         PyErr_SetString( PyExc_TypeError, "Invalid callback class argument" );
-        RETURN_NONE;
+        return NULL;
     }
     /*
        Ommit the check below: the old style classes worked fine with
@@ -1537,7 +1750,7 @@ py_modinfo_from_file( PyObject *  self,     /* unused */
        if ( ! PyType_Check( callbackClass ) )
        {
            PyErr_SetString( PyExc_TypeError, "Incorrect callback class instance" );
-           RETURN_NONE;
+           return NULL;
        }
     */
 
@@ -1545,7 +1758,7 @@ py_modinfo_from_file( PyObject *  self,     /* unused */
     if ( getInstanceCallbacks( callbackClass, & callbacks ) != 0 )
     {
         clearCallbacks( & callbacks );
-        RETURN_NONE;
+        return NULL;
     }
 
     /* Start the parser business */
@@ -1571,9 +1784,9 @@ py_modinfo_from_file( PyObject *  self,     /* unused */
     }
 
     /* There is no need to revert the changes because the input is closed */
-    parse_input( input, & callbacks );
+    retValue = parse_input( input, & callbacks );
     clearCallbacks( & callbacks );
-    RETURN_NONE;
+    return retValue;
 }
 
 
@@ -1588,6 +1801,8 @@ py_modinfo_from_mem( PyObject *  self,      /* unused */
     struct instanceCallbacks    callbacks;
     pANTLR3_INPUT_STREAM        input;
     int                         eolAddedAt;
+    PyObject *                  retValue;
+
 
     /* Parse the passed arguments */
     if ( ! PyArg_ParseTuple( args, "Os", & callbackClass, & content ) )
@@ -1595,19 +1810,19 @@ py_modinfo_from_mem( PyObject *  self,      /* unused */
         PyErr_SetString( PyExc_TypeError, "Incorrect arguments. "
                                           "Expected: callback class "
                                           "instance and buffer with python code" );
-        RETURN_NONE;
+        return NULL;
     }
 
     /* Check the passed argument */
     if ( ! content )
     {
         PyErr_SetString( PyExc_TypeError, "Incorrect memory buffer" );
-        RETURN_NONE;
+        return NULL;
     }
     if ( ! callbackClass )
     {
         PyErr_SetString( PyExc_TypeError, "Invalid callback class argument" );
-        RETURN_NONE;
+        return NULL;
     }
     /*
        Ommit the check below: the old style classes worked fine with
@@ -1619,7 +1834,7 @@ py_modinfo_from_mem( PyObject *  self,      /* unused */
        if ( ! PyType_Check( callbackClass ) )
        {
            PyErr_SetString( PyExc_TypeError, "Incorrect callback class instance" );
-           RETURN_NONE;
+           return NULL;
        }
     */
 
@@ -1627,7 +1842,7 @@ py_modinfo_from_mem( PyObject *  self,      /* unused */
     if ( getInstanceCallbacks( callbackClass, & callbacks ) != 0 )
     {
         clearCallbacks( & callbacks );
-        RETURN_NONE;
+        return NULL;
     }
 
     /* Start the parser business */
@@ -1654,7 +1869,7 @@ py_modinfo_from_mem( PyObject *  self,      /* unused */
         }
     }
 
-    parse_input( input, & callbacks );
+    retValue = parse_input( input, & callbacks );
     clearCallbacks( & callbacks );
 
     /* Revert the hack changes back if needed.
@@ -1664,7 +1879,7 @@ py_modinfo_from_mem( PyObject *  self,      /* unused */
     {
         content[ eolAddedAt ] = 0;
     }
-    RETURN_NONE;
+    return retValue;
 }
 
 
