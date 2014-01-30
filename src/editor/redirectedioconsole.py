@@ -35,6 +35,7 @@ from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 from utils.settings import Settings
 from redirectedmsg import IOConsoleMessages, IOConsoleMsg
+from scintillawrap import ScintillaWrapper
 
 
 
@@ -52,7 +53,13 @@ class RedirectedIOConsole( TextEditor ):
         self.__timestampTooltipShown = False
         self.__initIDEMessageMarker()
         self._updateDwellingTime()
+
+        self.installEventFilter( self )
         return
+
+    def eventFilter( self, obj, event ):
+        " Event filter to catch shortcuts on UBUNTU "
+        return ScintillaWrapper.eventFilter( self, obj, event )
 
     def __initGeneralSettings( self ):
         " Sets some generic look and feel "
