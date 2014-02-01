@@ -156,8 +156,8 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onDebuggerClientException )
         self.connect( self.__debugger, SIGNAL( 'ClientSyntaxError' ),
                       self.__onDebuggerClientSyntaxError )
-        self.connect( self.__debugger, SIGNAL( 'ClientFinished' ),
-                      self.__onDebuggerClientFinished )
+        self.connect( self.__debugger, SIGNAL( 'ClientIDEMessage' ),
+                      self.__onDebuggerClientIDEMessage )
         self.connect( self.__debugger.getBreakPointModel(),
                       SIGNAL( 'BreakpoinsChanged' ),
                       self.__onBreakpointsModelChanged )
@@ -171,8 +171,6 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onClientStdout )
         self.connect( self.__debugger, SIGNAL( 'ClientStderr' ),
                       self.__onClientStderr )
-        self.connect( self.__debugger, SIGNAL( 'ClientStart' ),
-                      self.__onClientStart )
 
         self.settings = settings
         self.__initialisation = True
@@ -2244,6 +2242,11 @@ class CodimensionMainWindow( QMainWindow ):
         self.diffViewer.zoomTo( zoomValue )
         return
 
+    def zoomIOconsole( self, zoomValue ):
+        " Zooms the IO console "
+        self.redirectedIOConsole.zoomTo( zoomValue )
+        return
+
     def showProfileReport( self, widget, tooltip ):
         " Shows the given profile report "
         self.editorsManagerWidget.editorsManager.showProfileReport( widget,
@@ -3285,10 +3288,12 @@ class CodimensionMainWindow( QMainWindow ):
             QTimer.singleShot( 0, self.__onBrutalStopDbgSession )
         return
 
-    def __onDebuggerClientFinished( self, exitCode ):
-        " Triggered when the debugged program has reported its exit code "
-        logging.info( "Debugged script finished with exit code " +
-                      str( exitCode ) )
+    def __onDebuggerClientIDEMessage( self, message ):
+        " Triggered when the debug server has something to report "
+        if self.settings.terminalType == TERM_REDIRECT:
+            self.__ioconsoleIDEMessage( message )
+        else:
+            logging.info( message )
         return
 
     def __removeCurrenDebugLineHighlight( self ):
@@ -4701,10 +4706,10 @@ class CodimensionMainWindow( QMainWindow ):
         self.redirectedIOConsole.appendStderrMessage( data )
         return
 
-    def __onClientStart( self, data ):
-        " Triggered when the client is starting "
+    def __ioconsoleIDEMessage( self, message ):
+        " Sends an IDE message to the IO console "
         self.__bottomSideBar.show()
         self.__bottomSideBar.setCurrentWidget( self.redirectedIOConsole )
         self.__bottomSideBar.raise_()
-        self.redirectedIOConsole.appendIDEMessage( data )
+        self.redirectedIOConsole.appendIDEMessage( message )
         return

@@ -43,8 +43,10 @@ class IOConsoleMsg( object ):
 
     def getTimestamp( self ):
         " Provides the timestamp as a string "
-        millisecond = int( round( self.timestamp.microsecond / 1000.0 ) )
-        return self.timestamp.strftime( "%H:%M:%S." ) + str( millisecond )
+        millisecond = str( int( round( self.timestamp.microsecond / 1000.0 ) ) )
+        while len( millisecond ) != 3:
+            millisecond = "0" + millisecond
+        return self.timestamp.strftime( "%H:%M:%S." ) + millisecond
 
 
 class IOConsoleMessages:

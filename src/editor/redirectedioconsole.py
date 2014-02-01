@@ -28,7 +28,7 @@ from PyQt4.QtCore import Qt, SIGNAL, QSize, QPoint
 from PyQt4.QtGui import ( QToolBar, QFont, QFontMetrics, QHBoxLayout, QWidget,
                           QAction, QSizePolicy, QToolTip, QMenu, QToolButton,
                           QActionGroup )
-from PyQt4.Qsci import QsciScintilla
+from PyQt4.Qsci import QsciScintilla, QsciStyle
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.fileutils import TexFileType
 from utils.pixmapcache import PixmapCache
@@ -43,18 +43,35 @@ class RedirectedIOConsole( TextEditor ):
 
     TIMESTAMP_MARGIN = 0     # Introduced here
 
-    def __init__( self, parent ):
-        self.__maxLength = None
+    stdoutIndicator = ScintillaWrapper.INDIC_CONTAINER + 10
+    stderrIndicator = ScintillaWrapper.INDIC_CONTAINER + 11
 
+    MODE_OUTPUT = 0
+    MODE_INPUT = 1
+
+    def __init__( self, parent ):
         TextEditor.__init__( self, parent, None )
+        self.zoomTo( Settings().zoom )
+
+        # line number -> [ timestamps ]
+        self.marginTooltip = {}
+        self.mode = self.MODE_OUTPUT
+        self.lastOutputPos = None
+
         self.__initGeneralSettings()
         self.__initMargins()
 
         self.__timestampTooltipShown = False
-        self.__initIDEMessageMarker()
+        self.__initMessageMarkers()
         self._updateDwellingTime()
 
         self.installEventFilter( self )
+        return
+
+    def zoomTo( self, zoomValue ):
+        " Reimplemented zoomTo "
+        QsciScintilla.zoomTo( self, zoomValue )
+        self.zoom = zoomValue
         return
 
     def eventFilter( self, obj, event ):
@@ -65,7 +82,6 @@ class RedirectedIOConsole( TextEditor ):
         " Sets some generic look and feel "
         skin = GlobalData().skin
 
-        self.zoomTo( Settings().zoom )
         self.setEolVisibility( Settings().ioconsoleshoweol )
         if Settings().ioconsolelinewrap:
             self.setWrapMode( QsciScintilla.WrapWord )
@@ -84,13 +100,43 @@ class RedirectedIOConsole( TextEditor ):
         self.bindLexer( "", TexFileType )
 
         self.setCurrentLineHighlight( False, None )
-        self.SendScintilla( self.SCI_SETCARETSTYLE, self.CARETSTYLE_BLOCK )
-        self.SendScintilla( self.SCI_SETCARETPERIOD, 750 )
         self.setEdgeMode( QsciScintilla.EdgeNone )
+        self.setCursorStyle()
+        return
+
+    def _onCursorPositionChanged( self, line, pos ):
+        " Called when the cursor changed position "
+        self.setCursorStyle()
+        return
+
+    def setCursorStyle( self ):
+        " Sets the cursor style depending on the mode and the cursor pos "
+        self.SendScintilla( self.SCI_SETCARETPERIOD, 750 )
+        if self.mode == self.MODE_OUTPUT:
+            self.SendScintilla( self.SCI_SETCARETSTYLE, self.CARETSTYLE_LINE )
+        else:
+            currentPos = self.currentPosition()
+            if currentPos >= self.lastOutputPos:
+                self.SendScintilla( self.SCI_SETCARETSTYLE, self.CARETSTYLE_BLOCK )
+            else:
+                self.SendScintilla( self.SCI_SETCARETSTYLE, self.CARETSTYLE_LINE )
+        return
+
+    def switchMode( self, newMode ):
+        " Switches between input/output mode "
+        self.mode = newMode
+        if self.mode == self.MODE_OUTPUT:
+            self.lastOutputPos = None
+            self.setReadOnly( True )
+        else:
+            line, pos = self.getEndPosition()
+            self.lastOutputPos = self.__viewer.positionFromLineIndex( line, pos )
+            self.setReadOnly( False )
+        self.setCursorStyle()
         return
 
     def __initMargins( self ):
-        " Initializes the editor margins "
+        " Initializes the IO console margins "
 
         # The supported margins: timestamp
 
@@ -101,16 +147,26 @@ class RedirectedIOConsole( TextEditor ):
             self.setMarginWidth( margin, 0 )
             self.setMarginSensitivity( margin, False )
 
+        self.setMarginType( self.TIMESTAMP_MARGIN, self.TextMargin )
+        self.setMarginMarkerMask( self.TIMESTAMP_MARGIN, 0 )
+
         skin = GlobalData().skin
         self.setMarginsBackgroundColor( skin.ioconsolemarginPaper )
         self.setMarginsForegroundColor( skin.ioconsolemarginColor )
 
-        # Set margin 0 for timestamps
+        timestampMarginFont = QFont( skin.ioconsolemarginFont )
+        timestampMarginFont.setPointSize( timestampMarginFont.pointSize() +
+                                          Settings().zoom )
+        self.timestampMarginStyle = QsciStyle( -1, "Timestamp margin style",
+                                               skin.ioconsolemarginColor,
+                                               skin.ioconsolemarginPaper,
+                                               timestampMarginFont )
+
         self.setMarginsFont( skin.ioconsolemarginFont )
         self.setTimestampMarginWidth()
         return
 
-    def __initIDEMessageMarker( self ):
+    def __initMessageMarkers( self ):
         " Initializes the marker used for the IDE messages "
         skin = GlobalData().skin
         self.ideMessageMarker = self.markerDefine( QsciScintilla.Background )
@@ -118,6 +174,24 @@ class RedirectedIOConsole( TextEditor ):
                                        self.ideMessageMarker )
         self.setMarkerBackgroundColor( skin.ioconsoleIDEMsgPaper,
                                        self.ideMessageMarker )
+
+        # stdout indicator
+        self.SendScintilla( self.SCI_INDICSETSTYLE, self.stdoutIndicator,
+                            self.INDIC_STRAIGHTBOX )
+        self.SendScintilla( self.SCI_INDICSETUNDER, self.stdoutIndicator,
+                            True )
+        self.SendScintilla( self.SCI_INDICSETFORE, self.stdoutIndicator,
+                            skin.ioconsoleStdoutPaper )
+        self.SendScintilla( self.SCI_INDICSETALPHA, self.stdoutIndicator, 255 )
+
+        # stderr indicator
+        self.SendScintilla( self.SCI_INDICSETSTYLE, self.stderrIndicator,
+                            self.INDIC_STRAIGHTBOX )
+        self.SendScintilla( self.SCI_INDICSETUNDER, self.stderrIndicator,
+                            True )
+        self.SendScintilla( self.SCI_INDICSETFORE, self.stderrIndicator,
+                            skin.ioconsoleStderrPaper )
+        self.SendScintilla( self.SCI_INDICSETALPHA, self.stderrIndicator, 255 )
         return
 
     def _marginClicked( self, margin, line, modifiers ):
@@ -155,6 +229,9 @@ class RedirectedIOConsole( TextEditor ):
         return
 
     def __getTimestampMarginTooltip( self, line ):
+        " Provides the margin tooltip "
+        if line in self.marginTooltip:
+            return "\n".join( self.marginTooltip[ line ] )
         return None
 
     def _onDwellEnd( self, position, x, y ):
@@ -212,8 +289,8 @@ class RedirectedIOConsole( TextEditor ):
             # The second parameter of the QFontMetrics is essential!
             # If it is not there then the width is not calculated properly.
             fontMetrics = QFontMetrics( font, self )
-            width = fontMetrics.width( '17:15.123' )
-            self.setMarginWidth( self.TIMESTAMP_MARGIN, width )
+            width = fontMetrics.width( '88:88:88.888' )
+            self.setMarginWidth( self.TIMESTAMP_MARGIN, width + 15 )
         else:
             self.setMarginWidth( self.TIMESTAMP_MARGIN, 0 )
         return
@@ -257,20 +334,15 @@ class RedirectedIOConsole( TextEditor ):
 class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
     " IO console tab widget "
 
-    MODE_OUTPUT = 0
-    MODE_INPUT = 1
-
     def __init__( self, parent ):
 
         MainWindowTabWidgetBase.__init__( self )
         QWidget.__init__( self, parent )
 
-        self.__mode = self.MODE_OUTPUT
         self.__viewer = RedirectedIOConsole( self )
         self.__messages = IOConsoleMessages()
 
         self.__createLayout()
-        self.__viewer.zoomTo( Settings().zoom )
         return
 
     def __createLayout( self ):
@@ -529,9 +601,9 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Triggered when requested to clear the console "
         self.__messages.clear()
         self.__viewer.clear()
+        self.__viewer.marginTooltip = {}
         self.__viewer.clearUndoHistory()
         return
-
 
 
     def resizeEvent( self, event ):
@@ -595,6 +667,7 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Regenerates the viewer content "
         self.__viewer.clear()
         self.__viewer.clearUndoHistory()
+        self.__viewer.marginTooltip = {}
         for msg in self.__messages.msgs:
             self.__renderMessage( msg )
         return
@@ -617,19 +690,51 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
                 self.__viewer.markerAdd( lineNo,
                                          self.__viewer.ideMessageMarker )
             # No timestamp on the margin for the IDE message
-        elif msg.msgType == IOConsoleMsg.STDERR_MESSAGE:
-            if self.__hiddenMessage( msg ):
-                return
-            self.__viewer.append( msg.msgText )
         else:
-            # stdout message
             if self.__hiddenMessage( msg ):
                 return
+            timestamp = msg.getTimestamp()
+            line, pos = self.__viewer.getEndPosition()
+            startPos = self.__viewer.positionFromLineIndex( line, pos )
+            if pos != 0:
+                self.__addTooltip( line, timestamp )
+                startTimestampLine = line + 1
+            else:
+                startTimestampLine = line
             self.__viewer.append( msg.msgText )
+            line, pos = self.__viewer.getEndPosition()
+            if pos != 0:
+                endTimestampLine = line
+            else:
+                endTimestampLine = line - 1
+            for lineNo in xrange( startTimestampLine, endTimestampLine + 1 ):
+                self.__addTooltip( lineNo, timestamp )
+                self.__viewer.setMarginText( lineNo, timestamp,
+                                             self.__viewer.timestampMarginStyle )
+
+            
+            if msg.msgType == IOConsoleMsg.STDERR_MESSAGE:
+                # Highlight as stderr
+                indicator = self.__viewer.stderrIndicator
+            else:
+                # Highlight as stdout
+                indicator = self.__viewer.stdoutIndicator
+
+            line, pos = self.__viewer.getEndPosition()
+            endPos = self.__viewer.positionFromLineIndex( line, pos )
+            self.__viewer.setIndicatorRange( indicator, startPos, endPos - startPos )
 
         self.__viewer.clearUndoHistory()
         if Settings().ioconsoleautoscroll:
             self.__viewer.ensureLineVisible( self.__viewer.lines() - 1 )
+        return
+
+    def __addTooltip( self, lineNo, timestamp ):
+        " Adds a tooltip into the dictionary "
+        if lineNo in self.__viewer.marginTooltip:
+            self.__viewer.marginTooltip[ lineNo ].append( timestamp )
+        else:
+            self.__viewer.marginTooltip[ lineNo ] = [ timestamp ]
         return
 
     def __hiddenMessage( self, msg ):
@@ -642,6 +747,12 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
             return True
         return False
 
+
+    def zoomTo( self, zoomValue ):
+        " Sets the new zoom value "
+        self.__viewer.zoomTo( zoomValue )
+        self.__viewer.setTimestampMarginWidth()
+        return
 
     # Mandatory interface part is below
 

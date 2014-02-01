@@ -103,7 +103,7 @@ class TextEditor( ScintillaWrapper ):
         self.connect( self, SIGNAL( 'SCN_DOUBLECLICK(int,int,int)' ),
                       self.__onDoubleClick )
         self.connect( self, SIGNAL( 'cursorPositionChanged(int,int)' ),
-                      self.__onCursorPositionChanged )
+                      self._onCursorPositionChanged )
 
         self.connect( self, SIGNAL( 'SCN_DWELLSTART(int,int,int)' ),
                       self._onDwellStart )
@@ -753,6 +753,7 @@ class TextEditor( ScintillaWrapper ):
         self.SendScintilla( self.SCI_INDICSETFORE, self.searchIndicator,
                             skin.searchMarkColor )
 
+        # Match indicator
         self.SendScintilla( self.SCI_INDICSETSTYLE, self.matchIndicator,
                             self.__convertIndicator( skin.matchMarkStyle ) )
         self.SendScintilla( self.SCI_INDICSETALPHA, self.matchIndicator,
@@ -1204,7 +1205,7 @@ class TextEditor( ScintillaWrapper ):
         self.__skipChangeCursor = False
         return
 
-    def __onCursorPositionChanged( self, line, pos ):
+    def _onCursorPositionChanged( self, line, pos ):
         " Triggered when the cursor changed the position "
         if self.__calltip:
             if self.__calltipTimer.isActive():
