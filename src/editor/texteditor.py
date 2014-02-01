@@ -817,7 +817,8 @@ class TextEditor( ScintillaWrapper ):
             self.lexer_.initProperties()
 
             # initialize the auto indent style of the lexer
-            ais = self.lexer_.autoIndentStyle()
+            # ais =
+            self.lexer_.autoIndentStyle()
 
         self.setIndentationsUseTabs( fileType == MakefileType )
 
