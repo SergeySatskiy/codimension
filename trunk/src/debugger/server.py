@@ -201,8 +201,8 @@ class CodimensionDebugger( QObject ):
         self.__mainWindow.switchDebugMode( True )
         terminalType = Settings().terminalType
 
-        self.emit( SIGNAL( 'ClientStart' ),
-                   "Stat debugging session for " + fileName )
+        self.emit( SIGNAL( 'ClientIDEMessage' ),
+                   "Start debugging session for " + fileName )
         self.__createProcfeedbackSocket()
         self.__createTCPServer( terminalType == TERM_REDIRECT )
 
@@ -567,7 +567,9 @@ class CodimensionDebugger( QObject ):
                     continue
 
                 if resp == ResponseExit:
-                    self.emit( SIGNAL( 'ClientFinished' ), line[ eoc : -1 ] )
+                    exitCode = line[ eoc : -1 ]
+                    message = "Debugged script finished with exit code " + str( exitCode )
+                    self.emit( SIGNAL( 'ClientIDEMessage' ), message )
                     try:
                         self.__exitCode = int( line[ eoc : -1 ] )
                     except:
@@ -732,8 +734,12 @@ class CodimensionDebugger( QObject ):
         self.__fileName = None
         self.__runParameters = None
         self.__debugSettings = None
-        return
 
+        message = "Debugging session has been stopped"
+        if brutal:
+            message += " brutally"
+        self.emit( SIGNAL( 'ClientIDEMessage' ), message )
+        return
 
     def __noPathTranslation( self, fname, remote2local = True ):
         """ Dump to support later path translations """

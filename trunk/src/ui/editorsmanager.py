@@ -2075,6 +2075,7 @@ class EditorsManager( QTabWidget ):
             elif item.getType() in [ MainWindowTabWidgetBase.DisassemblerViewer,
                                      MainWindowTabWidgetBase.DiffViewer ]:
                 item.zoomTo( zoomValue )
+        GlobalData().mainWindow.zoomIOconsole( zoomValue )
         GlobalData().mainWindow.zoomDiff( zoomValue )
         return
 

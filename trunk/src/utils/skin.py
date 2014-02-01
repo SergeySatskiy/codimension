@@ -157,7 +157,7 @@ SKIN_SETTINGS = [
     GeneralSkinSetting( "spellingMarkAlpha", GeneralSkinSetting.TYPE_INT, 100 ),
     GeneralSkinSetting( "nolexerPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 255, 230, 255 ) ),
     GeneralSkinSetting( "nolexerColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
-    GeneralSkinSetting( "nolexerFont", GeneralSkinSetting.TYPE_FONT, buildFont( "Monospace,14,-1,5,50,0,0,0,0,0" ) ),
+    GeneralSkinSetting( "nolexerFont", GeneralSkinSetting.TYPE_FONT, buildFont( "Monospace,12,-1,5,50,0,0,0,0,0" ) ),
     GeneralSkinSetting( "currentLinePaper", GeneralSkinSetting.TYPE_COLOR, QColor( 232, 232, 255, 255 ) ),
     GeneralSkinSetting( "edgeColor", GeneralSkinSetting.TYPE_COLOR, QColor( 127, 127, 127, 255 ) ),
     GeneralSkinSetting( "matchedBracePaper", GeneralSkinSetting.TYPE_COLOR, QColor( 132, 117, 245, 255 ) ),
@@ -194,13 +194,10 @@ SKIN_SETTINGS = [
     GeneralSkinSetting( "ioconsolePaper", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 255, 230, 255 ) ),
     GeneralSkinSetting( "ioconsoleColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
     GeneralSkinSetting( "ioconsoleStdoutPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 255, 230, 255 ) ),
-    GeneralSkinSetting( "ioconsoleStdoutColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
     GeneralSkinSetting( "ioconsoleStdinPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 232, 232, 255, 255 ) ),
-    GeneralSkinSetting( "ioconsoleStdinColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
     GeneralSkinSetting( "ioconsoleStderrPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 228, 228, 255 ) ),
-    GeneralSkinSetting( "ioconsoleStderrColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
-    GeneralSkinSetting( "ioconsoleIDEMsgPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 132, 117, 245, 255 ) ),
-    GeneralSkinSetting( "ioconsoleIDEMsgColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
+    GeneralSkinSetting( "ioconsoleIDEMsgPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 228, 228, 228, 255 ) ),
+    GeneralSkinSetting( "ioconsoleIDEMsgColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 255, 255 ) ),
     GeneralSkinSetting( "ioconsolemarginPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 228, 228, 228, 255 ) ),
     GeneralSkinSetting( "ioconsolemarginColor", GeneralSkinSetting.TYPE_COLOR, QColor( 128, 128, 128, 255 ) ),
     GeneralSkinSetting( "ioconsolemarginFont", GeneralSkinSetting.TYPE_FONT, buildFont( "Monospace,12,-1,5,50,0,0,0,0,0" ) ),
@@ -503,6 +500,8 @@ class Skin:
             if line.startswith( "nolexerfont" ):
                 updatedContent.append( replaceFontWith( line, family, size ) )
             elif line.startswith( "linenumfont" ):
+                updatedContent.append( replaceFontWith( line, family, size ) )
+            elif line.startswith( "ioconsolemarginfont" ):
                 updatedContent.append( replaceFontWith( line, family, size ) )
             else:
                 updatedContent.append( line )
