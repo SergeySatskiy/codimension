@@ -50,7 +50,8 @@ from client.protocol_cdm_dbg import ( EOT, RequestStep, RequestStepOver, Request
                                       ResponseBPConditionError, ResponseEval,
                                       ResponseEvalOK, ResponseEvalError,
                                       ResponseExec, ResponseExecError,
-                                      RequestThreadSet, ResponseThreadSet )
+                                      RequestThreadSet, ResponseThreadSet,
+                                      ResponseRaw )
 
 from bputils import getBreakpointLines
 from breakpointmodel import BreakPointModel
@@ -566,6 +567,11 @@ class CodimensionDebugger( QObject ):
                     self.emit( SIGNAL( 'ClientBreakConditionError' ), fileName, line )
                     continue
 
+                if resp == ResponseRaw:
+                    prompt, echo = eval( line[ eoc : -1 ] )
+                    self.emit( SIGNAL( 'ClientRawInput' ), prompt, echo )
+                    continue
+
                 if resp == ResponseExit:
                     exitCode = line[ eoc : -1 ]
                     message = "Debugged script finished with exit code " + str( exitCode )
@@ -603,7 +609,6 @@ class CodimensionDebugger( QObject ):
                     self.__msgParts = []
                     self.__collecting = False
                     continue
-
 
             if self.__collecting:
                 self.__msgParts.append( line )
@@ -996,4 +1001,9 @@ class CodimensionDebugger( QObject ):
     def remoteSetThread( self, tid ):
         " Sets the given thread as the current "
         self.__sendCommand( RequestThreadSet + str( tid ) + "\n" )
+        return
+
+    def remoteRawInput( self, userInput ):
+        " Sends the remote user input "
+        self.__sendCommand( userInput + "\n" )
         return

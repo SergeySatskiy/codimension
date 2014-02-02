@@ -171,6 +171,8 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onClientStdout )
         self.connect( self.__debugger, SIGNAL( 'ClientStderr' ),
                       self.__onClientStderr )
+        self.connect( self.__debugger, SIGNAL( 'ClientRawInput' ),
+                      self.__onClientRawInput )
 
         self.settings = settings
         self.__initialisation = True
@@ -3105,6 +3107,7 @@ class CodimensionMainWindow( QMainWindow ):
             self.__debugRestartAct.setEnabled( False )
             self.__setDebugControlFlowButtonsState( False )
             self.dbgState.setText( "Debugger: stopped" )
+            self.redirectedIOConsole.sessionStopped()
         elif newState == CodimensionDebugger.STATE_PROLOGUE:
             self.__dbgStopBrutal.setEnabled( True )
             self.__debugStopBrutalAct.setEnabled( True )
@@ -4685,6 +4688,8 @@ class CodimensionMainWindow( QMainWindow ):
     def installRedirectedIOConsole( self ):
         # Create redirected IO console
         self.redirectedIOConsole = IOConsoleTabWidget( self )
+        self.connect( self.redirectedIOConsole, SIGNAL( 'UserInput' ),
+                      self.__onUserInput )
         self.__bottomSideBar.addTab( self.redirectedIOConsole,
                 PixmapCache().getIcon( 'ioconsole.png' ), 'IO console' )
         self.__bottomSideBar.setTabToolTip( 7, 'Redirected IO console' )
@@ -4712,4 +4717,18 @@ class CodimensionMainWindow( QMainWindow ):
         self.__bottomSideBar.setCurrentWidget( self.redirectedIOConsole )
         self.__bottomSideBar.raise_()
         self.redirectedIOConsole.appendIDEMessage( message )
+        return
+
+    def __onClientRawInput( self, prompt, echo ):
+        " Triggered when the client input is requested "
+        self.__bottomSideBar.show()
+        self.__bottomSideBar.setCurrentWidget( self.redirectedIOConsole )
+        self.__bottomSideBar.raise_()
+        self.redirectedIOConsole.rawInput( prompt, echo )
+        self.redirectedIOConsole.setFocus()
+        return
+
+    def __onUserInput( self, userInput ):
+        " Triggered when the user finished input in the redirected IO console "
+        self.__debugger.remoteRawInput( userInput )
         return

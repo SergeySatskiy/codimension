@@ -57,6 +57,8 @@ class RedirectedIOConsole( TextEditor ):
         self.marginTooltip = {}
         self.mode = self.MODE_OUTPUT
         self.lastOutputPos = None
+        self.inputEcho = True
+        self.inputBuffer = ""
 
         self.__initGeneralSettings()
         self.__initMargins()
@@ -77,6 +79,59 @@ class RedirectedIOConsole( TextEditor ):
     def eventFilter( self, obj, event ):
         " Event filter to catch shortcuts on UBUNTU "
         return ScintillaWrapper.eventFilter( self, obj, event )
+
+    def keyPressEvent( self, event ):
+        " Triggered when a key is pressed "
+        key = event.key()
+        if key == Qt.Key_Escape:
+            self.clearSearchIndicators()
+            return
+
+        if self.mode == self.MODE_OUTPUT:
+            ScintillaWrapper.keyPressEvent( self, event )
+            return
+
+        # It is an input mode
+        txt = str( event.text() )
+        if len( txt ) and txt >= ' ':
+            # Printable character
+            if self.currentPosition() < self.lastOutputPos:
+                # Out of the input zone
+                return
+
+            if self.inputEcho:
+                ScintillaWrapper.keyPressEvent( self, event )
+                return
+            else:
+                pass
+        else:
+            # Non-printable character or some other key
+            if key == Qt.Key_Enter or key == Qt.Key_Return:
+                userInput = str( self.__getUserInput() )
+                self.switchMode( self.MODE_OUTPUT )
+                self.append( '\n' )
+                self.clearUndoHistory()
+                line, pos = self.getEndPosition()
+                self.setCursorPosition( line, pos )
+                self.ensureLineVisible( line )
+                self.emit( SIGNAL( 'UserInput' ), userInput )
+                return
+            if key == Qt.Key_Backspace and \
+                self.currentPosition() == self.lastOutputPos:
+                return
+
+        ScintillaWrapper.keyPressEvent( self, event )
+        return
+
+    def __getUserInput( self ):
+        " Provides the collected user input "
+        if self.mode != self.MODE_INPUT:
+            return ""
+        if self.inputEcho:
+            line, pos = self.getEndPosition()
+            stattLine, startPos = self.lineIndexFromPosition( self.lastOutputPos )
+            return self.getTextAtPos( line, startPos, pos - startPos )
+        return self.inputBuffer
 
     def __initGeneralSettings( self ):
         " Sets some generic look and feel "
@@ -102,6 +157,7 @@ class RedirectedIOConsole( TextEditor ):
         self.setCurrentLineHighlight( False, None )
         self.setEdgeMode( QsciScintilla.EdgeNone )
         self.setCursorStyle()
+        self.setAutoIndent( False )
         return
 
     def _onCursorPositionChanged( self, line, pos ):
@@ -118,8 +174,10 @@ class RedirectedIOConsole( TextEditor ):
             currentPos = self.currentPosition()
             if currentPos >= self.lastOutputPos:
                 self.SendScintilla( self.SCI_SETCARETSTYLE, self.CARETSTYLE_BLOCK )
+                self.setReadOnly( False )
             else:
                 self.SendScintilla( self.SCI_SETCARETSTYLE, self.CARETSTYLE_LINE )
+                self.setReadOnly( True )
         return
 
     def switchMode( self, newMode ):
@@ -128,10 +186,14 @@ class RedirectedIOConsole( TextEditor ):
         if self.mode == self.MODE_OUTPUT:
             self.lastOutputPos = None
             self.setReadOnly( True )
+            self.inputEcho = True
+            self.inputBuffer = ""
         else:
             line, pos = self.getEndPosition()
-            self.lastOutputPos = self.__viewer.positionFromLineIndex( line, pos )
+            self.lastOutputPos = self.positionFromLineIndex( line, pos )
             self.setReadOnly( False )
+            self.setCursorPosition( line, pos )
+            self.ensureLineVisible( line )
         self.setCursorStyle()
         return
 
@@ -340,9 +402,15 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         QWidget.__init__( self, parent )
 
         self.__viewer = RedirectedIOConsole( self )
+        self.connect( self.__viewer, SIGNAL( 'UserInput' ), self.__onUserInput )
         self.__messages = IOConsoleMessages()
 
         self.__createLayout()
+        return
+
+    def __onUserInput( self, userInput ):
+        " Triggered when the user finished input in the redirected IO console "
+        self.emit( SIGNAL( 'UserInput' ), userInput )
         return
 
     def __createLayout( self ):
@@ -747,11 +815,28 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
             return True
         return False
 
-
     def zoomTo( self, zoomValue ):
         " Sets the new zoom value "
         self.__viewer.zoomTo( zoomValue )
         self.__viewer.setTimestampMarginWidth()
+        return
+
+    def rawInput( self, prompt, echo ):
+        " Triggered when raw input is requested "
+        echo = int( echo )
+        if echo == 0:
+            self.__viewer.inputEcho = False
+        else:
+            self.__viewer.inputEcho = True
+
+        if prompt:
+            self.appendStdoutMessage( prompt )
+        self.__viewer.switchMode( self.__viewer.MODE_INPUT )
+        return
+
+    def sessionStopped( self ):
+        " Triggered when redirecting session is stopped "
+        self.__viewer.switchMode( self.__viewer.MODE_OUTPUT )
         return
 
     # Mandatory interface part is below

@@ -439,7 +439,7 @@ class DebugClientBase( object ):
         if line[ -1 ] == '\n':
             line = line[ : -1 ]
 
-##        printerr(line)          ##debug
+#        print(line)          ##debug
 
         eoc = line.find( '<' )
 
