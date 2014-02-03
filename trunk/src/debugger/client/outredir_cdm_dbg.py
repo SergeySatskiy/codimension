@@ -38,6 +38,7 @@ class OutStreamRedirector( object ):
     def __init__( self, sock ):
         self.closed = False
         self.sock = sock
+        self.sock.setsockopt( socket.IPPROTO_TCP, socket.TCP_NODELAY, True )
         return
 
     def close( self, closeit = False ):
