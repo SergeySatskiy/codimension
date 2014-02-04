@@ -27,13 +27,11 @@ Redirectors for stdout/stderr streams
 
 import socket
 
-MAX_TRIES = 5
+MAX_TRIES = 3
 
 
 class OutStreamRedirector( object ):
     " Wraps a socket object with a file interface "
-
-    maxbuffersize = 1024 * 1024 * 4
 
     def __init__( self, sock ):
         self.closed = False
@@ -114,6 +112,78 @@ class OutStreamRedirector( object ):
                 continue
 
         raise socket.error( "Too many attempts to send data" )
+
+    def writelines( self, lines ):
+        " Writes a list of strings to the file "
+        map( self.write, lines )
+        return
+
+
+class OutStreamCollector( object ):
+    " Collects output with a file interface "
+
+    def __init__( self ):
+        self.buf = ""
+        return
+
+    def close( self ):
+        " Closes the file "
+        return
+
+    def flush( self ):
+        " Does nothing because there is no buffering "
+        return
+
+    def isatty( self ):
+        " Indicates whether a tty interface is supported "
+        return 0
+
+    def fileno( self ):
+        " Provides the file number "
+        return -1
+
+    def read_p( self, size = -1 ):
+        " Read is not supported "
+        raise IOError, '[Errno 9] Bad file descriptor'
+
+    def read( self, size = -1 ):
+        " Read is not supported "
+        raise IOError, '[Errno 9] Bad file descriptor'
+
+    def readline_p( self, size = -1 ):
+        " Read is not supported "
+        raise IOError, '[Errno 9] Bad file descriptor'
+
+    def readlines( self, sizehint = -1 ):
+        " Read is not supported "
+        raise IOError, '[Errno 9] Bad file descriptor'
+
+    def readline( self, sizehint = -1 ):
+        " Read is not supported "
+        raise IOError, '[Errno 9] Bad file descriptor'
+
+    def seek( self, offset, whence = 0 ):
+        " Seek is not supported "
+        raise IOError, '[Errno 29] Illegal seek'
+
+    def tell( self ):
+        " Tell is not supported "
+        raise IOError, '[Errno 29] Illegal seek'
+
+    def truncate( self, size = -1 ):
+        " Truncates is not supported "
+        raise IOError, '[Errno 29] Illegal seek'
+
+    def write( self, data ):
+        " Writes a string to the file "
+
+        try:
+            data = data.encode( 'utf8' )
+        except ( UnicodeEncodeError, UnicodeDecodeError ):
+            pass
+
+        self.buf += data
+        return
 
     def writelines( self, lines ):
         " Writes a list of strings to the file "
