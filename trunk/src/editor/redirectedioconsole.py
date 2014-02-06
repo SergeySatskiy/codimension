@@ -238,8 +238,9 @@ class RedirectedIOConsole( TextEditor ):
                                        self.ideMessageMarker )
 
         # stdout indicator
+        # INDIC_STRAIGHTBOX => 8
         self.SendScintilla( self.SCI_INDICSETSTYLE, self.stdoutIndicator,
-                            self.INDIC_STRAIGHTBOX )
+                            self._convertIndicator( 8 ) )
         self.SendScintilla( self.SCI_INDICSETUNDER, self.stdoutIndicator,
                             True )
         self.SendScintilla( self.SCI_INDICSETFORE, self.stdoutIndicator,
@@ -248,7 +249,7 @@ class RedirectedIOConsole( TextEditor ):
 
         # stderr indicator
         self.SendScintilla( self.SCI_INDICSETSTYLE, self.stderrIndicator,
-                            self.INDIC_STRAIGHTBOX )
+                            self._convertIndicator( 8 ) )
         self.SendScintilla( self.SCI_INDICSETUNDER, self.stderrIndicator,
                             True )
         self.SendScintilla( self.SCI_INDICSETFORE, self.stderrIndicator,
