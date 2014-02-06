@@ -954,7 +954,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__debugStopBrutalAct.setEnabled( False )
         self.__debugStopAct = self.__debugMenu.addAction(
                 PixmapCache().getIcon( 'dbgstop.png' ),
-                'Stop session and keep console', self.__onStopDbgSession, "F10" )
+                'Stop session and keep console if so', self.__onStopDbgSession, "F10" )
         self.__debugStopAct.setEnabled( False )
         self.__debugRestartAct = self.__debugMenu.addAction(
                 PixmapCache().getIcon( 'dbgrestart.png' ),
@@ -1569,7 +1569,7 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onBrutalStopDbgSession )
         self.__dbgStopBrutal.setVisible( False )
         self.__dbgStop = QAction( PixmapCache().getIcon( 'dbgstop.png' ),
-                                  'Stop debugging session and keep console (F10)', self )
+                                  'Stop debugging session and keep console if so (F10)', self )
         self.connect( self.__dbgStop, SIGNAL( "triggered()" ),
                       self.__onStopDbgSession )
         self.__dbgStop.setVisible( False )
@@ -3045,7 +3045,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.sbEol.setVisible( not newState )
 
         # Toolbar buttons
-        self.__dbgStopBrutal.setVisible( newState )
+        self.__dbgStopBrutal.setVisible( newState and
+                                         self.settings.terminalType != TERM_REDIRECT )
         self.__dbgStop.setVisible( newState )
         self.__dbgRestart.setVisible( newState )
         self.__dbgGo.setVisible( newState )
@@ -3112,7 +3113,7 @@ class CodimensionMainWindow( QMainWindow ):
             self.redirectedIOConsole.sessionStopped()
         elif newState == CodimensionDebugger.STATE_PROLOGUE:
             self.__dbgStopBrutal.setEnabled( True )
-            self.__debugStopBrutalAct.setEnabled( True )
+            self.__debugStopBrutalAct.setEnabled( self.settings.terminalType != TERM_REDIRECT )
             self.__dbgStop.setEnabled( False )
             self.__debugStopAct.setEnabled( False )
             self.__dbgRestart.setEnabled( False )
@@ -3121,7 +3122,7 @@ class CodimensionMainWindow( QMainWindow ):
             self.dbgState.setText( "Debugger: prologue" )
         elif newState == CodimensionDebugger.STATE_IN_IDE:
             self.__dbgStopBrutal.setEnabled( True )
-            self.__debugStopBrutalAct.setEnabled( True )
+            self.__debugStopBrutalAct.setEnabled( self.settings.terminalType != TERM_REDIRECT )
             self.__dbgStop.setEnabled( True )
             self.__debugStopAct.setEnabled( True )
             self.__dbgRestart.setEnabled( True )
@@ -3130,7 +3131,7 @@ class CodimensionMainWindow( QMainWindow ):
             self.dbgState.setText( "Debugger: idle" )
         elif newState == CodimensionDebugger.STATE_IN_CLIENT:
             self.__dbgStopBrutal.setEnabled( True )
-            self.__debugStopBrutalAct.setEnabled( True )
+            self.__debugStopBrutalAct.setEnabled( self.settings.terminalType != TERM_REDIRECT )
             self.__dbgStop.setEnabled( True )
             self.__debugStopAct.setEnabled( True )
             self.__dbgRestart.setEnabled( True )
@@ -3139,7 +3140,7 @@ class CodimensionMainWindow( QMainWindow ):
             self.dbgState.setText( "Debugger: running" )
         elif newState == CodimensionDebugger.STATE_FINISHING:
             self.__dbgStopBrutal.setEnabled( True )
-            self.__debugStopBrutalAct.setEnabled( True )
+            self.__debugStopBrutalAct.setEnabled( self.settings.terminalType != TERM_REDIRECT )
             self.__dbgStop.setEnabled( False )
             self.__debugStopAct.setEnabled( False )
             self.__dbgRestart.setEnabled( False )

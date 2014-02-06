@@ -203,18 +203,21 @@ __osSpawnForProfile = {
 # code. So it is impossible to detect in a bash part whether the console should
 # be closed.
 __osSpawnForDebug = {
-    'posix'         : "%(term)s -e %(shell)s -c " \
-                      "'%(exec)s %(fb)s %(fbport)d $PPID; cd %(wdir)s; " \
-                      "%(exec)s %(dbgclient)s %(dbgopt)s -- %(app)s; echo; echo -e \"Script finished\"; " \
+    'posix'         : "%(term)s -e %(shell)s -c "
+                      "'%(exec)s %(fb)s %(fbport)d $PPID; cd %(wdir)s; "
+                      "%(exec)s %(dbgclient)s %(dbgopt)s -- %(app)s; echo; echo -e \"Script finished\"; "
                       "%(shell)s' &",
-    'Terminal'      : "Terminal --disable-server -x %(shell)s -c " \
-                      "'%(exec)s %(fb)s %(fbport)d $PPID; cd %(wdir)s; " \
-                      "%(exec)s %(dbgclient)s %(dbgopt)s -- %(app)s; echo; echo -e \"Script finished\"; " \
+    'Terminal'      : "Terminal --disable-server -x %(shell)s -c "
+                      "'%(exec)s %(fb)s %(fbport)d $PPID; cd %(wdir)s; "
+                      "%(exec)s %(dbgclient)s %(dbgopt)s -- %(app)s; echo; echo -e \"Script finished\"; "
                       "%(shell)s' &",
-    'gnome-terminal': "gnome-terminal --disable-factory -x %(shell)s -c " \
-                      "'%(exec)s %(fb)s %(fbport)d $PPID; cd %(wdir)s; " \
-                      "%(exec)s %(dbgclient)s %(dbgopt)s -- %(app)s; echo; echo -e \"Script finished\"; " \
+    'gnome-terminal': "gnome-terminal --disable-factory -x %(shell)s -c "
+                      "'%(exec)s %(fb)s %(fbport)d $PPID; cd %(wdir)s; "
+                      "%(exec)s %(dbgclient)s %(dbgopt)s -- %(app)s; echo; echo -e \"Script finished\"; "
                       "%(shell)s' &",
+    'redirect'      : "%(shell)s -c "
+                      "'%(exec)s %(fb)s %(fbport)d $PPID; cd %(wdir)s; "
+                      "%(exec)s %(dbgclient)s %(dbgopt)s -- %(app)s'",
                     }
 
 
@@ -317,7 +320,6 @@ def getTerminalCommandToDebug( fileName, workingDir, arguments,
     # TODO: change it later to a selectable python interpreter
     pythonExec = sys.executable
     shell = getUserShell()
-    terminalStartCmd = getStartTerminalCommand( terminalType )
 
     args = ""
     for index in xrange( len( arguments ) ):
@@ -354,10 +356,14 @@ def getTerminalCommandToDebug( fileName, workingDir, arguments,
     if terminalType != TERM_REDIRECT:
         dbgopt += " -n"
 
+    if terminalType == TERM_REDIRECT:
+        terminalStartCmd = "redirect"
+    else:
+        terminalStartCmd = getStartTerminalCommand( terminalType )
 
 
     # Here: all the parameters are prepared, need to combine the command line
-    if terminalStartCmd in __osSpawnForProfile:
+    if terminalStartCmd in __osSpawnForDebug:
         return __osSpawnForDebug[ terminalStartCmd ] % { 'shell':      shell,
                                                          'wdir':       workingDir,
                                                          'exec':       pythonExec,
