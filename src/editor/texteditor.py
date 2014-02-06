@@ -705,7 +705,7 @@ class TextEditor( ScintillaWrapper ):
         self.markerDeleteAll( self.__excptMarker )
         return
 
-    def __convertIndicator( self, value ):
+    def _convertIndicator( self, value ):
         " Converts an indicator style from a config file to the scintilla constant "
         indicatorStyles = { 0:  self.INDIC_PLAIN,
                             1:  self.INDIC_SQUIGGLE,
@@ -742,7 +742,7 @@ class TextEditor( ScintillaWrapper ):
 
         # Search indicator
         self.SendScintilla( self.SCI_INDICSETSTYLE, self.searchIndicator,
-                            self.__convertIndicator( skin.searchMarkStyle ) )
+                            self._convertIndicator( skin.searchMarkStyle ) )
         self.SendScintilla( self.SCI_INDICSETALPHA, self.searchIndicator,
                             skin.searchMarkAlpha )
         if hasattr( self, "SCI_INDICSETOUTLINEALPHA" ):
@@ -755,7 +755,7 @@ class TextEditor( ScintillaWrapper ):
 
         # Match indicator
         self.SendScintilla( self.SCI_INDICSETSTYLE, self.matchIndicator,
-                            self.__convertIndicator( skin.matchMarkStyle ) )
+                            self._convertIndicator( skin.matchMarkStyle ) )
         self.SendScintilla( self.SCI_INDICSETALPHA, self.matchIndicator,
                             skin.matchMarkAlpha )
         if hasattr( self, "SCI_INDICSETOUTLINEALPHA" ):
