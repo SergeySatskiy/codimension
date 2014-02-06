@@ -96,18 +96,8 @@ class CodimensionDebugger( QObject ):
         self.__stopAtFirstLine = None
         self.__translatePath = None
 
-        # Redirect stdout/stderr support
-        self.__stdoutServer = None
-        self.__clientStdoutSocket = None
-        self.__stderrServer = None
-        self.__clientStderrSocket = None
-
         self.__protocolState = self.PROTOCOL_CONTROL
         self.__buffer = ""
-
-        # Support collecting message parts for Eval and Exec
-        self.__msgParts = []
-        self.__collecting = False
 
         self.__exitCode = None
         self.__fileName = None
@@ -170,8 +160,6 @@ class CodimensionDebugger( QObject ):
 
         self.__protocolState = self.PROTOCOL_CONTROL
         self.__buffer = ""
-        self.__msgParts = []
-        self.__collecting = False
         self.__exitCode = None
         self.__fileName = None
         self.__runParameters = None
@@ -181,20 +169,10 @@ class CodimensionDebugger( QObject ):
             QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
             self.__initiatePrologue( fileName )
             QApplication.restoreOverrideCursor()
-            if self.__clientStdoutSocket is not None:
-                self.connect( self.__clientStdoutSocket,
-                              SIGNAL( 'readyRead()' ),
-                              self.__clientStdoutReady )
-                self.__clientStdoutReady()
-            if self.__clientStderrSocket is not None:
-                self.connect( self.__clientStderrSocket,
-                              SIGNAL( 'readyRead()' ),
-                              self.__clientStderrReady )
-                self.__clientStderrReady()
 
             self.connect( self.__clientSocket, SIGNAL( 'readyRead()' ),
-                          self.__parseClientLine2 )
-            self.__parseClientLine2()
+                          self.__parseClientLine )
+            self.__parseClientLine()
         except Exception, exc:
             QApplication.restoreOverrideCursor()
             logging.error( str( exc ) )
@@ -216,14 +194,7 @@ class CodimensionDebugger( QObject ):
         self.emit( SIGNAL( 'ClientIDEMessage' ),
                    "Start debugging session for " + fileName )
         self.__createProcfeedbackSocket()
-        self.__createTCPServer( terminalType == TERM_REDIRECT )
-
-        stdoutPort = None
-        if self.__stdoutServer is not None:
-            stdoutPort = self.__stdoutServer.serverPort()
-        stderrPort = None
-        if self.__stderrServer is not None:
-            stderrPort = self.__stderrServer.serverPort()
+        self.__createTCPServer()
 
         self.__runParameters = GlobalData().getRunParameters( fileName )
         workingDir, cmd, environment = getCwdCmdEnv(
@@ -231,8 +202,7 @@ class CodimensionDebugger( QObject ):
                                             fileName, self.__runParameters,
                                             terminalType,
                                             self.__procFeedbackPort,
-                                            self.__tcpServer.serverPort(),
-                                            stdoutPort, stderrPort )
+                                            self.__tcpServer.serverPort() )
 
         self.__debugSettings = Settings().getDebuggerSettings()
         self.__stopAtFirstLine = self.__debugSettings.stopAtFirstLine
@@ -335,26 +305,14 @@ class CodimensionDebugger( QObject ):
         self.__procFeedbackPort = self.__procFeedbackSocket.getsockname()[ 1 ]
         return
 
-    def __createTCPServer( self, redirected ):
+    def __createTCPServer( self ):
         " Creates the TCP server for the commands exchange "
         self.__tcpServer = QTcpServer()
         self.connect( self.__tcpServer, SIGNAL( "newConnection()" ),
                       self.__newConnection )
 
-        if redirected:
-            self.__stdoutServer = QTcpServer()
-            self.connect( self.__stdoutServer, SIGNAL( "newConnection()" ),
-                          self.__newStdoutConnection )
-            self.__stderrServer = QTcpServer()
-            self.connect( self.__stderrServer, SIGNAL( "newConnection()" ),
-                          self.__newStderrConnection )
-
         # Port will be assigned automatically
         self.__tcpServer.listen( QHostAddress.LocalHost )
-
-        if redirected:
-            self.__stdoutServer.listen( QHostAddress.LocalHost )
-            self.__stderrServer.listen( QHostAddress.LocalHost )
         return
 
     def __getProcfeedbackData( self ):
@@ -387,36 +345,8 @@ class CodimensionDebugger( QObject ):
         # So, connecting this signal is moved to the top level, see
         # startDebugging()
         # self.connect( self.__clientSocket, SIGNAL( 'readyRead()' ),
-        #               self.__parseClientLine2 )
+        #               self.__parseClientLine )
 
-        self.__changeStateWhenReady()
-        return
-
-    def __newStdoutConnection( self ):
-        " Handles new incoming stdout connection "
-        sock = self.__stdoutServer.nextPendingConnection()
-        if self.__state != self.STATE_PROLOGUE or \
-           self.__clientStdoutSocket is not None:
-            sock.abort()
-            return
-
-        self.__clientStdoutSocket = sock
-        self.__clientStdoutSocket.setSocketOption(
-                        QAbstractSocket.KeepAliveOption, 1 )
-        self.__changeStateWhenReady()
-        return
-
-    def __newStderrConnection( self ):
-        " Handles new incoming stderr connection "
-        sock = self.__stderrServer.nextPendingConnection()
-        if self.__state != self.STATE_PROLOGUE or \
-           self.__clientStderrSocket is not None:
-            sock.abort()
-            return
-
-        self.__clientStderrSocket = sock
-        self.__clientStderrSocket.setSocketOption(
-                        QAbstractSocket.KeepAliveOption, 1 )
         self.__changeStateWhenReady()
         return
 
@@ -424,10 +354,6 @@ class CodimensionDebugger( QObject ):
         """ Changes the debugger state from prologue to in client when
             all the required connections are ready """
         if self.__clientSocket is None:
-            return
-        if self.__stdoutServer is not None and self.__clientStdoutSocket is None:
-            return
-        if self.__stderrServer is not None and self.__clientStderrSocket is None:
             return
 
         # All the conditions are met, the state can be changed
@@ -444,7 +370,7 @@ class CodimensionDebugger( QObject ):
         raise Exception( "Cannot send command to debuggee - "
                          "no connection established. Command: " + command )
 
-    def __parseClientLine2( self ):
+    def __parseClientLine( self ):
         " Triggered when something has been received from the client "
         while self.__clientSocket and self.__clientSocket.bytesAvailable() > 0:
             qs = self.__clientSocket.readAll()
@@ -693,209 +619,6 @@ class CodimensionDebugger( QObject ):
             self.__protocolState = self.PROTOCOL_CONTROL
             return True
 
-    def __parseClientLine( self ):
-        " Triggered when something has been received from the client "
-        while self.__clientSocket and self.__clientSocket.canReadLine():
-            qs = self.__clientSocket.readLine()
-            us = self.__codec.fromUnicode( QString( qs ) )
-            line = str( us )
-            if line.endswith( EOT ):
-                line = line[ : -len( EOT ) ]
-                if not line:
-                    continue
-
-            # print "Server received: " + line
-
-            eoc = line.find( '<' ) + 1
-
-            # Deal with case where user has written directly to stdout
-            # or stderr, but not line terminated and we stepped over the
-            # write call, in that case the >line< will not be the first
-            # string read from the socket...
-            boc = line.find( '>' )
-            if boc > 0 and eoc > boc:
-                self.emit( SIGNAL( 'ClientOutput' ), line[ : boc ] )
-                line = line[ boc : ]
-                eoc = line.find( '<' ) + 1
-                boc = line.find( '>' )
-
-            if boc >= 0 and eoc > boc:
-                resp = line[ boc : eoc ]
-
-                if resp == ResponseLine or resp == ResponseStack:
-                    stack = eval( line[ eoc : -1 ] )
-                    for s in stack:
-                        s[ 0 ] = self.__translatePath( s[ 0 ], True )
-
-                    if self.__stopAtFirstLine:
-                        cf = stack[ 0 ]
-                        self.emit( SIGNAL( 'ClientLine' ), cf[ 0 ], int( cf[ 1 ] ),
-                                   resp == ResponseStack )
-                        self.emit( SIGNAL( 'ClientStack' ), stack )
-                    else:
-                        self.__stopAtFirstLine = True
-                        QTimer.singleShot( 0, self.remoteContinue )
-
-                    if resp == ResponseLine:
-                        self.__changeDebuggerState( self.STATE_IN_IDE )
-                    continue
-
-                if resp == ResponseThreadList:
-                    currentThreadID, threadList = eval( line[ eoc : -1 ] )
-                    self.emit( SIGNAL( 'ClientThreadList' ),
-                               currentThreadID, threadList )
-                    continue
-
-                if resp == ResponseVariables:
-                    vlist = eval( line[ eoc : -1 ] )
-                    scope = vlist[ 0 ]
-                    try:
-                        variables = vlist[ 1 : ]
-                    except IndexError:
-                        variables = []
-                    self.emit( SIGNAL( 'ClientVariables' ), scope, variables )
-                    continue
-
-                if resp == ResponseVariable:
-                    vlist = eval( line[ eoc : -1 ] )
-                    scope = vlist[ 0 ]
-                    try:
-                        variables = vlist[ 1 : ]
-                    except IndexError:
-                        variables = []
-                    self.emit( SIGNAL( 'ClientVariable' ), scope, variables )
-                    continue
-
-                if resp == ResponseException:
-                    self.__changeDebuggerState( self.STATE_IN_IDE )
-                    exc = line[ eoc : -1 ]
-                    try:
-                        excList = eval( exc )
-                        excType = excList[ 0 ]
-                        excMessage = excList[ 1 ]
-                        stackTrace = excList[ 2 : ]
-                        if stackTrace and stackTrace[ 0 ] and \
-                           stackTrace[ 0 ][ 0 ] == "<string>":
-                            stackTrace = []
-                    except (IndexError, ValueError, SyntaxError):
-                        excType = None
-                        excMessage = ""
-                        stackTrace = []
-                    self.emit( SIGNAL( 'ClientException' ),
-                               excType, excMessage, stackTrace )
-                    continue
-
-                if resp == ResponseSyntax:
-                    exc = line[ eoc : -1 ]
-                    try:
-                        message, ( fileName, lineNo, charNo ) = eval( exc )
-                        if fileName is None:
-                            fileName = ""
-                    except ( IndexError, ValueError ):
-                        message = None
-                        fileName = ''
-                        lineNo = 0
-                        charNo = 0
-                    if charNo is None:
-                        charNo = 0
-                    self.emit( SIGNAL( 'ClientSyntaxError' ),
-                               message, fileName, lineNo, charNo )
-                    continue
-
-                if resp == RequestForkTo:
-                    self.__askForkTo()
-                    continue
-
-                if resp == PassiveStartup:
-                    self.__sendBreakpoints()
-                    self.__sendWatchpoints()
-                    continue
-
-                if resp == ResponseThreadSet:
-                    self.emit( SIGNAL( 'ClientThreadSet' ) )
-                    continue
-
-                if resp == ResponseClearBreak:
-                    fileName, line = line[ eoc : -1 ].split( ',' )
-                    line = int( line )
-                    self.emit( SIGNAL( 'ClientClearBreak' ), fileName, line )
-                    continue
-
-                if resp == ResponseBPConditionError:
-                    fileName, line = line[ eoc : -1 ].split( ',' )
-                    line = int( line )
-                    self.emit( SIGNAL( 'ClientBreakConditionError' ), fileName, line )
-                    continue
-
-                if resp == ResponseRaw:
-                    prompt, echo = eval( line[ eoc : -1 ] )
-                    self.__clientStderrReady()
-                    self.__clientStdoutReady()
-                    self.emit( SIGNAL( 'ClientRawInput' ), prompt, echo )
-                    continue
-
-                if resp == ResponseExit:
-                    exitCode = line[ eoc : -1 ]
-                    message = "Debugged script finished with exit code " + str( exitCode )
-                    self.emit( SIGNAL( 'ClientIDEMessage' ), message )
-                    try:
-                        self.__exitCode = int( line[ eoc : -1 ] )
-                    except:
-                        pass
-                    continue
-
-                if resp == ResponseEval:
-                    self.__msgParts = []
-                    self.__collecting = True
-                    continue
-
-                if resp == ResponseEvalOK:
-                    self.emit( SIGNAL( 'EvalOK' ), ''.join( self.__msgParts ) )
-                    self.__msgParts = []
-                    self.__collecting = False
-                    continue
-
-                if resp == ResponseEvalError:
-                    self.emit( SIGNAL( 'EvalError' ), ''.join( self.__msgParts ) )
-                    self.__msgParts = []
-                    self.__collecting = False
-                    continue
-
-                if resp == ResponseExec:
-                    self.__msgParts = []
-                    self.__collecting = True
-                    continue
-
-                if resp == ResponseExecError:
-                    self.emit( SIGNAL( 'ExecError' ), ''.join( self.__msgParts ) )
-                    self.__msgParts = []
-                    self.__collecting = False
-                    continue
-
-            if self.__collecting:
-                self.__msgParts.append( line )
-                continue
-
-            print "Unhandled message received by the server: '" + line + "'"
-
-        return
-
-    def __clientStderrReady( self ):
-        " Triggered when stderr received "
-        while self.__clientStderrSocket and \
-              self.__clientStderrSocket.bytesAvailable() > 0:
-            data = str( self.__clientStderrSocket.readAll() )
-            self.emit( SIGNAL( 'ClientStderr' ), data )
-        return
-
-    def __clientStdoutReady( self ):
-        " Triggered when stdout received "
-        while self.__clientStdoutSocket and \
-              self.__clientStdoutSocket.bytesAvailable() > 0:
-            data = str( self.__clientStdoutSocket.readAll() )
-            self.emit( SIGNAL( 'ClientStdout' ), data )
-        return
-
     def __disconnected( self ):
         " Triggered when the client closed the connection "
         # Note: if the stopDebugging call is done synchronously - you've got
@@ -926,7 +649,7 @@ class CodimensionDebugger( QObject ):
         # Close the opened socket if so
         if self.__clientSocket is not None:
             self.disconnect( self.__clientSocket, SIGNAL( 'readyRead()' ),
-                             self.__parseClientLine2 )
+                             self.__parseClientLine )
             self.__sendCommand( RequestShutdown + "\n" )
 
             # Give the client a chance to shutdown itself
@@ -949,35 +672,12 @@ class CodimensionDebugger( QObject ):
             self.__clientSocket.close()
         self.__clientSocket = None
 
-        if self.__clientStdoutSocket is not None:
-            self.disconnect( self.__clientStdoutSocket, SIGNAL( 'readyRead()' ),
-                             self.__clientStdoutReady )
-            self.__clientStdoutSocket.close()
-            self.__clientStdoutSocket = None
-        if self.__clientStderrSocket is not None:
-            self.disconnect( self.__clientStderrSocket, SIGNAL( 'readyRead()' ),
-                             self.__clientStderrReady )
-            self.__clientStderrSocket.close()
-            self.__clientStderrSocket = None
-
         # Close the TCP server if so
         if self.__tcpServer is not None:
             self.disconnect( self.__tcpServer, SIGNAL( "newConnection()" ),
                              self.__newConnection )
             self.__tcpServer.close()
         self.__tcpServer = None
-
-        if self.__stdoutServer is not None:
-            self.disconnect( self.__stdoutServer, SIGNAL( "newConnection()" ),
-                             self.__newStdoutConnection )
-            self.__stdoutServer.close()
-        self.__stdoutServer = None
-
-        if self.__stderrServer is not None:
-            self.disconnect( self.__stderrServer, SIGNAL( "newConnection()" ),
-                             self.__newStderrConnection )
-            self.__stderrServer.close()
-        self.__stderrServer = None
 
         # Deal with the process if so
         if self.__procPID is not None:

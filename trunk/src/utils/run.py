@@ -308,8 +308,7 @@ def getTerminalCommandToProfile( fileName, workingDir, arguments,
 
 def getTerminalCommandToDebug( fileName, workingDir, arguments,
                                terminalType, closeTerminal,
-                               procFeedbackPort, tcpServerPort,
-                               stdoutPort, stderrPort ):
+                               procFeedbackPort, tcpServerPort ):
     " Provides a command line to debug in a separate shell terminal "
 
     if os.name != 'posix':
@@ -352,11 +351,8 @@ def getTerminalCommandToDebug( fileName, workingDir, arguments,
             dbgopt += " --fork-child"
         else:
             dbgopt += " --fork-parent"
-    if stdoutPort is None and stderrPort is None:
+    if terminalType != TERM_REDIRECT:
         dbgopt += " -n"
-    else:
-        dbgopt += " --stdout-port " + str( stdoutPort ) + \
-                  " --stderr-port " + str( stderrPort )
 
 
 
@@ -461,8 +457,7 @@ def parseCommandLineArguments( cmdLine ):
 
 
 def getCwdCmdEnv( cmdType, path, params, terminalType,
-                  procFeedbackPort = None, tcpServerPort = None,
-                  stdoutPort = None, stderrPort = None ):
+                  procFeedbackPort = None, tcpServerPort = None ):
     """ Provides the working directory, command line and environment
         for running/debugging a script """
 
@@ -481,8 +476,7 @@ def getCwdCmdEnv( cmdType, path, params, terminalType,
     elif cmdType == CMD_TYPE_DEBUG:
         cmd = getTerminalCommandToDebug( path, workingDir, arguments,
                                          terminalType, params.closeTerminal,
-                                         procFeedbackPort, tcpServerPort,
-                                         stdoutPort, stderrPort )
+                                         procFeedbackPort, tcpServerPort )
     else:
         raise Exception( "Unknown command requested. "
                          "Supported command types are: run, profile, debug." )
