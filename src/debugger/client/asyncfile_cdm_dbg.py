@@ -117,8 +117,8 @@ class AsyncFile( object ):
 
         @return the number of bytes to be written (int)
         """
-
-        return self.wpending.rfind( '\n' ) + 1
+        return len( self.wpending )
+#        return self.wpending.rfind( '\n' ) + 1
 
     def close( self, closeit = 0 ):
         """

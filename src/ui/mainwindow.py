@@ -165,6 +165,8 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onEvalOK )
         self.connect( self.__debugger, SIGNAL( 'EvalError' ),
                       self.__onEvalError )
+        self.connect( self.__debugger, SIGNAL( 'ExecOK' ),
+                      self.__onExecOK )
         self.connect( self.__debugger, SIGNAL( 'ExecError' ),
                       self.__onExecError )
         self.connect( self.__debugger, SIGNAL( 'ClientStdout' ),
@@ -4451,6 +4453,12 @@ class CodimensionMainWindow( QMainWindow ):
     def __onEvalError( self, message ):
         " Triggered when Eval failed "
         logging.error( "Eval failed:\n" + message )
+        return
+
+    def __onExecOK( self, message ):
+        " Triggered when Exec completed successfully "
+        if message:
+            logging.info( "Exec succeeded:\n" + message )
         return
 
     def __onExecError( self, message ):

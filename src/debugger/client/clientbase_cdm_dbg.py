@@ -57,10 +57,10 @@ from protocol_cdm_dbg import ( ResponseOK, RequestOK, RequestVariable,
                                ResponseVariables, DebugAddress,
                                ResponseVariable, PassiveStartup,
                                ResponseEval, ResponseEvalOK, ResponseEvalError,
-                               ResponseExec, ResponseExecError )
+                               ResponseExec, ResponseExecOK, ResponseExecError )
 from base_cdm_dbg import setRecursionLimit
 from asyncfile_cdm_dbg import AsyncFile, AsyncPendingWrite
-from outredir_cdm_dbg import OutStreamRedirector
+from outredir_cdm_dbg import OutStreamRedirector, OutStreamCollector
 
 
 
@@ -364,7 +364,7 @@ class DebugClientBase( object ):
             dmp[ "broken" ] = self.isBroken()
             threadList.append( dmp )
 
-        self.write( '%s%s\n' % ( ResponseThreadList,
+        self.write( '%s%s' % ( ResponseThreadList,
                                  unicode( ( currentId, threadList ) ) ) )
         return
 
@@ -376,7 +376,7 @@ class DebugClientBase( object ):
         @param echo Flag indicating echoing of the input (boolean)
         @return the entered string
         """
-        self.write( "%s%s\n" % (ResponseRaw, unicode((prompt, echo))) )
+        self.write( "%s%s" % (ResponseRaw, unicode((prompt, echo))) )
         self.inRawMode = 1
         self.eventLoop( True )
         return self.rawLine
@@ -464,16 +464,16 @@ class DebugClientBase( object ):
 
             if cmd == RequestStack:
                 stack = self.currentThread.getStack()
-                self.write( '%s%s\n' % ( ResponseStack, unicode( stack ) ) )
+                self.write( '%s%s' % ( ResponseStack, unicode( stack ) ) )
                 return
 
             if cmd == RequestThreadSet:
                 tid = eval( arg )
                 if tid in self.threads:
                     self.setCurrentThread( tid )
-                    self.write( ResponseThreadSet + '\n' )
+                    self.write( ResponseThreadSet )
                     stack = self.currentThread.getStack()
-                    self.write( '%s%s\n' % ( ResponseStack, unicode( stack ) ) )
+                    self.write( '%s%s' % ( ResponseStack, unicode( stack ) ) )
                 return
 
             if cmd == RequestStep:
@@ -506,7 +506,7 @@ class DebugClientBase( object ):
                 return
 
             if cmd == RequestOK:
-                self.write( self.pendingResponse + '\n' )
+                self.write( self.pendingResponse )
                 self.pendingResponse = ResponseOK
                 return
 
@@ -527,7 +527,7 @@ class DebugClientBase( object ):
                         try:
                             compile( cond, '<string>', 'eval' )
                         except SyntaxError:
-                            self.write( '%s%s,%d\n' % \
+                            self.write( '%s%s,%d' %
                                 ( ResponseBPConditionError, fname, line ) )
                             return
                     self.mainThread.set_break( fname, line, temporary, cond )
@@ -572,8 +572,8 @@ class DebugClientBase( object ):
                         try:
                             compile(cond, '<string>', 'eval')
                         except SyntaxError:
-                            self.write( '%s%s\n' % ( ResponseWPConditionError,
-                                                     cond ) )
+                            self.write( '%s%s' % ( ResponseWPConditionError,
+                                                   cond ) )
                             return
                     self.mainThread.set_watch( cond, temporary )
                 else:
@@ -615,9 +615,9 @@ class DebugClientBase( object ):
                     frameNumber -= 1
 
                 if f is None:
-                    self.write( ResponseEval + '\n' )
+                    self.write( ResponseEval )
                     self.write( 'Bad frame number\n' )
-                    self.write( ResponseEvalError + '\n' )
+                    self.write( ResponseEvalError )
                     return
 
                 _globals = f.f_globals
@@ -632,9 +632,9 @@ class DebugClientBase( object ):
                     _list += traceback.format_exception_only( SyntaxError,
                                                               excpt )
 
-                    self.write( ResponseEval + '\n' )
+                    self.write( ResponseEval )
                     map( self.write, _list )
-                    self.write( ResponseEvalError + '\n' )
+                    self.write( ResponseEvalError )
                 except:
                     # Report the exception and the traceback
                     try:
@@ -653,14 +653,14 @@ class DebugClientBase( object ):
                     finally:
                         tblist = tback = None
 
-                    self.write( ResponseEval + '\n' )
+                    self.write( ResponseEval )
                     map( self.write, _list )
-                    self.write( ResponseEvalError + '\n' )
+                    self.write( ResponseEvalError )
 
                 else:
-                    self.write( ResponseEval + '\n' )
+                    self.write( ResponseEval )
                     self.write( unicode( value ) + '\n' )
-                    self.write( ResponseEvalOK + '\n' )
+                    self.write( ResponseEvalOK )
 
                 return
 
@@ -675,10 +675,16 @@ class DebugClientBase( object ):
                     frameNumber -= 1
 
                 if f is None:
-                    self.write( ResponseExec + '\n' )
+                    self.write( ResponseExec )
                     self.write( 'Bad frame number\n' )
-                    self.write( ResponseExecError + '\n' )
+                    self.write( ResponseExecError )
                     return
+
+                currentStdout = sys.stdout
+                currentStderr = sys.stderr
+                collector = OutStreamCollector()
+                sys.stdout = collector
+                sys.stderr = collector
 
                 # Locals are copied (not referenced) here!
                 _globals = f.f_globals
@@ -700,9 +706,14 @@ class DebugClientBase( object ):
                     _list += traceback.format_exception_only( SyntaxError,
                                                               excpt )
 
-                    self.write( ResponseEval + '\n' )
+                    self.write( ResponseExec )
                     map( self.write, _list )
-                    self.write( ResponseEvalError + '\n' )
+                    self.write( ResponseExecError )
+
+                    # Restore the output streams
+                    sys.stdout = currentStdout
+                    sys.stderr = currentStderr
+                    return
                 except:
                     # Report the exception and the traceback
                     try:
@@ -721,10 +732,22 @@ class DebugClientBase( object ):
                     finally:
                         tblist = tback = None
 
-                    self.write( ResponseExec + '\n' )
+                    self.write( ResponseExec )
                     map( self.write, _list )
-                    self.write( ResponseExecError + '\n' )
+                    self.write( ResponseExecError )
 
+                    # Restore the output streams
+                    sys.stdout = currentStdout
+                    sys.stderr = currentStderr
+                    return
+
+                self.write( ResponseExec )
+                self.write( collector.buf )
+                self.write( ResponseExecOK )
+
+                # Restore the output streams
+                sys.stdout = currentStdout
+                sys.stderr = currentStderr
                 return
 
             if cmd == ResponseForkTo:
@@ -988,8 +1011,8 @@ class DebugClientBase( object ):
         self.errorstream = AsyncFile( sock, sys.stderr.mode, sys.stderr.name )
 
         if redirect:
-            sys.stdout = OutStreamRedirector( stdoutSock )
-            sys.stderr = OutStreamRedirector( stderrSock )
+            sys.stdout = OutStreamRedirector( sock, True )
+            sys.stderr = OutStreamRedirector( sock, False )
             sys.stdin = self.readstream
         self.redirect = redirect
 
@@ -1090,7 +1113,7 @@ class DebugClientBase( object ):
         if self.running:
             self.set_quit()
             self.running = None
-            self.write( '%s%d\n' % ( ResponseExit, status ) )
+            self.write( '%s%d' % ( ResponseExit, status ) )
 
         # reset coding
         self.__coding = self.defaultCoding
@@ -1110,7 +1133,7 @@ class DebugClientBase( object ):
             # thread variables which is wrong. It's better to send an empty
             # list to avoid confusion.
             varlist = [ scope ]
-            self.write( '%s%s\n' % ( ResponseVariables, varlist ) )
+            self.write( '%s%s' % ( ResponseVariables, varlist ) )
             return
 
         # The original version did not change the frame number for the global
@@ -1131,7 +1154,7 @@ class DebugClientBase( object ):
             # thread variables which is wrong. It's better to send an empty
             # list to avoid confusion.
             varlist = [ scope ]
-            self.write( '%s%s\n' % ( ResponseVariables, varlist ) )
+            self.write( '%s%s' % ( ResponseVariables, varlist ) )
             return
 
         if scope:
@@ -1150,7 +1173,7 @@ class DebugClientBase( object ):
             vlist = self.__formatVariablesList( keylist, varDict, scope )
             varlist.extend( vlist )
 
-        self.write( '%s%s\n' % ( ResponseVariables, unicode( varlist ) ) )
+        self.write( '%s%s' % ( ResponseVariables, unicode( varlist ) ) )
         return
 
     def __dumpVariable( self, var, frmnr, scope ):
@@ -1392,7 +1415,7 @@ class DebugClientBase( object ):
                 except:
                     pass
 
-        self.write('%s%s\n' % (ResponseVariable, unicode(varlist)))
+        self.write( '%s%s' % (ResponseVariable, unicode(varlist)) )
 
     def __formatQt4Variable( self, value, vtype ):
         """
@@ -1661,7 +1684,7 @@ class DebugClientBase( object ):
         self.debugging = 1
 
         self.passive = 1
-        self.write( "%s%s|%d\n" % ( PassiveStartup,
+        self.write( "%s%s|%d" % ( PassiveStartup,
                                     self.running, exceptions ) )
         self.__interact()
 
@@ -1802,7 +1825,7 @@ class DebugClientBase( object ):
 
 
         if not self.fork_auto and not isPopen:
-            self.write( RequestForkTo + '\n' )
+            self.write( RequestForkTo )
             self.eventLoop( True )
         pid = DebugClientOrigFork()
 
