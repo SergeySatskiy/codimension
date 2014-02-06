@@ -91,6 +91,7 @@ class CodimensionDebugger( QObject ):
         self.__procFeedbackPort = None
         self.__tcpServer = None
         self.__clientSocket = None
+        self.__proc = None
         self.__procPID = None
         self.__disconnectReceived = None
         self.__stopAtFirstLine = None
@@ -208,7 +209,8 @@ class CodimensionDebugger( QObject ):
         self.__stopAtFirstLine = self.__debugSettings.stopAtFirstLine
 
         # Run the client -  exception is processed in the outer scope
-        Popen( cmd, shell = True, cwd = workingDir, env = environment )
+        self.__proc = Popen( cmd, shell = True, cwd = workingDir,
+                             env = environment )
 
         # Wait for the child PID
         self.__waitChildPID()
@@ -687,13 +689,20 @@ class CodimensionDebugger( QObject ):
                    self.__runParameters.closeTerminal:
                     killOnSuccess = True
 
-            if brutal or killOnSuccess:
-                try:
-                    # Throws exceptions if cannot kill the process
-                    killProcess( self.__procPID )
-                except:
-                    pass
+            if Settings().terminalType != TERM_REDIRECT:
+                if brutal or killOnSuccess:
+                    try:
+                        # Throws exceptions if cannot kill the process
+                        killProcess( self.__procPID )
+                    except:
+                        pass
         self.__procPID = None
+        if self.__proc is not None:
+            try:
+                self.__proc.wait()
+            except:
+                pass
+            self.__proc = None
 
         self.__mainWindow.switchDebugMode( False )
         self.__changeDebuggerState( self.STATE_STOPPED )
@@ -703,7 +712,7 @@ class CodimensionDebugger( QObject ):
         self.__debugSettings = None
 
         message = "Debugging session has been stopped"
-        if brutal:
+        if brutal and Settings().terminalType != TERM_REDIRECT:
             message += " and the console has been closed"
         self.emit( SIGNAL( 'ClientIDEMessage' ), message )
         return
