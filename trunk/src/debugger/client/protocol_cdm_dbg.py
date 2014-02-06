@@ -78,8 +78,12 @@ ResponseEval =             RequestEval
 ResponseEvalOK =           '>EvalOK<'
 ResponseEvalError =        '>EvalError<'
 ResponseExec =             RequestExec
+ResponseExecOK =           '>ExecOK<'
 ResponseExecError =        '>ExecError<'
+ResponseStdout =           '>StdOut<'
+ResponseStderr =           '>StdErr<'
 
 PassiveStartup =           '>PassiveStartup<'
 
-EOT = '>EOT<\n'
+EOT = '>EOT<'
+StdoutStderrEOT = '\x04\x04'

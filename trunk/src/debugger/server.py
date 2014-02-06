@@ -51,7 +51,8 @@ from client.protocol_cdm_dbg import ( EOT, RequestStep, RequestStepOver, Request
                                       ResponseEvalOK, ResponseEvalError,
                                       ResponseExec, ResponseExecError,
                                       RequestThreadSet, ResponseThreadSet,
-                                      ResponseRaw )
+                                      ResponseRaw, StdoutStderrEOT,
+                                      ResponseStdout, ResponseStderr, ResponseExecOK )
 
 from bputils import getBreakpointLines
 from breakpointmodel import BreakPointModel
@@ -74,6 +75,11 @@ class CodimensionDebugger( QObject ):
     STATE_FINISHING = 4
     STATE_BRUTAL_FINISHING = 5
 
+    PROTOCOL_CONTROL = 0
+    PROTOCOL_EVALEXEC = 1
+    PROTOCOL_STDOUT = 2
+    PROTOCOL_STDERR = 3
+
     def __init__( self, mainWindow ):
         QObject.__init__( self )
 
@@ -95,6 +101,9 @@ class CodimensionDebugger( QObject ):
         self.__clientStdoutSocket = None
         self.__stderrServer = None
         self.__clientStderrSocket = None
+
+        self.__protocolState = self.PROTOCOL_CONTROL
+        self.__buffer = ""
 
         # Support collecting message parts for Eval and Exec
         self.__msgParts = []
@@ -159,6 +168,8 @@ class CodimensionDebugger( QObject ):
                            "The previous one has not finished yet." )
             return
 
+        self.__protocolState = self.PROTOCOL_CONTROL
+        self.__buffer = ""
         self.__msgParts = []
         self.__collecting = False
         self.__exitCode = None
@@ -182,8 +193,8 @@ class CodimensionDebugger( QObject ):
                 self.__clientStderrReady()
 
             self.connect( self.__clientSocket, SIGNAL( 'readyRead()' ),
-                          self.__parseClientLine )
-            self.__parseClientLine()
+                          self.__parseClientLine2 )
+            self.__parseClientLine2()
         except Exception, exc:
             QApplication.restoreOverrideCursor()
             logging.error( str( exc ) )
@@ -376,7 +387,7 @@ class CodimensionDebugger( QObject ):
         # So, connecting this signal is moved to the top level, see
         # startDebugging()
         # self.connect( self.__clientSocket, SIGNAL( 'readyRead()' ),
-        #               self.__parseClientLine )
+        #               self.__parseClientLine2 )
 
         self.__changeStateWhenReady()
         return
@@ -432,6 +443,255 @@ class CodimensionDebugger( QObject ):
 
         raise Exception( "Cannot send command to debuggee - "
                          "no connection established. Command: " + command )
+
+    def __parseClientLine2( self ):
+        " Triggered when something has been received from the client "
+        while self.__clientSocket and self.__clientSocket.bytesAvailable() > 0:
+            qs = self.__clientSocket.readAll()
+            us = self.__codec.fromUnicode( QString( qs ) )
+            self.__buffer += str( us )
+
+            # print "Received: '" + str( us ) + "'"
+
+            tryAgain = True
+            while tryAgain:
+                if self.__protocolState == self.PROTOCOL_CONTROL:
+                    tryAgain = self.__processControlState()
+                elif self.__protocolState == self.PROTOCOL_EVALEXEC:
+                    tryAgain = self.__processEvalexecState()
+                elif self.__protocolState == self.PROTOCOL_STDOUT:
+                    tryAgain = self.__processStdoutStderrState( True )
+                elif self.__protocolState == self.PROTOCOL_STDERR:
+                    tryAgain = self.__processStdoutStderrState( False )
+                else:
+                    raise Exception( "Unexpected protocol state" )
+        return
+
+    def __processControlState( self ):
+        " Analyzes receiving buffer in the CONTROL state "
+        # Buffer is going to start with >ZZZ< message and ends with EOT
+        index = self.__buffer.find( EOT )
+        if index == -1:
+            return False
+
+        line = self.__buffer[ 0 : index ]
+        self.__buffer = self.__buffer[ index + len( EOT ) : ]
+
+        if not line.startswith( '>' ):
+            print "Unexpected message received (no '>' at the beginning): '" + \
+                  line + "'"
+            return self.__buffer != ""
+
+        cmdIndex = line.find( '<' )
+        if cmdIndex == -1:
+            print "Unexpected message received (no '<' found): '" + line + "'"
+            return self.__buffer != ""
+
+        cmd = line[ 0 : cmdIndex + 1 ]
+        content = line[ cmdIndex + 1 : ]
+        if cmd == ResponseLine or cmd == ResponseStack:
+            stack = eval( content )
+            for s in stack:
+                s[ 0 ] = self.__translatePath( s[ 0 ], True )
+
+            if self.__stopAtFirstLine:
+                cf = stack[ 0 ]
+                self.emit( SIGNAL( 'ClientLine' ), cf[ 0 ], int( cf[ 1 ] ),
+                           cmd == ResponseStack )
+                self.emit( SIGNAL( 'ClientStack' ), stack )
+            else:
+                self.__stopAtFirstLine = True
+                QTimer.singleShot( 0, self.remoteContinue )
+
+            if cmd == ResponseLine:
+                self.__changeDebuggerState( self.STATE_IN_IDE )
+            return self.__buffer != ""
+
+        if cmd == ResponseThreadList:
+            currentThreadID, threadList = eval( content )
+            self.emit( SIGNAL( 'ClientThreadList' ),
+                       currentThreadID, threadList )
+            return self.__buffer != ""
+
+        if cmd == ResponseVariables:
+            vlist = eval( content )
+            scope = vlist[ 0 ]
+            try:
+                variables = vlist[ 1 : ]
+            except IndexError:
+                variables = []
+            self.emit( SIGNAL( 'ClientVariables' ), scope, variables )
+            return self.__buffer != ""
+
+        if cmd == ResponseVariable:
+            vlist = eval( content )
+            scope = vlist[ 0 ]
+            try:
+                variables = vlist[ 1 : ]
+            except IndexError:
+                variables = []
+            self.emit( SIGNAL( 'ClientVariable' ), scope, variables )
+            return self.__buffer != ""
+
+        if cmd == ResponseException:
+            self.__changeDebuggerState( self.STATE_IN_IDE )
+            try:
+                excList = eval( content )
+                excType = excList[ 0 ]
+                excMessage = excList[ 1 ]
+                stackTrace = excList[ 2 : ]
+                if stackTrace and stackTrace[ 0 ] and \
+                   stackTrace[ 0 ][ 0 ] == "<string>":
+                    stackTrace = []
+            except (IndexError, ValueError, SyntaxError):
+                excType = None
+                excMessage = ""
+                stackTrace = []
+            self.emit( SIGNAL( 'ClientException' ),
+                       excType, excMessage, stackTrace )
+            return self.__buffer != ""
+
+        if cmd == ResponseSyntax:
+            try:
+                message, ( fileName, lineNo, charNo ) = eval( content )
+                if fileName is None:
+                    fileName = ""
+            except ( IndexError, ValueError ):
+                message = None
+                fileName = ''
+                lineNo = 0
+                charNo = 0
+            if charNo is None:
+                charNo = 0
+            self.emit( SIGNAL( 'ClientSyntaxError' ),
+                       message, fileName, lineNo, charNo )
+            return self.__buffer != ""
+
+        if cmd == RequestForkTo:
+            self.__askForkTo()
+            return self.__buffer != ""
+
+        if cmd == PassiveStartup:
+            self.__sendBreakpoints()
+            self.__sendWatchpoints()
+            return self.__buffer != ""
+
+        if cmd == ResponseThreadSet:
+            self.emit( SIGNAL( 'ClientThreadSet' ) )
+            return self.__buffer != ""
+
+        if cmd == ResponseClearBreak:
+            fileName, lineNo = content.split( ',' )
+            lineNo = int( lineNo )
+            self.emit( SIGNAL( 'ClientClearBreak' ), fileName, lineNo )
+            return self.__buffer != ""
+
+        if cmd == ResponseBPConditionError:
+            fileName, lineNo = content.split( ',' )
+            lineNo = int( lineNo )
+            self.emit( SIGNAL( 'ClientBreakConditionError' ), fileName, lineNo )
+            return self.__buffer != ""
+
+        if cmd == ResponseRaw:
+            prompt, echo = eval( content )
+            self.emit( SIGNAL( 'ClientRawInput' ), prompt, echo )
+            return self.__buffer != ""
+
+        if cmd == ResponseExit:
+            message = "Debugged script finished with exit code " + content
+            self.emit( SIGNAL( 'ClientIDEMessage' ), message )
+            try:
+                self.__exitCode = int( content )
+            except:
+                pass
+            return self.__buffer != ""
+
+        if cmd == ResponseEval:
+            self.__protocolState = self.PROTOCOL_EVALEXEC
+            return self.__buffer != ""
+
+        if cmd == ResponseExec:
+            self.__protocolState = self.PROTOCOL_EVALEXEC
+            return self.__buffer != ""
+
+        if cmd == ResponseStdout:
+            self.__protocolState = self.PROTOCOL_STDOUT
+            return self.__buffer != ""
+
+        if cmd == ResponseStderr:
+            self.__protocolState = self.PROTOCOL_STDERR
+            return self.__buffer != ""
+
+        print "Unexpected message received (no control match): '" + line + "'"
+        return self.__buffer != ""
+
+    def __processEvalexecState( self ):
+        " Analyzes receiving buffer in the EVALEXEC state "
+        # Collect till ResponseEvalOK, ResponseEvalError,
+        #              ResponseExecOK, ResponseExecError
+
+        index = self.__buffer.find( ResponseEvalOK + EOT )
+        if index != -1:
+            self.emit( SIGNAL( 'EvalOK' ),
+                       self.__buffer[ 0 : index ].replace( EOT, "" ) )
+            self.__protocolState = self.PROTOCOL_CONTROL
+            self.__buffer = self.__buffer[ index + len( ResponseEvalOK ) + len( EOT ) : ]
+            return self.__buffer != ""
+
+        index = self.__buffer.find( ResponseEvalError + EOT )
+        if index != -1:
+            self.emit( SIGNAL( 'EvalError' ),
+                       self.__buffer[ 0 : index ].replace( EOT, "" ) )
+            self.__protocolState = self.PROTOCOL_CONTROL
+            self.__buffer = self.__buffer[ index + len( ResponseEvalError ) + len( EOT ) : ]
+            return self.__buffer != ""
+
+        index = self.__buffer.find( ResponseExecOK + EOT )
+        if index != -1:
+            self.emit( SIGNAL( 'ExecOK' ),
+                       self.__buffer[ 0 : index ].replace( EOT, "" ) )
+            self.__protocolState = self.PROTOCOL_CONTROL
+            self.__buffer = self.__buffer[ index + len( ResponseExecOK ) + len( EOT ) : ]
+            return self.__buffer != ""
+
+        index = self.__buffer.find( ResponseExecError + EOT )
+        if index != -1:
+            self.emit( SIGNAL( 'ExecError' ),
+                       self.__buffer[ 0 : index ].replace( EOT, "" ) )
+            self.__protocolState = self.PROTOCOL_CONTROL
+            self.__buffer = self.__buffer[ index + len( ResponseExecError ) + len( EOT ) : ]
+            return self.__buffer != ""
+
+        return False
+
+    def __processStdoutStderrState( self, isStdout ):
+        " Analyzes receiving buffer in the STDOUT/STDERR state "
+        # Collect till "\x04\x04"
+        index = self.__buffer.find( StdoutStderrEOT )
+        if index == -1:
+            # End has not been found
+            if self.__buffer.endswith( '\x04' ):
+                if isStdout:
+                    self.emit( SIGNAL( 'ClientStdout' ), self.__buffer[ : -1 ] )
+                else:
+                    self.emit( SIGNAL( 'ClientStderr' ), self.__buffer[ : -1 ] )
+                self.__buffer = '\x04'
+                return False
+            else:
+                if isStdout:
+                    self.emit( SIGNAL( 'ClientStdout' ), self.__buffer )
+                else:
+                    self.emit( SIGNAL( 'ClientStderr' ), self.__buffer )
+                self.__buffer = ""
+                return False
+        else:
+            if isStdout:
+                self.emit( SIGNAL( 'ClientStdout' ), self.__buffer[ 0 : index ] )
+            else:
+                self.emit( SIGNAL( 'ClientStderr' ), self.__buffer[ 0 : index ] )
+            self.__buffer = self.__buffer[ index + 2 : ]
+            self.__protocolState = self.PROTOCOL_CONTROL
+            return True
 
     def __parseClientLine( self ):
         " Triggered when something has been received from the client "
@@ -569,6 +829,8 @@ class CodimensionDebugger( QObject ):
 
                 if resp == ResponseRaw:
                     prompt, echo = eval( line[ eoc : -1 ] )
+                    self.__clientStderrReady()
+                    self.__clientStdoutReady()
                     self.emit( SIGNAL( 'ClientRawInput' ), prompt, echo )
                     continue
 
@@ -614,7 +876,7 @@ class CodimensionDebugger( QObject ):
                 self.__msgParts.append( line )
                 continue
 
-            print "Unhandled message received by the server: " + line
+            print "Unhandled message received by the server: '" + line + "'"
 
         return
 
@@ -664,7 +926,7 @@ class CodimensionDebugger( QObject ):
         # Close the opened socket if so
         if self.__clientSocket is not None:
             self.disconnect( self.__clientSocket, SIGNAL( 'readyRead()' ),
-                             self.__parseClientLine )
+                             self.__parseClientLine2 )
             self.__sendCommand( RequestShutdown + "\n" )
 
             # Give the client a chance to shutdown itself
@@ -742,7 +1004,7 @@ class CodimensionDebugger( QObject ):
 
         message = "Debugging session has been stopped"
         if brutal:
-            message += " brutally"
+            message += " and the console has been closed"
         self.emit( SIGNAL( 'ClientIDEMessage' ), message )
         return
 

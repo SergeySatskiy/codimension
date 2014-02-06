@@ -26,6 +26,8 @@ Redirectors for stdout/stderr streams
 """
 
 import socket
+from protocol_cdm_dbg import StdoutStderrEOT, ResponseStdout, ResponseStderr, EOT
+
 
 MAX_TRIES = 3
 
@@ -33,10 +35,10 @@ MAX_TRIES = 3
 class OutStreamRedirector( object ):
     " Wraps a socket object with a file interface "
 
-    def __init__( self, sock ):
+    def __init__( self, sock, isStdout ):
         self.closed = False
         self.sock = sock
-        self.sock.setsockopt( socket.IPPROTO_TCP, socket.TCP_NODELAY, True )
+        self.isStdout = isStdout
         return
 
     def close( self, closeit = False ):
@@ -105,7 +107,10 @@ class OutStreamRedirector( object ):
         tries = MAX_TRIES
         while tries > 0:
             try :
-                self.sock.sendall( data )
+                if self.isStdout:
+                    self.sock.sendall( ResponseStdout + EOT + data + StdoutStderrEOT )
+                else:
+                    self.sock.sendall( ResponseStderr + EOT + data + StdoutStderrEOT )
                 return
             except socket.error:
                 tries -= 1
