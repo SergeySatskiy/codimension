@@ -43,8 +43,9 @@ class RedirectedIOConsole( TextEditor ):
 
     TIMESTAMP_MARGIN = 0     # Introduced here
 
-    stdoutIndicator = ScintillaWrapper.INDIC_CONTAINER + 10
-    stderrIndicator = ScintillaWrapper.INDIC_CONTAINER + 11
+    stdoutStyle = 1
+    stderrStyle = 2
+    stdinStyle = 3
 
     MODE_OUTPUT = 0
     MODE_INPUT = 1
@@ -100,7 +101,14 @@ class RedirectedIOConsole( TextEditor ):
                 return
 
             if self.inputEcho:
+                line, pos = self.getCursorPosition()
+                startPos = self.positionFromLineIndex( line, pos )
+                self.SendScintilla( self.SCI_STARTSTYLING, startPos, 31 )
                 ScintillaWrapper.keyPressEvent( self, event )
+                line, pos = self.getCursorPosition()
+                endPos = self.positionFromLineIndex( line, pos )
+                self.SendScintilla( self.SCI_SETSTYLING,
+                                    endPos - startPos, self.stdinStyle )
                 return
             else:
                 pass
@@ -152,7 +160,12 @@ class RedirectedIOConsole( TextEditor ):
 
         self.setModified( False )
         self.setReadOnly( True )
-        self.bindLexer( "", TexFileType )
+
+        # If a lexer id bind then unnecessery visual effects appear like
+        # disappearing assingned text style. As the lexer actually not required
+        # at all I prefer not to struggle with styling but just not to use any
+        # lexers
+        # self.bindLexer( "", TexFileType )
 
         self.setCurrentLineHighlight( False, None )
         self.setEdgeMode( QsciScintilla.EdgeNone )
@@ -237,27 +250,41 @@ class RedirectedIOConsole( TextEditor ):
         self.setMarkerBackgroundColor( skin.ioconsoleIDEMsgPaper,
                                        self.ideMessageMarker )
 
-        # stdout indicator
-        # INDIC_STRAIGHTBOX => 8
-        self.SendScintilla( self.SCI_INDICSETSTYLE, self.stdoutIndicator,
-                            self._convertIndicator( 8 ) )
-        self.SendScintilla( self.SCI_INDICSETUNDER, self.stdoutIndicator,
-                            True )
-        self.SendScintilla( self.SCI_INDICSETFORE, self.stdoutIndicator,
-                            skin.ioconsoleStdoutPaper )
-        self.SendScintilla( self.SCI_INDICSETALPHA, self.stdoutIndicator, 255 )
+        # stdout style
+        self.SendScintilla( self.SCI_STYLESETFORE, self.stdoutStyle,
+                            self.convertColor( skin.ioconsoleStdoutColor ) )
+        self.SendScintilla( self.SCI_STYLESETBACK, self.stdoutStyle,
+                            self.convertColor( skin.ioconsoleStdoutPaper ) )
+        self.SendScintilla( self.SCI_STYLESETBOLD, self.stdoutStyle,
+                            skin.ioconsoleStdoutBold != 0 )
+        self.SendScintilla( self.SCI_STYLESETITALIC, self.stdoutStyle,
+                            skin.ioconsoleStdoutItalic != 0 )
 
-        # stderr indicator
-        self.SendScintilla( self.SCI_INDICSETSTYLE, self.stderrIndicator,
-                            self._convertIndicator( 8 ) )
-        self.SendScintilla( self.SCI_INDICSETUNDER, self.stderrIndicator,
-                            True )
-        self.SendScintilla( self.SCI_INDICSETFORE, self.stderrIndicator,
-                            skin.ioconsoleStderrPaper )
-        self.SendScintilla( self.SCI_INDICSETALPHA, self.stderrIndicator, 255 )
+        # stdout style
+        self.SendScintilla( self.SCI_STYLESETFORE, self.stderrStyle,
+                            self.convertColor( skin.ioconsoleStderrColor ) )
+        self.SendScintilla( self.SCI_STYLESETBACK, self.stderrStyle,
+                            self.convertColor( skin.ioconsoleStderrPaper ) )
+        self.SendScintilla( self.SCI_STYLESETBOLD, self.stderrStyle,
+                            skin.ioconsoleStderrBold != 0 )
+        self.SendScintilla( self.SCI_STYLESETITALIC, self.stderrStyle,
+                            skin.ioconsoleStderrItalic != 0 )
+
+        # stdin style
+        self.SendScintilla( self.SCI_STYLESETFORE, self.stdinStyle,
+                            self.convertColor( skin.ioconsoleStdinColor ) )
+        self.SendScintilla( self.SCI_STYLESETBACK, self.stdinStyle,
+                            self.convertColor( skin.ioconsoleStdinPaper ) )
+        self.SendScintilla( self.SCI_STYLESETBOLD, self.stdinStyle,
+                            skin.ioconsoleStdinBold != 0 )
+        self.SendScintilla( self.SCI_STYLESETITALIC, self.stdinStyle,
+                            skin.ioconsoleStdinItalic != 0 )
         return
 
     def _marginClicked( self, margin, line, modifiers ):
+        return
+
+    def _styleNeeded( self, position ):
         return
 
     def _updateDwellingTime( self ):
@@ -784,14 +811,20 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
             
             if msg.msgType == IOConsoleMsg.STDERR_MESSAGE:
                 # Highlight as stderr
-                indicator = self.__viewer.stderrIndicator
+                styleNo = self.__viewer.stderrStyle
             else:
                 # Highlight as stdout
-                indicator = self.__viewer.stdoutIndicator
+                styleNo = self.__viewer.stdoutStyle
 
             line, pos = self.__viewer.getEndPosition()
             endPos = self.__viewer.positionFromLineIndex( line, pos )
-            self.__viewer.setIndicatorRange( indicator, startPos, endPos - startPos )
+
+            self.__viewer.SendScintilla( self.__viewer.SCI_STARTSTYLING,
+                                         startPos, 31 )
+            line, pos = self.__viewer.getEndPosition()
+            endPos = self.__viewer.positionFromLineIndex( line, pos )
+            self.__viewer.SendScintilla( self.__viewer.SCI_SETSTYLING,
+                                         endPos - startPos, styleNo )
 
         self.__viewer.clearUndoHistory()
         if Settings().ioconsoleautoscroll:
