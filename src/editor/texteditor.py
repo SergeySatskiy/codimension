@@ -736,6 +736,11 @@ class TextEditor( ScintillaWrapper ):
             return indicatorStyles[ value ]
         return self.INDIC_ROUNDBOX
 
+    @staticmethod
+    def convertColor( color ):
+        " Scintilla colors are an integer value "
+        return color.red() + (color.green() << 8) + (color.blue() << 16)
+
     def __initIndicators( self ):
         " Initialises indicators "
         skin = GlobalData().skin
@@ -797,7 +802,7 @@ class TextEditor( ScintillaWrapper ):
         if self.lexer_ is not None and \
            (self.lexer_.lexer() == "container" or self.lexer_.lexer() is None):
             self.disconnect( self, SIGNAL( "SCN_STYLENEEDED(int)" ),
-                             self.__styleNeeded )
+                             self._styleNeeded )
 
         self.lexer_ = lexer.getLexerByType( fileType, fileName, self )
         skin = GlobalData().skin
@@ -811,7 +816,7 @@ class TextEditor( ScintillaWrapper ):
                self.lexer_.lexer() is None:
                 self.setStyleBits( self.lexer_.styleBitsNeeded() )
                 self.connect( self, SIGNAL( "SCN_STYLENEEDED(int)" ),
-                              self.__styleNeeded )
+                              self._styleNeeded )
 
             # now set the lexer properties
             self.lexer_.initProperties()
@@ -830,7 +835,7 @@ class TextEditor( ScintillaWrapper ):
         self.setMarginsFont( skin.lineNumFont )
         return
 
-    def __styleNeeded( self, position ):
+    def _styleNeeded( self, position ):
         " Handles the need for more styling "
         self.lexer_.styleText( self.getEndStyled(), position )
         return
