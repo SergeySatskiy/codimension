@@ -205,29 +205,29 @@ class TextEditor( ScintillaWrapper ):
                 if key == Qt.Key_B:
                     return self.onJumpToBottom()
                 if key == Qt.Key_Up:
-                    return self.__onCtrlShiftUp()
+                    return self._onCtrlShiftUp()
                 if key == Qt.Key_Down:
-                    return self.__onCtrlShiftDown()
+                    return self._onCtrlShiftDown()
             if modifiers == Qt.ShiftModifier:
                 if key == Qt.Key_Delete:
                     return self.onShiftDel()
                 if key == Qt.Key_Tab or key == Qt.Key_Backtab:
                     return self.__onDedent()
                 if key == Qt.Key_End:
-                    return self.__onShiftEnd()
+                    return self._onShiftEnd()
                 if key == Qt.Key_Home:
-                    return self.__onShiftHome()
+                    return self._onShiftHome()
             if modifiers == Qt.ControlModifier:
                 if key == Qt.Key_X:
                     return self.onShiftDel()
                 if key in [ Qt.Key_C, Qt.Key_Insert ]:
                     return self.onCtrlC()
                 if key == ord( "'" ):               # Ctrl + '
-                    return self.__onHighlight()
+                    return self._onHighlight()
                 if key == Qt.Key_Period:
-                    return self.__onNextHighlight() # Ctrl + .
+                    return self._onNextHighlight() # Ctrl + .
                 if key == Qt.Key_Comma:
-                    return self.__onPrevHighlight() # Ctrl + ,
+                    return self._onPrevHighlight() # Ctrl + ,
                 if key == Qt.Key_M:
                     return self.onCommentUncomment()
                 if key == Qt.Key_Space:
@@ -260,13 +260,13 @@ class TextEditor( ScintillaWrapper ):
                     return self.highlightInOutline()
             if modifiers == Qt.AltModifier:
                 if key == Qt.Key_Left:
-                    return self.__onWordPartLeft()
+                    return self._onWordPartLeft()
                 if key == Qt.Key_Right:
-                    return self.__onWordPartRight()
+                    return self._onWordPartRight()
                 if key == Qt.Key_Up:
-                    return self.__onParagraphUp()
+                    return self._onParagraphUp()
                 if key == Qt.Key_Down:
-                    return self.__onParagraphDown()
+                    return self._onParagraphDown()
                 if key == Qt.Key_U:
                     return self.onScopeBegin()
             if modifiers == Qt.KeypadModifier | Qt.ControlModifier:
@@ -277,9 +277,9 @@ class TextEditor( ScintillaWrapper ):
                 if key == Qt.Key_0:
                     return self.parent().onZoomReset()
             if key == Qt.Key_Home and modifiers == Qt.NoModifier:
-                return self.__onHome()
+                return self._onHome()
             if key == Qt.Key_End and modifiers == Qt.NoModifier:
-                return self.__onEnd()
+                return self._onEnd()
 
         return ScintillaWrapper.eventFilter( self, obj, event )
 
@@ -1342,22 +1342,22 @@ class TextEditor( ScintillaWrapper ):
                               False, False, False, True )
         return
 
-    def __onHighlight( self ):
+    def _onHighlight( self ):
         " Triggered when Ctrl+' is clicked "
         text = self.getCurrentWord()
         if text == "" or text.contains( '\r' ) or text.contains( '\n' ):
             TextEditor.textToIterate = ""
         else:
             if str( TextEditor.textToIterate ).lower() == str( text ).lower():
-                return self.__onNextHighlight()
+                return self._onNextHighlight()
             TextEditor.textToIterate = text
         self.highlightWord( text )
         return True
 
-    def __onNextHighlight( self ):
+    def _onNextHighlight( self ):
         " Triggered when Ctrl+. is clicked "
         if TextEditor.textToIterate == "":
-            return self.__onHighlight()
+            return self._onHighlight()
 
         targets = self.markOccurrences( self.searchIndicator,
                                         TextEditor.textToIterate,
@@ -1393,10 +1393,10 @@ class TextEditor( ScintillaWrapper ):
         self.ensureLineVisible( targets[ 0 ][ 0 ] )
         return True
 
-    def __onPrevHighlight( self ):
+    def _onPrevHighlight( self ):
         " Triggered when Ctrl+, is clicked "
         if TextEditor.textToIterate == "":
-            return self.__onHighlight()
+            return self._onHighlight()
 
         targets = self.markOccurrences( self.searchIndicator,
                                         TextEditor.textToIterate,
@@ -1486,37 +1486,37 @@ class TextEditor( ScintillaWrapper ):
         self.endUndoAction()
         return True
 
-    def __onWordPartLeft( self ):
+    def _onWordPartLeft( self ):
         " Triggered when Alt+Left is received "
         self.SendScintilla( QsciScintilla.SCI_WORDPARTLEFT )
         return True
 
-    def __onWordPartRight( self ):
+    def _onWordPartRight( self ):
         " Triggered when Alt+Right is received "
         self.SendScintilla( QsciScintilla.SCI_WORDPARTRIGHT )
         return True
 
-    def __onParagraphUp( self ):
+    def _onParagraphUp( self ):
         " Triggered when Alt+Up is received "
         self.SendScintilla( QsciScintilla.SCI_PARAUP )
         return True
 
-    def __onParagraphDown( self ):
+    def _onParagraphDown( self ):
         " Triggered when Alt+Down is received "
         self.SendScintilla( QsciScintilla.SCI_PARADOWN )
         return True
 
-    def __onCtrlShiftUp( self ):
+    def _onCtrlShiftUp( self ):
         " Triggered when Ctrl+Shift+Up is received "
         self.SendScintilla( QsciScintilla.SCI_PARAUPEXTEND )
         return True
 
-    def __onCtrlShiftDown( self ):
+    def _onCtrlShiftDown( self ):
         " Triggered when Ctrl+Shift+Down is received "
         self.SendScintilla( QsciScintilla.SCI_PARADOWNEXTEND )
         return True
 
-    def __onHome( self ):
+    def _onHome( self ):
         " Triggered when HOME is received "
         if Settings().jumpToFirstNonSpace:
             self.SendScintilla( QsciScintilla.SCI_VCHOME )
@@ -1524,7 +1524,7 @@ class TextEditor( ScintillaWrapper ):
             self.SendScintilla( QsciScintilla.SCI_HOMEDISPLAY )
         return True
 
-    def __onShiftHome( self ):
+    def _onShiftHome( self ):
         " Triggered when Shift+HOME is received "
         if Settings().jumpToFirstNonSpace:
             self.SendScintilla( QsciScintilla.SCI_VCHOMEEXTEND )
@@ -1532,12 +1532,12 @@ class TextEditor( ScintillaWrapper ):
             self.SendScintilla( QsciScintilla.SCI_HOMEDISPLAYEXTEND )
         return True
 
-    def __onEnd( self ):
+    def _onEnd( self ):
         " Triggered when END is received "
         self.SendScintilla( QsciScintilla.SCI_LINEENDDISPLAY )
         return True
 
-    def __onShiftEnd( self ):
+    def _onShiftEnd( self ):
         " Triggered when END is received "
         self.SendScintilla( QsciScintilla.SCI_LINEENDDISPLAYEXTEND )
         return True

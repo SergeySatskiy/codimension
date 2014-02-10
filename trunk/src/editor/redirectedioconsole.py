@@ -24,10 +24,10 @@
 
 
 from texteditor import TextEditor
-from PyQt4.QtCore import Qt, SIGNAL, QSize, QPoint
+from PyQt4.QtCore import Qt, SIGNAL, QSize, QPoint, QEvent
 from PyQt4.QtGui import ( QToolBar, QFont, QFontMetrics, QHBoxLayout, QWidget,
                           QAction, QSizePolicy, QToolTip, QMenu, QToolButton,
-                          QActionGroup )
+                          QActionGroup, QApplication )
 from PyQt4.Qsci import QsciScintilla, QsciStyle
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.fileutils import TexFileType
@@ -79,7 +79,73 @@ class RedirectedIOConsole( TextEditor ):
 
     def eventFilter( self, obj, event ):
         " Event filter to catch shortcuts on UBUNTU "
+        if event.type() == QEvent.KeyPress:
+            key = event.key()
+            modifiers = event.modifiers()
+            if modifiers == Qt.ShiftModifier | Qt.ControlModifier:
+                if key == Qt.Key_Up:
+                    return self._onCtrlShiftUp()
+                if key == Qt.Key_Down:
+                    return self._onCtrlShiftDown()
+            if modifiers == Qt.ShiftModifier:
+                if key == Qt.Key_End:
+                    return self._onShiftEnd()
+                if key == Qt.Key_Home:
+                    return self._onShiftHome()
+            if modifiers == Qt.ControlModifier:
+#                if key == Qt.Key_X:
+#                    return self.onShiftDel()
+                if key in [ Qt.Key_C, Qt.Key_Insert ]:
+                    return self.onCtrlC()
+                if key == ord( "'" ):               # Ctrl + '
+                    return self._onHighlight()
+                if key == Qt.Key_Period:
+                    return self._onNextHighlight() # Ctrl + .
+                if key == Qt.Key_Comma:
+                    return self._onPrevHighlight() # Ctrl + ,
+                if key == Qt.Key_Minus:
+                    return self.parent().onZoomOut()
+                if key == Qt.Key_Equal:
+                    return self.parent().onZoomIn()
+                if key == Qt.Key_0:
+                    return self.parent().onZoomReset()
+                if key == Qt.Key_Home:
+                    return self.onFirstChar()
+                if key == Qt.Key_End:
+                    return self.onLastChar()
+            if modifiers == Qt.AltModifier:
+                if key == Qt.Key_Left:
+                    return self._onWordPartLeft()
+                if key == Qt.Key_Right:
+                    return self._onWordPartRight()
+                if key == Qt.Key_Up:
+                    return self._onParagraphUp()
+                if key == Qt.Key_Down:
+                    return self._onParagraphDown()
+            if modifiers == Qt.KeypadModifier | Qt.ControlModifier:
+                if key == Qt.Key_Minus:
+                    return self.parent().onZoomOut()
+                if key == Qt.Key_Plus:
+                    return self.parent().onZoomIn()
+                if key == Qt.Key_0:
+                    return self.parent().onZoomReset()
+            if key == Qt.Key_Home and modifiers == Qt.NoModifier:
+                return self._onHome()
+            if key == Qt.Key_End and modifiers == Qt.NoModifier:
+                return self._onEnd()
+
         return ScintillaWrapper.eventFilter( self, obj, event )
+
+    def wheelEvent( self, event ):
+        " Mouse wheel event "
+        if QApplication.keyboardModifiers() == Qt.ControlModifier:
+            if event.delta() > 0:
+                self.parent().onZoomIn()
+            else:
+                self.parent().onZoomOut()
+        else:
+            ScintillaWrapper.wheelEvent( self, event )
+        return
 
     def keyPressEvent( self, event ):
         " Triggered when a key is pressed "
@@ -407,8 +473,6 @@ class RedirectedIOConsole( TextEditor ):
         pass
     def onShiftDel( self ):
         pass
-    def onCtrlC( self ):
-        pass
     def paste( self ):
         pass
     def selectAll( self ):
@@ -460,10 +524,10 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__printPreviewButton.setEnabled( False )
         self.__printPreviewButton.setVisible( False )
 
-        self.__sendUpButton = QAction( PixmapCache().getIcon( 'sendioup.png' ),
-                                       'Send to Main Editing Area', self )
-        self.connect( self.__sendUpButton, SIGNAL( "triggered()" ),
-                      self.__sendUp )
+        # self.__sendUpButton = QAction( PixmapCache().getIcon( 'sendioup.png' ),
+        #                                'Send to Main Editing Area', self )
+        # self.connect( self.__sendUpButton, SIGNAL( "triggered()" ),
+        #               self.__sendUp )
 
         self.__filterMenu = QMenu( self )
         self.connect( self.__filterMenu, SIGNAL( "aboutToShow()" ),
@@ -538,7 +602,7 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.setFixedWidth( 28 )
         toolbar.setContentsMargins( 0, 0, 0, 0 )
 
-        toolbar.addAction( self.__sendUpButton )
+        # toolbar.addAction( self.__sendUpButton )
         toolbar.addAction( self.__printPreviewButton )
         toolbar.addAction( self.__printButton )
         toolbar.addWidget( self.__filterButton )
