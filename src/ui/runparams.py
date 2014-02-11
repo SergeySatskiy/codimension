@@ -200,6 +200,8 @@ class RunDialog( QDialog ):
 
         # Close checkbox
         self.__closeCheckBox.setChecked( self.runParams.closeTerminal )
+        if self.termType == TERM_REDIRECT:
+            self.__closeCheckBox.setEnabled( False )
 
         # Profile limits if so
         if self.__action == "profile":
@@ -425,13 +427,15 @@ class RunDialog( QDialog ):
         sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Preferred )
         sizePolicy.setHorizontalStretch( 0 )
         sizePolicy.setVerticalStretch( 0 )
-        sizePolicy.setHeightForWidth( \
+        sizePolicy.setHeightForWidth(
                         termGroupbox.sizePolicy().hasHeightForWidth() )
         termGroupbox.setSizePolicy( sizePolicy )
 
         layoutTerm = QVBoxLayout( termGroupbox )
         self.__redirectRButton = QRadioButton( termGroupbox )
         self.__redirectRButton.setText( "&Redirect to IDE" )
+        self.connect( self.__redirectRButton, SIGNAL( 'toggled(bool)' ),
+                      self.__redirectedChanged )
         layoutTerm.addWidget( self.__redirectRButton )
         self.__autoRButton = QRadioButton( termGroupbox )
         self.__autoRButton.setText( "Aut&o detection" )
@@ -446,6 +450,11 @@ class RunDialog( QDialog ):
         self.__xtermRButton.setText( "&xterm" )
         layoutTerm.addWidget( self.__xtermRButton )
         return termGroupbox
+
+    def __redirectedChanged( self, checked ):
+        " Triggered when the redirected radio button changes its state "
+        self.__closeCheckBox.setEnabled( not checked )
+        return
 
     def __getIDEWideGroupbox( self ):
         " Creates the IDE wide groupbox "
