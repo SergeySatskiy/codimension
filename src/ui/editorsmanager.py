@@ -1017,7 +1017,7 @@ class EditorsManager( QTabWidget ):
             self.connect( newWidget, SIGNAL( 'ESCPressed' ),
                           self.__onESC )
             self.connect( newWidget, SIGNAL( 'TextEditorZoom' ),
-                          self.__onZoom )
+                          self.onZoom )
 
             newWidget.setHTML( content )
             newWidget.setFileName( "" )
@@ -1079,7 +1079,7 @@ class EditorsManager( QTabWidget ):
             self.connect( newWidget, SIGNAL( 'ESCPressed' ),
                           self.__onESC )
             self.connect( newWidget, SIGNAL( 'TextEditorZoom' ),
-                          self.__onZoom )
+                          self.onZoom )
 
             if self.widget( 0 ) == self.__welcomeWidget:
                 # It is the only welcome widget on the screen
@@ -1761,7 +1761,7 @@ class EditorsManager( QTabWidget ):
                       self.__onESC )
 
         self.connect( editorWidget, SIGNAL( 'TextEditorZoom' ),
-                      self.__onZoom )
+                      self.onZoom )
         return
 
     def __modificationChanged( self, modified ):
@@ -2063,7 +2063,7 @@ class EditorsManager( QTabWidget ):
         self.sendAllTabsVCSStatusRequest()
         return
 
-    def __onZoom( self, zoomValue ):
+    def onZoom( self, zoomValue ):
         " Sets the zoom value for all the opened editor tabs "
         Settings().zoom = zoomValue
 
