@@ -197,7 +197,7 @@ SKIN_SETTINGS = [
     GeneralSkinSetting( "ioconsoleStdoutColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
     GeneralSkinSetting( "ioconsoleStdoutBold", GeneralSkinSetting.TYPE_INT, 0 ),
     GeneralSkinSetting( "ioconsoleStdoutItalic", GeneralSkinSetting.TYPE_INT, 0 ),
-    GeneralSkinSetting( "ioconsoleStdinPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 232, 232, 255, 255 ) ),
+    GeneralSkinSetting( "ioconsoleStdinPaper", GeneralSkinSetting.TYPE_COLOR, QColor( 255, 255, 230, 255 ) ),
     GeneralSkinSetting( "ioconsoleStdinColor", GeneralSkinSetting.TYPE_COLOR, QColor( 0, 0, 0, 255 ) ),
     GeneralSkinSetting( "ioconsoleStdinBold", GeneralSkinSetting.TYPE_INT, 0 ),
     GeneralSkinSetting( "ioconsoleStdinItalic", GeneralSkinSetting.TYPE_INT, 0 ),
