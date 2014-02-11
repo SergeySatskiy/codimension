@@ -28,7 +28,7 @@ from PyQt4.QtCore import Qt, SIGNAL, QSize, QPoint, QEvent
 from PyQt4.QtGui import ( QToolBar, QFont, QFontMetrics, QHBoxLayout, QWidget,
                           QAction, QSizePolicy, QToolTip, QMenu, QToolButton,
                           QActionGroup, QApplication )
-from PyQt4.Qsci import QsciScintilla, QsciStyle
+from PyQt4.Qsci import QsciScintilla
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.fileutils import TexFileType
 from utils.pixmapcache import PixmapCache
@@ -46,6 +46,7 @@ class RedirectedIOConsole( TextEditor ):
     stdoutStyle = 1
     stderrStyle = 2
     stdinStyle = 3
+    marginStyle = 4
 
     MODE_OUTPUT = 0
     MODE_INPUT = 1
@@ -295,13 +296,19 @@ class RedirectedIOConsole( TextEditor ):
         self.setMarginsBackgroundColor( skin.ioconsolemarginPaper )
         self.setMarginsForegroundColor( skin.ioconsolemarginColor )
 
-        timestampMarginFont = QFont( skin.ioconsolemarginFont )
-        timestampMarginFont.setPointSize( timestampMarginFont.pointSize() +
-                                          Settings().zoom )
-        self.timestampMarginStyle = QsciStyle( -1, "Timestamp margin style",
-                                               skin.ioconsolemarginColor,
-                                               skin.ioconsolemarginPaper,
-                                               timestampMarginFont )
+        # Define margin style
+        self.SendScintilla( self.SCI_STYLESETFORE, self.marginStyle,
+                            self.convertColor( skin.ioconsolemarginColor ) )
+        self.SendScintilla( self.SCI_STYLESETBACK, self.marginStyle,
+                            self.convertColor( skin.ioconsolemarginPaper ) )
+        self.SendScintilla( self.SCI_STYLESETFONT, self.marginStyle,
+                            skin.ioconsolemarginFont.family() )
+        self.SendScintilla( self.SCI_STYLESETSIZE, self.marginStyle,
+                            skin.ioconsolemarginFont.pointSize() - 1 )
+        self.SendScintilla( self.SCI_STYLESETBOLD, self.marginStyle,
+                            skin.ioconsolemarginFont.bold() )
+        self.SendScintilla( self.SCI_STYLESETITALIC, self.marginStyle,
+                            skin.ioconsolemarginFont.italic() )
 
         self.setMarginsFont( skin.ioconsolemarginFont )
         self.setTimestampMarginWidth()
@@ -438,15 +445,17 @@ class RedirectedIOConsole( TextEditor ):
 
     def setTimestampMarginWidth( self ):
         " Sets the timestamp margin width "
-        if Settings().ioconsoleshowmargin:
+        settings = Settings()
+        if settings.ioconsoleshowmargin:
             skin = GlobalData().skin
             font = QFont( skin.ioconsolemarginFont )
-            font.setPointSize( font.pointSize() + self.zoom )
+            font.setPointSize( font.pointSize() + settings.zoom )
             # The second parameter of the QFontMetrics is essential!
             # If it is not there then the width is not calculated properly.
             fontMetrics = QFontMetrics( font, self )
-            width = fontMetrics.width( '88:88:88.888' )
-            self.setMarginWidth( self.TIMESTAMP_MARGIN, width + 15 )
+            # W is for extra space at the right of the timestamp
+            width = fontMetrics.width( '88:88:88.888W' )
+            self.setMarginWidth( self.TIMESTAMP_MARGIN, width )
         else:
             self.setMarginWidth( self.TIMESTAMP_MARGIN, 0 )
         return
@@ -456,6 +465,7 @@ class RedirectedIOConsole( TextEditor ):
         event.accept()
         if self._marginNumber( event.x() ) is None:
             # Editing area context menu
+            return
             self._menu.popup( event.globalPos() )
         else:
             # Menu for a margin
@@ -870,7 +880,7 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
             for lineNo in xrange( startTimestampLine, endTimestampLine + 1 ):
                 self.__addTooltip( lineNo, timestamp )
                 self.__viewer.setMarginText( lineNo, timestamp,
-                                             self.__viewer.timestampMarginStyle )
+                                             self.__viewer.marginStyle )
 
             
             if msg.msgType == IOConsoleMsg.STDERR_MESSAGE:
