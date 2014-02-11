@@ -4699,6 +4699,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.redirectedIOConsole = IOConsoleTabWidget( self )
         self.connect( self.redirectedIOConsole, SIGNAL( 'UserInput' ),
                       self.__onUserInput )
+        self.connect( self.redirectedIOConsole, SIGNAL( 'TextEditorZoom' ),
+                      self.editorsManagerWidget.editorsManager.onZoom )
         self.__bottomSideBar.addTab( self.redirectedIOConsole,
                 PixmapCache().getIcon( 'ioconsole.png' ), 'IO console' )
         self.__bottomSideBar.setTabToolTip( 7, 'Redirected IO console' )
