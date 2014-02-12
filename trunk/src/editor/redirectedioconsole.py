@@ -34,7 +34,7 @@ from utils.fileutils import TexFileType
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 from utils.settings import Settings
-from redirectedmsg import IOConsoleMessages, IOConsoleMsg
+from redirectedmsg import IOConsoleMessages, IOConsoleMsg, getNowTimestamp
 from scintillawrap import ScintillaWrapper
 
 
@@ -182,6 +182,7 @@ class RedirectedIOConsole( TextEditor ):
             if key == Qt.Key_Enter or key == Qt.Key_Return:
                 userInput = str( self.__getUserInput() )
                 self.switchMode( self.MODE_OUTPUT )
+                timestampLine, _ = self.getEndPosition()
                 self.append( '\n' )
                 self.clearUndoHistory()
                 line, pos = self.getEndPosition()
@@ -192,6 +193,7 @@ class RedirectedIOConsole( TextEditor ):
                 self.SendScintilla( self.SCI_STARTSTYLING, startPos, 31 )
                 self.SendScintilla( self.SCI_SETSTYLING, endPos - startPos, self.stdinStyle )
                 self.emit( SIGNAL( 'UserInput' ), userInput )
+                self.parent().addTooltip( timestampLine, getNowTimestamp() )
                 return
             if key == Qt.Key_Backspace and \
                 self.currentPosition() == self.lastOutputPos:
@@ -862,16 +864,14 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
             for lineNo in xrange( startMarkLine, line ):
                 self.__viewer.markerAdd( lineNo,
                                          self.__viewer.ideMessageMarker )
-                self.__addTooltip( lineNo, timestamp )
-                self.__viewer.setMarginText( lineNo, timestamp,
-                                             self.__viewer.marginStyle )
+                self.addTooltip( lineNo, timestamp )
         else:
             if self.__hiddenMessage( msg ):
                 return
             line, pos = self.__viewer.getEndPosition()
             startPos = self.__viewer.positionFromLineIndex( line, pos )
             if pos != 0:
-                self.__addTooltip( line, timestamp )
+                self.addTooltip( line, timestamp )
                 startTimestampLine = line + 1
             else:
                 startTimestampLine = line
@@ -882,9 +882,7 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
             else:
                 endTimestampLine = line - 1
             for lineNo in xrange( startTimestampLine, endTimestampLine + 1 ):
-                self.__addTooltip( lineNo, timestamp )
-                self.__viewer.setMarginText( lineNo, timestamp,
-                                             self.__viewer.marginStyle )
+                self.addTooltip( lineNo, timestamp )
 
             if msg.msgType == IOConsoleMsg.STDERR_MESSAGE:
                 # Highlight as stderr
@@ -908,12 +906,14 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
             self.__viewer.ensureLineVisible( self.__viewer.lines() - 1 )
         return
 
-    def __addTooltip( self, lineNo, timestamp ):
+    def addTooltip( self, lineNo, timestamp ):
         " Adds a tooltip into the dictionary "
         if lineNo in self.__viewer.marginTooltip:
             self.__viewer.marginTooltip[ lineNo ].append( timestamp )
         else:
             self.__viewer.marginTooltip[ lineNo ] = [ timestamp ]
+            self.__viewer.setMarginText( lineNo, timestamp,
+                                         self.__viewer.marginStyle )
         return
 
     def __hiddenMessage( self, msg ):
