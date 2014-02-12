@@ -304,7 +304,7 @@ class RedirectedIOConsole( TextEditor ):
         self.SendScintilla( self.SCI_STYLESETFONT, self.marginStyle,
                             skin.ioconsolemarginFont.family() )
         self.SendScintilla( self.SCI_STYLESETSIZE, self.marginStyle,
-                            skin.ioconsolemarginFont.pointSize() - 1 )
+                            skin.ioconsolemarginFont.pointSize() )
         self.SendScintilla( self.SCI_STYLESETBOLD, self.marginStyle,
                             skin.ioconsolemarginFont.bold() )
         self.SendScintilla( self.SCI_STYLESETITALIC, self.marginStyle,
