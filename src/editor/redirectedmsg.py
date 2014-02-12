@@ -26,6 +26,17 @@ from datetime import datetime
 from utils.settings import Settings
 
 
+
+def getNowTimestamp():
+    " Provides the now() timestamp as a string "
+    timestamp = datetime.now()
+    millisecond = str( int( round( timestamp.microsecond / 1000.0 ) ) )
+    while len( millisecond ) != 3:
+        millisecond = "0" + millisecond
+    return timestamp.strftime( "%H:%M:%S." ) + millisecond
+
+
+
 class IOConsoleMsg( object ):
     " Holds a single message "
 
