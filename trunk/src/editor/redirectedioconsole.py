@@ -601,7 +601,7 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__clearButton = QAction( PixmapCache().getIcon( 'trash.png' ),
                                       'Clear', self )
         self.connect( self.__clearButton, SIGNAL( "triggered()" ),
-                      self.__clear )
+                      self.clear )
 
         # The toolbar
         toolbar = QToolBar( self )
@@ -767,7 +767,7 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__viewer.setTimestampMarginWidth()
         return
 
-    def __clear( self ):
+    def clear( self ):
         " Triggered when requested to clear the console "
         self.__messages.clear()
         self.__viewer.clear()
