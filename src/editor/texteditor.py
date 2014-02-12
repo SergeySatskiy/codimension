@@ -1185,7 +1185,7 @@ class TextEditor( ScintillaWrapper ):
             line, pos = self.getCursorPosition()
             currentPosition = self.currentPosition()
             if pos != 0:
-                previousCharPos = self.positionFromLineIndex( line, pos - 1 )
+                previousCharPos = self.positionBefore( currentPosition )
                 char = self.charAt( previousCharPos )
                 if (char.isalnum() or char in [ '_', '.' ]) and \
                    currentPosition != self.__lastTabPosition:

@@ -168,12 +168,10 @@ class RedirectedIOConsole( TextEditor ):
                 return
 
             if self.inputEcho:
-                line, pos = self.getCursorPosition()
-                startPos = self.positionFromLineIndex( line, pos )
+                startPos = self.currentPosition()
                 self.SendScintilla( self.SCI_STARTSTYLING, startPos, 31 )
                 ScintillaWrapper.keyPressEvent( self, event )
-                line, pos = self.getCursorPosition()
-                endPos = self.positionFromLineIndex( line, pos )
+                endPos = self.currentPosition()
                 self.SendScintilla( self.SCI_SETSTYLING,
                                     endPos - startPos, self.stdinStyle )
                 return
@@ -189,6 +187,10 @@ class RedirectedIOConsole( TextEditor ):
                 line, pos = self.getEndPosition()
                 self.setCursorPosition( line, pos )
                 self.ensureLineVisible( line )
+                endPos = self.currentPosition()
+                startPos = self.positionBefore( endPos )
+                self.SendScintilla( self.SCI_STARTSTYLING, startPos, 31 )
+                self.SendScintilla( self.SCI_SETSTYLING, endPos - startPos, self.stdinStyle )
                 self.emit( SIGNAL( 'UserInput' ), userInput )
                 return
             if key == Qt.Key_Backspace and \
@@ -882,7 +884,6 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
                 self.__viewer.setMarginText( lineNo, timestamp,
                                              self.__viewer.marginStyle )
 
-            
             if msg.msgType == IOConsoleMsg.STDERR_MESSAGE:
                 # Highlight as stderr
                 styleNo = self.__viewer.stderrStyle
