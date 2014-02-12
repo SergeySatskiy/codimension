@@ -1327,8 +1327,6 @@ class TextEditor( ScintillaWrapper ):
         if line != 0:
             line -= 1
         pos = self.lineLength( line )
-        if pos != 0:
-            pos -= 1
         self.setCursorPosition( line, pos )
         self.ensureLineVisible( line )
         self.setHScrollOffset( 0 )
