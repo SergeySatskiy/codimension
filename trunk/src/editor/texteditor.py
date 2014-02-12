@@ -158,6 +158,7 @@ class TextEditor( ScintillaWrapper ):
         self.__inCompletion = False
         self.connect( self.__completer, SIGNAL( "activated(const QString &)" ),
                       self.insertCompletion )
+        self.__lastTabPosition = -1
 
         self.connect( self,
                       SIGNAL( 'marginClicked(int, int, Qt::KeyboardModifiers)' ),
@@ -1182,16 +1183,19 @@ class TextEditor( ScintillaWrapper ):
 
         elif key == Qt.Key_Tab:
             line, pos = self.getCursorPosition()
+            currentPosition = self.currentPosition()
             if pos != 0:
                 previousCharPos = self.positionFromLineIndex( line, pos - 1 )
                 char = self.charAt( previousCharPos )
-                if char.isalnum() or char in [ '_', '.' ]:
+                if (char.isalnum() or char in [ '_', '.' ]) and \
+                   currentPosition != self.__lastTabPosition:
                     self.onAutoComplete()
                     event.accept()
                 else:
                     ScintillaWrapper.keyPressEvent( self, event )
             else:
                 ScintillaWrapper.keyPressEvent( self, event )
+            self.__lastTabPosition = currentPosition
         elif key == Qt.Key_Z and \
             int( event.modifiers() ) == (Qt.ControlModifier + Qt.ShiftModifier):
             event.accept()
