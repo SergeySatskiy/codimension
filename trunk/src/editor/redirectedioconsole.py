@@ -846,6 +846,7 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def __renderMessage( self, msg ):
         " Adds a single message "
+        timestamp = msg.getTimestamp()
         if msg.msgType == IOConsoleMsg.IDE_MESSAGE:
             # Check the text. Append \n if needed. Append the message
             line, pos = self.__viewer.getEndPosition()
@@ -861,11 +862,12 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
             for lineNo in xrange( startMarkLine, line ):
                 self.__viewer.markerAdd( lineNo,
                                          self.__viewer.ideMessageMarker )
-            # No timestamp on the margin for the IDE message
+                self.__addTooltip( lineNo, timestamp )
+                self.__viewer.setMarginText( lineNo, timestamp,
+                                             self.__viewer.marginStyle )
         else:
             if self.__hiddenMessage( msg ):
                 return
-            timestamp = msg.getTimestamp()
             line, pos = self.__viewer.getEndPosition()
             startPos = self.__viewer.positionFromLineIndex( line, pos )
             if pos != 0:
