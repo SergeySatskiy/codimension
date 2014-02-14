@@ -24,7 +24,6 @@
 
 
 import os.path, logging, urllib2, socket
-from subprocess import Popen
 import lexer
 from PyQt4.Qsci import QsciLexerPython
 from scintillawrap import ScintillaWrapper
@@ -61,7 +60,6 @@ from autocomplete.completelists import ( getCompletionList, getCalltipAndDoc,
 from cdmbriefparser import getBriefModuleInfoFromMemory
 from ui.completer import CodeCompleter
 from ui.runparams import RunDialog
-from utils.run import getCwdCmdEnv, CMD_TYPE_RUN
 from ui.findinfiles import ItemToSearchIn, getSearchItemIndex
 from debugger.modifiedunsaved import ModifiedUnsavedDialog
 from ui.linecounter import LineCounterDialog
@@ -3201,18 +3199,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def onRunScriptSettings( self ):
         " Shows the run parameters dialogue "
-        fileName = self.getFileName()
-        params = GlobalData().getRunParameters( fileName )
-        termType = Settings().terminalType
-        profilerParams = Settings().getProfilerSettings()
-        debuggerParams = Settings().getDebuggerSettings()
-        dlg = RunDialog( fileName, params, termType,
-                         profilerParams, debuggerParams, "Run" )
-        if dlg.exec_() == QDialog.Accepted:
-            GlobalData().addRunParams( fileName, dlg.runParams )
-            if dlg.termType != termType:
-                Settings().terminalType = dlg.termType
-            self.onRunScript()
+        GlobalData().mainWindow.onRunTabDlg()
         return
 
     def onProfileScriptSettings( self ):
@@ -3235,17 +3222,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def onRunScript( self, action = False ):
         " Runs the script "
-        fileName = self.getFileName()
-        params = GlobalData().getRunParameters( fileName )
-        workingDir, cmd, environment = getCwdCmdEnv( CMD_TYPE_RUN,
-                                                     fileName, params,
-                                                     Settings().terminalType )
-
-        try:
-            Popen( cmd, shell = True,
-                   cwd = workingDir, env = environment )
-        except Exception, exc:
-            logging.error( str( exc ) )
+        GlobalData().mainWindow.onRunTab()
         return
 
     def onProfileScript( self, action = False ):

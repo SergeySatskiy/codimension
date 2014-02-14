@@ -95,6 +95,8 @@ from plugins.vcssupport.intervaldlg import VCSUpdateIntervalConfigDialog
 from utils.fileutils import MAGIC_AVAILABLE
 from statusbarslots import StatusBarSlots
 from editor.redirectedioconsole import IOConsoleTabWidget
+from runmanager import RunManager
+
 
 
 class EditorsManagerWidget( QWidget ):
@@ -247,6 +249,8 @@ class CodimensionMainWindow( QMainWindow ):
         # Needs for a proper update of the pylint menu
         self.connect( GlobalData().project, SIGNAL( 'fsChanged' ),
                       self.__onFSChanged )
+
+        self.__runManager = RunManager( self )
         return
 
     def restoreWindowPosition( self ):
@@ -912,10 +916,10 @@ class CodimensionMainWindow( QMainWindow ):
                 'Run p&roject main script...', self.__onRunProjectSettings )
         self.__tabRunAct = self.__runMenu.addAction(
                 PixmapCache().getIcon( 'run.png' ),
-                'Run &tab script', self.__onRunTab )
+                'Run &tab script', self.onRunTab )
         self.__tabRunDlgAct = self.__runMenu.addAction(
                 PixmapCache().getIcon( 'detailsdlg.png' ),
-                'Run t&ab script...', self.__onRunTabDlg )
+                'Run t&ab script...', self.onRunTabDlg )
         self.__runMenu.addSeparator()
         self.__prjProfileAct = self.__runMenu.addAction(
                 PixmapCache().getIcon( 'profile.png' ),
@@ -2622,6 +2626,11 @@ class CodimensionMainWindow( QMainWindow ):
             return
 
         fileName = GlobalData().project.getProjectScript()
+        if self.settings.terminalType == TERM_REDIRECT:
+            self.__runManager.run( fileName )
+            return
+
+        # No need redirection
         params = GlobalData().getRunParameters( fileName )
         workingDir, cmd, environment = getCwdCmdEnv( CMD_TYPE_RUN,
                                                      fileName, params,
@@ -3619,11 +3628,11 @@ class CodimensionMainWindow( QMainWindow ):
         currentWidget.onImportDgmTuned()
         return
 
-    def __onRunTab( self ):
+    def onRunTab( self ):
         " Triggered when run tab script is requested "
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
-        currentWidget.onRunScript()
+        self.__runManager.run( currentWidget.getFileName(), False )
         return
 
     def __onDebugTab( self ):
@@ -3640,11 +3649,11 @@ class CodimensionMainWindow( QMainWindow ):
         currentWidget.onProfileScript()
         return
 
-    def __onRunTabDlg( self ):
+    def onRunTabDlg( self ):
         " Triggered when run tab script dialog is requested "
         editorsManager = self.editorsManagerWidget.editorsManager
         currentWidget = editorsManager.currentWidget()
-        currentWidget.onRunScriptSettings()
+        self.__runManager.run( currentWidget.getFileName(), True )
         return
 
     def __onDebugTabDlg( self ):
