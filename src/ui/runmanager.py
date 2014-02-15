@@ -32,19 +32,41 @@ from runparams import RunDialog
 import logging, time
 
 
-class RemoteProcessProxy( QThread ):
+NEXT_ID = 0
+def getNextID( self ):
+    " Provides the next available ID "
+    global NEXT_ID
+    current = int( NEXT_ID )
+    NEXT_ID += 1
+    return current
+
+
+
+class RemoteProcessWrapper( QThread ):
     " Thread which monitors the remote process "
 
-    def __init__( self, cmdLine, workingDir, environment, needRedirection ):
+    def __init__( self, cmdLine, workingDir,
+                        environment, needRedirection ):
+        QThread.__init__( self )
+        self.__threadID = getNextID()
         self.__cmdLine = cmdLine
         self.__workingDir = workingDir
         self.__environment = environment
         self.__needRedirection = needRedirection
         self.__stopRequest = False
+        self.__retCode = 0
+
+        self.connect( self, SIGNAL( 'finished()' ),
+                      self.__threadFinished )
         return
 
     def needRedirection( self ):
+        " True if redirection required "
         return self.__needRedirection
+
+    def threadID( self ):
+        " Provides the thread ID "
+        return self.__threadID
 
     def run( self ):
         " Thread running function "
@@ -77,6 +99,12 @@ class RemoteProcessProxy( QThread ):
         self.__stopRequest = True
         return
 
+    def __threadFinished( self ):
+        " Triggered when the thread has finished "
+        self.emit( SIGNAL( 'ProcessFinished' ), self.__threadID,
+                   self.__retCode )
+        return
+
 
 class RemoteProcess:
     " Stores attributes of a single process "
@@ -88,10 +116,11 @@ class RemoteProcess:
         return
 
 
-class RunManager:
+class RunManager( QObject ):
     " Manages the external running processes "
 
     def __init__( self, mainWindow ):
+        QObject.__init__( self )
         self.__mainWindow = mainWindow
         self.__processes = []
         return
@@ -118,8 +147,11 @@ class RunManager:
                                                      Settings().terminalType )
 
         remoteProc = RemoteProcess()
-        remoteProc.thread = RemoteProcessProxy( cmd, workingDir, environment,
-                                    Settings().terminalType == TERM_REDIRECT )
+        remoteProc.thread = RemoteProcessWrapper(
+                                cmd, workingDir, environment,
+                                Settings().terminalType == TERM_REDIRECT )
+        self.connect( remoteProc.thread, SIGNAL( 'ProcessFinished' ),
+                      self.__onProcessFinished )
         if Settings().terminalType == TERM_REDIRECT:
             # TODO: Create a widget
             # TODO: Connect signals
@@ -130,7 +162,7 @@ class RunManager:
         remoteProc.isProfiling = False
 
         self.__processes.append( remoteProc )
-        remoteProc.run()
+        remoteProc.thread.start()
         return
 
     def profile( self, path ):
@@ -140,3 +172,17 @@ class RunManager:
     def close( self ):
         " Stops all the threads and kills all the processes if needed "
         return
+
+    def __onProcessFinished( self, threadID, retCode ):
+        " Triggered when a process has finished "
+        found = None
+        for index, item in enumerate( self.__processes ):
+            if item.thread.threadID() == threadID:
+                found = index
+                break
+
+        if found:
+            # item holds the process description
+            del self.__processes[ index ]
+        return
+
