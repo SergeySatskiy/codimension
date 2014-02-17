@@ -34,12 +34,13 @@ from utils.fileutils import TexFileType
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 from utils.settings import Settings
-from redirectedmsg import IOConsoleMessages, IOConsoleMsg, getNowTimestamp
+from redirectedmsg import IOConsoleMessages, IOConsoleMsg
 from scintillawrap import ScintillaWrapper
 
 
 
 class RedirectedIOConsole( TextEditor ):
+    " Widget which implements the redirected IO console "
 
     TIMESTAMP_MARGIN = 0     # Introduced here
 
@@ -56,11 +57,12 @@ class RedirectedIOConsole( TextEditor ):
         self.zoomTo( Settings().zoom )
 
         # line number -> [ timestamps ]
-        self.marginTooltip = {}
+        self.__marginTooltip = {}
         self.mode = self.MODE_OUTPUT
         self.lastOutputPos = None
         self.inputEcho = True
         self.inputBuffer = ""
+        self.__messages = IOConsoleMessages()
 
         self.__initGeneralSettings()
         self.__initMargins()
@@ -191,9 +193,13 @@ class RedirectedIOConsole( TextEditor ):
                 endPos = self.currentPosition()
                 startPos = self.positionBefore( endPos )
                 self.SendScintilla( self.SCI_STARTSTYLING, startPos, 31 )
-                self.SendScintilla( self.SCI_SETSTYLING, endPos - startPos, self.stdinStyle )
+                self.SendScintilla( self.SCI_SETSTYLING,
+                                    endPos - startPos, self.stdinStyle )
+                msg = IOConsoleMsg( IOConsoleMsg.STDIN_MESSAGE,
+                                    userInput + "\n" )
+                self.__messages.append( msg )
+                self.__addTooltip( timestampLine, msg.getTimestamp() )
                 self.emit( SIGNAL( 'UserInput' ), userInput )
-                self.parent().addTooltip( timestampLine, getNowTimestamp() )
                 return
             if key == Qt.Key_Backspace and \
                 self.currentPosition() == self.lastOutputPos:
@@ -208,7 +214,7 @@ class RedirectedIOConsole( TextEditor ):
             return ""
         if self.inputEcho:
             line, pos = self.getEndPosition()
-            stattLine, startPos = self.lineIndexFromPosition( self.lastOutputPos )
+            _, startPos = self.lineIndexFromPosition( self.lastOutputPos )
             return self.getTextAtPos( line, startPos, pos - startPos )
         return self.inputBuffer
 
@@ -257,10 +263,12 @@ class RedirectedIOConsole( TextEditor ):
         else:
             currentPos = self.currentPosition()
             if currentPos >= self.lastOutputPos:
-                self.SendScintilla( self.SCI_SETCARETSTYLE, self.CARETSTYLE_BLOCK )
+                self.SendScintilla( self.SCI_SETCARETSTYLE,
+                                    self.CARETSTYLE_BLOCK )
                 self.setReadOnly( False )
             else:
-                self.SendScintilla( self.SCI_SETCARETSTYLE, self.CARETSTYLE_LINE )
+                self.SendScintilla( self.SCI_SETCARETSTYLE,
+                                    self.CARETSTYLE_LINE )
                 self.setReadOnly( True )
         return
 
@@ -383,9 +391,10 @@ class RedirectedIOConsole( TextEditor ):
         return
 
     def __showTimestampTooltip( self, position, x, y ):
+        " Shows a tooltip on the timestamp margin "
         # Calculate the line
         pos = self.SendScintilla( self.SCI_POSITIONFROMPOINT, x, y )
-        line, posInLine = self.lineIndexFromPosition( pos )
+        line, _ = self.lineIndexFromPosition( pos )
 
         tooltip = self.__getTimestampMarginTooltip( line )
         if not tooltip:
@@ -397,8 +406,8 @@ class RedirectedIOConsole( TextEditor ):
 
     def __getTimestampMarginTooltip( self, line ):
         " Provides the margin tooltip "
-        if line in self.marginTooltip:
-            return "\n".join( self.marginTooltip[ line ] )
+        if line in self.__marginTooltip:
+            return "\n".join( self.__marginTooltip[ line ] )
         return None
 
     def _onDwellEnd( self, position, x, y ):
@@ -498,6 +507,126 @@ class RedirectedIOConsole( TextEditor ):
     def openInBrowser( self ):
         pass
 
+    def appendIDEMessage( self, text ):
+        " Appends an IDE message "
+        msg = IOConsoleMsg( IOConsoleMsg.IDE_MESSAGE, text )
+        self.__appendMessage( msg )
+        return
+
+    def appendStdoutMessage( self, text ):
+        " Appends an stdout message "
+        msg = IOConsoleMsg( IOConsoleMsg.STDOUT_MESSAGE, text )
+        self.__appendMessage( msg )
+        return
+
+    def appendStderrMessage( self, text ):
+        " Appends an stderr message "
+        msg = IOConsoleMsg( IOConsoleMsg.STDERR_MESSAGE, text )
+        self.__appendMessage( msg )
+        return
+
+    def __appendMessage( self, message ):
+        " Appends a new message to the console "
+        if not self.__messages.append( message ):
+            # There was no trimming of the message list
+            self.__renderMessage( message )
+        else:
+            # Some messages were stripped
+            self.renderContent()
+        return
+
+    def renderContent( self ):
+        " Regenerates the viewer content "
+        self.clear()
+        self.__marginTooltip = {}
+        for msg in self.__messages.msgs:
+            self.__renderMessage( msg )
+        return
+
+    def __renderMessage( self, msg ):
+        " Adds a single message "
+        timestamp = msg.getTimestamp()
+        if msg.msgType == IOConsoleMsg.IDE_MESSAGE:
+            # Check the text. Append \n if needed. Append the message
+            line, pos = self.getEndPosition()
+            if pos != 0:
+                self.append( "\n" )
+                startMarkLine = line + 1
+            else:
+                startMarkLine = line
+            self.append( msg.msgText )
+            if not msg.msgText.endswith( "\n" ):
+                self.append( "\n" )
+            line, pos = self.getEndPosition()
+            for lineNo in xrange( startMarkLine, line ):
+                self.markerAdd( lineNo, self.ideMessageMarker )
+                self.__addTooltip( lineNo, timestamp )
+        else:
+            if self.parent().hiddenMessage( msg ):
+                return
+            line, pos = self.getEndPosition()
+            startPos = self.positionFromLineIndex( line, pos )
+            if pos != 0:
+                self.__addTooltip( line, timestamp )
+                startTimestampLine = line + 1
+            else:
+                startTimestampLine = line
+            self.append( msg.msgText )
+            line, pos = self.getEndPosition()
+            if pos != 0:
+                endTimestampLine = line
+            else:
+                endTimestampLine = line - 1
+            for lineNo in xrange( startTimestampLine, endTimestampLine + 1 ):
+                self.__addTooltip( lineNo, timestamp )
+
+            if msg.msgType == IOConsoleMsg.STDERR_MESSAGE:
+                # Highlight as stderr
+                styleNo = self.stderrStyle
+            elif msg.msgType == IOConsoleMsg.STDOUT_MESSAGE:
+                # Highlight as stdout
+                styleNo = self.stdoutStyle
+            else:
+                styleNo = self.stdinStyle
+
+            line, pos = self.getEndPosition()
+            endPos = self.positionFromLineIndex( line, pos )
+
+            self.SendScintilla( self.SCI_STARTSTYLING, startPos, 31 )
+            line, pos = self.getEndPosition()
+            endPos = self.positionFromLineIndex( line, pos )
+            self.SendScintilla( self.SCI_SETSTYLING,
+                                endPos - startPos, styleNo )
+
+        self.clearUndoHistory()
+        if Settings().ioconsoleautoscroll:
+            self.ensureLineVisible( self.lines() - 1 )
+        return
+
+    def __addTooltip( self, lineNo, timestamp ):
+        " Adds a tooltip into the dictionary "
+        if lineNo in self.__marginTooltip:
+            self.__marginTooltip[ lineNo ].append( timestamp )
+        else:
+            self.__marginTooltip[ lineNo ] = [ timestamp ]
+            self.setMarginText( lineNo, timestamp, self.marginStyle )
+        return
+
+    def clearData( self ):
+        " Clears the collected data "
+        self.__messages.clear()
+        self.__marginTooltip = {}
+        return
+
+    def clearAll( self ):
+        " Clears both data and visible content "
+        self.clearData()
+        self.clear()
+        self.clearUndoHistory()
+        return
+
+
+
 
 class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
     " IO console tab widget "
@@ -509,7 +638,6 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         self.__viewer = RedirectedIOConsole( self )
         self.connect( self.__viewer, SIGNAL( 'UserInput' ), self.__onUserInput )
-        self.__messages = IOConsoleMessages()
 
         self.__createLayout()
         return
@@ -538,7 +666,7 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__printPreviewButton.setEnabled( False )
         self.__printPreviewButton.setVisible( False )
 
-        # self.__sendUpButton = QAction( PixmapCache().getIcon( 'sendioup.png' ),
+        # self.__sendUpButton = QAction( PixmapCache().getIcon('sendioup.png'),
         #                                'Send to Main Editing Area', self )
         # self.connect( self.__sendUpButton, SIGNAL( "triggered()" ),
         #               self.__sendUp )
@@ -552,12 +680,14 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__filterShowAllAct.setActionGroup( self.__filterGroup )
         self.connect( self.__filterShowAllAct, SIGNAL( 'triggered()' ),
                       self.__onFilterShowAll )
-        self.__filterShowStdoutAct = self.__filterMenu.addAction( "Show stdin and stdout" )
+        self.__filterShowStdoutAct = self.__filterMenu.addAction(
+                                                "Show stdin and stdout" )
         self.__filterShowStdoutAct.setCheckable( True )
         self.__filterShowStdoutAct.setActionGroup( self.__filterGroup )
         self.connect( self.__filterShowStdoutAct, SIGNAL( 'triggered()' ),
                       self.__onFilterShowStdout )
-        self.__filterShowStderrAct = self.__filterMenu.addAction( "Show stdin and stderr" )
+        self.__filterShowStderrAct = self.__filterMenu.addAction(
+                                                "Show stdin and stderr" )
         self.__filterShowStderrAct.setCheckable( True )
         self.__filterShowStderrAct.setActionGroup( self.__filterGroup )
         self.connect( self.__filterShowStderrAct, SIGNAL( 'triggered()' ),
@@ -572,7 +702,8 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__settingsMenu = QMenu( self )
         self.connect( self.__settingsMenu, SIGNAL( "aboutToShow()" ),
                       self.__settingsAboutToShow )
-        self.__wrapLongLinesAct = self.__settingsMenu.addAction( "Wrap long lines" )
+        self.__wrapLongLinesAct = self.__settingsMenu.addAction(
+                                                "Wrap long lines" )
         self.__wrapLongLinesAct.setCheckable( True )
         self.connect( self.__wrapLongLinesAct, SIGNAL( 'triggered()' ),
                       self.__onWrapLongLines )
@@ -580,7 +711,8 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__showEOLAct.setCheckable( True )
         self.connect( self.__showEOLAct, SIGNAL( 'triggered()' ),
                       self.__onShowEOL )
-        self.__showWhitespacesAct = self.__settingsMenu.addAction( "Show whitespaces" )
+        self.__showWhitespacesAct = self.__settingsMenu.addAction(
+                                                "Show whitespaces" )
         self.__showWhitespacesAct.setCheckable( True )
         self.connect( self.__showWhitespacesAct, SIGNAL( 'triggered()' ),
                       self.__onShowWhitespaces )
@@ -588,13 +720,15 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__autoscrollAct.setCheckable( True )
         self.connect( self.__autoscrollAct, SIGNAL( 'triggered()' ),
                       self.__onAutoscroll )
-        self.__showMarginAct = self.__settingsMenu.addAction( "Show timestamp margin" )
+        self.__showMarginAct = self.__settingsMenu.addAction(
+                                                "Show timestamp margin" )
         self.__showMarginAct.setCheckable( True )
         self.connect( self.__showMarginAct, SIGNAL( 'triggered()' ),
                       self.__onShowMargin )
 
         self.__settingsButton = QToolButton( self )
-        self.__settingsButton.setIcon( PixmapCache().getIcon( 'iosettings.png' ) )
+        self.__settingsButton.setIcon(
+                            PixmapCache().getIcon( 'iosettings.png' ) )
         self.__settingsButton.setToolTip( 'View settings' )
         self.__settingsButton.setPopupMode( QToolButton.InstantPopup )
         self.__settingsButton.setMenu( self.__settingsMenu )
@@ -698,7 +832,7 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         Settings().ioconsoleshowstdin = True
         Settings().ioconsoleshowstdout = True
         Settings().ioconsoleshowstderr = True
-        self.renderContent()
+        self.__viewer.renderContent()
         return
 
     def __onFilterShowStdout( self ):
@@ -711,7 +845,7 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         Settings().ioconsoleshowstdin = True
         Settings().ioconsoleshowstdout = True
         Settings().ioconsoleshowstderr = False
-        self.renderContent()
+        self.__viewer.renderContent()
         return
 
     def __onFilterShowStderr( self ):
@@ -724,7 +858,7 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         Settings().ioconsoleshowstdin = True
         Settings().ioconsoleshowstdout = False
         Settings().ioconsoleshowstderr = True
-        self.renderContent()
+        self.__viewer.renderContent()
         return
 
     def __settingsAboutToShow( self ):
@@ -773,10 +907,7 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def clear( self ):
         " Triggered when requested to clear the console "
-        self.__messages.clear()
-        self.__viewer.clear()
-        self.__viewer.marginTooltip = {}
-        self.__viewer.clearUndoHistory()
+        self.__viewer.clearAll()
         return
 
 
@@ -811,112 +942,20 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def appendIDEMessage( self, text ):
         " Appends an IDE message "
-        msg = IOConsoleMsg( IOConsoleMsg.IDE_MESSAGE, text )
-        self.__appendMessage( msg )
+        self.__viewer.appendIDEMessage( text )
         return
 
     def appendStdoutMessage( self, text ):
         " Appends an stdout message "
-        msg = IOConsoleMsg( IOConsoleMsg.STDOUT_MESSAGE, text )
-        self.__appendMessage( msg )
+        self.__viewer.appendStdoutMessage( text )
         return
 
     def appendStderrMessage( self, text ):
         " Appends an stderr message "
-        msg = IOConsoleMsg( IOConsoleMsg.STDERR_MESSAGE, text )
-        self.__appendMessage( msg )
+        self.__viewer.appendStderrMessage( text )
         return
 
-    def __appendMessage( self, message ):
-        " Appends a new message to the console "
-        if not self.__messages.append( message ):
-            # There was no trimming of the message list
-            self.__renderMessage( message )
-        else:
-            # Some messages were stripped
-            self.renderContent()
-        return
-
-    def renderContent( self ):
-        " Regenerates the viewer content "
-        self.__viewer.clear()
-        self.__viewer.clearUndoHistory()
-        self.__viewer.marginTooltip = {}
-        for msg in self.__messages.msgs:
-            self.__renderMessage( msg )
-        return
-
-    def __renderMessage( self, msg ):
-        " Adds a single message "
-        timestamp = msg.getTimestamp()
-        if msg.msgType == IOConsoleMsg.IDE_MESSAGE:
-            # Check the text. Append \n if needed. Append the message
-            line, pos = self.__viewer.getEndPosition()
-            if pos != 0:
-                self.__viewer.append( "\n" )
-                startMarkLine = line + 1
-            else:
-                startMarkLine = line
-            self.__viewer.append( msg.msgText )
-            if not msg.msgText.endswith( "\n" ):
-                self.__viewer.append( "\n" )
-            line, pos = self.__viewer.getEndPosition()
-            for lineNo in xrange( startMarkLine, line ):
-                self.__viewer.markerAdd( lineNo,
-                                         self.__viewer.ideMessageMarker )
-                self.addTooltip( lineNo, timestamp )
-        else:
-            if self.__hiddenMessage( msg ):
-                return
-            line, pos = self.__viewer.getEndPosition()
-            startPos = self.__viewer.positionFromLineIndex( line, pos )
-            if pos != 0:
-                self.addTooltip( line, timestamp )
-                startTimestampLine = line + 1
-            else:
-                startTimestampLine = line
-            self.__viewer.append( msg.msgText )
-            line, pos = self.__viewer.getEndPosition()
-            if pos != 0:
-                endTimestampLine = line
-            else:
-                endTimestampLine = line - 1
-            for lineNo in xrange( startTimestampLine, endTimestampLine + 1 ):
-                self.addTooltip( lineNo, timestamp )
-
-            if msg.msgType == IOConsoleMsg.STDERR_MESSAGE:
-                # Highlight as stderr
-                styleNo = self.__viewer.stderrStyle
-            else:
-                # Highlight as stdout
-                styleNo = self.__viewer.stdoutStyle
-
-            line, pos = self.__viewer.getEndPosition()
-            endPos = self.__viewer.positionFromLineIndex( line, pos )
-
-            self.__viewer.SendScintilla( self.__viewer.SCI_STARTSTYLING,
-                                         startPos, 31 )
-            line, pos = self.__viewer.getEndPosition()
-            endPos = self.__viewer.positionFromLineIndex( line, pos )
-            self.__viewer.SendScintilla( self.__viewer.SCI_SETSTYLING,
-                                         endPos - startPos, styleNo )
-
-        self.__viewer.clearUndoHistory()
-        if Settings().ioconsoleautoscroll:
-            self.__viewer.ensureLineVisible( self.__viewer.lines() - 1 )
-        return
-
-    def addTooltip( self, lineNo, timestamp ):
-        " Adds a tooltip into the dictionary "
-        if lineNo in self.__viewer.marginTooltip:
-            self.__viewer.marginTooltip[ lineNo ].append( timestamp )
-        else:
-            self.__viewer.marginTooltip[ lineNo ] = [ timestamp ]
-            self.__viewer.setMarginText( lineNo, timestamp,
-                                         self.__viewer.marginStyle )
-        return
-
-    def __hiddenMessage( self, msg ):
+    def hiddenMessage( self, msg ):
         " Returns True if the message should not be shown "
         if msg.msgType == IOConsoleMsg.STDERR_MESSAGE and \
            not Settings().ioconsoleshowstderr:
@@ -997,12 +1036,12 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def getLine( self ):
         " Tells the cursor line "
-        line, pos = self.__viewer.getCursorPosition()
+        line, _ = self.__viewer.getCursorPosition()
         return int( line )
 
     def getPos( self ):
         " Tells the cursor column "
-        line, pos = self.__viewer.getCursorPosition()
+        _, pos = self.__viewer.getCursorPosition()
         return int( pos )
 
     def getEncoding( self ):
@@ -1013,7 +1052,6 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Sets the new editor encoding "
         raise Exception( "Setting encoding is not supported by the "
                          "IO console widget" )
-        return
 
     def getShortName( self ):
         " Tells the display name "
@@ -1023,4 +1061,3 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Sets the display name "
         raise Exception( "Setting short name is not supported by the "
                          "IO console widget" )
-        return
