@@ -23,8 +23,12 @@
 """ Wrapper to run a script with redirected IO """
 
 
-import sys, socket
-from outredir_cdm_dbg import OutStreamRedirector
+import sys, socket, time, traceback
+from outredir_cdm_dbg import OutStreamRedirector, MAX_TRIES
+from protocol_cdm_dbg import RequestContinue, EOT, ResponseExit
+
+
+WAIT_CONTINUE_TIMEOUT = 10
 
 
 class RedirectedIORunWrapper():
@@ -48,10 +52,52 @@ class RedirectedIORunWrapper():
         remoteAddress = self.resolveHost( host )
         self.connect( remoteAddress, port )
 
-        # Wait till 'start' command
-        # Run the script
-        # Send the return code back
+        try:
+            self.__waitContinue()
+        except Exception, exc:
+            print >> sys.stderr, str( exc )
+            return 1
 
+        # Setup redirections
+        stdoutOld = sys.stdout
+        stderrOld = sys.stderr
+        sys.stdout = OutStreamRedirector( self.__socket, True )
+        sys.stderr = OutStreamRedirector( self.__socket, False )
+
+        # Run the script
+        retCode = 0
+        try:
+            self.__runScript( wdir, args )
+        except SystemExit, exc:
+            if exc.code is None:
+                retCode = 0
+            elif type( exc.code ) == int:
+                retCode = exc.code
+            else:
+                retCode = 1
+                print >> sys.stderr, str( exc.code )
+        except KeyboardInterrupt, exc:
+            retCode = 1
+            print >> sys.stderr, traceback.format_exc()
+        except Exception, exc:
+            retCode = 1
+            print >> sys.stderr, traceback.format_exc()
+        except:
+            retCode = 1
+            print >> sys.stderr, traceback.format_exc()
+
+        sys.stderr = stderrOld
+        sys.stdout = stdoutOld
+
+        # Send the return code back
+        try:
+            self.write( ResponseExit + str( retCode ) )
+        except Exception, exc:
+            print >> sys.stderr, str( exc )
+            self.close()
+            return 1
+
+        self.close()
         return 0
 
     def connect( self, remoteAddress, port ):
@@ -75,10 +121,41 @@ class RedirectedIORunWrapper():
                 self.__socket = socket.socket( socket.AF_INET,
                                                socket.SOCK_STREAM )
                 self.__socket.connect( ( remoteAddress, port ) )
-
-        sys.stdout = OutStreamRedirector( self.__socket, True )
-        sys.stderr = OutStreamRedirector( self.__socket, False )
         return
+
+    def __waitContinue( self ):
+        " Waits the 'continue' command "
+        startTime = time.time()
+        while True:
+            time.sleep( 0.01 )
+
+            # Read from the socket
+            data = self.__socket.recv( 1024, socket.MSG_DONTWAIT )
+            if not data:
+                if time.time() - startTime > WAIT_CONTINUE_TIMEOUT:
+                    raise Exception( "Continue command timeout" )
+            else:
+                if data == RequestContinue + EOT:
+                    break
+                raise Exception( "Unexpected command from IDE: " + data )
+        return
+
+    def write( self, data ):
+        " Writes into the socket "
+        tries = MAX_TRIES
+        while tries > 0:
+            try:
+                if self.__socket:
+                    self.__socket.sendall( data + EOT )
+                return
+            except socket.error:
+                tries -= 1
+                continue
+        raise socket.error( "Too many attempts to send data" )
+
+    def __runScript( self, workingDir, arguments ):
+        " Runs the python script "
+        pass
 
     def close( self ):
         " Closes the connection if so "
