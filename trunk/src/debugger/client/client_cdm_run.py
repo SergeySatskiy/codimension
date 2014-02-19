@@ -23,7 +23,7 @@
 """ Wrapper to run a script with redirected IO """
 
 
-import sys, socket, time, traceback
+import sys, socket, time, traceback, os, imp
 from outredir_cdm_dbg import OutStreamRedirector, MAX_TRIES
 from protocol_cdm_dbg import RequestContinue, EOT, ResponseExit
 
@@ -155,7 +155,45 @@ class RedirectedIORunWrapper():
 
     def __runScript( self, workingDir, arguments ):
         " Runs the python script "
-        pass
+
+        try:
+            # In Py 2.x, the builtins were in __builtin__
+            builtins = sys.modules[ '__builtin__' ]
+        except KeyError:
+            # In Py 3.x, they're in builtins
+            builtins = sys.modules[ 'builtins' ]
+
+        fileName = arguments[ 0 ]
+
+        oldMainMod = sys.modules[ '__main__' ]
+        mainMod = imp.new_module( '__main__' )
+        sys.modules[ '__main__' ] = mainMod
+        mainMod.__file__ = fileName
+        mainMod.__builtins__ = builtins
+
+        # Set sys.argv properly.
+        oldArgv = sys.argv
+        sys.argv = arguments
+
+        os.chdir( workingDir )
+        f = open( fileName, "rU" )
+        source = f.read()
+        f.close()
+
+        # We have the source.  `compile` still needs the last line to be clean,
+        # so make sure it is, then compile a code object from it.
+        if not source or source[-1] != '\n':
+            source += '\n'
+
+        code = compile( source, fileName, "exec" )
+        exec( code, mainMod.__dict__ )
+
+        # Restore the old __main__
+        sys.modules[ '__main__' ] = oldMainMod
+
+        # Restore the old argv and path
+        sys.argv = oldArgv
+        return
 
     def close( self ):
         " Closes the connection if so "
