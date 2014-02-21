@@ -2565,17 +2565,7 @@ class CodimensionMainWindow( QMainWindow ):
             return
 
         fileName = GlobalData().project.getProjectScript()
-        params = GlobalData().getRunParameters( fileName )
-        termType = self.settings.terminalType
-        profilerParams = self.settings.getProfilerSettings()
-        debuggerParams = self.settings.getDebuggerSettings()
-        dlg = RunDialog( fileName, params, termType,
-                         profilerParams, debuggerParams, "Run" )
-        if dlg.exec_() == QDialog.Accepted:
-            GlobalData().addRunParams( fileName, dlg.runParams )
-            if dlg.termType != termType:
-                self.settings.terminalType = dlg.termType
-            self.__onRunProject()
+        self.__runManager.run( fileName(), True )
         return
 
     def __onProfileProjectSettings( self ):
@@ -2626,21 +2616,7 @@ class CodimensionMainWindow( QMainWindow ):
             return
 
         fileName = GlobalData().project.getProjectScript()
-        if self.settings.terminalType == TERM_REDIRECT:
-            self.__runManager.run( fileName )
-            return
-
-        # No need redirection
-        params = GlobalData().getRunParameters( fileName )
-        workingDir, cmd, environment = getCwdCmdEnv( CMD_TYPE_RUN,
-                                                     fileName, params,
-                                                     self.settings.terminalType )
-
-        try:
-            Popen( cmd, shell = True,
-                   cwd = workingDir, env = environment )
-        except Exception, exc:
-            logging.error( str( exc ) )
+        self.__runManager.run( fileName(), False )
         return
 
     def __onProfileProject( self, action = False ):
