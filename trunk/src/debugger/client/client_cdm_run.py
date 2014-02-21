@@ -26,6 +26,7 @@
 import sys, socket, time, traceback, os, imp
 from outredir_cdm_dbg import OutStreamRedirector, MAX_TRIES
 from protocol_cdm_dbg import RequestContinue, EOT, ResponseExit
+from errno import EAGAIN
 
 
 WAIT_CONTINUE_TIMEOUT = 10
@@ -130,7 +131,12 @@ class RedirectedIORunWrapper():
             time.sleep( 0.01 )
 
             # Read from the socket
-            data = self.__socket.recv( 1024, socket.MSG_DONTWAIT )
+            try:
+                data = self.__socket.recv( 1024, socket.MSG_DONTWAIT )
+            except socket.error, exc:
+                if exc[ 0 ] != EAGAIN:
+                    raise
+                data = None
             if not data:
                 if time.time() - startTime > WAIT_CONTINUE_TIMEOUT:
                     raise Exception( "Continue command timeout" )
