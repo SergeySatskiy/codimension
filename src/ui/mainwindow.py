@@ -2565,7 +2565,7 @@ class CodimensionMainWindow( QMainWindow ):
             return
 
         fileName = GlobalData().project.getProjectScript()
-        self.__runManager.run( fileName(), True )
+        self.__runManager.run( fileName, True )
         return
 
     def __onProfileProjectSettings( self ):
@@ -2616,7 +2616,7 @@ class CodimensionMainWindow( QMainWindow ):
             return
 
         fileName = GlobalData().project.getProjectScript()
-        self.__runManager.run( fileName(), False )
+        self.__runManager.run( fileName, False )
         return
 
     def __onProfileProject( self, action = False ):
