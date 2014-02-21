@@ -45,6 +45,7 @@ class IOConsoleMsg( object ):
     IDE_MESSAGE = 0
     STDOUT_MESSAGE = 1
     STDERR_MESSAGE = 2
+    STDIN_MESSAGE = 3
 
     def __init__( self, msgType, msgText ):
         self.msgType = msgType
