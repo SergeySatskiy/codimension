@@ -179,6 +179,9 @@ __osSpawn = {
                       "'cd %(wdir)s; %(exec)s %(options)s; CDM_RES=$?; %(exit_if_ok)s %(shell)s' &",
     'gnome-terminal': "gnome-terminal --disable-factory -x %(shell)s -c " \
                       "'cd %(wdir)s; %(exec)s %(options)s; CDM_RES=$?; %(exit_if_ok)s %(shell)s' &",
+    'redirect'      : "%(shell)s -c "
+                      "'cd %(wdir)s; "
+                      "%(exec)s %(runclient)s %(runopt)s -- %(options)s'"
             }
 
 # The profiling needs to waiting for the child process to finish
@@ -227,7 +230,7 @@ EXIT_IF_OK = 'test "_$CDM_RES" == "_0" && exit;'
 
 
 def getTerminalCommandToRun( fileName, workingDir, arguments,
-                             terminalType, closeTerminal ):
+                             terminalType, closeTerminal, tcpServerPort = None ):
     " Provides a command to run a separate shell terminal "
 
     if os.name != 'posix':
@@ -235,7 +238,17 @@ def getTerminalCommandToRun( fileName, workingDir, arguments,
 
     pythonExec = sys.executable
     shell = getUserShell()
-    terminalStartCmd = getStartTerminalCommand( terminalType )
+
+    if terminalType == TERM_REDIRECT:
+        terminalStartCmd = "redirect"
+        runClient = os.path.sep.join( [ os.path.dirname( sys.argv[ 0 ] ),
+                                        "debugger", "client",
+                                        "client_cdm_run.py" ] )
+        runOptions = "-h localhost -p " + str( tcpServerPort ) + " -w " + workingDir
+    else:
+        terminalStartCmd = getStartTerminalCommand( terminalType )
+        runClient = ""
+        runOptions = ""
 
     args = ""
     for index in xrange( len( arguments ) ):
@@ -251,7 +264,9 @@ def getTerminalCommandToRun( fileName, workingDir, arguments,
                                                  'wdir':       workingDir,
                                                  'exec':       pythonExec,
                                                  'options':    fileName + args,
-                                                 'exit_if_ok': exit_if_ok }
+                                                 'exit_if_ok': exit_if_ok,
+                                                 'runclient':  runClient,
+                                                 'runopt':     runOptions }
 
     return __osSpawn[ os.name ] % { 'term':       terminalStartCmd,
                                     'shell':      shell,
@@ -474,7 +489,8 @@ def getCwdCmdEnv( cmdType, path, params, terminalType,
     arguments = parseCommandLineArguments( params.arguments )
     if cmdType == CMD_TYPE_RUN:
         cmd = getTerminalCommandToRun( path, workingDir, arguments,
-                                       terminalType, params.closeTerminal )
+                                       terminalType, params.closeTerminal,
+                                       tcpServerPort )
     elif cmdType == CMD_TYPE_PROFILE:
         cmd = getTerminalCommandToProfile( path, workingDir, arguments,
                                            terminalType, params.closeTerminal,
