@@ -4768,3 +4768,16 @@ class CodimensionMainWindow( QMainWindow ):
         " Triggered when the user finished input in the redirected IO console "
         self.__debugger.remoteRawInput( userInput )
         return
+
+    def installIOConsole( self, widget ):
+        " Installs a new widget at the bottom "
+        self.__bottomSideBar.addTab( widget,
+                PixmapCache().getIcon( 'ioconsole.png' ), 'Run console' )
+        self.__bottomSideBar.setTabToolTip(
+                self.__bottomSideBar.count() - 1, 'Redirected run console' )
+        self.__bottomSideBar.show()
+        self.__bottomSideBar.setCurrentWidget( widget )
+        self.__bottomSideBar.raise_()
+        widget.setFocus()
+        return
+
