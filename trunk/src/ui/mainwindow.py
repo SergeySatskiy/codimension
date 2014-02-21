@@ -146,6 +146,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.__lastDebugLineNumber = None
         self.__lastDebugAsException = None
         self.__lastDebugAction = None
+        self.__newRunIndex = -1
+        self.__newProfileIndex = -1
 
         self.vcsManager = VCSManager()
 
@@ -4745,12 +4747,31 @@ class CodimensionMainWindow( QMainWindow ):
         self.__debugger.remoteRawInput( userInput )
         return
 
-    def installIOConsole( self, widget ):
+    def __getNewRunIndex( self ):
+        " Provides the new run index "
+        self.__newRunIndex += 1
+        return self.__newRunIndex
+
+    def __getNewProfileIndex( self ):
+        " Provides the new profile index "
+        self.__newProfileIndex += 1
+        return self.__newProfileIndex
+
+    def installIOConsole( self, widget, isProfile = False ):
         " Installs a new widget at the bottom "
+        if isProfile:
+            index = str( self.__getNewProfileIndex() )
+            caption = "Profiling #" + index
+            tooltip = "Redirected IO profile console #" + index
+        else:
+            index = str( self.__getNewRunIndex() )
+            caption = "Run #" + index
+            tooltip = "Redirected IO run console #" + index
+
         self.__bottomSideBar.addTab( widget,
-                PixmapCache().getIcon( 'ioconsole.png' ), 'Run console' )
+                PixmapCache().getIcon( 'ioconsole.png' ), caption )
         self.__bottomSideBar.setTabToolTip(
-                self.__bottomSideBar.count() - 1, 'Redirected run console' )
+                self.__bottomSideBar.count() - 1, tooltip )
         self.__bottomSideBar.show()
         self.__bottomSideBar.setCurrentWidget( widget )
         self.__bottomSideBar.raise_()
