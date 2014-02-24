@@ -39,7 +39,7 @@ from redirectedmsg import IOConsoleMsg
 class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
     " IO console tab widget "
 
-    def __init__( self, parent = None ):
+    def __init__( self, threadID, parent = None ):
 
         MainWindowTabWidgetBase.__init__( self )
         QWidget.__init__( self, parent )
@@ -47,12 +47,17 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__viewer = RedirectedIOConsole( self )
         self.connect( self.__viewer, SIGNAL( 'UserInput' ), self.__onUserInput )
 
+        self.__threadID = threadID
         self.__showstdin = True
         self.__showstdout = True
         self.__showstderr = True
 
         self.__createLayout()
         return
+
+    def threadID( self ):
+        " Provides the thread ID the console linked to "
+        return self.__threadID
 
     def __onUserInput( self, userInput ):
         " Triggered when the user finished input in the redirected IO console "
@@ -160,7 +165,7 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
                                       'Close tab', self )
         self.connect( self.__closeButton, SIGNAL( 'triggered()' ),
                       self.close )
-        self.__closeButton.setVisible( False )
+        self.__closeButton.setEnabled( False )
 
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
@@ -422,16 +427,26 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def stop( self ):
         " Triggered when the user requesed to stop the process "
+        self.emit( SIGNAL( 'KillIOConsoleProcess' ), self.__threadID )
         return
 
     def stopAndClose( self ):
         " Triggered when the user requested to stop the process and close console "
+        self.stop()
+        self.close()
         return
 
     def close( self ):
         " Triggered when the console should be closed "
+        self.emit( SIGNAL( 'CloseIOConsole' ), self.__threadID )
         return
 
+    def scriptFinished( self ):
+        " Triggered when the script process finished "
+        self.__stopButton.setEnabled( False )
+        self.__stopAndCloseButton.setEnabled( False )
+        self.__closeButton.setEnabled( True )
+        return
 
     # Mandatory interface part is below
 
