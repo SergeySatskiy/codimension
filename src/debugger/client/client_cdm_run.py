@@ -181,6 +181,10 @@ class RedirectedIORunWrapper():
         oldArgv = sys.argv
         sys.argv = arguments
 
+        # Without this imports of what is located at the script directory do
+        # not work
+        sys.path.insert( 0, workingDir )
+
         os.chdir( workingDir )
         f = open( fileName, "rU" )
         source = f.read()
