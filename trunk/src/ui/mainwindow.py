@@ -23,7 +23,6 @@
 """ codimension main window """
 
 import os, os.path, sys, logging, ConfigParser, gc
-from subprocess import Popen
 from PyQt4.QtCore import SIGNAL, Qt, QSize, QTimer, QDir, QVariant, QUrl
 from PyQt4.QtGui import ( QLabel, QToolBar, QWidget, QMessageBox, QFont,
                           QVBoxLayout, QSplitter, QSizePolicy,
@@ -2056,6 +2055,9 @@ class CodimensionMainWindow( QMainWindow ):
 
             # Stop the VCS manager threads
             self.vcsManager.dismissAllPlugins()
+
+            # Kill all the non-detached processes
+            self.__runManager.killAll()
 
             # On ubuntu codimension produces core dumps coming from QT when:
             # - a new project is created
@@ -4706,7 +4708,7 @@ class CodimensionMainWindow( QMainWindow ):
                       self.editorsManagerWidget.editorsManager.onZoom )
         self.__bottomSideBar.addTab( self.redirectedIOConsole,
                 PixmapCache().getIcon( 'ioconsole.png' ), 'IO console' )
-        self.__bottomSideBar.setTabToolTip( 7, 'Redirected IO console' )
+        self.__bottomSideBar.setTabToolTip( 7, 'Redirected IO debug console' )
         return
 
     def __onClientStdout( self, data ):
@@ -4762,11 +4764,16 @@ class CodimensionMainWindow( QMainWindow ):
         if isProfile:
             index = str( self.__getNewProfileIndex() )
             caption = "Profiling #" + index
-            tooltip = "Redirected IO profile console #" + index
+            tooltip = "Redirected IO profile console #" + index + " (running)"
         else:
             index = str( self.__getNewRunIndex() )
             caption = "Run #" + index
-            tooltip = "Redirected IO run console #" + index
+            tooltip = "Redirected IO run console #" + index + " (running)"
+
+        self.connect( widget, SIGNAL( 'CloseIOConsole' ),
+                      self.__onCloseIOConsole )
+        self.connect( widget, SIGNAL( 'KillIOConsoleProcess' ),
+                      self.__onKillIOConsoleProcess )
 
         self.__bottomSideBar.addTab( widget,
                 PixmapCache().getIcon( 'ioconsole.png' ), caption )
@@ -4776,5 +4783,37 @@ class CodimensionMainWindow( QMainWindow ):
         self.__bottomSideBar.setCurrentWidget( widget )
         self.__bottomSideBar.raise_()
         widget.setFocus()
+        return
+
+    def updateIOConsoleTooltip( self, threadID, msg ):
+        " Updates the IO console tooltip "
+        index = self.__getIOConsoleIndex( threadID )
+        if index is not None:
+            tooltip = self.__bottomSideBar.tabToolTip( index )
+            tooltip = tooltip.replace( "(running)", "(" + msg + ")" )
+            self.__bottomSideBar.setTabToolTip( index, tooltip )
+        return
+
+    def __getIOConsoleIndex( self, threadID ):
+        " Provides the IO console index by the thread ID "
+        index = self.__bottomSideBar.count() - 1
+        while index >= 0:
+            widget = self.__bottomSideBar.widget( index )
+            if hasattr( widget, "threadID" ):
+                if widget.threadID() == threadID:
+                    return index
+            index -= 1
+        return None
+
+    def __onCloseIOConsole( self, threadID ):
+        " Closes the tab with the corresponding widget "
+        index = self.__getIOConsoleIndex( threadID )
+        if index is not None:
+            self.__bottomSideBar.removeTab( index )
+        return
+
+    def __onKillIOConsoleProcess( self, threadID ):
+        " Kills the process linked to the IO console "
+        self.__runManager.kill( threadID )
         return
 

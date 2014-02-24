@@ -38,6 +38,10 @@ from debugger.client.protocol_cdm_dbg import ( EOT, RequestContinue,
                                                ResponseStderr )
 
 
+# Finish codes in addition to the normal exit code
+KILLED = -1000000
+DISCONNECTED = -2000000
+
 
 NEXT_ID = 0
 def getNextID():
@@ -70,9 +74,7 @@ class RemoteProcessWrapper( QThread ):
         self.__codec = QTextCodec.codecForName( "utf-8" )
         self.__protocolState = self.PROTOCOL_CONTROL
         self.__buffer = ""
-
-        self.connect( self, SIGNAL( 'finished()' ),
-                      self.__threadFinished )
+        self.__proc = None
         return
 
     def needRedirection( self ):
@@ -82,6 +84,10 @@ class RemoteProcessWrapper( QThread ):
     def threadID( self ):
         " Provides the thread ID "
         return self.__threadID
+
+    def path( self ):
+        " Provides the script path "
+        return self.__path
 
     def run( self ):
         " Thread running function "
@@ -113,8 +119,8 @@ class RemoteProcessWrapper( QThread ):
     def __runRedirected( self, workingDir, cmd, environment ):
         " Runs a redirected IO process "
         try:
-            proc = Popen( cmd, shell = True,
-                          cwd = workingDir, env = environment )
+            self.__proc = Popen( cmd, shell = True,
+                                 cwd = workingDir, env = environment )
         except Exception, exc:
             logging.error( str( exc ) )
             return
@@ -144,37 +150,66 @@ class RemoteProcessWrapper( QThread ):
             time.sleep( 0.01 )
             QApplication.processEvents()
 
+        try:
+            self.__proc.wait()
+        except:
+            pass
+
+        if self.__clientSocket:
+            try:
+                self.__clientSocket.close()
+            except:
+                pass
+
         # Process has finished some way:
         # - stop requested
         # - process finished
         # - process disconnected
-
-        proc.wait()
+        if self.__procExitReceived:
+            signalValue = self.__retCode
+        elif self.__stopRequest:
+            signalValue = KILLED
+        else:
+            signalValue = DISCONNECTED
+        self.emit( SIGNAL( 'Finished' ), self.__threadID, signalValue )
         return
 
     def __runDetached( self, workingDir, cmd, environment ):
         " Runs a detached process "
-        proc = None
+        self.__proc = None
         try:
-            proc = Popen( cmd, shell = True,
+            self.__proc = Popen( cmd, shell = True,
                           cwd = workingDir, env = environment )
             while not self.__stopRequest:
                 time.sleep( 0.05 )
-                if proc.poll() is not None:
+                if self.__proc.poll() is not None:
                     break
         except Exception, exc:
             logging.error( str( exc ) )
+
+        try:
+            self.__proc.wait()
+        except:
+            pass
         return
 
     def stop( self ):
         " Sets the thread stop request "
-        self.__stopRequest = True
-        return
+        if self.__clientSocket:
+            try:
+                self.disconnect( self.__clientSocket, SIGNAL( 'readyRead()' ),
+                                 self.__parseClientLine )
+                self.disconnect( self.__clientSocket, SIGNAL( 'disconnected()' ),
+                                 self.__disconnected )
+            except:
+                pass
 
-    def __threadFinished( self ):
-        " Triggered when the thread has finished "
-        self.emit( SIGNAL( 'ProcessFinished' ), self.__threadID,
-                   self.__retCode )
+        try:
+            self.__proc.kill()
+        except:
+            pass
+
+        self.__stopRequest = True
         return
 
     def __newConnection( self ):
@@ -184,8 +219,8 @@ class RemoteProcessWrapper( QThread ):
         self.__clientSocket.setSocketOption( QAbstractSocket.KeepAliveOption, 1 )
         self.connect( self.__clientSocket, SIGNAL( 'disconnected()' ),
                       self.__disconnected )
-#        self.disconnect( self.__tcpServer, SIGNAL( "newConnection()" ),
-#                         self.__newConnection )
+        self.disconnect( self.__tcpServer, SIGNAL( "newConnection()" ),
+                         self.__newConnection )
         return
 
     def __waitIncomingConnection( self ):
@@ -347,10 +382,10 @@ class RunManager( QObject ):
 
         remoteProc = RemoteProcess()
         remoteProc.thread = RemoteProcessWrapper( path )
-        self.connect( remoteProc.thread, SIGNAL( 'ProcessFinished' ),
+        self.connect( remoteProc.thread, SIGNAL( 'Finished' ),
                       self.__onProcessFinished )
         if Settings().terminalType == TERM_REDIRECT:
-            remoteProc.widget = RunConsoleTabWidget()
+            remoteProc.widget = RunConsoleTabWidget( remoteProc.thread.threadID() )
             self.connect( remoteProc.thread, SIGNAL( 'Started' ),
                           self.__onProcessStarted )
             self.connect( remoteProc.thread, SIGNAL( 'ClientStdout' ),
@@ -369,8 +404,43 @@ class RunManager( QObject ):
         " Profiles the given script with redirected IO "
         return
 
-    def close( self ):
+    def killAll( self ):
         " Stops all the threads and kills all the processes if needed "
+        index = len( self.__processes ) - 1
+        while index >= 0:
+            item = self.__processes[ index ]
+            if item.thread.needRedirection():
+                item.thread.stop()
+            index -= 1
+
+        # Wait till all the processes stopped
+        count = self.__getDetachedCount()
+        while count > 0:
+            time.sleep( 0.01 )
+            QApplication.processEvents()
+            count = self.__getDetachedCount()
+        return
+
+    def __getDetachedCount( self ):
+        " Return the number of detached processes still running "
+        count = 0
+        index = len( self.__processes ) - 1
+        while index >= 0:
+            if self.__processes[ index ].thread.needRedirection():
+                count += 1
+            index -= 1
+        return count
+
+    def kill( self, threadID ):
+        " Kills a single process "
+        index = self.__getProcessIndex( threadID )
+        if index is None:
+            return
+        item = self.__processes[ index ]
+        if not item.thread.needRedirection():
+            return
+
+        item.thread.stop()
         return
 
     def __getProcessIndex( self, threadID ):
@@ -387,7 +457,18 @@ class RunManager( QObject ):
             item = self.__processes[ index ]
             if item.thread.needRedirection():
                 if item.widget:
-                    item.widget.appendIDEMessage( "Script finished with exit code " + str( retCode ) )
+                    item.widget.scriptFinished()
+                    if retCode == KILLED:
+                        msg  = "Script killed"
+                        tooltip = "killed"
+                    elif retCode == DISCONNECTED:
+                        msg = "Connection lost to the script process"
+                        tooltip = "connection lost"
+                    else:
+                        msg = "Script finished with exit code " + str( retCode )
+                        tooltip = "finished, exit code " + str( retCode )
+                    item.widget.appendIDEMessage( msg )
+                    self.__mainWindow.updateIOConsoleTooltip( threadID, tooltip )
             del self.__processes[ index ]
         return
 
@@ -398,5 +479,5 @@ class RunManager( QObject ):
             item = self.__processes[ index ]
             if item.widget:
                 self.__mainWindow.installIOConsole( item.widget )
-                item.widget.appendIDEMessage( "Script started" )
+                item.widget.appendIDEMessage( "Script " + item.thread.path() + " started" )
         return
