@@ -237,7 +237,8 @@ class RemoteProcessWrapper( QThread ):
                     f.close()
 
                     if "client/client_cdm_run.py" in content:
-                        if "-p " + str( self.__serverPort ) in content:
+                        if "-p" in content and \
+                           str( self.__serverPort ) in content:
                             return int( item )
                 except:
                     pass
