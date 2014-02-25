@@ -25,11 +25,45 @@
 
 import sys, socket, time, traceback, os, imp
 from outredir_cdm_dbg import OutStreamRedirector, MAX_TRIES
-from protocol_cdm_dbg import RequestContinue, EOT, ResponseExit
+from protocol_cdm_dbg import RequestContinue, EOT, ResponseExit, ResponseRaw
 from errno import EAGAIN
 
 
 WAIT_CONTINUE_TIMEOUT = 10
+RUN_WRAPPER = None
+
+
+def runClientRawInput( prompt = "", echo = 1 ):
+    " Replacement for the standard raw_input builtin "
+    if RUN_WRAPPER is None or RUN_WRAPPER.redirected() == False:
+        return runClientOrigRawInput( prompt )
+    return RUN_WRAPPER.raw_input( prompt, echo )
+
+# Use our own raw_input().
+try:
+    runClientOrigRawInput = __builtins__.__dict__[ 'raw_input' ]
+    __builtins__.__dict__[ 'raw_input' ] = runClientRawInput
+except ( AttributeError, KeyError ):
+    import __main__
+    runClientOrigRawInput = __main__.__builtins__.__dict__[ 'raw_input' ]
+    __main__.__builtins__.__dict__[ 'raw_input' ] = runClientRawInput
+
+
+def runClientInput( prompt = "" ):
+    " Replacement for the standard input builtin "
+    if RUN_WRAPPER is None or RUN_WRAPPER.redirected() == False:
+        return runClientOrigInput( prompt )
+    return RUN_WRAPPER.input( prompt )
+
+# Use our own input().
+try:
+    runClientOrigInput = __builtins__.__dict__[ 'input' ]
+    __builtins__.__dict__[ 'input' ] = runClientInput
+except ( AttributeError, KeyError ):
+    import __main__
+    runClientOrigInput = __main__.__builtins__.__dict__[ 'input' ]
+    __main__.__builtins__.__dict__[ 'input' ] = runClientInput
+
 
 
 class RedirectedIORunWrapper():
@@ -37,7 +71,12 @@ class RedirectedIORunWrapper():
 
     def __init__( self ):
         self.__socket = None
+        self.__redirected = False
         return
+
+    def redirected( self ):
+        " True if streams are redirected "
+        return self.__redirected
 
     def main( self ):
         " Run wrapper driver "
@@ -64,6 +103,7 @@ class RedirectedIORunWrapper():
         stderrOld = sys.stderr
         sys.stdout = OutStreamRedirector( self.__socket, True )
         sys.stderr = OutStreamRedirector( self.__socket, False )
+        self.__redirected = True
 
         # Run the script
         retCode = 0
@@ -89,6 +129,7 @@ class RedirectedIORunWrapper():
 
         sys.stderr = stderrOld
         sys.stdout = stdoutOld
+        self.__redirected = False
 
         # Send the return code back
         try:
@@ -214,6 +255,31 @@ class RedirectedIORunWrapper():
             pass
         return
 
+    def raw_input( self, prompt, echo ):
+        " Implements raw_input() using the redirected input "
+        self.write( "%s%s" % ( ResponseRaw, unicode( ( prompt, echo ) ) ) )
+        return self.__waitInput()
+
+    def input( self, prompt ):
+        " Implement input() using the redirected input "
+        return self.raw_input( prompt, 1 )
+
+    def __waitInput( self ):
+        " Waits the 'continue' command "
+        buf = ""
+        while True:
+            try:
+                data = self.__socket.recv( 2048 )
+                if data is not None:
+                    if data.endswith( "\n" ):
+                        buf += data[ : -1 ]
+                        break
+                    else:
+                        buf += data
+            except:
+                pass
+        return buf
+
     @staticmethod
     def resolveHost( host ):
         " Resolves a hostname to an IP address "
@@ -255,6 +321,6 @@ class RedirectedIORunWrapper():
 
 
 if __name__ == "__main__":
-    runWrapper = RedirectedIORunWrapper()
-    sys.exit( runWrapper.main() )
+    RUN_WRAPPER = RedirectedIORunWrapper()
+    sys.exit( RUN_WRAPPER.main() )
 
