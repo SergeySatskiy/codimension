@@ -237,6 +237,11 @@ class RemoteProcessWrapper( QThread ):
 
     def __disconnected( self ):
         " Triggered when the client closed the connection "
+        # It is possible that there are some data in the socket
+        try:
+            self.__parseClientLine()
+        except:
+            pass
         self.__disconnectReceived = True
         return
 
