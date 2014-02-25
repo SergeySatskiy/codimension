@@ -48,6 +48,7 @@ class ErrorMessage( object ):
         self.messageID = ""
         self.objectName = ""    # could be empty
         self.message = ""
+        self.position = None
 
         self.__parse( line )
         return
@@ -371,16 +372,17 @@ class Pylint( object ):
                 formatArg = [ '--msg-template="{path}:{line}: [{msg_id}, {obj}] {msg}"' ]
 
             skipTillRecognised = False
-            for line in self.__run( [ 'pylint' ] +
-                                    formatArg + initHook + rcArg +
-                                    path, workingDir ).split( '\n' ):
+            output = self.__run( [ 'pylint' ] + formatArg + initHook + rcArg +
+                                 path, workingDir ).split( '\n' )
+            for index in xrange( len( output ) ):
+                line = output[ index ]
                 if skipTillRecognised:
-                    lineType, shouldSkip = self.__detectLineType( line )
+                    lineType, shouldSkip = self.__detectLineType( output, index )
                     if lineType == self.Unknown:
                         continue
                     skipTillRecognised = shouldSkip
                 else:
-                    lineType, skipTillRecognised = self.__detectLineType( line )
+                    lineType, skipTillRecognised = self.__detectLineType( output, index )
 
                 if verbose:
                     print str( lineType ) + " -> " + line
@@ -473,15 +475,11 @@ class Pylint( object ):
                 raise Exception( "pylint crash:\n" + err )
         return processStdout
 
-    def __detectLineType( self, line ):
+    def __detectLineType( self, lines, index ):
         """ Provides the pylint output line type and a flag
             if some lines should be skipped  """
 
-        # Some error messages are multiline:
-        # ... Comma not followed by a space
-        # ... Operator not followed by a space
-        # ... Operator not preceded by a space
-
+        line = lines[ index ]
         line = line.strip()
         if line in [ 'Global evaluation', 'Messages',
                      '% errors / warnings by module',
@@ -498,13 +496,24 @@ class Pylint( object ):
             return self.Header, False
 
         if self.__messageRegexp.match( line ):
-            if "Comma not followed by a space" in line or \
-               "Operator not followed by a space" in line or \
-               "Operator not preceded by a space" in line:
-                return self.Message, True
+            # Some error messages have multiline output
+            if index + 2 < len( lines ):
+                # There are further 2 lines in the output
+                if not self.__messageRegexp.match( lines[ index + 1 ].strip() ) and \
+                   not self.__messageRegexp.match( lines[ index + 2 ].strip() ) and \
+                    self.__hasOnlyPointers( lines[ index + 2 ] ):
+                    return self.Message, True
             return self.Message, False
 
         return self.Unknown, False
+
+    @staticmethod
+    def __hasOnlyPointers( line ):
+        " Checks that all the characters in the line are spaces or ^"
+        for char in line:
+            if char not in [ ' ', '^' ]:
+                return False
+        return True
 
     def __parseCurrentSection( self, filesList ):
         " Parses one collected section "
