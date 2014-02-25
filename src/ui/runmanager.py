@@ -22,11 +22,13 @@
 
 """ Run/profile manager """
 
+import os
 from PyQt4.QtCore import QThread, SIGNAL, QObject, QTextCodec, QString
 from PyQt4.QtGui import QDialog, QApplication
 from PyQt4.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
 from subprocess import Popen
 from utils.run import getCwdCmdEnv, CMD_TYPE_RUN, TERM_REDIRECT
+from utils.procfeedback import killProcess
 from utils.globals import GlobalData
 from utils.settings import Settings
 from runparams import RunDialog
@@ -75,6 +77,7 @@ class RemoteProcessWrapper( QThread ):
         self.__protocolState = self.PROTOCOL_CONTROL
         self.__buffer = ""
         self.__proc = None
+        self.__serverPort = None
         return
 
     def needRedirection( self ):
@@ -101,10 +104,11 @@ class RemoteProcessWrapper( QThread ):
             except Exception, exc:
                 logging.error( str( exc ) )
 
+            self.__serverPort = self.__tcpServer.serverPort()
             workingDir, cmd, environment = getCwdCmdEnv( CMD_TYPE_RUN,
                                                          self.__path, params,
                                                          Settings().terminalType,
-                                                         None, self.__tcpServer.serverPort() )
+                                                         None, self.__serverPort )
         else:
             workingDir, cmd, environment = getCwdCmdEnv( CMD_TYPE_RUN,
                                                          self.__path, params,
@@ -209,8 +213,35 @@ class RemoteProcessWrapper( QThread ):
         except:
             pass
 
+        childPID = self.__getChildPID()
+        if childPID is not None:
+            try:
+                # Throws an exception if cannot kill the process
+                killProcess( childPID )
+            except:
+                pass
+
         self.__stopRequest = True
         return
+
+    def __getChildPID( self ):
+        " Provides the child process PID if redirected "
+        if self.__serverPort is None:
+            return None
+
+        for item in os.listdir( "/proc" ):
+            if item.isdigit():
+                try:
+                    f = open( "/proc/" + item + "/cmdline", "r" )
+                    content = f.read()
+                    f.close()
+
+                    if "client/client_cdm_run.py" in content:
+                        if "-p " + str( self.__serverPort ) in content:
+                            return int( item )
+                except:
+                    pass
+        return None
 
     def __newConnection( self ):
         " Handles new incoming connections "
