@@ -61,7 +61,7 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def __onUserInput( self, userInput ):
         " Triggered when the user finished input in the redirected IO console "
-        self.emit( SIGNAL( 'UserInput' ), userInput )
+        self.emit( SIGNAL( 'UserInput' ), self.__threadID, userInput )
         return
 
     def __createLayout( self ):
@@ -447,6 +447,7 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__stopAndCloseButton.setEnabled( False )
         self.__closeButton.setEnabled( True )
         return
+
 
     # Mandatory interface part is below
 

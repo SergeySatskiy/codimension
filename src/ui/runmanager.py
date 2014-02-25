@@ -344,6 +344,12 @@ class RemoteProcessWrapper( QThread ):
         print "Unexpected message received (no control match): '" + line + "'"
         return self.__buffer != ""
 
+    def userInput( self, collectedString ):
+        " Called when the user finished input "
+        if self.__clientSocket:
+            self.__clientSocket.write( collectedString + "\n" )
+            self.__clientSocket.flush()
+        return
 
 
 class RemoteProcess:
@@ -392,6 +398,10 @@ class RunManager( QObject ):
                           remoteProc.widget.appendStdoutMessage )
             self.connect( remoteProc.thread, SIGNAL( 'ClientStderr' ),
                           remoteProc.widget.appendStderrMessage )
+            self.connect( remoteProc.thread, SIGNAL( 'ClientRawInput' ),
+                          remoteProc.widget.rawInput )
+            self.connect( remoteProc.widget, SIGNAL( 'UserInput' ),
+                          self.__onUserInput )
         else:
             remoteProc.widget = None
         remoteProc.isProfiling = False
@@ -480,4 +490,13 @@ class RunManager( QObject ):
             if item.widget:
                 self.__mainWindow.installIOConsole( item.widget )
                 item.widget.appendIDEMessage( "Script " + item.thread.path() + " started" )
+        return
+
+    def __onUserInput( self, threadID, userInput ):
+        " Triggered when the user input is collected "
+        index = self.__getProcessIndex( threadID )
+        if index is not None:
+            item = self.__processes[ index ]
+            if item.thread.needRedirection():
+                item.thread.userInput( userInput )
         return
