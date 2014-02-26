@@ -38,7 +38,7 @@ verbose = False
 class ErrorMessage( object ):
     " Holds a single error message "
 
-    def __init__( self, line, cwd ):
+    def __init__( self, lines, index, cwd ):
 
         self.__cwd = cwd
         if not self.__cwd.endswith( os.path.sep ):
@@ -50,12 +50,13 @@ class ErrorMessage( object ):
         self.message = ""
         self.position = None
 
-        self.__parse( line )
+        self.__parse( lines, index )
         return
 
-    def __parse( self, line ):
+    def __parse( self, lines, index ):
         " parses the error message line "
 
+        line = lines[ index ]
         line = line.strip()
         parts = line.split( ':' )
         if len( parts ) < 3:
@@ -82,6 +83,17 @@ class ErrorMessage( object ):
             self.objectName = msgParts[ 1 ].strip()
 
         self.message = "]".join( parts[ 1: ] ).strip()
+
+        # Some error messages have multiline output
+        if index + 2 < len( lines ):
+            # There are further 2 lines in the output
+            if not Pylint.matchMessage( lines[ index + 1 ].strip() ) and \
+               not Pylint.matchMessage( lines[ index + 2 ].strip() ) and \
+               Pylint.__hasOnlyPointers( lines[ index + 2 ] ):
+                # This is a line with a position pointer
+                position = lines[ index + 2 ].find( "^" )
+                if position != -1:
+                    self.position = position + 1
         return
 
     def __str__( self ):
@@ -275,6 +287,10 @@ class Pylint( object ):
     SectionStart    = 2
     Header          = 3
 
+    MessageRegexp = re.compile( r"^\S+:\d+:\s*\[\S+.*\]\s*\S*" )
+    SimilarRegexp = re.compile( r"^\S+:\d+:\s*\[\S+.*\]\s*Similar lines in" )
+    HeaderRegexp  = re.compile( r"^\*\*+ Module" )
+
     def __init__( self ):
 
         self.retCode = -1
@@ -287,14 +303,12 @@ class Pylint( object ):
         self.previousScore = 0.0
 
         self.__currentSection = []
-        self.__messageRegexp = \
-            re.compile( r"^\S+:\d+:\s*\[\S+.*\]\s*\S*" )
-        self.__similarRegexp = \
-            re.compile( r"^\S+:\d+:\s*\[\S+.*\]\s*Similar lines in" )
-        self.__headerRegexp = \
-            re.compile( r"^\*\*+ Module" )
-
         return
+
+    @staticmethod
+    def matchMessage( line ):
+        " Returns True if the line matches the message regexp "
+        return Pylint.MessageRegexp.match( line )
 
     def getVersion( self ):
         " Provides the pylint version "
@@ -389,7 +403,7 @@ class Pylint( object ):
                 if lineType == self.Header:
                     continue
                 if lineType == self.Message:
-                    self.errorMessages.append( ErrorMessage( line,
+                    self.errorMessages.append( ErrorMessage( output, index,
                                                              workingDir ) )
                     continue
 
@@ -489,18 +503,18 @@ class Pylint( object ):
                      'Report' ]:
             return self.SectionStart, False
 
-        if self.__similarRegexp.match( line ):
+        if self.SimilarRegexp.match( line ):
             return self.MessageSimilar, False
 
-        if self.__headerRegexp.match( line ):
+        if self.HeaderRegexp.match( line ):
             return self.Header, False
 
-        if self.__messageRegexp.match( line ):
+        if self.matchMessage( line ):
             # Some error messages have multiline output
             if index + 2 < len( lines ):
                 # There are further 2 lines in the output
-                if not self.__messageRegexp.match( lines[ index + 1 ].strip() ) and \
-                   not self.__messageRegexp.match( lines[ index + 2 ].strip() ) and \
+                if not self.matchMessage( lines[ index + 1 ].strip() ) and \
+                   not self.matchMessage( lines[ index + 2 ].strip() ) and \
                     self.__hasOnlyPointers( lines[ index + 2 ] ):
                     return self.Message, True
             return self.Message, False
@@ -545,7 +559,7 @@ class Pylint( object ):
             self.dependencies = Dependencies( self.__currentSection )
         elif firstLine == 'Report':
             self.__parseReport()
-        elif self.__similarRegexp.match( firstLine ):
+        elif self.SimilarRegexp.match( firstLine ):
             try:
                 self.similarities.append(
                         Similarity( self.__currentSection, filesList ) )
