@@ -1899,9 +1899,9 @@ class CodimensionMainWindow( QMainWindow ):
         self.__bottomSideBar.raise_()
         return
 
-    def openFile( self, path, lineNo ):
+    def openFile( self, path, lineNo, pos = 0 ):
         " User double clicked on a file or an item in a file "
-        self.editorsManagerWidget.editorsManager.openFile( path, lineNo )
+        self.editorsManagerWidget.editorsManager.openFile( path, lineNo, pos )
         return
 
     def gotoInBuffer( self, uuid, lineNo ):

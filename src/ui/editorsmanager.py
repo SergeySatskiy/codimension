@@ -1145,7 +1145,7 @@ class EditorsManager( QTabWidget ):
         self.currentWidget().setFocus()
         return
 
-    def openFile( self, fileName, lineNo ):
+    def openFile( self, fileName, lineNo, pos = 0 ):
         " Opens the required file "
         try:
             fileName = os.path.realpath( fileName )
@@ -1157,7 +1157,7 @@ class EditorsManager( QTabWidget ):
                         self.history.updateForCurrentIndex()
                     if lineNo > 0:
                         editor = self.widget( index ).getEditor()
-                        editor.gotoLine( lineNo )
+                        editor.gotoLine( lineNo, pos )
                     self.activateTab( index )
                     if self.currentIndex() == index:
                         self.history.addCurrent()
@@ -1190,7 +1190,7 @@ class EditorsManager( QTabWidget ):
 
             if lineNo > 0:
                 # Jump to the asked line
-                editor.gotoLine( lineNo )
+                editor.gotoLine( lineNo, pos )
             else:
                 # Restore the last position
                 line, pos, firstVisible = \
@@ -1215,13 +1215,13 @@ class EditorsManager( QTabWidget ):
             return False
         return True
 
-    def gotoInBuffer( self, uuid, lineNo ):
+    def gotoInBuffer( self, uuid, lineNo, pos = 0 ):
         " Jumps to the given line in the current buffer if it matches uuid "
         widget = self.currentWidget()
         if widget.getUUID() != uuid:
             return
         self.history.updateForCurrentIndex()
-        widget.getEditor().gotoLine( lineNo )
+        widget.getEditor().gotoLine( lineNo, pos )
         self.history.addCurrent()
         widget.setFocus()
         return

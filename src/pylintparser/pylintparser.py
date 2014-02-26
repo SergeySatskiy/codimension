@@ -89,7 +89,7 @@ class ErrorMessage( object ):
             # There are further 2 lines in the output
             if not Pylint.matchMessage( lines[ index + 1 ].strip() ) and \
                not Pylint.matchMessage( lines[ index + 2 ].strip() ) and \
-               Pylint.__hasOnlyPointers( lines[ index + 2 ] ):
+               Pylint.hasOnlyPointers( lines[ index + 2 ] ):
                 # This is a line with a position pointer
                 position = lines[ index + 2 ].find( "^" )
                 if position != -1:
@@ -515,14 +515,14 @@ class Pylint( object ):
                 # There are further 2 lines in the output
                 if not self.matchMessage( lines[ index + 1 ].strip() ) and \
                    not self.matchMessage( lines[ index + 2 ].strip() ) and \
-                    self.__hasOnlyPointers( lines[ index + 2 ] ):
+                    self.hasOnlyPointers( lines[ index + 2 ] ):
                     return self.Message, True
             return self.Message, False
 
         return self.Unknown, False
 
     @staticmethod
-    def __hasOnlyPointers( line ):
+    def hasOnlyPointers( line ):
         " Checks that all the characters in the line are spaces or ^"
         for char in line:
             if char not in [ ' ', '^' ]:

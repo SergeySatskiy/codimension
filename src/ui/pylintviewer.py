@@ -305,7 +305,7 @@ class PylintViewer( QWidget ):
             else:
                 lineNumber = str( item.lineNumber ) + ":" + str( item.position )
             values = QStringList() << item.fileName \
-                                   << item.lineNumber << item.messageID \
+                                   << lineNumber << item.messageID \
                                    << item.objectName << item.message
             errTable.addTopLevelItem( ErrorTableItem( values, 1 ) )
 
@@ -552,7 +552,7 @@ class PylintViewer( QWidget ):
                     editor.setFocus()
                     return
 
-        GlobalData().mainWindow.openFile( fileName, lineNumber )
+        GlobalData().mainWindow.openFile( fileName, lineNumber, pos )
         return
 
     def __resizeBodyFrame( self ):
