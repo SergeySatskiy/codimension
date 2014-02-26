@@ -5,6 +5,7 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * Bug fix: crash when 'Edit' main menu is opened on the startup screen
 * New feature: detect TAB TAB clicks after a character and add spaces if
   there is no completion
+* Better pylint messages parser: collects positions in line if available
 
 
 2013 Dec 26 Sergey Satskiy <sergey.satskiy@gmail.com>

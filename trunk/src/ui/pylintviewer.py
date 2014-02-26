@@ -46,9 +46,24 @@ class ErrorTableItem( QTreeWidgetItem ):
         " Integer or string custom sorting "
         sortColumn = self.treeWidget().sortColumn()
         if sortColumn == self.__intColumn:
-            return int( self.text( sortColumn ) ) < \
-                   int( other.text( sortColumn ) )
+            selfLine, selfPos = self.getLinePos( self.text( sortColumn ) )
+            otherLine, otherPos = self.getLinePos( other.text( sortColumn ) )
+            if selfLine < otherLine:
+                return True
+            if otherLine < selfLine:
+                return False
+            return selfPos < otherPos
         return self.text( sortColumn ) < other.text( sortColumn )
+
+    @staticmethod
+    def getLinePos( value ):
+        " Returns line and pos to compare "
+        value = str( value )
+        if ":" in value:
+            parts = value.split( ":" )
+            return int( parts[ 0 ] ), int( parts[ 1 ] )
+        return int( value ), 0
+
 
 
 
@@ -285,8 +300,12 @@ class PylintViewer( QWidget ):
         errTable.setHeaderLabels( headerLabels )
 
         for item in messages:
+            if item.position is None:
+                lineNumber = str( item.lineNumber )
+            else:
+                lineNumber = str( item.lineNumber ) + ":" + str( item.position )
             values = QStringList() << item.fileName \
-                                   << str( item.lineNumber ) << item.messageID \
+                                   << item.lineNumber << item.messageID \
                                    << item.objectName << item.message
             errTable.addTopLevelItem( ErrorTableItem( values, 1 ) )
 
@@ -503,7 +522,15 @@ class PylintViewer( QWidget ):
     def __errorActivated( self, item, column ):
         " Handles the double click (or Enter) on the item "
 
-        lineNumber = int( item.text( 1 ) )
+        linePos = str( item.text( 1 ) )
+        if ":" in linePos:
+            parts = linePos.split( ":" )
+            lineNumber = int( parts[ 0 ] )
+            pos = int( parts[ 1 ] )
+        else:
+            lineNumber = int( linePos )
+            pos = 0
+
         if self.__reportOption in [ self.SingleFile, self.DirectoryFiles,
                                     self.ProjectFiles ]:
             fileName = str( item.text( 0 ) )
@@ -521,7 +548,7 @@ class PylintViewer( QWidget ):
                         return
                     # The widget was found, so jump to the required
                     editor = widget.getEditor()
-                    editor.gotoLine( lineNumber )
+                    editor.gotoLine( lineNumber, pos )
                     editor.setFocus()
                     return
 
