@@ -69,7 +69,7 @@ from mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from diagram.importsdgm import ( ImportsDiagramDialog, ImportsDiagramProgress,
                                  ImportDiagramOptions )
 from runparams import RunDialog
-from utils.run import ( getCwdCmdEnv, CMD_TYPE_RUN, getWorkingDir,
+from utils.run import ( getWorkingDir,
                         parseCommandLineArguments, getNoArgsEnvironment,
                         TERM_AUTO, TERM_KONSOLE, TERM_GNOME, TERM_XTERM,
                         TERM_REDIRECT )
@@ -2262,7 +2262,14 @@ class CodimensionMainWindow( QMainWindow ):
 
     def zoomIOconsole( self, zoomValue ):
         " Zooms the IO console "
-        self.redirectedIOConsole.zoomTo( zoomValue )
+        # Handle run/profile IO consoles and the debug IO console
+        index = self.__bottomSideBar.count() - 1
+        while index >= 0:
+            widget = self.__bottomSideBar.widget( index )
+            if hasattr( widget, "getType" ):
+                if widget.getType() == MainWindowTabWidgetBase.IOConsole:
+                    widget.zoomTo( zoomValue )
+            index -= 1
         return
 
     def showProfileReport( self, widget, tooltip ):
@@ -4774,6 +4781,8 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onCloseIOConsole )
         self.connect( widget, SIGNAL( 'KillIOConsoleProcess' ),
                       self.__onKillIOConsoleProcess )
+        self.connect( widget, SIGNAL( 'TextEditorZoom' ),
+                      self.editorsManagerWidget.editorsManager.onZoom )
 
         self.__bottomSideBar.addTab( widget,
                 PixmapCache().getIcon( 'ioconsole.png' ), caption )
