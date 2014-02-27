@@ -161,12 +161,6 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.connect( self.__stopAndCloseButton, SIGNAL( 'triggered()' ),
                       self.stopAndClose )
 
-        self.__closeButton = QAction( PixmapCache().getIcon( 'runconsoleclose.png' ),
-                                      'Close tab', self )
-        self.connect( self.__closeButton, SIGNAL( 'triggered()' ),
-                      self.close )
-        self.__closeButton.setEnabled( False )
-
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
         self.__clearButton = QAction( PixmapCache().getIcon( 'trash.png' ),
@@ -190,7 +184,6 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.addWidget( self.__settingsButton )
         toolbar.addAction( self.__stopButton )
         toolbar.addAction( self.__stopAndCloseButton )
-        toolbar.addAction( self.__closeButton )
         toolbar.addWidget( spacer )
         toolbar.addAction( self.__clearButton )
 
@@ -444,8 +437,8 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
     def scriptFinished( self ):
         " Triggered when the script process finished "
         self.__stopButton.setEnabled( False )
-        self.__stopAndCloseButton.setEnabled( False )
-        self.__closeButton.setEnabled( True )
+        self.__stopAndCloseButton.setToolTip( "Close tab" )
+        self.__viewer.switchMode( self.__viewer.MODE_OUTPUT )
         return
 
 
