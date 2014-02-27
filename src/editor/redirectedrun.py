@@ -151,6 +151,9 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__settingsButton.setMenu( self.__settingsMenu )
         self.__settingsButton.setFocusPolicy( Qt.NoFocus )
 
+        fixedSpacer = QWidget()
+        fixedSpacer.setFixedHeight( 8 )
+
         self.__stopButton = QAction( PixmapCache().getIcon( 'runconsolestop.png' ),
                                      'Stop process', self )
         self.connect( self.__stopButton, SIGNAL( 'triggered()' ),
@@ -182,6 +185,7 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.addAction( self.__printButton )
         toolbar.addWidget( self.__filterButton )
         toolbar.addWidget( self.__settingsButton )
+        toolbar.addWidget( fixedSpacer )
         toolbar.addAction( self.__stopButton )
         toolbar.addAction( self.__stopAndCloseButton )
         toolbar.addWidget( spacer )
