@@ -306,25 +306,19 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
     def __onWrapLongLines( self ):
         " Triggered when long lines setting is changed "
         Settings().ioconsolelinewrap = not Settings().ioconsolelinewrap
-        if Settings().ioconsolelinewrap:
-            self.__viewer.setWrapMode( QsciScintilla.WrapWord )
-        else:
-            self.__viewer.setWrapMode( QsciScintilla.WrapNone )
+        self.emit( SIGNAL( 'SettingUpdated' ) )
         return
 
     def __onShowEOL( self ):
         " Triggered when show EOL is changed "
         Settings().ioconsoleshoweol = not Settings().ioconsoleshoweol
-        self.__viewer.setEolVisibility( Settings().ioconsoleshoweol )
+        self.emit( SIGNAL( 'SettingUpdated' ) )
         return
 
     def __onShowWhitespaces( self ):
         " Triggered when show whitespaces is changed "
         Settings().ioconsoleshowspaces = not Settings().ioconsoleshowspaces
-        if Settings().ioconsoleshowspaces:
-            self.__viewer.setWhitespaceVisibility( QsciScintilla.WsVisible )
-        else:
-            self.__viewer.setWhitespaceVisibility( QsciScintilla.WsInvisible )
+        self.emit( SIGNAL( 'SettingUpdated' ) )
         return
 
     def __onAutoscroll( self ):
@@ -335,12 +329,26 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
     def __onShowMargin( self ):
         " Triggered when show margin is changed "
         Settings().ioconsoleshowmargin = not Settings().ioconsoleshowmargin
-        self.__viewer.setTimestampMarginWidth()
+        self.emit( SIGNAL( 'SettingUpdated' ) )
         return
 
     def clear( self ):
         " Triggered when requested to clear the console "
         self.__viewer.clearAll()
+        return
+
+    def consoleSettingsUpdated( self ):
+        " Triggered when one of the consoles updated a common setting "
+        if Settings().ioconsolelinewrap:
+            self.__viewer.setWrapMode( QsciScintilla.WrapWord )
+        else:
+            self.__viewer.setWrapMode( QsciScintilla.WrapNone )
+        self.__viewer.setEolVisibility( Settings().ioconsoleshoweol )
+        if Settings().ioconsoleshowspaces:
+            self.__viewer.setWhitespaceVisibility( QsciScintilla.WsVisible )
+        else:
+            self.__viewer.setWhitespaceVisibility( QsciScintilla.WsInvisible )
+        self.__viewer.setTimestampMarginWidth()
         return
 
 
