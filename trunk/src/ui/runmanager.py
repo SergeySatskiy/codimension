@@ -214,12 +214,16 @@ class RemoteProcessWrapper( QThread ):
             pass
 
         childPID = self.__getChildPID()
-        if childPID is not None:
+        while childPID is not None:
             try:
                 # Throws an exception if cannot kill the process
                 killProcess( childPID )
             except:
                 pass
+            nextPID = self.__getChildPID()
+            if nextPID == childPID:
+                break
+            childPID = nextPID
 
         self.__stopRequest = True
         return
