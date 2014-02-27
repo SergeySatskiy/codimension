@@ -2272,6 +2272,17 @@ class CodimensionMainWindow( QMainWindow ):
             index -= 1
         return
 
+    def onIOConsoleSettingUpdated( self ):
+        " Initiates updating all the IO consoles settings "
+        index = self.__bottomSideBar.count() - 1
+        while index >= 0:
+            widget = self.__bottomSideBar.widget( index )
+            if hasattr( widget, "getType" ):
+                if widget.getType() == MainWindowTabWidgetBase.IOConsole:
+                    widget.consoleSettingsUpdated()
+            index -= 1
+        return
+
     def showProfileReport( self, widget, tooltip ):
         " Shows the given profile report "
         self.editorsManagerWidget.editorsManager.showProfileReport( widget,
@@ -4713,6 +4724,8 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onUserInput )
         self.connect( self.redirectedIOConsole, SIGNAL( 'TextEditorZoom' ),
                       self.editorsManagerWidget.editorsManager.onZoom )
+        self.connect( self.redirectedIOConsole, SIGNAL( 'SettingUpdated' ),
+                      self.onIOConsoleSettingUpdated )
         self.__bottomSideBar.addTab( self.redirectedIOConsole,
                 PixmapCache().getIcon( 'ioconsole.png' ), 'IO console' )
         self.__bottomSideBar.setTabToolTip( 7, 'Redirected IO debug console' )
@@ -4783,6 +4796,8 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onKillIOConsoleProcess )
         self.connect( widget, SIGNAL( 'TextEditorZoom' ),
                       self.editorsManagerWidget.editorsManager.onZoom )
+        self.connect( widget, SIGNAL( 'SettingUpdated' ),
+                      self.onIOConsoleSettingUpdated )
 
         self.__bottomSideBar.addTab( widget,
                 PixmapCache().getIcon( 'ioconsole.png' ), caption )
