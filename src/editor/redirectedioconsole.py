@@ -601,7 +601,7 @@ class RedirectedIOConsole( TextEditor ):
         self.clearUndoHistory()
         if Settings().ioconsoleautoscroll:
             line, pos = self.getEndPosition()
-            self.gotoLine( line, pos )
+            self.gotoLine( line + 1, pos + 1 )
         return
 
     def __addTooltip( self, lineNo, timestamp ):
