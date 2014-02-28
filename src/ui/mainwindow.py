@@ -231,6 +231,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__verticalSplitterSizes = list( settings.vSplitterSizes )
 
         self.logViewer = None
+        self.redirectedIOConsole = None
         self.__createLayout()
 
         splash.showMessage( "Initializing main menu bar..." )
@@ -1747,6 +1748,7 @@ class CodimensionMainWindow( QMainWindow ):
         " Slot to receive projectChanged signal "
 
         if what == CodimensionProject.CompleteProject:
+            self.closeAllIOConsoles()
             self.updateToolbarStatus()
             self.updateWindowTitle()
 
@@ -4743,7 +4745,8 @@ class CodimensionMainWindow( QMainWindow ):
 
     def clearDebugIOConsole( self ):
         " Clears the content of the debug IO console "
-        self.redirectedIOConsole.clear()
+        if self.redirectedIOConsole:
+            self.redirectedIOConsole.clear()
         return
 
     def __onClientStdout( self, data ):
@@ -4854,5 +4857,21 @@ class CodimensionMainWindow( QMainWindow ):
     def __onKillIOConsoleProcess( self, threadID ):
         " Kills the process linked to the IO console "
         self.__runManager.kill( threadID )
+        return
+
+    def closeAllIOConsoles( self ):
+        " Closes all IO run/profile consoles and clears the debug IO console "
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+        index = self.__bottomSideBar.count() - 1
+        while index >= 0:
+            widget = self.__bottomSideBar.widget( index )
+            if hasattr( widget, "getType" ):
+                if widget.getType() == MainWindowTabWidgetBase.IOConsole:
+                    if hasattr( widget, "stopAndClose" ):
+                        widget.stopAndClose()
+            index -= 1
+
+        self.clearDebugIOConsole()
+        QApplication.restoreOverrideCursor()
         return
 
