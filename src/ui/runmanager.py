@@ -37,7 +37,7 @@ from editor.redirectedrun import RunConsoleTabWidget
 from debugger.client.protocol_cdm_dbg import ( EOT, RequestContinue,
                                                StdoutStderrEOT, ResponseRaw,
                                                ResponseExit, ResponseStdout,
-                                               ResponseStderr )
+                                               ResponseStderr, RequestExit )
 
 
 # Finish codes in addition to the normal exit code
@@ -288,6 +288,13 @@ class RemoteProcessWrapper( QThread ):
             self.__clientSocket.flush()
         return
 
+    def __sendExit( self ):
+        " sends the exit command to the runnee "
+        if self.__clientSocket:
+            self.__clientSocket.write( RequestExit + EOT )
+            self.__clientSocket.flush()
+        return
+
     def __parseClientLine( self ):
         " Parses a single line from the running client "
         while self.__clientSocket and self.__clientSocket.bytesAvailable() > 0:
@@ -375,6 +382,7 @@ class RemoteProcessWrapper( QThread ):
             except:
                 pass
             self.__procExitReceived = True
+            self.__sendExit()
             return self.__buffer != ""
 
         if cmd == ResponseStdout:
