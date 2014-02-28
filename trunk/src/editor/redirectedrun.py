@@ -62,6 +62,7 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
     def __onUserInput( self, userInput ):
         " Triggered when the user finished input in the redirected IO console "
         self.emit( SIGNAL( 'UserInput' ), self.__threadID, userInput )
+        self.__clearButton.setEnabled( True )
         return
 
     def __createLayout( self ):
@@ -422,12 +423,14 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         if prompt:
             self.appendStdoutMessage( prompt )
+        self.__clearButton.setEnabled( False )
         self.__viewer.switchMode( self.__viewer.MODE_INPUT )
         return
 
     def sessionStopped( self ):
         " Triggered when redirecting session is stopped "
         self.__viewer.switchMode( self.__viewer.MODE_OUTPUT )
+        self.__clearButton.setEnabled( True )
         return
 
     def stop( self ):
