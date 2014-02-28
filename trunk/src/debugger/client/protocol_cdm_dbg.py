@@ -56,6 +56,7 @@ RequestExec =              '>Exec<'
 RequestShutdown =          '>Shutdown<'
 RequestForkTo =            '>ForkTo<'
 RequestStack =             '>CurrentStack<'
+RequestExit =              '>Exit<'
 
 ResponseOK =               '>OK<'
 ResponseContinue =         '>Continue<'

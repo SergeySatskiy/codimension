@@ -25,11 +25,13 @@
 
 import sys, socket, time, traceback, os, imp
 from outredir_cdm_dbg import OutStreamRedirector, MAX_TRIES
-from protocol_cdm_dbg import RequestContinue, EOT, ResponseExit, ResponseRaw
+from protocol_cdm_dbg import ( RequestContinue, EOT, ResponseExit,
+                               ResponseRaw, RequestExit )
 from errno import EAGAIN
 
 
 WAIT_CONTINUE_TIMEOUT = 10
+WAIT_EXIT_COMMAND = 5
 RUN_WRAPPER = None
 
 
@@ -187,6 +189,28 @@ class RedirectedIORunWrapper():
                 raise Exception( "Unexpected command from IDE: " + data )
         return
 
+    def __waitExit( self ):
+        " Waits for the 'exit' command "
+        startTime = time.time()
+        while True:
+            time.sleep( 0.01 )
+
+            # Read from the socket
+            try:
+                data = self.__socket.recv( 1024, socket.MSG_DONTWAIT )
+            except socket.error, exc:
+                if exc[ 0 ] != EAGAIN:
+                    raise
+                data = None
+            if not data:
+                if time.time() - startTime > WAIT_EXIT_COMMAND:
+                    raise Exception( "Exit command timeout" )
+            else:
+                if data == RequestExit + EOT:
+                    break
+                raise Exception( "Unexpected command from IDE: " + data )
+        return
+
     def write( self, data ):
         " Writes into the socket "
         tries = MAX_TRIES
@@ -250,6 +274,11 @@ class RedirectedIORunWrapper():
         " Closes the connection if so "
         try:
             if self.__socket:
+                # Wait exit needed because otherwise IDE may get socket
+                # disconnected before it has a chance to read the script
+                # exit code. Wait for the explicit command to exit guarantees
+                # that all the data will be received.
+                self.__waitExit()
                 self.__socket.close()
         except:
             pass
