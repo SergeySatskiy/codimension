@@ -454,6 +454,7 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__stopButton.setEnabled( False )
         self.__stopAndCloseButton.setToolTip( "Close tab" )
         self.__viewer.switchMode( self.__viewer.MODE_OUTPUT )
+        self.__clearButton.setEnabled( True )
         return
 
 
