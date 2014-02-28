@@ -138,6 +138,7 @@ CDM_SETTINGS = {
     CDMSetting( "bottomBarMinimized", CDMSetting.TYPE_BOOL, False ),
     CDMSetting( "rightBarMinimized", CDMSetting.TYPE_BOOL, False ),
     CDMSetting( "projectLoaded", CDMSetting.TYPE_BOOL, False ),
+    CDMSetting( "clearDebugIO", CDMSetting.TYPE_BOOL, False ),
     CDMSetting( "hSplitterSizes", CDMSetting.TYPE_INT_LST,
                 _H_SPLITTER_SIZES_DEFAULT ),
     CDMSetting( "vSplitterSizes", CDMSetting.TYPE_INT_LST,
