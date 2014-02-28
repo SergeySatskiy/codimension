@@ -1263,6 +1263,11 @@ class CodimensionMainWindow( QMainWindow ):
         editorCalltipsAct.setChecked( self.settings.editorCalltips )
         self.connect( editorCalltipsAct, SIGNAL( 'changed()' ),
                       self.__editorCalltipsChanged )
+        clearDebugIOAct = self.__optionsMenu.addAction( 'Clear debug IO console on new session' )
+        clearDebugIOAct.setCheckable( True )
+        clearDebugIOAct.setChecked( self.settings.clearDebugIO )
+        self.connect( clearDebugIOAct, SIGNAL( 'changed()' ),
+                      self.__clearDebugIOChanged )
         self.__optionsMenu.addSeparator()
         tooltipsMenu = self.__optionsMenu.addMenu( "Tooltips" )
         projectTooltipsAct = tooltipsMenu.addAction( "&Project tab" )
@@ -2773,6 +2778,11 @@ class CodimensionMainWindow( QMainWindow ):
     def __editorCalltipsChanged( self ):
         " Editor calltips changed "
         self.settings.editorCalltips = not self.settings.editorCalltips
+        return
+
+    def __clearDebugIOChanged( self ):
+        " Clear debug IO console before a new session changed "
+        self.settings.clearDebugIO = not self.settings.clearDebugIO
         return
 
     def __projectTooltipsChanged( self ):
@@ -4718,7 +4728,7 @@ class CodimensionMainWindow( QMainWindow ):
         return
 
     def installRedirectedIOConsole( self ):
-        # Create redirected IO console
+        " Create redirected IO console "
         self.redirectedIOConsole = IOConsoleTabWidget( self )
         self.connect( self.redirectedIOConsole, SIGNAL( 'UserInput' ),
                       self.__onUserInput )
@@ -4729,6 +4739,11 @@ class CodimensionMainWindow( QMainWindow ):
         self.__bottomSideBar.addTab( self.redirectedIOConsole,
                 PixmapCache().getIcon( 'ioconsole.png' ), 'IO console' )
         self.__bottomSideBar.setTabToolTip( 7, 'Redirected IO debug console' )
+        return
+
+    def clearDebugIOConsole( self ):
+        " Clears the content of the debug IO console "
+        self.redirectedIOConsole.clear()
         return
 
     def __onClientStdout( self, data ):

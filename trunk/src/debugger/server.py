@@ -192,6 +192,9 @@ class CodimensionDebugger( QObject ):
         self.__mainWindow.switchDebugMode( True )
         terminalType = Settings().terminalType
 
+        if terminalType == TERM_REDIRECT and Settings().clearDebugIO:
+            self.__mainWindow.clearDebugIOConsole()
+
         self.emit( SIGNAL( 'ClientIDEMessage' ),
                    "Start debugging session for " + fileName )
         self.__createProcfeedbackSocket()
