@@ -176,33 +176,35 @@ class RedirectedIOConsole( TextEditor ):
                 endPos = self.currentPosition()
                 self.SendScintilla( self.SCI_SETSTYLING,
                                     endPos - startPos, self.stdinStyle )
-                return
             else:
-                pass
-        else:
-            # Non-printable character or some other key
-            if key == Qt.Key_Enter or key == Qt.Key_Return:
-                userInput = str( self.__getUserInput() )
-                self.switchMode( self.MODE_OUTPUT )
-                timestampLine, _ = self.getEndPosition()
-                self.append( '\n' )
-                self.clearUndoHistory()
-                line, pos = self.getEndPosition()
-                self.setCursorPosition( line, pos )
-                self.ensureLineVisible( line )
-                endPos = self.currentPosition()
-                startPos = self.positionBefore( endPos )
-                self.SendScintilla( self.SCI_STARTSTYLING, startPos, 31 )
-                self.SendScintilla( self.SCI_SETSTYLING,
-                                    endPos - startPos, self.stdinStyle )
-                msg = IOConsoleMsg( IOConsoleMsg.STDIN_MESSAGE,
-                                    userInput + "\n" )
-                self.__messages.append( msg )
-                self.__addTooltip( timestampLine, msg.getTimestamp() )
-                self.emit( SIGNAL( 'UserInput' ), userInput )
-                return
-            if key == Qt.Key_Backspace and \
-                self.currentPosition() == self.lastOutputPos:
+                self.inputBuffer += txt
+            return
+
+        # Non-printable character or some other key
+        if key == Qt.Key_Enter or key == Qt.Key_Return:
+            userInput = str( self.__getUserInput() )
+            self.switchMode( self.MODE_OUTPUT )
+            timestampLine, _ = self.getEndPosition()
+            self.append( '\n' )
+            self.clearUndoHistory()
+            line, pos = self.getEndPosition()
+            self.setCursorPosition( line, pos )
+            self.ensureLineVisible( line )
+            endPos = self.currentPosition()
+            startPos = self.positionBefore( endPos )
+            self.SendScintilla( self.SCI_STARTSTYLING, startPos, 31 )
+            self.SendScintilla( self.SCI_SETSTYLING,
+                                endPos - startPos, self.stdinStyle )
+            msg = IOConsoleMsg( IOConsoleMsg.STDIN_MESSAGE,
+                                userInput + "\n" )
+            self.__messages.append( msg )
+            self.__addTooltip( timestampLine, msg.getTimestamp() )
+            self.emit( SIGNAL( 'UserInput' ), userInput )
+            return
+        if key == Qt.Key_Backspace:
+            if self.currentPosition() == self.lastOutputPos:
+                if self.inputEcho == False:
+                    self.inputBuffer = self.inputBuffer[ : -1 ]
                 return
 
         ScintillaWrapper.keyPressEvent( self, event )
@@ -216,7 +218,9 @@ class RedirectedIOConsole( TextEditor ):
             line, pos = self.getEndPosition()
             _, startPos = self.lineIndexFromPosition( self.lastOutputPos )
             return self.getTextAtPos( line, startPos, pos - startPos )
-        return self.inputBuffer
+        value = self.inputBuffer
+        self.inputBuffer = ""
+        return value
 
     def __initGeneralSettings( self ):
         " Sets some generic look and feel "
