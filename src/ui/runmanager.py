@@ -316,26 +316,29 @@ class RemoteProcessWrapper( QThread ):
         if index == -1:
             # End has not been found
             if self.__buffer.endswith( '\x04' ):
-                if isStdout:
-                    self.emit( SIGNAL( 'ClientStdout' ), self.__buffer[ : -1 ] )
-                else:
-                    self.emit( SIGNAL( 'ClientStderr' ), self.__buffer[ : -1 ] )
+                value = self.__buffer[ : -1 ]
                 self.__buffer = '\x04'
+                if isStdout:
+                    self.emit( SIGNAL( 'ClientStdout' ), value )
+                else:
+                    self.emit( SIGNAL( 'ClientStderr' ), value )
                 return False
             else:
-                if isStdout:
-                    self.emit( SIGNAL( 'ClientStdout' ), self.__buffer )
-                else:
-                    self.emit( SIGNAL( 'ClientStderr' ), self.__buffer )
+                value = self.__buffer
                 self.__buffer = ""
+                if isStdout:
+                    self.emit( SIGNAL( 'ClientStdout' ), value )
+                else:
+                    self.emit( SIGNAL( 'ClientStderr' ), value )
                 return False
         else:
-            if isStdout:
-                self.emit( SIGNAL( 'ClientStdout' ), self.__buffer[ 0 : index ] )
-            else:
-                self.emit( SIGNAL( 'ClientStderr' ), self.__buffer[ 0 : index ] )
+            value = self.__buffer[ 0 : index ]
             self.__buffer = self.__buffer[ index + 2 : ]
             self.__protocolState = self.PROTOCOL_CONTROL
+            if isStdout:
+                self.emit( SIGNAL( 'ClientStdout' ), value )
+            else:
+                self.emit( SIGNAL( 'ClientStderr' ), value )
             return True
 
     def __processControlState( self ):
