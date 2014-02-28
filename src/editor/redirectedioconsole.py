@@ -95,7 +95,11 @@ class RedirectedIOConsole( TextEditor ):
                     return self._onShiftEnd()
                 if key == Qt.Key_Home:
                     return self._onShiftHome()
+                if key == Qt.Key_Insert:
+                    return self.insertText()
             if modifiers == Qt.ControlModifier:
+                if key == Qt.Key_V:
+                    return self.insertText()
 #                if key == Qt.Key_X:
 #                    return self.onShiftDel()
                 if key in [ Qt.Key_C, Qt.Key_Insert ]:
@@ -209,6 +213,29 @@ class RedirectedIOConsole( TextEditor ):
 
         ScintillaWrapper.keyPressEvent( self, event )
         return
+
+    def insertText( self ):
+        " Triggered when insert is requested "
+        if self.isReadOnly():
+            return True
+
+        # Check what is in the buffer
+        text = str( QApplication.clipboard().text() )
+        if '\n' in text or '\r' in text:
+            return True
+
+        if not self.inputEcho:
+            self.inputBuffer += text
+            return True
+
+        startPos = self.currentPosition()
+        TextEditor.paste( self )
+        endPos = self.currentPosition()
+
+        self.SendScintilla( self.SCI_STARTSTYLING, startPos, 31 )
+        self.SendScintilla( self.SCI_SETSTYLING,
+                            endPos - startPos, self.stdinStyle )
+        return True
 
     def __getUserInput( self ):
         " Provides the collected user input "
