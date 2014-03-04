@@ -3513,6 +3513,8 @@ class CodimensionMainWindow( QMainWindow ):
             prj.setTabsStatus( editorsManager.getTabsStatus() )
             editorsManager.closeAll()
             prj.loadProject( projectFile )
+            if not self.__leftSideBar.isMinimized():
+                self.activateProjectTab()
         QApplication.restoreOverrideCursor()
         return
 
@@ -4122,6 +4124,7 @@ class CodimensionMainWindow( QMainWindow ):
             act = self.__recentFilesMenu.addAction(
                                 self.__getAccelerator( addedCount ) + item )
             act.setData( QVariant( item ) )
+            act.setEnabled( os.path.exists( item ) )
 
         self.__recentFilesMenu.setEnabled( addedCount > 0 )
         return
@@ -4344,14 +4347,14 @@ class CodimensionMainWindow( QMainWindow ):
         addedCount = 0
         currentPrj = GlobalData().project.fileName
         for item in self.settings.recentProjects:
-            if item == currentPrj or not os.path.exists( item ):
+            if item == currentPrj:
                 continue
             addedCount += 1
             act = self.__recentPrjMenu.addAction(
                                 self.__getAccelerator( addedCount ) +
                                 os.path.basename( item ).replace( ".cdm", "" ) )
             act.setData( QVariant( item ) )
-            act.setEnabled( not self.debugMode )
+            act.setEnabled( not self.debugMode and os.path.exists( item ) )
 
         self.__recentPrjMenu.setEnabled( addedCount > 0 )
 
