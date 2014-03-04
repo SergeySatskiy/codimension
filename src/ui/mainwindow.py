@@ -22,7 +22,7 @@
 
 """ codimension main window """
 
-import os, os.path, sys, logging, ConfigParser, gc
+import os.path, sys, logging, ConfigParser, gc
 from PyQt4.QtCore import SIGNAL, Qt, QSize, QTimer, QDir, QVariant, QUrl
 from PyQt4.QtGui import ( QLabel, QToolBar, QWidget, QMessageBox, QFont,
                           QVBoxLayout, QSplitter, QSizePolicy,
@@ -4344,7 +4344,7 @@ class CodimensionMainWindow( QMainWindow ):
         addedCount = 0
         currentPrj = GlobalData().project.fileName
         for item in self.settings.recentProjects:
-            if item == currentPrj:
+            if item == currentPrj or not os.path.exists( item ):
                 continue
             addedCount += 1
             act = self.__recentPrjMenu.addAction(
@@ -4381,7 +4381,10 @@ class CodimensionMainWindow( QMainWindow ):
     def __onRecentPrj( self, act ):
         " Triggered when a recent project is requested to be loaded "
         path = str( act.data().toString() )
-        self.__loadProject( path )
+        if not os.path.exists( path ):
+            logging.error( "Could not find project file: " path )
+        else:
+            self.__loadProject( path )
         return
 
     def __onRecentFile( self, act ):
