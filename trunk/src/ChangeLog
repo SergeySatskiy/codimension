@@ -5,7 +5,10 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * Bug fix: crash when 'Edit' main menu is opened on the startup screen
 * New feature: detect TAB TAB clicks after a character and add spaces if
   there is no completion
-* Better pylint messages parser: collects positions in line if available
+* Better pylint messages parser: collects positions in line if available and
+  jumps to the certain column if so
+* Bug fix: opening recent project from the project main menu lead to crash if
+  the project does not exist anymore
 
 
 2013 Dec 26 Sergey Satskiy <sergey.satskiy@gmail.com>
