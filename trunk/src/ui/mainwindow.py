@@ -4385,7 +4385,7 @@ class CodimensionMainWindow( QMainWindow ):
         " Triggered when a recent project is requested to be loaded "
         path = str( act.data().toString() )
         if not os.path.exists( path ):
-            logging.error( "Could not find project file: " path )
+            logging.error( "Could not find project file: " + path )
         else:
             self.__loadProject( path )
         return
