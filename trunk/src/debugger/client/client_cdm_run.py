@@ -26,7 +26,7 @@
 import sys, socket, time, traceback, os, imp
 from outredir_cdm_dbg import OutStreamRedirector, MAX_TRIES
 from protocol_cdm_dbg import ( RequestContinue, EOT, ResponseExit,
-                               ResponseRaw, RequestExit )
+                               ResponseRaw, RequestExit, ResponseProcID )
 from errno import EAGAIN
 
 
@@ -86,13 +86,14 @@ class RedirectedIORunWrapper():
             print >> sys.stderr, "Unexpected arguments"
             return 1
 
-        host, port, wdir, args = self.parseArgs()
-        if host is None or port is None or wdir is None:
+        procid, host, port, wdir, args = self.parseArgs()
+        if procid is None or host is None or port is None or wdir is None:
             print >> sys.stderr, "Not enough arguments"
             return 1
 
         remoteAddress = self.resolveHost( host )
         self.connect( remoteAddress, port )
+        self.write( ResponseProcID + str( procid ) )
 
         try:
             self.__waitContinue()
@@ -286,27 +287,44 @@ class RedirectedIORunWrapper():
 
     def raw_input( self, prompt, echo ):
         " Implements raw_input() using the redirected input "
+#        self.__flushSocketBuffer()
         self.write( "%s%s" % ( ResponseRaw, unicode( ( prompt, echo ) ) ) )
         return self.__waitInput()
+
+    def __flushSocketBuffer( self ):
+        " Debug purpose function which empties the socket buffer "
+        try:
+            data = self.__socket.recv( 1024, socket.MSG_DONTWAIT )
+            if data is not None:
+                if len( data ) > 0:
+                    f = open( "clientsocket.txt", "a" )
+                    f.write( "UNEXPECTED data in socket: " + repr( data ) + "\n" )
+                    f.close()
+        except:
+            pass
+        return
 
     def input( self, prompt ):
         " Implement input() using the redirected input "
         return self.raw_input( prompt, 1 )
 
     def __waitInput( self ):
-        " Waits the 'continue' command "
-        buf = ""
+        " Waits for the user input "
+        buf = u""
         while True:
             try:
-                data = self.__socket.recv( 2048 )
+                data = self.__socket.recv( 4096 )
                 if data is not None:
-                    if data.endswith( "\n" ):
-                        buf += data[ : -1 ]
+                    pos = data.find( '\n' )
+                    if pos != -1:
+                        buf += data[ 0 : pos ].decode( 'utf8' )
                         break
-                    else:
-                        buf += data
-            except:
-                pass
+
+                    buf += data.decode( 'utf8' )
+            except Exception, exc:
+                f = open( "clientsocket.txt", "a" )
+                f.write( "Wait input exception: " + str( exc ) + "\n" )
+                f.close()
         return buf
 
     @staticmethod
@@ -327,6 +345,7 @@ class RedirectedIORunWrapper():
         host = None
         port = None
         wdir = None
+        procid = None
         args = sys.argv[ 1 : ]
 
         while args[ 0 ]:
@@ -342,11 +361,15 @@ class RedirectedIORunWrapper():
                 wdir = args[ 1 ]
                 del args[ 0 ]
                 del args[ 0 ]
+            elif args[ 0 ] in [ '-i', '--procid' ]:
+                procid = int( args[ 1 ] )
+                del args[ 0 ]
+                del args[ 0 ]
             elif args[ 0 ] == '--':
                 del args[ 0 ]
                 break
 
-        return host, port, wdir, args
+        return procid, host, port, wdir, args
 
 
 if __name__ == "__main__":
