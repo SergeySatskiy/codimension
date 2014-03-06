@@ -108,9 +108,11 @@ class OutStreamRedirector( object ):
         while tries > 0:
             try :
                 if self.isStdout:
-                    self.sock.sendall( ResponseStdout + EOT + data + StdoutStderrEOT )
+                    message = ResponseStdout
                 else:
-                    self.sock.sendall( ResponseStderr + EOT + data + StdoutStderrEOT )
+                    message = ResponseStderr
+                message += EOT + data + StdoutStderrEOT
+                self.sock.sendall( message )
                 return
             except socket.error:
                 tries -= 1
