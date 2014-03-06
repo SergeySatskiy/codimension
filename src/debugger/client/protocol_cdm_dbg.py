@@ -83,6 +83,7 @@ ResponseExecOK =           '>ExecOK<'
 ResponseExecError =        '>ExecError<'
 ResponseStdout =           '>StdOut<'
 ResponseStderr =           '>StdErr<'
+ResponseProcID =           '>ProcID<'
 
 PassiveStartup =           '>PassiveStartup<'
 
