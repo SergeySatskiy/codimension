@@ -57,7 +57,7 @@ def getNextID():
 CODEC = QTextCodec.codecForName( "utf-8" )
 
 
-class RemoteProcessWrapper( QThread ):
+class RemoteProcessWrapper( QObject ):
     " Thread which monitors the remote process "
 
     PROTOCOL_CONTROL = 0
@@ -65,11 +65,10 @@ class RemoteProcessWrapper( QThread ):
     PROTOCOL_STDERR = 2
 
     def __init__( self, path ):
-        QThread.__init__( self )
-        self.__threadID = getNextID()
+        QObject.__init__( self )
+        self.__procID = getNextID()
         self.__path = path
         self.__needRedirection = Settings().terminalType == TERM_REDIRECT
-        self.__tcpServer = None
         self.__clientSocket = None
         self.__stopRequest = False
         self.__disconnectReceived = False
@@ -79,7 +78,6 @@ class RemoteProcessWrapper( QThread ):
         self.__buffer = ""
         self.__proc = None
         self.__serverPort = None
-        self.__data = None
         return
 
     def needRedirection( self ):
@@ -288,26 +286,21 @@ class RemoteProcessWrapper( QThread ):
     def __sendStart( self ):
         " Sends the start command to the runnee "
         if self.__clientSocket:
-            # Without this temporary variable the socket sometimes has a few
-            # garbage bytes. I do not really know why
-            self.__data = RequestContinue + EOT
-            self.__clientSocket.write( self.__data )
+            data = RequestContinue + EOT
+            self.__clientSocket.write( data )
             self.__clientSocket.waitForBytesWritten()
         return
 
     def __sendExit( self ):
         " sends the exit command to the runnee "
         if self.__clientSocket:
-            # Without this temporary variable the socket sometimes has a few
-            # garbage bytes. I do not really know why
-            self.__data = RequestExit + EOT
-            self.__clientSocket.write( self.__data )
+            data = RequestExit + EOT
+            self.__clientSocket.write( data )
             self.__clientSocket.waitForBytesWritten()
         return
 
     def __parseClientLine( self ):
         " Parses a single line from the running client "
-        QApplication.processEvents()
         while self.__clientSocket and self.__clientSocket.bytesAvailable() > 0:
             qs = self.__clientSocket.readAll()
             us = CODEC.fromUnicode( QString( qs ) )
@@ -323,7 +316,6 @@ class RemoteProcessWrapper( QThread ):
                     tryAgain = self.__processStdoutStderrState( False )
                 else:
                     raise Exception( "Unexpected protocol state" )
-        QApplication.processEvents()
         return
 
     def __processStdoutStderrState( self, isStdout ):
@@ -339,7 +331,6 @@ class RemoteProcessWrapper( QThread ):
                     self.emit( SIGNAL( 'ClientStdout' ), value )
                 else:
                     self.emit( SIGNAL( 'ClientStderr' ), value )
-                QApplication.processEvents()
                 return False
             else:
                 value = self.__buffer
@@ -348,7 +339,6 @@ class RemoteProcessWrapper( QThread ):
                     self.emit( SIGNAL( 'ClientStdout' ), value )
                 else:
                     self.emit( SIGNAL( 'ClientStderr' ), value )
-                QApplication.processEvents()
                 return False
         else:
             value = self.__buffer[ 0 : index ]
@@ -358,7 +348,6 @@ class RemoteProcessWrapper( QThread ):
                 self.emit( SIGNAL( 'ClientStdout' ), value )
             else:
                 self.emit( SIGNAL( 'ClientStderr' ), value )
-            QApplication.processEvents()
             return True
 
     def __processControlState( self ):
@@ -386,9 +375,7 @@ class RemoteProcessWrapper( QThread ):
 
         if cmd == ResponseRaw:
             prompt, echo = eval( content )
-            QApplication.processEvents()
             self.emit( SIGNAL( 'ClientRawInput' ), prompt, echo )
-            QApplication.processEvents()
             return self.__buffer != ""
 
         if cmd == ResponseExit:
@@ -414,8 +401,8 @@ class RemoteProcessWrapper( QThread ):
     def userInput( self, collectedString ):
         " Called when the user finished input "
         if self.__clientSocket:
-            self.__data = collectedString.encode( "utf8" ) + "\n"
-            self.__clientSocket.write( self.__data )
+            data = collectedString.encode( "utf8" ) + "\n"
+            self.__clientSocket.write( data )
             self.__clientSocket.waitForBytesWritten()
         return
 
@@ -424,7 +411,7 @@ class RemoteProcess:
     " Stores attributes of a single process "
 
     def __init__( self ):
-        self.thread = None
+        self.procWrapper = None
         self.widget = None
         self.isProfiling = False
         return
