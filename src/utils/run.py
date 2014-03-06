@@ -179,9 +179,7 @@ __osSpawn = {
                       "'cd %(wdir)s; %(exec)s %(options)s; CDM_RES=$?; %(exit_if_ok)s %(shell)s' &",
     'gnome-terminal': "gnome-terminal --disable-factory -x %(shell)s -c " \
                       "'cd %(wdir)s; %(exec)s %(options)s; CDM_RES=$?; %(exit_if_ok)s %(shell)s' &",
-    'redirect'      : "%(shell)s -c "
-                      "'cd %(wdir)s; "
-                      "%(exec)s %(runclient)s %(runopt)s -- %(options)s'"
+    'redirect'      : "%(exec)s %(runclient)s %(runopt)s -- %(options)s"
             }
 
 # The profiling needs to waiting for the child process to finish
@@ -230,7 +228,8 @@ EXIT_IF_OK = 'test "_$CDM_RES" == "_0" && exit;'
 
 
 def getTerminalCommandToRun( fileName, workingDir, arguments,
-                             terminalType, closeTerminal, tcpServerPort = None ):
+                             terminalType, closeTerminal, tcpServerPort = None,
+                             procID = None ):
     " Provides a command to run a separate shell terminal "
 
     if os.name != 'posix':
@@ -244,7 +243,8 @@ def getTerminalCommandToRun( fileName, workingDir, arguments,
         runClient = os.path.sep.join( [ os.path.dirname( sys.argv[ 0 ] ),
                                         "debugger", "client",
                                         "client_cdm_run.py" ] )
-        runOptions = "-h localhost -p " + str( tcpServerPort ) + " -w " + workingDir
+        runOptions = "-h localhost -p " + str( tcpServerPort ) + \
+                     " -w " + workingDir + " -i " + str( procID )
     else:
         terminalStartCmd = getStartTerminalCommand( terminalType )
         runClient = ""
@@ -478,7 +478,8 @@ def parseCommandLineArguments( cmdLine ):
 
 
 def getCwdCmdEnv( cmdType, path, params, terminalType,
-                  procFeedbackPort = None, tcpServerPort = None ):
+                  procFeedbackPort = None, tcpServerPort = None,
+                  procID = None ):
     """ Provides the working directory, command line and environment
         for running/debugging a script """
 
@@ -490,7 +491,7 @@ def getCwdCmdEnv( cmdType, path, params, terminalType,
     if cmdType == CMD_TYPE_RUN:
         cmd = getTerminalCommandToRun( path, workingDir, arguments,
                                        terminalType, params.closeTerminal,
-                                       tcpServerPort )
+                                       tcpServerPort, procID )
     elif cmdType == CMD_TYPE_PROFILE:
         cmd = getTerminalCommandToProfile( path, workingDir, arguments,
                                            terminalType, params.closeTerminal,
