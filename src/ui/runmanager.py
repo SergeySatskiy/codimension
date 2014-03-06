@@ -23,8 +23,8 @@
 """ Run/profile manager """
 
 import os
-from PyQt4.QtCore import QThread, SIGNAL, QObject, QTextCodec, QString
-from PyQt4.QtGui import QDialog, QApplication
+from PyQt4.QtCore import QThread, SIGNAL, QObject, QTextCodec, QString, Qt
+from PyQt4.QtGui import QDialog, QApplication, QCursor
 from PyQt4.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
 from subprocess import Popen
 from utils.run import getCwdCmdEnv, CMD_TYPE_RUN, TERM_REDIRECT
@@ -37,7 +37,8 @@ from editor.redirectedrun import RunConsoleTabWidget
 from debugger.client.protocol_cdm_dbg import ( EOT, RequestContinue,
                                                StdoutStderrEOT, ResponseRaw,
                                                ResponseExit, ResponseStdout,
-                                               ResponseStderr, RequestExit )
+                                               ResponseStderr, RequestExit,
+                                               ResponseProcID )
 
 
 # Finish codes in addition to the normal exit code
@@ -53,6 +54,7 @@ def getNextID():
     NEXT_ID += 1
     return current
 
+CODEC = QTextCodec.codecForName( "utf-8" )
 
 
 class RemoteProcessWrapper( QThread ):
@@ -73,11 +75,11 @@ class RemoteProcessWrapper( QThread ):
         self.__disconnectReceived = False
         self.__procExitReceived = False
         self.__retCode = -1
-        self.__codec = QTextCodec.codecForName( "utf-8" )
         self.__protocolState = self.PROTOCOL_CONTROL
         self.__buffer = ""
         self.__proc = None
         self.__serverPort = None
+        self.__data = None
         return
 
     def needRedirection( self ):
@@ -250,13 +252,15 @@ class RemoteProcessWrapper( QThread ):
 
     def __newConnection( self ):
         " Handles new incoming connections "
-        sock = self.__tcpServer.nextPendingConnection()
-        self.__clientSocket = sock
+        if self.__clientSocket is not None:
+            return
+        self.__clientSocket = self.__tcpServer.nextPendingConnection()
         self.__clientSocket.setSocketOption( QAbstractSocket.KeepAliveOption, 1 )
         self.connect( self.__clientSocket, SIGNAL( 'disconnected()' ),
                       self.__disconnected )
-        self.disconnect( self.__tcpServer, SIGNAL( "newConnection()" ),
-                         self.__newConnection )
+#        self.disconnect( self.__tcpServer, SIGNAL( "newConnection()" ),
+#                         self.__newConnection )
+        QApplication.processEvents()
         return
 
     def __waitIncomingConnection( self ):
@@ -284,25 +288,30 @@ class RemoteProcessWrapper( QThread ):
     def __sendStart( self ):
         " Sends the start command to the runnee "
         if self.__clientSocket:
-            self.__clientSocket.write( RequestContinue + EOT )
-            self.__clientSocket.flush()
+            # Without this temporary variable the socket sometimes has a few
+            # garbage bytes. I do not really know why
+            self.__data = RequestContinue + EOT
+            self.__clientSocket.write( self.__data )
+            self.__clientSocket.waitForBytesWritten()
         return
 
     def __sendExit( self ):
         " sends the exit command to the runnee "
         if self.__clientSocket:
-            self.__clientSocket.write( RequestExit + EOT )
-            self.__clientSocket.flush()
+            # Without this temporary variable the socket sometimes has a few
+            # garbage bytes. I do not really know why
+            self.__data = RequestExit + EOT
+            self.__clientSocket.write( self.__data )
+            self.__clientSocket.waitForBytesWritten()
         return
 
     def __parseClientLine( self ):
         " Parses a single line from the running client "
+        QApplication.processEvents()
         while self.__clientSocket and self.__clientSocket.bytesAvailable() > 0:
             qs = self.__clientSocket.readAll()
-            us = self.__codec.fromUnicode( QString( qs ) )
+            us = CODEC.fromUnicode( QString( qs ) )
             self.__buffer += str( us )
-
-            # print "Received: '" + str( us ) + "'"
 
             tryAgain = True
             while tryAgain:
@@ -314,6 +323,7 @@ class RemoteProcessWrapper( QThread ):
                     tryAgain = self.__processStdoutStderrState( False )
                 else:
                     raise Exception( "Unexpected protocol state" )
+        QApplication.processEvents()
         return
 
     def __processStdoutStderrState( self, isStdout ):
@@ -329,6 +339,7 @@ class RemoteProcessWrapper( QThread ):
                     self.emit( SIGNAL( 'ClientStdout' ), value )
                 else:
                     self.emit( SIGNAL( 'ClientStderr' ), value )
+                QApplication.processEvents()
                 return False
             else:
                 value = self.__buffer
@@ -337,6 +348,7 @@ class RemoteProcessWrapper( QThread ):
                     self.emit( SIGNAL( 'ClientStdout' ), value )
                 else:
                     self.emit( SIGNAL( 'ClientStderr' ), value )
+                QApplication.processEvents()
                 return False
         else:
             value = self.__buffer[ 0 : index ]
@@ -346,6 +358,7 @@ class RemoteProcessWrapper( QThread ):
                 self.emit( SIGNAL( 'ClientStdout' ), value )
             else:
                 self.emit( SIGNAL( 'ClientStderr' ), value )
+            QApplication.processEvents()
             return True
 
     def __processControlState( self ):
@@ -373,7 +386,9 @@ class RemoteProcessWrapper( QThread ):
 
         if cmd == ResponseRaw:
             prompt, echo = eval( content )
+            QApplication.processEvents()
             self.emit( SIGNAL( 'ClientRawInput' ), prompt, echo )
+            QApplication.processEvents()
             return self.__buffer != ""
 
         if cmd == ResponseExit:
@@ -399,8 +414,9 @@ class RemoteProcessWrapper( QThread ):
     def userInput( self, collectedString ):
         " Called when the user finished input "
         if self.__clientSocket:
-            self.__clientSocket.write( collectedString + "\n" )
-            self.__clientSocket.flush()
+            self.__data = collectedString.encode( "utf8" ) + "\n"
+            self.__clientSocket.write( self.__data )
+            self.__clientSocket.waitForBytesWritten()
         return
 
 
@@ -421,7 +437,39 @@ class RunManager( QObject ):
         QObject.__init__( self )
         self.__mainWindow = mainWindow
         self.__processes = []
+
+        self.__tcpServer = QTcpServer()
+        self.connect( self.__tcpServer, SIGNAL( "newConnection()" ),
+                      self.__newConnection )
+        self.__tcpServer.listen( QHostAddress.LocalHost )
         return
+
+    def __newConnection( self ):
+        " Handles new incoming connections "
+        clientSocket = self.__tcpServer.nextPendingConnection()
+        clientSocket.setSocketOption( QAbstractSocket.KeepAliveOption, 1 )
+        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+        self.__waitForHandshake( clientSocket )
+        QApplication.restoreOverrideCursor()
+        return
+
+    def __waitForHandshake( self, clientSocket ):
+        " Waits for the message with the thread ID "
+        if clientSocket.waitForReadyRead( 1000 ):
+            qs = clientSocket.readAll()
+            us = str( CODEC.fromUnicode( QString( qs ) ) )
+            if us.endswith( EOT ):
+                line = us[ 0 : -len( EOT ) ]
+                if line.startswith( '>' ):
+                    cmdIndex = line.find( '<' )
+                    if cmdIndex != -1:
+                        cmd = line[ 0 : cmdIndex + 1 ]
+                        content = line[ cmdIndex + 1 : ]
+                        if cmd == ResponseProcID:
+                            procID = int( content )
+
+
+
 
     def run( self, path, needDialog ):
         " Runs the given script with redirected IO "
