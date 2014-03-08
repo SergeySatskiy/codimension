@@ -23,12 +23,12 @@
 """ Run/profile manager """
 
 import os
-from PyQt4.QtCore import QThread, SIGNAL, QObject, QTextCodec, QString, Qt
+from PyQt4.QtCore import SIGNAL, QObject, QTextCodec, QString, Qt
 from PyQt4.QtGui import QDialog, QApplication, QCursor
 from PyQt4.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
 from subprocess import Popen
 from utils.run import getCwdCmdEnv, CMD_TYPE_RUN, TERM_REDIRECT
-from utils.procfeedback import killProcess
+from utils.procfeedback import killProcess, isProcessAlive
 from utils.globals import GlobalData
 from utils.settings import Settings
 from runparams import RunDialog
@@ -58,160 +58,103 @@ CODEC = QTextCodec.codecForName( "utf-8" )
 
 
 class RemoteProcessWrapper( QObject ):
-    " Thread which monitors the remote process "
+    " Wrapper to control the remote process "
 
     PROTOCOL_CONTROL = 0
     PROTOCOL_STDOUT = 1
     PROTOCOL_STDERR = 2
 
-    def __init__( self, path ):
+    def __init__( self, path, serverPort ):
         QObject.__init__( self )
         self.__procID = getNextID()
         self.__path = path
-        self.__needRedirection = Settings().terminalType == TERM_REDIRECT
+        self.__serverPort = serverPort
         self.__clientSocket = None
-        self.__stopRequest = False
-        self.__disconnectReceived = False
-        self.__procExitReceived = False
-        self.__retCode = -1
+        self.__needRedirection = Settings().terminalType == TERM_REDIRECT
         self.__protocolState = self.PROTOCOL_CONTROL
         self.__buffer = ""
         self.__proc = None
-        self.__serverPort = None
         return
 
     def needRedirection( self ):
         " True if redirection required "
         return self.__needRedirection
 
-    def threadID( self ):
-        " Provides the thread ID "
-        return self.__threadID
+    def procID( self ):
+        " Provides the process ID "
+        return self.__procID
 
     def path( self ):
         " Provides the script path "
         return self.__path
 
-    def run( self ):
-        " Thread running function "
+    def start( self ):
+        " Starts the remote process "
         params = GlobalData().getRunParameters( self.__path )
         if self.__needRedirection:
-            try:
-                self.__tcpServer = QTcpServer()
-                self.connect( self.__tcpServer, SIGNAL( "newConnection()" ),
-                              self.__newConnection )
-                self.__tcpServer.listen( QHostAddress.LocalHost )
-            except Exception, exc:
-                logging.error( str( exc ) )
-
-            self.__serverPort = self.__tcpServer.serverPort()
-            workingDir, cmd, environment = getCwdCmdEnv( CMD_TYPE_RUN,
-                                                         self.__path, params,
-                                                         Settings().terminalType,
-                                                         None, self.__serverPort )
+            workingDir, cmd, \
+            environment = getCwdCmdEnv( CMD_TYPE_RUN, self.__path, params,
+                                        Settings().terminalType,
+                                        None, self.__serverPort, self.__procID )
         else:
-            workingDir, cmd, environment = getCwdCmdEnv( CMD_TYPE_RUN,
-                                                         self.__path, params,
-                                                         Settings().terminalType )
+            workingDir, cmd, \
+            environment = getCwdCmdEnv( CMD_TYPE_RUN, self.__path, params,
+                                        Settings().terminalType )
 
-        if self.__needRedirection:
-            self.__runRedirected( workingDir, cmd, environment )
-        else:
-            self.__runDetached( workingDir, cmd, environment )
-        return
-
-    def __runRedirected( self, workingDir, cmd, environment ):
-        " Runs a redirected IO process "
         try:
             self.__proc = Popen( cmd, shell = True,
                                  cwd = workingDir, env = environment )
         except Exception, exc:
             logging.error( str( exc ) )
-            return
+            return False
+        return True
 
-        # Wait till incoming connection
-        self.__waitIncomingConnection()
-        if not self.__clientSocket:
-            logging.error( "Error running the script in the redirected IO mode: "
-                           "incoming connection timeout." )
-            return
-
-        # Send the signal to notify the manager - should install the widget
-        # and produce an IDE message
-        self.emit( SIGNAL( 'Started' ), self.__threadID )
-
+    def setSocket( self, clientSocket ):
+        " Called when an incoming connection has come "
+        self.__clientSocket = clientSocket
         self.connect( self.__clientSocket, SIGNAL( 'readyRead()' ),
                       self.__parseClientLine )
+        self.connect( self.__clientSocket, SIGNAL( 'disconnected()' ),
+                      self.__disconnected )
         self.__parseClientLine()
 
         # Send runnee the 'start' message
         self.__sendStart()
-
-        # Wait till runnee finishes
-        while not self.__stopRequest and \
-              not self.__disconnectReceived and \
-              not self.__procExitReceived:
-            time.sleep( 0.01 )
-            QApplication.processEvents()
-
-        try:
-            self.__proc.wait()
-        except:
-            pass
-
-        if self.__clientSocket:
-            try:
-                self.__clientSocket.close()
-            except:
-                pass
-
-        # Process has finished some way:
-        # - stop requested
-        # - process finished
-        # - process disconnected
-        if self.__procExitReceived:
-            signalValue = self.__retCode
-        elif self.__stopRequest:
-            signalValue = KILLED
-        else:
-            signalValue = DISCONNECTED
-        self.emit( SIGNAL( 'Finished' ), self.__threadID, signalValue )
-        return
-
-    def __runDetached( self, workingDir, cmd, environment ):
-        " Runs a detached process "
-        self.__proc = None
-        try:
-            self.__proc = Popen( cmd, shell = True,
-                          cwd = workingDir, env = environment )
-            while not self.__stopRequest:
-                time.sleep( 0.05 )
-                if self.__proc.poll() is not None:
-                    break
-        except Exception, exc:
-            logging.error( str( exc ) )
-
-        try:
-            self.__proc.wait()
-        except:
-            pass
         return
 
     def stop( self ):
-        " Sets the thread stop request "
+        " Kills the process "
         if self.__clientSocket:
             try:
-                self.disconnect( self.__clientSocket, SIGNAL( 'readyRead()' ),
+                self.disconnect( self.__clientSocket,
+                                 SIGNAL( 'readyRead()' ),
                                  self.__parseClientLine )
-                self.disconnect( self.__clientSocket, SIGNAL( 'disconnected()' ),
+                self.disconnect( self.__clientSocket,
+                                 SIGNAL( 'disconnected()' ),
                                  self.__disconnected )
             except:
                 pass
 
-        try:
-            self.__proc.kill()
-        except:
-            pass
+        self.__kill()
+        self.emit( SIGNAL( 'Finished' ), self.__procID, KILLED )
+        return
+
+    def wait( self ):
+        " Waits for the process "
+        if self.__proc is not None:
+            try:
+                self.__proc.wait()
+            except:
+                pass
+        return
+
+    def __kill( self ):
+        " Kills the process or checks there is no process in memory "
+        if self.__proc is not None:
+            try:
+                self.__proc.kill()
+            except:
+                pass
 
         childPID = self.__getChildPID()
         while childPID is not None:
@@ -225,12 +168,14 @@ class RemoteProcessWrapper( QObject ):
                 break
             childPID = nextPID
 
-        self.__stopRequest = True
+        # Here: the process killed
+        self.wait()
+        self.__proc = None
         return
 
     def __getChildPID( self ):
         " Provides the child process PID if redirected "
-        if self.__serverPort is None:
+        if self.__serverPort is None or self.__procID is None:
             return None
 
         for item in os.listdir( "/proc" ):
@@ -243,44 +188,17 @@ class RemoteProcessWrapper( QObject ):
                     if "client/client_cdm_run.py" in content:
                         if "-p" in content and \
                            str( self.__serverPort ) in content:
-                            return int( item )
+                            if "-i" in content and \
+                                str( self.__procID ) in content:
+                                return int( item )
                 except:
                     pass
         return None
 
-    def __newConnection( self ):
-        " Handles new incoming connections "
-        if self.__clientSocket is not None:
-            return
-        self.__clientSocket = self.__tcpServer.nextPendingConnection()
-        self.__clientSocket.setSocketOption( QAbstractSocket.KeepAliveOption, 1 )
-        self.connect( self.__clientSocket, SIGNAL( 'disconnected()' ),
-                      self.__disconnected )
-#        self.disconnect( self.__tcpServer, SIGNAL( "newConnection()" ),
-#                         self.__newConnection )
-        QApplication.processEvents()
-        return
-
-    def __waitIncomingConnection( self ):
-        " Waits the incoming connection "
-        startTime = time.time()
-        while True:
-            time.sleep( 0.01 )
-            QApplication.processEvents()
-            if self.__clientSocket:
-                break
-            if time.time() - startTime > 10:
-                break
-        return
-
     def __disconnected( self ):
         " Triggered when the client closed the connection "
-        # It is possible that there are some data in the socket
-        try:
-            self.__parseClientLine()
-        except:
-            pass
-        self.__disconnectReceived = True
+        self.__kill()
+        self.emit( SIGNAL( 'Finished' ), self.__procID, DISCONNECTED )
         return
 
     def __sendStart( self ):
@@ -332,23 +250,25 @@ class RemoteProcessWrapper( QObject ):
                 else:
                     self.emit( SIGNAL( 'ClientStderr' ), value )
                 return False
-            else:
-                value = self.__buffer
-                self.__buffer = ""
-                if isStdout:
-                    self.emit( SIGNAL( 'ClientStdout' ), value )
-                else:
-                    self.emit( SIGNAL( 'ClientStderr' ), value )
-                return False
-        else:
-            value = self.__buffer[ 0 : index ]
-            self.__buffer = self.__buffer[ index + 2 : ]
-            self.__protocolState = self.PROTOCOL_CONTROL
+
+            # Partial stdout/stderr received
+            value = self.__buffer
+            self.__buffer = ""
             if isStdout:
                 self.emit( SIGNAL( 'ClientStdout' ), value )
             else:
                 self.emit( SIGNAL( 'ClientStderr' ), value )
-            return True
+            return False
+
+        # Here stdout/stderr has been received in full
+        value = self.__buffer[ 0 : index ]
+        self.__buffer = self.__buffer[ index + 2 : ]
+        self.__protocolState = self.PROTOCOL_CONTROL
+        if isStdout:
+            self.emit( SIGNAL( 'ClientStdout' ), value )
+        else:
+            self.emit( SIGNAL( 'ClientStderr' ), value )
+        return True
 
     def __processControlState( self ):
         " Analyzes receiving buffer in the CONTROL state "
@@ -380,10 +300,11 @@ class RemoteProcessWrapper( QObject ):
 
         if cmd == ResponseExit:
             try:
-                self.__retCode = int( content )
+                retCode = int( content )
             except:
-                pass
-            self.__procExitReceived = True
+                # Must never happened
+                retCode = -1
+            self.emit( SIGNAL( 'Finished' ), self.__procID, retCode )
             self.__sendExit()
             return self.__buffer != ""
 
@@ -441,22 +362,34 @@ class RunManager( QObject ):
         return
 
     def __waitForHandshake( self, clientSocket ):
-        " Waits for the message with the thread ID "
+        " Waits for the message with the proc ID "
         if clientSocket.waitForReadyRead( 1000 ):
             qs = clientSocket.readAll()
             us = str( CODEC.fromUnicode( QString( qs ) ) )
-            if us.endswith( EOT ):
-                line = us[ 0 : -len( EOT ) ]
-                if line.startswith( '>' ):
-                    cmdIndex = line.find( '<' )
-                    if cmdIndex != -1:
-                        cmd = line[ 0 : cmdIndex + 1 ]
-                        content = line[ cmdIndex + 1 : ]
-                        if cmd == ResponseProcID:
-                            procID = int( content )
+            if not us.endswith( EOT ):
+                return
 
+            line = us[ 0 : -len( EOT ) ]
+            if not line.startswith( '>' ):
+                return
 
+            cmdIndex = line.find( '<' )
+            if cmdIndex == -1:
+                return
 
+            cmd = line[ 0 : cmdIndex + 1 ]
+            content = line[ cmdIndex + 1 : ]
+            if cmd != ResponseProcID:
+                return
+
+            # It could only be a redirected process
+            procID = int( content )
+            procIndex = self.__getProcessIndex( procID )
+            if procIndex is not None:
+                self.__onProcessStarted( procID )
+                self.__processes[ procIndex ].procWrapper.setSocket(
+                                                            clientSocket )
+        return
 
     def run( self, path, needDialog ):
         " Runs the given script with redirected IO "
@@ -473,28 +406,34 @@ class RunManager( QObject ):
             if dlg.termType != termType:
                 Settings().terminalType = dlg.termType
 
+        # The parameters for the run are ready.
+        # Start the run business.
         remoteProc = RemoteProcess()
-        remoteProc.thread = RemoteProcessWrapper( path )
-        self.connect( remoteProc.thread, SIGNAL( 'Finished' ),
-                      self.__onProcessFinished )
-        if Settings().terminalType == TERM_REDIRECT:
-            remoteProc.widget = RunConsoleTabWidget( remoteProc.thread.threadID() )
-            self.connect( remoteProc.thread, SIGNAL( 'Started' ),
-                          self.__onProcessStarted )
-            self.connect( remoteProc.thread, SIGNAL( 'ClientStdout' ),
+        remoteProc.isProfiling = False
+        remoteProc.procWrapper = RemoteProcessWrapper( path,
+                                        self.__tcpServer.serverPort() )
+        if Settings().terminalType() == TERM_REDIRECT:
+            remoteProc.widget = RunConsoleTabWidget(
+                                        remoteProc.procWrapper.procID() )
+            self.connect( remoteProc.procWrapper, SIGNAL( 'ClientStdout' ),
                           remoteProc.widget.appendStdoutMessage )
-            self.connect( remoteProc.thread, SIGNAL( 'ClientStderr' ),
+            self.connect( remoteProc.procWrapper, SIGNAL( 'ClientStderr' ),
                           remoteProc.widget.appendStderrMessage )
-            self.connect( remoteProc.thread, SIGNAL( 'ClientRawInput' ),
+            self.connect( remoteProc.procWrapper, SIGNAL( 'ClientRawInput' ),
                           remoteProc.widget.rawInput )
             self.connect( remoteProc.widget, SIGNAL( 'UserInput' ),
                           self.__onUserInput )
         else:
             remoteProc.widget = None
-        remoteProc.isProfiling = False
 
+        self.connect( remoteProc.procWrapper, SIGNAL( 'Finished' ),
+                      self.__onProcessFinished )
         self.__processes.append( remoteProc )
-        remoteProc.thread.start()
+        if remoteProc.procWrapper.start() == False:
+            # Failed to start - the fact is logged, just remove from the list
+            procIndex = self.__getProcessIndex( remoteProc.procWrapper.procID() )
+            if procIndex is not None:
+                del self.__processes[ procIndex ]
         return
 
     def profile( self, path ):
@@ -502,12 +441,12 @@ class RunManager( QObject ):
         return
 
     def killAll( self ):
-        " Stops all the threads and kills all the processes if needed "
+        " Kills all the processes if needed "
         index = len( self.__processes ) - 1
         while index >= 0:
             item = self.__processes[ index ]
-            if item.thread.needRedirection():
-                item.thread.stop()
+            if item.procWrapper.needRedirection():
+                item.procWrapper.stop()
             index -= 1
 
         # Wait till all the processes stopped
@@ -523,36 +462,36 @@ class RunManager( QObject ):
         count = 0
         index = len( self.__processes ) - 1
         while index >= 0:
-            if self.__processes[ index ].thread.needRedirection():
+            if self.__processes[ index ].procWrapper.needRedirection():
                 count += 1
             index -= 1
         return count
 
-    def kill( self, threadID ):
+    def kill( self, procID ):
         " Kills a single process "
-        index = self.__getProcessIndex( threadID )
+        index = self.__getProcessIndex( procID )
         if index is None:
             return
         item = self.__processes[ index ]
-        if not item.thread.needRedirection():
+        if not item.procWrapper.needRedirection():
             return
 
-        item.thread.stop()
+        item.procWrapper.stop()
         return
 
-    def __getProcessIndex( self, threadID ):
+    def __getProcessIndex( self, procID ):
         " Returns a process index in the list "
         for index, item in enumerate( self.__processes ):
-            if item.thread.threadID() == threadID:
+            if item.procWrapper.procID() == procID:
                 return index
         return None
 
-    def __onProcessFinished( self, threadID, retCode ):
+    def __onProcessFinished( self, procID, retCode ):
         " Triggered when a process has finished "
-        index = self.__getProcessIndex( threadID )
+        index = self.__getProcessIndex( procID )
         if index is not None:
             item = self.__processes[ index ]
-            if item.thread.needRedirection():
+            if item.procWrapper.needRedirection() and retCode != STARTUPERROR:
                 if item.widget:
                     item.widget.scriptFinished()
                     if retCode == KILLED:
@@ -564,26 +503,30 @@ class RunManager( QObject ):
                     else:
                         msg = "Script finished with exit code " + str( retCode )
                         tooltip = "finished, exit code " + str( retCode )
+                        item.procWrapper.wait()
                     item.widget.appendIDEMessage( msg )
-                    self.__mainWindow.updateIOConsoleTooltip( threadID, tooltip )
+                    self.__mainWindow.updateIOConsoleTooltip( procID, tooltip )
             del self.__processes[ index ]
         return
 
-    def __onProcessStarted( self, threadID ):
+    def __onProcessStarted( self, procID ):
         " Triggered when a process has started "
-        index = self.__getProcessIndex( threadID )
+        index = self.__getProcessIndex( procID )
         if index is not None:
             item = self.__processes[ index ]
             if item.widget:
                 self.__mainWindow.installIOConsole( item.widget )
-                item.widget.appendIDEMessage( "Script " + item.thread.path() + " started" )
+                item.widget.appendIDEMessage( "Script " +
+                                              item.procWrapper.path() +
+                                              " started" )
         return
 
-    def __onUserInput( self, threadID, userInput ):
+    def __onUserInput( self, procID, userInput ):
         " Triggered when the user input is collected "
-        index = self.__getProcessIndex( threadID )
+        index = self.__getProcessIndex( procID )
         if index is not None:
             item = self.__processes[ index ]
-            if item.thread.needRedirection():
-                item.thread.userInput( userInput )
+            if item.procWrapper.needRedirection():
+                item.procWrapper.userInput( userInput )
         return
+
