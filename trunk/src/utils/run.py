@@ -26,7 +26,7 @@
 " Utility functions to support running scripts "
 
 
-import sys, os, os.path, getpass, commands
+import sys, os, os.path, getpass, commands, logging
 
 
 TERM_REDIRECT = -1
@@ -286,7 +286,13 @@ def getTerminalCommandToProfile( fileName, workingDir, arguments,
 
     pythonExec = sys.executable
     shell = getUserShell()
-    terminalStartCmd = getStartTerminalCommand( terminalType )
+
+    if terminalType == TERM_REDIRECT:
+        logging.warning( "Profiling with redirected IO to IDE has not been "
+                         "implemented yet. Falling back to xterm..." )
+        terminalStartCmd = getStartTerminalCommand( TERM_XTERM )
+    else:
+        terminalStartCmd = getStartTerminalCommand( terminalType )
 
     args = ""
     for index in xrange( len( arguments ) ):
