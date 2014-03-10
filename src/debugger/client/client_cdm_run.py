@@ -203,7 +203,7 @@ class RedirectedIORunWrapper():
                 if exc[ 0 ] != EAGAIN:
                     raise
                 data = None
-            if not data:
+            if data is None:
                 if time.time() - startTime > WAIT_EXIT_COMMAND:
                     raise Exception( "Exit command timeout" )
             else:
@@ -287,7 +287,7 @@ class RedirectedIORunWrapper():
 
     def raw_input( self, prompt, echo ):
         " Implements raw_input() using the redirected input "
-#        self.__flushSocketBuffer()
+        # self.__flushSocketBuffer()
         self.write( "%s%s" % ( ResponseRaw, unicode( ( prompt, echo ) ) ) )
         return self.__waitInput()
 
