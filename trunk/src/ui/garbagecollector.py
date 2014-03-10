@@ -42,9 +42,8 @@ class GarbageCollector( QObject ):
 
     INTERVAL = 10000
 
-    def __init__( self, parent, debug = False ):
+    def __init__( self, parent ):
         QObject.__init__( self, parent )
-        self.debug = debug
 
         self.timer = QTimer( self )
         self.timer.timeout.connect( self.check )
