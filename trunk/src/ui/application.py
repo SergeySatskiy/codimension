@@ -27,6 +27,7 @@ from PyQt4.QtCore       import Qt, QEvent, SIGNAL
 from PyQt4.QtGui        import QApplication, QMenuBar
 from utils.pixmapcache  import PixmapCache
 from utils.globals      import GlobalData
+from garbagecollector   import GarbageCollector
 
 
 class CodimensionApplication( QApplication ):
@@ -63,6 +64,9 @@ class CodimensionApplication( QApplication ):
         appCSS = GlobalData().skin.appCSS
         if appCSS != "":
             self.setStyleSheet( appCSS )
+
+
+        self.__gc = GarbageCollector( self, True )
 
         self.installEventFilter( self )
         return
