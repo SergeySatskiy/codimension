@@ -65,8 +65,8 @@ class CodimensionApplication( QApplication ):
         if appCSS != "":
             self.setStyleSheet( appCSS )
 
-
-        self.__gc = GarbageCollector( self, True )
+        # Install custom GC
+        self.__gc = GarbageCollector( self )
 
         self.installEventFilter( self )
         return
