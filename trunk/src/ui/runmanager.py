@@ -112,10 +112,7 @@ class RemoteProcessWrapper( QObject ):
     def setSocket( self, clientSocket ):
         " Called when an incoming connection has come "
         self.__clientSocket = clientSocket
-        self.connect( self.__clientSocket, SIGNAL( 'readyRead()' ),
-                      self.__parseClientLine )
-        self.connect( self.__clientSocket, SIGNAL( 'disconnected()' ),
-                      self.__disconnected )
+        self.__connectSocket()
         self.__parseClientLine()
 
         # Send runnee the 'start' message
@@ -124,6 +121,22 @@ class RemoteProcessWrapper( QObject ):
 
     def stop( self ):
         " Kills the process "
+        self.__disconnectSocket()
+        self.__kill()
+        self.emit( SIGNAL( 'Finished' ), self.__procID, KILLED )
+        return
+
+    def __connectSocket( self ):
+        " Connects the socket slots "
+        if self.__clientSocket:
+            self.connect( self.__clientSocket, SIGNAL( 'readyRead()' ),
+                          self.__parseClientLine )
+            self.connect( self.__clientSocket, SIGNAL( 'disconnected()' ),
+                          self.__disconnected )
+        return
+
+    def __disconnectSocket( self ):
+        " Disconnects the socket related slots "
         if self.__clientSocket:
             try:
                 self.disconnect( self.__clientSocket,
@@ -134,9 +147,16 @@ class RemoteProcessWrapper( QObject ):
                                  self.__disconnected )
             except:
                 pass
+        return
 
-        self.__kill()
-        self.emit( SIGNAL( 'Finished' ), self.__procID, KILLED )
+    def __closeSocket( self ):
+        " Closes the client socket if so "
+        if self.__clientSocket:
+            try:
+                self.__clientSocket.close()
+            except:
+                pass
+            self.__clientSocket = None
         return
 
     def wait( self ):
@@ -146,6 +166,7 @@ class RemoteProcessWrapper( QObject ):
                 self.__proc.wait()
             except:
                 pass
+        self.__closeSocket()
         return
 
     def __kill( self ):
@@ -206,13 +227,14 @@ class RemoteProcessWrapper( QObject ):
         if self.__clientSocket:
             data = RequestContinue + EOT
             self.__clientSocket.write( data )
-            self.__clientSocket.waitForBytesWritten()
         return
 
     def __sendExit( self ):
         " sends the exit command to the runnee "
+        self.__disconnectSocket()
         if self.__clientSocket:
             data = RequestExit + EOT
+            QApplication.processEvents()
             self.__clientSocket.write( data )
             self.__clientSocket.waitForBytesWritten()
         return
@@ -249,6 +271,7 @@ class RemoteProcessWrapper( QObject ):
                     self.emit( SIGNAL( 'ClientStdout' ), value )
                 else:
                     self.emit( SIGNAL( 'ClientStderr' ), value )
+                QApplication.processEvents()
                 return False
 
             # Partial stdout/stderr received
@@ -258,6 +281,7 @@ class RemoteProcessWrapper( QObject ):
                 self.emit( SIGNAL( 'ClientStdout' ), value )
             else:
                 self.emit( SIGNAL( 'ClientStderr' ), value )
+            QApplication.processEvents()
             return False
 
         # Here stdout/stderr has been received in full
@@ -268,6 +292,7 @@ class RemoteProcessWrapper( QObject ):
             self.emit( SIGNAL( 'ClientStdout' ), value )
         else:
             self.emit( SIGNAL( 'ClientStderr' ), value )
+        QApplication.processEvents()
         return True
 
     def __processControlState( self ):
@@ -304,8 +329,9 @@ class RemoteProcessWrapper( QObject ):
             except:
                 # Must never happened
                 retCode = -1
-            self.emit( SIGNAL( 'Finished' ), self.__procID, retCode )
             self.__sendExit()
+            self.emit( SIGNAL( 'Finished' ), self.__procID, retCode )
+            QApplication.processEvents()
             return self.__buffer != ""
 
         if cmd == ResponseStdout:
@@ -324,7 +350,6 @@ class RemoteProcessWrapper( QObject ):
         if self.__clientSocket:
             data = collectedString.encode( "utf8" ) + "\n"
             self.__clientSocket.write( data )
-            self.__clientSocket.waitForBytesWritten()
         return
 
 
@@ -356,6 +381,7 @@ class RunManager( QObject ):
         " Handles new incoming connections "
         clientSocket = self.__tcpServer.nextPendingConnection()
         clientSocket.setSocketOption( QAbstractSocket.KeepAliveOption, 1 )
+        clientSocket.setSocketOption( QAbstractSocket.LowDelayOption, 1 )
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         self.__waitForHandshake( clientSocket )
         QApplication.restoreOverrideCursor()
@@ -412,7 +438,7 @@ class RunManager( QObject ):
         remoteProc.isProfiling = False
         remoteProc.procWrapper = RemoteProcessWrapper( path,
                                         self.__tcpServer.serverPort() )
-        if Settings().terminalType() == TERM_REDIRECT:
+        if Settings().terminalType == TERM_REDIRECT:
             remoteProc.widget = RunConsoleTabWidget(
                                         remoteProc.procWrapper.procID() )
             self.connect( remoteProc.procWrapper, SIGNAL( 'ClientStdout' ),
@@ -491,7 +517,7 @@ class RunManager( QObject ):
         index = self.__getProcessIndex( procID )
         if index is not None:
             item = self.__processes[ index ]
-            if item.procWrapper.needRedirection() and retCode != STARTUPERROR:
+            if item.procWrapper.needRedirection():
                 if item.widget:
                     item.widget.scriptFinished()
                     if retCode == KILLED:
