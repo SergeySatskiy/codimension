@@ -1,5 +1,6 @@
-XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
+2014 Mar 11 Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Version 2.3.0
 * New feature: debugging and running script now can have IO redirected to IDE
 * New feature: allow selecting multiple files in the 'Open file' dialog
 * New feature: display the number of highlighted occurences on the status bar
@@ -11,6 +12,7 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * Bug fix: opening recent project from the project main menu lead to crash if
   the project does not exist anymore
 * New feature: custom garbage collector which runs in the GUI thread
+* Get rid of checking if a new version is available when IDE starts
 
 2013 Dec 26 Sergey Satskiy <sergey.satskiy@gmail.com>
 
