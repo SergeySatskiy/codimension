@@ -1,5 +1,6 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* New feature: debugging and running script now can have IO redirected to IDE
 * New feature: allow selecting multiple files in the 'Open file' dialog
 * New feature: display the number of highlighted occurences on the status bar
 * Bug fix: crash when 'Edit' main menu is opened on the startup screen

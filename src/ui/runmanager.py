@@ -23,12 +23,12 @@
 """ Run/profile manager """
 
 import os
-from PyQt4.QtCore import SIGNAL, QObject, QTextCodec, QString, Qt
+from PyQt4.QtCore import SIGNAL, QObject, QTextCodec, QString, Qt, QTimer
 from PyQt4.QtGui import QDialog, QApplication, QCursor
 from PyQt4.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
 from subprocess import Popen
 from utils.run import getCwdCmdEnv, CMD_TYPE_RUN, TERM_REDIRECT
-from utils.procfeedback import killProcess, isProcessAlive
+from utils.procfeedback import killProcess
 from utils.globals import GlobalData
 from utils.settings import Settings
 from runparams import RunDialog
@@ -168,6 +168,16 @@ class RemoteProcessWrapper( QObject ):
                 pass
         self.__closeSocket()
         return
+
+    def waitDetached( self ):
+        " Needs to avoid zombies "
+        try:
+            if self.__proc.poll() is not None:
+                self.__proc.wait()
+                return True
+        except:
+            return True
+        return False
 
     def __kill( self ):
         " Kills the process or checks there is no process in memory "
@@ -375,6 +385,11 @@ class RunManager( QObject ):
         self.connect( self.__tcpServer, SIGNAL( "newConnection()" ),
                       self.__newConnection )
         self.__tcpServer.listen( QHostAddress.LocalHost )
+
+        self.__waitTimer = QTimer( self )
+        self.__waitTimer.setSingleShot( True )
+        self.connect( self.__waitTimer, SIGNAL( 'timeout()' ),
+                      self.__onWaitImer )
         return
 
     def __newConnection( self ):
@@ -460,6 +475,10 @@ class RunManager( QObject ):
             procIndex = self.__getProcessIndex( remoteProc.procWrapper.procID() )
             if procIndex is not None:
                 del self.__processes[ procIndex ]
+        else:
+            if Settings().terminalType != TERM_REDIRECT:
+                if not self.__waitTimer.isActive():
+                    self.__waitTimer.start( 1000 )
         return
 
     def profile( self, path ):
@@ -556,3 +575,18 @@ class RunManager( QObject ):
                 item.procWrapper.userInput( userInput )
         return
 
+    def __onWaitImer( self ):
+        " Triggered when the timer fired "
+        needNewTimer = False
+        index = len( self.__processes ) - 1
+        while index >= 0:
+            item = self.__processes[ index ]
+            if item.procWrapper.needRedirection() == False:
+                if item.procWrapper.waitDetached() == True:
+                    del self.__processes[ index ]
+                else:
+                    needNewTimer = True
+            index -= 1
+        if needNewTimer:
+            self.__waitTimer.start( 1000 )
+        return
