@@ -25,8 +25,6 @@
 
 import os.path, sys
 from utils.globals import GlobalData
-from utils.latestver import getLatestVersionFile
-from distutils.version import StrictVersion
 from texttabwidget import TextTabWidget
 
 
@@ -45,24 +43,6 @@ class WelcomeWidget( TextTabWidget ):
         logoPath = pixmapPath + 'logo-48x48.png'
         welcome = "  Codimension version " + str( GlobalData().version ) + \
                   " <font size=-2>(GPL v3)</font>"
-
-        newerVersion = ""
-        success, values = getLatestVersionFile()
-        if success:
-            if StrictVersion( values[ "LatestVersion" ] ) > \
-               StrictVersion( GlobalData().version ):
-                newerVersion = "<p aligh='left'>" \
-                               "<b>Note</b>: version " + \
-                               values[ "LatestVersion" ] + " is <a href='" + \
-                               self.downloadPage + "'>available</a>"
-                if "ReleaseDate" in values:
-                    newerVersion += ", released on " + values[ "ReleaseDate" ]
-                newerVersion += "</p>"
-                if "ChangeLog" in values:
-                    newerVersion += "Version " + values[ "LatestVersion" ] + \
-                                    " change log:"
-                    newerVersion += "<pre>" + values[ "ChangeLog" ] + "</pre>"
-
 
         self.setHTML(
 """
@@ -94,9 +74,6 @@ class WelcomeWidget( TextTabWidget ):
           for more information.
     </p>
   </td>
-</tr>
-<tr>
-  <td>""" + newerVersion + """</td>
 </tr>
 </table></p>
 </body>""" )

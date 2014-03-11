@@ -107,8 +107,6 @@ CDM_SETTINGS = {
     CDMSetting( "currentLineVisible", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "jumpToFirstNonSpace", CDMSetting.TYPE_BOOL, False ),
     CDMSetting( "removeTrailingOnSave", CDMSetting.TYPE_BOOL, False ),
-    CDMSetting( "lastSuccessVerCheck", CDMSetting.TYPE_INT, 0 ),
-    CDMSetting( "newerVerShown", CDMSetting.TYPE_BOOL, False ),
     CDMSetting( "showFSViewer", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "showStackViewer", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "showThreadViewer", CDMSetting.TYPE_BOOL, True ),

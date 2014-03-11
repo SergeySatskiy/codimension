@@ -66,10 +66,9 @@ import warnings
 warnings.simplefilter( "ignore", UserWarning )
 
 
-import traceback, logging, shutil, time, datetime
+import traceback, logging, shutil, datetime
 from PyQt4 import QtGui
 from optparse import OptionParser
-from utils.latestver import getLatestVersionFile
 from autocomplete.completelists import buildSystemWideModulesList
 from utils.settings import Settings, settingsDir
 from utils.globals import GlobalData
@@ -77,7 +76,6 @@ from ui.application import CodimensionApplication
 from ui.splashscreen import SplashScreen
 from utils.project import CodimensionProject
 from utils.skin import Skin
-from distutils.version import StrictVersion
 
 
 # Saving the root logging handlers
@@ -255,23 +253,6 @@ def launchUserInterface():
         splashScreen = globalData.splash
         globalData.splash = None
         del splashScreen
-
-    # Check the new version availability
-    if int( time.time() ) > Settings().lastSuccessVerCheck + 60 * 60 * 24 * 30:
-        # Last check was earlier than a month ago
-        success, values = getLatestVersionFile()
-        if success:
-            Settings().lastSuccessVerCheck = int( time.time() )
-
-            # The file has been read from the web site
-            if StrictVersion( values[ "LatestVersion" ] ) > StrictVersion( globalData.version ):
-                # Newer version is available
-                if not Settings().newerVerShown:
-                    logging.info( "Newer codimension version " +
-                                  values[ "LatestVersion" ] +
-                                  " is available. Please visit "
-                                  "http://satsky.spb.ru/codimension/codimensionEng.php" )
-                    Settings().newerVerShown = True
 
     for message in __delayedWarnings:
         logging.warning( message )
