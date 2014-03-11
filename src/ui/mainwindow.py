@@ -3307,21 +3307,26 @@ class CodimensionMainWindow( QMainWindow ):
 
         dlg = QMessageBox( QMessageBox.Critical, "Debugging session",
                            message )
-        dlg.addButton( QMessageBox.Ok )
-        dlg.addButton( QMessageBox.Cancel )
 
-        btn1 = dlg.button( QMessageBox.Ok )
-        btn1.setText( "&Close debug console" )
-        btn1.setIcon( PixmapCache().getIcon( '' ) )
+        if self.settings.terminalType == TERM_REDIRECT:
+            dlg.addButton( QMessageBox.Ok )
+        else:
+            dlg.addButton( QMessageBox.Ok )
+            dlg.addButton( QMessageBox.Cancel )
 
-        btn2 = dlg.button( QMessageBox.Cancel )
-        btn2.setText( "&Keep debug console" )
-        btn2.setIcon( PixmapCache().getIcon( '' ) )
+            btn1 = dlg.button( QMessageBox.Ok )
+            btn1.setText( "&Close debug console" )
+            btn1.setIcon( PixmapCache().getIcon( '' ) )
+
+            btn2 = dlg.button( QMessageBox.Cancel )
+            btn2.setText( "&Keep debug console" )
+            btn2.setIcon( PixmapCache().getIcon( '' ) )
 
         dlg.setDefaultButton( QMessageBox.Ok )
         res = dlg.exec_()
 
-        if res == QMessageBox.Cancel:
+        if res == QMessageBox.Cancel or \
+           self.settings.terminalType == TERM_REDIRECT:
             QTimer.singleShot( 0, self.__onStopDbgSession )
         else:
             QTimer.singleShot( 0, self.__onBrutalStopDbgSession )
