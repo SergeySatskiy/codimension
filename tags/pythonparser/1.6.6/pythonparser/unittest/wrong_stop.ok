@@ -1,0 +1,4 @@
+Global[1:1:0]: 'a'
+Class[2:1:2:7:13:2:8]: 'C'
+    Function[3:5:3:9:24:3:12]: 'f'
+Cannot match to any predicted input near line 7
