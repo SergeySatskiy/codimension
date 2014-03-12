@@ -1,5 +1,5 @@
 Name: codimension-parser
-Version: 1.6.5
+Version: 1.6.6
 Release: 1
 License: GPLv3+
 Group: Development/Languages
@@ -40,6 +40,9 @@ find $RPM_BUILD_ROOT -name "*.la" -exec rm -f {} ';'
 %{python_sitearch}/*.egg-info
 
 %changelog
+* Wed Mar 12 2014 Ilya Loginov <isloginov@gmail.com> - 1.6.6-0
+- New upstream release.
+
 * Sat Dec 14 2013 Ilya Loginov <isloginov@gmail.com> - 1.6.5-0
 - New upstream release.
 
