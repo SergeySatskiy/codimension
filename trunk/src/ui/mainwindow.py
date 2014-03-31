@@ -1269,6 +1269,11 @@ class CodimensionMainWindow( QMainWindow ):
         clearDebugIOAct.setChecked( self.settings.clearDebugIO )
         self.connect( clearDebugIOAct, SIGNAL( 'changed()' ),
                       self.__clearDebugIOChanged )
+        showNavBarAct = self.__optionsMenu.addAction( 'Show navigation bar' )
+        showNavBarAct.setCheckable( True )
+        showNavBarAct.setChecked( self.settings.showNavigationBar )
+        self.connect( showNavBarAct, SIGNAL( 'changed()' ),
+                      self.__showNavBarChanged )
         self.__optionsMenu.addSeparator()
         tooltipsMenu = self.__optionsMenu.addMenu( "Tooltips" )
         projectTooltipsAct = tooltipsMenu.addAction( "&Project tab" )
@@ -2785,6 +2790,13 @@ class CodimensionMainWindow( QMainWindow ):
     def __clearDebugIOChanged( self ):
         " Clear debug IO console before a new session changed "
         self.settings.clearDebugIO = not self.settings.clearDebugIO
+        return
+
+    def __showNavBarChanged( self ):
+        " Editor setting changed "
+        self.settings.showNavigationBar = \
+                                not self.settings.showNavigationBar
+        self.editorsManagerWidget.editorsManager.updateEditorsSettings()
         return
 
     def __projectTooltipsChanged( self ):
