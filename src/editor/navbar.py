@@ -23,7 +23,12 @@
 " Navigation bar implementation "
 
 
-from PyQt4.QtGui import QFrame
+from PyQt4.QtCore import SIGNAL, QTimer
+from PyQt4.QtGui import QFrame, QHBoxLayout
+from utils.globals import GlobalData
+from utils.settings import Settings
+from utils.fileutils import TexFileType
+from utils.pixmapcache import PixmapCache
 
 
 IDLE_TIMEOUT = 1500
@@ -34,8 +39,20 @@ class NavigationBar( QFrame ):
 
     def __init__( self, editor, parent = None ):
         QFrame.__init__( self, parent )
-        self.__editor = editor
+        self.setFixedHeight( 16 )
+        self.__layout = QHBoxLayout( self )
 
+        if not Settings().showNavigationBar:
+            self.setVisible( False )
+
+        # Setup the background color
+
+
+        self.__bufferBrokenPixmap = PixmapCache().getIcon( '' )
+        self.__bufferParsedOK = PixmapCache().getIcon( '' )
+        self.__positionChanged = PixmapCache().getIcon( '' )
+
+        self.__editor = editor
         self.connect( editor, SIGNAL( 'cursorPositionChanged(int,int)' ),
                       self.__cursorPositionChanged )
 
@@ -51,6 +68,18 @@ class NavigationBar( QFrame ):
 
         self.connect( self.__editor, SIGNAL( 'SCEN_CHANGE()' ),
                       self.__onBufferChanged )
+        return
+
+    def __setPositionChangedIcon( self ):
+        " Sets the position changed icon "
+        return
+
+    def __setBufferParsedOKIcon( self ):
+        " Sets the icon that the buffer parsed OK and the info is up to date "
+        return
+
+    def __setBufferBrokenIcon( self ):
+        " Sets the buffer broken icon "
         return
 
     def resizeEvent( self, event ):
