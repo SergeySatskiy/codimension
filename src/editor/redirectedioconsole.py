@@ -97,11 +97,13 @@ class RedirectedIOConsole( TextEditor ):
                     return self._onShiftHome()
                 if key == Qt.Key_Insert:
                     return self.insertText()
+                if key == Qt.Key_Delete:
+                    return self.onShiftDel()
             if modifiers == Qt.ControlModifier:
                 if key == Qt.Key_V:
                     return self.insertText()
-#                if key == Qt.Key_X:
-#                    return self.onShiftDel()
+                if key == Qt.Key_X:
+                    return self.onShiftDel()
                 if key in [ Qt.Key_C, Qt.Key_Insert ]:
                     return self.onCtrlC()
                 if key == ord( "'" ):               # Ctrl + '
@@ -464,6 +466,10 @@ class RedirectedIOConsole( TextEditor ):
         self.__menuCopy = self._menu.addAction(
                                     PixmapCache().getIcon( 'copymenu.png' ),
                                     '&Copy', self.onCtrlC, "Ctrl+C" )
+        self.__menucopyTimestamp = self._menu.addAction(
+                                    PixmapCache().getIcon( 'copymenu.png' ),
+                                    '&Copy all with timestamps',
+                                    self.onCtrlShiftC, "Ctrl+Shift+C" )
         self.__menuPaste = self._menu.addAction(
                                     PixmapCache().getIcon( 'pastemenu.png' ),
                                     '&Paste', self.paste, "Ctrl+V" )
@@ -509,7 +515,6 @@ class RedirectedIOConsole( TextEditor ):
         event.accept()
         if self._marginNumber( event.x() ) is None:
             # Editing area context menu
-            return
             self._menu.popup( event.globalPos() )
         else:
             # Menu for a margin
@@ -521,11 +526,14 @@ class RedirectedIOConsole( TextEditor ):
         # Need to make decision about menu items for modifying the input
         return
 
+    def onShiftDel( self ):
+        " Deletes the selected text "
+        
+        return True
+
     def onUndo( self ):
         pass
     def onRedo( self ):
-        pass
-    def onShiftDel( self ):
         pass
     def paste( self ):
         pass
@@ -537,6 +545,10 @@ class RedirectedIOConsole( TextEditor ):
         pass
     def openInBrowser( self ):
         pass
+
+    def onCtrlShiftC( self ):
+        " Copy all with timestamps "
+        
 
     def appendIDEMessage( self, text ):
         " Appends an IDE message "

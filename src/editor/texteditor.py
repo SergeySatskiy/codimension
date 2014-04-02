@@ -32,7 +32,7 @@ from PyQt4.QtCore import ( Qt, QFileInfo, SIGNAL, QSize, QUrl, QTimer,
 from PyQt4.QtGui import ( QApplication, QCursor, QFontMetrics, QToolBar,
                           QActionGroup, QHBoxLayout, QWidget, QAction, QMenu,
                           QSizePolicy, QToolButton, QDialog, QToolTip,
-                          QDesktopServices, QFont )
+                          QDesktopServices, QFont, QVBoxLayout )
 from PyQt4.Qsci import QsciScintilla
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.fileutils import ( detectFileType, DesignerFileType,
@@ -70,6 +70,7 @@ from profiling.profui import ProfilingProgressDialog
 from debugger.bputils import getBreakpointLines
 from debugger.breakpoint import Breakpoint
 from ui.calltip import Calltip
+from navbar import NavigationBar
 
 
 class TextEditor( ScintillaWrapper ):
@@ -2746,7 +2747,16 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         hLayout = QHBoxLayout()
         hLayout.setContentsMargins( 0, 0, 0, 0 )
         hLayout.setSpacing( 0 )
-        hLayout.addWidget( self.__editor )
+
+        vLayout = QVBoxLayout()
+        vLayout.setContentsMargins( 0, 0, 0, 0 )
+        vLayout.setSpacing( 0 )
+
+        self.__navigationBar = NavigationBar( self.__editor, self )
+        vLayout.addWidget( self.__navigationBar )
+        vLayout.addWidget( self.__editor )
+
+        hLayout.addLayout( vLayout )
         hLayout.addWidget( toolbar )
 
         self.setLayout( hLayout )
