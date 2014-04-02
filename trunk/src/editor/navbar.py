@@ -29,6 +29,7 @@ from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.fileutils import Python3FileType, PythonFileType
 from utils.pixmapcache import PixmapCache
+from cdmbriefparser import getBriefModuleInfoFromMemory
 
 
 IDLE_TIMEOUT = 1500
@@ -54,25 +55,39 @@ class NavigationBar( QFrame ):
         # There is no parser info used to display values
         self.__currentInfo = None
         self.__currentIconState = self.STATE_UNKNOWN
+        self.__connected = False
 
         self.__createLayout()
 
-        # Make signal connections and set up the timer
-        self.connect( editor, SIGNAL( 'cursorPositionChanged(int,int)' ),
-                      self.__cursorPositionChanged )
+        # Create the update timer
+        self.__updateTimer = QTimer( self )
+        self.__updateTimer.setSingleShot( True )
+        self.connect( self.__updateTimer, SIGNAL( 'timeout()' ),
+                      self.updateBar )
 
+        # Connect to the change file type signal
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
         self.connect( editorsManager, SIGNAL( 'fileTypeChanged' ),
                       self.__onFileTypeChanged )
+        return
 
-        self.__updateTimer = QTimer( self )
-        self.__updateTimer.setSingleShot( True )
-        self.connect( self.__updateTimer, SIGNAL( 'timeout()' ),
-                                          self.updateBar )
-
+    def __connectEditorSignals( self ):
+        " When it is a python file - connect to the editor signals "
+        self.connect( self.__editor, SIGNAL( 'cursorPositionChanged(int,int)' ),
+                      self.__cursorPositionChanged )
         self.connect( self.__editor, SIGNAL( 'SCEN_CHANGE()' ),
                       self.__onBufferChanged )
+        self.__connected = True
+        return
+
+    def __disconnectEditorSignals( self ):
+        " Disconnect the editor signals when the file is not a python one "
+        self.disconnect( self.__editor, SIGNAL( 'cursorPositionChanged(int,int)' ),
+                         self.__cursorPositionChanged )
+        self.disconnect( self.__editor, SIGNAL( 'SCEN_CHANGE()' ),
+                         self.__onBufferChanged )
+        self.__connected = False
         return
 
     def __createLayout( self ):
@@ -91,6 +106,9 @@ class NavigationBar( QFrame ):
 
     def __updateInfoIcon( self, state ):
         " Updates the information icon "
+        if state == self.__currentIconState:
+            return
+
         if state == self.STATE_OK_UTD:
             self.__infoIcon.setPixmap( PixmapCache().getPixmap( 'nbokutd.png' ) )
             self.__infoIcon.setToolTip( "Context is up to date" )
@@ -111,7 +129,7 @@ class NavigationBar( QFrame ):
         return
 
     def resizeEvent( self, event ):
-        # Do not forget call the base class resize
+        " Editor has resized "
         QFrame.resizeEvent( self, event )
         return
 
@@ -120,19 +138,28 @@ class NavigationBar( QFrame ):
         if self.parent().getUUID() != uuid:
             return
 
-        if newFileType not in [ Python3FileType, PythonFileType ]:
+        if newFileType not in [ Python3FileType, PythonFileType ] or \
+           not Settings().showNavigationBar:
+            self.__disconnectEditorSignals()
+            self.__updateTimer.stop()
             self.__currentInfo = None
             self.setVisible( False )
-            return
-
-        if not Settings().showNavigationBar:
-            self.__currentInfo = None
-            self.setVisible( False )
+            self.__currentIconState = self.STATE_UNKNOWN
             return
 
         # Update the bar and show it
         self.setVisible( True )
         self.updateBar()
+        self.__connectEditorSignals()
+        return
+
+    def updateSettings( self ):
+        " Called when navigation bar settings have been updated "
+        if not Settings().showNavigationBar:
+            self.__disconnectEditorSignals()
+            self.__updateTimer.stop()
+            self.__currentInfo = None
+            self.setVisible( False )
         return
 
     def updateBar( self ):
@@ -141,10 +168,22 @@ class NavigationBar( QFrame ):
 
         if not self.isVisible():
             return
+        if self.__editor.parent.getFileType() not in [ Python3FileType,
+                                                       PythonFileType ]:
+            return
+
+        if not self.__connected:
+            self.__connectEditorSignals()
 
         # Parse the buffer content
+        self.__currentInfo = getBriefModuleInfoFromMemory(
+                                                str( self.__editor.text() ) )
 
         # Decide what icon to use
+        if self.__currentInfo.isOK:
+            self.__updateInfoIcon( self.STATE_OK_UTD )
+        else:
+            self.__updateInfoIcon( self.STATE_BROKEN_UTD )
 
         # Calc the cursor context
 
@@ -154,21 +193,19 @@ class NavigationBar( QFrame ):
 
     def __cursorPositionChanged( self, line, pos ):
         " Cursor position changed "
-        self.__updateTimer.stop()
-        # Update the bar icon, telling that its info is invalid
-        self.__updateTimer.start( IDLE_TIMEOUT )
+        self.__onNeedUpdate()
+        return
 
     def __onBufferChanged( self ):
         " Buffer changed "
-        self.__updateTimer.stop()
-        # Update the bar icon, telling that its info is invalid
-        self.__updateTimer.start( IDLE_TIMEOUT )
+        self.__onNeedUpdate()
         return
 
-#You would also need to deal with a setting to enable/disable the bar. The setting goes to src/utils/settings.py All you need to do is to create a new record in the CDM_SETTINGS dictionary and then the option will be available for you via the settings singleton as follows: Settings().yourOptionName. The saving/loading will be done for you.
-#
-#One more thing is skinning. It's a good idea to have colors skinnable.
-#Similarly to the settings you need to add a record to the SKIN_SETTINGS list in src/utils/skin.py
-#Then Settings().skin.yourName can be used.
-
-
+    def __onNeedUpdate( self ):
+        self.__updateTimer.stop()
+        if self.__currentInfo.isOK:
+            self.__updateInfoIcon( self.STATE_OK_CHN )
+        else:
+            self.__updateInfoIcon( self.STATE_BROKEN_CHN )
+        self.__updateTimer.start( IDLE_TIMEOUT )
+        return
