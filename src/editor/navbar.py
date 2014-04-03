@@ -23,13 +23,14 @@
 " Navigation bar implementation "
 
 
-from PyQt4.QtCore import SIGNAL, QTimer
-from PyQt4.QtGui import QFrame, QHBoxLayout, QLabel
+from PyQt4.QtCore import SIGNAL, QTimer, Qt
+from PyQt4.QtGui import QFrame, QHBoxLayout, QLabel, QWidget, QSizePolicy
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.fileutils import Python3FileType, PythonFileType
 from utils.pixmapcache import PixmapCache
 from cdmbriefparser import getBriefModuleInfoFromMemory
+from autocomplete.bufferutils import getContext
 
 
 IDLE_TIMEOUT = 1500
@@ -44,7 +45,7 @@ class NavigationBar( QFrame ):
     STATE_BROKEN_CHN = 3    # Parsed with errors, context changed
     STATE_UNKNOWN = 4
 
-    def __init__( self, editor, parent = None ):
+    def __init__( self, editor, parent ):
         QFrame.__init__( self, parent )
         self.__editor = editor
 
@@ -74,6 +75,9 @@ class NavigationBar( QFrame ):
 
     def __connectEditorSignals( self ):
         " When it is a python file - connect to the editor signals "
+        if self.__connected:
+            return
+
         self.connect( self.__editor, SIGNAL( 'cursorPositionChanged(int,int)' ),
                       self.__cursorPositionChanged )
         self.connect( self.__editor, SIGNAL( 'SCEN_CHANGE()' ),
@@ -83,6 +87,9 @@ class NavigationBar( QFrame ):
 
     def __disconnectEditorSignals( self ):
         " Disconnect the editor signals when the file is not a python one "
+        if not self.__connected:
+            return
+
         self.disconnect( self.__editor, SIGNAL( 'cursorPositionChanged(int,int)' ),
                          self.__cursorPositionChanged )
         self.disconnect( self.__editor, SIGNAL( 'SCEN_CHANGE()' ),
@@ -102,6 +109,14 @@ class NavigationBar( QFrame ):
         # Create info icon
         self.__infoIcon = QLabel()
         self.__layout.addWidget( self.__infoIcon )
+
+        self.__contextLabel = QLabel()
+        self.__contextLabel.setAlignment( Qt.AlignLeft )
+        self.__layout.addWidget( self.__contextLabel )
+
+        spacer = QWidget()
+        spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
+        self.__layout.addWidget( spacer )
         return
 
     def __updateInfoIcon( self, state ):
@@ -135,6 +150,7 @@ class NavigationBar( QFrame ):
 
     def __onFileTypeChanged( self, fileName, uuid, newFileType ):
         " Triggered when a buffer content type has changed "
+
         if self.parent().getUUID() != uuid:
             return
 
@@ -150,7 +166,6 @@ class NavigationBar( QFrame ):
         # Update the bar and show it
         self.setVisible( True )
         self.updateBar()
-        self.__connectEditorSignals()
         return
 
     def updateSettings( self ):
@@ -166,10 +181,8 @@ class NavigationBar( QFrame ):
         " Triggered when the timer is fired "
         self.__updateTimer.stop()  # just in case
 
-        if not self.isVisible():
-            return
-        if self.__editor.parent.getFileType() not in [ Python3FileType,
-                                                       PythonFileType ]:
+        if self.parent().getFileType() not in [ Python3FileType,
+                                                PythonFileType ]:
             return
 
         if not self.__connected:
@@ -186,9 +199,10 @@ class NavigationBar( QFrame ):
             self.__updateInfoIcon( self.STATE_BROKEN_UTD )
 
         # Calc the cursor context
+        context = getContext( self.__editor, self.__currentInfo, True, False )
 
         # Display the context
-
+        self.__contextLabel.setText( str( context ) )
         return
 
     def __cursorPositionChanged( self, line, pos ):
