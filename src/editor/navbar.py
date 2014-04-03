@@ -24,7 +24,8 @@
 
 
 from PyQt4.QtCore import SIGNAL, QTimer, Qt
-from PyQt4.QtGui import QFrame, QHBoxLayout, QLabel, QWidget, QSizePolicy
+from PyQt4.QtGui import ( QFrame, QHBoxLayout, QLabel, QWidget, QSizePolicy,
+                          QComboBox )
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.fileutils import Python3FileType, PythonFileType
@@ -34,6 +35,16 @@ from autocomplete.bufferutils import getContext
 
 
 IDLE_TIMEOUT = 1500
+
+
+
+class NavBarComboBox( QComboBox ):
+    " Navigation bar combo box "
+
+    def __init__( self, parent = None ):
+        QComboBox.__init__( self, parent )
+        return
+
 
 
 class NavigationBar( QFrame ):
@@ -109,6 +120,9 @@ class NavigationBar( QFrame ):
         # Create info icon
         self.__infoIcon = QLabel()
         self.__layout.addWidget( self.__infoIcon )
+
+        self.__globalScopeCombo = NavBarComboBox( self )
+        self.__layout.addWidget( self.__globalScopeCombo )
 
         self.__contextLabel = QLabel()
         self.__contextLabel.setAlignment( Qt.AlignLeft )
@@ -202,7 +216,48 @@ class NavigationBar( QFrame ):
         context = getContext( self.__editor, self.__currentInfo, True, False )
 
         # Display the context
+        self.__populateGlobalScope()
+        if context.length == 0:
+            self.__globalScopeCombo.setCurrentIndex( -1 )
+        else:
+            index = self.__globalScopeCombo.findData( context.levels[ 0 ][ 0 ].line )
+            self.__globalScopeCombo.setCurrentIndex( index )
+
         self.__contextLabel.setText( str( context ) )
+        return
+
+    def __populateGlobalScope( self ):
+        " Repopulates the global scope combo box "
+        self.__globalScopeCombo.clear()
+        self.__globalScopeCombo.clearEditText()
+
+        for klass in self.__currentInfo.classes:
+            self.__globalScopeCombo.addItem( PixmapCache().getIcon( 'class.png' ),
+                                             klass.name, klass.line )
+        for func in self.__currentInfo.functions:
+            if func.isPrivate():
+                icon = PixmapCache().getIcon( 'method_private.png' )
+            elif func.isProtected():
+                icon = PixmapCache().getIcon( 'method_protected.png' )
+            else:
+                icon = PixmapCache().getIcon( 'method.png' )
+
+            self.__globalScopeCombo.addItem( icon, func.name, func.line )
+
+        if len( self.__currentInfo.globals ) == 0 and \
+           len( self.__currentInfo.imports ) == 0:
+            return
+
+        if self.__globalScopeCombo.count() != 0:
+            self.__globalScopeCombo.insertSeparator(
+                                self.__globalScopeCombo.count() )
+
+        for glob in self.__currentInfo.globals:
+            self.__globalScopeCombo.addItem( PixmapCache().getIcon( 'globalvar.png' ),
+                                             glob.name, glob.line )
+        for imp in self.__currentInfo.imports:
+            self.__globalScopeCombo.addItem( PixmapCache().getIcon( 'imports.png' ),
+                                             imp.name, imp.line )
         return
 
     def __cursorPositionChanged( self, line, pos ):
