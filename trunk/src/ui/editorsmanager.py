@@ -540,6 +540,9 @@ class EditorsManager( QTabWidget ):
         editor.setFocus()
         newWidget.updateStatus()
         self.setWidgetDebugMode( newWidget )
+
+        self.emit( SIGNAL( 'fileTypeChanged' ), newWidget.getShortName(),
+                   newWidget.getUUID(), fileType )
         return
 
     def __updateControls( self ):
@@ -1210,6 +1213,9 @@ class EditorsManager( QTabWidget ):
             if self.__restoringTabs == False:
                 GlobalData().project.addRecentFile( fileName )
             self.setWidgetDebugMode( newWidget )
+
+            self.emit( SIGNAL( 'fileTypeChanged' ), fileName,
+                       newWidget.getUUID(), fileType )
         except Exception, exc:
             logging.error( str( exc ) )
             return False
