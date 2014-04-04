@@ -37,12 +37,21 @@ from autocomplete.bufferutils import getContext
 IDLE_TIMEOUT = 1500
 
 
-
 class NavBarComboBox( QComboBox ):
     " Navigation bar combo box "
 
     def __init__( self, parent = None ):
         QComboBox.__init__( self, parent )
+        return
+
+
+class PathElement:
+    " Single path element "
+
+    def __init__( self, parent = None ):
+        self.icon = QLabel()
+        self.icon.setPixmap( PixmapCache().getPixmap( 'nbsep.png' ) )
+        self.combo = NavBarComboBox( parent )
         return
 
 
@@ -68,6 +77,8 @@ class NavigationBar( QFrame ):
         self.__currentInfo = None
         self.__currentIconState = self.STATE_UNKNOWN
         self.__connected = False
+        self.__path = []    # List of PathElement starting after the
+                            # global scope
 
         self.__createLayout()
 
@@ -124,13 +135,10 @@ class NavigationBar( QFrame ):
         self.__globalScopeCombo = NavBarComboBox( self )
         self.__layout.addWidget( self.__globalScopeCombo )
 
-        self.__contextLabel = QLabel()
-        self.__contextLabel.setAlignment( Qt.AlignLeft )
-        self.__layout.addWidget( self.__contextLabel )
-
-        spacer = QWidget()
-        spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
-        self.__layout.addWidget( spacer )
+        self.__spacer = QWidget()
+        self.__spacer.setSizePolicy( QSizePolicy.Expanding,
+                                     QSizePolicy.Expanding )
+        self.__layout.addWidget( self.__spacer )
         return
 
     def __updateInfoIcon( self, state ):
@@ -223,26 +231,46 @@ class NavigationBar( QFrame ):
             index = self.__globalScopeCombo.findData( context.levels[ 0 ][ 0 ].line )
             self.__globalScopeCombo.setCurrentIndex( index )
 
-        self.__contextLabel.setText( str( context ) )
+        index = 1
+        while index < context.length:
+            if len( self.__path ) < index:
+                newPathItem = PathElement( self )
+                self.__path.append( newPathItem )
+                self.__layout.addWidget( newPathItem.icon )
+                self.__layout.addWidget( newPathItem.combo )
+                combo = newPathItem.combo
+            else:
+                self.__path[ index - 1 ].icon.setVisible( True )
+                self.__path[ index - 1 ].combo.setVisible( True )
+                combo = self.__path[ index - 1 ].combo
+                combo.clear()
+
+            # Populate the combo box
+            self.__populateClassesAndFunctions( context.levels[ index - 1 ][ 0 ],
+                                                combo )
+            combo.setCurrentIndex( combo.findData( context.levels[ index ][ 0 ].line ) )
+            index += 1
+
+        # Hide extra components if so
+        index = context.length - 1
+        if index < 0:
+            index = 0
+        while index < len( self.__path ):
+            self.__path[ index ].icon.setVisible( False )
+            self.__path[ index ].combo.setVisible( False )
+            index += 1
+
+        # Make sure the spacer is the last item
+        self.__layout.removeWidget( self.__spacer )
+        self.__layout.addWidget( self.__spacer )
         return
 
     def __populateGlobalScope( self ):
         " Repopulates the global scope combo box "
         self.__globalScopeCombo.clear()
-        self.__globalScopeCombo.clearEditText()
 
-        for klass in self.__currentInfo.classes:
-            self.__globalScopeCombo.addItem( PixmapCache().getIcon( 'class.png' ),
-                                             klass.name, klass.line )
-        for func in self.__currentInfo.functions:
-            if func.isPrivate():
-                icon = PixmapCache().getIcon( 'method_private.png' )
-            elif func.isProtected():
-                icon = PixmapCache().getIcon( 'method_protected.png' )
-            else:
-                icon = PixmapCache().getIcon( 'method.png' )
-
-            self.__globalScopeCombo.addItem( icon, func.name, func.line )
+        self.__populateClassesAndFunctions( self.__currentInfo,
+                                            self.__globalScopeCombo )
 
         if len( self.__currentInfo.globals ) == 0 and \
            len( self.__currentInfo.imports ) == 0:
@@ -260,6 +288,23 @@ class NavigationBar( QFrame ):
                                              imp.name, imp.line )
         return
 
+    @staticmethod
+    def __populateClassesAndFunctions( infoObj, combo ):
+        " Populates the given combo with classes and functions from the info object "
+        for klass in infoObj.classes:
+            combo.addItem( PixmapCache().getIcon( 'class.png' ),
+                           klass.name, klass.line )
+        for func in infoObj.functions:
+            if func.isPrivate():
+                icon = PixmapCache().getIcon( 'method_private.png' )
+            elif func.isProtected():
+                icon = PixmapCache().getIcon( 'method_protected.png' )
+            else:
+                icon = PixmapCache().getIcon( 'method.png' )
+
+            combo.addItem( icon, func.name, func.line )
+        return
+
     def __cursorPositionChanged( self, line, pos ):
         " Cursor position changed "
         self.__onNeedUpdate()
@@ -271,6 +316,7 @@ class NavigationBar( QFrame ):
         return
 
     def __onNeedUpdate( self ):
+        " Triggered to update status icon and to restart the timer "
         self.__updateTimer.stop()
         if self.__currentInfo.isOK:
             self.__updateInfoIcon( self.STATE_OK_CHN )
