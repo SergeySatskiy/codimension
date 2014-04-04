@@ -251,7 +251,19 @@ class Skin:
               background: QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #eef, stop: 1 #ccf );
             }
             QTreeView
-            { alternate-background-color: #eef0f1; } """
+            { alternate-background-color: #eef0f1;
+              background-color: #ffffe6; }
+            QLineEdit
+            { background-color: #ffffe6; }
+            QComboBox
+            { background-color: #ffffe6; }
+            QComboBox QAbstractItemView
+            { outline: 0px; }
+            QTextEdit
+            { background-color: #ffffe6; }
+            QListView
+            { background-color: #ffffe6; }
+            """
 
         for setting in SKIN_SETTINGS:
             self.data.values[ setting.name ] = setting.default
