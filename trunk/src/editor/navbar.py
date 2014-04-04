@@ -42,6 +42,11 @@ class NavBarComboBox( QComboBox ):
 
     def __init__( self, parent = None ):
         QComboBox.__init__( self, parent )
+        self.setSizeAdjustPolicy( QComboBox.AdjustToMinimumContentsLength )
+        sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Fixed )
+        sizePolicy.setHeightForWidth(
+                self.sizePolicy().hasHeightForWidth() )
+        self.setSizePolicy( sizePolicy )
         self.connect( self, SIGNAL( 'activated(int)' ), self.onActivated )
         return
 
@@ -53,6 +58,16 @@ class NavBarComboBox( QComboBox ):
         line, isOK = itemData.toInt()
         if isOK:
             self.emit( SIGNAL( 'JumpToLine' ), line )
+        return
+
+    def keyPressEvent( self, event ):
+        " Handles the key press events "
+        key = event.key()
+        if key == Qt.Key_Escape:
+            # Move the focus back to the editor
+            self.parent().getEditor().setFocus()
+            return
+        QComboBox.keyPressEvent( self, event )
         return
 
 
@@ -105,6 +120,10 @@ class NavigationBar( QFrame ):
         self.connect( editorsManager, SIGNAL( 'fileTypeChanged' ),
                       self.__onFileTypeChanged )
         return
+
+    def getEditor( self ):
+        " Provides the editor "
+        return self.__editor
 
     def __connectEditorSignals( self ):
         " When it is a python file - connect to the editor signals "
