@@ -42,6 +42,17 @@ class NavBarComboBox( QComboBox ):
 
     def __init__( self, parent = None ):
         QComboBox.__init__( self, parent )
+        self.connect( self, SIGNAL( 'activated(int)' ), self.onActivated )
+        return
+
+    def onActivated( self, index ):
+        " User selected an item "
+        if index < 0:
+            return
+        itemData = self.itemData( index )
+        line, isOK = itemData.toInt()
+        if isOK:
+            self.emit( SIGNAL( 'JumpToLine' ), line )
         return
 
 
@@ -133,6 +144,8 @@ class NavigationBar( QFrame ):
         self.__layout.addWidget( self.__infoIcon )
 
         self.__globalScopeCombo = NavBarComboBox( self )
+        self.connect( self.__globalScopeCombo, SIGNAL( 'JumpToLine' ),
+                      self.__onJumpToLine )
         self.__layout.addWidget( self.__globalScopeCombo )
 
         self.__spacer = QWidget()
@@ -231,6 +244,7 @@ class NavigationBar( QFrame ):
             index = self.__globalScopeCombo.findData( context.levels[ 0 ][ 0 ].line )
             self.__globalScopeCombo.setCurrentIndex( index )
 
+        usedFromStore = 0
         index = 1
         while index < context.length:
             if len( self.__path ) < index:
@@ -239,6 +253,8 @@ class NavigationBar( QFrame ):
                 self.__layout.addWidget( newPathItem.icon )
                 self.__layout.addWidget( newPathItem.combo )
                 combo = newPathItem.combo
+                self.connect( combo, SIGNAL( 'JumpToLine' ),
+                              self.__onJumpToLine )
             else:
                 self.__path[ index - 1 ].icon.setVisible( True )
                 self.__path[ index - 1 ].combo.setVisible( True )
@@ -250,11 +266,34 @@ class NavigationBar( QFrame ):
                                                 combo )
             combo.setCurrentIndex( combo.findData( context.levels[ index ][ 0 ].line ) )
             index += 1
+            usedFromStore += 1
+
+        # it might need to have one more level with nothing selected
+        if context.length > 0:
+            if len( context.levels[ context.length - 1 ][ 0 ].functions ) > 0 or \
+               len( context.levels[ context.length - 1 ][ 0 ].classes ) > 0:
+                # Need to add a combo
+                if len( self.__path ) <= usedFromStore:
+                    newPathItem = PathElement( self )
+                    self.__path.append( newPathItem )
+                    self.__layout.addWidget( newPathItem.icon )
+                    self.__layout.addWidget( newPathItem.combo )
+                    combo = newPathItem.combo
+                    self.connect( combo, SIGNAL( 'JumpToLine' ),
+                                  self.__onJumpToLine )
+                else:
+                    self.__path[ index - 1 ].icon.setVisible( True )
+                    self.__path[ index - 1 ].combo.setVisible( True )
+                    combo = self.__path[ index - 1 ].combo
+                    combo.clear()
+
+                self.__populateClassesAndFunctions( context.levels[ context.length - 1 ][ 0 ],
+                                                    combo )
+                combo.setCurrentIndex( -1 )
+                usedFromStore += 1
 
         # Hide extra components if so
-        index = context.length - 1
-        if index < 0:
-            index = 0
+        index = usedFromStore
         while index < len( self.__path ):
             self.__path[ index ].icon.setVisible( False )
             self.__path[ index ].combo.setVisible( False )
@@ -324,3 +363,10 @@ class NavigationBar( QFrame ):
             self.__updateInfoIcon( self.STATE_BROKEN_CHN )
         self.__updateTimer.start( IDLE_TIMEOUT )
         return
+
+    def __onJumpToLine( self, line ):
+        " Triggered when it needs to jump to a line "
+        self.__editor.gotoLine( line, 0 )
+        self.__editor.setFocus()
+        return
+
