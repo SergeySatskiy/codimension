@@ -55,6 +55,11 @@ QComboBox
     background-color: #ffffe6;
 }
 
+QComboBox QAbstractItemView
+{
+    outline: 0px;
+}
+
 QTextEdit
 {
     background-color: #ffffe6;
