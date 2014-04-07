@@ -48,6 +48,8 @@ class NavBarComboBox( QComboBox ):
                 self.sizePolicy().hasHeightForWidth() )
         self.setSizePolicy( sizePolicy )
         self.connect( self, SIGNAL( 'activated(int)' ), self.onActivated )
+
+        self.pathIndex = None
         return
 
     def onActivated( self, index ):
@@ -67,6 +69,17 @@ class NavBarComboBox( QComboBox ):
             # Move the focus back to the editor
             self.parent().getEditor().setFocus()
             return
+        if key == Qt.Key_Left:
+            # Move cursor to the left combo
+            if self.pathIndex is not None:
+                self.parent().activateCombo( self.pathIndex - 1 )
+                return
+        if key == Qt.Key_Right:
+            # Move cursor to the right combo
+            if self.pathIndex is not None:
+                self.parent().activateCombo( self.pathIndex + 1 )
+            else:
+                self.parent().activateCombo( 0 )
         QComboBox.keyPressEvent( self, event )
         return
 
@@ -272,6 +285,7 @@ class NavigationBar( QFrame ):
                 self.__layout.addWidget( newPathItem.icon )
                 self.__layout.addWidget( newPathItem.combo )
                 combo = newPathItem.combo
+                combo.pathIndex = len( self.__path ) - 1
                 self.connect( combo, SIGNAL( 'JumpToLine' ),
                               self.__onJumpToLine )
             else:
@@ -298,6 +312,7 @@ class NavigationBar( QFrame ):
                     self.__layout.addWidget( newPathItem.icon )
                     self.__layout.addWidget( newPathItem.combo )
                     combo = newPathItem.combo
+                    combo.pathIndex = len( self.__path ) - 1
                     self.connect( combo, SIGNAL( 'JumpToLine' ),
                                   self.__onJumpToLine )
                 else:
@@ -389,3 +404,31 @@ class NavigationBar( QFrame ):
         self.__editor.setFocus()
         return
 
+    def setFocusToLastCombo( self ):
+        " Activates the last combo "
+        if self.__currentInfo is None:
+            return
+        for index in xrange( len( self.__path ) - 1, -1, -1 ):
+            if self.__path[ index ].combo.isVisible():
+                self.__path[ index ].combo.setFocus()
+                self.__path[ index ].combo.showPopup()
+                return
+
+        self.__globalScopeCombo.setFocus()
+        self.__globalScopeCombo.showPopup()
+        return
+
+    def activateCombo( self, newIndex ):
+        " Triggered when a neighbour combo should be activated "
+        if newIndex == -1:
+            self.__globalScopeCombo.setFocus()
+            self.__globalScopeCombo.showPopup()
+            return
+
+        if newIndex >= len( self.__path ):
+            # This is the most right one
+            return
+
+        self.__path[ newIndex ].combo.setFocus()
+        self.__path[ newIndex ].combo.showPopup()
+        return
