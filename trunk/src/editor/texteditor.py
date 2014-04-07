@@ -90,6 +90,8 @@ class TextEditor( ScintillaWrapper ):
     def __init__( self, parent, debugger ):
 
         ScintillaWrapper.__init__( self, parent )
+        self.setAttribute( Qt.WA_DeleteOnClose )
+        self.setAttribute( Qt.WA_KeyCompression )
 
         self.__debugger = debugger
 
@@ -131,8 +133,6 @@ class TextEditor( ScintillaWrapper ):
         self.setColor( skin.nolexerColor )
         self.monospacedStyles( skin.nolexerFont )
 
-        self.setAttribute( Qt.WA_DeleteOnClose )
-        self.setAttribute( Qt.WA_KeyCompression )
         self.setUtf8( True )
         self.setFocusPolicy( Qt.StrongFocus )
         self.setIndentationWidth( 4 )
@@ -276,10 +276,13 @@ class TextEditor( ScintillaWrapper ):
                     return self.parent().onZoomIn()
                 if key == Qt.Key_0:
                     return self.parent().onZoomReset()
-            if key == Qt.Key_Home and modifiers == Qt.NoModifier:
-                return self._onHome()
-            if key == Qt.Key_End and modifiers == Qt.NoModifier:
-                return self._onEnd()
+            if modifiers == Qt.NoModifier:
+                if key == Qt.Key_Home:
+                    return self._onHome()
+                if key == Qt.Key_End:
+                    return self._onEnd()
+                if key == Qt.Key_F2:
+                    return self.parent().onNavigationBar()
 
         return ScintillaWrapper.eventFilter( self, obj, event )
 
@@ -533,7 +536,6 @@ class TextEditor( ScintillaWrapper ):
 
         return selectedText.startswith( 'http://' ) or \
                selectedText.startswith( 'www.' )
-
 
     def focusInEvent( self, event ):
         " Enable Shift+Tab when the focus is received "
@@ -2855,6 +2857,12 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Triggered when the zoom out button is pressed "
         if self.__editor.zoom > -10:
             self.emit( SIGNAL( 'TextEditorZoom' ), self.__editor.zoom - 1 )
+        return True
+
+    def onNavigationBar( self ):
+        " Triggered when navigation bar focus is requested "
+        if self.__navigationBar.isVisible():
+            self.__navigationBar.setFocusToLastCombo()
         return True
 
     def __onPrint( self ):
