@@ -23,7 +23,7 @@
 " Navigation bar implementation "
 
 
-from PyQt4.QtCore import SIGNAL, QTimer, Qt
+from PyQt4.QtCore import SIGNAL, QTimer, Qt, QEvent, QObject
 from PyQt4.QtGui import ( QFrame, QHBoxLayout, QLabel, QWidget, QSizePolicy,
                           QComboBox )
 from utils.globals import GlobalData
@@ -49,8 +49,31 @@ class NavBarComboBox( QComboBox ):
         self.setSizePolicy( sizePolicy )
         self.connect( self, SIGNAL( 'activated(int)' ), self.onActivated )
 
+        self.view().installEventFilter( self )
+
         self.pathIndex = None
         return
+
+    def eventFilter( self, obj, event ):
+        " Event filter for the qcombobox list view "
+        if event.type() == QEvent.KeyPress:
+            key = event.key()
+            if key == Qt.Key_Escape:
+                self.parent().getEditor().setFocus()
+                return True
+            if key == Qt.Key_Left:
+                # Move cursor to the left combo
+                if self.pathIndex is not None:
+                    self.parent().activateCombo( self, self.pathIndex - 1 )
+                    return True
+            if key == Qt.Key_Right:
+                # Move cursor to the right combo
+                if self.pathIndex is not None:
+                    self.parent().activateCombo( self, self.pathIndex + 1 )
+                else:
+                    self.parent().activateCombo( self, 0 )
+                return True
+        return QObject.eventFilter( self, obj, event )
 
     def onActivated( self, index ):
         " User selected an item "
@@ -72,14 +95,14 @@ class NavBarComboBox( QComboBox ):
         if key == Qt.Key_Left:
             # Move cursor to the left combo
             if self.pathIndex is not None:
-                self.parent().activateCombo( self.pathIndex - 1 )
+                self.parent().activateCombo( self, self.pathIndex - 1 )
                 return
         if key == Qt.Key_Right:
             # Move cursor to the right combo
             if self.pathIndex is not None:
-                self.parent().activateCombo( self.pathIndex + 1 )
+                self.parent().activateCombo( self, self.pathIndex + 1 )
             else:
-                self.parent().activateCombo( 0 )
+                self.parent().activateCombo( self, 0 )
         QComboBox.keyPressEvent( self, event )
         return
 
@@ -418,9 +441,12 @@ class NavigationBar( QFrame ):
         self.__globalScopeCombo.showPopup()
         return
 
-    def activateCombo( self, newIndex ):
+    def activateCombo( self, currentCombo, newIndex ):
         " Triggered when a neighbour combo should be activated "
         if newIndex == -1:
+            if len( self.__path ) > 0:
+                if self.__path[ 0 ].combo.isVisible():
+                    currentCombo.hidePopup()
             self.__globalScopeCombo.setFocus()
             self.__globalScopeCombo.showPopup()
             return
@@ -429,6 +455,8 @@ class NavigationBar( QFrame ):
             # This is the most right one
             return
 
-        self.__path[ newIndex ].combo.setFocus()
-        self.__path[ newIndex ].combo.showPopup()
+        if self.__path[ newIndex ].combo.isVisible():
+            currentCombo.hidePopup()
+            self.__path[ newIndex ].combo.setFocus()
+            self.__path[ newIndex ].combo.showPopup()
         return
