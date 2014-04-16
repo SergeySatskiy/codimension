@@ -30,6 +30,10 @@ from utils.globals      import GlobalData
 from garbagecollector   import GarbageCollector
 
 
+KEY_PRESS = QEvent.KeyPress
+APP_ACTIVATE = QEvent.ApplicationActivate
+APP_DEACTIVATE = QEvent.ApplicationDeactivate
+
 class CodimensionApplication( QApplication ):
     """ codimension application class """
 
@@ -60,7 +64,8 @@ class CodimensionApplication( QApplication ):
         self.connect( self, SIGNAL( "focusChanged(QWidget*, QWidget*)" ),
                       self.__onFocusChanged )
 
-        # Avoid having rectabgular frames on the status bar
+        # Avoid having rectangular frames on the status bar and
+        # some application wide style changes
         appCSS = GlobalData().skin.appCSS
         if appCSS != "":
             self.setStyleSheet( appCSS )
@@ -76,29 +81,42 @@ class CodimensionApplication( QApplication ):
         self.mainWindow = window
         return
 
-    def isWidgetAlive( self, widget ):
+    @staticmethod
+    def __areWidgetsAlive( widget1, widget2 ):
+        " True, True if QT still has the widgets "
+        first = False
+        second = False
         for item in QApplication.allWidgets():
-            if item == widget:
-                return True
-        return False
+            if not first and item == widget1:
+                first = True
+                if first and second:
+                    return first, second
+            if not second and item == widget2:
+                second = True
+                if first and second:
+                    return first, second
+        return first, second
 
     def eventFilter( self, obj, event ):
         " Event filter to catch ESC application wide "
         try:
             eventType = event.type()
-            if eventType == QEvent.KeyPress:
+            if eventType == KEY_PRESS:
                 if event.key() == Qt.Key_Escape:
-                    if self.mainWindow is not None:
+                    if self.mainWindow:
                         self.mainWindow.hideTooltips()
-            elif eventType == QEvent.ApplicationActivate:
-                if self.isWidgetAlive( self.__lastFocus ):
+            elif eventType == APP_ACTIVATE:
+                lastFocus, \
+                beforeMenuBar = self.__areWidgetsAlive( self.__lastFocus,
+                                                        self.__beforeMenuBar )
+                if lastFocus:
                     if isinstance( self.__lastFocus, QMenuBar ):
-                        if self.isWidgetAlive( self.__beforeMenuBar ):
+                        if beforeMenuBar:
                             self.__beforeMenuBar.setFocus()
                 self.__lastFocus = None
-                if self.mainWindow is not None:
+                if self.mainWindow:
                     self.mainWindow.checkOutsideFileChanges()
-            elif eventType == QEvent.ApplicationDeactivate:
+            elif eventType == APP_DEACTIVATE:
                 if QApplication.activeModalWidget() is not None:
                     self.__lastFocus = None
                 else:
