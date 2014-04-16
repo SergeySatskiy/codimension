@@ -89,16 +89,18 @@ class CodimensionApplication( QApplication ):
         for item in QApplication.allWidgets():
             if not first and item == widget1:
                 first = True
-                if first and second:
+                if second:
                     return first, second
             if not second and item == widget2:
                 second = True
-                if first and second:
+                if first:
                     return first, second
         return first, second
 
     def eventFilter( self, obj, event ):
-        " Event filter to catch ESC application wide "
+        """ Event filter to catch ESC application wide;
+            Pass focus explicitly on broken window managers when the app
+            is activated """
         try:
             eventType = event.type()
             if eventType == KEY_PRESS:
@@ -123,11 +125,7 @@ class CodimensionApplication( QApplication ):
                     self.__lastFocus = QApplication.focusWidget()
         except:
             pass
-
-        try:
-            return QApplication.eventFilter( self, obj, event )
-        except:
-            return True
+        return False
 
     def __onFocusChanged( self, fromWidget, toWidget ):
         " Triggered when a focus is passed from one widget to another "
