@@ -73,6 +73,14 @@ from ui.calltip import Calltip
 from navbar import NavigationBar
 
 
+CTRL_SHIFT = int( Qt.ShiftModifier | Qt.ControlModifier )
+SHIFT = int( Qt.ShiftModifier )
+CTRL = int( Qt.ControlModifier )
+ALT = int( Qt.AltModifier )
+CTRL_KEYPAD = int( Qt.KeypadModifier | Qt.ControlModifier )
+NO_MODIFIER = int( Qt.NoModifier )
+
+
 class TextEditor( ScintillaWrapper ):
     " Text editor implementation "
 
@@ -87,10 +95,15 @@ class TextEditor( ScintillaWrapper ):
     FOLDING_MARGIN = 2
     MESSAGES_MARGIN = 3
 
+    def parent( self ):
+        return self.__parent
+
     def __init__( self, parent, debugger ):
 
-        ScintillaWrapper.__init__( self, parent )
-        self.setAttribute( Qt.WA_DeleteOnClose )
+        self.__parent = parent
+        # ScintillaWrapper.__init__( self, parent )
+        ScintillaWrapper.__init__( self, GlobalData().mainWindow )
+        # self.setAttribute( Qt.WA_DeleteOnClose )
         self.setAttribute( Qt.WA_KeyCompression )
 
         self.__debugger = debugger
@@ -187,104 +200,77 @@ class TextEditor( ScintillaWrapper ):
                           SIGNAL( "rowsInserted(const QModelIndex &, int, int)" ),
                           self.__addBreakPoints )
 
+        self.__initHotKeys()
         self.installEventFilter( self )
+        return
+
+    def __initHotKeys( self ):
+        " Initializes a map for the hot keys event filter "
+        self.__hotKeys = {
+            CTRL_SHIFT:     { Qt.Key_F1:            self.onCallHelp,
+                              Qt.Key_T:             self.onJumpToTop,
+                              Qt.Key_M:             self.onJumpToMiddle,
+                              Qt.Key_B:             self.onJumpToBottom,
+                              Qt.Key_Up:            self.selectParagraphUp,
+                              Qt.Key_Down:          self.selectParagraphDown
+                            },
+            SHIFT:          { Qt.Key_Delete:        self.onShiftDel,
+                              Qt.Key_Tab:           self.dedentLine,
+                              Qt.Key_Backtab:       self.dedentLine,
+                              Qt.Key_End:           self.selectTillDisplayEnd,
+                              Qt.Key_Home:          self._onShiftHome
+                            },
+            CTRL:           { Qt.Key_X:             self.onShiftDel,
+                              Qt.Key_C:             self.onCtrlC,
+                              Qt.Key_Insert:        self.onCtrlC,
+                              ord( "'" ):           self._onHighlight,
+                              Qt.Key_Period:        self._onNextHighlight,
+                              Qt.Key_Comma:         self._onPrevHighlight,
+                              Qt.Key_M:             self.onCommentUncomment,
+                              Qt.Key_Space:         self.onAutoComplete,
+                              Qt.Key_F1:            self.onTagHelp,
+                              Qt.Key_Backslash:     self.onGotoDefinition,
+                              Qt.Key_BracketRight:  self.onOccurences,
+                              Qt.Key_Slash:         self.onShowCalltip,
+                              Qt.Key_Minus:         self.parent().onZoomOut,
+                              Qt.Key_Equal:         self.parent().onZoomIn,
+                              Qt.Key_0:             self.parent().onZoomReset,
+                              Qt.Key_L:             self.parent().onPylint,
+                              Qt.Key_K:             self.parent().onPymetrics,
+                              Qt.Key_I:             self.parent().onOpenImport,
+                              Qt.Key_Home:          self.onFirstChar,
+                              Qt.Key_End:           self.onLastChar,
+                              Qt.Key_B:             self.highlightInOutline
+                            },
+            ALT:            { Qt.Key_Left:          self.wordPartLeft,
+                              Qt.Key_Right:         self.wordPartRight,
+                              Qt.Key_Up:            self.paragraphUp,
+                              Qt.Key_Down:          self.paragraphDown,
+                              Qt.Key_U:             self.onScopeBegin
+                            },
+            CTRL_KEYPAD:    { Qt.Key_Minus:         self.parent().onZoomOut,
+                              Qt.Key_Plus:          self.parent().onZoomIn,
+                              Qt.Key_0:             self.parent().onZoomReset
+                            },
+            NO_MODIFIER:    { Qt.Key_Home:          self._onHome,
+                              Qt.Key_End:           self.moveToLineEnd,
+                              Qt.Key_F2:            self.parent().onNavigationBar
+                            }
+                    }
         return
 
     def eventFilter( self, obj, event ):
         " Event filter to catch shortcuts on UBUNTU "
         if event.type() == QEvent.KeyPress:
             key = event.key()
-            modifiers = event.modifiers()
-            if modifiers == Qt.ShiftModifier | Qt.ControlModifier:
-                if key == Qt.Key_F1:
-                    return self.onCallHelp()
-                if key == Qt.Key_T:
-                    return self.onJumpToTop()
-                if key == Qt.Key_M:
-                    return self.onJumpToMiddle()
-                if key == Qt.Key_B:
-                    return self.onJumpToBottom()
-                if key == Qt.Key_Up:
-                    return self._onCtrlShiftUp()
-                if key == Qt.Key_Down:
-                    return self._onCtrlShiftDown()
-            if modifiers == Qt.ShiftModifier:
-                if key == Qt.Key_Delete:
-                    return self.onShiftDel()
-                if key == Qt.Key_Tab or key == Qt.Key_Backtab:
-                    return self.__onDedent()
-                if key == Qt.Key_End:
-                    return self._onShiftEnd()
-                if key == Qt.Key_Home:
-                    return self._onShiftHome()
-            if modifiers == Qt.ControlModifier:
-                if key == Qt.Key_X:
-                    return self.onShiftDel()
-                if key in [ Qt.Key_C, Qt.Key_Insert ]:
-                    return self.onCtrlC()
-                if key == ord( "'" ):               # Ctrl + '
-                    return self._onHighlight()
-                if key == Qt.Key_Period:
-                    return self._onNextHighlight() # Ctrl + .
-                if key == Qt.Key_Comma:
-                    return self._onPrevHighlight() # Ctrl + ,
-                if key == Qt.Key_M:
-                    return self.onCommentUncomment()
-                if key == Qt.Key_Space:
-                    return self.onAutoComplete()
-                if key == Qt.Key_F1:
-                    return self.onTagHelp()
-                if key == Qt.Key_Backslash:
-                    return self.onGotoDefinition()
-                if key == Qt.Key_BracketRight:
-                    return self.onOccurences()
-                if key == Qt.Key_Slash:
-                    return self.onShowCalltip()
-                if key == Qt.Key_Minus:
-                    return self.parent().onZoomOut()
-                if key == Qt.Key_Equal:
-                    return self.parent().onZoomIn()
-                if key == Qt.Key_0:
-                    return self.parent().onZoomReset()
-                if key == Qt.Key_L:
-                    return self.parent().onPylint()
-                if key == Qt.Key_K:
-                    return self.parent().onPymetrics()
-                if key == Qt.Key_I:
-                    return self.parent().onOpenImport()
-                if key == Qt.Key_Home:
-                    return self.onFirstChar()
-                if key == Qt.Key_End:
-                    return self.onLastChar()
-                if key == Qt.Key_B:
-                    return self.highlightInOutline()
-            if modifiers == Qt.AltModifier:
-                if key == Qt.Key_Left:
-                    return self._onWordPartLeft()
-                if key == Qt.Key_Right:
-                    return self._onWordPartRight()
-                if key == Qt.Key_Up:
-                    return self._onParagraphUp()
-                if key == Qt.Key_Down:
-                    return self._onParagraphDown()
-                if key == Qt.Key_U:
-                    return self.onScopeBegin()
-            if modifiers == Qt.KeypadModifier | Qt.ControlModifier:
-                if key == Qt.Key_Minus:
-                    return self.parent().onZoomOut()
-                if key == Qt.Key_Plus:
-                    return self.parent().onZoomIn()
-                if key == Qt.Key_0:
-                    return self.parent().onZoomReset()
-            if modifiers == Qt.NoModifier:
-                if key == Qt.Key_Home:
-                    return self._onHome()
-                if key == Qt.Key_End:
-                    return self._onEnd()
-                if key == Qt.Key_F2:
-                    return self.parent().onNavigationBar()
-
-        return ScintillaWrapper.eventFilter( self, obj, event )
+            modifiers = int( event.modifiers() )
+            try:
+                self.__hotKeys[ modifiers ][ key ]()
+                return True
+            except:
+                pass
+        # Scintilla does not define an event filter so there is no need
+        return False
 
     def wheelEvent( self, event ):
         " Mouse wheel event "
@@ -1436,11 +1422,6 @@ class TextEditor( ScintillaWrapper ):
         self.ensureLineVisible( targets[ last ][ 0 ] )
         return True
 
-    def __onDedent( self ):
-        " Triggered when Shift+Tab is clicked "
-        self.SendScintilla( QsciScintilla.SCI_BACKTAB )
-        return True
-
     def onCommentUncomment( self ):
         " Triggered when Ctrl+M is received "
         if self.isReadOnly():
@@ -1489,60 +1470,14 @@ class TextEditor( ScintillaWrapper ):
         self.endUndoAction()
         return True
 
-    def _onWordPartLeft( self ):
-        " Triggered when Alt+Left is received "
-        self.SendScintilla( QsciScintilla.SCI_WORDPARTLEFT )
-        return True
-
-    def _onWordPartRight( self ):
-        " Triggered when Alt+Right is received "
-        self.SendScintilla( QsciScintilla.SCI_WORDPARTRIGHT )
-        return True
-
-    def _onParagraphUp( self ):
-        " Triggered when Alt+Up is received "
-        self.SendScintilla( QsciScintilla.SCI_PARAUP )
-        return True
-
-    def _onParagraphDown( self ):
-        " Triggered when Alt+Down is received "
-        self.SendScintilla( QsciScintilla.SCI_PARADOWN )
-        return True
-
-    def _onCtrlShiftUp( self ):
-        " Triggered when Ctrl+Shift+Up is received "
-        self.SendScintilla( QsciScintilla.SCI_PARAUPEXTEND )
-        return True
-
-    def _onCtrlShiftDown( self ):
-        " Triggered when Ctrl+Shift+Down is received "
-        self.SendScintilla( QsciScintilla.SCI_PARADOWNEXTEND )
-        return True
-
     def _onHome( self ):
         " Triggered when HOME is received "
-        if Settings().jumpToFirstNonSpace:
-            self.SendScintilla( QsciScintilla.SCI_VCHOME )
-        else:
-            self.SendScintilla( QsciScintilla.SCI_HOMEDISPLAY )
+        self.moveToLineBegin( Settings().jumpToFirstNonSpace )
         return True
 
     def _onShiftHome( self ):
         " Triggered when Shift+HOME is received "
-        if Settings().jumpToFirstNonSpace:
-            self.SendScintilla( QsciScintilla.SCI_VCHOMEEXTEND )
-        else:
-            self.SendScintilla( QsciScintilla.SCI_HOMEDISPLAYEXTEND )
-        return True
-
-    def _onEnd( self ):
-        " Triggered when END is received "
-        self.SendScintilla( QsciScintilla.SCI_LINEENDDISPLAY )
-        return True
-
-    def _onShiftEnd( self ):
-        " Triggered when END is received "
-        self.SendScintilla( QsciScintilla.SCI_LINEENDDISPLAYEXTEND )
+        self.selectTillLineBegin( Settings().jumpToFirstNonSpace )
         return True
 
     def onShiftDel( self ):
@@ -1550,8 +1485,8 @@ class TextEditor( ScintillaWrapper ):
         if self.hasSelectedText():
             self.cut()
         else:
-            self.SendScintilla( QsciScintilla.SCI_LINECOPY )
-            self.SendScintilla( QsciScintilla.SCI_LINEDELETE )
+            self.copyLine()
+            self.deleteLine()
         return True
 
     def onCtrlC( self ):
@@ -1559,7 +1494,7 @@ class TextEditor( ScintillaWrapper ):
         if self.hasSelectedText():
             self.copy()
         else:
-            self.SendScintilla( QsciScintilla.SCI_LINECOPY )
+            self.copyLine()
         return True
 
     def __detectLineHeight( self ):

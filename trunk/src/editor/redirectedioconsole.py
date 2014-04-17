@@ -87,12 +87,15 @@ class RedirectedIOConsole( TextEditor ):
             modifiers = event.modifiers()
             if modifiers == Qt.ShiftModifier | Qt.ControlModifier:
                 if key == Qt.Key_Up:
-                    return self._onCtrlShiftUp()
+                    self.selectParagraphUp()
+                    return True
                 if key == Qt.Key_Down:
-                    return self._onCtrlShiftDown()
+                    self.selectParagraphDown()
+                    return True
             if modifiers == Qt.ShiftModifier:
                 if key == Qt.Key_End:
-                    return self._onShiftEnd()
+                    self.selectTillDisplayEnd()
+                    return True
                 if key == Qt.Key_Home:
                     return self._onShiftHome()
                 if key == Qt.Key_Insert:
@@ -124,13 +127,17 @@ class RedirectedIOConsole( TextEditor ):
                     return self.onLastChar()
             if modifiers == Qt.AltModifier:
                 if key == Qt.Key_Left:
-                    return self._onWordPartLeft()
+                    self.wordPartLeft()
+                    return True
                 if key == Qt.Key_Right:
-                    return self._onWordPartRight()
+                    self.wordPartRight()
+                    return True
                 if key == Qt.Key_Up:
-                    return self._onParagraphUp()
+                    self.paragraphUp()
+                    return True
                 if key == Qt.Key_Down:
-                    return self._onParagraphDown()
+                    self.paragraphDown()
+                    return True
             if modifiers == Qt.KeypadModifier | Qt.ControlModifier:
                 if key == Qt.Key_Minus:
                     return self.parent().onZoomOut()
@@ -141,9 +148,10 @@ class RedirectedIOConsole( TextEditor ):
             if key == Qt.Key_Home and modifiers == Qt.NoModifier:
                 return self._onHome()
             if key == Qt.Key_End and modifiers == Qt.NoModifier:
-                return self._onEnd()
+                self.moveToLineEnd()
+                return True
 
-        return ScintillaWrapper.eventFilter( self, obj, event )
+        return False
 
     def wheelEvent( self, event ):
         " Mouse wheel event "
@@ -984,6 +992,8 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         return True
     def shouldAcceptFocus( self ):
         return True
+    def onNavigationBar( self ):
+        pass
 
     def writeFile( self, fileName ):
         " Writes the text to a file "
