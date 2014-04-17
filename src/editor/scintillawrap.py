@@ -137,7 +137,7 @@ class ScintillaWrapper( QsciScintilla ):
     def lineAt( self, pos ):
         """ Calculates the line at a position. pos is int or QPoint.
             Returns -1 if there is no line at pos """
-        if type( pos ) == type( 1 ):
+        if type( pos ) == int:
             scipos = pos
         else:
             scipos = self.SendScintilla( self.SCI_POSITIONFROMPOINT,
@@ -609,9 +609,9 @@ class ScintillaWrapper( QsciScintilla ):
 
     def findNextTarget( self ):
         " Finds the next occurrence in the target range "
-        if not self.__targetSearchActive:
-            return False
-        return self.__doSearchTarget()
+        if self.__targetSearchActive:
+            return self.__doSearchTarget()
+        return False
 
     def replaceTarget( self, replaceStr ):
         """ Replaces the string found by the last search in target """
@@ -719,7 +719,6 @@ class ScintillaWrapper( QsciScintilla ):
 
     def clearAlternateKeys( self ):
         """ Clears the alternate key commands """
-
         # call into the QsciCommandSet
         self.standardCommands().clearAlternateKeys()
         return
