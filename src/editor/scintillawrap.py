@@ -855,3 +855,76 @@ class ScintillaWrapper( QsciScintilla ):
         " Clears undo history "
         self.SendScintilla( self.SCI_EMPTYUNDOBUFFER )
         return
+
+    def wordPartLeft( self ):
+        " Moves the cursor a word part left "
+        self.SendScintilla( self.SCI_WORDPARTLEFT )
+        return
+
+    def wordPartRight( self ):
+        " Moves the cursor a word part right "
+        self.SendScintilla( self.SCI_WORDPARTRIGHT )
+        return
+
+    def selectParagraphUp( self ):
+        " Selects the paragraph up "
+        self.SendScintilla( self.SCI_PARAUPEXTEND )
+        return
+
+    def selectParagraphDown( self ):
+        " Selects the paragraph down "
+        self.SendScintilla( self.SCI_PARADOWNEXTEND )
+        return
+
+    def dedentLine( self ):
+        " Dedent the current line "
+        self.SendScintilla( self.SCI_BACKTAB )
+        return
+
+    def copyLine( self ):
+        " Copies the current line "
+        self.SendScintilla( self.SCI_LINECOPY )
+        return
+
+    def deleteLine( self ):
+        " Deletes the current line "
+        self.SendScintilla( self.SCI_LINEDELETE )
+        return
+
+    def paragraphUp( self ):
+        " Move the cursor a paragraph up "
+        self.SendScintilla( self.SCI_PARAUP )
+        return
+
+    def paragraphDown( self ):
+        " Move the cursor a paragraph down "
+        self.SendScintilla( self.SCI_PARADOWN )
+        return
+
+    def selectTillDisplayEnd( self ):
+        " Selects from the current position till the displayed end of line "
+        self.SendScintilla( self.SCI_LINEENDDISPLAYEXTEND )
+        return
+
+    def moveToLineEnd( self ):
+        " Moves the cursor to the displayed end of line "
+        self.SendScintilla( self.SCI_LINEENDDISPLAY )
+        return
+
+    def selectTillLineBegin( self, firstNonSpace ):
+        " Selects till the beginning of the line "
+        if firstNonSpace:
+            self.SendScintilla( self.SCI_VCHOMEEXTEND )
+        else:
+            self.SendScintilla( self.SCI_HOMEDISPLAYEXTEND )
+        return
+
+    def moveToLineBegin( self, firstNonSpace ):
+        " Moves the cursor to the beginning of the line "
+        if firstNonSpace:
+            self.SendScintilla( self.SCI_VCHOME )
+        else:
+            self.SendScintilla( self.SCI_HOMEDISPLAY )
+        return
+
+
