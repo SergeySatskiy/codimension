@@ -23,7 +23,7 @@
 " Navigation bar implementation "
 
 
-from PyQt4.QtCore import SIGNAL, QTimer, Qt, QEvent, QObject
+from PyQt4.QtCore import SIGNAL, QTimer, Qt, QEvent
 from PyQt4.QtGui import ( QFrame, QHBoxLayout, QLabel, QWidget, QSizePolicy,
                           QComboBox )
 from utils.globals import GlobalData
@@ -73,7 +73,7 @@ class NavBarComboBox( QComboBox ):
                 else:
                     self.parent().activateCombo( self, 0 )
                 return True
-        return QObject.eventFilter( self, obj, event )
+        return False
 
     def onActivated( self, index ):
         " User selected an item "
@@ -85,26 +85,6 @@ class NavBarComboBox( QComboBox ):
             self.emit( SIGNAL( 'JumpToLine' ), line )
         return
 
-    def keyPressEvent( self, event ):
-        " Handles the key press events "
-        key = event.key()
-        if key == Qt.Key_Escape:
-            # Move the focus back to the editor
-            self.parent().getEditor().setFocus()
-            return
-        if key == Qt.Key_Left:
-            # Move cursor to the left combo
-            if self.pathIndex is not None:
-                self.parent().activateCombo( self, self.pathIndex - 1 )
-                return
-        if key == Qt.Key_Right:
-            # Move cursor to the right combo
-            if self.pathIndex is not None:
-                self.parent().activateCombo( self, self.pathIndex + 1 )
-            else:
-                self.parent().activateCombo( self, 0 )
-        QComboBox.keyPressEvent( self, event )
-        return
 
 
 class PathElement:
