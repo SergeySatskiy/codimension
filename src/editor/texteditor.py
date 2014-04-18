@@ -95,12 +95,9 @@ class TextEditor( ScintillaWrapper ):
     FOLDING_MARGIN = 2
     MESSAGES_MARGIN = 3
 
-    def parent( self ):
-        return self.__parent
-
     def __init__( self, parent, debugger ):
 
-        self.__parent = parent
+        self._parent = parent
         ScintillaWrapper.__init__( self, GlobalData().mainWindow )
         # self.setAttribute( Qt.WA_DeleteOnClose )
         self.setAttribute( Qt.WA_KeyCompression )
@@ -222,7 +219,7 @@ class TextEditor( ScintillaWrapper ):
             CTRL:           { Qt.Key_X:             self.onShiftDel,
                               Qt.Key_C:             self.onCtrlC,
                               Qt.Key_Insert:        self.onCtrlC,
-                              ord( "'" ):           self._onHighlight,
+                              Qt.Key_Apostrophe:    self._onHighlight,
                               Qt.Key_Period:        self._onNextHighlight,
                               Qt.Key_Comma:         self._onPrevHighlight,
                               Qt.Key_M:             self.onCommentUncomment,
@@ -231,12 +228,9 @@ class TextEditor( ScintillaWrapper ):
                               Qt.Key_Backslash:     self.onGotoDefinition,
                               Qt.Key_BracketRight:  self.onOccurences,
                               Qt.Key_Slash:         self.onShowCalltip,
-                              Qt.Key_Minus:         self.parent().onZoomOut,
-                              Qt.Key_Equal:         self.parent().onZoomIn,
-                              Qt.Key_0:             self.parent().onZoomReset,
-                              Qt.Key_L:             self.parent().onPylint,
-                              Qt.Key_K:             self.parent().onPymetrics,
-                              Qt.Key_I:             self.parent().onOpenImport,
+                              Qt.Key_Minus:         self._parent.onZoomOut,
+                              Qt.Key_Equal:         self._parent.onZoomIn,
+                              Qt.Key_0:             self._parent.onZoomReset,
                               Qt.Key_Home:          self.onFirstChar,
                               Qt.Key_End:           self.onLastChar,
                               Qt.Key_B:             self.highlightInOutline
@@ -247,15 +241,24 @@ class TextEditor( ScintillaWrapper ):
                               Qt.Key_Down:          self.paragraphDown,
                               Qt.Key_U:             self.onScopeBegin
                             },
-            CTRL_KEYPAD:    { Qt.Key_Minus:         self.parent().onZoomOut,
-                              Qt.Key_Plus:          self.parent().onZoomIn,
-                              Qt.Key_0:             self.parent().onZoomReset
+            CTRL_KEYPAD:    { Qt.Key_Minus:         self._parent.onZoomOut,
+                              Qt.Key_Plus:          self._parent.onZoomIn,
+                              Qt.Key_0:             self._parent.onZoomReset
                             },
             NO_MODIFIER:    { Qt.Key_Home:          self._onHome,
-                              Qt.Key_End:           self.moveToLineEnd,
-                              Qt.Key_F2:            self.parent().onNavigationBar
+                              Qt.Key_End:           self.moveToLineEnd
                             }
                     }
+
+        # Not all the derived classes need certail tool functionality
+        if hasattr( self._parent, "onPylint" ):
+            self.__hotKeys[ CTRL ][ Qt.Key_L ] = self._parent.onPylint
+        if hasattr( self._parent, "onPymetrics" ):
+            self.__hotKeys[ CTRL ][ Qt.Key_K ] = self._parent.onPymetrics
+        if hasattr( self._parent, "onOpenImport" ):
+            self.__hotKeys[ CTRL ][ Qt.Key_I ] = self._parent.onOpenImport
+        if hasattr( self._parent, "onNavigationBar" ):
+            self.__hotKeys[ NO_MODIFIER ][ Qt.Key_F2 ] = self._parent.onNavigationBar
         return
 
     def eventFilter( self, obj, event ):
@@ -275,9 +278,9 @@ class TextEditor( ScintillaWrapper ):
         " Mouse wheel event "
         if QApplication.keyboardModifiers() == Qt.ControlModifier:
             if event.delta() > 0:
-                self.parent().onZoomIn()
+                self._parent.onZoomIn()
             else:
-                self.parent().onZoomOut()
+                self._parent.onZoomOut()
         else:
             ScintillaWrapper.wheelEvent( self, event )
         return
@@ -345,7 +348,8 @@ class TextEditor( ScintillaWrapper ):
 
         # Plugins support
         self.__pluginMenuSeparator = self._menu.addSeparator()
-        editorsManager = self.parent().parent()
+        mainWindow = GlobalData().mainWindow
+        editorsManager = mainWindow.editorsManagerWidget.editorsManager
         registeredMenus = editorsManager.getPluginMenus()
         if registeredMenus:
             for path in registeredMenus:
@@ -419,27 +423,27 @@ class TextEditor( ScintillaWrapper ):
         self.toolsMenu = QMenu( "Too&ls" )
         self.pylintAct = self.toolsMenu.addAction(
                             PixmapCache().getIcon( 'pylint.png' ),
-                            'pylint', self.parent().onPylint, "Ctrl+L" )
+                            'pylint', self._parent.onPylint, "Ctrl+L" )
         self.pylintAct.setEnabled( False )
         self.pymetricsAct = self.toolsMenu.addAction(
                             PixmapCache().getIcon( 'metrics.png' ),
-                            'pymetrics', self.parent().onPymetrics, "Ctrl+K" )
+                            'pymetrics', self._parent.onPymetrics, "Ctrl+K" )
         self.toolsMenu.addSeparator()
         self.runAct = self.toolsMenu.addAction(
                             PixmapCache().getIcon( 'run.png' ),
-                            'Run script', self.parent().onRunScript )
+                            'Run script', self._parent.onRunScript )
         self.runParamAct = self.toolsMenu.addAction(
                             PixmapCache().getIcon( 'paramsmenu.png' ),
                             'Set parameters and run',
-                            self.parent().onRunScriptSettings )
+                            self._parent.onRunScriptSettings )
         self.toolsMenu.addSeparator()
         self.profileAct = self.toolsMenu.addAction(
                             PixmapCache().getIcon( 'profile.png' ),
-                            'Profile script', self.parent().onProfileScript )
+                            'Profile script', self._parent.onProfileScript )
         self.profileParamAct = self.toolsMenu.addAction(
                             PixmapCache().getIcon( 'paramsmenu.png' ),
                             'Set parameters and profile',
-                            self.parent().onProfileScriptSettings )
+                            self._parent.onProfileScriptSettings )
         return self.toolsMenu
 
     def __initDiagramsMenu( self ):
@@ -448,11 +452,11 @@ class TextEditor( ScintillaWrapper ):
         self.importsDgmAct = self.diagramsMenu.addAction(
                                 PixmapCache().getIcon( 'importsdiagram.png' ),
                                 'Imports diagram',
-                                self.parent().onImportDgm )
+                                self._parent.onImportDgm )
         self.importsDgmParamAct = self.diagramsMenu.addAction(
                                 PixmapCache().getIcon( 'paramsmenu.png' ),
                                 'Fine tuned imports diagram',
-                                self.parent().onImportDgmTuned )
+                                self._parent.onImportDgmTuned )
         return self.diagramsMenu
 
     def contextMenuEvent( self, event ):
@@ -466,8 +470,8 @@ class TextEditor( ScintillaWrapper ):
                                          and not self.isReadOnly() )
 
             # Check the proper encoding in the menu
-            fileType = self.parent().getFileType()
-            fileName = self.parent().getFileName()
+            fileType = self._parent.getFileType()
+            fileName = self._parent.getFileName()
             if fileType in [ DesignerFileType, LinguistFileType ]:
                 self.encodingMenu.setEnabled( False )
             else:
@@ -486,7 +490,7 @@ class TextEditor( ScintillaWrapper ):
                         GlobalData().project.isLoaded() and
                         GlobalData().project.isProjectFile( fileName ) )
             self.__menuHighlightInFS.setEnabled( os.path.isabs( fileName ) )
-            self._menuHighlightInOutline.setEnabled( fileType == PythonFileType )
+            self._menuHighlightInOutline.setEnabled( self.isPythonBuffer() )
             self._menu.popup( event.globalPos() )
         else:
             # Menu for a margin
@@ -524,10 +528,10 @@ class TextEditor( ScintillaWrapper ):
 
     def focusInEvent( self, event ):
         " Enable Shift+Tab when the focus is received "
-        if not self.parent().shouldAcceptFocus():
-            self.parent().setFocus()
-            return
-        ScintillaWrapper.focusInEvent( self, event )
+        if self._parent.shouldAcceptFocus():
+            ScintillaWrapper.focusInEvent( self, event )
+        else:
+            self._parent.setFocus()
         return
 
     def focusOutEvent( self, event ):
@@ -579,8 +583,8 @@ class TextEditor( ScintillaWrapper ):
         self.setCurrentLineHighlight( settings.currentLineVisible,
                                       GlobalData().skin.currentLinePaper )
 
-        if hasattr( self.__parent, "getNavigationBar" ):
-            navBar = self.__parent.getNavigationBar()
+        if hasattr( self._parent, "getNavigationBar" ):
+            navBar = self._parent.getNavigationBar()
             if navBar:
                 navBar.updateSettings()
 
@@ -950,8 +954,8 @@ class TextEditor( ScintillaWrapper ):
             return False
 
         self.setEncoding( self.getFileEncoding( fileName, fileType ) )
-        self.parent().updateModificationTime( fileName )
-        self.parent().setReloadDialogShown( False )
+        self._parent.updateModificationTime( fileName )
+        self._parent.setReloadDialogShown( False )
         QApplication.restoreOverrideCursor()
         return True
 
@@ -1558,8 +1562,7 @@ class TextEditor( ScintillaWrapper ):
         self.__completionPrefix = getPrefixAndObject( self )
 
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
-        if self.parent().getFileType() not in [ PythonFileType,
-                                                Python3FileType ]:
+        if not self.isPythonBuffer():
             words = list( getEditorTags( self, self.__completionPrefix ) )
             isModName = False
         else:
@@ -1567,7 +1570,7 @@ class TextEditor( ScintillaWrapper ):
             info = getBriefModuleInfoFromMemory( text )
             context = getContext( self, info )
 
-            words, isModName = getCompletionList( self.parent().getFileName(),
+            words, isModName = getCompletionList( self._parent.getFileName(),
                                                   context,
                                                   self.__completionObject,
                                                   self.__completionPrefix,
@@ -1624,7 +1627,7 @@ class TextEditor( ScintillaWrapper ):
     def onTagHelp( self ):
         " Provides help for an item if available "
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
-        calltip, docstring = getCalltipAndDoc( self.parent().getFileName(),
+        calltip, docstring = getCalltipAndDoc( self._parent.getFileName(),
                                                self )
         if calltip is None and docstring is None:
             QApplication.restoreOverrideCursor()
@@ -1644,7 +1647,7 @@ class TextEditor( ScintillaWrapper ):
             GlobalData().mainWindow.showStatusBarMessage( "Not a function call.", 0 )
             return True
 
-        calltip, docstring = getCalltipAndDoc( self.parent().getFileName(),
+        calltip, docstring = getCalltipAndDoc( self._parent.getFileName(),
                                                self, callPosition )
         if calltip is None and docstring is None:
             QApplication.restoreOverrideCursor()
@@ -1699,12 +1702,11 @@ class TextEditor( ScintillaWrapper ):
 
     def onGotoDefinition( self ):
         " The user requested a jump to definition "
-        if self.parent().getFileType() not in [ PythonFileType,
-                                                Python3FileType ]:
+        if not self.isPythonBuffer():
             return True
 
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
-        location = getDefinitionLocation( self.parent().getFileName(),
+        location = getDefinitionLocation( self._parent.getFileName(),
                                           self )
         QApplication.restoreOverrideCursor()
         if location is None:
@@ -1721,15 +1723,12 @@ class TextEditor( ScintillaWrapper ):
 
     def onScopeBegin( self ):
         " The user requested jumping to the current scope begin "
-        if self.parent().getFileType() not in [ PythonFileType,
-                                                Python3FileType ]:
-            return True
-
-        text = str( self.text() )
-        info = getBriefModuleInfoFromMemory( text )
-        context = getContext( self, info, True )
-        if context.getScope() != context.GlobalScope:
-            GlobalData().mainWindow.jumpToLine( context.getLastScopeLine() )
+        if self.isPythonBuffer():
+            text = str( self.text() )
+            info = getBriefModuleInfoFromMemory( text )
+            context = getContext( self, info, True )
+            if context.getScope() != context.GlobalScope:
+                GlobalData().mainWindow.jumpToLine( context.getLastScopeLine() )
         return True
 
     def onShowCalltip( self, showMessage = True, showKeyword = True ):
@@ -1737,8 +1736,7 @@ class TextEditor( ScintillaWrapper ):
         if self.__calltip is not None:
             self.__resetCalltip()
             return True
-        if self.parent().getFileType() not in [ PythonFileType,
-                                                Python3FileType ]:
+        if not self.isPythonBuffer():
             return True
 
         if self.styleAt( self.currentPosition() ) in [
@@ -1764,7 +1762,7 @@ class TextEditor( ScintillaWrapper ):
             self.__resetCalltip()
             return True
 
-        calltip, docstring = getCalltipAndDoc( self.parent().getFileName(),
+        calltip, docstring = getCalltipAndDoc( self._parent.getFileName(),
                                                self, callPosition, True )
         if calltip is None:
             QApplication.restoreOverrideCursor()
@@ -1818,18 +1816,17 @@ class TextEditor( ScintillaWrapper ):
 
     def onOccurences( self ):
         " The user requested a list of occurences "
-        if self.parent().getFileType() not in [ PythonFileType,
-                                                Python3FileType ]:
+        if not self.isPythonBuffer():
             return True
-        if self.parent().getType() in [ MainWindowTabWidgetBase.VCSAnnotateViewer ]:
+        if self._parent.getType() in [ MainWindowTabWidgetBase.VCSAnnotateViewer ]:
             return True
-        if not os.path.isabs( self.parent().getFileName() ):
+        if not os.path.isabs( self._parent.getFileName() ):
             GlobalData().mainWindow.showStatusBarMessage(
                                             "Save the buffer first.", 0 )
             return True
         if self.isModified():
             # Check that the directory is writable for a temporary file
-            dirName = os.path.dirname( self.parent().getFileName() )
+            dirName = os.path.dirname( self._parent.getFileName() )
             if not os.access( dirName, os.W_OK ):
                 GlobalData().mainWindow.showStatusBarMessage(
                                 "File directory is not writable. "
@@ -1838,7 +1835,7 @@ class TextEditor( ScintillaWrapper ):
 
         # Prerequisites were checked, run the rope library
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
-        name, locations = getOccurrences( self.parent().getFileName(), self )
+        name, locations = getOccurrences( self._parent.getFileName(), self )
         if len( locations ) == 0:
             QApplication.restoreOverrideCursor()
             GlobalData().mainWindow.showStatusBarMessage(
@@ -1906,14 +1903,14 @@ class TextEditor( ScintillaWrapper ):
         " Triggered when undo button is clicked "
         if self.isUndoAvailable():
             self.undo()
-            self.parent().modificationChanged()
+            self._parent.modificationChanged()
         return
 
     def onRedo( self ):
         " Triggered when redo button is clicked "
         if self.isRedoAvailable():
             self.redo()
-            self.parent().modificationChanged()
+            self._parent.modificationChanged()
         return
 
     def openAsFile( self ):
@@ -1937,7 +1934,7 @@ class TextEditor( ScintillaWrapper ):
             return
         # This is not an absolute path but could be a relative path for the
         # current buffer file. Let's try it.
-        fileName = self.parent().getFileName()
+        fileName = self._parent.getFileName()
         if fileName != "":
             # There is a file name
             fName = os.path.dirname( fileName ) + os.path.sep + path
@@ -2019,17 +2016,13 @@ class TextEditor( ScintillaWrapper ):
 
     def _contextMenuAboutToShow( self ):
         " Context menu is about to show "
-        if self.parent().getFileType() not in [ PythonFileType,
-                                                Python3FileType ]:
-            self._menuHighlightInOutline.setEnabled( False )
-        else:
-            self._menuHighlightInOutline.setEnabled( True )
+        self._menuHighlightInOutline.setEnabled( self.isPythonBuffer() )
 
-        self.runAct.setEnabled( self.parent().runScriptButton.isEnabled() )
-        self.runParamAct.setEnabled( self.parent().runScriptButton.isEnabled() )
-        self.profileAct.setEnabled( self.parent().runScriptButton.isEnabled() )
+        self.runAct.setEnabled( self._parent.runScriptButton.isEnabled() )
+        self.runParamAct.setEnabled( self._parent.runScriptButton.isEnabled() )
+        self.profileAct.setEnabled( self._parent.runScriptButton.isEnabled() )
         self.profileParamAct.setEnabled(
-                                    self.parent().runScriptButton.isEnabled() )
+                                    self._parent.runScriptButton.isEnabled() )
         return
 
     def highlightInOutline( self ):
@@ -2114,11 +2107,10 @@ class TextEditor( ScintillaWrapper ):
                 return
 
         # Check if it is a python file
-        if self.parent().getFileType() not in [ PythonFileType,
-                                                Python3FileType ]:
+        if not self.isPythonBuffer():
             return
 
-        fileName = self.parent().getFileName()
+        fileName = self._parent.getFileName()
         if fileName is None or fileName == "" or not os.path.isabs( fileName ):
             logging.warning( "The buffer has to be saved "
                              "before breakpoints could be set." )
@@ -2185,7 +2177,7 @@ class TextEditor( ScintillaWrapper ):
 
     def __toggleBreakpoint( self, line, temporary = False ):
         " Toggles the line breakpoint "
-        fileName = self.parent().getFileName()
+        fileName = self._parent.getFileName()
         model = self.__debugger.getBreakPointModel()
         for handle, bpoint in self.__breakpoints.items():
             if self.markerLine( handle ) == line - 1:
@@ -2206,10 +2198,10 @@ class TextEditor( ScintillaWrapper ):
         # - it is a python buffer
         # - it is a breakable line
         # are checked in the function
-        if not self.parent().isLineBreakable( line, True, True ):
+        if not self._parent.isLineBreakable( line, True, True ):
             return
 
-        bpoint = Breakpoint( self.parent().getFileName(),
+        bpoint = Breakpoint( self._parent.getFileName(),
                              line, "", temporary, True, 0 )
         self.__debugger.getBreakPointModel().addBreakpoint( bpoint )
         return
@@ -2222,7 +2214,7 @@ class TextEditor( ScintillaWrapper ):
             bpoint = bpointModel.getBreakPointByIndex( index )
             fileName = bpoint.getAbsoluteFileName()
 
-            if fileName == self.parent().getFileName():
+            if fileName == self._parent.getFileName():
                 self.clearBreakpoint( bpoint.getLineNumber() )
         return
 
@@ -2261,7 +2253,7 @@ class TextEditor( ScintillaWrapper ):
             bpoint = bpointModel.getBreakPointByIndex( index )
             fileName = bpoint.getAbsoluteFileName()
 
-            if fileName == self.parent().getFileName():
+            if fileName == self._parent.getFileName():
                 self.newBreakpointWithProperties( bpoint )
         return
 
@@ -2342,7 +2334,7 @@ class TextEditor( ScintillaWrapper ):
 
         if toBeDeleted:
             model = self.__debugger.getBreakPointModel()
-            fileName = self.parent().getFileName()
+            fileName = self._parent.getFileName()
             for line in toBeDeleted:
                 index = model.getBreakPointIndex( fileName, line )
                 model.deleteBreakPointByIndex( index )
@@ -2358,7 +2350,7 @@ class TextEditor( ScintillaWrapper ):
         if not self.__breakpoints:
             return
 
-        fileName = self.parent().getFileName()
+        fileName = self._parent.getFileName()
         breakableLines = getBreakpointLines( fileName, str( self.text() ),
                                              True, False )
 
@@ -2409,6 +2401,12 @@ class TextEditor( ScintillaWrapper ):
             self.__inLinesChanged = False
             self.ignoreBufferChangedSignal = False
         return
+
+    def isPythonBuffer( self ):
+        " True if it is a python buffer "
+        return self._parent.getFileType() in [ PythonFileType,
+                                               Python3FileType ]
+
 
 
 

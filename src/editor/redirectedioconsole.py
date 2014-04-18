@@ -109,18 +109,18 @@ class RedirectedIOConsole( TextEditor ):
                     return self.onShiftDel()
                 if key in [ Qt.Key_C, Qt.Key_Insert ]:
                     return self.onCtrlC()
-                if key == ord( "'" ):               # Ctrl + '
+                if key == Qt.Key_Apostrophe:       # Ctrl + '
                     return self._onHighlight()
                 if key == Qt.Key_Period:
                     return self._onNextHighlight() # Ctrl + .
                 if key == Qt.Key_Comma:
                     return self._onPrevHighlight() # Ctrl + ,
                 if key == Qt.Key_Minus:
-                    return self.parent().onZoomOut()
+                    return self._parent.onZoomOut()
                 if key == Qt.Key_Equal:
-                    return self.parent().onZoomIn()
+                    return self._parent.onZoomIn()
                 if key == Qt.Key_0:
-                    return self.parent().onZoomReset()
+                    return self._parent.onZoomReset()
                 if key == Qt.Key_Home:
                     return self.onFirstChar()
                 if key == Qt.Key_End:
@@ -140,11 +140,11 @@ class RedirectedIOConsole( TextEditor ):
                     return True
             if modifiers == Qt.KeypadModifier | Qt.ControlModifier:
                 if key == Qt.Key_Minus:
-                    return self.parent().onZoomOut()
+                    return self._parent.onZoomOut()
                 if key == Qt.Key_Plus:
-                    return self.parent().onZoomIn()
+                    return self._parent.onZoomIn()
                 if key == Qt.Key_0:
-                    return self.parent().onZoomReset()
+                    return self._parent.onZoomReset()
             if key == Qt.Key_Home and modifiers == Qt.NoModifier:
                 return self._onHome()
             if key == Qt.Key_End and modifiers == Qt.NoModifier:
@@ -157,9 +157,9 @@ class RedirectedIOConsole( TextEditor ):
         " Mouse wheel event "
         if QApplication.keyboardModifiers() == Qt.ControlModifier:
             if event.delta() > 0:
-                self.parent().onZoomIn()
+                self._parent.onZoomIn()
             else:
-                self.parent().onZoomOut()
+                self._parent.onZoomOut()
         else:
             ScintillaWrapper.wheelEvent( self, event )
         return
@@ -536,7 +536,6 @@ class RedirectedIOConsole( TextEditor ):
 
     def onShiftDel( self ):
         " Deletes the selected text "
-        
         return True
 
     def onUndo( self ):
@@ -556,7 +555,7 @@ class RedirectedIOConsole( TextEditor ):
 
     def onCtrlShiftC( self ):
         " Copy all with timestamps "
-        
+        return True
 
     def appendIDEMessage( self, text ):
         " Appends an IDE message "
@@ -613,7 +612,7 @@ class RedirectedIOConsole( TextEditor ):
                 self.markerAdd( lineNo, self.ideMessageMarker )
                 self.__addTooltip( lineNo, timestamp )
         else:
-            if self.parent().hiddenMessage( msg ):
+            if self._parent.hiddenMessage( msg ):
                 return
             line, pos = self.getEndPosition()
             startPos = self.positionFromLineIndex( line, pos )
