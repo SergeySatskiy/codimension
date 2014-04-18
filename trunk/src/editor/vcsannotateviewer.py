@@ -74,7 +74,7 @@ class VCSAnnotateViewer( TextEditor ):
         self.__lineRevisions = lineRevisions
         self.__revisionInfo = revisionInfo
 
-        fileType = self.parent().getFileType()
+        fileType = self._parent.getFileType()
         if fileType in [ DesignerFileType, LinguistFileType ]:
             # special treatment for Qt-Linguist and Qt-Designer files
             self.encoding = 'latin-1'
@@ -228,16 +228,17 @@ class VCSAnnotateViewer( TextEditor ):
         return
 
     def _contextMenuAboutToShow( self ):
-        if self.parent().getFileType() not in [ PythonFileType,
-                                                Python3FileType ]:
-            self._menuHighlightInOutline.setEnabled( False )
-        else:
-            self._menuHighlightInOutline.setEnabled( True )
+        self._menuHighlightInOutline.setEnabled( self.isPythonBuffer() )
 
+        self.encodingMenu.setEnabled( False )
+        self.pylintAct.setEnabled( False )
+        self.pymetricsAct.setEnabled( False )
         self.runAct.setEnabled( False )
         self.runParamAct.setEnabled( False )
         self.profileAct.setEnabled( False )
         self.profileParamAct.setEnabled( False )
+        self.importsDgmAct.setEnabled( False )
+        self.importsDgmParamAct.setEnabled( False )
         return
 
 
