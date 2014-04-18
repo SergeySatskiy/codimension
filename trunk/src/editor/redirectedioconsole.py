@@ -153,17 +153,6 @@ class RedirectedIOConsole( TextEditor ):
 
         return False
 
-    def wheelEvent( self, event ):
-        " Mouse wheel event "
-        if QApplication.keyboardModifiers() == Qt.ControlModifier:
-            if event.delta() > 0:
-                self._parent.onZoomIn()
-            else:
-                self._parent.onZoomOut()
-        else:
-            ScintillaWrapper.wheelEvent( self, event )
-        return
-
     def keyPressEvent( self, event ):
         " Triggered when a key is pressed "
         key = event.key()
