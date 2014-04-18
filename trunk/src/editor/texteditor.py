@@ -101,7 +101,6 @@ class TextEditor( ScintillaWrapper ):
     def __init__( self, parent, debugger ):
 
         self.__parent = parent
-        # ScintillaWrapper.__init__( self, parent )
         ScintillaWrapper.__init__( self, GlobalData().mainWindow )
         # self.setAttribute( Qt.WA_DeleteOnClose )
         self.setAttribute( Qt.WA_KeyCompression )
@@ -579,6 +578,12 @@ class TextEditor( ScintillaWrapper ):
         self.setIndentationGuides( settings.indentationGuides )
         self.setCurrentLineHighlight( settings.currentLineVisible,
                                       GlobalData().skin.currentLinePaper )
+
+        if hasattr( self.__parent, "getNavigationBar" ):
+            navBar = self.__parent.getNavigationBar()
+            if navBar:
+                navBar.updateSettings()
+
         return
 
     def detectLineNumMarginWidth( self ):
@@ -2416,6 +2421,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         MainWindowTabWidgetBase.__init__( self )
         QWidget.__init__( self, parent )
 
+        self.__navigationBar = None
         self.__editor = TextEditor( self, debugger )
         self.__fileName = ""
         self.__shortName = ""
@@ -2436,6 +2442,10 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         self.__vcsStatus = None
         return
+
+    def getNavigationBar( self ):
+        " Provides a reference to the navigation bar "
+        return self.__navigationBar
 
     def shouldAcceptFocus( self ):
         return self.__outsideChangesBar.isHidden()

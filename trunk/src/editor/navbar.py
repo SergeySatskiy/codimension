@@ -245,6 +245,9 @@ class NavigationBar( QFrame ):
             self.__updateTimer.stop()
             self.__currentInfo = None
             self.setVisible( False )
+        else:
+            self.setVisible( True )
+            self.updateBar()
         return
 
     def updateBar( self ):
