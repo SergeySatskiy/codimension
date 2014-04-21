@@ -145,11 +145,15 @@ class RedirectedIOConsole( TextEditor ):
                     return self._parent.onZoomIn()
                 if key == Qt.Key_0:
                     return self._parent.onZoomReset()
-            if key == Qt.Key_Home and modifiers == Qt.NoModifier:
-                return self._onHome()
-            if key == Qt.Key_End and modifiers == Qt.NoModifier:
-                self.moveToLineEnd()
-                return True
+            if modifiers == Qt.NoModifier:
+                if key == Qt.Key_Home:
+                    return self._onHome()
+                if key == Qt.Key_End:
+                    self.moveToLineEnd()
+                    return True
+                if key in [ Qt.Key_Delete, Qt.Key_Backspace ]:
+                    if not self.__isCutDelAvailable():
+                        return True
 
         return False
 
@@ -469,7 +473,7 @@ class RedirectedIOConsole( TextEditor ):
                                     self.onCtrlShiftC, "Ctrl+Shift+C" )
         self.__menuPaste = self._menu.addAction(
                                     PixmapCache().getIcon( 'pastemenu.png' ),
-                                    '&Paste', self.paste, "Ctrl+V" )
+                                    '&Paste', self.insertText, "Ctrl+V" )
         self.__menuSelectAll = self._menu.addAction(
                                 PixmapCache().getIcon( 'selectallmenu.png' ),
                                 'Select &all', self.selectAll, "Ctrl+A" )
@@ -487,6 +491,8 @@ class RedirectedIOConsole( TextEditor ):
 
         self.connect( self._menu, SIGNAL( "aboutToShow()" ),
                       self._contextMenuAboutToShow )
+        self.connect( self._menu, SIGNAL( "aboutToHide()" ),
+                      self._contextMenuAboutToHide )
 
         return
 
@@ -519,28 +525,67 @@ class RedirectedIOConsole( TextEditor ):
         return
 
     def _contextMenuAboutToShow( self ):
-        " Editor context menu is about to show "
+        " IO Console context menu is about to show "
+        self.__menuUndo.setEnabled( self.isUndoAvailable() )
+        self.__menuRedo.setEnabled( self.isRedoAvailable() )
+
         # Need to make decision about menu items for modifying the input
+        self.__menuCut.setEnabled( self.__isCutDelAvailable() )
+        self.__menuCopy.setEnabled( self.__messages.size > 0 )
+        self.__menucopyTimestamp.setEnabled( self.__messages.size > 0 )
+        self.__menuPaste.setEnabled( QApplication.clipboard().text() != ""
+                                     and not self.isReadOnly() )
+        self.__menuSelectAll.setEnabled( self.__messages.size > 0 )
+
+        self.__menuOpenAsFile.setEnabled( self.openAsFileAvailable() )
+        self.__menuDownloadAndShow.setEnabled(
+                                        self.downloadAndShowAvailable() )
+        self.__menuOpenInBrowser.setEnabled(
+                                        self.downloadAndShowAvailable() )
         return
+
+    def _contextMenuAboutToHide( self ):
+        " IO console context menu is about to hide "
+        self.__menuUndo.setEnabled( True )
+        self.__menuRedo.setEnabled( True )
+        self.__menuCut.setEnabled( True )
+        self.__menuCopy.setEnabled( True )
+        self.__menucopyTimestamp.setEnabled( True )
+        self.__menuPaste.setEnabled( True )
+        self.__menuSelectAll.setEnabled( True )
+        self.__menuOpenAsFile.setEnabled( True )
+        self.__menuDownloadAndShow.setEnabled( True )
+        self.__menuOpenInBrowser.setEnabled( True )
+        return
+
+    def __isCutDelAvailable( self ):
+        " Returns True if cutting or deletion is possible "
+        if self.isReadOnly():
+            return False
+
+        minPos = self.getSelectionStart()
+        if minPos < self.lastOutputPos:
+            return False
+
+        return True
 
     def onShiftDel( self ):
         " Deletes the selected text "
+        if self.hasSelectedText():
+            if self.__isCutDelAvailable():
+                self.cut()
+            return True
         return True
 
     def onUndo( self ):
-        pass
+        if self.isUndoAvailable():
+            self.undo()
+        return
+
     def onRedo( self ):
-        pass
-    def paste( self ):
-        pass
-    def selectAll( self ):
-        pass
-    def openAsFile( self ):
-        pass
-    def downloadAndShow( self ):
-        pass
-    def openInBrowser( self ):
-        pass
+        if self.isRedoAvailable():
+            self.redo()
+        return
 
     def onCtrlShiftC( self ):
         " Copy all with timestamps "
