@@ -927,4 +927,11 @@ class ScintillaWrapper( QsciScintilla ):
             self.SendScintilla( self.SCI_HOMEDISPLAY )
         return
 
+    def getSelectionStart( self ):
+        " Provides the selection start "
+        return self.SendScintilla( self.SCI_GETSELECTIONSTART )
+
+    def getSelectionEnd( self ):
+        " Provides the selection end "
+        return self.SendScintilla( self.SCI_GETSELECTIONEND )
 
