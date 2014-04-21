@@ -529,12 +529,17 @@ class RedirectedIOConsole( TextEditor ):
         self.__menuUndo.setEnabled( self.isUndoAvailable() )
         self.__menuRedo.setEnabled( self.isRedoAvailable() )
 
+        pasteText = str( QApplication.clipboard().text() )
+        pasteEnable = pasteText != "" and \
+                      '\n' not in pasteText and \
+                      '\r' not in pasteText and \
+                      not self.isReadOnly()
+
         # Need to make decision about menu items for modifying the input
         self.__menuCut.setEnabled( self.__isCutDelAvailable() )
         self.__menuCopy.setEnabled( self.__messages.size > 0 )
         self.__menucopyTimestamp.setEnabled( self.__messages.size > 0 )
-        self.__menuPaste.setEnabled( QApplication.clipboard().text() != ""
-                                     and not self.isReadOnly() )
+        self.__menuPaste.setEnabled( pasteEnable )
         self.__menuSelectAll.setEnabled( self.__messages.size > 0 )
 
         self.__menuOpenAsFile.setEnabled( self.openAsFileAvailable() )
