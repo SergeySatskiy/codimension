@@ -92,6 +92,9 @@ class RedirectedIOConsole( TextEditor ):
                 if key == Qt.Key_Down:
                     self.selectParagraphDown()
                     return True
+                if key == Qt.Key_C:
+                    self.onCtrlShiftC()
+                    return True
             if modifiers == Qt.ShiftModifier:
                 if key == Qt.Key_End:
                     self.selectTillDisplayEnd()
@@ -594,6 +597,8 @@ class RedirectedIOConsole( TextEditor ):
 
     def onCtrlShiftC( self ):
         " Copy all with timestamps "
+        QApplication.clipboard().setText(
+                            self.__messages.renderWithTimestamps() )
         return True
 
     def appendIDEMessage( self, text ):
