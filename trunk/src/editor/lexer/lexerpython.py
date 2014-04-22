@@ -70,7 +70,7 @@ BUILTIN_EXCEPTIONS = "BaseException Exception ArithmeticError " \
                      "ValueError WindowsError ZeroDivisionError " \
                      "Warning UserWarning DeprecationWarning " \
                      "SyntaxWarning RuntimeWarning FutureWarning"
-TREAT_AS_KEYWORDS = BUILTIN_FUNCS + " " + BOOLEANS + " " + BUILTIN_EXCEPTIONS
+TREAT_AS_KEYWORDS = BUILTIN_FUNCS + " " + BOOLEANS + " " + BUILTIN_EXCEPTIONS + " nonlocal"
 
 
 
