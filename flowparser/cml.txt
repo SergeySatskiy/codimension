@@ -31,64 +31,51 @@ This information can be used in different ways, e.g.:
 
 Common format of the CML statements is as follows:
 
-# cml <version ID> <record type> <record subtype> [all the rest]
+# cml <version ID> <record type> [all the rest]
 
 where:
-- <versio ID> is a CML version, e.g. 1.0
-- <record type> is a record type identifier. Version 1.0 supports two types of
+- <version ID> is a CML version as integer, e.g. 1
+- <record type> is a record type identifier. Version 1 supports the following
   records:
-  I - independent record. That means that the record does not need a paired
-      record to mark an end of the markup scope.
-  S - scope record. That means that later on there must be a paired markup
-      record.
-  C - continue of a previous record. This allows to have multilined records of
-      any type.
-- <record subtype> is a subtype identifier. Version 1.0 supports the following:
   SB - scope begin record. It must have UUID as the first item in the
-       [all the rest] part.
+       [all the rest] part. The rest is the text which resides in the box
+       representing the scope. If this record is found then there must be a
+       paired SE record (see below)
+  C  - continue of a previous record. This allows to have multilined records of
+       any type.
   SE - scope end record. It must have UUID as the first item in the
-       [all the rest] part.
+       [all the rest] part. The UUID must match the one in the pair SB record
 
-The end of records is implicit. It is an absence of the 'C' subtype record as
+The end of records is implicit. It is an absence of the 'C' record at
 the next line.
 
 
 
 Example of a single line scope record:
 
-# cml 1.0 S SB 1234-123456-123456-1234 Calculation of a checksum
+# cml 1 SB 1234-123456-123456-1234 Calculation of a checksum
 
 ...
 Some python code
 ...
 
-# cml 1.0 S SE 1234-123456-123456-1234
+# cml 1 SE 1234-123456-123456-1234
 
 
 The same as multilined record:
 
-# cml 1.0 S SB 1234-123456-123456-1234
-# cml 1.0 C Calculation of a checksum
+# cml 1 SB 1234-123456-123456-1234
+# cml 1 C Calculation of a checksum
 
 ...
 Some python code
 ...
 
-# cml 1.0 S SE 1234-123456-123456-1234
+# cml 1 SE 1234-123456-123456-1234
 
 
-Note: having a record type and subtype is technically excessive. It however
-provides a generic way of extending cml without breaking forward compatibility.
-The recod types are fixed so starting from the very first version it'll be
-properly recognised by codimension and in case of scope records they will be
-properly matched. The record subtypes are for extending. If an earlier version
-does not recognize a subtype it will be able to skip it safely.
-
-
-
-Candidates for the other record subtypes:
-- L link to a web resource
-- F local file system resource
-- B background color for the further code blocks
-
+Candidates for the other record types:
+- WL link to a web resource
+- FS local file system resource
+- BC background color for the further code blocks
 
