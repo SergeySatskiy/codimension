@@ -1,3 +1,7 @@
+2014 XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* 'nonlocal' statement recognition added
+
 2014 Jan 29  Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Prepared for release v.1.6.6

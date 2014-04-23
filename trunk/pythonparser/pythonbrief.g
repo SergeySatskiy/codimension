@@ -258,6 +258,7 @@ small_stmt      : expr_stmt
                 | global_stmt
                 | exec_stmt
                 | assert_stmt
+                | nonlocal_stmt
                 ;
 
 expr_stmt       : testlist
@@ -382,6 +383,9 @@ exec_stmt       : 'exec' expr ( 'in' test ( COMMA test )? )?
 
 assert_stmt     : 'assert' test ( COMMA test )?
                     -> ASSERT_STMT
+                ;
+
+nonlocal_stmt   : 'nonlocal' NAME ( COMMA NAME )*
                 ;
 
 compound_stmt   : if_stmt
