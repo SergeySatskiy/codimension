@@ -113,6 +113,7 @@ CDM_SETTINGS = {
     CDMSetting( "showIgnoredExcViewer", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "showWatchPointViewer", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "showNavigationBar", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "showMainToolBar", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "terminalType", CDMSetting.TYPE_INT, TERM_REDIRECT ),
     CDMSetting( "profileNodeLimit", CDMSetting.TYPE_FLOAT, 1.0 ),
     CDMSetting( "profileEdgeLimit", CDMSetting.TYPE_FLOAT, 1.0 ),

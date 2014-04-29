@@ -4,6 +4,7 @@
 * Bug fix: mouse click in the editor led to a sporadic crash
 * New feature: implementation of a context menu for the redirected IO console
   including copying everything with timestamps
+* Main toolbar could be hidden/shown via a setting
 
 2014 Mar 11 Sergey Satskiy <sergey.satskiy@gmail.com>
 

@@ -1274,6 +1274,11 @@ class CodimensionMainWindow( QMainWindow ):
         showNavBarAct.setChecked( self.settings.showNavigationBar )
         self.connect( showNavBarAct, SIGNAL( 'changed()' ),
                       self.__showNavBarChanged )
+        showMainToolBarAct = self.__optionsMenu.addAction( 'Show main toolbar' )
+        showMainToolBarAct.setCheckable( True )
+        showMainToolBarAct.setChecked( self.settings.showMainToolBar )
+        self.connect( showMainToolBarAct, SIGNAL( 'changed()' ),
+                      self.__showMainToolbarChanged )
         self.__optionsMenu.addSeparator()
         tooltipsMenu = self.__optionsMenu.addMenu( "Tooltips" )
         projectTooltipsAct = tooltipsMenu.addAction( "&Project tab" )
@@ -1692,6 +1697,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.__dbgDumpSettingsAct.setVisible( False )
         # Debugger part end
 
+        self.__toolbar.setVisible( False )
         self.addToolBar( self.__toolbar )
         return
 
@@ -2797,6 +2803,13 @@ class CodimensionMainWindow( QMainWindow ):
         self.settings.showNavigationBar = \
                                 not self.settings.showNavigationBar
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        return
+
+    def __showMainToolbarChanged( self ):
+        " Main toolbar visibility changed "
+        self.settings.showMainToolBar = \
+                                not self.settings.showMainToolBar
+        self.__toolbar.setVisible( self.settings.showMainToolBar )
         return
 
     def __projectTooltipsChanged( self ):
