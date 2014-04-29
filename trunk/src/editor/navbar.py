@@ -351,6 +351,9 @@ class NavigationBar( QFrame ):
         self.__populateClassesAndFunctions( self.__currentInfo,
                                             self.__globalScopeCombo )
 
+        if not Settings().navbarglobalsimports:
+            return
+
         if len( self.__currentInfo.globals ) == 0 and \
            len( self.__currentInfo.imports ) == 0:
             return
