@@ -262,6 +262,7 @@ def launchUserInterface():
 
     # Additional checks may come here
     globalData.mainWindow.installRedirectedIOConsole()
+    globalData.mainWindow.getToolbar().setVisible( Settings().showMainToolBar )
 
     # Some startup time objects could be collected here. In my test runs
     # there were around 700 objects.
