@@ -53,6 +53,7 @@ QLineEdit
 QComboBox
 {
     background-color: #ffffe6;
+    color: black;
 }
 
 QComboBox QAbstractItemView
