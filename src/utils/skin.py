@@ -256,7 +256,7 @@ class Skin:
             QLineEdit
             { background-color: #ffffe6; }
             QComboBox
-            { background-color: #ffffe6; }
+            { background-color: #ffffe6; color: black; }
             QComboBox QAbstractItemView
             { outline: 0px; }
             QTextEdit
