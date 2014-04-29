@@ -159,6 +159,7 @@ CDM_SETTINGS = {
     CDMSetting( "ioconsoleshowstdin", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "ioconsoleshowstdout", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "ioconsoleshowstderr", CDMSetting.TYPE_BOOL, True ),
+    CDMSetting( "navbarglobalsimports", CDMSetting.TYPE_BOOL, False ),
            ],
 "recentProjects" : [
     CDMSetting( "project", CDMSetting.TYPE_STR_LST, [] )
