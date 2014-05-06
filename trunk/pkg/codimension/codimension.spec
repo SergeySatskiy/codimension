@@ -1,5 +1,5 @@
 Name: codimension
-Version: 2.3.0
+Version: 2.3.1
 Release: 2
 License: GPLv3+
 Group: Development/Tools/IDE
@@ -83,6 +83,9 @@ update-desktop-database -q
 %{_datadir}/pixmaps/*.png
 
 %changelog
+* Tue May 06 2014 Ilya Loginov <isloginov@gmail.com> - 2.3.1-0
+- New upstream release.
+
 * Wed Mar 12 2014 Ilya Loginov <isloginov@gmail.com> - 2.3.0-0
 - New upstream release.
 
