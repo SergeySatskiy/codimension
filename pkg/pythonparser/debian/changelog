@@ -1,3 +1,9 @@
+codimension-parser (1.6.7-0) precise; urgency=low
+
+  *  New upstream release.
+
+ -- Ilya Loginov <isloginov@gmail.com>  Tue, 06 Mar 2014 22:16:11 +0400
+
 codimension-parser (1.6.6-0) precise; urgency=low
 
   *  New upstream release.
