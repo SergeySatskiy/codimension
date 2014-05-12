@@ -31,47 +31,60 @@ This information can be used in different ways, e.g.:
 
 Common format of the CML statements is as follows:
 
-# cml <version ID> <record type> [all the rest]
+# cml <version> <record type> <key=value pairs>
+or
+# cmlcont <continue of a previous 'cml' line>
 
 where:
-- <version ID> is a CML version as integer, e.g. 1
-- <record type> is a record type identifier. Version 1 supports the following
-  records:
-  SB - scope begin record. It must have UUID as the first item in the
-       [all the rest] part. The rest is the text which resides in the box
-       representing the scope. If this record is found then there must be a
-       paired SE record (see below)
-  C  - continue of a previous record. This allows to have multilined records of
-       any type.
-  SE - scope end record. It must have UUID as the first item in the
-       [all the rest] part. The UUID must match the one in the pair SB record
+- <version> is a CML version as integer, e.g. 1
+- <record type> is a record type identifier. Usually it is a few characters
+  code, e.g. SB
 
-The end of records is implicit. It is an absence of the 'C' record at
+Key=value pairs are space separated. If the value contains spaces or needs to
+be split between several lines then the value should be taken into double
+quotes (" character). Double quote inside such a value must be escaped with \
+character. CML supports C/C++ style glueing double quoted values.
+
+If a cml line needs to be continued then the '# cmlcont' prefixed comment line
+should be used. The continuation line must immediately follow the previous line.
+Empty lines before '# cmlcont' lines are not allowed. There could be many
+'# cmlcont' lines.
+
+CML version 1 supports the following record types:
+SB - scope begin record. It must have scope id (alpha numeric literal) in the
+     list of values. The 'title' value is also recognized and will be used
+     in a box which represents the scope.
+     The SB record supposes that there must be an SE record further in the
+     code with matching id.
+SE - scope end record. It must have matching id.
+
+The end of records is implicit. It is an absence of the '# cmlcont' record at
 the next line.
 
 
 
 Example of a single line scope record:
 
-# cml 1 SB 1234-123456-123456-1234 Calculation of a checksum
+# cml 1 SB id=1234 title="Calculation of a checksum"
 
 ...
 Some python code
 ...
 
-# cml 1 SE 1234-123456-123456-1234
+# cml 1 SE id=1234
 
 
 The same as multilined record:
 
-# cml 1 SB 1234-123456-123456-1234
-# cml 1 C Calculation of a checksum
+# cml 1 SB id=1234
+# cmlcont title="Calculation of"
+# cmlcont       " a checksum"
 
 ...
 Some python code
 ...
 
-# cml 1 SE 1234-123456-123456-1234
+# cml 1 SE id=1234
 
 
 Candidates for the other record types:
