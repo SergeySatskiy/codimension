@@ -1,0 +1,101 @@
+/*
+   Copyright (c) 2008-2009 Barry A. Scott
+*/
+h1, h2, h3, h4 
+    {
+    color: #000099;
+    background-color: #aaaaff;
+    }
+h3
+    {
+    position: relative;
+    left: 20px
+    margin-right: 40px;
+    }
+body
+    {
+    background-color: #ffffff;
+    width: 95%;
+    }
+p 
+    {
+    position: relative;
+    left: 20px;
+    width: 45em;
+    margin-right: 40px;
+    }
+pre
+    {
+    color: #0000cc;
+    background-color: #eeeeee;
+    position: relative;
+    left: 40px;
+    margin-right: 80px;
+    border-style: solid;
+    border-color: black;
+    border-width: thin;
+    }
+kbd 
+    {
+    color: #990000;
+    }
+p cite, ol cite, ul cite
+    {
+    font-family: monospace;
+    font-style: normal;
+    font-size: normal;
+    }
+li
+    {
+    width: 43em;
+    }
+li var, pre var, p var, kbd var 
+    {
+    color: #009900;
+    font-style: italic;
+    }
+li samp, pre samp, p samp, kbd samp
+    {
+    color: #009900;
+    font-weight: bold;
+    }
+li p 
+    {
+    position: relative;
+    left: 0;
+    }
+table 
+    {
+    position: relative;
+    left: 20px;
+    margin-right: 40px;
+    border: solid #888888 1px;
+    background-color: #eeeeee;
+    }
+table th 
+    {
+    border: solid #888888 1px;
+    background-color: #88dd88;
+    color: black;
+    text-align: left;
+    }
+table td 
+    {
+    border: solid #888888 1px;
+    }
+table td.code
+    {
+    border: solid #888888 1px;
+    font-family: monospace;
+    font-style: normal;
+    font-size: normal;
+    }
+p.param
+    {
+    background-color: #eeeeee;
+    border-top: lightskyblue solid 4;
+    }
+p.center 
+    {
+    text-align: center;
+    }
