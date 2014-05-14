@@ -1,3 +1,8 @@
+2014 May 14 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for release v.1.6.8
+* Bug fix: exception for a broken code like 'from import os'
+
 2014 May 06 Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Prepared for release v.1.6.7
