@@ -609,6 +609,17 @@ static void  processImport( pANTLR3_BASE_TREE            tree,
     char                name[ MAX_DOTTED_NAME_LENGTH ];
     pANTLR3_BASE_TREE   t;
     ANTLR3_UINT32       type;
+    int                 import_called = 0;
+
+    /* NB: if there is a mistake in the code similar to:
+     * from import os
+     * then the built tree would still have IMPORT_STMT and the WHAT node
+     * however will not have the DOTTED_NAME node. This causes one of the
+     * following: incorrect attach of what imported (to the previous import)
+     * or an exception.
+     * To cope with this I first check if a dotted name was there.
+     */
+
 
     /* There could be many imports in a single import statement */
     for ( k = 0; k < n; ++k )
@@ -626,13 +637,14 @@ static void  processImport( pANTLR3_BASE_TREE            tree,
                 callOnImport( callbacks->onImport, name, length, token->line,
                               token->charPosition + 1, /* Make it 1-based */
                               (char *)(token->start) - (char *)token->input->data );
+                import_called = 1;
             }
         }
-        else if ( type == WHAT )
+        else if ( type == WHAT && import_called != 0 )
         {
             processWhat( t, callbacks );
         }
-        else if ( type == AS )
+        else if ( type == AS && import_called != 0 )
         {
             pANTLR3_BASE_TREE   asChild = vectorGet( t->children, 0 );
             pANTLR3_STRING      s = asChild->toString( asChild );
