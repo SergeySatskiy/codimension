@@ -20,28 +20,44 @@
 
 .PHONY: all gen clean cleanall
 
-GENERATED_FILES=pycfLexer.h pycfParser.h \
-		pycfLexer.c pycfParser.c pycf.tokens
+GENERATED_FILES=pycfLexer.h pycfParser.h pycfLexer.c pycfParser.c pycf.tokens
 
-FLAGS=-ffast-math -fomit-frame-pointer
-INCLUDE=-I../thirdparty/libantlr3c-3.2 -I../thirdparty/libantlr3c-3.2/include
+ANTLR_INCLUDE=-I../thirdparty/libantlr3c-3.2 \
+              -I../thirdparty/libantlr3c-3.2/include
+PYCXX_INCLUDE=-Ipycxx -Ipycxx/Src
+PYTHON_INCLUDE=$(shell python -c 'import distutils.sysconfig; print distutils.sysconfig.get_python_inc()')
+INCLUDE=${PYCXX_INCLUDE} -I${PYTHON_INCLUDE} ${ANTLR_INCLUDE}
 
-all: $(GENERATED_FILES) cdmcfparser.c lexerutils.o cf_test.c
-	python setup.py build_ext --inplace
+FLAGS=-O2 -ffast-math -fomit-frame-pointer -fPIC -fexceptions -frtti -DNDEBUG
+
+PYCXX_OBJ_FILES=pycxx/Src/cxxsupport.o pycxx/Src/cxx_extensions.o \
+                pycxx/Src/IndirectPythonInterface.o pycxx/Src/cxxextensions.o
+CDM_OBJ_FILES=cflowmodule.o
+GRAMMAR_OBJ_FILES=lexerutils.o pycfLexer.o pycfParser.o
+
+
+all: $(PYCXX_OBJ_FILES) $(CDM_OBJ_FILES) $(GRAMMAR_OBJ_FILES)
+	g++ -shared -fPIC -fexceptions -frtti -o cdmcf.so $^ ../thirdparty/libantlr3c-3.2/.libs/libantlr3c.a
 	gcc -O2 ${FLAGS} ${INCLUDE} -c -std=gnu99 cf_test.c
 	gcc ${FLAGS} -o cf_test build/*/pycfLexer.o \
                                build/*/pycfParser.o \
                                cf_test.o lexerutils.o \
                                ../thirdparty/libantlr3c-3.2/.libs/libantlr3c.a
 
+.cpp.o:
+	g++ ${FLAGS} ${INCLUDE} -c -o $@ $^
+pycxx/Src/%.o : pycxx/Src/%.cxx
+	g++ ${FLAGS} ${INCLUDE} -c -o $@ $^
+.c.o:
+	g++ ${FLAGS} ${INCLUDE} -c -o $@ $^
+
+
+
 gen: pycf.g
 	CLASSPATH=/home/swift/antlr/antlrworks-1.4.jar java org.antlr.Tool pycf.g
 
-lexerutils.o: lexerutils.c
-	gcc -O2 -I/usr/include/python2.7/ ${FLAGS} ${INCLUDE} -c lexerutils.c
-
 clean:
-	rm -rf *.o core.* _cdmcfparser.so build/ cf_test core *.pyc
+	rm -rf *.o core.* cdmcf.so build/ cf_test core *.pyc
 
 cleanall: clean
 	rm -f $(GENERATED_FILES)
