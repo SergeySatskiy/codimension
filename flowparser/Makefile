@@ -28,7 +28,7 @@ PYCXX_INCLUDE=-Ipycxx -Ipycxx/Src
 PYTHON_INCLUDE=$(shell python -c 'import distutils.sysconfig; print distutils.sysconfig.get_python_inc()')
 INCLUDE=${PYCXX_INCLUDE} -I${PYTHON_INCLUDE} ${ANTLR_INCLUDE}
 
-FLAGS=-O2 -ffast-math -fomit-frame-pointer -fPIC -fexceptions -frtti -DNDEBUG
+FLAGS=-O2 -ffast-math -fomit-frame-pointer -fPIC -fexceptions -frtti -DNDEBUG -D_GNU_SOURCE
 
 PYCXX_OBJ_FILES=pycxx/Src/cxxsupport.o pycxx/Src/cxx_extensions.o \
                 pycxx/Src/IndirectPythonInterface.o pycxx/Src/cxxextensions.o
