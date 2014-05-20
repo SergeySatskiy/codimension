@@ -55,6 +55,7 @@ pycxx/Src/%.o : pycxx/Src/%.cxx
 
 gen: pycf.g
 	CLASSPATH=/home/swift/antlr/antlrworks-1.4.jar java org.antlr.Tool pycf.g
+	python adjust_generated.py
 
 clean:
 	rm -rf *.o core.* cdmcf.so build/ cf_test core *.pyc

@@ -24,6 +24,10 @@
 #define CFLOWMODULE_HPP
 
 
+#include "CXX/Objects.hxx"
+#include "CXX/Extensions.hxx"
+
+
 class CDMControlFlowModule : public Py::ExtensionModule< CDMControlFlowModule >
 {
     public:
