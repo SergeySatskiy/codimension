@@ -82,8 +82,6 @@ tokens
     FOR_STMT;
     WITH_STMT;
     TEST_LIST;
-    CLASS_INHERITANCE;
-    ARGUMENTS;
     NAME_ARG;
     STAR_ARG;
     DBL_STAR_ARG;
@@ -99,7 +97,10 @@ tokens
 
     TRAILER_NAME;
     HEAD_NAME;
-    AUG_ASSIGN;
+
+    // Used in lexerutils.c
+    CLASS_INHERITANCE;
+    ARGUMENTS;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -154,10 +155,12 @@ tokens
 
 /////////////////////////////// PARSER /////////////////////////////////////////
 
+/* Not used in the parser
 single_input    : NEWLINE
                 | simple_stmt
                 | compound_stmt NEWLINE
                 ;
+*/
 
 file_input      : EOF
                 | ( NEWLINE | stmt )*
@@ -165,8 +168,10 @@ file_input      : EOF
                 | COMMENT EOF
                 ;
 
+/* Not used in the parser
 eval_input      : NEWLINE*  testlist  NEWLINE*
                 ;
+*/
 
 decorator       : '@' dotted_name ( LPAREN decor_arglist? RPAREN )? NEWLINE
                     -> ^( DECOR dotted_name decor_arglist? )
@@ -178,11 +183,11 @@ decorators      : decorator+
 decor_arglist
                 @init
                 {
-                    pANTLR3_VECTOR  args = antlr3VectorNew( ANTLR3_LIST_SIZE_HINT );
+                    pANTLR3_VECTOR  args = antlr3VectorNew( ANTLR3_VECTOR_INTERNAL_SIZE );
                 }
                 @after
                 {
-                    args->free( args );
+                    vectorFree( args );
                 }
                 : ( a1 = argument { addTypedName( args, NAME_ARG, $a1.text->chars ); } COMMA )*
                 (     (a2 = argument { addTypedName( args, NAME_ARG, $a2.text->chars ); } )?
@@ -192,10 +197,12 @@ decor_arglist
                     -> { pycfInsertArguments( ctx, args ) }
                 ;
 
-                /* It's a hack here: the name position has both the keyword pos and the class name pos */
-funcdef         : decorators? kw = 'def' n = NAME { $n->charPosition += ($kw->charPosition << 16);
-                                                    $n->line += ($kw->line << 16);
-                                                  } parameters COLON suite
+                /* keyword position is saved in user1 field,
+                   colon position is saved in user2 field */
+funcdef         : decorators? kw = 'def'
+                        n = NAME { $n->user1 = ($kw->line << 16) + $kw->charPosition; }
+                        parameters
+                        c = COLON { $n->user2 = ($c->line << 16) + $c->charPosition; } suite
                     -> ^( FUNC_DEF NAME  decorators? parameters  ^( BODY suite ) )
                 ;
 
@@ -209,11 +216,11 @@ defparameter    : fpdef ( '=' test )?
 varargslist
                 @init
                 {
-                    pANTLR3_VECTOR  f_args = antlr3VectorNew( ANTLR3_LIST_SIZE_HINT );
+                    pANTLR3_VECTOR  f_args = antlr3VectorNew( ANTLR3_VECTOR_INTERNAL_SIZE );
                 }
                 @after
                 {
-                    f_args->free( f_args );
+                    vectorFree( f_args );
                 }
                 : (( d = defparameter { addTypedName( f_args, NAME_ARG, $d.text->chars ); } COMMA )*
                     ( STAR n1 = NAME { addTypedName( f_args, STAR_ARG, $n1.text->chars ); } ( COMMA DOUBLESTAR n2 = NAME { addTypedName( f_args, DBL_STAR_ARG, $n2.text->chars ); } )? | DOUBLESTAR n3 = NAME { addTypedName( f_args, DBL_STAR_ARG, $n3.text->chars ); } )
@@ -248,6 +255,7 @@ small_stmt      : expr_stmt
                 | global_stmt
                 | exec_stmt
                 | assert_stmt
+                | nonlocal_stmt
                 ;
 
 expr_stmt       : testlist
@@ -271,7 +279,9 @@ augassign       : '+='
                 | '//='
                 ;
 
-print_stmt      : 'print' ( printlist | '>>' printlist )?
+// Python 3 (or python 2 with future imported) can have print as a function
+// so allow both of them.
+print_stmt      : 'print' ( (( printlist | '>>' printlist )?) | (LPAREN arglist? RPAREN) )
                     -> PRINT_STMT
                 ;
 
@@ -361,7 +371,7 @@ dotted_name     : NAME ( DOT NAME )*
                 ;
 
 global_stmt     : 'global' NAME ( options { k = 2; } : COMMA NAME )*
-                    -> ^( GLOBAL_STMT  NAME )+
+                    -> GLOBAL_STMT
                 ;
 
 exec_stmt       : 'exec' expr ( 'in' test ( COMMA test )? )?
@@ -370,6 +380,9 @@ exec_stmt       : 'exec' expr ( 'in' test ( COMMA test )? )?
 
 assert_stmt     : 'assert' test ( COMMA test )?
                     -> ASSERT_STMT
+                ;
+
+nonlocal_stmt   : 'nonlocal' NAME ( COMMA NAME )*
                 ;
 
 compound_stmt   : if_stmt
@@ -504,9 +517,9 @@ power           : atom  trailer*  ( options { greedy = true; } : DOUBLESTAR fact
 atom            : LPAREN RPAREN
                 | LPAREN ( yield_expr -> yield_expr | testlist_comp -> testlist_comp )? RPAREN
                 | LBRACK listmaker? RBRACK
-                    -> ^( LIST )
+                    -> LIST
                 | LCURLY dictorsetmaker? RCURLY
-                    -> ^( DICTIONARY )
+                    -> DICTIONARY
                 | '`' testlist '`'
                 | NAME
                     -> ^( HEAD_NAME  NAME )
@@ -539,7 +552,7 @@ lambdef         : 'lambda' varargslist? COLON test
 trailer         : LPAREN arglist? RPAREN
                     -> arglist?
                 | LBRACK subscriptlist RBRACK
-                    -> ^( LIST )
+                    -> LIST
                 | DOT NAME
                     -> ^( TRAILER_NAME NAME )
                 ;
@@ -573,24 +586,26 @@ setmakerclause  : comp_for | ( COMMA test )* COMMA?
                 ;
 
 
-                /* It's a hack here: the name position has both the keyword pos and the class name pos */
-classdef        : decorators? kw = 'class' n = NAME { $n->charPosition += ($kw->charPosition << 16);
-                                                      $n->line += ($kw->line << 16);
-                                                    } ( LPAREN inheritancelist? RPAREN )? COLON suite
+                /* keyword position is saved in user1 field,
+                   colon position is saved in user2 field */
+classdef        : decorators? kw = 'class'
+                        n = NAME { $n->user1 = ($kw->line << 16) + $kw->charPosition; }
+                        ( LPAREN inheritancelist? RPAREN )?
+                        c = COLON { $n->user2 = ($c->line << 16) + $c->charPosition; } suite
                     -> ^( CLASS_DEF  NAME  decorators?  inheritancelist?  ^( BODY suite ) )
                 ;
 
 inheritancelist
                 @init
                 {
-                    pANTLR3_VECTOR  arguments = antlr3VectorNew( ANTLR3_LIST_SIZE_HINT );
+                    pANTLR3_VECTOR  arguments = antlr3VectorNew( ANTLR3_VECTOR_INTERNAL_SIZE );
                 }
                 @after
                 {
-                    arguments->free( arguments );
+                    vectorFree( arguments );
                 }
-                : t1 = test { arguments->add( arguments, $t1.text->chars, NULL ); }
-                    ( options { k = 2; } : COMMA t2 = test { arguments->add( arguments, $t2.text->chars, NULL ); } )*  COMMA?
+                : t1 = test { vectorAdd( arguments, $t1.text->chars, NULL ); }
+                    ( options { k = 2; } : COMMA t2 = test { vectorAdd( arguments, $t2.text->chars, NULL ); } )*  COMMA?
                     -> { pycfInsertInheritance( ctx, arguments ) }
                 ;
 
@@ -863,7 +878,7 @@ LEADING_WS
             {
                 if ( LTOKEN != NULL )
                 {
-                    LTOKEN->setChannel( LTOKEN, HIDDEN );
+                    LTOKEN->channel = HIDDEN;
                 }
                 else
                 {
