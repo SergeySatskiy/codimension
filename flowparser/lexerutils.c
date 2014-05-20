@@ -283,23 +283,22 @@ void  pycfLexer_initLexer( ppycfLexer  ctx )
     ctx->origFree = ctx->free;
     ctx->free = pycfLexer_FreeImpl;
 
-    ctx->onEncoding = NULL;
     return;
 }
 
 
 pANTLR3_BASE_TREE pycfInsertInheritance( struct pycfParser_Ctx_struct *  ctx,
-                                         pANTLR3_VECTOR                         args )
+                                         pANTLR3_VECTOR                  args )
 {
     ANTLR3_UINT32   n = args->count;
     if ( n == 0 ) return NULL;      /* No base classes, so do not create the CLASS_INHERITANCE node */
 
-    pANTLR3_BASE_TREE   inheritance_root = ctx->adaptor->nilNode( ctx->adaptor );
-    inheritance_root = ctx->adaptor->becomeRoot( ctx->adaptor,
-                                                 ctx->adaptor->createTypeText( ctx->adaptor,
-                                                                               CLASS_INHERITANCE,
-                                                                               (pANTLR3_UINT8) "CLASS_INHERITANCE" ),
-                                                 inheritance_root );
+    pANTLR3_BASE_TREE   inheritance_root = (pANTLR3_BASE_TREE) (ctx->adaptor->nilNode( ctx->adaptor ));
+    inheritance_root = (pANTLR3_BASE_TREE) (ctx->adaptor->becomeRoot( ctx->adaptor,
+                                                                      ctx->adaptor->createTypeText( ctx->adaptor,
+                                                                                                    CLASS_INHERITANCE,
+                                                                                                    (pANTLR3_UINT8) "CLASS_INHERITANCE" ),
+                                                                      inheritance_root ));
 
     /* Add children stored in the vector of args */
     ANTLR3_UINT32   k;
@@ -307,7 +306,9 @@ pANTLR3_BASE_TREE pycfInsertInheritance( struct pycfParser_Ctx_struct *  ctx,
     for ( k = 0; k < n; ++k )
     {
         const char *        item = (const char *) (vectorGet( args, k ));
-        pANTLR3_BASE_TREE   child = ctx->adaptor->createTypeText( ctx->adaptor, CLASS_INHERITANCE, (pANTLR3_UINT8) item );
+        pANTLR3_BASE_TREE   child = (pANTLR3_BASE_TREE) (ctx->adaptor->createTypeText( ctx->adaptor,
+                                                                                       CLASS_INHERITANCE,
+                                                                                       (pANTLR3_UINT8) item ));
 
         ctx->adaptor->addChild( ctx->adaptor, inheritance_root, child );
     }
@@ -326,7 +327,7 @@ void addTypedName( pANTLR3_VECTOR       v,
                    ANTLR3_UINT32        type,
                    pANTLR3_UINT8        name )
 {
-    struct function_argument *  item = malloc( sizeof( struct function_argument ) );
+    struct function_argument *  item = (struct function_argument *) (malloc( sizeof( struct function_argument ) ));
     item->name = name;
     item->type = type;
     vectorAdd( v, item, free );
@@ -341,20 +342,20 @@ pANTLR3_BASE_TREE pycfInsertArguments( struct pycfParser_Ctx_struct *  ctx,
 
     if ( n == 0 )   return NULL;    /* No arguments so do not insert the ARGUMENTS node */
 
-    pANTLR3_BASE_TREE   arguments_root = ctx->adaptor->nilNode( ctx->adaptor );
-    arguments_root = ctx->adaptor->becomeRoot( ctx->adaptor,
-                                               ctx->adaptor->createTypeText( ctx->adaptor,
-                                                                             ARGUMENTS,
-                                                                             (pANTLR3_UINT8) "ARGUMENTS" ),
-                                               arguments_root );
+    pANTLR3_BASE_TREE   arguments_root = (pANTLR3_BASE_TREE) (ctx->adaptor->nilNode( ctx->adaptor ));
+    arguments_root = (pANTLR3_BASE_TREE) (ctx->adaptor->becomeRoot( ctx->adaptor,
+                                                                    ctx->adaptor->createTypeText( ctx->adaptor,
+                                                                                                  ARGUMENTS,
+                                                                                                  (pANTLR3_UINT8) "ARGUMENTS" ),
+                                                                    arguments_root ));
 
     /* Add children stored in the vector of args */
     ANTLR3_UINT32   k;
     for ( k = 0; k < n; ++k )
     {
         struct function_argument *  item = (struct function_argument *) (vectorGet( args, k ));
-        pANTLR3_BASE_TREE           child = ctx->adaptor->createTypeText( ctx->adaptor,
-                                                                          item->type, item->name );
+        pANTLR3_BASE_TREE           child = (pANTLR3_BASE_TREE) (ctx->adaptor->createTypeText( ctx->adaptor,
+                                                                                               item->type, item->name ) );
 
         ctx->adaptor->addChild( ctx->adaptor, arguments_root, child );
     }
