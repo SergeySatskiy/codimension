@@ -44,10 +44,9 @@
 
 
 // helper function to create token in lexer
-pANTLR3_COMMON_TOKEN
-pycfLexer_createLexerToken( pANTLR3_LEXER  lexer,
-                            ANTLR3_UINT32  tokenType,
-                            pANTLR3_UINT8  text )
+pANTLR3_COMMON_TOKEN  pycfLexer_createLexerToken( pANTLR3_LEXER  lexer,
+                                                  ANTLR3_UINT32  tokenType,
+                                                  pANTLR3_UINT8  text )
 {
     pANTLR3_COMMON_TOKEN    newToken = lexer->rec->state->tokFactory->newToken( lexer->rec->state->tokFactory );
 
@@ -101,9 +100,8 @@ static STACK_INT  FIRST_CHAR_POSITION = 0;
  * This is another level of nextToken - this one handles
  * setting of startPos and calling original handler
  */
-static pANTLR3_COMMON_TOKEN
-pycfLexer_nextTokenLowerLevelImpl( ppycfLexer            ctx,
-                                   pANTLR3_TOKEN_SOURCE  toksource )
+static pANTLR3_COMMON_TOKEN  pycfLexer_nextTokenLowerLevelImpl( ppycfLexer            ctx,
+                                                                pANTLR3_TOKEN_SOURCE  toksource )
 {
     ctx->startPos = ctx->pLexer->getCharPositionInLine( ctx->pLexer );
 
@@ -120,34 +118,33 @@ pycfLexer_nextTokenLowerLevelImpl( ppycfLexer            ctx,
 }
 
 
-static pANTLR3_COMMON_TOKEN
-pycfLexer_createDedentIdentToken( ppycfLexer     ctx,
-                                  ANTLR3_UINT32  toktype,
-                                  ANTLR3_UINT32  tokline )
+static pANTLR3_COMMON_TOKEN pycfLexer_createDedentIdentToken( ppycfLexer         ctx,
+                                                              ANTLR3_UINT32      toktype,
+                                                              ANTLR3_UINT32      tokline )
 {
     pANTLR3_COMMON_TOKEN    tok = ctx->pLexer->rec->state->tokFactory->newToken( ctx->pLexer->rec->state->tokFactory );
 
     tok->type = toktype;
     tok->input = ctx->pLexer->rec->state->tokFactory->input;
     tok->textState = ANTLR3_TEXT_NONE;
-    tok->setCharPositionInLine( tok, 0 );
-    tok->setLine( tok, tokline );
+    tok->charPosition = 0;
+    tok->line = tokline;
 
     return tok;
 }
 
 
 // Return the index on stack of previous indent level == i else -1
-static STACK_INT
-pycfLexer_findPreviousIndent( ppycfLexer  ctx,
-                              STACK_INT   i )
+static STACK_INT  pycfLexer_findPreviousIndent( ppycfLexer  ctx,
+                                                STACK_INT   i )
 {
     STACK_INT   j;
 
-    for ( j = ctx->identStack->size( ctx->identStack ) - 1; j >= 0; --j )
+    for ( j = ctx->identStack->vector->count - 1; j >= 0; --j )
     {
-        STACK_INT    pos = (STACK_INT) (ctx->identStack->get( ctx->identStack, j ));
-        if ( pos == i ) return j;
+        STACK_INT    pos = (STACK_INT) (stackGet( ctx->identStack, j ));
+        if ( pos == i )
+            return j;
     }
 
     return FIRST_CHAR_POSITION;
@@ -159,36 +156,39 @@ pycfLexer_insertImaginaryIndentDedentTokens( ppycfLexer            ctx,
                                              pANTLR3_TOKEN_SOURCE  toksource )
 {
     pANTLR3_COMMON_TOKEN    t = pycfLexer_nextTokenLowerLevelImpl( ctx, toksource );
-    ctx->tokens->add( ctx->tokens, t, NULL );
+    vectorAdd( ctx->tokens, t, NULL );
 
     // if not a NEWLINE, doesn't signal indent/dedent work; just enqueue
-    if ( t->getType( t ) != NEWLINE ) return;
+    if ( t->type != NEWLINE )
+        return;
 
     // Ignore newlines on hidden channel
-    if ( t->getChannel( t ) == HIDDEN ) return;
+    if ( t->channel == HIDDEN )
+        return;
 
-    ANTLR3_INT32    newlineno = t->getLine( t ) + 1;
+    ANTLR3_INT32    newlineno = t->line + 1;
 
     // grab first token of next line (skip COMMENT tokens)
     for ( ; ; )
     {
         t = pycfLexer_nextTokenLowerLevelImpl( ctx, toksource );
 
-        if ( t->getType( t ) == COMMENT ) // Pass comments to output stream (= skip processing here)
+        if ( t->type == COMMENT ) // Pass comments to output stream (= skip processing here)
         {
-            ctx->tokens->add( ctx->tokens, t, NULL );
+            vectorAdd( ctx->tokens, t, NULL );
             continue;
         }
 
         //Ignore LEADING_WS on HIDDEN channel - these are emited by empty line with some whitespaces on it
-        if ( (t->getType( t ) == LEADING_WS) && (t->getChannel( t ) == HIDDEN)) continue;
+        if ( (t->type == LEADING_WS) && (t->channel == HIDDEN))
+            continue;
 
         break;
     }
 
     // compute cpos as the char pos of next non-WS token in line
     STACK_INT   cpos;
-    switch ( t->getType( t ) )
+    switch ( t->type )
     {
 
         case EOF:
@@ -200,53 +200,53 @@ pycfLexer_insertImaginaryIndentDedentTokens( ppycfLexer            ctx,
             break;
 
         default:
-            cpos = t->getCharPositionInLine( t );
+            cpos = t->charPosition;
             break;
     }
 
-    STACK_INT       lastIndent = (STACK_INT) ctx->identStack->peek( ctx->identStack );
-    ANTLR3_INT32    lineno = t->getLine( t );
-    if ( lineno <= 0 ) lineno = newlineno;
+    STACK_INT       lastIndent = (STACK_INT) stackPeek( ctx->identStack );
+    ANTLR3_INT32    lineno = t->line;
+    if ( lineno <= 0 )
+        lineno = newlineno;
 
     if ( cpos > lastIndent )
     {
-        ctx->identStack->push( ctx->identStack, (void *)cpos, NULL );
-        ctx->tokens->add( ctx->tokens,
-                          pycfLexer_createDedentIdentToken( ctx, INDENT, lineno ),
-                          NULL );
+        stackPush( ctx->identStack, (void *)cpos, NULL );
+        vectorAdd( ctx->tokens,
+                   pycfLexer_createDedentIdentToken( ctx, INDENT, lineno ),
+                   NULL );
     }
     else if (cpos < lastIndent)
     {
         ANTLR3_INT32 prevIndex = pycfLexer_findPreviousIndent( ctx, cpos );
 
         // generate DEDENTs for each indent level we backed up over
-        while ( ctx->identStack->size( ctx->identStack ) > (prevIndex + 1) )
+        while ( ctx->identStack->vector->count > (prevIndex + 1) )
         {
-            ctx->tokens->add( ctx->tokens,
-                              pycfLexer_createDedentIdentToken( ctx, DEDENT, lineno ),
-                              NULL );
-            ctx->identStack->pop( ctx->identStack );
+            vectorAdd( ctx->tokens,
+                       pycfLexer_createDedentIdentToken( ctx, DEDENT, lineno ),
+                       NULL );
+            stackPop( ctx->identStack );
         }
     }
 
     // Filter out LEADING_WS tokens
-    if ( t->getType( t ) != LEADING_WS )
-        ctx->tokens->add( ctx->tokens, t, NULL );
+    if ( t->type != LEADING_WS )
+        vectorAdd( ctx->tokens, t, NULL );
 }
 
 
 
-static pANTLR3_COMMON_TOKEN
-pycfLexer_nextTokenImpl( pANTLR3_TOKEN_SOURCE  toksource )
+static pANTLR3_COMMON_TOKEN  pycfLexer_nextTokenImpl( pANTLR3_TOKEN_SOURCE  toksource )
 {
-    pANTLR3_LEXER  lexer = (pANTLR3_LEXER)( toksource->super );
-    ppycfLexer     ctx = (ppycfLexer) lexer->ctx;
+    pANTLR3_LEXER       lexer = (pANTLR3_LEXER)( toksource->super );
+    ppycfLexer          ctx = (ppycfLexer) lexer->ctx;
 
     for ( ; ; )
     {
-        if ( ctx->tokens->size( ctx->tokens ) > 0 )
+        if ( ctx->tokens->count > 0 )
         {
-            return (pANTLR3_COMMON_TOKEN) ctx->tokens->remove( ctx->tokens, 0 );
+            return (pANTLR3_COMMON_TOKEN) vectorRemove( ctx->tokens, 0 );
         }
 
         pycfLexer_insertImaginaryIndentDedentTokens( ctx, toksource );
@@ -257,11 +257,10 @@ pycfLexer_nextTokenImpl( pANTLR3_TOKEN_SOURCE  toksource )
 
 
 
-static void
-pycfLexer_FreeImpl( struct pycfLexer_Ctx_struct *  ctx )
+static void  pycfLexer_FreeImpl( struct pycfLexer_Ctx_struct *  ctx )
 {
-    ctx->tokens->free( ctx->tokens );
-    ctx->identStack->free( ctx->identStack );
+    vectorFree( ctx->tokens );
+    stackFree( ctx->identStack );
 
     ctx->origFree( ctx );
 }
@@ -273,9 +272,9 @@ void  pycfLexer_initLexer( ppycfLexer  ctx )
     ctx->implicitLineJoiningLevel = 0;
     ctx->startPos = -1;
 
-    ctx->tokens = antlr3VectorNew( ANTLR3_LIST_SIZE_HINT );
+    ctx->tokens = antlr3VectorNew( 16384 );
     ctx->identStack = antlr3StackNew( ANTLR3_LIST_SIZE_HINT );
-    ctx->identStack->push( ctx->identStack, (void *)FIRST_CHAR_POSITION, NULL );
+    stackPush( ctx->identStack, (void *)FIRST_CHAR_POSITION, NULL );
 
     // Override nextToken implementation by Python specific
     ctx->origNextToken = ctx->pLexer->rec->state->tokSource->nextToken;
@@ -284,15 +283,15 @@ void  pycfLexer_initLexer( ppycfLexer  ctx )
     ctx->origFree = ctx->free;
     ctx->free = pycfLexer_FreeImpl;
 
+    ctx->onEncoding = NULL;
     return;
 }
 
 
-pANTLR3_BASE_TREE
-pycfInsertInheritance( struct pycfParser_Ctx_struct *  ctx,
-                       pANTLR3_VECTOR                  args )
+pANTLR3_BASE_TREE pycfInsertInheritance( struct pycfParser_Ctx_struct *  ctx,
+                                         pANTLR3_VECTOR                         args )
 {
-    ANTLR3_UINT32   n = args->size( args );
+    ANTLR3_UINT32   n = args->count;
     if ( n == 0 ) return NULL;      /* No base classes, so do not create the CLASS_INHERITANCE node */
 
     pANTLR3_BASE_TREE   inheritance_root = ctx->adaptor->nilNode( ctx->adaptor );
@@ -307,7 +306,7 @@ pycfInsertInheritance( struct pycfParser_Ctx_struct *  ctx,
 
     for ( k = 0; k < n; ++k )
     {
-        const char *        item = (const char *) (args->get( args, k ));
+        const char *        item = (const char *) (vectorGet( args, k ));
         pANTLR3_BASE_TREE   child = ctx->adaptor->createTypeText( ctx->adaptor, CLASS_INHERITANCE, (pANTLR3_UINT8) item );
 
         ctx->adaptor->addChild( ctx->adaptor, inheritance_root, child );
@@ -330,16 +329,15 @@ void addTypedName( pANTLR3_VECTOR       v,
     struct function_argument *  item = malloc( sizeof( struct function_argument ) );
     item->name = name;
     item->type = type;
-    v->add( v, item, free );
+    vectorAdd( v, item, free );
 
     return;
 }
 
-pANTLR3_BASE_TREE
-pycfInsertArguments( struct pycfParser_Ctx_struct *  ctx,
-                     pANTLR3_VECTOR                  args )
+pANTLR3_BASE_TREE pycfInsertArguments( struct pycfParser_Ctx_struct *  ctx,
+                                       pANTLR3_VECTOR                  args )
 {
-    ANTLR3_UINT32   n = args->size( args );
+    ANTLR3_UINT32   n = args->count;
 
     if ( n == 0 )   return NULL;    /* No arguments so do not insert the ARGUMENTS node */
 
@@ -354,7 +352,7 @@ pycfInsertArguments( struct pycfParser_Ctx_struct *  ctx,
     ANTLR3_UINT32   k;
     for ( k = 0; k < n; ++k )
     {
-        struct function_argument *  item = (struct function_argument *) (args->get( args, k ));
+        struct function_argument *  item = (struct function_argument *) (vectorGet( args, k ));
         pANTLR3_BASE_TREE           child = ctx->adaptor->createTypeText( ctx->adaptor,
                                                                           item->type, item->name );
 
