@@ -1,0 +1,76 @@
+2014 May 14 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for release v.1.6.8
+* Bug fix: exception for a broken code like 'from import os'
+
+2014 May 06 Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for release v.1.6.7
+* 'nonlocal' statement recognition added
+
+2014 Jan 29  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for release v.1.6.6
+* Fix: memory leak
+* 10% better performance
+
+2013 Nov 30  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for release v.1.6.5
+* Collect line and position of the ':' character for functions and classes.
+* Around 5% better performance
+
+2013 Nov 16  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for release v.1.6.4
+* Bug fix: core dump in case if a docstring is longer than 65535 bytes.
+* Collect python files list from sys.path.
+
+2013 Aug 29  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for release v.1.6.3
+* Bug fix: core dump in case of import without anything following it
+
+2013 Jun 27  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for release v.1.6.2
+* Bug fix: parser was not able to parse python 3 style print() functions
+
+2013 Jun 18  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for release v.1.6.1
+* Bug fix: parser did not report errors if didn't reach the end
+* Increased performance due to fixed size arrays
+* Regexp based coding search is replaced with string search to avoid problems
+  on cygwin and eliminate dependency on windows.
+
+2013 Jan 18  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for release v.1.6
+* Bug fix: docstrings comprised of many string literal parts are properly
+  recognized now
+* Bug fix: module docstring if it is the only file item is recognised properly
+* Minor code cleanup
+
+2012 Sep 17  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for release v.1.5
+* Collect the input stream offset for the most of the items.
+
+2012 May 13  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for release v.1.4
+* Bug fix: no more problems in case if the last line is a comment one and there
+  is no EOL at the end of this line.
+
+2011 Sep 12  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for release v.1.3
+* Line number and position number are collected separately for:
+  - the 'def' keyword and a function name
+  - the 'class' keyword and a class name
+
+
+2011 Sep 2  Sergey Satskiy <sergey.satskiy@gmail.com>
+
+* Prepared for first public release. v.1.2

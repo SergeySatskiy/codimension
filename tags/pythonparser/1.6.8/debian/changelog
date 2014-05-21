@@ -1,0 +1,126 @@
+codimension-parser (1.6.8-0) precise; urgency=low
+
+  *  New upstream release.
+
+ -- Ilya Loginov <isloginov@gmail.com>  Wed, 21 Mar 2014 15:50:00 +0400
+
+codimension-parser (1.6.7-0) precise; urgency=low
+
+  *  New upstream release.
+
+ -- Ilya Loginov <isloginov@gmail.com>  Tue, 06 Mar 2014 22:16:11 +0400
+
+codimension-parser (1.6.6-0) precise; urgency=low
+
+  *  New upstream release.
+
+ -- Ilya Loginov <isloginov@gmail.com>  Wed, 12 Mar 2014 09:57:30 +0400
+
+codimension-parser (1.6.5-0) precise; urgency=low
+
+  *  New upstream release.
+
+ -- Ilya Loginov <isloginov@gmail.com>  Sat, 14 Dec 2013 13:00:29 +0400
+
+codimension-parser (1.6.4-2) precise; urgency=low
+
+  *  Prepared for release v.1.6.4
+  *  Bug fix: core dump in case if a docstring is longer than 65535 bytes
+  *  Collect python files list from sys.path
+
+ -- Sergey <sergey.satskiy@gmail.com>  Sat, 16 Nov 2013 13:28:00 +0400
+
+codimension-parser (1.6.3-2) precise; urgency=low
+
+  *  Prepared for release v.1.6.3
+  *  Bug fix: core dump in case of import without anything following it
+
+ -- Sergey <sergey.satskiy@gmail.com>  Thu, 29 Aug 2013 00:07:00 +0400
+
+codimension-parser (1.6.2-2) precise; urgency=low
+
+  *  Prepared for release v.1.6.2
+  *  Bug fix: parser was not able to parse python 3 style print() functions
+
+ -- Sergey <sergey.satskiy@gmail.com>  Sun, 30 Jun 2013 21:25:00 +0400
+
+codimension-parser (1.6.1-2) precise; urgency=low
+
+  * Bug fix: parser did not report errors if didn't reach the end
+  * Increased performance due to fixed size arrays
+  * Regexp based coding search is replaced with string search to avoid problems
+    on cygwin and eliminate dependency on windows.
+
+ -- Sergey <sergey.satskiy@gmail.com>  Tue, 18 Jun 2013 23:23:15 +0400
+
+codimension-parser (1.6-2) precise; urgency=low
+
+  * Release for precise series.
+  * Fix: docstrings comprised of many string literal parts are properly recognized.
+  * Fix: module docstring is recognized even if it is the only file content.
+  * Minor code cleanups targeting the parser performance.
+
+ -- Sergey <sergey.satskiy@gmail.com>  Fri, 18 Jan 2013 23:29:15 -0500
+
+codimension-parser (1.5-1) precise; urgency=low
+
+  * New: input stream offsets for most of the items.
+  * Fix to make the absPosition attribute accessible.
+
+ -- Dmitry Kazimirov <dk@revl.org>  Tue, 11 Sep 2012 00:31:00 -0400
+
+codimension-parser (1.4-4) unstable; urgency=low
+
+  * Release for Debian unstable.
+  * Standards-Version: '3.9.1' -> '3.9.3'
+  * Added a debian/watch file.
+  * Updated config.guess and config.sub in libantlr.
+
+ -- Dmitry Kazimirov <dk@revl.org>  Wed, 06 Jun 2012 13:29:41 -0400
+
+codimension-parser (1.4-2) unstable; urgency=low
+
+  * Release for Debian unstable.
+
+ -- Dmitry Kazimirov <dk@revl.org>  Fri, 25 May 2012 18:14:51 -0400
+
+codimension-parser (1.4-1) precise; urgency=low
+
+  * Upstream changes: Bug fix: make parseable the input where
+    the last line is a comment and has no EOL.
+
+ -- Dmitry Kazimirov <dk@revl.org>  Mon, 21 May 2012 13:51:31 -0400
+
+codimension-parser (1.3-2) oneiric; urgency=low
+
+  * Release of version 1.3 for the oneiric series.
+
+ -- Dmitry Kazimirov <dk@revl.org>  Wed, 02 Nov 2011 10:35:47 -0400
+
+codimension-parser (1.3-1) natty; urgency=low
+
+  * Source line numbers and column positions are now remembered for
+    class and function definitions.
+
+ -- Dmitry Kazimirov <dk@revl.org>  Tue, 13 Sep 2011 09:58:19 -0400
+
+codimension-parser (1.2-1) natty; urgency=low
+
+  * Latest grammar fixes.
+  * Lexer errors are collected now too.
+  * First public release.
+
+ -- Dmitry Kazimirov <dk@revl.org>  Fri, 02 Sep 2011 11:14:54 -0400
+
+codimension-parser (1.1-1) natty; urgency=low
+
+  * Added a new method 'getDisplayName' to parser classes 'ImportWhat',
+    'Import', 'Decorator', 'Function', and 'Class'.
+
+ -- Dmitry Kazimirov <dk@revl.org>  Tue, 19 Jul 2011 21:33:14 -0400
+
+codimension-parser (1.0-1) natty; urgency=low
+
+  * Initial release.
+
+ -- Dmitry Kazimirov <dk@revl.org>  Wed, 18 May 2011 18:21:53 -0400

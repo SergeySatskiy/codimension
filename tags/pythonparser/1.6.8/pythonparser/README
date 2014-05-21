@@ -1,0 +1,13 @@
+This directory contains implementation of the Python parser used
+in Codimension.
+
+The parser library requires ../thirdparty/libantlr3c-3.2 to be
+built in place.  This version of the ANTLR library is patched and
+differs from the original release.  The stock binary of the same
+version won't work.
+
+It is important that libantlr is configured with the following
+options:
+
+* --with-pic
+* --enable-64bit (for the 64-bit Python runtime)
