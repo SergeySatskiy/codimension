@@ -39,10 +39,10 @@ GRAMMAR_OBJ_FILES=lexerutils.o pycfLexer.o pycfParser.o
 all: $(PYCXX_OBJ_FILES) $(CDM_OBJ_FILES) $(GRAMMAR_OBJ_FILES)
 	g++ -shared -fPIC -fexceptions -frtti -o cdmcf.so $^ ../thirdparty/libantlr3c-3.2/.libs/libantlr3c.a
 	gcc -O2 ${FLAGS} ${INCLUDE} -c -std=gnu99 cf_test.c
-	gcc ${FLAGS} -o cf_test build/*/pycfLexer.o \
-                               build/*/pycfParser.o \
-                               cf_test.o lexerutils.o \
-                               ../thirdparty/libantlr3c-3.2/.libs/libantlr3c.a
+	gcc ${FLAGS} -o cf_test pycfLexer.o \
+                            pycfParser.o \
+                            cf_test.o lexerutils.o \
+                            ../thirdparty/libantlr3c-3.2/.libs/libantlr3c.a
 
 .cpp.o:
 	g++ ${FLAGS} ${INCLUDE} -c -o $@ $^
