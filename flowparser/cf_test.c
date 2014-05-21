@@ -45,11 +45,11 @@ void walk( pANTLR3_BASE_TREE    tree,
     if ( tree->children != NULL )
     {
         ANTLR3_UINT32   i;
-        ANTLR3_UINT32   n = tree->children->size( tree->children );
+        ANTLR3_UINT32   n = tree->children->count;
         for ( i = 0; i < n; i++ )
         {
             pANTLR3_BASE_TREE   t;
-            t = (pANTLR3_BASE_TREE) tree->children->get( tree->children, i );
+            t = (pANTLR3_BASE_TREE) vectorGet( tree->children, i );
             walk( t, level + 1 );
         }
     }
@@ -125,12 +125,12 @@ int process( const char *  filename, int  count )
         retVal = 1;
     }
 
-    size_t      tokenCount = tstream->tokens->size( tstream->tokens );
+    size_t      tokenCount = tstream->tokens->count;
     printf( "Number of tokens in the stream: %ld\n", tokenCount );
 
     for ( size_t  k = 0; k < tokenCount; ++k )
     {
-        pANTLR3_COMMON_TOKEN    tok = tstream->tokens->get( tstream->tokens, k );
+        pANTLR3_COMMON_TOKEN    tok = vectorGet( tstream->tokens, k );
         if ( tok->type == COMMENT )
         {
             size_t      line = tok->line;
@@ -151,12 +151,12 @@ int process( const char *  filename, int  count )
             char        buffer[ 4096 ];
 
             snprintf( buffer, commentSize + 1, "%s", firstChar );
-            printf( "COMMENT size: %03ld start: %06ld end: %06ld line: %03d pos: %03d content: '%s'\n",
+            printf( "COMMENT size: %03ld start: %06ld end: %06ld line: %03ld pos: %03d content: '%s'\n",
                     commentSize, begin, end, line, tok->charPosition + 1, buffer );
         }
         else
         {
-            printf( "Token line: %03ld Token type: %03ld\n",
+            printf( "Token line: %03d Token type: %03d\n",
                     tok->line, tok->type );
         }
     }
