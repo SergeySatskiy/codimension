@@ -23,6 +23,7 @@
 
 #include "cflowversion.hpp"
 #include "cflowdocs.hpp"
+#include "cflowfragmenttypes.hpp"
 
 #include "cflowmodule.hpp"
 
@@ -45,8 +46,34 @@ CDMControlFlowModule::CDMControlFlowModule() :
 
     // Setup what is visible from the module
     Py::Dict        d( moduleDictionary() );
-    d[ "VERSION" ] = Py::String( CDM_CF_PARSER_VERION );
-    d[ "CML_VERSION" ] = Py::String( CML_VERSION_AS_STRING );
+    d[ "VERSION" ]                  = Py::String( CDM_CF_PARSER_VERION );
+    d[ "CML_VERSION" ]              = Py::String( CML_VERSION_AS_STRING );
+    d[ "BASE_FRAGMENT" ]            = Py::Int( BASE_FRAGMENT );
+    d[ "BANG_LINE_FRAGMENT" ]       = Py::Int( BANG_LINE_FRAGMENT );
+    d[ "ENCODING_LINE_FRAGMENT" ]   = Py::Int(ENCODING_LINE_FRAGMENT );
+    d[ "COMMENT_FRAGMENT" ]         = Py::Int( COMMENT_FRAGMENT );
+    d[ "FRAGMENT_WITH_COMMENTS" ]   = Py::Int( FRAGMENT_WITH_COMMENTS );
+    d[ "DOCSTRING_FRAGMENT" ]       = Py::Int( DOCSTRING_FRAGMENT );
+    d[ "DECORATOR_FRAGMENT" ]       = Py::Int( DECORATOR_FRAGMENT );
+    d[ "CODEBLOCK_FRAGMENT" ]       = Py::Int( CODEBLOCK_FRAGMENT );
+    d[ "FUNCTION_FRAGMENT" ]        = Py::Int( FUNCTION_FRAGMENT );
+    d[ "CLASS_FRAGMENT" ]           = Py::Int( CLASS_FRAGMENT );
+    d[ "BREAK_FRAGMENT" ]           = Py::Int( BREAK_FRAGMENT );
+    d[ "CONTINUE_FRAGMENT" ]        = Py::Int( CONTINUE_FRAGMENT );
+    d[ "RETURN_FRAGMENT" ]          = Py::Int( RETURN_FRAGMENT );
+    d[ "RAISE_FRAGMENT" ]           = Py::Int( RAISE_FRAGMENT );
+    d[ "ASSERT_FRAGMENT" ]          = Py::Int( ASSERT_FRAGMENT );
+    d[ "SYSEXIT_FRAGMENT" ]         = Py::Int( SYSEXIT_FRAGMENT );
+    d[ "WHILE_FRAGMENT" ]           = Py::Int( WHILE_FRAGMENT );
+    d[ "FOR_FRAGMENT" ]             = Py::Int( FOR_FRAGMENT );
+    d[ "IMPORT_FRAGMENT" ]          = Py::Int( IMPORT_FRAGMENT );
+    d[ "IF_PART_FRAGMENT" ]         = Py::Int( IF_PART_FRAGMENT );
+    d[ "IF_FRAGMENT" ]              = Py::Int( IF_FRAGMENT );
+    d[ "WITH_FRAGMENT" ]            = Py::Int( WITH_FRAGMENT );
+    d[ "EXCEPT_PART_FRAGMENT" ]     = Py::Int( EXCEPT_PART_FRAGMENT );
+    d[ "TRY_FRAGMENT" ]             = Py::Int( TRY_FRAGMENT );
+    d[ "CONTROL_FLOW_FRAGMENT" ]    = Py::Int( CONTROL_FLOW_FRAGMENT );
+
 }
 
 

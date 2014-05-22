@@ -20,8 +20,8 @@
  * Python extension module - versions
  */
 
-#ifndef CDMCFVERSION_HPP
-#define CDMCFVERSION_HPP
+#ifndef CFLOWVERSION_HPP
+#define CFLOWVERSION_HPP
 
 
 #define STR_HELPER(x) #x
