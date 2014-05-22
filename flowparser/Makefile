@@ -20,6 +20,8 @@
 
 .PHONY: all gen clean cleanall
 
+VERSION=trunk
+
 GENERATED_FILES=pycfLexer.h pycfParser.h pycfLexer.c pycfParser.c pycf.tokens
 
 ANTLR_INCLUDE=-I../thirdparty/libantlr3c-3.2 \
@@ -28,7 +30,8 @@ PYCXX_INCLUDE=-Ipycxx -Ipycxx/Src
 PYTHON_INCLUDE=$(shell python -c 'import distutils.sysconfig; print distutils.sysconfig.get_python_inc()')
 INCLUDE=${PYCXX_INCLUDE} -I${PYTHON_INCLUDE} ${ANTLR_INCLUDE}
 
-FLAGS=-O2 -ffast-math -fomit-frame-pointer -fPIC -fexceptions -frtti -DNDEBUG -D_GNU_SOURCE
+VERSION_DEFINES=-DCDM_CF_PARSER_VERION=\"${VERSION}\"
+FLAGS=-O2 -ffast-math -fomit-frame-pointer -fPIC -fexceptions -frtti -DNDEBUG -D_GNU_SOURCE ${VERSION_DEFINES}
 
 PYCXX_OBJ_FILES=pycxx/Src/cxxsupport.o pycxx/Src/cxx_extensions.o \
                 pycxx/Src/IndirectPythonInterface.o pycxx/Src/cxxextensions.o
@@ -36,7 +39,7 @@ CDM_OBJ_FILES=cflowmodule.o
 GRAMMAR_OBJ_FILES=lexerutils.o pycfLexer.o pycfParser.o
 
 
-all: $(PYCXX_OBJ_FILES) $(CDM_OBJ_FILES) $(GRAMMAR_OBJ_FILES) cdmcfversion.hpp
+all: $(PYCXX_OBJ_FILES) $(CDM_OBJ_FILES) $(GRAMMAR_OBJ_FILES) cflowversion.hpp cflowdocs.hpp
 	g++ -shared -fPIC -fexceptions -frtti -o cdmcf.so $^ ../thirdparty/libantlr3c-3.2/.libs/libantlr3c.a
 	gcc -O2 ${FLAGS} ${INCLUDE} -c -std=gnu99 cf_test.c
 	gcc ${FLAGS} -o cf_test pycfLexer.o \
@@ -58,7 +61,7 @@ gen: pycf.g
 	python adjust_generated.py
 
 clean:
-	rm -rf *.o core.* cdmcf.so build/ cf_test core *.pyc
+	rm -rf *.o core.* cdmcf.so cf_test core *.pyc
 
 cleanall: clean
 	rm -f $(GENERATED_FILES)

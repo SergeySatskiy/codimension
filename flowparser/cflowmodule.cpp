@@ -21,7 +21,9 @@
  */
 
 
-#include "cdmcfversion.hpp"
+#include "cflowversion.hpp"
+#include "cflowdocs.hpp"
+
 #include "cflowmodule.hpp"
 
 
@@ -39,8 +41,9 @@ CDMControlFlowModule::CDMControlFlowModule() :
 //                        &CDMControlFlowModule::createFragmentWithComments,
 //                        "Creates the FragmentWithComments class instance" );
 
-    initialize( "Codimension Control Flow module types and procedures" );
+    initialize( MODULE_DOC );
 
+    // Setup what is visible from the module
     Py::Dict        d( moduleDictionary() );
     d[ "VERSION" ] = Py::String( CDM_CF_PARSER_VERION );
     d[ "CML_VERSION" ] = Py::String( CML_VERSION_AS_STRING );
