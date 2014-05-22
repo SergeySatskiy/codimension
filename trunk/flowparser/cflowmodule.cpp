@@ -21,7 +21,9 @@
  */
 
 
+#include "cdmcfversion.hpp"
 #include "cflowmodule.hpp"
+
 
 
 CDMControlFlowModule::CDMControlFlowModule() :
@@ -40,6 +42,8 @@ CDMControlFlowModule::CDMControlFlowModule() :
     initialize( "Codimension Control Flow module types and procedures" );
 
     Py::Dict        d( moduleDictionary() );
+    d[ "VERSION" ] = Py::String( CDM_CF_PARSER_VERION );
+    d[ "CML_VERSION" ] = Py::String( CML_VERSION_AS_STRING );
 }
 
 

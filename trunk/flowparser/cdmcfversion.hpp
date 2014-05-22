@@ -23,7 +23,13 @@
 #ifndef CDMCFVERSION_HPP
 #define CDMCFVERSION_HPP
 
-#define CMLVERSION  1
+
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+
+#define CML_VERSION  1
+#define CML_VERSION_AS_STRING STR(CML_VERSION)
+
 
 #ifndef CDM_CF_PARSER_VERION
 #define CDM_CF_PARSER_VERION "trunk"
