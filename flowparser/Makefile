@@ -18,6 +18,12 @@
 # $Id$
 #
 
+# TODO:
+# - dependencies between cpp and hpp files are not here
+# - C flags should not have -frtti
+# - move object files to a build dir
+
+
 .PHONY: all gen clean cleanall
 
 VERSION=trunk
@@ -35,11 +41,11 @@ FLAGS=-O2 -ffast-math -fomit-frame-pointer -fPIC -fexceptions -frtti -DNDEBUG -D
 
 PYCXX_OBJ_FILES=pycxx/Src/cxxsupport.o pycxx/Src/cxx_extensions.o \
                 pycxx/Src/IndirectPythonInterface.o pycxx/Src/cxxextensions.o
-CDM_OBJ_FILES=cflowmodule.o
+CDM_OBJ_FILES=cflowmodule.o cflowfragments.o
 GRAMMAR_OBJ_FILES=lexerutils.o pycfLexer.o pycfParser.o
 
 
-all: $(PYCXX_OBJ_FILES) $(CDM_OBJ_FILES) $(GRAMMAR_OBJ_FILES) cflowversion.hpp cflowdocs.hpp
+all: $(PYCXX_OBJ_FILES) $(CDM_OBJ_FILES) $(GRAMMAR_OBJ_FILES)
 	g++ -shared -fPIC -fexceptions -frtti -o cdmcf.so $^ ../thirdparty/libantlr3c-3.2/.libs/libantlr3c.a
 	gcc -O2 ${FLAGS} ${INCLUDE} -c -std=gnu99 cf_test.c
 	gcc ${FLAGS} -o cf_test pycfLexer.o \

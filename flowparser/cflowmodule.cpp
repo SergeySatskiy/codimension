@@ -42,15 +42,26 @@ CDMControlFlowModule::CDMControlFlowModule() :
 //                        &CDMControlFlowModule::createFragmentWithComments,
 //                        "Creates the FragmentWithComments class instance" );
 
+    // Free functions visible from the module
+    add_varargs_method( "getControlFlowFromMemory",
+                        &CDMControlFlowModule::getControlFlowFromMemory,
+                        GET_CF_MEMORY_DOC );
+    add_varargs_method( "getControlFlowFromFile",
+                        &CDMControlFlowModule::getControlFlowFromFile,
+                        GET_CF_FILE_DOC );
+
+
     initialize( MODULE_DOC );
 
-    // Setup what is visible from the module
+    // Constants visible from the module
     Py::Dict        d( moduleDictionary() );
     d[ "VERSION" ]                  = Py::String( CDM_CF_PARSER_VERION );
     d[ "CML_VERSION" ]              = Py::String( CML_VERSION_AS_STRING );
-    d[ "BASE_FRAGMENT" ]            = Py::Int( BASE_FRAGMENT );
+
+    d[ "UNDEFINED_FRAGMENT" ]       = Py::Int( UNDEFINED_FRAGMENT );
+    d[ "FRAGMENT" ]                 = Py::Int( FRAGMENT );
     d[ "BANG_LINE_FRAGMENT" ]       = Py::Int( BANG_LINE_FRAGMENT );
-    d[ "ENCODING_LINE_FRAGMENT" ]   = Py::Int(ENCODING_LINE_FRAGMENT );
+    d[ "ENCODING_LINE_FRAGMENT" ]   = Py::Int( ENCODING_LINE_FRAGMENT );
     d[ "COMMENT_FRAGMENT" ]         = Py::Int( COMMENT_FRAGMENT );
     d[ "FRAGMENT_WITH_COMMENTS" ]   = Py::Int( FRAGMENT_WITH_COMMENTS );
     d[ "DOCSTRING_FRAGMENT" ]       = Py::Int( DOCSTRING_FRAGMENT );
@@ -81,7 +92,18 @@ CDMControlFlowModule::~CDMControlFlowModule()
 {}
 
 
+Py::Object
+CDMControlFlowModule::getControlFlowFromMemory( const Py::Tuple &  args )
+{
+    return Py::None();
+}
 
+
+Py::Object
+CDMControlFlowModule::getControlFlowFromFile( const Py::Tuple &  args )
+{
+    return Py::None();
+}
 
 //Py::Object  CDMControlFlowModule::CreateFragment( const Py::Tuple &  args )
 //{

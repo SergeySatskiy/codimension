@@ -23,9 +23,17 @@
 #ifndef CFLOWDOCS_HPP
 #define CFLOWDOCS_HPP
 
-#define MODULE_DOC "Codimension Control Flow module types and procedures"
+// Module docstring
+#define MODULE_DOC \
+"Codimension Control Flow module types and procedures"
 
+// getControlFlowFromMemory( content ) docstring
+#define GET_CF_MEMORY_DOC \
+"Provides the control flow object for the given content"
 
+// getControlFlowFromFile( fileName ) docstring
+#define GET_CF_FILE_DOC \
+"Provides the control flow object for the given file"
 
 #endif
 

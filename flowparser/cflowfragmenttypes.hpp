@@ -24,7 +24,8 @@
 #define CFLOWFRAGMENTTYPES_HPP
 
 
-#define BASE_FRAGMENT           0
+#define UNDEFINED_FRAGMENT      -1
+#define FRAGMENT                0
 #define BANG_LINE_FRAGMENT      1
 #define ENCODING_LINE_FRAGMENT  2
 #define COMMENT_FRAGMENT        3

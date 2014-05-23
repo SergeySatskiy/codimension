@@ -35,8 +35,11 @@ class CDMControlFlowModule : public Py::ExtensionModule< CDMControlFlowModule >
         virtual ~CDMControlFlowModule();
 
     private:
-        Py::Object  CreateFragment( const Py::Tuple &  args );
-        Py::Object  CreateFragmentWithComments( const Py::Tuple &  args );
+        Py::Object  createFragment( const Py::Tuple &  args );
+        Py::Object  createFragmentWithComments( const Py::Tuple &  args );
+
+        Py::Object  getControlFlowFromMemory( const Py::Tuple &  args );
+        Py::Object  getControlFlowFromFile( const Py::Tuple &  args );
 };
 
 
