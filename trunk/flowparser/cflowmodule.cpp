@@ -24,6 +24,7 @@
 #include "cflowversion.hpp"
 #include "cflowdocs.hpp"
 #include "cflowfragmenttypes.hpp"
+#include "cflowfragments.hpp"
 
 #include "cflowmodule.hpp"
 
@@ -32,12 +33,14 @@
 CDMControlFlowModule::CDMControlFlowModule() :
     Py::ExtensionModule< CDMControlFlowModule >( "cdmcf" )
 {
-//    Fragment::InitType();
+    FragmentBase::Init();
+
+    Fragment::InitType();
 //    FragmentWithComments::InitType();
 
-//    add_varargs_method( "Fragment",
-//                        &CDMControlFlowModule::createFragment,
-//                        "Creates the Fragment class instance" );
+    add_varargs_method( "Fragment",
+                        &CDMControlFlowModule::createFragment,
+                        "Creates the Fragment class instance" );
 //    add_varargs_method( "FragmentWithComments",
 //                        &CDMControlFlowModule::createFragmentWithComments,
 //                        "Creates the FragmentWithComments class instance" );
@@ -105,10 +108,10 @@ CDMControlFlowModule::getControlFlowFromFile( const Py::Tuple &  args )
     return Py::None();
 }
 
-//Py::Object  CDMControlFlowModule::CreateFragment( const Py::Tuple &  args )
-//{
-//    return Py::asObject( new Fragment() );
-//}
+Py::Object  CDMControlFlowModule::createFragment( const Py::Tuple &  args )
+{
+    return Py::asObject( new Fragment() );
+}
 
 //Py::Object createFragmentWithComments( const Py::Tuple &  args )
 //{

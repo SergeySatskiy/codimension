@@ -25,6 +25,12 @@
 
 
 #include "CXX/Objects.hxx"
+#include "CXX/Extensions.hxx"
+
+
+// To make it easy to try with 'int' or 'long'
+#define INT_TYPE    long
+
 
 
 // Base class for all the fragments. It is visible in C++ only, python users
@@ -40,26 +46,43 @@ class FragmentBase
                                 // The most top level fragment has it as NULL
 
     protected:
-        int     kind;       // Fragment type
+        INT_TYPE    kind;       // Fragment type
 
-        int     begin;      // Absolute position of the first fragment
-                            // character. 0-based. It must never be -1.
-        int     end;        // Absolute position of the last fragment
-                            // character. 0-based. It must never be -1.
+        INT_TYPE    begin;      // Absolute position of the first fragment
+                                // character. 0-based. It must never be -1.
+        INT_TYPE    end;        // Absolute position of the last fragment
+                                // character. 0-based. It must never be -1.
 
         // Excessive members for convenience. This makes it easier to work with
         // the editor buffer directly.
-        int     beginLine;  // 1-based line number
-        int     beginPos;   // 1-based position number in the line
-        int     endLine;    // 1-based line number
-        int     endPos;     // 1-based position number in the line
+        INT_TYPE    beginLine;  // 1-based line number
+        INT_TYPE    beginPos;   // 1-based position number in the line
+        INT_TYPE    endLine;    // 1-based line number
+        INT_TYPE    endPos;     // 1-based position number in the line
 
-        bool    serialized; // true if has been serialized
+        bool        serialized; // true if has been serialized
 
         Py::List    getMembers( void ) const;
         Py::Object  getAttribute( const char *  name );
+
+    public:
+        // C++ only; helpers to make it a bit faster
+        static Py::List     members;
+        static void Init( void );
 };
 
+
+
+class Fragment : public FragmentBase,
+                 public Py::PythonExtension< Fragment >
+{
+    public:
+        Fragment();
+        virtual ~Fragment();
+
+        static void InitType( void );
+        Py::Object getattr( const char *  name );
+};
 
 
 #endif
