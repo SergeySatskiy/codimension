@@ -36,6 +36,16 @@
         return Py::Boolean( member ); } while ( 0 )
 
 
+#define SETINTATTR( member, value )                                 \
+    do { if ( strcmp( name, STR( member ) ) == 0 )                  \
+         { if ( ! value.isNumeric() )                               \
+             throw Py::ValueError( "Attribute "                     \
+                        STR( member ) " value must be numeric" );   \
+             member = (INT_TYPE)(Py::Long( value ));                \
+         }                                                          \
+       } while ( 0 )
+
+
 
 
 Py::List    FragmentBase::members;
@@ -66,7 +76,7 @@ void FragmentBase::Init( void )
 }
 
 
-Py::List    FragmentBase::getMembers( void ) const
+Py::List  FragmentBase::getMembers( void ) const
 {
     return members;
 }
@@ -84,6 +94,22 @@ Py::Object  FragmentBase::getAttribute( const char *  name )
     GETBOOLATTR( serialized );
 
     return Py::None();
+}
+
+
+int  FragmentBase::setAttr( const char *        name,
+                            const Py::Object &  value )
+{
+    SETINTATTR( kind, value );
+    SETINTATTR( begin, value );
+    SETINTATTR( end, value );
+    SETINTATTR( beginLine, value );
+    SETINTATTR( beginPos, value );
+    SETINTATTR( endLine, value );
+    SETINTATTR( endPos, value );
+    // SETBOOLATTR( serialized, value );
+
+    return -1;
 }
 
 
@@ -105,6 +131,7 @@ void Fragment::InitType( void )
     behaviors().name( "Fragment" );
     behaviors().doc( FRAGMENT_DOC );
     behaviors().supportGetattr();
+    behaviors().supportSetattr();
 }
 
 
@@ -120,4 +147,10 @@ Py::Object Fragment::getattr( const char *  name )
     return value;
 }
 
+
+int Fragment::setattr( const char *        name,
+                       const Py::Object &  value )
+{
+    return 0;
+}
 

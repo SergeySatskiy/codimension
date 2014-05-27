@@ -64,6 +64,8 @@ class FragmentBase
 
         Py::List    getMembers( void ) const;
         Py::Object  getAttribute( const char *  name );
+        int         setAttr( const char *        name,
+                             const Py::Object &  value );
 
     public:
         // C++ only; helpers to make it a bit faster
@@ -82,6 +84,9 @@ class Fragment : public FragmentBase,
 
         static void InitType( void );
         Py::Object getattr( const char *  name );
+
+        virtual int setattr( const char *        name,
+                             const Py::Object &  value );
 };
 
 
