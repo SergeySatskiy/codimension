@@ -23,8 +23,22 @@
 
 #include "cflowfragments.hpp"
 #include "cflowfragmenttypes.hpp"
+#include "cflowversion.hpp"
+#include "cflowdocs.hpp"
 
 
+// Convenience macros
+#define GETINTATTR( member )                        \
+    do { if ( strcmp( name, STR( member ) ) == 0 )  \
+        return Py::Long( member ); } while ( 0 )
+#define GETBOOLATTR( member )                       \
+    do { if ( strcmp( name, STR( member ) ) == 0 )  \
+        return Py::Boolean( member ); } while ( 0 )
+
+
+
+
+Py::List    FragmentBase::members;
 
 FragmentBase::FragmentBase() :
     parent( NULL ),
@@ -38,10 +52,8 @@ FragmentBase::~FragmentBase()
 {}
 
 
-Py::List    FragmentBase::getMembers( void ) const
+void FragmentBase::Init( void )
 {
-    Py::List    members;
-
     members.append( Py::String( "kind" ) );
     members.append( Py::String( "begin" ) );
     members.append( Py::String( "end" ) );
@@ -50,12 +62,62 @@ Py::List    FragmentBase::getMembers( void ) const
     members.append( Py::String( "endLine" ) );
     members.append( Py::String( "endPos" ) );
     members.append( Py::String( "serialized" ) );
+    return;
+}
+
+
+Py::List    FragmentBase::getMembers( void ) const
+{
     return members;
 }
 
 
 Py::Object  FragmentBase::getAttribute( const char *  name )
 {
+    GETINTATTR( kind );
+    GETINTATTR( begin );
+    GETINTATTR( end );
+    GETINTATTR( beginLine );
+    GETINTATTR( beginPos );
+    GETINTATTR( endLine );
+    GETINTATTR( endPos );
+    GETBOOLATTR( serialized );
+
     return Py::None();
 }
+
+
+
+// -----------------------------
+
+Fragment::Fragment()
+{
+    kind = FRAGMENT;
+}
+
+
+Fragment::~Fragment()
+{}
+
+
+void Fragment::InitType( void )
+{
+    behaviors().name( "Fragment" );
+    behaviors().doc( FRAGMENT_DOC );
+    behaviors().supportGetattr();
+}
+
+
+Py::Object Fragment::getattr( const char *  name )
+{
+    // Support for dir(...)
+    if ( strcmp( name, "__members__" ) == 0 )
+        return getMembers();
+
+    Py::Object      value = getAttribute( name );
+    if ( value.isNone() )
+        return getattr_methods( name );
+    return value;
+}
+
 

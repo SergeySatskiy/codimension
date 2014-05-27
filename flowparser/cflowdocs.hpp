@@ -35,5 +35,8 @@
 #define GET_CF_FILE_DOC \
 "Provides the control flow object for the given file"
 
+#define FRAGMENT_DOC \
+"Represents a single text fragment of a python file"
+
 #endif
 
