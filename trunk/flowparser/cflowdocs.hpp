@@ -38,5 +38,19 @@
 #define FRAGMENT_DOC \
 "Represents a single text fragment of a python file"
 
+
+// getLineRange() docstring
+#define GETLINERANGE_DOC \
+"Provides line range for the fragment"
+
+// getContent(...) docstring
+#define GETCONTENT_DOC \
+"Provides the content of the fragment"
+
+// getLineContent(...) docstring
+#define GETLINECONTENT_DOC \
+"Provides a content with complete lines including leading spaces if so"
+
+
 #endif
 
