@@ -21,6 +21,8 @@
  */
 
 
+#include <string>
+
 #include "cflowfragments.hpp"
 #include "cflowfragmenttypes.hpp"
 #include "cflowversion.hpp"
@@ -30,7 +32,7 @@
 // Convenience macros
 #define GETINTATTR( member )                        \
     do { if ( strcmp( name, STR( member ) ) == 0 )  \
-        return Py::Long( member ); } while ( 0 )
+        return PYTHON_INT_TYPE( member ); } while ( 0 )
 #define GETBOOLATTR( member )                       \
     do { if ( strcmp( name, STR( member ) ) == 0 )  \
         return Py::Boolean( member ); } while ( 0 )
@@ -38,12 +40,28 @@
 
 #define SETINTATTR( member, value )                                 \
     do { if ( strcmp( name, STR( member ) ) == 0 )                  \
-         { if ( ! value.isNumeric() )                               \
-             throw Py::ValueError( "Attribute "                     \
-                        STR( member ) " value must be numeric" );   \
-             member = (INT_TYPE)(Py::Long( value ));                \
+         { if ( !value.isNumeric() )                                \
+           {                                                        \
+             throw Py::ValueError( "Attribute '"                    \
+                        STR( member ) "' value must be numeric" );  \
+           }                                                        \
+           member = (INT_TYPE)(PYTHON_INT_TYPE( value ));           \
+           return 0;                                                \
          }                                                          \
        } while ( 0 )
+
+#define SETBOOLATTR( member, value )                                \
+    do { if ( strcmp( name, STR( member ) ) == 0 )                  \
+         { if ( !value.isBoolean() )                                \
+           {                                                        \
+             throw Py::ValueError( "Attribute '"                    \
+                        STR( member ) "' value must be boolean" );  \
+           }                                                        \
+           member = (bool)(Py::Boolean( value ));                   \
+           return 0;                                                \
+         }                                                          \
+       } while ( 0 )
+
 
 
 
@@ -51,10 +69,10 @@
 Py::List    FragmentBase::members;
 
 FragmentBase::FragmentBase() :
-    parent( NULL ),
+    parent( NULL ), content( NULL ),
     kind( UNDEFINED_FRAGMENT ),
     begin( -1 ), end( -1 ), beginLine( -1 ), beginPos( -1 ),
-    endLine( -1 ), endPos( -1 ), serialized( false )
+    endLine( -1 ), endPos( -1 )
 {}
 
 
@@ -71,7 +89,6 @@ void FragmentBase::Init( void )
     members.append( Py::String( "beginPos" ) );
     members.append( Py::String( "endLine" ) );
     members.append( Py::String( "endPos" ) );
-    members.append( Py::String( "serialized" ) );
     return;
 }
 
@@ -91,7 +108,6 @@ Py::Object  FragmentBase::getAttribute( const char *  name )
     GETINTATTR( beginPos );
     GETINTATTR( endLine );
     GETINTATTR( endPos );
-    GETBOOLATTR( serialized );
 
     return Py::None();
 }
@@ -107,14 +123,87 @@ int  FragmentBase::setAttr( const char *        name,
     SETINTATTR( beginPos, value );
     SETINTATTR( endLine, value );
     SETINTATTR( endPos, value );
-    // SETBOOLATTR( serialized, value );
 
     return -1;
 }
 
 
+std::string  FragmentBase::getContent( const std::string *  buf )
+{
+    if ( buf != NULL )
+        return buf->substr( begin, end - begin + 1 );
 
-// -----------------------------
+    // Check if serialized
+    FragmentBase *      current = this;
+    while ( current->parent != NULL )
+        current = current->parent;
+    if ( current->content != NULL )
+        return current->content->substr( begin, end - begin + 1 );
+
+    throw Py::RuntimeError( "Cannot get content of not serialized "
+                            "fragment without its buffer" );
+}
+
+
+Py::Object  FragmentBase::getContent( const Py::Tuple &  args )
+{
+    size_t      argCount( args.length() );
+
+    if ( argCount == 0 )
+        return Py::String( getContent( NULL ) );
+
+    if ( argCount == 1 )
+    {
+        std::string  content( Py::String( args[ 0 ] ).as_std_string() );
+        return Py::String( getContent( & content ) );
+    }
+
+    throw Py::RuntimeError( "Unexpected number of arguments. getContent() "
+                            "supports no arguments or one argument "
+                            "(text buffer)" );
+}
+
+
+Py::Object  FragmentBase::getLineContent( const Py::Tuple &  args )
+{
+    size_t      argCount( args.length() );
+
+    if ( argCount == 0 )
+        return Py::String( std::string( beginPos - 1, ' ' ) +
+                           getContent( NULL ) );
+
+    if ( argCount == 1 )
+    {
+        std::string  content( Py::String( args[ 0 ] ).as_std_string() );
+        return Py::String( std::string( beginPos - 1, ' ' ) +
+                           getContent( & content ) );
+    }
+
+    throw Py::RuntimeError( "Unexpected number of arguments. getLineContent() "
+                            "supports no arguments or one argument "
+                            "(text buffer)" );
+}
+
+
+Py::Object  FragmentBase::getLineRange( void )
+{
+    return Py::TupleN( PYTHON_INT_TYPE( beginLine ),
+                       PYTHON_INT_TYPE( endLine ) );
+}
+
+
+std::string  FragmentBase::str( void ) const
+{
+    char    buffer[ 64 ];
+    sprintf( buffer, "[%ld:%ld] (%ld,%ld) (%ld,%ld)",
+                     begin, end,
+                     beginLine, beginPos,
+                     endLine, endPos );
+    return buffer;
+}
+
+// --- End of FragmentBase definition ---
+
 
 Fragment::Fragment()
 {
@@ -132,6 +221,14 @@ void Fragment::InitType( void )
     behaviors().doc( FRAGMENT_DOC );
     behaviors().supportGetattr();
     behaviors().supportSetattr();
+    behaviors().supportRepr();
+
+    add_noargs_method( "getLineRange", &FragmentBase::getLineRange,
+                       GETLINERANGE_DOC );
+    add_varargs_method( "getContent", &FragmentBase::getContent,
+                        GETCONTENT_DOC );
+    add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
+                        GETLINECONTENT_DOC );
 }
 
 
@@ -148,9 +245,19 @@ Py::Object Fragment::getattr( const char *  name )
 }
 
 
-int Fragment::setattr( const char *        name,
-                       const Py::Object &  value )
+Py::Object  Fragment::repr( void )
 {
+    return Py::String( "<Fragment " + FragmentBase::str() + ">" );
+}
+
+
+int  Fragment::setattr( const char *        name,
+                        const Py::Object &  value )
+{
+    if ( FragmentBase::setAttr( name, value ) != 0 )
+        throw Py::AttributeError( "Unknown attribute '" +
+                                  std::string( name ) + "'" );
     return 0;
 }
+
 
