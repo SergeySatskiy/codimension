@@ -27,6 +27,7 @@
 #include "cflowfragmenttypes.hpp"
 #include "cflowversion.hpp"
 #include "cflowdocs.hpp"
+#include "cflowutils.hpp"
 
 
 // Convenience macros
@@ -258,6 +259,96 @@ int  Fragment::setattr( const char *        name,
         throw Py::AttributeError( "Unknown attribute '" +
                                   std::string( name ) + "'" );
     return 0;
+}
+
+
+// --- End of Fragment definition ---
+
+BangLine::BangLine()
+{
+    kind = BANG_LINE_FRAGMENT;
+}
+
+
+BangLine::~BangLine()
+{}
+
+
+void BangLine::InitType( void )
+{
+    behaviors().name( "BangLine" );
+    behaviors().doc( BANGLINE_DOC );
+    behaviors().supportGetattr();
+    behaviors().supportSetattr();
+    behaviors().supportRepr();
+
+    add_noargs_method( "getLineRange", &FragmentBase::getLineRange,
+                       GETLINERANGE_DOC );
+    add_varargs_method( "getContent", &FragmentBase::getContent,
+                        GETCONTENT_DOC );
+    add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
+                        GETLINECONTENT_DOC );
+}
+
+
+Py::Object BangLine::getattr( const char *  name )
+{
+    // Support for dir(...)
+    if ( strcmp( name, "__members__" ) == 0 )
+        return getMembers();
+
+    Py::Object      value = getAttribute( name );
+    if ( value.isNone() )
+        return getattr_methods( name );
+    return value;
+}
+
+
+Py::Object  BangLine::repr( void )
+{
+    return Py::String( "<BangLine " + FragmentBase::str() + ">" );
+}
+
+
+int  BangLine::setattr( const char *        name,
+                        const Py::Object &  value )
+{
+    if ( FragmentBase::setAttr( name, value ) != 0 )
+        throw Py::AttributeError( "Unknown attribute '" +
+                                  std::string( name ) + "'" );
+    return 0;
+}
+
+
+Py::Object  BangLine::getDisplayValue( const Py::Tuple &  args )
+{
+    size_t          argCount( args.length() );
+    std::string     content;
+
+    if ( argCount == 0 )
+    {
+        content = FragmentBase::getContent( NULL );
+    }
+    else if ( argCount == 1 )
+    {
+        std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
+        content = FragmentBase::getContent( & content );
+    }
+    else
+    {
+        throw Py::RuntimeError( "Unexpected number of arguments. getDisplayValue() "
+                                "supports no arguments or one argument "
+                                "(text buffer)" );
+    }
+
+    if ( content.length() < 2 )
+        throw Py::RuntimeError( "Unexpected bang line fragment. The fragment "
+                                "is shorter than 2 characters." );
+    if ( content[ 0 ] != '#' || content[ 1 ] != '!' )
+        throw Py::RuntimeError( "Unexpected bang line fragment. There is "
+                                "no #! at the beginning." );
+
+    return Py::String( trim( content.c_str() + 2, content.length() - 2 ) );
 }
 
 

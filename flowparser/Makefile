@@ -41,7 +41,7 @@ FLAGS=-O2 -ffast-math -fomit-frame-pointer -fPIC -fexceptions -frtti -DNDEBUG -D
 
 PYCXX_OBJ_FILES=pycxx/Src/cxxsupport.o pycxx/Src/cxx_extensions.o \
                 pycxx/Src/IndirectPythonInterface.o pycxx/Src/cxxextensions.o
-CDM_OBJ_FILES=cflowmodule.o cflowfragments.o
+CDM_OBJ_FILES=cflowmodule.o cflowfragments.o cflowutils.o
 GRAMMAR_OBJ_FILES=lexerutils.o pycfLexer.o pycfParser.o
 
 

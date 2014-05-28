@@ -17,7 +17,7 @@
  *
  * $Id$
  *
- * Python extension module -various documentation strings
+ * Python extension module - various documentation strings
  */
 
 #ifndef CFLOWDOCS_HPP
@@ -35,6 +35,7 @@
 #define GET_CF_FILE_DOC \
 "Provides the control flow object for the given file"
 
+// Fragment class docstring
 #define FRAGMENT_DOC \
 "Represents a single text fragment of a python file"
 
@@ -51,6 +52,10 @@
 #define GETLINECONTENT_DOC \
 "Provides a content with complete lines including leading spaces if so"
 
+
+// BangLine class docstring
+#define BANGLINE_DOC \
+"Represents a line with the bang notation"
 
 #endif
 

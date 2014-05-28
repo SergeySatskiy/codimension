@@ -79,7 +79,7 @@ class FragmentBase
         static Py::List     members;
         static void Init( void );
 
-    private:
+    protected:
         std::string getContent( const std::string *  buf = NULL );
 };
 
@@ -99,6 +99,22 @@ class Fragment : public FragmentBase,
                              const Py::Object &  value );
 };
 
+
+class BangLine : public FragmentBase,
+                 public Py::PythonExtension< BangLine >
+{
+    public:
+        BangLine();
+        virtual ~BangLine();
+
+        static void InitType( void );
+        Py::Object getattr( const char *  name );
+        Py::Object repr( void );
+        virtual int setattr( const char *        name,
+                             const Py::Object &  value );
+
+        Py::Object getDisplayValue( const Py::Tuple &  args );
+};
 
 #endif
 
