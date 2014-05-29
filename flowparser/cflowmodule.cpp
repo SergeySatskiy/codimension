@@ -36,11 +36,15 @@ CDMControlFlowModule::CDMControlFlowModule() :
     FragmentBase::Init();
 
     Fragment::InitType();
+    BangLine::InitType();
 //    FragmentWithComments::InitType();
 
     add_varargs_method( "Fragment",
                         &CDMControlFlowModule::createFragment,
-                        "Creates the Fragment class instance" );
+                        CREATE_FRAGMENT_DOC );
+    add_varargs_method( "BangLine",
+                        &CDMControlFlowModule::createBangLine,
+                        CREATE_BANGLINE_DOC );
 //    add_varargs_method( "FragmentWithComments",
 //                        &CDMControlFlowModule::createFragmentWithComments,
 //                        "Creates the FragmentWithComments class instance" );
@@ -111,6 +115,11 @@ CDMControlFlowModule::getControlFlowFromFile( const Py::Tuple &  args )
 Py::Object  CDMControlFlowModule::createFragment( const Py::Tuple &  args )
 {
     return Py::asObject( new Fragment() );
+}
+
+Py::Object  CDMControlFlowModule::createBangLine( const Py::Tuple &  args )
+{
+    return Py::asObject( new BangLine() );
 }
 
 //Py::Object createFragmentWithComments( const Py::Tuple &  args )

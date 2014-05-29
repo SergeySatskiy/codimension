@@ -116,5 +116,22 @@ class BangLine : public FragmentBase,
         Py::Object getDisplayValue( const Py::Tuple &  args );
 };
 
+
+class EncodingLine : public FragmentBase,
+                     public Py::PythonExtension< EncodingLine >
+{
+    public:
+        EncodingLine();
+        virtual ~EncodingLine();
+
+        static void InitType( void );
+        Py::Object getattr( const char *  name );
+        Py::Object repr( void );
+        virtual int setattr( const char *        name,
+                             const Py::Object &  value );
+
+        Py::Object getDisplayValue( const Py::Tuple &  args );
+};
+
 #endif
 

@@ -35,6 +35,15 @@
 #define GET_CF_FILE_DOC \
 "Provides the control flow object for the given file"
 
+// Fragment()
+#define CREATE_FRAGMENT_DOC \
+"Creates the Fragment class instance"
+
+// BangLine()
+#define CREATE_BANGLINE_DOC \
+"Creates the BangLine class instance"
+
+
 // Fragment class docstring
 #define FRAGMENT_DOC \
 "Represents a single text fragment of a python file"
@@ -56,6 +65,21 @@
 // BangLine class docstring
 #define BANGLINE_DOC \
 "Represents a line with the bang notation"
+
+// BangLine::getDisplayValue()
+#define BANGLINE_GETDISPLAYVALUE_DOC \
+"Provides the actual bang line"
+
+
+// EncodingLine class docstring
+#define ENCODINGLINE_DOC \
+"Represents a line with the file encoding"
+
+// EncodingLine::getDisplayValue()
+#define ENCODINGLINE_GETDISPLAYVALUE_DOC \
+"Provides the encoding"
+
+
 
 #endif
 
