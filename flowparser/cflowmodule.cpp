@@ -37,6 +37,8 @@ CDMControlFlowModule::CDMControlFlowModule() :
 
     Fragment::InitType();
     BangLine::InitType();
+    EncodingLine::InitType();
+    Comment::InitType();
 //    FragmentWithComments::InitType();
 
     add_varargs_method( "Fragment",
@@ -45,6 +47,12 @@ CDMControlFlowModule::CDMControlFlowModule() :
     add_varargs_method( "BangLine",
                         &CDMControlFlowModule::createBangLine,
                         CREATE_BANGLINE_DOC );
+    add_varargs_method( "EncodingLine",
+                        &CDMControlFlowModule::createEncodingLine,
+                        CREATE_ENCODINGLINE_DOC );
+    add_varargs_method( "Comment",
+                        &CDMControlFlowModule::createComment,
+                        CREATE_COMMENT_DOC );
 //    add_varargs_method( "FragmentWithComments",
 //                        &CDMControlFlowModule::createFragmentWithComments,
 //                        "Creates the FragmentWithComments class instance" );
@@ -121,6 +129,17 @@ Py::Object  CDMControlFlowModule::createBangLine( const Py::Tuple &  args )
 {
     return Py::asObject( new BangLine() );
 }
+
+Py::Object  CDMControlFlowModule::createEncodingLine( const Py::Tuple &  args )
+{
+    return Py::asObject( new EncodingLine() );
+}
+
+Py::Object  CDMControlFlowModule::createComment( const Py::Tuple &  args )
+{
+    return Py::asObject( new Comment() );
+}
+
 
 //Py::Object createFragmentWithComments( const Py::Tuple &  args )
 //{
