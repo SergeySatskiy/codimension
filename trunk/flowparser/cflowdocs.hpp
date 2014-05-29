@@ -43,6 +43,15 @@
 #define CREATE_BANGLINE_DOC \
 "Creates the BangLine class instance"
 
+// EncodingLine()
+#define CREATE_ENCODINGLINE_DOC \
+"Creates the EncodingLine class instance"
+
+
+// Comment()
+#define CREATE_COMMENT_DOC \
+"Creates the Comment class instance"
+
 
 // Fragment class docstring
 #define FRAGMENT_DOC \
@@ -79,6 +88,18 @@
 #define ENCODINGLINE_GETDISPLAYVALUE_DOC \
 "Provides the encoding"
 
+
+// Comment class docstring
+#define COMMENT_DOC \
+"Represents a one or many lines comment"
+
+// Comment::getDisplayValue()
+#define COMMENT_GETDISPLAYVALUE_DOC \
+"Provides the comment without trailing spaces"
+
+// Comment::niceStringify()
+#define COMMENT_NICESTRINGIFY_DOC \
+"Returns a string representation with new lines and shifts"
 
 
 #endif

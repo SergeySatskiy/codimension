@@ -159,9 +159,7 @@ Py::Object  FragmentBase::getContent( const Py::Tuple &  args )
         return Py::String( getContent( & content ) );
     }
 
-    throw Py::RuntimeError( "Unexpected number of arguments. getContent() "
-                            "supports no arguments or one argument "
-                            "(text buffer)" );
+    throwWrongBufArgument( "getContent" );
 }
 
 
@@ -201,6 +199,14 @@ std::string  FragmentBase::str( void ) const
                      beginLine, beginPos,
                      endLine, endPos );
     return buffer;
+}
+
+
+void  FragmentBase::throwWrongBufArgument( const std::string &  funcName )
+{
+    throw Py::RuntimeError( "Unexpected number of arguments. " + funcName +
+                            "() supports no arguments or one argument "
+                            "(text buffer)" );
 }
 
 // --- End of FragmentBase definition ---
@@ -324,23 +330,21 @@ int  BangLine::setattr( const char *        name,
 
 Py::Object  BangLine::getDisplayValue( const Py::Tuple &  args )
 {
-    size_t          argCount( args.length() );
     std::string     content;
 
-    if ( argCount == 0 )
+    switch ( args.length() )
     {
-        content = FragmentBase::getContent( NULL );
-    }
-    else if ( argCount == 1 )
-    {
-        std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
-        content = FragmentBase::getContent( & content );
-    }
-    else
-    {
-        throw Py::RuntimeError( "Unexpected number of arguments. getDisplayValue() "
-                                "supports no arguments or one argument "
-                                "(text buffer)" );
+        case 0:
+            content = FragmentBase::getContent( NULL );
+            break;
+        case 1:
+            {
+                std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
+                content = FragmentBase::getContent( & buf );
+                break;
+            }
+        default:
+            throwWrongBufArgument( "getDisplayValue" );
     }
 
     if ( content.length() < 2 )
@@ -415,6 +419,151 @@ int  EncodingLine::setattr( const char *        name,
 
 Py::Object  EncodingLine::getDisplayValue( const Py::Tuple &  args )
 {
+    std::string     content;
+
+    switch ( args.length() )
+    {
+        case 0:
+            content = FragmentBase::getContent( NULL );
+            break;
+        case 1:
+            {
+                std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
+                content = FragmentBase::getContent( & buf );
+                break;
+            }
+        default:
+            throwWrongBufArgument( "getDisplayValue" );
+    }
+
+    const char *    lineStart( content.c_str() );
+    const char *    encBegin( strstr( lineStart, "coding" ) );
+
+    if ( encBegin == NULL )
+        throw Py::RuntimeError( "Inconsistency detected. Cannot find 'coding' "
+                                "substring in the EncodingLine fragment" );
+
+    encBegin += 6;     /* len( 'coding' ) */
+    if ( *encBegin == ':' || *encBegin == '=' )
+        ++encBegin;
+    while ( isspace( *encBegin ) )
+        ++encBegin;
+
+    const char *    encEnd( encBegin );
+    while ( *encEnd != '\0' && isspace( *encEnd ) == 0 )
+        ++encEnd;
+
+    return Py::String( encBegin, encEnd - encBegin );
+}
+
+// --- End of EncodingLine definition ---
+
+
+Comment::Comment()
+{
+    kind = COMMENT_FRAGMENT;
+}
+
+
+Comment::~Comment()
+{}
+
+
+void Comment::InitType( void )
+{
+    behaviors().name( "Comment" );
+    behaviors().doc( COMMENT_DOC );
+    behaviors().supportGetattr();
+    behaviors().supportSetattr();
+    behaviors().supportRepr();
+
+    add_noargs_method( "getLineRange", &FragmentBase::getLineRange,
+                       GETLINERANGE_DOC );
+    add_varargs_method( "getContent", &FragmentBase::getContent,
+                        GETCONTENT_DOC );
+    add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
+                        GETLINECONTENT_DOC );
+    add_varargs_method( "getDisplayValue", &Comment::getDisplayValue,
+                        COMMENT_GETDISPLAYVALUE_DOC );
+    add_varargs_method( "niceStringify", &Comment::niceStringify,
+                        COMMENT_NICESTRINGIFY_DOC );
+}
+
+
+Py::Object Comment::getattr( const char *  name )
+{
+    // Support for dir(...)
+    if ( strcmp( name, "__members__" ) == 0 )
+    {
+        Py::List    members;
+        Py::List    baseMembers( getMembers() );
+
+        for ( Py::List::size_type k( 0 ); k < baseMembers.length(); ++k )
+            members.append( baseMembers[ k ] );
+
+        members.append( Py::String( "parts" ) );
+        return members;
+    }
+
+    Py::Object      value = getAttribute( name );
+    if ( value.isNone() )
+    {
+        if ( strcmp( name, "parts" ) == 0 )
+            return parts;
+        return getattr_methods( name );
+    }
+    return value;
+}
+
+
+Py::Object  Comment::repr( void )
+{
+    Py::String      ret( "<Comment " + FragmentBase::str() );
+    for ( Py::List::size_type k( 0 ); k < parts.length(); ++k )
+        ret = ret + Py::String( "\n" ) + Py::String( parts[ k ].repr() );
+    ret = ret + Py::String( ">" );
+    return ret;
+}
+
+
+int  Comment::setattr( const char *        name,
+                       const Py::Object &  value )
+{
+    if ( FragmentBase::setAttr( name, value ) != 0 )
+    {
+        if ( strcmp( name, "parts" ) == 0 )
+        {
+            if ( ! value.isList() )
+                throw Py::ValueError( "Attribute 'parts' value "
+                                      "must be a list" );
+            parts = Py::List( value );
+        }
+        else
+        {
+            throw Py::AttributeError( "Unknown attribute '" +
+                                      std::string( name ) + "'" );
+        }
+    }
+    return 0;
+}
+
+
+Py::Object  Comment::getDisplayValue( const Py::Tuple &  args )
+{
     return Py::None();
 }
+
+
+Py::Object  Comment::niceStringify( const Py::Tuple &  args )
+{
+    return Py::None();
+}
+
+
+// --- End of Comment definition ---
+
+
+
+
+
 

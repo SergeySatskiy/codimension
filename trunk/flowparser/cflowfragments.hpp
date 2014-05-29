@@ -42,13 +42,13 @@ class FragmentBase
         FragmentBase();
         virtual ~FragmentBase();
 
-    protected:
+    public:
         FragmentBase *  parent; // Pointer to the parent fragment.
                                 // The most top level fragment has it as NULL
         std::string *   content;// Owner of this field is the ControlFlow
                                 // object. Other derivatives must not touch it.
 
-    protected:
+    public:
         INT_TYPE    kind;       // Fragment type
 
         INT_TYPE    begin;      // Absolute position of the first fragment
@@ -81,6 +81,7 @@ class FragmentBase
 
     protected:
         std::string getContent( const std::string *  buf = NULL );
+        void throwWrongBufArgument( const std::string &  funcName );
 };
 
 
@@ -132,6 +133,28 @@ class EncodingLine : public FragmentBase,
 
         Py::Object getDisplayValue( const Py::Tuple &  args );
 };
+
+
+class Comment : public FragmentBase,
+                public Py::PythonExtension< Comment >
+{
+    public:
+        Comment();
+        virtual ~Comment();
+
+        static void InitType( void );
+        Py::Object getattr( const char *  name );
+        Py::Object repr( void );
+        virtual int setattr( const char *        name,
+                             const Py::Object &  value );
+
+        Py::Object getDisplayValue( const Py::Tuple &  args );
+        Py::Object niceStringify( const Py::Tuple &  args );
+
+    public:
+        Py::List    parts;      // Fragment instances
+};
+
 
 #endif
 
