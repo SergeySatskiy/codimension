@@ -288,6 +288,8 @@ void BangLine::InitType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+    add_varargs_method( "getDisplayValue", &BangLine::getDisplayValue,
+                        BANGLINE_GETDISPLAYVALUE_DOC );
 }
 
 
@@ -351,4 +353,68 @@ Py::Object  BangLine::getDisplayValue( const Py::Tuple &  args )
     return Py::String( trim( content.c_str() + 2, content.length() - 2 ) );
 }
 
+// --- End of BangLine definition ---
+
+EncodingLine::EncodingLine()
+{
+    kind = ENCODING_LINE_FRAGMENT;
+}
+
+
+EncodingLine::~EncodingLine()
+{}
+
+
+void EncodingLine::InitType( void )
+{
+    behaviors().name( "EncodingLine" );
+    behaviors().doc( ENCODINGLINE_DOC );
+    behaviors().supportGetattr();
+    behaviors().supportSetattr();
+    behaviors().supportRepr();
+
+    add_noargs_method( "getLineRange", &FragmentBase::getLineRange,
+                       GETLINERANGE_DOC );
+    add_varargs_method( "getContent", &FragmentBase::getContent,
+                        GETCONTENT_DOC );
+    add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
+                        GETLINECONTENT_DOC );
+    add_varargs_method( "getDisplayValue", &EncodingLine::getDisplayValue,
+                        ENCODINGLINE_GETDISPLAYVALUE_DOC );
+}
+
+
+Py::Object EncodingLine::getattr( const char *  name )
+{
+    // Support for dir(...)
+    if ( strcmp( name, "__members__" ) == 0 )
+        return getMembers();
+
+    Py::Object      value = getAttribute( name );
+    if ( value.isNone() )
+        return getattr_methods( name );
+    return value;
+}
+
+
+Py::Object  EncodingLine::repr( void )
+{
+    return Py::String( "<EncodingLine " + FragmentBase::str() + ">" );
+}
+
+
+int  EncodingLine::setattr( const char *        name,
+                            const Py::Object &  value )
+{
+    if ( FragmentBase::setAttr( name, value ) != 0 )
+        throw Py::AttributeError( "Unknown attribute '" +
+                                  std::string( name ) + "'" );
+    return 0;
+}
+
+
+Py::Object  EncodingLine::getDisplayValue( const Py::Tuple &  args )
+{
+    return Py::None();
+}
 
