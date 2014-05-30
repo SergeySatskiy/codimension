@@ -29,26 +29,25 @@
 #define BANG_LINE_FRAGMENT      1
 #define ENCODING_LINE_FRAGMENT  2
 #define COMMENT_FRAGMENT        3
-#define FRAGMENT_WITH_COMMENTS  4
-#define DOCSTRING_FRAGMENT      5
-#define DECORATOR_FRAGMENT      6
-#define CODEBLOCK_FRAGMENT      7
-#define FUNCTION_FRAGMENT       8
-#define CLASS_FRAGMENT          9
-#define BREAK_FRAGMENT          10
-#define CONTINUE_FRAGMENT       11
-#define RETURN_FRAGMENT         12
-#define RAISE_FRAGMENT          13
-#define ASSERT_FRAGMENT         14
-#define SYSEXIT_FRAGMENT        15
-#define WHILE_FRAGMENT          16
-#define FOR_FRAGMENT            17
-#define IMPORT_FRAGMENT         18
-#define IF_PART_FRAGMENT        19
-#define IF_FRAGMENT             20
-#define WITH_FRAGMENT           21
-#define EXCEPT_PART_FRAGMENT    22
-#define TRY_FRAGMENT            23
+#define DOCSTRING_FRAGMENT      4
+#define DECORATOR_FRAGMENT      5
+#define CODEBLOCK_FRAGMENT      6
+#define FUNCTION_FRAGMENT       7
+#define CLASS_FRAGMENT          8
+#define BREAK_FRAGMENT          9
+#define CONTINUE_FRAGMENT       10
+#define RETURN_FRAGMENT         11
+#define RAISE_FRAGMENT          12
+#define ASSERT_FRAGMENT         13
+#define SYSEXIT_FRAGMENT        14
+#define WHILE_FRAGMENT          15
+#define FOR_FRAGMENT            16
+#define IMPORT_FRAGMENT         17
+#define IF_PART_FRAGMENT        18
+#define IF_FRAGMENT             19
+#define WITH_FRAGMENT           20
+#define EXCEPT_PART_FRAGMENT    21
+#define TRY_FRAGMENT            22
 
 
 // Represents the complete source code

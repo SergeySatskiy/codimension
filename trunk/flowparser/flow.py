@@ -291,10 +291,11 @@ class Comment( Fragment ):
                 visibleLines.append( line.getContent( buf ).strip() )
             else:
                 if line.beginPos > minShift:
-                    visibleLines.append( ( line.beginPos - minShift ) * " " + \
+                    visibleLines.append( ( line.beginPos - minShift ) * " " +
                                          line.getContent( buf ).strip() )
                 else:
                     visibleLines.append( line.getContent( buf ).strip() )
+            currentLine = line.beginLine
 
         return "\n".join( visibleLines )
 

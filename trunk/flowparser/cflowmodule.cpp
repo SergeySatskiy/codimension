@@ -78,7 +78,6 @@ CDMControlFlowModule::CDMControlFlowModule() :
     d[ "BANG_LINE_FRAGMENT" ]       = Py::Int( BANG_LINE_FRAGMENT );
     d[ "ENCODING_LINE_FRAGMENT" ]   = Py::Int( ENCODING_LINE_FRAGMENT );
     d[ "COMMENT_FRAGMENT" ]         = Py::Int( COMMENT_FRAGMENT );
-    d[ "FRAGMENT_WITH_COMMENTS" ]   = Py::Int( FRAGMENT_WITH_COMMENTS );
     d[ "DOCSTRING_FRAGMENT" ]       = Py::Int( DOCSTRING_FRAGMENT );
     d[ "DECORATOR_FRAGMENT" ]       = Py::Int( DECORATOR_FRAGMENT );
     d[ "CODEBLOCK_FRAGMENT" ]       = Py::Int( CODEBLOCK_FRAGMENT );

@@ -550,7 +550,69 @@ int  Comment::setattr( const char *        name,
 
 Py::Object  Comment::getDisplayValue( const Py::Tuple &  args )
 {
-    return Py::None();
+    size_t          argCount( args.length() );
+    std::string     buf;
+    std::string *   bufPointer;
+
+    if ( argCount == 0 )
+        bufPointer = NULL;
+    else if ( argCount == 1 )
+    {
+        buf = Py::String( args[ 0 ] ).as_std_string();
+        bufPointer = & buf;
+    }
+    else
+        throwWrongBufArgument( "getDisplayValue" );
+
+
+    Py::List::size_type     partCount( parts.length() );
+
+    if (partCount == 0)
+        return Py::String( "" );
+
+    Fragment *  firstFragment( static_cast<Fragment *>(parts[ 0 ].ptr()) );
+    INT_TYPE    minShift( firstFragment->beginPos );
+    bool        sameShift( true );
+
+    for ( Py::List::size_type k( 1 ); k < partCount; ++k )
+    {
+        INT_TYPE    shift( static_cast<Fragment *>(parts[ k ].ptr())->beginPos );
+        if ( shift != minShift )
+        {
+            sameShift = false;
+            if ( shift < minShift )
+                minShift = shift;
+        }
+    }
+
+    std::string      content;
+    INT_TYPE         currentLine( firstFragment->beginLine );
+
+    for ( Py::List::size_type k( 0 ); k < partCount; ++k )
+    {
+        Fragment *  currentFragment( static_cast<Fragment *>(parts[ k ].ptr()) );
+
+        if ( k != 0 )
+            content += "\n";
+        if ( currentFragment->beginLine - currentLine > 1 )
+        {
+            for ( INT_TYPE  j( 1 ); j < currentFragment->beginLine - currentLine; ++j )
+                content += "\n";
+        }
+        if ( sameShift )
+            content += currentFragment->getContent( bufPointer );
+        else
+        {
+            if ( currentFragment->beginPos > minShift )
+                content += std::string( ' ', currentFragment->beginPos - minShift ) +
+                           currentFragment->getContent( bufPointer );
+            else
+                content += currentFragment->getContent( bufPointer );
+        }
+        currentLine = currentFragment->beginLine;
+    }
+
+    return Py::String( content );
 }
 
 
