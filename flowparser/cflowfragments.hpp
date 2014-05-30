@@ -73,6 +73,7 @@ class FragmentBase
     public:
         Py::Object  getLineRange( void );
         Py::Object  getContent( const Py::Tuple &  args );
+        std::string getContent( const std::string *  buf = NULL );
         Py::Object  getLineContent( const Py::Tuple &  args );
 
         // C++ only; helpers to make it a bit faster
@@ -80,7 +81,6 @@ class FragmentBase
         static void Init( void );
 
     protected:
-        std::string getContent( const std::string *  buf = NULL );
         void throwWrongBufArgument( const std::string &  funcName );
 };
 
@@ -154,6 +154,13 @@ class Comment : public FragmentBase,
     public:
         Py::List    parts;      // Fragment instances
 };
+
+
+
+//
+// NOTE: do not introduce FragmentWithComments
+//       have separate members instead
+//
 
 
 #endif
