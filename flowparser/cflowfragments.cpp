@@ -81,7 +81,7 @@ FragmentBase::~FragmentBase()
 {}
 
 
-void FragmentBase::Init( void )
+void FragmentBase::init( void )
 {
     members.append( Py::String( "kind" ) );
     members.append( Py::String( "begin" ) );
@@ -222,7 +222,7 @@ Fragment::~Fragment()
 {}
 
 
-void Fragment::InitType( void )
+void Fragment::initType( void )
 {
     behaviors().name( "Fragment" );
     behaviors().doc( FRAGMENT_DOC );
@@ -280,7 +280,7 @@ BangLine::~BangLine()
 {}
 
 
-void BangLine::InitType( void )
+void BangLine::initType( void )
 {
     behaviors().name( "BangLine" );
     behaviors().doc( BANGLINE_DOC );
@@ -369,7 +369,7 @@ EncodingLine::~EncodingLine()
 {}
 
 
-void EncodingLine::InitType( void )
+void EncodingLine::initType( void )
 {
     behaviors().name( "EncodingLine" );
     behaviors().doc( ENCODINGLINE_DOC );
@@ -469,7 +469,7 @@ Comment::~Comment()
 {}
 
 
-void Comment::InitType( void )
+void Comment::initType( void )
 {
     behaviors().name( "Comment" );
     behaviors().doc( COMMENT_DOC );
@@ -618,11 +618,154 @@ Py::Object  Comment::getDisplayValue( const Py::Tuple &  args )
 
 Py::Object  Comment::niceStringify( const Py::Tuple &  args )
 {
-    return Py::None();
+    if ( args.length() != 1 )
+        throw Py::TypeError( "niceStringify() takes exactly 1 argument" );
+
+    if ( ! args[ 0 ].isNumeric() )
+        throw Py::TypeError( "niceStringify() takes 1 integer argument" );
+
+    INT_TYPE    level( (INT_TYPE)(PYTHON_INT_TYPE( args[ 0 ] )) );
+    Py::String  joiner( "\n" + std::string( ' ', (level + 1) * 4 ) );
+    Py::String result( std::string( ' ', level * 4 ) + "Comment: " + FragmentBase::str() );
+
+    Py::List::size_type     partCount( parts.length() );
+    for ( Py::List::size_type k( 0 ); k < partCount; ++k )
+    {
+        result = result + joiner + Py::String( parts[ k ].repr() );
+    }
+
+    return result;
+}
+
+// --- End of Comment definition ---
+
+Docstring::Docstring()
+{
+    kind = DOCSTRING_FRAGMENT;
+    sideComment = Py::None();
 }
 
 
-// --- End of Comment definition ---
+Docstring::~Docstring()
+{}
+
+
+void Docstring::initType( void )
+{
+    behaviors().name( "Docstring" );
+    behaviors().doc( DOCSTRING_DOC );
+    behaviors().supportGetattr();
+    behaviors().supportSetattr();
+    behaviors().supportRepr();
+
+    add_noargs_method( "getLineRange", &FragmentBase::getLineRange,
+                       GETLINERANGE_DOC );
+    add_varargs_method( "getContent", &FragmentBase::getContent,
+                        GETCONTENT_DOC );
+    add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
+                        GETLINECONTENT_DOC );
+    add_varargs_method( "getDisplayValue", &Docstring::getDisplayValue,
+                        DOCSTRING_GETDISPLAYVALUE_DOC );
+    add_varargs_method( "niceStringify", &Docstring::niceStringify,
+                        DOCSTRING_NICESTRINGIFY_DOC );
+}
+
+Py::Object Docstring::getattr( const char *  name )
+{
+    // Support for dir(...)
+    if ( strcmp( name, "__members__" ) == 0 )
+    {
+        Py::List    members;
+        Py::List    baseMembers( getMembers() );
+
+        for ( Py::List::size_type k( 0 ); k < baseMembers.length(); ++k )
+            members.append( baseMembers[ k ] );
+
+        members.append( Py::String( "parts" ) );
+        members.append( Py::String( "sideComment" ) );
+        return members;
+    }
+
+    Py::Object      value = getAttribute( name );
+    if ( value.isNone() )
+    {
+        if ( strcmp( name, "parts" ) == 0 )
+            return parts;
+        if ( strcmp( name, "sideComment" ) == 0 )
+            return sideComment;
+        return getattr_methods( name );
+    }
+    return value;
+}
+
+int  Docstring::setattr( const char *        name,
+                         const Py::Object &  value )
+{
+    if ( FragmentBase::setAttr( name, value ) != 0 )
+    {
+        if ( strcmp( name, "parts" ) == 0 )
+        {
+            if ( ! value.isList() )
+                throw Py::ValueError( "Attribute 'parts' value "
+                                      "must be a list" );
+            parts = Py::List( value );
+        }
+        else if ( strcmp( name, "sideComment" ) == 0 )
+        {
+            if ( ! value.isString() )
+                throw Py::ValueError( "Attribute 'sideComment' value "
+                                      "must be a string");
+            sideComment = Py::String( value );
+        }
+        else
+        {
+            throw Py::AttributeError( "Unknown attribute '" +
+                                      std::string( name ) + "'" );
+        }
+    }
+    return 0;
+}
+
+Py::Object  Docstring::getDisplayValue( const Py::Tuple &  args )
+{
+    size_t          argCount( args.length() );
+    std::string     buf;
+    std::string *   bufPointer;
+
+    if ( argCount == 0 )
+        bufPointer = NULL;
+    else if ( argCount == 1 )
+    {
+        buf = Py::String( args[ 0 ] ).as_std_string();
+        bufPointer = & buf;
+    }
+    else
+        throwWrongBufArgument( "getDisplayValue" );
+
+    std::string     rawContent( FragmentBase::getContent( bufPointer ) );
+    size_t          stripCount( 1 );
+    if ( strncmp( rawContent.c_str(), "'''", 3 ) == 0 ||
+         strncmp( rawContent.c_str(), "\"\"\"", 3 ) == 0 )
+        stripCount = 3;
+
+    return Py::String( trimDocstring(
+                            rawContent.substr(
+                                stripCount,
+                                rawContent.length() - stripCount * 2 ) ) );
+}
+
+Py::Object  Docstring::niceStringify( const Py::Tuple &  args )
+{
+    return Py::None();
+}
+
+std::string  Docstring::trimDocstring( const std::string &  docstring )
+{
+    return "";
+}
+
+
+// --- End of Docstring definition ---
 
 
 

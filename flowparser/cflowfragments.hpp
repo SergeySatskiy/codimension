@@ -78,7 +78,7 @@ class FragmentBase
 
         // C++ only; helpers to make it a bit faster
         static Py::List     members;
-        static void Init( void );
+        static void init( void );
 
     protected:
         void throwWrongBufArgument( const std::string &  funcName );
@@ -93,7 +93,7 @@ class Fragment : public FragmentBase,
         Fragment();
         virtual ~Fragment();
 
-        static void InitType( void );
+        static void initType( void );
         Py::Object getattr( const char *  name );
         Py::Object repr( void );
         virtual int setattr( const char *        name,
@@ -108,7 +108,7 @@ class BangLine : public FragmentBase,
         BangLine();
         virtual ~BangLine();
 
-        static void InitType( void );
+        static void initType( void );
         Py::Object getattr( const char *  name );
         Py::Object repr( void );
         virtual int setattr( const char *        name,
@@ -125,7 +125,7 @@ class EncodingLine : public FragmentBase,
         EncodingLine();
         virtual ~EncodingLine();
 
-        static void InitType( void );
+        static void initType( void );
         Py::Object getattr( const char *  name );
         Py::Object repr( void );
         virtual int setattr( const char *        name,
@@ -142,7 +142,7 @@ class Comment : public FragmentBase,
         Comment();
         virtual ~Comment();
 
-        static void InitType( void );
+        static void initType( void );
         Py::Object getattr( const char *  name );
         Py::Object repr( void );
         virtual int setattr( const char *        name,
@@ -155,6 +155,30 @@ class Comment : public FragmentBase,
         Py::List    parts;      // Fragment instances
 };
 
+
+class Docstring : public FragmentBase,
+                  public Py::PythonExtension< Docstring >
+{
+    public:
+        Docstring();
+        virtual ~Docstring();
+
+        static void initType( void );
+        Py::Object getattr( const char *  name );
+        Py::Object repr( void );
+        virtual int setattr( const char *        name,
+                             const Py::Object &  value );
+
+        Py::Object getDisplayValue( const Py::Tuple &  args );
+        Py::Object niceStringify( const Py::Tuple &  args );
+
+    private:
+        static std::string  trimDocstring( const std::string &  docstring );
+
+    public:
+        Py::List        parts;
+        Py::Object      sideComment;    // None or Comment instance
+};
 
 
 //

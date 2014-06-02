@@ -47,16 +47,18 @@
 #define CREATE_ENCODINGLINE_DOC \
 "Creates the EncodingLine class instance"
 
-
 // Comment()
 #define CREATE_COMMENT_DOC \
 "Creates the Comment class instance"
+
+// Docstring()
+#define CREATE_DOCSTRING_DOC \
+"Creates the Docstring class instance"
 
 
 // Fragment class docstring
 #define FRAGMENT_DOC \
 "Represents a single text fragment of a python file"
-
 
 // getLineRange() docstring
 #define GETLINERANGE_DOC \
@@ -100,6 +102,20 @@
 // Comment::niceStringify()
 #define COMMENT_NICESTRINGIFY_DOC \
 "Returns a string representation with new lines and shifts"
+
+
+// Docstring class docstring
+#define DOCSTRING_DOC \
+"Represents a docstring"
+
+// Docstring::getDisplayValue()
+#define DOCSTRING_GETDISPLAYVALUE_DOC \
+"Provides the docstring without syntactic sugar"
+
+// Comment::niceStringify()
+#define DOCSTRING_NICESTRINGIFY_DOC \
+"Returns a string representation with new lines and shifts"
+
 
 
 #endif

@@ -33,13 +33,13 @@
 CDMControlFlowModule::CDMControlFlowModule() :
     Py::ExtensionModule< CDMControlFlowModule >( "cdmcf" )
 {
-    FragmentBase::Init();
+    FragmentBase::init();
 
-    Fragment::InitType();
-    BangLine::InitType();
-    EncodingLine::InitType();
-    Comment::InitType();
-//    FragmentWithComments::InitType();
+    Fragment::initType();
+    BangLine::initType();
+    EncodingLine::initType();
+    Comment::initType();
+    Docstring::initType();
 
     add_varargs_method( "Fragment",
                         &CDMControlFlowModule::createFragment,
@@ -53,9 +53,9 @@ CDMControlFlowModule::CDMControlFlowModule() :
     add_varargs_method( "Comment",
                         &CDMControlFlowModule::createComment,
                         CREATE_COMMENT_DOC );
-//    add_varargs_method( "FragmentWithComments",
-//                        &CDMControlFlowModule::createFragmentWithComments,
-//                        "Creates the FragmentWithComments class instance" );
+    add_varargs_method( "Docstring",
+                        &CDMControlFlowModule::createDocstring,
+                        CREATE_DOCSTRING_DOC );
 
     // Free functions visible from the module
     add_varargs_method( "getControlFlowFromMemory",
@@ -139,12 +139,10 @@ Py::Object  CDMControlFlowModule::createComment( const Py::Tuple &  args )
     return Py::asObject( new Comment() );
 }
 
-
-//Py::Object createFragmentWithComments( const Py::Tuple &  args )
-//{
-//    return Py::asObject( new FragmentWithComments() );
-//}
-
+Py::Object  CDMControlFlowModule::createDocstring( const Py::Tuple &  args )
+{
+    return Py::asObject( new Docstring() );
+}
 
 
 
