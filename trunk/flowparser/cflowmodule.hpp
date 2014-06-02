@@ -39,7 +39,7 @@ class CDMControlFlowModule : public Py::ExtensionModule< CDMControlFlowModule >
         Py::Object  createBangLine( const Py::Tuple &  args );
         Py::Object  createEncodingLine( const Py::Tuple &  args );
         Py::Object  createComment( const Py::Tuple &  args );
-        Py::Object  createFragmentWithComments( const Py::Tuple &  args );
+        Py::Object  createDocstring( const Py::Tuple &  args );
 
         Py::Object  getControlFlowFromMemory( const Py::Tuple &  args );
         Py::Object  getControlFlowFromFile( const Py::Tuple &  args );
