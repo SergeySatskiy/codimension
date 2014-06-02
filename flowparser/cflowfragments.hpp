@@ -68,7 +68,7 @@ class FragmentBase
         int         setAttr( const char *        name,
                              const Py::Object &  value );
 
-        std::string str( void ) const;
+        std::string asStr( void ) const;
 
     public:
         Py::Object  getLineRange( void );
