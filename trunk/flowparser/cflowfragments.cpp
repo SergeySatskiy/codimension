@@ -191,7 +191,7 @@ Py::Object  FragmentBase::getLineRange( void )
 }
 
 
-std::string  FragmentBase::str( void ) const
+std::string  FragmentBase::asStr( void ) const
 {
     char    buffer[ 64 ];
     sprintf( buffer, "[%ld:%ld] (%ld,%ld) (%ld,%ld)",
@@ -254,7 +254,7 @@ Py::Object Fragment::getattr( const char *  name )
 
 Py::Object  Fragment::repr( void )
 {
-    return Py::String( "<Fragment " + FragmentBase::str() + ">" );
+    return Py::String( "<Fragment " + asStr() + ">" );
 }
 
 
@@ -314,7 +314,7 @@ Py::Object BangLine::getattr( const char *  name )
 
 Py::Object  BangLine::repr( void )
 {
-    return Py::String( "<BangLine " + FragmentBase::str() + ">" );
+    return Py::String( "<BangLine " + asStr() + ">" );
 }
 
 
@@ -403,7 +403,7 @@ Py::Object EncodingLine::getattr( const char *  name )
 
 Py::Object  EncodingLine::repr( void )
 {
-    return Py::String( "<EncodingLine " + FragmentBase::str() + ">" );
+    return Py::String( "<EncodingLine " + asStr() + ">" );
 }
 
 
@@ -518,7 +518,7 @@ Py::Object Comment::getattr( const char *  name )
 
 Py::Object  Comment::repr( void )
 {
-    Py::String      ret( "<Comment " + FragmentBase::str() );
+    Py::String      ret( "<Comment " + asStr() );
     for ( Py::List::size_type k( 0 ); k < parts.length(); ++k )
         ret = ret + Py::String( "\n" ) + Py::String( parts[ k ].repr() );
     ret = ret + Py::String( ">" );
@@ -626,7 +626,7 @@ Py::Object  Comment::niceStringify( const Py::Tuple &  args )
 
     INT_TYPE    level( (INT_TYPE)(PYTHON_INT_TYPE( args[ 0 ] )) );
     Py::String  joiner( "\n" + std::string( ' ', (level + 1) * 4 ) );
-    Py::String result( std::string( ' ', level * 4 ) + "Comment: " + FragmentBase::str() );
+    Py::String  result( std::string( ' ', level * 4 ) + "Comment: " + asStr() );
 
     Py::List::size_type     partCount( parts.length() );
     for ( Py::List::size_type k( 0 ); k < partCount; ++k )
@@ -670,6 +670,7 @@ void Docstring::initType( void )
                         DOCSTRING_NICESTRINGIFY_DOC );
 }
 
+
 Py::Object Docstring::getattr( const char *  name )
 {
     // Support for dir(...)
@@ -697,6 +698,22 @@ Py::Object Docstring::getattr( const char *  name )
     }
     return value;
 }
+
+
+Py::Object  Docstring::repr( void )
+{
+    Py::String      ret( "<Docstring " + asStr() );
+    for ( Py::List::size_type k( 0 ); k < parts.length(); ++k )
+        ret = ret + Py::String( "\n" ) + Py::String( parts[ k ].repr() );
+    if (sideComment.isNone())
+        ret = ret + Py::String( "\nSideComment: None" );
+    else
+        ret = ret + Py::String( "\nSideComment: " ) +
+              Py::String( static_cast<Fragment *>(sideComment.ptr())->asStr() );
+    ret = ret + Py::String( ">" );
+    return ret;
+}
+
 
 int  Docstring::setattr( const char *        name,
                          const Py::Object &  value )
@@ -726,6 +743,7 @@ int  Docstring::setattr( const char *        name,
     return 0;
 }
 
+
 Py::Object  Docstring::getDisplayValue( const Py::Tuple &  args )
 {
     size_t          argCount( args.length() );
@@ -754,14 +772,98 @@ Py::Object  Docstring::getDisplayValue( const Py::Tuple &  args )
                                 rawContent.length() - stripCount * 2 ) ) );
 }
 
+
 Py::Object  Docstring::niceStringify( const Py::Tuple &  args )
 {
-    return Py::None();
+    if ( args.length() != 1 )
+        throw Py::TypeError( "niceStringify() takes exactly 1 argument" );
+
+    if ( ! args[ 0 ].isNumeric() )
+        throw Py::TypeError( "niceStringify() takes 1 integer argument" );
+
+    INT_TYPE    level( (INT_TYPE)(PYTHON_INT_TYPE( args[ 0 ] )) );
+    Py::String  joiner( "\n" + std::string( ' ', (level + 1) * 4 ) );
+    Py::String  result( std::string( ' ', level * 4 ) + "Docstring: " + asStr() );
+
+    Py::List::size_type     partCount( parts.length() );
+    for ( Py::List::size_type k( 0 ); k < partCount; ++k )
+    {
+        result = result + joiner + Py::String( parts[ k ].repr() );
+    }
+
+    result = result + joiner;
+    if ( sideComment.isNone() )
+        result = result + Py::String( "SideComment: None" );
+    else
+        result = result + Py::String( "\nSideComment: " ) +
+                 Py::String( static_cast<Fragment *>(sideComment.ptr())->asStr() );
+    return result;
 }
+
 
 std::string  Docstring::trimDocstring( const std::string &  docstring )
 {
-    return "";
+    if (docstring.empty())
+        return "";
+
+    // Split lines, expand tabs;
+    // Detect the min indent (first line doesn't count)
+    int                             indent( INT_MAX );
+    std::vector< std::string >      lines( splitLines( docstring ) );
+    for ( std::vector< std::string >::iterator  k( lines.begin() );
+          k != lines.end(); ++k )
+    {
+        *k = expandTabs( *k );
+        if ( k != lines.begin() )
+        {
+            int     strippedSize( strlen( trimStart( k->c_str() ) ) );
+            if ( strippedSize > 0 )
+                indent = std::min( indent, int(k->length()) - strippedSize );
+        }
+    }
+
+    // Remove indentation (first line is special)
+    lines[ 0 ] = trim( lines[ 0 ].c_str(), lines[ 0 ].length() );
+    if ( indent < INT_MAX )
+    {
+        std::vector< std::string >::iterator    k( lines.begin() );
+        for ( ++k; k != lines.end(); ++k )
+        {
+            std::string     rightStripped( trimEnd( k->c_str() ) );
+            if ( rightStripped.length() > indent )
+                *k = std::string( rightStripped.c_str() + indent );
+            else
+                *k = "";
+        }
+    }
+
+    // Strip off trailing and leading blank lines
+    ssize_t     startIndex( 0 );
+    ssize_t     endIndex( lines.size() - 1 );
+
+    for ( ssize_t    k( startIndex ); k <= endIndex; ++k )
+    {
+        if ( lines[ k ].length() != 0 )
+            break;
+        startIndex = k;
+    }
+
+    for ( ssize_t   k( endIndex ); k >= 0; --k )
+    {
+        if ( lines[ k ].length() != 0 )
+            break;
+        endIndex = k;
+    }
+
+    std::string     result;
+    for (ssize_t    k( startIndex ); k <= endIndex; ++k )
+    {
+        if ( k != startIndex )
+            result += "\n";
+        result += lines[ k ];
+    }
+
+    return result;
 }
 
 

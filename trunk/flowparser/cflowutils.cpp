@@ -51,3 +51,62 @@ void trimInplace( std::string &  str )
                 trimEnd( str.c_str() + str.length() ) );
 }
 
+
+
+std::vector< std::string >  splitLines( const std::string &  str )
+{
+    std::vector<std::string>    strings;
+    std::string::size_type      pos( 0 );
+    std::string::size_type      prev( 0 );
+
+    for ( ; ; )
+    {
+        pos = str.find( "\r\n", prev );
+        if ( pos != std::string::npos )
+        {
+            strings.push_back( str.substr( prev, pos - prev ) );
+            prev = pos + 2;
+            continue;
+        }
+        pos = str.find( '\n', prev );
+        if ( pos != std::string::npos )
+        {
+            strings.push_back( str.substr( prev, pos - prev ) );
+            prev = pos + 1;
+            continue;
+        }
+        pos = str.find( '\r', prev );
+        if ( pos != std::string::npos )
+        {
+            strings.push_back( str.substr( prev, pos - prev ) );
+            prev = pos + 1;
+            continue;
+        }
+        break;
+    }
+
+    // To get the last substring (or only, if delimiter is not found)
+    strings.push_back( str.substr( prev ) );
+    return strings;
+}
+
+
+// Note: works only for a string without \n or \r in it
+std::string  expandTabs( const std::string &  s, int  tabstop )
+{
+    std::string     r;
+
+    for ( std::string::const_iterator x( s.begin() ); x != s.end(); ++x )
+    {
+        switch ( *x )
+        {
+            case '\t':
+                r += std::string( tabstop - ( r.size() % tabstop ), ' ' );
+                break;
+            default:
+                r += *x;
+        }
+    }
+    return r;
+}
+
