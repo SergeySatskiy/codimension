@@ -31,16 +31,16 @@
 
 
 // Convenience macros
-#define GETINTATTR( member )                        \
-    do { if ( strcmp( name, STR( member ) ) == 0 )  \
+#define GETINTATTR( member )                            \
+    do { if ( strcmp( attrName, STR( member ) ) == 0 )  \
         return PYTHON_INT_TYPE( member ); } while ( 0 )
-#define GETBOOLATTR( member )                       \
-    do { if ( strcmp( name, STR( member ) ) == 0 )  \
+#define GETBOOLATTR( member )                           \
+    do { if ( strcmp( attrName, STR( member ) ) == 0 )  \
         return Py::Boolean( member ); } while ( 0 )
 
 
 #define SETINTATTR( member, value )                                 \
-    do { if ( strcmp( name, STR( member ) ) == 0 )                  \
+    do { if ( strcmp( attrName, STR( member ) ) == 0 )              \
          { if ( !value.isNumeric() )                                \
            {                                                        \
              throw Py::ValueError( "Attribute '"                    \
@@ -52,7 +52,7 @@
        } while ( 0 )
 
 #define SETBOOLATTR( member, value )                                \
-    do { if ( strcmp( name, STR( member ) ) == 0 )                  \
+    do { if ( strcmp( attrName, STR( member ) ) == 0 )              \
          { if ( !value.isBoolean() )                                \
            {                                                        \
              throw Py::ValueError( "Attribute '"                    \
@@ -61,6 +61,13 @@
            member = (bool)(Py::Boolean( value ));                   \
            return 0;                                                \
          }                                                          \
+       } while ( 0 )
+
+
+#define CHECKVALUETYPE( member, type )                              \
+    do { if ( strcmp( value.ptr()->ob_type->tp_name, type ) != 0 )  \
+           throw Py::ValueError( "Attribute '" member "' value "    \
+                                 "must be a " type " instance");    \
        } while ( 0 )
 
 
@@ -100,7 +107,7 @@ Py::List  FragmentBase::getMembers( void ) const
 }
 
 
-Py::Object  FragmentBase::getAttribute( const char *  name )
+Py::Object  FragmentBase::getAttribute( const char *  attrName )
 {
     GETINTATTR( kind );
     GETINTATTR( begin );
@@ -114,7 +121,7 @@ Py::Object  FragmentBase::getAttribute( const char *  name )
 }
 
 
-int  FragmentBase::setAttr( const char *        name,
+int  FragmentBase::setAttr( const char *        attrName,
                             const Py::Object &  value )
 {
     SETINTATTR( kind, value );
@@ -239,15 +246,15 @@ void Fragment::initType( void )
 }
 
 
-Py::Object Fragment::getattr( const char *  name )
+Py::Object Fragment::getattr( const char *  attrName )
 {
     // Support for dir(...)
-    if ( strcmp( name, "__members__" ) == 0 )
+    if ( strcmp( attrName, "__members__" ) == 0 )
         return getMembers();
 
-    Py::Object      value = getAttribute( name );
+    Py::Object      value = getAttribute( attrName );
     if ( value.isNone() )
-        return getattr_methods( name );
+        return getattr_methods( attrName );
     return value;
 }
 
@@ -258,12 +265,12 @@ Py::Object  Fragment::repr( void )
 }
 
 
-int  Fragment::setattr( const char *        name,
+int  Fragment::setattr( const char *        attrName,
                         const Py::Object &  value )
 {
-    if ( FragmentBase::setAttr( name, value ) != 0 )
+    if ( FragmentBase::setAttr( attrName, value ) != 0 )
         throw Py::AttributeError( "Unknown attribute '" +
-                                  std::string( name ) + "'" );
+                                  std::string( attrName ) + "'" );
     return 0;
 }
 
@@ -299,15 +306,15 @@ void BangLine::initType( void )
 }
 
 
-Py::Object BangLine::getattr( const char *  name )
+Py::Object BangLine::getattr( const char *  attrName )
 {
     // Support for dir(...)
-    if ( strcmp( name, "__members__" ) == 0 )
+    if ( strcmp( attrName, "__members__" ) == 0 )
         return getMembers();
 
-    Py::Object      value = getAttribute( name );
+    Py::Object      value = getAttribute( attrName );
     if ( value.isNone() )
-        return getattr_methods( name );
+        return getattr_methods( attrName );
     return value;
 }
 
@@ -318,12 +325,12 @@ Py::Object  BangLine::repr( void )
 }
 
 
-int  BangLine::setattr( const char *        name,
+int  BangLine::setattr( const char *        attrName,
                         const Py::Object &  value )
 {
-    if ( FragmentBase::setAttr( name, value ) != 0 )
+    if ( FragmentBase::setAttr( attrName, value ) != 0 )
         throw Py::AttributeError( "Unknown attribute '" +
-                                  std::string( name ) + "'" );
+                                  std::string( attrName ) + "'" );
     return 0;
 }
 
@@ -388,15 +395,15 @@ void EncodingLine::initType( void )
 }
 
 
-Py::Object EncodingLine::getattr( const char *  name )
+Py::Object EncodingLine::getattr( const char *  attrName )
 {
     // Support for dir(...)
-    if ( strcmp( name, "__members__" ) == 0 )
+    if ( strcmp( attrName, "__members__" ) == 0 )
         return getMembers();
 
-    Py::Object      value = getAttribute( name );
+    Py::Object      value = getAttribute( attrName );
     if ( value.isNone() )
-        return getattr_methods( name );
+        return getattr_methods( attrName );
     return value;
 }
 
@@ -407,12 +414,12 @@ Py::Object  EncodingLine::repr( void )
 }
 
 
-int  EncodingLine::setattr( const char *        name,
+int  EncodingLine::setattr( const char *        attrName,
                             const Py::Object &  value )
 {
-    if ( FragmentBase::setAttr( name, value ) != 0 )
+    if ( FragmentBase::setAttr( attrName, value ) != 0 )
         throw Py::AttributeError( "Unknown attribute '" +
-                                  std::string( name ) + "'" );
+                                  std::string( attrName ) + "'" );
     return 0;
 }
 
@@ -490,10 +497,10 @@ void Comment::initType( void )
 }
 
 
-Py::Object Comment::getattr( const char *  name )
+Py::Object Comment::getattr( const char *  attrName )
 {
     // Support for dir(...)
-    if ( strcmp( name, "__members__" ) == 0 )
+    if ( strcmp( attrName, "__members__" ) == 0 )
     {
         Py::List    members;
         Py::List    baseMembers( getMembers() );
@@ -505,12 +512,12 @@ Py::Object Comment::getattr( const char *  name )
         return members;
     }
 
-    Py::Object      value = getAttribute( name );
+    Py::Object      value = getAttribute( attrName );
     if ( value.isNone() )
     {
-        if ( strcmp( name, "parts" ) == 0 )
+        if ( strcmp( attrName, "parts" ) == 0 )
             return parts;
-        return getattr_methods( name );
+        return getattr_methods( attrName );
     }
     return value;
 }
@@ -526,12 +533,12 @@ Py::Object  Comment::repr( void )
 }
 
 
-int  Comment::setattr( const char *        name,
+int  Comment::setattr( const char *        attrName,
                        const Py::Object &  value )
 {
-    if ( FragmentBase::setAttr( name, value ) != 0 )
+    if ( FragmentBase::setAttr( attrName, value ) != 0 )
     {
-        if ( strcmp( name, "parts" ) == 0 )
+        if ( strcmp( attrName, "parts" ) == 0 )
         {
             if ( ! value.isList() )
                 throw Py::ValueError( "Attribute 'parts' value "
@@ -541,7 +548,7 @@ int  Comment::setattr( const char *        name,
         else
         {
             throw Py::AttributeError( "Unknown attribute '" +
-                                      std::string( name ) + "'" );
+                                      std::string( attrName ) + "'" );
         }
     }
     return 0;
@@ -671,10 +678,10 @@ void Docstring::initType( void )
 }
 
 
-Py::Object Docstring::getattr( const char *  name )
+Py::Object Docstring::getattr( const char *  attrName )
 {
     // Support for dir(...)
-    if ( strcmp( name, "__members__" ) == 0 )
+    if ( strcmp( attrName, "__members__" ) == 0 )
     {
         Py::List    members;
         Py::List    baseMembers( getMembers() );
@@ -687,14 +694,14 @@ Py::Object Docstring::getattr( const char *  name )
         return members;
     }
 
-    Py::Object      value = getAttribute( name );
+    Py::Object      value = getAttribute( attrName );
     if ( value.isNone() )
     {
-        if ( strcmp( name, "parts" ) == 0 )
+        if ( strcmp( attrName, "parts" ) == 0 )
             return parts;
-        if ( strcmp( name, "sideComment" ) == 0 )
+        if ( strcmp( attrName, "sideComment" ) == 0 )
             return sideComment;
-        return getattr_methods( name );
+        return getattr_methods( attrName );
     }
     return value;
 }
@@ -715,29 +722,27 @@ Py::Object  Docstring::repr( void )
 }
 
 
-int  Docstring::setattr( const char *        name,
+int  Docstring::setattr( const char *        attrName,
                          const Py::Object &  value )
 {
-    if ( FragmentBase::setAttr( name, value ) != 0 )
+    if ( FragmentBase::setAttr( attrName, value ) != 0 )
     {
-        if ( strcmp( name, "parts" ) == 0 )
+        if ( strcmp( attrName, "parts" ) == 0 )
         {
             if ( ! value.isList() )
                 throw Py::ValueError( "Attribute 'parts' value "
                                       "must be a list" );
             parts = Py::List( value );
         }
-        else if ( strcmp( name, "sideComment" ) == 0 )
+        else if ( strcmp( attrName, "sideComment" ) == 0 )
         {
-            if ( ! value.isString() )
-                throw Py::ValueError( "Attribute 'sideComment' value "
-                                      "must be a string");
-            sideComment = Py::String( value );
+            CHECKVALUETYPE( "sideComment", "Comment" );
+            sideComment = value;
         }
         else
         {
             throw Py::AttributeError( "Unknown attribute '" +
-                                      std::string( name ) + "'" );
+                                      std::string( attrName ) + "'" );
         }
     }
     return 0;
@@ -869,8 +874,136 @@ std::string  Docstring::trimDocstring( const std::string &  docstring )
 
 // --- End of Docstring definition ---
 
+Decorator::Decorator()
+{
+    kind = DECORATOR_FRAGMENT;
+    name = Py::None();
+    arguments = Py::None();
+    leadingComment = Py::None();
+    sideComment = Py::None();
+}
 
 
+Decorator::~Decorator()
+{}
+
+
+void Decorator::initType( void )
+{
+    behaviors().name( "Decorator" );
+    behaviors().doc( DECORATOR_DOC );
+    behaviors().supportGetattr();
+    behaviors().supportSetattr();
+    behaviors().supportRepr();
+
+    add_noargs_method( "getLineRange", &FragmentBase::getLineRange,
+                       GETLINERANGE_DOC );
+    add_varargs_method( "getContent", &FragmentBase::getContent,
+                        GETCONTENT_DOC );
+    add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
+                        GETLINECONTENT_DOC );
+}
+
+
+Py::Object Decorator::getattr( const char *  attrName )
+{
+    // Support for dir(...)
+    if ( strcmp( attrName, "__members__" ) == 0 )
+    {
+        Py::List    members;
+        Py::List    baseMembers( getMembers() );
+
+        for ( Py::List::size_type k( 0 ); k < baseMembers.length(); ++k )
+            members.append( baseMembers[ k ] );
+
+        members.append( Py::String( "name" ) );
+        members.append( Py::String( "arguments" ) );
+        members.append( Py::String( "leadingComment" ) );
+        members.append( Py::String( "sideComment" ) );
+        return members;
+    }
+
+    Py::Object      value = getAttribute( attrName );
+    if ( value.isNone() )
+    {
+        if ( strcmp( attrName, "name" ) == 0 )
+            return name;
+        if ( strcmp( attrName, "arguments" ) == 0 )
+            return arguments;
+        if ( strcmp( attrName, "leadingComment" ) == 0 )
+            return leadingComment;
+        if ( strcmp( attrName, "sideComment" ) == 0 )
+            return sideComment;
+        return getattr_methods( attrName );
+    }
+    return value;
+}
+
+
+Py::Object  Decorator::repr( void )
+{
+    Py::String      ret( "<Decorator " + asStr() );
+    if ( name.isNone() )
+        ret = ret + Py::String( "\nName: None" );
+    else
+        ret = ret + Py::String( "\nName: " ) +
+              Py::String( static_cast<Fragment *>(name.ptr())->asStr() );
+    if ( arguments.isNone() )
+        ret = ret + Py::String( "\nArguments: None" );
+    else
+        ret = ret + Py::String( "\nArguments: " ) +
+              Py::String( static_cast<Fragment *>(arguments.ptr())->asStr() );
+    if ( leadingComment.isNone() )
+        ret = ret + Py::String( "\nLeadingComment: None" );
+    else
+        ret = ret + Py::String( "\nLeadingComment: " ) +
+              Py::String( static_cast<Fragment *>(leadingComment.ptr())->asStr() );
+    if ( sideComment.isNone() )
+        ret = ret + Py::String( "\nSideComment: None" );
+    else
+        ret = ret + Py::String( "\nSideComment: " ) +
+              Py::String( static_cast<Fragment *>(sideComment.ptr())->asStr() );
+    ret = ret + Py::String( ">" );
+    return ret;
+}
+
+
+int  Decorator::setattr( const char *        attrName,
+                         const Py::Object &  value )
+{
+    if ( FragmentBase::setAttr( attrName, value ) != 0 )
+    {
+        if ( strcmp( attrName, "name" ) == 0 )
+        {
+            CHECKVALUETYPE( "name", "Fragment" );
+            name = value;
+        }
+        else if ( strcmp( attrName, "arguments" ) == 0 )
+        {
+            CHECKVALUETYPE( "arguments", "Fragment" );
+            arguments = value;
+        }
+        else if ( strcmp( attrName, "leadingComment" ) == 0 )
+        {
+            CHECKVALUETYPE( "leadingComment", "Comment" );
+            leadingComment = value;
+        }
+        else if ( strcmp( attrName, "sideComment" ) == 0 )
+        {
+            CHECKVALUETYPE( "sideComment", "Comment" );
+            sideComment = value;
+        }
+        else
+        {
+            throw Py::AttributeError( "Unknown attribute '" +
+                                      std::string( attrName ) + "'" );
+        }
+    }
+    return 0;
+}
+
+
+// --- End of Decorator definition ---
 
 
 

@@ -40,6 +40,7 @@ CDMControlFlowModule::CDMControlFlowModule() :
     EncodingLine::initType();
     Comment::initType();
     Docstring::initType();
+    Decorator::initType();
 
     add_varargs_method( "Fragment",
                         &CDMControlFlowModule::createFragment,
@@ -56,6 +57,9 @@ CDMControlFlowModule::CDMControlFlowModule() :
     add_varargs_method( "Docstring",
                         &CDMControlFlowModule::createDocstring,
                         CREATE_DOCSTRING_DOC );
+    add_varargs_method( "Decorator",
+                        &CDMControlFlowModule::createDecorator,
+                        CREATE_DECORATOR_DOC );
 
     // Free functions visible from the module
     add_varargs_method( "getControlFlowFromMemory",
@@ -142,6 +146,11 @@ Py::Object  CDMControlFlowModule::createComment( const Py::Tuple &  args )
 Py::Object  CDMControlFlowModule::createDocstring( const Py::Tuple &  args )
 {
     return Py::asObject( new Docstring() );
+}
+
+Py::Object  CDMControlFlowModule::createDecorator( const Py::Tuple &  args )
+{
+    return Py::asObject( new Decorator() );
 }
 
 
