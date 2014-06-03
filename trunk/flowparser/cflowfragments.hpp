@@ -176,7 +176,29 @@ class Docstring : public FragmentBase,
         static std::string  trimDocstring( const std::string &  docstring );
 
     public:
-        Py::List        parts;
+        Py::List        parts;          // List of Fragment instances
+        Py::Object      sideComment;    // None or Comment instance
+};
+
+
+class Decorator : public FragmentBase,
+                  public Py::PythonExtension< Decorator >
+{
+    public:
+        Decorator();
+        virtual ~Decorator();
+
+        static void initType( void );
+        Py::Object getattr( const char *  name );
+        Py::Object repr( void );
+        virtual int setattr( const char *        name,
+                             const Py::Object &  value );
+
+    public:
+        Py::Object      name;           // None or Fragment for a name
+        Py::Object      arguments;      // None or Fragment for arguments
+                                        // Starting from '(', ending with ')'
+        Py::Object      leadingComment; // None or Comment instance
         Py::Object      sideComment;    // None or Comment instance
 };
 

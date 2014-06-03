@@ -55,6 +55,9 @@
 #define CREATE_DOCSTRING_DOC \
 "Creates the Docstring class instance"
 
+// Decorator()
+#define CREATE_DECORATOR_DOC \
+"Creates the Decorator class instance"
 
 // Fragment class docstring
 #define FRAGMENT_DOC \
@@ -115,6 +118,11 @@
 // Comment::niceStringify()
 #define DOCSTRING_NICESTRINGIFY_DOC \
 "Returns a string representation with new lines and shifts"
+
+
+// Decorator class docstring
+#define DECORATOR_DOC \
+"Represents a single decorator"
 
 
 
