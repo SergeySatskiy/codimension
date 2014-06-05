@@ -1006,4 +1006,158 @@ int  Decorator::setattr( const char *        attrName,
 // --- End of Decorator definition ---
 
 
+CodeBlock::CodeBlock()
+{
+    kind = CODEBLOCK_FRAGMENT;
+    body = Py::None();
+    leadingComment = Py::None();
+    sideComment = Py::None();
+}
+
+
+CodeBlock::~CodeBlock()
+{}
+
+
+void CodeBlock::initType( void )
+{
+    behaviors().name( "CodeBlock" );
+    behaviors().doc( CODEBLOCK_DOC );
+    behaviors().supportGetattr();
+    behaviors().supportSetattr();
+    behaviors().supportRepr();
+
+    add_noargs_method( "getLineRange", &FragmentBase::getLineRange,
+                       GETLINERANGE_DOC );
+    add_varargs_method( "getContent", &FragmentBase::getContent,
+                        GETCONTENT_DOC );
+    add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
+                        GETLINECONTENT_DOC );
+}
+
+
+Py::Object CodeBlock::getattr( const char *  attrName )
+{
+    // Support for dir(...)
+    if ( strcmp( attrName, "__members__" ) == 0 )
+    {
+        Py::List    members;
+        Py::List    baseMembers( getMembers() );
+
+        for ( Py::List::size_type k( 0 ); k < baseMembers.length(); ++k )
+            members.append( baseMembers[ k ] );
+
+        members.append( Py::String( "body" ) );
+        members.append( Py::String( "leadingComment" ) );
+        members.append( Py::String( "sideComment" ) );
+        return members;
+    }
+
+    Py::Object      value = getAttribute( attrName );
+    if ( value.isNone() )
+    {
+        if ( strcmp( attrName, "body" ) == 0 )
+            return body;
+        if ( strcmp( attrName, "leadingComment" ) == 0 )
+            return leadingComment;
+        if ( strcmp( attrName, "sideComment" ) == 0 )
+            return sideComment;
+        return getattr_methods( attrName );
+    }
+    return value;
+}
+
+
+Py::Object  CodeBlock::repr( void )
+{
+    Py::String      ret( "<CodeBlock " + asStr() );
+    if ( body.isNone() )
+        ret = ret + Py::String( "\nBody: None" );
+    else
+        ret = ret + Py::String( "\nBody: " ) +
+              Py::String( static_cast<Fragment *>(body.ptr())->asStr() );
+    if ( leadingComment.isNone() )
+        ret = ret + Py::String( "\nLeadingComment: None" );
+    else
+        ret = ret + Py::String( "\nLeadingComment: " ) +
+              Py::String( static_cast<Fragment *>(leadingComment.ptr())->asStr() );
+    if ( sideComment.isNone() )
+        ret = ret + Py::String( "\nSideComment: None" );
+    else
+        ret = ret + Py::String( "\nSideComment: " ) +
+              Py::String( static_cast<Fragment *>(sideComment.ptr())->asStr() );
+    ret = ret + Py::String( ">" );
+    return ret;
+}
+
+
+int  CodeBlock::setattr( const char *        attrName,
+                         const Py::Object &  value )
+{
+    if ( FragmentBase::setAttr( attrName, value ) != 0 )
+    {
+        if ( strcmp( attrName, "body" ) == 0 )
+        {
+            CHECKVALUETYPE( "body", "Fragment" );
+            body = value;
+        }
+        else if ( strcmp( attrName, "leadingComment" ) == 0 )
+        {
+            CHECKVALUETYPE( "leadingComment", "Comment" );
+            leadingComment = value;
+        }
+        else if ( strcmp( attrName, "sideComment" ) == 0 )
+        {
+            CHECKVALUETYPE( "sideComment", "Comment" );
+            sideComment = value;
+        }
+        else
+        {
+            throw Py::AttributeError( "Unknown attribute '" +
+                                      std::string( attrName ) + "'" );
+        }
+    }
+    return 0;
+}
+
+// --- End of CodeBlock definition ---
+
+
+Function::Function()
+{
+    kind = FUNCTION_FRAGMENT;
+    name = Py::None();
+    arguments = Py::None();
+    docstring = Py::None();
+    leadingComment = Py::None();
+    sideComment = Py::None();
+}
+
+
+Function::~Function()
+{}
+
+
+void Function::initType( void )
+{
+    behaviors().name( "Function" );
+    behaviors().doc( FUNCTION_DOC );
+    behaviors().supportGetattr();
+    behaviors().supportSetattr();
+    behaviors().supportRepr();
+
+    add_noargs_method( "getLineRange", &FragmentBase::getLineRange,
+                       GETLINERANGE_DOC );
+    add_varargs_method( "getContent", &FragmentBase::getContent,
+                        GETCONTENT_DOC );
+    add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
+                        GETLINECONTENT_DOC );
+}
+
+
+
+
+// --- End of Function definition ---
+
+
 

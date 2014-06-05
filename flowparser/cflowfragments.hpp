@@ -64,8 +64,8 @@ class FragmentBase
         INT_TYPE    endPos;     // 1-based position number in the line
 
         Py::List    getMembers( void ) const;
-        Py::Object  getAttribute( const char *  name );
-        int         setAttr( const char *        name,
+        Py::Object  getAttribute( const char *  attrName );
+        int         setAttr( const char *        attrName,
                              const Py::Object &  value );
 
         std::string asStr( void ) const;
@@ -94,9 +94,9 @@ class Fragment : public FragmentBase,
         virtual ~Fragment();
 
         static void initType( void );
-        Py::Object getattr( const char *  name );
+        Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
-        virtual int setattr( const char *        name,
+        virtual int setattr( const char *        attrName,
                              const Py::Object &  value );
 };
 
@@ -109,9 +109,9 @@ class BangLine : public FragmentBase,
         virtual ~BangLine();
 
         static void initType( void );
-        Py::Object getattr( const char *  name );
+        Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
-        virtual int setattr( const char *        name,
+        virtual int setattr( const char *        attrName,
                              const Py::Object &  value );
 
         Py::Object getDisplayValue( const Py::Tuple &  args );
@@ -126,9 +126,9 @@ class EncodingLine : public FragmentBase,
         virtual ~EncodingLine();
 
         static void initType( void );
-        Py::Object getattr( const char *  name );
+        Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
-        virtual int setattr( const char *        name,
+        virtual int setattr( const char *        attrName,
                              const Py::Object &  value );
 
         Py::Object getDisplayValue( const Py::Tuple &  args );
@@ -143,9 +143,9 @@ class Comment : public FragmentBase,
         virtual ~Comment();
 
         static void initType( void );
-        Py::Object getattr( const char *  name );
+        Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
-        virtual int setattr( const char *        name,
+        virtual int setattr( const char *        attrName,
                              const Py::Object &  value );
 
         Py::Object getDisplayValue( const Py::Tuple &  args );
@@ -164,9 +164,9 @@ class Docstring : public FragmentBase,
         virtual ~Docstring();
 
         static void initType( void );
-        Py::Object getattr( const char *  name );
+        Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
-        virtual int setattr( const char *        name,
+        virtual int setattr( const char *        attrName,
                              const Py::Object &  value );
 
         Py::Object getDisplayValue( const Py::Tuple &  args );
@@ -189,9 +189,9 @@ class Decorator : public FragmentBase,
         virtual ~Decorator();
 
         static void initType( void );
-        Py::Object getattr( const char *  name );
+        Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
-        virtual int setattr( const char *        name,
+        virtual int setattr( const char *        attrName,
                              const Py::Object &  value );
 
     public:
@@ -203,11 +203,302 @@ class Decorator : public FragmentBase,
 };
 
 
+class CodeBlock : public FragmentBase,
+                  public Py::PythonExtension< CodeBlock >
+{
+    public:
+        CodeBlock();
+        virtual ~CodeBlock();
+
+        static void initType( void );
+        Py::Object getattr( const char *  attrName );
+        Py::Object repr( void );
+        virtual int setattr( const char *        attrName,
+                             const Py::Object &  value );
+
+    public:
+        Py::Object      body;           // Fragment of the code block
+        Py::Object      leadingComment; // None or Comment instance
+        Py::Object      sideComment;    // None or Comment instance
+};
+
+
+class Function : public FragmentBase,
+                 public Py::PythonExtension< Function >
+{
+    public:
+        Function();
+        virtual ~Function();
+
+        static void initType( void );
+        Py::Object getattr( const char *  attrName );
+        Py::Object repr( void );
+        virtual int setattr( const char *        attrName,
+                             const Py::Object &  value );
+
+    public:
+        Py::List        decorators;     // Decorator instances
+        Py::Object      name;           // Fragment for the function name
+        Py::Object      arguments;      // Fragment for the function arguments
+                                        // starting from '(', ending with ')'
+        Py::Object      docstring;      // None or Docstring instance
+        Py::Object      leadingComment; // None or Comment instance
+        Py::Object      sideComment;    // None or Comment instance
+        Py::List        body;
+};
+
+
+class Class : public FragmentBase,
+              public Py::PythonExtension< Class >
+{
+    public:
+        Class();
+        virtual ~Class();
+
+        static void initType( void );
+        Py::Object getattr( const char *  attrName );
+        Py::Object repr( void );
+        virtual int setattr( const char *        attrName,
+                             const Py::Object &  value );
+
+    public:
+        Py::List        decorators;     // Decorator instances
+        Py::Object      name;           // Fragment for the function name
+        Py::Object      baseClasses;    // Fragment for the class base classes
+                                        // starting from '(', ending with ')'
+        Py::Object      docstring;      // None or Docstring instance
+        Py::Object      leadingComment; // None or Comment instance
+        Py::Object      sideComment;    // None or Comment instance
+        Py::List        body;
+};
+
+
+class Break : public FragmentBase,
+              public Py::PythonExtension< Break >
+{
+    public:
+        Break();
+        virtual ~Break();
+
+        static void initType( void );
+        Py::Object getattr( const char *  attrName );
+        Py::Object repr( void );
+        virtual int setattr( const char *        attrName,
+                             const Py::Object &  value );
+
+    public:
+        Py::Object      body;           // Fragment for the break statement
+        Py::Object      leadingComment; // None or Comment instance
+        Py::Object      sideComment;    // None or Comment instance
+};
+
+
+class Continue : public FragmentBase,
+                 public Py::PythonExtension< Continue >
+{
+    public:
+        Continue();
+        virtual ~Continue();
+
+        static void initType( void );
+        Py::Object getattr( const char *  attrName );
+        Py::Object repr( void );
+        virtual int setattr( const char *        attrName,
+                             const Py::Object &  value );
+
+    public:
+        Py::Object      body;           // Fragment for the continue statement
+        Py::Object      leadingComment; // None or Comment instance
+        Py::Object      sideComment;    // None or Comment instance
+};
+
+
+class Return : public FragmentBase,
+               public Py::PythonExtension< Return >
+{
+    public:
+        Return();
+        virtual ~Return();
+
+        static void initType( void );
+        Py::Object getattr( const char *  attrName );
+        Py::Object repr( void );
+        virtual int setattr( const char *        attrName,
+                             const Py::Object &  value );
+
+    public:
+        Py::Object      body;           // Fragment for the return statement
+        Py::Object      value;          // None or Fragment for the value
+        Py::Object      leadingComment; // None or Comment instance
+        Py::Object      sideComment;    // None or Comment instance
+};
+
+
+class Raise : public FragmentBase,
+              public Py::PythonExtension< Raise >
+{
+    public:
+        Raise();
+        virtual ~Raise();
+
+        static void initType( void );
+        Py::Object getattr( const char *  attrName );
+        Py::Object repr( void );
+        virtual int setattr( const char *        attrName,
+                             const Py::Object &  value );
+
+    public:
+        Py::Object      body;           // Fragment for the raise statement
+        Py::Object      value;          // None or Fragment for the value
+        Py::Object      leadingComment; // None or Comment instance
+        Py::Object      sideComment;    // None or Comment instance
+};
+
+
+class Assert : public FragmentBase,
+               public Py::PythonExtension< Assert >
+{
+    public:
+        Assert();
+        virtual ~Assert();
+
+        static void initType( void );
+        Py::Object getattr( const char *  attrName );
+        Py::Object repr( void );
+        virtual int setattr( const char *        attrName,
+                             const Py::Object &  value );
+
+    public:
+        Py::Object      body;           // Fragment for the assert statement
+        Py::Object      test;           // Fragment for the test expression
+        Py::Object      message;        // Fragment for the message
+        Py::Object      leadingComment; // None or Comment instance
+        Py::Object      sideComment;    // None or Comment instance
+};
+
+
+class SysExit : public FragmentBase,
+                public Py::PythonExtension< SysExit >
+{
+    public:
+        SysExit();
+        virtual ~SysExit();
+
+        static void initType( void );
+        Py::Object getattr( const char *  attrName );
+        Py::Object repr( void );
+        virtual int setattr( const char *        attrName,
+                             const Py::Object &  value );
+
+    public:
+        Py::Object      body;           // Fragment for the sys.exit statement
+        Py::Object      argument;       // Fragment for the argument from '('
+                                        // till ')'
+        Py::Object      leadingComment; // None or Comment instance
+        Py::Object      sideComment;    // None or Comment instance
+};
+
+
+class While : public FragmentBase,
+              public Py::PythonExtension< While >
+{
+    public:
+        While();
+        virtual ~While();
+
+        static void initType( void );
+        Py::Object getattr( const char *  attrName );
+        Py::Object repr( void );
+        virtual int setattr( const char *        attrName,
+                             const Py::Object &  value );
+
+    public:
+        Py::Object      condition;      // Fragment for the condition
+        Py::List        body;           // List of Fragments for the body
+        Py::Object      elsePart;       // None or IfPart instance
+
+        Py::Object      leadingComment; // None or Comment instance
+        Py::Object      sideComment;    // None or Comment instance
+};
+
+
+
+class For : public FragmentBase,
+            public Py::PythonExtension< For >
+{
+    public:
+        For();
+        virtual ~For();
+
+        static void initType( void );
+        Py::Object getattr( const char *  attrName );
+        Py::Object repr( void );
+        virtual int setattr( const char *        attrName,
+                             const Py::Object &  value );
+
+    public:
+        Py::Object      iteration;      // Fragment for the iteration
+        Py::Object      body;
+        Py::List        nested;         // List of Fragments for the nested statements
+        Py::Object      elsePart;       // None or IfPart instance
+
+        Py::Object      leadingComment; // None or Comment instance
+        Py::Object      sideComment;    // None or Comment instance
+};
+
+
+class Import : public FragmentBase,
+               public Py::PythonExtension< Import >
+{
+    public:
+        Import();
+        virtual ~Import();
+
+        static void initType( void );
+        Py::Object getattr( const char *  attrName );
+        Py::Object repr( void );
+        virtual int setattr( const char *        attrName,
+                             const Py::Object &  value );
+
+    public:
+        Py::Object      fromPart;   // None or Fragment for A in statements
+                                    // like: from A import ...
+        Py::Object      whatPart;   // Fragment for B in statements like:
+                                    // from A import B
+                                    // import B
+        Py::Object      body;       //
+        Py::Object      leadingComment; // None or Comment instance
+        Py::Object      sideComment;    // None or Comment instance
+};
+
+
+
+
+
 //
 // NOTE: do not introduce FragmentWithComments
 //       have separate members instead
 //
 
+
+
+// Class
+// Break
+// Continue
+// Return
+// Raise
+// Assert
+// SysExit
+// While
+// For
+// Import
+// IfPart
+// If
+// With
+// ExceptPart
+// Try
+
+// ControlFlow
 
 #endif
 
