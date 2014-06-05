@@ -59,6 +59,11 @@
 #define CREATE_DECORATOR_DOC \
 "Creates the Decorator class instance"
 
+// CodeBlock()
+#define CREATE_CODEBLOCK_DOC \
+"Creates the CodeBlock class instance"
+
+
 // Fragment class docstring
 #define FRAGMENT_DOC \
 "Represents a single text fragment of a python file"
@@ -124,6 +129,77 @@
 #define DECORATOR_DOC \
 "Represents a single decorator"
 
+// CodeBlock class docstring
+#define CODEBLOCK_DOC \
+"Represents a code block"
+
+// Function class docstring
+#define FUNCTION_DOC \
+"Represents a single function"
+
+// Class class docstring
+#define CLASS_DOC \
+"Represents a single class"
+
+// Break class docstring
+#define BREAK_DOC \
+"Represents a single break statement"
+
+// Continue class docstring
+#define CONTINUE_DOC \
+"Represents a single continue statement"
+
+// Return class docstring
+#define RETURN_DOC \
+"Represents a single return statement"
+
+// Raise class docstring
+#define RAISE_DOC \
+"Represents a single raise statement"
+
+// Assert class docstring
+#define ASSERT_DOC \
+"Represents a single assert statement"
+
+// SysExit class docstring
+#define SYSEXIT_DOC \
+"Represents a single sys.exit() call"
+
+// While class docstring
+#define WHILE_DOC \
+"Represents a single while loop"
+
+// For class docstring
+#define FOR_DOC \
+"Represents a single for loop"
+
+// Import class docstring
+#define IMPORT_DOC \
+"Represents a single import statement"
+
+// IfPart class docstring
+#define IFPART_DOC \
+"Represents a single branch (if or elif or else) in the if statement"
+
+// If class docstring
+#define IF_DOC \
+"Represents a single if statement"
+
+// With class docstring
+#define WITH_DOC \
+"Represents a single with statement"
+
+// ExceptPart class docstring
+#define EXCEPTPART_DOC \
+"Represents a single except part"
+
+// Try class docstring
+#define TRY_DOC \
+"Represents a single try statement"
+
+// ControlFlow class docstring
+#define CONTROLFLOW_DOC \
+"Represents one python file content"
 
 
 #endif
