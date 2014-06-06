@@ -33,8 +33,6 @@
 CDMControlFlowModule::CDMControlFlowModule() :
     Py::ExtensionModule< CDMControlFlowModule >( "cdmcf" )
 {
-    FragmentBase::init();
-
     Fragment::initType();
     BangLine::initType();
     EncodingLine::initType();
