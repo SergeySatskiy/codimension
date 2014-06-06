@@ -63,10 +63,11 @@ class FragmentBase
         INT_TYPE    endLine;    // 1-based line number
         INT_TYPE    endPos;     // 1-based position number in the line
 
-        Py::List    getMembers( void ) const;
-        Py::Object  getAttribute( const char *  attrName );
-        int         setAttr( const char *        attrName,
-                             const Py::Object &  value );
+        void  appendMembers( Py::List &  container ) const;
+        bool  getAttribute( const char *        attrName,
+                            Py::Object          retval );
+        bool  setAttribute( const char *        attrName,
+                            const Py::Object &  value );
 
         std::string asStr( void ) const;
 
@@ -75,17 +76,23 @@ class FragmentBase
         Py::Object  getContent( const Py::Tuple &  args );
         std::string getContent( const std::string *  buf = NULL );
         Py::Object  getLineContent( const Py::Tuple &  args );
-
-        // C++ only; helpers to make it a bit faster
-        static Py::List     members;
-        static void init( void );
-
-    protected:
-        void throwWrongBufArgument( const std::string &  funcName );
 };
 
 
+// General idea is as follows:
+// - the fragment in the base covers everything in the fragment, starting from
+//   the very first character of the leading comment till the very last
+//   character of the side comment of the last nested statement.
+// - data members store fragments which describe the meaningfull parts of the
+//   complex statements
+// Naming convention
+// - body: first character of the statement itself
+// - nested: list of fragments in the statement scope if so
 
+
+
+// The most basic fragment. It is used to describe some parts of the other
+// complex fragments.
 class Fragment : public FragmentBase,
                  public Py::PythonExtension< Fragment >
 {
@@ -100,6 +107,31 @@ class Fragment : public FragmentBase,
                              const Py::Object &  value );
 };
 
+
+// Not visible in Python.
+// The class stores common parts of many complex statements.
+class Statement
+{
+    public:
+        Statement();
+        virtual ~Statement();
+
+    public:
+        Py::Object      leadingComment;     // None or Comment instance
+        Py::Object      sideComment;        // None or Comment instance
+        Py::Object      body;               // Fragment for the body
+
+    public:
+        void  appendMembers( Py::List &  container );
+        bool  getAttribute( const char *        attrName,
+                            Py::Object          retval );
+        bool  setAttribute( const char *        attrName,
+                            const Py::Object &  value );
+        std::string  asStr( void ) const;
+};
+
+
+// Below are the fragments which are visible from Python
 
 class BangLine : public FragmentBase,
                  public Py::PythonExtension< BangLine >
