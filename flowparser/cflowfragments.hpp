@@ -67,7 +67,7 @@ class FragmentBase
         bool  getAttribute( const char *        attrName,
                             Py::Object          retval );
         bool  setAttribute( const char *        attrName,
-                            const Py::Object &  value );
+                            const Py::Object &  val );
 
         std::string asStr( void ) const;
 
@@ -104,7 +104,7 @@ class Fragment : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 };
 
 
@@ -126,7 +126,7 @@ class FragmentWithComments
         bool  getAttribute( const char *        attrName,
                             Py::Object          retval );
         bool  setAttribute( const char *        attrName,
-                            const Py::Object &  value );
+                            const Py::Object &  val );
         std::string  asStr( void ) const;
 };
 
@@ -144,7 +144,7 @@ class BangLine : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 
         Py::Object getDisplayValue( const Py::Tuple &  args );
 };
@@ -161,7 +161,7 @@ class EncodingLine : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 
         Py::Object getDisplayValue( const Py::Tuple &  args );
 };
@@ -178,7 +178,7 @@ class Comment : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 
         Py::Object getDisplayValue( const Py::Tuple &  args );
         Py::Object niceStringify( const Py::Tuple &  args );
@@ -199,7 +199,7 @@ class Docstring : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 
         Py::Object getDisplayValue( const Py::Tuple &  args );
         Py::Object niceStringify( const Py::Tuple &  args );
@@ -225,7 +225,7 @@ class Decorator : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 
     public:
         Py::Object      name;           // None or Fragment for a name
@@ -246,7 +246,7 @@ class CodeBlock : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 };
 
 
@@ -262,7 +262,7 @@ class Function : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 
     public:
         Py::List        decorators;     // Decorator instances
@@ -286,7 +286,7 @@ class Class : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 
     public:
         Py::List        decorators;     // Decorator instances
@@ -310,7 +310,7 @@ class Break : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 };
 
 
@@ -326,7 +326,7 @@ class Continue : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 };
 
 
@@ -342,7 +342,7 @@ class Return : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 
     public:
         Py::Object      value;          // None or Fragment for the value
@@ -361,7 +361,7 @@ class Raise : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 
     public:
         Py::Object      value;          // None or Fragment for the value
@@ -380,7 +380,7 @@ class Assert : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 
     public:
         Py::Object      test;           // Fragment for the test expression
@@ -400,7 +400,7 @@ class SysExit : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 
     public:
         Py::Object      argument;       // Fragment for the argument from '('
@@ -420,7 +420,7 @@ class While : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 
     public:
         Py::Object      condition;      // Fragment for the condition
@@ -442,7 +442,7 @@ class For : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 
     public:
         Py::Object      iteration;      // Fragment for the iteration
@@ -463,7 +463,7 @@ class Import : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 
     public:
         Py::Object      fromPart;   // None or Fragment for A in statements
@@ -486,7 +486,7 @@ class IfPart : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 
     public:
         Py::Object      condition;  // None for 'else' part or Fragment instance
@@ -505,7 +505,7 @@ class If : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 
     public:
         Py::List        parts;      // List of IfPart fragments
@@ -524,7 +524,7 @@ class With : public FragmentBase,
         Py::Object getattr( const char *  attrName );
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
-                             const Py::Object &  value );
+                             const Py::Object &  val );
 
     public:
         Py::Object      object;     // Fragment for the object
@@ -533,12 +533,75 @@ class With : public FragmentBase,
 
 
 class ExceptPart : public FragmentBase,
-                   public 
+                   public FragmentWithComments,
+                   public Py::PythonExtension< ExceptPart >
+{
+    public:
+        ExceptPart();
+        virtual ~ExceptPart();
 
-// ExceptPart
-// Try
+        static void initType( void );
+        Py::Object getattr( const char *  attrName );
+        Py::Object repr( void );
+        virtual int setattr( const char *        attrName,
+                             const Py::Object &  val );
 
-// ControlFlow
+    public:
+        Py::Object      exceptionType;  // Fragment or None for the
+                                        // exception type
+        Py::Object      variable;       // Fragment or None for the variable
+                                        // It comes after ',' or 'as'
+                                        // Always None for 'finally'
+        Py::List        nested;         // List of nested stament fragments
+};
+
+
+class Try : public FragmentBase,
+            public FragmentWithComments,
+            public Py::PythonExtension< Try >
+{
+    public:
+        Try();
+        virtual ~Try();
+
+        static void initType( void );
+        Py::Object getattr( const char *  attrName );
+        Py::Object repr( void );
+        virtual int setattr( const char *        attrName,
+                             const Py::Object &  val );
+
+    public:
+        Py::List        exceptParts;    // List of ExceptPart fragments
+        Py::Object      finallyPart;    // None or ExceptPart for finally
+        Py::List        nested;         // List of nested stament fragments
+};
+
+
+class ControlFlow : public FragmentBase,
+                    public Py::PythonExtension< ControlFlow >
+{
+    public:
+        ControlFlow();
+        virtual ~ControlFlow();
+
+        static void initType( void );
+        Py::Object getattr( const char *  attrName );
+        Py::Object repr( void );
+        virtual int setattr( const char *        attrName,
+                             const Py::Object &  val );
+
+    public:
+        Py::Object  bangLine;       // None or BangLine instance
+        Py::Object  encodingLine;   // None or EncodingLine instance
+        Py::Object  docstring;      // None or Docstring instance
+        Py::List    nested;         // Nested statement fragments
+
+        // Error reporting support
+        bool        isOK;           // true if no errors detected
+        Py::List    errors;         // List of Py::String objects
+        Py::List    lexerErrors;    // List of Py::String objects
+};
+
 
 #endif
 
