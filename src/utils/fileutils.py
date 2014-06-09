@@ -315,7 +315,7 @@ def detectFileType( path, checkForBrokenLink = True, skipCache = False ):
                 __magicModule = magic.Magic()
 
             output = __magicModule.id_filename( path ).lower()
-            if 'elf ' in output:
+            if 'elf' in output:
                 if 'executable' in output:
                     __cachedFileTypes[ path ] = ELFFileType
                     return ELFFileType
@@ -325,20 +325,20 @@ def detectFileType( path, checkForBrokenLink = True, skipCache = False ):
                 # Could be a core dump
                 __cachedFileTypes[ path ] = UnknownELFFileType
                 return UnknownELFFileType
-            elif 'python ' in output:
+            elif 'python' in output and 'script' in output:
                 __cachedFileTypes[ path ] = PythonFileType
                 return PythonFileType
-            elif ' shell' in output:
+            elif 'shell' in output:
                 __cachedFileTypes[ path ] = ShellFileType
                 return ShellFileType
             elif 'text' in output:
-                if 'utf-8 ' in output:
+                if 'utf-8' in output:
                     __cachedFileTypes[ path ] = UTF8TextFile
                     return UTF8TextFile
-                if 'ascii ' in output:
+                if 'ascii' in output:
                     __cachedFileTypes[ path ] = ASCIITextFile
                     return ASCIITextFile
-                if 'xml ' in output:
+                if 'xml' in output:
                     __cachedFileTypes[ path ] = XMLFileType
                     return XMLFileType
                 __cachedFileTypes[ path ] = UTF8TextFile
