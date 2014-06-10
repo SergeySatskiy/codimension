@@ -63,6 +63,74 @@
 #define CREATE_CODEBLOCK_DOC \
 "Creates the CodeBlock class instance"
 
+// Function()
+#define CREATE_FUNCTION_DOC \
+"Creates the Function class instance"
+
+// Class()
+#define CREATE_CLASS_DOC \
+"Creates the Class class instance"
+
+// Break()
+#define CREATE_BREAK_DOC \
+"Creates the Break class instance"
+
+// Continue()
+#define CREATE_CONTINUE_DOC \
+"Creates the Continue class instance"
+
+// Return()
+#define CREATE_RETURN_DOC \
+"Creates the Return class instance"
+
+// Raise()
+#define CREATE_RAISE_DOC \
+"Creates the Raise class instance"
+
+// Assert()
+#define CREATE_ASSERT_DOC \
+"Creates the Assert class instance"
+
+// SysExit()
+#define CREATE_SYSEXIT_DOC \
+"Creates the SysExit class instance"
+
+// While()
+#define CREATE_WHILE_DOC \
+"Creates the While class instance"
+
+// For()
+#define CREATE_FOR_DOC \
+"Creates the For class instance"
+
+// Import()
+#define CREATE_IMPORT_DOC \
+"Creates the Import class instance"
+
+// IfPart()
+#define CREATE_IFPART_DOC \
+"Creates the IfPart class instance"
+
+// If()
+#define CREATE_IF_DOC \
+"Creates the If class instance"
+
+// With()
+#define CREATE_WITH_DOC \
+"Creates the With class instance"
+
+// ExceptPart()
+#define CREATE_EXCEPTPART_DOC \
+"Creates the ExceptPart class instance"
+
+// Try()
+#define CREATE_TRY_DOC \
+"Creates the Try class instance"
+
+// ControlFlow()
+#define CREATE_CONTROLFLOW_DOC \
+"Creates the ControlFlow class instance"
+
 
 // Fragment class docstring
 #define FRAGMENT_DOC \
