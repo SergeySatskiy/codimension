@@ -2046,6 +2046,159 @@ int  Import::setattr( const char *        attrName,
     throwUnknownAttribute( attrName );
 }
 
+// --- End of Import definition ---
+
+IfPart::IfPart()
+{
+    kind = IF_PART_FRAGMENT;
+    condition = Py::None();
+}
+
+IfPart::~IfPart()
+{}
+
+void IfPart::initType( void )
+{
+    behaviors().name( "IfPart" );
+    behaviors().doc( IFPART_DOC );
+    behaviors().supportGetattr();
+    behaviors().supportSetattr();
+    behaviors().supportRepr();
+
+    add_noargs_method( "getLineRange", &FragmentBase::getLineRange,
+                       GETLINERANGE_DOC );
+    add_varargs_method( "getContent", &FragmentBase::getContent,
+                        GETCONTENT_DOC );
+    add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
+                        GETLINECONTENT_DOC );
+}
+
+Py::Object IfPart::getattr( const char *  attrName )
+{
+    // Support for dir(...)
+    if ( strcmp( attrName, "__members__" ) == 0 )
+    {
+        Py::List    members;
+        FragmentBase::appendMembers( members );
+        FragmentWithComments::appendMembers( members );
+        members.append( Py::String( "condition" ) );
+        members.append( Py::String( "nested" ) );
+        return members;
+    }
+
+    Py::Object      retval;
+    if ( FragmentBase::getAttribute( attrName, retval ) )
+        return retval;
+    if ( FragmentWithComments::getAttribute( attrName, retval ) )
+        return retval;
+    if ( strcmp( attrName, "condition" ) == 0 )
+        return condition;
+    if ( strcmp( attrName, "nested" ) == 0 )
+        return nested;
+    return getattr_methods( attrName );
+}
+
+Py::Object  IfPart::repr( void )
+{
+    // TODO: the other members
+    return Py::String( "<IfPart " + FragmentBase::asStr() +
+                       "\n" + representFragmentPart( condition, "Condition" ) +
+                       "\n" + FragmentWithComments::asStr() + ">" );
+}
+
+int  IfPart::setattr( const char *        attrName,
+                      const Py::Object &  val )
+{
+    if ( FragmentBase::setAttribute( attrName, val ) )
+        return 0;
+    if ( FragmentWithComments::setAttribute( attrName, val ) )
+        return 0;
+    if ( strcmp( attrName, "condition" ) == 0 )
+    {
+        CHECKVALUETYPE( "condition", "Fragment" );
+        condition = val;
+        return 0;
+    }
+    if ( strcmp( attrName, "nested" ) == 0 )
+    {
+        if ( ! val.isList() )
+            throw Py::AttributeError( "Attribute 'nested' value "
+                                      "must be a list" );
+        nested = Py::List( val );
+        return 0;
+    }
+    throwUnknownAttribute( attrName );
+}
+
+// --- End of IfPart definition ---
+
+If::If()
+{
+    kind = IF_FRAGMENT;
+}
+
+If::~If()
+{}
+
+void If::initType( void )
+{
+    behaviors().name( "If" );
+    behaviors().doc( IF_DOC );
+    behaviors().supportGetattr();
+    behaviors().supportSetattr();
+    behaviors().supportRepr();
+
+    add_noargs_method( "getLineRange", &FragmentBase::getLineRange,
+                       GETLINERANGE_DOC );
+    add_varargs_method( "getContent", &FragmentBase::getContent,
+                        GETCONTENT_DOC );
+    add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
+                        GETLINECONTENT_DOC );
+}
+
+Py::Object If::getattr( const char *  attrName )
+{
+    // Support for dir(...)
+    if ( strcmp( attrName, "__members__" ) == 0 )
+    {
+        Py::List    members;
+        FragmentBase::appendMembers( members );
+        members.append( Py::String( "parts" ) );
+        return members;
+    }
+
+    Py::Object      retval;
+    if ( FragmentBase::getAttribute( attrName, retval ) )
+        return retval;
+    if ( strcmp( attrName, "parts" ) == 0 )
+        return parts;
+    return getattr_methods( attrName );
+}
+
+Py::Object  If::repr( void )
+{
+    // TODO: the other members
+    return Py::String( "<If " + FragmentBase::asStr() +
+                       "\n" + ">" );
+}
+
+int  If::setattr( const char *        attrName,
+                  const Py::Object &  val )
+{
+    if ( FragmentBase::setAttribute( attrName, val ) )
+        return 0;
+    if ( strcmp( attrName, "parts" ) == 0 )
+    {
+        if ( ! val.isList() )
+            throw Py::AttributeError( "Attribute 'parts' value "
+                                      "must be a list" );
+        parts = Py::List( val );
+        return 0;
+    }
+    throwUnknownAttribute( attrName );
+}
+
+
 
 
 
