@@ -2198,9 +2198,410 @@ int  If::setattr( const char *        attrName,
     throwUnknownAttribute( attrName );
 }
 
+// --- End of If definition ---
 
+With::With()
+{
+    kind = WITH_FRAGMENT;
+    object = Py::None();
+}
 
+With::~With()
+{}
 
+void With::initType( void )
+{
+    behaviors().name( "With" );
+    behaviors().doc( WITH_DOC );
+    behaviors().supportGetattr();
+    behaviors().supportSetattr();
+    behaviors().supportRepr();
 
+    add_noargs_method( "getLineRange", &FragmentBase::getLineRange,
+                       GETLINERANGE_DOC );
+    add_varargs_method( "getContent", &FragmentBase::getContent,
+                        GETCONTENT_DOC );
+    add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
+                        GETLINECONTENT_DOC );
+}
+
+Py::Object With::getattr( const char *  attrName )
+{
+    // Support for dir(...)
+    if ( strcmp( attrName, "__members__" ) == 0 )
+    {
+        Py::List    members;
+        FragmentBase::appendMembers( members );
+        FragmentWithComments::appendMembers( members );
+        members.append( Py::String( "object" ) );
+        members.append( Py::String( "nested" ) );
+        return members;
+    }
+
+    Py::Object      retval;
+    if ( FragmentBase::getAttribute( attrName, retval ) )
+        return retval;
+    if ( FragmentWithComments::getAttribute( attrName, retval ) )
+        return retval;
+    if ( strcmp( attrName, "object" ) == 0 )
+        return object;
+    if ( strcmp( attrName, "nested" ) == 0 )
+        return nested;
+    return getattr_methods( attrName );
+}
+
+Py::Object  With::repr( void )
+{
+    // TODO: the other members
+    return Py::String( "<With " + FragmentBase::asStr() +
+                       "\n" + representFragmentPart( object, "Object" ) +
+                       "\n" + FragmentWithComments::asStr() + ">" );
+}
+
+int  With::setattr( const char *        attrName,
+                    const Py::Object &  val )
+{
+    if ( FragmentBase::setAttribute( attrName, val ) )
+        return 0;
+    if ( FragmentWithComments::setAttribute( attrName, val ) )
+        return 0;
+    if ( strcmp( attrName, "object" ) == 0 )
+    {
+        CHECKVALUETYPE( "object", "Fragment" );
+        object = val;
+        return 0;
+    }
+    if ( strcmp( attrName, "nested" ) == 0 )
+    {
+        if ( ! val.isList() )
+            throw Py::AttributeError( "Attribute 'nested' value "
+                                      "must be a list" );
+        nested = Py::List( val );
+        return 0;
+    }
+    throwUnknownAttribute( attrName );
+}
+
+// --- End of With definition ---
+
+ExceptPart::ExceptPart()
+{
+    kind = EXCEPT_PART_FRAGMENT;
+    exceptionType = Py::None();
+    variable = Py::None();
+}
+
+ExceptPart::~ExceptPart()
+{}
+
+void ExceptPart::initType( void )
+{
+    behaviors().name( "ExceptPart" );
+    behaviors().doc( EXCEPTPART_DOC );
+    behaviors().supportGetattr();
+    behaviors().supportSetattr();
+    behaviors().supportRepr();
+
+    add_noargs_method( "getLineRange", &FragmentBase::getLineRange,
+                       GETLINERANGE_DOC );
+    add_varargs_method( "getContent", &FragmentBase::getContent,
+                        GETCONTENT_DOC );
+    add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
+                        GETLINECONTENT_DOC );
+}
+
+Py::Object ExceptPart::getattr( const char *  attrName )
+{
+    // Support for dir(...)
+    if ( strcmp( attrName, "__members__" ) == 0 )
+    {
+        Py::List    members;
+        FragmentBase::appendMembers( members );
+        FragmentWithComments::appendMembers( members );
+        members.append( Py::String( "exceptionType" ) );
+        members.append( Py::String( "variable" ) );
+        members.append( Py::String( "nested" ) );
+        return members;
+    }
+
+    Py::Object      retval;
+    if ( FragmentBase::getAttribute( attrName, retval ) )
+        return retval;
+    if ( FragmentWithComments::getAttribute( attrName, retval ) )
+        return retval;
+    if ( strcmp( attrName, "exceptionType" ) == 0 )
+        return exceptionType;
+    if ( strcmp( attrName, "variable" ) == 0 )
+        return variable;
+    if ( strcmp( attrName, "nested" ) == 0 )
+        return nested;
+    return getattr_methods( attrName );
+}
+
+Py::Object  ExceptPart::repr( void )
+{
+    // TODO: the other members
+    return Py::String( "<ExceptPart " + FragmentBase::asStr() +
+                       "\n" + representFragmentPart( exceptionType, "ExceptionType" ) +
+                       "\n" + representFragmentPart( variable, "variable" ) +
+                       "\n" + FragmentWithComments::asStr() + ">" );
+}
+
+int  ExceptPart::setattr( const char *        attrName,
+                          const Py::Object &  val )
+{
+    if ( FragmentBase::setAttribute( attrName, val ) )
+        return 0;
+    if ( FragmentWithComments::setAttribute( attrName, val ) )
+        return 0;
+    if ( strcmp( attrName, "exceptionType" ) == 0 )
+    {
+        CHECKVALUETYPE( "exceptionType", "Fragment" );
+        exceptionType = val;
+        return 0;
+    }
+    if ( strcmp( attrName, "variable" ) == 0 )
+    {
+        CHECKVALUETYPE( "variable", "Fragment" );
+        variable = val;
+        return 0;
+    }
+    if ( strcmp( attrName, "nested" ) == 0 )
+    {
+        if ( ! val.isList() )
+            throw Py::AttributeError( "Attribute 'nested' value "
+                                      "must be a list" );
+        nested = Py::List( val );
+        return 0;
+    }
+    throwUnknownAttribute( attrName );
+}
+
+// --- End of ExceptPart definition ---
+
+Try::Try()
+{
+    kind = TRY_FRAGMENT;
+    finallyPart = Py::None();
+}
+
+Try::~Try()
+{}
+
+void Try::initType( void )
+{
+    behaviors().name( "Try" );
+    behaviors().doc( TRY_DOC );
+    behaviors().supportGetattr();
+    behaviors().supportSetattr();
+    behaviors().supportRepr();
+
+    add_noargs_method( "getLineRange", &FragmentBase::getLineRange,
+                       GETLINERANGE_DOC );
+    add_varargs_method( "getContent", &FragmentBase::getContent,
+                        GETCONTENT_DOC );
+    add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
+                        GETLINECONTENT_DOC );
+}
+
+Py::Object Try::getattr( const char *  attrName )
+{
+    // Support for dir(...)
+    if ( strcmp( attrName, "__members__" ) == 0 )
+    {
+        Py::List    members;
+        FragmentBase::appendMembers( members );
+        FragmentWithComments::appendMembers( members );
+        members.append( Py::String( "exceptParts" ) );
+        members.append( Py::String( "finallyPart" ) );
+        members.append( Py::String( "nested" ) );
+        return members;
+    }
+
+    Py::Object      retval;
+    if ( FragmentBase::getAttribute( attrName, retval ) )
+        return retval;
+    if ( FragmentWithComments::getAttribute( attrName, retval ) )
+        return retval;
+    if ( strcmp( attrName, "exceptParts" ) == 0 )
+        return exceptParts;
+    if ( strcmp( attrName, "finallyPart" ) == 0 )
+        return finallyPart;
+    if ( strcmp( attrName, "nested" ) == 0 )
+        return nested;
+    return getattr_methods( attrName );
+}
+
+Py::Object  Try::repr( void )
+{
+    // TODO: the other members
+    return Py::String( "<Try " + FragmentBase::asStr() +
+                       "\n" + representFragmentPart( finallyPart, "finallyPart" ) +
+                       "\n" + FragmentWithComments::asStr() + ">" );
+}
+
+int  Try::setattr( const char *        attrName,
+                   const Py::Object &  val )
+{
+    if ( FragmentBase::setAttribute( attrName, val ) )
+        return 0;
+    if ( FragmentWithComments::setAttribute( attrName, val ) )
+        return 0;
+    if ( strcmp( attrName, "exceptParts" ) == 0 )
+    {
+        if ( ! val.isList() )
+            throw Py::AttributeError( "Attribute 'exceptParts' value "
+                                      "must be a list" );
+        exceptParts = val;
+        return 0;
+    }
+    if ( strcmp( attrName, "finallyPart" ) == 0 )
+    {
+        CHECKVALUETYPE( "finallyPart", "Fragment" );
+        finallyPart = val;
+        return 0;
+    }
+    if ( strcmp( attrName, "nested" ) == 0 )
+    {
+        if ( ! val.isList() )
+            throw Py::AttributeError( "Attribute 'nested' value "
+                                      "must be a list" );
+        nested = Py::List( val );
+        return 0;
+    }
+    throwUnknownAttribute( attrName );
+}
+
+// --- End of Try definition ---
+
+ControlFlow::ControlFlow()
+{
+    kind = CONTROL_FLOW_FRAGMENT;
+    bangLine = Py::None();
+    encodingLine = Py::None();
+    docstring = Py::None();
+    isOK = true;
+}
+
+ControlFlow::~ControlFlow()
+{}
+
+void ControlFlow::initType( void )
+{
+    behaviors().name( "ControlFlow" );
+    behaviors().doc( CONTROLFLOW_DOC );
+    behaviors().supportGetattr();
+    behaviors().supportSetattr();
+    behaviors().supportRepr();
+
+    add_noargs_method( "getLineRange", &FragmentBase::getLineRange,
+                       GETLINERANGE_DOC );
+    add_varargs_method( "getContent", &FragmentBase::getContent,
+                        GETCONTENT_DOC );
+    add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
+                        GETLINECONTENT_DOC );
+}
+
+Py::Object ControlFlow::getattr( const char *  attrName )
+{
+    // Support for dir(...)
+    if ( strcmp( attrName, "__members__" ) == 0 )
+    {
+        Py::List    members;
+        FragmentBase::appendMembers( members );
+        members.append( Py::String( "bangLine" ) );
+        members.append( Py::String( "encodingLine" ) );
+        members.append( Py::String( "docstring" ) );
+        members.append( Py::String( "nested" ) );
+        members.append( Py::String( "isOK" ) );
+        members.append( Py::String( "errors" ) );
+        members.append( Py::String( "lexerErrors" ) );
+        return members;
+    }
+
+    Py::Object      retval;
+    if ( FragmentBase::getAttribute( attrName, retval ) )
+        return retval;
+    if ( strcmp( attrName, "bangLine" ) == 0 )
+        return bangLine;
+    if ( strcmp( attrName, "encodingLine" ) == 0 )
+        return encodingLine;
+    if ( strcmp( attrName, "docstring" ) == 0 )
+        return docstring;
+    if ( strcmp( attrName, "nested" ) == 0 )
+        return nested;
+    if ( strcmp( attrName, "isOK" ) == 0 )
+        return Py::Boolean( isOK );
+    if ( strcmp( attrName, "errors" ) == 0 )
+        return errors;
+    if ( strcmp( attrName, "lexerErrors" ) == 0 )
+        return lexerErrors;
+    return getattr_methods( attrName );
+}
+
+Py::Object  ControlFlow::repr( void )
+{
+    // TODO: the other members
+    return Py::String( "<ControlFlow " + FragmentBase::asStr() +
+                       "\n" + ">" );
+}
+
+int  ControlFlow::setattr( const char *        attrName,
+                           const Py::Object &  val )
+{
+    if ( FragmentBase::setAttribute( attrName, val ) )
+        return 0;
+    if ( strcmp( attrName, "bangLine" ) == 0 )
+    {
+        CHECKVALUETYPE( "bangLine", "BangLine" );
+        bangLine = val;
+        return 0;
+    }
+    if ( strcmp( attrName, "encodingLine" ) == 0 )
+    {
+        CHECKVALUETYPE( "encodingLine", "EncodingLine" );
+        encodingLine = val;
+        return 0;
+    }
+    if ( strcmp( attrName, "docstring" ) == 0 )
+    {
+        CHECKVALUETYPE( "docstring", "Docstring" );
+        docstring = val;
+        return 0;
+    }
+    if ( strcmp( attrName, "nested" ) == 0 )
+    {
+        if ( ! val.isList() )
+            throw Py::AttributeError( "Attribute 'nested' value "
+                                      "must be a list" );
+        nested = Py::List( val );
+        return 0;
+    }
+    if ( strcmp( attrName, "isOK" ) == 0 )
+    {
+        if ( ! val.isBoolean() )
+            throw Py::AttributeError( "Attribute 'isOK' value "
+                                      "must be a boolean" );
+        isOK = (bool)(Py::Boolean( val ));
+        return 0;
+    }
+    if ( strcmp( attrName, "errors" ) == 0 )
+    {
+        if ( ! val.isList() )
+            throw Py::AttributeError( "Attribute 'errors' value "
+                                      "must be a list" );
+        errors = Py::List( val );
+        return 0;
+    }
+    if ( strcmp( attrName, "lexerErrors" ) == 0 )
+    {
+        if ( ! val.isList() )
+            throw Py::AttributeError( "Attribute 'lexerErrors' value "
+                                      "must be a list" );
+        lexerErrors = Py::List( val );
+        return 0;
+    }
+    throwUnknownAttribute( attrName );
+}
 
 

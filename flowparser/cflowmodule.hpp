@@ -42,6 +42,23 @@ class CDMControlFlowModule : public Py::ExtensionModule< CDMControlFlowModule >
         Py::Object  createDocstring( const Py::Tuple &  args );
         Py::Object  createDecorator( const Py::Tuple &  args );
         Py::Object  createCodeBlock( const Py::Tuple &  args );
+        Py::Object  createFunction( const Py::Tuple &  args );
+        Py::Object  createClass( const Py::Tuple &  args );
+        Py::Object  createBreak( const Py::Tuple &  args );
+        Py::Object  createContinue( const Py::Tuple &  args );
+        Py::Object  createReturn( const Py::Tuple &  args );
+        Py::Object  createRaise( const Py::Tuple &  args );
+        Py::Object  createAssert( const Py::Tuple &  args );
+        Py::Object  createSysExit( const Py::Tuple &  args );
+        Py::Object  createWhile( const Py::Tuple &  args );
+        Py::Object  createFor( const Py::Tuple &  args );
+        Py::Object  createImport( const Py::Tuple &  args );
+        Py::Object  createIfPart( const Py::Tuple &  args );
+        Py::Object  createIf( const Py::Tuple &  args );
+        Py::Object  createWith( const Py::Tuple &  args );
+        Py::Object  createExceptPart( const Py::Tuple &  args );
+        Py::Object  createTry( const Py::Tuple &  args );
+        Py::Object  createControlFlow( const Py::Tuple &  args );
 
         Py::Object  getControlFlowFromMemory( const Py::Tuple &  args );
         Py::Object  getControlFlowFromFile( const Py::Tuple &  args );
