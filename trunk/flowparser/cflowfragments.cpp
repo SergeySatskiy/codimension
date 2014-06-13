@@ -2484,7 +2484,10 @@ ControlFlow::ControlFlow()
 }
 
 ControlFlow::~ControlFlow()
-{}
+{
+    delete content;
+    content = NULL;
+}
 
 void ControlFlow::initType( void )
 {
@@ -2543,7 +2546,10 @@ Py::Object  ControlFlow::repr( void )
 {
     // TODO: the other members
     return Py::String( "<ControlFlow " + FragmentBase::asStr() +
-                       "\n" + ">" );
+                       "\n" + representFragmentPart( bangLine, "BangLine" ) +
+                       "\n" + representFragmentPart( encodingLine, "EncodingLine" ) +
+                       "\n" + representFragmentPart( docstring, "Docstring" ) +
+                       ">" );
 }
 
 int  ControlFlow::setattr( const char *        attrName,
