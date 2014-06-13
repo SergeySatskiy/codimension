@@ -20,6 +20,7 @@
  * Python extension module
  */
 
+#include "cflowparser.hpp"
 
 #include "cflowversion.hpp"
 #include "cflowdocs.hpp"
@@ -184,15 +185,134 @@ CDMControlFlowModule::~CDMControlFlowModule()
 Py::Object
 CDMControlFlowModule::getControlFlowFromMemory( const Py::Tuple &  args )
 {
-    return Py::None();
+    // One argument is expected: string with the python code
+    if ( args.length() != 1 )
+    {
+        char    buf[ 32 ];
+        sprintf( buf, "%ld", args.length() );
+        throw Py::TypeError( "getControlFlowFromMemory() takes exactly 1 "
+                             "argument (" + std::string( buf ) + "given)" );
+    }
+
+    Py::Object  fName( args[ 0 ] );
+    if ( ! fName.isString() )
+        throw Py::TypeError( "getControlFlowFromMemory() takes exactly 1 "
+                             "argument of string type: python code buffer" );
+
+
+    std::string     content( Py::String( fName ).as_std_string( "utf-8" ) );
+
+    /* Start the parser business */
+    pANTLR3_INPUT_STREAM        input(
+                antlr3NewAsciiStringInPlaceStream( (pANTLR3_UINT8) content.c_str(),
+                                                   content.size(), NULL ) );
+    if ( input == NULL )
+        throw Py::RuntimeError( "Cannot read python file" );
+
+    /* Dirty hack:
+     * it's a problem if a comment is the last one in the file and it does not
+     * have EOL at the end. It's easier to add EOL here (if EOL is not the last
+     * character) than to change the grammar.
+     * The \0 byte is used for temporary injection of EOL.
+     */
+    int     eolAddedAt = 0;
+    if ( input->sizeBuf > 0 )
+    {
+        if ( ((char*)(input->data))[ input->sizeBuf - 1 ] != '\n' )
+        {
+            eolAddedAt = input->sizeBuf;
+            ((char*)(input->data))[ eolAddedAt ] = '\n';
+            input->sizeBuf += 1;
+        }
+    }
+
+    Py::Object      retval;
+    try
+    {
+        retval = parseInput( input );
+    }
+    catch ( ... )
+    {
+        input->close( input );
+
+        // Revert the hack changes back if needed
+        if ( eolAddedAt != 0 )
+            content[ eolAddedAt ] = 0;
+        throw;
+    }
+
+    input->close( input );
+
+    // Revert the hack changes back if needed
+    if ( eolAddedAt != 0 )
+        content[ eolAddedAt ] = 0;
+
+    return retval;
 }
 
 
 Py::Object
 CDMControlFlowModule::getControlFlowFromFile( const Py::Tuple &  args )
 {
-    return Py::None();
+    // One parameter is expected: python file name
+    if ( args.length() != 1 )
+    {
+        char    buf[ 32 ];
+        sprintf( buf, "%ld", args.length() );
+        throw Py::TypeError( "getControlFlowFromFile() takes exactly 1 "
+                             "argument (" + std::string( buf ) + "given)" );
+    }
+
+    Py::Object  fName( args[ 0 ] );
+    if ( ! fName.isString() )
+        throw Py::TypeError( "getControlFlowFromFile() takes exactly 1 "
+                             "argument of string type: python file name" );
+
+
+    std::string fileName( Py::String( fName ).as_std_string( "utf-8" ) );
+    if ( fileName.empty() )
+        throw Py::RuntimeError( "Invalid argument: file name is empty" );
+
+    /* Start the parser business */
+    pANTLR3_INPUT_STREAM        input(
+                antlr3AsciiFileStreamNew( (pANTLR3_UINT8) fileName.c_str() ) );
+
+    if ( input == NULL )
+        throw Py::RuntimeError( "Cannot read python file" );
+
+
+    /* Dirty hack:
+     * it's a problem if a comment is the last one in the file and it does not
+     * have EOL at the end. It's easier to add EOL here (if EOL is not the last
+     * character) than to change the grammar.
+     * The run-time library reserves one byte in the patched version for EOL if
+     * needed.
+     */
+    if ( input->sizeBuf > 0 )
+    {
+        if ( ((char*)(input->data))[ input->sizeBuf - 1 ] != '\n' )
+        {
+            ((char*)(input->data))[ input->sizeBuf ] = '\n';
+            input->sizeBuf += 1;
+        }
+    }
+
+
+    Py::Object      retval;
+    try
+    {
+        retval = parseInput( input );
+    }
+    catch ( ... )
+    {
+        input->close( input );
+        throw;
+    }
+    input->close( input );
+    return retval;
 }
+
+
 
 Py::Object  CDMControlFlowModule::createFragment( const Py::Tuple &  args )
 {
