@@ -2,6 +2,7 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
 * Bug fix: exception is case when files in a project directory are created
   and deleted very quickly
+* Fix for pylint 1.2.1
 
 2014 May 06 Sergey Satskiy <sergey.satskiy@gmail.com>
 

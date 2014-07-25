@@ -386,6 +386,8 @@ class Pylint( object ):
                 formatArg = [ '--msg-template="{path}:{line}: [{msg_id}, {obj}] {msg}"' ]
 
             skipTillRecognised = False
+            # print "Command line: pylint: " + " ".join( formatArg + initHook + rcArg + path )
+            # print "Dir: " + workingDir
             output = self.__run( [ 'pylint' ] + formatArg + initHook + rcArg +
                                  path, workingDir ).split( '\n' )
             for index in xrange( len( output ) ):
@@ -525,7 +527,8 @@ class Pylint( object ):
     def hasOnlyPointers( line ):
         " Checks that all the characters in the line are spaces or ^"
         for char in line:
-            if char not in [ ' ', '^' ]:
+            # pylint 1.2.1 introduces '|^' notation
+            if char not in [ ' ', '^', '|' ]:
                 return False
         return True
 
