@@ -88,7 +88,12 @@ class GlobalsBrowserModel( BrowserModelBase ):
             self.removeTreeItem( item )
 
         for path in addedPythonFiles:
-            info = self.globalData.briefModinfoCache.get( path )
+            try:
+                info = self.globalData.briefModinfoCache.get( path )
+            except:
+                # It could be that a file was created and deleted straight
+                # away. In this case the cache will generate an exception.
+                continue
             for globalObj in info.globals:
                 needUpdate = True
                 newItem = TreeViewGlobalItem( self.rootItem, globalObj )

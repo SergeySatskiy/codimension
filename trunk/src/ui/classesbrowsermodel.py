@@ -90,7 +90,12 @@ class ClassesBrowserModel( BrowserModelBase ):
             self.removeTreeItem( item )
 
         for path in addedPythonFiles:
-            info = self.globalData.briefModinfoCache.get( path )
+            try:
+                info = self.globalData.briefModinfoCache.get( path )
+            except:
+                # It could be that a file was created and deleted straight
+                # away. In this case the cache will generate an exception.
+                continue
             for classObj in info.classes:
                 needUpdate = True
                 newItem = TreeViewClassItem( self.rootItem, classObj )
