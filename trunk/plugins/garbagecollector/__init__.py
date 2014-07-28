@@ -192,20 +192,36 @@ class GCPlugin( WizardInterface ):
 
     def __collectGarbage( self, ignored = None ):
         " Collects garbage "
-        iterCount = 0
-        collected = 0
+        collected = []
+        l0, l1, l2 = gc.get_count()
 
-        currentCollected = gc.collect()
-        while currentCollected > 0:
-            iterCount += 1
-            collected += currentCollected
-            currentCollected = gc.collect()
+        if l0 > 0:
+            collected.append( gc.collect( 0 ) )
+            if l1 > 0:
+                collected.append( gc.collect( 1 ) )
+                if l2 > 0:
+                    collected.append( gc.collect( 2 ) )
 
         if self.__where == GCPluginConfigDialog.SILENT:
             return
 
-        message = "Collected " + str( collected ) + " objects in " + \
-                  str( iterCount ) + " iteration(s)"
+        message = ""
+        if collected:
+            for index in xrange( len( collected ) ):
+                if collected[ index ] == 0:
+                    continue
+                if message:
+                    message += ", "
+                message += "generation " + str( index ) + ": " + \
+                           str( collected[ index ] )
+            if message:
+                message = "GC objects: " + message
+        else:
+            message = "No GC objects"
+
+        if not message:
+            return
+
         if self.__where == GCPluginConfigDialog.STATUS_BAR:
             # Display it for 5 seconds
             self.ide.showStatusBarMessage( message, 0, 5000 )
