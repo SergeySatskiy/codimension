@@ -396,14 +396,14 @@ class BreakPointViewer( QWidget ):
 
         self.__enableButton = QAction(
             PixmapCache().getIcon( 'bpenable.png' ),
-            "Enable the breakpoint", self )
+            "Enable selected breakpoint", self )
         self.connect( self.__enableButton, SIGNAL( "triggered()" ),
                       self.__onEnableDisable )
         self.__enableButton.setEnabled( False )
 
         self.__disableButton = QAction(
             PixmapCache().getIcon( 'bpdisable.png' ),
-            "Disable the breakpoint", self )
+            "Disable selected breakpoint", self )
         self.connect( self.__disableButton, SIGNAL( "triggered()" ),
                       self.__onEnableDisable )
         self.__disableButton.setEnabled( False )
@@ -423,8 +423,8 @@ class BreakPointViewer( QWidget ):
         self.__disableAllButton.setEnabled( False )
 
         self.__delButton = QAction(
-            PixmapCache().getIcon( 'bpdel.png' ),
-            "Delete the breakpoint", self )
+            PixmapCache().getIcon( 'delitem.png' ),
+            "Delete selected breakpoint", self )
         self.connect( self.__delButton, SIGNAL( "triggered()" ),
                       self.__onDel )
         self.__delButton.setEnabled( False )
