@@ -141,8 +141,8 @@ class IgnoredExceptionsViewer( QWidget ):
         expandingSpacer2.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
 
         self.__removeButton = QAction(
-            PixmapCache().getIcon( 'ignexcptdel.png' ),
-            "Remove from the ignored exception type list", self )
+            PixmapCache().getIcon( 'delitem.png' ),
+            "Remove selected exception type", self )
         self.connect( self.__removeButton, SIGNAL( "triggered()" ),
                       self.__onRemoveFromIgnore )
         self.__removeButton.setEnabled( False )
@@ -152,7 +152,7 @@ class IgnoredExceptionsViewer( QWidget ):
 
         self.__removeAllButton = QAction(
             PixmapCache().getIcon( 'ignexcptdelall.png' ),
-            "Remove all the ignored exception types", self )
+            "Remove all the exception types", self )
         self.connect( self.__removeAllButton, SIGNAL( "triggered()" ),
                       self.__onRemoveAllFromIgnore )
         self.__removeAllButton.setEnabled( False )
@@ -187,8 +187,9 @@ class IgnoredExceptionsViewer( QWidget ):
         self.exceptionsList.clear()
         self.__excTypeEdit.clear()
         self.__addButton.setEnabled( False )
-        self.__updateTitle()
+        self.__ignored = []
         self.__currentItem = None
+        self.__updateTitle()
         return
 
     def __onShowHide( self, startup = False ):
