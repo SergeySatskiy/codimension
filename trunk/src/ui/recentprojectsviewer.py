@@ -351,9 +351,9 @@ class RecentProjectsViewer( QWidget ):
                       self.__filePathToClipboard )
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
-        self.trashFileButton = QAction( PixmapCache().getIcon( 'trash.png' ),
-                                        'Remove from the recent list (not ' \
-                                        'from the disk)', self )
+        self.trashFileButton = QAction( PixmapCache().getIcon( 'delitem.png' ),
+                                        'Remove selected (not from the disk)',
+                                        self )
         self.connect( self.trashFileButton, SIGNAL( "triggered()" ),
                       self.__deleteFile )
 
@@ -436,9 +436,9 @@ class RecentProjectsViewer( QWidget ):
                       self.__prjPathToClipboard )
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
-        self.trashButton = QAction( PixmapCache().getIcon( 'trash.png' ),
-                                    'Remove from the recent list (not from ' \
-                                    'the disk)', self )
+        self.trashButton = QAction( PixmapCache().getIcon( 'delitem.png' ),
+                                    'Remove selected (not from the disk)',
+                                    self )
         self.connect( self.trashButton, SIGNAL( "triggered()" ),
                       self.__deleteProject )
 
