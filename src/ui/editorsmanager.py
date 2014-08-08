@@ -1910,6 +1910,9 @@ class EditorsManager( QTabWidget ):
     def closeAll( self ):
         " Close all the editors tabs "
         curWidget = self.currentWidget()
+        if not curWidget:
+            return
+
         if curWidget.getType() == MainWindowTabWidgetBase.PlainTextEditor:
             curWidget.getEditor().hideCompleter()
 
