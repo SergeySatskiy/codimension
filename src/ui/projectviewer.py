@@ -150,19 +150,17 @@ class ProjectViewer( QWidget ):
         self.propertiesButton.setToolTip( "Project properties" )
         self.propertiesButton.setEnabled( False )
         self.propertiesButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.propertiesButton, SIGNAL( "clicked()" ),
-                      self.projectProperties )
+        self.propertiesButton.clicked.connect( self.projectProperties )
 
         self.unloadButton = QToolButton()
         self.unloadButton.setAutoRaise( True )
-        self.unloadButton.setIcon( \
+        self.unloadButton.setIcon(
                 PixmapCache().getIcon( 'unloadproject.png' ) )
         self.unloadButton.setFixedSize( 20, 20 )
         self.unloadButton.setToolTip( "Unload project" )
         self.unloadButton.setEnabled( False )
         self.unloadButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.unloadButton, SIGNAL( "clicked()" ),
-                      self.unloadProject )
+        self.unloadButton.clicked.connect( self.unloadProject )
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins( 0, 0, 0, 0 )
@@ -177,38 +175,34 @@ class ProjectViewer( QWidget ):
         self.prjFindWhereUsedButton = QAction(
                 PixmapCache().getIcon( 'findusage.png' ),
                 'Find where the highlighted item is used', self )
-        self.connect( self.prjFindWhereUsedButton, SIGNAL( "triggered()" ),
-                      self.__findWhereUsed )
+        self.prjFindWhereUsedButton.triggered.connect( self.__findWhereUsed )
         self.prjFindInDirButton = QAction(
                 PixmapCache().getIcon( 'findindir.png' ),
                 'Find in highlighted directory', self )
-        self.connect( self.prjFindInDirButton, SIGNAL( "triggered()" ),
-                      self.projectTreeView.findInDirectory )
+        self.prjFindInDirButton.triggered.connect(
+                                        self.projectTreeView.findInDirectory )
         self.prjShowParsingErrorsButton = QAction(
                 PixmapCache().getIcon( 'showparsingerrors.png' ),
                 'Show lexer/parser errors', self )
-        self.connect( self.prjShowParsingErrorsButton, SIGNAL( "triggered()" ),
-                      self.showPrjParserError )
+        self.prjShowParsingErrorsButton.triggered.connect(
+                                        self.showPrjParserError )
         self.prjNewDirButton = QAction(
                 PixmapCache().getIcon( 'newdir.png' ),
                 'Create sub directory', self )
-        self.connect( self.prjNewDirButton, SIGNAL( "triggered()" ),
-                      self.__createDir )
+        self.prjNewDirButton.triggered.connect( self.__createDir )
         self.prjCopyToClipboardButton = QAction(
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
                 'Copy path to clipboard', self )
-        self.connect( self.prjCopyToClipboardButton, SIGNAL( "triggered()" ),
-                      self.projectTreeView.copyToClipboard )
+        self.prjCopyToClipboardButton.triggered.connect(
+                                        self.projectTreeView.copyToClipboard )
         self.prjPylintButton = QAction(
                 PixmapCache().getIcon( 'pylint.png' ),
                 'Run pylint for the selected item', self )
-        self.connect( self.prjPylintButton, SIGNAL( "triggered()" ),
-                      self.__pylintRequest )
+        self.prjPylintButton.triggered.connect( self.__pylintRequest )
         self.prjPymetricsButton = QAction(
                 PixmapCache().getIcon( 'metrics.png' ),
                 'Run pymetrics for the selected item', self )
-        self.connect( self.prjPymetricsButton, SIGNAL( 'triggered()' ),
-                      self.__pymetricsRequest )
+        self.prjPymetricsButton.triggered.connect( self.__pymetricsRequest )
 
         self.upperToolbar = QToolBar()
         self.upperToolbar.setMovable( False )
@@ -229,9 +223,8 @@ class ProjectViewer( QWidget ):
                       self.__prjSelectionChanged )
 
         self.projectTreeView.setContextMenuPolicy( Qt.CustomContextMenu )
-        self.connect( self.projectTreeView,
-                      SIGNAL( "customContextMenuRequested(const QPoint &)" ),
-                      self.__prjContextMenuRequested )
+        self.projectTreeView.customContextMenuRequested.connect(
+                                                self.__prjContextMenuRequested )
         pLayout = QVBoxLayout()
         pLayout.setContentsMargins( 0, 0, 0, 0 )
         pLayout.setSpacing( 0 )
@@ -267,8 +260,7 @@ class ProjectViewer( QWidget ):
 
         # popup menu for directories
         self.prjDirMenu = QMenu( self )
-        self.connect( self.prjDirMenu, SIGNAL( 'aboutToShow()' ),
-                      self.__updatePluginMenuData )
+        self.prjDirMenu.aboutToShow.connect( self.__updatePluginMenuData )
         self.prjDirPylintAct = self.prjDirMenu.addAction(
                 PixmapCache().getIcon( 'pylint.png' ),
                 'Run pylint for the directory recursively',
@@ -305,8 +297,7 @@ class ProjectViewer( QWidget ):
 
         # popup menu for files
         self.prjFileMenu = QMenu( self )
-        self.connect( self.prjFileMenu, SIGNAL( 'aboutToShow()' ),
-                      self.__updatePluginMenuData )
+        self.prjFileMenu.aboutToShow.connect( self.__updatePluginMenuData )
         self.prjFilePylintAct = self.prjFileMenu.addAction(
                 PixmapCache().getIcon( 'pylint.png' ),
                 'Run pylint for the file', self.__pylintRequest )
@@ -370,8 +361,7 @@ class ProjectViewer( QWidget ):
         self.__showHideButton.setFixedSize( 20, 20 )
         self.__showHideButton.setToolTip( "Hide file system tree" )
         self.__showHideButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__showHideButton, SIGNAL( 'clicked()' ),
-                      self.__onShowHide )
+        self.__showHideButton.clicked.connect( self.__onShowHide )
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins( 3, 0, 0, 0 )
@@ -386,40 +376,37 @@ class ProjectViewer( QWidget ):
                       SIGNAL( 'firstSelectedItem' ),
                       self.__fsSelectionChanged )
         self.filesystemView.setContextMenuPolicy( Qt.CustomContextMenu )
-        self.connect( self.filesystemView,
-                      SIGNAL( "customContextMenuRequested(const QPoint &)" ),
-                      self.__fsContextMenuRequested )
+        self.filesystemView.customContextMenuRequested.connect(
+                                                self.__fsContextMenuRequested )
 
         # Toolbar part - buttons
         self.fsFindInDirButton = QAction(
                 PixmapCache().getIcon( 'findindir.png' ),
                 'Find in highlighted directory', self )
-        self.connect( self.fsFindInDirButton, SIGNAL( "triggered()" ),
-                      self.filesystemView.findInDirectory )
+        self.fsFindInDirButton.triggered.connect(
+                                        self.filesystemView.findInDirectory )
         self.fsAddTopLevelDirButton = QAction(
                 PixmapCache().getIcon( 'addtopleveldir.png' ),
                 'Add as a top level directory', self )
-        self.connect( self.fsAddTopLevelDirButton, SIGNAL( "triggered()" ),
-                      self.addToplevelDir )
+        self.fsAddTopLevelDirButton.triggered.connect( self.addToplevelDir )
         self.fsRemoveTopLevelDirButton = QAction(
                 PixmapCache().getIcon( 'removetopleveldir.png' ),
                 'Remove from the top level directories', self )
-        self.connect( self.fsRemoveTopLevelDirButton, SIGNAL( "triggered()" ),
-                      self.removeToplevelDir )
+        self.fsRemoveTopLevelDirButton.triggered.connect(
+                                        self.removeToplevelDir )
         self.fsShowParsingErrorsButton = QAction(
                 PixmapCache().getIcon( 'showparsingerrors.png' ),
                 'Show lexer/parser errors', self )
-        self.connect( self.fsShowParsingErrorsButton, SIGNAL( "triggered()" ),
-                      self.showFsParserError )
+        self.fsShowParsingErrorsButton.triggered.connect(
+                                        self.showFsParserError )
         self.fsCopyToClipboardButton = QAction(
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
                 'Copy path to clipboard', self )
-        self.connect( self.fsCopyToClipboardButton, SIGNAL( "triggered()" ),
-                      self.filesystemView.copyToClipboard )
-        fsReloadButton = QAction( PixmapCache().getIcon( 'reload.png' ),
-                                  'Re-read the file system tree', self )
-        self.connect( fsReloadButton, SIGNAL( "triggered()" ),
-                      self.filesystemView.reload )
+        self.fsCopyToClipboardButton.triggered.connect(
+                                        self.filesystemView.copyToClipboard )
+        self.fsReloadButton = QAction( PixmapCache().getIcon( 'reload.png' ),
+                                       'Re-read the file system tree', self )
+        self.fsReloadButton.triggered.connect( self.filesystemView.reload )
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
 
@@ -435,7 +422,7 @@ class ProjectViewer( QWidget ):
         self.lowerToolbar.addAction( self.fsCopyToClipboardButton )
         self.lowerToolbar.addAction( self.fsShowParsingErrorsButton )
         self.lowerToolbar.addWidget( spacer )
-        self.lowerToolbar.addAction( fsReloadButton )
+        self.lowerToolbar.addAction( self.fsReloadButton )
 
 
         fsLayout = QVBoxLayout()
@@ -459,8 +446,7 @@ class ProjectViewer( QWidget ):
 
         # create the popup menu for files
         self.fsFileMenu = QMenu( self )
-        self.connect( self.fsFileMenu, SIGNAL( 'aboutToShow()' ),
-                      self.__updatePluginMenuData )
+        self.fsFileMenu.aboutToShow.connect( self.__updatePluginMenuData )
         self.fsFileCopyPathAct = self.fsFileMenu.addAction(
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
                 'Copy path to clipboard', self.filesystemView.copyToClipboard )
@@ -476,8 +462,7 @@ class ProjectViewer( QWidget ):
 
         # create the directory menu
         self.fsDirMenu = QMenu( self )
-        self.connect( self.fsDirMenu, SIGNAL( 'aboutToShow()' ),
-                      self.__updatePluginMenuData )
+        self.fsDirMenu.aboutToShow.connect( self.__updatePluginMenuData )
         self.fsDirAddAsTopLevelAct = self.fsDirMenu.addAction(
                 PixmapCache().getIcon( 'addtopleveldir.png' ),
                 'Add as top level directory',
@@ -583,7 +568,7 @@ class ProjectViewer( QWidget ):
                 if not relativePath.startswith( '..' ):
                     scriptName = relativePath
 
-            project.updateProperties( \
+            project.updateProperties(
                 scriptName, importDirs,
                 str( dialog.creationDateEdit.text() ).strip(),
                 str( dialog.authorEdit.text() ).strip(),
