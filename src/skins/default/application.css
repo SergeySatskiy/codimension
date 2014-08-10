@@ -66,6 +66,11 @@ QTextEdit
     background-color: #ffffe6;
 }
 
+QPlainTextEdit
+{
+    background-color: #ffffe6;
+}
+
 QListView
 {
     background-color: #ffffe6;
