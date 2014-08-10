@@ -86,32 +86,29 @@ class DisassemblerResultsWidget( QWidget, MainWindowTabWidgetBase ):
         # Buttons
         self.__printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
                                       'Print', self )
-        self.connect( self.__printButton, SIGNAL( 'triggered()' ),
-                      self.__onPrint )
+        self.__printButton.triggered.connect( self.__onPrint )
         self.__printButton.setEnabled( False )
         self.__printButton.setVisible( False )
 
         self.__printPreviewButton = QAction(
                 PixmapCache().getIcon( 'printpreview.png' ),
                 'Print preview', self )
-        self.connect( self.__printPreviewButton, SIGNAL( 'triggered()' ),
-                      self.__onPrintPreview )
+        self.__printPreviewButton.triggered.connect( self.__onPrintPreview )
         self.__printPreviewButton.setEnabled( False )
         self.__printPreviewButton.setVisible( False )
 
         # Zoom buttons
-        zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
-                                'Zoom in (Ctrl+=)', self )
-        self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.onZoomIn )
+        self.__zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
+                                       'Zoom in (Ctrl+=)', self )
+        self.__zoomInButton.triggered.connect( self.onZoomIn )
 
-        zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
-                                'Zoom out (Ctrl+-)', self )
-        self.connect( zoomOutButton, SIGNAL( 'triggered()' ), self.onZoomOut )
+        self.__zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
+                                        'Zoom out (Ctrl+-)', self )
+        self.__zoomOutButton.triggered.connect( self.onZoomOut )
 
-        zoomResetButton = QAction( PixmapCache().getIcon( 'zoomreset.png' ),
-                                   'Zoom reset (Ctrl+0)', self )
-        self.connect( zoomResetButton, SIGNAL( 'triggered()' ),
-                      self.onZoomReset )
+        self.__zoomResetButton = QAction( PixmapCache().getIcon( 'zoomreset.png' ),
+                                          'Zoom reset (Ctrl+0)', self )
+        self.__zoomResetButton.triggered.connect( self.onZoomReset )
 
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
@@ -128,9 +125,9 @@ class DisassemblerResultsWidget( QWidget, MainWindowTabWidgetBase ):
         toolbar.addAction( self.__printPreviewButton )
         toolbar.addAction( self.__printButton )
         toolbar.addWidget( spacer )
-        toolbar.addAction( zoomInButton )
-        toolbar.addAction( zoomOutButton )
-        toolbar.addAction( zoomResetButton )
+        toolbar.addAction( self.__zoomInButton )
+        toolbar.addAction( self.__zoomOutButton )
+        toolbar.addAction( self.__zoomResetButton )
 
         summary = QLabel( "<b>Script:</b> " + scriptName + "<br>"
                           "<b>Name:</b> " + name + "<br>"
