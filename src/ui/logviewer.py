@@ -28,14 +28,15 @@
 
 """ The log viewer implementation """
 
-from PyQt4.QtCore import Qt, SIGNAL, QSize
-from PyQt4.QtGui import QTextEdit, QColor, QBrush, QMenu, \
-                        QApplication, QTextCursor, QCursor, \
-                        QHBoxLayout, QWidget, QAction, QToolBar, \
-                        QSizePolicy
+from PyQt4.QtCore import Qt, QSize
+from PyQt4.QtGui import ( QPlainTextEdit, QColor, QBrush, QMenu, QTextCursor,
+                          QCursor, QHBoxLayout, QWidget, QAction, QToolBar,
+                          QSizePolicy, QFont )
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 
+
+MAX_LINES = 10000
 
 class LogViewer( QWidget ):
     """ The log (+stdout, +stderr) viewer widget """
@@ -53,23 +54,21 @@ class LogViewer( QWidget ):
 
         # create the context menu
         self.__menu = QMenu( self )
-        self.__selectAllMenuItem = self.__menu.addAction( \
+        self.__selectAllMenuItem = self.__menu.addAction(
                             PixmapCache().getIcon( 'selectall.png' ),
                             'Select All', self.messages.selectAll )
-        self.__copyMenuItem = self.__menu.addAction( \
+        self.__copyMenuItem = self.__menu.addAction(
                             PixmapCache().getIcon( 'copytoclipboard.png' ),
                             'Copy', self.messages.copy )
         self.__menu.addSeparator()
-        self.__clearMenuItem = self.__menu.addAction( \
+        self.__clearMenuItem = self.__menu.addAction(
                             PixmapCache().getIcon( 'trash.png' ),
                             'Clear', self.__clear )
 
         self.messages.setContextMenuPolicy( Qt.CustomContextMenu )
-        self.connect( self.messages,
-                      SIGNAL( "customContextMenuRequested(const QPoint &)" ),
-                      self.__handleShowContextMenu )
-        self.connect( self.messages, SIGNAL( "copyAvailable(bool)" ),
-                      self.__onCopyAvailable )
+        self.messages.customContextMenuRequested.connect(
+                                                self.__handleShowContextMenu )
+        self.messages.copyAvailable.connect( self.__onCopyAvailable )
 
         self.cNormalFormat = self.messages.currentCharFormat()
         self.cErrorFormat = self.messages.currentCharFormat()
@@ -81,11 +80,11 @@ class LogViewer( QWidget ):
         " Helper to create the viewer layout "
 
         # Messages list area
-        self.messages = QTextEdit( parent )
-        self.messages.setAcceptRichText( False )
-        self.messages.setLineWrapMode( QTextEdit.NoWrap )
-        self.messages.setFontFamily( GlobalData().skin.baseMonoFontFace )
+        self.messages = QPlainTextEdit( parent )
+        self.messages.setLineWrapMode( QPlainTextEdit.NoWrap )
+        self.messages.setFont( QFont( GlobalData().skin.baseMonoFontFace ) )
         self.messages.setReadOnly( True )
+        self.messages.setMaximumBlockCount( MAX_LINES )
 
         # Default font size is good enough for most of the systems.
         # 12.0 might be good only in case of the XServer on PC (Xming).
@@ -95,20 +94,17 @@ class LogViewer( QWidget ):
         self.selectAllButton = QAction(
             PixmapCache().getIcon( 'selectall.png' ),
             'Select all', self )
-        self.connect( self.selectAllButton, SIGNAL( "triggered()" ),
-                      self.messages.selectAll )
+        self.selectAllButton.triggered.connect( self.messages.selectAll )
         self.copyButton = QAction(
             PixmapCache().getIcon( 'copytoclipboard.png' ),
             'Copy to clipboard', self )
-        self.connect( self.copyButton, SIGNAL( "triggered()" ),
-                      self.messages.copy )
+        self.copyButton.triggered.connect( self.messages.copy )
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
         self.clearButton = QAction(
             PixmapCache().getIcon( 'trash.png' ),
             'Clear all', self )
-        self.connect( self.clearButton, SIGNAL( "triggered()" ),
-                      self.__clear )
+        self.clearButton.triggered.connect( self.__clear )
 
         # Toolbar
         self.toolbar = QToolBar()
