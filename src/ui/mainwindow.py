@@ -310,8 +310,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.__bottomSideBar.addTab( self.logViewer,
                                      PixmapCache().getIcon( 'logviewer.png' ),
                                      'Log' )
-        self.connect( sys.stdout, SIGNAL( 'appendToStdout(QString)' ), self.toStdout )
-        self.connect( sys.stderr, SIGNAL( 'appendToStderr(QString)' ), self.toStderr )
+        sys.stdout.appendToStdout.connect( self.toStdout )
+        sys.stderr.appendToStderr.connect( self.toStderr )
 
         # replace logging streamer to self.stdout
         logging.root.handlers = []

@@ -28,12 +28,15 @@
 
 """ Helper redirector class """
 
-from PyQt4.QtCore import QObject, SIGNAL
+from PyQt4.QtCore import QObject, pyqtSignal
 
 
 
 class Redirector( QObject ):
     " Helper class used to redirect stdout and stderr to the log window "
+
+    appendToStdout = pyqtSignal( str )
+    appendToStderr = pyqtSignal( str )
 
     def __init__( self, isStdout ):
         QObject.__init__( self )
@@ -46,13 +49,10 @@ class Redirector( QObject ):
 
     def write( self, message ):
         " Writes the given data "
-
-        while message.endswith( '\n' ):
-            message = message[ : -1 ]
-
+        message = message.rstrip( '\n' )
         if self.__isStdout:
-            self.emit( SIGNAL( 'appendToStdout(QString)' ), message )
+            self.appendToStdout.emit( message )
         else:
-            self.emit( SIGNAL( 'appendToStderr(QString)' ), message )
+            self.appendToStderr.emit( message )
         return
 
