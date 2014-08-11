@@ -23,7 +23,7 @@
 " Thread viewer "
 
 
-from PyQt4.QtCore import Qt, SIGNAL, QStringList
+from PyQt4.QtCore import Qt, QStringList
 from PyQt4.QtGui import ( QFrame, QTreeWidget, QToolButton, QTreeWidgetItem,
                           QHeaderView, QVBoxLayout, QLabel, QWidget,
                           QAbstractItemView, QSizePolicy, QSpacerItem,
@@ -128,8 +128,7 @@ class ThreadsViewer( QWidget ):
         self.__showHideButton.setFixedSize( 20, 20 )
         self.__showHideButton.setToolTip( "Hide threads list" )
         self.__showHideButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__showHideButton, SIGNAL( 'clicked()' ),
-                      self.__onShowHide )
+        self.__showHideButton.clicked.connect( self.__onShowHide )
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins( 0, 0, 0, 0 )
@@ -153,9 +152,7 @@ class ThreadsViewer( QWidget ):
         self.__threadsList.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         self.__threadsList.setFocusPolicy( Qt.NoFocus )
 
-        self.connect( self.__threadsList,
-                      SIGNAL( "itemClicked(QTreeWidgetItem*,int)" ),
-                      self.__onThreadClicked )
+        self.__threadsList.itemClicked.connect( self.__onThreadClicked )
 
         headerLabels = QStringList() << "" << "Name" << "State" << "TID"
         self.__threadsList.setHeaderLabels( headerLabels )
