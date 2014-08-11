@@ -22,10 +22,10 @@
 
 """ The tag help viewer implementation """
 
-from PyQt4.QtCore import Qt, SIGNAL, QSize
-from PyQt4.QtGui import ( QTextEdit, QMenu, QPalette, QApplication, QCursor,
-                          QHBoxLayout, QWidget, QAction, QToolBar,
-                          QSizePolicy, QLabel, QVBoxLayout, QFrame )
+from PyQt4.QtCore import Qt, QSize
+from PyQt4.QtGui import ( QPlainTextEdit, QMenu, QPalette, QApplication,
+                          QCursor, QHBoxLayout, QWidget, QAction, QToolBar,
+                          QSizePolicy, QLabel, QVBoxLayout, QFrame, QFont )
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 
@@ -59,11 +59,9 @@ class TagHelpViewer( QWidget ):
                             'Clear', self.__clear )
 
         self.__textEdit.setContextMenuPolicy( Qt.CustomContextMenu )
-        self.connect( self.__textEdit,
-                      SIGNAL( "customContextMenuRequested(const QPoint &)" ),
-                      self.__handleShowContextMenu )
-        self.connect( self.__textEdit, SIGNAL( "copyAvailable(bool)" ),
-                      self.__onCopyAvailable )
+        self.__textEdit.customContextMenuRequested.connect(
+                                                self.__handleShowContextMenu )
+        self.__textEdit.copyAvailable.connect( self.__onCopyAvailable )
 
         self.__updateToolbarButtons()
         return
@@ -72,10 +70,9 @@ class TagHelpViewer( QWidget ):
         " Helper to create the viewer layout "
 
         # __textEdit list area
-        self.__textEdit = QTextEdit( parent )
-        self.__textEdit.setAcceptRichText( False )
-        self.__textEdit.setLineWrapMode( QTextEdit.NoWrap )
-        self.__textEdit.setFontFamily( GlobalData().skin.baseMonoFontFace )
+        self.__textEdit = QPlainTextEdit( parent )
+        self.__textEdit.setLineWrapMode( QPlainTextEdit.NoWrap )
+        self.__textEdit.setFont( QFont( GlobalData().skin.baseMonoFontFace ) )
         self.__textEdit.setReadOnly( True )
 
         # Default font size is good enough for most of the systems.
@@ -86,20 +83,17 @@ class TagHelpViewer( QWidget ):
         self.__selectAllButton = QAction(
             PixmapCache().getIcon( 'selectall.png' ),
             'Select all', self )
-        self.connect( self.__selectAllButton, SIGNAL( "triggered()" ),
-                      self.__textEdit.selectAll )
+        self.__selectAllButton.triggered.connect(self.__textEdit.selectAll )
         self.__copyButton = QAction(
             PixmapCache().getIcon( 'copytoclipboard.png' ),
             'Copy to clipboard', self )
-        self.connect( self.__copyButton, SIGNAL( "triggered()" ),
-                      self.__textEdit.copy )
+        self.__copyButton.triggered.connect( self.__textEdit.copy )
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
         self.__clearButton = QAction(
             PixmapCache().getIcon( 'trash.png' ),
             'Clear all', self )
-        self.connect( self.__clearButton, SIGNAL( "triggered()" ),
-                      self.__clear )
+        self.__clearButton.triggered.connect( self.__clear )
 
         # Toolbar
         toolbar = QToolBar()
