@@ -22,7 +22,7 @@
 
 """ The diff viewer implementation """
 
-from PyQt4.QtCore import Qt, SIGNAL, QSize
+from PyQt4.QtCore import Qt, QSize
 from PyQt4.QtGui import ( QHBoxLayout, QWidget, QAction, QToolBar,
                           QSizePolicy, QVBoxLayout )
 from utils.pixmapcache import PixmapCache
@@ -60,15 +60,13 @@ class DiffViewer( QWidget ):
         self.__sendUpButton = QAction(
             PixmapCache().getIcon( 'senddiffup.png' ),
             'Send to Main Editing Area', self )
-        self.connect( self.__sendUpButton, SIGNAL( "triggered()" ),
-                      self.__sendUp )
+        self.__sendUpButton.triggered.connect( self.__sendUp )
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
         self.__clearButton = QAction(
             PixmapCache().getIcon( 'trash.png' ),
             'Clear Generated Diff', self )
-        self.connect( self.__clearButton, SIGNAL( "triggered()" ),
-                      self.__clear )
+        self.__clearButton.triggered.connect( self.__clear )
 
         # Toolbar
         self.toolbar = QToolBar()
