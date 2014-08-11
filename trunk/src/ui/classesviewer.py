@@ -67,9 +67,8 @@ class ClassesViewer( QWidget ):
                                 'Copy path to clipboard',
                                 self.clViewer.copyToClipboard )
         self.clViewer.setContextMenuPolicy( Qt.CustomContextMenu )
-        self.connect( self.clViewer,
-                      SIGNAL( "customContextMenuRequested(const QPoint &)" ),
-                      self.__handleShowContextMenu )
+        self.clViewer.customContextMenuRequested.connect(
+                                                self.__handleShowContextMenu )
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
@@ -95,27 +94,23 @@ class ClassesViewer( QWidget ):
         self.clViewer = ClassesBrowser()
 
         # Toolbar part - buttons
-        self.definitionButton = QAction( \
+        self.definitionButton = QAction(
                 PixmapCache().getIcon( 'definition.png' ),
                 'Jump to highlighted item definition', self )
-        self.connect( self.definitionButton, SIGNAL( "triggered()" ),
-                      self.__goToDefinition )
-        self.findButton = QAction( \
+        self.definitionButton.triggered.connect( self.__goToDefinition )
+        self.findButton = QAction(
                 PixmapCache().getIcon( 'findusage.png' ),
                 'Find highlighted item occurences', self )
-        self.connect( self.findButton, SIGNAL( "triggered()" ),
-                      self.__findWhereUsed )
-        self.copyPathButton = QAction( \
+        self.findButton.triggered.connect( self.__findWhereUsed )
+        self.copyPathButton = QAction(
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
                 'Copy path to clipboard', self )
-        self.connect( self.copyPathButton, SIGNAL( "triggered()" ),
-                      self.clViewer.copyToClipboard )
+        self.copyPathButton.triggered.connect( self.clViewer.copyToClipboard )
 
-        self.findNotUsedButton = QAction( \
+        self.findNotUsedButton = QAction(
                 PixmapCache().getIcon( 'notused.png' ),
                 'Unused class analysis', self )
-        self.connect( self.findNotUsedButton, SIGNAL( "triggered()" ),
-                      self.__findNotUsed )
+        self.findNotUsedButton.triggered.connect( self.__findNotUsed )
         self.findNotUsedButton.setEnabled( False )
 
         self.toolbar = QToolBar( self )
@@ -136,9 +131,7 @@ class ClassesViewer( QWidget ):
         self.filterEdit.lineEdit().setToolTip( "Space separated regular expressions" )
         self.toolbar.addWidget( self.filterEdit )
         self.toolbar.addAction( self.findNotUsedButton )
-        self.connect( self.filterEdit,
-                      SIGNAL( "editTextChanged(const QString &)" ),
-                      self.__filterChanged )
+        self.filterEdit.editTextChanged.connect( self.__filterChanged )
         self.connect( self.filterEdit, SIGNAL( 'itemAdded' ),
                       self.__filterItemAdded )
         self.connect( self.filterEdit, SIGNAL( 'enterClicked' ),
@@ -209,13 +202,10 @@ class ClassesViewer( QWidget ):
 
             project = GlobalData().project
             if project.isLoaded():
-                self.disconnect( self.filterEdit,
-                                 SIGNAL( "editTextChanged(const QString &)" ),
-                                 self.__filterChanged )
+                self.filterEdit.editTextChanged.disconnect(
+                                                    self.__filterChanged )
                 self.filterEdit.addItems( project.findClassHistory )
-                self.connect( self.filterEdit,
-                              SIGNAL( "editTextChanged(const QString &)" ),
-                              self.__filterChanged )
+                self.filterEdit.editTextChanged.connect( self.__filterChanged )
                 self.findNotUsedButton.setEnabled( self.getItemCount() > 0 )
             else:
                 self.findNotUsedButton.setEnabled( False )
