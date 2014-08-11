@@ -23,7 +23,7 @@
 
 """ definition of the codimension QT based application class """
 
-from PyQt4.QtCore       import Qt, QEvent, SIGNAL
+from PyQt4.QtCore       import Qt, QEvent
 from PyQt4.QtGui        import QApplication, QMenuBar
 from utils.pixmapcache  import PixmapCache
 from utils.globals      import GlobalData
@@ -61,8 +61,7 @@ class CodimensionApplication( QApplication ):
 
         QApplication.setWindowIcon( PixmapCache().getIcon( 'icon.png' ) )
 
-        self.connect( self, SIGNAL( "focusChanged(QWidget*, QWidget*)" ),
-                      self.__onFocusChanged )
+        self.focusChanged.connect( self.__onFocusChanged )
 
         # Avoid having rectangular frames on the status bar and
         # some application wide style changes
