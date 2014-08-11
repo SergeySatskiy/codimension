@@ -30,8 +30,7 @@
 
 
 import sys, os, logging
-from PyQt4.QtCore import ( Qt, QAbstractItemModel, QVariant, QModelIndex,
-                           SIGNAL )
+from PyQt4.QtCore import Qt, QAbstractItemModel, QVariant, QModelIndex
 from PyQt4.QtGui import QApplication, QCursor
 from viewitems import ( TreeViewItem, TreeViewDirectoryItem, TreeViewFileItem,
                         TreeViewGlobalsItem, TreeViewImportsItem,
@@ -79,8 +78,7 @@ class BrowserModelBase( QAbstractItemModel ):
     def updateRootData( self, column, value ):
         " Updates the root entry, i.e. header "
         self.rootItem.setData( column, value )
-        self.emit( SIGNAL( "headerDataChanged(Qt::Orientation, int, int)" ),
-                   Qt.Horizontal, column, column )
+        self.headerDataChanged.emit( Qt.Horizontal, column, column )
         return
 
     def data( self, index, role ):
@@ -617,8 +615,7 @@ class BrowserModelBase( QAbstractItemModel ):
     def signalItemUpdated( self, treeItem ):
         " Emits a signal that an item is updated "
         index = self.buildIndex( treeItem.getRowPath() )
-        self.emit( SIGNAL( "dataChanged(const QModelIndex &," \
-                           "const QModelIndex &)" ), index, index )
+        self.dataChanged.emit( index, index )
         return
 
     def removeTreeItem( self, treeItem ):
