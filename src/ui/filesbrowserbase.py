@@ -118,12 +118,9 @@ class FilesBrowser( QTreeView ):
         self.__sortModel.setSourceModel( self.__model )
         self.setModel( self.__sortModel )
 
-        self.connect( self, SIGNAL( "activated(const QModelIndex &)" ),
-                      self.openSelectedItem )
-        self.connect( self, SIGNAL( "expanded(const QModelIndex &)" ),
-                      self._resizeColumns )
-        self.connect( self, SIGNAL( "collapsed(const QModelIndex &)" ),
-                      self._resizeColumns )
+        self.activated.connect( self.openSelectedItem )
+        self.expanded.connect( self._resizeColumns )
+        self.collapsed.connect( self._resizeColumns )
 
         self.setRootIsDecorated( True )
         self.setAlternatingRowColors( True )
