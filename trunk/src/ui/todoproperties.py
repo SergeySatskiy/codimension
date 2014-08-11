@@ -30,12 +30,12 @@
 """ todo and fixme properties dialog """
 
 
-from PyQt4.QtCore import Qt, SIGNAL, QObject, QMetaObject
-from PyQt4.QtGui import QDialog, QLineEdit, QGridLayout, QLabel, QSizePolicy, \
-                        QDialogButtonBox, QCheckBox
+from PyQt4.QtCore import Qt, QMetaObject
+from PyQt4.QtGui import ( QDialog, QLineEdit, QGridLayout, QLabel, QSizePolicy,
+                          QDialogButtonBox, QCheckBox )
 
 
-class TodoPropertiesDialog( QDialog, object ):
+class TodoPropertiesDialog( QDialog ):
     """ todo properties dialog implementation """
 
     def __init__( self, todo = None, parent = None ):
@@ -107,8 +107,8 @@ class TodoPropertiesDialog( QDialog, object ):
 
         self.descriptionLabel.setBuddy( self.descriptionEdit )
 
-        QObject.connect( self.buttonBox, SIGNAL( "accepted()" ), self.accept )
-        QObject.connect( self.buttonBox, SIGNAL( "rejected()" ), self.reject )
+        self.buttonBox.accepted.connect( self.accept )
+        self.buttonBox.rejected.connect( self.reject )
         QMetaObject.connectSlotsByName( self )
         self.setTabOrder( self.completedCheckBox, self.buttonBox )
         return
