@@ -24,7 +24,7 @@
 
 from PyQt4.QtGui import ( QDialog, QVBoxLayout, QHBoxLayout, QLabel, QTabWidget,
                           QTextBrowser, QDialogButtonBox, QSizePolicy )
-from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtCore import Qt
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 from utils.versions import getComponentInfo
@@ -75,8 +75,8 @@ class AboutDialog( QDialog ):
         buttonBox = QDialogButtonBox( self )
         buttonBox.setOrientation( Qt.Horizontal )
         buttonBox.setStandardButtons( QDialogButtonBox.Ok )
-        self.connect( buttonBox, SIGNAL( "accepted()" ), self.close )
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
+        buttonBox.accepted.connect( self.close )
+        buttonBox.rejected.connect( self.close )
         vboxLayout.addWidget( buttonBox )
         return
 
