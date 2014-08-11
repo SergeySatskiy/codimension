@@ -72,16 +72,15 @@ class OutsideChangeWidget( QFrame ):
 
         self.__leaveAsIsButton = QPushButton( "Continue editing", self )
         self.__leaveAsIsButton.setToolTip( "ESC" )
-        self.connect( self.__leaveAsIsButton, SIGNAL( 'clicked()' ), self.hide )
+        self.__leaveAsIsButton.clicked.connect( self.hide )
 
         self.__reloadButton = QPushButton( self )
-        self.connect( self.__reloadButton, SIGNAL( 'clicked()' ),
-                      self.__reload )
+        self.__reloadButton.clicked.connect( self.__reload )
 
         txt = "Reload all non-modified buffers"
         self.__reloadAllNonChangedButton = QPushButton( txt, self )
-        self.connect( self.__reloadAllNonChangedButton, SIGNAL( 'clicked()' ),
-                      self.__reloadAllNonModified )
+        self.__reloadAllNonChangedButton.clicked.connect(
+                                                self.__reloadAllNonModified )
 
         # This will prevent the buttons growing wider than necessary
         fontMetrics = QFontMetrics( self.__reloadAllNonChangedButton.font() )
