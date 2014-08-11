@@ -402,8 +402,7 @@ class FilesBrowser( QTreeView ):
         self.setModel( self.__sortModel )
         self.selectedIndex = None
 
-        self.connect( self, SIGNAL( "activated(const QModelIndex &)" ),
-                      self.openCurrentItem )
+        self.activated.connect( self.openCurrentItem )
 
         self.setRootIsDecorated( False )
         self.setAlternatingRowColors( True )
@@ -502,9 +501,7 @@ class FindFileDialog( QDialog ):
         self.findCombo.addItems( self.__findFileHistory )
         self.findCombo.setEditText( "" )
 
-        self.connect( self.findCombo,
-                      SIGNAL( "editTextChanged(const QString &)" ),
-                      self.__filterChanged )
+        self.findCombo.editTextChanged.connect( self.__filterChanged )
 
         self.__highlightFirst()
         self.__updateTitle()
