@@ -133,10 +133,8 @@ class EditorsManager( QTabWidget ):
         self.__installActions()
         self.__updateStatusBar()
 
-        self.connect( self, SIGNAL( "tabCloseRequested(int)" ),
-                      self.__onCloseRequest )
-        self.connect( self, SIGNAL( "currentChanged(int)" ),
-                      self.__currentChanged )
+        self.tabCloseRequested.connect( self.__onCloseRequest )
+        self.currentChanged.connect( self.__currentChanged )
 
         # Context menu
         self.__tabContextMenu = QMenu( self )
@@ -178,9 +176,8 @@ class EditorsManager( QTabWidget ):
                                 "Close and &delete from disk",
                                 self.__closeDelete )
         self.tabBar().setContextMenuPolicy( Qt.CustomContextMenu )
-        self.connect( self.tabBar(),
-                      SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
-                      self.__showTabContextMenu )
+        self.tabBar().customContextMenuRequested.connect(
+                                                    self.__showTabContextMenu )
         self.connect( self.tabBar(), SIGNAL( 'currentTabClicked' ),
                       self.__currentTabClicked )
 
@@ -407,29 +404,21 @@ class EditorsManager( QTabWidget ):
     def __installActions( self ):
         " Installs various key combinations handlers "
         findAction = QShortcut( 'Ctrl+F', self )
-        self.connect( findAction, SIGNAL( 'activated()' ),
-                      self.onFind )
+        findAction.activated.connect( self.onFind )
         hiddenFindAction = QShortcut( 'Ctrl+F3', self )
-        self.connect( hiddenFindAction, SIGNAL( "activated()" ),
-                      self.onHiddenFind )
+        hiddenFindAction.activated.connect( self.onHiddenFind )
         replaceAction = QShortcut( 'Ctrl+R', self )
-        self.connect( replaceAction, SIGNAL( 'activated()' ),
-                      self.onReplace )
+        replaceAction.activated.connect( self.onReplace )
         closeTabAction = QShortcut( 'Ctrl+F4', self )
-        self.connect( closeTabAction, SIGNAL( 'activated()' ),
-                      self.onCloseTab )
+        closeTabAction.activated.connect( self.onCloseTab )
         nextTabAction = QShortcut( 'Ctrl+PgUp', self )
-        self.connect( nextTabAction, SIGNAL( 'activated()' ),
-                      self.__onPrevTab )
+        nextTabAction.activated.connect( self.__onPrevTab )
         flipTabAction = QShortcut( 'Ctrl+Tab', self )
-        self.connect( flipTabAction, SIGNAL( 'activated()' ),
-                      self.__onFlipTab )
+        flipTabAction.activated.connect( self.__onFlipTab )
         prevTabAction = QShortcut( 'Ctrl+PgDown', self )
-        self.connect( prevTabAction, SIGNAL( 'activated()' ),
-                      self.__onNextTab )
+        prevTabAction.activated.connect( self.__onNextTab )
         gotoAction = QShortcut( 'Ctrl+G', self )
-        self.connect( gotoAction, SIGNAL( 'activated()' ),
-                      self.onGoto )
+        gotoAction.activated.connect( self.onGoto )
         return
 
     def registerAuxWidgets( self, find, replace, goto ):
@@ -699,16 +688,14 @@ class EditorsManager( QTabWidget ):
         rightCornerWidgetLayout.setSpacing( 0 )
 
         self.__navigationMenu = QMenu( self )
-        self.connect( self.__navigationMenu, SIGNAL( "aboutToShow()" ),
-                      self.__showNavigationMenu )
-        self.connect( self.__navigationMenu, SIGNAL( "triggered(QAction*)" ),
-                      self.__navigationMenuTriggered )
+        self.__navigationMenu.aboutToShow.connect( self.__showNavigationMenu )
+        self.__navigationMenu.triggered.connect( self.__navigationMenuTriggered )
 
         newTabButton = QToolButton( self )
         newTabButton.setIcon( PixmapCache().getIcon( "newfiletab.png" ) )
         newTabButton.setToolTip( "New file (Ctrl+N)" )
         newTabButton.setEnabled( True )
-        self.connect( newTabButton, SIGNAL( 'clicked()' ), self.newTabClicked )
+        newTabButton.clicked.connect( self.newTabClicked )
         rightCornerWidgetLayout.addWidget( newTabButton )
         self.navigationButton = QToolButton( self )
         self.navigationButton.setIcon(
@@ -723,16 +710,12 @@ class EditorsManager( QTabWidget ):
 
 
         self.__historyBackMenu = QMenu( self )
-        self.connect( self.__historyBackMenu, SIGNAL( "aboutToShow()" ),
-                      self.__showHistoryBackMenu )
-        self.connect( self.__historyBackMenu, SIGNAL( "triggered(QAction*)" ),
-                      self.__historyMenuTriggered )
+        self.__historyBackMenu.aboutToShow.connect( self.__showHistoryBackMenu )
+        self.__historyBackMenu.triggered.connect( self.__historyMenuTriggered )
 
         self.__historyFwdMenu = QMenu( self )
-        self.connect( self.__historyFwdMenu, SIGNAL( "aboutToShow()" ),
-                      self.__showHistoryFwdMenu )
-        self.connect( self.__historyFwdMenu, SIGNAL( "triggered(QAction*)" ),
-                      self.__historyMenuTriggered )
+        self.__historyFwdMenu.aboutToShow.connect( self.__showHistoryFwdMenu )
+        self.__historyFwdMenu.triggered.connect( self.__historyMenuTriggered )
 
         leftCornerWidget = QWidget( self )
         leftCornerWidgetLayout = QHBoxLayout( leftCornerWidget )
@@ -746,8 +729,7 @@ class EditorsManager( QTabWidget ):
         self.historyBackButton.setPopupMode( QToolButton.DelayedPopup )
         self.historyBackButton.setMenu( self.__historyBackMenu )
         self.historyBackButton.setEnabled( False )
-        self.connect( self.historyBackButton, SIGNAL( 'clicked()' ),
-                      self.historyBackClicked )
+        self.historyBackButton.clicked.connect( self.historyBackClicked )
         leftCornerWidgetLayout.addWidget( self.historyBackButton )
         self.historyFwdButton = QToolButton( self )
         self.historyFwdButton.setIcon(
@@ -757,8 +739,7 @@ class EditorsManager( QTabWidget ):
         self.historyFwdButton.setPopupMode( QToolButton.DelayedPopup )
         self.historyFwdButton.setMenu( self.__historyFwdMenu )
         self.historyFwdButton.setEnabled( False )
-        self.connect( self.historyFwdButton, SIGNAL( 'clicked()' ),
-                      self.historyForwardClicked )
+        self.historyFwdButton.clicked.connect( self.historyForwardClicked )
         leftCornerWidgetLayout.addWidget( self.historyFwdButton )
 
         self.setCornerWidget( leftCornerWidget, Qt.TopLeftCorner )
@@ -1757,12 +1738,9 @@ class EditorsManager( QTabWidget ):
         " Connects the editor's signals "
 
         editor = editorWidget.getEditor()
-        self.connect( editor, SIGNAL( 'modificationChanged(bool)' ),
-                      self.__modificationChanged )
-        self.connect( editor, SIGNAL( "SCEN_CHANGE()" ),
-                      self.__contentChanged )
-        self.connect( editor, SIGNAL( 'cursorPositionChanged(int,int)' ),
-                      self.__cursorPositionChanged )
+        editor.modificationChanged.connect( self.__modificationChanged )
+        editor.SCEN_CHANGE.connect( self.__contentChanged )
+        editor.cursorPositionChanged.connect( self.__cursorPositionChanged )
         self.connect( editor, SIGNAL( 'ESCPressed' ),
                       self.__onESC )
 
