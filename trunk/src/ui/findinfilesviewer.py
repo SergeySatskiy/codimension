@@ -65,8 +65,7 @@ class Tooltip( QFrame ):
         # outside of the class.
         self.tooltipTimer = QTimer( self )
         self.tooltipTimer.setSingleShot( True )
-        self.connect( self.tooltipTimer, SIGNAL( 'timeout()' ),
-                      self.__onTimer )
+        self.tooltipTimer.timeout.connect( self.__onTimer )
 
         self.startPosition = None
         return
@@ -363,16 +362,14 @@ class FindInFilesViewer( QWidget ):
         self.printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
                                     'Print', self )
         #printButton.setShortcut( 'Ctrl+' )
-        self.connect( self.printButton, SIGNAL( 'triggered()' ),
-                      self.__onPrint )
+        self.printButton.triggered.connect( self.__onPrint )
         self.printButton.setVisible( False )
 
         self.printPreviewButton = QAction(
                 PixmapCache().getIcon( 'printpreview.png' ),
                 'Print preview', self )
         #printPreviewButton.setShortcut( 'Ctrl+' )
-        self.connect( self.printPreviewButton, SIGNAL( 'triggered()' ),
-                      self.__onPrintPreview )
+        self.printPreviewButton.triggered.connect( self.__onPrintPreview )
         self.printPreviewButton.setVisible( False )
 
         spacer = QWidget()
@@ -381,8 +378,7 @@ class FindInFilesViewer( QWidget ):
         self.clearButton = QAction(
             PixmapCache().getIcon( 'trash.png' ),
             'Clear', self )
-        self.connect( self.clearButton, SIGNAL( 'triggered()' ),
-                      self.__clear )
+        self.clearButton.triggered.connect( self.__clear )
 
         # The toolbar
         self.toolbar = QToolBar( self )
@@ -406,16 +402,10 @@ class FindInFilesViewer( QWidget ):
         self.__resultsTree.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         headerLabels = QStringList() << "File name / line" << "Text"
         self.__resultsTree.setHeaderLabels( headerLabels )
-        self.connect( self.__resultsTree,
-                      SIGNAL( "itemActivated(QTreeWidgetItem *, int)" ),
-                      self.__resultActivated )
-        self.connect( self.__resultsTree,
-                      SIGNAL( "itemClicked(QTreeWidgetItem *, int)" ),
-                      self.__resultClicked )
+        self.__resultsTree.itemActivated.connect( self.__resultActivated )
+        self.__resultsTree.itemClicked.connect( self.__resultClicked )
         self.__resultsTree.setMouseTracking( True )
-        self.connect( self.__resultsTree,
-                      SIGNAL( "itemEntered(QTreeWidgetItem *, int)" ),
-                      self.__itemEntered )
+        self.__resultsTree.itemEntered.connect( self.__itemEntered )
         self.__resultsTree.hide()
 
         self.__hLayout = QHBoxLayout()
