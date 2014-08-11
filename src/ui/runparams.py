@@ -25,7 +25,7 @@
 
 
 import os, os.path, copy
-from PyQt4.QtCore import Qt, SIGNAL, QStringList
+from PyQt4.QtCore import Qt, QStringList
 from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout,
                           QSizePolicy, QLabel, QGridLayout, QHBoxLayout,
                           QRadioButton, QGroupBox, QPushButton, QFileDialog,
@@ -76,14 +76,10 @@ class EnvVarDialog( QDialog ):
         valueLabel = QLabel( "Value" )
         gridLayout.addWidget( valueLabel, 1, 0 )
         self.__nameEdit = QLineEdit()
-        self.connect( self.__nameEdit,
-                      SIGNAL( 'textChanged(const QString &)' ),
-                      self.__nameChanged )
+        self.__nameEdit.textChanged.connect( self.__nameChanged )
         gridLayout.addWidget( self.__nameEdit, 0, 1 )
         self.__valueEdit = QLineEdit()
-        self.connect( self.__valueEdit,
-                      SIGNAL( 'textChanged(const QString &)' ),
-                      self.__valueChanged )
+        self.__valueEdit.textChanged.connect( self.__valueChanged )
         gridLayout.addWidget( self.__valueEdit, 1, 1 )
         layout.addLayout( gridLayout )
 
@@ -93,8 +89,8 @@ class EnvVarDialog( QDialog ):
                                       QDialogButtonBox.Cancel )
         self.__OKButton = buttonBox.button( QDialogButtonBox.Ok )
         self.__OKButton.setDefault( True )
-        self.connect( buttonBox, SIGNAL( "accepted()" ), self.accept )
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
+        buttonBox.accepted.connect( self.accept )
+        buttonBox.rejected.connect( self.close )
         layout.addWidget( buttonBox )
         return
 
@@ -267,9 +263,7 @@ class RunDialog( QDialog ):
         # Cmd line arguments
         argsLabel = QLabel( "Command line arguments" )
         self.__argsEdit = QLineEdit()
-        self.connect( self.__argsEdit,
-                      SIGNAL( 'textChanged(const QString &)' ),
-                      self.__argsChanged )
+        self.__argsEdit.textChanged.connect( self.__argsChanged )
         argsLayout = QHBoxLayout()
         argsLayout.addWidget( argsLabel )
         argsLayout.addWidget( self.__argsEdit )
@@ -289,26 +283,21 @@ class RunDialog( QDialog ):
         self.__scriptWDRButton = QRadioButton( workDirGroupbox )
         self.__scriptWDRButton.setText( "&Use script location" )
         gridLayoutWD.addWidget( self.__scriptWDRButton, 0, 0 )
-        self.connect( self.__scriptWDRButton, SIGNAL( 'clicked()' ),
-                      self.__scriptWDirClicked )
+        self.__scriptWDRButton.clicked.connect( self.__scriptWDirClicked )
 
         self.__dirRButton = QRadioButton( workDirGroupbox )
         self.__dirRButton.setText( "Select &directory" )
         gridLayoutWD.addWidget( self.__dirRButton, 1, 0 )
-        self.connect( self.__dirRButton, SIGNAL( 'clicked()' ),
-                      self.__dirClicked )
+        self.__dirRButton.clicked.connect( self.__dirClicked )
 
         self.__dirEdit = QLineEdit( workDirGroupbox )
         gridLayoutWD.addWidget( self.__dirEdit, 1, 1 )
-        self.connect( self.__dirEdit,
-                      SIGNAL( 'textChanged(const QString &)' ),
-                      self.__workingDirChanged )
+        self.__dirEdit.textChanged.connect( self.__workingDirChanged )
 
         self.__dirSelectButton = QPushButton( workDirGroupbox )
         self.__dirSelectButton.setText( "..." )
         gridLayoutWD.addWidget( self.__dirSelectButton, 1, 2 )
-        self.connect( self.__dirSelectButton, SIGNAL( 'clicked()' ),
-                      self.__selectDirClicked )
+        self.__dirSelectButton.clicked.connect( self.__selectDirClicked )
 
         layout.addWidget( workDirGroupbox )
 
@@ -325,36 +314,29 @@ class RunDialog( QDialog ):
         layoutEnv = QVBoxLayout( envGroupbox )
         self.__inheritParentRButton = QRadioButton( envGroupbox )
         self.__inheritParentRButton.setText( "Inherit &parent" )
-        self.connect( self.__inheritParentRButton, SIGNAL( 'clicked()' ),
-                      self.__inhClicked )
+        self.__inheritParentRButton.clicked.connect( self.__inhClicked )
         layoutEnv.addWidget( self.__inheritParentRButton )
 
         self.__inheritParentPlusRButton = QRadioButton( envGroupbox )
         self.__inheritParentPlusRButton.setText( "Inherit parent and add/&modify" )
-        self.connect( self.__inheritParentPlusRButton, SIGNAL( 'clicked()' ),
-                      self.__inhPlusClicked )
+        self.__inheritParentPlusRButton.clicked.connect( self.__inhPlusClicked )
         layoutEnv.addWidget( self.__inheritParentPlusRButton )
         hInhPlusLayout = QHBoxLayout()
         self.__inhPlusEnvTable = QTreeWidget()
-        self.connect( self.__inhPlusEnvTable,
-                      SIGNAL( 'itemActivated(QTreeWidgetItem*, int)' ),
-                      self.__inhPlusItemActivated )
+        self.__inhPlusEnvTable.itemActivated.connect( self.__inhPlusItemActivated )
         self.__tuneTable( self.__inhPlusEnvTable )
         hInhPlusLayout.addWidget( self.__inhPlusEnvTable )
         vInhPlusLayout = QVBoxLayout()
         self.__addInhButton = QPushButton()
-        self.connect( self.__addInhButton, SIGNAL( 'clicked()' ),
-                      self.__addInhClicked )
+        self.__addInhButton.clicked.connect( self.__addInhClicked )
         self.__addInhButton.setText( 'Add' )
         vInhPlusLayout.addWidget( self.__addInhButton )
         self.__delInhButton = QPushButton()
-        self.connect( self.__delInhButton, SIGNAL( 'clicked()' ),
-                      self.__delInhClicked )
+        self.__delInhButton.clicked.connect( self.__delInhClicked )
         self.__delInhButton.setText( 'Delete' )
         vInhPlusLayout.addWidget( self.__delInhButton )
         self.__editInhButton = QPushButton()
-        self.connect( self.__editInhButton, SIGNAL( 'clicked()' ),
-                      self.__editInhClicked )
+        self.__editInhButton.clicked.connect( self.__editInhClicked )
         self.__editInhButton.setText( "Edit" )
         vInhPlusLayout.addWidget( self.__editInhButton )
         hInhPlusLayout.addLayout( vInhPlusLayout )
@@ -362,30 +344,24 @@ class RunDialog( QDialog ):
 
         self.__specificRButton = QRadioButton( envGroupbox )
         self.__specificRButton.setText( "&Specific" )
-        self.connect( self.__specificRButton, SIGNAL( 'clicked()' ),
-                      self.__specClicked )
+        self.__specificRButton.clicked.connect( self.__specClicked )
         layoutEnv.addWidget( self.__specificRButton )
         hSpecLayout = QHBoxLayout()
         self.__specEnvTable = QTreeWidget()
-        self.connect( self.__specEnvTable,
-                      SIGNAL( 'itemActivated(QTreeWidgetItem*, int)' ),
-                      self.__specItemActivated )
+        self.__specEnvTable.itemActivated.connect( self.__specItemActivated )
         self.__tuneTable( self.__specEnvTable )
         hSpecLayout.addWidget( self.__specEnvTable )
         vSpecLayout = QVBoxLayout()
         self.__addSpecButton = QPushButton()
-        self.connect( self.__addSpecButton, SIGNAL( 'clicked()' ),
-                      self.__addSpecClicked )
+        self.__addSpecButton.clicked.connect( self.__addSpecClicked )
         self.__addSpecButton.setText( 'Add' )
         vSpecLayout.addWidget( self.__addSpecButton )
         self.__delSpecButton = QPushButton()
-        self.connect( self.__delSpecButton, SIGNAL( 'clicked()' ),
-                      self.__delSpecClicked )
+        self.__delSpecButton.clicked.connect( self.__delSpecClicked )
         self.__delSpecButton.setText( 'Delete' )
         vSpecLayout.addWidget( self.__delSpecButton )
         self.__editSpecButton = QPushButton()
-        self.connect( self.__editSpecButton, SIGNAL( 'clicked()' ),
-                      self.__editSpecClicked )
+        self.__editSpecButton.clicked.connect( self.__editSpecClicked )
         self.__editSpecButton.setText( "Edit" )
         vSpecLayout.addWidget( self.__editSpecButton )
         hSpecLayout.addLayout( vSpecLayout )
@@ -401,10 +377,9 @@ class RunDialog( QDialog ):
             layout.addWidget( termGroupbox )
 
         # Close checkbox
-        self.__closeCheckBox = QCheckBox( "&Close terminal upon " \
+        self.__closeCheckBox = QCheckBox( "&Close terminal upon "
                                           "successful completion" )
-        self.connect( self.__closeCheckBox, SIGNAL( "stateChanged(int)" ),
-                      self.__onCloseChanged )
+        self.__closeCheckBox.stateChanged.connect( self.__onCloseChanged )
         layout.addWidget( self.__closeCheckBox )
 
         # Buttons at the bottom
@@ -414,11 +389,10 @@ class RunDialog( QDialog ):
         self.__runButton = buttonBox.addButton( action,
                                                 QDialogButtonBox.AcceptRole )
         self.__runButton.setDefault( True )
-        self.connect( self.__runButton, SIGNAL( 'clicked()' ),
-                      self.onAccept )
+        self.__runButton.clicked.connect( self.onAccept )
         layout.addWidget( buttonBox )
 
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
+        buttonBox.rejected.connect( self.close )
         return
 
     def __getTermGroupbox( self ):
@@ -434,8 +408,7 @@ class RunDialog( QDialog ):
         layoutTerm = QVBoxLayout( termGroupbox )
         self.__redirectRButton = QRadioButton( termGroupbox )
         self.__redirectRButton.setText( "&Redirect to IDE" )
-        self.connect( self.__redirectRButton, SIGNAL( 'toggled(bool)' ),
-                      self.__redirectedChanged )
+        self.__redirectRButton.toggled.connect( self.__redirectedChanged )
         layoutTerm.addWidget( self.__redirectRButton )
         self.__autoRButton = QRadioButton( termGroupbox )
         self.__autoRButton.setText( "Aut&o detection" )
@@ -496,15 +469,13 @@ class RunDialog( QDialog ):
 
         layoutLimits = QGridLayout( limitsGroupbox )
         self.__nodeLimitEdit = QLineEdit()
-        self.connect( self.__nodeLimitEdit, SIGNAL( "textEdited(const QString &)" ),
-                      self.__setRunButtonProps )
+        self.__nodeLimitEdit.textEdited.connect( self.__setRunButtonProps )
         self.__nodeLimitValidator = QDoubleValidator( 0.0, 100.0, 2, self )
         self.__nodeLimitValidator.setNotation( QDoubleValidator.StandardNotation )
         self.__nodeLimitEdit.setValidator( self.__nodeLimitValidator )
         nodeLimitLabel = QLabel( "Hide nodes below" )
         self.__edgeLimitEdit = QLineEdit()
-        self.connect( self.__edgeLimitEdit, SIGNAL( "textEdited(const QString &)" ),
-                      self.__setRunButtonProps )
+        self.__edgeLimitEdit.textEdited.connect( self.__setRunButtonProps )
         self.__edgeLimitValidator = QDoubleValidator( 0.0, 100.0, 2, self )
         self.__edgeLimitValidator.setNotation( QDoubleValidator.StandardNotation )
         self.__edgeLimitEdit.setValidator( self.__edgeLimitValidator )
@@ -530,20 +501,18 @@ class RunDialog( QDialog ):
 
         dbgLayout = QVBoxLayout( dbgGroupbox )
         self.__reportExceptionCheckBox = QCheckBox( "Report &exceptions" )
-        self.connect( self.__reportExceptionCheckBox, SIGNAL( "stateChanged(int)" ),
-                      self.__onReportExceptionChanged )
+        self.__reportExceptionCheckBox.stateChanged.connect(
+                                            self.__onReportExceptionChanged )
         self.__traceInterpreterCheckBox = QCheckBox( "T&race interpreter libs" )
-        self.connect( self.__traceInterpreterCheckBox, SIGNAL( "stateChanged(int)" ),
-                      self.__onTraceInterpreterChanged )
+        self.__traceInterpreterCheckBox.stateChanged.connect(
+                                            self.__onTraceInterpreterChanged )
         self.__stopAtFirstCheckBox = QCheckBox( "Stop at first &line" )
-        self.connect( self.__stopAtFirstCheckBox, SIGNAL( "stateChanged(int)" ),
-                      self.__onStopAtFirstChanged )
+        self.__stopAtFirstCheckBox.stateChanged.connect(
+                                            self.__onStopAtFirstChanged )
         self.__autoforkCheckBox = QCheckBox( "&Fork without asking" )
-        self.connect( self.__autoforkCheckBox, SIGNAL( "stateChanged(int)" ),
-                      self.__onAutoforkChanged )
+        self.__autoforkCheckBox.stateChanged.connect(self.__onAutoforkChanged )
         self.__debugChildCheckBox = QCheckBox( "Debu&g child process" )
-        self.connect( self.__debugChildCheckBox, SIGNAL( "stateChanged(int)" ),
-                      self.__onDebugChild )
+        self.__debugChildCheckBox.stateChanged.connect( self.__onDebugChild )
 
         dbgLayout.addWidget( self.__reportExceptionCheckBox )
         dbgLayout.addWidget( self.__traceInterpreterCheckBox )
