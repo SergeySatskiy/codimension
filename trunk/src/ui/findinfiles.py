@@ -26,7 +26,7 @@
 
 import os, os.path, re, time, logging
 from os.path import sep
-from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout, QSizePolicy,
                           QLabel, QProgressBar, QApplication, QComboBox,
                           QGridLayout, QHBoxLayout, QCheckBox, QRadioButton,
@@ -321,9 +321,7 @@ class FindInFilesDialog( QDialog, object ):
         self.findCombo = QComboBox( self )
         self.__tuneCombo( self.findCombo )
         self.findCombo.lineEdit().setToolTip( "Regular expression to search for" )
-        self.connect( self.findCombo,
-                      SIGNAL( 'editTextChanged(const QString &)' ),
-                      self.__someTextChanged )
+        self.findCombo.editTextChanged.connect( self.__someTextChanged )
 
         gridLayout.addWidget( findLabel, 0, 0, 1, 1 )
         gridLayout.addWidget( self.findCombo, 0, 1, 1, 1 )
@@ -349,7 +347,7 @@ class FindInFilesDialog( QDialog, object ):
         sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Preferred )
         sizePolicy.setHorizontalStretch( 0 )
         sizePolicy.setVerticalStretch( 0 )
-        sizePolicy.setHeightForWidth( \
+        sizePolicy.setHeightForWidth(
                         filesGroupbox.sizePolicy().hasHeightForWidth() )
         filesGroupbox.setSizePolicy( sizePolicy )
 
@@ -357,34 +355,28 @@ class FindInFilesDialog( QDialog, object ):
         self.projectRButton = QRadioButton( filesGroupbox )
         self.projectRButton.setText( "&Project" )
         gridLayoutFG.addWidget( self.projectRButton, 0, 0 )
-        self.connect( self.projectRButton, SIGNAL( 'clicked()' ),
-                      self.__projectClicked )
+        self.projectRButton.clicked.connect( self.__projectClicked )
 
         self.openFilesRButton = QRadioButton( filesGroupbox )
         self.openFilesRButton.setText( "&Opened files only" )
         gridLayoutFG.addWidget( self.openFilesRButton, 1, 0 )
-        self.connect( self.openFilesRButton, SIGNAL( 'clicked()' ),
-                      self.__openFilesOnlyClicked )
+        self.openFilesRButton.clicked.connect( self.__openFilesOnlyClicked )
 
         self.dirRButton = QRadioButton( filesGroupbox )
         self.dirRButton.setText( "&Directory tree" )
         gridLayoutFG.addWidget( self.dirRButton, 2, 0 )
-        self.connect( self.dirRButton, SIGNAL( 'clicked()' ),
-                      self.__dirClicked )
+        self.dirRButton.clicked.connect( self.__dirClicked )
 
         self.dirEditCombo = QComboBox( filesGroupbox )
         self.__tuneCombo( self.dirEditCombo )
         self.dirEditCombo.lineEdit().setToolTip( "Directory to search in" )
         gridLayoutFG.addWidget( self.dirEditCombo, 2, 1 )
-        self.connect( self.dirEditCombo,
-                      SIGNAL( 'editTextChanged(const QString &)' ),
-                      self.__someTextChanged )
+        self.dirEditCombo.editTextChanged.connect( self.__someTextChanged )
 
         self.dirSelectButton = QPushButton( filesGroupbox )
         self.dirSelectButton.setText( "..." )
         gridLayoutFG.addWidget( self.dirSelectButton, 2, 2 )
-        self.connect( self.dirSelectButton, SIGNAL( 'clicked()' ),
-                      self.__selectDirClicked )
+        self.dirSelectButton.clicked.connect( self.__selectDirClicked )
 
         filterLabel = QLabel( filesGroupbox )
         filterLabel.setText( "Files filter:" )
@@ -393,9 +385,7 @@ class FindInFilesDialog( QDialog, object ):
         self.__tuneCombo( self.filterCombo )
         self.filterCombo.lineEdit().setToolTip( "File names regular expression" )
         gridLayoutFG.addWidget( self.filterCombo, 3, 1 )
-        self.connect( self.filterCombo,
-                      SIGNAL( 'editTextChanged(const QString &)' ),
-                      self.__someTextChanged )
+        self.filterCombo.editTextChanged.connect( self.__someTextChanged )
 
         verticalLayout.addWidget( filesGroupbox )
 
@@ -417,11 +407,10 @@ class FindInFilesDialog( QDialog, object ):
         self.findButton = buttonBox.addButton( "Find",
                                                QDialogButtonBox.AcceptRole )
         self.findButton.setDefault( True )
-        self.connect( self.findButton, SIGNAL( 'clicked()' ),
-                      self.__process )
+        self.findButton.clicked.connect( self.__process )
         verticalLayout.addWidget( buttonBox )
 
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.__onClose )
+        buttonBox.rejected.connect( self.__onClose )
         return
 
     @staticmethod
