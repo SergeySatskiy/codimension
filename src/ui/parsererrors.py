@@ -25,16 +25,16 @@
 
 
 import os, os.path
-from PyQt4.QtCore       import Qt, SIGNAL
-from PyQt4.QtGui        import QDialog, QTextEdit, QDialogButtonBox, \
-                               QVBoxLayout, QSizePolicy
+from PyQt4.QtCore       import Qt
+from PyQt4.QtGui        import ( QDialog, QTextEdit, QDialogButtonBox,
+                                 QVBoxLayout, QSizePolicy )
 from fitlabel           import FitLabel
 from utils.globals      import GlobalData
 from utils.fileutils    import detectFileType, PythonFileType, Python3FileType
 
 
 
-class ParserErrorsDialog( QDialog, object ):
+class ParserErrorsDialog( QDialog ):
     " python code parser errors dialog implementation "
 
     def __init__( self, fileName, info = None, parent = None ):
@@ -97,6 +97,6 @@ class ParserErrorsDialog( QDialog, object ):
         buttonBox.setStandardButtons( QDialogButtonBox.Close )
         verticalLayout.addWidget( buttonBox )
 
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
+        buttonBox.rejected.connect( self.close )
         return
 
