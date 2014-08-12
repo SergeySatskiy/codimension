@@ -26,7 +26,7 @@
 from PyQt4.QtGui import ( QHBoxLayout, QToolButton, QLabel, QSizePolicy,
                           QComboBox, QWidget, QIntValidator )
 from utils.pixmapcache import PixmapCache
-from PyQt4.QtCore import SIGNAL, Qt, QStringList
+from PyQt4.QtCore import Qt, QStringList
 from mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
@@ -47,7 +47,7 @@ class GotoLineWidget( QWidget ):
         closeButton = QToolButton( self )
         closeButton.setToolTip( "Click to close the dialog (ESC)" )
         closeButton.setIcon( PixmapCache().getIcon( "close.png" ) )
-        self.connect( closeButton, SIGNAL( "clicked()" ), self.hide )
+        closeButton.clicked.connect( self.hide )
 
         lineLabel = QLabel( self )
         lineLabel.setText( "Goto line:" )
@@ -65,19 +65,15 @@ class GotoLineWidget( QWidget ):
         self.linenumberEdit.setSizePolicy( sizePolicy )
         self.validator = QIntValidator( 1, 100000, self )
         self.linenumberEdit.setValidator( self.validator )
-        self.connect( self.linenumberEdit,
-                      SIGNAL( 'editTextChanged(const QString&)' ),
-                      self.__onEditTextChanged )
-        self.connect( self.linenumberEdit.lineEdit(),
-                      SIGNAL( "returnPressed()" ),
-                      self.__onEnter )
+        self.linenumberEdit.editTextChanged.connect( self.__onEditTextChanged )
+        self.linenumberEdit.lineEdit().returnPressed.connect( self.__onEnter )
 
         self.goButton = QToolButton( self )
         self.goButton.setToolTip( "Click to jump to the line (ENTER)" )
         self.goButton.setIcon( PixmapCache().getIcon( "gotoline.png" ) )
         self.goButton.setFocusPolicy( Qt.NoFocus )
         self.goButton.setEnabled( False )
-        self.connect( self.goButton, SIGNAL( "clicked()" ), self.__onGo )
+        self.goButton.clicked.connect( self.__onGo )
 
         spacer = QWidget()
         spacer.setFixedWidth( 1 )
