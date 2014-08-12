@@ -133,7 +133,7 @@ class FindReplaceBase( QWidget ):
         self.closeButton = QToolButton( self )
         self.closeButton.setToolTip( "Close the dialog (ESC)" )
         self.closeButton.setIcon( PixmapCache().getIcon( "close.png" ) )
-        self.connect( self.closeButton, SIGNAL( "clicked()" ), self.hide )
+        self.closeButton.clicked.connect( self.hide )
 
         self.findLabel = QLabel( self )
         self.findLabel.setText( "Find:" )
@@ -150,9 +150,7 @@ class FindReplaceBase( QWidget ):
         self.findtextCombo.setAutoCompletion( False )
         self.findtextCombo.setDuplicatesEnabled( False )
         self.findtextCombo.setEnabled( False )
-        self.connect( self.findtextCombo,
-                      SIGNAL( 'editTextChanged(const QString&)' ),
-                      self._onEditTextChanged )
+        self.findtextCombo.editTextChanged.connect( self._onEditTextChanged )
 
         self.findPrevButton = QToolButton( self )
         self.findPrevButton.setToolTip( "Previous occurrence (Shift+F3)" )
@@ -173,26 +171,22 @@ class FindReplaceBase( QWidget ):
         self.caseCheckBox.setText( "Match case" )
         self.caseCheckBox.setFocusPolicy( Qt.NoFocus )
         self.caseCheckBox.setEnabled( False )
-        self.connect( self.caseCheckBox, SIGNAL( 'stateChanged(int)' ),
-                      self._onCheckBoxChange )
+        self.caseCheckBox.stateChanged.connect( self._onCheckBoxChange )
 
         self.wordCheckBox = QCheckBox( self )
         self.wordCheckBox.setText( "Whole word" )
         self.wordCheckBox.setFocusPolicy( Qt.NoFocus )
         self.wordCheckBox.setEnabled( False )
-        self.connect( self.wordCheckBox, SIGNAL( 'stateChanged(int)' ),
-                      self._onCheckBoxChange )
+        self.wordCheckBox.stateChanged.connect( self._onCheckBoxChange )
 
         self.regexpCheckBox = QCheckBox( self )
         self.regexpCheckBox.setText( "Regexp" )
         self.regexpCheckBox.setFocusPolicy( Qt.NoFocus )
         self.regexpCheckBox.setEnabled( False )
-        self.connect( self.regexpCheckBox, SIGNAL( 'stateChanged(int)' ),
-                      self._onCheckBoxChange )
+        self.regexpCheckBox.stateChanged.connect( self._onCheckBoxChange )
 
-        self.connect( self.findtextCombo.lineEdit(),
-                      SIGNAL( "returnPressed()" ),
-                      self.__findByReturnPressed )
+        self.findtextCombo.lineEdit().returnPressed.connect(
+                                                self.__findByReturnPressed )
         self._skip = False
         return
 
@@ -693,10 +687,8 @@ class FindWidget( FindReplaceBase ):
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
-        self.connect( self.findNextButton, SIGNAL( 'clicked()' ),
-                      self.onNext )
-        self.connect( self.findPrevButton, SIGNAL( 'clicked()' ),
-                      self.onPrev )
+        self.findNextButton.clicked.connect( self.onNext )
+        self.findPrevButton.clicked.connect( self.onPrev )
         return
 
     def __onProjectChanged( self, what ):
@@ -771,8 +763,7 @@ class ReplaceWidget( FindReplaceBase ):
         self.replaceButton.setToolTip( "Replace current occurrence" )
         self.replaceButton.setIcon( PixmapCache().getIcon( "replace.png" ) )
         self.replaceButton.setEnabled( False )
-        self.connect( self.replaceButton, SIGNAL( 'clicked()' ),
-                      self.__onReplace )
+        self.replaceButton.clicked.connect( self.__onReplace )
         self.replaceButton.setIconSize( QSize( 24, 16 ) )
 
         self.replaceAllButton = QToolButton( self )
@@ -781,8 +772,7 @@ class ReplaceWidget( FindReplaceBase ):
                 PixmapCache().getIcon( "replace-all.png" ) )
         self.replaceAllButton.setIconSize( QSize( 24, 16 ) )
         self.replaceAllButton.setEnabled( False )
-        self.connect( self.replaceAllButton, SIGNAL( 'clicked()' ),
-                      self.__onReplaceAll )
+        self.replaceAllButton.clicked.connect( self.__onReplaceAll )
 
         self.replaceAndMoveButton = QToolButton( self )
         self.replaceAndMoveButton.setToolTip(
@@ -791,8 +781,7 @@ class ReplaceWidget( FindReplaceBase ):
                 PixmapCache().getIcon( "replace-move.png" ) )
         self.replaceAndMoveButton.setIconSize( QSize( 24, 16 ) )
         self.replaceAndMoveButton.setEnabled( False )
-        self.connect( self.replaceAndMoveButton, SIGNAL( 'clicked()' ),
-                      self.__onReplaceAndMove )
+        self.replaceAndMoveButton.clicked.connect( self.__onReplaceAndMove )
 
         self.gridLayout = QGridLayout( self )
         self.gridLayout.setMargin( 0 )
@@ -825,16 +814,12 @@ class ReplaceWidget( FindReplaceBase ):
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
-        self.connect( self.findNextButton, SIGNAL( 'clicked()' ),
-                      self.onNext )
-        self.connect( self.findPrevButton, SIGNAL( 'clicked()' ),
-                      self.onPrev )
+        self.findNextButton.clicked.connect( self.onNext )
+        self.findPrevButton.clicked.connect( self.onPrev )
         self.connect( self, SIGNAL( 'incSearchDone' ), self.__onSearchDone )
-        self.connect( self.replaceCombo,
-                      SIGNAL( 'editTextChanged(const QString&)' ),
-                      self.__onReplaceTextChanged )
-        self.connect( self.replaceCombo.lineEdit(), SIGNAL( "returnPressed()" ),
-                      self.__onReplaceAndMove )
+        self.replaceCombo.editTextChanged.connect( self.__onReplaceTextChanged )
+        self.replaceCombo.lineEdit().returnPressed.connect(
+                                                    self.__onReplaceAndMove )
         self.__connected = False
         self.__replaceCouldBeEnabled = False
         self._skip = False
@@ -934,18 +919,16 @@ class ReplaceWidget( FindReplaceBase ):
     def __subscribeToCursorChangePos( self ):
         " Subscribes for the cursor position notification "
         if self._editor is not None:
-            self.connect( self._editor,
-                          SIGNAL( 'cursorPositionChanged(int,int)' ),
-                          self.__cursorPositionChanged )
+            self._editor.cursorPositionChanged.connect(
+                                            self.__cursorPositionChanged )
             self.__connected = True
         return
 
     def __unsubscribeFromCursorChange( self ):
         " Unsubscribes from the cursor position notification "
         if self._editor is not None:
-            self.disconnect( self._editor,
-                             SIGNAL( 'cursorPositionChanged(int,int)' ),
-                             self.__cursorPositionChanged )
+            self._editor.cursorPositionChanged.disconnect(
+                                            self.__cursorPositionChanged )
             self.__connected = False
         return
 
