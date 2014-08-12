@@ -27,9 +27,9 @@ import logging
 import os.path
 
 from PyQt4.QtCore import Qt, SIGNAL, QStringList, QVariant
-from PyQt4.QtGui import QTreeWidgetItem, QTreeWidget, QColor, QBrush, QLabel, \
+from PyQt4.QtGui import QTreeWidgetItem, QTreeWidget, QLabel, \
                         QWidget, QVBoxLayout, QFrame, QPalette, QHeaderView, \
-                        QMenu, QItemSelectionModel, QAbstractItemView, QCursor
+                        QMenu, QAbstractItemView, QCursor
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.globals import GlobalData
 from utils.pixmapcache import PixmapCache
@@ -89,6 +89,9 @@ class ProfilingTableItem( QTreeWidgetItem ):
             self.setTextAlignment( column, Qt.AlignRight )
         self.setTextAlignment( TOTAL_COL_INDEX, Qt.AlignLeft )
         return
+
+    def isOutside( self ):
+        return self.__isOutside
 
     def getFuncIDs( self ):
         " Provides the function identification exactly as pstats defines it "
@@ -576,3 +579,37 @@ class ProfileTableViewer( QWidget ):
                 self.__table.setCurrentItem( item )
         return
 
+    def onSaveAs( self, fileName ):
+        " Saves the table to a file in CSV format "
+        try:
+            f = open( fileName, "wt" )
+            headerItem = self.__table.headerItem()
+            outsideIndex = -1
+            for index in xrange( 0, headerItem.columnCount() ):
+                title = str( headerItem.text( index ) )
+                if title == "":
+                    outsideIndex = index
+                    title = "Outside"
+                if index != 0:
+                    f.write( ',' + title )
+                else:
+                    f.write( title )
+
+            for index in xrange( 0, self.__table.topLevelItemCount() ):
+                item = self.__table.topLevelItem( index )
+                f.write( "\n" )
+                for column in xrange( 0, item.columnCount() ):
+                    if column != 0:
+                        f.write( ',' )
+                    if column == outsideIndex:
+                        if item.isOutside():
+                            f.write( "Y" )
+                        else:
+                            f.write( "N" )
+                    else:
+                        text = str( item.text( column ) )
+                        f.write( text.replace( '\t', '' ) )
+            f.close()
+        except Exception, ex:
+            logging.error( ex )
+        return

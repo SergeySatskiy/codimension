@@ -1220,10 +1220,12 @@ class EditorsManager( QTabWidget ):
             index = self.currentIndex()
             widgetType = widget.getType()
 
-            if widgetType == MainWindowTabWidgetBase.GeneratedDiagram or \
-               (widgetType == MainWindowTabWidgetBase.ProfileViewer and \
-                widget.isDiagramActive()):
+            if widgetType == MainWindowTabWidgetBase.GeneratedDiagram:
                 return self.onSaveDiagramAs()
+            if widgetType == MainWindowTabWidgetBase.ProfileViewer:
+                if widget.isDiagramActive():
+                    return self.onSaveDiagramAs()
+                return self.onSaveCSVAs()
         else:
             widget = self.widget( index )
             widgetType = widget.getType()
@@ -1321,10 +1323,12 @@ class EditorsManager( QTabWidget ):
             index = self.currentIndex()
             widgetType = widget.getType()
 
-            if widgetType == MainWindowTabWidgetBase.GeneratedDiagram or \
-               (widgetType == MainWindowTabWidgetBase.ProfileViewer and \
-                widget.isDiagramActive()):
+            if widgetType == MainWindowTabWidgetBase.GeneratedDiagram:
                 return self.onSaveDiagramAs()
+            if widgetType == MainWindowTabWidgetBase.ProfileViewer:
+                if widget.isDiagramActive():
+                    return self.onSaveDiagramAs()
+                return self.onSaveCSVAs()
         else:
             widget = self.widget( index )
             widgetType = widget.getType()
@@ -1510,6 +1514,77 @@ class EditorsManager( QTabWidget ):
         if os.path.exists( fileName ):
             res = QMessageBox.warning(
                 self, "Save diagram as",
+                "<p>The file <b>" + fileName + "</b> already exists.</p>",
+                QMessageBox.StandardButtons( QMessageBox.Abort |
+                                             QMessageBox.Save ),
+                QMessageBox.Abort )
+            if res == QMessageBox.Abort or res == QMessageBox.Cancel:
+                return False
+
+        # All prerequisites are checked, save it
+        try:
+            widget.onSaveAs( fileName )
+        except Exception, excpt:
+            logging.error( str( excpt ) )
+            return False
+        return True
+
+    def onSaveCSVAs( self ):
+        " Saves the current tab diagram to a file "
+        widget = self.currentWidget()
+        widgetType = widget.getType()
+        if widgetType not in [ MainWindowTabWidgetBase.ProfileViewer ]:
+            return
+        if widget.isDiagramActive():
+            return
+
+        dialog = QFileDialog( self, 'Save data as CSV file' )
+        dialog.setFileMode( QFileDialog.AnyFile )
+        dialog.setLabelText( QFileDialog.Accept, "Save" )
+        dialog.setNameFilter( "CSV files (*.csv)" )
+        urls = []
+        for dname in QDir.drives():
+            urls.append( QUrl.fromLocalFile( dname.absoluteFilePath() ) )
+        urls.append( QUrl.fromLocalFile( QDir.homePath() ) )
+        project = GlobalData().project
+        if project.isLoaded():
+            urls.append( QUrl.fromLocalFile( project.getProjectDir() ) )
+        dialog.setSidebarUrls( urls )
+
+        dialog.setDirectory( self.__getDefaultSaveDir() )
+        dialog.selectFile( "profiling-table.csv" )
+
+        dialog.setOption( QFileDialog.DontConfirmOverwrite, False )
+        if dialog.exec_() != QDialog.Accepted:
+            return False
+
+        fileNames = dialog.selectedFiles()
+        fileName = os.path.abspath( str( fileNames[0] ) )
+
+        if os.path.isdir( fileName ):
+            logging.error( "A file must be selected" )
+            return False
+
+        if "." not in fileName:
+            fileName += ".csv"
+
+        # Check permissions to write into the file or to a directory
+        if os.path.exists( fileName ):
+            # Check write permissions for the file
+            if not os.access( fileName, os.W_OK ):
+                logging.error( "There is no write permissions for " + fileName )
+                return False
+        else:
+            # Check write permissions to the directory
+            dirName = os.path.dirname( fileName )
+            if not os.access( dirName, os.W_OK ):
+                logging.error( "There is no write permissions for the "
+                               "directory " + dirName )
+                return False
+
+        if os.path.exists( fileName ):
+            res = QMessageBox.warning(
+                self, "Save data as CSV file",
                 "<p>The file <b>" + fileName + "</b> already exists.</p>",
                 QMessageBox.StandardButtons( QMessageBox.Abort |
                                              QMessageBox.Save ),

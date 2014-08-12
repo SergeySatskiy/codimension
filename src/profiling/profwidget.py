@@ -233,6 +233,8 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
         " Saves the diagram into a file "
         if self.__profGraph.isVisible():
             self.__profGraph.onSaveAs( fileName )
+        else:
+            self.__profTable.onSaveAs( fileName )
         return
 
 
