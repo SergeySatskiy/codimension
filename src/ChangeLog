@@ -5,6 +5,7 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * Fix for pylint 1.2.1
 * GC plugin: mimic standard GC procedure
 * Fix: 'remove all ignored exception types' did not clear the list in memory
+* New feature: saving profiling results table in a CSV file
 
 2014 May 06 Sergey Satskiy <sergey.satskiy@gmail.com>
 
