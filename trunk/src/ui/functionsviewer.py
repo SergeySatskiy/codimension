@@ -23,9 +23,9 @@
 """ The functions viewer implementation """
 
 from PyQt4.QtCore       import Qt, SIGNAL, QSize, QRect
-from PyQt4.QtGui        import QMenu, QWidget, QAction, QVBoxLayout, \
-                               QToolBar, QCursor, QLabel, QSizePolicy, \
-                               QItemSelectionModel
+from PyQt4.QtGui        import ( QMenu, QWidget, QAction, QVBoxLayout,
+                                 QToolBar, QCursor, QLabel, QSizePolicy,
+                                 QItemSelectionModel )
 from combobox           import CDMComboBox
 from utils.pixmapcache  import PixmapCache
 from utils.globals      import GlobalData
@@ -51,27 +51,26 @@ class FunctionsViewer( QWidget ):
 
         # create the context menu
         self.__menu = QMenu( self )
-        self.__jumpMenuItem = self.__menu.addAction( \
+        self.__jumpMenuItem = self.__menu.addAction(
                                 PixmapCache().getIcon( 'definition.png' ),
                                 'Jump to definition', self.__goToDefinition )
         self.__menu.addSeparator()
-        self.__findMenuItem = self.__menu.addAction( \
+        self.__findMenuItem = self.__menu.addAction(
                                 PixmapCache().getIcon( 'findusage.png' ),
                                 'Find occurences', self.__findWhereUsed )
         self.__menu.addSeparator()
-        self.__disasmMenuItem = self.__menu.addAction( \
+        self.__disasmMenuItem = self.__menu.addAction(
                                 PixmapCache().getIcon( 'disasmmenu.png' ),
                                 'Disassemble',
                                 self.__onDisassemble )
         self.__menu.addSeparator()
-        self.__copyMenuItem = self.__menu.addAction( \
+        self.__copyMenuItem = self.__menu.addAction(
                                 PixmapCache().getIcon( 'copytoclipboard.png' ),
                                 'Copy path to clipboard',
                                 self.funcViewer.copyToClipboard )
         self.funcViewer.setContextMenuPolicy( Qt.CustomContextMenu )
-        self.connect( self.funcViewer,
-                      SIGNAL( "customContextMenuRequested(const QPoint &)" ),
-                      self.__handleShowContextMenu )
+        self.funcViewer.customContextMenuRequested.connect(
+                                                self.__handleShowContextMenu )
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
@@ -97,27 +96,23 @@ class FunctionsViewer( QWidget ):
         self.funcViewer = FunctionsBrowser()
 
         # Toolbar part - buttons
-        self.definitionButton = QAction( \
+        self.definitionButton = QAction(
                 PixmapCache().getIcon( 'definition.png' ),
                 'Jump to highlighted item definition', self )
-        self.connect( self.definitionButton, SIGNAL( "triggered()" ),
-                      self.__goToDefinition )
-        self.findButton = QAction( \
+        self.definitionButton.triggered.connect( self.__goToDefinition )
+        self.findButton = QAction(
                 PixmapCache().getIcon( 'findusage.png' ),
                 'Find highlighted item occurences', self )
-        self.connect( self.findButton, SIGNAL( "triggered()" ),
-                      self.__findWhereUsed )
-        self.copyPathButton = QAction( \
+        self.findButton.triggered.connect( self.__findWhereUsed )
+        self.copyPathButton = QAction(
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
                 'Copy path to clipboard', self )
-        self.connect( self.copyPathButton, SIGNAL( "triggered()" ),
-                      self.funcViewer.copyToClipboard )
+        self.copyPathButton.triggered.connect( self.funcViewer.copyToClipboard )
 
-        self.findNotUsedButton = QAction( \
+        self.findNotUsedButton = QAction(
                 PixmapCache().getIcon( 'notused.png' ),
                 'Unused function analysis', self )
-        self.connect( self.findNotUsedButton, SIGNAL( "triggered()" ),
-                      self.__findNotUsed )
+        self.findNotUsedButton.triggered.connect( self.__findNotUsed )
         self.findNotUsedButton.setEnabled( False )
 
         self.toolbar = QToolBar( self )
@@ -138,9 +133,7 @@ class FunctionsViewer( QWidget ):
         self.filterEdit.lineEdit().setToolTip( "Space separated regular expressions" )
         self.toolbar.addWidget( self.filterEdit )
         self.toolbar.addAction( self.findNotUsedButton )
-        self.connect( self.filterEdit,
-                      SIGNAL( "editTextChanged(const QString &)" ),
-                      self.__filterChanged )
+        self.filterEdit.editTextChanged.connect( self.__filterChanged )
         self.connect( self.filterEdit,
                       SIGNAL( 'itemAdded' ),
                       self.__filterItemAdded )
@@ -214,13 +207,10 @@ class FunctionsViewer( QWidget ):
 
             project = GlobalData().project
             if project.isLoaded():
-                self.disconnect( self.filterEdit,
-                                 SIGNAL( "editTextChanged(const QString &)" ),
-                                 self.__filterChanged )
+                self.filterEdit.editTextChanged.disconnect(
+                                                        self.__filterChanged )
                 self.filterEdit.addItems( project.findFuncHistory )
-                self.connect( self.filterEdit,
-                              SIGNAL( "editTextChanged(const QString &)" ),
-                              self.__filterChanged )
+                self.filterEdit.editTextChanged.connect( self.__filterChanged )
                 self.findNotUsedButton.setEnabled( self.getItemCount() > 0 )
             else:
                 self.findNotUsedButton.setEnabled( False )
