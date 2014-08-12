@@ -4011,13 +4011,16 @@ class CodimensionMainWindow( QMainWindow ):
         plainTextBuffer = self.__isPlainTextBuffer()
         isPythonBuffer = self.__isPythonBuffer()
         isGeneratedDiagram = self.__isGeneratedDiagram()
+        isProfileViewer = self.__isProfileViewer()
         editorsManager = self.editorsManagerWidget.editorsManager
 
         self.__cloneTabAct.setEnabled( plainTextBuffer )
         self.__closeOtherTabsAct.setEnabled(
                                     editorsManager.closeOtherAvailable() )
-        self.__saveFileAct.setEnabled( plainTextBuffer or isGeneratedDiagram )
-        self.__saveFileAsAct.setEnabled( plainTextBuffer or isGeneratedDiagram )
+        self.__saveFileAct.setEnabled( plainTextBuffer or isGeneratedDiagram or
+                                       isProfileViewer )
+        self.__saveFileAsAct.setEnabled( plainTextBuffer or isGeneratedDiagram or
+                                         isProfileViewer )
         self.__closeTabAct.setEnabled( editorsManager.isTabClosable() )
         self.__tabJumpToDefAct.setEnabled( isPythonBuffer )
         self.__calltipAct.setEnabled( isPythonBuffer )
