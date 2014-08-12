@@ -23,7 +23,6 @@
 " Menu provider for codimension subversion plugin "
 
 
-from PyQt4.QtCore import SIGNAL
 import os.path
 from svnindicators import ( IND_ERROR, IND_ADDED, IND_DELETED, IND_MERGED,
                             IND_MODIFIED_LR, IND_MODIFIED_L,
@@ -42,8 +41,7 @@ class SVNMenuMixin:
 
     def populateMainMenu( self, parentMenu ):
         " Called to build main menu "
-        self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
-                      self.onMainMenuAboutToShow )
+        parentMenu.aboutToShow.connect( self.onMainMenuAboutToShow )
         parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuconf.png' ),
                               "Configure", self.configure )
         return
@@ -51,8 +49,7 @@ class SVNMenuMixin:
     def populateFileContextMenu( self, parentMenu ):
         " Called to build a file context menu in the project and FS browsers "
         self.fileParentMenu = parentMenu
-        self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
-                      self.onFileContextMenuAboutToShow )
+        parentMenu.aboutToShow.connect( self.onFileContextMenuAboutToShow )
         self.fileContextInfoAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuinfo.png' ),
                                                         "Detailed &info", self.fileInfo )
         self.fileContextAnnotateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuannotate.png' ),
@@ -80,8 +77,7 @@ class SVNMenuMixin:
     def populateDirectoryContextMenu( self, parentMenu ):
         " Called to build a dir context menu in the project and FS browsers "
         self.dirParentMenu = parentMenu
-        self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
-                      self.onDirectoryContextMenuAboutToShow )
+        parentMenu.aboutToShow.connect( self.onDirectoryContextMenuAboutToShow )
         self.dirContextInfoAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuinfo.png' ),
                                                        "Detailed &info ", self.dirInfo )
         self.dirContextLocalStatusAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenustatus.png' ),
@@ -107,8 +103,7 @@ class SVNMenuMixin:
 
     def populateBufferContextMenu( self, parentMenu ):
         " Called to build a buffer context menu "
-        self.connect( parentMenu, SIGNAL( "aboutToShow()" ),
-                      self.onBufferContextMenuAboutToshow )
+        parentMenu.aboutToShow.connect( self.onBufferContextMenuAboutToshow )
         self.bufContextInfoAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuinfo.png' ),
                                                        "Detailed &info", self.bufferInfo )
         self.bufContextAnnotateAct = parentMenu.addAction( PixmapCache().getIcon( pluginHomeDir + 'svnmenuannotate.png' ),
