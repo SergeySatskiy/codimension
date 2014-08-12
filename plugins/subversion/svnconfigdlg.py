@@ -24,7 +24,7 @@
 
 
 import os.path, logging, ConfigParser, string, copy, stat
-from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import ( QDialog, QVBoxLayout, QGroupBox, QSizePolicy,
                           QRadioButton, QDialogButtonBox, QPixmap,
                           QHBoxLayout, QLabel, QTabWidget, QWidget, QGridLayout,
@@ -144,12 +144,8 @@ class SVNPluginConfigDialog( QDialog ):
             self.__tabWidget.setCurrentIndex( 1 )
         self.__updateOKStatus()
 
-        self.connect( self.__idewideUser,
-                      SIGNAL( "textChanged(const QString&)" ),
-                      self.__updateOKStatus )
-        self.connect( self.__projectUser,
-                      SIGNAL( "textChanged(const QString&)" ),
-                      self.__updateOKStatus )
+        self.__idewideUser.textChanged.connect( self.__updateOKStatus )
+        self.__projectUser.textChanged.connect( self.__updateOKStatus )
         return
 
     def __setIDEWideValues( self ):
@@ -229,8 +225,8 @@ class SVNPluginConfigDialog( QDialog ):
         self.__buttonBox.setOrientation( Qt.Horizontal )
         self.__buttonBox.setStandardButtons( QDialogButtonBox.Ok |
                                              QDialogButtonBox.Cancel )
-        self.connect( self.__buttonBox, SIGNAL( "accepted()" ), self.userAccept )
-        self.connect( self.__buttonBox, SIGNAL( "rejected()" ), self.close )
+        self.__buttonBox.accepted.connect( self.userAccept )
+        self.__buttonBox.rejected.connect( self.close )
         vboxLayout.addWidget( self.__buttonBox )
         return
 
@@ -255,13 +251,11 @@ class SVNPluginConfigDialog( QDialog ):
 
         layoutAuth = QVBoxLayout( authGroupbox )
         self.__idewideAuthExtRButton = QRadioButton( "External", authGroupbox )
-        self.connect( self.__idewideAuthExtRButton, SIGNAL( "clicked()" ),
-                      self.__idewideAuthChanged )
+        self.__idewideAuthExtRButton.clicked.connect( self.__idewideAuthChanged )
         layoutAuth.addWidget( self.__idewideAuthExtRButton )
         self.__idewideAuthPasswdRButton = QRadioButton(
                     "Use user name / password", authGroupbox )
-        self.connect( self.__idewideAuthPasswdRButton, SIGNAL( "clicked()" ),
-                      self.__idewideAuthChanged )
+        self.__idewideAuthPasswdRButton.clicked.connect( self.__idewideAuthChanged )
         layoutAuth.addWidget( self.__idewideAuthPasswdRButton )
 
         upLayout = QGridLayout()
@@ -336,13 +330,11 @@ class SVNPluginConfigDialog( QDialog ):
 
         layoutAuth = QVBoxLayout( authGroupbox )
         self.__projectAuthExtRButton = QRadioButton( "External", authGroupbox )
-        self.connect( self.__projectAuthExtRButton, SIGNAL( "clicked()" ),
-                      self.__projectAuthChanged )
+        self.__projectAuthExtRButton.clicked.connect( self.__projectAuthChanged )
         layoutAuth.addWidget( self.__projectAuthExtRButton )
         self.__projectAuthPasswdRButton = QRadioButton(
                     "Use user name / password", authGroupbox )
-        self.connect( self.__projectAuthPasswdRButton, SIGNAL( "clicked()" ),
-                      self.__projectAuthChanged )
+        self.__projectAuthPasswdRButton.clicked.connect( self.__projectAuthChanged )
         layoutAuth.addWidget( self.__projectAuthPasswdRButton )
 
         upLayout = QGridLayout()
