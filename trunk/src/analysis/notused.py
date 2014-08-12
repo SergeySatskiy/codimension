@@ -25,10 +25,10 @@
 
 
 import os, os.path, logging
-from PyQt4.QtCore                import Qt, SIGNAL, QTimer
-from PyQt4.QtGui                 import QDialog, QDialogButtonBox, \
-                                        QVBoxLayout, QLabel, \
-                                        QProgressBar, QApplication, QCursor
+from PyQt4.QtCore                import Qt, QTimer
+from PyQt4.QtGui                 import ( QDialog, QDialogButtonBox,
+                                          QVBoxLayout, QLabel,
+                                          QProgressBar, QApplication, QCursor )
 from autocomplete.completelists  import getOccurrences
 from utils.globals               import GlobalData
 from ui.findinfiles              import ItemToSearchIn, getSearchItemIndex
@@ -143,7 +143,7 @@ class NotUsedAnalysisProgress( QDialog ):
         buttonBox.setStandardButtons( QDialogButtonBox.Close )
         verticalLayout.addWidget( buttonBox )
 
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.__onClose )
+        buttonBox.rejected.connect( self.__onClose )
         return
 
     def __onClose( self ):
