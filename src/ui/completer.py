@@ -23,7 +23,7 @@
 " completer selection widget "
 
 
-from PyQt4.QtCore       import Qt, SIGNAL, QEvent
+from PyQt4.QtCore       import Qt, QEvent, QModelIndex
 from PyQt4.QtGui        import QAction, QStringListModel, \
                                QAbstractItemView, QCompleter, QListView
 from itemdelegates      import NoOutlineHeightDelegate
@@ -45,14 +45,12 @@ class CompleterPopup( QListView ):
 
         shiftTabAct = QAction( self )
         shiftTabAct.setShortcut( 'Shift+Tab' )
-        self.connect( shiftTabAct, SIGNAL( 'triggered()' ),
-                      self.__completer.moveToPrevious )
+        shiftTabAct.triggered.connect( self.__completer.moveToPrevious )
         self.addAction( shiftTabAct )
 
         ctrlSpaceAct = QAction( self )
         ctrlSpaceAct.setShortcut( 'Ctrl+ ' )
-        self.connect( ctrlSpaceAct, SIGNAL( 'triggered()' ),
-                      self.__completer.moveToNext )
+        ctrlSpaceAct.triggered.connect( self.__completer.moveToNext )
         self.addAction( ctrlSpaceAct )
         return
 
@@ -91,8 +89,7 @@ class CodeCompleter( QCompleter ):
         self.setCaseSensitivity( Qt.CaseInsensitive )
         self.setWrapAround( False )
 
-        self.connect( self, SIGNAL( "highlighted(const QModelIndex &)" ),
-                      self.__onHighlighted )
+        self.highlighted[QModelIndex].connect( self.__onHighlighted )
         return
 
     def __onHighlighted( self, index ):
@@ -199,8 +196,7 @@ class CodeCompleter( QCompleter ):
                 return True
             key = evnt.key()
             if key in [ Qt.Key_Enter, Qt.Key_Return ]:
-                self.emit( SIGNAL( "activated(const QString &)" ),
-                           self.currentCompletion() )
+                self.activated.emit( self.currentCompletion() )
                 return True
             elif key == Qt.Key_Home:
                 cidx = self.completionModel().index( 0, 0 )
