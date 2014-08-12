@@ -117,7 +117,7 @@ class SVNLogProgress( QDialog ):
         buttonBox.setStandardButtons( QDialogButtonBox.Close )
         verticalLayout.addWidget( buttonBox )
 
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.__onClose )
+        buttonBox.rejected.connect( self.__onClose )
         return
 
     def __onClose( self ):
@@ -179,7 +179,7 @@ class DiffButton( QPushButton ):
 
         self.rev = None
         self.prevRev = None
-        self.connect( self, SIGNAL( "clicked()" ), self.onClick )
+        self.clicked.connect( self.onClick )
         return
 
     def onClick( self ):
@@ -343,8 +343,7 @@ class SVNPluginLogDialog( QDialog ):
         self.__lhsResetButton.setFocusPolicy( Qt.NoFocus )
         self.__lhsResetButton.setEnabled( False )
         self.__lhsResetButton.setToolTip( "Reset revision to compare" )
-        self.connect( self.__lhsResetButton, SIGNAL( 'clicked()' ),
-                      self.__onLHSReset )
+        self.__lhsResetButton.clicked.connect( self.__onLHSReset )
         self.__rhsRevisionLabel = QLabel()
         self.__rhsRevisionLabel.setFrameStyle( QFrame.StyledPanel )
         self.__rhsResetButton = QToolButton()
@@ -352,8 +351,7 @@ class SVNPluginLogDialog( QDialog ):
         self.__rhsResetButton.setFocusPolicy( Qt.NoFocus )
         self.__rhsResetButton.setEnabled( False )
         self.__rhsResetButton.setToolTip( "Reset revision to compare" )
-        self.connect( self.__rhsResetButton, SIGNAL( 'clicked()' ),
-                      self.__onRHSReset )
+        self.__rhsResetButton.clicked.connect( self.__onRHSReset )
 
         lhsLayout = QHBoxLayout()
         lhsLayout.addWidget( self.__lhsRevisionLabel )
@@ -370,8 +368,7 @@ class SVNPluginLogDialog( QDialog ):
         self.__diffButton.setText( "Diff" )
         self.__diffButton.setFocusPolicy( Qt.NoFocus )
         self.__diffButton.setEnabled( False )
-        self.connect( self.__diffButton, SIGNAL( 'clicked()' ),
-                      self.__onDiff )
+        self.__diffButton.clicked.connect( self.__onDiff )
         revisionLayout.addWidget( self.__diffButton )
         vboxLayout.addWidget( compareGroupbox )
 
@@ -399,9 +396,7 @@ class SVNPluginLogDialog( QDialog ):
                 QStringList() << "" << "" << "Revision" << "Date" << "Author" << "Message" )
         self.__logView.setHeaderItem( self.__logViewHeader )
         self.__logView.header().setSortIndicator( REVISION_COL, Qt.AscendingOrder )
-        self.connect( self.__logView,
-                      SIGNAL( "itemChanged(QTreeWidgetItem*,int)" ),
-                      self.__onLogViewChanged )
+        self.__logView.itemChanged.connect( self.__onLogViewChanged )
         vboxLayout.addWidget( self.__logView )
 
 
@@ -421,8 +416,7 @@ class SVNPluginLogDialog( QDialog ):
         self.__showHideDiffButton.setFixedSize( 20, 20 )
         self.__showHideDiffButton.setToolTip( "Show diff" )
         self.__showHideDiffButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__showHideDiffButton, SIGNAL( 'clicked()' ),
-                      self.__onShowHideDiff )
+        self.__showHideDiffButton.clicked.connect( self.__onShowHideDiff )
 
         diffLayout = QHBoxLayout()
         diffLayout.setContentsMargins( 3, 0, 0, 0 )
@@ -443,7 +437,7 @@ class SVNPluginLogDialog( QDialog ):
         buttonBox.setOrientation( Qt.Horizontal )
         buttonBox.setStandardButtons( QDialogButtonBox.Ok )
         buttonBox.button( QDialogButtonBox.Ok ).setDefault( True )
-        self.connect( buttonBox, SIGNAL( "accepted()" ), self.close )
+        buttonBox.accepted.connect( self.close )
         vboxLayout.addWidget( buttonBox )
         return
 
