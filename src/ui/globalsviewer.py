@@ -23,16 +23,17 @@
 """ The globals viewer implementation """
 
 from PyQt4.QtCore       import Qt, SIGNAL, QSize, QRect
-from PyQt4.QtGui        import QMenu, QWidget, QAction, QVBoxLayout, \
-                               QToolBar, QCursor, QLabel, QSizePolicy, \
-                               QItemSelectionModel
+from PyQt4.QtGui        import ( QMenu, QWidget, QAction, QVBoxLayout,
+                                 QToolBar, QCursor, QLabel, QSizePolicy,
+                                 QItemSelectionModel )
 from combobox           import CDMComboBox
 from utils.pixmapcache  import PixmapCache
 from utils.globals      import GlobalData
 from utils.project      import CodimensionProject
 from globalsbrowser     import GlobalsBrowser
-from viewitems          import DecoratorItemType, FunctionItemType, \
-                               ClassItemType, AttributeItemType, GlobalItemType
+from viewitems          import ( DecoratorItemType, FunctionItemType,
+                                 ClassItemType, AttributeItemType,
+                                 GlobalItemType )
 
 
 class GlobalsViewer( QWidget ):
@@ -63,9 +64,8 @@ class GlobalsViewer( QWidget ):
                                 'Copy path to clipboard',
                                 self.globalsViewer.copyToClipboard )
         self.globalsViewer.setContextMenuPolicy( Qt.CustomContextMenu )
-        self.connect( self.globalsViewer,
-                      SIGNAL( "customContextMenuRequested(const QPoint &)" ),
-                      self.__handleShowContextMenu )
+        self.globalsViewer.customContextMenuRequested.connect(
+                                                self.__handleShowContextMenu )
 
         self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
                       self.__onProjectChanged )
@@ -86,27 +86,24 @@ class GlobalsViewer( QWidget ):
         self.globalsViewer = GlobalsBrowser()
 
         # Toolbar part - buttons
-        self.definitionButton = QAction( \
+        self.definitionButton = QAction(
                 PixmapCache().getIcon( 'definition.png' ),
                 'Jump to highlighted item definition', self )
-        self.connect( self.definitionButton, SIGNAL( "triggered()" ),
-                      self.__goToDefinition )
-        self.findButton = QAction( \
+        self.definitionButton.triggered.connect( self.__goToDefinition )
+        self.findButton = QAction(
                 PixmapCache().getIcon( 'findusage.png' ),
                 'Find highlighted item occurences', self )
-        self.connect( self.findButton, SIGNAL( "triggered()" ),
-                      self.__findWhereUsed )
-        self.copyPathButton = QAction( \
+        self.findButton.triggered.connect( self.__findWhereUsed )
+        self.copyPathButton = QAction(
                 PixmapCache().getIcon( 'copytoclipboard.png' ),
                 'Copy path to clipboard', self )
-        self.connect( self.copyPathButton, SIGNAL( "triggered()" ),
-                      self.globalsViewer.copyToClipboard )
+        self.copyPathButton.triggered.connect(
+                                        self.globalsViewer.copyToClipboard )
 
-        self.findNotUsedButton = QAction( \
+        self.findNotUsedButton = QAction(
                 PixmapCache().getIcon( 'notused.png' ),
                 'Unused global variable analysis', self )
-        self.connect( self.findNotUsedButton, SIGNAL( "triggered()" ),
-                      self.__findNotUsed )
+        self.findNotUsedButton.triggered.connect( self.__findNotUsed )
         self.findNotUsedButton.setEnabled( False )
 
         self.toolbar = QToolBar( self )
@@ -127,9 +124,7 @@ class GlobalsViewer( QWidget ):
         self.filterEdit.lineEdit().setToolTip( "Space separated regular expressions" )
         self.toolbar.addWidget( self.filterEdit )
         self.toolbar.addAction( self.findNotUsedButton )
-        self.connect( self.filterEdit,
-                      SIGNAL( "editTextChanged(const QString &)" ),
-                      self.__filterChanged )
+        self.filterEdit.editTextChanged.connect( self.__filterChanged )
         self.connect( self.filterEdit, SIGNAL( 'itemAdded' ),
                       self.__filterItemAdded )
         self.connect( self.filterEdit, SIGNAL( 'enterClicked' ),
@@ -200,13 +195,9 @@ class GlobalsViewer( QWidget ):
 
             project = GlobalData().project
             if project.isLoaded():
-                self.disconnect( self.filterEdit,
-                                 SIGNAL( "editTextChanged(const QString &)" ),
-                                 self.__filterChanged )
+                self.filterEdit.editTextChanged.disconnect( self.__filterChanged )
                 self.filterEdit.addItems( project.findGlobalHistory )
-                self.connect( self.filterEdit,
-                              SIGNAL( "editTextChanged(const QString &)" ),
-                              self.__filterChanged )
+                self.filterEdit.editTextChanged.connect( self.__filterChanged )
                 self.findNotUsedButton.setEnabled( self.getItemCount() > 0 )
             else:
                 self.findNotUsedButton.setEnabled( False )
