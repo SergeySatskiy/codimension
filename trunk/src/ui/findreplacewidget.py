@@ -927,8 +927,11 @@ class ReplaceWidget( FindReplaceBase ):
     def __unsubscribeFromCursorChange( self ):
         " Unsubscribes from the cursor position notification "
         if self._editor is not None:
-            self._editor.cursorPositionChanged.disconnect(
+            try:
+                self._editor.cursorPositionChanged.disconnect(
                                             self.__cursorPositionChanged )
+            except:
+                pass
             self.__connected = False
         return
 
