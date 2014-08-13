@@ -24,7 +24,7 @@
 """ Dialog to show a single variable """
 
 
-from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout,
                           QLabel, QGridLayout, QTextEdit )
 from utils.pixmapcache import PixmapCache
@@ -109,8 +109,8 @@ class ViewVariableDialog( QDialog ):
         buttonBox.setStandardButtons( QDialogButtonBox.Ok )
         self.__OKButton = buttonBox.button( QDialogButtonBox.Ok )
         self.__OKButton.setDefault( True )
-        self.connect( buttonBox, SIGNAL( "accepted()" ), self.close )
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
+        buttonBox.accepted.connect( self.close )
+        buttonBox.rejected.connect( self.close )
         layout.addWidget( buttonBox )
 
         varValueValue.setFocus()
