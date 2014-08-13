@@ -25,7 +25,7 @@
 
 from PyQt4.QtCore import Qt, SIGNAL, QStringList, QSize
 from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeWidget,
-                          QTreeWidgetItem, QHeaderView, QVBoxLayout,
+                          QTreeWidgetItem, QVBoxLayout,
                           QLabel, QWidget, QAbstractItemView, QMenu,
                           QSpacerItem, QHBoxLayout, QPalette, QCursor,
                           QAction, QToolBar )
@@ -219,8 +219,7 @@ class ClientExceptionsViewer( QWidget ):
         self.__addToIgnoreButton = QAction(
             PixmapCache().getIcon( 'add.png' ),
             "Add exception to the list of ignored", self )
-        self.connect( self.__addToIgnoreButton, SIGNAL( "triggered()" ),
-                      self.__onAddToIgnore )
+        self.__addToIgnoreButton.triggered.connect( self.__onAddToIgnore )
         self.__addToIgnoreButton.setEnabled( False )
 
 
@@ -230,15 +229,13 @@ class ClientExceptionsViewer( QWidget ):
         self.__jumpToCodeButton = QAction(
             PixmapCache().getIcon( 'gotoline.png' ),
             "Jump to the code", self )
-        self.connect( self.__jumpToCodeButton, SIGNAL( "triggered()" ),
-                      self.__onJumpToCode )
+        self.__jumpToCodeButton.triggered.connect( self.__onJumpToCode )
         self.__jumpToCodeButton.setEnabled( False )
 
         self.__delAllButton = QAction(
             PixmapCache().getIcon( 'trash.png' ),
             "Delete all the client exceptions", self )
-        self.connect( self.__delAllButton, SIGNAL( "triggered()" ),
-                      self.__onDelAll )
+        self.__delAllButton.triggered.connect( self.__onDelAll )
         self.__delAllButton.setEnabled( False )
 
         self.toolbar = QToolBar()
@@ -253,15 +250,12 @@ class ClientExceptionsViewer( QWidget ):
         self.toolbar.addWidget( expandingSpacer )
         self.toolbar.addAction( self.__delAllButton )
 
-        self.connect( self.exceptionsList,
-                      SIGNAL( "itemDoubleClicked(QTreeWidgetItem*,int)" ),
-                      self.__onExceptionDoubleClicked )
-        self.connect( self.exceptionsList,
-                      SIGNAL( "customContextMenuRequested(const QPoint &)" ),
-                      self.__showContextMenu )
-        self.connect( self.exceptionsList,
-                      SIGNAL( "itemSelectionChanged()" ),
-                      self.__onSelectionChanged )
+        self.exceptionsList.itemDoubleClicked.connect(
+                                            self.__onExceptionDoubleClicked )
+        self.exceptionsList.customContextMenuRequested.connect(
+                                            self.__showContextMenu )
+        self.exceptionsList.itemSelectionChanged.connect(
+                                            self.__onSelectionChanged )
 
 
         headerLabels = QStringList() << "Exception"
