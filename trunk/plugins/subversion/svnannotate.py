@@ -26,7 +26,7 @@ import pysvn
 import logging
 import os.path
 from copy import deepcopy
-from PyQt4.QtCore import Qt, SIGNAL, QTimer
+from PyQt4.QtCore import Qt, QTimer
 from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
                           QApplication, QCursor )
 
@@ -147,7 +147,7 @@ class SVNAnnotateProgress( QDialog ):
         buttonBox.setStandardButtons( QDialogButtonBox.Close )
         verticalLayout.addWidget( buttonBox )
 
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.__onClose )
+        buttonBox.rejected.connect( self.__onClose )
         return
 
     def __onClose( self ):
