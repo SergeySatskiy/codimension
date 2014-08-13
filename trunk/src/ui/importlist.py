@@ -23,13 +23,10 @@
 " imports list selection widget "
 
 
-from PyQt4.QtCore       import Qt, SIGNAL, QStringList, QEventLoop
-from PyQt4.QtGui        import QSizePolicy, QSizePolicy, QFrame, \
-                               QTreeWidget, QApplication, \
-                               QTreeWidgetItem, QHeaderView, \
-                               QVBoxLayout, \
-                               QApplication, QAbstractItemView, \
-                               QHeaderView, QSizePolicy
+from PyQt4.QtCore       import Qt, QStringList, QEventLoop
+from PyQt4.QtGui        import ( QSizePolicy, QFrame, QTreeWidget, QApplication,
+                                 QTreeWidgetItem, QHeaderView, QVBoxLayout,
+                                 QAbstractItemView )
 from utils.globals      import GlobalData
 from itemdelegates      import NoOutlineHeightDelegate
 import os.path
@@ -77,9 +74,7 @@ class ImportListWidget( QFrame ):
         self.__importList.setSelectionBehavior( QAbstractItemView.SelectRows )
         self.__importList.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
 
-        self.connect( self.__importList,
-                      SIGNAL( "itemActivated(QTreeWidgetItem *, int)" ),
-                      self.__importActivated )
+        self.__importList.itemActivated.connect( self.__importActivated )
 
         verticalLayout.addWidget( self.__importList )
         verticalLayout.setMargin( 0 )
