@@ -47,7 +47,7 @@ class NavBarComboBox( QComboBox ):
         sizePolicy.setHeightForWidth(
                 self.sizePolicy().hasHeightForWidth() )
         self.setSizePolicy( sizePolicy )
-        self.connect( self, SIGNAL( 'activated(int)' ), self.onActivated )
+        self.activated.connect( self.onActivated )
 
         self.view().installEventFilter( self )
 
@@ -127,8 +127,7 @@ class NavigationBar( QFrame ):
         # Create the update timer
         self.__updateTimer = QTimer( self )
         self.__updateTimer.setSingleShot( True )
-        self.connect( self.__updateTimer, SIGNAL( 'timeout()' ),
-                      self.updateBar )
+        self.__updateTimer.timeout.connect( self.updateBar )
 
         # Connect to the change file type signal
         mainWindow = GlobalData().mainWindow
@@ -146,10 +145,8 @@ class NavigationBar( QFrame ):
         if self.__connected:
             return
 
-        self.connect( self.__editor, SIGNAL( 'cursorPositionChanged(int,int)' ),
-                      self.__cursorPositionChanged )
-        self.connect( self.__editor, SIGNAL( 'SCEN_CHANGE()' ),
-                      self.__onBufferChanged )
+        self.__editor.cursorPositionChanged.connect( self.__cursorPositionChanged )
+        self.__editor.SCEN_CHANGE.connect( self.__onBufferChanged )
         self.__connected = True
         return
 
@@ -158,10 +155,8 @@ class NavigationBar( QFrame ):
         if not self.__connected:
             return
 
-        self.disconnect( self.__editor, SIGNAL( 'cursorPositionChanged(int,int)' ),
-                         self.__cursorPositionChanged )
-        self.disconnect( self.__editor, SIGNAL( 'SCEN_CHANGE()' ),
-                         self.__onBufferChanged )
+        self.__editor.cursorPositionChanged.disconnect( self.__cursorPositionChanged )
+        self.__editor.SCEN_CHANGE.disconnect( self.__onBufferChanged )
         self.__connected = False
         return
 
