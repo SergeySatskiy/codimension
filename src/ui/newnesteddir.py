@@ -24,9 +24,9 @@
 
 
 import os
-from PyQt4.QtCore import Qt, SIGNAL, QEvent, QObject
-from PyQt4.QtGui  import QDialog, QLineEdit, QLabel, \
-                         QDialogButtonBox, QVBoxLayout
+from PyQt4.QtCore import Qt, QEvent, QObject
+from PyQt4.QtGui  import ( QDialog, QLineEdit, QLabel,
+                          QDialogButtonBox, QVBoxLayout )
 
 
 class NewProjectDirDialog( QDialog, object ):
@@ -55,22 +55,20 @@ class NewProjectDirDialog( QDialog, object ):
         vboxlayout.addWidget( inputLabel )
 
         self.__dirnameEdit = QLineEdit( self )
-        self.__dirnameEdit.setToolTip( "Subdirectory name without " \
+        self.__dirnameEdit.setToolTip( "Subdirectory name without "
                                        "path separators" )
         self.__dirnameEdit.installEventFilter( self )
-        self.connect( self.__dirnameEdit,
-                      SIGNAL( 'textEdited(const QString &)' ),
-                      self.__onTextChanged )
+        self.__dirnameEdit.textEdited.connect( self.__onTextChanged )
         vboxlayout.addWidget( self.__dirnameEdit )
 
         self.__buttonBox = QDialogButtonBox( self )
         self.__buttonBox.setOrientation( Qt.Horizontal )
-        self.__buttonBox.setStandardButtons( QDialogButtonBox.Cancel | \
+        self.__buttonBox.setStandardButtons( QDialogButtonBox.Cancel |
                                              QDialogButtonBox.Ok )
         vboxlayout.addWidget( self.__buttonBox )
 
-        self.connect( self.__buttonBox, SIGNAL( "accepted()" ), self.accept )
-        self.connect( self.__buttonBox, SIGNAL( "rejected()" ), self.reject )
+        self.__buttonBox.accepted.connect( self.accept )
+        self.__buttonBox.rejected.connect( self.reject )
         return
 
     def __onTextChanged( self, text ):
