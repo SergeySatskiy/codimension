@@ -71,45 +71,38 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         # Buttons
         self.__printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
                                       'Print', self )
-        self.connect( self.__printButton, SIGNAL( 'triggered()' ),
-                      self.__onPrint )
+        self.__printButton.triggered.connect( self.__onPrint )
         self.__printButton.setEnabled( False )
         self.__printButton.setVisible( False )
 
         self.__printPreviewButton = QAction(
                                 PixmapCache().getIcon( 'printpreview.png' ),
                                 'Print preview', self )
-        self.connect( self.__printPreviewButton, SIGNAL( 'triggered()' ),
-                      self.__onPrintPreview )
+        self.__printPreviewButton.triggered.connect( self.__onPrintPreview )
         self.__printPreviewButton.setEnabled( False )
         self.__printPreviewButton.setVisible( False )
 
         # self.__sendUpButton = QAction( PixmapCache().getIcon('sendioup.png'),
         #                                'Send to Main Editing Area', self )
-        # self.connect( self.__sendUpButton, SIGNAL( "triggered()" ),
-        #               self.__sendUp )
+        # self.__sendUpButton.triggered.connect( self.__sendUp )
 
         self.__filterMenu = QMenu( self )
-        self.connect( self.__filterMenu, SIGNAL( "aboutToShow()" ),
-                      self.__filterAboutToShow )
+        self.__filterMenu.aboutToShow.connect( self.__filterAboutToShow )
         self.__filterGroup = QActionGroup( self )
         self.__filterShowAllAct = self.__filterMenu.addAction( "Show all" )
         self.__filterShowAllAct.setCheckable( True )
         self.__filterShowAllAct.setActionGroup( self.__filterGroup )
-        self.connect( self.__filterShowAllAct, SIGNAL( 'triggered()' ),
-                      self.__onFilterShowAll )
+        self.__filterShowAllAct.triggered.connect( self.__onFilterShowAll )
         self.__filterShowStdoutAct = self.__filterMenu.addAction(
                                                 "Show stdin and stdout" )
         self.__filterShowStdoutAct.setCheckable( True )
         self.__filterShowStdoutAct.setActionGroup( self.__filterGroup )
-        self.connect( self.__filterShowStdoutAct, SIGNAL( 'triggered()' ),
-                      self.__onFilterShowStdout )
+        self.__filterShowStdoutAct.triggered.connect( self.__onFilterShowStdout )
         self.__filterShowStderrAct = self.__filterMenu.addAction(
                                                 "Show stdin and stderr" )
         self.__filterShowStderrAct.setCheckable( True )
         self.__filterShowStderrAct.setActionGroup( self.__filterGroup )
-        self.connect( self.__filterShowStderrAct, SIGNAL( 'triggered()' ),
-                      self.__onFilterShowStderr )
+        self.__filterShowStderrAct.triggered.connect( self.__onFilterShowStderr )
         self.__filterButton = QToolButton( self )
         self.__filterButton.setIcon( PixmapCache().getIcon( 'iofilter.png' ) )
         self.__filterButton.setToolTip( 'Filtering settings' )
@@ -118,31 +111,25 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__filterButton.setFocusPolicy( Qt.NoFocus )
 
         self.__settingsMenu = QMenu( self )
-        self.connect( self.__settingsMenu, SIGNAL( "aboutToShow()" ),
-                      self.__settingsAboutToShow )
+        self.__settingsMenu.aboutToShow.connect( self.__settingsAboutToShow )
         self.__wrapLongLinesAct = self.__settingsMenu.addAction(
                                                 "Wrap long lines" )
         self.__wrapLongLinesAct.setCheckable( True )
-        self.connect( self.__wrapLongLinesAct, SIGNAL( 'triggered()' ),
-                      self.__onWrapLongLines )
+        self.__wrapLongLinesAct.triggered.connect( self.__onWrapLongLines )
         self.__showEOLAct = self.__settingsMenu.addAction( "Show EOL" )
         self.__showEOLAct.setCheckable( True )
-        self.connect( self.__showEOLAct, SIGNAL( 'triggered()' ),
-                      self.__onShowEOL )
+        self.__showEOLAct.triggered.connect( self.__onShowEOL )
         self.__showWhitespacesAct = self.__settingsMenu.addAction(
                                                 "Show whitespaces" )
         self.__showWhitespacesAct.setCheckable( True )
-        self.connect( self.__showWhitespacesAct, SIGNAL( 'triggered()' ),
-                      self.__onShowWhitespaces )
+        self.__showWhitespacesAct.triggered.connect( self.__onShowWhitespaces )
         self.__autoscrollAct = self.__settingsMenu.addAction( "Autoscroll" )
         self.__autoscrollAct.setCheckable( True )
-        self.connect( self.__autoscrollAct, SIGNAL( 'triggered()' ),
-                      self.__onAutoscroll )
+        self.__autoscrollAct.triggered.connect( self.__onAutoscroll )
         self.__showMarginAct = self.__settingsMenu.addAction(
                                                 "Show timestamp margin" )
         self.__showMarginAct.setCheckable( True )
-        self.connect( self.__showMarginAct, SIGNAL( 'triggered()' ),
-                      self.__onShowMargin )
+        self.__showMarginAct.triggered.connect( self.__onShowMargin )
 
         self.__settingsButton = QToolButton( self )
         self.__settingsButton.setIcon(
@@ -157,20 +144,17 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         self.__stopButton = QAction( PixmapCache().getIcon( 'runconsolestop.png' ),
                                      'Stop process', self )
-        self.connect( self.__stopButton, SIGNAL( 'triggered()' ),
-                      self.stop )
+        self.__stopButton.triggered.connect( self.stop )
 
         self.__stopAndCloseButton = QAction( PixmapCache().getIcon( 'runconsolestopclose.png' ),
                                              'Stop process and close tab', self )
-        self.connect( self.__stopAndCloseButton, SIGNAL( 'triggered()' ),
-                      self.stopAndClose )
+        self.__stopAndCloseButton.triggered.connect( self.stopAndClose )
 
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
         self.__clearButton = QAction( PixmapCache().getIcon( 'trash.png' ),
                                       'Clear', self )
-        self.connect( self.__clearButton, SIGNAL( "triggered()" ),
-                      self.clear )
+        self.__clearButton.triggered.connect( self.clear )
 
         # The toolbar
         toolbar = QToolBar( self )
