@@ -24,7 +24,7 @@
 """ Dialog to edit a single breakpoint """
 
 
-from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout,
                           QLabel, QGridLayout, QSpinBox, QCheckBox )
 from utils.pixmapcache import PixmapCache
@@ -46,19 +46,10 @@ class BreakpointEditDialog( QDialog ):
         self.__createLayout( bpoint )
         self.__OKButton.setEnabled( False )
 
-
-        self.connect( self.__conditionValue.lineEdit(),
-                      SIGNAL( 'textChanged(const QString &)' ),
-                      self.__changed )
-        self.connect( self.__ignoreValue,
-                      SIGNAL( 'valueChanged(int)' ),
-                      self.__changed )
-        self.connect( self.__enabled,
-                      SIGNAL( 'stateChanged(int)' ),
-                      self.__changed )
-        self.connect( self.__tempCheckbox,
-                      SIGNAL( 'stateChanged(int)' ),
-                      self.__changed )
+        self.__conditionValue.lineEdit().textChanged.connect( self.__changed )
+        self.__ignoreValue.valueChanged.connect( self.__changed )
+        self.__enabled.stateChanged.connect( self.__changed )
+        self.__tempCheckbox.stateChanged.connect( self.__changed )
         return
 
     def __createLayout( self, bpoint ):
@@ -107,8 +98,8 @@ class BreakpointEditDialog( QDialog ):
                                       QDialogButtonBox.Cancel )
         self.__OKButton = buttonBox.button( QDialogButtonBox.Ok )
         self.__OKButton.setDefault( True )
-        self.connect( buttonBox, SIGNAL( "accepted()" ), self.accept )
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
+        buttonBox.accepted.connect( self.accept )
+        buttonBox.rejected.connect( self.close )
         layout.addWidget( buttonBox )
 
         self.__conditionValue.setFocus()
