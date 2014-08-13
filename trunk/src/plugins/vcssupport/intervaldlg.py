@@ -22,7 +22,7 @@
 
 " Update interval settings dialog "
 
-from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import ( QDialog, QVBoxLayout, QDialogButtonBox,
                           QHBoxLayout, QLabel, QLineEdit, QIntValidator )
 
@@ -40,9 +40,7 @@ class VCSUpdateIntervalConfigDialog( QDialog ):
         self.__intervalEdit.setText( str( self.interval ) )
         self.__updateOKStatus()
 
-        self.connect( self.__intervalEdit,
-                      SIGNAL( "textChanged(const QString&)" ),
-                      self.__updateOKStatus )
+        self.__intervalEdit.textChanged.connect( self.__updateOKStatus )
         self.__intervalEdit.setFocus()
         return
 
@@ -66,8 +64,8 @@ class VCSUpdateIntervalConfigDialog( QDialog ):
         self.__buttonBox.setOrientation( Qt.Horizontal )
         self.__buttonBox.setStandardButtons( QDialogButtonBox.Ok |
                                              QDialogButtonBox.Cancel )
-        self.connect( self.__buttonBox, SIGNAL( "accepted()" ), self.userAccept )
-        self.connect( self.__buttonBox, SIGNAL( "rejected()" ), self.close )
+        self.__buttonBox.accepted.connect( self.userAccept )
+        self.__buttonBox.rejected.connect( self.close )
 
         vboxLayout.addLayout( hboxLayout )
         vboxLayout.addWidget( self.__buttonBox )
