@@ -25,10 +25,10 @@
 
 
 import os, os.path
-from PyQt4.QtCore       import Qt, SIGNAL, QTimer
-from PyQt4.QtGui        import QDialog, QTextEdit, QDialogButtonBox, \
-                               QVBoxLayout, QSizePolicy, QCursor, \
-                               QProgressBar, QApplication, QFontMetrics
+from PyQt4.QtCore       import Qt, QTimer
+from PyQt4.QtGui        import ( QDialog, QTextEdit, QDialogButtonBox,
+                                 QVBoxLayout, QSizePolicy, QCursor,
+                                 QProgressBar, QApplication, QFontMetrics )
 from fitlabel           import FitPathLabel
 from utils.linescounter import LinesCounter
 from utils.globals      import GlobalData
@@ -71,7 +71,7 @@ class LineCounterDialog( QDialog, object ):
                                   QSizePolicy.Preferred )
         sizePolicy.setHorizontalStretch( 0 )
         sizePolicy.setVerticalStretch( 0 )
-        sizePolicy.setHeightForWidth( \
+        sizePolicy.setHeightForWidth(
                     self.infoLabel.sizePolicy().hasHeightForWidth() )
         self.infoLabel.setSizePolicy( sizePolicy )
         self.verticalLayout.addWidget( self.infoLabel )
@@ -94,7 +94,7 @@ class LineCounterDialog( QDialog, object ):
         fontMetrics = QFontMetrics( font )
         rect = fontMetrics.boundingRect( "W" )
         # 6 lines, 5 line spacings, 2 frames
-        self.resultEdit.setMinimumHeight( rect.height() * 7 + 4 * 5 + \
+        self.resultEdit.setMinimumHeight( rect.height() * 7 + 4 * 5 +
                                           self.resultEdit.frameWidth() * 2 )
         self.verticalLayout.addWidget( self.resultEdit )
 
@@ -104,7 +104,7 @@ class LineCounterDialog( QDialog, object ):
         self.buttonBox.setStandardButtons( QDialogButtonBox.Close )
         self.verticalLayout.addWidget( self.buttonBox )
 
-        self.connect( self.buttonBox, SIGNAL( "rejected()" ), self.__onClose )
+        self.buttonBox.rejected.connect( self.__onClose )
         return
 
     def __scanDir( self, path, files ):
