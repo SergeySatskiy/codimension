@@ -27,9 +27,9 @@ import logging
 import os.path
 
 from PyQt4.QtCore import Qt, SIGNAL, QStringList, QVariant
-from PyQt4.QtGui import QTreeWidgetItem, QTreeWidget, QLabel, \
-                        QWidget, QVBoxLayout, QFrame, QPalette, QHeaderView, \
-                        QMenu, QAbstractItemView, QCursor
+from PyQt4.QtGui import ( QTreeWidgetItem, QTreeWidget, QLabel,
+                          QWidget, QVBoxLayout, QFrame, QPalette, QHeaderView,
+                          QMenu, QAbstractItemView, QCursor, QSizePolicy )
 from ui.itemdelegates import NoOutlineHeightDelegate
 from utils.globals import GlobalData
 from utils.pixmapcache import PixmapCache
@@ -247,16 +247,16 @@ class ProfileTableViewer( QWidget ):
 
         headerItem = self.__table.headerItem()
         headerItem.setToolTip( 0, "Indication if it is an outside function" )
-        headerItem.setToolTip( 1, "Actual number of calls/primitive calls " \
+        headerItem.setToolTip( 1, "Actual number of calls/primitive calls "
                                   "(not induced via recursion)" )
-        headerItem.setToolTip( 2, "Total time spent in function " \
-                                  "(excluding time made in calls " \
+        headerItem.setToolTip( 2, "Total time spent in function "
+                                  "(excluding time made in calls "
                                   "to sub-functions)" )
-        headerItem.setToolTip( 3, "Total time divided by number " \
+        headerItem.setToolTip( 3, "Total time divided by number "
                                   "of actual calls" )
-        headerItem.setToolTip( 4, "Total time spent in function and all " \
+        headerItem.setToolTip( 4, "Total time spent in function and all "
                                   "subfunctions (from invocation till exit)" )
-        headerItem.setToolTip( 5, "Cumulative time divided by number " \
+        headerItem.setToolTip( 5, "Cumulative time divided by number "
                                   "of primitive calls" )
         headerItem.setToolTip( 6, "Function location" )
         headerItem.setToolTip( 7, "Function name" )
@@ -275,6 +275,7 @@ class ProfileTableViewer( QWidget ):
                           str( totalCalls ) + " function calls (" + \
                           str( totalPrimitiveCalls ) + " primitive calls) in " + \
                           FLOAT_FORMAT % totalTime + " CPU seconds" )
+        summary.setSizePolicy( QSizePolicy.Ignored, QSizePolicy.Fixed )
         summary.setFrameStyle( QFrame.StyledPanel )
         summary.setAutoFillBackground( True )
         summaryPalette = summary.palette()
