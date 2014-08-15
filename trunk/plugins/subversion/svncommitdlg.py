@@ -53,7 +53,7 @@ class DiffButton( QPushButton ):
 
         self.path = ""
         self.status = None
-        self.connect( self, SIGNAL( "clicked()" ), self.onClick )
+        self.clicked.connect( self.onClick )
         return
 
     def onClick( self ):
@@ -197,8 +197,7 @@ class SVNPluginCommitDialog( QDialog ):
         self.__selectAllButton.setFixedSize( 20, 20 )
         self.__selectAllButton.setToolTip( "Select all" )
         self.__selectAllButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__selectAllButton, SIGNAL( 'clicked()' ),
-                      self.__onSelectAll )
+        self.__selectAllButton.clicked.connect( self.__onSelectAll )
 
         commitHeaderLayout = QHBoxLayout()
         commitHeaderLayout.setContentsMargins( 3, 0, 0, 0 )
@@ -217,9 +216,7 @@ class SVNPluginCommitDialog( QDialog ):
                 QStringList() << "" << "Path" << "Status" << "")
         self.__pathToCommitView.setHeaderItem( self.__pathToCommitHeader )
         self.__pathToCommitView.header().setSortIndicator( PATH_COL, Qt.AscendingOrder )
-        self.connect( self.__pathToCommitView,
-                      SIGNAL( "itemChanged(QTreeWidgetItem*,int)" ),
-                      self.__onCommitPathChanged )
+        self.__pathToCommitView.itemChanged.connect( self.__onCommitPathChanged )
         vboxLayout.addWidget( self.__pathToCommitView )
 
         # Paths to ignore part
@@ -239,8 +236,7 @@ class SVNPluginCommitDialog( QDialog ):
         self.__showHideIgnoredButton.setFixedSize( 20, 20 )
         self.__showHideIgnoredButton.setToolTip( "Show ignored path list" )
         self.__showHideIgnoredButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__showHideIgnoredButton, SIGNAL( 'clicked()' ),
-                      self.__onShowHideIgnored )
+        self.__showHideIgnoredButton.clicked.connect( self.__onShowHideIgnored )
 
         ignoredHeaderLayout = QHBoxLayout()
         ignoredHeaderLayout.setContentsMargins( 3, 0, 0, 0 )
@@ -286,8 +282,7 @@ class SVNPluginCommitDialog( QDialog ):
         self.__showHideDiffButton.setFixedSize( 20, 20 )
         self.__showHideDiffButton.setToolTip( "Show diff" )
         self.__showHideDiffButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__showHideDiffButton, SIGNAL( 'clicked()' ),
-                      self.__onShowHideDiff )
+        self.__showHideDiffButton.clicked.connect( self.__onShowHideDiff )
 
         diffLayout = QHBoxLayout()
         diffLayout.setContentsMargins( 3, 0, 0, 0 )
@@ -311,8 +306,8 @@ class SVNPluginCommitDialog( QDialog ):
         self.__OKButton = buttonBox.button( QDialogButtonBox.Ok )
         self.__OKButton.setText( "Commit" )
         buttonBox.button( QDialogButtonBox.Cancel ).setDefault( True )
-        self.connect( buttonBox, SIGNAL( "accepted()" ), self.userAccept )
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
+        buttonBox.accepted.connect( self.userAccept )
+        buttonBox.rejected.connect( self.close )
         vboxLayout.addWidget( buttonBox )
         return
 
