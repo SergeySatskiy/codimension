@@ -22,7 +22,7 @@
 
 """ Performs SVN add command """
 
-from PyQt4.QtCore import Qt, SIGNAL, QStringList
+from PyQt4.QtCore import Qt, QStringList
 from PyQt4.QtGui import ( QDialog, QVBoxLayout, QDialogButtonBox,
                           QLabel, QTreeWidget,
                           QTreeWidgetItem, QHeaderView,
@@ -226,9 +226,7 @@ class SVNPluginAddDialog( QDialog ):
         self.__pathToAddView.setHeaderItem( self.__pathToAddHeader )
         self.__pathToAddView.header().setSortIndicator( PATH_COL,
                                                         Qt.AscendingOrder )
-        self.connect( self.__pathToAddView,
-                      SIGNAL( "itemChanged(QTreeWidgetItem*,int)" ),
-                      self.__onAddPathChanged )
+        self.__pathToAddView.itemChanged.connect( self.__onAddPathChanged )
         vboxLayout.addWidget( self.__pathToAddView )
 
         # Buttons at the bottom
@@ -239,8 +237,8 @@ class SVNPluginAddDialog( QDialog ):
         self.__OKButton = buttonBox.button( QDialogButtonBox.Ok )
         self.__OKButton.setText( "Add" )
         buttonBox.button( QDialogButtonBox.Cancel ).setDefault( True )
-        self.connect( buttonBox, SIGNAL( "accepted()" ), self.userAccept )
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
+        buttonBox.accepted.connect( self.userAccept )
+        buttonBox.rejected.connect( self.close )
         vboxLayout.addWidget( buttonBox )
         return
 
