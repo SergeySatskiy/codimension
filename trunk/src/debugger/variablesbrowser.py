@@ -23,7 +23,7 @@
 """ The debugger namespace viewer implementation """
 
 
-from PyQt4.QtCore import Qt, SIGNAL, QRegExp, QString, QStringList
+from PyQt4.QtCore import Qt, QRegExp, QString, QStringList
 from PyQt4.QtGui import QAbstractItemView, QHeaderView, QTreeWidget
 from ui.itemdelegates  import NoOutlineHeightDelegate
 from utils.encoding import toUnicode
@@ -103,10 +103,8 @@ class VariablesBrowser( QTreeWidget ):
         header.setClickable( True )
         header.setStretchLastSection( True )
 
-        self.connect( self, SIGNAL( "itemExpanded(QTreeWidgetItem*)"),
-                      self.__expandItemSignal )
-        self.connect( self, SIGNAL( "itemCollapsed(QTreeWidgetItem*)"),
-                      self.collapseItem )
+        self.itemExpanded.connect( self.__expandItemSignal )
+        self.itemCollapsed.connect( self.collapseItem )
 
         self.resortEnabled = True
         self.openItems = []
