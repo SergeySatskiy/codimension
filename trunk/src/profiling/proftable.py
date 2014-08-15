@@ -263,8 +263,7 @@ class ProfileTableViewer( QWidget ):
         headerItem.setToolTip( 8, "Function callers" )
         headerItem.setToolTip( 9, "Function callees" )
 
-        self.connect( self.__table, SIGNAL( "itemActivated(QTreeWidgetItem *, int)" ),
-                      self.__activated )
+        self.__table.itemActivated.connect( self.__activated )
 
         totalCalls = self.__stats.total_calls
         totalPrimitiveCalls = self.__stats.prim_calls  # The calls were not induced via recursion
@@ -322,18 +321,13 @@ class ProfileTableViewer( QWidget ):
                                     PixmapCache().getIcon( 'disasmmenu.png' ),
                                     "Disassemble", self.__onDisassemble )
 
-        self.connect( self.__callersMenu, SIGNAL( "triggered(QAction*)" ),
-                      self.__onCallContextMenu )
-        self.connect( self.__outsideCallersMenu, SIGNAL( "triggered(QAction*)" ),
-                      self.__onCallContextMenu )
-        self.connect( self.__calleesMenu, SIGNAL( "triggered(QAction*)" ),
-                      self.__onCallContextMenu )
-        self.connect( self.__outsideCalleesMenu, SIGNAL( "triggered(QAction*)" ),
-                      self.__onCallContextMenu )
+        self.__callersMenu.triggered.connect( self.__onCallContextMenu )
+        self.__outsideCallersMenu.triggered.connect( self.__onCallContextMenu )
+        self.__calleesMenu.triggered.connect( self.__onCallContextMenu )
+        self.__outsideCalleesMenu.triggered.connect( self.__onCallContextMenu )
 
         self.__table.setContextMenuPolicy( Qt.CustomContextMenu )
-        self.connect( self.__table, SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
-                      self.__showContextMenu )
+        self.__table.customContextMenuRequested.connect( self.__showContextMenu )
         return
 
     def __showContextMenu( self, point ):
