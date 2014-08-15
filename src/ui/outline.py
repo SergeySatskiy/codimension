@@ -59,8 +59,7 @@ class FileOutlineViewer( QWidget ):
 
         self.__editorsManager = editorsManager
         self.__mainWindow = parent
-        self.connect( self.__editorsManager, SIGNAL( "currentChanged(int)" ),
-                      self.__onTabChanged )
+        self.__editorsManager.currentChanged.connect( self.__onTabChanged )
         self.connect( self.__editorsManager, SIGNAL( "tabClosed" ),
                       self.__onTabClosed )
         self.connect( self.__editorsManager, SIGNAL( 'bufferSavedAs' ),
@@ -72,8 +71,7 @@ class FileOutlineViewer( QWidget ):
         self.__currentUUID = None
         self.__updateTimer = QTimer( self )
         self.__updateTimer.setSingleShot( True )
-        self.connect( self.__updateTimer, SIGNAL( 'timeout()' ),
-                                          self.__updateView )
+        self.__updateTimer.timeout.connect( self.__updateView )
 
         self.findButton = None
         self.outlineViewer = None
@@ -98,9 +96,7 @@ class FileOutlineViewer( QWidget ):
     def __connectOutlineBrowser( self, browser ):
         " Connects a new buffer signals "
         browser.setContextMenuPolicy( Qt.CustomContextMenu )
-        self.connect( browser,
-                      SIGNAL( "customContextMenuRequested(const QPoint &)" ),
-                      self.__handleShowContextMenu )
+        browser.customContextMenuRequested.connect( self.__handleShowContextMenu )
 
         self.connect( browser,
                       SIGNAL( "selectionChanged" ),
@@ -115,13 +111,11 @@ class FileOutlineViewer( QWidget ):
                 PixmapCache().getIcon( 'findusage.png' ),
                 'Find where highlighted item is used', self )
         self.findButton.setVisible( False )
-        self.connect( self.findButton, SIGNAL( "triggered()" ),
-                      self.__findWhereUsed )
+        self.findButton.triggered.connect( self.__findWhereUsed )
         self.showParsingErrorsButton = QAction(
                 PixmapCache().getIcon( 'showparsingerrors.png' ),
                 'Show lexer/parser errors', self )
-        self.connect( self.showParsingErrorsButton, SIGNAL( "triggered()" ),
-                      self.__showParserError )
+        self.showParsingErrorsButton.triggered.connect( self.__showParserError )
         self.showParsingErrorsButton.setEnabled( False )
 
         self.toolbar = QToolBar( self )
@@ -278,10 +272,8 @@ class FileOutlineViewer( QWidget ):
 
         # It is first time we are here, create a new
         editor = widget.getEditor()
-        self.connect( editor, SIGNAL( 'SCEN_CHANGE()' ),
-                              self.__onBufferChanged )
-        self.connect( editor, SIGNAL( 'cursorPositionChanged(int,int)' ),
-                              self.__cursorPositionChanged )
+        editor.SCEN_CHANGE.connect( self.__onBufferChanged )
+        editor.cursorPositionChanged.connect( self.__cursorPositionChanged )
         info = getBriefModuleInfoFromMemory( str( editor.text() ) )
 
         self.showParsingErrorsButton.setEnabled( info.isOK != True )
