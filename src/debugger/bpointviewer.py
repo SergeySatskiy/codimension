@@ -57,12 +57,8 @@ class BreakPointView( QTreeView ):
         self.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
 
         self.setContextMenuPolicy( Qt.CustomContextMenu )
-        self.connect( self,
-                      SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
-                      self.__showContextMenu )
-        self.connect( self,
-                      SIGNAL( 'doubleClicked(const QModelIndex &)' ),
-                      self.__doubleClicked )
+        self.customContextMenuRequested.connect( self.__showContextMenu )
+        self.doubleClicked.connect( self.__doubleClicked )
 
         self.__createPopupMenus()
         return
@@ -383,57 +379,49 @@ class BreakPointViewer( QWidget ):
         self.__editButton = QAction(
             PixmapCache().getIcon( 'bpprops.png' ),
             "Edit breakpoint properties", self )
-        self.connect( self.__editButton, SIGNAL( "triggered()" ),
-                      self.__onEdit )
+        self.__editButton.triggered.connect( self.__onEdit )
         self.__editButton.setEnabled( False )
 
         self.__jumpToCodeButton = QAction(
             PixmapCache().getIcon( 'gotoline.png' ),
             "Jump to the code", self )
-        self.connect( self.__jumpToCodeButton, SIGNAL( "triggered()" ),
-                      self.__onJumpToCode )
+        self.__jumpToCodeButton.triggered.connect( self.__onJumpToCode )
         self.__jumpToCodeButton.setEnabled( False )
 
         self.__enableButton = QAction(
             PixmapCache().getIcon( 'bpenable.png' ),
             "Enable selected breakpoint", self )
-        self.connect( self.__enableButton, SIGNAL( "triggered()" ),
-                      self.__onEnableDisable )
+        self.__enableButton.triggered.connect( self.__onEnableDisable )
         self.__enableButton.setEnabled( False )
 
         self.__disableButton = QAction(
             PixmapCache().getIcon( 'bpdisable.png' ),
             "Disable selected breakpoint", self )
-        self.connect( self.__disableButton, SIGNAL( "triggered()" ),
-                      self.__onEnableDisable )
+        self.__disableButton.triggered.connect( self.__onEnableDisable )
         self.__disableButton.setEnabled( False )
 
         self.__enableAllButton = QAction(
             PixmapCache().getIcon( 'bpenableall.png' ),
             "Enable all the breakpoint", self )
-        self.connect( self.__enableAllButton, SIGNAL( "triggered()" ),
-                      self.__onEnableAll )
+        self.__enableAllButton.triggered.connect( self.__onEnableAll )
         self.__enableAllButton.setEnabled( False )
 
         self.__disableAllButton = QAction(
             PixmapCache().getIcon( 'bpdisableall.png' ),
             "Disable all the breakpoint", self )
-        self.connect( self.__disableAllButton, SIGNAL( "triggered()" ),
-                      self.__onDisableAll )
+        self.__disableAllButton.triggered.connect( self.__onDisableAll )
         self.__disableAllButton.setEnabled( False )
 
         self.__delButton = QAction(
             PixmapCache().getIcon( 'delitem.png' ),
             "Delete selected breakpoint", self )
-        self.connect( self.__delButton, SIGNAL( "triggered()" ),
-                      self.__onDel )
+        self.__delButton.triggered.connect( self.__onDel )
         self.__delButton.setEnabled( False )
 
         self.__delAllButton = QAction(
             PixmapCache().getIcon( 'bpdelall.png' ),
             "Delete all the breakpoint", self )
-        self.connect( self.__delAllButton, SIGNAL( "triggered()" ),
-                      self.__onDelAll )
+        self.__delAllButton.triggered.connect( self.__onDelAll )
         self.__delAllButton.setEnabled( False )
 
 
