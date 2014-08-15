@@ -29,7 +29,7 @@ from PyQt4.QtGui import ( QDialog, QTreeWidgetItem, QTreeWidget, QVBoxLayout,
                           QHeaderView, QApplication, QCursor,
                           QHBoxLayout, QToolButton, QGroupBox,
                           QGridLayout, QSizePolicy, QLineEdit, QMessageBox )
-from PyQt4.QtCore import Qt, SIGNAL, QStringList
+from PyQt4.QtCore import Qt, QStringList
 from ui.itemdelegates import NoOutlineHeightDelegate
 
 
@@ -171,9 +171,7 @@ class SVNPluginPropsDialog( QDialog ):
         self.__propsView.setItemsExpandable( False )
         self.__propsView.setSortingEnabled( True )
         self.__propsView.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
-        self.connect( self.__propsView,
-                      SIGNAL( "itemSelectionChanged()" ),
-                      self.__propsSelectionChanged )
+        self.__propsView.itemSelectionChanged.connect( self.__propsSelectionChanged )
 
         propsViewHeader = QTreeWidgetItem(
                 QStringList() << "Property Name" << "Property Value" )
@@ -185,8 +183,7 @@ class SVNPluginPropsDialog( QDialog ):
         self.__delButton.setText( "Delete" )
         self.__delButton.setFocusPolicy( Qt.NoFocus )
         self.__delButton.setEnabled( False )
-        self.connect( self.__delButton, SIGNAL( 'clicked()' ),
-                      self.__onDel )
+        self.__delButton.clicked.connect( self.__onDel )
         hLayout.addWidget( self.__delButton, 0, Qt.AlignBottom )
         vboxLayout.addLayout( hLayout )
 
@@ -199,14 +196,12 @@ class SVNPluginPropsDialog( QDialog ):
         setLayout.addWidget( QLabel( "Value" ), 1, 0, Qt.AlignTop | Qt.AlignRight )
 
         self.__nameEdit = QLineEdit()
-        self.connect( self.__nameEdit, SIGNAL( 'textChanged(const QString&)' ),
-                      self.__nameChanged )
+        self.__nameEdit.textChanged.connect( self.__nameChanged )
         setLayout.addWidget( self.__nameEdit, 0, 1 )
 
         self.__valueEdit = QTextEdit()
         self.__valueEdit.setAcceptRichText( False )
-        self.connect( self.__valueEdit, SIGNAL( 'textChanged()' ),
-                      self.__valueChanged )
+        self.__valueEdit.textChanged.connect( self.__valueChanged )
         metrics = QFontMetrics( self.__valueEdit.font() )
         rect = metrics.boundingRect( "X" )
         self.__valueEdit.setFixedHeight( rect.height() * 4 + 5 )
@@ -216,8 +211,7 @@ class SVNPluginPropsDialog( QDialog ):
         self.__setButton.setText( "Set" )
         self.__setButton.setFocusPolicy( Qt.NoFocus )
         self.__setButton.setEnabled( False )
-        self.connect( self.__setButton, SIGNAL( 'clicked()' ),
-                      self.__onSet )
+        self.__setButton.clicked.connect( self.__onSet )
         setLayout.addWidget( self.__setButton, 1, 2, Qt.AlignBottom | Qt.AlignHCenter )
         
         sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Maximum )
@@ -232,7 +226,7 @@ class SVNPluginPropsDialog( QDialog ):
         buttonBox.setOrientation( Qt.Horizontal )
         buttonBox.setStandardButtons( QDialogButtonBox.Ok )
         buttonBox.button( QDialogButtonBox.Ok ).setDefault( True )
-        self.connect( buttonBox, SIGNAL( "accepted()" ), self.close )
+        buttonBox.accepted.connect( self.close )
         vboxLayout.addWidget( buttonBox )
         return
 
