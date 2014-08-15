@@ -23,7 +23,7 @@
 " Stack viewer "
 
 
-from PyQt4.QtCore import Qt, SIGNAL, QStringList
+from PyQt4.QtCore import Qt, QStringList
 from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeWidget, QToolButton,
                           QTreeWidgetItem, QHeaderView, QVBoxLayout,
                           QLabel, QWidget, QAbstractItemView, QMenu,
@@ -138,8 +138,7 @@ class StackViewer( QWidget ):
         self.__showHideButton.setFixedSize( 20, 20 )
         self.__showHideButton.setToolTip( "Hide frames list" )
         self.__showHideButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__showHideButton, SIGNAL( 'clicked()' ),
-                      self.__onShowHide )
+        self.__showHideButton.clicked.connect( self.__onShowHide )
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins( 0, 0, 0, 0 )
@@ -164,15 +163,9 @@ class StackViewer( QWidget ):
         self.__framesList.setFocusPolicy( Qt.NoFocus )
         self.__framesList.setContextMenuPolicy( Qt.CustomContextMenu )
 
-        self.connect( self.__framesList,
-                      SIGNAL( "itemClicked(QTreeWidgetItem*,int)" ),
-                      self.__onFrameClicked )
-        self.connect( self.__framesList,
-                      SIGNAL( "itemDoubleClicked(QTreeWidgetItem*,int)" ),
-                      self.__onFrameDoubleClicked )
-        self.connect( self.__framesList,
-                      SIGNAL( "customContextMenuRequested(const QPoint &)" ),
-                      self.__showContextMenu )
+        self.__framesList.itemClicked.connect( self.__onFrameClicked )
+        self.__framesList.itemDoubleClicked.connect( self.__onFrameDoubleClicked )
+        self.__framesList.customContextMenuRequested.connect( self.__showContextMenu )
 
         headerLabels = QStringList() << "" << "File:line" \
                                      << "Function" << "Full path"
