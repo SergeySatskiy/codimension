@@ -631,15 +631,13 @@ class ImportDgmTabWidget( QWidget, MainWindowTabWidgetBase ):
         printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
                                'Print', self )
         #printButton.setShortcut( 'Ctrl+' )
-        self.connect( printButton, SIGNAL( 'triggered()' ),
-                      self.__onPrint )
+        printButton.triggered.connect( self.__onPrint )
 
         printPreviewButton = QAction( \
                 PixmapCache().getIcon( 'printpreview.png' ),
                 'Print preview', self )
         #printPreviewButton.setShortcut( 'Ctrl+' )
-        self.connect( printPreviewButton, SIGNAL( 'triggered()' ),
-                      self.__onPrintPreview )
+        printPreviewButton.triggered.connect( self.__onPrintPreview )
 
         fixedSpacer = QWidget()
         fixedSpacer.setFixedHeight( 16 )
@@ -647,18 +645,17 @@ class ImportDgmTabWidget( QWidget, MainWindowTabWidgetBase ):
         zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
                                 'Zoom in (Ctrl+=)', self )
         zoomInButton.setShortcut( 'Ctrl+=' )
-        self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.onZoomIn )
+        zoomInButton.triggered.connect( self.onZoomIn )
 
         zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
                                 'Zoom out (Ctrl+-)', self )
         zoomOutButton.setShortcut( 'Ctrl+-' )
-        self.connect( zoomOutButton, SIGNAL( 'triggered()' ), self.onZoomOut )
+        zoomOutButton.triggered.connect( self.onZoomOut )
 
         zoomResetButton = QAction( PixmapCache().getIcon( 'zoomreset.png' ),
                                    'Zoom reset (Ctrl+0)', self )
         zoomResetButton.setShortcut( 'Ctrl+0' )
-        self.connect( zoomResetButton, SIGNAL( 'triggered()' ),
-                      self.onZoomReset )
+        zoomResetButton.triggered.connect( self.onZoomReset )
 
 
         # Toolbar
