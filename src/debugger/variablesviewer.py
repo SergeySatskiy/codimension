@@ -91,8 +91,7 @@ class VariablesViewer( QWidget ):
         self.__mcfButton.setFixedSize( 20, 20 )
         self.__mcfButton.setToolTip( "Show/hide modules, classes and functions" )
         self.__mcfButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__mcfButton, SIGNAL( 'clicked()' ),
-                      self.__onMCFFilter )
+        self.__mcfButton.clicked.connect( self.__onMCFFilter )
 
         self.__globalAndLocalButton = QToolButton()
         self.__globalAndLocalButton.setCheckable( True )
@@ -101,8 +100,7 @@ class VariablesViewer( QWidget ):
         self.__globalAndLocalButton.setFixedSize( 20, 20 )
         self.__globalAndLocalButton.setToolTip( "Do not filter out global or local variables" )
         self.__globalAndLocalButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__globalAndLocalButton, SIGNAL( 'clicked()' ),
-                      self.__onGlobalAndLocalFilter )
+        self.__globalAndLocalButton.clicked.connect( self.__onGlobalAndLocalFilter )
 
         self.__localOnlyButton = QToolButton()
         self.__localOnlyButton.setCheckable( True )
@@ -111,8 +109,7 @@ class VariablesViewer( QWidget ):
         self.__localOnlyButton.setFixedSize( 20, 20 )
         self.__localOnlyButton.setToolTip( "Filter out global variables" )
         self.__localOnlyButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__localOnlyButton, SIGNAL( 'clicked()' ),
-                      self.__onLocalFilter )
+        self.__localOnlyButton.clicked.connect( self.__onLocalFilter )
 
         self.__globalOnlyButton = QToolButton()
         self.__globalOnlyButton.setCheckable( True )
@@ -121,8 +118,7 @@ class VariablesViewer( QWidget ):
         self.__globalOnlyButton.setFixedSize( 20, 20 )
         self.__globalOnlyButton.setToolTip( "Filter out local variables" )
         self.__globalOnlyButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__globalOnlyButton, SIGNAL( 'clicked()' ),
-                      self.__onGlobalFilter )
+        self.__globalOnlyButton.clicked.connect( self.__onGlobalFilter )
 
         self.__execStatement = CDMComboBox( True )
         self.__execStatement.setSizePolicy( QSizePolicy.Expanding,
@@ -130,16 +126,13 @@ class VariablesViewer( QWidget ):
         self.__execStatement.lineEdit().setToolTip(
                                 "Expression to be executed" )
         self.__execStatement.setFixedHeight( 26 )
-        self.connect( self.__execStatement,
-                      SIGNAL( 'editTextChanged(const QString&)' ),
-                      self.__execStatementChanged )
+        self.__execStatement.editTextChanged.connect( self.__execStatementChanged )
         self.connect( self.__execStatement,
                       SIGNAL( 'enterClicked' ), self.__onEnterInExec )
         self.__execButton = QPushButton( "Exec" )
         # self.__execButton.setFocusPolicy( Qt.NoFocus )
         self.__execButton.setEnabled( False )
-        self.connect( self.__execButton, SIGNAL( 'clicked()' ),
-                      self.__onExec )
+        self.__execButton.clicked.connect( self.__onExec )
 
         self.__evalStatement = CDMComboBox( True )
         self.__evalStatement.setSizePolicy( QSizePolicy.Expanding,
@@ -147,16 +140,13 @@ class VariablesViewer( QWidget ):
         self.__evalStatement.lineEdit().setToolTip(
                                 "Expression to be evaluated" )
         self.__evalStatement.setFixedHeight( 26 )
-        self.connect( self.__evalStatement,
-                      SIGNAL( 'editTextChanged(const QString&)' ),
-                      self.__evalStatementChanged )
+        self.__evalStatement.editTextChanged.connect( self.__evalStatementChanged )
         self.connect( self.__evalStatement,
                       SIGNAL( 'enterClicked' ), self.__onEnterInEval )
         self.__evalButton = QPushButton( "Eval" )
         # self.__evalButton.setFocusPolicy( Qt.NoFocus )
         self.__evalButton.setEnabled( False )
-        self.connect( self.__evalButton, SIGNAL( 'clicked()' ),
-                      self.__onEval )
+        self.__evalButton.clicked.connect( self.__onEval )
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins( 0, 0, 0, 0 )
