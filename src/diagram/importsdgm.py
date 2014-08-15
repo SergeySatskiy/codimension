@@ -25,19 +25,19 @@
 
 
 import os, os.path, logging
-from PyQt4.QtCore import Qt, SIGNAL, QTimer
-from PyQt4.QtGui import QDialog, QDialogButtonBox, QVBoxLayout, QCheckBox, \
-                        QLabel, QProgressBar, QApplication, QGraphicsScene
+from PyQt4.QtCore import Qt, QTimer
+from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout, QCheckBox,
+                          QLabel, QProgressBar, QApplication, QGraphicsScene )
 from utils.globals import GlobalData
 from cdmbriefparser import getBriefModuleInfoFromMemory
 from plaindotparser import getGraphFromDescriptionData
-from importsdgmgraphics import ImportsDgmDocConn, ImportsDgmDependConn, \
-                               ImportsDgmSystemWideModule, \
-                               ImportsDgmUnknownModule, \
-                               ImportsDgmBuiltInModule, \
-                               ImportsDgmModuleOfInterest, \
-                               ImportsDgmOtherPrjModule, \
-                               ImportsDgmDocNote, ImportsDgmEdgeLabel
+from importsdgmgraphics import ( ImportsDgmDocConn, ImportsDgmDependConn,
+                                 ImportsDgmSystemWideModule,
+                                 ImportsDgmUnknownModule,
+                                 ImportsDgmBuiltInModule,
+                                 ImportsDgmModuleOfInterest,
+                                 ImportsDgmOtherPrjModule,
+                                 ImportsDgmDocNote, ImportsDgmEdgeLabel )
 from autocomplete.completelists import getSystemWideModules
 
 
@@ -390,28 +390,23 @@ class ImportsDiagramDialog( QDialog, object ):
         self.includeClassesBox = QCheckBox( self )
         self.includeClassesBox.setText( "Show &classes in modules" )
         self.includeClassesBox.setChecked( self.options.includeClasses )
-        self.connect( self.includeClassesBox, SIGNAL( 'stateChanged(int)' ),
-                      self.__updateOptions )
+        self.includeClassesBox.stateChanged.connect( self.__updateOptions )
         self.includeFuncsBox = QCheckBox( self )
         self.includeFuncsBox.setText( "Show &functions in modules" )
         self.includeFuncsBox.setChecked( self.options.includeFuncs )
-        self.connect( self.includeFuncsBox, SIGNAL( 'stateChanged(int)' ),
-                      self.__updateOptions )
+        self.includeFuncsBox.stateChanged.connect( self.__updateOptions )
         self.includeGlobsBox = QCheckBox( self )
         self.includeGlobsBox.setText( "Show &global variables in modules" )
         self.includeGlobsBox.setChecked( self.options.includeGlobs )
-        self.connect( self.includeGlobsBox, SIGNAL( 'stateChanged(int)' ),
-                      self.__updateOptions )
+        self.includeGlobsBox.stateChanged.connect( self.__updateOptions )
         self.includeDocsBox = QCheckBox( self )
         self.includeDocsBox.setText( "Show modules &docstrings" )
         self.includeDocsBox.setChecked( self.options.includeDocs )
-        self.connect( self.includeDocsBox, SIGNAL( 'stateChanged(int)' ),
-                      self.__updateOptions )
+        self.includeDocsBox.stateChanged.connect( self.__updateOptions )
         self.includeConnTextBox = QCheckBox( self )
         self.includeConnTextBox.setText( "Show connection &labels" )
         self.includeConnTextBox.setChecked( self.options.includeConnText )
-        self.connect( self.includeConnTextBox, SIGNAL( 'stateChanged(int)' ),
-                      self.__updateOptions )
+        self.includeConnTextBox.stateChanged.connect( self.__updateOptions )
 
         verticalLayout.addWidget( self.includeClassesBox )
         verticalLayout.addWidget( self.includeFuncsBox )
@@ -426,10 +421,10 @@ class ImportsDiagramDialog( QDialog, object ):
         generateButton = buttonBox.addButton( "Generate",
                                               QDialogButtonBox.ActionRole )
         generateButton.setDefault( True )
-        self.connect( generateButton, SIGNAL( 'clicked()' ), self.accept )
+        generateButton.clicked.connect( self.accept )
         verticalLayout.addWidget( buttonBox )
 
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
+        buttonBox.rejected.connect( self.close )
         return
 
 
@@ -496,7 +491,7 @@ class ImportsDiagramProgress( QDialog ):
         buttonBox.setStandardButtons( QDialogButtonBox.Close )
         verticalLayout.addWidget( buttonBox )
 
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.__onClose )
+        buttonBox.rejected.connect( self.__onClose )
         return
 
     def __onClose( self ):
