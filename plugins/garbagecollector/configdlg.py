@@ -23,7 +23,7 @@
 " Codimension garbage collector plugin config dialog "
 
 
-from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import ( QDialog, QVBoxLayout, QGroupBox, QSizePolicy,
                           QRadioButton, QDialogButtonBox )
 
@@ -87,8 +87,8 @@ class GCPluginConfigDialog( QDialog ):
                                       QDialogButtonBox.Cancel )
         self.__OKButton = buttonBox.button( QDialogButtonBox.Ok )
         self.__OKButton.setDefault( True )
-        self.connect( buttonBox, SIGNAL( "accepted()" ), self.accept )
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
+        buttonBox.accepted.connect( self.accept )
+        buttonBox.rejected.connect( self.close )
         verticalLayout.addWidget( buttonBox )
         return
 
