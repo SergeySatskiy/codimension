@@ -287,11 +287,13 @@ class ProfileGraphViewer( QWidget ):
         totalPrimitiveCalls = self.__stats.prim_calls  # The calls were not induced via recursion
         totalTime = self.__stats.total_tt
 
-        summary = QLabel( "<b>Script:</b> " + self.__script + " " + self.__params.arguments + "<br>" \
-                          "<b>Run at:</b> " + self.__reportTime + "<br>" + \
-                          str( totalCalls ) + " function calls (" + \
-                          str( totalPrimitiveCalls ) + " primitive calls) in " + \
-                          FLOAT_FORMAT % totalTime + " CPU seconds" )
+        txt = "<b>Script:</b> " + self.__script + " " + self.__params.arguments + "<br>" \
+              "<b>Run at:</b> " + self.__reportTime + "<br>" + \
+              str( totalCalls ) + " function calls (" + \
+              str( totalPrimitiveCalls ) + " primitive calls) in " + \
+              FLOAT_FORMAT % totalTime + " CPU seconds"
+        summary = QLabel( txt )
+        summary.setToolTip( txt )
         summary.setSizePolicy( QSizePolicy.Ignored, QSizePolicy.Fixed )
         summary.setFrameStyle( QFrame.StyledPanel )
         summary.setAutoFillBackground( True )
