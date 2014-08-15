@@ -28,7 +28,7 @@ from PyQt4.QtGui import QWidget, QLabel, QFrame, QPalette, QVBoxLayout, \
                         QGraphicsScene, QGraphicsPathItem, QPainterPath, \
                         QPen, QColor, QPainter, QGraphicsTextItem, \
                         QFont, QFontMetrics, QStyleOptionGraphicsItem, \
-                        QStyle, QGraphicsItem, QGraphicsRectItem
+                        QStyle, QGraphicsItem, QGraphicsRectItem, QSizePolicy
 from utils.misc import safeRun
 from utils.settings import Settings, thirdpartyDir
 from utils.globals import GlobalData
@@ -292,6 +292,7 @@ class ProfileGraphViewer( QWidget ):
                           str( totalCalls ) + " function calls (" + \
                           str( totalPrimitiveCalls ) + " primitive calls) in " + \
                           FLOAT_FORMAT % totalTime + " CPU seconds" )
+        summary.setSizePolicy( QSizePolicy.Ignored, QSizePolicy.Fixed )
         summary.setFrameStyle( QFrame.StyledPanel )
         summary.setAutoFillBackground( True )
         summaryPalette = summary.palette()
