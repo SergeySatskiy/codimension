@@ -26,7 +26,7 @@ import os.path
 import pysvn
 import logging
 from svnindicators import IND_ERROR, IND_IGNORED, getIndicatorPixmap
-from PyQt4.QtCore import Qt, QTimer, SIGNAL, QStringList
+from PyQt4.QtCore import Qt, QTimer, QStringList
 from PyQt4.QtGui import ( QDialog, QApplication, QVBoxLayout, QLabel,
                           QDialogButtonBox, QCursor, QTreeWidget,
                           QTreeWidgetItem, QHeaderView, QIcon )
@@ -119,7 +119,7 @@ class SVNStatusProgress( QDialog ):
         buttonBox.setStandardButtons( QDialogButtonBox.Close )
         verticalLayout.addWidget( buttonBox )
 
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.__onClose )
+        buttonBox.rejected.connect( self.__onClose )
         return
 
     def __onClose( self ):
@@ -310,6 +310,6 @@ class SVNPluginStatusDialog( QDialog ):
         buttonBox.setOrientation( Qt.Horizontal )
         buttonBox.setStandardButtons( QDialogButtonBox.Ok )
         buttonBox.button( QDialogButtonBox.Ok ).setDefault( True )
-        self.connect( buttonBox, SIGNAL( "accepted()" ), self.accept )
+        buttonBox.accepted.connect( self.accept )
         vboxLayout.addWidget( buttonBox )
         return
