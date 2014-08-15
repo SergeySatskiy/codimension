@@ -24,7 +24,7 @@
 """ project properties dialog """
 
 
-from PyQt4.QtCore import Qt, SIGNAL, QEvent, QObject
+from PyQt4.QtCore import Qt, QEvent, QObject
 from PyQt4.QtGui import ( QDialog, QLineEdit, QGridLayout, QLabel, QTextEdit,
                           QDialogButtonBox, QVBoxLayout, QPushButton,
                           QFileDialog, QMessageBox, QListWidget, QAbstractItemView,
@@ -301,20 +301,14 @@ class ProjectPropertiesDialog( QDialog, object ):
         copyrightLabel.setBuddy( self.copyrightEdit )
         descriptionLabel.setBuddy( self.descriptionEdit )
 
-
-        self.connect( buttonBox, SIGNAL( "accepted()" ), self.onOKButton )
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.reject )
-        self.connect( self.dirButton, SIGNAL( "clicked()" ), self.onDirButton )
-        self.connect( self.scriptButton, SIGNAL( "clicked()" ),
-                      self.onScriptButton )
-        self.connect( self.importDirList, SIGNAL( "currentRowChanged(int)" ),
-                      self.onImportDirRowChanged )
-        self.connect( self.addImportDirButton,
-                      SIGNAL( "clicked()" ), self.onAddImportDir )
-        self.connect( self.delImportDirButton,
-                      SIGNAL( "clicked()" ), self.onDelImportDir )
-        self.connect( self.nameEdit,  SIGNAL( "textEdited(const QString &)" ),
-                      self.onProjectNameChanged )
+        buttonBox.accepted.connect( self.onOKButton )
+        buttonBox.rejected.connect( self.reject )
+        self.dirButton.clicked.connect( self.onDirButton )
+        self.scriptButton.clicked.connect( self.onScriptButton )
+        self.importDirList.currentRowChanged.connect( self.onImportDirRowChanged )
+        self.addImportDirButton.clicked.connect( self.onAddImportDir )
+        self.delImportDirButton.clicked.connect( self.onDelImportDir )
+        self.nameEdit.textEdited.connect( self.onProjectNameChanged )
 
         self.setTabOrder( self.nameEdit, self.dirEdit )
         self.setTabOrder( self.dirEdit, self.dirButton )
