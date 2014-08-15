@@ -266,16 +266,14 @@ class VCSAnnotateViewerTabWidget( QWidget, MainWindowTabWidgetBase ):
         # Buttons
         printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
                                'Print', self )
-        self.connect( printButton, SIGNAL( 'triggered()' ),
-                      self.__onPrint )
+        printButton.triggered.connect( self.__onPrint )
         printButton.setEnabled( False )
         printButton.setVisible( False )
 
         printPreviewButton = QAction(
                 PixmapCache().getIcon( 'printpreview.png' ),
                 'Print preview', self )
-        self.connect( printPreviewButton, SIGNAL( 'triggered()' ),
-                      self.__onPrintPreview )
+        printPreviewButton.triggered.connect( self.__onPrintPreview )
         printPreviewButton.setEnabled( False )
         printPreviewButton.setVisible( False )
 
@@ -285,8 +283,7 @@ class VCSAnnotateViewerTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.lineCounterButton = QAction(
             PixmapCache().getIcon( 'linecounter.png' ),
             'Line counter', self )
-        self.connect( self.lineCounterButton, SIGNAL( 'triggered()' ),
-                      self.onLineCounter )
+        self.lineCounterButton.triggered.connect( self.onLineCounter )
 
         # The toolbar
         toolbar = QToolBar( self )
