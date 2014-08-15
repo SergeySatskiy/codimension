@@ -94,8 +94,7 @@ class IgnoredExceptionsViewer( QWidget ):
         self.__showHideButton.setFixedSize( 20, 20 )
         self.__showHideButton.setToolTip( "Hide ignored exceptions list" )
         self.__showHideButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__showHideButton, SIGNAL( 'clicked()' ),
-                      self.__onShowHide )
+        self.__showHideButton.clicked.connect( self.__onShowHide )
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins( 1, 1, 1, 1 )
@@ -116,26 +115,20 @@ class IgnoredExceptionsViewer( QWidget ):
         self.exceptionsList.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         self.exceptionsList.setContextMenuPolicy( Qt.CustomContextMenu )
 
-        self.connect( self.exceptionsList,
-                      SIGNAL( "customContextMenuRequested(const QPoint &)" ),
-                      self.__showContextMenu )
-        self.connect( self.exceptionsList, SIGNAL( "itemSelectionChanged()" ),
-                      self.__onSelectionChanged )
+        self.exceptionsList.customContextMenuRequested.connect( self.__showContextMenu )
+        self.exceptionsList.itemSelectionChanged.connect( self.__onSelectionChanged )
 
         headerLabels = QStringList() << "Exception type"
         self.exceptionsList.setHeaderLabels( headerLabels )
 
         self.__excTypeEdit = QLineEdit()
         self.__excTypeEdit.setFixedHeight( 26 )
-        self.connect( self.__excTypeEdit, SIGNAL( 'textChanged(const QString &)' ),
-                      self.__onNewFilterChanged )
-        self.connect( self.__excTypeEdit, SIGNAL( 'returnPressed()' ),
-                      self.__onAddExceptionFilter )
+        self.__excTypeEdit.textChanged.connect( self.__onNewFilterChanged )
+        self.__excTypeEdit.returnPressed.connect( self.__onAddExceptionFilter )
         self.__addButton = QPushButton( "Add" )
         # self.__addButton.setFocusPolicy( Qt.NoFocus )
         self.__addButton.setEnabled( False )
-        self.connect( self.__addButton, SIGNAL( 'clicked()' ),
-                      self.__onAddExceptionFilter )
+        self.__addButton.clicked.connect( self.__onAddExceptionFilter )
 
         expandingSpacer2 = QWidget()
         expandingSpacer2.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
@@ -143,8 +136,7 @@ class IgnoredExceptionsViewer( QWidget ):
         self.__removeButton = QAction(
             PixmapCache().getIcon( 'delitem.png' ),
             "Remove selected exception type", self )
-        self.connect( self.__removeButton, SIGNAL( "triggered()" ),
-                      self.__onRemoveFromIgnore )
+        self.__removeButton.triggered.connect( self.__onRemoveFromIgnore )
         self.__removeButton.setEnabled( False )
 
         fixedSpacer1 = QWidget()
@@ -153,8 +145,7 @@ class IgnoredExceptionsViewer( QWidget ):
         self.__removeAllButton = QAction(
             PixmapCache().getIcon( 'ignexcptdelall.png' ),
             "Remove all the exception types", self )
-        self.connect( self.__removeAllButton, SIGNAL( "triggered()" ),
-                      self.__onRemoveAllFromIgnore )
+        self.__removeAllButton.triggered.connect( self.__onRemoveAllFromIgnore )
         self.__removeAllButton.setEnabled( False )
 
 
