@@ -454,7 +454,8 @@ class WatchPointViewer( QWidget ):
         toolbarLayout.addSpacerItem( expandingSpacer )
         toolbarLayout.addWidget( self.__jumpToCodeButton )
 
-        self.__wpointsList.itemSelectionChanged.connect( self.__onSelectionChanged )
+        self.connect( self.__wpointsList, SIGNAL( "itemSelectionChanged()" ),
+                      self.__onSelectionChanged )
 
         verticalLayout.addWidget( self.headerFrame )
         verticalLayout.addLayout( toolbarLayout )
