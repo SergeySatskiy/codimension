@@ -54,12 +54,8 @@ class WatchPointView( QTreeView ):
         self.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
 
         self.setContextMenuPolicy( Qt.CustomContextMenu )
-        self.connect( self,
-                      SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
-                      self.__showContextMenu )
-        self.connect( self,
-                      SIGNAL( 'doubleClicked(const QModelIndex &)' ),
-                      self.__doubleClicked )
+        self.customContextMenuRequested.connect( self.__showContextMenu )
+        self.doubleClicked.connect( self.__doubleClicked )
 
         self.__createPopupMenus()
         return
@@ -150,7 +146,7 @@ class WatchPointView( QTreeView ):
         self.backMenuActions["DeleteAll"] = \
             self.backMenu.addAction(self.trUtf8("Delete all"),
                 self.__deleteAllWatchPoints)
-        self.connect(self.backMenu, SIGNAL('aboutToShow()'), self.__showBackMenu)
+        self.backMenu.aboutToShow.connect( self.__showBackMenu )
 
         self.multiMenu = QMenu()
         self.multiMenu.addAction(self.trUtf8("Add"), self.__addWatchPoint)
@@ -423,8 +419,7 @@ class WatchPointViewer( QWidget ):
         self.__showHideButton.setFixedSize( 20, 20 )
         self.__showHideButton.setToolTip( "Hide ignored exceptions list" )
         self.__showHideButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.__showHideButton, SIGNAL( 'clicked()' ),
-                      self.__onShowHide )
+        self.__showHideButton.clicked.connect( self.__onShowHide )
 
         headerLayout = QHBoxLayout()
         headerLayout.setContentsMargins( 1, 1, 1, 1 )
@@ -442,9 +437,7 @@ class WatchPointViewer( QWidget ):
         self.__enableButton.setToolTip( "Enable/disable the watchpoint" )
         self.__enableButton.setFocusPolicy( Qt.NoFocus )
         self.__enableButton.setEnabled( False )
-        self.connect( self.__enableButton,
-                      SIGNAL( 'clicked()' ),
-                      self.__onEnableDisable )
+        self.__enableButton.clicked.connect( self.__onEnableDisable )
 
         expandingSpacer = QSpacerItem( 10, 10, QSizePolicy.Expanding )
 
@@ -454,18 +447,14 @@ class WatchPointViewer( QWidget ):
         self.__jumpToCodeButton.setToolTip( "Jump to the code" )
         self.__jumpToCodeButton.setFocusPolicy( Qt.NoFocus )
         self.__jumpToCodeButton.setEnabled( False )
-        self.connect( self.__jumpToCodeButton,
-                      SIGNAL( 'clicked()' ),
-                      self.__onJumpToCode )
+        self.__jumpToCodeButton.clicked.connect( self.__onJumpToCode )
 
         toolbarLayout = QHBoxLayout()
         toolbarLayout.addWidget( self.__enableButton )
         toolbarLayout.addSpacerItem( expandingSpacer )
         toolbarLayout.addWidget( self.__jumpToCodeButton )
 
-        self.connect( self.__wpointsList,
-                      SIGNAL( "itemSelectionChanged()" ),
-                      self.__onSelectionChanged )
+        self.__wpointsList.itemSelectionChanged.connect( self.__onSelectionChanged )
 
         verticalLayout.addWidget( self.headerFrame )
         verticalLayout.addLayout( toolbarLayout )
