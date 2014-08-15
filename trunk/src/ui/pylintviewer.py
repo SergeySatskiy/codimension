@@ -121,16 +121,14 @@ class PylintViewer( QWidget ):
         self.printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
                                     'Print', self )
         #printButton.setShortcut( 'Ctrl+' )
-        self.connect( self.printButton, SIGNAL( 'triggered()' ),
-                      self.__onPrint )
+        self.printButton.triggered.connect( self.__onPrint )
         self.printButton.setVisible( False )
 
         self.printPreviewButton = QAction(
                 PixmapCache().getIcon( 'printpreview.png' ),
                 'Print preview', self )
         #printPreviewButton.setShortcut( 'Ctrl+' )
-        self.connect( self.printPreviewButton, SIGNAL( 'triggered()' ),
-                      self.__onPrintPreview )
+        self.printPreviewButton.triggered.connect( self.__onPrintPreview )
         self.printPreviewButton.setVisible( False )
 
         spacer = QWidget()
@@ -139,8 +137,7 @@ class PylintViewer( QWidget ):
         self.clearButton = QAction(
             PixmapCache().getIcon( 'trash.png' ),
             'Clear', self )
-        self.connect( self.clearButton, SIGNAL( 'triggered()' ),
-                      self.__clear )
+        self.clearButton.triggered.connect( self.__clear )
 
         # The toolbar
         self.toolbar = QToolBar( self )
@@ -291,9 +288,7 @@ class PylintViewer( QWidget ):
         errTable.setSortingEnabled( True )
         errTable.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         errTable.setUniformRowHeights( True )
-        self.connect( errTable,
-                      SIGNAL( "itemActivated(QTreeWidgetItem *, int)" ),
-                      self.__errorActivated )
+        errTable.itemActivated.connect( self.__errorActivated )
 
         headerLabels = QStringList() << "File name" << "Line" \
                                      << "Message ID" << "Object" << "Message"
@@ -350,9 +345,7 @@ class PylintViewer( QWidget ):
         simTable.setSortingEnabled( False )
         simTable.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         simTable.setUniformRowHeights( True )
-        self.connect( simTable,
-                      SIGNAL( "itemActivated(QTreeWidgetItem *, int)" ),
-                      self.__similarityActivated )
+        simTable.itemActivated.connect( self.__similarityActivated )
 
         headerLabels = QStringList() << "File name" << "Line"
         simTable.setHeaderLabels( headerLabels )
