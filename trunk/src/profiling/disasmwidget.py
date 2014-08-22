@@ -23,7 +23,7 @@
 " Disassembler widget "
 
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from PyQt4.QtCore import Qt, SIGNAL, QSize, QEvent
+from PyQt4.QtCore import Qt, QSize, QEvent, pyqtSignal
 from PyQt4.QtGui import ( QWidget, QToolBar, QHBoxLayout, QAction,
                           QLabel, QFrame, QPalette, QVBoxLayout,
                           QTextEdit, QSizePolicy, QApplication, QFont )
@@ -71,6 +71,9 @@ class DisasmWidget( QTextEdit ):
 
 class DisassemblerResultsWidget( QWidget, MainWindowTabWidgetBase ):
     " Disassembling results widget "
+
+    escapePressed = pyqtSignal()
+    textEditorZoom = pyqtSignal( int )
 
     def __init__( self, scriptName, name, code, reportTime, parent = None ):
 
@@ -180,27 +183,27 @@ class DisassemblerResultsWidget( QWidget, MainWindowTabWidgetBase ):
         " Triggered when the zoom reset button is pressed "
         zoom = Settings().zoom
         if zoom != 0:
-            self.emit( SIGNAL( 'TextEditorZoom' ), 0 )
+            self.textEditorZoom.emit( 0 )
         return True
 
     def onZoomIn( self ):
         " Triggered when the zoom in button is pressed "
         zoom = Settings().zoom
         if zoom < 20:
-            self.emit( SIGNAL( 'TextEditorZoom' ), zoom + 1 )
+            self.textEditorZoom.emit( zoom + 1 )
         return True
 
     def onZoomOut( self ):
         " Triggered when the zoom out button is pressed "
         zoom = Settings().zoom
         if zoom > -10:
-            self.emit( SIGNAL( 'TextEditorZoom' ), zoom - 1 )
+            self.textEditorZoom.emit( zoom - 1 )
         return True
 
     def keyPressEvent( self, event ):
         " Handles the key press events "
         if event.key() == Qt.Key_Escape:
-            self.emit( SIGNAL('ESCPressed') )
+            self.escapePressed.emit()
             event.accept()
         else:
             QWidget.keyPressEvent( self, event )

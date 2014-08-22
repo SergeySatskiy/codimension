@@ -23,7 +23,7 @@
 """ Diff viewer tab widget """
 
 
-from PyQt4.QtCore import SIGNAL, Qt, QEvent
+from PyQt4.QtCore import Qt, QEvent, pyqtSignal
 from PyQt4.QtGui import QApplication
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.settings import Settings
@@ -32,6 +32,8 @@ from htmltabwidget import HTMLTabWidget
 
 class DiffTabWidget( HTMLTabWidget ):
     " The widget which displays a RO diff page "
+
+    textEditorZoom = pyqtSignal( int )
 
     def __init__( self, parent = None ):
         HTMLTabWidget.__init__( self, parent )
@@ -94,17 +96,17 @@ class DiffTabWidget( HTMLTabWidget ):
     def onZoomReset( self ):
         " Triggered when the zoom reset button is pressed "
         if Settings().zoom != 0:
-            self.emit( SIGNAL( 'TextEditorZoom' ), 0 )
+            self.textEditorZoom.emit( 0 )
         return True
 
     def onZoomIn( self ):
         " Triggered when the zoom in button is pressed "
         if Settings().zoom < 20:
-            self.emit( SIGNAL( 'TextEditorZoom' ), Settings().zoom + 1 )
+            self.textEditorZoom.emit( Settings().zoom + 1 )
         return True
 
     def onZoomOut( self ):
         " Triggered when the zoom out button is pressed "
         if Settings().zoom > -10:
-            self.emit( SIGNAL( 'TextEditorZoom' ), Settings().zoom - 1 )
+            self.textEditorZoom.emit( Settings().zoom - 1 )
         return True

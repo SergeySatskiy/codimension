@@ -4677,8 +4677,8 @@ class CodimensionMainWindow( QMainWindow ):
         self.redirectedIOConsole = IOConsoleTabWidget( self )
         self.connect( self.redirectedIOConsole, SIGNAL( 'UserInput' ),
                       self.__onUserInput )
-        self.connect( self.redirectedIOConsole, SIGNAL( 'TextEditorZoom' ),
-                      self.editorsManagerWidget.editorsManager.onZoom )
+        self.redirectedIOConsole.textEditorZoom.connect(
+                            self.editorsManagerWidget.editorsManager.onZoom )
         self.connect( self.redirectedIOConsole, SIGNAL( 'SettingUpdated' ),
                       self.onIOConsoleSettingUpdated )
         self.__bottomSideBar.addTab( self.redirectedIOConsole,
@@ -4755,8 +4755,8 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onCloseIOConsole )
         self.connect( widget, SIGNAL( 'KillIOConsoleProcess' ),
                       self.__onKillIOConsoleProcess )
-        self.connect( widget, SIGNAL( 'TextEditorZoom' ),
-                      self.editorsManagerWidget.editorsManager.onZoom )
+        widget.textEditorZoom.connect(
+                            self.editorsManagerWidget.editorsManager.onZoom )
         self.connect( widget, SIGNAL( 'SettingUpdated' ),
                       self.onIOConsoleSettingUpdated )
 

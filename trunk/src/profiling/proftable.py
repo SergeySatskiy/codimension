@@ -26,7 +26,7 @@
 import logging
 import os.path
 
-from PyQt4.QtCore import Qt, SIGNAL, QStringList, QVariant
+from PyQt4.QtCore import Qt, QStringList, QVariant, pyqtSignal
 from PyQt4.QtGui import ( QTreeWidgetItem, QTreeWidget, QLabel,
                           QWidget, QVBoxLayout, QFrame, QPalette, QHeaderView,
                           QMenu, QAbstractItemView, QCursor, QSizePolicy )
@@ -193,7 +193,9 @@ class ProfilingTableItem( QTreeWidgetItem ):
 
 
 class ProfilerTreeWidget( QTreeWidget ):
-    " Need only to generate ESCPressed signal "
+    " Need only to generate escapePressed signal "
+
+    escapePressed = pyqtSignal()
 
     def __init__( self, parent = None ):
         QTreeWidget.__init__( self, parent )
@@ -202,7 +204,7 @@ class ProfilerTreeWidget( QTreeWidget ):
     def keyPressEvent( self, event ):
         " Handles the key press events "
         if event.key() == Qt.Key_Escape:
-            self.emit( SIGNAL('ESCPressed') )
+            self.escapePressed.emit()
             event.accept()
         else:
             QTreeWidget.keyPressEvent( self, event )
@@ -212,13 +214,14 @@ class ProfilerTreeWidget( QTreeWidget ):
 class ProfileTableViewer( QWidget ):
     " Profiling results table viewer "
 
+    escapePressed = pyqtSignal()
+
     def __init__( self, scriptName, params, reportTime,
                         dataFile, stats, parent = None ):
         QWidget.__init__( self, parent )
 
         self.__table = ProfilerTreeWidget( self )
-        self.connect( self.__table, SIGNAL( 'ESCPressed' ),
-                      self.__onEsc )
+        self.__table.escapePressed.connect( self.__onEsc )
 
         self.__script = scriptName
         self.__stats = stats
@@ -301,7 +304,7 @@ class ProfileTableViewer( QWidget ):
 
     def __onEsc( self ):
         " Triggered when Esc is pressed "
-        self.emit( SIGNAL( 'ESCPressed' ) )
+        self.escapePressed.emit()
         return
 
     def __createContextMenu( self ):

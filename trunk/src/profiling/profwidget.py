@@ -26,7 +26,7 @@ import pstats
 from proftable import ProfileTableViewer
 from profgraph import ProfileGraphViewer
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from PyQt4.QtCore import Qt, SIGNAL, QSize
+from PyQt4.QtCore import Qt, QSize, pyqtSignal
 from PyQt4.QtGui import QWidget, QToolBar, QHBoxLayout, QAction
 from utils.pixmapcache import PixmapCache
 
@@ -34,6 +34,8 @@ from utils.pixmapcache import PixmapCache
 
 class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
     " Profiling results widget "
+
+    escapePressed = pyqtSignal()
 
     def __init__( self, scriptName, params, reportTime, dataFile, parent = None ):
 
@@ -51,10 +53,8 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
                                                dataFile, stats, self )
         self.__profTable.hide()
 
-        self.connect( self.__profTable, SIGNAL( 'ESCPressed' ),
-                      self.__onEsc )
-        self.connect( self.__profGraph, SIGNAL( 'ESCPressed' ),
-                      self.__onEsc )
+        self.__profTable.escapePressed.connect( self.__onEsc )
+        self.__profGraph.escapePressed.connect( self.__onEsc )
 
         self.__createLayout()
         return
@@ -66,27 +66,23 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
         self.__toggleViewButton = QAction( PixmapCache().getIcon( 'tableview.png' ),
                                            'Switch to table view', self )
         self.__toggleViewButton.setCheckable( True )
-        self.connect( self.__toggleViewButton, SIGNAL( 'toggled(bool)' ),
-                      self.__switchView )
+        self.__toggleViewButton.toggled.connect( self.__switchView )
 
         self.__togglePathButton = QAction( PixmapCache().getIcon( 'longpath.png' ),
                                            'Show full paths for item location', self )
         self.__togglePathButton.setCheckable( True )
-        self.connect( self.__togglePathButton, SIGNAL( 'toggled(bool)' ),
-                      self.__togglePath )
+        self.__togglePathButton.toggled.connect( self.__togglePath )
         self.__togglePathButton.setEnabled( False )
 
         self.__printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
                                       'Print', self )
-        self.connect( self.__printButton, SIGNAL( 'triggered()' ),
-                      self.__onPrint )
+        self.__printButton.triggered.connect( self.__onPrint )
         self.__printButton.setEnabled( False )
 
-        self.__printPreviewButton = QAction( \
+        self.__printPreviewButton = QAction(
                 PixmapCache().getIcon( 'printpreview.png' ),
                 'Print preview', self )
-        self.connect( self.__printPreviewButton, SIGNAL( 'triggered()' ),
-                      self.__onPrintPreview )
+        self.__printPreviewButton.triggered.connect( self.__onPrintPreview )
         self.__printPreviewButton.setEnabled( False )
 
         fixedSpacer = QWidget()
@@ -95,18 +91,17 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
         self.__zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
                                        'Zoom in (Ctrl+=)', self )
         self.__zoomInButton.setShortcut( 'Ctrl+=' )
-        self.connect( self.__zoomInButton, SIGNAL( 'triggered()' ), self.onZoomIn )
+        self.__zoomInButton.triggered.connect( self.onZoomIn )
 
         self.__zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
                                         'Zoom out (Ctrl+-)', self )
         self.__zoomOutButton.setShortcut( 'Ctrl+-' )
-        self.connect( self.__zoomOutButton, SIGNAL( 'triggered()' ), self.onZoomOut )
+        self.__zoomOutButton.triggered.connect( self.onZoomOut )
 
         self.__zoomResetButton = QAction( PixmapCache().getIcon( 'zoomreset.png' ),
                                           'Zoom reset (Ctrl+0)', self )
         self.__zoomResetButton.setShortcut( 'Ctrl+0' )
-        self.connect( self.__zoomResetButton, SIGNAL( 'triggered()' ),
-                      self.onZoomReset )
+        self.__zoomResetButton.triggered.connect( self.onZoomReset )
 
 
         # Toolbar
@@ -147,7 +142,7 @@ class ProfileResultsWidget( QWidget, MainWindowTabWidgetBase ):
 
     def __onEsc( self ):
         " Triggered when Esc is pressed "
-        self.emit( SIGNAL( 'ESCPressed' ) )
+        self.escapePressed.emit()
         return
 
     def __switchView( self, state ):

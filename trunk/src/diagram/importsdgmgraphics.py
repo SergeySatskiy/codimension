@@ -29,7 +29,7 @@ from PyQt4.QtGui import ( QGraphicsRectItem, QGraphicsPathItem, QWidget,
                           QColor, QAction, QGraphicsItem, QPainterPath,
                           QGraphicsTextItem, QFontMetrics, QApplication,
                           QStyleOptionGraphicsItem, QPainter, QStyle, QImage )
-from PyQt4.QtCore import Qt, SIGNAL, QSize, QPointF, QRectF
+from PyQt4.QtCore import Qt, QSize, QPointF, QRectF, pyqtSignal
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
@@ -531,6 +531,8 @@ class ImportsDgmDocNote( QGraphicsRectItem ):
 class DiagramWidget( QGraphicsView ):
     " Widget to show a generated diagram "
 
+    escapePressed = pyqtSignal()
+
     def __init__( self, parent = None ):
         QGraphicsView.__init__( self, parent )
 #        self.setRenderHint( QPainter.Antialiasing )
@@ -540,7 +542,7 @@ class DiagramWidget( QGraphicsView ):
     def keyPressEvent( self, event ):
         """ Handles the key press events """
         if event.key() == Qt.Key_Escape:
-            self.emit( SIGNAL( 'ESCPressed' ) )
+            self.escapePressed.emit()
             event.accept()
         elif event.key() == Qt.Key_C and \
              event.modifiers() == Qt.ControlModifier:
@@ -613,13 +615,14 @@ class DiagramWidget( QGraphicsView ):
 class ImportDgmTabWidget( QWidget, MainWindowTabWidgetBase ):
     " Widget for an editors manager "
 
+    escapePressed = pyqtSignal()
+
     def __init__( self, parent = None ):
         MainWindowTabWidgetBase.__init__( self )
         QWidget.__init__( self, parent )
 
         self.__viewer = DiagramWidget( self )
-        self.connect( self.__viewer, SIGNAL( 'ESCPressed' ),
-                      self.__onEsc )
+        self.__viewer.escapePressed.connect( self.__onEsc )
 
         self.__createLayout()
         return
@@ -717,7 +720,7 @@ class ImportDgmTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def __onEsc( self ):
         " Triggered when Esc is pressed "
-        self.emit( SIGNAL( 'ESCPressed' ) )
+        self.escapePressed.emit()
         return
 
     def onCopy( self ):

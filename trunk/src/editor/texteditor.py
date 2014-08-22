@@ -27,7 +27,7 @@ import os.path, logging, urllib2, socket
 import lexer
 from PyQt4.Qsci import QsciLexerPython
 from scintillawrap import ScintillaWrapper
-from PyQt4.QtCore import ( Qt, QFileInfo, SIGNAL, QSize, QUrl, QTimer,
+from PyQt4.QtCore import ( Qt, QFileInfo, SIGNAL, QSize, QUrl, QTimer, pyqtSignal,
                            QVariant, QRect, QEvent, QPoint, QModelIndex )
 from PyQt4.QtGui import ( QApplication, QCursor, QFontMetrics, QToolBar,
                           QActionGroup, QHBoxLayout, QWidget, QAction, QMenu,
@@ -94,6 +94,8 @@ class TextEditor( ScintillaWrapper ):
     BPOINT_MARGIN = 1
     FOLDING_MARGIN = 2
     MESSAGES_MARGIN = 3
+
+    escapePressed = pyqtSignal()
 
     def __init__( self, parent, debugger ):
 
@@ -1174,7 +1176,7 @@ class TextEditor( ScintillaWrapper ):
 
         elif key == Qt.Key_Escape:
             self.__resetCalltip()
-            self.emit( SIGNAL('ESCPressed') )
+            self.escapePressed.emit()
             event.accept()
 
         elif key == Qt.Key_Tab:
@@ -2414,6 +2416,8 @@ class TextEditor( ScintillaWrapper ):
 class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     " Plain text editor tab widget "
 
+    textEditorZoom = pyqtSignal( int )
+
     def __init__( self, parent, debugger ):
 
         MainWindowTabWidgetBase.__init__( self )
@@ -2787,19 +2791,19 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     def onZoomReset( self ):
         " Triggered when the zoom reset button is pressed "
         if self.__editor.zoom != 0:
-            self.emit( SIGNAL( 'TextEditorZoom' ), 0 )
+            self.textEditorZoom.emit( 0 )
         return True
 
     def onZoomIn( self ):
         " Triggered when the zoom in button is pressed "
         if self.__editor.zoom < 20:
-            self.emit( SIGNAL( 'TextEditorZoom' ), self.__editor.zoom + 1 )
+            self.textEditorZoom.emit( self.__editor.zoom + 1 )
         return True
 
     def onZoomOut( self ):
         " Triggered when the zoom out button is pressed "
         if self.__editor.zoom > -10:
-            self.emit( SIGNAL( 'TextEditorZoom' ), self.__editor.zoom - 1 )
+            self.textEditorZoom.emit( self.__editor.zoom - 1 )
         return True
 
     def onNavigationBar( self ):

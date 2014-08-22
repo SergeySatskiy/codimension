@@ -122,12 +122,10 @@ class EditorsManager( QTabWidget ):
         self.__welcomeWidget = WelcomeWidget()
         self.addTab( self.__welcomeWidget,
                      self.__welcomeWidget.getShortName() )
-        self.connect( self.__welcomeWidget, SIGNAL( 'ESCPressed' ),
-                      self.__onESC )
+        self.__welcomeWidget.escapePressed.connect( self.__onESC )
 
         self.__helpWidget = QuickHelpWidget()
-        self.connect( self.__helpWidget, SIGNAL( 'ESCPressed' ),
-                      self.__onESC )
+        self.__helpWidget.escapePressed.connect( self.__onESC )
 
         self.__updateControls()
         self.__installActions()
@@ -937,8 +935,7 @@ class EditorsManager( QTabWidget ):
                     return True
             # Not found - create a new one
             newWidget = PixmapTabWidget( self )
-            self.connect( newWidget, SIGNAL( 'ESCPressed' ),
-                          self.__onESC )
+            newWidget.escapePressed.connect( self.__onESC )
             self.connect( newWidget, SIGNAL( 'ReloadRequest' ),
                           self.onReload )
             self.connect( newWidget, SIGNAL( 'ReloadAllNonModifiedRequest' ),
@@ -970,8 +967,7 @@ class EditorsManager( QTabWidget ):
 
         try:
             newWidget = ImportDgmTabWidget()
-            self.connect( newWidget, SIGNAL( 'ESCPressed' ),
-                          self.__onESC )
+            newWidget.escapePressed.connect( self.__onESC )
             newWidget.setScene( scene )
 
             if self.widget( 0 ) == self.__welcomeWidget:
@@ -998,10 +994,8 @@ class EditorsManager( QTabWidget ):
         " Shows diff (expected HTML format) "
         try:
             newWidget = DiffTabWidget()
-            self.connect( newWidget, SIGNAL( 'ESCPressed' ),
-                          self.__onESC )
-            self.connect( newWidget, SIGNAL( 'TextEditorZoom' ),
-                          self.onZoom )
+            newWidget.escapePressed.connect( self.__onESC )
+            newWidget.textEditorZoom.connect(self.onZoom )
 
             newWidget.setHTML( content )
             newWidget.setFileName( "" )
@@ -1030,8 +1024,7 @@ class EditorsManager( QTabWidget ):
     def showProfileReport( self, newWidget, tooltip ):
         " Shows profiling report "
         try:
-            self.connect( newWidget, SIGNAL( 'ESCPressed' ),
-                          self.__onESC )
+            newWidget.escapePressed.connect( self.__onESC )
 
             if self.widget( 0 ) == self.__welcomeWidget:
                 # It is the only welcome widget on the screen
@@ -1060,10 +1053,8 @@ class EditorsManager( QTabWidget ):
                       " at " + reportTime
             newWidget = DisassemblerResultsWidget( scriptPath, name,
                                                    code, reportTime )
-            self.connect( newWidget, SIGNAL( 'ESCPressed' ),
-                          self.__onESC )
-            self.connect( newWidget, SIGNAL( 'TextEditorZoom' ),
-                          self.onZoom )
+            newWidget.escapePressed.connect( self.__onESC )
+            newWidget.textEditorZoom.connect( self.onZoom )
 
             if self.widget( 0 ) == self.__welcomeWidget:
                 # It is the only welcome widget on the screen
@@ -1092,8 +1083,7 @@ class EditorsManager( QTabWidget ):
 
             newWidget = VCSAnnotateViewerTabWidget( self )
             newWidget.setFileType( detectFileType( fileName ) )
-            self.connect( newWidget, SIGNAL( 'ESCPressed' ),
-                          self.__onESC )
+            newWidget.escapePressed.connect( self.__onESC )
 
             newWidget.setAnnotatedContent( shortName, text, lineRevisions,
                                            revisionInfo )
@@ -1816,11 +1806,8 @@ class EditorsManager( QTabWidget ):
         editor.modificationChanged.connect( self.__modificationChanged )
         editor.SCEN_CHANGE.connect( self.__contentChanged )
         editor.cursorPositionChanged.connect( self.__cursorPositionChanged )
-        self.connect( editor, SIGNAL( 'ESCPressed' ),
-                      self.__onESC )
-
-        self.connect( editorWidget, SIGNAL( 'TextEditorZoom' ),
-                      self.onZoom )
+        editor.escapePressed.connect( self.__onESC )
+        editorWidget.textEditorZoom.connect( self.onZoom )
         return
 
     def __modificationChanged( self, modified ):
