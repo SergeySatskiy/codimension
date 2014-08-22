@@ -26,34 +26,34 @@
 import os.path
 from PyQt4.QtGui import QTextBrowser, QHBoxLayout, QWidget
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtCore import Qt, pyqtSignal
 
 
 class TextViewer( QTextBrowser ):
     " Text viewer "
 
+    escapePressed = pyqtSignal()
+
     def __init__( self, parent = None ):
         QTextBrowser.__init__( self, parent )
         self.setOpenExternalLinks( True )
-        self.copyAvailable = False
-        self.connect( self, SIGNAL( 'copyAvailable(bool)' ),
-                      self.__onCopyAvailable )
+        self.__copyAvailable = False
+        self.copyAvailable.connect( self.__onCopyAvailable )
         return
 
     def __onCopyAvailable( self, available ):
         " Triggered when copying is available "
-        self.copyAvailable = available
+        self.__copyAvailable = available
         return
 
     def isCopyAvailable( self ):
         " True if text copying is available "
-        return self.copyAvailable
-
+        return self.__copyAvailable
 
     def keyPressEvent( self, event ):
         " Handles the key press events "
         if event.key() == Qt.Key_Escape:
-            self.emit( SIGNAL( 'ESCPressed' ) )
+            self.escapePressed.emit()
             event.accept()
         else:
             QTextBrowser.keyPressEvent( self, event )
@@ -64,6 +64,8 @@ class TextViewer( QTextBrowser ):
 class TextTabWidget( QWidget, MainWindowTabWidgetBase ):
     " The widget which displays a RO HTML page "
 
+    escapePressed = pyqtSignal()
+
     def __init__( self, parent = None ):
         QWidget.__init__( self )
         MainWindowTabWidgetBase.__init__( self )
@@ -72,8 +74,7 @@ class TextTabWidget( QWidget, MainWindowTabWidgetBase ):
         layout.setMargin( 0 )
 
         self.__editor = TextViewer( self )
-        self.connect( self.__editor, SIGNAL( 'ESCPressed' ),
-                      self.__onEsc )
+        self.__editor.escapePressed.connect( self.__onEsc )
         layout.addWidget( self.__editor )
 
         self.__fileName = ""
@@ -83,7 +84,7 @@ class TextTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def __onEsc( self ):
         " Triggered when Esc is pressed "
-        self.emit( SIGNAL( 'ESCPressed' ) )
+        self.escapePressed.emit()
         return
 
     def setHTML( self, content ):

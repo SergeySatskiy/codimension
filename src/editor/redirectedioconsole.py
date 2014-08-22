@@ -24,7 +24,7 @@
 
 
 from texteditor import TextEditor
-from PyQt4.QtCore import Qt, SIGNAL, QSize, QPoint, QEvent
+from PyQt4.QtCore import Qt, SIGNAL, QSize, QPoint, QEvent, pyqtSignal
 from PyQt4.QtGui import ( QToolBar, QFont, QFontMetrics, QHBoxLayout, QWidget,
                           QAction, QSizePolicy, QToolTip, QMenu, QToolButton,
                           QActionGroup, QApplication )
@@ -724,6 +724,8 @@ class RedirectedIOConsole( TextEditor ):
 class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
     " IO console tab widget "
 
+    textEditorZoom = pyqtSignal( int )
+
     def __init__( self, parent ):
 
         MainWindowTabWidgetBase.__init__( self )
@@ -850,19 +852,19 @@ class IOConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
     def onZoomReset( self ):
         " Triggered when the zoom reset button is pressed "
         if self.__viewer.zoom != 0:
-            self.emit( SIGNAL( 'TextEditorZoom' ), 0 )
+            self.textEditorZoom.emit( 0 )
         return True
 
     def onZoomIn( self ):
         " Triggered when the zoom in button is pressed "
         if self.__viewer.zoom < 20:
-            self.emit( SIGNAL( 'TextEditorZoom' ), self.__viewer.zoom + 1 )
+            self.textEditorZoom.emit( self.__viewer.zoom + 1 )
         return True
 
     def onZoomOut( self ):
         " Triggered when the zoom out button is pressed "
         if self.__viewer.zoom > -10:
-            self.emit( SIGNAL( 'TextEditorZoom' ), self.__viewer.zoom - 1 )
+            self.textEditorZoom.emit( self.__viewer.zoom - 1 )
         return True
 
     def __onPrint( self ):

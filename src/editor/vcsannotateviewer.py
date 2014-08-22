@@ -25,7 +25,7 @@
 
 from texteditor import TextEditor
 import os.path
-from PyQt4.QtCore import Qt, SIGNAL, QSize, QPoint
+from PyQt4.QtCore import Qt, QSize, QPoint, pyqtSignal
 from PyQt4.QtGui import ( QToolBar, QFont, QFontMetrics, QHBoxLayout, QWidget,
                           QAction, QSizePolicy, QToolTip )
 from PyQt4.Qsci import QsciScintilla
@@ -246,6 +246,8 @@ class VCSAnnotateViewer( TextEditor ):
 class VCSAnnotateViewerTabWidget( QWidget, MainWindowTabWidgetBase ):
     " VCS annotate viewer tab widget "
 
+    textEditorZoom = pyqtSignal( int )
+
     def __init__( self, parent ):
 
         MainWindowTabWidgetBase.__init__( self )
@@ -322,19 +324,19 @@ class VCSAnnotateViewerTabWidget( QWidget, MainWindowTabWidgetBase ):
     def onZoomReset( self ):
         " Triggered when the zoom reset button is pressed "
         if self.__viewer.zoom != 0:
-            self.emit( SIGNAL( 'TextEditorZoom' ), 0 )
+            self.textEditorZoom.emit( 0 )
         return True
 
     def onZoomIn( self ):
         " Triggered when the zoom in button is pressed "
         if self.__viewer.zoom < 20:
-            self.emit( SIGNAL( 'TextEditorZoom' ), self.__viewer.zoom + 1 )
+            self.textEditorZoom.emit( self.__viewer.zoom + 1 )
         return True
 
     def onZoomOut( self ):
         " Triggered when the zoom out button is pressed "
         if self.__viewer.zoom > -10:
-            self.emit( SIGNAL( 'TextEditorZoom' ), self.__viewer.zoom - 1 )
+            self.textEditorZoom.emit( self.__viewer.zoom - 1 )
         return True
 
     def __onPrint( self ):

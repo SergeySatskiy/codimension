@@ -23,7 +23,7 @@
 " Profiling results as a graph "
 
 import os, os.path, math
-from PyQt4.QtCore import Qt, SIGNAL, QPointF
+from PyQt4.QtCore import Qt, QPointF, pyqtSignal
 from PyQt4.QtGui import QWidget, QLabel, QFrame, QPalette, QVBoxLayout, \
                         QGraphicsScene, QGraphicsPathItem, QPainterPath, \
                         QPen, QColor, QPainter, QGraphicsTextItem, \
@@ -248,6 +248,8 @@ def extractNodeID( label ):
 class ProfileGraphViewer( QWidget ):
     " Profiling results as a graph "
 
+    escapePressed = pyqtSignal()
+
     def __init__( self, scriptName, params, reportTime,
                         dataFile, stats, parent = None ):
         QWidget.__init__( self, parent )
@@ -307,7 +309,7 @@ class ProfileGraphViewer( QWidget ):
 
         self.__scene = QGraphicsScene()
         self.__viewer = DiagramWidget()
-        self.connect( self.__viewer, SIGNAL( 'ESCPressed' ), self.__onESC )
+        self.__viewer.escapePressed.connect( self.__onESC )
 
         vLayout = QVBoxLayout()
         vLayout.setContentsMargins( 0, 0, 0, 0 )
@@ -368,7 +370,7 @@ class ProfileGraphViewer( QWidget ):
 
     def __onESC( self ):
         " Triggered when ESC is clicked "
-        self.emit( SIGNAL( 'ESCPressed' ) )
+        self.escapePressed.emit()
         return
 
     def onCopy( self ):

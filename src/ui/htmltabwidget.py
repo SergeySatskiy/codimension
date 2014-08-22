@@ -26,7 +26,7 @@
 import os.path
 from PyQt4.QtGui import QFrame, QHBoxLayout, QDesktopServices, QMenu, QFont
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtCore import Qt, pyqtSignal
 from PyQt4.QtWebKit import QWebView, QWebPage
 from utils.globals import GlobalData
 
@@ -34,13 +34,15 @@ from utils.globals import GlobalData
 class HTMLViewer( QWebView ):
     " HTML viewer (web browser) "
 
+    escapePressed = pyqtSignal()
+
     def __init__( self, parent = None ):
         QWebView.__init__( self, parent )
 
     def keyPressEvent( self, event ):
         " Handles the key press events "
         if event.key() == Qt.Key_Escape:
-            self.emit( SIGNAL( 'ESCPressed' ) )
+            self.escapePressed.emit()
             event.accept()
         else:
             QWebView.keyPressEvent( self, event )
@@ -74,6 +76,8 @@ class HTMLViewer( QWebView ):
 class HTMLTabWidget( MainWindowTabWidgetBase, QFrame ):
     " The widget which displays a RO HTML page "
 
+    escapePressed = pyqtSignal()
+
     def __init__( self, parent = None ):
 
         MainWindowTabWidgetBase.__init__( self )
@@ -84,8 +88,7 @@ class HTMLTabWidget( MainWindowTabWidgetBase, QFrame ):
         layout.setMargin( 0 )
 
         self.__editor = HTMLViewer( self )
-        self.connect( self.__editor, SIGNAL( 'ESCPressed' ),
-                      self.__onEsc )
+        self.__editor.escapePressed.connect( self.__onEsc )
         layout.addWidget( self.__editor )
 
         self.__fileName = ""
@@ -95,7 +98,7 @@ class HTMLTabWidget( MainWindowTabWidgetBase, QFrame ):
 
     def __onEsc( self ):
         " Triggered when Esc is pressed "
-        self.emit( SIGNAL( 'ESCPressed' ) )
+        self.escapePressed.emit()
         return
 
     def setHTML( self, content ):
@@ -123,9 +126,7 @@ class HTMLTabWidget( MainWindowTabWidgetBase, QFrame ):
         " Connects the current web page to the links delegate "
         self.__editor.page().setLinkDelegationPolicy(
                                 QWebPage.DelegateAllLinks )
-        self.connect( self.__editor,
-                      SIGNAL( 'linkClicked(const QUrl &)' ),
-                      QDesktopServices.openUrl )
+        self.__editor.linkClicked.connect( QDesktopServices.openUrl )
         return
 
     def zoomTo( self, zoomFactor ):

@@ -28,7 +28,7 @@ from mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from PyQt4.QtGui import ( QPalette, QSizePolicy, QScrollArea, QImage, QPixmap,
                           QAction, QLabel, QToolBar, QWidget, QHBoxLayout,
                           QApplication, QMenu, QCursor, QShortcut )
-from PyQt4.QtCore import Qt, SIGNAL, QSize
+from PyQt4.QtCore import Qt, SIGNAL, QSize, pyqtSignal
 from utils.pixmapcache import PixmapCache
 from outsidechanges import OutsideChangeWidget
 
@@ -36,6 +36,8 @@ from outsidechanges import OutsideChangeWidget
 
 class PixmapWidget( QScrollArea ):
     " The pixmap widget "
+
+    escapePressed = pyqtSignal()
 
     formatStrings = { QImage.Format_Invalid:                "invalid",
                       QImage.Format_Mono:                   "1-bit per pixel",
@@ -113,7 +115,7 @@ class PixmapWidget( QScrollArea ):
         """ Handles the key press events """
 
         if event.key() == Qt.Key_Escape:
-            self.emit( SIGNAL('ESCPressed') )
+            self.escapePressed.emit()
             event.accept()
         else:
             QScrollArea.keyPressEvent( self, event )
@@ -151,6 +153,8 @@ class PixmapWidget( QScrollArea ):
 class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
     " Pixmap viewer tab widget "
 
+    escapePressed = pyqtSignal()
+
     def __init__( self, parent ):
 
         MainWindowTabWidgetBase.__init__( self )
@@ -161,11 +165,9 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__fileName = ""
         self.__shortName = ""
 
-        self.connect( self.__viewer, SIGNAL( 'ESCPressed' ),
-                      self.__onEsc )
+        self.__viewer.escapePressed.connect( self.__onEsc )
         self.__viewer.setContextMenuPolicy( Qt.CustomContextMenu )
-        self.connect( self.__viewer, SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
-                      self.__onContextMenu )
+        self.__viewer.customContextMenuRequested.connect( self.__onContextMenu )
 
         self.__createLayout()
 
@@ -183,16 +185,14 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
                                'Print', self )
         #printButton.setShortcut( 'Ctrl+' )
-        self.connect( printButton, SIGNAL( 'triggered()' ),
-                      self.__onPrint )
+        printButton.triggered.connect( self.__onPrint )
         printButton.setVisible( False )
 
         printPreviewButton = QAction(
                 PixmapCache().getIcon( 'printpreview.png' ),
                 'Print preview', self )
         #printPreviewButton.setShortcut( 'Ctrl+' )
-        self.connect( printPreviewButton, SIGNAL( 'triggered()' ),
-                      self.__onPrintPreview )
+        printPreviewButton.triggered.connect( self.__onPrintPreview )
         printPreviewButton.setVisible( False )
 
         fixedSpacer = QWidget()
@@ -201,20 +201,19 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
                                 'Zoom in (Ctrl+=)', self )
         zoomInButton.setShortcut( 'Ctrl+=' )
-        self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.onZoomIn )
+        zoomInButton.triggered.connect( self.onZoomIn )
         self.__zoomInSynonim = QShortcut( "Ctrl++", self )
-        self.connect( self.__zoomInSynonim, SIGNAL( "activated()" ), self.onZoomIn )
+        self.__zoomInSynonim.activated.connect( self.onZoomIn )
 
         zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
                                 'Zoom out (Ctrl+-)', self )
         zoomOutButton.setShortcut( 'Ctrl+-' )
-        self.connect( zoomOutButton, SIGNAL( 'triggered()' ), self.onZoomOut )
+        zoomOutButton.triggered.connect( self.onZoomOut )
 
         zoomResetButton = QAction( PixmapCache().getIcon( 'zoomreset.png' ),
                                    'Zoom reset (Ctrl+0)', self )
         zoomResetButton.setShortcut( 'Ctrl+0' )
-        self.connect( zoomResetButton, SIGNAL( 'triggered()' ),
-                      self.onZoomReset )
+        zoomResetButton.triggered.connect( self.onZoomReset )
 
 
         # Toolbar
@@ -328,7 +327,7 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def __onEsc( self ):
         " Triggered when Esc is pressed "
-        self.emit( SIGNAL( 'ESCPressed' ) )
+        self.escapePressed.emit()
         return
 
     def resizeEvent( self, event ):
