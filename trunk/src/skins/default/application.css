@@ -64,11 +64,15 @@ QComboBox QAbstractItemView
 QTextEdit
 {
     background-color: #ffffe6;
+    selection-background-color: #c0c0c0;
+    selection-color: #000000;
 }
 
 QPlainTextEdit
 {
     background-color: #ffffe6;
+    selection-background-color: #c0c0c0;
+    selection-color: #000000;
 }
 
 QListView
