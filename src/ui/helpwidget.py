@@ -176,6 +176,12 @@ class QuickHelpWidget( TextTabWidget ):
           <td bgcolor="#E9E9F3">Ctrl+B</td>
           <td bgcolor="#F6F4E4">Highlight the current text cursor context in the outline browser without moving the focus</td>
         </tr>
+        <tr>
+          <td bgcolor="#E9E9F3">F12</td>
+          <td bgcolor="#F6F4E4">Make the cursor line the first visible</td>
+          <td bgcolor="#E9E9F3"></td>
+          <td bgcolor="#F6F4E4"></td>
+        </tr>
       </table>
     </p>
 
