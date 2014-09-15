@@ -83,18 +83,14 @@ class ProjectViewer( QWidget ):
         self.__updateFSToolbarButtons()
         self.__updatePrjToolbarButtons()
 
-        self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
-                      self.__onProjectChanged )
+        GlobalData().project.projectChanged.connect( self.__onProjectChanged )
         self.connect( GlobalData().project, SIGNAL( 'restoreProjectExpandedDirs' ),
                       self.__onRestorePrjExpandedDirs )
 
         # Support switching to debug and back
-        self.connect( self.__mainWindow, SIGNAL( 'debugModeChanged' ),
-                      self.projectTreeView.onDebugMode )
-        self.connect( self.__mainWindow, SIGNAL( 'debugModeChanged' ),
-                      self.filesystemView.onDebugMode )
-        self.connect( self.__mainWindow, SIGNAL( 'debugModeChanged' ),
-                      self.onDebugMode )
+        self.__mainWindow.debugModeChanged.connect( self.projectTreeView.onDebugMode )
+        self.__mainWindow.debugModeChanged.connect( self.filesystemView.onDebugMode )
+        self.__mainWindow.debugModeChanged.connect( self.onDebugMode )
 
         # Plugin context menu support
         self.__pluginFileMenus = {}

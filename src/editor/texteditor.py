@@ -248,7 +248,8 @@ class TextEditor( ScintillaWrapper ):
                               Qt.Key_0:             self._parent.onZoomReset
                             },
             NO_MODIFIER:    { Qt.Key_Home:          self._onHome,
-                              Qt.Key_End:           self.moveToLineEnd
+                              Qt.Key_End:           self.moveToLineEnd,
+                              Qt.Key_F12:           self.makeLineFirst
                             }
                     }
 
@@ -1660,6 +1661,12 @@ class TextEditor( ScintillaWrapper ):
         GlobalData().mainWindow.showTagHelp( calltip, docstring )
         return True
 
+    def makeLineFirst( self ):
+        " Make the cursor line the first on the screen "
+        currentLine, _ = self.getCursorPosition()
+        self.setFirstVisibleLine( currentLine )
+        return True
+
     def onJumpToTop( self ):
         " Jumps to the first position of the first visible line "
         self.setCursorPosition( self.firstVisibleLine(), 0 )
@@ -2417,6 +2424,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     " Plain text editor tab widget "
 
     textEditorZoom = pyqtSignal( int )
+    reloadRequest = pyqtSignal()
+    reloadAllNonModifiedRequest = pyqtSignal()
 
     def __init__( self, parent, debugger ):
 
@@ -2686,11 +2695,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__importsBar.hide()
 
         self.__outsideChangesBar = OutsideChangeWidget( self.__editor )
-        self.connect( self.__outsideChangesBar, SIGNAL( 'ReloadRequest' ),
-                      self.__onReload )
-        self.connect( self.__outsideChangesBar,
-                      SIGNAL( 'ReloadAllNonModifiedRequest' ),
-                      self.reloadAllNonModified )
+        self.__outsideChangesBar.reloadRequest.connect( self.__onReload )
+        self.__outsideChangesBar.reloadAllNonModifiedRequest.connect( self.reloadAllNonModified )
         self.__outsideChangesBar.hide()
 
         hLayout = QHBoxLayout()
@@ -3137,7 +3143,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def __onReload( self ):
         " Triggered when a request to reload the file is received "
-        self.emit( SIGNAL( 'ReloadRequest' ) )
+        self.reloadRequest.emit()
         return
 
     def reload( self ):
@@ -3159,7 +3165,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     def reloadAllNonModified( self ):
         """ Triggered when a request to reload all the
             non-modified files is received """
-        self.emit( SIGNAL( 'ReloadAllNonModifiedRequest' ) )
+        self.reloadAllNonModifiedRequest.emit()
         return
 
     def onRunScriptSettings( self ):

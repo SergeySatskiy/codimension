@@ -23,7 +23,7 @@
 " UI support for detected outside changes of files "
 
 
-from PyQt4.QtCore import Qt, SIGNAL, QEventLoop
+from PyQt4.QtCore import Qt, QEventLoop, pyqtSignal
 from PyQt4.QtGui import ( QSizePolicy, QFrame, QLabel, QPushButton, QColor,
                           QApplication, QGridLayout, QFontMetrics )
 from utils.globals import GlobalData
@@ -31,6 +31,9 @@ from utils.globals import GlobalData
 
 class OutsideChangeWidget( QFrame ):
     " Frameless dialogue to deal with outside changes "
+
+    reloadRequest = pyqtSignal()
+    reloadAllNonModifiedRequest = pyqtSignal()
 
     def __init__( self, parent ):
         QFrame.__init__( self, parent )
@@ -200,11 +203,11 @@ class OutsideChangeWidget( QFrame ):
 
     def __reload( self ):
         " Reloads the file from the disk "
-        self.emit( SIGNAL( 'ReloadRequest' ) )
+        self.reloadRequest.emit()
         return
 
     def __reloadAllNonModified( self ):
         " Reloads all the non-modified buffers "
-        self.emit( SIGNAL( 'ReloadAllNonModifiedRequest' ) )
+        self.reloadAllNonModifiedRequest.emit()
         return
 

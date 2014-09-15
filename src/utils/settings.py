@@ -24,7 +24,7 @@
 """ codimension settings """
 
 import os, os.path, ConfigParser, sys, datetime
-from PyQt4.QtCore import QObject, SIGNAL, QDir
+from PyQt4.QtCore import QObject, QDir, pyqtSignal
 from filepositions import FilesPositions
 from run import TERM_REDIRECT
 
@@ -223,6 +223,7 @@ class Settings( object ):
     class Singleton( QObject ):
         """ Provides settings singleton facility """
 
+        recentListChanged = pyqtSignal()
 
         def __init__( self ):
 
@@ -461,7 +462,7 @@ class Settings( object ):
                 recentProjects = recentProjects[ 0 : _MAX_RECENT_PROJECTS ]
             self.values[ "recentProjects" ] = recentProjects
             self.flushSettings()
-            self.emit( SIGNAL('recentListChanged') )
+            self.recentListChanged.emit()
             return
 
         def deleteRecentProject( self, projectFile ):
@@ -473,7 +474,7 @@ class Settings( object ):
                 recentProjects.remove( absProjectFile )
                 self.values[ "recentProjects" ] = recentProjects
                 self.flushSettings()
-                self.emit( SIGNAL('recentListChanged') )
+                self.recentListChanged.emit()
             return
 
         def addExceptionFilter( self, excptType ):

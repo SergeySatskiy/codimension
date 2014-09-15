@@ -30,7 +30,7 @@
 
 
 import logging, os, os.path
-from PyQt4.QtCore import Qt, SIGNAL, QVariant, QDir, QUrl
+from PyQt4.QtCore import Qt, SIGNAL, QVariant, QDir, QUrl, pyqtSignal
 from PyQt4.QtGui import ( QTabWidget, QDialog, QMessageBox, QWidget,
                           QHBoxLayout, QMenu, QToolButton, QShortcut,
                           QFileDialog, QApplication, QTabBar, QIcon )
@@ -79,6 +79,8 @@ class ClickableTabBar( QTabBar ):
 class EditorsManager( QTabWidget ):
     " Tab bar with editors "
 
+    bufferModified = pyqtSignal( str, str )
+
     def __init__( self, parent, debugger ):
 
         QTabWidget.__init__( self, parent )
@@ -106,8 +108,7 @@ class EditorsManager( QTabWidget ):
         self.__debugMode = False
         self.__debugScript = ""     # If a single script is debugged
         self.__createdWithinDebugSession = []
-        self.connect( self.__mainWindow, SIGNAL( 'debugModeChanged' ),
-                      self.__onDebugMode )
+        self.__mainWindow.debugModeChanged.connect( self.__onDebugMode )
 
         # Auxiliary widgets - they are created in the main window
         self.findWidget = None
@@ -116,8 +117,7 @@ class EditorsManager( QTabWidget ):
         self.__lastDisplayedWasFindWidget = True
 
         self.history = TabsHistory( self )
-        self.connect( self.history, SIGNAL( 'historyChanged' ),
-                      self.__onHistoryChanged )
+        self.history.historyChanged.connect( self.__onHistoryChanged )
 
         self.__welcomeWidget = WelcomeWidget()
         self.addTab( self.__welcomeWidget,
@@ -490,10 +490,8 @@ class EditorsManager( QTabWidget ):
             self.setTabsClosable( True )
 
         newWidget = TextEditorTabWidget( self, self.__debugger )
-        self.connect( newWidget, SIGNAL( 'ReloadRequest' ),
-                      self.onReload )
-        self.connect( newWidget, SIGNAL( 'ReloadAllNonModifiedRequest' ),
-                      self.onReloadAllNonModified )
+        newWidget.reloadRequest.connect( self.onReload )
+        newWidget.reloadAllNonModifiedRequest.connect( self.onReloadAllNonModified )
         self.connect( newWidget, SIGNAL( 'TabRunChanged' ),
                       self.onTabRunChanged )
         editor = newWidget.getEditor()
@@ -936,10 +934,8 @@ class EditorsManager( QTabWidget ):
             # Not found - create a new one
             newWidget = PixmapTabWidget( self )
             newWidget.escapePressed.connect( self.__onESC )
-            self.connect( newWidget, SIGNAL( 'ReloadRequest' ),
-                          self.onReload )
-            self.connect( newWidget, SIGNAL( 'ReloadAllNonModifiedRequest' ),
-                          self.onReloadAllNonModified )
+            newWidget.reloadRequst.connect( self.onReload )
+            newWidget.reloadAllNonModifiedRequest.connect( self.onReloadAllNonModified )
 
             newWidget.loadFromFile( fileName )
 
@@ -1139,10 +1135,8 @@ class EditorsManager( QTabWidget ):
 
             # Not found - create a new one
             newWidget = TextEditorTabWidget( self, self.__debugger )
-            self.connect( newWidget, SIGNAL( 'ReloadRequest' ),
-                          self.onReload )
-            self.connect( newWidget, SIGNAL( 'ReloadAllNonModifiedRequest' ),
-                          self.onReloadAllNonModified )
+            newWidget.reloadRequest.connect( self.onReload )
+            newWidget.reloadAllNonModifiedRequest.connect( self.onReloadAllNonModified )
             self.connect( newWidget, SIGNAL( 'TabRunChanged' ),
                           self.onTabRunChanged )
             editor = newWidget.getEditor()
@@ -1290,7 +1284,7 @@ class EditorsManager( QTabWidget ):
             if GlobalData().project.fileName == fileName:
                 GlobalData().project.onProjectFileUpdated()
             if existedBefore:
-                # Otherwise the FS watcher will signal the chages
+                # Otherwise the FS watcher will signal the changes
                 self.emit( SIGNAL( 'fileUpdated' ), fileName,
                            widget.getUUID() )
             self.__mainWindow.vcsManager.setLocallyModified( fileName )
@@ -1824,8 +1818,8 @@ class EditorsManager( QTabWidget ):
     def __contentChanged( self ):
         " Triggered when a buffer content is changed "
         currentWidget = self.currentWidget()
-        self.emit( SIGNAL( "bufferModified" ), currentWidget.getFileName(),
-                                               str( currentWidget.getUUID() ) )
+        self.bufferModified.emit( currentWidget.getFileName(),
+                                  str( currentWidget.getUUID() ) )
         return
 
     def __onESC( self ):

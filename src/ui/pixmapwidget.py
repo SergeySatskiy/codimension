@@ -28,7 +28,7 @@ from mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from PyQt4.QtGui import ( QPalette, QSizePolicy, QScrollArea, QImage, QPixmap,
                           QAction, QLabel, QToolBar, QWidget, QHBoxLayout,
                           QApplication, QMenu, QCursor, QShortcut )
-from PyQt4.QtCore import Qt, SIGNAL, QSize, pyqtSignal
+from PyQt4.QtCore import Qt, QSize, pyqtSignal
 from utils.pixmapcache import PixmapCache
 from outsidechanges import OutsideChangeWidget
 
@@ -154,6 +154,8 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
     " Pixmap viewer tab widget "
 
     escapePressed = pyqtSignal()
+    reloadRequst = pyqtSignal()
+    reloadAllNonModifiedRequest = pyqtSignal()
 
     def __init__( self, parent ):
 
@@ -238,11 +240,8 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
         hLayout.addWidget( toolbar )
 
         self.__outsideChangesBar = OutsideChangeWidget( self.__viewer )
-        self.connect( self.__outsideChangesBar, SIGNAL( 'ReloadRequest' ),
-                      self.__onReload )
-        self.connect( self.__outsideChangesBar,
-                      SIGNAL( 'ReloadAllNonModifiedRequest' ),
-                      self.reloadAllNonModified )
+        self.__outsideChangesBar.reloadRequest.connect( self.__onReload )
+        self.__outsideChangesBar.reloadAllNonModifiedRequest.connect( self.reloadAllNonModified )
         self.__outsideChangesBar.hide()
 
         self.setLayout( hLayout )
@@ -344,13 +343,13 @@ class PixmapTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def __onReload( self ):
         " Triggered when a request to reload the file is received "
-        self.emit( SIGNAL( 'ReloadRequest' ) )
+        self.reloadRequst.emit()
         return
 
     def reloadAllNonModified( self ):
         """ Triggered when a request to reload all the
             non-modified files is received """
-        self.emit( SIGNAL( 'ReloadAllNonModifiedRequest' ) )
+        self.reloadAllNonModifiedRequest.emit()
         return
 
     def showOutsideChangesBar( self, allEnabled ):

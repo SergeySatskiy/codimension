@@ -24,15 +24,15 @@
 """ Dialog with a list of modified but unsaved files """
 
 
-from PyQt4.QtCore       import Qt, SIGNAL, QStringList
-from PyQt4.QtGui        import QDialog, QDialogButtonBox, QVBoxLayout, \
-                               QSizePolicy, QLabel, QHBoxLayout, \
-                               QTreeWidget, QAbstractItemView, \
-                               QTreeWidgetItem, QWidget
+from PyQt4.QtCore       import Qt, QStringList
+from PyQt4.QtGui        import ( QDialog, QDialogButtonBox, QVBoxLayout,
+                                 QSizePolicy, QLabel, QHBoxLayout,
+                                 QTreeWidget, QAbstractItemView,
+                                 QTreeWidgetItem, QWidget )
 from ui.itemdelegates   import NoOutlineHeightDelegate
 from utils.pixmapcache  import PixmapCache
-from utils.fileutils    import detectFileType, getFileIcon, \
-                               PythonFileType, Python3FileType
+from utils.fileutils    import ( detectFileType, getFileIcon,
+                                 PythonFileType, Python3FileType )
 from utils.globals      import GlobalData
 
 
@@ -118,9 +118,8 @@ class ModifiedUnsavedDialog( QDialog ):
         continueButton.setDefault( True )
         layout.addWidget( buttonBox )
 
-        self.connect( continueButton, SIGNAL( 'clicked()' ),
-                      self.accept )
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
+        continueButton.clicked.connect( self.accept )
+        buttonBox.rejected.connect( self.close )
         continueButton.setFocus()
         return
 

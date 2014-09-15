@@ -23,7 +23,7 @@
 " Variables viewer "
 
 
-from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import ( QFrame, QVBoxLayout, QLabel, QWidget,
                           QSizePolicy, QSpacerItem, QGridLayout,
                           QHBoxLayout, QToolButton, QPalette, QPushButton )
@@ -127,8 +127,7 @@ class VariablesViewer( QWidget ):
                                 "Expression to be executed" )
         self.__execStatement.setFixedHeight( 26 )
         self.__execStatement.editTextChanged.connect( self.__execStatementChanged )
-        self.connect( self.__execStatement,
-                      SIGNAL( 'enterClicked' ), self.__onEnterInExec )
+        self.__execStatement.enterClicked.connect( self.__onEnterInExec )
         self.__execButton = QPushButton( "Exec" )
         # self.__execButton.setFocusPolicy( Qt.NoFocus )
         self.__execButton.setEnabled( False )
@@ -141,8 +140,7 @@ class VariablesViewer( QWidget ):
                                 "Expression to be evaluated" )
         self.__evalStatement.setFixedHeight( 26 )
         self.__evalStatement.editTextChanged.connect( self.__evalStatementChanged )
-        self.connect( self.__evalStatement,
-                      SIGNAL( 'enterClicked' ), self.__onEnterInEval )
+        self.__evalStatement.enterClicked.connect( self.__onEnterInEval )
         self.__evalButton = QPushButton( "Eval" )
         # self.__evalButton.setFocusPolicy( Qt.NoFocus )
         self.__evalButton.setEnabled( False )

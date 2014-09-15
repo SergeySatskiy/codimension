@@ -22,7 +22,7 @@
 
 " Find in files viewer implementation "
 
-from PyQt4.QtCore import Qt, SIGNAL, QSize, QTimer, QStringList
+from PyQt4.QtCore import Qt, QSize, QTimer, QStringList
 from PyQt4.QtGui import ( QToolBar, QCursor, QBrush, QHBoxLayout, QWidget,
                           QAction, QLabel, QSizePolicy, QFrame,
                           QTreeWidget, QApplication, QTreeWidgetItem,
@@ -236,8 +236,7 @@ class FindResultsTreeWidget( QTreeWidget ):
 
     def __init__( self, parent = None ):
         QTreeWidget.__init__( self, parent )
-        self.__fNameCache = set()
-        self.__uuidCache = set()
+        self.resetCache()
         return
 
     def resetCache( self ):
@@ -251,8 +250,9 @@ class FindResultsTreeWidget( QTreeWidget ):
         index = self.topLevelItemCount() - 1
         while index >= 0:
             item = self.topLevelItem( index )
-            self.__fNameCache.add( str( item.data( 0, Qt.DisplayRole ).toString() ) )
-            self.__uuidCache.add( item.uuid )
+            fileName = str( item.data( 0, Qt.DisplayRole ).toString() )
+            self.__fNameCache.add( fileName )
+            self.__uuidCache.add( str( item.uuid ) )
             index -= 1
         return
 
@@ -268,6 +268,8 @@ class FindResultsTreeWidget( QTreeWidget ):
 
     def onBufferModified( self, fileName, uuid ):
         " Triggered when a buffer is modified "
+        uuid = str( uuid )
+        fileName = str( fileName )
         if uuid in self.__uuidCache:
             self.__markByUUID( uuid )
             self.__uuidCache.remove( uuid )
@@ -452,8 +454,8 @@ class FindInFilesViewer( QWidget ):
             self.__bufferChangeconnected = False
             mainWindow = GlobalData().mainWindow
             editorsManager = mainWindow.editorsManagerWidget.editorsManager
-            self.disconnect( editorsManager, SIGNAL( 'bufferModified' ),
-                             self.__resultsTree.onBufferModified )
+            editorsManager.bufferModified.disconnect(
+                                        self.__resultsTree.onBufferModified )
 
         self.__resultsTree.resetCache()
         self.__resultsTree.clear()
@@ -520,8 +522,8 @@ class FindInFilesViewer( QWidget ):
             self.__bufferChangeconnected = True
             mainWindow = GlobalData().mainWindow
             editorsManager = mainWindow.editorsManagerWidget.editorsManager
-            self.connect( editorsManager, SIGNAL( 'bufferModified' ),
-                          self.__resultsTree.onBufferModified )
+            editorsManager.bufferModified.connect(
+                                        self.__resultsTree.onBufferModified )
         return
 
     def __resultClicked( self, item, column ):

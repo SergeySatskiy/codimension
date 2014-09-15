@@ -40,6 +40,7 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
     " IO console tab widget "
 
     textEditorZoom = pyqtSignal( int )
+    settingUpdated = pyqtSignal()
 
     def __init__( self, threadID, parent = None ):
 
@@ -293,19 +294,19 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
     def __onWrapLongLines( self ):
         " Triggered when long lines setting is changed "
         Settings().ioconsolelinewrap = not Settings().ioconsolelinewrap
-        self.emit( SIGNAL( 'SettingUpdated' ) )
+        self.settingUpdated.emit()
         return
 
     def __onShowEOL( self ):
         " Triggered when show EOL is changed "
         Settings().ioconsoleshoweol = not Settings().ioconsoleshoweol
-        self.emit( SIGNAL( 'SettingUpdated' ) )
+        self.settingUpdated.emit()
         return
 
     def __onShowWhitespaces( self ):
         " Triggered when show whitespaces is changed "
         Settings().ioconsoleshowspaces = not Settings().ioconsoleshowspaces
-        self.emit( SIGNAL( 'SettingUpdated' ) )
+        self.settingUpdated.emit()
         return
 
     def __onAutoscroll( self ):
@@ -316,7 +317,7 @@ class RunConsoleTabWidget( QWidget, MainWindowTabWidgetBase ):
     def __onShowMargin( self ):
         " Triggered when show margin is changed "
         Settings().ioconsoleshowmargin = not Settings().ioconsoleshowmargin
-        self.emit( SIGNAL( 'SettingUpdated' ) )
+        self.settingUpdated.emit()
         return
 
     def clear( self ):

@@ -23,7 +23,7 @@
 " Navigation bar implementation "
 
 
-from PyQt4.QtCore import SIGNAL, QTimer, Qt, QEvent
+from PyQt4.QtCore import SIGNAL, QTimer, Qt, QEvent, pyqtSignal
 from PyQt4.QtGui import ( QFrame, QHBoxLayout, QLabel, QWidget, QSizePolicy,
                           QComboBox )
 from utils.globals import GlobalData
@@ -39,6 +39,8 @@ IDLE_TIMEOUT = 1500
 
 class NavBarComboBox( QComboBox ):
     " Navigation bar combo box "
+
+    jumpToLine = pyqtSignal( int )
 
     def __init__( self, parent = None ):
         QComboBox.__init__( self, parent )
@@ -82,7 +84,7 @@ class NavBarComboBox( QComboBox ):
         itemData = self.itemData( index )
         line, isOK = itemData.toInt()
         if isOK:
-            self.emit( SIGNAL( 'JumpToLine' ), line )
+            self.jumpToLine.emit( line )
         return
 
 
@@ -174,8 +176,7 @@ class NavigationBar( QFrame ):
         self.__layout.addWidget( self.__infoIcon )
 
         self.__globalScopeCombo = NavBarComboBox( self )
-        self.connect( self.__globalScopeCombo, SIGNAL( 'JumpToLine' ),
-                      self.__onJumpToLine )
+        self.__globalScopeCombo.jumpToLine.connect( self.__onJumpToLine )
         self.__layout.addWidget( self.__globalScopeCombo )
 
         self.__spacer = QWidget()
@@ -287,8 +288,7 @@ class NavigationBar( QFrame ):
                 self.__layout.addWidget( newPathItem.combo )
                 combo = newPathItem.combo
                 combo.pathIndex = len( self.__path ) - 1
-                self.connect( combo, SIGNAL( 'JumpToLine' ),
-                              self.__onJumpToLine )
+                combo.jumpToLine.connect( self.__onJumpToLine )
             else:
                 self.__path[ index - 1 ].icon.setVisible( True )
                 self.__path[ index - 1 ].combo.setVisible( True )
@@ -314,8 +314,7 @@ class NavigationBar( QFrame ):
                     self.__layout.addWidget( newPathItem.combo )
                     combo = newPathItem.combo
                     combo.pathIndex = len( self.__path ) - 1
-                    self.connect( combo, SIGNAL( 'JumpToLine' ),
-                                  self.__onJumpToLine )
+                    combo.jumpToLine.connect( self.__onJumpToLine )
                 else:
                     self.__path[ index - 1 ].icon.setVisible( True )
                     self.__path[ index - 1 ].combo.setVisible( True )

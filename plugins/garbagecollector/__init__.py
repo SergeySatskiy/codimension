@@ -65,8 +65,7 @@ class GCPlugin( WizardInterface ):
 
         self.connect( self.ide.editorsManager, SIGNAL( 'tabClosed' ),
                       self.__collectGarbage )
-        self.connect( self.ide.project, SIGNAL( 'projectChanged' ),
-                      self.__collectGarbage )
+        self.ide.project.projectChanged.connect( self.__collectGarbage )
         return
 
     def deactivate( self ):
@@ -75,8 +74,7 @@ class GCPlugin( WizardInterface ):
             Note: if overriden do not forget to call the
                   base class deactivate() """
 
-        self.disconnect( self.ide.project, SIGNAL( 'projectChanged' ),
-                         self.__collectGarbage )
+        self.ide.project.projectChanged.disconnect( self.__collectGarbage )
         self.disconnect( self.ide.editorsManager, SIGNAL( 'tabClosed' ),
                          self.__collectGarbage )
 

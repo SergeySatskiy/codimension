@@ -229,8 +229,7 @@ class RecentProjectsViewer( QWidget ):
 
         # Debugging mode support
         self.__debugMode = False
-        self.connect( parent, SIGNAL( 'debugModeChanged' ),
-                      self.__onDebugMode )
+        parent.debugModeChanged.connect( self.__onDebugMode )
         return
 
     def setTooltips( self, switchOn ):
@@ -293,8 +292,7 @@ class RecentProjectsViewer( QWidget ):
 
         self.connect( Settings().iInstance, SIGNAL( 'recentListChanged' ),
                       self.__populateProjects )
-        self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
-                      self.__projectChanged )
+        GlobalData().project.projectChanged.connect( self.__projectChanged )
         return
 
     def __createRecentFilesLayout( self ):

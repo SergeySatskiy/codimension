@@ -34,7 +34,7 @@ from utils.run import getCwdCmdEnv, CMD_TYPE_PROFILE
 from utils.procfeedback import decodeMessage, isProcessAlive, killProcess
 from utils.misc import getLocaleDateTime
 
-from PyQt4.QtCore import Qt, SIGNAL, QTimer
+from PyQt4.QtCore import Qt, QTimer
 from PyQt4.QtGui import QDialog, QDialogButtonBox, QVBoxLayout, QLabel, \
                         QApplication, QCursor
 
@@ -112,7 +112,7 @@ class ProfilingProgressDialog( QDialog ):
         self.__cancelButton = buttonBox.button( QDialogButtonBox.Cancel )
         verticalLayout.addWidget( buttonBox )
 
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.__onClose )
+        buttonBox.rejected.connect( self.__onClose )
         return
 
     def __onClose( self ):
@@ -137,7 +137,8 @@ class ProfilingProgressDialog( QDialog ):
                                                      Settings().terminalType,
                                                      port )
         try:
-            profProc = Popen( cmd, shell = True,
+            # profProc =
+            Popen( cmd, shell = True,
                               cwd = workingDir, env = environment )
         except Exception, exc:
             self.__onError( str( exc ) )

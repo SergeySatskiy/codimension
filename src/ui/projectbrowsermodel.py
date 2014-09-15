@@ -29,7 +29,7 @@
 " Project browser model "
 
 
-from PyQt4.QtCore import SIGNAL, Qt, QVariant
+from PyQt4.QtCore import Qt, QVariant
 from viewitems import TreeViewDirectoryItem
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
@@ -46,8 +46,7 @@ class ProjectBrowserModel( BrowserModelBase ):
         self.setTooltips( Settings().projectTooltips )
         self.populateModel()
 
-        self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
-                      self.__onProjectChanged )
+        GlobalData().project.projectChanged.connect( self.__onProjectChanged )
         return
 
     def populateModel( self ):

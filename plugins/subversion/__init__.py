@@ -100,14 +100,12 @@ class SubversionPlugin( SVNMenuMixin, SVNInfoMixin, SVNAddMixin, SVNCommitMixin,
         self.ideWideSettings = getSettings( self.__getIDEConfigFile() )
         if self.ide.project.isLoaded():
             self.projectSettings = getSettings( self.__getProjectConfigFile() )
-        self.connect( self.ide.project, SIGNAL( 'projectChanged' ),
-                      self.__onProjectChanged )
+        self.ide.project.projectChanged.connect( self.__onProjectChanged )
         return
 
     def deactivate( self ):
         " Called when the plugin is deactivated "
-        self.disconnect( self.ide.project, SIGNAL( 'projectChanged' ),
-                         self.__onProjectChanged )
+        self.ide.project.projectChanged.disconnect( self.__onProjectChanged )
 
         self.projectSettings = None
         self.ideWideSettings = None

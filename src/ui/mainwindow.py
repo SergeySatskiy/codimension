@@ -23,7 +23,7 @@
 """ codimension main window """
 
 import os.path, sys, logging, ConfigParser, gc
-from PyQt4.QtCore import SIGNAL, Qt, QSize, QTimer, QDir, QVariant, QUrl
+from PyQt4.QtCore import SIGNAL, Qt, QSize, QTimer, QDir, QVariant, QUrl, pyqtSignal
 from PyQt4.QtGui import ( QLabel, QToolBar, QWidget, QMessageBox, QFont,
                           QVBoxLayout, QSplitter, QSizePolicy,
                           QAction, QMainWindow, QShortcut, QFrame,
@@ -135,6 +135,8 @@ class CodimensionMainWindow( QMainWindow ):
     DEBUG_ACTION_STEP_INTO = 3
     DEBUG_ACTION_RUN_TO_LINE = 4
     DEBUG_ACTION_STEP_OUT = 5
+
+    debugModeChanged = pyqtSignal( bool )
 
     def __init__( self, splash, settings ):
         QMainWindow.__init__( self )
@@ -610,8 +612,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.sbFile.setFrameStyle( QFrame.StyledPanel )
         self.__statusBar.addPermanentWidget( self.sbFile, True )
         self.sbFile.setToolTip( "Editor file name (double click to copy path)" )
-        self.connect( self.sbFile, SIGNAL( "doubleClicked" ),
-                      self.__onPathLabelDoubleClick )
+        self.sbFile.doubleClicked.connect( self.__onPathLabelDoubleClick )
         self.sbFile.setContextMenuPolicy( Qt.CustomContextMenu )
         self.sbFile.customContextMenuRequested.connect(
                                             self.__showPathLabelContextMenu )
@@ -3046,7 +3047,7 @@ class CodimensionMainWindow( QMainWindow ):
                     self.__rightSideBar.setCurrentWidget( self.outlineViewer )
             self.__rightSideBar.setTabEnabled( 1, False )    # vars etc.
 
-        self.emit( SIGNAL( 'debugModeChanged' ), newState )
+        self.debugModeChanged.emit( newState )
         return
 
     def __onDebuggerStateChanged( self, newState ):
@@ -4679,8 +4680,7 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onUserInput )
         self.redirectedIOConsole.textEditorZoom.connect(
                             self.editorsManagerWidget.editorsManager.onZoom )
-        self.connect( self.redirectedIOConsole, SIGNAL( 'SettingUpdated' ),
-                      self.onIOConsoleSettingUpdated )
+        self.redirectedIOConsole.settingUpdated.connect( self.onIOConsoleSettingUpdated )
         self.__bottomSideBar.addTab( self.redirectedIOConsole,
                 PixmapCache().getIcon( 'ioconsole.png' ), 'IO console' )
         self.__bottomSideBar.setTabToolTip( 7, 'Redirected IO debug console' )
@@ -4757,8 +4757,7 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onKillIOConsoleProcess )
         widget.textEditorZoom.connect(
                             self.editorsManagerWidget.editorsManager.onZoom )
-        self.connect( widget, SIGNAL( 'SettingUpdated' ),
-                      self.onIOConsoleSettingUpdated )
+        widget.settingUpdated.connect( self.onIOConsoleSettingUpdated )
 
         self.__bottomSideBar.addTab( widget,
                 PixmapCache().getIcon( 'ioconsole.png' ), caption )

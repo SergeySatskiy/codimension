@@ -27,7 +27,7 @@ import os, os.path, ConfigParser, logging, uuid, re, copy
 from rope.base.project import Project as RopeProject
 from os.path import realpath, islink, isdir, sep
 from runparamscache import RunParametersCache
-from PyQt4.QtCore import QObject, SIGNAL
+from PyQt4.QtCore import QObject, SIGNAL, pyqtSignal
 from settings import Settings, ropePreferences, settingsDir
 from watcher import Watcher
 
@@ -38,6 +38,8 @@ class CodimensionProject( QObject ):
     # Constants for the projectChanged signal
     CompleteProject = 0     # It is a completely new project
     Properties      = 1     # Project properties were updated
+
+    projectChanged = pyqtSignal( int )
 
     def __init__( self ):
         QObject.__init__( self )
@@ -209,7 +211,7 @@ class CodimensionProject( QObject ):
                       self.onFSChanged )
 
         self.__createRopeProject()
-        self.emit( SIGNAL( 'projectChanged' ), self.CompleteProject )
+        self.projectChanged.emit( self.CompleteProject )
         return
 
     @staticmethod
@@ -528,7 +530,7 @@ class CodimensionProject( QObject ):
                       self.onFSChanged )
 
         self.__createRopeProject()
-        self.emit( SIGNAL( 'projectChanged' ), self.CompleteProject )
+        self.projectChanged.emit( self.CompleteProject )
         self.emit( SIGNAL( 'restoreProjectExpandedDirs' ) )
         return
 
@@ -892,7 +894,7 @@ class CodimensionProject( QObject ):
         self.__resetValues()
         if emitSignal:
             # No need to send a signal e.g. if IDE is closing
-            self.emit( SIGNAL( 'projectChanged' ), self.CompleteProject )
+            self.projectChanged.emit( self.CompleteProject )
         if self.__ropeProject is not None:
             try:
                 # If the project directory is read only then closing the
@@ -923,7 +925,7 @@ class CodimensionProject( QObject ):
         if self.importDirs != paths:
             self.importDirs = paths
             self.saveProject()
-            self.emit( SIGNAL( 'projectChanged' ), self.Properties )
+            self.projectChanged.emit( self.Properties )
         return
 
     def __generateFilesList( self ):
@@ -1090,7 +1092,7 @@ class CodimensionProject( QObject ):
         self.email = email
         self.description = description
         self.saveProject()
-        self.emit( SIGNAL( 'projectChanged' ), self.Properties )
+        self.projectChanged.emit( self.Properties )
         return
 
     def onProjectFileUpdated( self ):
@@ -1113,7 +1115,7 @@ class CodimensionProject( QObject ):
         self.description = description
 
         # no need to save, but signal just in case
-        self.emit( SIGNAL( 'projectChanged' ), self.Properties )
+        self.projectChanged.emit( self.Properties )
         return
 
     def isLoaded( self ):

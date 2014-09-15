@@ -138,11 +138,9 @@ class VCSManager( QObject ):
         self.__readSettingsIndicators()
         self.__dirRequestLoopTimer = QTimer( self )
         self.__dirRequestLoopTimer.setSingleShot( True )
-        self.connect( self.__dirRequestLoopTimer, SIGNAL( 'timeout()' ),
-                      self.__onDirRequestLoopTimer )
+        self.__dirRequestLoopTimer.timeout.connect( self.__onDirRequestLoopTimer )
 
-        self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
-                      self.__onProjectChanged )
+        GlobalData().project.projectChanged.connect( self.__onProjectChanged )
         self.connect( GlobalData().project, SIGNAL( 'fsChanged' ),
                       self.__onFSChanged )
         self.connect( GlobalData().pluginManager, SIGNAL( 'PluginActivated' ),

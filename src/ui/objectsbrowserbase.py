@@ -25,7 +25,7 @@
 
 
 import os
-from PyQt4.QtCore    import Qt, QModelIndex, SIGNAL, QRegExp
+from PyQt4.QtCore    import Qt, QModelIndex, SIGNAL, QRegExp, pyqtSignal
 from PyQt4.QtGui     import QAbstractItemView, QApplication, \
                             QSortFilterProxyModel, QTreeView
 from utils.globals   import GlobalData
@@ -128,6 +128,8 @@ class ObjectsBrowserSortFilterProxyModel( QSortFilterProxyModel ):
 class ObjectsBrowser( QTreeView ):
     " Common functionality of the G/F/C browsers "
 
+    openingItem = pyqtSignal( str, int )
+
     def __init__( self, sourceModel, parent = None ):
         QTreeView.__init__( self, parent )
 
@@ -166,8 +168,7 @@ class ObjectsBrowser( QTreeView ):
 
         self.layoutDisplay()
 
-        self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
-                      self.__onProjectChanged )
+        GlobalData().project.projectChanged.connect( self.__onProjectChanged )
         return
 
     def updateCounter( self, parent = None, start = 0, end = 0 ):
@@ -274,7 +275,7 @@ class ObjectsBrowser( QTreeView ):
             return
         path = item.getPath()
         line = item.data( 2 )
-        self.emit( SIGNAL( 'openingItem' ), path, line )
+        self.openingItem.emit( str( path ), line )
         GlobalData().mainWindow.openFile( path, line )
         return
 

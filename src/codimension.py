@@ -184,8 +184,8 @@ def codimensionMain():
     if options.cleanStart:
         # Codimension will not load anything.
         # Fake signal for triggering browsers layout
-        globalData.project.emit( SIGNAL( 'projectChanged' ),
-                                 CodimensionProject.CompleteProject )
+        globalData.project.projectChanged.emit(
+                                            CodimensionProject.CompleteProject )
     elif projectFile != "":
         splash.showMessage( "Loading project..." )
         globalData.project.loadProject( projectFile )
@@ -196,14 +196,14 @@ def codimensionMain():
         for fName in args:
             mainWindow.openFile( os.path.abspath( fName ), -1 )
         # Fake signal for triggering browsers layout
-        globalData.project.emit( SIGNAL( 'projectChanged' ),
-                                 CodimensionProject.CompleteProject )
+        globalData.project.projectChanged.emit(
+                                            CodimensionProject.CompleteProject )
     elif settings.projectLoaded:
         if len( settings.recentProjects ) == 0:
             # Some project was loaded but now it is not available.
             # Fake signal for triggering browsers layout
-            globalData.project.emit( SIGNAL( 'projectChanged' ),
-                                     CodimensionProject.CompleteProject )
+            globalData.project.projectChanged.emit(
+                                            CodimensionProject.CompleteProject )
         else:
             splash.showMessage( " Loading recent project..." )
             if os.path.exists( settings.recentProjects[ 0 ] ):
@@ -214,14 +214,14 @@ def codimensionMain():
                                           settings.recentProjects[ 0 ] +
                                           ". Ignore and continue." )
                 # Fake signal for triggering browsers layout
-                globalData.project.emit( SIGNAL( 'projectChanged' ),
-                                         CodimensionProject.CompleteProject )
+                globalData.project.projectChanged.emit(
+                                            CodimensionProject.CompleteProject )
     else:
         mainWindow.editorsManagerWidget.editorsManager.restoreTabs(
                                                     settings.tabsStatus )
         # Fake signal for triggering browsers layout
-        globalData.project.emit( SIGNAL( 'projectChanged' ),
-                                 CodimensionProject.CompleteProject )
+        globalData.project.projectChanged.emit(
+                                            CodimensionProject.CompleteProject )
 
     mainWindow.show()
     mainWindow.restoreWindowPosition()
@@ -233,8 +233,7 @@ def codimensionMain():
     # themselves and then manually call the main window handler to restore the
     # editors. The last step is to connect the signal.
     mainWindow.onProjectChanged( CodimensionProject.CompleteProject )
-    mainWindow.connect( globalData.project, SIGNAL( 'projectChanged' ),
-                        mainWindow.onProjectChanged )
+    globalData.project.projectChanged.connect( mainWindow.onProjectChanged )
 
     # Launch the user interface
     QTimer.singleShot( 1, launchUserInterface )
