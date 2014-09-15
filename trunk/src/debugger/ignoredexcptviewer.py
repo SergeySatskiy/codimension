@@ -23,7 +23,7 @@
 " Ignored exceptions viewer "
 
 
-from PyQt4.QtCore import Qt, SIGNAL, QStringList, QSize
+from PyQt4.QtCore import Qt, QStringList, QSize
 from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeWidget, QToolButton,
                           QTreeWidgetItem, QVBoxLayout, QToolBar,
                           QLabel, QWidget, QAbstractItemView, QMenu,
@@ -49,8 +49,7 @@ class IgnoredExceptionsViewer( QWidget ):
         self.__ignored = []
         self.__currentItem = None
 
-        self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
-                      self.__onProjectChanged )
+        GlobalData().project.projectChanged.connect( self.__onProjectChanged )
 
         if Settings().showIgnoredExcViewer == False:
             self.__onShowHide( True )

@@ -29,7 +29,7 @@
 " File system browser model "
 
 
-from PyQt4.QtCore import QVariant, QModelIndex, QDir, SIGNAL
+from PyQt4.QtCore import QVariant, QModelIndex, QDir
 from viewitems import TreeViewDirectoryItem, TreeViewSysPathItem
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
@@ -49,9 +49,7 @@ class FileSystemBrowserModel( BrowserModelBase ):
         self.projectTopLevelDirs = []
         self.populateModel()
 
-        self.connect( GlobalData().project,
-                      SIGNAL( 'projectChanged' ),
-                      self.__onProjectChanged )
+        GlobalData().project.projectChanged.connect( self.__onProjectChanged )
         return
 
     def populateModel( self ):

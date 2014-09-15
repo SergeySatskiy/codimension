@@ -72,12 +72,10 @@ class FunctionsViewer( QWidget ):
         self.funcViewer.customContextMenuRequested.connect(
                                                 self.__handleShowContextMenu )
 
-        self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
-                      self.__onProjectChanged )
+        GlobalData().project.projectChanged.connect( self.__onProjectChanged )
         self.connect( self.funcViewer, SIGNAL( "selectionChanged" ),
                       self.__selectionChanged )
-        self.connect( self.funcViewer, SIGNAL( "openingItem" ),
-                      self.itemActivated )
+        self.funcViewer.openingItem.connect( self.itemActivated )
         self.connect( self.funcViewer, SIGNAL( "modelFilesChanged" ),
                       self.modelFilesChanged )
 
@@ -134,12 +132,8 @@ class FunctionsViewer( QWidget ):
         self.toolbar.addWidget( self.filterEdit )
         self.toolbar.addAction( self.findNotUsedButton )
         self.filterEdit.editTextChanged.connect( self.__filterChanged )
-        self.connect( self.filterEdit,
-                      SIGNAL( 'itemAdded' ),
-                      self.__filterItemAdded )
-        self.connect( self.filterEdit,
-                      SIGNAL( 'enterClicked' ),
-                      self.__enterInFilter )
+        self.filterEdit.itemAdded.connect( self.__filterItemAdded )
+        self.filterEdit.enterClicked.connect( self.__enterInFilter )
 
         layout = QVBoxLayout()
         layout.setContentsMargins( 0, 0, 0, 0 )

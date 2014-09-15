@@ -24,7 +24,7 @@
 """ PythonTidy settings dialog """
 
 import logging
-from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
                           QFontMetrics, QLineEdit, QHBoxLayout, QGridLayout,
                           QTextEdit, QCheckBox, QGroupBox, QSizePolicy,
@@ -59,9 +59,7 @@ class TidySettingsDialog( QDialog ):
         self.__colsEdit = QLineEdit()
         self.__colsEdit.setText( str( self.__settings.settings[ "COL_LIMIT" ] ) )
         self.__colsEdit.setToolTip( self.__settings.getDescription( "COL_LIMIT" ) )
-        self.connect( self.__colsEdit,
-                      SIGNAL( "textChanged(const QString &)" ),
-                      self.__validate )
+        self.__colsEdit.textChanged.connect( self.__validate )
         gridLayout.addWidget( colsLabel, 0, 0, 1, 1 )
         gridLayout.addWidget( self.__colsEdit, 0, 1, 1, 1 )
         font = self.__colsEdit.font()
@@ -73,9 +71,7 @@ class TidySettingsDialog( QDialog ):
         self.__assignmentEdit = QLineEdit()
         self.__assignmentEdit.setText( self.__settings.settings[ "ASSIGNMENT" ] )
         self.__assignmentEdit.setToolTip( self.__settings.getDescription( "ASSIGNMENT" ) )
-        self.connect( self.__assignmentEdit,
-                      SIGNAL( "textChanged(const QString &)" ),
-                      self.__validate )
+        self.__assignmentEdit.textChanged.connect( self.__validate )
         gridLayout.addWidget( assignmentLabel, 0, 3, 1, 1 )
         gridLayout.addWidget( self.__assignmentEdit, 0, 4, 1, 1 )
         self.__assignmentEdit.setFont( font )
@@ -85,9 +81,7 @@ class TidySettingsDialog( QDialog ):
         self.__funcAssignEdit = QLineEdit()
         self.__funcAssignEdit.setText( self.__settings.settings[ "FUNCTION_PARAM_ASSIGNMENT" ] )
         self.__funcAssignEdit.setToolTip( self.__settings.getDescription( "FUNCTION_PARAM_ASSIGNMENT" ) )
-        self.connect( self.__funcAssignEdit,
-                      SIGNAL( "textChanged(const QString &)" ),
-                      self.__validate )
+        self.__funcAssignEdit.textChanged.connect( self.__validate )
         gridLayout.addWidget( funcAssignLabel, 1, 0, 1, 1 )
         gridLayout.addWidget( self.__funcAssignEdit, 1, 1, 1, 1 )
         self.__funcAssignEdit.setFont( font )
@@ -97,9 +91,7 @@ class TidySettingsDialog( QDialog ):
         self.__dictSepEdit = QLineEdit()
         self.__dictSepEdit.setText( self.__settings.settings[ "DICT_COLON" ] )
         self.__dictSepEdit.setToolTip( self.__settings.getDescription( "DICT_COLON" ) )
-        self.connect( self.__dictSepEdit,
-                      SIGNAL( "textChanged(const QString &)" ),
-                      self.__validate )
+        self.__dictSepEdit.textChanged.connect( self.__validate )
         gridLayout.addWidget( dictSepLabel, 1, 3, 1, 1 )
         gridLayout.addWidget( self.__dictSepEdit, 1, 4, 1, 1 )
         self.__dictSepEdit.setFont( font )
@@ -109,9 +101,7 @@ class TidySettingsDialog( QDialog ):
         self.__sliceSepEdit = QLineEdit()
         self.__sliceSepEdit.setText( self.__settings.settings[ "SLICE_COLON" ] )
         self.__sliceSepEdit.setToolTip( self.__settings.getDescription( "SLICE_COLON" ) )
-        self.connect( self.__sliceSepEdit,
-                      SIGNAL( "textChanged(const QString &)" ),
-                      self.__validate )
+        self.__sliceSepEdit.textChanged.connect( self.__validate )
         gridLayout.addWidget( sliceSepLabel, 2, 0, 1, 1 )
         gridLayout.addWidget( self.__sliceSepEdit, 2, 1, 1, 1 )
         self.__sliceSepEdit.setFont( font )
@@ -121,9 +111,7 @@ class TidySettingsDialog( QDialog ):
         self.__inEdit = QLineEdit()
         self.__inEdit.setText( self.__settings.settings[ "SHEBANG" ] )
         self.__inEdit.setToolTip( self.__settings.getDescription( "SHEBANG" ) )
-        self.connect( self.__inEdit,
-                      SIGNAL( "textChanged(const QString &)" ),
-                      self.__validate )
+        self.__inEdit.textChanged.connect( self.__validate )
         gridLayout.addWidget( inLabel, 2, 3, 1, 1 )
         gridLayout.addWidget( self.__inEdit, 2, 4, 1, 1 )
         self.__inEdit.setFont( font )
@@ -133,9 +121,7 @@ class TidySettingsDialog( QDialog ):
         self.__outCodingEdit = QLineEdit()
         self.__outCodingEdit.setText( self.__settings.settings[ "CODING" ] )
         self.__outCodingEdit.setToolTip( self.__settings.getDescription( "CODING" ) )
-        self.connect( self.__outCodingEdit,
-                      SIGNAL( "textChanged(const QString &)" ),
-                      self.__validate )
+        self.__outCodingEdit.textChanged.connect( self.__validate )
         gridLayout.addWidget( codingLabel, 3, 0, 1, 1 )
         gridLayout.addWidget( self.__outCodingEdit, 3, 1, 1, 1 )
         self.__outCodingEdit.setFont( font )
@@ -145,9 +131,7 @@ class TidySettingsDialog( QDialog ):
         self.__srcCodingEdit = QLineEdit()
         self.__srcCodingEdit.setText( self.__settings.settings[ "CODING_SPEC" ] )
         self.__srcCodingEdit.setToolTip( self.__settings.getDescription( "CODING_SPEC" ) )
-        self.connect( self.__srcCodingEdit,
-                      SIGNAL( "textChanged(const QString &)" ),
-                      self.__validate )
+        self.__srcCodingEdit.textChanged.connect( self.__validate )
         gridLayout.addWidget( srcCodingLabel, 3, 3, 1, 1 )
         gridLayout.addWidget( self.__srcCodingEdit, 3, 4, 1, 1 )
         self.__srcCodingEdit.setFont( font )
@@ -164,9 +148,7 @@ class TidySettingsDialog( QDialog ):
         self.__boilEdit.setTabChangesFocus( True )
         self.__boilEdit.setAcceptRichText( False )
         self.__boilEdit.setFont( font )
-        self.connect( self.__boilEdit,
-                      SIGNAL( "textChanged()" ),
-                      self.__validate )
+        self.__boilEdit.textChanged.connect( self.__validate )
         boilLayout = QHBoxLayout()
         boilLayout.addWidget( boilLabel )
         boilLayout.addWidget( self.__boilEdit )
@@ -267,16 +249,15 @@ class TidySettingsDialog( QDialog ):
         self.__resetButton = buttonBox.addButton( "Reset to Default",
                                                   QDialogButtonBox.ActionRole )
         self.__resetButton.setToolTip( "Mostly as recommended by PEP 8 / PEP 308" )
-        self.connect( self.__resetButton, SIGNAL( 'clicked()' ), self.__reset )
+        self.__resetButton.clicked.connect( self.__reset )
         self.__tidyButton = buttonBox.addButton( "Tidy",
                                                  QDialogButtonBox.ActionRole )
         self.__tidyButton.setToolTip( "Save settings and run PythonTidy" )
         self.__tidyButton.setDefault( True )
-        self.connect( self.__tidyButton, SIGNAL( 'clicked()' ),
-                      self.__saveAndAccept )
+        self.__tidyButton.clicked.connect( self.__saveAndAccept )
         layout.addWidget( buttonBox )
 
-        self.connect( buttonBox, SIGNAL( "rejected()" ), self.close )
+        buttonBox.rejected.connect( self.close )
         return
 
     def __reset( self ):

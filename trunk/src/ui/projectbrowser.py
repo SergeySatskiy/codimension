@@ -50,8 +50,7 @@ class ProjectBrowser( FilesBrowser ):
         self.setWindowTitle( 'Project browser' )
         self.setWindowIcon( PixmapCache().getIcon( 'icon.png' ) )
 
-        self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
-                      self.__onProjectChanged )
+        GlobalData().project.projectChanged.connect( self.__onProjectChanged )
         self.connect( GlobalData().project, SIGNAL( 'fsChanged' ),
                       self._onFSChanged )
 

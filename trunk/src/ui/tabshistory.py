@@ -24,7 +24,7 @@
 
 import os.path
 from mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from PyQt4.QtCore import QObject, SIGNAL
+from PyQt4.QtCore import QObject, pyqtSignal
 
 
 class TabHistoryEntry:
@@ -49,6 +49,8 @@ class TabHistoryEntry:
 
 class TabsHistory( QObject ):
     " Holds the editors manager history "
+
+    historyChanged = pyqtSignal()
 
     limit = 32
 
@@ -80,7 +82,7 @@ class TabsHistory( QObject ):
         self.__history = []
         self.__index = -1
         self.__tabsSequence = []
-        self.emit( SIGNAL( 'historyChanged' ) )
+        self.historyChanged.emit()
         return
 
     def addCurrent( self ):
@@ -114,7 +116,7 @@ class TabsHistory( QObject ):
         self.__index = len( self.__history ) - 1
         self.__tabsSequence.append( self.__index )
 
-        self.emit( SIGNAL( 'historyChanged' ) )
+        self.historyChanged.emit()
         return
 
     def __enforceLimit( self ):
@@ -241,7 +243,7 @@ class TabsHistory( QObject ):
             # Update it to the last visible
             self.__index = self.__tabsSequence[ len( self.__tabsSequence ) - 1 ]
 
-        self.emit( SIGNAL( 'historyChanged' ) )
+        self.historyChanged.emit()
         return
 
     def getSize( self ):
@@ -267,7 +269,7 @@ class TabsHistory( QObject ):
         if self.__index != index:
             self.__index = index
             self.__tabsSequence.append( index )
-            self.emit( SIGNAL( 'historyChanged' ) )
+            self.historyChanged.emit()
         return
 
     def getCurrentEntry( self ):
@@ -283,7 +285,7 @@ class TabsHistory( QObject ):
             return False
         self.__index -= 1
         self.__tabsSequence.append( self.__index )
-        self.emit( SIGNAL( 'historyChanged' ) )
+        self.historyChanged.emit()
         return True
 
     def stepForward( self ):
@@ -292,7 +294,7 @@ class TabsHistory( QObject ):
             return False
         self.__index += 1
         self.__tabsSequence.append( self.__index )
-        self.emit( SIGNAL( 'historyChanged' ) )
+        self.historyChanged.emit()
         return True
 
     def flip( self ):
@@ -302,7 +304,7 @@ class TabsHistory( QObject ):
         lastSeqIndex = len( self.__tabsSequence ) - 1
         self.__index = self.__tabsSequence[ lastSeqIndex - 1 ]
         self.__tabsSequence.append( self.__index )
-        self.emit( SIGNAL( 'historyChanged' ) )
+        self.historyChanged.emit()
         return True
 
     def updateFileNameForTab( self, uuid, newFileName ):

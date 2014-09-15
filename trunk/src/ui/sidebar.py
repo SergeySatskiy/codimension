@@ -28,7 +28,7 @@
 
 """ sidebar implementation """
 
-from PyQt4.QtCore import SIGNAL,  SLOT, QEvent, QSize, Qt
+from PyQt4.QtCore import QEvent, QSize, Qt
 from PyQt4.QtGui  import QTabBar, QWidget, QStackedWidget, QBoxLayout
 
 
@@ -75,8 +75,8 @@ class SideBar( QWidget ):
         self.__orientation = orientation
         self.setOrientation( orientation )
 
-        self.connect( self.__tabBar, SIGNAL( "currentChanged(int)" ),
-                      self.__stackedWidget, SLOT( "setCurrentIndex(int)" ) )
+        self.__tabBar.currentChanged.connect(
+                                        self.__stackedWidget.setCurrentIndex )
         return
 
     def setSplitter( self, splitter ):

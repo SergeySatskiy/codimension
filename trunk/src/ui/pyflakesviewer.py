@@ -77,9 +77,7 @@ class PyflakesViewer( QObject ):
         self.connect( self.__uiLabel,
                       SIGNAL( 'customContextMenuRequested(const QPoint &)' ),
                       self.__showPyflakesContextMenu )
-        self.connect( self.__uiLabel,
-                      SIGNAL( 'doubleClicked' ),
-                      self.__jumpToFirstMessage )
+        self.__uiLabel.doubleClicked.connect( self.__jumpToFirstMessage )
         return
 
     def __onTabChanged( self, index ):

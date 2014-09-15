@@ -31,7 +31,7 @@
 
 import os.path
 from os.path import basename
-from PyQt4.QtCore import SIGNAL, QVariant
+from PyQt4.QtCore import QVariant
 from viewitems import TreeViewGlobalItem
 from utils.project import CodimensionProject
 from browsermodelbase import BrowserModelBase
@@ -45,8 +45,7 @@ class GlobalsBrowserModel( BrowserModelBase ):
                                            QVariant( "File name" ),
                                            QVariant( "Line" ) ], parent )
 
-        self.connect( self.globalData.project, SIGNAL( 'projectChanged' ),
-                      self.__onProjectChanged )
+        self.globalData.project.projectChanged.connect( self.__onProjectChanged )
         return
 
     def __populateModel( self ):

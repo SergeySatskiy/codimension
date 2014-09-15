@@ -685,8 +685,7 @@ class FindWidget( FindReplaceBase ):
         self.setTabOrder( self.findNextButton, self.findPrevButton )
         self.setTabOrder( self.findPrevButton, self.closeButton )
 
-        self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
-                      self.__onProjectChanged )
+        GlobalData().project.projectChanged.connect( self.__onProjectChanged )
         self.findNextButton.clicked.connect( self.onNext )
         self.findPrevButton.clicked.connect( self.onPrev )
         return
@@ -812,8 +811,7 @@ class ReplaceWidget( FindReplaceBase ):
         self.setTabOrder( self.replaceAndMoveButton, self.replaceAllButton )
         self.setTabOrder( self.replaceAllButton, self.closeButton )
 
-        self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
-                      self.__onProjectChanged )
+        GlobalData().project.projectChanged.connect( self.__onProjectChanged )
         self.findNextButton.clicked.connect( self.onNext )
         self.findPrevButton.clicked.connect( self.onPrev )
         self.connect( self, SIGNAL( 'incSearchDone' ), self.__onSearchDone )

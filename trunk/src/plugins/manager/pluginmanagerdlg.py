@@ -214,7 +214,7 @@ class PluginsDialog( QDialog ):
                         self.__configFuncs[ index ] = configFunction
                         settingsButton.index = index
                         index += 1
-                except Exception, exc:
+                except Exception:
                     settingsButton.setToolTip( "Bad plugin interface. No "
                                                "configuration function received." )
                     settingsButton.setEnabled( False )

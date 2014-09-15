@@ -31,7 +31,6 @@
 
 import os.path
 from os.path import basename
-from PyQt4.QtCore import SIGNAL
 from PyQt4.QtCore import QVariant
 from viewitems import TreeViewFunctionItem
 from utils.project import CodimensionProject
@@ -48,8 +47,7 @@ class FunctionsBrowserModel( BrowserModelBase ):
                                            QVariant( "File name" ),
                                            QVariant( "Line" ) ], parent )
         self.setTooltips( Settings().functionsTooltips )
-        self.connect( self.globalData.project, SIGNAL( 'projectChanged' ),
-                      self.__onProjectChanged )
+        self.globalData.project.projectChanged.connect( self.__onProjectChanged )
         return
 
     def __populateModel( self ):

@@ -25,7 +25,7 @@
 
 from PyQt4.QtCore import Qt, SIGNAL, QModelIndex
 from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeView, QToolButton,
-                          QHeaderView, QVBoxLayout,
+                          QHeaderView, QVBoxLayout, QItemSelectionModel,
                           QLabel, QWidget, QAbstractItemView, QMenu,
                           QSpacerItem, QHBoxLayout, QPalette,
                           QSortFilterProxyModel )
@@ -375,8 +375,7 @@ class WatchPointViewer( QWidget ):
         self.__createPopupMenu()
         self.__createLayout( wpointModel )
 
-        self.connect( GlobalData().project, SIGNAL( 'projectChanged' ),
-                      self.__onProjectChanged )
+        GlobalData().project.projectChanged.connect( self.__onProjectChanged )
 
         if Settings().showWatchPointViewer == False:
             self.__onShowHide( True )

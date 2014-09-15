@@ -580,8 +580,7 @@ class FindNameDialog( QDialog ):
         self.__tuneCombo( self.findCombo )
         self.findCombo.lineEdit().setToolTip( "Regular expression to search for" )
         verticalLayout.addWidget( self.findCombo )
-        self.connect( self.findCombo, SIGNAL( 'enterClicked' ),
-                      self.__enterInFilter )
+        self.findCombo.enterClicked.connect( self.__enterInFilter )
         return
 
     @staticmethod
