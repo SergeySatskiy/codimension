@@ -33,7 +33,7 @@ from PyQt4.QtGui import ( QHBoxLayout, QToolButton, QLabel, QSizePolicy,
                           QComboBox, QGridLayout, QWidget, QCheckBox,
                           QKeySequence )
 from utils.pixmapcache import PixmapCache
-from PyQt4.QtCore import SIGNAL, Qt, QSize, QEvent
+from PyQt4.QtCore import SIGNAL, Qt, QSize, QEvent, pyqtSignal
 from mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
@@ -110,6 +110,7 @@ class FindReplaceBase( QWidget ):
     """ Base class for both find and replace widgets """
 
     maxHistory = 16
+    incSearchDone = pyqtSignal( bool )
 
     def __init__( self, editorsManager, parent = None ):
 
@@ -340,7 +341,7 @@ class FindReplaceBase( QWidget ):
                                                 searchAttributes.pos )
                 self._editor.ensureLineVisible( searchAttributes.firstLine )
                 searchAttributes.match = [ -1, -1, -1 ]
-                self.emit( SIGNAL( 'incSearchDone' ), False )
+                self.incSearchDone.emit( False )
                 return
 
             matchTarget = self._editor.highlightMatch( text,
@@ -359,19 +360,19 @@ class FindReplaceBase( QWidget ):
                 self._editor.setSelection( eLine, ePos,
                                            matchTarget[ 0 ], matchTarget[ 1 ] )
                 self._editor.ensureLineVisible( matchTarget[ 0 ] )
-                self.emit( SIGNAL( 'incSearchDone' ), True )
+                self.incSearchDone.emit( True )
             else:
                 # Nothing is found, so scroll back to the original
                 self._editor.setCursorPosition( searchAttributes.line,
                                                 searchAttributes.pos )
                 self._editor.ensureLineVisible( searchAttributes.firstLine )
-                self.emit( SIGNAL( 'incSearchDone' ), False )
+                self.incSearchDone.emit( False )
 
             return
 
         # Brand new editor to search in
         if text == "":
-            self.emit( SIGNAL( 'incSearchDone' ), False )
+            self.incSearchDone.emit( False )
             return
 
         matchTarget = self._editor.highlightMatch( text,
@@ -391,10 +392,10 @@ class FindReplaceBase( QWidget ):
             self._editor.setSelection( eLine, ePos,
                                        matchTarget[ 0 ], matchTarget[ 1 ] )
             self._editor.ensureLineVisible( matchTarget[ 0 ] )
-            self.emit( SIGNAL( 'incSearchDone' ), True )
+            self.incSearchDone.emit( True )
             return
 
-        self.emit( SIGNAL( 'incSearchDone' ), False )
+        self.incSearchDone.emit( False )
         return
 
     def _initialiseSearchAttributes( self, uuid ):
@@ -461,9 +462,9 @@ class FindReplaceBase( QWidget ):
             GlobalData().mainWindow.showStatusBarMessage(
                     "The '" + self.findtextCombo.currentText() +
                     "' was not found.", 0 )
-            self.emit( SIGNAL( 'incSearchDone' ), False )
+            self.incSearchDone.emit( False )
         else:
-            self.emit( SIGNAL( 'incSearchDone' ), True )
+            self.incSearchDone.emit( True )
         return
 
     def onPrev( self, clearSBMessage = True ):
@@ -476,9 +477,9 @@ class FindReplaceBase( QWidget ):
             GlobalData().mainWindow.showStatusBarMessage(
                     "The '" + self.findtextCombo.currentText() +
                     "' was not found.", 0 )
-            self.emit( SIGNAL( 'incSearchDone' ), False )
+            self.incSearchDone.emit( False )
         else:
-            self.emit( SIGNAL( 'incSearchDone' ), True )
+            self.incSearchDone.emit( True )
         return
 
     def onPrevNext( self ):
@@ -814,7 +815,7 @@ class ReplaceWidget( FindReplaceBase ):
         GlobalData().project.projectChanged.connect( self.__onProjectChanged )
         self.findNextButton.clicked.connect( self.onNext )
         self.findPrevButton.clicked.connect( self.onPrev )
-        self.connect( self, SIGNAL( 'incSearchDone' ), self.__onSearchDone )
+        self.incSearchDone.connect( self.__onSearchDone )
         self.replaceCombo.editTextChanged.connect( self.__onReplaceTextChanged )
         self.replaceCombo.lineEdit().returnPressed.connect(
                                                     self.__onReplaceAndMove )
