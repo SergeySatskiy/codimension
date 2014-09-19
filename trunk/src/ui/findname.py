@@ -24,7 +24,7 @@
 
 
 from PyQt4.QtCore import ( Qt, QAbstractItemModel, QRegExp, QModelIndex,
-                           SIGNAL, QVariant )
+                           QVariant )
 from PyQt4.QtGui import ( QTreeView, QAbstractItemView, QDialog, QVBoxLayout,
                           QCursor, QComboBox, QSizePolicy,
                           QSortFilterProxyModel, QApplication )
