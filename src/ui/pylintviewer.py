@@ -23,7 +23,7 @@
 " Pylint viewer implementation "
 
 import os.path, logging
-from PyQt4.QtCore import Qt, SIGNAL, QSize, QStringList
+from PyQt4.QtCore import Qt, QSize, QStringList, pyqtSignal
 from PyQt4.QtGui import ( QColor, QToolBar, QHBoxLayout, QWidget, QAction,
                           QPalette, QVBoxLayout, QLabel, QScrollArea,
                           QSizePolicy, QFrame, QLayout, QTreeWidget,
@@ -79,6 +79,8 @@ class PylintViewer( QWidget ):
     DirectoryFiles = 1
     ProjectFiles   = 2
     SingleBuffer   = 3
+
+    updatePylintTooltip = pyqtSignal( str )
 
     def __init__( self, parent = None ):
         QWidget.__init__( self, parent )
@@ -466,7 +468,7 @@ class PylintViewer( QWidget ):
                       self.__reportFileName
         else:
             tooltip = ""
-        self.emit( SIGNAL( 'updatePylintTooltip' ), tooltip )
+        self.updatePylintTooltip.emit( tooltip )
         return
 
     def showReport( self, lint, reportOption, fileName, uuid ):
@@ -576,8 +578,8 @@ class PylintViewer( QWidget ):
         # Currently shown report is for the saved buffer
         # File name is expected being absolute
         self.__reportFileName = fileName
-        self.emit( SIGNAL( 'updatePylintTooltip' ),
-                   "Report generated for buffer saved as " + fileName )
+        self.updatePylintTooltip.emit( "Report generated for buffer saved as " +
+                                       fileName )
         return
 
     def __similarityActivated( self, item, column ):
