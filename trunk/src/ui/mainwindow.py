@@ -385,8 +385,7 @@ class CodimensionMainWindow( QMainWindow ):
         self.connect( self.editorsManagerWidget.editorsManager,
                       SIGNAL( 'bufferSavedAs' ),
                       self.pylintViewer.onFileUpdated )
-        self.connect( self.pylintViewer, SIGNAL( 'updatePylintTooltip' ),
-                      self.__onPylintTooltip )
+        self.pylintViewer.updatePylintTooltip.connect( self.__onPylintTooltip )
         if GlobalData().pylintAvailable:
             self.__onPylintTooltip( "No results available" )
         else:
