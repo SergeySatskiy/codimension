@@ -207,8 +207,7 @@ class CodimensionProject( QObject ):
         # Update the watcher
         self.__dirWatcher = Watcher( Settings().projectFilesFilters,
                                      self.getProjectDir() )
-        self.connect( self.__dirWatcher, SIGNAL( 'fsCahanged' ),
-                      self.onFSChanged )
+        self.__dirWatcher.fsChanged.connect( self.onFSChanged )
 
         self.__createRopeProject()
         self.projectChanged.emit( self.CompleteProject )
@@ -526,8 +525,7 @@ class CodimensionProject( QObject ):
         # Setup the new watcher
         self.__dirWatcher = Watcher( Settings().projectFilesFilters,
                                      self.getProjectDir() )
-        self.connect( self.__dirWatcher, SIGNAL( 'fsCahanged' ),
-                      self.onFSChanged )
+        self.__dirWatcher.fsChanged.connect( self.onFSChanged )
 
         self.__createRopeProject()
         self.projectChanged.emit( self.CompleteProject )
