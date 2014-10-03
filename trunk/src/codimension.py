@@ -28,7 +28,7 @@ It performs necessery initialization and starts the Qt main loop.
 __version__ = "0.0.0"
 
 import sys, os, os.path, gc
-from PyQt4.QtCore import SIGNAL, SLOT, QTimer, QDir, QTextCodec
+from PyQt4.QtCore import QTimer, QDir, QTextCodec
 
 try:
     # Dirty hack to have default encoding set.
@@ -177,8 +177,7 @@ def codimensionMain():
     mainWindow = CodimensionMainWindow( splash, settings )
     codimensionApp.setMainWindow( mainWindow )
     globalData.mainWindow = mainWindow
-    codimensionApp.connect( codimensionApp, SIGNAL( "lastWindowClosed()" ),
-                            codimensionApp, SLOT( "quit()" ) )
+    codimensionApp.lastWindowClosed.connect( codimensionApp.quit )
 
     # Loading project if given or the recent one
     if options.cleanStart:
