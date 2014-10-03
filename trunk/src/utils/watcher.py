@@ -29,11 +29,13 @@ The watcher will ignore the directories which do not exist.
 """
 
 import os, os.path, re
-from PyQt4.QtCore import QObject, SIGNAL, QFileSystemWatcher, QStringList
+from PyQt4.QtCore import QObject, QFileSystemWatcher, pyqtSignal
 
 
 class Watcher( QObject ):
     " Filesystem watcher implementation "
+
+    fsChanged = pyqtSignal( list )
 
     def __init__( self, excludeFilters, dirToWatch ):
 
@@ -59,9 +61,9 @@ class Watcher( QObject ):
         # Initialise the list of dirs to watch
         self.__srcDirsToWatch.add( dirToWatch )
 
-        self.__topLevelDirsToWatch = self.__buildTopDirsList( \
+        self.__topLevelDirsToWatch = self.__buildTopDirsList(
                                         self.__srcDirsToWatch )
-        self.__fsTopLevelSnapshot = self.__buildTopLevelSnapshot( \
+        self.__fsTopLevelSnapshot = self.__buildTopLevelSnapshot(
                                         self.__topLevelDirsToWatch,
                                         self.__srcDirsToWatch )
         self.__dirsToWatch = self.__buildSnapshot()
@@ -70,9 +72,9 @@ class Watcher( QObject ):
         # set of what should be watched
 
         # Add the dirs to the watcher
-        dirs = QStringList()
+        dirs = []
         for path in self.__dirsToWatch | self.__topLevelDirsToWatch:
-            dirs << path
+            dirs.append( path )
         self.__dirWatcher.addPaths( dirs )
         self.__dirWatcher.directoryChanged.connect( self.__onDirChanged )
 
@@ -132,12 +134,12 @@ class Watcher( QObject ):
                 dirName = path + item + os.path.sep
                 dirItems.add( item + os.path.sep )
                 if itemsToReport is not None:
-                    itemsToReport << "+" + dirName
+                    itemsToReport.append( "+" + dirName )
                 self.__addSnapshotPath( dirName, snapshotDirs, itemsToReport )
                 continue
             dirItems.add( item )
             if itemsToReport is not None:
-                itemsToReport << "+" + path + item
+                itemsToReport.append( "+" + path + item )
         self.__fsSnapshot[ path ] = dirItems
         return
 
@@ -176,8 +178,8 @@ class Watcher( QObject ):
 
             self.__fsTopLevelSnapshot[ path ] = newSet
 
-            dirsToBeRemoved = QStringList()
-            itemsToReport = QStringList()
+            dirsToBeRemoved = []
+            itemsToReport = []
 
             for item in diff:
                 self.__processRemoveTopDir( path + item, dirsToBeRemoved,
@@ -186,11 +188,10 @@ class Watcher( QObject ):
             # Here: it is possible that the last dir to watch disappeared
             if not newSet:
                 # There is nothing to watch here anymore
-                dirsToBeRemoved << path
+                dirsToBeRemoved.append( path )
                 del self.__fsTopLevelSnapshot[ path ]
 
                 parts = path[ 1:-1 ].split( os.path.sep )
-#                for index in xrange( len( parts ) - 2, -1, -1 ):
                 for index in xrange( len( parts ) - 2, 0, -1 ):
                     candidate = os.path.sep + \
                                 os.path.sep.join( parts[ 0 : index ] ) + \
@@ -198,7 +199,7 @@ class Watcher( QObject ):
                     dirSet = self.__fsTopLevelSnapshot[ candidate ]
                     dirSet.remove( parts[ index + 1 ] + os.path.sep )
                     if not dirSet:
-                        dirsToBeRemoved << candidate
+                        dirsToBeRemoved.append( candidate )
                         del self.__fsTopLevelSnapshot[ candidate ]
                         continue
                     break   # it is not the last item in the set
@@ -209,7 +210,7 @@ class Watcher( QObject ):
 
             # Report
             if itemsToReport:
-                self.emit( SIGNAL( 'fsCahanged' ), itemsToReport )
+                self.fsChanged.emit( itemsToReport )
             return
         except:
             # it is not a top level dir - no key
@@ -247,9 +248,9 @@ class Watcher( QObject ):
             # - list of dirs which were deleted
             # The deleted dirs must be unregistered in the watcher
             # The added dirs must be registered
-            itemsToReport = QStringList()
-            dirsToBeAdded = QStringList()
-            dirsToBeRemoved = QStringList()
+            itemsToReport = []
+            dirsToBeAdded = []
+            dirsToBeRemoved = []
 
             for item in addedItems:
                 if item.endswith( os.path.sep ):
@@ -257,7 +258,7 @@ class Watcher( QObject ):
                     self.__processAddedDir( path + item,
                                             dirsToBeAdded, itemsToReport )
                 else:
-                    itemsToReport << "+" + path + item
+                    itemsToReport.append( "+" + path + item )
 
             for item in deletedItems:
                 if item.endswith( os.path.sep ):
@@ -265,7 +266,7 @@ class Watcher( QObject ):
                     self.__processRemovedDir( path + item,
                                               dirsToBeRemoved, itemsToReport )
                 else:
-                    itemsToReport << "-" + path + item
+                    itemsToReport.append( "-" + path + item )
 
             # Update the watcher
             if dirsToBeRemoved:
@@ -274,7 +275,7 @@ class Watcher( QObject ):
                 self.__dirWatcher.addPaths( dirsToBeAdded )
 
             # Report
-            self.emit( SIGNAL( 'fsCahanged' ), itemsToReport )
+            self.fsChanged.emit( itemsToReport )
 
         except:
             # It could be a queued signal about what was already reported
@@ -292,8 +293,8 @@ class Watcher( QObject ):
 
     def __processAddedDir( self, path, dirsToBeAdded, itemsToReport ):
         " called for an appeared dir in the project tree "
-        dirsToBeAdded << path
-        itemsToReport << "+" + path
+        dirsToBeAdded.append( path )
+        itemsToReport.append( "+" + path )
 
         # it should add dirs recursively into the snapshot and care
         # of the items to report
@@ -306,7 +307,7 @@ class Watcher( QObject ):
                 dirItems.add( item + os.path.sep )
                 self.__processAddedDir( dirName, dirsToBeAdded, itemsToReport )
                 continue
-            itemsToReport << "+" + path + item
+            itemsToReport.append( "+" + path + item )
             dirItems.add( item )
         self.__fsSnapshot[ path ] = dirItems
         return
@@ -316,8 +317,8 @@ class Watcher( QObject ):
 
         # it should remove the dirs recursively from the fs snapshot
         # and care of items to report
-        dirsToBeRemoved << path
-        itemsToReport << "-" + path
+        dirsToBeRemoved.append( path )
+        itemsToReport.append( "-" + path )
 
         oldSet = self.__fsSnapshot[ path ]
         for item in oldSet:
@@ -327,7 +328,7 @@ class Watcher( QObject ):
                                           itemsToReport )
             else:
                 # a file
-                itemsToReport << "-" + path + item
+                itemsToReport.append( "-" + path + item )
         del self.__fsSnapshot[ path ]
         return
 
@@ -336,7 +337,7 @@ class Watcher( QObject ):
 
         if path in self.__fsTopLevelSnapshot:
             # It is still a top level dir
-            dirsToBeRemoved << path
+            dirsToBeRemoved.append( path )
             for item in self.__fsTopLevelSnapshot[ path ]:
                 self.__processRemoveTopDir( path + item, dirsToBeRemoved,
                                             itemsToReport )
@@ -376,7 +377,7 @@ class Watcher( QObject ):
         self.__srcDirsToWatch.add( path )
 
         dirsToWatch = set()
-        itemsToReport = QStringList()
+        itemsToReport = []
         self.__registerDir( path, dirsToWatch, itemsToReport )
 
 
@@ -411,14 +412,14 @@ class Watcher( QObject ):
 
         # Update the watcher
         if dirsToWatch:
-            dirs = QStringList()
+            dirs = []
             for item in dirsToWatch:
-                dirs << item
+                dirs.append( item )
             self.__dirWatcher.addPaths( dirs )
 
         # Report the changes
         if itemsToReport:
-            self.emit( SIGNAL( 'fsCahanged' ), itemsToReport )
+            self.fsChanged.emit( itemsToReport )
 
         # self.debug()
         return
@@ -429,7 +430,7 @@ class Watcher( QObject ):
             return
 
         dirsToWatch.add( path )
-        itemsToReport << "+" + path
+        itemsToReport.append( "+" + path )
 
         dirItems = set()
         for item in os.listdir( path ):
@@ -438,11 +439,11 @@ class Watcher( QObject ):
             if os.path.isdir( path + item ):
                 dirName = path + item + os.path.sep
                 dirItems.add( item + os.path.sep )
-                itemsToReport << "+" + path + item + os.path.sep
+                itemsToReport.append( "+" + path + item + os.path.sep )
                 self.__addSnapshotPath( dirName, dirsToWatch, itemsToReport )
                 continue
             dirItems.add( item )
-            itemsToReport << "+" + path + item
+            itemsToReport.append( "+" + path + item )
         self.__fsSnapshot[ path ] = dirItems
         return
 
@@ -461,8 +462,8 @@ class Watcher( QObject ):
         # - collect the dirs to be removed from watching
         # - collect item to report
 
-        itemsToReport = QStringList()
-        dirsToBeRemoved = QStringList()
+        itemsToReport = []
+        dirsToBeRemoved = []
 
         self.__deregisterDir( path, dirsToBeRemoved, itemsToReport )
 
@@ -472,7 +473,7 @@ class Watcher( QObject ):
         deletedDirs = self.__topLevelDirsToWatch - newTopLevelDirsToWatch
 
         for item in deletedDirs:
-            dirsToBeRemoved << item
+            dirsToBeRemoved.append( item )
             del self.__fsTopLevelSnapshot[ item ]
 
         # It might be the case that some of the items should be deleted in the
@@ -495,15 +496,15 @@ class Watcher( QObject ):
 
         # Report the changes
         if itemsToReport:
-            self.emit( SIGNAL( 'fsCahanged' ), itemsToReport )
+            self.fsChanged.emit( itemsToReport )
 
         # self.debug()
         return
 
     def __deregisterDir( self, path, dirsToBeRemoved, itemsToReport ):
         " Deregisters a directory recursively "
-        dirsToBeRemoved << path
-        itemsToReport << "-" + path
+        dirsToBeRemoved.append( path )
+        itemsToReport.append( "-" + path )
         if path in self.__fsTopLevelSnapshot:
             # This is a top level dir
             for item in self.__fsTopLevelSnapshot[ path ]:
@@ -513,7 +514,7 @@ class Watcher( QObject ):
                                           itemsToReport )
                 else:
                     # It's a file
-                    itemsToReport << "-" + path + item
+                    itemsToReport.append( "-" + path + item )
             del self.__fsTopLevelSnapshot[ path ]
             return
 
@@ -526,7 +527,7 @@ class Watcher( QObject ):
                                           itemsToReport )
                 else:
                     # It's a file
-                    itemsToReport << "-" + path + item
+                    itemsToReport.append( "-" + path + item )
             del self.__fsSnapshot[ path ]
         return
 
