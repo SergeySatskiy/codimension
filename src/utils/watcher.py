@@ -74,10 +74,7 @@ class Watcher( QObject ):
         for path in self.__dirsToWatch | self.__topLevelDirsToWatch:
             dirs << path
         self.__dirWatcher.addPaths( dirs )
-
-        self.connect( self.__dirWatcher,
-                      SIGNAL( 'directoryChanged(const QString&)' ),
-                      self.__onDirChanged )
+        self.__dirWatcher.directoryChanged.connect( self.__onDirChanged )
 
         # self.debug()
         return
