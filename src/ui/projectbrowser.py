@@ -51,8 +51,7 @@ class ProjectBrowser( FilesBrowser ):
         self.setWindowIcon( PixmapCache().getIcon( 'icon.png' ) )
 
         GlobalData().project.projectChanged.connect( self.__onProjectChanged )
-        self.connect( GlobalData().project, SIGNAL( 'fsChanged' ),
-                      self._onFSChanged )
+        GlobalData().project.fsChanged.connect( self._onFSChanged )
 
         # VCS status support
         self.connect( GlobalData().pluginManager, SIGNAL( 'PluginDeactivated' ),
