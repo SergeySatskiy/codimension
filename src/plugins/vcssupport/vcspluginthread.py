@@ -27,6 +27,7 @@ VCS plugin support: plugin thread
 from PyQt4.QtCore import QThread, QMutex, QWaitCondition, SIGNAL
 from collections import deque
 from plugins.categories.vcsiface import VersionControlSystemInterface
+import time
 
 
 # Indicator used by IDE to display errors while retrieving item status
@@ -54,6 +55,7 @@ class VCSPluginThread( QThread ):
             while self.__requestQueue:
                 path, flag = self.__requestQueue.pop()
                 self.__lock.unlock()
+                time.sleep( 0.01 )
                 self.__processRequest( path, flag )
                 if self.__stopRequest:
                     break
