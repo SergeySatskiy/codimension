@@ -155,8 +155,8 @@ class ProfilingProgressDialog( QDialog ):
                     self.__onInterrupt()
                     return
                 else:
-                    self.infoLabel.setText( "Cancel request received.\n" \
-                                            "Waiting for profiler child " \
+                    self.infoLabel.setText( "Cancel request received.\n"
+                                            "Waiting for profiler child "
                                             "pid and finishing..." )
 
             data = getData( sock )
@@ -164,8 +164,8 @@ class ProfilingProgressDialog( QDialog ):
                 # We've got the message, extract the PID to watch
                 msgParts = decodeMessage( data )
                 if len( msgParts ) != 1:
-                    self.__onError( "Unexpected handshake message: '" + \
-                                    data + "'. Expected profiler child " \
+                    self.__onError( "Unexpected handshake message: '" +
+                                    data + "'. Expected profiler child "
                                     "process PID." )
                     return
                 try:
@@ -175,13 +175,13 @@ class ProfilingProgressDialog( QDialog ):
                         return
                     break   # Move to stage 2
                 except:
-                    self.__onError( "Broken handshake message: '" + \
-                                    data + ". Cannot convert profiler " \
+                    self.__onError( "Broken handshake message: '" +
+                                    data + ". Cannot convert profiler "
                                     "child process PID to integer." )
                     return
 
             if time.time() - startTime > HANDSHAKE_TIMEOUT:
-                self.__onError( "Handshake timeout: " \
+                self.__onError( "Handshake timeout: "
                                 "error spawning process to profile" )
                 return
 
@@ -200,7 +200,7 @@ class ProfilingProgressDialog( QDialog ):
                 #       I guess this is how the profiler is implemented
                 msgParts = decodeMessage( data )
                 if len( msgParts ) != 1:
-                    self.__onError( "Unexpected final message: '" + \
+                    self.__onError( "Unexpected final message: '" +
                                     data + "'. Expected profiler return code." )
                     return
 
@@ -208,8 +208,8 @@ class ProfilingProgressDialog( QDialog ):
                     retCode = int( msgParts[ 0 ] )
                     break   # Collect the results and show them
                 except:
-                    self.__onError( "Broken final message: '" + \
-                                    data + "'. Cannot convert " \
+                    self.__onError( "Broken final message: '" +
+                                    data + "'. Cannot convert "
                                     "profiler return code to integer." )
                     return
 
@@ -219,7 +219,7 @@ class ProfilingProgressDialog( QDialog ):
                 return
 
         if retCode != 0:
-            self.__onError( "Profiler session failed, return code: " + \
+            self.__onError( "Profiler session failed, return code: " +
                             str( retCode ) )
             return
 
@@ -234,8 +234,8 @@ class ProfilingProgressDialog( QDialog ):
         widget = ProfileResultsWidget( self.__scriptName, params, reportTime, outputFile,
                                        self.parentWidget() )
         GlobalData().mainWindow.showProfileReport( widget,
-                "Profiling report for " + \
-                os.path.basename( self.__scriptName ) + \
+                "Profiling report for " +
+                os.path.basename( self.__scriptName ) +
                 " at " + reportTime )
 
         QApplication.restoreOverrideCursor()
