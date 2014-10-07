@@ -59,7 +59,7 @@ class DevNull:
 def __isTestModule( modName ):
     " Returns True if it is a test module "
     for modToDel in TEST_PACKAGES:
-        if modName[ : len( modToDel ) ] == modToDel:
+        if modName.startswith( modToDel ):
             return True
     return False
 
