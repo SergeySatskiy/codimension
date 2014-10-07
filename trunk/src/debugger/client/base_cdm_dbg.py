@@ -174,7 +174,7 @@ class DebugBase( bdb.Bdb ):
             if self.__recursionDepth > RECURSION_LIMIT:
                 raise RuntimeError(
                         'maximum recursion depth exceeded\n'
-                        '(offending frame is two down the stack)' )
+                        '(offending frame is too down the stack)' )
         return
 
     def trace_dispatch( self, frame, event, arg ):
