@@ -251,8 +251,7 @@ class CodimensionMainWindow( QMainWindow ):
                         self.editorsManagerWidget.editorsManager.findPrev )
 
         # Needs for a proper update of the pylint menu
-        self.connect( GlobalData().project, SIGNAL( 'fsChanged' ),
-                      self.__onFSChanged )
+        GlobalData().project.fsChanged.connect( self.__onFSChanged )
 
         self.__runManager = RunManager( self )
         return

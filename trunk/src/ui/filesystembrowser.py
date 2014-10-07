@@ -28,7 +28,6 @@
 
 " File system browser with module browsing capabilities "
 
-from PyQt4.QtCore           import SIGNAL
 from utils.pixmapcache      import PixmapCache
 from utils.globals          import GlobalData
 from filesystembrowsermodel import FileSystemBrowserModel
@@ -45,8 +44,7 @@ class FileSystemBrowser( FilesBrowser ):
         self.setWindowTitle( 'Filesystem browser' )
         self.setWindowIcon( PixmapCache().getIcon( 'icon.png' ) )
 
-        self.connect( GlobalData().project, SIGNAL( 'fsChanged' ),
-                      self._onFSChanged )
+        GlobalData().project.fsChanged.connect( self._onFSChanged )
         return
 
     def removeToplevelDir( self ):

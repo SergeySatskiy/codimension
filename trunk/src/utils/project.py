@@ -40,6 +40,7 @@ class CodimensionProject( QObject ):
     Properties      = 1     # Project properties were updated
 
     projectChanged = pyqtSignal( int )
+    fsChanged = pyqtSignal( list )
 
     def __init__( self ):
         QObject.__init__( self )
@@ -616,7 +617,7 @@ class CodimensionProject( QObject ):
                 pass
 #        print "'" + report + "'"
 
-        self.emit( SIGNAL( 'fsChanged' ), items )
+        self.fsChanged.emit( items )
 #        self.__dirWatcher.debug()
         return
 
