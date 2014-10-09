@@ -23,7 +23,7 @@
 """ The debugger namespace viewer implementation """
 
 
-from PyQt4.QtCore import Qt, QRegExp, QString, QStringList
+from PyQt4.QtCore import Qt, QRegExp, QString
 from PyQt4.QtGui import QAbstractItemView, QHeaderView, QTreeWidget
 from ui.itemdelegates  import NoOutlineHeightDelegate
 from utils.encoding import toUnicode
@@ -96,7 +96,7 @@ class VariablesBrowser( QTreeWidget ):
 
         self.setSelectionBehavior( QAbstractItemView.SelectRows )
 
-        self.setHeaderLabels( QStringList() << "Name" << "Value" << "Type" )
+        self.setHeaderLabels( [ "Name", "Value", "Type" ] )
         header = self.header()
         header.setSortIndicator( 0, Qt.AscendingOrder )
         header.setSortIndicatorShown( True )
