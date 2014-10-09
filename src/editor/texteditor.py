@@ -112,15 +112,11 @@ class TextEditor( ScintillaWrapper ):
         self._initContextMenu()
         self.__initDebuggerMarkers()
 
-        self.connect( self, SIGNAL( 'SCN_DOUBLECLICK(int,int,int)' ),
-                      self.__onDoubleClick )
-        self.connect( self, SIGNAL( 'cursorPositionChanged(int,int)' ),
-                      self._onCursorPositionChanged )
+        self.SCN_DOUBLECLICK.connect( self.__onDoubleClick )
+        self.cursorPositionChanged.connect( self._onCursorPositionChanged )
 
-        self.connect( self, SIGNAL( 'SCN_DWELLSTART(int,int,int)' ),
-                      self._onDwellStart )
-        self.connect( self, SIGNAL( 'SCN_DWELLEND(int,int,int)' ),
-                      self._onDwellEnd )
+        self.SCN_DWELLSTART.connect( self._onDwellStart )
+        self.SCN_DWELLEND.connect( self._onDwellEnd )
 
         self.connect( self, SIGNAL( 'SCN_MODIFIED(int,int,const char*,int,int,int,int,int,int,int)' ),
                       self.__onSceneModified )
@@ -166,37 +162,28 @@ class TextEditor( ScintillaWrapper ):
         self.__completionPos = -1
         self.__completer = CodeCompleter( self )
         self.__inCompletion = False
-        self.connect( self.__completer, SIGNAL( "activated(const QString &)" ),
-                      self.insertCompletion )
+        self.__completer.activated.connect( self.insertCompletion )
         self.__lastTabPosition = -1
 
-        self.connect( self,
-                      SIGNAL( 'marginClicked(int, int, Qt::KeyboardModifiers)' ),
-                      self._marginClicked )
+        self.marginClicked.connect( self._marginClicked )
 
         # Calltip support
         self.__calltip = None
         self.__callPosition = None
         self.__calltipTimer = QTimer( self )
         self.__calltipTimer.setSingleShot( True )
-        self.connect( self.__calltipTimer, SIGNAL( 'timeout()' ), self.__onCalltipTimer )
+        self.__calltipTimer.timeout.connect( self.__onCalltipTimer )
 
         # Breakpoint support
         self.__inLinesChanged = False
         if self.__debugger:
             bpointModel = self.__debugger.getBreakPointModel()
-            self.connect( bpointModel,
-                          SIGNAL( "rowsAboutToBeRemoved(const QModelIndex &, int, int)" ),
-                          self.__deleteBreakPoints )
+            bpointModel.rowsAboutToBeRemoved.connect( self.__deleteBreakPoints )
             self.connect( bpointModel,
                           SIGNAL( "dataAboutToBeChanged(const QModelIndex &, const QModelIndex &)" ),
                           self.__breakPointDataAboutToBeChanged )
-            self.connect( bpointModel,
-                          SIGNAL( "dataChanged(const QModelIndex &, const QModelIndex &)" ),
-                          self.__changeBreakPoints )
-            self.connect( bpointModel,
-                          SIGNAL( "rowsInserted(const QModelIndex &, int, int)" ),
-                          self.__addBreakPoints )
+            bpointModel.dataChanged.connect( self.__changeBreakPoints )
+            bpointModel.rowsInserted.connect( self.__addBreakPoints )
 
         self.__initHotKeys()
         self.installEventFilter( self )
@@ -346,8 +333,7 @@ class TextEditor( ScintillaWrapper ):
                                 "Highlight in &outline browser",
                                 self.highlightInOutline, 'Ctrl+B' )
 
-        self.connect( self._menu, SIGNAL( "aboutToShow()" ),
-                      self._contextMenuAboutToShow )
+        self._menu.aboutToShow.connect( self._contextMenuAboutToShow )
 
         # Plugins support
         self.__pluginMenuSeparator = self._menu.addSeparator()
@@ -404,8 +390,7 @@ class TextEditor( ScintillaWrapper ):
             act.setData( QVariant( encoding ) )
             self.supportedEncodings[ encoding ] = act
             self.encodingsActGrp.addAction( act )
-        self.connect( self.encodingMenu, SIGNAL( 'triggered(QAction *)' ),
-                      self.__encodingsMenuTriggered )
+        self.encodingMenu.triggered.connect( self.__encodingsMenuTriggered )
         return self.encodingMenu
 
     def __encodingsMenuTriggered( self, act ):
@@ -801,8 +786,10 @@ class TextEditor( ScintillaWrapper ):
 
         if self.lexer_ is not None and \
            (self.lexer_.lexer() == "container" or self.lexer_.lexer() is None):
-            self.disconnect( self, SIGNAL( "SCN_STYLENEEDED(int)" ),
-                             self._styleNeeded )
+            try:
+                self.SCN_STYLENEEDED.disconnect( self._styleNeeded )
+            except:
+                pass
 
         self.lexer_ = lexer.getLexerByType( fileType, fileName, self )
         skin = GlobalData().skin
@@ -815,8 +802,7 @@ class TextEditor( ScintillaWrapper ):
             if self.lexer_.lexer() == "container" or \
                self.lexer_.lexer() is None:
                 self.setStyleBits( self.lexer_.styleBitsNeeded() )
-                self.connect( self, SIGNAL( "SCN_STYLENEEDED(int)" ),
-                              self._styleNeeded )
+                self.SCN_STYLENEEDED.connect( self._styleNeeded )
 
             # now set the lexer properties
             self.lexer_.initProperties()
@@ -2426,6 +2412,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     textEditorZoom = pyqtSignal( int )
     reloadRequest = pyqtSignal()
     reloadAllNonModifiedRequest = pyqtSignal()
+    tabRunChanged = pyqtSignal( bool )
 
     def __init__( self, parent, debugger ):
 
@@ -2441,8 +2428,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__createLayout()
         self.__editor.zoomTo( Settings().zoom )
 
-        self.connect( self.__editor, SIGNAL( 'modificationChanged(bool)' ),
-                      self.modificationChanged )
+        self.__editor.modificationChanged.connect( self.modificationChanged )
 
         self.__diskModTime = None
         self.__diskSize = None
@@ -2491,31 +2477,27 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         # Buttons
         printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
                                'Print', self )
-        self.connect( printButton, SIGNAL( 'triggered()' ),
-                      self.__onPrint )
+        printButton.triggered.connect( self.__onPrint )
         printButton.setEnabled( False )
         printButton.setVisible( False )
 
         printPreviewButton = QAction(
                 PixmapCache().getIcon( 'printpreview.png' ),
                 'Print preview', self )
-        self.connect( printPreviewButton, SIGNAL( 'triggered()' ),
-                      self.__onPrintPreview )
+        printPreviewButton.triggered.connect( self.__onPrintPreview )
         printPreviewButton.setEnabled( False )
         printPreviewButton.setVisible( False )
 
         self.pylintButton = QAction(
             PixmapCache().getIcon( 'pylint.png' ),
             'Analyse the file (Ctrl+L)', self )
-        self.connect( self.pylintButton, SIGNAL( 'triggered()' ),
-                      self.onPylint )
+        self.pylintButton.triggered.connect( self.onPylint )
         self.pylintButton.setEnabled( False )
 
         self.pymetricsButton = QAction(
             PixmapCache().getIcon( 'metrics.png' ),
             'Calculate the file metrics (Ctrl+K)', self )
-        self.connect( self.pymetricsButton, SIGNAL( 'triggered()' ),
-                      self.onPymetrics )
+        self.pymetricsButton.triggered.connect( self.onPymetrics )
         self.pymetricsButton.setEnabled( False )
 
         # Imports diagram and its menu
@@ -2523,8 +2505,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         importsDlgAct = importsMenu.addAction(
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
                                 'Fine tuned imports diagram' )
-        self.connect( importsDlgAct, SIGNAL( 'triggered()' ),
-                      self.onImportDgmTuned )
+        importsDlgAct.triggered.connect( self.onImportDgmTuned )
         self.importsDiagramButton = QToolButton( self )
         self.importsDiagramButton.setIcon(
                             PixmapCache().getIcon( 'importsdiagram.png' ) )
@@ -2532,8 +2513,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.importsDiagramButton.setPopupMode( QToolButton.DelayedPopup )
         self.importsDiagramButton.setMenu( importsMenu )
         self.importsDiagramButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.importsDiagramButton, SIGNAL( 'clicked(bool)' ),
-                      self.onImportDgm )
+        self.importsDiagramButton.clicked.connect( self.onImportDgm )
         self.importsDiagramButton.setEnabled( False )
 
         # Run script and its menu
@@ -2541,8 +2521,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         runScriptDlgAct = runScriptMenu.addAction(
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
                                 'Set run/debug parameters' )
-        self.connect( runScriptDlgAct, SIGNAL( 'triggered()' ),
-                      self.onRunScriptSettings )
+        runScriptDlgAct.triggered.connect( self.onRunScriptSettings )
         self.runScriptButton = QToolButton( self )
         self.runScriptButton.setIcon(
                             PixmapCache().getIcon( 'run.png' ) )
@@ -2550,8 +2529,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.runScriptButton.setPopupMode( QToolButton.DelayedPopup )
         self.runScriptButton.setMenu( runScriptMenu )
         self.runScriptButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.runScriptButton, SIGNAL( 'clicked(bool)' ),
-                      self.onRunScript )
+        self.runScriptButton.clicked.connect( self.onRunScript )
         self.runScriptButton.setEnabled( False )
 
         # Profile script and its menu
@@ -2559,8 +2537,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         profileScriptDlgAct = profileScriptMenu.addAction(
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
                                 'Set profile parameters' )
-        self.connect( profileScriptDlgAct, SIGNAL( 'triggered()' ),
-                      self.onProfileScriptSettings )
+        profileScriptDlgAct.triggered.connect( self.onProfileScriptSettings )
         self.profileScriptButton = QToolButton( self )
         self.profileScriptButton.setIcon(
                             PixmapCache().getIcon( 'profile.png' ) )
@@ -2568,8 +2545,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.profileScriptButton.setPopupMode( QToolButton.DelayedPopup )
         self.profileScriptButton.setMenu( profileScriptMenu )
         self.profileScriptButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.profileScriptButton, SIGNAL( 'clicked(bool)' ),
-                      self.onProfileScript )
+        self.profileScriptButton.clicked.connect( self.onProfileScript )
         self.profileScriptButton.setEnabled( False )
 
         # Debug script and its menu
@@ -2577,8 +2553,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         debugScriptDlgAct = debugScriptMenu.addAction(
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
                                 'Set run/debug parameters' )
-        self.connect( debugScriptDlgAct, SIGNAL( 'triggered()' ),
-                      self.onDebugScriptSettings )
+        debugScriptDlgAct.triggered.connect( self.onDebugScriptSettings )
         self.debugScriptButton = QToolButton( self )
         self.debugScriptButton.setIcon(
                             PixmapCache().getIcon( 'debugger.png' ) )
@@ -2586,8 +2561,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.debugScriptButton.setPopupMode( QToolButton.DelayedPopup )
         self.debugScriptButton.setMenu( debugScriptMenu )
         self.debugScriptButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.debugScriptButton, SIGNAL( 'clicked(bool)' ),
-                      self.onDebugScript )
+        self.debugScriptButton.clicked.connect( self.onDebugScript )
         self.debugScriptButton.setEnabled( False )
 
         spacer = QWidget()
@@ -2596,15 +2570,13 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__undoButton = QAction(
             PixmapCache().getIcon( 'undo.png' ), 'Undo (Ctrl+Z)', self )
         self.__undoButton.setShortcut( 'Ctrl+Z' )
-        self.connect( self.__undoButton, SIGNAL( 'triggered()' ),
-                      self.__editor.onUndo )
+        self.__undoButton.triggered.connect( self.__editor.onUndo )
         self.__undoButton.setEnabled( False )
 
         self.__redoButton = QAction(
             PixmapCache().getIcon( 'redo.png' ), 'Redo (Ctrl+Y)', self )
         self.__redoButton.setShortcut( 'Ctrl+Y' )
-        self.connect( self.__redoButton, SIGNAL( 'triggered()' ),
-                      self.__editor.onRedo )
+        self.__redoButton.triggered.connect( self.__editor.onRedo )
         self.__redoButton.setEnabled( False )
 
         # Python tidy script button and its menu
@@ -2612,8 +2584,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         pythonTidyDlgAct = pythonTidyMenu.addAction(
                                 PixmapCache().getIcon( 'detailsdlg.png' ),
                                 'Set python tidy parameters' )
-        self.connect( pythonTidyDlgAct, SIGNAL( 'triggered()' ),
-                      self.onPythonTidySettings )
+        pythonTidyDlgAct.triggered.connect( self.onPythonTidySettings )
         self.pythonTidyButton = QToolButton( self )
         self.pythonTidyButton.setIcon(
                       PixmapCache().getIcon( 'pythontidy.png' ) )
@@ -2622,41 +2593,36 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.pythonTidyButton.setPopupMode( QToolButton.DelayedPopup )
         self.pythonTidyButton.setMenu( pythonTidyMenu )
         self.pythonTidyButton.setFocusPolicy( Qt.NoFocus )
-        self.connect( self.pythonTidyButton, SIGNAL( 'clicked(bool)' ),
-                      self.onPythonTidy )
+        self.pythonTidyButton.clicked.connect( self.onPythonTidy )
         self.pythonTidyButton.setEnabled( False )
 
         self.lineCounterButton = QAction(
             PixmapCache().getIcon( 'linecounter.png' ),
             'Line counter', self )
-        self.connect( self.lineCounterButton, SIGNAL( 'triggered()' ),
-                      self.onLineCounter )
+        self.lineCounterButton.triggered.connect( self.onLineCounter )
 
         self.removeTrailingSpacesButton = QAction(
             PixmapCache().getIcon( 'trailingws.png' ),
             'Remove trailing spaces', self )
-        self.connect( self.removeTrailingSpacesButton, SIGNAL( 'triggered()' ),
-                      self.onRemoveTrailingWS )
+        self.removeTrailingSpacesButton.triggered.connect( self.onRemoveTrailingWS )
         self.expandTabsButton = QAction(
             PixmapCache().getIcon( 'expandtabs.png' ),
             'Expand tabs (4 spaces)', self )
-        self.connect( self.expandTabsButton, SIGNAL( 'triggered()' ),
-                      self.onExpandTabs )
+        self.expandTabsButton.triggered.connect( self.onExpandTabs )
 
         # Zoom buttons
         # It was decided that it is wrong to have these buttons here
         #zoomInButton = QAction( PixmapCache().getIcon( 'zoomin.png' ),
         #                        'Zoom in (Ctrl+=)', self )
-        #self.connect( zoomInButton, SIGNAL( 'triggered()' ), self.onZoomIn )
+        #zoomInButton.triggered.connect( self.onZoomIn )
 
         #zoomOutButton = QAction( PixmapCache().getIcon( 'zoomout.png' ),
         #                        'Zoom out (Ctrl+-)', self )
-        #self.connect( zoomOutButton, SIGNAL( 'triggered()' ), self.onZoomOut )
+        #zoomOutButton.triggered.connect( self.onZoomOut )
 
         #zoomResetButton = QAction( PixmapCache().getIcon( 'zoomreset.png' ),
         #                           'Zoom reset (Ctrl+0)', self )
-        #self.connect( zoomResetButton, SIGNAL( 'triggered()' ),
-        #              self.onZoomReset )
+        #zoomResetButton.triggered.connect( self.onZoomReset )
 
         #fixedSpacer = QWidget()
         #fixedSpacer.setFixedHeight( 16 )
@@ -2847,7 +2813,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.runScriptButton.setEnabled( enable )
         self.profileScriptButton.setEnabled( enable )
         self.debugScriptButton.setEnabled( enable )
-        self.emit( SIGNAL( "TabRunChanged" ), enable )
+        self.tabRunChanged.emit( enable )
         return
 
     def isTabRunEnabled( self ):
