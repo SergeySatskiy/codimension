@@ -25,7 +25,7 @@
 
 
 import os, os.path, copy
-from PyQt4.QtCore import Qt, QStringList
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout,
                           QSizePolicy, QLabel, QGridLayout, QHBoxLayout,
                           QRadioButton, QGroupBox, QPushButton, QFileDialog,
@@ -229,7 +229,7 @@ class RunDialog( QDialog ):
     def __populateTable( table, dictionary ):
         " Populates the given table "
         for key, value in dictionary.iteritems():
-            item = QTreeWidgetItem( QStringList() << key << value )
+            item = QTreeWidgetItem( [ key, value ] )
             table.addTopLevelItem( item )
         if dictionary:
             table.setCurrentItem( table.topLevelItem( 0 ) )
@@ -533,9 +533,7 @@ class RunDialog( QDialog ):
         table.setSelectionMode( QAbstractItemView.SingleSelection )
         table.setSelectionBehavior( QAbstractItemView.SelectRows )
         table.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
-
-        headerLabels = QStringList() << "Variable" << "Value"
-        table.setHeaderLabels( headerLabels )
+        table.setHeaderLabels( [ "Variable", "Value" ] )
 
         header = table.header()
         header.setSortIndicator( 0, Qt.AscendingOrder )
@@ -718,7 +716,7 @@ class RunDialog( QDialog ):
                 table.takeTopLevelItem( index )
                 break
 
-        item = QTreeWidgetItem( QStringList() << name << value )
+        item = QTreeWidgetItem( [ name, value ] )
         table.addTopLevelItem( item )
         table.setCurrentItem( item )
         return item
