@@ -293,9 +293,7 @@ class CodimensionMainWindow( QMainWindow ):
         """ creates the UI layout """
 
         self.editorsManagerWidget = EditorsManagerWidget( self, self.__debugger )
-        self.connect( self.editorsManagerWidget.editorsManager,
-                      SIGNAL( 'TabRunChanged' ),
-                      self.setDebugTabAvailable )
+        self.editorsManagerWidget.editorsManager.tabRunChanged.connect( self.setDebugTabAvailable )
 
         self.editorsManagerWidget.findWidget.hide()
         self.editorsManagerWidget.replaceWidget.hide()

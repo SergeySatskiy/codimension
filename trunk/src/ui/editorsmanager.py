@@ -57,6 +57,8 @@ from editor.vcsannotateviewer import VCSAnnotateViewerTabWidget
 class ClickableTabBar( QTabBar ):
     " Intercepts clicking on the toolbar "
 
+    currentTabClicked = pyqtSignal()
+
     def __init__( self, parent  = None ):
         QTabBar.__init__( self, parent )
         return
@@ -66,7 +68,7 @@ class ClickableTabBar( QTabBar ):
             It is used to transfer focus to the currently active tab editor. """
         tabBarPoint = self.mapTo( self, event.pos() )
         if self.tabAt( tabBarPoint ) == self.currentIndex():
-            self.emit( SIGNAL( 'currentTabClicked' ) )
+            self.currentTabClicked.emit()
         QTabBar.mousePressEvent( self, event )
         return
 
@@ -80,6 +82,7 @@ class EditorsManager( QTabWidget ):
     " Tab bar with editors "
 
     bufferModified = pyqtSignal( str, str )
+    tabRunChanged = pyqtSignal( bool )
 
     def __init__( self, parent, debugger ):
 
@@ -176,8 +179,7 @@ class EditorsManager( QTabWidget ):
         self.tabBar().setContextMenuPolicy( Qt.CustomContextMenu )
         self.tabBar().customContextMenuRequested.connect(
                                                     self.__showTabContextMenu )
-        self.connect( self.tabBar(), SIGNAL( 'currentTabClicked' ),
-                      self.__currentTabClicked )
+        self.tabBar().currentTabClicked.connect( self.__currentTabClicked )
 
         # Plugins context menus support
         self.__pluginMenus = {}
@@ -492,8 +494,7 @@ class EditorsManager( QTabWidget ):
         newWidget = TextEditorTabWidget( self, self.__debugger )
         newWidget.reloadRequest.connect( self.onReload )
         newWidget.reloadAllNonModifiedRequest.connect( self.onReloadAllNonModified )
-        self.connect( newWidget, SIGNAL( 'TabRunChanged' ),
-                      self.onTabRunChanged )
+        newWidget.tabRunChanged.connect( self.onTabRunChanged )
         editor = newWidget.getEditor()
         if shortName is None:
             newWidget.setShortName( self.getNewName() )
@@ -796,7 +797,7 @@ class EditorsManager( QTabWidget ):
     def __currentChanged( self, index ):
         " Handles the currentChanged signal "
         if index == -1:
-            self.emit( SIGNAL( "TabRunChanged" ), False )
+            self.tabRunChanged.emit( False )
             return
 
         self._updateIconAndTooltip( self.currentIndex() )
@@ -825,9 +826,9 @@ class EditorsManager( QTabWidget ):
                     self.checkOutsideFileChanges()
 
         if widget.getType() != MainWindowTabWidgetBase.PlainTextEditor:
-            self.emit( SIGNAL( "TabRunChanged" ), False )
+            self.tabRunChanged.emit( False )
         else:
-            self.emit( SIGNAL( "TabRunChanged" ), widget.isTabRunEnabled() )
+            self.tabRunChanged.emit( widget.isTabRunEnabled() )
         return
 
     def onHelp( self ):
@@ -1137,8 +1138,7 @@ class EditorsManager( QTabWidget ):
             newWidget = TextEditorTabWidget( self, self.__debugger )
             newWidget.reloadRequest.connect( self.onReload )
             newWidget.reloadAllNonModifiedRequest.connect( self.onReloadAllNonModified )
-            self.connect( newWidget, SIGNAL( 'TabRunChanged' ),
-                          self.onTabRunChanged )
+            newWidget.tabRunChanged.connect( self.onTabRunChanged )
             editor = newWidget.getEditor()
             newWidget.readFile( fileName )
 
@@ -2226,7 +2226,7 @@ class EditorsManager( QTabWidget ):
 
     def onTabRunChanged( self, enabled ):
         " Triggered when an editor informs about changes of the run buttons "
-        self.emit( SIGNAL( 'TabRunChanged' ), enabled )
+        self.tabRunChanged.emit( enabled )
         return
 
     def reloadTab( self, index ):
