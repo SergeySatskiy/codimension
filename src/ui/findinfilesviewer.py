@@ -501,8 +501,10 @@ class FindInFilesViewer( QWidget ):
             fileItem.setExpanded( True )
 
         # Update the header with the total number of matches
-        headerLabels = QStringList() << "File name / line" \
-                                     << "Text (total matches: " + \
+        headerLabels = QStringList() \
+                            << "File name / line (total files: " + \
+                                        str( len( results ) ) + ")" \
+                            << "Text (total matches: " + \
                                         str( totalMatched ) + ")"
         self.__resultsTree.setHeaderLabels( headerLabels )
 
