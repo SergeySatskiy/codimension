@@ -23,7 +23,7 @@
 " imports list selection widget "
 
 
-from PyQt4.QtCore       import Qt, QStringList, QEventLoop
+from PyQt4.QtCore       import Qt, QEventLoop
 from PyQt4.QtGui        import ( QSizePolicy, QFrame, QTreeWidget, QApplication,
                                  QTreeWidgetItem, QHeaderView, QVBoxLayout,
                                  QAbstractItemView )
@@ -116,11 +116,9 @@ class ImportListWidget( QFrame ):
         info = str( count ) + " resolved import"
         if count > 1:
             info += "s"
-        headerLabels = QStringList() << "Import (" + info + ")" << "Path"
-        self.__importList.setHeaderLabels( headerLabels )
+        self.__importList.setHeaderLabels( [ "Import (" + info + ")", "Path" ] )
         for item in importsList:
-            importItem = QTreeWidgetItem( QStringList() << item[ 0 ] \
-                                                        << item[ 1 ] )
+            importItem = QTreeWidgetItem( [ item[ 0 ], item[ 1 ] ] )
             importItem.setToolTip( 0, self.__getFileTooltip( item[ 1 ] ) )
             self.__importList.addTopLevelItem( importItem )
 
