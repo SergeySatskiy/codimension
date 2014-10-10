@@ -45,7 +45,7 @@ from utils.fileutils import ( PythonFileType, Python3FileType, RubyFileType,
 
 # The lexer registry
 # Dictionary with the language name as key. Each entry is a list with
-#       0. display string (QString)
+#       0. display string (string)
 #       1. dummy filename to derive lexer name (string)
 #       2. reference to a function instantiating the specific lexer
 #          This function must take a reference to the parent as argument.

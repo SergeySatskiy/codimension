@@ -31,7 +31,6 @@
 
 
 from PyQt4.Qsci     import QsciLexerRuby
-from PyQt4.QtCore   import QString
 from lexer          import Lexer
 
 
@@ -43,7 +42,7 @@ class LexerRuby( QsciLexerRuby, Lexer ):
         QsciLexerRuby.__init__( self, parent )
         Lexer.__init__( self )
 
-        self.commentString = QString( "#" )
+        self.commentString = "#"
         return
 
     def autoCompletionWordSeparators( self ):

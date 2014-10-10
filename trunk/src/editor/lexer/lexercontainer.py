@@ -31,7 +31,6 @@
 
 
 from PyQt4.Qsci     import QsciLexer
-from PyQt4.QtCore   import QString
 from lexer          import Lexer
 
 
@@ -59,7 +58,7 @@ class LexerContainer( QsciLexer, Lexer ):
 
     def description( self, style ):
         " Provides the descriptions of the lexer supported styles "
-        return QString()
+        return ""
 
     def styleBitsNeeded( self ):
         " Provides the number of style bits needed by the lexer "

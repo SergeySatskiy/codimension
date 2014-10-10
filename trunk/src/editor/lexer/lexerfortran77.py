@@ -31,7 +31,6 @@
 
 
 from PyQt4.Qsci     import QsciLexerFortran77
-from PyQt4.QtCore   import QString
 from lexer          import Lexer
 
 
@@ -43,7 +42,7 @@ class LexerFortran77( QsciLexerFortran77, Lexer ):
         QsciLexerFortran77.__init__( self, parent )
         Lexer.__init__( self )
 
-        self.commentString = QString( "c" )
+        self.commentString = "c"
         return
 
     def initProperties( self ):

@@ -30,26 +30,23 @@
 " Module implementing the lexer base class "
 
 
-from PyQt4.QtCore import QString
-
-
 class Lexer( object ):
     "  The lexer mixin class "
 
     def __init__( self ):
 
-        self.commentString = QString( '' )
-        self.streamCommentString = { 'start' : QString( '' ),
-                                     'end'   : QString( '' ) }
-        self.boxCommentString = { 'start'  : QString( '' ),
-                                  'middle' : QString( '' ),
-                                  'end'    : QString( '' ) }
+        self.commentString = ''
+        self.streamCommentString = { 'start' : '',
+                                     'end'   : '' }
+        self.boxCommentString = { 'start'  : '',
+                                  'middle' : '',
+                                  'end'    : '' }
 
         # last indented line wrapper
         self.lastIndented = -1
         self.lastIndentedIndex = -1
 
-        # always keep tabs (for languages where tabs are esential
+        # always keep tabs (for languages where tabs are esential)
         self._alwaysKeepTabs = False
         return
 

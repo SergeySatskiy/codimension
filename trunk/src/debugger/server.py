@@ -28,7 +28,7 @@ import errno
 import time
 import os.path
 from subprocess import Popen
-from PyQt4.QtCore import SIGNAL, QTimer, QObject, Qt, QTextCodec, QString, QModelIndex, pyqtSignal
+from PyQt4.QtCore import SIGNAL, QTimer, QObject, Qt, QTextCodec, QModelIndex, pyqtSignal
 from PyQt4.QtGui import QApplication, QCursor, QMessageBox, QDialog
 from PyQt4.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
 
@@ -378,7 +378,7 @@ class CodimensionDebugger( QObject ):
         " Triggered when something has been received from the client "
         while self.__clientSocket and self.__clientSocket.bytesAvailable() > 0:
             qs = self.__clientSocket.readAll()
-            us = self.__codec.fromUnicode( QString( qs ) )
+            us = self.__codec.fromUnicode( str( qs ) )
             self.__buffer += str( us )
 
             # print "Received: '" + str( us ) + "'"

@@ -265,7 +265,7 @@ class BreakPointModel( QAbstractItemModel ):
         Public method to get the index of a breakpoint
         given by filename and line number.
 
-        @param fname filename of the breakpoint (string or QString)
+        @param fname filename of the breakpoint (string)
         @param line line number of the breakpoint (integer)
         @return index (QModelIndex)
         """

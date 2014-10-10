@@ -194,7 +194,7 @@ def toUnicode( inputStr ):
     if isinstance( inputStr, QString ):
         return inputStr
 
-    if type( inputStr ) is type( u"" ):
+    if type( inputStr ) == unicode:
         return inputStr
 
     for codec in supportedCodecs:

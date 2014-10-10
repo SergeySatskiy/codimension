@@ -31,7 +31,6 @@
 
 
 from PyQt4.Qsci     import QsciLexerBatch
-from PyQt4.QtCore   import QString
 from lexer          import Lexer
 
 
@@ -43,7 +42,7 @@ class LexerBatch( QsciLexerBatch, Lexer ):
         QsciLexerBatch.__init__( self, parent )
         Lexer.__init__( self )
 
-        self.commentString = QString( "REM " )
+        self.commentString = "REM "
         return
 
     def isCommentStyle( self, style ):
