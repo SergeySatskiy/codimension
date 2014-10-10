@@ -23,7 +23,7 @@
 " Thread viewer "
 
 
-from PyQt4.QtCore import Qt, QStringList
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import ( QFrame, QTreeWidget, QToolButton, QTreeWidgetItem,
                           QHeaderView, QVBoxLayout, QLabel, QWidget,
                           QAbstractItemView, QSizePolicy, QSpacerItem,
@@ -37,8 +37,7 @@ class ThreadItem( QTreeWidgetItem ):
     " Single thread item data structure "
 
     def __init__( self, tid, name, state ):
-        QTreeWidgetItem.__init__( self,
-                QStringList() << "" << name << state << str( tid ) )
+        QTreeWidgetItem.__init__( self, [ "", name, state, str( tid ) ] )
 
         self.__isCurrent = False
         self.__setTooltip()
@@ -153,9 +152,7 @@ class ThreadsViewer( QWidget ):
         self.__threadsList.setFocusPolicy( Qt.NoFocus )
 
         self.__threadsList.itemClicked.connect( self.__onThreadClicked )
-
-        headerLabels = QStringList() << "" << "Name" << "State" << "TID"
-        self.__threadsList.setHeaderLabels( headerLabels )
+        self.__threadsList.setHeaderLabels( [ "", "Name", "State", "TID" ] )
 
         verticalLayout.addWidget( self.headerFrame )
         verticalLayout.addWidget( self.__threadsList )
