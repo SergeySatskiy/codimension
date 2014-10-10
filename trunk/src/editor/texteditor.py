@@ -346,10 +346,8 @@ class TextEditor( ScintillaWrapper ):
         else:
             self.__pluginMenuSeparator.setVisible( False )
 
-        self.connect( editorsManager, SIGNAL( 'PluginContextMenuAdded' ),
-                      self.__onPluginMenuAdded )
-        self.connect( editorsManager, SIGNAL( 'PluginContextMenuRemoved' ),
-                      self.__onPluginMenuRemoved )
+        editorsManager.pluginContextMenuAdded.connect( self.__onPluginMenuAdded )
+        editorsManager.pluginContextMenuRemoved.connect( self.__onPluginMenuRemoved )
         return
 
     def __onPluginMenuAdded( self, menu, count ):

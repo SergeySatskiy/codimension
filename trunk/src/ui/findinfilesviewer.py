@@ -22,7 +22,7 @@
 
 " Find in files viewer implementation "
 
-from PyQt4.QtCore import Qt, QSize, QTimer, QStringList
+from PyQt4.QtCore import Qt, QSize, QTimer
 from PyQt4.QtGui import ( QToolBar, QCursor, QBrush, QHBoxLayout, QWidget,
                           QAction, QLabel, QSizePolicy, QFrame,
                           QTreeWidget, QApplication, QTreeWidgetItem,
@@ -402,7 +402,7 @@ class FindInFilesViewer( QWidget ):
         self.__resultsTree.setItemsExpandable( True )
         self.__resultsTree.setUniformRowHeights( True )
         self.__resultsTree.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
-        headerLabels = QStringList() << "File name / line" << "Text"
+        headerLabels = [ "File name / line", "Text" ]
         self.__resultsTree.setHeaderLabels( headerLabels )
         self.__resultsTree.itemActivated.connect( self.__resultActivated )
         self.__resultsTree.itemClicked.connect( self.__resultClicked )
@@ -485,7 +485,7 @@ class FindInFilesViewer( QWidget ):
                 matchText = " (1 match)"
             else:
                 matchText = " (" + str( matched ) + " matches)"
-            columns = QStringList() << item.fileName << matchText
+            columns = [ item.fileName, matchText ]
             fileItem = MatchTableFileItem( columns, item.bufferUUID )
             fileItem.setIcon( 0,
                               getFileIcon( detectFileType( item.fileName ) ) )
@@ -495,17 +495,14 @@ class FindInFilesViewer( QWidget ):
 
             # Matches
             for match in item.matches:
-                columns = QStringList() << str( match.line ) << match.text
+                columns = [ str( match.line ), match.text ]
                 matchItem = MatchTableItem( columns, match.tooltip )
                 fileItem.addChild( matchItem )
             fileItem.setExpanded( True )
 
         # Update the header with the total number of matches
-        headerLabels = QStringList() \
-                            << "File name / line (total files: " + \
-                                        str( len( results ) ) + ")" \
-                            << "Text (total matches: " + \
-                                        str( totalMatched ) + ")"
+        headerLabels = [ "File name / line (total files: " + str( len( results ) ) + ")",
+                         "Text (total matches: " + str( totalMatched ) + ")" ]
         self.__resultsTree.setHeaderLabels( headerLabels )
 
         # Resizing the table

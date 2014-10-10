@@ -83,6 +83,8 @@ class EditorsManager( QTabWidget ):
 
     bufferModified = pyqtSignal( str, str )
     tabRunChanged = pyqtSignal( bool )
+    pluginContextMenuAdded = pyqtSignal( QMenu, int )
+    pluginContextMenuRemoved = pyqtSignal( QMenu, int )
 
     def __init__( self, parent, debugger ):
 
@@ -2441,7 +2443,7 @@ class EditorsManager( QTabWidget ):
                 menu = None
                 return
             self.__pluginMenus[ plugin.getPath() ] = menu
-            self.emit( SIGNAL( 'PluginContextMenuAdded' ), menu, len( self.__pluginMenus ) )
+            self.pluginContextMenuAdded.emit( menu, len( self.__pluginMenus ) )
         except Exception, exc:
             logging.error( "Error populating " + pluginName + " plugin buffer context menu: " +
                            str( exc ) + ". Ignore and continue." )
@@ -2454,7 +2456,7 @@ class EditorsManager( QTabWidget ):
             if path in self.__pluginMenus:
                 menu = self.__pluginMenus[ path ]
                 del self.__pluginMenus[ path ]
-                self.emit( SIGNAL( 'PluginContextMenuRemoved' ), menu, len( self.__pluginMenus ) )
+                self.pluginContextMenuRemoved.emit( menu, len( self.__pluginMenus ) )
                 menu = None
         except Exception, exc:
             pluginName = plugin.getName()

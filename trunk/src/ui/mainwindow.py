@@ -161,8 +161,7 @@ class CodimensionMainWindow( QMainWindow ):
                       self.__onDebuggerClientException )
         self.connect( self.__debugger, SIGNAL( 'ClientSyntaxError' ),
                       self.__onDebuggerClientSyntaxError )
-        self.connect( self.__debugger, SIGNAL( 'ClientIDEMessage' ),
-                      self.__onDebuggerClientIDEMessage )
+        self.__debugger.clientIDEMessage.connect( self.__onDebuggerClientIDEMessage )
         self.connect( self.__debugger.getBreakPointModel(),
                       SIGNAL( 'BreakpoinsChanged' ),
                       self.__onBreakpointsModelChanged )
@@ -3261,9 +3260,9 @@ class CodimensionMainWindow( QMainWindow ):
     def __onDebuggerClientIDEMessage( self, message ):
         " Triggered when the debug server has something to report "
         if self.settings.terminalType == TERM_REDIRECT:
-            self.__ioconsoleIDEMessage( message )
+            self.__ioconsoleIDEMessage( str( message ) )
         else:
-            logging.info( message )
+            logging.info( str( message ) )
         return
 
     def __removeCurrenDebugLineHighlight( self ):
