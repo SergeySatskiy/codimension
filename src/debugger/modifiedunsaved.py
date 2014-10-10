@@ -24,7 +24,7 @@
 """ Dialog with a list of modified but unsaved files """
 
 
-from PyQt4.QtCore       import Qt, QStringList
+from PyQt4.QtCore       import Qt
 from PyQt4.QtGui        import ( QDialog, QDialogButtonBox, QVBoxLayout,
                                  QSizePolicy, QLabel, QHBoxLayout,
                                  QTreeWidget, QAbstractItemView,
@@ -96,7 +96,7 @@ class ModifiedUnsavedDialog( QDialog ):
         filesList.setHeaderHidden( True )
         for item in files:
             fileName = item[ 0 ]
-            fileItem = QTreeWidgetItem( QStringList() << fileName )
+            fileItem = QTreeWidgetItem( [ fileName ] )
             fileType = detectFileType( fileName )
             fileItem.setIcon( 0, getFileIcon( fileType ) )
             if fileType in [ PythonFileType, Python3FileType ]:
