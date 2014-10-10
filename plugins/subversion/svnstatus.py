@@ -26,7 +26,7 @@ import os.path
 import pysvn
 import logging
 from svnindicators import IND_ERROR, IND_IGNORED, getIndicatorPixmap
-from PyQt4.QtCore import Qt, QTimer, QStringList
+from PyQt4.QtCore import Qt, QTimer
 from PyQt4.QtGui import ( QDialog, QApplication, QVBoxLayout, QLabel,
                           QDialogButtonBox, QCursor, QTreeWidget,
                           QTreeWidgetItem, QHeaderView, QIcon )
@@ -237,8 +237,8 @@ class SVNPluginStatusDialog( QDialog ):
             message = ""
             if item[ 2 ]:
                 message = item[ 2 ]
-            newItem = QTreeWidgetItem(
-                        QStringList() << "" << item[ 0 ] << STATUS[ item[ 1 ] ] << message )
+            newItem = QTreeWidgetItem( [ "", item[ 0 ],
+                                         STATUS[ item[ 1 ] ], message ] )
             pixmap = getIndicatorPixmap( item[ 1 ] )
             if pixmap:
                 newItem.setIcon( 0, QIcon( pixmap ) )
@@ -252,8 +252,7 @@ class SVNPluginStatusDialog( QDialog ):
         self.__pathView.header().setResizeMode( QHeaderView.Fixed )
 
         for item in ignoredPaths:
-            newItem = QTreeWidgetItem(
-                        QStringList() << item[ 0 ] << STATUS[ item[ 1 ] ] )
+            newItem = QTreeWidgetItem( [ item[ 0 ], STATUS[ item[ 1 ] ] ] )
             newItem.setToolTip( 0, item[ 0 ] )
             newItem.setToolTip( 1, STATUS[ item[ 1 ] ] )
             self.__ignoredPathView.addTopLevelItem( newItem )
@@ -281,8 +280,7 @@ class SVNPluginStatusDialog( QDialog ):
         self.__pathView.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         self.__pathView.setUniformRowHeights( True )
 
-        self.__pathHeader = QTreeWidgetItem(
-                QStringList() << "" << "Path" << "Status" << "Message" )
+        self.__pathHeader = QTreeWidgetItem( [ "", "Path", "Status", "Message" ] )
         self.__pathView.setHeaderItem( self.__pathHeader )
         self.__pathView.header().setSortIndicator( 1, Qt.AscendingOrder )
         vboxLayout.addWidget( self.__pathView )
@@ -299,8 +297,7 @@ class SVNPluginStatusDialog( QDialog ):
         self.__ignoredPathView.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         self.__ignoredPathView.setUniformRowHeights( True )
 
-        pathToIgnoreHeader = QTreeWidgetItem(
-                QStringList() << "Path" << "Status" )
+        pathToIgnoreHeader = QTreeWidgetItem( [ "Path", "Status" ] )
         self.__ignoredPathView.setHeaderItem( pathToIgnoreHeader )
         self.__ignoredPathView.header().setSortIndicator( 0, Qt.AscendingOrder )
         vboxLayout.addWidget( self.__ignoredPathView )
