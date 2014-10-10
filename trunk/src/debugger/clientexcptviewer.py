@@ -23,7 +23,7 @@
 " Client exceptions viewer "
 
 
-from PyQt4.QtCore import Qt, SIGNAL, QStringList, QSize
+from PyQt4.QtCore import Qt, SIGNAL, QSize
 from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeWidget,
                           QTreeWidgetItem, QVBoxLayout,
                           QLabel, QWidget, QAbstractItemView, QMenu,
@@ -257,8 +257,7 @@ class ClientExceptionsViewer( QWidget ):
                                             self.__onSelectionChanged )
 
 
-        headerLabels = QStringList() << "Exception"
-        self.exceptionsList.setHeaderLabels( headerLabels )
+        self.exceptionsList.setHeaderLabels( [ "Exception" ] )
 
         verticalLayout.addWidget( self.headerFrame )
         verticalLayout.addWidget( self.toolbar )
