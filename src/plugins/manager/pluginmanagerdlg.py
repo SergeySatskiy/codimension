@@ -22,7 +22,7 @@
 
 """ Plugins manager dialog """
 
-from PyQt4.QtCore import Qt, SIGNAL, QStringList
+from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui import ( QDialog, QTreeWidgetItem, QTreeWidget, QVBoxLayout,
                           QTextEdit, QDialogButtonBox, QLabel, QFontMetrics,
                           QHeaderView, QPushButton )
@@ -69,8 +69,7 @@ class PluginItem( QTreeWidgetItem ):
 
         name = self.plugin.getName()
         ver = self.plugin.getVersion()
-        QTreeWidgetItem.__init__( self,
-            QStringList() << "" << "" << "" << name << ver )
+        QTreeWidgetItem.__init__( self, [ "", "", "", name, ver ] )
 
         if not self.plugin.conflictType in [ pluginManager.NO_CONFLICT,
                                              pluginManager.USER_DISABLED ]:
@@ -130,8 +129,7 @@ class PluginsDialog( QDialog ):
         self.__pluginsView.setUniformRowHeights( True )
 
         # Alert | system/user | Enable | Name | Version
-        self.__pluginsHeader = QTreeWidgetItem(
-                QStringList() << "" << "" << "" << "Name" << "Version" << "" )
+        self.__pluginsHeader = QTreeWidgetItem( [ "", "", "", "Name", "Version", "" ] )
         self.__pluginsView.setHeaderItem( self.__pluginsHeader )
         self.__pluginsView.header().setSortIndicator( NAME_COL, Qt.AscendingOrder )
         self.connect( self.__pluginsView,
@@ -154,7 +152,7 @@ class PluginsDialog( QDialog ):
         self.__details.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         self.__details.setUniformRowHeights( True )
 
-        detailsHeader = QTreeWidgetItem( QStringList() << "" << "" )
+        detailsHeader = QTreeWidgetItem( [ "", "" ] )
         self.__details.setHeaderItem( detailsHeader )
         self.__details.setHeaderHidden( True )
 
@@ -300,24 +298,23 @@ class PluginsDialog( QDialog ):
             return
 
         self.__details.addTopLevelItem(
-                    QTreeWidgetItem( QStringList() << "Author" << item.plugin.getAuthor() ) )
+                    QTreeWidgetItem( [ "Author", item.plugin.getAuthor() ] ) )
         self.__details.addTopLevelItem(
-                    QTreeWidgetItem( QStringList() << "Path" << os.path.normpath( item.plugin.getPath() ) ) )
+                    QTreeWidgetItem( [ "Path", os.path.normpath( item.plugin.getPath() ) ] ) )
         self.__details.addTopLevelItem(
-                    QTreeWidgetItem( QStringList() << "Description" << item.plugin.getDescription() ) )
+                    QTreeWidgetItem( [ "Description", item.plugin.getDescription() ] ) )
         self.__details.addTopLevelItem(
-                    QTreeWidgetItem( QStringList() << "Web site" << item.plugin.getWebsite() ) )
+                    QTreeWidgetItem( [ "Web site", item.plugin.getWebsite() ] ) )
 
         copyright = item.plugin.getCopyright()
         if copyright is not None:
             if copyright.lower() != "unknown":
                 self.__details.addTopLevelItem(
-                    QTreeWidgetItem( QStringList() << "Copyright" << copyright ) )
+                    QTreeWidgetItem( [ "Copyright", copyright ] ) )
 
         for name in item.plugin.getDetails():
             value = item.plugin.getDetails()[ name ]
-            self.__details.addTopLevelItem(
-                    QTreeWidgetItem( QStringList() << name << value ) )
+            self.__details.addTopLevelItem( QTreeWidgetItem( [ name, value ] ) )
 
         self.__errorsText.setText( item.plugin.conflictMessage )
         return
