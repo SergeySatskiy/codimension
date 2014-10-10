@@ -26,7 +26,7 @@
 
 " Debugger variable browser items "
 
-from PyQt4.QtCore import Qt, QString, QRegExp, QStringList
+from PyQt4.QtCore import Qt, QString, QRegExp
 from PyQt4.QtGui import QTreeWidgetItem
 from utils.pixmapcache import PixmapCache
 
@@ -126,8 +126,8 @@ class VariableItem( QTreeWidgetItem ):
         else:
             self.__tooltip += tooltipDisplayValue
 
-        QTreeWidgetItem.__init__( self, parent,
-                                  QStringList() << displayName << displayValue << displayType )
+        QTreeWidgetItem.__init__( self, parent, [ displayName, displayValue,
+                                                  displayType ] )
 
         self.populated = True
         return
@@ -164,7 +164,7 @@ class VariableItem( QTreeWidgetItem ):
 
     def attachDummy( self ):
         " Attach a dummy sub item to allow for lazy population "
-        QTreeWidgetItem( self, QStringList( "DUMMY" ) )
+        QTreeWidgetItem( self, [ "DUMMY" ] )
         return
 
     def deleteChildren( self ):
