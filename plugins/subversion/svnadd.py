@@ -22,7 +22,7 @@
 
 """ Performs SVN add command """
 
-from PyQt4.QtCore import Qt, QStringList
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import ( QDialog, QVBoxLayout, QDialogButtonBox,
                           QLabel, QTreeWidget,
                           QTreeWidgetItem, QHeaderView,
@@ -168,7 +168,7 @@ class SVNPluginAddDialog( QDialog ):
 
         # Fill the lists
         for item in pathsToAdd:
-            newItem = QTreeWidgetItem( QStringList() << "" << item )
+            newItem = QTreeWidgetItem( [ "", item ] )
             newItem.setCheckState( CHECK_COL, Qt.Checked )
             newItem.setToolTip( PATH_COL, item[ 0 ] )
             self.__pathToAddView.addTopLevelItem( newItem )
@@ -222,7 +222,7 @@ class SVNPluginAddDialog( QDialog ):
         self.__pathToAddView = QTreeWidget()
         self.__configTable( self.__pathToAddView )
 
-        self.__pathToAddHeader = QTreeWidgetItem(QStringList() << "" << "Path")
+        self.__pathToAddHeader = QTreeWidgetItem( [ "", "Path" ] )
         self.__pathToAddView.setHeaderItem( self.__pathToAddHeader )
         self.__pathToAddView.header().setSortIndicator( PATH_COL,
                                                         Qt.AscendingOrder )
