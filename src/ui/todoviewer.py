@@ -28,7 +28,7 @@
 
 """ todo viewer implementation """
 
-from PyQt4.QtCore           import Qt, SIGNAL, QStringList
+from PyQt4.QtCore           import Qt, SIGNAL
 from PyQt4.QtGui            import QProgressDialog, QTreeWidget, \
                                    QTreeWidgetItem, QHeaderView, QDialog, \
                                    QAbstractItemView, QApplication
@@ -50,11 +50,8 @@ class TodoViewer( QTreeWidget ):
         self.setItemsExpandable( False )
         self.setSortingEnabled( True )
 
-        self.__headerItem = QTreeWidgetItem(
-            QStringList() << "" \
-                          << "File name" \
-                          << "Line" \
-                          << "Description" )
+        self.__headerItem = QTreeWidgetItem( [ "", "File name", "Line",
+                                               "Description" ] )
 
         self.__headerItem.setIcon( 0,
                                    PixmapCache().getIcon("todocompleted.png") )

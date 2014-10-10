@@ -23,7 +23,7 @@
 " Pymetrics viewer implementation "
 
 import os.path, logging
-from PyQt4.QtCore import Qt, SIGNAL, QSize, QStringList
+from PyQt4.QtCore import Qt, SIGNAL, QSize
 from PyQt4.QtGui import ( QToolBar, QHBoxLayout, QWidget, QAction, QPalette,
                           QLabel, QSizePolicy, QFrame, QTreeWidget,
                           QApplication, QTreeWidgetItem, QHeaderView )
@@ -41,7 +41,7 @@ class McCabeTableItem( QTreeWidgetItem ):
 
     def __init__( self, items ):
         QTreeWidgetItem.__init__( self, items )
-        self.__intColumn = items.count() - 1
+        self.__intColumn = len( items ) - 1
 
         complexityValue = int( items[ self.__intColumn ] )
         if complexityValue > PymetricsViewer.HighRiskLimit:
@@ -166,7 +166,7 @@ class PymetricsViewer( QWidget ):
         self.__totalResultsTree.setItemsExpandable( True )
         self.__totalResultsTree.setUniformRowHeights( True )
         self.__totalResultsTree.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
-        headerLabels = QStringList() << "Path / name" << "Value" << ""
+        headerLabels = [ "Path / name", "Value", "" ]
         self.__totalResultsTree.setHeaderLabels( headerLabels )
         self.connect( self.__totalResultsTree,
                       SIGNAL( "itemActivated(QTreeWidgetItem *, int)" ),
@@ -184,8 +184,7 @@ class PymetricsViewer( QWidget ):
         self.__mcCabeTable.setSortingEnabled( True )
         self.__mcCabeTable.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         self.__mcCabeTable.setUniformRowHeights( True )
-        headerLabels = QStringList() << "" << "File name" << "Object" \
-                                     << "McCabe Complexity"
+        headerLabels = [ "", "File name", "Object", "McCabe Complexity" ]
         self.__mcCabeTable.setHeaderLabels( headerLabels )
         self.connect( self.__mcCabeTable,
                       SIGNAL( "itemActivated(QTreeWidgetItem *, int)" ),
@@ -329,21 +328,20 @@ class PymetricsViewer( QWidget ):
 
         if len( metrics.report ) > 1:
             accumulatedBasic = self.__accumulateBasicMetrics()
-            accItem = QTreeWidgetItem( QStringList() << "Cumulative basic metrics" )
+            accItem = QTreeWidgetItem( [ "Cumulative basic metrics" ] )
             self.__totalResultsTree.addTopLevelItem( accItem )
             for key in accumulatedBasic:
-                bmItem = QStringList() \
-                            << BasicMetrics.metricsOfInterest[ key ] \
-                            << splitThousands( str( accumulatedBasic[ key ] ) )
+                bmItem = [ BasicMetrics.metricsOfInterest[ key ],
+                           splitThousands( str( accumulatedBasic[ key ] ) ) ]
                 basicMetric = QTreeWidgetItem( bmItem )
                 accItem.addChild( basicMetric )
 
         # Add the complete information
         for fileName in metrics.report:
             if reportOption == self.SingleBuffer:
-                fileItem = QTreeWidgetItem( QStringList() << "Editor buffer" )
+                fileItem = QTreeWidgetItem( [ "Editor buffer" ] )
             else:
-                fileItem = QTreeWidgetItem( QStringList() << fileName )
+                fileItem = QTreeWidgetItem( [ fileName ] )
                 info = GlobalData().briefModinfoCache.get( fileName )
                 if info.docstring is not None:
                     fileItem.setToolTip( 0, info.docstring.text )
@@ -354,38 +352,34 @@ class PymetricsViewer( QWidget ):
             # Messages part
             messages = metrics.report[ fileName ].messages
             if len( messages ) > 0:
-                messagesItem = QTreeWidgetItem( QStringList() << "Messages" )
+                messagesItem = QTreeWidgetItem( [ "Messages" ] )
                 fileItem.addChild( messagesItem )
                 for message in messages:
-                    mItem = QStringList() << message << "" << "E"
+                    mItem = [ message, "", "E" ]
                     messagesItem.addChild( QTreeWidgetItem( mItem ) )
 
             # Basic metrics part
-            basicItem = QTreeWidgetItem( QStringList() << "Basic metrics" )
+            basicItem = QTreeWidgetItem( [ "Basic metrics" ] )
             fileItem.addChild( basicItem )
             basic = metrics.report[ fileName ].basicMetrics
             for key in basic.metrics:
-                bmItem = QStringList() \
-                            << BasicMetrics.metricsOfInterest[ key ] \
-                            << str( basic.metrics[ key ] )
+                bmItem = [ BasicMetrics.metricsOfInterest[ key ],
+                           str( basic.metrics[ key ] ) ]
                 basicMetric = QTreeWidgetItem( bmItem )
                 basicItem.addChild( basicMetric )
 
             # McCabe part
-            mccabeItem = QTreeWidgetItem( QStringList() << "McCabe metrics" )
+            mccabeItem = QTreeWidgetItem( [ "McCabe metrics" ] )
             fileItem.addChild( mccabeItem )
             mccabe = metrics.report[ fileName ].mcCabeMetrics.metrics
             for objName in mccabe:
-                objItem = QStringList() << objName \
-                                        << str( mccabe[ objName ] ) << "M"
+                objItem = [ objName, str( mccabe[ objName ] ), "M" ]
                 mccabeMetric = QTreeWidgetItem( objItem )
                 mccabeItem.addChild( mccabeMetric )
 
 
             # COCOMO 2 part
-            cocomo = QStringList() \
-                     << "COCOMO 2" \
-                     << str( metrics.report[ fileName ].cocomo2Metrics.value )
+            cocomo = [ "COCOMO 2", str( metrics.report[ fileName ].cocomo2Metrics.value ) ]
             cocomoItem = QTreeWidgetItem( cocomo )
             fileItem.addChild( cocomoItem )
 
@@ -400,8 +394,7 @@ class PymetricsViewer( QWidget ):
         for fileName in metrics.report:
             mccabe = metrics.report[ fileName ].mcCabeMetrics.metrics
             for objName in mccabe:
-                values = QStringList() << "" << fileName << objName \
-                                       << str( mccabe[ objName ] )
+                values = [ "", fileName, objName, str( mccabe[ objName ] ) ]
                 self.__mcCabeTable.addTopLevelItem( McCabeTableItem( values ) )
 
         if not self.__shouldShowFileName( self.__mcCabeTable, 1 ):

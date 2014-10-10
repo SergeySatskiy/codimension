@@ -26,7 +26,7 @@
 import logging
 import os.path
 
-from PyQt4.QtCore import Qt, QStringList, QVariant, pyqtSignal
+from PyQt4.QtCore import Qt, QVariant, pyqtSignal
 from PyQt4.QtGui import ( QTreeWidgetItem, QTreeWidget, QLabel,
                           QWidget, QVBoxLayout, QFrame, QPalette, QHeaderView,
                           QMenu, QAbstractItemView, QCursor, QSizePolicy )
@@ -241,11 +241,10 @@ class ProfileTableViewer( QWidget ):
         self.__table.setUniformRowHeights( True )
         self.__table.setSelectionMode( QAbstractItemView.SingleSelection )
         self.__table.setSelectionBehavior( QAbstractItemView.SelectRows )
-        headerLabels = QStringList()
 
-        headerLabels << "" << "Calls" << "Total time" << "Per call"
-        headerLabels << "Cum. time" << "Per call"
-        headerLabels << "File name:line" << "Function" << "Callers" << "Callees"
+        headerLabels = [ "", "Calls", "Total time", "Per call",
+                         "Cum. time", "Per call", "File name:line",
+                         "Function", "Callers", "Callees" ]
         self.__table.setHeaderLabels( headerLabels )
 
         headerItem = self.__table.headerItem()
@@ -472,35 +471,35 @@ class ProfileTableViewer( QWidget ):
                             cumulativeTime, timePerCall, cumulativeTimePerCall,
                             callers ):
         " Creates an item to display "
-        values = QStringList()
-        values << ""
+        values = []
+        values.append( "" )
         if primitiveCalls == actualCalls:
-            values << str( actualCalls )
+            values.append( str( actualCalls ) )
         else:
-            values << str( actualCalls ) + "/" + str( primitiveCalls )
+            values.append( str( actualCalls ) + "/" + str( primitiveCalls ) )
 
         if totalCPUTime == 0.0:
-            values << FLOAT_FORMAT % totalTime
+            values.append( FLOAT_FORMAT % totalTime )
         else:
-            values << FLOAT_FORMAT % totalTime + " \t(%3.2f%%)" % (totalTime / totalCPUTime * 100)
-        values << FLOAT_FORMAT % timePerCall
-        values << FLOAT_FORMAT % cumulativeTime
-        values << FLOAT_FORMAT % cumulativeTimePerCall
+            values.append( FLOAT_FORMAT % totalTime + " \t(%3.2f%%)" % (totalTime / totalCPUTime * 100) )
+        values.append( FLOAT_FORMAT % timePerCall )
+        values.append( FLOAT_FORMAT % cumulativeTime )
+        values.append( FLOAT_FORMAT % cumulativeTimePerCall )
 
         # Location and name will be filled in the item constructor
-        values << ""
-        values << ""
+        values.append( "" )
+        values.append( "" )
 
         # Callers
         callersCount = len( callers )
-        values << str( callersCount )
+        values.append( str( callersCount ) )
 
         # Callees
         if func in self.__stats.all_callees:
             calleesCount = len( self.__stats.all_callees[ func ] )
         else:
             calleesCount = 0
-        values << str( calleesCount )
+        values.append( str( calleesCount ) )
 
         item = ProfilingTableItem( values, self.__isOutsideItem( func[ 0 ] ),
                                    func )

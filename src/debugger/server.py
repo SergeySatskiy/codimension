@@ -28,7 +28,7 @@ import errno
 import time
 import os.path
 from subprocess import Popen
-from PyQt4.QtCore import SIGNAL, QTimer, QObject, Qt, QTextCodec, QString, QModelIndex
+from PyQt4.QtCore import SIGNAL, QTimer, QObject, Qt, QTextCodec, QString, QModelIndex, pyqtSignal
 from PyQt4.QtGui import QApplication, QCursor, QMessageBox, QDialog
 from PyQt4.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
 
@@ -80,6 +80,10 @@ class CodimensionDebugger( QObject ):
     PROTOCOL_STDOUT = 2
     PROTOCOL_STDERR = 3
 
+    clientClearBreak = pyqtSignal( str, int )
+    clientBreakConditionError = pyqtSignal( str, int )
+    clientIDEMessage = pyqtSignal( str )
+
     def __init__( self, mainWindow ):
         QObject.__init__( self )
 
@@ -122,12 +126,8 @@ class CodimensionDebugger( QObject ):
         self.connect( self.__breakpointModel,
                       SIGNAL( "rowsInserted(const QModelIndex &, int, int)" ),
                       self.__addBreakPoints )
-        self.connect( self,
-                      SIGNAL( "ClientClearBreak" ),
-                      self.__clientClearBreakPoint )
-        self.connect( self,
-                      SIGNAL( 'ClientBreakConditionError' ),
-                      self.__clientBreakConditionError )
+        self.clientClearBreak.connect( self.__clientClearBreakPoint )
+        self.clientBreakConditionError.connect( self.__clientBreakConditionError )
         return
 
     def getScriptPath( self ):
@@ -195,8 +195,7 @@ class CodimensionDebugger( QObject ):
         if terminalType == TERM_REDIRECT and Settings().clearDebugIO:
             self.__mainWindow.clearDebugIOConsole()
 
-        self.emit( SIGNAL( 'ClientIDEMessage' ),
-                   "Start debugging session for " + fileName )
+        self.clientIDEMessage.emit( "Start debugging session for " + fileName )
         self.__createProcfeedbackSocket()
         self.__createTCPServer()
 
@@ -514,13 +513,13 @@ class CodimensionDebugger( QObject ):
         if cmd == ResponseClearBreak:
             fileName, lineNo = content.split( ',' )
             lineNo = int( lineNo )
-            self.emit( SIGNAL( 'ClientClearBreak' ), fileName, lineNo )
+            self.clientClearBreak.emit( fileName, lineNo )
             return self.__buffer != ""
 
         if cmd == ResponseBPConditionError:
             fileName, lineNo = content.split( ',' )
             lineNo = int( lineNo )
-            self.emit( SIGNAL( 'ClientBreakConditionError' ), fileName, lineNo )
+            self.clientBreakConditionError.emit( fileName, lineNo )
             return self.__buffer != ""
 
         if cmd == ResponseRaw:
@@ -530,7 +529,7 @@ class CodimensionDebugger( QObject ):
 
         if cmd == ResponseExit:
             message = "Debugged script finished with exit code " + content
-            self.emit( SIGNAL( 'ClientIDEMessage' ), message )
+            self.clientIDEMessage.emit( message )
             try:
                 self.__exitCode = int( content )
             except:
@@ -717,7 +716,7 @@ class CodimensionDebugger( QObject ):
         message = "Debugging session has been stopped"
         if brutal and Settings().terminalType != TERM_REDIRECT:
             message += " and the console has been closed"
-        self.emit( SIGNAL( 'ClientIDEMessage' ), message )
+        self.clientIDEMessage.emit( message )
         return
 
     def __noPathTranslation( self, fname, remote2local = True ):

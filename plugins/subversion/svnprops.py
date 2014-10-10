@@ -29,7 +29,7 @@ from PyQt4.QtGui import ( QDialog, QTreeWidgetItem, QTreeWidget, QVBoxLayout,
                           QHeaderView, QApplication, QCursor,
                           QHBoxLayout, QToolButton, QGroupBox,
                           QGridLayout, QSizePolicy, QLineEdit, QMessageBox )
-from PyQt4.QtCore import Qt, QStringList
+from PyQt4.QtCore import Qt
 from ui.itemdelegates import NoOutlineHeightDelegate
 
 
@@ -128,8 +128,7 @@ class SVNPluginPropsDialog( QDialog ):
                     for name, value in itemProps.iteritems():
                         name = str( name ).strip()
                         value = str( value ).strip()
-                        newItem = QTreeWidgetItem(
-                            QStringList() << name << value )
+                        newItem = QTreeWidgetItem( [ name, value ] )
                         self.__propsView.addTopLevelItem( newItem )
 
         self.__resizePropsView()
@@ -173,8 +172,7 @@ class SVNPluginPropsDialog( QDialog ):
         self.__propsView.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         self.__propsView.itemSelectionChanged.connect( self.__propsSelectionChanged )
 
-        propsViewHeader = QTreeWidgetItem(
-                QStringList() << "Property Name" << "Property Value" )
+        propsViewHeader = QTreeWidgetItem( [ "Property Name", "Property Value" ] )
         self.__propsView.setHeaderItem( propsViewHeader )
         self.__propsView.header().setSortIndicator( 0, Qt.DescendingOrder )
         hLayout.addWidget( self.__propsView )

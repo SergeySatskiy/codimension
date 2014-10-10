@@ -23,7 +23,7 @@
 " Pylint viewer implementation "
 
 import os.path, logging
-from PyQt4.QtCore import Qt, QSize, QStringList, pyqtSignal
+from PyQt4.QtCore import Qt, QSize, pyqtSignal
 from PyQt4.QtGui import ( QColor, QToolBar, QHBoxLayout, QWidget, QAction,
                           QPalette, QVBoxLayout, QLabel, QScrollArea,
                           QSizePolicy, QFrame, QLayout, QTreeWidget,
@@ -292,8 +292,7 @@ class PylintViewer( QWidget ):
         errTable.setUniformRowHeights( True )
         errTable.itemActivated.connect( self.__errorActivated )
 
-        headerLabels = QStringList() << "File name" << "Line" \
-                                     << "Message ID" << "Object" << "Message"
+        headerLabels = [ "File name", "Line", "Message ID", "Object", "Message" ]
         errTable.setHeaderLabels( headerLabels )
 
         for item in messages:
@@ -301,9 +300,8 @@ class PylintViewer( QWidget ):
                 lineNumber = str( item.lineNumber )
             else:
                 lineNumber = str( item.lineNumber ) + ":" + str( item.position )
-            values = QStringList() << item.fileName \
-                                   << lineNumber << item.messageID \
-                                   << item.objectName << item.message
+            values = [ item.fileName, lineNumber, item.messageID,
+                       item.objectName, item.message ]
             errTable.addTopLevelItem( ErrorTableItem( values, 1 ) )
 
         # Hide the file name column if required
@@ -348,12 +346,10 @@ class PylintViewer( QWidget ):
         simTable.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         simTable.setUniformRowHeights( True )
         simTable.itemActivated.connect( self.__similarityActivated )
-
-        headerLabels = QStringList() << "File name" << "Line"
-        simTable.setHeaderLabels( headerLabels )
+        simTable.setHeaderLabels( [ "File name", "Line" ] )
 
         for item in similarity.files:
-            values = QStringList() << item[ 0 ] << str( item[ 1 ] )
+            values = [ item[ 0 ], str( item[ 1 ] ) ]
             simTable.addTopLevelItem( QTreeWidgetItem( values )  )
 
         # Resizing
@@ -419,15 +415,15 @@ class PylintViewer( QWidget ):
         theTable.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         theTable.setUniformRowHeights( True )
 
-        headerLabels = QStringList()
+        headerLabels = []
         for index in range( 0, len( table.header ) ):
-            headerLabels << table.header[ index ]
+            headerLabels.append( table.header[ index ] )
         theTable.setHeaderLabels( headerLabels )
 
         for item in table.body:
-            row = QStringList()
+            row = []
             for index in range( 0, len( table.header ) ):
-                row << item[ index ]
+                row.append( item[ index ] )
             theTable.addTopLevelItem( QTreeWidgetItem( row ) )
 
         theTable.setFocusPolicy( Qt.NoFocus )
