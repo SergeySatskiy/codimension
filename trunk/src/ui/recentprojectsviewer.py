@@ -23,7 +23,7 @@
 """ list viewer base class for classes/func etc list viewers """
 
 import os.path, logging
-from PyQt4.QtCore import Qt, SIGNAL, QStringList, QSize
+from PyQt4.QtCore import Qt, SIGNAL, QSize
 from PyQt4.QtGui import ( QTreeWidget, QTreeWidgetItem, QHeaderView, QMenu,
                           QCursor, QToolButton, QWidget, QAction, QDialog,
                           QSpacerItem, QVBoxLayout, QSizePolicy, QToolBar,
@@ -48,8 +48,7 @@ class RecentProjectViewItem( QTreeWidgetItem ):
 
         # full file name is expected
         projectName = os.path.basename( fileName ).replace( '.cdm', '' )
-        QTreeWidgetItem.__init__( self,
-                QStringList() << "" << projectName + "   " << fileName )
+        QTreeWidgetItem.__init__( self, [ "", projectName + "   ", fileName ] )
 
         self.__isValid = True
         self.__isCurrent = False
@@ -120,8 +119,7 @@ class RecentFileViewItem( QTreeWidgetItem ):
 
         # full file name is expected
         basename = os.path.basename( fileName )
-        QTreeWidgetItem.__init__( self,
-                QStringList() << "" << basename + "   " << fileName )
+        QTreeWidgetItem.__init__( self, [ "", basename + "   ", fileName ] )
 
         self.__isValid = True
         self.updateIconAndTooltip()
@@ -325,8 +323,8 @@ class RecentProjectsViewer( QWidget ):
         self.recentFilesView.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         self.recentFilesView.setUniformRowHeights( True )
 
-        self.__filesHeaderItem = QTreeWidgetItem(
-                QStringList() << "" << "File" << "Absolute path" )
+        self.__filesHeaderItem = QTreeWidgetItem( [ "", "File",
+                                                    "Absolute path" ] )
         self.recentFilesView.setHeaderItem( self.__filesHeaderItem )
         self.recentFilesView.header().setSortIndicator( 1, Qt.AscendingOrder )
 
@@ -460,8 +458,8 @@ class RecentProjectsViewer( QWidget ):
         self.projectsView.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
         self.projectsView.setUniformRowHeights( True )
 
-        self.__projectsHeaderItem = QTreeWidgetItem(
-                QStringList() << "" << "Project" << "Absolute path" )
+        self.__projectsHeaderItem = QTreeWidgetItem( [ "", "Project",
+                                                       "Absolute path" ] )
         self.projectsView.setHeaderItem( self.__projectsHeaderItem )
 
         self.projectsView.header().setSortIndicator( 1, Qt.AscendingOrder )
@@ -549,7 +547,7 @@ class RecentProjectsViewer( QWidget ):
 
         self.__propsMenuItem.setEnabled( enabled )
         self.__delPrjMenuItem.setEnabled( not isCurrentProject )
-        fName = self.__projectContextItem.getFilename()
+#        fName = self.__projectContextItem.getFilename()
         self.__prjLoadMenuItem.setEnabled( enabled and \
                                            not isCurrentProject and \
                                            not self.__debugMode )
