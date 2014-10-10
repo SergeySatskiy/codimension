@@ -23,7 +23,7 @@
 " Ignored exceptions viewer "
 
 
-from PyQt4.QtCore import Qt, QStringList, QSize
+from PyQt4.QtCore import Qt, QSize
 from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeWidget, QToolButton,
                           QTreeWidgetItem, QVBoxLayout, QToolBar,
                           QLabel, QWidget, QAbstractItemView, QMenu,
@@ -116,9 +116,7 @@ class IgnoredExceptionsViewer( QWidget ):
 
         self.exceptionsList.customContextMenuRequested.connect( self.__showContextMenu )
         self.exceptionsList.itemSelectionChanged.connect( self.__onSelectionChanged )
-
-        headerLabels = QStringList() << "Exception type"
-        self.exceptionsList.setHeaderLabels( headerLabels )
+        self.exceptionsList.setHeaderLabels( [ "Exception type" ] )
 
         self.__excTypeEdit = QLineEdit()
         self.__excTypeEdit.setFixedHeight( 26 )
