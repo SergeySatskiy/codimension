@@ -30,7 +30,7 @@
 " Module implementing the lexer base class "
 
 
-from PyQt4.QtCore import QString, QStringList
+from PyQt4.QtCore import QString
 
 
 class Lexer( object ):
@@ -165,7 +165,7 @@ class Lexer( object ):
     def autoCompletionWordSeparators( self ):
         """ Provides the list of separators for autocompletion """
 
-        return QStringList()
+        return []
 
     def isCommentStyle( self, style ):
         """ Checks if a style is a comment style """

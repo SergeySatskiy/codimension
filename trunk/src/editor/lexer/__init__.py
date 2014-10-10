@@ -30,7 +30,6 @@
 """ Lexers for the various supported programming languages """
 
 
-from PyQt4.QtCore    import QStringList
 from utils.fileutils import ( PythonFileType, Python3FileType, RubyFileType,
                               DesignerFileType, DesignerHeaderFileType,
                               LinguistFileType, QTResourceFileType,
@@ -50,17 +49,23 @@ from utils.fileutils import ( PythonFileType, Python3FileType, RubyFileType,
 #       1. dummy filename to derive lexer name (string)
 #       2. reference to a function instantiating the specific lexer
 #          This function must take a reference to the parent as argument.
-#       3. list of open file filters (QStringList)
-#       4. list of save file filters (QStringList)
+#       3. list of open file filters (list)
+#       4. list of save file filters (list)
 #       5. default lexer associations (list of strings of filename wildcard
 #          patterns to be associated with the lexer)
 LexerRegistry = {}
 
 
 def registerLexer( name, displayString, filenameSample, getLexerFunc,
-                   openFilters = QStringList(), saveFilters = QStringList(),
+                   openFilters = None, saveFilters = None,
                    defaultAssocs = [] ):
     """ Registers a custom QScintilla lexer """
+
+    if openFilters is None:
+        openFilters = []
+
+    if saveFilters is None:
+        saveFilters = []
 
     if name in LexerRegistry:
         raise KeyError( 'Lexer "%s" already registered.' % name )
@@ -373,45 +378,44 @@ def __getPygmentsLexer( parent, name = "" ):
 def getOpenFileFiltersList( includeAll = False, asString = False ):
     """ Provides the file filter list for an open file operation """
 
-    openFileFiltersList = QStringList() \
-        << 'Python Files (*.py *.py3)' \
-        << 'Python GUI Files (*.pyw *.pyw3)' \
-        << 'Pyrex Files (*.pyx)' \
-        << 'Quixote Template Files (*.ptl)' \
-        << 'Ruby Files (*.rb)' \
-        << 'IDL Files (*.idl)' \
-        << 'C Files (*.h *.c)' \
-        << 'C++ Files (*.h *.hpp *.hh *.cxx *.cpp *.cc)' \
-        << 'C# Files (*.cs)' \
-        << 'HTML Files (*.html *.htm *.asp *.shtml)' \
-        << 'CSS Files (*.css)' \
-        << 'QSS Files (*.qss)' \
-        << 'PHP Files (*.php *.php3 *.php4 *.php5 *.phtml)' \
-        << 'XML Files (*.xml *.xsl *.xslt *.dtd *.svg *.xul *.xsd)' \
-        << 'Qt Resource Files (*.qrc)' \
-        << 'D Files (*.d *.di)' \
-        << 'Java Files (*.java)' \
-        << 'JavaScript Files (*.js)' \
-        << 'SQL Files (*.sql)' \
-        << 'Docbook Files (*.docbook)' \
-        << 'Perl Files (*.pl *.pm *.ph)' \
-        << 'Lua Files (*.lua)' \
-        << 'Tex Files (*.tex *.sty *.aux *.toc *.idx)' \
-        << 'Shell Files (*.sh)' \
-        << 'Batch Files (*.bat *.cmd)' \
-        << 'Diff Files (*.diff *.patch)' \
-        << 'Makefiles (*.mak)' \
-        << 'Properties Files ' \
-           '(*.properties *.ini *.inf *.reg *.cfg *.cnf *.rc)' \
-        << 'Povray Files (*.pov)' \
-        << 'CMake Files (CMakeLists.txt *.cmake *.ctest)' \
-        << 'VHDL Files (*.vhd *.vhdl)' \
-        << 'TCL/Tk Files (*.tcl *.tk)' \
-        << 'Fortran Files (*.f90 *.f95 *.f2k)' \
-        << 'Fortran77 Files (*.f *.for)' \
-        << 'Pascal Files (*.dpr *.dpk *.pas *.dfm *.inc *.pp)' \
-        << 'PostScript Files (*.ps)' \
-        << 'YAML Files (*.yaml *.yml)'
+    openFileFiltersList = [
+        'Python Files (*.py *.py3)',
+        'Python GUI Files (*.pyw *.pyw3)',
+        'Pyrex Files (*.pyx)',
+        'Quixote Template Files (*.ptl)',
+        'Ruby Files (*.rb)',
+        'IDL Files (*.idl)',
+        'C Files (*.h *.c)',
+        'C++ Files (*.h *.hpp *.hh *.cxx *.cpp *.cc)',
+        'C# Files (*.cs)',
+        'HTML Files (*.html *.htm *.asp *.shtml)',
+        'CSS Files (*.css)',
+        'QSS Files (*.qss)',
+        'PHP Files (*.php *.php3 *.php4 *.php5 *.phtml)',
+        'XML Files (*.xml *.xsl *.xslt *.dtd *.svg *.xul *.xsd)',
+        'Qt Resource Files (*.qrc)',
+        'D Files (*.d *.di)',
+        'Java Files (*.java)',
+        'JavaScript Files (*.js)',
+        'SQL Files (*.sql)',
+        'Docbook Files (*.docbook)',
+        'Perl Files (*.pl *.pm *.ph)',
+        'Lua Files (*.lua)',
+        'Tex Files (*.tex *.sty *.aux *.toc *.idx)',
+        'Shell Files (*.sh)',
+        'Batch Files (*.bat *.cmd)',
+        'Diff Files (*.diff *.patch)',
+        'Makefiles (*.mak)',
+        'Properties Files (*.properties *.ini *.inf *.reg *.cfg *.cnf *.rc)',
+        'Povray Files (*.pov)',
+        'CMake Files (CMakeLists.txt *.cmake *.ctest)',
+        'VHDL Files (*.vhd *.vhdl)',
+        'TCL/Tk Files (*.tcl *.tk)',
+        'Fortran Files (*.f90 *.f95 *.f2k)',
+        'Fortran77 Files (*.f *.for)',
+        'Pascal Files (*.dpr *.dpk *.pas *.dfm *.inc *.pp)',
+        'PostScript Files (*.ps)',
+        'YAML Files (*.yaml *.yml)' ]
 
     for name in LexerRegistry:
         openFileFiltersList << LexerRegistry[ name ][ 3 ]
@@ -428,56 +432,56 @@ def getOpenFileFiltersList( includeAll = False, asString = False ):
 def getSaveFileFiltersList( includeAll = False, asString = False ):
     " Provides the file filter list for a save file operation "
 
-    saveFileFiltersList = QStringList() \
-        << "Python Files (*.py)" \
-        << "Python3 Files (*.py3)" \
-        << "Python GUI Files (*.pyw)" \
-        << "Python3 GUI Files (*.pyw3)" \
-        << "Pyrex Files (*.pyx)" \
-        << "Quixote Template Files (*.ptl)" \
-        << "Ruby Files (*.rb)" \
-        << "IDL Files (*.idl)" \
-        << "C Files (*.c)" \
-        << "C++ Files (*.cpp)" \
-        << "C++/C Header Files (*.h)" \
-        << "C# Files (*.cs)" \
-        << "HTML Files (*.html)" \
-        << "PHP Files (*.php)" \
-        << "ASP Files (*.asp)" \
-        << "CSS Files (*.css)" \
-        << "QSS Files (*.qss)" \
-        << "XML Files (*.xml)" \
-        << "XSL Files (*.xsl)" \
-        << "DTD Files (*.dtd)" \
-        << "Qt Resource Files (*.qrc)" \
-        << "D Files (*.d)" \
-        << "D Interface Files (*.di)" \
-        << "Java Files (*.java)" \
-        << "JavaScript Files (*.js)" \
-        << "SQL Files (*.sql)" \
-        << "Docbook Files (*.docbook)" \
-        << "Perl Files (*.pl)" \
-        << "Perl Module Files (*.pm)" \
-        << "Lua Files (*.lua)" \
-        << "Shell Files (*.sh)" \
-        << "Batch Files (*.bat)" \
-        << "TeX Files (*.tex)" \
-        << "TeX Template Files (*.sty)" \
-        << "Diff Files (*.diff)" \
-        << "Make Files (*.mak)" \
-        << "Properties Files (*.ini)" \
-        << "Configuration Files (*.cfg)" \
-        << 'Povray Files (*.pov)' \
-        << 'CMake Files (CMakeLists.txt)' \
-        << 'CMake Macro Files (*.cmake)' \
-        << 'VHDL Files (*.vhd)' \
-        << 'TCL Files (*.tcl)' \
-        << 'Tk Files (*.tk)' \
-        << 'Fortran Files (*.f95)' \
-        << 'Fortran77 Files (*.f)' \
-        << 'Pascal Files (*.pas)' \
-        << 'PostScript Files (*.ps)' \
-        << 'YAML Files (*.yml)'
+    saveFileFiltersList = [
+        "Python Files (*.py)",
+        "Python3 Files (*.py3)",
+        "Python GUI Files (*.pyw)",
+        "Python3 GUI Files (*.pyw3)",
+        "Pyrex Files (*.pyx)",
+        "Quixote Template Files (*.ptl)",
+        "Ruby Files (*.rb)",
+        "IDL Files (*.idl)",
+        "C Files (*.c)",
+        "C++ Files (*.cpp)",
+        "C++/C Header Files (*.h)",
+        "C# Files (*.cs)",
+        "HTML Files (*.html)",
+        "PHP Files (*.php)",
+        "ASP Files (*.asp)",
+        "CSS Files (*.css)",
+        "QSS Files (*.qss)",
+        "XML Files (*.xml)",
+        "XSL Files (*.xsl)",
+        "DTD Files (*.dtd)",
+        "Qt Resource Files (*.qrc)",
+        "D Files (*.d)",
+        "D Interface Files (*.di)",
+        "Java Files (*.java)",
+        "JavaScript Files (*.js)",
+        "SQL Files (*.sql)",
+        "Docbook Files (*.docbook)",
+        "Perl Files (*.pl)",
+        "Perl Module Files (*.pm)",
+        "Lua Files (*.lua)",
+        "Shell Files (*.sh)",
+        "Batch Files (*.bat)",
+        "TeX Files (*.tex)",
+        "TeX Template Files (*.sty)",
+        "Diff Files (*.diff)",
+        "Make Files (*.mak)",
+        "Properties Files (*.ini)",
+        "Configuration Files (*.cfg)",
+        'Povray Files (*.pov)',
+        'CMake Files (CMakeLists.txt)',
+        'CMake Macro Files (*.cmake)',
+        'VHDL Files (*.vhd)',
+        'TCL Files (*.tcl)',
+        'Tk Files (*.tk)',
+        'Fortran Files (*.f95)',
+        'Fortran77 Files (*.f)',
+        'Pascal Files (*.pas)',
+        'PostScript Files (*.ps)',
+        'YAML Files (*.yml)' ]
 
     for name in LexerRegistry:
         saveFileFiltersList << LexerRegistry[ name ][ 4 ]
