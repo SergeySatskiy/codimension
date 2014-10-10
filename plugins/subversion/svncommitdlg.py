@@ -23,7 +23,7 @@
 " Codimension SVN plugin commit dialog "
 
 
-from PyQt4.QtCore import Qt, SIGNAL, QStringList
+from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui import ( QDialog, QVBoxLayout, QDialogButtonBox, QTextEdit,
                           QHBoxLayout, QLabel, QToolButton, QTreeWidget,
                           QTreeWidgetItem, QFontMetrics, QHeaderView,
@@ -84,8 +84,7 @@ class SVNPluginCommitDialog( QDialog ):
 
         # Fill the lists
         for item in pathsToCommit:
-            newItem = QTreeWidgetItem(
-                        QStringList() << "" << item[ 0 ] << STATUS[ item[ 1 ] ] )
+            newItem = QTreeWidgetItem( [ "", item[ 0 ], STATUS[ item[ 1 ] ] ] )
             newItem.setCheckState( CHECK_COL, Qt.Checked )
             newItem.setToolTip( PATH_COL, item[ 0 ] )
             newItem.setToolTip( STATUS_COL, STATUS[ item[ 1 ] ] )
@@ -110,8 +109,7 @@ class SVNPluginCommitDialog( QDialog ):
         self.__sortCommitPaths()
 
         for item in pathsToIgnore:
-            newItem = QTreeWidgetItem(
-                        QStringList() << item[ 0 ] << STATUS[ item[ 1 ] ] )
+            newItem = QTreeWidgetItem( [ item[ 0 ], STATUS[ item[ 1 ] ] ] )
             newItem.setToolTip( 0, item[ 0 ] )
             newItem.setToolTip( 1, STATUS[ item[ 1 ] ] )
             self.__pathToIgnoreView.addTopLevelItem( newItem )
@@ -212,8 +210,7 @@ class SVNPluginCommitDialog( QDialog ):
         self.__pathToCommitView = QTreeWidget()
         self.__configTable( self.__pathToCommitView )
 
-        self.__pathToCommitHeader = QTreeWidgetItem(
-                QStringList() << "" << "Path" << "Status" << "")
+        self.__pathToCommitHeader = QTreeWidgetItem( [ "", "Path", "Status", "" ] )
         self.__pathToCommitView.setHeaderItem( self.__pathToCommitHeader )
         self.__pathToCommitView.header().setSortIndicator( PATH_COL, Qt.AscendingOrder )
         self.__pathToCommitView.itemChanged.connect( self.__onCommitPathChanged )
@@ -251,8 +248,7 @@ class SVNPluginCommitDialog( QDialog ):
         self.__configTable( self.__pathToIgnoreView )
         self.__pathToIgnoreView.setVisible( False )
 
-        pathToIgnoreHeader = QTreeWidgetItem(
-                QStringList() << "Path" << "Status" )
+        pathToIgnoreHeader = QTreeWidgetItem( [ "Path", "Status" ] )
         self.__pathToIgnoreView.setHeaderItem( pathToIgnoreHeader )
         self.__pathToIgnoreView.header().setSortIndicator( 0, Qt.AscendingOrder )
         vboxLayout.addWidget( self.__pathToIgnoreView )
