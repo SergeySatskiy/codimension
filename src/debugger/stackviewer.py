@@ -23,7 +23,7 @@
 " Stack viewer "
 
 
-from PyQt4.QtCore import Qt, QStringList
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import ( QSizePolicy, QFrame, QTreeWidget, QToolButton,
                           QTreeWidgetItem, QHeaderView, QVBoxLayout,
                           QLabel, QWidget, QAbstractItemView, QMenu,
@@ -44,8 +44,7 @@ class StackFrameItem( QTreeWidgetItem ):
         full = fileName + ":" + str( lineNumber )
 
         self.__lineNumber = lineNumber
-        QTreeWidgetItem.__init__( self,
-                QStringList() << "" << shortened << funcName << fileName )
+        QTreeWidgetItem.__init__( self, [ "", shortened, funcName, fileName ] )
 
         self.__isCurrent = False
         self.__frameNumber = frameNumber
@@ -167,9 +166,8 @@ class StackViewer( QWidget ):
         self.__framesList.itemDoubleClicked.connect( self.__onFrameDoubleClicked )
         self.__framesList.customContextMenuRequested.connect( self.__showContextMenu )
 
-        headerLabels = QStringList() << "" << "File:line" \
-                                     << "Function" << "Full path"
-        self.__framesList.setHeaderLabels( headerLabels )
+        self.__framesList.setHeaderLabels( [ "", "File:line", "Function",
+                                             "Full path" ] )
 
         verticalLayout.addWidget( self.headerFrame )
         verticalLayout.addWidget( self.__framesList )
