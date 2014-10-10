@@ -30,7 +30,6 @@
 """ Pascal lexer implementation """
 
 from PyQt4.Qsci     import QsciLexerPascal
-from PyQt4.QtCore   import QString
 from lexer          import Lexer
 
 
@@ -42,9 +41,9 @@ class LexerPascal( QsciLexerPascal, Lexer ):
         QsciLexerPascal.__init__( self, parent )
         Lexer.__init__( self )
 
-        self.commentString = QString( "//" )
-        self.streamCommentString = { 'start' : QString( '{ ' ),
-                                     'end'   : QString( ' }' ) }
+        self.commentString = "//"
+        self.streamCommentString = { 'start' : '{ ',
+                                     'end'   : ' }' }
         return
 
     def initProperties( self ):

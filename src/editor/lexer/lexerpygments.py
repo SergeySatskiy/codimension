@@ -34,8 +34,7 @@ from pygments.token      import Token
 from pygments.lexers     import find_lexer_class, get_lexer_for_filename
 from pygments.util       import ClassNotFound
 
-from PyQt4.QtCore        import QString
-from PyQt4.QtGui         import QColor, QFont
+from PyQt4.QtGui         import QColor
 from lexercontainer      import LexerContainer
 
 from utils.globals import GlobalData
@@ -240,7 +239,7 @@ class LexerPygments( LexerContainer ):
         try:
             return self.descriptions[ style ]
         except KeyError:
-            return QString()
+            return ""
 
     def defaultColor( self, style ):
         """ Provides the default foreground color for a style """

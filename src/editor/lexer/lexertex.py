@@ -30,7 +30,6 @@
 """ Tex lexer implementation """
 
 from PyQt4.Qsci     import QsciLexerTeX
-from PyQt4.QtCore   import QString
 from lexer          import Lexer
 
 
@@ -42,7 +41,7 @@ class LexerTeX(QsciLexerTeX, Lexer):
         QsciLexerTeX.__init__( self, parent )
         Lexer.__init__( self )
 
-        self.commentString = QString( "%" )
+        self.commentString = "%"
         return
 
     def isCommentStyle( self, style ):

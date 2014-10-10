@@ -214,7 +214,7 @@ class WatchPointView( QTreeView ):
 
     def __addWatchPoint( self ):
         " Adds watch expression via a context menu entry "
-#        dlg = EditWatchpointDialog( ( QString( "" ), False, True, 0, QString( "" ) ), self )
+#        dlg = EditWatchpointDialog( ( "", False, True, 0, "" ), self )
 #        if dlg.exec_() == QDialog.Accepted:
 #            cond, temp, enabled, ignorecount, special = dlg.getData()
 #            if not self.__findDuplicates(cond, special, True):
@@ -247,7 +247,7 @@ class WatchPointView( QTreeView ):
             cond, special, temp, enabled, count = wp[ : 5 ]
 
 #            dlg = EditWatchpointDialog(
-#                (QString(cond), temp, enabled, count, QString(special)), self)
+#                (cond, temp, enabled, count, special), self)
 #            if dlg.exec_() == QDialog.Accepted:
 #                cond, temp, enabled, count, special = dlg.getData()
 #                if not self.__findDuplicates(cond, special, True, sindex):

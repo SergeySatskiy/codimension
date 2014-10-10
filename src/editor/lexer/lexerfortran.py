@@ -31,7 +31,6 @@
 
 
 from PyQt4.Qsci     import QsciLexerFortran
-from PyQt4.QtCore   import QString
 from lexer          import Lexer
 
 
@@ -43,7 +42,7 @@ class LexerFortran( QsciLexerFortran, Lexer ):
         QsciLexerFortran.__init__( self, parent )
         Lexer.__init__( self )
 
-        self.commentString = QString( "!" )
+        self.commentString = "!"
         return
 
     def initProperties(self):

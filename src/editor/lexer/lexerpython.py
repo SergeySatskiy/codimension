@@ -32,7 +32,6 @@
 import re
 
 from PyQt4.Qsci     import QsciLexerPython
-from PyQt4.QtCore   import QString
 from lexer          import Lexer
 
 
@@ -82,7 +81,7 @@ class LexerPython( QsciLexerPython, Lexer ):
         QsciLexerPython.__init__( self, parent )
         Lexer.__init__( self )
 
-        self.commentString = QString( "#" )
+        self.commentString = "#"
         return
 
     def initProperties( self ):

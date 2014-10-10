@@ -157,8 +157,8 @@ class WatchPointModel( QAbstractItemModel ):
         """
         Public method to add a new watch expression to the list.
 
-        @param cond expression of the watch expression (string or QString)
-        @param special special condition of the watch expression (string or QString)
+        @param cond expression of the watch expression (string)
+        @param special special condition of the watch expression (string)
         @param properties properties of the watch expression
             (tuple of temporary flag (bool), enabled flag (bool), ignore count (integer))
         """
@@ -174,9 +174,9 @@ class WatchPointModel( QAbstractItemModel ):
         Public method to set the values of a watch expression given by index.
 
         @param index index of the watch expression (QModelIndex)
-        @param cond expression of the watch expression (string or QString)
+        @param cond expression of the watch expression (string)
         @param special special condition of the
-               watch expression (string or QString)
+               watch expression (string)
         @param properties properties of the watch expression
             (tuple of temporary flag (bool), enabled flag (bool),
                       ignore count (integer))
@@ -278,9 +278,9 @@ class WatchPointModel( QAbstractItemModel ):
         Public method to get the index of a watch expression
         given by expression.
 
-        @param cond expression of the watch expression (string or QString)
+        @param cond expression of the watch expression (string)
         @param special special condition of the
-               watch expression (string or QString)
+               watch expression (string)
         @return index (QModelIndex)
         """
         cond = unicode( cond )

@@ -31,7 +31,6 @@
 
 
 from PyQt4.Qsci     import QsciLexerJava
-from PyQt4.QtCore   import QString
 from lexer          import Lexer
 
 
@@ -43,12 +42,12 @@ class LexerJava( QsciLexerJava, Lexer ):
         QsciLexerJava.__init__( self, parent )
         Lexer.__init__( self )
 
-        self.commentString = QString( "//" )
-        self.streamCommentString = { 'start' : QString( '/* ' ),
-                                     'end'   : QString( ' */' ) }
-        self.boxCommentString = { 'start'  : QString( '/* ' ),
-                                  'middle' : QString( ' * ' ),
-                                  'end'    : QString( ' */' ) }
+        self.commentString = "//"
+        self.streamCommentString = { 'start' : '/* ',
+                                     'end'   : ' */' }
+        self.boxCommentString = { 'start'  : '/* ',
+                                  'middle' : ' * ',
+                                  'end'    : ' */' }
         return
 
     def initProperties( self ):

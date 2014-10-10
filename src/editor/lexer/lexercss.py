@@ -30,7 +30,6 @@
 """ CSS lexer implementation """
 
 from PyQt4.Qsci     import QsciLexerCSS
-from PyQt4.QtCore   import QString
 from lexer          import Lexer
 
 
@@ -42,9 +41,9 @@ class LexerCSS( QsciLexerCSS, Lexer ):
         QsciLexerCSS.__init__( self, parent )
         Lexer.__init__( self )
 
-        self.commentString = QString( "#" )
-        self.streamCommentString = { 'start' : QString('/* '),
-                                     'end'   : QString(' */') }
+        self.commentString = "#"
+        self.streamCommentString = { 'start' : '/* ',
+                                     'end'   : ' */' }
         return
 
     def initProperties( self ):

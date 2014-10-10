@@ -30,7 +30,6 @@
 """ Povray lexer implementation """
 
 from PyQt4.Qsci     import QsciLexerPOV
-from PyQt4.QtCore   import QString
 from lexer          import Lexer
 
 
@@ -42,12 +41,12 @@ class LexerPOV( QsciLexerPOV, Lexer ):
         QsciLexerPOV.__init__( self, parent )
         Lexer.__init__( self )
 
-        self.commentString = QString( "//" )
-        self.streamCommentString = { 'start' : QString( '/* ' ),
-                                     'end'   : QString( ' */' ) }
-        self.boxCommentString = { 'start'  : QString( '/* ' ),
-                                  'middle' : QString( ' * ' ),
-                                  'end'    : QString( ' */' ) }
+        self.commentString = "//"
+        self.streamCommentString = { 'start' : '/* ',
+                                     'end'   : ' */' }
+        self.boxCommentString = { 'start'  : '/* ',
+                                  'middle' : ' * ',
+                                  'end'    : ' */' }
         return
 
     def initProperties( self ):

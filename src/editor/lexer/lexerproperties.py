@@ -31,7 +31,6 @@
 """ Properties lexer implementation """
 
 from PyQt4.Qsci     import QsciLexerProperties
-from PyQt4.QtCore   import QString
 from lexer          import Lexer
 
 
@@ -43,7 +42,7 @@ class LexerProperties( QsciLexerProperties, Lexer ):
         QsciLexerProperties.__init__( self, parent )
         Lexer.__init__( self )
 
-        self.commentString = QString( "#" )
+        self.commentString = "#"
         return
 
     def initProperties( self ):

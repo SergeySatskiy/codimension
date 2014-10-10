@@ -31,7 +31,6 @@
 """ Makefile lexer implementation """
 
 from PyQt4.Qsci     import QsciLexerMakefile
-from PyQt4.QtCore   import QString
 from lexer          import Lexer
 
 
@@ -44,7 +43,7 @@ class LexerMakefile( QsciLexerMakefile, Lexer ):
         QsciLexerMakefile.__init__( self, parent )
         Lexer.__init__( self )
 
-        self.commentString = QString( "#" )
+        self.commentString = "#"
         self._alwaysKeepTabs = True
         return
 
