@@ -31,7 +31,7 @@
 
 
 from PyQt4.Qsci     import QsciLexerCPP
-from PyQt4.QtCore   import QString, QStringList
+from PyQt4.QtCore   import QString
 from lexer          import Lexer
 
 
@@ -74,7 +74,7 @@ class LexerCPP( QsciLexerCPP, Lexer ):
     def autoCompletionWordSeparators( self ):
         """ Provides the list of separators for autocompletion """
 
-        return QStringList() << '::' << '->' << '.'
+        return [ '::', '->', '.' ]
 
     def isCommentStyle( self, style ):
         """ Checks if a style is a comment one """
