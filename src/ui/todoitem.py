@@ -23,7 +23,7 @@
 
 """ todo item implementation """
 
-from PyQt4.QtCore import Qt, QStringList
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QTreeWidgetItem, QColor
 
 from utils.pixmapcache  import PixmapCache
@@ -42,11 +42,9 @@ class TodoItem( QTreeWidgetItem ):
         self.__lineno = lineNumber
         self.__isfixme = isFixme
 
-        QTreeWidgetItem.__init__( self,
-            QStringList() << "" \
-                          << self.__filename \
-                          << (self.__lineno and "%6d" % self.__lineno or "") \
-                          << self.__description )
+        QTreeWidgetItem.__init__( self, [ "", self.__filename,
+                                          (self.__lineno and "%6d" % self.__lineno or ""),
+                                          self.__description ] )
 
         self.setCompleted( completed )
         self.colorizeTask()
