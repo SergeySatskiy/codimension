@@ -25,7 +25,7 @@
 import logging
 import os.path
 import difflib
-from PyQt4.QtCore import Qt, SIGNAL, QTimer, QStringList
+from PyQt4.QtCore import Qt, SIGNAL, QTimer
 from PyQt4.QtGui import ( QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
                           QApplication, QCursor, QFrame, QSpacerItem,
                           QSizePolicy, QToolButton, QHBoxLayout, QGroupBox,
@@ -218,8 +218,8 @@ class LogItem( QTreeWidgetItem ):
         if logInfo.date:
             date = timestampToString( logInfo.date )
 
-        QTreeWidgetItem.__init__( self,
-            QStringList() << "" << "" << revision << date << author << message )
+        QTreeWidgetItem.__init__( self, [ "", "", revision, date,
+                                          author, message ] )
 
         self.setCheckState( SELECT_COL, Qt.Unchecked )
         self.setToolTip( REVISION_COL, revision )
@@ -392,8 +392,8 @@ class SVNPluginLogDialog( QDialog ):
         self.__logView.setSortingEnabled( True )
         self.__logView.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
 
-        self.__logViewHeader = QTreeWidgetItem(
-                QStringList() << "" << "" << "Revision" << "Date" << "Author" << "Message" )
+        self.__logViewHeader = QTreeWidgetItem( [ "", "", "Revision", "Date",
+                                                  "Author", "Message" ] )
         self.__logView.setHeaderItem( self.__logViewHeader )
         self.__logView.header().setSortIndicator( REVISION_COL, Qt.AscendingOrder )
         self.__logView.itemChanged.connect( self.__onLogViewChanged )
