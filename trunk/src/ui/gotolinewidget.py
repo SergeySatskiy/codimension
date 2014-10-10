@@ -26,7 +26,7 @@
 from PyQt4.QtGui import ( QHBoxLayout, QToolButton, QLabel, QSizePolicy,
                           QComboBox, QWidget, QIntValidator )
 from utils.pixmapcache import PixmapCache
-from PyQt4.QtCore import Qt, QStringList
+from PyQt4.QtCore import Qt
 from mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
@@ -41,7 +41,7 @@ class GotoLineWidget( QWidget ):
         QWidget.__init__( self, parent )
         self.editorsManager = editorsManager
 
-        self.__gotoHistory = QStringList()
+        self.__gotoHistory = []
 
         # Common graphics items
         closeButton = QToolButton( self )
@@ -102,10 +102,11 @@ class GotoLineWidget( QWidget ):
     def __updateHistory( self, txt ):
         " Updates the combo history "
 
-        self.__gotoHistory.removeAll( txt )
-        self.__gotoHistory.prepend( txt )
-        while len( self.__gotoHistory ) > GotoLineWidget.maxHistory:
-            del self.__gotoHistory[ len( self.__gotoHistory ) - 1 ]
+        while txt in self.__gotoHistory:
+            self.__gotoHistory.remove( txt )
+        self.__gotoHistory = [ txt ] + self.__gotoHistory
+        self.__gotoHistory = self.__gotoHistory[ : GotoLineWidget.maxHistory ]
+
         self.linenumberEdit.clear()
         self.linenumberEdit.addItems( self.__gotoHistory )
         return

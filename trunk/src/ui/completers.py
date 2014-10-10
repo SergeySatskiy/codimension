@@ -30,7 +30,7 @@
 """ Various kinds of completers """
 
 
-from PyQt4.QtCore import QDir, QStringList
+from PyQt4.QtCore import QDir
 from PyQt4.QtGui import QCompleter, QDirModel, QStringListModel
 
 
@@ -87,9 +87,11 @@ class DirCompleter( QCompleter ):
 class StringListCompleter( QCompleter ):
     """ Completer for strings lists """
 
-    def __init__( self, parent = None, strings = QStringList(),
+    def __init__( self, parent = None, strings = None,
                   completionMode = QCompleter.PopupCompletion ):
 
+        if strings is None:
+            strings = []
         QCompleter.__init__( self, parent )
         self.__model = QStringListModel( strings, parent )
         self.setModel( self.__model )
