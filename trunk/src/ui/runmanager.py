@@ -23,7 +23,7 @@
 """ Run/profile manager """
 
 import os
-from PyQt4.QtCore import SIGNAL, QObject, QTextCodec, QString, Qt, QTimer
+from PyQt4.QtCore import SIGNAL, QObject, QTextCodec, Qt, QTimer
 from PyQt4.QtGui import QDialog, QApplication, QCursor
 from PyQt4.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
 from subprocess import Popen
@@ -253,7 +253,7 @@ class RemoteProcessWrapper( QObject ):
         " Parses a single line from the running client "
         while self.__clientSocket and self.__clientSocket.bytesAvailable() > 0:
             qs = self.__clientSocket.readAll()
-            us = CODEC.fromUnicode( QString( qs ) )
+            us = CODEC.fromUnicode( str( qs ) )
             self.__buffer += str( us )
 
             tryAgain = True
@@ -406,7 +406,7 @@ class RunManager( QObject ):
         " Waits for the message with the proc ID "
         if clientSocket.waitForReadyRead( 1000 ):
             qs = clientSocket.readAll()
-            us = str( CODEC.fromUnicode( QString( qs ) ) )
+            us = str( CODEC.fromUnicode( str( qs ) ) )
             if not us.endswith( EOT ):
                 return
 

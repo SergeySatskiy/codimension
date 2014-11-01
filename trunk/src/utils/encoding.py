@@ -37,7 +37,6 @@ try:
 except ImportError:
     # Import chardet from a local copy.
     import thirdparty.chardet as chardet
-from PyQt4.QtCore import QString
 
 
 coding_regexps = [
@@ -191,9 +190,6 @@ def encode( text, orig_coding, forceOrigCoding = False ):
 def toUnicode( inputStr ):
     """ Converts a string to unicode """
 
-    if isinstance( inputStr, QString ):
-        return inputStr
-
     if type( inputStr ) == unicode:
         return inputStr
 
@@ -204,6 +200,8 @@ def toUnicode( inputStr ):
             pass
         except TypeError:
             break
+        except:
+            pass
 
     # we didn't succeed
     return inputStr

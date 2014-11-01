@@ -26,7 +26,7 @@
 
 " Debugger variable browser items "
 
-from PyQt4.QtCore import Qt, QString, QRegExp
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QTreeWidgetItem
 from utils.pixmapcache import PixmapCache
 
@@ -34,7 +34,7 @@ from utils.pixmapcache import PixmapCache
 def getDisplayValue( displayValue ):
     " Takes potentially multilined value and converts it to a single line "
 
-    lines = QString( displayValue ).split( QRegExp( r"\r\n|\r|\n" ) )
+    lines = str( displayValue ).splitlines()
     lineCount = len( lines )
     if lineCount > 1:
         # There are many lines. Find first non-empty.
@@ -42,7 +42,7 @@ def getDisplayValue( displayValue ):
         index = -1
         for line in lines:
             index += 1
-            if len( line.trimmed() ) > 0:
+            if len( line.strip() ) > 0:
                 nonEmptyIndex = index
                 break
         if nonEmptyIndex is None:
@@ -69,13 +69,13 @@ def getTooltipValue( value ):
     """ Takes a potentially multilined string and converts it to
         the form suitable for tooltips """
 
-    value = QString( value )
+    value = str( value )
     if Qt.mightBeRichText( value ):
-        tooltipValue = Qt.escape( value )
+        tooltipValue = str( Qt.escape( value ) )
     else:
         tooltipValue = value
 
-    lines = QString( tooltipValue ).split( QRegExp( r"\r\n|\r|\n" ) )
+    lines = tooltipValue.splitlines()
     lineCount = len( lines )
     if lineCount > 1:
         value = ""
@@ -243,7 +243,7 @@ class ArrayElementVariableItem( VariableItem ):
         element 10 with a key of '000010'
         """
         keyStr = str( self.text( 0 ) )
-        self.arrayElementKey = QString( "%.6d" % int( keyStr ) )
+        self.arrayElementKey = "%.6d" % int( keyStr )
         return
 
     def key( self, column ):
@@ -270,7 +270,7 @@ class SpecialArrayElementVariableItem( SpecialVariableItem ):
         element 10 with a key of '000010'
         """
         keyStr = str( self.text( 0 ) )[ : -2 ]     # strip off [], () or {}
-        self.arrayElementKey = QString( "%.6d" % int( keyStr ) )
+        self.arrayElementKey = "%.6d" % int( keyStr )
         return
 
     def key( self, column ):

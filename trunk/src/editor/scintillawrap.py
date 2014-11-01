@@ -29,7 +29,6 @@
 """ QsciScintilla wrapper """
 
 import re
-from PyQt4.QtCore import QString, Qt, QRegExp
 from PyQt4.QtGui import QApplication, QPalette
 from PyQt4.Qsci import QsciScintilla
 
@@ -48,7 +47,7 @@ class ScintillaWrapper( QsciScintilla ):
         self._lineHeight = -1
 
         self.__targetSearchFlags = 0
-        self.__targetSearchExpr = QString()
+        self.__targetSearchExpr = ""
         self.__targetSearchStart = 0
         self.__targetSearchEnd = -1
         self.__targetSearchActive = False
@@ -156,7 +155,7 @@ class ScintillaWrapper( QsciScintilla ):
     def getEndPosition( self ):
         " Provides the end position "
         line = self.lines() - 1
-        return ( line, self.text( line ).length() )
+        return ( line, len( self.text( line ) ) )
 
     def getCurrentPixelPosition( self ):
         " Provides the current text cursor position in points "
@@ -769,14 +768,14 @@ class ScintillaWrapper( QsciScintilla ):
             if text.contains( '\r' ) or text.contains( '\n' ):
                 # the selection contains at least a newline, it is
                 # unlikely to be the expression to search for
-                return QString( "" )
+                return ""
             return text
 
         if not selectionOnly:
             # no selected text, determine the word at the current position
             return self.getCurrentWord()
 
-        return QString( "" )
+        return ""
 
     def getCurrentWord( self, addChars = "" ):
         " Provides the word at the current position "
@@ -796,8 +795,9 @@ class ScintillaWrapper( QsciScintilla ):
 
         if end > start:
             text = self.text( line )
+            return text[ start : end ]
             return text.mid( start, end - start )
-        return QString( '' )
+        return ''
 
     def getWordBoundaries( self, line, col,
                            useWordChars = True, addChars = "" ):
@@ -805,27 +805,24 @@ class ScintillaWrapper( QsciScintilla ):
 
         text = self.text( line )
         if self.caseSensitive():
-            sensitivity = Qt.CaseSensitive
+            flags = 0
         else:
-            sensitivity = Qt.CaseInsensitive
+            flags = re.IGNORECASE
+
         wChars = self.wordCharacters()
         if wChars is None or not useWordChars:
-            regExp = QRegExp( '[^\w_]', sensitivity )
+            regExp = re.compile( r'\b\[w_]+\b', flags )
         else:
             wChars += addChars
-            wChars = re.sub( '\w', "", wChars )
-            regExp = QRegExp( '[^\w%s]' % re.escape( wChars ), sensitivity )
-        start = text.lastIndexOf( regExp, col ) + 1
-        end = text.indexOf( regExp, col )
-        if start == end + 1 and col > 0:
-            # we are on a word boundary, try again
-            start = text.lastIndexOf( regExp, col - 1 ) + 1
-        if start == -1:
-            start = 0
-        if end == -1:
-            end = text.length()
+            wChars = re.sub( r'\w', '', wChars )
+            regExp = re.compile( r'\b[\w%s]+\b' % re.escape( wChars ), flags )
 
-        return ( start, end )
+        for m in regExp.finditer( text ):
+            start = m.start()
+            end = m.end()
+            if start <= col and end >= col:
+                return ( start, end )
+        return ( 0, len( text ) )
 
     def getTextAtPos( self, line, col, length ):
         " Provides the text of the given length under the cursor "

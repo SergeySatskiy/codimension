@@ -22,8 +22,8 @@
 " Various editor buffer related utilities "
 
 
+import re
 from PyQt4.Qsci import QsciLexerPython
-from PyQt4.QtCore import QString, QRegExp
 from cdmbriefparser import getBriefModuleInfoFromMemory
 
 
@@ -222,7 +222,7 @@ def getContext( editor, info = None,
     if skipBlankLinesBack == True:
         while line >= 0:
             text = editor.text( line )
-            trimmedText = text.trimmed()
+            trimmedText = text.strip()
             if trimmedText != "":
                 pos = len( str( text ).rstrip() )
                 break
@@ -248,9 +248,9 @@ def getContext( editor, info = None,
             break
 
         text = editor.text( currentLine )
-        trimmedText = text.trimmed()
+        trimmedText = text.strip()
         if continueLine == False:
-            if trimmedText == "" or trimmedText.startsWith( "#" ):
+            if trimmedText == "" or trimmedText.startswith( "#" ):
                 continue
 
             # Here: there must be characters in the line
@@ -259,7 +259,7 @@ def getContext( editor, info = None,
             if context.length == 0:
                 return context
 
-        if trimmedText.endsWith( "," ) or trimmedText.endsWith( '\\' ) or \
+        if trimmedText.endswith( "," ) or trimmedText.endswith( '\\' ) or \
            _endsWithTripleQuotedString( editor, currentLine, len( text ) - 1 ):
             continueLine = True
         else:
@@ -384,11 +384,9 @@ def getEditorTags( editor, exclude = "", excludePythonKeywords = False ):
         # Note: 2 characters words will be filtered unconditionally
         excludeSet.update( [ "try", "for", "and", "not" ] )
 
-    wordRegexp = QRegExp( "\\W+" )
-
     result = set()
     for line in xrange( editor.lines() ):
-        words = editor.text( line ).split( wordRegexp, QString.SkipEmptyParts )
+        words = re.sub( "[^\w]", " ", str( editor.text( line ) ) ).split()
         for word in words:
             word = str( word )
             if len( word ) > 2:
@@ -438,14 +436,14 @@ def isImportLine( editor, pos = None ):
     while True:
         if line == 0:
             break
-        prevLine = editor.text( line - 1 ).trimmed()
-        if not prevLine.endsWith( '\\' ) and not prevLine.endsWith( ',' ):
+        prevLine = editor.text( line - 1 ).strip()
+        if not prevLine.endswith( '\\' ) and not prevLine.endswith( ',' ):
             break
         line -= 1
 
-    text = editor.text( line ).trimmed()
-    if text.startsWith( "import " ) or text.startsWith( "from " ) or \
-       text.startsWith( "import\\" ) or text.startsWith( "from\\" ):
+    text = editor.text( line ).strip()
+    if text.startswith( "import " ) or text.startswith( "from " ) or \
+       text.startswith( "import\\" ) or text.startswith( "from\\" ):
         if not isStringLiteral( editor,
                                 editor.positionFromLineIndex( line, 0 ) ):
             return True, line
@@ -472,8 +470,8 @@ def isOnSomeImport( editor ):
 
     charsToSkip = [ ' ', '\\', '\r', '\n', '\t' ]
 
-    text = editor.text( line ).trimmed()
-    if text.startsWith( "import" ):
+    text = editor.text( line ).strip()
+    if text.startswith( "import" ):
         currentWord = editor.getCurrentWord()
         if currentWord in [ "import", "as" ]:
             # It is an import line, but no need to complete
@@ -616,11 +614,11 @@ def getCallPosition( editor, pos = None ):
             # It makes sense to check if it is a time to stop searching
             curLine, _ = editor.lineIndexFromPosition( pos )
             if curLine < startLine:
-                lineContent = editor.text( curLine + 1 ).trimmed()
-                if lineContent.startsWith( "def " ) or \
-                   lineContent.startsWith( "class " ) or \
-                   lineContent.startsWith( "def\\" ) or \
-                   lineContent.startsWith( "class\\" ):
+                lineContent = editor.text( curLine + 1 ).strip()
+                if lineContent.startswith( "def " ) or \
+                   lineContent.startswith( "class " ) or \
+                   lineContent.startswith( "def\\" ) or \
+                   lineContent.startswith( "class\\" ):
                     # It does not make sense to search beyond a class or
                     # a function definition
                     return None

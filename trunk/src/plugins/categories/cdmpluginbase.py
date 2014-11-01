@@ -24,13 +24,15 @@
 
 import logging
 from yapsy.IPlugin import IPlugin
-from PyQt4.QtCore import QObject, SIGNAL
+from PyQt4.QtCore import QObject, pyqtSignal
 
 from utils.settings import settingsDir
 
 
 class CDMPluginBase( IPlugin, QObject ):
     " Base class for all codimension plugin categories "
+
+    pluginLogMessage = pyqtSignal( int, str )
 
     def __init__( self ):
         IPlugin.__init__( self )
@@ -351,10 +353,10 @@ class IDEAccess( object ):
             args => message arguments to be substituted (mgs % args)
         """
         try:
-            self.__parent.emit( SIGNAL( 'pluginLogMessage(int, QString)' ), level, msg % args )
+            self.__parent.pluginLogMessage.emit( level, msg % args )
         except Exception, exc:
-            self.__parent.emit( SIGNAL( 'pluginLogMessage(int, QString)' ), logging.ERROR,
-                                "Error sending a plugin log message. Error: " + str( exc ) )
+            self.__parent.pluginLogMessage.emit( logging.ERROR,
+                    "Error sending a plugin log message. Error: " + str( exc ) )
         return
 
 

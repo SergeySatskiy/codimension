@@ -240,7 +240,7 @@ class TextEditor( ScintillaWrapper ):
                             }
                     }
 
-        # Not all the derived classes need certail tool functionality
+        # Not all the derived classes need certain tool functionality
         if hasattr( self._parent, "onPylint" ):
             self.__hotKeys[ CTRL ][ Qt.Key_L ] = self._parent.onPylint
         if hasattr( self._parent, "onPymetrics" ):
@@ -257,8 +257,10 @@ class TextEditor( ScintillaWrapper ):
             key = event.key()
             modifiers = int( event.modifiers() )
             try:
-                self.__hotKeys[ modifiers ][ key ]()
-                return True
+                if modifiers in self.__hotKeys:
+                    if key in self.__hotKeys[ modifiers ]:
+                        self.__hotKeys[ modifiers ][ key ]()
+                        return True
             except:
                 pass
         # Scintilla does not define an event filter so there is no need
@@ -1137,7 +1139,7 @@ class TextEditor( ScintillaWrapper ):
             line, pos = self.getCursorPosition()
             text = self.text( line )
             self.__openedLine = -1
-            if len( text ) > 0 and len( text.trimmed() ) == 0:
+            if len( text ) > 0 and len( text.strip() ) == 0:
                 self.__openedLine = line
 
         elif key in [ Qt.Key_Up, Qt.Key_PageUp,
@@ -1250,7 +1252,7 @@ class TextEditor( ScintillaWrapper ):
     def __onDoubleClick( self, position, line, modifier ):
         " Triggered when the user double clicks in the editor "
         text = self.getCurrentWord()
-        if text == "" or text.contains( '\r' ) or text.contains( '\n' ):
+        if text == "" or '\r' in text or '\n' in text:
             TextEditor.textToIterate = ""
         else:
             TextEditor.textToIterate = text
@@ -1320,7 +1322,7 @@ class TextEditor( ScintillaWrapper ):
         self.clearAllIndicators( self.matchIndicator )
         self.clearAllIndicators( self.searchIndicator )
 
-        if text == "" or text.contains( '\r' ) or text.contains( '\n' ):
+        if text == "" or '\r' in text or '\n' in text:
             return
 
         self.markOccurrences( self.searchIndicator, text,
@@ -1330,7 +1332,7 @@ class TextEditor( ScintillaWrapper ):
     def _onHighlight( self ):
         " Triggered when Ctrl+' is clicked "
         text = self.getCurrentWord()
-        if text == "" or text.contains( '\r' ) or text.contains( '\n' ):
+        if text == "" or '\r' in text or '\n' in text:
             TextEditor.textToIterate = ""
         else:
             if str( TextEditor.textToIterate ).lower() == str( text ).lower():
@@ -2269,7 +2271,7 @@ class TextEditor( ScintillaWrapper ):
 
     def isLineEmpty( self, line ):
         " Returns True if the line is empty. Line is 1 based. "
-        return self.text( line - 1 ).trimmed() == ""
+        return self.text( line - 1 ).strip() == ""
 
     def restoreBreakpoints( self ):
         " Restores the breakpoints "

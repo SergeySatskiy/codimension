@@ -31,29 +31,27 @@
 """ Line edit which shows specific text when inactive """
 
 
-from PyQt4.QtCore import QString, Qt
-from PyQt4.QtGui import QLineEdit, QStyleOptionFrameV2, \
-                        QStyle, QPainter, QPalette
+from PyQt4.QtCore import Qt
+from PyQt4.QtGui import ( QLineEdit, QStyleOptionFrameV2,
+                          QStyle, QPainter, QPalette )
 
 
 class InactiveLineEdit( QLineEdit ):
     """ Line edit widget showing some inactive text """
 
-    def __init__( self, parent = None, inactiveText = QString() ):
+    def __init__( self, parent = None, inactiveText = "" ):
 
         QLineEdit.__init__( self, parent )
-        self.__inactiveText = QString( inactiveText )
+        self.__inactiveText = inactiveText
         return
 
     def inactiveText( self ):
         """ Provides the inactive text """
-
-        return QString( self.__inactiveText )
+        return self.__inactiveText
 
     def setInactiveText( self, inactiveText ):
         """ Sets the inactive text """
-
-        self.__inactiveText = QString( inactiveText )
+        self.__inactiveText = inactiveText
         self.update()
         return
 
