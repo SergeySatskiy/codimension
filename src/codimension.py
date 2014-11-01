@@ -27,6 +27,9 @@ It performs necessery initialization and starts the Qt main loop.
 
 __version__ = "0.0.0"
 
+import sip
+sip.setapi( "QString", 2 )
+
 import sys, os, os.path, gc
 from PyQt4.QtCore import QTimer, QDir, QTextCodec
 

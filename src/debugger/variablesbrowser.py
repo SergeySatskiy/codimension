@@ -23,7 +23,7 @@
 """ The debugger namespace viewer implementation """
 
 
-from PyQt4.QtCore import Qt, QRegExp, QString
+from PyQt4.QtCore import Qt, QRegExp
 from PyQt4.QtGui import QAbstractItemView, QHeaderView, QTreeWidget
 from ui.itemdelegates  import NoOutlineHeightDelegate
 from utils.encoding import toUnicode
@@ -138,7 +138,7 @@ class VariablesBrowser( QTreeWidget ):
         that is a child of node. If node is None, a child of the
         QTreeWidget is searched.
 
-        @param slist searchlist (list of strings or QStrings)
+        @param slist searchlist (list of strings)
         @param column index of column to search in (int)
         @param node start point of the search
         @return the found item or None
@@ -154,7 +154,7 @@ class VariablesBrowser( QTreeWidget ):
             else:
                 item = node.child( index )
 
-            if QString.compare( item.text( column ), slist[ 0 ] ) == 0:
+            if item.text( column ) == slist[ 0 ]:
                 if len( slist ) > 1:
                     item = self.__findItem( slist[ 1 : ], column, item )
                 return item
@@ -256,7 +256,6 @@ class VariablesBrowser( QTreeWidget ):
             if self.current:
                 self.curpathlist = self.__buildTreePath( self.current )
 
-        subelementsAdded = False
         if vlist:
             item = self.__findItem( vlist[ 0 ], 0 )
             for var, vtype, value in vlist[ 1 : ]:
@@ -264,7 +263,6 @@ class VariablesBrowser( QTreeWidget ):
                 newItem.setHidden( not self.__variableToShow( newItem.getName(),
                                                               newItem.isGlobal(),
                                                               newItem.getType() ) )
-            subelementsAdded = True
 
         # reexpand tree
         openItems = self.openItems[ : ]
@@ -329,8 +327,6 @@ class VariablesBrowser( QTreeWidget ):
                                         varName, varValue, varType,
                                         self.framenr )
         else:
-            if isinstance( varValue, str ):
-                varValue = QString.fromLocal8Bit( varValue )
             if VARNAME_ARRAY_ELEMENT.exactMatch( varName ):
                 return ArrayElementVariableItem( parentItem, isGlobal,
                                                  varName, varValue, varType )

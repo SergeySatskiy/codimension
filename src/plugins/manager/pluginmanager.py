@@ -384,14 +384,12 @@ class CDMPluginManager( PluginManager, QObject ):
     def sendPluginActivated( self, plugin ):
         " Emits the signal with the corresponding plugin "
         self.emit( SIGNAL( 'PluginActivated' ), plugin )
-        self.connect( plugin.getObject(), SIGNAL( 'pluginLogMessage(int, QString)' ),
-                      self.__onPluginLogMessage )
+        plugin.getObject().pluginLogMessage.connect( self.__onPluginLogMessage )
         return
 
     def sendPluginDeactivated( self, plugin ):
         " Emits the signal with the corresponding plugin "
-        self.disconnect( plugin.getObject(), SIGNAL( 'pluginLogMessage(int, QString)' ),
-                         self.__onPluginLogMessage )
+        plugin.getObject().pluginLogMessage.disconnect( self.__onPluginLogMessage )
         self.emit( SIGNAL( 'PluginDeactivated' ), plugin )
         return
 
