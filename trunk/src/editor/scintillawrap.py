@@ -774,7 +774,6 @@ class ScintillaWrapper( QsciScintilla ):
         if not selectionOnly:
             # no selected text, determine the word at the current position
             return self.getCurrentWord()
-
         return ""
 
     def getCurrentWord( self, addChars = "" ):
@@ -796,7 +795,6 @@ class ScintillaWrapper( QsciScintilla ):
         if end > start:
             text = self.text( line )
             return text[ start : end ]
-            return text.mid( start, end - start )
         return ''
 
     def getWordBoundaries( self, line, col,
@@ -822,7 +820,7 @@ class ScintillaWrapper( QsciScintilla ):
             end = m.end()
             if start <= col and end >= col:
                 return ( start, end )
-        return ( 0, len( text ) )
+        return ( col, col )
 
     def getTextAtPos( self, line, col, length ):
         " Provides the text of the given length under the cursor "
