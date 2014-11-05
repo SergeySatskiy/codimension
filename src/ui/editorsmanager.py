@@ -505,7 +505,7 @@ class EditorsManager( QTabWidget ):
 
         fileType = detectFileType( newWidget.getShortName() )
 
-        if initialContent is None:
+        if initialContent is None or type( initialContent ) == bool:
             # Load a template content if available
             initialContent = getNewFileTemplate()
             if initialContent != "":
