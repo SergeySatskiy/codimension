@@ -59,8 +59,8 @@ class InactiveLineEdit( QLineEdit ):
         """ Paint event handler """
 
         QLineEdit.paintEvent( self, evt )
-        if self.text().isEmpty() and \
-           not self.__inactiveText.isEmpty() and \
+        if self.text() == "" and \
+           self.__inactiveText != "" and \
            not self.hasFocus():
             panel = QStyleOptionFrameV2()
             self.initStyleOption( panel )

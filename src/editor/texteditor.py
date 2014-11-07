@@ -1359,9 +1359,13 @@ class TextEditor( ScintillaWrapper ):
                index >= targets[ 0 ][ 1 ] and \
                index <= targets[ 0 ][ 1 ] + targets[ 0 ][ 2 ]:
                 # The only match and we are within it
+                GlobalData().mainWindow.showStatusBarMessage(
+                                    "Highlighted occurrences: 1 of 1", 1, 5000 )
                 return True
 
+        count = 0
         for target in targets:
+            count += 1
             if target[ 0 ] < line:
                 continue
             if target[ 0 ] == line:
@@ -1374,10 +1378,13 @@ class TextEditor( ScintillaWrapper ):
             # Move the cursor to the target
             self.setCursorPosition( target[ 0 ], target[ 1 ] )
             self.ensureLineVisible( target[ 0 ] )
+            GlobalData().mainWindow.showStatusBarMessage(
+                                    "Highlighted occurrences: " + str( count ) + " of " + str( foundCount ), 1, 5000 )
             return True
 
         self.setCursorPosition( targets[ 0 ][ 0 ], targets[ 0 ][ 1 ] )
         self.ensureLineVisible( targets[ 0 ][ 0 ] )
+        GlobalData().mainWindow.showStatusBarMessage( "Highlighted occurrences: 1 of " + str( foundCount ), 1, 5000 )
         return True
 
     def _onPrevHighlight( self ):

@@ -51,7 +51,7 @@ class HTMLViewer( QWebView ):
     def contextMenuEvent( self, event ):
         " Disables the default menu "
         testContent = self.page().mainFrame().hitTestContent( event.pos() )
-        if not testContent.linkUrl().isEmpty():
+        if testContent.linkUrl():
             menu = QMenu( self )
             menu.addAction( self.pageAction( QWebPage.CopyLinkToClipboard ) )
             menu.popup( self.mapToGlobal( event.pos() ) )

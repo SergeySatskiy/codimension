@@ -97,7 +97,7 @@ class EnvVarDialog( QDialog ):
     def __nameChanged( self, newName ):
         " Triggered when a variable name is changed "
         strippedName = str( newName ).strip()
-        self.__OKButton.setEnabled( strippedName != "" and \
+        self.__OKButton.setEnabled( strippedName != "" and
                                     ' ' not in strippedName )
         self.name = strippedName
         return
@@ -436,7 +436,7 @@ class RunDialog( QDialog ):
         sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Preferred )
         sizePolicy.setHorizontalStretch( 0 )
         sizePolicy.setVerticalStretch( 0 )
-        sizePolicy.setHeightForWidth( \
+        sizePolicy.setHeightForWidth(
                         ideGroupbox.sizePolicy().hasHeightForWidth() )
         ideGroupbox.setSizePolicy( sizePolicy )
 
@@ -463,7 +463,7 @@ class RunDialog( QDialog ):
         sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Preferred )
         sizePolicy.setHorizontalStretch( 0 )
         sizePolicy.setVerticalStretch( 0 )
-        sizePolicy.setHeightForWidth( \
+        sizePolicy.setHeightForWidth(
                 limitsGroupbox.sizePolicy().hasHeightForWidth() )
         limitsGroupbox.setSizePolicy( sizePolicy )
 
@@ -628,7 +628,7 @@ class RunDialog( QDialog ):
 
         if not self.__dirOK():
             self.__runButton.setEnabled( False )
-            self.__runButton.setToolTip( "The given working " \
+            self.__runButton.setToolTip( "The given working "
                                          "dir is not found" )
             return
 
@@ -640,24 +640,24 @@ class RunDialog( QDialog ):
                     raise Exception( "Out of range" )
             except:
                 self.__runButton.setEnabled( False )
-                self.__runButton.setToolTip( "The given node limit " \
+                self.__runButton.setToolTip( "The given node limit "
                                              "is out of range" )
                 return
 
         if self.__edgeLimitEdit is not None:
-            txt = str( self.__edgeLimitEdit.text() ).strip()
+            txt = self.__edgeLimitEdit.text().strip()
             try:
                 value = float( txt )
                 if value < 0.0 or value > 100.0:
                     raise Exception( "Out of range" )
             except:
                 self.__runButton.setEnabled( False )
-                self.__runButton.setToolTip( "The given edge limit " \
+                self.__runButton.setToolTip( "The given edge limit "
                                              "is out of range" )
                 return
 
         self.__runButton.setEnabled( True )
-        self.__runButton.setToolTip( "Save parameters and " + \
+        self.__runButton.setToolTip( "Save parameters and " +
                                      self.__action + " script" )
         return
 
@@ -668,8 +668,8 @@ class RunDialog( QDialog ):
                     self.__dirEdit.text(),
                     QFileDialog.Options( QFileDialog.ShowDirsOnly ) )
 
-        if not dirName.isEmpty():
-            self.__dirEdit.setText( os.path.normpath( str( dirName ) ) )
+        if dirName:
+            self.__dirEdit.setText( os.path.normpath( dirName ) )
         return
 
     def __inhClicked( self ):
