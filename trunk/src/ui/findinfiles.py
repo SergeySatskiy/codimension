@@ -662,8 +662,8 @@ class FindInFilesDialog( QDialog, object ):
                     self.dirEditCombo.currentText(),
                     QFileDialog.Options( QFileDialog.ShowDirsOnly ) )
 
-        if not dirName.isEmpty():
-            self.dirEditCombo.setEditText( os.path.normpath( str( dirName ) ) )
+        if dirName:
+            self.dirEditCombo.setEditText( os.path.normpath( dirName ) )
         self.__testSearchability()
         return
 
@@ -748,7 +748,7 @@ class FindInFilesDialog( QDialog, object ):
 
     def __buildFilesList( self ):
         " Builds the list of files to search in "
-        filtersText = str( self.filterCombo.currentText() ).strip()
+        filtersText = self.filterCombo.currentText().strip()
         if filtersText != "":
             filterRe = re.compile( filtersText, re.IGNORECASE )
         else:
@@ -760,8 +760,7 @@ class FindInFilesDialog( QDialog, object ):
         if self.openFilesRButton.isChecked():
             return self.__openedFiles( filterRe )
 
-        dirname = os.path.realpath( \
-                        str( self.dirEditCombo.currentText() ).strip() )
+        dirname = os.path.realpath( self.dirEditCombo.currentText().strip() )
         files = []
         self.__dirFiles( dirname + sep, filterRe, files )
         return files
@@ -771,7 +770,7 @@ class FindInFilesDialog( QDialog, object ):
         " Search process "
 
         # Add entries to the combo box if required
-        regexpText = str( self.findCombo.currentText() )
+        regexpText = self.findCombo.currentText()
         if regexpText in self.findFilesWhat:
             self.findFilesWhat.remove( regexpText )
         self.findFilesWhat.insert( 0, regexpText )
@@ -780,7 +779,7 @@ class FindInFilesDialog( QDialog, object ):
         self.findCombo.clear()
         self.findCombo.addItems( self.findFilesWhat )
 
-        filtersText = str( self.filterCombo.currentText() ).strip()
+        filtersText = self.filterCombo.currentText().strip()
         if filtersText in self.findFilesMasks:
             self.findFilesMasks.remove( filtersText )
         self.findFilesMasks.insert( 0, filtersText )
@@ -790,7 +789,7 @@ class FindInFilesDialog( QDialog, object ):
         self.filterCombo.addItems( self.findFilesMasks )
 
         if self.dirRButton.isChecked():
-            dirText = str( self.dirEditCombo.currentText() ).strip()
+            dirText = self.dirEditCombo.currentText().strip()
             if dirText in self.findFilesDirs:
                 self.findFilesDirs.remove( dirText )
             self.findFilesDirs.insert( 0, dirText )

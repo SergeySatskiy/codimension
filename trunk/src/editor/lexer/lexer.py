@@ -64,7 +64,7 @@ class Lexer( object ):
     def canBlockComment( self ):
         """ Determines if the lexer language supports a block comment """
 
-        return not self.commentString.isEmpty()
+        return self.commentString != ""
 
     def streamCommentStr( self ):
         """ Provides the stream comment strings """
@@ -74,8 +74,8 @@ class Lexer( object ):
     def canStreamComment( self ):
         """ Determines if the lexer language supports a stream comment """
 
-        return (not self.streamCommentString[ 'start' ].isEmpty()) and \
-               (not self.streamCommentString[ 'end' ].isEmpty())
+        return (self.streamCommentString[ 'start' ] != "") and \
+               (self.streamCommentString[ 'end' ] != "")
 
     def boxCommentStr( self ):
         """ Provides the box comment strings """
@@ -85,9 +85,9 @@ class Lexer( object ):
     def canBoxComment( self ):
         """ Determines if the lexer language supports a box comment """
 
-        return (not self.boxCommentString[ 'start' ].isEmpty()) and \
-               (not self.boxCommentString[ 'middle' ].isEmpty()) and \
-               (not self.boxCommentString[ 'end' ].isEmpty())
+        return (self.boxCommentString[ 'start' ] != "") and \
+               (self.boxCommentString[ 'middle' ] != "") and \
+               (self.boxCommentString[ 'end' ] != "")
 
     def alwaysKeepTabs( self ):
         """ Checks if tab conversion is allowed """

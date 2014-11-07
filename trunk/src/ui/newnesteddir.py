@@ -73,7 +73,7 @@ class NewProjectDirDialog( QDialog, object ):
 
     def __onTextChanged( self, text ):
         " Triggered when the input text has been changed "
-        self.okButton.setEnabled( not text.isEmpty() )
+        self.okButton.setEnabled( text != "" )
         return
 
     def getDirName( self ):
