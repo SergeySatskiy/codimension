@@ -344,8 +344,8 @@ class ProjectPropertiesDialog( QDialog, object ):
                     self.dirEdit.text(),
                     QFileDialog.Options( QFileDialog.ShowDirsOnly ) )
 
-        if not dirName.isEmpty():
-            self.dirEdit.setText( os.path.normpath( str( dirName ) ) )
+        if dirName:
+            self.dirEdit.setText( os.path.normpath( dirName ) )
         return
 
     def onScriptButton( self ):
@@ -354,8 +354,8 @@ class ProjectPropertiesDialog( QDialog, object ):
                         "Select project main script",
                         self.dirEdit.text() )
 
-        if not scriptName.isEmpty():
-            self.scriptEdit.setText( os.path.normpath( str( scriptName ) ) )
+        if scriptName:
+            self.scriptEdit.setText( os.path.normpath( scriptName ) )
         return
 
     def onImportDirRowChanged( self, row ):
@@ -371,10 +371,8 @@ class ProjectPropertiesDialog( QDialog, object ):
                     self.dirEdit.text(),
                     QFileDialog.Options( QFileDialog.ShowDirsOnly ) )
 
-        if dirName.isEmpty():
+        if not dirName:
             return
-
-        dirName = str( dirName )
 
         # There are 2 cases: new project or
         # editing the existed project properties
@@ -385,7 +383,7 @@ class ProjectPropertiesDialog( QDialog, object ):
             # This is an existed project; no way the project path is changed
             # Let's decide it a relative path should be used here
             if self.__project.isProjectDir( dirName ):
-                dirToInsert = relpath( dirName, str( self.dirEdit.text() ) )
+                dirToInsert = relpath( dirName, self.dirEdit.text() )
             else:
                 dirToInsert = dirName
 
@@ -427,19 +425,19 @@ class ProjectPropertiesDialog( QDialog, object ):
 
         # Check that the project name does not have path separators and is not
         # empty
-        if str( self.nameEdit.text() ).strip() == "":
+        if not self.nameEdit.text().strip():
             QMessageBox.critical( self, "Error",
                                   "The project name must not be empty" )
             return
-        if os.path.sep in str( self.nameEdit.text() ):
+        if os.path.sep in self.nameEdit.text():
             QMessageBox.critical( self, "Error",
                                   "The project name must not "
                                   "contain path separators" )
             return
 
         # Check that the project directory is given
-        dirName = str( self.dirEdit.text() ).strip()
-        if dirName == "":
+        dirName = self.dirEdit.text().strip()
+        if not dirName:
             QMessageBox.critical( self, "Error",
                                   "The project directory must not be empty" )
             return
@@ -450,14 +448,14 @@ class ProjectPropertiesDialog( QDialog, object ):
         projectFileName = dirName
         if not projectFileName.endswith( os.path.sep ):
             projectFileName += os.path.sep
-        projectFileName += str( self.nameEdit.text() ).strip()
+        projectFileName += self.nameEdit.text().strip()
         if not projectFileName.endswith( ".cdm" ):
             projectFileName += ".cdm"
 
         if os.path.exists( projectFileName ):
             QMessageBox.critical( self, "Error",
-                                  "The project file " + projectFileName + \
-                                  " exists. Please provide another " \
+                                  "The project file " + projectFileName +
+                                  " exists. Please provide another "
                                   "directory / project name." )
             return
 
@@ -499,11 +497,10 @@ class ProjectPropertiesDialog( QDialog, object ):
     def onProjectNameChanged( self, newName ):
         " Called when the project name changed "
 
-        newName = str( newName )
         if newName.endswith( ".cdm" ):
             newName = newName[ :-4 ]
-        if str( self.dirEdit.text() ).strip() == (self.initialDirName + \
-                                                  self.lastProjectName):
+        if self.dirEdit.text().strip() == (self.initialDirName +
+                                           self.lastProjectName):
             self.dirEdit.setText( self.initialDirName + newName )
             self.lastProjectName = newName
         return
@@ -542,7 +539,7 @@ class ProjectPropertiesDialog( QDialog, object ):
 
     def __copyProjectPath( self ):
         " Copies the project path when a label is double clicked "
-        text = str( self.uuidEdit.text() ).strip()
+        text = self.uuidEdit.text().strip()
         if text:
             path = settingsDir + text + os.path.sep
             QApplication.clipboard().setText( path )
