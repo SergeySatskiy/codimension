@@ -825,7 +825,7 @@ class ScintillaWrapper( QsciScintilla ):
     def getTextAtPos( self, line, col, length ):
         " Provides the text of the given length under the cursor "
         text = self.text( line )
-        return text.mid( col, length )
+        return text[ col : col + length ]
 
     def hideCalltip( self ):
         " Hides a calltip if shown "
