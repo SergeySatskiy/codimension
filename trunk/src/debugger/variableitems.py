@@ -57,10 +57,12 @@ def getDisplayValue( displayValue ):
 
             if nonEmptyIndex > 0:
                 displayValue = "<...>" + displayValue
-    else:
+    elif lineCount == 1:
         # There is just one line
         if len( lines[ 0 ] ) > 128:
             displayValue = lines[ 0 ][ : 128 ] + "<...>"
+        else:
+            value = lines[ 0 ]
 
     return displayValue
 
@@ -92,7 +94,7 @@ def getTooltipValue( value ):
             index += 1
         if lineCount > 5:
             value += "\n<...>"
-    else:
+    elif lineCount == 1:
         if len( lines[ 0 ] ) > 128:
             value = lines[ 0 ][ : 128 ] + "<...>"
         else:
