@@ -375,6 +375,7 @@ class VariablesBrowser( QTreeWidget ):
             else:
                 try:
                     stringValue = eval( varValue )
+                    displayType += " (chars: " + str( len( stringValue ) ) + ")"
                 except:
                     stringValue = varValue
             return self.__generateItem( parentItem, isGlobal,

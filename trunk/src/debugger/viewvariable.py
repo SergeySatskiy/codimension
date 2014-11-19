@@ -55,10 +55,12 @@ class ViewVariableDialog( QDialog ):
     def __createLayout( self, varName, varType, varValue, isGlobal ):
         """ Creates the dialog layout """
 
-        if varType.lower() in [ "string", "unicode string", "qstring" ]:
+        varTypeParts = varType.split()
+        if varTypeParts[ 0 ].lower() in [ "string", "unicode", "qstring" ]:
             length = str( len( varValue ) )
             lines = str( len( varValue.splitlines() ) )
-            varType += " (lines: " + lines + ", characters: " + length + ")"
+            varType = varType.split( "(" )[ 0 ].strip() + \
+                      " (lines: " + lines + ", characters: " + length + ")"
 
         self.resize( 600, 250 )
         self.setSizeGripEnabled( True )
