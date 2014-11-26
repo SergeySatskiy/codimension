@@ -36,7 +36,9 @@ from viewvariable import ViewVariableDialog
 NONPRINTABLE = QRegExp( r"""(\\x\d\d)+""" )
 VARNAME_CLASS_1 = QRegExp( r'<.*(instance|object) at 0x.*>(\[\]|\{\}|\(\))' )
 VARNAME_CLASS_2 = QRegExp( r'<class .* at 0x.*>(\[\]|\{\}|\(\))' )
+VARNAME_CLASS_3 = QRegExp( r"<class '.*'>" )
 VARTYPE_CLASS = QRegExp( 'class .*' )
+VARTYPE_TYPE = QRegExp( 'Type' )
 VARVALUE_CLASS_1 = QRegExp( '<.*(instance|object) at 0x.*>' )
 VARVALUE_CLASS_2 = QRegExp( '<class .* at 0x.*>' )
 VARNAME_SPECIAL_ARRAY_ELEMENT = QRegExp( r'^\d+(\[\]|\{\}|\(\))$' )
@@ -310,7 +312,8 @@ class VariablesBrowser( QTreeWidget ):
                VARNAME_CLASS_2.exactMatch( varName ):
                 isSpecial = False
 
-        if VARTYPE_CLASS.exactMatch( varType ):
+        if VARTYPE_CLASS.exactMatch( varType ) or \
+           (VARTYPE_TYPE.exactMatch( varType ) and VARNAME_CLASS_3.exactMatch( varValue )):
             return SpecialVariableItem( parentItem, self.__debugger, isGlobal,
                                         varName, varValue, varType[ 7 : -1 ],
                                         self.framenr )
