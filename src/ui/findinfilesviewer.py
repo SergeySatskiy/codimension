@@ -31,6 +31,7 @@ from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 from itemdelegates import NoOutlineHeightDelegate
 from utils.fileutils import getFileIcon, detectFileType
+from utils.project import CodimensionProject
 
 
 cellHeight = 20     # default
@@ -355,6 +356,8 @@ class FindInFilesViewer( QWidget ):
         self.__createLayout( parent )
 
         self.__updateButtonsStatus()
+
+        GlobalData().project.projectChanged.connect( self.__onProjectChanged )
         return
 
     def __createLayout( self, parent ):
@@ -442,6 +445,12 @@ class FindInFilesViewer( QWidget ):
     def setFocus( self ):
         " Overridden setFocus "
         self.__hLayout.setFocus()
+        return
+
+    def __onProjectChanged( self, what ):
+        " Triggered when a project is changed "
+        if what == CodimensionProject.CompleteProject:
+            self.__clear()
         return
 
     def __clear( self ):

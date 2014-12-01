@@ -1,5 +1,6 @@
 XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Bug fix: clear find-in-files results when a project is changed
 * Bug fix: exception is case when files in a project directory are created
   and deleted very quickly
 * Fix for pylint 1.2.1
