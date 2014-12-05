@@ -765,7 +765,7 @@ class ScintillaWrapper( QsciScintilla ):
         " Provides the guessed text for searching "
         if self.hasSelectedText():
             text = self.selectedText()
-            if text.contains( '\r' ) or text.contains( '\n' ):
+            if '\r' in text or '\n' in text:
                 # the selection contains at least a newline, it is
                 # unlikely to be the expression to search for
                 return ""
