@@ -261,7 +261,7 @@ class TextEditor( ScintillaWrapper ):
                     if key in self.__hotKeys[ modifiers ]:
                         self.__hotKeys[ modifiers ][ key ]()
                         return True
-            except:
+            except Exception, exc:
                 pass
         # Scintilla does not define an event filter so there is no need
         return False
@@ -1444,12 +1444,12 @@ class TextEditor( ScintillaWrapper ):
             else:
                 endLine = lineTo
 
-            if self.text( lineFrom ).startsWith( commentStr ):
+            if self.text( lineFrom ).startswith( commentStr ):
                 # need to uncomment
                 for line in xrange( lineFrom, endLine + 1 ):
-                    if not self.text( line ).startsWith( commentStr ):
+                    if not self.text( line ).startswith( commentStr ):
                         continue
-                    self.setSelection( line, 0, line, commentStr.length() )
+                    self.setSelection( line, 0, line, len( commentStr ) )
                     self.removeSelectedText()
                 self.setSelection( lineFrom, 0, endLine + 1, 0 )
             else:
@@ -1460,9 +1460,9 @@ class TextEditor( ScintillaWrapper ):
         else:
             # Detect what we need - comment or uncomment
             line, index = self.getCursorPosition()
-            if self.text( line ).startsWith( commentStr ):
+            if self.text( line ).startswith( commentStr ):
                 # need to uncomment
-                self.setSelection( line, 0, line, commentStr.length() )
+                self.setSelection( line, 0, line, len( commentStr ) )
                 self.removeSelectedText()
             else:
                 # need to comment
