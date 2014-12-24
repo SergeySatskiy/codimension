@@ -191,7 +191,7 @@ class CodeCompleter( QCompleter ):
     def eventFilter( self, obj, evnt ):
         " Custom events filtering "
         if evnt.type() == QEvent.KeyPress and self.popup().isVisible():
-            if evnt.modifiers() != Qt.NoModifier and evnt.text().size() == 0:
+            if evnt.modifiers() != Qt.NoModifier and len( evnt.text() ) == 0:
                 # Supress
                 return True
             key = evnt.key()
