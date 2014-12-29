@@ -280,7 +280,7 @@ class IgnoredExceptionsViewer( QWidget ):
 
     def __onAddExceptionFilter( self ):
         " Adds an item into the ignored exceptions list "
-        text = str( self.__excTypeEdit.text() ).strip()
+        text = self.__excTypeEdit.text().strip()
         self.addExceptionFilter( text )
 
     def addExceptionFilter( self, excType ):

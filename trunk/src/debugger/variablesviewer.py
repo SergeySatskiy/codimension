@@ -286,7 +286,7 @@ class VariablesViewer( QWidget ):
 
     def __onEval( self ):
         " Triggered when the Eval button is clicked "
-        text = str( self.__evalStatement.currentText() ).strip()
+        text = self.__evalStatement.currentText().strip()
         if text != "":
             currentFrame = GlobalData().mainWindow.getCurrentFrameNumber()
             self.__debugger.remoteEval( text, currentFrame )
@@ -307,7 +307,7 @@ class VariablesViewer( QWidget ):
 
     def __onExec( self ):
         " Triggered when the Exec button is clicked "
-        text = str( self.__execStatement.currentText() ).strip()
+        text = self.__execStatement.currentText().strip()
         if text != "":
             currentFrame = GlobalData().mainWindow.getCurrentFrameNumber()
             self.__debugger.remoteExec( text, currentFrame )
@@ -324,14 +324,14 @@ class VariablesViewer( QWidget ):
 
         self.__execStatement.setEnabled( isInIDE )
         if isInIDE:
-            text = str( self.__execStatement.currentText() ).strip()
+            text = self.__execStatement.currentText().strip()
             self.__execButton.setEnabled( text != "" )
         else:
             self.__execButton.setEnabled( False )
 
         self.__evalStatement.setEnabled( isInIDE )
         if isInIDE:
-            text = str( self.__evalStatement.currentText() ).strip()
+            text = self.__evalStatement.currentText().strip()
             self.__evalButton.setEnabled( text != "" )
         else:
             self.__evalButton.setEnabled( False )
