@@ -216,7 +216,7 @@ def getContext( editor, info = None,
 
     # It's not the first position, so the parsed module info is required
     if info is None:
-        info = getBriefModuleInfoFromMemory( str( editor.text() ) )
+        info = getBriefModuleInfoFromMemory( editor.text() )
 
     line, pos = editor.getCursorPosition()
     if skipBlankLinesBack == True:
@@ -224,7 +224,7 @@ def getContext( editor, info = None,
             text = editor.text( line )
             trimmedText = text.strip()
             if trimmedText != "":
-                pos = len( str( text ).rstrip() )
+                pos = len( text.rstrip() )
                 break
             line -= 1
         if line < 0:
