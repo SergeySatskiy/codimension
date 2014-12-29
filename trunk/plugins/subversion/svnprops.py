@@ -230,8 +230,8 @@ class SVNPluginPropsDialog( QDialog ):
 
     def __onSet( self ):
         " Triggered when propery set is clicked "
-        name = str( self.__nameEdit.text() ).strip()
-        value = str( self.__valueEdit.toPlainText() ).strip()
+        name = self.__nameEdit.text().strip()
+        value = self.__valueEdit.toPlainText().strip()
         try:
             commitInfo = self.__client.propset( name, value, self.__path )
             if commitInfo:
@@ -303,7 +303,7 @@ class SVNPluginPropsDialog( QDialog ):
 
     def __updateSetButton( self ):
         " Updates the 'Set' button state "
-        name = str( self.__nameEdit.text() ).strip()
-        value = str( self.__valueEdit.toPlainText() ).strip()
+        name = self.__nameEdit.text().strip()
+        value = self.__valueEdit.toPlainText().strip()
         self.__setButton.setEnabled( name != "" and value != "" )
         return

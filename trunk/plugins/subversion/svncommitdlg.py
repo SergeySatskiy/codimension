@@ -332,7 +332,7 @@ class SVNPluginCommitDialog( QDialog ):
     def userAccept( self ):
         " Triggered when the user clicks OK "
         # Collect the list of checked paths
-        self.commitMessage = str( self.__message.toPlainText() ).strip()
+        self.commitMessage = self.__message.toPlainText().strip()
 
         self.commitPaths = []
         index = 0
