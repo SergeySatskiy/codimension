@@ -258,8 +258,7 @@ class NavigationBar( QFrame ):
             self.__connectEditorSignals()
 
         # Parse the buffer content
-        self.__currentInfo = getBriefModuleInfoFromMemory(
-                                                str( self.__editor.text() ) )
+        self.__currentInfo = getBriefModuleInfoFromMemory( self.__editor.text() )
 
         # Decide what icon to use
         if self.__currentInfo.isOK:
