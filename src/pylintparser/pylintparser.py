@@ -570,7 +570,7 @@ class Pylint( object ):
                 logging.error( str( exc ) )
                 logging.error( "Skipping this similarity" )
         else:
-            raise Exception( "unknown pylint output section: '" + \
+            raise Exception( "unknown pylint output section: '" +
                              firstLine + "'" )
         self.__currentSection = []
         return
