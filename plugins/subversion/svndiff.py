@@ -66,7 +66,7 @@ class SVNDiffMixin:
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         editorWidget = self.ide.currentEditorWidget
         path = editorWidget.getFileName()
-        content = str( self.ide.currentEditorWidget.getEditor().text() )
+        content = self.ide.currentEditorWidget.getEditor().text()
         self.__svnDiff( path, content, editorWidget.isModified() )
         QApplication.restoreOverrideCursor()
         return

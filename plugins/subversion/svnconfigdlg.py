@@ -422,8 +422,8 @@ class SVNPluginConfigDialog( QDialog ):
             self.ideWideSettings.password = None
         else:
             self.ideWideSettings.authKind = AUTH_PASSWD
-            self.ideWideSettings.userName = str( self.__idewideUser.text() ).strip()
-            self.ideWideSettings.password = str( self.__idewidePasswd.text() ).strip()
+            self.ideWideSettings.userName = self.__idewideUser.text().strip()
+            self.ideWideSettings.password = self.__idewidePasswd.text().strip()
 
         if self.__idewideReposRButton.isChecked():
             self.ideWideSettings.statusKind = STATUS_REPOSITORY
@@ -437,8 +437,8 @@ class SVNPluginConfigDialog( QDialog ):
                 self.projectSettings.password = None
             else:
                 self.projectSettings.authKind = AUTH_PASSWD
-                self.projectSettings.userName = str( self.__projectUser.text() ).strip()
-                self.projectSettings.password = str( self.__projectPasswd.text() ).strip()
+                self.projectSettings.userName = self.__projectUser.text().strip()
+                self.projectSettings.password = self.__projectPasswd.text().strip()
 
             if self.__projectReposRButton.isChecked():
                 self.projectSettings.statusKind = STATUS_REPOSITORY
@@ -452,14 +452,14 @@ class SVNPluginConfigDialog( QDialog ):
         " Updates the OK button status "
         okButton = self.__buttonBox.button( QDialogButtonBox.Ok )
         if self.__idewideAuthPasswdRButton.isChecked():
-            userName = str( self.__idewideUser.text() ).strip()
+            userName = self.__idewideUser.text().strip()
             if not userName:
                 okButton.setEnabled( False )
                 okButton.setToolTip( "IDE wide SVN user name cannot be empty" )
                 return
         if self.projectSettings is not None:
             if self.__projectAuthPasswdRButton.isChecked():
-                userName = str( self.__projectUser.text() ).strip()
+                userName = self.__projectUser.text().strip()
                 if not userName:
                     okButton.setEnabled( False )
                     okButton.setToolTip( "Project specific SVN "
