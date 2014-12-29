@@ -171,7 +171,7 @@ def getImportedNameDefinitionLine( path, name, info = None ):
             info = getBriefModuleInfoFromFile( path )
         else:
             editor = widget.getEditor()
-            info = getBriefModuleInfoFromMemory( str( editor.text() ) )
+            info = getBriefModuleInfoFromMemory( editor.text() )
 
     # Check the object names
     for classObj in info.classes:
