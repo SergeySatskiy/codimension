@@ -114,7 +114,7 @@ class BreakpointEditDialog( QDialog ):
         " Provides a new instance of a breakpoint "
         newBPoint = Breakpoint( self.__origBpoint.getAbsoluteFileName(),
                                 self.__origBpoint.getLineNumber(),
-                                str( self.__conditionValue.lineEdit().text() ).strip(),
+                                self.__conditionValue.lineEdit().text().strip(),
                                 self.__tempCheckbox.isChecked(),
                                 self.__enabled.isChecked(),
                                 self.__ignoreValue.value() )
