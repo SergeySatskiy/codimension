@@ -490,7 +490,7 @@ class TextEditor( ScintillaWrapper ):
         importLine, line = isImportLine( self )
         if importLine:
             return False
-        selectedText = str( self.selectedText() ).strip()
+        selectedText = self.selectedText().strip()
         if selectedText:
             return '\n' not in selectedText and \
                    '\r' not in selectedText
@@ -503,7 +503,7 @@ class TextEditor( ScintillaWrapper ):
         importLine, line = isImportLine( self )
         if importLine:
             return False
-        selectedText = str( self.selectedText() ).strip()
+        selectedText = self.selectedText().strip()
         if not selectedText:
             return False
 
@@ -1562,7 +1562,7 @@ class TextEditor( ScintillaWrapper ):
             words = list( getEditorTags( self, self.__completionPrefix ) )
             isModName = False
         else:
-            text = str( self.text() )
+            text = self.text()
             info = getBriefModuleInfoFromMemory( text )
             context = getContext( self, info )
 
@@ -1726,7 +1726,7 @@ class TextEditor( ScintillaWrapper ):
     def onScopeBegin( self ):
         " The user requested jumping to the current scope begin "
         if self.isPythonBuffer():
-            text = str( self.text() )
+            text = self.text()
             info = getBriefModuleInfoFromMemory( text )
             context = getContext( self, info, True )
             if context.getScope() != context.GlobalScope:
@@ -1918,13 +1918,13 @@ class TextEditor( ScintillaWrapper ):
     def openAsFile( self ):
         """ Triggered when a selection or a current tag is
             requested to be opened as a file """
-        selectedText = str( self.selectedText() ).strip()
+        selectedText = self.selectedText().strip()
         singleSelection = selectedText != "" and \
                           '\n' not in selectedText and \
                           '\r' not in selectedText
         currentWord = ""
         if selectedText == "":
-            currentWord = str( self.getCurrentWord() ).strip()
+            currentWord = self.getCurrentWord().strip()
 
         path = currentWord
         if singleSelection:
@@ -1984,7 +1984,7 @@ class TextEditor( ScintillaWrapper ):
 
     def downloadAndShow( self ):
         " Triggered when the user wants to download and see the file "
-        url = str( self.selectedText() ).strip()
+        url = self.selectedText().strip()
         if url.startswith( "www." ):
             url = "http://" + url
 
@@ -2010,7 +2010,7 @@ class TextEditor( ScintillaWrapper ):
 
     def openInBrowser( self ):
         " Triggered when a selected URL should be opened in a browser "
-        url = str( self.selectedText() ).strip()
+        url = self.selectedText().strip()
         if url.startswith( "www." ):
             url = "http://" + url
         QDesktopServices.openUrl( QUrl( url ) )
@@ -2033,7 +2033,7 @@ class TextEditor( ScintillaWrapper ):
             # It is not a python file at all
             return True
 
-        text = str( self.text() )
+        text = self.text()
         info = getBriefModuleInfoFromMemory( text )
         context = getContext( self, info, True, False )
         line, pos = self.getCursorPosition()
@@ -2119,7 +2119,7 @@ class TextEditor( ScintillaWrapper ):
             return
 
 
-        breakableLines = getBreakpointLines( "", str( self.text() ),
+        breakableLines = getBreakpointLines( "", self.text(),
                                              True, False )
         if breakableLines is None:
             logging.warning( "The breakable lines could not be identified "
@@ -2353,7 +2353,7 @@ class TextEditor( ScintillaWrapper ):
             return
 
         fileName = self._parent.getFileName()
-        breakableLines = getBreakpointLines( fileName, str( self.text() ),
+        breakableLines = getBreakpointLines( fileName, self.text(),
                                              True, False )
 
         toBeDeleted = []
@@ -2829,7 +2829,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def onPythonTidy( self ):
         " Triggered when python tidy should be called "
-        text = str( self.__editor.text() )
+        text = self.__editor.text()
         info = getBriefModuleInfoFromMemory( text )
         if info.isOK == False:
             logging.warning( "The python code is syntactically incorrect. "
@@ -2868,7 +2868,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
     def onPythonTidySettings( self ):
         " Triggered when a python tidy settings are requested "
-        text = str( self.__editor.text() )
+        text = self.__editor.text()
         info = getBriefModuleInfoFromMemory( text )
         if info.isOK == False:
             logging.warning( "The python code is syntactically incorrect. "
@@ -2884,7 +2884,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         tidy = PythonTidyDriver()
         try:
             QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
-            result = tidy.run( str( self.__editor.text() ),
+            result = tidy.run( self.__editor.text(),
                                tidySettings )
             QApplication.restoreOverrideCursor()
         except Exception, exc:
@@ -3025,7 +3025,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         if importLine:
             lineImports, importWhat = getImportsInLine( self.__editor.text(),
                                                         lineNo + 1 )
-            currentWord = str( self.__editor.getCurrentWord( "." ) )
+            currentWord = self.__editor.getCurrentWord( "." )
             if currentWord in lineImports:
                 # The cursor is on some import
                 path = resolveImport( basePath, currentWord )
@@ -3398,7 +3398,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
             return line in self.__breakableLines
 
         self.__breakableLines = getBreakpointLines( self.getFileName(),
-                                                    str( self.__editor.text() ),
+                                                    self.__editor.text(),
                                                     enforceRecalc )
 
         if self.__breakableLines is None :

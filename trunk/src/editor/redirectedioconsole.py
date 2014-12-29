@@ -172,7 +172,7 @@ class RedirectedIOConsole( TextEditor ):
             return
 
         # It is an input mode
-        txt = str( event.text() )
+        txt = event.text()
         if len( txt ) and txt >= ' ':
             # Printable character
             if self.currentPosition() < self.lastOutputPos:
@@ -226,7 +226,7 @@ class RedirectedIOConsole( TextEditor ):
             return True
 
         # Check what is in the buffer
-        text = str( QApplication.clipboard().text() )
+        text = QApplication.clipboard().text()
         if '\n' in text or '\r' in text:
             return True
 
@@ -530,7 +530,7 @@ class RedirectedIOConsole( TextEditor ):
         self.__menuUndo.setEnabled( self.isUndoAvailable() )
         self.__menuRedo.setEnabled( self.isRedoAvailable() )
 
-        pasteText = str( QApplication.clipboard().text() )
+        pasteText = QApplication.clipboard().text()
         pasteEnable = pasteText != "" and \
                       '\n' not in pasteText and \
                       '\r' not in pasteText and \
