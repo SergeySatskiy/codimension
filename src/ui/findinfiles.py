@@ -84,7 +84,7 @@ class ItemToSearchIn:
                 mainWindow = GlobalData().mainWindow
                 widget = mainWindow.getWidgetByUUID( self.bufferUUID )
                 if widget is not None:
-                    content = str( widget.getEditor().text() ).splitlines()
+                    content = widget.getEditor().text().splitlines()
                 else:
                     raise Exception( "Inconsistency. Buffer disappeared." )
             else:
@@ -130,7 +130,7 @@ class ItemToSearchIn:
             if widget is not None:
                 # Search in the buffer
 
-                content = str( widget.getEditor().text() ).splitlines()
+                content = widget.getEditor().text().splitlines()
                 self.__lookThroughLines( content, expression )
                 return
 
@@ -529,13 +529,13 @@ class FindInFilesDialog( QDialog, object ):
         " Tests the searchability and sets the Find button status "
 
         startTime = time.time()
-        if str( self.findCombo.currentText() ).strip() == "":
+        if self.findCombo.currentText().strip() == "":
             self.findButton.setEnabled( False )
             self.findButton.setToolTip( "No text to search" )
             return
 
         if self.dirRButton.isChecked():
-            dirname = str( self.dirEditCombo.currentText() ).strip()
+            dirname = self.dirEditCombo.currentText().strip()
             if dirname == "":
                 self.findButton.setEnabled( False )
                 self.findButton.setToolTip( "No directory path" )
@@ -546,7 +546,7 @@ class FindInFilesDialog( QDialog, object ):
                 return
 
         # Now we need to match file names if there is a filter
-        filtersText = str( self.filterCombo.currentText() ).strip()
+        filtersText = self.filterCombo.currentText().strip()
         if filtersText == "":
             self.findButton.setEnabled( True )
             self.findButton.setToolTip( "Find in files" )

@@ -1615,7 +1615,7 @@ class EditorsManager( QTabWidget ):
                   MainWindowTabWidgetBase.VCSAnnotateViewer ]:
             return
 
-        searchText = str( self.currentWidget().getEditor().getSearchText() )
+        searchText = self.currentWidget().getEditor().getSearchText()
         if searchText:
             self.findWidget.startHiddenSearch( searchText )
             self.__lastDisplayedWasFindWidget = True

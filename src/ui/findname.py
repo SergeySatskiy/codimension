@@ -132,7 +132,7 @@ class FindNameModel( QAbstractItemModel ):
                 if widget is None:
                     info = GlobalData().briefModinfoCache.get( fname )
                 else:
-                    content = str( widget.getEditor().text() )
+                    content = widget.getEditor().text()
                     info = getBriefModuleInfoFromMemory( content )
                 self.__populateInfo( info, fname )
         return
@@ -227,7 +227,7 @@ class FindNameModel( QAbstractItemModel ):
             if fname.endswith( '.py' ) or \
                fname.endswith( '.py3' ) or \
                fname.endswith( '.pyw' ):
-                content = str( widget.getEditor().text() )
+                content = widget.getEditor().text()
                 info = getBriefModuleInfoFromMemory( content )
                 self.__populateInfo( info, fname )
         return
@@ -610,7 +610,7 @@ class FindNameDialog( QDialog ):
             the cursor jumped where it should """
 
         # Save the current filter if needed
-        filterText = str( self.findCombo.currentText() ).strip()
+        filterText = self.findCombo.currentText().strip()
         if filterText != "":
             if filterText in self.__findNameHistory:
                 self.__findNameHistory.remove( filterText )

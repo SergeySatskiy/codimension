@@ -555,10 +555,9 @@ class ProjectViewer( QWidget ):
         if dialog.exec_() == QDialog.Accepted:
             importDirs = []
             for index in xrange( dialog.importDirList.count() ):
-                importDirs.append( str( dialog.importDirList.item(
-                                                        index ).text() ) )
+                importDirs.append( dialog.importDirList.item( index ).text() )
 
-            scriptName = str( dialog.scriptEdit.text() ).strip()
+            scriptName = dialog.scriptEdit.text().strip()
             if scriptName != "":
                 relativePath = relpath( scriptName, project.getProjectDir() )
                 if not relativePath.startswith( '..' ):
@@ -566,13 +565,13 @@ class ProjectViewer( QWidget ):
 
             project.updateProperties(
                 scriptName, importDirs,
-                str( dialog.creationDateEdit.text() ).strip(),
-                str( dialog.authorEdit.text() ).strip(),
-                str( dialog.licenseEdit.text() ).strip(),
-                str( dialog.copyrightEdit.text() ).strip(),
-                str( dialog.versionEdit.text() ).strip(),
-                str( dialog.emailEdit.text() ).strip(),
-                str( dialog.descriptionEdit.toPlainText() ).strip() )
+                dialog.creationDateEdit.text().strip(),
+                dialog.authorEdit.text().strip(),
+                dialog.licenseEdit.text().strip(),
+                dialog.copyrightEdit.text().strip(),
+                dialog.versionEdit.text().strip(),
+                dialog.emailEdit.text().strip(),
+                dialog.descriptionEdit.toPlainText().strip() )
 
             self.emit( SIGNAL( "fileUpdated" ), project.fileName, None )
             self.onFileUpdated( project.fileName, None )

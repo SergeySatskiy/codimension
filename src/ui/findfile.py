@@ -167,7 +167,7 @@ class FindFileModel( QAbstractItemModel ):
                 if widget is None:
                     info = GlobalData().briefModinfoCache.get( fname )
                 else:
-                    content = str( widget.getEditor().text() )
+                    content = widget.getEditor().text()
                     info = getBriefModuleInfoFromMemory( content )
                 if info.docstring is not None:
                     tooltip = info.docstring.text
@@ -190,7 +190,7 @@ class FindFileModel( QAbstractItemModel ):
             fileType = detectFileType( fname )
             tooltip = ""
             if showTooltips and fileType in [ PythonFileType, Python3FileType ]:
-                content = str( widget.getEditor().text() )
+                content = widget.getEditor().text()
                 info = getBriefModuleInfoFromMemory( content )
                 if info.docstring is not None:
                     tooltip = info.docstring.text
@@ -574,7 +574,7 @@ class FindFileDialog( QDialog ):
             the cursor jumped where it should """
 
         # Save the current filter if needed
-        filterText = str( self.findCombo.currentText() ).strip()
+        filterText = self.findCombo.currentText().strip()
         if filterText != "":
             if filterText in self.__findFileHistory:
                 self.__findFileHistory.remove( filterText )

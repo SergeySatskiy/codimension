@@ -657,7 +657,7 @@ class FindReplaceBase( QWidget ):
 
     def getLastSearchString( self ):
         " Provides the string which was searched last time "
-        return str( self.findtextCombo.currentText() )
+        return self.findtextCombo.currentText()
 
 
 class FindWidget( FindReplaceBase ):

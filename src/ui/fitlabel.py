@@ -127,7 +127,7 @@ class FramedLabelWithDoubleClick( QLabel ):
     def mouseDoubleClickEvent( self, event ):
         if event.button() == Qt.LeftButton:
             if self.__callback is None:
-                txt = str( self.text() ).strip()
+                txt = self.text().strip()
                 if txt:
                     QApplication.clipboard().setText( txt )
             else:

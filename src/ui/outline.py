@@ -274,7 +274,7 @@ class FileOutlineViewer( QWidget ):
         editor = widget.getEditor()
         editor.SCEN_CHANGE.connect( self.__onBufferChanged )
         editor.cursorPositionChanged.connect( self.__cursorPositionChanged )
-        info = getBriefModuleInfoFromMemory( str( editor.text() ) )
+        info = getBriefModuleInfoFromMemory( editor.text() )
 
         self.showParsingErrorsButton.setEnabled( info.isOK != True )
 
@@ -374,7 +374,7 @@ class FileOutlineViewer( QWidget ):
             return None
 
         editor = widget.getEditor()
-        info = getBriefModuleInfoFromMemory( str( editor.text() ) )
+        info = getBriefModuleInfoFromMemory( editor.text() )
         return info
 
     def __onTabClosed( self, uuid ):
@@ -445,7 +445,7 @@ class FileOutlineViewer( QWidget ):
                 return
 
             editor = widget.getEditor()
-            info = getBriefModuleInfoFromMemory( str( editor.text() ) )
+            info = getBriefModuleInfoFromMemory( editor.text() )
             dialog = ParserErrorsDialog( fName, info )
             dialog.exec_()
         except Exception, ex:
