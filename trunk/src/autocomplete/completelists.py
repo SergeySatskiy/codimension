@@ -178,7 +178,7 @@ def __getImportedObjects( moduleName, fileName ):
     else:
         # Parse it from memory because it could be changed
         editor = widget.getEditor()
-        info = getBriefModuleInfoFromMemory( str( editor.text() ) )
+        info = getBriefModuleInfoFromMemory( editor.text() )
 
     return __getParsedModuleNames( info )
 
@@ -266,7 +266,7 @@ def getCalltipAndDoc( fileName, editor, position = None, tryQt = False ):
         ropeProject = GlobalData().getRopeProject( fileName )
         if position is None:
             position = editor.currentPosition()
-        text = str( editor.text() )
+        text = editor.text()
 
         calltip = None
         docstring = None
@@ -335,7 +335,7 @@ def getDefinitionLocation( fileName, editor ):
         GlobalData().validateRopeProject()
         ropeProject = GlobalData().getRopeProject( fileName )
         position = editor.currentPosition()
-        text = str( editor.text() )
+        text = editor.text()
 
         resource = None
         if os.path.isabs( fileName ):
