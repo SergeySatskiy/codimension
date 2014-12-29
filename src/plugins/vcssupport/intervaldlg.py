@@ -75,12 +75,12 @@ class VCSUpdateIntervalConfigDialog( QDialog ):
         " Updates the OK button status "
         okButton = self.__buttonBox.button( QDialogButtonBox.Ok )
 
-        if str( self.__intervalEdit.text() ) == "":
+        if self.__intervalEdit.text() == "":
             okButton.setEnabled( False )
             okButton.setToolTip( "Interval must be defined" )
             return
 
-        value = int( str( self.__intervalEdit.text() ) )
+        value = int( self.__intervalEdit.text() )
         if value < 1 or value > 3600:
             okButton.setEnabled( False )
             okButton.setToolTip( "Interval must be within 1..3600 sec" )
@@ -92,6 +92,6 @@ class VCSUpdateIntervalConfigDialog( QDialog ):
 
     def userAccept( self ):
         " Triggered when the user clicks OK "
-        self.interval = int( str( self.__intervalEdit.text() ) )
+        self.interval = int( self.__intervalEdit.text() )
         self.accept()
         return
