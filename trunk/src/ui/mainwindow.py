@@ -1900,7 +1900,7 @@ class CodimensionMainWindow( QMainWindow ):
         importDirs = []
         index = 0
         while index < dialog.importDirList.count():
-            dirName = str( dialog.importDirList.item( index ).text() )
+            dirName = dialog.importDirList.item( index ).text()
             if dirName.startswith( baseDir ):
                 # Replace paths with relative if needed
                 dirName = dirName[ len( baseDir ) : ]
@@ -1918,15 +1918,15 @@ class CodimensionMainWindow( QMainWindow ):
 
         GlobalData().project.createNew(
                         dialog.absProjectFileName,
-                        str( dialog.scriptEdit.text() ).strip(),
+                        dialog.scriptEdit.text().strip(),
                         importDirs,
-                        str( dialog.authorEdit.text() ).strip(),
-                        str( dialog.licenseEdit.text() ).strip(),
-                        str( dialog.copyrightEdit.text() ).strip(),
-                        str( dialog.descriptionEdit.toPlainText() ).strip(),
-                        str( dialog.creationDateEdit.text() ).strip(),
-                        str( dialog.versionEdit.text() ).strip(),
-                        str( dialog.emailEdit.text() ).strip() )
+                        dialog.authorEdit.text().strip(),
+                        dialog.licenseEdit.text().strip(),
+                        dialog.copyrightEdit.text().strip(),
+                        dialog.descriptionEdit.toPlainText().strip(),
+                        dialog.creationDateEdit.text().strip(),
+                        dialog.versionEdit.text().strip(),
+                        dialog.emailEdit.text().strip() )
 
         QApplication.restoreOverrideCursor()
         self.settings.addRecentProject( dialog.absProjectFileName )

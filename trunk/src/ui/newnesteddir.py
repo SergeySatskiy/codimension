@@ -78,7 +78,7 @@ class NewProjectDirDialog( QDialog, object ):
 
     def getDirName( self ):
         " Provides the user input "
-        return str( self.__dirnameEdit.text() )
+        return self.__dirnameEdit.text()
 
     def eventFilter( self, obj, event ):
         " Event filter for the project name field "

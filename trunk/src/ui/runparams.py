@@ -617,7 +617,7 @@ class RunDialog( QDialog ):
         " Returns True if the working dir is OK "
         if self.__scriptWDRButton.isChecked():
             return True
-        return os.path.isdir( str( self.__dirEdit.text() ) )
+        return os.path.isdir( self.__dirEdit.text() )
 
     def __setRunButtonProps( self, newText = None ):
         " Enable/disable run button and set its tooltip "
@@ -633,7 +633,7 @@ class RunDialog( QDialog ):
             return
 
         if self.__nodeLimitEdit is not None:
-            txt = str( self.__nodeLimitEdit.text() ).strip()
+            txt = self.__nodeLimitEdit.text().strip()
             try:
                 value = float( txt )
                 if value < 0.0 or value > 100.0:
@@ -840,9 +840,9 @@ class RunDialog( QDialog ):
 
         if self.__action == "profile":
             self.profilerParams.nodeLimit = float(
-                                    str( self.__nodeLimitEdit.text() ) )
+                                    self.__nodeLimitEdit.text() )
             self.profilerParams.edgeLimit = float(
-                                    str( self.__edgeLimitEdit.text() ) )
+                                    self.__edgeLimitEdit.text() )
 
         self.accept()
         return

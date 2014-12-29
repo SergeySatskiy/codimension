@@ -522,7 +522,7 @@ class PymetricsViewer( QWidget ):
             # The widget was found
             editor = widget.getEditor()
             # The editor content has been modified, so re-parse the buffer
-            info = getBriefModuleInfoFromMemory( str( editor.text() ) )
+            info = getBriefModuleInfoFromMemory( editor.text() )
 
         parts = objName.split( '.' )
         currentIndex = 0

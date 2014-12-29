@@ -130,7 +130,7 @@ class PyflakesViewer( QObject ):
         self.connect( editor, SIGNAL( 'cursorPositionChanged(int,int)' ),
                               self.__cursorPositionChanged )
 
-        results = getFileErrors( str( editor.text() ) )
+        results = getFileErrors( editor.text() )
         attributes = PyflakesAttributes()
         attributes.messages = results
         attributes.changed = False
@@ -183,7 +183,7 @@ class PyflakesViewer( QObject ):
             return
 
         editor = widget.getEditor()
-        results = getFileErrors( str( editor.text() ) )
+        results = getFileErrors( editor.text() )
 
         self.__flakesResults[ self.__currentUUID ].messages = results
         self.__flakesResults[ self.__currentUUID ].changed = False
