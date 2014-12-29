@@ -320,14 +320,14 @@ class TidySettingsDialog( QDialog ):
             return
 
         self.__settings.settings[ "COL_LIMIT" ] = int( self.__colsEdit.text() )
-        self.__settings.settings[ "ASSIGNMENT" ] = str( self.__assignmentEdit.text() )
-        self.__settings.settings[ "FUNCTION_PARAM_ASSIGNMENT" ] = str( self.__funcAssignEdit.text() )
-        self.__settings.settings[ "DICT_COLON" ] = str( self.__dictSepEdit.text() )
-        self.__settings.settings[ "SLICE_COLON" ] = str( self.__sliceSepEdit.text() )
-        self.__settings.settings[ "SHEBANG" ] = str( self.__inEdit.text() )
-        self.__settings.settings[ "CODING" ] = str( self.__outCodingEdit.text() )
-        self.__settings.settings[ "CODING_SPEC" ] = str( self.__srcCodingEdit.text() )
-        self.__settings.settings[ "BOILERPLATE" ] = str( self.__boilEdit.toPlainText() )
+        self.__settings.settings[ "ASSIGNMENT" ] = self.__assignmentEdit.text()
+        self.__settings.settings[ "FUNCTION_PARAM_ASSIGNMENT" ] = self.__funcAssignEdit.text()
+        self.__settings.settings[ "DICT_COLON" ] = self.__dictSepEdit.text()
+        self.__settings.settings[ "SLICE_COLON" ] = self.__sliceSepEdit.text()
+        self.__settings.settings[ "SHEBANG" ] = self.__inEdit.text()
+        self.__settings.settings[ "CODING" ] = self.__outCodingEdit.text()
+        self.__settings.settings[ "CODING_SPEC" ] = self.__srcCodingEdit.text()
+        self.__settings.settings[ "BOILERPLATE" ] = self.__boilEdit.toPlainText()
         self.__settings.settings[ "KEEP_BLANK_LINES" ] = bool( self.__keepBlanks.isChecked() )
         self.__settings.settings[ "ADD_BLANK_LINES_AROUND_COMMENTS" ] = bool( self.__addBlanks.isChecked() )
         self.__settings.settings[ "LEFTJUST_DOC_STRINGS" ] = bool( self.__justifyDoc.isChecked() )
@@ -359,7 +359,7 @@ class TidySettingsDialog( QDialog ):
     def __validate( self, text = None ):
         " Validates input "
         allValid = True
-        val = str( self.__colsEdit.text() )
+        val = self.__colsEdit.text()
         try:
             intVal = int( val )
             if intVal <= 0:
@@ -395,14 +395,14 @@ class TidySettingsDialog( QDialog ):
         else:
             self.__setValid( self.__sliceSepEdit, True )
 
-        val = str( self.__inEdit.text() )
+        val = self.__inEdit.text()
         if val.strip() != "" and not val.strip().startswith( '#!' ):
             allValid = False
             self.__setValid( self.__inEdit, False )
         else:
             self.__setValid( self.__inEdit, True )
 
-        val = str( self.__srcCodingEdit.text() )
+        val = self.__srcCodingEdit.text()
         if val.strip() != "" and not val.strip().startswith( '#' ):
             allValid = False
             self.__setValid( self.__srcCodingEdit, False )
