@@ -116,7 +116,7 @@ class LinesCounter:
     def getLinesInBuffer( self, editor ):
         " Counts lines in the given Scintilla buffer "
         self.__reset()
-        txt = str( editor.text() )
+        txt = editor.text()
         self.filesSize = len( txt )
         for line in txt.split( '\n' ):
             self.__processLine( line )
