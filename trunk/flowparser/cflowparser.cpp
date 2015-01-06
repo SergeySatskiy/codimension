@@ -36,12 +36,80 @@ Py::Object  parseInput( pANTLR3_INPUT_STREAM  input )
         throw Py::RuntimeError( "Cannot create lexer" );
 
 
-    pANTLR3_COMMON_TOKEN_STREAM     tstream;
+    pANTLR3_COMMON_TOKEN_STREAM     tstream( antlr3CommonTokenStreamSourceNew(
+                                                ANTLR3_SIZE_HINT,
+                                                TOKENSOURCE( lxr ) ) );
+    if ( tstream == NULL )
+    {
+        lxr->free( lxr );
+        throw Py::RuntimeError( "Cannot create token stream" );
+    }
+
+    // I cannot discard off channel tokens because all the comments
+    // will be discarded. Instead there is another pass to collect comment
+    // tokens from the lexer.
+    // tstream->discardOffChannelToks( tstream, ANTLR3_TRUE );
+
+    // Create parser
+    ppycfParser     psr( pycfParserNew( tstream ) );
+    if ( psr == NULL )
+    {
+        tstream->free( tstream );
+        lxr->free( lxr );
+        throw Py::RuntimeError( "Error creating parser" );
+    }
+
+    // Get the tree and walk it
+    pANTLR3_BASE_TREE       tree( psr->file_input( psr ).tree );
+    ControlFlow *           controlFlow = new ControlFlow();
+
+    if ( tree == NULL )
+    {
+        psr->free( psr );
+        tstream->free( tstream );
+        lxr->free( lxr );
+        throw Py::RuntimeError( "Parsing error" );
+    }
+
+    // Walk the tree and insert collected info into the controlFlow object
 
 
+    // Second walk - comments
+    size_t      tokenCount = tstream->tokens->count;
+    for ( size_t  k = 0; k < tokenCount; ++k )
+    {
+        pANTLR3_COMMON_TOKEN    tok( (pANTLR3_COMMON_TOKEN)vectorGet( tstream->tokens, k ) );
+        if ( tok->type == COMMENT )
+        {
+            size_t      line = tok->line;
 
-    ControlFlow *   controlFlow = new ControlFlow();
+            // Adjust the last character of the comment
+            char *      lastChar = (char *)tok->stop;
+            while ( *lastChar == '\n' || *lastChar == '\r' || *lastChar == 0 )
+                --lastChar;
+            char *      firstChar = (char *)tok->start;
+            while ( *firstChar != '#' )
+            {
+                ++firstChar;
+                ++tok->charPosition;
+            }
+            size_t      commentSize = lastChar - firstChar + 1;
+            size_t      begin = firstChar - (char*)(tok->input->data);
+            size_t      end = begin + commentSize - 1;
+            char        buffer[ commentSize + 1 ];
+
+            snprintf( buffer, commentSize + 1, "%s", firstChar );
+            printf( "COMMENT size: %03ld start: %06ld end: %06ld line: %03ld pos: %03d content: '%s'\n",
+                    commentSize, begin, end, line, tok->charPosition + 1, buffer );
+        }
+    }
+
+    // Cleanup
+    psr->free( psr );
+    tstream->free( tstream );
+    lxr->free( lxr );
+
+    // Provide the result object
     return Py::asObject( controlFlow );
 }
-
 
