@@ -38,7 +38,7 @@ void walk( pANTLR3_BASE_TREE    tree,
         printf( "    " );
 
     // Print itself
-    const char *    tok = (tree->toString( tree ))->chars;
+    const char *    tok = (char *)((tree->toString( tree ))->chars);
     printf( "'%s'\n", tok );
 
     // Walk children

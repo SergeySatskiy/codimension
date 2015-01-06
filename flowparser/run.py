@@ -22,16 +22,17 @@
 
 " Unit tests for the python control flow parser "
 
-import sys
-from cdmcfparser import getControlFlowFromFile, getVersion
+import sys      # side comment: line 1
+                #               line 2
+from cdmcf import getControlFlowFromFile, VERSION
 
 if len( sys.argv ) != 2:
     print >> sys.stderr, "Single file name is expected"
     sys.exit( 1 )
 
-print "Running control flow parser version: " + getVersion()
+print "Running control flow parser version: " + VERSION
 
 controlFlow = getControlFlowFromFile( sys.argv[ 1 ] )
-print controlFlow.niceStringify()
+print controlFlow
 sys.exit( 0 )
 
