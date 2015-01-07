@@ -98,6 +98,35 @@ Py::Object  parseInput( pANTLR3_INPUT_STREAM  input )
             size_t      end = begin + commentSize - 1;
             char        buffer[ commentSize + 1 ];
 
+            if ( line == 1 )
+            {
+                // This might be a bang line
+                if ( commentSize > 2 )
+                {
+                    if ( firstChar[ 1 ] == '!' )
+                    {
+                        BangLine *      bangLine( new BangLine );
+                        bangLine->parent = controlFlow;
+                        bangLine->begin = firstChar - (char *)(input->data);
+                        bangLine->end = lastChar - (char *)(input->data);
+                        bangLine->beginLine = line;
+                        bangLine->beginPos = tok->charPosition + 1;
+                        bangLine->endLine = line;
+                        bangLine->endPos = bangLine->beginPos + commentSize - 1;
+                        controlFlow->updateEnd( bangLine->end,
+                                                bangLine->endLine,
+                                                bangLine->endPos );
+                        controlFlow->updateBegin( bangLine->begin,
+                                                  bangLine->beginLine,
+                                                  bangLine->beginPos );
+                        controlFlow->bangLine = Py::asObject( bangLine );
+                        continue;
+                    }
+                }
+            }
+
+
+
             snprintf( buffer, commentSize + 1, "%s", firstChar );
             printf( "COMMENT size: %03ld start: %06ld end: %06ld line: %03ld pos: %03d content: '%s'\n",
                     commentSize, begin, end, line, tok->charPosition + 1, buffer );
