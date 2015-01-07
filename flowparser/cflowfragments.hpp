@@ -76,6 +76,11 @@ class FragmentBase
         Py::Object  getContent( const Py::Tuple &  args );
         std::string getContent( const std::string *  buf = NULL );
         Py::Object  getLineContent( const Py::Tuple &  args );
+        void        updateEnd( INT_TYPE  otherEnd,
+                               INT_TYPE  otherEndLine, INT_TYPE  otherEndPos );
+        void        updateBegin( INT_TYPE  otherBegin,
+                                 INT_TYPE  otherBeginLine,
+                                 INT_TYPE  otherBeginPos );
 };
 
 
