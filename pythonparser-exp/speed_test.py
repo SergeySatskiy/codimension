@@ -45,12 +45,6 @@ def collectFiles( path, files ):
             (item.endswith( ".py" ) or item.endswith( ".py3" )):
             if item.startswith( "__" ):
                 continue
-#            if "bad_coding.py" in item:
-#                continue
-            if "bad_coding2.py" in item:
-                continue
-            if "func_unknown_encoding.py" in item:
-                continue
             files.append( os.path.abspath( path + item ) )
             continue
     return
@@ -79,11 +73,7 @@ def cdmpyparserTest( files ):
     count = 0
     for item in files:
         # print "Processing " + item + " ..."
-        before = sys.getdefaultencoding()
         tempObj = cdmbriefparser.getBriefModuleInfoFromFile( item )
-        after = sys.getdefaultencoding()
-        if before != after:
-            print "Encoding changed. Was : " + before + " now: " + after
         if SHOW_ERRORS:
             if not tempObj.isOK:
                 errorCount += 1
