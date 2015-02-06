@@ -1507,6 +1507,7 @@ parse_input( char *                         buffer,
 
         getErrorMessage( buffer, & error );
         callOnError( callbacks->onError, buffer );
+        PyErr_Clear();
     }
     else
     {
