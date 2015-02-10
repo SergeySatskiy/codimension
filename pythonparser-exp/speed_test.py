@@ -31,7 +31,7 @@ import time
 
 
 # Shows found errors in the parsed files
-SHOW_ERRORS = True
+SHOW_ERRORS = False
 
 
 def collectFiles( path, files ):
@@ -52,8 +52,8 @@ def collectFiles( path, files ):
 
 def pyclbrTest( files ):
     " Loop for the library standard parser "
-    time.sleep( 0.1 )
-    return
+#    time.sleep( 0.1 )
+#    return
     count = 0
     for item in files:
         try:
