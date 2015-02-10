@@ -105,7 +105,6 @@ void walk( node *                       tree,
     }
 
 
-
 /* Helper function to extract and check method pointers */
 static int
 getInstanceCallbacks( PyObject *                  instance,
@@ -198,8 +197,8 @@ callOnError( PyObject *  onError_, const char *  error_ )
 static void
 callOnArg( PyObject *  onArg, const char *  name, int  length )
 {
-    register PyObject *  argName = PyString_FromStringAndSize( name, length );
-    register PyObject *  ret = PyObject_CallFunctionObjArgs( onArg, argName, NULL );
+    PyObject *  argName = PyString_FromStringAndSize( name, length );
+    PyObject *  ret = PyObject_CallFunctionObjArgs( onArg, argName, NULL );
 
     if ( ret != NULL )
         Py_DECREF( ret );
@@ -211,8 +210,8 @@ callOnArg( PyObject *  onArg, const char *  name, int  length )
 static void
 callOnArgVal( PyObject *  onArgVal, const char *  value, int  length )
 {
-    register PyObject *  argVal = PyString_FromStringAndSize( value, length );
-    register PyObject *  ret = PyObject_CallFunctionObjArgs( onArgVal, argVal, NULL );
+    PyObject *  argVal = PyString_FromStringAndSize( value, length );
+    PyObject *  ret = PyObject_CallFunctionObjArgs( onArgVal, argVal, NULL );
 
     if ( ret != NULL )
         Py_DECREF( ret );
@@ -465,9 +464,12 @@ static int getTotalLines( node *  tree )
         tree = &(tree->n_child[ 0 ]);
 
     assert( tree->n_type == file_input );
-    for ( size_t k = 0; k < tree->n_nchildren; ++k )
+
+    node *          child;
+    int             n = tree->n_nchildren;
+    for ( int  k = 0; k < n; ++k )
     {
-        node *  child = &(tree->n_child[ k ]);
+        child = &(tree->n_child[ k ]);
         if ( child->n_type == ENDMARKER )
             return child->n_lineno;
     }
@@ -515,7 +517,8 @@ static char *   getDottedName( node *   tree,
 
 static node *  findChildOfType( node *  from, int  type )
 {
-    for ( int  k = 0; k < from->n_nchildren; ++k )
+    int         n = from->n_nchildren;
+    for ( int  k = 0; k < n; ++k )
         if ( from->n_child[ k ].n_type == type )
             return & (from->n_child[ k ]);
     return NULL;
@@ -554,10 +557,6 @@ static void  collectTestString( node *  from, char *  buffer, int *  length )
                   strcmp( from->n_str, "/" ) == 0 ||
                   strcmp( from->n_str, "*" ) == 0 ||
                   strcmp( from->n_str, ":" ) == 0 ||
-                  strcmp( from->n_str, "or" ) == 0 ||
-                  strcmp( from->n_str, "and" ) == 0 ||
-                  strcmp( from->n_str, "if" ) == 0 ||
-                  strcmp( from->n_str, "else" ) == 0 ||
                   strcmp( from->n_str, "**" ) == 0 ||
                   strcmp( from->n_str, "~" ) == 0 ||
                   strcmp( from->n_str, "%" ) == 0 ||
@@ -576,7 +575,12 @@ static void  collectTestString( node *  from, char *  buffer, int *  length )
                   strcmp( from->n_str, "^" ) == 0 ||
                   strcmp( from->n_str, "&" ) == 0 ||
                   strcmp( from->n_str, "<<" ) == 0 ||
-                  strcmp( from->n_str, ">>" ) == 0 )
+                  strcmp( from->n_str, ">>" ) == 0 ||
+                  strcmp( from->n_str, "or" ) == 0 ||
+                  strcmp( from->n_str, "and" ) == 0 ||
+                  strcmp( from->n_str, "if" ) == 0 ||
+                  strcmp( from->n_str, "elif" ) == 0 ||
+                  strcmp( from->n_str, "else" ) == 0 )
         {
             buffer[ *length ] = ' ';
             ++(*length);
@@ -594,7 +598,8 @@ static void  collectTestString( node *  from, char *  buffer, int *  length )
         }
     }
 
-    for ( int  k = 0; k < from->n_nchildren; ++k )
+    int         n = from->n_nchildren;
+    for ( int  k = 0; k < n; ++k )
         collectTestString( & ( from->n_child[ k ] ), buffer, length );
 }
 
@@ -638,7 +643,8 @@ static void checkForDocstring( node *                       tree,
         return;
 
     node *      child = NULL;
-    for ( int  k = 0; k < tree->n_nchildren; ++k )
+    int         n = tree->n_nchildren;
+    for ( int  k = 0; k < n; ++k )
     {
         /* need to skip NEWLINE and INDENT till stmt if so */
         child = & ( tree->n_child[ k ] );
@@ -661,11 +667,14 @@ static void checkForDocstring( node *                       tree,
     int             collected = 0;
     int             charsToSkip;
     int             charsToCopy;
-    for ( int  k = 0; k < child->n_nchildren; ++k )
+    node *          stringChild;
+    n = child->n_nchildren;
+    for ( int  k = 0; k < n; ++k )
     {
-        node *      stringChild = & ( child->n_child[ k ] );
+        stringChild = & ( child->n_child[ k ] );
         if ( stringChild->n_type != STRING )
             return;
+
         charsToSkip = getStringLiteralPrefixLength( stringChild );
         charsToCopy = strlen( stringChild->n_str ) - 2 * charsToSkip;
 
@@ -706,8 +715,9 @@ static void  processImport( node *                       tree,
         int     length = 0;
         int     needFlush = 0;
         node *  firstNameNode = NULL;
+        int     n = tree->n_nchildren;
 
-        for ( int  k = 0; k < tree->n_nchildren; ++k )
+        for ( int  k = 0; k < n; ++k )
         {
             node *      child = & ( tree->n_child[ k ] );
             if ( child->n_type == DOT )
@@ -744,9 +754,9 @@ static void  processImport( node *                       tree,
             if ( child->n_type == import_as_names )
             {
                 // This is what is imported from the module
-                for ( int  k = 0; k < child->n_nchildren; ++k )
+                for ( int  j = 0; j < child->n_nchildren; ++j )
                 {
-                    node *      whatChild = & ( child->n_child[ k ] );
+                    node *      whatChild = & ( child->n_child[ j ] );
                     if ( whatChild->n_type == import_as_name )
                     {
                         assert( whatChild->n_nchildren == 1 ||
@@ -778,9 +788,10 @@ static void  processImport( node *                       tree,
         tree = findChildOfType( tree, dotted_as_names );
         assert( tree != NULL );
 
+        node *      child;
         for ( int  k = 0; k < tree->n_nchildren; ++k )
         {
-            node *      child = & ( tree->n_child[ k ] );
+            child = & ( tree->n_child[ k ] );
             if ( child->n_type == dotted_as_name )
             {
                 int     expect_as_name = 0;
@@ -863,9 +874,10 @@ static int processDecor( node *                        tree,
     if ( argsNode != NULL )
     {
         /* There are decorator arguments */
+        node *      child;
         for ( int  k = 0; k < argsNode->n_nchildren; ++k )
         {
-            node *      child = & ( argsNode->n_child[ k ] );
+            child = & ( argsNode->n_child[ k ] );
             if ( child->n_type == argument )
             {
                 char        arg[ MAX_ARG_VAL_SIZE ];
@@ -885,11 +897,13 @@ static int processDecorators( node *                        tree,
                               int *                         lineShifts )
 {
     int         staticMethod = 0;
+    node *      child;
+    int         n = tree->n_nchildren;
     assert( tree->n_type == decorators );
 
-    for ( int  k = 0; k < tree->n_nchildren; ++k )
+    for ( int  k = 0; k < n; ++k )
     {
-        node *  child = & ( tree->n_child[ k ] );
+        child = & ( tree->n_child[ k ] );
         if ( child->n_type == decorator )
         {
             int     isStatic = 0;
@@ -940,9 +954,11 @@ static void  processClassDefinition( node *                       tree,
     node *      listNode = findChildOfType( tree, testlist );
     if ( listNode != NULL )
     {
-        for ( int  k = 0; k < listNode->n_nchildren; ++k )
+        node *      child;
+        int         n = listNode->n_nchildren;
+        for ( int  k = 0; k < n; ++k )
         {
-            node *      child = & ( listNode->n_child[ k ] );
+            child = & ( listNode->n_child[ k ] );
             if ( child->n_type == test )
             {
                 char        buffer[ MAX_ARG_VAL_SIZE ];
@@ -1007,10 +1023,11 @@ processFuncDefinition( node *                       tree,
     if ( argsNode != NULL )
     {
         /* The function has arguments */
-        int     k = 0;
+        int         k = 0;
+        node *      child;
         while ( k < argsNode->n_nchildren )
         {
-            node *      child = & ( argsNode->n_child[ k ] );
+            child = & ( argsNode->n_child[ k ] );
             if ( child->n_type == fpdef )
             {
                 if ( firstArg == 1 )
@@ -1097,9 +1114,10 @@ static void processAssign( node *              tree,
     assert( tree->n_type == testlist ||
             tree->n_type == testlist_comp );
 
+    node *      child;
     for ( int  k = 0; k < tree->n_nchildren; ++k )
     {
-        node *      child = & ( tree->n_child[ k ] );
+        child = & ( tree->n_child[ k ] );
         if ( child->n_type == test )
         {
             node *      powerNode = skipToNode( child, power );
@@ -1149,9 +1167,11 @@ static void processInstanceMember( node *                      tree,
     assert( tree->n_type == testlist ||
             tree->n_type == testlist_comp );
 
-    for ( int  k = 0; k < tree->n_nchildren; ++k )
+    node *      child;
+    int         n = tree->n_nchildren;
+    for ( int  k = 0; k < n; ++k )
     {
-        node *      child = & ( tree->n_child[ k ] );
+        child = & ( tree->n_child[ k ] );
         if ( child->n_type == test )
         {
             node *      powerNode = skipToNode( child, power );
@@ -1293,10 +1313,12 @@ void walk( node *                       tree,
     }
 
 
-    int     staticDecor = 0;
-    for ( int  i = 0; i < tree->n_nchildren; ++i )
+    int         staticDecor = 0;
+    node *      child;
+    int         n = tree->n_nchildren;
+    for ( int  i = 0; i < n; ++i )
     {
-        node *      child = & ( tree->n_child[ i ] );
+        child = & ( tree->n_child[ i ] );
 
         if ( (entryLevel == 1) && (i == 0) )
         {
@@ -1595,7 +1617,8 @@ py_modinfo_from_file( PyObject *  self,     /* unused */
     f = fopen( fileName, "r" );
     if ( f == NULL )
     {
-        PyErr_SetString( PyExc_TypeError, "Cannot open file" );
+        clearCallbacks( & callbacks );
+        PyErr_SetString( PyExc_RuntimeError, "Cannot open file" );
         return NULL;
     }
 
@@ -1609,7 +1632,8 @@ py_modinfo_from_file( PyObject *  self,     /* unused */
         if ( elem != 1 )
         {
             fclose( f );
-            PyErr_SetString( PyExc_TypeError, "Cannot read file" );
+            clearCallbacks( & callbacks );
+            PyErr_SetString( PyExc_RuntimeError, "Cannot read file" );
             return NULL;
         }
 

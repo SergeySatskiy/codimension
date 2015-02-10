@@ -20,8 +20,8 @@
 
 .PHONY: all clean
 
-FLAGS=-ffast-math -fomit-frame-pointer -g
-INCLUDE=-I/opt/python-2.7/include/python2.7/
+FLAGS=-ffast-math -fomit-frame-pointer
+INCLUDE=-I/usr/include/python2.7/
 
 all: cdmpyparser.c tree.cpp
 	python setup.py build_ext --inplace
