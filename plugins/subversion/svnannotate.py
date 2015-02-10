@@ -243,8 +243,8 @@ class SVNAnnotateProgress( QDialog ):
         minRevision = min( revisions )
         maxRevision = max( revisions )
 
-        revStart = pysvn.Revision( pysvn.opt_revision_kind.number, maxRevision )
-        revEnd = pysvn.Revision( pysvn.opt_revision_kind.number, minRevision )
+        revStart = pysvn.Revision( pysvn.opt_revision_kind.number, minRevision )
+        revEnd = pysvn.Revision( pysvn.opt_revision_kind.number, maxRevision )
 
         revs = self.__client.log( self.__path,
                                   revision_start = revStart,
@@ -256,3 +256,4 @@ class SVNAnnotateProgress( QDialog ):
                     self.revisionsInfo[ number ] = { 'message' :
                                             rev[ 'message' ] }
         return
+
