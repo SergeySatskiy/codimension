@@ -117,8 +117,11 @@ class VCSAnnotateViewer( TextEditor ):
         needMarker = True
 
         for lineRevision in self.__lineRevisions:
-            marginText = " " + ":".join( [ str( lineRevision ),
-                    self.__revisionInfo[ lineRevision ][ 'shortAuthor' ] ] )
+            if lineRevision in self.__revisionInfo:
+                marginText = " " + ":".join( [ str( lineRevision ),
+                        self.__revisionInfo[ lineRevision ][ 'shortAuthor' ] ] )
+            else:
+                marginText = " " + str( lineRevision )
             textLength = len( marginText )
             if textLength > self.__maxLength:
                 self.__maxLength = textLength
@@ -247,6 +250,7 @@ class VCSAnnotateViewerTabWidget( QWidget, MainWindowTabWidgetBase ):
     " VCS annotate viewer tab widget "
 
     textEditorZoom = pyqtSignal( int )
+    escapePressed = pyqtSignal()
 
     def __init__( self, parent ):
 
@@ -254,12 +258,18 @@ class VCSAnnotateViewerTabWidget( QWidget, MainWindowTabWidgetBase ):
         QWidget.__init__( self, parent )
 
         self.__viewer = VCSAnnotateViewer( self )
+        self.__viewer.escapePressed.connect( self.__onEsc )
         self.__fileName = ""
         self.__shortName = ""
         self.__fileType = UnknownFileType
 
         self.__createLayout()
         self.__viewer.zoomTo( Settings().zoom )
+        return
+
+    def __onEsc( self ):
+        " Triggered when Esc is pressed "
+        self.escapePressed.emit()
         return
 
     def __createLayout( self ):
