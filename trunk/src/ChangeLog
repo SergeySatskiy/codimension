@@ -9,6 +9,8 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * New feature: saving profiling results table in a CSV file
 * F12: make the cursor line the first on the screen
 * Get rid of QString, use python strings instead
+* Fix: ESC handling on a VCS annotate view
+* Improvement: more robust processing of a VCS revision information
 
 2014 May 06 Sergey Satskiy <sergey.satskiy@gmail.com>
 
