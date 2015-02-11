@@ -89,14 +89,16 @@ def getBreakpointLines( fileName, srcCode,
 
     try:
         if srcCode is None:
-            f = open( fileName )
+            f = open( fileName, "r" )
             srcCode = f.read()
             f.close()
+        if type( srcCode ) == unicode:
+            srcCode = str( srcCode )
         lines = calcBreakpointLines( srcCode )
         if saveToCache:
             validBreakPointLinesCache[ fileName ] = lines
         return lines
-    except:
+    except Exception, exc:
         return None
 
 
