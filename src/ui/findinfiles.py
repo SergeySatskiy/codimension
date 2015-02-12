@@ -228,7 +228,7 @@ class ItemToSearchIn:
         """ Calculates the start line number for the context tooltip """
         # matchedLine is a zero based index
         if ItemToSearchIn.contextLines >= totalLines:
-            return 0, totalLines - 1
+            return 0, totalLines
 
         start = matchedLine - int( ItemToSearchIn.contextLines / 2 )
         if start < 0:
