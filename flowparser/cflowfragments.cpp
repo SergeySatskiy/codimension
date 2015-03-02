@@ -191,6 +191,7 @@ Py::Object  FragmentBase::getContent( const Py::Tuple &  args )
     }
 
     throwWrongBufArgument( "getContent" );
+    return Py::None();  // Suppress compiler warning
 }
 
 
@@ -319,6 +320,7 @@ int  Fragment::setattr( const char *        attrName,
     if ( setAttribute( attrName, val ) )
         return 0;
     throwUnknownAttribute( attrName );
+    return -1;
 }
 
 // --- End of Fragment definition ---
@@ -472,6 +474,7 @@ int  BangLine::setattr( const char *        attrName,
     if ( setAttribute( attrName, val ) )
         return 0;
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 
@@ -564,6 +567,7 @@ int  EncodingLine::setattr( const char *        attrName,
     if ( setAttribute( attrName, val ) )
         return 0;
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 
@@ -685,6 +689,7 @@ int  Comment::setattr( const char *        attrName,
         return 0;
     }
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 
@@ -695,14 +700,19 @@ Py::Object  Comment::getDisplayValue( const Py::Tuple &  args )
     std::string *   bufPointer;
 
     if ( argCount == 0 )
+    {
         bufPointer = NULL;
+    }
     else if ( argCount == 1 )
     {
         buf = Py::String( args[ 0 ] ).as_std_string();
         bufPointer = & buf;
     }
     else
+    {
         throwWrongBufArgument( "getDisplayValue" );
+        throw std::exception();     // Suppress compiler warning
+    }
 
 
     Py::List::size_type     partCount( parts.length() );
@@ -866,6 +876,7 @@ int  Docstring::setattr( const char *        attrName,
         return 0;
     }
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 
@@ -876,14 +887,19 @@ Py::Object  Docstring::getDisplayValue( const Py::Tuple &  args )
     std::string *   bufPointer;
 
     if ( argCount == 0 )
+    {
         bufPointer = NULL;
+    }
     else if ( argCount == 1 )
     {
         buf = Py::String( args[ 0 ] ).as_std_string();
         bufPointer = & buf;
     }
     else
+    {
         throwWrongBufArgument( "getDisplayValue" );
+        throw std::exception();     // suppress compiler warning
+    }
 
     std::string     rawContent( FragmentBase::getContent( bufPointer ) );
     size_t          stripCount( 1 );
@@ -929,7 +945,7 @@ std::string  Docstring::trimDocstring( const std::string &  docstring )
 
     // Split lines, expand tabs;
     // Detect the min indent (first line doesn't count)
-    int                             indent( INT_MAX );
+    size_t                          indent( INT_MAX );
     std::vector< std::string >      lines( splitLines( docstring ) );
     for ( std::vector< std::string >::iterator  k( lines.begin() );
           k != lines.end(); ++k )
@@ -937,9 +953,9 @@ std::string  Docstring::trimDocstring( const std::string &  docstring )
         *k = expandTabs( *k );
         if ( k != lines.begin() )
         {
-            int     strippedSize( strlen( trimStart( k->c_str() ) ) );
+            size_t      strippedSize( strlen( trimStart( k->c_str() ) ) );
             if ( strippedSize > 0 )
-                indent = std::min( indent, int(k->length()) - strippedSize );
+                indent = std::min( indent, k->length() - strippedSize );
         }
     }
 
@@ -1074,6 +1090,7 @@ int  Decorator::setattr( const char *        attrName,
         return 0;
     }
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 
@@ -1142,6 +1159,7 @@ int  CodeBlock::setattr( const char *        attrName,
     if ( FragmentWithComments::setAttribute( attrName, val ) )
         return 0;
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 // --- End of CodeBlock definition ---
@@ -1198,7 +1216,7 @@ Py::Object Function::getattr( const char *  attrName )
     if ( FragmentWithComments::getAttribute( attrName, retval ) )
         return retval;
     if ( strcmp( attrName, "decorators" ) == 0 )
-        return decorators;
+        return decors;
     if ( strcmp( attrName, "name" ) == 0 )
         return name;
     if ( strcmp( attrName, "arguments" ) == 0 )
@@ -1230,7 +1248,7 @@ int  Function::setattr( const char *        attrName,
         if ( ! val.isList() )
             throw Py::AttributeError( "Attribute 'decorators' value "
                                       "must be a list" );
-        decorators = Py::List( val );
+        decors = Py::List( val );
         return 0;
     }
     if ( strcmp( attrName, "name" ) == 0 )
@@ -1260,6 +1278,7 @@ int  Function::setattr( const char *        attrName,
         return 0;
     }
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 // --- End of Function definition ---
@@ -1314,7 +1333,7 @@ Py::Object Class::getattr( const char *  attrName )
     if ( FragmentWithComments::getAttribute( attrName, retval ) )
         return retval;
     if ( strcmp( attrName, "decorators" ) == 0 )
-        return decorators;
+        return decors;
     if ( strcmp( attrName, "name" ) == 0 )
         return name;
     if ( strcmp( attrName, "baseClasses" ) == 0 )
@@ -1346,7 +1365,7 @@ int  Class::setattr( const char *        attrName,
         if ( ! val.isList() )
             throw Py::AttributeError( "Attribute 'decorators' value "
                                       "must be a list" );
-        decorators = Py::List( val );
+        decors = Py::List( val );
         return 0;
     }
     if ( strcmp( attrName, "name" ) == 0 )
@@ -1376,6 +1395,7 @@ int  Class::setattr( const char *        attrName,
         return 0;
     }
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 // --- End of Class definition ---
@@ -1437,6 +1457,7 @@ int  Break::setattr( const char *        attrName,
     if ( FragmentWithComments::setAttribute( attrName, val ) )
         return 0;
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 
@@ -1499,6 +1520,7 @@ int  Continue::setattr( const char *        attrName,
     if ( FragmentWithComments::setAttribute( attrName, val ) )
         return 0;
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 // --- End of Continue definition ---
@@ -1571,6 +1593,7 @@ int  Return::setattr( const char *        attrName,
         return 0;
     }
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 // --- End of Return definition ---
@@ -1643,6 +1666,7 @@ int  Raise::setattr( const char *        attrName,
         return 0;
     }
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 // --- End of Raise definition ---
@@ -1650,7 +1674,7 @@ int  Raise::setattr( const char *        attrName,
 Assert::Assert()
 {
     kind = ASSERT_FRAGMENT;
-    test = Py::None();
+    tst = Py::None();
     message = Py::None();
 }
 
@@ -1692,7 +1716,7 @@ Py::Object Assert::getattr( const char *  attrName )
     if ( FragmentWithComments::getAttribute( attrName, retval ) )
         return retval;
     if ( strcmp( attrName, "test" ) == 0 )
-        return test;
+        return tst;
     if ( strcmp( attrName, "message" ) == 0 )
         return message;
     return getattr_methods( attrName );
@@ -1701,7 +1725,7 @@ Py::Object Assert::getattr( const char *  attrName )
 Py::Object  Assert::repr( void )
 {
     return Py::String( "<Assert " + FragmentBase::asStr() +
-                       "\n" + representFragmentPart( test, "Test" ) +
+                       "\n" + representFragmentPart( tst, "Test" ) +
                        "\n" + representFragmentPart( message, "Message" ) +
                        "\n" + FragmentWithComments::asStr() + ">" );
 }
@@ -1716,7 +1740,7 @@ int  Assert::setattr( const char *        attrName,
     if ( strcmp( attrName, "test" ) == 0 )
     {
         CHECKVALUETYPE( "test", "Fragment" );
-        test = val;
+        tst = val;
         return 0;
     }
     if ( strcmp( attrName, "message" ) == 0 )
@@ -1726,6 +1750,7 @@ int  Assert::setattr( const char *        attrName,
         return 0;
     }
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 // --- End of Assert definition ---
@@ -1733,7 +1758,7 @@ int  Assert::setattr( const char *        attrName,
 SysExit::SysExit()
 {
     kind = SYSEXIT_FRAGMENT;
-    argument = Py::None();
+    arg = Py::None();
 }
 
 SysExit::~SysExit()
@@ -1773,14 +1798,14 @@ Py::Object SysExit::getattr( const char *  attrName )
     if ( FragmentWithComments::getAttribute( attrName, retval ) )
         return retval;
     if ( strcmp( attrName, "argument" ) == 0 )
-        return argument;
+        return arg;
     return getattr_methods( attrName );
 }
 
 Py::Object  SysExit::repr( void )
 {
     return Py::String( "<Assert " + FragmentBase::asStr() +
-                       "\n" + representFragmentPart( argument, "Argument" ) +
+                       "\n" + representFragmentPart( arg, "Argument" ) +
                        "\n" + FragmentWithComments::asStr() + ">" );
 }
 
@@ -1794,10 +1819,11 @@ int  SysExit::setattr( const char *        attrName,
     if ( strcmp( attrName, "argument" ) == 0 )
     {
         CHECKVALUETYPE( "argument", "Fragment" );
-        argument = val;
+        arg = val;
         return 0;
     }
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 
@@ -1893,6 +1919,7 @@ int  While::setattr( const char *        attrName,
         return 0;
     }
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 
@@ -1988,6 +2015,7 @@ int  For::setattr( const char *        attrName,
         return 0;
     }
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 // --- End of For definition ---
@@ -2071,6 +2099,7 @@ int  Import::setattr( const char *        attrName,
         return 0;
     }
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 // --- End of Import definition ---
@@ -2155,6 +2184,7 @@ int  IfPart::setattr( const char *        attrName,
         return 0;
     }
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 // --- End of IfPart definition ---
@@ -2223,6 +2253,7 @@ int  If::setattr( const char *        attrName,
         return 0;
     }
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 // --- End of If definition ---
@@ -2307,6 +2338,7 @@ int  With::setattr( const char *        attrName,
         return 0;
     }
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 // --- End of With definition ---
@@ -2402,6 +2434,7 @@ int  ExceptPart::setattr( const char *        attrName,
         return 0;
     }
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 // --- End of ExceptPart definition ---
@@ -2497,6 +2530,7 @@ int  Try::setattr( const char *        attrName,
         return 0;
     }
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 // --- End of Try definition ---
@@ -2546,7 +2580,6 @@ Py::Object ControlFlow::getattr( const char *  attrName )
         members.append( Py::String( "nested" ) );
         members.append( Py::String( "isOK" ) );
         members.append( Py::String( "errors" ) );
-        members.append( Py::String( "lexerErrors" ) );
         return members;
     }
 
@@ -2565,8 +2598,6 @@ Py::Object ControlFlow::getattr( const char *  attrName )
         return Py::Boolean( isOK );
     if ( strcmp( attrName, "errors" ) == 0 )
         return errors;
-    if ( strcmp( attrName, "lexerErrors" ) == 0 )
-        return lexerErrors;
     return getattr_methods( attrName );
 }
 
@@ -2627,15 +2658,8 @@ int  ControlFlow::setattr( const char *        attrName,
         errors = Py::List( val );
         return 0;
     }
-    if ( strcmp( attrName, "lexerErrors" ) == 0 )
-    {
-        if ( ! val.isList() )
-            throw Py::AttributeError( "Attribute 'lexerErrors' value "
-                                      "must be a list" );
-        lexerErrors = Py::List( val );
-        return 0;
-    }
     throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
 }
 
 

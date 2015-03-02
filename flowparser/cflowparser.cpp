@@ -21,55 +21,336 @@
  */
 
 
-#include "pycfLexer.h"
-#include "pycfParser.h"
+#include <Python.h>
+#include <node.h>
+#include <grammar.h>
+#include <parsetok.h>
+#include <graminit.h>
+#include <errcode.h>
+#include <token.h>
+
+#include <string.h>
 
 #include "cflowparser.hpp"
 #include "cflowfragments.hpp"
 
 
+extern grammar      _PyParser_Grammar;  /* From graminit.c */
 
-Py::Object  parseInput( pANTLR3_INPUT_STREAM  input )
+
+/* Holds the currently analysed scope */
+enum Scope {
+    GLOBAL_SCOPE,
+    FUNCTION_SCOPE,
+    CLASS_SCOPE,
+    CLASS_METHOD_SCOPE,
+    CLASS_STATIC_METHOD_SCOPE
+};
+
+
+/* Copied and adjusted from Python/pythonrun.c
+ * static void err_input(perrdetail *err)
+ */
+static std::string getErrorMessage( perrdetail *  err)
 {
-    ppycfLexer      lxr( pycfLexerNew( input ) );
-    if ( lxr == NULL )
-        throw Py::RuntimeError( "Cannot create lexer" );
+    char            buffer[ 64 ];
+    sprintf( buffer, "%d:%d ", err->lineno, err->offset );
 
-
-    pANTLR3_COMMON_TOKEN_STREAM     tstream( antlr3CommonTokenStreamSourceNew(
-                                                ANTLR3_SIZE_HINT,
-                                                TOKENSOURCE( lxr ) ) );
-    if ( tstream == NULL )
+    std::string     message( buffer );
+    switch ( err->error )
     {
-        lxr->free( lxr );
-        throw Py::RuntimeError( "Cannot create token stream" );
+        case E_ERROR:
+            return std::string( "execution error" );
+        case E_SYNTAX:
+            if ( err->expected == INDENT )
+                message += "expected an indented block";
+            else if ( err->token == INDENT )
+                message += "unexpected indent";
+            else if (err->token == DEDENT)
+                message += "unexpected unindent";
+            else
+                message += "invalid syntax";
+            break;
+        case E_TOKEN:
+            message += "invalid token";
+            break;
+        case E_EOFS:
+            message += "EOF while scanning triple-quoted string literal";
+            break;
+        case E_EOLS:
+            message += "EOL while scanning string literal";
+            break;
+        case E_INTR:
+            message = "keyboard interrupt";
+            goto cleanup;
+        case E_NOMEM:
+            message = "no memory";
+            goto cleanup;
+        case E_EOF:
+            message += "unexpected EOF while parsing";
+            break;
+        case E_TABSPACE:
+            message += "inconsistent use of tabs and spaces in indentation";
+            break;
+        case E_OVERFLOW:
+            message += "expression too long";
+            break;
+        case E_DEDENT:
+            message += "unindent does not match any outer indentation level";
+            break;
+        case E_TOODEEP:
+            message += "too many levels of indentation";
+            break;
+        case E_DECODE:
+            message += "decode error";
+            break;
+        case E_LINECONT:
+            message += "unexpected character after line continuation character";
+            break;
+        default:
+            {
+                char    code[ 32 ];
+                sprintf( code, "%d", err->error );
+                message += "unknown parsing error (error code " +
+                           std::string( code ) + ")";
+                break;
+            }
     }
 
-    // I cannot discard off channel tokens because all the comments
-    // will be discarded. Instead there is another pass to collect comment
-    // tokens from the lexer.
-    // tstream->discardOffChannelToks( tstream, ANTLR3_TRUE );
+    if ( err->text != NULL )
+        message += std::string( "\n" ) + err->text;
 
-    // Create parser
-    ppycfParser     psr( pycfParserNew( tstream ) );
-    if ( psr == NULL )
+    cleanup:
+    if (err->text != NULL)
     {
-        tstream->free( tstream );
-        lxr->free( lxr );
-        throw Py::RuntimeError( "Error creating parser" );
+        PyObject_FREE(err->text);
+        err->text = NULL;
+    }
+    return message;
+}
+
+/* Provides the total number of lines in the code */
+static int getTotalLines( node *  tree )
+{
+    if ( tree == NULL )
+        return -1;
+
+    if ( tree->n_type != file_input )
+        tree = &(tree->n_child[ 0 ]);
+
+    assert( tree->n_type == file_input );
+    for ( int k = 0; k < tree->n_nchildren; ++k )
+    {
+        node *  child = &(tree->n_child[ k ]);
+        if ( child->n_type == ENDMARKER )
+            return child->n_lineno;
+    }
+    return -1;
+}
+
+/* Calculates the line shifts in terms of absolute position */
+void calculateLineShifts( const char *  buffer, int *  lineShifts )
+{
+    int     absPos = 0;
+    char    symbol;
+    int     line = 1;
+
+    /* index 0 is not used; The first line starts with shift 0 */
+    lineShifts[ 1 ] = 0;
+    while ( buffer[ absPos ] != '\0' )
+    {
+        symbol = buffer[ absPos ];
+        if ( symbol == '\r' )
+        {
+            ++absPos;
+            if ( buffer[ absPos ] == '\n' )
+            {
+                ++absPos;
+            }
+            ++line;
+            lineShifts[ line ] = absPos;
+            continue;
+        }
+
+        if ( symbol == '\n' )
+        {
+            ++absPos;
+            ++line;
+            lineShifts[ line ] = absPos;
+            continue;
+        }
+        ++absPos;
+    }
+    return;
+}
+
+static void processEncoding( const char *   buffer,
+                             node *         tree,
+                             ControlFlow *  callbacks )
+{
+    /* Unfortunately, the parser does not provide the position of the encoding
+     * so it needs to be calculated
+     */
+    const char *      start = strstr( buffer,
+                                tree->n_str );
+    if ( start == NULL )
+        return;     /* would be really strange */
+
+    int             line = 1;
+    int             col = 1;
+    const char *    current = buffer;
+    while ( current != start )
+    {
+        if ( * current == '\r' )
+        {
+            if ( * (current + 1) == '\n' )
+                ++current;
+            ++line;
+            col = 0;
+        }
+        else if ( * current == '\n' )
+        {
+            ++line;
+            col = 0;
+        }
+        ++col;
+        ++current;
     }
 
-    // Get the tree and walk it
-    pANTLR3_BASE_TREE       tree( psr->file_input( psr ).tree );
+//    callOnEncoding( callbacks->onEncoding, tree->n_str,
+//                    line, col, start - buffer );
+}
+
+
+void walk( node *                       tree,
+           ControlFlow *                controlFlow,
+           int                          objectsLevel,
+           enum Scope                   scope,
+           const char *                 firstArgName,
+           int                          entryLevel,
+           int *                        lineShifts,
+           int                          isStaticMethod )
+{
+    ++entryLevel;   // For module docstring only
+
+#if 0
+
+    switch ( tree->n_type )
+    {
+        case import_stmt:
+            processImport( tree, callbacks, lineShifts );
+            return;
+        case funcdef:
+            processFuncDefinition( tree, callbacks,
+                                   objectsLevel, scope, entryLevel,
+                                   lineShifts, isStaticMethod );
+            return;
+        case classdef:
+            processClassDefinition( tree, callbacks,
+                                    objectsLevel, scope, entryLevel,
+                                    lineShifts );
+            return;
+        case stmt:
+            {
+                node *      assignNode = isAssignment( tree );
+                if ( assignNode != NULL )
+                {
+                    node *      testListNode = & ( assignNode->n_child[ 0 ] );
+                    if ( scope == GLOBAL_SCOPE )
+                        processAssign( testListNode, callbacks->onGlobal,
+                                       objectsLevel, lineShifts );
+                    else if ( scope == CLASS_SCOPE )
+                        processAssign( testListNode,
+                                       callbacks->onClassAttribute,
+                                       objectsLevel, lineShifts );
+                    else if ( scope == CLASS_METHOD_SCOPE )
+                        processInstanceMember( testListNode, callbacks,
+                                               firstArgName, objectsLevel,
+                                               lineShifts );
+
+                    /* The other scopes are not interesting */
+                    return;
+                }
+            }
+
+        default:
+            break;
+    }
+
+
+    int     staticDecor = 0;
+    for ( int  i = 0; i < tree->n_nchildren; ++i )
+    {
+        node *      child = & ( tree->n_child[ i ] );
+
+        if ( (entryLevel == 1) && (i == 0) )
+        {
+            /* This could be a module docstring */
+            checkForDocstring( tree, callbacks );
+        }
+
+        /* decorators are always before a class or a function definition on the
+         * same level. So they will be picked by the following deinition
+         */
+        if ( child->n_type == decorators )
+        {
+            staticDecor = processDecorators( child, callbacks, lineShifts );
+            continue;
+        }
+        walk( child, callbacks, objectsLevel,
+              scope, firstArgName, entryLevel, lineShifts, staticDecor );
+        staticDecor = 0;
+    }
+#endif
+
+    return;
+}
+
+
+
+
+Py::Object  parseInput( const char *  buffer, const char *  fileName )
+{
     ControlFlow *           controlFlow = new ControlFlow();
+
+    perrdetail          error;
+    PyCompilerFlags     flags = { 0 };
+    node *              tree = PyParser_ParseStringFlagsFilename(
+                                    buffer, fileName, &_PyParser_Grammar,
+                                    file_input, &error, flags.cf_flags );
 
     if ( tree == NULL )
     {
-        psr->free( psr );
-        tstream->free( tstream );
-        lxr->free( lxr );
-        throw Py::RuntimeError( "Parsing error" );
+        controlFlow->errors.append( Py::String( getErrorMessage( & error ) ) );
+        PyErr_Clear();
     }
+    else
+    {
+        /* Walk the tree and populate the python structures */
+        node *      root = tree;
+        int         totalLines = getTotalLines( tree );
+
+        assert( totalLines >= 0 );
+        int         lineShifts[ totalLines + 1 ];
+
+        calculateLineShifts( buffer, lineShifts );
+
+        if ( root->n_type == encoding_decl )
+        {
+            processEncoding( buffer, tree, controlFlow );
+            root = & (root->n_child[ 0 ]);
+        }
+
+
+        assert( root->n_type == file_input );
+        walk( root, controlFlow, -1, GLOBAL_SCOPE, NULL, 0, lineShifts, 0 );
+        PyNode_Free( tree );
+    }
+
+    return Py::asObject( controlFlow );
+
+#if 0
+
 
     // Walk the tree and insert collected info into the controlFlow object
 
@@ -127,18 +408,12 @@ Py::Object  parseInput( pANTLR3_INPUT_STREAM  input )
 
 
 
-            snprintf( buffer, commentSize + 1, "%s", firstChar );
-            printf( "COMMENT size: %03ld start: %06ld end: %06ld line: %03ld pos: %03d content: '%s'\n",
-                    commentSize, begin, end, line, tok->charPosition + 1, buffer );
+//            snprintf( buffer, commentSize + 1, "%s", firstChar );
+//            printf( "COMMENT size: %03ld start: %06ld end: %06ld line: %03ld pos: %03d content: '%s'\n",
+//                    commentSize, begin, end, line, tok->charPosition + 1, buffer );
         }
     }
 
-    // Cleanup
-    psr->free( psr );
-    tstream->free( tstream );
-    lxr->free( lxr );
-
-    // Provide the result object
-    return Py::asObject( controlFlow );
+#endif
 }
 

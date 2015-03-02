@@ -270,7 +270,7 @@ class Function : public FragmentBase,
                              const Py::Object &  val );
 
     public:
-        Py::List        decorators;     // Decorator instances
+        Py::List        decors;         // Decorator instances
         Py::Object      name;           // Fragment for the function name
         Py::Object      arguments;      // Fragment for the function arguments
                                         // starting from '(', ending with ')'
@@ -294,7 +294,7 @@ class Class : public FragmentBase,
                              const Py::Object &  val );
 
     public:
-        Py::List        decorators;     // Decorator instances
+        Py::List        decors;         // Decorator instances
         Py::Object      name;           // Fragment for the function name
         Py::Object      baseClasses;    // Fragment for the class base classes
                                         // starting from '(', ending with ')'
@@ -388,7 +388,7 @@ class Assert : public FragmentBase,
                              const Py::Object &  val );
 
     public:
-        Py::Object      test;           // Fragment for the test expression
+        Py::Object      tst;            // Fragment for the test expression
         Py::Object      message;        // Fragment for the message
 };
 
@@ -408,7 +408,7 @@ class SysExit : public FragmentBase,
                              const Py::Object &  val );
 
     public:
-        Py::Object      argument;       // Fragment for the argument from '('
+        Py::Object      arg;            // Fragment for the argument from '('
                                         // till ')'
 };
 
@@ -604,7 +604,6 @@ class ControlFlow : public FragmentBase,
         // Error reporting support
         bool        isOK;           // true if no errors detected
         Py::List    errors;         // List of Py::String objects
-        Py::List    lexerErrors;    // List of Py::String objects
 };
 
 

@@ -25,7 +25,7 @@
 import os, os.path, sys
 import datetime
 import pyclbr
-from cdmcfparser import getControlFlowFromFile, getVersion
+from cdmcf import getControlFlowFromFile, VERSION
 
 
 def collectFiles( path, files ):
@@ -35,13 +35,13 @@ def collectFiles( path, files ):
     for item in os.listdir( path ):
         if os.path.isdir( path + item ):
             collectFiles( path + item, files )
-        if item.endswith( ".py" ):
+        if os.path.isfile( path + item ) and \
+            (item.endswith( ".py" ) or item.endswith( ".py3" )):
             if item.startswith( "__" ):
                 continue
             files.append( os.path.abspath( path + item ) )
             continue
     return
-
 
 def cdmcfparserTest( files ):
     " Loop for the codimension parser "
@@ -50,13 +50,13 @@ def cdmcfparserTest( files ):
         #print "Processing " + item + " ..."
         tempObj = getControlFlowFromFile( item )
         count += 1
-    print "cdmcfparser: processed " + str(count) + " file(s)"
+    print "cdmcf: processed " + str(count) + " file(s)"
     return
 
 
 print "Speed test measures the time required for " \
-      "cdmcfparser to parse python files."
-print "Parser version: " + getVersion()
+      "cdmcf to parse python files."
+print "Parser version: " + VERSION
 
 
 pythonFiles = []
@@ -70,21 +70,22 @@ if len( sys.argv ) > 1:
     print "Files to test: " + str(len(pythonFiles))
 else:
     print "Collecting a list of python classes..."
-    startDir = os.path.sep + "usr" + os.path.sep + "lib64" + os.path.sep + \
-               "python2.7" + os.path.sep
-    if not os.path.exists( startDir ):
-        startDir = os.path.sep + "usr" + os.path.sep + "lib" + os.path.sep + \
-                   "python2.7" + os.path.sep
-    collectFiles( startDir, pythonFiles )
-    print "Collected " + str(len(pythonFiles)) + " files from " + startDir
+    paths = list( sys.path )
+    if '' in paths:
+        paths.remove( '' )
+    for path in paths:
+        if os.path.isdir( path ):
+            collectFiles( path, pythonFiles )
+    pythonFiles = set( pythonFiles )
+    print "Collected " + str(len(pythonFiles))
 
 
-# timing for cdmcfparser
+# timing for cdmcf
 start = datetime.datetime.now()
 cdmcfparserTest( pythonFiles )
 end = datetime.datetime.now()
 
-print "cdmcfparser timing:"
+print "cdmcf timing:"
 print "Start: " + str( start )
 print "End:   " + str( end )
 print "Delta: " + str( end - start )
