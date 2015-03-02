@@ -28,46 +28,26 @@
 
 VERSION=trunk
 
-GENERATED_FILES=pycfLexer.h pycfParser.h pycfLexer.c pycfParser.c pycf.tokens
-
-ANTLR_INCLUDE=-I../thirdparty/libantlr3c-3.2 \
-              -I../thirdparty/libantlr3c-3.2/include
 PYCXX_INCLUDE=-Ipycxx -Ipycxx/Src
 PYTHON_INCLUDE=$(shell python -c 'import distutils.sysconfig; print distutils.sysconfig.get_python_inc()')
-INCLUDE=${PYCXX_INCLUDE} -I${PYTHON_INCLUDE} ${ANTLR_INCLUDE}
+INCLUDE=${PYCXX_INCLUDE} -I${PYTHON_INCLUDE}
 
 VERSION_DEFINES=-DCDM_CF_PARSER_VERION=\"${VERSION}\"
 FLAGS=-Wall -O2 -ffast-math -fomit-frame-pointer -fPIC -fexceptions -frtti -DNDEBUG -D_GNU_SOURCE ${VERSION_DEFINES}
 
 PYCXX_OBJ_FILES=pycxx/Src/cxxsupport.o pycxx/Src/cxx_extensions.o \
                 pycxx/Src/IndirectPythonInterface.o pycxx/Src/cxxextensions.o
-CDM_OBJ_FILES=cflowmodule.o cflowfragments.o cflowutils.o cflowparser.o
-GRAMMAR_OBJ_FILES=lexerutils.o pycfLexer.o pycfParser.o
+PYCXX_SRC_FILES=pycxx/Src/cxxsupport.cxx pycxx/Src/cxx_extensions.cxx \
+                pycxx/Src/IndirectPythonInterface.cxx pycxx/Src/cxxextensions.c
+CDM_SRC_FILES=cflowmodule.cpp cflowfragments.cpp cflowutils.cpp cflowparser.cpp
+CDM_INC_FILES=cflowmodule.hpp cflowfragments.hpp cflowutils.hpp cflowparser.hpp
 
 
-all: $(PYCXX_OBJ_FILES) $(CDM_OBJ_FILES) $(GRAMMAR_OBJ_FILES)
-	g++ -shared -fPIC -fexceptions -frtti -o cdmcf.so $^ ../thirdparty/libantlr3c-3.2/.libs/libantlr3c.a
-	gcc -O2 ${FLAGS} ${INCLUDE} -c -std=gnu99 cf_test.c
-	gcc ${FLAGS} -o cf_test pycfLexer.o \
-                            pycfParser.o \
-                            cf_test.o lexerutils.o \
-                            ../thirdparty/libantlr3c-3.2/.libs/libantlr3c.a
-
-.cpp.o:
-	g++ ${FLAGS} ${INCLUDE} -c -o $@ $^
-pycxx/Src/%.o : pycxx/Src/%.cxx
-	g++ ${FLAGS} ${INCLUDE} -c -o $@ $^
-.c.o:
-	g++ ${FLAGS} ${INCLUDE} -c -o $@ $^
-
-
-
-gen: pycf.g
-	CLASSPATH=/home/swift/antlr/antlrworks-1.4.jar java org.antlr.Tool pycf.g
-	python adjust_generated.py
+all: $(CDM_SRC_FILES) $(CDM_INC_FILES) $(PYCXX_SRC_FILES)
+	python setup.py build_ext --inplace
+	g++ ${FLAGS} -I ${PYTHON_INCLUDE} -c tree.cpp
+	g++ ${FLAGS} -o tree  tree.o -L/opt/python-2.7/lib/ -lpython2.7
 
 clean:
-	rm -rf *.o core.* cdmcf.so cf_test core *.pyc
+	rm -rf *.o core.* cdmcf.so *.pyc tree
 
-cleanall: clean
-	rm -f $(GENERATED_FILES)

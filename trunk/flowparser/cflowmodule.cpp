@@ -201,53 +201,22 @@ CDMControlFlowModule::getControlFlowFromMemory( const Py::Tuple &  args )
 
 
     std::string     content( Py::String( fName ).as_std_string( "utf-8" ) );
+    size_t          contentSize = content.size();
 
-    /* Start the parser business */
-    pANTLR3_INPUT_STREAM        input(
-                antlr3NewAsciiStringInPlaceStream( (pANTLR3_UINT8) content.c_str(),
-                                                   content.size(), NULL ) );
-    if ( input == NULL )
-        throw Py::RuntimeError( "Cannot read python file" );
-
-    /* Dirty hack:
-     * it's a problem if a comment is the last one in the file and it does not
-     * have EOL at the end. It's easier to add EOL here (if EOL is not the last
-     * character) than to change the grammar.
-     * The \0 byte is used for temporary injection of EOL.
-     */
-    int     eolAddedAt = 0;
-    if ( input->sizeBuf > 0 )
+    if ( contentSize > 0 )
     {
-        if ( ((char*)(input->data))[ input->sizeBuf - 1 ] != '\n' )
+        if ( content[ contentSize - 1 ] == '\n' )
         {
-            eolAddedAt = input->sizeBuf;
-            ((char*)(input->data))[ eolAddedAt ] = '\n';
-            input->sizeBuf += 1;
+            return parseInput( content.c_str(), "dummy.py" );
         }
+
+        // No \n at the end; it is safer to add it
+        content += "\n";
+        return parseInput( content.c_str(), "dummy.py" );
     }
 
-    Py::Object      retval;
-    try
-    {
-        retval = parseInput( input );
-    }
-    catch ( ... )
-    {
-        input->close( input );
-
-        // Revert the hack changes back if needed
-        if ( eolAddedAt != 0 )
-            content[ eolAddedAt ] = 0;
-        throw;
-    }
-
-    input->close( input );
-
-    // Revert the hack changes back if needed
-    if ( eolAddedAt != 0 )
-        content[ eolAddedAt ] = 0;
-
-    return retval;
+    // Content size is zero
+    return Py::None();
 }
 
 
@@ -263,53 +232,42 @@ CDMControlFlowModule::getControlFlowFromFile( const Py::Tuple &  args )
                              "argument (" + std::string( buf ) + "given)" );
     }
 
-    Py::Object  fName( args[ 0 ] );
+    Py::Object      fName( args[ 0 ] );
     if ( ! fName.isString() )
         throw Py::TypeError( "getControlFlowFromFile() takes exactly 1 "
                              "argument of string type: python file name" );
 
 
-    std::string fileName( Py::String( fName ).as_std_string( "utf-8" ) );
+    std::string     fileName( Py::String( fName ).as_std_string( "utf-8" ) );
     if ( fileName.empty() )
         throw Py::RuntimeError( "Invalid argument: file name is empty" );
 
-    /* Start the parser business */
-    pANTLR3_INPUT_STREAM        input(
-                antlr3AsciiFileStreamNew( (pANTLR3_UINT8) fileName.c_str() ) );
+    // Read the whole file
+    FILE *  f;
+    f = fopen( fileName.c_str(), "r" );
+    if ( f == NULL )
+        throw Py::RuntimeError( "Cannot open file " + fileName );
 
-    if ( input == NULL )
-        throw Py::RuntimeError( "Cannot read python file" );
+    struct stat     st;
+    stat( fileName.c_str(), &st );
 
-
-    /* Dirty hack:
-     * it's a problem if a comment is the last one in the file and it does not
-     * have EOL at the end. It's easier to add EOL here (if EOL is not the last
-     * character) than to change the grammar.
-     * The run-time library reserves one byte in the patched version for EOL if
-     * needed.
-     */
-    if ( input->sizeBuf > 0 )
+    if ( st.st_size > 0 )
     {
-        if ( ((char*)(input->data))[ input->sizeBuf - 1 ] != '\n' )
-        {
-            ((char*)(input->data))[ input->sizeBuf ] = '\n';
-            input->sizeBuf += 1;
-        }
+        char            buffer[st.st_size + 2];
+        int             elem = fread( buffer, st.st_size, 1, f );
+
+        fclose( f );
+        if ( elem != 1 )
+            throw Py::RuntimeError( "Cannot read file " + fileName );
+
+        buffer[ st.st_size ] = '\n';
+        buffer[ st.st_size + 1 ] = '\0';
+        return parseInput( buffer, fileName.c_str() );
     }
 
-
-    Py::Object      retval;
-    try
-    {
-        retval = parseInput( input );
-    }
-    catch ( ... )
-    {
-        input->close( input );
-        throw;
-    }
-    input->close( input );
-    return retval;
+    // File size is zero
+    fclose( f );
+    return Py::None();
 }
 
 

@@ -23,10 +23,9 @@
 #ifndef CFLOWPARSER_HPP
 #define CFLOWPARSER_HPP
 
-#include <antlr3.h>
 #include "CXX/Objects.hxx"
 
-Py::Object  parseInput( pANTLR3_INPUT_STREAM  input );
+Py::Object  parseInput( const char *  buffer, const char *  fileName );
 
 
 #endif
