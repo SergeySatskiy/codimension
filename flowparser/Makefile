@@ -39,8 +39,8 @@ PYCXX_OBJ_FILES=pycxx/Src/cxxsupport.o pycxx/Src/cxx_extensions.o \
                 pycxx/Src/IndirectPythonInterface.o pycxx/Src/cxxextensions.o
 PYCXX_SRC_FILES=pycxx/Src/cxxsupport.cxx pycxx/Src/cxx_extensions.cxx \
                 pycxx/Src/IndirectPythonInterface.cxx pycxx/Src/cxxextensions.c
-CDM_SRC_FILES=cflowmodule.cpp cflowfragments.cpp cflowutils.cpp cflowparser.cpp
-CDM_INC_FILES=cflowmodule.hpp cflowfragments.hpp cflowutils.hpp cflowparser.hpp
+CDM_SRC_FILES=cflowmodule.cpp cflowfragments.cpp cflowutils.cpp cflowparser.cpp cflowcomments.cpp
+CDM_INC_FILES=cflowmodule.hpp cflowfragments.hpp cflowutils.hpp cflowparser.hpp cflowcomments.hpp
 
 
 all: $(CDM_SRC_FILES) $(CDM_INC_FILES) $(PYCXX_SRC_FILES)
