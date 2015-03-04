@@ -99,14 +99,14 @@ isTriple( const char *  buffer, int  absPos )
 // - an array of absolute positions of the beginning of each line
 // - a vector of found comments
 void getLineShiftsAndComments( const char *  buffer, int *  lineShifts,
-                               std::vector< Comment > &  comments )
+                               std::vector< CommentLine > &  comments )
 {
     int             absPos = 0;
     char            symbol;
     int             line = 1;
     int             column = 1;
     ExpectState     expectState = expectCommentStart;
-    Comment         comment;
+    CommentLine     comment;
 
     /* index 0 is not used; The first line starts with shift 0 */
     lineShifts[ 1 ] = 0;
