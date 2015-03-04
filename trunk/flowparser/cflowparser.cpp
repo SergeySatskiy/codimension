@@ -33,6 +33,7 @@
 
 #include "cflowparser.hpp"
 #include "cflowfragments.hpp"
+#include "cflowcomments.hpp"
 
 
 extern grammar      _PyParser_Grammar;  /* From graminit.c */
@@ -148,45 +149,11 @@ static int getTotalLines( node *  tree )
     return -1;
 }
 
-/* Calculates the line shifts in terms of absolute position */
-void calculateLineShifts( const char *  buffer, int *  lineShifts )
-{
-    int     absPos = 0;
-    char    symbol;
-    int     line = 1;
-
-    /* index 0 is not used; The first line starts with shift 0 */
-    lineShifts[ 1 ] = 0;
-    while ( buffer[ absPos ] != '\0' )
-    {
-        symbol = buffer[ absPos ];
-        if ( symbol == '\r' )
-        {
-            ++absPos;
-            if ( buffer[ absPos ] == '\n' )
-            {
-                ++absPos;
-            }
-            ++line;
-            lineShifts[ line ] = absPos;
-            continue;
-        }
-
-        if ( symbol == '\n' )
-        {
-            ++absPos;
-            ++line;
-            lineShifts[ line ] = absPos;
-            continue;
-        }
-        ++absPos;
-    }
-    return;
-}
 
 static void processEncoding( const char *   buffer,
                              node *         tree,
-                             ControlFlow *  callbacks )
+                             ControlFlow *  controlFlow,
+                             const std::vector< CommentLine > &  comments )
 {
     /* Unfortunately, the parser does not provide the position of the encoding
      * so it needs to be calculated
@@ -217,8 +184,31 @@ static void processEncoding( const char *   buffer,
         ++current;
     }
 
-//    callOnEncoding( callbacks->onEncoding, tree->n_str,
-//                    line, col, start - buffer );
+    int     commentIndex = 0;
+    for ( ; ; )
+    {
+        if ( comments[ commentIndex ].line == line )
+            break;
+        ++commentIndex;
+    }
+
+
+    EncodingLine *      encodingLine( new EncodingLine );
+    encodingLine->parent = controlFlow;
+    encodingLine->begin = comments[ commentIndex ].begin;
+    encodingLine->end = comments[ commentIndex ].end;
+    encodingLine->beginLine = line;
+    encodingLine->beginPos = comments[ commentIndex ].pos;
+    encodingLine->endLine = line;
+    encodingLine->endPos = encodingLine->beginPos + ( encodingLine->end -
+                                                      encodingLine->begin );
+    controlFlow->updateEnd( encodingLine->end,
+                            encodingLine->endLine,
+                            encodingLine->endPos );
+    controlFlow->updateBegin( encodingLine->begin,
+                              encodingLine->beginLine,
+                              encodingLine->beginPos );
+    controlFlow->encodingLine = Py::asObject( encodingLine );
 }
 
 
@@ -331,13 +321,15 @@ Py::Object  parseInput( const char *  buffer, const char *  fileName )
         int         totalLines = getTotalLines( tree );
 
         assert( totalLines >= 0 );
-        int         lineShifts[ totalLines + 1 ];
+        int                         lineShifts[ totalLines + 1 ];
+        std::vector< CommentLine >  comments;
 
-        calculateLineShifts( buffer, lineShifts );
+        comments.reserve( totalLines );     // There are no more comments than lines
+        getLineShiftsAndComments( buffer, lineShifts, comments );
 
         if ( root->n_type == encoding_decl )
         {
-            processEncoding( buffer, tree, controlFlow );
+            processEncoding( buffer, tree, controlFlow, comments );
             root = & (root->n_child[ 0 ]);
         }
 

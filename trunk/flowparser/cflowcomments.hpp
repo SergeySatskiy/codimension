@@ -39,7 +39,7 @@ enum CommentType
 
 std::string  commentTypeToString( CommentType  t );
 
-struct Comment
+struct CommentLine
 {
     int             begin;      // Absolute position of the '#' character,
                                 // 0-based
@@ -51,10 +51,10 @@ struct Comment
     CommentType     type;       // Comment line type. Combining comment lines
                                 // into block comments will be done later
 
-    Comment( int  b, int  e, int  l, int  p, CommentType  t ) :
+    CommentLine( int  b, int  e, int  l, int  p, CommentType  t ) :
         begin( b ), end( e ), line( l ), pos( p ), type( t )
     {}
-    Comment() :
+    CommentLine() :
         begin( -1 ), end( -1 ), line( -1 ), pos( -1 ),
         type( UNKNOWN_COMMENT_LINE_TYPE )
     {}
@@ -63,7 +63,7 @@ struct Comment
 
 
 void getLineShiftsAndComments( const char *  buffer, int *  lineShifts,
-                               std::vector< Comment > &  comments );
+                               std::vector< CommentLine > &  comments );
 
 
 #endif

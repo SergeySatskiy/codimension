@@ -65,14 +65,17 @@ int  main( int  argc, char **  argv )
         buffer[ st.st_size + 1 ] = '\0';
 
         // Do the line shifts and comments
-        int                     lineShifts[ 65536 ];        // Max supported lines
-        std::vector<Comment>    comments;
+        int                         lineShifts[ 65536 ]; // Max supported lines
+        std::vector<CommentLine>    comments;
 
         getLineShiftsAndComments( buffer, lineShifts, comments );
         printf( "Found comments count: %ld\n", comments.size() );
-        for ( std::vector<Comment>::const_iterator  k = comments.begin(); k != comments.end(); ++k )
+        for ( std::vector<CommentLine>::const_iterator
+                    k = comments.begin(); k != comments.end(); ++k )
         {
-            printf( "%d:%d Absolute begin:end %d:%d Type: %s\n", k->line, k->pos, k->begin, k->end, commentTypeToString( k->type ).c_str() );
+            printf( "%d:%d Absolute begin:end %d:%d Type: %s\n",
+                    k->line, k->pos, k->begin, k->end,
+                    commentTypeToString( k->type ).c_str() );
             buffer[ k->end + 1 ] = '\0';
             printf( "    %s\n", &buffer[ k->begin ] );
         }
