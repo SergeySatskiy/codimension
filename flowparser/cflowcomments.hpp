@@ -25,6 +25,7 @@
 
 
 #include <vector>
+#include <string>
 
 
 enum CommentType
@@ -35,6 +36,8 @@ enum CommentType
     UNKNOWN_COMMENT_LINE_TYPE = 99
 };
 
+
+std::string  commentTypeToString( CommentType  t );
 
 struct Comment
 {
