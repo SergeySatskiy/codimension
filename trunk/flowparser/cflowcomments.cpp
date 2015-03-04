@@ -141,24 +141,24 @@ void getLineShiftsAndComments( const char *  buffer, int *  lineShifts,
                 }
 
                 // It is not escaped some kind of quote
-                if ( symbol == '\"' && ( expectState == expectClosingSingleQuote ||
-                                         expectState == expectClosingTripleSingleQuote ) )
+                if ( symbol == '\"' &&
+                        ( expectState == expectClosingSingleQuote ||
+                          expectState == expectClosingTripleSingleQuote ) )
                 {
                     // " inside ' or '''
                     ++absPos;
                     ++column;
                     continue;
                 }
-                if ( symbol == '\'' && ( expectState == expectClosingDoubleQuote ||
-                                         expectState == expectClosingTripleDoubleQuote ) )
+                if ( symbol == '\'' &&
+                        ( expectState == expectClosingDoubleQuote ||
+                          expectState == expectClosingTripleDoubleQuote ) )
                 {
                     // ' inside " or """
                     ++absPos;
                     ++column;
                     continue;
                 }
-
-                // detect new state, advance the counters and continue
 
                 // String literal beginning case
                 if ( expectState == expectCommentStart )
@@ -185,34 +185,16 @@ void getLineShiftsAndComments( const char *  buffer, int *  lineShifts,
                 }
 
                 // String literal end case
-                if ( expectState == expectClosingSingleQuote )
+                if ( expectState == expectClosingSingleQuote ||
+                     expectState == expectClosingDoubleQuote )
                 {
                     expectState = expectCommentStart;
                     ++absPos;
                     ++column;
                     continue;
                 }
-                else if ( expectState == expectClosingTripleSingleQuote )
-                {
-                    if ( isTriple( buffer, absPos ) == true )
-                    {
-                        expectState = expectCommentStart;
-                        absPos += 3;
-                        column += 3;
-                        continue;
-                    }
-                    ++absPos;
-                    ++column;
-                    continue;
-                }
-                else if ( expectState == expectClosingDoubleQuote )
-                {
-                    expectState = expectCommentStart;
-                    ++absPos;
-                    ++column;
-                    continue;
-                }
-                else if ( expectState == expectClosingTripleDoubleQuote )
+                else if ( expectState == expectClosingTripleSingleQuote ||
+                          expectState == expectClosingTripleDoubleQuote )
                 {
                     if ( isTriple( buffer, absPos ) == true )
                     {
@@ -279,6 +261,4 @@ void getLineShiftsAndComments( const char *  buffer, int *  lineShifts,
 
     return;
 }
-
-
 
