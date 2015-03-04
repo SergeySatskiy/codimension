@@ -47,7 +47,8 @@ all: $(CDM_SRC_FILES) $(CDM_INC_FILES) $(PYCXX_SRC_FILES)
 	python setup.py build_ext --inplace
 	g++ ${FLAGS} -I ${PYTHON_INCLUDE} -c tree.cpp
 	g++ ${FLAGS} -o tree  tree.o -L/opt/python-2.7/lib/ -lpython2.7
+	g++ -o comments comments.cpp cflowcomments.cpp
 
 clean:
-	rm -rf *.o core.* cdmcf.so *.pyc tree
+	rm -rf *.o core.* cdmcf.so *.pyc tree comments
 

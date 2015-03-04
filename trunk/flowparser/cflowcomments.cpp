@@ -25,6 +25,24 @@
 #include "cflowcomments.hpp"
 
 
+
+std::string  commentTypeToString( CommentType  t )
+{
+    switch ( t )
+    {
+        case STANDALONE_COMMENT_LINE:
+            return "STANDALONE_COMMENT_LINE";
+        case TRAILING_COMMENT_LINE:
+            return "TRAILING_COMMENT_LINE";
+        case UNKNOWN_COMMENT_LINE_TYPE:
+            return "UNKNOWN_COMMENT_LINE_TYPE";
+        default:
+            break;
+    }
+    return "ERROR: COMMENT TYPE";
+}
+
+
 // Comment search state
 enum ExpectState
 {
@@ -216,7 +234,7 @@ void getLineShiftsAndComments( const char *  buffer, int *  lineShifts,
 
         if ( symbol == '\r' )
         {
-            comment.end = absPos;   // will not harm but will unify the code
+            comment.end = absPos - 1;   // will not harm but will unify the code
             ++absPos;
             if ( buffer[ absPos ] == '\n' )
             {
@@ -228,13 +246,14 @@ void getLineShiftsAndComments( const char *  buffer, int *  lineShifts,
             if ( expectState == expectCommentEnd )
             {
                 comments.push_back( comment );
+                expectState = expectCommentStart;
             }
             continue;
         }
 
         if ( symbol == '\n' )
         {
-            comment.end = absPos;   // will not harm but will unify the code
+            comment.end = absPos - 1;   // will not harm but will unify the code
             ++absPos;
             ++line;
             lineShifts[ line ] = absPos;
@@ -243,6 +262,7 @@ void getLineShiftsAndComments( const char *  buffer, int *  lineShifts,
             {
                 comments.push_back( comment );
                 comment.type = UNKNOWN_COMMENT_LINE_TYPE;
+                expectState = expectCommentStart;
             }
             continue;
         }
