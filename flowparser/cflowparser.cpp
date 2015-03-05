@@ -337,6 +337,35 @@ Py::Object  parseInput( const char *  buffer, const char *  fileName )
         assert( root->n_type == file_input );
         walk( root, controlFlow, -1, GLOBAL_SCOPE, NULL, 0, lineShifts, 0 );
         PyNode_Free( tree );
+
+        // Second pass: inject comments
+        for ( std::vector< CommentLine >::const_iterator
+                k = comments.begin(); k != comments.end(); ++k )
+        {
+            if ( k->line == 1 &&
+                 k->end - k->begin > 1 &&
+                 buffer[ k->begin + 1 ] == '!' )
+            {
+                // That's a bang line
+                BangLine *          bangLine( new BangLine );
+                bangLine->parent = controlFlow;
+                bangLine->begin = k->begin;
+                bangLine->end = k->end;
+                bangLine->beginLine = 1;
+                bangLine->beginPos = k->pos;
+                bangLine->endLine = 1;
+                bangLine->endPos = bangLine->beginPos + ( bangLine->end -
+                                                          bangLine->begin );
+                controlFlow->updateEnd( bangLine->end,
+                                        bangLine->endLine,
+                                        bangLine->endPos );
+                controlFlow->updateBegin( bangLine->begin,
+                                          bangLine->beginLine,
+                                          bangLine->beginPos );
+                controlFlow->bangLine = Py::asObject( bangLine );
+                continue;
+            }
+        }
     }
 
     return Py::asObject( controlFlow );
