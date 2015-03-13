@@ -76,11 +76,15 @@ class FragmentBase
         Py::Object  getContent( const Py::Tuple &  args );
         std::string getContent( const std::string *  buf = NULL );
         Py::Object  getLineContent( const Py::Tuple &  args );
+        #if 0
+        // TODO: No need anymore?
         void        updateEnd( INT_TYPE  otherEnd,
                                INT_TYPE  otherEndLine, INT_TYPE  otherEndPos );
         void        updateBegin( INT_TYPE  otherBegin,
                                  INT_TYPE  otherBeginLine,
                                  INT_TYPE  otherBeginPos );
+        #endif
+        void        updateBeginEnd( const FragmentBase *  other );
 };
 
 
@@ -92,7 +96,11 @@ class FragmentBase
 //   complex statements
 // Naming convention
 // - body: first character of the statement itself
-// - nested: list of fragments in the statement scope if so
+// - nsuite: list of fragments in the statement scope if so
+//           Note: the better name is simply 'suite' however python headers
+//                 define suite as 300, so I had to call this member
+//                 differently. The module however will display this member as
+//                 good plain 'suite' without 'n' (nested) prefix
 
 
 
@@ -275,7 +283,7 @@ class Function : public FragmentBase,
         Py::Object      arguments;      // Fragment for the function arguments
                                         // starting from '(', ending with ')'
         Py::Object      docstring;      // None or Docstring instance
-        Py::List        nested;
+        Py::List        nsuite;
 };
 
 
@@ -299,7 +307,7 @@ class Class : public FragmentBase,
         Py::Object      baseClasses;    // Fragment for the class base classes
                                         // starting from '(', ending with ')'
         Py::Object      docstring;      // None or Docstring instance
-        Py::List        nested;
+        Py::List        nsuite;
 };
 
 
@@ -429,7 +437,7 @@ class While : public FragmentBase,
 
     public:
         Py::Object      condition;      // Fragment for the condition
-        Py::List        nested;         // List of nested Fragments
+        Py::List        nsuite;         // List of suite Fragments
         Py::Object      elsePart;       // None or IfPart instance
 };
 
@@ -451,7 +459,7 @@ class For : public FragmentBase,
 
     public:
         Py::Object      iteration;      // Fragment for the iteration
-        Py::List        nested;         // List of Fragments for the nested statements
+        Py::List        nsuite;         // List of Fragments for the suite
         Py::Object      elsePart;       // None or IfPart instance
 };
 
@@ -495,7 +503,7 @@ class IfPart : public FragmentBase,
 
     public:
         Py::Object      condition;  // None for 'else' part or Fragment instance
-        Py::List        nested;     // Fragments for nested statements
+        Py::List        nsuite;     // Fragments for suite statements
 };
 
 
@@ -533,7 +541,7 @@ class With : public FragmentBase,
 
     public:
         Py::Object      object;     // Fragment for the object
-        Py::List        nested;     // List of nested statement fragments
+        Py::List        nsuite;     // List of suite statement fragments
 };
 
 
@@ -557,7 +565,7 @@ class ExceptPart : public FragmentBase,
         Py::Object      variable;       // Fragment or None for the variable
                                         // It comes after ',' or 'as'
                                         // Always None for 'finally'
-        Py::List        nested;         // List of nested stament fragments
+        Py::List        nsuite;         // List of suite statement fragments
 };
 
 
@@ -578,7 +586,7 @@ class Try : public FragmentBase,
     public:
         Py::List        exceptParts;    // List of ExceptPart fragments
         Py::Object      finallyPart;    // None or ExceptPart for finally
-        Py::List        nested;         // List of nested stament fragments
+        Py::List        nsuite;         // List of suite statement fragments
 };
 
 
@@ -599,7 +607,7 @@ class ControlFlow : public FragmentBase,
         Py::Object  bangLine;       // None or BangLine instance
         Py::Object  encodingLine;   // None or EncodingLine instance
         Py::Object  docstring;      // None or Docstring instance
-        Py::List    nested;         // Nested statement fragments
+        Py::List    nsuite;         // Suite statement fragments
 
         // Error reporting support
         bool        isOK;           // true if no errors detected

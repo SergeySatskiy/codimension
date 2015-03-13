@@ -215,7 +215,8 @@ Py::Object  FragmentBase::getLineContent( const Py::Tuple &  args )
                             "(text buffer)" );
 }
 
-
+#if 0
+// TODO: No need anymore?
 // Updates the end of the fragment with a new candidate if the new end is
 // further than the current
 void  FragmentBase::updateEnd( INT_TYPE  otherEnd,
@@ -240,6 +241,28 @@ void  FragmentBase::updateBegin( INT_TYPE  otherBegin,
         beginLine = otherBeginLine;
         beginPos = otherBeginPos;
     }
+}
+#endif
+
+
+void FragmentBase::updateBeginEnd( const FragmentBase *  other )
+{
+    if ( begin == -1 || other->begin < begin )
+    {
+        begin = other->begin;
+        beginLine = other->beginLine;
+        beginPos = other->beginPos;
+    }
+    if ( end == -1 || other->end > end )
+    {
+        end = other->end;
+        endLine = other->endLine;
+        endPos = other->endPos;
+    }
+
+    // Spread the change to the upper levels
+    if ( parent != NULL )
+        parent->updateBeginEnd( other );
 }
 
 
@@ -1206,7 +1229,7 @@ Py::Object Function::getattr( const char *  attrName )
         members.append( Py::String( "name" ) );
         members.append( Py::String( "arguments" ) );
         members.append( Py::String( "docstring" ) );
-        members.append( Py::String( "nested" ) );
+        members.append( Py::String( "suite" ) );
         return members;
     }
 
@@ -1223,8 +1246,8 @@ Py::Object Function::getattr( const char *  attrName )
         return arguments;
     if ( strcmp( attrName, "docstring" ) == 0 )
         return docstring;
-    if ( strcmp( attrName, "nested" ) == 0 )
-        return nested;
+    if ( strcmp( attrName, "suite" ) == 0 )
+        return nsuite;
     return getattr_methods( attrName );
 }
 
@@ -1269,12 +1292,12 @@ int  Function::setattr( const char *        attrName,
         docstring = val;
         return 0;
     }
-    if ( strcmp( attrName, "nested" ) == 0 )
+    if ( strcmp( attrName, "suite" ) == 0 )
     {
         if ( ! val.isList() )
-            throw Py::AttributeError( "Attribute 'nested' value "
+            throw Py::AttributeError( "Attribute 'suite' value "
                                       "must be a list" );
-        nested = Py::List( val );
+        nsuite = Py::List( val );
         return 0;
     }
     throwUnknownAttribute( attrName );
@@ -1323,7 +1346,7 @@ Py::Object Class::getattr( const char *  attrName )
         members.append( Py::String( "name" ) );
         members.append( Py::String( "baseClasses" ) );
         members.append( Py::String( "docstring" ) );
-        members.append( Py::String( "nested" ) );
+        members.append( Py::String( "suite" ) );
         return members;
     }
 
@@ -1340,8 +1363,8 @@ Py::Object Class::getattr( const char *  attrName )
         return baseClasses;
     if ( strcmp( attrName, "docstring" ) == 0 )
         return docstring;
-    if ( strcmp( attrName, "nested" ) == 0 )
-        return nested;
+    if ( strcmp( attrName, "suite" ) == 0 )
+        return nsuite;
     return getattr_methods( attrName );
 }
 
@@ -1386,12 +1409,12 @@ int  Class::setattr( const char *        attrName,
         docstring = val;
         return 0;
     }
-    if ( strcmp( attrName, "nested" ) == 0 )
+    if ( strcmp( attrName, "suite" ) == 0 )
     {
         if ( ! val.isList() )
-            throw Py::AttributeError( "Attribute 'nested' value "
+            throw Py::AttributeError( "Attribute 'suite' value "
                                       "must be a list" );
-        nested = Py::List( val );
+        nsuite = Py::List( val );
         return 0;
     }
     throwUnknownAttribute( attrName );
@@ -1864,7 +1887,7 @@ Py::Object While::getattr( const char *  attrName )
         FragmentBase::appendMembers( members );
         FragmentWithComments::appendMembers( members );
         members.append( Py::String( "condition" ) );
-        members.append( Py::String( "nested" ) );
+        members.append( Py::String( "suite" ) );
         members.append( Py::String( "elsePart" ) );
         return members;
     }
@@ -1876,8 +1899,8 @@ Py::Object While::getattr( const char *  attrName )
         return retval;
     if ( strcmp( attrName, "condition" ) == 0 )
         return condition;
-    if ( strcmp( attrName, "nested" ) == 0 )
-        return nested;
+    if ( strcmp( attrName, "suite" ) == 0 )
+        return nsuite;
     if ( strcmp( attrName, "elsePart" ) == 0 )
         return elsePart;
     return getattr_methods( attrName );
@@ -1904,12 +1927,12 @@ int  While::setattr( const char *        attrName,
         condition = val;
         return 0;
     }
-    if ( strcmp( attrName, "nested" ) == 0 )
+    if ( strcmp( attrName, "suite" ) == 0 )
     {
         if ( ! val.isList() )
-            throw Py::AttributeError( "Attribute 'nested' value "
+            throw Py::AttributeError( "Attribute 'suite' value "
                                       "must be a list" );
-        nested = Py::List( val );
+        nsuite = Py::List( val );
         return 0;
     }
     if ( strcmp( attrName, "elsePart" ) == 0 )
@@ -1960,7 +1983,7 @@ Py::Object For::getattr( const char *  attrName )
         FragmentBase::appendMembers( members );
         FragmentWithComments::appendMembers( members );
         members.append( Py::String( "iteration" ) );
-        members.append( Py::String( "nested" ) );
+        members.append( Py::String( "suite" ) );
         members.append( Py::String( "elsePart" ) );
         return members;
     }
@@ -1972,8 +1995,8 @@ Py::Object For::getattr( const char *  attrName )
         return retval;
     if ( strcmp( attrName, "iteration" ) == 0 )
         return iteration;
-    if ( strcmp( attrName, "nested" ) == 0 )
-        return nested;
+    if ( strcmp( attrName, "suite" ) == 0 )
+        return nsuite;
     if ( strcmp( attrName, "elsePart" ) == 0 )
         return elsePart;
     return getattr_methods( attrName );
@@ -2000,12 +2023,12 @@ int  For::setattr( const char *        attrName,
         iteration = val;
         return 0;
     }
-    if ( strcmp( attrName, "nested" ) == 0 )
+    if ( strcmp( attrName, "suite" ) == 0 )
     {
         if ( ! val.isList() )
-            throw Py::AttributeError( "Attribute 'nested' value "
+            throw Py::AttributeError( "Attribute 'suite' value "
                                       "must be a list" );
-        nested = Py::List( val );
+        nsuite = Py::List( val );
         return 0;
     }
     if ( strcmp( attrName, "elsePart" ) == 0 )
@@ -2138,7 +2161,7 @@ Py::Object IfPart::getattr( const char *  attrName )
         FragmentBase::appendMembers( members );
         FragmentWithComments::appendMembers( members );
         members.append( Py::String( "condition" ) );
-        members.append( Py::String( "nested" ) );
+        members.append( Py::String( "suite" ) );
         return members;
     }
 
@@ -2149,8 +2172,8 @@ Py::Object IfPart::getattr( const char *  attrName )
         return retval;
     if ( strcmp( attrName, "condition" ) == 0 )
         return condition;
-    if ( strcmp( attrName, "nested" ) == 0 )
-        return nested;
+    if ( strcmp( attrName, "suite" ) == 0 )
+        return nsuite;
     return getattr_methods( attrName );
 }
 
@@ -2175,12 +2198,12 @@ int  IfPart::setattr( const char *        attrName,
         condition = val;
         return 0;
     }
-    if ( strcmp( attrName, "nested" ) == 0 )
+    if ( strcmp( attrName, "suite" ) == 0 )
     {
         if ( ! val.isList() )
-            throw Py::AttributeError( "Attribute 'nested' value "
+            throw Py::AttributeError( "Attribute 'suite' value "
                                       "must be a list" );
-        nested = Py::List( val );
+        nsuite = Py::List( val );
         return 0;
     }
     throwUnknownAttribute( attrName );
@@ -2292,7 +2315,7 @@ Py::Object With::getattr( const char *  attrName )
         FragmentBase::appendMembers( members );
         FragmentWithComments::appendMembers( members );
         members.append( Py::String( "object" ) );
-        members.append( Py::String( "nested" ) );
+        members.append( Py::String( "suite" ) );
         return members;
     }
 
@@ -2303,8 +2326,8 @@ Py::Object With::getattr( const char *  attrName )
         return retval;
     if ( strcmp( attrName, "object" ) == 0 )
         return object;
-    if ( strcmp( attrName, "nested" ) == 0 )
-        return nested;
+    if ( strcmp( attrName, "suite" ) == 0 )
+        return nsuite;
     return getattr_methods( attrName );
 }
 
@@ -2329,12 +2352,12 @@ int  With::setattr( const char *        attrName,
         object = val;
         return 0;
     }
-    if ( strcmp( attrName, "nested" ) == 0 )
+    if ( strcmp( attrName, "suite" ) == 0 )
     {
         if ( ! val.isList() )
-            throw Py::AttributeError( "Attribute 'nested' value "
+            throw Py::AttributeError( "Attribute 'suite' value "
                                       "must be a list" );
-        nested = Py::List( val );
+        nsuite = Py::List( val );
         return 0;
     }
     throwUnknownAttribute( attrName );
@@ -2379,7 +2402,7 @@ Py::Object ExceptPart::getattr( const char *  attrName )
         FragmentWithComments::appendMembers( members );
         members.append( Py::String( "exceptionType" ) );
         members.append( Py::String( "variable" ) );
-        members.append( Py::String( "nested" ) );
+        members.append( Py::String( "suite" ) );
         return members;
     }
 
@@ -2392,8 +2415,8 @@ Py::Object ExceptPart::getattr( const char *  attrName )
         return exceptionType;
     if ( strcmp( attrName, "variable" ) == 0 )
         return variable;
-    if ( strcmp( attrName, "nested" ) == 0 )
-        return nested;
+    if ( strcmp( attrName, "suite" ) == 0 )
+        return nsuite;
     return getattr_methods( attrName );
 }
 
@@ -2425,12 +2448,12 @@ int  ExceptPart::setattr( const char *        attrName,
         variable = val;
         return 0;
     }
-    if ( strcmp( attrName, "nested" ) == 0 )
+    if ( strcmp( attrName, "suite" ) == 0 )
     {
         if ( ! val.isList() )
-            throw Py::AttributeError( "Attribute 'nested' value "
+            throw Py::AttributeError( "Attribute 'suite' value "
                                       "must be a list" );
-        nested = Py::List( val );
+        nsuite = Py::List( val );
         return 0;
     }
     throwUnknownAttribute( attrName );
@@ -2474,7 +2497,7 @@ Py::Object Try::getattr( const char *  attrName )
         FragmentWithComments::appendMembers( members );
         members.append( Py::String( "exceptParts" ) );
         members.append( Py::String( "finallyPart" ) );
-        members.append( Py::String( "nested" ) );
+        members.append( Py::String( "suite" ) );
         return members;
     }
 
@@ -2487,8 +2510,8 @@ Py::Object Try::getattr( const char *  attrName )
         return exceptParts;
     if ( strcmp( attrName, "finallyPart" ) == 0 )
         return finallyPart;
-    if ( strcmp( attrName, "nested" ) == 0 )
-        return nested;
+    if ( strcmp( attrName, "suite" ) == 0 )
+        return nsuite;
     return getattr_methods( attrName );
 }
 
@@ -2521,12 +2544,12 @@ int  Try::setattr( const char *        attrName,
         finallyPart = val;
         return 0;
     }
-    if ( strcmp( attrName, "nested" ) == 0 )
+    if ( strcmp( attrName, "suite" ) == 0 )
     {
         if ( ! val.isList() )
-            throw Py::AttributeError( "Attribute 'nested' value "
+            throw Py::AttributeError( "Attribute 'suite' value "
                                       "must be a list" );
-        nested = Py::List( val );
+        nsuite = Py::List( val );
         return 0;
     }
     throwUnknownAttribute( attrName );
@@ -2577,7 +2600,7 @@ Py::Object ControlFlow::getattr( const char *  attrName )
         members.append( Py::String( "bangLine" ) );
         members.append( Py::String( "encodingLine" ) );
         members.append( Py::String( "docstring" ) );
-        members.append( Py::String( "nested" ) );
+        members.append( Py::String( "suite" ) );
         members.append( Py::String( "isOK" ) );
         members.append( Py::String( "errors" ) );
         return members;
@@ -2592,8 +2615,8 @@ Py::Object ControlFlow::getattr( const char *  attrName )
         return encodingLine;
     if ( strcmp( attrName, "docstring" ) == 0 )
         return docstring;
-    if ( strcmp( attrName, "nested" ) == 0 )
-        return nested;
+    if ( strcmp( attrName, "suite" ) == 0 )
+        return nsuite;
     if ( strcmp( attrName, "isOK" ) == 0 )
         return Py::Boolean( isOK );
     if ( strcmp( attrName, "errors" ) == 0 )
@@ -2634,12 +2657,12 @@ int  ControlFlow::setattr( const char *        attrName,
         docstring = val;
         return 0;
     }
-    if ( strcmp( attrName, "nested" ) == 0 )
+    if ( strcmp( attrName, "suite" ) == 0 )
     {
         if ( ! val.isList() )
-            throw Py::AttributeError( "Attribute 'nested' value "
+            throw Py::AttributeError( "Attribute 'suite' value "
                                       "must be a list" );
-        nested = Py::List( val );
+        nsuite = Py::List( val );
         return 0;
     }
     if ( strcmp( attrName, "isOK" ) == 0 )
