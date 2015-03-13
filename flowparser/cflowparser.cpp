@@ -202,18 +202,58 @@ static void processEncoding( const char *   buffer,
     encodingLine->endLine = line;
     encodingLine->endPos = encodingLine->beginPos + ( encodingLine->end -
                                                       encodingLine->begin );
-    controlFlow->updateEnd( encodingLine->end,
-                            encodingLine->endLine,
-                            encodingLine->endPos );
-    controlFlow->updateBegin( encodingLine->begin,
-                              encodingLine->beginLine,
-                              encodingLine->beginPos );
     controlFlow->encodingLine = Py::asObject( encodingLine );
+    controlFlow->updateBeginEnd( encodingLine );
+}
+
+
+
+static void processImport( node *  tree, FragmentBase *  parent,
+                           Py::List &  flow, int *  lineShifts )
+{
+    assert( tree->n_type == import_stmt );
+    assert( tree->n_nchildren == 1 );
+
+
+    Import *        import( new Import );
+    import->parent = parent;
+
+
+    /* There must be one child of type import_from or import_name */
+    tree = & (tree->n_child[ 0 ]);
+    if ( tree->n_type == import_from )
+    {
+
+    }
+    else
+    {
+        assert( tree->n_type == import_name );
+        import->fromPart = Py::None();
+
+        Fragment *      fragment = new Fragment;
+
+        fragment->parent = import;
+        fragment->begin = 
+        fragment->end =
+        fragment->beginLine =
+        fragment->beginPos =
+        fragment->endLine =
+        fragment->endPos =
+
+
+        import->whatPart = Py::asObject( fragment );
+        // TODO: update import end
+    }
+
+    flow.append( Py::asObject( import ) );
+    parent->updateBeginEnd( import );
+    return;
 }
 
 
 void walk( node *                       tree,
-           ControlFlow *                controlFlow,
+           FragmentBase *               parent,
+           Py::List &                   flow,
            int                          objectsLevel,
            enum Scope                   scope,
            const char *                 firstArgName,
@@ -223,13 +263,12 @@ void walk( node *                       tree,
 {
     ++entryLevel;   // For module docstring only
 
-#if 0
-
     switch ( tree->n_type )
     {
         case import_stmt:
-            processImport( tree, callbacks, lineShifts );
+            processImport( tree, parent, flow, lineShifts );
             return;
+#if 0
         case funcdef:
             processFuncDefinition( tree, callbacks,
                                    objectsLevel, scope, entryLevel,
@@ -262,13 +301,13 @@ void walk( node *                       tree,
                     return;
                 }
             }
+#endif
 
         default:
             break;
     }
 
-
-    int     staticDecor = 0;
+//    int     staticDecor = 0;
     for ( int  i = 0; i < tree->n_nchildren; ++i )
     {
         node *      child = & ( tree->n_child[ i ] );
@@ -276,22 +315,21 @@ void walk( node *                       tree,
         if ( (entryLevel == 1) && (i == 0) )
         {
             /* This could be a module docstring */
-            checkForDocstring( tree, callbacks );
+//            checkForDocstring( tree, callbacks );
         }
 
         /* decorators are always before a class or a function definition on the
          * same level. So they will be picked by the following deinition
          */
-        if ( child->n_type == decorators )
-        {
-            staticDecor = processDecorators( child, callbacks, lineShifts );
-            continue;
-        }
+//        if ( child->n_type == decorators )
+//        {
+//            staticDecor = processDecorators( child, callbacks, lineShifts );
+//            continue;
+//        }
         walk( child, callbacks, objectsLevel,
               scope, firstArgName, entryLevel, lineShifts, staticDecor );
-        staticDecor = 0;
+//        staticDecor = 0;
     }
-#endif
 
     return;
 }
@@ -335,7 +373,8 @@ Py::Object  parseInput( const char *  buffer, const char *  fileName )
 
 
         assert( root->n_type == file_input );
-        walk( root, controlFlow, -1, GLOBAL_SCOPE, NULL, 0, lineShifts, 0 );
+        walk( root, controlFlow, controlFlow->nsuite, -1,
+              GLOBAL_SCOPE, NULL, 0, lineShifts, 0 );
         PyNode_Free( tree );
 
         // Second pass: inject comments
@@ -356,85 +395,13 @@ Py::Object  parseInput( const char *  buffer, const char *  fileName )
                 bangLine->endLine = 1;
                 bangLine->endPos = bangLine->beginPos + ( bangLine->end -
                                                           bangLine->begin );
-                controlFlow->updateEnd( bangLine->end,
-                                        bangLine->endLine,
-                                        bangLine->endPos );
-                controlFlow->updateBegin( bangLine->begin,
-                                          bangLine->beginLine,
-                                          bangLine->beginPos );
                 controlFlow->bangLine = Py::asObject( bangLine );
+                controlFlow->updateBeginEnd( bangLine );
                 continue;
             }
         }
     }
 
     return Py::asObject( controlFlow );
-
-#if 0
-
-
-    // Walk the tree and insert collected info into the controlFlow object
-
-
-    // Second walk - comments
-    size_t      tokenCount = tstream->tokens->count;
-    for ( size_t  k = 0; k < tokenCount; ++k )
-    {
-        pANTLR3_COMMON_TOKEN    tok( (pANTLR3_COMMON_TOKEN)vectorGet( tstream->tokens, k ) );
-        if ( tok->type == COMMENT )
-        {
-            size_t      line = tok->line;
-
-            // Adjust the last character of the comment
-            char *      lastChar = (char *)tok->stop;
-            while ( *lastChar == '\n' || *lastChar == '\r' || *lastChar == 0 )
-                --lastChar;
-            char *      firstChar = (char *)tok->start;
-            while ( *firstChar != '#' )
-            {
-                ++firstChar;
-                ++tok->charPosition;
-            }
-            size_t      commentSize = lastChar - firstChar + 1;
-            size_t      begin = firstChar - (char*)(tok->input->data);
-            size_t      end = begin + commentSize - 1;
-            char        buffer[ commentSize + 1 ];
-
-            if ( line == 1 )
-            {
-                // This might be a bang line
-                if ( commentSize > 2 )
-                {
-                    if ( firstChar[ 1 ] == '!' )
-                    {
-                        BangLine *      bangLine( new BangLine );
-                        bangLine->parent = controlFlow;
-                        bangLine->begin = firstChar - (char *)(input->data);
-                        bangLine->end = lastChar - (char *)(input->data);
-                        bangLine->beginLine = line;
-                        bangLine->beginPos = tok->charPosition + 1;
-                        bangLine->endLine = line;
-                        bangLine->endPos = bangLine->beginPos + commentSize - 1;
-                        controlFlow->updateEnd( bangLine->end,
-                                                bangLine->endLine,
-                                                bangLine->endPos );
-                        controlFlow->updateBegin( bangLine->begin,
-                                                  bangLine->beginLine,
-                                                  bangLine->beginPos );
-                        controlFlow->bangLine = Py::asObject( bangLine );
-                        continue;
-                    }
-                }
-            }
-
-
-
-//            snprintf( buffer, commentSize + 1, "%s", firstChar );
-//            printf( "COMMENT size: %03ld start: %06ld end: %06ld line: %03ld pos: %03d content: '%s'\n",
-//                    commentSize, begin, end, line, tok->charPosition + 1, buffer );
-        }
-    }
-
-#endif
 }
 
