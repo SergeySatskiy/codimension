@@ -150,6 +150,36 @@ static int getTotalLines( node *  tree )
 }
 
 
+static node *  findLastPart( node *  tree )
+{
+    while ( tree->n_nchildren > 0 )
+        tree = & (tree->n_child[ tree->n_nchildren - 1 ]);
+    return tree;
+}
+
+static node *  findChildOfType( node *  from, int  type )
+{
+    for ( int  k = 0; k < from->n_nchildren; ++k )
+        if ( from->n_child[ k ].n_type == type )
+            return & (from->n_child[ k ]);
+    return NULL;
+}
+
+static void updateEnd( Fragment *  f, node *  lastPart,
+                       int *  lineShifts )
+{
+    int             lastPartLength = 0;
+
+    if ( lastPart->n_str != NULL )
+        lastPartLength = strlen( lastPart->n_str );
+
+    f->end = lineShifts[ lastPart->n_lineno ] +
+             lastPart->n_col_offset + lastPartLength;
+    f->endLine = lastPart->n_lineno;
+    f->endPos = lastPart->n_col_offset + lastPartLength;
+}
+
+
 static void processEncoding( const char *   buffer,
                              node *         tree,
                              ControlFlow *  controlFlow,
@@ -218,6 +248,14 @@ static void processImport( node *  tree, FragmentBase *  parent,
     Import *        import( new Import );
     import->parent = parent;
 
+    Fragment *      body( new Fragment );
+    body->parent = parent;
+    body->begin = lineShifts[ tree->n_lineno ] + tree->n_col_offset;
+    body->beginLine = tree->n_lineno;
+    body->beginPos = tree->n_col_offset + 1;
+
+    node *          lastPart = findLastPart( tree );
+    updateEnd( body, lastPart, lineShifts );
 
     /* There must be one child of type import_from or import_name */
     tree = & (tree->n_child[ 0 ]);
@@ -230,23 +268,26 @@ static void processImport( node *  tree, FragmentBase *  parent,
         assert( tree->n_type == import_name );
         import->fromPart = Py::None();
 
-        Fragment *      fragment = new Fragment;
+        Fragment *      whatFragment( new Fragment );
+        node *          firstWhat = findChildOfType( tree, dotted_as_names );
+        assert( firstWhat != NULL );
 
-        fragment->parent = import;
-        fragment->begin = 
-        fragment->end =
-        fragment->beginLine =
-        fragment->beginPos =
-        fragment->endLine =
-        fragment->endPos =
+        whatFragment->parent = import;
+        whatFragment->begin = lineShifts[ firstWhat->n_lineno ] + firstWhat->n_col_offset;
+        whatFragment->beginLine = firstWhat->n_lineno;
+        whatFragment->beginPos = firstWhat->n_col_offset + 1;
 
+        // The end matches the body
+        whatFragment->end = body->end;
+        whatFragment->endLine = body->endLine;
+        whatFragment->endPos = body->endPos;
 
-        import->whatPart = Py::asObject( fragment );
-        // TODO: update import end
+        import->whatPart = Py::asObject( whatFragment );
     }
 
+    import->updateBeginEnd( body );
+    import->body = Py::asObject( body );
     flow.append( Py::asObject( import ) );
-    parent->updateBeginEnd( import );
     return;
 }
 
@@ -326,8 +367,9 @@ void walk( node *                       tree,
 //            staticDecor = processDecorators( child, callbacks, lineShifts );
 //            continue;
 //        }
-        walk( child, callbacks, objectsLevel,
-              scope, firstArgName, entryLevel, lineShifts, staticDecor );
+        walk( child, parent, flow, objectsLevel,
+              GLOBAL_SCOPE, NULL, entryLevel, lineShifts, 0 );
+
 //        staticDecor = 0;
     }
 

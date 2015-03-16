@@ -131,7 +131,7 @@ void  FragmentBase::appendMembers( Py::List &  container ) const
 }
 
 
-bool  FragmentBase::getAttribute( const char *  attrName, Py::Object  retval )
+bool  FragmentBase::getAttribute( const char *  attrName, Py::Object &  retval )
 {
     GETINTATTR( kind );
     GETINTATTR( begin );
@@ -367,7 +367,8 @@ void FragmentWithComments::appendMembers( Py::List &  container )
     return;
 }
 
-bool FragmentWithComments::getAttribute( const char *  attrName, Py::Object  retval )
+bool FragmentWithComments::getAttribute( const char *  attrName,
+                                         Py::Object &  retval )
 {
     if ( strcmp( attrName, "leadingComment" ) == 0 )
     {
@@ -2096,7 +2097,7 @@ Py::Object Import::getattr( const char *  attrName )
 
 Py::Object  Import::repr( void )
 {
-    return Py::String( "<For " + FragmentBase::asStr() +
+    return Py::String( "<Import " + FragmentBase::asStr() +
                        "\n" + representFragmentPart( fromPart, "FromPart" ) +
                        "\n" + representFragmentPart( whatPart, "WhatPart" ) +
                        "\n" + FragmentWithComments::asStr() + ">" );

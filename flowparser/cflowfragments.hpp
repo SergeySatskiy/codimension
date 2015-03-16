@@ -65,7 +65,7 @@ class FragmentBase
 
         void  appendMembers( Py::List &  container ) const;
         bool  getAttribute( const char *        attrName,
-                            Py::Object          retval );
+                            Py::Object &        retval );
         bool  setAttribute( const char *        attrName,
                             const Py::Object &  val );
 
@@ -137,7 +137,7 @@ class FragmentWithComments
     public:
         void  appendMembers( Py::List &  container );
         bool  getAttribute( const char *        attrName,
-                            Py::Object          retval );
+                            Py::Object &        retval );
         bool  setAttribute( const char *        attrName,
                             const Py::Object &  val );
         std::string  asStr( void ) const;
