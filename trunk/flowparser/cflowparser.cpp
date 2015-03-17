@@ -165,6 +165,15 @@ static node *  findChildOfType( node *  from, int  type )
     return NULL;
 }
 
+static node *  findChildOfTypeAndValue( node *  from, int  type, const char *  val )
+{
+    for ( int  k = 0; k < from->n_nchildren; ++k )
+        if ( from->n_child[ k ].n_type == type )
+            if ( strcmp( from->n_child[ k ].n_str, val ) == 0 )
+                return & (from->n_child[ k ]);
+    return NULL;
+}
+
 static void updateEnd( Fragment *  f, node *  lastPart,
                        int *  lineShifts )
 {
@@ -258,10 +267,37 @@ static void processImport( node *  tree, FragmentBase *  parent,
     updateEnd( body, lastPart, lineShifts );
 
     /* There must be one child of type import_from or import_name */
-    tree = & (tree->n_child[ 0 ]);
+    tree = & ( tree->n_child[ 0 ] );
     if ( tree->n_type == import_from )
     {
+        Fragment *  fromFragment( new Fragment );
+        Fragment *  whatFragment( new Fragment );
 
+        node *      fromPart = findChildOfType( tree, dotted_name );
+        assert( fromPart != NULL );
+
+        fromFragment->parent = import;
+        whatFragment->parent = import;
+
+        fromFragment->begin = lineShifts[ fromPart->n_lineno ] + fromPart->n_col_offset;
+        fromFragment->beginLine = fromPart->n_lineno;
+        fromFragment->beginPos = fromPart->n_col_offset + 1;
+
+        node *      lastFromPart = findLastPart( fromPart );
+        updateEnd( fromFragment, lastFromPart, lineShifts );
+
+        node *      whatPart = findChildOfTypeAndValue( tree, NAME, "import" );
+        assert( whatPart != NULL );
+
+        ++whatPart;     // the very next after import is the first of the what part
+        whatFragment->begin = lineShifts[ whatPart->n_lineno ] + whatPart->n_col_offset;
+        whatFragment->beginLine = whatPart->n_lineno;
+        whatFragment->beginPos = whatPart->n_col_offset + 1;
+
+        updateEnd( whatFragment, lastPart, lineShifts );
+
+        import->fromPart = Py::asObject( fromFragment );
+        import->whatPart = Py::asObject( whatFragment );
     }
     else
     {
