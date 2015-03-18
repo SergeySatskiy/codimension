@@ -20,10 +20,51 @@
 # $Id$
 #
 
-" Unit tests for the python control flow parser "
+" Convinience parser launcher "
 
-import sys      # side comment: line 1
-                #               line 2
+import sys
+
+
+def formatFlow( s ):
+    " Reformats the control flow output "
+    result = ""
+    shifts = []
+    pos = 0
+
+    maxIndex = len( s ) - 1
+    for index in xrange( len( s ) ):
+        sym = s[ index ]
+        if sym == "\n":
+            result += sym
+            lastShift = shifts[ -1 ]
+            result += lastShift * " "
+            pos = lastShift
+            continue
+        if sym == "<":
+            pos += 1
+            if (index > 0 and s[ index - 1 ] == '>') or \
+               (index > 1 and s[ index - 2 ] == '>'):
+                result = result[ : -1 ]
+            else:
+                shifts.append( pos )
+            result += sym
+            continue
+        if sym == ">":
+            shift = shifts[ -1 ] - 1
+            result += '\n'
+            result += shift * " "
+            pos = shift
+            result += sym
+            pos += 1
+            if index < maxIndex:
+                if s[ index + 1 ] == '>':
+                    del shifts[ -1 ]
+            continue
+        result += sym
+        pos += 1
+    return result
+
+
 from cdmcf import getControlFlowFromFile, VERSION
 
 if len( sys.argv ) != 2:
@@ -33,6 +74,6 @@ if len( sys.argv ) != 2:
 print "Running control flow parser version: " + VERSION
 
 controlFlow = getControlFlowFromFile( sys.argv[ 1 ] )
-print controlFlow
+print formatFlow( str( controlFlow ) )
 sys.exit( 0 )
 
