@@ -2627,11 +2627,41 @@ Py::Object ControlFlow::getattr( const char *  attrName )
 
 Py::Object  ControlFlow::repr( void )
 {
-    // TODO: the other members
+    std::string     ok( "true" );
+    if ( !isOK )
+        ok = "false";
+
+    std::string     errorsPart;
+    if ( errors.size() == 0 )
+        errorsPart = "n/a";
+    else
+    {
+        for ( size_t  k = 0; k < errors.size(); ++k )
+        {
+            if ( k != 0 )
+                errorsPart += "\n";
+            errorsPart += errors[ k ].str();
+        }
+    }
+
+    std::string     suitePart;
+    if ( nsuite.size() == 0 )
+        suitePart = "n/a";
+    else
+        for ( size_t  k = 0; k < nsuite.size(); ++k )
+        {
+            if ( k != 0 )
+                suitePart += "\n";
+            suitePart += nsuite[ k ].str();
+        }
+
     return Py::String( "<ControlFlow " + FragmentBase::asStr() +
+                       "\nisOK: " + ok +
+                       "\nErrors: " + errorsPart +
                        "\n" + representFragmentPart( bangLine, "BangLine" ) +
                        "\n" + representFragmentPart( encodingLine, "EncodingLine" ) +
                        "\n" + representFragmentPart( docstring, "Docstring" ) +
+                       "\nSuite: " + suitePart +
                        ">" );
 }
 

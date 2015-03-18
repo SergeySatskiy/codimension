@@ -25,8 +25,8 @@
 import unittest
 import os.path
 import sys
-from cdmcfparser import ( getControlFlowFromMemory,
-                          getControlFlowFromFile, getVersion )
+from cdmcf import ( getControlFlowFromMemory,
+                    getControlFlowFromFile, VERSION )
 
 
 
@@ -308,6 +308,6 @@ class CDMControlFlowParserTest( unittest.TestCase ):
 
 # Run the unit tests
 if __name__ == '__main__':
-    print "Testing control flow parser version: " + getVersion()
+    print "Testing control flow parser version: " + VERSION
     unittest.main()
 
