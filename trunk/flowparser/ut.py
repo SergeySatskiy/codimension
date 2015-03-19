@@ -29,6 +29,45 @@ from cdmcf import ( getControlFlowFromMemory,
                     getControlFlowFromFile, VERSION )
 
 
+def formatFlow( s ):
+    " Reformats the control flow output "
+    result = ""
+    shifts = []
+    pos = 0
+
+    maxIndex = len( s ) - 1
+    for index in xrange( len( s ) ):
+        sym = s[ index ]
+        if sym == "\n":
+            result += sym
+            lastShift = shifts[ -1 ]
+            result += lastShift * " "
+            pos = lastShift
+            continue
+        if sym == "<":
+            pos += 1
+            if (index > 0 and s[ index - 1 ] == '>') or \
+               (index > 1 and s[ index - 2 ] == '>'):
+                result = result[ : -1 ]
+            else:
+                shifts.append( pos )
+            result += sym
+            continue
+        if sym == ">":
+            shift = shifts[ -1 ] - 1
+            result += '\n'
+            result += shift * " "
+            pos = shift
+            result += sym
+            pos += 1
+            if index < maxIndex:
+                if s[ index + 1 ] == '>':
+                    del shifts[ -1 ]
+            continue
+        result += sym
+        pos += 1
+    return result
+
 
 def files_equal( name1, name2 ):
     " Compares two files. Returns True if their content matches "
@@ -58,7 +97,7 @@ class CDMControlFlowParserTest( unittest.TestCase ):
 
         self.dir = "unittest" + os.path.sep
         if not os.path.isdir( self.dir ):
-            raise Exception( "Cannot find directory with tests. " \
+            raise Exception( "Cannot find directory with tests. "
                              "Expected here: " + self.dir )
         return
 
@@ -77,7 +116,7 @@ class CDMControlFlowParserTest( unittest.TestCase ):
 
         outFileName = pythonFile.replace( ".py", ".out" )
         outFile = open( outFileName, "w" )
-        outFile.write( controlFlow.niceStringify() + "\n" )
+        outFile.write( formatFlow( str( controlFlow ) ) + "\n" )
         outFile.close()
 
         okFileName = pythonFile.replace( ".py", ".ok" )
@@ -97,94 +136,94 @@ class CDMControlFlowParserTest( unittest.TestCase ):
                    "bang line file test failed" )
         return
 
-    def test_notbang( self ):
-        " Test that the second line is not a bang "
-        self.meat( self.dir + "notbang.py",
-                   "second line must not be a bang failed" )
-        return
-
-    def test_coding1( self ):
-        " Test coding 1 "
-        self.meat( self.dir + "coding1.py",
-                   "error retrieving coding" )
-        return
-
-    def test_coding2( self ):
-        " Test coding 2 "
-        self.meat( self.dir + "coding2.py",
-                   "error retrieving coding" )
-        return
-
-    def test_coding3( self ):
-        " Test coding 3 "
-        self.meat( self.dir + "coding3.py",
-                   "error retrieving coding" )
-        return
-
-    def test_cml1( self ):
-        " Test cml 1 "
-        self.meat( self.dir + "cml1.py",
-                   "error collecting cml type I" )
-        return
-
-    def test_cml2( self ):
-        " Test cml 2 "
-        self.meat( self.dir + "cml2.py",
-                   "error collecting cml type I with C" )
-        return
-
-    def test_cml3( self ):
-        " Test cml 3 "
-        self.meat( self.dir + "cml3.py",
-                   "error collecting cml type S with C" )
-        return
-
-    def test_docstring1( self ):
-        " Test docstring 1 "
-        self.meat( self.dir + "docstring1.py",
-                   "module docstring error - 1 line" )
-        return
-
-    def test_docstring2( self ):
-        " Test docstring 2 "
-        self.meat( self.dir + "docstring2.py",
-                   "module docstring error - 1 line" )
-        return
-
-    def test_docstring3( self ):
-        " Test docstring 3 "
-        self.meat( self.dir + "docstring3.py",
-                   "module docstring error - 2 lines" )
-        return
-
-    def test_docstring4( self ):
-        " Test docstring 4 "
-        self.meat( self.dir + "docstring4.py",
-                   "module docstring error - 1 line, joined" )
-        return
-
-    def test_docstring5( self ):
-        " Test docstring 5 "
-        self.meat( self.dir + "docstring5.py",
-                   "module docstring error - 1 line, joined" )
-        return
-
-    def test_docstring6( self ):
-        " Test docstring 6 "
-        self.meat( self.dir + "docstring6.py",
-                   "module docstring error - 2 lines, joined" )
-        return
-
-    def test_docstring7( self ):
-        " Test docstring 7 "
-        self.meat( self.dir + "docstring7.py",
-                   'module docstring error - multilined with """' )
-        return
+#    def test_notbang( self ):
+#        " Test that the second line is not a bang "
+#        self.meat( self.dir + "notbang.py",
+#                   "second line must not be a bang failed" )
+#        return
 
 #    def test_import( self ):
 #        " Tests imports "
 #        self.meat( self.dir + "import.py",
 #                   "import test failed" )
+#        return
+
+#    def test_coding1( self ):
+#        " Test coding 1 "
+#        self.meat( self.dir + "coding1.py",
+#                   "error retrieving coding" )
+#        return
+
+#    def test_coding2( self ):
+#        " Test coding 2 "
+#        self.meat( self.dir + "coding2.py",
+#                   "error retrieving coding" )
+#        return
+
+#    def test_coding3( self ):
+#        " Test coding 3 "
+#        self.meat( self.dir + "coding3.py",
+#                   "error retrieving coding" )
+#        return
+
+#    def test_cml1( self ):
+#        " Test cml 1 "
+#        self.meat( self.dir + "cml1.py",
+#                   "error collecting cml type I" )
+#        return
+
+#    def test_cml2( self ):
+#        " Test cml 2 "
+#        self.meat( self.dir + "cml2.py",
+#                   "error collecting cml type I with C" )
+#        return
+
+#    def test_cml3( self ):
+#        " Test cml 3 "
+#        self.meat( self.dir + "cml3.py",
+#                   "error collecting cml type S with C" )
+#        return
+
+#    def test_docstring1( self ):
+#        " Test docstring 1 "
+#        self.meat( self.dir + "docstring1.py",
+#                   "module docstring error - 1 line" )
+#        return
+
+#    def test_docstring2( self ):
+#        " Test docstring 2 "
+#        self.meat( self.dir + "docstring2.py",
+#                   "module docstring error - 1 line" )
+#        return
+
+#    def test_docstring3( self ):
+#        " Test docstring 3 "
+#        self.meat( self.dir + "docstring3.py",
+#                   "module docstring error - 2 lines" )
+#        return
+
+#    def test_docstring4( self ):
+#        " Test docstring 4 "
+#        self.meat( self.dir + "docstring4.py",
+#                   "module docstring error - 1 line, joined" )
+#        return
+
+#    def test_docstring5( self ):
+#        " Test docstring 5 "
+#        self.meat( self.dir + "docstring5.py",
+#                   "module docstring error - 1 line, joined" )
+#        return
+
+#    def test_docstring6( self ):
+#        " Test docstring 6 "
+#        self.meat( self.dir + "docstring6.py",
+#                   "module docstring error - 2 lines, joined" )
+#        return
+
+#    def test_docstring7( self ):
+#        " Test docstring 7 "
+#        self.meat( self.dir + "docstring7.py",
+#                   'module docstring error - multilined with """' )
 #        return
 
 #    def test_function_definitions( self ):
@@ -241,24 +280,22 @@ class CDMControlFlowParserTest( unittest.TestCase ):
 #                   "class members test failed" )
 #        return
 
-#    def test_errors( self ):
-#        " Test errors "
+    def test_errors( self ):
+        " Test errors "
 
-#        pythonFile = self.dir + "errors.py"
-#        info = getControlFlowFromFile( pythonFile )
-#        self.failUnless( info.isOK != True )
+        pythonFile = self.dir + "errors.py"
+        info = getControlFlowFromFile( pythonFile )
+        self.failUnless( info.isOK != True )
 
-#        outFileName = pythonFile.replace( ".py", ".out" )
-#        outFile = open( outFileName, "w" )
-#        outFile.write( info.niceStringify() )
-#        for item in info.errors:
-#            outFile.write( "\n" + item )
-#        outFile.close()
+        outFileName = pythonFile.replace( ".py", ".out" )
+        outFile = open( outFileName, "w" )
+        outFile.write( formatFlow( str( info ) ) + "\n" )
+        outFile.close()
 
-#        okFileName = pythonFile.replace( ".py", ".ok" )
-#        self.failUnless( files_equal( outFileName, okFileName ),
-#                         "errors test failed" )
-#        return
+        okFileName = pythonFile.replace( ".py", ".ok" )
+        self.failUnless( files_equal( outFileName, okFileName ),
+                         "errors test failed" )
+        return
 
 #    def test_wrong_indent( self ):
 #        " Test wrong indent "
@@ -269,9 +306,7 @@ class CDMControlFlowParserTest( unittest.TestCase ):
 
 #        outFileName = pythonFile.replace( ".py", ".out" )
 #        outFile = open( outFileName, "w" )
-#        outFile.write( info.niceStringify() )
-#        for item in info.errors:
-#            outFile.write( "\n" + item )
+#        outFile.write( formatFlow( str( info ) ) + "\n" )
 #        outFile.close()
 
 #        okFileName = pythonFile.replace( ".py", ".ok" )
