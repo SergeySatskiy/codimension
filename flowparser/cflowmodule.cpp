@@ -216,7 +216,8 @@ CDMControlFlowModule::getControlFlowFromMemory( const Py::Tuple &  args )
     }
 
     // Content size is zero
-    return Py::None();
+    ControlFlow *   controlFlow = new ControlFlow();
+    return Py::asObject( controlFlow );
 }
 
 
@@ -267,7 +268,9 @@ CDMControlFlowModule::getControlFlowFromFile( const Py::Tuple &  args )
 
     // File size is zero
     fclose( f );
-    return Py::None();
+
+    ControlFlow *   controlFlow = new ControlFlow();
+    return Py::asObject( controlFlow );
 }
 
 

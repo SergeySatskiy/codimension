@@ -2566,7 +2566,6 @@ ControlFlow::ControlFlow()
     bangLine = Py::None();
     encodingLine = Py::None();
     docstring = Py::None();
-    isOK = true;
 }
 
 ControlFlow::~ControlFlow()
@@ -2619,7 +2618,7 @@ Py::Object ControlFlow::getattr( const char *  attrName )
     if ( strcmp( attrName, "suite" ) == 0 )
         return nsuite;
     if ( strcmp( attrName, "isOK" ) == 0 )
-        return Py::Boolean( isOK );
+        return Py::Boolean( errors.size() == 0 );
     if ( strcmp( attrName, "errors" ) == 0 )
         return errors;
     return getattr_methods( attrName );
@@ -2628,7 +2627,7 @@ Py::Object ControlFlow::getattr( const char *  attrName )
 Py::Object  ControlFlow::repr( void )
 {
     std::string     ok( "true" );
-    if ( !isOK )
+    if ( errors.size() != 0 )
         ok = "false";
 
     std::string     errorsPart;
@@ -2694,14 +2693,6 @@ int  ControlFlow::setattr( const char *        attrName,
             throw Py::AttributeError( "Attribute 'suite' value "
                                       "must be a list" );
         nsuite = Py::List( val );
-        return 0;
-    }
-    if ( strcmp( attrName, "isOK" ) == 0 )
-    {
-        if ( ! val.isBoolean() )
-            throw Py::AttributeError( "Attribute 'isOK' value "
-                                      "must be a boolean" );
-        isOK = (bool)(Py::Boolean( val ));
         return 0;
     }
     if ( strcmp( attrName, "errors" ) == 0 )

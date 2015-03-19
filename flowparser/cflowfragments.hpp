@@ -610,7 +610,6 @@ class ControlFlow : public FragmentBase,
         Py::List    nsuite;         // Suite statement fragments
 
         // Error reporting support
-        bool        isOK;           // true if no errors detected
         Py::List    errors;         // List of Py::String objects
 };
 
