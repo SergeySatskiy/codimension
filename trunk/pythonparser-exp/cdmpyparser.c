@@ -1645,6 +1645,7 @@ py_modinfo_from_file( PyObject *  self,     /* unused */
     }
     else
     {
+        fclose( f );
         clearCallbacks( & callbacks );
         Py_INCREF( Py_None );
         return Py_None;
