@@ -1,6 +1,8 @@
 <ControlFlow [-1:-1] (-1,-1) (-1,-1)
- isOK: true
- Errors: n/a
+ isOK: false
+ Errors: 2:8 invalid syntax
+ def f()
+ 
  BangLine: None
  EncodingLine: None
  Docstring: None
