@@ -1,0 +1,175 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <title>PyCXX: Write Python Extensions in C++</title>
+</head>
+<body>
+
+<center><b>PyCXX: Write Python Extensions in C++</b>
+<p><b>Barry Scott, barry@barrys-emacs.org</b>
+</center>
+<p><b>The <a href="http://sourceforge.net/project/?group_id=3180">CXX
+Project Page</a> at&nbsp;<a href="http://sourceforge.net"><img SRC="http://sourceforge.net/sflogo.php?group_id=3180&type=1" alt="SourceForge Home" nosave height="31" width="88" align="abscenter"></a>
+gives you access to the releases, the Subversion repository, and more.</b>
+<p>
+
+<h1>PyCXX is designed to make it easier to extend Python with C++</h1>
+
+<p>
+CXX/Objects is a set of C++ facilities to make it easier
+to write Python extensions. The chief way in which PyCXX makes it easier
+to write Python extensions is that it greatly increases the probability
+that your program will not make a reference-counting error and will not
+have to continually check error returns from the Python C API. CXX/Objects
+integrates Python with C++ in these ways:
+<p>
+<ul>
+
+<li>
+C++ exception handling is relied on to detect errors
+and clean up. In a complicated function this is often a tremendous problem
+when writing in C. With PyCXX, we let the compiler keep track of what objects
+need to be dereferenced when an error occurs.</li>
+
+<li>
+
+The Standard Template Library (STL) and its many algorithms
+plug and play with Python containers such as lists and tuples.
+</li>
+
+<li>
+The optional CXX/Extensions facility allows you to replace the clumsy C tables with objects
+and method calls that define your modules and extension objects.
+</li>
+</ul>
+
+<hr />
+
+<p>PyCXX documentation is split into <a href="PyCXX-Python3.html">Python 3</a>
+and <a href="PyCXX-Python2.html">Python 2</a> versions. The Python 3 documentation is the most accurate.</p>
+
+<p>Latest PyCXX <a href="README.html">README</a> file.</p>
+
+<hr />
+<h3>Version 6.2.6 (4-Jan-2015)</h3>
+<p>Fix various compiler warning.</p>
+<p>Fix incorrect use of NULL.</p>
+<p>Fix conversion from (const char *) to (char *) is deprecated warning.</p>
+
+<h3>Version 6.2.5 (18-Aug-2013)</h3>
+<p>Fix build issue with GCC 4.2.1 on FreeBSD and Mac OS X (stop python defining isspace as a macro).</p>
+<p>Remove support for python 3.1 (API's are unstable).</p>
+<p>Add Python 3.3 support.</p>
+<p>Patch frm Michael Droettboom to fix compilation issues.</p>
+<p>Patch frm Michael Droettboom to add buffer interface for python3.</p>
+
+<h3>Version 6.2.4 (3-Mar-2012)</h3>
+<p>Fix memory leak in string encode and decode functions</p>
+<p>Fix indirect python loading on windows - Bool_type was missing</p>
+
+<h2>Version 6.2.3 (11-mar-2011)</h2>
+<p>Fix memory leak in string encode and decode functions</p>
+<p>Fix indirect python loading on windows - Bool_type was missing</p>
+
+<hr />
+<h2>Version 6.2.2 (26-Dec-2010)</h2>
+<p>Fix problem compiling against Python 3.1.3</p>
+
+<hr />
+<h2>Version 6.2.1 (15-Aug-2010)</h2>
+<p>Add support for NotImplementedError</p>
+<p>Remove String() and Byte() c'tors that are not allowed by ISO C++ and where ambigous</p>
+
+<hr />
+<h2>Version 6.2.0 (9-May-2010)</h2>
+
+<p>Fix problems with new style classes.</p>
+<p>Replace all example makefile and project files with setup_makefile.py script.</p>
+<p>Add APIs to make calling python functions easier. See TupleN(), callOnSelf(), self()</p>
+
+<hr />
+<h2>Version 6.1.1 (26-Sep-2009)</h2>
+<p>Supports Python 3 starting at Python 3.1 and Python 2</p>
+<p>Code clean up to fix compiler warnings reported by gcc 4.2.1 on Mac OS X when building for Python 3.</p>
+
+<hr />
+<h2>Version 6.1.0 (19-Jul-2009)</h2>
+<p>Supports Python 3 and Python 2</p>
+<p>This release replaces 5.5.0 and 6.0.0</p>
+<p>Speed of method calling has been improved.</p>
+
+<hr />
+<h2>Version 6.0.0 (31-Jan-2009)</h2>
+<p>Supports Python 3 only</p>
+
+<hr />
+<h2>Version 5.5.0 (31-Jan-2009)</h2>
+<p>Supports Python 2 only</p>
+ 
+<hr />
+<h2>Version 5.4.2 (11-Oct-2008)</h2>
+<p>Add support for rich compare.</p>
+<p>Add the simplest code for a module with a single function and a single class (Demo/simple.cxx)</p>
+<p>Fix long standing bugs with Dict::iterator</p>
+
+<hr />
+<h2>Version 5.4.1 (28-Jun-2008)</h2>
+<p>Add Boolean type from Vivian De Smedt.</p>
+<p>Patch from Dmitry Kostjuchenko to which improves PyCXX method's calling
+speed/performance by almost 2 times.</p>
+<p>More PY_LONG_LONG support.</p>
+<p>No longer allow creation of Py::Int from PY_LONG_LONG as long long cannot fit. Use Py::Long.</p>
+<p>Py:Dict can now be constructed from a Py::Object.</p>
+
+<hr />
+<h2>Version 5.4.0 (20-Jan-2007)</h2>
+<p>PyCXX has a new <a href="https://svn.sourceforge.net/svnroot/cxx/trunk/CXX/COPYRIGHT">BSD license</a>
+to make it open source compatible.
+Many thanks to Sebastian Sauer for bring this matter to our attention and 
+to Paul Dubios for working with the LLNL people to get the license changed.</p>
+<p>Fix compilation issues with GCC 4.1 found on FC6.</p>
+<p>Fix compilation issues caused by problems in IRIX header files.</p>
+<p>Add PY_LONG_LONG support from patch contributed by Dmitry Kostjuchenko.</p>
+
+
+<h2>Version 5.3.6 (21-Oct-2006)</h2>
+<p>Add support for Python 2.5</p>
+<p>Add support for PY_LONG_LONG to Py::Int()</p>
+
+<h2>Version 5.3.5 (2-Oct-2005)</h2>
+<p>More changes to keep GCC 4.0 happy - no warning should be report</p>
+
+<h2>Version 5.3.4 (29-Aug-2005)</h2>
+<p>Add interator support - thanks to Helmut Jarausch - see pycxx_iter demo
+<p>Allow an extension to be part of a python package
+<p>Allow creation of Exception hierachies
+<p>Fix problem compiling with GCC 2.9X
+<p>Fix uninitialise memory problem
+<P>Work around compile problems with the example and GCC 4.0.
+
+<h2>Version 5.3.3 and 5.3.2</h2>
+<p>No details recorded</p>
+
+<h2> PyCXX V5.3.1 </h2>
+<p>Added fixes to support problems reported against GCC4 builds and .NET 2003 builds
+<p>Download PyCXX 5.3.1 from <a href="http://prdownloads.sourceforge.net/cxx/pycxx_5_3_1.tar.gz?download">SourceForge</a>.</p>
+
+<h2> PyCXX V5.3.0 </h2>
+<p>I've added Unicode string support to PyCXX and fixed a number of reported bugs.</p>
+<p>See the <a href="README.html">README</a> and <a href="PyCXX.html">documentation</a> for details.</p>
+
+<p>Download PyCXX 5.3.0 from <a href="http://prdownloads.sourceforge.net/cxx/pycxx_5_3_0.tar.gz?download">SourceForge</a>.</p>
+<p>-- BArry Scott, October 2004</p>
+<hr />
+<h2> PyCXX V5.2.0 </h2>
+<p>After a long gap I have updated PyCXX (the name I prefer for CXX) to
+fix a number of bugs and add a small number of features.</p>
+
+<p>I'm using the development of <a href="http://pysvn.tigris.org/">pysvn</a> 
+to drive the need for fixes and features in PyCXX.</p>
+
+<p>-- Barry Scott, November 2003</p>
+
+</body>
+</html>
