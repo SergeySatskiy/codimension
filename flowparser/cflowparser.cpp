@@ -273,17 +273,42 @@ static void processImport( node *  tree, FragmentBase *  parent,
         Fragment *  fromFragment( new Fragment );
         Fragment *  whatFragment( new Fragment );
 
-        node *      fromPart = findChildOfType( tree, dotted_name );
-        assert( fromPart != NULL );
+        node *      fromPartBegin = findChildOfType( tree, DOT );
+        if ( fromPartBegin == NULL )
+            fromPartBegin = findChildOfType( tree, dotted_name );
+        assert( fromPartBegin != NULL );
 
         fromFragment->parent = import;
         whatFragment->parent = import;
 
-        fromFragment->begin = lineShifts[ fromPart->n_lineno ] + fromPart->n_col_offset;
-        fromFragment->beginLine = fromPart->n_lineno;
-        fromFragment->beginPos = fromPart->n_col_offset + 1;
+        fromFragment->begin = lineShifts[ fromPartBegin->n_lineno ] + fromPartBegin->n_col_offset;
+        fromFragment->beginLine = fromPartBegin->n_lineno;
+        fromFragment->beginPos = fromPartBegin->n_col_offset + 1;
 
-        node *      lastFromPart = findLastPart( fromPart );
+        node *      lastFromPart = NULL;
+        if ( fromPartBegin->n_type == DOT )
+        {
+            // it could be:
+            // DOT ... DOT or
+            // DOT ... DOT dotted_name
+            lastFromPart = findChildOfType( tree, dotted_name );
+            if ( lastFromPart == NULL )
+            {
+                // This is DOT ... DOT
+                lastFromPart = fromPartBegin;
+                while ( (lastFromPart+1)->n_type == DOT )
+                    ++lastFromPart;
+            }
+            else
+            {
+                lastFromPart = findLastPart( lastFromPart );
+            }
+        }
+        else
+        {
+            lastFromPart = findLastPart( fromPartBegin );
+        }
+
         updateEnd( fromFragment, lastFromPart, lineShifts );
 
         node *      whatPart = findChildOfTypeAndValue( tree, NAME, "import" );
