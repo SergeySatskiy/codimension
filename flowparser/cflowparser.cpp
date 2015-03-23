@@ -30,6 +30,7 @@
 #include <token.h>
 
 #include <string.h>
+#include <list>
 
 #include "cflowparser.hpp"
 #include "cflowfragments.hpp"
@@ -352,6 +353,82 @@ static void processImport( node *  tree, FragmentBase *  parent,
     return;
 }
 
+static void
+processDecor( node *  tree, int *  lineShifts,
+              std::list<Decorator *> &  decors )
+{
+    assert( tree->n_type == decorator );
+
+    node *      atNode = findChildOfType( tree, AT );
+    node *      nameNode = findChildOfType( tree, dotted_name );
+    node *      lparNode = findChildOfType( tree, LPAR );
+    assert( atNode != NULL );
+    assert( nameNode != NULL );
+
+    Decorator *     decor( new Decorator );
+    Fragment *      nameFragment( new Fragment );
+    node *          lastNameNode = findLastPart( nameNode );
+
+    nameFragment->parent = decor;
+    nameFragment->begin = lineShifts[ nameNode->n_lineno ] + nameNode->n_col_offset;
+    nameFragment->beginLine = nameNode->n_lineno;
+    nameFragment->beginPos = nameNode->n_col_offset + 1;
+    updateEnd( nameFragment, lastNameNode, lineShifts );
+    decor->name = Py::asObject( nameFragment );
+
+    Fragment *      body( new Fragment );
+    body->parent = decor;
+    body->begin = lineShifts[ atNode->n_lineno ] + atNode->n_col_offset;
+    body->beginLine = atNode->n_lineno;
+    body->beginPos = atNode->n_col_offset + 1;
+
+    if ( lparNode == NULL )
+    {
+        // Decorator without arguments
+        updateEnd( body, lastNameNode, lineShifts );
+    }
+    else
+    {
+        // Decorator with arguments
+        node *          rparNode = findChildOfType( tree, RPAR );
+        Fragment *      argsFragment( new Fragment );
+
+        argsFragment->parent = decor;
+        argsFragment->begin = lineShifts[ lparNode->n_lineno ] + lparNode->n_col_offset;
+        argsFragment->beginLine = lparNode->n_lineno;
+        argsFragment->beginPos = lparNode->n_col_offset + 1;
+        updateEnd( argsFragment, rparNode, lineShifts );
+        decor->arguments = Py::asObject( argsFragment );
+        updateEnd( body, rparNode, lineShifts );
+    }
+
+    decor->body = Py::asObject( body );
+    decor->updateBeginEnd( body );
+    decors.push_back( decor );
+    return;
+}
+
+
+static std::list<Decorator *>
+processDecorators( node *  tree, int *  lineShifts )
+{
+    assert( tree->n_type == decorators );
+
+    int                         n = tree->n_nchildren;
+    node *                      child;
+    std::list<Decorator *>      decors;
+
+    for ( int  k = 0; k < n; ++k )
+    {
+        child = & ( tree->n_child[ k ] );
+        if ( child->n_type == decorator )
+        {
+            processDecor( child, lineShifts, decors );
+        }
+    }
+    return decors;
+}
+
 
 static void processFuncDefinition( node *           tree,
                                    FragmentBase *   parent,
@@ -377,7 +454,8 @@ void walk( node *                       tree,
            Py::List &                   flow,
            enum Scope                   scope,
            int                          entryLevel,
-           int *                        lineShifts)
+           int *                        lineShifts,
+           std::list<Decorator *> &     decors )
 {
     ++entryLevel;   // For module docstring only
 
@@ -427,7 +505,7 @@ void walk( node *                       tree,
             break;
     }
 
-//    int     staticDecor = 0;
+    std::list<Decorator *>      foundDecors;
     for ( int  i = 0; i < tree->n_nchildren; ++i )
     {
         node *      child = & ( tree->n_child[ i ] );
@@ -441,15 +519,13 @@ void walk( node *                       tree,
         /* decorators are always before a class or a function definition on the
          * same level. So they will be picked by the following definition
          */
-//        if ( child->n_type == decorators )
-//        {
-//            staticDecor = processDecorators( child, callbacks, lineShifts );
-//            continue;
-//        }
+        if ( child->n_type == decorators )
+        {
+            foundDecors = processDecorators( child, lineShifts );
+            continue;
+        }
         walk( child, parent, flow,
-              GLOBAL_SCOPE, entryLevel, lineShifts );
-
-//        staticDecor = 0;
+              GLOBAL_SCOPE, entryLevel, lineShifts, foundDecors );
     }
 
     return;
@@ -494,8 +570,9 @@ Py::Object  parseInput( const char *  buffer, const char *  fileName )
 
 
         assert( root->n_type == file_input );
+        std::list<Decorator *>      decors;
         walk( root, controlFlow, controlFlow->nsuite,
-              GLOBAL_SCOPE, 0, lineShifts );
+              GLOBAL_SCOPE, 0, lineShifts, decors );
         PyNode_Free( tree );
 
         // Second pass: inject comments

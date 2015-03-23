@@ -1033,7 +1033,6 @@ std::string  Docstring::trimDocstring( const std::string &  docstring )
 Decorator::Decorator()
 {
     kind = DECORATOR_FRAGMENT;
-    name = Py::None();
     arguments = Py::None();
 }
 

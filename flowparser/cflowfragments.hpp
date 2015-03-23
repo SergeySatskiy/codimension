@@ -241,7 +241,7 @@ class Decorator : public FragmentBase,
                              const Py::Object &  val );
 
     public:
-        Py::Object      name;           // None or Fragment for a name
+        Py::Object      name;           // Fragment for a name
         Py::Object      arguments;      // None or Fragment for arguments
                                         // Starting from '(', ending with ')'
 };
