@@ -353,15 +353,31 @@ static void processImport( node *  tree, FragmentBase *  parent,
 }
 
 
+static void processFuncDefinition( node *           tree,
+                                   FragmentBase *   parent,
+                                   Py::List &       flow,
+                                   enum Scope       scope,
+                                   int              entryLevel,
+                                   int *            lineShifts )
+{
+    assert( tree->n_type == funcdef );
+    assert( tree->n_nchildren > 1 );
+
+    node *      defNode = & ( tree->n_child[ 0 ] );
+    node *      nameNode = & ( tree->n_child[ 1 ] );
+    node *      colonNode = findChildOfType( tree, COLON );
+
+    assert( colonNode != NULL );
+
+}
+
+
 void walk( node *                       tree,
            FragmentBase *               parent,
            Py::List &                   flow,
-           int                          objectsLevel,
            enum Scope                   scope,
-           const char *                 firstArgName,
            int                          entryLevel,
-           int *                        lineShifts,
-           int                          isStaticMethod )
+           int *                        lineShifts)
 {
     ++entryLevel;   // For module docstring only
 
@@ -370,12 +386,14 @@ void walk( node *                       tree,
         case import_stmt:
             processImport( tree, parent, flow, lineShifts );
             return;
-#if 0
         case funcdef:
-            processFuncDefinition( tree, callbacks,
-                                   objectsLevel, scope, entryLevel,
-                                   lineShifts, isStaticMethod );
+            processFuncDefinition( tree, parent,
+                                   flow,
+                                   scope,
+                                   entryLevel,
+                                   lineShifts );
             return;
+#if 0
         case classdef:
             processClassDefinition( tree, callbacks,
                                     objectsLevel, scope, entryLevel,
@@ -421,15 +439,15 @@ void walk( node *                       tree,
         }
 
         /* decorators are always before a class or a function definition on the
-         * same level. So they will be picked by the following deinition
+         * same level. So they will be picked by the following definition
          */
 //        if ( child->n_type == decorators )
 //        {
 //            staticDecor = processDecorators( child, callbacks, lineShifts );
 //            continue;
 //        }
-        walk( child, parent, flow, objectsLevel,
-              GLOBAL_SCOPE, NULL, entryLevel, lineShifts, 0 );
+        walk( child, parent, flow,
+              GLOBAL_SCOPE, entryLevel, lineShifts );
 
 //        staticDecor = 0;
     }
@@ -476,8 +494,8 @@ Py::Object  parseInput( const char *  buffer, const char *  fileName )
 
 
         assert( root->n_type == file_input );
-        walk( root, controlFlow, controlFlow->nsuite, -1,
-              GLOBAL_SCOPE, NULL, 0, lineShifts, 0 );
+        walk( root, controlFlow, controlFlow->nsuite,
+              GLOBAL_SCOPE, 0, lineShifts );
         PyNode_Free( tree );
 
         // Second pass: inject comments
@@ -502,6 +520,8 @@ Py::Object  parseInput( const char *  buffer, const char *  fileName )
                 controlFlow->updateBeginEnd( bangLine );
                 continue;
             }
+
+            // Regular comment (not encoding, not bang)
         }
     }
 
