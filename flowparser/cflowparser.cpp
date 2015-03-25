@@ -259,7 +259,7 @@ static void processImport( node *  tree, FragmentBase *  parent,
     import->parent = parent;
 
     Fragment *      body( new Fragment );
-    body->parent = parent;
+    body->parent = import;
     body->begin = lineShifts[ tree->n_lineno ] + tree->n_col_offset;
     body->beginLine = tree->n_lineno;
     body->beginPos = tree->n_col_offset + 1;
@@ -430,12 +430,14 @@ processDecorators( node *  tree, int *  lineShifts )
 }
 
 
-static void processFuncDefinition( node *           tree,
-                                   FragmentBase *   parent,
-                                   Py::List &       flow,
-                                   enum Scope       scope,
-                                   int              entryLevel,
-                                   int *            lineShifts )
+static void
+processFuncDefinition( node *                       tree,
+                       FragmentBase *               parent,
+                       Py::List &                   flow,
+                       enum Scope                   scope,
+                       int                          entryLevel,
+                       int *                        lineShifts,
+                       std::list<Decorator *> &     decors )
 {
     assert( tree->n_type == funcdef );
     assert( tree->n_nchildren > 1 );
@@ -446,6 +448,59 @@ static void processFuncDefinition( node *           tree,
 
     assert( colonNode != NULL );
 
+    Function *      func( new Function );
+    func->parent = parent;
+
+    Fragment *      body( new Fragment );
+    body->parent = func;
+    body->begin = lineShifts[ defNode->n_lineno ] + defNode->n_col_offset;
+    body->beginLine = defNode->n_lineno;
+    body->beginPos = defNode->n_col_offset + 1;
+    updateEnd( body, colonNode, lineShifts );
+    func->body = Py::asObject( body );
+
+    Fragment *      name( new Fragment );
+    name->parent = func;
+    name->begin = lineShifts[ nameNode->n_lineno ] + nameNode->n_col_offset;
+    name->beginLine = nameNode->n_lineno;
+    name->beginPos = nameNode->n_col_offset + 1;
+    updateEnd( name, nameNode, lineShifts );
+    func->name = Py::asObject( name );
+
+    node *      params = findChildOfType( tree, parameters );
+    node *      lparNode = findChildOfType( params, LPAR );
+    node *      rparNode = findChildOfType( params, RPAR );
+    Fragment *  args( new Fragment );
+    args->parent = func;
+    args->begin = lineShifts[ lparNode->n_lineno ] + lparNode->n_col_offset;
+    args->beginLine = lparNode->n_lineno;
+    args->beginPos = lparNode->n_col_offset + 1;
+    updateEnd( args, rparNode, lineShifts );
+    func->arguments = Py::asObject( args );
+
+    if ( decors.empty() )
+    {
+        func->updateBegin( body );
+    }
+    else
+    {
+        for ( std::list<Decorator *>::iterator  k = decors.begin();
+              k != decors.end(); ++k )
+        {
+            Decorator *     dec = *k;
+            dec->parent = func;
+            func->decors.append( Py::asObject( dec ) );
+        }
+        func->updateBegin( *(decors.begin()) );
+    }
+
+    // TODO: docstring
+    // TODO: nested statements
+
+    func->updateEnd( body );
+
+    flow.append( Py::asObject( func ) );
+    return;
 }
 
 
@@ -469,7 +524,8 @@ void walk( node *                       tree,
                                    flow,
                                    scope,
                                    entryLevel,
-                                   lineShifts );
+                                   lineShifts,
+                                   decors );
             return;
 #if 0
         case classdef:

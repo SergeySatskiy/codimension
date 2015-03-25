@@ -84,6 +84,8 @@ class FragmentBase
                                  INT_TYPE  otherBeginLine,
                                  INT_TYPE  otherBeginPos );
         #endif
+        void        updateBegin( const FragmentBase *  other );
+        void        updateEnd( const FragmentBase *  other );
         void        updateBeginEnd( const FragmentBase *  other );
 };
 

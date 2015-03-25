@@ -245,6 +245,34 @@ void  FragmentBase::updateBegin( INT_TYPE  otherBegin,
 #endif
 
 
+void FragmentBase::updateBegin( const FragmentBase *  other )
+{
+    if ( begin == -1 || other->begin < begin )
+    {
+        begin = other->begin;
+        beginLine = other->beginLine;
+        beginPos = other->beginPos;
+    }
+
+    // Spread the change to the upper levels
+    if ( parent != NULL )
+        parent->updateBegin( other );
+}
+
+void FragmentBase::updateEnd( const FragmentBase *  other )
+{
+    if ( end == -1 || other->end > end )
+    {
+        end = other->end;
+        endLine = other->endLine;
+        endPos = other->endPos;
+    }
+
+    // Spread the change to the upper levels
+    if ( parent != NULL )
+        parent->updateEnd( other );
+}
+
 void FragmentBase::updateBeginEnd( const FragmentBase *  other )
 {
     if ( begin == -1 || other->begin < begin )
@@ -1253,9 +1281,42 @@ Py::Object Function::getattr( const char *  attrName )
 
 Py::Object  Function::repr( void )
 {
-    // TODO: the other members
+    std::string     docstringPart;
+    if ( docstring.isNone() )
+        docstringPart = "None";
+    else
+        docstringPart = docstring.str();
+
+    std::string     decorsPart;
+    if ( decors.size() == 0 )
+        decorsPart = "n/a";
+    else
+        for ( size_t  k = 0; k < decors.size(); ++k )
+        {
+            if ( k != 0 )
+                decorsPart += "\n";
+            decorsPart += decors[ k ].str();
+        }
+
+    std::string     suitePart;
+    if ( nsuite.size() == 0 )
+        suitePart = "n/a";
+    else
+        for ( size_t  k = 0; k < nsuite.size(); ++k )
+        {
+            if ( k != 0 )
+                suitePart += "\n";
+            suitePart += nsuite[ k ].str();
+        }
+
     return Py::String( "<Function " + FragmentBase::asStr() +
-                       "\n" + FragmentWithComments::asStr() + ">" );
+                       "\n" + FragmentWithComments::asStr() +
+                       "\n" + representFragmentPart( name, "Name" ) +
+                       "\n" + representFragmentPart( arguments, "Arguments" ) +
+                       "\nDocstring: " + docstringPart +
+                       "\nDecorators: " + decorsPart +
+                       "\nSuite: " + suitePart +
+                       ">" );
 }
 
 
