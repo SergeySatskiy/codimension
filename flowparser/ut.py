@@ -32,41 +32,57 @@ from cdmcf import ( getControlFlowFromMemory,
 def formatFlow( s ):
     " Reformats the control flow output "
     result = ""
-    shifts = []
-    pos = 0
+    shifts = []     # positions of opening '<'
+    pos = 0         # symbol position in a line
+    nextIsList = False
+
+    def IsNextList( index, maxIndex, buf ):
+        if index == maxIndex:
+            return False
+        if buf[ index + 1 ] == '<':
+            return True
+        if index < maxIndex - 1:
+            if buf[ index + 1 ] == '\n' and buf[ index + 2 ] == '<':
+                return True
+        return False
 
     maxIndex = len( s ) - 1
     for index in xrange( len( s ) ):
         sym = s[ index ]
         if sym == "\n":
-            result += sym
             lastShift = shifts[ -1 ]
-            result += lastShift * " "
+            result += sym + lastShift * " "
             pos = lastShift
+            if index < maxIndex:
+                if s[ index + 1 ] not in "<>":
+                    result += " "
+                    pos += 1
             continue
         if sym == "<":
-            pos += 1
-            if (index > 0 and s[ index - 1 ] == '>') or \
-               (index > 1 and s[ index - 2 ] == '>'):
-                result = result[ : -1 ]
-            else:
+            if nextIsList == False:
                 shifts.append( pos )
+            else:
+                nextIsList = False
+            pos += 1
             result += sym
             continue
         if sym == ">":
-            shift = shifts[ -1 ] - 1
+            shift = shifts[ -1 ]
             result += '\n'
             result += shift * " "
             pos = shift
             result += sym
             pos += 1
-            if index < maxIndex:
-                if s[ index + 1 ] == '>':
-                    del shifts[ -1 ]
+            if IsNextList( index, maxIndex, s ):
+                nextIsList = True
+            else:
+                del shifts[ -1 ]
+                nextIsList = False
             continue
         result += sym
         pos += 1
     return result
+
 
 
 def files_equal( name1, name2 ):

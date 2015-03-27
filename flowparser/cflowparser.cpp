@@ -166,12 +166,31 @@ static node *  findChildOfType( node *  from, int  type )
     return NULL;
 }
 
-static node *  findChildOfTypeAndValue( node *  from, int  type, const char *  val )
+static node *
+findChildOfTypeAndValue( node *  from, int  type, const char *  val )
 {
     for ( int  k = 0; k < from->n_nchildren; ++k )
         if ( from->n_child[ k ].n_type == type )
             if ( strcmp( from->n_child[ k ].n_str, val ) == 0 )
                 return & (from->n_child[ k ]);
+    return NULL;
+}
+
+/* Searches for a certain  node among the first children */
+static node *
+skipToNode( node *  tree, int nodeType )
+{
+    if ( tree == NULL )
+        return NULL;
+
+    for ( ; ; )
+    {
+        if ( tree->n_type == nodeType )
+            return tree;
+        if ( tree->n_nchildren < 1 )
+            return NULL;
+        tree = & ( tree->n_child[ 0 ] );
+    }
     return NULL;
 }
 
@@ -430,6 +449,66 @@ processDecorators( node *  tree, int *  lineShifts )
 }
 
 
+// None or Docstring instance
+Docstring *  checkForDocstring( node *  tree, int *  lineShifts )
+{
+    if ( tree == NULL )
+        return NULL;
+
+    node *      child = NULL;
+    int         n = tree->n_nchildren;
+    for ( int  k = 0; k < n; ++k )
+    {
+        /* need to skip NEWLINE and INDENT till stmt if so */
+        child = & ( tree->n_child[ k ] );
+        if ( child->n_type == NEWLINE )
+            continue;
+        if ( child->n_type == INDENT )
+            continue;
+        if ( child->n_type == stmt )
+            break;
+
+        return NULL;
+    }
+
+    child = skipToNode( child, atom );
+    if ( child == NULL )
+        return NULL;
+
+    Docstring *     docstr( new Docstring );
+
+    /* Atom has to have children of the STRING type only */
+    node *          stringChild;
+
+    n = child->n_nchildren;
+    for ( int  k = 0; k < n; ++k )
+    {
+        stringChild = & ( child->n_child[ k ] );
+        if ( stringChild->n_type != STRING )
+        {
+            delete docstr;
+            return NULL;
+        }
+
+        // This is a docstring part
+        Fragment *      part( new Fragment );
+        part->parent = docstr;
+        part->begin = lineShifts[ stringChild->n_lineno ] +
+                      stringChild->n_col_offset;
+        part->beginLine = stringChild->n_lineno;
+        part->beginPos = stringChild->n_col_offset + 1;
+        updateEnd( part, stringChild, lineShifts );
+
+        // In the vast majority of cases a docstring consists of a single part
+        // so there is no need to optimize via updateBegin() & updateEnd()
+        docstr->updateBeginEnd( part );
+        docstr->parts.append( Py::asObject( part ) );
+    }
+
+    return docstr;
+}
+
+
 static void
 processFuncDefinition( node *                       tree,
                        FragmentBase *               parent,
@@ -494,8 +573,20 @@ processFuncDefinition( node *                       tree,
         func->updateBegin( *(decors.begin()) );
     }
 
-    // TODO: docstring
+    // Handle docstring if so
+    node *      suiteNode = findChildOfType( tree, suite );
+    assert( suiteNode != NULL );
+
+    Docstring *  docstr = checkForDocstring( suiteNode, lineShifts );
+    if ( docstr != NULL )
+    {
+        docstr->parent = func;
+        func->docstring = Py::asObject( docstr );
+    }
+
     // TODO: nested statements
+//    walk( suiteNode, callbacks, objectsLevel,
+//          newScope, firstArgName, entryLevel, lineShifts, 0 );
 
     func->updateEnd( body );
 

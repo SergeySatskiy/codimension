@@ -125,6 +125,7 @@ static PyTypeObject *ptr__Slice_Type = NULL;
 static PyTypeObject *ptr__TraceBack_Type = NULL;
 static PyTypeObject *ptr__Tuple_Type = NULL;
 static PyTypeObject *ptr__Type_Type = NULL;
+static PyTypeObject *ptr__Unicode_Type = NULL;
 #if PY_MAJOR_VERSION == 2
 static PyTypeObject *ptr__Int_Type = NULL;
 static PyTypeObject *ptr__String_Type = NULL;
