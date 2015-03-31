@@ -200,11 +200,11 @@ class CDMControlFlowParserTest( unittest.TestCase ):
 #                   "error collecting cml type S with C" )
 #        return
 
-#    def test_docstring1( self ):
-#        " Test docstring 1 "
-#        self.meat( self.dir + "docstring1.py",
-#                   "module docstring error - 1 line" )
-#        return
+    def test_docstring1( self ):
+        " Test docstring 1 "
+        self.meat( self.dir + "docstring1.py",
+                   "module docstring error - 1 line" )
+        return
 
 #    def test_docstring2( self ):
 #        " Test docstring 2 "

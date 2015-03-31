@@ -1,6 +1,11 @@
-Bang: None
-Encoding: None
-Docstring: Fragment[0:6] (1,1) (1,7)
-    Fragment[0:6] (1,1) (1,7)
-Body:
-
+<ControlFlow [0:6] (1,1) (1,7)
+ isOK: true
+ Errors: n/a
+ BangLine: None
+ EncodingLine: None
+ Docstring: <Docstring [0:6] (1,1) (1,7)
+             Parts: <Fragment [0:6] (1,1) (1,7)
+                    >
+            >
+ Suite: n/a
+>

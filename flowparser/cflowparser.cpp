@@ -40,17 +40,18 @@
 extern grammar      _PyParser_Grammar;  /* From graminit.c */
 
 
-/* Holds the currently analysed scope */
-enum Scope {
-    GLOBAL_SCOPE,
-    FUNCTION_SCOPE,
-    CLASS_SCOPE,
-    CLASS_METHOD_SCOPE,
-    CLASS_STATIC_METHOD_SCOPE
-};
+static void
+walk( node *                       tree,
+      FragmentBase *               parent,
+      Py::List &                   flow,
+      int *                        lineShifts,
+      std::list<Decorator *> &     decors,
+      bool                         docstrProcessed );
 
 
-/* Copied and adjusted from Python/pythonrun.c
+
+
+/* Copied and adjusted from 
  * static void err_input(perrdetail *err)
  */
 static std::string getErrorMessage( perrdetail *  err)
@@ -197,15 +198,21 @@ skipToNode( node *  tree, int nodeType )
 static void updateEnd( Fragment *  f, node *  lastPart,
                        int *  lineShifts )
 {
-    int             lastPartLength = 0;
-
     if ( lastPart->n_str != NULL )
-        lastPartLength = strlen( lastPart->n_str );
+    {
+        int     lastPartLength = strlen( lastPart->n_str );
 
-    f->end = lineShifts[ lastPart->n_lineno ] +
-             lastPart->n_col_offset + lastPartLength;
-    f->endLine = lastPart->n_lineno;
-    f->endPos = lastPart->n_col_offset + lastPartLength;
+        f->end = lineShifts[ lastPart->n_lineno ] +
+                 lastPart->n_col_offset + lastPartLength - 1;
+        f->endLine = lastPart->n_lineno;
+        f->endPos = lastPart->n_col_offset + lastPartLength;
+    }
+    else
+    {
+        f->end = lineShifts[ lastPart->n_lineno ] + lastPart->n_col_offset;
+        f->endLine = lastPart->n_lineno;
+        f->endPos = lastPart->n_col_offset;
+    }
 }
 
 
@@ -513,8 +520,6 @@ static void
 processFuncDefinition( node *                       tree,
                        FragmentBase *               parent,
                        Py::List &                   flow,
-                       enum Scope                   scope,
-                       int                          entryLevel,
                        int *                        lineShifts,
                        std::list<Decorator *> &     decors )
 {
@@ -571,6 +576,7 @@ processFuncDefinition( node *                       tree,
             func->decors.append( Py::asObject( dec ) );
         }
         func->updateBegin( *(decors.begin()) );
+        decors.clear();
     }
 
     // Handle docstring if so
@@ -584,9 +590,10 @@ processFuncDefinition( node *                       tree,
         func->docstring = Py::asObject( docstr );
     }
 
-    // TODO: nested statements
-//    walk( suiteNode, callbacks, objectsLevel,
-//          newScope, firstArgName, entryLevel, lineShifts, 0 );
+    // Walk nested nodes
+    std::list<Decorator *>      emptyDecors;
+    walk( suiteNode, func, func->nsuite,
+          lineShifts, emptyDecors, docstr != NULL );
 
     func->updateEnd( body );
 
@@ -595,16 +602,14 @@ processFuncDefinition( node *                       tree,
 }
 
 
-void walk( node *                       tree,
-           FragmentBase *               parent,
-           Py::List &                   flow,
-           enum Scope                   scope,
-           int                          entryLevel,
-           int *                        lineShifts,
-           std::list<Decorator *> &     decors )
+static void
+walk( node *                       tree,
+      FragmentBase *               parent,
+      Py::List &                   flow,
+      int *                        lineShifts,
+      std::list<Decorator *> &     decors,
+      bool                         docstrProcessed )
 {
-    ++entryLevel;   // For module docstring only
-
     switch ( tree->n_type )
     {
         case import_stmt:
@@ -613,15 +618,12 @@ void walk( node *                       tree,
         case funcdef:
             processFuncDefinition( tree, parent,
                                    flow,
-                                   scope,
-                                   entryLevel,
                                    lineShifts,
                                    decors );
             return;
 #if 0
         case classdef:
             processClassDefinition( tree, callbacks,
-                                    objectsLevel, scope, entryLevel,
                                     lineShifts );
             return;
         case stmt:
@@ -653,15 +655,14 @@ void walk( node *                       tree,
     }
 
     std::list<Decorator *>      foundDecors;
+    int                         statementCount = 0;
     for ( int  i = 0; i < tree->n_nchildren; ++i )
     {
         node *      child = & ( tree->n_child[ i ] );
+        if ( child->n_type == NEWLINE || child->n_type == INDENT )
+            continue;
 
-        if ( (entryLevel == 1) && (i == 0) )
-        {
-            /* This could be a module docstring */
-//            checkForDocstring( tree, callbacks );
-        }
+        ++statementCount;
 
         /* decorators are always before a class or a function definition on the
          * same level. So they will be picked by the following definition
@@ -671,8 +672,14 @@ void walk( node *                       tree,
             foundDecors = processDecorators( child, lineShifts );
             continue;
         }
-        walk( child, parent, flow,
-              GLOBAL_SCOPE, entryLevel, lineShifts, foundDecors );
+
+        // Skip processing a statement if it is a docstring which has already
+        // been processed on the previous step
+        if ( statementCount != 1 || docstrProcessed == false )
+        {
+            walk( child, parent, flow,
+                  lineShifts, foundDecors, false );
+        }
     }
 
     return;
@@ -717,9 +724,20 @@ Py::Object  parseInput( const char *  buffer, const char *  fileName )
 
 
         assert( root->n_type == file_input );
+
+        // Check for the docstring first
+        Docstring *  docstr = checkForDocstring( root, lineShifts );
+        if ( docstr != NULL )
+        {
+            docstr->parent = controlFlow;
+            controlFlow->docstring = Py::asObject( docstr );
+            controlFlow->updateBeginEnd( docstr );
+        }
+
+        // Walk the syntax tree
         std::list<Decorator *>      decors;
         walk( root, controlFlow, controlFlow->nsuite,
-              GLOBAL_SCOPE, 0, lineShifts, decors );
+              lineShifts, decors, docstr != NULL );
         PyNode_Free( tree );
 
         // Second pass: inject comments

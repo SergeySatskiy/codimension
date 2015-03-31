@@ -2703,12 +2703,19 @@ Py::Object  ControlFlow::repr( void )
     if ( errors.size() != 0 )
         ok = "false";
 
+    std::string     docstringPart;
+    if ( docstring.isNone() )
+        docstringPart = "None";
+    else
+        docstringPart = docstring.str();
+
+
     return Py::String( "<ControlFlow " + FragmentBase::asStr() +
                        "\nisOK: " + ok +
                        "\nErrors: " + representList( errors ) +
                        "\n" + representFragmentPart( bangLine, "BangLine" ) +
                        "\n" + representFragmentPart( encodingLine, "EncodingLine" ) +
-                       "\n" + representFragmentPart( docstring, "Docstring" ) +
+                       "\nDocstring: " + docstringPart +
                        "\nSuite: " + representList( nsuite ) +
                        ">" );
 }
