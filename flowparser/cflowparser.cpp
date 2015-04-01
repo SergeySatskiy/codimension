@@ -588,6 +588,9 @@ processFuncDefinition( node *                       tree,
     {
         docstr->parent = func;
         func->docstring = Py::asObject( docstr );
+
+        // It could be that a docstring is the only item in the function suite
+        func->updateEnd( docstr );
     }
 
     // Walk nested nodes
@@ -596,6 +599,12 @@ processFuncDefinition( node *                       tree,
           lineShifts, emptyDecors, docstr != NULL );
 
     func->updateEnd( body );
+    size_t          items( func->nsuite.size() );
+    if ( items > 0 )
+    {
+        func->updateEnd( static_cast<Fragment *>
+                            ( (func->nsuite[ items - 1 ]).ptr() ) );
+    }
 
     flow.append( Py::asObject( func ) );
     return;
