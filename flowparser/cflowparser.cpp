@@ -195,6 +195,15 @@ skipToNode( node *  tree, int nodeType )
     return NULL;
 }
 
+static void updateBegin( Fragment *  f, node *  firstPart,
+                         int *  lineShifts )
+{
+    f->begin = lineShifts[ firstPart->n_lineno ] + firstPart->n_col_offset;
+    f->beginLine = firstPart->n_lineno;
+    f->beginPos = firstPart->n_col_offset + 1;
+}
+
+
 static void updateEnd( Fragment *  f, node *  lastPart,
                        int *  lineShifts )
 {
@@ -214,7 +223,6 @@ static void updateEnd( Fragment *  f, node *  lastPart,
         f->endPos = lastPart->n_col_offset;
     }
 }
-
 
 static void processEncoding( const char *   buffer,
                              node *         tree,
@@ -273,6 +281,44 @@ static void processEncoding( const char *   buffer,
 }
 
 
+static FragmentBase *
+processReturn( node *  tree, FragmentBase *  parent,
+               Py::List &  flow, int *  lineShifts )
+{
+    assert( tree->n_type == return_stmt );
+    Return *        ret( new Return );
+    ret->parent = parent;
+
+    Fragment *      body( new Fragment );
+    body->parent = ret;
+    updateBegin( body, tree, lineShifts );
+    body->end = body->begin + 5;        // 5 = strlen( "return" ) - 1
+    body->endLine = tree->n_lineno;
+    body->endPos = body->beginPos + 5;  // 5 = strlen( "return" ) - 1
+
+    ret->updateBegin( body );
+
+    node *      testlistNode = findChildOfType( tree, testlist );
+    if ( testlistNode != NULL )
+    {
+        Fragment *      val( new Fragment );
+        node *          lastPart = findLastPart( testlistNode );
+
+        val->parent = ret;
+        updateBegin( val, testlistNode, lineShifts );
+        updateEnd( val, lastPart, lineShifts );
+
+        ret->updateEnd( val );
+        ret->value = Py::asObject( val );
+    }
+    else
+        ret->updateEnd( body );
+
+    ret->body = Py::asObject( body );
+    flow.append( Py::asObject( ret ) );
+    return ret;
+}
+
 
 static FragmentBase *
 processImport( node *  tree, FragmentBase *  parent,
@@ -286,12 +332,10 @@ processImport( node *  tree, FragmentBase *  parent,
     import->parent = parent;
 
     Fragment *      body( new Fragment );
-    body->parent = import;
-    body->begin = lineShifts[ tree->n_lineno ] + tree->n_col_offset;
-    body->beginLine = tree->n_lineno;
-    body->beginPos = tree->n_col_offset + 1;
-
     node *          lastPart = findLastPart( tree );
+
+    body->parent = import;
+    updateBegin( body, tree, lineShifts );
     updateEnd( body, lastPart, lineShifts );
 
     /* There must be one child of type import_from or import_name */
@@ -309,9 +353,7 @@ processImport( node *  tree, FragmentBase *  parent,
         fromFragment->parent = import;
         whatFragment->parent = import;
 
-        fromFragment->begin = lineShifts[ fromPartBegin->n_lineno ] + fromPartBegin->n_col_offset;
-        fromFragment->beginLine = fromPartBegin->n_lineno;
-        fromFragment->beginPos = fromPartBegin->n_col_offset + 1;
+        updateBegin( fromFragment, fromPartBegin, lineShifts );
 
         node *      lastFromPart = NULL;
         if ( fromPartBegin->n_type == DOT )
@@ -343,10 +385,7 @@ processImport( node *  tree, FragmentBase *  parent,
         assert( whatPart != NULL );
 
         ++whatPart;     // the very next after import is the first of the what part
-        whatFragment->begin = lineShifts[ whatPart->n_lineno ] + whatPart->n_col_offset;
-        whatFragment->beginLine = whatPart->n_lineno;
-        whatFragment->beginPos = whatPart->n_col_offset + 1;
-
+        updateBegin( whatFragment, whatPart, lineShifts );
         updateEnd( whatFragment, lastPart, lineShifts );
 
         import->fromPart = Py::asObject( fromFragment );
@@ -362,9 +401,7 @@ processImport( node *  tree, FragmentBase *  parent,
         assert( firstWhat != NULL );
 
         whatFragment->parent = import;
-        whatFragment->begin = lineShifts[ firstWhat->n_lineno ] + firstWhat->n_col_offset;
-        whatFragment->beginLine = firstWhat->n_lineno;
-        whatFragment->beginPos = firstWhat->n_col_offset + 1;
+        updateBegin( whatFragment, firstWhat, lineShifts );
 
         // The end matches the body
         whatFragment->end = body->end;
@@ -397,17 +434,13 @@ processDecor( node *  tree, int *  lineShifts,
     node *          lastNameNode = findLastPart( nameNode );
 
     nameFragment->parent = decor;
-    nameFragment->begin = lineShifts[ nameNode->n_lineno ] + nameNode->n_col_offset;
-    nameFragment->beginLine = nameNode->n_lineno;
-    nameFragment->beginPos = nameNode->n_col_offset + 1;
+    updateBegin( nameFragment, nameNode, lineShifts );
     updateEnd( nameFragment, lastNameNode, lineShifts );
     decor->name = Py::asObject( nameFragment );
 
     Fragment *      body( new Fragment );
     body->parent = decor;
-    body->begin = lineShifts[ atNode->n_lineno ] + atNode->n_col_offset;
-    body->beginLine = atNode->n_lineno;
-    body->beginPos = atNode->n_col_offset + 1;
+    updateBegin( body, atNode, lineShifts );
 
     if ( lparNode == NULL )
     {
@@ -421,9 +454,7 @@ processDecor( node *  tree, int *  lineShifts,
         Fragment *      argsFragment( new Fragment );
 
         argsFragment->parent = decor;
-        argsFragment->begin = lineShifts[ lparNode->n_lineno ] + lparNode->n_col_offset;
-        argsFragment->beginLine = lparNode->n_lineno;
-        argsFragment->beginPos = lparNode->n_col_offset + 1;
+        updateBegin( argsFragment, lparNode, lineShifts );
         updateEnd( argsFragment, rparNode, lineShifts );
         decor->arguments = Py::asObject( argsFragment );
         updateEnd( body, rparNode, lineShifts );
@@ -501,10 +532,7 @@ Docstring *  checkForDocstring( node *  tree, int *  lineShifts )
         // This is a docstring part
         Fragment *      part( new Fragment );
         part->parent = docstr;
-        part->begin = lineShifts[ stringChild->n_lineno ] +
-                      stringChild->n_col_offset;
-        part->beginLine = stringChild->n_lineno;
-        part->beginPos = stringChild->n_col_offset + 1;
+        updateBegin( part, stringChild, lineShifts );
         updateEnd( part, stringChild, lineShifts );
 
         // In the vast majority of cases a docstring consists of a single part
@@ -538,17 +566,13 @@ processFuncDefinition( node *                       tree,
 
     Fragment *      body( new Fragment );
     body->parent = func;
-    body->begin = lineShifts[ defNode->n_lineno ] + defNode->n_col_offset;
-    body->beginLine = defNode->n_lineno;
-    body->beginPos = defNode->n_col_offset + 1;
+    updateBegin( body, defNode, lineShifts );
     updateEnd( body, colonNode, lineShifts );
     func->body = Py::asObject( body );
 
     Fragment *      name( new Fragment );
     name->parent = func;
-    name->begin = lineShifts[ nameNode->n_lineno ] + nameNode->n_col_offset;
-    name->beginLine = nameNode->n_lineno;
-    name->beginPos = nameNode->n_col_offset + 1;
+    updateBegin( name, nameNode, lineShifts );
     updateEnd( name, nameNode, lineShifts );
     func->name = Py::asObject( name );
 
@@ -557,9 +581,7 @@ processFuncDefinition( node *                       tree,
     node *      rparNode = findChildOfType( params, RPAR );
     Fragment *  args( new Fragment );
     args->parent = func;
-    args->begin = lineShifts[ lparNode->n_lineno ] + lparNode->n_col_offset;
-    args->beginLine = lparNode->n_lineno;
-    args->beginPos = lparNode->n_col_offset + 1;
+    updateBegin( args, lparNode, lineShifts );
     updateEnd( args, rparNode, lineShifts );
     func->arguments = Py::asObject( args );
 
@@ -630,17 +652,13 @@ processClassDefinition( node *                       tree,
 
     Fragment *      body( new Fragment );
     body->parent = cls;
-    body->begin = lineShifts[ defNode->n_lineno ] + defNode->n_col_offset;
-    body->beginLine = defNode->n_lineno;
-    body->beginPos = defNode->n_col_offset + 1;
+    updateBegin( body, defNode, lineShifts );
     updateEnd( body, colonNode, lineShifts );
     cls->body = Py::asObject( body );
 
     Fragment *      name( new Fragment );
     name->parent = cls;
-    name->begin = lineShifts[ nameNode->n_lineno ] + nameNode->n_col_offset;
-    name->beginLine = nameNode->n_lineno;
-    name->beginPos = nameNode->n_col_offset + 1;
+    updateBegin( name, nameNode, lineShifts );
     updateEnd( name, nameNode, lineShifts );
     cls->name = Py::asObject( name );
 
@@ -652,9 +670,7 @@ processClassDefinition( node *                       tree,
         Fragment *  baseClasses( new Fragment );
 
         baseClasses->parent = cls;
-        baseClasses->begin = lineShifts[ lparNode->n_lineno ] + lparNode->n_col_offset;
-        baseClasses->beginLine = lparNode->n_lineno;
-        baseClasses->beginPos = lparNode->n_col_offset + 1;
+        updateBegin( baseClasses, lparNode, lineShifts );
         updateEnd( baseClasses, rparNode, lineShifts );
         cls->baseClasses = Py::asObject( baseClasses );
     }
@@ -725,6 +741,8 @@ walk( node *                       tree,
         case classdef:
             return processClassDefinition( tree, parent, flow,
                                            lineShifts, decors );
+        case return_stmt:
+            return processReturn( tree, parent, flow, lineShifts );
 #if 0
         case stmt:
             {
