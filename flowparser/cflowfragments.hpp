@@ -308,6 +308,7 @@ class Class : public FragmentBase,
         Py::Object      name;           // Fragment for the function name
         Py::Object      baseClasses;    // Fragment for the class base classes
                                         // starting from '(', ending with ')'
+                                        // or None
         Py::Object      docstring;      // None or Docstring instance
         Py::List        nsuite;
 };

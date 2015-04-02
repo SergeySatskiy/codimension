@@ -1428,10 +1428,16 @@ Py::Object  Class::repr( void )
     else
         docstringPart = docstring.str();
 
+    std::string     baseClassesPart;
+    if ( baseClasses.isNone() )
+        baseClassesPart = "None";
+    else
+        baseClassesPart = baseClasses.str();
+
     return Py::String( "<Class " + FragmentBase::asStr() +
                        "\n" + FragmentWithComments::asStr() +
                        "\n" + representFragmentPart( name, "Name" ) +
-                       "\n" + representFragmentPart( baseClasses, "BaseClasses" ) +
+                       "\nBaseClasses: " + baseClassesPart +
                        "\nDocstring: " + docstringPart +
                        "\nDecorators: " + representList( decors ) +
                        "\nSuite: " + representList( nsuite ) +

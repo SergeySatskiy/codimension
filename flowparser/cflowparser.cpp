@@ -40,7 +40,7 @@
 extern grammar      _PyParser_Grammar;  /* From graminit.c */
 
 
-static void
+static FragmentBase *
 walk( node *                       tree,
       FragmentBase *               parent,
       Py::List &                   flow,
@@ -274,8 +274,9 @@ static void processEncoding( const char *   buffer,
 
 
 
-static void processImport( node *  tree, FragmentBase *  parent,
-                           Py::List &  flow, int *  lineShifts )
+static FragmentBase *
+processImport( node *  tree, FragmentBase *  parent,
+               Py::List &  flow, int *  lineShifts )
 {
     assert( tree->n_type == import_stmt );
     assert( tree->n_nchildren == 1 );
@@ -376,7 +377,7 @@ static void processImport( node *  tree, FragmentBase *  parent,
     import->updateBeginEnd( body );
     import->body = Py::asObject( body );
     flow.append( Py::asObject( import ) );
-    return;
+    return import;
 }
 
 static void
@@ -516,7 +517,7 @@ Docstring *  checkForDocstring( node *  tree, int *  lineShifts )
 }
 
 
-static void
+static FragmentBase *
 processFuncDefinition( node *                       tree,
                        FragmentBase *               parent,
                        Py::List &                   flow,
@@ -595,23 +596,118 @@ processFuncDefinition( node *                       tree,
 
     // Walk nested nodes
     std::list<Decorator *>      emptyDecors;
-    walk( suiteNode, func, func->nsuite,
-          lineShifts, emptyDecors, docstr != NULL );
-
-    func->updateEnd( body );
-    size_t          items( func->nsuite.size() );
-    if ( items > 0 )
-    {
-        func->updateEnd( static_cast<Fragment *>
-                            ( (func->nsuite[ items - 1 ]).ptr() ) );
-    }
-
+    FragmentBase *              lastAdded = walk( suiteNode, func,
+                                                  func->nsuite,
+                                                  lineShifts, emptyDecors,
+                                                  docstr != NULL );
+    if ( lastAdded == NULL )
+        func->updateEnd( body );
+    else
+        func->updateEnd( lastAdded );
     flow.append( Py::asObject( func ) );
-    return;
+    return func;
 }
 
 
-static void
+static FragmentBase *
+processClassDefinition( node *                       tree,
+                        FragmentBase *               parent,
+                        Py::List &                   flow,
+                        int *                        lineShifts,
+                        std::list<Decorator *> &     decors )
+{
+    assert( tree->n_type == classdef );
+    assert( tree->n_nchildren > 1 );
+
+    node *      defNode = & ( tree->n_child[ 0 ] );
+    node *      nameNode = & ( tree->n_child[ 1 ] );
+    node *      colonNode = findChildOfType( tree, COLON );
+
+    assert( colonNode != NULL );
+
+    Class *      cls( new Class );
+    cls->parent = parent;
+
+    Fragment *      body( new Fragment );
+    body->parent = cls;
+    body->begin = lineShifts[ defNode->n_lineno ] + defNode->n_col_offset;
+    body->beginLine = defNode->n_lineno;
+    body->beginPos = defNode->n_col_offset + 1;
+    updateEnd( body, colonNode, lineShifts );
+    cls->body = Py::asObject( body );
+
+    Fragment *      name( new Fragment );
+    name->parent = cls;
+    name->begin = lineShifts[ nameNode->n_lineno ] + nameNode->n_col_offset;
+    name->beginLine = nameNode->n_lineno;
+    name->beginPos = nameNode->n_col_offset + 1;
+    updateEnd( name, nameNode, lineShifts );
+    cls->name = Py::asObject( name );
+
+    node *      lparNode = findChildOfType( tree, LPAR );
+    if ( lparNode != NULL )
+    {
+        // There is a list of base classes
+        node *      rparNode = findChildOfType( tree, RPAR );
+        Fragment *  baseClasses( new Fragment );
+
+        baseClasses->parent = cls;
+        baseClasses->begin = lineShifts[ lparNode->n_lineno ] + lparNode->n_col_offset;
+        baseClasses->beginLine = lparNode->n_lineno;
+        baseClasses->beginPos = lparNode->n_col_offset + 1;
+        updateEnd( baseClasses, rparNode, lineShifts );
+        cls->baseClasses = Py::asObject( baseClasses );
+    }
+
+    if ( decors.empty() )
+    {
+        cls->updateBegin( body );
+    }
+    else
+    {
+        for ( std::list<Decorator *>::iterator  k = decors.begin();
+              k != decors.end(); ++k )
+        {
+            Decorator *     dec = *k;
+            dec->parent = cls;
+            cls->decors.append( Py::asObject( dec ) );
+        }
+        cls->updateBegin( *(decors.begin()) );
+        decors.clear();
+    }
+
+    // Handle docstring if so
+    node *      suiteNode = findChildOfType( tree, suite );
+    assert( suiteNode != NULL );
+
+    Docstring *  docstr = checkForDocstring( suiteNode, lineShifts );
+    if ( docstr != NULL )
+    {
+        docstr->parent = cls;
+        cls->docstring = Py::asObject( docstr );
+
+        // It could be that a docstring is the only item in the class suite
+        cls->updateEnd( docstr );
+    }
+
+    // Walk nested nodes
+    std::list<Decorator *>      emptyDecors;
+    FragmentBase *              lastAdded = walk( suiteNode, cls, cls->nsuite,
+                                                  lineShifts, emptyDecors,
+                                                  docstr != NULL );
+
+    if ( lastAdded == NULL )
+        cls->updateEnd( body );
+    else
+        cls->updateEnd( lastAdded );
+
+    flow.append( Py::asObject( cls ) );
+    return cls;
+}
+
+
+
+static FragmentBase *
 walk( node *                       tree,
       FragmentBase *               parent,
       Py::List &                   flow,
@@ -622,19 +718,14 @@ walk( node *                       tree,
     switch ( tree->n_type )
     {
         case import_stmt:
-            processImport( tree, parent, flow, lineShifts );
-            return;
+            return processImport( tree, parent, flow, lineShifts );
         case funcdef:
-            processFuncDefinition( tree, parent,
-                                   flow,
-                                   lineShifts,
-                                   decors );
-            return;
-#if 0
+            return processFuncDefinition( tree, parent, flow,
+                                          lineShifts, decors );
         case classdef:
-            processClassDefinition( tree, callbacks,
-                                    lineShifts );
-            return;
+            return processClassDefinition( tree, parent, flow,
+                                           lineShifts, decors );
+#if 0
         case stmt:
             {
                 node *      assignNode = isAssignment( tree );
@@ -663,6 +754,7 @@ walk( node *                       tree,
             break;
     }
 
+    FragmentBase *              lastAdded( NULL );
     std::list<Decorator *>      foundDecors;
     int                         statementCount = 0;
     for ( int  i = 0; i < tree->n_nchildren; ++i )
@@ -686,12 +778,12 @@ walk( node *                       tree,
         // been processed on the previous step
         if ( statementCount != 1 || docstrProcessed == false )
         {
-            walk( child, parent, flow,
-                  lineShifts, foundDecors, false );
+            lastAdded = walk( child, parent, flow,
+                              lineShifts, foundDecors, false );
         }
     }
 
-    return;
+    return lastAdded;
 }
 
 
