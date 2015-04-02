@@ -282,6 +282,49 @@ static void processEncoding( const char *   buffer,
 
 
 static FragmentBase *
+processBreak( node *  tree, FragmentBase *  parent,
+              Py::List &  flow, int *  lineShifts )
+{
+    assert( tree->n_type == break_stmt );
+    Break *         br( new Break );
+    br->parent = parent;
+
+    Fragment *      body( new Fragment );
+    body->parent = br;
+    updateBegin( body, tree, lineShifts );
+    body->end = body->begin + 4;        // 4 = strlen( "break" ) - 1
+    body->endLine = tree->n_lineno;
+    body->endPos = body->beginPos + 4;  // 4 = strlen( "break" ) - 1
+
+    br->updateBeginEnd( body );
+    br->body = Py::asObject( body );
+    flow.append( Py::asObject( br ) );
+    return br;
+}
+
+
+static FragmentBase *
+processContinue( node *  tree, FragmentBase *  parent,
+                 Py::List &  flow, int *  lineShifts )
+{
+    assert( tree->n_type == continue_stmt );
+    Continue *      cont( new Continue );
+    cont->parent = parent;
+
+    Fragment *      body( new Fragment );
+    body->parent = cont;
+    updateBegin( body, tree, lineShifts );
+    body->end = body->begin + 7;        // 7 = strlen( "continue" ) - 1
+    body->endLine = tree->n_lineno;
+    body->endPos = body->beginPos + 7;  // 7 = strlen( "continue" ) - 1
+
+    cont->updateBeginEnd( body );
+    cont->body = Py::asObject( body );
+    flow.append( Py::asObject( cont ) );
+    return cont;
+}
+
+static FragmentBase *
 processReturn( node *  tree, FragmentBase *  parent,
                Py::List &  flow, int *  lineShifts )
 {
@@ -743,6 +786,10 @@ walk( node *                       tree,
                                            lineShifts, decors );
         case return_stmt:
             return processReturn( tree, parent, flow, lineShifts );
+        case break_stmt:
+            return processBreak( tree, parent, flow, lineShifts );
+        case continue_stmt:
+            return processContinue( tree, parent, flow, lineShifts );
 #if 0
         case stmt:
             {
