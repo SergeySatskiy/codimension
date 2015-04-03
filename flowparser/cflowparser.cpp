@@ -324,6 +324,46 @@ processContinue( node *  tree, FragmentBase *  parent,
     return cont;
 }
 
+
+static FragmentBase *
+processRaise( node *  tree, FragmentBase *  parent,
+              Py::List &  flow, int *  lineShifts )
+{
+    assert( tree->n_type == raise_stmt );
+    Raise *         r( new Raise );
+    r->parent = parent;
+
+    Fragment *      body( new Fragment );
+    body->parent = r;
+    updateBegin( body, tree, lineShifts );
+    body->end = body->begin + 4;        // 4 = strlen( "raise" ) - 1
+    body->endLine = tree->n_lineno;
+    body->endPos = body->beginPos + 4;  // 4 = strlen( "raise" ) - 1
+
+    r->updateBegin( body );
+
+    node *      testNode = findChildOfType( tree, test );
+    if ( testNode != NULL )
+    {
+        Fragment *      val( new Fragment );
+        node *          lastPart = findLastPart( tree );
+
+        val->parent = r;
+        updateBegin( val, testNode, lineShifts );
+        updateEnd( val, lastPart, lineShifts );
+
+        r->updateEnd( val );
+        r->value = Py::asObject( val );
+    }
+    else
+        r->updateEnd( body );
+
+    r->body = Py::asObject( body );
+    flow.append( Py::asObject( r ) );
+    return r;
+}
+
+
 static FragmentBase *
 processReturn( node *  tree, FragmentBase *  parent,
                Py::List &  flow, int *  lineShifts )
@@ -790,30 +830,8 @@ walk( node *                       tree,
             return processBreak( tree, parent, flow, lineShifts );
         case continue_stmt:
             return processContinue( tree, parent, flow, lineShifts );
-#if 0
-        case stmt:
-            {
-                node *      assignNode = isAssignment( tree );
-                if ( assignNode != NULL )
-                {
-                    node *      testListNode = & ( assignNode->n_child[ 0 ] );
-                    if ( scope == GLOBAL_SCOPE )
-                        processAssign( testListNode, callbacks->onGlobal,
-                                       objectsLevel, lineShifts );
-                    else if ( scope == CLASS_SCOPE )
-                        processAssign( testListNode,
-                                       callbacks->onClassAttribute,
-                                       objectsLevel, lineShifts );
-                    else if ( scope == CLASS_METHOD_SCOPE )
-                        processInstanceMember( testListNode, callbacks,
-                                               firstArgName, objectsLevel,
-                                               lineShifts );
-
-                    /* The other scopes are not interesting */
-                    return;
-                }
-            }
-#endif
+        case raise_stmt:
+            return processRaise( tree, parent, flow, lineShifts );
 
         default:
             break;
