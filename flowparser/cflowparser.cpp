@@ -324,6 +324,61 @@ processContinue( node *  tree, FragmentBase *  parent,
     return cont;
 }
 
+static FragmentBase *
+processAssert( node *  tree, FragmentBase *  parent,
+               Py::List &  flow, int *  lineShifts )
+{
+    assert( tree->n_type == assert_stmt );
+    Assert *            a( new Assert );
+    a->parent = parent;
+
+    Fragment *      body( new Fragment );
+    body->parent = a;
+    updateBegin( body, tree, lineShifts );
+    body->end = body->begin + 5;        // 5 = strlen( "assert" ) - 1
+    body->endLine = tree->n_lineno;
+    body->endPos = body->beginPos + 5;  // 5 = strlen( "assert" ) - 1
+
+    a->updateBegin( body );
+
+    // One test node must be there. The second one may not be there
+    node *      firstTestNode = findChildOfType( tree, test );
+    assert( firstTestNode != NULL );
+
+    Fragment *      tst( new Fragment );
+    node *          testLastPart = findLastPart( firstTestNode );
+
+    tst->parent = a;
+    updateBegin( tst, firstTestNode, lineShifts );
+    updateEnd( tst, testLastPart, lineShifts );
+    a->tst = Py::asObject( tst );
+
+    // If a comma is there => there is a message part
+    node *      commaNode = findChildOfType( tree, COMMA );
+    if ( commaNode != NULL )
+    {
+        Fragment *      message( new Fragment );
+
+        // Message test node must follow the comma node
+        node *          secondTestNode = commaNode + 1;
+        node *          secondTestLastPart = findLastPart( secondTestNode );
+
+        message->parent = a;
+        updateBegin( message, secondTestNode, lineShifts );
+        updateEnd( message, secondTestLastPart, lineShifts );
+
+        a->updateEnd( message );
+        a->message = Py::asObject( message );
+    }
+    else
+        a->updateEnd( tst );
+
+    a->body = Py::asObject( body );
+    flow.append( Py::asObject( a ) );
+    return a;
+}
+
+
 
 static FragmentBase *
 processRaise( node *  tree, FragmentBase *  parent,
@@ -832,6 +887,8 @@ walk( node *                       tree,
             return processContinue( tree, parent, flow, lineShifts );
         case raise_stmt:
             return processRaise( tree, parent, flow, lineShifts );
+        case assert_stmt:
+            return processAssert( tree, parent, flow, lineShifts );
 
         default:
             break;

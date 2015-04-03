@@ -400,7 +400,7 @@ class Assert : public FragmentBase,
 
     public:
         Py::Object      tst;            // Fragment for the test expression
-        Py::Object      message;        // Fragment for the message
+        Py::Object      message;        // None or Fragment for the message
 };
 
 
