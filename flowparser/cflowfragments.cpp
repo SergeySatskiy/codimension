@@ -2071,10 +2071,17 @@ Py::Object For::getattr( const char *  attrName )
 
 Py::Object  For::repr( void )
 {
-    // TODO: the other members
+    std::string     elsePartRepr;
+    if ( elsePart.isNone() )
+        elsePartRepr = "None";
+    else
+        elsePartRepr = elsePart.str();
+
     return Py::String( "<For " + FragmentBase::asStr() +
                        "\n" + FragmentWithComments::asStr() +
                        "\n" + representFragmentPart( iteration, "Iteration" ) +
+                       "\nSuite: " + representList( nsuite ) +
+                       "\nElsePart: " + elsePartRepr +
                        ">" );
 }
 

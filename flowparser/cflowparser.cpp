@@ -545,6 +545,59 @@ processWhile( node *  tree, FragmentBase *  parent,
 
 
 static FragmentBase *
+processFor( node *  tree, FragmentBase *  parent,
+            Py::List &  flow, int *  lineShifts )
+{
+    assert( tree->n_type == for_stmt );
+
+    For *       f( new For );
+    f->parent = parent;
+
+    Fragment *      body( new Fragment );
+    node *          colonNode = findChildOfType( tree, COLON );
+    node *          forNode = findChildOfType( tree, NAME );
+
+    body->parent = f;
+    updateBegin( body, forNode, lineShifts );
+    updateEnd( body, colonNode, lineShifts );
+    f->body = Py::asObject( body );
+
+    // Iteration
+    node *          exprlistNode = findChildOfType( tree, exprlist );
+    node *          testlistNode = findChildOfType( tree, testlist );
+    node *          lastPart = findLastPart( testlistNode );
+    Fragment *      iteration( new Fragment );
+
+    iteration->parent = f;
+    updateBegin( iteration, exprlistNode, lineShifts );
+    updateEnd( iteration, lastPart, lineShifts );
+    f->iteration = Py::asObject( iteration );
+
+    // suite
+    node *                      suiteNode = findChildOfType( tree, suite );
+    std::list<Decorator *>      emptyDecors;
+    FragmentBase *              lastAdded = walk( suiteNode, f, f->nsuite,
+                                                  lineShifts, emptyDecors,
+                                                  false );
+    if ( lastAdded == NULL )
+        f->updateEnd( body );
+    else
+        f->updateEnd( lastAdded );
+
+    // else part
+    node *          elseNode = findChildOfTypeAndValue( tree, NAME, "else" );
+    if ( elseNode != NULL )
+    {
+        IfPart *        elsePart = processElsePart( elseNode, f, lineShifts );
+        f->elsePart = Py::asObject( elsePart );
+    }
+
+    flow.append( Py::asObject( f ) );
+    return f;
+}
+
+
+static FragmentBase *
 processImport( node *  tree, FragmentBase *  parent,
                Py::List &  flow, int *  lineShifts )
 {
@@ -977,6 +1030,8 @@ walk( node *                       tree,
             return processAssert( tree, parent, flow, lineShifts );
         case while_stmt:
             return processWhile( tree, parent, flow, lineShifts );
+        case for_stmt:
+            return processFor( tree, parent, flow, lineShifts );
 
         default:
             break;
