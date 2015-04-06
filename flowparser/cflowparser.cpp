@@ -458,6 +458,92 @@ processReturn( node *  tree, FragmentBase *  parent,
 }
 
 
+// Handles 'else' clause for various statements: last part of 'if',
+// 'while', 'for', 'try'
+static IfPart *
+processElsePart( node *  tree, FragmentBase *  parent,
+                 int *  lineShifts )
+{
+    assert( tree->n_type == NAME );
+    assert( strcmp( tree->n_str, "else" ) == 0 );
+
+    node *      elseColonNode = tree + 1;
+    node *      elseSuiteNode = elseColonNode + 1;
+
+    IfPart *    elsePart( new IfPart );
+    elsePart->parent = parent;
+
+    Fragment *      body( new Fragment );
+    body->parent = elsePart;
+    updateBegin( body, tree, lineShifts );
+    updateEnd( body, elseColonNode, lineShifts );
+    elsePart->body = Py::asObject( body );
+
+    std::list<Decorator *>      emptyDecors;
+    FragmentBase *              lastAdded = walk( elseSuiteNode,
+                                                  elsePart, elsePart->nsuite,
+                                                  lineShifts, emptyDecors,
+                                                  false );
+    if ( lastAdded == NULL )
+        elsePart->updateEnd( body );
+    else
+        elsePart->updateEnd( lastAdded );
+    return elsePart;
+}
+
+
+static FragmentBase *
+processWhile( node *  tree, FragmentBase *  parent,
+              Py::List &  flow, int *  lineShifts )
+{
+    assert( tree->n_type == while_stmt );
+
+    While *     w( new While);
+    w->parent = parent;
+
+    Fragment *      body( new Fragment );
+    node *          colonNode = findChildOfType( tree, COLON );
+    node *          whileNode = findChildOfType( tree, NAME );
+
+    body->parent = w;
+    updateBegin( body, whileNode, lineShifts );
+    updateEnd( body, colonNode, lineShifts );
+    w->body = Py::asObject( body );
+
+    // condition
+    node *          testNode = findChildOfType( tree, test );
+    node *          lastPart = findLastPart( testNode );
+    Fragment *      condition( new Fragment );
+
+    condition->parent = w;
+    updateBegin( condition, testNode, lineShifts );
+    updateEnd( condition, lastPart, lineShifts );
+    w->condition = Py::asObject( condition );
+
+    // suite
+    node *                      suiteNode = findChildOfType( tree, suite );
+    std::list<Decorator *>      emptyDecors;
+    FragmentBase *              lastAdded = walk( suiteNode, w, w->nsuite,
+                                                  lineShifts, emptyDecors,
+                                                  false );
+    if ( lastAdded == NULL )
+        w->updateEnd( body );
+    else
+        w->updateEnd( lastAdded );
+
+    // else part
+    node *          elseNode = findChildOfTypeAndValue( tree, NAME, "else" );
+    if ( elseNode != NULL )
+    {
+        IfPart *        elsePart = processElsePart( elseNode, w, lineShifts );
+        w->elsePart = Py::asObject( elsePart );
+    }
+
+    flow.append( Py::asObject( w ) );
+    return w;
+}
+
+
 static FragmentBase *
 processImport( node *  tree, FragmentBase *  parent,
                Py::List &  flow, int *  lineShifts )
@@ -889,6 +975,8 @@ walk( node *                       tree,
             return processRaise( tree, parent, flow, lineShifts );
         case assert_stmt:
             return processAssert( tree, parent, flow, lineShifts );
+        case while_stmt:
+            return processWhile( tree, parent, flow, lineShifts );
 
         default:
             break;

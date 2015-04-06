@@ -268,11 +268,11 @@ void FragmentBase::updateBegin( const FragmentBase *  other )
         begin = other->begin;
         beginLine = other->beginLine;
         beginPos = other->beginPos;
-    }
 
-    // Spread the change to the upper levels
-    if ( parent != NULL )
-        parent->updateBegin( other );
+        // Spread the change to the upper levels
+        if ( parent != NULL )
+            parent->updateBegin( other );
+    }
 }
 
 void FragmentBase::updateEnd( const FragmentBase *  other )
@@ -282,31 +282,17 @@ void FragmentBase::updateEnd( const FragmentBase *  other )
         end = other->end;
         endLine = other->endLine;
         endPos = other->endPos;
-    }
 
-    // Spread the change to the upper levels
-    if ( parent != NULL )
-        parent->updateEnd( other );
+        // Spread the change to the upper levels
+        if ( parent != NULL )
+            parent->updateEnd( other );
+    }
 }
 
 void FragmentBase::updateBeginEnd( const FragmentBase *  other )
 {
-    if ( begin == -1 || other->begin < begin )
-    {
-        begin = other->begin;
-        beginLine = other->beginLine;
-        beginPos = other->beginPos;
-    }
-    if ( end == -1 || other->end > end )
-    {
-        end = other->end;
-        endLine = other->endLine;
-        endPos = other->endPos;
-    }
-
-    // Spread the change to the upper levels
-    if ( parent != NULL )
-        parent->updateBeginEnd( other );
+    updateBegin( other );
+    updateEnd( other );
 }
 
 
@@ -1981,10 +1967,17 @@ Py::Object While::getattr( const char *  attrName )
 
 Py::Object  While::repr( void )
 {
-    // TODO: the other members
+    std::string     elsePartRepr;
+    if ( elsePart.isNone() )
+        elsePartRepr = "None";
+    else
+        elsePartRepr = elsePart.str();
+
     return Py::String( "<While " + FragmentBase::asStr() +
                        "\n" + FragmentWithComments::asStr() +
                        "\n" + representFragmentPart( condition, "Condition" ) +
+                       "\nSuite: " + representList( nsuite ) +
+                       "\nElsePart: " + elsePartRepr +
                        ">" );
 }
 
@@ -2255,10 +2248,10 @@ Py::Object IfPart::getattr( const char *  attrName )
 
 Py::Object  IfPart::repr( void )
 {
-    // TODO: the other members
     return Py::String( "<IfPart " + FragmentBase::asStr() +
                        "\n" + FragmentWithComments::asStr() +
                        "\n" + representFragmentPart( condition, "Condition" ) +
+                       "\nSuite: " + representList( nsuite ) +
                        ">" );
 }
 
