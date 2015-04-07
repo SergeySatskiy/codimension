@@ -2334,9 +2334,9 @@ Py::Object If::getattr( const char *  attrName )
 
 Py::Object  If::repr( void )
 {
-    // TODO: the other members
     return Py::String( "<If " + FragmentBase::asStr() +
-                       "\n" + ">" );
+                       "\nParts: " + representList( parts ) +
+                       ">" );
 }
 
 int  If::setattr( const char *        attrName,

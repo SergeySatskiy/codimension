@@ -458,37 +458,83 @@ processReturn( node *  tree, FragmentBase *  parent,
 }
 
 
-// Handles 'else' clause for various statements: last part of 'if',
-// 'while', 'for', 'try'
+// Handles 'else' and 'elif' clauses for various statements: 'if' branches,
+// 'else' parts of 'while', 'for', 'try'
 static IfPart *
-processElsePart( node *  tree, FragmentBase *  parent,
-                 int *  lineShifts )
+processIfPart( node *  tree, FragmentBase *  parent,
+               int *  lineShifts )
 {
     assert( tree->n_type == NAME );
-    assert( strcmp( tree->n_str, "else" ) == 0 );
+    assert( strcmp( tree->n_str, "else" ) == 0 ||
+            strcmp( tree->n_str, "elif" ) == 0 ||
+            strcmp( tree->n_str, "if" ) == 0 );
 
-    node *      elseColonNode = tree + 1;
-    node *      elseSuiteNode = elseColonNode + 1;
+    IfPart *    ifPart( new IfPart );
+    ifPart->parent = parent;
 
-    IfPart *    elsePart( new IfPart );
-    elsePart->parent = parent;
+    node *      current = tree + 1;
+    node *      colonNode = NULL;
+    if ( current->n_type == test )
+    {
+        // This is an if or elif part, i.e. there is a condition part
+        node *      last = findLastPart( current );
+        Fragment *  condition( new Fragment );
+        condition->parent = ifPart;
+        updateBegin( condition, current, lineShifts );
+        updateEnd( condition, last, lineShifts );
+        ifPart->condition = Py::asObject( condition );
 
+        colonNode = current + 1;
+    }
+    else
+    {
+        assert( current->n_type == COLON );
+        colonNode = current;
+    }
+
+    node *          suiteNode = colonNode + 1;
     Fragment *      body( new Fragment );
-    body->parent = elsePart;
+    body->parent = ifPart;
     updateBegin( body, tree, lineShifts );
-    updateEnd( body, elseColonNode, lineShifts );
-    elsePart->body = Py::asObject( body );
+    updateEnd( body, colonNode, lineShifts );
+    ifPart->updateBegin( body );
+    ifPart->body = Py::asObject( body );
 
     std::list<Decorator *>      emptyDecors;
-    FragmentBase *              lastAdded = walk( elseSuiteNode,
-                                                  elsePart, elsePart->nsuite,
+    FragmentBase *              lastAdded = walk( suiteNode,
+                                                  ifPart, ifPart->nsuite,
                                                   lineShifts, emptyDecors,
                                                   false );
     if ( lastAdded == NULL )
-        elsePart->updateEnd( body );
+        ifPart->updateEnd( body );
     else
-        elsePart->updateEnd( lastAdded );
-    return elsePart;
+        ifPart->updateEnd( lastAdded );
+    return ifPart;
+}
+
+
+static FragmentBase *
+processIf( node *  tree, FragmentBase *  parent,
+           Py::List &  flow, int *  lineShifts )
+{
+    assert( tree->n_type == if_stmt );
+
+    If *        ifStatement( new If );
+    ifStatement->parent = parent;
+
+    for ( int k = 0; k < tree->n_nchildren; ++k )
+    {
+        node *  child = &(tree->n_child[ k ]);
+        if ( child->n_type == NAME )
+        {
+            IfPart *    part = processIfPart( child, ifStatement, lineShifts );
+            ifStatement->updateBegin( part );
+            ifStatement->parts.append( Py::asObject( part ) );
+        }
+    }
+
+    flow.append( Py::asObject( ifStatement ) );
+    return ifStatement;
 }
 
 
@@ -535,7 +581,7 @@ processWhile( node *  tree, FragmentBase *  parent,
     node *          elseNode = findChildOfTypeAndValue( tree, NAME, "else" );
     if ( elseNode != NULL )
     {
-        IfPart *        elsePart = processElsePart( elseNode, w, lineShifts );
+        IfPart *        elsePart = processIfPart( elseNode, w, lineShifts );
         w->elsePart = Py::asObject( elsePart );
     }
 
@@ -588,7 +634,7 @@ processFor( node *  tree, FragmentBase *  parent,
     node *          elseNode = findChildOfTypeAndValue( tree, NAME, "else" );
     if ( elseNode != NULL )
     {
-        IfPart *        elsePart = processElsePart( elseNode, f, lineShifts );
+        IfPart *        elsePart = processIfPart( elseNode, f, lineShifts );
         f->elsePart = Py::asObject( elsePart );
     }
 
@@ -1032,6 +1078,8 @@ walk( node *                       tree,
             return processWhile( tree, parent, flow, lineShifts );
         case for_stmt:
             return processFor( tree, parent, flow, lineShifts );
+        case if_stmt:
+            return processIf( tree, parent, flow, lineShifts );
 
         default:
             break;
