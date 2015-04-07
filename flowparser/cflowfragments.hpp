@@ -563,12 +563,9 @@ class ExceptPart : public FragmentBase,
                              const Py::Object &  val );
 
     public:
-        Py::Object      exceptionType;  // Fragment or None for the
-                                        // exception type
-        Py::Object      variable;       // Fragment or None for the variable
-                                        // It comes after ',' or 'as'
-                                        // Always None for 'finally'
-        Py::List        nsuite;         // List of suite statement fragments
+        Py::Object      clause;     // Fragment or None for the
+                                    // clause after 'except'
+        Py::List        nsuite;     // List of suite statement fragments
 };
 
 
@@ -587,9 +584,10 @@ class Try : public FragmentBase,
                              const Py::Object &  val );
 
     public:
-        Py::List        exceptParts;    // List of ExceptPart fragments
-        Py::Object      finallyPart;    // None or ExceptPart for finally
         Py::List        nsuite;         // List of suite statement fragments
+        Py::List        exceptParts;    // List of ExceptPart fragments
+        Py::Object      elsePart;       // None of ExceptPart for 'else'
+        Py::Object      finallyPart;    // None or ExceptPart for 'finally'
 };
 
 

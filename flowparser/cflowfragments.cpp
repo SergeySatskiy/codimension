@@ -2447,8 +2447,7 @@ int  With::setattr( const char *        attrName,
 ExceptPart::ExceptPart()
 {
     kind = EXCEPT_PART_FRAGMENT;
-    exceptionType = Py::None();
-    variable = Py::None();
+    clause = Py::None();
 }
 
 ExceptPart::~ExceptPart()
@@ -2478,8 +2477,7 @@ Py::Object ExceptPart::getattr( const char *  attrName )
         Py::List    members;
         FragmentBase::appendMembers( members );
         FragmentWithComments::appendMembers( members );
-        members.append( Py::String( "exceptionType" ) );
-        members.append( Py::String( "variable" ) );
+        members.append( Py::String( "clause" ) );
         members.append( Py::String( "suite" ) );
         return members;
     }
@@ -2489,10 +2487,8 @@ Py::Object ExceptPart::getattr( const char *  attrName )
         return retval;
     if ( FragmentWithComments::getAttribute( attrName, retval ) )
         return retval;
-    if ( strcmp( attrName, "exceptionType" ) == 0 )
-        return exceptionType;
-    if ( strcmp( attrName, "variable" ) == 0 )
-        return variable;
+    if ( strcmp( attrName, "clause" ) == 0 )
+        return clause;
     if ( strcmp( attrName, "suite" ) == 0 )
         return nsuite;
     return getattr_methods( attrName );
@@ -2500,11 +2496,10 @@ Py::Object ExceptPart::getattr( const char *  attrName )
 
 Py::Object  ExceptPart::repr( void )
 {
-    // TODO: the other members
     return Py::String( "<ExceptPart " + FragmentBase::asStr() +
                        "\n" + FragmentWithComments::asStr() +
-                       "\n" + representFragmentPart( exceptionType, "ExceptionType" ) +
-                       "\n" + representFragmentPart( variable, "variable" ) +
+                       "\n" + representFragmentPart( clause, "Clause" ) +
+                       "\nSuite: " + representList( nsuite ) +
                        ">" );
 }
 
@@ -2515,16 +2510,10 @@ int  ExceptPart::setattr( const char *        attrName,
         return 0;
     if ( FragmentWithComments::setAttribute( attrName, val ) )
         return 0;
-    if ( strcmp( attrName, "exceptionType" ) == 0 )
+    if ( strcmp( attrName, "clause" ) == 0 )
     {
-        CHECKVALUETYPE( "exceptionType", "Fragment" );
-        exceptionType = val;
-        return 0;
-    }
-    if ( strcmp( attrName, "variable" ) == 0 )
-    {
-        CHECKVALUETYPE( "variable", "Fragment" );
-        variable = val;
+        CHECKVALUETYPE( "clause", "Fragment" );
+        clause = val;
         return 0;
     }
     if ( strcmp( attrName, "suite" ) == 0 )
@@ -2575,6 +2564,7 @@ Py::Object Try::getattr( const char *  attrName )
         FragmentBase::appendMembers( members );
         FragmentWithComments::appendMembers( members );
         members.append( Py::String( "exceptParts" ) );
+        members.append( Py::String( "elsePart" ) );
         members.append( Py::String( "finallyPart" ) );
         members.append( Py::String( "suite" ) );
         return members;
@@ -2587,6 +2577,8 @@ Py::Object Try::getattr( const char *  attrName )
         return retval;
     if ( strcmp( attrName, "exceptParts" ) == 0 )
         return exceptParts;
+    if ( strcmp( attrName, "elseParts" ) == 0 )
+        return elsePart;
     if ( strcmp( attrName, "finallyPart" ) == 0 )
         return finallyPart;
     if ( strcmp( attrName, "suite" ) == 0 )
@@ -2596,10 +2588,12 @@ Py::Object Try::getattr( const char *  attrName )
 
 Py::Object  Try::repr( void )
 {
-    // TODO: the other members
     return Py::String( "<Try " + FragmentBase::asStr() +
                        "\n" + FragmentWithComments::asStr() +
-                       "\n" + representFragmentPart( finallyPart, "finallyPart" ) +
+                       "\nSuite: " + representList( nsuite ) +
+                       "\nExceptParts: " + representList( exceptParts ) +
+                       "\n" + representFragmentPart( elsePart, "ElsePart" ) +
+                       "\n" + representFragmentPart( finallyPart, "FinallyPart" ) +
                        ">" );
 }
 
@@ -2616,6 +2610,12 @@ int  Try::setattr( const char *        attrName,
             throw Py::AttributeError( "Attribute 'exceptParts' value "
                                       "must be a list" );
         exceptParts = val;
+        return 0;
+    }
+    if ( strcmp( attrName, "elsePart" ) == 0 )
+    {
+        CHECKVALUETYPE( "elsePart", "Fragment" );
+        elsePart = val;
         return 0;
     }
     if ( strcmp( attrName, "finallyPart" ) == 0 )
