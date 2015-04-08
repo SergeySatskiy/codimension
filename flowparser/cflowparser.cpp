@@ -710,6 +710,57 @@ processWhile( node *  tree, FragmentBase *  parent,
 
 
 static FragmentBase *
+processWith( node *  tree, FragmentBase *  parent,
+             Py::List &  flow, int *  lineShifts )
+{
+    assert( tree->n_type == with_stmt );
+
+    With *      w( new With );
+    w->parent = parent;
+
+    Fragment *      body( new Fragment );
+    node *          colonNode = findChildOfType( tree, COLON );
+    node *          whithNode = findChildOfType( tree, NAME );
+
+    body->parent = w;
+    updateBegin( body, whithNode, lineShifts );
+    updateEnd( body, colonNode, lineShifts );
+    w->body = Py::asObject( body );
+    w->updateBegin( body );
+
+    // items
+    node *      firstWithItem = findChildOfType( tree, with_item );
+    node *      lastWithItem = NULL;
+    for ( int  k = 0; k < tree->n_nchildren; ++k )
+    {
+        node *  child = &(tree->n_child[ k ]);
+        if ( child->n_type == with_item )
+            lastWithItem = child;
+    }
+
+    Fragment *      items( new Fragment );
+    items->parent = w;
+    updateBegin( items, firstWithItem, lineShifts );
+    updateEnd( items, lastWithItem, lineShifts );
+    w->items = Py::asObject( items );
+
+    // suite
+    node *                      suiteNode = findChildOfType( tree, suite );
+    std::list<Decorator *>      emptyDecors;
+    FragmentBase *              lastAdded = walk( suiteNode, w, w->nsuite,
+                                                  lineShifts, emptyDecors,
+                                                  false );
+    if ( lastAdded == NULL )
+        w->updateEnd( body );
+    else
+        w->updateEnd( lastAdded );
+
+    flow.append( Py::asObject( w ) );
+    return w;
+}
+
+
+static FragmentBase *
 processFor( node *  tree, FragmentBase *  parent,
             Py::List &  flow, int *  lineShifts )
 {
@@ -1202,6 +1253,8 @@ walk( node *                       tree,
             return processIf( tree, parent, flow, lineShifts );
         case try_stmt:
             return processTry( tree, parent, flow, lineShifts );
+        case with_stmt:
+            return processWith( tree, parent, flow, lineShifts );
 
         default:
             break;
