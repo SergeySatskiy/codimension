@@ -543,7 +543,7 @@ class With : public FragmentBase,
                              const Py::Object &  val );
 
     public:
-        Py::Object      object;     // Fragment for the object
+        Py::Object      items;      // Fragment for the items
         Py::List        nsuite;     // List of suite statement fragments
 };
 

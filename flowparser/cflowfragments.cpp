@@ -2361,7 +2361,7 @@ int  If::setattr( const char *        attrName,
 With::With()
 {
     kind = WITH_FRAGMENT;
-    object = Py::None();
+    items = Py::None();
 }
 
 With::~With()
@@ -2391,7 +2391,7 @@ Py::Object With::getattr( const char *  attrName )
         Py::List    members;
         FragmentBase::appendMembers( members );
         FragmentWithComments::appendMembers( members );
-        members.append( Py::String( "object" ) );
+        members.append( Py::String( "items" ) );
         members.append( Py::String( "suite" ) );
         return members;
     }
@@ -2401,8 +2401,8 @@ Py::Object With::getattr( const char *  attrName )
         return retval;
     if ( FragmentWithComments::getAttribute( attrName, retval ) )
         return retval;
-    if ( strcmp( attrName, "object" ) == 0 )
-        return object;
+    if ( strcmp( attrName, "items" ) == 0 )
+        return items;
     if ( strcmp( attrName, "suite" ) == 0 )
         return nsuite;
     return getattr_methods( attrName );
@@ -2410,10 +2410,10 @@ Py::Object With::getattr( const char *  attrName )
 
 Py::Object  With::repr( void )
 {
-    // TODO: the other members
     return Py::String( "<With " + FragmentBase::asStr() +
                        "\n" + FragmentWithComments::asStr() +
-                       "\n" + representFragmentPart( object, "Object" ) +
+                       "\n" + representFragmentPart( items, "Items" ) +
+                       "\nSuite: " + representList( nsuite ) +
                        ">" );
 }
 
@@ -2424,10 +2424,10 @@ int  With::setattr( const char *        attrName,
         return 0;
     if ( FragmentWithComments::setAttribute( attrName, val ) )
         return 0;
-    if ( strcmp( attrName, "object" ) == 0 )
+    if ( strcmp( attrName, "items" ) == 0 )
     {
-        CHECKVALUETYPE( "object", "Fragment" );
-        object = val;
+        CHECKVALUETYPE( "items", "Fragment" );
+        items = val;
         return 0;
     }
     if ( strcmp( attrName, "suite" ) == 0 )
