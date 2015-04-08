@@ -2588,12 +2588,24 @@ Py::Object Try::getattr( const char *  attrName )
 
 Py::Object  Try::repr( void )
 {
+    std::string     elsePartStr;
+    if ( elsePart.isNone() )
+        elsePartStr = "None";
+    else
+        elsePartStr = elsePart.str();
+
+    std::string     finallyPartStr;
+    if ( finallyPart.isNone() )
+        finallyPartStr = "None";
+    else
+        finallyPartStr = finallyPart.str();
+
     return Py::String( "<Try " + FragmentBase::asStr() +
                        "\n" + FragmentWithComments::asStr() +
                        "\nSuite: " + representList( nsuite ) +
                        "\nExceptParts: " + representList( exceptParts ) +
-                       "\n" + representFragmentPart( elsePart, "ElsePart" ) +
-                       "\n" + representFragmentPart( finallyPart, "FinallyPart" ) +
+                       "\nElsePart: " + elsePartStr +
+                       "\nFinallyPart: " + finallyPartStr +
                        ">" );
 }
 

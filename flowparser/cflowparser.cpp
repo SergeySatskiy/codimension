@@ -538,6 +538,124 @@ processIf( node *  tree, FragmentBase *  parent,
 }
 
 
+static ExceptPart *
+processExceptPart( node *  tree, FragmentBase *  parent, int *  lineShifts )
+{
+    assert( tree->n_type == except_clause ||
+            tree->n_type == NAME );
+
+    ExceptPart *    exceptPart( new ExceptPart );
+    exceptPart->parent = parent;
+
+    Fragment *      body( new Fragment );
+    body->parent = exceptPart;
+
+    // ':' node is the very next one
+    node *          colonNode = tree + 1;
+    updateBegin( body, tree, lineShifts );
+    updateEnd( body, colonNode, lineShifts );
+    exceptPart->updateBegin( body );
+    exceptPart->body = Py::asObject( body );
+
+    // If it is NAME => it is 'finally' or 'else'
+    // The clause could only be in the 'except' case
+    if ( tree->n_type == except_clause )
+    {
+        node *      testNode = findChildOfType( tree, test );
+        if ( testNode != NULL )
+        {
+            node *      last = findLastPart( tree );
+            Fragment *  clause( new Fragment );
+
+            clause->parent = exceptPart;
+            updateBegin( clause, testNode, lineShifts );
+            updateEnd( clause, last, lineShifts );
+            exceptPart->clause = Py::asObject( clause );
+        }
+    }
+
+    // 'suite' node follows the colon node
+    node *                      suiteNode = colonNode + 1;
+    std::list<Decorator *>      emptyDecors;
+    FragmentBase *              lastAdded = walk( suiteNode, exceptPart,
+                                                  exceptPart->nsuite,
+                                                  lineShifts, emptyDecors,
+                                                  false );
+    if ( lastAdded == NULL )
+        exceptPart->updateEnd( body );
+    else
+        exceptPart->updateEnd( lastAdded );
+    return exceptPart;
+}
+
+
+static FragmentBase *
+processTry( node *  tree, FragmentBase *  parent,
+            Py::List &  flow, int *  lineShifts )
+{
+    assert( tree->n_type == try_stmt );
+
+    Try *       tryStatement( new Try );
+    tryStatement->parent = parent;
+
+    Fragment *      body( new Fragment );
+    node *          tryColonNode = findChildOfType( tree, COLON );
+    body->parent = tryStatement;
+    updateBegin( body, tree, lineShifts );
+    updateEnd( body, tryColonNode, lineShifts );
+    tryStatement->body = Py::asObject( body );
+    tryStatement->updateBegin( body );
+
+    // suite
+    node *                      trySuiteNode = tryColonNode + 1;
+    std::list<Decorator *>      emptyDecors;
+    FragmentBase *              lastAdded = walk( trySuiteNode, tryStatement,
+                                                  tryStatement->nsuite,
+                                                  lineShifts, emptyDecors,
+                                                  false );
+    if ( lastAdded == NULL )
+        tryStatement->updateEnd( body );
+    else
+        tryStatement->updateEnd( lastAdded );
+
+
+    // except, finally, else parts
+    for ( int k = 0; k < tree->n_nchildren; ++k )
+    {
+        node *  child = &(tree->n_child[ k ]);
+        if ( child->n_type == except_clause )
+        {
+            ExceptPart *    exceptPart = processExceptPart( child,
+                                                            tryStatement,
+                                                            lineShifts );
+            tryStatement->exceptParts.append( Py::asObject( exceptPart ) );
+            continue;
+        }
+        if ( child->n_type == NAME )
+        {
+            if ( strcmp( child->n_str, "else" ) == 0 )
+            {
+                ExceptPart *    elsePart = processExceptPart( child,
+                                                              tryStatement,
+                                                              lineShifts );
+                tryStatement->elsePart = Py::asObject( elsePart );
+                continue;
+            }
+            if ( strcmp( child->n_str, "finally" ) == 0 )
+            {
+                ExceptPart *    finallyPart = processExceptPart( child,
+                                                                 tryStatement,
+                                                                 lineShifts );
+                tryStatement->finallyPart = Py::asObject( finallyPart );
+            }
+        }
+    }
+
+    flow.append( Py::asObject( tryStatement ) );
+    return tryStatement;
+}
+
+
 static FragmentBase *
 processWhile( node *  tree, FragmentBase *  parent,
               Py::List &  flow, int *  lineShifts )
@@ -555,6 +673,7 @@ processWhile( node *  tree, FragmentBase *  parent,
     updateBegin( body, whileNode, lineShifts );
     updateEnd( body, colonNode, lineShifts );
     w->body = Py::asObject( body );
+    w->updateBegin( body );
 
     // condition
     node *          testNode = findChildOfType( tree, test );
@@ -607,6 +726,7 @@ processFor( node *  tree, FragmentBase *  parent,
     updateBegin( body, forNode, lineShifts );
     updateEnd( body, colonNode, lineShifts );
     f->body = Py::asObject( body );
+    f->updateBegin( body );
 
     // Iteration
     node *          exprlistNode = findChildOfType( tree, exprlist );
@@ -1080,6 +1200,8 @@ walk( node *                       tree,
             return processFor( tree, parent, flow, lineShifts );
         case if_stmt:
             return processIf( tree, parent, flow, lineShifts );
+        case try_stmt:
+            return processTry( tree, parent, flow, lineShifts );
 
         default:
             break;
