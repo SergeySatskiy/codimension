@@ -203,6 +203,28 @@ class Comment : public FragmentBase,
 };
 
 
+// It covers a single CML comment including its continuation lines
+class CMLComment : public FragmentBase,
+                   public Py::PythonExtension< CMLComment >
+{
+    public:
+        CMLComment();
+        virtual ~CMLComment();
+
+        static void initType( void );
+        Py::Object getattr( const char *  attrName );
+        Py::Object repr( void );
+        virtual int setattr( const char *        attrName,
+                             const Py::Object &  val );
+
+    public:
+        Py::List    parts;          // Fragment instances
+        Py::Int     version;
+        Py::String  recordType;
+        Py::Dict    properties;     // string -> string
+};
+
+
 class Docstring : public FragmentBase,
                   public Py::PythonExtension< Docstring >
 {

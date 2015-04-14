@@ -33,7 +33,7 @@ Common format of the CML statements is as follows:
 
 # cml <version> <record type> <key=value pairs>
 or
-# cmlcont <continue of a previous 'cml' line>
+# cml+ <continue of a previous 'cml' line>
 
 where:
 - <version> is a CML version as integer, e.g. 1
@@ -45,10 +45,10 @@ be split between several lines then the value should be taken into double
 quotes (" character). Double quote inside such a value must be escaped with \
 character. CML supports C/C++ style glueing double quoted values.
 
-If a cml line needs to be continued then the '# cmlcont' prefixed comment line
+If a cml line needs to be continued then the '# cml+' prefixed comment line
 should be used. The continuation line must immediately follow the previous line.
-Empty lines before '# cmlcont' lines are not allowed. There could be many
-'# cmlcont' lines.
+Empty lines before '# cml+' lines are not allowed. There could be many
+'# cml+' lines.
 
 CML version 1 supports the following record types:
 SB - scope begin record. It must have scope id (alpha numeric literal) in the
@@ -58,7 +58,7 @@ SB - scope begin record. It must have scope id (alpha numeric literal) in the
      code with matching id.
 SE - scope end record. It must have matching id.
 
-The end of records is implicit. It is an absence of the '# cmlcont' record at
+The end of records is implicit. It is an absence of the '# cml+' record at
 the next line.
 
 
@@ -77,8 +77,8 @@ Some python code
 The same as multilined record:
 
 # cml 1 SB id=1234
-# cmlcont title="Calculation of"
-# cmlcont       " a checksum"
+# cml+ title="Calculation of"
+# cml+       " a checksum"
 
 ...
 Some python code

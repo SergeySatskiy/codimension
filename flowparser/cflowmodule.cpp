@@ -38,6 +38,7 @@ CDMControlFlowModule::CDMControlFlowModule() :
     BangLine::initType();
     EncodingLine::initType();
     Comment::initType();
+    CMLComment::initType();
     Docstring::initType();
     Decorator::initType();
     CodeBlock::initType();
@@ -72,6 +73,9 @@ CDMControlFlowModule::CDMControlFlowModule() :
     add_varargs_method( "Comment",
                         &CDMControlFlowModule::createComment,
                         CREATE_COMMENT_DOC );
+    add_varargs_method( "CMLComment",
+                        &CDMControlFlowModule::createCMLComment,
+                        CREATE_CML_COMMENT_DOC );
     add_varargs_method( "Docstring",
                         &CDMControlFlowModule::createDocstring,
                         CREATE_DOCSTRING_DOC );
@@ -173,6 +177,7 @@ CDMControlFlowModule::CDMControlFlowModule() :
     d[ "WITH_FRAGMENT" ]            = Py::Int( WITH_FRAGMENT );
     d[ "EXCEPT_PART_FRAGMENT" ]     = Py::Int( EXCEPT_PART_FRAGMENT );
     d[ "TRY_FRAGMENT" ]             = Py::Int( TRY_FRAGMENT );
+    d[ "CML_COMMENT_FRAGMENT" ]     = Py::Int( CML_COMMENT_FRAGMENT );
     d[ "CONTROL_FLOW_FRAGMENT" ]    = Py::Int( CONTROL_FLOW_FRAGMENT );
 
 }
@@ -293,6 +298,11 @@ Py::Object  CDMControlFlowModule::createEncodingLine( const Py::Tuple &  args )
 Py::Object  CDMControlFlowModule::createComment( const Py::Tuple &  args )
 {
     return Py::asObject( new Comment() );
+}
+
+Py::Object  CDMControlFlowModule::createCMLComment( const Py::Tuple &  args )
+{
+    return Py::asObject( new CMLComment() );
 }
 
 Py::Object  CDMControlFlowModule::createDocstring( const Py::Tuple &  args )

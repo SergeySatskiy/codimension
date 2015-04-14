@@ -51,6 +51,10 @@
 #define CREATE_COMMENT_DOC \
 "Creates the Comment class instance"
 
+// CMLComment()
+#define CREATE_CML_COMMENT_DOC \
+"Creates the CMLComment class instance"
+
 // Docstring()
 #define CREATE_DOCSTRING_DOC \
 "Creates the Docstring class instance"
@@ -180,6 +184,11 @@
 "Returns a string representation with new lines and shifts"
 
 
+// CMLComment class docstring
+#define CML_COMMENT_DOC \
+"Represents a one or many lines CML comment"
+
+
 // Docstring class docstring
 #define DOCSTRING_DOC \
 "Represents a docstring"
@@ -188,7 +197,7 @@
 #define DOCSTRING_GETDISPLAYVALUE_DOC \
 "Provides the docstring without syntactic sugar"
 
-// Comment::niceStringify()
+// Docstring::niceStringify()
 #define DOCSTRING_NICESTRINGIFY_DOC \
 "Returns a string representation with new lines and shifts"
 

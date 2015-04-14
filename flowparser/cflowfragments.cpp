@@ -720,11 +720,9 @@ Py::Object Comment::getattr( const char *  attrName )
 
 Py::Object  Comment::repr( void )
 {
-    Py::String      ret( "<Comment " + asStr() );
-    for ( Py::List::size_type k( 0 ); k < parts.length(); ++k )
-        ret = ret + Py::String( "\n" ) + Py::String( parts[ k ].repr() );
-    ret = ret + Py::String( ">" );
-    return ret;
+    return Py::String( "<Comment " + FragmentBase::asStr() +
+                        "\nParts: " + representList( parts ) +
+                        ">" );
 }
 
 
@@ -843,6 +841,115 @@ Py::Object  Comment::niceStringify( const Py::Tuple &  args )
 
 // --- End of Comment definition ---
 
+CMLComment::CMLComment()
+{
+    kind = CML_COMMENT_FRAGMENT;
+    version = Py::None();
+    recordType = Py::None();
+}
+
+CMLComment::~CMLComment()
+{}
+
+void CMLComment::initType( void )
+{
+    behaviors().name( "Comment" );
+    behaviors().doc( CML_COMMENT_DOC );
+    behaviors().supportGetattr();
+    behaviors().supportSetattr();
+    behaviors().supportRepr();
+
+    add_noargs_method( "getLineRange", &FragmentBase::getLineRange,
+                       GETLINERANGE_DOC );
+    add_varargs_method( "getContent", &FragmentBase::getContent,
+                        GETCONTENT_DOC );
+    add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
+                        GETLINECONTENT_DOC );
+}
+
+Py::Object CMLComment::getattr( const char *  attrName )
+{
+    // Support for dir(...)
+    if ( strcmp( attrName, "__members__" ) == 0 )
+    {
+        Py::List    members;
+        FragmentBase::appendMembers( members );
+        members.append( Py::String( "parts" ) );
+        members.append( Py::String( "version" ) );
+        members.append( Py::String( "recordType" ) );
+        members.append( Py::String( "properties" ) );
+        return members;
+    }
+
+    Py::Object      retval;
+    if ( getAttribute( attrName, retval ) )
+        return retval;
+    if ( strcmp( attrName, "parts" ) == 0 )
+        return parts;
+    if ( strcmp( attrName, "version" ) == 0 )
+        return version;
+    if ( strcmp( attrName, "recordType" ) == 0 )
+        return recordType;
+    if ( strcmp( attrName, "properties" ) == 0 )
+        return properties;
+    return getattr_methods( attrName );
+}
+
+int  CMLComment::setattr( const char *        attrName,
+                          const Py::Object &  val )
+{
+    if ( setAttribute( attrName, val ) )
+        return 0;
+
+    if ( strcmp( attrName, "parts" ) == 0 )
+    {
+        if ( ! val.isList() )
+            throw Py::AttributeError( "Attribute 'parts' value "
+                                      "must be a list" );
+        parts = Py::List( val );
+        return 0;
+    }
+    if ( strcmp( attrName, "version" ) == 0 )
+    {
+        if ( ! val.isNumeric() )
+            throw Py::AttributeError( "Attribute 'version' value "
+                                      "must be an integer" );
+        version = Py::Int( val );
+        return 0;
+    }
+    if ( strcmp( attrName, "recordType" ) == 0 )
+    {
+        if ( ! val.isString() )
+            throw Py::AttributeError( "Attribute 'recordType' value "
+                                      "must be a string" );
+        recordType = Py::String( val );
+        return 0;
+    }
+    if ( strcmp( attrName, "properties" ) == 0 )
+    {
+        if ( ! val.isDict() )
+            throw Py::AttributeError( "Attribute 'properties' value "
+                                      "must be a dictionary" );
+        properties = Py::Dict( val );
+        return 0;
+    }
+    throwUnknownAttribute( attrName );
+    return -1;  // Suppress compiler warning
+}
+
+Py::Object  CMLComment::repr( void )
+{
+    return Py::String( "<CMLComment " + FragmentBase::asStr() +
+                        "\nParts: " + representList( parts ) +
+                        "\nVersion: " + version.as_string() +
+                        "\nRecordType: " + recordType.as_string() +
+                        "\nProperties: " + properties.as_string() +
+                        ">" );
+}
+
+
+// --- End of CMLComment definition ---
+
 Docstring::Docstring()
 {
     kind = DOCSTRING_FRAGMENT;
@@ -902,6 +1009,8 @@ Py::Object  Docstring::repr( void )
 {
     return Py::String( "<Docstring " + FragmentBase::asStr() +
                        "\nParts: " + representList( parts ) +
+                       "\n" + representFragmentPart( sideComment,
+                                                     "SideComment" ) +
                        ">" );
 }
 

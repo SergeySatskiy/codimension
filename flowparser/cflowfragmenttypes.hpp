@@ -49,6 +49,8 @@
 #define EXCEPT_PART_FRAGMENT    21
 #define TRY_FRAGMENT            22
 
+// Codimension Markup Language (cml) comment
+#define CML_COMMENT_FRAGMENT    63
 
 // Represents the complete source code
 #define CONTROL_FLOW_FRAGMENT   64
