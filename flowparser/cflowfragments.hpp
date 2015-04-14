@@ -69,7 +69,7 @@ class FragmentBase
         bool  setAttribute( const char *        attrName,
                             const Py::Object &  val );
 
-        std::string asStr( void ) const;
+        std::string as_string( void ) const;
 
     public:
         Py::Object  getLineRange( void );
@@ -134,6 +134,8 @@ class FragmentWithComments
     public:
         Py::Object      leadingComment;     // None or Comment instance
         Py::Object      sideComment;        // None or Comment instance
+        Py::List        leadingCMLComments; // CMLComment instances
+        Py::List        sideCMLComments;    // CMLComment instances
         Py::Object      body;               // Fragment for the body
 
     public:
@@ -142,7 +144,7 @@ class FragmentWithComments
                             Py::Object &        retval );
         bool  setAttribute( const char *        attrName,
                             const Py::Object &  val );
-        std::string  asStr( void ) const;
+        std::string  as_string( void ) const;
 };
 
 

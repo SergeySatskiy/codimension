@@ -100,25 +100,35 @@ representFragmentPart( const Py::Object &  value,
 {
     if ( value.isNone() )
         return std::string( name ) + ": None";
-    return std::string( name ) + ": " + TOFRAGMENT( value )->asStr();
+    return std::string( name ) + ": " + TOFRAGMENT( value )->as_string();
 }
 
 static std::string
-representList( const Py::List &  lst )
+representList( const Py::List &  lst,
+               const char *      name )
 {
     if ( lst.size() == 0 )
-        return "n/a";
+        return std::string( name ) + ": n/a";
 
-    std::string     result;
+    std::string     result( name );
+    result += ": ";
     for ( size_t  k = 0; k < lst.size(); ++k )
     {
         if ( k != 0 )
             result += "\n";
-        result += lst[ k ].str();
+        result += lst[ k ].as_string();
     }
     return result;
 }
 
+static std::string
+representPart( const Py::Object &  value,
+               const char *        name )
+{
+    if ( value.isNone() )
+        return std::string( name ) + ": None";
+    return std::string( name ) + ": " + value.as_string();
+}
 
 
 
@@ -303,7 +313,7 @@ Py::Object  FragmentBase::getLineRange( void )
 }
 
 
-std::string  FragmentBase::asStr( void ) const
+std::string  FragmentBase::as_string( void ) const
 {
     char    buffer[ 64 ];
     sprintf( buffer, "[%ld:%ld] (%ld,%ld) (%ld,%ld)",
@@ -363,7 +373,7 @@ Py::Object Fragment::getattr( const char *  attrName )
 
 Py::Object  Fragment::repr( void )
 {
-    return Py::String( "<Fragment " + asStr() + ">" );
+    return Py::String( "<Fragment " + as_string() + ">" );
 }
 
 
@@ -393,6 +403,8 @@ void FragmentWithComments::appendMembers( Py::List &  container )
 {
     container.append( Py::String( "leadingComment" ) );
     container.append( Py::String( "sideComment" ) );
+    container.append( Py::String( "leadingCMLComments" ) );
+    container.append( Py::String( "sideCMLComments" ) );
     container.append( Py::String( "body" ) );
     return;
 }
@@ -408,6 +420,16 @@ bool FragmentWithComments::getAttribute( const char *  attrName,
     if ( strcmp( attrName, "sideComment" ) == 0 )
     {
         retval = sideComment;
+        return true;
+    }
+    if ( strcmp( attrName, "leadingCMLComments" ) == 0 )
+    {
+        retval = leadingCMLComments;
+        return true;
+    }
+    if ( strcmp( attrName, "sideCMLComments" ) == 0 )
+    {
+        retval = sideCMLComments;
         return true;
     }
     if ( strcmp( attrName, "body" ) == 0 )
@@ -439,31 +461,32 @@ bool FragmentWithComments::setAttribute( const char *        attrName,
         sideComment = val;
         return true;
     }
+    if ( strcmp( attrName, "leadingCMLComments" ) == 0 )
+    {
+        if ( ! val.isList() )
+            throw Py::AttributeError( "Attribute 'leadingCMLComments' value "
+                                      "must be a list" );
+        leadingCMLComments = val;
+        return true;
+    }
+    if ( strcmp( attrName, "sideCMLComments" ) == 0 )
+    {
+        if ( ! val.isList() )
+            throw Py::AttributeError( "Attribute 'sideCMLComments' value "
+                                      "must be a list" );
+        sideCMLComments = val;
+        return true;
+    }
     return false;
 }
 
-std::string  FragmentWithComments::asStr( void ) const
+std::string  FragmentWithComments::as_string( void ) const
 {
-    std::string     ret;
-
-    if ( body.isNone() )
-        ret = ret + "Body: None";
-    else
-        ret = ret + "Body: " +
-              TOFRAGMENT( body )->asStr();
-
-    if ( leadingComment.isNone() )
-        ret = ret + "\nLeadingComment: None";
-    else
-        ret = ret + "\nLeadingComment: " +
-              TOFRAGMENT( leadingComment )->asStr();
-
-    if ( sideComment.isNone() )
-        ret = ret + "\nSideComment: None";
-    else
-        ret = ret + "\nSideComment: " +
-              TOFRAGMENT( sideComment )->asStr();
-    return ret;
+    return representFragmentPart( body, "Body" ) +
+           "\n" + representFragmentPart( leadingComment, "LeadingComment" ) +
+           "\n" + representFragmentPart( sideComment, "SideComment" ) +
+           "\n" + representList( leadingCMLComments, "LeadingCMLComments" ) +
+           "\n" + representList( sideCMLComments, "SideCMLComments" );
 }
 
 // --- End of FragmentWithComments definition ---
@@ -518,7 +541,7 @@ Py::Object BangLine::getattr( const char *  attrName )
 
 Py::Object  BangLine::repr( void )
 {
-    return Py::String( "<BangLine " + asStr() + ">" );
+    return Py::String( "<BangLine " + as_string() + ">" );
 }
 
 
@@ -611,7 +634,7 @@ Py::Object EncodingLine::getattr( const char *  attrName )
 
 Py::Object  EncodingLine::repr( void )
 {
-    return Py::String( "<EncodingLine " + asStr() + ">" );
+    return Py::String( "<EncodingLine " + as_string() + ">" );
 }
 
 
@@ -720,8 +743,8 @@ Py::Object Comment::getattr( const char *  attrName )
 
 Py::Object  Comment::repr( void )
 {
-    return Py::String( "<Comment " + FragmentBase::asStr() +
-                        "\nParts: " + representList( parts ) +
+    return Py::String( "<Comment " + FragmentBase::as_string() +
+                        "\n" + representList( parts, "Parts" ) +
                         ">" );
 }
 
@@ -828,7 +851,7 @@ Py::Object  Comment::niceStringify( const Py::Tuple &  args )
 
     INT_TYPE    level( (INT_TYPE)(PYTHON_INT_TYPE( args[ 0 ] )) );
     Py::String  joiner( "\n" + std::string( ' ', (level + 1) * 4 ) );
-    Py::String  result( std::string( ' ', level * 4 ) + "Comment: " + asStr() );
+    Py::String  result( std::string( ' ', level * 4 ) + "Comment: " + as_string() );
 
     Py::List::size_type     partCount( parts.length() );
     for ( Py::List::size_type k( 0 ); k < partCount; ++k )
@@ -939,11 +962,11 @@ int  CMLComment::setattr( const char *        attrName,
 
 Py::Object  CMLComment::repr( void )
 {
-    return Py::String( "<CMLComment " + FragmentBase::asStr() +
-                        "\nParts: " + representList( parts ) +
-                        "\nVersion: " + version.as_string() +
-                        "\nRecordType: " + recordType.as_string() +
-                        "\nProperties: " + properties.as_string() +
+    return Py::String( "<CMLComment " + FragmentBase::as_string() +
+                        "\n" + representList( parts, "Parts" ) +
+                        "\n" + representPart( version, "Version" ) +
+                        "\n" + representPart( recordType, "RecordType" ) +
+                        "\n" + representPart( properties, "Properties" ) +
                         ">" );
 }
 
@@ -1007,8 +1030,8 @@ Py::Object Docstring::getattr( const char *  attrName )
 
 Py::Object  Docstring::repr( void )
 {
-    return Py::String( "<Docstring " + FragmentBase::asStr() +
-                       "\nParts: " + representList( parts ) +
+    return Py::String( "<Docstring " + FragmentBase::as_string() +
+                       "\n" + representList( parts, "Parts" ) +
                        "\n" + representFragmentPart( sideComment,
                                                      "SideComment" ) +
                        ">" );
@@ -1083,7 +1106,7 @@ Py::Object  Docstring::niceStringify( const Py::Tuple &  args )
 
     INT_TYPE    level( (INT_TYPE)(PYTHON_INT_TYPE( args[ 0 ] )) );
     Py::String  joiner( "\n" + std::string( ' ', (level + 1) * 4 ) );
-    Py::String  result( std::string( ' ', level * 4 ) + "Docstring: " + asStr() );
+    Py::String  result( std::string( ' ', level * 4 ) + "Docstring: " + as_string() );
 
     Py::List::size_type     partCount( parts.length() );
     for ( Py::List::size_type k( 0 ); k < partCount; ++k )
@@ -1221,8 +1244,8 @@ Py::Object Decorator::getattr( const char *  attrName )
 
 Py::Object  Decorator::repr( void )
 {
-    return Py::String( "<Decorator " + FragmentBase::asStr() +
-                       "\n" + FragmentWithComments::asStr() +
+    return Py::String( "<Decorator " + FragmentBase::as_string() +
+                       "\n" + FragmentWithComments::as_string() +
                        "\n" + representFragmentPart( name, "Name" ) +
                        "\n" + representFragmentPart( arguments, "Arguments" ) +
                        ">" );
@@ -1305,8 +1328,8 @@ Py::Object CodeBlock::getattr( const char *  attrName )
 
 Py::Object  CodeBlock::repr( void )
 {
-    return Py::String( "<CodeBlock " + FragmentBase::asStr() +
-                       "\n" + FragmentWithComments::asStr() + ">" );
+    return Py::String( "<CodeBlock " + FragmentBase::as_string() +
+                       "\n" + FragmentWithComments::as_string() + ">" );
 }
 
 
@@ -1389,19 +1412,13 @@ Py::Object Function::getattr( const char *  attrName )
 
 Py::Object  Function::repr( void )
 {
-    std::string     docstringPart;
-    if ( docstring.isNone() )
-        docstringPart = "None";
-    else
-        docstringPart = docstring.str();
-
-    return Py::String( "<Function " + FragmentBase::asStr() +
-                       "\n" + FragmentWithComments::asStr() +
+    return Py::String( "<Function " + FragmentBase::as_string() +
+                       "\n" + FragmentWithComments::as_string() +
                        "\n" + representFragmentPart( name, "Name" ) +
                        "\n" + representFragmentPart( arguments, "Arguments" ) +
-                       "\nDocstring: " + docstringPart +
-                       "\nDecorators: " + representList( decors ) +
-                       "\nSuite: " + representList( nsuite ) +
+                       "\n" + representPart( docstring, "Docstring" ) +
+                       "\n" + representList( decors, "Decorators" ) +
+                       "\n" + representList( nsuite, "Suite" ) +
                        ">" );
 }
 
@@ -1517,25 +1534,13 @@ Py::Object Class::getattr( const char *  attrName )
 
 Py::Object  Class::repr( void )
 {
-    std::string     docstringPart;
-    if ( docstring.isNone() )
-        docstringPart = "None";
-    else
-        docstringPart = docstring.str();
-
-    std::string     baseClassesPart;
-    if ( baseClasses.isNone() )
-        baseClassesPart = "None";
-    else
-        baseClassesPart = baseClasses.str();
-
-    return Py::String( "<Class " + FragmentBase::asStr() +
-                       "\n" + FragmentWithComments::asStr() +
+    return Py::String( "<Class " + FragmentBase::as_string() +
+                       "\n" + FragmentWithComments::as_string() +
                        "\n" + representFragmentPart( name, "Name" ) +
-                       "\nBaseClasses: " + baseClassesPart +
-                       "\nDocstring: " + docstringPart +
-                       "\nDecorators: " + representList( decors ) +
-                       "\nSuite: " + representList( nsuite ) +
+                       "\n" + representPart( baseClasses, "BaseClasses" ) +
+                       "\n" + representPart( docstring, "Docstring" ) +
+                       "\n" + representList( decors, "Decorators" ) +
+                       "\n" + representList( nsuite, "Suite" ) +
                        ">" );
 }
 
@@ -1632,8 +1637,8 @@ Py::Object Break::getattr( const char *  attrName )
 
 Py::Object  Break::repr( void )
 {
-    return Py::String( "<Break " + FragmentBase::asStr() +
-                       "\n" + FragmentWithComments::asStr() + ">" );
+    return Py::String( "<Break " + FragmentBase::as_string() +
+                       "\n" + FragmentWithComments::as_string() + ">" );
 }
 
 int  Break::setattr( const char *        attrName,
@@ -1695,8 +1700,8 @@ Py::Object Continue::getattr( const char *  attrName )
 
 Py::Object  Continue::repr( void )
 {
-    return Py::String( "<Continue " + FragmentBase::asStr() +
-                       "\n" + FragmentWithComments::asStr() + ">" );
+    return Py::String( "<Continue " + FragmentBase::as_string() +
+                       "\n" + FragmentWithComments::as_string() + ">" );
 }
 
 int  Continue::setattr( const char *        attrName,
@@ -1761,8 +1766,8 @@ Py::Object Return::getattr( const char *  attrName )
 
 Py::Object  Return::repr( void )
 {
-    return Py::String( "<Return " + FragmentBase::asStr() +
-                       "\n" + FragmentWithComments::asStr() +
+    return Py::String( "<Return " + FragmentBase::as_string() +
+                       "\n" + FragmentWithComments::as_string() +
                        "\n" + representFragmentPart( value, "Value" ) +
                        ">" );
 }
@@ -1835,8 +1840,8 @@ Py::Object Raise::getattr( const char *  attrName )
 
 Py::Object  Raise::repr( void )
 {
-    return Py::String( "<Raise " + FragmentBase::asStr() +
-                       "\n" + FragmentWithComments::asStr() +
+    return Py::String( "<Raise " + FragmentBase::as_string() +
+                       "\n" + FragmentWithComments::as_string() +
                        "\n" + representFragmentPart( value, "Value" ) +
                        ">" );
 }
@@ -1913,8 +1918,8 @@ Py::Object Assert::getattr( const char *  attrName )
 
 Py::Object  Assert::repr( void )
 {
-    return Py::String( "<Assert " + FragmentBase::asStr() +
-                       "\n" + FragmentWithComments::asStr() +
+    return Py::String( "<Assert " + FragmentBase::as_string() +
+                       "\n" + FragmentWithComments::as_string() +
                        "\n" + representFragmentPart( tst, "Test" ) +
                        "\n" + representFragmentPart( message, "Message" ) +
                        ">" );
@@ -1994,8 +1999,8 @@ Py::Object SysExit::getattr( const char *  attrName )
 
 Py::Object  SysExit::repr( void )
 {
-    return Py::String( "<Assert " + FragmentBase::asStr() +
-                       "\n" + FragmentWithComments::asStr() +
+    return Py::String( "<Assert " + FragmentBase::as_string() +
+                       "\n" + FragmentWithComments::as_string() +
                        "\n" + representFragmentPart( arg, "Argument" ) +
                        ">" );
 }
@@ -2076,17 +2081,11 @@ Py::Object While::getattr( const char *  attrName )
 
 Py::Object  While::repr( void )
 {
-    std::string     elsePartRepr;
-    if ( elsePart.isNone() )
-        elsePartRepr = "None";
-    else
-        elsePartRepr = elsePart.str();
-
-    return Py::String( "<While " + FragmentBase::asStr() +
-                       "\n" + FragmentWithComments::asStr() +
+    return Py::String( "<While " + FragmentBase::as_string() +
+                       "\n" + FragmentWithComments::as_string() +
                        "\n" + representFragmentPart( condition, "Condition" ) +
-                       "\nSuite: " + representList( nsuite ) +
-                       "\nElsePart: " + elsePartRepr +
+                       "\n" + representList( nsuite, "Suite" ) +
+                       "\n" + representPart( elsePart, "ElsePart" ) +
                        ">" );
 }
 
@@ -2180,17 +2179,11 @@ Py::Object For::getattr( const char *  attrName )
 
 Py::Object  For::repr( void )
 {
-    std::string     elsePartRepr;
-    if ( elsePart.isNone() )
-        elsePartRepr = "None";
-    else
-        elsePartRepr = elsePart.str();
-
-    return Py::String( "<For " + FragmentBase::asStr() +
-                       "\n" + FragmentWithComments::asStr() +
+    return Py::String( "<For " + FragmentBase::as_string() +
+                       "\n" + FragmentWithComments::as_string() +
                        "\n" + representFragmentPart( iteration, "Iteration" ) +
-                       "\nSuite: " + representList( nsuite ) +
-                       "\nElsePart: " + elsePartRepr +
+                       "\n" + representList( nsuite, "Suite" ) +
+                       "\n" + representPart( elsePart, "ElsePart" ) +
                        ">" );
 }
 
@@ -2280,8 +2273,8 @@ Py::Object Import::getattr( const char *  attrName )
 
 Py::Object  Import::repr( void )
 {
-    return Py::String( "<Import " + FragmentBase::asStr() +
-                       "\n" + FragmentWithComments::asStr() +
+    return Py::String( "<Import " + FragmentBase::as_string() +
+                       "\n" + FragmentWithComments::as_string() +
                        "\n" + representFragmentPart( fromPart, "FromPart" ) +
                        "\n" + representFragmentPart( whatPart, "WhatPart" ) +
                        ">" );
@@ -2364,10 +2357,10 @@ Py::Object IfPart::getattr( const char *  attrName )
 
 Py::Object  IfPart::repr( void )
 {
-    return Py::String( "<IfPart " + FragmentBase::asStr() +
-                       "\n" + FragmentWithComments::asStr() +
+    return Py::String( "<IfPart " + FragmentBase::as_string() +
+                       "\n" + FragmentWithComments::as_string() +
                        "\n" + representFragmentPart( condition, "Condition" ) +
-                       "\nSuite: " + representList( nsuite ) +
+                       "\n" + representList( nsuite, "Suite" ) +
                        ">" );
 }
 
@@ -2443,8 +2436,8 @@ Py::Object If::getattr( const char *  attrName )
 
 Py::Object  If::repr( void )
 {
-    return Py::String( "<If " + FragmentBase::asStr() +
-                       "\nParts: " + representList( parts ) +
+    return Py::String( "<If " + FragmentBase::as_string() +
+                       "\n" + representList( parts, "Parts" ) +
                        ">" );
 }
 
@@ -2519,10 +2512,10 @@ Py::Object With::getattr( const char *  attrName )
 
 Py::Object  With::repr( void )
 {
-    return Py::String( "<With " + FragmentBase::asStr() +
-                       "\n" + FragmentWithComments::asStr() +
+    return Py::String( "<With " + FragmentBase::as_string() +
+                       "\n" + FragmentWithComments::as_string() +
                        "\n" + representFragmentPart( items, "Items" ) +
-                       "\nSuite: " + representList( nsuite ) +
+                       "\n" + representList( nsuite, "Suite" ) +
                        ">" );
 }
 
@@ -2605,10 +2598,10 @@ Py::Object ExceptPart::getattr( const char *  attrName )
 
 Py::Object  ExceptPart::repr( void )
 {
-    return Py::String( "<ExceptPart " + FragmentBase::asStr() +
-                       "\n" + FragmentWithComments::asStr() +
+    return Py::String( "<ExceptPart " + FragmentBase::as_string() +
+                       "\n" + FragmentWithComments::as_string() +
                        "\n" + representFragmentPart( clause, "Clause" ) +
-                       "\nSuite: " + representList( nsuite ) +
+                       "\n" + representList( nsuite, "Suite" ) +
                        ">" );
 }
 
@@ -2697,24 +2690,12 @@ Py::Object Try::getattr( const char *  attrName )
 
 Py::Object  Try::repr( void )
 {
-    std::string     elsePartStr;
-    if ( elsePart.isNone() )
-        elsePartStr = "None";
-    else
-        elsePartStr = elsePart.str();
-
-    std::string     finallyPartStr;
-    if ( finallyPart.isNone() )
-        finallyPartStr = "None";
-    else
-        finallyPartStr = finallyPart.str();
-
-    return Py::String( "<Try " + FragmentBase::asStr() +
-                       "\n" + FragmentWithComments::asStr() +
-                       "\nSuite: " + representList( nsuite ) +
-                       "\nExceptParts: " + representList( exceptParts ) +
-                       "\nElsePart: " + elsePartStr +
-                       "\nFinallyPart: " + finallyPartStr +
+    return Py::String( "<Try " + FragmentBase::as_string() +
+                       "\n" + FragmentWithComments::as_string() +
+                       "\n" + representList( nsuite, "Suite" ) +
+                       "\n" + representList( exceptParts, "ExceptParts" ) +
+                       "\n" + representPart( elsePart, "ElsePart" ) +
+                       "\n" + representPart( finallyPart, "FinallyPart" ) +
                        ">" );
 }
 
@@ -2830,20 +2811,13 @@ Py::Object  ControlFlow::repr( void )
     if ( errors.size() != 0 )
         ok = "false";
 
-    std::string     docstringPart;
-    if ( docstring.isNone() )
-        docstringPart = "None";
-    else
-        docstringPart = docstring.str();
-
-
-    return Py::String( "<ControlFlow " + FragmentBase::asStr() +
+    return Py::String( "<ControlFlow " + FragmentBase::as_string() +
                        "\nisOK: " + ok +
-                       "\nErrors: " + representList( errors ) +
+                       "\n" + representList( errors, "Errors" ) +
                        "\n" + representFragmentPart( bangLine, "BangLine" ) +
                        "\n" + representFragmentPart( encodingLine, "EncodingLine" ) +
-                       "\nDocstring: " + docstringPart +
-                       "\nSuite: " + representList( nsuite ) +
+                       "\n" + representPart( docstring, "Docstring" ) +
+                       "\n" + representList( nsuite, "Suite" ) +
                        ">" );
 }
 
