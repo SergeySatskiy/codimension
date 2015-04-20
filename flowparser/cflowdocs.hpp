@@ -111,9 +111,9 @@
 #define CREATE_IMPORT_DOC \
 "Creates the Import class instance"
 
-// IfPart()
-#define CREATE_IFPART_DOC \
-"Creates the IfPart class instance"
+// ElifPart()
+#define CREATE_ELIFPART_DOC \
+"Creates the ElifPart class instance"
 
 // If()
 #define CREATE_IF_DOC \
@@ -179,11 +179,6 @@
 #define COMMENT_GETDISPLAYVALUE_DOC \
 "Provides the comment without trailing spaces"
 
-// Comment::niceStringify()
-#define COMMENT_NICESTRINGIFY_DOC \
-"Returns a string representation with new lines and shifts"
-
-
 // CMLComment class docstring
 #define CML_COMMENT_DOC \
 "Represents a one or many lines CML comment"
@@ -196,11 +191,6 @@
 // Docstring::getDisplayValue()
 #define DOCSTRING_GETDISPLAYVALUE_DOC \
 "Provides the docstring without syntactic sugar"
-
-// Docstring::niceStringify()
-#define DOCSTRING_NICESTRINGIFY_DOC \
-"Returns a string representation with new lines and shifts"
-
 
 // Decorator class docstring
 #define DECORATOR_DOC \
@@ -254,9 +244,9 @@
 #define IMPORT_DOC \
 "Represents a single import statement"
 
-// IfPart class docstring
-#define IFPART_DOC \
-"Represents a single branch (if or elif or else) in the if statement"
+// ElifPart class docstring
+#define ELIFPART_DOC \
+"Represents a single 'elif' or 'else' branch in the if statement"
 
 // If class docstring
 #define IF_DOC \

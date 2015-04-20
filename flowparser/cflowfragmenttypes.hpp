@@ -43,7 +43,7 @@
 #define WHILE_FRAGMENT          15
 #define FOR_FRAGMENT            16
 #define IMPORT_FRAGMENT         17
-#define IF_PART_FRAGMENT        18
+#define ELIF_PART_FRAGMENT      18
 #define IF_FRAGMENT             19
 #define WITH_FRAGMENT           20
 #define EXCEPT_PART_FRAGMENT    21

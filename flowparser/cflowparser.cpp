@@ -460,29 +460,29 @@ processReturn( node *  tree, FragmentBase *  parent,
 
 // Handles 'else' and 'elif' clauses for various statements: 'if' branches,
 // 'else' parts of 'while', 'for', 'try'
-static IfPart *
-processIfPart( node *  tree, FragmentBase *  parent,
-               int *  lineShifts )
+static ElifPart *
+processElifPart( node *  tree, FragmentBase *  parent,
+                 int *  lineShifts )
 {
     assert( tree->n_type == NAME );
     assert( strcmp( tree->n_str, "else" ) == 0 ||
             strcmp( tree->n_str, "elif" ) == 0 ||
             strcmp( tree->n_str, "if" ) == 0 );
 
-    IfPart *    ifPart( new IfPart );
-    ifPart->parent = parent;
+    ElifPart *      elifPart( new ElifPart );
+    elifPart->parent = parent;
 
     node *      current = tree + 1;
     node *      colonNode = NULL;
     if ( current->n_type == test )
     {
-        // This is an if or elif part, i.e. there is a condition part
+        // This is an elif part, i.e. there is a condition part
         node *      last = findLastPart( current );
         Fragment *  condition( new Fragment );
-        condition->parent = ifPart;
+        condition->parent = elifPart;
         updateBegin( condition, current, lineShifts );
         updateEnd( condition, last, lineShifts );
-        ifPart->condition = Py::asObject( condition );
+        elifPart->condition = Py::asObject( condition );
 
         colonNode = current + 1;
     }
@@ -494,22 +494,22 @@ processIfPart( node *  tree, FragmentBase *  parent,
 
     node *          suiteNode = colonNode + 1;
     Fragment *      body( new Fragment );
-    body->parent = ifPart;
+    body->parent = elifPart;
     updateBegin( body, tree, lineShifts );
     updateEnd( body, colonNode, lineShifts );
-    ifPart->updateBegin( body );
-    ifPart->body = Py::asObject( body );
+    elifPart->updateBegin( body );
+    elifPart->body = Py::asObject( body );
 
     std::list<Decorator *>      emptyDecors;
     FragmentBase *              lastAdded = walk( suiteNode,
-                                                  ifPart, ifPart->nsuite,
+                                                  elifPart, elifPart->nsuite,
                                                   lineShifts, emptyDecors,
                                                   false );
     if ( lastAdded == NULL )
-        ifPart->updateEnd( body );
+        elifPart->updateEnd( body );
     else
-        ifPart->updateEnd( lastAdded );
-    return ifPart;
+        elifPart->updateEnd( lastAdded );
+    return elifPart;
 }
 
 
@@ -527,9 +527,46 @@ processIf( node *  tree, FragmentBase *  parent,
         node *  child = &(tree->n_child[ k ]);
         if ( child->n_type == NAME )
         {
-            IfPart *    part = processIfPart( child, ifStatement, lineShifts );
-            ifStatement->updateBegin( part );
-            ifStatement->parts.append( Py::asObject( part ) );
+            if ( strcmp( child->n_str, "if" ) == 0 )
+            {
+                node *      conditionNode = child + 1;
+                assert( conditionNode->n_type == test );
+
+                node *      last = findLastPart( conditionNode );
+                Fragment *  condition( new Fragment );
+                condition->parent = ifStatement;
+                updateBegin( condition, conditionNode, lineShifts );
+                updateEnd( condition, last, lineShifts );
+                ifStatement->condition = Py::asObject( condition );
+
+                node *      colonNode = conditionNode + 1;
+                node *      suiteNode = colonNode + 1;
+
+                Fragment *      body( new Fragment );
+                body->parent = ifStatement;
+                updateBegin( body, tree, lineShifts );
+                updateEnd( body, colonNode, lineShifts );
+                ifStatement->updateBegin( body );
+                ifStatement->body = Py::asObject( body );
+
+                std::list<Decorator *>      emptyDecors;
+                FragmentBase *              lastAdded = walk( suiteNode,
+                                                              ifStatement,
+                                                              ifStatement->nsuite,
+                                                              lineShifts, emptyDecors,
+                                                              false );
+                if ( lastAdded == NULL )
+                    ifStatement->updateEnd( body );
+                else
+                    ifStatement->updateEnd( lastAdded );
+            }
+            else
+            {
+                ElifPart *  elifPart = processElifPart( child, ifStatement,
+                                                        lineShifts );
+                ifStatement->updateBegin( elifPart );
+                ifStatement->elifParts.append( Py::asObject( elifPart ) );
+            }
         }
     }
 
@@ -700,7 +737,7 @@ processWhile( node *  tree, FragmentBase *  parent,
     node *          elseNode = findChildOfTypeAndValue( tree, NAME, "else" );
     if ( elseNode != NULL )
     {
-        IfPart *        elsePart = processIfPart( elseNode, w, lineShifts );
+        ElifPart *      elsePart = processElifPart( elseNode, w, lineShifts );
         w->elsePart = Py::asObject( elsePart );
     }
 
@@ -805,7 +842,7 @@ processFor( node *  tree, FragmentBase *  parent,
     node *          elseNode = findChildOfTypeAndValue( tree, NAME, "else" );
     if ( elseNode != NULL )
     {
-        IfPart *        elsePart = processIfPart( elseNode, f, lineShifts );
+        ElifPart *      elsePart = processElifPart( elseNode, f, lineShifts );
         f->elsePart = Py::asObject( elsePart );
     }
 

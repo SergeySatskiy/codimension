@@ -54,7 +54,7 @@ CDMControlFlowModule::CDMControlFlowModule() :
     While::initType();
     For::initType();
     Import::initType();
-    IfPart::initType();
+    ElifPart::initType();
     If::initType();
     With::initType();
     ExceptPart::initType();
@@ -118,9 +118,9 @@ CDMControlFlowModule::CDMControlFlowModule() :
     add_varargs_method( "Import",
                         &CDMControlFlowModule::createImport,
                         CREATE_IMPORT_DOC );
-    add_varargs_method( "IfPart",
-                        &CDMControlFlowModule::createIfPart,
-                        CREATE_IFPART_DOC );
+    add_varargs_method( "ElifPart",
+                        &CDMControlFlowModule::createElifPart,
+                        CREATE_ELIFPART_DOC );
     add_varargs_method( "If",
                         &CDMControlFlowModule::createIf,
                         CREATE_IF_DOC );
@@ -172,7 +172,7 @@ CDMControlFlowModule::CDMControlFlowModule() :
     d[ "WHILE_FRAGMENT" ]           = Py::Int( WHILE_FRAGMENT );
     d[ "FOR_FRAGMENT" ]             = Py::Int( FOR_FRAGMENT );
     d[ "IMPORT_FRAGMENT" ]          = Py::Int( IMPORT_FRAGMENT );
-    d[ "IF_PART_FRAGMENT" ]         = Py::Int( IF_PART_FRAGMENT );
+    d[ "ELIF_PART_FRAGMENT" ]       = Py::Int( ELIF_PART_FRAGMENT );
     d[ "IF_FRAGMENT" ]              = Py::Int( IF_FRAGMENT );
     d[ "WITH_FRAGMENT" ]            = Py::Int( WITH_FRAGMENT );
     d[ "EXCEPT_PART_FRAGMENT" ]     = Py::Int( EXCEPT_PART_FRAGMENT );
@@ -375,9 +375,9 @@ Py::Object  CDMControlFlowModule::createImport( const Py::Tuple &  args )
     return Py::asObject( new Import() );
 }
 
-Py::Object  CDMControlFlowModule::createIfPart( const Py::Tuple &  args )
+Py::Object  CDMControlFlowModule::createElifPart( const Py::Tuple &  args )
 {
-    return Py::asObject( new IfPart() );
+    return Py::asObject( new ElifPart() );
 }
 
 Py::Object  CDMControlFlowModule::createIf( const Py::Tuple &  args )

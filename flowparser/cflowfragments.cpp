@@ -716,8 +716,6 @@ void Comment::initType( void )
                         GETLINECONTENT_DOC );
     add_varargs_method( "getDisplayValue", &Comment::getDisplayValue,
                         COMMENT_GETDISPLAYVALUE_DOC );
-    add_varargs_method( "niceStringify", &Comment::niceStringify,
-                        COMMENT_NICESTRINGIFY_DOC );
 }
 
 
@@ -841,27 +839,6 @@ Py::Object  Comment::getDisplayValue( const Py::Tuple &  args )
 }
 
 
-Py::Object  Comment::niceStringify( const Py::Tuple &  args )
-{
-    if ( args.length() != 1 )
-        throw Py::TypeError( "niceStringify() takes exactly 1 argument" );
-
-    if ( ! args[ 0 ].isNumeric() )
-        throw Py::TypeError( "niceStringify() takes 1 integer argument" );
-
-    INT_TYPE    level( (INT_TYPE)(PYTHON_INT_TYPE( args[ 0 ] )) );
-    Py::String  joiner( "\n" + std::string( ' ', (level + 1) * 4 ) );
-    Py::String  result( std::string( ' ', level * 4 ) + "Comment: " + as_string() );
-
-    Py::List::size_type     partCount( parts.length() );
-    for ( Py::List::size_type k( 0 ); k < partCount; ++k )
-    {
-        result = result + joiner + Py::String( parts[ k ].repr() );
-    }
-
-    return result;
-}
-
 // --- End of Comment definition ---
 
 CMLComment::CMLComment()
@@ -976,7 +953,6 @@ Py::Object  CMLComment::repr( void )
 Docstring::Docstring()
 {
     kind = DOCSTRING_FRAGMENT;
-    sideComment = Py::None();
 }
 
 
@@ -1000,8 +976,6 @@ void Docstring::initType( void )
                         GETLINECONTENT_DOC );
     add_varargs_method( "getDisplayValue", &Docstring::getDisplayValue,
                         DOCSTRING_GETDISPLAYVALUE_DOC );
-    add_varargs_method( "niceStringify", &Docstring::niceStringify,
-                        DOCSTRING_NICESTRINGIFY_DOC );
 }
 
 
@@ -1012,18 +986,18 @@ Py::Object Docstring::getattr( const char *  attrName )
     {
         Py::List    members;
         FragmentBase::appendMembers( members );
+        FragmentWithComments::appendMembers( members );
         members.append( Py::String( "parts" ) );
-        members.append( Py::String( "sideComment" ) );
         return members;
     }
 
     Py::Object      retval;
-    if ( getAttribute( attrName, retval ) )
+    if ( FragmentBase::getAttribute( attrName, retval ) )
+        return retval;
+    if ( FragmentWithComments::getAttribute( attrName, retval ) )
         return retval;
     if ( strcmp( attrName, "parts" ) == 0 )
         return parts;
-    if ( strcmp( attrName, "sideComment" ) == 0 )
-        return sideComment;
     return getattr_methods( attrName );
 }
 
@@ -1031,9 +1005,8 @@ Py::Object Docstring::getattr( const char *  attrName )
 Py::Object  Docstring::repr( void )
 {
     return Py::String( "<Docstring " + FragmentBase::as_string() +
+                       "\n" + FragmentWithComments::as_string() +
                        "\n" + representList( parts, "Parts" ) +
-                       "\n" + representFragmentPart( sideComment,
-                                                     "SideComment" ) +
                        ">" );
 }
 
@@ -1041,7 +1014,9 @@ Py::Object  Docstring::repr( void )
 int  Docstring::setattr( const char *        attrName,
                          const Py::Object &  val )
 {
-    if ( setAttribute( attrName, val ) )
+    if ( FragmentBase::setAttribute( attrName, val ) )
+        return 0;
+    if ( FragmentWithComments::setAttribute( attrName, val ) )
         return 0;
     if ( strcmp( attrName, "parts" ) == 0 )
     {
@@ -1049,12 +1024,6 @@ int  Docstring::setattr( const char *        attrName,
             throw Py::ValueError( "Attribute 'parts' value "
                                   "must be a list" );
         parts = Py::List( val );
-        return 0;
-    }
-    if ( strcmp( attrName, "sideComment" ) == 0 )
-    {
-        CHECKVALUETYPE( "sideComment", "Comment" );
-        sideComment = val;
         return 0;
     }
     throwUnknownAttribute( attrName );
@@ -1093,30 +1062,6 @@ Py::Object  Docstring::getDisplayValue( const Py::Tuple &  args )
                             rawContent.substr(
                                 stripCount,
                                 rawContent.length() - stripCount * 2 ) ) );
-}
-
-
-Py::Object  Docstring::niceStringify( const Py::Tuple &  args )
-{
-    if ( args.length() != 1 )
-        throw Py::TypeError( "niceStringify() takes exactly 1 argument" );
-
-    if ( ! args[ 0 ].isNumeric() )
-        throw Py::TypeError( "niceStringify() takes 1 integer argument" );
-
-    INT_TYPE    level( (INT_TYPE)(PYTHON_INT_TYPE( args[ 0 ] )) );
-    Py::String  joiner( "\n" + std::string( ' ', (level + 1) * 4 ) );
-    Py::String  result( std::string( ' ', level * 4 ) + "Docstring: " + as_string() );
-
-    Py::List::size_type     partCount( parts.length() );
-    for ( Py::List::size_type k( 0 ); k < partCount; ++k )
-    {
-        result = result + joiner + Py::String( parts[ k ].repr() );
-    }
-
-    return result + joiner +
-           Py::String( "\n" + representFragmentPart( sideComment,
-                                                     "SideComment" ) );
 }
 
 
@@ -2305,19 +2250,19 @@ int  Import::setattr( const char *        attrName,
 
 // --- End of Import definition ---
 
-IfPart::IfPart()
+ElifPart::ElifPart()
 {
-    kind = IF_PART_FRAGMENT;
+    kind = ELIF_PART_FRAGMENT;
     condition = Py::None();
 }
 
-IfPart::~IfPart()
+ElifPart::~ElifPart()
 {}
 
-void IfPart::initType( void )
+void ElifPart::initType( void )
 {
-    behaviors().name( "IfPart" );
-    behaviors().doc( IFPART_DOC );
+    behaviors().name( "ElifPart" );
+    behaviors().doc( ELIFPART_DOC );
     behaviors().supportGetattr();
     behaviors().supportSetattr();
     behaviors().supportRepr();
@@ -2330,7 +2275,7 @@ void IfPart::initType( void )
                         GETLINECONTENT_DOC );
 }
 
-Py::Object IfPart::getattr( const char *  attrName )
+Py::Object ElifPart::getattr( const char *  attrName )
 {
     // Support for dir(...)
     if ( strcmp( attrName, "__members__" ) == 0 )
@@ -2355,17 +2300,17 @@ Py::Object IfPart::getattr( const char *  attrName )
     return getattr_methods( attrName );
 }
 
-Py::Object  IfPart::repr( void )
+Py::Object  ElifPart::repr( void )
 {
-    return Py::String( "<IfPart " + FragmentBase::as_string() +
+    return Py::String( "<ElifPart " + FragmentBase::as_string() +
                        "\n" + FragmentWithComments::as_string() +
                        "\n" + representFragmentPart( condition, "Condition" ) +
                        "\n" + representList( nsuite, "Suite" ) +
                        ">" );
 }
 
-int  IfPart::setattr( const char *        attrName,
-                      const Py::Object &  val )
+int  ElifPart::setattr( const char *        attrName,
+                        const Py::Object &  val )
 {
     if ( FragmentBase::setAttribute( attrName, val ) )
         return 0;
@@ -2394,6 +2339,7 @@ int  IfPart::setattr( const char *        attrName,
 If::If()
 {
     kind = IF_FRAGMENT;
+    condition = Py::None();
 }
 
 If::~If()
@@ -2422,22 +2368,34 @@ Py::Object If::getattr( const char *  attrName )
     {
         Py::List    members;
         FragmentBase::appendMembers( members );
-        members.append( Py::String( "parts" ) );
+        FragmentWithComments::appendMembers( members );
+        members.append( Py::String( "condition" ) );
+        members.append( Py::String( "suite" ) );
+        members.append( Py::String( "elifParts" ) );
         return members;
     }
 
     Py::Object      retval;
     if ( FragmentBase::getAttribute( attrName, retval ) )
         return retval;
-    if ( strcmp( attrName, "parts" ) == 0 )
-        return parts;
+    if ( FragmentWithComments::getAttribute( attrName, retval ) )
+        return retval;
+    if ( strcmp( attrName, "condition" ) == 0 )
+        return condition;
+    if ( strcmp( attrName, "suite" ) == 0 )
+        return nsuite;
+    if ( strcmp( attrName, "elifParts" ) == 0 )
+        return elifParts;
     return getattr_methods( attrName );
 }
 
 Py::Object  If::repr( void )
 {
     return Py::String( "<If " + FragmentBase::as_string() +
-                       "\n" + representList( parts, "Parts" ) +
+                       "\n" + FragmentWithComments::as_string() +
+                       "\n" + representFragmentPart( condition, "Condition" ) +
+                       "\n" + representList( nsuite, "Suite" ) +
+                       "\n" + representList( elifParts, "ElifParts" ) +
                        ">" );
 }
 
@@ -2446,12 +2404,28 @@ int  If::setattr( const char *        attrName,
 {
     if ( FragmentBase::setAttribute( attrName, val ) )
         return 0;
-    if ( strcmp( attrName, "parts" ) == 0 )
+    if ( FragmentWithComments::setAttribute( attrName, val ) )
+        return 0;
+    if ( strcmp( attrName, "condition" ) == 0 )
+    {
+        CHECKVALUETYPE( "condition", "Fragment" );
+        condition = val;
+        return 0;
+    }
+    if ( strcmp( attrName, "suite" ) == 0 )
     {
         if ( ! val.isList() )
-            throw Py::AttributeError( "Attribute 'parts' value "
+            throw Py::AttributeError( "Attribute 'suite' value "
                                       "must be a list" );
-        parts = Py::List( val );
+        nsuite = Py::List( val );
+        return 0;
+    }
+    if ( strcmp( attrName, "elifParts" ) == 0 )
+    {
+        if ( ! val.isList() )
+            throw Py::AttributeError( "Attribute 'elifParts' value "
+                                      "must be a list" );
+        elifParts = Py::List( val );
         return 0;
     }
     throwUnknownAttribute( attrName );

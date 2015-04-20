@@ -198,7 +198,6 @@ class Comment : public FragmentBase,
                              const Py::Object &  val );
 
         Py::Object getDisplayValue( const Py::Tuple &  args );
-        Py::Object niceStringify( const Py::Tuple &  args );
 
     public:
         Py::List    parts;      // Fragment instances
@@ -228,6 +227,7 @@ class CMLComment : public FragmentBase,
 
 
 class Docstring : public FragmentBase,
+                  public FragmentWithComments,
                   public Py::PythonExtension< Docstring >
 {
     public:
@@ -241,14 +241,12 @@ class Docstring : public FragmentBase,
                              const Py::Object &  val );
 
         Py::Object getDisplayValue( const Py::Tuple &  args );
-        Py::Object niceStringify( const Py::Tuple &  args );
 
     private:
         static std::string  trimDocstring( const std::string &  docstring );
 
     public:
         Py::List        parts;          // List of Fragment instances
-        Py::Object      sideComment;    // None or Comment instance
 };
 
 
@@ -514,13 +512,13 @@ class Import : public FragmentBase,
 };
 
 
-class IfPart : public FragmentBase,
-               public FragmentWithComments,
-               public Py::PythonExtension< IfPart >
+class ElifPart : public FragmentBase,
+                 public FragmentWithComments,
+                 public Py::PythonExtension< ElifPart >
 {
     public:
-        IfPart();
-        virtual ~IfPart();
+        ElifPart();
+        virtual ~ElifPart();
 
         static void initType( void );
         Py::Object getattr( const char *  attrName );
@@ -535,6 +533,7 @@ class IfPart : public FragmentBase,
 
 
 class If : public FragmentBase,
+           public FragmentWithComments,
            public Py::PythonExtension< If >
 {
     public:
@@ -548,7 +547,9 @@ class If : public FragmentBase,
                              const Py::Object &  val );
 
     public:
-        Py::List        parts;      // List of IfPart fragments
+        Py::Object      condition;
+        Py::List        nsuite;     // List of suite statement fragments
+        Py::List        elifParts;  // List of ElifPart fragments
 };
 
 

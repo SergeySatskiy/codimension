@@ -54,7 +54,7 @@ class CDMControlFlowModule : public Py::ExtensionModule< CDMControlFlowModule >
         Py::Object  createWhile( const Py::Tuple &  args );
         Py::Object  createFor( const Py::Tuple &  args );
         Py::Object  createImport( const Py::Tuple &  args );
-        Py::Object  createIfPart( const Py::Tuple &  args );
+        Py::Object  createElifPart( const Py::Tuple &  args );
         Py::Object  createIf( const Py::Tuple &  args );
         Py::Object  createWith( const Py::Tuple &  args );
         Py::Object  createExceptPart( const Py::Tuple &  args );
