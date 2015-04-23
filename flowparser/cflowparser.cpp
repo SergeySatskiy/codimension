@@ -45,9 +45,7 @@ walk( node *                       tree,
       FragmentBase *               parent,
       Py::List &                   flow,
       int *                        lineShifts,
-      std::list<Decorator *> &     decors,
       bool                         docstrProcessed );
-
 
 
 
@@ -500,11 +498,8 @@ processElifPart( node *  tree, FragmentBase *  parent,
     elifPart->updateBegin( body );
     elifPart->body = Py::asObject( body );
 
-    std::list<Decorator *>      emptyDecors;
-    FragmentBase *              lastAdded = walk( suiteNode,
-                                                  elifPart, elifPart->nsuite,
-                                                  lineShifts, emptyDecors,
-                                                  false );
+    FragmentBase *  lastAdded = walk( suiteNode, elifPart, elifPart->nsuite,
+                                      lineShifts, false );
     if ( lastAdded == NULL )
         elifPart->updateEnd( body );
     else
@@ -549,12 +544,9 @@ processIf( node *  tree, FragmentBase *  parent,
                 ifStatement->updateBegin( body );
                 ifStatement->body = Py::asObject( body );
 
-                std::list<Decorator *>      emptyDecors;
-                FragmentBase *              lastAdded = walk( suiteNode,
-                                                              ifStatement,
-                                                              ifStatement->nsuite,
-                                                              lineShifts, emptyDecors,
-                                                              false );
+                FragmentBase *  lastAdded = walk( suiteNode, ifStatement,
+                                                  ifStatement->nsuite,
+                                                  lineShifts, false );
                 if ( lastAdded == NULL )
                     ifStatement->updateEnd( body );
                 else
@@ -612,12 +604,10 @@ processExceptPart( node *  tree, FragmentBase *  parent, int *  lineShifts )
     }
 
     // 'suite' node follows the colon node
-    node *                      suiteNode = colonNode + 1;
-    std::list<Decorator *>      emptyDecors;
-    FragmentBase *              lastAdded = walk( suiteNode, exceptPart,
-                                                  exceptPart->nsuite,
-                                                  lineShifts, emptyDecors,
-                                                  false );
+    node *          suiteNode = colonNode + 1;
+    FragmentBase *  lastAdded = walk( suiteNode, exceptPart,
+                                      exceptPart->nsuite,
+                                      lineShifts, false );
     if ( lastAdded == NULL )
         exceptPart->updateEnd( body );
     else
@@ -644,12 +634,10 @@ processTry( node *  tree, FragmentBase *  parent,
     tryStatement->updateBegin( body );
 
     // suite
-    node *                      trySuiteNode = tryColonNode + 1;
-    std::list<Decorator *>      emptyDecors;
-    FragmentBase *              lastAdded = walk( trySuiteNode, tryStatement,
-                                                  tryStatement->nsuite,
-                                                  lineShifts, emptyDecors,
-                                                  false );
+    node *          trySuiteNode = tryColonNode + 1;
+    FragmentBase *  lastAdded = walk( trySuiteNode, tryStatement,
+                                      tryStatement->nsuite,
+                                      lineShifts, false );
     if ( lastAdded == NULL )
         tryStatement->updateEnd( body );
     else
@@ -723,11 +711,9 @@ processWhile( node *  tree, FragmentBase *  parent,
     w->condition = Py::asObject( condition );
 
     // suite
-    node *                      suiteNode = findChildOfType( tree, suite );
-    std::list<Decorator *>      emptyDecors;
-    FragmentBase *              lastAdded = walk( suiteNode, w, w->nsuite,
-                                                  lineShifts, emptyDecors,
-                                                  false );
+    node *          suiteNode = findChildOfType( tree, suite );
+    FragmentBase *  lastAdded = walk( suiteNode, w, w->nsuite,
+                                      lineShifts, false );
     if ( lastAdded == NULL )
         w->updateEnd( body );
     else
@@ -782,11 +768,9 @@ processWith( node *  tree, FragmentBase *  parent,
     w->items = Py::asObject( items );
 
     // suite
-    node *                      suiteNode = findChildOfType( tree, suite );
-    std::list<Decorator *>      emptyDecors;
-    FragmentBase *              lastAdded = walk( suiteNode, w, w->nsuite,
-                                                  lineShifts, emptyDecors,
-                                                  false );
+    node *          suiteNode = findChildOfType( tree, suite );
+    FragmentBase *  lastAdded = walk( suiteNode, w, w->nsuite,
+                                      lineShifts, false );
     if ( lastAdded == NULL )
         w->updateEnd( body );
     else
@@ -828,11 +812,9 @@ processFor( node *  tree, FragmentBase *  parent,
     f->iteration = Py::asObject( iteration );
 
     // suite
-    node *                      suiteNode = findChildOfType( tree, suite );
-    std::list<Decorator *>      emptyDecors;
-    FragmentBase *              lastAdded = walk( suiteNode, f, f->nsuite,
-                                                  lineShifts, emptyDecors,
-                                                  false );
+    node *          suiteNode = findChildOfType( tree, suite );
+    FragmentBase *  lastAdded = walk( suiteNode, f, f->nsuite,
+                                      lineShifts, false );
     if ( lastAdded == NULL )
         f->updateEnd( body );
     else
@@ -1148,11 +1130,9 @@ processFuncDefinition( node *                       tree,
     }
 
     // Walk nested nodes
-    std::list<Decorator *>      emptyDecors;
-    FragmentBase *              lastAdded = walk( suiteNode, func,
-                                                  func->nsuite,
-                                                  lineShifts, emptyDecors,
-                                                  docstr != NULL );
+    FragmentBase *  lastAdded = walk( suiteNode, func,
+                                      func->nsuite,
+                                      lineShifts, docstr != NULL );
     if ( lastAdded == NULL )
         func->updateEnd( body );
     else
@@ -1238,10 +1218,8 @@ processClassDefinition( node *                       tree,
     }
 
     // Walk nested nodes
-    std::list<Decorator *>      emptyDecors;
-    FragmentBase *              lastAdded = walk( suiteNode, cls, cls->nsuite,
-                                                  lineShifts, emptyDecors,
-                                                  docstr != NULL );
+    FragmentBase *  lastAdded = walk( suiteNode, cls, cls->nsuite,
+                                      lineShifts, docstr != NULL );
 
     if ( lastAdded == NULL )
         cls->updateEnd( body );
@@ -1254,82 +1232,215 @@ processClassDefinition( node *                       tree,
 
 
 
+
+// Receives small_stmt
+// Provides the meaningful node to process or NULL
+static node *
+getSmallStatementNodeToProcess( node *  tree )
+{
+    assert( tree->n_type == small_stmt );
+
+    // small_stmt: (expr_stmt | print_stmt  | del_stmt | pass_stmt | flow_stmt
+    //              | import_stmt | global_stmt | exec_stmt | assert_stmt)
+    // flow_stmt: break_stmt | continue_stmt | return_stmt | raise_stmt |
+    //            yield_stmt
+    if ( tree->n_nchildren <= 0 )
+        return NULL;
+
+    node *      child = & ( tree->n_child[ 0 ] );
+    if ( child->n_type == flow_stmt )
+    {
+        if ( child->n_nchildren <= 0 )
+            return NULL;
+        // Return first flow_stmt child
+        return & ( child->n_child[ 0 ] );
+    }
+    return child;
+}
+
+
+// Receives stmt
+// Provides the meaningful node to process or NULL
+static node *
+getStmtNodeToProcess( node *  tree )
+{
+    // stmt: simple_stmt | compound_stmt
+    assert( tree->n_type == stmt );
+
+    if ( tree->n_nchildren <= 0 )
+        return NULL;
+
+    // simple_stmt: small_stmt (';' small_stmt)* [';'] NEWLINE
+    tree = & ( tree->n_child[ 0 ] );
+    if ( tree->n_type == simple_stmt )
+        return tree;
+
+    // It is a compound statement
+    // compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | with_stmt |
+    //                funcdef | classdef | decorated
+    // decorated: decorators (classdef | funcdef)
+    assert( tree->n_type == compound_stmt );
+    if ( tree->n_nchildren <= 0 )
+        return NULL;
+    return & ( tree->n_child[ 0 ] );
+}
+
+// Receives stmt or small_stmt
+// Provides the meaningful node to process or NULL
+static node *
+getNodeToProcess( node *  tree )
+{
+    assert( tree->n_type == stmt || tree->n_type == small_stmt );
+
+    if ( tree->n_type == small_stmt )
+        return getSmallStatementNodeToProcess( tree );
+    return getStmtNodeToProcess( tree );
+}
+
+
 static FragmentBase *
 walk( node *                       tree,
       FragmentBase *               parent,
       Py::List &                   flow,
       int *                        lineShifts,
-      std::list<Decorator *> &     decors,
       bool                         docstrProcessed )
 {
-    switch ( tree->n_type )
-    {
-        case import_stmt:
-            return processImport( tree, parent, flow, lineShifts );
-        case funcdef:
-            return processFuncDefinition( tree, parent, flow,
-                                          lineShifts, decors );
-        case classdef:
-            return processClassDefinition( tree, parent, flow,
-                                           lineShifts, decors );
-        case return_stmt:
-            return processReturn( tree, parent, flow, lineShifts );
-        case break_stmt:
-            return processBreak( tree, parent, flow, lineShifts );
-        case continue_stmt:
-            return processContinue( tree, parent, flow, lineShifts );
-        case raise_stmt:
-            return processRaise( tree, parent, flow, lineShifts );
-        case assert_stmt:
-            return processAssert( tree, parent, flow, lineShifts );
-        case while_stmt:
-            return processWhile( tree, parent, flow, lineShifts );
-        case for_stmt:
-            return processFor( tree, parent, flow, lineShifts );
-        case if_stmt:
-            return processIf( tree, parent, flow, lineShifts );
-        case try_stmt:
-            return processTry( tree, parent, flow, lineShifts );
-        case with_stmt:
-            return processWith( tree, parent, flow, lineShifts );
+    Py::List            codeBlock;
+    FragmentBase *      lastAdded = NULL;
+    int                 statementCount = 0;
 
-        default:
-            break;
-    }
-
-    FragmentBase *              lastAdded( NULL );
-    std::list<Decorator *>      foundDecors;
-    int                         statementCount = 0;
     for ( int  i = 0; i < tree->n_nchildren; ++i )
     {
         node *      child = & ( tree->n_child[ i ] );
-        if ( child->n_type == NEWLINE || child->n_type == INDENT )
+        if ( child->n_type != stmt )
             continue;
 
         ++statementCount;
 
-        /* decorators are always before a class or a function definition on the
-         * same level. So they will be picked by the following definition
-         */
-        if ( child->n_type == decorators )
-        {
-            foundDecors = processDecorators( child, lineShifts );
+        node *      nodeToProcess = getNodeToProcess( child );
+        if ( nodeToProcess == NULL )
             continue;
-        }
 
-        // Skip processing a statement if it is a docstring which has already
-        // been processed on the previous step
-        if ( statementCount != 1 || docstrProcessed == false )
+        switch ( nodeToProcess->n_type )
         {
-            lastAdded = walk( child, parent, flow,
-                              lineShifts, foundDecors, false );
+            case simple_stmt:
+                // need to walk over the small_stmt
+                for ( int  k = 0; k < nodeToProcess->n_nchildren; ++k )
+                {
+                    node *      simpleChild = & ( nodeToProcess->n_child[ k ] );
+                    if ( simpleChild->n_type != small_stmt )
+                        continue;
+
+                    node *      nodeToProcess = getNodeToProcess( simpleChild );
+                    if ( nodeToProcess == NULL )
+                        continue;
+
+                    switch ( nodeToProcess->n_type )
+                    {
+                        case import_stmt:
+                            lastAdded = processImport( nodeToProcess, parent,
+                                                       flow, lineShifts );
+                            continue;
+                        case assert_stmt:
+                            lastAdded = processAssert( nodeToProcess, parent,
+                                                       flow, lineShifts );
+                            continue;
+                        case break_stmt:
+                            lastAdded = processBreak( nodeToProcess, parent,
+                                                      flow, lineShifts );
+                            continue;
+                        case continue_stmt:
+                            lastAdded = processContinue( nodeToProcess, parent,
+                                                         flow, lineShifts );
+                            continue;
+                        case return_stmt:
+                            lastAdded = processReturn( nodeToProcess, parent,
+                                                       flow, lineShifts );
+                            continue;
+                        case raise_stmt:
+                            lastAdded = processRaise( nodeToProcess, parent,
+                                                      flow, lineShifts );
+                            continue;
+                        default: ;
+                    }
+
+                    // Some other statement
+                    if ( statementCount == 1 && docstrProcessed )
+                        continue;   // That's a docstring
+
+                    // Not a docstring => add it to the code block
+
+                }
+                continue;
+            case if_stmt:
+                lastAdded = processIf( nodeToProcess, parent,
+                                       flow, lineShifts );
+                continue;
+            case while_stmt:
+                lastAdded = processWhile( nodeToProcess, parent,
+                                          flow, lineShifts );
+                continue;
+            case for_stmt:
+                lastAdded = processFor( nodeToProcess, parent,
+                                        flow, lineShifts );
+                continue;
+            case try_stmt:
+                lastAdded = processTry( nodeToProcess, parent,
+                                        flow, lineShifts );
+                continue;
+            case with_stmt:
+                lastAdded = processWith( nodeToProcess, parent,
+                                         flow, lineShifts );
+                continue;
+            case funcdef:
+                {
+                    std::list<Decorator *>      noDecors;
+                    lastAdded = processFuncDefinition( nodeToProcess, parent,
+                                                       flow, lineShifts,
+                                                       noDecors );
+                }
+                continue;
+            case classdef:
+                {
+                    std::list<Decorator *>      noDecors;
+                    lastAdded = processClassDefinition( nodeToProcess, parent,
+                                                        flow, lineShifts,
+                                                        noDecors );
+                }
+                continue;
+            case decorated:
+                {
+                    // funcdef or classdef follows
+                    if ( nodeToProcess->n_nchildren < 2 )
+                        continue;
+
+                    node *  decorsNode = & ( nodeToProcess->n_child[ 0 ] );
+                    node *  classOrFuncNode = & ( nodeToProcess->n_child[ 1 ] );
+
+                    if ( decorsNode->n_type != decorators )
+                        continue;
+
+                    std::list<Decorator *>      decors =
+                            processDecorators( decorsNode, lineShifts );
+
+                    if ( classOrFuncNode->n_type == funcdef )
+                        lastAdded = processFuncDefinition( classOrFuncNode,
+                                                           parent, flow,
+                                                           lineShifts,
+                                                           decors );
+                    else if ( classOrFuncNode->n_type == classdef )
+                        lastAdded = processClassDefinition( classOrFuncNode,
+                                                            parent, flow,
+                                                            lineShifts,
+                                                            decors );
+                }
+                continue;
         }
     }
 
+    // Add block if needed
     return lastAdded;
 }
-
-
 
 
 Py::Object  parseInput( const char *  buffer, const char *  fileName )
@@ -1379,9 +1490,8 @@ Py::Object  parseInput( const char *  buffer, const char *  fileName )
         }
 
         // Walk the syntax tree
-        std::list<Decorator *>      decors;
-        walk( root, controlFlow, controlFlow->nsuite,
-              lineShifts, decors, docstr != NULL );
+        walk( root, controlFlow, controlFlow->nsuite, lineShifts,
+              docstr != NULL );
         PyNode_Free( tree );
 
         // Second pass: inject comments
