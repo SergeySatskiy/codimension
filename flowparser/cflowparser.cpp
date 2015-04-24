@@ -222,60 +222,82 @@ static void updateEnd( Fragment *  f, node *  lastPart,
     }
 }
 
+
+// It also discards the comment from the deque if it is a bang line
+static void
+checkForBangLine( const char *  buffer,
+                  ControlFlow *  controlFlow,
+                  std::deque< CommentLine > &  comments )
+{
+    if ( comments.empty() )
+        return;
+
+    CommentLine &       comment( comments.front() );
+    if ( comment.line == 1 && comment.end - comment.begin > 1 &&
+         buffer[ comment.begin + 1 ] == '!' )
+    {
+        // That's a bang line
+        BangLine *          bangLine( new BangLine );
+        bangLine->parent = controlFlow;
+        bangLine->begin = comment.begin;
+        bangLine->end = comment.end;
+        bangLine->beginLine = 1;
+        bangLine->beginPos = comment.pos;
+        bangLine->endLine = 1;
+        bangLine->endPos = bangLine->beginPos + ( bangLine->end -
+                                                  bangLine->begin );
+        controlFlow->bangLine = Py::asObject( bangLine );
+        controlFlow->updateBeginEnd( bangLine );
+
+        // Discard the shebang comment
+        comments.pop_front();
+    }
+    return;
+}
+
+
+// It also discards the comment from the deque
 static void processEncoding( const char *   buffer,
                              node *         tree,
                              ControlFlow *  controlFlow,
-                             const std::vector< CommentLine > &  comments )
+                             std::deque< CommentLine > &  comments )
 {
     /* Unfortunately, the parser does not provide the position of the encoding
      * so it needs to be calculated
      */
-    const char *      start = strstr( buffer,
-                                tree->n_str );
-    if ( start == NULL )
-        return;     /* would be really strange */
 
-    int             line = 1;
-    int             col = 1;
-    const char *    current = buffer;
-    while ( current != start )
-    {
-        if ( * current == '\r' )
-        {
-            if ( * (current + 1) == '\n' )
-                ++current;
-            ++line;
-            col = 0;
-        }
-        else if ( * current == '\n' )
-        {
-            ++line;
-            col = 0;
-        }
-        ++col;
-        ++current;
-    }
+    /* Another problem is that the python parser can replace what is found
+       in the source code to a 'normal' name. The rules in the python source
+       code are (Parser/tokenizer.c):
+       'utf-8', 'utf-8-...' -> 'utf-8'
+       'latin-1', 'iso-8859-1', 'iso-latin-1', 'latin-1-...',
+       'iso-8859-1-...', 'iso-latin-1-...' -> 'iso-8859-1'
 
-    int     commentIndex = 0;
-    for ( ; ; )
-    {
-        if ( comments[ commentIndex ].line == line )
-            break;
-        ++commentIndex;
-    }
+       Moreover, the first 12 characters may be converted as follows:
+       '_' -> '-'
+       all the other -> tolower()
+    */
 
+    if ( comments.empty() )
+        return;
 
+    CommentLine &       comment( comments.front() );
     EncodingLine *      encodingLine( new EncodingLine );
+
+    encodingLine->normalizedName = Py::String( tree->n_str );
     encodingLine->parent = controlFlow;
-    encodingLine->begin = comments[ commentIndex ].begin;
-    encodingLine->end = comments[ commentIndex ].end;
-    encodingLine->beginLine = line;
-    encodingLine->beginPos = comments[ commentIndex ].pos;
-    encodingLine->endLine = line;
+    encodingLine->begin = comment.begin;
+    encodingLine->end = comment.end;
+    encodingLine->beginLine = comment.line;
+    encodingLine->beginPos = comment.pos;
+    encodingLine->endLine = comment.line;
     encodingLine->endPos = encodingLine->beginPos + ( encodingLine->end -
                                                       encodingLine->begin );
     controlFlow->encodingLine = Py::asObject( encodingLine );
     controlFlow->updateBeginEnd( encodingLine );
+
+    comments.pop_front();
+    return;
 }
 
 
@@ -1302,7 +1324,7 @@ static FragmentBase *
 addCodeBlock( CodeBlock **  codeBlock,
               Py::List &    flow, int *  lineShifts )
 {
-    if ( codeBlock == NULL )
+    if ( *codeBlock == NULL )
         return NULL;
 
     CodeBlock *     p( *codeBlock );
@@ -1553,10 +1575,10 @@ Py::Object  parseInput( const char *  buffer, const char *  fileName )
 
         assert( totalLines >= 0 );
         int                         lineShifts[ totalLines + 1 ];
-        std::vector< CommentLine >  comments;
+        std::deque< CommentLine >   comments;
 
-        comments.reserve( totalLines );     // There are no more comments than lines
         getLineShiftsAndComments( buffer, lineShifts, comments );
+        checkForBangLine( buffer, controlFlow, comments );
 
         if ( root->n_type == encoding_decl )
         {
@@ -1582,28 +1604,9 @@ Py::Object  parseInput( const char *  buffer, const char *  fileName )
         PyNode_Free( tree );
 
         // Second pass: inject comments
-        for ( std::vector< CommentLine >::const_iterator
+        for ( std::deque< CommentLine >::const_iterator
                 k = comments.begin(); k != comments.end(); ++k )
         {
-            if ( k->line == 1 &&
-                 k->end - k->begin > 1 &&
-                 buffer[ k->begin + 1 ] == '!' )
-            {
-                // That's a bang line
-                BangLine *          bangLine( new BangLine );
-                bangLine->parent = controlFlow;
-                bangLine->begin = k->begin;
-                bangLine->end = k->end;
-                bangLine->beginLine = 1;
-                bangLine->beginPos = k->pos;
-                bangLine->endLine = 1;
-                bangLine->endPos = bangLine->beginPos + ( bangLine->end -
-                                                          bangLine->begin );
-                controlFlow->bangLine = Py::asObject( bangLine );
-                controlFlow->updateBeginEnd( bangLine );
-                continue;
-            }
-
             // Regular comment (not encoding, not bang)
         }
     }

@@ -24,7 +24,7 @@
 #define CFLOWCOMMENTS_HPP
 
 
-#include <vector>
+#include <deque>
 #include <string>
 
 
@@ -63,7 +63,7 @@ struct CommentLine
 
 
 void getLineShiftsAndComments( const char *  buffer, int *  lineShifts,
-                               std::vector< CommentLine > &  comments );
+                               std::deque< CommentLine > &  comments );
 
 
 #endif

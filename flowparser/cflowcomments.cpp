@@ -97,9 +97,9 @@ isTriple( const char *  buffer, int  absPos )
 
 // The function walks the given buffer and provides two things:
 // - an array of absolute positions of the beginning of each line
-// - a vector of found comments
+// - a deque of found comments
 void getLineShiftsAndComments( const char *  buffer, int *  lineShifts,
-                               std::vector< CommentLine > &  comments )
+                               std::deque< CommentLine > &  comments )
 {
     int             absPos = 0;
     char            symbol;

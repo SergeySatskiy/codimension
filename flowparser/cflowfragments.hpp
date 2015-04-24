@@ -181,6 +181,9 @@ class EncodingLine : public FragmentBase,
                              const Py::Object &  val );
 
         Py::Object getDisplayValue( const Py::Tuple &  args );
+
+    public:
+        Py::String      normalizedName;
 };
 
 

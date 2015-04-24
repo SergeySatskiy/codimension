@@ -622,19 +622,24 @@ Py::Object EncodingLine::getattr( const char *  attrName )
     {
         Py::List    members;
         FragmentBase::appendMembers( members );
+        members.append( Py::String( "normalizedName" ) );
         return members;
     }
 
     Py::Object      retval;
     if ( getAttribute( attrName, retval ) )
         return retval;
+    if ( strcmp( attrName, "normalizedName" ) == 0 )
+        return normalizedName;
     return getattr_methods( attrName );
 }
 
 
 Py::Object  EncodingLine::repr( void )
 {
-    return Py::String( "<EncodingLine " + as_string() + ">" );
+    return Py::String( "<EncodingLine " + as_string() +
+                       "\nNormalizedName: " + normalizedName.as_std_string() +
+                       ">" );
 }
 
 
@@ -643,6 +648,14 @@ int  EncodingLine::setattr( const char *        attrName,
 {
     if ( setAttribute( attrName, val ) )
         return 0;
+    if ( strcmp( attrName, "normalizedName" ) == 0 )
+    {
+        if ( ! val.isString() )
+            throw Py::AttributeError( "Attribute 'normalizedName' value "
+                                      "must be a string" );
+        normalizedName = Py::String( val );
+        return 0;
+    }
     throwUnknownAttribute( attrName );
     return -1;  // Suppress compiler warning
 }

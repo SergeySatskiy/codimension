@@ -66,11 +66,11 @@ int  main( int  argc, char **  argv )
 
         // Do the line shifts and comments
         int                         lineShifts[ 65536 ]; // Max supported lines
-        std::vector<CommentLine>    comments;
+        std::deque<CommentLine>     comments;
 
         getLineShiftsAndComments( buffer, lineShifts, comments );
         printf( "Found comments count: %ld\n", comments.size() );
-        for ( std::vector<CommentLine>::const_iterator
+        for ( std::deque<CommentLine>::const_iterator
                     k = comments.begin(); k != comments.end(); ++k )
         {
             printf( "%d:%d Absolute begin:end %d:%d Type: %s\n",
