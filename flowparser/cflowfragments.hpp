@@ -284,6 +284,14 @@ class CodeBlock : public FragmentBase,
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
                              const Py::Object &  val );
+
+    public:
+        // Data and methods below are available in C++ only. They are used to
+        // support code blocks parsing process.
+        void *      firstNode;  // void * to avoid exposing python types here
+        void *      lastNode;   // void * to avoid exposing python types here
+
+        int         lastLine;
 };
 
 

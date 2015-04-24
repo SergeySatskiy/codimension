@@ -1299,13 +1299,64 @@ getNodeToProcess( node *  tree )
 
 
 static FragmentBase *
+addCodeBlock( CodeBlock **  codeBlock,
+              Py::List &    flow, int *  lineShifts )
+{
+    if ( codeBlock == NULL )
+        return NULL;
+
+    CodeBlock *     p( *codeBlock );
+
+    Fragment *      body( new Fragment );
+    body->parent = p;
+    updateBegin( body, (node *)(p->firstNode), lineShifts );
+    updateEnd( body, findLastPart( (node *)(p->lastNode) ), lineShifts );
+
+    p->updateBeginEnd( body );
+    p->body = Py::asObject( body );
+
+    flow.append( Py::asObject( p ) );
+    *codeBlock = NULL;
+    return p;
+}
+
+
+// Creates the code block and sets the beginning and the end of the block
+static CodeBlock *
+createCodeBlock( node *  tree, FragmentBase *  parent )
+{
+    CodeBlock *     codeBlock( new CodeBlock );
+    codeBlock->parent = parent;
+
+    codeBlock->firstNode = tree;
+    codeBlock->lastNode = tree;
+
+    node *      last = findLastPart( tree );
+    codeBlock->lastLine = last->n_lineno;
+    return codeBlock;
+}
+
+
+// Adds a statement to the code block and updates the end of the block
+static void
+addToCodeBlock( CodeBlock *  codeBlock, node *  tree )
+{
+    codeBlock->lastNode = tree;
+
+    node *      last = findLastPart( tree );
+    codeBlock->lastLine = last->n_lineno;
+    return;
+}
+
+
+static FragmentBase *
 walk( node *                       tree,
       FragmentBase *               parent,
       Py::List &                   flow,
       int *                        lineShifts,
       bool                         docstrProcessed )
 {
-    Py::List            codeBlock;
+    CodeBlock *         codeBlock = NULL;
     FragmentBase *      lastAdded = NULL;
     int                 statementCount = 0;
 
@@ -1338,26 +1389,32 @@ walk( node *                       tree,
                     switch ( nodeToProcess->n_type )
                     {
                         case import_stmt:
+                            addCodeBlock( & codeBlock, flow, lineShifts );
                             lastAdded = processImport( nodeToProcess, parent,
                                                        flow, lineShifts );
                             continue;
                         case assert_stmt:
+                            addCodeBlock( & codeBlock, flow, lineShifts );
                             lastAdded = processAssert( nodeToProcess, parent,
                                                        flow, lineShifts );
                             continue;
                         case break_stmt:
+                            addCodeBlock( & codeBlock, flow, lineShifts );
                             lastAdded = processBreak( nodeToProcess, parent,
                                                       flow, lineShifts );
                             continue;
                         case continue_stmt:
+                            addCodeBlock( & codeBlock, flow, lineShifts );
                             lastAdded = processContinue( nodeToProcess, parent,
                                                          flow, lineShifts );
                             continue;
                         case return_stmt:
+                            addCodeBlock( & codeBlock, flow, lineShifts );
                             lastAdded = processReturn( nodeToProcess, parent,
                                                        flow, lineShifts );
                             continue;
                         case raise_stmt:
+                            addCodeBlock( & codeBlock, flow, lineShifts );
                             lastAdded = processRaise( nodeToProcess, parent,
                                                       flow, lineShifts );
                             continue;
@@ -1369,32 +1426,53 @@ walk( node *                       tree,
                         continue;   // That's a docstring
 
                     // Not a docstring => add it to the code block
-
+                    if ( codeBlock == NULL )
+                    {
+                        codeBlock = createCodeBlock( nodeToProcess, parent );
+                    }
+                    else
+                    {
+                        if ( nodeToProcess->n_lineno - codeBlock->lastLine > 1 )
+                        {
+                            lastAdded = addCodeBlock( & codeBlock, flow, lineShifts );
+                            codeBlock = createCodeBlock( nodeToProcess, parent );
+                        }
+                        else
+                        {
+                            addToCodeBlock( codeBlock, nodeToProcess );
+                        }
+                    }
                 }
                 continue;
             case if_stmt:
+                addCodeBlock( & codeBlock, flow, lineShifts );
                 lastAdded = processIf( nodeToProcess, parent,
                                        flow, lineShifts );
                 continue;
             case while_stmt:
+                addCodeBlock( & codeBlock, flow, lineShifts );
                 lastAdded = processWhile( nodeToProcess, parent,
                                           flow, lineShifts );
                 continue;
             case for_stmt:
+                addCodeBlock( & codeBlock, flow, lineShifts );
                 lastAdded = processFor( nodeToProcess, parent,
                                         flow, lineShifts );
                 continue;
             case try_stmt:
+                addCodeBlock( & codeBlock, flow, lineShifts );
                 lastAdded = processTry( nodeToProcess, parent,
                                         flow, lineShifts );
                 continue;
             case with_stmt:
+                addCodeBlock( & codeBlock, flow, lineShifts );
                 lastAdded = processWith( nodeToProcess, parent,
                                          flow, lineShifts );
                 continue;
             case funcdef:
                 {
                     std::list<Decorator *>      noDecors;
+                    addCodeBlock( & codeBlock, flow, lineShifts );
                     lastAdded = processFuncDefinition( nodeToProcess, parent,
                                                        flow, lineShifts,
                                                        noDecors );
@@ -1403,6 +1481,7 @@ walk( node *                       tree,
             case classdef:
                 {
                     std::list<Decorator *>      noDecors;
+                    addCodeBlock( & codeBlock, flow, lineShifts );
                     lastAdded = processClassDefinition( nodeToProcess, parent,
                                                         flow, lineShifts,
                                                         noDecors );
@@ -1424,21 +1503,29 @@ walk( node *                       tree,
                             processDecorators( decorsNode, lineShifts );
 
                     if ( classOrFuncNode->n_type == funcdef )
+                    {
+                        addCodeBlock( & codeBlock, flow, lineShifts );
                         lastAdded = processFuncDefinition( classOrFuncNode,
                                                            parent, flow,
                                                            lineShifts,
                                                            decors );
+                    }
                     else if ( classOrFuncNode->n_type == classdef )
+                    {
+                        addCodeBlock( & codeBlock, flow, lineShifts );
                         lastAdded = processClassDefinition( classOrFuncNode,
                                                             parent, flow,
                                                             lineShifts,
                                                             decors );
+                    }
                 }
                 continue;
         }
     }
 
     // Add block if needed
+    if ( codeBlock != NULL )
+        return addCodeBlock( & codeBlock, flow, lineShifts );
     return lastAdded;
 }
 

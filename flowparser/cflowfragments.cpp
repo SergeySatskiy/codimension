@@ -1227,11 +1227,15 @@ int  Decorator::setattr( const char *        attrName,
 CodeBlock::CodeBlock()
 {
     kind = CODEBLOCK_FRAGMENT;
+    lastLine = -1;
+    firstNode = NULL;
+    lastNode = NULL;
 }
 
 
 CodeBlock::~CodeBlock()
 {}
+
 
 
 void CodeBlock::initType( void )
