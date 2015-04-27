@@ -20,6 +20,7 @@
  * Python control flow parser implementation
  */
 
+#include <string.h>
 #include <stdexcept>
 
 #include "cflowcomments.hpp"
@@ -30,12 +31,14 @@ std::string  commentTypeToString( CommentType  t )
 {
     switch ( t )
     {
-        case STANDALONE_COMMENT_LINE:
-            return "STANDALONE_COMMENT_LINE";
-        case TRAILING_COMMENT_LINE:
-            return "TRAILING_COMMENT_LINE";
-        case UNKNOWN_COMMENT_LINE_TYPE:
-            return "UNKNOWN_COMMENT_LINE_TYPE";
+        case REGULAR_COMMENT:
+            return "REGULAR_COMMENT";
+        case CML_COMMENT:
+            return "CML_COMMENT";
+        case CML_COMMENT_CONTINUE:
+            return "CML_COMMENT_CONTINUE";
+        case UNKNOWN_COMMENT:
+            return "UNKNOWN_COMMENT";
         default:
             break;
     }
@@ -54,23 +57,6 @@ enum ExpectState
     expectClosingTripleDoubleQuote
 };
 
-
-
-static CommentType
-detectCommentType( const char *  buffer, int  absPos, int  column )
-{
-    char        symbol;
-
-    --column;   // Make it zero based
-    while ( column > 0 )
-    {
-        symbol = buffer[ absPos - column ];
-        if ( symbol != ' ' && symbol != '\t' )
-            return TRAILING_COMMENT_LINE;
-        --column;
-    }
-    return STANDALONE_COMMENT_LINE;
-}
 
 
 static bool
@@ -93,6 +79,35 @@ isTriple( const char *  buffer, int  absPos )
     return true;
 }
 
+
+CommentType
+CommentLine::detectType( const char *  buffer )
+{
+    int     shift = begin + 1;
+    while ( shift <= end )
+    {
+        if ( buffer[ shift ] == ' ' || buffer[ shift ] == '\t' )
+        {
+            ++shift;
+            continue;
+        }
+
+        if ( strcmp( buffer + shift, "cml+" ) == 0 )
+        {
+            type = CML_COMMENT_CONTINUE;
+            break;
+        }
+        if ( strcmp( buffer + shift, "cml" ) == 0 )
+        {
+            type = CML_COMMENT;
+            break;
+        }
+        type = REGULAR_COMMENT;
+        break;
+    }
+
+    return type;
+}
 
 
 // The function walks the given buffer and provides two things:
@@ -121,7 +136,6 @@ void getLineShiftsAndComments( const char *  buffer, int *  lineShifts,
                 comment.begin = absPos;
                 comment.line = line;
                 comment.pos = column;
-                comment.type = detectCommentType( buffer, absPos, column );
                 expectState = expectCommentEnd;
 
                 ++absPos;
@@ -227,7 +241,9 @@ void getLineShiftsAndComments( const char *  buffer, int *  lineShifts,
             column = 1;
             if ( expectState == expectCommentEnd )
             {
+                comment.detectType( buffer );
                 comments.push_back( comment );
+                comment.begin = -1;
                 expectState = expectCommentStart;
             }
             continue;
@@ -242,8 +258,9 @@ void getLineShiftsAndComments( const char *  buffer, int *  lineShifts,
             column = 1;
             if ( expectState == expectCommentEnd )
             {
+                comment.detectType( buffer );
                 comments.push_back( comment );
-                comment.type = UNKNOWN_COMMENT_LINE_TYPE;
+                comment.begin = -1;
                 expectState = expectCommentStart;
             }
             continue;
@@ -252,9 +269,10 @@ void getLineShiftsAndComments( const char *  buffer, int *  lineShifts,
         ++column;
     }
 
-    if ( comment.type != UNKNOWN_COMMENT_LINE_TYPE )
+    if ( comment.begin != -1 )
     {
         // Need to flush the collected comment
+        comment.detectType( buffer );
         comment.end = absPos - 1;
         comments.push_back( comment );
     }

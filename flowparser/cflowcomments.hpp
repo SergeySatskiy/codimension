@@ -30,10 +30,11 @@
 
 enum CommentType
 {
-    STANDALONE_COMMENT_LINE = 0,
-    TRAILING_COMMENT_LINE = 1,
+    REGULAR_COMMENT = 0,
+    CML_COMMENT = 1,
+    CML_COMMENT_CONTINUE = 2,
 
-    UNKNOWN_COMMENT_LINE_TYPE = 99
+    UNKNOWN_COMMENT = 99
 };
 
 
@@ -47,17 +48,17 @@ struct CommentLine
                                 // before '\n', '\r' or '\0', 0-based
     int             line;       // 1-based line
     int             pos;        // 1-based column of the '#' character
-
-    CommentType     type;       // Comment line type. Combining comment lines
-                                // into block comments will be done later
+    CommentType     type;
 
     CommentLine( int  b, int  e, int  l, int  p, CommentType  t ) :
         begin( b ), end( e ), line( l ), pos( p ), type( t )
     {}
     CommentLine() :
-        begin( -1 ), end( -1 ), line( -1 ), pos( -1 ),
-        type( UNKNOWN_COMMENT_LINE_TYPE )
+        begin( -1 ), end( -1 ), line( -1 ), pos( -1 ), type( UNKNOWN_COMMENT )
     {}
+
+    // Updates the 'type' field
+    CommentType  detectType( const char *  buffer );
 };
 
 
