@@ -483,8 +483,8 @@ bool FragmentWithComments::setAttribute( const char *        attrName,
 std::string  FragmentWithComments::as_string( void ) const
 {
     return representFragmentPart( body, "Body" ) +
-           "\n" + representFragmentPart( leadingComment, "LeadingComment" ) +
-           "\n" + representFragmentPart( sideComment, "SideComment" ) +
+           "\n" + representPart( leadingComment, "LeadingComment" ) +
+           "\n" + representPart( sideComment, "SideComment" ) +
            "\n" + representList( leadingCMLComments, "LeadingCMLComments" ) +
            "\n" + representList( sideCMLComments, "SideCMLComments" );
 }
