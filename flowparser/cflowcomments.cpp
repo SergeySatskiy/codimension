@@ -20,6 +20,8 @@
  * Python control flow parser implementation
  */
 
+#include <stdio.h>
+
 #include <string.h>
 #include <stdexcept>
 
@@ -86,20 +88,20 @@ CommentLine::detectType( const char *  buffer )
     int     shift = begin + 1;
     while ( shift <= end )
     {
+        // skip spaces if so
         if ( buffer[ shift ] == ' ' || buffer[ shift ] == '\t' )
         {
             ++shift;
             continue;
         }
 
-        if ( strcmp( buffer + shift, "cml+" ) == 0 )
+        if ( strncmp( buffer + shift, "cml", 3 ) == 0 )
         {
-            type = CML_COMMENT_CONTINUE;
-            break;
-        }
-        if ( strcmp( buffer + shift, "cml" ) == 0 )
-        {
-            type = CML_COMMENT;
+            shift += 3;
+            if ( buffer[ shift ] == '+' )
+                type = CML_COMMENT_CONTINUE;
+            else
+                type = CML_COMMENT;
             break;
         }
         type = REGULAR_COMMENT;

@@ -76,14 +76,7 @@ class FragmentBase
         Py::Object  getContent( const Py::Tuple &  args );
         std::string getContent( const std::string *  buf = NULL );
         Py::Object  getLineContent( const Py::Tuple &  args );
-        #if 0
-        // TODO: No need anymore?
-        void        updateEnd( INT_TYPE  otherEnd,
-                               INT_TYPE  otherEndLine, INT_TYPE  otherEndPos );
-        void        updateBegin( INT_TYPE  otherBegin,
-                                 INT_TYPE  otherBeginLine,
-                                 INT_TYPE  otherBeginPos );
-        #endif
+
         void        updateBegin( const FragmentBase *  other );
         void        updateEnd( const FragmentBase *  other );
         void        updateBeginEnd( const FragmentBase *  other );
@@ -226,6 +219,10 @@ class CMLComment : public FragmentBase,
         Py::Int     version;
         Py::String  recordType;
         Py::Dict    properties;     // string -> string
+
+    public:
+        // Not visible from python
+        void extractProperties( const char *  buffer );
 };
 
 

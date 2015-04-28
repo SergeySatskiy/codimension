@@ -31,7 +31,7 @@ This information can be used in different ways, e.g.:
 
 Common format of the CML statements is as follows:
 
-# cml <version> <record type> <key=value pairs>
+# cml <version> <record type> [key=value pairs]
 or
 # cml+ <continue of a previous 'cml' line>
 

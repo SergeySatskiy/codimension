@@ -857,8 +857,8 @@ Py::Object  Comment::getDisplayValue( const Py::Tuple &  args )
 CMLComment::CMLComment()
 {
     kind = CML_COMMENT_FRAGMENT;
-    version = Py::None();
-    recordType = Py::None();
+    version = Py::Int( 0 );
+    recordType = Py::String( "" );
 }
 
 CMLComment::~CMLComment()
@@ -958,6 +958,13 @@ Py::Object  CMLComment::repr( void )
                         "\n" + representPart( recordType, "RecordType" ) +
                         "\n" + representPart( properties, "Properties" ) +
                         ">" );
+}
+
+
+// Extracts version, record type and properties
+void CMLComment::extractProperties( const char *  buffer )
+{
+    // version, recordType, properties
 }
 
 
