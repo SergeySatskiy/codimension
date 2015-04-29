@@ -41,7 +41,8 @@ extern grammar      _PyParser_Grammar;  /* From graminit.c */
 
 
 static FragmentBase *
-walk( node *                       tree,
+walk( const char *                 buffer,
+      node *                       tree,
       FragmentBase *               parent,
       Py::List &                   flow,
       int *                        lineShifts,
@@ -346,7 +347,8 @@ createCommentFragment( const CommentLine &  comment )
 
 
 static void
-injectLeadingComments( Py::List &  flow,
+injectLeadingComments( const char *  buffer,
+                       Py::List &  flow,
                        FragmentBase *  flowAsParent,
                        FragmentWithComments *  statement, // could be NULL
                        FragmentBase *  statementAsParent, // could be NULL
@@ -503,13 +505,15 @@ injectSideComments( FragmentWithComments *  statement,
 // Injects comments to the control flow or to the statement
 // The injected comments are deleted from the deque
 static void
-injectComments( Py::List &  flow,
+injectComments( const char *  buffer,
+                Py::List &  flow,
                 FragmentBase *  flowAsParent,
                 FragmentWithComments *  statement,
                 FragmentBase *  statementAsParent,
                 std::deque< CommentLine > &  comments )
 {
-    injectLeadingComments( flow, flowAsParent, statement, statementAsParent,
+    injectLeadingComments( buffer, flow, flowAsParent, statement,
+                           statementAsParent,
                            statementAsParent->beginLine, comments );
     injectSideComments( statement, statementAsParent, comments );
     return;
@@ -655,7 +659,7 @@ processRaise( node *  tree, FragmentBase *  parent,
 
 
 static FragmentBase *
-processReturn( node *  tree, FragmentBase *  parent,
+processReturn( const char *  buffer, node *  tree, FragmentBase *  parent,
                Py::List &  flow, int *  lineShifts,
                std::deque< CommentLine > &  comments )
 {
@@ -689,7 +693,7 @@ processReturn( node *  tree, FragmentBase *  parent,
         ret->updateEnd( body );
 
     ret->body = Py::asObject( body );
-    injectComments( flow, parent, ret, ret, comments );
+    injectComments( buffer, flow, parent, ret, ret, comments );
     flow.append( Py::asObject( ret ) );
     return ret;
 }
@@ -698,7 +702,8 @@ processReturn( node *  tree, FragmentBase *  parent,
 // Handles 'else' and 'elif' clauses for various statements: 'if' branches,
 // 'else' parts of 'while', 'for', 'try'
 static ElifPart *
-processElifPart( node *  tree, FragmentBase *  parent,
+processElifPart( const char *  buffer,
+                 node *  tree, FragmentBase *  parent,
                  int *  lineShifts,
                  std::deque< CommentLine > &  comments )
 {
@@ -738,7 +743,8 @@ processElifPart( node *  tree, FragmentBase *  parent,
     elifPart->updateBegin( body );
     elifPart->body = Py::asObject( body );
 
-    FragmentBase *  lastAdded = walk( suiteNode, elifPart, elifPart->nsuite,
+    FragmentBase *  lastAdded = walk( buffer, suiteNode, elifPart,
+                                      elifPart->nsuite,
                                       lineShifts, false, comments );
     if ( lastAdded == NULL )
         elifPart->updateEnd( body );
@@ -749,7 +755,8 @@ processElifPart( node *  tree, FragmentBase *  parent,
 
 
 static FragmentBase *
-processIf( node *  tree, FragmentBase *  parent,
+processIf( const char *  buffer,
+           node *  tree, FragmentBase *  parent,
            Py::List &  flow, int *  lineShifts,
            std::deque< CommentLine > &  comments )
 {
@@ -785,7 +792,7 @@ processIf( node *  tree, FragmentBase *  parent,
                 ifStatement->updateBegin( body );
                 ifStatement->body = Py::asObject( body );
 
-                FragmentBase *  lastAdded = walk( suiteNode, ifStatement,
+                FragmentBase *  lastAdded = walk( buffer, suiteNode, ifStatement,
                                                   ifStatement->nsuite,
                                                   lineShifts, false, comments );
                 if ( lastAdded == NULL )
@@ -795,7 +802,7 @@ processIf( node *  tree, FragmentBase *  parent,
             }
             else
             {
-                ElifPart *  elifPart = processElifPart( child, ifStatement,
+                ElifPart *  elifPart = processElifPart( buffer, child, ifStatement,
                                                         lineShifts, comments );
                 ifStatement->updateBegin( elifPart );
                 ifStatement->elifParts.append( Py::asObject( elifPart ) );
@@ -809,7 +816,8 @@ processIf( node *  tree, FragmentBase *  parent,
 
 
 static ExceptPart *
-processExceptPart( node *  tree, FragmentBase *  parent, int *  lineShifts,
+processExceptPart( const char *  buffer,
+                   node *  tree, FragmentBase *  parent, int *  lineShifts,
                    std::deque< CommentLine > &  comments )
 {
     assert( tree->n_type == except_clause ||
@@ -847,7 +855,8 @@ processExceptPart( node *  tree, FragmentBase *  parent, int *  lineShifts,
 
     // 'suite' node follows the colon node
     node *          suiteNode = colonNode + 1;
-    FragmentBase *  lastAdded = walk( suiteNode, exceptPart,
+    FragmentBase *  lastAdded = walk( buffer,
+                                      suiteNode, exceptPart,
                                       exceptPart->nsuite,
                                       lineShifts, false, comments );
     if ( lastAdded == NULL )
@@ -859,7 +868,8 @@ processExceptPart( node *  tree, FragmentBase *  parent, int *  lineShifts,
 
 
 static FragmentBase *
-processTry( node *  tree, FragmentBase *  parent,
+processTry( const char *  buffer,
+            node *  tree, FragmentBase *  parent,
             Py::List &  flow, int *  lineShifts,
             std::deque< CommentLine > &  comments )
 {
@@ -878,7 +888,8 @@ processTry( node *  tree, FragmentBase *  parent,
 
     // suite
     node *          trySuiteNode = tryColonNode + 1;
-    FragmentBase *  lastAdded = walk( trySuiteNode, tryStatement,
+    FragmentBase *  lastAdded = walk( buffer,
+                                      trySuiteNode, tryStatement,
                                       tryStatement->nsuite,
                                       lineShifts, false, comments );
     if ( lastAdded == NULL )
@@ -893,7 +904,7 @@ processTry( node *  tree, FragmentBase *  parent,
         node *  child = &(tree->n_child[ k ]);
         if ( child->n_type == except_clause )
         {
-            ExceptPart *    exceptPart = processExceptPart( child,
+            ExceptPart *    exceptPart = processExceptPart( buffer, child,
                                                             tryStatement,
                                                             lineShifts,
                                                             comments );
@@ -904,7 +915,7 @@ processTry( node *  tree, FragmentBase *  parent,
         {
             if ( strcmp( child->n_str, "else" ) == 0 )
             {
-                ExceptPart *    elsePart = processExceptPart( child,
+                ExceptPart *    elsePart = processExceptPart( buffer, child,
                                                               tryStatement,
                                                               lineShifts,
                                                               comments );
@@ -913,7 +924,7 @@ processTry( node *  tree, FragmentBase *  parent,
             }
             if ( strcmp( child->n_str, "finally" ) == 0 )
             {
-                ExceptPart *    finallyPart = processExceptPart( child,
+                ExceptPart *    finallyPart = processExceptPart( buffer, child,
                                                                  tryStatement,
                                                                  lineShifts,
                                                                  comments );
@@ -928,7 +939,8 @@ processTry( node *  tree, FragmentBase *  parent,
 
 
 static FragmentBase *
-processWhile( node *  tree, FragmentBase *  parent,
+processWhile( const char *  buffer,
+              node *  tree, FragmentBase *  parent,
               Py::List &  flow, int *  lineShifts,
               std::deque< CommentLine > &  comments )
 {
@@ -959,7 +971,7 @@ processWhile( node *  tree, FragmentBase *  parent,
 
     // suite
     node *          suiteNode = findChildOfType( tree, suite );
-    FragmentBase *  lastAdded = walk( suiteNode, w, w->nsuite,
+    FragmentBase *  lastAdded = walk( buffer, suiteNode, w, w->nsuite,
                                       lineShifts, false, comments );
     if ( lastAdded == NULL )
         w->updateEnd( body );
@@ -970,8 +982,8 @@ processWhile( node *  tree, FragmentBase *  parent,
     node *          elseNode = findChildOfTypeAndValue( tree, NAME, "else" );
     if ( elseNode != NULL )
     {
-        ElifPart *      elsePart = processElifPart( elseNode, w, lineShifts,
-                                                    comments );
+        ElifPart *      elsePart = processElifPart( buffer, elseNode, w,
+                                                    lineShifts, comments );
         w->elsePart = Py::asObject( elsePart );
     }
 
@@ -981,7 +993,8 @@ processWhile( node *  tree, FragmentBase *  parent,
 
 
 static FragmentBase *
-processWith( node *  tree, FragmentBase *  parent,
+processWith( const char *  buffer,
+             node *  tree, FragmentBase *  parent,
              Py::List &  flow, int *  lineShifts,
              std::deque< CommentLine > &  comments )
 {
@@ -1018,7 +1031,7 @@ processWith( node *  tree, FragmentBase *  parent,
 
     // suite
     node *          suiteNode = findChildOfType( tree, suite );
-    FragmentBase *  lastAdded = walk( suiteNode, w, w->nsuite,
+    FragmentBase *  lastAdded = walk( buffer, suiteNode, w, w->nsuite,
                                       lineShifts, false, comments );
     if ( lastAdded == NULL )
         w->updateEnd( body );
@@ -1031,7 +1044,8 @@ processWith( node *  tree, FragmentBase *  parent,
 
 
 static FragmentBase *
-processFor( node *  tree, FragmentBase *  parent,
+processFor( const char *  buffer,
+            node *  tree, FragmentBase *  parent,
             Py::List &  flow, int *  lineShifts,
             std::deque< CommentLine > &  comments )
 {
@@ -1063,7 +1077,7 @@ processFor( node *  tree, FragmentBase *  parent,
 
     // suite
     node *          suiteNode = findChildOfType( tree, suite );
-    FragmentBase *  lastAdded = walk( suiteNode, f, f->nsuite,
+    FragmentBase *  lastAdded = walk( buffer, suiteNode, f, f->nsuite,
                                       lineShifts, false, comments );
     if ( lastAdded == NULL )
         f->updateEnd( body );
@@ -1074,8 +1088,8 @@ processFor( node *  tree, FragmentBase *  parent,
     node *          elseNode = findChildOfTypeAndValue( tree, NAME, "else" );
     if ( elseNode != NULL )
     {
-        ElifPart *      elsePart = processElifPart( elseNode, f, lineShifts,
-                                                    comments );
+        ElifPart *      elsePart = processElifPart( buffer, elseNode, f,
+                                                    lineShifts, comments );
         f->elsePart = Py::asObject( elsePart );
     }
 
@@ -1310,7 +1324,8 @@ Docstring *  checkForDocstring( node *  tree, int *  lineShifts )
 
 
 static FragmentBase *
-processFuncDefinition( node *                       tree,
+processFuncDefinition( const char *                 buffer,
+                       node *                       tree,
                        FragmentBase *               parent,
                        Py::List &                   flow,
                        int *                        lineShifts,
@@ -1382,7 +1397,7 @@ processFuncDefinition( node *                       tree,
     }
 
     // Walk nested nodes
-    FragmentBase *  lastAdded = walk( suiteNode, func,
+    FragmentBase *  lastAdded = walk( buffer, suiteNode, func,
                                       func->nsuite,
                                       lineShifts, docstr != NULL, comments );
     if ( lastAdded == NULL )
@@ -1395,7 +1410,8 @@ processFuncDefinition( node *                       tree,
 
 
 static FragmentBase *
-processClassDefinition( node *                       tree,
+processClassDefinition( const char *                 buffer,
+                        node *                       tree,
                         FragmentBase *               parent,
                         Py::List &                   flow,
                         int *                        lineShifts,
@@ -1471,7 +1487,7 @@ processClassDefinition( node *                       tree,
     }
 
     // Walk nested nodes
-    FragmentBase *  lastAdded = walk( suiteNode, cls, cls->nsuite,
+    FragmentBase *  lastAdded = walk( buffer, suiteNode, cls, cls->nsuite,
                                       lineShifts, docstr != NULL, comments );
 
     if ( lastAdded == NULL )
@@ -1603,7 +1619,8 @@ addToCodeBlock( CodeBlock *  codeBlock, node *  tree )
 
 
 static FragmentBase *
-walk( node *                       tree,
+walk( const char *                 buffer,
+      node *                       tree,
       FragmentBase *               parent,
       Py::List &                   flow,
       int *                        lineShifts,
@@ -1664,8 +1681,8 @@ walk( node *                       tree,
                             continue;
                         case return_stmt:
                             addCodeBlock( & codeBlock, flow, lineShifts );
-                            lastAdded = processReturn( nodeToProcess, parent,
-                                                       flow, lineShifts,
+                            lastAdded = processReturn( buffer, nodeToProcess,
+                                                       parent, flow, lineShifts,
                                                        comments );
                             continue;
                         case raise_stmt:
@@ -1701,34 +1718,35 @@ walk( node *                       tree,
                 continue;
             case if_stmt:
                 addCodeBlock( & codeBlock, flow, lineShifts );
-                lastAdded = processIf( nodeToProcess, parent,
+                lastAdded = processIf( buffer, nodeToProcess, parent,
                                        flow, lineShifts, comments );
                 continue;
             case while_stmt:
                 addCodeBlock( & codeBlock, flow, lineShifts );
-                lastAdded = processWhile( nodeToProcess, parent,
+                lastAdded = processWhile( buffer, nodeToProcess, parent,
                                           flow, lineShifts, comments );
                 continue;
             case for_stmt:
                 addCodeBlock( & codeBlock, flow, lineShifts );
-                lastAdded = processFor( nodeToProcess, parent,
+                lastAdded = processFor( buffer, nodeToProcess, parent,
                                         flow, lineShifts, comments );
                 continue;
             case try_stmt:
                 addCodeBlock( & codeBlock, flow, lineShifts );
-                lastAdded = processTry( nodeToProcess, parent,
+                lastAdded = processTry( buffer, nodeToProcess, parent,
                                         flow, lineShifts, comments );
                 continue;
             case with_stmt:
                 addCodeBlock( & codeBlock, flow, lineShifts );
-                lastAdded = processWith( nodeToProcess, parent,
+                lastAdded = processWith( buffer, nodeToProcess, parent,
                                          flow, lineShifts, comments );
                 continue;
             case funcdef:
                 {
                     std::list<Decorator *>      noDecors;
                     addCodeBlock( & codeBlock, flow, lineShifts );
-                    lastAdded = processFuncDefinition( nodeToProcess, parent,
+                    lastAdded = processFuncDefinition( buffer,
+                                                       nodeToProcess, parent,
                                                        flow, lineShifts,
                                                        noDecors, comments );
                 }
@@ -1737,7 +1755,8 @@ walk( node *                       tree,
                 {
                     std::list<Decorator *>      noDecors;
                     addCodeBlock( & codeBlock, flow, lineShifts );
-                    lastAdded = processClassDefinition( nodeToProcess, parent,
+                    lastAdded = processClassDefinition( buffer,
+                                                        nodeToProcess, parent,
                                                         flow, lineShifts,
                                                         noDecors, comments );
                 }
@@ -1760,7 +1779,8 @@ walk( node *                       tree,
                     if ( classOrFuncNode->n_type == funcdef )
                     {
                         addCodeBlock( & codeBlock, flow, lineShifts );
-                        lastAdded = processFuncDefinition( classOrFuncNode,
+                        lastAdded = processFuncDefinition( buffer,
+                                                           classOrFuncNode,
                                                            parent, flow,
                                                            lineShifts,
                                                            decors, comments );
@@ -1768,7 +1788,8 @@ walk( node *                       tree,
                     else if ( classOrFuncNode->n_type == classdef )
                     {
                         addCodeBlock( & codeBlock, flow, lineShifts );
-                        lastAdded = processClassDefinition( classOrFuncNode,
+                        lastAdded = processClassDefinition( buffer,
+                                                            classOrFuncNode,
                                                             parent, flow,
                                                             lineShifts,
                                                             decors, comments );
@@ -1832,12 +1853,12 @@ Py::Object  parseInput( const char *  buffer, const char *  fileName )
         }
 
         // Walk the syntax tree
-        walk( root, controlFlow, controlFlow->nsuite, lineShifts,
+        walk( buffer, root, controlFlow, controlFlow->nsuite, lineShifts,
               docstr != NULL, comments );
         PyNode_Free( tree );
 
         // Inject trailing comments if so
-        injectLeadingComments( controlFlow->nsuite,
+        injectLeadingComments( buffer, controlFlow->nsuite,
                                controlFlow, NULL, NULL, INT_MAX,
                                comments );
     }
