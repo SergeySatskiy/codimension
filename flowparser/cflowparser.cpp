@@ -521,8 +521,10 @@ injectComments( const char *  buffer,
 
 
 static FragmentBase *
-processBreak( node *  tree, FragmentBase *  parent,
-              Py::List &  flow, int *  lineShifts )
+processBreak( const char *  buffer,
+              node *  tree, FragmentBase *  parent,
+              Py::List &  flow, int *  lineShifts,
+              std::deque< CommentLine > &  comments )
 {
     assert( tree->n_type == break_stmt );
     Break *         br( new Break );
@@ -537,14 +539,17 @@ processBreak( node *  tree, FragmentBase *  parent,
 
     br->updateBeginEnd( body );
     br->body = Py::asObject( body );
+    injectComments( buffer, flow, parent, br, br, comments );
     flow.append( Py::asObject( br ) );
     return br;
 }
 
 
 static FragmentBase *
-processContinue( node *  tree, FragmentBase *  parent,
-                 Py::List &  flow, int *  lineShifts )
+processContinue( const char *  buffer,
+                 node *  tree, FragmentBase *  parent,
+                 Py::List &  flow, int *  lineShifts,
+                 std::deque< CommentLine > &  comments )
 {
     assert( tree->n_type == continue_stmt );
     Continue *      cont( new Continue );
@@ -559,13 +564,16 @@ processContinue( node *  tree, FragmentBase *  parent,
 
     cont->updateBeginEnd( body );
     cont->body = Py::asObject( body );
+    injectComments( buffer, flow, parent, cont, cont, comments );
     flow.append( Py::asObject( cont ) );
     return cont;
 }
 
 static FragmentBase *
-processAssert( node *  tree, FragmentBase *  parent,
-               Py::List &  flow, int *  lineShifts )
+processAssert( const char *  buffer,
+               node *  tree, FragmentBase *  parent,
+               Py::List &  flow, int *  lineShifts,
+               std::deque< CommentLine > &  comments )
 {
     assert( tree->n_type == assert_stmt );
     Assert *            a( new Assert );
@@ -613,6 +621,7 @@ processAssert( node *  tree, FragmentBase *  parent,
         a->updateEnd( tst );
 
     a->body = Py::asObject( body );
+    injectComments( buffer, flow, parent, a, a, comments );
     flow.append( Py::asObject( a ) );
     return a;
 }
@@ -620,8 +629,10 @@ processAssert( node *  tree, FragmentBase *  parent,
 
 
 static FragmentBase *
-processRaise( node *  tree, FragmentBase *  parent,
-              Py::List &  flow, int *  lineShifts )
+processRaise( const char *  buffer,
+              node *  tree, FragmentBase *  parent,
+              Py::List &  flow, int *  lineShifts,
+              std::deque< CommentLine > &  comments )
 {
     assert( tree->n_type == raise_stmt );
     Raise *         r( new Raise );
@@ -653,6 +664,7 @@ processRaise( node *  tree, FragmentBase *  parent,
         r->updateEnd( body );
 
     r->body = Py::asObject( body );
+    injectComments( buffer, flow, parent, r, r, comments );
     flow.append( Py::asObject( r ) );
     return r;
 }
@@ -810,6 +822,7 @@ processIf( const char *  buffer,
         }
     }
 
+    injectComments( buffer, flow, parent, ifStatement, ifStatement, comments );
     flow.append( Py::asObject( ifStatement ) );
     return ifStatement;
 }
@@ -933,6 +946,7 @@ processTry( const char *  buffer,
         }
     }
 
+    injectComments( buffer, flow, parent, tryStatement, tryStatement, comments );
     flow.append( Py::asObject( tryStatement ) );
     return tryStatement;
 }
@@ -987,6 +1001,7 @@ processWhile( const char *  buffer,
         w->elsePart = Py::asObject( elsePart );
     }
 
+    injectComments( buffer, flow, parent, w, w, comments );
     flow.append( Py::asObject( w ) );
     return w;
 }
@@ -1038,6 +1053,7 @@ processWith( const char *  buffer,
     else
         w->updateEnd( lastAdded );
 
+    injectComments( buffer, flow, parent, w, w, comments );
     flow.append( Py::asObject( w ) );
     return w;
 }
@@ -1093,14 +1109,17 @@ processFor( const char *  buffer,
         f->elsePart = Py::asObject( elsePart );
     }
 
+    injectComments( buffer, flow, parent, f, f, comments );
     flow.append( Py::asObject( f ) );
     return f;
 }
 
 
 static FragmentBase *
-processImport( node *  tree, FragmentBase *  parent,
-               Py::List &  flow, int *  lineShifts )
+processImport( const char *  buffer,
+               node *  tree, FragmentBase *  parent,
+               Py::List &  flow, int *  lineShifts,
+               std::deque< CommentLine > &  comments )
 {
     assert( tree->n_type == import_stmt );
     assert( tree->n_nchildren == 1 );
@@ -1191,6 +1210,7 @@ processImport( node *  tree, FragmentBase *  parent,
 
     import->updateBeginEnd( body );
     import->body = Py::asObject( body );
+    injectComments( buffer, flow, parent, import, import, comments );
     flow.append( Py::asObject( import ) );
     return import;
 }
@@ -1404,6 +1424,7 @@ processFuncDefinition( const char *                 buffer,
         func->updateEnd( body );
     else
         func->updateEnd( lastAdded );
+    injectComments( buffer, flow, parent, func, func, comments );
     flow.append( Py::asObject( func ) );
     return func;
 }
@@ -1495,6 +1516,7 @@ processClassDefinition( const char *                 buffer,
     else
         cls->updateEnd( lastAdded );
 
+    injectComments( buffer, flow, parent, cls, cls, comments );
     flow.append( Py::asObject( cls ) );
     return cls;
 }
@@ -1569,7 +1591,9 @@ getNodeToProcess( node *  tree )
 
 static FragmentBase *
 addCodeBlock( CodeBlock **  codeBlock,
-              Py::List &    flow, int *  lineShifts )
+              Py::List &    flow, int *  lineShifts,
+              const char *  buffer, FragmentBase *  parent,
+              std::deque< CommentLine > &  comments )
 {
     if ( *codeBlock == NULL )
         return NULL;
@@ -1584,6 +1608,7 @@ addCodeBlock( CodeBlock **  codeBlock,
     p->updateBeginEnd( body );
     p->body = Py::asObject( body );
 
+    injectComments( buffer, flow, parent, p, p, comments );
     flow.append( Py::asObject( p ) );
     *codeBlock = NULL;
     return p;
@@ -1660,35 +1685,51 @@ walk( const char *                 buffer,
                     switch ( nodeToProcess->n_type )
                     {
                         case import_stmt:
-                            addCodeBlock( & codeBlock, flow, lineShifts );
-                            lastAdded = processImport( nodeToProcess, parent,
-                                                       flow, lineShifts );
+                            addCodeBlock( & codeBlock, flow, lineShifts,
+                                          buffer, parent, comments );
+                            lastAdded = processImport( buffer,
+                                                       nodeToProcess, parent,
+                                                       flow, lineShifts,
+                                                       comments );
                             continue;
                         case assert_stmt:
-                            addCodeBlock( & codeBlock, flow, lineShifts );
-                            lastAdded = processAssert( nodeToProcess, parent,
-                                                       flow, lineShifts );
+                            addCodeBlock( & codeBlock, flow, lineShifts,
+                                          buffer, parent, comments );
+                            lastAdded = processAssert( buffer,
+                                                       nodeToProcess, parent,
+                                                       flow, lineShifts,
+                                                       comments );
                             continue;
                         case break_stmt:
-                            addCodeBlock( & codeBlock, flow, lineShifts );
-                            lastAdded = processBreak( nodeToProcess, parent,
-                                                      flow, lineShifts );
+                            addCodeBlock( & codeBlock, flow, lineShifts,
+                                          buffer, parent, comments );
+                            lastAdded = processBreak( buffer,
+                                                      nodeToProcess, parent,
+                                                      flow, lineShifts,
+                                                      comments );
                             continue;
                         case continue_stmt:
-                            addCodeBlock( & codeBlock, flow, lineShifts );
-                            lastAdded = processContinue( nodeToProcess, parent,
-                                                         flow, lineShifts );
+                            addCodeBlock( & codeBlock, flow, lineShifts,
+                                          buffer, parent, comments );
+                            lastAdded = processContinue( buffer, nodeToProcess,
+                                                         parent, flow,
+                                                         lineShifts,
+                                                         comments );
                             continue;
                         case return_stmt:
-                            addCodeBlock( & codeBlock, flow, lineShifts );
+                            addCodeBlock( & codeBlock, flow, lineShifts,
+                                          buffer, parent, comments );
                             lastAdded = processReturn( buffer, nodeToProcess,
                                                        parent, flow, lineShifts,
                                                        comments );
                             continue;
                         case raise_stmt:
-                            addCodeBlock( & codeBlock, flow, lineShifts );
-                            lastAdded = processRaise( nodeToProcess, parent,
-                                                      flow, lineShifts );
+                            addCodeBlock( & codeBlock, flow, lineShifts,
+                                          buffer, parent, comments );
+                            lastAdded = processRaise( buffer, nodeToProcess,
+                                                      parent, flow,
+                                                      lineShifts,
+                                                      comments );
                             continue;
                         default: ;
                     }
@@ -1706,7 +1747,8 @@ walk( const char *                 buffer,
                     {
                         if ( nodeToProcess->n_lineno - codeBlock->lastLine > 1 )
                         {
-                            lastAdded = addCodeBlock( & codeBlock, flow, lineShifts );
+                            lastAdded = addCodeBlock( & codeBlock, flow, lineShifts,
+                                                      buffer, parent, comments );
                             codeBlock = createCodeBlock( nodeToProcess, parent );
                         }
                         else
@@ -1717,34 +1759,40 @@ walk( const char *                 buffer,
                 }
                 continue;
             case if_stmt:
-                addCodeBlock( & codeBlock, flow, lineShifts );
+                addCodeBlock( & codeBlock, flow, lineShifts,
+                              buffer, parent, comments );
                 lastAdded = processIf( buffer, nodeToProcess, parent,
                                        flow, lineShifts, comments );
                 continue;
             case while_stmt:
-                addCodeBlock( & codeBlock, flow, lineShifts );
+                addCodeBlock( & codeBlock, flow, lineShifts,
+                              buffer, parent, comments );
                 lastAdded = processWhile( buffer, nodeToProcess, parent,
                                           flow, lineShifts, comments );
                 continue;
             case for_stmt:
-                addCodeBlock( & codeBlock, flow, lineShifts );
+                addCodeBlock( & codeBlock, flow, lineShifts,
+                              buffer, parent, comments );
                 lastAdded = processFor( buffer, nodeToProcess, parent,
                                         flow, lineShifts, comments );
                 continue;
             case try_stmt:
-                addCodeBlock( & codeBlock, flow, lineShifts );
+                addCodeBlock( & codeBlock, flow, lineShifts,
+                              buffer, parent, comments );
                 lastAdded = processTry( buffer, nodeToProcess, parent,
                                         flow, lineShifts, comments );
                 continue;
             case with_stmt:
-                addCodeBlock( & codeBlock, flow, lineShifts );
+                addCodeBlock( & codeBlock, flow, lineShifts,
+                              buffer, parent, comments );
                 lastAdded = processWith( buffer, nodeToProcess, parent,
                                          flow, lineShifts, comments );
                 continue;
             case funcdef:
                 {
                     std::list<Decorator *>      noDecors;
-                    addCodeBlock( & codeBlock, flow, lineShifts );
+                    addCodeBlock( & codeBlock, flow, lineShifts,
+                                  buffer, parent, comments );
                     lastAdded = processFuncDefinition( buffer,
                                                        nodeToProcess, parent,
                                                        flow, lineShifts,
@@ -1754,7 +1802,8 @@ walk( const char *                 buffer,
             case classdef:
                 {
                     std::list<Decorator *>      noDecors;
-                    addCodeBlock( & codeBlock, flow, lineShifts );
+                    addCodeBlock( & codeBlock, flow, lineShifts,
+                                  buffer, parent, comments );
                     lastAdded = processClassDefinition( buffer,
                                                         nodeToProcess, parent,
                                                         flow, lineShifts,
@@ -1778,7 +1827,8 @@ walk( const char *                 buffer,
 
                     if ( classOrFuncNode->n_type == funcdef )
                     {
-                        addCodeBlock( & codeBlock, flow, lineShifts );
+                        addCodeBlock( & codeBlock, flow, lineShifts,
+                                      buffer, parent, comments );
                         lastAdded = processFuncDefinition( buffer,
                                                            classOrFuncNode,
                                                            parent, flow,
@@ -1787,7 +1837,8 @@ walk( const char *                 buffer,
                     }
                     else if ( classOrFuncNode->n_type == classdef )
                     {
-                        addCodeBlock( & codeBlock, flow, lineShifts );
+                        addCodeBlock( & codeBlock, flow, lineShifts,
+                                      buffer, parent, comments );
                         lastAdded = processClassDefinition( buffer,
                                                             classOrFuncNode,
                                                             parent, flow,
@@ -1801,7 +1852,8 @@ walk( const char *                 buffer,
 
     // Add block if needed
     if ( codeBlock != NULL )
-        return addCodeBlock( & codeBlock, flow, lineShifts );
+        return addCodeBlock( & codeBlock, flow, lineShifts,
+                             buffer, parent, comments );
     return lastAdded;
 }
 
