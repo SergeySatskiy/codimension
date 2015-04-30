@@ -45,7 +45,7 @@ class FragmentBase
     public:
         FragmentBase *  parent; // Pointer to the parent fragment.
                                 // The most top level fragment has it as NULL
-        std::string *   content;// Owner of this field is the ControlFlow
+        const char *    content;// Owner of this field is the ControlFlow
                                 // object. Other derivatives must not touch it.
 
     public:

@@ -141,7 +141,13 @@ FragmentBase::FragmentBase() :
 
 
 FragmentBase::~FragmentBase()
-{}
+{
+    if ( content != NULL )
+    {
+        delete [] content;
+        content = NULL;
+    }
+}
 
 
 void  FragmentBase::appendMembers( Py::List &  container ) const
@@ -196,7 +202,7 @@ std::string  FragmentBase::getContent( const std::string *  buf )
     while ( current->parent != NULL )
         current = current->parent;
     if ( current->content != NULL )
-        return current->content->substr( begin, end - begin + 1 );
+        return std::string( current->content + begin, end - begin + 1 );
 
     throw Py::RuntimeError( "Cannot get content of not serialized "
                             "fragment without its buffer" );
@@ -351,6 +357,8 @@ void Fragment::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 
@@ -519,6 +527,8 @@ void BangLine::initType( void )
                         GETLINECONTENT_DOC );
     add_varargs_method( "getDisplayValue", &BangLine::getDisplayValue,
                         BANGLINE_GETDISPLAYVALUE_DOC );
+
+    behaviors().readyType();
 }
 
 
@@ -612,6 +622,8 @@ void EncodingLine::initType( void )
                         GETLINECONTENT_DOC );
     add_varargs_method( "getDisplayValue", &EncodingLine::getDisplayValue,
                         ENCODINGLINE_GETDISPLAYVALUE_DOC );
+
+    behaviors().readyType();
 }
 
 
@@ -729,6 +741,8 @@ void Comment::initType( void )
                         GETLINECONTENT_DOC );
     add_varargs_method( "getDisplayValue", &Comment::getDisplayValue,
                         COMMENT_GETDISPLAYVALUE_DOC );
+
+    behaviors().readyType();
 }
 
 
@@ -878,6 +892,8 @@ void CMLComment::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 Py::Object CMLComment::getattr( const char *  attrName )
@@ -996,6 +1012,8 @@ void Docstring::initType( void )
                         GETLINECONTENT_DOC );
     add_varargs_method( "getDisplayValue", &Docstring::getDisplayValue,
                         DOCSTRING_GETDISPLAYVALUE_DOC );
+
+    behaviors().readyType();
 }
 
 
@@ -1178,6 +1196,8 @@ void Decorator::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 
@@ -1272,6 +1292,8 @@ void CodeBlock::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 
@@ -1343,6 +1365,8 @@ void Function::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 Py::Object Function::getattr( const char *  attrName )
@@ -1465,6 +1489,8 @@ void Class::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 Py::Object Class::getattr( const char *  attrName )
@@ -1583,6 +1609,8 @@ void Break::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 Py::Object Break::getattr( const char *  attrName )
@@ -1646,6 +1674,8 @@ void Continue::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 Py::Object Continue::getattr( const char *  attrName )
@@ -1709,6 +1739,8 @@ void Return::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 Py::Object Return::getattr( const char *  attrName )
@@ -1783,6 +1815,8 @@ void Raise::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 Py::Object Raise::getattr( const char *  attrName )
@@ -1858,6 +1892,8 @@ void Assert::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 Py::Object Assert::getattr( const char *  attrName )
@@ -1942,6 +1978,8 @@ void SysExit::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 Py::Object SysExit::getattr( const char *  attrName )
@@ -2018,6 +2056,8 @@ void While::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 Py::Object While::getattr( const char *  attrName )
@@ -2116,6 +2156,8 @@ void For::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 Py::Object For::getattr( const char *  attrName )
@@ -2213,6 +2255,8 @@ void Import::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 Py::Object Import::getattr( const char *  attrName )
@@ -2297,6 +2341,8 @@ void ElifPart::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 Py::Object ElifPart::getattr( const char *  attrName )
@@ -2383,6 +2429,8 @@ void If::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 Py::Object If::getattr( const char *  attrName )
@@ -2481,6 +2529,8 @@ void With::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 Py::Object With::getattr( const char *  attrName )
@@ -2567,6 +2617,8 @@ void ExceptPart::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 Py::Object ExceptPart::getattr( const char *  attrName )
@@ -2653,6 +2705,8 @@ void Try::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 Py::Object Try::getattr( const char *  attrName )
@@ -2749,8 +2803,11 @@ ControlFlow::ControlFlow()
 
 ControlFlow::~ControlFlow()
 {
-    delete content;
-    content = NULL;
+    if ( content != NULL )
+    {
+        delete [] content;
+        content = NULL;
+    }
 }
 
 void ControlFlow::initType( void )
@@ -2767,6 +2824,8 @@ void ControlFlow::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+
+    behaviors().readyType();
 }
 
 Py::Object ControlFlow::getattr( const char *  attrName )

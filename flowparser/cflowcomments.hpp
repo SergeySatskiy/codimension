@@ -58,7 +58,7 @@ struct CommentLine
     {}
 
     // Updates the 'type' field
-    CommentType  detectType( const char *  buffer );
+    void  detectType( const char *  buffer );
 };
 
 

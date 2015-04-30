@@ -428,6 +428,7 @@ injectLeadingComments( const char *  buffer,
                     }
                 }
             }
+
             if ( comment.type == REGULAR_COMMENT )
             {
                 if ( leadingCML != NULL )
@@ -494,11 +495,145 @@ injectLeadingComments( const char *  buffer,
 
 
 static void
-injectSideComments( FragmentWithComments *  statement,
+injectSideComments( const char *  buffer,
+                    FragmentWithComments *  statement,
                     FragmentBase *  statementAsParent,
+                    FragmentBase *  flowAsParent,
                     std::deque< CommentLine > &  comments )
 {
+    CMLComment *        sideCML = NULL;
+    Comment *           side = NULL;
+    int                 lastCommentLine = -1;
+    int                 lastCommentPos = -1;
 
+    while ( ! comments.empty() )
+    {
+        CommentLine &       comment = comments.front();
+        // TODO: is that always right?
+        if ( comment.line > statementAsParent->endLine )
+            break;
+
+        lastCommentLine = comment.line;
+        lastCommentPos = comment.pos;
+
+        if ( comment.type == CML_COMMENT )
+        {
+            if ( sideCML != NULL )
+            {
+                sideCML->extractProperties( buffer );
+                statement->sideCMLComments.append( Py::asObject( sideCML ) );
+                flowAsParent->updateEnd( sideCML );
+                sideCML = NULL;
+            }
+
+            Fragment *      part( createCommentFragment( comment ) );
+            part->parent = statementAsParent;
+
+            sideCML = new CMLComment;
+            sideCML->updateBeginEnd( part );
+            sideCML->parts.append( Py::asObject( part ) );
+        }
+
+        if ( comment.type == CML_COMMENT_CONTINUE )
+        {
+            if ( sideCML == NULL )
+            {
+                // Bad thing: someone may deleted the proper
+                // cml comment beginning so the comment is converted into a
+                // regular one. The regular comment will be handled below.
+                comment.type = REGULAR_COMMENT;
+            }
+            else
+            {
+                if ( sideCML->endLine + 1 != comment.line )
+                {
+                    // Bad thing: whether someone deleted the beginning of
+                    // the cml comment or inserted an empty line between.
+                    // So convert the comment into a regular one.
+                    comment.type = REGULAR_COMMENT;
+                }
+                else
+                {
+                    Fragment *      part( createCommentFragment( comment ) );
+                    part->parent = statementAsParent;
+                    sideCML->updateEnd( part );
+                    sideCML->parts.append( Py::asObject( part ) );
+                }
+            }
+        }
+
+        if ( comment.type == REGULAR_COMMENT )
+        {
+            Fragment *      part( createCommentFragment( comment ) );
+            part->parent = statementAsParent;
+
+            if ( side == NULL )
+            {
+                side = new Comment;
+                side->updateBegin( part );
+            }
+            side->parts.append( Py::asObject( part ) );
+            side->updateEnd( part );
+        }
+
+        comments.pop_front();
+    }
+
+    // Collect trailing comments which could be a continuation of the last side
+    // comment
+    while ( ! comments.empty() )
+    {
+        CommentLine &       comment = comments.front();
+        if ( comment.line != lastCommentLine + 1 )
+            break;
+        if ( comment.pos != lastCommentPos )
+            break;
+
+        lastCommentLine = comment.line;
+
+        if ( comment.type == CML_COMMENT )
+        {
+
+        }
+
+        if ( comment.type == CML_COMMENT_CONTINUE )
+        {
+
+        }
+
+        if ( comment.type == REGULAR_COMMENT )
+        {
+            Fragment *      part( createCommentFragment( comment ) );
+            part->parent = statementAsParent;
+
+            if ( side == NULL )
+            {
+                side = new Comment;
+                side->updateBegin( part );
+            }
+            side->parts.append( Py::asObject( part ) );
+            side->updateEnd( part );
+        }
+
+        comments.pop_front();
+    }
+
+
+    // Insert the collected comments
+    if ( sideCML != NULL )
+    {
+        sideCML->extractProperties( buffer );
+        statement->sideCMLComments.append( Py::asObject( sideCML ) );
+        flowAsParent->updateEnd( sideCML );
+        sideCML = NULL;
+    }
+    if ( side != NULL )
+    {
+        statement->sideComment = Py::asObject( side );
+        flowAsParent->updateEnd( side );
+        side = NULL;
+    }
+    return;
 }
 
 
@@ -515,7 +650,8 @@ injectComments( const char *  buffer,
     injectLeadingComments( buffer, flow, flowAsParent, statement,
                            statementAsParent,
                            statementAsParent->beginLine, comments );
-    injectSideComments( statement, statementAsParent, comments );
+    injectSideComments( buffer, statement, statementAsParent,
+                        flowAsParent, comments );
     return;
 }
 
@@ -568,6 +704,7 @@ processContinue( const char *  buffer,
     flow.append( Py::asObject( cont ) );
     return cont;
 }
+
 
 static FragmentBase *
 processAssert( const char *  buffer,
@@ -1885,9 +2022,13 @@ walk( const char *                 buffer,
 }
 
 
-Py::Object  parseInput( const char *  buffer, const char *  fileName )
+Py::Object  parseInput( const char *  buffer, const char *  fileName,
+                        bool  serialize )
 {
     ControlFlow *           controlFlow = new ControlFlow();
+
+    if ( serialize )
+        controlFlow->content = buffer;
 
     perrdetail          error;
     PyCompilerFlags     flags = { 0 };

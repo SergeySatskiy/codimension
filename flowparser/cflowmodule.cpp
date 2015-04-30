@@ -212,12 +212,12 @@ CDMControlFlowModule::getControlFlowFromMemory( const Py::Tuple &  args )
     {
         if ( content[ contentSize - 1 ] == '\n' )
         {
-            return parseInput( content.c_str(), "dummy.py" );
+            return parseInput( content.c_str(), "dummy.py", false );
         }
 
         // No \n at the end; it is safer to add it
         content += "\n";
-        return parseInput( content.c_str(), "dummy.py" );
+        return parseInput( content.c_str(), "dummy.py", false );
     }
 
     // Content size is zero
@@ -249,6 +249,7 @@ CDMControlFlowModule::getControlFlowFromFile( const Py::Tuple &  args )
         throw Py::RuntimeError( "Invalid argument: file name is empty" );
 
     // Read the whole file
+    char *  buffer = NULL;
     FILE *  f;
     f = fopen( fileName.c_str(), "r" );
     if ( f == NULL )
@@ -259,16 +260,19 @@ CDMControlFlowModule::getControlFlowFromFile( const Py::Tuple &  args )
 
     if ( st.st_size > 0 )
     {
-        char            buffer[st.st_size + 2];
+        buffer = new char[ st.st_size + 2 ];
+
         int             elem = fread( buffer, st.st_size, 1, f );
 
         fclose( f );
-        if ( elem != 1 )
+        if ( elem != 1 ) {
+            delete [] buffer;
             throw Py::RuntimeError( "Cannot read file " + fileName );
+        }
 
         buffer[ st.st_size ] = '\n';
         buffer[ st.st_size + 1 ] = '\0';
-        return parseInput( buffer, fileName.c_str() );
+        return parseInput( buffer, fileName.c_str(), true );
     }
 
     // File size is zero

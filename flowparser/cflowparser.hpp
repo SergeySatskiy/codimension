@@ -25,7 +25,8 @@
 
 #include "CXX/Objects.hxx"
 
-Py::Object  parseInput( const char *  buffer, const char *  fileName );
+Py::Object  parseInput( const char *  buffer, const char *  fileName,
+                        bool  serialize );
 
 
 #endif

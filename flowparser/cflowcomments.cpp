@@ -82,8 +82,7 @@ isTriple( const char *  buffer, int  absPos )
 }
 
 
-CommentType
-CommentLine::detectType( const char *  buffer )
+void CommentLine::detectType( const char *  buffer )
 {
     int     shift = begin + 1;
     while ( shift <= end )
@@ -102,13 +101,14 @@ CommentLine::detectType( const char *  buffer )
                 type = CML_COMMENT_CONTINUE;
             else
                 type = CML_COMMENT;
-            break;
+            return;
         }
         type = REGULAR_COMMENT;
-        break;
+        return;
     }
 
-    return type;
+    type = REGULAR_COMMENT;
+    return;
 }
 
 
