@@ -593,12 +593,48 @@ injectSideComments( const char *  buffer,
 
         if ( comment.type == CML_COMMENT )
         {
+            if ( sideCML != NULL )
+            {
+                sideCML->extractProperties( buffer );
+                statement->sideCMLComments.append( Py::asObject( sideCML ) );
+                flowAsParent->updateEnd( sideCML );
+                sideCML = NULL;
+            }
 
+            Fragment *      part( createCommentFragment( comment ) );
+            part->parent = statementAsParent;
+
+            sideCML = new CMLComment;
+            sideCML->updateBeginEnd( part );
+            sideCML->parts.append( Py::asObject( part ) );
         }
 
         if ( comment.type == CML_COMMENT_CONTINUE )
         {
-
+            if ( sideCML == NULL )
+            {
+                // Bad thing: someone may deleted the proper
+                // cml comment beginning so the comment is converted into a
+                // regular one. The regular comment will be handled below.
+                comment.type = REGULAR_COMMENT;
+            }
+            else
+            {
+                if ( sideCML->endLine + 1 != comment.line )
+                {
+                    // Bad thing: whether someone deleted the beginning of
+                    // the cml comment or inserted an empty line between.
+                    // So convert the comment into a regular one.
+                    comment.type = REGULAR_COMMENT;
+                }
+                else
+                {
+                    Fragment *      part( createCommentFragment( comment ) );
+                    part->parent = statementAsParent;
+                    sideCML->updateEnd( part );
+                    sideCML->parts.append( Py::asObject( part ) );
+                }
+            }
         }
 
         if ( comment.type == REGULAR_COMMENT )
