@@ -410,6 +410,10 @@ injectLeadingComments( Context *  context,
                     // Bad thing: someone may deleted the proper
                     // cml comment beginning so the comment is converted into a
                     // regular one. The regular comment will be handled below.
+                    context->flow->addWarning( comment.line,
+                                               "Continue of the CML comment "
+                                               "without the beginning. "
+                                               "Treat it as a regular comment." );
                     comment.type = REGULAR_COMMENT;
                 }
                 else
@@ -419,6 +423,10 @@ injectLeadingComments( Context *  context,
                         // Bad thing: whether someone deleted the beginning of
                         // the cml comment or inserted an empty line between.
                         // So convert the comment into a regular one.
+                        context->flow->addWarning( comment.line,
+                                               "Continue of the CML comment "
+                                               "without the beginning. "
+                                               "Treat it as a regular comment." );
                         comment.type = REGULAR_COMMENT;
                     }
                     else
@@ -546,6 +554,10 @@ injectSideComments( Context *  context,
                 // Bad thing: someone may deleted the proper
                 // cml comment beginning so the comment is converted into a
                 // regular one. The regular comment will be handled below.
+                context->flow->addWarning( comment.line,
+                                           "Continue of the CML comment "
+                                           "without the beginning. "
+                                           "Treat it as a regular comment." );
                 comment.type = REGULAR_COMMENT;
             }
             else
@@ -555,6 +567,10 @@ injectSideComments( Context *  context,
                     // Bad thing: whether someone deleted the beginning of
                     // the cml comment or inserted an empty line between.
                     // So convert the comment into a regular one.
+                    context->flow->addWarning( comment.line,
+                                               "Continue of the CML comment "
+                                               "without the beginning. "
+                                               "Treat it as a regular comment." );
                     comment.type = REGULAR_COMMENT;
                 }
                 else
@@ -621,6 +637,10 @@ injectSideComments( Context *  context,
                 // Bad thing: someone may deleted the proper
                 // cml comment beginning so the comment is converted into a
                 // regular one. The regular comment will be handled below.
+                context->flow->addWarning( comment.line,
+                                           "Continue of the CML comment "
+                                           "without the beginning. "
+                                           "Treat it as a regular comment." );
                 comment.type = REGULAR_COMMENT;
             }
             else
@@ -630,6 +650,10 @@ injectSideComments( Context *  context,
                     // Bad thing: whether someone deleted the beginning of
                     // the cml comment or inserted an empty line between.
                     // So convert the comment into a regular one.
+                    context->flow->addWarning( comment.line,
+                                           "Continue of the CML comment "
+                                           "without the beginning. "
+                                           "Treat it as a regular comment." );
                     comment.type = REGULAR_COMMENT;
                 }
                 else
