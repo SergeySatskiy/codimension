@@ -2841,6 +2841,7 @@ Py::Object ControlFlow::getattr( const char *  attrName )
         members.append( Py::String( "suite" ) );
         members.append( Py::String( "isOK" ) );
         members.append( Py::String( "errors" ) );
+        members.append( Py::String( "warnings" ) );
         return members;
     }
 
@@ -2859,6 +2860,8 @@ Py::Object ControlFlow::getattr( const char *  attrName )
         return Py::Boolean( errors.size() == 0 );
     if ( strcmp( attrName, "errors" ) == 0 )
         return errors;
+    if ( strcmp( attrName, "warnings" ) == 0 )
+        return warnings;
     return getattr_methods( attrName );
 }
 
@@ -2871,6 +2874,7 @@ Py::Object  ControlFlow::repr( void )
     return Py::String( "<ControlFlow " + FragmentBase::as_string() +
                        "\nisOK: " + ok +
                        "\n" + representList( errors, "Errors" ) +
+                       "\n" + representList( warnings, "Warnings" ) +
                        "\n" + representFragmentPart( bangLine, "BangLine" ) +
                        "\n" + representFragmentPart( encodingLine, "EncodingLine" ) +
                        "\n" + representPart( docstring, "Docstring" ) +
@@ -2917,8 +2921,21 @@ int  ControlFlow::setattr( const char *        attrName,
         errors = Py::List( val );
         return 0;
     }
+    if ( strcmp( attrName, "warnings" ) == 0 )
+    {
+        if ( ! val.isList() )
+            throw Py::AttributeError( "Attribute 'warnings' value "
+                                      "must be a list" );
+        warnings = Py::List( val );
+        return 0;
+    }
     throwUnknownAttribute( attrName );
     return -1;  // Suppress compiler warning
 }
 
+
+void  ControlFlow::addWarning( int  line, const std::string &  message )
+{
+    warnings.append( Py::TupleN( Py::Int( line ), Py::String( message ) ) );
+}
 

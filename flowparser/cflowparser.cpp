@@ -40,14 +40,21 @@
 extern grammar      _PyParser_Grammar;  /* From graminit.c */
 
 
+struct Context
+{
+    ControlFlow *                   flow;
+    const char *                    buffer;
+    int *                           lineShifts;
+    std::deque< CommentLine > *     comments;
+};
+
+
 static FragmentBase *
-walk( const char *                 buffer,
-      node *                       tree,
-      FragmentBase *               parent,
-      Py::List &                   flow,
-      int *                        lineShifts,
-      bool                         docstrProcessed,
-      std::deque< CommentLine > &  comments );
+walk( Context *             context,
+      node *                tree,
+      FragmentBase *        parent,
+      Py::List &            flow,
+      bool                  docstrProcessed );
 
 
 
@@ -305,19 +312,19 @@ static void processEncoding( const char *   buffer,
 
 // Detects the leading comments block last line. -1 if none found
 static int
-detectLeadingBlock( const std::deque< CommentLine > &  comments,
-                    int  limit )
+detectLeadingBlock( Context * context, int  limit )
 {
-    if ( comments.empty() )
+    if ( context->comments->empty() )
         return -1;
 
-    const CommentLine &     first = comments.front();
+    const CommentLine &     first = context->comments->front();
     if ( first.line >= limit )
         return -1;
 
     int     lastInBlock( first.line );
-    for ( std::deque< CommentLine >::const_iterator  k = comments.begin();
-            k != comments.end(); ++k )
+    for ( std::deque< CommentLine >::const_iterator
+            k = context->comments->begin();
+            k != context->comments->end(); ++k )
     {
         if ( k->line >= limit )
             break;
@@ -347,15 +354,14 @@ createCommentFragment( const CommentLine &  comment )
 
 
 static void
-injectLeadingComments( const char *  buffer,
+injectLeadingComments( Context *  context,
                        Py::List &  flow,
                        FragmentBase *  flowAsParent,
                        FragmentWithComments *  statement, // could be NULL
                        FragmentBase *  statementAsParent, // could be NULL
-                       int  firstStatementLine,
-                       std::deque< CommentLine > &  comments )
+                       int  firstStatementLine )
 {
-    int     leadingLastLine = detectLeadingBlock( comments,
+    int     leadingLastLine = detectLeadingBlock( context,
                                                   firstStatementLine );
 
     while ( leadingLastLine != -1 )
@@ -363,9 +369,9 @@ injectLeadingComments( const char *  buffer,
         CMLComment *    leadingCML = NULL;
         Comment *       leading = NULL;
 
-        while ( ! comments.empty() )
+        while ( ! context->comments->empty() )
         {
-            CommentLine &       comment = comments.front();
+            CommentLine &       comment = context->comments->front();
             if ( comment.line > leadingLastLine )
                 break;
 
@@ -373,7 +379,7 @@ injectLeadingComments( const char *  buffer,
             {
                 if ( leadingCML != NULL )
                 {
-                    leadingCML->extractProperties( buffer );
+                    leadingCML->extractProperties( context->buffer );
                     if ( leadingLastLine + 1 == firstStatementLine )
                         statement->leadingCMLComments.append(
                                                 Py::asObject( leadingCML ) );
@@ -433,7 +439,7 @@ injectLeadingComments( const char *  buffer,
             {
                 if ( leadingCML != NULL )
                 {
-                    leadingCML->extractProperties( buffer );
+                    leadingCML->extractProperties( context->buffer );
                     if ( leadingLastLine + 1 == firstStatementLine )
                         statement->leadingCMLComments.append(
                                                 Py::asObject( leadingCML ) );
@@ -460,12 +466,12 @@ injectLeadingComments( const char *  buffer,
                 leading->updateEnd( part );
             }
 
-            comments.pop_front();
+            context->comments->pop_front();
         }
 
         if ( leadingCML != NULL )
         {
-            leadingCML->extractProperties( buffer );
+            leadingCML->extractProperties( context->buffer );
             if ( leadingLastLine + 1 == firstStatementLine )
                 statement->leadingCMLComments.append(
                                                 Py::asObject( leadingCML ) );
@@ -488,27 +494,26 @@ injectLeadingComments( const char *  buffer,
             leading = NULL;
         }
 
-        leadingLastLine = detectLeadingBlock( comments, firstStatementLine );
+        leadingLastLine = detectLeadingBlock( context, firstStatementLine );
     }
     return;
 }
 
 
 static void
-injectSideComments( const char *  buffer,
+injectSideComments( Context *  context,
                     FragmentWithComments *  statement,
                     FragmentBase *  statementAsParent,
-                    FragmentBase *  flowAsParent,
-                    std::deque< CommentLine > &  comments )
+                    FragmentBase *  flowAsParent )
 {
     CMLComment *        sideCML = NULL;
     Comment *           side = NULL;
     int                 lastCommentLine = -1;
     int                 lastCommentPos = -1;
 
-    while ( ! comments.empty() )
+    while ( ! context->comments->empty() )
     {
-        CommentLine &       comment = comments.front();
+        CommentLine &       comment = context->comments->front();
         // TODO: is that always right?
         if ( comment.line > statementAsParent->endLine )
             break;
@@ -520,7 +525,7 @@ injectSideComments( const char *  buffer,
         {
             if ( sideCML != NULL )
             {
-                sideCML->extractProperties( buffer );
+                sideCML->extractProperties( context->buffer );
                 statement->sideCMLComments.append( Py::asObject( sideCML ) );
                 flowAsParent->updateEnd( sideCML );
                 sideCML = NULL;
@@ -576,14 +581,14 @@ injectSideComments( const char *  buffer,
             side->updateEnd( part );
         }
 
-        comments.pop_front();
+        context->comments->pop_front();
     }
 
     // Collect trailing comments which could be a continuation of the last side
     // comment
-    while ( ! comments.empty() )
+    while ( ! context->comments->empty() )
     {
-        CommentLine &       comment = comments.front();
+        CommentLine &       comment = context->comments->front();
         if ( comment.line != lastCommentLine + 1 )
             break;
         if ( comment.pos != lastCommentPos )
@@ -595,7 +600,7 @@ injectSideComments( const char *  buffer,
         {
             if ( sideCML != NULL )
             {
-                sideCML->extractProperties( buffer );
+                sideCML->extractProperties( context->buffer );
                 statement->sideCMLComments.append( Py::asObject( sideCML ) );
                 flowAsParent->updateEnd( sideCML );
                 sideCML = NULL;
@@ -651,14 +656,14 @@ injectSideComments( const char *  buffer,
             side->updateEnd( part );
         }
 
-        comments.pop_front();
+        context->comments->pop_front();
     }
 
 
     // Insert the collected comments
     if ( sideCML != NULL )
     {
-        sideCML->extractProperties( buffer );
+        sideCML->extractProperties( context->buffer );
         statement->sideCMLComments.append( Py::asObject( sideCML ) );
         flowAsParent->updateEnd( sideCML );
         sideCML = NULL;
@@ -676,27 +681,25 @@ injectSideComments( const char *  buffer,
 // Injects comments to the control flow or to the statement
 // The injected comments are deleted from the deque
 static void
-injectComments( const char *  buffer,
+injectComments( Context *  context,
                 Py::List &  flow,
                 FragmentBase *  flowAsParent,
                 FragmentWithComments *  statement,
-                FragmentBase *  statementAsParent,
-                std::deque< CommentLine > &  comments )
+               FragmentBase *  statementAsParent )
 {
-    injectLeadingComments( buffer, flow, flowAsParent, statement,
+    injectLeadingComments( context, flow, flowAsParent, statement,
                            statementAsParent,
-                           statementAsParent->beginLine, comments );
-    injectSideComments( buffer, statement, statementAsParent,
-                        flowAsParent, comments );
+                           statementAsParent->beginLine );
+    injectSideComments( context, statement, statementAsParent,
+                        flowAsParent );
     return;
 }
 
 
 static FragmentBase *
-processBreak( const char *  buffer,
+processBreak( Context *  context,
               node *  tree, FragmentBase *  parent,
-              Py::List &  flow, int *  lineShifts,
-              std::deque< CommentLine > &  comments )
+              Py::List &  flow )
 {
     assert( tree->n_type == break_stmt );
     Break *         br( new Break );
@@ -704,24 +707,23 @@ processBreak( const char *  buffer,
 
     Fragment *      body( new Fragment );
     body->parent = br;
-    updateBegin( body, tree, lineShifts );
+    updateBegin( body, tree, context->lineShifts );
     body->end = body->begin + 4;        // 4 = strlen( "break" ) - 1
     body->endLine = tree->n_lineno;
     body->endPos = body->beginPos + 4;  // 4 = strlen( "break" ) - 1
 
     br->updateBeginEnd( body );
     br->body = Py::asObject( body );
-    injectComments( buffer, flow, parent, br, br, comments );
+    injectComments( context, flow, parent, br, br );
     flow.append( Py::asObject( br ) );
     return br;
 }
 
 
 static FragmentBase *
-processContinue( const char *  buffer,
+processContinue( Context *  context,
                  node *  tree, FragmentBase *  parent,
-                 Py::List &  flow, int *  lineShifts,
-                 std::deque< CommentLine > &  comments )
+                 Py::List &  flow )
 {
     assert( tree->n_type == continue_stmt );
     Continue *      cont( new Continue );
@@ -729,24 +731,23 @@ processContinue( const char *  buffer,
 
     Fragment *      body( new Fragment );
     body->parent = cont;
-    updateBegin( body, tree, lineShifts );
+    updateBegin( body, tree, context->lineShifts );
     body->end = body->begin + 7;        // 7 = strlen( "continue" ) - 1
     body->endLine = tree->n_lineno;
     body->endPos = body->beginPos + 7;  // 7 = strlen( "continue" ) - 1
 
     cont->updateBeginEnd( body );
     cont->body = Py::asObject( body );
-    injectComments( buffer, flow, parent, cont, cont, comments );
+    injectComments( context, flow, parent, cont, cont );
     flow.append( Py::asObject( cont ) );
     return cont;
 }
 
 
 static FragmentBase *
-processAssert( const char *  buffer,
+processAssert( Context *  context,
                node *  tree, FragmentBase *  parent,
-               Py::List &  flow, int *  lineShifts,
-               std::deque< CommentLine > &  comments )
+               Py::List &  flow )
 {
     assert( tree->n_type == assert_stmt );
     Assert *            a( new Assert );
@@ -754,7 +755,7 @@ processAssert( const char *  buffer,
 
     Fragment *      body( new Fragment );
     body->parent = a;
-    updateBegin( body, tree, lineShifts );
+    updateBegin( body, tree, context->lineShifts );
     body->end = body->begin + 5;        // 5 = strlen( "assert" ) - 1
     body->endLine = tree->n_lineno;
     body->endPos = body->beginPos + 5;  // 5 = strlen( "assert" ) - 1
@@ -769,8 +770,8 @@ processAssert( const char *  buffer,
     node *          testLastPart = findLastPart( firstTestNode );
 
     tst->parent = a;
-    updateBegin( tst, firstTestNode, lineShifts );
-    updateEnd( tst, testLastPart, lineShifts );
+    updateBegin( tst, firstTestNode, context->lineShifts );
+    updateEnd( tst, testLastPart, context->lineShifts );
     a->tst = Py::asObject( tst );
 
     // If a comma is there => there is a message part
@@ -784,8 +785,8 @@ processAssert( const char *  buffer,
         node *          secondTestLastPart = findLastPart( secondTestNode );
 
         message->parent = a;
-        updateBegin( message, secondTestNode, lineShifts );
-        updateEnd( message, secondTestLastPart, lineShifts );
+        updateBegin( message, secondTestNode, context->lineShifts );
+        updateEnd( message, secondTestLastPart, context->lineShifts );
 
         a->updateEnd( message );
         a->message = Py::asObject( message );
@@ -794,7 +795,7 @@ processAssert( const char *  buffer,
         a->updateEnd( tst );
 
     a->body = Py::asObject( body );
-    injectComments( buffer, flow, parent, a, a, comments );
+    injectComments( context, flow, parent, a, a );
     flow.append( Py::asObject( a ) );
     return a;
 }
@@ -802,10 +803,9 @@ processAssert( const char *  buffer,
 
 
 static FragmentBase *
-processRaise( const char *  buffer,
+processRaise( Context *  context,
               node *  tree, FragmentBase *  parent,
-              Py::List &  flow, int *  lineShifts,
-              std::deque< CommentLine > &  comments )
+              Py::List &  flow )
 {
     assert( tree->n_type == raise_stmt );
     Raise *         r( new Raise );
@@ -813,7 +813,7 @@ processRaise( const char *  buffer,
 
     Fragment *      body( new Fragment );
     body->parent = r;
-    updateBegin( body, tree, lineShifts );
+    updateBegin( body, tree, context->lineShifts );
     body->end = body->begin + 4;        // 4 = strlen( "raise" ) - 1
     body->endLine = tree->n_lineno;
     body->endPos = body->beginPos + 4;  // 4 = strlen( "raise" ) - 1
@@ -827,8 +827,8 @@ processRaise( const char *  buffer,
         node *          lastPart = findLastPart( tree );
 
         val->parent = r;
-        updateBegin( val, testNode, lineShifts );
-        updateEnd( val, lastPart, lineShifts );
+        updateBegin( val, testNode, context->lineShifts );
+        updateEnd( val, lastPart, context->lineShifts );
 
         r->updateEnd( val );
         r->value = Py::asObject( val );
@@ -837,16 +837,15 @@ processRaise( const char *  buffer,
         r->updateEnd( body );
 
     r->body = Py::asObject( body );
-    injectComments( buffer, flow, parent, r, r, comments );
+    injectComments( context, flow, parent, r, r );
     flow.append( Py::asObject( r ) );
     return r;
 }
 
 
 static FragmentBase *
-processReturn( const char *  buffer, node *  tree, FragmentBase *  parent,
-               Py::List &  flow, int *  lineShifts,
-               std::deque< CommentLine > &  comments )
+processReturn( Context *  context, node *  tree,
+               FragmentBase *  parent, Py::List &  flow )
 {
     assert( tree->n_type == return_stmt );
     Return *        ret( new Return );
@@ -854,7 +853,7 @@ processReturn( const char *  buffer, node *  tree, FragmentBase *  parent,
 
     Fragment *      body( new Fragment );
     body->parent = ret;
-    updateBegin( body, tree, lineShifts );
+    updateBegin( body, tree, context->lineShifts );
     body->end = body->begin + 5;        // 5 = strlen( "return" ) - 1
     body->endLine = tree->n_lineno;
     body->endPos = body->beginPos + 5;  // 5 = strlen( "return" ) - 1
@@ -868,8 +867,8 @@ processReturn( const char *  buffer, node *  tree, FragmentBase *  parent,
         node *          lastPart = findLastPart( testlistNode );
 
         val->parent = ret;
-        updateBegin( val, testlistNode, lineShifts );
-        updateEnd( val, lastPart, lineShifts );
+        updateBegin( val, testlistNode, context->lineShifts );
+        updateEnd( val, lastPart, context->lineShifts );
 
         ret->updateEnd( val );
         ret->value = Py::asObject( val );
@@ -878,7 +877,7 @@ processReturn( const char *  buffer, node *  tree, FragmentBase *  parent,
         ret->updateEnd( body );
 
     ret->body = Py::asObject( body );
-    injectComments( buffer, flow, parent, ret, ret, comments );
+    injectComments( context, flow, parent, ret, ret );
     flow.append( Py::asObject( ret ) );
     return ret;
 }
@@ -887,10 +886,8 @@ processReturn( const char *  buffer, node *  tree, FragmentBase *  parent,
 // Handles 'else' and 'elif' clauses for various statements: 'if' branches,
 // 'else' parts of 'while', 'for', 'try'
 static ElifPart *
-processElifPart( const char *  buffer, Py::List &  flow,
-                 node *  tree, FragmentBase *  parent,
-                 int *  lineShifts,
-                 std::deque< CommentLine > &  comments )
+processElifPart( Context *  context, Py::List &  flow,
+                 node *  tree, FragmentBase *  parent )
 {
     assert( tree->n_type == NAME );
     assert( strcmp( tree->n_str, "else" ) == 0 ||
@@ -908,8 +905,8 @@ processElifPart( const char *  buffer, Py::List &  flow,
         node *      last = findLastPart( current );
         Fragment *  condition( new Fragment );
         condition->parent = elifPart;
-        updateBegin( condition, current, lineShifts );
-        updateEnd( condition, last, lineShifts );
+        updateBegin( condition, current, context->lineShifts );
+        updateEnd( condition, last, context->lineShifts );
         elifPart->condition = Py::asObject( condition );
 
         colonNode = current + 1;
@@ -923,15 +920,14 @@ processElifPart( const char *  buffer, Py::List &  flow,
     node *          suiteNode = colonNode + 1;
     Fragment *      body( new Fragment );
     body->parent = elifPart;
-    updateBegin( body, tree, lineShifts );
-    updateEnd( body, colonNode, lineShifts );
+    updateBegin( body, tree, context->lineShifts );
+    updateEnd( body, colonNode, context->lineShifts );
     elifPart->updateBegin( body );
     elifPart->body = Py::asObject( body );
 
-    injectComments( buffer, flow, parent, elifPart, elifPart, comments );
-    FragmentBase *  lastAdded = walk( buffer, suiteNode, elifPart,
-                                      elifPart->nsuite,
-                                      lineShifts, false, comments );
+    injectComments( context, flow, parent, elifPart, elifPart );
+    FragmentBase *  lastAdded = walk( context, suiteNode, elifPart,
+                                      elifPart->nsuite, false );
     if ( lastAdded == NULL )
         elifPart->updateEnd( body );
     else
@@ -941,10 +937,9 @@ processElifPart( const char *  buffer, Py::List &  flow,
 
 
 static FragmentBase *
-processIf( const char *  buffer,
+processIf( Context *  context,
            node *  tree, FragmentBase *  parent,
-           Py::List &  flow, int *  lineShifts,
-           std::deque< CommentLine > &  comments )
+           Py::List &  flow )
 {
     assert( tree->n_type == if_stmt );
 
@@ -964,8 +959,8 @@ processIf( const char *  buffer,
                 node *      last = findLastPart( conditionNode );
                 Fragment *  condition( new Fragment );
                 condition->parent = ifStatement;
-                updateBegin( condition, conditionNode, lineShifts );
-                updateEnd( condition, last, lineShifts );
+                updateBegin( condition, conditionNode, context->lineShifts );
+                updateEnd( condition, last, context->lineShifts );
                 ifStatement->condition = Py::asObject( condition );
 
                 node *      colonNode = conditionNode + 1;
@@ -973,16 +968,15 @@ processIf( const char *  buffer,
 
                 Fragment *      body( new Fragment );
                 body->parent = ifStatement;
-                updateBegin( body, tree, lineShifts );
-                updateEnd( body, colonNode, lineShifts );
+                updateBegin( body, tree, context->lineShifts );
+                updateEnd( body, colonNode, context->lineShifts );
                 ifStatement->updateBegin( body );
                 ifStatement->body = Py::asObject( body );
 
-                injectComments( buffer, flow, parent,
-                                ifStatement, ifStatement, comments );
-                FragmentBase *  lastAdded = walk( buffer, suiteNode, ifStatement,
-                                                  ifStatement->nsuite,
-                                                  lineShifts, false, comments );
+                injectComments( context, flow, parent,
+                                ifStatement, ifStatement );
+                FragmentBase *  lastAdded = walk( context, suiteNode, ifStatement,
+                                                  ifStatement->nsuite, false );
                 if ( lastAdded == NULL )
                     ifStatement->updateEnd( body );
                 else
@@ -990,9 +984,8 @@ processIf( const char *  buffer,
             }
             else
             {
-                ElifPart *  elifPart = processElifPart( buffer, flow, child,
-                                                        ifStatement,
-                                                        lineShifts, comments );
+                ElifPart *  elifPart = processElifPart( context, flow, child,
+                                                        ifStatement );
                 ifStatement->updateBegin( elifPart );
                 ifStatement->elifParts.append( Py::asObject( elifPart ) );
             }
@@ -1005,9 +998,8 @@ processIf( const char *  buffer,
 
 
 static ExceptPart *
-processExceptPart( const char *  buffer, Py::List &  flow,
-                   node *  tree, FragmentBase *  parent, int *  lineShifts,
-                   std::deque< CommentLine > &  comments )
+processExceptPart( Context *  context, Py::List &  flow,
+                   node *  tree, FragmentBase *  parent )
 {
     assert( tree->n_type == except_clause ||
             tree->n_type == NAME );
@@ -1020,8 +1012,8 @@ processExceptPart( const char *  buffer, Py::List &  flow,
 
     // ':' node is the very next one
     node *          colonNode = tree + 1;
-    updateBegin( body, tree, lineShifts );
-    updateEnd( body, colonNode, lineShifts );
+    updateBegin( body, tree, context->lineShifts );
+    updateEnd( body, colonNode, context->lineShifts );
     exceptPart->updateBegin( body );
     exceptPart->body = Py::asObject( body );
 
@@ -1036,21 +1028,20 @@ processExceptPart( const char *  buffer, Py::List &  flow,
             Fragment *  clause( new Fragment );
 
             clause->parent = exceptPart;
-            updateBegin( clause, testNode, lineShifts );
-            updateEnd( clause, last, lineShifts );
+            updateBegin( clause, testNode, context->lineShifts );
+            updateEnd( clause, last, context->lineShifts );
             exceptPart->clause = Py::asObject( clause );
         }
     }
 
-    injectComments( buffer, flow, parent,
-                    exceptPart, exceptPart, comments );
+    injectComments( context, flow, parent,
+                    exceptPart, exceptPart );
 
     // 'suite' node follows the colon node
     node *          suiteNode = colonNode + 1;
-    FragmentBase *  lastAdded = walk( buffer,
+    FragmentBase *  lastAdded = walk( context,
                                       suiteNode, exceptPart,
-                                      exceptPart->nsuite,
-                                      lineShifts, false, comments );
+                                      exceptPart->nsuite, false );
     if ( lastAdded == NULL )
         exceptPart->updateEnd( body );
     else
@@ -1060,10 +1051,9 @@ processExceptPart( const char *  buffer, Py::List &  flow,
 
 
 static FragmentBase *
-processTry( const char *  buffer,
+processTry( Context *  context,
             node *  tree, FragmentBase *  parent,
-            Py::List &  flow, int *  lineShifts,
-            std::deque< CommentLine > &  comments )
+            Py::List &  flow )
 {
     assert( tree->n_type == try_stmt );
 
@@ -1073,20 +1063,19 @@ processTry( const char *  buffer,
     Fragment *      body( new Fragment );
     node *          tryColonNode = findChildOfType( tree, COLON );
     body->parent = tryStatement;
-    updateBegin( body, tree, lineShifts );
-    updateEnd( body, tryColonNode, lineShifts );
+    updateBegin( body, tree, context->lineShifts );
+    updateEnd( body, tryColonNode, context->lineShifts );
     tryStatement->body = Py::asObject( body );
     tryStatement->updateBegin( body );
 
-    injectComments( buffer, flow, parent,
-                    tryStatement, tryStatement, comments );
+    injectComments( context, flow, parent,
+                    tryStatement, tryStatement );
 
     // suite
     node *          trySuiteNode = tryColonNode + 1;
-    FragmentBase *  lastAdded = walk( buffer,
+    FragmentBase *  lastAdded = walk( context,
                                       trySuiteNode, tryStatement,
-                                      tryStatement->nsuite,
-                                      lineShifts, false, comments );
+                                      tryStatement->nsuite, false );
     if ( lastAdded == NULL )
         tryStatement->updateEnd( body );
     else
@@ -1099,11 +1088,9 @@ processTry( const char *  buffer,
         node *  child = &(tree->n_child[ k ]);
         if ( child->n_type == except_clause )
         {
-            ExceptPart *    exceptPart = processExceptPart( buffer, flow,
+            ExceptPart *    exceptPart = processExceptPart( context, flow,
                                                             child,
-                                                            tryStatement,
-                                                            lineShifts,
-                                                            comments );
+                                                            tryStatement );
             tryStatement->exceptParts.append( Py::asObject( exceptPart ) );
             continue;
         }
@@ -1111,21 +1098,17 @@ processTry( const char *  buffer,
         {
             if ( strcmp( child->n_str, "else" ) == 0 )
             {
-                ExceptPart *    elsePart = processExceptPart( buffer, flow,
+                ExceptPart *    elsePart = processExceptPart( context, flow,
                                                               child,
-                                                              tryStatement,
-                                                              lineShifts,
-                                                              comments );
+                                                              tryStatement );
                 tryStatement->elsePart = Py::asObject( elsePart );
                 continue;
             }
             if ( strcmp( child->n_str, "finally" ) == 0 )
             {
-                ExceptPart *    finallyPart = processExceptPart( buffer, flow,
+                ExceptPart *    finallyPart = processExceptPart( context, flow,
                                                                  child,
-                                                                 tryStatement,
-                                                                 lineShifts,
-                                                                 comments );
+                                                                 tryStatement );
                 tryStatement->finallyPart = Py::asObject( finallyPart );
             }
         }
@@ -1137,10 +1120,9 @@ processTry( const char *  buffer,
 
 
 static FragmentBase *
-processWhile( const char *  buffer,
+processWhile( Context *  context,
               node *  tree, FragmentBase *  parent,
-              Py::List &  flow, int *  lineShifts,
-              std::deque< CommentLine > &  comments )
+              Py::List &  flow )
 {
     assert( tree->n_type == while_stmt );
 
@@ -1152,8 +1134,8 @@ processWhile( const char *  buffer,
     node *          whileNode = findChildOfType( tree, NAME );
 
     body->parent = w;
-    updateBegin( body, whileNode, lineShifts );
-    updateEnd( body, colonNode, lineShifts );
+    updateBegin( body, whileNode, context->lineShifts );
+    updateEnd( body, colonNode, context->lineShifts );
     w->body = Py::asObject( body );
     w->updateBegin( body );
 
@@ -1163,16 +1145,16 @@ processWhile( const char *  buffer,
     Fragment *      condition( new Fragment );
 
     condition->parent = w;
-    updateBegin( condition, testNode, lineShifts );
-    updateEnd( condition, lastPart, lineShifts );
+    updateBegin( condition, testNode, context->lineShifts );
+    updateEnd( condition, lastPart, context->lineShifts );
     w->condition = Py::asObject( condition );
 
-    injectComments( buffer, flow, parent, w, w, comments );
+    injectComments( context, flow, parent, w, w );
 
     // suite
     node *          suiteNode = findChildOfType( tree, suite );
-    FragmentBase *  lastAdded = walk( buffer, suiteNode, w, w->nsuite,
-                                      lineShifts, false, comments );
+    FragmentBase *  lastAdded = walk( context, suiteNode, w, w->nsuite,
+                                      false );
     if ( lastAdded == NULL )
         w->updateEnd( body );
     else
@@ -1182,8 +1164,7 @@ processWhile( const char *  buffer,
     node *          elseNode = findChildOfTypeAndValue( tree, NAME, "else" );
     if ( elseNode != NULL )
     {
-        ElifPart *      elsePart = processElifPart( buffer, flow, elseNode, w,
-                                                    lineShifts, comments );
+        ElifPart *      elsePart = processElifPart( context, flow, elseNode, w );
         w->elsePart = Py::asObject( elsePart );
     }
 
@@ -1193,10 +1174,9 @@ processWhile( const char *  buffer,
 
 
 static FragmentBase *
-processWith( const char *  buffer,
+processWith( Context *  context,
              node *  tree, FragmentBase *  parent,
-             Py::List &  flow, int *  lineShifts,
-             std::deque< CommentLine > &  comments )
+             Py::List &  flow )
 {
     assert( tree->n_type == with_stmt );
 
@@ -1208,8 +1188,8 @@ processWith( const char *  buffer,
     node *          whithNode = findChildOfType( tree, NAME );
 
     body->parent = w;
-    updateBegin( body, whithNode, lineShifts );
-    updateEnd( body, colonNode, lineShifts );
+    updateBegin( body, whithNode, context->lineShifts );
+    updateEnd( body, colonNode, context->lineShifts );
     w->body = Py::asObject( body );
     w->updateBegin( body );
 
@@ -1225,16 +1205,16 @@ processWith( const char *  buffer,
 
     Fragment *      items( new Fragment );
     items->parent = w;
-    updateBegin( items, firstWithItem, lineShifts );
-    updateEnd( items, lastWithItem, lineShifts );
+    updateBegin( items, firstWithItem, context->lineShifts );
+    updateEnd( items, lastWithItem, context->lineShifts );
     w->items = Py::asObject( items );
 
-    injectComments( buffer, flow, parent, w, w, comments );
+    injectComments( context, flow, parent, w, w );
 
     // suite
     node *          suiteNode = findChildOfType( tree, suite );
-    FragmentBase *  lastAdded = walk( buffer, suiteNode, w, w->nsuite,
-                                      lineShifts, false, comments );
+    FragmentBase *  lastAdded = walk( context, suiteNode, w, w->nsuite,
+                                      false );
     if ( lastAdded == NULL )
         w->updateEnd( body );
     else
@@ -1246,10 +1226,9 @@ processWith( const char *  buffer,
 
 
 static FragmentBase *
-processFor( const char *  buffer,
+processFor( Context *  context,
             node *  tree, FragmentBase *  parent,
-            Py::List &  flow, int *  lineShifts,
-            std::deque< CommentLine > &  comments )
+            Py::List &  flow )
 {
     assert( tree->n_type == for_stmt );
 
@@ -1261,8 +1240,8 @@ processFor( const char *  buffer,
     node *          forNode = findChildOfType( tree, NAME );
 
     body->parent = f;
-    updateBegin( body, forNode, lineShifts );
-    updateEnd( body, colonNode, lineShifts );
+    updateBegin( body, forNode, context->lineShifts );
+    updateEnd( body, colonNode, context->lineShifts );
     f->body = Py::asObject( body );
     f->updateBegin( body );
 
@@ -1273,16 +1252,16 @@ processFor( const char *  buffer,
     Fragment *      iteration( new Fragment );
 
     iteration->parent = f;
-    updateBegin( iteration, exprlistNode, lineShifts );
-    updateEnd( iteration, lastPart, lineShifts );
+    updateBegin( iteration, exprlistNode, context->lineShifts );
+    updateEnd( iteration, lastPart, context->lineShifts );
     f->iteration = Py::asObject( iteration );
 
-    injectComments( buffer, flow, parent, f, f, comments );
+    injectComments( context, flow, parent, f, f );
 
     // suite
     node *          suiteNode = findChildOfType( tree, suite );
-    FragmentBase *  lastAdded = walk( buffer, suiteNode, f, f->nsuite,
-                                      lineShifts, false, comments );
+    FragmentBase *  lastAdded = walk( context, suiteNode, f, f->nsuite,
+                                      false );
     if ( lastAdded == NULL )
         f->updateEnd( body );
     else
@@ -1292,8 +1271,7 @@ processFor( const char *  buffer,
     node *          elseNode = findChildOfTypeAndValue( tree, NAME, "else" );
     if ( elseNode != NULL )
     {
-        ElifPart *      elsePart = processElifPart( buffer, flow, elseNode, f,
-                                                    lineShifts, comments );
+        ElifPart *      elsePart = processElifPart( context, flow, elseNode, f );
         f->elsePart = Py::asObject( elsePart );
     }
 
@@ -1303,10 +1281,9 @@ processFor( const char *  buffer,
 
 
 static FragmentBase *
-processImport( const char *  buffer,
+processImport( Context *  context,
                node *  tree, FragmentBase *  parent,
-               Py::List &  flow, int *  lineShifts,
-               std::deque< CommentLine > &  comments )
+               Py::List &  flow )
 {
     assert( tree->n_type == import_stmt );
     assert( tree->n_nchildren == 1 );
@@ -1319,8 +1296,8 @@ processImport( const char *  buffer,
     node *          lastPart = findLastPart( tree );
 
     body->parent = import;
-    updateBegin( body, tree, lineShifts );
-    updateEnd( body, lastPart, lineShifts );
+    updateBegin( body, tree, context->lineShifts );
+    updateEnd( body, lastPart, context->lineShifts );
 
     /* There must be one child of type import_from or import_name */
     tree = & ( tree->n_child[ 0 ] );
@@ -1337,7 +1314,7 @@ processImport( const char *  buffer,
         fromFragment->parent = import;
         whatFragment->parent = import;
 
-        updateBegin( fromFragment, fromPartBegin, lineShifts );
+        updateBegin( fromFragment, fromPartBegin, context->lineShifts );
 
         node *      lastFromPart = NULL;
         if ( fromPartBegin->n_type == DOT )
@@ -1363,14 +1340,14 @@ processImport( const char *  buffer,
             lastFromPart = findLastPart( fromPartBegin );
         }
 
-        updateEnd( fromFragment, lastFromPart, lineShifts );
+        updateEnd( fromFragment, lastFromPart, context->lineShifts );
 
         node *      whatPart = findChildOfTypeAndValue( tree, NAME, "import" );
         assert( whatPart != NULL );
 
         ++whatPart;     // the very next after import is the first of the what part
-        updateBegin( whatFragment, whatPart, lineShifts );
-        updateEnd( whatFragment, lastPart, lineShifts );
+        updateBegin( whatFragment, whatPart, context->lineShifts );
+        updateEnd( whatFragment, lastPart, context->lineShifts );
 
         import->fromPart = Py::asObject( fromFragment );
         import->whatPart = Py::asObject( whatFragment );
@@ -1385,7 +1362,7 @@ processImport( const char *  buffer,
         assert( firstWhat != NULL );
 
         whatFragment->parent = import;
-        updateBegin( whatFragment, firstWhat, lineShifts );
+        updateBegin( whatFragment, firstWhat, context->lineShifts );
 
         // The end matches the body
         whatFragment->end = body->end;
@@ -1397,17 +1374,15 @@ processImport( const char *  buffer,
 
     import->updateBeginEnd( body );
     import->body = Py::asObject( body );
-    injectComments( buffer, flow, parent, import, import, comments );
+    injectComments( context, flow, parent, import, import );
     flow.append( Py::asObject( import ) );
     return import;
 }
 
 static void
-processDecor( const char *  buffer, Py::List &  flow,
+processDecor( Context *  context, Py::List &  flow,
               FragmentBase *  parent,
-              node *  tree, int *  lineShifts,
-              std::list<Decorator *> &  decors,
-              std::deque< CommentLine > &  comments )
+              node *  tree, std::list<Decorator *> &  decors )
 {
     assert( tree->n_type == decorator );
 
@@ -1422,18 +1397,18 @@ processDecor( const char *  buffer, Py::List &  flow,
     node *          lastNameNode = findLastPart( nameNode );
 
     nameFragment->parent = decor;
-    updateBegin( nameFragment, nameNode, lineShifts );
-    updateEnd( nameFragment, lastNameNode, lineShifts );
+    updateBegin( nameFragment, nameNode, context->lineShifts );
+    updateEnd( nameFragment, lastNameNode, context->lineShifts );
     decor->name = Py::asObject( nameFragment );
 
     Fragment *      body( new Fragment );
     body->parent = decor;
-    updateBegin( body, atNode, lineShifts );
+    updateBegin( body, atNode, context->lineShifts );
 
     if ( lparNode == NULL )
     {
         // Decorator without arguments
-        updateEnd( body, lastNameNode, lineShifts );
+        updateEnd( body, lastNameNode, context->lineShifts );
     }
     else
     {
@@ -1442,26 +1417,24 @@ processDecor( const char *  buffer, Py::List &  flow,
         Fragment *      argsFragment( new Fragment );
 
         argsFragment->parent = decor;
-        updateBegin( argsFragment, lparNode, lineShifts );
-        updateEnd( argsFragment, rparNode, lineShifts );
+        updateBegin( argsFragment, lparNode, context->lineShifts );
+        updateEnd( argsFragment, rparNode, context->lineShifts );
         decor->arguments = Py::asObject( argsFragment );
-        updateEnd( body, rparNode, lineShifts );
+        updateEnd( body, rparNode, context->lineShifts );
     }
 
     decor->body = Py::asObject( body );
     decor->updateBeginEnd( body );
 
-    injectComments( buffer, flow, parent, decor, decor, comments );
+    injectComments( context, flow, parent, decor, decor );
     decors.push_back( decor );
     return;
 }
 
 
 static std::list<Decorator *>
-processDecorators( const char *  buffer, Py::List &  flow,
-                   FragmentBase *  parent,
-                   node *  tree, int *  lineShifts,
-                   std::deque< CommentLine > &  comments )
+processDecorators( Context *  context, Py::List &  flow,
+                   FragmentBase *  parent, node *  tree )
 {
     assert( tree->n_type == decorators );
 
@@ -1474,8 +1447,7 @@ processDecorators( const char *  buffer, Py::List &  flow,
         child = & ( tree->n_child[ k ] );
         if ( child->n_type == decorator )
         {
-            processDecor( buffer, flow, parent, child, lineShifts, decors,
-                          comments );
+            processDecor( context, flow, parent, child, decors );
         }
     }
     return decors;
@@ -1540,13 +1512,11 @@ Docstring *  checkForDocstring( node *  tree, int *  lineShifts )
 
 
 static FragmentBase *
-processFuncDefinition( const char *                 buffer,
+processFuncDefinition( Context *                    context,
                        node *                       tree,
                        FragmentBase *               parent,
                        Py::List &                   flow,
-                       int *                        lineShifts,
-                       std::list<Decorator *> &     decors,
-                       std::deque< CommentLine > &  comments )
+                       std::list<Decorator *> &     decors )
 {
     assert( tree->n_type == funcdef );
     assert( tree->n_nchildren > 1 );
@@ -1562,14 +1532,14 @@ processFuncDefinition( const char *                 buffer,
 
     Fragment *      body( new Fragment );
     body->parent = func;
-    updateBegin( body, defNode, lineShifts );
-    updateEnd( body, colonNode, lineShifts );
+    updateBegin( body, defNode, context->lineShifts );
+    updateEnd( body, colonNode, context->lineShifts );
     func->body = Py::asObject( body );
 
     Fragment *      name( new Fragment );
     name->parent = func;
-    updateBegin( name, nameNode, lineShifts );
-    updateEnd( name, nameNode, lineShifts );
+    updateBegin( name, nameNode, context->lineShifts );
+    updateEnd( name, nameNode, context->lineShifts );
     func->name = Py::asObject( name );
 
     node *      params = findChildOfType( tree, parameters );
@@ -1577,8 +1547,8 @@ processFuncDefinition( const char *                 buffer,
     node *      rparNode = findChildOfType( params, RPAR );
     Fragment *  args( new Fragment );
     args->parent = func;
-    updateBegin( args, lparNode, lineShifts );
-    updateEnd( args, rparNode, lineShifts );
+    updateBegin( args, lparNode, context->lineShifts );
+    updateEnd( args, rparNode, context->lineShifts );
     func->arguments = Py::asObject( args );
 
     if ( decors.empty() )
@@ -1598,13 +1568,13 @@ processFuncDefinition( const char *                 buffer,
         decors.clear();
     }
 
-    injectComments( buffer, flow, parent, func, func, comments );
+    injectComments( context, flow, parent, func, func );
 
     // Handle docstring if so
     node *      suiteNode = findChildOfType( tree, suite );
     assert( suiteNode != NULL );
 
-    Docstring *  docstr = checkForDocstring( suiteNode, lineShifts );
+    Docstring *  docstr = checkForDocstring( suiteNode, context->lineShifts );
     if ( docstr != NULL )
     {
         docstr->parent = func;
@@ -1615,9 +1585,8 @@ processFuncDefinition( const char *                 buffer,
     }
 
     // Walk nested nodes
-    FragmentBase *  lastAdded = walk( buffer, suiteNode, func,
-                                      func->nsuite,
-                                      lineShifts, docstr != NULL, comments );
+    FragmentBase *  lastAdded = walk( context, suiteNode, func,
+                                      func->nsuite, docstr != NULL );
     if ( lastAdded == NULL )
         func->updateEnd( body );
     else
@@ -1628,13 +1597,11 @@ processFuncDefinition( const char *                 buffer,
 
 
 static FragmentBase *
-processClassDefinition( const char *                 buffer,
+processClassDefinition( Context *                    context,
                         node *                       tree,
                         FragmentBase *               parent,
                         Py::List &                   flow,
-                        int *                        lineShifts,
-                        std::list<Decorator *> &     decors,
-                        std::deque< CommentLine > &  comments )
+                        std::list<Decorator *> &     decors )
 {
     assert( tree->n_type == classdef );
     assert( tree->n_nchildren > 1 );
@@ -1650,14 +1617,14 @@ processClassDefinition( const char *                 buffer,
 
     Fragment *      body( new Fragment );
     body->parent = cls;
-    updateBegin( body, defNode, lineShifts );
-    updateEnd( body, colonNode, lineShifts );
+    updateBegin( body, defNode, context->lineShifts );
+    updateEnd( body, colonNode, context->lineShifts );
     cls->body = Py::asObject( body );
 
     Fragment *      name( new Fragment );
     name->parent = cls;
-    updateBegin( name, nameNode, lineShifts );
-    updateEnd( name, nameNode, lineShifts );
+    updateBegin( name, nameNode, context->lineShifts );
+    updateEnd( name, nameNode, context->lineShifts );
     cls->name = Py::asObject( name );
 
     node *      lparNode = findChildOfType( tree, LPAR );
@@ -1668,8 +1635,8 @@ processClassDefinition( const char *                 buffer,
         Fragment *  baseClasses( new Fragment );
 
         baseClasses->parent = cls;
-        updateBegin( baseClasses, lparNode, lineShifts );
-        updateEnd( baseClasses, rparNode, lineShifts );
+        updateBegin( baseClasses, lparNode, context->lineShifts );
+        updateEnd( baseClasses, rparNode, context->lineShifts );
         cls->baseClasses = Py::asObject( baseClasses );
     }
 
@@ -1690,13 +1657,13 @@ processClassDefinition( const char *                 buffer,
         decors.clear();
     }
 
-    injectComments( buffer, flow, parent, cls, cls, comments );
+    injectComments( context, flow, parent, cls, cls );
 
     // Handle docstring if so
     node *      suiteNode = findChildOfType( tree, suite );
     assert( suiteNode != NULL );
 
-    Docstring *  docstr = checkForDocstring( suiteNode, lineShifts );
+    Docstring *  docstr = checkForDocstring( suiteNode, context->lineShifts );
     if ( docstr != NULL )
     {
         docstr->parent = cls;
@@ -1707,8 +1674,8 @@ processClassDefinition( const char *                 buffer,
     }
 
     // Walk nested nodes
-    FragmentBase *  lastAdded = walk( buffer, suiteNode, cls, cls->nsuite,
-                                      lineShifts, docstr != NULL, comments );
+    FragmentBase *  lastAdded = walk( context, suiteNode, cls, cls->nsuite,
+                                      docstr != NULL );
 
     if ( lastAdded == NULL )
         cls->updateEnd( body );
@@ -1788,10 +1755,10 @@ getNodeToProcess( node *  tree )
 
 
 static FragmentBase *
-addCodeBlock( CodeBlock **  codeBlock,
-              Py::List &    flow, int *  lineShifts,
-              const char *  buffer, FragmentBase *  parent,
-              std::deque< CommentLine > &  comments )
+addCodeBlock( Context *  context,
+              CodeBlock **  codeBlock,
+              Py::List &    flow,
+              FragmentBase *  parent )
 {
     if ( *codeBlock == NULL )
         return NULL;
@@ -1800,13 +1767,13 @@ addCodeBlock( CodeBlock **  codeBlock,
 
     Fragment *      body( new Fragment );
     body->parent = p;
-    updateBegin( body, (node *)(p->firstNode), lineShifts );
-    updateEnd( body, findLastPart( (node *)(p->lastNode) ), lineShifts );
+    updateBegin( body, (node *)(p->firstNode), context->lineShifts );
+    updateEnd( body, findLastPart( (node *)(p->lastNode) ), context->lineShifts );
 
     p->updateBeginEnd( body );
     p->body = Py::asObject( body );
 
-    injectComments( buffer, flow, parent, p, p, comments );
+    injectComments( context, flow, parent, p, p );
     flow.append( Py::asObject( p ) );
     *codeBlock = NULL;
     return p;
@@ -1842,13 +1809,11 @@ addToCodeBlock( CodeBlock *  codeBlock, node *  tree )
 
 
 static FragmentBase *
-walk( const char *                 buffer,
+walk( Context *                    context,
       node *                       tree,
       FragmentBase *               parent,
       Py::List &                   flow,
-      int *                        lineShifts,
-      bool                         docstrProcessed,
-      std::deque< CommentLine > &  comments )
+      bool                         docstrProcessed )
 {
     CodeBlock *         codeBlock = NULL;
     FragmentBase *      lastAdded = NULL;
@@ -1883,51 +1848,34 @@ walk( const char *                 buffer,
                     switch ( nodeToProcess->n_type )
                     {
                         case import_stmt:
-                            addCodeBlock( & codeBlock, flow, lineShifts,
-                                          buffer, parent, comments );
-                            lastAdded = processImport( buffer,
-                                                       nodeToProcess, parent,
-                                                       flow, lineShifts,
-                                                       comments );
+                            addCodeBlock( context, & codeBlock, flow, parent );
+                            lastAdded = processImport( context, nodeToProcess,
+                                                       parent, flow );
                             continue;
                         case assert_stmt:
-                            addCodeBlock( & codeBlock, flow, lineShifts,
-                                          buffer, parent, comments );
-                            lastAdded = processAssert( buffer,
-                                                       nodeToProcess, parent,
-                                                       flow, lineShifts,
-                                                       comments );
+                            addCodeBlock( context, & codeBlock, flow, parent );
+                            lastAdded = processAssert( context, nodeToProcess,
+                                                       parent, flow );
                             continue;
                         case break_stmt:
-                            addCodeBlock( & codeBlock, flow, lineShifts,
-                                          buffer, parent, comments );
-                            lastAdded = processBreak( buffer,
-                                                      nodeToProcess, parent,
-                                                      flow, lineShifts,
-                                                      comments );
+                            addCodeBlock( context, & codeBlock, flow, parent );
+                            lastAdded = processBreak( context, nodeToProcess,
+                                                      parent, flow );
                             continue;
                         case continue_stmt:
-                            addCodeBlock( & codeBlock, flow, lineShifts,
-                                          buffer, parent, comments );
-                            lastAdded = processContinue( buffer, nodeToProcess,
-                                                         parent, flow,
-                                                         lineShifts,
-                                                         comments );
+                            addCodeBlock( context, & codeBlock, flow, parent );
+                            lastAdded = processContinue( context, nodeToProcess,
+                                                         parent, flow );
                             continue;
                         case return_stmt:
-                            addCodeBlock( & codeBlock, flow, lineShifts,
-                                          buffer, parent, comments );
-                            lastAdded = processReturn( buffer, nodeToProcess,
-                                                       parent, flow, lineShifts,
-                                                       comments );
+                            addCodeBlock( context, & codeBlock, flow, parent );
+                            lastAdded = processReturn( context, nodeToProcess,
+                                                       parent, flow );
                             continue;
                         case raise_stmt:
-                            addCodeBlock( & codeBlock, flow, lineShifts,
-                                          buffer, parent, comments );
-                            lastAdded = processRaise( buffer, nodeToProcess,
-                                                      parent, flow,
-                                                      lineShifts,
-                                                      comments );
+                            addCodeBlock( context, & codeBlock, flow, parent );
+                            lastAdded = processRaise( context, nodeToProcess,
+                                                      parent, flow );
                             continue;
                         default: ;
                     }
@@ -1945,8 +1893,8 @@ walk( const char *                 buffer,
                     {
                         if ( nodeToProcess->n_lineno - codeBlock->lastLine > 1 )
                         {
-                            lastAdded = addCodeBlock( & codeBlock, flow, lineShifts,
-                                                      buffer, parent, comments );
+                            lastAdded = addCodeBlock( context, & codeBlock, flow,
+                                                      parent );
                             codeBlock = createCodeBlock( nodeToProcess, parent );
                         }
                         else
@@ -1957,55 +1905,41 @@ walk( const char *                 buffer,
                 }
                 continue;
             case if_stmt:
-                addCodeBlock( & codeBlock, flow, lineShifts,
-                              buffer, parent, comments );
-                lastAdded = processIf( buffer, nodeToProcess, parent,
-                                       flow, lineShifts, comments );
+                addCodeBlock( context, & codeBlock, flow, parent );
+                lastAdded = processIf( context, nodeToProcess, parent, flow );
                 continue;
             case while_stmt:
-                addCodeBlock( & codeBlock, flow, lineShifts,
-                              buffer, parent, comments );
-                lastAdded = processWhile( buffer, nodeToProcess, parent,
-                                          flow, lineShifts, comments );
+                addCodeBlock( context, & codeBlock, flow, parent );
+                lastAdded = processWhile( context, nodeToProcess, parent, flow );
                 continue;
             case for_stmt:
-                addCodeBlock( & codeBlock, flow, lineShifts,
-                              buffer, parent, comments );
-                lastAdded = processFor( buffer, nodeToProcess, parent,
-                                        flow, lineShifts, comments );
+                addCodeBlock( context, & codeBlock, flow, parent );
+                lastAdded = processFor( context, nodeToProcess, parent, flow );
                 continue;
             case try_stmt:
-                addCodeBlock( & codeBlock, flow, lineShifts,
-                              buffer, parent, comments );
-                lastAdded = processTry( buffer, nodeToProcess, parent,
-                                        flow, lineShifts, comments );
+                addCodeBlock( context, & codeBlock, flow, parent );
+                lastAdded = processTry( context, nodeToProcess, parent, flow );
                 continue;
             case with_stmt:
-                addCodeBlock( & codeBlock, flow, lineShifts,
-                              buffer, parent, comments );
-                lastAdded = processWith( buffer, nodeToProcess, parent,
-                                         flow, lineShifts, comments );
+                addCodeBlock( context, & codeBlock, flow, parent );
+                lastAdded = processWith( context, nodeToProcess, parent, flow );
                 continue;
             case funcdef:
                 {
                     std::list<Decorator *>      noDecors;
-                    addCodeBlock( & codeBlock, flow, lineShifts,
-                                  buffer, parent, comments );
-                    lastAdded = processFuncDefinition( buffer,
-                                                       nodeToProcess, parent,
-                                                       flow, lineShifts,
-                                                       noDecors, comments );
+                    addCodeBlock( context, & codeBlock, flow, parent );
+                    lastAdded = processFuncDefinition( context, nodeToProcess,
+                                                       parent, flow,
+                                                       noDecors );
                 }
                 continue;
             case classdef:
                 {
                     std::list<Decorator *>      noDecors;
-                    addCodeBlock( & codeBlock, flow, lineShifts,
-                                  buffer, parent, comments );
-                    lastAdded = processClassDefinition( buffer,
-                                                        nodeToProcess, parent,
-                                                        flow, lineShifts,
-                                                        noDecors, comments );
+                    addCodeBlock( context, & codeBlock, flow, parent );
+                    lastAdded = processClassDefinition( context, nodeToProcess,
+                                                        parent, flow,
+                                                        noDecors );
                 }
                 continue;
             case decorated:
@@ -2021,29 +1955,24 @@ walk( const char *                 buffer,
                         continue;
 
                     std::list<Decorator *>      decors =
-                            processDecorators( buffer, flow, parent,
-                                               decorsNode, lineShifts,
-                                               comments );
+                            processDecorators( context, flow, parent,
+                                               decorsNode );
 
                     if ( classOrFuncNode->n_type == funcdef )
                     {
-                        addCodeBlock( & codeBlock, flow, lineShifts,
-                                      buffer, parent, comments );
-                        lastAdded = processFuncDefinition( buffer,
+                        addCodeBlock( context, & codeBlock, flow, parent );
+                        lastAdded = processFuncDefinition( context,
                                                            classOrFuncNode,
                                                            parent, flow,
-                                                           lineShifts,
-                                                           decors, comments );
+                                                           decors );
                     }
                     else if ( classOrFuncNode->n_type == classdef )
                     {
-                        addCodeBlock( & codeBlock, flow, lineShifts,
-                                      buffer, parent, comments );
-                        lastAdded = processClassDefinition( buffer,
+                        addCodeBlock( context, & codeBlock, flow, parent );
+                        lastAdded = processClassDefinition( context,
                                                             classOrFuncNode,
                                                             parent, flow,
-                                                            lineShifts,
-                                                            decors, comments );
+                                                            decors );
                     }
                 }
                 continue;
@@ -2052,8 +1981,7 @@ walk( const char *                 buffer,
 
     // Add block if needed
     if ( codeBlock != NULL )
-        return addCodeBlock( & codeBlock, flow, lineShifts,
-                             buffer, parent, comments );
+        return addCodeBlock( context, & codeBlock, flow, parent );
     return lastAdded;
 }
 
@@ -2109,14 +2037,19 @@ Py::Object  parseInput( const char *  buffer, const char *  fileName,
         }
 
         // Walk the syntax tree
-        walk( buffer, root, controlFlow, controlFlow->nsuite, lineShifts,
-              docstr != NULL, comments );
+        Context         context;
+        context.flow = controlFlow;
+        context.buffer = buffer;
+        context.lineShifts = lineShifts;
+        context.comments = & comments;
+
+        walk( & context, root, controlFlow,
+              controlFlow->nsuite, docstr != NULL );
         PyNode_Free( tree );
 
         // Inject trailing comments if so
-        injectLeadingComments( buffer, controlFlow->nsuite,
-                               controlFlow, NULL, NULL, INT_MAX,
-                               comments );
+        injectLeadingComments( & context, controlFlow->nsuite,
+                               controlFlow, NULL, NULL, INT_MAX );
     }
 
     return Py::asObject( controlFlow );

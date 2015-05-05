@@ -645,6 +645,10 @@ class ControlFlow : public FragmentBase,
 
         // Error reporting support
         Py::List    errors;         // List of Py::String objects
+        Py::List    warnings;       // List of tuples( line, message )
+
+    public:
+        void addWarning( int  line, const std::string &  message );
 };
 
 
