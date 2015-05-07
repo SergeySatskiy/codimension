@@ -345,6 +345,30 @@ createCommentFragment( const CommentLine &  comment )
 
 
 static void
+addLeadingCMLComment( Context *  context,
+                      CMLComment *  leadingCML,
+                      int  leadingLastLine,
+                      int  firstStatementLine,
+                      FragmentWithComments *  statement,
+                      FragmentBase *  flowAsParent,
+                      Py::List &  flow )
+{
+    leadingCML->extractProperties( context );
+    if ( leadingLastLine + 1 == firstStatementLine )
+    {
+        statement->leadingCMLComments.append( Py::asObject( leadingCML ) );
+    }
+    else
+    {
+        flowAsParent->updateBeginEnd( leadingCML );
+        flow.append( Py::asObject( leadingCML ) );
+    }
+    return;
+}
+
+
+
+static void
 injectLeadingComments( Context *  context,
                        Py::List &  flow,
                        FragmentBase *  flowAsParent,
@@ -370,15 +394,9 @@ injectLeadingComments( Context *  context,
             {
                 if ( leadingCML != NULL )
                 {
-                    leadingCML->extractProperties( context );
-                    if ( leadingLastLine + 1 == firstStatementLine )
-                        statement->leadingCMLComments.append(
-                                                Py::asObject( leadingCML ) );
-                    else
-                    {
-                        flowAsParent->updateBeginEnd( leadingCML );
-                        flow.append( Py::asObject( leadingCML ) );
-                    }
+                    addLeadingCMLComment( context, leadingCML,
+                                          leadingLastLine, firstStatementLine,
+                                          statement, flowAsParent, flow );
                     leadingCML = NULL;
                 }
 
@@ -438,15 +456,9 @@ injectLeadingComments( Context *  context,
             {
                 if ( leadingCML != NULL )
                 {
-                    leadingCML->extractProperties( context );
-                    if ( leadingLastLine + 1 == firstStatementLine )
-                        statement->leadingCMLComments.append(
-                                                Py::asObject( leadingCML ) );
-                    else
-                    {
-                        flowAsParent->updateBeginEnd( leadingCML );
-                        flow.append( Py::asObject( leadingCML ) );
-                    }
+                    addLeadingCMLComment( context, leadingCML,
+                                          leadingLastLine, firstStatementLine,
+                                          statement, flowAsParent, flow );
                     leadingCML = NULL;
                 }
 
@@ -470,15 +482,9 @@ injectLeadingComments( Context *  context,
 
         if ( leadingCML != NULL )
         {
-            leadingCML->extractProperties( context );
-            if ( leadingLastLine + 1 == firstStatementLine )
-                statement->leadingCMLComments.append(
-                                                Py::asObject( leadingCML ) );
-            else
-            {
-                flowAsParent->updateBeginEnd( leadingCML );
-                flow.append( Py::asObject( leadingCML ) );
-            }
+            addLeadingCMLComment( context, leadingCML,
+                                  leadingLastLine, firstStatementLine,
+                                  statement, flowAsParent, flow );
             leadingCML = NULL;
         }
         if ( leading != NULL )
@@ -495,6 +501,59 @@ injectLeadingComments( Context *  context,
 
         leadingLastLine = detectLeadingBlock( context, firstStatementLine );
     }
+    return;
+}
+
+
+static void
+addSideCMLCommentContinue( Context *  context,
+                           CMLComment *  sideCML,
+                           CommentLine &  comment,
+                           FragmentBase *  statementAsParent )
+{
+    if ( sideCML == NULL )
+    {
+        // Bad thing: someone may deleted the proper
+        // cml comment beginning so the comment is converted into a
+        // regular one. The regular comment will be handled below.
+        context->flow->addWarning( comment.line,
+                    "Continue of the CML comment without the "
+                    "beginning. Treat it as a regular comment." );
+        comment.type = REGULAR_COMMENT;
+        return;
+    }
+
+    // Check if there is the proper beginning
+    if ( sideCML->endLine + 1 != comment.line )
+    {
+        // Bad thing: whether someone deleted the beginning of
+        // the cml comment or inserted an empty line between.
+        // So convert the comment into a regular one.
+        context->flow->addWarning( comment.line,
+                    "Continue of the CML comment without the beginning "
+                    "in the previous line. Treat it as a regular comment." );
+        comment.type = REGULAR_COMMENT;
+        return;
+    }
+
+    // All is fine, let's add the CML continue
+    Fragment *      part( createCommentFragment( comment ) );
+    part->parent = statementAsParent;
+    sideCML->updateEnd( part );
+    sideCML->parts.append( Py::asObject( part ) );
+    return;
+}
+
+
+static void
+addSideCMLComment( Context *  context,
+                   CMLComment *  sideCML,
+                   FragmentWithComments *  statement,
+                   FragmentBase *  flowAsParent )
+{
+    sideCML->extractProperties( context );
+    statement->sideCMLComments.append( Py::asObject( sideCML ) );
+    flowAsParent->updateEnd( sideCML );
     return;
 }
 
@@ -524,9 +583,7 @@ injectSideComments( Context *  context,
         {
             if ( sideCML != NULL )
             {
-                sideCML->extractProperties( context );
-                statement->sideCMLComments.append( Py::asObject( sideCML ) );
-                flowAsParent->updateEnd( sideCML );
+                addSideCMLComment( context, sideCML, statement, flowAsParent );
                 sideCML = NULL;
             }
 
@@ -540,38 +597,9 @@ injectSideComments( Context *  context,
 
         if ( comment.type == CML_COMMENT_CONTINUE )
         {
-            if ( sideCML == NULL )
-            {
-                // Bad thing: someone may deleted the proper
-                // cml comment beginning so the comment is converted into a
-                // regular one. The regular comment will be handled below.
-                context->flow->addWarning( comment.line,
-                                           "Continue of the CML comment "
-                                           "without the beginning. "
-                                           "Treat it as a regular comment." );
-                comment.type = REGULAR_COMMENT;
-            }
-            else
-            {
-                if ( sideCML->endLine + 1 != comment.line )
-                {
-                    // Bad thing: whether someone deleted the beginning of
-                    // the cml comment or inserted an empty line between.
-                    // So convert the comment into a regular one.
-                    context->flow->addWarning( comment.line,
-                                               "Continue of the CML comment "
-                                               "without the beginning. "
-                                               "Treat it as a regular comment." );
-                    comment.type = REGULAR_COMMENT;
-                }
-                else
-                {
-                    Fragment *      part( createCommentFragment( comment ) );
-                    part->parent = statementAsParent;
-                    sideCML->updateEnd( part );
-                    sideCML->parts.append( Py::asObject( part ) );
-                }
-            }
+            // It may change the comment type to a REGULAR_COMMENT one
+            addSideCMLCommentContinue( context, sideCML, comment,
+                                       statementAsParent );
         }
 
         if ( comment.type == REGULAR_COMMENT )
@@ -607,9 +635,7 @@ injectSideComments( Context *  context,
         {
             if ( sideCML != NULL )
             {
-                sideCML->extractProperties( context );
-                statement->sideCMLComments.append( Py::asObject( sideCML ) );
-                flowAsParent->updateEnd( sideCML );
+                addSideCMLComment( context, sideCML, statement, flowAsParent );
                 sideCML = NULL;
             }
 
@@ -623,38 +649,9 @@ injectSideComments( Context *  context,
 
         if ( comment.type == CML_COMMENT_CONTINUE )
         {
-            if ( sideCML == NULL )
-            {
-                // Bad thing: someone may deleted the proper
-                // cml comment beginning so the comment is converted into a
-                // regular one. The regular comment will be handled below.
-                context->flow->addWarning( comment.line,
-                                           "Continue of the CML comment "
-                                           "without the beginning. "
-                                           "Treat it as a regular comment." );
-                comment.type = REGULAR_COMMENT;
-            }
-            else
-            {
-                if ( sideCML->endLine + 1 != comment.line )
-                {
-                    // Bad thing: whether someone deleted the beginning of
-                    // the cml comment or inserted an empty line between.
-                    // So convert the comment into a regular one.
-                    context->flow->addWarning( comment.line,
-                                           "Continue of the CML comment "
-                                           "without the beginning. "
-                                           "Treat it as a regular comment." );
-                    comment.type = REGULAR_COMMENT;
-                }
-                else
-                {
-                    Fragment *      part( createCommentFragment( comment ) );
-                    part->parent = statementAsParent;
-                    sideCML->updateEnd( part );
-                    sideCML->parts.append( Py::asObject( part ) );
-                }
-            }
+            // It may change the comment type to a REGULAR_COMMENT one
+            addSideCMLCommentContinue( context, sideCML, comment,
+                                       statementAsParent );
         }
 
         if ( comment.type == REGULAR_COMMENT )
@@ -678,9 +675,7 @@ injectSideComments( Context *  context,
     // Insert the collected comments
     if ( sideCML != NULL )
     {
-        sideCML->extractProperties( context );
-        statement->sideCMLComments.append( Py::asObject( sideCML ) );
-        flowAsParent->updateEnd( sideCML );
+        addSideCMLComment( context, sideCML, statement, flowAsParent );
         sideCML = NULL;
     }
     if ( side != NULL )

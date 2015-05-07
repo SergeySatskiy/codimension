@@ -1006,8 +1006,6 @@ void CMLComment::extractProperties( Context *  context )
     }
 
     // version, recordType, properties
-    printf( "Combined: %s\n", completed.c_str() );
-
     std::string     token;
     size_t          pos( 0 );
 
