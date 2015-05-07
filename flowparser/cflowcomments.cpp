@@ -21,6 +21,7 @@
  */
 
 #include <stdio.h>
+#include <ctype.h>
 
 #include <string.h>
 #include <stdexcept>
@@ -279,6 +280,124 @@ void getLineShiftsAndComments( const char *  buffer, int *  lineShifts,
         comments.push_back( comment );
     }
 
+    return;
+}
+
+
+// CML comments parsing support
+
+// It is used to get:
+// - version
+// - record type
+// - value name
+// - '=' character
+std::string  getCMLCommentToken( const std::string &  comment,
+                                 size_t &  pos )
+{
+    skipSpaces( comment, pos );
+
+    size_t          lastPos( comment.size() - 1 );
+    std::string     token;
+
+    while ( pos <= lastPos )
+    {
+        char    symbol( comment[ pos ] );
+
+        if ( symbol == '=' )
+        {
+            if ( token.empty() )
+            {
+                ++pos;
+                return "=";     // This is a key-value separator
+            }
+            break;              // A key has ended
+        }
+        if ( isspace( symbol ) != 0 )
+        {
+            break;              // A token has ended
+        }
+
+        token += symbol;
+        ++pos;
+    }
+    return token;
+}
+
+
+// It is used to get a value. '"' characters are stripped and if there are many
+// parts then they are merged.
+std::string  getCMLCommentValue( const std::string &  comment,
+                                 size_t &  pos,
+                                 std::string &  warning )
+{
+    skipSpaces( comment, pos );
+
+    size_t          lastPos( comment.size() - 1 );
+    if ( pos > lastPos )
+        return "";
+
+    if ( comment[ pos ] != '"' )
+        return getCMLCommentToken( comment, pos );
+
+    // Here: the value is in double quotes
+    std::string     value;
+
+    ++pos;
+    while ( pos <= lastPos )
+    {
+        char    symbol( comment[ pos ] );
+        if ( symbol == '\\' )
+        {
+            if ( pos < lastPos )
+            {
+                if ( comment[ pos + 1 ] == '"' )
+                {
+                    pos += 2;
+                    value += std::string( "\"" );
+                    continue;
+                }
+            }
+        }
+        else if ( symbol == '"' )
+        {
+            ++pos;
+
+            // That's the end of the value or of a part.
+            // It might be that the value continues in the next part so we need
+            // to look ahead.
+            size_t      tempPos( pos );
+            skipSpaces( comment, tempPos );
+            if ( tempPos <= lastPos )
+            {
+                if ( comment[ tempPos ] == '"' )
+                {
+                    // This is a value continue
+                    pos = tempPos + 1;
+                    continue;
+                }
+            }
+
+            return value;
+        }
+        value += symbol;
+        ++pos;
+    }
+
+    // Unfinished double quote
+    warning = "Unfinished double quote for a property value";
+    return "";
+}
+
+void  skipSpaces( const std::string &  comment,
+                  size_t &  pos )
+{
+    size_t      lastPos( comment.size() - 1 );
+    while ( pos <= lastPos )
+    {
+        if ( isspace( comment[ pos ] ) == 0 )
+            return;
+        ++pos;
+    }
     return;
 }
 

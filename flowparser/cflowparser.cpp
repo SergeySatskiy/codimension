@@ -40,15 +40,6 @@
 extern grammar      _PyParser_Grammar;  /* From graminit.c */
 
 
-struct Context
-{
-    ControlFlow *                   flow;
-    const char *                    buffer;
-    int *                           lineShifts;
-    std::deque< CommentLine > *     comments;
-};
-
-
 static FragmentBase *
 walk( Context *             context,
       node *                tree,
@@ -379,7 +370,7 @@ injectLeadingComments( Context *  context,
             {
                 if ( leadingCML != NULL )
                 {
-                    leadingCML->extractProperties( context->buffer );
+                    leadingCML->extractProperties( context );
                     if ( leadingLastLine + 1 == firstStatementLine )
                         statement->leadingCMLComments.append(
                                                 Py::asObject( leadingCML ) );
@@ -447,7 +438,7 @@ injectLeadingComments( Context *  context,
             {
                 if ( leadingCML != NULL )
                 {
-                    leadingCML->extractProperties( context->buffer );
+                    leadingCML->extractProperties( context );
                     if ( leadingLastLine + 1 == firstStatementLine )
                         statement->leadingCMLComments.append(
                                                 Py::asObject( leadingCML ) );
@@ -479,7 +470,7 @@ injectLeadingComments( Context *  context,
 
         if ( leadingCML != NULL )
         {
-            leadingCML->extractProperties( context->buffer );
+            leadingCML->extractProperties( context );
             if ( leadingLastLine + 1 == firstStatementLine )
                 statement->leadingCMLComments.append(
                                                 Py::asObject( leadingCML ) );
@@ -533,7 +524,7 @@ injectSideComments( Context *  context,
         {
             if ( sideCML != NULL )
             {
-                sideCML->extractProperties( context->buffer );
+                sideCML->extractProperties( context );
                 statement->sideCMLComments.append( Py::asObject( sideCML ) );
                 flowAsParent->updateEnd( sideCML );
                 sideCML = NULL;
@@ -616,7 +607,7 @@ injectSideComments( Context *  context,
         {
             if ( sideCML != NULL )
             {
-                sideCML->extractProperties( context->buffer );
+                sideCML->extractProperties( context );
                 statement->sideCMLComments.append( Py::asObject( sideCML ) );
                 flowAsParent->updateEnd( sideCML );
                 sideCML = NULL;
@@ -687,7 +678,7 @@ injectSideComments( Context *  context,
     // Insert the collected comments
     if ( sideCML != NULL )
     {
-        sideCML->extractProperties( context->buffer );
+        sideCML->extractProperties( context );
         statement->sideCMLComments.append( Py::asObject( sideCML ) );
         flowAsParent->updateEnd( sideCML );
         sideCML = NULL;

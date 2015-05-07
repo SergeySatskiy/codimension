@@ -27,11 +27,16 @@
 #include "CXX/Objects.hxx"
 #include "CXX/Extensions.hxx"
 
+#include "cflowcomments.hpp"
+
+
 
 // To make it easy to try with 'int' or 'long'
 #define INT_TYPE            long
 #define PYTHON_INT_TYPE     Py::Long
 
+
+struct Context;
 
 
 // Base class for all the fragments. It is visible in C++ only, python users
@@ -74,7 +79,7 @@ class FragmentBase
     public:
         Py::Object  getLineRange( void );
         Py::Object  getContent( const Py::Tuple &  args );
-        std::string getContent( const std::string *  buf = NULL );
+        std::string getContent( const char *  buf = NULL );
         Py::Object  getLineContent( const Py::Tuple &  args );
 
         void        updateBegin( const FragmentBase *  other );
@@ -222,7 +227,7 @@ class CMLComment : public FragmentBase,
 
     public:
         // Not visible from python
-        void extractProperties( const char *  buffer );
+        void extractProperties( Context *  context );
 };
 
 
@@ -651,6 +656,16 @@ class ControlFlow : public FragmentBase,
         void addWarning( int  line, const std::string &  message );
 };
 
+
+
+// The parser context
+struct Context
+{
+    ControlFlow *                   flow;
+    const char *                    buffer;
+    int *                           lineShifts;
+    std::deque< CommentLine > *     comments;
+};
 
 #endif
 

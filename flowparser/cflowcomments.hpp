@@ -67,5 +67,14 @@ void getLineShiftsAndComments( const char *  buffer, int *  lineShifts,
                                std::deque< CommentLine > &  comments );
 
 
+// CML comments parsing support
+std::string  getCMLCommentToken( const std::string &  comment,
+                                 size_t &  pos );
+std::string  getCMLCommentValue( const std::string &  comment,
+                                 size_t &  pos,
+                                 std::string &  warning );
+void  skipSpaces( const std::string &  comment,
+                  size_t &  pos );
+
 #endif
 

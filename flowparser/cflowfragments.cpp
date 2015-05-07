@@ -20,6 +20,7 @@
  * Python extension module - control flow fragments
  */
 
+#include <stdlib.h>
 
 #include <string>
 
@@ -192,10 +193,10 @@ bool  FragmentBase::setAttribute( const char *        attrName,
 }
 
 
-std::string  FragmentBase::getContent( const std::string *  buf )
+std::string  FragmentBase::getContent( const char *  buf )
 {
     if ( buf != NULL )
-        return buf->substr( begin, end - begin + 1 );
+        return std::string( buf + begin, end - begin + 1 );
 
     // Check if serialized
     FragmentBase *      current = this;
@@ -219,7 +220,7 @@ Py::Object  FragmentBase::getContent( const Py::Tuple &  args )
     if ( argCount == 1 )
     {
         std::string  content( Py::String( args[ 0 ] ).as_std_string() );
-        return Py::String( getContent( & content ) );
+        return Py::String( getContent( content.c_str() ) );
     }
 
     throwWrongBufArgument( "getContent" );
@@ -239,7 +240,7 @@ Py::Object  FragmentBase::getLineContent( const Py::Tuple &  args )
     {
         std::string  content( Py::String( args[ 0 ] ).as_std_string() );
         return Py::String( std::string( beginPos - 1, ' ' ) +
-                           getContent( & content ) );
+                           getContent( content.c_str() ) );
     }
 
     throw Py::RuntimeError( "Unexpected number of arguments. getLineContent() "
@@ -577,7 +578,7 @@ Py::Object  BangLine::getDisplayValue( const Py::Tuple &  args )
         case 1:
             {
                 std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
-                content = FragmentBase::getContent( & buf );
+                content = FragmentBase::getContent( buf.c_str() );
                 break;
             }
         default:
@@ -685,7 +686,7 @@ Py::Object  EncodingLine::getDisplayValue( const Py::Tuple &  args )
         case 1:
             {
                 std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
-                content = FragmentBase::getContent( & buf );
+                content = FragmentBase::getContent( buf.c_str() );
                 break;
             }
         default:
@@ -797,7 +798,7 @@ Py::Object  Comment::getDisplayValue( const Py::Tuple &  args )
 {
     size_t          argCount( args.length() );
     std::string     buf;
-    std::string *   bufPointer;
+    const char *    bufPointer;
 
     if ( argCount == 0 )
     {
@@ -806,7 +807,7 @@ Py::Object  Comment::getDisplayValue( const Py::Tuple &  args )
     else if ( argCount == 1 )
     {
         buf = Py::String( args[ 0 ] ).as_std_string();
-        bufPointer = & buf;
+        bufPointer = buf.c_str();
     }
     else
     {
@@ -978,9 +979,95 @@ Py::Object  CMLComment::repr( void )
 
 
 // Extracts version, record type and properties
-void CMLComment::extractProperties( const char *  buffer )
+void CMLComment::extractProperties( Context *  context )
 {
+    // Combine the whole string considering continuations
+    std::string     completed;
+    int             firstLine( -1 );
+
+    for ( size_t  k = 0; k < parts.size(); ++k )
+    {
+        Fragment *      f( TOFRAGMENT( parts[ k ] ) );
+        const char *    b;
+
+        if ( k == 0 )
+        {
+            b = strstr( context->buffer + f->begin, "cml" ) + 3;
+            firstLine = f->beginLine;
+        }
+        else
+        {
+            b = strstr( context->buffer + f->begin, "cml+" ) + 4;
+            completed += " ";
+        }
+
+        size_t          shift = b - ( context->buffer + f->begin );
+        completed += std::string( b, f->end - f->begin + 1 - shift );
+    }
+
     // version, recordType, properties
+    printf( "Combined: %s\n", completed.c_str() );
+
+    std::string     token;
+    size_t          pos( 0 );
+
+    // Version
+    token = getCMLCommentToken( completed, pos );
+    if ( token.empty() )
+    {
+        context->flow->addWarning( firstLine, "Could not find CML version" );
+        return;
+    }
+    int     ver( atol( token.c_str() ) );
+    if ( ver <= 0 )
+    {
+        context->flow->addWarning( firstLine, "Unknown format of the "
+                                   "CML version. Expected positive integer." );
+        return;
+    }
+    this->version = Py::Int( ver );
+
+    // Record type
+    token = getCMLCommentToken( completed, pos );
+    if ( token.empty() )
+    {
+        context->flow->addWarning( firstLine, "Could not find CML record type" );
+        return;
+    }
+    this->recordType = Py::String( token );
+
+    // Properties
+    for ( ; ; )
+    {
+        token = getCMLCommentToken( completed, pos );
+        if ( token.empty() )
+            break;
+
+        std::string     key( token );
+        token = getCMLCommentToken( completed, pos );
+        if ( token != std::string( "=" ) )
+        {
+            context->flow->addWarning( firstLine, "Could not find '=' "
+                                       "after a property name (property '" +
+                                       key + "')" );
+            return;
+        }
+
+        std::string     warning;
+        token = getCMLCommentValue( completed, pos, warning );
+        if ( ! warning.empty() )
+        {
+            context->flow->addWarning( firstLine, warning );
+            return;
+        }
+        if ( token.empty() )
+        {
+            context->flow->addWarning( firstLine, "Could not find a property "
+                                       "value (property '"+ key + "')" );
+            return;
+        }
+        this->properties.setItem( key, Py::String( token ) );
+    }
 }
 
 
@@ -1073,7 +1160,7 @@ Py::Object  Docstring::getDisplayValue( const Py::Tuple &  args )
 {
     size_t          argCount( args.length() );
     std::string     buf;
-    std::string *   bufPointer;
+    const char *    bufPointer;
 
     if ( argCount == 0 )
     {
@@ -1082,7 +1169,7 @@ Py::Object  Docstring::getDisplayValue( const Py::Tuple &  args )
     else if ( argCount == 1 )
     {
         buf = Py::String( args[ 0 ] ).as_std_string();
-        bufPointer = & buf;
+        bufPointer = buf.c_str();
     }
     else
     {
