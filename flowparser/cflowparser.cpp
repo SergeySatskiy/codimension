@@ -1588,6 +1588,7 @@ processFuncDefinition( Context *                    context,
     if ( docstr != NULL )
     {
         docstr->parent = func;
+        injectComments( context, func->nsuite, func, docstr, docstr );
         func->docstring = Py::asObject( docstr );
 
         // It could be that a docstring is the only item in the function suite
@@ -1678,6 +1679,7 @@ processClassDefinition( Context *                    context,
     if ( docstr != NULL )
     {
         docstr->parent = cls;
+        injectComments( context, cls->nsuite, cls, docstr, docstr );
         cls->docstring = Py::asObject( docstr );
 
         // It could be that a docstring is the only item in the class suite
@@ -2038,14 +2040,6 @@ Py::Object  parseInput( const char *  buffer, const char *  fileName,
 
         assert( root->n_type == file_input );
 
-        // Check for the docstring first
-        Docstring *  docstr = checkForDocstring( root, lineShifts );
-        if ( docstr != NULL )
-        {
-            docstr->parent = controlFlow;
-            controlFlow->docstring = Py::asObject( docstr );
-            controlFlow->updateBeginEnd( docstr );
-        }
 
         // Walk the syntax tree
         Context         context;
@@ -2053,6 +2047,17 @@ Py::Object  parseInput( const char *  buffer, const char *  fileName,
         context.buffer = buffer;
         context.lineShifts = lineShifts;
         context.comments = & comments;
+
+        // Check for the docstring first
+        Docstring *  docstr = checkForDocstring( root, lineShifts );
+        if ( docstr != NULL )
+        {
+            docstr->parent = controlFlow;
+            injectComments( & context, controlFlow->nsuite,
+                            controlFlow, docstr, docstr );
+            controlFlow->docstring = Py::asObject( docstr );
+            controlFlow->updateBeginEnd( docstr );
+        }
 
         walk( & context, root, controlFlow,
               controlFlow->nsuite, docstr != NULL );
