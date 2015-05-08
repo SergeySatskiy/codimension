@@ -190,39 +190,59 @@ CDMControlFlowModule::~CDMControlFlowModule()
 Py::Object
 CDMControlFlowModule::getControlFlowFromMemory( const Py::Tuple &  args )
 {
-    // One argument is expected: string with the python code
-    if ( args.length() != 1 )
+    // One or two arguments are expected:
+    // - string with the python code - mandatory
+    // - bool to serialize or not - optional (default: true)
+    if ( args.length() < 1 || args.length() > 2 )
     {
         char    buf[ 32 ];
         sprintf( buf, "%ld", args.length() );
-        throw Py::TypeError( "getControlFlowFromMemory() takes exactly 1 "
-                             "argument (" + std::string( buf ) + "given)" );
+        throw Py::TypeError( "Unexpected number of arguments. "
+                             "Expected 1 or 2, received " + std::string( buf ) );
     }
 
-    Py::Object  fName( args[ 0 ] );
-    if ( ! fName.isString() )
-        throw Py::TypeError( "getControlFlowFromMemory() takes exactly 1 "
-                             "argument of string type: python code buffer" );
+    Py::Object      pythonCode( args[ 0 ] );
+    if ( ! pythonCode.isString() )
+        throw Py::TypeError( "Unexpected first argument type. "
+                             "Expected a string: python code buffer" );
 
-
-    std::string     content( Py::String( fName ).as_std_string( "utf-8" ) );
-    size_t          contentSize = content.size();
-
-    if ( contentSize > 0 )
+    bool            makeCopy( true );
+    if ( args.length() > 1 )
     {
-        if ( content[ contentSize - 1 ] == '\n' )
-        {
-            return parseInput( content.c_str(), "dummy.py", false );
-        }
-
-        // No \n at the end; it is safer to add it
-        content += "\n";
-        return parseInput( content.c_str(), "dummy.py", false );
+        Py::Object      serialize( args[ 1 ] );
+        if ( ! serialize.isBoolean() )
+            throw Py::TypeError( "Unexpected second argument type. "
+                                 "Expected a boolean: serialize control flow or not" );
+        makeCopy = serialize.isTrue();
     }
 
-    // Content size is zero
-    ControlFlow *   controlFlow = new ControlFlow();
-    return Py::asObject( controlFlow );
+
+    Py::String      code( pythonCode );
+    size_t          codeSize( code.size() );
+
+    if ( codeSize == 0 )
+    {
+        ControlFlow *   controlFlow = new ControlFlow();
+        return Py::asObject( controlFlow );
+    }
+
+    std::string     content;
+    content.reserve( codeSize + 2 );
+    content = code.as_std_string( "utf-8" );
+
+    // Just in case if there were multibyte characters and
+    // the size has been increased
+    codeSize = content.size();
+    if ( content[ codeSize - 1 ] != '\n' )
+        content += "\n";
+
+    if ( makeCopy )
+    {
+        char *      copy = new char[ content.size() + 1 ];
+        strncpy( copy, content.c_str(), content.size() + 1 );
+        return parseInput( copy, "dummy.py", true );
+    }
+    return parseInput( content.c_str(), "dummy.py", false );
 }
 
 
