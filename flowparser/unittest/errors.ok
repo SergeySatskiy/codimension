@@ -3,6 +3,7 @@
  Errors: 2:8 invalid syntax
  def f()
  
+ Warnings: n/a
  BangLine: None
  EncodingLine: None
  Docstring: None
