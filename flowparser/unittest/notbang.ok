@@ -1,6 +1,12 @@
-Bang: None
-Encoding: None
-Docstring: None
-Body:
-    Comment: Fragment[1:21] (2,1) (2,21)
-        Fragment[1:21] (2,1) (2,21)
+<ControlFlow [1:21] (2,1) (2,21)
+ isOK: true
+ Errors: n/a
+ Warnings: n/a
+ BangLine: None
+ EncodingLine: None
+ Docstring: None
+ Suite: <Comment [1:21] (2,1) (2,21)
+         Parts: <Fragment [1:21] (2,1) (2,21)
+                >
+        >
+>
