@@ -572,7 +572,6 @@ injectSideComments( Context *  context,
     while ( ! context->comments->empty() )
     {
         CommentLine &       comment = context->comments->front();
-        // TODO: is that always right?
         if ( comment.line > statementAsParent->endLine )
             break;
 
@@ -695,7 +694,7 @@ injectComments( Context *  context,
                 Py::List &  flow,
                 FragmentBase *  flowAsParent,
                 FragmentWithComments *  statement,
-               FragmentBase *  statementAsParent )
+                FragmentBase *  statementAsParent )
 {
     injectLeadingComments( context, flow, flowAsParent, statement,
                            statementAsParent,
@@ -932,7 +931,7 @@ processElifPart( Context *  context, Py::List &  flow,
     body->parent = elifPart;
     updateBegin( body, tree, context->lineShifts );
     updateEnd( body, colonNode, context->lineShifts );
-    elifPart->updateBegin( body );
+    elifPart->updateBeginEnd( body );
     elifPart->body = Py::asObject( body );
 
     injectComments( context, flow, parent, elifPart, elifPart );
@@ -980,7 +979,7 @@ processIf( Context *  context,
                 body->parent = ifStatement;
                 updateBegin( body, tree, context->lineShifts );
                 updateEnd( body, colonNode, context->lineShifts );
-                ifStatement->updateBegin( body );
+                ifStatement->updateBeginEnd( body );
                 ifStatement->body = Py::asObject( body );
 
                 injectComments( context, flow, parent,
@@ -1024,7 +1023,7 @@ processExceptPart( Context *  context, Py::List &  flow,
     node *          colonNode = tree + 1;
     updateBegin( body, tree, context->lineShifts );
     updateEnd( body, colonNode, context->lineShifts );
-    exceptPart->updateBegin( body );
+    exceptPart->updateBeginEnd( body );
     exceptPart->body = Py::asObject( body );
 
     // If it is NAME => it is 'finally' or 'else'
@@ -1076,7 +1075,7 @@ processTry( Context *  context,
     updateBegin( body, tree, context->lineShifts );
     updateEnd( body, tryColonNode, context->lineShifts );
     tryStatement->body = Py::asObject( body );
-    tryStatement->updateBegin( body );
+    tryStatement->updateBeginEnd( body );
 
     injectComments( context, flow, parent,
                     tryStatement, tryStatement );
@@ -1147,7 +1146,7 @@ processWhile( Context *  context,
     updateBegin( body, whileNode, context->lineShifts );
     updateEnd( body, colonNode, context->lineShifts );
     w->body = Py::asObject( body );
-    w->updateBegin( body );
+    w->updateBeginEnd( body );
 
     // condition
     node *          testNode = findChildOfType( tree, test );
@@ -1201,7 +1200,7 @@ processWith( Context *  context,
     updateBegin( body, whithNode, context->lineShifts );
     updateEnd( body, colonNode, context->lineShifts );
     w->body = Py::asObject( body );
-    w->updateBegin( body );
+    w->updateBeginEnd( body );
 
     // items
     node *      firstWithItem = findChildOfType( tree, with_item );
@@ -1253,7 +1252,7 @@ processFor( Context *  context,
     updateBegin( body, forNode, context->lineShifts );
     updateEnd( body, colonNode, context->lineShifts );
     f->body = Py::asObject( body );
-    f->updateBegin( body );
+    f->updateBeginEnd( body );
 
     // Iteration
     node *          exprlistNode = findChildOfType( tree, exprlist );
@@ -1561,6 +1560,7 @@ processFuncDefinition( Context *                    context,
     updateEnd( args, rparNode, context->lineShifts );
     func->arguments = Py::asObject( args );
 
+    func->updateEnd( body );
     if ( decors.empty() )
     {
         func->updateBegin( body );
@@ -1650,6 +1650,7 @@ processClassDefinition( Context *                    context,
         cls->baseClasses = Py::asObject( baseClasses );
     }
 
+    cls->updateEnd( body );
     if ( decors.empty() )
     {
         cls->updateBegin( body );
