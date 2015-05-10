@@ -1,11 +1,28 @@
-Bang: None
-Encoding: None
-Docstring: None
-Body:
-    Comment: Fragment[0:15] (1,1) (1,16)
-        Fragment[0:15] (1,1) (1,16)
-    CML record: Fragment[18:93] (3,1) (4,37)
-        Fragment[18:55] (3,1) (3,38)
-        Fragment[57:93] (4,1) (4,37)
-    CML record: Fragment[96:133] (6,1) (6,38)
-        Fragment[96:133] (6,1) (6,38)
+<ControlFlow [0:139] (1,1) (6,37)
+ isOK: true
+ Errors: n/a
+ Warnings: (1, 'Continue of the CML comment without the beginning. Treat it as a regular comment.')
+ BangLine: None
+ EncodingLine: None
+ Docstring: None
+ Suite: <Comment [0:20] (1,1) (1,21)
+         Parts: <Fragment [0:20] (1,1) (1,21)
+                >
+        >
+        <CMLComment [23:100] (3,1) (4,40)
+         Parts: <Fragment [23:59] (3,1) (3,37)
+                >
+                <Fragment [61:100] (4,1) (4,40)
+                >
+         Version: 1
+         RecordType: SB
+         Properties: {'id': '1234-123456-123456-1234', 'title': 'Calculation of a checksum'}
+        >
+        <CMLComment [103:139] (6,1) (6,37)
+         Parts: <Fragment [103:139] (6,1) (6,37)
+                >
+         Version: 1
+         RecordType: SE
+         Properties: {'id': '1234-123456-123456-1234'}
+        >
+>

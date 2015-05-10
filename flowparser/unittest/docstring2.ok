@@ -1,6 +1,17 @@
-Bang: None
-Encoding: None
-Docstring: Fragment[0:10] (1,1) (1,11)
-    Fragment[0:10] (1,1) (1,11)
-Body:
-
+<ControlFlow [0:10] (1,1) (1,11)
+ isOK: true
+ Errors: n/a
+ Warnings: n/a
+ BangLine: None
+ EncodingLine: None
+ Docstring: <Docstring [0:10] (1,1) (1,11)
+             Body: None
+             LeadingComment: None
+             SideComment: None
+             LeadingCMLComments: n/a
+             SideCMLComments: n/a
+             Parts: <Fragment [0:10] (1,1) (1,11)
+                    >
+            >
+ Suite: n/a
+>

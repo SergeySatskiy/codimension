@@ -1,4 +1,4 @@
-# cml 1.0 I blah
-# cml 1.0 C cont
-# cml 1.0 I blah
-# cml 1.0 C cont
+# cml 1 I one = 
+# cml+ 1
+# cml 1 I two = ""
+# cml+ "2"

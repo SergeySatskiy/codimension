@@ -117,18 +117,18 @@ class CDMControlFlowParserTest( unittest.TestCase ):
                              "Expected here: " + self.dir )
         return
 
-    def meat( self, pythonFile, errorMsg ):
+    def meat( self, pythonFile, errorMsg, expectedOK = True ):
         " The test process meat "
 
         controlFlow = getControlFlowFromFile( pythonFile )
-        self.failUnless( controlFlow.isOK == True )
+        self.failUnless( controlFlow.isOK == expectedOK )
 
         f = open( pythonFile )
         content = f.read()
         f.close()
 
         controlFlow = getControlFlowFromMemory( content )
-        self.failUnless( controlFlow.isOK == True )
+        self.failUnless( controlFlow.isOK == expectedOK )
 
         outFileName = pythonFile.replace( ".py", ".out" )
         outFile = open( outFileName, "w" )
@@ -170,35 +170,35 @@ class CDMControlFlowParserTest( unittest.TestCase ):
                    "error retrieving coding" )
         return
 
-#    def test_coding2( self ):
-#        " Test coding 2 "
-#        self.meat( self.dir + "coding2.py",
-#                   "error retrieving coding" )
-#        return
+    def test_coding2( self ):
+        " Test coding 2 "
+        self.meat( self.dir + "coding2.py",
+                   "error retrieving coding", False )
+        return
 
-#    def test_coding3( self ):
-#        " Test coding 3 "
-#        self.meat( self.dir + "coding3.py",
-#                   "error retrieving coding" )
-#        return
+    def test_coding3( self ):
+        " Test coding 3 "
+        self.meat( self.dir + "coding3.py",
+                   "error retrieving coding" )
+        return
 
-#    def test_cml1( self ):
-#        " Test cml 1 "
-#        self.meat( self.dir + "cml1.py",
-#                   "error collecting cml type I" )
-#        return
+    def test_cml1( self ):
+        " Test cml 1 "
+        self.meat( self.dir + "cml1.py",
+                   "error collecting cml" )
+        return
 
-#    def test_cml2( self ):
-#        " Test cml 2 "
-#        self.meat( self.dir + "cml2.py",
-#                   "error collecting cml type I with C" )
-#        return
+    def test_cml2( self ):
+        " Test cml 2 "
+        self.meat( self.dir + "cml2.py",
+                   "error collecting cml with cml+" )
+        return
 
-#    def test_cml3( self ):
-#        " Test cml 3 "
-#        self.meat( self.dir + "cml3.py",
-#                   "error collecting cml type S with C" )
-#        return
+    def test_cml3( self ):
+        " Test cml 3 "
+        self.meat( self.dir + "cml3.py",
+                   "error collecting cml with cml+" )
+        return
 
     def test_docstring1( self ):
         " Test docstring 1 "
@@ -206,11 +206,11 @@ class CDMControlFlowParserTest( unittest.TestCase ):
                    "module docstring error - 1 line" )
         return
 
-#    def test_docstring2( self ):
-#        " Test docstring 2 "
-#        self.meat( self.dir + "docstring2.py",
-#                   "module docstring error - 1 line" )
-#        return
+    def test_docstring2( self ):
+        " Test docstring 2 "
+        self.meat( self.dir + "docstring2.py",
+                   "module docstring error - 1 line" )
+        return
 
 #    def test_docstring3( self ):
 #        " Test docstring 3 "

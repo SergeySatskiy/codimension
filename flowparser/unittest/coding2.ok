@@ -1,6 +1,9 @@
-Bang: None
-Encoding: Fragment[2:26] (2,1) (2,25)
-Docstring: None
-Body:
-    Comment: Fragment[0:0] (1,1) (1,1)
-        Fragment[0:0] (1,1) (1,1)
+<ControlFlow [-1:-1] (-1,-1) (-1,-1)
+ isOK: false
+ Errors: 0:0 decode error
+ Warnings: n/a
+ BangLine: None
+ EncodingLine: None
+ Docstring: None
+ Suite: n/a
+>

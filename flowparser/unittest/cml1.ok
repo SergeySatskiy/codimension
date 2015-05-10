@@ -1,8 +1,22 @@
-Bang: None
-Encoding: None
-Docstring: None
-Body:
-    CML record: Fragment[0:15] (1,1) (1,16)
-        Fragment[0:15] (1,1) (1,16)
-    CML record: Fragment[17:32] (2,1) (2,16)
-        Fragment[17:32] (2,1) (2,16)
+<ControlFlow [0:32] (1,1) (2,17)
+ isOK: true
+ Errors: n/a
+ Warnings: n/a
+ BangLine: None
+ EncodingLine: None
+ Docstring: None
+ Suite: <CMLComment [0:14] (1,1) (1,15)
+         Parts: <Fragment [0:14] (1,1) (1,15)
+                >
+         Version: 1
+         RecordType: I
+         Properties: {'one': '1'}
+        >
+        <CMLComment [16:32] (2,1) (2,17)
+         Parts: <Fragment [16:32] (2,1) (2,17)
+                >
+         Version: 1
+         RecordType: I
+         Properties: {'two': '2'}
+        >
+>
