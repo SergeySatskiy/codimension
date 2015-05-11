@@ -1464,7 +1464,8 @@ processDecorators( Context *  context, Py::List &  flow,
 
 
 // None or Docstring instance
-Docstring *  checkForDocstring( node *  tree, int *  lineShifts )
+static Docstring *
+checkForDocstring( Context *  context, node *  tree )
 {
     if ( tree == NULL )
         return NULL;
@@ -1507,8 +1508,61 @@ Docstring *  checkForDocstring( node *  tree, int *  lineShifts )
         // This is a docstring part
         Fragment *      part( new Fragment );
         part->parent = docstr;
-        updateBegin( part, stringChild, lineShifts );
-        updateEnd( part, stringChild, lineShifts );
+
+        if ( stringChild->n_col_offset != -1 )
+        {
+            updateBegin( part, stringChild, context->lineShifts );
+            updateEnd( part, stringChild, context->lineShifts );
+        }
+        else
+        {
+            // Sick! The syntax parser provides column == -1 if it was a
+            // multiline comment. So the only real information is the end line
+            // of the multiline comment. All the rest I have to deduct myself
+            part->endLine = stringChild->n_lineno;
+
+            int             strLen = strlen( stringChild->n_str );
+            const char *    firstNewLine = NULL;
+            const char *    lastNewLine = NULL;
+            int             count = 0;
+            const char *    current = stringChild->n_str;
+            bool            found = false;
+
+            while ( * current != '\0' )
+            {
+                if ( * current == '\r' )
+                {
+                    if ( * (current + 1 ) == '\n' )
+                    {
+                        ++current;
+                    }
+                    found = true;
+                }
+                else if ( * current == '\n' )
+                {
+                    found = true;
+                }
+
+                if ( found )
+                {
+                    ++count;
+                    lastNewLine = current;
+                    if ( firstNewLine == NULL )
+                        firstNewLine = current;
+                    found = false;
+                }
+
+                ++current;
+            }
+
+            part->beginLine = part->endLine - count;
+
+            part->endPos = strlen( lastNewLine + 1 );
+            part->end = context->lineShifts[ part->endLine ] + part->endPos - 1;
+
+            part->begin = part->end - strLen + 1;
+            part->beginPos = part->begin - context->lineShifts[ part->beginLine ] + 1;
+        }
 
         // In the vast majority of cases a docstring consists of a single part
         // so there is no need to optimize via updateBegin() & updateEnd()
@@ -1584,7 +1638,7 @@ processFuncDefinition( Context *                    context,
     node *      suiteNode = findChildOfType( tree, suite );
     assert( suiteNode != NULL );
 
-    Docstring *  docstr = checkForDocstring( suiteNode, context->lineShifts );
+    Docstring *  docstr = checkForDocstring( context, suiteNode );
     if ( docstr != NULL )
     {
         docstr->parent = func;
@@ -1675,7 +1729,7 @@ processClassDefinition( Context *                    context,
     node *      suiteNode = findChildOfType( tree, suite );
     assert( suiteNode != NULL );
 
-    Docstring *  docstr = checkForDocstring( suiteNode, context->lineShifts );
+    Docstring *  docstr = checkForDocstring( context, suiteNode );
     if ( docstr != NULL )
     {
         docstr->parent = cls;
@@ -2049,7 +2103,7 @@ Py::Object  parseInput( const char *  buffer, const char *  fileName,
         context.comments = & comments;
 
         // Check for the docstring first
-        Docstring *  docstr = checkForDocstring( root, lineShifts );
+        Docstring *  docstr = checkForDocstring( & context, root );
         if ( docstr != NULL )
         {
             docstr->parent = controlFlow;
