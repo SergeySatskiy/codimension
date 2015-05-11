@@ -343,18 +343,18 @@ class CDMControlFlowParserTest( unittest.TestCase ):
         self.meat( self.dir + "commentsonly.py",
                    "comments only with no other empty lines test failed" )
 
-#    def test_noendofline( self ):
-#        " Test for a file which has no EOL at the end "
+    def test_noendofline( self ):
+        " Test for a file which has no EOL at the end "
 
-#        self.meat( self.dir + "noendofline.py",
-#                   "No end of line at the end of the file test failed" )
+        self.meat( self.dir + "noendofline.py",
+                   "No end of line at the end of the file test failed" )
 
-#    def test_empty_brackets( self ):
-#        " Test for empty brackets "
+    def test_empty_brackets( self ):
+        " Test for empty brackets "
 
-#        self.meat( self.dir + "empty_brackets.py",
-#                   "empty brackets test failed" )
-#        return
+        self.meat( self.dir + "empty_brackets.py",
+                   "empty brackets test failed" )
+        return
 
 
 # Run the unit tests
