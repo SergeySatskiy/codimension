@@ -212,29 +212,29 @@ class CDMControlFlowParserTest( unittest.TestCase ):
                    "module docstring error - 1 line" )
         return
 
-#    def test_docstring3( self ):
-#        " Test docstring 3 "
-#        self.meat( self.dir + "docstring3.py",
-#                   "module docstring error - 2 lines" )
-#        return
+    def test_docstring3( self ):
+        " Test docstring 3 "
+        self.meat( self.dir + "docstring3.py",
+                   "module docstring error - 2 lines" )
+        return
 
-#    def test_docstring4( self ):
-#        " Test docstring 4 "
-#        self.meat( self.dir + "docstring4.py",
-#                   "module docstring error - 1 line, joined" )
-#        return
+    def test_docstring4( self ):
+        " Test docstring 4 "
+        self.meat( self.dir + "docstring4.py",
+                   "module docstring error - 1 line, joined" )
+        return
 
-#    def test_docstring5( self ):
-#        " Test docstring 5 "
-#        self.meat( self.dir + "docstring5.py",
-#                   "module docstring error - 1 line, joined" )
-#        return
+    def test_docstring5( self ):
+        " Test docstring 5 "
+        self.meat( self.dir + "docstring5.py",
+                   "module docstring error - 1 line, joined" )
+        return
 
-#    def test_docstring6( self ):
-#        " Test docstring 6 "
-#        self.meat( self.dir + "docstring6.py",
-#                   "module docstring error - 2 lines, joined" )
-#        return
+    def test_docstring6( self ):
+        " Test docstring 6 "
+        self.meat( self.dir + "docstring6.py",
+                   "module docstring error - 2 lines, joined" )
+        return
 
 #    def test_docstring7( self ):
 #        " Test docstring 7 "
