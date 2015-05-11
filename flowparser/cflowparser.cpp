@@ -1463,6 +1463,64 @@ processDecorators( Context *  context, Py::List &  flow,
 }
 
 
+static int
+getNewLineParts( const char *  str, std::deque<const char *>  &  parts)
+{
+    int     count = 0;
+    bool    found = false;
+
+    while ( * str != '\0' )
+    {
+        if ( * str == '\r' )
+        {
+            if ( * (str + 1 ) == '\n' )
+                ++str;
+            found = true;
+        }
+        else if ( * str == '\n' )
+            found = true;
+
+        if ( found )
+        {
+            ++count;
+            parts.push_back( str );
+            found = false;
+        }
+
+        ++str;
+    }
+    return count;
+}
+
+
+// Multiline string literals do not have properly filled information
+// They only have the last line info
+static void
+updateFragmentForMultilineStringLiteral( Context *  context,
+                                         node *  stringChild,
+                                         Fragment *  f )
+{
+    // Sick! The syntax parser provides column == -1 if it was a
+    // multiline comment. So the only real information is the end line
+    // of the multiline comment. All the rest I have to deduct myself
+    std::deque< const char * >  newLines;
+    int             count = getNewLineParts( stringChild->n_str,
+                                             newLines );
+    const char *    lastNewLine = newLines.back();
+    int             strLen = strlen( stringChild->n_str );
+
+    f->endLine = stringChild->n_lineno;
+    f->beginLine = f->endLine - count;
+
+    f->endPos = strlen( lastNewLine + 1 );
+    f->end = context->lineShifts[ f->endLine ] + f->endPos - 1;
+
+    f->begin = f->end - strLen + 1;
+    f->beginPos = f->begin - context->lineShifts[ f->beginLine ] + 1;
+    return;
+}
+
+
 // None or Docstring instance
 static Docstring *
 checkForDocstring( Context *  context, node *  tree )
@@ -1516,52 +1574,8 @@ checkForDocstring( Context *  context, node *  tree )
         }
         else
         {
-            // Sick! The syntax parser provides column == -1 if it was a
-            // multiline comment. So the only real information is the end line
-            // of the multiline comment. All the rest I have to deduct myself
-            part->endLine = stringChild->n_lineno;
-
-            int             strLen = strlen( stringChild->n_str );
-            const char *    firstNewLine = NULL;
-            const char *    lastNewLine = NULL;
-            int             count = 0;
-            const char *    current = stringChild->n_str;
-            bool            found = false;
-
-            while ( * current != '\0' )
-            {
-                if ( * current == '\r' )
-                {
-                    if ( * (current + 1 ) == '\n' )
-                    {
-                        ++current;
-                    }
-                    found = true;
-                }
-                else if ( * current == '\n' )
-                {
-                    found = true;
-                }
-
-                if ( found )
-                {
-                    ++count;
-                    lastNewLine = current;
-                    if ( firstNewLine == NULL )
-                        firstNewLine = current;
-                    found = false;
-                }
-
-                ++current;
-            }
-
-            part->beginLine = part->endLine - count;
-
-            part->endPos = strlen( lastNewLine + 1 );
-            part->end = context->lineShifts[ part->endLine ] + part->endPos - 1;
-
-            part->begin = part->end - strLen + 1;
-            part->beginPos = part->begin - context->lineShifts[ part->beginLine ] + 1;
+            updateFragmentForMultilineStringLiteral( context, stringChild,
+                                                     part );
         }
 
         // In the vast majority of cases a docstring consists of a single part
@@ -1834,8 +1848,57 @@ addCodeBlock( Context *  context,
 
     Fragment *      body( new Fragment );
     body->parent = p;
-    updateBegin( body, (node *)(p->firstNode), context->lineShifts );
-    updateEnd( body, findLastPart( (node *)(p->lastNode) ), context->lineShifts );
+
+    // In case of multiline statement like ''' ... ''' the syntax tree does
+    // not provide any information except the last line
+    node *          firstNode = (node *)(p->firstNode);
+    if ( firstNode->n_col_offset != -1 )
+    {
+        updateBegin( body, firstNode, context->lineShifts );
+    }
+    else
+    {
+        node *      lastItem = findLastPart( firstNode );
+        if ( lastItem->n_type == STRING && lastItem->n_str != NULL )
+        {
+            updateFragmentForMultilineStringLiteral( context, lastItem, body );
+        }
+        else
+        {
+            // NB: must never happened really
+            updateBegin( body, firstNode, context->lineShifts );
+        }
+    }
+
+    node *          lastNode = findLastPart( (node *)(p->lastNode) );
+    if ( lastNode->n_col_offset != -1 )
+    {
+        updateEnd( body, lastNode, context->lineShifts );
+    }
+    else
+    {
+        if ( lastNode->n_type == STRING &&
+             lastNode->n_str != NULL )
+        {
+            if ( p->firstNode != p->lastNode )
+            {
+                // If the string node is the only one then the end part is
+                // updated above
+                std::deque< const char * >  newLines;
+                getNewLineParts( lastNode->n_str, newLines );
+                const char *                lastNewLine = newLines.back();
+
+                body->endLine = lastNode->n_lineno;
+                body->endPos = strlen( lastNewLine + 1 );
+                body->end = context->lineShifts[ body->endLine ] + body->endPos - 1;
+            }
+        }
+        else
+        {
+            // NB: must never happened really
+            updateEnd( body, lastNode, context->lineShifts );
+        }
+    }
 
     p->updateBeginEnd( body );
     p->body = Py::asObject( body );
