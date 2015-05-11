@@ -313,29 +313,29 @@ class CDMControlFlowParserTest( unittest.TestCase ):
                          "errors test failed" )
         return
 
-#    def test_wrong_indent( self ):
-#        " Test wrong indent "
+    def test_wrong_indent( self ):
+        " Test wrong indent "
 
-#        pythonFile = self.dir + "wrong_indent.py"
-#        info = getControlFlowFromFile( pythonFile )
-#        self.failUnless( info.isOK != True )
+        pythonFile = self.dir + "wrong_indent.py"
+        info = getControlFlowFromFile( pythonFile )
+        self.failUnless( info.isOK != True )
 
-#        outFileName = pythonFile.replace( ".py", ".out" )
-#        outFile = open( outFileName, "w" )
-#        outFile.write( formatFlow( str( info ) ) + "\n" )
-#        outFile.close()
+        outFileName = pythonFile.replace( ".py", ".out" )
+        outFile = open( outFileName, "w" )
+        outFile.write( str( info ) + "\n" )
+        outFile.close()
 
-#        okFileName = pythonFile.replace( ".py", ".ok" )
-#        self.failUnless( files_equal( outFileName, okFileName ),
-#                         "wrong indent test failed" )
-#        return
+        okFileName = pythonFile.replace( ".py", ".ok" )
+        self.failUnless( files_equal( outFileName, okFileName ),
+                         "wrong indent test failed" )
+        return
 
-#    def test_one_comment( self ):
-#        " Test for a file which consists of a single comment line "
+    def test_one_comment( self ):
+        " Test for a file which consists of a single comment line "
 
-#        self.meat( self.dir + "one_comment.py",
-#                   "one comment line test failed" )
-#        return
+        self.meat( self.dir + "one_comment.py",
+                   "one comment line test failed" )
+        return
 
     def test_comments_only( self ):
         " Test for a file with no other lines except of comments "
