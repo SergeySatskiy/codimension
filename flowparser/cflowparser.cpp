@@ -1852,13 +1852,14 @@ addCodeBlock( Context *  context,
     // In case of multiline statement like ''' ... ''' the syntax tree does
     // not provide any information except the last line
     node *          firstNode = (node *)(p->firstNode);
+    node *          lastItem = NULL;
     if ( firstNode->n_col_offset != -1 )
     {
         updateBegin( body, firstNode, context->lineShifts );
     }
     else
     {
-        node *      lastItem = findLastPart( firstNode );
+        lastItem = findLastPart( firstNode );
         if ( lastItem->n_type == STRING && lastItem->n_str != NULL )
         {
             updateFragmentForMultilineStringLiteral( context, lastItem, body );
@@ -1880,7 +1881,7 @@ addCodeBlock( Context *  context,
         if ( lastNode->n_type == STRING &&
              lastNode->n_str != NULL )
         {
-            if ( p->firstNode != p->lastNode )
+            if ( lastItem != lastNode )
             {
                 // If the string node is the only one then the end part is
                 // updated above
