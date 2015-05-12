@@ -260,6 +260,18 @@ class CDMControlFlowParserTest( unittest.TestCase ):
                    'multiline string literal statement tail block' )
         return
 
+    def test_literal_stmt4( self ):
+        " Multiline string literal as a statement "
+        self.meat( self.dir + "stringliteral4.py",
+                   'multiline string literal statement tail block' )
+        return
+
+    def test_literal_stmt5( self ):
+        " Multiline string literal as a statement "
+        self.meat( self.dir + "stringliteral5.py",
+                   'multiline string literal statement tail block' )
+        return
+
 #    def test_function_definitions( self ):
 #        " Test function definitions"
 #        self.meat( self.dir + "func_defs.py",
@@ -290,11 +302,11 @@ class CDMControlFlowParserTest( unittest.TestCase ):
 #                   "nested classes test failed" )
 #        return
 
-#    def test_docstrings( self ):
-#        " Test docstrings "
-#        self.meat( self.dir + "docstring.py",
-#                   "docstring test failed" )
-#        return
+    def test_docstrings( self ):
+        " Test docstrings "
+        self.meat( self.dir + "docstring.py",
+                   "docstring test failed" )
+        return
 
 #    def test_decorators( self ):
 #        " Test decorators "
