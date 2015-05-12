@@ -242,6 +242,24 @@ class CDMControlFlowParserTest( unittest.TestCase ):
                    'module docstring error - multilined with """' )
         return
 
+    def test_literal_stmt1( self ):
+        " Multiline string literal as a statement "
+        self.meat( self.dir + "stringliteral1.py",
+                   'multiline string literal statement' )
+        return
+
+    def test_literal_stmt2( self ):
+        " Multiline string literal as a statement "
+        self.meat( self.dir + "stringliteral2.py",
+                   'multiline string literal statement lead block' )
+        return
+
+    def test_literal_stmt3( self ):
+        " Multiline string literal as a statement "
+        self.meat( self.dir + "stringliteral3.py",
+                   'multiline string literal statement tail block' )
+        return
+
 #    def test_function_definitions( self ):
 #        " Test function definitions"
 #        self.meat( self.dir + "func_defs.py",
