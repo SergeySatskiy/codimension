@@ -1939,6 +1939,19 @@ addToCodeBlock( CodeBlock *  codeBlock, node *  tree )
 }
 
 
+static int
+getStringFirstLine( node *  n )
+{
+    n = findLastPart( n );
+    if ( n->n_type != STRING || n->n_str == NULL )
+        return n->n_lineno;
+
+    std::deque< const char * >  newLines;
+    int                         count = getNewLineParts( n->n_str, newLines );
+    return n->n_lineno - count;
+}
+
+
 static FragmentBase *
 walk( Context *                    context,
       node *                       tree,
@@ -2022,7 +2035,15 @@ walk( Context *                    context,
                     }
                     else
                     {
-                        if ( nodeToProcess->n_lineno - codeBlock->lastLine > 1 )
+                        // If it a multilined string literal then we do not
+                        // have the first line. We hav the last line
+                        int     realFirstLine;
+                        if ( nodeToProcess->n_col_offset == -1 )
+                            realFirstLine = getStringFirstLine( nodeToProcess );
+                        else
+                            realFirstLine = nodeToProcess->n_lineno;
+
+                        if ( realFirstLine - codeBlock->lastLine > 1 )
                         {
                             lastAdded = addCodeBlock( context, & codeBlock, flow,
                                                       parent );
