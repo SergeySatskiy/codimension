@@ -1552,7 +1552,7 @@ checkForDocstring( Context *  context, node *  tree )
             continue;
         if ( child->n_type == INDENT )
             continue;
-        if ( child->n_type == stmt )
+        if ( child->n_type == stmt || child->n_type == simple_stmt )
             break;
 
         return NULL;
@@ -1841,8 +1841,12 @@ getStmtNodeToProcess( node *  tree )
 static node *
 getNodeToProcess( node *  tree )
 {
-    assert( tree->n_type == stmt || tree->n_type == small_stmt );
+    assert( tree->n_type == stmt ||
+            tree->n_type == small_stmt ||
+            tree->n_type == simple_stmt );
 
+    if ( tree->n_type == simple_stmt )
+        return tree;
     if ( tree->n_type == small_stmt )
         return getSmallStatementNodeToProcess( tree );
     return getStmtNodeToProcess( tree );
@@ -1980,7 +1984,7 @@ walk( Context *                    context,
     for ( int  i = 0; i < tree->n_nchildren; ++i )
     {
         node *      child = & ( tree->n_child[ i ] );
-        if ( child->n_type != stmt )
+        if ( child->n_type != stmt  && child->n_type != simple_stmt )
             continue;
 
         ++statementCount;
@@ -1998,6 +2002,9 @@ walk( Context *                    context,
                     node *      simpleChild = & ( nodeToProcess->n_child[ k ] );
                     if ( simpleChild->n_type != small_stmt )
                         continue;
+
+                    if ( k != 0 )
+                        ++statementCount;
 
                     node *      nodeToProcess = getNodeToProcess( simpleChild );
                     if ( nodeToProcess == NULL )
