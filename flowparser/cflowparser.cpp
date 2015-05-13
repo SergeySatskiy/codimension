@@ -349,6 +349,7 @@ addLeadingCMLComment( Context *  context,
                       CMLComment *  leadingCML,
                       int  leadingLastLine,
                       int  firstStatementLine,
+                      FragmentBase *  statementAsParent,
                       FragmentWithComments *  statement,
                       FragmentBase *  flowAsParent,
                       Py::List &  flow )
@@ -356,6 +357,7 @@ addLeadingCMLComment( Context *  context,
     leadingCML->extractProperties( context );
     if ( leadingLastLine + 1 == firstStatementLine )
     {
+        statementAsParent->updateBeginEnd( leadingCML );
         statement->leadingCMLComments.append( Py::asObject( leadingCML ) );
     }
     else
@@ -396,7 +398,8 @@ injectLeadingComments( Context *  context,
                 {
                     addLeadingCMLComment( context, leadingCML,
                                           leadingLastLine, firstStatementLine,
-                                          statement, flowAsParent, flow );
+                                          statementAsParent, statement,
+                                          flowAsParent, flow );
                     leadingCML = NULL;
                 }
 
@@ -458,7 +461,8 @@ injectLeadingComments( Context *  context,
                 {
                     addLeadingCMLComment( context, leadingCML,
                                           leadingLastLine, firstStatementLine,
-                                          statement, flowAsParent, flow );
+                                          statementAsParent, statement,
+                                          flowAsParent, flow );
                     leadingCML = NULL;
                 }
 
@@ -484,13 +488,17 @@ injectLeadingComments( Context *  context,
         {
             addLeadingCMLComment( context, leadingCML,
                                   leadingLastLine, firstStatementLine,
-                                  statement, flowAsParent, flow );
+                                  statementAsParent, statement,
+                                  flowAsParent, flow );
             leadingCML = NULL;
         }
         if ( leading != NULL )
         {
             if ( leadingLastLine + 1 == firstStatementLine )
+            {
+                statementAsParent->updateBeginEnd( leading );
                 statement->leadingComment = Py::asObject( leading );
+            }
             else
             {
                 flowAsParent->updateBeginEnd( leading );
@@ -548,11 +556,13 @@ addSideCMLCommentContinue( Context *  context,
 static void
 addSideCMLComment( Context *  context,
                    CMLComment *  sideCML,
+                   FragmentBase *  statementAsParent,
                    FragmentWithComments *  statement,
                    FragmentBase *  flowAsParent )
 {
     sideCML->extractProperties( context );
     statement->sideCMLComments.append( Py::asObject( sideCML ) );
+    statementAsParent->updateEnd( sideCML );
     flowAsParent->updateEnd( sideCML );
     return;
 }
@@ -582,7 +592,8 @@ injectSideComments( Context *  context,
         {
             if ( sideCML != NULL )
             {
-                addSideCMLComment( context, sideCML, statement, flowAsParent );
+                addSideCMLComment( context, sideCML, statementAsParent,
+                                   statement, flowAsParent );
                 sideCML = NULL;
             }
 
@@ -634,7 +645,8 @@ injectSideComments( Context *  context,
         {
             if ( sideCML != NULL )
             {
-                addSideCMLComment( context, sideCML, statement, flowAsParent );
+                addSideCMLComment( context, sideCML, statementAsParent,
+                                   statement, flowAsParent );
                 sideCML = NULL;
             }
 
@@ -674,12 +686,14 @@ injectSideComments( Context *  context,
     // Insert the collected comments
     if ( sideCML != NULL )
     {
-        addSideCMLComment( context, sideCML, statement, flowAsParent );
+        addSideCMLComment( context, sideCML, statementAsParent,
+                           statement, flowAsParent );
         sideCML = NULL;
     }
     if ( side != NULL )
     {
         statement->sideComment = Py::asObject( side );
+        statementAsParent->updateEnd( side );
         flowAsParent->updateEnd( side );
         side = NULL;
     }
