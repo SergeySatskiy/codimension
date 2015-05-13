@@ -272,11 +272,11 @@ class CDMControlFlowParserTest( unittest.TestCase ):
                    'multiline string literal statement tail block' )
         return
 
-#    def test_function_definitions( self ):
-#        " Test function definitions"
-#        self.meat( self.dir + "func_defs.py",
-#                   "function definition test failed" )
-#        return
+    def test_function_definitions( self ):
+        " Test function definitions"
+        self.meat( self.dir + "func_defs.py",
+                   "function definition test failed" )
+        return
 
 #    def test_nested_func_definitions( self ):
 #        " Test nested functions definitions "
