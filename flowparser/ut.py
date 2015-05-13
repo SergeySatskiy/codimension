@@ -308,6 +308,12 @@ class CDMControlFlowParserTest( unittest.TestCase ):
                    "docstring test failed" )
         return
 
+    def test_docstring_comments( self ):
+        " Test docstrings "
+        self.meat( self.dir + "docstringcomments.py",
+                   "docstring comments test failed" )
+        return
+
 #    def test_decorators( self ):
 #        " Test decorators "
 #        self.meat( self.dir + "decorators.py",
