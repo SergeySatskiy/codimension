@@ -4,7 +4,7 @@
  Warnings: n/a
  BangLine: None
  EncodingLine: None
- Docstring: <Docstring [65:86] (7,1) (10,3)
+ Docstring: <Docstring [7:142] (3,1) (11,28)
              Body: None
              LeadingComment: <Comment [7:63] (3,1) (6,11)
                               Parts: <Fragment [7:17] (3,1) (3,11)
@@ -50,7 +50,7 @@
          SideCMLComments: n/a
          Name: [175:175] (14,5) (14,5)
          Arguments: [176:177] (14,6) (14,7)
-         Docstring: <Docstring [199:210] (17,5) (17,16)
+         Docstring: <Docstring [185:252] (16,5) (18,31)
                      Body: None
                      LeadingComment: <Comment [185:193] (16,5) (16,13)
                                       Parts: <Fragment [185:193] (16,5) (16,13)
