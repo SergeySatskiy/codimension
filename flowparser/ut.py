@@ -278,6 +278,12 @@ class CDMControlFlowParserTest( unittest.TestCase ):
                    "function definition test failed" )
         return
 
+    def test_function_comments( self ):
+        " Test function comments "
+        self.meat( self.dir + "func_comments.py",
+                   "function comments test failed" )
+        return
+
 #    def test_nested_func_definitions( self ):
 #        " Test nested functions definitions "
 #        self.meat( self.dir + "nested_funcs.py",
