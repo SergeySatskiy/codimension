@@ -296,11 +296,11 @@ class CDMControlFlowParserTest( unittest.TestCase ):
 #                   "global variables test failed" )
 #        return
 
-#    def test_class_definitions( self ):
-#        " Test class definitions "
-#        self.meat( self.dir + "class_defs.py",
-#                   "class definitions test failed" )
-#        return
+    def test_class_definitions( self ):
+        " Test class definitions "
+        self.meat( self.dir + "class_defs.py",
+                   "class definitions test failed" )
+        return
 
 #    def test_nested_classes( self ):
 #        " Test nested classes "
