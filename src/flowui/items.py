@@ -57,7 +57,7 @@ class CellElement:
         raise Exception( "getConnections() is not implemented for " +
                          kindToString( self.kind ) )
 
-    def draw( self, rect, canvas, settings ):
+    def draw( self, rect, scene, settings ):
         """
         Draws the element on the real canvas
         in the given rect respecting settings
@@ -100,7 +100,7 @@ class VacantCell( CellElement ):
     def getConnections( self ):
         return []
 
-    def draw( self, rect, canvas, settings ):
+    def draw( self, rect, scene, settings ):
         return
 
 

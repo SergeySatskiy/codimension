@@ -31,17 +31,22 @@ The whole canvas is split into independent sections. The growing in one section
 does not affect all the other sections.
 """
 
+from items import VacantCell
+
+
 class VirtualCanvas:
     " Holds the control flow representation "
 
     def __init__( self ):
-        self.cells = [[]]       # Stores the item instances from items.py
+        self.cells = [[VacantCell()]]   # Stores the item instances
+                                        # from items.py or other virtual
+                                        # canvases
 
     def render( self, settings ):
         " Preforms rendering for all the cells "
-        return
+        return (0, 0)
 
-    def draw( self, canvas ):
+    def draw( self, scene ):
         " Draws the diagram on the real canvas "
         return
 

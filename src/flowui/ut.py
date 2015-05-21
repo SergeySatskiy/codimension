@@ -17,11 +17,14 @@
 Unit test for the control flow drawing
 """
 
-import sys, os, os.path, tempfile
+import sys, os, os.path, tempfile, datetime
 from PyQt4      import QtGui, QtCore
 from optparse   import OptionParser
 from subprocess import Popen, PIPE
+from cdmcf      import getControlFlowFromFile, VERSION
 
+import vcanvas
+import cflowsettings
 
 
 def safeRun( commandArgs ):
@@ -53,6 +56,61 @@ def isPythonFile( fName ):
     except:
         return "Error running the 'file' utility for " + fName
     return None
+
+
+def formatFlow( s ):
+    " Reformats the control flow output "
+    result = ""
+    shifts = []     # positions of opening '<'
+    pos = 0         # symbol position in a line
+    nextIsList = False
+
+    def IsNextList( index, maxIndex, buf ):
+        if index == maxIndex:
+            return False
+        if buf[ index + 1 ] == '<':
+            return True
+        if index < maxIndex - 1:
+            if buf[ index + 1 ] == '\n' and buf[ index + 2 ] == '<':
+                return True
+        return False
+
+    maxIndex = len( s ) - 1
+    for index in xrange( len( s ) ):
+        sym = s[ index ]
+        if sym == "\n":
+            lastShift = shifts[ -1 ]
+            result += sym + lastShift * " "
+            pos = lastShift
+            if index < maxIndex:
+                if s[ index + 1 ] not in "<>":
+                    result += " "
+                    pos += 1
+            continue
+        if sym == "<":
+            if nextIsList == False:
+                shifts.append( pos )
+            else:
+                nextIsList = False
+            pos += 1
+            result += sym
+            continue
+        if sym == ">":
+            shift = shifts[ -1 ]
+            result += '\n'
+            result += shift * " "
+            pos = shift
+            result += sym
+            pos += 1
+            if IsNextList( index, maxIndex, s ):
+                nextIsList = True
+            else:
+                del shifts[ -1 ]
+                nextIsList = False
+            continue
+        result += sym
+        pos += 1
+    return result
 
 
 def main():
@@ -213,6 +271,7 @@ class MainWindow( QtGui.QMainWindow ):
 
     def reloadButtonClicked( self ):
         """ reload button has been clicked """
+        self.proceedWithFile( False )
         return
 
     def clearButtonClicked( self ):
@@ -237,6 +296,8 @@ class MainWindow( QtGui.QMainWindow ):
         self.view = None
         self.scene = None
         self.fName = fName
+        self.verbose = verbose
+        self.cf = None
 
         self.resize( 800, 600 )
 
@@ -247,6 +308,9 @@ class MainWindow( QtGui.QMainWindow ):
         self.createGraphicsView()
 
         self.setCentralWidget( self.view )
+
+        if verbose:
+            self.logMessage( "Using cdmcf version " + VERSION )
 
         if warning:
             self.logMessage( warning )
@@ -268,8 +332,8 @@ class MainWindow( QtGui.QMainWindow ):
 
     def logMessage( self, message ):
         """ Makes a log message visible in the user interface """
-
-        self.logWidget.append( message )
+        timestamp = datetime.datetime.now().strftime( '%m-%d-%y %H:%M:%S.%f' )
+        self.logWidget.append( timestamp + " " + message )
         self.logWidget.update()
         return
 
@@ -309,45 +373,56 @@ class MainWindow( QtGui.QMainWindow ):
         self.proceedWithFile()
         return
 
-    def proceedWithFile( self ):
+    def proceedWithFile( self, needToParse = True ):
         """ Taks the file from settings and processes it """
 
-        # Get the Graph objects and draw them
-        self.pathGateGraph,     \
-        self.pathNoGateGraph,   \
-        self.noPathNoGateGraph, \
-        self.noPathGateGraph = buildGraphs( self.settings.soFileName, self )
+        if needToParse:
+            if self.verbose:
+                self.logMessage( "Parsing file " + self.fName )
+            self.cf = getControlFlowFromFile( self.fName )
+            if self.verbose:
+                self.logMessage( "Parsed file:" )
+                self.logMessage( formatFlow( str( self.cf ) ) )
 
-        self.drawScene()
-        return
+            if len( self.cf.errors ) != 0:
+                self.logMessage( "No drawing due to parsing errors" )
+                return
 
-
-    def drawScene( self ):
-        """ Redraws the scene using the given graph object """
+            if len( self.cf.warnings ) != 0:
+                self.logMessage( "Parser warnings: " )
+                for warn in self.cf.warnings:
+                    self.logMessage( str( warn[0] ) + ": " + warn[1] )
+        else:
+            if self.cf is None:
+                self.logMessage( "No control flow object" )
+                return
+            if len( self.cf.errors ) != 0:
+                self.logMessage( "No drawing due to parsing errors" )
+                return
 
         self.scene.clear()
 
-        graph = None
-        if self.settings.showGateSO:
-            if self.settings.showPath:
-                graph = self.pathGateGraph
-            else:
-                graph = self.noPathGateGraph
-        else:
-            if self.settings.showPath:
-                graph = self.pathNoGateGraph
-            else:
-                graph = self.noPathNoGateGraph
+        if self.verbose:
+            self.logMessage( "Layouting ..." )
+        canvas = vcanvas.VirtualCanvas()
+        canvas.layout( self.cf )
+        if self.verbose:
+            self.logMessage( "Layout is done. Rendering ..." )
 
-        self.scene.setSceneRect( 0, 0, graph.width, graph.height )
+        # To pick up possibly changed settings
+        reload( cflowsettings )
 
-        for edge in graph.edges:
-            self.scene.addItem( GraphicsEdge( edge, self ) )
+        width, height = canvas.render( cflowsettings.DEFAULT_CFLOW_SETTINGS )
+        if self.verbose:
+            self.logMessage( "Rendering is done. Drawing ..." )
 
-        for node in graph.nodes:
-            self.scene.addItem( GraphicsNode( node, self ) )
+        self.scene.setSceneRect( 0, 0, width, height )
+        canvas.draw( self.scene )
 
+        if self.verbose:
+            self.logMessage( "Drawing is done." )
         return
+
 
 # The script execution entry point
 if __name__ == "__main__":
