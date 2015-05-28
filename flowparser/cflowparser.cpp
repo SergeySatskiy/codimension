@@ -52,34 +52,36 @@ walk( Context *             context,
 /* Copied and adjusted from 
  * static void err_input(perrdetail *err)
  */
-static std::string getErrorMessage( perrdetail *  err)
+static void getErrorMessage( perrdetail *  err,
+                             int &  line, int &  column,
+                             std::string &  message )
 {
-    char            buffer[ 64 ];
-    sprintf( buffer, "%d:%d ", err->lineno, err->offset );
+    line = err->lineno;
+    column = err->offset;
 
-    std::string     message( buffer );
     switch ( err->error )
     {
         case E_ERROR:
-            return std::string( "execution error" );
+            message = "execution error";
+            return;
         case E_SYNTAX:
             if ( err->expected == INDENT )
-                message += "expected an indented block";
+                message = "expected an indented block";
             else if ( err->token == INDENT )
-                message += "unexpected indent";
+                message = "unexpected indent";
             else if (err->token == DEDENT)
-                message += "unexpected unindent";
+                message = "unexpected unindent";
             else
-                message += "invalid syntax";
+                message = "invalid syntax";
             break;
         case E_TOKEN:
-            message += "invalid token";
+            message = "invalid token";
             break;
         case E_EOFS:
-            message += "EOF while scanning triple-quoted string literal";
+            message = "EOF while scanning triple-quoted string literal";
             break;
         case E_EOLS:
-            message += "EOL while scanning string literal";
+            message = "EOL while scanning string literal";
             break;
         case E_INTR:
             message = "keyboard interrupt";
@@ -88,31 +90,31 @@ static std::string getErrorMessage( perrdetail *  err)
             message = "no memory";
             goto cleanup;
         case E_EOF:
-            message += "unexpected EOF while parsing";
+            message = "unexpected EOF while parsing";
             break;
         case E_TABSPACE:
-            message += "inconsistent use of tabs and spaces in indentation";
+            message = "inconsistent use of tabs and spaces in indentation";
             break;
         case E_OVERFLOW:
-            message += "expression too long";
+            message = "expression too long";
             break;
         case E_DEDENT:
-            message += "unindent does not match any outer indentation level";
+            message = "unindent does not match any outer indentation level";
             break;
         case E_TOODEEP:
-            message += "too many levels of indentation";
+            message = "too many levels of indentation";
             break;
         case E_DECODE:
-            message += "decode error";
+            message = "decode error";
             break;
         case E_LINECONT:
-            message += "unexpected character after line continuation character";
+            message = "unexpected character after line continuation character";
             break;
         default:
             {
                 char    code[ 32 ];
                 sprintf( code, "%d", err->error );
-                message += "unknown parsing error (error code " +
+                message = "unknown parsing error (error code " +
                            std::string( code ) + ")";
                 break;
             }
@@ -127,7 +129,7 @@ static std::string getErrorMessage( perrdetail *  err)
         PyObject_FREE(err->text);
         err->text = NULL;
     }
-    return message;
+    return;
 }
 
 /* Provides the total number of lines in the code */
@@ -422,7 +424,7 @@ injectLeadingComments( Context *  context,
                     // Bad thing: someone may deleted the proper
                     // cml comment beginning so the comment is converted into a
                     // regular one. The regular comment will be handled below.
-                    context->flow->addWarning( comment.line,
+                    context->flow->addWarning( comment.line, -1,
                                                "Continue of the CML comment "
                                                "without the beginning. "
                                                "Treat it as a regular comment." );
@@ -435,7 +437,7 @@ injectLeadingComments( Context *  context,
                         // Bad thing: whether someone deleted the beginning of
                         // the cml comment or inserted an empty line between.
                         // So convert the comment into a regular one.
-                        context->flow->addWarning( comment.line,
+                        context->flow->addWarning( comment.line, -1,
                                                "Continue of the CML comment "
                                                "without the beginning. "
                                                "Treat it as a regular comment." );
@@ -524,7 +526,7 @@ addSideCMLCommentContinue( Context *  context,
         // Bad thing: someone may deleted the proper
         // cml comment beginning so the comment is converted into a
         // regular one. The regular comment will be handled below.
-        context->flow->addWarning( comment.line,
+        context->flow->addWarning( comment.line, -1,
                     "Continue of the CML comment without the "
                     "beginning. Treat it as a regular comment." );
         comment.type = REGULAR_COMMENT;
@@ -537,7 +539,7 @@ addSideCMLCommentContinue( Context *  context,
         // Bad thing: whether someone deleted the beginning of
         // the cml comment or inserted an empty line between.
         // So convert the comment into a regular one.
-        context->flow->addWarning( comment.line,
+        context->flow->addWarning( comment.line, -1,
                     "Continue of the CML comment without the beginning "
                     "in the previous line. Treat it as a regular comment." );
         comment.type = REGULAR_COMMENT;
@@ -2175,7 +2177,12 @@ Py::Object  parseInput( const char *  buffer, const char *  fileName,
 
     if ( tree == NULL )
     {
-        controlFlow->errors.append( Py::String( getErrorMessage( & error ) ) );
+        int             line;
+        int             column;
+        std::string     message;
+
+        getErrorMessage( & error, line, column, message );
+        controlFlow->addError( line, column, message );
         PyErr_Clear();
     }
     else

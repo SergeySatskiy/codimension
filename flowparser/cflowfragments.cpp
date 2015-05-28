@@ -1013,13 +1013,14 @@ void CMLComment::extractProperties( Context *  context )
     token = getCMLCommentToken( completed, pos );
     if ( token.empty() )
     {
-        context->flow->addWarning( firstLine, "Could not find CML version" );
+        context->flow->addWarning( firstLine, -1,
+                                   "Could not find CML version" );
         return;
     }
     int     ver( atol( token.c_str() ) );
     if ( ver <= 0 )
     {
-        context->flow->addWarning( firstLine, "Unknown format of the "
+        context->flow->addWarning( firstLine, -1, "Unknown format of the "
                                    "CML version. Expected positive integer." );
         return;
     }
@@ -1029,7 +1030,8 @@ void CMLComment::extractProperties( Context *  context )
     token = getCMLCommentToken( completed, pos );
     if ( token.empty() )
     {
-        context->flow->addWarning( firstLine, "Could not find CML record type" );
+        context->flow->addWarning( firstLine, -1,
+                                   "Could not find CML record type" );
         return;
     }
     this->recordType = Py::String( token );
@@ -1045,7 +1047,7 @@ void CMLComment::extractProperties( Context *  context )
         token = getCMLCommentToken( completed, pos );
         if ( token != std::string( "=" ) )
         {
-            context->flow->addWarning( firstLine, "Could not find '=' "
+            context->flow->addWarning( firstLine, -1, "Could not find '=' "
                                        "after a property name (property '" +
                                        key + "')" );
             return;
@@ -1055,12 +1057,13 @@ void CMLComment::extractProperties( Context *  context )
         token = getCMLCommentValue( completed, pos, warning );
         if ( ! warning.empty() )
         {
-            context->flow->addWarning( firstLine, warning );
+            context->flow->addWarning( firstLine, -1, warning );
             return;
         }
         if ( token.empty() )
         {
-            context->flow->addWarning( firstLine, "Could not find a property "
+            context->flow->addWarning( firstLine, -1,
+                                       "Could not find a property "
                                        "value (property '"+ key + "')" );
             return;
         }
@@ -3019,8 +3022,20 @@ int  ControlFlow::setattr( const char *        attrName,
 }
 
 
-void  ControlFlow::addWarning( int  line, const std::string &  message )
+void  ControlFlow::addWarning( int  line, int  column,
+                               const std::string &  message )
 {
-    warnings.append( Py::TupleN( Py::Int( line ), Py::String( message ) ) );
+    warnings.append( Py::TupleN( Py::Int( line ),
+                                 Py::Int( column ),
+                                 Py::String( message ) ) );
+}
+
+
+void  ControlFlow::addError( int  line, int  column,
+                             const std::string &  message )
+{
+    errors.append( Py::TupleN( Py::Int( line ),
+                               Py::Int( column ),
+                               Py::String( message ) ) );
 }
 

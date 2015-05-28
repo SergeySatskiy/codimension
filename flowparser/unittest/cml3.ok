@@ -1,7 +1,7 @@
 <ControlFlow [0:139] (1,1) (6,37)
  isOK: true
  Errors: n/a
- Warnings: (1, 'Continue of the CML comment without the beginning. Treat it as a regular comment.')
+ Warnings: (1, -1, 'Continue of the CML comment without the beginning. Treat it as a regular comment.')
  BangLine: None
  EncodingLine: None
  Docstring: None

@@ -1,6 +1,6 @@
 <ControlFlow [-1:-1] (-1,-1) (-1,-1)
  isOK: false
- Errors: 0:0 decode error
+ Errors: (0, 0, 'decode error')
  Warnings: n/a
  BangLine: None
  EncodingLine: None

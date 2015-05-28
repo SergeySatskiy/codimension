@@ -649,11 +649,12 @@ class ControlFlow : public FragmentBase,
         Py::List    nsuite;         // Suite statement fragments
 
         // Error reporting support
-        Py::List    errors;         // List of Py::String objects
-        Py::List    warnings;       // List of tuples( line, message )
+        Py::List    errors;         // List of tuples( line, column, message )
+        Py::List    warnings;       // List of tuples( line, column, message )
 
     public:
-        void addWarning( int  line, const std::string &  message );
+        void addError( int  line, int  column, const std::string &  message );
+        void addWarning( int  line, int  column, const std::string &  message );
 };
 
 
