@@ -404,20 +404,26 @@ class MainWindow( QtGui.QMainWindow ):
 
         if self.verbose:
             self.logMessage( "Layouting ..." )
-        canvas = vcanvas.VirtualCanvas()
-        canvas.layout( self.cf )
-        if self.verbose:
-            self.logMessage( "Layout is done. Rendering ..." )
+        try:
+            canvas = vcanvas.VirtualCanvas()
+            canvas.layout( self.cf )
+            if self.verbose:
+                self.logMessage( "Layout is done:" )
+                self.logMessage( str( canvas ) )
+                self.logMessage( "Rendering ..." )
 
-        # To pick up possibly changed settings
-        reload( cflowsettings )
+            # To pick up possibly changed settings
+            reload( cflowsettings )
 
-        width, height = canvas.render( cflowsettings.DEFAULT_CFLOW_SETTINGS )
-        if self.verbose:
-            self.logMessage( "Rendering is done. Drawing ..." )
+            width, height = canvas.render( cflowsettings.DEFAULT_CFLOW_SETTINGS )
+            if self.verbose:
+                self.logMessage( "Rendering is done. Drawing ..." )
 
-        self.scene.setSceneRect( 0, 0, width, height )
-        canvas.draw( self.scene )
+            self.scene.setSceneRect( 0, 0, width, height )
+            canvas.draw( self.scene )
+        except Exception, exc:
+            self.logMessage( "Exception:\n" + str( exc ) )
+            raise
 
         if self.verbose:
             self.logMessage( "Drawing is done." )
