@@ -43,6 +43,16 @@ class CellElement:
     FINALLY_SCOPE = 110
 
     CODE_BLOCK = 200
+    BREAK = 201
+    CONTINUE = 202
+    RETURN = 203
+    RAISE = 204
+    ASSERT = 205
+    SYSEXIT = 206
+    IMPORT = 207
+    COMMENT = 208
+
+    CONNECTOR = 300
 
     def __init__( self ):
         self.kind = self.UNKNOWN
@@ -98,8 +108,8 @@ class ScopeCellElement( CellElement ):
         return
 
     def __str__( self ):
-        return CellElement.__str__( self ) +
-               "(" + __scopeCellElementToString( self.subKind ) + ")"
+        return CellElement.__str__( self ) + \
+               "(" + scopeCellElementToString( self.subKind ) + ")"
 
 
 __kindToString = {
@@ -111,6 +121,15 @@ __kindToString = {
     CellElement.FUNC_SCOPE:         "FUNC_SCOPE",
     CellElement.CLASS_SCOPE:        "CLASS_SCOPE",
     CellElement.CODE_BLOCK:         "CODE_BLOCK",
+    CellElement.BREAK:              "BREAK",
+    CellElement.CONTINUE:           "CONTINUE",
+    CellElement.RETURN:             "RETURN",
+    CellElement.RAISE:              "RAISE",
+    CellElement.ASSERT:             "ASSERT",
+    CellElement.SYSEXIT:            "SYSEXIT",
+    CellElement.IMPORT:             "IMPORT",
+    CellElement.COMMENT:            "COMMENT",
+    CellElement.CONNECTOR:          "CONNECTOR",
 }
 
 
@@ -119,7 +138,7 @@ def kindToString( kind ):
     return __kindToString[ kind ]
 
 
-__scopeCellElementToString = {
+_scopeCellElementToString = {
     ScopeCellElement.UNKNOWN:           "UNKNOWN",
     ScopeCellElement.TOP_LEFT:          "TOP_LEFT",
     ScopeCellElement.LEFT:              "LEFT",
@@ -134,7 +153,7 @@ __scopeCellElementToString = {
 
 def scopeCellElementToString( kind ):
     " Provides a string representation of a element kind "
-    return __scopeCellElementToString[ kind ]
+    return _scopeCellElementToString[ kind ]
 
 
 
@@ -372,4 +391,167 @@ class FinallyScopeCell( ScopeCellElement ):
 
     def draw( self, rect, scene, settings ):
         raise Exception( "Not implemented yet" )
+
+
+
+class BreakCell( CellElement ):
+    " Represents a single break statement "
+
+    def __init__( self, ref ):
+        CellElement.__init__( self )
+        self.kind = CellElement.BREAK
+        self.reference = ref
+        return
+
+    def render( self, settings ):
+        raise Exception( "Not implemented yet" )
+
+    def draw( self, rect, scene, settings ):
+        raise Exception( "Not implemented yet" )
+
+
+
+class ContinueCell( CellElement ):
+    " Represents a single continue statement "
+
+    def __init__( self, ref ):
+        CellElement.__init__( self )
+        self.kind = CellElement.CONTINUE
+        self.reference = ref
+        return
+
+    def render( self, settings ):
+        raise Exception( "Not implemented yet" )
+
+    def draw( self, rect, scene, settings ):
+        raise Exception( "Not implemented yet" )
+
+
+
+class ReturnCell( CellElement ):
+    " Represents a single return statement "
+
+    def __init__( self, ref ):
+        CellElement.__init__( self )
+        self.kind = CellElement.RETURN
+        self.reference = ref
+        return
+
+    def render( self, settings ):
+        raise Exception( "Not implemented yet" )
+
+    def draw( self, rect, scene, settings ):
+        raise Exception( "Not implemented yet" )
+
+
+
+class RaiseCell( CellElement ):
+    " Represents a single raise statement "
+
+    def __init__( self, ref ):
+        CellElement.__init__( self )
+        self.kind = CellElement.RAISE
+        self.reference = ref
+        return
+
+    def render( self, settings ):
+        raise Exception( "Not implemented yet" )
+
+    def draw( self, rect, scene, settings ):
+        raise Exception( "Not implemented yet" )
+
+
+
+class AssertCell( CellElement ):
+    " Represents a single assert statement "
+
+    def __init__( self, ref ):
+        CellElement.__init__( self )
+        self.kind = CellElement.ASSERT
+        self.reference = ref
+        return
+
+    def render( self, settings ):
+        raise Exception( "Not implemented yet" )
+
+    def draw( self, rect, scene, settings ):
+        raise Exception( "Not implemented yet" )
+
+
+
+class SysexitCell( CellElement ):
+    " Represents a single sys.exit(...) statement "
+
+    def __init__( self, ref ):
+        CellElement.__init__( self )
+        self.kind = CellElement.SYSEXIT
+        self.reference = ref
+        return
+
+    def render( self, settings ):
+        raise Exception( "Not implemented yet" )
+
+    def draw( self, rect, scene, settings ):
+        raise Exception( "Not implemented yet" )
+
+
+
+class ImportCell( CellElement ):
+    " Represents a single import statement "
+
+    def __init__( self, ref ):
+        CellElement.__init__( self )
+        self.kind = CellElement.IMPORT
+        self.reference = ref
+        return
+
+    def render( self, settings ):
+        raise Exception( "Not implemented yet" )
+
+    def draw( self, rect, scene, settings ):
+        raise Exception( "Not implemented yet" )
+
+
+
+class CommentCell( CellElement ):
+    " Represents a single independent comment "
+
+    def __init__( self, ref ):
+        CellElement.__init__( self )
+        self.kind = CellElement.COMMENT
+        self.reference = ref
+        return
+
+    def render( self, settings ):
+        raise Exception( "Not implemented yet" )
+
+    def draw( self, rect, scene, settings ):
+        raise Exception( "Not implemented yet" )
+
+
+
+class ConnectorCell( CellElement ):
+    " Represents a single connector cell "
+
+    NORTH = 0
+    SOUTH = 1
+    WEST = 2
+    EAST = 3
+    CENTER = 4
+
+    def __init__( self, connections ):
+        """ Connections are supposed to be a list of tuples e.g
+            [ (NORTH, SOUTH), (EAST, CENTER) ] """
+        CellElement.__init__( self )
+        self.kind = CellElement.CONNECTOR
+        self.reference = None
+        self.connections = connections
+        return
+
+    def render( self, settings ):
+        raise Exception( "Not implemented yet" )
+
+    def draw( self, rect, scene, settings ):
+        raise Exception( "Not implemented yet" )
+
 
