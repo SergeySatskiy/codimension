@@ -53,6 +53,10 @@ class CellElement:
         self.height = None
         return
 
+    def __str__( self ):
+        return kindToString( self.kind ) + \
+               "[" + str( self.width ) + ":" + str( self.height ) + "]"
+
     def render( self, settings ):
         " Renders the graphics considering settings "
         raise Exception( "render() is not implemented for " +
@@ -76,6 +80,8 @@ class CellElement:
 
 class ScopeCellElement( CellElement ):
 
+    UNKNOWN = -1
+
     TOP_LEFT = 0
     LEFT = 1
     BOTTOM_LEFT = 2
@@ -86,6 +92,14 @@ class ScopeCellElement( CellElement ):
     TOP = 7
     BOTTOM = 8
 
+    def __init__( self ):
+        CellElement.__init__( self )
+        self.subKind = self.UNKNOWN
+        return
+
+    def __str__( self ):
+        return CellElement.__str__( self ) +
+               "(" + __scopeCellElementToString( self.subKind ) + ")"
 
 
 __kindToString = {
@@ -106,6 +120,7 @@ def kindToString( kind ):
 
 
 __scopeCellElementToString = {
+    ScopeCellElement.UNKNOWN:           "UNKNOWN",
     ScopeCellElement.TOP_LEFT:          "TOP_LEFT",
     ScopeCellElement.LEFT:              "LEFT",
     ScopeCellElement.BOTTOM_LEFT:       "BOTTOM_LEFT",
