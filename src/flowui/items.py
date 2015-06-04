@@ -30,6 +30,7 @@ class CellElement:
     H_SPACER = 1
     V_SPACER = 2
 
+    NO_SCOPE = 99
     FILE_SCOPE = 100
     FUNC_SCOPE = 101
     CLASS_SCOPE = 102

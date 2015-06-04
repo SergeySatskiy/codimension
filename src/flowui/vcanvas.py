@@ -48,6 +48,7 @@ from cdmcf import ( CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
                     WITH_FRAGMENT, TRY_FRAGMENT )
 
 _scopeToClass = {
+    CellElement.NO_SCOPE:       None,
     CellElement.FILE_SCOPE:     FileScopeCell,
     CellElement.FUNC_SCOPE:     FunctionScopeCell,
     CellElement.CLASS_SCOPE:    ClassScopeCell,
@@ -112,15 +113,174 @@ class VirtualCanvas:
             self.cells.append( [] )
             lastIndex += 1
             if needScopeEdge:
-                self.cells[ lastIndex ].append(
-                    self.__currentScopeClass( self.__currentCF,
-                                              ScopeCellElement.LEFT ) )
+                if self.__currentScopeClass:
+                    self.cells[ lastIndex ].append(
+                        self.__currentScopeClass( self.__currentCF,
+                                                  ScopeCellElement.LEFT ) )
         lastIndex = len( self.cells[ row ] ) - 1
         while lastIndex < column:
             self.cells[ row ].append( VacantCell() )
             lastIndex += 1
         return
 
+    def layoutSuite( self, vacantRow, suite, scopeKind = None, cf = None ):
+        " Does a single sute layout "
+        if scopeKind:
+            self.__currentCF = cf
+            self.__currentScopeClass = _scopeToClass[ scopeKind ]
+
+        for item in suite:
+            if item.kind in [ FUNCTION_FRAGMENT, CLASS_FRAGMENT ]:
+                scopeCanvas = VirtualCanvas( self )
+                if item.kind == FUNCTION_FRAGMENT:
+                    scopeCanvas.layout( item, CellElement.FUNCTION_SCOPE )
+                else:
+                    scopeCanvas.layout( item, CellElement.CLASS_SCOPE )
+
+                if item.decors:
+                    for dec in reversed( item.decors ):
+                        # Create a decorator scope virtual canvas
+                        decScope = VirtualCanvas()
+                        decScope.layout( dec, CellElement.DECOR_SCOPE )
+                        # Fix the parent
+                        scopeCanvas.parent = decScope
+                        # Set the decorator content
+                        decScope.cells[ -2 ][ 1 ] = scopeCanvas
+                        # Set the current content scope
+                        scopeCanvas = decScope
+
+                # Update the scope canvas parent
+                scopeCanvas.parent = self
+
+                self.__allocateCell( vacantRow, 1 )
+                self.cells[ vacantRow ][ 1 ] = scopeCanvas
+                vacantRow += 1
+                continue
+
+            if item.kind == WITH_FRAGMENT:
+                scopeCanvas = VirtualCanvas( self )
+                scopeCanvas.layout( item, CellElement.WITH_SCOPE )
+                self.__allocateCell( vacantRow, 1 )
+                self.cells[ vacantRow ][ 1 ] = scopeCanvas
+                vacantRow += 1
+                continue
+
+            if item.kind == CODEBLOCK_FRAGMENT:
+                self.__allocateCell( vacantRow, 1 )
+                self.cells[ vacantRow ][ 1 ] = CodeBlockCell( item )
+                vacantRow += 1
+                continue
+
+            if item.kind == BREAK_FRAGMENT:
+                self.__allocateCell( vacantRow, 1 )
+                self.cells[ vacantRow ][ 1 ] = BreakCell( item )
+                vacantRow += 1
+                continue
+
+            if item.kind == CONTINUE_FRAGMENT:
+                self.__allocateCell( vacantRow, 1 )
+                self.cells[ vacantRow ][ 1 ] = ContinueCell( item )
+                vacantRow += 1
+                continue
+
+            if item.kind == RETURN_FRAGMENT:
+                self.__allocateCell( vacantRow, 1 )
+                self.cells[ vacantRow ][ 1 ] = ReturnCell( item )
+                vacantRow += 1
+                continue
+
+            if item.kind == RAISE_FRAGMENT:
+                self.__allocateCell( vacantRow, 1 )
+                self.cells[ vacantRow ][ 1 ] = RaiseCell( item )
+                vacantRow += 1
+                continue
+
+            if item.kind == ASSERT_FRAGMENT:
+                self.__allocateCell( vacantRow, 1 )
+                self.cells[ vacantRow ][ 1 ] = AssertCell( item )
+                vacantRow += 1
+                continue
+
+            if item.kind == SYSEXIT_FRAGMENT:
+                self.__allocateCell( vacantRow, 1 )
+                self.cells[ vacantRow ][ 1 ] = SysexitCell( item )
+                vacantRow += 1
+                continue
+
+            if item.kind == IMPORT_FRAGMENT:
+                self.__allocateCell( vacantRow, 1 )
+                self.cells[ vacantRow ][ 1 ] = ImportCell( item )
+                vacantRow += 1
+                continue
+
+            if item.kind == COMMENT_FRAGMENT:
+                self.__allocateCell( vacantRow, 2 )
+                self.cells[ vacantRow ][ 1 ] = ConnectorCell( [ (ConnectorCell.NORTH,
+                                                                 ConnectorCell.SOUTH) ] )
+                self.cells[ vacantRow ][ 2 ] = CommentCell( item )
+                vacantRow += 1
+                continue
+
+            if item.kind == WHILE_FRAGMENT:
+                scopeCanvas = VirtualCanvas( self )
+                scopeCanvas.layout( item, CellElement.WHILE_SCOPE )
+                self.__allocateCell( vacantRow, 1 )
+                self.cells[ vacantRow ][ 1 ] = scopeCanvas
+                if item.elsePart:
+                    elseScopeCanvas = VirtualCanvas( self )
+                    elseScopeCanvas.layout( item.elsePart, CellElement.ELSE_SCOPE )
+                    self.__allocateCell( vacantRow, 2 )
+                    self.cells[ vacantRow ][ 2 ] = elseScopeCanvas
+                vacantRow += 1
+                continue
+
+            if item.kind == FOR_FRAGMENT:
+                scopeCanvas = VirtualCanvas( self )
+                scopeCanvas.layout( item, CellElement.FOR_SCOPE )
+                self.__allocateCell( vacantRow, 1 )
+                self.cells[ vacantRow ][ 1 ] = scopeCanvas
+                if item.elsePart:
+                    elseScopeCanvas = VirtualCanvas( self )
+                    elseScopeCanvas.layout( item.elsePart, CellElement.ELSE_SCOPE )
+                    self.__allocateCell( vacantRow, 2 )
+                    self.cells[ vacantRow ][ 2 ] = elseScopeCanvas
+                vacantRow += 1
+                continue
+
+            if item.kind == TRY_FRAGMENT:
+                tryScopeCanvas = VirtualCanvas( self )
+                tryScopeCanvas.layout( item, CellElement.TRY_SCOPE )
+                self.__allocateCell( vacantRow, 1 )
+                self.cells[ vacantRow ][ 1 ] = tryScopeCanvas
+                nextColumn = 2
+                for exceptPart in item.exceptParts:
+                    exceptScopeCanvas = VirtualCanvas( self )
+                    exceptScopeCanvas.layout( exceptPart, CellElement.EXCEPT_SCOPE )
+                    self.__allocateCell( vacantRow, nextColumn )
+                    self.cells[ vacantRow ][ nextColumn ] = exceptScopeCanvas
+                    nextColumn += 1
+                if item.elsePart:
+                    elseScopeCanvas = VirtualCanvas( self )
+                    elseScopeCanvas.layout( item.elsePart, CellElement.ELSE_SCOPE )
+                    self.__allocateCell( vacantRow, nextColumn )
+                    self.cells[ vacantRow ][ nextColumn ] = elseScopeCanvas
+                    nextColumn += 1
+                if item.finallyPart:
+                    finallyScopeCanvas = VirtualCanvas( self )
+                    finallyScopeCanvas.layout( item.finallyPart, CellElement.FINALLY_SCOPE )
+                    self.__allocateCell( vacantRow, nextColumn )
+                    self.cells[ vacantRow ][ nextColumn ] = finallyScopeCanvas
+                vacantRow += 1
+                continue
+
+            if item.kind == IF_FRAGMENT:
+                pass
+
+
+
+            raise Exception( "Unknown item kind in a control flow: " +
+                             str( item.kind ) )
+        return vacantRow
 
     def layout( self, cf, scopeKind = CellElement.FILE_SCOPE ):
         " Does the layout "
@@ -158,106 +318,15 @@ class VirtualCanvas:
                 self.cells[ vacantRow ][ 1 ] = self.__currentScopeClass( cf, ScopeCellElement.DOCSTRING )
                 vacantRow += 1
 
-        # walk the suite if so
+        # Handle the content of the scope
         if scopeKind == CellElement.DECOR_SCOPE:
-            # no suite, only one cell need to be reserved
+            # no suite, only one cell needs to be reserved
             self.__allocateCell( vacantRow, 1 )
             vacantRow += 1
         else:
-            for item in cf.suite:
-                if item.kind in [ FUNCTION_FRAGMENT, CLASS_FRAGMENT ]:
-                    scopeCanvas = VirtualCanvas( self )
-                    if item.kind == FUNCTION_FRAGMENT:
-                        scopeCanvas.layout( item, CellElement.FUNCTION_SCOPE )
-                    else:
-                        scopeCanvas.layout( item, CellElement.CLASS_SCOPE )
-
-                    if item.decors:
-                        for dec in reversed( item.decors ):
-                            # Create a decorator scope virtual canvas
-                            decScope = VirtualCanvas()
-                            decScope.layout( dec, CellElement.DECOR_SCOPE )
-                            # Fix the parent
-                            scopeCanvas.parent = decScope
-                            # Set the decorator content
-                            decScope.cells[ -2 ][ 1 ] = scopeCanvas
-                            # Set the current content scope
-                            scopeCanvas = decScope
-
-                    # Update the scope canvas parent
-                    scopeCanvas.parent = self
-
-                    self.__allocateCell( vacantRow, 1 )
-                    self.cells[ vacantRow ][ 1 ] = scopeCanvas
-                    vacantRow += 1
-                    continue
-
-                if item.kind == WITH_FRAGMENT:
-                    scopeCanvas = VirtualCanvas( self )
-                    scopeCanvas.layout( item, CellElement.WITH_SCOPE )
-                    self.__allocateCell( vacantRow, 1 )
-                    self.cells[ vacantRow ][ 1 ] = scopeCanvas
-                    vacantRow += 1
-                    continue
-
-                if item.kind == CODEBLOCK_FRAGMENT:
-                    self.__allocateCell( vacantRow, 1 )
-                    self.cells[ vacantRow ][ 1 ] = CodeBlockCell( item )
-                    vacantRow += 1
-                    continue
-
-                if item.kind == BREAK_FRAGMENT:
-                    self.__allocateCell( vacantRow, 1 )
-                    self.cells[ vacantRow ][ 1 ] = BreakCell( item )
-                    vacantRow += 1
-                    continue
-
-                if item.kind == CONTINUE_FRAGMENT:
-                    self.__allocateCell( vacantRow, 1 )
-                    self.cells[ vacantRow ][ 1 ] = ContinueCell( item )
-                    vacantRow += 1
-                    continue
-
-                if item.kind == RETURN_FRAGMENT:
-                    self.__allocateCell( vacantRow, 1 )
-                    self.cells[ vacantRow ][ 1 ] = ReturnCell( item )
-                    vacantRow += 1
-                    continue
-
-                if item.kind == RAISE_FRAGMENT:
-                    self.__allocateCell( vacantRow, 1 )
-                    self.cells[ vacantRow ][ 1 ] = RaiseCell( item )
-                    vacantRow += 1
-                    continue
-
-                if item.kind == ASSERT_FRAGMENT:
-                    self.__allocateCell( vacantRow, 1 )
-                    self.cells[ vacantRow ][ 1 ] = AssertCell( item )
-                    vacantRow += 1
-                    continue
-
-                if item.kind == SYSEXIT_FRAGMENT:
-                    self.__allocateCell( vacantRow, 1 )
-                    self.cells[ vacantRow ][ 1 ] = SysexitCell( item )
-                    vacantRow += 1
-                    continue
-
-                if item.kind == IMPORT_FRAGMENT:
-                    self.__allocateCell( vacantRow, 1 )
-                    self.cells[ vacantRow ][ 1 ] = ImportCell( item )
-                    vacantRow += 1
-                    continue
-
-                if item.kind == COMMENT_FRAGMENT:
-                    self.__allocateCell( vacantRow, 2 )
-                    self.cells[ vacantRow ][ 1 ] = ConnectorCell( [ (ConnectorCell.NORTH,
-                                                                     ConnectorCell.SOUTH) ] )
-                    self.cells[ vacantRow ][ 2 ] = CommentCell( item )
-                    vacantRow += 1
-                    continue
-
-                raise Exception( "Unknown item kind in a control flow: " +
-                                 str( item.kind ) )
+            # walk the suite
+            # no changes in the scope kind or control flow object
+            vacantRow = self.layoutSuite( vacantRow, cf.suite )
 
 
         # Allocate the scope footer
