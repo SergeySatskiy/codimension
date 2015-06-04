@@ -476,7 +476,7 @@ class While : public FragmentBase,
     public:
         Py::Object      condition;      // Fragment for the condition
         Py::List        nsuite;         // List of suite Fragments
-        Py::Object      elsePart;       // None or IfPart instance
+        Py::Object      elsePart;       // None or ElifPart instance
 };
 
 
@@ -498,7 +498,7 @@ class For : public FragmentBase,
     public:
         Py::Object      iteration;      // Fragment for the iteration
         Py::List        nsuite;         // List of Fragments for the suite
-        Py::Object      elsePart;       // None or IfPart instance
+        Py::Object      elsePart;       // None or ElifPart instance
 };
 
 
@@ -624,7 +624,7 @@ class Try : public FragmentBase,
     public:
         Py::List        nsuite;         // List of suite statement fragments
         Py::List        exceptParts;    // List of ExceptPart fragments
-        Py::Object      elsePart;       // None of ExceptPart for 'else'
+        Py::Object      elsePart;       // None of ElifPart for 'else'
         Py::Object      finallyPart;    // None or ExceptPart for 'finally'
 };
 

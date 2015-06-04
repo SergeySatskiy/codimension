@@ -1123,9 +1123,18 @@ processTry( Context *  context,
         {
             if ( strcmp( child->n_str, "else" ) == 0 )
             {
-                ExceptPart *    elsePart = processExceptPart( context, flow,
-                                                              child,
-                                                              tryStatement );
+                // I am not too sure object of what type is better to see here.
+                // The options are: ElifPart or ExceptPart
+                // Elif part is better because it is unified among all 'else's,
+                // in 'for', 'while' and 'try'.
+                // ExceptPart is better because it is more specific for 'try'
+                // For the time being Elif part is chosen. To switch to
+                // ExceptPart use:
+                // ExceptPart * elsePart = processExceptPart(...) with the same
+                // arguments.
+                ElifPart *      elsePart = processElifPart( context, flow,
+                                                            child,
+                                                            tryStatement );
                 tryStatement->elsePart = Py::asObject( elsePart );
                 continue;
             }
