@@ -51,7 +51,9 @@ class CellElement:
     ASSERT = 205
     SYSEXIT = 206
     IMPORT = 207
-    COMMENT = 208
+    LEADING_COMMENT = 208
+    INDEPENDENT_COMMENT = 209
+    SIDE_COMMENT = 210
 
     CONNECTOR = 300
 
@@ -114,23 +116,25 @@ class ScopeCellElement( CellElement ):
 
 
 __kindToString = {
-    CellElement.UNKNOWN:            "UNKNOWN",
-    CellElement.VACANT:             "VACANT",
-    CellElement.H_SPACER:           "H_SPACER",
-    CellElement.V_SPACER:           "V_SPACER",
-    CellElement.FILE_SCOPE:         "FILE_SCOPE",
-    CellElement.FUNC_SCOPE:         "FUNC_SCOPE",
-    CellElement.CLASS_SCOPE:        "CLASS_SCOPE",
-    CellElement.CODE_BLOCK:         "CODE_BLOCK",
-    CellElement.BREAK:              "BREAK",
-    CellElement.CONTINUE:           "CONTINUE",
-    CellElement.RETURN:             "RETURN",
-    CellElement.RAISE:              "RAISE",
-    CellElement.ASSERT:             "ASSERT",
-    CellElement.SYSEXIT:            "SYSEXIT",
-    CellElement.IMPORT:             "IMPORT",
-    CellElement.COMMENT:            "COMMENT",
-    CellElement.CONNECTOR:          "CONNECTOR",
+    CellElement.UNKNOWN:                "UNKNOWN",
+    CellElement.VACANT:                 "VACANT",
+    CellElement.H_SPACER:               "H_SPACER",
+    CellElement.V_SPACER:               "V_SPACER",
+    CellElement.FILE_SCOPE:             "FILE_SCOPE",
+    CellElement.FUNC_SCOPE:             "FUNC_SCOPE",
+    CellElement.CLASS_SCOPE:            "CLASS_SCOPE",
+    CellElement.CODE_BLOCK:             "CODE_BLOCK",
+    CellElement.BREAK:                  "BREAK",
+    CellElement.CONTINUE:               "CONTINUE",
+    CellElement.RETURN:                 "RETURN",
+    CellElement.RAISE:                  "RAISE",
+    CellElement.ASSERT:                 "ASSERT",
+    CellElement.SYSEXIT:                "SYSEXIT",
+    CellElement.IMPORT:                 "IMPORT",
+    CellElement.LEADING_COMMENT:        "LEADING_COMMENT",
+    CellElement.INDEPENDENT_COMMENT:    "INDEPENDENT_COMMENT",
+    CellElement.SIDE_COMMENT:           "SIDE_COMMENT",
+    CellElement.CONNECTOR:              "CONNECTOR",
 }
 
 
@@ -514,12 +518,46 @@ class ImportCell( CellElement ):
 
 
 
-class CommentCell( CellElement ):
+class IndependentCommentCell( CellElement ):
     " Represents a single independent comment "
 
     def __init__( self, ref ):
         CellElement.__init__( self )
-        self.kind = CellElement.COMMENT
+        self.kind = CellElement.INDEPENDENT_COMMENT
+        self.reference = ref
+        return
+
+    def render( self, settings ):
+        raise Exception( "Not implemented yet" )
+
+    def draw( self, rect, scene, settings ):
+        raise Exception( "Not implemented yet" )
+
+
+
+class LeadingCommentCell( CellElement ):
+    " Represents a single leading comment "
+
+    def __init__( self, ref ):
+        CellElement.__init__( self )
+        self.kind = CellElement.LEADING_COMMENT
+        self.reference = ref
+        return
+
+    def render( self, settings ):
+        raise Exception( "Not implemented yet" )
+
+    def draw( self, rect, scene, settings ):
+        raise Exception( "Not implemented yet" )
+
+
+
+class SideCommentCell( CellElement ):
+    " Represents a single side comment "
+
+    def __init__( self, ref ):
+        CellElement.__init__( self )
+        self.kind = CellElement.SIDE_COMMENT
         self.reference = ref
         return
 
