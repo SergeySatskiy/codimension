@@ -144,12 +144,12 @@ class VirtualCanvas:
             if item.kind in [ FUNCTION_FRAGMENT, CLASS_FRAGMENT ]:
                 scopeCanvas = VirtualCanvas( self )
                 if item.kind == FUNCTION_FRAGMENT:
-                    scopeCanvas.layout( item, CellElement.FUNCTION_SCOPE )
+                    scopeCanvas.layout( item, CellElement.FUNC_SCOPE )
                 else:
                     scopeCanvas.layout( item, CellElement.CLASS_SCOPE )
 
-                if item.decors:
-                    for dec in reversed( item.decors ):
+                if item.decorators:
+                    for dec in reversed( item.decorators ):
                         # Create a decorator scope virtual canvas
                         decScope = VirtualCanvas()
                         decScope.layout( dec, CellElement.DECOR_SCOPE )
