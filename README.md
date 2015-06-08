@@ -1,3 +1,12 @@
+
+Essential links:
+* [Project home page] (http://satsky.spb.ru/codimension/codimensionEng.php)
+* [Installation instructions] (http://satsky.spb.ru/codimension/installationEng.php)
+* [Packages for downloading] (http://satsky.spb.ru/codimension/downloadEng.php)
+* [Hot keys cheat sheet (pdf)] (http://satsky.spb.ru/codimension/other/CodimensionShortcuts.pdf)
+
+---
+
 **Codimension** is yet another free experimental Python IDE licensed under GPL v3.
 
 Codimension aims to provide an integrated system for:
@@ -8,7 +17,7 @@ Many Python developers will find codimension useful as-is, even though not all o
 
 The finished codimension will include several graphics-based features. Diagrams will be generated for imports and classes. The results from some tools, such as a profiler, will be represented graphically. Graphical features will be interactive and if you double click on a class box in a diagram, for example, the corresponding source code file will be opened and the cursor will jump to the appropriate line. A major objective is to provide an editor which is capable of working simultaneously with textual and graphical representations of the code. With this feature in place, changing the text will automatically update the graphics and vice versa. Finally, the editor will support the grouping and traversal of code blocks, which should greatly simplify the analysis of unfamiliar code. 
 
-![screenshot](http://satsky.spb.ru/codimension/screenshots/01-commonView.png "Screenshot")
+![Screenshot](http://satsky.spb.ru/codimension/screenshots/01-commonView.png "Screenshot")
 
 
 ## Features
