@@ -39,7 +39,7 @@ from items import ( kindToString,
                     ExceptScopeCell, FinallyScopeCell,
                     BreakCell, ContinueCell, ReturnCell, RaiseCell,
                     AssertCell, SysexitCell, ImportCell, IndependentCommentCell,
-                    LeadingCommentCell, SideCommentCell, ConnectorCell )
+                    LeadingCommentCell, SideCommentCell, ConnectorCell, IfCell )
 from cdmcf import ( CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
                     BREAK_FRAGMENT, CONTINUE_FRAGMENT, RETURN_FRAGMENT,
                     RAISE_FRAGMENT, ASSERT_FRAGMENT, SYSEXIT_FRAGMENT,
@@ -237,10 +237,134 @@ class VirtualCanvas:
                 continue
 
             if item.kind == IF_FRAGMENT:
-                pass
+                if item.leadingComment:
+                    self.__allocateCell( vacantRow, column + 1 )
+                    self.cells[ vacantRow ][ column ] = ConnectorCell( [ (ConnectorCell.NORTH,
+                                                                          ConnectorCell.SOUTH) ] )
+                    self.cells[ vacantRow ][ column + 1 ] = LeadingCommentCell( item )
+                    vacantRow += 1
+                self.__allocateCell( vacantRow, column )
+                self.cells[ vacantRow ][ column ] = IfCell( item )
+
+                # Memorize the No-branch endpoint
+                openEnd = [vacantRow, column + 1]
+                vacantRow += 1
+
+                # Allocate Yes-branch
+                branchLayout = VirtualCanvas( self )
+                branchLayout.layoutSuite( 0, item.suite, CellElement.NO_SCOPE, None, 0 )
+
+                # Copy the layout cells into the current layout calculating the
+                # max width of the layout
+                branchWidth, branchHeight = self.__copyLayout( branchLayout, vacantRow, column )
+
+                # Calculate the number of horizontal connectors left->right
+                count = branchWidth - 1
+                while count > 0:
+                    self.__allocateCell( openEnd[ 0 ], openEnd[ 1 ] )
+                    self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.WEST,
+                                                                                   ConnectorCell.EAST) ] )
+                    openEnd[ 1 ] += 1
+                    count -= 1
+
+                self.__allocateCell( openEnd[ 0 ], openEnd[ 1 ] )
+                self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.WEST,
+                                                                               ConnectorCell.SOUTH) ] )
+                openEnd[ 0 ] += 1
+
+                branchEndStack = []
+                branchEndStack.append( (vacantRow + branchHeight, column) )
+
+                # Handle the elif and else branches
+                for elifBranch in item.elifParts:
+                    if elifBranch.condition:
+                        # This is the elif ...
+                        if elifBranch.leadingComment:
+                            self.__allocateCell( openEnd[ 0 ], openEnd[ 1 ] + 1 )
+                            self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.NORTH,
+                                                                                           ConnectorCell.SOUTH) ] )
+                            self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] + 1 ] = LeadingCommentCell( elifBranch )
+                            openEnd[ 0 ] += 1
+
+                        self.__allocateCell( openEnd[ 0 ], openEnd[ 1 ] )
+                        self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = IfCell( elifBranch )
+
+                        # Memorize the new open end
+                        newOpenEnd = [openEnd[ 0 ], openEnd[ 1 ] + 1]
+                        openEnd[ 0 ] += 1
+
+                        # Allocate Yes-branch
+                        branchLayout = VirtualCanvas( self )
+                        branchLayout.layoutSuite( 0, elifBranch.suite, CellElement.NO_SCOPE, None, 0 )
+
+                        # Copy the layout cells into the current layout
+                        # calculating the max width of the layout
+                        branchWidth, branchHeight = self.__copyLayout( branchLayout, openEnd[ 0 ], openEnd[ 1 ] )
+
+                        # Calculate the number of horizontal connectors left->right
+                        count = branchWidth - 1
+                        while count > 0:
+                            self.__allocateCell( newOpenEnd[ 0 ], newOpenEnd[ 1 ] )
+                            self.cells[ newOpenEnd[ 0 ] ][ newOpenEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.WEST,
+                                                                                                 ConnectorCell.EAST) ] )
+                            newOpenEnd[ 1 ] += 1
+                            count -= 1
+
+                        self.__allocateCell( newOpenEnd[ 0 ], newOpenEnd[ 1 ] )
+                        self.cells[ newOpenEnd[ 0 ] ][ newOpenEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.WEST,
+                                                                                             ConnectorCell.SOUTH) ] )
+                        newOpenEnd[ 0 ] += 1
+
+                        branchEndStack.append( (openEnd[ 0 ] + branchHeight, openEnd[ 1 ]) )
+                        openEnd = newOpenEnd
+                    else:
+                        # This is the else which is always the last
+                        branchLayout = VirtualCanvas( self )
+                        branchLayout.layoutSuite( 0, elifBranch.suite, CellElement.NO_SCOPE, None, 0 )
+                        branchWidth, branchHeight = self.__copyLayout( branchLayout, openEnd[ 0 ], openEnd[ 1 ] )
+
+                        # replace the open end
+                        openEnd[ 0 ] += branchHeight
 
 
-            # Below the single cell fragments possibly with comments
+                # Make the connections between the open ends and the branch ends
+                while branchEndStack:
+                    targetRow, targetColumn = branchEndStack.pop( -1 )
+
+                    # make the branches adjusted
+                    while targetRow > openEnd[ 0 ]:
+                        self.__allocateCell( openEnd[ 0 ], openEnd[ 1 ] )
+                        self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.NORTH,
+                                                                                       ConnectorCell.SOUTH) ] )
+                        openEnd[ 0 ] += 1
+                    while openEnd[ 0 ] > targetRow:
+                        self.__allocateCell( targetRow, targetColumn )
+                        self.cells[ targetRow ][ targetColumn ] = ConnectorCell( [ (ConnectorCell.NORTH,
+                                                                                    ConnectorCell.SOUTH) ] )
+                        targetRow += 1
+
+                    # make the horizontal connection
+                    self.__allocateCell( openEnd[ 0 ], openEnd[ 1 ] )
+                    self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.NORTH,
+                                                                                   ConnectorCell.WEST) ] )
+                    openEnd[ 1 ] -= 1
+                    while openEnd[ 1 ] > targetColumn:
+                        self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.EAST,
+                                                                                       ConnectorCell.WEST) ] )
+                        openEnd[ 1 ] -= 1
+                    self.cells[ targetRow ][ targetColumn ] = ConnectorCell( [ (ConnectorCell.NORTH,
+                                                                                ConnectorCell.SOUTH),
+                                                                               (ConnectorCell.EAST,
+                                                                                ConnectorCell.CENTER) ] )
+
+                    # adjust the new open end
+                    openEnd = [ targetRow + 1, targetColumn ]
+
+                vacantRow = openEnd[ 0 ]
+                continue
+
+
+            # Below are the single cell fragments possibly with comments
             cellClass = _fragmentKindToCellClass[ item.kind ]
             if item.leadingComment:
                 self.__allocateCell( vacantRow, column + 1 )
@@ -261,6 +385,22 @@ class VirtualCanvas:
 
 
         return vacantRow
+
+    def __copyLayout( self, fromCanvas, row, column ):
+        " Copies all the cells from another layout starting from the row, column "
+        width = 0
+        height = 0
+        for line in fromCanvas.cells:
+            lineWidth = len( line )
+            if lineWidth > width:
+                width = lineWidth
+            self.__allocateCell( row + height, column + lineWidth - 1 )
+            for index, item in enumerate( line ):
+                self.cells[ row + height ][ column + index ] = fromCanvas.cells[ height ][ index ]
+            height += 1
+
+        return width, height
+
 
     def layout( self, cf, scopeKind = CellElement.FILE_SCOPE ):
         " Does the layout "

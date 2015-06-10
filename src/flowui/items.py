@@ -51,9 +51,10 @@ class CellElement:
     ASSERT = 205
     SYSEXIT = 206
     IMPORT = 207
-    LEADING_COMMENT = 208
-    INDEPENDENT_COMMENT = 209
-    SIDE_COMMENT = 210
+    IF = 208
+    LEADING_COMMENT = 209
+    INDEPENDENT_COMMENT = 210
+    SIDE_COMMENT = 211
 
     CONNECTOR = 300
 
@@ -131,6 +132,7 @@ __kindToString = {
     CellElement.ASSERT:                 "ASSERT",
     CellElement.SYSEXIT:                "SYSEXIT",
     CellElement.IMPORT:                 "IMPORT",
+    CellElement.IF:                     "IF",
     CellElement.LEADING_COMMENT:        "LEADING_COMMENT",
     CellElement.INDEPENDENT_COMMENT:    "INDEPENDENT_COMMENT",
     CellElement.SIDE_COMMENT:           "SIDE_COMMENT",
@@ -507,6 +509,23 @@ class ImportCell( CellElement ):
     def __init__( self, ref ):
         CellElement.__init__( self )
         self.kind = CellElement.IMPORT
+        self.reference = ref
+        return
+
+    def render( self, settings ):
+        raise Exception( "Not implemented yet" )
+
+    def draw( self, rect, scene, settings ):
+        raise Exception( "Not implemented yet" )
+
+
+
+class IfCell( CellElement ):
+    " Represents a single if statement "
+
+    def __init__( self, ref ):
+        CellElement.__init__( self )
+        self.kind = CellElement.IF
         self.reference = ref
         return
 

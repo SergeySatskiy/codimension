@@ -49,12 +49,13 @@ def safeRun( commandArgs ):
 
 
 def isPythonFile( fName ):
-    try:
-        output = safeRun( ['file', '-i', '-b', fName] )
-        if 'text/x-python' not in output:
-            return "The file " + fName + " is not a python one"
-    except:
-        return "Error running the 'file' utility for " + fName
+    if not fName.endswith( ".py" ):
+        try:
+            output = safeRun( ['file', '-i', '-b', fName] )
+            if 'text/x-python' not in output:
+                return "The file " + fName + " is not a python one"
+        except:
+            return "Error running the 'file' utility for " + fName
     return None
 
 
@@ -271,7 +272,7 @@ class MainWindow( QtGui.QMainWindow ):
 
     def reloadButtonClicked( self ):
         """ reload button has been clicked """
-        self.proceedWithFile( False )
+        self.proceedWithFile()
         return
 
     def clearButtonClicked( self ):
