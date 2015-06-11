@@ -378,7 +378,8 @@ injectLeadingComments( Context *  context,
                        FragmentBase *  flowAsParent,
                        FragmentWithComments *  statement, // could be NULL
                        FragmentBase *  statementAsParent, // could be NULL
-                       int  firstStatementLine )
+                       int  firstStatementLine,
+                       bool  consumeAllLeading )
 {
     int     leadingLastLine = detectLeadingBlock( context,
                                                   firstStatementLine );
@@ -406,7 +407,8 @@ injectLeadingComments( Context *  context,
                 }
 
                 Fragment *      part( createCommentFragment( comment ) );
-                if ( leadingLastLine + 1 == firstStatementLine )
+                if ( leadingLastLine + 1 == firstStatementLine ||
+                     consumeAllLeading )
                     part->parent = statementAsParent;
                 else
                     part->parent = flowAsParent;
@@ -446,7 +448,8 @@ injectLeadingComments( Context *  context,
                     else
                     {
                         Fragment *      part( createCommentFragment( comment ) );
-                        if ( leadingLastLine + 1 == firstStatementLine )
+                        if ( leadingLastLine + 1 == firstStatementLine ||
+                             consumeAllLeading )
                             part->parent = statementAsParent;
                         else
                             part->parent = flowAsParent;
@@ -469,7 +472,8 @@ injectLeadingComments( Context *  context,
                 }
 
                 Fragment *      part( createCommentFragment( comment ) );
-                if ( leadingLastLine + 1 == firstStatementLine )
+                if ( leadingLastLine + 1 == firstStatementLine ||
+                     consumeAllLeading )
                     part->parent = statementAsParent;
                 else
                     part->parent = flowAsParent;
@@ -496,7 +500,8 @@ injectLeadingComments( Context *  context,
         }
         if ( leading != NULL )
         {
-            if ( leadingLastLine + 1 == firstStatementLine )
+            if ( leadingLastLine + 1 == firstStatementLine ||
+                 consumeAllLeading )
             {
                 statementAsParent->updateBeginEnd( leading );
                 statement->leadingComment = Py::asObject( leading );
@@ -710,11 +715,13 @@ injectComments( Context *  context,
                 Py::List &  flow,
                 FragmentBase *  flowAsParent,
                 FragmentWithComments *  statement,
-                FragmentBase *  statementAsParent )
+                FragmentBase *  statementAsParent,
+                bool  consumeAllLeading = false )
 {
     injectLeadingComments( context, flow, flowAsParent, statement,
                            statementAsParent,
-                           statementAsParent->beginLine );
+                           statementAsParent->beginLine,
+                           consumeAllLeading );
     injectSideComments( context, statement, statementAsParent,
                         flowAsParent );
     return;
@@ -950,7 +957,7 @@ processElifPart( Context *  context, Py::List &  flow,
     elifPart->updateBeginEnd( body );
     elifPart->body = Py::asObject( body );
 
-    injectComments( context, flow, parent, elifPart, elifPart );
+    injectComments( context, flow, parent, elifPart, elifPart, true );
     FragmentBase *  lastAdded = walk( context, suiteNode, elifPart,
                                       elifPart->nsuite, false );
     if ( lastAdded == NULL )
@@ -1060,7 +1067,7 @@ processExceptPart( Context *  context, Py::List &  flow,
     }
 
     injectComments( context, flow, parent,
-                    exceptPart, exceptPart );
+                    exceptPart, exceptPart, true );
 
     // 'suite' node follows the colon node
     node *          suiteNode = colonNode + 1;
@@ -2241,7 +2248,7 @@ Py::Object  parseInput( const char *  buffer, const char *  fileName,
 
         // Inject trailing comments if so
         injectLeadingComments( & context, controlFlow->nsuite,
-                               controlFlow, NULL, NULL, INT_MAX );
+                               controlFlow, NULL, NULL, INT_MAX, false );
     }
 
     return Py::asObject( controlFlow );
