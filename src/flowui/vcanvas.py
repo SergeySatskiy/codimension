@@ -86,6 +86,10 @@ class VirtualCanvas:
         # Layout support
         self.__currentCF = None
         self.__currentScopeClass = None
+
+        # Rendering support
+        self.width = None
+        self.height = None
         return
 
     def clear( self ):
@@ -106,14 +110,6 @@ class VirtualCanvas:
             c += 1
         return s
 
-    def render( self, settings ):
-        " Preforms rendering for all the cells "
-        return (0, 0)
-
-    def draw( self, scene ):
-        " Draws the diagram on the real canvas "
-        return
-
     def __allocateCell( self, row, column, needScopeEdge = True ):
         """ Allocates a cell as Vacant if it is not available yet
             Can only allocate bottom and right growing cells
@@ -133,9 +129,32 @@ class VirtualCanvas:
             lastIndex += 1
         return
 
+    def __allocateAndSet( self, row, column, what ):
+        " Allocates a cell and sets it to the given value "
+        self.__allocateCell( row, column )
+        self.cells[ row ][ column ] = what
+        return
+
+    def __allocateScope( self, suite, scopeType, row, column ):
+        " Allocates a scope for a suite "
+        canvas = VirtualCanvas( self )
+        canvas.layout( suite, scopeType )
+        self.__allocateAndSet( row, column, canvas )
+        return
+
+    def __allocateLeadingComment( self, item, row, column ):
+        " Allocates a leading comment if so "
+        if item.leadingComment:
+            self.__allocateCell( row, column + 1 )
+            self.cells[ row ][ column ] = ConnectorCell( [ (ConnectorCell.NORTH,
+                                                            ConnectorCell.SOUTH) ] )
+            self.cells[ row ][ column + 1 ] = LeadingCommentCell( item )
+            return row + 1
+        return row
+
     def layoutSuite( self, vacantRow, suite,
                      scopeKind = None, cf = None, column = 1 ):
-        " Does a single sute layout "
+        " Does a single suite layout "
         if scopeKind:
             self.__currentCF = cf
             self.__currentScopeClass = _scopeToClass[ scopeKind ]
@@ -163,42 +182,31 @@ class VirtualCanvas:
                 # Update the scope canvas parent
                 scopeCanvas.parent = self
 
-                self.__allocateCell( vacantRow, column )
-                self.cells[ vacantRow ][ column ] = scopeCanvas
+                self.__allocateAndSet( vacantRow, column, scopeCanvas )
                 vacantRow += 1
                 continue
 
             if item.kind == WITH_FRAGMENT:
-                scopeCanvas = VirtualCanvas( self )
-                scopeCanvas.layout( item, CellElement.WITH_SCOPE )
-                self.__allocateCell( vacantRow, column )
-                self.cells[ vacantRow ][ column ] = scopeCanvas
+                self.__allocateScope( item, CellElement.WITH_SCOPE,
+                                      vacantRow, column )
                 vacantRow += 1
                 continue
 
             if item.kind == WHILE_FRAGMENT:
-                scopeCanvas = VirtualCanvas( self )
-                scopeCanvas.layout( item, CellElement.WHILE_SCOPE )
-                self.__allocateCell( vacantRow, column )
-                self.cells[ vacantRow ][ column ] = scopeCanvas
+                self.__allocateScope( item, CellElement.WHILE_SCOPE,
+                                      vacantRow, column )
                 if item.elsePart:
-                    elseScopeCanvas = VirtualCanvas( self )
-                    elseScopeCanvas.layout( item.elsePart, CellElement.ELSE_SCOPE )
-                    self.__allocateCell( vacantRow, column + 1 )
-                    self.cells[ vacantRow ][ column + 1 ] = elseScopeCanvas
+                    self.__allocateScope( item.elsePart, CellElement.ELSE_SCOPE,
+                                          vacantRow, column + 1 )
                 vacantRow += 1
                 continue
 
             if item.kind == FOR_FRAGMENT:
-                scopeCanvas = VirtualCanvas( self )
-                scopeCanvas.layout( item, CellElement.FOR_SCOPE )
-                self.__allocateCell( vacantRow, column )
-                self.cells[ vacantRow ][ column ] = scopeCanvas
+                self.__allocateScope( item, CellElement.FOR_SCOPE,
+                                      vacantRow, column )
                 if item.elsePart:
-                    elseScopeCanvas = VirtualCanvas( self )
-                    elseScopeCanvas.layout( item.elsePart, CellElement.ELSE_SCOPE )
-                    self.__allocateCell( vacantRow, column + 1 )
-                    self.cells[ vacantRow ][ column + 1 ] = elseScopeCanvas
+                    self.__allocateScope( item.elsePart, CellElement.ELSE_SCOPE,
+                                          vacantRow, column + 1 )
                 vacantRow += 1
                 continue
 
@@ -211,40 +219,26 @@ class VirtualCanvas:
                 continue
 
             if item.kind == TRY_FRAGMENT:
-                tryScopeCanvas = VirtualCanvas( self )
-                tryScopeCanvas.layout( item, CellElement.TRY_SCOPE )
-                self.__allocateCell( vacantRow, column )
-                self.cells[ vacantRow ][ column ] = tryScopeCanvas
+                self.__allocateScope( item, CellElement.TRY_SCOPE,
+                                      vacantRow, column )
                 nextColumn = column + 1
                 for exceptPart in item.exceptParts:
-                    exceptScopeCanvas = VirtualCanvas( self )
-                    exceptScopeCanvas.layout( exceptPart, CellElement.EXCEPT_SCOPE )
-                    self.__allocateCell( vacantRow, nextColumn )
-                    self.cells[ vacantRow ][ nextColumn ] = exceptScopeCanvas
+                    self.__allocateScope( exceptPart, CellElement.EXCEPT_SCOPE,
+                                          vacantRow, nextColumn )
                     nextColumn += 1
                 if item.elsePart:
-                    elseScopeCanvas = VirtualCanvas( self )
-                    elseScopeCanvas.layout( item.elsePart, CellElement.ELSE_SCOPE )
-                    self.__allocateCell( vacantRow, nextColumn )
-                    self.cells[ vacantRow ][ nextColumn ] = elseScopeCanvas
+                    self.__allocateScope( item.elsePart, CellElement.ELSE_SCOPE,
+                                          vacantRow, nextColumn )
                     nextColumn += 1
                 if item.finallyPart:
-                    finallyScopeCanvas = VirtualCanvas( self )
-                    finallyScopeCanvas.layout( item.finallyPart, CellElement.FINALLY_SCOPE )
-                    self.__allocateCell( vacantRow, nextColumn )
-                    self.cells[ vacantRow ][ nextColumn ] = finallyScopeCanvas
+                    self.__allocateScope( item.finallyPart, CellElement.FINALLY_SCOPE,
+                                          vacantRow, nextColumn )
                 vacantRow += 1
                 continue
 
             if item.kind == IF_FRAGMENT:
-                if item.leadingComment:
-                    self.__allocateCell( vacantRow, column + 1 )
-                    self.cells[ vacantRow ][ column ] = ConnectorCell( [ (ConnectorCell.NORTH,
-                                                                          ConnectorCell.SOUTH) ] )
-                    self.cells[ vacantRow ][ column + 1 ] = LeadingCommentCell( item )
-                    vacantRow += 1
-                self.__allocateCell( vacantRow, column )
-                self.cells[ vacantRow ][ column ] = IfCell( item )
+                vacantRow = self.__allocateLeadingComment( item, vacantRow, column )
+                self.__allocateAndSet( vacantRow, column, IfCell( item ) )
 
                 # Memorize the No-branch endpoint
                 openEnd = [vacantRow, column + 1]
@@ -261,15 +255,15 @@ class VirtualCanvas:
                 # Calculate the number of horizontal connectors left->right
                 count = branchWidth - 1
                 while count > 0:
-                    self.__allocateCell( openEnd[ 0 ], openEnd[ 1 ] )
-                    self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.WEST,
-                                                                                   ConnectorCell.EAST) ] )
+                    self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ],
+                                           ConnectorCell( [ (ConnectorCell.WEST,
+                                                             ConnectorCell.EAST) ] ) )
                     openEnd[ 1 ] += 1
                     count -= 1
 
-                self.__allocateCell( openEnd[ 0 ], openEnd[ 1 ] )
-                self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.WEST,
-                                                                               ConnectorCell.SOUTH) ] )
+                self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ],
+                                       ConnectorCell( [ (ConnectorCell.WEST,
+                                                         ConnectorCell.SOUTH) ] ) )
                 openEnd[ 0 ] += 1
 
                 branchEndStack = []
@@ -279,15 +273,8 @@ class VirtualCanvas:
                 for elifBranch in item.elifParts:
                     if elifBranch.condition:
                         # This is the elif ...
-                        if elifBranch.leadingComment:
-                            self.__allocateCell( openEnd[ 0 ], openEnd[ 1 ] + 1 )
-                            self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.NORTH,
-                                                                                           ConnectorCell.SOUTH) ] )
-                            self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] + 1 ] = LeadingCommentCell( elifBranch )
-                            openEnd[ 0 ] += 1
-
-                        self.__allocateCell( openEnd[ 0 ], openEnd[ 1 ] )
-                        self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = IfCell( elifBranch )
+                        openEnd[ 0 ] = self.__allocateLeadingComment( elifBranch, openEnd[ 0 ], openEnd[ 1 ] )
+                        self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ], IfCell( elifBranch ) )
 
                         # Memorize the new open end
                         newOpenEnd = [openEnd[ 0 ], openEnd[ 1 ] + 1]
@@ -304,15 +291,15 @@ class VirtualCanvas:
                         # Calculate the number of horizontal connectors left->right
                         count = branchWidth - 1
                         while count > 0:
-                            self.__allocateCell( newOpenEnd[ 0 ], newOpenEnd[ 1 ] )
-                            self.cells[ newOpenEnd[ 0 ] ][ newOpenEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.WEST,
-                                                                                                 ConnectorCell.EAST) ] )
+                            self.__allocateAndSet( newOpenEnd[ 0 ], newOpenEnd[ 1 ],
+                                                   ConnectorCell( [ (ConnectorCell.WEST,
+                                                                     ConnectorCell.EAST) ] ) )
                             newOpenEnd[ 1 ] += 1
                             count -= 1
 
-                        self.__allocateCell( newOpenEnd[ 0 ], newOpenEnd[ 1 ] )
-                        self.cells[ newOpenEnd[ 0 ] ][ newOpenEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.WEST,
-                                                                                             ConnectorCell.SOUTH) ] )
+                        self.__allocateAndSet( newOpenEnd[ 0 ], newOpenEnd[ 1 ],
+                                               ConnectorCell( [ (ConnectorCell.WEST,
+                                                                 ConnectorCell.SOUTH) ] ) )
                         newOpenEnd[ 0 ] += 1
 
                         branchEndStack.append( (openEnd[ 0 ] + branchHeight, openEnd[ 1 ]) )
@@ -333,20 +320,20 @@ class VirtualCanvas:
 
                     # make the branches adjusted
                     while targetRow > openEnd[ 0 ]:
-                        self.__allocateCell( openEnd[ 0 ], openEnd[ 1 ] )
-                        self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.NORTH,
-                                                                                       ConnectorCell.SOUTH) ] )
+                        self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ],
+                                               ConnectorCell( [ (ConnectorCell.NORTH,
+                                                                 ConnectorCell.SOUTH) ] ) )
                         openEnd[ 0 ] += 1
                     while openEnd[ 0 ] > targetRow:
-                        self.__allocateCell( targetRow, targetColumn )
-                        self.cells[ targetRow ][ targetColumn ] = ConnectorCell( [ (ConnectorCell.NORTH,
-                                                                                    ConnectorCell.SOUTH) ] )
+                        self.__allocateAndSet( targetRow, targetColumn,
+                                               ConnectorCell( [ (ConnectorCell.NORTH,
+                                                                 ConnectorCell.SOUTH) ] ) )
                         targetRow += 1
 
                     # make the horizontal connection
-                    self.__allocateCell( openEnd[ 0 ], openEnd[ 1 ] )
-                    self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.NORTH,
-                                                                                   ConnectorCell.WEST) ] )
+                    self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ],
+                                           ConnectorCell( [ (ConnectorCell.NORTH,
+                                                             ConnectorCell.WEST) ] ) )
                     openEnd[ 1 ] -= 1
                     while openEnd[ 1 ] > targetColumn:
                         self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.EAST,
@@ -366,23 +353,14 @@ class VirtualCanvas:
 
             # Below are the single cell fragments possibly with comments
             cellClass = _fragmentKindToCellClass[ item.kind ]
-            if item.leadingComment:
-                self.__allocateCell( vacantRow, column + 1 )
-                self.cells[ vacantRow ][ column ] = ConnectorCell( [ (ConnectorCell.NORTH,
-                                                                      ConnectorCell.SOUTH) ] )
-                self.cells[ vacantRow ][ column + 1 ] = LeadingCommentCell( item )
-                vacantRow += 1
-
-            self.__allocateCell( vacantRow, column )
-            self.cells[ vacantRow ][ column ] = cellClass( item )
+            vacantRow = self.__allocateLeadingComment( item, vacantRow, column )
+            self.__allocateAndSet( vacantRow, column, cellClass( item ) )
 
             if item.sideComment:
-                self.__allocateCell( vacantRow, column + 1 )
-                self.cells[ vacantRow ][ column + 1 ] = SideCommentCell( item )
+                self.__allocateAndSet( vacantRow, column + 1, SideCommentCell( item ) )
             vacantRow += 1
 
             # end of for loop
-
 
         return vacantRow
 
@@ -454,4 +432,13 @@ class VirtualCanvas:
         self.cells[ vacantRow ][ 0 ] = self.__currentScopeClass( cf, ScopeCellElement.BOTTOM_LEFT )
         self.cells[ vacantRow ][ 1 ] = self.__currentScopeClass( cf, ScopeCellElement.BOTTOM )
         return
+
+    def render( self, settings ):
+        " Preforms rendering for all the cells "
+        return (0, 0)
+
+    def draw( self, scene ):
+        " Draws the diagram on the real canvas "
+        return
+
 
