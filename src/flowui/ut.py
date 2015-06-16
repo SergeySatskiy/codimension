@@ -158,7 +158,7 @@ class CFGraphicsView( QtGui.QGraphicsView ):
 
     def __init__( self, parent = None ):
         super( CFGraphicsView, self ).__init__( parent )
-        self.setRenderHint( QtGui.QPainter.Antialiasing )
+#        self.setRenderHint( QtGui.QPainter.Antialiasing )
         self.setRenderHint( QtGui.QPainter.TextAntialiasing )
         return
 
@@ -416,12 +416,15 @@ class MainWindow( QtGui.QMainWindow ):
             # To pick up possibly changed settings
             reload( cflowsettings )
 
-            width, height = canvas.render( cflowsettings.DEFAULT_CFLOW_SETTINGS )
+            cflowSettings = cflowsettings.getDefaultCflowSettings( self )
+            width, height = canvas.render( cflowSettings )
             if self.verbose:
-                self.logMessage( "Rendering is done. Drawing ..." )
+                self.logMessage( "Rendering is done. Scene size: " +
+                                 str( width ) + "x" + str( height ) +
+                                 ". Drawing ..." )
 
             self.scene.setSceneRect( 0, 0, width, height )
-            canvas.draw( self.scene )
+            canvas.draw( self.scene, cflowSettings )
         except Exception, exc:
             self.logMessage( "Exception:\n" + str( exc ) )
             raise

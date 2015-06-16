@@ -90,13 +90,20 @@ class VirtualCanvas:
         # Rendering support
         self.width = None
         self.height = None
+        self.minWidth = None
+        self.minHeight = None
         return
 
     def clear( self ):
         " Resets the layout "
         self.cells = []
         self.parent = None
+        self.__currentCF = None
         self.__currentScopeClass = None
+        self.width = None
+        self.height = None
+        self.minWidth = None
+        self.minHeight = None
         return
 
     def __str__( self ):
@@ -435,10 +442,53 @@ class VirtualCanvas:
 
     def render( self, settings ):
         " Preforms rendering for all the cells "
-        return (0, 0)
+        self.width = 0
+        self.height = 0
 
-    def draw( self, scene ):
+        maxColumns = 0
+        for row in self.cells:
+            maxHeight = 0
+            for cell in row:
+                _, height = cell.render( settings )
+                if height > maxHeight:
+                    maxHeight = height
+            columns = 0
+            for cell in row:
+                cell.height = maxHeight
+                columns += 1
+            if columns > maxColumns:
+                maxColumns = columns
+            self.height += maxHeight
+
+        for column in xrange( maxColumns ):
+            maxWidth = 0
+            for row in self.cells:
+                if column < len( row ):
+                    if row[ column ].width > maxWidth:
+                        maxWidth = row[ column ].width
+            for row in self.cells:
+                if column < len( row ):
+                    row[ column ].width = maxWidth
+            self.width += maxWidth
+
+        self.minWidth = self.minWidth
+        self.minHeight = self.height
+        return (self.width, self.height)
+
+    def draw( self, scene, settings, baseX = 0, baseY = 0 ):
         " Draws the diagram on the real canvas "
+        currentY = baseY
+        for row in self.cells:
+            height = row[ 0 ].height
+            currentX = baseX
+            for cell in row:
+                if settings.debug:
+                    scene.addLine( currentX, currentY, currentX + cell.width, currentY )
+                    scene.addLine( currentX, currentY, currentX, currentY + cell.height )
+                    scene.addLine( currentX, currentY + cell.height, currentX + cell.width, currentY + cell.height )
+                    scene.addLine( currentX + cell.width, currentY, currentX + cell.width, currentY + cell.height )
+                cell.draw( scene, settings, currentX, currentY )
+                currentX += cell.width
+            currentY += height
         return
-
 
