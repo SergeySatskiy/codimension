@@ -31,6 +31,8 @@ The whole canvas is split into independent sections. The growing in one section
 does not affect all the other sections.
 """
 
+from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QPen
 from items import ( kindToString,
                     CellElement, VacantCell, CodeBlockCell, ScopeCellElement,
                     FileScopeCell, FunctionScopeCell, ClassScopeCell,
@@ -483,10 +485,11 @@ class VirtualCanvas:
             currentX = baseX
             for cell in row:
                 if settings.debug:
-                    scene.addLine( currentX, currentY, currentX + cell.width, currentY )
-                    scene.addLine( currentX, currentY, currentX, currentY + cell.height )
-                    scene.addLine( currentX, currentY + cell.height, currentX + cell.width, currentY + cell.height )
-                    scene.addLine( currentX + cell.width, currentY, currentX + cell.width, currentY + cell.height )
+                    pen = QPen( Qt.DotLine )
+                    scene.addLine( currentX, currentY, currentX + cell.width, currentY, pen )
+                    scene.addLine( currentX, currentY, currentX, currentY + cell.height, pen )
+                    scene.addLine( currentX, currentY + cell.height, currentX + cell.width, currentY + cell.height, pen )
+                    scene.addLine( currentX + cell.width, currentY, currentX + cell.width, currentY + cell.height, pen )
                 cell.draw( scene, settings, currentX, currentY )
                 currentX += cell.width
             currentY += height
