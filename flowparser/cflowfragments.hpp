@@ -24,6 +24,8 @@
 #define CFLOWFRAGMENTS_HPP
 
 
+#include <set>
+
 #include "CXX/Objects.hxx"
 #include "CXX/Extensions.hxx"
 
@@ -666,6 +668,7 @@ struct Context
     const char *                    buffer;
     int *                           lineShifts;
     std::deque< CommentLine > *     comments;
+    std::set< std::string >         sysExit;
 };
 
 #endif

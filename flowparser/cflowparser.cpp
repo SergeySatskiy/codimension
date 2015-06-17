@@ -1411,6 +1411,29 @@ processImport( Context *  context,
         whatFragment->endPos = body->endPos;
 
         import->whatPart = Py::asObject( whatFragment );
+
+        // Check if there are imports of sys
+        for ( int  k = 0; k < firstWhat->n_nchildren; ++k )
+        {
+            node *  child = &(firstWhat->n_child[ k ]);
+            if ( child->n_type == dotted_as_name )
+            {
+                node *  nameNode = &(child->n_child[ 0 ]);
+                nameNode = &(nameNode->n_child[ 0 ]);
+                if ( nameNode->n_type == NAME && strcmp( nameNode->n_str, "sys" ) == 0 )
+                {
+                    if ( child->n_nchildren == 3 )
+                    {
+                        node *  asNameNode = &(child->n_child[ 2 ]);
+                        context->sysExit.insert( asNameNode->n_str );
+                    }
+                    else
+                    {
+                        context->sysExit.insert( "sys.exit" );
+                    }
+                }
+            }
+        }
     }
 
     import->updateBeginEnd( body );
