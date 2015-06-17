@@ -65,6 +65,8 @@ class CellElement:
         # Filled when rendering is called
         self.width = None
         self.height = None
+        self.minWidth = None
+        self.minHeight = None
         return
 
     def __str__( self ):
@@ -196,10 +198,16 @@ class CodeBlockCell( CellElement ):
         return
 
     def render( self, settings ):
-        raise Exception( "Not implemented yet" )
+        text = self.reference.getContent()
+        rect = settings.otherFontMetrics.boundingRect( text )
+        self.minHeight = rect.height() + 2 * settings.vPadding
+        self.minWidth = rect.width() + 2 * settings.hPadding
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
 
-    def draw( self, rect, scene, settings ):
-        raise Exception( "Not implemented yet" )
+    def draw( self, scene, settings, baseX, baseY ):
+        pass
 
 
 
@@ -214,10 +222,50 @@ class FileScopeCell( ScopeCellElement ):
         return
 
     def render( self, settings ):
-        raise Exception( "Not implemented yet" )
+        if self.subKind == ScopeCellElement.UNKNOWN:
+            raise Exception( "Unknown file scope element" )
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            self.minHeight = settings.rectRadius
+            self.minWidth = settings.rectRadius
+        elif self.subKind == ScopeCellElement.LEFT:
+            self.minHeight = 0
+            self.minWidth = settings.rectRadius
+        elif self.subKind == ScopeCellElement.BOTTOM_LEFT:
+            self.minHeight = settings.rectRadius
+            self.minWidth = settings.rectRadius
+        elif self.subKind == ScopeCellElement.DECLARATION:
+            if self.reference.encodingLine:
+                text = "Encoding: " + self.reference.encodingLine.getDisplayValue()
+            else:
+                text = "Encoding: not specified"
+            if self.reference.bangLine:
+                text += "\nBang line: " + self.reference.bangLine.getDisplayValue()
+            else:
+                text += "\nBang line: not specified"
+            rect = settings.otherFontMetrics.boundingRect( text )
+            self.minHeight = rect.height() + settings.vPadding
+            self.minWidth = rect.width() + settings.hPadding
+        elif self.subKind == ScopeCellElement.SIDE_COMMENT:
+            pass
+        elif self.subKind == ScopeCellElement.LEADING_COMMENT:
+            pass
+        elif self.subKind == ScopeCellElement.DOCSTRING:
+            pass
+        elif self.subKind == ScopeCellElement.TOP:
+            self.minHeight = settings.rectRadius
+            self.minWidth = 0
+        elif self.subKind == ScopeCellElement.BOTTOM:
+            self.minHeight = settings.rectRadius
+            self.minWidth = 0
+        else:
+            raise Exception( "Unrecognized file scope element: " +
+                             str( self.subKind ) )
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
 
-    def draw( self, rect, scene, settings ):
-        raise Exception( "Not implemented yet" )
+    def draw( self, scene, settings, baseX, baseY ):
+        pass
 
 
 

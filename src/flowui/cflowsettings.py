@@ -28,18 +28,35 @@
 # accordingly.
 
 
-from PyQt4.QtGui import QColor
+from PyQt4.QtGui import QColor, QFont, QFontMetrics
+
+
+def buildFont( fontAsString ):
+    " Converts a string into QFont object "
+    fontAsString = fontAsString.strip()
+    font = QFont()
+    font.fromString( fontAsString )
+    return font
 
 
 class CFlowSettings:
     " Holds the control flow rendering and drawing settings "
 
-    def __init__( self ):
+    def __init__( self, paintDevice ):
 
-        self.debug = False      # visible virtual cells
+        self.debug = True       # visible virtual cells
+        self.__paintDevice = paintDevice
+
+        self.monoFont = buildFont( "Monospace,12,-1,5,50,0,0,0,0,0" )
+        self.otherFont = buildFont( "Times,12,-1,5,50,0,0,0,0,0" )
+
+        self.monoFontMetrics = QFontMetrics( self.monoFont, paintDevice )
+        self.otherFontMetrics = QFontMetrics( self.otherFont, paintDevice )
 
         self.hPadding = 5       # in pixels (left and right)
         self.vPadding = 5       # in pixels (top and bottom)
+
+        self.rectRadius = 5     # Rounded rectangles radius
 
         self.lineWidth = 1      # used for connections and box edges
         self.lineColor = QColor( 0, 0, 0, 255 )
@@ -51,6 +68,21 @@ class CFlowSettings:
 
         return
 
+    def setMonoFont( self, font ):
+        " Sets the mono font "
+        self.monoFont = font
+        self.monoFontMetrics = QFontMetrics( self.monoFont,
+                                             self.__paintDevice )
+        return
 
-DEFAULT_CFLOW_SETTINGS = CFlowSettings()
+    def setOtherFont( self, font ):
+        " Sets the non-mono font "
+        self.otherFont = font
+        self.otherFontMetrics = QFontMetrics( self.otherFont,
+                                              self.__paintDevice )
+        return
+
+
+def getDefaultCflowSettings( paintDevice ):
+    return CFlowSettings( paintDevice )
 
