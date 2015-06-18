@@ -406,25 +406,26 @@ class MainWindow( QtGui.QMainWindow ):
         if self.verbose:
             self.logMessage( "Layouting ..." )
         try:
-            canvas = vcanvas.VirtualCanvas()
+            # To pick up possibly changed settings
+            reload( cflowsettings )
+            cflowSettings = cflowsettings.getDefaultCflowSettings( self )
+
+            # Top level canvas has no adress and no parent canvas
+            canvas = vcanvas.VirtualCanvas( cflowSettings, None, None, None )
             canvas.layout( self.cf )
             if self.verbose:
                 self.logMessage( "Layout is done:" )
                 self.logMessage( str( canvas ) )
                 self.logMessage( "Rendering ..." )
 
-            # To pick up possibly changed settings
-            reload( cflowsettings )
-
-            cflowSettings = cflowsettings.getDefaultCflowSettings( self )
-            width, height = canvas.render( cflowSettings )
+            width, height = canvas.render()
             if self.verbose:
                 self.logMessage( "Rendering is done. Scene size: " +
                                  str( width ) + "x" + str( height ) +
                                  ". Drawing ..." )
 
             self.scene.setSceneRect( 0, 0, width, height )
-            canvas.draw( self.scene, cflowSettings )
+            canvas.draw( self.scene, 0, 0 )
         except Exception, exc:
             self.logMessage( "Exception:\n" + str( exc ) )
             raise

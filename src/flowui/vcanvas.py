@@ -79,33 +79,27 @@ _fragmentKindToCellClass = {
 class VirtualCanvas:
     " Holds the control flow representation "
 
-    def __init__( self, parent = None ):
-        self.cells = []                 # Stores the item instances
-                                        # from items.py or other virtual
-                                        # canvases
-        self.parent = parent            # Reference to the upper level canvas
+    def __init__( self, settings, x, y, parent ):
+        self.cells = []         # Stores the item instances
+                                # from items.py or other virtual canvases
+        self.canvas = parent    # Reference to the upper level canvas or
+                                # None for the most upper canvas
+        self.settings = settings
+        self.addr = [ x, y ]
 
         # Layout support
         self.__currentCF = None
         self.__currentScopeClass = None
 
         # Rendering support
-        self.width = None
-        self.height = None
-        self.minWidth = None
-        self.minHeight = None
-        return
+        self.width = 0
+        self.height = 0
+        self.minWidth = 0
+        self.minHeight = 0
 
-    def clear( self ):
-        " Resets the layout "
-        self.cells = []
-        self.parent = None
-        self.__currentCF = None
-        self.__currentScopeClass = None
-        self.width = None
-        self.height = None
-        self.minWidth = None
-        self.minHeight = None
+        # Painting support
+        self.baseX = 0
+        self.baseY = 0
         return
 
     def __str__( self ):
@@ -130,11 +124,12 @@ class VirtualCanvas:
             if needScopeEdge:
                 if self.__currentScopeClass:
                     self.cells[ lastIndex ].append(
-                        self.__currentScopeClass( self.__currentCF,
+                        self.__currentScopeClass( self.__currentCF, self,
+                                                  0, lastIndex,
                                                   ScopeCellElement.LEFT ) )
         lastIndex = len( self.cells[ row ] ) - 1
         while lastIndex < column:
-            self.cells[ row ].append( VacantCell() )
+            self.cells[ row ].append( VacantCell( None, self, lastIndex, row ) )
             lastIndex += 1
         return
 
@@ -363,10 +358,12 @@ class VirtualCanvas:
             # Below are the single cell fragments possibly with comments
             cellClass = _fragmentKindToCellClass[ item.kind ]
             vacantRow = self.__allocateLeadingComment( item, vacantRow, column )
-            self.__allocateAndSet( vacantRow, column, cellClass( item ) )
+            self.__allocateAndSet( vacantRow, column,
+                                   cellClass( item, self, column, vacantRow ) )
 
             if item.sideComment:
-                self.__allocateAndSet( vacantRow, column + 1, SideCommentCell( item ) )
+                self.__allocateAndSet( vacantRow, column + 1,
+                                       SideCommentCell( item, self, column + 1, vacantRow ) )
             vacantRow += 1
 
             # end of for loop
@@ -405,11 +402,11 @@ class VirtualCanvas:
                 headerRow = 1
 
         self.__allocateCell( headerRow, 1, False )
-        self.cells[ headerRow ][ 0 ] = self.__currentScopeClass( cf, ScopeCellElement.TOP_LEFT )
-        self.cells[ headerRow ][ 1 ] = self.__currentScopeClass( cf, ScopeCellElement.TOP )
+        self.cells[ headerRow ][ 0 ] = self.__currentScopeClass( cf, self, 0, headerRow, ScopeCellElement.TOP_LEFT )
+        self.cells[ headerRow ][ 1 ] = self.__currentScopeClass( cf, self, 1, headerRow, ScopeCellElement.TOP )
         headerRow += 1
         self.__allocateCell( headerRow, 1 )
-        self.cells[ headerRow ][ 1 ] = self.__currentScopeClass( cf, ScopeCellElement.DECLARATION )
+        self.cells[ headerRow ][ 1 ] = self.__currentScopeClass( cf, self, 1, headerRow, ScopeCellElement.DECLARATION )
 
         if hasattr( cf, "sideComment" ):
             if cf.sideComment:
@@ -438,11 +435,11 @@ class VirtualCanvas:
 
         # Allocate the scope footer
         self.__allocateCell( vacantRow, 1, False )
-        self.cells[ vacantRow ][ 0 ] = self.__currentScopeClass( cf, ScopeCellElement.BOTTOM_LEFT )
-        self.cells[ vacantRow ][ 1 ] = self.__currentScopeClass( cf, ScopeCellElement.BOTTOM )
+        self.cells[ vacantRow ][ 0 ] = self.__currentScopeClass( cf, self, 0, vacantRow, ScopeCellElement.BOTTOM_LEFT )
+        self.cells[ vacantRow ][ 1 ] = self.__currentScopeClass( cf, self, 1, vacantRow, ScopeCellElement.BOTTOM )
         return
 
-    def render( self, settings ):
+    def render( self ):
         " Preforms rendering for all the cells "
         self.width = 0
         self.height = 0
@@ -451,7 +448,7 @@ class VirtualCanvas:
         for row in self.cells:
             maxHeight = 0
             for cell in row:
-                _, height = cell.render( settings )
+                _, height = cell.render()
                 if height > maxHeight:
                     maxHeight = height
             columns = 0
@@ -477,20 +474,20 @@ class VirtualCanvas:
         self.minHeight = self.height
         return (self.width, self.height)
 
-    def draw( self, scene, settings, baseX = 0, baseY = 0 ):
+    def draw( self, scene, baseX, baseY ):
         " Draws the diagram on the real canvas "
         currentY = baseY
         for row in self.cells:
             height = row[ 0 ].height
             currentX = baseX
             for cell in row:
-                if settings.debug:
+                if self.settings.debug:
                     pen = QPen( Qt.DotLine )
                     scene.addLine( currentX, currentY, currentX + cell.width, currentY, pen )
                     scene.addLine( currentX, currentY, currentX, currentY + cell.height, pen )
                     scene.addLine( currentX, currentY + cell.height, currentX + cell.width, currentY + cell.height, pen )
                     scene.addLine( currentX + cell.width, currentY, currentX + cell.width, currentY + cell.height, pen )
-                cell.draw( scene, settings, currentX, currentY )
+                cell.draw( scene, currentX, currentY )
                 currentX += cell.width
             currentY += height
         return

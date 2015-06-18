@@ -53,19 +53,25 @@ class CFlowSettings:
         self.monoFontMetrics = QFontMetrics( self.monoFont, paintDevice )
         self.otherFontMetrics = QFontMetrics( self.otherFont, paintDevice )
 
-        self.hPadding = 5       # in pixels (left and right)
-        self.vPadding = 5       # in pixels (top and bottom)
+        self.hCellPadding = 15      # in pixels (left and right)
+        self.vCellPadding = 15      # in pixels (top and bottom)
+        self.hTextPadding = 5       # in pixels (left and right)
+        self.vTextPadding = 5       # in pixels (top and bottom)
 
-        self.rectRadius = 5     # Rounded rectangles radius
+        self.rectRadius = 10        # Rounded rectangles radius
 
-        self.lineWidth = 1      # used for connections and box edges
+        self.lineWidth = 3          # used for connections and box edges
         self.lineColor = QColor( 0, 0, 0, 255 )
 
-        self.needArrows = True  # affects connectors
+        self.needArrows = True      # affects connectors
 
-        self.boxBGColor = QColor( 255, 255, 255, 255 )
+        self.boxBGColor = QColor( 216, 216, 207, 255 )
         self.boxFGColor = QColor( 0, 0, 0, 255 )
 
+        self.commentBGColor = QColor( 216, 216, 207, 255 )
+        self.commentFGColor = QColor( 90, 90, 88, 255 )
+        self.commentLineColor = QColor( 255, 0, 0, 255 )
+        self.commentLineWidth = 1
         return
 
     def setMonoFont( self, font ):
