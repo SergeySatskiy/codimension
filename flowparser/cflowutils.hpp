@@ -31,6 +31,7 @@ const char *  trimStart( const char *  str );
 const char *  trimEnd( const char *  end );
 std::string   trim( const char *  buffer, int  len );
 void          trimInplace( std::string &  str );
+void          trimEndInplace( std::string &  str );
 std::string   expandTabs( const std::string &  s, int  tabstop = 4 );
 std::vector< std::string >
               splitLines( const std::string &  str );

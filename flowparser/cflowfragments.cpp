@@ -498,6 +498,27 @@ std::string  FragmentWithComments::as_string( void ) const
            "\n" + representList( sideCMLComments, "SideCMLComments" );
 }
 
+Fragment *
+FragmentWithComments::getSideCommentFragmentForLine( INT_TYPE  lineNo )
+{
+    Fragment *  f( NULL );
+
+    if ( ! sideComment.isNone() )
+        f = static_cast<Comment *>(sideComment.ptr())->getFragmentForLine( lineNo );
+    if ( f == NULL )
+    {
+        Py::List::size_type     partCount( sideCMLComments.length() );
+        for ( Py::List::size_type k( 0 ); k < partCount; ++k )
+        {
+            CMLComment *  currentComment( static_cast<CMLComment *>(sideCMLComments[ k ].ptr()) );
+            f = currentComment->getFragmentForLine( lineNo );
+            if ( f != NULL )
+                return f;
+        }
+    }
+    return f;
+}
+
 // --- End of FragmentWithComments definition ---
 
 
@@ -859,6 +880,21 @@ Py::Object  Comment::getDisplayValue( const Py::Tuple &  args )
     return Py::String( content );
 }
 
+Fragment *  Comment::getFragmentForLine( INT_TYPE  lineNo )
+{
+    if ( lineNo < beginLine || lineNo > endLine )
+        return NULL;
+
+    Py::List::size_type     partCount( parts.length() );
+    for ( Py::List::size_type k( 0 ); k < partCount; ++k )
+    {
+        Fragment *  currentFragment( static_cast<Fragment *>(parts[ k ].ptr()) );
+        if ( currentFragment->beginLine == lineNo )
+            return currentFragment;
+    }
+    return NULL;
+}
+
 
 // --- End of Comment definition ---
 
@@ -1062,6 +1098,21 @@ void CMLComment::extractProperties( Context *  context )
         }
         this->properties.setItem( key, Py::String( token ) );
     }
+}
+
+Fragment *  CMLComment::getFragmentForLine( INT_TYPE  lineNo )
+{
+    if ( lineNo < beginLine || lineNo > endLine )
+        return NULL;
+
+    Py::List::size_type     partCount( parts.length() );
+    for ( Py::List::size_type k( 0 ); k < partCount; ++k )
+    {
+        Fragment *  currentFragment( static_cast<Fragment *>(parts[ k ].ptr()) );
+        if ( currentFragment->beginLine == lineNo )
+            return currentFragment;
+    }
+    return NULL;
 }
 
 
@@ -1373,6 +1424,8 @@ void CodeBlock::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+    add_varargs_method( "getDisplayValue", &CodeBlock::getDisplayValue,
+                        CODEBLOCK_GETDISPLAYVALUE_DOC );
 
     behaviors().readyType();
 }
@@ -1415,6 +1468,81 @@ int  CodeBlock::setattr( const char *        attrName,
     throwUnknownAttribute( attrName );
     return -1;  // Suppress compiler warning
 }
+
+
+Py::Object  CodeBlock::getDisplayValue( const Py::Tuple &  args )
+{
+    size_t          argCount( args.length() );
+    std::string     buf;
+    const char *    bufPointer;
+
+    if ( argCount == 0 )
+    {
+        bufPointer = NULL;
+    }
+    else if ( argCount == 1 )
+    {
+        buf = Py::String( args[ 0 ] ).as_std_string();
+        bufPointer = buf.c_str();
+    }
+    else
+    {
+        throwWrongBufArgument( "getDisplayValue" );
+        throw std::exception();     // Suppress compiler warning
+    }
+
+    // The content may have trailing side comments
+    Fragment *      bodyFragment( static_cast<Fragment *>(body.ptr()) );
+    size_t          indent( bodyFragment->beginPos - 1 );
+    std::string     content( bodyFragment->getContent( bufPointer ) );
+    std::vector< std::string >  lines( splitLines( content ) );
+
+    for ( std::vector< std::string >::iterator  k( lines.begin() );
+            k != lines.end(); ++k )
+    {
+        if ( k == lines.begin() )
+            *k = std::string( bodyFragment->beginPos - 1, ' ' ) + *k;
+        *k = expandTabs( *k );
+        if ( k != lines.begin() )
+        {
+            size_t      strippedSize( strlen( trimStart( k->c_str() ) ) );
+            if ( strippedSize > 0 )
+                indent = std::min( indent, k->length() - strippedSize );
+        }
+    }
+
+    // Remove indentation, trailing comments and trailing spaces
+    // Last line must not participate
+    size_t      lineNum( bodyFragment->beginLine );
+    size_t      lastIndex( lines.size() - 2 );
+    for ( size_t  k( 0 ); k <= lastIndex; ++k )
+    {
+        Fragment *  f = getSideCommentFragmentForLine( lineNum );
+
+        if ( f != NULL )
+        {
+            std::string &   tmp( lines[ k ] );
+            INT_TYPE        commentSize( f->endPos - f->beginPos + 1 );
+
+            tmp = std::string( tmp.c_str(), tmp.size() - commentSize );
+            trimEndInplace( tmp );
+        }
+
+        ++lineNum;
+    }
+
+    // Glue the lines back
+    std::string     result;
+    for ( std::vector< std::string >::iterator  k( lines.begin() );
+            k != lines.end(); ++k )
+    {
+        if ( ! result.empty() )
+            result += "\n";
+        result += *k;
+    }
+    return Py::String( result );
+}
+
 
 // --- End of CodeBlock definition ---
 

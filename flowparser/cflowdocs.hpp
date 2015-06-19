@@ -200,6 +200,10 @@
 #define CODEBLOCK_DOC \
 "Represents a code block"
 
+// CodeBlock::getDisplayValue()
+#define CODEBLOCK_GETDISPLAYVALUE_DOC \
+"Provides the code block without trailing spaces and comments"
+
 // Function class docstring
 #define FUNCTION_DOC \
 "Represents a single function"

@@ -145,6 +145,9 @@ class FragmentWithComments
         bool  setAttribute( const char *        attrName,
                             const Py::Object &  val );
         std::string  as_string( void ) const;
+
+    public:
+        Fragment *  getSideCommentFragmentForLine( INT_TYPE  lineNo );
 };
 
 
@@ -201,6 +204,7 @@ class Comment : public FragmentBase,
                              const Py::Object &  val );
 
         Py::Object getDisplayValue( const Py::Tuple &  args );
+        Fragment *  getFragmentForLine( INT_TYPE  lineNo );
 
     public:
         Py::List    parts;      // Fragment instances
@@ -230,6 +234,7 @@ class CMLComment : public FragmentBase,
     public:
         // Not visible from python
         void extractProperties( Context *  context );
+        Fragment *  getFragmentForLine( INT_TYPE  lineNo );
 };
 
 
@@ -291,6 +296,8 @@ class CodeBlock : public FragmentBase,
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
                              const Py::Object &  val );
+
+        Py::Object getDisplayValue( const Py::Tuple &  args );
 
     public:
         // Data and methods below are available in C++ only. They are used to

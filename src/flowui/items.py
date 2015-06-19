@@ -211,12 +211,18 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
         CellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
         self.kind = CellElement.CODE_BLOCK
+        self.__text = None
         return
+
+    def __getText( self ):
+        if self.__text is None:
+            self.__text = self.ref.getDisplayValue()
+        return self.__text
 
     def render( self ):
         s = self.canvas.settings
-        text = self.ref.getContent()
-        rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0, text )
+        rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
+                                               0, self.__getText() )
 
         self.minHeight = rect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
         self.minWidth = rect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding
@@ -263,7 +269,7 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
                           int( self.rect().width() ) - 2 * s.hTextPadding,
                           int( self.rect().height() ) - 2 * s.vTextPadding,
                           Qt.AlignLeft,
-                          self.ref.getContent() )
+                          self.__getText() )
         return
 
 
@@ -275,18 +281,20 @@ class FileScopeCell( ScopeCellElement ):
         CellElement.__init__( self, ref, canvas, x, y )
         self.kind = CellElement.FILE_SCOPE
         self.subKind = kind
+        self.__text = None
         return
 
     def __getHeaderText( self ):
-        if self.ref.encodingLine:
-            text = "Encoding: " + self.ref.encodingLine.getDisplayValue()
-        else:
-            text = "Encoding: not specified"
-        if self.ref.bangLine:
-            text += "\nBang line: " + self.ref.bangLine.getDisplayValue()
-        else:
-            text += "\nBang line: not specified"
-        return text
+        if self.__text is None:
+            if self.ref.encodingLine:
+                self.__text = "Encoding: " + self.ref.encodingLine.getDisplayValue()
+            else:
+                self.__text = "Encoding: not specified"
+            if self.ref.bangLine:
+                self.__text += "\nBang line: " + self.ref.bangLine.getDisplayValue()
+            else:
+                self.__text += "\nBang line: not specified"
+        return self.__text
 
     def render( self ):
         s = self.canvas.settings
@@ -686,11 +694,14 @@ class SideCommentCell( CellElement, QGraphicsRectItem ):
         CellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
         self.kind = CellElement.SIDE_COMMENT
+        self.__text = None
         return
 
     def __getText( self ):
-        return '\n' * (self.ref.sideComment.beginLine - self.ref.beginLine ) + \
-               self.ref.sideComment.getDisplayValue()
+        if self.__text is None:
+            self.__text = '\n' * (self.ref.sideComment.beginLine - self.ref.beginLine ) + \
+                          self.ref.sideComment.getDisplayValue()
+        return self.__text
 
     def render( self ):
         s = self.canvas.settings

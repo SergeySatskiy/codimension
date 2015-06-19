@@ -47,11 +47,16 @@ std::string  trim( const char *  buffer, int  len )
 
 void trimInplace( std::string &  str )
 {
-    str.assign( trimStart( str.c_str() ),
-                trimEnd( str.c_str() + str.length() ) );
+    const char *  b( str.c_str() );
+    str.assign( trimStart( b ), trimEnd( b + str.length() ) );
 }
 
 
+void trimEndInplace( std::string &  str )
+{
+    const char *  b( str.c_str() );
+    str.assign( b, trimEnd( b + str.length() ) );
+}
 
 std::vector< std::string >  splitLines( const std::string &  str )
 {
