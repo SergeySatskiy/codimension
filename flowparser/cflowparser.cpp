@@ -1392,6 +1392,39 @@ processImport( Context *  context,
 
         import->fromPart = Py::asObject( fromFragment );
         import->whatPart = Py::asObject( whatFragment );
+
+        // Check if there is exit imported from sys
+        if ( fromPartBegin->n_type == dotted_name )
+        {
+            if ( fromPartBegin->n_nchildren == 1 )
+            {
+                node *  fromNode = &(fromPartBegin->n_child[ 0 ]);
+                if ( strcmp( fromNode->n_str, "sys" ) == 0 )
+                {
+                    node *  importAsNames = findChildOfType( tree, import_as_names );
+                    for ( int  k = 0; k < importAsNames->n_nchildren; ++k )
+                    {
+                        node *  child = &(importAsNames->n_child[ k ]);
+                        if ( child->n_type == import_as_name )
+                        {
+                            node *  nameNode = &(child->n_child[ 0 ]);
+                            if ( strcmp( nameNode->n_str, "exit" ) == 0 )
+                            {
+                                if ( child->n_nchildren == 1 )
+                                {
+                                    context->sysExit.insert( "exit" );
+                                }
+                                else if ( child->n_nchildren == 3 )
+                                {
+                                    node *  asChild = &(child->n_child[ 2 ]);
+                                    context->sysExit.insert( asChild->n_str );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     else
     {
