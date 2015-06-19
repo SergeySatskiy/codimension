@@ -689,8 +689,8 @@ class SideCommentCell( CellElement, QGraphicsRectItem ):
         return
 
     def __getText( self ):
-        text = self.ref.sideComment.getDisplayValue()
-        return text
+        return '\n' * (self.ref.sideComment.beginLine - self.ref.beginLine ) + \
+               self.ref.sideComment.getDisplayValue()
 
     def render( self ):
         s = self.canvas.settings
