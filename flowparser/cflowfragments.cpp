@@ -846,20 +846,13 @@ Py::Object  Comment::getDisplayValue( const Py::Tuple &  args )
         if ( k != 0 )
             content += "\n";
         if ( currentFragment->beginLine - currentLine > 1 )
-        {
-            for ( INT_TYPE  j( 1 ); j < currentFragment->beginLine - currentLine; ++j )
-                content += "\n";
-        }
-        if ( sameShift )
-            content += currentFragment->getContent( bufPointer );
-        else
-        {
+            content += std::string( currentFragment->beginLine - currentLine - 1, '\n' );
+
+        if ( !sameShift )
             if ( currentFragment->beginPos > minShift )
-                content += std::string( ' ', currentFragment->beginPos - minShift ) +
-                           currentFragment->getContent( bufPointer );
-            else
-                content += currentFragment->getContent( bufPointer );
-        }
+                content += std::string( currentFragment->beginPos - minShift, ' ' );
+        content += currentFragment->getContent( bufPointer );
+
         currentLine = currentFragment->beginLine;
     }
 
