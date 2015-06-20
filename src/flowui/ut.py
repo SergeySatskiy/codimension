@@ -285,7 +285,7 @@ class MainWindow( QtGui.QMainWindow ):
 
         self.scene = QtGui.QGraphicsScene( self )
 
-        self.view = CFGraphicsView()
+        self.view = CFGraphicsView( self )
         self.view.setScene( self.scene )
         return
 
