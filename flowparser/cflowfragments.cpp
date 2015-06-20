@@ -1514,8 +1514,8 @@ Py::Object  CodeBlock::getDisplayValue( const Py::Tuple &  args )
     // Remove indentation, trailing comments and trailing spaces
     // Last line must not participate
     size_t      lineNum( bodyFragment->beginLine );
-    size_t      lastIndex( lines.size() - 2 );
-    for ( size_t  k( 0 ); k <= lastIndex; ++k )
+    ssize_t      lastIndex( lines.size() - 2 );
+    for ( ssize_t  k( 0 ); k <= lastIndex; ++k )
     {
         Fragment *  f = getSideCommentFragmentForLine( lineNum );
 
