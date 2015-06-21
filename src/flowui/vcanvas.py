@@ -151,8 +151,9 @@ class VirtualCanvas:
         if item.leadingComment:
             self.__allocateCell( row, column + 1 )
             self.cells[ row ][ column ] = ConnectorCell( [ (ConnectorCell.NORTH,
-                                                            ConnectorCell.SOUTH) ] )
-            self.cells[ row ][ column + 1 ] = LeadingCommentCell( item )
+                                                            ConnectorCell.SOUTH) ],
+                                                         self, row, column )
+            self.cells[ row ][ column + 1 ] = LeadingCommentCell( item, self, row, column + 1 )
             return row + 1
         return row
 
