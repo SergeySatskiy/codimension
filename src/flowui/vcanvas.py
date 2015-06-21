@@ -217,8 +217,10 @@ class VirtualCanvas:
             if item.kind == COMMENT_FRAGMENT:
                 self.__allocateCell( vacantRow, column + 1 )
                 self.cells[ vacantRow ][ column ] = ConnectorCell( [ (ConnectorCell.NORTH,
-                                                                      ConnectorCell.SOUTH) ] )
-                self.cells[ vacantRow ][ column + 1 ] = IndependentCommentCell( item )
+                                                                      ConnectorCell.SOUTH) ],
+                                                                   self, vacantRow, column )
+                self.cells[ vacantRow ][ column + 1 ] = IndependentCommentCell( item,
+                                                                                self, vacantRow, column + 1 )
                 vacantRow += 1
                 continue
 
