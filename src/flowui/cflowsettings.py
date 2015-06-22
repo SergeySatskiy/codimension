@@ -44,10 +44,11 @@ class CFlowSettings:
 
     def __init__( self, paintDevice ):
 
-        self.debug = True       # visible virtual cells
+        # Visibility of the virtual cells (dotted outline)
+        self.debug = True
         self.__paintDevice = paintDevice
 
-        self.monoFont = buildFont( "Monospace,12,-1,5,50,0,0,0,0,0" )
+        self.monoFont = buildFont( "Ubuntu mono,12,-1,5,50,0,0,0,0,0" )
         self.otherFont = buildFont( "Times,12,-1,5,50,0,0,0,0,0" )
 
         self.monoFontMetrics = QFontMetrics( self.monoFont, paintDevice )
@@ -65,13 +66,17 @@ class CFlowSettings:
 
         self.needArrows = True      # affects connectors
 
+        # Code blocks and other statements
         self.boxBGColor = QColor( 216, 216, 207, 255 )
         self.boxFGColor = QColor( 0, 0, 0, 255 )
 
+        # Comments: leading, side & independent
         self.commentBGColor = QColor( 216, 216, 207, 255 )
         self.commentFGColor = QColor( 90, 90, 88, 255 )
         self.commentLineColor = QColor( 255, 0, 0, 255 )
         self.commentLineWidth = 1
+
+        self.fileScopeBGColor = QColor( 255, 255, 230, 255 )
         return
 
     def setMonoFont( self, font ):

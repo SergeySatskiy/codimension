@@ -209,7 +209,7 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
 
     def __init__( self, ref, canvas, x, y ):
         CellElement.__init__( self, ref, canvas, x, y )
-        QGraphicsRectItem.__init__( self )
+        QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.CODE_BLOCK
         self.__text = None
         return
@@ -274,27 +274,28 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
 
 
 
-class FileScopeCell( ScopeCellElement ):
+class FileScopeCell( ScopeCellElement, QGraphicsRectItem ):
     " Represents a file scope element "
 
     def __init__( self, ref, canvas, x, y, kind ):
         CellElement.__init__( self, ref, canvas, x, y )
+        QGraphicsRectItem.__init__( self )
         self.kind = CellElement.FILE_SCOPE
         self.subKind = kind
-        self.__text = None
+        self.__headerText = None
         return
 
     def __getHeaderText( self ):
-        if self.__text is None:
+        if self.__headerText is None:
             if self.ref.encodingLine:
-                self.__text = "Encoding: " + self.ref.encodingLine.getDisplayValue()
+                self.__headerText = "Encoding: " + self.ref.encodingLine.getDisplayValue()
             else:
-                self.__text = "Encoding: not specified"
+                self.__headerText = "Encoding: not specified"
             if self.ref.bangLine:
-                self.__text += "\nBang line: " + self.ref.bangLine.getDisplayValue()
+                self.__headerText += "\nBang line: " + self.ref.bangLine.getDisplayValue()
             else:
-                self.__text += "\nBang line: not specified"
-        return self.__text
+                self.__headerText += "\nBang line: not specified"
+        return self.__headerText
 
     def render( self ):
         s = self.canvas.settings
@@ -333,7 +334,28 @@ class FileScopeCell( ScopeCellElement ):
         return (self.width, self.height)
 
     def draw( self, scene, baseX, baseY ):
-        pass
+        if self.subKind == ScopeCellElement.UNKNOWN:
+            raise Exception( "Unknown file scope element" )
+
+        self.baseX = baseX
+        self.baseY = baseY
+        s = self.canvas.settings
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            # Draw the scope rounded rectangle when we see the top left corner
+            self.setRect( baseX, baseY, self.width, self.height )
+            scene.addItem( self )
+            self.canvas.scopeRectangle = self
+        return
+
+    def paint( self, painter, option, widget ):
+        " Draws the code block "
+        s = self.canvas.settings
+
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            brush = QBrush( s.fileScopeBGColor )
+            painter.setBrush( brush )
+            painter.drawRoundedRect( self.baseX, self.baseY, self.canvas.width, self.canvas.height,
+                                     s.rectRadius, s.rectRadius )
 
 
 
@@ -658,7 +680,7 @@ class IndependentCommentCell( CellElement, QGraphicsRectItem ):
 
     def __init__( self, ref, canvas, x, y ):
         CellElement.__init__( self, ref, canvas, x, y )
-        QGraphicsRectItem.__init__( self )
+        QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.INDEPENDENT_COMMENT
         self.__text = None
         return
@@ -746,7 +768,7 @@ class LeadingCommentCell( CellElement, QGraphicsRectItem ):
 
     def __init__( self, ref, canvas, x, y ):
         CellElement.__init__( self, ref, canvas, x, y )
-        QGraphicsRectItem.__init__( self )
+        QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.LEADING_COMMENT
         self.__text = None
         return
@@ -834,7 +856,7 @@ class SideCommentCell( CellElement, QGraphicsRectItem ):
 
     def __init__( self, ref, canvas, x, y ):
         CellElement.__init__( self, ref, canvas, x, y )
-        QGraphicsRectItem.__init__( self )
+        QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.SIDE_COMMENT
         self.__text = None
         return
@@ -931,7 +953,7 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
         """ Connections are supposed to be a list of tuples e.g
             [ (NORTH, SOUTH), (EAST, CENTER) ] """
         CellElement.__init__( self, None, canvas, x, y )
-        QGraphicsPathItem.__init__( self )
+        QGraphicsPathItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.CONNECTOR
         self.connections = connections
         return

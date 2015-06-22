@@ -100,6 +100,7 @@ class VirtualCanvas:
         # Painting support
         self.baseX = 0
         self.baseY = 0
+        self.scopeRectangle = None
         return
 
     def __str__( self ):
@@ -473,7 +474,7 @@ class VirtualCanvas:
                     row[ column ].width = maxWidth
             self.width += maxWidth
 
-        self.minWidth = self.minWidth
+        self.minWidth = self.width + self.settings.rectRadius
         self.minHeight = self.height
         return (self.width, self.height)
 
