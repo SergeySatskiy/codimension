@@ -115,3 +115,14 @@ std::string  expandTabs( const std::string &  s, int  tabstop )
     return r;
 }
 
+
+bool  isBlankLine( const std::string &  s )
+{
+    for ( std::string::const_iterator x( s.begin() ); x != s.end(); ++x )
+    {
+        if ( *x != ' '|| *x != '\t' )
+            return false;
+    }
+    return true;
+}
+

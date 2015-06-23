@@ -35,6 +35,7 @@ void          trimEndInplace( std::string &  str );
 std::string   expandTabs( const std::string &  s, int  tabstop = 4 );
 std::vector< std::string >
               splitLines( const std::string &  str );
+bool          isBlankLine( const std::string &  str );
 
 
 #endif

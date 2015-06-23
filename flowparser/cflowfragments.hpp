@@ -148,6 +148,8 @@ class FragmentWithComments
 
     public:
         Fragment *  getSideCommentFragmentForLine( INT_TYPE  lineNo );
+        std::string alignBlockAndStripSideComments( const std::string &  content,
+                                                    Fragment *  firstFragment);
 };
 
 
@@ -524,6 +526,7 @@ class Import : public FragmentBase,
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
                              const Py::Object &  val );
+        Py::Object getDisplayValue( const Py::Tuple &  args );
 
     public:
         Py::Object      fromPart;   // None or Fragment for A in statements

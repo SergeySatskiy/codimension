@@ -519,6 +519,63 @@ FragmentWithComments::getSideCommentFragmentForLine( INT_TYPE  lineNo )
     return f;
 }
 
+std::string
+FragmentWithComments::alignBlockAndStripSideComments(const std::string &  content,
+                                                     Fragment *  firstFragment)
+{
+    // The content may have trailing side comments
+    size_t                      indent( firstFragment->beginPos - 1 );
+    std::vector< std::string >  lines( splitLines( content ) );
+
+    for ( std::vector< std::string >::iterator  k( lines.begin() );
+            k != lines.end(); ++k )
+    {
+        if ( k == lines.begin() )
+            *k = std::string( firstFragment->beginPos - 1, ' ' ) + *k;
+        *k = expandTabs( *k );
+        if ( k != lines.begin() )
+        {
+            size_t      strippedSize( strlen( trimStart( k->c_str() ) ) );
+            if ( strippedSize > 0 )
+                indent = std::min( indent, k->length() - strippedSize );
+        }
+    }
+
+    // Remove indentation, trailing comments and trailing spaces
+    size_t      lineNum( firstFragment->beginLine );
+    ssize_t     lastIndex( lines.size() - 1 );
+    for ( ssize_t  k( 0 ); k <= lastIndex; ++k )
+    {
+        std::string &   tmp( lines[ k ] );
+        Fragment *      f = getSideCommentFragmentForLine( lineNum );
+
+        if ( f != NULL && k != lastIndex )
+        {
+            INT_TYPE        commentSize( f->endPos - f->beginPos + 1 );
+            tmp = std::string( tmp.c_str(), tmp.size() - commentSize );
+        }
+        if ( indent != 0 )
+            tmp = std::string( tmp.c_str() + indent );
+        if ( k != lastIndex )
+            trimEndInplace( tmp );
+
+        ++lineNum;
+    }
+
+    // Glue the lines back
+    std::string     result;
+    for ( std::vector< std::string >::iterator  k( lines.begin() );
+            k != lines.end(); ++k )
+    {
+        if ( ! result.empty() )
+            result += "\n";
+        result += *k;
+    }
+    return result;
+
+}
+
+
 // --- End of FragmentWithComments definition ---
 
 
@@ -1277,16 +1334,16 @@ std::string  Docstring::trimDocstring( const std::string &  docstring )
 
     for ( ssize_t    k( startIndex ); k <= endIndex; ++k )
     {
-        if ( lines[ k ].length() != 0 )
-            break;
         startIndex = k;
+        if ( lines[ k ].length() != 0 ) 
+            break;
     }
 
     for ( ssize_t   k( endIndex ); k >= 0; --k )
     {
+        endIndex = k;
         if ( lines[ k ].length() != 0 )
             break;
-        endIndex = k;
     }
 
     std::string     result;
@@ -1472,75 +1529,27 @@ int  CodeBlock::setattr( const char *        attrName,
 
 Py::Object  CodeBlock::getDisplayValue( const Py::Tuple &  args )
 {
-    size_t          argCount( args.length() );
-    std::string     buf;
-    const char *    bufPointer;
-
-    if ( argCount == 0 )
-    {
-        bufPointer = NULL;
-    }
-    else if ( argCount == 1 )
-    {
-        buf = Py::String( args[ 0 ] ).as_std_string();
-        bufPointer = buf.c_str();
-    }
-    else
-    {
-        throwWrongBufArgument( "getDisplayValue" );
-        throw std::exception();     // Suppress compiler warning
-    }
-
-    // The content may have trailing side comments
     Fragment *      bodyFragment( static_cast<Fragment *>(body.ptr()) );
-    size_t          indent( bodyFragment->beginPos - 1 );
-    std::string     content( bodyFragment->getContent( bufPointer ) );
-    std::vector< std::string >  lines( splitLines( content ) );
-
-    for ( std::vector< std::string >::iterator  k( lines.begin() );
-            k != lines.end(); ++k )
+    std::string     content;
+    switch ( args.length() )
     {
-        if ( k == lines.begin() )
-            *k = std::string( bodyFragment->beginPos - 1, ' ' ) + *k;
-        *k = expandTabs( *k );
-        if ( k != lines.begin() )
-        {
-            size_t      strippedSize( strlen( trimStart( k->c_str() ) ) );
-            if ( strippedSize > 0 )
-                indent = std::min( indent, k->length() - strippedSize );
-        }
+        case 0:
+            content = bodyFragment->getContent( NULL );
+            break;
+        case 1:
+            {
+                std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
+                content = bodyFragment->getContent( buf.c_str() );
+                break;
+            }
+        default:
+            throwWrongBufArgument( "getDisplayValue" );
     }
 
-    // Remove indentation, trailing comments and trailing spaces
-    // Last line must not participate
-    size_t      lineNum( bodyFragment->beginLine );
-    ssize_t      lastIndex( lines.size() - 2 );
-    for ( ssize_t  k( 0 ); k <= lastIndex; ++k )
-    {
-        Fragment *  f = getSideCommentFragmentForLine( lineNum );
-
-        if ( f != NULL )
-        {
-            std::string &   tmp( lines[ k ] );
-            INT_TYPE        commentSize( f->endPos - f->beginPos + 1 );
-
-            tmp = std::string( tmp.c_str(), tmp.size() - commentSize );
-            trimEndInplace( tmp );
-        }
-
-        ++lineNum;
-    }
-
-    // Glue the lines back
-    std::string     result;
-    for ( std::vector< std::string >::iterator  k( lines.begin() );
-            k != lines.end(); ++k )
-    {
-        if ( ! result.empty() )
-            result += "\n";
-        result += *k;
-    }
-    return Py::String( result );
+    // The content may be shifted and may have side comments.
+    // The common shift should be shaved as well the comments
+    return Py::String( alignBlockAndStripSideComments( content,
+                                                       bodyFragment ) );
 }
 
 
@@ -2464,6 +2473,8 @@ void Import::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+    add_varargs_method( "getDisplayValue", &Import::getDisplayValue,
+                        IMPORT_GETDISPLAYVALUE_DOC );
 
     behaviors().readyType();
 }
@@ -2525,7 +2536,49 @@ int  Import::setattr( const char *        attrName,
     return -1;  // Suppress compiler warning
 }
 
+
+Py::Object Import::getDisplayValue( const Py::Tuple &  args )
+{
+    Fragment *      bodyFragment( static_cast<Fragment *>(body.ptr()) );
+    std::string     fromContent;
+    std::string     whatContent;
+    Fragment *      whatFragment( static_cast<Fragment *>(whatPart.ptr()) );
+    std::string     content;
+    switch ( args.length() )
+    {
+        case 0:
+            content = bodyFragment->getContent( NULL );
+            if ( ! fromPart.isNone() )
+                fromContent = static_cast<Fragment *>(fromPart.ptr())->getContent( NULL );
+            whatContent = whatFragment->getContent( NULL );
+            break;
+        case 1:
+            {
+                std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
+                content = bodyFragment->getContent( buf.c_str() );
+                if ( ! fromPart.isNone() )
+                    fromContent = static_cast<Fragment *>(fromPart.ptr())->getContent( buf.c_str() );
+                whatContent = whatFragment->getContent( buf.c_str() );
+                break;
+            }
+        default:
+            throwWrongBufArgument( "getDisplayValue" );
+    }
+
+    std::string     result;
+    if ( ! fromPart.isNone() )
+        result = "from " + fromContent + "\n";
+
+    // The content of the what part may be shifted and may have side comments.
+    // The common shift should be shaved as well the comments
+    return Py::String( result +
+                       alignBlockAndStripSideComments( whatContent,
+                                                       whatFragment ) );
+}
+
+
 // --- End of Import definition ---
+
 
 ElifPart::ElifPart()
 {

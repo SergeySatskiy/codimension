@@ -248,6 +248,10 @@
 #define IMPORT_DOC \
 "Represents a single import statement"
 
+// Import::getDisplayValue()
+#define IMPORT_GETDISPLAYVALUE_DOC \
+"Provides the import without trailing spaces and comments"
+
 // ElifPart class docstring
 #define ELIFPART_DOC \
 "Represents a single 'elif' or 'else' branch in the if statement"
