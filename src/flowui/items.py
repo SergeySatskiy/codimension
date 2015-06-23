@@ -1004,8 +1004,16 @@ class SideCommentCell( CellElement, QGraphicsRectItem ):
 
     def __getText( self ):
         if self.__text is None:
-            self.__text = '\n' * (self.ref.sideComment.beginLine - self.ref.body.beginLine ) + \
-                          self.ref.sideComment.getDisplayValue()
+            self.__text = ""
+            if self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ].kind == CellElement.IMPORT:
+                importRef = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ].ref
+                if importRef.fromPart is not None:
+                    self.__text = "\n"
+                self.__text += '\n' * (self.ref.sideComment.beginLine - importRef.whatPart.beginLine ) + \
+                               self.ref.sideComment.getDisplayValue()
+            else:
+                self.__text = '\n' * (self.ref.sideComment.beginLine - self.ref.body.beginLine ) + \
+                              self.ref.sideComment.getDisplayValue()
         return self.__text
 
     def render( self ):
