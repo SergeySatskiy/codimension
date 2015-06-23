@@ -41,7 +41,8 @@ from items import ( kindToString,
                     ExceptScopeCell, FinallyScopeCell,
                     BreakCell, ContinueCell, ReturnCell, RaiseCell,
                     AssertCell, SysexitCell, ImportCell, IndependentCommentCell,
-                    LeadingCommentCell, SideCommentCell, ConnectorCell, IfCell )
+                    LeadingCommentCell, SideCommentCell, ConnectorCell, IfCell,
+                    VSpacerCell )
 from cdmcf import ( CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
                     BREAK_FRAGMENT, CONTINUE_FRAGMENT, RETURN_FRAGMENT,
                     RAISE_FRAGMENT, ASSERT_FRAGMENT, SYSEXIT_FRAGMENT,
@@ -422,9 +423,14 @@ class VirtualCanvas:
         vacantRow = headerRow + 1
         if hasattr( cf, "docstring" ):
             if cf.docstring:
-                self.__allocateCell( vacantRow, 1 )
-                self.cells[ vacantRow ][ 1 ] = self.__currentScopeClass( cf, ScopeCellElement.DOCSTRING )
-                vacantRow += 1
+                if cf.docstring.getDisplayValue():
+                    self.__allocateCell( vacantRow, 1 )
+                    self.cells[ vacantRow ][ 1 ] = self.__currentScopeClass( cf, self, 1, vacantRow, ScopeCellElement.DOCSTRING )
+                    vacantRow += 1
+
+        # Spaces after the header to avoid glueing the flow chart to the header
+        self.__allocateAndSet( vacantRow, 1, VSpacerCell( None, self, 1, vacantRow ) )
+        vacantRow += 1
 
         # Handle the content of the scope
         if scopeKind == CellElement.DECOR_SCOPE:

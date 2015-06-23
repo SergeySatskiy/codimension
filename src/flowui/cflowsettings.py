@@ -59,12 +59,17 @@ class CFlowSettings:
         self.hTextPadding = 5       # in pixels (left and right)
         self.vTextPadding = 5       # in pixels (top and bottom)
 
+        self.hHeaderPadding = 5     # Scope header (file, decor, loops etc) paddings
+        self.vHeaderPadding = 5
+
+        self.vSpacer = 10
+
         self.rectRadius = 10        # Rounded rectangles radius
+        self.arrowLength = 3        # Length of an arrow
+        self.arrowWidth = 2         # One wing width
 
-        self.lineWidth = 3          # used for connections and box edges
+        self.lineWidth = 2          # used for connections and box edges
         self.lineColor = QColor( 0, 0, 0, 255 )
-
-        self.needArrows = True      # affects connectors
 
         # Code blocks and other statements
         self.boxBGColor = QColor( 216, 216, 207, 255 )

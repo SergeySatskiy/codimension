@@ -90,13 +90,6 @@ class CellElement:
         raise Exception( "render() is not implemented for " +
                          kindToString( self.kind ) )
 
-    def getConnections( self ):
-        " Provides the connection points the element uses "
-        # Connections are described as a list of single letter strings
-        # Each letter represents a cell edge: N, S, W, E
-        raise Exception( "getConnections() is not implemented for " +
-                         kindToString( self.kind ) )
-
     def draw( self, scene, baseX, baseY ):
         """
         Draws the element on the real canvas
@@ -194,8 +187,27 @@ class VacantCell( CellElement ):
         self.minHeight = 0
         return (self.width, self.height)
 
-    def getConnections( self ):
-        return []
+    def draw( self, scene, baseX, baseY ):
+        self.baseX = baseX
+        self.baseY = baseY
+        return
+
+
+
+class VSpacerCell( CellElement ):
+    " Represents a vertical spacer cell "
+
+    def __init__( self, ref, canvas, x, y ):
+        CellElement.__init__( self, ref, canvas, x, y )
+        self.kind = CellElement.V_SPACER
+        return
+
+    def render( self ):
+        self.width = 0
+        self.height = self.canvas.settings.vSpacer
+        self.minWidth = self.width
+        self.minHeight = self.height
+        return (self.width, self.height)
 
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
@@ -283,6 +295,7 @@ class FileScopeCell( ScopeCellElement, QGraphicsRectItem ):
         self.kind = CellElement.FILE_SCOPE
         self.subKind = kind
         self.__headerText = None
+        self.__docstringText = None
         return
 
     def __getHeaderText( self ):
@@ -296,6 +309,11 @@ class FileScopeCell( ScopeCellElement, QGraphicsRectItem ):
             else:
                 self.__headerText += "\nBang line: not specified"
         return self.__headerText
+
+    def __getDocstringText( self ):
+        if self.__docstringText is None:
+            self.__docstringText = self.ref.docstring.getDisplayValue()
+        return self.__docstringText
 
     def render( self ):
         s = self.canvas.settings
@@ -311,15 +329,19 @@ class FileScopeCell( ScopeCellElement, QGraphicsRectItem ):
             self.minHeight = s.rectRadius
             self.minWidth = s.rectRadius
         elif self.subKind == ScopeCellElement.DECLARATION:
-            rect = s.otherFontMetrics.boundingRect( self.__getHeaderText() )
-            self.minHeight = rect.height() + s.vCellPadding
-            self.minWidth = rect.width() + s.hCellPadding
+            rect = s.otherFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
+                                                    self.__getHeaderText() )
+            self.minHeight = rect.height() + 2 * s.vHeaderPadding
+            self.minWidth = rect.width() + 2 * s.vHeaderPadding
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
-            pass
+            raise Exception( "Side comment is not supported for a file scope" )
         elif self.subKind == ScopeCellElement.LEADING_COMMENT:
-            pass
+            raise Exception( "Leading comment is not supported for a file scope" )
         elif self.subKind == ScopeCellElement.DOCSTRING:
-            pass
+            rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
+                                                   self.__getDocstringText() )
+            self.minHeight = rect.height() + 2 * s.vHeaderPadding
+            self.minWidth = rect.width() + 2 * s.vHeaderPadding
         elif self.subKind == ScopeCellElement.TOP:
             self.minHeight = s.rectRadius
             self.minWidth = 0
@@ -345,6 +367,12 @@ class FileScopeCell( ScopeCellElement, QGraphicsRectItem ):
             self.setRect( baseX, baseY, self.width, self.height )
             scene.addItem( self )
             self.canvas.scopeRectangle = self
+        elif self.subKind == ScopeCellElement.DECLARATION:
+            self.setRect( baseX, baseY, self.width, self.height )
+            scene.addItem( self )
+        elif self.subKind == ScopeCellElement.DOCSTRING:
+            self.setRect( baseX, baseY, self.width, self.height )
+            scene.addItem( self )
         return
 
     def paint( self, painter, option, widget ):
@@ -354,8 +382,46 @@ class FileScopeCell( ScopeCellElement, QGraphicsRectItem ):
         if self.subKind == ScopeCellElement.TOP_LEFT:
             brush = QBrush( s.fileScopeBGColor )
             painter.setBrush( brush )
+            pen = QPen( s.lineColor )
+            pen.setWidth( s.lineWidth )
+            painter.setPen( pen )
             painter.drawRoundedRect( self.baseX, self.baseY, self.canvas.width, self.canvas.height,
                                      s.rectRadius, s.rectRadius )
+        elif self.subKind == ScopeCellElement.DECLARATION:
+            pen = QPen( s.boxFGColor )
+            painter.setFont( s.otherFont )
+            painter.setPen( pen )
+            painter.drawText( self.baseX + s.hHeaderPadding,
+                              self.baseY + s.vHeaderPadding,
+                              int( self.rect().width() ) - 2 * s.hHeaderPadding,
+                              int( self.rect().height() ) - 2 * s.vHeaderPadding,
+                              Qt.AlignLeft,
+                              self.__getHeaderText() )
+
+            pen = QPen( s.lineColor )
+            pen.setWidth( s.lineWidth )
+            painter.setPen( pen )
+            painter.drawLine( self.baseX - s.rectRadius, self.baseY + self.height,
+                              self.baseX - s.rectRadius + self.canvas.width,
+                              self.baseY + self.height )
+        elif self.subKind == ScopeCellElement.DOCSTRING:
+            pen = QPen( s.boxFGColor )
+            painter.setFont( s.monoFont )
+            painter.setPen( pen )
+            painter.drawText( self.baseX + s.hHeaderPadding,
+                              self.baseY + s.vHeaderPadding,
+                              int( self.rect().width() ) - 2 * s.hHeaderPadding,
+                              int( self.rect().height() ) - 2 * s.vHeaderPadding,
+                              Qt.AlignLeft,
+                              self.__getDocstringText() )
+
+            pen = QPen( s.lineColor )
+            pen.setWidth( s.lineWidth )
+            painter.setPen( pen )
+            painter.drawLine( self.baseX - s.rectRadius, self.baseY + self.height,
+                              self.baseX - s.rectRadius + self.canvas.width,
+                              self.baseY + self.height )
+        return
 
 
 
@@ -641,21 +707,96 @@ class SysexitCell( CellElement ):
 
 
 
-class ImportCell( CellElement ):
+class ImportCell( CellElement, QGraphicsRectItem ):
     " Represents a single import statement "
 
-    def __init__( self, ref ):
-        CellElement.__init__( self )
+    def __init__( self, ref, canvas, x, y ):
+        CellElement.__init__( self, ref, canvas, x, y )
+        QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.IMPORT
-        self.reference = ref
+        self.__text = None
+        self.__arrowWidth = None
         return
 
-    def render( self, settings ):
-        raise Exception( "Not implemented yet" )
+    def __getText( self ):
+        if self.__text is None:
+            self.__text = self.ref.getDisplayValue()
+        return self.__text
 
-    def draw( self, rect, scene, settings ):
-        raise Exception( "Not implemented yet" )
+    def render( self ):
+        s = self.canvas.settings
+        rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
+                                               0, self.__getText() )
 
+        # for an arrow box
+        singleCharRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
+                                                         0, 'w' )
+        self.__arrowWidth = singleCharRect.width() + 2 * s.hTextPadding
+
+        self.minHeight = rect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
+        self.minWidth = rect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding + \
+                        self.__arrowWidth
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
+
+    def draw( self, scene, baseX, baseY ):
+        self.baseX = baseX
+        self.baseY = baseY
+        s = self.canvas.settings
+        self.setRect( baseX + s.hCellPadding, baseY + s.vCellPadding,
+                      self.width - 2 * s.hCellPadding,
+                      self.height - 2 * s.vCellPadding )
+        scene.addItem( self )
+        return
+
+    def paint( self, painter, option, widget ):
+        " Draws the code block "
+        s = self.canvas.settings
+
+        # Set the colors and line width
+        pen = QPen( s.lineColor )
+        pen.setWidth( s.lineWidth )
+        self.setPen( pen )
+        brush = QBrush( s.boxBGColor )
+        self.setBrush( brush )
+
+        # Draw the connector as a single line under the rectangle
+        painter.setPen( pen )
+        painter.drawLine( self.baseX + self.width / 2,
+                          self.baseY,
+                          self.baseX + self.width / 2,
+                          self.baseY + self.height )
+        QGraphicsRectItem.paint( self, painter, option, widget )
+        painter.drawLine( self.baseX + s.hCellPadding + self.__arrowWidth,
+                          self.baseY + s.vCellPadding,
+                          self.baseX + s.hCellPadding + self.__arrowWidth,
+                          self.baseY + self.height - s.vCellPadding )
+        painter.drawLine( self.baseX + s.hCellPadding + s.hTextPadding,
+                          self.baseY + self.height / 2,
+                          self.baseX + s.hCellPadding + self.__arrowWidth - s.hTextPadding,
+                          self.baseY + self.height / 2 )
+        painter.drawLine( self.baseX + s.hCellPadding + self.__arrowWidth - s.hTextPadding,
+                          self.baseY + self.height / 2,
+                          self.baseX + s.hCellPadding + self.__arrowWidth - s.hTextPadding - s.arrowLength,
+                          self.baseY + self.height / 2 - s.arrowWidth )
+        painter.drawLine( self.baseX + s.hCellPadding + self.__arrowWidth - s.hTextPadding,
+                          self.baseY + self.height / 2,
+                          self.baseX + s.hCellPadding + self.__arrowWidth - s.hTextPadding - s.arrowLength,
+                          self.baseY + self.height / 2 + s.arrowWidth )
+
+
+        # Draw the text in the rectangle
+        pen = QPen( s.boxFGColor )
+        painter.setFont( s.monoFont )
+        painter.setPen( pen )
+        painter.drawText( self.baseX + s.hCellPadding + self.__arrowWidth + s.hTextPadding,
+                          self.baseY + s.vCellPadding + s.vTextPadding,
+                          int( self.rect().width() ) - 2 * s.hTextPadding,
+                          int( self.rect().height() ) - 2 * s.vTextPadding,
+                          Qt.AlignLeft,
+                          self.__getText() )
+        return
 
 
 class IfCell( CellElement ):
@@ -863,7 +1004,7 @@ class SideCommentCell( CellElement, QGraphicsRectItem ):
 
     def __getText( self ):
         if self.__text is None:
-            self.__text = '\n' * (self.ref.sideComment.beginLine - self.ref.beginLine ) + \
+            self.__text = '\n' * (self.ref.sideComment.beginLine - self.ref.body.beginLine ) + \
                           self.ref.sideComment.getDisplayValue()
         return self.__text
 
