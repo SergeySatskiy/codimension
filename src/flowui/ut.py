@@ -158,7 +158,7 @@ class CFGraphicsView( QtGui.QGraphicsView ):
 
     def __init__( self, parent = None ):
         super( CFGraphicsView, self ).__init__( parent )
-#        self.setRenderHint( QtGui.QPainter.Antialiasing )
+        self.setRenderHint( QtGui.QPainter.Antialiasing )
         self.setRenderHint( QtGui.QPainter.TextAntialiasing )
         return
 

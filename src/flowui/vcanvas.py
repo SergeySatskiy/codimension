@@ -32,7 +32,7 @@ does not affect all the other sections.
 """
 
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QPen
+from PyQt4.QtGui import QPen, QColor
 from items import ( kindToString,
                     CellElement, VacantCell, CodeBlockCell, ScopeCellElement,
                     FileScopeCell, FunctionScopeCell, ClassScopeCell,
@@ -154,8 +154,8 @@ class VirtualCanvas:
             self.__allocateCell( row, column + 1 )
             self.cells[ row ][ column ] = ConnectorCell( [ (ConnectorCell.NORTH,
                                                             ConnectorCell.SOUTH) ],
-                                                         self, row, column )
-            self.cells[ row ][ column + 1 ] = LeadingCommentCell( item, self, row, column + 1 )
+                                                         self, column, row )
+            self.cells[ row ][ column + 1 ] = LeadingCommentCell( item, self, column + 1, row )
             return row + 1
         return row
 
@@ -221,9 +221,9 @@ class VirtualCanvas:
                 self.__allocateCell( vacantRow, column + 1 )
                 self.cells[ vacantRow ][ column ] = ConnectorCell( [ (ConnectorCell.NORTH,
                                                                       ConnectorCell.SOUTH) ],
-                                                                   self, vacantRow, column )
+                                                                   self, column, vacantRow )
                 self.cells[ vacantRow ][ column + 1 ] = IndependentCommentCell( item,
-                                                                                self, vacantRow, column + 1 )
+                                                                                self, column + 1, vacantRow )
                 vacantRow += 1
                 continue
 
@@ -247,14 +247,14 @@ class VirtualCanvas:
 
             if item.kind == IF_FRAGMENT:
                 vacantRow = self.__allocateLeadingComment( item, vacantRow, column )
-                self.__allocateAndSet( vacantRow, column, IfCell( item ) )
+                self.__allocateAndSet( vacantRow, column, IfCell( item, self, column, vacantRow ) )
 
                 # Memorize the No-branch endpoint
                 openEnd = [vacantRow, column + 1]
                 vacantRow += 1
 
                 # Allocate Yes-branch
-                branchLayout = VirtualCanvas( self )
+                branchLayout = VirtualCanvas( self, None, None, None )
                 branchLayout.layoutSuite( 0, item.suite, CellElement.NO_SCOPE, None, 0 )
 
                 # Copy the layout cells into the current layout calculating the
@@ -272,7 +272,8 @@ class VirtualCanvas:
 
                 self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ],
                                        ConnectorCell( [ (ConnectorCell.WEST,
-                                                         ConnectorCell.SOUTH) ] ) )
+                                                         ConnectorCell.SOUTH) ],
+                                                      self, openEnd[ 1 ], openEnd[ 0 ] ) )
                 openEnd[ 0 ] += 1
 
                 branchEndStack = []
@@ -283,14 +284,14 @@ class VirtualCanvas:
                     if elifBranch.condition:
                         # This is the elif ...
                         openEnd[ 0 ] = self.__allocateLeadingComment( elifBranch, openEnd[ 0 ], openEnd[ 1 ] )
-                        self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ], IfCell( elifBranch ) )
+                        self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ], IfCell( elifBranch, self, openEnd[ 1 ], openEnd[ 0 ] ) )
 
                         # Memorize the new open end
                         newOpenEnd = [openEnd[ 0 ], openEnd[ 1 ] + 1]
                         openEnd[ 0 ] += 1
 
                         # Allocate Yes-branch
-                        branchLayout = VirtualCanvas( self )
+                        branchLayout = VirtualCanvas( self, None, None, None )
                         branchLayout.layoutSuite( 0, elifBranch.suite, CellElement.NO_SCOPE, None, 0 )
 
                         # Copy the layout cells into the current layout
@@ -302,20 +303,22 @@ class VirtualCanvas:
                         while count > 0:
                             self.__allocateAndSet( newOpenEnd[ 0 ], newOpenEnd[ 1 ],
                                                    ConnectorCell( [ (ConnectorCell.WEST,
-                                                                     ConnectorCell.EAST) ] ) )
+                                                                     ConnectorCell.EAST) ],
+                                                                  self, newOpenEnd[ 1 ], newOpenEnd[ 0 ] ) )
                             newOpenEnd[ 1 ] += 1
                             count -= 1
 
                         self.__allocateAndSet( newOpenEnd[ 0 ], newOpenEnd[ 1 ],
                                                ConnectorCell( [ (ConnectorCell.WEST,
-                                                                 ConnectorCell.SOUTH) ] ) )
+                                                                 ConnectorCell.SOUTH) ],
+                                                              self, newOpenEnd[ 1 ], newOpenEnd[ 0 ] ) )
                         newOpenEnd[ 0 ] += 1
 
                         branchEndStack.append( (openEnd[ 0 ] + branchHeight, openEnd[ 1 ]) )
                         openEnd = newOpenEnd
                     else:
                         # This is the else which is always the last
-                        branchLayout = VirtualCanvas( self )
+                        branchLayout = VirtualCanvas( self, None, None, None )
                         branchLayout.layoutSuite( 0, elifBranch.suite, CellElement.NO_SCOPE, None, 0 )
                         branchWidth, branchHeight = self.__copyLayout( branchLayout, openEnd[ 0 ], openEnd[ 1 ] )
 
@@ -331,27 +334,32 @@ class VirtualCanvas:
                     while targetRow > openEnd[ 0 ]:
                         self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ],
                                                ConnectorCell( [ (ConnectorCell.NORTH,
-                                                                 ConnectorCell.SOUTH) ] ) )
+                                                                 ConnectorCell.SOUTH) ],
+                                                              self, openEnd[ 1 ], openEnd[ 0 ] ) )
                         openEnd[ 0 ] += 1
                     while openEnd[ 0 ] > targetRow:
                         self.__allocateAndSet( targetRow, targetColumn,
                                                ConnectorCell( [ (ConnectorCell.NORTH,
-                                                                 ConnectorCell.SOUTH) ] ) )
+                                                                 ConnectorCell.SOUTH) ],
+                                                              self, targetColumn, targetRow ) )
                         targetRow += 1
 
                     # make the horizontal connection
                     self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ],
                                            ConnectorCell( [ (ConnectorCell.NORTH,
-                                                             ConnectorCell.WEST) ] ) )
+                                                             ConnectorCell.WEST) ],
+                                                          self, openEnd[ 1 ], openEnd[ 0 ] ) )
                     openEnd[ 1 ] -= 1
                     while openEnd[ 1 ] > targetColumn:
                         self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.EAST,
-                                                                                       ConnectorCell.WEST) ] )
+                                                                                       ConnectorCell.WEST) ],
+                                                                                    self, openEnd[ 1 ], openEnd[ 0 ] )
                         openEnd[ 1 ] -= 1
                     self.cells[ targetRow ][ targetColumn ] = ConnectorCell( [ (ConnectorCell.NORTH,
                                                                                 ConnectorCell.SOUTH),
                                                                                (ConnectorCell.EAST,
-                                                                                ConnectorCell.CENTER) ] )
+                                                                                ConnectorCell.CENTER) ],
+                                                                             self, targetColumn, targetRow )
 
                     # adjust the new open end
                     openEnd = [ targetRow + 1, targetColumn ]
@@ -385,7 +393,11 @@ class VirtualCanvas:
                 width = lineWidth
             self.__allocateCell( row + height, column + lineWidth - 1 )
             for index, item in enumerate( line ):
-                self.cells[ row + height ][ column + index ] = fromCanvas.cells[ height ][ index ]
+                newRow = row + height
+                newColumn = column + index
+                self.cells[ newRow ][ newColumn ] = fromCanvas.cells[ height ][ index ]
+                self.cells[ newRow ][ newColumn ].canvas = self
+                self.cells[ newRow ][ newColumn ].addr = [ newColumn, newRow ]
             height += 1
 
         return width, height
@@ -493,6 +505,8 @@ class VirtualCanvas:
             for cell in row:
                 if self.settings.debug:
                     pen = QPen( Qt.DotLine )
+                    pen.setColor( QColor( 0, 255, 0, 255 ) )
+                    pen.setWidth( 1 )
                     scene.addLine( currentX, currentY, currentX + cell.width, currentY, pen )
                     scene.addLine( currentX, currentY, currentX, currentY + cell.height, pen )
                     scene.addLine( currentX, currentY + cell.height, currentX + cell.width, currentY + cell.height, pen )

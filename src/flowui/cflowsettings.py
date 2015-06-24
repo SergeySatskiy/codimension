@@ -67,6 +67,7 @@ class CFlowSettings:
         self.rectRadius = 10        # Rounded rectangles radius
         self.arrowLength = 3        # Length of an arrow
         self.arrowWidth = 2         # One wing width
+        self.ifWidth = 5            # One if wing width
 
         self.lineWidth = 2          # used for connections and box edges
         self.lineColor = QColor( 0, 0, 0, 255 )

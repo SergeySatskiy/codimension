@@ -210,6 +210,8 @@ class VSpacerCell( CellElement ):
         return (self.width, self.height)
 
     def draw( self, scene, baseX, baseY ):
+        # There is no need to draw anything. The cell just reserves some
+        # vertical space for better appearance
         self.baseX = baseX
         self.baseY = baseY
         return
@@ -799,20 +801,92 @@ class ImportCell( CellElement, QGraphicsRectItem ):
         return
 
 
-class IfCell( CellElement ):
+class IfCell( CellElement, QGraphicsRectItem ):
     " Represents a single if statement "
 
-    def __init__( self, ref ):
-        CellElement.__init__( self )
+    def __init__( self, ref, canvas, x, y ):
+        CellElement.__init__( self, ref, canvas, x, y )
+        QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.IF
-        self.reference = ref
+        self.__text = None
         return
 
-    def render( self, settings ):
-        raise Exception( "Not implemented yet" )
+    def __getText( self ):
+        if self.__text is None:
+            self.__text = self.ref.getDisplayValue()
+        return self.__text
 
-    def draw( self, rect, scene, settings ):
-        raise Exception( "Not implemented yet" )
+    def render( self ):
+        s = self.canvas.settings
+        rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
+                                               self.__getText() )
+
+        self.minHeight = rect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
+        self.minWidth = rect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding + 2 * s.ifWidth
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
+
+    def draw( self, scene, baseX, baseY ):
+        self.baseX = baseX
+        self.baseY = baseY
+        s = self.canvas.settings
+        self.setRect( baseX + s.hCellPadding, baseY + s.vCellPadding,
+                      self.width - 2 * s.hCellPadding,
+                      self.height - 2 * s.vCellPadding )
+        scene.addItem( self )
+        return
+
+    def paint( self, painter, option, widget ):
+        " Draws the code block "
+        s = self.canvas.settings
+
+        path = QPainterPath()
+        path.moveTo( self.baseX + s.hCellPadding,
+                     self.baseY + self.height / 2 )
+        path.lineTo( self.baseX + s.hCellPadding + s.ifWidth,
+                     self.baseY + s.vCellPadding )
+        path.lineTo( self.baseX + (self.width - s.hCellPadding - s.ifWidth),
+                     self.baseY + s.vCellPadding )
+        path.lineTo( self.baseX + (self.width - s.hCellPadding),
+                     self.baseY + self.height / 2 )
+        path.lineTo( self.baseX + (self.width - s.hCellPadding - s.ifWidth),
+                     self.baseY + (self.height - s.hCellPadding) )
+        path.lineTo( self.baseX + s.hCellPadding + s.ifWidth,
+                     self.baseY + (self.height - s.hCellPadding) )
+        path.lineTo( self.baseX + s.hCellPadding,
+                     self.baseY + self.height / 2 )
+
+        # Set the colors and line width
+        pen = QPen( s.lineColor )
+        pen.setWidth( s.lineWidth )
+        painter.setPen( pen )
+        brush = QBrush( s.boxBGColor )
+        painter.setBrush( brush )
+
+
+        # Draw the connector as a single line under the rectangle
+        painter.drawLine( self.baseX + self.width / 2,
+                          self.baseY,
+                          self.baseX + self.width / 2,
+                          self.baseY + self.height )
+        painter.drawPath( path )
+        painter.drawLine( self.baseX + (self.width - s.hCellPadding),
+                          self.baseY + self.height / 2,
+                          self.baseX + self.width,
+                          self.baseY + self.height / 2 )
+
+        # Draw the text in the rectangle
+        pen = QPen( s.boxFGColor )
+        painter.setFont( s.monoFont )
+        painter.setPen( pen )
+        painter.drawText( self.baseX + s.hCellPadding + s.ifWidth + s.hTextPadding,
+                          self.baseY + s.vCellPadding + s.vTextPadding,
+                          int( self.rect().width() ) - 2 * s.ifWidth - 2 * s.hTextPadding,
+                          int( self.rect().height() ) - 2 * s.vTextPadding,
+                          Qt.AlignLeft,
+                          self.__getText() )
+        return
 
 
 
@@ -1128,6 +1202,13 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
         # It is CENTER
         return self.baseX + self.width / 2, self.baseY + self.height / 2
 
+    def __angled( self, begin, end ):
+        if begin in [ self.NORTH, self.SOUTH ] and \
+           end in [ self.WEST, self.EAST ]:
+            return True
+        return end in [ self.NORTH, self.SOUTH ] and \
+               begin in [ self.WEST, self.EAST ]
+
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
@@ -1137,8 +1218,14 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
         for connection in self.connections:
             startX, startY = self.__getXY( connection[ 0 ] )
             endX, endY = self.__getXY( connection[ 1 ] )
-            path.moveTo( startX, startY )
-            path.lineTo( endX, endY )
+            if self.__angled( connection[ 0 ], connection[ 1 ] ):
+                centerX, centerY = self.__getXY( self.CENTER )
+                path.moveTo( startX, startY )
+                path.lineTo( centerX, centerY )
+                path.lineTo( endX, endY )
+            else:
+                path.moveTo( startX, startY )
+                path.lineTo( endX, endY )
         self.setPath( path )
 
         scene.addItem( self )
