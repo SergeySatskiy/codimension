@@ -551,6 +551,8 @@ class ElifPart : public FragmentBase,
         virtual int setattr( const char *        attrName,
                              const Py::Object &  val );
 
+        Py::Object getDisplayValue( const Py::Tuple &  args );
+
     public:
         Py::Object      condition;  // None for 'else' part or Fragment instance
         Py::List        nsuite;     // Fragments for suite statements
@@ -570,6 +572,8 @@ class If : public FragmentBase,
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
                              const Py::Object &  val );
+
+        Py::Object getDisplayValue( const Py::Tuple &  args );
 
     public:
         Py::Object      condition;

@@ -256,9 +256,17 @@
 #define ELIFPART_DOC \
 "Represents a single 'elif' or 'else' branch in the if statement"
 
+// ElifPart::getDisplayValue()
+#define ELIFPART_GETDISPLAYVALUE_DOC \
+"Provides the if condition without trailing spaces and comments"
+
 // If class docstring
 #define IF_DOC \
 "Represents a single if statement"
+
+// If::getDisplayValue()
+#define IF_GETDISPLAYVALUE_DOC \
+"Provides the if condition without trailing spaces and comments"
 
 // With class docstring
 #define WITH_DOC \

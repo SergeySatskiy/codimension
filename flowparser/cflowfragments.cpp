@@ -2603,6 +2603,8 @@ void ElifPart::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+    add_varargs_method( "getDisplayValue", &ElifPart::getDisplayValue,
+                        ELIFPART_GETDISPLAYVALUE_DOC );
 
     behaviors().readyType();
 }
@@ -2666,6 +2668,32 @@ int  ElifPart::setattr( const char *        attrName,
     return -1;  // Suppress compiler warning
 }
 
+Py::Object  ElifPart::getDisplayValue( const Py::Tuple &  args )
+{
+    Fragment *      condFragment( static_cast<Fragment *>(condition.ptr()) );
+    std::string     content;
+    switch ( args.length() )
+    {
+        case 0:
+            content = condFragment->getContent( NULL );
+            break;
+        case 1:
+            {
+                std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
+                content = condFragment->getContent( buf.c_str() );
+                break;
+            }
+        default:
+            throwWrongBufArgument( "getDisplayValue" );
+    }
+
+    // The content may be shifted and may have side comments.
+    // The common shift should be shaved as well the comments
+    return Py::String( alignBlockAndStripSideComments( content,
+                                                       condFragment ) );
+}
+
+
 // --- End of IfPart definition ---
 
 If::If()
@@ -2691,6 +2719,8 @@ void If::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+    add_varargs_method( "getDisplayValue", &If::getDisplayValue,
+                        IF_GETDISPLAYVALUE_DOC );
 
     behaviors().readyType();
 }
@@ -2765,6 +2795,33 @@ int  If::setattr( const char *        attrName,
     throwUnknownAttribute( attrName );
     return -1;  // Suppress compiler warning
 }
+
+
+Py::Object  If::getDisplayValue( const Py::Tuple &  args )
+{
+    Fragment *      condFragment( static_cast<Fragment *>(condition.ptr()) );
+    std::string     content;
+    switch ( args.length() )
+    {
+        case 0:
+            content = condFragment->getContent( NULL );
+            break;
+        case 1:
+            {
+                std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
+                content = condFragment->getContent( buf.c_str() );
+                break;
+            }
+        default:
+            throwWrongBufArgument( "getDisplayValue" );
+    }
+
+    // The content may be shifted and may have side comments.
+    // The common shift should be shaved as well the comments
+    return Py::String( alignBlockAndStripSideComments( content,
+                                                       condFragment ) );
+}
+
 
 // --- End of If definition ---
 
