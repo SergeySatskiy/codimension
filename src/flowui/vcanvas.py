@@ -168,7 +168,7 @@ class VirtualCanvas:
 
         for item in suite:
             if item.kind in [ FUNCTION_FRAGMENT, CLASS_FRAGMENT ]:
-                scopeCanvas = VirtualCanvas( self )
+                scopeCanvas = VirtualCanvas( self.settings, None, None, self )
                 if item.kind == FUNCTION_FRAGMENT:
                     scopeCanvas.layout( item, CellElement.FUNC_SCOPE )
                 else:
@@ -186,9 +186,9 @@ class VirtualCanvas:
                         # Set the current content scope
                         scopeCanvas = decScope
 
-                # Update the scope canvas parent
+                # Update the scope canvas parent and address
                 scopeCanvas.parent = self
-
+                scopeCanvas.addr = [ column, vacantRow ]
                 self.__allocateAndSet( vacantRow, column, scopeCanvas )
                 vacantRow += 1
                 continue
@@ -266,7 +266,8 @@ class VirtualCanvas:
                 while count > 0:
                     self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ],
                                            ConnectorCell( [ (ConnectorCell.WEST,
-                                                             ConnectorCell.EAST) ] ) )
+                                                             ConnectorCell.EAST) ],
+                                                          self, openEnd[ 1 ], openEnd[ 0 ] ) )
                     openEnd[ 1 ] += 1
                     count -= 1
 

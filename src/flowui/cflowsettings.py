@@ -45,17 +45,14 @@ class CFlowSettings:
     def __init__( self, paintDevice ):
 
         # Visibility of the virtual cells (dotted outline)
-        self.debug = True
+        self.debug = False
         self.__paintDevice = paintDevice
 
         self.monoFont = buildFont( "Ubuntu mono,12,-1,5,50,0,0,0,0,0" )
-        self.otherFont = buildFont( "Times,12,-1,5,50,0,0,0,0,0" )
-
         self.monoFontMetrics = QFontMetrics( self.monoFont, paintDevice )
-        self.otherFontMetrics = QFontMetrics( self.otherFont, paintDevice )
 
         self.hCellPadding = 15      # in pixels (left and right)
-        self.vCellPadding = 15      # in pixels (top and bottom)
+        self.vCellPadding = 10      # in pixels (top and bottom)
         self.hTextPadding = 5       # in pixels (left and right)
         self.vTextPadding = 5       # in pixels (top and bottom)
 
@@ -67,7 +64,7 @@ class CFlowSettings:
         self.rectRadius = 10        # Rounded rectangles radius
         self.arrowLength = 3        # Length of an arrow
         self.arrowWidth = 2         # One wing width
-        self.ifWidth = 5            # One if wing width
+        self.ifWidth = 10           # One if wing width
 
         self.lineWidth = 2          # used for connections and box edges
         self.lineColor = QColor( 0, 0, 0, 255 )
@@ -83,6 +80,7 @@ class CFlowSettings:
         self.commentLineWidth = 1
 
         self.fileScopeBGColor = QColor( 255, 255, 230, 255 )
+        self.funcScopeBGColor = QColor( 230, 230, 255, 255 )
         return
 
     def setMonoFont( self, font ):
@@ -91,14 +89,6 @@ class CFlowSettings:
         self.monoFontMetrics = QFontMetrics( self.monoFont,
                                              self.__paintDevice )
         return
-
-    def setOtherFont( self, font ):
-        " Sets the non-mono font "
-        self.otherFont = font
-        self.otherFontMetrics = QFontMetrics( self.otherFont,
-                                              self.__paintDevice )
-        return
-
 
 def getDefaultCflowSettings( paintDevice ):
     return CFlowSettings( paintDevice )
