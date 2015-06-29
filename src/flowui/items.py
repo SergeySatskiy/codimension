@@ -1000,6 +1000,7 @@ class IndependentCommentCell( CellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.INDEPENDENT_COMMENT
         self.__text = None
+        self.__textRect = None
         return
 
     def __getText( self ):
@@ -1009,11 +1010,11 @@ class IndependentCommentCell( CellElement, QGraphicsRectItem ):
 
     def render( self ):
         s = self.canvas.settings
-        rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
-                                               self.__getText() )
+        self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
+                                                          self.__getText() )
 
-        self.minHeight = rect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
-        self.minWidth = rect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding
+        self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
+        self.minWidth = self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1022,9 +1023,7 @@ class IndependentCommentCell( CellElement, QGraphicsRectItem ):
         self.baseX = baseX
         self.baseY = baseY
         s = self.canvas.settings
-        self.setRect( baseX + s.hCellPadding, baseY + s.vCellPadding,
-                      self.width - 2 * s.hCellPadding,
-                      self.height - 2 * s.vCellPadding )
+        self.setRect( baseX, baseY, self.width, self.height )
         scene.addItem( self )
         return
 
@@ -1034,32 +1033,34 @@ class IndependentCommentCell( CellElement, QGraphicsRectItem ):
 
         pen = QPen( s.commentBGColor )
         pen.setWidth( 0 )
-        self.setPen( pen )
-        brush = QBrush( s.commentBGColor )
-        self.setBrush( brush )
-
         painter.setPen( pen )
-        QGraphicsRectItem.paint( self, painter, option, widget )
+        brush = QBrush( s.commentBGColor )
+        painter.setBrush( brush )
+
+        painter.drawRect( self.baseX + s.hCellPadding,
+                          self.baseY + s.vCellPadding,
+                          self.width - 2 * s.hCellPadding,
+                          self.height - 2 * s.vCellPadding )
 
 
         # Set the colors and line width
         pen = QPen( s.commentLineColor )
         pen.setWidth( s.commentLineWidth )
 
-        # Draw the connector as a single line under the rectangle
+        # Draw the comment outline
         painter.setPen( pen )
         painter.drawLine( self.baseX + s.hCellPadding,
                           self.baseY + s.vCellPadding,
                           self.baseX + s.hCellPadding,
-                          self.baseY + s.vCellPadding + int( self.rect().height() ) )
+                          self.baseY + self.height - s.vCellPadding )
         painter.drawLine( self.baseX + s.hCellPadding,
                           self.baseY + s.vCellPadding,
                           self.baseX + s.hCellPadding + s.hTextPadding,
                           self.baseY + s.vCellPadding )
         painter.drawLine( self.baseX + s.hCellPadding,
-                          self.baseY + s.vCellPadding + int( self.rect().height() ),
+                          self.baseY + self.height - s.vCellPadding,
                           self.baseX + s.hCellPadding + s.hTextPadding,
-                          self.baseY + s.vCellPadding + int( self.rect().height() ) )
+                          self.baseY + self.height - s.vCellPadding )
         painter.drawLine( self.baseX,
                           self.baseY + self.height / 2,
                           self.baseX + s.hCellPadding,
@@ -1072,10 +1073,8 @@ class IndependentCommentCell( CellElement, QGraphicsRectItem ):
         painter.setPen( pen )
         painter.drawText( self.baseX + s.hCellPadding + s.hTextPadding,
                           self.baseY + s.vCellPadding + s.vTextPadding,
-                          int( self.rect().width() ) - 2 * s.hTextPadding,
-                          int( self.rect().height() ) - 2 * s.vTextPadding,
-                          Qt.AlignLeft,
-                          self.__getText() )
+                          self.__textRect.width(), self.__textRect.height(),
+                          Qt.AlignLeft, self.__getText() )
         return
 
 
