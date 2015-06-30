@@ -22,6 +22,8 @@ from PyQt4      import QtGui, QtCore
 from optparse   import OptionParser
 from subprocess import Popen, PIPE
 from cdmcf      import getControlFlowFromFile, VERSION
+from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QApplication
 
 import vcanvas
 import cflowsettings
@@ -164,8 +166,11 @@ class CFGraphicsView( QtGui.QGraphicsView ):
 
     def wheelEvent( self, event ):
         """ Mouse wheel event """
-        factor = 1.41 ** ( -event.delta() / 240.0 )
-        self.scale( factor, factor )
+        if QApplication.keyboardModifiers() == Qt.ControlModifier:
+            factor = 1.41 ** ( -event.delta() / 240.0 )
+            self.scale( factor, factor )
+        else:
+            QtGui.QGraphicsView.wheelEvent( self, event )
         return
 
     def zoomIn( self ):

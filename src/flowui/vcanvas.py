@@ -141,10 +141,10 @@ class VirtualCanvas:
         self.cells[ row ][ column ] = what
         return
 
-    def __allocateScope( self, suite, scopeType, row, column ):
+    def __allocateScope( self, item, scopeType, row, column ):
         " Allocates a scope for a suite "
-        canvas = VirtualCanvas( self )
-        canvas.layout( suite, scopeType )
+        canvas = VirtualCanvas( self.settings, column, row, self )
+        canvas.layout( item, scopeType )
         self.__allocateAndSet( row, column, canvas )
         return
 
@@ -169,6 +169,7 @@ class VirtualCanvas:
         for item in suite:
             if item.kind in [ FUNCTION_FRAGMENT, CLASS_FRAGMENT ]:
                 scopeCanvas = VirtualCanvas( self.settings, None, None, self )
+                scopeItem = item
                 if item.kind == FUNCTION_FRAGMENT:
                     scopeCanvas.layout( item, CellElement.FUNC_SCOPE )
                 else:
@@ -177,16 +178,32 @@ class VirtualCanvas:
                 if item.decorators:
                     for dec in reversed( item.decorators ):
                         # Create a decorator scope virtual canvas
-                        decScope = VirtualCanvas()
-                        decScope.layout( dec, CellElement.DECOR_SCOPE )
+                        decScope = VirtualCanvas( self.settings, None, None, self )
+                        decScopeRows = len( decScope.cells )
+                        if scopeItem.leadingComment:
+                            # Need two rows; one for the comment + one for the scope
+                            decScope.layout( dec, CellElement.DECOR_SCOPE, 2 )
+                            decScope.__allocateCell( decScopeRows - 3, 2 )
+                            decScope.cells[ decScopeRows - 3 ][ 2 ] = LeadingCommentCell( scopeItem, self, 2, decScopeRows - 3 )
+                        else:
+                            # Need one row for the scope
+                            decScope.layout( dec, CellElement.DECOR_SCOPE, 1 )
+                        decScope.__allocateCell( decScopeRows - 2, 1 )
+
                         # Fix the parent
                         scopeCanvas.parent = decScope
                         # Set the decorator content
-                        decScope.cells[ -2 ][ 1 ] = scopeCanvas
+                        decScope.cells[ decScopeRows - 2 ][ 1 ] = scopeCanvas
+                        scopeCanvas.addr = [ 1, decScopeRows - 2 ]
                         # Set the current content scope
                         scopeCanvas = decScope
+                        scopeItem = dec
 
                 # Update the scope canvas parent and address
+                if scopeItem.leadingComment:
+                    self.__allocateCell( vacantRow, column + 1 )
+                    self.cells[ vacantRow ][ column + 1 ] = LeadingCommentCell( scopeItem, self, column + 1, vacantRow )
+                    vacantRow += 1
                 scopeCanvas.parent = self
                 scopeCanvas.addr = [ column, vacantRow ]
                 self.__allocateAndSet( vacantRow, column, scopeCanvas )
@@ -404,7 +421,8 @@ class VirtualCanvas:
         return width, height
 
 
-    def layout( self, cf, scopeKind = CellElement.FILE_SCOPE ):
+    def layout( self, cf, scopeKind = CellElement.FILE_SCOPE,
+                          rowsToAllocate = 1 ):
         " Does the layout "
 
         self.__currentCF = cf
@@ -412,10 +430,10 @@ class VirtualCanvas:
 
         # Allocate the scope header
         headerRow = 0
-        if hasattr( cf, "leadingComment" ):
+        if hasattr( cf, "leadingComment" ) and False:
             if cf.leadingComment:
                 self.__allocateCell( 0, 2, False )  # No left scope edge required
-                self.cells[ 0 ][ 2 ] = self.__currentScopeClass( self.__currentCF,
+                self.cells[ 0 ][ 2 ] = self.__currentScopeClass( cf, self, 2, 0,
                                                 ScopeCellElement.LEADING_COMMENT )
                 headerRow = 1
 
@@ -429,9 +447,9 @@ class VirtualCanvas:
         if hasattr( cf, "sideComment" ):
             if cf.sideComment:
                 self.__allocateCell( headerRow - 1, 2 )
-                self.cells[ headerRow - 1 ][ 2 ] = self.__currentScopeClass( cf, ScopeCellElement.TOP )
+                self.cells[ headerRow - 1 ][ 2 ] = self.__currentScopeClass( cf, self, 2, headerRow - 1, ScopeCellElement.TOP )
                 self.__allocateCell( headerRow, 2 )
-                self.cells[ headerRow ][ 2 ] = self.__currentScopeClass( cf, ScopeCellElement.SIDE_COMMENT )
+                self.cells[ headerRow ][ 2 ] = self.__currentScopeClass( cf, self, 2, headerRow, ScopeCellElement.SIDE_COMMENT )
 
         vacantRow = headerRow + 1
         if hasattr( cf, "docstring" ):
@@ -447,9 +465,11 @@ class VirtualCanvas:
 
         # Handle the content of the scope
         if scopeKind == CellElement.DECOR_SCOPE:
-            # no suite, only one cell needs to be reserved
-            self.__allocateCell( vacantRow, 1 )
-            vacantRow += 1
+            # no suite, just reserve the required rows
+            while rowsToAllocate > 0:
+                self.__allocateCell( vacantRow, 0 )
+                vacantRow += 1
+                rowsToAllocate -= 1
         else:
             # walk the suite
             # no changes in the scope kind or control flow object

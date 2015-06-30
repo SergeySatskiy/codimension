@@ -45,7 +45,7 @@ class CFlowSettings:
     def __init__( self, paintDevice ):
 
         # Visibility of the virtual cells (dotted outline)
-        self.debug = False
+        self.debug = True
         self.__paintDevice = paintDevice
 
         self.monoFont = buildFont( "Ubuntu mono,12,-1,5,50,0,0,0,0,0" )
@@ -65,6 +65,7 @@ class CFlowSettings:
         self.arrowLength = 3        # Length of an arrow
         self.arrowWidth = 2         # One wing width
         self.ifWidth = 10           # One if wing width
+        self.commentCorner = 6      # Top right comment corner
 
         self.lineWidth = 2          # used for connections and box edges
         self.lineColor = QColor( 0, 0, 0, 255 )
@@ -74,13 +75,14 @@ class CFlowSettings:
         self.boxFGColor = QColor( 0, 0, 0, 255 )
 
         # Comments: leading, side & independent
-        self.commentBGColor = QColor( 216, 216, 207, 255 )
-        self.commentFGColor = QColor( 90, 90, 88, 255 )
-        self.commentLineColor = QColor( 255, 0, 0, 255 )
+        self.commentBGColor = QColor( 230, 230, 16, 255 )
+        self.commentFGColor = QColor( 0, 0, 0, 255 )
+        self.commentLineColor = QColor( 168, 22, 168, 255 )
         self.commentLineWidth = 1
 
         self.fileScopeBGColor = QColor( 255, 255, 230, 255 )
         self.funcScopeBGColor = QColor( 230, 230, 255, 255 )
+        self.decorScopeBGColor = QColor( 230, 255, 255, 255 )
         return
 
     def setMonoFont( self, font ):
