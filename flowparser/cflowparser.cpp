@@ -1523,7 +1523,9 @@ processDecor( Context *  context, Py::List &  flow,
     decor->body = Py::asObject( body );
     decor->updateBeginEnd( body );
 
-    injectComments( context, flow, parent, decor, decor );
+    // If it is not the first decorator then all the leading comments should be
+    // consumed.
+    injectComments( context, flow, parent, decor, decor, ! decors.empty() );
     decors.push_back( decor );
     return;
 }
@@ -1717,11 +1719,14 @@ processFuncDefinition( Context *                    context,
     func->arguments = Py::asObject( args );
 
     func->updateEnd( body );
-    if ( decors.empty() )
-    {
-        func->updateBegin( body );
-    }
-    else
+    func->updateBegin( body );
+
+    // Comments must be injected before decorators can update the begin of the
+    // function. Otherwise leading comments could be injected as side ones
+    // If there are decorators then all the leading comments should be consumed
+    injectComments( context, flow, parent, func, func, ! decors.empty() );
+
+    if ( ! decors.empty() )
     {
         for ( std::list<Decorator *>::iterator  k = decors.begin();
               k != decors.end(); ++k )
@@ -1733,8 +1738,6 @@ processFuncDefinition( Context *                    context,
         func->updateBegin( *(decors.begin()) );
         decors.clear();
     }
-
-    injectComments( context, flow, parent, func, func );
 
     // Handle docstring if so
     node *      suiteNode = findChildOfType( tree, suite );
@@ -1808,11 +1811,14 @@ processClassDefinition( Context *                    context,
     }
 
     cls->updateEnd( body );
-    if ( decors.empty() )
-    {
-        cls->updateBegin( body );
-    }
-    else
+    cls->updateBegin( body );
+
+    // Comments must be injected before decorators can update the begin of the
+    // class. Otherwise leading comments could be injected as side ones
+    // If there are decorators then all the leading comments should be consumed
+    injectComments( context, flow, parent, cls, cls, ! decors.empty() );
+
+    if ( ! decors.empty() )
     {
         for ( std::list<Decorator *>::iterator  k = decors.begin();
               k != decors.end(); ++k )
@@ -1824,8 +1830,6 @@ processClassDefinition( Context *                    context,
         cls->updateBegin( *(decors.begin()) );
         decors.clear();
     }
-
-    injectComments( context, flow, parent, cls, cls );
 
     // Handle docstring if so
     node *      suiteNode = findChildOfType( tree, suite );
