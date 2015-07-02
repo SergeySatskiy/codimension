@@ -99,13 +99,25 @@
 #define CREATE_RETURN_DOC \
 "Creates the Return class instance"
 
+// Return::getDisplayValue()
+#define RETURN_GETDISPLAYVALUE_DOC \
+"Provides the return value without trailing spaces and comments"
+
 // Raise()
 #define CREATE_RAISE_DOC \
 "Creates the Raise class instance"
 
+// Raise::getDisplayValue()
+#define RAISE_GETDISPLAYVALUE_DOC \
+"Provides the raise value without trailing spaces and comments"
+
 // Assert()
 #define CREATE_ASSERT_DOC \
 "Creates the Assert class instance"
+
+// Assert::getDisplayValue()
+#define ASSERT_GETDISPLAYVALUE_DOC \
+"Provides the assert condition and a message (if so) without trailing spaces and comments"
 
 // SysExit()
 #define CREATE_SYSEXIT_DOC \
@@ -115,9 +127,17 @@
 #define CREATE_WHILE_DOC \
 "Creates the While class instance"
 
+// While::getDisplayValue()
+#define WHILE_GETDISPLAYVALUE_DOC \
+"Provides the while condition without trailing spaces and comments"
+
 // For()
 #define CREATE_FOR_DOC \
 "Creates the For class instance"
+
+// For::getDisplayValue()
+#define FOR_GETDISPLAYVALUE_DOC \
+"Provides the for iteration without trailing spaces and comments"
 
 // Import()
 #define CREATE_IMPORT_DOC \
@@ -135,9 +155,17 @@
 #define CREATE_WITH_DOC \
 "Creates the With class instance"
 
+// Raise::getDisplayValue()
+#define WITH_GETDISPLAYVALUE_DOC \
+"Provides the with items without trailing spaces and comments"
+
 // ExceptPart()
 #define CREATE_EXCEPTPART_DOC \
 "Creates the ExceptPart class instance"
+
+// Raise::getDisplayValue()
+#define EXCEPTPART_GETDISPLAYVALUE_DOC \
+"Provides the except part clause without trailing spaces and comments"
 
 // Try()
 #define CREATE_TRY_DOC \

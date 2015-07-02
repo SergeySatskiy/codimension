@@ -2064,6 +2064,8 @@ void Return::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+    add_varargs_method( "getDisplayValue", &Return::getDisplayValue,
+                        RETURN_GETDISPLAYVALUE_DOC );
 
     behaviors().readyType();
 }
@@ -2115,6 +2117,33 @@ int  Return::setattr( const char *        attrName,
     return -1;  // Suppress compiler warning
 }
 
+Py::Object Return::getDisplayValue( const Py::Tuple &  args )
+{
+    if ( value.isNone() )
+        return Py::String();
+
+    Fragment *      valFragment( static_cast<Fragment *>(value.ptr()) );
+    std::string     content;
+    switch ( args.length() )
+    {
+        case 0:
+            content = valFragment->getContent( NULL );
+            break;
+        case 1:
+            {
+                std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
+                content = valFragment->getContent( buf.c_str() );
+                break;
+            }
+        default:
+            throwWrongBufArgument( "getDisplayValue" );
+    }
+
+    // The content may be shifted and may have side comments.
+    // The common shift should be shaved as well the comments
+    return Py::String( alignBlockAndStripSideComments( content, valFragment ) );
+}
+
 // --- End of Return definition ---
 
 Raise::Raise()
@@ -2140,6 +2169,8 @@ void Raise::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+    add_varargs_method( "getDisplayValue", &Raise::getDisplayValue,
+                        RAISE_GETDISPLAYVALUE_DOC );
 
     behaviors().readyType();
 }
@@ -2191,6 +2222,33 @@ int  Raise::setattr( const char *        attrName,
     return -1;  // Suppress compiler warning
 }
 
+Py::Object Raise::getDisplayValue( const Py::Tuple &  args )
+{
+    if ( value.isNone() )
+        return Py::String();
+
+    Fragment *      valFragment( static_cast<Fragment *>(value.ptr()) );
+    std::string     content;
+    switch ( args.length() )
+    {
+        case 0:
+            content = valFragment->getContent( NULL );
+            break;
+        case 1:
+            {
+                std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
+                content = valFragment->getContent( buf.c_str() );
+                break;
+            }
+        default:
+            throwWrongBufArgument( "getDisplayValue" );
+    }
+
+    // The content may be shifted and may have side comments.
+    // The common shift should be shaved as well the comments
+    return Py::String( alignBlockAndStripSideComments( content, valFragment ) );
+}
+
 // --- End of Raise definition ---
 
 Assert::Assert()
@@ -2217,6 +2275,8 @@ void Assert::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+    add_varargs_method( "getDisplayValue", &Assert::getDisplayValue,
+                        ASSERT_GETDISPLAYVALUE_DOC );
 
     behaviors().readyType();
 }
@@ -2276,6 +2336,44 @@ int  Assert::setattr( const char *        attrName,
     }
     throwUnknownAttribute( attrName );
     return -1;  // Suppress compiler warning
+}
+
+Py::Object Assert::getDisplayValue( const Py::Tuple &  args )
+{
+    Fragment *      tstFragment( static_cast<Fragment *>(tst.ptr()) );
+    Fragment *      lastFragment( tstFragment );
+    if ( ! message.isNone() )
+        lastFragment = static_cast<Fragment *>(message.ptr());
+
+    // The required fragment is from the name till the ')' or just the name
+    FragmentBase    f;
+    f.parent = tstFragment->parent;
+    f.begin = tstFragment->begin;
+    f.end = lastFragment->end;
+    f.beginLine = tstFragment->beginLine;
+    f.beginPos = tstFragment->beginPos;
+    f.endLine = lastFragment->endLine;
+    f.endPos = lastFragment->endPos;
+
+    std::string     content;
+    switch ( args.length() )
+    {
+        case 0:
+            content = f.getContent( NULL );
+            break;
+        case 1:
+            {
+                std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
+                content = f.getContent( buf.c_str() );
+                break;
+            }
+        default:
+            throwWrongBufArgument( "getDisplayValue" );
+    }
+
+    // The content may be shifted and may have side comments.
+    // The common shift should be shaved as well the comments
+    return Py::String( alignBlockAndStripSideComments( content, & f ) );
 }
 
 // --- End of Assert definition ---
@@ -2381,6 +2479,8 @@ void While::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+    add_varargs_method( "getDisplayValue", &While::getDisplayValue,
+                        WHILE_GETDISPLAYVALUE_DOC );
 
     behaviors().readyType();
 }
@@ -2454,6 +2554,30 @@ int  While::setattr( const char *        attrName,
     return -1;  // Suppress compiler warning
 }
 
+Py::Object While::getDisplayValue( const Py::Tuple &  args )
+{
+    Fragment *      condFragment( static_cast<Fragment *>(condition.ptr()) );
+    std::string     content;
+    switch ( args.length() )
+    {
+        case 0:
+            content = condFragment->getContent( NULL );
+            break;
+        case 1:
+            {
+                std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
+                content = condFragment->getContent( buf.c_str() );
+                break;
+            }
+        default:
+            throwWrongBufArgument( "getDisplayValue" );
+    }
+
+    // The content may be shifted and may have side comments.
+    // The common shift should be shaved as well the comments
+    return Py::String( alignBlockAndStripSideComments( content, condFragment ) );
+}
+
 
 // --- End of While definition ---
 
@@ -2481,6 +2605,8 @@ void For::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+    add_varargs_method( "getDisplayValue", &For::getDisplayValue,
+                        FOR_GETDISPLAYVALUE_DOC );
 
     behaviors().readyType();
 }
@@ -2552,6 +2678,30 @@ int  For::setattr( const char *        attrName,
     }
     throwUnknownAttribute( attrName );
     return -1;  // Suppress compiler warning
+}
+
+Py::Object For::getDisplayValue( const Py::Tuple &  args )
+{
+    Fragment *      itFragment( static_cast<Fragment *>(iteration.ptr()) );
+    std::string     content;
+    switch ( args.length() )
+    {
+        case 0:
+            content = itFragment->getContent( NULL );
+            break;
+        case 1:
+            {
+                std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
+                content = itFragment->getContent( buf.c_str() );
+                break;
+            }
+        default:
+            throwWrongBufArgument( "getDisplayValue" );
+    }
+
+    // The content may be shifted and may have side comments.
+    // The common shift should be shaved as well the comments
+    return Py::String( alignBlockAndStripSideComments( content, itFragment ) );
 }
 
 // --- End of For definition ---
@@ -2955,6 +3105,8 @@ void With::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+    add_varargs_method( "getDisplayValue", &With::getDisplayValue,
+                        WITH_GETDISPLAYVALUE_DOC );
 
     behaviors().readyType();
 }
@@ -3018,6 +3170,30 @@ int  With::setattr( const char *        attrName,
     return -1;  // Suppress compiler warning
 }
 
+Py::Object With::getDisplayValue( const Py::Tuple &  args )
+{
+    Fragment *      itemsFragment( static_cast<Fragment *>(items.ptr()) );
+    std::string     content;
+    switch ( args.length() )
+    {
+        case 0:
+            content = itemsFragment->getContent( NULL );
+            break;
+        case 1:
+            {
+                std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
+                content = itemsFragment->getContent( buf.c_str() );
+                break;
+            }
+        default:
+            throwWrongBufArgument( "getDisplayValue" );
+    }
+
+    // The content may be shifted and may have side comments.
+    // The common shift should be shaved as well the comments
+    return Py::String( alignBlockAndStripSideComments( content, itemsFragment ) );
+}
+
 // --- End of With definition ---
 
 ExceptPart::ExceptPart()
@@ -3043,6 +3219,8 @@ void ExceptPart::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+    add_varargs_method( "getDisplayValue", &ExceptPart::getDisplayValue,
+                        EXCEPTPART_GETDISPLAYVALUE_DOC );
 
     behaviors().readyType();
 }
@@ -3104,6 +3282,33 @@ int  ExceptPart::setattr( const char *        attrName,
     }
     throwUnknownAttribute( attrName );
     return -1;  // Suppress compiler warning
+}
+
+Py::Object ExceptPart::getDisplayValue( const Py::Tuple &  args )
+{
+    if ( clause.isNone() )
+        return Py::String();
+
+    Fragment *      clauseFragment( static_cast<Fragment *>(clause.ptr()) );
+    std::string     content;
+    switch ( args.length() )
+    {
+        case 0:
+            content = clauseFragment->getContent( NULL );
+            break;
+        case 1:
+            {
+                std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
+                content = clauseFragment->getContent( buf.c_str() );
+                break;
+            }
+        default:
+            throwWrongBufArgument( "getDisplayValue" );
+    }
+
+    // The content may be shifted and may have side comments.
+    // The common shift should be shaved as well the comments
+    return Py::String( alignBlockAndStripSideComments( content, clauseFragment ) );
 }
 
 // --- End of ExceptPart definition ---

@@ -408,6 +408,7 @@ class Return : public FragmentBase,
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
                              const Py::Object &  val );
+        Py::Object getDisplayValue( const Py::Tuple &  args );
 
     public:
         Py::Object      value;          // None or Fragment for the value
@@ -427,6 +428,7 @@ class Raise : public FragmentBase,
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
                              const Py::Object &  val );
+        Py::Object getDisplayValue( const Py::Tuple &  args );
 
     public:
         Py::Object      value;          // None or Fragment for the value
@@ -446,6 +448,7 @@ class Assert : public FragmentBase,
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
                              const Py::Object &  val );
+        Py::Object getDisplayValue( const Py::Tuple &  args );
 
     public:
         Py::Object      tst;            // Fragment for the test expression
@@ -486,6 +489,7 @@ class While : public FragmentBase,
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
                              const Py::Object &  val );
+        Py::Object getDisplayValue( const Py::Tuple &  args );
 
     public:
         Py::Object      condition;      // Fragment for the condition
@@ -508,6 +512,7 @@ class For : public FragmentBase,
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
                              const Py::Object &  val );
+        Py::Object getDisplayValue( const Py::Tuple &  args );
 
     public:
         Py::Object      iteration;      // Fragment for the iteration
@@ -598,6 +603,7 @@ class With : public FragmentBase,
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
                              const Py::Object &  val );
+        Py::Object getDisplayValue( const Py::Tuple &  args );
 
     public:
         Py::Object      items;      // Fragment for the items
@@ -618,6 +624,7 @@ class ExceptPart : public FragmentBase,
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
                              const Py::Object &  val );
+        Py::Object getDisplayValue( const Py::Tuple &  args );
 
     public:
         Py::Object      clause;     // Fragment or None for the
