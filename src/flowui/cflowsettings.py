@@ -45,7 +45,7 @@ class CFlowSettings:
     def __init__( self, paintDevice ):
 
         # Visibility of the virtual cells (dotted outline)
-        self.debug = True
+        self.debug = False
         self.__paintDevice = paintDevice
 
         self.monoFont = buildFont( "Ubuntu mono,12,-1,5,50,0,0,0,0,0" )
@@ -83,6 +83,7 @@ class CFlowSettings:
         self.fileScopeBGColor = QColor( 255, 255, 230, 255 )
         self.funcScopeBGColor = QColor( 230, 230, 255, 255 )
         self.decorScopeBGColor = QColor( 230, 255, 255, 255 )
+        self.classScopeBGColor = QColor( 230, 255, 230, 255 )
         return
 
     def setMonoFont( self, font ):

@@ -184,7 +184,7 @@ class VirtualCanvas:
                             # Need two rows; one for the comment + one for the scope
                             decScope.layout( dec, CellElement.DECOR_SCOPE, 2 )
                             decScope.__allocateCell( decScopeRows - 3, 2 )
-                            decScope.cells[ decScopeRows - 3 ][ 2 ] = LeadingCommentCell( scopeItem, self, 2, decScopeRows - 3 )
+                            decScope.cells[ decScopeRows - 3 ][ 2 ] = LeadingCommentCell( scopeItem, decScope, 2, decScopeRows - 3 )
                         else:
                             # Need one row for the scope
                             decScope.layout( dec, CellElement.DECOR_SCOPE, 1 )
@@ -513,7 +513,8 @@ class VirtualCanvas:
                     row[ column ].width = maxWidth
             self.width += maxWidth
 
-        self.minWidth = self.width + self.settings.rectRadius
+        self.width = self.width + self.settings.rectRadius
+        self.minWidth = self.width
         self.minHeight = self.height
         return (self.width, self.height)
 
