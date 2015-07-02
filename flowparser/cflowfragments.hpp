@@ -149,7 +149,7 @@ class FragmentWithComments
     public:
         Fragment *  getSideCommentFragmentForLine( INT_TYPE  lineNo );
         std::string alignBlockAndStripSideComments( const std::string &  content,
-                                                    Fragment *  firstFragment);
+                                                    FragmentBase *  firstFragment);
 };
 
 
@@ -277,6 +277,7 @@ class Decorator : public FragmentBase,
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
                              const Py::Object &  val );
+        Py::Object getDisplayValue( const Py::Tuple &  args );
 
     public:
         Py::Object      name;           // Fragment for a name
@@ -324,6 +325,7 @@ class Function : public FragmentBase,
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
                              const Py::Object &  val );
+        Py::Object getDisplayValue( const Py::Tuple &  args );
 
     public:
         Py::List        decors;         // Decorator instances
@@ -348,6 +350,7 @@ class Class : public FragmentBase,
         Py::Object repr( void );
         virtual int setattr( const char *        attrName,
                              const Py::Object &  val );
+        Py::Object getDisplayValue( const Py::Tuple &  args );
 
     public:
         Py::List        decors;         // Decorator instances

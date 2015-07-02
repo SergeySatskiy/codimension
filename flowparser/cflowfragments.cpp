@@ -521,7 +521,7 @@ FragmentWithComments::getSideCommentFragmentForLine( INT_TYPE  lineNo )
 
 std::string
 FragmentWithComments::alignBlockAndStripSideComments(const std::string &  content,
-                                                     Fragment *  firstFragment)
+                                                     FragmentBase *  firstFragment)
 {
     // The content may have trailing side comments
     size_t                      indent( firstFragment->beginPos - 1 );
@@ -1385,6 +1385,8 @@ void Decorator::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+    add_varargs_method( "getDisplayValue", &Decorator::getDisplayValue,
+                        DECORATOR_GETDISPLAYVALUE_DOC );
 
     behaviors().readyType();
 }
@@ -1449,6 +1451,31 @@ int  Decorator::setattr( const char *        attrName,
     return -1;  // Suppress compiler warning
 }
 
+
+Py::Object Decorator::getDisplayValue( const Py::Tuple &  args )
+{
+    Fragment *      bodyFragment( static_cast<Fragment *>(body.ptr()) );
+    std::string     content;
+    switch ( args.length() )
+    {
+        case 0:
+            content = bodyFragment->getContent( NULL );
+            break;
+        case 1:
+            {
+                std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
+                content = bodyFragment->getContent( buf.c_str() );
+                break;
+            }
+        default:
+            throwWrongBufArgument( "getDisplayValue" );
+    }
+
+    // The content may be shifted and may have side comments.
+    // The common shift should be shaved as well the comments
+    return Py::String( alignBlockAndStripSideComments( content,
+                                                       bodyFragment ) );
+}
 
 // --- End of Decorator definition ---
 
@@ -1583,6 +1610,8 @@ void Function::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+    add_varargs_method( "getDisplayValue", &Function::getDisplayValue,
+                        FUNCTION_GETDISPLAYVALUE_DOC );
 
     behaviors().readyType();
 }
@@ -1679,6 +1708,44 @@ int  Function::setattr( const char *        attrName,
     return -1;  // Suppress compiler warning
 }
 
+
+Py::Object Function::getDisplayValue( const Py::Tuple &  args )
+{
+    Fragment *      nameFragment( static_cast<Fragment *>(name.ptr()) );
+    Fragment *      argsFragment( static_cast<Fragment *>(arguments.ptr()) );
+    std::string     content;
+
+    // The required fragment is from the name till the ')'
+    FragmentBase    f;
+    f.parent = nameFragment->parent;
+    f.begin = nameFragment->begin;
+    f.end = argsFragment->end;
+    f.beginLine = nameFragment->beginLine;
+    f.beginPos = nameFragment->beginPos;
+    f.endLine = argsFragment->endLine;
+    f.endPos = argsFragment->endPos;
+
+    switch ( args.length() )
+    {
+        case 0:
+            content = f.getContent( NULL );
+            break;
+        case 1:
+            {
+                std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
+                content = f.getContent( buf.c_str() );
+                break;
+            }
+        default:
+            throwWrongBufArgument( "getDisplayValue" );
+    }
+
+    // The content may be shifted and may have side comments.
+    // The common shift should be shaved as well the comments
+    return Py::String( alignBlockAndStripSideComments( content, & f ) );
+}
+
+
 // --- End of Function definition ---
 
 
@@ -1707,6 +1774,8 @@ void Class::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+    add_varargs_method( "getDisplayValue", &Class::getDisplayValue,
+                        CLASS_GETDISPLAYVALUE_DOC );
 
     behaviors().readyType();
 }
@@ -1801,6 +1870,44 @@ int  Class::setattr( const char *        attrName,
     }
     throwUnknownAttribute( attrName );
     return -1;  // Suppress compiler warning
+}
+
+Py::Object Class::getDisplayValue( const Py::Tuple &  args )
+{
+    Fragment *      nameFragment( static_cast<Fragment *>(name.ptr()) );
+    Fragment *      lastFragment( nameFragment );
+    if ( ! baseClasses.isNone() )
+        lastFragment = static_cast<Fragment *>(baseClasses.ptr());
+
+    // The required fragment is from the name till the ')' or just the name
+    FragmentBase    f;
+    f.parent = nameFragment->parent;
+    f.begin = nameFragment->begin;
+    f.end = lastFragment->end;
+    f.beginLine = nameFragment->beginLine;
+    f.beginPos = nameFragment->beginPos;
+    f.endLine = lastFragment->endLine;
+    f.endPos = lastFragment->endPos;
+
+    std::string     content;
+    switch ( args.length() )
+    {
+        case 0:
+            content = f.getContent( NULL );
+            break;
+        case 1:
+            {
+                std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
+                content = f.getContent( buf.c_str() );
+                break;
+            }
+        default:
+            throwWrongBufArgument( "getDisplayValue" );
+    }
+
+    // The content may be shifted and may have side comments.
+    // The common shift should be shaved as well the comments
+    return Py::String( alignBlockAndStripSideComments( content, & f ) );
 }
 
 // --- End of Class definition ---

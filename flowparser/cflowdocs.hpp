@@ -63,6 +63,10 @@
 #define CREATE_DECORATOR_DOC \
 "Creates the Decorator class instance"
 
+// Import::getDisplayValue()
+#define DECORATOR_GETDISPLAYVALUE_DOC \
+"Provides the decorator without trailing spaces and comments"
+
 // CodeBlock()
 #define CREATE_CODEBLOCK_DOC \
 "Creates the CodeBlock class instance"
@@ -71,9 +75,17 @@
 #define CREATE_FUNCTION_DOC \
 "Creates the Function class instance"
 
+// Function::getDisplayValue()
+#define FUNCTION_GETDISPLAYVALUE_DOC \
+"Provides the function without trailing spaces and comments"
+
 // Class()
 #define CREATE_CLASS_DOC \
 "Creates the Class class instance"
+
+// Class::getDisplayValue()
+#define CLASS_GETDISPLAYVALUE_DOC \
+"Provides the class without trailing spaces and comments"
 
 // Break()
 #define CREATE_BREAK_DOC \
