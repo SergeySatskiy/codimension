@@ -2927,6 +2927,9 @@ int  ElifPart::setattr( const char *        attrName,
 
 Py::Object  ElifPart::getDisplayValue( const Py::Tuple &  args )
 {
+    if (condition.isNone())
+        return Py::String();
+
     Fragment *      condFragment( static_cast<Fragment *>(condition.ptr()) );
     std::string     content;
     switch ( args.length() )

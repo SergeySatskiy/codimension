@@ -354,7 +354,7 @@ class Class : public FragmentBase,
 
     public:
         Py::List        decors;         // Decorator instances
-        Py::Object      name;           // Fragment for the function name
+        Py::Object      name;           // Fragment for the class name
         Py::Object      baseClasses;    // Fragment for the class base classes
                                         // starting from '(', ending with ')'
                                         // or None
