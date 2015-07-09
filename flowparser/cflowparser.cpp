@@ -1247,7 +1247,7 @@ processWith( Context *  context,
     Fragment *      items( new Fragment );
     items->parent = w;
     updateBegin( items, firstWithItem, context->lineShifts );
-    updateEnd( items, lastWithItem, context->lineShifts );
+    updateEnd( items, findLastPart(lastWithItem), context->lineShifts );
     w->items = Py::asObject( items );
 
     injectComments( context, flow, parent, w, w );
