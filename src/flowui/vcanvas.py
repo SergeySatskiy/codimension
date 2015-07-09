@@ -42,7 +42,7 @@ from items import ( kindToString,
                     BreakCell, ContinueCell, ReturnCell, RaiseCell,
                     AssertCell, SysexitCell, ImportCell, IndependentCommentCell,
                     LeadingCommentCell, SideCommentCell, ConnectorCell, IfCell,
-                    VSpacerCell )
+                    VSpacerCell, HSpacerCell )
 from cdmcf import ( CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
                     BREAK_FRAGMENT, CONTINUE_FRAGMENT, RETURN_FRAGMENT,
                     RAISE_FRAGMENT, ASSERT_FRAGMENT, SYSEXIT_FRAGMENT,
@@ -211,24 +211,54 @@ class VirtualCanvas:
                 continue
 
             if item.kind == WITH_FRAGMENT:
+                if item.leadingComment:
+                    vacantRow = self.__allocateLeadingComment( item,
+                                                               vacantRow,
+                                                               column )
                 self.__allocateScope( item, CellElement.WITH_SCOPE,
                                       vacantRow, column )
                 vacantRow += 1
                 continue
 
             if item.kind == WHILE_FRAGMENT:
+                if item.leadingComment:
+                    vacantRow = self.__allocateLeadingComment( item,
+                                                               vacantRow,
+                                                               column )
+                else:
+                    if item.elsePart:
+                        if item.elsePart.leadingComment:
+                            self.__allocateAndSet( vacantRow, column, ConnectorCell( [ (ConnectorCell.NORTH,
+                                                                                        ConnectorCell.SOUTH) ],
+                                                                                     self, column, vacantRow ) )
+                            vacantRow += 1
                 self.__allocateScope( item, CellElement.WHILE_SCOPE,
                                       vacantRow, column )
                 if item.elsePart:
+                    if item.elsePart.leadingComment:
+                        self.__allocateAndSet( vacantRow - 1, column + 2, LeadingCommentCell( item.elsePart, self, column + 2, vacantRow - 1 ) )
                     self.__allocateScope( item.elsePart, CellElement.ELSE_SCOPE,
                                           vacantRow, column + 1 )
                 vacantRow += 1
                 continue
 
             if item.kind == FOR_FRAGMENT:
+                if item.leadingComment:
+                    vacantRow = self.__allocateLeadingComment( item,
+                                                               vacantRow,
+                                                               column )
+                else:
+                    if item.elsePart:
+                        if item.elsePart.leadingComment:
+                            self.__allocateAndSet( vacantRow, column, ConnectorCell( [ (ConnectorCell.NORTH,
+                                                                                        ConnectorCell.SOUTH) ],
+                                                                                     self, column, vacantRow ) )
+                            vacantRow += 1
                 self.__allocateScope( item, CellElement.FOR_SCOPE,
                                       vacantRow, column )
                 if item.elsePart:
+                    if item.elsePart.leadingComment:
+                        self.__allocateAndSet( vacantRow - 1, column + 2, LeadingCommentCell( item.elsePart, self, column + 2, vacantRow - 1 ) )
                     self.__allocateScope( item.elsePart, CellElement.ELSE_SCOPE,
                                           vacantRow, column + 1 )
                 vacantRow += 1
@@ -430,13 +460,6 @@ class VirtualCanvas:
 
         # Allocate the scope header
         headerRow = 0
-        if hasattr( cf, "leadingComment" ) and False:
-            if cf.leadingComment:
-                self.__allocateCell( 0, 2, False )  # No left scope edge required
-                self.cells[ 0 ][ 2 ] = self.__currentScopeClass( cf, self, 2, 0,
-                                                ScopeCellElement.LEADING_COMMENT )
-                headerRow = 1
-
         self.__allocateCell( headerRow, 1, False )
         self.cells[ headerRow ][ 0 ] = self.__currentScopeClass( cf, self, 0, headerRow, ScopeCellElement.TOP_LEFT )
         self.cells[ headerRow ][ 1 ] = self.__currentScopeClass( cf, self, 1, headerRow, ScopeCellElement.TOP )

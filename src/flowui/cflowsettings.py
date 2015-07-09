@@ -84,6 +84,10 @@ class CFlowSettings:
         self.funcScopeBGColor = QColor( 230, 230, 255, 255 )
         self.decorScopeBGColor = QColor( 230, 255, 255, 255 )
         self.classScopeBGColor = QColor( 230, 255, 230, 255 )
+        self.forScopeBGColor = QColor( 230, 230, 230, 255 )
+        self.whileScopeBGColor = QColor( 255, 230, 230, 255 )
+        self.elseScopeBGColor = QColor( 255, 230, 255, 255 )
+        self.withScopeBGColor = QColor( 255, 255, 255, 255 )
         return
 
     def setMonoFont( self, font ):

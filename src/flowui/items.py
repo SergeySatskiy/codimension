@@ -98,6 +98,11 @@ class CellElement:
         raise Exception( "draw() is not implemented for " +
                          kindToString( self.kind ) )
 
+    def getBoundingRect( self, text ):
+        " Provides the bounding rectangle for a monospaced font "
+        return self.canvas.settings.monoFontMetrics.boundingRect(
+                                        0, 0,  maxint, maxint, 0, text )
+
     def getTooltip( self ):
         return "Size: " + str( self.width ) + "x" + str( self.height ) + \
                " (" + str( self.minWidth ) + "x" + str( self.minHeight ) + ")"
@@ -105,6 +110,7 @@ class CellElement:
     def getCanvasTooltip( self ):
         return "Size: " + str( self.canvas.width ) + "x" + str( self.canvas.height ) + \
                " (" + str( self.canvas.minWidth ) + "x" + str( self.canvas.minHeight ) + ")"
+
 
 
 class ScopeCellElement( CellElement ):
@@ -124,12 +130,186 @@ class ScopeCellElement( CellElement ):
         CellElement.__init__( self, ref, canvas, x, y )
         self.subKind = self.UNKNOWN
         self.docstringText = None
+        self._headerText = None
+        self._headerRect = None
+        self._sideComment = None
+        self._sideCommentRect = None
         return
+
+    def _getHeaderText( self ):
+        if self._headerText is None:
+            self._headerText = self.ref.getDisplayValue()
+        return self._headerText
 
     def getDocstringText( self ):
         if self.docstringText is None:
             self.docstringText = self.ref.docstring.getDisplayValue()
         return self.docstringText
+
+    def _render( self ):
+        " Provides rendering for the scope elements "
+        s = self.canvas.settings
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            self.minHeight = s.rectRadius
+            self.minWidth = s.rectRadius
+        elif self.subKind == ScopeCellElement.LEFT:
+            self.minHeight = 0
+            self.minWidth = s.rectRadius
+        elif self.subKind == ScopeCellElement.BOTTOM_LEFT:
+            self.minHeight = s.rectRadius
+            self.minWidth = s.rectRadius
+        elif self.subKind == ScopeCellElement.TOP:
+            self.minHeight = s.rectRadius
+            self.minWidth = 0
+        elif self.subKind == ScopeCellElement.BOTTOM:
+            self.minHeight = s.rectRadius
+            self.minWidth = 0
+        elif self.subKind == ScopeCellElement.DECLARATION:
+            # The declaration location uses a bit of the top cell space
+            # to make the view more compact
+            self._headerRect = self.getBoundingRect( self._getHeaderText() )
+            self.minHeight = self._headerRect.height() + 2 * s.vHeaderPadding - s.rectRadius
+            self.minWidth = self._headerRect.width() + s.hHeaderPadding - s.rectRadius
+            if hasattr( self.ref, "sideComment" ):
+                if self.ref.sideComment:
+                    self.minHeight += 2 * s.vTextPadding
+                    self.minWidth += s.hCellPadding
+                else:
+                    self.minWidth += s.hHeaderPadding
+            else:
+                self.minWidth += s.hHeaderPadding
+        elif self.subKind == ScopeCellElement.SIDE_COMMENT:
+            self._sideCommentRect = self.getBoundingRect( self._getSideComment() )
+            self.minHeight = self._sideCommentRect.height() + \
+                             2 * (s.vHeaderPadding + s.vTextPadding) - \
+                             s.rectRadius
+            self.minWidth = s.hCellPadding + s.hTextPadding + \
+                            self._sideCommentRect.width() + s.hTextPadding + \
+                            s.hHeaderPadding - s.rectRadius
+        elif self.subKind == ScopeCellElement.DOCSTRING:
+            rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
+                                                   self.getDocstringText() )
+            self.minHeight = rect.height() + 2 * s.vHeaderPadding
+            self.minWidth = rect.width() + 2 * (s.hHeaderPadding - s.rectRadius)
+        elif self.subKind == ScopeCellElement.UNKNOWN:
+            raise Exception( "Unknown scope element" )
+        else:
+            raise Exception( "Unrecognized scope element: " +
+                             str( self.subKind ) )
+        return
+
+    def _draw( self, scene, baseX, baseY ):
+        s = self.canvas.settings
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            # Draw the scope rounded rectangle when we see the top left corner
+            self.setRect( baseX, baseY, self.canvas.width, self.canvas.height )
+            self.setToolTip( self.getCanvasTooltip() )
+            scene.addItem( self )
+            self.canvas.scopeRectangle = self
+        elif self.subKind == ScopeCellElement.DECLARATION:
+            yShift = 0
+            if hasattr( self.ref, "sideComment" ):
+                if self.ref.sideComment:
+                    yShift = s.vTextPadding
+            self.setRect( baseX - s.rectRadius,
+                          baseY - s.rectRadius + s.vHeaderPadding + yShift,
+                          self.canvas.width,
+                          self.height + (s.rectRadius - s.vHeaderPadding) )
+            self.setToolTip( self.getTooltip() )
+            scene.addItem( self )
+        elif self.subKind == ScopeCellElement.SIDE_COMMENT:
+            self.setRect( baseX,
+                          baseY - s.rectRadius + s.vHeaderPadding,
+                          self.width + s.rectRadius - s.hHeaderPadding,
+                          self._sideCommentRect.height() + 2 * s.vTextPadding )
+            self.setToolTip( self.getTooltip() )
+            scene.addItem( self )
+        elif self.subKind == ScopeCellElement.DOCSTRING:
+            self.setRect( baseX - s.rectRadius,
+                          baseY + s.vHeaderPadding,
+                          self.canvas.width, self.height - s.vHeaderPadding )
+            self.setToolTip( self.getTooltip() )
+            scene.addItem( self )
+        return
+
+    def _paint( self, painter, option, widget ):
+        " Draws the function scope element "
+        s = self.canvas.settings
+
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            pen = QPen( s.lineColor )
+            pen.setWidth( s.lineWidth )
+            painter.setPen( pen )
+            painter.drawRoundedRect( self.baseX, self.baseY,
+                                     self.canvas.width, self.canvas.height,
+                                     s.rectRadius, s.rectRadius )
+        elif self.subKind == ScopeCellElement.DECLARATION:
+            pen = QPen( s.boxFGColor )
+            painter.setFont( s.monoFont )
+            painter.setPen( pen )
+            yShift = 0
+            if hasattr( self.ref, "sideComment" ):
+                if self.ref.sideComment:
+                    yShift = s.vTextPadding
+            canvasLeft = self.baseX - s.rectRadius
+            canvasTop = self.baseY - s.rectRadius
+            painter.drawText( canvasLeft + s.hHeaderPadding,
+                              canvasTop + s.vHeaderPadding + yShift,
+                              int( self._headerRect.width() ),
+                              int( self._headerRect.height() ),
+                              Qt.AlignLeft, self._getHeaderText() )
+
+            pen = QPen( s.lineColor )
+            pen.setWidth( s.lineWidth )
+            painter.setPen( pen )
+            painter.drawLine( canvasLeft, self.baseY + self.height,
+                              canvasLeft + self.canvas.width,
+                              self.baseY + self.height )
+        elif self.subKind == ScopeCellElement.SIDE_COMMENT:
+            canvasTop = self.baseY - s.rectRadius
+            path = getNoCellCommentBoxPath( self.baseX + s.hCellPadding,
+                                            canvasTop + s.vHeaderPadding,
+                                            int( self._sideCommentRect.width() ) + 2 * s.hTextPadding,
+                                            int( self._sideCommentRect.height() ) + 2 * s.vTextPadding,
+                                            s.commentCorner )
+            # Add vertcal separation line
+            path.moveTo( self.baseX, canvasTop + s.vHeaderPadding )
+            path.lineTo( self.baseX, canvasTop + s.vHeaderPadding +
+                                     int( self._sideCommentRect.height() ) +
+                                     2 * s.vTextPadding )
+            brush = QBrush( s.commentBGColor )
+            painter.setBrush( brush )
+            pen = QPen( s.commentLineColor )
+            pen.setWidth( s.commentLineWidth )
+            painter.setPen( pen )
+            painter.drawPath( path )
+
+            pen = QPen( s.boxFGColor )
+            painter.setFont( s.monoFont )
+            painter.setPen( pen )
+            painter.drawText( self.baseX + s.hCellPadding + s.hTextPadding,
+                              canvasTop + s.vHeaderPadding + s.vTextPadding,
+                              int( self._sideCommentRect.width() ),
+                              int( self._sideCommentRect.height() ),
+                              Qt.AlignLeft, self._getSideComment() )
+        elif self.subKind == ScopeCellElement.DOCSTRING:
+            canvasLeft = self.baseX - s.rectRadius
+            pen = QPen( s.boxFGColor )
+            painter.setFont( s.monoFont )
+            painter.setPen( pen )
+            painter.drawText( canvasLeft + s.hHeaderPadding,
+                              self.baseY + s.vHeaderPadding,
+                              self.canvas.width - 2 * s.hHeaderPadding,
+                              self.height - 2 * s.vHeaderPadding,
+                              Qt.AlignLeft, self.getDocstringText() )
+
+            pen = QPen( s.lineColor )
+            pen.setWidth( s.lineWidth )
+            painter.setPen( pen )
+            painter.drawLine( canvasLeft, self.baseY + self.height,
+                              canvasLeft + self.canvas.width,
+                              self.baseY + self.height )
+        return
 
     def __str__( self ):
         return CellElement.__str__( self ) + \
@@ -145,6 +325,10 @@ __kindToString = {
     CellElement.FUNC_SCOPE:             "FUNC_SCOPE",
     CellElement.CLASS_SCOPE:            "CLASS_SCOPE",
     CellElement.DECOR_SCOPE:            "DECOR_SCOPE",
+    CellElement.FOR_SCOPE:              "FOR_SCOPE",
+    CellElement.WHILE_SCOPE:            "WHILE_SCOPE",
+    CellElement.ELSE_SCOPE:             "ELSE_SCOPE",
+    CellElement.WITH_SCOPE:             "WITH_SCOPE",
     CellElement.CODE_BLOCK:             "CODE_BLOCK",
     CellElement.BREAK:                  "BREAK",
     CellElement.CONTINUE:               "CONTINUE",
@@ -206,7 +390,6 @@ class VacantCell( CellElement ):
         return
 
 
-
 class VSpacerCell( CellElement ):
     " Represents a vertical spacer cell "
 
@@ -230,6 +413,28 @@ class VSpacerCell( CellElement ):
         return
 
 
+class HSpacerCell( CellElement ):
+    " Represents a horizontal spacer cell "
+
+    def __init__( self, ref, canvas, x, y ):
+        CellElement.__init__( self, ref, canvas, x, y )
+        self.kind = CellElement.H_SPACER
+        return
+
+    def render( self ):
+        self.width = self.canvas.settings.hSpacer
+        self.height = 0
+        self.minWidth = self.width
+        self.minHeight = self.height
+        return (self.width, self.height)
+
+    def draw( self, scene, baseX, baseY ):
+        # There is no need to draw anything. The cell just reserves some
+        # horizontal space for better appearance
+        self.baseX = baseX
+        self.baseY = baseY
+        return
+
 
 class CodeBlockCell( CellElement, QGraphicsRectItem ):
     " Represents a single code block "
@@ -249,8 +454,7 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
 
     def render( self ):
         s = self.canvas.settings
-        self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
-                                                          0, self.__getText() )
+        self.__textRect = self.getBoundingRect( self.__getText() )
 
         self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
         self.minWidth = self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding)
@@ -308,128 +512,41 @@ class FileScopeCell( ScopeCellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self )
         self.kind = CellElement.FILE_SCOPE
         self.subKind = kind
-        self.__headerText = None
         return
 
-    def __getHeaderText( self ):
-        if self.__headerText is None:
+    def _getHeaderText( self ):
+        if self._headerText is None:
             if self.ref.encodingLine:
-                self.__headerText = "Encoding: " + self.ref.encodingLine.getDisplayValue()
+                self._headerText = "Encoding: " + \
+                                   self.ref.encodingLine.getDisplayValue()
             else:
-                self.__headerText = "Encoding: not specified"
+                self._headerText = "Encoding: not specified"
             if self.ref.bangLine:
-                self.__headerText += "\nBang line: " + self.ref.bangLine.getDisplayValue()
+                self._headerText += "\nBang line: " + \
+                                    self.ref.bangLine.getDisplayValue()
             else:
-                self.__headerText += "\nBang line: not specified"
-        return self.__headerText
+                self._headerText += "\nBang line: not specified"
+        return self._headerText
 
     def render( self ):
-        s = self.canvas.settings
-        if self.subKind == ScopeCellElement.UNKNOWN:
-            raise Exception( "Unknown file scope element" )
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.minHeight = s.rectRadius
-            self.minWidth = s.rectRadius
-        elif self.subKind == ScopeCellElement.LEFT:
-            self.minHeight = 0
-            self.minWidth = s.rectRadius
-        elif self.subKind == ScopeCellElement.BOTTOM_LEFT:
-            self.minHeight = s.rectRadius
-            self.minWidth = s.rectRadius
-        elif self.subKind == ScopeCellElement.DECLARATION:
-            rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
-                                                   self.__getHeaderText() )
-            self.minHeight = rect.height() + 2 * s.vHeaderPadding
-            self.minWidth = rect.width() + 2 * s.vHeaderPadding
-        elif self.subKind == ScopeCellElement.SIDE_COMMENT:
-            raise Exception( "Side comment is not supported for a file scope" )
-        elif self.subKind == ScopeCellElement.DOCSTRING:
-            rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
-                                                   self.getDocstringText() )
-            self.minHeight = rect.height() + 2 * s.vHeaderPadding
-            self.minWidth = rect.width() + 2 * s.vHeaderPadding
-        elif self.subKind == ScopeCellElement.TOP:
-            self.minHeight = s.rectRadius
-            self.minWidth = 0
-        elif self.subKind == ScopeCellElement.BOTTOM:
-            self.minHeight = s.rectRadius
-            self.minWidth = 0
-        else:
-            raise Exception( "Unrecognized file scope element: " +
-                             str( self.subKind ) )
+        self._render()
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
 
     def draw( self, scene, baseX, baseY ):
-        if self.subKind == ScopeCellElement.UNKNOWN:
-            raise Exception( "Unknown file scope element" )
-
         self.baseX = baseX
         self.baseY = baseY
-        s = self.canvas.settings
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            # Draw the scope rounded rectangle when we see the top left corner
-            self.setRect( baseX, baseY, self.canvas.width, self.canvas.height )
-            self.setToolTip( self.getCanvasTooltip() )
-            scene.addItem( self )
-            self.canvas.scopeRectangle = self
-        elif self.subKind == ScopeCellElement.DECLARATION:
-            self.setRect( baseX, baseY, self.width, self.height )
-            scene.addItem( self )
-        elif self.subKind == ScopeCellElement.DOCSTRING:
-            self.setRect( baseX, baseY, self.width, self.height )
-            scene.addItem( self )
+        self._draw( scene, baseX, baseY )
         return
 
     def paint( self, painter, option, widget ):
-        " Draws the code block "
-        s = self.canvas.settings
-
+        " Draws the file scope element "
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            brush = QBrush( s.fileScopeBGColor )
+            brush = QBrush( self.canvas.settings.fileScopeBGColor )
             painter.setBrush( brush )
-            pen = QPen( s.lineColor )
-            pen.setWidth( s.lineWidth )
-            painter.setPen( pen )
-            painter.drawRoundedRect( self.baseX, self.baseY, self.canvas.width, self.canvas.height,
-                                     s.rectRadius, s.rectRadius )
-        elif self.subKind == ScopeCellElement.DECLARATION:
-            pen = QPen( s.boxFGColor )
-            painter.setFont( s.monoFont )
-            painter.setPen( pen )
-            painter.drawText( self.baseX + s.hHeaderPadding,
-                              self.baseY + s.vHeaderPadding,
-                              int( self.rect().width() ) - 2 * s.hHeaderPadding,
-                              int( self.rect().height() ) - 2 * s.vHeaderPadding,
-                              Qt.AlignLeft,
-                              self.__getHeaderText() )
-
-            pen = QPen( s.lineColor )
-            pen.setWidth( s.lineWidth )
-            painter.setPen( pen )
-            painter.drawLine( self.baseX - s.rectRadius, self.baseY + self.height,
-                              self.baseX - s.rectRadius + self.canvas.width,
-                              self.baseY + self.height )
-        elif self.subKind == ScopeCellElement.DOCSTRING:
-            pen = QPen( s.boxFGColor )
-            painter.setFont( s.monoFont )
-            painter.setPen( pen )
-            painter.drawText( self.baseX + s.hHeaderPadding,
-                              self.baseY + s.vHeaderPadding,
-                              int( self.rect().width() ) - 2 * s.hHeaderPadding,
-                              int( self.rect().height() ) - 2 * s.vHeaderPadding,
-                              Qt.AlignLeft,
-                              self.getDocstringText() )
-
-            pen = QPen( s.lineColor )
-            pen.setWidth( s.lineWidth )
-            painter.setPen( pen )
-            painter.drawLine( self.baseX - s.rectRadius, self.baseY + self.height,
-                              self.baseX - s.rectRadius + self.canvas.width,
-                              self.baseY + self.height )
+        self._paint( painter, option, widget )
         return
-
 
 
 class FunctionScopeCell( ScopeCellElement, QGraphicsRectItem ):
@@ -440,164 +557,41 @@ class FunctionScopeCell( ScopeCellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self )
         self.kind = CellElement.FUNC_SCOPE
         self.subKind = kind
-        self.__headerText = None
-        self.__headerRect = None
-        self.__sideComment = None
-        self.__sideCommentRect = None
         return
 
-    def __getHeaderText( self ):
-        if self.__headerText is None:
-            self.__headerText = self.ref.getDisplayValue()
-        return self.__headerText
-
-    def __getSideComment( self ):
-        if self.__sideComment is None:
-            self.__sideComment = '\n' * (self.ref.sideComment.beginLine - self.ref.name.beginLine) + \
-                                 self.ref.sideComment.getDisplayValue()
-        return self.__sideComment
+    def _getSideComment( self ):
+        if self._sideComment is None:
+            # The comment may start not at the first line of the function
+            linesBefore = self.ref.sideComment.beginLine - \
+                          self.ref.name.beginLine
+            self._sideComment = '\n' * linesBefore + \
+                                self.ref.sideComment.getDisplayValue()
+            # The comment may stop before the end of the arguments list
+            linesAfter = self.ref.arguments.endLine - \
+                         self.ref.sideComment.endLine
+            if linesAfter > 0:
+                self._sideComment += '\n' * linesAfter
+        return self._sideComment
 
     def render( self ):
-        s = self.canvas.settings
-        if self.subKind == ScopeCellElement.UNKNOWN:
-            raise Exception( "Unknown function scope element" )
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.minHeight = s.rectRadius
-            self.minWidth = s.rectRadius
-        elif self.subKind == ScopeCellElement.LEFT:
-            self.minHeight = 0
-            self.minWidth = s.rectRadius
-        elif self.subKind == ScopeCellElement.BOTTOM_LEFT:
-            self.minHeight = s.rectRadius
-            self.minWidth = s.rectRadius
-        elif self.subKind == ScopeCellElement.DECLARATION:
-            self.__headerRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
-                                                                self.__getHeaderText() )
-            self.minHeight = self.__headerRect.height() + 2 * s.vHeaderPadding - s.rectRadius
-            self.minWidth = self.__headerRect.width() + 2 * s.hHeaderPadding - s.rectRadius
-            if self.ref.sideComment:
-                self.minHeight += 2 * s.vTextPadding
-        elif self.subKind == ScopeCellElement.SIDE_COMMENT:
-            self.__sideCommentRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
-                                                                     self.__getSideComment() )
-            self.minHeight = self.__sideCommentRect.height() + 2 * (s.vHeaderPadding + s.vTextPadding) - s.rectRadius
-            self.minWidth = self.__sideCommentRect.width() + 2 * (s.vHeaderPadding + s.hTextPadding) - s.rectRadius
-        elif self.subKind == ScopeCellElement.DOCSTRING:
-            rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
-                                                   self.getDocstringText() )
-            self.minHeight = rect.height() + 2 * s.vHeaderPadding
-            self.minWidth = rect.width() + 2 * s.vHeaderPadding
-        elif self.subKind == ScopeCellElement.TOP:
-            self.minHeight = s.rectRadius
-            self.minWidth = 0
-        elif self.subKind == ScopeCellElement.BOTTOM:
-            self.minHeight = s.rectRadius
-            self.minWidth = 0
-        else:
-            raise Exception( "Unrecognized function scope element: " +
-                             str( self.subKind ) )
+        self._render()
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
 
     def draw( self, scene, baseX, baseY ):
-        if self.subKind == ScopeCellElement.UNKNOWN:
-            raise Exception( "Unknown function scope element" )
-
         self.baseX = baseX
         self.baseY = baseY
-        s = self.canvas.settings
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            # Draw the scope rounded rectangle when we see the top left corner
-            self.setRect( baseX, baseY, self.canvas.width, self.canvas.height )
-            self.setToolTip( self.getCanvasTooltip() )
-            scene.addItem( self )
-            self.canvas.scopeRectangle = self
-        elif self.subKind == ScopeCellElement.DECLARATION:
-            self.setRect( baseX, baseY, self.width, self.height )
-            scene.addItem( self )
-        elif self.subKind == ScopeCellElement.SIDE_COMMENT:
-            self.setRect( baseX, baseY, self.width, self.height )
-            scene.addItem( self )
-        elif self.subKind == ScopeCellElement.DOCSTRING:
-            self.setRect( baseX, baseY, self.width, self.height )
-            scene.addItem( self )
+        self._draw( scene, baseX, baseY )
         return
 
     def paint( self, painter, option, widget ):
         " Draws the function scope element "
-        s = self.canvas.settings
-
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            brush = QBrush( s.funcScopeBGColor )
+            brush = QBrush( self.canvas.settings.funcScopeBGColor )
             painter.setBrush( brush )
-            pen = QPen( s.lineColor )
-            pen.setWidth( s.lineWidth )
-            painter.setPen( pen )
-            painter.drawRoundedRect( self.baseX, self.baseY, self.canvas.width, self.canvas.height,
-                                     s.rectRadius, s.rectRadius )
-        elif self.subKind == ScopeCellElement.DECLARATION:
-            pen = QPen( s.boxFGColor )
-            painter.setFont( s.monoFont )
-            painter.setPen( pen )
-            yShift = 0
-            if self.ref.sideComment:
-                yShift = s.vTextPadding
-            painter.drawText( self.baseX - s.rectRadius + s.hHeaderPadding,
-                              self.baseY - s.rectRadius + s.vHeaderPadding + yShift,
-                              int( self.__headerRect.width() ),
-                              int( self.__headerRect.height() ),
-                              Qt.AlignLeft,
-                              self.__getHeaderText() )
-
-            pen = QPen( s.lineColor )
-            pen.setWidth( s.lineWidth )
-            painter.setPen( pen )
-            painter.drawLine( self.baseX - s.rectRadius, self.baseY + self.height,
-                              self.baseX - s.rectRadius + self.canvas.width,
-                              self.baseY + self.height )
-        elif self.subKind == ScopeCellElement.SIDE_COMMENT:
-
-            path = getNoCellCommentBoxPath( self.baseX + s.hHeaderPadding,
-                                            self.baseY - s.rectRadius + s.vHeaderPadding,
-                                            int( self.__sideCommentRect.width() ) + 2 * s.hTextPadding,
-                                            int( self.__sideCommentRect.height() ) + 2 * s.vTextPadding,
-                                            s.commentCorner )
-            brush = QBrush( s.commentBGColor )
-            painter.setBrush( brush )
-            pen = QPen( s.commentLineColor )
-            pen.setWidth( s.commentLineWidth )
-            painter.setPen( pen )
-            painter.drawPath( path )
-
-            pen = QPen( s.boxFGColor )
-            painter.setFont( s.monoFont )
-            painter.setPen( pen )
-            painter.drawText( self.baseX + s.hHeaderPadding + s.hTextPadding,
-                              self.baseY - s.rectRadius + s.vHeaderPadding + s.vTextPadding,
-                              int( self.__sideCommentRect.width() ),
-                              int( self.__sideCommentRect.height() ),
-                              Qt.AlignLeft,
-                              self.__getSideComment() )
-        elif self.subKind == ScopeCellElement.DOCSTRING:
-            pen = QPen( s.boxFGColor )
-            painter.setFont( s.monoFont )
-            painter.setPen( pen )
-            painter.drawText( self.baseX + s.hHeaderPadding,
-                              self.baseY + s.vHeaderPadding,
-                              int( self.rect().width() ) - 2 * s.hHeaderPadding,
-                              int( self.rect().height() ) - 2 * s.vHeaderPadding,
-                              Qt.AlignLeft,
-                              self.getDocstringText() )
-
-            pen = QPen( s.lineColor )
-            pen.setWidth( s.lineWidth )
-            painter.setPen( pen )
-            painter.drawLine( self.baseX - s.rectRadius, self.baseY + self.height,
-                              self.baseX - s.rectRadius + self.canvas.width,
-                              self.baseY + self.height )
+        self._paint( painter, option, widget )
         return
-
 
 
 class ClassScopeCell( ScopeCellElement, QGraphicsRectItem ):
@@ -608,155 +602,135 @@ class ClassScopeCell( ScopeCellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self )
         self.kind = CellElement.CLASS_SCOPE
         self.subKind = kind
-        self.__headerText = None
         return
 
-    def __getHeaderText( self ):
-        if self.__headerText is None:
-            self.__headerText = self.ref.getDisplayValue()
-        return self.__headerText
+    def _getSideComment( self ):
+        if self._sideComment is None:
+            # The comment may start not at the first line of the function
+            linesBefore = self.ref.sideComment.beginLine - \
+                          self.ref.name.beginLine
+            self._sideComment = '\n' * linesBefore + \
+                                self.ref.sideComment.getDisplayValue()
+            if self.ref.baseClasses is None:
+                lastLine = self.ref.name.endLine
+            else:
+                lastLine = self.ref.baseClasses.endLine
+            # The comment may stop before the end of the arguments list
+            linesAfter = lastLine - self.ref.sideComment.endLine
+            if linesAfter > 0:
+                self._sideComment += '\n' * linesAfter
+        return self._sideComment
 
     def render( self ):
-        s = self.canvas.settings
-        if self.subKind == ScopeCellElement.UNKNOWN:
-            raise Exception( "Unknown class scope element" )
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.minHeight = s.rectRadius
-            self.minWidth = s.rectRadius
-        elif self.subKind == ScopeCellElement.LEFT:
-            self.minHeight = 0
-            self.minWidth = s.rectRadius
-        elif self.subKind == ScopeCellElement.BOTTOM_LEFT:
-            self.minHeight = s.rectRadius
-            self.minWidth = s.rectRadius
-        elif self.subKind == ScopeCellElement.DECLARATION:
-            rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
-                                                   self.__getHeaderText() )
-            self.minHeight = rect.height() + 2 * s.vHeaderPadding
-            self.minWidth = rect.width() + 2 * s.vHeaderPadding
-        elif self.subKind == ScopeCellElement.SIDE_COMMENT:
-            raise Exception( "Class side comment has not been implemented yet" )
-        elif self.subKind == ScopeCellElement.DOCSTRING:
-            rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
-                                                   self.getDocstringText() )
-            self.minHeight = rect.height() + 2 * s.vHeaderPadding
-            self.minWidth = rect.width() + 2 * s.vHeaderPadding
-        elif self.subKind == ScopeCellElement.TOP:
-            self.minHeight = s.rectRadius
-            self.minWidth = 0
-        elif self.subKind == ScopeCellElement.BOTTOM:
-            self.minHeight = s.rectRadius
-            self.minWidth = 0
-        else:
-            raise Exception( "Unrecognized class scope element: " +
-                             str( self.subKind ) )
+        self._render()
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
 
     def draw( self, scene, baseX, baseY ):
-        if self.subKind == ScopeCellElement.UNKNOWN:
-            raise Exception( "Unknown class scope element" )
-
         self.baseX = baseX
         self.baseY = baseY
-        s = self.canvas.settings
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            # Draw the scope rounded rectangle when we see the top left corner
-            self.setRect( baseX, baseY, self.canvas.width, self.canvas.height )
-            self.setToolTip( self.getCanvasTooltip() )
-            scene.addItem( self )
-            self.canvas.scopeRectangle = self
-        elif self.subKind == ScopeCellElement.DECLARATION:
-            self.setRect( baseX, baseY, self.width, self.height )
-            scene.addItem( self )
-        elif self.subKind == ScopeCellElement.DOCSTRING:
-            self.setRect( baseX, baseY, self.width, self.height )
-            scene.addItem( self )
+        self._draw( scene, baseX, baseY )
         return
 
     def paint( self, painter, option, widget ):
         " Draws the class scope element "
-        s = self.canvas.settings
-
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            brush = QBrush( s.classScopeBGColor )
+            brush = QBrush( self.canvas.settings.classScopeBGColor )
             painter.setBrush( brush )
-            pen = QPen( s.lineColor )
-            pen.setWidth( s.lineWidth )
-            painter.setPen( pen )
-            painter.drawRoundedRect( self.baseX, self.baseY, self.canvas.width, self.canvas.height,
-                                     s.rectRadius, s.rectRadius )
-        elif self.subKind == ScopeCellElement.DECLARATION:
-            pen = QPen( s.boxFGColor )
-            painter.setFont( s.monoFont )
-            painter.setPen( pen )
-            painter.drawText( self.baseX + s.hHeaderPadding,
-                              self.baseY + s.vHeaderPadding,
-                              int( self.rect().width() ) - 2 * s.hHeaderPadding,
-                              int( self.rect().height() ) - 2 * s.vHeaderPadding,
-                              Qt.AlignLeft,
-                              self.__getHeaderText() )
-
-            pen = QPen( s.lineColor )
-            pen.setWidth( s.lineWidth )
-            painter.setPen( pen )
-            painter.drawLine( self.baseX - s.rectRadius, self.baseY + self.height,
-                              self.baseX - s.rectRadius + self.canvas.width,
-                              self.baseY + self.height )
-        elif self.subKind == ScopeCellElement.DOCSTRING:
-            pen = QPen( s.boxFGColor )
-            painter.setFont( s.monoFont )
-            painter.setPen( pen )
-            painter.drawText( self.baseX + s.hHeaderPadding,
-                              self.baseY + s.vHeaderPadding,
-                              int( self.rect().width() ) - 2 * s.hHeaderPadding,
-                              int( self.rect().height() ) - 2 * s.vHeaderPadding,
-                              Qt.AlignLeft,
-                              self.getDocstringText() )
-
-            pen = QPen( s.lineColor )
-            pen.setWidth( s.lineWidth )
-            painter.setPen( pen )
-            painter.drawLine( self.baseX - s.rectRadius, self.baseY + self.height,
-                              self.baseX - s.rectRadius + self.canvas.width,
-                              self.baseY + self.height )
+        self._paint( painter, option, widget )
         return
 
 
-class ForScopeCell( ScopeCellElement ):
+class ForScopeCell( ScopeCellElement, QGraphicsRectItem ):
     " Represents a for-loop scope element "
 
-    def __init__( self, ref, kind ):
-        CellElement.__init__( self )
+    def __init__( self, ref, canvas, x, y, kind ):
+        ScopeCellElement.__init__( self, ref, canvas, x, y )
+        QGraphicsRectItem.__init__( self )
         self.kind = CellElement.FOR_SCOPE
-        self.reference = ref
         self.subKind = kind
         return
 
-    def render( self, settings ):
-        raise Exception( "Not implemented yet" )
+    def _getSideComment( self ):
+        if self._sideComment is None:
+            # The comment may start not at the first line of the function
+            linesBefore = self.ref.sideComment.beginLine - \
+                          self.ref.iteration.beginLine
+            self._sideComment = '\n' * linesBefore + \
+                                self.ref.sideComment.getDisplayValue()
+            # The comment may stop before the end of the arguments list
+            linesAfter = self.ref.iteration.endLine - \
+                         self.ref.sideComment.endLine
+            if linesAfter > 0:
+                self._sideComment += '\n' * linesAfter
+        return self._sideComment
 
-    def draw( self, rect, scene, settings ):
-        raise Exception( "Not implemented yet" )
+    def render( self ):
+        self._render()
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
+
+    def draw( self, scene, baseX, baseY ):
+        self.baseX = baseX
+        self.baseY = baseY
+        self._draw( scene, baseX, baseY )
+        return
+
+    def paint( self, painter, option, widget ):
+        " Draws the for-loop scope element "
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            brush = QBrush( self.canvas.settings.forScopeBGColor )
+            painter.setBrush( brush )
+        self._paint( painter, option, widget )
+        return
 
 
 
-class WhileScopeCell( ScopeCellElement ):
+class WhileScopeCell( ScopeCellElement, QGraphicsRectItem ):
     " Represents a while-loop scope element "
 
-    def __init__( self, ref, kind ):
-        CellElement.__init__( self )
+    def __init__( self, ref, canvas, x, y, kind ):
+        ScopeCellElement.__init__( self, ref, canvas, x, y )
+        QGraphicsRectItem.__init__( self )
         self.kind = CellElement.WHILE_SCOPE
-        self.reference = ref
         self.subKind = kind
         return
 
-    def render( self, settings ):
-        raise Exception( "Not implemented yet" )
+    def _getSideComment( self ):
+        if self._sideComment is None:
+            # The comment may start not at the first line of the function
+            linesBefore = self.ref.sideComment.beginLine - \
+                          self.ref.condition.beginLine
+            self._sideComment = '\n' * linesBefore + \
+                                self.ref.sideComment.getDisplayValue()
+            # The comment may stop before the end of the arguments list
+            linesAfter = self.ref.condition.endLine - \
+                         self.ref.sideComment.endLine
+            if linesAfter > 0:
+                self._sideComment += '\n' * linesAfter
+        return self._sideComment
 
-    def draw( self, rect, scene, settings ):
-        raise Exception( "Not implemented yet" )
+    def render( self ):
+        self._render()
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
+
+    def draw( self, scene, baseX, baseY ):
+        self.baseX = baseX
+        self.baseY = baseY
+        self._draw( scene, baseX, baseY )
+        return
+
+    def paint( self, painter, option, widget ):
+        " Draws the for-loop scope element "
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            brush = QBrush( self.canvas.settings.whileScopeBGColor )
+            painter.setBrush( brush )
+        self._paint( painter, option, widget )
+        return
 
 
 
@@ -778,22 +752,49 @@ class TryScopeCell( ScopeCellElement ):
 
 
 
-class WithScopeCell( ScopeCellElement ):
+class WithScopeCell( ScopeCellElement, QGraphicsRectItem ):
     " Represents a with scope element "
 
-    def __init__( self, ref, kind ):
-        CellElement.__init__( self )
+    def __init__( self, ref, canvas, x, y, kind ):
+        ScopeCellElement.__init__( self, ref, canvas, x, y )
+        QGraphicsRectItem.__init__( self )
         self.kind = CellElement.WITH_SCOPE
-        self.reference = ref
         self.subKind = kind
         return
 
-    def render( self, settings ):
-        raise Exception( "Not implemented yet" )
+    def _getSideComment( self ):
+        if self._sideComment is None:
+            # The comment may start not at the first line of the function
+            linesBefore = self.ref.sideComment.beginLine - \
+                          self.ref.items.beginLine
+            self._sideComment = '\n' * linesBefore + \
+                                self.ref.sideComment.getDisplayValue()
+            # The comment may stop before the end of the arguments list
+            linesAfter = self.ref.items.endLine - \
+                         self.ref.sideComment.endLine
+            if linesAfter > 0:
+                self._sideComment += '\n' * linesAfter
+        return self._sideComment
 
-    def draw( self, rect, scene, settings ):
-        raise Exception( "Not implemented yet" )
+    def render( self ):
+        self._render()
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
 
+    def draw( self, scene, baseX, baseY ):
+        self.baseX = baseX
+        self.baseY = baseY
+        self._draw( scene, baseX, baseY )
+        return
+
+    def paint( self, painter, option, widget ):
+        " Draws the file scope element "
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            brush = QBrush( self.canvas.settings.withScopeBGColor )
+            painter.setBrush( brush )
+        self._paint( painter, option, widget )
+        return
 
 
 class DecoratorScopeCell( ScopeCellElement, QGraphicsRectItem ):
@@ -804,135 +805,87 @@ class DecoratorScopeCell( ScopeCellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self )
         self.kind = CellElement.DECOR_SCOPE
         self.subKind = kind
-        self.__headerText = None
         return
 
-    def __getHeaderText( self ):
-        if self.__headerText is None:
-            self.__headerText = self.ref.getDisplayValue()
-        return self.__headerText
+    def _getSideComment( self ):
+        if self._sideComment is None:
+            # The comment may start not at the first line of the function
+            linesBefore = self.ref.sideComment.beginLine - \
+                          self.ref.name.beginLine
+            self._sideComment = '\n' * linesBefore + \
+                                self.ref.sideComment.getDisplayValue()
+            if self.ref.arguments is None:
+                lastLine = self.ref.name.endLine
+            else:
+                lastLine = self.ref.arguments.endLine
+            # The comment may stop before the end of the arguments list
+            linesAfter = lastLine - self.ref.sideComment.endLine
+            if linesAfter > 0:
+                self._sideComment += '\n' * linesAfter
+        return self._sideComment
 
     def render( self ):
-        s = self.canvas.settings
-        if self.subKind == ScopeCellElement.UNKNOWN:
-            raise Exception( "Unknown decorator scope element" )
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.minHeight = s.rectRadius
-            self.minWidth = s.rectRadius
-        elif self.subKind == ScopeCellElement.LEFT:
-            self.minHeight = 0
-            self.minWidth = s.rectRadius
-        elif self.subKind == ScopeCellElement.BOTTOM_LEFT:
-            self.minHeight = s.rectRadius
-            self.minWidth = s.rectRadius
-        elif self.subKind == ScopeCellElement.DECLARATION:
-            rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
-                                                   self.__getHeaderText() )
-            self.minHeight = rect.height() + 2 * s.vHeaderPadding
-            self.minWidth = rect.width() + 2 * s.vHeaderPadding
-        elif self.subKind == ScopeCellElement.SIDE_COMMENT:
-            raise Exception( "Decorator side comment has not been implemented yet" )
-        elif self.subKind == ScopeCellElement.DOCSTRING:
-            raise Exception( "Decorators may not have a docstring" )
-        elif self.subKind == ScopeCellElement.TOP:
-            self.minHeight = s.rectRadius
-            self.minWidth = 0
-        elif self.subKind == ScopeCellElement.BOTTOM:
-            self.minHeight = s.rectRadius
-            self.minWidth = 0
-        else:
-            raise Exception( "Unrecognized decorator scope element: " +
-                             str( self.subKind ) )
+        self._render()
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
 
     def draw( self, scene, baseX, baseY ):
+        self.baseX = baseX
+        self.baseY = baseY
+        self._draw( scene, baseX, baseY )
+        return
         if self.subKind == ScopeCellElement.UNKNOWN:
             raise Exception( "Unknown decorator scope element" )
 
-        self.baseX = baseX
-        self.baseY = baseY
-        s = self.canvas.settings
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            # Draw the scope rounded rectangle when we see the top left corner
-            self.setRect( baseX, baseY, self.canvas.width, self.canvas.height )
-            self.setToolTip( self.getCanvasTooltip() )
-            scene.addItem( self )
-            self.canvas.scopeRectangle = self
-        elif self.subKind == ScopeCellElement.DECLARATION:
-            self.setRect( baseX, baseY, self.width, self.height )
-            scene.addItem( self )
-        elif self.subKind == ScopeCellElement.DOCSTRING:
-            self.setRect( baseX, baseY, self.width, self.height )
-            scene.addItem( self )
-        return
-
     def paint( self, painter, option, widget ):
-        " Draws the function scope element "
-        s = self.canvas.settings
-
+        " Draws the decorator scope element "
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            brush = QBrush( s.decorScopeBGColor )
+            brush = QBrush( self.canvas.settings.decorScopeBGColor )
             painter.setBrush( brush )
-            pen = QPen( s.lineColor )
-            pen.setWidth( s.lineWidth )
-            painter.setPen( pen )
-            painter.drawRoundedRect( self.baseX, self.baseY, self.canvas.width, self.canvas.height,
-                                     s.rectRadius, s.rectRadius )
-        elif self.subKind == ScopeCellElement.DECLARATION:
-            pen = QPen( s.boxFGColor )
-            painter.setFont( s.monoFont )
-            painter.setPen( pen )
-            painter.drawText( self.baseX + s.hHeaderPadding,
-                              self.baseY + s.vHeaderPadding,
-                              int( self.rect().width() ) - 2 * s.hHeaderPadding,
-                              int( self.rect().height() ) - 2 * s.vHeaderPadding,
-                              Qt.AlignLeft,
-                              self.__getHeaderText() )
-
-            pen = QPen( s.lineColor )
-            pen.setWidth( s.lineWidth )
-            painter.setPen( pen )
-            painter.drawLine( self.baseX - s.rectRadius, self.baseY + self.height,
-                              self.baseX - s.rectRadius + self.canvas.width,
-                              self.baseY + self.height )
-        elif self.subKind == ScopeCellElement.DOCSTRING:
-            pen = QPen( s.boxFGColor )
-            painter.setFont( s.monoFont )
-            painter.setPen( pen )
-            painter.drawText( self.baseX + s.hHeaderPadding,
-                              self.baseY + s.vHeaderPadding,
-                              int( self.rect().width() ) - 2 * s.hHeaderPadding,
-                              int( self.rect().height() ) - 2 * s.vHeaderPadding,
-                              Qt.AlignLeft,
-                              self.getDocstringText() )
-
-            pen = QPen( s.lineColor )
-            pen.setWidth( s.lineWidth )
-            painter.setPen( pen )
-            painter.drawLine( self.baseX - s.rectRadius, self.baseY + self.height,
-                              self.baseX - s.rectRadius + self.canvas.width,
-                              self.baseY + self.height )
+        self._paint( painter, option, widget )
         return
 
 
-class ElseScopeCell( ScopeCellElement ):
+class ElseScopeCell( ScopeCellElement, QGraphicsRectItem ):
     " Represents an else scope element "
 
-    def __init__( self, ref, kind ):
-        CellElement.__init__( self )
+    def __init__( self, ref, canvas, x, y, kind ):
+        ScopeCellElement.__init__( self, ref, canvas, x, y )
+        QGraphicsRectItem.__init__( self )
         self.kind = CellElement.ELSE_SCOPE
-        self.reference = ref
         self.subKind = kind
         return
 
-    def render( self, settings ):
-        raise Exception( "Not implemented yet" )
+    def _getSideComment( self ):
+        if self._sideComment is None:
+            self._sideComment = self.ref.sideComment.getDisplayValue()
+        return self._sideComment
 
-    def draw( self, rect, scene, settings ):
-        raise Exception( "Not implemented yet" )
+    def _getHeaderText( self ):
+        if self._headerText is None:
+            self._headerText = "else"
+        return self._headerText
 
+    def render( self ):
+        self._render()
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
+
+    def draw( self, scene, baseX, baseY ):
+        self.baseX = baseX
+        self.baseY = baseY
+        self._draw( scene, baseX, baseY )
+        return
+
+    def paint( self, painter, option, widget ):
+        " Draws the for-loop scope element "
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            brush = QBrush( self.canvas.settings.elseScopeBGColor )
+            painter.setBrush( brush )
+        self._paint( painter, option, widget )
+        return
 
 
 class ExceptScopeCell( ScopeCellElement ):
