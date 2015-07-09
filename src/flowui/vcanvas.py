@@ -275,6 +275,17 @@ class VirtualCanvas:
                 continue
 
             if item.kind == TRY_FRAGMENT:
+                def needCommentRow( item ):
+                    " Tells if a row for comments need to be reserved "
+                    if item.leadingComment:
+                        return True
+                    for exceptPart in item.exceptParts:
+                        if exceptPart.leadingComment:
+                            return True
+                    if item.finallyPart:
+                        if item.finallyPart.leadingComment:
+                            return True
+                    return False
                 self.__allocateScope( item, CellElement.TRY_SCOPE,
                                       vacantRow, column )
                 nextColumn = column + 1

@@ -329,6 +329,8 @@ __kindToString = {
     CellElement.WHILE_SCOPE:            "WHILE_SCOPE",
     CellElement.ELSE_SCOPE:             "ELSE_SCOPE",
     CellElement.WITH_SCOPE:             "WITH_SCOPE",
+    CellElement.EXCEPT_SCOPE:           "EXCEPT_SCOPE",
+    CellElement.FINALLY_SCOPE:          "FINALLY_SCOPE",
     CellElement.CODE_BLOCK:             "CODE_BLOCK",
     CellElement.BREAK:                  "BREAK",
     CellElement.CONTINUE:               "CONTINUE",
@@ -606,7 +608,7 @@ class ClassScopeCell( ScopeCellElement, QGraphicsRectItem ):
 
     def _getSideComment( self ):
         if self._sideComment is None:
-            # The comment may start not at the first line of the function
+            # The comment may start not at the first line of the class
             linesBefore = self.ref.sideComment.beginLine - \
                           self.ref.name.beginLine
             self._sideComment = '\n' * linesBefore + \
@@ -734,21 +736,45 @@ class WhileScopeCell( ScopeCellElement, QGraphicsRectItem ):
 
 
 
-class TryScopeCell( ScopeCellElement ):
+class TryScopeCell( ScopeCellElement, QGraphicsRectItem ):
     " Represents a try-except scope element "
 
-    def __init__( self, ref, kind ):
-        CellElement.__init__( self )
+    def __init__( self, ref, canvas, x, y, kind ):
+        ScopeCellElement.__init__( self, ref, canvas, x, y )
+        QGraphicsRectItem.__init__( self )
         self.kind = CellElement.TRY_SCOPE
-        self.reference = ref
         self.subKind = kind
         return
 
-    def render( self, settings ):
-        raise Exception( "Not implemented yet" )
+    def _getSideComment( self ):
+        if self._sideComment is None:
+            self._sideComment = self.ref.sideComment.getDisplayValue()
+        return self._sideComment
 
-    def draw( self, rect, scene, settings ):
-        raise Exception( "Not implemented yet" )
+    def _getHeaderText( self ):
+        if self._headerText is None:
+            self._headerText = "try"
+        return self._headerText
+
+    def render( self ):
+        self._render()
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
+
+    def draw( self, scene, baseX, baseY ):
+        self.baseX = baseX
+        self.baseY = baseY
+        self._draw( scene, baseX, baseY )
+        return
+
+    def paint( self, painter, option, widget ):
+        " Draws the for-loop scope element "
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            brush = QBrush( self.canvas.settings.tryScopeBGColor )
+            painter.setBrush( brush )
+        self._paint( painter, option, widget )
+        return
 
 
 
@@ -888,39 +914,95 @@ class ElseScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return
 
 
-class ExceptScopeCell( ScopeCellElement ):
+class ExceptScopeCell( ScopeCellElement, QGraphicsRectItem ):
     " Represents an except scope element "
 
-    def __init__( self, ref, kind ):
-        CellElement.__init__( self )
+    def __init__( self, ref, canvas, x, y, kind ):
+        ScopeCellElement.__init__( self, ref, canvas, x, y )
+        QGraphicsRectItem.__init__( self )
         self.kind = CellElement.EXCEPT_SCOPE
-        self.reference = ref
         self.subKind = kind
         return
 
-    def render( self, settings ):
-        raise Exception( "Not implemented yet" )
+    def _getSideComment( self ):
+        if self._sideComment is None:
+            # The comment may start not at the first line of the except
+            if self.ref.clause is None:
+                self._sideComment = self.ref.sideComment.getDisplayValue()
+            else:
+                linesBefore = self.ref.sideComment.beginLine - \
+                              self.ref.clause.beginLine
+                self._sideComment = '\n' * linesBefore + \
+                                    self.ref.sideComment.getDisplayValue()
+                lastLine = self.ref.clause.endLine
+                # The comment may stop before the end of the arguments list
+                linesAfter = lastLine - self.ref.sideComment.endLine
+                if linesAfter > 0:
+                    self._sideComment += '\n' * linesAfter
+        return self._sideComment
 
-    def draw( self, rect, scene, settings ):
-        raise Exception( "Not implemented yet" )
+    def render( self ):
+        self._render()
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
+
+    def draw( self, scene, baseX, baseY ):
+        self.baseX = baseX
+        self.baseY = baseY
+        self._draw( scene, baseX, baseY )
+        return
+
+    def paint( self, painter, option, widget ):
+        " Draws the class scope element "
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            brush = QBrush( self.canvas.settings.exceptScopeBGColor )
+            painter.setBrush( brush )
+        self._paint( painter, option, widget )
+        return
 
 
-
-class FinallyScopeCell( ScopeCellElement ):
+class FinallyScopeCell( ScopeCellElement, QGraphicsRectItem ):
     " Represents a finally scope element "
 
-    def __init__( self, ref, kind ):
-        CellElement.__init__( self )
+    def __init__( self, ref, canvas, x, y, kind ):
+        ScopeCellElement.__init__( self, ref, canvas, x, y )
+        QGraphicsRectItem.__init__( self )
         self.kind = CellElement.FINALLY_SCOPE
-        self.reference = ref
         self.subKind = kind
         return
 
-    def render( self, settings ):
-        raise Exception( "Not implemented yet" )
+    def _getSideComment( self ):
+        if self._sideComment is None:
+            self._sideComment = self.ref.sideComment.getDisplayValue()
+        return self._sideComment
 
-    def draw( self, rect, scene, settings ):
-        raise Exception( "Not implemented yet" )
+    def _getHeaderText( self ):
+        if self._headerText is None:
+            self._headerText = "finally"
+        return self._headerText
+
+    def render( self ):
+        self._render()
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
+
+    def draw( self, scene, baseX, baseY ):
+        self.baseX = baseX
+        self.baseY = baseY
+        self._draw( scene, baseX, baseY )
+        return
+
+    def paint( self, painter, option, widget ):
+        " Draws the for-loop scope element "
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            brush = QBrush( self.canvas.settings.finallyScopeBGColor )
+            painter.setBrush( brush )
+        self._paint( painter, option, widget )
+        return
+
+
 
 
 
