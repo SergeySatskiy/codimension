@@ -1454,17 +1454,31 @@ int  Decorator::setattr( const char *        attrName,
 
 Py::Object Decorator::getDisplayValue( const Py::Tuple &  args )
 {
-    Fragment *      bodyFragment( static_cast<Fragment *>(body.ptr()) );
+    Fragment *      nameFragment( static_cast<Fragment *>(name.ptr()) );
+    Fragment *      lastFragment( nameFragment );
+    if ( ! arguments.isNone() )
+        lastFragment = static_cast<Fragment *>(arguments.ptr());
+
+    // The required fragment is from the name till the ')' or just the name
+    FragmentBase    f;
+    f.parent = nameFragment->parent;
+    f.begin = nameFragment->begin;
+    f.end = lastFragment->end;
+    f.beginLine = nameFragment->beginLine;
+    f.beginPos = nameFragment->beginPos;
+    f.endLine = lastFragment->endLine;
+    f.endPos = lastFragment->endPos;
+
     std::string     content;
     switch ( args.length() )
     {
         case 0:
-            content = bodyFragment->getContent( NULL );
+            content = f.getContent( NULL );
             break;
         case 1:
             {
                 std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
-                content = bodyFragment->getContent( buf.c_str() );
+                content = f.getContent( buf.c_str() );
                 break;
             }
         default:
@@ -1473,8 +1487,7 @@ Py::Object Decorator::getDisplayValue( const Py::Tuple &  args )
 
     // The content may be shifted and may have side comments.
     // The common shift should be shaved as well the comments
-    return Py::String( alignBlockAndStripSideComments( content,
-                                                       bodyFragment ) );
+    return Py::String( alignBlockAndStripSideComments( content, &f ) );
 }
 
 // --- End of Decorator definition ---
