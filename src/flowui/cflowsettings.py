@@ -50,6 +50,8 @@ class CFlowSettings:
 
         self.monoFont = buildFont( "Ubuntu mono,12,-1,5,50,0,0,0,0,0" )
         self.monoFontMetrics = QFontMetrics( self.monoFont, paintDevice )
+        self.badgeFont = buildFont( "Ubuntu mono,9,-1,5,50,0,0,0,0,0" )
+        self.badgeFontMetrics = QFontMetrics( self.badgeFont, paintDevice )
 
         self.hCellPadding = 15      # in pixels (left and right)
         self.vCellPadding = 10      # in pixels (top and bottom)
@@ -69,10 +71,13 @@ class CFlowSettings:
 
         self.lineWidth = 2          # used for connections and box edges
         self.lineColor = QColor( 0, 0, 0, 255 )
+        self.badgeLineWidth = 1
+        self.badgeLineColor = QColor( 0, 0, 0, 255 )
 
         # Code blocks and other statements
         self.boxBGColor = QColor( 216, 216, 207, 255 )
         self.boxFGColor = QColor( 0, 0, 0, 255 )
+        self.badgeBGColor = QColor( 255, 255, 0, 255 )
 
         # Comments: leading, side & independent
         self.commentBGColor = QColor( 230, 230, 16, 255 )
@@ -97,6 +102,13 @@ class CFlowSettings:
         self.monoFont = font
         self.monoFontMetrics = QFontMetrics( self.monoFont,
                                              self.__paintDevice )
+        return
+
+    def setBadgeFont( self, font ):
+        " Sets the badge font "
+        self.badgeFont = font
+        self.badgeFontMetrics = QFontMetrics( self.badgeFont,
+                                              self.__paintDevice )
         return
 
 def getDefaultCflowSettings( paintDevice ):
