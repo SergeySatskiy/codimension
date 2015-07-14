@@ -3378,7 +3378,7 @@ Py::Object Try::getattr( const char *  attrName )
         return retval;
     if ( strcmp( attrName, "exceptParts" ) == 0 )
         return exceptParts;
-    if ( strcmp( attrName, "elseParts" ) == 0 )
+    if ( strcmp( attrName, "elsePart" ) == 0 )
         return elsePart;
     if ( strcmp( attrName, "finallyPart" ) == 0 )
         return finallyPart;
