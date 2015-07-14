@@ -140,6 +140,8 @@ class ScopeCellElement( CellElement ):
         self._headerRect = None
         self._sideComment = None
         self._sideCommentRect = None
+        self._badgeRect = None
+        self._badgeText = None
         return
 
     def _getHeaderText( self ):
@@ -152,12 +154,15 @@ class ScopeCellElement( CellElement ):
             self.docstringText = self.ref.docstring.getDisplayValue()
         return self.docstringText
 
-    def _render( self ):
+    def _render( self, badgeText = None ):
         " Provides rendering for the scope elements "
         s = self.canvas.settings
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self.minHeight = s.rectRadius
             self.minWidth = s.rectRadius
+            if badgeText:
+                self._badgeText = badgeText
+                self._badgeRect = self.getBadgeBoundingRect( badgeText )
         elif self.subKind == ScopeCellElement.LEFT:
             self.minHeight = 0
             self.minWidth = s.rectRadius
@@ -181,6 +186,7 @@ class ScopeCellElement( CellElement ):
                     self.minHeight += 2 * s.vTextPadding
                     self.minWidth += s.hCellPadding
                 else:
+                    self.minHeight += s.vTextPadding
                     self.minWidth += s.hHeaderPadding
             else:
                 self.minWidth += s.hHeaderPadding
@@ -208,15 +214,18 @@ class ScopeCellElement( CellElement ):
         s = self.canvas.settings
         if self.subKind == ScopeCellElement.TOP_LEFT:
             # Draw the scope rounded rectangle when we see the top left corner
-            self.setRect( baseX, baseY, self.canvas.width, self.canvas.height )
+            vAdjust = 0
+            if self._badgeRect:
+                vAdjust = self._badgeRect.height() / 2 + 1
+            self.setRect( baseX, baseY - vAdjust,
+                          self.canvas.width, self.canvas.height + vAdjust )
             self.setToolTip( self.getCanvasTooltip() )
             scene.addItem( self )
             self.canvas.scopeRectangle = self
         elif self.subKind == ScopeCellElement.DECLARATION:
             yShift = 0
             if hasattr( self.ref, "sideComment" ):
-                if self.ref.sideComment:
-                    yShift = s.vTextPadding
+                yShift = s.vTextPadding
             self.setRect( baseX - s.rectRadius,
                           baseY - s.rectRadius + s.vHeaderPadding + yShift,
                           self.canvas.width,
@@ -249,14 +258,15 @@ class ScopeCellElement( CellElement ):
             painter.drawRoundedRect( self.baseX, self.baseY,
                                      self.canvas.width, self.canvas.height,
                                      s.rectRadius, s.rectRadius )
+            if self._badgeText:
+                self._paintBadge( self._badgeText, painter, option, widget )
         elif self.subKind == ScopeCellElement.DECLARATION:
             pen = QPen( s.boxFGColor )
             painter.setFont( s.monoFont )
             painter.setPen( pen )
             yShift = 0
             if hasattr( self.ref, "sideComment" ):
-                if self.ref.sideComment:
-                    yShift = s.vTextPadding
+                yShift = s.vTextPadding
             canvasLeft = self.baseX - s.rectRadius
             canvasTop = self.baseY - s.rectRadius
             painter.drawText( canvasLeft + s.hHeaderPadding,
@@ -320,9 +330,8 @@ class ScopeCellElement( CellElement ):
     def _paintBadge( self, txt, painter, option, widget ):
         " Paints a badge for a scope "
         s = self.canvas.settings
-        boundingRect = self.getBadgeBoundingRect( txt )
-        height = boundingRect.height() + 2
-        width = boundingRect.width() + 4
+        height = self._badgeRect.height() + 2
+        width = self._badgeRect.width() + 4
         pen = QPen( s.badgeLineColor )
         pen.setWidth( s.badgeLineWidth )
         painter.setPen( pen )
@@ -334,7 +343,7 @@ class ScopeCellElement( CellElement ):
         painter.drawText( self.baseX + s.rectRadius + 2,
                           self.baseY  - height / 2 + 1,
                           width - 2, height - 2,
-                          Qt.AlignLeft, txt )
+                          Qt.AlignLeft, self._badgeText )
         return
 
 
@@ -604,7 +613,7 @@ class FunctionScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._sideComment
 
     def render( self ):
-        self._render()
+        self._render( "def" )
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -621,8 +630,6 @@ class FunctionScopeCell( ScopeCellElement, QGraphicsRectItem ):
             brush = QBrush( self.canvas.settings.funcScopeBGColor )
             painter.setBrush( brush )
         self._paint( painter, option, widget )
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._paintBadge( "def", painter, option, widget )
         return
 
 
@@ -654,7 +661,7 @@ class ClassScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._sideComment
 
     def render( self ):
-        self._render()
+        self._render( "class" )
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -671,8 +678,6 @@ class ClassScopeCell( ScopeCellElement, QGraphicsRectItem ):
             brush = QBrush( self.canvas.settings.classScopeBGColor )
             painter.setBrush( brush )
         self._paint( painter, option, widget )
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._paintBadge( "class", painter, option, widget )
         return
 
 
@@ -701,7 +706,7 @@ class ForScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._sideComment
 
     def render( self ):
-        self._render()
+        self._render( "for" )
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -718,8 +723,6 @@ class ForScopeCell( ScopeCellElement, QGraphicsRectItem ):
             brush = QBrush( self.canvas.settings.forScopeBGColor )
             painter.setBrush( brush )
         self._paint( painter, option, widget )
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._paintBadge( "for", painter, option, widget )
         return
 
 
@@ -749,7 +752,7 @@ class WhileScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._sideComment
 
     def render( self ):
-        self._render()
+        self._render( "while" )
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -761,13 +764,11 @@ class WhileScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return
 
     def paint( self, painter, option, widget ):
-        " Draws the for-loop scope element "
+        " Draws the while-loop scope element "
         if self.subKind == ScopeCellElement.TOP_LEFT:
             brush = QBrush( self.canvas.settings.whileScopeBGColor )
             painter.setBrush( brush )
         self._paint( painter, option, widget )
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._paintBadge( "while", painter, option, widget )
         return
 
 
@@ -793,7 +794,7 @@ class TryScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._headerText
 
     def render( self ):
-        self._render()
+        self._render( "try" )
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -810,8 +811,6 @@ class TryScopeCell( ScopeCellElement, QGraphicsRectItem ):
             brush = QBrush( self.canvas.settings.tryScopeBGColor )
             painter.setBrush( brush )
         self._paint( painter, option, widget )
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._paintBadge( "try", painter, option, widget )
         return
 
 
@@ -841,7 +840,7 @@ class WithScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._sideComment
 
     def render( self ):
-        self._render()
+        self._render( "with" )
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -858,8 +857,6 @@ class WithScopeCell( ScopeCellElement, QGraphicsRectItem ):
             brush = QBrush( self.canvas.settings.withScopeBGColor )
             painter.setBrush( brush )
         self._paint( painter, option, widget )
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._paintBadge( "with", painter, option, widget )
         return
 
 
@@ -891,7 +888,7 @@ class DecoratorScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._sideComment
 
     def render( self ):
-        self._render()
+        self._render( "@" )
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -910,8 +907,6 @@ class DecoratorScopeCell( ScopeCellElement, QGraphicsRectItem ):
             brush = QBrush( self.canvas.settings.decorScopeBGColor )
             painter.setBrush( brush )
         self._paint( painter, option, widget )
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._paintBadge( "@", painter, option, widget )
         return
 
 
@@ -936,7 +931,7 @@ class ElseScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._headerText
 
     def render( self ):
-        self._render()
+        self._render( "else" )
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -953,8 +948,6 @@ class ElseScopeCell( ScopeCellElement, QGraphicsRectItem ):
             brush = QBrush( self.canvas.settings.elseScopeBGColor )
             painter.setBrush( brush )
         self._paint( painter, option, widget )
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._paintBadge( "else", painter, option, widget )
         return
 
 
@@ -986,7 +979,7 @@ class ExceptScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._sideComment
 
     def render( self ):
-        self._render()
+        self._render( "except" )
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1003,8 +996,6 @@ class ExceptScopeCell( ScopeCellElement, QGraphicsRectItem ):
             brush = QBrush( self.canvas.settings.exceptScopeBGColor )
             painter.setBrush( brush )
         self._paint( painter, option, widget )
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._paintBadge( "except", painter, option, widget )
         return
 
 
@@ -1029,7 +1020,7 @@ class FinallyScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._headerText
 
     def render( self ):
-        self._render()
+        self._render( "finally" )
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1046,8 +1037,6 @@ class FinallyScopeCell( ScopeCellElement, QGraphicsRectItem ):
             brush = QBrush( self.canvas.settings.finallyScopeBGColor )
             painter.setBrush( brush )
         self._paint( painter, option, widget )
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._paintBadge( "finally", painter, option, widget )
         return
 
 
