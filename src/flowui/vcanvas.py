@@ -282,22 +282,41 @@ class VirtualCanvas:
                     for exceptPart in item.exceptParts:
                         if exceptPart.leadingComment:
                             return True
+                    if item.elsePart:
+                        if item.elsePart.leadingComment:
+                            return True
                     if item.finallyPart:
                         if item.finallyPart.leadingComment:
                             return True
                     return False
+
+                if needCommentRow( item ):
+                    commentRow = vacantRow
+                    vacantRow += 1
+                    if item.leadingComment:
+                        self.__allocateAndSet( commentRow, column + 1,
+                                               LeadingCommentCell( item, self, column + 1, commentRow ) )
                 self.__allocateScope( item, CellElement.TRY_SCOPE,
                                       vacantRow, column )
                 nextColumn = column + 1
                 for exceptPart in item.exceptParts:
+                    if exceptPart.leadingComment:
+                        self.__allocateAndSet( commentRow, nextColumn + 1,
+                                               LeadingCommentCell( exceptPart, self, nextColumn + 1, commentRow ) )
                     self.__allocateScope( exceptPart, CellElement.EXCEPT_SCOPE,
                                           vacantRow, nextColumn )
                     nextColumn += 1
                 if item.elsePart:
+                    if item.elsePart.leadingComment:
+                        self.__allocateAndSet( commentRow, nextColumn + 1,
+                                               LeadingCommentCell( item.elsePart, self, nextColumn + 1, commentRow ) )
                     self.__allocateScope( item.elsePart, CellElement.ELSE_SCOPE,
                                           vacantRow, nextColumn )
                     nextColumn += 1
                 if item.finallyPart:
+                    if item.finallyPart.leadingComment:
+                        self.__allocateAndSet( commentRow, nextColumn + 1,
+                                               LeadingCommentCell( item.finallyPart, self, nextColumn + 1, commentRow ) )
                     self.__allocateScope( item.finallyPart, CellElement.FINALLY_SCOPE,
                                           vacantRow, nextColumn )
                 vacantRow += 1

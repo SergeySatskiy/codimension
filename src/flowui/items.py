@@ -22,6 +22,7 @@
 " Various items used to represent a control flow on a virtual canvas "
 
 from sys import maxint
+from math import sqrt
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import ( QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
                           QGraphicsTextItem, QGraphicsItem, QPainterPath,
@@ -366,6 +367,7 @@ __kindToString = {
     CellElement.WHILE_SCOPE:            "WHILE_SCOPE",
     CellElement.ELSE_SCOPE:             "ELSE_SCOPE",
     CellElement.WITH_SCOPE:             "WITH_SCOPE",
+    CellElement.TRY_SCOPE:              "TRY_SCOPE",
     CellElement.EXCEPT_SCOPE:           "EXCEPT_SCOPE",
     CellElement.FINALLY_SCOPE:          "FINALLY_SCOPE",
     CellElement.CODE_BLOCK:             "CODE_BLOCK",
@@ -1043,21 +1045,66 @@ class FinallyScopeCell( ScopeCellElement, QGraphicsRectItem ):
 
 
 
-class BreakCell( CellElement ):
+class BreakCell( CellElement, QGraphicsRectItem ):
     " Represents a single break statement "
 
-    def __init__( self, ref ):
-        CellElement.__init__( self )
+    def __init__( self, ref, canvas, x, y ):
+        CellElement.__init__( self, ref, canvas, x, y )
+        QGraphicsRectItem.__init__( self )
         self.kind = CellElement.BREAK
-        self.reference = ref
+        self.__textRect = None
+        self.__radius = None
         return
 
-    def render( self, settings ):
-        raise Exception( "Not implemented yet" )
+    def render( self ):
+        s = self.canvas.settings
+        self.__textRect = self.getBoundingRect( "b" )
+        self.__radius = sqrt( self.__textRect.width() ** 2 +
+                              self.__textRect.height() ** 2 )
+        self.minHeight = 2 * (self.__radius + s.vCellPadding)
+        self.minWidth = 2 * (self.__radius + s.hCellPadding)
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
 
-    def draw( self, rect, scene, settings ):
-        raise Exception( "Not implemented yet" )
+    def draw( self, scene, baseX, baseY ):
+        self.baseX = baseX
+        self.baseY = baseY
+        s = self.canvas.settings
+        self.setRect( baseX, baseY, self.width, self.height )
+        self.setToolTip( self.getTooltip() )
+        scene.addItem( self )
+        return
 
+    def paint( self, painter, option, widget ):
+        " Draws the break statement "
+        s = self.canvas.settings
+
+        # Set the colors and line width
+        pen = QPen( s.lineColor )
+        pen.setWidth( s.lineWidth )
+        brush = QBrush( s.breakBGColor )
+
+        # Draw the connector as a single line under the rectangle
+        painter.setPen( pen )
+        painter.setBrush( brush )
+        painter.drawLine( self.baseX + self.width / 2,
+                          self.baseY,
+                          self.baseX + self.width / 2,
+                          self.baseY + self.height / 2 )
+        painter.drawEllipse( self.baseX + s.hCellPadding,
+                             self.baseY + s.vCellPadding,
+                             self.__radius, self.__radius )
+
+        # Draw the text in the rectangle
+        pen = QPen( s.boxFGColor )
+        painter.setFont( s.monoFont )
+        painter.setPen( pen )
+        painter.drawText( self.baseX + s.hCellPadding + (self.width - self.__textRect.width()) / 2,
+                          self.baseY + s.vCellPadding + (self.height - self.__textRect.height()) / 2,
+                          self.__textRect.width(), self.__textRect.height(),
+                          Qt.AlignLeft, "b" )
+        return
 
 
 class ContinueCell( CellElement ):
