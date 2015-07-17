@@ -1059,8 +1059,8 @@ class BreakCell( CellElement, QGraphicsRectItem ):
     def render( self ):
         s = self.canvas.settings
         self.__textRect = self.getBoundingRect( "b" )
-        self.__radius = sqrt( self.__textRect.width() ** 2 +
-                              self.__textRect.height() ** 2 )
+        self.__radius = int( sqrt( self.__textRect.width() ** 2 +
+                                   self.__textRect.height() ** 2 ) / 2 ) + 1
         self.minHeight = 2 * (self.__radius + s.vCellPadding)
         self.minWidth = 2 * (self.__radius + s.hCellPadding)
         self.height = self.minHeight
@@ -1072,7 +1072,7 @@ class BreakCell( CellElement, QGraphicsRectItem ):
         self.baseY = baseY
         s = self.canvas.settings
         self.setRect( baseX, baseY, self.width, self.height )
-        self.setToolTip( self.getTooltip() )
+        self.setToolTip( self.getTooltip() + " radius: " + str( self.__radius ) )
         scene.addItem( self )
         return
 
@@ -1092,69 +1092,251 @@ class BreakCell( CellElement, QGraphicsRectItem ):
                           self.baseY,
                           self.baseX + self.width / 2,
                           self.baseY + self.height / 2 )
-        painter.drawEllipse( self.baseX + s.hCellPadding,
-                             self.baseY + s.vCellPadding,
-                             self.__radius, self.__radius )
+        painter.drawEllipse( self.baseX + self.width / 2 - self.__radius,
+                             self.baseY + self.height / 2 - self.__radius,
+                             self.__radius * 2, self.__radius * 2 )
 
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
-        painter.drawText( self.baseX + s.hCellPadding + (self.width - self.__textRect.width()) / 2,
-                          self.baseY + s.vCellPadding + (self.height - self.__textRect.height()) / 2,
+        painter.drawText( self.baseX + (self.width - self.__textRect.width()) / 2,
+                          self.baseY + (self.height - self.__textRect.height()) / 2,
                           self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft, "b" )
+                          Qt.AlignCenter, "b" )
         return
 
 
-class ContinueCell( CellElement ):
+class ContinueCell( CellElement, QGraphicsRectItem ):
     " Represents a single continue statement "
 
-    def __init__( self, ref ):
-        CellElement.__init__( self )
+    def __init__( self, ref, canvas, x, y ):
+        CellElement.__init__( self, ref, canvas, x, y )
+        QGraphicsRectItem.__init__( self )
         self.kind = CellElement.CONTINUE
-        self.reference = ref
+        self.__textRect = None
+        self.__radius = None
         return
 
-    def render( self, settings ):
-        raise Exception( "Not implemented yet" )
+    def render( self ):
+        s = self.canvas.settings
+        self.__textRect = self.getBoundingRect( "c" )
+        self.__radius = int( sqrt( self.__textRect.width() ** 2 +
+                                   self.__textRect.height() ** 2 ) / 2 ) + 1
+        self.minHeight = 2 * (self.__radius + s.vCellPadding)
+        self.minWidth = 2 * (self.__radius + s.hCellPadding)
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
 
-    def draw( self, rect, scene, settings ):
-        raise Exception( "Not implemented yet" )
+    def draw( self, scene, baseX, baseY ):
+        self.baseX = baseX
+        self.baseY = baseY
+        s = self.canvas.settings
+        self.setRect( baseX, baseY, self.width, self.height )
+        self.setToolTip( self.getTooltip() + " radius: " + str( self.__radius ) )
+        scene.addItem( self )
+        return
+
+    def paint( self, painter, option, widget ):
+        " Draws the break statement "
+        s = self.canvas.settings
+
+        # Set the colors and line width
+        pen = QPen( s.lineColor )
+        pen.setWidth( s.lineWidth )
+        brush = QBrush( s.continueBGColor )
+
+        # Draw the connector as a single line under the rectangle
+        painter.setPen( pen )
+        painter.setBrush( brush )
+        painter.drawLine( self.baseX + self.width / 2,
+                          self.baseY,
+                          self.baseX + self.width / 2,
+                          self.baseY + self.height / 2 )
+        painter.drawEllipse( self.baseX + self.width / 2 - self.__radius,
+                             self.baseY + self.height / 2 - self.__radius,
+                             self.__radius * 2, self.__radius * 2 )
+
+        # Draw the text in the rectangle
+        pen = QPen( s.boxFGColor )
+        painter.setFont( s.monoFont )
+        painter.setPen( pen )
+        painter.drawText( self.baseX + (self.width - self.__textRect.width()) / 2,
+                          self.baseY + (self.height - self.__textRect.height()) / 2,
+                          self.__textRect.width(), self.__textRect.height(),
+                          Qt.AlignCenter, "c" )
+        return
 
 
 
-class ReturnCell( CellElement ):
+class ReturnCell( CellElement, QGraphicsRectItem ):
     " Represents a single return statement "
 
-    def __init__( self, ref ):
-        CellElement.__init__( self )
+    def __init__( self, ref, canvas, x, y ):
+        CellElement.__init__( self, ref, canvas, x, y )
+        QGraphicsRectItem.__init__( self )
         self.kind = CellElement.RETURN
-        self.reference = ref
+        self.__text = None
+        self.__textRect = None
         return
 
-    def render( self, settings ):
-        raise Exception( "Not implemented yet" )
+    def __getText( self ):
+        if self.__text is None:
+            self.__text = self.ref.getDisplayValue()
+        return self.__text
 
-    def draw( self, rect, scene, settings ):
-        raise Exception( "Not implemented yet" )
+    def render( self ):
+        s = self.canvas.settings
+        self.__textRect = self.getBoundingRect( self.__getText() )
+
+        self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
+        self.minWidth = self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding)
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
+
+    def draw( self, scene, baseX, baseY ):
+        self.baseX = baseX
+        self.baseY = baseY
+        s = self.canvas.settings
+        self.setRect( baseX, baseY, self.width, self.height )
+        self.setToolTip( self.getTooltip() )
+        scene.addItem( self )
+        return
+
+    def paint( self, painter, option, widget ):
+        " Draws the code block "
+        s = self.canvas.settings
+
+        # Set the colors and line width
+        pen = QPen( s.lineColor )
+        pen.setWidth( s.lineWidth )
+        brush = QBrush( s.returnBGColor )
+
+        # Draw the connector as a single line under the rectangle
+        painter.setPen( pen )
+        painter.setBrush( brush )
+        painter.drawLine( self.baseX + self.width / 2,
+                          self.baseY,
+                          self.baseX + self.width / 2,
+                          self.baseY + self.height / 2 )
+        painter.drawRoundedRect( self.baseX + s.hCellPadding,
+                                 self.baseY + s.vCellPadding,
+                                 self.width - 2 * s.hCellPadding,
+                                 self.height - 2 * s.vCellPadding,
+                                 s.returnRectRadius, s.returnRectRadius )
+
+        # Draw the text in the rectangle
+        pen = QPen( s.boxFGColor )
+        painter.setFont( s.monoFont )
+        painter.setPen( pen )
+        painter.drawText( self.baseX + s.hCellPadding + (self.width - 2 * s.hCellPadding - self.__textRect.width()) / 2,
+                          self.baseY + s.vCellPadding + s.vTextPadding,
+                          self.__textRect.width(), self.__textRect.height(),
+                          Qt.AlignLeft, self.__getText() )
+        return
 
 
-
-class RaiseCell( CellElement ):
+class RaiseCell( CellElement, QGraphicsRectItem ):
     " Represents a single raise statement "
 
-    def __init__( self, ref ):
-        CellElement.__init__( self )
+    def __init__( self, ref, canvas, x, y ):
+        CellElement.__init__( self, ref, canvas, x, y )
+        QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.RAISE
-        self.reference = ref
+        self.__text = None
+        self.__arrowWidth = None
+        self.__arrowHeight = None
         return
 
-    def render( self, settings ):
-        raise Exception( "Not implemented yet" )
+    def __getText( self ):
+        if self.__text is None:
+            self.__text = self.ref.getDisplayValue()
+        return self.__text
 
-    def draw( self, rect, scene, settings ):
-        raise Exception( "Not implemented yet" )
+    def render( self ):
+        s = self.canvas.settings
+        rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
+                                               0, self.__getText() )
+
+        # for an arrow box
+        singleCharRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
+                                                         0, 'w' )
+        self.__arrowWidth = singleCharRect.width()
+        self.__arrowHeight = rect.height()
+
+        self.minHeight = rect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
+        self.minWidth = rect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding + \
+                        2 * s.returnRectRadius + self.__arrowWidth
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
+
+    def draw( self, scene, baseX, baseY ):
+        self.baseX = baseX
+        self.baseY = baseY
+        s = self.canvas.settings
+        self.setRect( baseX, baseY, self.width, self.height )
+        self.setToolTip( self.getTooltip() )
+        scene.addItem( self )
+        return
+
+    def paint( self, painter, option, widget ):
+        " Draws the code block "
+        s = self.canvas.settings
+
+        # Set the colors and line width
+        pen = QPen( s.lineColor )
+        pen.setWidth( s.lineWidth )
+        painter.setPen( pen )
+        brush = QBrush( s.boxBGColor )
+        painter.setBrush( brush )
+
+        # Draw the connector as a single line under the rectangle
+        painter.setPen( pen )
+        painter.drawLine( self.baseX + self.width / 2,
+                          self.baseY,
+                          self.baseX + self.width / 2,
+                          self.baseY + self.height / 2 )
+        painter.drawRoundedRect( self.baseX + s.hCellPadding,
+                                 self.baseY + s.vCellPadding,
+                                 self.width - 2 * s.hCellPadding,
+                                 self.height - 2 * s.vCellPadding,
+                                 s.returnRectRadius, s.returnRectRadius )
+        painter.drawLine( self.baseX + s.hCellPadding + s.returnRectRadius + self.__arrowWidth + s.hTextPadding,
+                          self.baseY + s.vCellPadding,
+                          self.baseX + s.hCellPadding + s.returnRectRadius + self.__arrowWidth + s.hTextPadding,
+                          self.baseY + self.height - s.vCellPadding )
+
+        # Draw the arrow
+        beginX = self.baseX + s.hCellPadding + s.returnRectRadius
+        beginY = self.baseY + self.height / 2 + self.__arrowHeight / 2
+        endX = beginX + self.__arrowWidth
+        endY = beginY - self.__arrowHeight
+        painter.drawLine( beginX, beginY, endX, endY )
+        painter.drawLine( self.baseX + s.hCellPadding + self.__arrowWidth - s.hTextPadding,
+                          self.baseY + self.height / 2,
+                          self.baseX + s.hCellPadding + self.__arrowWidth - s.hTextPadding - s.arrowLength,
+                          self.baseY + self.height / 2 - s.arrowWidth )
+        painter.drawLine( self.baseX + s.hCellPadding + self.__arrowWidth - s.hTextPadding,
+                          self.baseY + self.height / 2,
+                          self.baseX + s.hCellPadding + self.__arrowWidth - s.hTextPadding - s.arrowLength,
+                          self.baseY + self.height / 2 + s.arrowWidth )
+
+
+        # Draw the text in the rectangle
+        pen = QPen( s.boxFGColor )
+        painter.setFont( s.monoFont )
+        painter.setPen( pen )
+        painter.drawText( self.baseX + s.hCellPadding + self.__arrowWidth + s.hTextPadding,
+                          self.baseY + s.vCellPadding + s.vTextPadding,
+                          int( self.rect().width() ) - 2 * s.hTextPadding,
+                          int( self.rect().height() ) - 2 * s.vTextPadding,
+                          Qt.AlignLeft,
+                          self.__getText() )
+        return
+
 
 
 

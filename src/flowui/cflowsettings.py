@@ -64,6 +64,7 @@ class CFlowSettings:
         self.vSpacer = 10
 
         self.rectRadius = 10        # Rounded rectangles radius
+        self.returnRectRadius = 16  # Rounded rectangles radius
         self.arrowLength = 3        # Length of an arrow
         self.arrowWidth = 2         # One wing width
         self.ifWidth = 10           # One if wing width
@@ -97,6 +98,8 @@ class CFlowSettings:
         self.exceptScopeBGColor = QColor( 255, 255, 255, 255 )
         self.finallyScopeBGColor = QColor( 192, 192, 192, 255 )
         self.breakBGColor = QColor( 255, 0, 0, 255 )
+        self.continueBGColor = QColor( 0, 255, 0, 255 )
+        self.returnBGColor = QColor( 255, 255, 255, 255 )
         return
 
     def setMonoFont( self, font ):
