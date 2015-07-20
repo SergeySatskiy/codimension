@@ -26,7 +26,7 @@ from math import sqrt, atan2, pi, cos, sin
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import ( QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
                           QGraphicsTextItem, QGraphicsItem, QPainterPath,
-                          QColor )
+                          QColor, QPainter )
 
 
 class CellElement:
@@ -1315,18 +1315,17 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
         endY = beginY - self.__arrowHeight
         painter.drawLine( beginX, beginY, endX, endY )
 
-        arrowDegrees = 0.15      # Radian
-        arrowDegrees = 0.20      # Radian
+        angle = atan2( beginY - endY, beginX - endX )
+        cosy = cos( angle )
+        siny = sin( angle )
+        painter.setRenderHints( QPainter.Antialiasing )
+        painter.drawLine( endX, endY,
+                          endX + int( s.arrowLength * cosy - ( s.arrowLength / 2.0 * siny ) ),
+                          endY + int( s.arrowLength * siny + ( s.arrowLength / 2.0 * cosy ) ) )
+        painter.drawLine( endX, endY,
+                          endX + int( s.arrowLength * cosy + s.arrowLength / 2.0 * siny ),
+                          endY - int( s.arrowLength / 2.0 * cosy - s.arrowLength * siny ) )
 
-        angle = atan2( endY - beginY, endX - beginX ) + pi
-        angle = 0.785398163 + pi / 2.0
-        arrowX1 = endX + float( s.arrowLength ) * cos( angle - arrowDegrees )
-        arrowY1 = endY + float( s.arrowLength ) * sin( angle - arrowDegrees )
-        arrowX2 = endX + float( s.arrowLength ) * cos( angle + arrowDegrees )
-        arrowY2 = endY + float( s.arrowLength ) * sin( angle + arrowDegrees )
-
-        painter.drawLine( endX, endY, arrowX1, arrowY1 )
-        painter.drawLine( endX, endY, arrowX2, arrowY2 )
 
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
@@ -1334,8 +1333,8 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
         painter.setPen( pen )
         painter.drawText( endX + 2 * s.hTextPadding,
                           self.baseY + s.vCellPadding + s.vTextPadding,
-                          int( self.rect().width() ) - 2 * s.hTextPadding,
-                          int( self.rect().height() ) - 2 * s.vTextPadding,
+                          int( self.rect().width() ) - 2 * (s.hTextPadding + s.hCellPadding) - self.__arrowWidth,
+                          int( self.rect().height() ) - 2 * (s.vTextPadding + s.vCellPadding),
                           Qt.AlignLeft,
                           self.__getText() )
         return
@@ -1343,20 +1342,115 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
 
 
 
-class AssertCell( CellElement ):
+class AssertCell( CellElement, QGraphicsRectItem ):
     " Represents a single assert statement "
 
-    def __init__( self, ref ):
-        CellElement.__init__( self )
+    def __init__( self, ref, canvas, x, y ):
+        CellElement.__init__( self, ref, canvas, x, y )
+        QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.ASSERT
-        self.reference = ref
+        self.__text = None
+        self.__diamondDiagonal = None
         return
 
-    def render( self, settings ):
-        raise Exception( "Not implemented yet" )
+    def __getText( self ):
+        if self.__text is None:
+            self.__text = self.ref.getDisplayValue()
+        return self.__text
 
-    def draw( self, rect, scene, settings ):
-        raise Exception( "Not implemented yet" )
+    def render( self ):
+        s = self.canvas.settings
+        rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
+                                               0, self.__getText() )
+
+        # for an arrow box
+        singleCharRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
+                                                         0, "W" )
+        self.__diamondDiagonal = singleCharRect.height() + 2 * s.vTextPadding
+
+        self.minHeight = rect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
+        self.minWidth = rect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding + \
+                        self.__diamondDiagonal
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
+
+    def draw( self, scene, baseX, baseY ):
+        self.baseX = baseX
+        self.baseY = baseY
+        s = self.canvas.settings
+        self.setRect( baseX, baseY, self.width, self.height )
+        self.setToolTip( self.getTooltip() )
+        scene.addItem( self )
+        return
+
+    def paint( self, painter, option, widget ):
+        " Draws the code block "
+        s = self.canvas.settings
+
+        # Set the colors and line width
+        pen = QPen( s.lineColor )
+        pen.setWidth( s.lineWidth )
+        painter.setPen( pen )
+        brush = QBrush( s.boxBGColor )
+        painter.setBrush( brush )
+
+        # Draw the connector as a single line under the rectangle
+        painter.setPen( pen )
+        painter.drawLine( self.baseX + self.width / 2,
+                          self.baseY,
+                          self.baseX + self.width / 2,
+                          self.baseY + self.height )
+
+        dHalf = int( self.__diamondDiagonal / 2.0 )
+        dx1 = self.baseX + s.hCellPadding
+        dy1 = self.baseY + int( self.height / 2 )
+        dx2 = dx1 + dHalf
+        dy2 = dy1 - dHalf
+        dx3 = dx1 + 2 * dHalf
+        dy3 = dy1
+        dx4 = dx2
+        dy4 = dy2 + 2 * dHalf
+        painter.drawLine( dx1, dy1, dx2, dy2 )
+        painter.drawLine( dx2, dy2, dx3, dy3 )
+        painter.drawLine( dx3, dy3, dx4, dy4 )
+        painter.drawLine( dx4, dy4, dx1, dy1 )
+
+        painter.drawRect( dx3 + 1, self.baseY + s.vCellPadding,
+                          self.width - 2 * s.hCellPadding - self.__diamondDiagonal,
+                          self.height - 2 * s.vCellPadding )
+
+        # Draw the arrow
+#        beginX = self.baseX + s.hCellPadding + s.returnRectRadius
+#        beginY = self.baseY + self.height / 2 + self.__arrowHeight / 2
+#        endX = beginX + self.__arrowWidth
+#        endY = beginY - self.__arrowHeight
+#        painter.drawLine( beginX, beginY, endX, endY )
+
+#        angle = atan2( beginY - endY, beginX - endX )
+#        cosy = cos( angle )
+#        siny = sin( angle )
+#        painter.setRenderHints( QPainter.Antialiasing )
+#        painter.drawLine( endX, endY,
+#                          endX + int( s.arrowLength * cosy - ( s.arrowLength / 2.0 * siny ) ),
+#                          endY + int( s.arrowLength * siny + ( s.arrowLength / 2.0 * cosy ) ) )
+#        painter.drawLine( endX, endY,
+#                          endX + int( s.arrowLength * cosy + s.arrowLength / 2.0 * siny ),
+#                          endY - int( s.arrowLength / 2.0 * cosy - s.arrowLength * siny ) )
+
+
+        # Draw the text in the rectangle
+        pen = QPen( s.boxFGColor )
+        painter.setFont( s.monoFont )
+        painter.setPen( pen )
+        painter.drawText( dx3 + s.hTextPadding,
+                          self.baseY + s.vCellPadding + s.vTextPadding,
+                          int( self.rect().width() ) - 2 * (s.hTextPadding + s.hCellPadding) - self.__diamondDiagonal,
+                          int( self.rect().height() ) - 2 * (s.vTextPadding + s.vCellPadding),
+                          Qt.AlignLeft,
+                          self.__getText() )
+        return
+
 
 
 
@@ -1400,7 +1494,7 @@ class ImportCell( CellElement, QGraphicsRectItem ):
 
         # for an arrow box
         singleCharRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
-                                                         0, 'w' )
+                                                         0, 'ww' )
         self.__arrowWidth = singleCharRect.width() + 2 * s.hTextPadding
 
         self.minHeight = rect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
