@@ -22,7 +22,7 @@
 " Various items used to represent a control flow on a virtual canvas "
 
 from sys import maxint
-from math import sqrt
+from math import sqrt, atan2, pi, cos, sin
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import ( QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
                           QGraphicsTextItem, QGraphicsItem, QPainterPath,
@@ -1261,10 +1261,9 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
                                                0, self.__getText() )
 
         # for an arrow box
-        singleCharRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
-                                                         0, 'w' )
-        self.__arrowWidth = singleCharRect.width()
-        self.__arrowHeight = rect.height()
+        singleCharRect = s.monoFontMetrics.tightBoundingRect( 'W' )
+        self.__arrowHeight = singleCharRect.height()
+        self.__arrowWidth = self.__arrowHeight
 
         self.minHeight = rect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
         self.minWidth = rect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding + \
@@ -1315,21 +1314,25 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
         endX = beginX + self.__arrowWidth
         endY = beginY - self.__arrowHeight
         painter.drawLine( beginX, beginY, endX, endY )
-        painter.drawLine( self.baseX + s.hCellPadding + self.__arrowWidth - s.hTextPadding,
-                          self.baseY + self.height / 2,
-                          self.baseX + s.hCellPadding + self.__arrowWidth - s.hTextPadding - s.arrowLength,
-                          self.baseY + self.height / 2 - s.arrowWidth )
-        painter.drawLine( self.baseX + s.hCellPadding + self.__arrowWidth - s.hTextPadding,
-                          self.baseY + self.height / 2,
-                          self.baseX + s.hCellPadding + self.__arrowWidth - s.hTextPadding - s.arrowLength,
-                          self.baseY + self.height / 2 + s.arrowWidth )
 
+        arrowDegrees = 0.15      # Radian
+        arrowDegrees = 0.20      # Radian
+
+        angle = atan2( endY - beginY, endX - beginX ) + pi
+        angle = 0.785398163 + pi / 2.0
+        arrowX1 = endX + float( s.arrowLength ) * cos( angle - arrowDegrees )
+        arrowY1 = endY + float( s.arrowLength ) * sin( angle - arrowDegrees )
+        arrowX2 = endX + float( s.arrowLength ) * cos( angle + arrowDegrees )
+        arrowY2 = endY + float( s.arrowLength ) * sin( angle + arrowDegrees )
+
+        painter.drawLine( endX, endY, arrowX1, arrowY1 )
+        painter.drawLine( endX, endY, arrowX2, arrowY2 )
 
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
-        painter.drawText( self.baseX + s.hCellPadding + self.__arrowWidth + s.hTextPadding,
+        painter.drawText( endX + 2 * s.hTextPadding,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           int( self.rect().width() ) - 2 * s.hTextPadding,
                           int( self.rect().height() ) - 2 * s.vTextPadding,
