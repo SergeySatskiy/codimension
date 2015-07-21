@@ -81,6 +81,10 @@ class CellElement:
         # Filled when draw is called
         self.baseX = None
         self.baseY = None
+
+        # Badge painting support
+        self._badgeRect = None
+        self._badgeText = None
         return
 
     def __str__( self ):
@@ -118,6 +122,31 @@ class CellElement:
         return "Size: " + str( self.canvas.width ) + "x" + str( self.canvas.height ) + \
                " (" + str( self.canvas.minWidth ) + "x" + str( self.canvas.minHeight ) + ")"
 
+    def _paintBadge( self, painter, option, widget, startX = None,
+                                                    startY = None ):
+        " Paints a badge for a scope "
+        s = self.canvas.settings
+        height = self._badgeRect.height() + 2
+        width = self._badgeRect.width() + 4
+        pen = QPen( s.badgeLineColor )
+        pen.setWidth( s.badgeLineWidth )
+        painter.setPen( pen )
+        brush = QBrush( s.badgeBGColor )
+        painter.setBrush( brush )
+
+        if startX is None:
+            startX = self.baseX + s.rectRadius
+        if startY is None:
+            startY = self.baseY - height / 2
+        painter.drawRoundedRect( startX, startY,
+                                 width, height, 2, 2 )
+        painter.setFont( s.badgeFont )
+        painter.drawText( startX + 2, startY + 1,
+                          width - 2, height - 2,
+                          Qt.AlignLeft, self._badgeText )
+        return
+
+
 
 
 class ScopeCellElement( CellElement ):
@@ -141,8 +170,6 @@ class ScopeCellElement( CellElement ):
         self._headerRect = None
         self._sideComment = None
         self._sideCommentRect = None
-        self._badgeRect = None
-        self._badgeText = None
         return
 
     def _getHeaderText( self ):
@@ -260,7 +287,7 @@ class ScopeCellElement( CellElement ):
                                      self.canvas.width, self.canvas.height,
                                      s.rectRadius, s.rectRadius )
             if self._badgeText:
-                self._paintBadge( self._badgeText, painter, option, widget )
+                self._paintBadge( painter, option, widget )
         elif self.subKind == ScopeCellElement.DECLARATION:
             pen = QPen( s.boxFGColor )
             painter.setFont( s.monoFont )
@@ -327,26 +354,6 @@ class ScopeCellElement( CellElement ):
                               canvasLeft + self.canvas.width,
                               self.baseY + self.height )
         return
-
-    def _paintBadge( self, txt, painter, option, widget ):
-        " Paints a badge for a scope "
-        s = self.canvas.settings
-        height = self._badgeRect.height() + 2
-        width = self._badgeRect.width() + 4
-        pen = QPen( s.badgeLineColor )
-        pen.setWidth( s.badgeLineWidth )
-        painter.setPen( pen )
-        brush = QBrush( s.badgeBGColor )
-        painter.setBrush( brush )
-        painter.drawRoundedRect( self.baseX + s.rectRadius, self.baseY - height / 2,
-                                 width, height, 2, 2 )
-        painter.setFont( s.badgeFont )
-        painter.drawText( self.baseX + s.rectRadius + 2,
-                          self.baseY  - height / 2 + 1,
-                          width - 2, height - 2,
-                          Qt.AlignLeft, self._badgeText )
-        return
-
 
 
     def __str__( self ):
@@ -1649,6 +1656,13 @@ class IfCell( CellElement, QGraphicsRectItem ):
                           int( self.rect().height() ) - 2 * s.vTextPadding,
                           Qt.AlignLeft,
                           self.__getText() )
+
+        # Draw the 'n' badge
+        self._badgeText = 'N'
+        self._badgeRect = self.getBadgeBoundingRect( self._badgeText )
+        self._paintBadge( painter, option, widget,
+                          self.baseX + self.width - self._badgeRect.width() - 7,
+                          self.baseY + self.height / 2 - self._badgeRect.height() - 5 )
         return
 
 
