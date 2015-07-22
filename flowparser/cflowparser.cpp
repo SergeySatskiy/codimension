@@ -1402,25 +1402,35 @@ processImport( Context *  context,
                 if ( strcmp( fromNode->n_str, "sys" ) == 0 )
                 {
                     node *  importAsNames = findChildOfType( tree, import_as_names );
-                    for ( int  k = 0; k < importAsNames->n_nchildren; ++k )
+                    if ( importAsNames != NULL )
                     {
-                        node *  child = &(importAsNames->n_child[ k ]);
-                        if ( child->n_type == import_as_name )
+                        for ( int  k = 0; k < importAsNames->n_nchildren; ++k )
                         {
-                            node *  nameNode = &(child->n_child[ 0 ]);
-                            if ( strcmp( nameNode->n_str, "exit" ) == 0 )
+                            node *  child = &(importAsNames->n_child[ k ]);
+                            if ( child->n_type == import_as_name )
                             {
-                                if ( child->n_nchildren == 1 )
+                                node *  nameNode = &(child->n_child[ 0 ]);
+                                if ( strcmp( nameNode->n_str, "exit" ) == 0 )
                                 {
-                                    context->sysExit.insert( "exit" );
-                                }
-                                else if ( child->n_nchildren == 3 )
-                                {
-                                    node *  asChild = &(child->n_child[ 2 ]);
-                                    context->sysExit.insert( asChild->n_str );
+                                    if ( child->n_nchildren == 1 )
+                                    {
+                                        context->sysExit.insert( "exit" );
+                                    }
+                                    else if ( child->n_nchildren == 3 )
+                                    {
+                                        node *  asChild = &(child->n_child[ 2 ]);
+                                        context->sysExit.insert( asChild->n_str );
+                                    }
                                 }
                             }
                         }
+                    }
+                    else
+                    {
+                        // It could be * imported
+                        node *  starImported = findChildOfType( tree, STAR );
+                        if ( starImported != NULL )
+                            context->sysExit.insert( "exit" );
                     }
                 }
             }
