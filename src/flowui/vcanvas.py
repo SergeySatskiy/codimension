@@ -396,6 +396,20 @@ class VirtualCanvas:
                         openEnd = newOpenEnd
                     else:
                         # This is the else which is always the last
+                        if elifBranch.leadingComment:
+                            self.__allocateAndSet( openEnd[ 0 ] - 2, openEnd[ 1 ] + 1,
+                                                   LeadingCommentCell( elifBranch, self, openEnd[ 1 ] + 1, openEnd[ 0 ] - 2 ) )
+                        if elifBranch.sideComment:
+                            # Draw it as an independent comment
+                            self.__allocateCell( openEnd[ 0 ], openEnd[ 1 ] + 1 )
+                            self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.NORTH,
+                                                                                           ConnectorCell.SOUTH) ],
+                                                                                         self, openEnd[ 1 ],
+                                                                                         openEnd[ 0 ] )
+                            self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] + 1 ] = IndependentCommentCell( elifBranch.sideComment,
+                                                                                                     self, openEnd[ 1 ] + 1, openEnd[ 0 ] )
+                            openEnd[ 0 ] += 1
+
                         branchLayout = VirtualCanvas( self, None, None, None )
                         branchLayout.layoutSuite( 0, elifBranch.suite, CellElement.NO_SCOPE, None, 0 )
                         branchWidth, branchHeight = self.__copyLayout( branchLayout, openEnd[ 0 ], openEnd[ 1 ] )

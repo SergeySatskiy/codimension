@@ -123,7 +123,8 @@ class CellElement:
                " (" + str( self.canvas.minWidth ) + "x" + str( self.canvas.minHeight ) + ")"
 
     def _paintBadge( self, painter, option, widget, startX = None,
-                                                    startY = None ):
+                                                    startY = None,
+                                                    needRect = True ):
         " Paints a badge for a scope "
         s = self.canvas.settings
         height = self._badgeRect.height() + 2
@@ -131,15 +132,16 @@ class CellElement:
         pen = QPen( s.badgeLineColor )
         pen.setWidth( s.badgeLineWidth )
         painter.setPen( pen )
-        brush = QBrush( s.badgeBGColor )
-        painter.setBrush( brush )
 
         if startX is None:
             startX = self.baseX + s.rectRadius
         if startY is None:
             startY = self.baseY - height / 2
-        painter.drawRoundedRect( startX, startY,
-                                 width, height, 2, 2 )
+        if needRect:
+            brush = QBrush( s.badgeBGColor )
+            painter.setBrush( brush )
+            painter.drawRoundedRect( startX, startY,
+                                     width, height, 2, 2 )
         painter.setFont( s.badgeFont )
         painter.drawText( startX + 2, startY + 1,
                           width - 2, height - 2,
@@ -1662,7 +1664,8 @@ class IfCell( CellElement, QGraphicsRectItem ):
         self._badgeRect = self.getBadgeBoundingRect( self._badgeText )
         self._paintBadge( painter, option, widget,
                           self.baseX + self.width - self._badgeRect.width() - 7,
-                          self.baseY + self.height / 2 - self._badgeRect.height() - 5 )
+                          self.baseY + self.height / 2 - self._badgeRect.height() - 3,
+                          False )
         return
 
 
