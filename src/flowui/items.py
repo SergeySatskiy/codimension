@@ -1887,10 +1887,23 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
         s = self.canvas.settings
 
         path = getCommentBoxPath( s, self.baseX, self.baseY, self.width, self.height )
-        path.moveTo( self.baseX + s.hCellPadding,
-                     self.baseY + self.height / 2 )
-        path.lineTo( self.baseX - s.hCellPadding,
-                     self.baseY + self.height / 2 )
+        if self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ].kind == CellElement.CONNECTOR:
+            # 'if' or 'elif' side comment
+            path.moveTo( self.baseX + s.hCellPadding,
+                         self.baseY + self.height / 2 + 3 )
+            width = 0
+            index = self.addr[ 0 ] - 1
+            while self.canvas.cells[ self.addr[ 1 ] ][ index ].kind == CellElement.CONNECTOR:
+                width += self.canvas.cells[ self.addr[ 1 ] ][ index ].width
+                index -= 1
+            path.lineTo( self.baseX - s.hCellPadding - width,
+                         self.baseY + self.height / 2 + 3 )
+        else:
+            # Regular box
+            path.moveTo( self.baseX + s.hCellPadding,
+                         self.baseY + self.height / 2 )
+            path.lineTo( self.baseX - s.hCellPadding,
+                         self.baseY + self.height / 2 )
 
         self.setPath( path )
 

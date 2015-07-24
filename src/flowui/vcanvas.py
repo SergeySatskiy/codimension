@@ -115,6 +115,19 @@ class VirtualCanvas:
             c += 1
         return s
 
+    def __isTerminalCell( self, row, column ):
+        """ Tells if a cell is terminal,
+            i.e. no need to continue the control flow line """
+        try:
+            return self.cells[ row ][ column ].kind in [
+                                                CellElement.BREAK,
+                                                CellElement.CONTINUE,
+                                                CellElement.RETURN,
+                                                CellElement.RAISE,
+                                                CellElement.SYSEXIT ]
+        except:
+            return False
+
     def __allocateCell( self, row, column, needScopeEdge = True ):
         """ Allocates a cell as Vacant if it is not available yet
             Can only allocate bottom and right growing cells
@@ -352,6 +365,9 @@ class VirtualCanvas:
                                        ConnectorCell( [ (ConnectorCell.WEST,
                                                          ConnectorCell.SOUTH) ],
                                                       self, openEnd[ 1 ], openEnd[ 0 ] ) )
+                if item.sideComment:
+                    self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ] + 1,
+                                           SideCommentCell( item, self, openEnd[ 1 ] + 1, openEnd[ 0 ] ) )
                 openEnd[ 0 ] += 1
 
                 branchEndStack = []
@@ -390,6 +406,9 @@ class VirtualCanvas:
                                                ConnectorCell( [ (ConnectorCell.WEST,
                                                                  ConnectorCell.SOUTH) ],
                                                               self, newOpenEnd[ 1 ], newOpenEnd[ 0 ] ) )
+                        if elifBranch.sideComment:
+                            self.__allocateAndSet( newOpenEnd[ 0 ], newOpenEnd[ 1 ] + 1,
+                                                   SideCommentCell( elifBranch, self, newOpenEnd[ 1 ] + 1, newOpenEnd[ 0 ] ) )
                         newOpenEnd[ 0 ] += 1
 
                         branchEndStack.append( (openEnd[ 0 ] + branchHeight, openEnd[ 1 ]) )
@@ -421,6 +440,9 @@ class VirtualCanvas:
                 # Make the connections between the open ends and the branch ends
                 while branchEndStack:
                     targetRow, targetColumn = branchEndStack.pop( -1 )
+                    if self.__isTerminalCell( openEnd[ 0 ] - 1, openEnd[ 1 ] ):
+                        openEnd = [ targetRow, targetColumn ]
+                        continue
 
                     # make the branches adjusted
                     while targetRow > openEnd[ 0 ]:
