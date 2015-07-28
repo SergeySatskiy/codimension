@@ -290,6 +290,15 @@ class ScopeCellElement( CellElement ):
                                      s.rectRadius, s.rectRadius )
             if self._badgeText:
                 self._paintBadge( painter, option, widget )
+
+            if self.kind in [ CellElement.FOR_SCOPE, CellElement.WHILE_SCOPE ]:
+                # Draw the 'break' badge
+                self._badgeText = 'break'
+                self._badgeRect = self.getBadgeBoundingRect( self._badgeText )
+                self._paintBadge( painter, option, widget,
+                                  self.baseX + self.canvas.width / 2 - self._badgeRect.width() / 2,
+                                  self.baseY + self.canvas.height - self._badgeRect.height() - s.lineWidth, True )
+
         elif self.subKind == ScopeCellElement.DECLARATION:
             pen = QPen( s.boxFGColor )
             painter.setFont( s.monoFont )
@@ -311,6 +320,14 @@ class ScopeCellElement( CellElement ):
             painter.drawLine( canvasLeft, self.baseY + self.height,
                               canvasLeft + self.canvas.width,
                               self.baseY + self.height )
+            if self.kind in [ CellElement.FOR_SCOPE, CellElement.WHILE_SCOPE ]:
+                # Draw the 'continue' badge
+                self._badgeText = 'continue'
+                self._badgeRect = self.getBadgeBoundingRect( self._badgeText )
+                self._paintBadge( painter, option, widget,
+                                  self.baseX - s.rectRadius + self.canvas.width / 2 - self._badgeRect.width() / 2,
+                                  self.baseY + self.height, True )
+
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
             canvasTop = self.baseY - s.rectRadius
             path = getNoCellCommentBoxPath( self.baseX + s.hCellPadding,
