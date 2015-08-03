@@ -298,9 +298,6 @@ class VirtualCanvas:
                     if item.elsePart:
                         if item.elsePart.leadingComment:
                             return True
-                    if item.finallyPart:
-                        if item.finallyPart.leadingComment:
-                            return True
                     return False
 
                 if needCommentRow( item ):
@@ -326,12 +323,12 @@ class VirtualCanvas:
                     self.__allocateScope( item.elsePart, CellElement.ELSE_SCOPE,
                                           vacantRow, nextColumn )
                     nextColumn += 1
+                # The finally part is located below
                 if item.finallyPart:
-                    if item.finallyPart.leadingComment:
-                        self.__allocateAndSet( commentRow, nextColumn + 1,
-                                               LeadingCommentCell( item.finallyPart, self, nextColumn + 1, commentRow ) )
+                    vacantRow += 1
+                    vacantRow = self.__allocateLeadingComment( item.finallyPart, vacantRow, column )
                     self.__allocateScope( item.finallyPart, CellElement.FINALLY_SCOPE,
-                                          vacantRow, nextColumn )
+                                          vacantRow, column )
                 vacantRow += 1
                 continue
 
