@@ -344,7 +344,7 @@ class VirtualCanvas:
                 vacantRow += 1
 
                 # Allocate Yes-branch
-                branchLayout = VirtualCanvas( self, None, None, None )
+                branchLayout = VirtualCanvas( self.settings, None, None, None )
                 branchLayout.layoutSuite( 0, item.suite, CellElement.NO_SCOPE, None, 0 )
 
                 # Copy the layout cells into the current layout calculating the
@@ -385,7 +385,7 @@ class VirtualCanvas:
                         openEnd[ 0 ] += 1
 
                         # Allocate Yes-branch
-                        branchLayout = VirtualCanvas( self, None, None, None )
+                        branchLayout = VirtualCanvas( self.settings, None, None, None )
                         branchLayout.layoutSuite( 0, elifBranch.suite, CellElement.NO_SCOPE, None, 0 )
 
                         # Copy the layout cells into the current layout
@@ -429,7 +429,7 @@ class VirtualCanvas:
                                                                                                      self, openEnd[ 1 ] + 1, openEnd[ 0 ] )
                             openEnd[ 0 ] += 1
 
-                        branchLayout = VirtualCanvas( self, None, None, None )
+                        branchLayout = VirtualCanvas( self.settings, None, None, None )
                         branchLayout.layoutSuite( 0, elifBranch.suite, CellElement.NO_SCOPE, None, 0 )
                         branchWidth, branchHeight = self.__copyLayout( branchLayout, openEnd[ 0 ], openEnd[ 1 ] )
 
