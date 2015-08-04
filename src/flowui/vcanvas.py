@@ -97,6 +97,7 @@ class VirtualCanvas:
         self.height = 0
         self.minWidth = 0
         self.minHeight = 0
+        self.linesInHeader = 0
 
         # Painting support
         self.baseX = 0
@@ -526,9 +527,11 @@ class VirtualCanvas:
         self.__allocateCell( headerRow, 1, False )
         self.cells[ headerRow ][ 0 ] = self.__currentScopeClass( cf, self, 0, headerRow, ScopeCellElement.TOP_LEFT )
         self.cells[ headerRow ][ 1 ] = self.__currentScopeClass( cf, self, 1, headerRow, ScopeCellElement.TOP )
+        self.linesInHeader += 1
         headerRow += 1
         self.__allocateCell( headerRow, 1 )
         self.cells[ headerRow ][ 1 ] = self.__currentScopeClass( cf, self, 1, headerRow, ScopeCellElement.DECLARATION )
+        self.linesInHeader += 1
 
         if hasattr( cf, "sideComment" ):
             if cf.sideComment:
@@ -544,6 +547,7 @@ class VirtualCanvas:
                     self.__allocateCell( vacantRow, 1 )
                     self.cells[ vacantRow ][ 1 ] = self.__currentScopeClass( cf, self, 1, vacantRow, ScopeCellElement.DOCSTRING )
                     vacantRow += 1
+                    self.linesInHeader += 1
 
         # Spaces after the header to avoid glueing the flow chart to the header
         self.__allocateAndSet( vacantRow, 1, VSpacerCell( None, self, 1, vacantRow ) )
@@ -600,14 +604,27 @@ class VirtualCanvas:
 
         for column in xrange( maxColumns ):
             maxWidth = 0
-            for row in self.cells:
+            for index, row in enumerate( self.cells ):
                 if column < len( row ):
+                    if column != 0 and index < self.linesInHeader:
+                        continue
                     if row[ column ].width > maxWidth:
                         maxWidth = row[ column ].width
-            for row in self.cells:
+            for index, row in enumerate( self.cells ):
                 if column < len( row ):
+                    if column != 0 and index < self.linesInHeader:
+                        continue
                     row[ column ].width = maxWidth
             self.width += maxWidth
+
+        # In fact self.width here is the width of the body, not the header
+        # (without the trailing (right) border of the scope)
+        for rowIndex in xrange( 1, self.linesInHeader ):
+            headerWidth = 0
+            for item in self.cells[ rowIndex ]:
+                headerWidth += item.width
+            if headerWidth > self.width:
+                self.width = headerWidth
 
         self.width = self.width + self.settings.rectRadius
         self.minWidth = self.width
@@ -616,6 +633,8 @@ class VirtualCanvas:
 
     def draw( self, scene, baseX, baseY ):
         " Draws the diagram on the real canvas "
+        self.baseX = baseX
+        self.baseY = baseY
         currentY = baseY
         for row in self.cells:
             height = row[ 0 ].height

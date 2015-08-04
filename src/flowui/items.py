@@ -263,7 +263,7 @@ class ScopeCellElement( CellElement ):
             self.setToolTip( self.getTooltip() )
             scene.addItem( self )
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
-            self.setRect( baseX,
+            self.setRect( self.canvas.baseX + self.canvas.width - self.width,
                           baseY - s.rectRadius + s.vHeaderPadding,
                           self.width + s.rectRadius - s.hHeaderPadding,
                           self._sideCommentRect.height() + 2 * s.vTextPadding )
@@ -330,14 +330,15 @@ class ScopeCellElement( CellElement ):
 
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
             canvasTop = self.baseY - s.rectRadius
-            path = getNoCellCommentBoxPath( self.baseX + s.hCellPadding,
+            movedBaseX = self.canvas.baseX + self.canvas.width - self.width
+            path = getNoCellCommentBoxPath( movedBaseX + s.hHeaderPadding,
                                             canvasTop + s.vHeaderPadding,
                                             int( self._sideCommentRect.width() ) + 2 * s.hTextPadding,
                                             int( self._sideCommentRect.height() ) + 2 * s.vTextPadding,
                                             s.commentCorner )
             # Add vertcal separation line
-            path.moveTo( self.baseX, canvasTop + s.vHeaderPadding )
-            path.lineTo( self.baseX, canvasTop + s.vHeaderPadding +
+            path.moveTo( movedBaseX, canvasTop + s.vHeaderPadding )
+            path.lineTo( movedBaseX, canvasTop + s.vHeaderPadding +
                                      int( self._sideCommentRect.height() ) +
                                      2 * s.vTextPadding )
             brush = QBrush( s.commentBGColor )
@@ -350,7 +351,7 @@ class ScopeCellElement( CellElement ):
             pen = QPen( s.boxFGColor )
             painter.setFont( s.monoFont )
             painter.setPen( pen )
-            painter.drawText( self.baseX + s.hCellPadding + s.hTextPadding,
+            painter.drawText( movedBaseX + s.hHeaderPadding + s.hTextPadding,
                               canvasTop + s.vHeaderPadding + s.vTextPadding,
                               int( self._sideCommentRect.width() ),
                               int( self._sideCommentRect.height() ),
