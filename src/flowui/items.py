@@ -134,9 +134,9 @@ class CellElement:
         painter.setPen( pen )
 
         if startX is None:
-            startX = self.baseX + s.rectRadius
+            startX = self.baseX + s.rectRadius + s.hScopeSpacing
         if startY is None:
-            startY = self.baseY - height / 2
+            startY = self.baseY - height / 2 + s.vScopeSpacing
         if needRect:
             brush = QBrush( s.badgeBGColor )
             painter.setBrush( brush )
@@ -188,22 +188,22 @@ class ScopeCellElement( CellElement ):
         " Provides rendering for the scope elements "
         s = self.canvas.settings
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.minHeight = s.rectRadius
-            self.minWidth = s.rectRadius
+            self.minHeight = s.rectRadius + s.vScopeSpacing
+            self.minWidth = s.rectRadius + s. hScopeSpacing
             if badgeText:
                 self._badgeText = badgeText
                 self._badgeRect = self.getBadgeBoundingRect( badgeText )
         elif self.subKind == ScopeCellElement.LEFT:
             self.minHeight = 0
-            self.minWidth = s.rectRadius
+            self.minWidth = s.rectRadius + s.hScopeSpacing
         elif self.subKind == ScopeCellElement.BOTTOM_LEFT:
-            self.minHeight = s.rectRadius
-            self.minWidth = s.rectRadius
+            self.minHeight = s.rectRadius + s.vScopeSpacing
+            self.minWidth = s.rectRadius + s.hScopeSpacing
         elif self.subKind == ScopeCellElement.TOP:
-            self.minHeight = s.rectRadius
+            self.minHeight = s.rectRadius + s.vScopeSpacing
             self.minWidth = 0
         elif self.subKind == ScopeCellElement.BOTTOM:
-            self.minHeight = s.rectRadius
+            self.minHeight = s.rectRadius + s.vScopeSpacing
             self.minWidth = 0
         elif self.subKind == ScopeCellElement.DECLARATION:
             # The declaration location uses a bit of the top cell space
@@ -246,7 +246,7 @@ class ScopeCellElement( CellElement ):
             # Draw the scope rounded rectangle when we see the top left corner
             vAdjust = 0
             if self._badgeRect:
-                vAdjust = self._badgeRect.height() / 2 + 1
+                vAdjust = self._badgeRect.height() / 2 + 1 - s.vScopeSpacing
             self.setRect( baseX, baseY - vAdjust,
                           self.canvas.width, self.canvas.height + vAdjust )
             self.setToolTip( self.getCanvasTooltip() )
@@ -285,8 +285,10 @@ class ScopeCellElement( CellElement ):
             pen = QPen( s.lineColor )
             pen.setWidth( s.lineWidth )
             painter.setPen( pen )
-            painter.drawRoundedRect( self.baseX, self.baseY,
-                                     self.canvas.width, self.canvas.height,
+            painter.drawRoundedRect( self.baseX + s.hScopeSpacing,
+                                     self.baseY + s.vScopeSpacing,
+                                     self.canvas.width - 2 * s.hScopeSpacing,
+                                     self.canvas.height - 2 * s.vScopeSpacing,
                                      s.rectRadius, s.rectRadius )
             if self._badgeText:
                 self._paintBadge( painter, option, widget )
@@ -308,8 +310,8 @@ class ScopeCellElement( CellElement ):
                 yShift = s.vTextPadding
             canvasLeft = self.baseX - s.rectRadius
             canvasTop = self.baseY - s.rectRadius
-            painter.drawText( canvasLeft + s.hHeaderPadding,
-                              canvasTop + s.vHeaderPadding + yShift,
+            painter.drawText( canvasLeft + s.hHeaderPadding + s.hScopeSpacing,
+                              canvasTop + s.vHeaderPadding + yShift + s.vScopeSpacing,
                               int( self._headerRect.width() ),
                               int( self._headerRect.height() ),
                               Qt.AlignLeft, self._getHeaderText() )
@@ -317,8 +319,9 @@ class ScopeCellElement( CellElement ):
             pen = QPen( s.lineColor )
             pen.setWidth( s.lineWidth )
             painter.setPen( pen )
-            painter.drawLine( canvasLeft, self.baseY + self.height,
-                              canvasLeft + self.canvas.width,
+            painter.drawLine( canvasLeft,
+                              self.baseY + self.height,
+                              canvasLeft + self.canvas.width - 2 * s.hScopeSpacing,
                               self.baseY + self.height )
             if self.kind in [ CellElement.FOR_SCOPE, CellElement.WHILE_SCOPE ]:
                 # Draw the 'continue' badge
@@ -330,7 +333,7 @@ class ScopeCellElement( CellElement ):
 
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
             canvasTop = self.baseY - s.rectRadius
-            movedBaseX = self.canvas.baseX + self.canvas.width - self.width
+            movedBaseX = self.canvas.baseX + self.canvas.width - self.width + s.hScopeSpacing
             path = getNoCellCommentBoxPath( movedBaseX + s.hHeaderPadding,
                                             canvasTop + s.vHeaderPadding,
                                             int( self._sideCommentRect.width() ) + 2 * s.hTextPadding,
@@ -371,7 +374,7 @@ class ScopeCellElement( CellElement ):
             pen.setWidth( s.lineWidth )
             painter.setPen( pen )
             painter.drawLine( canvasLeft, self.baseY + self.height,
-                              canvasLeft + self.canvas.width,
+                              canvasLeft + self.canvas.width - 2 * s.hScopeSpacing,
                               self.baseY + self.height )
         return
 

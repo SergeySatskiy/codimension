@@ -626,7 +626,7 @@ class VirtualCanvas:
             if headerWidth > self.width:
                 self.width = headerWidth
 
-        self.width = self.width + self.settings.rectRadius
+        self.width = self.width + self.settings.rectRadius + self.settings.hScopeSpacing
         self.minWidth = self.width
         self.minHeight = self.height
         return (self.width, self.height)
