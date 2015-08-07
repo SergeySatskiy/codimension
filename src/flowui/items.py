@@ -72,6 +72,8 @@ class CellElement:
         self.addr = [ x, y ]        # indexes in the current canvas
         self.canvas = canvas        # reference to the canvas
 
+        self.tailComment = False
+
         # Filled when rendering is called
         self.width = None
         self.height = None
@@ -119,8 +121,10 @@ class CellElement:
                " (" + str( self.minWidth ) + "x" + str( self.minHeight ) + ")"
 
     def getCanvasTooltip( self ):
-        return "Size: " + str( self.canvas.width ) + "x" + str( self.canvas.height ) + \
-               " (" + str( self.canvas.minWidth ) + "x" + str( self.canvas.minHeight ) + ")"
+        return "Size: " + str( self.canvas.width ) + "x" + \
+               str( self.canvas.height ) + \
+               " (" + str( self.canvas.minWidth ) + "x" + \
+               str( self.canvas.minHeight ) + ")"
 
     def _paintBadge( self, painter, option, widget, startX = None,
                                                     startY = None,
@@ -209,8 +213,10 @@ class ScopeCellElement( CellElement ):
             # The declaration location uses a bit of the top cell space
             # to make the view more compact
             self._headerRect = self.getBoundingRect( self._getHeaderText() )
-            self.minHeight = self._headerRect.height() + 2 * s.vHeaderPadding - s.rectRadius
-            self.minWidth = self._headerRect.width() + s.hHeaderPadding - s.rectRadius
+            self.minHeight = self._headerRect.height() + \
+                             2 * s.vHeaderPadding - s.rectRadius
+            self.minWidth = self._headerRect.width() + \
+                            s.hHeaderPadding - s.rectRadius
             if hasattr( self.ref, "sideComment" ):
                 if self.ref.sideComment:
                     self.minHeight += 2 * s.vTextPadding
@@ -295,11 +301,17 @@ class ScopeCellElement( CellElement ):
 
             if self.kind in [ CellElement.FOR_SCOPE, CellElement.WHILE_SCOPE ]:
                 # Draw the 'break' badge
+                oldBadgeText = self._badgeText
+                oldBadgeRect = self._badgeRect
                 self._badgeText = 'break'
                 self._badgeRect = self.getBadgeBoundingRect( self._badgeText )
                 self._paintBadge( painter, option, widget,
-                                  self.baseX + self.canvas.width / 2 - self._badgeRect.width() / 2,
-                                  self.baseY + self.canvas.height - self._badgeRect.height() - s.lineWidth, True )
+                                  self.baseX + self.canvas.width / 2 -
+                                  self._badgeRect.width() / 2,
+                                  self.baseY + self.canvas.height -
+                                  self._badgeRect.height() - 2 * s.vScopeSpacing, True )
+                self._badgeText = oldBadgeText
+                self._badgeRect = oldBadgeRect
 
         elif self.subKind == ScopeCellElement.DECLARATION:
             pen = QPen( s.boxFGColor )
@@ -325,11 +337,16 @@ class ScopeCellElement( CellElement ):
                               self.baseY + self.height )
             if self.kind in [ CellElement.FOR_SCOPE, CellElement.WHILE_SCOPE ]:
                 # Draw the 'continue' badge
+                oldBadgeText = self._badgeText
+                oldBadgeRect = self._badgeRect
                 self._badgeText = 'continue'
                 self._badgeRect = self.getBadgeBoundingRect( self._badgeText )
                 self._paintBadge( painter, option, widget,
-                                  self.baseX - s.rectRadius + self.canvas.width / 2 - self._badgeRect.width() / 2,
+                                  self.baseX - s.rectRadius +
+                                  self.canvas.width / 2 - self._badgeRect.width() / 2,
                                   self.baseY + self.height, True )
+                self._badgeText = oldBadgeText
+                self._badgeRect = oldBadgeRect
 
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
             canvasTop = self.baseY - s.rectRadius
@@ -567,7 +584,8 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
         pen = QPen( s.boxFGColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
-        painter.drawText( self.baseX + s.hCellPadding + (self.width - 2 * s.hCellPadding - self.__textRect.width()) / 2,
+        painter.drawText( self.baseX + s.hCellPadding +
+                          (self.width - 2 * s.hCellPadding - self.__textRect.width()) / 2,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, self.__getText() )
@@ -1261,7 +1279,8 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
         pen = QPen( s.boxFGColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
-        painter.drawText( self.baseX + s.hCellPadding + (self.width - 2 * s.hCellPadding - self.__textRect.width()) / 2,
+        painter.drawText( self.baseX + s.hCellPadding +
+                          (self.width - 2 * s.hCellPadding - self.__textRect.width()) / 2,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, self.__getText() )
@@ -1333,9 +1352,11 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
                                  self.width - 2 * s.hCellPadding,
                                  self.height - 2 * s.vCellPadding,
                                  s.returnRectRadius, s.returnRectRadius )
-        painter.drawLine( self.baseX + s.hCellPadding + s.returnRectRadius + self.__arrowWidth + s.hTextPadding,
+        painter.drawLine( self.baseX + s.hCellPadding + s.returnRectRadius +
+                          self.__arrowWidth + s.hTextPadding,
                           self.baseY + s.vCellPadding,
-                          self.baseX + s.hCellPadding + s.returnRectRadius + self.__arrowWidth + s.hTextPadding,
+                          self.baseX + s.hCellPadding + s.returnRectRadius +
+                          self.__arrowWidth + s.hTextPadding,
                           self.baseY + self.height - s.vCellPadding )
 
         # Draw the arrow
@@ -1755,8 +1776,12 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         " Draws the independent comment "
         s = self.canvas.settings
 
+        w = self.minWidth
+        if s.stretchComments:
+            w = self.width
+
         cellToTheLeft = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ]
-        path = getCommentBoxPath( s, self.baseX, self.baseY, self.width, self.height )
+        path = getCommentBoxPath( s, self.baseX, self.baseY, w, self.height )
         path.moveTo( self.baseX + s.hCellPadding,
                      self.baseY + self.height / 2 )
         path.lineTo( self.baseX - cellToTheLeft.width / 2,
@@ -1823,8 +1848,12 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
         " Draws the leading comment "
         s = self.canvas.settings
 
+        w = self.minWidth
+        if s.stretchComments:
+            w = self.width
+
         cellToTheLeft = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ]
-        path = getCommentBoxPath( s, self.baseX, self.baseY, self.width, self.height )
+        path = getCommentBoxPath( s, self.baseX, self.baseY, w, self.height )
         path.moveTo( self.baseX + s.hCellPadding,
                      self.baseY + self.height / 2 )
         path.lineTo( self.baseX - cellToTheLeft.width / 4,
@@ -1907,7 +1936,11 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
         " Draws the side comment "
         s = self.canvas.settings
 
-        path = getCommentBoxPath( s, self.baseX, self.baseY, self.width, self.height )
+        w = self.minWidth
+        if s.stretchComments:
+            w = self.width
+
+        path = getCommentBoxPath( s, self.baseX, self.baseY, w, self.height )
         if self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ].kind == CellElement.CONNECTOR:
             # 'if' or 'elif' side comment
             path.moveTo( self.baseX + s.hCellPadding,

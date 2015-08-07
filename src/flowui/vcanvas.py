@@ -50,6 +50,13 @@ from cdmcf import ( CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
                     WHILE_FRAGMENT, FOR_FRAGMENT, IF_FRAGMENT,
                     WITH_FRAGMENT, TRY_FRAGMENT )
 
+
+CONN_N_S = [ (ConnectorCell.NORTH, ConnectorCell.SOUTH) ]
+CONN_W_E = [ (ConnectorCell.WEST, ConnectorCell.EAST) ]
+CONN_E_W = [ (ConnectorCell.EAST, ConnectorCell.WEST) ]
+CONN_N_W = [ (ConnectorCell.NORTH, ConnectorCell.WEST) ]
+CONN_W_S = [ (ConnectorCell.WEST, ConnectorCell.SOUTH) ]
+
 _scopeToClass = {
     CellElement.NO_SCOPE:       None,
     CellElement.FILE_SCOPE:     FileScopeCell,
@@ -166,8 +173,7 @@ class VirtualCanvas:
         " Allocates a leading comment if so "
         if item.leadingComment:
             self.__allocateCell( row, column + 1 )
-            self.cells[ row ][ column ] = ConnectorCell( [ (ConnectorCell.NORTH,
-                                                            ConnectorCell.SOUTH) ],
+            self.cells[ row ][ column ] = ConnectorCell( CONN_N_S,
                                                          self, column, row )
             self.cells[ row ][ column + 1 ] = LeadingCommentCell( item, self, column + 1, row )
             return row + 1
@@ -242,8 +248,7 @@ class VirtualCanvas:
                 else:
                     if item.elsePart:
                         if item.elsePart.leadingComment:
-                            self.__allocateAndSet( vacantRow, column, ConnectorCell( [ (ConnectorCell.NORTH,
-                                                                                        ConnectorCell.SOUTH) ],
+                            self.__allocateAndSet( vacantRow, column, ConnectorCell( CONN_N_S,
                                                                                      self, column, vacantRow ) )
                             vacantRow += 1
                 self.__allocateScope( item, CellElement.WHILE_SCOPE,
@@ -264,8 +269,7 @@ class VirtualCanvas:
                 else:
                     if item.elsePart:
                         if item.elsePart.leadingComment:
-                            self.__allocateAndSet( vacantRow, column, ConnectorCell( [ (ConnectorCell.NORTH,
-                                                                                        ConnectorCell.SOUTH) ],
+                            self.__allocateAndSet( vacantRow, column, ConnectorCell( CONN_N_S,
                                                                                      self, column, vacantRow ) )
                             vacantRow += 1
                 self.__allocateScope( item, CellElement.FOR_SCOPE,
@@ -280,8 +284,7 @@ class VirtualCanvas:
 
             if item.kind == COMMENT_FRAGMENT:
                 self.__allocateCell( vacantRow, column + 1 )
-                self.cells[ vacantRow ][ column ] = ConnectorCell( [ (ConnectorCell.NORTH,
-                                                                      ConnectorCell.SOUTH) ],
+                self.cells[ vacantRow ][ column ] = ConnectorCell( CONN_N_S,
                                                                    self, column, vacantRow )
                 self.cells[ vacantRow ][ column + 1 ] = IndependentCommentCell( item,
                                                                                 self, column + 1, vacantRow )
@@ -394,15 +397,13 @@ class VirtualCanvas:
                         count = branchWidth - 1
                         while count > 0:
                             self.__allocateAndSet( newOpenEnd[ 0 ], newOpenEnd[ 1 ],
-                                                   ConnectorCell( [ (ConnectorCell.WEST,
-                                                                     ConnectorCell.EAST) ],
+                                                   ConnectorCell( CONN_W_E,
                                                                   self, newOpenEnd[ 1 ], newOpenEnd[ 0 ] ) )
                             newOpenEnd[ 1 ] += 1
                             count -= 1
 
                         self.__allocateAndSet( newOpenEnd[ 0 ], newOpenEnd[ 1 ],
-                                               ConnectorCell( [ (ConnectorCell.WEST,
-                                                                 ConnectorCell.SOUTH) ],
+                                               ConnectorCell( CONN_W_S,
                                                               self, newOpenEnd[ 1 ], newOpenEnd[ 0 ] ) )
                         if elifBranch.sideComment:
                             self.__allocateAndSet( newOpenEnd[ 0 ], newOpenEnd[ 1 ] + 1,
@@ -419,10 +420,9 @@ class VirtualCanvas:
                         if elifBranch.sideComment:
                             # Draw it as an independent comment
                             self.__allocateCell( openEnd[ 0 ], openEnd[ 1 ] + 1 )
-                            self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.NORTH,
-                                                                                           ConnectorCell.SOUTH) ],
-                                                                                         self, openEnd[ 1 ],
-                                                                                         openEnd[ 0 ] )
+                            self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( CONN_N_S,
+                                                                                        self, openEnd[ 1 ],
+                                                                                        openEnd[ 0 ] )
                             self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] + 1 ] = IndependentCommentCell( elifBranch.sideComment,
                                                                                                      self, openEnd[ 1 ] + 1, openEnd[ 0 ] )
                             openEnd[ 0 ] += 1
@@ -445,26 +445,22 @@ class VirtualCanvas:
                     # make the branches adjusted
                     while targetRow > openEnd[ 0 ]:
                         self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ],
-                                               ConnectorCell( [ (ConnectorCell.NORTH,
-                                                                 ConnectorCell.SOUTH) ],
+                                               ConnectorCell( CONN_N_S,
                                                               self, openEnd[ 1 ], openEnd[ 0 ] ) )
                         openEnd[ 0 ] += 1
                     while openEnd[ 0 ] > targetRow:
                         self.__allocateAndSet( targetRow, targetColumn,
-                                               ConnectorCell( [ (ConnectorCell.NORTH,
-                                                                 ConnectorCell.SOUTH) ],
+                                               ConnectorCell( CONN_N_S,
                                                               self, targetColumn, targetRow ) )
                         targetRow += 1
 
                     # make the horizontal connection
                     self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ],
-                                           ConnectorCell( [ (ConnectorCell.NORTH,
-                                                             ConnectorCell.WEST) ],
+                                           ConnectorCell( CONN_N_W,
                                                           self, openEnd[ 1 ], openEnd[ 0 ] ) )
                     openEnd[ 1 ] -= 1
                     while openEnd[ 1 ] > targetColumn:
-                        self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( [ (ConnectorCell.EAST,
-                                                                                       ConnectorCell.WEST) ],
+                        self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( CONN_E_W,
                                                                                     self, openEnd[ 1 ], openEnd[ 0 ] )
                         openEnd[ 1 ] -= 1
                     self.cells[ targetRow ][ targetColumn ] = ConnectorCell( [ (ConnectorCell.NORTH,
@@ -587,6 +583,10 @@ class VirtualCanvas:
         self.width = 0
         self.height = 0
 
+        # Loop through all the rows:
+        # - calculate the max number of columns
+        # - set the hight in the row as the max hight of all cells in the row
+        # - detect tail comments cells
         maxColumns = 0
         for row in self.cells:
             maxHeight = 0
@@ -602,18 +602,24 @@ class VirtualCanvas:
                 maxColumns = columns
             self.height += maxHeight
 
+            if type( row[ -1 ] ) == CellElement:
+                row[ -1 ].tailComment = row[ -1 ].kind in [ CellElement.LEADING_COMMENT,
+                                                            CellElement.INDEPENDENT_COMMENT,
+                                                            CellElement.SIDE_COMMENT ]
+
+        # Loop over all columns
         for column in xrange( maxColumns ):
             maxWidth = 0
             for index, row in enumerate( self.cells ):
                 if column < len( row ):
                     if column != 0 and index < self.linesInHeader:
-                        continue
+                        continue    # Skip the header
                     if row[ column ].width > maxWidth:
                         maxWidth = row[ column ].width
             for index, row in enumerate( self.cells ):
                 if column < len( row ):
                     if column != 0 and index < self.linesInHeader:
-                        continue
+                        continue    # Skip the header
                     row[ column ].width = maxWidth
             self.width += maxWidth
 
