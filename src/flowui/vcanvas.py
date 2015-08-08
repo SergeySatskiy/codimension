@@ -88,6 +88,7 @@ class VirtualCanvas:
     " Holds the control flow representation "
 
     def __init__( self, settings, x, y, parent ):
+        self.kind = CellElement.VCANVAS
         self.cells = []         # Stores the item instances
                                 # from items.py or other virtual canvases
         self.canvas = parent    # Reference to the upper level canvas or
@@ -602,24 +603,32 @@ class VirtualCanvas:
                 maxColumns = columns
             self.height += maxHeight
 
-            if type( row[ -1 ] ) == CellElement:
-                row[ -1 ].tailComment = row[ -1 ].kind in [ CellElement.LEADING_COMMENT,
-                                                            CellElement.INDEPENDENT_COMMENT,
-                                                            CellElement.SIDE_COMMENT ]
+            if row[ -1 ].kind in [ CellElement.LEADING_COMMENT,
+                                   CellElement.INDEPENDENT_COMMENT,
+                                   CellElement.SIDE_COMMENT ]:
+                row[ -1 ].tailComment = True
 
         # Loop over all columns
+        tailCommentColumns = []
         for column in xrange( maxColumns ):
             maxWidth = 0
             for index, row in enumerate( self.cells ):
                 if column < len( row ):
                     if column != 0 and index < self.linesInHeader:
                         continue    # Skip the header
+                    if row[ column ].kind != CellElement.VCANVAS:
+                        if row[ column ].tailComment:
+                            tailCommentColumns.append( index )  # Skip columns which have trailing comments
+                            continue
                     if row[ column ].width > maxWidth:
                         maxWidth = row[ column ].width
             for index, row in enumerate( self.cells ):
                 if column < len( row ):
                     if column != 0 and index < self.linesInHeader:
                         continue    # Skip the header
+                    if row[ column ].kind != CellElement.VCANVAS:
+                        if row[ column ].tailComment:
+                            continue            # Skip the line trailing comments
                     row[ column ].width = maxWidth
             self.width += maxWidth
 
@@ -631,6 +640,15 @@ class VirtualCanvas:
                 headerWidth += item.width
             if headerWidth > self.width:
                 self.width = headerWidth
+
+        # Scope width might need to be adjusted by the size of the lines with
+        # the trailing comments
+        for rowIndex in tailCommentColumns:
+            lineWidth = 0
+            for item in self.cells[ rowIndex ]:
+                lineWidth += item.width
+            if lineWidth > self.width:
+                self.width = lineWidth
 
         self.width = self.width + self.settings.rectRadius + self.settings.hScopeSpacing
         self.minWidth = self.width

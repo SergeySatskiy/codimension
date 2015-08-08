@@ -305,7 +305,7 @@ class MainWindow( QtGui.QMainWindow ):
         self.verbose = verbose
         self.cf = None
 
-        self.resize( 800, 600 )
+        self.resize( 1400, 800 )
 
         self.updateWindowTitle()
         self.statusBar()

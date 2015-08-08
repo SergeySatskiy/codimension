@@ -34,9 +34,11 @@ class CellElement:
 
     UNKNOWN = -1
 
-    VACANT = 0
-    H_SPACER = 1
-    V_SPACER = 2
+    VCANVAS = 0
+
+    VACANT = 1
+    H_SPACER = 2
+    V_SPACER = 3
 
     NO_SCOPE = 99
     FILE_SCOPE = 100
