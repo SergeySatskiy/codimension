@@ -474,6 +474,10 @@ class VirtualCanvas:
                         srcRow += 1
 
                     # Do the horizontal connection
+                    self.__allocateAndSet( srcRow, srcCol,
+                                           ConnectorCell( CONN_N_W,
+                                                          self, srcCol, srcRow ) )
+                    srcCol -= 1
                     while mainCol < srcCol:
                         self.__allocateAndSet( srcRow, srcCol,
                                                ConnectorCell( CONN_E_W, self, srcCol, srcRow ) )
