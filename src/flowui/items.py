@@ -22,11 +22,10 @@
 " Various items used to represent a control flow on a virtual canvas "
 
 from sys import maxint
-from math import sqrt, atan2, pi, cos, sin
+from math import sqrt, atan2, cos, sin
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import ( QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
-                          QGraphicsTextItem, QGraphicsItem, QPainterPath,
-                          QColor, QPainter )
+                          QPainterPath, QPainter )
 
 
 class CellElement:
@@ -120,7 +119,8 @@ class CellElement:
 
     def getTooltip( self ):
         return "Size: " + str( self.width ) + "x" + str( self.height ) + \
-               " (" + str( self.minWidth ) + "x" + str( self.minHeight ) + ")"
+               " (" + str( self.minWidth ) + "x" + str( self.minHeight ) + ")" + \
+               " Row: " + str( self.addr[1] ) + " Column: " + str( self.addr[0] )
 
     def getCanvasTooltip( self ):
         return "Size: " + str( self.canvas.width ) + "x" + \
@@ -555,7 +555,6 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        s = self.canvas.settings
         self.setRect( baseX, baseY, self.width, self.height )
         self.setToolTip( self.getTooltip() )
         scene.addItem( self )
@@ -1120,7 +1119,6 @@ class BreakCell( CellElement, QGraphicsRectItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        s = self.canvas.settings
         self.setRect( baseX, baseY, self.width, self.height )
         self.setToolTip( self.getTooltip() + " radius: " + str( self.__radius ) )
         scene.addItem( self )
@@ -1182,7 +1180,6 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        s = self.canvas.settings
         self.setRect( baseX, baseY, self.width, self.height )
         self.setToolTip( self.getTooltip() + " radius: " + str( self.__radius ) )
         scene.addItem( self )
@@ -1249,7 +1246,6 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        s = self.canvas.settings
         self.setRect( baseX, baseY, self.width, self.height )
         self.setToolTip( self.getTooltip() )
         scene.addItem( self )
@@ -1326,7 +1322,6 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        s = self.canvas.settings
         self.setRect( baseX, baseY, self.width, self.height )
         self.setToolTip( self.getTooltip() )
         scene.addItem( self )
@@ -1431,7 +1426,6 @@ class AssertCell( CellElement, QGraphicsRectItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        s = self.canvas.settings
         self.setRect( baseX, baseY, self.width, self.height )
         self.setToolTip( self.getTooltip() )
         scene.addItem( self )
@@ -1560,7 +1554,6 @@ class ImportCell( CellElement, QGraphicsRectItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        s = self.canvas.settings
         self.setRect( baseX, baseY, self.width, self.height )
         self.setToolTip( self.getTooltip() )
         scene.addItem( self )
@@ -1647,7 +1640,6 @@ class IfCell( CellElement, QGraphicsRectItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        s = self.canvas.settings
         self.setRect( baseX, baseY, self.width, self.height )
         self.setToolTip( self.getTooltip() )
         scene.addItem( self )
@@ -2034,7 +2026,6 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        s = self.canvas.settings
 
         path = QPainterPath()
         for connection in self.connections:

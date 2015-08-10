@@ -56,6 +56,7 @@ CONN_W_E = [ (ConnectorCell.WEST, ConnectorCell.EAST) ]
 CONN_E_W = [ (ConnectorCell.EAST, ConnectorCell.WEST) ]
 CONN_N_W = [ (ConnectorCell.NORTH, ConnectorCell.WEST) ]
 CONN_W_S = [ (ConnectorCell.WEST, ConnectorCell.SOUTH) ]
+CONN_E_S = [ (ConnectorCell.EAST, ConnectorCell.SOUTH) ]
 
 _scopeToClass = {
     CellElement.NO_SCOPE:       None,
@@ -136,6 +137,13 @@ class VirtualCanvas:
                                                 CellElement.SYSEXIT ]
         except:
             return False
+
+    def __isVacantCell( self, row, column ):
+        " Tells if a cell is a vacant one "
+        try:
+            return self.cells[ row ][ column ].kind == CellElement.VACANT
+        except:
+            return True
 
     def __allocateCell( self, row, column, needScopeEdge = True ):
         """ Allocates a cell as Vacant if it is not available yet
@@ -435,6 +443,56 @@ class VirtualCanvas:
                         # replace the open end
                         openEnd[ 0 ] += branchHeight
 
+                branchEndStack.append( openEnd )
+                mainBranch = branchEndStack.pop( 0 )
+                mainRow = mainBranch[ 0 ]
+                mainCol = mainBranch[ 1 ]
+                print branchEndStack
+
+                while branchEndStack:
+                    srcRow, srcCol = branchEndStack.pop( 0 )
+
+                    # Adjust the main branch
+                    if self.__isTerminalCell( mainRow - 1, mainCol ) or \
+                       self.__isVacantCell( mainRow - 1, mainCol ):
+                        if mainRow < srcRow:
+                            mainRow = srcRow
+                    else:
+                        while mainRow < srcRow:
+                            self.__allocateAndSet( mainRow, mainCol,
+                                                   ConnectorCell( CONN_N_S, self, mainCol, mainRow ) )
+                            mainRow += 1
+
+                    if self.__isTerminalCell( srcRow - 1, srcCol ):
+                        # No need to make any connections from a terminated branch
+                        continue
+
+                    # Do the source branch adjustment
+                    while srcRow < mainRow:
+                        self.__allocateAndSet( srcRow, srcCol,
+                                               ConnectorCell( CONN_N_S, self, srcCol, srcRow ) )
+                        srcRow += 1
+
+                    # Do the horizontal connection
+                    while mainCol < srcCol:
+                        self.__allocateAndSet( srcRow, srcCol,
+                                               ConnectorCell( CONN_E_W, self, srcCol, srcRow ) )
+                        srcCol -= 1
+
+                    # Do the proper main branch connection
+                    if self.__isTerminalCell( mainRow - 1, mainCol ) or \
+                       self.__isVacantCell( mainRow - 1, mainCol ):
+                        self.__allocateAndSet( mainRow, mainCol,
+                                               ConnectorCell( CONN_E_S, self, mainCol, mainRow ) )
+                    else:
+                        self.__allocateAndSet( mainRow, mainCol,
+                                               ConnectorCell( [ (ConnectorCell.NORTH,
+                                                                 ConnectorCell.SOUTH),
+                                                                (ConnectorCell.EAST,
+                                                                 ConnectorCell.CENTER) ], self, mainCol, mainRow ) )
+
+                vacantRow = mainRow + 1
+                continue
 
                 # Make the connections between the open ends and the branch ends
                 while branchEndStack:
@@ -603,10 +661,11 @@ class VirtualCanvas:
                 maxColumns = columns
             self.height += maxHeight
 
-            if row[ -1 ].kind in [ CellElement.LEADING_COMMENT,
-                                   CellElement.INDEPENDENT_COMMENT,
-                                   CellElement.SIDE_COMMENT ]:
-                row[ -1 ].tailComment = True
+            if row:
+                if row[ -1 ].kind in [ CellElement.LEADING_COMMENT,
+                                       CellElement.INDEPENDENT_COMMENT,
+                                       CellElement.SIDE_COMMENT ]:
+                    row[ -1 ].tailComment = True
 
         # Loop over all columns
         tailCommentColumns = []
@@ -661,6 +720,8 @@ class VirtualCanvas:
         self.baseY = baseY
         currentY = baseY
         for row in self.cells:
+            if not row:
+                continue
             height = row[ 0 ].height
             currentX = baseX
             for cell in row:
