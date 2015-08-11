@@ -447,7 +447,6 @@ class VirtualCanvas:
                 mainBranch = branchEndStack.pop( 0 )
                 mainRow = mainBranch[ 0 ]
                 mainCol = mainBranch[ 1 ]
-                print branchEndStack
 
                 while branchEndStack:
                     srcRow, srcCol = branchEndStack.pop( 0 )
@@ -494,50 +493,10 @@ class VirtualCanvas:
                                                                  ConnectorCell.SOUTH),
                                                                 (ConnectorCell.EAST,
                                                                  ConnectorCell.CENTER) ], self, mainCol, mainRow ) )
+                    mainRow += 1
 
                 vacantRow = mainRow + 1
                 continue
-
-                # Make the connections between the open ends and the branch ends
-                while branchEndStack:
-                    targetRow, targetColumn = branchEndStack.pop( -1 )
-                    if self.__isTerminalCell( openEnd[ 0 ] - 1, openEnd[ 1 ] ):
-                        openEnd = [ targetRow, targetColumn ]
-                        continue
-
-                    # make the branches adjusted
-                    while targetRow > openEnd[ 0 ]:
-                        self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ],
-                                               ConnectorCell( CONN_N_S,
-                                                              self, openEnd[ 1 ], openEnd[ 0 ] ) )
-                        openEnd[ 0 ] += 1
-                    while openEnd[ 0 ] > targetRow:
-                        self.__allocateAndSet( targetRow, targetColumn,
-                                               ConnectorCell( CONN_N_S,
-                                                              self, targetColumn, targetRow ) )
-                        targetRow += 1
-
-                    # make the horizontal connection
-                    self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ],
-                                           ConnectorCell( CONN_N_W,
-                                                          self, openEnd[ 1 ], openEnd[ 0 ] ) )
-                    openEnd[ 1 ] -= 1
-                    while openEnd[ 1 ] > targetColumn:
-                        self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( CONN_E_W,
-                                                                                    self, openEnd[ 1 ], openEnd[ 0 ] )
-                        openEnd[ 1 ] -= 1
-                    self.cells[ targetRow ][ targetColumn ] = ConnectorCell( [ (ConnectorCell.NORTH,
-                                                                                ConnectorCell.SOUTH),
-                                                                               (ConnectorCell.EAST,
-                                                                                ConnectorCell.CENTER) ],
-                                                                             self, targetColumn, targetRow )
-
-                    # adjust the new open end
-                    openEnd = [ targetRow + 1, targetColumn ]
-
-                vacantRow = openEnd[ 0 ]
-                continue
-
 
             # Below are the single cell fragments possibly with comments
             cellClass = _fragmentKindToCellClass[ item.kind ]
