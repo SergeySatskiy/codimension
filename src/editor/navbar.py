@@ -112,6 +112,7 @@ class NavigationBar( QFrame ):
     def __init__( self, editor, parent ):
         QFrame.__init__( self, parent )
         self.__editor = editor
+        self.__parentWidget = parent
 
         # It is always not visible at the beginning because there is no
         # editor content at the start
@@ -217,7 +218,7 @@ class NavigationBar( QFrame ):
     def __onFileTypeChanged( self, fileName, uuid, newFileType ):
         " Triggered when a buffer content type has changed "
 
-        if self.parent().getUUID() != uuid:
+        if self.__parentWidget.getUUID() != uuid:
             return
 
         if newFileType not in [ Python3FileType, PythonFileType ] or \
@@ -250,8 +251,8 @@ class NavigationBar( QFrame ):
         " Triggered when the timer is fired "
         self.__updateTimer.stop()  # just in case
 
-        if self.parent().getFileType() not in [ Python3FileType,
-                                                PythonFileType ]:
+        if self.__parentWidget.getFileType() not in [ Python3FileType,
+                                                      PythonFileType ]:
             return
 
         if not self.__connected:

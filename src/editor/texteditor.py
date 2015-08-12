@@ -32,7 +32,7 @@ from PyQt4.QtCore import ( Qt, QFileInfo, SIGNAL, QSize, QUrl, QTimer, pyqtSigna
 from PyQt4.QtGui import ( QApplication, QCursor, QFontMetrics, QToolBar,
                           QActionGroup, QHBoxLayout, QWidget, QAction, QMenu,
                           QSizePolicy, QToolButton, QDialog, QToolTip,
-                          QDesktopServices, QFont, QVBoxLayout )
+                          QDesktopServices, QFont, QVBoxLayout, QSplitter )
 from PyQt4.Qsci import QsciScintilla
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from utils.fileutils import ( detectFileType, DesignerFileType,
@@ -71,6 +71,7 @@ from debugger.bputils import getBreakpointLines
 from debugger.breakpoint import Breakpoint
 from ui.calltip import Calltip
 from navbar import NavigationBar
+from flowuiwidget import FlowUIWidget
 
 
 CTRL_SHIFT = int( Qt.ShiftModifier | Qt.ControlModifier )
@@ -2686,8 +2687,17 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
 
         hLayout.addLayout( vLayout )
         hLayout.addWidget( toolbar )
+        widget = QWidget()
+        widget.setLayout( hLayout )
 
-        self.setLayout( hLayout )
+        self.__splitter = QSplitter( Qt.Horizontal, self )
+        self.__flowUI = FlowUIWidget( self.__editor, self )
+        self.__splitter.addWidget( widget )
+        self.__splitter.addWidget( self.__flowUI )
+
+        containerLayout = QHBoxLayout()
+        containerLayout.addWidget( self.__splitter )
+        self.setLayout( containerLayout )
         return
 
     def updateStatus( self ):

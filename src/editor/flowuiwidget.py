@@ -65,8 +65,10 @@ class CFGraphicsView( QGraphicsView ):
 class FlowUIWidget( QWidget ):
     " The widget which goes along with the text editor "
 
-    def __init__( self, parent ):
+    def __init__( self, editor, parent ):
         QWidget.__init__( self, parent )
+
+        self.__editor = editor
 
         self.cflowSettings = getDefaultCflowSettings( self )
 
