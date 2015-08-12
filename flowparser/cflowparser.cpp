@@ -283,22 +283,38 @@ static void processEncoding( const char *   buffer,
     if ( comments.empty() )
         return;
 
-    CommentLine &       comment( comments.front() );
+    // It could be that the very first line starts with '#' however it is
+    // not a hash bang line. In this case the encoding is in the second line.
+    const CommentLine *     comment( & comments.front() );
+    std::string             content( & buffer[ comment->begin ],
+                                     comment->end - comment->begin + 1 );
+    CommentLine             temp;
+    bool                    needInsertBack( false );
+    if ( strstr( content.c_str(), "coding" ) == NULL )
+    {
+        temp = comments.front();
+        comments.pop_front();
+        comment = & comments.front();
+        needInsertBack = true;
+    }
+
     EncodingLine *      encodingLine( new EncodingLine );
 
     encodingLine->normalizedName = Py::String( tree->n_str );
     encodingLine->parent = controlFlow;
-    encodingLine->begin = comment.begin;
-    encodingLine->end = comment.end;
-    encodingLine->beginLine = comment.line;
-    encodingLine->beginPos = comment.pos;
-    encodingLine->endLine = comment.line;
+    encodingLine->begin = comment->begin;
+    encodingLine->end = comment->end;
+    encodingLine->beginLine = comment->line;
+    encodingLine->beginPos = comment->pos;
+    encodingLine->endLine = comment->line;
     encodingLine->endPos = encodingLine->beginPos + ( encodingLine->end -
                                                       encodingLine->begin );
     controlFlow->encodingLine = Py::asObject( encodingLine );
     controlFlow->updateBeginEnd( encodingLine );
 
     comments.pop_front();
+    if ( needInsertBack )
+        comments.push_front( temp );
     return;
 }
 
