@@ -2696,6 +2696,8 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__splitter.addWidget( self.__flowUI )
 
         containerLayout = QHBoxLayout()
+        containerLayout.setContentsMargins( 0, 0, 0, 0 )
+        containerLayout.setSpacing( 0 )
         containerLayout.addWidget( self.__splitter )
         self.setLayout( containerLayout )
         return
