@@ -358,11 +358,6 @@ class ScopeCellElement( CellElement ):
                                             int( self._sideCommentRect.width() ) + 2 * s.hTextPadding,
                                             int( self._sideCommentRect.height() ) + 2 * s.vTextPadding,
                                             s.commentCorner )
-            # Add vertcal separation line
-            path.moveTo( movedBaseX, canvasTop + s.vHeaderPadding )
-            path.lineTo( movedBaseX, canvasTop + s.vHeaderPadding +
-                                     int( self._sideCommentRect.height() ) +
-                                     2 * s.vTextPadding )
             brush = QBrush( s.commentBGColor )
             painter.setBrush( brush )
             pen = QPen( s.commentLineColor )
