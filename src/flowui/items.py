@@ -1736,6 +1736,8 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         self.kind = CellElement.INDEPENDENT_COMMENT
         self.__text = None
         self.__textRect = None
+        self.leadingForElse = False
+        self.sideForElse = False
         return
 
     def __getText( self ):
@@ -1773,8 +1775,14 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         path = getCommentBoxPath( s, self.baseX, self.baseY, w, self.height )
         path.moveTo( self.baseX + s.hCellPadding,
                      self.baseY + self.height / 2 )
-        path.lineTo( self.baseX - cellToTheLeft.width / 2,
-                     self.baseY + self.height / 2 )
+        if self.leadingForElse:
+            path.lineTo( self.baseX, self.baseY + self.height / 2 )
+            path.moveTo( self.baseX, self.baseY + self.height / 2 )
+            path.lineTo( self.baseX - cellToTheLeft.width / 2,
+                         self.baseY + self.height )
+        else:
+            path.lineTo( self.baseX - cellToTheLeft.width / 2,
+                         self.baseY + self.height / 2 )
 
         self.setPath( path )
 

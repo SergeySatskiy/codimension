@@ -424,16 +424,26 @@ class VirtualCanvas:
                     else:
                         # This is the else which is always the last
                         if elifBranch.leadingComment:
-                            self.__allocateAndSet( openEnd[ 0 ] - 2, openEnd[ 1 ] + 1,
-                                                   LeadingCommentCell( elifBranch, self, openEnd[ 1 ] + 1, openEnd[ 0 ] - 2 ) )
+                            # Draw it as an independent comment
+                            self.__allocateCell( openEnd[ 0 ], openEnd[ 1 ] + 1 )
+                            self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( CONN_N_S,
+                                                                                        self, openEnd[ 1 ],
+                                                                                        openEnd[ 0 ] )
+                            cItem = IndependentCommentCell( elifBranch.leadingComment,
+                                                            self, openEnd[ 1 ] + 1, openEnd[ 0 ] )
+                            cItem.leadingForElse = True
+                            self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] + 1 ] = cItem
+                            openEnd[ 0 ] += 1
                         if elifBranch.sideComment:
                             # Draw it as an independent comment
                             self.__allocateCell( openEnd[ 0 ], openEnd[ 1 ] + 1 )
                             self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( CONN_N_S,
                                                                                         self, openEnd[ 1 ],
                                                                                         openEnd[ 0 ] )
-                            self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] + 1 ] = IndependentCommentCell( elifBranch.sideComment,
-                                                                                                     self, openEnd[ 1 ] + 1, openEnd[ 0 ] )
+                            cItem = IndependentCommentCell( elifBranch.sideComment,
+                                                            self, openEnd[ 1 ] + 1, openEnd[ 0 ] )
+                            cItem.sideForElse = True
+                            self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] + 1 ] = cItem
                             openEnd[ 0 ] += 1
 
                         branchLayout = VirtualCanvas( self.settings, None, None, None )
