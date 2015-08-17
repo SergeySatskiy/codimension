@@ -53,8 +53,8 @@ class CFlowSettings:
         self.badgeFont = buildFont( "Ubuntu mono,9,-1,5,50,0,0,0,0,0" )
         self.badgeFontMetrics = QFontMetrics( self.badgeFont, paintDevice )
 
-        self.hCellPadding = 15      # in pixels (left and right)
-        self.vCellPadding = 10      # in pixels (top and bottom)
+        self.hCellPadding = 10      # in pixels (left and right)
+        self.vCellPadding = 6       # in pixels (top and bottom)
         self.hTextPadding = 5       # in pixels (left and right)
         self.vTextPadding = 5       # in pixels (top and bottom)
 
@@ -83,11 +83,12 @@ class CFlowSettings:
         self.badgeBGColor = QColor( 255, 255, 0, 255 )
 
         # Comments: leading, side & independent
-        self.commentBGColor = QColor( 230, 230, 16, 255 )
+        self.commentBGColor = QColor( 255, 255, 153, 255 )
         self.commentFGColor = QColor( 0, 0, 0, 255 )
-        self.commentLineColor = QColor( 168, 22, 168, 255 )
+        self.commentLineColor = QColor( 102, 102, 61, 255 )
         self.commentLineWidth = 1
         self.stretchComments = False
+        self.stretchBlocks = False
 
         self.fileScopeBGColor = QColor( 255, 255, 230, 255 )
         self.funcScopeBGColor = QColor( 230, 230, 255, 255 )

@@ -25,7 +25,14 @@ from sys import maxint
 from math import sqrt, atan2, cos, sin
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import ( QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
-                          QPainterPath, QPainter )
+                          QPainterPath, QPainter, QColor )
+
+
+def getDarkerColor( color ):
+    r = color.red() - 40
+    g = color.green() - 40
+    b = color.blue() - 40
+    return QColor( max( r, 0 ), max( g, 0 ), max( b, 0 ), color.alpha() )
 
 
 class CellElement:
@@ -290,7 +297,7 @@ class ScopeCellElement( CellElement ):
         s = self.canvas.settings
 
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            pen = QPen( s.lineColor )
+            pen = QPen( getDarkerColor( painter.brush().color() ) )
             pen.setWidth( s.lineWidth )
             painter.setPen( pen )
             painter.drawRoundedRect( self.baseX + s.hScopeSpacing,
@@ -330,7 +337,7 @@ class ScopeCellElement( CellElement ):
                               int( self._headerRect.height() ),
                               Qt.AlignLeft, self._getHeaderText() )
 
-            pen = QPen( s.lineColor )
+            pen = QPen( getDarkerColor( painter.brush().color() ) )
             pen.setWidth( s.lineWidth )
             painter.setPen( pen )
             painter.drawLine( canvasLeft,
@@ -385,6 +392,7 @@ class ScopeCellElement( CellElement ):
                               Qt.AlignLeft, self.getDocstringText() )
 
             pen = QPen( s.lineColor )
+            pen = QPen( getDarkerColor( painter.brush().color() ) )
             pen.setWidth( s.lineWidth )
             painter.setPen( pen )
             painter.drawLine( canvasLeft, self.baseY + self.height,
@@ -571,10 +579,19 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
                           self.baseY,
                           self.baseX + self.width / 2,
                           self.baseY + self.height )
-        painter.drawRect( self.baseX + s.hCellPadding,
-                          self.baseY + s.vCellPadding,
-                          self.width - 2 * s.hCellPadding,
-                          self.height - 2 * s.vCellPadding )
+
+        pen = QPen( getDarkerColor( s.boxBGColor ) )
+        painter.setPen( pen )
+        if s.stretchBlocks:
+            painter.drawRect( self.baseX + s.hCellPadding,
+                              self.baseY + s.vCellPadding,
+                              self.width - 2 * s.hCellPadding,
+                              self.height - 2 * s.vCellPadding )
+        else:
+            painter.drawRect( self.baseX + s.hCellPadding + (self.width - self.minWidth) / 2,
+                              self.baseY + s.vCellPadding,
+                              self.minWidth - 2 * s.hCellPadding,
+                              self.height - 2 * s.vCellPadding )
 
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
@@ -627,9 +644,8 @@ class FileScopeCell( ScopeCellElement, QGraphicsRectItem ):
 
     def paint( self, painter, option, widget ):
         " Draws the file scope element "
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            brush = QBrush( self.canvas.settings.fileScopeBGColor )
-            painter.setBrush( brush )
+        brush = QBrush( self.canvas.settings.fileScopeBGColor )
+        painter.setBrush( brush )
         self._paint( painter, option, widget )
         return
 
@@ -672,9 +688,8 @@ class FunctionScopeCell( ScopeCellElement, QGraphicsRectItem ):
 
     def paint( self, painter, option, widget ):
         " Draws the function scope element "
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            brush = QBrush( self.canvas.settings.funcScopeBGColor )
-            painter.setBrush( brush )
+        brush = QBrush( self.canvas.settings.funcScopeBGColor )
+        painter.setBrush( brush )
         self._paint( painter, option, widget )
         return
 
@@ -720,9 +735,8 @@ class ClassScopeCell( ScopeCellElement, QGraphicsRectItem ):
 
     def paint( self, painter, option, widget ):
         " Draws the class scope element "
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            brush = QBrush( self.canvas.settings.classScopeBGColor )
-            painter.setBrush( brush )
+        brush = QBrush( self.canvas.settings.classScopeBGColor )
+        painter.setBrush( brush )
         self._paint( painter, option, widget )
         return
 
@@ -765,9 +779,8 @@ class ForScopeCell( ScopeCellElement, QGraphicsRectItem ):
 
     def paint( self, painter, option, widget ):
         " Draws the for-loop scope element "
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            brush = QBrush( self.canvas.settings.forScopeBGColor )
-            painter.setBrush( brush )
+        brush = QBrush( self.canvas.settings.forScopeBGColor )
+        painter.setBrush( brush )
         self._paint( painter, option, widget )
         return
 
@@ -811,9 +824,8 @@ class WhileScopeCell( ScopeCellElement, QGraphicsRectItem ):
 
     def paint( self, painter, option, widget ):
         " Draws the while-loop scope element "
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            brush = QBrush( self.canvas.settings.whileScopeBGColor )
-            painter.setBrush( brush )
+        brush = QBrush( self.canvas.settings.whileScopeBGColor )
+        painter.setBrush( brush )
         self._paint( painter, option, widget )
         return
 
@@ -853,9 +865,8 @@ class TryScopeCell( ScopeCellElement, QGraphicsRectItem ):
 
     def paint( self, painter, option, widget ):
         " Draws the try scope element "
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            brush = QBrush( self.canvas.settings.tryScopeBGColor )
-            painter.setBrush( brush )
+        brush = QBrush( self.canvas.settings.tryScopeBGColor )
+        painter.setBrush( brush )
         self._paint( painter, option, widget )
         return
 
@@ -899,9 +910,8 @@ class WithScopeCell( ScopeCellElement, QGraphicsRectItem ):
 
     def paint( self, painter, option, widget ):
         " Draws the with scope element "
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            brush = QBrush( self.canvas.settings.withScopeBGColor )
-            painter.setBrush( brush )
+        brush = QBrush( self.canvas.settings.withScopeBGColor )
+        painter.setBrush( brush )
         self._paint( painter, option, widget )
         return
 
@@ -949,9 +959,8 @@ class DecoratorScopeCell( ScopeCellElement, QGraphicsRectItem ):
 
     def paint( self, painter, option, widget ):
         " Draws the decorator scope element "
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            brush = QBrush( self.canvas.settings.decorScopeBGColor )
-            painter.setBrush( brush )
+        brush = QBrush( self.canvas.settings.decorScopeBGColor )
+        painter.setBrush( brush )
         self._paint( painter, option, widget )
         return
 
@@ -990,9 +999,8 @@ class ElseScopeCell( ScopeCellElement, QGraphicsRectItem ):
 
     def paint( self, painter, option, widget ):
         " Draws the else scope element "
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            brush = QBrush( self.canvas.settings.elseScopeBGColor )
-            painter.setBrush( brush )
+        brush = QBrush( self.canvas.settings.elseScopeBGColor )
+        painter.setBrush( brush )
         self._paint( painter, option, widget )
         return
 
@@ -1038,9 +1046,8 @@ class ExceptScopeCell( ScopeCellElement, QGraphicsRectItem ):
 
     def paint( self, painter, option, widget ):
         " Draws the except scope element "
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            brush = QBrush( self.canvas.settings.exceptScopeBGColor )
-            painter.setBrush( brush )
+        brush = QBrush( self.canvas.settings.exceptScopeBGColor )
+        painter.setBrush( brush )
         self._paint( painter, option, widget )
         return
 
@@ -1079,9 +1086,8 @@ class FinallyScopeCell( ScopeCellElement, QGraphicsRectItem ):
 
     def paint( self, painter, option, widget ):
         " Draws the finally scope element "
-        if self.subKind == ScopeCellElement.TOP_LEFT:
-            brush = QBrush( self.canvas.settings.finallyScopeBGColor )
-            painter.setBrush( brush )
+        brush = QBrush( self.canvas.settings.finallyScopeBGColor )
+        painter.setBrush( brush )
         self._paint( painter, option, widget )
         return
 
@@ -2058,5 +2064,4 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
         painter.setPen( pen )
         QGraphicsPathItem.paint( self, painter, option, widget )
         return
-
 
