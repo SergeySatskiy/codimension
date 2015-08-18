@@ -225,6 +225,121 @@ static void updateEnd( Fragment *  f, node *  lastPart,
 }
 
 
+static int
+getNewLineParts( const char *  str, std::deque<const char *>  &  parts)
+{
+    int     count = 0;
+    bool    found = false;
+
+    while ( * str != '\0' )
+    {
+        if ( * str == '\r' )
+        {
+            if ( * (str + 1 ) == '\n' )
+                ++str;
+            found = true;
+        }
+        else if ( * str == '\n' )
+            found = true;
+
+        if ( found )
+        {
+            ++count;
+            parts.push_back( str );
+            found = false;
+        }
+
+        ++str;
+    }
+    return count;
+}
+
+
+// Multiline string literals do not have properly filled information
+// They only have the last line info
+static void
+updateFragmentForMultilineStringLiteral( Context *  context,
+                                         node *  stringChild,
+                                         Fragment *  f )
+{
+    // Sick! The syntax parser provides column == -1 if it was a
+    // multiline comment. So the only real information is the end line
+    // of the multiline comment. All the rest I have to deduct myself
+    std::deque< const char * >  newLines;
+    int             count = getNewLineParts( stringChild->n_str,
+                                             newLines );
+    const char *    lastNewLine = newLines.back();
+    int             strLen = strlen( stringChild->n_str );
+
+    f->endLine = stringChild->n_lineno;
+    f->beginLine = f->endLine - count;
+
+    f->endPos = strlen( lastNewLine + 1 );
+    f->end = context->lineShifts[ f->endLine ] + f->endPos - 1;
+
+    f->begin = f->end - strLen + 1;
+    f->beginPos = f->begin - context->lineShifts[ f->beginLine ] + 1;
+    return;
+}
+
+
+// Considers a possibility of a multiline string literal which does not have
+// the proper begin
+static void
+safeUpdateBegin( Context *   context,
+                 node *      beginNode,
+                 Fragment *  fragmentToUpdate )
+{
+    if ( beginNode->n_col_offset != -1)
+    {
+        updateBegin( fragmentToUpdate, beginNode, context->lineShifts );
+    }
+    else
+    {
+        node *      lastPart = findLastPart( beginNode );
+        if ( lastPart->n_type == STRING &&
+             lastPart->n_str != NULL &&
+             lastPart->n_col_offset == -1 )
+        {
+            updateFragmentForMultilineStringLiteral( context, lastPart, fragmentToUpdate );
+        }
+        else
+        {
+            // NB: must never happened really
+            updateBegin( fragmentToUpdate, beginNode, context->lineShifts );
+        }
+    }
+}
+
+
+// Considers a possibility of a multiline string literal which does not have
+// the proper begin
+static void
+safeUpdateEnd( Context *   context,
+               node *      lastPart,
+               Fragment *  fragmentToUpdate )
+{
+    if ( lastPart->n_type == STRING &&
+         lastPart->n_str != NULL &&
+         lastPart->n_col_offset == -1 )
+    {
+        std::deque< const char * >  newLines;
+        getNewLineParts( lastPart->n_str, newLines );
+        const char *                lastNewLine = newLines.back();
+
+        fragmentToUpdate->endLine = lastPart->n_lineno;
+        fragmentToUpdate->endPos = strlen( lastNewLine + 1 );
+        fragmentToUpdate->end = context->lineShifts[ fragmentToUpdate->endLine ] +
+                                fragmentToUpdate->endPos - 1;
+    }
+    else
+    {
+        updateEnd( fragmentToUpdate, lastPart, context->lineShifts );
+    }
+}
+
+
+
 // It also discards the comment from the deque if it is a bang line
 static void
 checkForBangLine( const char *  buffer,
@@ -818,8 +933,9 @@ processAssert( Context *  context,
     node *          testLastPart = findLastPart( firstTestNode );
 
     tst->parent = a;
-    updateBegin( tst, firstTestNode, context->lineShifts );
-    updateEnd( tst, testLastPart, context->lineShifts );
+    safeUpdateBegin( context, firstTestNode, tst );
+    safeUpdateEnd( context, testLastPart, tst );
+
     a->tst = Py::asObject( tst );
 
     // If a comma is there => there is a message part
@@ -875,8 +991,8 @@ processRaise( Context *  context,
         node *          lastPart = findLastPart( tree );
 
         val->parent = r;
-        updateBegin( val, testNode, context->lineShifts );
-        updateEnd( val, lastPart, context->lineShifts );
+        safeUpdateBegin( context, testNode, val );
+        safeUpdateEnd( context, lastPart, val );
 
         r->updateEnd( val );
         r->value = Py::asObject( val );
@@ -915,8 +1031,8 @@ processReturn( Context *  context, node *  tree,
         node *          lastPart = findLastPart( testlistNode );
 
         val->parent = ret;
-        updateBegin( val, testlistNode, context->lineShifts );
-        updateEnd( val, lastPart, context->lineShifts );
+        safeUpdateBegin( context, testlistNode, val );
+        safeUpdateEnd( context, lastPart, val );
 
         ret->updateEnd( val );
         ret->value = Py::asObject( val );
@@ -953,8 +1069,9 @@ processElifPart( Context *  context, Py::List &  flow,
         node *      last = findLastPart( current );
         Fragment *  condition( new Fragment );
         condition->parent = elifPart;
-        updateBegin( condition, current, context->lineShifts );
-        updateEnd( condition, last, context->lineShifts );
+        safeUpdateBegin( context, current, condition );
+        safeUpdateEnd( context, last, condition );
+
         elifPart->condition = Py::asObject( condition );
 
         colonNode = current + 1;
@@ -1007,8 +1124,8 @@ processIf( Context *  context,
                 node *      last = findLastPart( conditionNode );
                 Fragment *  condition( new Fragment );
                 condition->parent = ifStatement;
-                updateBegin( condition, conditionNode, context->lineShifts );
-                updateEnd( condition, last, context->lineShifts );
+                safeUpdateBegin( context, conditionNode, condition );
+                safeUpdateEnd( context, last, condition );
                 ifStatement->condition = Py::asObject( condition );
 
                 node *      colonNode = conditionNode + 1;
@@ -1202,8 +1319,8 @@ processWhile( Context *  context,
     Fragment *      condition( new Fragment );
 
     condition->parent = w;
-    updateBegin( condition, testNode, context->lineShifts );
-    updateEnd( condition, lastPart, context->lineShifts );
+    safeUpdateBegin( context, testNode, condition );
+    safeUpdateEnd( context, lastPart, condition );
     w->condition = Py::asObject( condition );
 
     injectComments( context, flow, parent, w, w );
@@ -1261,9 +1378,10 @@ processWith( Context *  context,
     }
 
     Fragment *      items( new Fragment );
+    node *          lastPart = findLastPart(lastWithItem);
     items->parent = w;
-    updateBegin( items, firstWithItem, context->lineShifts );
-    updateEnd( items, findLastPart(lastWithItem), context->lineShifts );
+    safeUpdateBegin( context, firstWithItem, items );
+    safeUpdateEnd( context, lastPart, items );
     w->items = Py::asObject( items );
 
     injectComments( context, flow, parent, w, w );
@@ -1309,8 +1427,8 @@ processFor( Context *  context,
     Fragment *      iteration( new Fragment );
 
     iteration->parent = f;
-    updateBegin( iteration, exprlistNode, context->lineShifts );
-    updateEnd( iteration, lastPart, context->lineShifts );
+    safeUpdateBegin( context, exprlistNode, iteration );
+    safeUpdateEnd( context, lastPart, iteration );
     f->iteration = Py::asObject( iteration );
 
     injectComments( context, flow, parent, f, f );
@@ -1576,64 +1694,6 @@ processDecorators( Context *  context, Py::List &  flow,
         }
     }
     return decors;
-}
-
-
-static int
-getNewLineParts( const char *  str, std::deque<const char *>  &  parts)
-{
-    int     count = 0;
-    bool    found = false;
-
-    while ( * str != '\0' )
-    {
-        if ( * str == '\r' )
-        {
-            if ( * (str + 1 ) == '\n' )
-                ++str;
-            found = true;
-        }
-        else if ( * str == '\n' )
-            found = true;
-
-        if ( found )
-        {
-            ++count;
-            parts.push_back( str );
-            found = false;
-        }
-
-        ++str;
-    }
-    return count;
-}
-
-
-// Multiline string literals do not have properly filled information
-// They only have the last line info
-static void
-updateFragmentForMultilineStringLiteral( Context *  context,
-                                         node *  stringChild,
-                                         Fragment *  f )
-{
-    // Sick! The syntax parser provides column == -1 if it was a
-    // multiline comment. So the only real information is the end line
-    // of the multiline comment. All the rest I have to deduct myself
-    std::deque< const char * >  newLines;
-    int             count = getNewLineParts( stringChild->n_str,
-                                             newLines );
-    const char *    lastNewLine = newLines.back();
-    int             strLen = strlen( stringChild->n_str );
-
-    f->endLine = stringChild->n_lineno;
-    f->beginLine = f->endLine - count;
-
-    f->endPos = strlen( lastNewLine + 1 );
-    f->end = context->lineShifts[ f->endLine ] + f->endPos - 1;
-
-    f->begin = f->end - strLen + 1;
-    f->beginPos = f->begin - context->lineShifts[ f->beginLine ] + 1;
-    return;
 }
 
 
