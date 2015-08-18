@@ -1239,7 +1239,9 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
         self.__textRect = self.getBoundingRect( self.__getText() )
 
         self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
-        self.minWidth = self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding)
+        self.minWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
+                             s.minReturnWidth )
+
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1268,11 +1270,19 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
                           self.baseY,
                           self.baseX + self.width / 2,
                           self.baseY + self.height / 2 )
-        painter.drawRoundedRect( self.baseX + s.hCellPadding,
-                                 self.baseY + s.vCellPadding,
-                                 self.width - 2 * s.hCellPadding,
-                                 self.height - 2 * s.vCellPadding,
-                                 s.returnRectRadius, s.returnRectRadius )
+
+        if s.stretchBlocks:
+            painter.drawRoundedRect( self.baseX + s.hCellPadding,
+                                     self.baseY + s.vCellPadding,
+                                     self.width - 2 * s.hCellPadding,
+                                     self.height - 2 * s.vCellPadding,
+                                     s.returnRectRadius, s.returnRectRadius )
+        else:
+            painter.drawRoundedRect( self.baseX + s.hCellPadding + (self.width - self.minWidth) / 2,
+                                     self.baseY + s.vCellPadding,
+                                     self.minWidth - 2 * s.hCellPadding,
+                                     self.height - 2 * s.vCellPadding,
+                                     s.returnRectRadius, s.returnRectRadius )
 
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
