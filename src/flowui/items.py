@@ -550,7 +550,8 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
         self.__textRect = self.getBoundingRect( self.__getText() )
 
         self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
-        self.minWidth = self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding)
+        self.minWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
+                             s.minWidth )
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1240,7 +1241,7 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
 
         self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
         self.minWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
-                             s.minReturnWidth )
+                             s.minWidth )
 
         self.height = self.minHeight
         self.width = self.minWidth
