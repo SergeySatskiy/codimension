@@ -23,7 +23,7 @@
 
 from sys import maxint
 from math import sqrt
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, QPointF
 from PyQt4.QtGui import ( QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
                           QPainterPath, QPainter, QColor )
 from PyQt4.QtSvg import QGraphicsSvgItem
@@ -1451,6 +1451,11 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         self.kind = CellElement.ASSERT
         self.__text = None
         self.__diamondDiagonal = None
+        self.__arrowWidth = 16
+
+        self.arrowItem = SVGItem( "assert.svg" )
+        self.arrowItem.setWidth( self.__arrowWidth )
+        self.arrowItem.setToolTip( "assert" )
         return
 
     def __getText( self ):
@@ -1469,8 +1474,9 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         self.__diamondDiagonal = singleCharRect.height() + 2 * s.vTextPadding
 
         self.minHeight = rect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
-        self.minWidth = rect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding + \
-                        self.__diamondDiagonal
+        self.minWidth = max( rect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding + \
+                             self.__diamondDiagonal,
+                             s.minWidth )
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1479,8 +1485,15 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         self.baseX = baseX
         self.baseY = baseY
         self.setRect( baseX, baseY, self.width, self.height )
+
+        s = self.canvas.settings
+        self.arrowItem.setPos( baseX + self.__diamondDiagonal / 2 + s.hCellPadding -
+                               self.arrowItem.width() / 2,
+                               baseY + self.height/2 - self.arrowItem.height()/2 )
+
         self.setToolTip( self.getTooltip() )
         scene.addItem( self )
+        scene.addItem( self.arrowItem )
         return
 
     def paint( self, painter, option, widget ):
@@ -1501,6 +1514,9 @@ class AssertCell( CellElement, QGraphicsRectItem ):
                           self.baseX + self.width / 2,
                           self.baseY + self.height )
 
+        pen = QPen( getDarkerColor( s.boxBGColor ) )
+        painter.setPen( pen )
+
         dHalf = int( self.__diamondDiagonal / 2.0 )
         dx1 = self.baseX + s.hCellPadding
         dy1 = self.baseY + int( self.height / 2 )
@@ -1510,10 +1526,9 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         dy3 = dy1
         dx4 = dx2
         dy4 = dy2 + 2 * dHalf
-        painter.drawLine( dx1, dy1, dx2, dy2 )
-        painter.drawLine( dx2, dy2, dx3, dy3 )
-        painter.drawLine( dx3, dy3, dx4, dy4 )
-        painter.drawLine( dx4, dy4, dx1, dy1 )
+
+        painter.drawPolygon( QPointF(dx1, dy1), QPointF(dx2, dy2),
+                             QPointF(dx3, dy3), QPointF(dx4, dy4) )
 
         painter.drawRect( dx3 + 1, self.baseY + s.vCellPadding,
                           self.width - 2 * s.hCellPadding - self.__diamondDiagonal,
