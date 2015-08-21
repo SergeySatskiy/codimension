@@ -44,16 +44,19 @@ class PixmapCache( object ):
                                 os.path.sep + 'pixmaps' + os.path.sep
             return
 
+        def getPath( self, path ):
+            " Provides an absolute path "
+            if os.path.isabs( path ):
+                return path
+            return self.__searchPath + path
+
         def getPixmap( self, name ):
             """ Provides the required pixmap """
 
             try:
                 return self.__cache[ name ]
             except KeyError:
-                if os.path.isabs( name ):
-                    path = name
-                else:
-                    path = self.__searchPath + name
+                path = self.getPath( name )
                 if not os.path.exists( path ):
                     pixmap = QPixmap()
                     self.__cache[ name ] = pixmap
@@ -66,12 +69,13 @@ class PixmapCache( object ):
                 self.__cache[ name ] = pixmap
                 return pixmap
 
-
         def getIcon( self, name ):
             """ Provides a pixmap as an icon """
-
             return QIcon( self.getPixmap( name ) )
 
+        def getSearchPath( self ):
+            " Provides the path where pixmaps are "
+            return self.__searchPath
 
     def __init__( self ):
         if PixmapCache._iInstance is None:
