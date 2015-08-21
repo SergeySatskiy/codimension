@@ -228,11 +228,17 @@ class VirtualCanvas:
                         scopeCanvas = decScope
                         scopeItem = dec
 
-                # Update the scope canvas parent and address
                 if scopeItem.leadingComment:
                     self.__allocateCell( vacantRow, column + 1 )
                     self.cells[ vacantRow ][ column + 1 ] = LeadingCommentCell( scopeItem, self, column + 1, vacantRow )
                     vacantRow += 1
+
+                # Insert a spacer to avoid badge overlapping with a previous
+                # scope or a comment
+                self.__allocateAndSet( vacantRow, column, VSpacerCell( None, self, column, vacantRow ) )
+                vacantRow += 1
+
+                # Update the scope canvas parent and address
                 scopeCanvas.parent = self
                 scopeCanvas.addr = [ column, vacantRow ]
                 self.__allocateAndSet( vacantRow, column, scopeCanvas )

@@ -79,9 +79,10 @@ class CFlowSettings:
         self.badgeLineColor = QColor( 0, 0, 0, 255 )
 
         # Code blocks and other statements
-        self.boxBGColor = QColor( 216, 216, 207, 255 )
+        self.boxBGColor = QColor( 250, 250, 250, 255 )
         self.boxFGColor = QColor( 0, 0, 0, 255 )
-        self.badgeBGColor = QColor( 255, 255, 0, 255 )
+        self.badgeBGColor = QColor( 230, 230, 230, 255 )
+        self.badgeFGColor = QColor( 0, 0, 0, 255 )
 
         # Comments: leading, side & independent
         self.commentBGColor = QColor( 255, 255, 153, 255 )
