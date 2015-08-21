@@ -22,7 +22,7 @@
 " Various items used to represent a control flow on a virtual canvas "
 
 from sys import maxint
-from math import sqrt, atan2, cos, sin
+from math import sqrt
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import ( QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
                           QPainterPath, QPainter, QColor )
@@ -1357,8 +1357,11 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.RAISE
         self.__text = None
-        self.__arrowWidth = None
-        self.__arrowHeight = None
+        self.__arrowWidth = 16
+
+        self.arrowItem = SVGItem( "raise.svg" )
+        self.arrowItem.setWidth( self.__arrowWidth )
+        self.arrowItem.setToolTip( "raise" )
         return
 
     def __getText( self ):
@@ -1371,14 +1374,9 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
         rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
                                                0, self.__getText() )
 
-        # for an arrow box
-        singleCharRect = s.monoFontMetrics.tightBoundingRect( 'W' )
-        self.__arrowHeight = singleCharRect.height()
-        self.__arrowWidth = self.__arrowHeight
-
         self.minHeight = rect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
         self.minWidth = max( rect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding +
-                             2 * s.returnRectRadius + self.__arrowWidth,
+                             2 * s.hTextPadding + self.__arrowWidth,
                              s.minWidth )
         self.height = self.minHeight
         self.width = self.minWidth
@@ -1388,8 +1386,14 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
         self.baseX = baseX
         self.baseY = baseY
         self.setRect( baseX, baseY, self.width, self.height )
+
+        s = self.canvas.settings
+        self.arrowItem.setPos( baseX + s.hCellPadding + s.hTextPadding,
+                               baseY + self.height/2 - self.arrowItem.height()/2 )
+
         self.setToolTip( self.getTooltip() )
         scene.addItem( self )
+        scene.addItem( self.arrowItem )
         return
 
     def paint( self, painter, option, widget ):
@@ -1417,37 +1421,17 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
                                  self.width - 2 * s.hCellPadding,
                                  self.height - 2 * s.vCellPadding,
                                  s.returnRectRadius, s.returnRectRadius )
-        painter.drawLine( self.baseX + s.hCellPadding + s.returnRectRadius +
-                          self.__arrowWidth + s.hTextPadding,
-                          self.baseY + s.vCellPadding,
-                          self.baseX + s.hCellPadding + s.returnRectRadius +
-                          self.__arrowWidth + s.hTextPadding,
-                          self.baseY + self.height - s.vCellPadding )
-
-        # Draw the arrow
-        beginX = self.baseX + s.hCellPadding + s.returnRectRadius
-        beginY = self.baseY + self.height / 2 + self.__arrowHeight / 2
-        endX = beginX + self.__arrowWidth
-        endY = beginY - self.__arrowHeight
-        painter.drawLine( beginX, beginY, endX, endY )
-
-        angle = atan2( beginY - endY, beginX - endX )
-        cosy = cos( angle )
-        siny = sin( angle )
-        painter.setRenderHints( QPainter.Antialiasing )
-        painter.drawLine( endX, endY,
-                          endX + int( s.arrowLength * cosy - ( s.arrowLength / 2.0 * siny ) ),
-                          endY + int( s.arrowLength * siny + ( s.arrowLength / 2.0 * cosy ) ) )
-        painter.drawLine( endX, endY,
-                          endX + int( s.arrowLength * cosy + s.arrowLength / 2.0 * siny ),
-                          endY - int( s.arrowLength / 2.0 * cosy - s.arrowLength * siny ) )
-
+        painter.drawRoundedRect( self.baseX + s.hCellPadding,
+                                 self.baseY + s.vCellPadding,
+                                 self.__arrowWidth + 2 * s.hTextPadding,
+                                self.height - 2 * s.vCellPadding,
+                                s.returnRectRadius, s.returnRectRadius )
 
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
-        painter.drawText( endX + 2 * s.hTextPadding,
+        painter.drawText( self.baseX + s.hCellPadding + self.__arrowWidth + 3 * s.hTextPadding,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           int( self.rect().width() ) - 2 * (s.hTextPadding + s.hCellPadding) - self.__arrowWidth,
                           int( self.rect().height() ) - 2 * (s.vTextPadding + s.vCellPadding),
@@ -1535,25 +1519,6 @@ class AssertCell( CellElement, QGraphicsRectItem ):
                           self.width - 2 * s.hCellPadding - self.__diamondDiagonal,
                           self.height - 2 * s.vCellPadding )
 
-        # Draw the arrow
-#        beginX = self.baseX + s.hCellPadding + s.returnRectRadius
-#        beginY = self.baseY + self.height / 2 + self.__arrowHeight / 2
-#        endX = beginX + self.__arrowWidth
-#        endY = beginY - self.__arrowHeight
-#        painter.drawLine( beginX, beginY, endX, endY )
-
-#        angle = atan2( beginY - endY, beginX - endX )
-#        cosy = cos( angle )
-#        siny = sin( angle )
-#        painter.setRenderHints( QPainter.Antialiasing )
-#        painter.drawLine( endX, endY,
-#                          endX + int( s.arrowLength * cosy - ( s.arrowLength / 2.0 * siny ) ),
-#                          endY + int( s.arrowLength * siny + ( s.arrowLength / 2.0 * cosy ) ) )
-#        painter.drawLine( endX, endY,
-#                          endX + int( s.arrowLength * cosy + s.arrowLength / 2.0 * siny ),
-#                          endY - int( s.arrowLength / 2.0 * cosy - s.arrowLength * siny ) )
-
-
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
         painter.setFont( s.monoFont )
@@ -1594,8 +1559,10 @@ class ImportCell( CellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.IMPORT
         self.__text = None
-        self.arrowItem = SVGItem( "import.svgz" )
         self.__arrowWidth = 16
+        self.arrowItem = SVGItem( "import.svgz" )
+        self.arrowItem.setWidth( self.__arrowWidth )
+        self.arrowItem.setToolTip( "import" )
         return
 
     def __getText( self ):
@@ -1622,7 +1589,6 @@ class ImportCell( CellElement, QGraphicsRectItem ):
         self.setRect( baseX, baseY, self.width, self.height )
 
         s = self.canvas.settings
-        self.arrowItem.setWidth( self.__arrowWidth )
         self.arrowItem.setPos( baseX + s.hCellPadding + s.hTextPadding,
                                baseY + self.height/2 - self.arrowItem.height()/2 )
         self.setToolTip( self.getTooltip() )
