@@ -248,35 +248,6 @@ Py::Object  FragmentBase::getLineContent( const Py::Tuple &  args )
                             "(text buffer)" );
 }
 
-#if 0
-// TODO: No need anymore?
-// Updates the end of the fragment with a new candidate if the new end is
-// further than the current
-void  FragmentBase::updateEnd( INT_TYPE  otherEnd,
-                               INT_TYPE  otherEndLine, INT_TYPE  otherEndPos )
-{
-    if ( end == -1 || otherEnd > end )
-    {
-        end = otherEnd;
-        endLine = otherEndLine;
-        endPos = otherEndPos;
-    }
-}
-
-// Updates the begin of the fragment if needed
-void  FragmentBase::updateBegin( INT_TYPE  otherBegin,
-                                 INT_TYPE  otherBeginLine,
-                                 INT_TYPE  otherBeginPos )
-{
-    if ( begin == -1 || otherBegin < begin )
-    {
-        begin = otherBegin;
-        beginLine = otherBeginLine;
-        beginPos = otherBeginPos;
-    }
-}
-#endif
-
 
 void FragmentBase::updateBegin( const FragmentBase *  other )
 {

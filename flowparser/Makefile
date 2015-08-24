@@ -33,7 +33,7 @@ PYTHON_INCLUDE=$(shell python -c 'import distutils.sysconfig; print distutils.sy
 INCLUDE=${PYCXX_INCLUDE} -I${PYTHON_INCLUDE}
 
 VERSION_DEFINES=-DCDM_CF_PARSER_VERION=\"${VERSION}\"
-FLAGS=-Wall -O2 -ffast-math -fomit-frame-pointer -fPIC -fexceptions -frtti -DNDEBUG -D_GNU_SOURCE ${VERSION_DEFINES}
+FLAGS=-Wall -O2 -fno-gcse -ffast-math -fomit-frame-pointer -fPIC -fexceptions -frtti -DNDEBUG -D_GNU_SOURCE ${VERSION_DEFINES}
 
 PYCXX_OBJ_FILES=pycxx/Src/cxxsupport.o pycxx/Src/cxx_extensions.o \
                 pycxx/Src/IndirectPythonInterface.o pycxx/Src/cxxextensions.o
