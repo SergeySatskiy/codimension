@@ -1575,6 +1575,7 @@ class ImportCell( CellElement, QGraphicsRectItem ):
         self.kind = CellElement.IMPORT
         self.__text = None
         self.__arrowWidth = 16
+        self.__textRect = None
         self.arrowItem = SVGItem( "import.svgz" )
         self.arrowItem.setWidth( self.__arrowWidth )
         self.arrowItem.setToolTip( "import" )
@@ -1587,13 +1588,12 @@ class ImportCell( CellElement, QGraphicsRectItem ):
 
     def render( self ):
         s = self.canvas.settings
-        rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
+        self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
                                                0, self.__getText() )
-
-        # for an arrow box
-        self.minHeight = rect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
-        self.minWidth = rect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding + \
-                        self.__arrowWidth + 2 * s.hTextPadding
+        self.minHeight = self.__textRect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
+        self.minWidth = max( self.__textRect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding +
+                             self.__arrowWidth + 2 * s.hTextPadding,
+                             s.minWidth )
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1604,9 +1604,12 @@ class ImportCell( CellElement, QGraphicsRectItem ):
         self.setRect( baseX, baseY, self.width, self.height )
 
         s = self.canvas.settings
-        self.arrowItem.setPos( baseX + s.hCellPadding + s.hTextPadding,
+        if s.stretchBlocks:
+            hShift = 0
+        else:
+            hShift = (self.width - self.minWidth) / 2
+        self.arrowItem.setPos( baseX + s.hCellPadding + s.hTextPadding + hShift,
                                baseY + self.height/2 - self.arrowItem.height()/2 )
-        self.setToolTip( self.getTooltip() )
         scene.addItem( self )
         scene.addItem( self.arrowItem )
         return
@@ -1631,23 +1634,30 @@ class ImportCell( CellElement, QGraphicsRectItem ):
 
         pen = QPen( getDarkerColor( s.boxBGColor ) )
         painter.setPen( pen )
-        painter.drawRect( self.baseX + s.hCellPadding,
+        if s.stretchBlocks:
+            hShift = 0
+            width = self.width
+        else:
+            hShift = (self.width - self.minWidth) / 2
+            width = self.minWidth
+        painter.drawRect( self.baseX + s.hCellPadding + hShift,
                           self.baseY + s.vCellPadding,
-                          self.width - 2 * s.hCellPadding,
+                          width - 2 * s.hCellPadding,
                           self.height - 2 * s.vCellPadding )
-        painter.drawLine( self.baseX + s.hCellPadding + self.__arrowWidth + 2 * s.hTextPadding,
+        painter.drawLine( self.baseX + s.hCellPadding + self.__arrowWidth + 2 * s.hTextPadding + hShift,
                           self.baseY + s.vCellPadding,
-                          self.baseX + s.hCellPadding + self.__arrowWidth + 2 * s.hTextPadding,
+                          self.baseX + s.hCellPadding + self.__arrowWidth + 2 * s.hTextPadding + hShift,
                           self.baseY + self.height - s.vCellPadding )
 
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
-        painter.drawText( self.baseX + s.hCellPadding + self.__arrowWidth + 3 * s.hTextPadding,
+        textRectWidth = width - 2 * s.hCellPadding - 4 * s.hTextPadding - self.__arrowWidth
+        textShift = ( textRectWidth - self.__textRect.width() ) / 2
+        painter.drawText( self.baseX + s.hCellPadding + self.__arrowWidth + 3 * s.hTextPadding + hShift + textShift,
                           self.baseY + s.vCellPadding + s.vTextPadding,
-                          int( self.rect().width() ) - 2 * s.hTextPadding,
-                          int( self.rect().height() ) - 2 * s.vTextPadding,
+                          self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft,
                           self.__getText() )
         return
