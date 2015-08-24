@@ -173,15 +173,31 @@ class CellElement:
                                         0, 0,  maxint, maxint, 0, text )
 
     def getTooltip( self ):
-        return "Size: " + str( self.width ) + "x" + str( self.height ) + \
+        s = self.canvas.settings
+        parts = []
+        canvas = self.canvas
+        while canvas is not None:
+            parts.insert( 0, canvas.getScopeName() )
+            canvas = canvas.canvas
+        if s.debug:
+            return "::".join( parts ) + "<br>Size: " + str( self.width ) + "x" + str( self.height ) + \
                " (" + str( self.minWidth ) + "x" + str( self.minHeight ) + ")" + \
                " Row: " + str( self.addr[1] ) + " Column: " + str( self.addr[0] )
+        return "::".join( parts )
 
     def getCanvasTooltip( self ):
-        return "Size: " + str( self.canvas.width ) + "x" + \
-               str( self.canvas.height ) + \
-               " (" + str( self.canvas.minWidth ) + "x" + \
-               str( self.canvas.minHeight ) + ")"
+        s = self.canvas.settings
+        parts = []
+        canvas = self.canvas
+        while canvas is not None:
+            parts.insert( 0, canvas.getScopeName() )
+            canvas = canvas.canvas
+        if s.debug:
+            return "::".join(parts ) + "<br>Size: " + str( self.canvas.width ) + "x" + \
+                   str( self.canvas.height ) + \
+                   " (" + str( self.canvas.minWidth ) + "x" + \
+                   str( self.canvas.minHeight ) + ")"
+        return "::".join( parts )
 
     def _paintBadge( self, painter, option, widget, startX = None,
                                                     startY = None,

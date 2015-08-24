@@ -114,6 +114,41 @@ class VirtualCanvas:
         self.scopeRectangle = None
         return
 
+    def getScopeName( self ):
+        " Provides the name of the scope drawn on the canvas "
+        for rowNumber, row in enumerate( self.cells ):
+            for columnNumber, cell in enumerate( row ):
+                if cell.kind == CellElement.FILE_SCOPE:
+                    return ""
+                if cell.kind == CellElement.FOR_SCOPE:
+                    return "for"
+                if cell.kind == CellElement.WHILE_SCOPE:
+                    return "while"
+                if cell.kind == CellElement.TRY_SCOPE:
+                    return "try"
+                if cell.kind == CellElement.WITH_SCOPE:
+                    return "with"
+                if cell.kind == CellElement.EXCEPT_SCOPE:
+                    return "except"
+                if cell.kind == CellElement.FINALLY_SCOPE:
+                    return "finally"
+                if cell.kind == CellElement.FUNC_SCOPE:
+                    return "def&nbsp;<i>" + cell.ref.name.getContent() + "</i>()"
+                if cell.kind == CellElement.CLASS_SCOPE:
+                    return "class&nbsp;" + cell.ref.name.getContent()
+                if cell.kind == CellElement.DECOR_SCOPE:
+                    return "@" + cell.ref.name.getContent()
+                if cell.kind == CellElement.ELSE_SCOPE:
+                    parentCanvas = cell.canvas.canvas
+                    canvasToTheLeft = parentCanvas.cells[ cell.canvas.addr[ 1 ] ][ cell.canvas.addr[ 0 ] - 1 ]
+                    scopeToTheLeftName = canvasToTheLeft.getScopeName()
+                    if scopeToTheLeftName in [ "for", "while" ]:
+                        return scopeToTheLeftName + "-else"
+                    if scopeToTheLeftName in [ "try", "except" ]:
+                        return "try-else"
+                    return "else"
+        return None
+
     def __str__( self ):
         s = "Rows: " + str( len( self.cells ) )
         c = 0
@@ -221,6 +256,7 @@ class VirtualCanvas:
 
                         # Fix the parent
                         scopeCanvas.parent = decScope
+                        scopeCanvas.canvas = decScope
                         # Set the decorator content
                         decScope.cells[ decScopeRows - 2 ][ 1 ] = scopeCanvas
                         scopeCanvas.addr = [ 1, decScopeRows - 2 ]
