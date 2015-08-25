@@ -121,21 +121,21 @@ class VirtualCanvas:
                 if cell.kind == CellElement.FILE_SCOPE:
                     return ""
                 if cell.kind == CellElement.FOR_SCOPE:
-                    return "for"
+                    return "<b>for</b>"
                 if cell.kind == CellElement.WHILE_SCOPE:
-                    return "while"
+                    return "<b>while</b>"
                 if cell.kind == CellElement.TRY_SCOPE:
-                    return "try"
+                    return "<b>try</b>"
                 if cell.kind == CellElement.WITH_SCOPE:
-                    return "with"
+                    return "<b>with</b>"
                 if cell.kind == CellElement.EXCEPT_SCOPE:
-                    return "except"
+                    return "<b>except</b>"
                 if cell.kind == CellElement.FINALLY_SCOPE:
-                    return "finally"
+                    return "<b>finally</b>"
                 if cell.kind == CellElement.FUNC_SCOPE:
-                    return "def&nbsp;<i>" + cell.ref.name.getContent() + "</i>()"
+                    return "<b>def</b>&nbsp;<i>" + cell.ref.name.getContent() + "</i>()"
                 if cell.kind == CellElement.CLASS_SCOPE:
-                    return "class&nbsp;" + cell.ref.name.getContent()
+                    return "<b>class</b>&nbsp;" + cell.ref.name.getContent()
                 if cell.kind == CellElement.DECOR_SCOPE:
                     return "@" + cell.ref.name.getContent()
                 if cell.kind == CellElement.ELSE_SCOPE:
@@ -143,10 +143,10 @@ class VirtualCanvas:
                     canvasToTheLeft = parentCanvas.cells[ cell.canvas.addr[ 1 ] ][ cell.canvas.addr[ 0 ] - 1 ]
                     scopeToTheLeftName = canvasToTheLeft.getScopeName()
                     if scopeToTheLeftName in [ "for", "while" ]:
-                        return scopeToTheLeftName + "-else"
+                        return "<b>" + scopeToTheLeftName + "</b>-<b>else</b>"
                     if scopeToTheLeftName in [ "try", "except" ]:
-                        return "try-else"
-                    return "else"
+                        return "<b>try</b>-<b>else</b>"
+                    return "<b>else</b>"
         return None
 
     def __str__( self ):
