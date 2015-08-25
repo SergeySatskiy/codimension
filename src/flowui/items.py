@@ -1747,18 +1747,20 @@ class IfCell( CellElement, QGraphicsRectItem ):
                           self.baseX + self.width / 2,
                           self.baseY + self.height )
 
+        # Draw the main element
         pen = QPen( getDarkerColor( s.boxBGColor ) )
         painter.setPen( pen )
         painter.drawPath( path )
+
+        pen = QPen( s.boxFGColor )
+        painter.setFont( s.monoFont )
+        painter.setPen( pen )
+        # Draw the 'false' connector
         painter.drawLine( self.baseX + (self.width - s.hCellPadding),
                           self.baseY + self.height / 2,
                           self.baseX + self.width,
                           self.baseY + self.height / 2 )
-
         # Draw the text in the rectangle
-        pen = QPen( s.boxFGColor )
-        painter.setFont( s.monoFont )
-        painter.setPen( pen )
         painter.drawText( self.baseX + s.hCellPadding + s.ifWidth + s.hTextPadding,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           int( self.rect().width() ) - 2 * s.ifWidth - 2 * s.hTextPadding,
