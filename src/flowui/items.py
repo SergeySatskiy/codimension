@@ -1159,9 +1159,6 @@ class FinallyScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return
 
 
-
-
-
 class BreakCell( CellElement, QGraphicsRectItem ):
     " Represents a single break statement "
 
@@ -1211,7 +1208,6 @@ class BreakCell( CellElement, QGraphicsRectItem ):
         pen = QPen( getDarkerColor( s.breakBGColor ) )
         painter.setPen( pen )
 
-        # 5 points
         xShift = (self.width - self.minWidth) / 2
         yShift = (self.height - self.minHeight) / 2
         x1 = self.baseX + self.__hSpacing + xShift
@@ -1239,16 +1235,15 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self )
         self.kind = CellElement.CONTINUE
         self.__textRect = None
-        self.__radius = None
+        self.__vSpacing = 0
+        self.__hSpacing = 4
         return
 
     def render( self ):
         s = self.canvas.settings
-        self.__textRect = self.getBoundingRect( "c" )
-        self.__radius = int( sqrt( self.__textRect.width() ** 2 +
-                                   self.__textRect.height() ** 2 ) / 2 ) + 1
-        self.minHeight = 2 * (self.__radius + s.vCellPadding)
-        self.minWidth = 2 * (self.__radius + s.hCellPadding)
+        self.__textRect = self.getBoundingRect( "continue" )
+        self.minHeight = self.__textRect.height() + 4 * self.__vSpacing
+        self.minWidth = self.__textRect.width() + 4 * self.__hSpacing
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1257,7 +1252,7 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
         self.baseX = baseX
         self.baseY = baseY
         self.setRect( baseX, baseY, self.width, self.height )
-        self.setToolTip( self.getTooltip() + " radius: " + str( self.__radius ) )
+        self.setToolTip( self.getTooltip() )
         scene.addItem( self )
         return
 
@@ -1277,20 +1272,27 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
                           self.baseY,
                           self.baseX + self.width / 2,
                           self.baseY + self.height / 2 )
-        painter.drawEllipse( self.baseX + self.width / 2 - self.__radius,
-                             self.baseY + self.height / 2 - self.__radius,
-                             self.__radius * 2, self.__radius * 2 )
+
+        pen = QPen( getDarkerColor( s.continueBGColor ) )
+        painter.setPen( pen )
+
+        xShift = (self.width - self.minWidth) / 2
+        yShift = (self.height - self.minHeight) / 2
+        x1 = self.baseX + self.__hSpacing + xShift
+        y1 = self.baseY + self.__vSpacing + yShift
+        w = 2 * self.__hSpacing + self.__textRect.width()
+        h = 2 * self.__vSpacing + self.__textRect.height()
+
+        painter.drawRoundedRect( x1, y1, w, h, 2, 2 )
 
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
-        painter.drawText( self.baseX + (self.width - self.__textRect.width()) / 2,
-                          self.baseY + (self.height - self.__textRect.height()) / 2,
+        painter.drawText( x1 + self.__hSpacing, y1 + self.__vSpacing,
                           self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignCenter, "c" )
+                          Qt.AlignLeft, "continue" )
         return
-
 
 
 class ReturnCell( CellElement, QGraphicsRectItem ):
@@ -1760,8 +1762,8 @@ class IfCell( CellElement, QGraphicsRectItem ):
         painter.setPen( pen )
         painter.drawPath( path )
 
-        pen = QPen( s.boxFGColor )
-        painter.setFont( s.monoFont )
+        pen = QPen( s.lineColor )
+        pen.setWidth( s.lineWidth )
         painter.setPen( pen )
         # Draw the 'false' connector
         painter.drawLine( self.baseX + (self.width - s.hCellPadding),
@@ -1769,6 +1771,8 @@ class IfCell( CellElement, QGraphicsRectItem ):
                           self.baseX + self.width,
                           self.baseY + self.height / 2 )
         # Draw the text in the rectangle
+        pen = QPen( s.boxFGColor )
+        painter.setFont( s.monoFont )
         painter.drawText( self.baseX + s.hCellPadding + s.ifWidth + s.hTextPadding,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           int( self.rect().width() ) - 2 * s.ifWidth - 2 * s.hTextPadding,

@@ -103,8 +103,8 @@ class CFlowSettings:
         self.tryScopeBGColor = QColor( 255, 255, 255, 255 )
         self.exceptScopeBGColor = QColor( 255, 255, 255, 255 )
         self.finallyScopeBGColor = QColor( 192, 192, 192, 255 )
-        self.breakBGColor = QColor( 255, 0, 0, 255 )
-        self.continueBGColor = QColor( 0, 255, 0, 255 )
+        self.breakBGColor = QColor( 255, 204, 188, 255 )
+        self.continueBGColor = QColor( 255, 204, 188, 255 )
         self.returnBGColor = QColor( 255, 255, 255, 255 )
         return
 
