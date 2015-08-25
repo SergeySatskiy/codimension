@@ -32,6 +32,11 @@ def getPythonParserVersion():
     import cdmbriefparser
     return cdmbriefparser.getVersion()
 
+def getControlFlowParserVersion():
+    " Provides the python control flow version "
+    import cdmcf
+    return cdmcf.VERSION
+
 def getPythonInterpreterVersion():
     " Provides the python interpreter version "
     import sys
@@ -187,6 +192,11 @@ def getComponentInfo():
                         "GPL-3.0",
                         "http://www.gnu.org/licenses/gpl-3.0.html") )
     components.append( ("Codimension python parser", getPythonParserVersion(),
+                        "http://satsky.spb.ru/codimension/", None,
+                        "GPL-3.0",
+                        "http://www.gnu.org/licenses/gpl-3.0.html") )
+    components.append( ("Codimension python control flow parser",
+                        getControlFlowParserVersion(),
                         "http://satsky.spb.ru/codimension/", None,
                         "GPL-3.0",
                         "http://www.gnu.org/licenses/gpl-3.0.html") )
