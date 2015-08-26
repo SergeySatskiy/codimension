@@ -1316,7 +1316,9 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
         self.__textRect = self.getBoundingRect( self.__getText() )
 
         self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
-        self.minWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
+        self.minWidth = max( self.__textRect.width() +
+                             2 * (s.hCellPadding + s.hTextPadding) +
+                             s.returnRectRadius,
                              s.minWidth )
 
         self.height = self.minHeight
@@ -1367,8 +1369,7 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
         pen = QPen( s.boxFGColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
-        painter.drawText( self.baseX + s.hCellPadding +
-                          (self.width - 2 * s.hCellPadding - self.__textRect.width()) / 2,
+        painter.drawText( self.baseX + self.width / 2 - self.__textRect.width() / 2,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, self.__getText() )
@@ -1697,6 +1698,7 @@ class IfCell( CellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.IF
         self.__text = None
+        self.__textRect = None
         return
 
     def __getText( self ):
@@ -1706,11 +1708,12 @@ class IfCell( CellElement, QGraphicsRectItem ):
 
     def render( self ):
         s = self.canvas.settings
-        rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
-                                               self.__getText() )
+        self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
+                                                          self.__getText() )
 
-        self.minHeight = rect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
-        self.minWidth = rect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding + 2 * s.ifWidth
+        self.minHeight = self.__textRect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
+        self.minWidth = max( self.__textRect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding + 2 * s.ifWidth,
+                             s.minWidth )
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1727,29 +1730,12 @@ class IfCell( CellElement, QGraphicsRectItem ):
         " Draws the code block "
         s = self.canvas.settings
 
-        path = QPainterPath()
-        path.moveTo( self.baseX + s.hCellPadding,
-                     self.baseY + self.height / 2 )
-        path.lineTo( self.baseX + s.hCellPadding + s.ifWidth,
-                     self.baseY + s.vCellPadding )
-        path.lineTo( self.baseX + (self.width - s.hCellPadding - s.ifWidth),
-                     self.baseY + s.vCellPadding )
-        path.lineTo( self.baseX + (self.width - s.hCellPadding),
-                     self.baseY + self.height / 2 )
-        path.lineTo( self.baseX + (self.width - s.hCellPadding - s.ifWidth),
-                     self.baseY + (self.height - s.vCellPadding) )
-        path.lineTo( self.baseX + s.hCellPadding + s.ifWidth,
-                     self.baseY + (self.height - s.vCellPadding) )
-        path.lineTo( self.baseX + s.hCellPadding,
-                     self.baseY + self.height / 2 )
-
         # Set the colors and line width
         pen = QPen( s.lineColor )
         pen.setWidth( s.lineWidth )
         painter.setPen( pen )
         brush = QBrush( s.boxBGColor )
         painter.setBrush( brush )
-
 
         # Draw the connector as a single line under the rectangle
         painter.drawLine( self.baseX + self.width / 2,
@@ -1760,32 +1746,45 @@ class IfCell( CellElement, QGraphicsRectItem ):
         # Draw the main element
         pen = QPen( getDarkerColor( s.boxBGColor ) )
         painter.setPen( pen )
-        painter.drawPath( path )
 
+        if s.stretchBlocks:
+            hShift = 0
+        else:
+            hShift = (self.width - self.minWidth) / 2
+        x1 = self.baseX + s.hCellPadding + hShift
+        y1 = self.baseY + self.height / 2
+        x2 = self.baseX + s.hCellPadding + s.ifWidth + hShift
+        y2 = self.baseY + s.vCellPadding
+        x3 = self.baseX + (self.width - s.hCellPadding - s.ifWidth - hShift)
+        y3 = y2
+        x4 = x3 + s.ifWidth
+        y4 = y1
+        x5 = x3
+        y5 = self.baseY + (self.height - s.vCellPadding)
+        x6 = x2
+        y6 = y5
+        painter.drawPolygon( QPointF(x1, y1), QPointF(x2, y2),
+                             QPointF(x3, y3), QPointF(x4, y4),
+                             QPointF(x5, y5), QPointF(x6, y6) )
+
+        # Draw the 'false' connector
         pen = QPen( s.lineColor )
         pen.setWidth( s.lineWidth )
         painter.setPen( pen )
-        # Draw the 'false' connector
-        painter.drawLine( self.baseX + (self.width - s.hCellPadding),
-                          self.baseY + self.height / 2,
-                          self.baseX + self.width,
-                          self.baseY + self.height / 2 )
+        painter.drawLine( x4, y4, self.baseX + self.width, y4 )
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
         painter.setFont( s.monoFont )
-        painter.drawText( self.baseX + s.hCellPadding + s.ifWidth + s.hTextPadding,
+        painter.drawText( self.baseX + self.width / 2 - self.__textRect.width() / 2,
                           self.baseY + s.vCellPadding + s.vTextPadding,
-                          int( self.rect().width() ) - 2 * s.ifWidth - 2 * s.hTextPadding,
-                          int( self.rect().height() ) - 2 * s.vTextPadding,
-                          Qt.AlignLeft,
-                          self.__getText() )
+                          self.__textRect.width(), self.__textRect.height(),
+                          Qt.AlignLeft, self.__getText() )
 
         # Draw the 'n' badge
         self._badgeText = 'N'
         self._badgeRect = self.getBadgeBoundingRect( self._badgeText )
         self._paintBadge( painter, option, widget,
-                          self.baseX + self.width - self._badgeRect.width() - 7,
-                          self.baseY + self.height / 2 - self._badgeRect.height() - 3,
+                          x4, y4 - self._badgeRect.height() - 3,
                           False )
         return
 
