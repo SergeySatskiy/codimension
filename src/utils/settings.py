@@ -213,488 +213,444 @@ class ProfilerSettings:
                self.edgeLimit == other.edgeLimit
 
 
-class Settings( object ):
-    """
-    Implementation idea is taken from here:
-    http://wiki.forum.nokia.com/index.php/How_to_make_a_singleton_in_Python
-    """
+class SettingsWrapper( QObject ):
+    """ Provides settings singleton facility """
 
-    iInstance = None
-    class Singleton( QObject ):
-        """ Provides settings singleton facility """
-
-        recentListChanged = pyqtSignal()
-
-        def __init__( self ):
-
-            QObject.__init__( self )
-            self.values = {}
-            self.__setDefaultValues()
-
-            # make sure that the directory exists
-            if not os.path.exists( settingsDir ):
-                os.mkdir( settingsDir )
-
-            # Save the config file name
-            self.fullFileName = settingsDir + "settings"
-
-            # Load previous sessions files positions and tabs status
-            self.values[ "filePositions" ] = FilesPositions( settingsDir )
-            self.values[ "tabsStatus" ] = self.__loadTabsStatus()
-            self.values[ "findFilesWhat" ], \
-            self.values[ "findFilesDirs" ], \
-            self.values[ "findFilesMasks" ] = self.__loadFindFilesHistory()
-            self.values[ "findNameHistory" ] = self.__loadFindNameHistory()
-            self.values[ "findFileHistory" ] = self.__loadFindFileHistory()
-            self.values[ "breakpoints" ] = self.__loadBreakpoints()
-            self.values[ "watchpoints" ] = self.__loadWatchpoints()
-            self.values[ "vcsindicators" ] = self.__loadVCSIndicators()
-
-            # Create file if does not exist
-            if not os.path.exists( self.fullFileName ):
-                # Save to file
-                self.flushSettings()
-                return
-
-            self.__readErrors = []
-            self.__config = ConfigParser.ConfigParser()
-
-            try:
-                self.__config.read( [ self.fullFileName ] )
-            except:
-                # Bad error - save default
-                self.__config = None
-                self.__saveErrors( "Bad format of settings detected. "
-                                   "Overwriting the settings file..." )
-                self.flushSettings()
-                return
-
-            for section in CDM_SETTINGS:
-                for setting in CDM_SETTINGS[ section ]:
-                    if setting.sType == CDMSetting.TYPE_INT:
-                        self.values[ setting.name ] = self.__getInt(
-                                section, setting.name, setting.default )
-                    elif setting.sType == CDMSetting.TYPE_FLOAT:
-                        self.values[ setting.name ] = self.__getFloat(
-                                section, setting.name, setting.default )
-                    elif setting.sType == CDMSetting.TYPE_BOOL:
-                        self.values[ setting.name ] = self.__getBool(
-                                section, setting.name, setting.default )
-                    elif setting.sType == CDMSetting.TYPE_STR:
-                        self.values[ setting.name ] = self.__getStr(
-                                section, setting.name, setting.default )
-                    elif setting.sType == CDMSetting.TYPE_STR_LST:
-                        self.values[ section ] = self.__getStrList(
-                                section, setting.name, setting.default )
-                    elif setting.sType == CDMSetting.TYPE_INT_LST:
-                        self.values[ setting.name ] = self.__getIntList(
-                                section, setting.name, setting.default )
-                    else:
-                        raise Exception( "Unexpected setting type: " +
-                                         str( setting.sType ) )
-
-            # Special checks
-            if len( self.values[ "hSplitterSizes" ] ) != \
-                                    len( _H_SPLITTER_SIZES_DEFAULT ):
-                self.__readErrors.append( "Unexpected number of values in the "
-                                          "[general]/hSplitterSizes setting. "
-                                          "Using default: " +
-                                          str( _H_SPLITTER_SIZES_DEFAULT ) )
-                self.values[ "hSplitterSizes" ] = _H_SPLITTER_SIZES_DEFAULT
-
-            if len( self.values[ "vSplitterSizes" ] ) != \
-                                    len( _V_SPLITTER_SIZES_DEFAULT ):
-                self.__readErrors.append( "Unexpected number of values in the "
-                                          "[general]/vSplitterSizes setting. "
-                                          "Using default: " +
-                                          str( _V_SPLITTER_SIZES_DEFAULT ) )
-                self.values[ "vSplitterSizes" ] = _V_SPLITTER_SIZES_DEFAULT
-
-            self.__config = None
-
-            # If format is bad then overwrite the file
-            if self.__readErrors:
-                self.__saveErrors( "\n".join( self.__readErrors ) )
-                self.flushSettings()
-            return
-
-        def __saveErrors( self, message ):
-            fileName = settingsDir + "startupmessages.log"
-            try:
-                f = open( fileName, "a" )
-                f.write( "------ Startup report at " +
-                         str( datetime.datetime.now() ) + "\n" )
-                f.write( message )
-                f.write( "\n------\n\n" )
-                f.close()
-            except:
-                pass
-
-        def __setDefaultValues( self ):
-            " Sets the default values to the members "
-            for section in CDM_SETTINGS:
-                for setting in CDM_SETTINGS[ section ]:
-                    if setting.sType == CDMSetting.TYPE_STR_LST:
-                        self.values[ section ] = setting.default
-                    else:
-                        self.values[ setting.name ] = setting.default
-            return
-
-        def __getInt( self, sec, key, default ):
-            " Helper to read a config value "
-            try:
-                return self.__config.getint( sec, key )
-            except:
-                self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
-                                          " setting. Using default: " +
-                                          str( default ) )
-            return default
-
-        def __getFloat( self, sec, key, default ):
-            " Helper to read a config value "
-            try:
-                return self.__config.getfloat( sec, key )
-            except:
-                self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
-                                          " setting. Using default: " +
-                                          str( default ) )
-            return default
-
-        def __getBool( self, sec, key, default ):
-            " Helper to read a config value "
-            try:
-                return self.__config.getboolean( sec, key )
-            except:
-                self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
-                                          " setting. Using default: " +
-                                          str( default ) )
-            return default
-
-        def __getStr( self, sec, key, default ):
-            " Helper to read a config value "
-            try:
-                return self.__config.get( sec, key ).strip()
-            except:
-                self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
-                                          " setting. Using default: " +
-                                          str( default ) )
-            return default
-
-        def __getIntList( self, sec, key, default ):
-            " Helper to read a list of integer values "
-            try:
-                values = self.__config.get( sec, key ).split( ',' )
-                return [ int( x ) for x in values ]
-            except:
-                self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
-                                          " setting. Using default: " +
-                                          str( default ) )
-            return default
-
-        def __getStrList( self, sec, key, default ):
-            " Helper to read a list of string values "
-            try:
-                return [ value for name, value in self.__config.items( sec )
-                               if name.startswith( key ) ]
-            except ConfigParser.NoSectionError:
-                self.__readErrors.append( "Section [" + sec + "] is not found. "
-                                          "Using default values: " +
-                                          str( default ) )
-            except:
-                self.__readErrors.append( "Cannot get a setting from section [" +
-                                          sec + "]. Using default values for "
-                                          "the section: " + str( default ) )
-            return default
-
-
-        def flushSettings( self ):
-            """ Writes all the settings into the file """
-
-            # Save the tabs status
-            self.__saveTabsStatus()
-            self.__saveFindFilesHistory()
-            self.__saveFindNameHistory()
-            self.__saveFindFileHistory()
-            self.__saveBreakpoints()
-            self.__saveWatchpoints()
-
-            f = open( self.fullFileName, "w" )
-            self.__writeHeader( f )
-            for section in CDM_SETTINGS:
-                f.write( "\n[" + section + "]\n" )
-                for setting in CDM_SETTINGS[ section ]:
-                    if setting.sType in [ CDMSetting.TYPE_INT,
-                                          CDMSetting.TYPE_FLOAT,
-                                          CDMSetting.TYPE_BOOL,
-                                          CDMSetting.TYPE_STR ]:
-                        f.write( setting.name + "=" +
-                                 str( self.values[ setting.name ] ) + "\n" )
-                    elif setting.sType == CDMSetting.TYPE_INT_LST:
-                        strVal = [ str( x ) for x in
-                                            self.values[ setting.name ] ]
-                        f.write( setting.name + "=" +
-                                 ",".join( strVal ) + "\n" )
-                    elif setting.sType == CDMSetting.TYPE_STR_LST:
-                        index = 0
-                        for item in self.values[ section ]:
-                            f.write( setting.name + str( index ) + "=" +
-                                     item + "\n" )
-                            index += 1
-                    else:
-                        raise Exception( "Unexpected setting type: " +
-                                         str( setting.sType ) )
-
-            f.flush()
-            f.close()
-            self.__readErrors = []
-            return
-
-        def addRecentProject( self, projectFile ):
-            " Adds the recent project to the list "
-            absProjectFile = os.path.abspath( projectFile )
-            recentProjects = self.values[ "recentProjects" ]
-
-            if absProjectFile in recentProjects:
-                recentProjects.remove( absProjectFile )
-
-            recentProjects.insert( 0, absProjectFile )
-            if len( recentProjects ) > _MAX_RECENT_PROJECTS:
-                recentProjects = recentProjects[ 0 : _MAX_RECENT_PROJECTS ]
-            self.values[ "recentProjects" ] = recentProjects
-            self.flushSettings()
-            self.recentListChanged.emit()
-            return
-
-        def deleteRecentProject( self, projectFile ):
-            " Deletes the recent project from the list "
-            absProjectFile = os.path.abspath( projectFile )
-            recentProjects = self.values[ "recentProjects" ]
-
-            if absProjectFile in recentProjects:
-                recentProjects.remove( absProjectFile )
-                self.values[ "recentProjects" ] = recentProjects
-                self.flushSettings()
-                self.recentListChanged.emit()
-            return
-
-        def addExceptionFilter( self, excptType ):
-            " Adds a new exception filter "
-            if excptType not in self.values[ "ignoredExceptions" ]:
-                self.values[ "ignoredExceptions" ].append( excptType )
-                self.flushSettings()
-            return
-
-        def deleteExceptionFilter( self, excptType ):
-            " Deletes the exception filter "
-            if excptType in self.values[ "ignoredExceptions" ]:
-                self.values[ "ignoredExceptions" ].remove( excptType )
-                self.flushSettings()
-            return
-
-        def setExceptionFilters( self, newFilters ):
-            " Sets the new exception filters "
-            self.values[ "ignoredExceptions" ] = newFilters
-            self.flushSettings()
-            return
-
-        @staticmethod
-        def __writeHeader( fileObj ):
-            " Helper to write a header with a warning "
-            fileObj.write( "#\n"
-                           "# Generated automatically\n"
-                           "#\n\n" )
-            return
-
-        @staticmethod
-        def __writeList( fileObj, header, prefix, items ):
-            " Helper to write a list "
-            fileObj.write( "[" + header + "]\n" )
-            index = 0
-            for item in items:
-                fileObj.write( prefix + str( index ) + "=" + item + "\n" )
-                index += 1
-            fileObj.write( "\n" )
-            return
-
-        @staticmethod
-        def __loadListSection( config, section, listPrefix ):
-            " Loads a list off the given section from the given file "
-            if config.has_section( section):
-                return [ value for name, value in config.items( section )
-                               if name.startswith( listPrefix ) ]
-            return []
-
-        def __loadTabsStatus( self ):
-            " Loads the last saved tabs statuses "
-            config = ConfigParser.ConfigParser()
-            try:
-                config.read( settingsDir + "tabsstatus" )
-            except:
-                config = None
-                return []
-
-            # tabs part
-            items = self.__loadListSection( config, 'tabsstatus', 'tab' )
-            config = None
-            return items
-
-        def __saveTabsStatus( self ):
-            " Saves the tabs status "
-            fName = settingsDir + "tabsstatus"
-            try:
-                f = open( fName, "w" )
-                self.__writeHeader( f )
-                self.__writeList( f, "tabsstatus",
-                                  "tab", self.values[ "tabsStatus" ] )
-                f.close()
-            except:
-                # Do nothing, it's not vital important to have this file
-                pass
-            return
-
-        def __loadFindFilesHistory( self ):
-            " Loads the saved find files dialog history "
-            config = ConfigParser.ConfigParser()
-            try:
-                config.read( settingsDir + "findinfiles" )
-            except:
-                return [], [], []
-
-            what = self.__loadListSection( config, 'whathistory', 'what' )
-            dirs = self.__loadListSection( config, 'dirhistory', 'dir' )
-            mask = self.__loadListSection( config, 'maskhistory', 'mask' )
-            return what, dirs, mask
-
-        def __loadStringSectionFromFile( self, fileName, sectionName,
-                                         itemName ):
-            " Loads a string section from a file "
-            config = ConfigParser.ConfigParser()
-            try:
-                config.read( settingsDir + fileName )
-            except:
-                return []
-            return self.__loadListSection( config, sectionName, itemName )
-
-        def __loadFindNameHistory( self ):
-            " Loads the saved find name dialog history "
-            return self.__loadStringSectionFromFile( "findinfiles",
-                                                     "findnamehistory", "find" )
-
-        def __loadFindFileHistory( self ):
-            " Loads the saved find file dialog history "
-            return self.__loadStringSectionFromFile( "findfile",
-                                                     "findfilehistory", "find" )
-
-        def __loadBreakpoints( self ):
-            " Loads the saved breakpoints "
-            return self.__loadStringSectionFromFile( "breakpoints",
-                                                     "breakpoints", "bpoint" )
-
-        def __loadWatchpoints( self ):
-            " Loads the saved watchpoints "
-            return self.__loadStringSectionFromFile( "watchpoints",
-                                                     "watchpoints", "wpoint" )
-
-        def __loadVCSIndicators( self ):
-            " Loads tbe VCS indicators "
-            indicators = self.__loadStringSectionFromFile( "vcsindicators",
-                                                           "indicators", "indicator" )
-            if indicators:
-                return indicators
-            return DEFAULT_VCS_INDICATORS
-
-        def __saveFindFilesHistory( self ):
-            " Saves the find in files dialog history "
-            fName = settingsDir + "findinfiles"
-            try:
-                f = open( fName, "w" )
-                self.__writeHeader( f )
-                self.__writeList( f, "whathistory", "what",
-                                  self.values[ "findFilesWhat" ] )
-                self.__writeList( f, "dirhistory", "dir",
-                                  self.values[ "findFilesDirs" ] )
-                self.__writeList( f, "maskhistory", "mask",
-                                  self.values[ "findFilesMasks" ] )
-                f.close()
-            except:
-                # Do nothing, it's not vital important to have this file
-                pass
-            return
-
-        def __saveStringSectionToFile( self, fileName, sectionName,
-                                       itemName, valuesName ):
-            " Saves a string section into a file "
-            fName = settingsDir + fileName
-            try:
-                f = open( fName, "w" )
-                self.__writeList( f, sectionName, itemName,
-                                  self.values[ valuesName ] )
-                f.close()
-            except:
-                # This method is for files which existance is not vitally
-                # important
-                pass
-            return
-
-        def __saveFindNameHistory( self ):
-            " Saves the find name dialog history "
-            self.__saveStringSectionToFile( "findinfiles", "findnamehistory",
-                                            "find", "findNameHistory" )
-            return
-
-        def __saveFindFileHistory( self ):
-            " Saves the find file dialog history "
-            self.__saveStringSectionToFile( "findfile", "findfilehistory",
-                                            "find", "findFileHistory" )
-            return
-
-        def __saveBreakpoints( self ):
-            " Saves the breakpoints "
-            self.__saveStringSectionToFile( "breakpoints", "breakpoints",
-                                            "bpoint", "breakpoints" )
-            return
-
-        def __saveWatchpoints( self ):
-            " Saves the watchpoints "
-            self.__saveStringSectionToFile( "watchpoints", "watchpoints",
-                                            "wpoint", "watchpoints" )
-            return
-
+    recentListChanged = pyqtSignal()
 
     def __init__( self ):
-        if Settings.iInstance is None:
-            Settings.iInstance = Settings.Singleton()
 
-        self.__dict__[ '_Settings__iInstance' ] = Settings.iInstance
+        QObject.__init__( self )
+        self.__dict__[ "values" ] = {}
+        self.__setDefaultValues()
+
+        # make sure that the directory exists
+        if not os.path.exists( settingsDir ):
+            os.mkdir( settingsDir )
+
+        # Save the config file name
+        self.__dict__[ "fullFileName" ] = settingsDir + "settings"
+
+        # Load previous sessions files positions and tabs status
+        self.values[ "filePositions" ] = FilesPositions( settingsDir )
+        self.values[ "tabsStatus" ] = self.__loadTabsStatus()
+        self.values[ "findFilesWhat" ], \
+        self.values[ "findFilesDirs" ], \
+        self.values[ "findFilesMasks" ] = self.__loadFindFilesHistory()
+        self.values[ "findNameHistory" ] = self.__loadFindNameHistory()
+        self.values[ "findFileHistory" ] = self.__loadFindFileHistory()
+        self.values[ "breakpoints" ] = self.__loadBreakpoints()
+        self.values[ "watchpoints" ] = self.__loadWatchpoints()
+        self.values[ "vcsindicators" ] = self.__loadVCSIndicators()
+
+        # Create file if does not exist
+        if not os.path.exists( self.fullFileName ):
+            # Save to file
+            self.flushSettings()
+            return
+
+        self.__readErrors = []
+        self.__config = ConfigParser.ConfigParser()
+
+        try:
+            self.__config.read( [ self.fullFileName ] )
+        except:
+            # Bad error - save default
+            self.__config = None
+            self.__saveErrors( "Bad format of settings detected. "
+                               "Overwriting the settings file..." )
+            self.flushSettings()
+            return
+
+        for section in CDM_SETTINGS:
+            for setting in CDM_SETTINGS[ section ]:
+                if setting.sType == CDMSetting.TYPE_INT:
+                    self.values[ setting.name ] = self.__getInt(
+                            section, setting.name, setting.default )
+                elif setting.sType == CDMSetting.TYPE_FLOAT:
+                    self.values[ setting.name ] = self.__getFloat(
+                            section, setting.name, setting.default )
+                elif setting.sType == CDMSetting.TYPE_BOOL:
+                    self.values[ setting.name ] = self.__getBool(
+                            section, setting.name, setting.default )
+                elif setting.sType == CDMSetting.TYPE_STR:
+                    self.values[ setting.name ] = self.__getStr(
+                            section, setting.name, setting.default )
+                elif setting.sType == CDMSetting.TYPE_STR_LST:
+                    self.values[ section ] = self.__getStrList(
+                            section, setting.name, setting.default )
+                elif setting.sType == CDMSetting.TYPE_INT_LST:
+                    self.values[ setting.name ] = self.__getIntList(
+                            section, setting.name, setting.default )
+                else:
+                    raise Exception( "Unexpected setting type: " +
+                                     str( setting.sType ) )
+
+        # Special checks
+        if len( self.values[ "hSplitterSizes" ] ) != \
+                                len( _H_SPLITTER_SIZES_DEFAULT ):
+            self.__readErrors.append( "Unexpected number of values in the "
+                                      "[general]/hSplitterSizes setting. "
+                                      "Using default: " +
+                                      str( _H_SPLITTER_SIZES_DEFAULT ) )
+            self.values[ "hSplitterSizes" ] = _H_SPLITTER_SIZES_DEFAULT
+
+        if len( self.values[ "vSplitterSizes" ] ) != \
+                                len( _V_SPLITTER_SIZES_DEFAULT ):
+            self.__readErrors.append( "Unexpected number of values in the "
+                                      "[general]/vSplitterSizes setting. "
+                                      "Using default: " +
+                                      str( _V_SPLITTER_SIZES_DEFAULT ) )
+            self.values[ "vSplitterSizes" ] = _V_SPLITTER_SIZES_DEFAULT
+
+        self.__config = None
+
+        # If format is bad then overwrite the file
+        if self.__readErrors:
+            self.__saveErrors( "\n".join( self.__readErrors ) )
+            self.flushSettings()
         return
 
-    def __getattr__( self, aAttr ):
-        return self.iInstance.values[ aAttr ]
+    def __saveErrors( self, message ):
+        fileName = settingsDir + "startupmessages.log"
+        try:
+            f = open( fileName, "a" )
+            f.write( "------ Startup report at " +
+                     str( datetime.datetime.now() ) + "\n" )
+            f.write( message )
+            f.write( "\n------\n\n" )
+            f.close()
+        except:
+            pass
 
-    def __setattr__( self, aAttr, aValue ):
-        if self.iInstance.values[ aAttr ] != aValue:
-            self.iInstance.values[ aAttr ] = aValue
-            self.iInstance.flushSettings()
+    def __setDefaultValues( self ):
+        " Sets the default values to the members "
+        for section in CDM_SETTINGS:
+            for setting in CDM_SETTINGS[ section ]:
+                if setting.sType == CDMSetting.TYPE_STR_LST:
+                    self.values[ section ] = setting.default
+                else:
+                    self.values[ setting.name ] = setting.default
+        return
+
+    def __getInt( self, sec, key, default ):
+        " Helper to read a config value "
+        try:
+            return self.__config.getint( sec, key )
+        except:
+            self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
+                                      " setting. Using default: " +
+                                      str( default ) )
+        return default
+
+    def __getFloat( self, sec, key, default ):
+        " Helper to read a config value "
+        try:
+            return self.__config.getfloat( sec, key )
+        except:
+            self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
+                                      " setting. Using default: " +
+                                      str( default ) )
+        return default
+
+    def __getBool( self, sec, key, default ):
+        " Helper to read a config value "
+        try:
+            return self.__config.getboolean( sec, key )
+        except:
+            self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
+                                      " setting. Using default: " +
+                                      str( default ) )
+        return default
+
+    def __getStr( self, sec, key, default ):
+        " Helper to read a config value "
+        try:
+            return self.__config.get( sec, key ).strip()
+        except:
+            self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
+                                      " setting. Using default: " +
+                                      str( default ) )
+        return default
+
+    def __getIntList( self, sec, key, default ):
+        " Helper to read a list of integer values "
+        try:
+            values = self.__config.get( sec, key ).split( ',' )
+            return [ int( x ) for x in values ]
+        except:
+            self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
+                                      " setting. Using default: " +
+                                      str( default ) )
+        return default
+
+    def __getStrList( self, sec, key, default ):
+        " Helper to read a list of string values "
+        try:
+            return [ value for name, value in self.__config.items( sec )
+                           if name.startswith( key ) ]
+        except ConfigParser.NoSectionError:
+            self.__readErrors.append( "Section [" + sec + "] is not found. "
+                                      "Using default values: " +
+                                      str( default ) )
+        except:
+            self.__readErrors.append( "Cannot get a setting from section [" +
+                                      sec + "]. Using default values for "
+                                      "the section: " + str( default ) )
+        return default
+
+
+    def flushSettings( self ):
+        """ Writes all the settings into the file """
+
+        # Save the tabs status
+        self.__saveTabsStatus()
+        self.__saveFindFilesHistory()
+        self.__saveFindNameHistory()
+        self.__saveFindFileHistory()
+        self.__saveBreakpoints()
+        self.__saveWatchpoints()
+
+        f = open( self.fullFileName, "w" )
+        self.__writeHeader( f )
+        for section in CDM_SETTINGS:
+            f.write( "\n[" + section + "]\n" )
+            for setting in CDM_SETTINGS[ section ]:
+                if setting.sType in [ CDMSetting.TYPE_INT,
+                                      CDMSetting.TYPE_FLOAT,
+                                      CDMSetting.TYPE_BOOL,
+                                      CDMSetting.TYPE_STR ]:
+                    f.write( setting.name + "=" +
+                             str( self.values[ setting.name ] ) + "\n" )
+                elif setting.sType == CDMSetting.TYPE_INT_LST:
+                    strVal = [ str( x ) for x in
+                                        self.values[ setting.name ] ]
+                    f.write( setting.name + "=" +
+                             ",".join( strVal ) + "\n" )
+                elif setting.sType == CDMSetting.TYPE_STR_LST:
+                    index = 0
+                    for item in self.values[ section ]:
+                        f.write( setting.name + str( index ) + "=" +
+                                 item + "\n" )
+                        index += 1
+                else:
+                    raise Exception( "Unexpected setting type: " +
+                                     str( setting.sType ) )
+
+        f.flush()
+        f.close()
+        self.__readErrors = []
         return
 
     def addRecentProject( self, projectFile ):
-        self.iInstance.addRecentProject( projectFile )
+        " Adds the recent project to the list "
+        absProjectFile = os.path.abspath( projectFile )
+        recentProjects = self.values[ "recentProjects" ]
+
+        if absProjectFile in recentProjects:
+            recentProjects.remove( absProjectFile )
+
+        recentProjects.insert( 0, absProjectFile )
+        if len( recentProjects ) > _MAX_RECENT_PROJECTS:
+            recentProjects = recentProjects[ 0 : _MAX_RECENT_PROJECTS ]
+        self.values[ "recentProjects" ] = recentProjects
+        self.flushSettings()
+        self.recentListChanged.emit()
         return
 
     def deleteRecentProject( self, projectFile ):
-        self.iInstance.deleteRecentProject( projectFile )
+        " Deletes the recent project from the list "
+        absProjectFile = os.path.abspath( projectFile )
+        recentProjects = self.values[ "recentProjects" ]
+
+        if absProjectFile in recentProjects:
+            recentProjects.remove( absProjectFile )
+            self.values[ "recentProjects" ] = recentProjects
+            self.flushSettings()
+            self.recentListChanged.emit()
         return
 
     def addExceptionFilter( self, excptType ):
-        self.iInstance.addExceptionFilter( excptType )
+        " Adds a new exception filter "
+        if excptType not in self.values[ "ignoredExceptions" ]:
+            self.values[ "ignoredExceptions" ].append( excptType )
+            self.flushSettings()
         return
 
     def deleteExceptionFilter( self, excptType ):
-        self.iInstance.deleteExceptionFilter( excptType )
+        " Deletes the exception filter "
+        if excptType in self.values[ "ignoredExceptions" ]:
+            self.values[ "ignoredExceptions" ].remove( excptType )
+            self.flushSettings()
         return
 
-    def flushSettings( self ):
-        self.iInstance.flushSettings()
+    def setExceptionFilters( self, newFilters ):
+        " Sets the new exception filters "
+        self.values[ "ignoredExceptions" ] = newFilters
+        self.flushSettings()
+        return
+
+    @staticmethod
+    def __writeHeader( fileObj ):
+        " Helper to write a header with a warning "
+        fileObj.write( "#\n"
+                       "# Generated automatically\n"
+                       "#\n\n" )
+        return
+
+    @staticmethod
+    def __writeList( fileObj, header, prefix, items ):
+        " Helper to write a list "
+        fileObj.write( "[" + header + "]\n" )
+        index = 0
+        for item in items:
+            fileObj.write( prefix + str( index ) + "=" + item + "\n" )
+            index += 1
+        fileObj.write( "\n" )
+        return
+
+    @staticmethod
+    def __loadListSection( config, section, listPrefix ):
+        " Loads a list off the given section from the given file "
+        if config.has_section( section):
+            return [ value for name, value in config.items( section )
+                           if name.startswith( listPrefix ) ]
+        return []
+
+    def __loadTabsStatus( self ):
+        " Loads the last saved tabs statuses "
+        config = ConfigParser.ConfigParser()
+        try:
+            config.read( settingsDir + "tabsstatus" )
+        except:
+            config = None
+            return []
+
+        # tabs part
+        items = self.__loadListSection( config, 'tabsstatus', 'tab' )
+        config = None
+        return items
+
+    def __saveTabsStatus( self ):
+        " Saves the tabs status "
+        fName = settingsDir + "tabsstatus"
+        try:
+            f = open( fName, "w" )
+            self.__writeHeader( f )
+            self.__writeList( f, "tabsstatus",
+                              "tab", self.values[ "tabsStatus" ] )
+            f.close()
+        except:
+            # Do nothing, it's not vital important to have this file
+            pass
+        return
+
+    def __loadFindFilesHistory( self ):
+        " Loads the saved find files dialog history "
+        config = ConfigParser.ConfigParser()
+        try:
+            config.read( settingsDir + "findinfiles" )
+        except:
+            return [], [], []
+
+        what = self.__loadListSection( config, 'whathistory', 'what' )
+        dirs = self.__loadListSection( config, 'dirhistory', 'dir' )
+        mask = self.__loadListSection( config, 'maskhistory', 'mask' )
+        return what, dirs, mask
+
+    def __loadStringSectionFromFile( self, fileName, sectionName,
+                                     itemName ):
+        " Loads a string section from a file "
+        config = ConfigParser.ConfigParser()
+        try:
+            config.read( settingsDir + fileName )
+        except:
+            return []
+        return self.__loadListSection( config, sectionName, itemName )
+
+    def __loadFindNameHistory( self ):
+        " Loads the saved find name dialog history "
+        return self.__loadStringSectionFromFile( "findinfiles",
+                                                 "findnamehistory", "find" )
+
+    def __loadFindFileHistory( self ):
+        " Loads the saved find file dialog history "
+        return self.__loadStringSectionFromFile( "findfile",
+                                                 "findfilehistory", "find" )
+
+    def __loadBreakpoints( self ):
+        " Loads the saved breakpoints "
+        return self.__loadStringSectionFromFile( "breakpoints",
+                                                 "breakpoints", "bpoint" )
+
+    def __loadWatchpoints( self ):
+        " Loads the saved watchpoints "
+        return self.__loadStringSectionFromFile( "watchpoints",
+                                                 "watchpoints", "wpoint" )
+
+    def __loadVCSIndicators( self ):
+        " Loads tbe VCS indicators "
+        indicators = self.__loadStringSectionFromFile( "vcsindicators",
+                                                       "indicators", "indicator" )
+        if indicators:
+            return indicators
+        return DEFAULT_VCS_INDICATORS
+
+    def __saveFindFilesHistory( self ):
+        " Saves the find in files dialog history "
+        fName = settingsDir + "findinfiles"
+        try:
+            f = open( fName, "w" )
+            self.__writeHeader( f )
+            self.__writeList( f, "whathistory", "what",
+                              self.values[ "findFilesWhat" ] )
+            self.__writeList( f, "dirhistory", "dir",
+                              self.values[ "findFilesDirs" ] )
+            self.__writeList( f, "maskhistory", "mask",
+                              self.values[ "findFilesMasks" ] )
+            f.close()
+        except:
+            # Do nothing, it's not vital important to have this file
+            pass
+        return
+
+    def __saveStringSectionToFile( self, fileName, sectionName,
+                                   itemName, valuesName ):
+        " Saves a string section into a file "
+        fName = settingsDir + fileName
+        try:
+            f = open( fName, "w" )
+            self.__writeList( f, sectionName, itemName,
+                              self.values[ valuesName ] )
+            f.close()
+        except:
+            # This method is for files which existance is not vitally
+            # important
+            pass
+        return
+
+    def __saveFindNameHistory( self ):
+        " Saves the find name dialog history "
+        self.__saveStringSectionToFile( "findinfiles", "findnamehistory",
+                                        "find", "findNameHistory" )
+        return
+
+    def __saveFindFileHistory( self ):
+        " Saves the find file dialog history "
+        self.__saveStringSectionToFile( "findfile", "findfilehistory",
+                                        "find", "findFileHistory" )
+        return
+
+    def __saveBreakpoints( self ):
+        " Saves the breakpoints "
+        self.__saveStringSectionToFile( "breakpoints", "breakpoints",
+                                        "bpoint", "breakpoints" )
+        return
+
+    def __saveWatchpoints( self ):
+        " Saves the watchpoints "
+        self.__saveStringSectionToFile( "watchpoints", "watchpoints",
+                                        "wpoint", "watchpoints" )
         return
 
     @staticmethod
@@ -706,41 +662,57 @@ class Settings( object ):
     def getProfilerSettings( self ):
         " Provides the profiler IDE-wide settings "
         profSettings = ProfilerSettings()
-        profSettings.edgeLimit = self.iInstance.values[ "profileEdgeLimit" ]
-        profSettings.nodeLimit = self.iInstance.values[ "profileNodeLimit" ]
+        profSettings.edgeLimit = self.values[ "profileEdgeLimit" ]
+        profSettings.nodeLimit = self.values[ "profileNodeLimit" ]
         return profSettings
 
     def setProfilerSettings( self, newValues ):
         " Updates the profiler settings "
-        if self.iInstance.values[ "profileEdgeLimit" ] != newValues.edgeLimit or \
-           self.iInstance.values[ "profileNodeLimit" ] != newValues.nodeLimit:
-            self.iInstance.values[ "profileEdgeLimit" ] = newValues.edgeLimit
-            self.iInstance.values[ "profileNodeLimit" ] = newValues.nodeLimit
-            self.iInstance.flushSettings()
+        if self.values[ "profileEdgeLimit" ] != newValues.edgeLimit or \
+           self.values[ "profileNodeLimit" ] != newValues.nodeLimit:
+            self.values[ "profileEdgeLimit" ] = newValues.edgeLimit
+            self.values[ "profileNodeLimit" ] = newValues.nodeLimit
+            self.flushSettings()
         return
 
     def getDebuggerSettings( self ):
         " Provides the debugger IDE-wide settings "
         dbgSettings = DebuggerSettings()
-        dbgSettings.autofork = self.iInstance.values[ "debugAutofork" ]
-        dbgSettings.followChild = self.iInstance.values[ "debugFollowChild" ]
-        dbgSettings.reportExceptions = self.iInstance.values[ "debugReportExceptions" ]
-        dbgSettings.stopAtFirstLine = self.iInstance.values[ "debugStopAtFirstLine" ]
-        dbgSettings.traceInterpreter = self.iInstance.values[ "debugTraceInterpreter" ]
+        dbgSettings.autofork = self.values[ "debugAutofork" ]
+        dbgSettings.followChild = self.values[ "debugFollowChild" ]
+        dbgSettings.reportExceptions = self.values[ "debugReportExceptions" ]
+        dbgSettings.stopAtFirstLine = self.values[ "debugStopAtFirstLine" ]
+        dbgSettings.traceInterpreter = self.values[ "debugTraceInterpreter" ]
         return dbgSettings
 
     def setDebuggerSettings( self, newValues ):
         " Updates the debugger settings "
-        if self.iInstance.values[ "debugAutofork" ] != newValues.autofork or \
-           self.iInstance.values[ "debugFollowChild" ] != newValues.followChild or \
-           self.iInstance.values[ "debugReportExceptions" ] != newValues.reportExceptions or \
-           self.iInstance.values[ "debugStopAtFirstLine" ] != newValues.stopAtFirstLine or \
-           self.iInstance.values[ "debugTraceInterpreter" ] != newValues.traceInterpreter:
-            self.iInstance.values[ "debugAutofork" ] = newValues.autofork
-            self.iInstance.values[ "debugFollowChild" ] = newValues.followChild
-            self.iInstance.values[ "debugReportExceptions" ] = newValues.reportExceptions
-            self.iInstance.values[ "debugStopAtFirstLine" ] = newValues.stopAtFirstLine
-            self.iInstance.values[ "debugTraceInterpreter" ] = newValues.traceInterpreter
-            self.iInstance.flushSettings()
+        if self.values[ "debugAutofork" ] != newValues.autofork or \
+           self.values[ "debugFollowChild" ] != newValues.followChild or \
+           self.values[ "debugReportExceptions" ] != newValues.reportExceptions or \
+           self.values[ "debugStopAtFirstLine" ] != newValues.stopAtFirstLine or \
+           self.values[ "debugTraceInterpreter" ] != newValues.traceInterpreter:
+            self.values[ "debugAutofork" ] = newValues.autofork
+            self.values[ "debugFollowChild" ] = newValues.followChild
+            self.values[ "debugReportExceptions" ] = newValues.reportExceptions
+            self.values[ "debugStopAtFirstLine" ] = newValues.stopAtFirstLine
+            self.values[ "debugTraceInterpreter" ] = newValues.traceInterpreter
+            self.flushSettings()
         return
+
+    def __getattr__( self, aAttr ):
+        return self.values[ aAttr ]
+
+    def __setattr__( self, aAttr, aValue ):
+        # Access to the private members should be checked first
+        if aAttr.startswith( '_SettingsWrapper' ):
+            self.__dict__[ aAttr ] = aValue
+        elif self.values[ aAttr ] != aValue:
+            self.values[ aAttr ] = aValue
+            self.flushSettings()
+
+
+settingsSingleton = SettingsWrapper()
+def Settings():
+    return settingsSingleton
 
