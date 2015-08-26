@@ -29,7 +29,7 @@ from PyQt4.QtGui import ( QTreeWidget, QTreeWidgetItem, QHeaderView, QMenu,
                           QSpacerItem, QVBoxLayout, QSizePolicy, QToolBar,
                           QApplication, QFrame, QLabel, QHBoxLayout, QSplitter,
                           QPalette )
-from utils.pixmapcache import PixmapCache
+from utils.pixmapcache import getIcon
 from utils.settings import Settings
 from utils.project import CodimensionProject, getProjectFileTooltip
 from utils.globals import GlobalData
@@ -89,12 +89,12 @@ class RecentProjectViewItem( QTreeWidgetItem ):
 
     def __markBroken( self ):
         """ Mark the broken project with an icon """
-        self.setIcon( 0, PixmapCache().getIcon( 'brokenproject.png' ) )
+        self.setIcon( 0, getIcon( 'brokenproject.png' ) )
         return
 
     def __markCurrent( self ):
         """ Mark the current project with an icon """
-        self.setIcon( 0, PixmapCache().getIcon( 'currentproject.png' ) )
+        self.setIcon( 0, getIcon( 'currentproject.png' ) )
         self.__isCurrent = True
         return
 
@@ -139,7 +139,7 @@ class RecentFileViewItem( QTreeWidgetItem ):
         self.setToolTip( 0, 'File does not exist' )
         self.setToolTip( 1, 'File does not exist' )
         self.setToolTip( 2, self.getFilename() )
-        self.setIcon( 0, PixmapCache().getIcon( 'brokenproject.png' ) )
+        self.setIcon( 0, getIcon( 'brokenproject.png' ) )
         return
 
     def __markOK( self ):
@@ -155,11 +155,9 @@ class RecentFileViewItem( QTreeWidgetItem ):
             else:
                 self.setToolTip( 1, "" )
             if info.isOK:
-                self.setIcon( 0,
-                              PixmapCache().getIcon( 'filepython.png' ) )
+                self.setIcon( 0, getIcon( 'filepython.png' ) )
             else:
-                self.setIcon( 0,
-                              PixmapCache().getIcon( 'filepythonbroken.png' ) )
+                self.setIcon( 0, getIcon( 'filepythonbroken.png' ) )
             self.setToolTip( 0, "" )
 
         elif fileType == CodimensionProjectFileType:
@@ -241,15 +239,15 @@ class RecentProjectsViewer( QWidget ):
     def __createFilePopupMenu( self ):
         " create the recent files popup menu "
         self.__fileMenu = QMenu( self.recentFilesView )
-        self.__openMenuItem = self.__fileMenu.addAction( \
-                                PixmapCache().getIcon( 'openitem.png' ),
+        self.__openMenuItem = self.__fileMenu.addAction(
+                                getIcon( 'openitem.png' ),
                                 'Open', self.__openFile )
-        self.__copyPathFileMenuItem = self.__fileMenu.addAction( \
-                        PixmapCache().getIcon( 'copytoclipboard.png' ),
+        self.__copyPathFileMenuItem = self.__fileMenu.addAction(
+                        getIcon( 'copytoclipboard.png' ),
                         'Copy path to clipboard', self.__filePathToClipboard )
         self.__fileMenu.addSeparator()
-        self.__delFileMenuItem = self.__fileMenu.addAction( \
-                                PixmapCache().getIcon( 'trash.png' ),
+        self.__delFileMenuItem = self.__fileMenu.addAction(
+                                getIcon( 'trash.png' ),
                                 'Delete from recent',
                                 self.__deleteFile )
         self.recentFilesView.setContextMenuPolicy( Qt.CustomContextMenu )
@@ -265,31 +263,27 @@ class RecentProjectsViewer( QWidget ):
     def __createProjectPopupMenu( self ):
         " Creates the recent project popup menu "
         self.__projectMenu = QMenu( self.projectsView )
-        self.__prjLoadMenuItem = self.__projectMenu.addAction( \
-                                PixmapCache().getIcon( 'load.png' ),
-                                'Load',
+        self.__prjLoadMenuItem = self.__projectMenu.addAction(
+                                getIcon( 'load.png' ), 'Load',
                                 self.__loadProject )
         self.__projectMenu.addSeparator()
-        self.__propsMenuItem = self.__projectMenu.addAction( \
-                                PixmapCache().getIcon( 'smalli.png' ),
-                                'Properties',
+        self.__propsMenuItem = self.__projectMenu.addAction(
+                                getIcon( 'smalli.png' ), 'Properties',
                                 self.__viewProperties )
-        self.__prjCopyPathMenuItem = self.__projectMenu.addAction( \
-                                PixmapCache().getIcon( 'copytoclipboard.png' ),
+        self.__prjCopyPathMenuItem = self.__projectMenu.addAction(
+                                getIcon( 'copytoclipboard.png' ),
                                 'Copy path to clipboard',
                                 self.__prjPathToClipboard )
         self.__projectMenu.addSeparator()
-        self.__delPrjMenuItem = self.__projectMenu.addAction( \
-                                PixmapCache().getIcon( 'trash.png' ),
-                                'Delete from recent',
+        self.__delPrjMenuItem = self.__projectMenu.addAction(
+                                getIcon( 'trash.png' ), 'Delete from recent',
                                 self.__deleteProject )
         self.projectsView.setContextMenuPolicy( Qt.CustomContextMenu )
         self.connect( self.projectsView,
                       SIGNAL( "customContextMenuRequested(const QPoint &)" ),
                       self.__handleShowPrjContextMenu )
 
-        self.connect( Settings().iInstance, SIGNAL( 'recentListChanged' ),
-                      self.__populateProjects )
+        Settings().recentListChanged.connect( self.__populateProjects )
         GlobalData().project.projectChanged.connect( self.__projectChanged )
         return
 
@@ -336,18 +330,18 @@ class RecentProjectsViewer( QWidget ):
                       self.__fileActivated )
 
         # Toolbar part - buttons
-        self.openFileButton = QAction( PixmapCache().getIcon( 'openitem.png' ),
+        self.openFileButton = QAction( getIcon( 'openitem.png' ),
                                        'Open the highlighted file', self )
         self.connect( self.openFileButton, SIGNAL( "triggered()" ),
                       self.__openFile )
-        self.copyFilePathButton = QAction( \
-                        PixmapCache().getIcon( 'copytoclipboard.png' ),
+        self.copyFilePathButton = QAction(
+                        getIcon( 'copytoclipboard.png' ),
                         'Copy path to clipboard', self )
         self.connect( self.copyFilePathButton, SIGNAL( "triggered()" ),
                       self.__filePathToClipboard )
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
-        self.trashFileButton = QAction( PixmapCache().getIcon( 'delitem.png' ),
+        self.trashFileButton = QAction( getIcon( 'delitem.png' ),
                                         'Remove selected (not from the disk)',
                                         self )
         self.connect( self.trashFileButton, SIGNAL( "triggered()" ),
@@ -401,7 +395,7 @@ class RecentProjectsViewer( QWidget ):
 
         self.__showHideButton = QToolButton()
         self.__showHideButton.setAutoRaise( True )
-        self.__showHideButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
+        self.__showHideButton.setIcon( getIcon( 'less.png' ) )
         self.__showHideButton.setFixedSize( 20, 20 )
         self.__showHideButton.setToolTip( "Hide recent projects list" )
         self.__showHideButton.setFocusPolicy( Qt.NoFocus )
@@ -416,23 +410,23 @@ class RecentProjectsViewer( QWidget ):
         self.headerFrame.setLayout( headerLayout )
 
         # Toolbar part - buttons
-        self.loadButton = QAction( PixmapCache().getIcon( 'load.png' ),
+        self.loadButton = QAction( getIcon( 'load.png' ),
                                    'Load the highlighted project', self )
         self.connect( self.loadButton, SIGNAL( "triggered()" ),
                       self.__loadProject )
-        self.propertiesButton = QAction( PixmapCache().getIcon( 'smalli.png' ),
-                                         'Show the highlighted project ' \
+        self.propertiesButton = QAction( getIcon( 'smalli.png' ),
+                                         'Show the highlighted project '
                                          'properties', self )
         self.connect( self.propertiesButton, SIGNAL( "triggered()" ),
                       self.__viewProperties )
-        self.copyPrjPathButton = QAction( \
-                        PixmapCache().getIcon( 'copytoclipboard.png' ),
-                        'Copy path to clipboard', self )
+        self.copyPrjPathButton = QAction( getIcon( 'copytoclipboard.png' ),
+                                                   'Copy path to clipboard',
+                                                   self )
         self.connect( self.copyPrjPathButton, SIGNAL( "triggered()" ),
                       self.__prjPathToClipboard )
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
-        self.trashButton = QAction( PixmapCache().getIcon( 'delitem.png' ),
+        self.trashButton = QAction( getIcon( 'delitem.png' ),
                                     'Remove selected (not from the disk)',
                                     self )
         self.connect( self.trashButton, SIGNAL( "triggered()" ),
@@ -548,8 +542,8 @@ class RecentProjectsViewer( QWidget ):
         self.__propsMenuItem.setEnabled( enabled )
         self.__delPrjMenuItem.setEnabled( not isCurrentProject )
 #        fName = self.__projectContextItem.getFilename()
-        self.__prjLoadMenuItem.setEnabled( enabled and \
-                                           not isCurrentProject and \
+        self.__prjLoadMenuItem.setEnabled( enabled and
+                                           not isCurrentProject and
                                            not self.__debugMode )
 
         self.__projectMenu.popup( QCursor.pos() )
@@ -564,7 +558,7 @@ class RecentProjectsViewer( QWidget ):
 
     def __sortFiles( self ):
         " Sort the file items "
-        self.recentFilesView.sortItems( \
+        self.recentFilesView.sortItems(
                 self.recentFilesView.sortColumn(),
                 self.recentFilesView.header().sortIndicatorOrder() )
         return
@@ -572,7 +566,7 @@ class RecentProjectsViewer( QWidget ):
     def __resizeProjectColumns( self ):
         """ Resize the projects list columns """
         self.projectsView.header().setStretchLastSection( True )
-        self.projectsView.header().resizeSections( \
+        self.projectsView.header().resizeSections(
                                     QHeaderView.ResizeToContents )
         self.projectsView.header().resizeSection( 0, 22 )
         self.projectsView.header().setResizeMode( 0, QHeaderView.Fixed )
@@ -581,7 +575,7 @@ class RecentProjectsViewer( QWidget ):
     def __resizeFileColumns( self ):
         " Resize the files list columns "
         self.recentFilesView.header().setStretchLastSection( True )
-        self.recentFilesView.header().resizeSections( \
+        self.recentFilesView.header().resizeSections(
                                     QHeaderView.ResizeToContents )
         self.recentFilesView.header().resizeSection( 0, 22 )
         self.recentFilesView.header().setResizeMode( 0, QHeaderView.Fixed )
@@ -674,8 +668,8 @@ class RecentProjectsViewer( QWidget ):
                 prj.loadProject( projectFileName )
                 mainWin.activateProjectTab()
         else:
-            logging.error( "The project " + \
-                           os.path.basename( projectFileName ) + \
+            logging.error( "The project " +
+                           os.path.basename( projectFileName ) +
                            " disappeared from the file system." )
             self.__populateProjects()
         QApplication.restoreOverrideCursor()
@@ -715,7 +709,7 @@ class RecentProjectsViewer( QWidget ):
             items = self.projectsView.findItems( GlobalData().project.fileName,
                                                  Qt.MatchExactly, 2 )
             if len( items ) != 1:
-                logging.error( "Unexpected number of matched projects: " + \
+                logging.error( "Unexpected number of matched projects: " +
                                str( len( items ) ) )
                 return
 
@@ -754,14 +748,14 @@ class RecentProjectsViewer( QWidget ):
     def __filePathToClipboard( self ):
         " Copies the file item path to the clipboard "
         if self.__fileContextItem is not None:
-            QApplication.clipboard().setText( \
+            QApplication.clipboard().setText(
                     self.__fileContextItem.getFilename() )
         return
 
     def __prjPathToClipboard( self ):
         " Copies the project item path to the clipboard "
         if self.__projectContextItem is not None:
-            QApplication.clipboard().setText( \
+            QApplication.clipboard().setText(
                     self.__projectContextItem.getFilename() )
         return
 
@@ -792,7 +786,7 @@ class RecentProjectsViewer( QWidget ):
         if self.projectsView.isVisible():
             self.projectsView.setVisible( False )
             self.lowerToolbar.setVisible( False )
-            self.__showHideButton.setIcon( PixmapCache().getIcon( 'more.png' ) )
+            self.__showHideButton.setIcon( getIcon( 'more.png' ) )
             self.__showHideButton.setToolTip( "Show recent projects list" )
 
             self.__minH = self.lower.minimumHeight()
@@ -803,7 +797,7 @@ class RecentProjectsViewer( QWidget ):
         else:
             self.projectsView.setVisible( True )
             self.lowerToolbar.setVisible( True )
-            self.__showHideButton.setIcon( PixmapCache().getIcon( 'less.png' ) )
+            self.__showHideButton.setIcon( getIcon( 'less.png' ) )
             self.__showHideButton.setToolTip( "Hide recent projects list" )
 
             self.lower.setMinimumHeight( self.__minH )
