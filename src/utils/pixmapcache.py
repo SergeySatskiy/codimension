@@ -87,3 +87,8 @@ class PixmapCache( object ):
     def __getattr__( self, aAttr ):
         return getattr( self._iInstance, aAttr )
 
+
+def getIcon( name ):
+    " Syntactic shugar "
+    return PixmapCache().getIcon( name )
+
