@@ -2700,6 +2700,21 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         containerLayout.setSpacing( 0 )
         containerLayout.addWidget( self.__splitter )
         self.setLayout( containerLayout )
+
+        self.__splitter.setSizes( Settings().flowSplitterSizes )
+        self.__splitter.splitterMoved.connect( self.flowSplitterMoved )
+        Settings().flowSplitterChanged.connect( self.otherFlowSplitterMoved )
+        return
+
+    def flowSplitterMoved( self, pos, index ):
+        " Splitter has been moved "
+        newSizes = list( self.__splitter.sizes() )
+        Settings().flowSplitterSizes = newSizes
+        return
+
+    def otherFlowSplitterMoved( self ):
+        " Other window has changed the splitter position "
+        self.__splitter.setSizes( Settings().flowSplitterSizes )
         return
 
     def updateStatus( self ):

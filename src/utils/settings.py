@@ -36,6 +36,7 @@ thirdpartyDir = os.path.dirname( os.path.abspath( sys.argv[ 0 ] ) ) + \
 
 _H_SPLITTER_SIZES_DEFAULT = [ 200, 450, 575 ]
 _V_SPLITTER_SIZES_DEFAULT = [ 400, 150 ]
+_FLOW_SPLITTER_SIZES_DEFAULT = [ 225, 225 ]
 _X_POS_DEFAULT = 50
 _Y_POS_DEFAULT = 50
 _WIDTH_DEFAULT = 750
@@ -143,6 +144,8 @@ CDM_SETTINGS = {
                 _H_SPLITTER_SIZES_DEFAULT ),
     CDMSetting( "vSplitterSizes", CDMSetting.TYPE_INT_LST,
                 _V_SPLITTER_SIZES_DEFAULT ),
+    CDMSetting( "flowSplitterSizes", CDMSetting.TYPE_INT_LST,
+                _FLOW_SPLITTER_SIZES_DEFAULT ),
     CDMSetting( "style", CDMSetting.TYPE_STR, "plastique" ),
     CDMSetting( "vcsstatusupdateinterval", CDMSetting.TYPE_INT, 
                 VCS_STATUS_UPDATE_INTERVAL_DEFAULT ),
@@ -217,6 +220,7 @@ class SettingsWrapper( QObject ):
     """ Provides settings singleton facility """
 
     recentListChanged = pyqtSignal()
+    flowSplitterChanged = pyqtSignal()
 
     def __init__( self ):
 
@@ -710,6 +714,8 @@ class SettingsWrapper( QObject ):
         elif self.values[ aAttr ] != aValue:
             self.values[ aAttr ] = aValue
             self.flushSettings()
+            if aAttr == "flowSplitterSizes":
+                self.flowSplitterChanged.emit()
 
 
 settingsSingleton = SettingsWrapper()
