@@ -777,6 +777,25 @@ injectSideComments( Context *  context,
         if ( comment.pos != lastCommentPos )
             break;
 
+        // It could be that the next line comment starts at the same column
+        // however there is some other statement at that line. So we need to
+        // stop if so.
+        const char *  lineBegin( context->buffer +
+                                 context->lineShifts[ comment.line ] );
+        const char *  commentBegin( context->buffer + comment.begin );
+        bool          nextStatement( false );
+        while ( lineBegin != commentBegin )
+        {
+            if ( *lineBegin != ' ' && *lineBegin != '\t' )
+            {
+                nextStatement = true;
+                break;
+            }
+            ++lineBegin;
+        }
+        if ( nextStatement )
+            break;
+
         lastCommentLine = comment.line;
 
         if ( comment.type == CML_COMMENT )
