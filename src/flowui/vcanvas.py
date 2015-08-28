@@ -547,7 +547,7 @@ class VirtualCanvas:
                                                                  ConnectorCell.CENTER) ], self, mainCol, mainRow ) )
                     mainRow += 1
 
-                vacantRow = mainRow + 1
+                vacantRow = mainRow
                 continue
 
             # Below are the single cell fragments possibly with comments
