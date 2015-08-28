@@ -75,14 +75,22 @@ class CFlowSettings:
 
         self.lineWidth = 1          # used for connections and box edges
         self.lineColor = QColor( 16, 16, 16, 255 )
-        self.badgeLineWidth = 1
-        self.badgeLineColor = QColor( 0, 0, 0, 255 )
 
         # Code blocks and other statements
         self.boxBGColor = QColor( 250, 250, 250, 255 )
         self.boxFGColor = QColor( 0, 0, 0, 255 )
+
+        # Badges
         self.badgeBGColor = QColor( 230, 230, 230, 255 )
         self.badgeFGColor = QColor( 0, 0, 0, 255 )
+        self.badgeLineWidth = 1
+        self.badgeLineColor = QColor( 0, 0, 0, 255 )
+
+        # Labels
+        self.labelBGColor = QColor( 230, 230, 230, 255 )
+        self.labelFGColor = QColor( 0, 0, 0, 255 )
+        self.labelLineWidth = 1
+        self.labelLineColor = QColor( 0, 0, 0, 255 )
 
         # Comments: leading, side & independent
         self.commentBGColor = QColor( 255, 255, 153, 255 )

@@ -83,6 +83,115 @@ class SVGItem( QGraphicsSvgItem ):
         return self.boundingRect().width() * self.__scale
 
 
+class LabelItem( QGraphicsRectItem ):
+    " Serves 'continue' and 'break' labels "
+
+    def __init__( self, ref, text ):
+        QGraphicsRectItem.__init__( self )
+        self.ref = ref
+        self.__text = text
+        self.__bgColor = ref.canvas.settings.labelBGColor
+        self.__fgColor = ref.canvas.settings.labelFGColor
+        self.__frameColor = ref.canvas.settings.labelLineColor
+        self.__font = ref.canvas.settings.badgeFont
+        self.__textRect = ref.canvas.settings.badgeFontMetrics.boundingRect(
+                                                0, 0,  maxint, maxint, 0, text )
+        self.__hSpacing = 2
+        self.__vSpacing = 1
+        self.__radius = 2
+
+        self.setRect( 0, 0, self.__textRect.width() + 2 * self.__hSpacing,
+                            self.__textRect.height() + 2 * self.__vSpacing )
+        return
+
+    def setBGColor( self, bgColor ):
+        self.__bgColor = bgColor
+    def setFGColor( self, fgColor ):
+        self.__fgColor = fgColor
+    def setFrameColor( self, frameColor ):
+        self.__frameColor = framecolor
+    def setFont( self, font ):
+        self.__font = font
+
+    def paint( self, painter, option, widget ):
+        " Paints the label "
+        s = self.ref.canvas.settings
+
+        pen = QPen( self.__frameColor )
+        pen.setWidth( s.labelLineWidth )
+        painter.setPen( pen )
+        brush = QBrush( self.__bgColor )
+        painter.setBrush( brush )
+        painter.drawRoundedRect( self.x(), self.y(), self.width(), self.height(),
+                                 self.__radius, self.__radius )
+
+        pen = QPen( self.__fgColor )
+        painter.setPen( pen )
+        painter.setFont( self.__font )
+        painter.drawText( self.x() + self.__hSpacing, self.y() + self.__vSpacing,
+                          self.width() - 2 * self.__hSpacing,
+                          self.height() - 2 * self.__vSpacing,
+                          Qt.AlignLeft, self.__text )
+        return
+
+
+class BadgeItem( QGraphicsRectItem ):
+    " Serves the scope badges "
+
+    def __init__( self, ref, text ):
+        QGraphicsRectItem.__init__( self )
+        self.ref = ref
+        self.__text = text
+        self.__bgColor = ref.canvas.settings.badgeBGColor
+        self.__fgColor = ref.canvas.settings.badgeFGColor
+        self.__frameColor = ref.canvas.settings.badgeLineColor
+        self.__font = ref.canvas.settings.badgeFont
+        self.__needRect = True
+        self.__textRect = ref.canvas.settings.badgeFontMetrics.boundingRect(
+                                                0, 0,  maxint, maxint, 0, text )
+        self.__hSpacing = 2
+        self.__vSpacing = 1
+        self.__radius = 2
+
+        self.setRect( 0, 0, self.__textRect.width() + 2 * self.__hSpacing,
+                            self.__textRect.height() + 2 * self.__vSpacing )
+        return
+
+    def setBGColor( self, bgColor ):
+        self.__bgColor = bgColor
+    def setFGColor( self, fgColor ):
+        self.__fgColor = fgColor
+    def setFrameColor( self, frameColor ):
+        self.__frameColor = framecolor
+    def setNeedRectangle( self, value ):
+        self.__needRect = value
+    def setFont( self, font ):
+        self.__font = font
+
+    def paint( self, painter, option, widget ):
+        " Paints the scope item "
+        s = self.ref.canvas.settings
+
+        if self.__needRect:
+            pen = QPen( self.__frameColor )
+            pen.setWidth( s.badgeLineWidth )
+            painter.setPen( pen )
+            brush = QBrush( self.__bgColor )
+            painter.setBrush( brush )
+            painter.drawRoundedRect( self.x(), self.y(), self.width(), self.height(),
+                                     self.__radius, self.__radius )
+
+        pen = QPen( self.__fgColor )
+        painter.setPen( pen )
+        painter.setFont( self.__font )
+        painter.drawText( self.x() + self.__hSpacing, self.y() + self.__vSpacing,
+                          self.width() - 2 * self.__hSpacing,
+                          self.height() - 2 * self.__vSpacing,
+                          Qt.AlignLeft, self.__text )
+        return
+
+
+
 class CellElement:
     " Base class for all the elements which could be found on the canvas "
 
