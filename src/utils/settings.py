@@ -151,6 +151,7 @@ CDM_SETTINGS = {
                 VCS_STATUS_UPDATE_INTERVAL_DEFAULT ),
     CDMSetting( "tablistsortalpha", CDMSetting.TYPE_BOOL, True ),
     CDMSetting( "taborderpreserved", CDMSetting.TYPE_BOOL, False ),
+    CDMSetting( "flowScale", CDMSetting.TYPE_FLOAT, 1.0 ),
 
     # The IO redirect console
     CDMSetting( "ioconsolemaxmsgs", CDMSetting.TYPE_INT, 10000 ),
@@ -221,6 +222,7 @@ class SettingsWrapper( QObject ):
 
     recentListChanged = pyqtSignal()
     flowSplitterChanged = pyqtSignal()
+    flowScaleChanged = pyqtSignal()
 
     def __init__( self ):
 
@@ -716,6 +718,8 @@ class SettingsWrapper( QObject ):
             self.flushSettings()
             if aAttr == "flowSplitterSizes":
                 self.flowSplitterChanged.emit()
+            elif aAttr == "flowScale":
+                self.flowScaleChanged.emit()
 
 
 settingsSingleton = SettingsWrapper()

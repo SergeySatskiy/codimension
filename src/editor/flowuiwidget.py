@@ -25,13 +25,14 @@
 from PyQt4.QtCore import Qt, QSize, QTimer, SIGNAL
 from PyQt4.QtGui import ( QToolBar, QWidget, QGraphicsView, QPainter,
                           QApplication, QGraphicsScene, QHBoxLayout,
-                          QLabel )
+                          QLabel, QTransform )
 from cdmcf import getControlFlowFromMemory
 from flowui.vcanvas import VirtualCanvas
 from flowui.cflowsettings import getDefaultCflowSettings
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 from utils.fileutils import Python3FileType, PythonFileType
+from utils.settings import Settings
 
 
 IDLE_TIMEOUT = 1500
@@ -42,29 +43,37 @@ class CFGraphicsView( QGraphicsView ):
 
     def __init__( self, parent = None ):
         super( CFGraphicsView, self ).__init__( parent )
+
+        self.__currentFactor = 1.0
         self.setRenderHint( QPainter.Antialiasing )
         self.setRenderHint( QPainter.TextAntialiasing )
+        Settings().flowScaleChanged.connect( self.__scaleChanged )
         return
 
     def wheelEvent( self, event ):
         """ Mouse wheel event """
         if QApplication.keyboardModifiers() == Qt.ControlModifier:
             factor = 1.41 ** ( -event.delta() / 240.0 )
-            self.scale( factor, factor )
+            self.__currentFactor *= factor
+            self.setTransform( QTransform.fromScale( self.__currentFactor,
+                                                     self.__currentFactor ) )
+            Settings().flowScale = self.__currentFactor
         else:
             QGraphicsView.wheelEvent( self, event )
         return
 
-    def zoomIn( self ):
-        """ Zoom when a button clicked """
-        factor = 1.41 ** (120.0/240.0)
-        self.scale( factor, factor )
+    def zoomTo( self, scale ):
+        " Zooms to the specific factor "
+        self.__currentFactor = scale
+        self.setTransform( QTransform.fromScale( self.__currentFactor,
+                                                 self.__currentFactor ) )
         return
 
-    def zoomOut( self ):
-        """ Zoom when a button clicked """
-        factor = 1.41 ** (-120.0/240.0)
-        self.scale( factor, factor )
+    def __scaleChanged( self ):
+        " When another window made a change "
+        newScale = Settings().flowScale
+        if newScale != self.__currentFactor:
+            self.zoomTo( newScale )
         return
 
 
@@ -137,6 +146,7 @@ class FlowUIWidget( QWidget ):
         self.scene = QGraphicsScene( self )
         self.view = CFGraphicsView( self )
         self.view.setScene( self.scene )
+        self.view.zoomTo( Settings().flowScale )
         return self.view
 
     def __updateInfoIcon( self, state ):
