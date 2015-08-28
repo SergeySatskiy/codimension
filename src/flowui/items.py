@@ -336,9 +336,6 @@ class CellElement:
                           Qt.AlignLeft, self._badgeText )
         return
 
-
-
-
 class ScopeCellElement( CellElement ):
 
     UNKNOWN = -1
@@ -710,6 +707,7 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y ):
         CellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
+#        self.setAcceptHoverEvents( True )
         self.kind = CellElement.CODE_BLOCK
         self.__text = None
         self.__textRect = None
@@ -779,6 +777,14 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, self.__getText() )
         return
+
+#    def hoverEnterEvent( self, event ):
+        #print self.toolTip()
+#        return
+
+#    def hoverLeaveEvent( self, event ):
+#        return
+
 
 
 
