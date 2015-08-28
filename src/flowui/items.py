@@ -425,7 +425,7 @@ class ScopeCellElement( CellElement ):
 
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
             canvasTop = self.baseY - s.rectRadius
-            movedBaseX = self.canvas.baseX + self.canvas.width - self.width + s.hScopeSpacing
+            movedBaseX = self.canvas.baseX + self.canvas.width - self.width - s.hScopeSpacing
             path = getNoCellCommentBoxPath( movedBaseX + s.hHeaderPadding,
                                             canvasTop + s.vHeaderPadding,
                                             int( self._sideCommentRect.width() ) + 2 * s.hTextPadding,
