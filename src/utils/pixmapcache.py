@@ -92,3 +92,7 @@ def getIcon( name ):
     " Syntactic shugar "
     return PixmapCache().getIcon( name )
 
+def getPixmap( name ):
+    " Syntactic shugar "
+    return PixmapCache().getPixmap( name )
+
