@@ -25,14 +25,16 @@
 from PyQt4.QtCore import Qt, QSize, QTimer, SIGNAL
 from PyQt4.QtGui import ( QToolBar, QWidget, QGraphicsView, QPainter,
                           QApplication, QGraphicsScene, QHBoxLayout,
-                          QLabel, QTransform )
+                          QLabel, QTransform, QVBoxLayout, QFrame,
+                          QSizePolicy )
 from cdmcf import getControlFlowFromMemory
 from flowui.vcanvas import VirtualCanvas
 from flowui.cflowsettings import getDefaultCflowSettings
-from utils.pixmapcache import PixmapCache
+from utils.pixmapcache import getPixmap
 from utils.globals import GlobalData
 from utils.fileutils import Python3FileType, PythonFileType
 from utils.settings import Settings
+from ui.fitlabel import FitLabel
 
 
 IDLE_TIMEOUT = 1500
@@ -78,14 +80,88 @@ class CFGraphicsView( QGraphicsView ):
 
 
 
-class FlowUIWidget( QWidget ):
-    " The widget which goes along with the text editor "
+class ControlFlowNavigationBar( QFrame ):
+    " Navigation bar at the top of the flow UI widget "
 
     STATE_OK_UTD = 0        # Parsed OK, control flow up to date
     STATE_OK_CHN = 1        # Parsed OK, control flow changed
     STATE_BROKEN_UTD = 2    # Parsed with errors, control flow up to date
     STATE_BROKEN_CHN = 3    # Parsed with errors, control flow changed
     STATE_UNKNOWN = 4
+
+    def __init__( self, parent ):
+        QFrame.__init__( self, parent )
+        self.__infoIcon = None
+        self.__layout = None
+        self.__pathLabel = None
+        self.__createLayout()
+        self.__currentIconState = self.STATE_UNKNOWN
+        return
+
+    def __createLayout( self ):
+        " Creates the layout "
+        self.setFixedHeight( 24 )
+        self.__layout = QHBoxLayout( self )
+        self.__layout.setMargin( 0 )
+        self.__layout.setContentsMargins( 0, 0, 0, 0 )
+
+        # Create info icon
+        self.__infoIcon = QLabel()
+        self.__infoIcon.setPixmap( getPixmap( 'cfunknown.png' ) )
+        self.__layout.addWidget( self.__infoIcon )
+        self.__spacer = QWidget()
+        self.__spacer.setSizePolicy( QSizePolicy.Fixed, QSizePolicy.Expanding )
+        self.__spacer.setMinimumWidth( 0 )
+        self.__layout.addWidget( self.__spacer )
+        self.__pathLabel = FitLabel()
+        self.__pathLabel.setFrameStyle( QFrame.StyledPanel )
+        self.__pathLabel.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Fixed )
+        self.__layout.addWidget( self.__pathLabel )
+        return
+
+
+    def updateInfoIcon( self, state ):
+        " Updates the information icon "
+        if state == self.__currentIconState:
+            return
+
+        if state == self.STATE_OK_UTD:
+            self.__infoIcon.setPixmap( getPixmap( 'cfokutd.png' ) )
+            self.__infoIcon.setToolTip( "Control flow is up to date" )
+            self.__currentIconState = self.STATE_OK_UTD
+        elif state == self.STATE_OK_CHN:
+            self.__infoIcon.setPixmap( getPixmap( 'cfokchn.png' ) )
+            self.__infoIcon.setToolTip( "Control flow is not up to date; will be updated on idle" )
+            self.__currentIconState = self.STATE_OK_CHN
+        elif state == self.STATE_BROKEN_UTD:
+            self.__infoIcon.setPixmap( getPixmap( 'cfbrokenutd.png' ) )
+            self.__infoIcon.setToolTip( "Control flow might be invalid due to invalid python code" )
+            self.__currentIconState = self.STATE_BROKEN_UTD
+        elif state == self.STATE_BROKEN_CHN:
+            self.__infoIcon.setPixmap( getPixmap( 'cfbrokenchn.png' ) )
+            self.__infoIcon.setToolTip( "Control flow might be invalid; will be updated on idle" )
+            self.__currentIconState = self.STATE_BROKEN_CHN
+        else:
+            # STATE_UNKNOWN
+            self.__infoIcon.setPixmap( getPixmap( 'cfunknown.png' ) )
+            self.__infoIcon.setToolTip( "Control flow state is unknown" )
+            self.__currentIconState = self.STATE_UNKNOWN
+        return
+
+    def setPath( self, txt ):
+        " Sets the path label content "
+        self.__pathLabel.setText( txt )
+        return
+
+    def resizeEvent( self, event ):
+        " Editor has resized "
+        QFrame.resizeEvent( self, event )
+        return
+
+
+
+class FlowUIWidget( QWidget ):
+    " The widget which goes along with the text editor "
 
     def __init__( self, editor, parent ):
         QWidget.__init__( self, parent )
@@ -96,7 +172,6 @@ class FlowUIWidget( QWidget ):
 
         self.__editor = editor
         self.__parentWidget = parent
-        self.__currentIconState = self.STATE_UNKNOWN
         self.__connected = False
 
         self.cflowSettings = getDefaultCflowSettings( self )
@@ -105,9 +180,13 @@ class FlowUIWidget( QWidget ):
         hLayout.setContentsMargins( 0, 0, 0, 0 )
         hLayout.setSpacing( 0 )
 
+        vLayout = QVBoxLayout()
+        vLayout.setContentsMargins( 0, 0, 0, 0 )
+        vLayout.setSpacing( 0 )
+
         # Make pylint happy
         self.__toolbar = None
-        self.__infoIcon = None
+        self.__navBar = None
         self.__cf = None
 
         # Create the update timer
@@ -115,7 +194,10 @@ class FlowUIWidget( QWidget ):
         self.__updateTimer.setSingleShot( True )
         self.__updateTimer.timeout.connect( self.process )
 
-        hLayout.addWidget( self.__createGraphicsView() )
+        vLayout.addWidget( self.__createNavigationBar() )
+        vLayout.addWidget( self.__createGraphicsView() )
+
+        hLayout.addLayout( vLayout )
         hLayout.addWidget( self.__createToolbar() )
         self.setLayout( hLayout )
 
@@ -136,10 +218,12 @@ class FlowUIWidget( QWidget ):
         self.__toolbar.setFixedWidth( 28 )
         self.__toolbar.setContentsMargins( 0, 0, 0, 0 )
 
-        self.__infoIcon = QLabel()
-        self.__infoIcon.setPixmap( PixmapCache().getPixmap( 'cfunknown.png' ) )
-        self.__toolbar.addWidget( self.__infoIcon )
         return self.__toolbar
+
+    def __createNavigationBar( self ):
+        " Creates the navigation bar "
+        self.__navBar = ControlFlowNavigationBar( self )
+        return self.__navBar
 
     def __createGraphicsView( self ):
         """ Creates the graphics view """
@@ -148,30 +232,6 @@ class FlowUIWidget( QWidget ):
         self.view.setScene( self.scene )
         self.view.zoomTo( Settings().flowScale )
         return self.view
-
-    def __updateInfoIcon( self, state ):
-        " Updates the information icon "
-        if state == self.__currentIconState:
-            return
-
-        if state == self.STATE_OK_UTD:
-            self.__infoIcon.setPixmap( PixmapCache().getPixmap( 'cfokutd.png' ) )
-            self.__infoIcon.setToolTip( "Control flow is up to date" )
-            self.__currentIconState = self.STATE_OK_UTD
-        elif state == self.STATE_OK_CHN:
-            self.__infoIcon.setPixmap( PixmapCache().getPixmap( 'cfokchn.png' ) )
-            self.__infoIcon.setToolTip( "Control flow is not up to date; will be updated on idle" )
-            self.__currentIconState = self.STATE_OK_CHN
-        elif state == self.STATE_BROKEN_UTD:
-            self.__infoIcon.setPixmap( PixmapCache().getPixmap( 'cfbrokenutd.png' ) )
-            self.__infoIcon.setToolTip( "Control flow might be invalid due to invalid python code" )
-            self.__currentIconState = self.STATE_BROKEN_UTD
-        else:
-            # STATE_BROKEN_CHN
-            self.__infoIcon.setPixmap( PixmapCache().getPixmap( 'cfbrokenchn.png' ) )
-            self.__infoIcon.setToolTip( "Control flow might be invalid; will be updated on idle" )
-            self.__currentIconState = self.STATE_BROKEN_CHN
-        return
 
     def process( self ):
         """ Parses the content and displays the results """
@@ -182,10 +242,10 @@ class FlowUIWidget( QWidget ):
         content = self.__editor.text()
         self.__cf = getControlFlowFromMemory( content )
         if len( self.__cf.errors ) != 0:
-            self.__updateInfoIcon( self.STATE_BROKEN_UTD )
+            self.__navBar.updateInfoIcon( self.__navBar.STATE_BROKEN_UTD )
             return
 
-        self.__updateInfoIcon( self.STATE_OK_UTD )
+        self.__navBar.updateInfoIcon( self.__navBar.STATE_OK_UTD )
 
 #        if len( self.__cf.warnings ) != 0:
 #            self.logMessage( "Parser warnings: " )
@@ -215,7 +275,7 @@ class FlowUIWidget( QWidget ):
             self.__updateTimer.stop()
             self.__cf = None
             self.setVisible( False )
-            self.__currentIconState = self.STATE_UNKNOWN
+            self.__navBar.updateInfoIcon( self.__navBar.STATE_UNKNOWN )
             return
 
         # Update the bar and show it
@@ -241,9 +301,9 @@ class FlowUIWidget( QWidget ):
         " Triggered to update status icon and to restart the timer "
         self.__updateTimer.stop()
         if len( self.__cf.errors ) == 0:
-            self.__updateInfoIcon( self.STATE_OK_CHN )
+            self.__navBar.updateInfoIcon( self.__navBar.STATE_OK_CHN )
         else:
-            self.__updateInfoIcon( self.STATE_BROKEN_CHN )
+            self.__navBar.updateInfoIcon( self.__navBar.STATE_BROKEN_CHN )
         self.__updateTimer.start( IDLE_TIMEOUT )
         return
 
