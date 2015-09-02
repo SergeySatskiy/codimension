@@ -98,22 +98,22 @@ class CFlowSettings:
         self.commentLineColor = QColor( 102, 102, 61, 255 )
         self.commentLineWidth = 1
         self.stretchComments = False
-        self.stretchBlocks = False
+        self.mainLine = 50
 
         self.fileScopeBGColor = QColor( 255, 255, 230, 255 )
         self.funcScopeBGColor = QColor( 230, 230, 255, 255 )
         self.decorScopeBGColor = QColor( 230, 255, 255, 255 )
         self.classScopeBGColor = QColor( 230, 255, 230, 255 )
-        self.forScopeBGColor = QColor( 178, 223, 219, 255 )
-        self.whileScopeBGColor = QColor( 178, 223, 219, 255 )
+        self.forScopeBGColor = QColor( 187, 222, 251, 255 )
+        self.whileScopeBGColor = QColor( 187, 222, 251, 255 )
         self.elseScopeBGColor = QColor( 209, 196, 233, 255 )
         self.withScopeBGColor = QColor( 255, 255, 255, 255 )
         self.tryScopeBGColor = QColor( 255, 255, 255, 255 )
         self.exceptScopeBGColor = QColor( 255, 255, 255, 255 )
         self.finallyScopeBGColor = QColor( 192, 192, 192, 255 )
-        self.breakBGColor = QColor( 255, 204, 188, 255 )
-        self.continueBGColor = QColor( 255, 204, 188, 255 )
-        self.returnBGColor = QColor( 129, 212, 250, 255 )
+        self.breakBGColor = QColor( 144, 202, 249, 255 )
+        self.continueBGColor = QColor( 144, 202, 249, 255 )
+        self.ifBGColor = QColor( 255, 229, 127, 255 )
         return
 
     def setMonoFont( self, font ):

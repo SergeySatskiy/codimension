@@ -627,6 +627,8 @@ class VirtualCanvas:
             # insert one more spacer because there is the 'continue' badge
             self.__allocateAndSet( vacantRow, 1, VSpacerCell( None, self, 1, vacantRow ) )
             vacantRow += 1
+            self.__allocateAndSet( vacantRow, 1, VSpacerCell( None, self, 1, vacantRow ) )
+            vacantRow += 1
 
         # Handle the content of the scope
         if scopeKind == CellElement.DECOR_SCOPE:
@@ -643,6 +645,8 @@ class VirtualCanvas:
 
         if scopeKind in [ CellElement.FOR_SCOPE, CellElement.WHILE_SCOPE ]:
             # insert a spacer because there is the 'break' badge
+            self.__allocateAndSet( vacantRow, 1, VSpacerCell( None, self, 1, vacantRow ) )
+            vacantRow += 1
             self.__allocateAndSet( vacantRow, 1, VSpacerCell( None, self, 1, vacantRow ) )
             vacantRow += 1
 

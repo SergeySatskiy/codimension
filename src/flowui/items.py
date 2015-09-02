@@ -477,22 +477,45 @@ class ScopeCellElement( CellElement ):
                                      self.canvas.width - 2 * s.hScopeSpacing,
                                      self.canvas.height - 2 * s.vScopeSpacing,
                                      s.rectRadius, s.rectRadius )
-            if self._badgeText:
-                self._paintBadge( painter, option, widget )
-
             if self.kind in [ CellElement.FOR_SCOPE, CellElement.WHILE_SCOPE ]:
                 # Draw the 'break' badge
-                oldBadgeText = self._badgeText
-                oldBadgeRect = self._badgeRect
-                self._badgeText = 'break'
-                self._badgeRect = self.getBadgeBoundingRect( self._badgeText )
-                self._paintBadge( painter, option, widget,
-                                  self.baseX + self.canvas.width / 2 -
-                                  self._badgeRect.width() / 2,
-                                  self.baseY + self.canvas.height -
-                                  self._badgeRect.height() - 2 * s.vScopeSpacing, True )
-                self._badgeText = oldBadgeText
-                self._badgeRect = oldBadgeRect
+#                oldBadgeText = self._badgeText
+#                oldBadgeRect = self._badgeRect
+#                self._badgeText = 'break'
+#                self._badgeRect = self.getBadgeBoundingRect( self._badgeText )
+#                self._paintBadge( painter, option, widget,
+#                                  self.baseX + self.canvas.width / 2 -
+#                                  self._badgeRect.width() / 2,
+#                                  self.baseY + self.canvas.height -
+#                                  self._badgeRect.height() - 2 * s.vScopeSpacing, True )
+#                self._badgeText = oldBadgeText
+#                self._badgeRect = oldBadgeRect
+
+                pen = QPen( getDarkerColor( painter.brush().color() ) )
+                pen.setWidth( s.lineWidth )
+                painter.setPen( pen )
+                brush = QBrush( s.breakBGColor )
+                painter.setBrush( brush )
+
+                breakRect = self.getBadgeBoundingRect( "break" )
+                x = self.baseX + s.hScopeSpacing
+                y = self.baseY + self.canvas.height - 2 * s.vScopeSpacing - self._badgeRect.height()
+                width = self.canvas.width - 2 * s.hScopeSpacing
+                height = breakRect.height() + 2
+                painter.drawRoundedRect( x, y, width, height, s.rectRadius, s.rectRadius )
+#                painter.drawLine( opeSpacing,
+#                                  self.baseY + self.canvas.height - 2 * s.vScopeSpacing - self._badgeRect.height(),
+#                                  self.baseX + self.canvas.width - s.hScopeSpacing,
+#                                  self.baseY + self.canvas.height - 2 * s.vScopeSpacing - self._badgeRect.height() )
+                pen = QPen( s.boxFGColor )
+                painter.setPen( pen )
+                painter.setFont( s.badgeFont )
+                painter.drawText( self.baseX + (self.canvas.width - breakRect.width())/2,
+                                  y + 2, breakRect.width(), breakRect.height(),
+                                  Qt.AlignLeft, "break" )
+
+            if self._badgeText:
+                self._paintBadge( painter, option, widget )
 
         elif self.subKind == ScopeCellElement.DECLARATION:
             pen = QPen( s.boxFGColor )
@@ -518,16 +541,38 @@ class ScopeCellElement( CellElement ):
                               self.baseY + self.height )
             if self.kind in [ CellElement.FOR_SCOPE, CellElement.WHILE_SCOPE ]:
                 # Draw the 'continue' badge
-                oldBadgeText = self._badgeText
-                oldBadgeRect = self._badgeRect
-                self._badgeText = 'continue'
-                self._badgeRect = self.getBadgeBoundingRect( self._badgeText )
-                self._paintBadge( painter, option, widget,
-                                  self.baseX - s.rectRadius +
-                                  self.canvas.width / 2 - self._badgeRect.width() / 2,
-                                  self.baseY + self.height, True )
-                self._badgeText = oldBadgeText
-                self._badgeRect = oldBadgeRect
+#                oldBadgeText = self._badgeText
+#                oldBadgeRect = self._badgeRect
+#                self._badgeText = 'continue'
+#                self._badgeRect = self.getBadgeBoundingRect( self._badgeText )
+#                self._paintBadge( painter, option, widget,
+#                                  self.baseX - s.rectRadius +
+#                                  self.canvas.width / 2 - self._badgeRect.width() / 2,
+#                                  self.baseY + self.height, True )
+#                self._badgeText = oldBadgeText
+#                self._badgeRect = oldBadgeRect
+
+                pen = QPen( getDarkerColor( painter.brush().color() ) )
+                pen.setWidth( s.lineWidth )
+                painter.setPen( pen )
+                brush = QBrush( s.continueBGColor )
+                painter.setBrush( brush )
+
+                contRect = self.getBadgeBoundingRect( "continue" )
+                x = canvasLeft
+                y = self.baseY + self.height
+                width = self.canvas.width - 2 * s.hScopeSpacing
+                height = contRect.height() + 2
+                painter.drawRoundedRect( x, y, width, height, s.rectRadius, s.rectRadius )
+
+                pen = QPen( s.boxFGColor )
+                painter.setPen( pen )
+                painter.setFont( s.badgeFont )
+                painter.drawText( canvasLeft + (self.canvas.width - contRect.width())/2,
+                                  y + 2, contRect.width(), contRect.height(),
+                                  Qt.AlignLeft, "continue" )
+
+
 
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
             canvasTop = self.baseY - s.rectRadius
@@ -749,30 +794,26 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
         # Draw the connector as a single line under the rectangle
         painter.setPen( pen )
         painter.setBrush( brush )
-        painter.drawLine( self.baseX + self.width / 2,
-                          self.baseY,
-                          self.baseX + self.width / 2,
-                          self.baseY + self.height )
+        painter.drawLine( self.baseX + s.mainLine, self.baseY,
+                          self.baseX + s.mainLine, self.baseY + self.height )
 
         pen = QPen( getDarkerColor( s.boxBGColor ) )
         painter.setPen( pen )
-        if s.stretchBlocks:
-            painter.drawRect( self.baseX + s.hCellPadding,
-                              self.baseY + s.vCellPadding,
-                              self.width - 2 * s.hCellPadding,
-                              self.height - 2 * s.vCellPadding )
-        else:
-            painter.drawRect( self.baseX + s.hCellPadding + (self.width - self.minWidth) / 2,
-                              self.baseY + s.vCellPadding,
-                              self.minWidth - 2 * s.hCellPadding,
-                              self.height - 2 * s.vCellPadding )
+
+        rectWidth = self.minWidth - 2 * s.hCellPadding
+        rectHeight = self.minHeight - 2 * s.vCellPadding
+        painter.drawRect( self.baseX + s.hCellPadding,
+                          self.baseY + s.vCellPadding,
+                          rectWidth, rectHeight )
 
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
-        painter.drawText( self.baseX + s.hCellPadding +
-                          (self.width - 2 * s.hCellPadding - self.__textRect.width()) / 2,
+
+        textWidth = self.__textRect.width() + 2 * s.hTextPadding
+        textShift = (rectWidth - textWidth) / 2
+        painter.drawText( self.baseX + s.hCellPadding + s.hTextPadding + textShift,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, self.__getText() )
@@ -1289,8 +1330,8 @@ class BreakCell( CellElement, QGraphicsRectItem ):
     def render( self ):
         s = self.canvas.settings
         self.__textRect = self.getBoundingRect( "break" )
-        self.minHeight = self.__textRect.height() + 4 * self.__vSpacing
-        self.minWidth = self.__textRect.width() + 4 * self.__hSpacing
+        self.minHeight = self.__textRect.height() + 2 * self.__vSpacing + s.vCellPadding
+        self.minWidth = self.__textRect.width() + 2 * self.__hSpacing + 2 * s.hCellPadding
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1315,18 +1356,14 @@ class BreakCell( CellElement, QGraphicsRectItem ):
         # Draw the connector as a single line under the rectangle
         painter.setPen( pen )
         painter.setBrush( brush )
-        painter.drawLine( self.baseX + self.width / 2,
-                          self.baseY,
-                          self.baseX + self.width / 2,
-                          self.baseY + self.height / 2 )
+        painter.drawLine( self.baseX + s.mainLine, self.baseY,
+                          self.baseX + s.mainLine, self.baseY + s.vCellPadding )
 
         pen = QPen( getDarkerColor( s.breakBGColor ) )
         painter.setPen( pen )
 
-        xShift = (self.width - self.minWidth) / 2
-        yShift = (self.height - self.minHeight) / 2
-        x1 = self.baseX + self.__hSpacing + xShift
-        y1 = self.baseY + self.__vSpacing + yShift
+        x1 = self.baseX + s.mainLine - self.__textRect.width() / 2 - self.__hSpacing
+        y1 = self.baseY + s.vCellPadding
         w = 2 * self.__hSpacing + self.__textRect.width()
         h = 2 * self.__vSpacing + self.__textRect.height()
 
@@ -1357,8 +1394,8 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
     def render( self ):
         s = self.canvas.settings
         self.__textRect = self.getBoundingRect( "continue" )
-        self.minHeight = self.__textRect.height() + 4 * self.__vSpacing
-        self.minWidth = self.__textRect.width() + 4 * self.__hSpacing
+        self.minHeight = self.__textRect.height() + 2 * self.__vSpacing + s.vCellPadding
+        self.minWidth = self.__textRect.width() + 2 * self.__hSpacing + 2 * s.hCellPadding
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1383,18 +1420,14 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
         # Draw the connector as a single line under the rectangle
         painter.setPen( pen )
         painter.setBrush( brush )
-        painter.drawLine( self.baseX + self.width / 2,
-                          self.baseY,
-                          self.baseX + self.width / 2,
-                          self.baseY + self.height / 2 )
+        painter.drawLine( self.baseX + s.mainLine, self.baseY,
+                          self.baseX + s.mainLine, self.baseY + s.vCellPadding )
 
         pen = QPen( getDarkerColor( s.continueBGColor ) )
         painter.setPen( pen )
 
-        xShift = (self.width - self.minWidth) / 2
-        yShift = (self.height - self.minHeight) / 2
-        x1 = self.baseX + self.__hSpacing + xShift
-        y1 = self.baseY + self.__vSpacing + yShift
+        x1 = self.baseX + s.mainLine - self.__textRect.width() / 2 - self.__hSpacing
+        y1 = self.baseY + s.vCellPadding
         w = 2 * self.__hSpacing + self.__textRect.width()
         h = 2 * self.__vSpacing + self.__textRect.height()
 
@@ -1419,6 +1452,11 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
         self.kind = CellElement.RETURN
         self.__text = None
         self.__textRect = None
+        self.__arrowWidth = 16
+
+        self.arrowItem = SVGItem( "return.svgz" )
+        self.arrowItem.setWidth( self.__arrowWidth )
+        self.arrowItem.setToolTip( "return" )
         return
 
     def __getText( self ):
@@ -1431,9 +1469,8 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
         self.__textRect = self.getBoundingRect( self.__getText() )
 
         self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
-        self.minWidth = max( self.__textRect.width() +
-                             2 * (s.hCellPadding + s.hTextPadding) +
-                             s.returnRectRadius,
+        self.minWidth = max( self.__textRect.width() + 2 * s.hCellPadding + s.hTextPadding +
+                             s.returnRectRadius + 2 * s.hTextPadding + self.__arrowWidth,
                              s.minWidth )
 
         self.height = self.minHeight
@@ -1444,8 +1481,14 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
         self.baseX = baseX
         self.baseY = baseY
         self.setRect( baseX, baseY, self.width, self.height )
+
+        s = self.canvas.settings
+        self.arrowItem.setPos( baseX + s.hCellPadding + s.hTextPadding,
+                               baseY + self.minHeight/2 - self.arrowItem.height()/2 )
+
         self.setToolTip( self.getTooltip() )
         scene.addItem( self )
+        scene.addItem( self.arrowItem )
         return
 
     def paint( self, painter, option, widget ):
@@ -1455,36 +1498,35 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
         # Set the colors and line width
         pen = QPen( s.lineColor )
         pen.setWidth( s.lineWidth )
-        brush = QBrush( s.returnBGColor )
+        brush = QBrush( s.boxBGColor )
+        painter.setBrush( brush )
 
         # Draw the connector as a single line under the rectangle
         painter.setPen( pen )
-        painter.setBrush( brush )
-        painter.drawLine( self.baseX + self.width / 2,
-                          self.baseY,
-                          self.baseX + self.width / 2,
-                          self.baseY + self.height / 2 )
+        painter.drawLine( self.baseX + s.mainLine, self.baseY,
+                          self.baseX + s.mainLine, self.baseY + s.vCellPadding )
 
-        pen = QPen( getDarkerColor( s.returnBGColor ) )
+        pen = QPen( getDarkerColor( s.boxBGColor ) )
         painter.setPen( pen )
-        if s.stretchBlocks:
-            painter.drawRoundedRect( self.baseX + s.hCellPadding,
-                                     self.baseY + s.vCellPadding,
-                                     self.width - 2 * s.hCellPadding,
-                                     self.height - 2 * s.vCellPadding,
-                                     s.returnRectRadius, s.returnRectRadius )
-        else:
-            painter.drawRoundedRect( self.baseX + s.hCellPadding + (self.width - self.minWidth) / 2,
-                                     self.baseY + s.vCellPadding,
-                                     self.minWidth - 2 * s.hCellPadding,
-                                     self.height - 2 * s.vCellPadding,
-                                     s.returnRectRadius, s.returnRectRadius )
+        painter.drawRoundedRect( self.baseX + s.hCellPadding,
+                                 self.baseY + s.vCellPadding,
+                                 self.minWidth - 2 * s.hCellPadding,
+                                 self.minHeight - 2 * s.vCellPadding,
+                                 s.returnRectRadius, s.returnRectRadius )
+        painter.drawRoundedRect( self.baseX + s.hCellPadding,
+                                 self.baseY + s.vCellPadding,
+                                 self.__arrowWidth + 2 * s.hTextPadding,
+                                 self.minHeight - 2 * s.vCellPadding,
+                                 s.returnRectRadius, s.returnRectRadius )
 
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
-        painter.drawText( self.baseX + self.width / 2 - self.__textRect.width() / 2,
+
+        availWidth = self.minWidth - 2 * s.hCellPadding - self.__arrowWidth - 2 * s.hTextPadding - s.hTextPadding - s.returnRectRadius
+        textShift = (availWidth - self.__textRect.width()) / 2
+        painter.drawText( self.baseX + s.hCellPadding + self.__arrowWidth + 3 * s.hTextPadding + textShift,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, self.__getText() )
@@ -1499,6 +1541,7 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.RAISE
         self.__text = None
+        self.__textRect = None
         self.__arrowWidth = 16
 
         self.arrowItem = SVGItem( "raise.svg" )
@@ -1513,12 +1556,11 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
 
     def render( self ):
         s = self.canvas.settings
-        rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
-                                               0, self.__getText() )
+        self.__textRect = self.getBoundingRect( self.__getText() )
 
-        self.minHeight = rect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
-        self.minWidth = max( rect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding +
-                             2 * s.hTextPadding + self.__arrowWidth,
+        self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
+        self.minWidth = max( self.__textRect.width() + 2 * s.hCellPadding + s.hTextPadding +
+                             s.returnRectRadius + 2 * s.hTextPadding + self.__arrowWidth,
                              s.minWidth )
         self.height = self.minHeight
         self.width = self.minWidth
@@ -1531,7 +1573,7 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
 
         s = self.canvas.settings
         self.arrowItem.setPos( baseX + s.hCellPadding + s.hTextPadding,
-                               baseY + self.height/2 - self.arrowItem.height()/2 )
+                               baseY + self.minHeight/2 - self.arrowItem.height()/2 )
 
         self.setToolTip( self.getTooltip() )
         scene.addItem( self )
@@ -1551,34 +1593,32 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
 
         # Draw the connector as a single line under the rectangle
         painter.setPen( pen )
-        painter.drawLine( self.baseX + self.width / 2,
-                          self.baseY,
-                          self.baseX + self.width / 2,
-                          self.baseY + self.height / 2 )
+        painter.drawLine( self.baseX + s.mainLine, self.baseY,
+                          self.baseX + s.mainLine, self.baseY + s.vCellPadding )
 
         pen = QPen( getDarkerColor( s.boxBGColor ) )
         painter.setPen( pen )
         painter.drawRoundedRect( self.baseX + s.hCellPadding,
                                  self.baseY + s.vCellPadding,
-                                 self.width - 2 * s.hCellPadding,
-                                 self.height - 2 * s.vCellPadding,
+                                 self.minWidth - 2 * s.hCellPadding,
+                                 self.minHeight - 2 * s.vCellPadding,
                                  s.returnRectRadius, s.returnRectRadius )
         painter.drawRoundedRect( self.baseX + s.hCellPadding,
                                  self.baseY + s.vCellPadding,
                                  self.__arrowWidth + 2 * s.hTextPadding,
-                                self.height - 2 * s.vCellPadding,
-                                s.returnRectRadius, s.returnRectRadius )
+                                 self.minHeight - 2 * s.vCellPadding,
+                                 s.returnRectRadius, s.returnRectRadius )
 
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
-        painter.drawText( self.baseX + s.hCellPadding + self.__arrowWidth + 3 * s.hTextPadding,
+        availWidth = self.minWidth - 2 * s.hCellPadding - self.__arrowWidth - 2 * s.hTextPadding - s.hTextPadding - s.returnRectRadius
+        textShift = (availWidth - self.__textRect.width()) / 2
+        painter.drawText( self.baseX + s.hCellPadding + self.__arrowWidth + 3 * s.hTextPadding + textShift,
                           self.baseY + s.vCellPadding + s.vTextPadding,
-                          int( self.rect().width() ) - 2 * (s.hTextPadding + s.hCellPadding) - self.__arrowWidth,
-                          int( self.rect().height() ) - 2 * (s.vTextPadding + s.vCellPadding),
-                          Qt.AlignLeft,
-                          self.__getText() )
+                          self.__textRect.width(), self.__textRect.height(),
+                          Qt.AlignLeft, self.__getText() )
         return
 
 
@@ -1592,6 +1632,7 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.ASSERT
         self.__text = None
+        self.__textRect = None
         self.__diamondDiagonal = None
         self.__arrowWidth = 16
 
@@ -1607,18 +1648,17 @@ class AssertCell( CellElement, QGraphicsRectItem ):
 
     def render( self ):
         s = self.canvas.settings
-        rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
-                                               0, self.__getText() )
+        self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
+                                                          0, self.__getText() )
 
         # for an arrow box
         singleCharRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
                                                          0, "W" )
         self.__diamondDiagonal = singleCharRect.height() + 2 * s.vTextPadding
 
-        self.minHeight = rect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
-        self.minWidth = max( rect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding + \
-                             self.__diamondDiagonal,
-                             s.minWidth )
+        self.minHeight = self.__textRect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
+        self.minWidth = max( self.__textRect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding +
+                             self.__diamondDiagonal, s.minWidth )
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1631,7 +1671,7 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         s = self.canvas.settings
         self.arrowItem.setPos( baseX + self.__diamondDiagonal / 2 + s.hCellPadding -
                                self.arrowItem.width() / 2,
-                               baseY + self.height/2 - self.arrowItem.height()/2 )
+                               baseY + self.minHeight/2 - self.arrowItem.height()/2 )
 
         self.setToolTip( self.getTooltip() )
         scene.addItem( self )
@@ -1651,17 +1691,15 @@ class AssertCell( CellElement, QGraphicsRectItem ):
 
         # Draw the connector as a single line under the rectangle
         painter.setPen( pen )
-        painter.drawLine( self.baseX + self.width / 2,
-                          self.baseY,
-                          self.baseX + self.width / 2,
-                          self.baseY + self.height )
+        painter.drawLine( self.baseX + s.mainLine, self.baseY,
+                          self.baseX + s.mainLine, self.baseY + self.height )
 
         pen = QPen( getDarkerColor( s.boxBGColor ) )
         painter.setPen( pen )
 
         dHalf = int( self.__diamondDiagonal / 2.0 )
         dx1 = self.baseX + s.hCellPadding
-        dy1 = self.baseY + int( self.height / 2 )
+        dy1 = self.baseY + int( self.minHeight / 2 )
         dx2 = dx1 + dHalf
         dy2 = dy1 - dHalf
         dx3 = dx1 + 2 * dHalf
@@ -1673,19 +1711,20 @@ class AssertCell( CellElement, QGraphicsRectItem ):
                              QPointF(dx3, dy3), QPointF(dx4, dy4) )
 
         painter.drawRect( dx3 + 1, self.baseY + s.vCellPadding,
-                          self.width - 2 * s.hCellPadding - self.__diamondDiagonal,
-                          self.height - 2 * s.vCellPadding )
+                          self.minWidth - 2 * s.hCellPadding - self.__diamondDiagonal,
+                          self.minHeight - 2 * s.vCellPadding )
 
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
-        painter.drawText( dx3 + s.hTextPadding,
+        availWidth = self.minWidth - 2 * s.hCellPadding - self.__diamondDiagonal
+        textWidth = self.__textRect.width() + 2 * s.hTextPadding
+        textShift = (availWidth - textWidth) / 2
+        painter.drawText( dx3 + s.hTextPadding + textShift,
                           self.baseY + s.vCellPadding + s.vTextPadding,
-                          int( self.rect().width() ) - 2 * (s.hTextPadding + s.hCellPadding) - self.__diamondDiagonal,
-                          int( self.rect().height() ) - 2 * (s.vTextPadding + s.vCellPadding),
-                          Qt.AlignLeft,
-                          self.__getText() )
+                          self.__textRect.width(), self.__textRect.height(),
+                          Qt.AlignLeft, self.__getText() )
         return
 
 
@@ -1746,11 +1785,7 @@ class ImportCell( CellElement, QGraphicsRectItem ):
         self.setRect( baseX, baseY, self.width, self.height )
 
         s = self.canvas.settings
-        if s.stretchBlocks:
-            hShift = 0
-        else:
-            hShift = (self.width - self.minWidth) / 2
-        self.arrowItem.setPos( baseX + s.hCellPadding + s.hTextPadding + hShift,
+        self.arrowItem.setPos( baseX + s.hCellPadding + s.hTextPadding,
                                baseY + self.height/2 - self.arrowItem.height()/2 )
         scene.addItem( self )
         scene.addItem( self.arrowItem )
@@ -1769,35 +1804,27 @@ class ImportCell( CellElement, QGraphicsRectItem ):
 
         # Draw the connector as a single line under the rectangle
         painter.setPen( pen )
-        painter.drawLine( self.baseX + self.width / 2,
-                          self.baseY,
-                          self.baseX + self.width / 2,
-                          self.baseY + self.height )
+        painter.drawLine( self.baseX + s.mainLine, self.baseY,
+                          self.baseX + s.mainLine, self.baseY + self.height )
 
         pen = QPen( getDarkerColor( s.boxBGColor ) )
         painter.setPen( pen )
-        if s.stretchBlocks:
-            hShift = 0
-            width = self.width
-        else:
-            hShift = (self.width - self.minWidth) / 2
-            width = self.minWidth
-        painter.drawRect( self.baseX + s.hCellPadding + hShift,
+        painter.drawRect( self.baseX + s.hCellPadding,
                           self.baseY + s.vCellPadding,
-                          width - 2 * s.hCellPadding,
+                          self.minWidth - 2 * s.hCellPadding,
                           self.height - 2 * s.vCellPadding )
-        painter.drawLine( self.baseX + s.hCellPadding + self.__arrowWidth + 2 * s.hTextPadding + hShift,
+        painter.drawLine( self.baseX + s.hCellPadding + self.__arrowWidth + 2 * s.hTextPadding,
                           self.baseY + s.vCellPadding,
-                          self.baseX + s.hCellPadding + self.__arrowWidth + 2 * s.hTextPadding + hShift,
+                          self.baseX + s.hCellPadding + self.__arrowWidth + 2 * s.hTextPadding,
                           self.baseY + self.height - s.vCellPadding )
 
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
-        textRectWidth = width - 2 * s.hCellPadding - 4 * s.hTextPadding - self.__arrowWidth
+        textRectWidth = self.minWidth - 2 * s.hCellPadding - 4 * s.hTextPadding - self.__arrowWidth
         textShift = ( textRectWidth - self.__textRect.width() ) / 2
-        painter.drawText( self.baseX + s.hCellPadding + self.__arrowWidth + 3 * s.hTextPadding + hShift + textShift,
+        painter.drawText( self.baseX + s.hCellPadding + self.__arrowWidth + 3 * s.hTextPadding + textShift,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft,
@@ -1849,33 +1876,27 @@ class IfCell( CellElement, QGraphicsRectItem ):
         pen = QPen( s.lineColor )
         pen.setWidth( s.lineWidth )
         painter.setPen( pen )
-        brush = QBrush( s.boxBGColor )
+        brush = QBrush( s.ifBGColor )
         painter.setBrush( brush )
 
         # Draw the connector as a single line under the rectangle
-        painter.drawLine( self.baseX + self.width / 2,
-                          self.baseY,
-                          self.baseX + self.width / 2,
-                          self.baseY + self.height )
+        painter.drawLine( self.baseX + s.mainLine, self.baseY,
+                          self.baseX + s.mainLine, self.baseY + self.height )
 
         # Draw the main element
-        pen = QPen( getDarkerColor( s.boxBGColor ) )
+        pen = QPen( getDarkerColor( s.ifBGColor ) )
         painter.setPen( pen )
 
-        if s.stretchBlocks:
-            hShift = 0
-        else:
-            hShift = (self.width - self.minWidth) / 2
-        x1 = self.baseX + s.hCellPadding + hShift
-        y1 = self.baseY + self.height / 2
-        x2 = self.baseX + s.hCellPadding + s.ifWidth + hShift
+        x1 = self.baseX + s.hCellPadding
+        y1 = self.baseY + self.minHeight / 2
+        x2 = self.baseX + s.hCellPadding + s.ifWidth
         y2 = self.baseY + s.vCellPadding
-        x3 = self.baseX + (self.width - s.hCellPadding - s.ifWidth - hShift)
+        x3 = self.baseX + self.minWidth - s.hCellPadding - s.ifWidth
         y3 = y2
         x4 = x3 + s.ifWidth
         y4 = y1
         x5 = x3
-        y5 = self.baseY + (self.height - s.vCellPadding)
+        y5 = self.baseY + (self.minHeight - s.vCellPadding)
         x6 = x2
         y6 = y5
         painter.drawPolygon( QPointF(x1, y1), QPointF(x2, y2),
@@ -1890,7 +1911,10 @@ class IfCell( CellElement, QGraphicsRectItem ):
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
         painter.setFont( s.monoFont )
-        painter.drawText( self.baseX + self.width / 2 - self.__textRect.width() / 2,
+        availWidth = x3 - x2
+        textWidth = self.__textRect.width() + 2 * s.hTextPadding
+        textShift = (availWidth - textWidth) / 2
+        painter.drawText( x2 + s.hTextPadding + textShift,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, self.__getText() )
@@ -1955,7 +1979,8 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
                                                           self.__getText() )
 
         self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
-        self.minWidth = self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding)
+        self.minWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
+                             s.minWidth )
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1971,22 +1996,18 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         " Draws the independent comment "
         s = self.canvas.settings
 
-        w = self.minWidth
-        if s.stretchComments:
-            w = self.width
-
         cellToTheLeft = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ]
-        path = getCommentBoxPath( s, self.baseX, self.baseY, w, self.height )
+        path = getCommentBoxPath( s, self.baseX, self.baseY, self.minWidth, self.minHeight )
         path.moveTo( self.baseX + s.hCellPadding,
-                     self.baseY + self.height / 2 )
+                     self.baseY + self.minHeight / 2 )
         if self.leadingForElse:
-            path.lineTo( self.baseX, self.baseY + self.height / 2 )
-            path.moveTo( self.baseX, self.baseY + self.height / 2 )
-            path.lineTo( self.baseX - cellToTheLeft.width / 2,
-                         self.baseY + self.height )
+            path.lineTo( self.baseX, self.baseY + self.minHeight / 2 )
+            path.moveTo( self.baseX, self.baseY + self.minHeight / 2 )
+            path.lineTo( cellToTheLeft.baseX + s.mainLine,
+                         self.baseY + self.minHeight )
         else:
-            path.lineTo( self.baseX - cellToTheLeft.width / 2,
-                         self.baseY + self.height / 2 )
+            path.lineTo( cellToTheLeft.baseX + s.mainLine,
+                         self.baseY + self.minHeight / 2 )
 
         self.setPath( path )
 
@@ -2004,8 +2025,7 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         painter.setPen( pen )
         painter.drawText( self.baseX + s.hCellPadding + s.hTextPadding,
                           self.baseY + s.vCellPadding + s.vTextPadding,
-                          self.width - 2 * (s.hCellPadding + s.hTextPadding),
-                          self.height - 2 * (s.vCellPadding + s.vTextPadding),
+                          self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft | Qt.AlignVCenter,
                           self.__getText() )
         return
@@ -2217,22 +2237,33 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
         s = self.canvas.settings
 
         self.minHeight = 2 * s.vCellPadding
-        self.minWidth = 2 * s.hCellPadding
+
+        hasVertical = False
+        for conn in self.connections:
+            if self.NORTH in conn or self.SOUTH in conn:
+                hasVertical = True
+                break
+        if hasVertical:
+            self.minWidth = s.mainLine + s.hCellPadding
+        else:
+            self.minWidth = 2 * s.hCellPadding
+
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
 
     def __getXY( self, location ):
+        s = self.canvas.settings
         if location == self.NORTH:
-            return self.baseX + self.width / 2, self.baseY
+            return self.baseX + s.mainLine, self.baseY
         if location == self.SOUTH:
-            return self.baseX + self.width / 2, self.baseY + self.height
+            return self.baseX + s.mainLine, self.baseY + self.height
         if location == self.WEST:
             return self.baseX, self.baseY + self.height / 2
         if location == self.EAST:
             return self.baseX + self.width, self.baseY + self.height / 2
         # It is CENTER
-        return self.baseX + self.width / 2, self.baseY + self.height / 2
+        return self.baseX + s.mainLine, self.baseY + self.height / 2
 
     def __angled( self, begin, end ):
         if begin in [ self.NORTH, self.SOUTH ] and \
@@ -2258,7 +2289,6 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
                 path.moveTo( startX, startY )
                 path.lineTo( endX, endY )
         self.setPath( path )
-
         self.setToolTip( self.getTooltip() )
         scene.addItem( self )
         return
