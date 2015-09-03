@@ -83,58 +83,6 @@ class SVGItem( QGraphicsSvgItem ):
         return self.boundingRect().width() * self.__scale
 
 
-class LabelItem( QGraphicsRectItem ):
-    " Serves 'continue' and 'break' labels "
-
-    def __init__( self, ref, text ):
-        QGraphicsRectItem.__init__( self )
-        self.ref = ref
-        self.__text = text
-        self.__bgColor = ref.canvas.settings.labelBGColor
-        self.__fgColor = ref.canvas.settings.labelFGColor
-        self.__frameColor = ref.canvas.settings.labelLineColor
-        self.__font = ref.canvas.settings.badgeFont
-        self.__textRect = ref.canvas.settings.badgeFontMetrics.boundingRect(
-                                                0, 0,  maxint, maxint, 0, text )
-        self.__hSpacing = 2
-        self.__vSpacing = 1
-        self.__radius = 2
-
-        self.setRect( 0, 0, self.__textRect.width() + 2 * self.__hSpacing,
-                            self.__textRect.height() + 2 * self.__vSpacing )
-        return
-
-    def setBGColor( self, bgColor ):
-        self.__bgColor = bgColor
-    def setFGColor( self, fgColor ):
-        self.__fgColor = fgColor
-    def setFrameColor( self, frameColor ):
-        self.__frameColor = framecolor
-    def setFont( self, font ):
-        self.__font = font
-
-    def paint( self, painter, option, widget ):
-        " Paints the label "
-        s = self.ref.canvas.settings
-
-        pen = QPen( self.__frameColor )
-        pen.setWidth( s.labelLineWidth )
-        painter.setPen( pen )
-        brush = QBrush( self.__bgColor )
-        painter.setBrush( brush )
-        painter.drawRoundedRect( self.x(), self.y(), self.width(), self.height(),
-                                 self.__radius, self.__radius )
-
-        pen = QPen( self.__fgColor )
-        painter.setPen( pen )
-        painter.setFont( self.__font )
-        painter.drawText( self.x() + self.__hSpacing, self.y() + self.__vSpacing,
-                          self.width() - 2 * self.__hSpacing,
-                          self.height() - 2 * self.__vSpacing,
-                          Qt.AlignLeft, self.__text )
-        return
-
-
 class BadgeItem( QGraphicsRectItem ):
     " Serves the scope badges "
 
@@ -153,8 +101,10 @@ class BadgeItem( QGraphicsRectItem ):
         self.__vSpacing = 1
         self.__radius = 2
 
-        self.setRect( 0, 0, self.__textRect.width() + 2 * self.__hSpacing,
-                            self.__textRect.height() + 2 * self.__vSpacing )
+        self.__width = self.__textRect.width() + 2 * self.__hSpacing
+        self.__height = self.__textRect.height() + 2 * self.__vSpacing
+
+        self.setRect( 0, 0, self.__width, self.__height )
         return
 
     def setBGColor( self, bgColor ):
@@ -167,6 +117,13 @@ class BadgeItem( QGraphicsRectItem ):
         self.__needRect = value
     def setFont( self, font ):
         self.__font = font
+    def width( self ):
+        return self.__width
+    def height( self ):
+        return self.__height
+    def moveTo( self, x, y ):
+        self.setPos( self.mapToScene( float(x), float(y) ) )
+        self.setRect( x, y, self.__width, self.__height )
 
     def paint( self, painter, option, widget ):
         " Paints the scope item "
@@ -178,15 +135,15 @@ class BadgeItem( QGraphicsRectItem ):
             painter.setPen( pen )
             brush = QBrush( self.__bgColor )
             painter.setBrush( brush )
-            painter.drawRoundedRect( self.x(), self.y(), self.width(), self.height(),
+            painter.drawRoundedRect( self.x(), self.y(), self.__width, self.__height,
                                      self.__radius, self.__radius )
 
         pen = QPen( self.__fgColor )
         painter.setPen( pen )
         painter.setFont( self.__font )
         painter.drawText( self.x() + self.__hSpacing, self.y() + self.__vSpacing,
-                          self.width() - 2 * self.__hSpacing,
-                          self.height() - 2 * self.__vSpacing,
+                          self.__textRect.width(),
+                          self.__textRect.height(),
                           Qt.AlignLeft, self.__text )
         return
 
@@ -248,10 +205,6 @@ class CellElement:
         # Filled when draw is called
         self.baseX = None
         self.baseY = None
-
-        # Badge painting support
-        self._badgeRect = None
-        self._badgeText = None
         return
 
     def __str__( self ):
@@ -274,11 +227,6 @@ class CellElement:
     def getBoundingRect( self, text ):
         " Provides the bounding rectangle for a monospaced font "
         return self.canvas.settings.monoFontMetrics.boundingRect(
-                                        0, 0,  maxint, maxint, 0, text )
-
-    def getBadgeBoundingRect( self, text ):
-        " Provides the bounding rectangle for a badge text "
-        return self.canvas.settings.badgeFontMetrics.boundingRect(
                                         0, 0,  maxint, maxint, 0, text )
 
     def getTooltip( self ):
@@ -308,33 +256,6 @@ class CellElement:
                    str( self.canvas.minHeight ) + ")"
         return "::".join( parts )
 
-    def _paintBadge( self, painter, option, widget, startX = None,
-                                                    startY = None,
-                                                    needRect = True ):
-        " Paints a badge for a scope "
-        s = self.canvas.settings
-        height = self._badgeRect.height() + 2
-        width = self._badgeRect.width() + 4
-        pen = QPen( s.badgeLineColor )
-        pen.setWidth( s.badgeLineWidth )
-        painter.setPen( pen )
-
-        if startX is None:
-            startX = self.baseX + s.rectRadius + s.hScopeSpacing
-        if startY is None:
-            startY = self.baseY - height / 2 + s.vScopeSpacing
-        if needRect:
-            brush = QBrush( s.badgeBGColor )
-            painter.setBrush( brush )
-            painter.drawRoundedRect( startX, startY,
-                                     width, height, 2, 2 )
-        pen.setColor( s.badgeFGColor )
-        painter.setPen( pen )
-        painter.setFont( s.badgeFont )
-        painter.drawText( startX + 2, startY + 1,
-                          width - 2, height - 2,
-                          Qt.AlignLeft, self._badgeText )
-        return
 
 class ScopeCellElement( CellElement ):
 
@@ -357,6 +278,7 @@ class ScopeCellElement( CellElement ):
         self._headerRect = None
         self._sideComment = None
         self._sideCommentRect = None
+        self._badgeItem = None
         return
 
     def _getHeaderText( self ):
@@ -369,15 +291,12 @@ class ScopeCellElement( CellElement ):
             self.docstringText = self.ref.docstring.getDisplayValue()
         return self.docstringText
 
-    def _render( self, badgeText = None ):
+    def _render( self ):
         " Provides rendering for the scope elements "
         s = self.canvas.settings
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self.minHeight = s.rectRadius + s.vScopeSpacing
             self.minWidth = s.rectRadius + s. hScopeSpacing
-            if badgeText:
-                self._badgeText = badgeText
-                self._badgeRect = self.getBadgeBoundingRect( badgeText )
         elif self.subKind == ScopeCellElement.LEFT:
             self.minHeight = 0
             self.minWidth = s.rectRadius + s.hScopeSpacing
@@ -431,14 +350,15 @@ class ScopeCellElement( CellElement ):
         s = self.canvas.settings
         if self.subKind == ScopeCellElement.TOP_LEFT:
             # Draw the scope rounded rectangle when we see the top left corner
-            vAdjust = 0
-            if self._badgeRect:
-                vAdjust = self._badgeRect.height() / 2 + 1 - s.vScopeSpacing
-            self.setRect( baseX, baseY - vAdjust,
-                          self.canvas.width, self.canvas.height + vAdjust )
+            self.setRect( baseX, baseY,
+                          self.canvas.width, self.canvas.height )
             self.setToolTip( self.getCanvasTooltip() )
             scene.addItem( self )
             self.canvas.scopeRectangle = self
+            if self._badgeItem:
+                self._badgeItem.moveTo( baseX + s.hScopeSpacing + s.rectRadius,
+                                        baseY + s.vScopeSpacing - self._badgeItem.height() / 2 )
+#                scene.addItem( self._badgeItem )
         elif self.subKind == ScopeCellElement.DECLARATION:
             yShift = 0
             if hasattr( self.ref, "sideComment" ):
@@ -477,45 +397,6 @@ class ScopeCellElement( CellElement ):
                                      self.canvas.width - 2 * s.hScopeSpacing,
                                      self.canvas.height - 2 * s.vScopeSpacing,
                                      s.rectRadius, s.rectRadius )
-            if self.kind in [ CellElement.FOR_SCOPE, CellElement.WHILE_SCOPE ]:
-                # Draw the 'break' badge
-#                oldBadgeText = self._badgeText
-#                oldBadgeRect = self._badgeRect
-#                self._badgeText = 'break'
-#                self._badgeRect = self.getBadgeBoundingRect( self._badgeText )
-#                self._paintBadge( painter, option, widget,
-#                                  self.baseX + self.canvas.width / 2 -
-#                                  self._badgeRect.width() / 2,
-#                                  self.baseY + self.canvas.height -
-#                                  self._badgeRect.height() - 2 * s.vScopeSpacing, True )
-#                self._badgeText = oldBadgeText
-#                self._badgeRect = oldBadgeRect
-
-                pen = QPen( getDarkerColor( painter.brush().color() ) )
-                pen.setWidth( s.lineWidth )
-                painter.setPen( pen )
-                brush = QBrush( s.breakBGColor )
-                painter.setBrush( brush )
-
-                breakRect = self.getBadgeBoundingRect( "break" )
-                x = self.baseX + s.hScopeSpacing
-                y = self.baseY + self.canvas.height - 2 * s.vScopeSpacing - self._badgeRect.height()
-                width = self.canvas.width - 2 * s.hScopeSpacing
-                height = breakRect.height() + 2
-                painter.drawRoundedRect( x, y, width, height, s.rectRadius, s.rectRadius )
-#                painter.drawLine( opeSpacing,
-#                                  self.baseY + self.canvas.height - 2 * s.vScopeSpacing - self._badgeRect.height(),
-#                                  self.baseX + self.canvas.width - s.hScopeSpacing,
-#                                  self.baseY + self.canvas.height - 2 * s.vScopeSpacing - self._badgeRect.height() )
-                pen = QPen( s.boxFGColor )
-                painter.setPen( pen )
-                painter.setFont( s.badgeFont )
-                painter.drawText( self.baseX + (self.canvas.width - breakRect.width())/2,
-                                  y + 2, breakRect.width(), breakRect.height(),
-                                  Qt.AlignLeft, "break" )
-
-            if self._badgeText:
-                self._paintBadge( painter, option, widget )
 
         elif self.subKind == ScopeCellElement.DECLARATION:
             pen = QPen( s.boxFGColor )
@@ -539,40 +420,6 @@ class ScopeCellElement( CellElement ):
                               self.baseY + self.height,
                               canvasLeft + self.canvas.width - 2 * s.hScopeSpacing,
                               self.baseY + self.height )
-            if self.kind in [ CellElement.FOR_SCOPE, CellElement.WHILE_SCOPE ]:
-                # Draw the 'continue' badge
-#                oldBadgeText = self._badgeText
-#                oldBadgeRect = self._badgeRect
-#                self._badgeText = 'continue'
-#                self._badgeRect = self.getBadgeBoundingRect( self._badgeText )
-#                self._paintBadge( painter, option, widget,
-#                                  self.baseX - s.rectRadius +
-#                                  self.canvas.width / 2 - self._badgeRect.width() / 2,
-#                                  self.baseY + self.height, True )
-#                self._badgeText = oldBadgeText
-#                self._badgeRect = oldBadgeRect
-
-                pen = QPen( getDarkerColor( painter.brush().color() ) )
-                pen.setWidth( s.lineWidth )
-                painter.setPen( pen )
-                brush = QBrush( s.continueBGColor )
-                painter.setBrush( brush )
-
-                contRect = self.getBadgeBoundingRect( "continue" )
-                x = canvasLeft
-                y = self.baseY + self.height
-                width = self.canvas.width - 2 * s.hScopeSpacing
-                height = contRect.height() + 2
-                painter.drawRoundedRect( x, y, width, height, s.rectRadius, s.rectRadius )
-
-                pen = QPen( s.boxFGColor )
-                painter.setPen( pen )
-                painter.setFont( s.badgeFont )
-                painter.drawText( canvasLeft + (self.canvas.width - contRect.width())/2,
-                                  y + 2, contRect.width(), contRect.height(),
-                                  Qt.AlignLeft, "continue" )
-
-
 
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
             canvasTop = self.baseY - s.rectRadius
@@ -898,7 +745,9 @@ class FunctionScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._sideComment
 
     def render( self ):
-        self._render( "def" )
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            self._badgeItem = BadgeItem( self, "def" )
+        self._render()
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -945,7 +794,9 @@ class ClassScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._sideComment
 
     def render( self ):
-        self._render( "class" )
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            self._badgeItem = BadgeItem( self, "class" )
+        self._render()
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -989,7 +840,9 @@ class ForScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._sideComment
 
     def render( self ):
-        self._render( "for" )
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            self._badgeItem = BadgeItem( self, "for" )
+        self._render()
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1034,7 +887,9 @@ class WhileScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._sideComment
 
     def render( self ):
-        self._render( "while" )
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            self._badgeItem = BadgeItem( self, "while" )
+        self._render()
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1075,7 +930,9 @@ class TryScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._headerText
 
     def render( self ):
-        self._render( "try" )
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            self._badgeItem = BadgeItem( self, "try" )
+        self._render()
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1120,7 +977,9 @@ class WithScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._sideComment
 
     def render( self ):
-        self._render( "with" )
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            self._badgeItem = BadgeItem( self, "with" )
+        self._render()
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1167,7 +1026,9 @@ class DecoratorScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._sideComment
 
     def render( self ):
-        self._render( "@" )
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            self._badgeItem = BadgeItem( self, "@" )
+        self._render()
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1209,7 +1070,9 @@ class ElseScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._headerText
 
     def render( self ):
-        self._render( "else" )
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            self._badgeItem = BadgeItem( self, "else" )
+        self._render()
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1256,7 +1119,9 @@ class ExceptScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._sideComment
 
     def render( self ):
-        self._render( "except" )
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            self._badgeItem = BadgeItem( self, "except" )
+        self._render()
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1296,7 +1161,9 @@ class FinallyScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._headerText
 
     def render( self ):
-        self._render( "finally" )
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            self._badgeItem = BadgeItem( self, "finally" )
+        self._render()
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1920,11 +1787,15 @@ class IfCell( CellElement, QGraphicsRectItem ):
                           Qt.AlignLeft, self.__getText() )
 
         # Draw the 'n' badge
-        self._badgeText = 'N'
-        self._badgeRect = self.getBadgeBoundingRect( self._badgeText )
-        self._paintBadge( painter, option, widget,
-                          x4, y4 - self._badgeRect.height() - 3,
-                          False )
+        pen = QPen( s.lineColor )
+        pen.setWidth( 1 )
+        painter.setPen( pen )
+        painter.setFont( s.badgeFont )
+        badgeRect = s.badgeFontMetrics.boundingRect( 0, 0,  maxint, maxint,
+                                                     0, text )
+        painter.drawText( x4 + 2, y4 - badgeRect.height() - 2,
+                          badgeRect.width(), badgeRect.height(),
+                          Qt.AlignLeft, 'N' )
         return
 
 

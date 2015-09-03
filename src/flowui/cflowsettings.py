@@ -66,8 +66,6 @@ class CFlowSettings:
         self.rectRadius = 6         # Rounded rectangles radius
         self.returnRectRadius = 16  # Rounded rectangles radius
         self.minWidth = 100
-        self.arrowLength = 6        # Length of an arrow
-        self.arrowWidth = 2         # One wing width
         self.ifWidth = 10           # One if wing width
         self.commentCorner = 6      # Top right comment corner
         self.hScopeSpacing = 2
