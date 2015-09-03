@@ -24,38 +24,55 @@
 #include "cflowutils.hpp"
 
 
+const std::string   emptyString;
 
-const char *  trimStart( const char *  str )
+
+const char *  trimStart( const char *  str, int  len )
 {
-    while ( memchr( " \t\n\r", *str, 4 ) )
+    const char *    end( str + len );
+    while ( str < end && memchr( " \t\n\r", *str, 4 ) )
         ++str;
     return str;
 }
 
-const char *  trimEnd( const char *  end )
+const char *  trimEnd( const char *  end, int  len )
 {
-    while ( memchr( " \t\n\r", end[ -1 ], 4 ) )
+    const char *    begin( end - len );
+    while ( end > begin  && memchr( " \t\n\r", end[ -1 ], 4 ) )
         --end;
     return end;
 }
 
 std::string  trim( const char *  buffer, int  len )
 {
-    return std::string( trimStart( buffer ),
-                        trimEnd( buffer + len ) );
+    const char *    begin( trimStart( buffer, len ) );
+    const char *    end( trimEnd( buffer + len, len ) );
+
+    if ( begin < end )
+        return std::string( begin, end );
+    return emptyString;
 }
 
 void trimInplace( std::string &  str )
 {
+    int           len( str.length() );
     const char *  b( str.c_str() );
-    str.assign( trimStart( b ), trimEnd( b + str.length() ) );
+
+    const char *    begin( trimStart( b, len ) );
+    const char *    end( trimEnd( b + len, len ) );
+
+    if ( begin < end )
+        str.assign( begin, end );
+    else
+        str.clear();
 }
 
 
 void trimEndInplace( std::string &  str )
 {
+    int           len( str.length() );
     const char *  b( str.c_str() );
-    str.assign( b, trimEnd( b + str.length() ) );
+    str.assign( b, trimEnd( b + len, len ) );
 }
 
 std::vector< std::string >  splitLines( const std::string &  str )

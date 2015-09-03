@@ -27,8 +27,8 @@
 #include <vector>
 
 
-const char *  trimStart( const char *  str );
-const char *  trimEnd( const char *  end );
+const char *  trimStart( const char *  str, int  len );
+const char *  trimEnd( const char *  end, int  len );
 std::string   trim( const char *  buffer, int  len );
 void          trimInplace( std::string &  str );
 void          trimEndInplace( std::string &  str );

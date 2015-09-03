@@ -506,7 +506,7 @@ FragmentWithComments::alignBlockAndStripSideComments(const std::string &  conten
         *k = expandTabs( *k );
         if ( k != lines.begin() )
         {
-            size_t      strippedSize( strlen( trimStart( k->c_str() ) ) );
+            size_t      strippedSize( strlen( trimStart( k->c_str(), k->length() ) ) );
             if ( strippedSize > 0 )
                 indent = std::min( indent, k->length() - strippedSize );
         }
@@ -1278,7 +1278,7 @@ std::string  Docstring::trimDocstring( const std::string &  docstring )
         *k = expandTabs( *k );
         if ( k != lines.begin() )
         {
-            size_t      strippedSize( strlen( trimStart( k->c_str() ) ) );
+            size_t      strippedSize( strlen( trimStart( k->c_str(), k->length() ) ) );
             if ( strippedSize > 0 )
                 indent = std::min( indent, k->length() - strippedSize );
         }
@@ -1291,7 +1291,7 @@ std::string  Docstring::trimDocstring( const std::string &  docstring )
         std::vector< std::string >::iterator    k( lines.begin() );
         for ( ++k; k != lines.end(); ++k )
         {
-            std::string     rightStripped( trimEnd( k->c_str() ) );
+            std::string     rightStripped( trimEnd( k->c_str(), k->length() ) );
             if ( rightStripped.length() > indent )
                 *k = std::string( rightStripped.c_str() + indent );
             else
