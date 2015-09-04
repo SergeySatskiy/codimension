@@ -1792,7 +1792,7 @@ class IfCell( CellElement, QGraphicsRectItem ):
         painter.setPen( pen )
         painter.setFont( s.badgeFont )
         badgeRect = s.badgeFontMetrics.boundingRect( 0, 0,  maxint, maxint,
-                                                     0, text )
+                                                     0, 'N' )
         painter.drawText( x4 + 2, y4 - badgeRect.height() - 2,
                           badgeRect.width(), badgeRect.height(),
                           Qt.AlignLeft, 'N' )
