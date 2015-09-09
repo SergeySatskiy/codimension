@@ -90,11 +90,7 @@ class BadgeItem( QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self )
         self.ref = ref
         self.__text = text
-        self.__bgColor = ref.canvas.settings.badgeBGColor
-        self.__fgColor = ref.canvas.settings.badgeFGColor
-        self.__frameColor = ref.canvas.settings.badgeLineColor
-        self.__font = ref.canvas.settings.badgeFont
-        self.__needRect = True
+
         self.__textRect = ref.canvas.settings.badgeFontMetrics.boundingRect(
                                                 0, 0,  maxint, maxint, 0, text )
         self.__hSpacing = 2
@@ -104,7 +100,11 @@ class BadgeItem( QGraphicsRectItem ):
         self.__width = self.__textRect.width() + 2 * self.__hSpacing
         self.__height = self.__textRect.height() + 2 * self.__vSpacing
 
-        self.setRect( 0, 0, self.__width, self.__height )
+        self.__bgColor = ref.canvas.settings.badgeBGColor
+        self.__fgColor = ref.canvas.settings.badgeFGColor
+        self.__frameColor = ref.canvas.settings.badgeLineColor
+        self.__font = ref.canvas.settings.badgeFont
+        self.__needRect = True
         return
 
     def setBGColor( self, bgColor ):
@@ -122,8 +122,11 @@ class BadgeItem( QGraphicsRectItem ):
     def height( self ):
         return self.__height
     def moveTo( self, x, y ):
-        self.setPos( self.mapToScene( float(x), float(y) ) )
-        self.setRect( x, y, self.__width, self.__height )
+        # This is a mistery. I do not understand why I need to divide by 2.0
+        # however this works. I tried various combinations of initialization,
+        # setting the position and mapping. Nothing works but ../2.0. Sick!
+        self.setPos( float(x)/2.0, float(y)/2.0 )
+        self.setRect( float(x)/2.0, float(y)/2.0, self.__width, self.__height )
 
     def paint( self, painter, option, widget ):
         " Paints the scope item "
@@ -135,7 +138,8 @@ class BadgeItem( QGraphicsRectItem ):
             painter.setPen( pen )
             brush = QBrush( self.__bgColor )
             painter.setBrush( brush )
-            painter.drawRoundedRect( self.x(), self.y(), self.__width, self.__height,
+            painter.drawRoundedRect( self.x(), self.y(),
+                                     self.__width, self.__height,
                                      self.__radius, self.__radius )
 
         pen = QPen( self.__fgColor )
@@ -358,7 +362,7 @@ class ScopeCellElement( CellElement ):
             if self._badgeItem:
                 self._badgeItem.moveTo( baseX + s.hScopeSpacing + s.rectRadius,
                                         baseY + s.vScopeSpacing - self._badgeItem.height() / 2 )
-#                scene.addItem( self._badgeItem )
+                scene.addItem( self._badgeItem )
         elif self.subKind == ScopeCellElement.DECLARATION:
             yShift = 0
             if hasattr( self.ref, "sideComment" ):
