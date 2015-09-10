@@ -379,6 +379,7 @@ class ScopeCellElement( CellElement ):
                 scene.addItem( self._badgeItem )
             if hasattr( scene.parent(), "updateNavigationToolbar" ):
                 self.__navBarUpdate = scene.parent().updateNavigationToolbar
+                self.setAcceptHoverEvents( True )
         elif self.subKind == ScopeCellElement.DECLARATION:
             yShift = 0
             if hasattr( self.ref, "sideComment" ):
@@ -698,7 +699,6 @@ class FileScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
-        self.setAcceptHoverEvents( True )
         self.kind = CellElement.FILE_SCOPE
         self.subKind = kind
         return
@@ -743,7 +743,6 @@ class FunctionScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
-        self.setAcceptHoverEvents( True )
         self.kind = CellElement.FUNC_SCOPE
         self.subKind = kind
         return
@@ -791,7 +790,6 @@ class ClassScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
-        self.setAcceptHoverEvents( True )
         self.kind = CellElement.CLASS_SCOPE
         self.subKind = kind
         return
@@ -841,7 +839,6 @@ class ForScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
-        self.setAcceptHoverEvents( True )
         self.kind = CellElement.FOR_SCOPE
         self.subKind = kind
         return
@@ -889,7 +886,6 @@ class WhileScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
-        self.setAcceptHoverEvents( True )
         self.kind = CellElement.WHILE_SCOPE
         self.subKind = kind
         return
@@ -937,7 +933,6 @@ class TryScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
-        self.setAcceptHoverEvents( True )
         self.kind = CellElement.TRY_SCOPE
         self.subKind = kind
         return
@@ -981,7 +976,6 @@ class WithScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
-        self.setAcceptHoverEvents( True )
         self.kind = CellElement.WITH_SCOPE
         self.subKind = kind
         return
@@ -1028,7 +1022,6 @@ class DecoratorScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
-        self.setAcceptHoverEvents( True )
         self.kind = CellElement.DECOR_SCOPE
         self.subKind = kind
         return
@@ -1078,7 +1071,6 @@ class ElseScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
-        self.setAcceptHoverEvents( True )
         self.kind = CellElement.ELSE_SCOPE
         self.subKind = kind
         return
@@ -1121,7 +1113,6 @@ class ExceptScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
-        self.setAcceptHoverEvents( True )
         self.kind = CellElement.EXCEPT_SCOPE
         self.subKind = kind
         return
@@ -1171,7 +1162,6 @@ class FinallyScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
-        self.setAcceptHoverEvents( True )
         self.kind = CellElement.FINALLY_SCOPE
         self.subKind = kind
         return
