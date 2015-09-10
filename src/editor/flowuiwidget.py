@@ -113,7 +113,7 @@ class ControlFlowNavigationBar( QFrame ):
         self.__spacer.setSizePolicy( QSizePolicy.Fixed, QSizePolicy.Expanding )
         self.__spacer.setMinimumWidth( 0 )
         self.__layout.addWidget( self.__spacer )
-        self.__pathLabel = FitLabel()
+        self.__pathLabel = FitLabel( self )
         self.__pathLabel.setFrameStyle( QFrame.StyledPanel )
         self.__pathLabel.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Fixed )
         self.__layout.addWidget( self.__pathLabel )
@@ -305,6 +305,11 @@ class FlowUIWidget( QWidget ):
         else:
             self.__navBar.updateInfoIcon( self.__navBar.STATE_BROKEN_CHN )
         self.__updateTimer.start( IDLE_TIMEOUT )
+        return
+
+    def updateNavigationToolbar( self, text ):
+        " Updates the toolbar text "
+        self.__navBar.setPath( text )
         return
 
 

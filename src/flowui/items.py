@@ -127,6 +127,8 @@ class BadgeItem( QGraphicsRectItem ):
         # setting the position and mapping. Nothing works but ../2.0. Sick!
         self.setPos( float(x)/2.0, float(y)/2.0 )
         self.setRect( float(x)/2.0, float(y)/2.0, self.__width, self.__height )
+    def withinHeader( self ):
+        return self.ref.kind in [ self.ref.ELSE_SCOPE ]
 
     def paint( self, painter, option, widget ):
         " Paints the scope item "
@@ -253,12 +255,16 @@ class CellElement:
         while canvas is not None:
             parts.insert( 0, canvas.getScopeName() )
             canvas = canvas.canvas
+        if parts:
+            path = "::".join( parts )
+        else:
+            path = "::"
         if s.debug:
-            return "::".join(parts ) + "<br>Size: " + str( self.canvas.width ) + "x" + \
+            return path + "<br>Size: " + str( self.canvas.width ) + "x" + \
                    str( self.canvas.height ) + \
                    " (" + str( self.canvas.minWidth ) + "x" + \
                    str( self.canvas.minHeight ) + ")"
-        return "::".join( parts )
+        return path
 
 
 class ScopeCellElement( CellElement ):
@@ -283,6 +289,7 @@ class ScopeCellElement( CellElement ):
         self._sideComment = None
         self._sideCommentRect = None
         self._badgeItem = None
+        self.__navBarUpdate = None
         return
 
     def _getHeaderText( self ):
@@ -354,15 +361,24 @@ class ScopeCellElement( CellElement ):
         s = self.canvas.settings
         if self.subKind == ScopeCellElement.TOP_LEFT:
             # Draw the scope rounded rectangle when we see the top left corner
-            self.setRect( baseX, baseY,
-                          self.canvas.width, self.canvas.height )
-            self.setToolTip( self.getCanvasTooltip() )
+            self.setRect( baseX + s.hScopeSpacing,
+                          baseY + s.vScopeSpacing,
+                          self.canvas.width - 2 * s.hScopeSpacing,
+                          self.canvas.height - 2 * s.vScopeSpacing )
             scene.addItem( self )
             self.canvas.scopeRectangle = self
             if self._badgeItem:
-                self._badgeItem.moveTo( baseX + s.hScopeSpacing + s.rectRadius,
-                                        baseY + s.vScopeSpacing - self._badgeItem.height() / 2 )
+                if self._badgeItem.withinHeader():
+                    headerHeight = self.canvas.cells[ self.addr[ 1 ] + 1 ][ self.addr[ 0 ] ].height
+                    fullHeight = headerHeight + s.rectRadius
+                    self._badgeItem.moveTo( baseX + s.hScopeSpacing + s.rectRadius,
+                                            baseY + s.vScopeSpacing + fullHeight / 2 - self._badgeItem.height() / 2 )
+                else:
+                    self._badgeItem.moveTo( baseX + s.hScopeSpacing + s.rectRadius,
+                                            baseY + s.vScopeSpacing - self._badgeItem.height() / 2 )
                 scene.addItem( self._badgeItem )
+            if hasattr( scene.parent(), "updateNavigationToolbar" ):
+                self.__navBarUpdate = scene.parent().updateNavigationToolbar
         elif self.subKind == ScopeCellElement.DECLARATION:
             yShift = 0
             if hasattr( self.ref, "sideComment" ):
@@ -371,20 +387,17 @@ class ScopeCellElement( CellElement ):
                           baseY - s.rectRadius + s.vHeaderPadding + yShift,
                           self.canvas.width,
                           self.height + (s.rectRadius - s.vHeaderPadding) )
-            self.setToolTip( self.getTooltip() )
             scene.addItem( self )
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
             self.setRect( self.canvas.baseX + self.canvas.width - self.width,
                           baseY - s.rectRadius + s.vHeaderPadding,
                           self.width + s.rectRadius - s.hHeaderPadding,
                           self._sideCommentRect.height() + 2 * s.vTextPadding )
-            self.setToolTip( self.getTooltip() )
             scene.addItem( self )
         elif self.subKind == ScopeCellElement.DOCSTRING:
             self.setRect( baseX - s.rectRadius,
                           baseY + s.vHeaderPadding,
                           self.canvas.width, self.height - s.vHeaderPadding )
-            self.setToolTip( self.getTooltip() )
             scene.addItem( self )
         return
 
@@ -468,6 +481,15 @@ class ScopeCellElement( CellElement ):
                               self.baseY + self.height )
         return
 
+    def hoverEnterEvent( self, event ):
+        if self.__navBarUpdate:
+            self.__navBarUpdate( self.getCanvasTooltip() )
+        return
+
+    def hoverLeaveEvent( self, event ):
+#        if self.__navBarUpdate:
+#            self.__navBarUpdate( "" )
+        return
 
     def __str__( self ):
         return CellElement.__str__( self ) + \
@@ -603,7 +625,6 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y ):
         CellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
-#        self.setAcceptHoverEvents( True )
         self.kind = CellElement.CODE_BLOCK
         self.__text = None
         self.__textRect = None
@@ -629,7 +650,6 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
         self.baseX = baseX
         self.baseY = baseY
         self.setRect( baseX, baseY, self.width, self.height )
-        self.setToolTip( self.getTooltip() )
         scene.addItem( self )
         return
 
@@ -670,14 +690,6 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
                           Qt.AlignLeft, self.__getText() )
         return
 
-#    def hoverEnterEvent( self, event ):
-        #print self.toolTip()
-#        return
-
-#    def hoverLeaveEvent( self, event ):
-#        return
-
-
 
 
 class FileScopeCell( ScopeCellElement, QGraphicsRectItem ):
@@ -686,6 +698,7 @@ class FileScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
+        self.setAcceptHoverEvents( True )
         self.kind = CellElement.FILE_SCOPE
         self.subKind = kind
         return
@@ -730,6 +743,7 @@ class FunctionScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
+        self.setAcceptHoverEvents( True )
         self.kind = CellElement.FUNC_SCOPE
         self.subKind = kind
         return
@@ -770,12 +784,14 @@ class FunctionScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return
 
 
+
 class ClassScopeCell( ScopeCellElement, QGraphicsRectItem ):
     " Represents a class scope element "
 
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
+        self.setAcceptHoverEvents( True )
         self.kind = CellElement.CLASS_SCOPE
         self.subKind = kind
         return
@@ -825,6 +841,7 @@ class ForScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
+        self.setAcceptHoverEvents( True )
         self.kind = CellElement.FOR_SCOPE
         self.subKind = kind
         return
@@ -872,6 +889,7 @@ class WhileScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
+        self.setAcceptHoverEvents( True )
         self.kind = CellElement.WHILE_SCOPE
         self.subKind = kind
         return
@@ -919,6 +937,7 @@ class TryScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
+        self.setAcceptHoverEvents( True )
         self.kind = CellElement.TRY_SCOPE
         self.subKind = kind
         return
@@ -962,6 +981,7 @@ class WithScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
+        self.setAcceptHoverEvents( True )
         self.kind = CellElement.WITH_SCOPE
         self.subKind = kind
         return
@@ -1008,6 +1028,7 @@ class DecoratorScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
+        self.setAcceptHoverEvents( True )
         self.kind = CellElement.DECOR_SCOPE
         self.subKind = kind
         return
@@ -1042,8 +1063,6 @@ class DecoratorScopeCell( ScopeCellElement, QGraphicsRectItem ):
         self.baseY = baseY
         self._draw( scene, baseX, baseY )
         return
-        if self.subKind == ScopeCellElement.UNKNOWN:
-            raise Exception( "Unknown decorator scope element" )
 
     def paint( self, painter, option, widget ):
         " Draws the decorator scope element "
@@ -1059,6 +1078,7 @@ class ElseScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
+        self.setAcceptHoverEvents( True )
         self.kind = CellElement.ELSE_SCOPE
         self.subKind = kind
         return
@@ -1070,7 +1090,7 @@ class ElseScopeCell( ScopeCellElement, QGraphicsRectItem ):
 
     def _getHeaderText( self ):
         if self._headerText is None:
-            self._headerText = "else"
+            self._headerText = ""
         return self._headerText
 
     def render( self ):
@@ -1101,6 +1121,7 @@ class ExceptScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
+        self.setAcceptHoverEvents( True )
         self.kind = CellElement.EXCEPT_SCOPE
         self.subKind = kind
         return
@@ -1150,6 +1171,7 @@ class FinallyScopeCell( ScopeCellElement, QGraphicsRectItem ):
     def __init__( self, ref, canvas, x, y, kind ):
         ScopeCellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
+        self.setAcceptHoverEvents( True )
         self.kind = CellElement.FINALLY_SCOPE
         self.subKind = kind
         return
@@ -1211,7 +1233,6 @@ class BreakCell( CellElement, QGraphicsRectItem ):
         self.baseX = baseX
         self.baseY = baseY
         self.setRect( baseX, baseY, self.width, self.height )
-        self.setToolTip( self.getTooltip() )
         scene.addItem( self )
         return
 
@@ -1275,7 +1296,6 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
         self.baseX = baseX
         self.baseY = baseY
         self.setRect( baseX, baseY, self.width, self.height )
-        self.setToolTip( self.getTooltip() )
         scene.addItem( self )
         return
 
@@ -1357,7 +1377,6 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
         self.arrowItem.setPos( baseX + s.hCellPadding + s.hTextPadding,
                                baseY + self.minHeight/2 - self.arrowItem.height()/2 )
 
-        self.setToolTip( self.getTooltip() )
         scene.addItem( self )
         scene.addItem( self.arrowItem )
         return
@@ -1446,7 +1465,6 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
         self.arrowItem.setPos( baseX + s.hCellPadding + s.hTextPadding,
                                baseY + self.minHeight/2 - self.arrowItem.height()/2 )
 
-        self.setToolTip( self.getTooltip() )
         scene.addItem( self )
         scene.addItem( self.arrowItem )
         return
@@ -1544,7 +1562,6 @@ class AssertCell( CellElement, QGraphicsRectItem ):
                                self.arrowItem.width() / 2,
                                baseY + self.minHeight/2 - self.arrowItem.height()/2 )
 
-        self.setToolTip( self.getTooltip() )
         scene.addItem( self )
         scene.addItem( self.arrowItem )
         return
@@ -1735,7 +1752,6 @@ class IfCell( CellElement, QGraphicsRectItem ):
         self.baseX = baseX
         self.baseY = baseY
         self.setRect( baseX, baseY, self.width, self.height )
-        self.setToolTip( self.getTooltip() )
         scene.addItem( self )
         return
 
@@ -1863,7 +1879,6 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        self.setToolTip( self.getTooltip() )
         scene.addItem( self )
         return
 
@@ -1937,7 +1952,6 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        self.setToolTip( self.getTooltip() )
         scene.addItem( self )
         return
 
@@ -1972,7 +1986,6 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
                      baseY + self.minHeight + s.vCellPadding )
         self.setPath( path )
 
-        self.setToolTip( self.getTooltip() + " Cell to the left width: " + str(cellToTheLeft.width ) )
 
         brush = QBrush( s.commentBGColor )
         self.setBrush( brush )
@@ -2035,7 +2048,6 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        self.setToolTip( self.getTooltip() )
         scene.addItem( self )
         return
 
@@ -2164,7 +2176,6 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
                 path.moveTo( startX, startY )
                 path.lineTo( endX, endY )
         self.setPath( path )
-        self.setToolTip( self.getTooltip() )
         scene.addItem( self )
         return
 

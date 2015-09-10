@@ -143,7 +143,7 @@ class FindReplaceBase( QWidget ):
         sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Fixed )
         sizePolicy.setHorizontalStretch( 0 )
         sizePolicy.setVerticalStretch( 0 )
-        sizePolicy.setHeightForWidth( \
+        sizePolicy.setHeightForWidth(
                 self.findtextCombo.sizePolicy().hasHeightForWidth() )
         self.findtextCombo.setSizePolicy( sizePolicy )
         self.findtextCombo.setEditable( True )

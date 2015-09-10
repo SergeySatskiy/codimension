@@ -223,6 +223,15 @@ class VirtualCanvas:
             return row + 1
         return row
 
+    def __needLoopCommentRow( self, item ):
+        " Tells if a row for comments need to be reserved "
+        if item.leadingComment:
+            return True
+        if item.elsePart:
+            if item.elsePart.leadingComment:
+                return True
+        return False
+
     def layoutSuite( self, vacantRow, suite,
                      scopeKind = None, cf = None, column = 1 ):
         " Does a single suite layout "
@@ -248,10 +257,15 @@ class VirtualCanvas:
                             # Need two rows; one for the comment + one for the scope
                             decScope.layout( dec, CellElement.DECOR_SCOPE, 2 )
                             decScope.__allocateCell( decScopeRows - 3, 2 )
+                            decScope.cells[ decScopeRows - 3 ][ 1 ] = ConnectorCell( CONN_N_S, decScope, 1, decScopeRows - 3 )
                             decScope.cells[ decScopeRows - 3 ][ 2 ] = LeadingCommentCell( scopeItem, decScope, 2, decScopeRows - 3 )
                         else:
-                            # Need one row for the scope
-                            decScope.layout( dec, CellElement.DECOR_SCOPE, 1 )
+                            # Need two rows; one for a connector + one for the scope
+                            decScope.layout( dec, CellElement.DECOR_SCOPE, 2 )
+                            decScope.__allocateCell( decScopeRows - 3, 2 )
+                            decScope.cells[ decScopeRows - 3 ][ 1 ] = ConnectorCell( CONN_N_S, decScope, 1, decScopeRows - 3 )
+                            decScope.cells[ decScopeRows - 3 ][ 2 ] = VSpacerCell( None, decScope, 2, decScopeRows - 3 )
+
                         decScope.__allocateCell( decScopeRows - 2, 1 )
 
                         # Fix the parent
@@ -264,14 +278,14 @@ class VirtualCanvas:
                         scopeCanvas = decScope
                         scopeItem = dec
 
+                # Insert a leading comment or a spacer to avoid badge glueing)
+                self.__allocateCell( vacantRow, column + 1 )
+                self.cells[ vacantRow ][ column ] = ConnectorCell( CONN_N_S,
+                                                                   self, column, vacantRow )
                 if scopeItem.leadingComment:
-                    self.__allocateCell( vacantRow, column + 1 )
                     self.cells[ vacantRow ][ column + 1 ] = LeadingCommentCell( scopeItem, self, column + 1, vacantRow )
-                    vacantRow += 1
-
-                # Insert a spacer to avoid badge overlapping with a previous
-                # scope or a comment
-                self.__allocateAndSet( vacantRow, column, VSpacerCell( None, self, column, vacantRow ) )
+                else:
+                    self.cells[ vacantRow ][ column + 1 ] = VSpacerCell( None, self, column + 1, vacantRow )
                 vacantRow += 1
 
                 # Update the scope canvas parent and address
@@ -282,52 +296,44 @@ class VirtualCanvas:
                 continue
 
             if item.kind == WITH_FRAGMENT:
+                # Insert a leading comment or a spacer to avoid badge glueing)
+                self.__allocateCell( vacantRow, column + 1 )
+                self.cells[ vacantRow ][ column ] = ConnectorCell( CONN_N_S,
+                                                                   self, column, vacantRow )
                 if item.leadingComment:
-                    vacantRow = self.__allocateLeadingComment( item,
-                                                               vacantRow,
-                                                               column )
+                    self.cells[ vacantRow ][ column + 1 ] = LeadingCommentCell( item, self, column + 1, vacantRow )
+                else:
+                    self.cells[ vacantRow ][ column + 1 ] = VSpacerCell( None, self, column + 1, vacantRow )
+                vacantRow += 1
+
                 self.__allocateScope( item, CellElement.WITH_SCOPE,
                                       vacantRow, column )
                 vacantRow += 1
                 continue
 
-            if item.kind == WHILE_FRAGMENT:
-                if item.leadingComment:
-                    vacantRow = self.__allocateLeadingComment( item,
-                                                               vacantRow,
-                                                               column )
-                else:
-                    if item.elsePart:
-                        if item.elsePart.leadingComment:
-                            self.__allocateAndSet( vacantRow, column, ConnectorCell( CONN_N_S,
-                                                                                     self, column, vacantRow ) )
-                            vacantRow += 1
-                self.__allocateScope( item, CellElement.WHILE_SCOPE,
-                                      vacantRow, column )
-                if item.elsePart:
-                    if item.elsePart.leadingComment:
-                        self.__allocateAndSet( vacantRow - 1, column + 2, LeadingCommentCell( item.elsePart, self, column + 2, vacantRow - 1 ) )
-                    self.__allocateScope( item.elsePart, CellElement.ELSE_SCOPE,
-                                          vacantRow, column + 1 )
-                vacantRow += 1
-                continue
+            if item.kind in [ WHILE_FRAGMENT, FOR_FRAGMENT ]:
+                targetScope = CellElement.WHILE_SCOPE
+                if item.kind == FOR_FRAGMENT:
+                    targetScope = CellElement.FOR_SCOPE
 
-            if item.kind == FOR_FRAGMENT:
+                # Insert a leading comment or a spacer to avoid badge glueing)
+                self.__allocateCell( vacantRow, column + 1 )
+                self.cells[ vacantRow ][ column ] = ConnectorCell( CONN_N_S,
+                                                                   self, column, vacantRow )
                 if item.leadingComment:
-                    vacantRow = self.__allocateLeadingComment( item,
-                                                               vacantRow,
-                                                               column )
+                    self.cells[ vacantRow ][ column + 1 ] = LeadingCommentCell( item, self, column + 1, vacantRow )
                 else:
-                    if item.elsePart:
-                        if item.elsePart.leadingComment:
-                            self.__allocateAndSet( vacantRow, column, ConnectorCell( CONN_N_S,
-                                                                                     self, column, vacantRow ) )
-                            vacantRow += 1
-                self.__allocateScope( item, CellElement.FOR_SCOPE,
-                                      vacantRow, column )
+                    if not self.__needLoopCommentRow( item ):
+                        self.cells[ vacantRow ][ column + 1 ] = VSpacerCell( None, self, column + 1, vacantRow )
+
                 if item.elsePart:
                     if item.elsePart.leadingComment:
-                        self.__allocateAndSet( vacantRow - 1, column + 2, LeadingCommentCell( item.elsePart, self, column + 2, vacantRow - 1 ) )
+                        self.__allocateAndSet( vacantRow, column + 2,
+                                               LeadingCommentCell( item.elsePart, self, column + 2, vacantRow ) )
+                vacantRow += 1
+
+                self.__allocateScope( item, targetScope, vacantRow, column )
+                if item.elsePart:
                     self.__allocateScope( item.elsePart, CellElement.ELSE_SCOPE,
                                           vacantRow, column + 1 )
                 vacantRow += 1
