@@ -121,6 +121,8 @@ class BadgeItem( QGraphicsRectItem ):
         return self.__width
     def height( self ):
         return self.__height
+    def text( self ):
+        return self.__text
     def moveTo( self, x, y ):
         # This is a mistery. I do not understand why I need to divide by 2.0
         # however this works. I tried various combinations of initialization,
@@ -128,7 +130,9 @@ class BadgeItem( QGraphicsRectItem ):
         self.setPos( float(x)/2.0, float(y)/2.0 )
         self.setRect( float(x)/2.0, float(y)/2.0, self.__width, self.__height )
     def withinHeader( self ):
-        return self.ref.kind in [ self.ref.ELSE_SCOPE ]
+        return self.ref.kind in [ self.ref.ELSE_SCOPE,
+                                  self.ref.FINALLY_SCOPE,
+                                  self.ref.TRY_SCOPE ]
 
     def paint( self, painter, option, widget ):
         " Paints the scope item "
@@ -255,10 +259,9 @@ class CellElement:
         while canvas is not None:
             parts.insert( 0, canvas.getScopeName() )
             canvas = canvas.canvas
-        if parts:
-            path = "::".join( parts )
-        else:
-            path = "::"
+        path = " :: ".join( parts )
+        if not path:
+            path = " ::"
         if s.debug:
             return path + "<br>Size: " + str( self.canvas.width ) + "x" + \
                    str( self.canvas.height ) + \
@@ -323,11 +326,19 @@ class ScopeCellElement( CellElement ):
         elif self.subKind == ScopeCellElement.DECLARATION:
             # The declaration location uses a bit of the top cell space
             # to make the view more compact
+            badgeItem = self.canvas.cells[ self.addr[ 1 ] - 1 ][ self.addr[ 0 ] - 1]._badgeItem
+
             self._headerRect = self.getBoundingRect( self._getHeaderText() )
             self.minHeight = self._headerRect.height() + \
                              2 * s.vHeaderPadding - s.rectRadius
-            self.minWidth = self._headerRect.width() + \
-                            s.hHeaderPadding - s.rectRadius
+            w = self._headerRect.width()
+            if badgeItem:
+                w = max( w, badgeItem.width() )
+            self.minWidth = w + s.hHeaderPadding - s.rectRadius
+            if badgeItem:
+                if badgeItem.withinHeader():
+                    self.minWidth = badgeItem.width() + \
+                                    s.hHeaderPadding - s.rectRadius
             if hasattr( self.ref, "sideComment" ):
                 if self.ref.sideComment:
                     self.minHeight += 2 * s.vTextPadding
@@ -944,7 +955,7 @@ class TryScopeCell( ScopeCellElement, QGraphicsRectItem ):
 
     def _getHeaderText( self ):
         if self._headerText is None:
-            self._headerText = "try"
+            self._headerText = ""
         return self._headerText
 
     def render( self ):
@@ -1173,7 +1184,7 @@ class FinallyScopeCell( ScopeCellElement, QGraphicsRectItem ):
 
     def _getHeaderText( self ):
         if self._headerText is None:
-            self._headerText = "finally"
+            self._headerText = ""
         return self._headerText
 
     def render( self ):

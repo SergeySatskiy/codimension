@@ -113,8 +113,13 @@ class ControlFlowNavigationBar( QFrame ):
         self.__spacer.setSizePolicy( QSizePolicy.Fixed, QSizePolicy.Expanding )
         self.__spacer.setMinimumWidth( 0 )
         self.__layout.addWidget( self.__spacer )
-        self.__pathLabel = FitLabel( self )
+#        self.__pathLabel = FitLabel( self )
+        self.__pathLabel = QLabel( self )
+        self.__pathLabel.setTextFormat( Qt.PlainText )
+        self.__pathLabel.setAlignment( Qt.AlignLeft )
+        self.__pathLabel.setWordWrap( False )
         self.__pathLabel.setFrameStyle( QFrame.StyledPanel )
+        self.__pathLabel.setTextInteractionFlags( Qt.NoTextInteraction )
         self.__pathLabel.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Fixed )
         self.__layout.addWidget( self.__pathLabel )
         return
@@ -150,7 +155,9 @@ class ControlFlowNavigationBar( QFrame ):
 
     def setPath( self, txt ):
         " Sets the path label content "
+        self.__pathLabel.hide()
         self.__pathLabel.setText( txt )
+        self.__pathLabel.show()
         return
 
     def resizeEvent( self, event ):

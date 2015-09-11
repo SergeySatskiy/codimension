@@ -121,32 +121,31 @@ class VirtualCanvas:
                 if cell.kind == CellElement.FILE_SCOPE:
                     return ""
                 if cell.kind == CellElement.FOR_SCOPE:
-                    return "<b>for</b>"
+                    return "for"
                 if cell.kind == CellElement.WHILE_SCOPE:
-                    return "<b>while</b>"
+                    return "while"
                 if cell.kind == CellElement.TRY_SCOPE:
-                    return "<b>try</b>"
+                    return "try"
                 if cell.kind == CellElement.WITH_SCOPE:
-                    return "<b>with</b>"
+                    return "with"
                 if cell.kind == CellElement.EXCEPT_SCOPE:
-                    return "<b>except</b>"
+                    return "except"
                 if cell.kind == CellElement.FINALLY_SCOPE:
-                    return "<b>finally</b>"
+                    return "finally"
                 if cell.kind == CellElement.FUNC_SCOPE:
-                    return "<b>def</b>&nbsp;<i>" + cell.ref.name.getContent() + "</i>()"
+                    return "def " + cell.ref.name.getContent() + "()"
                 if cell.kind == CellElement.CLASS_SCOPE:
-                    return "<b>class</b>&nbsp;" + cell.ref.name.getContent()
+                    return "class " + cell.ref.name.getContent()
                 if cell.kind == CellElement.DECOR_SCOPE:
                     return "@" + cell.ref.name.getContent()
                 if cell.kind == CellElement.ELSE_SCOPE:
                     parentCanvas = cell.canvas.canvas
-                    canvasToTheLeft = parentCanvas.cells[ cell.canvas.addr[ 1 ] ][ cell.canvas.addr[ 0 ] - 1 ]
-                    scopeToTheLeftName = canvasToTheLeft.getScopeName()
-                    if scopeToTheLeftName in [ "for", "while" ]:
-                        return "<b>" + scopeToTheLeftName + "</b>-<b>else</b>"
-                    if scopeToTheLeftName in [ "try", "except" ]:
-                        return "<b>try</b>-<b>else</b>"
-                    return "<b>else</b>"
+                    cellToTheLeft = parentCanvas.cells[ cell.canvas.addr[ 1 ] ][ cell.canvas.addr[ 0 ] - 1 ]
+                    if cellToTheLeft.kind == CellElement.VCANVAS:
+                        scopeToTheLeftName = cellToTheLeft.getScopeName()
+                        if scopeToTheLeftName in [ "for", "while" ]:
+                            return scopeToTheLeftName + "-else"
+                    return "try-else"
         return None
 
     def __str__( self ):
@@ -356,17 +355,36 @@ class VirtualCanvas:
                     for exceptPart in item.exceptParts:
                         if exceptPart.leadingComment:
                             return True
-                    if item.elsePart:
-                        if item.elsePart.leadingComment:
-                            return True
                     return False
+
+                def needSpacingRow( item ):
+                    " Tells if a row with a spacer is required "
+                    if item.leadingComment and len( item.exceptParts ) == 0:
+                        return False
+                    if len( item.exceptParts ) > 0:
+                        if item.exceptParts[ -1 ].leadingComment and not item.leadingComment:
+                            for index in xrange( len( item.exceptParts ) - 1 ):
+                                if item.exceptParts[ index ].leadingComment:
+                                    return True
+                            return False
+                    return True
 
                 if needCommentRow( item ):
                     commentRow = vacantRow
+                    self.__allocateAndSet( commentRow, column, ConnectorCell( CONN_N_S, self, column, commentRow ) )
                     vacantRow += 1
                     if item.leadingComment:
                         self.__allocateAndSet( commentRow, column + 1,
                                                LeadingCommentCell( item, self, column + 1, commentRow ) )
+
+                if needSpacingRow( item ):
+                    # Spacer is to avoid badge glueing
+                    self.__allocateCell( vacantRow, column + 1 )
+                    self.cells[ vacantRow ][ column ] = ConnectorCell( CONN_N_S,
+                                                                       self, column, vacantRow )
+                    self.cells[ vacantRow ][ column + 1 ] = VSpacerCell( None, self, column + 1, vacantRow )
+                    vacantRow += 1
+
                 self.__allocateScope( item, CellElement.TRY_SCOPE,
                                       vacantRow, column )
                 nextColumn = column + 1
@@ -377,13 +395,12 @@ class VirtualCanvas:
                     self.__allocateScope( exceptPart, CellElement.EXCEPT_SCOPE,
                                           vacantRow, nextColumn )
                     nextColumn += 1
+                # The else part goes below
                 if item.elsePart:
-                    if item.elsePart.leadingComment:
-                        self.__allocateAndSet( commentRow, nextColumn + 1,
-                                               LeadingCommentCell( item.elsePart, self, nextColumn + 1, commentRow ) )
+                    vacantRow += 1
+                    vacantRow = self.__allocateLeadingComment( item.elsePart, vacantRow, column )
                     self.__allocateScope( item.elsePart, CellElement.ELSE_SCOPE,
-                                          vacantRow, nextColumn )
-                    nextColumn += 1
+                                          vacantRow, column )
                 # The finally part is located below
                 if item.finallyPart:
                     vacantRow += 1
