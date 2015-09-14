@@ -2121,17 +2121,23 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
         self.connections = connections
         return
 
+    def __hasVertical( self ):
+        for conn in self.connections:
+            if self.NORTH in conn or self.SOUTH in conn:
+                return True
+        return False
+
+    def __hasHorizontal( self ):
+        for conn in self.connections:
+            if self.EAST in conn or self.WEST in conn:
+                return True
+        return False
+
     def render( self ):
         s = self.canvas.settings
 
         self.minHeight = 2 * s.vCellPadding
-
-        hasVertical = False
-        for conn in self.connections:
-            if self.NORTH in conn or self.SOUTH in conn:
-                hasVertical = True
-                break
-        if hasVertical:
+        if self.__hasVertical():
             self.minWidth = s.mainLine + s.hCellPadding
         else:
             self.minWidth = 2 * s.hCellPadding
@@ -2140,6 +2146,15 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
         self.width = self.minWidth
         return (self.width, self.height)
 
+    def __getY( self ):
+        row = self.addr[ 1 ]
+        column = self.addr[ 0 ]
+        cells = self.canvas.cells
+        for index in xrange( column - 1, -1, -1 ):
+            if cells[ row ][ index ].kind != CellElement.CONNECTOR:
+                return cells[ row ][ index ].height / 2
+        return self.height / 2
+
     def __getXY( self, location ):
         s = self.canvas.settings
         if location == self.NORTH:
@@ -2147,9 +2162,9 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
         if location == self.SOUTH:
             return self.baseX + s.mainLine, self.baseY + self.height
         if location == self.WEST:
-            return self.baseX, self.baseY + self.height / 2
+            return self.baseX, self.baseY + self.__getY()
         if location == self.EAST:
-            return self.baseX + self.width, self.baseY + self.height / 2
+            return self.baseX + self.width, self.baseY + self.__getY()
         # It is CENTER
         return self.baseX + s.mainLine, self.baseY + self.height / 2
 
