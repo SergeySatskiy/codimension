@@ -95,7 +95,6 @@ class CFlowSettings:
         self.commentFGColor = QColor( 0, 0, 0, 255 )
         self.commentLineColor = QColor( 102, 102, 61, 255 )
         self.commentLineWidth = 1
-        self.stretchComments = False
         self.mainLine = 50
 
         self.fileScopeBGColor = QColor( 255, 255, 230, 255 )

@@ -28,6 +28,7 @@ from PyQt4.QtGui import ( QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
                           QPainterPath, QPainter, QColor )
 from PyQt4.QtSvg import QGraphicsSvgItem
 import os.path
+from cdmcf import TRY_FRAGMENT
 
 
 def getDarkerColor( color ):
@@ -157,6 +158,25 @@ class BadgeItem( QGraphicsRectItem ):
                           Qt.AlignLeft, self.__text )
         return
 
+
+class ScopeConnector( QGraphicsPathItem ):
+
+    def __init__( self, settings, x1, y1, x2, y2 ):
+        QGraphicsPathItem.__init__( self )
+        self.__settings = settings
+
+        path = QPainterPath()
+        path.moveTo( x1, y1 )
+        path.lineTo( x2, y2 )
+        self.setPath( path )
+        return
+
+    def paint( self, painter, option, widget ):
+        pen = QPen( self.__settings.lineColor )
+        pen.setWidth( self.__settings.lineWidth )
+        self.setPen( pen )
+        QGraphicsPathItem.paint( self, painter, option, widget )
+        return
 
 
 class CellElement:
@@ -293,6 +313,7 @@ class ScopeCellElement( CellElement ):
         self._sideCommentRect = None
         self._badgeItem = None
         self.__navBarUpdate = None
+        self._connector = None
         return
 
     def _getHeaderText( self ):
@@ -368,14 +389,30 @@ class ScopeCellElement( CellElement ):
                              str( self.subKind ) )
         return
 
+    def __needConnector( self ):
+        if self.kind in [ CellElement.FOR_SCOPE, CellElement.DECOR_SCOPE,
+                          CellElement.WHILE_SCOPE, CellElement.FUNC_SCOPE,
+                          CellElement.CLASS_SCOPE, CellElement.WITH_SCOPE,
+                          CellElement.FINALLY_SCOPE, CellElement.TRY_SCOPE ]:
+            return True
+        if self.kind == CellElement.ELSE_SCOPE:
+            return self.ref.parent.kind == TRY_FRAGMENT
+
     def _draw( self, scene, baseX, baseY ):
         s = self.canvas.settings
         if self.subKind == ScopeCellElement.TOP_LEFT:
+            # Draw connector if needed
+            if self.__needConnector() and self._connector is None:
+                self._connector = ScopeConnector( s, baseX + s.mainLine, baseY,
+                                                  baseX + s.mainLine,
+                                                  baseY + self.canvas.height )
+                scene.addItem( self._connector )
+
             # Draw the scope rounded rectangle when we see the top left corner
             self.setRect( baseX + s.hScopeSpacing,
                           baseY + s.vScopeSpacing,
-                          self.canvas.width - 2 * s.hScopeSpacing,
-                          self.canvas.height - 2 * s.vScopeSpacing )
+                          self.canvas.minWidth - 2 * s.hScopeSpacing,
+                          self.canvas.minHeight - 2 * s.vScopeSpacing )
             scene.addItem( self )
             self.canvas.scopeRectangle = self
             if self._badgeItem:
@@ -423,8 +460,8 @@ class ScopeCellElement( CellElement ):
             painter.setPen( pen )
             painter.drawRoundedRect( self.baseX + s.hScopeSpacing,
                                      self.baseY + s.vScopeSpacing,
-                                     self.canvas.width - 2 * s.hScopeSpacing,
-                                     self.canvas.height - 2 * s.vScopeSpacing,
+                                     self.canvas.minWidth - 2 * s.hScopeSpacing,
+                                     self.canvas.minHeight - 2 * s.vScopeSpacing,
                                      s.rectRadius, s.rectRadius )
 
         elif self.subKind == ScopeCellElement.DECLARATION:
@@ -447,7 +484,7 @@ class ScopeCellElement( CellElement ):
             painter.setPen( pen )
             painter.drawLine( canvasLeft,
                               self.baseY + self.height,
-                              canvasLeft + self.canvas.width - 2 * s.hScopeSpacing,
+                              canvasLeft + self.canvas.minWidth - 2 * s.hScopeSpacing,
                               self.baseY + self.height )
 
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
@@ -489,7 +526,7 @@ class ScopeCellElement( CellElement ):
             pen.setWidth( s.lineWidth )
             painter.setPen( pen )
             painter.drawLine( canvasLeft, self.baseY + self.height,
-                              canvasLeft + self.canvas.width - 2 * s.hScopeSpacing,
+                              canvasLeft + self.canvas.minWidth - 2 * s.hScopeSpacing,
                               self.baseY + self.height )
         return
 
@@ -1852,7 +1889,7 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
 
     def __init__( self, ref, canvas, x, y ):
         CellElement.__init__( self, ref, canvas, x, y )
-        QGraphicsPathItem.__init__( self, canvas.scopeRectangle )
+        QGraphicsPathItem.__init__( self )
         self.kind = CellElement.INDEPENDENT_COMMENT
         self.__text = None
         self.__textRect = None
@@ -1928,7 +1965,7 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
 
     def __init__( self, ref, canvas, x, y ):
         CellElement.__init__( self, ref, canvas, x, y )
-        QGraphicsPathItem.__init__( self, canvas.scopeRectangle )
+        QGraphicsPathItem.__init__( self )
         self.kind = CellElement.LEADING_COMMENT
         self.__text = None
         return
@@ -1960,29 +1997,19 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
         " Draws the leading comment "
         s = self.canvas.settings
 
-        w = self.minWidth
-        if s.stretchComments:
-            w = self.width
-
         # Bottom adjustment
         yShift = self.height - self.minHeight
         baseY = self.baseY + yShift
 
         cellToTheLeft = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ]
-        path = getCommentBoxPath( s, self.baseX, baseY, w, self.minHeight )
+        path = getCommentBoxPath( s, self.baseX, baseY, self.minWidth, self.minHeight )
         path.moveTo( self.baseX + s.hCellPadding,
                      baseY + self.minHeight / 2 )
-#        path.lineTo( self.baseX - cellToTheLeft.width / 4,
-#                     baseY + self.minHeight / 2 )
         path.lineTo( self.baseX,
                      baseY + self.minHeight / 2 )
         # The moveTo() below is required to suppress painting the surface
-#        path.moveTo( self.baseX - cellToTheLeft.width / 4,
-#                     baseY + self.minHeight / 2 )
         path.moveTo( self.baseX,
                      baseY + self.minHeight / 2 )
-#        path.lineTo( self.baseX - cellToTheLeft.width / 3,
-#                     baseY + self.minHeight + s.vCellPadding )
         path.lineTo( self.baseX - s.rectRadius,
                      baseY + self.minHeight + s.vCellPadding )
         self.setPath( path )
@@ -2015,7 +2042,7 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
 
     def __init__( self, ref, canvas, x, y ):
         CellElement.__init__( self, ref, canvas, x, y )
-        QGraphicsPathItem.__init__( self, canvas.scopeRectangle )
+        QGraphicsPathItem.__init__( self )
         self.kind = CellElement.SIDE_COMMENT
         self.__text = None
         return
@@ -2055,12 +2082,8 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
     def paint( self, painter, option, widget ):
         " Draws the side comment "
         s = self.canvas.settings
-
-        w = self.minWidth
-        if s.stretchComments:
-            w = self.width
-
-        path = getCommentBoxPath( s, self.baseX, self.baseY, w, self.height )
+        path = getCommentBoxPath( s, self.baseX, self.baseY,
+                                     self.minWidth, self.height )
         if self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ].kind == CellElement.CONNECTOR:
             # 'if' or 'elif' side comment
             path.moveTo( self.baseX + s.hCellPadding,
@@ -2116,7 +2139,7 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
         """ Connections are supposed to be a list of tuples e.g
             [ (NORTH, SOUTH), (EAST, CENTER) ] """
         CellElement.__init__( self, None, canvas, x, y )
-        QGraphicsPathItem.__init__( self, canvas.scopeRectangle )
+        QGraphicsPathItem.__init__( self )
         self.kind = CellElement.CONNECTOR
         self.connections = connections
         return
@@ -2151,8 +2174,19 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
         column = self.addr[ 0 ]
         cells = self.canvas.cells
         for index in xrange( column - 1, -1, -1 ):
-            if cells[ row ][ index ].kind != CellElement.CONNECTOR:
-                return cells[ row ][ index ].height / 2
+            kind = cells[ row ][ index ].kind
+            if kind in [ CellElement.VACANT, CellElement.H_SPACER,
+                         CellElement.V_SPACER ]:
+                continue
+            if kind != CellElement.CONNECTOR:
+                return cells[ row ][ index ].minHeight / 2
+            if kind in [ CellElement.FILE_SCOPE, CellElement.FUNC_SCOPE,
+                         CellElement.CLASS_SCOPE, CellElement.FOR_SCOPE,
+                         CellElement.WHILE_SCOPE, CellElement.TRY_SCOPE,
+                         CellElement.WITH_SCOPE, CellElement.DECOR_SCOPE,
+                         CellElement.ELSE_SCOPE, CellElement.EXCEPT_SCOPE,
+                         CellElement.FINALLY_SCOPE ]:
+                break
         return self.height / 2
 
     def __getXY( self, location ):
@@ -2166,7 +2200,7 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
         if location == self.EAST:
             return self.baseX + self.width, self.baseY + self.__getY()
         # It is CENTER
-        return self.baseX + s.mainLine, self.baseY + self.height / 2
+        return self.baseX + s.mainLine, self.baseY + self.__getY()
 
     def __angled( self, begin, end ):
         if begin in [ self.NORTH, self.SOUTH ] and \
