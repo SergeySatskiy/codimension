@@ -131,9 +131,13 @@ class BadgeItem( QGraphicsRectItem ):
         self.setPos( float(x)/2.0, float(y)/2.0 )
         self.setRect( float(x)/2.0, float(y)/2.0, self.__width, self.__height )
     def withinHeader( self ):
-        return self.ref.kind in [ self.ref.ELSE_SCOPE,
-                                  self.ref.FINALLY_SCOPE,
-                                  self.ref.TRY_SCOPE ]
+        if self.ref.kind in [ self.ref.ELSE_SCOPE,
+                              self.ref.FINALLY_SCOPE,
+                              self.ref.TRY_SCOPE ]:
+            return True
+        if self.ref.kind == self.ref.EXCEPT_SCOPE:
+            return self.ref.ref.clause is None
+        return False
 
     def paint( self, painter, option, widget ):
         " Paints the scope item "
@@ -1914,6 +1918,25 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         self.width = self.minWidth
         return (self.width, self.height)
 
+    def adjustWidth( self ):
+        """ Used during rendering to adjust the width of the cell.
+            The comment now can take some space on the left and the left hand cell
+            has to be rendered already.
+            The width of this cell will take whatever is needed considering
+            the comment shift to the left
+        """
+        s = self.canvas.settings
+        cellToTheLeft = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ]
+        spareWidth = cellToTheLeft.width - s.mainLine
+        boxWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
+                        s.minWidth )
+        if spareWidth >= boxWidth:
+            self.minWidth = 0
+        else:
+            self.minWidth = boxWidth - spareWidth
+        self.width = self.minWidth
+        return
+
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
@@ -1925,14 +1948,18 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         s = self.canvas.settings
 
         cellToTheLeft = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ]
-        path = getCommentBoxPath( s, self.baseX, self.baseY, self.minWidth, self.minHeight )
-        path.moveTo( self.baseX + s.hCellPadding,
+        leftEdge = cellToTheLeft.baseX + s.mainLine
+        boxWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
+                        s.minWidth )
+        path = getCommentBoxPath( s, leftEdge, self.baseY, boxWidth, self.minHeight )
+        path.moveTo( leftEdge + s.hCellPadding,
                      self.baseY + self.minHeight / 2 )
         if self.leadingForElse:
-            path.lineTo( self.baseX, self.baseY + self.minHeight / 2 )
-            path.moveTo( self.baseX, self.baseY + self.minHeight / 2 )
             path.lineTo( cellToTheLeft.baseX + s.mainLine,
-                         self.baseY + self.minHeight )
+                         self.baseY + self.minHeight / 2 )
+#            path.moveTo( self.baseX, self.baseY + self.minHeight / 2 )
+#            path.lineTo( cellToTheLeft.baseX + s.mainLine,
+#                         self.baseY + self.minHeight )
         else:
             path.lineTo( cellToTheLeft.baseX + s.mainLine,
                          self.baseY + self.minHeight / 2 )
@@ -1951,7 +1978,7 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         pen = QPen( s.commentFGColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
-        painter.drawText( self.baseX + s.hCellPadding + s.hTextPadding,
+        painter.drawText( leftEdge + s.hCellPadding + s.hTextPadding,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft | Qt.AlignVCenter,
@@ -2159,11 +2186,15 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
     def render( self ):
         s = self.canvas.settings
 
-        self.minHeight = 2 * s.vCellPadding
         if self.__hasVertical():
             self.minWidth = s.mainLine + s.hCellPadding
         else:
-            self.minWidth = 2 * s.hCellPadding
+            self.minWidth = 0
+
+        if self.__hasHorizontal():
+            self.minHeight = 2 * s.vCellPadding
+        else:
+            self.minHeight = 0
 
         self.height = self.minHeight
         self.width = self.minWidth

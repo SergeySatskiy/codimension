@@ -703,6 +703,8 @@ class VirtualCanvas:
                     if column != 0 and index < self.linesInHeader:
                         continue    # Skip the header
                     if row[ column ].kind != CellElement.VCANVAS:
+                        if row[ column ].kind == CellElement.INDEPENDENT_COMMENT:
+                            row[ column ].adjustWidth()
                         if row[ column ].tailComment:
                             tailCommentColumns.append( index )  # Skip columns which have trailing comments
                             continue

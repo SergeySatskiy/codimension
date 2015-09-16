@@ -29,6 +29,8 @@ import vcanvas
 import cflowsettings
 
 
+DEBUG = None
+
 def safeRun( commandArgs ):
     """ Runs the given command and reads the output """
 
@@ -128,6 +130,9 @@ def main():
     parser.add_option( "-v", "--verbose",
                        action="store_true", dest="verbose", default=False,
                        help="be verbose (default: False)" )
+    parser.add_option( "-g", "--debug",
+                       action="store_true", dest="debug", default=None,
+                       help="show debug (default: None)" )
 
     options, args = parser.parse_args()
     if not len( args ) in [ 0, 1 ]:
@@ -146,6 +151,10 @@ def main():
             warning = isPythonFile( args[0] )
             if warning is not None:
                 fName = None
+
+    if options.debug == True:
+        global DEBUG
+        DEBUG = True
 
     # Run the QT application
     app = QtGui.QApplication( sys.argv )
@@ -414,6 +423,8 @@ class MainWindow( QtGui.QMainWindow ):
             # To pick up possibly changed settings
             reload( cflowsettings )
             cflowSettings = cflowsettings.getDefaultCflowSettings( self )
+            if DEBUG == True:
+                cflowSettings.debug = True
 
             # Top level canvas has no adress and no parent canvas
             canvas = vcanvas.VirtualCanvas( cflowSettings, None, None, None )
