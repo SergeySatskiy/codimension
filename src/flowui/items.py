@@ -2178,8 +2178,6 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
             if kind in [ CellElement.VACANT, CellElement.H_SPACER,
                          CellElement.V_SPACER ]:
                 continue
-            if kind != CellElement.CONNECTOR:
-                return cells[ row ][ index ].minHeight / 2
             if kind in [ CellElement.FILE_SCOPE, CellElement.FUNC_SCOPE,
                          CellElement.CLASS_SCOPE, CellElement.FOR_SCOPE,
                          CellElement.WHILE_SCOPE, CellElement.TRY_SCOPE,
@@ -2187,6 +2185,8 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
                          CellElement.ELSE_SCOPE, CellElement.EXCEPT_SCOPE,
                          CellElement.FINALLY_SCOPE ]:
                 break
+            if kind != CellElement.CONNECTOR:
+                return cells[ row ][ index ].minHeight / 2
         return self.height / 2
 
     def __getXY( self, location ):
