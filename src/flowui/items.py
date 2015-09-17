@@ -28,7 +28,6 @@ from PyQt4.QtGui import ( QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
                           QPainterPath, QPainter, QColor )
 from PyQt4.QtSvg import QGraphicsSvgItem
 import os.path
-from cdmcf import TRY_FRAGMENT
 
 
 def getDarkerColor( color ):
@@ -393,6 +392,20 @@ class ScopeCellElement( CellElement ):
                              str( self.subKind ) )
         return
 
+    def __afterTry( self ):
+        row = self.addr[ 1 ] - 1
+        column = self.addr[ 0 ]
+        cells = self.canvas.cells
+        while row >= 0:
+            try:
+                if cells[ row ][ column ].kind == CellElement.CONNECTOR:
+                    row -= 1
+                    continue
+                return cells[ row ][ column ].kind == CellElement.TRY_SCOPE
+            except:
+                return False
+        return False
+
     def __needConnector( self ):
         if self.kind in [ CellElement.FOR_SCOPE, CellElement.DECOR_SCOPE,
                           CellElement.WHILE_SCOPE, CellElement.FUNC_SCOPE,
@@ -400,7 +413,7 @@ class ScopeCellElement( CellElement ):
                           CellElement.FINALLY_SCOPE, CellElement.TRY_SCOPE ]:
             return True
         if self.kind == CellElement.ELSE_SCOPE:
-            return self.ref.parent.kind == TRY_FRAGMENT
+            return self.__afterTry()
 
     def _draw( self, scene, baseX, baseY ):
         s = self.canvas.settings
@@ -1125,6 +1138,7 @@ class ElseScopeCell( ScopeCellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self )
         self.kind = CellElement.ELSE_SCOPE
         self.subKind = kind
+        self.after = self
         return
 
     def _getSideComment( self ):
