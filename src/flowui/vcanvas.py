@@ -296,14 +296,12 @@ class VirtualCanvas:
 
             if item.kind == WITH_FRAGMENT:
                 # Insert a leading comment or a spacer to avoid badge glueing)
-                self.__allocateCell( vacantRow, column + 1 )
-                self.cells[ vacantRow ][ column ] = ConnectorCell( CONN_N_S,
-                                                                   self, column, vacantRow )
                 if item.leadingComment:
+                    self.__allocateCell( vacantRow, column + 1 )
+                    self.cells[ vacantRow ][ column ] = ConnectorCell( CONN_N_S,
+                                                                       self, column, vacantRow )
                     self.cells[ vacantRow ][ column + 1 ] = LeadingCommentCell( item, self, column + 1, vacantRow )
-                else:
-                    self.cells[ vacantRow ][ column + 1 ] = VSpacerCell( None, self, column + 1, vacantRow )
-                vacantRow += 1
+                    vacantRow += 1
 
                 self.__allocateScope( item, CellElement.WITH_SCOPE,
                                       vacantRow, column )

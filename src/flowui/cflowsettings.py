@@ -69,7 +69,7 @@ class CFlowSettings:
         self.ifWidth = 10           # One if wing width
         self.commentCorner = 6      # Top right comment corner
         self.hScopeSpacing = 2
-        self.vScopeSpacing = 2
+        self.vScopeSpacing = 6
 
         self.lineWidth = 1          # used for connections and box edges
         self.lineColor = QColor( 16, 16, 16, 255 )

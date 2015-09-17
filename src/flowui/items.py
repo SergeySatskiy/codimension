@@ -485,15 +485,15 @@ class ScopeCellElement( CellElement ):
             pen = QPen( s.boxFGColor )
             painter.setFont( s.monoFont )
             painter.setPen( pen )
+            canvasLeft = self.baseX - s.rectRadius
+            canvasTop = self.baseY - s.rectRadius
+            textHeight = self._headerRect.height()
             yShift = 0
             if hasattr( self.ref, "sideComment" ):
                 yShift = s.vTextPadding
-            canvasLeft = self.baseX - s.rectRadius
-            canvasTop = self.baseY - s.rectRadius
             painter.drawText( canvasLeft + s.hHeaderPadding + s.hScopeSpacing,
-                              canvasTop + s.vHeaderPadding + yShift + s.vScopeSpacing,
-                              int( self._headerRect.width() ),
-                              int( self._headerRect.height() ),
+                              canvasTop + s.vHeaderPadding + yShift,
+                              int( self._headerRect.width() ), textHeight,
                               Qt.AlignLeft, self._getHeaderText() )
 
             pen = QPen( getDarkerColor( painter.brush().color() ) )
