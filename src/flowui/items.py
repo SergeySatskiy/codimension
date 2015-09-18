@@ -393,15 +393,16 @@ class ScopeCellElement( CellElement ):
         return
 
     def __afterTry( self ):
-        row = self.addr[ 1 ] - 1
-        column = self.addr[ 0 ]
-        cells = self.canvas.cells
+        row = self.canvas.addr[ 1 ] - 1
+        column = self.canvas.addr[ 0 ]
+        cells = self.canvas.canvas.cells
         while row >= 0:
             try:
                 if cells[ row ][ column ].kind == CellElement.CONNECTOR:
                     row -= 1
                     continue
-                return cells[ row ][ column ].kind == CellElement.TRY_SCOPE
+                if cells[ row ][ column ].kind == CellElement.VCANVAS:
+                    return cells[ row ][ column ].cells[ 0 ][ 0 ].kind == CellElement.TRY_SCOPE
             except:
                 return False
         return False
@@ -1934,8 +1935,8 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
 
     def adjustWidth( self ):
         """ Used during rendering to adjust the width of the cell.
-            The comment now can take some space on the left and the left hand cell
-            has to be rendered already.
+            The comment now can take some space on the left and the left hand
+            side cell has to be rendered already.
             The width of this cell will take whatever is needed considering
             the comment shift to the left
         """
@@ -1995,8 +1996,7 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         painter.drawText( leftEdge + s.hCellPadding + s.hTextPadding,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft | Qt.AlignVCenter,
-                          self.__getText() )
+                          Qt.AlignLeft, self.__getText() )
         return
 
 
@@ -2009,6 +2009,7 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
         QGraphicsPathItem.__init__( self )
         self.kind = CellElement.LEADING_COMMENT
         self.__text = None
+        self.__textRect = None
         return
 
     def __getText( self ):
@@ -2018,15 +2019,40 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
 
     def render( self ):
         s = self.canvas.settings
-        rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
-                                               self.__getText() )
+        self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
+                                                          self.__getText() )
 
-        self.minHeight = rect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
-        self.minWidth = max( rect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding,
+        self.minHeight = self.__textRect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
+        self.minWidth = max( self.__textRect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding,
                              s.minWidth )
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
+
+    def adjustWidth( self ):
+        """ Used during rendering to adjust the width of the cell.
+            The comment now can take some space on the left and the left hand
+            side cell has to be rendered already.
+            The width of this cell will take whatever is needed considering
+            the comment shift to the left
+        """
+        cellToTheLeft = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ]
+        if cellToTheLeft.kind != CellElement.CONNECTOR:
+            # Not implemented yet
+            return
+
+        # Here: there is a connector on the left so we can move the comment
+        #       safely
+        s = self.canvas.settings
+        spareWidth = cellToTheLeft.width - cellToTheLeft.minWidth + s.hCellPadding
+        boxWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
+                        s.minWidth )
+        if spareWidth >= boxWidth:
+            self.minWidth = 0
+        else:
+            self.minWidth = boxWidth - spareWidth
+        self.width = self.minWidth
+        return
 
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
@@ -2043,15 +2069,23 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
         baseY = self.baseY + yShift
 
         cellToTheLeft = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ]
-        path = getCommentBoxPath( s, self.baseX, baseY, self.minWidth, self.minHeight )
-        path.moveTo( self.baseX + s.hCellPadding,
+        if cellToTheLeft.kind != CellElement.CONNECTOR:
+            # not implemented yet
+            leftEdge = self.baseX
+        else:
+            leftEdge = cellToTheLeft.baseX + s.mainLine
+        boxWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
+                        s.minWidth )
+
+        path = getCommentBoxPath( s, leftEdge, baseY, boxWidth, self.minHeight )
+        path.moveTo( leftEdge + s.hCellPadding,
                      baseY + self.minHeight / 2 )
-        path.lineTo( self.baseX,
+        path.lineTo( leftEdge + s.hCellPadding / 2,
                      baseY + self.minHeight / 2 )
         # The moveTo() below is required to suppress painting the surface
-        path.moveTo( self.baseX,
+        path.moveTo( leftEdge + s.hCellPadding / 2,
                      baseY + self.minHeight / 2 )
-        path.lineTo( self.baseX - s.rectRadius,
+        path.lineTo( leftEdge,
                      baseY + self.minHeight + s.vCellPadding )
         self.setPath( path )
 
@@ -2068,12 +2102,10 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
         pen = QPen( s.commentFGColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
-        painter.drawText( self.baseX + s.hCellPadding + s.hTextPadding,
+        painter.drawText( leftEdge + s.hCellPadding + s.hTextPadding,
                           baseY + s.vCellPadding + s.vTextPadding,
-                          self.width - 2 * (s.hCellPadding + s.hTextPadding),
-                          self.minHeight - 2 * (s.vCellPadding + s.vTextPadding),
-                          Qt.AlignLeft | Qt.AlignVCenter,
-                          self.__getText() )
+                          self.__textRect.width(), self.__textRect.height(),
+                          Qt.AlignLeft, self.__getText() )
         return
 
 
@@ -2086,6 +2118,7 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
         QGraphicsPathItem.__init__( self )
         self.kind = CellElement.SIDE_COMMENT
         self.__text = None
+        self.__textRect = None
         return
 
     def __getText( self ):
@@ -2105,14 +2138,37 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
 
     def render( self ):
         s = self.canvas.settings
-        rect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
-                                               self.__getText() )
+        self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
+                                                          self.__getText() )
 
-        self.minHeight = rect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
-        self.minWidth = rect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding
+        self.minHeight = self.__textRect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
+        self.minWidth = max( self.__textRect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding,
+                             s.minWidth )
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
+
+    def adjustWidth( self ):
+        """ Used during rendering to adjust the width of the cell.
+            The comment now can take some space on the left and the left hand
+            side cell has to be rendered already.
+            The width of this cell will take whatever is needed considering
+            the comment shift to the left
+        """
+        s = self.canvas.settings
+        cellToTheLeft = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ]
+        if cellToTheLeft.kind == CellElement.CONNECTOR:
+            spareWidth = cellToTheLeft.width - cellToTheLeft.minWidth + s.hCellPadding
+        else:
+            spareWidth = cellToTheLeft.width - cellToTheLeft.minWidth
+        boxWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
+                        s.minWidth )
+        if spareWidth >= boxWidth:
+            self.minWidth = 0
+        else:
+            self.minWidth = boxWidth - spareWidth
+        self.width = self.minWidth
+        return
 
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
@@ -2123,25 +2179,38 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
     def paint( self, painter, option, widget ):
         " Draws the side comment "
         s = self.canvas.settings
-        path = getCommentBoxPath( s, self.baseX, self.baseY,
-                                     self.minWidth, self.height )
+
+        cellToTheLeft = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ]
+        boxWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
+                        s.minWidth )
+        leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
         if self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ].kind == CellElement.CONNECTOR:
             # 'if' or 'elif' side comment
-            path.moveTo( self.baseX + s.hCellPadding,
-                         self.baseY + self.height / 2 + 6 )
+            leftEdge = cellToTheLeft.baseX + s.mainLine
+            path = getCommentBoxPath( s, leftEdge, self.baseY, boxWidth, self.minHeight )
+
             width = 0
             index = self.addr[ 0 ] - 1
             while self.canvas.cells[ self.addr[ 1 ] ][ index ].kind == CellElement.CONNECTOR:
                 width += self.canvas.cells[ self.addr[ 1 ] ][ index ].width
                 index -= 1
-            path.lineTo( self.baseX - s.hCellPadding - width,
-                         self.baseY + self.height / 2 + 6 )
+
+            # The first non-connector cell must be the 'if' cell
+            ifCell = self.canvas.cells[ self.addr[ 1 ] ][ index ]
+
+            path.moveTo( leftEdge + s.hCellPadding,
+                         self.baseY + ifCell.minHeight / 2 + 6 )
+            path.lineTo( ifCell.baseX + ifCell.minWidth - s.hCellPadding,
+                         self.baseY + ifCell.minHeight / 2 + 6 )
         else:
             # Regular box
-            path.moveTo( self.baseX + s.hCellPadding,
-                         self.baseY + self.height / 2 )
-            path.lineTo( self.baseX - s.hCellPadding,
-                         self.baseY + self.height / 2 )
+            leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
+            path = getCommentBoxPath( s, leftEdge, self.baseY, boxWidth, self.minHeight )
+
+            h = min( self.minHeight / 2, cellToTheLeft.minHeight / 2 )
+            path.moveTo( leftEdge + s.hCellPadding, self.baseY + h )
+            path.lineTo( cellToTheLeft.baseX + cellToTheLeft.minWidth - s.hCellPadding,
+                         self.baseY + h )
 
         self.setPath( path )
 
@@ -2157,10 +2226,9 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
         pen = QPen( s.commentFGColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
-        painter.drawText( self.baseX + s.hCellPadding + s.hTextPadding,
+        painter.drawText( leftEdge + s.hCellPadding + s.hTextPadding,
                           self.baseY + s.vCellPadding + s.vTextPadding,
-                          self.width - 2 * (s.hCellPadding + s.hTextPadding),
-                          self.height - 2 * (s.vCellPadding + s.vTextPadding),
+                          self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft,
                           self.__getText() )
         return
