@@ -107,6 +107,9 @@ class VirtualCanvas:
         self.minWidth = 0
         self.minHeight = 0
         self.linesInHeader = 0
+        self.dependentRegions = []  # inclusive regions of rows with columns
+                                    # which affect each other width
+        self.maxLineWidth = 0
 
         # Painting support
         self.baseX = 0
@@ -231,6 +234,15 @@ class VirtualCanvas:
                 return True
         return False
 
+    def __needTryCommentRow( self, item ):
+        " Tells if a row for comments need to be reserved "
+        if item.leadingComment:
+            return True
+        for exceptPart in item.exceptParts:
+            if exceptPart.leadingComment:
+                return True
+        return False
+
     def layoutSuite( self, vacantRow, suite,
                      scopeKind = None, cf = None, column = 1 ):
         " Does a single suite layout "
@@ -306,6 +318,7 @@ class VirtualCanvas:
                 if item.kind == FOR_FRAGMENT:
                     targetScope = CellElement.FOR_SCOPE
 
+                loopRegionBegin = vacantRow
                 if self.__needLoopCommentRow( item ):
                     self.__allocateCell( vacantRow, column + 1 )
                     self.cells[ vacantRow ][ column ] = ConnectorCell( CONN_N_S,
@@ -316,6 +329,7 @@ class VirtualCanvas:
                         if item.elsePart.leadingComment:
                             self.__allocateAndSet( vacantRow, column + 2,
                                                    LeadingCommentCell( item.elsePart, self, column + 2, vacantRow ) )
+                        self.dependentRegions.append( (loopRegionBegin, vacantRow + 1) )
                     vacantRow += 1
 
                 self.__allocateScope( item, targetScope, vacantRow, column )
@@ -335,22 +349,16 @@ class VirtualCanvas:
                 continue
 
             if item.kind == TRY_FRAGMENT:
-                def needCommentRow( item ):
-                    " Tells if a row for comments need to be reserved "
-                    if item.leadingComment:
-                        return True
-                    for exceptPart in item.exceptParts:
-                        if exceptPart.leadingComment:
-                            return True
-                    return False
-
-                if needCommentRow( item ):
+                tryRegionBegin = vacantRow
+                if self.__needTryCommentRow( item ):
                     commentRow = vacantRow
                     self.__allocateAndSet( commentRow, column, ConnectorCell( CONN_N_S, self, column, commentRow ) )
                     vacantRow += 1
                     if item.leadingComment:
                         self.__allocateAndSet( commentRow, column + 1,
                                                LeadingCommentCell( item, self, column + 1, commentRow ) )
+                    if item.exceptParts:
+                        self.dependentRegions.append( (tryRegionBegin, vacantRow) )
 
                 self.__allocateScope( item, CellElement.TRY_SCOPE,
                                       vacantRow, column )
@@ -378,6 +386,7 @@ class VirtualCanvas:
                 continue
 
             if item.kind == IF_FRAGMENT:
+                ifRegionBegin = vacantRow
                 vacantRow = self.__allocateLeadingComment( item, vacantRow, column )
                 self.__allocateAndSet( vacantRow, column, IfCell( item, self, column, vacantRow ) )
 
@@ -538,6 +547,10 @@ class VirtualCanvas:
                     mainRow += 1
 
                 vacantRow = mainRow
+
+                # Memorize the inclusive if-statement region. It is used at the
+                # further rendering stage
+                self.dependentRegions.append( (ifRegionBegin, vacantRow - 1) )
                 continue
 
             # Below are the single cell fragments possibly with comments
@@ -631,7 +644,96 @@ class VirtualCanvas:
         self.cells[ vacantRow ][ 1 ] = self.__currentScopeClass( cf, self, 1, vacantRow, ScopeCellElement.BOTTOM )
         return
 
+    def __dependentRegion( self, rowIndex ):
+        if self.dependentRegions:
+            return self.dependentRegions[ 0 ][ 0 ] == rowIndex
+        return False
+
+    def __getRangeMaxColumns( self, start, end ):
+        maxColumns = 0
+        while start <= end:
+            maxColumns = max( maxColumns, len( self.cells[ start ] ) )
+            start += 1
+        return maxColumns
+
+    def __renderRegion( self ):
+        " Renders a region where the rows affect each other "
+        start, end = self.dependentRegions.pop( 0 )
+        maxColumns = self.__getRangeMaxColumns( start, end )
+        totalWidth = 0
+        for column in xrange( maxColumns ):
+            maxColumnWidth = 0
+            index = start
+            while index <= end:
+                row = self.cells[ index ]
+                if column < len( row ):
+                    row[ column ].render()
+                    if row[ column ].kind in [ CellElement.INDEPENDENT_COMMENT,
+                                               CellElement.SIDE_COMMENT,
+                                               CellElement.LEADING_COMMENT ]:
+                        row[ column ].adjustWidth()
+                    if row[ column ].width > maxColumnWidth:
+                        maxColumnWidth = row[ column ].width
+                index += 1
+
+            index = start
+            while index <= end:
+                row = self.cells[ index ]
+                if column < len( row ):
+                    row[ column ].width = maxColumnWidth
+                index += 1
+            totalWidth += maxColumnWidth
+
+        # Update the row height
+        index = start
+        while index <= end:
+            maxHeight = 0
+            row = self.cells[ index ]
+            for cell in row:
+                maxHeight = max( cell.height, maxHeight )
+            for cell in row:
+                cell.height = maxHeight
+            self.height += maxHeight
+            index += 1
+
+        # Update the scope width if needed
+        self.width = max( self.width, totalWidth )
+        return end
+
     def render( self ):
+        " Preforms rendering for all the cells "
+        self.width = 0
+        self.height = 0
+
+        maxRowIndex = len( self.cells ) - 1
+        index = 0
+        while index <= maxRowIndex:
+            if self.__dependentRegion( index ):
+                index = self.__renderRegion()
+            else:
+                row = self.cells[ index ]
+                maxHeight = 0
+                for cell in row:
+                    _, height = cell.render()
+                    maxHeight = max( maxHeight, height )
+                    if cell.kind in [ CellElement.INDEPENDENT_COMMENT,
+                                      CellElement.SIDE_COMMENT,
+                                      CellElement.LEADING_COMMENT ]:
+                        cell.adjustWidth()
+                totalWidth = 0
+                for cell in row:
+                    cell.height = maxHeight
+                    totalWidth += cell.width
+                self.height += maxHeight
+                self.width = max( self.width, totalWidth )
+            index += 1
+
+        self.width = self.width + self.settings.rectRadius + self.settings.hScopeSpacing
+        self.minWidth = self.width
+        self.minHeight = self.height
+        return (self.width, self.height)
+
+    def render1( self ):
         " Preforms rendering for all the cells "
         self.width = 0
         self.height = 0
@@ -662,7 +764,7 @@ class VirtualCanvas:
                     row[ -1 ].tailComment = True
 
         # Loop over all columns
-        tailCommentColumns = []
+        tailCommentRows = []
         for column in xrange( maxColumns ):
             maxWidth = 0
             for index, row in enumerate( self.cells ):
@@ -675,7 +777,7 @@ class VirtualCanvas:
                                                    CellElement.LEADING_COMMENT ]:
                             row[ column ].adjustWidth()
                         if row[ column ].tailComment:
-                            tailCommentColumns.append( index )  # Skip columns which have trailing comments
+                            tailCommentRows.append( index )  # Skip rows which have trailing comments
                             continue
                     if row[ column ].width > maxWidth:
                         maxWidth = row[ column ].width
@@ -700,7 +802,7 @@ class VirtualCanvas:
 
         # Scope width might need to be adjusted by the size of the lines with
         # the trailing comments
-        for rowIndex in tailCommentColumns:
+        for rowIndex in tailCommentRows:
             lineWidth = 0
             for item in self.cells[ rowIndex ]:
                 lineWidth += item.width
