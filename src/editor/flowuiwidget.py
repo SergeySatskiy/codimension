@@ -155,9 +155,11 @@ class ControlFlowNavigationBar( QFrame ):
 
     def setPath( self, txt ):
         " Sets the path label content "
-        self.__pathLabel.hide()
         self.__pathLabel.setText( txt )
-        self.__pathLabel.show()
+        return
+
+    def setPathVisible( self, on ):
+        self.__pathLabel.setVisible( on )
         return
 
     def resizeEvent( self, event ):
@@ -180,6 +182,7 @@ class FlowUIWidget( QWidget ):
         self.__editor = editor
         self.__parentWidget = parent
         self.__connected = False
+        self.__needPathUpdate = False
 
         self.cflowSettings = getDefaultCflowSettings( self )
 
@@ -207,6 +210,8 @@ class FlowUIWidget( QWidget ):
         hLayout.addLayout( vLayout )
         hLayout.addWidget( self.__createToolbar() )
         self.setLayout( hLayout )
+
+        self.updateSettings()
 
         # Connect to the change file type signal
         mainWindow = GlobalData().mainWindow
@@ -316,7 +321,16 @@ class FlowUIWidget( QWidget ):
 
     def updateNavigationToolbar( self, text ):
         " Updates the toolbar text "
-        self.__navBar.setPath( text )
+        if self.__needPathUpdate:
+            self.__navBar.setPath( text )
+        return
+
+    def updateSettings( self ):
+        " Updates settings "
+        s = Settings()
+        self.__needPathUpdate = s.showCFNavigationBar
+        self.__navBar.setPathVisible( self.__needPathUpdate )
+        self.__navBar.setPath( "" )
         return
 
 

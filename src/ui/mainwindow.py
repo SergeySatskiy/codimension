@@ -1224,6 +1224,10 @@ class CodimensionMainWindow( QMainWindow ):
         showNavBarAct.setCheckable( True )
         showNavBarAct.setChecked( self.settings.showNavigationBar )
         showNavBarAct.changed.connect( self.__showNavBarChanged )
+        showCFNavBarAct = self.__optionsMenu.addAction( 'Show control flow navigation bar' )
+        showCFNavBarAct.setCheckable( True )
+        showCFNavBarAct.setChecked( self.settings.showCFNavigationBar )
+        showCFNavBarAct.changed.connect( self.__showCFNavBarChanged )
         showMainToolBarAct = self.__optionsMenu.addAction( 'Show main toolbar' )
         showMainToolBarAct.setCheckable( True )
         showMainToolBarAct.setChecked( self.settings.showMainToolBar )
@@ -2703,6 +2707,13 @@ class CodimensionMainWindow( QMainWindow ):
         self.settings.showNavigationBar = \
                                 not self.settings.showNavigationBar
         self.editorsManagerWidget.editorsManager.updateEditorsSettings()
+        return
+
+    def __showCFNavBarChanged( self ):
+        " Control flow toolbar visibility changed "
+        self.settings.showCFNavigationBar = \
+                                not self.settings.showCFNavigationBar
+        self.editorsManagerWidget.editorsManager.updateCFEditorsSettings()
         return
 
     def __showMainToolbarChanged( self ):

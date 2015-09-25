@@ -3249,6 +3249,10 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         # Need to save the modified project files
         return editorsManager.saveModified( True )
 
+    def getCFEditor( self ):
+        " Provides a reference to the control flow widget "
+        return self.__flowUI
+
     # Mandatory interface part is below
 
     def getEditor( self ):

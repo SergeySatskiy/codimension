@@ -63,13 +63,11 @@ class CFlowSettings:
 
         self.vSpacer = 10
 
-        self.rectRadius = 6         # Rounded rectangles radius
-        self.returnRectRadius = 16  # Rounded rectangles radius
+        self.rectRadius = 6         # Rounded rectangles radius for the scopes
+        self.returnRectRadius = 16  # Rounded rectangles radius for the return-like statements
         self.minWidth = 100
         self.ifWidth = 10           # One if wing width
         self.commentCorner = 6      # Top right comment corner
-        self.hScopeSpacing = 8
-        self.vScopeSpacing = 8
 
         self.lineWidth = 1          # used for connections and box edges
         self.lineColor = QColor( 16, 16, 16, 255 )

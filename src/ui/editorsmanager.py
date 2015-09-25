@@ -2146,6 +2146,14 @@ class EditorsManager( QTabWidget ):
                     item.resizeBars()
         return
 
+    def updateCFEditorsSettings( self ):
+        " Visits all the visible CF editors "
+        for index in xrange( self.count() ):
+            item = self.widget( index )
+            if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
+                item.getCFEditor().updateSettings()
+        return
+
     def getWidgetByUUID( self, uuid ):
         " Provides the widget found by the given UUID "
         for index in xrange( self.count() ):

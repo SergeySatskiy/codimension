@@ -30,6 +30,9 @@ from PyQt4.QtSvg import QGraphicsSvgItem
 import os.path
 
 
+
+TOP_Z = 100.0
+
 def getDarkerColor( color ):
     r = color.red() - 40
     g = color.green() - 40
@@ -333,19 +336,19 @@ class ScopeCellElement( CellElement ):
         " Provides rendering for the scope elements "
         s = self.canvas.settings
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self.minHeight = s.rectRadius + s.vScopeSpacing
-            self.minWidth = s.rectRadius + s. hScopeSpacing
+            self.minHeight = s.rectRadius + s.vCellPadding
+            self.minWidth = s.rectRadius + s.hCellPadding
         elif self.subKind == ScopeCellElement.LEFT:
             self.minHeight = 0
-            self.minWidth = s.rectRadius + s.hScopeSpacing
+            self.minWidth = s.rectRadius + s.hCellPadding
         elif self.subKind == ScopeCellElement.BOTTOM_LEFT:
-            self.minHeight = s.rectRadius + s.vScopeSpacing
-            self.minWidth = s.rectRadius + s.hScopeSpacing
+            self.minHeight = s.rectRadius + s.vCellPadding
+            self.minWidth = s.rectRadius + s.hCellPadding
         elif self.subKind == ScopeCellElement.TOP:
-            self.minHeight = s.rectRadius + s.vScopeSpacing
+            self.minHeight = s.rectRadius + s.vCellPadding
             self.minWidth = 0
         elif self.subKind == ScopeCellElement.BOTTOM:
-            self.minHeight = s.rectRadius + s.vScopeSpacing
+            self.minHeight = s.rectRadius + s.vCellPadding
             self.minWidth = 0
         elif self.subKind == ScopeCellElement.DECLARATION:
             # The declaration location uses a bit of the top cell space
@@ -427,21 +430,21 @@ class ScopeCellElement( CellElement ):
                 scene.addItem( self._connector )
 
             # Draw the scope rounded rectangle when we see the top left corner
-            self.setRect( baseX + s.hScopeSpacing,
-                          baseY + s.vScopeSpacing,
-                          self.canvas.minWidth - 2 * s.hScopeSpacing,
-                          self.canvas.minHeight - 2 * s.vScopeSpacing )
+            self.setRect( baseX + s.hCellPadding,
+                          baseY + s.vCellPadding,
+                          self.canvas.minWidth - 2 * s.hCellPadding,
+                          self.canvas.minHeight - 2 * s.vCellPadding )
             scene.addItem( self )
             self.canvas.scopeRectangle = self
             if self._badgeItem:
                 if self._badgeItem.withinHeader():
                     headerHeight = self.canvas.cells[ self.addr[ 1 ] + 1 ][ self.addr[ 0 ] ].height
                     fullHeight = headerHeight + s.rectRadius
-                    self._badgeItem.moveTo( baseX + s.hScopeSpacing + s.rectRadius,
-                                            baseY + s.vScopeSpacing + fullHeight / 2 - self._badgeItem.height() / 2 )
+                    self._badgeItem.moveTo( baseX + s.hCellPadding + s.rectRadius,
+                                            baseY + s.vCellPadding + fullHeight / 2 - self._badgeItem.height() / 2 )
                 else:
-                    self._badgeItem.moveTo( baseX + s.hScopeSpacing + s.rectRadius,
-                                            baseY + s.vScopeSpacing - self._badgeItem.height() / 2 )
+                    self._badgeItem.moveTo( baseX + s.hCellPadding + s.rectRadius,
+                                            baseY + s.vCellPadding - self._badgeItem.height() / 2 )
                 scene.addItem( self._badgeItem )
             if hasattr( scene.parent(), "updateNavigationToolbar" ):
                 self.__navBarUpdate = scene.parent().updateNavigationToolbar
@@ -476,10 +479,10 @@ class ScopeCellElement( CellElement ):
             pen = QPen( getDarkerColor( painter.brush().color() ) )
             pen.setWidth( s.lineWidth )
             painter.setPen( pen )
-            painter.drawRoundedRect( self.baseX + s.hScopeSpacing,
-                                     self.baseY + s.vScopeSpacing,
-                                     self.canvas.minWidth - 2 * s.hScopeSpacing,
-                                     self.canvas.minHeight - 2 * s.vScopeSpacing,
+            painter.drawRoundedRect( self.baseX + s.hCellPadding,
+                                     self.baseY + s.vCellPadding,
+                                     self.canvas.minWidth - 2 * s.hCellPadding,
+                                     self.canvas.minHeight - 2 * s.vCellPadding,
                                      s.rectRadius, s.rectRadius )
 
         elif self.subKind == ScopeCellElement.DECLARATION:
@@ -492,9 +495,9 @@ class ScopeCellElement( CellElement ):
             yShift = 0
             if hasattr( self.ref, "sideComment" ):
                 yShift = s.vTextPadding
-            painter.drawText( canvasLeft + s.hHeaderPadding + s.hScopeSpacing,
+            painter.drawText( canvasLeft + s.hHeaderPadding,
                               canvasTop + s.vHeaderPadding + yShift,
-                              int( self._headerRect.width() ), textHeight,
+                              self._headerRect.width(), textHeight,
                               Qt.AlignLeft, self._getHeaderText() )
 
             pen = QPen( getDarkerColor( painter.brush().color() ) )
@@ -502,16 +505,18 @@ class ScopeCellElement( CellElement ):
             painter.setPen( pen )
             painter.drawLine( canvasLeft,
                               self.baseY + self.height,
-                              canvasLeft + self.canvas.minWidth - 2 * s.hScopeSpacing,
+                              canvasLeft + self.canvas.minWidth - 2 * s.hCellPadding,
                               self.baseY + self.height )
 
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
             canvasTop = self.baseY - s.rectRadius
-            movedBaseX = self.canvas.baseX + self.canvas.width - self.width - s.hScopeSpacing
+            # s.vHeaderPadding below is used intentionally: to have the same
+            # spacing on top, bottom and right for the comment box
+            movedBaseX = self.canvas.baseX + self.canvas.width - self.width - s.rectRadius - s.vHeaderPadding
             path = getNoCellCommentBoxPath( movedBaseX + s.hHeaderPadding,
                                             canvasTop + s.vHeaderPadding,
-                                            int( self._sideCommentRect.width() ) + 2 * s.hTextPadding,
-                                            int( self._sideCommentRect.height() ) + 2 * s.vTextPadding,
+                                            self._sideCommentRect.width() + 2 * s.hTextPadding,
+                                            self._sideCommentRect.height() + 2 * s.vTextPadding,
                                             s.commentCorner )
             brush = QBrush( s.commentBGColor )
             painter.setBrush( brush )
@@ -525,8 +530,8 @@ class ScopeCellElement( CellElement ):
             painter.setPen( pen )
             painter.drawText( movedBaseX + s.hHeaderPadding + s.hTextPadding,
                               canvasTop + s.vHeaderPadding + s.vTextPadding,
-                              int( self._sideCommentRect.width() ),
-                              int( self._sideCommentRect.height() ),
+                              self._sideCommentRect.width(),
+                              self._sideCommentRect.height(),
                               Qt.AlignLeft, self._getSideComment() )
         elif self.subKind == ScopeCellElement.DOCSTRING:
             canvasLeft = self.baseX - s.rectRadius
@@ -544,7 +549,7 @@ class ScopeCellElement( CellElement ):
             pen.setWidth( s.lineWidth )
             painter.setPen( pen )
             painter.drawLine( canvasLeft, self.baseY + self.height,
-                              canvasLeft + self.canvas.minWidth - 2 * s.hScopeSpacing,
+                              canvasLeft + self.canvas.minWidth - 2 * s.hCellPadding,
                               self.baseY + self.height )
         return
 
@@ -717,6 +722,7 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
         self.baseX = baseX
         self.baseY = baseY
         self.setRect( baseX, baseY, self.width, self.height )
+        self.setZValue( TOP_Z )
         scene.addItem( self )
         return
 
@@ -1281,7 +1287,7 @@ class BreakCell( CellElement, QGraphicsRectItem ):
         s = self.canvas.settings
         self.__textRect = self.getBoundingRect( "break" )
         self.minHeight = self.__textRect.height() + 2 * self.__vSpacing + s.vCellPadding
-        self.minWidth = self.__textRect.width() + 2 * self.__hSpacing + 2 * s.hCellPadding
+        self.minWidth = self.__textRect.width() + 2 * (self.__hSpacing + s.hCellPadding)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1311,7 +1317,7 @@ class BreakCell( CellElement, QGraphicsRectItem ):
         pen = QPen( getDarkerColor( s.breakBGColor ) )
         painter.setPen( pen )
 
-        x1 = self.baseX + s.mainLine - self.__textRect.width() / 2 - self.__hSpacing
+        x1 = self.baseX + s.hCellPadding
         y1 = self.baseY + s.vCellPadding
         w = 2 * self.__hSpacing + self.__textRect.width()
         h = 2 * self.__vSpacing + self.__textRect.height()
@@ -1344,7 +1350,7 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
         s = self.canvas.settings
         self.__textRect = self.getBoundingRect( "continue" )
         self.minHeight = self.__textRect.height() + 2 * self.__vSpacing + s.vCellPadding
-        self.minWidth = self.__textRect.width() + 2 * self.__hSpacing + 2 * s.hCellPadding
+        self.minWidth = self.__textRect.width() + 2 * (self.__hSpacing + s.hCellPadding)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
@@ -1374,7 +1380,7 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
         pen = QPen( getDarkerColor( s.continueBGColor ) )
         painter.setPen( pen )
 
-        x1 = self.baseX + s.mainLine - self.__textRect.width() / 2 - self.__hSpacing
+        x1 = self.baseX + s.hCellPadding
         y1 = self.baseY + s.vCellPadding
         w = 2 * self.__hSpacing + self.__textRect.width()
         h = 2 * self.__vSpacing + self.__textRect.height()
@@ -1410,6 +1416,8 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
     def __getText( self ):
         if self.__text is None:
             self.__text = self.ref.getDisplayValue()
+            if not self.__text:
+                self.__text = "None"
         return self.__text
 
     def render( self ):
@@ -1809,6 +1817,7 @@ class IfCell( CellElement, QGraphicsRectItem ):
         self.baseX = baseX
         self.baseY = baseY
         self.setRect( baseX, baseY, self.width, self.height )
+        self.setZValue( TOP_Z )
         scene.addItem( self )
         return
 
@@ -1955,6 +1964,7 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
+        self.setZValue( TOP_Z )
         scene.addItem( self )
         return
 
@@ -2057,6 +2067,7 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
+        self.setZValue( TOP_Z )
         scene.addItem( self )
         return
 
@@ -2173,6 +2184,7 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
+        self.setZValue( TOP_Z )
         scene.addItem( self )
         return
 
