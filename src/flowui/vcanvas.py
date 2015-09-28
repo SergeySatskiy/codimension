@@ -733,6 +733,14 @@ class VirtualCanvas:
         self.minHeight = self.height
         return (self.width, self.height)
 
+    def setEditor( self, editor ):
+        " Provides the editor counterpart "
+        for row in self.cells:
+            if row:
+                for cell in row:
+                    cell.setEditor( editor )
+        return
+
     def draw( self, scene, baseX, baseY ):
         " Draws the diagram on the real canvas "
         self.baseX = baseX
@@ -756,4 +764,6 @@ class VirtualCanvas:
                 currentX += cell.width
             currentY += height
         return
+
+
 

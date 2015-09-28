@@ -25,7 +25,8 @@ from sys import maxint
 from math import sqrt
 from PyQt4.QtCore import Qt, QPointF
 from PyQt4.QtGui import ( QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
-                          QPainterPath, QPainter, QColor )
+                          QPainterPath, QPainter, QColor, QGraphicsItem,
+                          QStyleOptionGraphicsItem, QStyle )
 from PyQt4.QtSvg import QGraphicsSvgItem
 import os.path
 
@@ -229,6 +230,7 @@ class CellElement:
         self.ref = ref              # reference to the control flow object
         self.addr = [ x, y ]        # indexes in the current canvas
         self.canvas = canvas        # reference to the canvas
+        self._editor = None
 
         self.tailComment = False
 
@@ -294,6 +296,11 @@ class CellElement:
                    " (" + str( self.canvas.minWidth ) + "x" + \
                    str( self.canvas.minHeight ) + ")"
         return path
+
+    def setEditor( self, editor ):
+        """ Provides the editor counterpart
+            The default implementation is to ignore it """
+        return
 
 
 class ScopeCellElement( CellElement ):
@@ -700,6 +707,9 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
         self.kind = CellElement.CODE_BLOCK
         self.__text = None
         self.__textRect = None
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def __getText( self ):
@@ -761,6 +771,18 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, self.__getText() )
+        return
+
+    def setEditor( self, editor ):
+        " Provides the editor counterpart "
+        self._editor = editor
+
+    def mouseDoubleClickEvent( self, event ):
+        " Jump to the appropriate line in the text editor "
+        line = self.ref.body.beginLine
+        if self._editor:
+            self._editor.gotoLine( line )
+            self._editor.setFocus()
         return
 
 
@@ -1281,6 +1303,9 @@ class BreakCell( CellElement, QGraphicsRectItem ):
         self.__textRect = None
         self.__vSpacing = 0
         self.__hSpacing = 4
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def render( self ):
@@ -1333,6 +1358,18 @@ class BreakCell( CellElement, QGraphicsRectItem ):
                           Qt.AlignLeft, "break" )
         return
 
+    def setEditor( self, editor ):
+        " Provides the editor counterpart "
+        self._editor = editor
+
+    def mouseDoubleClickEvent( self, event ):
+        " Jump to the appropriate line in the text editor "
+        line = self.ref.body.beginLine
+        if self._editor:
+            self._editor.gotoLine( line )
+            self._editor.setFocus()
+        return
+
 
 class ContinueCell( CellElement, QGraphicsRectItem ):
     " Represents a single continue statement "
@@ -1344,6 +1381,9 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
         self.__textRect = None
         self.__vSpacing = 0
         self.__hSpacing = 4
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def render( self ):
@@ -1396,6 +1436,18 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
                           Qt.AlignLeft, "continue" )
         return
 
+    def setEditor( self, editor ):
+        " Provides the editor counterpart "
+        self._editor = editor
+
+    def mouseDoubleClickEvent( self, event ):
+        " Jump to the appropriate line in the text editor "
+        line = self.ref.body.beginLine
+        if self._editor:
+            self._editor.gotoLine( line )
+            self._editor.setFocus()
+        return
+
 
 class ReturnCell( CellElement, QGraphicsRectItem ):
     " Represents a single return statement "
@@ -1411,6 +1463,9 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
         self.arrowItem = SVGItem( "return.svgz" )
         self.arrowItem.setWidth( self.__arrowWidth )
         self.arrowItem.setToolTip( "return" )
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def __getText( self ):
@@ -1487,6 +1542,18 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
                           Qt.AlignLeft, self.__getText() )
         return
 
+    def setEditor( self, editor ):
+        " Provides the editor counterpart "
+        self._editor = editor
+
+    def mouseDoubleClickEvent( self, event ):
+        " Jump to the appropriate line in the text editor "
+        line = self.ref.body.beginLine
+        if self._editor:
+            self._editor.gotoLine( line )
+            self._editor.setFocus()
+        return
+
 
 class RaiseCell( CellElement, QGraphicsRectItem ):
     " Represents a single raise statement "
@@ -1502,6 +1569,9 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
         self.arrowItem = SVGItem( "raise.svg" )
         self.arrowItem.setWidth( self.__arrowWidth )
         self.arrowItem.setToolTip( "raise" )
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def __getText( self ):
@@ -1575,6 +1645,18 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
                           Qt.AlignLeft, self.__getText() )
         return
 
+    def setEditor( self, editor ):
+        " Provides the editor counterpart "
+        self._editor = editor
+
+    def mouseDoubleClickEvent( self, event ):
+        " Jump to the appropriate line in the text editor "
+        line = self.ref.body.beginLine
+        if self._editor:
+            self._editor.gotoLine( line )
+            self._editor.setFocus()
+        return
+
 
 
 
@@ -1593,6 +1675,9 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         self.arrowItem = SVGItem( "assert.svg" )
         self.arrowItem.setWidth( self.__arrowWidth )
         self.arrowItem.setToolTip( "assert" )
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def __getText( self ):
@@ -1680,6 +1765,18 @@ class AssertCell( CellElement, QGraphicsRectItem ):
                           Qt.AlignLeft, self.__getText() )
         return
 
+    def setEditor( self, editor ):
+        " Provides the editor counterpart "
+        self._editor = editor
+
+    def mouseDoubleClickEvent( self, event ):
+        " Jump to the appropriate line in the text editor "
+        line = self.ref.body.beginLine
+        if self._editor:
+            self._editor.gotoLine( line )
+            self._editor.setFocus()
+        return
+
 
 
 
@@ -1713,6 +1810,9 @@ class ImportCell( CellElement, QGraphicsRectItem ):
         self.arrowItem = SVGItem( "import.svgz" )
         self.arrowItem.setWidth( self.__arrowWidth )
         self.arrowItem.setToolTip( "import" )
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def __getText( self ):
@@ -1784,6 +1884,19 @@ class ImportCell( CellElement, QGraphicsRectItem ):
                           self.__getText() )
         return
 
+    def setEditor( self, editor ):
+        " Provides the editor counterpart "
+        self._editor = editor
+
+    def mouseDoubleClickEvent( self, event ):
+        " Jump to the appropriate line in the text editor "
+        line = self.ref.body.beginLine
+        if self._editor:
+            self._editor.gotoLine( line )
+            self._editor.setFocus()
+        return
+
+
 
 class IfCell( CellElement, QGraphicsRectItem ):
     " Represents a single if statement "
@@ -1794,6 +1907,9 @@ class IfCell( CellElement, QGraphicsRectItem ):
         self.kind = CellElement.IF
         self.__text = None
         self.__textRect = None
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def __getText( self ):
@@ -1884,6 +2000,18 @@ class IfCell( CellElement, QGraphicsRectItem ):
                           Qt.AlignLeft, 'N' )
         return
 
+    def setEditor( self, editor ):
+        " Provides the editor counterpart "
+        self._editor = editor
+
+    def mouseDoubleClickEvent( self, event ):
+        " Jump to the appropriate line in the text editor "
+        line = self.ref.body.beginLine
+        if self._editor:
+            self._editor.gotoLine( line )
+            self._editor.setFocus()
+        return
+
 
 
 def getCommentBoxPath( settings, baseX, baseY, width, height ):
@@ -1923,6 +2051,9 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         self.__textRect = None
         self.leadingForElse = False
         self.sideForElse = False
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def __getText( self ):
@@ -1997,7 +2128,12 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         pen = QPen( s.commentLineColor )
         pen.setWidth( s.commentLineWidth )
         self.setPen( pen )
-        QGraphicsPathItem.paint( self, painter, option, widget )
+
+        # Hide the dotted outline
+        itemOption = QStyleOptionGraphicsItem( option )
+        if itemOption.state & QStyle.State_Selected != 0:
+            itemOption.state = itemOption.state & ~QStyle.State_Selected
+        QGraphicsPathItem.paint( self, painter, itemOption, widget )
 
         # Draw the text in the rectangle
         pen = QPen( s.commentFGColor )
@@ -2007,6 +2143,18 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, self.__getText() )
+        return
+
+    def setEditor( self, editor ):
+        " Provides the editor counterpart "
+        self._editor = editor
+
+    def mouseDoubleClickEvent( self, event ):
+        " Jump to the appropriate line in the text editor "
+        line = self.ref.beginLine
+        if self._editor:
+            self._editor.gotoLine( line )
+            self._editor.setFocus()
         return
 
 
@@ -2020,6 +2168,9 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
         self.kind = CellElement.LEADING_COMMENT
         self.__text = None
         self.__textRect = None
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def __getText( self ):
@@ -2107,7 +2258,12 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
         pen = QPen( s.commentLineColor )
         pen.setWidth( s.commentLineWidth )
         self.setPen( pen )
-        QGraphicsPathItem.paint( self, painter, option, widget )
+
+        # Hide the dotted outline
+        itemOption = QStyleOptionGraphicsItem( option )
+        if itemOption.state & QStyle.State_Selected != 0:
+            itemOption.state = itemOption.state & ~QStyle.State_Selected
+        QGraphicsPathItem.paint( self, painter, itemOption, widget )
 
         # Draw the text in the rectangle
         pen = QPen( s.commentFGColor )
@@ -2117,6 +2273,18 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
                           baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, self.__getText() )
+        return
+
+    def setEditor( self, editor ):
+        " Provides the editor counterpart "
+        self._editor = editor
+
+    def mouseDoubleClickEvent( self, event ):
+        " Jump to the appropriate line in the text editor "
+        line = self.ref.leadingComment.beginLine
+        if self._editor:
+            self._editor.gotoLine( line )
+            self._editor.setFocus()
         return
 
 
@@ -2130,6 +2298,9 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
         self.kind = CellElement.SIDE_COMMENT
         self.__text = None
         self.__textRect = None
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def __getText( self ):
@@ -2232,7 +2403,12 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
         pen = QPen( s.commentLineColor )
         pen.setWidth( s.commentLineWidth )
         self.setPen( pen )
-        QGraphicsPathItem.paint( self, painter, option, widget )
+
+        # Hide the dotted outline
+        itemOption = QStyleOptionGraphicsItem( option )
+        if itemOption.state & QStyle.State_Selected != 0:
+            itemOption.state = itemOption.state & ~QStyle.State_Selected
+        QGraphicsPathItem.paint( self, painter, itemOption, widget )
 
         # Draw the text in the rectangle
         pen = QPen( s.commentFGColor )
@@ -2243,6 +2419,18 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft,
                           self.__getText() )
+        return
+
+    def setEditor( self, editor ):
+        " Provides the editor counterpart "
+        self._editor = editor
+
+    def mouseDoubleClickEvent( self, event ):
+        " Jump to the appropriate line in the text editor "
+        line = self.ref.sideComment.beginLine
+        if self._editor:
+            self._editor.gotoLine( line )
+            self._editor.setFocus()
         return
 
 
