@@ -15,9 +15,13 @@ Codimension aims to provide an integrated system for:
 
 Many Python developers will find codimension useful as-is, even though not all of its features have been implemented yet.
 
-The finished codimension will include several graphics-based features. Diagrams will be generated for imports and classes. The results from some tools, such as a profiler, will be represented graphically. Graphical features will be interactive and if you double click on a class box in a diagram, for example, the corresponding source code file will be opened and the cursor will jump to the appropriate line. A major objective is to provide an editor which is capable of working simultaneously with textual and graphical representations of the code. With this feature in place, changing the text will automatically update the graphics and vice versa. Finally, the editor will support the grouping and traversal of code blocks, which should greatly simplify the analysis of unfamiliar code. 
+The finished codimension will include several graphics-based features. Diagrams will be generated for imports and classes. The results from some tools, such as a profiler, will be represented graphically. Graphical features will be interactive and if you double click on a class box in a diagram, for example, the corresponding source code file will be opened and the cursor will jump to the appropriate line. A major objective is to provide an editor which is capable of working simultaneously with textual and graphical representations of the code. With this feature in place, changing the text will automatically update the graphics and vice verse. Finally, the editor will support the grouping and traversal of code blocks, which should greatly simplify the analysis of unfamiliar code. 
 
 ![Screenshot](http://satsky.spb.ru/codimension/screenshots/01-commonView.png "Screenshot")
+
+Here is the upcoming release screenshot (with automatically generated control flow diagram feature implemented)
+
+![UpcomingReleaseScreenshot](http://satsky.spb.ru/codimension/screenshots/00-upcomingCommonView.png "Upcoming release screenshot")
 
 
 ## Features
