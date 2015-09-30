@@ -413,6 +413,7 @@ class ScopeCellElement( CellElement ):
                     continue
                 if cells[ row ][ column ].kind == CellElement.VCANVAS:
                     return cells[ row ][ column ].cells[ 0 ][ 0 ].kind == CellElement.TRY_SCOPE
+                break
             except:
                 return False
         return False
