@@ -100,6 +100,7 @@ class VirtualCanvas:
         # Layout support
         self.__currentCF = None
         self.__currentScopeClass = None
+        self.isNoScope = False
 
         # Rendering support
         self.width = 0
@@ -395,12 +396,15 @@ class VirtualCanvas:
                 vacantRow += 1
 
                 # Allocate Yes-branch
-                branchLayout = VirtualCanvas( self.settings, None, None, None )
+                branchLayout = VirtualCanvas( self.settings, column, vacantRow, self )
+                branchLayout.isNoScope = True
                 branchLayout.layoutSuite( 0, item.suite, CellElement.NO_SCOPE, None, 0 )
 
                 # Copy the layout cells into the current layout calculating the
                 # max width of the layout
-                branchWidth, branchHeight = self.__copyLayout( branchLayout, vacantRow, column )
+#                branchWidth, branchHeight = self.__copyLayout( branchLayout, vacantRow, column )
+                branchWidth, branchHeight = 1, 1
+                self.__allocateAndSet( vacantRow, column, branchLayout )
 
                 # Calculate the number of horizontal connectors left->right
                 count = branchWidth - 1
@@ -436,12 +440,15 @@ class VirtualCanvas:
                         openEnd[ 0 ] += 1
 
                         # Allocate Yes-branch
-                        branchLayout = VirtualCanvas( self.settings, None, None, None )
+                        branchLayout = VirtualCanvas( self.settings, openEnd[ 1 ], openEnd[ 0 ], self )
+                        branchLayout.isNoScope = True
                         branchLayout.layoutSuite( 0, elifBranch.suite, CellElement.NO_SCOPE, None, 0 )
 
                         # Copy the layout cells into the current layout
                         # calculating the max width of the layout
-                        branchWidth, branchHeight = self.__copyLayout( branchLayout, openEnd[ 0 ], openEnd[ 1 ] )
+#                        branchWidth, branchHeight = self.__copyLayout( branchLayout, openEnd[ 0 ], openEnd[ 1 ] )
+                        branchWidth, branchHeight = 1, 1
+                        self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ], branchLayout )
 
                         # Calculate the number of horizontal connectors left->right
                         count = branchWidth - 1
@@ -487,9 +494,12 @@ class VirtualCanvas:
                             self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] + 1 ] = cItem
                             openEnd[ 0 ] += 1
 
-                        branchLayout = VirtualCanvas( self.settings, None, None, None )
+                        branchLayout = VirtualCanvas( self.settings, openEnd[ 1 ], openEnd[ 0 ], self )
+                        branchLayout.isNoScope = True
                         branchLayout.layoutSuite( 0, elifBranch.suite, CellElement.NO_SCOPE, None, 0 )
-                        branchWidth, branchHeight = self.__copyLayout( branchLayout, openEnd[ 0 ], openEnd[ 1 ] )
+#                        branchWidth, branchHeight = self.__copyLayout( branchLayout, openEnd[ 0 ], openEnd[ 1 ] )
+                        branchWidth, branchHeight = 1, 1
+                        self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ], branchLayout )
 
                         # replace the open end
                         openEnd[ 0 ] += branchHeight
@@ -693,12 +703,31 @@ class VirtualCanvas:
                 maxHeight = max( cell.height, maxHeight )
             for cell in row:
                 cell.height = maxHeight
+                if cell.kind == CellElement.VCANVAS:
+                    if not cell.hasScope():
+                        cell.adjustLastCellHeight( maxHeight )
             self.height += maxHeight
             index += 1
 
         # Update the scope width if needed
         self.width = max( self.width, totalWidth )
         return end
+
+    def hasScope( self ):
+        try:
+            return self.cells[ 0 ][ 0 ].kind in [ CellElement.FILE_SCOPE,
+                                                  CellElement.FUNC_SCOPE,
+                                                  CellElement.CLASS_SCOPE,
+                                                  CellElement.FOR_SCOPE,
+                                                  CellElement.WHILE_SCOPE,
+                                                  CellElement.TRY_SCOPE,
+                                                  CellElement.WITH_SCOPE,
+                                                  CellElement.DECOR_SCOPE,
+                                                  CellElement.ELSE_SCOPE,
+                                                  CellElement.EXCEPT_SCOPE,
+                                                  CellElement.FINALLY_SCOPE ]
+        except:
+            return False
 
     def render( self ):
         " Preforms rendering for all the cells "
@@ -724,14 +753,30 @@ class VirtualCanvas:
                 for cell in row:
                     cell.height = maxHeight
                     totalWidth += cell.width
+                    if cell.kind == CellElement.VCANVAS:
+                        if not cell.hasScope():
+                            cell.adjustLastCellHeight( maxHeight )
                 self.height += maxHeight
                 self.width = max( self.width, totalWidth )
             index += 1
 
-        self.width = self.width + self.settings.rectRadius + self.settings.hCellPadding
+        if self.hasScope():
+            # Right hand side vertical part
+            self.width += self.settings.rectRadius + self.settings.hCellPadding
         self.minWidth = self.width
         self.minHeight = self.height
         return (self.width, self.height)
+
+    def adjustLastCellHeight( self, maxHeight ):
+        """ The last cell in the first column of the non-scope virtual canvas
+            may need to be adjusted to occupy the whole row hight in the upper
+            level canvas. This happens mostly in 'if' statements """
+        allButLastHeight = 0
+        for index in xrange( len( self.cells ) - 1 ):
+            allButLastHeight += self.cells[ index ][ 0 ].height
+        if allButLastHeight + self.cells[ -1 ][ 0 ].height < maxHeight:
+            self.cells[ -1 ][ 0 ].height = maxHeight - allButLastHeight
+        return
 
     def setEditor( self, editor ):
         " Provides the editor counterpart "

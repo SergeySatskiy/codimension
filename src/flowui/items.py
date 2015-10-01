@@ -26,7 +26,8 @@ from math import sqrt
 from PyQt4.QtCore import Qt, QPointF
 from PyQt4.QtGui import ( QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
                           QPainterPath, QPainter, QColor, QGraphicsItem,
-                          QStyleOptionGraphicsItem, QStyle )
+                          QStyleOptionGraphicsItem, QStyle,
+                          QGraphicsDropShadowEffect )
 from PyQt4.QtSvg import QGraphicsSvgItem
 import os.path
 
@@ -285,7 +286,8 @@ class CellElement:
         parts = []
         canvas = self.canvas
         while canvas is not None:
-            parts.insert( 0, canvas.getScopeName() )
+            if canvas.isNoScope == False:
+                parts.insert( 0, canvas.getScopeName() )
             canvas = canvas.canvas
         path = " :: ".join( parts )
         if not path:
@@ -345,6 +347,13 @@ class ScopeCellElement( CellElement ):
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self.minHeight = s.rectRadius + s.vCellPadding
             self.minWidth = s.rectRadius + s.hCellPadding
+            # The effect is nice but the CPU consumption becomes so high that
+            # the diagram could hardly be scrolled ...
+            # effect = QGraphicsDropShadowEffect()
+            # effect.setBlurRadius( 5.0 )
+            # effect.setOffset( 2.0, 2.0 )
+            # effect.setColor( QColor( 180, 180, 180, 180 ) )
+            # self.setGraphicsEffect( effect )
         elif self.subKind == ScopeCellElement.LEFT:
             self.minHeight = 0
             self.minWidth = s.rectRadius + s.hCellPadding
@@ -754,6 +763,7 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
 
         pen = QPen( getDarkerColor( s.boxBGColor ) )
         painter.setPen( pen )
+
 
         rectWidth = self.minWidth - 2 * s.hCellPadding
         rectHeight = self.minHeight - 2 * s.vCellPadding
@@ -1312,7 +1322,7 @@ class BreakCell( CellElement, QGraphicsRectItem ):
     def render( self ):
         s = self.canvas.settings
         self.__textRect = self.getBoundingRect( "break" )
-        self.minHeight = self.__textRect.height() + 2 * self.__vSpacing + s.vCellPadding
+        self.minHeight = self.__textRect.height() + 2 * (self.__vSpacing + s.vCellPadding)
         self.minWidth = self.__textRect.width() + 2 * (self.__hSpacing + s.hCellPadding)
         self.height = self.minHeight
         self.width = self.minWidth
@@ -1390,7 +1400,7 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
     def render( self ):
         s = self.canvas.settings
         self.__textRect = self.getBoundingRect( "continue" )
-        self.minHeight = self.__textRect.height() + 2 * self.__vSpacing + s.vCellPadding
+        self.minHeight = self.__textRect.height() + 2 * (self.__vSpacing + s.vCellPadding)
         self.minWidth = self.__textRect.width() + 2 * (self.__hSpacing + s.hCellPadding)
         self.height = self.minHeight
         self.width = self.minWidth
@@ -2083,7 +2093,7 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         """
         s = self.canvas.settings
         cellToTheLeft = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ]
-        spareWidth = cellToTheLeft.width - s.mainLine
+        spareWidth = cellToTheLeft.width - s.mainLine - s.hCellPadding
         boxWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
                         s.minWidth )
         if spareWidth >= boxWidth:
@@ -2105,7 +2115,7 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         s = self.canvas.settings
 
         cellToTheLeft = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ]
-        leftEdge = cellToTheLeft.baseX + s.mainLine
+        leftEdge = cellToTheLeft.baseX + s.mainLine + s.hCellPadding
         boxWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
                         s.minWidth )
         path = getCommentBoxPath( s, leftEdge, self.baseY, boxWidth, self.minHeight )
