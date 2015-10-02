@@ -110,7 +110,7 @@ class VirtualCanvas:
         self.linesInHeader = 0
         self.dependentRegions = []  # inclusive regions of rows with columns
                                     # which affect each other width
-        self.maxLineWidth = 0
+        self.tailComment = False
 
         # Painting support
         self.baseX = 0
@@ -671,6 +671,18 @@ class VirtualCanvas:
         start, end = self.dependentRegions.pop( 0 )
         maxColumns = self.__getRangeMaxColumns( start, end )
         totalWidth = 0
+
+        # Detect the region tail comment cells
+        index = start
+        while index <= end:
+            row = self.cells[ index ]
+            if row:
+                if row[ -1 ].kind in [ CellElement.LEADING_COMMENT,
+                                       CellElement.INDEPENDENT_COMMENT,
+                                       CellElement.SIDE_COMMENT ]:
+                    row[ -1 ].tailComment = True
+            index += 1
+
         for column in xrange( maxColumns ):
             maxColumnWidth = 0
             index = start
@@ -682,25 +694,28 @@ class VirtualCanvas:
                                                CellElement.SIDE_COMMENT,
                                                CellElement.LEADING_COMMENT ]:
                         row[ column ].adjustWidth()
-                    if row[ column ].width > maxColumnWidth:
-                        maxColumnWidth = row[ column ].width
+                    if not row[ column ].tailComment:
+                        maxColumnWidth = max( row[ column ].width, maxColumnWidth )
                 index += 1
 
             index = start
             while index <= end:
                 row = self.cells[ index ]
                 if column < len( row ):
-                    row[ column ].width = maxColumnWidth
+                    if not row[ column ].tailComment:
+                        row[ column ].width = maxColumnWidth
                 index += 1
-            totalWidth += maxColumnWidth
 
-        # Update the row height
+        # Update the row height and calculate the row width
         index = start
         while index <= end:
             maxHeight = 0
             row = self.cells[ index ]
+            rowWidth = 0
             for cell in row:
                 maxHeight = max( cell.height, maxHeight )
+                rowWidth += cell.width
+            self.width = max( self.width, rowWidth )
             for cell in row:
                 cell.height = maxHeight
                 if cell.kind == CellElement.VCANVAS:
@@ -709,8 +724,6 @@ class VirtualCanvas:
             self.height += maxHeight
             index += 1
 
-        # Update the scope width if needed
-        self.width = max( self.width, totalWidth )
         return end
 
     def hasScope( self ):
