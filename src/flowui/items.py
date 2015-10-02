@@ -2259,7 +2259,7 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
         path.moveTo( leftEdge,
                      baseY + self.minHeight / 2 )
         path.lineTo( leftEdge - s.hCellPadding,
-                     baseY + self.minHeight + s.vCellPadding )
+                     baseY + self.minHeight )
         self.setPath( path )
 
 
