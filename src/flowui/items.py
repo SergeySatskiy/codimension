@@ -175,11 +175,15 @@ class ScopeConnector( QGraphicsPathItem ):
         path.moveTo( x1, y1 )
         path.lineTo( x2, y2 )
         self.setPath( path )
+
+        self.penStyle = None
         return
 
     def paint( self, painter, option, widget ):
         pen = QPen( self.__settings.lineColor )
         pen.setWidth( self.__settings.lineWidth )
+        if self.penStyle:
+            pen.setStyle( self.penStyle )
         self.setPen( pen )
         QGraphicsPathItem.paint( self, painter, option, widget )
         return
@@ -426,6 +430,19 @@ class ScopeCellElement( CellElement ):
                 return False
         return False
 
+    def __followLoop( self ):
+        " Used to detect if an 'else' scope is for a loop "
+        row = self.canvas.addr[ 1 ]
+        column = self.canvas.addr[ 0 ] - 1
+        cells = self.canvas.canvas.cells
+        try:
+            if cells[ row ][ column ].kind == CellElement.VCANVAS:
+                return cells[ row ][ column ].cells[ 0 ][ 0 ].kind in [ CellElement.FOR_SCOPE,
+                                                                        CellElement.WHILE_SCOPE ]
+            return False
+        except:
+            return False
+
     def __needConnector( self ):
         if self.kind in [ CellElement.FOR_SCOPE, CellElement.DECOR_SCOPE,
                           CellElement.WHILE_SCOPE, CellElement.FUNC_SCOPE,
@@ -462,9 +479,22 @@ class ScopeCellElement( CellElement ):
                     self._badgeItem.moveTo( baseX + s.hCellPadding + s.rectRadius,
                                             baseY + s.vCellPadding - self._badgeItem.height() / 2 )
                 scene.addItem( self._badgeItem )
+            # Draw a horizontal connector if needed
+            if self._connector is None:
+                if self.kind == CellElement.EXCEPT_SCOPE or ( self.kind == CellElement.ELSE_SCOPE and self.__followLoop() ):
+                    parentCanvas = self.canvas.canvas
+                    cellToTheLeft = parentCanvas.cells[ self.canvas.addr[ 1 ] ][ self.canvas.addr[ 0 ] - 1 ]
+                    self._connector = ScopeConnector( s, cellToTheLeft.baseX + cellToTheLeft.minWidth - s.hCellPadding + s.lineWidth,
+                                                         baseY + 2 * s.vCellPadding,
+                                                         baseX + s.hCellPadding - s.lineWidth,
+                                                         baseY + 2 * s.vCellPadding )
+                    self._connector.penStyle = Qt.DotLine
+                    scene.addItem( self._connector )
+
             if hasattr( scene.parent(), "updateNavigationToolbar" ):
                 self.__navBarUpdate = scene.parent().updateNavigationToolbar
                 self.setAcceptHoverEvents( True )
+
         elif self.subKind == ScopeCellElement.DECLARATION:
             yShift = 0
             if hasattr( self.ref, "sideComment" ):
