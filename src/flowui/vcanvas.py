@@ -325,15 +325,18 @@ class VirtualCanvas:
 
                 loopRegionBegin = vacantRow
                 if self.__needLoopCommentRow( item ):
-                    self.__allocateCell( vacantRow, column + 1 )
-                    self.cells[ vacantRow ][ column ] = ConnectorCell( CONN_N_S,
-                                                                       self, column, vacantRow )
                     if item.leadingComment:
-                        self.cells[ vacantRow ][ column + 1 ] = LeadingCommentCell( item, self, column + 1, vacantRow )
+                        comment = AboveCommentCell( item, self, column, vacantRow )
+                        comment.needConnector = True
+                        self.__allocateAndSet( vacantRow, column, comment )
+                    else:
+                        self.__allocateCell( vacantRow, column )
+                        self.cells[ vacantRow ][ column ] = ConnectorCell( CONN_N_S,
+                                                                           self, column, vacantRow )
                     if item.elsePart:
                         if item.elsePart.leadingComment:
-                            self.__allocateAndSet( vacantRow, column + 2,
-                                                   LeadingCommentCell( item.elsePart, self, column + 2, vacantRow ) )
+                            self.__allocateAndSet( vacantRow, column + 1,
+                                                   AboveCommentCell( item.elsePart, self, column + 1, vacantRow ) )
                         self.dependentRegions.append( (loopRegionBegin, vacantRow + 1) )
                     vacantRow += 1
 
@@ -357,12 +360,14 @@ class VirtualCanvas:
                 tryRegionBegin = vacantRow
                 if self.__needTryCommentRow( item ):
                     commentRow = vacantRow
-                    self.__allocateAndSet( commentRow, column, ConnectorCell( CONN_N_S, self, column, commentRow ) )
                     vacantRow += 1
                     if item.leadingComment:
                         comment = AboveCommentCell( item, self, column, commentRow )
                         comment.needConnector = True
                         self.__allocateAndSet( commentRow, column, comment )
+                    else:
+                        self.__allocateAndSet( commentRow, column,
+                                               ConnectorCell( CONN_N_S, self, column, commentRow ) )
                     if item.exceptParts:
                         self.dependentRegions.append( (tryRegionBegin, vacantRow) )
 
