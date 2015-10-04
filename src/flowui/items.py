@@ -33,8 +33,6 @@ import os.path
 
 
 
-TOP_Z = 100.0
-
 def getDarkerColor( color ):
     r = color.red() - 40
     g = color.green() - 40
@@ -223,6 +221,7 @@ class CellElement:
     LEADING_COMMENT = 209
     INDEPENDENT_COMMENT = 210
     SIDE_COMMENT = 211
+    ABOVE_COMMENT = 212
 
     CONNECTOR = 300
 
@@ -613,6 +612,7 @@ __kindToString = {
     CellElement.LEADING_COMMENT:        "LEADING_COMMENT",
     CellElement.INDEPENDENT_COMMENT:    "INDEPENDENT_COMMENT",
     CellElement.SIDE_COMMENT:           "SIDE_COMMENT",
+    CellElement.ABOVE_COMMENT:          "ABOVE_COMMENT",
     CellElement.CONNECTOR:              "CONNECTOR",
 }
 
@@ -742,7 +742,6 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
         self.baseX = baseX
         self.baseY = baseY
         self.setRect( baseX, baseY, self.width, self.height )
-        self.setZValue( TOP_Z )
         scene.addItem( self )
         return
 
@@ -1944,7 +1943,6 @@ class IfCell( CellElement, QGraphicsRectItem ):
         self.baseX = baseX
         self.baseY = baseY
         self.setRect( baseX, baseY, self.width, self.height )
-        self.setZValue( TOP_Z )
         scene.addItem( self )
         return
 
@@ -2107,7 +2105,6 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        self.setZValue( TOP_Z )
         self.__setupPath()
         scene.addItem( self )
         return
@@ -2234,7 +2231,6 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        self.setZValue( TOP_Z )
         self.__setupPath()
         scene.addItem( self )
         return
@@ -2265,7 +2261,7 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
         path.moveTo( self.__leftEdge,
                      baseY + self.minHeight / 2 )
         path.lineTo( self.__leftEdge - s.hCellPadding,
-                     baseY + self.minHeight )
+                     baseY + self.minHeight + s.vCellPadding )
         self.setPath( path )
         return
 
@@ -2378,7 +2374,6 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        self.setZValue( TOP_Z )
         self.__setupPath()
         scene.addItem( self )
         return
@@ -2457,6 +2452,129 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
     def mouseDoubleClickEvent( self, event ):
         " Jump to the appropriate line in the text editor "
         line = self.ref.sideComment.beginLine
+        if self._editor:
+            self._editor.gotoLine( line )
+            self._editor.setFocus()
+        return
+
+
+class AboveCommentCell( CellElement, QGraphicsPathItem ):
+    """ Represents a single leading comment which is above a certain block, namely
+        try/except or for/else or while/else
+        i.e. those which are scopes located in a single row """
+
+    def __init__( self, ref, canvas, x, y ):
+        CellElement.__init__( self, ref, canvas, x, y )
+        QGraphicsPathItem.__init__( self )
+        self.kind = CellElement.ABOVE_COMMENT
+        self.__text = None
+        self.__textRect = None
+        self.__leftEdge = None
+        self.needConnector = False
+        self.connector = None
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
+        return
+
+    def __getText( self ):
+        if self.__text is None:
+            self.__text = self.ref.leadingComment.getDisplayValue()
+        return self.__text
+
+    def render( self ):
+        s = self.canvas.settings
+        self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
+                                                          self.__getText() )
+
+        self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
+        # Width of the comment box itself
+        self.minWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
+                             s.minWidth )
+        # Add the connector space
+        self.minWidth += s.mainLine + s.hCellPadding
+
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
+
+    def draw( self, scene, baseX, baseY ):
+        self.baseX = baseX
+        self.baseY = baseY
+        self.__setupPath()
+        scene.addItem( self )
+
+        if self.needConnector:
+            s = self.canvas.settings
+            self.connector = ScopeConnector( s, baseX + s.mainLine, baseY,
+                                             baseX + s.mainLine,
+                                             baseY + self.height )
+            scene.addItem( self.connector )
+        return
+
+    def __setupPath( self ):
+        " Sets the comment path "
+        s = self.canvas.settings
+
+        # Bottom adjustment
+        yShift = self.height - self.minHeight
+        baseY = self.baseY + yShift
+
+        self.__leftEdge = self.baseX + s.mainLine + s.hCellPadding
+        boxWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
+                        s.minWidth )
+
+        path = getCommentBoxPath( s, self.__leftEdge, baseY, boxWidth, self.minHeight )
+        path.moveTo( self.__leftEdge + s.hCellPadding,
+                     baseY + self.minHeight / 2 )
+        path.lineTo( self.__leftEdge,
+                     baseY + self.minHeight / 2 )
+        # The moveTo() below is required to suppress painting the surface
+        path.moveTo( self.__leftEdge,
+                     baseY + self.minHeight / 2 )
+        path.lineTo( self.__leftEdge - s.hCellPadding,
+                     baseY + self.minHeight + s.vCellPadding )
+        self.setPath( path )
+        return
+
+    def paint( self, painter, option, widget ):
+        " Draws the leading comment "
+        s = self.canvas.settings
+
+        # Bottom adjustment
+        yShift = self.height - self.minHeight
+        baseY = self.baseY + yShift
+
+        brush = QBrush( s.commentBGColor )
+        self.setBrush( brush )
+
+        pen = QPen( s.commentLineColor )
+        pen.setWidth( s.commentLineWidth )
+        self.setPen( pen )
+
+        # Hide the dotted outline
+        itemOption = QStyleOptionGraphicsItem( option )
+        if itemOption.state & QStyle.State_Selected != 0:
+            itemOption.state = itemOption.state & ~QStyle.State_Selected
+        QGraphicsPathItem.paint( self, painter, itemOption, widget )
+
+        # Draw the text in the rectangle
+        pen = QPen( s.commentFGColor )
+        painter.setFont( s.monoFont )
+        painter.setPen( pen )
+        painter.drawText( self.__leftEdge + s.hCellPadding + s.hTextPadding,
+                          baseY + s.vCellPadding + s.vTextPadding,
+                          self.__textRect.width(), self.__textRect.height(),
+                          Qt.AlignLeft, self.__getText() )
+        return
+
+    def setEditor( self, editor ):
+        " Provides the editor counterpart "
+        self._editor = editor
+
+    def mouseDoubleClickEvent( self, event ):
+        " Jump to the appropriate line in the text editor "
+        line = self.ref.leadingComment.beginLine
         if self._editor:
             self._editor.gotoLine( line )
             self._editor.setFocus()

@@ -42,7 +42,7 @@ from items import ( kindToString,
                     BreakCell, ContinueCell, ReturnCell, RaiseCell,
                     AssertCell, SysexitCell, ImportCell, IndependentCommentCell,
                     LeadingCommentCell, SideCommentCell, ConnectorCell, IfCell,
-                    VSpacerCell, HSpacerCell )
+                    VSpacerCell, HSpacerCell, AboveCommentCell )
 from cdmcf import ( CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
                     BREAK_FRAGMENT, CONTINUE_FRAGMENT, RETURN_FRAGMENT,
                     RAISE_FRAGMENT, ASSERT_FRAGMENT, SYSEXIT_FRAGMENT,
@@ -116,6 +116,12 @@ class VirtualCanvas:
         self.baseX = 0
         self.baseY = 0
         self.scopeRectangle = None
+
+        self.__terminalCellTypes = [ CellElement.BREAK,
+                                     CellElement.CONTINUE,
+                                     CellElement.RETURN,
+                                     CellElement.RAISE,
+                                     CellElement.SYSEXIT ]
         return
 
     def getScopeName( self ):
@@ -167,12 +173,10 @@ class VirtualCanvas:
         """ Tells if a cell is terminal,
             i.e. no need to continue the control flow line """
         try:
-            return self.cells[ row ][ column ].kind in [
-                                                CellElement.BREAK,
-                                                CellElement.CONTINUE,
-                                                CellElement.RETURN,
-                                                CellElement.RAISE,
-                                                CellElement.SYSEXIT ]
+            cell = self.cells[ row ][ column ]
+            if cell.kind == CellElement.VCANVAS:
+                return cell.cells[ -1 ][ 0 ].kind in self.__terminalCellTypes
+            return cell.kind in self.__terminalCellTypes
         except:
             return False
 
@@ -356,8 +360,9 @@ class VirtualCanvas:
                     self.__allocateAndSet( commentRow, column, ConnectorCell( CONN_N_S, self, column, commentRow ) )
                     vacantRow += 1
                     if item.leadingComment:
-                        self.__allocateAndSet( commentRow, column + 1,
-                                               LeadingCommentCell( item, self, column + 1, commentRow ) )
+                        comment = AboveCommentCell( item, self, column, commentRow )
+                        comment.needConnector = True
+                        self.__allocateAndSet( commentRow, column, comment )
                     if item.exceptParts:
                         self.dependentRegions.append( (tryRegionBegin, vacantRow) )
 
@@ -366,8 +371,8 @@ class VirtualCanvas:
                 nextColumn = column + 1
                 for exceptPart in item.exceptParts:
                     if exceptPart.leadingComment:
-                        self.__allocateAndSet( commentRow, nextColumn + 1,
-                                               LeadingCommentCell( exceptPart, self, nextColumn + 1, commentRow ) )
+                        self.__allocateAndSet( commentRow, nextColumn,
+                                               AboveCommentCell( exceptPart, self, nextColumn, commentRow ) )
                     self.__allocateScope( exceptPart, CellElement.EXCEPT_SCOPE,
                                           vacantRow, nextColumn )
                     nextColumn += 1
