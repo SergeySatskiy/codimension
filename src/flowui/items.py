@@ -505,9 +505,11 @@ class ScopeCellElement( CellElement ):
                           self.height + (s.rectRadius - s.vHeaderPadding) )
             scene.addItem( self )
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
-            self.setRect( self.canvas.baseX + self.canvas.width - self.width,
-                          baseY - s.rectRadius + s.vHeaderPadding,
-                          self.width + s.rectRadius - s.hHeaderPadding,
+            canvasTop = self.baseY - s.rectRadius
+            movedBaseX = self.canvas.baseX + self.canvas.width - self.width - s.rectRadius - s.vHeaderPadding
+            self.setRect( movedBaseX + s.hHeaderPadding,
+                          canvasTop + s.vHeaderPadding,
+                          self._sideCommentRect.width() + 2 * s.hTextPadding,
                           self._sideCommentRect.height() + 2 * s.vTextPadding )
             scene.addItem( self )
         elif self.subKind == ScopeCellElement.DOCSTRING:
@@ -518,7 +520,7 @@ class ScopeCellElement( CellElement ):
         return
 
     def _paint( self, painter, option, widget ):
-        " Draws the function scope element "
+        " Draws the corresponding scope element "
         s = self.canvas.settings
 
         if self.subKind == ScopeCellElement.TOP_LEFT:
@@ -612,6 +614,35 @@ class ScopeCellElement( CellElement ):
     def __str__( self ):
         return CellElement.__str__( self ) + \
                "(" + scopeCellElementToString( self.subKind ) + ")"
+
+    def setEditor( self, editor ):
+        " Provides the editor counterpart "
+        self._editor = editor
+
+    def mouseDoubleClickEvent( self, event ):
+        " Jump to the appropriate line in the text editor "
+        if self._editor is None:
+            return
+        if self.subKind == self.SIDE_COMMENT:
+            self._editor.gotoLine( self.ref.sideComment.beginLine,
+                                   self.ref.sideComment.beginPos )
+            self._editor.setFocus()
+            return
+        if self.subKind == self.DOCSTRING:
+            self._editor.gotoLine( self.ref.docstring.beginLine,
+                                   self.ref.docstring.beginPos )
+            self._editor.setFocus()
+            return
+        if self.subKind == self.DECLARATION:
+            if self.kind == CellElement.FILE_SCOPE:
+                self._editor.gotoLine( 1, 1 )   # Good enough for the
+                                                # vast majority of the cases
+            else:
+                self._editor.gotoLine( self.ref.body.beginLine,
+                                       self.ref.body.beginPos )
+            self._editor.setFocus()
+            return
+        return
 
 
 __kindToString = {
@@ -879,6 +910,9 @@ class FunctionScopeCell( ScopeCellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self )
         self.kind = CellElement.FUNC_SCOPE
         self.subKind = kind
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def _getSideComment( self ):
@@ -2481,9 +2515,9 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
 
     def mouseDoubleClickEvent( self, event ):
         " Jump to the appropriate line in the text editor "
-        line = self.ref.sideComment.beginLine
         if self._editor:
-            self._editor.gotoLine( line )
+            self._editor.gotoLine( self.ref.sideComment.beginLine,
+                                   self.ref.sideComment.beginPos )
             self._editor.setFocus()
         return
 
