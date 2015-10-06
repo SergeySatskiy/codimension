@@ -850,9 +850,9 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
 
     def mouseDoubleClickEvent( self, event ):
         " Jump to the appropriate line in the text editor "
-        line = self.ref.body.beginLine
         if self._editor:
-            self._editor.gotoLine( line )
+            self._editor.gotoLine( self.ref.body.beginLine,
+                                   self.ref.body.beginPos )
             self._editor.setFocus()
         return
 
@@ -1438,9 +1438,9 @@ class BreakCell( CellElement, QGraphicsRectItem ):
 
     def mouseDoubleClickEvent( self, event ):
         " Jump to the appropriate line in the text editor "
-        line = self.ref.body.beginLine
         if self._editor:
-            self._editor.gotoLine( line )
+            self._editor.gotoLine( self.ref.body.beginLine,
+                                   self.ref.body.beginPos )
             self._editor.setFocus()
         return
 
@@ -1516,9 +1516,9 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
 
     def mouseDoubleClickEvent( self, event ):
         " Jump to the appropriate line in the text editor "
-        line = self.ref.body.beginLine
         if self._editor:
-            self._editor.gotoLine( line )
+            self._editor.gotoLine( self.ref.body.beginLine,
+                                   self.ref.body.beginPos )
             self._editor.setFocus()
         return
 
@@ -1622,9 +1622,9 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
 
     def mouseDoubleClickEvent( self, event ):
         " Jump to the appropriate line in the text editor "
-        line = self.ref.body.beginLine
         if self._editor:
-            self._editor.gotoLine( line )
+            self._editor.gotoLine( self.ref.body.beginLine,
+                                   self.ref.body.beginPos )
             self._editor.setFocus()
         return
 
@@ -1725,9 +1725,9 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
 
     def mouseDoubleClickEvent( self, event ):
         " Jump to the appropriate line in the text editor "
-        line = self.ref.body.beginLine
         if self._editor:
-            self._editor.gotoLine( line )
+            self._editor.gotoLine( self.ref.body.beginLine,
+                                   self.ref.body.beginPos )
             self._editor.setFocus()
         return
 
@@ -1845,9 +1845,9 @@ class AssertCell( CellElement, QGraphicsRectItem ):
 
     def mouseDoubleClickEvent( self, event ):
         " Jump to the appropriate line in the text editor "
-        line = self.ref.body.beginLine
         if self._editor:
-            self._editor.gotoLine( line )
+            self._editor.gotoLine( self.ref.body.beginLine,
+                                   self.ref.body.beginPos )
             self._editor.setFocus()
         return
 
@@ -1964,9 +1964,9 @@ class ImportCell( CellElement, QGraphicsRectItem ):
 
     def mouseDoubleClickEvent( self, event ):
         " Jump to the appropriate line in the text editor "
-        line = self.ref.body.beginLine
         if self._editor:
-            self._editor.gotoLine( line )
+            self._editor.gotoLine( self.ref.body.beginLine,
+                                   self.ref.body.beginPos )
             self._editor.setFocus()
         return
 
@@ -2079,9 +2079,9 @@ class IfCell( CellElement, QGraphicsRectItem ):
 
     def mouseDoubleClickEvent( self, event ):
         " Jump to the appropriate line in the text editor "
-        line = self.ref.body.beginLine
         if self._editor:
-            self._editor.gotoLine( line )
+            self._editor.gotoLine( self.ref.body.beginLine,
+                                   self.ref.body.beginPos )
             self._editor.setFocus()
         return
 
@@ -2227,9 +2227,9 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
 
     def mouseDoubleClickEvent( self, event ):
         " Jump to the appropriate line in the text editor "
-        line = self.ref.beginLine
         if self._editor:
-            self._editor.gotoLine( line )
+            self._editor.gotoLine( self.ref.beginLine,
+                                   self.ref.beginPos )
             self._editor.setFocus()
         return
 
@@ -2366,9 +2366,9 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
 
     def mouseDoubleClickEvent( self, event ):
         " Jump to the appropriate line in the text editor "
-        line = self.ref.leadingComment.beginLine
         if self._editor:
-            self._editor.gotoLine( line )
+            self._editor.gotoLine( self.ref.leadingComment.beginLine,
+                                   self.ref.leadingComment.beginPos )
             self._editor.setFocus()
         return
 
@@ -2638,9 +2638,9 @@ class AboveCommentCell( CellElement, QGraphicsPathItem ):
 
     def mouseDoubleClickEvent( self, event ):
         " Jump to the appropriate line in the text editor "
-        line = self.ref.leadingComment.beginLine
         if self._editor:
-            self._editor.gotoLine( line )
+            self._editor.gotoLine( self.ref.leadingComment.beginLine,
+                                   self.ref.leadingComment.beginPos )
             self._editor.setFocus()
         return
 
