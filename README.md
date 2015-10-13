@@ -2,6 +2,7 @@
 Essential links:
 * [Project home page] (http://satsky.spb.ru/codimension/codimensionEng.php)
 * [Installation instructions] (http://satsky.spb.ru/codimension/installationEng.php)
+* [Running Codimension from a git clone] (http://satsky.spb.ru/codimension/runFromGitEng.php)
 * [Packages for downloading] (http://satsky.spb.ru/codimension/downloadEng.php)
 * [Hot keys cheat sheet (pdf)] (http://satsky.spb.ru/codimension/other/CodimensionShortcuts.pdf)
 
