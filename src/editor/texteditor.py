@@ -97,6 +97,7 @@ class TextEditor( ScintillaWrapper ):
     MESSAGES_MARGIN = 3
 
     escapePressed = pyqtSignal()
+    cflowSyncRequested = pyqtSignal(int)
 
     def __init__( self, parent, debugger ):
 
@@ -198,7 +199,8 @@ class TextEditor( ScintillaWrapper ):
                               Qt.Key_M:             self.onJumpToMiddle,
                               Qt.Key_B:             self.onJumpToBottom,
                               Qt.Key_Up:            self.selectParagraphUp,
-                              Qt.Key_Down:          self.selectParagraphDown
+                              Qt.Key_Down:          self.selectParagraphDown,
+                              Qt.Key_B:             self.highlightInCFlow
                             },
             SHIFT:          { Qt.Key_Delete:        self.onShiftDel,
                               Qt.Key_Tab:           self.dedentLine,
@@ -780,6 +782,7 @@ class TextEditor( ScintillaWrapper ):
         altshift = alt + shift
         self.SendScintilla( self.SCI_ASSIGNCMDKEY,
                             self.SCK_HOME  + altshift, self.SCI_HOMERECTEXTEND )
+        self.SendScintilla( self.SCI_CLEARCMDKEY, ord( 'B' ) + ctrl + shift )
         return
 
     def bindLexer( self, fileName, fileType ):
@@ -2042,6 +2045,37 @@ class TextEditor( ScintillaWrapper ):
         self.setFocus()
         return True
 
+    def highlightInCFlow( self ):
+        " Triggered when highlight in the control flow is requested "
+        if self.lexer_ is None or not isinstance( self.lexer_, QsciLexerPython ):
+            # It is not a python file at all
+            return True
+
+        line, pos = self.getCursorPosition()
+
+        # Now, let's detect the non-empty line number to search it on the
+        # control flow diagram. The search is first done ahead.
+
+        candidate = line
+        lastLine = self.lines() - 1
+        while candidate <= lastLine:
+            if self.text( candidate ).strip() not in [ "", "else:" ]:
+                self.cflowSyncRequested.emit( int( candidate ) + 1 )
+                return True
+            candidate += 1
+
+        # Here: not found ahead, try to find backward
+        candidate = line -1
+        while candidate >= 0:
+            if self.text( candidate ).strip() not in [ "", "else:" ]:
+                self.cflowSyncRequested.emit( int( candidate ) + 1 )
+                return True
+            candidate -= 1
+
+        # Here: not found at all. That means the file is empty or it has only
+        # the empty lines. Thus there is nothing to do.
+        return True
+
     def _updateDwellingTime( self ):
         " Updates the dwelling time as necessary "
         if self.__pyflakesMessages:
@@ -2437,6 +2471,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__editor.zoomTo( Settings().zoom )
 
         self.__editor.modificationChanged.connect( self.modificationChanged )
+        self.__editor.cflowSyncRequested.connect( self.cflowSyncRequested )
 
         self.__diskModTime = None
         self.__diskSize = None
@@ -3252,6 +3287,12 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
     def getCFEditor( self ):
         " Provides a reference to the control flow widget "
         return self.__flowUI
+
+    def cflowSyncRequested( self, line ):
+        " Need to sync with the graphics scene (line is 1 based) "
+        self.__flowUI.scrollToLine( line )
+        return
+
 
     # Mandatory interface part is below
 

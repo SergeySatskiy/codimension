@@ -28,6 +28,7 @@ from PyQt4.QtGui import ( QToolBar, QWidget, QGraphicsView, QPainter,
                           QLabel, QTransform, QVBoxLayout, QFrame,
                           QSizePolicy )
 from cdmcf import getControlFlowFromMemory
+from flowui.items import CellElement, ScopeCellElement
 from flowui.vcanvas import VirtualCanvas
 from flowui.cflowsettings import getDefaultCflowSettings
 from utils.pixmapcache import getPixmap
@@ -334,4 +335,109 @@ class FlowUIWidget( QWidget ):
         self.__navBar.setPath( "" )
         return
 
+    def scrollToLine( self, line ):
+        " Scrolls the view to make the primitive which occupies the line visible "
+
+        # Find the item which the line belongs to
+        candidate = None
+        candidateRange = None
+        items = self.view.items()
+        for item in items:
+            if not hasattr( item, "kind" ):
+                continue
+            if item.kind in [ CellElement.CONNECTOR ]:
+                continue
+
+            if hasattr( item, "subKind" ):
+                # That's a scope element
+                if item.subKind == ScopeCellElement.DECLARATION:
+                    if item.kind == CellElement.FILE_SCOPE:
+                        # There might be encoding and/or bang line
+                        if item.ref.encodingLine:
+                            lineRange = item.ref.encodingLine.getLineRange()
+                            if line >= lineRange[ 0 ] and line <= lineRange[ 1 ]:
+                                if candidate:
+                                    if candidateRange < lineRange[ 1 ] - lineRange[ 0 ]:
+                                        continue
+                                candidate = item
+                                candidateRange = lineRange[ 1 ] - lineRange[ 0 ]
+                        if item.ref.bangLine:
+                            lineRange = item.ref.bangLine.getLineRange()
+                            if line >= lineRange[ 0 ] and line <= lineRange[ 1 ]:
+                                if candidate:
+                                    if candidateRange < lineRange[ 1 ] - lineRange[ 0 ]:
+                                        continue
+                                candidate = item
+                                candidateRange = lineRange[ 1 ] - lineRange[ 0 ]
+                    else:
+                        # all the other scopes are the same
+                        lineRange = item.ref.body.getLineRange()
+                        if line >= lineRange[ 0 ] and line <= lineRange[ 1 ]:
+                            if candidate:
+                                if candidateRange < lineRange[ 1 ] - lineRange[ 0 ]:
+                                    continue
+                            candidate = item
+                            candidateRange = lineRange[ 1 ] - lineRange[ 0 ]
+                    continue
+                if item.subKind == ScopeCellElement.SIDE_COMMENT:
+                    lineRange = item.ref.sideComment.getLineRange()
+                    if line >= lineRange[ 0 ] and line <= lineRange[ 1 ]:
+                        if candidate:
+                            if candidateRange < lineRange[ 1 ] - lineRange[ 0 ]:
+                                continue
+                        candidate = item
+                        candidateRange = lineRange[ 1 ] - lineRange[ 0 ]
+                    continue
+                if item.subKind == ScopeCellElement.DOCSTRING:
+                    lineRange = item.ref.docstring.getLineRange()
+                    if line >= lineRange[ 0 ] and line <= lineRange[ 1 ]:
+                        if candidate:
+                            if candidateRange < lineRange[ 1 ] - lineRange[ 0 ]:
+                                continue
+                        candidate = item
+                        candidateRange = lineRange[ 1 ] - lineRange[ 0 ]
+                    continue
+            else:
+                # That's a terminal primitive
+                if item.kind in [ CellElement.CODE_BLOCK,
+                                  CellElement.BREAK,
+                                  CellElement.CONTINUE,
+                                  CellElement.RETURN,
+                                  CellElement.RAISE,
+                                  CellElement.ASSERT,
+                                  CellElement.SYSEXIT,
+                                  CellElement.IMPORT,
+                                  CellElement.INDEPENDENT_COMMENT,
+                                  CellElement.IF ]:
+                    lineRange = item.ref.getLineRange()
+                    if line >= lineRange[ 0 ] and line <= lineRange[ 1 ]:
+                        if candidate:
+                            if candidateRange < lineRange[ 1 ] - lineRange[ 0 ]:
+                                continue
+                        candidate = item
+                        candidateRange = lineRange[ 1 ] - lineRange[ 0 ]
+                    continue
+                if item.kind in [ CellElement.LEADING_COMMENT,
+                                  CellElement.ABOVE_COMMENT ]:
+                    lineRange = item.ref.leadingComment.getLineRange()
+                    if line >= lineRange[ 0 ] and line <= lineRange[ 1 ]:
+                        if candidate:
+                            if candidateRange < lineRange[ 1 ] - lineRange[ 0 ]:
+                                continue
+                        candidate = item
+                        candidateRange = lineRange[ 1 ] - lineRange[ 0 ]
+                    continue
+                if item.kind == CellElement.SIDE_COMMENT:
+                    lineRange = item.ref.sideComment.getLineRange()
+                    if line >= lineRange[ 0 ] and line <= lineRange[ 1 ]:
+                        if candidate:
+                            if candidateRange < lineRange[ 1 ] - lineRange[ 0 ]:
+                                continue
+                        candidate = item
+                        candidateRange = lineRange[ 1 ] - lineRange[ 0 ]
+                    continue
+
+        if candidate:
+            self.view.centerOn( candidate )
+        return
 
