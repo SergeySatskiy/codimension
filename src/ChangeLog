@@ -1,5 +1,8 @@
-XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
+2015 Oct 15 Sergey Satskiy <sergey.satskiy@gmail.com>
 
+* Version 3.0.0
+* Major new feature: automatic flow chart generation on a separate pane
+* Replacing old style SIGNAL with pyqtSignal in many places
 * Bug fix: clear find-in-files results when a project is changed
 * Bug fix: exception is case when files in a project directory are created
   and deleted very quickly
@@ -11,6 +14,7 @@ XXXX XXX XX Sergey Satskiy <sergey.satskiy@gmail.com>
 * Get rid of QString, use python strings instead
 * Fix: ESC handling on a VCS annotate view
 * Improvement: more robust processing of a VCS revision information
+* Many minor fixes
 
 2014 May 06 Sergey Satskiy <sergey.satskiy@gmail.com>
 
