@@ -1780,6 +1780,7 @@ checkForSysExit( Context *          context,
     {
         node *      lparNode = findChildOfType( lastTrailer, LPAR );
         node *      rparNode = findChildOfType( lastTrailer, RPAR );
+        node *      arglistNode = findChildOfType( lastTrailer, arglist );
 
         SysExit *       sysExit( new SysExit );
         sysExit->parent = parent;
@@ -1789,6 +1790,17 @@ checkForSysExit( Context *          context,
         updateBegin( body, atomNode, context->lineShifts );
         updateEnd( body, rparNode, context->lineShifts );
         sysExit->body = Py::asObject( body );
+
+        if ( arglistNode != NULL )
+        {
+            node *      lastPartNode = findLastPart( arglistNode );
+            Fragment *  actualArg( new Fragment );
+
+            actualArg->parent = parent;
+            updateBegin( actualArg, arglistNode, context->lineShifts );
+            updateEnd( actualArg, lastPartNode, context->lineShifts );
+            sysExit->actualArg = Py::asObject( actualArg );
+        }
 
         Fragment *  arg( new Fragment );
         arg->parent = sysExit;
@@ -2326,7 +2338,8 @@ walk( Context *                    context,
                     if ( sysExit != NULL )
                     {
                         addCodeBlock( context, & codeBlock, flow, parent );
-                        flow.append( Py::asObject( static_cast<SysExit *>(sysExit) ) );
+                        flow.append( Py::asObject(
+                                            static_cast<SysExit *>(sysExit) ) );
                         lastAdded = sysExit;
                         continue;
                     }

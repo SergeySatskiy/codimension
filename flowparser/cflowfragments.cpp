@@ -2366,6 +2366,7 @@ SysExit::SysExit()
 {
     kind = SYSEXIT_FRAGMENT;
     arg = Py::None();
+    actualArg = Py::None();
 }
 
 SysExit::~SysExit()
@@ -2409,7 +2410,7 @@ Py::Object SysExit::getattr( const char *  attrName )
     if ( FragmentWithComments::getAttribute( attrName, retval ) )
         return retval;
     if ( strcmp( attrName, "argument" ) == 0 )
-        return arg;
+        return actualArg;
     return getattr_methods( attrName );
 }
 
@@ -2417,7 +2418,7 @@ Py::Object  SysExit::repr( void )
 {
     return Py::String( "<SysExit " + FragmentBase::as_string() +
                        "\n" + FragmentWithComments::as_string() +
-                       "\n" + representFragmentPart( arg, "Argument" ) +
+                       "\n" + representFragmentPart( actualArg, "Argument" ) +
                        ">" );
 }
 
@@ -2431,7 +2432,7 @@ int  SysExit::setattr( const char *        attrName,
     if ( strcmp( attrName, "argument" ) == 0 )
     {
         CHECKVALUETYPE( "argument", "Fragment" );
-        arg = val;
+        actualArg = val;
         return 0;
     }
     throwUnknownAttribute( attrName );
@@ -2440,7 +2441,10 @@ int  SysExit::setattr( const char *        attrName,
 
 Py::Object SysExit::getDisplayValue( const Py::Tuple &  args )
 {
-    Fragment *      argFragment( static_cast<Fragment *>(arg.ptr()) );
+    if ( actualArg.isNone() )
+        return Py::String( "" );
+
+    Fragment *      argFragment( static_cast<Fragment *>(actualArg.ptr()) );
     std::string     content;
     switch ( args.length() )
     {

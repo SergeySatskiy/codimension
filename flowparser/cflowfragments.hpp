@@ -474,6 +474,8 @@ class SysExit : public FragmentBase,
     public:
         Py::Object      arg;            // Fragment for the argument from '('
                                         // till ')'
+        Py::Object      actualArg;      // Fragment for the argument without
+                                        // () or None if nothing is there
 };
 
 
