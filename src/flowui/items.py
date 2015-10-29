@@ -1854,20 +1854,108 @@ class AssertCell( CellElement, QGraphicsRectItem ):
 
 
 
-class SysexitCell( CellElement ):
+class SysexitCell( CellElement, QGraphicsRectItem ):
     " Represents a single sys.exit(...) statement "
 
-    def __init__( self, ref ):
-        CellElement.__init__( self )
+    def __init__( self, ref, canvas, x, y ):
+        CellElement.__init__( self, ref, canvas, x, y )
+        QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.SYSEXIT
-        self.reference = ref
+        self.__text = None
+        self.__textRect = None
+        self.__xWidth = 16
+
+        self.xItem = SVGItem( "sysexit.svgz" )
+        self.xItem.setWidth( self.__xWidth )
+        self.xItem.setToolTip( "sys.exit()" )
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
-    def render( self, settings ):
-        raise Exception( "Not implemented yet" )
+    def __getText( self ):
+        if self.__text is None:
+            self.__text = self.ref.getDisplayValue()
+        return self.__text
 
-    def draw( self, rect, scene, settings ):
-        raise Exception( "Not implemented yet" )
+    def render( self ):
+        s = self.canvas.settings
+        self.__textRect = self.getBoundingRect( self.__getText() )
+
+        self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
+        self.minWidth = max( self.__textRect.width() + 2 * s.hCellPadding + s.hTextPadding +
+                             s.returnRectRadius + 2 * s.hTextPadding + self.__xWidth,
+                             s.minWidth )
+        self.height = self.minHeight
+        self.width = self.minWidth
+        return (self.width, self.height)
+
+    def draw( self, scene, baseX, baseY ):
+        self.baseX = baseX
+        self.baseY = baseY
+        self.setRect( baseX, baseY, self.width, self.height )
+
+        s = self.canvas.settings
+        self.xItem.setPos( baseX + s.hCellPadding + s.hTextPadding,
+                           baseY + self.minHeight/2 - self.xItem.height()/2 )
+
+        scene.addItem( self )
+        scene.addItem( self.xItem )
+        return
+
+    def paint( self, painter, option, widget ):
+        " Draws the code block "
+        s = self.canvas.settings
+
+        # Set the colors and line width
+        pen = QPen( s.lineColor )
+        pen.setWidth( s.lineWidth )
+        painter.setPen( pen )
+        brush = QBrush( s.boxBGColor )
+        painter.setBrush( brush )
+
+        # Draw the connector as a single line under the rectangle
+        painter.setPen( pen )
+        painter.drawLine( self.baseX + s.mainLine, self.baseY,
+                          self.baseX + s.mainLine, self.baseY + s.vCellPadding )
+
+        pen = QPen( getDarkerColor( s.boxBGColor ) )
+        painter.setPen( pen )
+        painter.drawRoundedRect( self.baseX + s.hCellPadding,
+                                 self.baseY + s.vCellPadding,
+                                 self.minWidth - 2 * s.hCellPadding,
+                                 self.minHeight - 2 * s.vCellPadding,
+                                 s.returnRectRadius, s.returnRectRadius )
+        painter.drawRoundedRect( self.baseX + s.hCellPadding,
+                                 self.baseY + s.vCellPadding,
+                                 self.__xWidth + 2 * s.hTextPadding,
+                                 self.minHeight - 2 * s.vCellPadding,
+                                 s.returnRectRadius, s.returnRectRadius )
+
+        # Draw the text in the rectangle
+        pen = QPen( s.boxFGColor )
+        painter.setFont( s.monoFont )
+        painter.setPen( pen )
+        availWidth = self.minWidth - 2 * s.hCellPadding - self.__xWidth - 2 * s.hTextPadding - s.hTextPadding - s.returnRectRadius
+        textShift = (availWidth - self.__textRect.width()) / 2
+        painter.drawText( self.baseX + s.hCellPadding + self.__xWidth + 3 * s.hTextPadding + textShift,
+                          self.baseY + s.vCellPadding + s.vTextPadding,
+                          self.__textRect.width(), self.__textRect.height(),
+                          Qt.AlignLeft, self.__getText() )
+        return
+
+    def setEditor( self, editor ):
+        " Provides the editor counterpart "
+        self._editor = editor
+
+    def mouseDoubleClickEvent( self, event ):
+        " Jump to the appropriate line in the text editor "
+        if self._editor:
+            self._editor.gotoLine( self.ref.body.beginLine,
+                                   self.ref.body.beginPos )
+            self._editor.setFocus()
+        return
+
 
 
 
