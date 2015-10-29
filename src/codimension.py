@@ -49,6 +49,7 @@ sys.argv[0] = os.path.realpath( sys.argv[0] )
 
 # Make it possible to import from the subdirectories
 srcDir = os.path.dirname( os.path.abspath( sys.argv[0] ) )
+srcDir = os.path.dirname( os.path.abspath( __file__ ) )
 if not srcDir in sys.path:
     sys.path.insert( 0, srcDir )
 ropeDir = srcDir + os.path.sep + "thirdparty" + os.path.sep + "rope"
@@ -458,6 +459,8 @@ def exceptionHook( excType, excValue, tracebackObj ):
         QtGui.QMessageBox.critical( None, "Unhandled exception: " + error, message )
         globalData.application.exit( 1 )
     return
+
+
 
 
 if __name__ == '__main__':
