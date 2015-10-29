@@ -2385,6 +2385,8 @@ void SysExit::initType( void )
                         GETCONTENT_DOC );
     add_varargs_method( "getLineContent", &FragmentBase::getLineContent,
                         GETLINECONTENT_DOC );
+    add_varargs_method( "getDisplayValue", &SysExit::getDisplayValue,
+                        SYSEXIT_GETDISPLAYVALUE_DOC );
 
     behaviors().readyType();
 }
@@ -2413,7 +2415,7 @@ Py::Object SysExit::getattr( const char *  attrName )
 
 Py::Object  SysExit::repr( void )
 {
-    return Py::String( "<Assert " + FragmentBase::as_string() +
+    return Py::String( "<SysExit " + FragmentBase::as_string() +
                        "\n" + FragmentWithComments::as_string() +
                        "\n" + representFragmentPart( arg, "Argument" ) +
                        ">" );
@@ -2434,6 +2436,31 @@ int  SysExit::setattr( const char *        attrName,
     }
     throwUnknownAttribute( attrName );
     return -1;  // Suppress compiler warning
+}
+
+Py::Object SysExit::getDisplayValue( const Py::Tuple &  args )
+{
+    Fragment *      argFragment( static_cast<Fragment *>(arg.ptr()) );
+    std::string     content;
+    switch ( args.length() )
+    {
+        case 0:
+            content = argFragment->getContent( NULL );
+            break;
+        case 1:
+            {
+                std::string  buf( Py::String( args[ 0 ] ).as_std_string() );
+                content = argFragment->getContent( buf.c_str() );
+                break;
+            }
+        default:
+            throwWrongBufArgument( "getDisplayValue" );
+    }
+
+    // The content may be shifted and may have side comments.
+    // The common shift should be shaved as well the comments
+    return Py::String( alignBlockAndStripSideComments( content,
+                                                       argFragment ) );
 }
 
 

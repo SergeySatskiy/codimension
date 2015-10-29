@@ -1716,7 +1716,98 @@ processDecorators( Context *  context, Py::List &  flow,
 }
 
 
-// None or Docstring instance
+// None or a SysExit instance
+static FragmentBase *
+checkForSysExit( Context *          context,
+                 node *             tree,
+                 Py::List &         flow,
+                 FragmentBase *     parent )
+{
+    if ( tree == NULL )
+        return NULL;
+    if ( tree->n_type != small_stmt )
+        return NULL;
+
+    node *      powerNode( skipToNode( tree, power ) );
+    if ( powerNode == NULL )
+        return NULL;
+
+    // The 'power' must have:
+    // - the first child 'atom'
+    // - the 'atom' must have 1 child of type NAME
+    // - followed by one or more 'trailer'
+    // - the last 'trailer' must have the the first child LPAR
+
+    // There could be only one '.' so the number of trailers is 1 or 2
+    // the first child is 'atom' and then trailers
+    if ( powerNode->n_nchildren < 2 || powerNode->n_nchildren > 3 )
+        return NULL;
+
+    node *      atomNode = & ( powerNode->n_child[ 0 ] );
+    if ( atomNode->n_type != atom )
+        return NULL;
+    if ( atomNode->n_nchildren != 1 )
+        return NULL;
+    if ( atomNode->n_child[ 0 ].n_type != NAME )
+        return NULL;
+
+    node *      lastTrailer = & ( powerNode->n_child[ powerNode->n_nchildren - 1 ] );
+    if ( lastTrailer->n_type != trailer )
+        return NULL;
+    if ( lastTrailer->n_nchildren < 2 )
+        return NULL;
+    if ( lastTrailer->n_child[ 0 ].n_type != LPAR )
+        return NULL;
+
+    // Now collect the string as the statement may look like
+    std::string     statement( atomNode->n_child[ 0 ].n_str );
+    if ( powerNode->n_nchildren == 3 )
+    {
+        node *      trailerNode = & ( powerNode->n_child[ 1 ] );
+        if ( trailerNode->n_type != trailer )
+            return NULL;
+        if ( trailerNode->n_nchildren != 2 )
+            return NULL;
+        if ( trailerNode->n_child[ 0 ].n_type != DOT )
+            return NULL;
+        if ( trailerNode->n_child[ 1 ].n_type != NAME )
+            return NULL;
+        statement += "." + std::string( trailerNode->n_child[ 1 ].n_str );
+    }
+
+    // Check if the pattern is in the sys.exit patterns
+    if ( context->sysExit.find( statement ) != context->sysExit.end() )
+    {
+        node *      lparNode = findChildOfType( lastTrailer, LPAR );
+        node *      rparNode = findChildOfType( lastTrailer, RPAR );
+
+        SysExit *       sysExit( new SysExit );
+        sysExit->parent = parent;
+
+        Fragment *      body( new Fragment );
+        body->parent = sysExit;
+        updateBegin( body, atomNode, context->lineShifts );
+        updateEnd( body, rparNode, context->lineShifts );
+        sysExit->body = Py::asObject( body );
+
+        Fragment *  arg( new Fragment );
+        arg->parent = sysExit;
+        updateBegin( arg, lparNode, context->lineShifts );
+        updateEnd( arg, rparNode, context->lineShifts );
+        sysExit->arg = Py::asObject( arg );
+
+        sysExit->updateBeginEnd( body );
+
+        injectComments( context, flow, parent, sysExit, sysExit );
+        return sysExit;
+    }
+
+    // It is not a sys.exit(...) statement
+    return NULL;
+}
+
+
+// None or a Docstring instance
 static Docstring *
 checkForDocstring( Context *  context, node *  tree )
 {
@@ -2226,6 +2317,18 @@ walk( Context *                    context,
                                                       parent, flow );
                             continue;
                         default: ;
+                    }
+
+                    FragmentBase *  sysExit( checkForSysExit( context,
+                                                              simpleChild,
+                                                              flow,
+                                                              parent ) );
+                    if ( sysExit != NULL )
+                    {
+                        addCodeBlock( context, & codeBlock, flow, parent );
+                        flow.append( Py::asObject( static_cast<SysExit *>(sysExit) ) );
+                        lastAdded = sysExit;
+                        continue;
                     }
 
                     // Some other statement
