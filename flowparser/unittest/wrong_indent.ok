@@ -1,8 +1,0 @@
-<ControlFlow [-1:-1] (-1,-1) (-1,-1)
-isOK: false
-Errors: (2, 4, 'unexpected indent\n    if 1 > 2:\n')
-Warnings: n/a
-BangLine: None
-EncodingLine: None
-Docstring: None
-Suite: n/a>

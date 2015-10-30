@@ -1,9 +1,0 @@
-<ControlFlow [-1:-1] (-1,-1) (-1,-1)
- isOK: false
- Errors: (2, 8, 'invalid syntax\ndef f()\n')
- Warnings: n/a
- BangLine: None
- EncodingLine: None
- Docstring: None
- Suite: n/a
->
