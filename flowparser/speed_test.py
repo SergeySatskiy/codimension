@@ -69,7 +69,7 @@ if len( sys.argv ) > 1:
         pythonFiles.append( os.path.abspath( fname ) )
     print "Files to test: " + str(len(pythonFiles))
 else:
-    print "Collecting a list of python classes..."
+    print "Collecting a list of python files..."
     paths = list( sys.path )
     if '' in paths:
         paths.remove( '' )
