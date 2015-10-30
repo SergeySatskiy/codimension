@@ -123,6 +123,10 @@
 #define CREATE_SYSEXIT_DOC \
 "Creates the SysExit class instance"
 
+// SysExit::getDisplayValue()
+#define SYSEXIT_GETDISPLAYVALUE_DOC \
+"Provides the sys.exit() value without parentheses and comments"
+
 // While()
 #define CREATE_WHILE_DOC \
 "Creates the While class instance"

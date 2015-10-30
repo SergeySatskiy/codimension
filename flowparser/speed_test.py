@@ -24,7 +24,6 @@
 
 import os, os.path, sys
 import datetime
-import pyclbr
 from cdmcf import getControlFlowFromFile, VERSION
 
 
@@ -43,11 +42,17 @@ def collectFiles( path, files ):
             continue
     return
 
+def getTotalSize( files ):
+    total = 0
+    for item in files:
+        total += os.path.getsize( item )
+    return total
+
 def cdmcfparserTest( files ):
     " Loop for the codimension parser "
     count = 0
     for item in files:
-        #print "Processing " + item + " ..."
+#        print "Processing " + item + " ..."
         tempObj = getControlFlowFromFile( item )
         count += 1
     print "cdmcf: processed " + str(count) + " file(s)"
@@ -78,6 +83,7 @@ else:
             collectFiles( path, pythonFiles )
     pythonFiles = set( pythonFiles )
     print "Collected " + str(len(pythonFiles))
+    print "Total file size: " + str( getTotalSize( pythonFiles ) )
 
 
 # timing for cdmcf
