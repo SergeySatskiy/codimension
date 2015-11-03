@@ -1,7 +1,0 @@
-build/
-*.[oa]
-*~
-*.so
-tree
-comments
-*.out
