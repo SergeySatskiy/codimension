@@ -1,6 +1,0 @@
-- Move callback initialization into a single place
-- Multiline string literals may cause a problem if they are used in wierd
-  (though valid) way
-- String literals are not glued into a single one where they actually could
-- sys.exit() is not supported yet
-
