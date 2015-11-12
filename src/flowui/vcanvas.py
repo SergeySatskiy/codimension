@@ -797,8 +797,11 @@ class VirtualCanvas:
         allButLastHeight = 0
         for index in xrange( len( self.cells ) - 1 ):
             allButLastHeight += self.cells[ index ][ 0 ].height
-        if allButLastHeight + self.cells[ -1 ][ 0 ].height < maxHeight:
-            self.cells[ -1 ][ 0 ].height = maxHeight - allButLastHeight
+
+        # Update the height for all the cells in the last row
+        for cell in self.cells[ -1 ]:
+            if allButLastHeight + cell.height < maxHeight:
+                cell.height = maxHeight - allButLastHeight
         return
 
     def setEditor( self, editor ):
