@@ -154,6 +154,9 @@ class ControlFlowNavigationBar( QFrame ):
             self.__currentIconState = self.STATE_UNKNOWN
         return
 
+    def getCurrentState( self ):
+        return self.__currentIconState
+
     def setPath( self, txt ):
         " Sets the path label content "
         self.__pathLabel.setText( txt )
@@ -253,10 +256,11 @@ class FlowUIWidget( QWidget ):
             self.__connectEditorSignals()
 
         content = self.__editor.text()
-        self.__cf = getControlFlowFromMemory( content )
-        if len( self.__cf.errors ) != 0:
+        cf = getControlFlowFromMemory( content )
+        if len( cf.errors ) != 0:
             self.__navBar.updateInfoIcon( self.__navBar.STATE_BROKEN_UTD )
             return
+        self.__cf = cf
 
         self.__navBar.updateInfoIcon( self.__navBar.STATE_OK_UTD )
 
@@ -300,6 +304,7 @@ class FlowUIWidget( QWidget ):
     def __connectEditorSignals( self ):
         " When it is a python file - connect to the editor signals "
         if not self.__connected:
+            self.__editor.cursorPositionChanged.connect( self.__cursorPositionChanged )
             self.__editor.SCEN_CHANGE.connect( self.__onBufferChanged )
             self.__connected = True
         return
@@ -307,14 +312,25 @@ class FlowUIWidget( QWidget ):
     def __disconnectEditorSignals( self ):
         " Disconnect the editor signals when the file is not a python one "
         if self.__connected:
+            self.__editor.cursorPositionChanged.disconnect( self.__cursorPositionChanged )
             self.__editor.SCEN_CHANGE.disconnect( self.__onBufferChanged )
             self.__connected = False
+        return
+
+    def __cursorPositionChanged( self, line, pos ):
+        " Cursor position changed "
+        # The timer should be reset only in case if the redrawing was delayed
+        if self.__updateTimer.isActive():
+            self.__updateTimer.stop()
+            self.__updateTimer.start( IDLE_TIMEOUT )
         return
 
     def __onBufferChanged( self ):
         " Triggered to update status icon and to restart the timer "
         self.__updateTimer.stop()
-        if len( self.__cf.errors ) == 0:
+        if self.__navBar.getCurrentState() in [ self.__navBar.STATE_OK_UTD,
+                                                self.__navBar.STATE_OK_CHN,
+                                                self.__navBar.STATE_UNKNOWN ]:
             self.__navBar.updateInfoIcon( self.__navBar.STATE_OK_CHN )
         else:
             self.__navBar.updateInfoIcon( self.__navBar.STATE_BROKEN_CHN )
