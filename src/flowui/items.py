@@ -506,7 +506,7 @@ class ScopeCellElement( CellElement ):
             scene.addItem( self )
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
             canvasTop = self.baseY - s.rectRadius
-            movedBaseX = self.canvas.baseX + self.canvas.width - self.width - s.rectRadius - s.vHeaderPadding
+            movedBaseX = self.canvas.baseX + self.canvas.minWidth - self.width - s.rectRadius - s.vHeaderPadding
             self.setRect( movedBaseX + s.hHeaderPadding,
                           canvasTop + s.vHeaderPadding,
                           self._sideCommentRect.width() + 2 * s.hTextPadding,
@@ -560,7 +560,7 @@ class ScopeCellElement( CellElement ):
             canvasTop = self.baseY - s.rectRadius
             # s.vHeaderPadding below is used intentionally: to have the same
             # spacing on top, bottom and right for the comment box
-            movedBaseX = self.canvas.baseX + self.canvas.width - self.width - s.rectRadius - s.vHeaderPadding
+            movedBaseX = self.canvas.baseX + self.canvas.minWidth - self.width - s.rectRadius - s.vHeaderPadding
             path = getNoCellCommentBoxPath( movedBaseX + s.hHeaderPadding,
                                             canvasTop + s.vHeaderPadding,
                                             self._sideCommentRect.width() + 2 * s.hTextPadding,
