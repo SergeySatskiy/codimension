@@ -22,16 +22,18 @@
 
 " Control flow UI widget "
 
-from PyQt4.QtCore import Qt, QSize, QTimer, SIGNAL
+import os.path
+from PyQt4.QtCore import Qt, QSize, QTimer, SIGNAL, QDir, QUrl
 from PyQt4.QtGui import ( QToolBar, QWidget, QGraphicsView, QPainter,
                           QApplication, QGraphicsScene, QHBoxLayout,
                           QLabel, QTransform, QVBoxLayout, QFrame,
-                          QSizePolicy )
+                          QSizePolicy, QAction, QFileDialog, QDialog )
+from PyQt4.QtSvg import QSvgGenerator
 from cdmcf import getControlFlowFromMemory
 from flowui.items import CellElement, ScopeCellElement
 from flowui.vcanvas import VirtualCanvas
 from flowui.cflowsettings import getDefaultCflowSettings
-from utils.pixmapcache import getPixmap
+from utils.pixmapcache import getPixmap, getIcon
 from utils.globals import GlobalData
 from utils.fileutils import Python3FileType, PythonFileType
 from utils.settings import Settings
@@ -234,6 +236,13 @@ class FlowUIWidget( QWidget ):
         self.__toolbar.setFixedWidth( 28 )
         self.__toolbar.setContentsMargins( 0, 0, 0, 0 )
 
+        # Buttons
+        self.__saveAsSVGButton = QAction( getIcon( 'saveasmenu.png' ),
+                                          'Save as SVG', self )
+        self.__saveAsSVGButton.triggered.connect( self.__onSaveAsSVG )
+
+
+        self.__toolbar.addAction( self.__saveAsSVGButton )
         return self.__toolbar
 
     def __createNavigationBar( self ):
@@ -455,5 +464,88 @@ class FlowUIWidget( QWidget ):
 
         if candidate:
             self.view.centerOn( candidate )
+        return
+
+    def __getDefaultSaveDir( self ):
+        " Provides the default directory to save files to "
+        project = GlobalData().project
+        if project.isLoaded():
+            return project.getProjectDir()
+        return QDir.currentPath()
+
+    def __onSaveAsSVG( self ):
+        " Triggered on the 'Save as SVG' button "
+        dialog = QFileDialog( self, 'Save flowchart as' )
+        dialog.setFileMode( QFileDialog.AnyFile )
+        dialog.setLabelText( QFileDialog.Accept, "Save" )
+        dialog.setNameFilter( "SVG files (*.svg)" )
+        urls = []
+        for dname in QDir.drives():
+            urls.append( QUrl.fromLocalFile( dname.absoluteFilePath() ) )
+        urls.append( QUrl.fromLocalFile( QDir.homePath() ) )
+        project = GlobalData().project
+        if project.isLoaded():
+            urls.append( QUrl.fromLocalFile( project.getProjectDir() ) )
+        dialog.setSidebarUrls( urls )
+
+        suggestedFName = self.__parentWidget.getFileName()
+        if '.' in suggestedFName:
+            dotIndex = suggestedFName.rindex( '.' )
+            suggestedFName = suggestedFName[ : dotIndex ]
+
+        dialog.setDirectory( self.__getDefaultSaveDir() )
+        dialog.selectFile( suggestedFName + ".svg" )
+        dialog.setOption( QFileDialog.DontConfirmOverwrite, False )
+        if dialog.exec_() != QDialog.Accepted:
+            return False
+
+        fileNames = dialog.selectedFiles()
+        fileName = os.path.abspath( str( fileNames[0] ) )
+        if os.path.isdir( fileName ):
+            logging.error( "A file must be selected" )
+            return False
+
+        if "." not in fileName:
+            fileName += ".svg"
+
+        # Check permissions to write into the file or to a directory
+        if os.path.exists( fileName ):
+            # Check write permissions for the file
+            if not os.access( fileName, os.W_OK ):
+                logging.error( "There is no write permissions for " + fileName )
+                return False
+        else:
+            # Check write permissions to the directory
+            dirName = os.path.dirname( fileName )
+            if not os.access( dirName, os.W_OK ):
+                logging.error( "There is no write permissions for the "
+                               "directory " + dirName )
+                return False
+
+        if os.path.exists( fileName ):
+            res = QMessageBox.warning( self, "Save flowchart as",
+                    "<p>The file <b>" + fileName + "</b> already exists.</p>",
+                    QMessageBox.StandardButtons( QMessageBox.Abort |
+                                                 QMessageBox.Save ),
+                    QMessageBox.Abort )
+            if res == QMessageBox.Abort or res == QMessageBox.Cancel:
+                return False
+
+        # All prerequisites are checked, save it
+        try:
+            self.__saveAsSVG( fileName )
+        except Exception, excpt:
+            logging.error( str( excpt ) )
+            return False
+        return True
+
+    def __saveAsSVG( self, fileName ):
+        " Saves the flowchart as an SVG file "
+        generator = QSvgGenerator()
+        generator.setFileName( fileName )
+        generator.setSize( QSize( self.scene.width(), self.scene.height() ) )
+        painter = QPainter( generator )
+        self.scene.render( painter )
+        painter.end()
         return
 
