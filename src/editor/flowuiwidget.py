@@ -23,11 +23,13 @@
 " Control flow UI widget "
 
 import os.path
-from PyQt4.QtCore import Qt, QSize, QTimer, SIGNAL, QDir, QUrl
+import logging
+from PyQt4.QtCore import Qt, QSize, QTimer, SIGNAL, QDir, QUrl, QSizeF
 from PyQt4.QtGui import ( QToolBar, QWidget, QGraphicsView, QPainter,
                           QApplication, QGraphicsScene, QHBoxLayout,
                           QLabel, QTransform, QVBoxLayout, QFrame,
-                          QSizePolicy, QAction, QFileDialog, QDialog )
+                          QSizePolicy, QAction, QFileDialog, QDialog,
+                          QMenu, QToolButton, QImage, QMessageBox, QPrinter )
 from PyQt4.QtSvg import QSvgGenerator
 from cdmcf import getControlFlowFromMemory
 from flowui.items import CellElement, ScopeCellElement
@@ -237,12 +239,27 @@ class FlowUIWidget( QWidget ):
         self.__toolbar.setContentsMargins( 0, 0, 0, 0 )
 
         # Buttons
-        self.__saveAsSVGButton = QAction( getIcon( 'saveasmenu.png' ),
-                                          'Save as SVG', self )
-        self.__saveAsSVGButton.triggered.connect( self.__onSaveAsSVG )
+        saveAsMenu = QMenu( self )
+        saveAsSVGAct = saveAsMenu.addAction( getIcon( 'filesvg.png' ),
+                                             'Save as SVG...' )
+        saveAsSVGAct.triggered.connect( self.__onSaveAsSVG )
+
+        saveAsPDFAct = saveAsMenu.addAction( getIcon( 'filepdf.png' ),
+                                             'Save as PDF...' )
+        saveAsPDFAct.triggered.connect( self.__onSaveAsPDF )
+        saveAsPNGAct = saveAsMenu.addAction( getIcon( 'filepixmap.png' ),
+                                             'Save as PNG...' )
+        saveAsPNGAct.triggered.connect( self.__onSaveAsPNG )
 
 
-        self.__toolbar.addAction( self.__saveAsSVGButton )
+        self.__saveAsButton = QToolButton( self )
+        self.__saveAsButton.setIcon( getIcon( 'saveasmenu.png' ) )
+        self.__saveAsButton.setToolTip( 'Save as' )
+        self.__saveAsButton.setPopupMode( QToolButton.InstantPopup )
+        self.__saveAsButton.setMenu( saveAsMenu )
+        self.__saveAsButton.setFocusPolicy( Qt.NoFocus )
+
+        self.__toolbar.addWidget( self.__saveAsButton )
         return self.__toolbar
 
     def __createNavigationBar( self ):
@@ -473,12 +490,13 @@ class FlowUIWidget( QWidget ):
             return project.getProjectDir()
         return QDir.currentPath()
 
-    def __onSaveAsSVG( self ):
-        " Triggered on the 'Save as SVG' button "
+    def __selectFile( self, extension ):
+        " Picks a file of a certain extension "
         dialog = QFileDialog( self, 'Save flowchart as' )
         dialog.setFileMode( QFileDialog.AnyFile )
         dialog.setLabelText( QFileDialog.Accept, "Save" )
-        dialog.setNameFilter( "SVG files (*.svg)" )
+        dialog.setNameFilter( extension.upper() + " files (*." +
+                              extension.lower() + ")" )
         urls = []
         for dname in QDir.drives():
             urls.append( QUrl.fromLocalFile( dname.absoluteFilePath() ) )
@@ -494,33 +512,33 @@ class FlowUIWidget( QWidget ):
             suggestedFName = suggestedFName[ : dotIndex ]
 
         dialog.setDirectory( self.__getDefaultSaveDir() )
-        dialog.selectFile( suggestedFName + ".svg" )
+        dialog.selectFile( suggestedFName + "." + extension.lower() )
         dialog.setOption( QFileDialog.DontConfirmOverwrite, False )
         if dialog.exec_() != QDialog.Accepted:
-            return False
+            return None
 
         fileNames = dialog.selectedFiles()
         fileName = os.path.abspath( str( fileNames[0] ) )
         if os.path.isdir( fileName ):
             logging.error( "A file must be selected" )
-            return False
+            return None
 
         if "." not in fileName:
-            fileName += ".svg"
+            fileName += "." + extension.lower()
 
         # Check permissions to write into the file or to a directory
         if os.path.exists( fileName ):
             # Check write permissions for the file
             if not os.access( fileName, os.W_OK ):
                 logging.error( "There is no write permissions for " + fileName )
-                return False
+                return None
         else:
             # Check write permissions to the directory
             dirName = os.path.dirname( fileName )
             if not os.access( dirName, os.W_OK ):
                 logging.error( "There is no write permissions for the "
                                "directory " + dirName )
-                return False
+                return None
 
         if os.path.exists( fileName ):
             res = QMessageBox.warning( self, "Save flowchart as",
@@ -529,9 +547,18 @@ class FlowUIWidget( QWidget ):
                                                  QMessageBox.Save ),
                     QMessageBox.Abort )
             if res == QMessageBox.Abort or res == QMessageBox.Cancel:
-                return False
+                return None
 
-        # All prerequisites are checked, save it
+        # All prerequisites are checked, return a file name
+        return fileName
+
+
+    def __onSaveAsSVG( self ):
+        " Triggered on the 'Save as SVG' button "
+        fileName = self.__selectFile( "svg" )
+        if fileName is None:
+            return False
+
         try:
             self.__saveAsSVG( fileName )
         except Exception, excpt:
@@ -548,4 +575,58 @@ class FlowUIWidget( QWidget ):
         self.scene.render( painter )
         painter.end()
         return
+
+    def __onSaveAsPDF( self ):
+        " Triggered on the 'Save as PDF' button "
+        fileName = self.__selectFile( "pdf" )
+        if fileName is None:
+            return False
+
+        try:
+            self.__saveAsPDF( fileName )
+        except Exception, excpt:
+            logging.error( str( excpt ) )
+            return False
+        return True
+
+    def __saveAsPDF( self, fileName ):
+        " Saves the flowchart as an PDF file "
+        printer = QPrinter()
+        printer.setOutputFormat( QPrinter.PdfFormat )
+        printer.setPaperSize( QSizeF( self.scene.width(),
+                                      self.scene.height() ), QPrinter.Point )
+        printer.setFullPage( True )
+        printer.setOutputFileName( fileName )
+
+        painter = QPainter( printer )
+        self.scene.render( painter )
+        painter.end()
+        return
+
+    def __onSaveAsPNG( self ):
+        " Triggered on the 'Save as PNG' button "
+        fileName = self.__selectFile( "png" )
+        if fileName is None:
+            return False
+
+        try:
+            self.__saveAsPNG( fileName )
+        except Exception, excpt:
+            logging.error( str( excpt ) )
+            return False
+        return True
+
+    def __saveAsPNG( self, fileName ):
+        " Saves the flowchart as an PNG file "
+        image = QImage( self.scene.width(), self.scene.height(),
+                        QImage.Format_ARGB32_Premultiplied )
+        painter = QPainter( image )
+        # It seems that the better results are without antialiasing
+        # painter.setRenderHint( QPainter.Antialiasing )
+        self.scene.render( painter )
+        painter.end()
+        image.save( fileName, "PNG" )
+        return
+
+
 
