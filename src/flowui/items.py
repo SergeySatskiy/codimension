@@ -165,7 +165,7 @@ class BadgeItem( QGraphicsRectItem ):
         return
 
 
-class ScopeConnector( QGraphicsPathItem ):
+class Connector( QGraphicsPathItem ):
 
     def __init__( self, settings, x1, y1, x2, y2 ):
         QGraphicsPathItem.__init__( self )
@@ -457,9 +457,9 @@ class ScopeCellElement( CellElement ):
         if self.subKind == ScopeCellElement.TOP_LEFT:
             # Draw connector if needed
             if self.__needConnector() and self._connector is None:
-                self._connector = ScopeConnector( s, baseX + s.mainLine, baseY,
-                                                  baseX + s.mainLine,
-                                                  baseY + self.canvas.height )
+                self._connector = Connector( s, baseX + s.mainLine, baseY,
+                                             baseX + s.mainLine,
+                                             baseY + self.canvas.height )
                 scene.addItem( self._connector )
 
             # Draw the scope rounded rectangle when we see the top left corner
@@ -484,10 +484,10 @@ class ScopeCellElement( CellElement ):
                 if self.kind == CellElement.EXCEPT_SCOPE or ( self.kind == CellElement.ELSE_SCOPE and self.__followLoop() ):
                     parentCanvas = self.canvas.canvas
                     cellToTheLeft = parentCanvas.cells[ self.canvas.addr[ 1 ] ][ self.canvas.addr[ 0 ] - 1 ]
-                    self._connector = ScopeConnector( s, cellToTheLeft.baseX + cellToTheLeft.minWidth - s.hCellPadding + s.lineWidth,
-                                                         baseY + 2 * s.vCellPadding,
-                                                         baseX + s.hCellPadding - s.lineWidth,
-                                                         baseY + 2 * s.vCellPadding )
+                    self._connector = Connector( s, cellToTheLeft.baseX + cellToTheLeft.minWidth - s.hCellPadding + s.lineWidth,
+                                                 baseY + 2 * s.vCellPadding,
+                                                 baseX + s.hCellPadding - s.lineWidth,
+                                                 baseY + 2 * s.vCellPadding )
                     self._connector.penStyle = Qt.DotLine
                     scene.addItem( self._connector )
 
@@ -778,6 +778,7 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
         self.kind = CellElement.CODE_BLOCK
         self.__text = None
         self.__textRect = None
+        self.connector = None
 
         # To make double click delivered
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
@@ -802,7 +803,22 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        self.setRect( baseX, baseY, self.width, self.height )
+
+        # Add the connector as a separate scene item to make the selection
+        # working properly
+        s = self.canvas.settings
+        self.connector = Connector( s, baseX + s.mainLine, baseY,
+                                    baseX + s.mainLine,
+                                    baseY + self.height )
+        scene.addItem( self.connector )
+
+        # Setting the rectangle is important for the selection and for
+        # redrawing. Thus the selection pen with must be considered too.
+        penWidth = s.selectPenWidth - 1
+        self.setRect( baseX + s.hCellPadding - penWidth,
+                      baseY + s.vCellPadding - penWidth,
+                      self.minWidth - 2 * s.hCellPadding + 2 * penWidth,
+                      self.minHeight - 2 * s.vCellPadding + 2 * penWidth )
         scene.addItem( self )
         return
 
@@ -810,23 +826,19 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
         " Draws the code block "
         s = self.canvas.settings
 
-        # Set the colors and line width
-        pen = QPen( s.lineColor )
-        pen.setWidth( s.lineWidth )
-        brush = QBrush( s.boxBGColor )
-
-        # Draw the connector as a single line under the rectangle
-        painter.setPen( pen )
-        painter.setBrush( brush )
-        painter.drawLine( self.baseX + s.mainLine, self.baseY,
-                          self.baseX + s.mainLine, self.baseY + self.height )
-
-        pen = QPen( getDarkerColor( s.boxBGColor ) )
-        painter.setPen( pen )
-
-
         rectWidth = self.minWidth - 2 * s.hCellPadding
         rectHeight = self.minHeight - 2 * s.vCellPadding
+
+        if self.isSelected():
+            selectPen = QPen( s.selectColor )
+            selectPen.setWidth( s.selectPenWidth )
+            selectPen.setJoinStyle( Qt.RoundJoin )
+            painter.setPen( selectPen )
+        else:
+            pen = QPen( getDarkerColor( s.boxBGColor ) )
+            painter.setPen( pen )
+        brush = QBrush( s.boxBGColor )
+        painter.setBrush( brush )
         painter.drawRect( self.baseX + s.hCellPadding,
                           self.baseY + s.vCellPadding,
                           rectWidth, rectHeight )
@@ -1533,6 +1545,7 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
         self.__text = None
         self.__textRect = None
         self.__arrowWidth = 16
+        self.connector = None
 
         self.arrowItem = SVGItem( "return.svgz" )
         self.arrowItem.setWidth( self.__arrowWidth )
@@ -1565,12 +1578,26 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        self.setRect( baseX, baseY, self.width, self.height )
 
+        # Add the connector as a separate scene item to make the selection
+        # working properly
         s = self.canvas.settings
+        self.connector = Connector( s, baseX + s.mainLine, baseY,
+                                    baseX + s.mainLine, baseY + s.vCellPadding )
+
+
+        # Setting the rectangle is important for the selection and for
+        # redrawing. Thus the selection pen with must be considered too.
+        penWidth = s.selectPenWidth - 1
+        self.setRect( baseX + s.hCellPadding - penWidth,
+                      baseY + s.vCellPadding - penWidth,
+                      self.minWidth - 2 * s.hCellPadding + 2 * penWidth,
+                      self.minHeight - 2 * s.vCellPadding + 2 * penWidth )
+
         self.arrowItem.setPos( baseX + s.hCellPadding + s.hTextPadding,
                                baseY + self.minHeight/2 - self.arrowItem.height()/2 )
 
+        scene.addItem( self.connector )
         scene.addItem( self )
         scene.addItem( self.arrowItem )
         return
@@ -1579,19 +1606,16 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
         " Draws the code block "
         s = self.canvas.settings
 
-        # Set the colors and line width
-        pen = QPen( s.lineColor )
-        pen.setWidth( s.lineWidth )
+        if self.isSelected():
+            selectPen = QPen( s.selectColor )
+            selectPen.setWidth( s.selectPenWidth )
+            painter.setPen( selectPen )
+        else:
+            pen = QPen( getDarkerColor( s.boxBGColor ) )
+            painter.setPen( pen )
+
         brush = QBrush( s.boxBGColor )
         painter.setBrush( brush )
-
-        # Draw the connector as a single line under the rectangle
-        painter.setPen( pen )
-        painter.drawLine( self.baseX + s.mainLine, self.baseY,
-                          self.baseX + s.mainLine, self.baseY + s.vCellPadding )
-
-        pen = QPen( getDarkerColor( s.boxBGColor ) )
-        painter.setPen( pen )
         painter.drawRoundedRect( self.baseX + s.hCellPadding,
                                  self.baseY + s.vCellPadding,
                                  self.minWidth - 2 * s.hCellPadding,
@@ -2658,9 +2682,9 @@ class AboveCommentCell( CellElement, QGraphicsPathItem ):
 
         if self.needConnector:
             s = self.canvas.settings
-            self.connector = ScopeConnector( s, baseX + s.mainLine, baseY,
-                                             baseX + s.mainLine,
-                                             baseY + self.height )
+            self.connector = Connector( s, baseX + s.mainLine, baseY,
+                                        baseX + s.mainLine,
+                                        baseY + self.height )
             scene.addItem( self.connector )
         return
 
@@ -2847,6 +2871,7 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
 
         pen = QPen( s.lineColor )
         pen.setWidth( s.lineWidth )
+        pen.setJoinStyle( Qt.RoundJoin )
         self.setPen( pen )
         painter.setPen( pen )
         QGraphicsPathItem.paint( self, painter, option, widget )
