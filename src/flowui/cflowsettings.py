@@ -72,6 +72,10 @@ class CFlowSettings:
         self.lineWidth = 1          # used for connections and box edges
         self.lineColor = QColor( 16, 16, 16, 255 )
 
+        # Selection
+        self.selectColor = QColor( 63, 81, 181, 255 )
+        self.selectPenWidth = 3
+
         # Code blocks and other statements
         self.boxBGColor = QColor( 250, 250, 250, 255 )
         self.boxFGColor = QColor( 0, 0, 0, 255 )
