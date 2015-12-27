@@ -1667,6 +1667,7 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
         self.arrowItem = SVGItem( "raise.svg" )
         self.arrowItem.setWidth( self.__arrowWidth )
         self.arrowItem.setToolTip( "raise" )
+        self.connector = None
 
         # To make double click delivered
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
@@ -1692,12 +1693,25 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        self.setRect( baseX, baseY, self.width, self.height )
 
+        # Add the connector as a separate scene item to make the selection
+        # working properly
         s = self.canvas.settings
+        self.connector = Connector( s, baseX + s.mainLine, baseY,
+                                    baseX + s.mainLine, baseY + s.vCellPadding )
+
+        # Setting the rectangle is important for the selection and for
+        # redrawing. Thus the selection pen must be considered too.
+        penWidth = s.selectPenWidth - 1
+        self.setRect( baseX + s.hCellPadding - penWidth,
+                      baseY + s.vCellPadding - penWidth,
+                      self.minWidth - 2 * s.hCellPadding + 2 * penWidth,
+                      self.minHeight - 2 * s.vCellPadding + 2 * penWidth )
+
         self.arrowItem.setPos( baseX + s.hCellPadding + s.hTextPadding,
                                baseY + self.minHeight/2 - self.arrowItem.height()/2 )
 
+        scene.addItem( self.connector )
         scene.addItem( self )
         scene.addItem( self.arrowItem )
         return
@@ -1706,20 +1720,16 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
         " Draws the code block "
         s = self.canvas.settings
 
-        # Set the colors and line width
-        pen = QPen( s.lineColor )
-        pen.setWidth( s.lineWidth )
-        painter.setPen( pen )
+        if self.isSelected():
+            selectPen = QPen( s.selectColor )
+            selectPen.setWidth( s.selectPenWidth )
+            painter.setPen( selectPen )
+        else:
+            pen = QPen( getDarkerColor( s.boxBGColor ) )
+            painter.setPen( pen )
+
         brush = QBrush( s.boxBGColor )
         painter.setBrush( brush )
-
-        # Draw the connector as a single line under the rectangle
-        painter.setPen( pen )
-        painter.drawLine( self.baseX + s.mainLine, self.baseY,
-                          self.baseX + s.mainLine, self.baseY + s.vCellPadding )
-
-        pen = QPen( getDarkerColor( s.boxBGColor ) )
-        painter.setPen( pen )
         painter.drawRoundedRect( self.baseX + s.hCellPadding,
                                  self.baseY + s.vCellPadding,
                                  self.minWidth - 2 * s.hCellPadding,
