@@ -45,6 +45,22 @@ from ui.fitlabel import FitLabel
 IDLE_TIMEOUT = 1500
 
 
+class CFGraphicsScene( QGraphicsScene ):
+    """ Reimplemented graphics scene """
+
+    def __init__( self, parent = None ):
+        super( CFGraphicsScene, self ).__init__( parent )
+        return
+
+    def mousePressEvent( self, event ):
+        """ Reimplemented to avoid resetting selection on RMB click """
+        if event.button() != Qt.LeftButton:
+            event.accept()
+            return
+        QGraphicsScene.mousePressEvent( self, event )
+        return
+
+
 class CFGraphicsView( QGraphicsView ):
     """ Central widget """
 
@@ -269,7 +285,8 @@ class FlowUIWidget( QWidget ):
 
     def __createGraphicsView( self ):
         """ Creates the graphics view """
-        self.scene = QGraphicsScene( self )
+#        self.scene = QGraphicsScene( self )
+        self.scene = CFGraphicsScene( self )
         self.view = CFGraphicsView( self )
         self.view.setScene( self.scene )
         self.view.zoomTo( Settings().flowScale )
