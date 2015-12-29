@@ -177,11 +177,22 @@ class Connector( QGraphicsPathItem ):
         self.setPath( path )
 
         self.penStyle = None
+        self.penColor = None
+        self.penWidth = None
         return
 
     def paint( self, painter, option, widget ):
-        pen = QPen( self.__settings.lineColor )
-        pen.setWidth( self.__settings.lineWidth )
+        color = self.__settings.lineColor
+        if self.penColor:
+            color = self.penColor
+        width = self.__settings.lineWidth
+        if self.penWidth:
+            width = self.penWidth
+
+        pen = QPen( color )
+        pen.setWidth( width )
+        pen.setCapStyle( Qt.FlatCap )
+        pen.setJoinStyle( Qt.RoundJoin )
         if self.penStyle:
             pen.setStyle( self.penStyle )
         self.setPen( pen )
@@ -1389,6 +1400,13 @@ class BreakCell( CellElement, QGraphicsRectItem ):
         self.__textRect = None
         self.__vSpacing = 0
         self.__hSpacing = 4
+        self.connector = None
+
+        # Cache for the size
+        x1 = None
+        y1 = None
+        w = None
+        h = None
 
         # To make double click delivered
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
@@ -1403,10 +1421,31 @@ class BreakCell( CellElement, QGraphicsRectItem ):
         self.width = self.minWidth
         return (self.width, self.height)
 
+    def __calculateSize( self ):
+        s = self.canvas.settings
+        self.x1 = self.baseX + s.hCellPadding
+        self.y1 = self.baseY + s.vCellPadding
+        self.w = 2 * self.__hSpacing + self.__textRect.width()
+        self.h = 2 * self.__vSpacing + self.__textRect.height()
+        return
+
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        self.setRect( baseX, baseY, self.width, self.height )
+
+        # Add the connector as a separate scene item to make the selection
+        # working properly
+        s = self.canvas.settings
+        self.connector = Connector( s, baseX + s.mainLine, baseY,
+                                    baseX + s.mainLine, baseY + s.vCellPadding )
+        scene.addItem( self.connector )
+
+        # Setting the rectangle is important for the selection and for
+        # redrawing. Thus the selection pen with must be considered too.
+        penWidth = s.selectPenWidth - 1
+        self.__calculateSize()
+        self.setRect( self.x1 - penWidth, self.y1 - penWidth,
+                      self.w + 2 * penWidth, self.h + 2 * penWidth )
         scene.addItem( self )
         return
 
@@ -1414,32 +1453,25 @@ class BreakCell( CellElement, QGraphicsRectItem ):
         " Draws the break statement "
         s = self.canvas.settings
 
-        # Set the colors and line width
-        pen = QPen( s.lineColor )
-        pen.setWidth( s.lineWidth )
+        if self.isSelected():
+            selectPen = QPen( s.selectColor )
+            selectPen.setWidth( s.selectPenWidth )
+            selectPen.setJoinStyle( Qt.RoundJoin )
+            painter.setPen( selectPen )
+        else:
+            pen = QPen( getDarkerColor( s.breakBGColor ) )
+            painter.setPen( pen )
+
         brush = QBrush( s.breakBGColor )
-
-        # Draw the connector as a single line under the rectangle
-        painter.setPen( pen )
         painter.setBrush( brush )
-        painter.drawLine( self.baseX + s.mainLine, self.baseY,
-                          self.baseX + s.mainLine, self.baseY + s.vCellPadding )
 
-        pen = QPen( getDarkerColor( s.breakBGColor ) )
-        painter.setPen( pen )
-
-        x1 = self.baseX + s.hCellPadding
-        y1 = self.baseY + s.vCellPadding
-        w = 2 * self.__hSpacing + self.__textRect.width()
-        h = 2 * self.__vSpacing + self.__textRect.height()
-
-        painter.drawRoundedRect( x1, y1, w, h, 2, 2 )
+        painter.drawRoundedRect( self.x1, self.y1, self.w, self.h, 2, 2 )
 
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
-        painter.drawText( x1 + self.__hSpacing, y1 + self.__vSpacing,
+        painter.drawText( self.x1 + self.__hSpacing, self.y1 + self.__vSpacing,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, "break" )
         return
@@ -1467,6 +1499,13 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
         self.__textRect = None
         self.__vSpacing = 0
         self.__hSpacing = 4
+        self.connector = None
+
+        # Cache for the size
+        x1 = None
+        y1 = None
+        w = None
+        h = None
 
         # To make double click delivered
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
@@ -1481,10 +1520,32 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
         self.width = self.minWidth
         return (self.width, self.height)
 
+    def __calculateSize( self ):
+        s = self.canvas.settings
+        self.x1 = self.baseX + s.hCellPadding
+        self.y1 = self.baseY + s.vCellPadding
+        self.w = 2 * self.__hSpacing + self.__textRect.width()
+        self.h = 2 * self.__vSpacing + self.__textRect.height()
+        return
+
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        self.setRect( baseX, baseY, self.width, self.height )
+
+        # Add the connector as a separate scene item to make the selection
+        # working properly
+        s = self.canvas.settings
+        self.connector = Connector( s, baseX + s.mainLine, baseY,
+                                    baseX + s.mainLine, baseY + s.vCellPadding )
+        scene.addItem( self.connector )
+
+        # Setting the rectangle is important for the selection and for
+        # redrawing. Thus the selection pen with must be considered too.
+        penWidth = s.selectPenWidth - 1
+        self.__calculateSize()
+        self.setRect( self.x1 - penWidth, self.y1 - penWidth,
+                      self.w + 2 * penWidth, self.h + 2 * penWidth )
+
         scene.addItem( self )
         return
 
@@ -1492,32 +1553,25 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
         " Draws the break statement "
         s = self.canvas.settings
 
-        # Set the colors and line width
-        pen = QPen( s.lineColor )
-        pen.setWidth( s.lineWidth )
+        if self.isSelected():
+            selectPen = QPen( s.selectColor )
+            selectPen.setWidth( s.selectPenWidth )
+            selectPen.setJoinStyle( Qt.RoundJoin )
+            painter.setPen( selectPen )
+        else:
+            pen = QPen( getDarkerColor( s.continueBGColor ) )
+            painter.setPen( pen )
+
         brush = QBrush( s.continueBGColor )
-
-        # Draw the connector as a single line under the rectangle
-        painter.setPen( pen )
         painter.setBrush( brush )
-        painter.drawLine( self.baseX + s.mainLine, self.baseY,
-                          self.baseX + s.mainLine, self.baseY + s.vCellPadding )
 
-        pen = QPen( getDarkerColor( s.continueBGColor ) )
-        painter.setPen( pen )
-
-        x1 = self.baseX + s.hCellPadding
-        y1 = self.baseY + s.vCellPadding
-        w = 2 * self.__hSpacing + self.__textRect.width()
-        h = 2 * self.__vSpacing + self.__textRect.height()
-
-        painter.drawRoundedRect( x1, y1, w, h, 2, 2 )
+        painter.drawRoundedRect( self.x1, self.y1, self.w, self.h, 2, 2 )
 
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
-        painter.drawText( x1 + self.__hSpacing, y1 + self.__vSpacing,
+        painter.drawText( self.x1 + self.__hSpacing, self.y1 + self.__vSpacing,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, "continue" )
         return
@@ -1779,6 +1833,7 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         self.__textRect = None
         self.__diamondDiagonal = None
         self.__arrowWidth = 16
+        self.connector = None
 
         self.arrowItem = SVGItem( "assert.svg" )
         self.arrowItem.setWidth( self.__arrowWidth )
@@ -1813,7 +1868,21 @@ class AssertCell( CellElement, QGraphicsRectItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
-        self.setRect( baseX, baseY, self.width, self.height )
+
+        # Add the connector as a separate scene item to make the selection
+        # working properly
+        s = self.canvas.settings
+        self.connector = Connector( s, baseX + s.mainLine, baseY,
+                                    baseX + s.mainLine, baseY + self.height )
+        scene.addItem( self.connector )
+
+        # Setting the rectangle is important for the selection and for
+        # redrawing. Thus the selection pen must be considered too.
+        penWidth = s.selectPenWidth - 1
+        self.setRect( baseX + s.hCellPadding - penWidth,
+                      baseY + s.vCellPadding - penWidth,
+                      self.minWidth - 2 * s.hCellPadding + 2 * penWidth,
+                      self.minHeight - 2 * s.vCellPadding + 2 * penWidth )
 
         s = self.canvas.settings
         self.arrowItem.setPos( baseX + self.__diamondDiagonal / 2 + s.hCellPadding -
@@ -1828,20 +1897,14 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         " Draws the code block "
         s = self.canvas.settings
 
-        # Set the colors and line width
-        pen = QPen( s.lineColor )
-        pen.setWidth( s.lineWidth )
-        painter.setPen( pen )
-        brush = QBrush( s.boxBGColor )
-        painter.setBrush( brush )
-
-        # Draw the connector as a single line under the rectangle
-        painter.setPen( pen )
-        painter.drawLine( self.baseX + s.mainLine, self.baseY,
-                          self.baseX + s.mainLine, self.baseY + self.height )
-
-        pen = QPen( getDarkerColor( s.boxBGColor ) )
-        painter.setPen( pen )
+        if self.isSelected():
+            selectPen = QPen( s.selectColor )
+            selectPen.setWidth( s.selectPenWidth )
+            selectPen.setJoinStyle( Qt.RoundJoin )
+            painter.setPen( selectPen )
+        else:
+            pen = QPen( getDarkerColor( s.boxBGColor ) )
+            painter.setPen( pen )
 
         dHalf = int( self.__diamondDiagonal / 2.0 )
         dx1 = self.baseX + s.hCellPadding
@@ -1853,6 +1916,8 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         dx4 = dx2
         dy4 = dy2 + 2 * dHalf
 
+        brush = QBrush( s.boxBGColor )
+        painter.setBrush( brush )
         painter.drawPolygon( QPointF(dx1, dy1), QPointF(dx2, dy2),
                              QPointF(dx3, dy3), QPointF(dx4, dy4) )
 
@@ -2243,13 +2308,15 @@ def getNoCellCommentBoxPath( x, y, width, height, corner ):
     path = QPainterPath()
     path.moveTo( x, y )
     path.lineTo( x + width - corner, y )
-    path.lineTo( x + width - corner, y + corner )
     path.lineTo( x + width, y + corner )
     path.lineTo( x + width,  y + height )
     path.lineTo( x, y + height )
     path.lineTo( x, y )
-    path.moveTo( x + width - corner, y )
-    path.lineTo( x + width, y + corner )
+
+    # -1 is to avoid sharp corners of the lines
+    path.moveTo( x + width - corner, y + 1 )
+    path.lineTo( x + width - corner, y + corner )
+    path.lineTo( x + width - 1, y + corner )
     return path
 
 
@@ -2267,6 +2334,7 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         self.leadingForElse = False
         self.sideForElse = False
         self.__leftEdge = None
+        self.connector = None
 
         # To make double click delivered
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
@@ -2312,6 +2380,7 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         self.baseX = baseX
         self.baseY = baseY
         self.__setupPath()
+        scene.addItem( self.connector )
         scene.addItem( self )
         return
 
@@ -2324,16 +2393,21 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         boxWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
                         s.minWidth )
         path = getCommentBoxPath( s, self.__leftEdge, self.baseY, boxWidth, self.minHeight )
-        path.moveTo( self.__leftEdge + s.hCellPadding,
-                     self.baseY + self.minHeight / 2 )
-        if self.leadingForElse:
-            path.lineTo( cellToTheLeft.baseX + s.mainLine,
-                         self.baseY + self.minHeight / 2 )
-        else:
-            path.lineTo( cellToTheLeft.baseX + s.mainLine,
-                         self.baseY + self.minHeight / 2 )
-
         self.setPath( path )
+
+        # May be later the connector will look different for two cases below
+        if self.leadingForElse:
+            self.connector = Connector( s, self.__leftEdge + s.hCellPadding,
+                                        self.baseY + self.minHeight / 2,
+                                        cellToTheLeft.baseX + s.mainLine,
+                                        self.baseY + self.minHeight / 2 )
+        else:
+            self.connector = Connector( s, self.__leftEdge + s.hCellPadding,
+                                        self.baseY + self.minHeight / 2,
+                                        cellToTheLeft.baseX + s.mainLine,
+                                        self.baseY + self.minHeight / 2 )
+        self.connector.penColor = s.commentLineColor
+        self.connector.penWidth = s.commentLineWidth
         return
 
     def paint( self, painter, option, widget ):
@@ -2343,9 +2417,16 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         brush = QBrush( s.commentBGColor )
         self.setBrush( brush )
 
-        pen = QPen( s.commentLineColor )
-        pen.setWidth( s.commentLineWidth )
-        self.setPen( pen )
+        if self.isSelected():
+            selectPen = QPen( s.selectColor )
+            selectPen.setWidth( s.selectPenWidth )
+            selectPen.setJoinStyle( Qt.RoundJoin )
+            self.setPen( selectPen )
+        else:
+            pen = QPen( s.commentLineColor )
+            pen.setWidth( s.commentLineWidth )
+            pen.setJoinStyle( Qt.RoundJoin )
+            self.setPen( pen )
 
         # Hide the dotted outline
         itemOption = QStyleOptionGraphicsItem( option )
@@ -2387,6 +2468,7 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
         self.__text = None
         self.__textRect = None
         self.__leftEdge = None
+        self.connector = None
 
         # To make double click delivered
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
@@ -2438,6 +2520,7 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
         self.baseX = baseX
         self.baseY = baseY
         self.__setupPath()
+        scene.addItem( self.connector )
         scene.addItem( self )
         return
 
@@ -2459,16 +2542,19 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
                         s.minWidth )
 
         path = getCommentBoxPath( s, self.__leftEdge, baseY, boxWidth, self.minHeight )
-        path.moveTo( self.__leftEdge + s.hCellPadding,
-                     baseY + self.minHeight / 2 )
-        path.lineTo( self.__leftEdge,
-                     baseY + self.minHeight / 2 )
-        # The moveTo() below is required to suppress painting the surface
-        path.moveTo( self.__leftEdge,
-                     baseY + self.minHeight / 2 )
-        path.lineTo( self.__leftEdge - s.hCellPadding,
-                     baseY + self.minHeight + s.vCellPadding )
         self.setPath( path )
+
+        self.connector = Connector( s, 0, 0, 0, 0 )
+        connectorPath = QPainterPath()
+        connectorPath.moveTo( self.__leftEdge + s.hCellPadding,
+                              baseY + self.minHeight / 2 )
+        connectorPath.lineTo( self.__leftEdge,
+                              baseY + self.minHeight / 2 )
+        connectorPath.lineTo( self.__leftEdge - s.hCellPadding,
+                              baseY + self.minHeight + s.vCellPadding )
+        self.connector.setPath( connectorPath )
+        self.connector.penColor = s.commentLineColor
+        self.connector.penWidth = s.commentLineWidth
         return
 
     def paint( self, painter, option, widget ):
@@ -2482,9 +2568,16 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
         brush = QBrush( s.commentBGColor )
         self.setBrush( brush )
 
-        pen = QPen( s.commentLineColor )
-        pen.setWidth( s.commentLineWidth )
-        self.setPen( pen )
+        if self.isSelected():
+            selectPen = QPen( s.selectColor )
+            selectPen.setWidth( s.selectPenWidth )
+            selectPen.setJoinStyle( Qt.RoundJoin )
+            self.setPen( selectPen )
+        else:
+            pen = QPen( s.commentLineColor )
+            pen.setWidth( s.commentLineWidth )
+            pen.setJoinStyle( Qt.RoundJoin )
+            self.setPen( pen )
 
         # Hide the dotted outline
         itemOption = QStyleOptionGraphicsItem( option )
@@ -2526,6 +2619,7 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
         self.__text = None
         self.__textRect = None
         self.__leftEdge = None
+        self.connector = None
 
         # To make double click delivered
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
@@ -2581,6 +2675,7 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
         self.baseX = baseX
         self.baseY = baseY
         self.__setupPath()
+        scene.addItem( self.connector )
         scene.addItem( self )
         return
 
@@ -2606,19 +2701,26 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
             # The first non-connector cell must be the 'if' cell
             ifCell = self.canvas.cells[ self.addr[ 1 ] ][ index ]
 
-            path.moveTo( self.__leftEdge + s.hCellPadding,
-                         self.baseY + ifCell.minHeight / 2 + 6 )
-            path.lineTo( ifCell.baseX + ifCell.minWidth - s.hCellPadding,
-                         self.baseY + ifCell.minHeight / 2 + 6 )
+            self.connector = Connector( s,
+                                        self.__leftEdge + s.hCellPadding,
+                                        self.baseY + ifCell.minHeight / 2 + 6,
+                                        ifCell.baseX + ifCell.minWidth - s.hCellPadding,
+                                        self.baseY + ifCell.minHeight / 2 + 6 )
         else:
             # Regular box
             self.__leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
             path = getCommentBoxPath( s, self.__leftEdge, self.baseY, boxWidth, self.minHeight )
 
             h = min( self.minHeight / 2, cellToTheLeft.minHeight / 2 )
-            path.moveTo( self.__leftEdge + s.hCellPadding, self.baseY + h )
-            path.lineTo( cellToTheLeft.baseX + cellToTheLeft.minWidth - s.hCellPadding,
-                         self.baseY + h )
+
+            self.connector = Connector( s,
+                                        self.__leftEdge + s.hCellPadding,
+                                        self.baseY + h,
+                                        cellToTheLeft.baseX + cellToTheLeft.minWidth - s.hCellPadding,
+                                        self.baseY + h )
+
+        self.connector.penColor = s.commentLineColor
+        self.connector.penWidth = s.commentLineWidth
 
         self.setPath( path )
         return
@@ -2630,9 +2732,16 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
         brush = QBrush( s.commentBGColor )
         self.setBrush( brush )
 
-        pen = QPen( s.commentLineColor )
-        pen.setWidth( s.commentLineWidth )
-        self.setPen( pen )
+        if self.isSelected():
+            selectPen = QPen( s.selectColor )
+            selectPen.setWidth( s.selectPenWidth )
+            selectPen.setJoinStyle( Qt.RoundJoin )
+            self.setPen( selectPen )
+        else:
+            pen = QPen( s.commentLineColor )
+            pen.setWidth( s.commentLineWidth )
+            pen.setJoinStyle( Qt.RoundJoin )
+            self.setPen( pen )
 
         # Hide the dotted outline
         itemOption = QStyleOptionGraphicsItem( option )
@@ -2647,8 +2756,7 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
         painter.drawText( self.__leftEdge + s.hCellPadding + s.hTextPadding,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft,
-                          self.__getText() )
+                          Qt.AlignLeft, self.__getText() )
         return
 
     def setEditor( self, editor ):
