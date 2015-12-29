@@ -2188,6 +2188,8 @@ class IfCell( CellElement, QGraphicsRectItem ):
         self.kind = CellElement.IF
         self.__text = None
         self.__textRect = None
+        self.vConnector = None
+        self.hConnector = None
 
         # To make double click delivered
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
@@ -2213,6 +2215,16 @@ class IfCell( CellElement, QGraphicsRectItem ):
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
+
+        # Add the connectors as separate scene items to make the selection
+        # working properly
+        s = self.canvas.settings
+        self.vConnector = Connector( s, baseX + s.mainLine, baseY,
+                                     baseX + s.mainLine,
+                                     baseY + self.height )
+        scene.addItem( self.vConnector )
+
+
         self.setRect( baseX, baseY, self.width, self.height )
         scene.addItem( self )
         return
@@ -2228,12 +2240,9 @@ class IfCell( CellElement, QGraphicsRectItem ):
         brush = QBrush( s.ifBGColor )
         painter.setBrush( brush )
 
-        # Draw the connector as a single line under the rectangle
-        painter.drawLine( self.baseX + s.mainLine, self.baseY,
-                          self.baseX + s.mainLine, self.baseY + self.height )
-
         # Draw the main element
         pen = QPen( getDarkerColor( s.ifBGColor ) )
+        pen.setJoinStyle( Qt.RoundJoin )
         painter.setPen( pen )
 
         x1 = self.baseX + s.hCellPadding
