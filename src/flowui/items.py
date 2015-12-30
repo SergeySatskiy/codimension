@@ -27,7 +27,7 @@ from PyQt4.QtCore import Qt, QPointF
 from PyQt4.QtGui import ( QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
                           QPainterPath, QPainter, QColor, QGraphicsItem,
                           QStyleOptionGraphicsItem, QStyle,
-                          QGraphicsDropShadowEffect )
+                          QGraphicsSimpleTextItem )
 from PyQt4.QtSvg import QGraphicsSvgItem
 import os.path
 
@@ -198,6 +198,18 @@ class Connector( QGraphicsPathItem ):
         self.setPen( pen )
         QGraphicsPathItem.paint( self, painter, option, widget )
         return
+
+
+class Text( QGraphicsSimpleTextItem ):
+
+    def __init__( self, settings, text ):
+        QGraphicsSimpleTextItem.__init__( self )
+        self.__settings = settings
+        self.setText( text )
+        self.setFont( settings.badgeFont )
+        return
+
+
 
 
 class CellElement:
@@ -2212,9 +2224,28 @@ class IfCell( CellElement, QGraphicsRectItem ):
         self.width = self.minWidth
         return (self.width, self.height)
 
+    def __calcPolygon( self ):
+        s = self.canvas.settings
+
+        self.x1 = self.baseX + s.hCellPadding
+        self.y1 = self.baseY + self.minHeight / 2
+        self.x2 = self.baseX + s.hCellPadding + s.ifWidth
+        self.y2 = self.baseY + s.vCellPadding
+        self.x3 = self.baseX + self.minWidth - s.hCellPadding - s.ifWidth
+        self.y3 = self.y2
+        self.x4 = self.x3 + s.ifWidth
+        self.y4 = self.y1
+        self.x5 = self.x3
+        self.y5 = self.baseY + (self.minHeight - s.vCellPadding)
+        self.x6 = self.x2
+        self.y6 = self.y5
+        return
+
     def draw( self, scene, baseX, baseY ):
         self.baseX = baseX
         self.baseY = baseY
+
+        self.__calcPolygon()
 
         # Add the connectors as separate scene items to make the selection
         # working properly
@@ -2224,55 +2255,45 @@ class IfCell( CellElement, QGraphicsRectItem ):
                                      baseY + self.height )
         scene.addItem( self.vConnector )
 
+        self.hConnector = Connector( s, self.x4, self.y4,
+                                     self.baseX + self.width,
+                                     self.y4 )
+        scene.addItem( self.hConnector )
+
 
         self.setRect( baseX, baseY, self.width, self.height )
         scene.addItem( self )
         return
 
+
     def paint( self, painter, option, widget ):
         " Draws the code block "
         s = self.canvas.settings
 
-        # Set the colors and line width
-        pen = QPen( s.lineColor )
-        pen.setWidth( s.lineWidth )
-        painter.setPen( pen )
+        if self.isSelected():
+            selectPen = QPen( s.selectColor )
+            selectPen.setWidth( s.selectPenWidth )
+            selectPen.setJoinStyle( Qt.RoundJoin )
+            painter.setPen( selectPen )
+        else:
+            pen = QPen( getDarkerColor( s.ifBGColor ) )
+            pen.setJoinStyle( Qt.RoundJoin )
+            painter.setPen( pen )
+
         brush = QBrush( s.ifBGColor )
         painter.setBrush( brush )
+        painter.drawPolygon( QPointF(self.x1, self.y1), QPointF(self.x2, self.y2),
+                             QPointF(self.x3, self.y3), QPointF(self.x4, self.y4),
+                             QPointF(self.x5, self.y5), QPointF(self.x6, self.y6) )
 
-        # Draw the main element
-        pen = QPen( getDarkerColor( s.ifBGColor ) )
-        pen.setJoinStyle( Qt.RoundJoin )
-        painter.setPen( pen )
-
-        x1 = self.baseX + s.hCellPadding
-        y1 = self.baseY + self.minHeight / 2
-        x2 = self.baseX + s.hCellPadding + s.ifWidth
-        y2 = self.baseY + s.vCellPadding
-        x3 = self.baseX + self.minWidth - s.hCellPadding - s.ifWidth
-        y3 = y2
-        x4 = x3 + s.ifWidth
-        y4 = y1
-        x5 = x3
-        y5 = self.baseY + (self.minHeight - s.vCellPadding)
-        x6 = x2
-        y6 = y5
-        painter.drawPolygon( QPointF(x1, y1), QPointF(x2, y2),
-                             QPointF(x3, y3), QPointF(x4, y4),
-                             QPointF(x5, y5), QPointF(x6, y6) )
-
-        # Draw the 'false' connector
-        pen = QPen( s.lineColor )
-        pen.setWidth( s.lineWidth )
-        painter.setPen( pen )
-        painter.drawLine( x4, y4, self.baseX + self.width, y4 )
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
+        painter.setPen( pen )
         painter.setFont( s.monoFont )
-        availWidth = x3 - x2
+        availWidth = self.x3 - self.x2
         textWidth = self.__textRect.width() + 2 * s.hTextPadding
         textShift = (availWidth - textWidth) / 2
-        painter.drawText( x2 + s.hTextPadding + textShift,
+        painter.drawText( self.x2 + s.hTextPadding + textShift,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, self.__getText() )
@@ -2284,7 +2305,7 @@ class IfCell( CellElement, QGraphicsRectItem ):
         painter.setFont( s.badgeFont )
         badgeRect = s.badgeFontMetrics.boundingRect( 0, 0,  maxint, maxint,
                                                      0, 'N' )
-        painter.drawText( x4 + 2, y4 - badgeRect.height() - 2,
+        painter.drawText( self.x4 + 2, self.y4 - badgeRect.height() - 2,
                           badgeRect.width(), badgeRect.height(),
                           Qt.AlignLeft, 'N' )
         return
