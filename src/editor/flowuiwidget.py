@@ -60,6 +60,16 @@ class CFGraphicsScene( QGraphicsScene ):
         QGraphicsScene.mousePressEvent( self, event )
         return
 
+    def keyPressEvent( self, event ):
+        """ Handles the key press event """
+        key = event.key()
+        if key == Qt.Key_Escape:
+            self.clearSelection()
+            event.accept()
+        else:
+            QGraphicsScene.keyPressEvent( self, event )
+        return
+
 
 class CFGraphicsView( QGraphicsView ):
     """ Central widget """

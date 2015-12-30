@@ -26,7 +26,7 @@ from math import sqrt
 from PyQt4.QtCore import Qt, QPointF
 from PyQt4.QtGui import ( QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
                           QPainterPath, QPainter, QColor, QGraphicsItem,
-                          QStyleOptionGraphicsItem, QStyle,
+                          QStyleOptionGraphicsItem, QStyle, QFont,
                           QGraphicsSimpleTextItem )
 from PyQt4.QtSvg import QGraphicsSvgItem
 import os.path
@@ -205,11 +205,21 @@ class Text( QGraphicsSimpleTextItem ):
     def __init__( self, settings, text ):
         QGraphicsSimpleTextItem.__init__( self )
         self.__settings = settings
-        self.setText( text )
+
         self.setFont( settings.badgeFont )
+        self.setText( text )
+
+        self.color = None
         return
 
+    def paint( self, painter, option, widget ):
+        color = self.__settings.lineColor
+        if self.color:
+            color = self.color
 
+        self.setBrush( QBrush( color ) )
+        QGraphicsSimpleTextItem.paint( self, painter, option, widget )
+        return
 
 
 class CellElement:
@@ -2202,6 +2212,7 @@ class IfCell( CellElement, QGraphicsRectItem ):
         self.__textRect = None
         self.vConnector = None
         self.hConnector = None
+        self.rightLabel = None
 
         # To make double click delivered
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
@@ -2260,8 +2271,15 @@ class IfCell( CellElement, QGraphicsRectItem ):
                                      self.y4 )
         scene.addItem( self.hConnector )
 
+        self.rightLabel = Text( s, "N" )
+        self.rightLabel.setPos( self.x4 + 2,
+                                self.y4 - self.rightLabel.boundingRect().height() - 2 )
+        scene.addItem( self.rightLabel )
 
-        self.setRect( baseX, baseY, self.width, self.height )
+        penWidth = s.selectPenWidth - 1
+        self.setRect( self.x1 - penWidth, self.y2 - penWidth,
+                      self.x4 - self.x1 + 2 * penWidth,
+                      self.y6 - self.y2 + 2 * penWidth )
         scene.addItem( self )
         return
 
@@ -2297,17 +2315,6 @@ class IfCell( CellElement, QGraphicsRectItem ):
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, self.__getText() )
-
-        # Draw the 'n' badge
-        pen = QPen( s.lineColor )
-        pen.setWidth( 1 )
-        painter.setPen( pen )
-        painter.setFont( s.badgeFont )
-        badgeRect = s.badgeFontMetrics.boundingRect( 0, 0,  maxint, maxint,
-                                                     0, 'N' )
-        painter.drawText( self.x4 + 2, self.y4 - badgeRect.height() - 2,
-                          badgeRect.width(), badgeRect.height(),
-                          Qt.AlignLeft, 'N' )
         return
 
     def setEditor( self, editor ):
@@ -2816,6 +2823,7 @@ class AboveCommentCell( CellElement, QGraphicsPathItem ):
         self.__leftEdge = None
         self.needConnector = False
         self.connector = None
+        self.commentConnector = None
 
         # To make double click delivered
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
@@ -2846,7 +2854,6 @@ class AboveCommentCell( CellElement, QGraphicsPathItem ):
         self.baseX = baseX
         self.baseY = baseY
         self.__setupPath()
-        scene.addItem( self )
 
         if self.needConnector:
             s = self.canvas.settings
@@ -2854,6 +2861,9 @@ class AboveCommentCell( CellElement, QGraphicsPathItem ):
                                         baseX + s.mainLine,
                                         baseY + self.height )
             scene.addItem( self.connector )
+
+        scene.addItem( self.commentConnector )
+        scene.addItem( self )
         return
 
     def __setupPath( self ):
@@ -2869,16 +2879,19 @@ class AboveCommentCell( CellElement, QGraphicsPathItem ):
                         s.minWidth )
 
         path = getCommentBoxPath( s, self.__leftEdge, baseY, boxWidth, self.minHeight )
-        path.moveTo( self.__leftEdge + s.hCellPadding,
-                     baseY + self.minHeight / 2 )
-        path.lineTo( self.__leftEdge,
-                     baseY + self.minHeight / 2 )
-        # The moveTo() below is required to suppress painting the surface
-        path.moveTo( self.__leftEdge,
-                     baseY + self.minHeight / 2 )
-        path.lineTo( self.__leftEdge - s.hCellPadding,
-                     baseY + self.minHeight + s.vCellPadding )
         self.setPath( path )
+
+        self.commentConnector = Connector( s, 0, 0, 0, 0 )
+        connectorPath = QPainterPath()
+        connectorPath.moveTo( self.__leftEdge + s.hCellPadding,
+                              baseY + self.minHeight / 2 )
+        connectorPath.lineTo( self.__leftEdge,
+                              baseY + self.minHeight / 2 )
+        connectorPath.lineTo( self.__leftEdge - s.hCellPadding,
+                              baseY + self.minHeight + s.vCellPadding )
+        self.commentConnector.setPath( connectorPath )
+        self.commentConnector.penColor = s.commentLineColor
+        self.commentConnector.penWidth = s.commentLineWidth
         return
 
     def paint( self, painter, option, widget ):
@@ -2891,10 +2904,16 @@ class AboveCommentCell( CellElement, QGraphicsPathItem ):
 
         brush = QBrush( s.commentBGColor )
         self.setBrush( brush )
-
-        pen = QPen( s.commentLineColor )
-        pen.setWidth( s.commentLineWidth )
-        self.setPen( pen )
+        if self.isSelected():
+            selectPen = QPen( s.selectColor )
+            selectPen.setWidth( s.selectPenWidth )
+            selectPen.setJoinStyle( Qt.RoundJoin )
+            self.setPen( selectPen )
+        else:
+            pen = QPen( s.commentLineColor )
+            pen.setWidth( s.commentLineWidth )
+            pen.setJoinStyle( Qt.RoundJoin )
+            self.setPen( pen )
 
         # Hide the dotted outline
         itemOption = QStyleOptionGraphicsItem( option )
