@@ -48,8 +48,9 @@ IDLE_TIMEOUT = 1500
 class CFGraphicsScene( QGraphicsScene ):
     """ Reimplemented graphics scene """
 
-    def __init__( self, parent = None ):
+    def __init__( self, navBar, parent = None ):
         super( CFGraphicsScene, self ).__init__( parent )
+        self.__navBar = navBar
         self.selectionChanged.connect( self.selChanged )
         return
 
@@ -72,11 +73,14 @@ class CFGraphicsScene( QGraphicsScene ):
         return
 
     def selChanged( self ):
-        print "Selected items: " + str( len( self.selectedItems() ) )
-        for item in self.selectedItems():
-            print "Type: " + str( type( item ) )
-
-
+        items = self.selectedItems()
+        count = len( items )
+        if count:
+            tooltip = "\n".join( [ str( type( item ) )  for item in items ] )
+            self.__navBar.setSelectionLabel( count, tooltip )
+        else:
+            self.__navBar.setSelectionLabel( 0, None )
+        return
 
 
 class CFGraphicsView( QGraphicsView ):
@@ -152,6 +156,8 @@ class ControlFlowNavigationBar( QFrame ):
         self.__spacer.setSizePolicy( QSizePolicy.Fixed, QSizePolicy.Expanding )
         self.__spacer.setMinimumWidth( 0 )
         self.__layout.addWidget( self.__spacer )
+
+        # Create the path label
 #        self.__pathLabel = FitLabel( self )
         self.__pathLabel = QLabel( self )
         self.__pathLabel.setTextFormat( Qt.PlainText )
@@ -161,6 +167,17 @@ class ControlFlowNavigationBar( QFrame ):
         self.__pathLabel.setTextInteractionFlags( Qt.NoTextInteraction )
         self.__pathLabel.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Fixed )
         self.__layout.addWidget( self.__pathLabel )
+
+        # Create the selection label
+        self.__selectionLabel = QLabel( self )
+        self.__selectionLabel.setTextFormat( Qt.PlainText )
+        self.__selectionLabel.setAlignment( Qt.AlignCenter )
+        self.__selectionLabel.setWordWrap( False )
+        self.__selectionLabel.setFrameStyle( QFrame.StyledPanel )
+        self.__selectionLabel.setTextInteractionFlags( Qt.NoTextInteraction )
+        self.__selectionLabel.setSizePolicy( QSizePolicy.Minimum, QSizePolicy.Fixed )
+        self.__layout.addWidget( self.__selectionLabel )
+        self.setSelectionLabel( 0, None )
         return
 
 
@@ -202,6 +219,14 @@ class ControlFlowNavigationBar( QFrame ):
 
     def setPathVisible( self, on ):
         self.__pathLabel.setVisible( on )
+        return
+
+    def setSelectionLabel( self, text, tooltip ):
+        self.__selectionLabel.setText( str( text ) )
+        if tooltip:
+            self.__selectionLabel.setToolTip( "Selected items:\n" + str( tooltip ) )
+        else:
+            self.__selectionLabel.setToolTip( "Number of selected items" )
         return
 
     def resizeEvent( self, event ):
@@ -303,7 +328,7 @@ class FlowUIWidget( QWidget ):
 
     def __createGraphicsView( self ):
         """ Creates the graphics view """
-        self.scene = CFGraphicsScene( self )
+        self.scene = CFGraphicsScene( self.__navBar, self )
         self.view = CFGraphicsView( self )
         self.view.setScene( self.scene )
         self.view.zoomTo( Settings().flowScale )
