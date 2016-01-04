@@ -365,6 +365,7 @@ class ScopeCellElement( CellElement ):
         self._badgeItem = None
         self.__navBarUpdate = None
         self._connector = None
+        self.scene = None
         return
 
     def _getHeaderText( self ):
@@ -486,6 +487,7 @@ class ScopeCellElement( CellElement ):
             return self.__afterTry()
 
     def _draw( self, scene, baseX, baseY ):
+        self.scene = scene
         s = self.canvas.settings
         if self.subKind == ScopeCellElement.TOP_LEFT:
             # Draw connector if needed
@@ -557,9 +559,16 @@ class ScopeCellElement( CellElement ):
         s = self.canvas.settings
 
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            pen = QPen( getDarkerColor( painter.brush().color() ) )
-            pen.setWidth( s.lineWidth )
-            painter.setPen( pen )
+            if self.isSelected():
+                selectPen = QPen( s.selectColor )
+                selectPen.setWidth( s.selectPenWidth )
+                selectPen.setJoinStyle( Qt.RoundJoin )
+                painter.setPen( selectPen )
+            else:
+                pen = QPen( getDarkerColor( painter.brush().color() ) )
+                pen.setWidth( s.lineWidth )
+                painter.setPen( pen )
+
             painter.drawRoundedRect( self.baseX + s.hCellPadding,
                                      self.baseY + s.vCellPadding,
                                      self.canvas.minWidth - 2 * s.hCellPadding,
@@ -677,6 +686,33 @@ class ScopeCellElement( CellElement ):
             return
         return
 
+    def mousePressEvent( self, event ):
+        button = event.button()
+        if button == Qt.LeftButton:
+            if self.subKind not in [ self.SIDE_COMMENT, self.DOCSTRING, self.DECLARATION ]:
+                event.accept()
+                return
+        QGraphicsItem.mousePressEvent( self, event )
+        return
+
+    def mouseReleaseEvent( self, event ):
+        button = event.button()
+        if button == Qt.LeftButton:
+            if self.subKind not in [ self.SIDE_COMMENT, self.DOCSTRING, self.DECLARATION ]:
+                self.scene.clearSelection()
+                event.accept()
+                return
+            if self.subKind == self.DECLARATION:
+                # Need to remove the selection from self and set the scope
+                # selected. The scope is at (x-1, y-1) location
+                self.setSelected( False )
+                row = self.addr[ 1 ] - 1
+                column = self.addr[ 0 ] - 1
+                self.canvas.cells[ row ][ column ].setSelected( True )
+                event.accept()
+                return
+        QGraphicsItem.mouseReleaseEvent( self, event )
+        return
 
 __kindToString = {
     CellElement.UNKNOWN:                "UNKNOWN",

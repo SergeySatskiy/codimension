@@ -50,6 +50,7 @@ class CFGraphicsScene( QGraphicsScene ):
 
     def __init__( self, parent = None ):
         super( CFGraphicsScene, self ).__init__( parent )
+        self.selectionChanged.connect( self.selChanged )
         return
 
     def mousePressEvent( self, event ):
@@ -69,6 +70,13 @@ class CFGraphicsScene( QGraphicsScene ):
         else:
             QGraphicsScene.keyPressEvent( self, event )
         return
+
+    def selChanged( self ):
+        print "Selected items: " + str( len( self.selectedItems() ) )
+        for item in self.selectedItems():
+            print "Type: " + str( type( item ) )
+
+
 
 
 class CFGraphicsView( QGraphicsView ):
@@ -295,7 +303,6 @@ class FlowUIWidget( QWidget ):
 
     def __createGraphicsView( self ):
         """ Creates the graphics view """
-#        self.scene = QGraphicsScene( self )
         self.scene = CFGraphicsScene( self )
         self.view = CFGraphicsView( self )
         self.view.setScene( self.scene )
