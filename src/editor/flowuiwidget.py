@@ -76,8 +76,13 @@ class CFGraphicsScene( QGraphicsScene ):
         items = self.selectedItems()
         count = len( items )
         if count:
-            tooltip = "\n".join( [ str( type( item ) )  for item in items ] )
-            self.__navBar.setSelectionLabel( count, tooltip )
+            tooltip = []
+            for item in items:
+                if hasattr( item, "getSelectTooltip" ):
+                    tooltip.append( item.getSelectTooltip() )
+                else:
+                    tooltip.append( str( type( item ) ) )
+            self.__navBar.setSelectionLabel( count, "\n".join( tooltip ) )
         else:
             self.__navBar.setSelectionLabel( 0, None )
         return
@@ -175,7 +180,8 @@ class ControlFlowNavigationBar( QFrame ):
         self.__selectionLabel.setWordWrap( False )
         self.__selectionLabel.setFrameStyle( QFrame.StyledPanel )
         self.__selectionLabel.setTextInteractionFlags( Qt.NoTextInteraction )
-        self.__selectionLabel.setSizePolicy( QSizePolicy.Minimum, QSizePolicy.Fixed )
+        self.__selectionLabel.setSizePolicy( QSizePolicy.Fixed, QSizePolicy.Fixed )
+        self.__selectionLabel.setMinimumWidth( 72 )
         self.__layout.addWidget( self.__selectionLabel )
         self.setSelectionLabel( 0, None )
         return

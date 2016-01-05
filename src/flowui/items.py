@@ -45,6 +45,7 @@ class SVGItem( QGraphicsSvgItem ):
     " Wrapper for an SVG items on the control flow "
 
     def __init__( self, fName ):
+        self.__fName = fName
         QGraphicsSvgItem.__init__( self, self.__getPath( fName ) )
         self.__scale = 0
         return
@@ -84,6 +85,9 @@ class SVGItem( QGraphicsSvgItem ):
 
     def width( self ):
         return self.boundingRect().width() * self.__scale
+
+    def getSelectTooltip( self ):
+        return "SVG item for " + self.__fName
 
 
 class BadgeItem( QGraphicsRectItem ):
@@ -164,6 +168,9 @@ class BadgeItem( QGraphicsRectItem ):
                           Qt.AlignLeft, self.__text )
         return
 
+    def getSelectTooltip( self ):
+        return "Badge item '" + self.__text + "'"
+
 
 class Connector( QGraphicsPathItem ):
 
@@ -199,6 +206,9 @@ class Connector( QGraphicsPathItem ):
         QGraphicsPathItem.paint( self, painter, option, widget )
         return
 
+    def getSelectTooltip( self ):
+        return "Connector item"
+
 
 class Text( QGraphicsSimpleTextItem ):
 
@@ -220,6 +230,9 @@ class Text( QGraphicsSimpleTextItem ):
         self.setBrush( QBrush( color ) )
         QGraphicsSimpleTextItem.paint( self, painter, option, widget )
         return
+
+    def getSelectTooltip( self ):
+        return "Text item"
 
 
 class CellElement:
@@ -498,10 +511,11 @@ class ScopeCellElement( CellElement ):
                 scene.addItem( self._connector )
 
             # Draw the scope rounded rectangle when we see the top left corner
-            self.setRect( baseX + s.hCellPadding,
-                          baseY + s.vCellPadding,
-                          self.canvas.minWidth - 2 * s.hCellPadding,
-                          self.canvas.minHeight - 2 * s.vCellPadding )
+            penWidth = s.selectPenWidth - 1
+            self.setRect( baseX + s.hCellPadding - penWidth,
+                          baseY + s.vCellPadding - penWidth,
+                          self.canvas.minWidth - 2 * s.hCellPadding + 2 * penWidth,
+                          self.canvas.minHeight - 2 * s.vCellPadding + 2 * penWidth )
             scene.addItem( self )
             self.canvas.scopeRectangle = self
             if self._badgeItem:
@@ -534,10 +548,11 @@ class ScopeCellElement( CellElement ):
             yShift = 0
             if hasattr( self.ref, "sideComment" ):
                 yShift = s.vTextPadding
-            self.setRect( baseX - s.rectRadius,
-                          baseY - s.rectRadius + s.vHeaderPadding + yShift,
-                          self.canvas.width,
-                          self.height + (s.rectRadius - s.vHeaderPadding) )
+            penWidth = s.selectPenWidth - 1
+            self.setRect( baseX - s.rectRadius - penWidth,
+                          baseY - s.rectRadius - penWidth,
+                          self.canvas.minWidth - 2 * s.hCellPadding + 2 * penWidth,
+                          self.height + s.rectRadius + penWidth )
             scene.addItem( self )
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
             canvasTop = self.baseY - s.rectRadius
@@ -548,9 +563,11 @@ class ScopeCellElement( CellElement ):
                           self._sideCommentRect.height() + 2 * s.vTextPadding )
             scene.addItem( self )
         elif self.subKind == ScopeCellElement.DOCSTRING:
-            self.setRect( baseX - s.rectRadius,
-                          baseY + s.vHeaderPadding,
-                          self.canvas.width, self.height - s.vHeaderPadding )
+            penWidth = s.selectPenWidth - 1
+            self.setRect( baseX - s.rectRadius - penWidth,
+                          baseY - penWidth,
+                          self.canvas.minWidth - 2 * s.hCellPadding + 2 * penWidth,
+                          self.height + 2 * penWidth )
             scene.addItem( self )
         return
 
@@ -593,9 +610,17 @@ class ScopeCellElement( CellElement ):
             pen = QPen( getDarkerColor( painter.brush().color() ) )
             pen.setWidth( s.lineWidth )
             painter.setPen( pen )
-            painter.drawLine( canvasLeft,
+
+            # If the scope is selected then the line may need to be shorter
+            # to avoid covering the outline
+            row = self.addr[ 1 ] - 1
+            column = self.addr[ 0 ] - 1
+            correction = 0.0
+            if self.canvas.cells[ row ][ column ].isSelected():
+                correction = s.selectPenWidth - 1
+            painter.drawLine( canvasLeft + correction,
                               self.baseY + self.height,
-                              canvasLeft + self.canvas.minWidth - 2 * s.hCellPadding,
+                              canvasLeft + self.canvas.minWidth - 2 * s.hCellPadding - correction,
                               self.baseY + self.height )
 
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
@@ -625,6 +650,33 @@ class ScopeCellElement( CellElement ):
                               Qt.AlignLeft, self._getSideComment() )
         elif self.subKind == ScopeCellElement.DOCSTRING:
             canvasLeft = self.baseX - s.rectRadius
+
+            if self.isSelected():
+                selectPen = QPen( s.selectColor )
+                selectPen.setWidth( s.selectPenWidth )
+                selectPen.setJoinStyle( Qt.RoundJoin )
+                painter.setPen( selectPen )
+                painter.drawRect( canvasLeft, self.baseY,
+                                  self.canvas.minWidth - 2 * s.hCellPadding,
+                                  self.height )
+            else:
+                pen = QPen( s.lineColor )
+                pen = QPen( getDarkerColor( painter.brush().color() ) )
+                pen.setWidth( s.lineWidth )
+                painter.setPen( pen )
+
+                # If the scope is selected then the line may need to be shorter
+                # to avoid covering the outline
+                row = self.addr[ 1 ] - 2
+                column = self.addr[ 0 ] - 1
+                correction = 0.0
+                if self.canvas.cells[ row ][ column ].isSelected():
+                    correction = s.selectPenWidth - 1
+                painter.drawLine( canvasLeft + correction,
+                                  self.baseY + self.height,
+                                  canvasLeft + self.canvas.minWidth - 2 * s.hCellPadding - correction,
+                                  self.baseY + self.height )
+
             pen = QPen( s.boxFGColor )
             painter.setFont( s.monoFont )
             painter.setPen( pen )
@@ -634,13 +686,6 @@ class ScopeCellElement( CellElement ):
                               self.height - 2 * s.vHeaderPadding,
                               Qt.AlignLeft, self.getDocstringText() )
 
-            pen = QPen( s.lineColor )
-            pen = QPen( getDarkerColor( painter.brush().color() ) )
-            pen.setWidth( s.lineWidth )
-            painter.setPen( pen )
-            painter.drawLine( canvasLeft, self.baseY + self.height,
-                              canvasLeft + self.canvas.minWidth - 2 * s.hCellPadding,
-                              self.baseY + self.height )
         return
 
     def hoverEnterEvent( self, event ):
@@ -689,15 +734,9 @@ class ScopeCellElement( CellElement ):
     def mousePressEvent( self, event ):
         button = event.button()
         if button == Qt.LeftButton:
-            if self.subKind not in [ self.SIDE_COMMENT, self.DOCSTRING, self.DECLARATION ]:
-                event.accept()
-                return
-        QGraphicsItem.mousePressEvent( self, event )
-        return
-
-    def mouseReleaseEvent( self, event ):
-        button = event.button()
-        if button == Qt.LeftButton:
+#            if self.subKind not in [ self.SIDE_COMMENT, self.DOCSTRING, self.DECLARATION ]:
+#                event.accept()
+#                return
             if self.subKind not in [ self.SIDE_COMMENT, self.DOCSTRING, self.DECLARATION ]:
                 self.scene.clearSelection()
                 event.accept()
@@ -705,13 +744,38 @@ class ScopeCellElement( CellElement ):
             if self.subKind == self.DECLARATION:
                 # Need to remove the selection from self and set the scope
                 # selected. The scope is at (x-1, y-1) location
-                self.setSelected( False )
+#                self.setSelected( False )
                 row = self.addr[ 1 ] - 1
                 column = self.addr[ 0 ] - 1
+#                self.canvas.cells[ row ][ column ].setSelected( True )
+                QGraphicsItem.mousePressEvent( self, event )
+#                event.accept()
+                self.setSelected( False )
                 self.canvas.cells[ row ][ column ].setSelected( True )
-                event.accept()
                 return
-        QGraphicsItem.mouseReleaseEvent( self, event )
+        QGraphicsItem.mousePressEvent( self, event )
+        return
+
+    def mouseReleaseEvent( self, event ):
+#        button = event.button()
+#        if button == Qt.LeftButton:
+#            if self.subKind not in [ self.SIDE_COMMENT, self.DOCSTRING, self.DECLARATION ]:
+#                self.scene.clearSelection()
+#                event.accept()
+#                return
+#            if self.subKind == self.DECLARATION:
+#                # Need to remove the selection from self and set the scope
+#                # selected. The scope is at (x-1, y-1) location
+#                self.setSelected( False )
+#                row = self.addr[ 1 ] - 1
+#                column = self.addr[ 0 ] - 1
+#                self.canvas.cells[ row ][ column ].setSelected( True )
+#                event.accept()
+#                return
+        if event.modifiers() == Qt.NoModifier and self.subKind == self.DECLARATION:
+            event.accept()
+        else:
+            QGraphicsItem.mouseReleaseEvent( self, event )
         return
 
 __kindToString = {
@@ -937,6 +1001,10 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
             self._editor.setFocus()
         return
 
+    def getSelectTooltip( self ):
+        lineRange = self.ref.getLineRange()
+        return "Code block at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
+
 
 
 class FileScopeCell( ScopeCellElement, QGraphicsRectItem ):
@@ -947,6 +1015,9 @@ class FileScopeCell( ScopeCellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self )
         self.kind = CellElement.FILE_SCOPE
         self.subKind = kind
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def _getHeaderText( self ):
@@ -981,6 +1052,10 @@ class FileScopeCell( ScopeCellElement, QGraphicsRectItem ):
         painter.setBrush( brush )
         self._paint( painter, option, widget )
         return
+
+    def getSelectTooltip( self ):
+        return "File scope (" + scopeCellElementToString( self.subKind ) + ")"
+
 
 
 class FunctionScopeCell( ScopeCellElement, QGraphicsRectItem ):
@@ -1031,6 +1106,8 @@ class FunctionScopeCell( ScopeCellElement, QGraphicsRectItem ):
         self._paint( painter, option, widget )
         return
 
+    def getSelectTooltip( self ):
+        return "Function " + self.ref.name + " scope (" + scopeCellElementToString( self.subKind ) + ")"
 
 
 class ClassScopeCell( ScopeCellElement, QGraphicsRectItem ):
@@ -1041,6 +1118,9 @@ class ClassScopeCell( ScopeCellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self )
         self.kind = CellElement.CLASS_SCOPE
         self.subKind = kind
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def _getSideComment( self ):
@@ -1090,6 +1170,9 @@ class ForScopeCell( ScopeCellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self )
         self.kind = CellElement.FOR_SCOPE
         self.subKind = kind
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def _getSideComment( self ):
@@ -1137,6 +1220,9 @@ class WhileScopeCell( ScopeCellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self )
         self.kind = CellElement.WHILE_SCOPE
         self.subKind = kind
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def _getSideComment( self ):
@@ -1184,6 +1270,9 @@ class TryScopeCell( ScopeCellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self )
         self.kind = CellElement.TRY_SCOPE
         self.subKind = kind
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def _getSideComment( self ):
@@ -1227,6 +1316,9 @@ class WithScopeCell( ScopeCellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self )
         self.kind = CellElement.WITH_SCOPE
         self.subKind = kind
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def _getSideComment( self ):
@@ -1273,6 +1365,9 @@ class DecoratorScopeCell( ScopeCellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self )
         self.kind = CellElement.DECOR_SCOPE
         self.subKind = kind
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def _getSideComment( self ):
@@ -1323,6 +1418,9 @@ class ElseScopeCell( ScopeCellElement, QGraphicsRectItem ):
         self.kind = CellElement.ELSE_SCOPE
         self.subKind = kind
         self.after = self
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def _getSideComment( self ):
@@ -1365,6 +1463,9 @@ class ExceptScopeCell( ScopeCellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self )
         self.kind = CellElement.EXCEPT_SCOPE
         self.subKind = kind
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def _getSideComment( self ):
@@ -1414,6 +1515,9 @@ class FinallyScopeCell( ScopeCellElement, QGraphicsRectItem ):
         QGraphicsRectItem.__init__( self )
         self.kind = CellElement.FINALLY_SCOPE
         self.subKind = kind
+
+        # To make double click delivered
+        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
     def _getSideComment( self ):
