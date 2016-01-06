@@ -1054,6 +1054,12 @@ class FileScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return
 
     def getSelectTooltip( self ):
+        if self.subKind == self.TOP_LEFT:
+            return "File scope"
+        if self.subKind == self.DECLARATION:
+            return "File scope declaration"
+        if self.subKind == self.DOCSTRING:
+            return "File scope docstring"
         return "File scope (" + scopeCellElementToString( self.subKind ) + ")"
 
 
@@ -1107,7 +1113,13 @@ class FunctionScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return
 
     def getSelectTooltip( self ):
-        return "Function " + self.ref.name + " scope (" + scopeCellElementToString( self.subKind ) + ")"
+        if self.subKind == self.TOP_LEFT:
+            return "Function " + self.ref.name.getContent() + " scope"
+        if self.subKind == self.DECLARATION:
+            return "Function " + self.ref.name.getContent() + " declaration"
+        if self.subKind == self.DOCSTRING:
+            return "Function " + self.ref.name.getContent() + " docstring"
+        return "Function " + self.ref.name.getContent() + " scope (" + scopeCellElementToString( self.subKind ) + ")"
 
 
 class ClassScopeCell( ScopeCellElement, QGraphicsRectItem ):
@@ -1160,6 +1172,15 @@ class ClassScopeCell( ScopeCellElement, QGraphicsRectItem ):
         painter.setBrush( brush )
         self._paint( painter, option, widget )
         return
+
+    def getSelectTooltip( self ):
+        if self.subKind == self.TOP_LEFT:
+            return "Class " + self.ref.name.getContent() + " scope"
+        if self.subKind == self.DECLARATION:
+            return "Class " + self.ref.name.getContent() + " declaration"
+        if self.subKind == self.DOCSTRING:
+            return "Class " + self.ref.name.getContent() + " docstring"
+        return "Class " + self.ref.name.getContent() + " scope (" + scopeCellElementToString( self.subKind ) + ")"
 
 
 class ForScopeCell( ScopeCellElement, QGraphicsRectItem ):
@@ -2286,7 +2307,7 @@ class ImportCell( CellElement, QGraphicsRectItem ):
                       self.minHeight - 2 * s.vCellPadding + 2 * penWidth )
 
         self.arrowItem.setPos( baseX + s.hCellPadding + s.hTextPadding,
-                               baseY + self.height/2 - self.arrowItem.height()/2 )
+                               baseY + self.minHeight/2 - self.arrowItem.height()/2 )
         scene.addItem( self )
         scene.addItem( self.arrowItem )
         return
