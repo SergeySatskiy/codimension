@@ -379,6 +379,7 @@ class ScopeCellElement( CellElement ):
         self.__navBarUpdate = None
         self._connector = None
         self.scene = None
+        self.__sideCommentPath = None
         return
 
     def _getHeaderText( self ):
@@ -557,10 +558,16 @@ class ScopeCellElement( CellElement ):
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
             canvasTop = self.baseY - s.rectRadius
             movedBaseX = self.canvas.baseX + self.canvas.minWidth - self.width - s.rectRadius - s.vHeaderPadding
-            self.setRect( movedBaseX + s.hHeaderPadding,
-                          canvasTop + s.vHeaderPadding,
-                          self._sideCommentRect.width() + 2 * s.hTextPadding,
-                          self._sideCommentRect.height() + 2 * s.vTextPadding )
+            self.__sideCommentPath = getNoCellCommentBoxPath( movedBaseX + s.hHeaderPadding,
+                                                              canvasTop + s.vHeaderPadding,
+                                                              self._sideCommentRect.width() + 2 * s.hTextPadding,
+                                                              self._sideCommentRect.height() + 2 * s.vTextPadding,
+                                                              s.commentCorner )
+            penWidth = s.selectPenWidth - 1
+            self.setRect( movedBaseX + s.hHeaderPadding - penWidth,
+                          canvasTop + s.vHeaderPadding - penWidth,
+                          self._sideCommentRect.width() + 2 * s.hTextPadding + 2 * penWidth,
+                          self._sideCommentRect.height() + 2 * s.vTextPadding + 2 * penWidth )
             scene.addItem( self )
         elif self.subKind == ScopeCellElement.DOCSTRING:
             penWidth = s.selectPenWidth - 1
@@ -624,21 +631,26 @@ class ScopeCellElement( CellElement ):
                               self.baseY + self.height )
 
         elif self.subKind == ScopeCellElement.SIDE_COMMENT:
+            brush = QBrush( s.commentBGColor )
+            painter.setBrush( brush )
+
+            if self.isSelected():
+                selectPen = QPen( s.selectColor )
+                selectPen.setWidth( s.selectPenWidth )
+                selectPen.setJoinStyle( Qt.RoundJoin )
+                painter.setPen( selectPen )
+            else:
+                pen = QPen( s.commentLineColor )
+                pen.setWidth( s.commentLineWidth )
+                pen.setJoinStyle( Qt.RoundJoin )
+                painter.setPen( pen )
+
+
             canvasTop = self.baseY - s.rectRadius
             # s.vHeaderPadding below is used intentionally: to have the same
             # spacing on top, bottom and right for the comment box
             movedBaseX = self.canvas.baseX + self.canvas.minWidth - self.width - s.rectRadius - s.vHeaderPadding
-            path = getNoCellCommentBoxPath( movedBaseX + s.hHeaderPadding,
-                                            canvasTop + s.vHeaderPadding,
-                                            self._sideCommentRect.width() + 2 * s.hTextPadding,
-                                            self._sideCommentRect.height() + 2 * s.vTextPadding,
-                                            s.commentCorner )
-            brush = QBrush( s.commentBGColor )
-            painter.setBrush( brush )
-            pen = QPen( s.commentLineColor )
-            pen.setWidth( s.commentLineWidth )
-            painter.setPen( pen )
-            painter.drawPath( path )
+            painter.drawPath( self.__sideCommentPath )
 
             pen = QPen( s.boxFGColor )
             painter.setFont( s.monoFont )
@@ -1410,7 +1422,7 @@ class DecoratorScopeCell( ScopeCellElement, QGraphicsRectItem ):
 
     def render( self ):
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            self._badgeItem = BadgeItem( self, "@" )
+            self._badgeItem = BadgeItem( self, " @ " )
         self._render()
         self.height = self.minHeight
         self.width = self.minWidth
@@ -2359,6 +2371,10 @@ class ImportCell( CellElement, QGraphicsRectItem ):
                                    self.ref.body.beginPos )
             self._editor.setFocus()
         return
+
+    def getSelectTooltip( self ):
+        lineRange = self.ref.getLineRange()
+        return "Import at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
 
 
 
