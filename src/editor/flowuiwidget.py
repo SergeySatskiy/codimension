@@ -181,7 +181,7 @@ class ControlFlowNavigationBar( QFrame ):
         self.__selectionLabel.setFrameStyle( QFrame.StyledPanel )
         self.__selectionLabel.setTextInteractionFlags( Qt.NoTextInteraction )
         self.__selectionLabel.setSizePolicy( QSizePolicy.Fixed, QSizePolicy.Fixed )
-        self.__selectionLabel.setMinimumWidth( 72 )
+        self.__selectionLabel.setMinimumWidth( 40 )
         self.__layout.addWidget( self.__selectionLabel )
         self.setSelectionLabel( 0, None )
         return

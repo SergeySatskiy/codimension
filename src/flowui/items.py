@@ -1014,7 +1014,7 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
         return
 
     def getSelectTooltip( self ):
-        lineRange = self.ref.getLineRange()
+        lineRange = self.ref.body.getLineRange()
         return "Code block at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
 
 
@@ -1125,13 +1125,16 @@ class FunctionScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return
 
     def getSelectTooltip( self ):
+        tooltip = "Function " + self.ref.name.getContent() + " "
         if self.subKind == self.TOP_LEFT:
-            return "Function " + self.ref.name.getContent() + " scope"
-        if self.subKind == self.DECLARATION:
-            return "Function " + self.ref.name.getContent() + " declaration"
+            return tooltip + "scope at lines " + str( self.ref.body.beginLine ) + "-" + str( self.ref.endLine )
         if self.subKind == self.DOCSTRING:
-            return "Function " + self.ref.name.getContent() + " docstring"
-        return "Function " + self.ref.name.getContent() + " scope (" + scopeCellElementToString( self.subKind ) + ")"
+            lines = self.ref.docstring.getLineRange()
+            return tooltip + "docstring at lines " + str( lines[0] ) + "-" + str( lines[1] )
+        if self.subKind == self.SIDE_COMMENT:
+            lines = self.ref.sideComment.getLineRange()
+            return tooltip + "side comment at lines " + str( lines[0] ) + "-" + str( lines[1] )
+        return tooltip + "scope (" + scopeCellElementToString( self.subKind ) + ")"
 
 
 class ClassScopeCell( ScopeCellElement, QGraphicsRectItem ):
@@ -1186,13 +1189,16 @@ class ClassScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return
 
     def getSelectTooltip( self ):
+        tooltip = "Class " + self.ref.name.getContent() + " "
         if self.subKind == self.TOP_LEFT:
-            return "Class " + self.ref.name.getContent() + " scope"
-        if self.subKind == self.DECLARATION:
-            return "Class " + self.ref.name.getContent() + " declaration"
+            return tooltip + "scope at lines " + str( self.ref.body.beginLine ) + "-" + str( self.ref.endLine )
         if self.subKind == self.DOCSTRING:
-            return "Class " + self.ref.name.getContent() + " docstring"
-        return "Class " + self.ref.name.getContent() + " scope (" + scopeCellElementToString( self.subKind ) + ")"
+            lines = self.ref.docstring.getLineRange()
+            return tooltip + "docstring at lines " + str( lines[0] ) + "-" + str( lines[1] )
+        if self.subKind == self.SIDE_COMMENT:
+            lines = self.ref.sideComment.getLineRange()
+            return tooltip + "side comment at lines " + str( lines[0] ) + "-" + str( lines[1] )
+        return tooltip + "scope (" + scopeCellElementToString( self.subKind ) + ")"
 
 
 class ForScopeCell( ScopeCellElement, QGraphicsRectItem ):
@@ -1242,6 +1248,15 @@ class ForScopeCell( ScopeCellElement, QGraphicsRectItem ):
         painter.setBrush( brush )
         self._paint( painter, option, widget )
         return
+
+    def getSelectTooltip( self ):
+        tooltip = "For loop "
+        if self.subKind == self.TOP_LEFT:
+            return tooltip + "scope at lines " + str( self.ref.body.beginLine ) + "-" + str( self.ref.endLine )
+        if self.subKind == self.SIDE_COMMENT:
+            lines = self.ref.sideComment.getLineRange()
+            return tooltip + "side comment at lines " + str( lines[0] ) + "-" + str( lines[1] )
+        return tooltip + "scope (" + scopeCellElementToString( self.subKind ) + ")"
 
 
 
@@ -1293,6 +1308,15 @@ class WhileScopeCell( ScopeCellElement, QGraphicsRectItem ):
         self._paint( painter, option, widget )
         return
 
+    def getSelectTooltip( self ):
+        tooltip = "While loop "
+        if self.subKind == self.TOP_LEFT:
+            return tooltip + "scope at lines " + str( self.ref.body.beginLine ) + "-" + str( self.ref.endLine )
+        if self.subKind == self.SIDE_COMMENT:
+            lines = self.ref.sideComment.getLineRange()
+            return tooltip + "side comment at lines " + str( lines[0] ) + "-" + str( lines[1] )
+        return tooltip + "scope (" + scopeCellElementToString( self.subKind ) + ")"
+
 
 
 class TryScopeCell( ScopeCellElement, QGraphicsRectItem ):
@@ -1339,6 +1363,16 @@ class TryScopeCell( ScopeCellElement, QGraphicsRectItem ):
         self._paint( painter, option, widget )
         return
 
+    def getSelectTooltip( self ):
+        tooltip = "Try "
+        if self.subKind == self.TOP_LEFT:
+            beginLine = self.ref.body.beginLine
+            endLine = self.ref.suite[ -1 ].endLine
+            return tooltip + "scope at lines " + str( beginLine ) + "-" + str( endLine )
+        if self.subKind == self.SIDE_COMMENT:
+            lines = self.ref.sideComment.getLineRange()
+            return tooltip + "side comment at lines " + str( lines[0] ) + "-" + str( lines[1] )
+        return tooltip + "scope (" + scopeCellElementToString( self.subKind ) + ")"
 
 
 class WithScopeCell( ScopeCellElement, QGraphicsRectItem ):
@@ -1388,6 +1422,16 @@ class WithScopeCell( ScopeCellElement, QGraphicsRectItem ):
         painter.setBrush( brush )
         self._paint( painter, option, widget )
         return
+
+    def getSelectTooltip( self ):
+        tooltip = "With "
+        if self.subKind == self.TOP_LEFT:
+            return tooltip + "scope at lines " + str( self.ref.body.beginLine ) + "-" + str( self.ref.endLine )
+        if self.subKind == self.SIDE_COMMENT:
+            lines = self.ref.sideComment.getLineRange()
+            return tooltip + "side comment at lines " + str( lines[0] ) + "-" + str( lines[1] )
+        return tooltip + "scope (" + scopeCellElementToString( self.subKind ) + ")"
+
 
 
 class DecoratorScopeCell( ScopeCellElement, QGraphicsRectItem ):
@@ -1441,6 +1485,17 @@ class DecoratorScopeCell( ScopeCellElement, QGraphicsRectItem ):
         self._paint( painter, option, widget )
         return
 
+    def getSelectTooltip( self ):
+        tooltip = "Decorator "
+        if self.subKind == self.TOP_LEFT:
+            return tooltip + "scope at lines " + str( self.ref.body.beginLine ) + "-" + str( self.ref.endLine )
+        if self.subKind == self.SIDE_COMMENT:
+            lines = self.ref.sideComment.getLineRange()
+            return tooltip + "side comment at lines " + str( lines[0] ) + "-" + str( lines[1] )
+        return tooltip + "scope (" + scopeCellElementToString( self.subKind ) + ")"
+
+
+
 
 class ElseScopeCell( ScopeCellElement, QGraphicsRectItem ):
     " Represents an else scope element "
@@ -1486,6 +1541,16 @@ class ElseScopeCell( ScopeCellElement, QGraphicsRectItem ):
         painter.setBrush( brush )
         self._paint( painter, option, widget )
         return
+
+    def getSelectTooltip( self ):
+        tooltip = "Else "
+        if self.subKind == self.TOP_LEFT:
+            return tooltip + "scope at lines " + str( self.ref.body.beginLine ) + "-" + str( self.ref.endLine )
+        if self.subKind == self.SIDE_COMMENT:
+            lines = self.ref.sideComment.getLineRange()
+            return tooltip + "side comment at lines " + str( lines[0] ) + "-" + str( lines[1] )
+        return tooltip + "scope (" + scopeCellElementToString( self.subKind ) + ")"
+
 
 
 class ExceptScopeCell( ScopeCellElement, QGraphicsRectItem ):
@@ -1539,6 +1604,16 @@ class ExceptScopeCell( ScopeCellElement, QGraphicsRectItem ):
         self._paint( painter, option, widget )
         return
 
+    def getSelectTooltip( self ):
+        tooltip = "Except "
+        if self.subKind == self.TOP_LEFT:
+            return tooltip + "scope at lines " + str( self.ref.body.beginLine ) + "-" + str( self.ref.endLine )
+        if self.subKind == self.SIDE_COMMENT:
+            lines = self.ref.sideComment.getLineRange()
+            return tooltip + "side comment at lines " + str( lines[0] ) + "-" + str( lines[1] )
+        return tooltip + "scope (" + scopeCellElementToString( self.subKind ) + ")"
+
+
 
 class FinallyScopeCell( ScopeCellElement, QGraphicsRectItem ):
     " Represents a finally scope element "
@@ -1583,6 +1658,16 @@ class FinallyScopeCell( ScopeCellElement, QGraphicsRectItem ):
         painter.setBrush( brush )
         self._paint( painter, option, widget )
         return
+
+    def getSelectTooltip( self ):
+        tooltip = "Finally "
+        if self.subKind == self.TOP_LEFT:
+            return tooltip + "scope at lines " + str( self.ref.body.beginLine ) + "-" + str( self.ref.endLine )
+        if self.subKind == self.SIDE_COMMENT:
+            lines = self.ref.sideComment.getLineRange()
+            return tooltip + "side comment at lines " + str( lines[0] ) + "-" + str( lines[1] )
+        return tooltip + "scope (" + scopeCellElementToString( self.subKind ) + ")"
+
 
 
 class BreakCell( CellElement, QGraphicsRectItem ):
@@ -1683,6 +1768,10 @@ class BreakCell( CellElement, QGraphicsRectItem ):
             self._editor.setFocus()
         return
 
+    def getSelectTooltip( self ):
+        lineRange = self.ref.body.getLineRange()
+        return "Break at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
+
 
 class ContinueCell( CellElement, QGraphicsRectItem ):
     " Represents a single continue statement "
@@ -1782,6 +1871,10 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
                                    self.ref.body.beginPos )
             self._editor.setFocus()
         return
+
+    def getSelectTooltip( self ):
+        lineRange = self.ref.body.getLineRange()
+        return "Continue at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
 
 
 class ReturnCell( CellElement, QGraphicsRectItem ):
@@ -1901,6 +1994,11 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
             self._editor.setFocus()
         return
 
+    def getSelectTooltip( self ):
+        lineRange = self.ref.body.getLineRange()
+        return "Return at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
+
+
 
 class RaiseCell( CellElement, QGraphicsRectItem ):
     " Represents a single raise statement "
@@ -2013,6 +2111,10 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
                                    self.ref.body.beginPos )
             self._editor.setFocus()
         return
+
+    def getSelectTooltip( self ):
+        lineRange = self.ref.body.getLineRange()
+        return "Raise at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
 
 
 
@@ -2145,6 +2247,9 @@ class AssertCell( CellElement, QGraphicsRectItem ):
             self._editor.setFocus()
         return
 
+    def getSelectTooltip( self ):
+        lineRange = self.ref.body.getLineRange()
+        return "Assert at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
 
 
 
@@ -2260,6 +2365,9 @@ class SysexitCell( CellElement, QGraphicsRectItem ):
             self._editor.setFocus()
         return
 
+    def getSelectTooltip( self ):
+        lineRange = self.ref.body.getLineRange()
+        return "Sys.exit() at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
 
 
 
@@ -2373,7 +2481,7 @@ class ImportCell( CellElement, QGraphicsRectItem ):
         return
 
     def getSelectTooltip( self ):
-        lineRange = self.ref.getLineRange()
+        lineRange = self.ref.body.getLineRange()
         return "Import at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
 
 
@@ -2506,6 +2614,9 @@ class IfCell( CellElement, QGraphicsRectItem ):
             self._editor.setFocus()
         return
 
+    def getSelectTooltip( self ):
+        lineRange = self.ref.body.getLineRange()
+        return "If at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
 
 
 def getCommentBoxPath( settings, baseX, baseY, width, height ):
@@ -2670,6 +2781,9 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
             self._editor.setFocus()
         return
 
+    def getSelectTooltip( self ):
+        lineRange = self.ref.getLineRange()
+        return "Independent comment at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
 
 
 class LeadingCommentCell( CellElement, QGraphicsPathItem ):
@@ -2821,6 +2935,9 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
             self._editor.setFocus()
         return
 
+    def getSelectTooltip( self ):
+        lineRange = self.ref.leadingComment.getLineRange()
+        return "Leading comment at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
 
 
 class SideCommentCell( CellElement, QGraphicsPathItem ):
@@ -2985,6 +3102,11 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
             self._editor.setFocus()
         return
 
+    def getSelectTooltip( self ):
+        lineRange = self.ref.sideComment.getLineRange()
+        return "Side comment at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
+
+
 
 class AboveCommentCell( CellElement, QGraphicsPathItem ):
     """ Represents a single leading comment which is above a certain block, namely
@@ -3119,6 +3241,10 @@ class AboveCommentCell( CellElement, QGraphicsPathItem ):
                                    self.ref.leadingComment.beginPos )
             self._editor.setFocus()
         return
+
+    def getSelectTooltip( self ):
+        lineRange = self.ref.leadingComment.getLineRange()
+        return "Leading comment at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
 
 
 

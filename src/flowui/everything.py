@@ -82,7 +82,8 @@ class C:    # Side
     Class C doc
     Class C doc line 2
     """
-    pass
+    pass    # Last class statement side 1
+            # Last class statement side 2
 
 class C1( B1,
           B2 ):
@@ -215,15 +216,108 @@ else:   # Side 1
 # Try
 #
 
+try:
+    pass
+except:
+    pass
+
+try:
+    pass
+except Exception:
+    pass
+except Exception, ex:
+    pass
+except:
+    pass
+
+# Leading 1
+try:        # Side 1
+    pass
+# Leading 2
+# Leading 2.1
+except Exception:   # Side 2
+                    # Side 2.1
+    pass
+except Exception, ex:
+    pass
+# Leading 4
+except:         # Side 4
+    pass
+
+# Leading 1
+try:        # Side 1
+            # Side 2
+    a = 10
+    b = 20  # Side 1
+            # Side 2
+# Leading 2
+# Leading 2.1
+except Exception:   # Side 2
+                    # Side 2.1
+    pass
+except Exception, ex:
+    pass
+# Leading 4
+except:         # Side 4
+    pass
+# Leading 5
+# Leadin 5.1
+else:   # Side 5
+    pass
+# Leading 6
+finally:    # Side 6
+    pass
+
 
 #
 # break/continue
 #
 
+for x in y:
+    break
+
+for x in y:
+    # Leading 1
+    # Leading 2
+    break   # Side 1
+            # Side 2
+
+while True:
+    continue
+
+while True:
+    # Leading 1
+    # Leading 2
+    continue    # Side 1
+                # Side 2
+
 
 #
 # Return
 #
+
+def f10():
+    return
+
+def f11():
+    return None
+
+def f12():
+    return 154
+
+def f13():
+    return 154, \
+           "Shakespeare"
+
+def f14():
+    # Leading
+    return 154  # Side 1
+                # Side 2
+
+def f15():
+    # Leading
+    return ( 154,               # Side 1
+             "Shakespeare" )    # Side 2
 
 
 #
@@ -231,16 +325,145 @@ else:   # Side 1
 #
 
 
+assert x != 154
+
+assert x != 154 and \
+       y != 154 and \
+       z != 154
+
+# Leading
+assert x != 154, ( "..."        # Side 1
+                   "..." )      # side 2
+                                # Side 3
+
+
+
 #
 # Raise
 #
 
+raise
+
+raise Exception( "..." )
+
+raise Exception( 1 +
+                 2 +
+                 3 )
+
+# Leading
+raise Exception( 1 +    # Side 1
+                 3 )    # Side 2
+                        # Side 3
 
 
 #
 # sys.exit()
 #
 
+sys.exit( 0 )
+
+sys.exit( 0 +
+          0 +
+          0 )
+
+# Leading
+sys.exit( 0 +   # Side 1
+          0 )   # Side 2
+                # Side 3
+
+from sys import exit
+
+exit( 0 )
+
+exit( 0 +
+      0 +
+      0 )
+
+# Leading
+exit( 0 +   # Side 1
+      0 )   # Side 2
+            # Side 3
+
+from sys import os, exit as EXIT
+
+EXIT( 0 )
+
+EXIT( 0 +
+      0 +
+      0 )
+
+# Leading
+EXIT( 0 +   # Side 1
+      0 )   # Side 2
+            # Side 3
+
+
 #
-# 
+# With
 #
+
+with open( "my.txt" ) as f:
+    pass
+
+
+with \
+    open( "my.txt" ) \
+        as \
+            f:
+    pass
+
+# leading
+with open( "my.txt" +           # Side 1
+           "your.txt" ) as f:   # Side 2
+                                # Side 3
+    pass
+
+
+
+#
+# If
+#
+
+if True:
+    pass
+
+if True:
+    pass
+else:
+    pass
+
+if True:
+    pass
+elif False:
+    pass
+else:
+    pass
+
+
+# Leading
+if True:    # Side 1
+            # Side 2
+    pass
+
+    pass
+
+    pass
+# Leading
+elif False: # Side 3
+    pass
+# Leading
+else:       # Side 4
+    pass
+
+
+if a > 456 and \
+   b < 76 or \
+   c == 99:
+    pass
+elif a < 456 and \
+     b > 76 or \
+     c == 99:
+    pass
+else:
+    pass
+
