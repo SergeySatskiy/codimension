@@ -1995,8 +1995,12 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
         return
 
     def getSelectTooltip( self ):
-        lineRange = self.ref.body.getLineRange()
-        return "Return at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
+        beginLine = self.ref.body.beginLine
+        if self.ref.value is not None:
+            endLine = self.ref.value.endLine
+        else:
+            endLine = self.ref.body.endLine
+        return "Return at lines " + str( beginLine ) + "-" + str( endLine )
 
 
 
@@ -2113,8 +2117,12 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
         return
 
     def getSelectTooltip( self ):
-        lineRange = self.ref.body.getLineRange()
-        return "Raise at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
+        beginLine = self.ref.body.beginLine
+        if self.ref.value is not None:
+            endLine = self.ref.value.endLine
+        else:
+            endLine = self.ref.body.endLine
+        return "Raise at lines " + str( beginLine ) + "-" + str( endLine )
 
 
 
@@ -2248,8 +2256,14 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         return
 
     def getSelectTooltip( self ):
-        lineRange = self.ref.body.getLineRange()
-        return "Assert at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
+        beginLine = self.ref.body.beginLine
+        if self.ref.message is not None:
+            endLine = self.ref.message.endLine
+        elif self.ref.test is not None:
+            endLine = self.ref.test.endLine
+        else:
+            endLine = self.ref.body.endLine
+        return "Assert at lines " + str( beginLine ) + "-" + str( endLine )
 
 
 
