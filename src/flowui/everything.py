@@ -22,6 +22,16 @@ a = 10      # Side
 b = 20      # Side
             # Side last
 
+c = """
+    ...
+    """ + \
+    "123456"    # Side
+                # Another side
+
+'''
+...
+'''
+
 
 #
 # Imports
@@ -69,6 +79,10 @@ def f3( x,      # Side 1
     " f3 doc "
     pass
 
+def f4( a = """
+            ...
+            """ ):
+    pass
 
 #
 # Classes
@@ -319,6 +333,10 @@ def f15():
     return ( 154,               # Side 1
              "Shakespeare" )    # Side 2
 
+def f16():
+    return """
+           ...
+           """
 
 #
 # Assert
@@ -336,7 +354,10 @@ assert x != 154, ( "..."        # Side 1
                    "..." )      # side 2
                                 # Side 3
 
-
+assert """ one """, \
+       """
+       two
+       """
 
 #
 # Raise
@@ -355,6 +376,9 @@ raise Exception( 1 +    # Side 1
                  3 )    # Side 2
                         # Side 3
 
+raise """
+      ...
+      """
 
 #
 # sys.exit()

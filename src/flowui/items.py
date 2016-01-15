@@ -353,6 +353,9 @@ class CellElement:
             The default implementation is to ignore it """
         return
 
+    def scopedItem( self ):
+        return False
+
 
 class ScopeCellElement( CellElement ):
 
@@ -718,6 +721,9 @@ class ScopeCellElement( CellElement ):
         " Provides the editor counterpart "
         self._editor = editor
 
+    def scopedItem( self ):
+        return True
+
     def mouseDoubleClickEvent( self, event ):
         " Jump to the appropriate line in the text editor "
         if self._editor is None:
@@ -743,52 +749,15 @@ class ScopeCellElement( CellElement ):
             return
         return
 
-    def mousePressEvent( self, event ):
-        button = event.button()
-        if button == Qt.LeftButton:
-#            if self.subKind not in [ self.SIDE_COMMENT, self.DOCSTRING, self.DECLARATION ]:
-#                event.accept()
-#                return
-            if self.subKind not in [ self.SIDE_COMMENT, self.DOCSTRING, self.DECLARATION ]:
-                self.scene.clearSelection()
-                event.accept()
-                return
-            if self.subKind == self.DECLARATION:
-                # Need to remove the selection from self and set the scope
-                # selected. The scope is at (x-1, y-1) location
-#                self.setSelected( False )
-                row = self.addr[ 1 ] - 1
-                column = self.addr[ 0 ] - 1
-#                self.canvas.cells[ row ][ column ].setSelected( True )
-                QGraphicsItem.mousePressEvent( self, event )
-#                event.accept()
-                self.setSelected( False )
-                self.canvas.cells[ row ][ column ].setSelected( True )
-                return
-        QGraphicsItem.mousePressEvent( self, event )
-        return
+    def getTopLeftItem( self ):
+        if self.subKind == self.DECLARATION:
+            # The scope is at (x-1, y-1) location
+            column = self.addr[ 0 ] - 1
+            row = self.addr[ 1 ] - 1
+            return self.canvas.cells[ row ][ column ]
+        raise Exception( "Logical error: the getTopLeftItem() is designed "
+                         "to be called for the DECLARATION only" )
 
-    def mouseReleaseEvent( self, event ):
-#        button = event.button()
-#        if button == Qt.LeftButton:
-#            if self.subKind not in [ self.SIDE_COMMENT, self.DOCSTRING, self.DECLARATION ]:
-#                self.scene.clearSelection()
-#                event.accept()
-#                return
-#            if self.subKind == self.DECLARATION:
-#                # Need to remove the selection from self and set the scope
-#                # selected. The scope is at (x-1, y-1) location
-#                self.setSelected( False )
-#                row = self.addr[ 1 ] - 1
-#                column = self.addr[ 0 ] - 1
-#                self.canvas.cells[ row ][ column ].setSelected( True )
-#                event.accept()
-#                return
-        if event.modifiers() == Qt.NoModifier and self.subKind == self.DECLARATION:
-            event.accept()
-        else:
-            QGraphicsItem.mouseReleaseEvent( self, event )
-        return
 
 __kindToString = {
     CellElement.UNKNOWN:                "UNKNOWN",

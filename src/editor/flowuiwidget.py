@@ -54,14 +54,6 @@ class CFGraphicsScene( QGraphicsScene ):
         self.selectionChanged.connect( self.selChanged )
         return
 
-    def mousePressEvent( self, event ):
-        """ Reimplemented to avoid resetting selection on RMB click """
-        if event.button() != Qt.LeftButton:
-            event.accept()
-            return
-        QGraphicsScene.mousePressEvent( self, event )
-        return
-
     def keyPressEvent( self, event ):
         """ Handles the key press event """
         key = event.key()
@@ -71,6 +63,104 @@ class CFGraphicsScene( QGraphicsScene ):
         else:
             QGraphicsScene.keyPressEvent( self, event )
         return
+
+    def __getLogicalItem( self, item ):
+        if item is None:
+            return None
+        if not item.scopedItem():
+            return item
+        # Here: it is a scope item. Need to map/suppress in some cases
+        if item.subKind in [ ScopeCellElement.DECLARATION ]:
+            # Need to map to the top left item because the out
+            return item.getTopLeftItem()
+        if item.subKind in [ ScopeCellElement.SIDE_COMMENT,
+                             ScopeCellElement.DOCSTRING ]:
+            # No mapping
+            return item
+        # All the other scope items
+        #   ScopeCellElement.TOP_LEFT, ScopeCellElement.LEFT,
+        #   ScopeCellElement.BOTTOM_LEFT, ScopeCellElement.TOP,
+        #   ScopeCellElement.BOTTOM
+        # are to be ignored
+        return None
+
+    def mousePressEvent( self, event ):
+        """ The default mouse behavior of the QT library is sometimes
+            inconsistent. For example, selecting of the items is done on
+            mousePressEvent however adding items is done on mouseReleaseEvent.
+            The second thing is that the QT library does not support
+            hierarchical relationships between the items.
+            The third thig is the selection proxy which is not supported either.
+            So the whole mouse[Press,Release]Event members are overridden """
+        item = self.itemAt( event.scenePos() )
+        logicalItem = self.__getLogicalItem( item )
+
+        button = event.button()
+        if button not in [ Qt.LeftButton, Qt.RightButton ]:
+            self.clearSelection()
+            event.accept()
+            return
+
+        if button == Qt.RightButton:
+            if logicalItem is None:
+                # Not a selectable item or out of the items
+                self.clearSelection()
+                event.accept()
+                return
+            if logicalItem.isSelected():
+                print "Show a context menu for " + str( type( logicalItem ) )
+                event.accept()
+                return
+            # Here: pressed on not selected item
+            self.clearSelection()
+            logicalItem.setSelected( True )
+            print "Show a context menu for " + str( type( logicalItem ) )
+            event.accept()
+            return
+
+
+        # Here: this is LMB
+        if logicalItem is None:
+            self.clearSelection()
+            event.accept()
+            return
+
+        modifiers = event.modifiers()
+        if modifiers == Qt.NoModifier:
+            self.clearSelection()
+            logicalItem.setSelected( True )
+            event.accept()
+            return
+
+        if modifiers == Qt.ControlModifier:
+            if logicalItem.isSelected():
+                logicalItem.setSelected( False )
+                event.accept()
+                return
+            # Item is not selected and should be added or ignored
+            logicalItem.setSelected( True )
+            event.accept()
+            return
+
+        if modifiers == Qt.AltModifier:
+            self.clearSelection()
+            logicalItem.setSelected( True )
+            # Here: add comments
+            event.accept()
+            return
+
+        if modifiers == Qt.ShiftModifier:
+            pass
+
+        event.accept()
+
+#        QGraphicsScene.mousePressEvent( self, event )
+        return
+
+    def mouseReleaseEvent( self, event ):
+        event.accept()
+        return
+
 
     def selChanged( self ):
         items = self.selectedItems()
