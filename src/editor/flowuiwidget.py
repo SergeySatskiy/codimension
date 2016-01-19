@@ -168,8 +168,21 @@ class CFGraphicsScene( QGraphicsScene ):
         event.accept()
         return
 
-    def isNestedInSelected( self, item ):
+    def isNestedInSelected( self, itemToSelect ):
         " Tells if the item is already included into some other selected "
+        toSelectBegin, toSelectEnd = self.__getItemVisualBeginEnd( itemToSelect )
+
+        items = self.selectedItems()
+        for item in items:
+            if not item.scopedItem():
+                continue
+            if item.subKind != ScopeCellElement.TOP_LEFT:
+                continue
+
+            itemBegin, itemEnd = self.__getItemVisualBeginEnd( item )
+            if toSelectBegin >= itemBegin and toSelectEnd <= itemEnd:
+                return True
+
         return False
 
     def deselectNested( self, itemToSelect ):
@@ -181,29 +194,56 @@ class CFGraphicsScene( QGraphicsScene ):
             # Scope docstrings and side comments cannot include anything
             return
 
-        if itemToSelect.kind == CellElement.FILE_SCOPE:
-            begin = itemToSelect.ref.begin
-            end = itemToSelect.ref.end
-        else:
-            begin = itemToSelect.ref.body.begin
-            end = itemToSelect.ref.end
-
+        toSelectBegin, toSelectEnd = self.__getItemVisualBeginEnd( itemToSelect )
         items = self.selectedItems()
         for item in items:
-            if item.scopedItem():
-                if item.subKind == ScopeCellElement.SIDE_COMMENT:
-                    if item.ref.sideComment.begin >= begin and item.ref.sideComment.end <= end:
-                        item.setSelected( False )
-                elif item.subKind == ScopeCellElement.DOCSTRING:
-                    if item.ref.docstring.begin >= begin and item.ref.docstring.end <= end:
-                        item.setSelected( False )
-                else:
-                    if item.ref.begin >= begin and item.ref.end <= end:
-                        item.setSelected( False )
-            # Regular item condition
-            elif item.ref.begin >= begin and item.ref.end <= end:
+            itemBegin, itemEnd = self.__getItemVisualBeginEnd( item )
+            if itemBegin >= toSelectBegin and itemEnd <= toSelectEnd:
                 item.setSelected( False )
         return
+
+    def __getItemVisualBeginEnd( self, item ):
+        if item.scopedItem():
+            if item.subKind == ScopeCellElement.SIDE_COMMENT:
+                return item.ref.sideComment.begin, item.ref.sideComment.end
+            if item.subKind == ScopeCellElement.DOCSTRING:
+                return item.ref.docstring.begin, item.ref.docstring.end
+            # File scope differs from the other scopes
+            if item.kind == CellElement.FILE_SCOPE:
+                return item.ref.begin, item.ref.end
+            return item.ref.body.begin, item.ref.end
+        # Here: not a scope item.
+        if item.kind in [ CellElement.ABOVE_COMMENT,
+                          CellElement.LEADING_COMMENT ]:
+            return item.ref.leadingComment.begin, item.ref.leadingComment.end
+        if item.kind == CellElement.SIDE_COMMENT:
+            return item.ref.sideComment.begin, item.ref.sideComment.end
+        if item.kind == CellElement.INDEPENDENT_COMMENT:
+            return item.ref.begin, item.ref.end
+        if item.kind == CellElement.ASSERT:
+            if item.ref.message is not None:
+                end = item.ref.message.end
+            elif item.ref.test is not None:
+                end = item.ref.test.end
+            else:
+                end = item.ref.body.end
+            return item.ref.body.begin, end
+        if item.kind == CellElement.RAISE:
+            if item.ref.value is not None:
+                end = item.ref.value.end
+            else:
+                end = item.ref.body.end
+            return item.ref.body.begin, end
+        if item.kind == CellElement.RETURN:
+            if item.ref.value is not None:
+                end = item.ref.value.end
+            else:
+                end = item.ref.body.end
+            return item.ref.body.begin, end
+
+        # if, import, sys.exit(), continue, break, code block
+        return item.ref.body.begin, item.ref.body.end
+
 
     def selChanged( self ):
         items = self.selectedItems()
