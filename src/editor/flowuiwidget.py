@@ -138,6 +138,13 @@ class CFGraphicsScene( QGraphicsScene ):
                 event.accept()
                 return
             # Item is not selected and should be added or ignored
+            if self.isNestedInSelected( logicalItem ):
+                # Ignore the selection request
+                event.accept()
+                return
+
+            self.deselectNested( logicalItem )
+
             logicalItem.setSelected( True )
             event.accept()
             return
@@ -161,6 +168,42 @@ class CFGraphicsScene( QGraphicsScene ):
         event.accept()
         return
 
+    def isNestedInSelected( self, item ):
+        " Tells if the item is already included into some other selected "
+        return False
+
+    def deselectNested( self, itemToSelect ):
+        " Deselects all the nested items if needed "
+        if not itemToSelect.scopedItem():
+            # The only scope items require deselection of the nested items
+            return
+        elif itemToSelect.subKind != ScopeCellElement.TOP_LEFT:
+            # Scope docstrings and side comments cannot include anything
+            return
+
+        if itemToSelect.kind == CellElement.FILE_SCOPE:
+            begin = itemToSelect.ref.begin
+            end = itemToSelect.ref.end
+        else:
+            begin = itemToSelect.ref.body.begin
+            end = itemToSelect.ref.end
+
+        items = self.selectedItems()
+        for item in items:
+            if item.scopedItem():
+                if item.subKind == ScopeCellElement.SIDE_COMMENT:
+                    if item.ref.sideComment.begin >= begin and item.ref.sideComment.end <= end:
+                        item.setSelected( False )
+                elif item.subKind == ScopeCellElement.DOCSTRING:
+                    if item.ref.docstring.begin >= begin and item.ref.docstring.end <= end:
+                        item.setSelected( False )
+                else:
+                    if item.ref.begin >= begin and item.ref.end <= end:
+                        item.setSelected( False )
+            # Regular item condition
+            elif item.ref.begin >= begin and item.ref.end <= end:
+                item.setSelected( False )
+        return
 
     def selChanged( self ):
         items = self.selectedItems()
