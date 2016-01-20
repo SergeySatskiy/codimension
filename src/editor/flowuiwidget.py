@@ -149,6 +149,9 @@ class CFGraphicsScene( QGraphicsScene ):
             event.accept()
             return
 
+        # The alt modifier works for the whole app window on
+        # Ubuntu, so it cannot really be used...
+
         if modifiers == Qt.AltModifier:
             self.clearSelection()
             logicalItem.setSelected( True )
@@ -157,7 +160,15 @@ class CFGraphicsScene( QGraphicsScene ):
             return
 
         if modifiers == Qt.ShiftModifier:
-            pass
+            self.clearSelection()
+
+            # Here: add comments
+            if not logicalItem.scopedItem():
+                for item in self.findItemsForRef( logicalItem.ref ):
+                    item.setSelected( True )
+
+            event.accept()
+            return
 
         event.accept()
 
@@ -243,6 +254,20 @@ class CFGraphicsScene( QGraphicsScene ):
 
         # if, import, sys.exit(), continue, break, code block
         return item.ref.body.begin, item.ref.body.end
+
+    def findItemsForRef( self, ref ):
+        " Provides graphics items for the given ref "
+        result = []
+        for item in self.items():
+            if hasattr( item, "ref" ):
+                if item.ref is ref:
+                    result.append( item )
+        return result
+#                if item.kind in [ CellElement.SIDE_COMMENT,
+#                                  CellElement.ABOVE_COMMENT,
+#                                  CellElement.LEADING_COMMENT,
+#                                  CellElement.INDEPENDENT_COMMENT ]:
+#                    if comment.
 
 
     def selChanged( self ):
