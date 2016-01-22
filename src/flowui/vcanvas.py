@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
 """
 Virtual canvas to represent a control flow
@@ -33,16 +31,15 @@ does not affect all the other sections.
 
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QPen, QColor
-from items import ( kindToString,
-                    CellElement, VacantCell, CodeBlockCell, ScopeCellElement,
-                    FileScopeCell, FunctionScopeCell, ClassScopeCell,
-                    ForScopeCell, WhileScopeCell, TryScopeCell,
-                    WithScopeCell, DecoratorScopeCell, ElseScopeCell,
-                    ExceptScopeCell, FinallyScopeCell,
+from items import ( CellElement, VacantCell, CodeBlockCell,
                     BreakCell, ContinueCell, ReturnCell, RaiseCell,
                     AssertCell, SysexitCell, ImportCell, IndependentCommentCell,
                     LeadingCommentCell, SideCommentCell, ConnectorCell, IfCell,
                     VSpacerCell, HSpacerCell, AboveCommentCell )
+from scopeitems import ( ScopeCellElement, FileScopeCell, FunctionScopeCell,
+                         ClassScopeCell, ForScopeCell, WhileScopeCell, TryScopeCell,
+                         WithScopeCell, DecoratorScopeCell, ElseScopeCell,
+                         ExceptScopeCell, FinallyScopeCell )
 from cdmcf import ( CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
                     BREAK_FRAGMENT, CONTINUE_FRAGMENT, RETURN_FRAGMENT,
                     RAISE_FRAGMENT, ASSERT_FRAGMENT, SYSEXIT_FRAGMENT,

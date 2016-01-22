@@ -32,7 +32,8 @@ from PyQt4.QtGui import ( QToolBar, QWidget, QGraphicsView, QPainter,
                           QMenu, QToolButton, QImage, QMessageBox, QPrinter )
 from PyQt4.QtSvg import QSvgGenerator
 from cdmcf import getControlFlowFromMemory
-from flowui.items import CellElement, ScopeCellElement
+from flowui.items import CellElement
+from flowui.scopeitems import ScopeCellElement
 from flowui.vcanvas import VirtualCanvas
 from flowui.cflowsettings import getDefaultCflowSettings
 from utils.pixmapcache import getPixmap, getIcon
