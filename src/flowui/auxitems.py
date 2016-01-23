@@ -32,10 +32,11 @@ import os.path
 class SVGItem( QGraphicsSvgItem ):
     " Wrapper for an SVG items on the control flow "
 
-    def __init__( self, fName ):
+    def __init__( self, fName, ref ):
         self.__fName = fName
         QGraphicsSvgItem.__init__( self, self.__getPath( fName ) )
         self.__scale = 0
+        self.ref = ref
         return
 
     def __getPath( self, fName ):
@@ -76,6 +77,12 @@ class SVGItem( QGraphicsSvgItem ):
 
     def getSelectTooltip( self ):
         return "SVG item for " + self.__fName
+
+    def isProxyItem( self ):
+        return True
+
+    def getProxiedItem( self ):
+        return self.ref
 
 
 class BadgeItem( QGraphicsRectItem ):
@@ -159,6 +166,12 @@ class BadgeItem( QGraphicsRectItem ):
     def getSelectTooltip( self ):
         return "Badge item '" + self.__text + "'"
 
+    def isProxyItem( self ):
+        return True
+
+    def getProxiedItem( self ):
+        return self.ref
+
 
 class Connector( QGraphicsPathItem ):
 
@@ -197,6 +210,12 @@ class Connector( QGraphicsPathItem ):
     def getSelectTooltip( self ):
         return "Connector item"
 
+    def isProxyItem( self ):
+        return True
+
+    def getProxiedItem( self ):
+        return None
+
 
 class Text( QGraphicsSimpleTextItem ):
 
@@ -221,5 +240,11 @@ class Text( QGraphicsSimpleTextItem ):
 
     def getSelectTooltip( self ):
         return "Text item"
+
+    def isProxyItem( self ):
+        return True
+
+    def getProxiedItem( self ):
+        return None
 
 

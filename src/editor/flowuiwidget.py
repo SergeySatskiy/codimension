@@ -68,6 +68,9 @@ class CFGraphicsScene( QGraphicsScene ):
     def __getLogicalItem( self, item ):
         if item is None:
             return None
+        if item.isProxyItem():
+            # This is for an SVG, a badge, a text and a connector
+            return item.getProxiedItem()
         if not item.scopedItem():
             return item
         # Here: it is a scope item. Need to map/suppress in some cases

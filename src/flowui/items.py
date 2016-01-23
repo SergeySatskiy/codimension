@@ -28,7 +28,7 @@ from PyQt4.QtGui import ( QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
                           QStyleOptionGraphicsItem, QStyle, QFont,
                           QGraphicsSimpleTextItem )
 from PyQt4.QtSvg import QGraphicsSvgItem
-from auxitems import SVGItem, BadgeItem, Connector, Text
+from auxitems import SVGItem, Connector, Text
 
 
 
@@ -160,6 +160,12 @@ class CellElement:
 
     def scopedItem( self ):
         return False
+
+    def isProxyItem( self ):
+        return False
+
+    def getProxiedItem( self ):
+        return None
 
 
 
@@ -594,7 +600,7 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
         self.__arrowWidth = 16
         self.connector = None
 
-        self.arrowItem = SVGItem( "return.svgz" )
+        self.arrowItem = SVGItem( "return.svgz", self )
         self.arrowItem.setWidth( self.__arrowWidth )
         self.arrowItem.setToolTip( "return" )
 
@@ -720,7 +726,7 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
         self.__textRect = None
         self.__arrowWidth = 16
 
-        self.arrowItem = SVGItem( "raise.svg" )
+        self.arrowItem = SVGItem( "raise.svg", self )
         self.arrowItem.setWidth( self.__arrowWidth )
         self.arrowItem.setToolTip( "raise" )
         self.connector = None
@@ -845,7 +851,7 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         self.__arrowWidth = 16
         self.connector = None
 
-        self.arrowItem = SVGItem( "assert.svg" )
+        self.arrowItem = SVGItem( "assert.svg", self )
         self.arrowItem.setWidth( self.__arrowWidth )
         self.arrowItem.setToolTip( "assert" )
 
@@ -984,7 +990,7 @@ class SysexitCell( CellElement, QGraphicsRectItem ):
         self.__xWidth = 16
         self.connector = None
 
-        self.xItem = SVGItem( "sysexit.svgz" )
+        self.xItem = SVGItem( "sysexit.svgz", self )
         self.xItem.setWidth( self.__xWidth )
         self.xItem.setToolTip( "sys.exit()" )
 
@@ -1100,7 +1106,7 @@ class ImportCell( CellElement, QGraphicsRectItem ):
         self.__text = None
         self.__arrowWidth = 16
         self.__textRect = None
-        self.arrowItem = SVGItem( "import.svgz" )
+        self.arrowItem = SVGItem( "import.svgz", self )
         self.arrowItem.setWidth( self.__arrowWidth )
         self.arrowItem.setToolTip( "import" )
         self.connector = None
