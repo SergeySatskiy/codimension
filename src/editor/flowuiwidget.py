@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
 " Control flow UI widget "
 
@@ -41,16 +39,20 @@ from utils.globals import GlobalData
 from utils.fileutils import Python3FileType, PythonFileType
 from utils.settings import Settings
 from ui.fitlabel import FitLabel
+from flowuicontextmenus import CFSceneContextMenuMixin
 
 
 IDLE_TIMEOUT = 1500
 
 
-class CFGraphicsScene( QGraphicsScene ):
+
+
+class CFGraphicsScene( QGraphicsScene, CFSceneContextMenuMixin ):
     """ Reimplemented graphics scene """
 
     def __init__( self, navBar, parent = None ):
-        super( CFGraphicsScene, self ).__init__( parent )
+        QGraphicsScene.__init__( self, parent )
+        CFSceneContextMenuMixin.__init__( self )
         self.__navBar = navBar
         self.selectionChanged.connect( self.selChanged )
         return
@@ -111,14 +113,16 @@ class CFGraphicsScene( QGraphicsScene ):
                 self.clearSelection()
                 event.accept()
                 return
-            if logicalItem.isSelected():
+
+            if not logicalItem.isSelected():
+                self.clearSelection()
+                logicalItem.setSelected( True )
+
+            if len( self.selectedItems() ) == 1:
                 print "Show a context menu for " + str( type( logicalItem ) )
-                event.accept()
-                return
-            # Here: pressed on not selected item
-            self.clearSelection()
-            logicalItem.setSelected( True )
-            print "Show a context menu for " + str( type( logicalItem ) )
+                if type( logicalItem ) in self.menus:
+                    menu = self.menus[ type( logicalItem ) ]
+                    menu.popup( event.screenPos() )
             event.accept()
             return
 
@@ -288,6 +292,7 @@ class CFGraphicsScene( QGraphicsScene ):
         else:
             self.__navBar.setSelectionLabel( 0, None )
         return
+
 
 
 class CFGraphicsView( QGraphicsView ):
