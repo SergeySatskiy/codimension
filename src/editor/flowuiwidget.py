@@ -118,11 +118,8 @@ class CFGraphicsScene( QGraphicsScene, CFSceneContextMenuMixin ):
                 self.clearSelection()
                 logicalItem.setSelected( True )
 
-            if len( self.selectedItems() ) == 1:
-                print "Show a context menu for " + str( type( logicalItem ) )
-                if type( logicalItem ) in self.menus:
-                    menu = self.menus[ type( logicalItem ) ]
-                    menu.popup( event.screenPos() )
+            # Bring up a context menu
+            self.onContextMenu( event )
             event.accept()
             return
 
