@@ -33,11 +33,18 @@ from auxitems import SVGItem, Connector, Text
 
 
 def getDarkerColor( color ):
+    " Creates a darker version of the color "
     r = color.red() - 40
     g = color.green() - 40
     b = color.blue() - 40
     return QColor( max( r, 0 ), max( g, 0 ), max( b, 0 ), color.alpha() )
 
+
+def distance( absPos, begin, end ):
+    " Provides a distance between the absPos and an item "
+    if absPos >= begin and absPos <= end:
+        return 0
+    return min( abs( absPos - begin ), abs( absPos - end ) )
 
 
 class CellElement:
@@ -167,6 +174,10 @@ class CellElement:
     def getProxiedItem( self ):
         return None
 
+    def getDistance( self, absPos ):
+        """ Default implementation.
+            Provides a distance between the absPos and the item """
+        return distance( absPos, self.ref.body.begin, self.ref.body.end )
 
 
 __kindToString = {
@@ -484,6 +495,7 @@ class BreakCell( CellElement, QGraphicsRectItem ):
         return "Break at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
 
 
+
 class ContinueCell( CellElement, QGraphicsRectItem ):
     " Represents a single continue statement "
 
@@ -713,6 +725,12 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
             endLine = self.ref.body.endLine
         return "Return at lines " + str( beginLine ) + "-" + str( endLine )
 
+    def getDistance( self, absPos ):
+        """ Provides a distance between the absPos and the item """
+        if self.ref.value is not None:
+            return distance( absPos, self.ref.body.begin, self.ref.value.end )
+        return distance( absPos, self.ref.body.begin, self.ref.body.end )
+
 
 
 class RaiseCell( CellElement, QGraphicsRectItem ):
@@ -835,6 +853,11 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
             endLine = self.ref.body.endLine
         return "Raise at lines " + str( beginLine ) + "-" + str( endLine )
 
+    def getDistance( self, absPos ):
+        """ Provides a distance between the absPos and the item """
+        if self.ref.value is not None:
+            return distance( absPos, self.ref.body.begin, self.ref.value.end )
+        return distance( absPos, self.ref.body.begin, self.ref.body.end )
 
 
 
@@ -975,6 +998,14 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         else:
             endLine = self.ref.body.endLine
         return "Assert at lines " + str( beginLine ) + "-" + str( endLine )
+
+    def getDistance( self, absPos ):
+        """ Provides a distance between the absPos and the item """
+        if self.ref.message is not None:
+            return distance( absPos, self.ref.body.begin, self.ref.message.end )
+        if self.ref.test is not None:
+            return distance( absPos, self.ref.body.begin, self.ref.test.end )
+        return distance( absPos, self.ref.body.begin, self.ref.body.end )
 
 
 
@@ -1510,6 +1541,11 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         lineRange = self.ref.getLineRange()
         return "Independent comment at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
 
+    def getDistance( self, absPos ):
+        """ Provides a distance between the absPos and the item """
+        return distance( absPos, self.ref.begin, self.ref.end )
+
+
 
 class LeadingCommentCell( CellElement, QGraphicsPathItem ):
     " Represents a single leading comment "
@@ -1663,6 +1699,12 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
     def getSelectTooltip( self ):
         lineRange = self.ref.leadingComment.getLineRange()
         return "Leading comment at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
+
+    def getDistance( self, absPos ):
+        """ Provides a distance between the absPos and the item """
+        return distance( absPos, self.ref.leadingComment.begin,
+                                 self.ref.leadingComment.end )
+
 
 
 class SideCommentCell( CellElement, QGraphicsPathItem ):
@@ -1831,6 +1873,16 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
         lineRange = self.ref.sideComment.getLineRange()
         return "Side comment at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
 
+    def getDistance( self, absPos ):
+        """ Provides a distance between the absPos and the item """
+        retval = maxint
+        for part in self.ref.sideComment.parts:
+            dist = distance( absPos, part.begin, part.end )
+            if dis == 0:
+                return 0
+            retval = min( retval, dis )
+        return retval
+
 
 
 class AboveCommentCell( CellElement, QGraphicsPathItem ):
@@ -1971,6 +2023,11 @@ class AboveCommentCell( CellElement, QGraphicsPathItem ):
         lineRange = self.ref.leadingComment.getLineRange()
         return "Leading comment at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
 
+    def getDistance( self, absPos ):
+        """ Provides a distance between the absPos and the item """
+        return distance( absPos, self.ref.leadingComment.begin,
+                                 self.ref.leadingComment.end )
+
 
 
 class ConnectorCell( CellElement, QGraphicsPathItem ):
@@ -2091,4 +2148,10 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
         painter.setPen( pen )
         QGraphicsPathItem.paint( self, painter, option, widget )
         return
+
+    def isProxyItem( self ):
+        return True
+
+    def getProxiedItem( self ):
+        return None
 
