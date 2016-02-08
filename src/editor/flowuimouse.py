@@ -238,23 +238,21 @@ class CFSceneMouseMixin:
 
 
 
-    def getItemAtLinePos( self, line, pos ):
+    def getItemAtAbsolutePosition( self, pos ):
         """ Provides a logical item which is the closest
             to the specified line:pos as well as the flag if the position
             is covered by the item """
 
+        return None, -1
+
         # Find the item which the line belongs to
         candidate = None
         candidateRange = None
-        items = self.view.items()
-        for item in items:
-            if not hasattr( item, "kind" ):
-                continue
-            if item.kind in [ CellElement.CONNECTOR ]:
+        for item in self.items():
+            if item.isProxyItem():
                 continue
 
-            if hasattr( item, "subKind" ):
-                # That's a scope element
+            if item.scopedItem():
                 if item.subKind == ScopeCellElement.DECLARATION:
                     if item.kind == CellElement.FILE_SCOPE:
                         # There might be encoding and/or bang line

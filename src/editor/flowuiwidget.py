@@ -431,6 +431,14 @@ class FlowUIWidget( QWidget ):
         self.__navBar.setPath( "" )
         return
 
+    def highlightAtAbsPos( self, absPos ):
+        " Scrolls the view to the item closest to absPos and selects it "
+        item, distance = self.scene.getItemAtAbsolutePosition( absPos )
+        if item:
+            item.setSelected( True )
+            self.setFocus()
+        return
+
     def scrollToLine( self, line ):
         " Scrolls the view to make the primitive which occupies the line visible "
 

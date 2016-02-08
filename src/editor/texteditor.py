@@ -2051,29 +2051,7 @@ class TextEditor( ScintillaWrapper ):
             # It is not a python file at all
             return True
 
-        line, pos = self.getCursorPosition()
-
-        # Now, let's detect the non-empty line number to search it on the
-        # control flow diagram. The search is first done ahead.
-
-        candidate = line
-        lastLine = self.lines() - 1
-        while candidate <= lastLine:
-            if self.text( candidate ).strip() not in [ "", "else:" ]:
-                self.cflowSyncRequested.emit( int( candidate ) + 1 )
-                return True
-            candidate += 1
-
-        # Here: not found ahead, try to find backward
-        candidate = line -1
-        while candidate >= 0:
-            if self.text( candidate ).strip() not in [ "", "else:" ]:
-                self.cflowSyncRequested.emit( int( candidate ) + 1 )
-                return True
-            candidate -= 1
-
-        # Here: not found at all. That means the file is empty or it has only
-        # the empty lines. Thus there is nothing to do.
+        self.cflowSyncRequested.emit( self.getAbsCursorPosition() )
         return True
 
     def _updateDwellingTime( self ):
@@ -3288,9 +3266,9 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Provides a reference to the control flow widget "
         return self.__flowUI
 
-    def cflowSyncRequested( self, line ):
-        " Need to sync with the graphics scene (line is 1 based) "
-        self.__flowUI.scrollToLine( line )
+    def cflowSyncRequested( self, absPos ):
+        " Highlight the item closest to the absPos "
+        self.__flowUI.highlightAtAbsPos( absPos )
         return
 
 

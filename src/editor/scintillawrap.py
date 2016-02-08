@@ -500,6 +500,11 @@ class ScintillaWrapper( QsciScintilla ):
             pos = self.positionAfter( pos )
         return pos
 
+    def getAbsCursorPosition( self ):
+        " Provides the absolute current cursor position "
+        line, pos = self.getCursorPosition()
+        return self.positionFromLineIndex( line, pos )
+
     def lineIndexFromPosition( self, pos ):
         """ Converts an absolute position to line and index """
         lin = self.SendScintilla( self.SCI_LINEFROMPOSITION, pos )
