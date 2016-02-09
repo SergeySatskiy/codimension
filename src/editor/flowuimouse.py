@@ -20,6 +20,7 @@
 
 " Control flow UI widget: handling mouse events "
 
+from sys import maxint
 from flowui.scopeitems import ScopeCellElement
 from flowui.items import CellElement
 from PyQt4.QtCore import Qt
@@ -238,108 +239,24 @@ class CFSceneMouseMixin:
 
 
 
-    def getItemAtAbsolutePosition( self, pos ):
+    def getNearestItem( self, absPos, line, pos ):
         """ Provides a logical item which is the closest
-            to the specified line:pos as well as the flag if the position
-            is covered by the item """
-
-        return None, -1
-
-        # Find the item which the line belongs to
+            to the specified absPos, line:pos as well as the distance to the
+            item (0 - within the item)
+            line and pos are 1-based """
         candidate = None
-        candidateRange = None
+        distance = maxint
+
         for item in self.items():
             if item.isProxyItem():
                 continue
 
-            if item.scopedItem():
-                if item.subKind == ScopeCellElement.DECLARATION:
-                    if item.kind == CellElement.FILE_SCOPE:
-                        # There might be encoding and/or bang line
-                        if item.ref.encodingLine:
-                            lineRange = item.ref.encodingLine.getLineRange()
-                            if line >= lineRange[ 0 ] and line <= lineRange[ 1 ]:
-                                if candidate:
-                                    if candidateRange < lineRange[ 1 ] - lineRange[ 0 ]:
-                                        continue
-                                candidate = item
-                                candidateRange = lineRange[ 1 ] - lineRange[ 0 ]
-                        if item.ref.bangLine:
-                            lineRange = item.ref.bangLine.getLineRange()
-                            if line >= lineRange[ 0 ] and line <= lineRange[ 1 ]:
-                                if candidate:
-                                    if candidateRange < lineRange[ 1 ] - lineRange[ 0 ]:
-                                        continue
-                                candidate = item
-                                candidateRange = lineRange[ 1 ] - lineRange[ 0 ]
-                    else:
-                        # all the other scopes are the same
-                        lineRange = item.ref.body.getLineRange()
-                        if line >= lineRange[ 0 ] and line <= lineRange[ 1 ]:
-                            if candidate:
-                                if candidateRange < lineRange[ 1 ] - lineRange[ 0 ]:
-                                    continue
-                            candidate = item
-                            candidateRange = lineRange[ 1 ] - lineRange[ 0 ]
-                    continue
-                if item.subKind == ScopeCellElement.SIDE_COMMENT:
-                    lineRange = item.ref.sideComment.getLineRange()
-                    if line >= lineRange[ 0 ] and line <= lineRange[ 1 ]:
-                        if candidate:
-                            if candidateRange < lineRange[ 1 ] - lineRange[ 0 ]:
-                                continue
-                        candidate = item
-                        candidateRange = lineRange[ 1 ] - lineRange[ 0 ]
-                    continue
-                if item.subKind == ScopeCellElement.DOCSTRING:
-                    lineRange = item.ref.docstring.getLineRange()
-                    if line >= lineRange[ 0 ] and line <= lineRange[ 1 ]:
-                        if candidate:
-                            if candidateRange < lineRange[ 1 ] - lineRange[ 0 ]:
-                                continue
-                        candidate = item
-                        candidateRange = lineRange[ 1 ] - lineRange[ 0 ]
-                    continue
-            else:
-                # That's a terminal primitive
-                if item.kind in [ CellElement.CODE_BLOCK,
-                                  CellElement.BREAK,
-                                  CellElement.CONTINUE,
-                                  CellElement.RETURN,
-                                  CellElement.RAISE,
-                                  CellElement.ASSERT,
-                                  CellElement.SYSEXIT,
-                                  CellElement.IMPORT,
-                                  CellElement.INDEPENDENT_COMMENT,
-                                  CellElement.IF ]:
-                    lineRange = item.ref.getLineRange()
-                    if line >= lineRange[ 0 ] and line <= lineRange[ 1 ]:
-                        if candidate:
-                            if candidateRange < lineRange[ 1 ] - lineRange[ 0 ]:
-                                continue
-                        candidate = item
-                        candidateRange = lineRange[ 1 ] - lineRange[ 0 ]
-                    continue
-                if item.kind in [ CellElement.LEADING_COMMENT,
-                                  CellElement.ABOVE_COMMENT ]:
-                    lineRange = item.ref.leadingComment.getLineRange()
-                    if line >= lineRange[ 0 ] and line <= lineRange[ 1 ]:
-                        if candidate:
-                            if candidateRange < lineRange[ 1 ] - lineRange[ 0 ]:
-                                continue
-                        candidate = item
-                        candidateRange = lineRange[ 1 ] - lineRange[ 0 ]
-                    continue
-                if item.kind == CellElement.SIDE_COMMENT:
-                    lineRange = item.ref.sideComment.getLineRange()
-                    if line >= lineRange[ 0 ] and line <= lineRange[ 1 ]:
-                        if candidate:
-                            if candidateRange < lineRange[ 1 ] - lineRange[ 0 ]:
-                                continue
-                        candidate = item
-                        candidateRange = lineRange[ 1 ] - lineRange[ 0 ]
-                    continue
-
-        return candidate
-
+#            dist = item.getDistance( absPos )
+            dist = item.getLineDistance( line )
+#            if dist == 0:
+#                return self.__getLogicalItem( item ), 0
+            if dist < distance:
+                distance = dist
+                candidate = item
+        return self.__getLogicalItem( candidate ), distance
 

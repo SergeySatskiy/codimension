@@ -40,11 +40,11 @@ def getDarkerColor( color ):
     return QColor( max( r, 0 ), max( g, 0 ), max( b, 0 ), color.alpha() )
 
 
-def distance( absPos, begin, end ):
+def distance( val, begin, end ):
     " Provides a distance between the absPos and an item "
-    if absPos >= begin and absPos <= end:
+    if val >= begin and val <= end:
         return 0
-    return min( abs( absPos - begin ), abs( absPos - end ) )
+    return min( abs( val - begin ), abs( val - end ) )
 
 
 class CellElement:
@@ -178,6 +178,13 @@ class CellElement:
         """ Default implementation.
             Provides a distance between the absPos and the item """
         return distance( absPos, self.ref.body.begin, self.ref.body.end )
+
+    def getLineDistance( self, line ):
+        """ Default implementation.
+            Provides a distance between the line and the item """
+        return distance( line, self.ref.body.beginLine,
+                               self.ref.body.endLine )
+
 
 
 __kindToString = {
@@ -731,6 +738,11 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
             return distance( absPos, self.ref.body.begin, self.ref.value.end )
         return distance( absPos, self.ref.body.begin, self.ref.body.end )
 
+    def getLineDistance( self, line ):
+        """ Provides a distance between the line and the item """
+        if self.ref.value is not None:
+            return distance( line, self.ref.body.beginLine, self.ref.value.endLine )
+        return distance( line, self.ref.body.beginLine, self.ref.body.endLine )
 
 
 class RaiseCell( CellElement, QGraphicsRectItem ):
@@ -858,6 +870,12 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
         if self.ref.value is not None:
             return distance( absPos, self.ref.body.begin, self.ref.value.end )
         return distance( absPos, self.ref.body.begin, self.ref.body.end )
+
+    def getLineDistance( self, line ):
+        """ Provides a distance between the line and the item """
+        if self.ref.value is not None:
+            return distance( line, self.ref.body.beginLine, self.ref.value.endLine )
+        return distance( line, self.ref.body.beginLine, self.ref.body.endLine )
 
 
 
@@ -1006,6 +1024,14 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         if self.ref.test is not None:
             return distance( absPos, self.ref.body.begin, self.ref.test.end )
         return distance( absPos, self.ref.body.begin, self.ref.body.end )
+
+    def getLineDistance( self, line ):
+        """ Provides a distance between the line and the item """
+        if self.ref.message is not None:
+            return distance( line, self.ref.body.beginLine, self.ref.message.endLine )
+        if self.ref.test is not None:
+            return distance( line, self.ref.body.beginLine, self.ref.test.endLine )
+        return distance( line, self.ref.body.beginLine, self.ref.body.endLine )
 
 
 
@@ -1545,6 +1571,10 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         """ Provides a distance between the absPos and the item """
         return distance( absPos, self.ref.begin, self.ref.end )
 
+    def getLineDistance( self, line ):
+        """ Provides a distance between the line and the item """
+        return distance( line, self.ref.beginLine, self.ref.endLine )
+
 
 
 class LeadingCommentCell( CellElement, QGraphicsPathItem ):
@@ -1704,6 +1734,11 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
         """ Provides a distance between the absPos and the item """
         return distance( absPos, self.ref.leadingComment.begin,
                                  self.ref.leadingComment.end )
+
+    def getLineDistance( self, line ):
+        """ Provides a distance between the line and the item """
+        return distance( line, self.ref.leadingComment.beginLine,
+                               self.ref.leadingComment.endLine )
 
 
 
@@ -1878,9 +1913,19 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
         retval = maxint
         for part in self.ref.sideComment.parts:
             dist = distance( absPos, part.begin, part.end )
-            if dis == 0:
+            if dist == 0:
                 return 0
-            retval = min( retval, dis )
+            retval = min( retval, dist )
+        return retval
+
+    def getLineDistance( self, line ):
+        """ Provides a distance between the line and the item """
+        retval = maxint
+        for part in self.ref.sideComment.parts:
+            dist = distance( line, part.beginLine, part.endLine )
+            if dist == 0:
+                return 0
+            retval = min( retval, dist )
         return retval
 
 
@@ -2027,6 +2072,11 @@ class AboveCommentCell( CellElement, QGraphicsPathItem ):
         """ Provides a distance between the absPos and the item """
         return distance( absPos, self.ref.leadingComment.begin,
                                  self.ref.leadingComment.end )
+
+    def getLineDistance( self, line ):
+        """ Provides a distance between the line and the item """
+        return distance( line, self.ref.leadingComment.beginLine,
+                               self.ref.leadingComment.endLine )
 
 
 

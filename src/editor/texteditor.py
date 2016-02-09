@@ -97,7 +97,7 @@ class TextEditor( ScintillaWrapper ):
     MESSAGES_MARGIN = 3
 
     escapePressed = pyqtSignal()
-    cflowSyncRequested = pyqtSignal(int)
+    cflowSyncRequested = pyqtSignal(int, int, int)
 
     def __init__( self, parent, debugger ):
 
@@ -2050,8 +2050,9 @@ class TextEditor( ScintillaWrapper ):
         if self.lexer_ is None or not isinstance( self.lexer_, QsciLexerPython ):
             # It is not a python file at all
             return True
-
-        self.cflowSyncRequested.emit( self.getAbsCursorPosition() )
+        line, pos = self.getCursorPosition()
+        absPos = self.positionFromLineIndex( line, pos )
+        self.cflowSyncRequested.emit( absPos, line + 1, pos + 1 )
         return True
 
     def _updateDwellingTime( self ):
@@ -3266,9 +3267,9 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         " Provides a reference to the control flow widget "
         return self.__flowUI
 
-    def cflowSyncRequested( self, absPos ):
+    def cflowSyncRequested( self, absPos, line, pos ):
         " Highlight the item closest to the absPos "
-        self.__flowUI.highlightAtAbsPos( absPos )
+        self.__flowUI.highlightAtAbsPos( absPos, line, pos )
         return
 
 

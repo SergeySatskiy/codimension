@@ -24,7 +24,7 @@ import os.path
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QPen, QBrush, QGraphicsRectItem, QGraphicsItem
 from auxitems import BadgeItem, Connector
-from items import CellElement, getDarkerColor, getNoCellCommentBoxPath
+from items import CellElement, getDarkerColor, getNoCellCommentBoxPath, distance
 
 
 
@@ -428,6 +428,58 @@ class ScopeCellElement( CellElement ):
             return self.canvas.cells[ row ][ column ]
         raise Exception( "Logical error: the getTopLeftItem() is designed "
                          "to be called for the DECLARATION only" )
+
+    def getDistance( self, absPos ):
+        """ Provides a distance between the absPos and the item """
+        if self.subKind == self.DOCSTRING:
+            return distance( absPos, self.ref.docstring.begin,
+                                     self.ref.docstring.end )
+        if self.subKind == self.SIDE_COMMENT:
+            return distance( absPos, self.ref.sideComment.begin,
+                                     self.ref.sideComment.end )
+        if self.subKind == self.DECLARATION:
+            if self.kind == CellElement.FILE_SCOPE:
+                dist = maxint
+                if self.ref.encodingLine:
+                    dist = min( dist, distance( absPos,
+                                                self.ref.encodingLine.begin,
+                                                self.ref.encodingLine.end ) )
+                if self.ref.bangLine:
+                    dist = min( dist, distance( absPos,
+                                                self.ref.bangLine.begin,
+                                                self.ref.bangLine.end ) )
+                return dist
+            # Not a file scope
+            else:
+                return distance( absPos, self.ref.body.begin,
+                                         self.ref.body.end )
+        return maxint
+
+    def getLineDistance( self, line ):
+        """ Provides a distance between the line and the item """
+        if self.subKind == self.DOCSTRING:
+            return distance( line, self.ref.docstring.beginLine,
+                                   self.ref.docstring.endLine )
+        if self.subKind == self.SIDE_COMMENT:
+            return distance( line, self.ref.sideComment.beginLine,
+                                   self.ref.sideComment.endLine )
+        if self.subKind == self.DECLARATION:
+            if self.kind == CellElement.FILE_SCOPE:
+                dist = maxint
+                if self.ref.encodingLine:
+                    dist = min( dist, distance( line,
+                                                self.ref.encodingLine.beginLine,
+                                                self.ref.encodingLine.endLine ) )
+                if self.ref.bangLine:
+                    dist = min( dist, distance( line,
+                                                self.ref.bangLine.beginLine,
+                                                self.ref.bangLine.endLine ) )
+                return dist
+            # Not a file scope
+            else:
+                return distance( line, self.ref.body.beginLine,
+                                       self.ref.body.endLine )
+        return maxint
 
 
 _scopeCellElementToString = {
