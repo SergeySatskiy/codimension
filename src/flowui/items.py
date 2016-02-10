@@ -1912,7 +1912,8 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
         """ Provides a distance between the absPos and the item """
         retval = maxint
         for part in self.ref.sideComment.parts:
-            dist = distance( absPos, part.begin, part.end )
+            # +1 is for finishing \n character
+            dist = distance( absPos, part.begin, part.end + 1 )
             if dist == 0:
                 return 0
             retval = min( retval, dist )
