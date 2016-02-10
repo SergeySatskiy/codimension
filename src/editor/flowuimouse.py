@@ -244,17 +244,43 @@ class CFSceneMouseMixin:
             to the specified absPos, line:pos as well as the distance to the
             item (0 - within the item)
             line and pos are 1-based """
-        candidate = None
+        candidates = []
         distance = maxint
 
         for item in self.items():
             if item.isProxyItem():
                 continue
 
-#            dist = item.getDistance( absPos )
             dist = item.getLineDistance( line )
-#            if dist == 0:
-#                return self.__getLogicalItem( item ), 0
+            if dist == maxint:
+                continue    # Not really an option
+            if dist < distance:
+                distance = dist
+                candidates = [ item ]
+            elif dist == distance:
+                candidates.append( item )
+
+        count = len( candidates )
+        if count == 0:
+            return None, maxint
+        if count == 1:
+            return self.__getLogicalItem( candidates[ 0 ] ), distance
+
+        # Here: more than one item with an equal distance
+        #       There are two cases here: 0 and non zero distance
+        if distance != 0:
+            # It is pretty much not important which one to pick.
+            # Let it be the first foun item
+            return self.__getLogicalItem( candidates[ 0 ] ), distance
+
+        # This is a zero line distance, so a candidate should be the one with
+        # the shortest position distance
+        candidate = None
+        distance = maxint
+        for item in candidates:
+            dist = item.getDistance( absPos )
+            if dist == 0:
+                return self.__getLogicalItem( item ), 0
             if dist < distance:
                 distance = dist
                 candidate = item
