@@ -148,9 +148,19 @@ class ControlFlowNavigationBar( QFrame ):
         self.__layout.addWidget( self.__infoIcon )
         self.__spacer = QWidget()
         self.__spacer.setSizePolicy( QSizePolicy.Fixed, QSizePolicy.Expanding )
-        self.__spacer.setMinimumWidth( 0 )
+        self.__spacer.setMinimumWidth( 1 )
         self.__layout.addWidget( self.__spacer )
 
+        # Create warnings label
+        self.__warningsIcon = QLabel()
+        self.__warningsIcon.setPixmap( getPixmap( 'cfwarning.png' ) )
+        self.__layout.addWidget( self.__warningsIcon )
+        self.__spacer1 = QWidget()
+        self.__spacer1.setSizePolicy( QSizePolicy.Fixed, QSizePolicy.Expanding )
+        self.__spacer1.setMinimumWidth( 1 )
+        self.__layout.addWidget( self.__spacer1 )
+
+        self.clearWarnings()
         # Create the path label
 #        self.__pathLabel = FitLabel( self )
         self.__pathLabel = QLabel( self )
@@ -175,6 +185,27 @@ class ControlFlowNavigationBar( QFrame ):
         self.setSelectionLabel( 0, None )
         return
 
+    def clearWarnings( self ):
+        self.__warningsIcon.setVisible( False )
+        self.__warningsIcon.setToolTip( "" )
+        self.__spacer1.setVisible( False )
+        return
+
+    def setWarnings( self, warnings ):
+        self.__warningsIcon.setToolTip( "Control flow parser warnings:\n" +
+                                        "\n".join( warnings ) )
+        self.__warningsIcon.setVisible( True )
+        self.__spacer1.setVisible( True )
+        return
+
+    def clearErrors( self ):
+        self.__infoIcon.setToolTip( "" )
+        return
+
+    def setErrors( self, errors ):
+        self.__infoIcon.setToolTip( "Control flow parser errors:\n" +
+                                    "\n".join( errors ) )
+        return
 
     def updateInfoIcon( self, state ):
         " Updates the information icon "
@@ -337,15 +368,39 @@ class FlowUIWidget( QWidget ):
 
         content = self.__editor.text()
         cf = getControlFlowFromMemory( content )
-        if len( cf.errors ) != 0:
+        if cf.errors:
             self.__navBar.updateInfoIcon( self.__navBar.STATE_BROKEN_UTD )
+            errors = []
+            for err in cf.errors:
+                if err[ 0 ] == -1 and err[ 1 ] == -1:
+                    errors.append( err[ 2 ] )
+                elif err[ 1 ] == -1:
+                    errors.append( "[" + str( err[0] ) + ":] " + err[ 2 ] )
+                elif err[ 0 ] == -1:
+                    errors.append( "[:" + str( err[1] ) + "] " + err[ 2 ] )
+                else:
+                    errors.append( "[" + str( err[0] ) + ":" + str( err[1] ) + "] " + err[ 2 ] )
+            self.__navBar.setErrors( errors )
             return
         self.__cf = cf
 
+        # That will clear the error tooltip as well
         self.__navBar.updateInfoIcon( self.__navBar.STATE_OK_UTD )
 
-        for warn in self.__cf.warnings:
-            logging.warning( str( warn[0] ) + ": " + str( warn[1] ) )
+        if self.__cf.warnings:
+            warnings = []
+            for warn in self.__cf.warnings:
+                if warn[ 0 ] == -1 and warn[ 1 ] == -1:
+                    warnings.append( warn[ 2 ] )
+                elif warn[ 1 ] == -1:
+                    warnings.append( "[" + str( warn[0] ) + ":] " + warn[ 2 ] )
+                elif warn[ 0 ] == -1:
+                    warnings.append( "[:" + str( warn[1] ) + "] " + warn[ 2 ] )
+                else:
+                    warnings.append( "[" + str( warn[0] ) + ":" + str( warn[1] ) + "] " + warn[ 2 ] )
+            self.__navBar.setWarnings( warnings )
+        else:
+            self.__navBar.clearWarnings()
 
         self.scene.clear()
         try:
