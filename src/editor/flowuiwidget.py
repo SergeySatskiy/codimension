@@ -147,7 +147,7 @@ class ControlFlowNavigationBar( QFrame ):
         self.__infoIcon.setPixmap( getPixmap( 'cfunknown.png' ) )
         self.__layout.addWidget( self.__infoIcon )
         self.__spacer = QWidget()
-        self.__spacer.setSizePolicy( QSizePolicy.Fixed, QSizePolicy.Expanding )
+        self.__spacer.setSizePolicy( QSizePolicy.Fixed, QSizePolicy.Fixed )
         self.__spacer.setMinimumWidth( 1 )
         self.__layout.addWidget( self.__spacer )
 
@@ -157,7 +157,7 @@ class ControlFlowNavigationBar( QFrame ):
         self.__layout.addWidget( self.__warningsIcon )
         self.__spacer1 = QWidget()
         self.__spacer1.setSizePolicy( QSizePolicy.Fixed, QSizePolicy.Expanding )
-        self.__spacer1.setMinimumWidth( 1 )
+        self.__spacer1.setMinimumWidth( 0 )
         self.__layout.addWidget( self.__spacer1 )
 
         self.clearWarnings()
@@ -188,14 +188,14 @@ class ControlFlowNavigationBar( QFrame ):
     def clearWarnings( self ):
         self.__warningsIcon.setVisible( False )
         self.__warningsIcon.setToolTip( "" )
-        self.__spacer1.setVisible( False )
+        self.__spacer.setVisible( False )
         return
 
     def setWarnings( self, warnings ):
         self.__warningsIcon.setToolTip( "Control flow parser warnings:\n" +
                                         "\n".join( warnings ) )
         self.__warningsIcon.setVisible( True )
-        self.__spacer1.setVisible( True )
+        self.__spacer.setVisible( True )
         return
 
     def clearErrors( self ):
@@ -412,7 +412,9 @@ class FlowUIWidget( QWidget ):
             self.scene.setSceneRect( 0, 0, width, height )
             canvas.draw( self.scene, 0, 0 )
         except Exception, exc:
+#            logging.error( "cflow exception" )
             logging.error( str( exc ) )
+#            raise
         return
 
     def __onFileTypeChanged( self, fileName, uuid, newFileType ):
