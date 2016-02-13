@@ -408,8 +408,6 @@ class FlowUIWidget( QWidget ):
             self.scene.setSceneRect( 0, 0, width, height )
             canvas.draw( self.scene, 0, 0 )
         except Exception, exc:
-            print exc
-            logging.error( "cflow exception" )
             logging.error( str( exc ) )
             raise
         return

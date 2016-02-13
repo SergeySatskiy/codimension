@@ -45,7 +45,7 @@ from cdmcf import ( CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
                     RAISE_FRAGMENT, ASSERT_FRAGMENT, SYSEXIT_FRAGMENT,
                     IMPORT_FRAGMENT, COMMENT_FRAGMENT,
                     WHILE_FRAGMENT, FOR_FRAGMENT, IF_FRAGMENT,
-                    WITH_FRAGMENT, TRY_FRAGMENT )
+                    WITH_FRAGMENT, TRY_FRAGMENT, CML_COMMENT_FRAGMENT )
 
 
 CONN_N_S = [ (ConnectorCell.NORTH, ConnectorCell.SOUTH) ]
@@ -253,6 +253,10 @@ class VirtualCanvas:
             self.__currentScopeClass = _scopeToClass[ scopeKind ]
 
         for item in suite:
+            if item.kind == CML_COMMENT_FRAGMENT:
+                # CML comments are not shown on the diagram
+                continue
+
             if item.kind in [ FUNCTION_FRAGMENT, CLASS_FRAGMENT ]:
                 scopeCanvas = VirtualCanvas( self.settings, None, None, self )
                 scopeItem = item
