@@ -129,6 +129,7 @@ class ControlFlowNavigationBar( QFrame ):
     def __init__( self, parent ):
         QFrame.__init__( self, parent )
         self.__infoIcon = None
+        self.__warningsIcon = None
         self.__layout = None
         self.__pathLabel = None
         self.__createLayout()
@@ -146,23 +147,14 @@ class ControlFlowNavigationBar( QFrame ):
         self.__infoIcon = QLabel()
         self.__infoIcon.setPixmap( getPixmap( 'cfunknown.png' ) )
         self.__layout.addWidget( self.__infoIcon )
-        self.__spacer = QWidget()
-        self.__spacer.setSizePolicy( QSizePolicy.Fixed, QSizePolicy.Fixed )
-        self.__spacer.setMinimumWidth( 1 )
-        self.__layout.addWidget( self.__spacer )
 
-        # Create warnings label
         self.__warningsIcon = QLabel()
         self.__warningsIcon.setPixmap( getPixmap( 'cfwarning.png' ) )
         self.__layout.addWidget( self.__warningsIcon )
-        self.__spacer1 = QWidget()
-        self.__spacer1.setSizePolicy( QSizePolicy.Fixed, QSizePolicy.Expanding )
-        self.__spacer1.setMinimumWidth( 0 )
-        self.__layout.addWidget( self.__spacer1 )
 
         self.clearWarnings()
+
         # Create the path label
-#        self.__pathLabel = FitLabel( self )
         self.__pathLabel = QLabel( self )
         self.__pathLabel.setTextFormat( Qt.PlainText )
         self.__pathLabel.setAlignment( Qt.AlignLeft )
@@ -171,6 +163,11 @@ class ControlFlowNavigationBar( QFrame ):
         self.__pathLabel.setTextInteractionFlags( Qt.NoTextInteraction )
         self.__pathLabel.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Fixed )
         self.__layout.addWidget( self.__pathLabel )
+
+        self.__spacer = QWidget()
+        self.__spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Fixed )
+        self.__spacer.setMinimumWidth( 0 )
+        self.__layout.addWidget( self.__spacer )
 
         # Create the selection label
         self.__selectionLabel = QLabel( self )
@@ -188,14 +185,12 @@ class ControlFlowNavigationBar( QFrame ):
     def clearWarnings( self ):
         self.__warningsIcon.setVisible( False )
         self.__warningsIcon.setToolTip( "" )
-        self.__spacer.setVisible( False )
         return
 
     def setWarnings( self, warnings ):
         self.__warningsIcon.setToolTip( "Control flow parser warnings:\n" +
                                         "\n".join( warnings ) )
         self.__warningsIcon.setVisible( True )
-        self.__spacer.setVisible( True )
         return
 
     def clearErrors( self ):
@@ -245,6 +240,7 @@ class ControlFlowNavigationBar( QFrame ):
 
     def setPathVisible( self, on ):
         self.__pathLabel.setVisible( on )
+        self.__spacer.setVisible( not on )
         return
 
     def setSelectionLabel( self, text, tooltip ):
@@ -412,9 +408,10 @@ class FlowUIWidget( QWidget ):
             self.scene.setSceneRect( 0, 0, width, height )
             canvas.draw( self.scene, 0, 0 )
         except Exception, exc:
-#            logging.error( "cflow exception" )
+            print exc
+            logging.error( "cflow exception" )
             logging.error( str( exc ) )
-#            raise
+            raise
         return
 
     def __onFileTypeChanged( self, fileName, uuid, newFileType ):
