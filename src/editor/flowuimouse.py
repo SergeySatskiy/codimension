@@ -108,35 +108,18 @@ class CFSceneMouseMixin:
                 event.accept()
                 return
             # Item is not selected and should be added or ignored
-            if self.isNestedInSelected( logicalItem ):
-                # Ignore the selection request
-                event.accept()
-                return
-
-            self.deselectNested( logicalItem )
-
-            logicalItem.setSelected( True )
+            self.__addToSelection( self, logicalItem )
             event.accept()
             return
 
         # The alt modifier works for the whole app window on
         # Ubuntu, so it cannot really be used...
-
-        if modifiers == Qt.AltModifier:
-            self.clearSelection()
-            logicalItem.setSelected( True )
-            # Here: add comments
-            event.accept()
-            return
-
         if modifiers == Qt.ShiftModifier:
             self.clearSelection()
 
             # Here: add comments
-            if not logicalItem.scopedItem():
-                for item in self.findItemsForRef( logicalItem.ref ):
-                    item.setSelected( True )
-
+            for item in self.findItemsForRef( logicalItem.ref ):
+                self.__addToSelection( item )
             event.accept()
             return
 
@@ -145,6 +128,16 @@ class CFSceneMouseMixin:
 
     def mouseReleaseEvent( self, event ):
         event.accept()
+        return
+
+    def __addToSelection( self, item ):
+        " Adds an item to the current selection "
+        if self.isNestedInSelected( item ):
+            # Ignore the selection request
+            return
+
+        self.deselectNested( item )
+        item.setSelected( True )
         return
 
     def isNestedInSelected( self, itemToSelect ):
@@ -239,13 +232,6 @@ class CFSceneMouseMixin:
                 if item.ref is ref:
                     result.append( item )
         return result
-#                if item.kind in [ CellElement.SIDE_COMMENT,
-#                                  CellElement.ABOVE_COMMENT,
-#                                  CellElement.LEADING_COMMENT,
-#                                  CellElement.INDEPENDENT_COMMENT ]:
-#                    if comment.
-
-
 
     def getNearestItem( self, absPos, line, pos ):
         """ Provides a logical item which is the closest
