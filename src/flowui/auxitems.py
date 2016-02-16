@@ -85,6 +85,15 @@ class SVGItem( QGraphicsSvgItem ):
         return self.ref
 
 
+class CMLLabel( SVGItem ):
+    " Represents the CML label for an item "
+
+    def __init__( self, ref = None ):
+        SVGItem.__init__( self, "cmllabel.svgz", ref )
+        self.setWidth( 8 )
+        return
+
+
 class BadgeItem( QGraphicsRectItem ):
     " Serves the scope badges "
 

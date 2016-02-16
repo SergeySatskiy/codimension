@@ -28,7 +28,7 @@ from PyQt4.QtGui import ( QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
                           QStyleOptionGraphicsItem, QStyle, QFont,
                           QGraphicsSimpleTextItem )
 from PyQt4.QtSvg import QGraphicsSvgItem
-from auxitems import SVGItem, Connector, Text
+from auxitems import SVGItem, Connector, Text, CMLLabel
 
 
 
@@ -1212,6 +1212,13 @@ class ImportCell( CellElement, QGraphicsRectItem ):
                                baseY + self.minHeight/2 - self.arrowItem.height()/2 )
         scene.addItem( self )
         scene.addItem( self.arrowItem )
+
+        if self.ref.leadingCMLComments or self.ref.sideCMLComments:
+            self.cmlLabelItem = CMLLabel()
+            self.cmlLabelItem.setPos( baseX + self.minWidth - s.hCellPadding + 2 * penWidth,
+                                      baseY + s.vCellPadding )
+            scene.addItem( self.cmlLabelItem )
+
         return
 
     def paint( self, painter, option, widget ):
