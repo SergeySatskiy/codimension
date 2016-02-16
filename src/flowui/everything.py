@@ -37,6 +37,14 @@ d = 154
 e = 154  # side
 f = 154
 
+# cml 1 none
+alone = 2
+
+# cml 1 none
+# Leading
+a = 10      # Side
+            # Side
+
 
 #
 # Imports
@@ -50,6 +58,16 @@ import sys, \
 import sys      # Side
                 # Side last
 
+# Leading
+from sys import path        # Side
+                            # Side last
+
+
+# cml 1 none
+import sys, \
+       os.path
+
+# cml 1 none
 # Leading
 from sys import path        # Side
                             # Side last
@@ -456,6 +474,7 @@ with open( "my.txt" +           # Side 1
 if True:
     pass
 
+# cml 1 none
 if True:
     pass
 else:
@@ -485,9 +504,10 @@ else:       # Side 4
     pass
 
 
+# cml 1 CC
 if a > 456 and \
    b < 76 or \
-   c == 99:
+   p == 99:
     pass
 elif a < 456 and \
      b > 76 or \

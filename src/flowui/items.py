@@ -93,6 +93,8 @@ class CellElement:
         self.addr = [ x, y ]        # indexes in the current canvas
         self.canvas = canvas        # reference to the canvas
         self._editor = None
+        self.cmlLabelItem = None    # Label near the item to indicate a CML
+                                    # presence
 
         self.tailComment = False
 
@@ -345,6 +347,14 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
                       self.minWidth - 2 * s.hCellPadding + 2 * penWidth,
                       self.minHeight - 2 * s.vCellPadding + 2 * penWidth )
         scene.addItem( self )
+
+        if self.ref.leadingCMLComments or self.ref.sideCMLComments:
+            self.cmlLabelItem = CMLLabel()
+            self.cmlLabelItem.setPos( baseX + self.minWidth - s.hCellPadding + 2 * penWidth,
+                                      baseY + s.vCellPadding )
+            self.cmlLabelItem.setPos( baseX + s.hCellPadding - 2 * penWidth - self.cmlLabelItem.width(),
+                                      baseY + s.vCellPadding )
+            scene.addItem( self.cmlLabelItem )
         return
 
     def paint( self, painter, option, widget ):
@@ -1355,6 +1365,12 @@ class IfCell( CellElement, QGraphicsRectItem ):
                       self.x4 - self.x1 + 2 * penWidth,
                       self.y6 - self.y2 + 2 * penWidth )
         scene.addItem( self )
+
+        if self.ref.leadingCMLComments or self.ref.sideCMLComments:
+            self.cmlLabelItem = CMLLabel()
+            self.cmlLabelItem.setPos( self.x6,
+                                      self.y6 - self.cmlLabelItem.height() - 1 )
+            scene.addItem( self.cmlLabelItem )
         return
 
 

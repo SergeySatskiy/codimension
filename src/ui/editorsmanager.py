@@ -2078,7 +2078,7 @@ class EditorsManager( QTabWidget ):
             # A usual file
             if self.openFile( fileName, line ):
                 self.widget( 0 ).getEditor().gotoLine( line + 1, pos + 1,
-                                                       firstLine + 1)
+                                                       firstLine + 1 )
 
         # This call happens when a project is loaded, so it makes sense to
         # reset a new file index
