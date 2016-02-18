@@ -23,7 +23,7 @@ from sys import maxint
 import os.path
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QPen, QBrush, QGraphicsRectItem, QGraphicsItem
-from auxitems import BadgeItem, Connector
+from auxitems import BadgeItem, Connector, CMLLabel
 from items import CellElement, getDarkerColor, getNoCellCommentBoxPath, distance
 
 
@@ -214,6 +214,10 @@ class ScopeCellElement( CellElement ):
                                                  baseY + 2 * s.vCellPadding )
                     self._connector.penStyle = Qt.DotLine
                     scene.addItem( self._connector )
+
+            if self.kind != CellElement.FILE_SCOPE:
+                # The file scope does not have leading and side comments
+                self.addCMLIndicator( baseX, baseY, penWidth, scene )
 
             if hasattr( scene.parent(), "updateNavigationToolbar" ):
                 self.__navBarUpdate = scene.parent().updateNavigationToolbar

@@ -138,6 +138,7 @@ class C3( B1,       # Side 1
 class C4( C5 ):
     def member1( self ):
         pass
+    # cml 1 none
     # Leading 1
     # Leading 2
     def member2( self,      # Side 1
@@ -314,6 +315,7 @@ for x in y:
     break
 
 for x in y:
+    # cml 1 I
     # Leading 1
     # Leading 2
     break   # Side 1
@@ -323,6 +325,7 @@ while True:
     continue
 
 while True:
+    # cml 1 I
     # Leading 1
     # Leading 2
     continue    # Side 1
@@ -347,11 +350,13 @@ def f13():
            "Shakespeare"
 
 def f14():
+    # cml 1 I
     # Leading
     return 154  # Side 1
                 # Side 2
 
 def f15():
+    # cml 1 I
     # Leading
     return ( 154,               # Side 1
              "Shakespeare" )    # Side 2
@@ -372,6 +377,7 @@ assert x != 154 and \
        y != 154 and \
        z != 154
 
+# cml 1 I
 # Leading
 assert x != 154, ( "..."        # Side 1
                    "..." )      # side 2
@@ -394,6 +400,7 @@ raise Exception( 1 +
                  2 +
                  3 )
 
+# cml 1 I
 # Leading
 raise Exception( 1 +    # Side 1
                  3 )    # Side 2
@@ -426,6 +433,7 @@ exit( 0 +
       0 +
       0 )
 
+# cml 1 I
 # Leading
 exit( 0 +   # Side 1
       0 )   # Side 2
@@ -459,6 +467,7 @@ with \
             f:
     pass
 
+# cml 1 I
 # leading
 with open( "my.txt" +           # Side 1
            "your.txt" ) as f:   # Side 2

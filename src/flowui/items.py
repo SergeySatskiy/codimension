@@ -187,6 +187,15 @@ class CellElement:
         return distance( line, self.ref.body.beginLine,
                                self.ref.body.endLine )
 
+    def addCMLIndicator( self, baseX, baseY, penWidth, scene ):
+        " Adds a CML indicator for an item if needed "
+        if self.ref.leadingCMLComments or self.ref.sideCMLComments:
+            s = self.canvas.settings
+            self.cmlLabelItem = CMLLabel()
+            self.cmlLabelItem.setPos( baseX + s.hCellPadding - penWidth -
+                                      self.cmlLabelItem.width(),
+                                      baseY + s.vCellPadding )
+            scene.addItem( self.cmlLabelItem )
 
 
 __kindToString = {
@@ -348,13 +357,7 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
                       self.minHeight - 2 * s.vCellPadding + 2 * penWidth )
         scene.addItem( self )
 
-        if self.ref.leadingCMLComments or self.ref.sideCMLComments:
-            self.cmlLabelItem = CMLLabel()
-            self.cmlLabelItem.setPos( baseX + self.minWidth - s.hCellPadding + 2 * penWidth,
-                                      baseY + s.vCellPadding )
-            self.cmlLabelItem.setPos( baseX + s.hCellPadding - 2 * penWidth - self.cmlLabelItem.width(),
-                                      baseY + s.vCellPadding )
-            scene.addItem( self.cmlLabelItem )
+        self.addCMLIndicator( baseX, baseY, penWidth, scene )
         return
 
     def paint( self, painter, option, widget ):
@@ -466,6 +469,8 @@ class BreakCell( CellElement, QGraphicsRectItem ):
         self.setRect( self.x1 - penWidth, self.y1 - penWidth,
                       self.w + 2 * penWidth, self.h + 2 * penWidth )
         scene.addItem( self )
+
+        self.addCMLIndicator( baseX, baseY, penWidth, scene )
         return
 
     def paint( self, painter, option, widget ):
@@ -571,6 +576,8 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
                       self.w + 2 * penWidth, self.h + 2 * penWidth )
 
         scene.addItem( self )
+
+        self.addCMLIndicator( baseX, baseY, penWidth, scene )
         return
 
     def paint( self, painter, option, widget ):
@@ -682,6 +689,8 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
         scene.addItem( self.connector )
         scene.addItem( self )
         scene.addItem( self.arrowItem )
+
+        self.addCMLIndicator( baseX, baseY, penWidth, scene )
         return
 
     def paint( self, painter, option, widget ):
@@ -816,6 +825,8 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
         scene.addItem( self.connector )
         scene.addItem( self )
         scene.addItem( self.arrowItem )
+
+        self.addCMLIndicator( baseX, baseY, penWidth, scene )
         return
 
     def paint( self, painter, option, widget ):
@@ -958,6 +969,8 @@ class AssertCell( CellElement, QGraphicsRectItem ):
 
         scene.addItem( self )
         scene.addItem( self.arrowItem )
+
+        self.addCMLIndicator( baseX, baseY, penWidth, scene )
         return
 
     def paint( self, painter, option, widget ):
@@ -1106,6 +1119,8 @@ class SysexitCell( CellElement, QGraphicsRectItem ):
         scene.addItem( self.connector )
         scene.addItem( self )
         scene.addItem( self.xItem )
+
+        self.addCMLIndicator( baseX, baseY, penWidth, scene )
         return
 
     def paint( self, painter, option, widget ):
@@ -1223,12 +1238,7 @@ class ImportCell( CellElement, QGraphicsRectItem ):
         scene.addItem( self )
         scene.addItem( self.arrowItem )
 
-        if self.ref.leadingCMLComments or self.ref.sideCMLComments:
-            self.cmlLabelItem = CMLLabel()
-            self.cmlLabelItem.setPos( baseX + self.minWidth - s.hCellPadding + 2 * penWidth,
-                                      baseY + s.vCellPadding )
-            scene.addItem( self.cmlLabelItem )
-
+        self.addCMLIndicator( baseX, baseY, penWidth, scene )
         return
 
     def paint( self, painter, option, widget ):
@@ -1366,11 +1376,7 @@ class IfCell( CellElement, QGraphicsRectItem ):
                       self.y6 - self.y2 + 2 * penWidth )
         scene.addItem( self )
 
-        if self.ref.leadingCMLComments or self.ref.sideCMLComments:
-            self.cmlLabelItem = CMLLabel()
-            self.cmlLabelItem.setPos( self.x6,
-                                      self.y6 - self.cmlLabelItem.height() - 1 )
-            scene.addItem( self.cmlLabelItem )
+        self.addCMLIndicator( baseX, baseY, penWidth, scene )
         return
 
 

@@ -90,7 +90,7 @@ class CMLLabel( SVGItem ):
 
     def __init__( self, ref = None ):
         SVGItem.__init__( self, "cmllabel.svgz", ref )
-        self.setWidth( 8 )
+        self.setWidth( 6 )
         self.setToolTip( "CML hint is used" )
         return
 
