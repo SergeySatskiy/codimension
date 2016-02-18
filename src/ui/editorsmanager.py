@@ -666,15 +666,22 @@ class EditorsManager( QTabWidget ):
     def __updateFilePosition( self, index ):
         " Updates the file position of a file which is loaded to the given tab "
 
-        if self.widget( index ).getType() == \
-            MainWindowTabWidgetBase.PlainTextEditor:
+        widget = self.widget( index )
+        if widget.getType() == MainWindowTabWidgetBase.PlainTextEditor:
             # Save the current cursor position
-            editor = self.widget( index ).getEditor()
+            editor = widget.getEditor()
             line, pos = editor.getCursorPosition()
+
+            cflowHPos = -1
+            cflowVPos = -1
+            if widget.getFileType() in [ PythonFileType, Python3FileType ]:
+                cflowHPos, cflowVPos = widget.getCFEditor().getScrollbarPositions()
+
             Settings().filePositions.updatePosition(
-                            self.widget( index ).getFileName(),
+                            widget.getFileName(),
                             line, pos,
-                            editor.firstVisibleLine() )
+                            editor.firstVisibleLine(),
+                            cflowHPos, cflowVPos )
             Settings().filePositions.save()
         return
 
@@ -1163,7 +1170,7 @@ class EditorsManager( QTabWidget ):
                 editor.gotoLine( lineNo, pos )
             else:
                 # Restore the last position
-                line, pos, firstVisible = \
+                line, pos, firstVisible, cflowHPos, cflowVPos = \
                             Settings().filePositions.getPosition( fileName )
                 if line != -1:
                     editor.gotoLine( line + 1, pos + 1, firstVisible + 1)
@@ -1987,7 +1994,7 @@ class EditorsManager( QTabWidget ):
             item = self.widget( index )
             if item.getType() == MainWindowTabWidgetBase.HTMLViewer and \
                item.getShortName() == helpShortName:
-                record = "help:-1:-1:-1"
+                record = "help"
                 if item == curWidget:
                     record = "*:" + record
                 status.append( record )
@@ -1998,14 +2005,8 @@ class EditorsManager( QTabWidget ):
                 if fileName == "":
                     continue    # New, not saved yet file
 
-                # Need to save the file name and the cursor position.
-                # Modified and not saved files are saved too.
-                if item.getType() == MainWindowTabWidgetBase.PlainTextEditor:
-                    line, pos = item.getEditor().getCursorPosition()
-                    firstLine = item.getEditor().firstVisibleLine()
-                else:
-                    line, pos = -1, -1
-                    firstLine = -1
+                # Need to save the file name only. The cursor position is saved
+                # in another file.
                 if GlobalData().project.isProjectFile( fileName ):
                     prjDir = os.path.dirname( GlobalData().project.fileName )
                     relativePath = relpath( fileName, prjDir )
@@ -2014,8 +2015,6 @@ class EditorsManager( QTabWidget ):
                     record = fileName
                 if item == curWidget:
                     record = "*:" + record
-                record = record + ':' + str( firstLine ) + ':' + \
-                         str( line ) + ':' + str( pos )
                 status.append( record )
 
         return status
@@ -2033,22 +2032,21 @@ class EditorsManager( QTabWidget ):
         # Walk the status list
         activeIndex = -1
         for index in xrange( len( status ) - 1, -1, -1 ):
-            parts = status[ index ].split( ':' )
-            if len( parts ) == 5:
+            record = status[ index ]
+            if record.startswith( "*:" ):
                 activeIndex = index
-                parts = parts[ 1: ]
-            if len( parts ) != 4:
+                record = record[ 2 : ]
+            parts = record.split( ':' )
+            if len( parts ) not in [ 1, 4 ]:
                 logging.warning( 'Cannot restore last session tab. '
                                  'Unknown status format (' +
                                  status[ index ] + ')' )
                 continue
-            fileName = parts[ 0 ]
-            firstLine = int( parts[ 1 ] )
-            line = int( parts[ 2 ] )
-            pos = int( parts[ 3 ] )
 
-            if firstLine == -1 and line == -1 and pos == -1 and \
-               fileName == 'help':
+            # The old format had 4 items; ignore the last three
+            fileName = parts[ 0 ]
+
+            if fileName == 'help':
                 # Help widget
                 if self.widget( 0 ) == self.__welcomeWidget:
                     # It is the only welcome widget on the screen
@@ -2058,7 +2056,7 @@ class EditorsManager( QTabWidget ):
                 self.addTab( self.__helpWidget, shortName )
                 continue
 
-            if not fileName.startswith( os.path.sep ):
+            if not os.path.isabs( fileName ):
                 # Relative path - build absolute
                 prjDir = os.path.dirname( GlobalData().project.fileName )
                 fileName = os.path.abspath( prjDir + os.path.sep + fileName )
@@ -2075,10 +2073,8 @@ class EditorsManager( QTabWidget ):
                 self.openPixmapFile( fileName )
                 continue
 
-            # A usual file
-            if self.openFile( fileName, line ):
-                self.widget( 0 ).getEditor().gotoLine( line + 1, pos + 1,
-                                                       firstLine + 1 )
+            # A usual file; position will be restored at the file loading stage
+            self.openFile( fileName, -1 )
 
         # This call happens when a project is loaded, so it makes sense to
         # reset a new file index

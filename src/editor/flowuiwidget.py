@@ -429,6 +429,11 @@ class FlowUIWidget( QWidget ):
         # Update the bar and show it
         self.setVisible( True )
         self.process()
+
+        # The buffer type change event comes when the content is loaded first
+        # time. So this is a good point to restore the position
+        _, _, _, cflowHPos, cflowVPos = Settings().filePositions.getPosition( fileName )
+        self.setScrollbarPositions( cflowHPos, cflowVPos )
         return
 
     def __connectEditorSignals( self ):
@@ -637,5 +642,15 @@ class FlowUIWidget( QWidget ):
         image.save( fileName, "PNG" )
         return
 
+    def getScrollbarPositions( self ):
+        " Provides the scrollbar positions "
+        hScrollBar = self.view.horizontalScrollBar()
+        vScrollBar = self.view.verticalScrollBar()
+        return hScrollBar.value(), vScrollBar.value()
 
+    def setScrollbarPositions( self, hPos, vPos ):
+        " Sets the scrollbar positions for the view "
+        self.view.horizontalScrollBar().setValue( hPos )
+        self.view.verticalScrollBar().setValue( vPos )
+        return
 
