@@ -46,6 +46,7 @@ from cdmcf import ( CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
                     IMPORT_FRAGMENT, COMMENT_FRAGMENT,
                     WHILE_FRAGMENT, FOR_FRAGMENT, IF_FRAGMENT,
                     WITH_FRAGMENT, TRY_FRAGMENT, CML_COMMENT_FRAGMENT )
+from cml import CMLsw
 
 
 CONN_N_S = [ (ConnectorCell.NORTH, ConnectorCell.SOUTH) ]
@@ -411,21 +412,8 @@ class VirtualCanvas:
                 branchLayout.isNoScope = True
                 branchLayout.layoutSuite( 0, item.suite, CellElement.NO_SCOPE, None, 0 )
 
-                # Copy the layout cells into the current layout calculating the
-                # max width of the layout
-#                branchWidth, branchHeight = self.__copyLayout( branchLayout, vacantRow, column )
-                branchWidth, branchHeight = 1, 1
+                # Insert the branch layout
                 self.__allocateAndSet( vacantRow, column, branchLayout )
-
-                # Calculate the number of horizontal connectors left->right
-                count = branchWidth - 1
-                while count > 0:
-                    self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ],
-                                           ConnectorCell( [ (ConnectorCell.WEST,
-                                                             ConnectorCell.EAST) ],
-                                                          self, openEnd[ 1 ], openEnd[ 0 ] ) )
-                    openEnd[ 1 ] += 1
-                    count -= 1
 
                 self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ],
                                        ConnectorCell( [ (ConnectorCell.WEST,
@@ -437,7 +425,7 @@ class VirtualCanvas:
                 openEnd[ 0 ] += 1
 
                 branchEndStack = []
-                branchEndStack.append( (vacantRow + branchHeight, column) )
+                branchEndStack.append( (vacantRow + 1, column) )
 
                 # Handle the elif and else branches
                 for elifBranch in item.elifParts:
@@ -455,20 +443,8 @@ class VirtualCanvas:
                         branchLayout.isNoScope = True
                         branchLayout.layoutSuite( 0, elifBranch.suite, CellElement.NO_SCOPE, None, 0 )
 
-                        # Copy the layout cells into the current layout
-                        # calculating the max width of the layout
-#                        branchWidth, branchHeight = self.__copyLayout( branchLayout, openEnd[ 0 ], openEnd[ 1 ] )
-                        branchWidth, branchHeight = 1, 1
+                        # Insert the branch layout
                         self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ], branchLayout )
-
-                        # Calculate the number of horizontal connectors left->right
-                        count = branchWidth - 1
-                        while count > 0:
-                            self.__allocateAndSet( newOpenEnd[ 0 ], newOpenEnd[ 1 ],
-                                                   ConnectorCell( CONN_W_E,
-                                                                  self, newOpenEnd[ 1 ], newOpenEnd[ 0 ] ) )
-                            newOpenEnd[ 1 ] += 1
-                            count -= 1
 
                         self.__allocateAndSet( newOpenEnd[ 0 ], newOpenEnd[ 1 ],
                                                ConnectorCell( CONN_W_S,
@@ -478,7 +454,7 @@ class VirtualCanvas:
                                                    SideCommentCell( elifBranch, self, newOpenEnd[ 1 ] + 1, newOpenEnd[ 0 ] ) )
                         newOpenEnd[ 0 ] += 1
 
-                        branchEndStack.append( (openEnd[ 0 ] + branchHeight, openEnd[ 1 ]) )
+                        branchEndStack.append( (openEnd[ 0 ] + 1, openEnd[ 1 ]) )
                         openEnd = newOpenEnd
                     else:
                         # This is the else which is always the last
@@ -508,12 +484,10 @@ class VirtualCanvas:
                         branchLayout = VirtualCanvas( self.settings, openEnd[ 1 ], openEnd[ 0 ], self )
                         branchLayout.isNoScope = True
                         branchLayout.layoutSuite( 0, elifBranch.suite, CellElement.NO_SCOPE, None, 0 )
-#                        branchWidth, branchHeight = self.__copyLayout( branchLayout, openEnd[ 0 ], openEnd[ 1 ] )
-                        branchWidth, branchHeight = 1, 1
                         self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ], branchLayout )
 
                         # replace the open end
-                        openEnd[ 0 ] += branchHeight
+                        openEnd[ 0 ] += 1
 
                 branchEndStack.append( openEnd )
                 mainBranch = branchEndStack.pop( 0 )
@@ -588,26 +562,6 @@ class VirtualCanvas:
             # end of for loop
 
         return vacantRow
-
-    def __copyLayout( self, fromCanvas, row, column ):
-        " Copies all the cells from another layout starting from the row, column "
-        width = 0
-        height = 0
-        for line in fromCanvas.cells:
-            lineWidth = len( line )
-            if lineWidth > width:
-                width = lineWidth
-            self.__allocateCell( row + height, column + lineWidth - 1 )
-            for index, item in enumerate( line ):
-                newRow = row + height
-                newColumn = column + index
-                self.cells[ newRow ][ newColumn ] = fromCanvas.cells[ height ][ index ]
-                self.cells[ newRow ][ newColumn ].canvas = self
-                self.cells[ newRow ][ newColumn ].addr = [ newColumn, newRow ]
-            height += 1
-
-        return width, height
-
 
     def layout( self, cf, scopeKind = CellElement.FILE_SCOPE,
                           rowsToAllocate = 1 ):
