@@ -400,35 +400,13 @@ class VirtualCanvas:
 
             if item.kind == IF_FRAGMENT:
                 ifRegionBegin = vacantRow
-                vacantRow = self.__allocateLeadingComment( item, vacantRow, column )
-                self.__allocateAndSet( vacantRow, column, IfCell( item, self, column, vacantRow ) )
-
-                # Memorize the No-branch endpoint
-                openEnd = [vacantRow, column + 1]
+                openEnd = [vacantRow, column]
                 vacantRow += 1
 
-                # Allocate Yes-branch
-                branchLayout = VirtualCanvas( self.settings, column, vacantRow, self )
-                branchLayout.isNoScope = True
-                branchLayout.layoutSuite( 0, item.suite, CellElement.NO_SCOPE, None, 0 )
-
-                # Insert the branch layout
-                self.__allocateAndSet( vacantRow, column, branchLayout )
-
-                self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ],
-                                       ConnectorCell( [ (ConnectorCell.WEST,
-                                                         ConnectorCell.SOUTH) ],
-                                                      self, openEnd[ 1 ], openEnd[ 0 ] ) )
-                if item.sideComment:
-                    self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ] + 1,
-                                           SideCommentCell( item, self, openEnd[ 1 ] + 1, openEnd[ 0 ] ) )
-                openEnd[ 0 ] += 1
-
                 branchEndStack = []
-                branchEndStack.append( (vacantRow + 1, column) )
 
                 # Handle the elif and else branches
-                for elifBranch in item.elifParts:
+                for elifBranch in item.parts:
                     if elifBranch.condition:
                         # This is the elif ...
                         openEnd[ 0 ] = self.__allocateLeadingComment( elifBranch, openEnd[ 0 ], openEnd[ 1 ] )
