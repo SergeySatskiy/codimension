@@ -610,9 +610,33 @@ class VirtualCanvas:
             if yBelow:
                 self.__allocateAndSet( vacantRow, 1,
                                        ConnectorCell( CONN_N_S, self, 1, vacantRow ) )
+                vacantRow += 1
+                self.__allocateAndSet( vacantRow, 1,
+                                       ConnectorCell( CONN_N_W, self, 1, vacantRow ) )
+                if self.__isTerminalCell( vacantRow - 1, 0 ) or \
+                   self.__isVacantCell( vacantRow - 1, 0 ):
+                    self.__allocateAndSet( vacantRow, 0,
+                                           ConnectorCell( CONN_E_S, self, 0, vacantRow ) )
+                else:
+                    self.__allocateAndSet( vacantRow, 0,
+                                           ConnectorCell( [ (ConnectorCell.NORTH,
+                                                             ConnectorCell.SOUTH),
+                                                            (ConnectorCell.EAST,
+                                                             ConnectorCell.CENTER) ], self, 0, vacantRow ) )
+                vacantRow += 1
             else:
                 self.__allocateAndSet( vacantRow, 0,
                                        ConnectorCell( CONN_N_S, self, 0, vacantRow ) )
+                if not self.__isTerminalCell( vacantRow - 1, 1 ) and \
+                   not self.__isVacantCell( vacantRow - 1, 1 ):
+                    self.__allocateAndSet( vacantRow, 1,
+                                           ConnectorCell( CONN_N_W, self, 1, vacantRow ) )
+                    self.__allocateAndSet( vacantRow, 0,
+                                           ConnectorCell( [ (ConnectorCell.NORTH,
+                                                             ConnectorCell.SOUTH),
+                                                            (ConnectorCell.EAST,
+                                                             ConnectorCell.CENTER) ], self, 0, vacantRow ) )
+                    vacantRow += 1
         else:
             if nBranch.kind == CellElement.VCANVAS:
                 if yBelow:
