@@ -856,12 +856,19 @@ class VirtualCanvas:
             for cell in row:
                 if self.settings.debug:
                     pen = QPen( Qt.DotLine )
-                    pen.setColor( QColor( 0, 255, 0, 255 ) )
                     pen.setWidth( 1 )
-                    scene.addLine( currentX, currentY, currentX + cell.width, currentY, pen )
-                    scene.addLine( currentX, currentY, currentX, currentY + cell.height, pen )
-                    scene.addLine( currentX, currentY + cell.height, currentX + cell.width, currentY + cell.height, pen )
-                    scene.addLine( currentX + cell.width, currentY, currentX + cell.width, currentY + cell.height, pen )
+                    if cell.kind == CellElement.VCANVAS:
+                        pen.setColor( QColor( 255, 0, 0, 255 ) )
+                        scene.addLine( currentX + 1, currentY + 1, currentX + cell.width - 2, currentY + 1, pen )
+                        scene.addLine( currentX + 1, currentY + 1, currentX + 1, currentY + cell.height - 2, pen )
+                        scene.addLine( currentX + 1, currentY + cell.height - 2, currentX + cell.width - 2, currentY + cell.height - 2, pen )
+                        scene.addLine( currentX + cell.width - 2, currentY + 1, currentX + cell.width - 2, currentY + cell.height - 2, pen )
+                    else:
+                        pen.setColor( QColor( 0, 255, 0, 255 ) )
+                        scene.addLine( currentX, currentY, currentX + cell.width, currentY, pen )
+                        scene.addLine( currentX, currentY, currentX, currentY + cell.height, pen )
+                        scene.addLine( currentX, currentY + cell.height, currentX + cell.width, currentY + cell.height, pen )
+                        scene.addLine( currentX + cell.width, currentY, currentX + cell.width, currentY + cell.height, pen )
                 cell.draw( scene, currentX, currentY )
                 currentX += cell.width
             currentY += height
