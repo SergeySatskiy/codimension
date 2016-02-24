@@ -29,6 +29,7 @@ from PyQt4.QtGui import ( QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
                           QGraphicsSimpleTextItem )
 from PyQt4.QtSvg import QGraphicsSvgItem
 from auxitems import SVGItem, Connector, Text, CMLLabel
+from cml import CMLsw
 
 
 
@@ -1365,7 +1366,12 @@ class IfCell( CellElement, QGraphicsRectItem ):
                                      self.y4 )
         scene.addItem( self.hConnector )
 
-        self.rightLabel = Text( s, "N" )
+        yBelow = CMLsw.match( self.ref.leadingCMLComments ) is not None
+        if yBelow:
+            self.rightLabel = Text( s, "N" )
+        else:
+            self.rightLabel = Text( s, "Y" )
+
         self.rightLabel.setPos( self.x4 + 2,
                                 self.y4 - self.rightLabel.boundingRect().height() - 2 )
         scene.addItem( self.rightLabel )
