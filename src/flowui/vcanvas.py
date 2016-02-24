@@ -399,6 +399,36 @@ class VirtualCanvas:
                 continue
 
             if item.kind == IF_FRAGMENT:
+
+                lastNonElseIndex = len( item.parts ) - 1
+                for index in xrange( len( item.parts ) ):
+                    if item.parts[ index ].condition is None:
+                        lastNonElseIndex = index
+                        break
+
+                canvas = VirtualCanvas( self.settings, 0, 0, self )
+                canvas.isNoScope = True
+
+                if lastNonElseIndex == len( item.parts ) - 1:
+                    # There is no else
+                    canvas = self.layoutIfBranch( item.parts[ lastNonElseIndex ], None )
+                else:
+                    canvas = self.layoutIfBranch( item.parts[ lastNonElseIndex ],
+                                                  item.parts[ -1 ] )
+
+                index = lastNonElseIndex - 1
+                while index >= 0:
+                    tempCanvas = VirtualCanvas( self.settings, 0, 0, self )
+                    tempCanvas.isNoScope = True
+                    tempCanvas.layoutIfBranch( item.parts[ index ], canvas )
+                    canvas = tempCanvas
+                    index -= 1
+
+                self.__allocateAndSet( vacantRow, 0, canvas )
+                vacantRow += 1
+                continue
+
+
                 ifRegionBegin = vacantRow
                 openEnd = [vacantRow, column]
                 vacantRow += 1
@@ -540,6 +570,74 @@ class VirtualCanvas:
             # end of for loop
 
         return vacantRow
+
+
+    def layoutIfBranch( self, yBranch, nBranch ):
+        " Used in 'if' statements processing "
+        # It is always called when a layout is empty
+        vacantRow = self.__allocateLeadingComment( yBranch, 0, 0 )
+        self.__allocateAndSet( vacantRow, 0, IfCell( yBranch, self, 0, vacantRow ) )
+
+        self.__allocateAndSet( vacantRow, 1,
+                               ConnectorCell( CONN_W_S, self, 1, vacantRow ) )
+
+        if yBranch.sideComment:
+            self.__allocateAndSet( vacantRow, 2,
+                                   SideCommentCell( yBranch, self, 2, vacantRow ) )
+        vacantRow += 1
+
+        # Test if there is a switch of the branches
+        yBelow = CMLsw.match( yBranch.leadingCMLComments ) is not None
+
+        # Allocate the YES branch
+        if yBelow:
+            branchLayout = VirtualCanvas( self.settings, 0, vacantRow, self )
+        else:
+            branchLayout = VirtualCanvas( self.settings, 1, vacantRow, self )
+        branchLayout.isNoScope = True
+        branchLayout.layoutSuite( 0, yBranch.suite, CellElement.NO_SCOPE, None, 0 )
+
+        if yBelow:
+            self.__allocateAndSet( vacantRow, 0, branchLayout )
+        else:
+            self.__allocateAndSet( vacantRow, 1, branchLayout )
+
+
+        # nBranch could be: None: for absent of else
+        #                   ifPart: present else
+        #                   vcanvas: other elif
+        if nBranch is None:
+            if yBelow:
+                self.__allocateAndSet( vacantRow, 1,
+                                       ConnectorCell( CONN_N_S, self, 1, vacantRow ) )
+            else:
+                self.__allocateAndSet( vacantRow, 0,
+                                       ConnectorCell( CONN_N_S, self, 0, vacantRow ) )
+        else:
+            if nBranch.kind == CellElement.VCANVAS:
+                if yBelow:
+                    self.__allocateAndSet( vacantRow, 1, nBranch )
+                else:
+                    self.__allocateAndSet( vacantRow, 0, nBranch )
+            else:
+                # This is else suite
+                if yBelow:
+                    branchLayout = VirtualCanvas( self.settings, 1, vacantRow, self )
+                else:
+                    branchLayout = VirtualCanvas( self.settings, 0, vacantRow, self )
+                branchLayout.isNoScope = True
+                branchLayout.layoutSuite( 0, nBranch.suite, CellElement.NO_SCOPE, None, 0 )
+
+                if yBelow:
+                    self.__allocateAndSet( vacantRow, 1, branchLayout )
+                else:
+                    self.__allocateAndSet( vacantRow, 0, branchLayout )
+
+        vacantRow += 1
+
+        self.dependentRegions.append( (0, vacantRow - 1) )
+        return
+
 
     def layout( self, cf, scopeKind = CellElement.FILE_SCOPE,
                           rowsToAllocate = 1 ):
