@@ -1308,6 +1308,7 @@ class IfCell( CellElement, QGraphicsRectItem ):
         self.vConnector = None
         self.hConnector = None
         self.rightLabel = None
+        self.yBelow = False
 
         # To make double click delivered
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
@@ -1366,8 +1367,8 @@ class IfCell( CellElement, QGraphicsRectItem ):
                                      self.y4 )
         scene.addItem( self.hConnector )
 
-        yBelow = CMLsw.match( self.ref.leadingCMLComments ) is not None
-        if yBelow:
+        self.yBelow = CMLsw.match( self.ref.leadingCMLComments ) is not None
+        if self.yBelow:
             self.rightLabel = Text( s, "N" )
         else:
             self.rightLabel = Text( s, "Y" )
@@ -1405,6 +1406,11 @@ class IfCell( CellElement, QGraphicsRectItem ):
         painter.drawPolygon( QPointF(self.x1, self.y1), QPointF(self.x2, self.y2),
                              QPointF(self.x3, self.y3), QPointF(self.x4, self.y4),
                              QPointF(self.x5, self.y5), QPointF(self.x6, self.y6) )
+        if self.yBelow:
+            # Non-default, need additional mark
+            painter.setBrush( QBrush( QColor( 0, 0, 255 ) ) )
+            painter.setPen( QPen( QColor( 0, 0, 255 ) ) )
+            painter.drawEllipse( QPointF(self.x4 - 6, self.y4), 3, 3 )
 
         # Draw the text in the rectangle
         pen = QPen( s.boxFGColor )
