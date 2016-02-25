@@ -403,7 +403,7 @@ class VirtualCanvas:
                 lastNonElseIndex = len( item.parts ) - 1
                 for index in xrange( len( item.parts ) ):
                     if item.parts[ index ].condition is None:
-                        lastNonElseIndex = index
+                        lastNonElseIndex = index - 1
                         break
 
                 canvas = VirtualCanvas( self.settings, 0, 0, self )
@@ -411,10 +411,10 @@ class VirtualCanvas:
 
                 if lastNonElseIndex == len( item.parts ) - 1:
                     # There is no else
-                    canvas = self.layoutIfBranch( item.parts[ lastNonElseIndex ], None )
+                    canvas.layoutIfBranch( item.parts[ lastNonElseIndex ], None )
                 else:
-                    canvas = self.layoutIfBranch( item.parts[ lastNonElseIndex ],
-                                                  item.parts[ -1 ] )
+                    canvas.layoutIfBranch( item.parts[ lastNonElseIndex ],
+                                           item.parts[ lastNonElseIndex + 1 ] )
 
                 index = lastNonElseIndex - 1
                 while index >= 0:
@@ -424,136 +424,8 @@ class VirtualCanvas:
                     canvas = tempCanvas
                     index -= 1
 
-                self.__allocateAndSet( vacantRow, 0, canvas )
+                self.__allocateAndSet( vacantRow, 1, canvas )
                 vacantRow += 1
-                continue
-
-
-                ifRegionBegin = vacantRow
-                openEnd = [vacantRow, column]
-                vacantRow += 1
-
-                branchEndStack = []
-
-                # Handle the elif and else branches
-                for elifBranch in item.parts:
-                    if elifBranch.condition:
-                        # This is the elif ...
-                        openEnd[ 0 ] = self.__allocateLeadingComment( elifBranch, openEnd[ 0 ], openEnd[ 1 ] )
-                        self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ], IfCell( elifBranch, self, openEnd[ 1 ], openEnd[ 0 ] ) )
-
-                        # Memorize the new open end
-                        newOpenEnd = [openEnd[ 0 ], openEnd[ 1 ] + 1]
-                        openEnd[ 0 ] += 1
-
-                        # Allocate Yes-branch
-                        branchLayout = VirtualCanvas( self.settings, openEnd[ 1 ], openEnd[ 0 ], self )
-                        branchLayout.isNoScope = True
-                        branchLayout.layoutSuite( 0, elifBranch.suite, CellElement.NO_SCOPE, None, 0 )
-
-                        # Insert the branch layout
-                        self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ], branchLayout )
-
-                        self.__allocateAndSet( newOpenEnd[ 0 ], newOpenEnd[ 1 ],
-                                               ConnectorCell( CONN_W_S,
-                                                              self, newOpenEnd[ 1 ], newOpenEnd[ 0 ] ) )
-                        if elifBranch.sideComment:
-                            self.__allocateAndSet( newOpenEnd[ 0 ], newOpenEnd[ 1 ] + 1,
-                                                   SideCommentCell( elifBranch, self, newOpenEnd[ 1 ] + 1, newOpenEnd[ 0 ] ) )
-                        newOpenEnd[ 0 ] += 1
-
-                        branchEndStack.append( (openEnd[ 0 ] + 1, openEnd[ 1 ]) )
-                        openEnd = newOpenEnd
-                    else:
-                        # This is the else which is always the last
-                        if elifBranch.leadingComment:
-                            # Draw it as an independent comment
-                            self.__allocateCell( openEnd[ 0 ], openEnd[ 1 ] + 1 )
-                            self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( CONN_N_S,
-                                                                                        self, openEnd[ 1 ],
-                                                                                        openEnd[ 0 ] )
-                            cItem = IndependentCommentCell( elifBranch.leadingComment,
-                                                            self, openEnd[ 1 ] + 1, openEnd[ 0 ] )
-                            cItem.leadingForElse = True
-                            self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] + 1 ] = cItem
-                            openEnd[ 0 ] += 1
-                        if elifBranch.sideComment:
-                            # Draw it as an independent comment
-                            self.__allocateCell( openEnd[ 0 ], openEnd[ 1 ] + 1 )
-                            self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] ] = ConnectorCell( CONN_N_S,
-                                                                                        self, openEnd[ 1 ],
-                                                                                        openEnd[ 0 ] )
-                            cItem = IndependentCommentCell( elifBranch.sideComment,
-                                                            self, openEnd[ 1 ] + 1, openEnd[ 0 ] )
-                            cItem.sideForElse = True
-                            self.cells[ openEnd[ 0 ] ][ openEnd[ 1 ] + 1 ] = cItem
-                            openEnd[ 0 ] += 1
-
-                        branchLayout = VirtualCanvas( self.settings, openEnd[ 1 ], openEnd[ 0 ], self )
-                        branchLayout.isNoScope = True
-                        branchLayout.layoutSuite( 0, elifBranch.suite, CellElement.NO_SCOPE, None, 0 )
-                        self.__allocateAndSet( openEnd[ 0 ], openEnd[ 1 ], branchLayout )
-
-                        # replace the open end
-                        openEnd[ 0 ] += 1
-
-                branchEndStack.append( openEnd )
-                mainBranch = branchEndStack.pop( 0 )
-                mainRow = mainBranch[ 0 ]
-                mainCol = mainBranch[ 1 ]
-
-                while branchEndStack:
-                    srcRow, srcCol = branchEndStack.pop( 0 )
-
-                    # Adjust the main branch
-                    if self.__isTerminalCell( mainRow - 1, mainCol ) or \
-                       self.__isVacantCell( mainRow - 1, mainCol ):
-                        if mainRow < srcRow:
-                            mainRow = srcRow
-                    else:
-                        while mainRow < srcRow:
-                            self.__allocateAndSet( mainRow, mainCol,
-                                                   ConnectorCell( CONN_N_S, self, mainCol, mainRow ) )
-                            mainRow += 1
-
-                    if self.__isTerminalCell( srcRow - 1, srcCol ):
-                        # No need to make any connections from a terminated branch
-                        continue
-
-                    # Do the source branch adjustment
-                    while srcRow < mainRow:
-                        self.__allocateAndSet( srcRow, srcCol,
-                                               ConnectorCell( CONN_N_S, self, srcCol, srcRow ) )
-                        srcRow += 1
-
-                    # Do the horizontal connection
-                    self.__allocateAndSet( srcRow, srcCol,
-                                           ConnectorCell( CONN_N_W,
-                                                          self, srcCol, srcRow ) )
-                    srcCol -= 1
-                    while mainCol < srcCol:
-                        self.__allocateAndSet( srcRow, srcCol,
-                                               ConnectorCell( CONN_E_W, self, srcCol, srcRow ) )
-                        srcCol -= 1
-
-                    # Do the proper main branch connection
-                    if self.__isTerminalCell( mainRow - 1, mainCol ) or \
-                       self.__isVacantCell( mainRow - 1, mainCol ):
-                        self.__allocateAndSet( mainRow, mainCol,
-                                               ConnectorCell( CONN_E_S, self, mainCol, mainRow ) )
-                    else:
-                        self.__allocateAndSet( mainRow, mainCol,
-                                               ConnectorCell( [ (ConnectorCell.NORTH,
-                                                                 ConnectorCell.SOUTH),
-                                                                (ConnectorCell.EAST,
-                                                                 ConnectorCell.CENTER) ], self, mainCol, mainRow ) )
-                    mainRow += 1
-
-                vacantRow = mainRow
-
-                # Memorize the inclusive if-statement region. It is used at the
-                # further rendering stage
-                self.dependentRegions.append( (ifRegionBegin, vacantRow - 1) )
                 continue
 
             # Below are the single cell fragments possibly with comments
@@ -602,7 +474,6 @@ class VirtualCanvas:
         else:
             self.__allocateAndSet( vacantRow, 1, branchLayout )
 
-
         # nBranch could be: None: for absent of else
         #                   ifPart: present else
         #                   vcanvas: other elif
@@ -623,12 +494,12 @@ class VirtualCanvas:
                                                              ConnectorCell.SOUTH),
                                                             (ConnectorCell.EAST,
                                                              ConnectorCell.CENTER) ], self, 0, vacantRow ) )
-                vacantRow += 1
             else:
                 self.__allocateAndSet( vacantRow, 0,
                                        ConnectorCell( CONN_N_S, self, 0, vacantRow ) )
-                if not self.__isTerminalCell( vacantRow - 1, 1 ) and \
-                   not self.__isVacantCell( vacantRow - 1, 1 ):
+                if not self.__isTerminalCell( vacantRow, 1 ) and \
+                   not self.__isVacantCell( vacantRow, 1 ):
+                    vacantRow += 1
                     self.__allocateAndSet( vacantRow, 1,
                                            ConnectorCell( CONN_N_W, self, 1, vacantRow ) )
                     self.__allocateAndSet( vacantRow, 0,
@@ -636,7 +507,6 @@ class VirtualCanvas:
                                                              ConnectorCell.SOUTH),
                                                             (ConnectorCell.EAST,
                                                              ConnectorCell.CENTER) ], self, 0, vacantRow ) )
-                    vacantRow += 1
         else:
             if nBranch.kind == CellElement.VCANVAS:
                 if yBelow:
@@ -644,22 +514,70 @@ class VirtualCanvas:
                 else:
                     self.__allocateAndSet( vacantRow, 0, nBranch )
             else:
-                # This is else suite
+                # This is 'else' suite
+                scopeCommentRows = 0
+                if nBranch.leadingComment:
+                    scopeCommentRows += 1
+                if nBranch.sideComment:
+                    scopeCommentRows += 1
+
                 if yBelow:
                     branchLayout = VirtualCanvas( self.settings, 1, vacantRow, self )
                 else:
                     branchLayout = VirtualCanvas( self.settings, 0, vacantRow, self )
+
+                if nBranch.leadingComment:
+                    # Draw as an independent comment: insert into the layout
+                    conn = ConnectorCell( CONN_N_S, branchLayout, 0, 0 )
+                    cItem = IndependentCommentCell( nBranch.leadingComment, branchLayout, 1, 0 )
+                    branchLayout.cells.append( [] )
+                    branchLayout.cells[ 0 ].append( conn )
+                    branchLayout.cells[ 0 ].append( cItem )
+
+                if nBranch.sideComment:
+                    # Draw as an independent comment: insert into the layout
+                    rowIndex = scopeCommentRows - 1
+                    conn = ConnectorCell( CONN_N_S, branchLayout, 0, rowIndex )
+                    cItem = IndependentCommentCell( nBranch.sideComment, branchLayout, 1, rowIndex )
+                    cItem.sideForElse = True
+                    branchLayout.cells.append( [] )
+                    branchLayout.cells[ rowIndex ].append( conn )
+                    branchLayout.cells[ rowIndex ].append( cItem )
+
                 branchLayout.isNoScope = True
-                branchLayout.layoutSuite( 0, nBranch.suite, CellElement.NO_SCOPE, None, 0 )
+                branchLayout.layoutSuite( scopeCommentRows, nBranch.suite, CellElement.NO_SCOPE, None, 0 )
 
                 if yBelow:
                     self.__allocateAndSet( vacantRow, 1, branchLayout )
                 else:
                     self.__allocateAndSet( vacantRow, 0, branchLayout )
 
-        vacantRow += 1
+            # Finilizing connectors
+            leftTerminal = self.__isTerminalCell( vacantRow, 0 ) or self.__isVacantCell( vacantRow, 0 )
+            rightTerminal = self.__isTerminalCell( vacantRow, 1 ) or self.__isVacantCell( vacantRow, 1 )
 
-        self.dependentRegions.append( (0, vacantRow - 1) )
+            if leftTerminal and rightTerminal:
+                pass    # No need to do anything
+            elif leftTerminal:
+                vacantRow += 1
+                self.__allocateAndSet( vacantRow, 1,
+                                       ConnectorCell( CONN_N_W, self, 1, vacantRow ) )
+                self.__allocateAndSet( vacantRow, 0,
+                                       ConnectorCell( CONN_E_S, self, 0, vacantRow ) )
+            elif rightTerminal:
+                pass    # No need to do anything
+            else:
+                # Both are non terminal
+                vacantRow += 1
+                self.__allocateAndSet( vacantRow, 1,
+                                       ConnectorCell( CONN_N_W, self, 1, vacantRow ) )
+                self.__allocateAndSet( vacantRow, 0,
+                                       ConnectorCell( [ (ConnectorCell.NORTH,
+                                                         ConnectorCell.SOUTH),
+                                                        (ConnectorCell.EAST,
+                                                         ConnectorCell.CENTER) ], self, 0, vacantRow ) )
+
+        self.dependentRegions.append( (0, vacantRow) )
         return
 
 
