@@ -610,9 +610,33 @@ class VirtualCanvas:
             if yBelow:
                 self.__allocateAndSet( vacantRow, 1,
                                        ConnectorCell( CONN_N_S, self, 1, vacantRow ) )
+                vacantRow += 1
+                self.__allocateAndSet( vacantRow, 1,
+                                       ConnectorCell( CONN_N_W, self, 1, vacantRow ) )
+                if self.__isTerminalCell( vacantRow - 1, 0 ) or \
+                   self.__isVacantCell( vacantRow - 1, 0 ):
+                    self.__allocateAndSet( vacantRow, 0,
+                                           ConnectorCell( CONN_E_S, self, 0, vacantRow ) )
+                else:
+                    self.__allocateAndSet( vacantRow, 0,
+                                           ConnectorCell( [ (ConnectorCell.NORTH,
+                                                             ConnectorCell.SOUTH),
+                                                            (ConnectorCell.EAST,
+                                                             ConnectorCell.CENTER) ], self, 0, vacantRow ) )
+                vacantRow += 1
             else:
                 self.__allocateAndSet( vacantRow, 0,
                                        ConnectorCell( CONN_N_S, self, 0, vacantRow ) )
+                if not self.__isTerminalCell( vacantRow - 1, 1 ) and \
+                   not self.__isVacantCell( vacantRow - 1, 1 ):
+                    self.__allocateAndSet( vacantRow, 1,
+                                           ConnectorCell( CONN_N_W, self, 1, vacantRow ) )
+                    self.__allocateAndSet( vacantRow, 0,
+                                           ConnectorCell( [ (ConnectorCell.NORTH,
+                                                             ConnectorCell.SOUTH),
+                                                            (ConnectorCell.EAST,
+                                                             ConnectorCell.CENTER) ], self, 0, vacantRow ) )
+                    vacantRow += 1
         else:
             if nBranch.kind == CellElement.VCANVAS:
                 if yBelow:
@@ -856,12 +880,19 @@ class VirtualCanvas:
             for cell in row:
                 if self.settings.debug:
                     pen = QPen( Qt.DotLine )
-                    pen.setColor( QColor( 0, 255, 0, 255 ) )
                     pen.setWidth( 1 )
-                    scene.addLine( currentX, currentY, currentX + cell.width, currentY, pen )
-                    scene.addLine( currentX, currentY, currentX, currentY + cell.height, pen )
-                    scene.addLine( currentX, currentY + cell.height, currentX + cell.width, currentY + cell.height, pen )
-                    scene.addLine( currentX + cell.width, currentY, currentX + cell.width, currentY + cell.height, pen )
+                    if cell.kind == CellElement.VCANVAS:
+                        pen.setColor( QColor( 255, 0, 0, 255 ) )
+                        scene.addLine( currentX + 1, currentY + 1, currentX + cell.width - 2, currentY + 1, pen )
+                        scene.addLine( currentX + 1, currentY + 1, currentX + 1, currentY + cell.height - 2, pen )
+                        scene.addLine( currentX + 1, currentY + cell.height - 2, currentX + cell.width - 2, currentY + cell.height - 2, pen )
+                        scene.addLine( currentX + cell.width - 2, currentY + 1, currentX + cell.width - 2, currentY + cell.height - 2, pen )
+                    else:
+                        pen.setColor( QColor( 0, 255, 0, 255 ) )
+                        scene.addLine( currentX, currentY, currentX + cell.width, currentY, pen )
+                        scene.addLine( currentX, currentY, currentX, currentY + cell.height, pen )
+                        scene.addLine( currentX, currentY + cell.height, currentX + cell.width, currentY + cell.height, pen )
+                        scene.addLine( currentX + cell.width, currentY, currentX + cell.width, currentY + cell.height, pen )
                 cell.draw( scene, currentX, currentY )
                 currentX += cell.width
             currentY += height
