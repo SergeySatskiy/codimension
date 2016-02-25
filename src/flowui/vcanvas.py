@@ -775,6 +775,9 @@ class VirtualCanvas:
         for cell in self.cells[ -1 ]:
             if allButLastHeight + cell.height < maxHeight:
                 cell.height = maxHeight - allButLastHeight
+                if cell.kind == CellElement.VCANVAS:
+                    if not cell.hasScope():
+                        cell.adjustLastCellHeight( cell.height )
         return
 
     def setEditor( self, editor ):
