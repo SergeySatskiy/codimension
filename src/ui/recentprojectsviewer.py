@@ -603,7 +603,7 @@ class RecentProjectsViewer( QWidget ):
         if self.__projectContextItem.isCurrent():
             # This is the current project - it can be edited
             project = GlobalData().project
-            dialog = ProjectPropertiesDialog( project )
+            dialog = ProjectPropertiesDialog( project, self )
             if dialog.exec_() == QDialog.Accepted:
                 importDirs = []
                 for index in xrange( dialog.importDirList.count() ):
@@ -626,7 +626,7 @@ class RecentProjectsViewer( QWidget ):
         else:
             # This is not the current project - it can be viewed
             fName = self.__projectContextItem.getFilename()
-            dialog = ProjectPropertiesDialog( fName )
+            dialog = ProjectPropertiesDialog( fName, self )
             dialog.exec_()
         return
 

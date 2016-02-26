@@ -3017,7 +3017,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
                 return
         else:
             what = ImportsDiagramDialog.SingleFile
-        dlg = ImportsDiagramDialog( what, self.getFileName() )
+        dlg = ImportsDiagramDialog( what, self.getFileName(), self )
         if dlg.exec_() == QDialog.Accepted:
             # Should proceed with the diagram generation
             self.__generateImportDiagram( what, dlg.options )
@@ -3195,7 +3195,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         profilerParams = Settings().getProfilerSettings()
         debuggerParams = Settings().getDebuggerSettings()
         dlg = RunDialog( fileName, params, termType,
-                         profilerParams, debuggerParams, "Profile" )
+                         profilerParams, debuggerParams, "Profile", self )
         if dlg.exec_() == QDialog.Accepted:
             GlobalData().addRunParams( fileName, dlg.runParams )
             if dlg.termType != termType:
@@ -3229,7 +3229,7 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         profilerParams = Settings().getProfilerSettings()
         debuggerParams = Settings().getDebuggerSettings()
         dlg = RunDialog( fileName, params, termType,
-                         profilerParams, debuggerParams, "Debug" )
+                         profilerParams, debuggerParams, "Debug", self )
         if dlg.exec_() == QDialog.Accepted:
             GlobalData().addRunParams( fileName, dlg.runParams )
             if dlg.termType != termType:

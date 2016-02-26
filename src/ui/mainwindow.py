@@ -1796,7 +1796,8 @@ class CodimensionMainWindow( QMainWindow ):
                 [ MainWindowTabWidgetBase.PlainTextEditor ]:
             searchText = currentWidget.getEditor().getSearchText()
 
-        dlg = FindInFilesDialog( FindInFilesDialog.inProject, searchText )
+        dlg = FindInFilesDialog( FindInFilesDialog.inProject, searchText,
+                                 "", [], self )
         dlg.exec_()
         if dlg.searchResults:
             self.displayFindInFiles( dlg.searchRegexp, dlg.searchResults )
@@ -1894,7 +1895,7 @@ class CodimensionMainWindow( QMainWindow ):
         if editorsManager.closeRequest() == False:
             return
 
-        dialog = ProjectPropertiesDialog()
+        dialog = ProjectPropertiesDialog( None, self )
         if dialog.exec_() != QDialog.Accepted:
             return
 
@@ -2458,20 +2459,18 @@ class CodimensionMainWindow( QMainWindow ):
         self.__bottomSideBar.raise_()
         return
 
-    @staticmethod
-    def findNameClicked():
+    def findNameClicked( self ):
         " Find name dialog should come up "
         try:
-            FindNameDialog().exec_()
+            FindNameDialog( "", self ).exec_()
         except Exception, exc:
             logging.error( str( exc ) )
         return
 
-    @staticmethod
-    def findFileClicked():
+    def findFileClicked( self ):
         " Find file dialog should come up "
         try:
-            FindFileDialog().exec_()
+            FindFileDialog( self ).exec_()
         except Exception, exc:
             logging.error( str( exc ) )
         return
@@ -2485,7 +2484,8 @@ class CodimensionMainWindow( QMainWindow ):
 
     def __onImportDgmTuned( self ):
         " Runs the settings dialog first "
-        dlg = ImportsDiagramDialog( ImportsDiagramDialog.ProjectFiles )
+        dlg = ImportsDiagramDialog( ImportsDiagramDialog.ProjectFiles,
+                                    "", self )
         if dlg.exec_() == QDialog.Accepted:
             self.__generateImportDiagram( dlg.options )
         return

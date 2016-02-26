@@ -440,7 +440,8 @@ class RunManager( QObject ):
             profilerParams = Settings().getProfilerSettings()
             debuggerParams = Settings().getDebuggerSettings()
             dlg = RunDialog( path, params, termType,
-                             profilerParams, debuggerParams, "Run" )
+                             profilerParams, debuggerParams, "Run",
+                             self.__mainWindow )
             if dlg.exec_() != QDialog.Accepted:
                 return
             GlobalData().addRunParams( path, dlg.runParams )

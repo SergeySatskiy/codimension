@@ -551,7 +551,7 @@ class ProjectViewer( QWidget ):
         " Triggered when the project properties button is clicked "
 
         project = GlobalData().project
-        dialog = ProjectPropertiesDialog( project )
+        dialog = ProjectPropertiesDialog( project, self )
         if dialog.exec_() == QDialog.Accepted:
             importDirs = []
             for index in xrange( dialog.importDirList.count() ):
@@ -1200,18 +1200,20 @@ class ProjectViewer( QWidget ):
             projectDir = GlobalData().project.getProjectDir()
             if projectDir == self.__prjContextItem.getPath():
                 what = ImportsDiagramDialog.ProjectFiles
-                dlg = ImportsDiagramDialog( what )
+                dlg = ImportsDiagramDialog( what, "", self )
                 tooltip = "Generated for the project"
             else:
                 what = ImportsDiagramDialog.DirectoryFiles
                 dlg = ImportsDiagramDialog( what,
-                                            self.__prjContextItem.getPath() )
+                                            self.__prjContextItem.getPath(),
+                                            self )
                 tooltip = "Generated for directory " + \
                           self.__prjContextItem.getPath()
         else:
             what = ImportsDiagramDialog.SingleFile
             dlg = ImportsDiagramDialog( what,
-                                        self.__prjContextItem.getPath() )
+                                        self.__prjContextItem.getPath(),
+                                        self )
             tooltip = "Generated for file " + self.__prjContextItem.getPath()
 
         if dlg.exec_() == QDialog.Accepted:
