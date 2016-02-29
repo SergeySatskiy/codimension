@@ -1,5 +1,6 @@
 
 Essential links:
+* [Presentation of the technology and the tool] (http://satsky.spb.ru/codimension/vp/Visualization.html)
 * [Project home page] (http://satsky.spb.ru/codimension/codimensionEng.php)
 * [Installation instructions] (http://satsky.spb.ru/codimension/installationEng.php)
 * [Running Codimension from a git clone] (http://satsky.spb.ru/codimension/runFromGitEng.php)
