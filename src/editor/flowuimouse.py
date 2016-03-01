@@ -108,7 +108,7 @@ class CFSceneMouseMixin:
                 event.accept()
                 return
             # Item is not selected and should be added or ignored
-            self.__addToSelection( self, logicalItem )
+            self.__addToSelection( logicalItem )
             event.accept()
             return
 
