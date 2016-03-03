@@ -179,8 +179,9 @@ class QuickHelpWidget( TextTabWidget ):
         <tr>
           <td bgcolor="#E9E9F3">F12</td>
           <td bgcolor="#F6F4E4">Make the cursor line the first visible</td>
-          <td bgcolor="#E9E9F3"></td>
-          <td bgcolor="#F6F4E4"></td>
+          <td bgcolor="#E9E9F3">Ctrl+`</td>
+          <td bgcolor="#F6F4E4">Select a graphics pane item which corresponds the current text cursor 
+                                position and scroll the graphics view if needed</td>
         </tr>
       </table>
     </p>

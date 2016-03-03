@@ -199,8 +199,7 @@ class TextEditor( ScintillaWrapper ):
                               Qt.Key_M:             self.onJumpToMiddle,
                               Qt.Key_B:             self.onJumpToBottom,
                               Qt.Key_Up:            self.selectParagraphUp,
-                              Qt.Key_Down:          self.selectParagraphDown,
-                              Qt.Key_B:             self.highlightInCFlow
+                              Qt.Key_Down:          self.selectParagraphDown
                             },
             SHIFT:          { Qt.Key_Delete:        self.onShiftDel,
                               Qt.Key_Tab:           self.dedentLine,
@@ -225,7 +224,8 @@ class TextEditor( ScintillaWrapper ):
                               Qt.Key_0:             self._parent.onZoomReset,
                               Qt.Key_Home:          self.onFirstChar,
                               Qt.Key_End:           self.onLastChar,
-                              Qt.Key_B:             self.highlightInOutline
+                              Qt.Key_B:             self.highlightInOutline,
+                              Qt.Key_QuoteLeft:     self.highlightInCFlow
                             },
             ALT:            { Qt.Key_Left:          self.wordPartLeft,
                               Qt.Key_Right:         self.wordPartRight,
