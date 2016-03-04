@@ -42,7 +42,7 @@ class SplashScreen( QSplashScreen ):
         self.labelAlignment = \
             Qt.Alignment( Qt.AlignBottom | Qt.AlignRight | Qt.AlignAbsolute )
 
-        QSplashScreen.__init__( self, PixmapCache().getPixmap( 'splash.png' ) )
+        QSplashScreen.__init__( self, None, PixmapCache().getPixmap( 'splash.png' ) )
 
         self.show()
         QApplication.flush()

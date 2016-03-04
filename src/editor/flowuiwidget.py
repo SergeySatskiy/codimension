@@ -22,7 +22,7 @@
 
 import os.path
 import logging
-from PyQt4.QtCore import Qt, QSize, QTimer, SIGNAL, QDir, QUrl, QSizeF
+from PyQt4.QtCore import Qt, QSize, QTimer, SIGNAL, QDir, QUrl, QSizeF, QRectF
 from PyQt4.QtGui import ( QToolBar, QWidget, QGraphicsView, QPainter,
                           QApplication, QGraphicsScene, QHBoxLayout,
                           QLabel, QTransform, QVBoxLayout, QFrame,
@@ -494,7 +494,11 @@ class FlowUIWidget( QWidget ):
             self.scene.clearSelection()
             item.setSelected( True )
             self.view.centerOn( item )
-            self.view.setFocus()
+            self.setFocus()
+        return
+
+    def setFocus( self ):
+        self.view.setFocus()
         return
 
     def __getDefaultSaveDir( self ):
@@ -653,4 +657,12 @@ class FlowUIWidget( QWidget ):
         self.view.horizontalScrollBar().setValue( hPos )
         self.view.verticalScrollBar().setValue( vPos )
         return
+
+    def getVisibleRect( self ):
+        " Provides the visible rectangle "
+        A = self.view.mapToScene( QPointF( 0, 0 ) )
+        B = self.view.mapToScene( QPointF( self.view.viewport().width(),
+                                           self.view.viewport().height() ) )
+        return QRectF( A, B )
+
 

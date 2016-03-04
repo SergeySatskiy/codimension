@@ -4823,3 +4823,11 @@ class CodimensionMainWindow( QMainWindow ):
         QApplication.restoreOverrideCursor()
         return
 
+    def passFocusToEditor( self ):
+        " Passes the focus to the text editor if it is there "
+        return self.editorsManagerWidget.editorsManager.passFocusToEditor()
+
+    def passFocusToFlow( self ):
+        " Passes the focus to the flow UI if it is there "
+        return self.editorsManagerWidget.editorsManager.passFocusToFlow()
+

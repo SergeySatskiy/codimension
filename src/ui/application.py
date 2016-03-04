@@ -99,13 +99,24 @@ class CodimensionApplication( QApplication ):
     def eventFilter( self, obj, event ):
         """ Event filter to catch ESC application wide;
             Pass focus explicitly on broken window managers when the app
-            is activated """
+            is activated;
+            Catch Ctrl+1 and Ctrl+2 application wide;
+         """
         try:
             eventType = event.type()
             if eventType == KEY_PRESS:
-                if event.key() == Qt.Key_Escape:
+                key = event.key()
+                modifiers = int( event.modifiers() )
+                if key == Qt.Key_Escape:
                     if self.mainWindow:
                         self.mainWindow.hideTooltips()
+                if modifiers == int( Qt.ControlModifier ):
+                    if key == Qt.Key_1:
+                        if self.mainWindow:
+                            return self.mainWindow.passFocusToEditor()
+                    elif key == Qt.Key_2:
+                        if self.mainWindow:
+                            return self.mainWindow.passFocusToFlow()
             elif eventType == APP_ACTIVATE:
                 lastFocus, \
                 beforeMenuBar = self.__areWidgetsAlive( self.__lastFocus,

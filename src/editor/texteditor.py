@@ -3272,6 +3272,15 @@ class TextEditorTabWidget( QWidget, MainWindowTabWidgetBase ):
         self.__flowUI.highlightAtAbsPos( absPos, line, pos )
         return
 
+    def passFocusToFlow( self ):
+        if self.__fileType == UnknownFileType:
+            self.__fileType = self.getFileType()
+        isPythonFile = self.__fileType in [ PythonFileType, Python3FileType ]
+        if isPythonFile:
+            self.__flowUI.setFocus()
+            return True
+        return False
+
 
     # Mandatory interface part is below
 

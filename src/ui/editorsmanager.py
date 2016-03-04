@@ -2500,3 +2500,19 @@ class EditorsManager( QTabWidget ):
                     self.__mainWindow.vcsManager.requestStatus( fileName )
         return
 
+    def passFocusToEditor( self ):
+        " Passes the focus to the text editor if it is there "
+        widget = self.currentWidget()
+        if widget:
+            widget.setFocus()
+            return True
+        return False
+
+    def passFocusToFlow( self ):
+        " Passes the focus to the flow UI if it is there "
+        widget = self.currentWidget()
+        if widget:
+            if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
+                return widget.passFocusToFlow()
+        return False
+

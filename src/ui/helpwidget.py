@@ -183,6 +183,12 @@ class QuickHelpWidget( TextTabWidget ):
           <td bgcolor="#F6F4E4">Select a graphics pane item which corresponds the current text cursor 
                                 position and scroll the graphics view if needed</td>
         </tr>
+        <tr>
+          <td bgcolor="#E9E9F3">Ctrl+1</td>
+          <td bgcolor="#F6F4E4">Move the focus to the text editor</td>
+          <td bgcolor="#E9E9F3">Ctrl+2</td>
+          <td bgcolor="#F6F4E4">Move the focus to the flowchart pane</td>
+        </tr>
       </table>
     </p>
 
