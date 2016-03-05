@@ -20,26 +20,83 @@
 
 " Control flow UI widget: handling keyboard events "
 
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, QPoint
 from PyQt4.QtGui import QGraphicsScene
+from sys import maxint
 
+
+CTRL_SHIFT = int( Qt.ShiftModifier | Qt.ControlModifier )
+SHIFT = int( Qt.ShiftModifier )
+CTRL = int( Qt.ControlModifier )
+ALT = int( Qt.AltModifier )
+CTRL_KEYPAD = int( Qt.KeypadModifier | Qt.ControlModifier )
+NO_MODIFIER = int( Qt.NoModifier )
 
 
 class CFSceneKeyboardMixin:
     " Encapsulates keyboard handling and related functionality "
 
     def __init__( self ):
-        pass
+        self.__hotKeys = {
+                CTRL:   { Qt.Key_QuoteLeft:     self.highlightInText }
+                         }
+        return
 
     def keyPressEvent( self, event ):
         """ Handles the key press event """
         key = event.key()
+        modifiers = int( event.modifiers() )
         if key == Qt.Key_Escape:
             self.clearSelection()
             event.accept()
-        else:
-            QGraphicsScene.keyPressEvent( self, event )
+            return
+
+        if modifiers in self.__hotKeys:
+            if key in self.__hotKeys[ modifiers ]:
+                self.__hotKeys[ modifiers ][ key ]()
+                event.accept()
+                return
+
+        QGraphicsScene.keyPressEvent( self, event )
         return
 
+    def highlightInText( self ):
+        " Sync the text with the graphics "
+        view = self.parent().view
+        visibleRect = view.getVisibleRect()
 
+        firstLine = visibleRect.y()
+
+        candidateAfter = None
+        candidateAfterDistance = maxint
+        candidateBefore = None
+        candidateBeforeDistance = maxint * -1
+        for item in self.items():
+            if item.isProxyItem():
+                continue
+
+            itemY = item.boundingRect().topLeft().y()
+
+            dist = itemY - firstLine
+            if dist > 0:
+                if dist < candidateAfterDistance:
+                    candidateAfterDistance = dist
+                    candidateAfter = item
+            elif dist > candidateBeforeDistance:
+                candidateBeforeDistance = dist
+                candidateBefore = item
+
+        if candidateAfter:
+            self.clearSelection()
+            candidateAfter.setSelected( True )
+            view.horizontalScrollBar().setValue( 0 )
+            view.verticalScrollBar().setValue( candidateAfter.boundingRect().topLeft().y() - 15 )
+            candidateAfter.mouseDoubleClickEvent( None )
+        elif candidateBefore:
+            self.clearSelection()
+            candidateBefore.setSelected( True )
+            view.horizontalScrollBar().setValue( candidateBefore.boundingRect().topLeft().x() - 15 )
+            view.verticalScrollBar().setValue( candidateBefore.boundingRect().topLeft().y() - 15 )
+            candidateBefore.mouseDoubleClickEvent( None )
+        return
 

@@ -22,7 +22,7 @@
 
 import os.path
 import logging
-from PyQt4.QtCore import Qt, QSize, QTimer, SIGNAL, QDir, QUrl, QSizeF, QRectF
+from PyQt4.QtCore import Qt, QSize, QTimer, SIGNAL, QDir, QUrl, QSizeF, QRectF, QPoint
 from PyQt4.QtGui import ( QToolBar, QWidget, QGraphicsView, QPainter,
                           QApplication, QGraphicsScene, QHBoxLayout,
                           QLabel, QTransform, QVBoxLayout, QFrame,
@@ -114,6 +114,13 @@ class CFGraphicsView( QGraphicsView ):
         if newScale != self.__currentFactor:
             self.zoomTo( newScale )
         return
+
+    def getVisibleRect( self ):
+        " Provides the visible rectangle "
+        A = self.mapToScene( QPoint( 0, 0 ) )
+        B = self.mapToScene( QPoint( self.viewport().width(),
+                                     self.viewport().height() ) )
+        return QRectF( A, B )
 
 
 
@@ -657,12 +664,5 @@ class FlowUIWidget( QWidget ):
         self.view.horizontalScrollBar().setValue( hPos )
         self.view.verticalScrollBar().setValue( vPos )
         return
-
-    def getVisibleRect( self ):
-        " Provides the visible rectangle "
-        A = self.view.mapToScene( QPointF( 0, 0 ) )
-        B = self.view.mapToScene( QPointF( self.view.viewport().width(),
-                                           self.view.viewport().height() ) )
-        return QRectF( A, B )
 
 
