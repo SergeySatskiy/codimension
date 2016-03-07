@@ -122,6 +122,64 @@ class CFGraphicsView( QGraphicsView ):
                                      self.viewport().height() ) )
         return QRectF( A, B )
 
+    def scrollTo( self, item ):
+        " Scrolls the view to the item "
+        if item is None:
+            return
+
+        visibleRect = self.getVisibleRect()
+        itemRect = item.boundingRect()
+        if visibleRect.contains( itemRect ):
+            # The item is fully visible
+            return
+
+        # The item is fully visible vertically
+        if itemRect.topLeft().y() >= visibleRect.topLeft().y() and \
+           itemRect.bottomLeft().y() <= visibleRect.bottomLeft().y():
+            self.__hScrollToItem( item )
+            return
+
+        # The item top left is visible
+        if visibleRect.contains( itemRect.topLeft() ):
+            # So far scroll the view vertically anyway
+            self.verticalScrollBar().setValue( itemRect.topLeft().y() - 15 )
+            self.__hScrollToItem( item )
+            return
+
+        # Here: the top left is not visible, so the vertical scrolling is
+        # required
+        self.verticalScrollBar().setValue( itemRect.topLeft().y() - 15 )
+        self.__hScrollToItem( item )
+        return
+
+
+    def __hScrollToItem( self, item ):
+        " Sets the horizontal scrolling for the item "
+
+        if item is None:
+            return
+
+        # There are a few cases here:
+        # - the item does not fit the screen width
+        # - the item fits the screen width and would be visible if the
+        #   scroll is set to 0
+        # - the item fits the screen width and would not be visible if the
+        #   scroll is set to 0
+
+        visibleRect = self.getVisibleRect()
+        itemRect = item.boundingRect()
+
+        if itemRect.width() > visibleRect.width():
+            # Does not fit the screen
+            self.horizontalScrollBar().setValue( itemRect.topLeft().x() - 15 )
+        else:
+            if itemRect.topRight().x() < visibleRect.width():
+                # Fits the screen if the scroll is 0
+                self.horizontalScrollBar().setValue( 0 )
+            else:
+                self.horizontalScrollBar().setValue( itemRect.topLeft().x() - 15 )
+        return
+
 
 
 class ControlFlowNavigationBar( QFrame ):
@@ -500,7 +558,7 @@ class FlowUIWidget( QWidget ):
         if item:
             self.scene.clearSelection()
             item.setSelected( True )
-            self.view.centerOn( item )
+            self.view.scrollTo( item )
             self.setFocus()
         return
 

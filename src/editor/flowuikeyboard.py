@@ -89,14 +89,12 @@ class CFSceneKeyboardMixin:
         if candidateAfter:
             self.clearSelection()
             candidateAfter.setSelected( True )
-            view.horizontalScrollBar().setValue( 0 )
-            view.verticalScrollBar().setValue( candidateAfter.boundingRect().topLeft().y() - 15 )
+            view.scrollTo( candidateAfter )
             candidateAfter.mouseDoubleClickEvent( None )
         elif candidateBefore:
             self.clearSelection()
             candidateBefore.setSelected( True )
-            view.horizontalScrollBar().setValue( candidateBefore.boundingRect().topLeft().x() - 15 )
-            view.verticalScrollBar().setValue( candidateBefore.boundingRect().topLeft().y() - 15 )
+            view.scrollTo( candidateBefore )
             candidateBefore.mouseDoubleClickEvent( None )
         return
 
