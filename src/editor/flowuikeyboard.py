@@ -23,6 +23,7 @@
 from PyQt4.QtCore import Qt, QPoint
 from PyQt4.QtGui import QGraphicsScene
 from sys import maxint
+from flowui.scopeitems import ScopeCellElement
 
 
 CTRL_SHIFT = int( Qt.ShiftModifier | Qt.ControlModifier )
@@ -38,7 +39,15 @@ class CFSceneKeyboardMixin:
 
     def __init__( self ):
         self.__hotKeys = {
-                CTRL:   { Qt.Key_QuoteLeft:     self.highlightInText }
+                CTRL:   { Qt.Key_QuoteLeft:     self.highlightInText,
+                          Qt.Key_Home:          self.scrollToTop,
+                          Qt.Key_End:           self.scrollToBottom
+                         },
+                NO_MODIFIER:
+                        { Qt.Key_Home:          self.scrollToHBegin,
+                          Qt.Key_End:           self.scrollToHEnd,
+                          Qt.Key_Escape:        self.clearSelection
+                        }
                          }
         return
 
@@ -46,11 +55,6 @@ class CFSceneKeyboardMixin:
         """ Handles the key press event """
         key = event.key()
         modifiers = int( event.modifiers() )
-        if key == Qt.Key_Escape:
-            self.clearSelection()
-            event.accept()
-            return
-
         if modifiers in self.__hotKeys:
             if key in self.__hotKeys[ modifiers ]:
                 self.__hotKeys[ modifiers ][ key ]()
@@ -86,15 +90,44 @@ class CFSceneKeyboardMixin:
                 candidateBeforeDistance = dist
                 candidateBefore = item
 
+        item = None
         if candidateAfter:
-            self.clearSelection()
-            candidateAfter.setSelected( True )
-            view.scrollTo( candidateAfter )
-            candidateAfter.mouseDoubleClickEvent( None )
+            item = candidateAfter
         elif candidateBefore:
-            self.clearSelection()
-            candidateBefore.setSelected( True )
-            view.scrollTo( candidateBefore )
-            candidateBefore.mouseDoubleClickEvent( None )
+            item = candidateBefore
+        else:
+            # No suitable item to select
+            return
+
+        self.clearSelection()
+        logicalItem = item
+        if item.scopedItem():
+            if item.subKind in [ ScopeCellElement.DECLARATION ]:
+                logicalItem = item.getTopLeftItem()
+        logicalItem.setSelected( True )
+        view.scrollTo( logicalItem )
+        item.mouseDoubleClickEvent( None )
+        return
+
+    def scrollToTop( self ):
+        view = self.parent().view
+        view.horizontalScrollBar().setValue( 0 )
+        view.verticalScrollBar().setValue( 0 )
+        return
+
+    def scrollToBottom( self ):
+        view = self.parent().view
+        view.horizontalScrollBar().setValue( 0 )
+        view.verticalScrollBar().setValue( view.verticalScrollBar().maximum() )
+        return
+
+    def scrollToHBegin( self ):
+        view = self.parent().view
+        view.horizontalScrollBar().setValue( 0 )
+        return
+
+    def scrollToHEnd( self ):
+        view = self.parent().view
+        view.horizontalScrollBar().setValue( view.horizontalScrollBar().maximum() )
         return
 

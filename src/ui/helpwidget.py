@@ -180,7 +180,7 @@ class QuickHelpWidget( TextTabWidget ):
           <td bgcolor="#E9E9F3">F12</td>
           <td bgcolor="#F6F4E4">Make the cursor line the first visible</td>
           <td bgcolor="#E9E9F3">Ctrl+`</td>
-          <td bgcolor="#F6F4E4">Select a graphics pane item which corresponds the current text cursor 
+          <td bgcolor="#F6F4E4">Select a graphics pane item which corresponds the current text cursor
                                 position and scroll the graphics view if needed</td>
         </tr>
         <tr>
@@ -238,6 +238,34 @@ class QuickHelpWidget( TextTabWidget ):
           <td bgcolor="#F6F4E4">Show the current debugger line</td>
           <td bgcolor="#E9E9F3"></td>
           <td bgcolor="#F6F4E4"></td>
+        </tr>
+      </table>
+    </p>
+
+    <br>
+    <h3>Graphics Pane</h3>
+    <p align="center">
+      <table border="0" cellspacing="1"
+             cellpadding="4" width="95%" align="center">
+        <tr>
+          <td width="15%" bgcolor="#E9E9F3">Escape</td>
+          <td width="35%" bgcolor="#F6F4E4">Clear selection</td>
+          <td width="15%" bgcolor="#E9E9F3">Ctrl+`</td>
+          <td width="35%" bgcolor="#F6F4E4">Select the first visible item,
+                                            move focus to the text editor and
+                                            scroll to the line which corresponds to the selected item</td>
+        </tr>
+        <tr>
+          <td bgcolor="#E9E9F3">Home</td>
+          <td bgcolor="#F6F4E4">Scroll horizontally to the most left position</td>
+          <td bgcolor="#E9E9F3">End</td>
+          <td bgcolor="#F6F4E4">Scroll horizontally to the most right position</td>
+        </tr>
+        <tr>
+          <td bgcolor="#E9E9F3">Ctrl+Home</td>
+          <td bgcolor="#F6F4E4">Scroll to the top left position</td>
+          <td bgcolor="#E9E9F3">Ctrl+End</td>
+          <td bgcolor="#F6F4E4">Scroll to the bottom left position</td>
         </tr>
       </table>
     </p>
