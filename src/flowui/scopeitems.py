@@ -392,10 +392,6 @@ class ScopeCellElement( CellElement ):
         return CellElement.__str__( self ) + \
                "(" + scopeCellElementToString( self.subKind ) + ")"
 
-    def setEditor( self, editor ):
-        " Provides the editor counterpart "
-        self._editor = editor
-
     def scopedItem( self ):
         return True
 
@@ -403,6 +399,10 @@ class ScopeCellElement( CellElement ):
         " Jump to the appropriate line in the text editor "
         if self._editor is None:
             return
+        if event:
+            if event.buttons() != Qt.LeftButton:
+                return
+
         if self.subKind == self.SIDE_COMMENT:
             self._editor.gotoLine( self.ref.sideComment.beginLine,
                                    self.ref.sideComment.beginPos )

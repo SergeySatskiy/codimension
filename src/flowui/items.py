@@ -164,8 +164,20 @@ class CellElement:
         return path
 
     def setEditor( self, editor ):
-        """ Provides the editor counterpart
-            The default implementation is to ignore it """
+        " Provides the editor counterpart "
+        self._editor = editor
+
+    def mouseDoubleClickEvent( self, event ):
+        " Jump to the appropriate line in the text editor: default implementation "
+        if self._editor is None:
+            return
+        if event:
+            if event.buttons() != Qt.LeftButton:
+                return
+
+        self._editor.gotoLine( self.ref.body.beginLine,
+                               self.ref.body.beginPos )
+        self._editor.setFocus()
         return
 
     def scopedItem( self ):
@@ -395,18 +407,6 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
                           Qt.AlignLeft, self.__getText() )
         return
 
-    def setEditor( self, editor ):
-        " Provides the editor counterpart "
-        self._editor = editor
-
-    def mouseDoubleClickEvent( self, event ):
-        " Jump to the appropriate line in the text editor "
-        if self._editor:
-            self._editor.gotoLine( self.ref.body.beginLine,
-                                   self.ref.body.beginPos )
-            self._editor.setFocus()
-        return
-
     def getSelectTooltip( self ):
         lineRange = self.ref.body.getLineRange()
         return "Code block at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
@@ -499,18 +499,6 @@ class BreakCell( CellElement, QGraphicsRectItem ):
         painter.drawText( self.x1 + self.__hSpacing, self.y1 + self.__vSpacing,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, "break" )
-        return
-
-    def setEditor( self, editor ):
-        " Provides the editor counterpart "
-        self._editor = editor
-
-    def mouseDoubleClickEvent( self, event ):
-        " Jump to the appropriate line in the text editor "
-        if self._editor:
-            self._editor.gotoLine( self.ref.body.beginLine,
-                                   self.ref.body.beginPos )
-            self._editor.setFocus()
         return
 
     def getSelectTooltip( self ):
@@ -606,18 +594,6 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
         painter.drawText( self.x1 + self.__hSpacing, self.y1 + self.__vSpacing,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, "continue" )
-        return
-
-    def setEditor( self, editor ):
-        " Provides the editor counterpart "
-        self._editor = editor
-
-    def mouseDoubleClickEvent( self, event ):
-        " Jump to the appropriate line in the text editor "
-        if self._editor:
-            self._editor.gotoLine( self.ref.body.beginLine,
-                                   self.ref.body.beginPos )
-            self._editor.setFocus()
         return
 
     def getSelectTooltip( self ):
@@ -730,18 +706,6 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, self.__getText() )
-        return
-
-    def setEditor( self, editor ):
-        " Provides the editor counterpart "
-        self._editor = editor
-
-    def mouseDoubleClickEvent( self, event ):
-        " Jump to the appropriate line in the text editor "
-        if self._editor:
-            self._editor.gotoLine( self.ref.body.beginLine,
-                                   self.ref.body.beginPos )
-            self._editor.setFocus()
         return
 
     def getSelectTooltip( self ):
@@ -865,18 +829,6 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, self.__getText() )
-        return
-
-    def setEditor( self, editor ):
-        " Provides the editor counterpart "
-        self._editor = editor
-
-    def mouseDoubleClickEvent( self, event ):
-        " Jump to the appropriate line in the text editor "
-        if self._editor:
-            self._editor.gotoLine( self.ref.body.beginLine,
-                                   self.ref.body.beginPos )
-            self._editor.setFocus()
         return
 
     def getSelectTooltip( self ):
@@ -1019,18 +971,6 @@ class AssertCell( CellElement, QGraphicsRectItem ):
                           Qt.AlignLeft, self.__getText() )
         return
 
-    def setEditor( self, editor ):
-        " Provides the editor counterpart "
-        self._editor = editor
-
-    def mouseDoubleClickEvent( self, event ):
-        " Jump to the appropriate line in the text editor "
-        if self._editor:
-            self._editor.gotoLine( self.ref.body.beginLine,
-                                   self.ref.body.beginPos )
-            self._editor.setFocus()
-        return
-
     def getSelectTooltip( self ):
         beginLine = self.ref.body.beginLine
         if self.ref.message is not None:
@@ -1161,18 +1101,6 @@ class SysexitCell( CellElement, QGraphicsRectItem ):
                           Qt.AlignLeft, self.__getText() )
         return
 
-    def setEditor( self, editor ):
-        " Provides the editor counterpart "
-        self._editor = editor
-
-    def mouseDoubleClickEvent( self, event ):
-        " Jump to the appropriate line in the text editor "
-        if self._editor:
-            self._editor.gotoLine( self.ref.body.beginLine,
-                                   self.ref.body.beginPos )
-            self._editor.setFocus()
-        return
-
     def getSelectTooltip( self ):
         lineRange = self.ref.body.getLineRange()
         return "Sys.exit() at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
@@ -1276,18 +1204,6 @@ class ImportCell( CellElement, QGraphicsRectItem ):
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft,
                           self.__getText() )
-        return
-
-    def setEditor( self, editor ):
-        " Provides the editor counterpart "
-        self._editor = editor
-
-    def mouseDoubleClickEvent( self, event ):
-        " Jump to the appropriate line in the text editor "
-        if self._editor:
-            self._editor.gotoLine( self.ref.body.beginLine,
-                                   self.ref.body.beginPos )
-            self._editor.setFocus()
         return
 
     def getSelectTooltip( self ):
@@ -1423,18 +1339,6 @@ class IfCell( CellElement, QGraphicsRectItem ):
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, self.__getText() )
-        return
-
-    def setEditor( self, editor ):
-        " Provides the editor counterpart "
-        self._editor = editor
-
-    def mouseDoubleClickEvent( self, event ):
-        " Jump to the appropriate line in the text editor "
-        if self._editor:
-            self._editor.gotoLine( self.ref.body.beginLine,
-                                   self.ref.body.beginPos )
-            self._editor.setFocus()
         return
 
     def getSelectTooltip( self ):
@@ -1591,10 +1495,6 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, self.__getText() )
         return
-
-    def setEditor( self, editor ):
-        " Provides the editor counterpart "
-        self._editor = editor
 
     def mouseDoubleClickEvent( self, event ):
         " Jump to the appropriate line in the text editor "
@@ -1754,10 +1654,6 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft, self.__getText() )
         return
-
-    def setEditor( self, editor ):
-        " Provides the editor counterpart "
-        self._editor = editor
 
     def mouseDoubleClickEvent( self, event ):
         " Jump to the appropriate line in the text editor "
@@ -1933,10 +1829,6 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
                           Qt.AlignLeft, self.__getText() )
         return
 
-    def setEditor( self, editor ):
-        " Provides the editor counterpart "
-        self._editor = editor
-
     def mouseDoubleClickEvent( self, event ):
         " Jump to the appropriate line in the text editor "
         if self._editor:
@@ -2094,10 +1986,6 @@ class AboveCommentCell( CellElement, QGraphicsPathItem ):
                           Qt.AlignLeft, self.__getText() )
         return
 
-    def setEditor( self, editor ):
-        " Provides the editor counterpart "
-        self._editor = editor
-
     def mouseDoubleClickEvent( self, event ):
         " Jump to the appropriate line in the text editor "
         if self._editor:
@@ -2246,4 +2134,10 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
 
     def getProxiedItem( self ):
         return None
+
+    def mouseDoubleClickEvent( self, event ):
+        return  # To be on the safe side: override the default implementation
+
+    def setEditor( self, editor ):
+        return  # To be on the safe side: override the default implementation
 
