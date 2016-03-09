@@ -45,8 +45,7 @@ class CMLCommentBase:
     @staticmethod
     def description():
         " Provides the CML comment description "
-        return "CML comment 'sw'; used for 'if' and 'elif' statements " \
-               "to switch default branch location."
+        return ""
 
     @staticmethod
     def generate( pos = 1 ):
@@ -79,8 +78,12 @@ class CMLsw( CMLCommentBase ):
     @staticmethod
     def description():
         " Provides the CML comment description "
-        return "CML comment 'sw'; used for 'if' and 'elif' statements " \
-               "to switch default branch location."
+        return "The '" + CMLsw.CODE + \
+               "' comment is used for 'if' and 'elif' statements " \
+               "to switch default branch location i.e. to have the 'No' branch at the right.\n" \
+               "Supported properties: none\n\n" \
+               "Example:\n" \
+               "# cml 1 " + CMLsw.CODE
 
     @staticmethod
     def generate( pos = 1 ):
@@ -114,8 +117,19 @@ class CMLcc( CMLCommentBase ):
     @staticmethod
     def description():
         " Provides the CML comment description "
-        return "CML comment 'cc'; used for custom colors of most of " \
-               "the graphics items"
+        return "The '" + CMLcc.CODE + \
+               "' comment is used for custom colors of most of " \
+               "the graphics items.\n" \
+               "Supported properties:\n" \
+               "- 'background': background color for the item\n" \
+               "- 'foreground': foreground color for the item\n" \
+               "Color spec formats:\n" \
+               "- '#hhhhhh': hexadecimal RGB\n" \
+               "- '#hhhhhhhh': hexadecimal RGB + alpha\n" \
+               "- 'ddd,ddd,ddd': decimal RGB\n" \
+               "- 'ddd,ddd,ddd,ddd': decimal RGB + alpha\n\n" \
+               "Example:\n" \
+               "# cml 1 " + CMLcc.CODE + " backgound=#f6f4e4 foreground=#000000"
 
     @staticmethod
     def generate( backgound, foreground, pos = 1 ):

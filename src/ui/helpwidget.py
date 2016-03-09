@@ -23,6 +23,7 @@
 """ Quick help screen """
 
 from texttabwidget import TextTabWidget
+from flowui.cml import CMLVersion
 
 
 class QuickHelpWidget( TextTabWidget ):
@@ -271,13 +272,14 @@ class QuickHelpWidget( TextTabWidget ):
     </p>
 
     <br>
-    <p align="justify">
-        The industry common keys are not shown above. Please refer to
+    <p align="left">
+        Note: The industry common keys are not shown above. Please refer to
         <a href="http://satsky.spb.ru/codimension/keyBindingsEng.php">
            http://satsky.spb.ru/codimension/keyBindingsEng.php</a> for the complete list of
            bindings.
     </p>
 
+    <br><br>""" + self.generateCMLHelp() + """
 </div>
 </body>
 </html>
@@ -286,6 +288,28 @@ class QuickHelpWidget( TextTabWidget ):
         self.setFileName( "" )
         self.setShortName( "Quick help" )
         return
+
+    def generateCMLHelp( self ):
+        " Generates CML comments help "
+        cmlHelpHeader = """<h3 align="center">CML Comments Reference<br>
+                        (CML version """ + str( CMLVersion.VERSION ) + ")</h3>"
+
+        cmlCodes = CMLVersion.COMMENT_TYPES.keys()
+        cmlCodes.sort()
+
+        rows = []
+        for code in cmlCodes:
+            rows.append( """<tr><td width="15%" bgcolor="#E9E9F3">""" + code +
+                         """</td><td width="85%" bgcolor="#F6F4E4">""" +
+                         CMLVersion.COMMENT_TYPES[ code ].description().replace( "\n", "<br>" ) +
+                         "</td></tr>" )
+
+        return cmlHelpHeader + \
+               """<p align="center">
+                  <table border="0" cellspacing="1"
+                         cellpadding="4" width="95%" align="center">""" + \
+               "\n".join( rows ) + \
+               """</table></p>"""
 
     def setFocus( self ):
         " Sets the focus to the nested html displaying editor "
