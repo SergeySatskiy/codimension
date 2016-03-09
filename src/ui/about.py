@@ -28,6 +28,7 @@ from PyQt4.QtCore import Qt
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 from utils.versions import getComponentInfo
+from flowui.cml import CMLVersion
 
 
 class AboutDialog( QDialog ):
@@ -51,8 +52,10 @@ class AboutDialog( QDialog ):
         iconLabel.setScaledContents( False )
         hboxLayout.addWidget( iconLabel )
         versionLabel = QLabel( "<b>Codimension IDE version " +
-                               str( GlobalData().version ) +
-                               "</b><p>Copyright (c) Sergey Satskiy 2010-2015</p>" )
+                               str( GlobalData().version ) + "<br>"
+                               "CML version " +
+                               str( CMLVersion.VERSION ) +
+                               "</b><p>Copyright (c) Sergey Satskiy 2010-2016</p>" )
         versionLabel.setSizePolicy( QSizePolicy.Expanding,
                                     QSizePolicy.Expanding )
         versionLabel.setFixedHeight( versionLabel.minimumSizeHint().height() )
