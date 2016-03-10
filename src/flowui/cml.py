@@ -22,35 +22,72 @@ CML utilities
 """
 
 from PyQt4.QtGui import QColor
+from cdmcf import IF_FRAGMENT
 
+
+def checkColorRange( value ):
+    if value < 0 or value > 255:
+        raise Exception( "Invalid color value" )
+
+def readColor( color ):
+    """ Four options are supported:
+        #hhhhhh             hexadecimal rgb
+        #hhhhhhhh           hexadecimal rgb and alpha
+        ddd,ddd,ddd         decimal rgb
+        ddd,ddd,ddd,ddd     decimal rgb and alpha
+    """
+    if color.startswith( '#' ):
+        color = color[ 1: ]
+        length = len( color )
+        if length not in [ 6, 8 ]:
+            raise Exception( "Invalid hexadecimal color format: #" + color )
+
+        try:
+            # The most common case
+            r = int( color[ 0:2 ], 16 )
+            checkColorRange( r )
+            g = int( color[ 2:4 ], 16 )
+            checkColorRange( g )
+            b = int( color[ 4:6 ], 16 )
+            checkColorRange( b )
+
+            if length == 6:
+                return QColor( r, g, b )
+            a = int( color[ 6:8 ], 16 )
+            checkColorRange( a )
+            return QColor( r, g, b, a )
+        except:
+            raise Exception( "Invalid hexadecimal color format: #" + color )
+
+    parts = color.split( ',' )
+    length = len( parts )
+    if length not in [ 3, 4 ]:
+        raise Exception( "Invalid decimal color format: " + color )
+
+    try:
+        r = int( parts[ 0 ].strip() )
+        checkColorRange( r )
+        g = int( parts[ 1 ].strip() )
+        checkColorRange( g )
+        b = int( parts[ 2 ].strip() )
+        checkColorRange( b )
+
+        if length == 3:
+            return QColor( r, g, b )
+        a = int( parts[ 3 ].strip() )
+        checkColorRange( a )
+        return QColor( r, g, b, a )
+    except:
+        raise Exception( "Invalid decimal color format: " + color )
 
 
 
 class CMLCommentBase:
     " Base class for all the CML comments "
 
-    def __init__( self ):
+    def __init__( self, ref = None ):
+        self.ref = ref
         return
-
-    @staticmethod
-    def isValid( cmlComment ):
-        " Tells is the comment is a valid one "
-        return False
-
-    @staticmethod
-    def match( cmlComments ):
-        " Provides an instance of the comment in the container of comments "
-        return None
-
-    @staticmethod
-    def description():
-        " Provides the CML comment description "
-        return ""
-
-    @staticmethod
-    def generate( pos = 1 ):
-        " Generates the appropriate CML comment line "
-        return ""
 
 
 
@@ -59,21 +96,14 @@ class CMLsw( CMLCommentBase ):
 
     CODE = "sw"
 
-    def __init__( self ):
-        CMLCommentBase.__init__( self )
+    def __init__( self, ref ):
+        CMLCommentBase.__init__( self, ref )
+        self.validate()
         return
 
-    @staticmethod
-    def isValid( cmlComment ):
-        return cmlComment.recordType == CMLsw.CODE and \
-               CMLVersion.isValid( cmlComment )
-
-    @staticmethod
-    def match( cmlComments ):
-        for cmlComment in cmlComments:
-            if CMLsw.isValid( cmlComment ):
-                return cmlComment
-        return None
+    def validate( self ):
+        return self.ref.recordType == CMLsw.CODE and \
+               CMLVersion.isValid( self.ref )
 
     @staticmethod
     def description():
@@ -155,69 +185,11 @@ class CMLcc( CMLCommentBase ):
         fg = None
         bg = None
         if "background" in cmlComment.properties:
-            bg = CMLcc.readColor( cmlComment.properties[ "background" ] )
+            bg = readColor( cmlComment.properties[ "background" ] )
         if "foreground" in cmlComment.properties:
-            fg = CMLcc.readColor( cmlComment.properties[ "foreground" ] )
+            fg = readColor( cmlComment.properties[ "foreground" ] )
         return bg, fg
 
-    @staticmethod
-    def readColor( color ):
-        """ Four variations are supported:
-            #hhhhhh             hexadecimal rgb
-            #hhhhhhhh           hexadecimal rgb and alpha
-            ddd,ddd,ddd         decimal rgb
-            ddd,ddd,ddd,ddd     decimal rgb and alpha
-        """
-        if color.startswith( '#' ):
-            color = color[ 1: ]
-            length = len( color )
-            if length not in [ 6, 8 ]:
-                raise Exception( "Invalid hexadecimal color format: #" + color )
-
-            try:
-                # The most common case
-                r = int( color[ 0:2 ], 16 )
-                CMLcc.checkColorRange( r )
-                g = int( color[ 2:4 ], 16 )
-                CMLcc.checkColorRange( g )
-                b = int( color[ 4:6 ], 16 )
-                CMLcc.checkColorRange( b )
-
-                if length == 6:
-                    return QColor( r, g, b )
-                a = int( color[ 6:8 ], 16 )
-                CMLcc.checkColorRange( a )
-                return QColor( r, g, b, a )
-            except:
-                raise Exception( "Invalid hexadecimal color format: #" + color )
-
-        parts = color.split( ',' )
-        length = len( parts )
-        if length not in [ 3, 4 ]:
-            raise Exception( "Invalid decimal color format: " + color )
-
-        try:
-            r = int( parts[ 0 ].strip() )
-            CMLcc.checkColorRange( r )
-            g = int( parts[ 1 ].strip() )
-            CMLcc.checkColorRange( g )
-            b = int( parts[ 2 ].strip() )
-            CMLcc.checkColorRange( b )
-
-            if length == 4:
-                a = int( parts[ 3 ].strip() )
-                CMLcc.checkColorRange( a )
-        except:
-            raise Exception( "Invalid decimal color format: " + color )
-
-        if length == 3:
-            return QColor( r, g, b )
-        return QColor( r, g, b, a )
-
-    @staticmethod
-    def checkColorRange( value ):
-        if value < 0 or value > 255:
-            raise Exception( "Invalid color value" )
 
 
 
@@ -236,12 +208,58 @@ class CMLVersion:
         return cmlComment.version <= CMLVersion.VERSION
 
     @staticmethod
+    def find( cmlComments, cmlType ):
+        for comment in cmlComments:
+            if hasattr( comment, "CODE" ):
+                if comment.CODE == cmlType.CODE:
+                    return comment
+        return None
+
+    @staticmethod
     def getType( cmlComment ):
-        " Provides the supported type of the comment; None otherwise "
         try:
             return CMLVersion.COMMENT_TYPES[ cmlComment.recordType ]
         except KeyError:
             return None
 
+    @staticmethod
+    def validateCMLComments( item ):
+        """ Walks recursively all the items in the control flow and validates
+            the CML comments. Replaces the recognized CML comments from the module
+            with their higher level counterparts.
+            Returns back a list of warnings. """
+        warnings = []
+        if hasattr( item, "leadingCMLComments" ):
+            if item.leadingCMLComments:
+                count = len( item.leadingCMLComments )
+                for index in xrange( count ):
+                    cmlComment = item.leadingCMLComments[ index ]
+                    cmlType = CMLVersion.getType( cmlComment )
+                    if cmlType:
+                        try:
+                            highLevel = cmlType( cmlComment )
+                            item.leadingCMLComments[ index ] = highLevel
+                        except Exception, exc:
+                            line = cmlComment.parts[ 0 ].beginLine
+                            pos = cmlComment.parts[ 0 ].beginPos
+                            warnings.append( (line, pos,
+                                              "Invalid CML comment: " + str( exc )) )
+                            raise
+                    else:
+                        line = cmlComment.parts[ 0 ].beginLine
+                        pos = cmlComment.parts[ 0 ].beginPos
+                        warnings.append( (line, pos,
+                                          "CML comment type '" + cmlComment.recordType + "' is not supported") )
 
+        if item.kind == IF_FRAGMENT:
+            for part in item.parts:
+                warnings += CMLVersion.validateCMLComments( part )
+
+        if hasattr( item, "sideCMLComments" ):
+            pass
+
+        if hasattr( item, "suite" ):
+            for nestedItem in item.suite:
+                warnings += CMLVersion.validateCMLComments( nestedItem )
+        return warnings
 

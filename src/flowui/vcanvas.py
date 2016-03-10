@@ -46,7 +46,7 @@ from cdmcf import ( CODEBLOCK_FRAGMENT, FUNCTION_FRAGMENT, CLASS_FRAGMENT,
                     IMPORT_FRAGMENT, COMMENT_FRAGMENT,
                     WHILE_FRAGMENT, FOR_FRAGMENT, IF_FRAGMENT,
                     WITH_FRAGMENT, TRY_FRAGMENT, CML_COMMENT_FRAGMENT )
-from cml import CMLsw
+from cml import CMLVersion, CMLsw
 
 
 CONN_N_S = [ (ConnectorCell.NORTH, ConnectorCell.SOUTH) ]
@@ -459,7 +459,7 @@ class VirtualCanvas:
         vacantRow += 1
 
         # Test if there is a switch of the branches
-        yBelow = CMLsw.match( yBranch.leadingCMLComments ) is not None
+        yBelow = CMLVersion.find( yBranch.leadingCMLComments, CMLsw ) is not None
 
         # Allocate the YES branch
         if yBelow:

@@ -32,6 +32,7 @@ from PyQt4.QtSvg import QSvgGenerator
 from cdmcf import getControlFlowFromMemory
 from flowui.vcanvas import VirtualCanvas
 from flowui.cflowsettings import getDefaultCflowSettings
+from flowui.cml import CMLVersion
 from utils.pixmapcache import getPixmap, getIcon
 from utils.globals import GlobalData
 from utils.fileutils import Python3FileType, PythonFileType
@@ -444,6 +445,11 @@ class FlowUIWidget( QWidget ):
             self.__navBar.setErrors( errors )
             return
         self.__cf = cf
+
+        # Validate CML comments
+        cmlWarnings = CMLVersion.validateCMLComments( self.__cf )
+        if cmlWarnings:
+            self.__cf.warnings += cmlWarnings
 
         # That will clear the error tooltip as well
         self.__navBar.updateInfoIcon( self.__navBar.STATE_OK_UTD )
