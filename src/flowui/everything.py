@@ -37,10 +37,10 @@ d = 154
 e = 154  # side
 f = 154
 
-# cml 1 none
+# cml 1 cc foreground=#000000
 alone = 2
 
-# cml 1 none
+# cml 1 cc foreground=#000000
 # Leading
 a = 10      # Side
             # Side
@@ -63,11 +63,11 @@ from sys import path        # Side
                             # Side last
 
 
-# cml 1 none
+# cml 1 cc background=#000000 foreground=#eaeaea
 import sys, \
        os.path
 
-# cml 1 none
+# cml 1 cc background=#eaeaea foreground=#000000
 # Leading
 from sys import path        # Side
                             # Side last
@@ -112,6 +112,7 @@ def f4( a = """
 #
 
 
+# cml 1 cc background=#dddddd foreground=#ffffff
 # Leading
 class C:    # Side
             # Last side
@@ -138,7 +139,7 @@ class C3( B1,       # Side 1
 class C4( C5 ):
     def member1( self ):
         pass
-    # cml 1 none
+    # cml 1 cc background=#777777 
     # Leading 1
     # Leading 2
     def member2( self,      # Side 1
@@ -315,7 +316,7 @@ for x in y:
     break
 
 for x in y:
-    # cml 1 I
+    # cml 1 cc background=0,230,0 foreground=255,255,255
     # Leading 1
     # Leading 2
     break   # Side 1
@@ -324,8 +325,9 @@ for x in y:
 while True:
     continue
 
+# cml 1 cc background=#dddddd foreground=#343399
 while True:
-    # cml 1 I
+    # cml 1 cc background=0,230,0 foreground=255,255,255
     # Leading 1
     # Leading 2
     continue    # Side 1
@@ -350,13 +352,13 @@ def f13():
            "Shakespeare"
 
 def f14():
-    # cml 1 I
+    # cml 1 cc background="230,0,0" foreground="255,255,255"
     # Leading
     return 154  # Side 1
                 # Side 2
 
 def f15():
-    # cml 1 I
+    # cml 1 sw
     # Leading
     return ( 154,               # Side 1
              "Shakespeare" )    # Side 2
@@ -377,7 +379,7 @@ assert x != 154 and \
        y != 154 and \
        z != 154
 
-# cml 1 I
+# cml 1 cc background=0,0,210 foreground=255,255,255
 # Leading
 assert x != 154, ( "..."        # Side 1
                    "..." )      # side 2
@@ -400,7 +402,7 @@ raise Exception( 1 +
                  2 +
                  3 )
 
-# cml 1 I
+# cml 1 cc background=0,230,0 foreground=0,0,230
 # Leading
 raise Exception( 1 +    # Side 1
                  3 )    # Side 2
@@ -433,7 +435,8 @@ exit( 0 +
       0 +
       0 )
 
-# cml 1 I
+# cml 1 cc background="25, 200, 200"
+# cml+     foreground=#ffffff
 # Leading
 exit( 0 +   # Side 1
       0 )   # Side 2
@@ -467,7 +470,7 @@ with \
             f:
     pass
 
-# cml 1 I
+# cml 1 cc background=#dddddd foreground=#343399
 # leading
 with open( "my.txt" +           # Side 1
            "your.txt" ) as f:   # Side 2
@@ -483,7 +486,7 @@ with open( "my.txt" +           # Side 1
 if True:
     pass
 
-# cml 1 none
+# cml 1 sw
 if True:
     pass
 else:
@@ -507,6 +510,7 @@ if True:    # Side 1
     pass
 # Leading 3
 # cml 1 sw
+# cml 1 cc background=#345678 foreground=#ffffff
 elif False: # Side 3
     pass
 # Leading 4
@@ -514,7 +518,7 @@ else:       # Side 4
     pass
 
 
-# cml 1 CC
+# cml 1 cc background=#ee00ee foreground=#ffffff
 if a > 456 and \
    b < 76 or \
    p == 99:

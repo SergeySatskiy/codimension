@@ -22,7 +22,7 @@ CML utilities
 """
 
 from PyQt4.QtGui import QColor
-from cdmcf import IF_FRAGMENT
+from cdmcf import IF_FRAGMENT, FOR_FRAGMENT, WHILE_FRAGMENT, TRY_FRAGMENT
 
 
 def checkColorRange( value ):
@@ -89,6 +89,13 @@ class CMLCommentBase:
         self.ref = ref
         return
 
+    def validateRecordType( self, code ):
+        if self.ref.recordType != code:
+            raise Exception( "Invalid CML comment type. "
+                             "Expected: '" + code + "'. Received: '" +
+                             self.ref.recordType + "'." )
+        return
+
 
 
 class CMLsw( CMLCommentBase ):
@@ -102,8 +109,9 @@ class CMLsw( CMLCommentBase ):
         return
 
     def validate( self ):
-        return self.ref.recordType == CMLsw.CODE and \
-               CMLVersion.isValid( self.ref )
+        self.validateRecordType( CMLsw.CODE )
+        CMLVersion.validate( self.ref )
+        return
 
     @staticmethod
     def description():
@@ -127,22 +135,27 @@ class CMLcc( CMLCommentBase ):
 
     CODE = "cc"
 
-    def __init__( self ):
-        CMLCommentBase.__init__( self )
+    def __init__( self, ref ):
+        CMLCommentBase.__init__( self, ref )
+        self.bg = None      # background color
+        self.fg = None      # foreground color
+        self.validate()
         return
 
-    @staticmethod
-    def isValid( cmlComment ):
-        # test the properties too
-        return cmlComment.recordType == CMLcc.CODE and \
-               CMLVersion.isValid( cmlComment )
+    def validate( self ):
+        self.validateRecordType( CMLcc.CODE )
+        CMLVersion.validate( self.ref )
 
-    @staticmethod
-    def match( cmlComments ):
-        for cmlComment in cmlComments:
-            if CMLcc.isValid( cmlComment ):
-                return cmlComment
-        return None
+        if "background" in self.ref.properties:
+            self.bg = readColor( self.ref.properties[ "background" ] )
+        if "foreground" in self.ref.properties:
+            self.fg = readColor( self.ref.properties[ "foreground" ] )
+
+        if self.bg is None and self.fg is None:
+            raise Exception( "The '" + CMLcc.CODE +
+                             "' CML comment does not supply neither "
+                             "background nor foreground color" )
+        return
 
     @staticmethod
     def description():
@@ -180,17 +193,6 @@ class CMLcc( CMLCommentBase ):
 
         return res
 
-    @staticmethod
-    def getColors( cmlComment ):
-        fg = None
-        bg = None
-        if "background" in cmlComment.properties:
-            bg = readColor( cmlComment.properties[ "background" ] )
-        if "foreground" in cmlComment.properties:
-            fg = readColor( cmlComment.properties[ "foreground" ] )
-        return bg, fg
-
-
 
 
 class CMLVersion:
@@ -204,8 +206,12 @@ class CMLVersion:
         return
 
     @staticmethod
-    def isValid( cmlComment ):
-        return cmlComment.version <= CMLVersion.VERSION
+    def validate( cmlComment ):
+        if cmlComment.version > CMLVersion.VERSION:
+            raise Exception( "The CML comment version " +
+                             str( cmlComment.version ) +
+                             " is not supported. Max supported version is " +
+                             str( CMLVersion.VERSION ) )
 
     @staticmethod
     def find( cmlComments, cmlType ):
@@ -230,36 +236,57 @@ class CMLVersion:
             Returns back a list of warnings. """
         warnings = []
         if hasattr( item, "leadingCMLComments" ):
-            if item.leadingCMLComments:
-                count = len( item.leadingCMLComments )
-                for index in xrange( count ):
-                    cmlComment = item.leadingCMLComments[ index ]
-                    cmlType = CMLVersion.getType( cmlComment )
-                    if cmlType:
-                        try:
-                            highLevel = cmlType( cmlComment )
-                            item.leadingCMLComments[ index ] = highLevel
-                        except Exception, exc:
-                            line = cmlComment.parts[ 0 ].beginLine
-                            pos = cmlComment.parts[ 0 ].beginPos
-                            warnings.append( (line, pos,
-                                              "Invalid CML comment: " + str( exc )) )
-                            raise
-                    else:
-                        line = cmlComment.parts[ 0 ].beginLine
-                        pos = cmlComment.parts[ 0 ].beginPos
-                        warnings.append( (line, pos,
-                                          "CML comment type '" + cmlComment.recordType + "' is not supported") )
+            warnings += CMLVersion.validateCMLList( item.leadingCMLComments )
 
+        # Some items are containers
         if item.kind == IF_FRAGMENT:
             for part in item.parts:
                 warnings += CMLVersion.validateCMLComments( part )
+        elif item.kind in [ FOR_FRAGMENT, WHILE_FRAGMENT ]:
+            if item.elsePart:
+                warnings += CMLVersion.validateCMLComments( item.elsePart )
+        elif item.kind == TRY_FRAGMENT:
+            if item.elsePart:
+                warnings += CMLVersion.validateCMLComments( item.elsePart )
+            if item.finallyPart:
+                warnings += CMLVersion.validateCMLComments( item.finallyPart )
+            for part in item.exceptParts:
+                warnings += CMLVersion.validateCMLComments( part )
+
 
         if hasattr( item, "sideCMLComments" ):
-            pass
+            warnings += CMLVersion.validateCMLList( item.sideCMLComments )
 
         if hasattr( item, "suite" ):
             for nestedItem in item.suite:
                 warnings += CMLVersion.validateCMLComments( nestedItem )
+        return warnings
+
+    @staticmethod
+    def validateCMLList( comments ):
+        """ Validates the CML comments in the provided list.
+            Internal usage only. """
+        warnings = []
+        if comments:
+            count = len( comments )
+            for index in xrange( count ):
+                cmlComment = comments[ index ]
+                cmlType = CMLVersion.getType( cmlComment )
+                if cmlType:
+                    try:
+                        highLevel = cmlType( cmlComment )
+                        comments[ index ] = highLevel
+                    except Exception, exc:
+                        line = cmlComment.parts[ 0 ].beginLine
+                        pos = cmlComment.parts[ 0 ].beginPos
+                        warnings.append( (line, pos,
+                                          "Invalid CML comment: " + str( exc )) )
+                else:
+                    line = cmlComment.parts[ 0 ].beginLine
+                    pos = cmlComment.parts[ 0 ].beginPos
+                    warnings.append( (line, pos,
+                                      "CML comment type '" +
+                                      cmlComment.recordType +
+                                      "' is not supported") )
         return warnings
 

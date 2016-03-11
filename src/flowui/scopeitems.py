@@ -261,6 +261,12 @@ class ScopeCellElement( CellElement ):
         s = self.canvas.settings
 
         if self.subKind == ScopeCellElement.TOP_LEFT:
+            if hasattr( self.ref, "leadingCMLComments" ):
+                bgColor, _ = self.getCustomColors( painter.brush().color(),
+                                                   painter.brush().color() )
+                brush = QBrush( bgColor )
+                painter.setBrush( brush )
+
             if self.isSelected():
                 selectPen = QPen( s.selectColor )
                 selectPen.setWidth( s.selectPenWidth )
@@ -278,7 +284,14 @@ class ScopeCellElement( CellElement ):
                                      s.rectRadius, s.rectRadius )
 
         elif self.subKind == ScopeCellElement.DECLARATION:
-            pen = QPen( s.boxFGColor )
+            fgColor = s.boxFGColor
+            if hasattr( self.ref, "leadingCMLComments" ):
+                bgColor, fgColor = self.getCustomColors( painter.brush().color(),
+                                                         s.boxFGColor )
+                brush = QBrush( bgColor )
+                painter.setBrush( brush )
+
+            pen = QPen( fgColor )
             painter.setFont( s.monoFont )
             painter.setPen( pen )
             canvasLeft = self.baseX - s.rectRadius
@@ -339,6 +352,13 @@ class ScopeCellElement( CellElement ):
                               self._sideCommentRect.height(),
                               Qt.AlignLeft, self._getSideComment() )
         elif self.subKind == ScopeCellElement.DOCSTRING:
+            fgColor = s.boxFGColor
+            if hasattr( self.ref, "leadingCMLComments" ):
+                bgColor, fgColor = self.getCustomColors( painter.brush().color(),
+                                                         s.boxFGColor )
+                brush = QBrush( bgColor )
+                painter.setBrush( brush )
+
             canvasLeft = self.baseX - s.rectRadius
 
             if self.isSelected():
@@ -367,7 +387,7 @@ class ScopeCellElement( CellElement ):
                                   canvasLeft + self.canvas.minWidth - 2 * s.hCellPadding - correction,
                                   self.baseY + self.height )
 
-            pen = QPen( s.boxFGColor )
+            pen = QPen( fgColor )
             painter.setFont( s.monoFont )
             painter.setPen( pen )
             painter.drawText( canvasLeft + s.hHeaderPadding,
