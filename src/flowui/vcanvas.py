@@ -711,17 +711,7 @@ class VirtualCanvas:
 
     def hasScope( self ):
         try:
-            return self.cells[ 0 ][ 0 ].kind in [ CellElement.FILE_SCOPE,
-                                                  CellElement.FUNC_SCOPE,
-                                                  CellElement.CLASS_SCOPE,
-                                                  CellElement.FOR_SCOPE,
-                                                  CellElement.WHILE_SCOPE,
-                                                  CellElement.TRY_SCOPE,
-                                                  CellElement.WITH_SCOPE,
-                                                  CellElement.DECOR_SCOPE,
-                                                  CellElement.ELSE_SCOPE,
-                                                  CellElement.EXCEPT_SCOPE,
-                                                  CellElement.FINALLY_SCOPE ]
+            return self.cells[ 0 ][ 0 ].scopedItem()
         except:
             return False
 
