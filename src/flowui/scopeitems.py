@@ -25,6 +25,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QPen, QBrush, QGraphicsRectItem, QGraphicsItem
 from auxitems import BadgeItem, Connector, CMLLabel
 from items import CellElement, getDarkerColor, getNoCellCommentBoxPath, distance
+from cml import CMLVersion, CMLcc
 
 
 
@@ -215,9 +216,7 @@ class ScopeCellElement( CellElement ):
                     self._connector.penStyle = Qt.DotLine
                     scene.addItem( self._connector )
 
-            if self.kind != CellElement.FILE_SCOPE:
-                # The file scope does not have leading and side comments
-                self.addCMLIndicator( baseX, baseY, penWidth, scene )
+            self.addCMLIndicator( baseX, baseY, penWidth, scene )
 
             if hasattr( scene.parent(), "updateNavigationToolbar" ):
                 self.__navBarUpdate = scene.parent().updateNavigationToolbar
@@ -254,6 +253,8 @@ class ScopeCellElement( CellElement ):
                           self.canvas.minWidth - 2 * s.hCellPadding + 2 * penWidth,
                           self.height + 2 * penWidth )
             scene.addItem( self )
+            self.addCMLIndicator( baseX - s.rectRadius - s.hCellPadding,
+                                  baseY - penWidth, penWidth, scene, self.ref.docstring )
         return
 
     def _paint( self, painter, option, widget ):
@@ -261,11 +262,10 @@ class ScopeCellElement( CellElement ):
         s = self.canvas.settings
 
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            if hasattr( self.ref, "leadingCMLComments" ):
-                bgColor, _ = self.getCustomColors( painter.brush().color(),
-                                                   painter.brush().color() )
-                brush = QBrush( bgColor )
-                painter.setBrush( brush )
+            bgColor, _ = self.getCustomColors( painter.brush().color(),
+                                               painter.brush().color() )
+            brush = QBrush( bgColor )
+            painter.setBrush( brush )
 
             if self.isSelected():
                 selectPen = QPen( s.selectColor )
@@ -284,12 +284,10 @@ class ScopeCellElement( CellElement ):
                                      s.rectRadius, s.rectRadius )
 
         elif self.subKind == ScopeCellElement.DECLARATION:
-            fgColor = s.boxFGColor
-            if hasattr( self.ref, "leadingCMLComments" ):
-                bgColor, fgColor = self.getCustomColors( painter.brush().color(),
-                                                         s.boxFGColor )
-                brush = QBrush( bgColor )
-                painter.setBrush( brush )
+            bgColor, fgColor = self.getCustomColors( painter.brush().color(),
+                                                     s.boxFGColor )
+            brush = QBrush( bgColor )
+            painter.setBrush( brush )
 
             pen = QPen( fgColor )
             painter.setFont( s.monoFont )
@@ -352,12 +350,21 @@ class ScopeCellElement( CellElement ):
                               self._sideCommentRect.height(),
                               Qt.AlignLeft, self._getSideComment() )
         elif self.subKind == ScopeCellElement.DOCSTRING:
-            fgColor = s.boxFGColor
-            if hasattr( self.ref, "leadingCMLComments" ):
-                bgColor, fgColor = self.getCustomColors( painter.brush().color(),
-                                                         s.boxFGColor )
-                brush = QBrush( bgColor )
-                painter.setBrush( brush )
+            bgColor, fgColor = self.getCustomColors( painter.brush().color(),
+                                                     s.boxFGColor )
+            lineColor = getDarkerColor( bgColor )
+
+            if self.ref.docstring.leadingCMLComments:
+                colorSpec = CMLVersion.find( self.ref.docstring.leadingCMLComments,
+                                             CMLcc )
+                if colorSpec:
+                    if colorSpec.bg:
+                        bgColor = colorSpec.bg
+                    if colorSpec.fg:
+                        fgColor = colorSpec.fg
+
+            brush = QBrush( bgColor )
+            painter.setBrush( brush )
 
             canvasLeft = self.baseX - s.rectRadius
 
@@ -370,11 +377,6 @@ class ScopeCellElement( CellElement ):
                                   self.canvas.minWidth - 2 * s.hCellPadding,
                                   self.height )
             else:
-                pen = QPen( s.lineColor )
-                pen = QPen( getDarkerColor( painter.brush().color() ) )
-                pen.setWidth( s.lineWidth )
-                painter.setPen( pen )
-
                 # If the scope is selected then the line may need to be shorter
                 # to avoid covering the outline
                 row = self.addr[ 1 ] - 2
@@ -382,6 +384,24 @@ class ScopeCellElement( CellElement ):
                 correction = 0.0
                 if self.canvas.cells[ row ][ column ].isSelected():
                     correction = s.selectPenWidth - 1
+
+                # The background could also be custom
+                pen = QPen( bgColor )
+                pen.setWidth( s.lineWidth )
+                pen.setJoinStyle( Qt.MiterJoin )
+                painter.setPen( pen )
+
+                dsCorr = float( s.lineWidth )
+                if self.canvas.cells[ row ][ column ].isSelected():
+                    dsCorr = float( s.selectPenWidth ) / 2.0 + float( s.lineWidth ) / 2.0
+                painter.drawRect( float( canvasLeft ) + dsCorr,
+                                  self.baseY + s.lineWidth,
+                                  float( self.canvas.minWidth ) - 2.0 * float( s.hCellPadding ) - 2.0 * dsCorr,
+                                  self.height - 2 * s.lineWidth )
+
+                pen = QPen( lineColor )
+                pen.setWidth( s.lineWidth )
+                painter.setPen( pen )
                 painter.drawLine( canvasLeft + correction,
                                   self.baseY + self.height,
                                   canvasLeft + self.canvas.minWidth - 2 * s.hCellPadding - correction,

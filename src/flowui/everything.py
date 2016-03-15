@@ -1,7 +1,9 @@
 #!/usr/bin/python
 # encoding: utf-8
+# cml 1 cc background=#afafaf
 # File top comment
 
+# cml 1 cc foreground=#ffffff background=#000000
 """
 File docstring
 """
@@ -81,6 +83,8 @@ from sys import path        # Side
 # Leading
 def f( x ):     # Side
                 # Last side
+
+    # cml 1 cc foreground=#ff0000
     """ f doc
         f doc line 2
     """
@@ -116,6 +120,7 @@ def f4( a = """
 # Leading
 class C:    # Side
             # Last side
+    # cml 1 cc background=#555555 foreground=#ffffff
     """
     Class C doc
     Class C doc line 2
@@ -132,6 +137,7 @@ class C1( B1,
 class C3( B1,       # Side 1
           B2,       # Side 2
           B3 ):
+    # cml 1 cc background=#ffffff
     " C3 doc "
     pass
 

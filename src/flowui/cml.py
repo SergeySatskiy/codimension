@@ -22,7 +22,8 @@ CML utilities
 """
 
 from PyQt4.QtGui import QColor
-from cdmcf import IF_FRAGMENT, FOR_FRAGMENT, WHILE_FRAGMENT, TRY_FRAGMENT
+from cdmcf import ( IF_FRAGMENT, FOR_FRAGMENT, WHILE_FRAGMENT, TRY_FRAGMENT,
+                    CONTROL_FLOW_FRAGMENT, CLASS_FRAGMENT, FUNCTION_FRAGMENT )
 
 
 def checkColorRange( value ):
@@ -252,6 +253,12 @@ class CMLVersion:
                 warnings += CMLVersion.validateCMLComments( item.finallyPart )
             for part in item.exceptParts:
                 warnings += CMLVersion.validateCMLComments( part )
+
+        if item.kind in [ CONTROL_FLOW_FRAGMENT,
+                          CLASS_FRAGMENT, FUNCTION_FRAGMENT ]:
+            if item.docstring:
+                warnings += CMLVersion.validateCMLList( item.docstring.leadingCMLComments )
+                warnings += CMLVersion.validateCMLList( item.docstring.sideCMLComments )
 
 
         if hasattr( item, "sideCMLComments" ):

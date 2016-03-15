@@ -218,9 +218,14 @@ class CellElement:
         return distance( line, self.ref.body.beginLine,
                                self.ref.body.endLine )
 
-    def addCMLIndicator( self, baseX, baseY, penWidth, scene ):
+    def addCMLIndicator( self, baseX, baseY, penWidth, scene, ref = None ):
         " Adds a CML indicator for an item if needed "
-        if self.ref.leadingCMLComments or self.ref.sideCMLComments:
+        if ref is None:
+            hasCML = self.ref.leadingCMLComments or self.ref.sideCMLComments
+        else:
+            hasCML = ref.leadingCMLComments or ref.sideCMLComments
+
+        if hasCML:
             s = self.canvas.settings
             self.cmlLabelItem = CMLLabel()
             self.cmlLabelItem.setPos( baseX + s.hCellPadding - penWidth -
