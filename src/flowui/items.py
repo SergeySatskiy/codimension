@@ -33,7 +33,7 @@ from cml import CMLVersion, CMLsw, CMLcc
 
 
 
-def getDarkerColor( color ):
+def getBorderColor( color ):
     " Creates a darker version of the color "
     r = color.red()
     g = color.green()
@@ -244,8 +244,12 @@ class CellElement:
                     bg = colorSpec.bg
                 if colorSpec.fg:
                     fg = colorSpec.fg
-                return bg, fg
-        return defaultBG, defaultFG
+                if colorSpec.border:
+                    border = colorSpec.border
+                else:
+                    border = getBorderColor( bg )
+                return bg, fg, border
+        return defaultBG, defaultFG, getBorderColor( defaultBG )
 
 
 __kindToString = {
@@ -408,12 +412,14 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
         scene.addItem( self )
 
         self.addCMLIndicator( baseX, baseY, penWidth, scene )
+
+        self.__bgColor, self.__fgColor, self.__borderColor = \
+                    self.getCustomColors( s.boxBGColor, s.boxFGColor )
         return
 
     def paint( self, painter, option, widget ):
         " Draws the code block "
         s = self.canvas.settings
-        bgColor, fgColor = self.getCustomColors( s.boxBGColor, s.boxFGColor )
 
         rectWidth = self.minWidth - 2 * s.hCellPadding
         rectHeight = self.minHeight - 2 * s.vCellPadding
@@ -424,16 +430,16 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
             selectPen.setJoinStyle( Qt.RoundJoin )
             painter.setPen( selectPen )
         else:
-            pen = QPen( getDarkerColor( bgColor ) )
+            pen = QPen( self.__borderColor )
             painter.setPen( pen )
-        brush = QBrush( bgColor )
+        brush = QBrush( self.__bgColor )
         painter.setBrush( brush )
         painter.drawRect( self.baseX + s.hCellPadding,
                           self.baseY + s.vCellPadding,
                           rectWidth, rectHeight )
 
         # Draw the text in the rectangle
-        pen = QPen( fgColor )
+        pen = QPen( self.__fgColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
 
@@ -510,13 +516,14 @@ class BreakCell( CellElement, QGraphicsRectItem ):
         scene.addItem( self )
 
         self.addCMLIndicator( baseX, baseY, penWidth, scene )
+
+        self.__bgColor, self.__fgColor, self.__borderColor = \
+                    self.getCustomColors( s.breakBGColor, s.boxFGColor )
         return
 
     def paint( self, painter, option, widget ):
         " Draws the break statement "
         s = self.canvas.settings
-
-        bgColor, fgColor = self.getCustomColors( s.breakBGColor, s.boxFGColor )
 
         if self.isSelected():
             selectPen = QPen( s.selectColor )
@@ -524,16 +531,16 @@ class BreakCell( CellElement, QGraphicsRectItem ):
             selectPen.setJoinStyle( Qt.RoundJoin )
             painter.setPen( selectPen )
         else:
-            pen = QPen( getDarkerColor( bgColor ) )
+            pen = QPen( self.__borderColor )
             painter.setPen( pen )
 
-        brush = QBrush( bgColor )
+        brush = QBrush( self.__bgColor )
         painter.setBrush( brush )
 
         painter.drawRoundedRect( self.x1, self.y1, self.w, self.h, 2, 2 )
 
         # Draw the text in the rectangle
-        pen = QPen( fgColor )
+        pen = QPen( self.__fgColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
         painter.drawText( self.x1 + self.__hSpacing, self.y1 + self.__vSpacing,
@@ -607,14 +614,14 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
         scene.addItem( self )
 
         self.addCMLIndicator( baseX, baseY, penWidth, scene )
+
+        self.__bgColor, self.__fgColor, self.__borderColor = \
+                    self.getCustomColors( s.continueBGColor, s.boxFGColor )
         return
 
     def paint( self, painter, option, widget ):
         " Draws the break statement "
         s = self.canvas.settings
-
-        bgColor, fgColor = self.getCustomColors( s.continueBGColor,
-                                                 s.boxFGColor )
 
         if self.isSelected():
             selectPen = QPen( s.selectColor )
@@ -622,16 +629,16 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
             selectPen.setJoinStyle( Qt.RoundJoin )
             painter.setPen( selectPen )
         else:
-            pen = QPen( getDarkerColor( bgColor ) )
+            pen = QPen( self.__borderColor )
             painter.setPen( pen )
 
-        brush = QBrush( bgColor )
+        brush = QBrush( self.__bgColor )
         painter.setBrush( brush )
 
         painter.drawRoundedRect( self.x1, self.y1, self.w, self.h, 2, 2 )
 
         # Draw the text in the rectangle
-        pen = QPen( fgColor )
+        pen = QPen( self.__fgColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
         painter.drawText( self.x1 + self.__hSpacing, self.y1 + self.__vSpacing,
@@ -711,22 +718,24 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
         scene.addItem( self.arrowItem )
 
         self.addCMLIndicator( baseX, baseY, penWidth, scene )
+
+        self.__bgColor, self.__fgColor, self.__borderColor = \
+                    self.getCustomColors( s.boxBGColor, s.boxFGColor )
         return
 
     def paint( self, painter, option, widget ):
         " Draws the code block "
         s = self.canvas.settings
-        bgColor, fgColor = self.getCustomColors( s.boxBGColor, s.boxFGColor )
 
         if self.isSelected():
             selectPen = QPen( s.selectColor )
             selectPen.setWidth( s.selectPenWidth )
             painter.setPen( selectPen )
         else:
-            pen = QPen( getDarkerColor( bgColor ) )
+            pen = QPen( self.__borderColor )
             painter.setPen( pen )
 
-        brush = QBrush( bgColor )
+        brush = QBrush( self.__bgColor )
         painter.setBrush( brush )
         painter.drawRoundedRect( self.baseX + s.hCellPadding,
                                  self.baseY + s.vCellPadding,
@@ -740,7 +749,7 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
                                  s.returnRectRadius, s.returnRectRadius )
 
         # Draw the text in the rectangle
-        pen = QPen( fgColor )
+        pen = QPen( self.__fgColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
 
@@ -836,22 +845,24 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
         scene.addItem( self.arrowItem )
 
         self.addCMLIndicator( baseX, baseY, penWidth, scene )
+
+        self.__bgColor, self.__fgColor, self.__borderColor = \
+                    self.getCustomColors( s.boxBGColor, s.boxFGColor )
         return
 
     def paint( self, painter, option, widget ):
         " Draws the code block "
         s = self.canvas.settings
-        bgColor, fgColor = self.getCustomColors( s.boxBGColor, s.boxFGColor )
 
         if self.isSelected():
             selectPen = QPen( s.selectColor )
             selectPen.setWidth( s.selectPenWidth )
             painter.setPen( selectPen )
         else:
-            pen = QPen( getDarkerColor( bgColor ) )
+            pen = QPen( self.__borderColor )
             painter.setPen( pen )
 
-        brush = QBrush( bgColor )
+        brush = QBrush( self.__bgColor )
         painter.setBrush( brush )
         painter.drawRoundedRect( self.baseX + s.hCellPadding,
                                  self.baseY + s.vCellPadding,
@@ -865,7 +876,7 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
                                  s.returnRectRadius, s.returnRectRadius )
 
         # Draw the text in the rectangle
-        pen = QPen( fgColor )
+        pen = QPen( self.__fgColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
         availWidth = self.minWidth - 2 * s.hCellPadding - self.__arrowWidth - 2 * s.hTextPadding - s.hTextPadding - s.returnRectRadius
@@ -969,12 +980,14 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         scene.addItem( self.arrowItem )
 
         self.addCMLIndicator( baseX, baseY, penWidth, scene )
+
+        self.__bgColor, self.__fgColor, self.__borderColor = \
+                    self.getCustomColors( s.boxBGColor, s.boxFGColor )
         return
 
     def paint( self, painter, option, widget ):
         " Draws the code block "
         s = self.canvas.settings
-        bgColor, fgColor = self.getCustomColors( s.boxBGColor, s.boxFGColor )
 
         if self.isSelected():
             selectPen = QPen( s.selectColor )
@@ -982,7 +995,7 @@ class AssertCell( CellElement, QGraphicsRectItem ):
             selectPen.setJoinStyle( Qt.RoundJoin )
             painter.setPen( selectPen )
         else:
-            pen = QPen( getDarkerColor( bgColor ) )
+            pen = QPen( self.__borderColor )
             painter.setPen( pen )
 
         dHalf = int( self.__diamondDiagonal / 2.0 )
@@ -995,7 +1008,7 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         dx4 = dx2
         dy4 = dy2 + 2 * dHalf
 
-        brush = QBrush( bgColor )
+        brush = QBrush( self.__bgColor )
         painter.setBrush( brush )
         painter.drawPolygon( QPointF(dx1, dy1), QPointF(dx2, dy2),
                              QPointF(dx3, dy3), QPointF(dx4, dy4) )
@@ -1005,7 +1018,7 @@ class AssertCell( CellElement, QGraphicsRectItem ):
                           self.minHeight - 2 * s.vCellPadding )
 
         # Draw the text in the rectangle
-        pen = QPen( fgColor )
+        pen = QPen( self.__fgColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
         availWidth = self.minWidth - 2 * s.hCellPadding - self.__diamondDiagonal
@@ -1108,22 +1121,24 @@ class SysexitCell( CellElement, QGraphicsRectItem ):
         scene.addItem( self.xItem )
 
         self.addCMLIndicator( baseX, baseY, penWidth, scene )
+
+        self.__bgColor, self.__fgColor, self.__borderColor = \
+                    self.getCustomColors( s.boxBGColor, s.boxFGColor )
         return
 
     def paint( self, painter, option, widget ):
         " Draws the code block "
         s = self.canvas.settings
-        bgColor, fgColor = self.getCustomColors( s.boxBGColor, s.boxFGColor )
 
         if self.isSelected():
             selectPen = QPen( s.selectColor )
             selectPen.setWidth( s.selectPenWidth )
             painter.setPen( selectPen )
         else:
-            pen = QPen( getDarkerColor( bgColor ) )
+            pen = QPen( self.__borderColor )
             painter.setPen( pen )
 
-        brush = QBrush( bgColor )
+        brush = QBrush( self.__bgColor )
         painter.setBrush( brush )
         painter.drawRoundedRect( self.baseX + s.hCellPadding,
                                  self.baseY + s.vCellPadding,
@@ -1137,7 +1152,7 @@ class SysexitCell( CellElement, QGraphicsRectItem ):
                                  s.returnRectRadius, s.returnRectRadius )
 
         # Draw the text in the rectangle
-        pen = QPen( fgColor )
+        pen = QPen( self.__fgColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
         availWidth = self.minWidth - 2 * s.hCellPadding - self.__xWidth - 2 * s.hTextPadding - s.hTextPadding - s.returnRectRadius
@@ -1215,12 +1230,14 @@ class ImportCell( CellElement, QGraphicsRectItem ):
         scene.addItem( self.arrowItem )
 
         self.addCMLIndicator( baseX, baseY, penWidth, scene )
+
+        self.__bgColor, self.__fgColor, self.__borderColor = \
+                    self.getCustomColors( s.boxBGColor, s.boxFGColor )
         return
 
     def paint( self, painter, option, widget ):
         " Draws the code block "
         s = self.canvas.settings
-        bgColor, fgColor = self.getCustomColors( s.boxBGColor, s.boxFGColor )
 
         if self.isSelected():
             selectPen = QPen( s.selectColor )
@@ -1228,9 +1245,9 @@ class ImportCell( CellElement, QGraphicsRectItem ):
             selectPen.setJoinStyle( Qt.RoundJoin )
             painter.setPen( selectPen )
         else:
-            pen = QPen( getDarkerColor( bgColor ) )
+            pen = QPen( self.__borderColor )
             painter.setPen( pen )
-        brush = QBrush( bgColor )
+        brush = QBrush( self.__bgColor )
         painter.setBrush( brush )
         painter.drawRect( self.baseX + s.hCellPadding,
                           self.baseY + s.vCellPadding,
@@ -1242,7 +1259,7 @@ class ImportCell( CellElement, QGraphicsRectItem ):
                           self.baseY + self.minHeight - s.vCellPadding )
 
         # Draw the text in the rectangle
-        pen = QPen( fgColor )
+        pen = QPen( self.__fgColor )
         painter.setFont( s.monoFont )
         painter.setPen( pen )
         textRectWidth = self.minWidth - 2 * s.hCellPadding - 4 * s.hTextPadding - self.__arrowWidth
@@ -1334,6 +1351,9 @@ class IfCell( CellElement, QGraphicsRectItem ):
         self.yBelow = CMLVersion.find( self.ref.leadingCMLComments, CMLsw ) is not None
         if self.yBelow:
             self.rightLabel = Text( s, "N" )
+            f = self.rightLabel.font()
+            f.setBold( True )
+            self.rightLabel.setFont( f )
         else:
             self.rightLabel = Text( s, "Y" )
 
@@ -1348,13 +1368,15 @@ class IfCell( CellElement, QGraphicsRectItem ):
         scene.addItem( self )
 
         self.addCMLIndicator( baseX, baseY, penWidth, scene )
+
+        self.__bgColor, self.__fgColor, self.__borderColor = \
+                    self.getCustomColors( s.ifBGColor, s.boxFGColor )
         return
 
 
     def paint( self, painter, option, widget ):
         " Draws the code block "
         s = self.canvas.settings
-        bgColor, fgColor = self.getCustomColors( s.ifBGColor, s.boxFGColor )
 
         if self.isSelected():
             selectPen = QPen( s.selectColor )
@@ -1362,23 +1384,18 @@ class IfCell( CellElement, QGraphicsRectItem ):
             selectPen.setJoinStyle( Qt.RoundJoin )
             painter.setPen( selectPen )
         else:
-            pen = QPen( getDarkerColor( bgColor ) )
+            pen = QPen( self.__borderColor )
             pen.setJoinStyle( Qt.RoundJoin )
             painter.setPen( pen )
 
-        brush = QBrush( bgColor )
+        brush = QBrush( self.__bgColor )
         painter.setBrush( brush )
         painter.drawPolygon( QPointF(self.x1, self.y1), QPointF(self.x2, self.y2),
                              QPointF(self.x3, self.y3), QPointF(self.x4, self.y4),
                              QPointF(self.x5, self.y5), QPointF(self.x6, self.y6) )
-        if self.yBelow:
-            # Non-default, need additional mark
-            painter.setBrush( QBrush( QColor( 0, 0, 255 ) ) )
-            painter.setPen( QPen( QColor( 0, 0, 255 ) ) )
-            painter.drawEllipse( QPointF(self.x4 - 6, self.y4), 3, 3 )
 
         # Draw the text in the rectangle
-        pen = QPen( fgColor )
+        pen = QPen( self.__fgColor )
         painter.setPen( pen )
         painter.setFont( s.monoFont )
         availWidth = self.x3 - self.x2

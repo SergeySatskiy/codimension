@@ -83,6 +83,17 @@ _fragmentKindToCellClass = {
                        }
 
 
+_scopeToName =  {
+    CellElement.FILE_SCOPE:     "",
+    CellElement.FOR_SCOPE:      "for",
+    CellElement.WHILE_SCOPE:    "while",
+    CellElement.TRY_SCOPE:      "try",
+    CellElement.WITH_SCOPE:     "with",
+    CellElement.EXCEPT_SCOPE:   "except",
+    CellElement.FINALLY_SCOPE:  "finally"
+                }
+
+
 class VirtualCanvas:
     " Holds the control flow representation "
 
@@ -126,20 +137,8 @@ class VirtualCanvas:
         " Provides the name of the scope drawn on the canvas "
         for rowNumber, row in enumerate( self.cells ):
             for columnNumber, cell in enumerate( row ):
-                if cell.kind == CellElement.FILE_SCOPE:
-                    return ""
-                if cell.kind == CellElement.FOR_SCOPE:
-                    return "for"
-                if cell.kind == CellElement.WHILE_SCOPE:
-                    return "while"
-                if cell.kind == CellElement.TRY_SCOPE:
-                    return "try"
-                if cell.kind == CellElement.WITH_SCOPE:
-                    return "with"
-                if cell.kind == CellElement.EXCEPT_SCOPE:
-                    return "except"
-                if cell.kind == CellElement.FINALLY_SCOPE:
-                    return "finally"
+                if cell.kind in _scopeToName:
+                    return _scopeToName[ cell.kind ]
                 if cell.kind == CellElement.FUNC_SCOPE:
                     return "def " + cell.ref.name.getContent() + "()"
                 if cell.kind == CellElement.CLASS_SCOPE:
@@ -588,25 +587,36 @@ class VirtualCanvas:
         self.__currentCF = cf
         self.__currentScopeClass = _scopeToClass[ scopeKind ]
 
+        vacantRow = 0
+        if scopeKind == CellElement.FILE_SCOPE and cf.leadingComment:
+            self.__allocateAndSet( vacantRow, 1, VSpacerCell( None, self, 1, vacantRow ) )
+            vacantRow += 1
+
+            self.__allocateCell( vacantRow, 2, False )
+            self.cells[ vacantRow ][ 1 ] = ConnectorCell( CONN_N_S,
+                                                          self, 1, vacantRow )
+            self.cells[ vacantRow ][ 2 ] = LeadingCommentCell( cf, self, 2, vacantRow )
+            vacantRow += 1
+
+
         # Allocate the scope header
-        headerRow = 0
-        self.__allocateCell( headerRow, 1, False )
-        self.cells[ headerRow ][ 0 ] = self.__currentScopeClass( cf, self, 0, headerRow, ScopeCellElement.TOP_LEFT )
-        self.cells[ headerRow ][ 1 ] = self.__currentScopeClass( cf, self, 1, headerRow, ScopeCellElement.TOP )
+        self.__allocateCell( vacantRow, 1, False )
+        self.cells[ vacantRow ][ 0 ] = self.__currentScopeClass( cf, self, 0, vacantRow, ScopeCellElement.TOP_LEFT )
+        self.cells[ vacantRow ][ 1 ] = self.__currentScopeClass( cf, self, 1, vacantRow, ScopeCellElement.TOP )
         self.linesInHeader += 1
-        headerRow += 1
-        self.__allocateCell( headerRow, 1 )
-        self.cells[ headerRow ][ 1 ] = self.__currentScopeClass( cf, self, 1, headerRow, ScopeCellElement.DECLARATION )
+        vacantRow += 1
+        self.__allocateCell( vacantRow, 1 )
+        self.cells[ vacantRow ][ 1 ] = self.__currentScopeClass( cf, self, 1, vacantRow, ScopeCellElement.DECLARATION )
         self.linesInHeader += 1
 
         if hasattr( cf, "sideComment" ):
             if cf.sideComment:
-                self.__allocateCell( headerRow - 1, 2 )
-                self.cells[ headerRow - 1 ][ 2 ] = self.__currentScopeClass( cf, self, 2, headerRow - 1, ScopeCellElement.TOP )
-                self.__allocateCell( headerRow, 2 )
-                self.cells[ headerRow ][ 2 ] = self.__currentScopeClass( cf, self, 2, headerRow, ScopeCellElement.SIDE_COMMENT )
+                self.__allocateCell( vacantRow - 1, 2 )
+                self.cells[ vacantRow - 1 ][ 2 ] = self.__currentScopeClass( cf, self, 2, vacantRow - 1, ScopeCellElement.TOP )
+                self.__allocateCell( vacantRow, 2 )
+                self.cells[ vacantRow ][ 2 ] = self.__currentScopeClass( cf, self, 2, vacantRow, ScopeCellElement.SIDE_COMMENT )
 
-        vacantRow = headerRow + 1
+        vacantRow += 1
         if hasattr( cf, "docstring" ):
             if cf.docstring:
                 if cf.docstring.getDisplayValue():
@@ -635,6 +645,10 @@ class VirtualCanvas:
         self.__allocateCell( vacantRow, 1, False )
         self.cells[ vacantRow ][ 0 ] = self.__currentScopeClass( cf, self, 0, vacantRow, ScopeCellElement.BOTTOM_LEFT )
         self.cells[ vacantRow ][ 1 ] = self.__currentScopeClass( cf, self, 1, vacantRow, ScopeCellElement.BOTTOM )
+        vacantRow += 1
+
+        if scopeKind == CellElement.FILE_SCOPE and cf.leadingComment:
+            self.__allocateAndSet( vacantRow, 1, VSpacerCell( None, self, 1, vacantRow ) )
         return
 
     def __dependentRegion( self, rowIndex ):
@@ -711,6 +725,8 @@ class VirtualCanvas:
 
     def hasScope( self ):
         try:
+            if self.canvas is None:
+                return True
             return self.cells[ 0 ][ 0 ].scopedItem()
         except:
             return False

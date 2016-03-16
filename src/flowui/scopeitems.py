@@ -24,7 +24,7 @@ import os.path
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QPen, QBrush, QGraphicsRectItem, QGraphicsItem
 from auxitems import BadgeItem, Connector, CMLLabel
-from items import CellElement, getDarkerColor, getNoCellCommentBoxPath, distance
+from items import CellElement, getBorderColor, getNoCellCommentBoxPath, distance
 from cml import CMLVersion, CMLcc
 
 
@@ -262,8 +262,8 @@ class ScopeCellElement( CellElement ):
         s = self.canvas.settings
 
         if self.subKind == ScopeCellElement.TOP_LEFT:
-            bgColor, _ = self.getCustomColors( painter.brush().color(),
-                                               painter.brush().color() )
+            bgColor, _, borderColor = self.getCustomColors( painter.brush().color(),
+                                                            painter.brush().color() )
             brush = QBrush( bgColor )
             painter.setBrush( brush )
 
@@ -273,7 +273,7 @@ class ScopeCellElement( CellElement ):
                 selectPen.setJoinStyle( Qt.RoundJoin )
                 painter.setPen( selectPen )
             else:
-                pen = QPen( getDarkerColor( painter.brush().color() ) )
+                pen = QPen( borderColor )
                 pen.setWidth( s.lineWidth )
                 painter.setPen( pen )
 
@@ -284,8 +284,8 @@ class ScopeCellElement( CellElement ):
                                      s.rectRadius, s.rectRadius )
 
         elif self.subKind == ScopeCellElement.DECLARATION:
-            bgColor, fgColor = self.getCustomColors( painter.brush().color(),
-                                                     s.boxFGColor )
+            bgColor, fgColor, borderColor = self.getCustomColors( painter.brush().color(),
+                                                                  s.boxFGColor )
             brush = QBrush( bgColor )
             painter.setBrush( brush )
 
@@ -303,7 +303,7 @@ class ScopeCellElement( CellElement ):
                               self._headerRect.width(), textHeight,
                               Qt.AlignLeft, self._getHeaderText() )
 
-            pen = QPen( getDarkerColor( painter.brush().color() ) )
+            pen = QPen( borderColor )
             pen.setWidth( s.lineWidth )
             painter.setPen( pen )
 
@@ -350,10 +350,8 @@ class ScopeCellElement( CellElement ):
                               self._sideCommentRect.height(),
                               Qt.AlignLeft, self._getSideComment() )
         elif self.subKind == ScopeCellElement.DOCSTRING:
-            bgColor, fgColor = self.getCustomColors( painter.brush().color(),
-                                                     s.boxFGColor )
-            lineColor = getDarkerColor( bgColor )
-
+            bgColor, fgColor, borderColor = self.getCustomColors( painter.brush().color(),
+                                                                  s.boxFGColor )
             if self.ref.docstring.leadingCMLComments:
                 colorSpec = CMLVersion.find( self.ref.docstring.leadingCMLComments,
                                              CMLcc )
@@ -399,7 +397,7 @@ class ScopeCellElement( CellElement ):
                                   float( self.canvas.minWidth ) - 2.0 * float( s.hCellPadding ) - 2.0 * dsCorr,
                                   self.height - 2 * s.lineWidth )
 
-                pen = QPen( lineColor )
+                pen = QPen( borderColor )
                 pen.setWidth( s.lineWidth )
                 painter.setPen( pen )
                 painter.drawLine( canvasLeft + correction,
@@ -572,6 +570,8 @@ class FileScopeCell( ScopeCellElement, QGraphicsRectItem ):
         return self._headerText
 
     def render( self ):
+        if self.subKind == ScopeCellElement.TOP_LEFT:
+            self._badgeItem = BadgeItem( self, "module" )
         self._render()
         self.height = self.minHeight
         self.width = self.minWidth

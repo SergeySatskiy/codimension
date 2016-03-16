@@ -140,6 +140,7 @@ class CMLcc( CMLCommentBase ):
         CMLCommentBase.__init__( self, ref )
         self.bg = None      # background color
         self.fg = None      # foreground color
+        self.border = None
         self.validate()
         return
 
@@ -151,11 +152,14 @@ class CMLcc( CMLCommentBase ):
             self.bg = readColor( self.ref.properties[ "background" ] )
         if "foreground" in self.ref.properties:
             self.fg = readColor( self.ref.properties[ "foreground" ] )
+        if "border" in self.ref.properties:
+            self.border = readColor( self.ref.properties[ "border" ] )
 
-        if self.bg is None and self.fg is None:
+        if self.bg is None and self.fg is None and self.border is None:
             raise Exception( "The '" + CMLcc.CODE +
                              "' CML comment does not supply neither "
-                             "background nor foreground color" )
+                             "background nor foreground color nor "
+                             "border color" )
         return
 
     @staticmethod
@@ -167,16 +171,17 @@ class CMLcc( CMLCommentBase ):
                "Supported properties:\n" \
                "- 'background': background color for the item\n" \
                "- 'foreground': foreground color for the item\n" \
+               "- 'border': border color for the item\n" \
                "Color spec formats:\n" \
                "- '#hhhhhh': hexadecimal RGB\n" \
                "- '#hhhhhhhh': hexadecimal RGB + alpha\n" \
                "- 'ddd,ddd,ddd': decimal RGB\n" \
                "- 'ddd,ddd,ddd,ddd': decimal RGB + alpha\n\n" \
                "Example:\n" \
-               "# cml 1 " + CMLcc.CODE + " backgound=#f6f4e4 foreground=#000000"
+               "# cml 1 " + CMLcc.CODE + " backgound=#f6f4e4 foreground=#000000 border=#ffffff"
 
     @staticmethod
-    def generate( backgound, foreground, pos = 1 ):
+    def generate( backgound, foreground, border, pos = 1 ):
         " Generates a complete line to be inserted "
         res = " " * (pos -1) + "# cml 1 cc"
         if backgound is not None:
@@ -191,6 +196,12 @@ class CMLcc( CMLCommentBase ):
             if fgalpha != 255:
                 fg += hex( fgalpha )[ 2: ]
             res += " foreground=" + fg
+        if border is not None:
+            brd = border.name()
+            brdalpha = border.alpha()
+            if brdalpha != 255:
+                brd += hex( brdalpha )[ 2: ]
+            res += " border=" + brd
 
         return res
 

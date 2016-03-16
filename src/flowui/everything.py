@@ -65,7 +65,7 @@ from sys import path        # Side
                             # Side last
 
 
-# cml 1 cc background=#000000 foreground=#eaeaea
+# cml 1 cc background=#000000 foreground=#eaeaea border=#ffffff
 import sys, \
        os.path
 
@@ -358,7 +358,7 @@ def f13():
            "Shakespeare"
 
 def f14():
-    # cml 1 cc background="230,0,0" foreground="255,255,255"
+    # cml 1 cc background="230,0,0" foreground="255,255,255" border=#000000
     # Leading
     return 154  # Side 1
                 # Side 2
@@ -476,7 +476,7 @@ with \
             f:
     pass
 
-# cml 1 cc background=#dddddd foreground=#343399
+# cml 1 cc background=#dddddd foreground=#343399 border=#ffffff
 # leading
 with open( "my.txt" +           # Side 1
            "your.txt" ) as f:   # Side 2
@@ -516,12 +516,16 @@ if True:    # Side 1
     pass
 # Leading 3
 # cml 1 sw
-# cml 1 cc background=#345678 foreground=#ffffff
+# cml 1 cc background=#345678 foreground=#ffffff border=#ffffff
 elif False: # Side 3
     pass
 # Leading 4
 else:       # Side 4
-    pass
+    def f( a,
+           b,       # side
+           c ) :
+        " docstring "
+        pass
 
 
 # cml 1 cc background=#ee00ee foreground=#ffffff
