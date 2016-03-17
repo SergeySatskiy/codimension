@@ -182,7 +182,9 @@ class CFSceneMouseMixin:
                 return item.ref.docstring.begin, item.ref.docstring.end
             # File scope differs from the other scopes
             if item.kind == CellElement.FILE_SCOPE:
-                return item.ref.begin, item.ref.end
+                if item.ref.docstring:
+                    return item.ref.docstring.begin, item.ref.body.end
+                return item.ref.body.begin, item.ref.body.end
 
             # try, while, for are special
             if item.kind in [ CellElement.TRY_SCOPE,

@@ -473,7 +473,7 @@ class FlowUIWidget( QWidget ):
         try:
             # Top level canvas has no adress and no parent canvas
             canvas = VirtualCanvas( self.cflowSettings, None, None, None )
-            canvas.layout( self.__cf )
+            canvas.layoutModule( self.__cf )
             canvas.setEditor( self.__editor )
             width, height = canvas.render()
             self.scene.setSceneRect( 0, 0, width, height )

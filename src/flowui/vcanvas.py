@@ -579,30 +579,35 @@ class VirtualCanvas:
         self.dependentRegions.append( (0, vacantRow) )
         return
 
+    def layoutModule( self, cf ):
+        if cf.leadingComment:
+            self.isNoScope = True
 
-    def layout( self, cf, scopeKind = CellElement.FILE_SCOPE,
-                          rowsToAllocate = 1 ):
+            vacantRow = 0
+            self.__allocateAndSet( vacantRow, 1, VSpacerCell( None, self, 1, vacantRow ) )
+            vacantRow += 1
+            self.__allocateCell( vacantRow, 2, False )
+            self.cells[ vacantRow ][ 1 ] = ConnectorCell( CONN_N_S,
+                                                          self, 1, vacantRow )
+            self.cells[ vacantRow ][ 2 ] = LeadingCommentCell( cf, self, 2, vacantRow )
+            vacantRow += 1
+            self.__allocateScope( cf, CellElement.FILE_SCOPE, vacantRow, 0 )
+        else:
+            self.layout( cf, CellElement.FILE_SCOPE )
+        return
+
+
+    def layout( self, cf, scopeKind, rowsToAllocate = 1 ):
         " Does the layout "
 
         self.__currentCF = cf
         self.__currentScopeClass = _scopeToClass[ scopeKind ]
 
         vacantRow = 0
-        if scopeKind == CellElement.FILE_SCOPE and cf.leadingComment:
-            self.__allocateAndSet( vacantRow, 1, VSpacerCell( None, self, 1, vacantRow ) )
-            vacantRow += 1
-
-            self.__allocateCell( vacantRow, 2, False )
-            self.cells[ vacantRow ][ 1 ] = ConnectorCell( CONN_N_S,
-                                                          self, 1, vacantRow )
-            self.cells[ vacantRow ][ 2 ] = LeadingCommentCell( cf, self, 2, vacantRow )
-            vacantRow += 1
-
 
         # Allocate the scope header
-        self.__allocateCell( vacantRow, 1, False )
+        self.__allocateCell( vacantRow, 0, False )
         self.cells[ vacantRow ][ 0 ] = self.__currentScopeClass( cf, self, 0, vacantRow, ScopeCellElement.TOP_LEFT )
-        self.cells[ vacantRow ][ 1 ] = self.__currentScopeClass( cf, self, 1, vacantRow, ScopeCellElement.TOP )
         self.linesInHeader += 1
         vacantRow += 1
         self.__allocateCell( vacantRow, 1 )
@@ -642,13 +647,8 @@ class VirtualCanvas:
             vacantRow = self.layoutSuite( vacantRow, cf.suite )
 
         # Allocate the scope footer
-        self.__allocateCell( vacantRow, 1, False )
+        self.__allocateCell( vacantRow, 0, False )
         self.cells[ vacantRow ][ 0 ] = self.__currentScopeClass( cf, self, 0, vacantRow, ScopeCellElement.BOTTOM_LEFT )
-        self.cells[ vacantRow ][ 1 ] = self.__currentScopeClass( cf, self, 1, vacantRow, ScopeCellElement.BOTTOM )
-        vacantRow += 1
-
-        if scopeKind == CellElement.FILE_SCOPE and cf.leadingComment:
-            self.__allocateAndSet( vacantRow, 1, VSpacerCell( None, self, 1, vacantRow ) )
         return
 
     def __dependentRegion( self, rowIndex ):
@@ -725,8 +725,6 @@ class VirtualCanvas:
 
     def hasScope( self ):
         try:
-            if self.canvas is None:
-                return True
             return self.cells[ 0 ][ 0 ].scopedItem()
         except:
             return False
