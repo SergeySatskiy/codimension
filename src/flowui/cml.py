@@ -206,13 +206,56 @@ class CMLcc( CMLCommentBase ):
         return res
 
 
+class CMLrt( CMLCommentBase ):
+    " Covers 'Replace text' comment "
+
+    CODE = "rt"
+
+    def __init__( self, ref ):
+        CMLCommentBase.__init__( self, ref )
+        self.text = None
+        self.validate()
+        return
+
+    def validate( self ):
+        self.validateRecordType( CMLrt.CODE )
+        CMLVersion.validate( self.ref )
+
+        if "text" in self.ref.properties:
+            self.text = self.ref.properties[ "text" ]
+
+        if self.text is None:
+            raise Exception( "The '" + CMLrt.CODE +
+                             "' CML comment does not supply text" )
+        return
+
+    @staticmethod
+    def description():
+        " Provides the CML comment description "
+        return "The '" + CMLrt.CODE + \
+               "' comment is used for replacing the text of most of " \
+               "the graphics items.\n" \
+               "Supported properties:\n" \
+               "- 'text': text to be shown instead of the real code\n\n" \
+               "Example:\n" \
+               "# cml 1 " + CMLrt.CODE + " text=\"Reset the dictionary\""
+
+    @staticmethod
+    def generate( txt, pos = 1 ):
+        " Generates a complete line to be inserted "
+        res = " " * (pos -1) + "# cml 1 rt"
+        if txt is not None:
+            res += " text=\"" + txt.replace( '"', '\\"' ) + "\""
+        return res
+
 
 class CMLVersion:
     " Describes the current CML version "
 
     VERSION = 1     # Current CML version
     COMMENT_TYPES = { CMLsw.CODE: CMLsw,
-                      CMLcc.CODE: CMLcc }
+                      CMLcc.CODE: CMLcc,
+                      CMLrt.CODE: CMLrt }
 
     def __init__( self ):
         return

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # encoding: utf-8
-# cml 1 cc background=#afafaf
+# cml 1 cc background=#ffffff
 # File top comment
 
 # cml 1 cc foreground=#ffffff background=#000000
@@ -14,6 +14,7 @@ File docstring
 #
 
 
+# cml 1 rt text="one"
 alone = 1
 
 one = 1
@@ -24,6 +25,7 @@ a = 10      # Side
 b = 20      # Side
             # Side last
 
+
 c = """
     ...
     """ + \
@@ -33,6 +35,11 @@ c = """
 '''
 ...
 '''
+
+
+
+# cml 1 rt text="Quite a \"long\" text\nOn two lines"
+x = 720
 
 
 d = 154
@@ -369,6 +376,7 @@ def f15():
     return ( 154,               # Side 1
              "Shakespeare" )    # Side 2
 
+# cml 1 cc background=#454545 foreground=#ffffff border=#ff0000
 def f16():
     return """
            ...
@@ -498,15 +506,21 @@ if True:
 else:
     pass
 
-if True:
+# cml 1 rt text = "Some text"
+if a == 154 and \
+   b == 155 and \
+   c == 156:
     pass
 elif False:
+    pass
+
     pass
 else:
     pass
 
 
 # Leading
+# cml 1 rt text = ""
 if True:    # Side 1
             # Side 2
     pass
@@ -529,6 +543,7 @@ else:       # Side 4
 
 
 # cml 1 cc background=#ee00ee foreground=#ffffff
+# cml 1 rt text="Salary is too high"
 if a > 456 and \
    b < 76 or \
    p == 99:

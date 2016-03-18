@@ -29,7 +29,7 @@ from PyQt4.QtGui import ( QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
                           QGraphicsSimpleTextItem )
 from PyQt4.QtSvg import QGraphicsSvgItem
 from auxitems import SVGItem, Connector, Text, CMLLabel
-from cml import CMLVersion, CMLsw, CMLcc
+from cml import CMLVersion, CMLsw, CMLcc, CMLrt
 
 
 
@@ -64,6 +64,13 @@ def distance( val, begin, end ):
     if val >= begin and val <= end:
         return 0
     return min( abs( val - begin ), abs( val - end ) )
+
+
+def htmlEncode( string ):
+    return string.replace( "&", "&amp;" ) \
+                 .replace( ">", "&gt;" ) \
+                 .replace( "<", "&lt;" )
+
 
 
 class CellElement:
@@ -114,6 +121,7 @@ class CellElement:
         self._editor = None
         self.cmlLabelItem = None    # Label near the item to indicate a CML
                                     # presence
+        self._text = None
 
         self.tailComment = False
 
@@ -251,6 +259,26 @@ class CellElement:
                 return bg, fg, border
         return defaultBG, defaultFG, getBorderColor( defaultBG )
 
+    def getReplacementText( self ):
+        " Provides the CML replacement text if so "
+        if hasattr( self.ref, "leadingCMLComments" ):
+            rt = CMLVersion.find( self.ref.leadingCMLComments, CMLrt )
+            if rt:
+                if rt.text is not None:
+                    return rt.text.replace( '\\n', '\n' )
+        return None
+
+    def _getText( self ):
+        " Default implementation of the item text provider "
+        if self._text is None:
+            self._text = self.getReplacementText()
+            displayText = self.ref.getDisplayValue()
+            if self._text is None:
+                self._text = displayText
+            else:
+                self.setToolTip( "<pre>" + htmlEncode( displayText ) + "</pre>" )
+        return self._text
+
 
 __kindToString = {
     CellElement.UNKNOWN:                "UNKNOWN",
@@ -366,7 +394,6 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
         CellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.CODE_BLOCK
-        self.__text = None
         self.__textRect = None
         self.connector = None
 
@@ -374,14 +401,9 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
-    def __getText( self ):
-        if self.__text is None:
-            self.__text = self.ref.getDisplayValue()
-        return self.__text
-
     def render( self ):
         s = self.canvas.settings
-        self.__textRect = self.getBoundingRect( self.__getText() )
+        self.__textRect = self.getBoundingRect( self._getText() )
 
         self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
         self.minWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
@@ -448,7 +470,7 @@ class CodeBlockCell( CellElement, QGraphicsRectItem ):
         painter.drawText( self.baseX + s.hCellPadding + s.hTextPadding + textShift,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft, self.__getText() )
+                          Qt.AlignLeft, self._getText() )
         return
 
     def getSelectTooltip( self ):
@@ -658,7 +680,6 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
         CellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self )
         self.kind = CellElement.RETURN
-        self.__text = None
         self.__textRect = None
         self.__arrowWidth = 16
         self.connector = None
@@ -671,16 +692,21 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
-    def __getText( self ):
-        if self.__text is None:
-            self.__text = self.ref.getDisplayValue()
-            if not self.__text:
-                self.__text = "None"
-        return self.__text
+    def _getText( self ):
+        if self._text is None:
+            self._text = self.getReplacementText()
+            displayText = self.ref.getDisplayValue()
+            if self._text is None:
+                self._text = displayText
+                if not self._text:
+                    self._text = "None"
+            else:
+                self.setToolTip( "<pre>" + htmlEncode( displayText ) + "</pre>" )
+        return self._text
 
     def render( self ):
         s = self.canvas.settings
-        self.__textRect = self.getBoundingRect( self.__getText() )
+        self.__textRect = self.getBoundingRect( self._getText() )
 
         self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
         self.minWidth = max( self.__textRect.width() + 2 * s.hCellPadding + s.hTextPadding +
@@ -758,7 +784,7 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
         painter.drawText( self.baseX + s.hCellPadding + self.__arrowWidth + 3 * s.hTextPadding + textShift,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft, self.__getText() )
+                          Qt.AlignLeft, self._getText() )
         return
 
     def getSelectTooltip( self ):
@@ -789,7 +815,6 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
         CellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.RAISE
-        self.__text = None
         self.__textRect = None
         self.__arrowWidth = 16
 
@@ -802,14 +827,9 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
-    def __getText( self ):
-        if self.__text is None:
-            self.__text = self.ref.getDisplayValue()
-        return self.__text
-
     def render( self ):
         s = self.canvas.settings
-        self.__textRect = self.getBoundingRect( self.__getText() )
+        self.__textRect = self.getBoundingRect( self._getText() )
 
         self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
         self.minWidth = max( self.__textRect.width() + 2 * s.hCellPadding + s.hTextPadding +
@@ -884,7 +904,7 @@ class RaiseCell( CellElement, QGraphicsRectItem ):
         painter.drawText( self.baseX + s.hCellPadding + self.__arrowWidth + 3 * s.hTextPadding + textShift,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft, self.__getText() )
+                          Qt.AlignLeft, self._getText() )
         return
 
     def getSelectTooltip( self ):
@@ -916,7 +936,6 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         CellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.ASSERT
-        self.__text = None
         self.__textRect = None
         self.__diamondDiagonal = None
         self.__arrowWidth = 16
@@ -930,15 +949,10 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
-    def __getText( self ):
-        if self.__text is None:
-            self.__text = self.ref.getDisplayValue()
-        return self.__text
-
     def render( self ):
         s = self.canvas.settings
         self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
-                                                          0, self.__getText() )
+                                                          0, self._getText() )
 
         # for an arrow box
         singleCharRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
@@ -1027,7 +1041,7 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         painter.drawText( dx3 + s.hTextPadding + textShift,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft, self.__getText() )
+                          Qt.AlignLeft, self._getText() )
         return
 
     def getSelectTooltip( self ):
@@ -1065,7 +1079,6 @@ class SysexitCell( CellElement, QGraphicsRectItem ):
         CellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.SYSEXIT
-        self.__text = None
         self.__textRect = None
         self.__xWidth = 16
         self.connector = None
@@ -1078,14 +1091,9 @@ class SysexitCell( CellElement, QGraphicsRectItem ):
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
-    def __getText( self ):
-        if self.__text is None:
-            self.__text = self.ref.getDisplayValue()
-        return self.__text
-
     def render( self ):
         s = self.canvas.settings
-        self.__textRect = self.getBoundingRect( self.__getText() )
+        self.__textRect = self.getBoundingRect( self._getText() )
 
         self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
         self.minWidth = max( self.__textRect.width() + 2 * s.hCellPadding + s.hTextPadding +
@@ -1160,7 +1168,7 @@ class SysexitCell( CellElement, QGraphicsRectItem ):
         painter.drawText( self.baseX + s.hCellPadding + self.__xWidth + 3 * s.hTextPadding + textShift,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft, self.__getText() )
+                          Qt.AlignLeft, self._getText() )
         return
 
     def getSelectTooltip( self ):
@@ -1176,7 +1184,6 @@ class ImportCell( CellElement, QGraphicsRectItem ):
         CellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.IMPORT
-        self.__text = None
         self.__arrowWidth = 16
         self.__textRect = None
         self.arrowItem = SVGItem( "import.svgz", self )
@@ -1188,15 +1195,10 @@ class ImportCell( CellElement, QGraphicsRectItem ):
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
-    def __getText( self ):
-        if self.__text is None:
-            self.__text = self.ref.getDisplayValue()
-        return self.__text
-
     def render( self ):
         s = self.canvas.settings
         self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
-                                               0, self.__getText() )
+                                               0, self._getText() )
         self.minHeight = self.__textRect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
         self.minWidth = max( self.__textRect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding +
                              self.__arrowWidth + 2 * s.hTextPadding,
@@ -1268,7 +1270,7 @@ class ImportCell( CellElement, QGraphicsRectItem ):
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
                           Qt.AlignLeft,
-                          self.__getText() )
+                          self._getText() )
         return
 
     def getSelectTooltip( self ):
@@ -1284,7 +1286,6 @@ class IfCell( CellElement, QGraphicsRectItem ):
         CellElement.__init__( self, ref, canvas, x, y )
         QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
         self.kind = CellElement.IF
-        self.__text = None
         self.__textRect = None
         self.vConnector = None
         self.hConnector = None
@@ -1295,15 +1296,10 @@ class IfCell( CellElement, QGraphicsRectItem ):
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
-    def __getText( self ):
-        if self.__text is None:
-            self.__text = self.ref.getDisplayValue()
-        return self.__text
-
     def render( self ):
         s = self.canvas.settings
         self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
-                                                          self.__getText() )
+                                                          self._getText() )
 
         self.minHeight = self.__textRect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
         self.minWidth = max( self.__textRect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding + 2 * s.ifWidth,
@@ -1404,7 +1400,7 @@ class IfCell( CellElement, QGraphicsRectItem ):
         painter.drawText( self.x2 + s.hTextPadding + textShift,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft, self.__getText() )
+                          Qt.AlignLeft, self._getText() )
         return
 
     def getSelectTooltip( self ):
@@ -1447,7 +1443,6 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         CellElement.__init__( self, ref, canvas, x, y )
         QGraphicsPathItem.__init__( self )
         self.kind = CellElement.INDEPENDENT_COMMENT
-        self.__text = None
         self.__textRect = None
         self.leadingForElse = False
         self.sideForElse = False
@@ -1458,15 +1453,10 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
-    def __getText( self ):
-        if self.__text is None:
-            self.__text = self.ref.getDisplayValue()
-        return self.__text
-
     def render( self ):
         s = self.canvas.settings
         self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
-                                                          self.__getText() )
+                                                          self._getText() )
 
         self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
         self.minWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
@@ -1559,7 +1549,7 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         painter.drawText( self.__leftEdge + s.hCellPadding + s.hTextPadding,
                           self.baseY + s.vCellPadding + s.vTextPadding,
                           self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft, self.__getText() )
+                          Qt.AlignLeft, self._getText() )
         return
 
     def mouseDoubleClickEvent( self, event ):
