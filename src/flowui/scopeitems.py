@@ -46,7 +46,6 @@ class ScopeCellElement( CellElement ):
         CellElement.__init__( self, ref, canvas, x, y )
         self.subKind = self.UNKNOWN
         self.docstringText = None
-        self._headerText = None
         self._headerRect = None
         self._sideComment = None
         self._sideCommentRect = None
@@ -56,11 +55,6 @@ class ScopeCellElement( CellElement ):
         self.scene = None
         self.__sideCommentPath = None
         return
-
-    def _getHeaderText( self ):
-        if self._headerText is None:
-            self._headerText = self.ref.getDisplayValue()
-        return self._headerText
 
     def getDocstringText( self ):
         if self.docstringText is None:
@@ -97,7 +91,7 @@ class ScopeCellElement( CellElement ):
             # to make the view more compact
             badgeItem = self.canvas.cells[ self.addr[ 1 ] - 1 ][ self.addr[ 0 ] - 1]._badgeItem
 
-            self._headerRect = self.getBoundingRect( self._getHeaderText() )
+            self._headerRect = self.getBoundingRect( self._getText() )
             self.minHeight = self._headerRect.height() + \
                              2 * s.vHeaderPadding - s.rectRadius
             w = self._headerRect.width()
@@ -301,7 +295,7 @@ class ScopeCellElement( CellElement ):
             painter.drawText( canvasLeft + s.hHeaderPadding,
                               canvasTop + s.vHeaderPadding + yShift,
                               self._headerRect.width(), textHeight,
-                              Qt.AlignLeft, self._getHeaderText() )
+                              Qt.AlignLeft, self._getText() )
 
             pen = QPen( borderColor )
             pen.setWidth( s.lineWidth )
@@ -554,20 +548,6 @@ class FileScopeCell( ScopeCellElement, QGraphicsRectItem ):
         # To make double click delivered
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
-
-    def _getHeaderText( self ):
-        if self._headerText is None:
-            if self.ref.encodingLine:
-                self._headerText = "Encoding: " + \
-                                   self.ref.encodingLine.getDisplayValue()
-            else:
-                self._headerText = "Encoding: not specified"
-            if self.ref.bangLine:
-                self._headerText += "\nBang line: " + \
-                                    self.ref.bangLine.getDisplayValue()
-            else:
-                self._headerText += "\nBang line: not specified"
-        return self._headerText
 
     def render( self ):
         if self.subKind == ScopeCellElement.TOP_LEFT:
@@ -862,11 +842,6 @@ class TryScopeCell( ScopeCellElement, QGraphicsRectItem ):
             self._sideComment = self.ref.sideComment.getDisplayValue()
         return self._sideComment
 
-    def _getHeaderText( self ):
-        if self._headerText is None:
-            self._headerText = ""
-        return self._headerText
-
     def render( self ):
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self._badgeItem = BadgeItem( self, "try" )
@@ -1041,11 +1016,6 @@ class ElseScopeCell( ScopeCellElement, QGraphicsRectItem ):
             self._sideComment = self.ref.sideComment.getDisplayValue()
         return self._sideComment
 
-    def _getHeaderText( self ):
-        if self._headerText is None:
-            self._headerText = ""
-        return self._headerText
-
     def render( self ):
         if self.subKind == ScopeCellElement.TOP_LEFT:
             self._badgeItem = BadgeItem( self, "else" )
@@ -1157,11 +1127,6 @@ class FinallyScopeCell( ScopeCellElement, QGraphicsRectItem ):
         if self._sideComment is None:
             self._sideComment = self.ref.sideComment.getDisplayValue()
         return self._sideComment
-
-    def _getHeaderText( self ):
-        if self._headerText is None:
-            self._headerText = ""
-        return self._headerText
 
     def render( self ):
         if self.subKind == ScopeCellElement.TOP_LEFT:

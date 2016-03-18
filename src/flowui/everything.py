@@ -118,6 +118,12 @@ def f4( a = """
             """ ):
     pass
 
+
+# cml 1 rt text="My own header"
+def fReplaced( x ):
+    pass
+
+
 #
 # Classes
 #
