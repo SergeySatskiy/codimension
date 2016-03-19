@@ -32,6 +32,14 @@ class CFSceneContextMenuMixin:
     def __init__( self ):
         self.individualMenus = {}
 
+        self.sceneMenu = QMenu()
+        self.sceneMenu.addAction( getIcon( 'filesvg.png' ), 'Save as SVG...',
+                                  self.parent().onSaveAsSVG )
+        self.sceneMenu.addAction( getIcon( 'filepdf.png' ), 'Save as PDF...',
+                                  self.parent().onSaveAsPDF )
+        self.sceneMenu.addAction( getIcon( 'filepixmap.png' ), 'Save as PNG...',
+                                  self.parent().onSaveAsPNG )
+
         self.individualCommonMenu = QMenu()
         self.individualCommonMenu.addAction(
             getIcon( "customcolors.png" ), "Custom colors...",
@@ -69,6 +77,7 @@ class CFSceneContextMenuMixin:
         selectedItems = self.selectedItems()
         selectionCount = len( selectedItems )
         if selectionCount == 0:
+            self.sceneMenu.popup( event.screenPos() )
             return
 
         if selectionCount == 1:
@@ -121,5 +130,4 @@ class CFSceneContextMenuMixin:
     def onGroup( self ):
         " Groups items into a single one "
         print "Group"
-
 

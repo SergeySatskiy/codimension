@@ -23,6 +23,7 @@
 from PyQt4.QtCore import Qt, QPoint
 from PyQt4.QtGui import QGraphicsScene
 from sys import maxint
+from flowui.items import CellElement
 from flowui.scopeitems import ScopeCellElement
 
 
@@ -41,7 +42,8 @@ class CFSceneKeyboardMixin:
         self.__hotKeys = {
                 CTRL:   { Qt.Key_QuoteLeft:     self.highlightInText,
                           Qt.Key_Home:          self.scrollToTop,
-                          Qt.Key_End:           self.scrollToBottom
+                          Qt.Key_End:           self.scrollToBottom,
+                          Qt.Key_A:             self.selectAll
                          },
                 NO_MODIFIER:
                         { Qt.Key_Home:          self.scrollToHBegin,
@@ -129,5 +131,21 @@ class CFSceneKeyboardMixin:
     def scrollToHEnd( self ):
         view = self.parent().view
         view.horizontalScrollBar().setValue( view.horizontalScrollBar().maximum() )
+        return
+
+    def selectAll( self ):
+        moduleItem = None
+        for item in self.items():
+            if item.isProxyItem():
+                continue
+            if item.kind == CellElement.FILE_SCOPE:
+                if item.subKind == ScopeCellElement.TOP_LEFT:
+                    moduleItem = item
+                    break
+
+        if moduleItem:
+            self.clearSelection()
+            for item in self.findItemsForRef( moduleItem.ref ):
+                self.addToSelection( item )
         return
 

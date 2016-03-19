@@ -76,10 +76,7 @@ class CFSceneMouseMixin:
             if logicalItem is None:
                 # Not a selectable item or out of the items
                 self.clearSelection()
-                event.accept()
-                return
-
-            if not logicalItem.isSelected():
+            elif not logicalItem.isSelected():
                 self.clearSelection()
                 logicalItem.setSelected( True )
 
@@ -108,7 +105,7 @@ class CFSceneMouseMixin:
                 event.accept()
                 return
             # Item is not selected and should be added or ignored
-            self.__addToSelection( logicalItem )
+            self.addToSelection( logicalItem )
             event.accept()
             return
 
@@ -119,7 +116,7 @@ class CFSceneMouseMixin:
 
             # Here: add comments
             for item in self.findItemsForRef( logicalItem.ref ):
-                self.__addToSelection( item )
+                self.addToSelection( item )
             event.accept()
             return
 
@@ -130,7 +127,7 @@ class CFSceneMouseMixin:
         event.accept()
         return
 
-    def __addToSelection( self, item ):
+    def addToSelection( self, item ):
         " Adds an item to the current selection "
         if self.isNestedInSelected( item ):
             # Ignore the selection request

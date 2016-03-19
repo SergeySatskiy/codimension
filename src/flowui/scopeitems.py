@@ -572,12 +572,14 @@ class FileScopeCell( ScopeCellElement, QGraphicsRectItem ):
 
     def getSelectTooltip( self ):
         if self.subKind == self.TOP_LEFT:
-            return "File scope"
+            return "Module scope"
         if self.subKind == self.DECLARATION:
-            return "File scope declaration"
+            return "Module header"
         if self.subKind == self.DOCSTRING:
-            return "File scope docstring"
-        return "File scope (" + scopeCellElementToString( self.subKind ) + ")"
+            return "Module docstring"
+
+        # Must not really happen
+        return "Module scope (" + scopeCellElementToString( self.subKind ) + ")"
 
 
 

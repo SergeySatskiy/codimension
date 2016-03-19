@@ -389,14 +389,14 @@ class FlowUIWidget( QWidget ):
         saveAsMenu = QMenu( self )
         saveAsSVGAct = saveAsMenu.addAction( getIcon( 'filesvg.png' ),
                                              'Save as SVG...' )
-        saveAsSVGAct.triggered.connect( self.__onSaveAsSVG )
+        saveAsSVGAct.triggered.connect( self.onSaveAsSVG )
 
         saveAsPDFAct = saveAsMenu.addAction( getIcon( 'filepdf.png' ),
                                              'Save as PDF...' )
-        saveAsPDFAct.triggered.connect( self.__onSaveAsPDF )
+        saveAsPDFAct.triggered.connect( self.onSaveAsPDF )
         saveAsPNGAct = saveAsMenu.addAction( getIcon( 'filepixmap.png' ),
                                              'Save as PNG...' )
-        saveAsPNGAct.triggered.connect( self.__onSaveAsPNG )
+        saveAsPNGAct.triggered.connect( self.onSaveAsPNG )
 
 
         self.__saveAsButton = QToolButton( self )
@@ -642,7 +642,7 @@ class FlowUIWidget( QWidget ):
         return fileName
 
 
-    def __onSaveAsSVG( self ):
+    def onSaveAsSVG( self ):
         " Triggered on the 'Save as SVG' button "
         fileName = self.__selectFile( "svg" )
         if fileName is None:
@@ -665,7 +665,7 @@ class FlowUIWidget( QWidget ):
         painter.end()
         return
 
-    def __onSaveAsPDF( self ):
+    def onSaveAsPDF( self ):
         " Triggered on the 'Save as PDF' button "
         fileName = self.__selectFile( "pdf" )
         if fileName is None:
@@ -692,7 +692,7 @@ class FlowUIWidget( QWidget ):
         painter.end()
         return
 
-    def __onSaveAsPNG( self ):
+    def onSaveAsPNG( self ):
         " Triggered on the 'Save as PNG' button "
         fileName = self.__selectFile( "png" )
         if fileName is None:
