@@ -215,6 +215,9 @@ class CellElement:
     def getProxiedItem( self ):
         return None
 
+    def isComment( self ):
+        return False
+
     def getDistance( self, absPos ):
         """ Default implementation.
             Provides a distance between the absPos and the item """
@@ -1407,6 +1410,21 @@ class IfCell( CellElement, QGraphicsRectItem ):
         lineRange = self.ref.body.getLineRange()
         return "If at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
 
+    def switchBranches( self ):
+        " Switches branches for the if statement "
+        if self._editor is None:
+            return
+
+        cmlComment = CMLVersion.find( self.ref.leadingCMLComments, CMLsw )
+        if cmlComment is None:
+            # Did not exist, so needs to be generated
+            line = CMLsw.generate( self.ref.body.beginPos )
+            
+        else:
+            # Existed, so it just needs to be deleted
+            cmlComment.removeFromText( self._editor )
+        return
+
 
 def getCommentBoxPath( settings, baseX, baseY, width, height ):
     " Provides the comomment box path "
@@ -1572,6 +1590,9 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         """ Provides a distance between the line and the item """
         return distance( line, self.ref.beginLine, self.ref.endLine )
 
+    def isComment( self ):
+        return True
+
 
 
 class LeadingCommentCell( CellElement, QGraphicsPathItem ):
@@ -1732,6 +1753,9 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
         """ Provides a distance between the line and the item """
         return distance( line, self.ref.leadingComment.beginLine,
                                self.ref.leadingComment.endLine )
+
+    def isComment( self ):
+        return True
 
 
 
@@ -1918,6 +1942,9 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
             retval = min( retval, dist )
         return retval
 
+    def isComment( self ):
+        return True
+
 
 
 class AboveCommentCell( CellElement, QGraphicsPathItem ):
@@ -2063,6 +2090,9 @@ class AboveCommentCell( CellElement, QGraphicsPathItem ):
         """ Provides a distance between the line and the item """
         return distance( line, self.ref.leadingComment.beginLine,
                                self.ref.leadingComment.endLine )
+
+    def isComment( self ):
+        return True
 
 
 

@@ -109,6 +109,20 @@ class CFGraphicsView( QGraphicsView ):
                                                  self.__currentFactor ) )
         return
 
+    def zoomIn( self ):
+        ' Mouse event delta is typically 120 '
+        factor = 1.41 ** ( 120.0 / 240.0 )
+        self.zoomTo( self.__currentFactor * factor  )
+        Settings().flowScale = self.__currentFactor
+        return
+
+    def zoomOut( self ):
+        ' Mouse event delta is typically 120 '
+        factor = 1.41 ** ( -120.0 / 240.0 )
+        self.zoomTo( self.__currentFactor * factor  )
+        Settings().flowScale = self.__currentFactor
+        return
+
     def __scaleChanged( self ):
         " When another window made a change "
         newScale = Settings().flowScale

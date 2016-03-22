@@ -43,7 +43,9 @@ class CFSceneKeyboardMixin:
                 CTRL:   { Qt.Key_QuoteLeft:     self.highlightInText,
                           Qt.Key_Home:          self.scrollToTop,
                           Qt.Key_End:           self.scrollToBottom,
-                          Qt.Key_A:             self.selectAll
+                          Qt.Key_A:             self.selectAll,
+                          Qt.Key_Minus:         self.onZoomOut,
+                          Qt.Key_Equal:         self.onZoomIn
                          },
                 NO_MODIFIER:
                         { Qt.Key_Home:          self.scrollToHBegin,
@@ -148,4 +150,12 @@ class CFSceneKeyboardMixin:
             for item in self.findItemsForRef( moduleItem.ref ):
                 self.addToSelection( item )
         return
+
+    def onZoomOut( self ):
+        view = self.parent().view
+        view.zoomOut()
+
+    def onZoomIn( self ):
+        view = self.parent().view
+        view.zoomIn()
 

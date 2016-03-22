@@ -22,7 +22,7 @@
 
 
 from PyQt4.QtGui import QMenu, QAction
-from flowui.items import IfCell
+from flowui.items import CellElement, IfCell
 from utils.pixmapcache import getIcon
 
 
@@ -30,8 +30,10 @@ class CFSceneContextMenuMixin:
     " Encapsulates the context menu handling "
 
     def __init__( self ):
+        self.menu = None
         self.individualMenus = {}
 
+        # Scene menu preparation
         self.sceneMenu = QMenu()
         self.sceneMenu.addAction( getIcon( 'filesvg.png' ), 'Save as SVG...',
                                   self.parent().onSaveAsSVG )
@@ -40,25 +42,37 @@ class CFSceneContextMenuMixin:
         self.sceneMenu.addAction( getIcon( 'filepixmap.png' ), 'Save as PNG...',
                                   self.parent().onSaveAsPNG )
 
-        self.individualCommonMenu = QMenu()
-        self.individualCommonMenu.addAction(
+        # Common menu for all the individually selected items
+        self.commonMenu = QMenu()
+        self.commonMenu.addAction(
+            getIcon( "cutmenu.png" ), "Cut (Ctrl+X)", self.onCut )
+        self.commonMenu.addAction(
+            getIcon( "copymenu.png" ), "Copy (Ctrl+C)", self.onCopy )
+        self.commonMenu.addSeparator()
+        self.commonMenu.addAction(
+            getIcon( "trash.png" ), "Delete (Del)", self.onDelete )
+
+
+        # Non-comment common menu for the individually selected items
+        self.nonCommentCommonMenu = QMenu()
+        self.nonCommentCommonMenu.addAction(
             getIcon( "customcolors.png" ), "Custom colors...",
             self.onCustomColors )
-        self.individualCommonMenu.addAction(
-            getIcon( "replacetitle.png" ), "Replace title...",
-            self.onReplaceTitle )
-        self.individualCommonMenu.addSeparator()
-        self.individualCommonMenu.addAction(
-            getIcon( "trash.png" ), "Delete...", self.onDelete )
+        self.nonCommentCommonMenu.addAction(
+            getIcon( "replacetitle.png" ), "Replace text...",
+            self.onReplaceText )
 
+        # Individual items specific menu: begin
         ifContextMenu = QMenu()
         ifContextMenu.addAction(
             getIcon( "switchbranches.png") , "Switch branch layout",
             self.onSwitchIfBranch )
 
         self.individualMenus[ IfCell ] = ifContextMenu
+        # Individual items specific menu: end
 
 
+        # Menu for a group of selected items
         self.groupMenu = QMenu()
         self.groupMenu.addAction(
             getIcon( "cfgroup.png" ), "Group...",
@@ -68,7 +82,7 @@ class CFSceneContextMenuMixin:
             self.onCustomColors )
         self.groupMenu.addSeparator()
         self.groupMenu.addAction(
-            getIcon( "trash.png" ), "Delete...", self.onDelete )
+            getIcon( "trash.png" ), "Delete (Del)", self.onDelete )
 
         return
 
@@ -94,7 +108,10 @@ class CFSceneContextMenuMixin:
             individualPart = self.individualMenus[ type( item ) ]
             self.menu.addActions( individualPart.actions() )
             self.menu.addSeparator()
-        self.menu.addActions( self.individualCommonMenu.actions() )
+        if not item.isComment():
+            self.menu.addActions( self.nonCommentCommonMenu.actions() )
+            self.menu.addSeparator()
+        self.menu.addActions( self.commonMenu.actions() )
 
         # Note: if certain items need to be disabled then it should be done
         #       here
@@ -113,13 +130,17 @@ class CFSceneContextMenuMixin:
 
     def onSwitchIfBranch( self ):
         " If primitive should switch the branches "
-        print "Switch if branch"
+        selectedItems = self.selectedItems()
+        for item in selectedItems:
+            if item.kind == CellElement.IF:
+                item.switchBranches()
+        return
 
     def onCustomColors( self ):
         " Custom background and foreground colors "
         print "Custom colors"
 
-    def onReplaceTitle( self ):
+    def onReplaceText( self ):
         " Replace the code with a title "
         print "Replace title"
 
@@ -130,4 +151,12 @@ class CFSceneContextMenuMixin:
     def onGroup( self ):
         " Groups items into a single one "
         print "Group"
+
+    def onCopy( self ):
+        print "Copy"
+
+    def onCut( self ):
+        print "Cut"
+
+
 

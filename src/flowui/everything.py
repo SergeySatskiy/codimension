@@ -561,3 +561,11 @@ elif a < 456 and \
 else:
     pass
 
+def ff( x ):
+    if True:
+        # Something
+        if x > 32:
+            x = 32
+    return
+
+

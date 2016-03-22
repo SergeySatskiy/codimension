@@ -84,6 +84,9 @@ class SVGItem( QGraphicsSvgItem ):
     def getProxiedItem( self ):
         return self.ref
 
+    def isComment( self ):
+        return False
+
 
 class CMLLabel( SVGItem ):
     " Represents the CML label for an item "
@@ -182,6 +185,9 @@ class BadgeItem( QGraphicsRectItem ):
     def getProxiedItem( self ):
         return self.ref
 
+    def isComment( self ):
+        return False
+
 
 class Connector( QGraphicsPathItem ):
 
@@ -226,6 +232,9 @@ class Connector( QGraphicsPathItem ):
     def getProxiedItem( self ):
         return None
 
+    def isComment( self ):
+        return False
+
 
 class Text( QGraphicsSimpleTextItem ):
 
@@ -256,5 +265,8 @@ class Text( QGraphicsSimpleTextItem ):
 
     def getProxiedItem( self ):
         return None
+
+    def isComment( self ):
+        return False
 
 

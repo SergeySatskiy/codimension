@@ -427,6 +427,9 @@ class ScopeCellElement( CellElement ):
     def scopedItem( self ):
         return True
 
+    def isComment( self ):
+        return self.subKind == self.SIDE_COMMENT
+
     def mouseDoubleClickEvent( self, event ):
         " Jump to the appropriate line in the text editor "
         if self._editor is None:

@@ -97,6 +97,36 @@ class CMLCommentBase:
                              self.ref.recordType + "'." )
         return
 
+    def __isSideComment( self, editor ):
+        # The only first part needs to be checked
+        firstPart = self.ref.parts[ 0 ]
+        # Editor has 0-based lines
+        leftStripped = editor.text( firstPart.beginLine - 1 ).lstrip()
+        return not leftStripped.startswith( firstPart.getContent() )
+
+    def removeFromText( self, editor ):
+        " Removes the comment from the code "
+        if editor is None:
+            return
+
+        isSideComment = self.__isSideComment( editor )
+
+        editor.beginUndoAction()
+        oldLine, oldPos = editor.getCursorPosition()
+
+        line = self.ref.endLine
+        while line >= self.ref.beginLine:
+            if isSideComment:
+                pass
+            else:
+                # Editor has 0-based lines
+                editor.setCursorPosition( line - 1, 0 )
+                editor.deleteLine()
+            line -= 1
+
+        editor.setCursorPosition( oldLine, oldPos )
+        editor.endUndoAction()
+        return
 
 
 class CMLsw( CMLCommentBase ):
