@@ -1895,6 +1895,15 @@ class TextEditor( ScintillaWrapper ):
             self.__completer.hide()
         return
 
+    def insertLines( self, text, line ):
+        """ Inserts the given text into new lines starting from 1-based line
+            Adds the trailing \n
+            All is done in a single undo block """
+        self.beginUndoAction()
+        self.insertAt( text + "\n", line - 1, 0 )
+        self.endUndoAction()
+        return
+
     @staticmethod
     def utf8len( txt ):
         " Calculates lenght in bytes "

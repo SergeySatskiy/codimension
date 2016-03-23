@@ -21,6 +21,7 @@
 CML utilities
 """
 
+from sys import maxint
 from PyQt4.QtGui import QColor
 from cdmcf import ( IF_FRAGMENT, FOR_FRAGMENT, WHILE_FRAGMENT, TRY_FRAGMENT,
                     CONTROL_FLOW_FRAGMENT, CLASS_FRAGMENT, FUNCTION_FRAGMENT )
@@ -117,7 +118,7 @@ class CMLCommentBase:
         line = self.ref.endLine
         while line >= self.ref.beginLine:
             if isSideComment:
-                pass
+                raise Exception( "Side CML comments removal has not been implemented yet" )
             else:
                 # Editor has 0-based lines
                 editor.setCursorPosition( line - 1, 0 )
@@ -380,4 +381,17 @@ class CMLVersion:
                                       cmlComment.recordType +
                                       "' is not supported") )
         return warnings
+
+    @staticmethod
+    def getFirstLine( comments ):
+        # The list may contain raw comments and high level comments
+        line = maxint
+        if comments:
+            if hasattr( comments[ 0 ], "ref" ):
+                # High level CML comment
+                return comments[ 0 ].ref.parts[ 0 ].beginLine
+            # Raw CML comment
+            if comments[ 0 ].parts:
+                return comments[ 0 ].parts[ 0 ].beginLine
+        return line
 
