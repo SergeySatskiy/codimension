@@ -157,13 +157,15 @@ class CFGraphicsView( QGraphicsView ):
         # The item top left is visible
         if visibleRect.contains( itemRect.topLeft() ):
             # So far scroll the view vertically anyway
-            self.verticalScrollBar().setValue( itemRect.topLeft().y() - 15 )
+            val = ( float( itemRect.topLeft().y() - 15.0 ) ) * self.__currentFactor
+            self.verticalScrollBar().setValue( val )
             self.__hScrollToItem( item )
             return
 
         # Here: the top left is not visible, so the vertical scrolling is
         # required
-        self.verticalScrollBar().setValue( itemRect.topLeft().y() - 15 )
+        val = ( float( itemRect.topLeft().y() - 15.0 ) ) * self.__currentFactor
+        self.verticalScrollBar().setValue( val )
         self.__hScrollToItem( item )
         return
 
@@ -186,13 +188,15 @@ class CFGraphicsView( QGraphicsView ):
 
         if itemRect.width() > visibleRect.width():
             # Does not fit the screen
-            self.horizontalScrollBar().setValue( itemRect.topLeft().x() - 15 )
+            val = ( float( itemRect.topLeft().x() ) - 15.0 ) * self.__currentFactor
+            self.horizontalScrollBar().setValue( val )
         else:
             if itemRect.topRight().x() < visibleRect.width():
                 # Fits the screen if the scroll is 0
                 self.horizontalScrollBar().setValue( 0 )
             else:
-                self.horizontalScrollBar().setValue( itemRect.topLeft().x() - 15 )
+                val = ( float( itemRect.topLeft().x() ) - 15.0 ) * self.__currentFactor
+                self.horizontalScrollBar().setValue( val )
         return
 
 

@@ -341,6 +341,12 @@ class ScintillaWrapper( QsciScintilla ):
         self.SendScintilla( self.SCI_NEWLINE )
         return
 
+    def newLineAbove( self ):
+        self.SendScintilla( self.SCI_HOME )
+        self.SendScintilla( self.SCI_NEWLINE )
+        self.SendScintilla( self.SCI_LINEUP )
+        return
+
     def duplicateLine( self ):
         " Duplicates the current line "
         if not self.isReadOnly():

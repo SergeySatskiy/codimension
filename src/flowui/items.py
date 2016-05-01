@@ -282,6 +282,18 @@ class CellElement:
                 self.setToolTip( "<pre>" + htmlEncode( displayText ) + "</pre>" )
         return self._text
 
+    def _getFirstLine( self ):
+        line = maxint
+        if hasattr( self.ref, "leadingCMLComments" ):
+            if self.ref.leadingCMLComments:
+                line = CMLVersion.getFirstLine( self.ref.leadingCMLComments )
+        if hasattr( self.ref, "leadingComment" ):
+            if self.ref.leadingComment:
+                if self.ref.leadingComment.parts:
+                    line = min( self.ref.leadingComment.parts[ 0 ].beginLine,
+                                line )
+        return min( self.ref.body.beginLine, line )
+
 
 __kindToString = {
     CellElement.UNKNOWN:                "UNKNOWN",
@@ -1419,7 +1431,8 @@ class IfCell( CellElement, QGraphicsRectItem ):
         if cmlComment is None:
             # Did not exist, so needs to be generated
             line = CMLsw.generate( self.ref.body.beginPos )
-            
+            lineNo = self._getFirstLine()
+            self._editor.insertLines( line, lineNo )
         else:
             # Existed, so it just needs to be deleted
             cmlComment.removeFromText( self._editor )
