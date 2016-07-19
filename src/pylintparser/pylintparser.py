@@ -30,6 +30,7 @@ from optparse  import OptionParser
 import logging
 from distutils.version import StrictVersion
 from utils.globals import GlobalData
+from distutils.spawn import find_executable
 
 
 verbose = False
@@ -325,6 +326,10 @@ class Pylint( object ):
         except:
             pass
         return None
+
+    def getPath( self ):
+        " Provides the path to the executable or None "
+        return find_executable( 'pylint' )
 
     def analyzeFile( self, path, pylintrc = "",
                      importDirs = [], workingDir = "" ):

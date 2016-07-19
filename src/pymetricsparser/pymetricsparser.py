@@ -25,6 +25,7 @@
 from subprocess import Popen, PIPE
 import sys, os, os.path, tempfile
 from optparse  import OptionParser
+from distutils.spawn import find_executable
 
 
 verbose = False
@@ -215,22 +216,24 @@ class PyMetrics( object ):
         if pymetricsElf == "":
             # Try to find in the PATH
             try:
-                self.__run( [ "pymetrics" ] )
-                # Found in PATH
-                self.pymetricsElf = "pymetrics"
+                self.pymetricsElf = find_executable( "pymetrics" )
+                if self.pymetricsElf:
+                    self.__run( [ self.pymetricsElf ] )
+                else:
+                    raise Exception( "Not found" )
             except:
-                raise Exception( "Cannot find pymetrics. " \
+                raise Exception( "Cannot find pymetrics. "
                                  "Consider updating PATH." )
         else:
             self.pymetricsElf = os.path.abspath( pymetricsElf )
             if not os.path.exists( self.pymetricsElf ):
-                raise Exception( "Cannot find pymetrics executable at " + \
+                raise Exception( "Cannot find pymetrics executable at " +
                                  self.pymetricsElf )
             if not os.path.isfile( self.pymetricsElf ):
-                raise Exception( self.pymetricsElf + \
+                raise Exception( self.pymetricsElf +
                                  " is expected to be a file" )
             if not os.access( self.pymetricsElf, os.X_OK ):
-                raise Exception( self.pymetricsElf + \
+                raise Exception( self.pymetricsElf +
                                  " does not have exec permissions" )
 
         # file name -> Metric
@@ -256,6 +259,9 @@ class PyMetrics( object ):
         except:
             pass
         return None
+
+    def getPath( self ):
+        return self.pymetricsElf
 
     def analyzeFile( self, path ):
         " run pymetrics for a certain file or files list "

@@ -117,7 +117,7 @@ Codimension home page</a>.<br> Happy coding with Codimension!
         text = "<p>The major Codimension components are listed below:</p>" \
                "<ul>"
         for (prettyName, version, homeURL,
-             patched, license, licenseLink) in components:
+             patched, license, licenseLink, localPath) in components:
             text += "<li><a href='" + homeURL + "'>" + prettyName + "</a><br>" \
                     "Version: "
             if version is not None and version[ 0 ].isdigit():
@@ -136,6 +136,8 @@ Codimension home page</a>.<br> Happy coding with Codimension!
                 text += "<a href='" + licenseLink + "'>" + license + "</a>"
             else:
                 text += license + " (" + licenseLink + ")"
+            if localPath:
+                text += "<br/>Local path: " + localPath
             text += "<br></li>"
         text += "</ul>"
         browser = QTextBrowser()
