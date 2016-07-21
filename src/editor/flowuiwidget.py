@@ -723,8 +723,8 @@ class FlowUIWidget( QWidget ):
             return False
         return True
 
-    def __saveAsPNG( self, fileName ):
-        " Saves the flowchart as an PNG file "
+    def __getPNG( self ):
+        " Renders the scene as PNG "
         image = QImage( self.scene.width(), self.scene.height(),
                         QImage.Format_ARGB32_Premultiplied )
         painter = QPainter( image )
@@ -732,7 +732,19 @@ class FlowUIWidget( QWidget ):
         # painter.setRenderHint( QPainter.Antialiasing )
         self.scene.render( painter )
         painter.end()
+        return image
+
+    def __saveAsPNG( self, fileName ):
+        " Saves the flowchart as an PNG file "
+        image = self.__getPNG()
         image.save( fileName, "PNG" )
+        return
+
+    def copyToClipboard( self ):
+        " Copies the rendered scene to the clipboard as an image "
+        image = self.__getPNG()
+        clip = QApplication.clipboard()
+        clip.setImage( image )
         return
 
     def getScrollbarPositions( self ):

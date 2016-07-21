@@ -41,6 +41,9 @@ class CFSceneContextMenuMixin:
                                   self.parent().onSaveAsPDF )
         self.sceneMenu.addAction( getIcon( 'filepixmap.png' ), 'Save as PNG...',
                                   self.parent().onSaveAsPNG )
+        self.sceneMenu.addSeparator()
+        self.sceneMenu.addAction( getIcon( 'copymenu.png' ), 'Copy to clipboard',
+                                  self.parent().copyToClipboard )
 
         # Common menu for all the individually selected items
         self.commonMenu = QMenu()
