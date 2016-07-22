@@ -31,9 +31,9 @@ from texttabwidget import TextTabWidget
 class WelcomeWidget( TextTabWidget ):
     """ Welcome screen """
 
-    httpAddress = "http://satsky.spb.ru/codimension/"
-    homePage = httpAddress + "codimensionEng.php"
-    downloadPage = httpAddress + "downloadEng.php"
+    httpAddress = "http://codimension.org"
+    homePage = httpAddress
+    downloadPage = httpAddress + "/download/"
 
     def __init__( self, parent = None ):
 
@@ -52,7 +52,7 @@ class WelcomeWidget( TextTabWidget ):
        align="left" bgcolor="#d5d1cf" border="0" style="width: 100%">
 <tr>
   <td width="1%" valign="middle">
-      <a href="http://satsky.spb.ru/codimension/codimensionEng.php">
+      <a href="http://codimension.org">
       <img border="0" align="left" src='file:""" + logoPath + """'
            width="48" height="48">
       </a>
