@@ -415,6 +415,10 @@ class FlowUIWidget( QWidget ):
         saveAsPNGAct = saveAsMenu.addAction( getIcon( 'filepixmap.png' ),
                                              'Save as PNG...' )
         saveAsPNGAct.triggered.connect( self.onSaveAsPNG )
+        saveAsMenu.addSeparator()
+        saveAsCopyToClipboardAct = saveAsMenu.addAction( getIcon( 'copymenu.png' ),
+                                                         'Copy to clipboard' )
+        saveAsCopyToClipboardAct.triggered.connect( self.copyToClipboard )
 
 
         self.__saveAsButton = QToolButton( self )
