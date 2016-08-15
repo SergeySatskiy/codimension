@@ -48,8 +48,7 @@ except AttributeError:
 sys.argv[0] = os.path.realpath( sys.argv[0] )
 
 # Make it possible to import from the subdirectories
-srcDir = os.path.dirname( os.path.abspath( sys.argv[0] ) )
-srcDir = os.path.dirname( os.path.abspath( __file__ ) )
+srcDir = os.path.dirname( os.path.abspath( os.path.realpath( __file__ ) ) )
 if not srcDir in sys.path:
     sys.path.insert( 0, srcDir )
 ropeDir = srcDir + os.path.sep + "thirdparty" + os.path.sep + "rope"
