@@ -25,8 +25,6 @@ codimension main Python script.
 It performs necessery initialization and starts the Qt main loop.
 """
 
-__version__ = "0.0.0"
-
 import sip
 sip.setapi( "QString", 2 )
 
@@ -49,6 +47,7 @@ sys.argv[0] = os.path.realpath( sys.argv[0] )
 
 # Make it possible to import from the subdirectories
 srcDir = os.path.dirname( os.path.abspath( os.path.realpath( __file__ ) ) )
+
 if not srcDir in sys.path:
     sys.path.insert( 0, srcDir )
 ropeDir = srcDir + os.path.sep + "thirdparty" + os.path.sep + "rope"
@@ -90,6 +89,12 @@ __rootLoggingHandlers = []
 # main application loop has started.
 __delayedWarnings = []
 
+try:
+    import cdmverspec
+    VER = cdmverspec.__version__
+except:
+    VER = '0.0.0'
+
 def codimensionMain():
     """ The codimension driver """
 
@@ -99,7 +104,7 @@ def codimensionMain():
     %prog [options] [project file | python files]
     Runs codimension UI
     """,
-    version = "%prog " + __version__ )
+    version = "%prog " + VER )
 
     parser.add_option( "--debug",
                        action="store_true", dest="debug", default=False,
@@ -119,7 +124,7 @@ def codimensionMain():
     # Create global data singleton.
     # It's unlikely to throw any exceptions.
     globalData = GlobalData()
-    globalData.version = __version__
+    globalData.version = VER
 
     # Loading settings - they have to be loaded before the application is
     # created. This is because the skin name is saved there.
@@ -141,7 +146,7 @@ def codimensionMain():
     codimensionApp = CodimensionApplication( sys.argv, settings.style )
     globalData.application = codimensionApp
 
-    logging.debug( "Starting codimension v." + __version__ )
+    logging.debug( "Starting codimension v." + VER )
 
     try:
         # Process command line arguments

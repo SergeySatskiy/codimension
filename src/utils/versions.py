@@ -80,8 +80,8 @@ def getRopeVersion():
 
 def getPyFlakesVersion():
     " Provides the pyflakes library version "
-    import thirdparty.pyflakes
-    return thirdparty.pyflakes.__version__, abspath( thirdparty.pyflakes.__file__ )
+    import pyflakes
+    return pyflakes.__version__, abspath( pyflakes.__file__ )
 
 def getPyMetricsVersion():
     " Provides pymetrics version "

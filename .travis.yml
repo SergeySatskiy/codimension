@@ -1,0 +1,37 @@
+sudo: required
+
+services:
+    - docker
+
+language: python
+
+python:
+    - "2.7"
+
+script:
+   - ./pkg/travis.sh
+
+env:
+  matrix:
+    - OS=ubuntu DIST=trusty PACK=deb
+    - OS=el DIST=7 PACK=rpm
+    - OS=fedora DIST=23 PACK=rpm
+    - OS=debian DIST=jessie PACK=deb
+
+notifications:
+   email: false
+   irc: false
+
+deploy:
+   provider: releases
+   api_key:
+    secure: OglNDCGAk+fGEryzuHP4qKx7K6jw4Kd4zMzspn3CPiYBlEOAJhxa8bgWjj2P6VXmmJmaAr0SMYl2usCXX0PWsErxfWsS+7oXewb10plhz/GMQgjUh6UETHF5BnRN4mjL1PKQWiNeG55GDtV3JYm9KoIsKP9tOhlnzmGcMKZRcLaWvSh+gvoJUKMpkloUzTThinkNe0+Odn5yrueCXGtFTgcwsqO6QzAWagj0nv1qKPRlcy0cZrbQpoCu0AUbLUgUkspVxk+lmCIA6WB1oup0xFuFI5xsTVG+4MH55E04514HanhJgTOSV7Lh26npyBttnoBUA8n2fLoMimjcZbAfi7juJ0L3I2umt3Mf5Zt4Q4uznH9YBhLFelS1dq8xUat7/FZMwpyKUqyzCVAnrbteIuFtFabLnVyrHFLSFWVS9uZ/No35VfxcFcloSwsB0YVoC4ehxn9w8hbBItoIsfUxm+oyyG0VhhhtFMJUmNrYSB9xybHx5cW1b+udaDZa+vlXWqlwmMP4IcS5VpHOhXN8aq5tVTYZ3koWC17yEvBjOI2lViMNACwFKINctJjcJEwLPythCtI2LvIbwpHZFy9yjpEMrVghTrDdKqjX1un6HDAQanffZoNurYgLpfWAj0QiH480XfIj8ADWcpPcX0wR7/8BMYdvMp2oBfKk7TUcHSY=
+   file_glob: true
+   file:
+     - ../out/*.rpm
+     - ../out/*.deb
+   skip_cleanup: true
+   on:
+      tags: true
+      all_branches: true
+
