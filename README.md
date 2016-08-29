@@ -16,7 +16,7 @@ Codimension aims to provide an integrated system for:
  * traditional text-based code editing, and
  * diagram-based code analysis.
 
-At the moment a few graphics oriented features are implemented. One of the major (and the most visible) is a generation of a control flow while the code is typed. The screenshot below shows the main area divided into two parts. The left one is a traditional text editor while the right one is a generated diagram. The diagram is updated when the IDE detects a pause in typing the code.
+At the moment a few graphics oriented features are implemented. One of the major (and the most visible) is a generation of a control flow diagram while the code is typed. The screenshot below shows the main area divided into two parts. The left one is a traditional text editor while the right one is a generated diagram. The diagram is updated when the IDE detects a pause in typing the code.
 
 ![Screenshot](http://satsky.spb.ru/codimension/screenshots/00-upcomingCommonView.png "Screenshot")
 
