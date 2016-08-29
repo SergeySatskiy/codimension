@@ -16,15 +16,9 @@ Codimension aims to provide an integrated system for:
  * traditional text-based code editing, and
  * diagram-based code analysis.
 
-Many Python developers will find codimension useful as-is, even though not all of its features have been implemented yet.
+At the moment a few graphics oriented features are implemented. One of the major (and the most visible) is a generation of a control flow while the code is typed. The screenshot below shows the main area divided into two parts. The left one is a traditional text editor while the right one is a generated diagram. The diagram is updated when the IDE detects a pause in typing the code.
 
-The finished codimension will include several graphics-based features. Diagrams will be generated for imports and classes. The results from some tools, such as a profiler, will be represented graphically. Graphical features will be interactive and if you double click on a class box in a diagram, for example, the corresponding source code file will be opened and the cursor will jump to the appropriate line. A major objective is to provide an editor which is capable of working simultaneously with textual and graphical representations of the code. With this feature in place, changing the text will automatically update the graphics and vice verse. Finally, the editor will support the grouping and traversal of code blocks, which should greatly simplify the analysis of unfamiliar code. 
-
-![Screenshot](http://satsky.spb.ru/codimension/screenshots/01-commonView.png "Screenshot")
-
-Here is the upcoming release screenshot (with automatically generated control flow diagram feature implemented)
-
-![UpcomingReleaseScreenshot](http://satsky.spb.ru/codimension/screenshots/00-upcomingCommonView.png "Upcoming release screenshot")
+![Screenshot](http://satsky.spb.ru/codimension/screenshots/00-upcomingCommonView.png "Screenshot")
 
 
 ## Features
@@ -79,6 +73,7 @@ Here is the upcoming release screenshot (with automatically generated control fl
   * SVN plugin
   * Ran and debugged script may have IO redirected to IDE
   * Main editor navigation bar
+  * On-the-fly generation of the program control flow diagram
 
 
 ### Planned features (not in priority order):
@@ -90,5 +85,4 @@ Here is the upcoming release screenshot (with automatically generated control fl
   * Print / print preview for various windows
   * Ability to tear off / merge editor windows
   * Sphinx integration
-  * Graphics representation and editing the program control flow
   * Code coverage
