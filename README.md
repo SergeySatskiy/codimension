@@ -1,3 +1,4 @@
+# Codimension [![Build Status](https://travis-ci.org/SergeySatskiy/codimension.svg?branch=master)](https://travis-ci.org/SergeySatskiy/codimension)
 
 Essential links:
 * [Presentation of the technology and the tool] (http://satsky.spb.ru/codimension/vp/Visualization.html)
