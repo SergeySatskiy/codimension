@@ -70,8 +70,8 @@ RUN dpkg -i /tmp/0/codimension_${CODIMENSION_VERSION}-Ubuntu.trusty_all.deb
 
 USER ${USER}
 ENV HOME /home/${USER}
-#CMD /usr/bin/codimension
-CMD /bin/bash
+CMD /usr/bin/codimension
+# CMD /bin/bash
 
 EOF
 }
@@ -84,7 +84,7 @@ function build_docker_image()
 
 function run_x_enabled_image()
 {
-	docker run --dns 8.8.8.8 -ti --rm=true -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --ipc=host --pid=host cdtest:${DISTRO}
+	docker run --dns 8.8.8.8 -ti --rm=true -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --ipc=host --net=host --pid=host cdtest:${DISTRO}
 }
 
 mkdir cd-docker

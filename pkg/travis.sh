@@ -3,10 +3,9 @@
 script=$(readlink -f $0)
 script_dir=$(dirname $script)
 
-VERSION=$(git describe --always --tags --abbrev=0)
+VERSION=$(git describe --tags --abbrev=0 2> /dev/null)
 if [ -z "${VERSION}" ]; then
-	echo "Can't get version"
-	exit 1
+	VERSION="v0.0.0"
 fi
 
 VERSION=${VERSION#v}
