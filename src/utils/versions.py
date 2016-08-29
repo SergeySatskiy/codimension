@@ -248,7 +248,7 @@ def getComponentInfo():
                         path) )
     version, path = getPyFlakesVersion()
     components.append( ("pyflakes", version,
-                        "https://pypi.python.org/pypi/pyflakes", True,
+                        "https://pypi.python.org/pypi/pyflakes", None,
                         "pyflakes license", "see the package",
                         path) )
     version, path = getPyMetricsVersion()
@@ -297,7 +297,7 @@ def getComponentInfo():
                         path) )
     version, path = getYapsyVersion()
     components.append( ("yapsy", version,
-                        "http://yapsy.sourceforge.net", True,
+                        "http://yapsy.sourceforge.net", None,
                         "BSD License",
                         "http://opensource.org/licenses/bsd-license.php",
                         path) )
