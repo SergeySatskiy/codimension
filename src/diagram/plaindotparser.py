@@ -333,10 +333,8 @@ def getGraphFromDescriptionData( content ):
 
     try:
         graph = getGraphFromDescrptionFile( graphtmp[ 1 ] )
-    except:
+    finally:
         os.unlink( graphtmp[ 1 ] )
-        raise
 
-    os.unlink( graphtmp[ 1 ] )
     return graph
 
