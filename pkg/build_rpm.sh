@@ -10,10 +10,10 @@ cp ~/result/${projectfull}.tar.gz ~/rpmbuild/SOURCES/${projectfull}.tar.gz
 tar xzf ~/result/${projectfull}.tar.gz
 cp ${projectfull}/pkg/${project}.spec ~/rpmbuild/SPECS
 
-cp ${projectfull}/pkg/codimension/debian/${project}.xpm ~/rpmbuild/SOURCES
-cp ${projectfull}/pkg/codimension/debian/${project}.sharedmimeinfo ~/rpmbuild/SOURCES
-cp ${projectfull}/pkg/codimension/debian/${project}.desktop ~/rpmbuild/SOURCES
-cp ${projectfull}/pkg/codimension/debian/${project}.png ~/rpmbuild/SOURCES
+cp ${projectfull}/debian/${project}.xpm ~/rpmbuild/SOURCES
+cp ${projectfull}/debian/${project}.sharedmimeinfo ~/rpmbuild/SOURCES
+cp ${projectfull}/debian/${project}.desktop ~/rpmbuild/SOURCES
+cp ${projectfull}/debian/${project}.png ~/rpmbuild/SOURCES
 
 sudo version=${version} yum-builddep -y ~/rpmbuild/SPECS/${project}.spec
 rpmbuild -ba --define "version $version" ~/rpmbuild/SPECS/${project}.spec
