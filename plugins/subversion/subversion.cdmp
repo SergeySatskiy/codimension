@@ -5,6 +5,6 @@ Module = .
 [Documentation]
 Author = Sergey Satskiy <sergey.satskiy@gmail.com>
 Version = 1.0.0
-Website = http://satsky.spb.ru/codimension
+Website = http://codimension.org
 Description = Codimension subversion plugin
 License = GPL v.3

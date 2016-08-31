@@ -69,8 +69,8 @@ class WelcomeWidget( TextTabWidget ):
     <p align="left">Click <b>F1</b> for Keyboard Shortcut Reference or
     <p align="left">
        visit
-       <a href="http://satsky.spb.ru/codimension/codimensionEng.php">
-          http://satsky.spb.ru/codimension/codimensionEng.php</a>
+       <a href="http://codimension.org">
+          http://codimension.org</a>
           for more information.
     </p>
   </td>

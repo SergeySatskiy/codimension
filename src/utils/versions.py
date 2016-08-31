@@ -200,20 +200,20 @@ def getComponentInfo():
     # A list is used to have some kind of priority ordering
     version, path = getCodimensionVersion()
     components.append( ("Codimension IDE", version,
-                        "http://satsky.spb.ru/codimension/", None,
+                        "http://codimension.org/", None,
                         "GPL-3.0",
                         "http://www.gnu.org/licenses/gpl-3.0.html",
                         path) )
     version, path = getPythonParserVersion()
     components.append( ("Codimension python parser", version,
-                        "http://satsky.spb.ru/codimension/", None,
+                        "http://codimension.org/", None,
                         "GPL-3.0",
                         "http://www.gnu.org/licenses/gpl-3.0.html",
                         path) )
     version, path = getControlFlowParserVersion()
     components.append( ("Codimension python control flow parser",
                         version,
-                        "http://satsky.spb.ru/codimension/", None,
+                        "http://codimension.org/", None,
                         "GPL-3.0",
                         "http://www.gnu.org/licenses/gpl-3.0.html",
                         path) )

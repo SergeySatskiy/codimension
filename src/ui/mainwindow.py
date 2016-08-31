@@ -3647,14 +3647,14 @@ class CodimensionMainWindow( QMainWindow ):
     @staticmethod
     def __onHomePage():
         " Triggered when opening the home page is requested "
-        QDesktopServices.openUrl( QUrl( "http://satsky.spb.ru/codimension/" ) )
+        QDesktopServices.openUrl( QUrl( "http://codimension.org" ) )
         return
 
     @staticmethod
     def __onAllShortcurs():
         " Triggered when opening key bindings page is requested"
         QDesktopServices.openUrl(
-            QUrl( "http://satsky.spb.ru/codimension/keyBindingsEng.php" ) )
+            QUrl( "http://codimension.org/documentation/cheatsheet.html" ) )
         return
 
     def __onAbout( self ):

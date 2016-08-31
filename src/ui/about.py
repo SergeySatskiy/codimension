@@ -104,7 +104,7 @@ Many Python developers will find codimension useful as-is, even though not all
 of its features have been implemented yet.
 </p>
 <p align="justify">
-More information could be found on <a href='http://satsky.spb.ru/codimension/'>
+More information could be found on <a href='http://codimension.org'>
 Codimension home page</a>.<br> Happy coding with Codimension!
 </p>
 """ )
