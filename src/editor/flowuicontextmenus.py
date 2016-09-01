@@ -47,23 +47,23 @@ class CFSceneContextMenuMixin:
 
         # Common menu for all the individually selected items
         self.commonMenu = QMenu()
-        self.commonMenu.addAction(
-            getIcon( "cutmenu.png" ), "Cut (Ctrl+X)", self.onCut )
-        self.commonMenu.addAction(
-            getIcon( "copymenu.png" ), "Copy (Ctrl+C)", self.onCopy )
-        self.commonMenu.addSeparator()
-        self.commonMenu.addAction(
-            getIcon( "trash.png" ), "Delete (Del)", self.onDelete )
+        #self.commonMenu.addAction(
+        #    getIcon( "cutmenu.png" ), "Cut (Ctrl+X)", self.onCut )
+        #self.commonMenu.addAction(
+        #    getIcon( "copymenu.png" ), "Copy (Ctrl+C)", self.onCopy )
+        #self.commonMenu.addSeparator()
+        #self.commonMenu.addAction(
+        #    getIcon( "trash.png" ), "Delete (Del)", self.onDelete )
 
 
         # Non-comment common menu for the individually selected items
         self.nonCommentCommonMenu = QMenu()
-        self.nonCommentCommonMenu.addAction(
-            getIcon( "customcolors.png" ), "Custom colors...",
-            self.onCustomColors )
-        self.nonCommentCommonMenu.addAction(
-            getIcon( "replacetitle.png" ), "Replace text...",
-            self.onReplaceText )
+        #self.nonCommentCommonMenu.addAction(
+        #    getIcon( "customcolors.png" ), "Custom colors...",
+        #    self.onCustomColors )
+        #self.nonCommentCommonMenu.addAction(
+        #    getIcon( "replacetitle.png" ), "Replace text...",
+        #    self.onReplaceText )
 
         # Individual items specific menu: begin
         ifContextMenu = QMenu()
@@ -77,15 +77,15 @@ class CFSceneContextMenuMixin:
 
         # Menu for a group of selected items
         self.groupMenu = QMenu()
-        self.groupMenu.addAction(
-            getIcon( "cfgroup.png" ), "Group...",
-            self.onGroup )
-        self.groupMenu.addAction(
-            getIcon( "customcolors.png" ), "Custom colors...",
-            self.onCustomColors )
-        self.groupMenu.addSeparator()
-        self.groupMenu.addAction(
-            getIcon( "trash.png" ), "Delete (Del)", self.onDelete )
+        #self.groupMenu.addAction(
+        #    getIcon( "cfgroup.png" ), "Group...",
+        #    self.onGroup )
+        #self.groupMenu.addAction(
+        #    getIcon( "customcolors.png" ), "Custom colors...",
+        #    self.onCustomColors )
+        #self.groupMenu.addSeparator()
+        #self.groupMenu.addAction(
+        #    getIcon( "trash.png" ), "Delete (Del)", self.onDelete )
 
         return
 
