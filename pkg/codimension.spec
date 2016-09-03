@@ -13,6 +13,7 @@ Source1: %{name}.xpm
 Source2: %{name}.sharedmimeinfo
 Source3: %{name}.desktop
 Source4: %{name}.png
+Source5: %{name}-32x32.xpm
 
 Requires: python
 Requires: cdm-flowparser >= 1.0
@@ -72,6 +73,7 @@ mkdir -p $RPM_BUILD_ROOT/%{_bindir}
 ln -s ../share/codimension/codimension.py $RPM_BUILD_ROOT/%{_bindir}/%{name}
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/pixmaps
 cp -p %{SOURCE1} $RPM_BUILD_ROOT%{_datadir}/pixmaps/%{name}.xpm
+cp -p %{SOURCE5} $RPM_BUILD_ROOT%{_datadir}/pixmaps/%{name}-32x32.xpm
 cp -p %{SOURCE4} $RPM_BUILD_ROOT%{_datadir}/pixmaps/%{name}.png
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/mime/packages
 cp -p %{SOURCE2} $RPM_BUILD_ROOT%{_datadir}/mime/packages/%{name}.xml

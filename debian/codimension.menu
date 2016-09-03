@@ -4,4 +4,4 @@
     title="Codimension" \
     longtitle="Codimension Python IDE" \
     command="/usr/bin/codimension" \
-    icon="/usr/share/pixmaps/codimension.xpm"
+    icon="/usr/share/pixmaps/codimension-32x32.xpm"

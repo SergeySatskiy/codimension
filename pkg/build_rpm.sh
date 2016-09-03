@@ -11,6 +11,7 @@ tar xzf ~/result/${projectfull}.tar.gz
 cp ${projectfull}/pkg/${project}.spec ~/rpmbuild/SPECS
 
 cp ${projectfull}/debian/${project}.xpm ~/rpmbuild/SOURCES
+cp ${projectfull}/debian/${project}-32x32.xpm ~/rpmbuild/SOURCES
 cp ${projectfull}/debian/${project}.sharedmimeinfo ~/rpmbuild/SOURCES
 cp ${projectfull}/debian/${project}.desktop ~/rpmbuild/SOURCES
 cp ${projectfull}/debian/${project}.png ~/rpmbuild/SOURCES
