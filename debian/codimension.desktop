@@ -6,5 +6,5 @@ Terminal=false
 Type=Application
 Icon=codimension
 Categories=Development;IDE;
-MimeType=application/x-codimension-project
+MimeType=application/x-codimension-project;
 StartupNotify=true
