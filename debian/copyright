@@ -68,6 +68,10 @@ License: GPL-2.0+
  License version 2 can be found in the file
  `/usr/share/common-licenses/GPL-2'.
 
-Apache License 2.0:
+License: Apache License 2.0
  Available at http://www.apache.org/licenses/LICENSE-2.0
+ .
+ On Debian systems, the full text of the Apache License
+ version 2.0 cn be found in the file
+ `/usr/share/common-licenses/Apache-2.0'.
 
