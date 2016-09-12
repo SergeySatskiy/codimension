@@ -1,5 +1,5 @@
 %define version %{getenv:version}
-%define requirements python, cdm-flowparser >= 1.0, cdm-pythonparser >= 2.0, PyQt4, qscintilla-python, pylint, pymetrics, python-pygments, python-chardet,  python-yapsy, pyflakes, python-rope, graphviz, pysvn
+%define requirements python, cdm-flowparser >= 1.0, cdm-pythonparser >= 2.0, PyQt4, qscintilla-python, pylint, python-pymetrics, python-pygments, python-chardet,  python-yapsy, pyflakes, python-rope, graphviz, pysvn
 
 Name: codimension
 Version: %{version}
@@ -17,7 +17,7 @@ Source4: %{name}.png
 Source5: %{name}-32x32.xpm
 
 Requires: %{requirements}
-BuildRequires: desktop-file-utils, %{requirements}
+BuildRequires: desktop-file-utils
 
 %description
 Codimension is an experimental Python IDE based on QT, QScintilla,
