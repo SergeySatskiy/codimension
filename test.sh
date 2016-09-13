@@ -1,13 +1,13 @@
 #!/bin/bash
 
-export https_proxy=http://192.168.12.1:3129
-export http_proxy=http://192.168.12.1:3129
+#export https_proxy=http://192.168.12.1:3129
+#export http_proxy=http://192.168.12.1:3129
 
 export DISTRO=ubuntu-trusty
 #export DISTRO=debian-jessie
 #export DISTRO=debian-wheezy
 
-export CODIMENSION_VERSION=0.21
+export CODIMENSION_VERSION=3.0.0
 
 if test ! -z http_proxy ; then
 	export http_proxy_var="http_proxy=${http_proxy}"
@@ -21,7 +21,7 @@ function fetch_debs()
 {
 	wget --continue https://github.com/SergeySatskiy/cdm-flowparser/releases/download/v1.0.1/cdm-flowparser_1.0.1-Ubuntu.trusty_amd64.deb
 	wget --continue https://github.com/SergeySatskiy/cdm-pythonparser/releases/download/v2.0.1/cdm-pythonparser_2.0.1-Ubuntu.trusty_amd64.deb
-	wget --continue https://github.com/fukanchik/codimension/releases/download/v${CODIMENSION_VERSION}/codimension_${CODIMENSION_VERSION}-Ubuntu.trusty_all.deb
+	wget --continue https://github.com/SergeySatskiy/codimension/releases/download/v${CODIMENSION_VERSION}/codimension_${CODIMENSION_VERSION}-Ubuntu.trusty_all.deb
 }
 
 function create_docker_file()
@@ -84,7 +84,7 @@ function build_docker_image()
 
 function run_x_enabled_image()
 {
-	docker run --dns 8.8.8.8 -ti --rm=true -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --ipc=host --net=host --pid=host cdtest:${DISTRO}
+	docker run -ti --rm=true -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --ipc=host --net=host --pid=host cdtest:${DISTRO}
 }
 
 mkdir cd-docker
