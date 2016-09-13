@@ -1,5 +1,5 @@
 %define version %{getenv:version}
-%define requirements python, cdm-flowparser >= 1.0, cdm-pythonparser >= 2.0, PyQt4, qscintilla-python, pylint, python-pymetrics, python-pygments, python-chardet,  python-yapsy, pyflakes, python-rope, graphviz, pysvn
+%define requirements python, cdm-flowparser >= 1.0, cdm-pythonparser >= 2.0, PyQt4, qscintilla-python, pylint, python-pygments, python-chardet,  python-yapsy, pyflakes, python-rope, graphviz, pysvn
 
 Name: codimension
 Version: %{version}
