@@ -1,12 +1,11 @@
 # Codimension [![Build Status](https://travis-ci.org/SergeySatskiy/codimension.svg?branch=master)](https://travis-ci.org/SergeySatskiy/codimension)
 
 Essential links:
-* [Presentation of the technology and the tool] (http://satsky.spb.ru/codimension/vp/Visualization.html)
-* [Project home page] (http://satsky.spb.ru/codimension/codimensionEng.php)
-* [Installation instructions] (http://satsky.spb.ru/codimension/installationEng.php)
-* [Running Codimension from a git clone] (http://satsky.spb.ru/codimension/runFromGitEng.php)
-* [Packages for downloading] (http://satsky.spb.ru/codimension/downloadEng.php)
-* [Hot keys cheat sheet (pdf)] (http://satsky.spb.ru/codimension/other/CodimensionShortcuts.pdf)
+* [Presentation of the technology and the tool] (http://codimension.org/documentation/technologypresentation/)
+* [Project home page] (http://codimension.org/)
+* [Packages and installation] (http://codimension.org/download/linuxdownload.html)
+* [Running Codimension from a git clone] (http://codimension.org/download/runfromgit.html)
+* [Hot keys cheat sheet] (http://codimension.org/documentation/cheatsheet.html)
 
 ---
 
@@ -74,15 +73,3 @@ At the moment a few graphics oriented features are implemented. One of the major
   * Ran and debugged script may have IO redirected to IDE
   * Main editor navigation bar
   * On-the-fly generation of the program control flow diagram
-
-
-### Planned features (not in priority order):
-
-  * Classes diagram with jumps to the code
-  * TODO tab
-  * Bookmarks
-  * Refactoring support
-  * Print / print preview for various windows
-  * Ability to tear off / merge editor windows
-  * Sphinx integration
-  * Code coverage
