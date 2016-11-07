@@ -1,12 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 # File:   clean.py
 #
 # Author: Sergey Satskiy
 #
 # Date:   Apr 13, 2010
-#
-# $Id$
 #
 
 """ Deletes the compiled python files """
@@ -39,8 +37,8 @@ def mainClean():
 
     files = processDir( args[0] )
 
-    print "Project directory: " + args[0]
-    print "Deleted files:    " + str( files )
+    print( "Project directory: " + args[0] )
+    print( "Deleted files:    " + str( files ) )
 
     return 0
 
@@ -67,7 +65,7 @@ if __name__ == "__main__":
     returnCode = 1
     try:
         returnCode = mainClean()
-    except Exception, exception:
-        print >> sys.stderr, str( exception )
+    except Exception as exception:
+        print( str( exception ), file = sys.stderr )
     sys.exit( returnCode )
 
