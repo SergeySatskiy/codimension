@@ -17,36 +17,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
 
 """ not used globals, functions, classes analysis """
 
 
 import os, os.path, logging
-from PyQt4.QtCore                import Qt, QTimer
-from PyQt4.QtGui                 import ( QDialog, QDialogButtonBox,
-                                          QVBoxLayout, QLabel,
-                                          QProgressBar, QApplication, QCursor )
-from autocomplete.completelists  import getOccurrences
-from utils.globals               import GlobalData
-from ui.findinfiles              import ItemToSearchIn, getSearchItemIndex
+from PyQt5.QtGui import QCursor
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QVBoxLayout, QLabel,
+                             QProgressBar, QApplication)
+from autocomplete.completelists import getOccurrences
+from utils.globals import GlobalData
+from ui.findinfiles import ItemToSearchIn, getSearchItemIndex
 
 
-class NotUsedAnalysisProgress( QDialog ):
+class NotUsedAnalysisProgress(QDialog):
     " Progress of the not used analysis "
 
     Functions = 0
-    Classes   = 1
-    Globals   = 2
+    Classes = 1
+    Globals = 2
 
-    def __init__( self, what, sourceModel, parent = None ):
-        QDialog.__init__( self, parent )
+    def __init__(self, what, sourceModel, parent=None):
+        QDialog.__init__(self, parent)
 
-        if what not in [ self.Functions, self.Classes, self.Globals ]:
-            raise Exception( "Unsupported unused analysis type: " + \
-                             str( what ) )
+        if what not in [self.Functions, self.Classes, self.Globals]:
+            raise Exception("Unsupported unused analysis type: " + str(what))
 
         self.__cancelRequest = False
         self.__inProgress = False
@@ -62,19 +59,19 @@ class NotUsedAnalysisProgress( QDialog ):
         self.__found = 0        # Number of found
 
         self.__createLayout()
-        self.setWindowTitle( self.__formTitle() )
-        QTimer.singleShot( 0, self.__process )
+        self.setWindowTitle(self.__formTitle())
+        QTimer.singleShot(0, self.__process)
         return
 
-    def keyPressEvent( self, event ):
+    def keyPressEvent(self, event):
         " Processes the ESC key specifically "
         if event.key() == Qt.Key_Escape:
             self.__onClose()
         else:
-            QDialog.keyPressEvent( self, event )
+            QDialog.keyPressEvent(self, event)
         return
 
-    def __formTitle( self ):
+    def __formTitle(self):
         " Forms the progress dialog title "
         title = "Unused "
         if self.__what == self.Functions:
@@ -85,7 +82,7 @@ class NotUsedAnalysisProgress( QDialog ):
             title += 'globlal variable'
         return title + " analysis"
 
-    def __formInfoLabel( self, name ):
+    def __formInfoLabel(self, name):
         " Forms the info label "
         if self.__what == self.Functions:
             return 'Function: ' + name
@@ -93,7 +90,7 @@ class NotUsedAnalysisProgress( QDialog ):
             return 'Class: ' + name
         return 'Globlal variable: ' + name
 
-    def __whatAsString( self ):
+    def __whatAsString(self):
         " Provides 'what' as string "
         if self.__what == self.Functions:
             return 'function'
@@ -101,52 +98,52 @@ class NotUsedAnalysisProgress( QDialog ):
             return 'class'
         return 'global variable'
 
-    def __updateFoundLabel( self ):
+    def __updateFoundLabel(self):
         " Updates the found label "
-        text = "Found: " + str( self.__found ) + " candidate"
+        text = "Found: " + str(self.__found) + " candidate"
         if self.__found != 1:
             text += "s"
-        self.__foundLabel.setText( text )
+        self.__foundLabel.setText(text)
         return
 
-    def __createLayout( self ):
+    def __createLayout(self):
         """ Creates the dialog layout """
 
-        self.resize( 450, 20 )
-        self.setSizeGripEnabled( True )
+        self.resize(450, 20)
+        self.setSizeGripEnabled(True)
 
-        verticalLayout = QVBoxLayout( self )
+        verticalLayout = QVBoxLayout(self)
 
         # Note label
-        noteLabel = QLabel( "<b>Note</b>: the analysis is " \
-                            "suggestive and not precise. " \
-                            "Use the results with caution.\n", self )
-        verticalLayout.addWidget( noteLabel )
+        noteLabel = QLabel("<b>Note</b>: the analysis is "
+                           "suggestive and not precise. "
+                           "Use the results with caution.\n", self)
+        verticalLayout.addWidget(noteLabel)
 
         # Info label
-        self.__infoLabel = QLabel( self )
-        verticalLayout.addWidget( self.__infoLabel )
+        self.__infoLabel = QLabel(self)
+        verticalLayout.addWidget(self.__infoLabel)
 
         # Progress bar
-        self.__progressBar = QProgressBar( self )
-        self.__progressBar.setValue( 0 )
-        self.__progressBar.setOrientation( Qt.Horizontal )
-        verticalLayout.addWidget( self.__progressBar )
+        self.__progressBar = QProgressBar(self)
+        self.__progressBar.setValue(0)
+        self.__progressBar.setOrientation(Qt.Horizontal)
+        verticalLayout.addWidget(self.__progressBar)
 
         # Found label
-        self.__foundLabel = QLabel( self )
-        verticalLayout.addWidget( self.__foundLabel )
+        self.__foundLabel = QLabel(self)
+        verticalLayout.addWidget(self.__foundLabel)
 
         # Buttons
-        buttonBox = QDialogButtonBox( self )
-        buttonBox.setOrientation( Qt.Horizontal )
-        buttonBox.setStandardButtons( QDialogButtonBox.Close )
-        verticalLayout.addWidget( buttonBox )
+        buttonBox = QDialogButtonBox(self)
+        buttonBox.setOrientation(Qt.Horizontal)
+        buttonBox.setStandardButtons(QDialogButtonBox.Close)
+        verticalLayout.addWidget(buttonBox)
 
-        buttonBox.rejected.connect( self.__onClose )
+        buttonBox.rejected.connect(self.__onClose)
         return
 
-    def __onClose( self ):
+    def __onClose(self):
         " triggered when the close button is clicked "
 
         self.__cancelRequest = True
@@ -154,29 +151,31 @@ class NotUsedAnalysisProgress( QDialog ):
             self.close()
         return
 
-    def __process( self ):
+    def __process(self):
         " Analysis process "
 
         self.__inProgress = True
 
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
-        modified = editorsManager.getModifiedList( True ) # True - only project files
+        # True - only project files
+        modified = editorsManager.getModifiedList(True)
         if modified:
-            modNames = [ modItem[ 0 ] for modItem in modified ]
+            modNames = [modItem[0] for modItem in modified]
             label = "File"
-            if len( modified ) >= 2:
+            if len(modified) >= 2:
                 label += "s"
             label += ": "
-            logging.warning( "The analisys is performed for the content of saved files. " \
-                             "The unsaved modifications will not be taken into account. " \
-                             + label + ", ".join( modNames ) )
+            logging.warning("The analisys is performed for the content "
+                            "of saved files. The unsaved modifications will "
+                            "not be taken into account. " + label +
+                            ", ".join(modNames))
 
         self.__updateFoundLabel()
-        self.__progressBar.setRange( 0,
-                                   len( self.__srcModel.rootItem.childItems ) )
+        self.__progressBar.setRange(0,
+                                    len(self.__srcModel.rootItem.childItems))
         QApplication.processEvents()
-        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
 
         count = 0
         candidates = []
@@ -184,38 +183,37 @@ class NotUsedAnalysisProgress( QDialog ):
             if self.__cancelRequest:
                 break
 
-            name = str( treeItem.data( 0 ) ).split( '(' )[ 0 ]
-            path = os.path.realpath( treeItem.getPath() )
-            lineNumber = int( treeItem.data( 2 ) )
+            name = str(treeItem.data(0)).split('(')[0]
+            path = os.path.realpath(treeItem.getPath())
+            lineNumber = int(treeItem.data(2))
             absPosition = treeItem.sourceObj.absPosition
 
             count += 1
-            self.__progressBar.setValue( count )
-            self.__infoLabel.setText( self.__formInfoLabel( name ) )
+            self.__progressBar.setValue(count)
+            self.__infoLabel.setText(self.__formInfoLabel(name))
             QApplication.processEvents()
 
             # Analyze the name
             found = False
             try:
                 # True is for throwing exceptions
-                locations = getOccurrences( path, absPosition, True )
+                locations = getOccurrences(path, absPosition, True)
 
-                if len( locations ) == 1 and \
-                   locations[ 0 ][ 1 ] == lineNumber:
+                if len(locations) == 1 and locations[0][1] == lineNumber:
                     found = True
-                    index = getSearchItemIndex( candidates, path )
+                    index = getSearchItemIndex(candidates, path)
                     if index < 0:
-                        widget = mainWindow.getWidgetForFileName( path )
+                        widget = mainWindow.getWidgetForFileName(path)
                         if widget is None:
                             uuid = ""
                         else:
                             uuid = widget.getUUID()
-                        newItem = ItemToSearchIn( path, uuid )
-                        candidates.append( newItem )
-                        index = len( candidates ) - 1
-                    candidates[ index ].addMatch( name, lineNumber )
+                        newItem = ItemToSearchIn(path, uuid)
+                        candidates.append(newItem)
+                        index = len(candidates) - 1
+                    candidates[index].addMatch(name, lineNumber)
 
-            except Exception, exc:
+            except Exception as exc:
                 # There is nothing interesting with exceptions here.
                 # It seems to me that rope throws them in case if the same item
                 # is declared multiple times in a file. I also suspect that
@@ -223,8 +221,8 @@ class NotUsedAnalysisProgress( QDialog ):
                 # So I just suppress them.
                 pass
 
-                #logging.warning( "Error detected while analysing " + \
-                #                 self.__whatAsString() + " '" + name + \
+                # logging.warning("Error detected while analysing " +
+                #                 self.__whatAsString() + " '" + name +
                 #                 "'. Message: " + str( exc ) )
 
             if found:
@@ -235,14 +233,13 @@ class NotUsedAnalysisProgress( QDialog ):
         if self.__found == 0:
             # The analysis could be interrupted
             if not self.__cancelRequest:
-                logging.info( "No unused candidates found" )
+                logging.info("No unused candidates found")
         else:
-            mainWindow.displayFindInFiles( "", candidates )
+            mainWindow.displayFindInFiles("", candidates)
 
         QApplication.restoreOverrideCursor()
-        self.__infoLabel.setText( 'Done' )
+        self.__infoLabel.setText('Done')
         self.__inProgress = False
 
         self.accept()
         return
-
