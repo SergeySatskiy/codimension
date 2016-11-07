@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
 """ Provides versions of various components used by codimension """
 
@@ -138,7 +136,6 @@ def getGraphvizVersion():
 
     from misc import safeRunWithStderr
     try:
-        
         stdOut, stdErr = safeRunWithStderr( [ path, "-V" ] )
         for line in stdErr.splitlines():
             # E.g. dot - graphviz version 2.26.3 (20100126.1600)
