@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,82 +17,70 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
 
-""" codimension pixmap cache singleton """
+""" codimension pixmap cache """
 
-import os.path, sys
-from PyQt4.QtGui import QPixmap, QIcon
+from os.path import dirname, realpath, sep, isabs, exists
+import sys
+from PyQt5.QtGui import QPixmap, QIcon
 
 
-class PixmapCache( object ):
+class PixmapCache():
     """
-    Implementation idea is taken from here:
-    http://wiki.forum.nokia.com/index.php/How_to_make_a_singleton_in_Python
+    pixmap cache
+    used as a singleton
     """
 
-    _iInstance = None
-    class Singleton:
-        """ Provides pixmap cache singleton facility """
-
-        def __init__( self ):
-
-            self.__cache = {}
-            self.__searchPath = os.path.dirname( os.path.abspath( sys.argv[0] ) ) + \
-                                os.path.sep + 'pixmaps' + os.path.sep
-            return
-
-        def getPath( self, path ):
-            " Provides an absolute path "
-            if os.path.isabs( path ):
-                return path
-            return self.__searchPath + path
-
-        def getPixmap( self, name ):
-            """ Provides the required pixmap """
-
-            try:
-                return self.__cache[ name ]
-            except KeyError:
-                path = self.getPath( name )
-                if not os.path.exists( path ):
-                    pixmap = QPixmap()
-                    self.__cache[ name ] = pixmap
-                    return pixmap
-
-                try:
-                    pixmap = QPixmap( path )
-                except:
-                    pixmap = QPixmap()
-                self.__cache[ name ] = pixmap
-                return pixmap
-
-        def getIcon( self, name ):
-            """ Provides a pixmap as an icon """
-            return QIcon( self.getPixmap( name ) )
-
-        def getSearchPath( self ):
-            " Provides the path where pixmaps are "
-            return self.__searchPath
-
-    def __init__( self ):
-        if PixmapCache._iInstance is None:
-            PixmapCache._iInstance = PixmapCache.Singleton()
-
-        self.__dict__[ '_PixmapCache__iInstance' ] = PixmapCache._iInstance
+    def __init__(self):
+        self.__cache = {}
+        self.__dir = dirname(realpath(sys.argv[0])) + sep + 'pixmaps' + sep
         return
 
-    def __getattr__( self, aAttr ):
-        return getattr( self._iInstance, aAttr )
+    def getPath(self, path):
+        " Provides an absolute path "
+        if isabs(path):
+            return path
+        return self.__dir + path
+
+    def getSearchPath(self):
+        " Provides the path where pixmaps are "
+        return self.__dir
+
+    def getPixmap(self, name):
+        """ Provides the required pixmap """
+
+        try:
+            return self.__cache[name]
+        except KeyError:
+            path = self.getPath(name)
+            if not exists(path):
+                pixmap = QPixmap()
+                self.__cache[name] = pixmap
+                return pixmap
+
+            try:
+                pixmap = QPixmap(path)
+            except:
+                pixmap = QPixmap()
+            self.__cache[name] = pixmap
+            return pixmap
+
+    def getIcon(self, name):
+        """ Provides a pixmap as an icon """
+        return QIcon(self.getPixmap(name))
 
 
-def getIcon( name ):
+# Pixmap cache: should be only one
+# Access functions are below
+PIXMAP_CACHE = PixmapCache()
+
+
+def getIcon(name):
     " Syntactic shugar "
-    return PixmapCache().getIcon( name )
+    return PIXMAP_CACHE.getIcon(name)
 
-def getPixmap( name ):
+
+def getPixmap(name):
     " Syntactic shugar "
-    return PixmapCache().getPixmap( name )
-
+    return PIXMAP_CACHE.getPixmap(name)
