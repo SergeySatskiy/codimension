@@ -27,6 +27,7 @@
 
 
 import sys, os, os.path, getpass, commands, logging
+from runparams import RunParameters
 
 
 TERM_REDIRECT = -1
@@ -40,40 +41,6 @@ CMD_TYPE_RUN     = 0
 CMD_TYPE_PROFILE = 1
 CMD_TYPE_DEBUG   = 2
 
-
-class RunParameters:
-    " Stores the script run parameters "
-
-    InheritParentEnv = 0
-    InheritParentEnvPlus = 1
-    SpecificEnvironment = 2
-
-    def __init__( self ):
-        # Cmd line arguments
-        self.arguments = ""
-
-        # Working dir part
-        self.useScriptLocation = True
-        self.specificDir = ""
-
-        # Environment
-        self.envType = RunParameters.InheritParentEnv
-        self.additionToParentEnv = {}
-        self.specificEnv = {}
-
-        # Close terminal
-        self.closeTerminal = False
-        return
-
-    def isDefault( self ):
-        " Returns True if all the values are default "
-        return self.arguments == "" and \
-               self.useScriptLocation == True and \
-               self.specificDir == "" and \
-               self.envType == RunParameters.InheritParentEnv and \
-               len( self.additionToParentEnv ) == 0 and \
-               len( self.specificEnv ) == 0 and \
-               self.closeTerminal == False
 
 
 def getUserShell():
