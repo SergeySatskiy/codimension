@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,22 +17,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
 
 """ codimension run parameters cache """
 
-import cPickle, copy
-from run import RunParameters
+import json
+from copy import deepcopy
+from runparams import RunParameters, toJSON, fromJSON
 
 
-class RunParametersCache( object ):
+class RunParametersCache:
     """ Provides the run parameters cache """
 
-    def __init__( self ):
+    def __init__(self):
 
-        # path -> RunParameters, see run.py
+        # path -> RunParameters, see runparams.py
         # The path can be relative or absolute:
         # relative for project files, absolute for non-project ones
         self.__cache = {}
@@ -57,34 +56,30 @@ class RunParametersCache( object ):
         except KeyError:
             return RunParameters()
 
-    def add( self, path, params ):
+    def add(self, path, params):
         " Adds run params into cache if needed "
         if params.isDefault():
-            if not path in self.__cache:
-                return
-            self.remove( path )
+            self.remove(path)
             return
         # Non-default, so need to insert
-        self.__cache[ path ] = copy.deepcopy( params )
+        self.__cache[path] = copy.deepcopy(params)
         return
 
-    def remove( self, path ):
+    def remove(self, path):
         " Removes one item from the map "
         try:
-            del self.__cache[ path ]
+            del self.__cache[path]
         except KeyError:
             return
 
-    def serialize( self, path ):
+    def serialize(self, path):
         " Saves the cache into the given file "
-        ouf = open( path, "wb" )
-        cPickle.dump( self.__cache, ouf, 1 )
-        ouf.close()
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(self.__cache, f, default=toJSON)
         return
 
-    def deserialize( self, path ):
+    def deserialize(self, path):
         " Loads the cache from the given file "
-        inf = open( path, "rb" )
-        self.__cache = cPickle.load( inf )
-        inf.close()
+        with open(path, "r", encoding="utf-8") as f:
+            self.__cache = json.load(f, object_hook=fromJSON)
         return
