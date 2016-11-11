@@ -37,22 +37,10 @@ class RunParametersCache:
         self.__cache = {}
         return
 
-    def get( self, path ):
+    def get(self, path):
         """ Provides the required parameters object """
         try:
-            params = self.__cache[ path ]
-            if hasattr( params, "closeTerminal" ):
-                return params
-            newParams = RunParameters()
-            newParams.arguments = params.arguments
-            newParams.useScriptLocation = params.useScriptLocation
-            newParams.specificDir = params.specificDir
-            newParams.envType = params.envType
-            newParams.additionToParentEnv = params.additionToParentEnv
-            newParams.specificEnv = params.specificEnv
-            newParams.closeTerminal = False
-            self.__cache[ path ] = newParams
-            return newParams
+            return deepcopy(self.__cache[path])
         except KeyError:
             return RunParameters()
 
@@ -62,7 +50,7 @@ class RunParametersCache:
             self.remove(path)
             return
         # Non-default, so need to insert
-        self.__cache[path] = copy.deepcopy(params)
+        self.__cache[path] = deepcopy(params)
         return
 
     def remove(self, path):
@@ -74,12 +62,12 @@ class RunParametersCache:
 
     def serialize(self, path):
         " Saves the cache into the given file "
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(self.__cache, f, default=toJSON)
+        with open(path, "w", encoding="utf-8") as diskfile:
+            json.dump(self.__cache, diskfile, default=toJSON)
         return
 
     def deserialize(self, path):
         " Loads the cache from the given file "
-        with open(path, "r", encoding="utf-8") as f:
-            self.__cache = json.load(f, object_hook=fromJSON)
+        with open(path, "r", encoding="utf-8") as diskfile:
+            self.__cache = json.load(diskfile, object_hook=fromJSON)
         return
