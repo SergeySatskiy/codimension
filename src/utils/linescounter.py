@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
 
 " Counts lines in python code "
@@ -30,12 +28,12 @@ from optparse  import OptionParser
 class LinesCounter:
     " Holds various line information, see the members comments "
 
-    def __init__( self ):
+    def __init__(self):
 
         self.__reset()
         return
 
-    def __reset( self ):
+    def __reset(self):
         " Resets all the values "
 
         self.files = 0          # Total number of analyzed files
@@ -46,80 +44,80 @@ class LinesCounter:
         self.classes = 0        # Number of classes
         return
 
-    def __processFile( self, path ):
+    def __processFile(self, path):
         " Accumulates lines from a single file "
 
-        afile = open( path )
+        afile = open(path)
         for line in afile:
-            self.__processLine( line )
+            self.__processLine(line)
         afile.close()
         return
 
-    def __processLine( self, line ):
+    def __processLine(self, line):
         " Process a single line "
         line = line.strip()
         if line == "":
             self.emptyLines += 1
             return
-        if line.startswith( '#' ):
+        if line.startswith('#'):
             self.commentLines += 1
             return
-        if line.startswith( 'class ' ):
+        if line.startswith('class '):
             self.classes += 1
         self.codeLines += 1
         return
 
-    def __processDir( self, path, extensions ):
+    def __processDir(self, path, extensions):
         " Accumulates lines from all files in the given directory recursively "
 
-        for item in os.listdir( path ):
-            if item in [ '.svn', '.cvs' ]:
+        for item in os.listdir(path):
+            if item in ('.svn', '.cvs'):
                 continue
-            if os.path.isdir( path + os.path.sep + item ):
-                self.__processDir( path + os.path.sep + item, extensions )
+            if os.path.isdir(path + os.path.sep + item):
+                self.__processDir(path + os.path.sep + item, extensions)
                 continue
             for ext in extensions:
-                if item.endswith( ext ):
+                if item.endswith(ext):
                     self.files += 1
-                    self.__processFile( path + os.path.sep + item )
-                    self.filesSize += os.path.getsize( path + os.path.sep + item )
+                    self.__processFile(path + os.path.sep + item)
+                    self.filesSize += os.path.getsize(path + os.path.sep + item)
                 continue
         return
 
-    def getLines( self, path, extensions = [ '.py', '.py3', '.pyw' ] ):
+    def getLines(self, path, extensions = ['.py', '.py3', '.pyw']):
         " Accumulates lines for a file or directory "
 
-        if not os.path.exists( path ):
-            raise Exception( "Lines counter cannot open " + path )
+        if not os.path.exists(path):
+            raise Exception("Lines counter cannot open " + path)
 
         self.__reset()
 
-        if os.path.isfile( path ):
+        if os.path.isfile(path):
             for ext in extensions:
-                if path.endswith( ext ):
+                if path.endswith(ext):
                     # It's OK
-                    self.__processFile( path )
+                    self.__processFile(path)
                     self.files = 1
-                    self.filesSize = os.path.getsize( path )
+                    self.filesSize = os.path.getsize(path)
                     return
-            raise Exception( "Lines counter detected inconsistency. " \
-                             "The file " + path + " does not have expected " \
-                             "extension (" + ", ".join( extensions ) + ")" )
+            raise Exception("Lines counter detected inconsistency. "
+                            "The file " + path + " does not have expected "
+                            "extension (" + ", ".join(extensions) + ")")
 
         # It's a directory
-        if not path.endswith( os.path.sep ):
+        if not path.endswith(os.path.sep):
             path += os.path.sep
 
-        self.__processDir( path, extensions )
+        self.__processDir(path, extensions)
         return
 
-    def getLinesInBuffer( self, editor ):
+    def getLinesInBuffer(self, editor):
         " Counts lines in the given Scintilla buffer "
         self.__reset()
         txt = editor.text()
-        self.filesSize = len( txt )
-        for line in txt.split( '\n' ):
-            self.__processLine( line )
+        self.filesSize = len(txt)
+        for line in txt.split('\n'):
+            self.__processLine(line)
         return
 
 
@@ -134,28 +132,28 @@ if __name__ == "__main__":
 
     options, args = parser.parse_args()
 
-    if len( args ) != 1:
-        print >> sys.stderr, "One arguments expected"
-        sys.exit( 1 )
+    if len(args) != 1:
+        print("One arguments expected", file=sys.stderr)
+        sys.exit(1)
 
 
-    if not os.path.exists( args[0] ):
-        print >> sys.stderr, "Path " + args[0] + " does not exist"
-        sys.exit( 1 )
+    if not os.path.exists(args[0]):
+        print("Path " + args[0] + " does not exist", file=sys.stderr)
+        sys.exit(1)
 
     counter = LinesCounter()
-    counter.getLines( args[0] )
+    counter.getLines(args[0])
 
-    print "Lines info for " + args[0] + ":"
-    print "Files analysed:    " + str( counter.files )
-    print "Total size:        " + str( counter.filesSize ) + " bytes\n"
-    print "Classes:           " + str( counter.classes )
-    print "Code lines:        " + str( counter.codeLines )
-    print "Comment lines:     " + str( counter.commentLines )
-    print "Empty lines:       " + str( counter.emptyLines )
-    print "Total lines:       " + str( counter.codeLines + \
-                                       counter.commentLines + \
-                                       counter.emptyLines )
+    totalLines = counter.codeLines + counter.commentLines + counter.emptyLines
 
-    sys.exit( 0 )
+    print("Lines info for " + args[0] + ":")
+    print("Files analysed:    " + str(counter.files))
+    print("Total size:        " + str(counter.filesSize) + " bytes\n")
+    print("Classes:           " + str(counter.classes))
+    print("Code lines:        " + str(counter.codeLines))
+    print("Comment lines:     " + str(counter.commentLines))
+    print("Empty lines:       " + str(counter.emptyLines))
+    print("Total lines:       " + str(totalLines))
+
+    sys.exit(0)
 
