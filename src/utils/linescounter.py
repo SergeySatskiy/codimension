@@ -21,8 +21,9 @@
 
 " Counts lines in python code "
 
-import sys, os.path
-from optparse  import OptionParser
+import sys
+import os.path
+from optparse import OptionParser
 
 
 class LinesCounter:
@@ -84,7 +85,7 @@ class LinesCounter:
                 continue
         return
 
-    def getLines(self, path, extensions = ['.py', '.py3', '.pyw']):
+    def getLines(self, path, extensions=('.py', '.py3', '.pyw')):
         " Accumulates lines for a file or directory "
 
         if not os.path.exists(path):
@@ -125,17 +126,16 @@ class LinesCounter:
 if __name__ == "__main__":
 
     parser = OptionParser(
-    """
-    %prog  <dir name>
-    Counts lines in python code
-    """ )
+        """
+        %prog  <dir name>
+        Counts lines in python code
+        """)
 
     options, args = parser.parse_args()
 
     if len(args) != 1:
         print("One arguments expected", file=sys.stderr)
         sys.exit(1)
-
 
     if not os.path.exists(args[0]):
         print("Path " + args[0] + " does not exist", file=sys.stderr)
@@ -156,4 +156,3 @@ if __name__ == "__main__":
     print("Total lines:       " + str(totalLines))
 
     sys.exit(0)
-
