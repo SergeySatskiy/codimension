@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,401 +17,571 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-#
-# The file was taken from eric 4.4.3 and adopted for codimension.
-# Original copyright:
-# Copyright (c) 2007 - 2010 Detlev Offenbach <detlev@die-offenbachs.de>
-#
 
 """ file related utils """
 
-from os.path import islink, exists, split, join, sep, basename
-from PyQt4.QtGui        import QImageReader
-from utils.pixmapcache  import PixmapCache
+from os.path import islink, exists, split, join, sep, basename, realpath
+import logging
+import magic
+from PyQt5.QtGui import QImageReader
+
+# Qutepart has a few maps which halp to map a file to a syntax.
+from qutepart import Qutepart
+
+from .pixmapcache import getIcon
 
 
-UnknownFileType             = -1
-PythonFileType              = 0
-PythonCompiledFileType      = 1
-Python3FileType             = 2
-RubyFileType                = 3
-DesignerFileType            = 4
-DesignerHeaderFileType      = 5
-LinguistFileType            = 6
-QTResourceFileType          = 7
-CodimensionProjectFileType  = 8
-IDLFileType                 = 9
-PixmapFileType              = 10
-SVGFileType                 = 11
-DFileType                   = 12
-CFileType                   = 13
-CHeaderFileType             = 14
-CPPFileType                 = 15
-CPPHeaderFileType           = 16
-ELFFileType                 = 17
-SOFileType                  = 18
-PDFFileType                 = 19
-HTMLFileType                = 20
-CSSFileType                 = 21
-XMLFileType                 = 22
-MakefileType                = 23
-ShellFileType               = 24
-JavascriptFileType          = 25
-DiffFileType                = 26
-JavaFileType                = 27
-PascalFileType              = 28
-PerlFileType                = 29
-TCLFileType                 = 30
-PropsFileType               = 31
-TexFileType                 = 32
-UnknownELFFileType          = 33
-UTF8TextFile                = 34
-ASCIITextFile               = 35
-ObjectFileType              = 36
-ArchiveFileType             = 37
-TarFileType                 = 38
+# Default encoding for the cases when:
+# - the encoding could not be detected
+# - replaces ascii to be on the safe side
+__DEFAULT_ENCODING = 'utf-8'
 
-BrokenSymlinkFileType       = 50
-DirectoryFileType           = 51
+__QTSupportedImageFormats = [fmt.data().decode('utf-8') for fmt in
+                             QImageReader.supportedImageFormats()]
+VIEWABLE_IMAGE_MIMES = ['image/' + ext for ext in __QTSupportedImageFormats]
 
 
-_fileTypes = {
-    UnknownFileType:
-        [ PixmapCache().getIcon( 'filemisc.png' ), 'Unknown' ],
-    PythonFileType:
-        [ PixmapCache().getIcon( 'filepython.png' ), 'Python' ],
-    PythonCompiledFileType:
-        [ PixmapCache().getIcon( 'filepythoncompiled.png' ), 'Binary' ],
-    Python3FileType:
-        [ PixmapCache().getIcon( 'filepython.png' ), 'Python' ],
-    RubyFileType:
-        [ PixmapCache().getIcon( 'fileruby.png' ), 'Ruby' ],
-    DesignerFileType:
-        [ PixmapCache().getIcon( 'filedesigner.png' ), 'XML' ],
-    DesignerHeaderFileType:
-        [ PixmapCache().getIcon( 'filedesigner.png' ), 'C++' ],
-    LinguistFileType:
-        [ PixmapCache().getIcon( 'filelinguist2.png' ), 'XML' ],
-    QTResourceFileType:
-        [ PixmapCache().getIcon( 'fileresource.png' ), 'XML' ],
-    CodimensionProjectFileType :
-        [ PixmapCache().getIcon( 'fileproject.png' ), 'Properties' ],
-    IDLFileType:
-        [ PixmapCache().getIcon( 'fileidl.png' ), 'IDL' ],
-    PixmapFileType:
-        [ PixmapCache().getIcon( 'filepixmap.png' ), 'Pixmap' ],
-    SVGFileType:
-        [ PixmapCache().getIcon( 'filesvg.png' ), 'XML' ],
-    DFileType:
-        [ PixmapCache().getIcon( 'filed.png' ), 'D' ],
-    CFileType:
-        [ PixmapCache().getIcon( 'filec.png' ), 'C' ],
-    CHeaderFileType:
-        [ PixmapCache().getIcon( 'filecheader.png' ), 'C' ],
-    CPPFileType:
-        [ PixmapCache().getIcon( 'filecpp.png' ), 'C++' ],
-    CPPHeaderFileType:
-        [ PixmapCache().getIcon( 'filecppheader.png' ), 'C++' ],
-    ELFFileType:
-        [ PixmapCache().getIcon( 'filebinary.png' ), 'Binary' ],
-    SOFileType:
-        [ PixmapCache().getIcon( 'fileso.png' ), 'Binary' ],
-    ObjectFileType:
-        [ PixmapCache().getIcon( 'fileso.png' ), 'Binary' ],
-    PDFFileType:
-        [ PixmapCache().getIcon( 'filepdf.png' ), 'PDF' ],
-    HTMLFileType:
-        [ PixmapCache().getIcon( 'filehtml.png' ), 'HTML' ],
-    CSSFileType:
-        [ PixmapCache().getIcon( 'filecss.png' ), 'CSS' ],
-    XMLFileType:
-        [ PixmapCache().getIcon( 'filexml.png' ), 'XML' ],
-    MakefileType:
-        [ PixmapCache().getIcon( 'filemake.png' ), 'Makefile' ],
-    BrokenSymlinkFileType:
-        [ PixmapCache().getIcon( 'filebrokenlink.png' ), 'Unknown' ],
-    ShellFileType:
-        [ PixmapCache().getIcon( 'fileshell.png' ), 'Shell' ],
-    JavascriptFileType:
-        [ PixmapCache().getIcon( 'filejs.png' ), 'Javascript' ],
-    DiffFileType:
-        [ PixmapCache().getIcon( 'filediff.png' ), 'Diff' ],
-    JavaFileType:
-        [ PixmapCache().getIcon( 'filejava.png' ), 'Java' ],
-    PascalFileType:
-        [ PixmapCache().getIcon( 'filepascal.png' ), 'Pascal' ],
-    PerlFileType:
-        [ PixmapCache().getIcon( 'fileperl.png' ), 'Perl' ],
-    TCLFileType:
-        [ PixmapCache().getIcon( 'filetcl.png' ), 'TCL' ],
-    PropsFileType:
-        [ PixmapCache().getIcon( 'fileprops.png' ), 'Properties' ],
-    TexFileType:
-        [ PixmapCache().getIcon( 'filetex.png' ), 'TeX' ],
-    UnknownELFFileType:
-        [ PixmapCache().getIcon( 'filemisc.png' ), 'Unknown' ],
-    UTF8TextFile:
-        [ PixmapCache().getIcon( 'filetext.png' ), 'Text' ],
-    ASCIITextFile:
-        [ PixmapCache().getIcon( 'filetext.png' ), 'Text' ],
-    DirectoryFileType:
-        [ PixmapCache().getIcon( 'dirclosed.png' ), '' ],
-    ArchiveFileType:
-        [ PixmapCache().getIcon( 'filearchive.png' ), 'Archive' ],
-    TarFileType:
-        [ PixmapCache().getIcon( 'filetar.png' ), 'Tar' ],
-}
+# NOTES
+# The standard set of mime types does not cover all the required cases.
+# In particular:
+# - makefiles are not reliably distinguished
+# - code and header files are detected as the same type but the icon needs to
+#   be different
+# - broken symbolic links are not distinguished
 
 
-_extType = {
-    'py'    :   PythonFileType,
-    'pyw'   :   PythonFileType,
-    'ptl'   :   PythonFileType,
-    'pyc'   :   PythonCompiledFileType,
-    'pyo'   :   PythonCompiledFileType,
-    'py3'   :   Python3FileType,
-    'pyw3'  :   Python3FileType,
-    'rb'    :   RubyFileType,
-    'ui'    :   DesignerFileType,
-    'ts'    :   LinguistFileType,
-    'qm'    :   LinguistFileType,
-    'qrc'   :   QTResourceFileType,
-    'cdm'   :   CodimensionProjectFileType,
-    'idl'   :   IDLFileType,
-    'svg'   :   SVGFileType,
-    'd'     :   DFileType,
-    'di'    :   DFileType,
-    'c'     :   CFileType,
-    'cpp'   :   CPPFileType,
-    'cc'    :   CPPFileType,
-    'cxx'   :   CPPFileType,
-    'c++'   :   CPPFileType,
-    'hpp'   :   CPPHeaderFileType,
-    'hxx'   :   CPPHeaderFileType,
-    'h++'   :   CPPHeaderFileType,
-    'hh'    :   CPPHeaderFileType,
-    'pdf'   :   PDFFileType,
-    'htm'   :   HTMLFileType,
-    'html'  :   HTMLFileType,
-    'css'   :   CSSFileType,
-    'xml'   :   XMLFileType,
-    'xsl'   :   XMLFileType,
-    'xslt'  :   XMLFileType,
-    'so'    :   SOFileType,
-    'o'     :   ObjectFileType,
-    'bash'  :   ShellFileType,
-    'sh'    :   ShellFileType,
-    'js'    :   JavascriptFileType,
-    'diff'  :   DiffFileType,
-    'patch' :   DiffFileType,
-    'java'  :   JavaFileType,
-    'dfm'   :   PascalFileType,
-    'dpk'   :   PascalFileType,
-    'dpr'   :   PascalFileType,
-    'inc'   :   PascalFileType,
-    'pas'   :   PascalFileType,
-    'pp'    :   PascalFileType,
-    'ph'    :   PerlFileType,
-    'pl'    :   PerlFileType,
-    'pm'    :   PerlFileType,
-    'tcl'   :   TCLFileType,
-    'tk'    :   TCLFileType,
-    'cfg'   :   PropsFileType,
-    'cnf'   :   PropsFileType,
-    'inf'   :   PropsFileType,
-    'ini'   :   PropsFileType,
-    'rc'    :   PropsFileType,
-    'reg'   :   PropsFileType,
-    'aux'   :   TexFileType,
-    'idx'   :   TexFileType,
-    'sty'   :   TexFileType,
-    'tex'   :   TexFileType,
-    'toc'   :   TexFileType,
-    'txt'   :   UTF8TextFile,
-    'tar'   :   TarFileType,
-    'gz'    :   ArchiveFileType,
-    'bz2'   :   ArchiveFileType,
-    'gzip'  :   ArchiveFileType,
-    'zip'   :   ArchiveFileType,
-    'xz'    :   ArchiveFileType,
-    'tgz'   :   ArchiveFileType,
-    'properties':   PropsFileType,
-}
+def __getXmlSyntaxFile(fName):
+    """ Checks the Qutepart mapping of a file extension to a syntax file.
+        Returns: None if not found or a syntax file name
+    """
+    # Special cases: codimension project files
+    #                makefiles
+    if fName.endswith('.cdm'):
+        return 'ini.xml'
+    if fName.endswith('.ts'):
+        return 'xml.xml'
+    if fName.endswith('.qm'):
+        return 'xml.xml'
+    if 'makefile' in fName.lower():
+        return "makefile.xml"
+
+    for regExp, xmlFileName in \
+                Qutepart._globalSyntaxManager._extensionToXmlFileName.items():
+        if regExp.match(fName):
+            return xmlFileName
+    return None
+
+
+def __getMimeByXmlSyntaxFile(xmlSyntaxFile):
+    """ Checks the Qutepart mapping of a mime type to a syntax file.
+        Returns a mime type or None
+    """
+    candidates = []
+    for mime, xmlFileName in \
+                Qutepart._globalSyntaxManager._mimeTypeToXmlFileName.items():
+        if xmlFileName == xmlSyntaxFile:
+            candidates.append(mime)
+    if len(candidates) != 1:
+        return None
+    return candidates[0]
+
+
+def __getXmlSyntaxFileByMime(mime):
+    """ Checks the Qutepart mapping of a mime type to a syntax file.
+        Returns an xml syntax file or None
+    """
+    try:
+        return Qutepart._globalSyntaxManager._mimeTypeToXmlFileName[mime]
+    except KeyError:
+        return None
 
 
 __cachedFileTypes = {}
-__magicModule = None
-__QTSupportedImageFormats = [ str( fmt ) for fmt in
-                              QImageReader.supportedImageFormats() ]
+__magic = magic.Magic(mime=True, mime_encoding=True)
 
 
-def __isMagicAvailable():
-    " Checks if the magic module is able to be loaded "
-    try:
-        import magic
-        m = magic.Magic()
-        m.close()
+def isFileSearchable(fName, checkForBrokenLink=True):
+    " Returns True if it makes sense to search for text in that file "
+    mime, _, _, syntaxFile = getFileProperties(fName, False,
+                                               checkForBrokenLink,
+                                               skipCache=False)
+    if syntaxFile is not None:
         return True
-    except:
-        return False
+    return mime.startswith('text/')
 
-# Cached value to avoid unnecessary searches for a name
-MAGIC_AVAILABLE = __isMagicAvailable()
 
- 
+def isImageViewable(mime):
+    " True if QT can show the image "
+    return mime in VIEWABLE_IMAGE_MIMES
 
-def detectFileType( path, checkForBrokenLink = True, skipCache = False ):
-    " Detects file type - must work for both existed and not existed files "
 
-    global __cachedFileTypes
-    global __magicModule
+__syntaxToIcon = {
+    'stata.xml': getIcon('filemisc.png'),
+    'sisu.xml': getIcon('filemisc.png'),
+    'mandoc.xml': getIcon('fileman.png'),
+    'fgl-4gl.xml': getIcon('filemisc.png'),
+    'ansforth94.xml': getIcon('filemisc.png'),
+    'abap.xml': getIcon('filemisc.png'),
+    'abc.xml': getIcon('filemisc.png'),
+    'asm-avr.xml': getIcon('filemisc.png'),
+    'freebasic.xml': getIcon('filemisc.png'),
+    'wml.xml': getIcon('filemisc.png'),
+    'd.xml': getIcon('filed.png'),
+    'sql-oracle.xml': getIcon('filemisc.png'),
+    'maxima.xml': getIcon('filemisc.png'),
+    'fortran.xml': getIcon('filemisc.png'),
+    'gdl.xml': getIcon('filemisc.png'),
+    'haxe.xml': getIcon('filemisc.png'),
+    'asm-m68k.xml': getIcon('filemisc.png'),
+    'j.xml': getIcon('filemisc.png'),
+    'lilypond.xml': getIcon('filemisc.png'),
+    'asm-dsp56k.xml': getIcon('filemisc.png'),
+    'jsp.xml': getIcon('filemisc.png'),
+    'objectivecpp.xml': getIcon('filemisc.png'),
+    'mab.xml': getIcon('filemisc.png'),
+    'fgl-per.xml': getIcon('filemisc.png'),
+    'pgn.xml': getIcon('filemisc.png'),
+    'picsrc.xml': getIcon('filemisc.png'),
+    'perl.xml': getIcon('fileperl.png'),
+    'xharbour.xml': getIcon('filemisc.png'),
+    'r.xml': getIcon('filemisc.png'),
+    'rmarkdown.xml': getIcon('filemisc.png'),
+    'relaxng.xml': getIcon('filemisc.png'),
+    'verilog.xml': getIcon('filemisc.png'),
+    'ada.xml': getIcon('fileada.png'),
+    'hunspell-aff.xml': getIcon('filemisc.png'),
+    'agda.xml': getIcon('filemisc.png'),
+    'ahdl.xml': getIcon('filemisc.png'),
+    'ahk.xml': getIcon('filemisc.png'),
+    'postscript.xml': getIcon('filepostscript.png'),
+    'ample.xml': getIcon('filemisc.png'),
+    'ansys.xml': getIcon('filemisc.png'),
+    'actionscript.xml': getIcon('filemisc.png'),
+    'asn1.xml': getIcon('filemisc.png'),
+    'asp.xml': getIcon('filemisc.png'),
+    'awk.xml': getIcon('fileawk.png'),
+    'bash.xml': getIcon('fileshell.png'),
+    'dosbat.xml': getIcon('filemisc.png'),
+    'latex.xml': getIcon('filetex.png'),
+    'bibtex.xml': getIcon('filetex.png'),
+    'boo.xml': getIcon('filemisc.png'),
+    'component-pascal.xml': getIcon('filepascal.png'),
+    'gdb.xml': getIcon('filemisc.png'),
+    '4dos.xml': getIcon('filemisc.png'),
+    'c.xml': getIcon('filec.png'),
+    'ccss.xml': getIcon('filecss.png'),
+    'coldfusion.xml': getIcon('filemisc.png'),
+    'nagios.xml': getIcon('filemisc.png'),
+    'cg.xml': getIcon('filemisc.png'),
+    'cgis.xml': getIcon('filemisc.png'),
+    'chicken.xml': getIcon('filemisc.png'),
+    'haskell.xml': getIcon('filemisc.png'),
+    'cisco.xml': getIcon('filemisc.png'),
+    'opencl.xml': getIcon('filemisc.png'),
+    'clojure.xml': getIcon('filemisc.png'),
+    'cmake.xml': getIcon('filemake.png'),
+    'coffee.xml': getIcon('filemisc.png'),
+    'logtalk.xml': getIcon('filemisc.png'),
+    'crk.xml': getIcon('filemisc.png'),
+    'cs.xml': getIcon('filemisc.png'),
+    'tcsh.xml': getIcon('fileshell.png'),
+    'css.xml': getIcon('filecss.png'),
+    'context.xml': getIcon('filemisc.png'),
+    'cue.xml': getIcon('filemisc.png'),
+    'curry.xml': getIcon('filemisc.png'),
+    'xml.xml': getIcon('filexml.png'),
+    'hunspell-dat.xml': getIcon('filemisc.png'),
+    'prolog.xml': getIcon('filemisc.png'),
+    'modula-2.xml': getIcon('filemisc.png'),
+    'desktop.xml': getIcon('filemisc.png'),
+    'hunspell-dic.xml': getIcon('filemisc.png'),
+    'diff.xml': getIcon('filediff.png'),
+    'dot.xml': getIcon('filemisc.png'),
+    'doxygen.xml': getIcon('filemisc.png'),
+    'dtd.xml': getIcon('filemisc.png'),
+    'euphoria.xml': getIcon('filemisc.png'),
+    'email.xml': getIcon('fileemail.png'),
+    'erlang.xml': getIcon('filemisc.png'),
+    'fasm.xml': getIcon('filemisc.png'),
+    'ferite.xml': getIcon('filemisc.png'),
+    'lex.xml': getIcon('filemisc.png'),
+    'glsl.xml': getIcon('filemisc.png'),
+    'fsharp.xml': getIcon('filemisc.png'),
+    'ftl.xml': getIcon('filemisc.png'),
+    'grammar.xml': getIcon('filemisc.png'),
+    'gap.xml': getIcon('filemisc.png'),
+    'glosstex.xml': getIcon('filetex.png'),
+    'ruby.xml': getIcon('filemisc.png'),
+    'gnuplot.xml': getIcon('filemisc.png'),
+    'go.xml': getIcon('filemisc.png'),
+    'groovy.xml': getIcon('filemisc.png'),
+    'scheme.xml': getIcon('filemisc.png'),
+    'haml.xml': getIcon('filemisc.png'),
+    'hamlet.xml': getIcon('filemisc.png'),
+    'spice.xml': getIcon('filemisc.png'),
+    'html.xml': getIcon('filehtml.png'),
+    'rhtml.xml': getIcon('filemisc.png'),
+    'progress.xml': getIcon('filemisc.png'),
+    'vcard.xml': getIcon('filevcard.png'),
+    'idl.xml': getIcon('fileidl.png'),
+    'hunspell-idx.xml': getIcon('filemisc.png'),
+    'bmethod.xml': getIcon('filemisc.png'),
+    'opal.xml': getIcon('filemisc.png'),
+    'html-php.xml': getIcon('filemisc.png'),
+    'inform.xml': getIcon('filemisc.png'),
+    'ini.xml': getIcon('fileprops.png'),
+    'jam.xml': getIcon('filemisc.png'),
+    'java.xml': getIcon('filejava.png'),
+    'jira.xml': getIcon('filemisc.png'),
+    'julia.xml': getIcon('filemisc.png'),
+    'javascript.xml': getIcon('filejs.png'),
+    'json.xml': getIcon('filemisc.png'),
+    'k.xml': getIcon('filemisc.png'),
+    'kbasic.xml': getIcon('filemisc.png'),
+    'literate-curry.xml': getIcon('filemisc.png'),
+    'ld.xml': getIcon('filemisc.png'),
+    'ldif.xml': getIcon('filemisc.png'),
+    'less.xml': getIcon('filemisc.png'),
+    'literate-haskell.xml': getIcon('filemisc.png'),
+    'commonlisp.xml': getIcon('filemisc.png'),
+    'lsl.xml': getIcon('filemisc.png'),
+    'lua.xml': getIcon('filemisc.png'),
+    'octave.xml': getIcon('filemisc.png'),
+    'm3u.xml': getIcon('filemisc.png'),
+    'm4.xml': getIcon('filemisc.png'),
+    'mako.xml': getIcon('filemisc.png'),
+    'markdown.xml': getIcon('filemisc.png'),
+    'mediawiki.xml': getIcon('filemisc.png'),
+    'mel.xml': getIcon('filemisc.png'),
+    'metafont.xml': getIcon('filemisc.png'),
+    'makefile.xml': getIcon('filemake.png'),
+    'ocaml.xml': getIcon('filemisc.png'),
+    'ocamllex.xml': getIcon('filemisc.png'),
+    'ocamlyacc.xml': getIcon('filemisc.png'),
+    'modelica.xml': getIcon('filemisc.png'),
+    'carto-css.xml': getIcon('filecss.png'),
+    'mergetagtext.xml': getIcon('filemisc.png'),
+    'mup.xml': getIcon('filemisc.png'),
+    'nemerle.xml': getIcon('filemisc.png'),
+    'mathematica.xml': getIcon('filemisc.png'),
+    'nesc.xml': getIcon('filemisc.png'),
+    'nsis.xml': getIcon('filemisc.png'),
+    'noweb.xml': getIcon('filemisc.png'),
+    'lpc.xml': getIcon('filemisc.png'),
+    'oors.xml': getIcon('filemisc.png'),
+    'pascal.xml': getIcon('filepascal.png'),
+    'purebasic.xml': getIcon('filemisc.png'),
+    'pig.xml': getIcon('filemisc.png'),
+    'pike.xml': getIcon('filemisc.png'),
+    'pli.xml': getIcon('filemisc.png'),
+    'gettext.xml': getIcon('filemisc.png'),
+    'povray.xml': getIcon('filemisc.png'),
+    'puppet.xml': getIcon('filemisc.png'),
+    'ppd.xml': getIcon('filemisc.png'),
+    'qmake.xml': getIcon('filemake.png'),
+    'protobuf.xml': getIcon('filemisc.png'),
+    'python.xml': getIcon('filepython.png'),
+    'qml.xml': getIcon('filemisc.png'),
+    'winehq.xml': getIcon('filemisc.png'),
+    'replicode.xml': getIcon('filemisc.png'),
+    'rexx.xml': getIcon('filemisc.png'),
+    'rib.xml': getIcon('filemisc.png'),
+    'relaxngcompact.xml': getIcon('filemisc.png'),
+    'rapidq.xml': getIcon('filemisc.png'),
+    'rust.xml': getIcon('filemisc.png'),
+    'rest.xml': getIcon('filemisc.png'),
+    'rtf.xml': getIcon('filertf.png'),
+    'sather.xml': getIcon('filemisc.png'),
+    'scala.xml': getIcon('filemisc.png'),
+    'sci.xml': getIcon('filemisc.png'),
+    'scss.xml': getIcon('filecss.png'),
+    'sed.xml': getIcon('filemisc.png'),
+    'sgml.xml': getIcon('filemisc.png'),
+    'zsh.xml': getIcon('fileshell.png'),
+    'sieve.xml': getIcon('filemisc.png'),
+    'sml.xml': getIcon('filemisc.png'),
+    'rpmspec.xml': getIcon('filemisc.png'),
+    'valgrind-suppression.xml': getIcon('filemisc.png'),
+    'systemverilog.xml': getIcon('filemisc.png'),
+    'tads3.xml': getIcon('filemisc.png'),
+    'txt2tags.xml': getIcon('filemisc.png'),
+    'tcl.xml': getIcon('filetcl.png'),
+    'texinfo.xml': getIcon('filetex.png'),
+    'textile.xml': getIcon('filemisc.png'),
+    'taskjuggler.xml': getIcon('filemisc.png'),
+    'toml.xml': getIcon('filemisc.png'),
+    'template-toolkit.xml': getIcon('filemisc.png'),
+    'uscript.xml': getIcon('filemisc.png'),
+    'vala.xml': getIcon('filemisc.png'),
+    'monobasic.xml': getIcon('filemisc.png'),
+    'varnishcc4.xml': getIcon('filemisc.png'),
+    'varnish4.xml': getIcon('filemisc.png'),
+    'vhdl.xml': getIcon('filemisc.png'),
+    'velocity.xml': getIcon('filemisc.png'),
+    'vera.xml': getIcon('filemisc.png'),
+    'varnishtest4.xml': getIcon('filemisc.png'),
+    'vrml.xml': getIcon('filemisc.png'),
+    'xslt.xml': getIcon('filexml.png'),
+    'xul.xml': getIcon('filemisc.png'),
+    'yaml.xml': getIcon('filemisc.png'),
+    'yacas.xml': getIcon('filemisc.png'),
+    'yacc.xml': getIcon('filemisc.png'),
+    'zonnon.xml': getIcon('filemisc.png'),
+    'asterisk.xml': getIcon('filemisc.png'),
+    'git-ignore.xml': getIcon('filemisc.png'),
+    'kdesrc-buildrc.xml': getIcon('filemisc.png'),
+    'changelog.xml': getIcon('filemisc.png'),
+    'dockerfile.xml': getIcon('filemisc.png'),
+    'kconfig.xml': getIcon('filemisc.png'),
+    'ilerpg.xml': getIcon('filemisc.png'),
+    'apache.xml': getIcon('filemisc.png'),
+    'debiancontrol.xml': getIcon('filemisc.png'),
+    'fstab.xml': getIcon('filemisc.png'),
+    'git-rebase.xml': getIcon('filemisc.png'),
+    'gitolite.xml': getIcon('filemisc.png'),
+    'meson.xml': getIcon('filemisc.png'),
+    'xorg.xml': getIcon('filemisc.png')}
 
-    if not path:
-        return UnknownFileType
 
-    if path.endswith( sep ):
-        __cachedFileTypes[ path ] = DirectoryFileType
-        return DirectoryFileType
+# Some specific cases for various binaries to be mapped to a certain icon
+__mimeToIcon = {
+    'application/x-executable': getIcon('filebinary.png'),
+    'application/x-sharedlib': getIcon('fileso.png'),
+    'application/x-coredump': getIcon('filemisc.png'),
+    'application/pdf': getIcon('filepdf.png'),
+    'application/x-bzip2': getIcon('filearchive.png'),
+    'application/x-gzip': getIcon('filearchive.png'),
+    'application/zip': getIcon('filearchive.png'),
+    'application/x-xz': getIcon('filearchive.png'),
+    'application/x-rar': getIcon('filearchive.png'),
+    'application/x-tar': getIcon('filetar.png'),
+    'application/x-object': getIcon('fileso.png')
+}
 
-    if checkForBrokenLink and islink( path ):
-        if not exists( path ):
-            return BrokenSymlinkFileType
 
-    if not skipCache and path in __cachedFileTypes:
-        return __cachedFileTypes[ path ]
+def __getIcon(xmlSyntaxFile, mime, fBaseName):
+    """ Provides an icon for a file
+    """
 
-    # Must work for not existed files, e.g. new file request will also use it
-    #    if not exists( absPath ):
-    #        raise Exception( "Cannot find file: " + path )
+    fileExtension = fBaseName.split('.')[-1].lower()
 
-    fileExtension = path.split( '.' )[ -1 ].lower()
+    if xmlSyntaxFile is not None:
+        # There are a few special cases:
+        # - svg is detected as xml.xml
+        # - c/c++/h/h++ are detected as cpp.xml
+        # - cdm project is detected as ini.xml
+        if xmlSyntaxFile == 'ini.xml':
+            if fileExtension == 'cdm':
+                return getIcon('fileproject.png')
+        if xmlSyntaxFile == 'cpp.xml':
+            if 'h' in fileExtension:
+                if fBaseName.endswith('.ui.h'):
+                    return getIcon('filedesigner.png')
+                if fBaseName.endswith('.h'):    # Capital H is for C++
+                    return getIcon('filecheader.png')
+                return getIcon('filecppheader.png')
+            return getIcon('filecpp.png')
+        if xmlSyntaxFile == 'xml.xml':
+            if fileExtension == 'svg':
+                return getIcon('filesvg.png')
+            if fileExtension == "ui":
+                return getIcon('filedesigner.png')
+            if fileExtension in ['ts', 'qm']:
+                return getIcon('filelinguist2.png')
+            if fileExtension == 'qrc':
+                return getIcon('fileresource.png')
 
-    if fileExtension in _extType:
-        fType = _extType[ fileExtension ]
-        __cachedFileTypes[ path ] = fType
-        return fType
-
-    if fileExtension == 'h':
-        if path.lower().endswith( '.ui.h' ):
-            __cachedFileTypes[ path ] = DesignerHeaderFileType
-            return DesignerHeaderFileType
-        __cachedFileTypes[ path ] = CHeaderFileType
-        return CHeaderFileType
-    if fileExtension in __QTSupportedImageFormats:
-        __cachedFileTypes[ path ] = PixmapFileType
-        return PixmapFileType
-
-    if 'makefile' in basename( path ).lower():
-        __cachedFileTypes[ path ] = MakefileType
-        return MakefileType
-
-    if MAGIC_AVAILABLE:
         try:
-            if __magicModule is None:
-                import magic
-                __magicModule = magic.Magic()
+            return __syntaxToIcon[xmlSyntaxFile]
+        except KeyError:
+            return getIcon('filemisc.png')
 
-            output = __magicModule.id_filename( path ).lower()
-            if 'elf' in output:
-                if 'executable' in output:
-                    __cachedFileTypes[ path ] = ELFFileType
-                    return ELFFileType
-                if 'shared object' in output:
-                    __cachedFileTypes[ path ] = SOFileType
-                    return SOFileType
-                # Could be a core dump
-                __cachedFileTypes[ path ] = UnknownELFFileType
-                return UnknownELFFileType
-            elif 'python' in output and 'script' in output:
-                __cachedFileTypes[ path ] = PythonFileType
-                return PythonFileType
-            elif 'shell' in output:
-                __cachedFileTypes[ path ] = ShellFileType
-                return ShellFileType
-            elif 'text' in output:
-                if 'utf-8' in output:
-                    __cachedFileTypes[ path ] = UTF8TextFile
-                    return UTF8TextFile
-                if 'ascii' in output:
-                    __cachedFileTypes[ path ] = ASCIITextFile
-                    return ASCIITextFile
-                if 'xml' in output:
-                    __cachedFileTypes[ path ] = XMLFileType
-                    return XMLFileType
-                __cachedFileTypes[ path ] = UTF8TextFile
-                return UTF8TextFile
-        except:
-            pass
+    # Here: no luck with a syntax file
+    # This could be an image or compiled python or binary of some sort...
+    # Or a text which does not need a syntax highlight
 
-    __cachedFileTypes[ path ] = UnknownFileType
-    return UnknownFileType
+    if fileExtension in __QTSupportedImageFormats:
+        return getIcon('filepixmap.png')
+
+    try:
+        if mime is not None:
+            return __mimeToIcon[mime]
+    except KeyError:
+        pass
+
+    if fileExtension in ['pyc', 'pyo']:
+        return getIcon('filepythoncompiled.png')
+    if mime == 'application/x-executable':
+        return getIcon('filebinary.png')
+
+    if mime.startswith('text/'):
+        return getIcon('filetext.png')
+    return getIcon('filemisc.png')
 
 
-def closeMagicLibrary():
-    global __magicModule
-    if __magicModule is not None:
-        __magicModule.close()
-        __magicModule = None
+def __getMagicMimeAndEncoding(fName):
+    """ Uses the magic module to retrieve mime and encoding.
+        Both values could be None if e.g. thefile does not exist
+    """
+    try:
+        # E.g.: 'text/x-shellscript; charset=us-ascii'
+        output = __magic.from_file(realpath(fName))
+        parts = output.split('; ')
+        if len(parts) != 2:
+            # Unknown magic library problem
+            logging.error("python-magic library unknown output format. (" +
+                          output + ")")
+            return None, None
+        if not parts[1].startswith('charset='):
+            logging.error("Unexpected python-magic library charset output. (" +
+                          parts[1] + ")")
+            return None, None
+        # Second value: strip 'charset='
+        enc = parts[1][8:]
+        if enc.lower() == 'us-ascii':
+            enc = __DEFAULT_ENCODING
+        return parts[0], enc
+    except Exception as exc:
+        # Most probably the file does not exist
+        logging.error(str(exc))
+        return None, None
+
+
+# Cache is initialized with:
+# - an unknown file type properties: ''
+# - a directory: '/'
+# - broken symlink: '.'
+__filePropertiesCache = {'': [None, 'binary',
+                              getIcon('filemisc.png'), None],
+                         '/': ['inode/directory', 'binary',
+                               getIcon('dirclosed.png'), None],
+                         '.': ['inode/broken-symlink', 'binary',
+                               getIcon('filebrokenlink.png'), None]}
+
+
+def getFileProperties(fName, needEncoding=False,
+                      checkForBrokenLink=True, skipCache=False):
+    """ Provides the following properties:
+        - mime type (could be None)
+        - encoding (could be None)
+        - icon
+        - syntax file name (could be None)
+
+        Works for non-existing files too.
+        Special cases:
+        - fName ends with os.path.sep => directory
+        - fName is empy or None => unknown file type
+    """
+    if not fName:
+        return __filePropertiesCache['']
+
+    if fName.endswith(sep):
+        return __filePropertiesCache['/']
+
+    if checkForBrokenLink and islink(fName):
+        if not exists(fName):
+            return __filePropertiesCache['.']
+
+    if not skipCache and fName in __filePropertiesCache:
+        value = __filePropertiesCache[fName]
+        if needEncoding:
+            if value[1] is None:
+                mime, encoding = __getMagicMimeAndEncoding(fName)
+                if mime is not None:
+                    value[0] = mime
+                if encoding is not None:
+                    value[1] = encoding
+        return value
+
+    # The function should work both for existing and non-existing files
+    try:
+        # If a file exists then it could be a symbolic link to
+        # a different name file
+        fBaseName = basename(realpath(fName))
+    except:
+        # File may not exist
+        fBaseName = basename(fName)
+
+    fileExtension = fBaseName.split('.')[-1].lower()
+
+    syntaxFile = __getXmlSyntaxFile(fBaseName)
+    if syntaxFile is None:
+        # Special case: this could be a QT supported image
+        if fileExtension in __QTSupportedImageFormats:
+            mime = 'image/' + fileExtension
+            encoding = 'binary'
+        else:
+            mime, encoding = __getMagicMimeAndEncoding(fName)
+            if mime is not None:
+                syntaxFile = __getXmlSyntaxFileByMime(mime)
+
+        cacheValue = [mime, encoding,
+                      __getIcon(syntaxFile, mime, fBaseName), syntaxFile]
+        __filePropertiesCache[fName] = cacheValue
+        return cacheValue
+
+    # syntax file was successfully identified.
+    # Detect the mime type by a syntax file
+    encoding = None
+    magicTried = False
+    if fileExtension == 'cdm':
+        mime = 'text/x-codimension'
+    else:
+        mime = __getMimeByXmlSyntaxFile(syntaxFile)
+        if mime is None:
+            mime, encoding = __getMagicMimeAndEncoding(fName)
+            magicTried = True
+
+    if needEncoding and encoding is None and not magicTried:
+        _, encoding = __getMagicMimeAndEncoding(fName)
+
+    cacheValue = [mime, encoding,
+                  __getIcon(None, mime, fBaseName), None]
+    __filePropertiesCache[fName] = cacheValue
+    return cacheValue
+
+
+def setFileEncoding(fName, encoding):
+    """ Sets the file encoding. It is used when the user specifies
+        the encoding explicitly when the file is saved.
+    """
+    if fName in __filePropertiesCache:
+        val = __filePropertiesCache[fName]
+        val[1] = encoding
+        __filePropertiesCache[fName] = val
     return
 
-def isFileSearchable( fileName, checkForBrokenLink = True ):
-    " Returns True if it makes sense to search for text in that file "
-    return isFileTypeSearchable( detectFileType( fileName,
-                                                 checkForBrokenLink ) )
 
-def isFileTypeSearchable( fileType ):
-    " Returns True if it makes sense to search for text in that file "
-    return fileType not in [ PythonCompiledFileType, PixmapFileType,
-                             ELFFileType, SOFileType, PDFFileType,
-                             UnknownELFFileType, ObjectFileType,
-                             BrokenSymlinkFileType, DirectoryFileType,
-                             TarFileType, ArchiveFileType ]
-
-
-def getFileIcon( fileType ):
-    " Provides the file icon for a certain type "
-    try:
-        return _fileTypes[ fileType ][ 0 ]
-    except:
-        return PixmapCache().getIcon( 'empty.png' )
-
-
-def getFileLanguage( fileType ):
-    " Provides the file language "
-    try:
-        return _fileTypes[ fileType ][ 1 ]
-    except:
-        return 'Unknown'
-
-
-def compactPath( path, width, measure = len ):
+def compactPath(path, width, measure=len):
     """ Provides a compacted path fitting inside the given width.
         measure - ref to a function used to get the length of the string """
 
-    if measure( path ) <= width:
+    if measure(path) <= width:
         return path
 
-    ellipsis = '...'
+    dots = '...'
 
-    head, tail = split( path )
-    while head:
-        path = join( "%s%s" % ( head, ellipsis ), tail )
-        if measure( path ) <= width:
+    head, tail = split(path)
+    mid = len(head) // 2
+    head1 = head[:mid]
+    head2 = head[mid:]
+
+    while head1:
+        path = join("%s%s%s" % (head1, dots, head2), tail)
+        if measure(path) <= width:
             return path
-        head = head[ :-1 ]
+        head1 = head1[:-1]
+        head2 = head2[1:]
 
-    path = join( ellipsis, tail )
-    if measure( path ) <= width:
+    path = join(dots, tail)
+    if measure(path) <= width:
         return path
 
     while tail:
-        path = "%s%s" % (ellipsis, tail)
-        if measure( path ) <= width:
+        path = "%s%s" % (dots, tail)
+        if measure(path) <= width:
             return path
-        tail = tail[ 1: ]
+        tail = tail[1:]
 
-    return ""
-
+    return ''
