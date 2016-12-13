@@ -30,12 +30,8 @@ from PyQt5.QtGui import QImageReader
 from qutepart import Qutepart
 
 from .pixmapcache import getIcon
+from .config import DEFAULT_ENCODING
 
-
-# Default encoding for the cases when:
-# - the encoding could not be detected
-# - replaces ascii to be on the safe side
-__DEFAULT_ENCODING = 'utf-8'
 
 __QTSupportedImageFormats = [fmt.data().decode('utf-8') for fmt in
                              QImageReader.supportedImageFormats()]
@@ -440,7 +436,7 @@ def __getMagicMimeAndEncoding(fName):
         # Second value: strip 'charset='
         enc = parts[1][8:]
         if enc.lower() == 'us-ascii':
-            enc = __DEFAULT_ENCODING
+            enc = DEFAULT_ENCODING
         return parts[0], enc
     except Exception as exc:
         # Most probably the file does not exist

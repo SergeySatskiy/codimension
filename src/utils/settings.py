@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,181 +17,61 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
 
 """ codimension settings """
 
-import os, os.path, ConfigParser, sys, datetime
-from PyQt4.QtCore import QObject, QDir, pyqtSignal
-from filepositions import FilesPositions
-from run import TERM_REDIRECT
+import os
+import os.path
+import sys
+import datetime
+import json
+import logging
+from copy import deepcopy
+from PyQt5.QtCore import QObject, QDir, pyqtSignal
+from .filepositions import FilesPositions
+from .run import TERM_REDIRECT
+from .config import SETTINGS_ENCODING
 
 
-settingsDir = os.path.normpath( str( QDir.homePath() ) ) + \
-              os.path.sep + ".codimension" + os.path.sep
-thirdpartyDir = os.path.dirname( os.path.abspath( sys.argv[ 0 ] ) ) + \
-                os.path.sep + "thirdparty" + os.path.sep
+SETTINGS_DIR = os.path.join(os.path.realpath(QDir.homePath()),
+                            '.cdm') + os.path.sep
+THIRDPARTY_DIR = os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])),
+                              'thirdparty') + os.path.sep
 
-_H_SPLITTER_SIZES_DEFAULT = [ 200, 450, 575 ]
-_V_SPLITTER_SIZES_DEFAULT = [ 400, 150 ]
-_FLOW_SPLITTER_SIZES_DEFAULT = [ 225, 225 ]
-_X_POS_DEFAULT = 50
-_Y_POS_DEFAULT = 50
-_WIDTH_DEFAULT = 750
-_HEIGHT_DEFAULT = 550
-_MAX_RECENT_PROJECTS = 32
-
-
-ropePreferences = { 'ignore_syntax_errors': True,
-                    'ignore_bad_imports':   True,
-                    'soa_followed_calls':   2,
-                    'extension_modules': [
-                        "sys", "os", "os.path", "time", "datetime",
-                        "thread", "errno", "inspect", "math", "cmath",
-                        "socket", "re", "zlib", "shutil",
-                        "ConfigParser", "urllib", "urllib2", "xml",
-                        "numpy", "scipy", "collections", "cPickle", "gc",
-                        "exceptions", "signal", "imp", "operator",
-                        "strop", "zipimport",
-                        "PyQt4", "PyQt4.QtGui", "QtGui",
-                        "PyQt4.QtCore", "QtCore" ],
-                    'ignored_resources': [
-                        "*.pyo", "*.pyc", "*~", ".ropeproject",
-                        ".hg", ".svn", "_svn", ".git", ".cvs" ] }
-
-VCS_STATUS_UPDATE_INTERVAL_DEFAULT = 30     # seconds
 DEFAULT_VCS_INDICATORS = (
     "-1:::vcsunversioned.png:::none:::220,220,255,255:::Not under VCS control",
     "-2:::vcsstatuserror.png:::none:::255,160,160,255:::Error getting status",
 )
 
-class CDMSetting:
-    " Holds a single CDM setting description "
-    TYPE_INT = 0
-    TYPE_FLOAT = 1
-    TYPE_BOOL = 2
-    TYPE_STR = 3
-    TYPE_STR_LST = 4
-    TYPE_INT_LST = 5
 
-    def __init__( self, name, sType, default ):
-        self.name = name
-        self.sType = sType
-        self.default = default
+class ProfilerSettings:
+    " Holds IDE-wide profiler options "
+    def __init__(self):
+        self.nodeLimit = 1.0
+        self.edgeLimit = 1.0
         return
 
+    def toJSON(self):
+        " Converts the instance to a serializable structure "
+        return {'__class__': 'ProfilerSettings',
+                '__values__': {'nodeLimit': self.nodeLimit,
+                               'edgeLimit': self.edgeLimit}}
 
-CDM_SETTINGS = {
-"general": [
-    CDMSetting( "zoom", CDMSetting.TYPE_INT, 0 ),
-    CDMSetting( "xpos", CDMSetting.TYPE_INT, _X_POS_DEFAULT ),
-    CDMSetting( "ypos", CDMSetting.TYPE_INT, _Y_POS_DEFAULT ),
-    CDMSetting( "width", CDMSetting.TYPE_INT, _WIDTH_DEFAULT ),
-    CDMSetting( "height", CDMSetting.TYPE_INT, _HEIGHT_DEFAULT ),
-    CDMSetting( "screenwidth", CDMSetting.TYPE_INT, 0 ),
-    CDMSetting( "screenheight", CDMSetting.TYPE_INT, 0 ),
-    CDMSetting( "xdelta", CDMSetting.TYPE_INT, 0 ),
-    CDMSetting( "ydelta", CDMSetting.TYPE_INT, 0 ),
-    CDMSetting( "skin", CDMSetting.TYPE_STR, "default" ),
-    CDMSetting( "modifiedFormat", CDMSetting.TYPE_STR, "%s *" ),
-    CDMSetting( "verticalEdge", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "showSpaces", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "lineWrap", CDMSetting.TYPE_BOOL, False ),
-    CDMSetting( "showEOL", CDMSetting.TYPE_BOOL, False ),
-    CDMSetting( "showBraceMatch", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "autoIndent", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "backspaceUnindent", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "tabIndents", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "indentationGuides", CDMSetting.TYPE_BOOL, False ),
-    CDMSetting( "currentLineVisible", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "jumpToFirstNonSpace", CDMSetting.TYPE_BOOL, False ),
-    CDMSetting( "removeTrailingOnSave", CDMSetting.TYPE_BOOL, False ),
-    CDMSetting( "showFSViewer", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "showStackViewer", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "showThreadViewer", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "showIgnoredExcViewer", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "showWatchPointViewer", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "showNavigationBar", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "showCFNavigationBar", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "showMainToolBar", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "terminalType", CDMSetting.TYPE_INT, TERM_REDIRECT ),
-    CDMSetting( "profileNodeLimit", CDMSetting.TYPE_FLOAT, 1.0 ),
-    CDMSetting( "profileEdgeLimit", CDMSetting.TYPE_FLOAT, 1.0 ),
-    CDMSetting( "debugReportExceptions", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "debugTraceInterpreter", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "debugStopAtFirstLine", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "debugAutofork", CDMSetting.TYPE_BOOL, False ),
-    CDMSetting( "debugFollowChild", CDMSetting.TYPE_BOOL, False ),
-    CDMSetting( "debugHideMCF", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "debugGLFilter", CDMSetting.TYPE_INT, 0 ),
-    CDMSetting( "editorEdge", CDMSetting.TYPE_INT, 80 ),
-    CDMSetting( "projectTooltips", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "recentTooltips", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "classesTooltips", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "functionsTooltips", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "outlineTooltips", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "findNameTooltips", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "findFileTooltips", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "editorTooltips", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "editorCalltips", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "leftBarMinimized", CDMSetting.TYPE_BOOL, False ),
-    CDMSetting( "bottomBarMinimized", CDMSetting.TYPE_BOOL, False ),
-    CDMSetting( "rightBarMinimized", CDMSetting.TYPE_BOOL, False ),
-    CDMSetting( "projectLoaded", CDMSetting.TYPE_BOOL, False ),
-    CDMSetting( "clearDebugIO", CDMSetting.TYPE_BOOL, False ),
-    CDMSetting( "hSplitterSizes", CDMSetting.TYPE_INT_LST,
-                _H_SPLITTER_SIZES_DEFAULT ),
-    CDMSetting( "vSplitterSizes", CDMSetting.TYPE_INT_LST,
-                _V_SPLITTER_SIZES_DEFAULT ),
-    CDMSetting( "flowSplitterSizes", CDMSetting.TYPE_INT_LST,
-                _FLOW_SPLITTER_SIZES_DEFAULT ),
-    CDMSetting( "style", CDMSetting.TYPE_STR, "plastique" ),
-    CDMSetting( "vcsstatusupdateinterval", CDMSetting.TYPE_INT, 
-                VCS_STATUS_UPDATE_INTERVAL_DEFAULT ),
-    CDMSetting( "tablistsortalpha", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "taborderpreserved", CDMSetting.TYPE_BOOL, False ),
-    CDMSetting( "flowScale", CDMSetting.TYPE_FLOAT, 1.0 ),
+    def fromJSON(self, jsonObj):
+        " Populates the values from the json object "
+        self.nodeLimit = jsonObj['__values__']['nodeLimit']
+        self.edgeLimit = jsonObj['__values__']['edgeLimit']
+        return
 
-    # The IO redirect console
-    CDMSetting( "ioconsolemaxmsgs", CDMSetting.TYPE_INT, 10000 ),
-    CDMSetting( "ioconsoledelchunk", CDMSetting.TYPE_INT, 512 ),
-    CDMSetting( "ioconsolelinewrap", CDMSetting.TYPE_BOOL, False ),
-    CDMSetting( "ioconsoleshoweol", CDMSetting.TYPE_BOOL, False ),
-    CDMSetting( "ioconsoleshowspaces", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "ioconsoleautoscroll", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "ioconsoleshowmargin", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "ioconsoleshowstdin", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "ioconsoleshowstdout", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "ioconsoleshowstderr", CDMSetting.TYPE_BOOL, True ),
-    CDMSetting( "navbarglobalsimports", CDMSetting.TYPE_BOOL, False ),
-           ],
-"recentProjects" : [
-    CDMSetting( "project", CDMSetting.TYPE_STR_LST, [] )
-                   ],
-"projectFilesFilters" : [
-    CDMSetting( "filter", CDMSetting.TYPE_STR_LST, [ "^\\.", ".*\\~$",
-                                                     ".*\\.pyc$", ".*\\.swp$",
-                                                     ".*\\.pyo$" ] )
-                        ],
-"ignoredExceptions" : [
-    CDMSetting( "exceptiontype", CDMSetting.TYPE_STR_LST, [] )
-                      ],
-"disabledPlugins" : [
-    CDMSetting( "disabledplugins", CDMSetting.TYPE_STR_LST, [] )
-                    ],
-"dirSafeModules" : [
-    CDMSetting( "module", CDMSetting.TYPE_STR_LST, [ "os", "sys", "xml", "collections",
-                                                     "numpy", "scipy", "unittest" ] )
-                   ],
-               }
-
+    def __eq__(self, other):
+        return self.nodeLimit == other.nodeLimit and \
+               self.edgeLimit == other.edgeLimit
 
 
 class DebuggerSettings:
     " Holds IDE-wide debugger options "
-    def __init__( self ):
+    def __init__(self):
         self.reportExceptions = True
         self.traceInterpreter = True
         self.stopAtFirstLine = True
@@ -199,531 +79,459 @@ class DebuggerSettings:
         self.followChild = False
         return
 
-    def __eq__( self, other ):
+    def toJSON(self):
+        " Converts the instance to a serializable structure "
+        return {'__class__': 'DebuggerSettings',
+                '__values__': {'reportExceptions': self.reportExceptions,
+                               'traceInterpreter': self.traceInterpreter,
+                               'stopAtFirstLine': self.stopAtFirstLine,
+                               'autofork': self.autofork,
+                               'followChild': self.followChild}}
+
+    def fromJSON(self, jsonObj):
+        " Populates the values from the json object "
+        self.reportExceptions = jsonObj['__values__']['reportExceptions']
+        self.traceInterpreter = jsonObj['__values__']['traceInterpreter']
+        self.stopAtFirstLine = jsonObj['__values__']['stopAtFirstLine']
+        self.autofork = jsonObj['__values__']['autofork']
+        self.followChild = jsonObj['__values__']['followChild']
+        return
+
+    def __eq__(self, other):
         return self.reportExceptions == other.reportExceptions and \
                self.traceInterpreter == other.traceInterpreter and \
                self.stopAtFirstLine == other.stopAtFirstLine and \
                self.autofork == other.autofork and \
                self.followChild == other.followChild
 
-class ProfilerSettings:
-    " Holds IDE-wide profiler options "
-    def __init__( self ):
-        self.nodeLimit = 1.0
-        self.edgeLimit = 1.0
-        return
 
-    def __eq__( self, other ):
-        return self.nodeLimit == other.nodeLimit and \
-               self.edgeLimit == other.edgeLimit
+__DEFAULT_SETTINGS = {
+    # general
+    'zoom': 0,
+    'xpos': 50,
+    'ypos': 50,
+    'width': 750,
+    'height': 550,
+    'screenwidth': 0,
+    'screenheight': 0,
+    'xdelta': 0,
+    'ydelta': 0,
+    'skin': 'default',
+    'modifiedFormat': '%s *',
+    'verticalEdge': True,
+    'showSpaces': True,
+    'lineWrap': False,
+    'showEOL': False,
+    'showBraceMatch': True,
+    'autoIndent': True,
+    'backspaceUnindent': True,
+    'tabIndents': True,
+    'indentationGuides': False,
+    'currentLineVisible': True,
+    'jumpToFirstNonSpace': False,
+    'removeTrailingOnSave': False,
+    'showFSViewer': True,
+    'showStackViewer': True,
+    'showThreadViewer': True,
+    'showIgnoredExcViewer': True,
+    'showWatchPointViewer': True,
+    'showNavigationBar': True,
+    'showCFNavigationBar': True,
+    'showMainToolBar': True,
+    'terminalType': TERM_REDIRECT,
+    'profilerLimits': ProfilerSettings(),
+    'debuggerSettings': DebuggerSettings(),
+    'debugHideMCF': True,
+    'debugGLFilter': 0,
+    'editorEdge': 80,
+    'projectTooltips': True,
+    'recentTooltips': True,
+    'classesTooltips': True,
+    'functionsTooltips': True,
+    'outlineTooltips': True,
+    'findNameTooltips': True,
+    'findFileTooltips': True,
+    'editorTooltips': True,
+    'editorCalltips': True,
+    'leftBarMinimized': False,
+    'bottomBarMinimized': False,
+    'rightBarMinimized': False,
+    'projectLoaded': False,
+    'clearDebugIO': False,
+    'hSplitterSizes': [200, 450, 575],
+    'vSplitterSizes': [400, 150],
+    'flowSplitterSizes': [225, 225],
+    'style': 'plastique',
+    'vcsstatusupdateinterval': 30,      # seconds
+    'tablistsortalpha': True,
+    'taborderpreserved': False,
+    'flowScale': 1.0,
+    'maxRecentProjects': 32,
+
+    # The IO redirect console
+    'ioconsolemaxmsgs': 10000,
+    'ioconsoledelchunk': 512,
+    'ioconsolelinewrap': False,
+    'ioconsoleshoweol': False,
+    'ioconsoleshowspaces': True,
+    'ioconsoleautoscroll': True,
+    'ioconsoleshowmargin': True,
+    'ioconsoleshowstdin': True,
+    'ioconsoleshowstdout': True,
+    'ioconsoleshowstderr': True,
+    'navbarglobalsimports': False,
+
+    'recentProjects': [],
+    'projectFilesFilters': ['^\\.', '.*\\~$', '.*\\.pyc$',
+                            '.*\\.swp$', '.*\\.pyo$'],
+    'ignoredExceptions': [],
+    'disabledPlugins': [],
+    'dirSafeModules': ['os', 'sys', 'xml', 'collections',
+                       'numpy', 'scipy', 'unittest']}
 
 
-class SettingsWrapper( QObject ):
+def settingsFromJSON(jsonObj):
+    " Custom deserialization "
+    if '__class__' in jsonObj:
+        if jsonObj['__class__'] == 'ProfilerSettings':
+            pSettings = ProfilerSettings()
+            pSettings.fromJSON(jsonObj)
+            return pSettings
+        if jsonObj['__class__'] == 'DebuggerSettings':
+            dSettings = DebuggerSettings()
+            dSettings.fromJSON(jsonObj)
+            return dSettings
+    return jsonObj
+
+
+def settingsToJSON(pythonObj):
+    " Custom serialization "
+    if isinstance(pythonObj, ProfilerSettings):
+        return pythonObj.toJSON()
+    if isinstance(pythonObj, DebuggerSettings):
+        return pythonObj.toJSON()
+    raise TypeError(repr(pythonObj) + ' is not JSON serializable')
+
+
+class SettingsWrapper(QObject):
     """ Provides settings singleton facility """
 
     recentListChanged = pyqtSignal()
     flowSplitterChanged = pyqtSignal()
     flowScaleChanged = pyqtSignal()
 
-    def __init__( self ):
+    def __init__(self):
 
-        QObject.__init__( self )
-        self.__dict__[ "values" ] = {}
-        self.__setDefaultValues()
+        QObject.__init__(self)
+        self.__dict__['values'] = deepcopy(__DEFAULT_SETTINGS)
 
         # make sure that the directory exists
-        if not os.path.exists( settingsDir ):
-            os.mkdir( settingsDir )
+        if not os.path.exists(SETTINGS_DIR):
+            os.mkdir(SETTINGS_DIR)
 
         # Save the config file name
-        self.__dict__[ "fullFileName" ] = settingsDir + "settings"
+        self.__dict__['fullFileName'] = SETTINGS_DIR + "settings"
 
         # Load previous sessions files positions and tabs status
-        self.values[ "filePositions" ] = FilesPositions( settingsDir )
-        self.values[ "tabsStatus" ] = self.__loadTabsStatus()
-        self.values[ "findFilesWhat" ], \
-        self.values[ "findFilesDirs" ], \
-        self.values[ "findFilesMasks" ] = self.__loadFindFilesHistory()
-        self.values[ "findNameHistory" ] = self.__loadFindNameHistory()
-        self.values[ "findFileHistory" ] = self.__loadFindFileHistory()
-        self.values[ "breakpoints" ] = self.__loadBreakpoints()
-        self.values[ "watchpoints" ] = self.__loadWatchpoints()
-        self.values[ "vcsindicators" ] = self.__loadVCSIndicators()
+        self.__dict__['filePositions'] = FilesPositions(SETTINGS_DIR)
+        self.__dict__['tabsStatus'] = self.__loadTabsStatus()
+        self.__dict__['findInFilesHistory'] = self.__loadFindInFilesHistory()
+        self.__dict__['findNameHistory'] = self.__loadFindNameHistory()
+        self.__dict__['findFileHistory'] = self.__loadFindFileHistory()
+        self.__dict__['breakpoints'] = self.__loadBreakpoints()
+        self.__dict__['watchpoints'] = self.__loadWatchpoints()
+        self.__dict__['vcsindicators'] = self.__loadVCSIndicators()
 
         # Create file if does not exist
-        if not os.path.exists( self.fullFileName ):
+        if not os.path.exists(self.fullFileName):
             # Save to file
-            self.flushSettings()
+            self.flush()
             return
 
-        self.__readErrors = []
-        self.__config = ConfigParser.ConfigParser()
+        readErrors = []
 
+        # Load the previous session settings
         try:
-            self.__config.read( [ self.fullFileName ] )
-        except:
+            with open(self.fullFileName, "r",
+                      encoding=SETTINGS_ENCODING) as diskfile:
+                diskValues = json.load(diskfile, object_hook=settingsFromJSON)
+        except Exception as exc:
             # Bad error - save default
-            self.__config = None
-            self.__saveErrors( "Bad format of settings detected. "
-                               "Overwriting the settings file..." )
-            self.flushSettings()
+            self.__saveErrors('Could not read setting from ' +
+                              self.fullFileName + ': ' + str(exc) +
+                              'Overwriting with the default settings...')
+            self.flush()
             return
 
-        for section in CDM_SETTINGS:
-            for setting in CDM_SETTINGS[ section ]:
-                if setting.sType == CDMSetting.TYPE_INT:
-                    self.values[ setting.name ] = self.__getInt(
-                            section, setting.name, setting.default )
-                elif setting.sType == CDMSetting.TYPE_FLOAT:
-                    self.values[ setting.name ] = self.__getFloat(
-                            section, setting.name, setting.default )
-                elif setting.sType == CDMSetting.TYPE_BOOL:
-                    self.values[ setting.name ] = self.__getBool(
-                            section, setting.name, setting.default )
-                elif setting.sType == CDMSetting.TYPE_STR:
-                    self.values[ setting.name ] = self.__getStr(
-                            section, setting.name, setting.default )
-                elif setting.sType == CDMSetting.TYPE_STR_LST:
-                    self.values[ section ] = self.__getStrList(
-                            section, setting.name, setting.default )
-                elif setting.sType == CDMSetting.TYPE_INT_LST:
-                    self.values[ setting.name ] = self.__getIntList(
-                            section, setting.name, setting.default )
+        for item, val in diskValues.items():
+            if item in self.values:
+                if type(self.values[item]) != type(val):
+                    readErrors.append("Settings '" + item +
+                                      "' type from the disk file " +
+                                      self.fullFileName +
+                                      ' does not match the expected one. '
+                                      'The default value is used.')
                 else:
-                    raise Exception( "Unexpected setting type: " +
-                                     str( setting.sType ) )
-
-        # Special checks
-        if len( self.values[ "hSplitterSizes" ] ) != \
-                                len( _H_SPLITTER_SIZES_DEFAULT ):
-            self.__readErrors.append( "Unexpected number of values in the "
-                                      "[general]/hSplitterSizes setting. "
-                                      "Using default: " +
-                                      str( _H_SPLITTER_SIZES_DEFAULT ) )
-            self.values[ "hSplitterSizes" ] = _H_SPLITTER_SIZES_DEFAULT
-
-        if len( self.values[ "vSplitterSizes" ] ) != \
-                                len( _V_SPLITTER_SIZES_DEFAULT ):
-            self.__readErrors.append( "Unexpected number of values in the "
-                                      "[general]/vSplitterSizes setting. "
-                                      "Using default: " +
-                                      str( _V_SPLITTER_SIZES_DEFAULT ) )
-            self.values[ "vSplitterSizes" ] = _V_SPLITTER_SIZES_DEFAULT
-
-        self.__config = None
+                    self.values[item] = val
+            else:
+                readErrors.append('Disk file ' + self.fullFileName +
+                                  " contains extra value '" + item +
+                                  "'. It will be lost.")
 
         # If format is bad then overwrite the file
-        if self.__readErrors:
-            self.__saveErrors( "\n".join( self.__readErrors ) )
-            self.flushSettings()
+        if readErrors:
+            self.__saveErrors("\n".join(readErrors))
+            self.flush()
         return
 
-    def __saveErrors( self, message ):
-        fileName = settingsDir + "startupmessages.log"
+    @staticmethod
+    def __saveErrors(message):
+        " Appends the message to the startup errors file "
         try:
-            f = open( fileName, "a" )
-            f.write( "------ Startup report at " +
-                     str( datetime.datetime.now() ) + "\n" )
-            f.write( message )
-            f.write( "\n------\n\n" )
-            f.close()
+            with open(SETTINGS_DIR + 'startupmessages.log', 'a',
+                      encoding=SETTINGS_ENCODING) as diskfile:
+                diskfile.write('------ Startup report at ' +
+                               str(datetime.datetime.now()) + '\n')
+                diskfile.write(message)
+                diskfile.write('\n------\n\n')
         except:
+            # This is not that important
             pass
 
-    def __setDefaultValues( self ):
-        " Sets the default values to the members "
-        for section in CDM_SETTINGS:
-            for setting in CDM_SETTINGS[ section ]:
-                if setting.sType == CDMSetting.TYPE_STR_LST:
-                    self.values[ section ] = setting.default
-                else:
-                    self.values[ setting.name ] = setting.default
-        return
-
-    def __getInt( self, sec, key, default ):
-        " Helper to read a config value "
-        try:
-            return self.__config.getint( sec, key )
-        except:
-            self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
-                                      " setting. Using default: " +
-                                      str( default ) )
-        return default
-
-    def __getFloat( self, sec, key, default ):
-        " Helper to read a config value "
-        try:
-            return self.__config.getfloat( sec, key )
-        except:
-            self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
-                                      " setting. Using default: " +
-                                      str( default ) )
-        return default
-
-    def __getBool( self, sec, key, default ):
-        " Helper to read a config value "
-        try:
-            return self.__config.getboolean( sec, key )
-        except:
-            self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
-                                      " setting. Using default: " +
-                                      str( default ) )
-        return default
-
-    def __getStr( self, sec, key, default ):
-        " Helper to read a config value "
-        try:
-            return self.__config.get( sec, key ).strip()
-        except:
-            self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
-                                      " setting. Using default: " +
-                                      str( default ) )
-        return default
-
-    def __getIntList( self, sec, key, default ):
-        " Helper to read a list of integer values "
-        try:
-            values = self.__config.get( sec, key ).split( ',' )
-            return [ int( x ) for x in values ]
-        except:
-            self.__readErrors.append( "Cannot get [" + sec + "]/" + key +
-                                      " setting. Using default: " +
-                                      str( default ) )
-        return default
-
-    def __getStrList( self, sec, key, default ):
-        " Helper to read a list of string values "
-        try:
-            return [ value for name, value in self.__config.items( sec )
-                           if name.startswith( key ) ]
-        except ConfigParser.NoSectionError:
-            self.__readErrors.append( "Section [" + sec + "] is not found. "
-                                      "Using default values: " +
-                                      str( default ) )
-        except:
-            self.__readErrors.append( "Cannot get a setting from section [" +
-                                      sec + "]. Using default values for "
-                                      "the section: " + str( default ) )
-        return default
-
-
-    def flushSettings( self ):
-        """ Writes all the settings into the file """
-
-        # Save the tabs status
+    def flush(self):
+        """ Writes all the settings into the appropriate files """
         self.__saveTabsStatus()
         self.__saveFindFilesHistory()
         self.__saveFindNameHistory()
         self.__saveFindFileHistory()
         self.__saveBreakpoints()
         self.__saveWatchpoints()
-
-        f = open( self.fullFileName, "w" )
-        self.__writeHeader( f )
-        for section in CDM_SETTINGS:
-            f.write( "\n[" + section + "]\n" )
-            for setting in CDM_SETTINGS[ section ]:
-                if setting.sType in [ CDMSetting.TYPE_INT,
-                                      CDMSetting.TYPE_FLOAT,
-                                      CDMSetting.TYPE_BOOL,
-                                      CDMSetting.TYPE_STR ]:
-                    f.write( setting.name + "=" +
-                             str( self.values[ setting.name ] ) + "\n" )
-                elif setting.sType == CDMSetting.TYPE_INT_LST:
-                    strVal = [ str( x ) for x in
-                                        self.values[ setting.name ] ]
-                    f.write( setting.name + "=" +
-                             ",".join( strVal ) + "\n" )
-                elif setting.sType == CDMSetting.TYPE_STR_LST:
-                    index = 0
-                    for item in self.values[ section ]:
-                        f.write( setting.name + str( index ) + "=" +
-                                 item + "\n" )
-                        index += 1
-                else:
-                    raise Exception( "Unexpected setting type: " +
-                                     str( setting.sType ) )
-
-        f.flush()
-        f.close()
-        self.__readErrors = []
+        self.__saveValues()
         return
 
-    def addRecentProject( self, projectFile ):
+    def __saveValues(self):
+        " Saves the general settings "
+        with open(self.fullFileName, "w",
+                  encoding=SETTINGS_ENCODING) as diskfile:
+            json.dump(self.values, diskfile, default=settingsToJSON, indent=4)
+        return
+
+    def addRecentProject(self, projectFile, needFlush=True):
         " Adds the recent project to the list "
-        absProjectFile = os.path.abspath( projectFile )
-        recentProjects = self.values[ "recentProjects" ]
+        absProjectFile = os.path.realpath(projectFile)
+        recentProjects = self.values['recentProjects']
 
         if absProjectFile in recentProjects:
-            recentProjects.remove( absProjectFile )
+            recentProjects.remove(absProjectFile)
 
-        recentProjects.insert( 0, absProjectFile )
-        if len( recentProjects ) > _MAX_RECENT_PROJECTS:
-            recentProjects = recentProjects[ 0 : _MAX_RECENT_PROJECTS ]
-        self.values[ "recentProjects" ] = recentProjects
-        self.flushSettings()
+        recentProjects.insert(0, absProjectFile)
+        limit = self.values['maxRecentProjects']
+        if len(recentProjects) > limit:
+            recentProjects = recentProjects[0:limit]
+        self.values['recentProjects'] = recentProjects
+        if needFlush:
+            self.__saveValues()
         self.recentListChanged.emit()
         return
 
-    def deleteRecentProject( self, projectFile ):
+    def deleteRecentProject(self, projectFile, needFlush=True):
         " Deletes the recent project from the list "
-        absProjectFile = os.path.abspath( projectFile )
-        recentProjects = self.values[ "recentProjects" ]
+        absProjectFile = os.path.realpath(projectFile)
+        recentProjects = self.values['recentProjects']
 
         if absProjectFile in recentProjects:
-            recentProjects.remove( absProjectFile )
-            self.values[ "recentProjects" ] = recentProjects
-            self.flushSettings()
+            recentProjects.remove(absProjectFile)
+            self.values['recentProjects'] = recentProjects
+            if needFlush:
+                self.__saveValues()
             self.recentListChanged.emit()
         return
 
-    def addExceptionFilter( self, excptType ):
+    def addExceptionFilter(self, excptType, needFlush=True):
         " Adds a new exception filter "
-        if excptType not in self.values[ "ignoredExceptions" ]:
-            self.values[ "ignoredExceptions" ].append( excptType )
-            self.flushSettings()
+        if excptType not in self.values['ignoredExceptions']:
+            self.values['ignoredExceptions'].append(excptType)
+            if needFlush:
+                self.__saveValues()
         return
 
-    def deleteExceptionFilter( self, excptType ):
+    def deleteExceptionFilter(self, excptType, needFlush=True):
         " Deletes the exception filter "
-        if excptType in self.values[ "ignoredExceptions" ]:
-            self.values[ "ignoredExceptions" ].remove( excptType )
-            self.flushSettings()
+        if excptType in self.values['ignoredExceptions']:
+            self.values['ignoredExceptions'].remove(excptType)
+            if needFlush:
+                self.__saveValues()
         return
 
-    def setExceptionFilters( self, newFilters ):
+    def setExceptionFilters(self, newFilters, needFlush=True):
         " Sets the new exception filters "
-        self.values[ "ignoredExceptions" ] = newFilters
-        self.flushSettings()
+        self.values['ignoredExceptions'] = newFilters
+        if needFlush:
+            self.__saveValues()
         return
 
     @staticmethod
-    def __writeHeader( fileObj ):
-        " Helper to write a header with a warning "
-        fileObj.write( "#\n"
-                       "# Generated automatically\n"
-                       "#\n\n" )
-        return
+    def __loadValuesFromFile(fileName, errorWhat, defaultValue):
+        " Generic value loading "
+        try:
+            with open(SETTINGS_DIR + fileName, 'r',
+                      encoding=SETTINGS_ENCODING) as diskfile:
+                return json.load(diskfile)
+        except Exception as exc:
+            logging.error('Error loading ' + errorWhat + ': ' + str(exc))
+            return defaultValue
 
-    @staticmethod
-    def __writeList( fileObj, header, prefix, items ):
-        " Helper to write a list "
-        fileObj.write( "[" + header + "]\n" )
-        index = 0
-        for item in items:
-            fileObj.write( prefix + str( index ) + "=" + item + "\n" )
-            index += 1
-        fileObj.write( "\n" )
-        return
-
-    @staticmethod
-    def __loadListSection( config, section, listPrefix ):
-        " Loads a list off the given section from the given file "
-        if config.has_section( section):
-            return [ value for name, value in config.items( section )
-                           if name.startswith( listPrefix ) ]
-        return []
-
-    def __loadTabsStatus( self ):
+    def __loadTabsStatus(self):
         " Loads the last saved tabs statuses "
-        config = ConfigParser.ConfigParser()
-        try:
-            config.read( settingsDir + "tabsstatus" )
-        except:
-            config = None
-            return []
+        return self.__loadValuesFromFile('tabsstatus', 'tabs status', [])
 
-        # tabs part
-        items = self.__loadListSection( config, 'tabsstatus', 'tab' )
-        config = None
-        return items
-
-    def __saveTabsStatus( self ):
-        " Saves the tabs status "
-        fName = settingsDir + "tabsstatus"
-        try:
-            f = open( fName, "w" )
-            self.__writeHeader( f )
-            self.__writeList( f, "tabsstatus",
-                              "tab", self.values[ "tabsStatus" ] )
-            f.close()
-        except:
-            # Do nothing, it's not vital important to have this file
-            pass
-        return
-
-    def __loadFindFilesHistory( self ):
+    def __loadFindInFilesHistory(self):
         " Loads the saved find files dialog history "
-        config = ConfigParser.ConfigParser()
-        try:
-            config.read( settingsDir + "findinfiles" )
-        except:
-            return [], [], []
+        return self.__loadValuesFromFile('findinfiles',
+                                         'find in files history', [])
 
-        what = self.__loadListSection( config, 'whathistory', 'what' )
-        dirs = self.__loadListSection( config, 'dirhistory', 'dir' )
-        mask = self.__loadListSection( config, 'maskhistory', 'mask' )
-        return what, dirs, mask
-
-    def __loadStringSectionFromFile( self, fileName, sectionName,
-                                     itemName ):
-        " Loads a string section from a file "
-        config = ConfigParser.ConfigParser()
-        try:
-            config.read( settingsDir + fileName )
-        except:
-            return []
-        return self.__loadListSection( config, sectionName, itemName )
-
-    def __loadFindNameHistory( self ):
+    def __loadFindNameHistory(self):
         " Loads the saved find name dialog history "
-        return self.__loadStringSectionFromFile( "findinfiles",
-                                                 "findnamehistory", "find" )
+        return self.__loadValuesFromFile('findname', 'find name history', [])
 
-    def __loadFindFileHistory( self ):
+    def __loadFindFileHistory(self):
         " Loads the saved find file dialog history "
-        return self.__loadStringSectionFromFile( "findfile",
-                                                 "findfilehistory", "find" )
+        return self.__loadValuesFromFile('findfile', 'find name history', [])
 
-    def __loadBreakpoints( self ):
+    def __loadBreakpoints(self):
         " Loads the saved breakpoints "
-        return self.__loadStringSectionFromFile( "breakpoints",
-                                                 "breakpoints", "bpoint" )
+        return self.__loadValuesFromFile('breakpoints', 'breakpoints', [])
 
-    def __loadWatchpoints( self ):
+    def __loadWatchpoints(self):
         " Loads the saved watchpoints "
-        return self.__loadStringSectionFromFile( "watchpoints",
-                                                 "watchpoints", "wpoint" )
+        return self.__loadValuesFromFile('watchpoints', 'watchpoints', [])
 
-    def __loadVCSIndicators( self ):
+    def __loadVCSIndicators(self):
         " Loads tbe VCS indicators "
-        indicators = self.__loadStringSectionFromFile( "vcsindicators",
-                                                       "indicators", "indicator" )
+        indicators = self.__loadValuesFromFile('vcsindicators',
+                                               'VCS indicators', [])
         if indicators:
             return indicators
         return DEFAULT_VCS_INDICATORS
 
-    def __saveFindFilesHistory( self ):
+    @staticmethod
+    def __saveValuesInFile(fileName, values, errorWhat):
+        " Generic value saving "
+        try:
+            with open(SETTINGS_DIR + fileName, 'w',
+                      encoding=SETTINGS_ENCODING) as diskfile:
+                json.dump(values, diskfile, indent=4)
+        except Exception as exc:
+            logging.error('Error saving ' + errorWhat + ': ' + str(exc))
+        return
+
+    def __saveTabsStatus(self):
+        " Saves the tabs status "
+        self.__saveValuesInFile('tabsstatus', self.__dict__['tabsStatus'],
+                                'tabs status')
+        return
+
+    def __saveFindInFilesHistory(self):
         " Saves the find in files dialog history "
-        fName = settingsDir + "findinfiles"
-        try:
-            f = open( fName, "w" )
-            self.__writeHeader( f )
-            self.__writeList( f, "whathistory", "what",
-                              self.values[ "findFilesWhat" ] )
-            self.__writeList( f, "dirhistory", "dir",
-                              self.values[ "findFilesDirs" ] )
-            self.__writeList( f, "maskhistory", "mask",
-                              self.values[ "findFilesMasks" ] )
-            f.close()
-        except:
-            # Do nothing, it's not vital important to have this file
-            pass
+        self.__saveValuesInFile('findinfiles',
+                                self.__dict__['findInFilesHistory'],
+                                'find in files history')
         return
 
-    def __saveStringSectionToFile( self, fileName, sectionName,
-                                   itemName, valuesName ):
-        " Saves a string section into a file "
-        fName = settingsDir + fileName
-        try:
-            f = open( fName, "w" )
-            self.__writeList( f, sectionName, itemName,
-                              self.values[ valuesName ] )
-            f.close()
-        except:
-            # This method is for files which existance is not vitally
-            # important
-            pass
-        return
-
-    def __saveFindNameHistory( self ):
+    def __saveFindNameHistory(self):
         " Saves the find name dialog history "
-        self.__saveStringSectionToFile( "findinfiles", "findnamehistory",
-                                        "find", "findNameHistory" )
+        self.__saveValuesInFile('findname', self.__dict__['findNameHistory'],
+                                'find name history')
         return
 
-    def __saveFindFileHistory( self ):
+    def __saveFindFileHistory(self):
         " Saves the find file dialog history "
-        self.__saveStringSectionToFile( "findfile", "findfilehistory",
-                                        "find", "findFileHistory" )
+        self.__saveValuesInFile('findfile', self.__dict__['findFileHistory'],
+                                'find file history')
         return
 
-    def __saveBreakpoints( self ):
+    def __saveBreakpoints(self):
         " Saves the breakpoints "
-        self.__saveStringSectionToFile( "breakpoints", "breakpoints",
-                                        "bpoint", "breakpoints" )
+        self.__saveValuesInFile('breakpoints', self.__dict__['breakpoints'],
+                                'breakpoints')
         return
 
-    def __saveWatchpoints( self ):
+    def __saveWatchpoints(self):
         " Saves the watchpoints "
-        self.__saveStringSectionToFile( "watchpoints", "watchpoints",
-                                        "wpoint", "watchpoints" )
+        self.__saveValuesInFile('watchpoints', self.__dict__['watchpoints'],
+                                'watchpoints')
         return
 
     @staticmethod
     def getDefaultGeometry():
         " Provides the default window size and location "
-        return _X_POS_DEFAULT, _Y_POS_DEFAULT, \
-               _WIDTH_DEFAULT, _HEIGHT_DEFAULT
+        return __DEFAULT_SETTINGS['xpos'], __DEFAULT_SETTINGS['ypos'], \
+               __DEFAULT_SETTINGS['width'], __DEFAULT_SETTINGS['height']
 
-    def getProfilerSettings( self ):
+    def getProfilerSettings(self):
         " Provides the profiler IDE-wide settings "
-        profSettings = ProfilerSettings()
-        profSettings.edgeLimit = self.values[ "profileEdgeLimit" ]
-        profSettings.nodeLimit = self.values[ "profileNodeLimit" ]
-        return profSettings
+        return self.values['profilerLimits']
 
-    def setProfilerSettings( self, newValues ):
+    def setProfilerSettings(self, newValue, needFlush=True):
         " Updates the profiler settings "
-        if self.values[ "profileEdgeLimit" ] != newValues.edgeLimit or \
-           self.values[ "profileNodeLimit" ] != newValues.nodeLimit:
-            self.values[ "profileEdgeLimit" ] = newValues.edgeLimit
-            self.values[ "profileNodeLimit" ] = newValues.nodeLimit
-            self.flushSettings()
+        if self.values['profilerLimits'] != newValue:
+            self.values['profilerLimits'] = newValue
+            if needFlush:
+                self.__saveValues()
         return
 
-    def getDebuggerSettings( self ):
+    def getDebuggerSettings(self):
         " Provides the debugger IDE-wide settings "
-        dbgSettings = DebuggerSettings()
-        dbgSettings.autofork = self.values[ "debugAutofork" ]
-        dbgSettings.followChild = self.values[ "debugFollowChild" ]
-        dbgSettings.reportExceptions = self.values[ "debugReportExceptions" ]
-        dbgSettings.stopAtFirstLine = self.values[ "debugStopAtFirstLine" ]
-        dbgSettings.traceInterpreter = self.values[ "debugTraceInterpreter" ]
-        return dbgSettings
+        return self.values['debuggerSettings']
 
-    def setDebuggerSettings( self, newValues ):
+    def setDebuggerSettings(self, newValue, needFlush=True):
         " Updates the debugger settings "
-        if self.values[ "debugAutofork" ] != newValues.autofork or \
-           self.values[ "debugFollowChild" ] != newValues.followChild or \
-           self.values[ "debugReportExceptions" ] != newValues.reportExceptions or \
-           self.values[ "debugStopAtFirstLine" ] != newValues.stopAtFirstLine or \
-           self.values[ "debugTraceInterpreter" ] != newValues.traceInterpreter:
-            self.values[ "debugAutofork" ] = newValues.autofork
-            self.values[ "debugFollowChild" ] = newValues.followChild
-            self.values[ "debugReportExceptions" ] = newValues.reportExceptions
-            self.values[ "debugStopAtFirstLine" ] = newValues.stopAtFirstLine
-            self.values[ "debugTraceInterpreter" ] = newValues.traceInterpreter
-            self.flushSettings()
+        if self.values['debuggerSettings'] != newValue:
+            self.values['debuggerSettings'] = newValue
+            if needFlush:
+                self.__saveValues()
         return
 
-    def __getattr__( self, aAttr ):
-        return self.values[ aAttr ]
+    def __getattr__(self, aAttr):
+        if aAttr in ['filePositions', 'tabsStatus', 'findInFilesHistory',
+                     'findNameHistory', 'findFileHistory', 'breakpoints',
+                     'watchpoints', 'vcsindicators']:
+            return self.__dict__[aAttr]
+        return self.values[aAttr]
 
-    def __setattr__( self, aAttr, aValue ):
+    def __setattr__(self, aAttr, aValue):
         # Access to the private members should be checked first
-        if aAttr.startswith( '_SettingsWrapper' ):
-            self.__dict__[ aAttr ] = aValue
-        elif self.values[ aAttr ] != aValue:
-            self.values[ aAttr ] = aValue
-            self.flushSettings()
-            if aAttr == "flowSplitterSizes":
+        if aAttr.startswith('_SettingsWrapper'):
+            self.__dict__[aAttr] = aValue
+        elif aAttr in ['filePositions', 'tabsStatus', 'findInFilesHistory',
+                       'findNameHistory', 'findFileHistory', 'breakpoints',
+                       'watchpoints', 'vcsindicators']:
+            if self.__dict__[aAttr] != aValue:
+                self.__dict__[aAttr] = aValue
+                if aAttr == 'tabsStatus':
+                    self.__saveTabsStatus()
+                elif aAttr == 'findInFilesHistory':
+                    self.__saveFindInFilesHistory()
+                elif aAttr == 'findNameHistory':
+                    self.__saveFindNameHistory()
+                elif aAttr == 'findFileHistory':
+                    self.__saveFindFileHistory()
+                elif aAttr == 'breakpoints':
+                    self.__saveBreakpoints()
+                elif aAttr == 'watchpoints':
+                    self.__saveWatchpoints()
+        elif self.values[aAttr] != aValue:
+            self.values[aAttr] = aValue
+            self.__saveValues()
+            if aAttr == 'flowSplitterSizes':
                 self.flowSplitterChanged.emit()
-            elif aAttr == "flowScale":
+            elif aAttr == 'flowScale':
                 self.flowScaleChanged.emit()
 
 
 settingsSingleton = SettingsWrapper()
-def Settings():
-    return settingsSingleton
 
+
+def Settings():
+    " Settings singleton access "
+    return settingsSingleton
