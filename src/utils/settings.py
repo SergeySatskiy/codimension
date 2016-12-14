@@ -168,6 +168,7 @@ __DEFAULT_SETTINGS = {
     'flowScale': 1.0,
     'maxRecentProjects': 32,
     'maxRecentFiles': 32,
+    'maxSearchEntries': 32,
 
     # The IO redirect console
     'ioconsolemaxmsgs': 10000,
