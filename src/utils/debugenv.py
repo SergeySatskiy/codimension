@@ -37,6 +37,10 @@ class DebuggerEnvironment:
         self.__props = deepcopy(__DEFAULT_DEBUGGER_PROPS)
         self.__fileName = None
 
+    def reset(self):
+        self.__props = deepcopy(__DEFAULT_DEBUGGER_PROPS)
+        self.__fileName = None
+
     def setup(self, dirName):
         " Binds the parameters to a disk file "
         # Just in case - flush the previous data if they were bound
