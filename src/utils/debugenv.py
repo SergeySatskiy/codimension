@@ -33,9 +33,14 @@ __DEFAULT_DEBUGGER_PROPS = {'breakpoints': [],          # [[file, line], ...]
 class DebuggerEnvironment:
     " Loads/stores/saves the debugger environment "
 
-    def __init__(self, dirName):
-
+    def __init__(self):
         self.__props = deepcopy(__DEFAULT_DEBUGGER_PROPS)
+        self.__fileName = None
+
+    def setup(self, dirName):
+        " Binds the parameters to a disk file "
+        # Just in case - flush the previous data if they were bound
+        self.save()
 
         dirName = os.path.realpath(dirName)
         if not dirName.endswith(os.path.sep):
@@ -50,13 +55,15 @@ class DebuggerEnvironment:
 
     def load(self):
         " Loads the saved debugger environment "
-        default = deepcopy(__DEFAULT_DEBUGGER_PROPS)
-        self.__props = loadJSON(self.__fileName, 'debugger environment',
-                                default)
+        if self.__fileName:
+            default = deepcopy(__DEFAULT_DEBUGGER_PROPS)
+            self.__props = loadJSON(self.__fileName, 'debugger environment',
+                                    default)
 
     def save(self):
         " Saves the debugger environment into a file "
-        saveJSON(self.__fileName, self.__props, 'debugger environment')
+        if self.__fileName:
+            saveJSON(self.__fileName, self.__props, 'debugger environment')
 
     @property
     def breakpoints(self):
