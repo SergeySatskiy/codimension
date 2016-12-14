@@ -23,6 +23,7 @@
 
 from os.path import islink, exists, split, join, sep, basename, realpath
 import logging
+import json
 import magic
 from PyQt5.QtGui import QImageReader
 
@@ -33,7 +34,7 @@ from .pixmapcache import getIcon
 from .config import DEFAULT_ENCODING
 
 
-__QTSupportedImageFormats = [fmt.data().decode('utf-8') for fmt in
+__QTSupportedImageFormats = [fmt.data().decode(DEFAULT_ENCODING) for fmt in
                              QImageReader.supportedImageFormats()]
 VIEWABLE_IMAGE_MIMES = ['image/' + ext for ext in __QTSupportedImageFormats]
 
@@ -55,6 +56,8 @@ def __getXmlSyntaxFile(fName):
     #                makefiles
     if fName.endswith('.cdm'):
         return 'ini.xml'
+    if fName.endswith('.cdm3'):
+        return 'json.xml'
     if fName.endswith('.ts'):
         return 'xml.xml'
     if fName.endswith('.qm'):
@@ -370,6 +373,9 @@ def __getIcon(xmlSyntaxFile, mime, fBaseName):
         if xmlSyntaxFile == 'ini.xml':
             if fileExtension == 'cdm':
                 return getIcon('fileproject.png')
+        if xmlSyntaxFile == 'json.xml':
+            if fileExtension == 'cdm3':
+                return getIcon('fileproject.png')
         if xmlSyntaxFile == 'cpp.xml':
             if 'h' in fileExtension:
                 if fBaseName.endswith('.ui.h'):
@@ -523,6 +529,8 @@ def getFileProperties(fName, needEncoding=False,
     magicTried = False
     if fileExtension == 'cdm':
         mime = 'text/x-codimension'
+    elif fileExtension == 'cdm3':
+        mime = 'text/x-codimension3'
     else:
         mime = __getMimeByXmlSyntaxFile(syntaxFile)
         if mime is None:
@@ -546,7 +554,6 @@ def setFileEncoding(fName, encoding):
         val = __filePropertiesCache[fName]
         val[1] = encoding
         __filePropertiesCache[fName] = val
-    return
 
 
 def compactPath(path, width, measure=len):
@@ -581,3 +588,25 @@ def compactPath(path, width, measure=len):
         tail = tail[1:]
 
     return ''
+
+
+# Utility functions to save/load generic JSON
+def loadJSON(fileName, errorWhat, defaultValue):
+    " Generic JSON loading "
+    try:
+        with open(fileName, 'r', encoding=DEFAULT_ENCODING) as diskfile:
+            return json.load(diskfile)
+    except Exception as exc:
+        logging.error('Error loading ' + errorWhat +
+                      ' (from ' + fileName + '): ' + str(exc))
+        return defaultValue
+
+
+def saveJSON(fileName, values, errorWhat):
+    " Generic JSON saving "
+    try:
+        with open(fileName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
+            json.dump(values, diskfile, indent=4)
+    except Exception as exc:
+        logging.error('Error saving ' + errorWhat +
+                      ' (to ' + fileName + '): ' + str(exc))
