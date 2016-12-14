@@ -27,29 +27,38 @@ from .fileutils import loadJSON, saveJSON
 class FilesPositions:
     " Loads/stores/saves the last position in files "
 
-    def __init__(self, dirName):
+    def __init__(self):
 
         # file name -> (line, pos, first visible, horizontalPos, verticalPos)
         self.__filePos = {}
+        self.__fileName = None
+
+    def setup(self, dirName):
+        " Binds the parameters to a disk file "
+        # Just in case - flush the previous data if they were bound
+        self.save()
 
         dirName = os.path.realpath(dirName)
         if not dirName.endswith(os.path.sep):
             dirName += os.path.sep
         if not os.path.isdir(dirName):
-            raise Exception("Directory name is expected for files "
-                            "positions. The given " + dirName + " is not.")
+            raise Exception('Directory name is expected for files '
+                            'positions. The given ' + dirName + ' is not.')
 
-        self.__fileName = dirName + "lastpositions.json"
+        self.__fileName = dirName + 'lastpositions.json'
         if os.path.exists(self.__fileName):
             self.load()
 
     def load(self):
         " Loads the saved positions file "
-        self.__filePos = loadJSON(self.__fileName, 'file editing positions', {})
+        if self.__fileName:
+            self.__filePos = loadJSON(self.__fileName,
+                                      'file editing positions', {})
 
     def save(self):
         " Saves the positions into a file "
-        saveJSON(self.__fileName, self.__filePos, 'file editing positions')
+        if self.__fileName:
+            saveJSON(self.__fileName, self.__filePos, 'file editing positions')
 
     def getPosition(self, fileName):
         " Provides the position or (-1,-1,-1,-1,-1) if not found "
