@@ -21,8 +21,7 @@
 " Provides the storage for the last position in a file "
 
 import os.path
-import logging
-import json
+from .fileutils import loadJSON, saveJSON
 
 
 class FilesPositions:
@@ -42,29 +41,15 @@ class FilesPositions:
 
         self.__fileName = dirName + "lastpositions.json"
         if os.path.exists(self.__fileName):
-            self.__load()
-        return
+            self.load()
 
-    def __load(self):
+    def load(self):
         " Loads the saved positions file "
-        try:
-            with open(self.__fileName, mode='r', encoding='utf-8') as f:
-                self.__filePos = json.load(f)
-        except Exception as exc:
-            logging.warning("Cannot load file editing positions from " +
-                            self.__fileName + ". Message: " +
-                            str(exc))
-        return
+        self.__filePos = loadJSON(self.__fileName, 'file editing positions', {})
 
     def save(self):
         " Saves the positions into a file "
-        try:
-            with open(self.__fileName, mode='w', encoding='utf-8') as f:
-                json.dump(self.__filePos, f)
-        except Exception as exc:
-            logging.warning("Cannot save file editing positions to " +
-                            self.__fileName + ". Message: " + str(exc))
-        return
+        saveJSON(self.__fileName, self.__filePos, 'file editing positions')
 
     def getPosition(self, fileName):
         " Provides the position or (-1,-1,-1,-1,-1) if not found "
@@ -78,4 +63,3 @@ class FilesPositions:
         " Updates the position for the file "
         self.__filePos[fileName] = (line, pos, firstLine,
                                     horizontalPos, verticalPos)
-        return
