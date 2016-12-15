@@ -60,6 +60,7 @@ class SearchEnvironment:
         self.__limit = Settings()['maxSearchEntries']
 
     def reset(self):
+        """Un-binds from the file system"""
         self.__props = deepcopy(__DEFAULT_SEARCH_HISTORY)
         self.__fileName = None
 
@@ -82,7 +83,7 @@ class SearchEnvironment:
     def load(self):
         " Loads the saved search environment "
         if self.__fileName:
-            default = deepcopy(__DEFAULT_DEBUGGER_PROPS)
+            default = deepcopy(__DEFAULT_SEARCH_HISTORY)
             self.__props = loadJSON(self.__fileName, 'search environment',
                                     default)
 
