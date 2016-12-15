@@ -31,7 +31,7 @@ import os
 from os.path import realpath, islink, isdir, sep, exists, dirname, isabs, join
 from PyQt5.QtCore import QObject, pyqtSignal
 from .runparamscache import RunParametersCache
-from .settings import Settings, settingsDir
+from .settings import Settings, SETTINGS_DIR
 from .watcher import Watcher
 from .config import DEFAULT_ENCODING
 from .debugenv import DebuggerEnvironment
@@ -52,10 +52,10 @@ __DEFAULT_PROJECT_PROPS = {'scriptname': '',    # Script to run the project
                            'importdirs': []}
 
 
-
 class CodimensionProject(QObject,
                          DebuggerEnvironment, SearchEnvironment,
-                         FileSystemEnvironment):
+                         FileSystemEnvironment,
+                         RunParametersCache):
     " Provides codimension project singleton facility "
 
     # Constants for the projectChanged signal
@@ -73,6 +73,7 @@ class CodimensionProject(QObject,
         DebuggerEnvironment.__init__(self)
         SearchEnvironment.__init__(self)
         FileSystemEnvironment.__init__(self)
+        RunParametersCache.__init__(self)
 
         self.__dirWatcher = None
 
@@ -82,9 +83,6 @@ class CodimensionProject(QObject,
         self.filesList = set()
 
         self.props = copy.deepcopy(__DEFAULT_PROJECT_PROPS)
-
-        # Coming from separate files from ~/.codimension/uuidN/
-        self.runParamsCache = RunParametersCache()
 
         # Precompile the exclude filters for the project files list
         self.__excludeFilter = []
@@ -108,14 +106,13 @@ class CodimensionProject(QObject,
         self.userProjectDir = ""
 
         # Generated having the project dir Full paths are stored.
-        # The set holds all files and directories. The dirs end with os.path.sep
+        # The set holds all files and directories.
+        # The dirs end with os.path.sep
         self.filesList = set()
 
         self.props = copy.deepcopy(__DEFAULT_PROJECT_PROPS)
 
-        # Coming from separate files from ~/.codimension/uuidN/
-        self.runParamsCache = RunParametersCache()
-
+        RunParametersCache.reset(self)
         DebuggerEnvironment.reset(self)
         SearchEnvironment.reset(self)
         FileSystemEnvironment.reset(self)
@@ -131,7 +128,7 @@ class CodimensionProject(QObject,
 
         # Try to create the user project directory
         projectUuid = str(uuid.uuid1())
-        userProjectDir = settingsDir + projectUuid + sep
+        userProjectDir = SETTINGS_DIR + projectUuid + sep
         if not exists(userProjectDir):
             try:
                 os.makedirs(userProjectDir)
@@ -154,6 +151,7 @@ class CodimensionProject(QObject,
         self.userProjectDir = userProjectDir
 
         self.__createProjectFile()  # ~/.codimension/uuidNN/project
+        RunParametersCache.setup(self, self.userProjectDir)
         DebuggerEnvironment.setup(self, self.userProjectDir)
         SearchEnvironment.setup(self, self.userProjectDir)
         FileSystemEnvironment.setup(self, self.userProjectDir)
@@ -218,15 +216,6 @@ class CodimensionProject(QObject,
         else:
             logging.warning('Skipping updates in ' + self.fileName +
                             ' due to writing permissions')
-
-        self.serializeRunParameters()
-        self.__saveTopLevelDirs()
-
-        return
-
-    def serializeRunParameters(self):
-        " Saves the run parameters cache "
-        self.runParamsCache.serialize(self.userProjectDir + "runparamscache")
         return
 
     @staticmethod
@@ -264,7 +253,7 @@ class CodimensionProject(QObject,
             logging.warning('Project file does not have UUID. '
                             'Re-generate it...')
             self.props['uuid'] = str(uuid.uuid1())
-        self.userProjectDir = settingsDir + self.props['uuid'] + sep
+        self.userProjectDir = SETTINGS_DIR + self.props['uuid'] + sep
         if not exists(self.userProjectDir):
             os.makedirs(self.userProjectDir)
 
@@ -272,17 +261,11 @@ class CodimensionProject(QObject,
         DebuggerEnvironment.setup(self, self.userProjectDir)
         SearchEnvironment.setup(self, self.userProjectDir)
         FileSystemEnvironment.setup(self, self.userProjectDir)
-
-        self.__loadTopLevelDirs()
-        self.__loadProjectBrowserExpandedDirs()
+        RunParametersCache.setup(self, self.userProjectDir)
 
         # The project might have been moved...
         self.__createProjectFile()  # ~/.codimension/uuidNN/project
         self.__generateFilesList()
-
-        if exists(self.userProjectDir + 'runparamscache'):
-            self.runParamsCache.deserialize(self.userProjectDir +
-                                            'runparamscache')
 
         # Update the recent list
         Settings().addRecentProject(self.fileName)
@@ -318,17 +301,6 @@ class CodimensionProject(QObject,
                 pass
         self.fsChanged.emit(items)
         return
-
-    @staticmethod
-    def __loadValuesFromFile(fileName, errorWhat, defaultValue):
-        " Generic value loading "
-        try:
-            with open(fileName, 'r',
-                      encoding=DEFAULT_ENCODING) as diskfile:
-                return json.load(diskfile)
-        except Exception as exc:
-            logging.error('Error loading ' + errorWhat + ': ' + str(exc))
-            return defaultValue
 
     def unloadProject(self, emitSignal=True):
         """ Unloads the current project if required """

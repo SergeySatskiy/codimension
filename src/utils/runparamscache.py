@@ -19,55 +19,89 @@
 #
 
 
-""" codimension run parameters cache """
+"""codimension run parameters cache"""
 
 import json
+import logging
+import os.path
 from copy import deepcopy
-from runparams import RunParameters, toJSON, fromJSON
+from .runparams import RunParameters, toJSON, fromJSON
+from .config import DEFAULT_ENCODING
 
 
 class RunParametersCache:
-    """ Provides the run parameters cache """
+    """Provides the run parameters cache"""
 
     def __init__(self):
-
         # path -> RunParameters, see runparams.py
         # The path can be relative or absolute:
         # relative for project files, absolute for non-project ones
         self.__cache = {}
-        return
+        self.__fileName = None
 
-    def get(self, path):
-        """ Provides the required parameters object """
+    def reset(self):
+        """Resets the binding to the file system"""
+        self.__cache = {}
+        self.__fileName = None
+
+    def setup(self, dirName):
+        " Binds the cache to a disk file "
+        # Just in case - flush the previous data if they were bound
+        self.save()
+
+        dirName = os.path.realpath(dirName)
+        if not dirName.endswith(os.path.sep):
+            dirName += os.path.sep
+        if not os.path.isdir(dirName):
+            raise Exception('Directory name is expected for the '
+                            'run parameters cache. The given ' +
+                            dirName + ' is not.')
+
+        self.__fileName = dirName + 'runparams.json'
+        if os.path.exists(self.__fileName):
+            self.load()
+
+    def load(self):
+        """Loads the cache from the given file"""
+        if self.__fileName:
+            try:
+                with open(self.__fileName, 'r',
+                          encoding=DEFAULT_ENCODING) as diskfile:
+                    self.__cache = json.load(diskfile, object_hook=fromJSON)
+            except Exception as exc:
+                logging.error('Error loading run paramaters cache (from ' +
+                              self.__fileName + '): ' + str(exc))
+                self.__cache = {}
+
+    def save(self):
+        """Saves the cache into the given file"""
+        if self.__fileName:
+            try:
+                with open(self.__fileName, 'w',
+                          encoding=DEFAULT_ENCODING) as diskfile:
+                    json.dump(self.__cache, diskfile, default=toJSON)
+            except Exception as exc:
+                logging.error('Error saving run paramaters cache (to ' +
+                              self.__fileName + '): ' + str(exc))
+
+    def getRunParameters(self, path):
+        """Provides the required parameters object"""
         try:
             return deepcopy(self.__cache[path])
         except KeyError:
             return RunParameters()
 
-    def add(self, path, params):
-        " Adds run params into cache if needed "
+    def addRunParameters(self, path, params):
+        """Adds run params into cache if needed"""
         if params.isDefault():
-            self.remove(path)
+            self.removeRunParameters(path)
             return
         # Non-default, so need to insert
         self.__cache[path] = deepcopy(params)
-        return
 
-    def remove(self, path):
-        " Removes one item from the map "
+    def removeRunParameters(self, path):
+        """Removes one item from the map"""
         try:
             del self.__cache[path]
         except KeyError:
             return
-
-    def serialize(self, path):
-        " Saves the cache into the given file "
-        with open(path, "w", encoding="utf-8") as diskfile:
-            json.dump(self.__cache, diskfile, default=toJSON)
-        return
-
-    def deserialize(self, path):
-        " Loads the cache from the given file "
-        with open(path, "r", encoding="utf-8") as diskfile:
-            self.__cache = json.load(diskfile, object_hook=fromJSON)
-        return

@@ -35,7 +35,7 @@ from .config import SETTINGS_ENCODING
 
 
 SETTINGS_DIR = os.path.join(os.path.realpath(QDir.homePath()),
-                            '.cdm') + os.path.sep
+                            '.cdm3') + os.path.sep
 THIRDPARTY_DIR = os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])),
                               'thirdparty') + os.path.sep
 
