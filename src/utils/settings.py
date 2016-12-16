@@ -19,7 +19,7 @@
 #
 
 
-""" codimension settings """
+"""codimension settings"""
 
 import os
 import os.path
@@ -29,7 +29,7 @@ import json
 import logging
 from copy import deepcopy
 from PyQt5.QtCore import QObject, QDir, pyqtSignal
-from .filepositions import FilesPositions
+from .filepositions import FilePositions
 from .run import TERM_REDIRECT
 from .config import SETTINGS_ENCODING
 
@@ -232,7 +232,7 @@ class SettingsWrapper(QObject):
             os.mkdir(SETTINGS_DIR)
 
         # Save the config file name
-        self.__dict__['fullFileName'] = SETTINGS_DIR + "settings"
+        self.__dict__['fullFileName'] = SETTINGS_DIR + "settings.json"
 
         # Load previous sessions files positions and tabs status
         self.__dict__['filePositions'] = FilesPositions(SETTINGS_DIR)
