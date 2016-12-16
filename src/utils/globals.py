@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,232 +17,199 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-""" global data singleton """
+"""Global data singleton"""
 
-import os, sys,  copy
+import os
+import sys
+import copy
+from os.path import relpath, dirname, sep, realpath, isdir, exists
 from subprocess import check_output, STDOUT
 from distutils.version import StrictVersion
-from .project import CodimensionProject
-from briefmodinfocache import BriefModuleInfoCache
-from runparamscache import RunParametersCache
-from settings import ropePreferences, settingsDir
-from PyQt4.QtCore import QDir
-from compatibility import relpath
 from plugins.manager.pluginmanager import CDMPluginManager
+from .project import CodimensionProject
+from .briefmodinfocache import BriefModuleInfoCache
+from .settings import SETTINGS_DIR, Settings
 
 
 # This function needs to have a rope project built smart
-def getSubdirs( path, baseNamesOnly = True, excludePythonModulesDirs = True ):
+def getSubdirs(path, baseNamesOnly=True, excludePythonModulesDirs=True):
     " Provides a list of sub directories for the given path "
     subdirs = []
     try:
-        path = os.path.realpath( path ) + os.path.sep
-        for item in os.listdir( path ):
+        path = realpath(path) + sep
+        for item in os.listdir(path):
             candidate = path + item
-            if os.path.isdir( candidate ):
+            if isdir(candidate):
                 if excludePythonModulesDirs:
-                    modFile1 = candidate + os.path.sep + "__init__.py"
-                    modFile2 = candidate + os.path.sep + "__init__.py3"
-                    if os.path.exists( modFile1 ) or \
-                       os.path.exists( modFile2 ):
+                    modFile1 = candidate + sep + "__init__.py"
+                    modFile2 = candidate + sep + "__init__.py3"
+                    if exists(modFile1) or exists(modFile2):
                         continue
                 if baseNamesOnly:
-                    subdirs.append( item )
+                    subdirs.append(item)
                 else:
-                    subdirs.append( candidate )
+                    subdirs.append(candidate)
     except:
         pass
     return subdirs
 
 
-class GlobalData( object ):
-    """ Global data singleton """
-    _iInstance = None
-    class Singleton:
-        """ Provides singleton facility """
+class GlobalDataWrapper:
 
-        def __init__( self ):
-            self.application = None
-            self.splash = None
-            self.mainWindow = None
-            self.skin = None
-            self.screenWidth = 0
-            self.screenHeight = 0
-            self.version = "unknown"
-            self.project = CodimensionProject()
+    """Global data singleton"""
 
-            self.pluginManager = CDMPluginManager()
+    def __init__(self):
+        self.application = None
+        self.splash = None
+        self.mainWindow = None
+        self.skin = None
+        self.screenWidth = 0
+        self.screenHeight = 0
+        self.version = "unknown"
+        self.project = CodimensionProject()
 
-            self.briefModinfoCache = BriefModuleInfoCache()
-            self.runParamsCache = RunParametersCache()
-            if os.path.isfile( settingsDir + "runparamscache" ):
-                self.runParamsCache.deserialize( settingsDir +
-                                                 "runparamscache" )
+        self.pluginManager = CDMPluginManager()
 
-            self.pylintAvailable = self.__checkPylint()
-            self.graphvizAvailable = self.__checkGraphviz()
+        self.briefModinfoCache = BriefModuleInfoCache()
 
-            self.pylintVersion = None
-            if self.pylintAvailable:
-                self.pylintVersion = self.__getPylintVersion()
-                if self.pylintVersion is None:
-                    self.pylintAvailable = False
-            return
+        self.pylintAvailable = self.__checkPylint()
+        self.graphvizAvailable = self.__checkGraphviz()
 
-        def getRunParameters( self, fileName ):
-            " Provides the run parameters "
-            if self.project.isLoaded():
-                if self.project.isProjectFile( fileName ):
-                    key = relpath( fileName,
-                                   os.path.dirname( self.project.fileName ) )
-                else:
-                    key = fileName
-                return self.project.runParamsCache.get( key )
+        self.pylintVersion = None
+        if self.pylintAvailable:
+            self.pylintVersion = self.__getPylintVersion()
+            if self.pylintVersion is None:
+                self.pylintAvailable = False
 
+    def getRunParameters(self, fileName):
+        """Provides the run parameters"""
+        if self.project.isLoaded():
+            if self.project.isProjectFile(fileName):
+                key = relpath(fileName, dirname(self.project.fileName))
+            else:
+                key = fileName
+            return self.project.getRunParameters(key)
+
+        # No project loaded
+        return Settings().getRunParameters(fileName)
+
+    def addRunParams(self, fileName, params):
+        """Registers new latest run parameters"""
+        if self.project.isLoaded():
+            if self.project.isProjectFile(fileName):
+                key = relpath(fileName, dirname(self.project.fileName))
+            else:
+                key = fileName
+            self.project.addRunParameters(key, params)
+        else:
             # No project loaded
-            return self.runParamsCache.get( fileName )
+            Settings().addRunParameters(fileName, params)
 
-        def addRunParams( self, fileName, params ):
-            " Registers new latest run parameters "
-            if self.project.isLoaded():
-                if self.project.isProjectFile( fileName ):
-                    key = relpath( fileName,
-                                   os.path.dirname( self.project.fileName ) )
-                else:
-                    key = fileName
-                self.project.runParamsCache.add( key, params )
-                self.project.serializeRunParameters()
-                return
+    def getProfileOutputPath(self):
+        """Provides the path to the profile output file"""
+        if self.project.isLoaded():
+            return self.project.userProjectDir + 'profile.out'
 
-            # No project loaded
-            self.runParamsCache.add( fileName, params )
-            self.runParamsCache.serialize( settingsDir + "runparamscache" )
-            return
+        # No project loaded
+        return SETTINGS_DIR + 'profile.out'
 
-        def getProfileOutputPath( self ):
-            " Provides the path to the profile output file "
-            if self.project.isLoaded():
-                return self.project.userProjectDir + "profile.out"
+    def getProjectImportDirs(self):
+        """Provides a list of the project import dirs if so"""
+        if not self.project.isLoaded():
+            return []
+        return self.project.getImportDirsAsAbsolutePaths()
 
-            # No project loaded
-            return settingsDir + "profile.out"
-
-        def getProjectImportDirs( self ):
-            """ Provides a list of the project import dirs if so.
-                Note: the paths do not have '/' at the end due to
-                os.path.normpath """
-            if not self.project.isLoaded():
-                return []
-
-            basePath = self.project.getProjectDir()
-            result = list( self.project.importDirs )
-            index = len( result ) - 1
-            while index >= 0:
-                path = result[ index ]
-                if not os.path.isabs( path ):
-                    result[ index ] = os.path.normpath( basePath + path )
-                index -= 1
-            return result
-
-        def isProjectScriptValid( self ):
-            " True if the project script valid "
-            scriptName = self.project.getProjectScript()
-            if not os.path.exists( scriptName ):
-                return False
-            scriptName = os.path.realpath( scriptName )
-            if not os.path.isfile( scriptName ):
-                return False
-
-            from fileutils import ( detectFileType, PythonFileType,
-                                    Python3FileType )
-            if detectFileType( scriptName ) in [ PythonFileType,
-                                                 Python3FileType ]:
-                return True
+    def isProjectScriptValid(self):
+        " True if the project script valid "
+        scriptName = self.project.getProjectScript()
+        if not os.path.exists( scriptName ):
+            return False
+        scriptName = os.path.realpath( scriptName )
+        if not os.path.isfile( scriptName ):
             return False
 
-        def getFileLineDocstring( self, fName, line ):
-            " Provides a docstring if so for the given file and line "
-            from fileutils import ( detectFileType, PythonFileType,
-                                    Python3FileType )
-            if detectFileType( fName ) not in [ PythonFileType,
-                                                Python3FileType ]:
-                return ""
+        from fileutils import ( detectFileType, PythonFileType,
+                                Python3FileType )
+        if detectFileType( scriptName ) in [ PythonFileType,
+                                             Python3FileType ]:
+            return True
+        return False
 
-            infoCache = self.briefModinfoCache
-
-            def checkFuncObject( obj, line ):
-                " Checks docstring for a function or a class "
-                if obj.line == line or obj.keywordLine == line:
-                    if obj.docstring is None:
-                        return True, ""
-                    return True, obj.docstring.text
-                for item in obj.classes + obj.functions:
-                    found, docstring = checkFuncObject( item, line )
-                    if found:
-                        return True, docstring
-                return False, ""
-
-            try:
-                info = infoCache.get( fName )
-                for item in info.classes + info.functions:
-                    found, docstring = checkFuncObject( item, line )
-                    if found:
-                        return docstring
-            except:
-                pass
+    def getFileLineDocstring( self, fName, line ):
+        " Provides a docstring if so for the given file and line "
+        from fileutils import ( detectFileType, PythonFileType,
+                                Python3FileType )
+        if detectFileType( fName ) not in [ PythonFileType,
+                                            Python3FileType ]:
             return ""
 
-        def getModInfo( self, path ):
-            " Provides a module info for the given file "
-            from fileutils import ( detectFileType, PythonFileType,
-                                    Python3FileType )
-            if detectFileType( path ) not in [ PythonFileType,
-                                               Python3FileType ]:
-                raise Exception( "Trying to parse non-python file: " + path )
-            return self.briefModinfoCache.get( path )
+        infoCache = self.briefModinfoCache
 
-        @staticmethod
-        def __checkGraphviz():
-            " Checks if the graphviz available "
-            if 'win' in sys.platform.lower():
-                return os.system( 'which dot > /NUL 2>&1' ) == 0
-            return os.system( 'which dot > /dev/null 2>&1' ) == 0
+        def checkFuncObject( obj, line ):
+            " Checks docstring for a function or a class "
+            if obj.line == line or obj.keywordLine == line:
+                if obj.docstring is None:
+                    return True, ""
+                return True, obj.docstring.text
+            for item in obj.classes + obj.functions:
+                found, docstring = checkFuncObject( item, line )
+                if found:
+                    return True, docstring
+            return False, ""
 
-        @staticmethod
-        def __checkPylint():
-            " Checks if pylint is available "
-            if 'win' in sys.platform.lower():
-                return os.system( 'which pylint > /NUL 2>&1' ) == 0
-            return os.system( 'which pylint > /dev/null 2>&1' ) == 0
+        try:
+            info = infoCache.get( fName )
+            for item in info.classes + info.functions:
+                found, docstring = checkFuncObject( item, line )
+                if found:
+                    return docstring
+        except:
+            pass
+        return ""
 
-        @staticmethod
-        def __getPylintVersion():
-            " Provides the pylint version "
-            output = check_output( "pylint --version; exit 0",
-                                   stderr = STDOUT, shell = True )
-            for line in output.splitlines():
-                line = line.strip()
-                if line.startswith( "pylint " ):
-                    version = line.replace( "pylint", "" ).replace( ",", "" )
-                    try:
-                        return StrictVersion( version.strip() )
-                    except:
-                        return None
-            return None
+    def getModInfo( self, path ):
+        " Provides a module info for the given file "
+        from fileutils import ( detectFileType, PythonFileType,
+                                Python3FileType )
+        if detectFileType( path ) not in [ PythonFileType,
+                                           Python3FileType ]:
+            raise Exception( "Trying to parse non-python file: " + path )
+        return self.briefModinfoCache.get( path )
 
-    def __init__( self ):
-        if GlobalData._iInstance is None:
-            GlobalData._iInstance = GlobalData.Singleton()
-        self.__dict__[ '_GlobalData__iInstance' ] = GlobalData._iInstance
-        return
+    @staticmethod
+    def __checkGraphviz():
+        " Checks if the graphviz available "
+        if 'win' in sys.platform.lower():
+            return os.system( 'which dot > /NUL 2>&1' ) == 0
+        return os.system( 'which dot > /dev/null 2>&1' ) == 0
 
-    def __getattr__( self, aAttr ):
-        return getattr( self._iInstance, aAttr )
+    @staticmethod
+    def __checkPylint():
+        " Checks if pylint is available "
+        if 'win' in sys.platform.lower():
+            return os.system( 'which pylint > /NUL 2>&1' ) == 0
+        return os.system( 'which pylint > /dev/null 2>&1' ) == 0
 
-    def __setattr__( self, aAttr, aValue ):
-        setattr( self._iInstance, aAttr, aValue )
-        return
+    @staticmethod
+    def __getPylintVersion():
+        " Provides the pylint version "
+        output = check_output( "pylint --version; exit 0",
+                               stderr = STDOUT, shell = True )
+        for line in output.splitlines():
+            line = line.strip()
+            if line.startswith( "pylint " ):
+                version = line.replace( "pylint", "" ).replace( ",", "" )
+                try:
+                    return StrictVersion( version.strip() )
+                except:
+                    return None
+        return None
 
+
+globalsSingleton = GlobalDataWrapper()
+
+
+def GlobalData():
+    """Global singleton access"""
+    return globalsSingleton

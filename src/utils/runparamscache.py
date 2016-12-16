@@ -98,10 +98,12 @@ class RunParametersCache:
             return
         # Non-default, so need to insert
         self.__cache[path] = deepcopy(params)
+        RunParametersCache.save(self)
 
     def removeRunParameters(self, path):
         """Removes one item from the map"""
         try:
             del self.__cache[path]
+            RunParametersCache.save(self)
         except KeyError:
             return
