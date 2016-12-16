@@ -41,7 +41,7 @@ class FilePositions:
     def setup(self, dirName):
         """Binds the parameters to a disk file"""
         # Just in case - flush the previous data if they were bound
-        self.save()
+        FilePositions.save(self)
 
         dirName = os.path.realpath(dirName)
         if not dirName.endswith(os.path.sep):
@@ -52,7 +52,7 @@ class FilePositions:
 
         self.__fileName = dirName + 'lastpositions.json'
         if os.path.exists(self.__fileName):
-            self.load()
+            FilePositions.load(self)
 
     def load(self):
         """Loads the saved positions file"""

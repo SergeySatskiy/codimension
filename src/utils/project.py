@@ -90,7 +90,7 @@ class CodimensionProject(QObject,
 
         # Precompile the exclude filters for the project files list
         self.__excludeFilter = []
-        for flt in Settings().projectFilesFilters:
+        for flt in Settings()['projectFilesFilters']:
             self.__excludeFilter.append(re.compile(flt))
 
     def shouldExclude(self, name):
@@ -166,7 +166,7 @@ class CodimensionProject(QObject,
         self.saveProject()
 
         # Update the watcher
-        self.__dirWatcher = Watcher(Settings().projectFilesFilters,
+        self.__dirWatcher = Watcher(Settings()['projectFilesFilters'],
                                     self.getProjectDir())
         self.__dirWatcher.fsChanged.connect(self.onFSChanged)
 
@@ -263,7 +263,7 @@ class CodimensionProject(QObject,
         Settings().addRecentProject(self.fileName)
 
         # Setup the new watcher
-        self.__dirWatcher = Watcher(Settings().projectFilesFilters,
+        self.__dirWatcher = Watcher(Settings()['projectFilesFilters'],
                                     self.getProjectDir())
         self.__dirWatcher.fsChanged.connect(self.onFSChanged)
 

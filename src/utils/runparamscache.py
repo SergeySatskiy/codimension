@@ -47,7 +47,7 @@ class RunParametersCache:
     def setup(self, dirName):
         " Binds the cache to a disk file "
         # Just in case - flush the previous data if they were bound
-        self.save()
+        RunParametersCache.save(self)
 
         dirName = os.path.realpath(dirName)
         if not dirName.endswith(os.path.sep):
@@ -59,7 +59,7 @@ class RunParametersCache:
 
         self.__fileName = dirName + 'runparams.json'
         if os.path.exists(self.__fileName):
-            self.load()
+            RunParametersCache.load(self)
 
     def load(self):
         """Loads the cache from the given file"""

@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-" Provides the storage for the search environment "
+"""Provides the storage for the search environment"""
 
 import os.path
 from copy import deepcopy
@@ -52,7 +52,7 @@ __DEFAULT_SEARCH_HISTORY = {'class': [],        # [term, ...]
                             'findinfiles': []}  # [term + dir + mask, ...]
 
 class SearchEnvironment:
-    " Loads/stores/saves the search environment "
+    """Loads/stores/saves the search environment"""
 
     def __init__(self):
         self.__props = deepcopy(__DEFAULT_SEARCH_HISTORY)
@@ -65,9 +65,9 @@ class SearchEnvironment:
         self.__fileName = None
 
     def setup(self, dirName):
-        " Binds the parameters to a disk file "
+        """Binds the parameters to a disk file"""
         # Just in case - flush the previous data if they were bound
-        self.save()
+        SearchEnvironment.save(self)
 
         dirName = os.path.realpath(dirName)
         if not dirName.endswith(os.path.sep):
@@ -78,40 +78,40 @@ class SearchEnvironment:
 
         self.__fileName = dirName + "searchenv.json"
         if os.path.exists(self.__fileName):
-            self.load()
+            SearchEnvironment.load(self)
 
     def load(self):
-        " Loads the saved search environment "
+        """Loads the saved search environment"""
         if self.__fileName:
             default = deepcopy(__DEFAULT_SEARCH_HISTORY)
             self.__props = loadJSON(self.__fileName, 'search environment',
                                     default)
 
     def save(self):
-        " Saves the search environment into a file "
+        """Saves the search environment into a file"""
         if self.__fileName:
             saveJSON(self.__fileName, self.__props, 'search environment')
 
     def __addToContainer(self, element, item):
-        " Common implementation of adding a search item "
+        """Common implementation of adding a search item"""
         if item in self.__props[element]:
             self.__props[element].remove(item)
         self.__props[element].insert(0, item)
         if len(self.__props[element]) > self.__limit:
             self.__props[element] = self.__props[element][0:self.__limit]
-        self.save()
+        SearchEnvironment.save(self)
 
     def __setContainer(self, item, history):
-        " Generic container setter which respects the limit "
+        """Generic container setter which respects the limit"""
         if len(history) > self.__limit:
             self.__props[item] = history[0:self.__limit]
         else:
             self.__props[item] = history
-        self.save()
+        SearchEnvironment.save(self)
 
     @property
     def findClassHistory(self):
-        " Provides the find class history "
+        """Provides the find class history"""
         return self.__props['class']
 
     @findClassHistory.setter
@@ -119,12 +119,12 @@ class SearchEnvironment:
         self.__setContainer('class', history)
 
     def addToFindClassHistory(self, item):
-        " Adds an item to the class history "
+        """Adds an item to the class history"""
         self.__addToContainer('class', item)
 
     @property
     def findFunctionHistory(self):
-        " Provides the find function history "
+        """Provides the find function history"""
         return self.__props['function']
 
     @findFunctionHistory.setter
@@ -132,12 +132,12 @@ class SearchEnvironment:
         self.__setContainer('function', history)
 
     def addToFindFunctionHistory(self, item):
-        " Adds an item to the function history "
+        """Adds an item to the function history"""
         self.__addToContainer('function', item)
 
     @property
     def findGlobalHistory(self):
-        " Provides the find global history "
+        """Provides the find global history"""
         return self.__props['global']
 
     @findGlobalHistory.setter
@@ -145,12 +145,12 @@ class SearchEnvironment:
         self.__setContainer('global', history)
 
     def addToFindGlobalHistory(self, item):
-        " Adds an item to the global history "
+        """Adds an item to the global history"""
         self.__addToContainer('global', item)
 
     @property
     def findNameHistory(self):
-        " Provides the find name history "
+        """Provides the find name history"""
         return self.__props['findname']
 
     @findNameHistory.setter
@@ -158,12 +158,12 @@ class SearchEnvironment:
         self.__setContainer('findname', history)
 
     def addToFindNameHistory(self, item):
-        " Adds an item to the name history "
+        """Adds an item to the name history"""
         self.__addToContainer('findname', item)
 
     @property
     def findFileHistory(self):
-        " Provides the find file history "
+        """Provides the find file history"""
         return self.__props['findfile']
 
     @findFileHistory.setter
@@ -171,12 +171,12 @@ class SearchEnvironment:
         self.__setContainer('findfile', history)
 
     def addToFindFileHistory(self, item):
-        " Adds an item to the file history "
+        """Adds an item to the file history"""
         self.__addToContainer('findfile', item)
 
     @property
     def findHistory(self):
-        " Provides the find history "
+        """Provides the find history"""
         return self.__props['find']
 
     @findHistory.setter
@@ -184,12 +184,12 @@ class SearchEnvironment:
         self.__setContainer('find', history)
 
     def addToFindHistory(self, item):
-        " Adds an item to the file history "
+        """Adds an item to the file history"""
         self.__addToContainer('find', item)
 
     @property
     def replaceHistory(self):
-        " Provides the replace history "
+        """Provides the replace history"""
         return self.__props['replace']
 
     @replaceHistory.setter
@@ -197,12 +197,12 @@ class SearchEnvironment:
         self.__setContainer('replace', history)
 
     def addToReplaceHistory(self, item):
-        " Adds an item to the replace history "
+        """Adds an item to the replace history"""
         self.__addToContainer('replace', item)
 
     @property
     def findInFilesHistory(self):
-        " Provides the find in files history "
+        """Provides the find in files history"""
         return self.__props['findinfiles']
 
     @findInFilesHistory.setter
@@ -210,5 +210,5 @@ class SearchEnvironment:
         self.__setContainer('findinfile', history)
 
     def addToFindInFilesHistory(self, item):
-        " Adds an item to the file history "
+        """Adds an item to the file history"""
         self.__addToContainer('findinfiles', item)

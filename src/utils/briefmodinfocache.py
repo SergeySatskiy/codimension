@@ -19,23 +19,21 @@
 #
 
 
-""" codimension brief module info cache """
+"""codimension brief module info cache"""
 
 from os.path import realpath, getmtime, exists
 from cdmbriefparser import getBriefModuleInfoFromFile
 
 
-
 class BriefModuleInfoCache():
-    """ Provides the module info cache """
+    """Provides the module info cache"""
 
     def __init__(self):
         # abs file path -> (modification time, mod info)
         self.__cache = {}
-        return
 
     def get(self, path):
-        """ Provides the required modinfo """
+        """Provides the required modinfo"""
 
         path = realpath(path)
         try:
@@ -61,7 +59,7 @@ class BriefModuleInfoCache():
             return info
 
     def remove(self, path):
-        " Removes one file from the map "
+        """Removes one file from the map"""
         path = realpath(path)
         try:
             del self.__cache[path]
@@ -69,6 +67,5 @@ class BriefModuleInfoCache():
             return
 
     def clear(self):
-        " Clears the cache "
+        """Clears the cache"""
         self.__cache = {}
-        return

@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-" Provides the storage for the debugger environment "
+"""Provides the storage for the debugger environment"""
 
 import os.path
 from copy import deepcopy
@@ -31,20 +31,21 @@ __DEFAULT_DEBUGGER_PROPS = {'breakpoints': [],          # [[file, line], ...]
 
 
 class DebuggerEnvironment:
-    " Loads/stores/saves the debugger environment "
+    """Loads/stores/saves the debugger environment"""
 
     def __init__(self):
         self.__props = deepcopy(__DEFAULT_DEBUGGER_PROPS)
         self.__fileName = None
 
     def reset(self):
+        """Resets the filesystem binding"""
         self.__props = deepcopy(__DEFAULT_DEBUGGER_PROPS)
         self.__fileName = None
 
     def setup(self, dirName):
-        " Binds the parameters to a disk file "
+        """Binds the parameters to a disk file"""
         # Just in case - flush the previous data if they were bound
-        self.save()
+        DebuggerEnvironment.save(self)
 
         dirName = os.path.realpath(dirName)
         if not dirName.endswith(os.path.sep):
@@ -55,86 +56,86 @@ class DebuggerEnvironment:
 
         self.__fileName = dirName + "debuggerenv.json"
         if os.path.exists(self.__fileName):
-            self.load()
+            DebuggerEnvironment.load(self)
 
     def load(self):
-        " Loads the saved debugger environment "
+        """Loads the saved debugger environment"""
         if self.__fileName:
             default = deepcopy(__DEFAULT_DEBUGGER_PROPS)
             self.__props = loadJSON(self.__fileName, 'debugger environment',
                                     default)
 
     def save(self):
-        " Saves the debugger environment into a file "
+        """Saves the debugger environment into a file"""
         if self.__fileName:
             saveJSON(self.__fileName, self.__props, 'debugger environment')
 
     @property
     def breakpoints(self):
-        " Provides the breakpoints "
+        """Provides the breakpoints"""
         return self.__props['breakpoints']
 
     @breakpoints.setter
     def breakpoints(self, bpointList):
         self.__props['breakpoints'] = bpointList
-        self.save()
+        DebuggerEnvironment.save(self)
 
     @property
     def watchpoints(self):
-        " Provides the watchpoints "
+        """Provides the watchpoints"""
         return self.__props['watchpoints']
 
     @watchpoints.setter
     def watchpoints(self, wpointList):
         self.__props['watchpoints'] = wpointList
-        self.save()
+        DebuggerEnvironment.save(self)
 
     @property
     def exceptionFilters(self):
-        " Provides the ignored exceptions "
+        """Provides the ignored exceptions"""
         return self.__props['ignoredexceptions']
 
     @exceptionFilters.setter
     def exceptionFilters(self, newFilters):
         self.__props['ignoredexceptions'] = newFilters
-        self.save()
+        DebuggerEnvironment.save(self)
 
     def addExceptionFilter(self, excptType):
-        " Adds a new ignored exception type "
+        """Adds a new ignored exception type"""
         if excptType not in self.__props['ignoredexceptions']:
             self.__props['ignoredexceptions'].append(excptType)
-            self.save()
+            DebuggerEnvironment.save(self)
 
     def deleteExceptionFilter(self, excptType):
-        " Remove ignored exception type "
+        """Remove ignored exception type"""
         if excptType in self.__props['ignoredexceptions']:
             self.__props['ignoredexceptions'].remove(excptType)
-            self.save()
+            DebuggerEnvironment.save(self)
 
     def addBreakpoint(self, fName, line):
-        " Adds serialized breakpoint "
+        """Adds serialized breakpoint"""
         value = [fName, line]
         if value not in self.__props['breakpoints']:
             self.__props['breakpoints'].append(value)
-            self.save()
+            DebuggerEnvironment.save(self)
 
     def deleteBreakpoint(self, fName, line):
-        " Deletes serialized breakpoint "
+        """Deletes serialized breakpoint"""
         value = [fName, line]
         if value in self.__props['breakpoints']:
             self.__props['breakpoints'].remove(value)
-            self.save()
+            DebuggerEnvironment.save(self)
 
     def addWatchpoint(self, fName, expression):
-        " Adds serialized watchpoint "
+        """Adds serialized watchpoint"""
         value = [fName, expression]
         if value not in self.__props['watchpoints']:
             self.__props['watchpoints'].append(value)
-            self.save()
+            DebuggerEnvironment.save(self)
 
     def deleteWatchpoint(self, fName, expression):
-        " Deletes serialized watchpoint "
+        """Deletes serialized watchpoint"""
         value = [fName, expression]
         if value in self.__props['watchpoints']:
             self.__props['watchpoints'].remove(value)
-            self.save()
+            DebuggerEnvironment.save(self)

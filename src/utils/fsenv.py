@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-" Provides the storage for the file system environment "
+"""Provides the storage for the file system environment"""
 
 import os.path
 from copy import deepcopy
@@ -37,7 +37,7 @@ __DEFAULT_FS_PROPS = {'tabs': [],                       # [bool: active,
 
 
 class FileSystemEnvironment:
-    " Loads/stores/saves the fs related environment "
+    """Loads/stores/saves the fs related environment"""
 
     def __init__(self):
         self.__props = deepcopy(__DEFAULT_FS_PROPS)
@@ -45,14 +45,14 @@ class FileSystemEnvironment:
         self.__limit = Settings()['maxRecentFiles']
 
     def reset(self):
-        " Resets the binding to the file system "
+        """Resets the binding to the file system"""
         self.__props = deepcopy(__DEFAULT_FS_PROPS)
         self.__fileName = None
 
     def setup(self, dirName):
-        " Binds the parameters to a disk file "
+        """Binds the parameters to a disk file"""
         # Just in case - flush the previous data if they were bound
-        self.save()
+        FileSystemEnvironment.save(self)
 
         dirName = os.path.realpath(dirName)
         if not dirName.endswith(os.path.sep):
@@ -63,91 +63,91 @@ class FileSystemEnvironment:
 
         self.__fileName = dirName + "fsenv.json"
         if os.path.exists(self.__fileName):
-            self.load()
+            FileSystemEnvironment.load(self)
 
     def load(self):
-        " Loads the saved file system environment "
+        """Loads the saved file system environment"""
         if self.__fileName:
             default = deepcopy(__DEFAULT_FS_PROPS)
             self.__props = loadJSON(self.__fileName, 'file system environment',
                                     default)
 
     def save(self):
-        " Saves the file system environment into a file "
+        """Saves the file system environment into a file"""
         if self.__fileName:
             saveJSON(self.__fileName, self.__props, 'file system environment')
 
     @property
     def tabStatus(self):
-        " Provides the opened tabs status "
+        """Provides the opened tabs status"""
         return self.__props['tabs']
 
     @tabStatus.setter
     def tabStatus(self, newStatus):
         self.__props['tabs'] = newStatus
-        self.save()
+        FileSystemEnvironment.save(self)
 
     @property
     def recentFiles(self):
-        " Provides the recently used files list "
+        """Provides the recently used files list"""
         return self.__props['recent']
 
     @recentFiles.setter
     def recentFiles(self, files):
         self.__props['recent'] = files
-        self.save()
+        FileSystemEnvironment.save(self)
 
     def addRecentFile(self, path):
-        " Adds a single recent file. True if a new file was inserted. "
+        """Adds a single recent file. True if a new file was inserted."""
         if path in self.__props['recent']:
             self.__props['recent'].remove(path)
             self.__props['recent'].insert(0, path)
-            self.save()
+            FileSystemEnvironment.save(self)
             return False
         self.__props['recent'].insert(0, path)
         if len(self.__props['recent']) > self.__limit:
             self.__props['recent'] = self.__props['recent'][0:self.__limit]
-        self.save()
+        FileSystemEnvironment.save(self)
         return True
 
     def removeRecentFile(self, path):
-        " Removes a single recent file "
+        """Removes a single recent file"""
         if path in self.__props['recent']:
             self.__props['recent'].remove(path)
-            self.save()
+            FileSystemEnvironment.save(self)
 
     @property
     def fsBrowserExpandedDirs(self):
-        " Provides the file system browser expanded dirs "
+        """Provides the file system browser expanded dirs"""
         return self.__props['fsbrowserexpandeddirs']
 
     @fsBrowserExpandedDirs.setter
     def fsBrowserExpandedDirs(self, newDirs):
         self.__props['fsbrowserexpandeddirs'] = newDirs
-        self.save()
+        FileSystemEnvironment.save(self)
 
     @property
     def topLevelDirs(self):
-        " Provides a list of dirs in the FS browser "
+        """Provides a list of dirs in the FS browser"""
         return self.__props['topleveldirs']
 
     @topLevelDirs.setter
     def topLevelDirs(self, newDirs):
         self.__props['topleveldirs'] = newDirs
-        self.save()
+        FileSystemEnvironment.save(self)
 
     def addTopLevelDir(self, path):
-        " Adds a top level dir "
+        """Adds a top level dir"""
         if not path.endswith(os.path.sep):
             path += os.path.sep
         if path not in self.__props['topleveldirs']:
             self.__props['topleveldirs'].append(path)
-            self.save()
+            FileSystemEnvironment.save(self)
 
     def removeTopLevelDir(self, path):
-        " Removes a top level dir "
+        """Removes a top level dir"""
         if not path.endswith(os.path.sep):
             path += os.path.sep
         if path in self.__props['topleveldirs']:
             self.__props['topleveldirs'].remove(path)
-            self.save()
+            FileSystemEnvironment.save(self)
