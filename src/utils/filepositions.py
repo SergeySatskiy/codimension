@@ -25,6 +25,7 @@ from .fileutils import loadJSON, saveJSON
 
 
 class FilePositions:
+
     """Loads/stores/saves the last position in files"""
 
     def __init__(self):

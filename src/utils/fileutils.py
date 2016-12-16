@@ -19,7 +19,7 @@
 #
 
 
-""" file related utils """
+"""file related utils"""
 
 from os.path import islink, exists, split, join, sep, basename, realpath
 import logging
@@ -111,7 +111,7 @@ def isFileSearchable(fName, checkForBrokenLink=True):
 
 
 def isImageViewable(mime):
-    " True if QT can show the image "
+    """True if QT can show the image"""
     return mime in VIEWABLE_IMAGE_MIMES
 
 
@@ -360,8 +360,7 @@ __mimeToIcon = {
 
 
 def __getIcon(xmlSyntaxFile, mime, fBaseName):
-    """ Provides an icon for a file
-    """
+    """Provides an icon for a file"""
 
     fileExtension = fBaseName.split('.')[-1].lower()
 
@@ -592,7 +591,7 @@ def compactPath(path, width, measure=len):
 
 # Utility functions to save/load generic JSON
 def loadJSON(fileName, errorWhat, defaultValue):
-    " Generic JSON loading "
+    """Generic JSON loading"""
     try:
         with open(fileName, 'r', encoding=DEFAULT_ENCODING) as diskfile:
             return json.load(diskfile)
@@ -603,7 +602,7 @@ def loadJSON(fileName, errorWhat, defaultValue):
 
 
 def saveJSON(fileName, values, errorWhat):
-    " Generic JSON saving "
+    """Generic JSON saving"""
     try:
         with open(fileName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
             json.dump(values, diskfile, indent=4)

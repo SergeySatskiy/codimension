@@ -19,7 +19,7 @@
 #
 
 
-" Counts lines in python code "
+"""Counts lines in python code"""
 
 import sys
 import os.path
@@ -27,35 +27,30 @@ from optparse import OptionParser
 
 
 class LinesCounter:
-    " Holds various line information, see the members comments "
+
+    """Holds various line information, see the members comments"""
 
     def __init__(self):
-
         self.__reset()
-        return
 
     def __reset(self):
         " Resets all the values "
-
         self.files = 0          # Total number of analyzed files
         self.filesSize = 0      # Total size of all files in bytes
         self.codeLines = 0      # Number of non-empty non-comment lines
         self.emptyLines = 0     # Number of empty lines
         self.commentLines = 0   # Number of lines which start from the hash sign
         self.classes = 0        # Number of classes
-        return
 
     def __processFile(self, path):
-        " Accumulates lines from a single file "
-
+        """Accumulates lines from a single file"""
         afile = open(path)
         for line in afile:
             self.__processLine(line)
         afile.close()
-        return
 
     def __processLine(self, line):
-        " Process a single line "
+        """Process a single line"""
         line = line.strip()
         if line == "":
             self.emptyLines += 1
@@ -66,11 +61,9 @@ class LinesCounter:
         if line.startswith('class '):
             self.classes += 1
         self.codeLines += 1
-        return
 
     def __processDir(self, path, extensions):
-        " Accumulates lines from all files in the given directory recursively "
-
+        """Accumulates lines from all files in the given dir recursively"""
         for item in os.listdir(path):
             if item in ('.svn', '.cvs'):
                 continue
@@ -83,11 +76,9 @@ class LinesCounter:
                     self.__processFile(path + os.path.sep + item)
                     self.filesSize += os.path.getsize(path + os.path.sep + item)
                 continue
-        return
 
     def getLines(self, path, extensions=('.py', '.py3', '.pyw')):
-        " Accumulates lines for a file or directory "
-
+        """Accumulates lines for a file or directory"""
         if not os.path.exists(path):
             raise Exception("Lines counter cannot open " + path)
 
@@ -110,16 +101,14 @@ class LinesCounter:
             path += os.path.sep
 
         self.__processDir(path, extensions)
-        return
 
     def getLinesInBuffer(self, editor):
-        " Counts lines in the given Scintilla buffer "
+        """Counts lines in the given Scintilla buffer"""
         self.__reset()
         txt = editor.text()
         self.filesSize = len(txt)
         for line in txt.split('\n'):
             self.__processLine(line)
-        return
 
 
 # The script execution entry point

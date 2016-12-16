@@ -26,6 +26,7 @@ from cdmbriefparser import getBriefModuleInfoFromFile
 
 
 class BriefModuleInfoCache():
+
     """Provides the module info cache"""
 
     def __init__(self):

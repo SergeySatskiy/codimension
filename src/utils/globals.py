@@ -25,8 +25,7 @@
 import os, sys,  copy
 from subprocess import check_output, STDOUT
 from distutils.version import StrictVersion
-from rope.base.project import Project as RopeProject
-from project import CodimensionProject
+from .project import CodimensionProject
 from briefmodinfocache import BriefModuleInfoCache
 from runparamscache import RunParametersCache
 from settings import ropePreferences, settingsDir
@@ -130,55 +129,6 @@ class GlobalData( object ):
 
             # No project loaded
             return settingsDir + "profile.out"
-
-        def getRopeProject( self, fileName = "" ):
-            " Provides existed or creates a new rope project "
-            if self.project.isLoaded():
-                return self.project.getRopeProject()
-
-            # There is no current project so create a temporary one.
-            # Two cases: the buffer has been saved
-            #            not saved buffer
-            if os.path.isabs( fileName ):
-                dirName = os.path.dirname( fileName )
-            else:
-                # Unsaved buffer, make an assumption that
-                # it is in home directory
-                dirName = str( QDir.homePath() )
-
-            prefs = copy.deepcopy( ropePreferences )
-
-            # Exclude nested dirs as it could take too long
-            # Get only dir names and do not get those dirs
-            # where __init__.py[3] are present
-            subdirsToExclude = getSubdirs( dirName, True, True )
-
-            if "ignored_resources" in prefs:
-                prefs[ "ignored_resources" ] += subdirsToExclude
-            else:
-                prefs[ "ignored_resources" ] = subdirsToExclude
-
-            project = RopeProject( dirName, None, None, **prefs )
-            project.validate( project.root )
-            return project
-
-        def validateRopeProject( self, fileName = "" ):
-            " Validates the existed rope project if so "
-            if not self.project.isLoaded():
-                return
-
-            # Currently rope supports validating of directories only
-            # There is a hope that it will support validating a single file
-            # one day. So the fileName argument is ignored by now and the whole
-            # project is invalidated.
-            if fileName != "":
-                from fileutils import ( detectFileType, PythonFileType,
-                                        Python3FileType )
-                fileType = detectFileType( fileName )
-                if fileType not in [ PythonFileType, Python3FileType ]:
-                    return
-            self.project.validateRopeProject( fileName )
-            return
 
         def getProjectImportDirs( self ):
             """ Provides a list of the project import dirs if so.

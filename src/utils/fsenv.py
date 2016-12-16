@@ -37,6 +37,7 @@ __DEFAULT_FS_PROPS = {'tabs': [],                       # [bool: active,
 
 
 class FileSystemEnvironment:
+
     """Loads/stores/saves the fs related environment"""
 
     def __init__(self):
