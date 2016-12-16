@@ -38,7 +38,7 @@ class FilePositions:
         self.__filePos = {}
         self.__fileName = None
 
-     def setup(self, dirName):
+    def setup(self, dirName):
         """Binds the parameters to a disk file"""
         # Just in case - flush the previous data if they were bound
         self.save()
