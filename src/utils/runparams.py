@@ -18,49 +18,40 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-" Running/debugging session parameters "
-
+"""Running/debugging session parameters"""
 
 from copy import deepcopy
 
+
 class RunParameters:
-    " Stores the script run parameters "
+    """Stores the script run parameters"""
 
     InheritParentEnv = 0
     InheritParentEnvPlus = 1
     SpecificEnvironment = 2
 
     def __init__(self):
-        self.__dict__['__params'] = deepcopy(DEFAULT_RUN_PARAMETERS)
+        self.__params = deepcopy(DEFAULT_RUN_PARAMETERS)
         return
 
-    def __getattr__(self, name):
-        if name in self.__dict__:
-            return self.__dict__[name]
-        if name in self.__dict__['__params']:
-            return self.__dict__['__params'][name]
-        raise AttributeError(name)
+    def __getitem__(self, key):
+        return self.__params[key]
 
-    def __setattr__(self, name, value):
-        self.__dict__['__params'][name] = value
-        return
+    def __setitem__(self, key, value):
+        self.__params[key] = value
 
     def isDefault(self):
-        " Returns True if all the values are default "
-        for key in DEFAULT_RUN_PARAMETERS:
-            if self.__dict__['__params'][key] != DEFAULT_RUN_PARAMETERS[key]:
-                return False
-        return True
+        """Returns True if all the values are default"""
+        return self.params == DEFAULT_RUN_PARAMETERS
 
     def toJSON(self):
-        " Converts the instance to a serializable structure "
+        """Converts the instance to a serializable structure"""
         return {'__class__': 'RunParameters',
-                '__values__': self.__dict__['__params']}
+                '__values__': self.__params}
 
     def fromJSON(self, jsonObj):
-        " Populates the values from the json object "
-        self.__dict__['__params'] = jsonObj['__values__']
-        return
+        """Populates the values from the json object"""
+        self.__params = jsonObj['__values__']
 
 
 # Default parameters
@@ -85,13 +76,14 @@ DEFAULT_RUN_PARAMETERS = {
 # implementation idea is taken from here:
 # http://www.diveintopython3.net/serializing.html
 def toJSON(pythonObj):
-    " Custom serialization "
+    """Custom serialization"""
     if isinstance(pythonObj, RunParameters):
         return pythonObj.toJSON()
     raise TypeError(repr(pythonObj) + ' is not JSON serializable')
 
+
 def fromJSON(jsonObj):
-    " Custom deserialization "
+    """Custom deserialization"""
     if '__class__' in jsonObj:
         if jsonObj['__class__'] == 'RunParameters':
             params = RunParameters()
