@@ -19,7 +19,7 @@
 #
 
 
-""" codimension project """
+"""codimension project"""
 
 import logging
 import uuid
@@ -37,6 +37,7 @@ from .config import DEFAULT_ENCODING
 from .debugenv import DebuggerEnvironment
 from .searchenv import SearchEnvironment
 from .fsenv import FileSystemEnvironment
+from .filepositions import FilePositions
 
 
 # Saved in .cdm3 file
@@ -53,10 +54,12 @@ __DEFAULT_PROJECT_PROPS = {'scriptname': '',    # Script to run the project
 
 
 class CodimensionProject(QObject,
-                         DebuggerEnvironment, SearchEnvironment,
+                         DebuggerEnvironment,
+                         SearchEnvironment,
                          FileSystemEnvironment,
-                         RunParametersCache):
-    " Provides codimension project singleton facility "
+                         RunParametersCache,
+                         FilePositions):
+    """Provides codimension project singleton facility"""
 
     # Constants for the projectChanged signal
     CompleteProject = 0     # It is a completely new project
@@ -74,6 +77,7 @@ class CodimensionProject(QObject,
         SearchEnvironment.__init__(self)
         FileSystemEnvironment.__init__(self)
         RunParametersCache.__init__(self)
+        FilePositions.__init__(self)
 
         self.__dirWatcher = None
 
@@ -88,17 +92,16 @@ class CodimensionProject(QObject,
         self.__excludeFilter = []
         for flt in Settings().projectFilesFilters:
             self.__excludeFilter.append(re.compile(flt))
-        return
 
     def shouldExclude(self, name):
-        " Tests if a file must be excluded "
+        """Tests if a file must be excluded"""
         for excl in self.__excludeFilter:
             if excl.match(name):
                 return True
         return False
 
     def __resetValues(self):
-        """ Initializes or resets all the project members """
+        """Initializes or resets all the project members"""
 
         # Empty file name means that the project has not been loaded or
         # created. This must be an absolute path.
@@ -116,15 +119,15 @@ class CodimensionProject(QObject,
         DebuggerEnvironment.reset(self)
         SearchEnvironment.reset(self)
         FileSystemEnvironment.reset(self)
+        FilePositions.reset(self)
 
         # Reset the dir watchers if so
         if self.__dirWatcher is not None:
             del self.__dirWatcher
-        self.__dirWatcher = None
-        return
+            self.__dirWatcher = None
 
     def createNew(self, fileName, props):
-        " Creates a new project "
+        """Creates a new project"""
 
         # Try to create the user project directory
         projectUuid = str(uuid.uuid1())
@@ -151,10 +154,12 @@ class CodimensionProject(QObject,
         self.userProjectDir = userProjectDir
 
         self.__createProjectFile()  # ~/.codimension/uuidNN/project
+
         RunParametersCache.setup(self, self.userProjectDir)
         DebuggerEnvironment.setup(self, self.userProjectDir)
         SearchEnvironment.setup(self, self.userProjectDir)
         FileSystemEnvironment.setup(self, self.userProjectDir)
+        FilePositions.setup(self, self.userProjectDir)
 
         self.__generateFilesList()
 
@@ -166,10 +171,9 @@ class CodimensionProject(QObject,
         self.__dirWatcher.fsChanged.connect(self.onFSChanged)
 
         self.projectChanged.emit(self.CompleteProject)
-        return
 
     def __removeProjectFiles(self, userProjectDir):
-        " Removes user project files "
+        """Removes user project files"""
 
         for root, dirs, files in os.walk(userProjectDir):
             for f in files:
@@ -182,10 +186,9 @@ class CodimensionProject(QObject,
                     shutil.rmtree(join(root, d))
                 except Exception:
                     pass
-        return
 
     def __createProjectFile(self):
-        " Helper function to create the user project file "
+        """Helper function to create the user project file"""
         try:
             with open(self.userProjectDir + 'project', 'w',
                       encoding=DEFAULT_ENCODING) as diskfile:
@@ -193,10 +196,9 @@ class CodimensionProject(QObject,
         except Exception as exc:
             logging.error('Could not create the ' + self.userProjectDir +
                           'project file: ' + str(exc))
-            return
 
     def saveProject(self):
-        " Writes all the settings into the file "
+        """Writes all the settings into the file"""
         if not self.isLoaded():
             return
 
@@ -216,20 +218,9 @@ class CodimensionProject(QObject,
         else:
             logging.warning('Skipping updates in ' + self.fileName +
                             ' due to writing permissions')
-        return
-
-    @staticmethod
-    def __save(fileName, values, errorWhat):
-        " Saves the general settings "
-        try:
-            with open(fileName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
-                json.dump(values, diskfile, indent=4)
-        except Exception as exc:
-            logging.error('Error saving ' + errorWhat + ': ' + str(exc))
-        return
 
     def loadProject(self, projectFile):
-        """ Loads a project from the given file """
+        """Loads a project from the given file"""
 
         path = realpath(projectFile)
         if not exists(path):
@@ -262,6 +253,7 @@ class CodimensionProject(QObject,
         SearchEnvironment.setup(self, self.userProjectDir)
         FileSystemEnvironment.setup(self, self.userProjectDir)
         RunParametersCache.setup(self, self.userProjectDir)
+        FilePositions.setup(self, self.userProjectDir)
 
         # The project might have been moved...
         self.__createProjectFile()  # ~/.codimension/uuidNN/project
@@ -277,10 +269,9 @@ class CodimensionProject(QObject,
 
         self.projectChanged.emit(self.CompleteProject)
         self.restoreProjectExpandedDirs.emit()
-        return
 
     def getImportDirsAsAbsolutePaths(self):
-        " Provides a list of import dirs as absolute paths "
+        """Provides a list of import dirs as absolute paths"""
         result = []
         for path in self.importDirs:
             if isabs(path):
@@ -290,7 +281,7 @@ class CodimensionProject(QObject,
         return result
 
     def onFSChanged(self, items):
-        " Triggered when the watcher detects changes "
+        """Triggered when the watcher detects changes"""
         for item in items:
             try:
                 if item.startswith('+'):
@@ -300,10 +291,9 @@ class CodimensionProject(QObject,
             except:
                 pass
         self.fsChanged.emit(items)
-        return
 
     def unloadProject(self, emitSignal=True):
-        """ Unloads the current project if required """
+        """Unloads the current project if required"""
         self.projectAboutToUnload.emit()
         if self.isLoaded():
             self.__saveProjectBrowserExpandedDirs()
@@ -311,26 +301,23 @@ class CodimensionProject(QObject,
         if emitSignal:
             # No need to send a signal e.g. if IDE is closing
             self.projectChanged.emit(self.CompleteProject)
-        return
 
     def setImportDirs(self, paths):
-        " Sets a new set of the project import dirs "
+        """Sets a new set of the project import dirs"""
         if self.props['importdirs'] != paths:
             self.props['importdirs'] = paths
             self.saveProject()
             self.projectChanged.emit(self.Properties)
-        return
 
     def __generateFilesList(self):
-        """ Generates the files list having the list of dirs """
+        """Generates the files list having the list of dirs"""
         self.filesList = set()
         path = self.getProjectDir()
         self.filesList.add(path)
         self.__scanDir(path)
-        return
 
     def __scanDir(self, path):
-        """ Recursive function to scan one dir """
+        """Recursive function to scan one dir"""
         # The path is with '/' at the end
         for item in os.listdir(path):
             if self.shouldExclude(item):
@@ -353,10 +340,9 @@ class CodimensionProject(QObject,
                 self.__scanDir(candidate + sep)
                 continue
             self.filesList.add(candidate)
-        return
 
     def isProjectDir(self, path):
-        " Returns True if the path belongs to the project "
+        """Returns True if the path belongs to the project"""
         if not self.isLoaded():
             return False
         path = realpath(path)     # it could be a symlink
@@ -365,45 +351,43 @@ class CodimensionProject(QObject,
         return path.startswith(self.getProjectDir())
 
     def isProjectFile(self, path):
-        " Returns True if the path belongs to the project "
+        """Returns True if the path belongs to the project"""
         if not self.isLoaded():
             return False
         return self.isProjectDir(dirname(path))
 
     def isTopLevelDir(self, path):
-        " Checks if the path is a top level dir "
+        """Checks if the path is a top level dir"""
         if not path.endswith(sep):
             path += sep
         return path in self.topLevelDirs
 
     def updateProperties(self, props):
-        " Updates the project properties "
+        """Updates the project properties"""
         if self.props != props:
             self.props = props
             self.saveProject()
             self.projectChanged.emit(self.Properties)
-        return
 
     def onProjectFileUpdated(self):
-        " Called when a project file is updated via direct editing "
+        """Called when a project file is updated via direct editing"""
         self.props = getProjectProperties(self.fileName)
 
         # no need to save, but signal just in case
         self.projectChanged.emit(self.Properties)
-        return
 
     def isLoaded(self):
-        " returns True if a project is loaded "
+        """Returns True if a project is loaded"""
         return self.fileName != ''
 
     def getProjectDir(self):
-        " Provides an absolute path to the project dir "
+        """Provides an absolute path to the project dir"""
         if not self.isLoaded():
             return None
         return dirname(realpath(self.fileName)) + sep
 
     def getProjectScript(self):
-        " Provides the project script file name "
+        """Provides the project script file name"""
         if not self.isLoaded():
             return None
         if self.scriptName == '':
@@ -413,7 +397,7 @@ class CodimensionProject(QObject,
         return realpath(self.getProjectDir() + self.scriptName)
 
     def addRecentFile(self, path):
-        " Adds a single recent file. True if a new file was inserted. "
+        """Adds a single recent file. True if a new file was inserted."""
         ret = FileSystemEnvironment.addRecentFile(self, path)
         if ret:
             self.recentFilesChanged.emit()
@@ -421,7 +405,7 @@ class CodimensionProject(QObject,
 
 
 def getProjectProperties(projectFile):
-    """ Provides project properties or throws an exception """
+    """Provides project properties or throws an exception"""
 
     path = realpath(projectFile)
     if not exists(path):
@@ -437,7 +421,7 @@ def getProjectProperties(projectFile):
 
 
 def getProjectFileTooltip(fileName):
-    " Provides a project file tooltip "
+    """Provides a project file tooltip"""
     props = getProjectProperties(fileName)
     return '\n'.join(['Version: ' + props.get('version', 'n/a'),
                       'Description: ' + props.get('description', 'n/a'),

@@ -24,8 +24,8 @@ import os.path
 from .fileutils import loadJSON, saveJSON
 
 
-class FilesPositions:
-    " Loads/stores/saves the last position in files "
+class FilePositions:
+    """Loads/stores/saves the last position in files"""
 
     def __init__(self):
 
@@ -33,8 +33,13 @@ class FilesPositions:
         self.__filePos = {}
         self.__fileName = None
 
-    def setup(self, dirName):
-        " Binds the parameters to a disk file "
+    def reset(self):
+        """Un-binds from the file system"""
+        self.__filePos = {}
+        self.__fileName = None
+
+     def setup(self, dirName):
+        """Binds the parameters to a disk file"""
         # Just in case - flush the previous data if they were bound
         self.save()
 
@@ -50,25 +55,25 @@ class FilesPositions:
             self.load()
 
     def load(self):
-        " Loads the saved positions file "
+        """Loads the saved positions file"""
         if self.__fileName:
             self.__filePos = loadJSON(self.__fileName,
                                       'file editing positions', {})
 
     def save(self):
-        " Saves the positions into a file "
+        """Saves the positions into a file"""
         if self.__fileName:
             saveJSON(self.__fileName, self.__filePos, 'file editing positions')
 
-    def getPosition(self, fileName):
-        " Provides the position or (-1,-1,-1,-1,-1) if not found "
+    def getFilePosition(self, fileName):
+        """Provides the position or (-1,-1,-1,-1,-1) if not found"""
         try:
             return self.__filePos[fileName]
         except KeyError:
             return (-1, -1, -1, -1, -1)
 
-    def updatePosition(self, fileName, line, pos, firstLine,
-                       horizontalPos, verticalPos):
-        " Updates the position for the file "
+    def updateFilePosition(self, fileName, line, pos, firstLine,
+                           horizontalPos, verticalPos):
+        """Updates the position for the file"""
         self.__filePos[fileName] = (line, pos, firstLine,
                                     horizontalPos, verticalPos)
