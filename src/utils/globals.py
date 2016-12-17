@@ -20,10 +20,9 @@
 
 """Global data singleton"""
 
-import os
 import sys
-import copy
-from os.path import relpath, dirname, sep, realpath, isdir, exists
+import os
+from os.path import relpath, dirname, sep, realpath, isdir, exists, isfile
 from subprocess import check_output, STDOUT
 from distutils.version import StrictVersion
 from plugins.manager.pluginmanager import CDMPluginManager
@@ -121,87 +120,82 @@ class GlobalDataWrapper:
         return self.project.getImportDirsAsAbsolutePaths()
 
     def isProjectScriptValid(self):
-        " True if the project script valid "
+        """True if the project script valid"""
         scriptName = self.project.getProjectScript()
-        if not os.path.exists( scriptName ):
+        if not exists(scriptName):
             return False
-        scriptName = os.path.realpath( scriptName )
-        if not os.path.isfile( scriptName ):
+        if not isfile(scriptName):
             return False
 
-        from fileutils import ( detectFileType, PythonFileType,
-                                Python3FileType )
-        if detectFileType( scriptName ) in [ PythonFileType,
-                                             Python3FileType ]:
-            return True
-        return False
+        from .fileutils import getFileProperties
+        mime, _, _, _ = getFileProperties(scriptName)
+        return 'python' in mime
 
-    def getFileLineDocstring( self, fName, line ):
-        " Provides a docstring if so for the given file and line "
-        from fileutils import ( detectFileType, PythonFileType,
-                                Python3FileType )
-        if detectFileType( fName ) not in [ PythonFileType,
-                                            Python3FileType ]:
+    def getFileLineDocstring(self, fName, line):
+        """Provides a docstring if so for the given file and line"""
+        from .fileutils import getFileProperties
+        mime, _, _, _ = getFileProperties(fName)
+        if 'python' not in mime:
             return ""
 
         infoCache = self.briefModinfoCache
 
-        def checkFuncObject( obj, line ):
-            " Checks docstring for a function or a class "
+        def checkFuncObject(obj, line):
+            """Checks docstring for a function or a class"""
             if obj.line == line or obj.keywordLine == line:
                 if obj.docstring is None:
-                    return True, ""
+                    return True, ''
                 return True, obj.docstring.text
             for item in obj.classes + obj.functions:
-                found, docstring = checkFuncObject( item, line )
+                found, docstring = checkFuncObject(item, line)
                 if found:
                     return True, docstring
-            return False, ""
+            return False, ''
 
         try:
-            info = infoCache.get( fName )
+            info = infoCache.get(fName)
             for item in info.classes + info.functions:
-                found, docstring = checkFuncObject( item, line )
+                found, docstring = checkFuncObject(item, line)
                 if found:
                     return docstring
         except:
             pass
-        return ""
+        return ''
 
-    def getModInfo( self, path ):
-        " Provides a module info for the given file "
-        from fileutils import ( detectFileType, PythonFileType,
-                                Python3FileType )
-        if detectFileType( path ) not in [ PythonFileType,
-                                           Python3FileType ]:
-            raise Exception( "Trying to parse non-python file: " + path )
-        return self.briefModinfoCache.get( path )
+    def getModInfo(self, path):
+        """Provides a module info for the given file"""
+        from .fileutils import getFileProperties
+        mime, _, _, _ = getFileProperties(path)
+
+        if 'python' not in mime:
+            raise Exception('Trying to parse non-python file: ' + path)
+        return self.briefModinfoCache.get(path)
 
     @staticmethod
     def __checkGraphviz():
-        " Checks if the graphviz available "
+        """Checks if the graphviz available"""
         if 'win' in sys.platform.lower():
-            return os.system( 'which dot > /NUL 2>&1' ) == 0
-        return os.system( 'which dot > /dev/null 2>&1' ) == 0
+            return os.system('which dot > /NUL 2>&1') == 0
+        return os.system('which dot > /dev/null 2>&1') == 0
 
     @staticmethod
     def __checkPylint():
-        " Checks if pylint is available "
+        """Checks if pylint is available"""
         if 'win' in sys.platform.lower():
-            return os.system( 'which pylint > /NUL 2>&1' ) == 0
-        return os.system( 'which pylint > /dev/null 2>&1' ) == 0
+            return os.system('which pylint > /NUL 2>&1') == 0
+        return os.system('which pylint > /dev/null 2>&1') == 0
 
     @staticmethod
     def __getPylintVersion():
         " Provides the pylint version "
-        output = check_output( "pylint --version; exit 0",
-                               stderr = STDOUT, shell = True )
+        output = check_output("pylint --version; exit 0",
+                              stderr=STDOUT, shell=True)
         for line in output.splitlines():
             line = line.strip()
-            if line.startswith( "pylint " ):
-                version = line.replace( "pylint", "" ).replace( ",", "" )
+            if line.startswith("pylint "):
+                version = line.replace("pylint", "").replace(",", "")
                 try:
-                    return StrictVersion( version.strip() )
+                    return StrictVersion(version.strip())
                 except:
                     return None
         return None
