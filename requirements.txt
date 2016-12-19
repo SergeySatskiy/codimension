@@ -3,3 +3,4 @@ pylint==1.6.4
 PyQt5==5.7
 python-magic==0.4.12
 qutepart==3.0.1
+pysvn==1.8.0
