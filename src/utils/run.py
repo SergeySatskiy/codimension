@@ -21,7 +21,7 @@
 # Credits: Nir Aides, Copyright (C) 2005-2009
 #
 
-" Utility functions to support running scripts "
+"""Utility functions to support running scripts"""
 
 
 import sys
@@ -38,15 +38,13 @@ TERM_KONSOLE = 1
 TERM_GNOME = 2
 TERM_XTERM = 3
 
-
 CMD_TYPE_RUN = 0
 CMD_TYPE_PROFILE = 1
 CMD_TYPE_DEBUG = 2
 
 
-
 def getUserShell():
-    " Provides the user shell on unix systems "
+    """Provides the user shell on unix systems"""
 
     try:
         osShell = os.getenv('SHELL')
@@ -69,7 +67,7 @@ def getUserShell():
 
 
 def __isPrefixInEnviron(prefix):
-    " True if any of the environment variables starts with the given prefix "
+    """True if any of the environment variables starts with the given prefix"""
     for name in os.environ.keys():
         if name.startswith(prefix):
             return True
@@ -77,7 +75,7 @@ def __isPrefixInEnviron(prefix):
 
 
 def __isFileInPath(name):
-    " True is the given name is in PATH "
+    """True is the given name is in PATH"""
     if name == '':
         return False
 
@@ -100,7 +98,7 @@ __konsoleQuery = "kreadconfig --file kdeglobals --group General " \
 
 
 def getStartTerminalCommand(terminalType):
-    " Provides the UNIX command to start a new terminal, e.g.: xterm "
+    """Provides the UNIX command to start a new terminal, e.g.: xterm"""
 
     if terminalType == TERM_KONSOLE:
         (s, term) = getstatusoutput(__konsoleQuery)
@@ -196,7 +194,7 @@ EXIT_IF_OK = 'test "_$CDM_RES" == "_0" && exit;'
 
 
 def prepareArguments(arguments):
-    """ Prepares arguments for the command line """
+    """Prepares arguments for the command line"""
     args = ""
     for index in range(len(arguments)):
         args += ' "$CDM_ARG' + str(index) + '"'
@@ -206,7 +204,7 @@ def prepareArguments(arguments):
 def getTerminalCommandToRun(fileName, workingDir, arguments,
                             terminalType, closeTerminal, tcpServerPort=None,
                             procID=None):
-    " Provides a command to run a separate shell terminal "
+    """Provides a command to run a separate shell terminal"""
 
     if os.name != 'posix':
         raise Exception("Cannot guess terminal command.")
@@ -255,7 +253,7 @@ def getTerminalCommandToRun(fileName, workingDir, arguments,
 
 def getTerminalCommandToProfile(fileName, workingDir, arguments,
                                 terminalType, closeTerminal, port):
-    " Provides a command to run a separate shell terminal "
+    """Provides a command to run a separate shell terminal"""
 
     if os.name != 'posix':
         raise Exception("Cannot guess terminal command.")
@@ -309,7 +307,7 @@ def getTerminalCommandToProfile(fileName, workingDir, arguments,
 def getTerminalCommandToDebug(fileName, workingDir, arguments,
                               terminalType, closeTerminal,
                               procFeedbackPort, tcpServerPort):
-    " Provides a command line to debug in a separate shell terminal "
+    """Provides a command line to debug in a separate shell terminal"""
 
     if os.name != 'posix':
         raise Exception("Cannot guess terminal command.")
@@ -384,7 +382,7 @@ def getTerminalCommandToDebug(fileName, workingDir, arguments,
 
 
 def parseCommandLineArguments(cmdLine):
-    " Parses command line arguments provided by the user in the UI "
+    """Parses command line arguments provided by the user in the UI"""
 
     result = []
 
@@ -462,8 +460,8 @@ def parseCommandLineArguments(cmdLine):
 def getCwdCmdEnv(cmdType, path, params, terminalType,
                  procFeedbackPort=None, tcpServerPort=None,
                  procID=None):
-    """ Provides the working directory, command line and environment
-        for running/debugging a script """
+    """Provides the working directory, command line and environment
+       for running/debugging a script"""
 
     workingDir = getWorkingDir(path, params)
 
@@ -494,14 +492,14 @@ def getCwdCmdEnv(cmdType, path, params, terminalType,
 
 
 def getWorkingDir(path, params):
-    " Provides the working directory "
+    """Provides the working directory"""
     if params.useScriptLocation:
         return os.path.dirname(path)
     return params.specificDir
 
 
 def getNoArgsEnvironment(params):
-    " Provides a copy of the environment "
+    """Provides a copy of the environment"""
     if params.envType == params.InheritParentEnv:
         # 'None' does not work here: popen stores last env somewhere and
         # uses it inappropriately
