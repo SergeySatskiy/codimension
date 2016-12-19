@@ -37,7 +37,7 @@ class VersionControlSystemInterface(CDMPluginBase):
            enabled or disabled. So it is recommended to have the
            resource allocation in the activate(...) method and
            deallocation of them in the deactivate(...) method."""
-        CDMPluginBase.__init__( self )
+        CDMPluginBase.__init__(self)
 
     # Member functions below could or should be implemented by a plugin.
     # See docstrings for the detailed description.
