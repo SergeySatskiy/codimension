@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
 
 #
@@ -27,39 +25,35 @@
 # Copyright (c) 2007 - 2010 Detlev Offenbach <detlev@die-offenbachs.de>
 #
 
-""" Splash screen implementation """
+"""Splash screen implementation"""
 
-from PyQt4.QtCore       import Qt
-from PyQt4.QtGui        import QApplication, QSplashScreen, QColor
-from utils.pixmapcache  import PixmapCache
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QApplication, QSplashScreen, QColor
+from utils.pixmapcache import PixmapCache
 
 
-class SplashScreen( QSplashScreen ):
-    """ Splash screen class """
+class SplashScreen(QSplashScreen):
 
-    def __init__( self ):
+    """Splash screen class"""
 
-        self.labelAlignment = \
-            Qt.Alignment( Qt.AlignBottom | Qt.AlignRight | Qt.AlignAbsolute )
+    def __init__(self):
+        self.labelAlignment = Qt.Alignment(Qt.AlignBottom |
+                                           Qt.AlignRight |
+                                           Qt.AlignAbsolute)
 
-        QSplashScreen.__init__( self, None, PixmapCache().getPixmap( 'splash.png' ) )
+        QSplashScreen.__init__(self, None,
+                               PixmapCache().getPixmap('splash.png'))
 
         self.show()
         QApplication.flush()
-        return
 
-    def showMessage( self, msg ):
-        """ Show the message in the bottom part of the splashscreen """
-
-        QSplashScreen.showMessage( self, msg,
-                                   self.labelAlignment, QColor( Qt.black ) )
+    def showMessage(self, msg):
+        """Show the message in the bottom part of the splashscreen"""
+        QSplashScreen.showMessage(self, msg,
+                                  self.labelAlignment, QColor(Qt.black))
         QApplication.processEvents()
-        return
 
-    def clearMessage( self ):
-        """ Clear the splash screen message """
-
-        QSplashScreen.clearMessage( self )
+    def clearMessage(self):
+        """Clear the splash screen message"""
+        QSplashScreen.clearMessage(self)
         QApplication.processEvents()
-        return
-

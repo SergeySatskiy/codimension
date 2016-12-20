@@ -23,8 +23,8 @@
 """ codimension main window """
 
 import os.path, sys, logging, ConfigParser, gc
-from PyQt4.QtCore import SIGNAL, Qt, QSize, QTimer, QDir, QVariant, QUrl, pyqtSignal
-from PyQt4.QtGui import ( QLabel, QToolBar, QWidget, QMessageBox, QFont,
+from PyQt5.QtCore import SIGNAL, Qt, QSize, QTimer, QDir, QVariant, QUrl, pyqtSignal
+from PyQt5.QtGui import ( QLabel, QToolBar, QWidget, QMessageBox, QFont,
                           QVBoxLayout, QSplitter, QSizePolicy,
                           QAction, QMainWindow, QShortcut, QFrame,
                           QApplication, QCursor, QMenu, QToolButton,
@@ -2062,7 +2062,7 @@ class CodimensionMainWindow( QMainWindow ):
                 lint.analyzeFile( fileOrContent, pylintrcFile, importDirs,
                                   workingDir )
 
-        except Exception, exc:
+        except Exception as exc:
             QApplication.restoreOverrideCursor()
             logging.error( str( exc ) )
             return
@@ -2101,7 +2101,7 @@ class CodimensionMainWindow( QMainWindow ):
             else:
                 metrics.analyzeFile( fileOrContent )
 
-        except Exception, exc:
+        except Exception as exc:
             QApplication.restoreOverrideCursor()
             logging.error( str( exc ) )
             logging.info( "Note: pymetrics does not work for syntactically "
@@ -2169,7 +2169,7 @@ class CodimensionMainWindow( QMainWindow ):
             self.__bottomSideBar.setTabToolTip( 6, tooltip )
             self.diffViewer.setHTML( parse_from_memory( diff, False, True ),
                                      tooltip )
-        except Exception, exc:
+        except Exception as exc:
             logging.error( "Error showing diff: " + str( exc ) )
         return
 
@@ -2370,7 +2370,7 @@ class CodimensionMainWindow( QMainWindow ):
             f = open( fileName, "w" )
             f.write( getDefaultTemplate() )
             f.close()
-        except Exception, exc:
+        except Exception as exc:
             logging.error( "Error creating a template file: " + str( exc ) )
             return
         self.openFile( fileName, -1 )
@@ -2463,7 +2463,7 @@ class CodimensionMainWindow( QMainWindow ):
         " Find name dialog should come up "
         try:
             FindNameDialog( "", self ).exec_()
-        except Exception, exc:
+        except Exception as exc:
             logging.error( str( exc ) )
         return
 
@@ -2471,7 +2471,7 @@ class CodimensionMainWindow( QMainWindow ):
         " Find file dialog should come up "
         try:
             FindFileDialog( self ).exec_()
-        except Exception, exc:
+        except Exception as exc:
             logging.error( str( exc ) )
         return
 
@@ -2572,7 +2572,7 @@ class CodimensionMainWindow( QMainWindow ):
             dlg = ProfilingProgressDialog(
                         GlobalData().project.getProjectScript(), self )
             dlg.exec_()
-        except Exception, exc:
+        except Exception as exc:
             logging.error( str( exc ) )
         return
 
@@ -3495,7 +3495,7 @@ class CodimensionMainWindow( QMainWindow ):
         for fileName in dialog.selectedFiles():
             try:
                 self.detectTypeAndOpenFile( os.path.realpath( str( fileName ) ) )
-            except Exception, exc:
+            except Exception as exc:
                 logging.error( str( exc ) )
         return
 
@@ -4280,11 +4280,11 @@ class CodimensionMainWindow( QMainWindow ):
             return "&" + str( count ) + ".  "
         return "&" + chr( count - 10 + ord( 'a' ) ) + ".  "
 
-    def __prjAboutToShow( self ):
-        " Triggered when project menu is about to show "
-        self.__newProjectAct.setEnabled( not self.debugMode )
-        self.__openProjectAct.setEnabled( not self.debugMode )
-        self.__unloadProjectAct.setEnabled( not self.debugMode )
+    def __prjAboutToShow(self):
+        """Triggered when project menu is about to show"""
+        self.__newProjectAct.setEnabled(not self.debugMode)
+        self.__openProjectAct.setEnabled(not self.debugMode)
+        self.__unloadProjectAct.setEnabled(not self.debugMode)
 
         # Recent projects part
         self.__recentPrjMenu.clear()
@@ -4295,162 +4295,142 @@ class CodimensionMainWindow( QMainWindow ):
                 continue
             addedCount += 1
             act = self.__recentPrjMenu.addAction(
-                                self.__getAccelerator( addedCount ) +
-                                os.path.basename( item ).replace( ".cdm", "" ) )
-            act.setData( QVariant( item ) )
-            act.setEnabled( not self.debugMode and os.path.exists( item ) )
+                                self.__getAccelerator(addedCount) +
+                                os.path.basename(item).replace(".cdm3", ""))
+            act.setData(QVariant(item))
+            act.setEnabled(not self.debugMode and os.path.exists(item))
 
-        self.__recentPrjMenu.setEnabled( addedCount > 0 )
+        self.__recentPrjMenu.setEnabled(addedCount > 0)
 
         if GlobalData().project.isLoaded():
             # Template part
-            exists = os.path.exists( getProjectTemplateFile() )
-            self.__prjTemplateMenu.setEnabled( True )
-            self.__createPrjTemplateAct.setEnabled( not exists )
-            self.__editPrjTemplateAct.setEnabled( exists )
-            self.__delPrjTemplateAct.setEnabled( exists )
+            exists = os.path.exists(getProjectTemplateFile())
+            self.__prjTemplateMenu.setEnabled(True)
+            self.__createPrjTemplateAct.setEnabled(not exists)
+            self.__editPrjTemplateAct.setEnabled(exists)
+            self.__delPrjTemplateAct.setEnabled(exists)
             # Pylint part
-            exists = os.path.exists( self.__getPylintRCFileName() )
-            self.__prjPylintMenu.setEnabled( True )
-            self.__prjGenPylintrcAct.setEnabled( not exists )
-            self.__prjEditPylintrcAct.setEnabled( exists )
-            self.__prjDelPylintrcAct.setEnabled( exists )
+            exists = os.path.exists(self.__getPylintRCFileName())
+            self.__prjPylintMenu.setEnabled(True)
+            self.__prjGenPylintrcAct.setEnabled(not exists)
+            self.__prjEditPylintrcAct.setEnabled(exists)
+            self.__prjDelPylintrcAct.setEnabled(exists)
             # Rope part
             self.__prjRopeConfigAct.setEnabled(
-                                os.path.exists( self.__getRopeConfig() ) )
+                                os.path.exists(self.__getRopeConfig()))
         else:
-            self.__prjTemplateMenu.setEnabled( False )
-            self.__prjPylintMenu.setEnabled( False )
-            self.__prjRopeConfigAct.setEnabled( False )
+            self.__prjTemplateMenu.setEnabled(False)
+            self.__prjPylintMenu.setEnabled(False)
+            self.__prjRopeConfigAct.setEnabled(False)
 
-        return
-
-    def __onRecentPrj( self, act ):
-        " Triggered when a recent project is requested to be loaded "
-        path = str( act.data().toString() )
-        if not os.path.exists( path ):
-            logging.error( "Could not find project file: " + path )
+    def __onRecentPrj(self, act):
+        """Triggered when a recent project is requested to be loaded"""
+        path = str(act.data().toString())
+        if not os.path.exists(path):
+            logging.error("Could not find project file: " + path)
         else:
-            self.__loadProject( path )
-        return
+            self.__loadProject(path)
 
-    def __onRecentFile( self, act ):
-        " Triggered when a recent file is requested to be loaded "
-        path = str( act.data().toString() )
-        fileType = detectFileType( path )
+    def __onRecentFile(self, act):
+        """Triggered when a recent file is requested to be loaded"""
+        path = str(act.data().toString())
+        fileType = detectFileType(path)
         if fileType == PixmapFileType:
-            self.openPixmapFile( path )
-            return
-        self.openFile( path, -1 )
-        return
+            self.openPixmapFile(path)
+        else:
+            self.openFile(path, -1)
 
-    def onNotUsedFunctions( self ):
-        " Triggered when not used functions analysis requested "
+    def onNotUsedFunctions(self):
+        """Triggered when not used functions analysis requested"""
         dlg = NotUsedAnalysisProgress(
-                        NotUsedAnalysisProgress.Functions,
-                        self.functionsViewer.funcViewer.model().sourceModel(),
-                        self )
+            NotUsedAnalysisProgress.Functions,
+            self.functionsViewer.funcViewer.model().sourceModel(), self )
         dlg.exec_()
-        return
 
-    def onNotUsedGlobals( self ):
-        " Triggered when not used global vars analysis requested "
+    def onNotUsedGlobals(self):
+        """Triggered when not used global vars analysis requested"""
         dlg = NotUsedAnalysisProgress(
-                        NotUsedAnalysisProgress.Globals,
-                        self.globalsViewer.globalsViewer.model().sourceModel(),
-                        self )
+            NotUsedAnalysisProgress.Globals,
+            self.globalsViewer.globalsViewer.model().sourceModel(), self)
         dlg.exec_()
-        return
 
-    def onNotUsedClasses( self ):
-        " Triggered when not used classes analysis requested "
+    def onNotUsedClasses(self):
+        """Triggered when not used classes analysis requested"""
         dlg = NotUsedAnalysisProgress(
-                        NotUsedAnalysisProgress.Classes,
-                        self.classesViewer.clViewer.model().sourceModel(),
-                        self )
+            NotUsedAnalysisProgress.Classes,
+            self.classesViewer.clViewer.model().sourceModel(), self)
         dlg.exec_()
-        return
 
-    def showDisassembler( self, scriptPath, name ):
-        " Triggered when a disassembler should be shown "
+    def showDisassembler(self, scriptPath, name):
+        """Triggered when a disassembler should be shown"""
         try:
-            code = getDisassembled( scriptPath, name )
+            code = getDisassembled(scriptPath, name)
             editorsManager = self.editorsManagerWidget.editorsManager
-            editorsManager.showDisassembler( scriptPath, name, code )
+            editorsManager.showDisassembler(scriptPath, name, code)
         except:
-            logging.error( "Could not get '" + name + "' from " +
-                           scriptPath + " disassembled." )
-        return
+            logging.error("Could not get '" + name + "' from " +
+                          scriptPath + " disassembled.")
 
-    def highlightInPrj( self, path ):
-        " Triggered when the file is to be highlighted in a project tree "
+    def highlightInPrj(self, path):
+        """Triggered when the file is to be highlighted in a project tree"""
         if not GlobalData().project.isLoaded():
             return
-        if not os.path.isabs( path ):
+        if not os.path.isabs(path):
             return
-        if not GlobalData().project.isProjectFile( path ):
+        if not GlobalData().project.isProjectFile(path):
             return
-        if self.projectViewer.highlightPrjItem( path ):
+        if self.projectViewer.highlightPrjItem(path):
             self.activateProjectTab()
-        return
 
-    def highlightInFS( self, path ):
-        " Triggered when the file is to be highlighted in the FS tree "
-        if not os.path.isabs( path ):
+    def highlightInFS(self, path):
+        """Triggered when the file is to be highlighted in the FS tree"""
+        if not os.path.isabs(path):
             return
-        if self.projectViewer.highlightFSItem( path ):
+        if self.projectViewer.highlightFSItem(path):
             self.activateProjectTab()
-        return
 
-    def highlightInOutline( self, context, line ):
-        " Triggered when the given context should be highlighted in outline "
-        if self.outlineViewer.highlightContextItem( context, line ):
+    def highlightInOutline(self, context, line):
+        """Triggered when the given context should be highlighted in outline"""
+        if self.outlineViewer.highlightContextItem(context, line):
             self.activateOutlineTab()
-        return
 
-    def getLogViewerContent( self ):
-        " Provides the log viewer window content as a plain text "
+    def getLogViewerContent(self):
+        """Provides the log viewer window content as a plain text"""
         return self.logViewer.getText()
 
-    def getCurrentFrameNumber( self ):
-        " Provides the current stack frame number "
+    def getCurrentFrameNumber(self):
+        """Provides the current stack frame number"""
         return self.debuggerContext.getCurrentFrameNumber()
 
-    def __onClientExceptionsCleared( self ):
-        " Triggered when the user cleared the client exceptions "
-        self.__rightSideBar.setTabText( 2, "Exceptions" )
-        return
+    def __onClientExceptionsCleared(self):
+        """Triggered when the user cleared the client exceptions"""
+        self.__rightSideBar.setTabText(2, "Exceptions")
 
-    def __onBreakpointsModelChanged( self ):
+    def __onBreakpointsModelChanged(self):
         " Triggered when something is changed in the breakpoints list "
         enabledCount, disabledCount = self.__debugger.getBreakPointModel().getCounts()
         total = enabledCount + disabledCount
         if total == 0:
-            self.__rightSideBar.setTabText( 3, "Breakpoints" )
+            self.__rightSideBar.setTabText(3, "Breakpoints")
         else:
-            self.__rightSideBar.setTabText( 3, "Breakpoints (" + str( total ) + ")" )
-        return
+            self.__rightSideBar.setTabText(3, "Breakpoints (" + str(total) + ")")
 
-    def __onEvalOK( self, message ):
-        " Triggered when Eval completed successfully "
-        logging.info( "Eval succeeded:\n" + message )
-        return
+    def __onEvalOK(self, message):
+        """Triggered when Eval completed successfully"""
+        logging.info("Eval succeeded:\n" + message)
 
-    def __onEvalError( self, message ):
-        " Triggered when Eval failed "
-        logging.error( "Eval failed:\n" + message )
-        return
+    def __onEvalError(self, message):
+        """Triggered when Eval failed"""
+        logging.error("Eval failed:\n" + message)
 
-    def __onExecOK( self, message ):
-        " Triggered when Exec completed successfully "
+    def __onExecOK(self, message):
+        """Triggered when Exec completed successfully"""
         if message:
-            logging.info( "Exec succeeded:\n" + message )
-        return
+            logging.info("Exec succeeded:\n" + message)
 
-    def __onExecError( self, message ):
-        " Triggered when Eval failed "
-        logging.error( "Exec failed:\n" + message )
-        return
+    def __onExecError(self, message):
+        """Triggered when Eval failed"""
+        logging.error("Exec failed:\n" + message)
 
     def setDebugTabAvailable( self, enabled ):
         " Sets a new status when a tab is changed or a content has been changed "
@@ -4484,7 +4464,7 @@ class CodimensionMainWindow( QMainWindow ):
                 return
             self.__pluginMenus[ plugin.getPath() ] = pluginMenu
             self.__recomposePluginMenu()
-        except Exception, exc:
+        except Exception as exc:
             logging.error( "Error populating " + pluginName + " plugin main menu: " +
                            str( exc ) + ". Ignore and continue." )
         return
@@ -4508,7 +4488,7 @@ class CodimensionMainWindow( QMainWindow ):
             if path in self.__pluginMenus:
                 del self.__pluginMenus[ path ]
                 self.__recomposePluginMenu()
-        except Exception, exc:
+        except Exception as exc:
             pluginName = plugin.getName()
             logging.error( "Error removing " + pluginName + " plugin main menu: " +
                            str( exc ) + ". Ignore and continue." )
@@ -4629,24 +4609,21 @@ class CodimensionMainWindow( QMainWindow ):
             editorsManager = self.editorsManagerWidget.editorsManager
             currentWidget = editorsManager.currentWidget()
             self.__dumpDebugSettings( currentWidget.getFileName(), True )
-        return
 
     def __onDumpProjectDebugSettings( self ):
         " Triggered when dumping project script settings is requested "
         if self.__dumpProjectDbgSettingsAvailable():
             project = GlobalData().project
             self.__dumpDebugSettings( project.getProjectScript(), False )
-        return
 
-    def __onDumpProjectFullDebugSettings( self ):
-        " Triggered when dumping project script complete settings is requested "
+    def __onDumpProjectFullDebugSettings(self):
+        """Triggered when dumping project script complete settings is requested"""
         if self.__dumpProjectDbgSettingsAvailable():
             project = GlobalData().project
-            self.__dumpDebugSettings( project.getProjectScript(), True )
-        return
+            self.__dumpDebugSettings(project.getProjectScript(), True)
 
-    def __dumpScriptDbgSettingsAvailable( self ):
-        " True if dumping debug session settings for the script is available "
+    def __dumpScriptDbgSettingsAvailable(self):
+        """True if dumping dbg session settings for the script is available"""
         if not self.__isPythonBuffer():
             return False
         editorsManager = self.editorsManagerWidget.editorsManager
@@ -4654,180 +4631,165 @@ class CodimensionMainWindow( QMainWindow ):
         if currentWidget is None:
             return False
         fileName  = currentWidget.getFileName()
-        if os.path.isabs( fileName ) and os.path.exists( fileName ):
+        if os.path.isabs(fileName) and os.path.exists(fileName):
             return True
         return False
 
-    def __dumpProjectDbgSettingsAvailable( self ):
-        " True if dumping debug session settings for the project is available "
+    def __dumpProjectDbgSettingsAvailable(self):
+        """True if dumping dbg session settings for the project is available"""
         project = GlobalData().project
         if not project.isLoaded():
             return False
         fileName = project.getProjectScript()
-        if os.path.exists( fileName ) and os.path.isabs( fileName ):
+        if os.path.exists(fileName) and os.path.isabs(fileName):
             return True
         return False
 
-    def __onDumpDbgSettingsAboutToShow( self ):
-        " Dump debug settings is about to show "
+    def __onDumpDbgSettingsAboutToShow(self):
+        """Dump debug settings is about to show"""
         scriptAvailable = self.__dumpScriptDbgSettingsAvailable()
-        self.__debugDumpScriptSettingsAct.setEnabled( scriptAvailable )
-        self.__debugDumpScriptSettingsEnvAct.setEnabled( scriptAvailable )
+        self.__debugDumpScriptSettingsAct.setEnabled(scriptAvailable)
+        self.__debugDumpScriptSettingsEnvAct.setEnabled(scriptAvailable)
 
         projectAvailable = self.__dumpProjectDbgSettingsAvailable()
-        self.__debugDumpProjectSettingsAct.setEnabled( projectAvailable )
-        self.__debugDumpProjectSettingsEnvAct.setEnabled( projectAvailable )
-        return
+        self.__debugDumpProjectSettingsAct.setEnabled(projectAvailable)
+        self.__debugDumpProjectSettingsEnvAct.setEnabled(projectAvailable)
 
-    def installRedirectedIOConsole( self ):
+    def installRedirectedIOConsole(self):
         " Create redirected IO console "
-        self.redirectedIOConsole = IOConsoleTabWidget( self )
-        self.connect( self.redirectedIOConsole, SIGNAL( 'UserInput' ),
-                      self.__onUserInput )
+        self.redirectedIOConsole = IOConsoleTabWidget(self)
+        self.redirectedIOConsole.UserInput.connect(self.__onUserInput)
         self.redirectedIOConsole.textEditorZoom.connect(
-                            self.editorsManagerWidget.editorsManager.onZoom )
-        self.redirectedIOConsole.settingUpdated.connect( self.onIOConsoleSettingUpdated )
-        self.__bottomSideBar.addTab( self.redirectedIOConsole,
-                PixmapCache().getIcon( 'ioconsole.png' ), 'IO console' )
-        self.__bottomSideBar.setTabToolTip( 7, 'Redirected IO debug console' )
-        return
+            self.editorsManagerWidget.editorsManager.onZoom)
+        self.redirectedIOConsole.settingUpdated.connect(
+            self.onIOConsoleSettingUpdated)
+        self.__bottomSideBar.addTab(
+            self.redirectedIOConsole,
+            PixmapCache().getIcon('ioconsole.png'), 'IO console')
+        self.__bottomSideBar.setTabToolTip(7, 'Redirected IO debug console')
 
-    def clearDebugIOConsole( self ):
-        " Clears the content of the debug IO console "
+    def clearDebugIOConsole(self):
+        """Clears the content of the debug IO console"""
         if self.redirectedIOConsole:
             self.redirectedIOConsole.clear()
-        return
 
-    def __onClientStdout( self, data ):
-        " Triggered when the client reports stdout "
+    def __onClientStdout(self, data):
+        """Triggered when the client reports stdout"""
         self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget( self.redirectedIOConsole )
+        self.__bottomSideBar.setCurrentWidget(self.redirectedIOConsole)
         self.__bottomSideBar.raise_()
-        self.redirectedIOConsole.appendStdoutMessage( data )
-        return
+        self.redirectedIOConsole.appendStdoutMessage(data)
 
-    def __onClientStderr( self, data ):
-        " Triggered when the client reports stderr "
+    def __onClientStderr(self, data):
+        """Triggered when the client reports stderr"""
         self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget( self.redirectedIOConsole )
+        self.__bottomSideBar.setCurrentWidget(self.redirectedIOConsole)
         self.__bottomSideBar.raise_()
-        self.redirectedIOConsole.appendStderrMessage( data )
-        return
+        self.redirectedIOConsole.appendStderrMessage(data)
 
-    def __ioconsoleIDEMessage( self, message ):
-        " Sends an IDE message to the IO console "
+    def __ioconsoleIDEMessage(self, message):
+        """Sends an IDE message to the IO console"""
         self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget( self.redirectedIOConsole )
+        self.__bottomSideBar.setCurrentWidget(self.redirectedIOConsole)
         self.__bottomSideBar.raise_()
-        self.redirectedIOConsole.appendIDEMessage( message )
-        return
+        self.redirectedIOConsole.appendIDEMessage(message)
 
-    def __onClientRawInput( self, prompt, echo ):
-        " Triggered when the client input is requested "
+    def __onClientRawInput(self, prompt, echo):
+        """Triggered when the client input is requested"""
         self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget( self.redirectedIOConsole )
+        self.__bottomSideBar.setCurrentWidget(self.redirectedIOConsole)
         self.__bottomSideBar.raise_()
-        self.redirectedIOConsole.rawInput( prompt, echo )
+        self.redirectedIOConsole.rawInput(prompt, echo)
         self.redirectedIOConsole.setFocus()
-        return
 
-    def __onUserInput( self, userInput ):
-        " Triggered when the user finished input in the redirected IO console "
-        self.__debugger.remoteRawInput( userInput )
-        return
+    def __onUserInput(self, userInput):
+        """Triggered when the user finished input in the redirected IO tab"""
+        self.__debugger.remoteRawInput(userInput)
 
-    def __getNewRunIndex( self ):
-        " Provides the new run index "
+    def __getNewRunIndex(self):
+        """Provides the new run index"""
         self.__newRunIndex += 1
         return self.__newRunIndex
 
-    def __getNewProfileIndex( self ):
-        " Provides the new profile index "
+    def __getNewProfileIndex(self):
+        """Provides the new profile index"""
         self.__newProfileIndex += 1
         return self.__newProfileIndex
 
-    def installIOConsole( self, widget, isProfile = False ):
-        " Installs a new widget at the bottom "
+    def installIOConsole(self, widget, isProfile=False):
+        """Installs a new widget at the bottom"""
         if isProfile:
-            index = str( self.__getNewProfileIndex() )
+            index = str(self.__getNewProfileIndex())
             caption = "Profiling #" + index
             tooltip = "Redirected IO profile console #" + index + " (running)"
         else:
-            index = str( self.__getNewRunIndex() )
+            index = str(self.__getNewRunIndex())
             caption = "Run #" + index
             tooltip = "Redirected IO run console #" + index + " (running)"
 
-        self.connect( widget, SIGNAL( 'CloseIOConsole' ),
-                      self.__onCloseIOConsole )
-        self.connect( widget, SIGNAL( 'KillIOConsoleProcess' ),
-                      self.__onKillIOConsoleProcess )
+        widget.CloseIOConsole.connect(self.__onCloseIOConsole)
+        widget.KillIOConsoleProcess.connect(self.__onKillIOConsoleProcess)
         widget.textEditorZoom.connect(
-                            self.editorsManagerWidget.editorsManager.onZoom )
-        widget.settingUpdated.connect( self.onIOConsoleSettingUpdated )
+            self.editorsManagerWidget.editorsManager.onZoom)
+        widget.settingUpdated.connect(self.onIOConsoleSettingUpdated)
 
-        self.__bottomSideBar.addTab( widget,
-                PixmapCache().getIcon( 'ioconsole.png' ), caption )
+        self.__bottomSideBar.addTab(
+            widget, PixmapCache().getIcon('ioconsole.png'), caption)
         self.__bottomSideBar.setTabToolTip(
-                self.__bottomSideBar.count() - 1, tooltip )
+            self.__bottomSideBar.count() - 1, tooltip)
         self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget( widget )
+        self.__bottomSideBar.setCurrentWidget(widget)
         self.__bottomSideBar.raise_()
         widget.setFocus()
-        return
 
-    def updateIOConsoleTooltip( self, threadID, msg ):
-        " Updates the IO console tooltip "
-        index = self.__getIOConsoleIndex( threadID )
+    def updateIOConsoleTooltip(self, threadID, msg):
+        """Updates the IO console tooltip"""
+        index = self.__getIOConsoleIndex(threadID)
         if index is not None:
-            tooltip = self.__bottomSideBar.tabToolTip( index )
-            tooltip = tooltip.replace( "(running)", "(" + msg + ")" )
-            self.__bottomSideBar.setTabToolTip( index, tooltip )
-        return
+            tooltip = self.__bottomSideBar.tabToolTip(index)
+            tooltip = tooltip.replace("(running)", "(" + msg + ")")
+            self.__bottomSideBar.setTabToolTip(index, tooltip)
 
-    def __getIOConsoleIndex( self, threadID ):
-        " Provides the IO console index by the thread ID "
+    def __getIOConsoleIndex(self, threadID):
+        """Provides the IO console index by the thread ID"""
         index = self.__bottomSideBar.count() - 1
         while index >= 0:
-            widget = self.__bottomSideBar.widget( index )
-            if hasattr( widget, "threadID" ):
+            widget = self.__bottomSideBar.widget(index)
+            if hasattr(widget, "threadID"):
                 if widget.threadID() == threadID:
                     return index
             index -= 1
         return None
 
-    def __onCloseIOConsole( self, threadID ):
-        " Closes the tab with the corresponding widget "
-        index = self.__getIOConsoleIndex( threadID )
+    def __onCloseIOConsole(self, threadID):
+        """Closes the tab with the corresponding widget"""
+        index = self.__getIOConsoleIndex(threadID)
         if index is not None:
-            self.__bottomSideBar.removeTab( index )
-        return
+            self.__bottomSideBar.removeTab(index)
 
-    def __onKillIOConsoleProcess( self, threadID ):
-        " Kills the process linked to the IO console "
-        self.__runManager.kill( threadID )
-        return
+    def __onKillIOConsoleProcess(self, threadID):
+        """Kills the process linked to the IO console"""
+        self.__runManager.kill(threadID)
 
-    def closeAllIOConsoles( self ):
-        " Closes all IO run/profile consoles and clears the debug IO console "
-        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+    def closeAllIOConsoles(self):
+        """Closes all IO run/profile tabs and clears the debug IO console"""
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         index = self.__bottomSideBar.count() - 1
         while index >= 0:
-            widget = self.__bottomSideBar.widget( index )
-            if hasattr( widget, "getType" ):
+            widget = self.__bottomSideBar.widget(index)
+            if hasattr(widget, "getType"):
                 if widget.getType() == MainWindowTabWidgetBase.IOConsole:
-                    if hasattr( widget, "stopAndClose" ):
+                    if hasattr(widget, "stopAndClose"):
                         widget.stopAndClose()
             index -= 1
 
         self.clearDebugIOConsole()
         QApplication.restoreOverrideCursor()
-        return
 
-    def passFocusToEditor( self ):
-        " Passes the focus to the text editor if it is there "
+    def passFocusToEditor(self):
+        """Passes the focus to the text editor if it is there"""
         return self.editorsManagerWidget.editorsManager.passFocusToEditor()
 
-    def passFocusToFlow( self ):
-        " Passes the focus to the flow UI if it is there "
+    def passFocusToFlow(self):
+        """Passes the focus to the flow UI if it is there"""
         return self.editorsManagerWidget.editorsManager.passFocusToFlow()
-

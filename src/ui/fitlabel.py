@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
 #
 # The file was taken from eric 4.4.3 and adopted for codimension.
@@ -26,112 +24,104 @@
 # Copyright (c) 2007 - 2010 Detlev Offenbach <detlev@die-offenbachs.de>
 #
 
-""" Implementation of labels which can change its
-    content to fit the label size """
+"""Labels which can change its content to fit the label size"""
 
-from PyQt4.QtCore    import Qt, pyqtSignal
-from PyQt4.QtGui     import QLabel, QApplication, QFrame
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QLabel, QApplication, QFrame
 from utils.fileutils import compactPath
 
-class FitLabel( QLabel ):
-    """ a label that squeezes its contents to fit it's size """
 
-    def __init__( self, parent = None ):
-        QLabel.__init__( self, parent )
+class FitLabel(QLabel):
+
+    """a label that squeezes its contents to fit it's size"""
+
+    def __init__(self, parent=None):
+        QLabel.__init__(self, parent)
         self.__text = ''
-        return
 
-    def paintEvent( self, event ):
-        """ Called when painting is required """
+    def paintEvent(self, event):
+        """Called when painting is required"""
 
         metric = self.fontMetrics()
-        if metric.width( self.__text ) > self.contentsRect().width():
-            QLabel.setText( self,
-                            metric.elidedText( self.text(),
-                                               Qt.ElideMiddle, self.width() ) )
+        if metric.width(self.__text) > self.contentsRect().width():
+            QLabel.setText(self,
+                           metric.elidedText(self.text(),
+                                             Qt.ElideMiddle, self.width()))
         else:
-            QLabel.setText( self, self.__text )
+            QLabel.setText(self, self.__text)
 
-        QLabel.paintEvent( self, event )
-        return
+        QLabel.paintEvent(self, event)
 
-    def setText( self, txt ):
+    def setText(self, txt):
         """ Set the text to be shown """
 
         self.__text = txt
-        QLabel.setText( self, txt )
-        return
+        QLabel.setText(self, txt)
 
 
-class FitPathLabel( QLabel ):
-    """ a label showing a file path compacted to fit it's size """
+class FitPathLabel(QLabel):
+
+    """a label showing a file path compacted to fit it's size"""
 
     doubleClicked = pyqtSignal()
 
-    def __init__( self, parent = None ):
-        QLabel.__init__( self, parent )
-
+    def __init__(self, parent=None):
+        QLabel.__init__(self, parent)
         self.__path = ''
-        return
 
-    def setPath( self, path ):
-        """ Set the path to be shown """
-
+    def setPath(self, path):
+        """Set the path to be shown"""
         self.__path = path
-        QLabel.setText( self, path )
-        return
+        QLabel.setText(self, path)
 
-    def getPath( self ):
-        " Provides the stored path "
+    def getPath(self):
+        """Provides the stored path"""
         return self.__path
 
-    def paintEvent( self, event ):
-        """ Called when painting is required """
+    def paintEvent(self, event):
+        """Called when painting is required"""
 
         sparePixels = 5
         metric = self.fontMetrics()
-        if metric.width( self.__path ) > self.contentsRect().width() - sparePixels:
-            QLabel.setText( self,
-                compactPath( self.__path,
-                             self.contentsRect().width() - sparePixels,
-                             self.length ) )
+        requiredWidth = metric.width(self.__path)
+        if requiredWidth > self.contentsRect().width() - sparePixels:
+            compacted = compactPath(self.__path,
+                                    self.contentsRect().width() - sparePixels,
+                                    self.length)
+            QLabel.setText(self, compacted)
         else:
-            QLabel.setText( self, self.__path )
-        QLabel.paintEvent( self, event )
-        return
+            QLabel.setText(self, self.__path)
+        QLabel.paintEvent(self, event)
 
-    def length( self, txt ):
-        """ Length of a text in pixels """
+    def length(self, txt):
+        """Length of a text in pixels"""
+        return self.fontMetrics().width(txt)
 
-        return self.fontMetrics().width( txt )
-
-    def mouseDoubleClickEvent( self, event ):
-        " Generates the doubleClicked signal "
+    def mouseDoubleClickEvent(self, event):
+        """Generates the doubleClicked signal"""
         if event.button() == Qt.LeftButton:
             self.doubleClicked.emit()
-        QLabel.mouseDoubleClickEvent( self, event )
-        return
+        QLabel.mouseDoubleClickEvent(self, event)
 
 
-class FramedLabelWithDoubleClick( QLabel ):
-    " A label with a nice frame and double click for copy content to clipboard "
+class FramedLabelWithDoubleClick(QLabel):
 
-    def __init__( self, text = None, callback = None, parent = None ):
-        QLabel.__init__( self, parent )
-        self.setFrameStyle( QFrame.StyledPanel )
+    """A label with a frame and double click for copy content to clipboard"""
+
+    def __init__(self, text=None, callback=None, parent=None):
+        QLabel.__init__(self, parent)
+        self.setFrameStyle(QFrame.StyledPanel)
         if text is not None:
-            self.setText( text )
+            self.setText(text)
         self.__callback = callback
-        return
 
-    def mouseDoubleClickEvent( self, event ):
+    def mouseDoubleClickEvent(self, event):
+        """Handles the mouse double click"""
         if event.button() == Qt.LeftButton:
             if self.__callback is None:
                 txt = self.text().strip()
                 if txt:
-                    QApplication.clipboard().setText( txt )
+                    QApplication.clipboard().setText(txt)
             else:
                 self.__callback()
-        QLabel.mouseDoubleClickEvent( self, event )
-        return
-
+        QLabel.mouseDoubleClickEvent(self, event)
