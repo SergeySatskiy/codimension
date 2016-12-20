@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,81 +17,76 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" Update interval settings dialog "
+"""Update interval settings dialog"""
 
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import ( QDialog, QVBoxLayout, QDialogButtonBox,
-                          QHBoxLayout, QLabel, QLineEdit, QIntValidator )
+from PyQt4.QtGui import (QDialog, QVBoxLayout, QDialogButtonBox,
+                         QHBoxLayout, QLabel, QLineEdit, QIntValidator)
 
 
-class VCSUpdateIntervalConfigDialog( QDialog ):
-    " Dialog to configure update interval "
+class VCSUpdateIntervalConfigDialog(QDialog):
 
-    def __init__( self, value, parent = None ):
-        QDialog.__init__( self, parent )
+    """Dialog to configure update interval"""
+
+    def __init__(self, value, parent=None):
+        QDialog.__init__(self, parent)
         self.interval = value
 
         self.__createLayout()
-        self.setWindowTitle( "VCS file status update interval configuration" )
+        self.setWindowTitle("VCS file status update interval configuration")
 
-        self.__intervalEdit.setText( str( self.interval ) )
+        self.__intervalEdit.setText(str(self.interval))
         self.__updateOKStatus()
 
-        self.__intervalEdit.textChanged.connect( self.__updateOKStatus )
+        self.__intervalEdit.textChanged.connect(self.__updateOKStatus)
         self.__intervalEdit.setFocus()
-        return
 
-    def __createLayout( self ):
-        " Creates the dialog layout "
+    def __createLayout(self):
+        """Creates the dialog layout"""
 
-        self.resize( 400, 80 )
-        self.setSizeGripEnabled( True )
+        self.resize(400, 80)
+        self.setSizeGripEnabled(True)
 
-        vboxLayout = QVBoxLayout( self )
+        vboxLayout = QVBoxLayout(self)
 
         hboxLayout = QHBoxLayout()
-        hboxLayout.addWidget( QLabel( "Status update interval, sec." ) )
+        hboxLayout.addWidget(QLabel("Status update interval, sec."))
         self.__intervalEdit = QLineEdit()
-        self.__intervalEdit.setValidator( QIntValidator( 1, 3600, self ) )
-        self.__intervalEdit.setAlignment( Qt.AlignRight | Qt.AlignVCenter )
-        hboxLayout.addWidget( self.__intervalEdit )
+        self.__intervalEdit.setValidator(QIntValidator(1, 3600, self))
+        self.__intervalEdit.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        hboxLayout.addWidget(self.__intervalEdit)
 
         # Buttons at the bottom
-        self.__buttonBox = QDialogButtonBox( self )
-        self.__buttonBox.setOrientation( Qt.Horizontal )
-        self.__buttonBox.setStandardButtons( QDialogButtonBox.Ok |
-                                             QDialogButtonBox.Cancel )
-        self.__buttonBox.accepted.connect( self.userAccept )
-        self.__buttonBox.rejected.connect( self.close )
+        self.__buttonBox = QDialogButtonBox(self)
+        self.__buttonBox.setOrientation(Qt.Horizontal)
+        self.__buttonBox.setStandardButtons(QDialogButtonBox.Ok |
+                                            QDialogButtonBox.Cancel)
+        self.__buttonBox.accepted.connect(self.userAccept)
+        self.__buttonBox.rejected.connect(self.close)
 
-        vboxLayout.addLayout( hboxLayout )
-        vboxLayout.addWidget( self.__buttonBox )
-        return
+        vboxLayout.addLayout(hboxLayout)
+        vboxLayout.addWidget(self.__buttonBox)
 
-    def __updateOKStatus( self ):
-        " Updates the OK button status "
-        okButton = self.__buttonBox.button( QDialogButtonBox.Ok )
+    def __updateOKStatus(self):
+        """Updates the OK button status"""
+        okButton = self.__buttonBox.button(QDialogButtonBox.Ok)
 
         if self.__intervalEdit.text() == "":
-            okButton.setEnabled( False )
-            okButton.setToolTip( "Interval must be defined" )
+            okButton.setEnabled(False)
+            okButton.setToolTip("Interval must be defined")
             return
 
-        value = int( self.__intervalEdit.text() )
+        value = int(self.__intervalEdit.text())
         if value < 1 or value > 3600:
-            okButton.setEnabled( False )
-            okButton.setToolTip( "Interval must be within 1..3600 sec" )
+            okButton.setEnabled(False)
+            okButton.setToolTip("Interval must be within 1..3600 sec")
             return
 
-        okButton.setEnabled( True )
-        okButton.setToolTip( "" )
-        return
+        okButton.setEnabled(True)
+        okButton.setToolTip("")
 
-    def userAccept( self ):
-        " Triggered when the user clicks OK "
-        self.interval = int( self.__intervalEdit.text() )
+    def userAccept(self):
+        """Triggered when the user clicks OK"""
+        self.interval = int(self.__intervalEdit.text())
         self.accept()
-        return
