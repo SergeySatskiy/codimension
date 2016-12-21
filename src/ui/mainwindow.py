@@ -59,8 +59,6 @@ from gotolinewidget import GotoLineWidget
 from utils.fileutils import ( PythonFileType, Python3FileType, detectFileType,
                               PixmapFileType, CodimensionProjectFileType,
                               closeMagicLibrary, isFileTypeSearchable )
-from pymetricsviewer import PymetricsViewer
-from pymetricsparser.pymetricsparser import PyMetrics
 from findinfiles import FindInFilesDialog
 from findinfilesviewer import FindInFilesViewer, hideSearchTooltip
 from findname import FindNameDialog
@@ -249,9 +247,6 @@ class CodimensionMainWindow(QMainWindow):
         findPrevAction.activated.connect(
                         self.editorsManagerWidget.editorsManager.findPrev )
 
-        # Needs for a proper update of the pylint menu
-        GlobalData().project.fsChanged.connect(self.__onFSChanged)
-
         self.__runManager = RunManager(self)
 
     def restoreWindowPosition( self ):
@@ -367,38 +362,6 @@ class CodimensionMainWindow(QMainWindow):
                                      PixmapCache().getIcon( 'todo.png' ),
                                      'Todo' )
         self.__bottomSideBar.setTabEnabled( 1, False )
-
-        # Create pylint viewer
-        self.pylintViewer = PylintViewer()
-        self.__bottomSideBar.addTab( self.pylintViewer,
-                                     PixmapCache().getIcon( 'pylint.png' ),
-                                     'Pylint viewer' )
-        self.connect( self.editorsManagerWidget.editorsManager,
-                      SIGNAL( 'fileUpdated' ),
-                      self.pylintViewer.onFileUpdated )
-        self.connect( self.editorsManagerWidget.editorsManager,
-                      SIGNAL( 'bufferSavedAs' ),
-                      self.pylintViewer.onFileUpdated )
-        self.pylintViewer.updatePylintTooltip.connect( self.__onPylintTooltip )
-        if GlobalData().pylintAvailable:
-            self.__onPylintTooltip( "No results available" )
-        else:
-            self.__onPylintTooltip( "Pylint is not available" )
-
-        # Create pymetrics viewer
-        self.pymetricsViewer = PymetricsViewer()
-        self.__bottomSideBar.addTab( self.pymetricsViewer,
-                PixmapCache().getIcon( 'metrics.png' ), 'Metrics viewer' )
-        self.connect( self.editorsManagerWidget.editorsManager,
-                      SIGNAL( 'fileUpdated' ),
-                      self.pymetricsViewer.onFileUpdated )
-        self.connect( self.editorsManagerWidget.editorsManager,
-                      SIGNAL( 'bufferSavedAs' ),
-                      self.pymetricsViewer.onFileUpdated )
-        self.connect( self.pymetricsViewer,
-                      SIGNAL( 'updatePymetricsTooltip' ),
-                      self.__onPymetricsTooltip )
-        self.__onPymetricsTooltip( "No results available" )
 
         # Create search results viewer
         self.findInFilesViewer = FindInFilesViewer()
@@ -653,22 +616,7 @@ class CodimensionMainWindow(QMainWindow):
         self.__delPrjTemplateAct = self.__prjTemplateMenu.addAction(
                 PixmapCache().getIcon( 'trash.png' ), '&Delete' )
         self.__delPrjTemplateAct.triggered.connect( self.__onDelPrjTemplate )
-        self.__prjPylintMenu = QMenu( "Project-specific p&ylintrc", self )
-        self.__prjGenPylintrcAct = self.__prjPylintMenu.addAction(
-                PixmapCache().getIcon( 'generate.png' ),
-                '&Create', self.__onGenPylintRC )
-        self.__prjEditPylintrcAct = self.__prjPylintMenu.addAction(
-                PixmapCache().getIcon( 'edit.png' ),
-                '&Edit', self.__onEditPylintRC )
-        self.__prjPylintMenu.addSeparator()
-        self.__prjDelPylintrcAct = self.__prjPylintMenu.addAction(
-                PixmapCache().getIcon( 'trash.png' ), '&Delete',
-                self.__onDelPylintRC )
         self.__projectMenu.addMenu( self.__prjTemplateMenu )
-        self.__projectMenu.addMenu( self.__prjPylintMenu )
-        self.__prjRopeConfigAct = self.__projectMenu.addAction(
-                PixmapCache().getIcon( 'edit.png' ),
-                'Edit project-specific rope &config file', self.__onRopeConfig )
         self.__projectMenu.addSeparator()
         self.__recentPrjMenu = QMenu( "&Recent projects", self )
         self.__recentPrjMenu.triggered.connect( self.__onRecentPrj )
@@ -824,19 +772,7 @@ class CodimensionMainWindow(QMainWindow):
         self.__toolsMenu = QMenu( "T&ools", self )
         self.__toolsMenu.aboutToShow.connect( self.__toolsAboutToShow )
         self.__toolsMenu.aboutToHide.connect( self.__toolsAboutToHide )
-        self.__prjPylintAct = self.__toolsMenu.addAction(
-                PixmapCache().getIcon( 'pylint.png' ),
-                '&Pylint for project', self.pylintButtonClicked )
-        self.__tabPylintAct = self.__toolsMenu.addAction(
-                PixmapCache().getIcon( 'pylint.png' ),
-                'P&ylint for tab', self.__onTabPylint )
         self.__toolsMenu.addSeparator()
-        self.__prjPymetricsAct = self.__toolsMenu.addAction(
-                PixmapCache().getIcon( 'metrics.png' ),
-                'Py&metrics for project', self.pymetricsButtonClicked )
-        self.__tabPymetricsAct = self.__toolsMenu.addAction(
-                PixmapCache().getIcon( 'metrics.png' ),
-                "Pyme&trics for tab", self.__onTabPymetrics )
         self.__toolsMenu.addSeparator()
         self.__prjLineCounterAct = self.__toolsMenu.addAction(
                 PixmapCache().getIcon( 'linecounter.png' ),
@@ -1065,14 +1001,6 @@ class CodimensionMainWindow(QMainWindow):
                 PixmapCache().getIcon( 'logviewer.png' ),
                 'Activate &log tab' )
         self.__logBarAct.setData( QVariant( 'log' ) )
-        self.__pylintBarAct = self.__bottomSideBarMenu.addAction(
-                PixmapCache().getIcon( 'pylint.png' ),
-                'Activate &pylint tab' )
-        self.__pylintBarAct.setData( QVariant( 'pylint' ) )
-        self.__pymetricsBarAct = self.__bottomSideBarMenu.addAction(
-                PixmapCache().getIcon( 'metrics.png' ),
-                'Activate py&metrics tab' )
-        self.__pymetricsBarAct.setData( QVariant( 'pymetrics' ) )
         self.__searchBarAct = self.__bottomSideBarMenu.addAction(
                 PixmapCache().getIcon( 'findindir.png' ),
                 'Activate &search tab' )
@@ -1121,18 +1049,6 @@ class CodimensionMainWindow(QMainWindow):
         self.__ideDelTemplateAct.triggered.connect( self.__onDelIDETemplate )
         self.__optionsMenu.addMenu( self.__ideTemplateMenu )
 
-        self.__idePylintMenu = QMenu( "IDE-wide &pylint", self )
-        self.__ideCreatePylintAct = self.__idePylintMenu.addAction(
-                PixmapCache().getIcon( 'generate.png' ), '&Create' )
-        self.__ideCreatePylintAct.triggered.connect( self.__onCreateIDEPylint )
-        self.__ideEditPylintAct = self.__idePylintMenu.addAction(
-                    PixmapCache().getIcon( 'edit.png' ), '&Edit' )
-        self.__ideEditPylintAct.triggered.connect( self.__onEditIDEPylint )
-        self.__idePylintMenu.addSeparator()
-        self.__ideDelPylintAct = self.__idePylintMenu.addAction(
-                    PixmapCache().getIcon( 'trash.png' ), '&Delete' )
-        self.__ideDelPylintAct.triggered.connect( self.__onDelIDEPylint )
-        self.__optionsMenu.addMenu( self.__idePylintMenu )
         self.__optionsMenu.addSeparator()
 
         verticalEdgeAct = self.__optionsMenu.addAction( 'Show vertical edge' )
@@ -1424,58 +1340,6 @@ class CodimensionMainWindow(QMainWindow):
         neverUsedButton.setEnabled( False )
         neverUsedButton.setVisible( False )
 
-        # pylint button
-        self.__existentPylintRCMenu = QMenu( self )
-        editAct = self.__existentPylintRCMenu.addAction(
-                                    PixmapCache().getIcon( 'edit.png' ),
-                                    'Edit project-specific pylintrc' )
-        editAct.triggered.connect( self.__onEditPylintRC )
-        self.__existentPylintRCMenu.addSeparator()
-        delAct = self.__existentPylintRCMenu.addAction(
-                                    PixmapCache().getIcon( 'trash.png' ),
-                                    'Delete project-specific pylintrc' )
-        delAct.triggered.connect( self.__onDelPylintRC )
-
-        self.__absentPylintRCMenu = QMenu( self )
-        genAct = self.__absentPylintRCMenu.addAction(
-                                    PixmapCache().getIcon( 'generate.png' ),
-                                    'Create project-specific pylintrc' )
-        genAct.triggered.connect( self.__onGenPylintRC )
-
-        self.__pylintButton = QToolButton( self )
-        self.__pylintButton.setIcon( PixmapCache().getIcon( 'pylint.png' ) )
-        self.__pylintButton.setToolTip( 'Run pylint for the whole project' )
-        self.__pylintButton.setPopupMode( QToolButton.DelayedPopup )
-        self.__pylintButton.setMenu( self.__existentPylintRCMenu )
-        self.__pylintButton.setFocusPolicy( Qt.NoFocus )
-        self.__pylintButton.clicked.connect( self.pylintButtonClicked )
-
-        # pymetrics button
-        self.__pymetricsButton = QAction(
-                                    PixmapCache().getIcon( 'metrics.png' ),
-                                    'Project metrics', self )
-        self.__pymetricsButton.triggered.connect( self.pymetricsButtonClicked )
-
-        self.linecounterButton = QAction(
-                                    PixmapCache().getIcon( 'linecounter.png' ),
-                                    'Project line counter', self )
-        self.linecounterButton.triggered.connect( self.linecounterButtonClicked )
-
-        self.__findInFilesButton = QAction(
-                                    PixmapCache().getIcon( 'findindir.png' ),
-                                    'Find in files (Ctrl+Shift+F)', self )
-        self.__findInFilesButton.triggered.connect( self.findInFilesClicked )
-
-        self.__findNameButton = QAction(
-                                    PixmapCache().getIcon( 'findname.png' ),
-                                    'Find name in project (Alt+Shift+S)', self )
-        self.__findNameButton.triggered.connect( self.findNameClicked )
-
-        self.__findFileButton = QAction(
-                                    PixmapCache().getIcon( 'findfile.png' ),
-                                    'Find project file (Alt+Shift+O)', self )
-        self.__findFileButton.triggered.connect( self.findFileClicked )
-
         # Debugger buttons
         self.__dbgStopBrutal = QAction( PixmapCache().getIcon( 'dbgstopbrutal.png' ),
                                        'Stop debugging session and '
@@ -1549,8 +1413,6 @@ class CodimensionMainWindow(QMainWindow):
         self.__toolbar.addAction( applicationDiagramButton )
         self.__toolbar.addSeparator()
         self.__toolbar.addAction( neverUsedButton )
-        self.__toolbar.addWidget( self.__pylintButton )
-        self.__toolbar.addAction( self.__pymetricsButton )
         self.__toolbar.addAction( self.linecounterButton )
         self.__toolbar.addSeparator()
         self.__toolbar.addAction( self.__findInFilesButton )
@@ -1637,24 +1499,15 @@ class CodimensionMainWindow(QMainWindow):
             projectLoaded = GlobalData().project.isLoaded()
             self.__unloadProjectAct.setEnabled(projectLoaded)
             self.__projectPropsAct.setEnabled(projectLoaded)
-            self.__prjRopeConfigAct.setEnabled(projectLoaded and
-                                os.path.exists(self.__getRopeConfig()))
             self.__prjTemplateMenu.setEnabled(projectLoaded)
             self.__findNameMenuAct.setEnabled(projectLoaded)
             self.__fileProjectFileAct.setEnabled(projectLoaded)
-            self.__prjPylintAct.setEnabled(projectLoaded)
-            self.__prjPymetricsAct.setEnabled(projectLoaded)
             self.__prjLineCounterAct.setEnabled(projectLoaded)
             self.__prjImportDgmAct.setEnabled(projectLoaded)
             self.__prjImportsDgmDlgAct.setEnabled(projectLoaded)
 
             self.settings.projectLoaded = projectLoaded
             if projectLoaded:
-                if os.path.exists(self.__getPylintRCFileName()):
-                    self.__pylintButton.setMenu(self.__existentPylintRCMenu)
-                else:
-                    self.__pylintButton.setMenu(self.__absentPylintRCMenu)
-
                 # The editor tabs must be loaded after a VCS plugin has a
                 # chance to receive projectChanged signal where it reads
                 # the plugin configuration
@@ -1679,11 +1532,8 @@ class CodimensionMainWindow(QMainWindow):
         " Enables/disables the toolbar buttons "
         projectLoaded = GlobalData().project.isLoaded()
         self.linecounterButton.setEnabled(projectLoaded)
-        self.__pylintButton.setEnabled(projectLoaded and
-                                       GlobalData().pylintAvailable)
         self.importsDiagramButton.setEnabled(projectLoaded and
                                              GlobalData().graphvizAvailable)
-        self.__pymetricsButton.setEnabled(projectLoaded)
         self.__findNameButton.setEnabled(projectLoaded)
         self.__findFileButton.setEnabled(projectLoaded)
 
@@ -1949,127 +1799,6 @@ class CodimensionMainWindow(QMainWindow):
             return self.projectViewer.projectTreeView.getExpanded()
         return []
 
-    def showPylintReport( self, reportOption, fileOrContent,
-                                displayName, uuid, fileName ):
-        " Passes data to the pylint viewer "
-
-        # This is a python file, let's pylint it
-        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
-
-        projectDir = ""
-        if GlobalData().project.isLoaded():
-            projectDir = os.path.dirname( GlobalData().project.fileName ) + \
-                         os.path.sep
-
-        # Detect the project pylintrc file if so
-        pylintrcFile = ""
-        if projectDir:
-            # First try project-specific pylintrc
-            fName = projectDir + "pylintrc"
-            if os.path.exists( fName ):
-                pylintrcFile = fName
-
-        if not pylintrcFile:
-            # Second try IDE-wide pylintrc
-            fName = getIDEPylintFile()
-            if os.path.exists( fName ):
-                pylintrcFile = fName
-
-        try:
-            if projectDir:
-                workingDir = projectDir
-            else:
-                workingDir = os.getcwd()
-
-            lint = Pylint()
-            if reportOption == PylintViewer.SingleBuffer:
-                # No file, it's a buffer content
-                importDirs = GlobalData().getProjectImportDirs()
-                if os.path.isabs( fileName ):
-                    path = os.path.dirname( fileName )
-                    if path not in importDirs:
-                        importDirs.append( path )
-
-                lint.analyzeBuffer( fileOrContent, pylintrcFile, importDirs,
-                                    workingDir )
-            else:
-                # The file exists
-                fNames = fileOrContent
-                if type( fileOrContent ) == type( "a" ):
-                    fNames = fileOrContent.split()
-
-                importDirs = GlobalData().getProjectImportDirs()
-                for fName in fNames:
-                    path = os.path.dirname( fName )
-                    if path not in importDirs:
-                        importDirs.append( path )
-
-                lint.analyzeFile( fileOrContent, pylintrcFile, importDirs,
-                                  workingDir )
-
-        except Exception as exc:
-            QApplication.restoreOverrideCursor()
-            logging.error( str( exc ) )
-            return
-
-        QApplication.restoreOverrideCursor()
-        self.pylintViewer.showReport( lint, reportOption,
-                                        displayName, uuid )
-
-        if self.__bottomSideBar.height() == 0:
-            # It was hidden completely, so need to move the slider
-            splitterSizes = self.settings.vSplitterSizes
-            splitterSizes[ 0 ] -= 200
-            splitterSizes[ 1 ] += 200
-            self.__verticalSplitter.setSizes( splitterSizes )
-
-        self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget( self.pylintViewer )
-        self.__bottomSideBar.raise_()
-        return
-
-    def showPymetricsReport( self, reportOption, fileOrContent,
-                                   displayName, uuid ):
-        " Passes data to the pymetrics viewer "
-
-        # This is a python file, let's pymetric it
-        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
-
-        try:
-            path = thirdpartyDir + "pymetrics" + os.path.sep + "pymetrics.py"
-            if os.path.exists( path ):
-                metrics = PyMetrics( path )
-            else:
-                metrics = PyMetrics()
-            if reportOption == PylintViewer.SingleBuffer:
-                metrics.analyzeBuffer( fileOrContent )
-            else:
-                metrics.analyzeFile( fileOrContent )
-
-        except Exception as exc:
-            QApplication.restoreOverrideCursor()
-            logging.error( str( exc ) )
-            logging.info( "Note: pymetrics does not work for syntactically "
-                          "incorrect files. Please check that your files "
-                          "are OK before running pymetrics." )
-            return
-
-        QApplication.restoreOverrideCursor()
-        self.pymetricsViewer.showReport( metrics, reportOption,
-                                           displayName, uuid )
-
-        if self.__bottomSideBar.height() == 0:
-            # It was hidden completely, so need to move the slider
-            splitterSizes = self.settings.vSplitterSizes
-            splitterSizes[ 0 ] -= 200
-            splitterSizes[ 1 ] += 200
-            self.__verticalSplitter.setSizes( splitterSizes )
-
-        self.__bottomSideBar.show()
-        self.__bottomSideBar.setCurrentWidget( self.pymetricsViewer )
-        self.__bottomSideBar.raise_()
-        return
-
     def __calltipDisplayable(self, calltip):
         """True if calltip is displayable"""
         if calltip is None:
@@ -2156,16 +1885,6 @@ class CodimensionMainWindow(QMainWindow):
                                                                     tooltip )
         return
 
-    def __onPylintTooltip( self, tooltip ):
-        " Updates the pylint viewer tab tooltip "
-        self.__bottomSideBar.setTabToolTip( 2, tooltip )
-        return
-
-    def __onPymetricsTooltip( self, tooltip ):
-        " Updates the pymetrics viewer tab tooltip "
-        self.__bottomSideBar.setTabToolTip( 3, tooltip )
-        return
-
     def getWidgetByUUID( self, uuid ):
         " Provides the widget found by the given UUID "
         return self.editorsManagerWidget.editorsManager.getWidgetByUUID( uuid )
@@ -2182,106 +1901,16 @@ class CodimensionMainWindow(QMainWindow):
     @staticmethod
     def __buildPythonFilesList():
         " Builds the list of python project files "
-        ropeDir = os.path.sep + ".ropeproject" + os.path.sep
-
         QApplication.processEvents()
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         filesToProcess = []
         for item in GlobalData().project.filesList:
-            if ropeDir in item:
-                continue
             if detectFileType( item ) in [ PythonFileType,
                                            Python3FileType ]:
                 filesToProcess.append( item )
         QApplication.restoreOverrideCursor()
         QApplication.processEvents()
         return filesToProcess
-
-    def pylintButtonClicked( self, action = None):
-        " Project pylint report is requested "
-
-        filesToProcess = self.__buildPythonFilesList()
-        if not filesToProcess:
-            logging.error( "No python files in the project" )
-            return
-
-        # This may happen only if a project is loaded, so the working
-        # dir is the project dir
-        projectDir = os.path.dirname( GlobalData().project.fileName ) + \
-                         os.path.sep
-        self.showPylintReport( PylintViewer.ProjectFiles,
-                               filesToProcess,
-                               "", "", projectDir )
-        return
-
-    def pymetricsButtonClicked( self ):
-        " Project pymetrics report is requested "
-
-        filesToProcess = self.__buildPythonFilesList()
-        if not filesToProcess:
-            logging.error( "No python files in the project" )
-            return
-
-        self.showPymetricsReport( PymetricsViewer.ProjectFiles,
-                                  filesToProcess,
-                                  "", "" )
-        return
-
-    @staticmethod
-    def __getPylintRCFileName():
-        " Provides the pylintrc full name "
-        projectDir = os.path.dirname( GlobalData().project.fileName )
-        if not projectDir.endswith( os.path.sep ):
-            projectDir += os.path.sep
-        return projectDir + "pylintrc"
-
-    @staticmethod
-    def __getRopeConfig():
-        " Provides the rope config file path "
-        projectDir = os.path.dirname( GlobalData().project.fileName )
-        if not projectDir.endswith( os.path.sep ):
-            projectDir += os.path.sep
-        return projectDir + ".ropeproject" + os.path.sep + "config.py"
-
-    def __onRopeConfig( self ):
-        " Requests to load rope config file for editing "
-        fileName = self.__getRopeConfig()
-        if not os.path.exists( fileName ):
-            logging.error( "Cannot find the project rope  config file (" +
-                           fileName + ")" )
-            return
-        self.openFile( fileName, -1 )
-        return
-
-    def __onEditPylintRC( self ):
-        " Request to edit the project pylint rc "
-        fileName = self.__getPylintRCFileName()
-        if not os.path.exists( fileName ):
-            logging.error( "Cannot find the project pylintrc (" +
-                           fileName + ")" )
-            return
-        self.openFile( fileName, -1 )
-        return
-
-    def __onDelPylintRC( self ):
-        " Request to delete the project pylint rc "
-        fileName = self.__getPylintRCFileName()
-        if os.path.exists( fileName ):
-            os.unlink( fileName )
-        self.__pylintButton.setMenu( self.__absentPylintRCMenu )
-        return
-
-    def __onGenPylintRC( self ):
-        " Request to generate the project pylintrc "
-        fileName = self.__getPylintRCFileName()
-        if not os.path.exists( fileName ):
-            if os.system( "pylint --generate-rcfile > " + fileName ) != 0:
-                logging.error( "Error generating the project pylintrc (" +
-                               fileName + ")" )
-                return
-        self.__pylintButton.setMenu( self.__existentPylintRCMenu )
-        self.openFile( fileName, -1 )
-        return
 
     def __onCreatePrjTemplate( self ):
         " Triggered when project template should be created "
@@ -2343,48 +1972,6 @@ class CodimensionMainWindow(QMainWindow):
             if os.path.exists( fileName ):
                 os.unlink( fileName )
                 logging.info( "IDE new file template deleted" )
-        return
-
-    def __onCreateIDEPylint( self ):
-        " Triggered to create IDE pylint "
-        fileName = getIDEPylintFile()
-        if not os.path.exists( fileName ):
-            if os.system( "pylint --generate-rcfile > " + fileName ) != 0:
-                logging.error( "Error generating the project pylintrc (" +
-                               fileName + ")" )
-                return
-        self.openFile( fileName, -1 )
-        return
-
-    def __onEditIDEPylint( self ):
-        " Triggered to edit IDE pylint "
-        fileName = getIDEPylintFile()
-        if not os.path.exists( fileName ):
-            logging.error( "Cannot find the IDE-wide pylintrc (" +
-                           fileName + ")" )
-            return
-        self.openFile( fileName, -1 )
-        return
-
-    @staticmethod
-    def __onDelIDEPylint():
-        " Triggered to delete IDE pylint "
-        fileName = getIDEPylintFile()
-        if os.path.exists( fileName ):
-            os.unlink( fileName )
-        return
-
-    def __onFSChanged( self, items ):
-        " Update the pylint button menu if pylintrc appeared/disappeared "
-        pylintRCFileName = self.__getPylintRCFileName()
-        for path in items:
-            path = str( path )
-            if path.endswith( pylintRCFileName ):
-                if path.startswith( '+' ):
-                    self.__pylintButton.setMenu( self.__existentPylintRCMenu )
-                else:
-                    self.__pylintButton.setMenu( self.__absentPylintRCMenu )
-                break
         return
 
     def displayFindInFiles( self, searchRegexp, searchResults ):
@@ -3648,14 +3235,6 @@ class CodimensionMainWindow(QMainWindow):
             self.__bottomSideBar.show()
             self.__bottomSideBar.setCurrentWidget( self.logViewer )
             self.__bottomSideBar.raise_()
-        elif name == "pylint":
-            self.__bottomSideBar.show()
-            self.__bottomSideBar.setCurrentWidget( self.pylintViewer )
-            self.__bottomSideBar.raise_()
-        elif name == "pymetrics":
-            self.__bottomSideBar.show()
-            self.__bottomSideBar.setCurrentWidget( self.pymetricsViewer )
-            self.__bottomSideBar.raise_()
         elif name == "search":
             self.__bottomSideBar.show()
             self.__bottomSideBar.setCurrentWidget( self.findInFilesViewer )
@@ -3668,20 +3247,6 @@ class CodimensionMainWindow(QMainWindow):
             self.__bottomSideBar.show()
             self.__bottomSideBar.setCurrentWidget( self.diffViewer )
             self.__bottomSideBar.raise_()
-        return
-
-    def __onTabPylint( self ):
-        " Triggered when pylint for the current tab is requested "
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.onPylint()
-        return
-
-    def __onTabPymetrics( self ):
-        " Triggered when pymetrics for the current tab is requested "
-        editorsManager = self.editorsManagerWidget.editorsManager
-        currentWidget = editorsManager.currentWidget()
-        currentWidget.onPymetrics()
         return
 
     def __onTabLineCounter( self ):
@@ -4087,8 +3652,6 @@ class CodimensionMainWindow(QMainWindow):
 
         pythonBufferNonAnnotate = isPythonBuffer and \
             currentWidget.getType() != MainWindowTabWidgetBase.VCSAnnotateViewer
-        self.__tabPylintAct.setEnabled( pythonBufferNonAnnotate )
-        self.__tabPymetricsAct.setEnabled( pythonBufferNonAnnotate )
         self.__tabLineCounterAct.setEnabled( isPythonBuffer )
         self.__tabPythonTidyAct.setEnabled( pythonBufferNonAnnotate and not self.debugMode )
         self.__tabPythonTidyDlgAct.setEnabled( pythonBufferNonAnnotate and not self.debugMode )
@@ -4104,10 +3667,6 @@ class CodimensionMainWindow(QMainWindow):
             self.__unusedClassesAct.setEnabled( False )
             self.__unusedFunctionsAct.setEnabled( False )
             self.__unusedGlobalsAct.setEnabled( False )
-
-        self.__tabPylintAct.setShortcut( "Ctrl+L" )
-        self.__tabPymetricsAct.setShortcut( "Ctrl+K" )
-        return
 
     def __viewAboutToShow( self ):
         " Triggered when view menu is about to show "
@@ -4139,12 +3698,6 @@ class CodimensionMainWindow(QMainWindow):
         self.__ideCreateTemplateAct.setEnabled( not exists )
         self.__ideEditTemplateAct.setEnabled( exists )
         self.__ideDelTemplateAct.setEnabled( exists )
-
-        exists = os.path.exists( getIDEPylintFile() )
-        self.__ideCreatePylintAct.setEnabled( not exists )
-        self.__ideEditPylintAct.setEnabled( exists )
-        self.__ideDelPylintAct.setEnabled( exists )
-        return
 
     def __helpAboutToShow( self ):
         " Triggered when help menu is about to show "
@@ -4200,8 +3753,6 @@ class CodimensionMainWindow(QMainWindow):
 
     def __toolsAboutToHide( self ):
         " Triggered when tools menu is about to hide "
-        self.__tabPylintAct.setShortcut( "" )
-        self.__tabPymetricsAct.setShortcut( "" )
         return
 
     def __viewAboutToHide( self ):
@@ -4253,19 +3804,8 @@ class CodimensionMainWindow(QMainWindow):
             self.__createPrjTemplateAct.setEnabled(not exists)
             self.__editPrjTemplateAct.setEnabled(exists)
             self.__delPrjTemplateAct.setEnabled(exists)
-            # Pylint part
-            exists = os.path.exists(self.__getPylintRCFileName())
-            self.__prjPylintMenu.setEnabled(True)
-            self.__prjGenPylintrcAct.setEnabled(not exists)
-            self.__prjEditPylintrcAct.setEnabled(exists)
-            self.__prjDelPylintrcAct.setEnabled(exists)
-            # Rope part
-            self.__prjRopeConfigAct.setEnabled(
-                                os.path.exists(self.__getRopeConfig()))
         else:
             self.__prjTemplateMenu.setEnabled(False)
-            self.__prjPylintMenu.setEnabled(False)
-            self.__prjRopeConfigAct.setEnabled(False)
 
     def __onRecentPrj(self, act):
         """Triggered when a recent project is requested to be loaded"""
