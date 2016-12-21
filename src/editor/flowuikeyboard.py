@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,67 +18,63 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-" Control flow UI widget: handling keyboard events "
+"""Control flow UI widget: handling keyboard events"""
 
-from PyQt4.QtCore import Qt, QPoint
-from PyQt4.QtGui import QGraphicsScene
-from sys import maxint
+from sys import maxsize
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QGraphicsScene
 from flowui.items import CellElement
 from flowui.scopeitems import ScopeCellElement
 
 
-CTRL_SHIFT = int( Qt.ShiftModifier | Qt.ControlModifier )
-SHIFT = int( Qt.ShiftModifier )
-CTRL = int( Qt.ControlModifier )
-ALT = int( Qt.AltModifier )
-CTRL_KEYPAD = int( Qt.KeypadModifier | Qt.ControlModifier )
-NO_MODIFIER = int( Qt.NoModifier )
+CTRL_SHIFT = int(Qt.ShiftModifier | Qt.ControlModifier)
+SHIFT = int(Qt.ShiftModifier)
+CTRL = int(Qt.ControlModifier)
+ALT = int(Qt.AltModifier)
+CTRL_KEYPAD = int(Qt.KeypadModifier | Qt.ControlModifier)
+NO_MODIFIER = int(Qt.NoModifier)
 
 
 class CFSceneKeyboardMixin:
-    " Encapsulates keyboard handling and related functionality "
 
-    def __init__( self ):
+    """Encapsulates keyboard handling and related functionality"""
+
+    def __init__(self):
         self.__hotKeys = {
-                CTRL:   { Qt.Key_QuoteLeft:     self.highlightInText,
-                          Qt.Key_Home:          self.scrollToTop,
-                          Qt.Key_End:           self.scrollToBottom,
-                          Qt.Key_A:             self.selectAll,
-                          Qt.Key_Minus:         self.onZoomOut,
-                          Qt.Key_Equal:         self.onZoomIn
-                         },
-                NO_MODIFIER:
-                        { Qt.Key_Home:          self.scrollToHBegin,
-                          Qt.Key_End:           self.scrollToHEnd,
-                          Qt.Key_Escape:        self.clearSelection
-                        }
-                         }
-        return
+            CTRL: {
+                Qt.Key_QuoteLeft: self.highlightInText,
+                Qt.Key_Home: self.scrollToTop,
+                Qt.Key_End: self.scrollToBottom,
+                Qt.Key_A: self.selectAll,
+                Qt.Key_Minus: self.onZoomOut,
+                Qt.Key_Equal: self.onZoomIn},
+            NO_MODIFIER: {
+                Qt.Key_Home: self.scrollToHBegin,
+                Qt.Key_End: self.scrollToHEnd,
+                Qt.Key_Escape: self.clearSelection}}
 
-    def keyPressEvent( self, event ):
+    def keyPressEvent(self, event):
         """ Handles the key press event """
         key = event.key()
-        modifiers = int( event.modifiers() )
+        modifiers = int(event.modifiers())
         if modifiers in self.__hotKeys:
-            if key in self.__hotKeys[ modifiers ]:
-                self.__hotKeys[ modifiers ][ key ]()
+            if key in self.__hotKeys[modifiers]:
+                self.__hotKeys[modifiers][key]()
                 event.accept()
                 return
+        QGraphicsScene.keyPressEvent(self, event)
 
-        QGraphicsScene.keyPressEvent( self, event )
-        return
-
-    def highlightInText( self ):
-        " Sync the text with the graphics "
+    def highlightInText(self):
+        """Sync the text with the graphics"""
         view = self.parent().view
         visibleRect = view.getVisibleRect()
 
         firstLine = visibleRect.y()
 
         candidateAfter = None
-        candidateAfterDistance = maxint
+        candidateAfterDistance = maxsize
         candidateBefore = None
-        candidateBeforeDistance = maxint * -1
+        candidateBeforeDistance = maxsize * -1
         for item in self.items():
             if item.isProxyItem():
                 continue
@@ -106,36 +102,37 @@ class CFSceneKeyboardMixin:
         self.clearSelection()
         logicalItem = item
         if item.scopedItem():
-            if item.subKind in [ ScopeCellElement.DECLARATION ]:
+            if item.subKind in [ScopeCellElement.DECLARATION]:
                 logicalItem = item.getTopLeftItem()
-        logicalItem.setSelected( True )
-        view.scrollTo( logicalItem )
-        item.mouseDoubleClickEvent( None )
-        return
+        logicalItem.setSelected(True)
+        view.scrollTo(logicalItem)
+        item.mouseDoubleClickEvent(None)
 
-    def scrollToTop( self ):
+    def scrollToTop(self):
+        """Scrolls the view to the top"""
         view = self.parent().view
-        view.horizontalScrollBar().setValue( 0 )
-        view.verticalScrollBar().setValue( 0 )
-        return
+        view.horizontalScrollBar().setValue(0)
+        view.verticalScrollBar().setValue(0)
 
-    def scrollToBottom( self ):
+    def scrollToBottom(self):
+        """Scrolls the view to the bottom"""
         view = self.parent().view
-        view.horizontalScrollBar().setValue( 0 )
-        view.verticalScrollBar().setValue( view.verticalScrollBar().maximum() )
-        return
+        view.horizontalScrollBar().setValue(0)
+        view.verticalScrollBar().setValue(view.verticalScrollBar().maximum())
 
-    def scrollToHBegin( self ):
+    def scrollToHBegin(self):
+        """Scrolls horizontally to the very beginning"""
         view = self.parent().view
-        view.horizontalScrollBar().setValue( 0 )
-        return
+        view.horizontalScrollBar().setValue(0)
 
-    def scrollToHEnd( self ):
+    def scrollToHEnd(self):
+        """Scrolls horizontally to the very end"""
         view = self.parent().view
-        view.horizontalScrollBar().setValue( view.horizontalScrollBar().maximum() )
-        return
+        view.horizontalScrollBar().setValue(
+            view.horizontalScrollBar().maximum())
 
-    def selectAll( self ):
+    def selectAll(self):
+        """Selects all"""
         moduleItem = None
         for item in self.items():
             if item.isProxyItem():
@@ -147,15 +144,15 @@ class CFSceneKeyboardMixin:
 
         if moduleItem:
             self.clearSelection()
-            for item in self.findItemsForRef( moduleItem.ref ):
-                self.addToSelection( item )
-        return
+            for item in self.findItemsForRef(moduleItem.ref):
+                self.addToSelection(item)
 
-    def onZoomOut( self ):
+    def onZoomOut(self):
+        """Zoom out the view"""
         view = self.parent().view
         view.zoomOut()
 
-    def onZoomIn( self ):
+    def onZoomIn(self):
+        """Zoom in the view"""
         view = self.parent().view
         view.zoomIn()
-
