@@ -26,18 +26,19 @@
 
 """Sidebar implementation"""
 
-from PyQt5.QtCore import QEvent, QSize, Qt
+from PyQt5.QtCore import QEvent, QSize, Qt, QVariant
 from PyQt5.QtGui import QTabBar, QWidget, QStackedWidget, QBoxLayout
 
 
 class SideBar(QWidget):
+
     """Sidebar with a widget area which is hidden or shown.
        On by clicking any tab, off by clicking the current tab.
     """
 
     North = 0
-    South = 1
-    East = 2
+    East = 1
+    South = 2
     West = 3
 
     def __init__(self, orientation, parent=None):
@@ -45,7 +46,6 @@ class SideBar(QWidget):
 
         self.__tabBar = QTabBar()
         self.__tabBar.setDrawBase(True)
-        self.__tabBar.setShape(QTabBar.RoundedNorth)
         self.__tabBar.setFocusPolicy(Qt.NoFocus)
         self.__tabBar.setUsesScrollButtons(True)
         self.__tabBar.setElideMode(1)
@@ -89,10 +89,6 @@ class SideBar(QWidget):
         if self.__orientation == SideBar.South:
             return 1
         return 0
-
-    def __getWidget(self):
-        """Provides a reference to the widget"""
-        return self.splitter.widget(self.__getIndex())
 
     def shrink(self):
         """Shrink the sidebar"""
@@ -171,16 +167,14 @@ class SideBar(QWidget):
 
     def eventFilter(self, obj, evt):
         """Handle click events for the tabbar"""
-
         if obj == self.__tabBar:
             if evt.type() == QEvent.MouseButtonPress:
                 pos = evt.pos()
 
-                index = self.__tabBar.count() - 1
-                while index >= 0:
+                index = None
+                for index in range(self.__tabBar.count()):
                     if self.__tabBar.tabRect(index).contains(pos):
                         break
-                    index -= 1
 
                 if index == self.__tabBar.currentIndex():
                     if self.isMinimized():
@@ -189,43 +183,71 @@ class SideBar(QWidget):
                         self.shrink()
                     return True
 
-                elif self.isMinimized():
+                if self.isMinimized():
                     if self.isTabEnabled(index):
                         self.expand()
 
         return QWidget.eventFilter(self, obj, evt)
 
-    def addTab(self, widget, iconOrLabel, label=None):
-        """Add a tab to the sidebar"""
-        if label:
-            self.__tabBar.addTab(iconOrLabel, label)
-        else:
-            self.__tabBar.addTab(iconOrLabel)
+    @staticmethod
+    def __toVariant(name, priority):
+        """A tab stores its name and priority"""
+        if priority is None:
+            return QVariant(':' + name)
+        return QVariant(str(priority) + ':' + name)
+
+    @staticmethod
+    def __fromVariant(data):
+        """A tab stores its name and priority"""
+        val = data.toString().split(':')
+        if val[0] == '':
+            return val[1], None
+        return val[1], int(val[0])
+
+    def __appendTab(self, widget, icon, label, name, priority):
+        """Appends a new widget to the end"""
+        self.__tabBar.addTab(icon, label)
         self.__stackedWidget.addWidget(widget)
+        self.__tabBar.setTabData(self.count - 1,
+                                 self.__toVariant(name, priority))
 
-    def insertTab(self, index, widget, iconOrLabel, label=None):
-        """Insert a tab into the sidebar"""
-        if label:
-            self.__tabBar.insertTab(index, iconOrLabel, label)
+    def __pickInsertIndex(self, priority):
+        """Picks the tab insert index in accordance to the priority"""
+        for index in range(self.__tabBar.count()):
+            data = self.__tabBar.tabData(index)
+            _, tabPriority = self.__fromVariant(data)
+            if tabPriority is None:
+                return index
+            if priority < tabPriority:
+                return index
+        return None
+
+    def addTab(self, widget, icon, label, name, priority):
+        """Add a tab to the sidebar"""
+        if priority is None:
+            # Appending to the end
+            self.__appendTab(widget, icon, label, name, priority)
         else:
-            self.__tabBar.insertTab(index, iconOrLabel)
-        self.__stackedWidget.insertWidget(index, widget)
-
-    def removeTab(self, index):
-        """Remove a tab"""
-        self.__stackedWidget.removeWidget(self.__stackedWidget.widget(index))
-        self.__tabBar.removeTab(index)
+            # Pick the index in accordance to the priority
+            index = self.__pickInsertIndex(priority)
+            if index is None:
+                self.__appendTab(widget, icon, label, name, priority)
+            else:
+                self.__tabBar.insertTab(index, icon, label)
+                self.__stackedWidget.insertWidget(index, widget)
+                self.__tabBar.setTabData(index,
+                                         self.__toVariant(name, priority))
 
     def clear(self):
         """Remove all tabs"""
-        while self.count() > 0:
+        while self.count > 0:
             self.removeTab(0)
 
     def prevTab(self):
         """Show the previous tab"""
         index = self.currentIndex() - 1
         if index < 0:
-            index = self.count() - 1
+            index = self.count - 1
 
         self.setCurrentIndex(index)
         self.currentWidget().setFocus()
@@ -233,12 +255,13 @@ class SideBar(QWidget):
     def nextTab(self):
         """Show the next tab"""
         index = self.currentIndex() + 1
-        if index >= self.count():
+        if index >= self.count:
             index = 0
 
         self.setCurrentIndex(index)
         self.currentWidget().setFocus()
 
+    @property
     def count(self):
         """Provides the number of tabs"""
         return self.__tabBar.count()
@@ -247,38 +270,56 @@ class SideBar(QWidget):
         """Provides the index of the current tab"""
         return self.__stackedWidget.currentIndex()
 
-    def setCurrentIndex(self, index):
-        """ Switch to the certain tab """
-        if index >= self.currentIndex():
-            return
-
-        self.__tabBar.setCurrentIndex( index )
-        self.__stackedWidget.setCurrentIndex(index)
-        if self.isMinimized():
-            self.expand()
-
     def currentWidget(self):
         """Provide a reference to the current widget"""
         return self.__stackedWidget.currentWidget()
 
-    def setCurrentWidget(self, widget):
-        """Set the current widget"""
-        self.__stackedWidget.setCurrentWidget(widget)
-        self.__tabBar.setCurrentIndex(self.__stackedWidget.currentIndex())
-        if self.isMinimized():
-            self.expand()
+    def __getWidgetIndex(self, indexOrNameOrWidget):
+        """Provides the widget index via the provided index, name or widget"""
+        if indexOrNameOrWidget is None:
+            return None
+        if isinstance(indexOrNameOrWidget, int):
+            if indexOrNameOrWidget >= self.count:
+                return None
+            return indexOrNameOrWidget
+        if isinstance(indexOrNameOrWidget, str):
+            for index in range(self.__tabBar.count()):
+                data = self.__tabBar.tabData(index)
+                tabName, _ = self.__fromVariant(data)
+                if tabName == indexOrNameOrWidget:
+                    return index
+            return None
+        return self.__stackedWidget.indexOf(indexOrNameOrWidget)
 
-    def indexOf(self, widget):
-        """Provides the index of the given widget"""
-        return self.__stackedWidget.indexOf(widget)
+    def setCurrentTab(self, indexOrNameOrWidget):
+        """Sets the current widget approprietly"""
+        index = self.__getWidgetIndex(indexOrNameOrWidget)
+        if index is not None:
+            self.__tabBar.setCurrentIndex(index)
+            self.__stackedWidget.setCurrentIndex(index)
+            if self.isMinimized():
+                self.expand()
 
-    def isTabEnabled(self, index):
+    def removeTab(self, indexOrNameOrWidget):
+        """Remove a tab"""
+        index = self.__getWidgetIndex(indexOrNameOrWidget)
+        if index is not None:
+            self.__stackedWidget.removeWidget(
+                self.__stackedWidget.widget(index))
+            self.__tabBar.removeTab(index)
+
+    def isTabEnabled(self, indexOrNameOrWidget):
         """Check if the tab is enabled"""
-        return self.__tabBar.isTabEnabled(index)
+        index = self.__getWidgetIndex(indexOrNameOrWidget)
+        if index is not None:
+            return self.__tabBar.isTabEnabled(index)
+        return False
 
-    def setTabEnabled(self, index, enabled):
-        """ Set the enabled state of the tab """
-        self.__tabBar.setTabEnabled(index, enabled)
+    def setTabEnabled(self, indexOrNameOrWidget, enabled):
+        """Set the enabled state of the tab"""
+        index = self.__getWidgetIndex(indexOrNameOrWidget)
+        if index is not None:
+            self.__tabBar.setTabEnabled(index, enabled)
 
     def orientation(self):
         """Provides the orientation of the sidebar"""
@@ -310,38 +351,61 @@ class SideBar(QWidget):
             self.layout.setAlignment(self.barLayout, Qt.AlignTop)
         self.__orientation = orient
 
-    def tabIcon(self, index):
+    def tabIcon(self, indexOrNameOrWidget):
         """Provide the icon of the tab"""
-        return self.__tabBar.tabIcon(index)
+        index = self.__getWidgetIndex(indexOrNameOrWidget)
+        if index is not None:
+            return self.__tabBar.tabIcon(index)
+        return None
 
-    def setTabIcon(self, index, icon):
+    def setTabIcon(self, indexOrNameOrWidget, icon):
         """Set the icon of the tab"""
-        self.__tabBar.setTabIcon(index, icon)
+        index = self.__getWidgetIndex(indexOrNameOrWidget)
+        if index is not None:
+            self.__tabBar.setTabIcon(index, icon)
 
-    def tabText(self, index):
+    def tabText(self, indexOrNameOrWidget):
         """Provide the text of the tab"""
-        return self.__tabBar.tabText(index)
+        index = self.__getWidgetIndex(indexOrNameOrWidget)
+        if index is not None:
+            return self.__tabBar.tabText(index)
+        return None
 
-    def setTabText(self, index, text):
+    def setTabText(self, indexOrNameOrWidget, text):
         """Set the text of the tab"""
-        self.__tabBar.setTabText(index, text)
+        index = self.__getWidgetIndex(indexOrNameOrWidget)
+        if index is not None:
+            self.__tabBar.setTabText(index, text)
 
-    def tabToolTip(self, index):
+    def tabToolTip(self, indexOrNameOrWidget):
         """Provide the tooltip text of the tab"""
-        return self.__tabBar.tabToolTip(index)
+        index = self.__getWidgetIndex(indexOrNameOrWidget)
+        if index is not None:
+            return self.__tabBar.tabToolTip(index)
+        return None
 
-    def setTabToolTip(self, index, tip):
+    def setTabToolTip(self, indexOrNameOrWidget, tip):
         """Set the tooltip text of the tab"""
-        self.__tabBar.setTabToolTip(index, tip)
+        index = self.__getWidgetIndex(indexOrNameOrWidget)
+        if index is not None:
+            self.__tabBar.setTabToolTip(index, tip)
 
-    def tabWhatsThis(self, index):
+    def tabWhatsThis(self, indexOrNameOrWidget):
         """Provide the WhatsThis text of the tab"""
-        return self.__tabBar.tabWhatsThis(index)
+        index = self.__getWidgetIndex(indexOrNameOrWidget)
+        if index is not None:
+            return self.__tabBar.tabWhatsThis(index)
+        return None
 
-    def setTabWhatsThis(self, index, text):
+    def setTabWhatsThis(self, indexOrNameOrWidget, text):
         """Set the WhatsThis text for the tab"""
-        self.__tabBar.setTabWhatsThis(index, text)
+        index = self.__getWidgetIndex(indexOrNameOrWidget)
+        if index is not None:
+            self.__tabBar.setTabWhatsThis(index, text)
 
-    def widget(self, index):
+    def widget(self, indexOrNameOrWidget):
         """Provides the reference to the widget (QWidget)"""
-        return self.__stackedWidget.widget(index)
+        index = self.__getWidgetIndex(indexOrNameOrWidget)
+        if index is not None:
+            return self.__stackedWidget.widget(index)
+        return None
