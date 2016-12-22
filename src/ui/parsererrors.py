@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,86 +17,77 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
+
+"""Python code parser errors dialog"""
 
 
-""" python code parser errors dialog """
+from os.path import exists, basename
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import (QDialog, QTextEdit, QDialogButtonBox,
+                         QVBoxLayout, QSizePolicy)
+from utils.globals import GlobalData
+from utils.fileutils import isPythonFile
+from .fitlabel import FitLabel
 
 
-import os, os.path
-from PyQt4.QtCore       import Qt
-from PyQt4.QtGui        import ( QDialog, QTextEdit, QDialogButtonBox,
-                                 QVBoxLayout, QSizePolicy )
-from fitlabel           import FitLabel
-from utils.globals      import GlobalData
-from utils.fileutils    import detectFileType, PythonFileType, Python3FileType
+class ParserErrorsDialog(QDialog):
 
+    """Python code parser errors dialog implementation"""
 
-
-class ParserErrorsDialog( QDialog ):
-    " python code parser errors dialog implementation "
-
-    def __init__( self, fileName, info = None, parent = None ):
-
-        QDialog.__init__( self, parent )
+    def __init__(self, fileName, info=None, parent=None):
+        QDialog.__init__(self, parent)
 
         if info is None:
-            if not os.path.exists( fileName ):
-                raise Exception( "Cannot open " + fileName )
+            if not exists(fileName):
+                raise Exception('Cannot open ' + fileName)
 
-            if not detectFileType( fileName ) in [ PythonFileType,
-                                                   Python3FileType ]:
-                raise Exception( "Unexpected file type (" + fileName + \
-                                 "). A python file is expected." )
+            if not isPythonFile(fileName):
+                raise Exception('Unexpected file type (' + fileName +
+                                '). A python file is expected.')
 
-        self.__createLayout( fileName, info )
-        self.setWindowTitle( "Lexer/parser errors: " + \
-                             os.path.basename( fileName ) )
+        self.__createLayout(fileName, info)
+        self.setWindowTitle('Lexer/parser errors: ' + basename(fileName))
         self.show()
-        return
 
-    def __createLayout( self, fileName, info ):
-        """ Creates the dialog layout """
+    def __createLayout(self, fileName, info):
+        """Creates the dialog layout"""
+        self.resize(600, 220)
+        self.setSizeGripEnabled(True)
 
-        self.resize( 600, 220 )
-        self.setSizeGripEnabled( True )
-
-        verticalLayout = QVBoxLayout( self )
+        verticalLayout = QVBoxLayout(self)
 
         # Info label
-        infoLabel = FitLabel( self )
-        sizePolicy = QSizePolicy( QSizePolicy.Minimum, QSizePolicy.Preferred )
-        sizePolicy.setHorizontalStretch( 0 )
-        sizePolicy.setVerticalStretch( 0 )
-        sizePolicy.setHeightForWidth(infoLabel.sizePolicy().hasHeightForWidth())
-        infoLabel.setSizePolicy( sizePolicy )
-        infoLabel.setText( "Lexer/parser errors for " + fileName )
-        verticalLayout.addWidget( infoLabel )
+        infoLabel = FitLabel(self)
+        sizePolicy = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(
+            infoLabel.sizePolicy().hasHeightForWidth())
+        infoLabel.setSizePolicy(sizePolicy)
+        infoLabel.setText('Lexer/parser errors for ' + fileName)
+        verticalLayout.addWidget(infoLabel)
 
         # Result window
-        resultEdit = QTextEdit( self )
-        resultEdit.setTabChangesFocus( False )
-        resultEdit.setAcceptRichText( False )
-        resultEdit.setReadOnly( True )
-        resultEdit.setFontFamily( GlobalData().skin.baseMonoFontFace )
+        resultEdit = QTextEdit(self)
+        resultEdit.setTabChangesFocus(False)
+        resultEdit.setAcceptRichText(False)
+        resultEdit.setReadOnly(True)
+        resultEdit.setFontFamily(GlobalData().skin.baseMonoFontFace)
         if info is not None:
             modInfo = info
         else:
-            modInfo = GlobalData().briefModinfoCache.get( fileName )
+            modInfo = GlobalData().briefModinfoCache.get(fileName)
         if modInfo.isOK:
-            resultEdit.setText( "No errors found" )
+            resultEdit.setText('No errors found')
         else:
-            resultEdit.setText( "\n".join( modInfo.lexerErrors +
-                                           modInfo.errors ) )
-        verticalLayout.addWidget( resultEdit )
+            resultEdit.setText('\n'.join(modInfo.lexerErrors +
+                                         modInfo.errors))
+        verticalLayout.addWidget(resultEdit)
 
         # Buttons
-        buttonBox = QDialogButtonBox( self )
-        buttonBox.setOrientation( Qt.Horizontal )
-        buttonBox.setStandardButtons( QDialogButtonBox.Close )
-        verticalLayout.addWidget( buttonBox )
+        buttonBox = QDialogButtonBox(self)
+        buttonBox.setOrientation(Qt.Horizontal)
+        buttonBox.setStandardButtons(QDialogButtonBox.Close)
+        verticalLayout.addWidget(buttonBox)
 
-        buttonBox.rejected.connect( self.close )
-        return
-
+        buttonBox.rejected.connect(self.close)

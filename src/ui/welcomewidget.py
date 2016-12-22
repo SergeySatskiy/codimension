@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,35 +17,34 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-""" Welcome screen """
+"""Welcome screen"""
 
 
-import os.path, sys
+import os.path
+import sys
 from utils.globals import GlobalData
-from texttabwidget import TextTabWidget
+from .texttabwidget import TextTabWidget
 
 
-class WelcomeWidget( TextTabWidget ):
-    """ Welcome screen """
+class WelcomeWidget(TextTabWidget):
+
+    """Welcome screen"""
 
     httpAddress = "http://codimension.org"
     homePage = httpAddress
     downloadPage = httpAddress + "/download/"
 
-    def __init__( self, parent = None ):
+    def __init__(self, parent=None):
 
-        TextTabWidget.__init__( self, parent )
-        pixmapPath = os.path.dirname( os.path.abspath( sys.argv[0] ) ) + \
-                     os.path.sep + 'pixmaps' + os.path.sep
+        TextTabWidget.__init__(self, parent)
+        pixmapPath = os.path.dirname(os.path.realpath(sys.argv[0])) + \
+            os.path.sep + 'pixmaps' + os.path.sep
         logoPath = pixmapPath + 'logo-48x48.png'
-        welcome = "  Codimension version " + str( GlobalData().version ) + \
-                  " <font size=-2>(GPL v3)</font>"
+        welcome = "  Codimension version " + str(GlobalData().version) + \
+            " <font size=-2>(GPL v3)</font>"
 
-        self.setHTML(
-"""
+        self.setHTML("""
 <body bgcolor="#d5d1cf">
 <p>
 <table cellspacing="0" cellpadding="8" width="100%"
@@ -76,8 +75,7 @@ class WelcomeWidget( TextTabWidget ):
   </td>
 </tr>
 </table></p>
-</body>""" )
+</body>""")
 
-        self.setFileName( "" )
-        self.setShortName( "Welcome" )
-        return
+        self.setFileName("")
+        self.setShortName("Welcome")
