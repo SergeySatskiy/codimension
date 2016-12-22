@@ -5,7 +5,7 @@
 
 # Python code to execute, usually for sys.path manipulation such as
 # pygtk.require().
-init-hook=import sys;sys.path.insert(0,'./src')
+init-hook="import sys;sys.path.insert(0,'./src')"
 
 # Add files or directories to the blacklist. They should be base names, not
 # paths.

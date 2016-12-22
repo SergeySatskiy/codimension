@@ -35,7 +35,6 @@ class PixmapCache():
     def __init__(self):
         self.__cache = {}
         self.__dir = dirname(realpath(sys.argv[0])) + sep + 'pixmaps' + sep
-        return
 
     def getPath(self, path):
         " Provides an absolute path "

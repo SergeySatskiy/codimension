@@ -283,7 +283,7 @@ try:
     pass
 except Exception:
     pass
-except Exception, ex:
+except Exception as ex:
     pass
 except:
     pass
@@ -296,7 +296,7 @@ try:        # Side 1
 except Exception:   # Side 2
                     # Side 2.1
     pass
-except Exception, ex:
+except Exception as ex:
     pass
 # Leading 4
 except:         # Side 4
@@ -313,7 +313,7 @@ try:        # Side 1
 except Exception:   # Side 2
                     # Side 2.1
     pass
-except Exception, ex:
+except Exception as ex:
     pass
 # Leading 4
 except:         # Side 4
