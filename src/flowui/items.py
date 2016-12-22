@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2015  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2015-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,64 +17,56 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-" Various items used to represent a control flow on a virtual canvas "
+"""Various items used to represent a control flow on a virtual canvas"""
 
-from sys import maxint
+from sys import maxsize
 from math import sqrt
+from cgi import escape
 import os.path
-from PyQt4.QtCore import Qt, QPointF
-from PyQt4.QtGui import ( QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
-                          QPainterPath, QPainter, QColor, QGraphicsItem,
-                          QStyleOptionGraphicsItem, QStyle, QFont,
-                          QGraphicsSimpleTextItem )
-from PyQt4.QtSvg import QGraphicsSvgItem
+from PyQt5.QtCore import Qt, QPointF
+from PyQt5.QtGui import (QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
+                         QPainterPath, QPainter, QColor, QGraphicsItem,
+                         QStyleOptionGraphicsItem, QStyle, QFont,
+                         QGraphicsSimpleTextItem)
+from PyQt5.QtSvg import QGraphicsSvgItem
 from auxitems import SVGItem, Connector, Text, CMLLabel
 from cml import CMLVersion, CMLsw, CMLcc, CMLrt
 
 
-
-def getBorderColor( color ):
-    " Creates a darker version of the color "
+def getBorderColor(color):
+    """Creates a darker version of the color"""
     r = color.red()
     g = color.green()
     b = color.blue()
 
     delta = 60
-    if isDark( r, g, b ):
+    if isDark(r, g, b):
         # Need lighter color
-        return QColor( min( r + delta, 255 ),
-                       min( g + delta, 255 ),
-                       min( b + delta, 255 ), color.alpha() )
+        return QColor(min(r + delta, 255),
+                      min(g + delta, 255),
+                      min(b + delta, 255), color.alpha())
     # Need darker color
-    return QColor( max( r - delta, 0 ),
-                   max( g - delta, 0 ),
-                   max( b - delta, 0 ), color.alpha() )
+    return QColor(max(r - delta, 0),
+                  max(g - delta, 0),
+                  max(b - delta, 0), color.alpha())
 
 
-
-def isDark( r, g, b ):
-    " True if the color is dark "
-    yiq = ( ( r * 299 ) + ( g * 587 ) + ( b * 114 ) ) / 1000
+def isDark(r, g, b):
+    """True if the color is dark"""
+    yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000
     return yiq < 128
 
 
-
-def distance( val, begin, end ):
-    " Provides a distance between the absPos and an item "
+def distance(val, begin, end):
+    """Provides a distance between the absPos and an item"""
     if val >= begin and val <= end:
         return 0
-    return min( abs( val - begin ), abs( val - end ) )
-
-
-def htmlEncode( string ):
-    return string.replace( "&", "&amp;" ) \
-                 .replace( ">", "&gt;" ) \
-                 .replace( "<", "&lt;" )
-
+    return min(abs(val - begin), abs(val - end))
 
 
 class CellElement:
-    " Base class for all the elements which could be found on the canvas "
+
+    """Base class for all the elements which could be found on the canvas"""
 
     UNKNOWN = -1
 
@@ -113,10 +105,10 @@ class CellElement:
 
     CONNECTOR = 300
 
-    def __init__( self, ref, canvas, x, y ):
+    def __init__(self, ref, canvas, x, y):
         self.kind = self.UNKNOWN
         self.ref = ref              # reference to the control flow object
-        self.addr = [ x, y ]        # indexes in the current canvas
+        self.addr = [x, y]          # indexes in the current canvas
         self.canvas = canvas        # reference to the canvas
         self._editor = None
         self.cmlLabelItem = None    # Label near the item to indicate a CML
@@ -134,103 +126,110 @@ class CellElement:
         # Filled when draw is called
         self.baseX = None
         self.baseY = None
-        return
 
-    def __str__( self ):
-        return kindToString( self.kind ) + \
-               "[" + str( self.width ) + ":" + str( self.height ) + "]"
+    def __str__(self):
+        return kindToString(self.kind) + \
+               "[" + str(self.width) + ":" + str(self.height) + "]"
 
-    def render( self ):
-        " Renders the graphics considering settings "
-        raise Exception( "render() is not implemented for " +
-                         kindToString( self.kind ) )
+    def render(self):
+        """Renders the graphics considering settings"""
+        raise Exception("render() is not implemented for " +
+                        kindToString(self.kind))
 
-    def draw( self, scene, baseX, baseY ):
+    def draw(self, scene, baseX, baseY):
+        """Draws the element on the real canvas
+           in the given rect respecting settings
         """
-        Draws the element on the real canvas
-        in the given rect respecting settings
-        """
-        raise Exception( "draw() is not implemented for " +
-                         kindToString( self.kind ) )
+        raise Exception("draw() is not implemented for " +
+                        kindToString(self.kind))
 
-    def getBoundingRect( self, text ):
-        " Provides the bounding rectangle for a monospaced font "
+    def getBoundingRect(self, text):
+        """Provides the bounding rectangle for a monospaced font"""
         return self.canvas.settings.monoFontMetrics.boundingRect(
-                                        0, 0,  maxint, maxint, 0, text )
+            0, 0, maxsize, maxsize, 0, text)
 
-    def getTooltip( self ):
+    def getTooltip(self):
+        """Provides the tooltip"""
         s = self.canvas.settings
         parts = []
         canvas = self.canvas
         while canvas is not None:
-            parts.insert( 0, canvas.getScopeName() )
+            parts.insert(0, canvas.getScopeName())
             canvas = canvas.canvas
         if s.debug:
-            return "::".join( parts ) + "<br>Size: " + str( self.width ) + "x" + str( self.height ) + \
-               " (" + str( self.minWidth ) + "x" + str( self.minHeight ) + ")" + \
-               " Row: " + str( self.addr[1] ) + " Column: " + str( self.addr[0] )
-        return "::".join( parts )
+            return "::".join(parts) + "<br>Size: " + \
+                str(self.width) + "x" + str(self.height) + \
+                " (" + str(self.minWidth) + "x" + str(self.minHeight) + ")" + \
+                " Row: " + str(self.addr[1]) + " Column: " + str(self.addr[0])
+        return "::".join(parts)
 
-    def getCanvasTooltip( self ):
+    def getCanvasTooltip(self):
+        """Provides the canvas tooltip"""
         s = self.canvas.settings
         parts = []
         canvas = self.canvas
         while canvas is not None:
             if canvas.isNoScope == False:
-                parts.insert( 0, canvas.getScopeName() )
+                parts.insert(0, canvas.getScopeName())
             canvas = canvas.canvas
-        path = " :: ".join( parts )
+        path = " :: ".join(parts)
         if not path:
             path = " ::"
         if s.debug:
-            return path + "<br>Size: " + str( self.canvas.width ) + "x" + \
-                   str( self.canvas.height ) + \
-                   " (" + str( self.canvas.minWidth ) + "x" + \
-                   str( self.canvas.minHeight ) + ")"
+            return path + "<br>Size: " + str(self.canvas.width) + "x" + \
+                   str(self.canvas.height) + \
+                   " (" + str(self.canvas.minWidth) + "x" + \
+                   str(self.canvas.minHeight) + ")"
         return path
 
-    def setEditor( self, editor ):
-        " Provides the editor counterpart "
+    def setEditor(self, editor):
+        """Sets the editor counterpart"""
         self._editor = editor
 
-    def mouseDoubleClickEvent( self, event ):
-        " Jump to the appropriate line in the text editor: default implementation "
+    def mouseDoubleClickEvent(self, event):
+        """Jump to the appropriate line in the text editor:
+           default implementation
+        """
         if self._editor is None:
             return
         if event:
             if event.buttons() != Qt.LeftButton:
                 return
 
-        self._editor.gotoLine( self.ref.body.beginLine,
-                               self.ref.body.beginPos )
+        self._editor.gotoLine(self.ref.body.beginLine,
+                              self.ref.body.beginPos)
         self._editor.setFocus()
-        return
 
-    def scopedItem( self ):
+    def scopedItem(self):
+        """True if it is a scoped item"""
         return False
 
-    def isProxyItem( self ):
+    def isProxyItem(self):
+        """True if it is a proxy item"""
         return False
 
-    def getProxiedItem( self ):
+    def getProxiedItem(self):
+        """Provides the real item for a proxy one"""
         return None
 
-    def isComment( self ):
+    def isComment(self):
+        """True if it is a comment"""
         return False
 
-    def getDistance( self, absPos ):
-        """ Default implementation.
-            Provides a distance between the absPos and the item """
-        return distance( absPos, self.ref.body.begin, self.ref.body.end )
+    def getDistance(self, absPos):
+        """Default implementation.
+           Provides a distance between the absPos and the item
+        """
+        return distance(absPos, self.ref.body.begin, self.ref.body.end)
 
-    def getLineDistance( self, line ):
-        """ Default implementation.
-            Provides a distance between the line and the item """
-        return distance( line, self.ref.body.beginLine,
-                               self.ref.body.endLine )
+    def getLineDistance(self, line):
+        """Default implementation.
+           Provides a distance between the line and the item
+        """
+        return distance(line, self.ref.body.beginLine, self.ref.body.endLine)
 
-    def addCMLIndicator( self, baseX, baseY, penWidth, scene, ref = None ):
-        " Adds a CML indicator for an item if needed "
+    def addCMLIndicator(self, baseX, baseY, penWidth, scene, ref=None):
+        """Adds a CML indicator for an item if needed"""
         if ref is None:
             hasCML = self.ref.leadingCMLComments or self.ref.sideCMLComments
         else:
@@ -239,15 +238,15 @@ class CellElement:
         if hasCML:
             s = self.canvas.settings
             self.cmlLabelItem = CMLLabel()
-            self.cmlLabelItem.setPos( baseX + s.hCellPadding - penWidth -
-                                      self.cmlLabelItem.width(),
-                                      baseY + s.vCellPadding )
-            scene.addItem( self.cmlLabelItem )
+            self.cmlLabelItem.setPos(baseX + s.hCellPadding - penWidth -
+                                     self.cmlLabelItem.width(),
+                                     baseY + s.vCellPadding)
+            scene.addItem(self.cmlLabelItem)
 
-    def getCustomColors( self, defaultBG, defaultFG ):
-        " Provides the colors to be used for an item "
+    def getCustomColors(self, defaultBG, defaultFG):
+        """Provides the colors to be used for an item"""
         if self.ref.leadingCMLComments:
-            colorSpec = CMLVersion.find( self.ref.leadingCMLComments, CMLcc )
+            colorSpec = CMLVersion.find(self.ref.leadingCMLComments, CMLcc)
             if colorSpec:
                 bg = defaultBG
                 fg = defaultFG
@@ -258,248 +257,252 @@ class CellElement:
                 if colorSpec.border:
                     border = colorSpec.border
                 else:
-                    border = getBorderColor( bg )
+                    border = getBorderColor(bg)
                 return bg, fg, border
-        return defaultBG, defaultFG, getBorderColor( defaultBG )
+        return defaultBG, defaultFG, getBorderColor(defaultBG)
 
-    def getReplacementText( self ):
-        " Provides the CML replacement text if so "
-        if hasattr( self.ref, "leadingCMLComments" ):
-            rt = CMLVersion.find( self.ref.leadingCMLComments, CMLrt )
+    def getReplacementText(self):
+        """Provides the CML replacement text if so"""
+        if hasattr(self.ref, "leadingCMLComments"):
+            rt = CMLVersion.find(self.ref.leadingCMLComments, CMLrt)
             if rt:
                 if rt.text is not None:
-                    return rt.text.replace( '\\n', '\n' )
+                    return rt.text.replace('\\n', '\n')
         return None
 
-    def _getText( self ):
-        " Default implementation of the item text provider "
+    def _getText(self):
+        """Default implementation of the item text provider"""
         if self._text is None:
             self._text = self.getReplacementText()
             displayText = self.ref.getDisplayValue()
             if self._text is None:
                 self._text = displayText
             else:
-                self.setToolTip( "<pre>" + htmlEncode( displayText ) + "</pre>" )
+                self.setToolTip("<pre>" + escape(displayText) + "</pre>")
         return self._text
 
-    def _getFirstLine( self ):
-        line = maxint
-        if hasattr( self.ref, "leadingCMLComments" ):
+    def _getFirstLine(self):
+        """Provides the first line"""
+        line = maxsize
+        if hasattr(self.ref, "leadingCMLComments"):
             if self.ref.leadingCMLComments:
-                line = CMLVersion.getFirstLine( self.ref.leadingCMLComments )
-        if hasattr( self.ref, "leadingComment" ):
+                line = CMLVersion.getFirstLine(self.ref.leadingCMLComments)
+        if hasattr(self.ref, "leadingComment"):
             if self.ref.leadingComment:
                 if self.ref.leadingComment.parts:
-                    line = min( self.ref.leadingComment.parts[ 0 ].beginLine,
-                                line )
-        return min( self.ref.body.beginLine, line )
+                    line = min(self.ref.leadingComment.parts[0].beginLine,
+                               line)
+        return min(self.ref.body.beginLine, line)
 
 
 __kindToString = {
-    CellElement.UNKNOWN:                "UNKNOWN",
-    CellElement.VACANT:                 "VACANT",
-    CellElement.H_SPACER:               "H_SPACER",
-    CellElement.V_SPACER:               "V_SPACER",
-    CellElement.FILE_SCOPE:             "FILE_SCOPE",
-    CellElement.FUNC_SCOPE:             "FUNC_SCOPE",
-    CellElement.CLASS_SCOPE:            "CLASS_SCOPE",
-    CellElement.DECOR_SCOPE:            "DECOR_SCOPE",
-    CellElement.FOR_SCOPE:              "FOR_SCOPE",
-    CellElement.WHILE_SCOPE:            "WHILE_SCOPE",
-    CellElement.ELSE_SCOPE:             "ELSE_SCOPE",
-    CellElement.WITH_SCOPE:             "WITH_SCOPE",
-    CellElement.TRY_SCOPE:              "TRY_SCOPE",
-    CellElement.EXCEPT_SCOPE:           "EXCEPT_SCOPE",
-    CellElement.FINALLY_SCOPE:          "FINALLY_SCOPE",
-    CellElement.CODE_BLOCK:             "CODE_BLOCK",
-    CellElement.BREAK:                  "BREAK",
-    CellElement.CONTINUE:               "CONTINUE",
-    CellElement.RETURN:                 "RETURN",
-    CellElement.RAISE:                  "RAISE",
-    CellElement.ASSERT:                 "ASSERT",
-    CellElement.SYSEXIT:                "SYSEXIT",
-    CellElement.IMPORT:                 "IMPORT",
-    CellElement.IF:                     "IF",
-    CellElement.LEADING_COMMENT:        "LEADING_COMMENT",
-    CellElement.INDEPENDENT_COMMENT:    "INDEPENDENT_COMMENT",
-    CellElement.SIDE_COMMENT:           "SIDE_COMMENT",
-    CellElement.ABOVE_COMMENT:          "ABOVE_COMMENT",
-    CellElement.CONNECTOR:              "CONNECTOR",
-}
+    CellElement.UNKNOWN: "UNKNOWN",
+    CellElement.VACANT: "VACANT",
+    CellElement.H_SPACER: "H_SPACER",
+    CellElement.V_SPACER: "V_SPACER",
+    CellElement.FILE_SCOPE: "FILE_SCOPE",
+    CellElement.FUNC_SCOPE: "FUNC_SCOPE",
+    CellElement.CLASS_SCOPE: "CLASS_SCOPE",
+    CellElement.DECOR_SCOPE: "DECOR_SCOPE",
+    CellElement.FOR_SCOPE: "FOR_SCOPE",
+    CellElement.WHILE_SCOPE: "WHILE_SCOPE",
+    CellElement.ELSE_SCOPE: "ELSE_SCOPE",
+    CellElement.WITH_SCOPE: "WITH_SCOPE",
+    CellElement.TRY_SCOPE: "TRY_SCOPE",
+    CellElement.EXCEPT_SCOPE: "EXCEPT_SCOPE",
+    CellElement.FINALLY_SCOPE: "FINALLY_SCOPE",
+    CellElement.CODE_BLOCK: "CODE_BLOCK",
+    CellElement.BREAK: "BREAK",
+    CellElement.CONTINUE: "CONTINUE",
+    CellElement.RETURN: "RETURN",
+    CellElement.RAISE: "RAISE",
+    CellElement.ASSERT: "ASSERT",
+    CellElement.SYSEXIT: "SYSEXIT",
+    CellElement.IMPORT: "IMPORT",
+    CellElement.IF: "IF",
+    CellElement.LEADING_COMMENT: "LEADING_COMMENT",
+    CellElement.INDEPENDENT_COMMENT: "INDEPENDENT_COMMENT",
+    CellElement.SIDE_COMMENT: "SIDE_COMMENT",
+    CellElement.ABOVE_COMMENT: "ABOVE_COMMENT",
+    CellElement.CONNECTOR: "CONNECTOR"}
 
 
-def kindToString( kind ):
-    " Provides a string representation of a element kind "
-    return __kindToString[ kind ]
+def kindToString(kind):
+    """Provides a string representation of a element kind"""
+    return __kindToString[kind]
 
 
+class VacantCell(CellElement):
 
+    """A vacant cell which can be later used for some other element"""
 
-class VacantCell( CellElement ):
-    " Represents a vacant cell which can be later used for some other element "
-
-    def __init__( self, ref, canvas, x, y ):
-        CellElement.__init__( self, ref, canvas, x, y )
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
         self.kind = CellElement.VACANT
-        return
 
-    def render( self ):
+    def render(self):
+        """Renders the cell"""
         self.width = 0
         self.height = 0
         self.minWidth = 0
         self.minHeight = 0
         return (self.width, self.height)
 
-    def draw( self, scene, baseX, baseY ):
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
-        return
 
 
-class VSpacerCell( CellElement ):
-    " Represents a vertical spacer cell "
+class VSpacerCell(CellElement):
 
-    def __init__( self, ref, canvas, x, y ):
-        CellElement.__init__( self, ref, canvas, x, y )
+    """Represents a vertical spacer cell"""
+
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
         self.kind = CellElement.V_SPACER
-        return
 
-    def render( self ):
+    def render(self):
+        """Renders the cell"""
         self.width = 0
         self.height = self.canvas.settings.vSpacer
         self.minWidth = self.width
         self.minHeight = self.height
         return (self.width, self.height)
 
-    def draw( self, scene, baseX, baseY ):
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
         # There is no need to draw anything. The cell just reserves some
         # vertical space for better appearance
         self.baseX = baseX
         self.baseY = baseY
-        return
 
 
-class HSpacerCell( CellElement ):
-    " Represents a horizontal spacer cell "
+class HSpacerCell(CellElement):
 
-    def __init__( self, ref, canvas, x, y ):
-        CellElement.__init__( self, ref, canvas, x, y )
+    """Represents a horizontal spacer cell"""
+
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
         self.kind = CellElement.H_SPACER
-        return
 
-    def render( self ):
+    def render(self):
+        """Renders the cell"""
         self.width = self.canvas.settings.hSpacer
         self.height = 0
         self.minWidth = self.width
         self.minHeight = self.height
         return (self.width, self.height)
 
-    def draw( self, scene, baseX, baseY ):
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
         # There is no need to draw anything. The cell just reserves some
         # horizontal space for better appearance
         self.baseX = baseX
         self.baseY = baseY
-        return
 
 
-class CodeBlockCell( CellElement, QGraphicsRectItem ):
-    " Represents a single code block "
+class CodeBlockCell(CellElement, QGraphicsRectItem):
 
-    def __init__( self, ref, canvas, x, y ):
-        CellElement.__init__( self, ref, canvas, x, y )
-        QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
+    """Represents a single code block"""
+
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
+        QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.CODE_BLOCK
         self.__textRect = None
         self.connector = None
 
         # To make double click delivered
-        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
-        return
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def render( self ):
+    def render(self):
+        """Renders the cell"""
         s = self.canvas.settings
-        self.__textRect = self.getBoundingRect( self._getText() )
+        self.__textRect = self.getBoundingRect(self._getText())
 
-        self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
-        self.minWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
-                             s.minWidth )
+        vPadding = 2 * (s.vCellPadding + s.vTextPadding)
+        self.minHeight = self.__textRect.height() + vPadding
+        hPadding = 2 * (s.hCellPadding + s.hTextPadding)
+        self.minWidth = max(self.__textRect.width() + hPadding, s.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
 
-    def draw( self, scene, baseX, baseY ):
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
 
         # Add the connector as a separate scene item to make the selection
         # working properly
         s = self.canvas.settings
-        self.connector = Connector( s, baseX + s.mainLine, baseY,
-                                    baseX + s.mainLine,
-                                    baseY + self.height )
-        scene.addItem( self.connector )
+        self.connector = Connector(s, baseX + s.mainLine, baseY,
+                                   baseX + s.mainLine,
+                                   baseY + self.height)
+        scene.addItem(self.connector)
 
         # Setting the rectangle is important for the selection and for
         # redrawing. Thus the selection pen with must be considered too.
         penWidth = s.selectPenWidth - 1
-        self.setRect( baseX + s.hCellPadding - penWidth,
-                      baseY + s.vCellPadding - penWidth,
-                      self.minWidth - 2 * s.hCellPadding + 2 * penWidth,
-                      self.minHeight - 2 * s.vCellPadding + 2 * penWidth )
-        scene.addItem( self )
+        self.setRect(baseX + s.hCellPadding - penWidth,
+                     baseY + s.vCellPadding - penWidth,
+                     self.minWidth - 2 * s.hCellPadding + 2 * penWidth,
+                     self.minHeight - 2 * s.vCellPadding + 2 * penWidth)
+        scene.addItem(self)
 
-        self.addCMLIndicator( baseX, baseY, penWidth, scene )
+        self.addCMLIndicator(baseX, baseY, penWidth, scene)
 
         self.__bgColor, self.__fgColor, self.__borderColor = \
-                    self.getCustomColors( s.boxBGColor, s.boxFGColor )
-        return
+                    self.getCustomColors(s.boxBGColor, s.boxFGColor)
 
-    def paint( self, painter, option, widget ):
-        " Draws the code block "
+    def paint(self, painter, option, widget):
+        """Draws the code block"""
         s = self.canvas.settings
 
         rectWidth = self.minWidth - 2 * s.hCellPadding
         rectHeight = self.minHeight - 2 * s.vCellPadding
 
         if self.isSelected():
-            selectPen = QPen( s.selectColor )
-            selectPen.setWidth( s.selectPenWidth )
-            selectPen.setJoinStyle( Qt.RoundJoin )
-            painter.setPen( selectPen )
+            selectPen = QPen(s.selectColor)
+            selectPen.setWidth(s.selectPenWidth)
+            selectPen.setJoinStyle(Qt.RoundJoin)
+            painter.setPen(selectPen)
         else:
-            pen = QPen( self.__borderColor )
-            painter.setPen( pen )
-        brush = QBrush( self.__bgColor )
-        painter.setBrush( brush )
-        painter.drawRect( self.baseX + s.hCellPadding,
-                          self.baseY + s.vCellPadding,
-                          rectWidth, rectHeight )
+            pen = QPen(self.__borderColor)
+            painter.setPen(pen)
+        brush = QBrush(self.__bgColor)
+        painter.setBrush(brush)
+        painter.drawRect(self.baseX + s.hCellPadding,
+                         self.baseY + s.vCellPadding,
+                         rectWidth, rectHeight)
 
         # Draw the text in the rectangle
-        pen = QPen( self.__fgColor )
-        painter.setFont( s.monoFont )
-        painter.setPen( pen )
+        pen = QPen(self.__fgColor)
+        painter.setFont(s.monoFont)
+        painter.setPen(pen)
 
         textWidth = self.__textRect.width() + 2 * s.hTextPadding
         textShift = (rectWidth - textWidth) / 2
-        painter.drawText( self.baseX + s.hCellPadding + s.hTextPadding + textShift,
-                          self.baseY + s.vCellPadding + s.vTextPadding,
-                          self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft, self._getText() )
-        return
+        painter.drawText(
+            self.baseX + s.hCellPadding + s.hTextPadding + textShift,
+            self.baseY + s.vCellPadding + s.vTextPadding,
+            self.__textRect.width(), self.__textRect.height(),
+            Qt.AlignLeft, self._getText())
 
-    def getSelectTooltip( self ):
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
         lineRange = self.ref.body.getLineRange()
-        return "Code block at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
+        return 'Code block at lines ' + \
+               str(lineRange[0]) + "-" + str(lineRange[1])
 
 
+class BreakCell(CellElement, QGraphicsRectItem):
+    """Represents a single break statement"""
 
-class BreakCell( CellElement, QGraphicsRectItem ):
-    " Represents a single break statement "
-
-    def __init__( self, ref, canvas, x, y ):
-        CellElement.__init__( self, ref, canvas, x, y )
-        QGraphicsRectItem.__init__( self )
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
+        QGraphicsRectItem.__init__(self)
         self.kind = CellElement.BREAK
         self.__textRect = None
         self.__vSpacing = 0
@@ -513,90 +516,92 @@ class BreakCell( CellElement, QGraphicsRectItem ):
         h = None
 
         # To make double click delivered
-        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
-        return
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def render( self ):
+    def render(self):
+        """Renders the cell"""
         s = self.canvas.settings
-        self.__textRect = self.getBoundingRect( "break" )
-        self.minHeight = self.__textRect.height() + 2 * (self.__vSpacing + s.vCellPadding)
-        self.minWidth = self.__textRect.width() + 2 * (self.__hSpacing + s.hCellPadding)
+        self.__textRect = self.getBoundingRect("break")
+        vPadding = 2 * (self.__vSpacing + s.vCellPadding)
+        self.minHeight = self.__textRect.height() + vPadding
+        hPadding = 2 * (self.__hSpacing + s.hCellPadding)
+        self.minWidth = self.__textRect.width() + hPadding
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
 
-    def __calculateSize( self ):
+    def __calculateSize(self):
+        """Calculates the size"""
         s = self.canvas.settings
         self.x1 = self.baseX + s.hCellPadding
         self.y1 = self.baseY + s.vCellPadding
         self.w = 2 * self.__hSpacing + self.__textRect.width()
         self.h = 2 * self.__vSpacing + self.__textRect.height()
-        return
 
-    def draw( self, scene, baseX, baseY ):
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
 
         # Add the connector as a separate scene item to make the selection
         # working properly
         s = self.canvas.settings
-        self.connector = Connector( s, baseX + s.mainLine, baseY,
-                                    baseX + s.mainLine, baseY + s.vCellPadding )
-        scene.addItem( self.connector )
+        self.connector = Connector(s, baseX + s.mainLine, baseY,
+                                   baseX + s.mainLine, baseY + s.vCellPadding)
+        scene.addItem(self.connector)
 
         # Setting the rectangle is important for the selection and for
         # redrawing. Thus the selection pen with must be considered too.
         penWidth = s.selectPenWidth - 1
         self.__calculateSize()
-        self.setRect( self.x1 - penWidth, self.y1 - penWidth,
-                      self.w + 2 * penWidth, self.h + 2 * penWidth )
-        scene.addItem( self )
+        self.setRect(self.x1 - penWidth, self.y1 - penWidth,
+                     self.w + 2 * penWidth, self.h + 2 * penWidth)
+        scene.addItem(self)
 
-        self.addCMLIndicator( baseX, baseY, penWidth, scene )
+        self.addCMLIndicator(baseX, baseY, penWidth, scene)
 
         self.__bgColor, self.__fgColor, self.__borderColor = \
-                    self.getCustomColors( s.breakBGColor, s.boxFGColor )
-        return
+                    self.getCustomColors(s.breakBGColor, s.boxFGColor)
 
-    def paint( self, painter, option, widget ):
-        " Draws the break statement "
+    def paint(self, painter, option, widget):
+        """Draws the break statement"""
         s = self.canvas.settings
 
         if self.isSelected():
-            selectPen = QPen( s.selectColor )
-            selectPen.setWidth( s.selectPenWidth )
-            selectPen.setJoinStyle( Qt.RoundJoin )
-            painter.setPen( selectPen )
+            selectPen = QPen(s.selectColor)
+            selectPen.setWidth(s.selectPenWidth)
+            selectPen.setJoinStyle(Qt.RoundJoin)
+            painter.setPen(selectPen)
         else:
-            pen = QPen( self.__borderColor )
-            painter.setPen( pen )
+            pen = QPen(self.__borderColor)
+            painter.setPen(pen)
 
-        brush = QBrush( self.__bgColor )
-        painter.setBrush( brush )
+        brush = QBrush(self.__bgColor)
+        painter.setBrush(brush)
 
-        painter.drawRoundedRect( self.x1, self.y1, self.w, self.h, 2, 2 )
+        painter.drawRoundedRect(self.x1, self.y1, self.w, self.h, 2, 2)
 
         # Draw the text in the rectangle
-        pen = QPen( self.__fgColor )
-        painter.setFont( s.monoFont )
-        painter.setPen( pen )
-        painter.drawText( self.x1 + self.__hSpacing, self.y1 + self.__vSpacing,
-                          self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft, "break" )
-        return
+        pen = QPen(self.__fgColor)
+        painter.setFont(s.monoFont)
+        painter.setPen(pen)
+        painter.drawText(self.x1 + self.__hSpacing, self.y1 + self.__vSpacing,
+                         self.__textRect.width(), self.__textRect.height(),
+                         Qt.AlignLeft, "break")
 
-    def getSelectTooltip( self ):
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
         lineRange = self.ref.body.getLineRange()
-        return "Break at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
+        return 'Break at lines ' + str(lineRange[0]) + '-' + str(lineRange[1])
 
 
+class ContinueCell(CellElement, QGraphicsRectItem):
 
-class ContinueCell( CellElement, QGraphicsRectItem ):
-    " Represents a single continue statement "
+    """Represents a single continue statement"""
 
-    def __init__( self, ref, canvas, x, y ):
-        CellElement.__init__( self, ref, canvas, x, y )
-        QGraphicsRectItem.__init__( self )
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
+        QGraphicsRectItem.__init__(self)
         self.kind = CellElement.CONTINUE
         self.__textRect = None
         self.__vSpacing = 0
@@ -610,104 +615,108 @@ class ContinueCell( CellElement, QGraphicsRectItem ):
         self.h = None
 
         # To make double click delivered
-        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
-        return
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def render( self ):
+    def render(self):
+        """Renders the cell"""
         s = self.canvas.settings
-        self.__textRect = self.getBoundingRect( "continue" )
-        self.minHeight = self.__textRect.height() + 2 * (self.__vSpacing + s.vCellPadding)
-        self.minWidth = self.__textRect.width() + 2 * (self.__hSpacing + s.hCellPadding)
+        self.__textRect = self.getBoundingRect("continue")
+        vPadding = 2 * (self.__vSpacing + s.vCellPadding)
+        self.minHeight = self.__textRect.height() + vPadding
+        hPadding = 2 * (self.__hSpacing + s.hCellPadding)
+        self.minWidth = self.__textRect.width() + hPadding
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
 
-    def __calculateSize( self ):
+    def __calculateSize(self):
+        """Calculates the size"""
         s = self.canvas.settings
         self.x1 = self.baseX + s.hCellPadding
         self.y1 = self.baseY + s.vCellPadding
         self.w = 2 * self.__hSpacing + self.__textRect.width()
         self.h = 2 * self.__vSpacing + self.__textRect.height()
-        return
 
-    def draw( self, scene, baseX, baseY ):
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
 
         # Add the connector as a separate scene item to make the selection
         # working properly
         s = self.canvas.settings
-        self.connector = Connector( s, baseX + s.mainLine, baseY,
-                                    baseX + s.mainLine, baseY + s.vCellPadding )
-        scene.addItem( self.connector )
+        self.connector = Connector(s, baseX + s.mainLine, baseY,
+                                   baseX + s.mainLine, baseY + s.vCellPadding)
+        scene.addItem(self.connector)
 
         # Setting the rectangle is important for the selection and for
         # redrawing. Thus the selection pen with must be considered too.
         penWidth = s.selectPenWidth - 1
         self.__calculateSize()
-        self.setRect( self.x1 - penWidth, self.y1 - penWidth,
-                      self.w + 2 * penWidth, self.h + 2 * penWidth )
+        self.setRect(self.x1 - penWidth, self.y1 - penWidth,
+                     self.w + 2 * penWidth, self.h + 2 * penWidth)
 
-        scene.addItem( self )
+        scene.addItem(self)
 
-        self.addCMLIndicator( baseX, baseY, penWidth, scene )
+        self.addCMLIndicator(baseX, baseY, penWidth, scene)
 
         self.__bgColor, self.__fgColor, self.__borderColor = \
-                    self.getCustomColors( s.continueBGColor, s.boxFGColor )
-        return
+            self.getCustomColors(s.continueBGColor, s.boxFGColor)
 
-    def paint( self, painter, option, widget ):
-        " Draws the break statement "
+    def paint(self, painter, option, widget):
+        """Draws the break statement"""
         s = self.canvas.settings
 
         if self.isSelected():
-            selectPen = QPen( s.selectColor )
-            selectPen.setWidth( s.selectPenWidth )
-            selectPen.setJoinStyle( Qt.RoundJoin )
-            painter.setPen( selectPen )
+            selectPen = QPen(s.selectColor)
+            selectPen.setWidth(s.selectPenWidth)
+            selectPen.setJoinStyle(Qt.RoundJoin)
+            painter.setPen(selectPen)
         else:
-            pen = QPen( self.__borderColor )
-            painter.setPen( pen )
+            pen = QPen(self.__borderColor)
+            painter.setPen(pen)
 
-        brush = QBrush( self.__bgColor )
-        painter.setBrush( brush )
+        brush = QBrush(self.__bgColor)
+        painter.setBrush(brush)
 
-        painter.drawRoundedRect( self.x1, self.y1, self.w, self.h, 2, 2 )
+        painter.drawRoundedRect(self.x1, self.y1, self.w, self.h, 2, 2)
 
         # Draw the text in the rectangle
-        pen = QPen( self.__fgColor )
-        painter.setFont( s.monoFont )
-        painter.setPen( pen )
-        painter.drawText( self.x1 + self.__hSpacing, self.y1 + self.__vSpacing,
-                          self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft, "continue" )
-        return
+        pen = QPen(self.__fgColor)
+        painter.setFont(s.monoFont)
+        painter.setPen(pen)
+        painter.drawText(self.x1 + self.__hSpacing, self.y1 + self.__vSpacing,
+                         self.__textRect.width(), self.__textRect.height(),
+                         Qt.AlignLeft, "continue")
 
-    def getSelectTooltip( self ):
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
         lineRange = self.ref.body.getLineRange()
-        return "Continue at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
+        return "Continue at lines " + \
+               str(lineRange[0]) + "-" + str(lineRange[1])
 
 
-class ReturnCell( CellElement, QGraphicsRectItem ):
-    " Represents a single return statement "
+class ReturnCell(CellElement, QGraphicsRectItem):
 
-    def __init__( self, ref, canvas, x, y ):
-        CellElement.__init__( self, ref, canvas, x, y )
-        QGraphicsRectItem.__init__( self )
+    """Represents a single return statement"""
+
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
+        QGraphicsRectItem.__init__(self)
         self.kind = CellElement.RETURN
         self.__textRect = None
         self.__arrowWidth = 16
         self.connector = None
 
-        self.arrowItem = SVGItem( "return.svgz", self )
-        self.arrowItem.setWidth( self.__arrowWidth )
-        self.arrowItem.setToolTip( "return" )
+        self.arrowItem = SVGItem("return.svgz", self)
+        self.arrowItem.setWidth(self.__arrowWidth)
+        self.arrowItem.setToolTip("return")
 
         # To make double click delivered
-        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
-        return
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def _getText( self ):
+    def _getText(self):
+        """Provides the text"""
         if self._text is None:
             self._text = self.getReplacementText()
             displayText = self.ref.getDisplayValue()
@@ -716,320 +725,342 @@ class ReturnCell( CellElement, QGraphicsRectItem ):
                 if not self._text:
                     self._text = "None"
             else:
-                self.setToolTip( "<pre>" + htmlEncode( displayText ) + "</pre>" )
+                self.setToolTip("<pre>" + escape( displayText ) + "</pre>")
         return self._text
 
-    def render( self ):
+    def render(self):
+        """Renders the cell"""
         s = self.canvas.settings
-        self.__textRect = self.getBoundingRect( self._getText() )
+        self.__textRect = self.getBoundingRect(self._getText())
 
-        self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
-        self.minWidth = max( self.__textRect.width() + 2 * s.hCellPadding + s.hTextPadding +
-                             s.returnRectRadius + 2 * s.hTextPadding + self.__arrowWidth,
-                             s.minWidth )
+        vPadding = 2 * (s.vCellPadding + s.vTextPadding)
+        self.minHeight = self.__textRect.height() + vPadding
+        self.minWidth = max(self.__textRect.width() + 2 * s.hCellPadding +
+                            s.hTextPadding + s.returnRectRadius +
+                            2 * s.hTextPadding + self.__arrowWidth,
+                            s.minWidth)
 
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
 
-    def draw( self, scene, baseX, baseY ):
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
 
         # Add the connector as a separate scene item to make the selection
         # working properly
         s = self.canvas.settings
-        self.connector = Connector( s, baseX + s.mainLine, baseY,
-                                    baseX + s.mainLine, baseY + s.vCellPadding )
+        self.connector = Connector(s, baseX + s.mainLine, baseY,
+                                   baseX + s.mainLine, baseY + s.vCellPadding)
 
 
         # Setting the rectangle is important for the selection and for
         # redrawing. Thus the selection pen with must be considered too.
         penWidth = s.selectPenWidth - 1
-        self.setRect( baseX + s.hCellPadding - penWidth,
-                      baseY + s.vCellPadding - penWidth,
-                      self.minWidth - 2 * s.hCellPadding + 2 * penWidth,
-                      self.minHeight - 2 * s.vCellPadding + 2 * penWidth )
+        self.setRect(baseX + s.hCellPadding - penWidth,
+                     baseY + s.vCellPadding - penWidth,
+                     self.minWidth - 2 * s.hCellPadding + 2 * penWidth,
+                     self.minHeight - 2 * s.vCellPadding + 2 * penWidth)
 
-        self.arrowItem.setPos( baseX + s.hCellPadding + s.hTextPadding,
-                               baseY + self.minHeight/2 - self.arrowItem.height()/2 )
+        self.arrowItem.setPos(
+            baseX + s.hCellPadding + s.hTextPadding,
+            baseY + self.minHeight/2 - self.arrowItem.height()/2)
 
-        scene.addItem( self.connector )
-        scene.addItem( self )
-        scene.addItem( self.arrowItem )
+        scene.addItem(self.connector)
+        scene.addItem(self)
+        scene.addItem(self.arrowItem)
 
-        self.addCMLIndicator( baseX, baseY, penWidth, scene )
+        self.addCMLIndicator(baseX, baseY, penWidth, scene)
 
         self.__bgColor, self.__fgColor, self.__borderColor = \
-                    self.getCustomColors( s.boxBGColor, s.boxFGColor )
-        return
+            self.getCustomColors(s.boxBGColor, s.boxFGColor)
 
-    def paint( self, painter, option, widget ):
-        " Draws the code block "
+    def paint(self, painter, option, widget):
+        """Draws the code block"""
         s = self.canvas.settings
 
         if self.isSelected():
-            selectPen = QPen( s.selectColor )
-            selectPen.setWidth( s.selectPenWidth )
-            painter.setPen( selectPen )
+            selectPen = QPen(s.selectColor)
+            selectPen.setWidth(s.selectPenWidth)
+            painter.setPen(selectPen)
         else:
-            pen = QPen( self.__borderColor )
-            painter.setPen( pen )
+            pen = QPen(self.__borderColor)
+            painter.setPen(pen)
 
-        brush = QBrush( self.__bgColor )
-        painter.setBrush( brush )
-        painter.drawRoundedRect( self.baseX + s.hCellPadding,
-                                 self.baseY + s.vCellPadding,
-                                 self.minWidth - 2 * s.hCellPadding,
-                                 self.minHeight - 2 * s.vCellPadding,
-                                 s.returnRectRadius, s.returnRectRadius )
-        painter.drawRoundedRect( self.baseX + s.hCellPadding,
-                                 self.baseY + s.vCellPadding,
-                                 self.__arrowWidth + 2 * s.hTextPadding,
-                                 self.minHeight - 2 * s.vCellPadding,
-                                 s.returnRectRadius, s.returnRectRadius )
+        brush = QBrush(self.__bgColor)
+        painter.setBrush(brush)
+        painter.drawRoundedRect(self.baseX + s.hCellPadding,
+                                self.baseY + s.vCellPadding,
+                                self.minWidth - 2 * s.hCellPadding,
+                                self.minHeight - 2 * s.vCellPadding,
+                                s.returnRectRadius, s.returnRectRadius)
+        painter.drawRoundedRect(self.baseX + s.hCellPadding,
+                                self.baseY + s.vCellPadding,
+                                self.__arrowWidth + 2 * s.hTextPadding,
+                                self.minHeight - 2 * s.vCellPadding,
+                                s.returnRectRadius, s.returnRectRadius)
 
         # Draw the text in the rectangle
-        pen = QPen( self.__fgColor )
-        painter.setFont( s.monoFont )
-        painter.setPen( pen )
+        pen = QPen(self.__fgColor)
+        painter.setFont(s.monoFont)
+        painter.setPen(pen)
 
-        availWidth = self.minWidth - 2 * s.hCellPadding - self.__arrowWidth - 2 * s.hTextPadding - s.hTextPadding - s.returnRectRadius
+        availWidth = self.minWidth - 2 * s.hCellPadding - \
+                     self.__arrowWidth - 2 * s.hTextPadding - \
+                     s.hTextPadding - s.returnRectRadius
         textShift = (availWidth - self.__textRect.width()) / 2
-        painter.drawText( self.baseX + s.hCellPadding + self.__arrowWidth + 3 * s.hTextPadding + textShift,
-                          self.baseY + s.vCellPadding + s.vTextPadding,
-                          self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft, self._getText() )
-        return
+        painter.drawText(
+            self.baseX + s.hCellPadding + self.__arrowWidth +
+            3 * s.hTextPadding + textShift,
+            self.baseY + s.vCellPadding + s.vTextPadding,
+            self.__textRect.width(), self.__textRect.height(),
+            Qt.AlignLeft, self._getText())
 
-    def getSelectTooltip( self ):
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
         beginLine = self.ref.body.beginLine
         if self.ref.value is not None:
             endLine = self.ref.value.endLine
         else:
             endLine = self.ref.body.endLine
-        return "Return at lines " + str( beginLine ) + "-" + str( endLine )
+        return "Return at lines " + str(beginLine) + "-" + str(endLine)
 
-    def getDistance( self, absPos ):
-        """ Provides a distance between the absPos and the item """
+    def getDistance(self, absPos):
+        """Provides a distance between the absPos and the item"""
         if self.ref.value is not None:
-            return distance( absPos, self.ref.body.begin, self.ref.value.end )
-        return distance( absPos, self.ref.body.begin, self.ref.body.end )
+            return distance(absPos, self.ref.body.begin, self.ref.value.end)
+        return distance(absPos, self.ref.body.begin, self.ref.body.end)
 
-    def getLineDistance( self, line ):
-        """ Provides a distance between the line and the item """
+    def getLineDistance(self, line):
+        """Provides a distance between the line and the item"""
         if self.ref.value is not None:
-            return distance( line, self.ref.body.beginLine, self.ref.value.endLine )
-        return distance( line, self.ref.body.beginLine, self.ref.body.endLine )
+            return distance(line, self.ref.body.beginLine,
+                            self.ref.value.endLine)
+        return distance(line, self.ref.body.beginLine, self.ref.body.endLine)
 
 
-class RaiseCell( CellElement, QGraphicsRectItem ):
-    " Represents a single raise statement "
+class RaiseCell(CellElement, QGraphicsRectItem):
 
-    def __init__( self, ref, canvas, x, y ):
-        CellElement.__init__( self, ref, canvas, x, y )
-        QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
+    """Represents a single raise statement"""
+
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
+        QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.RAISE
         self.__textRect = None
         self.__arrowWidth = 16
 
-        self.arrowItem = SVGItem( "raise.svg", self )
-        self.arrowItem.setWidth( self.__arrowWidth )
-        self.arrowItem.setToolTip( "raise" )
+        self.arrowItem = SVGItem("raise.svg", self)
+        self.arrowItem.setWidth(self.__arrowWidth)
+        self.arrowItem.setToolTip("raise")
         self.connector = None
 
         # To make double click delivered
-        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
-        return
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def render( self ):
+    def render(self):
+        """Renders the cell"""
         s = self.canvas.settings
-        self.__textRect = self.getBoundingRect( self._getText() )
+        self.__textRect = self.getBoundingRect(self._getText())
 
-        self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
-        self.minWidth = max( self.__textRect.width() + 2 * s.hCellPadding + s.hTextPadding +
-                             s.returnRectRadius + 2 * s.hTextPadding + self.__arrowWidth,
-                             s.minWidth )
+        vPadding = 2 * (s.vCellPadding + s.vTextPadding)
+        self.minHeight = self.__textRect.height() + vPadding
+        self.minWidth = max(self.__textRect.width() + 2 * s.hCellPadding +
+                            s.hTextPadding + s.returnRectRadius +
+                            2 * s.hTextPadding + self.__arrowWidth,
+                            s.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
 
-    def draw( self, scene, baseX, baseY ):
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
 
         # Add the connector as a separate scene item to make the selection
         # working properly
         s = self.canvas.settings
-        self.connector = Connector( s, baseX + s.mainLine, baseY,
-                                    baseX + s.mainLine, baseY + s.vCellPadding )
+        self.connector = Connector(s, baseX + s.mainLine, baseY,
+                                   baseX + s.mainLine, baseY + s.vCellPadding)
 
         # Setting the rectangle is important for the selection and for
         # redrawing. Thus the selection pen must be considered too.
         penWidth = s.selectPenWidth - 1
-        self.setRect( baseX + s.hCellPadding - penWidth,
-                      baseY + s.vCellPadding - penWidth,
-                      self.minWidth - 2 * s.hCellPadding + 2 * penWidth,
-                      self.minHeight - 2 * s.vCellPadding + 2 * penWidth )
+        self.setRect(baseX + s.hCellPadding - penWidth,
+                     baseY + s.vCellPadding - penWidth,
+                     self.minWidth - 2 * s.hCellPadding + 2 * penWidth,
+                     self.minHeight - 2 * s.vCellPadding + 2 * penWidth)
 
-        self.arrowItem.setPos( baseX + s.hCellPadding + s.hTextPadding,
-                               baseY + self.minHeight/2 - self.arrowItem.height()/2 )
+        self.arrowItem.setPos(
+            baseX + s.hCellPadding + s.hTextPadding,
+            baseY + self.minHeight/2 - self.arrowItem.height()/2)
 
-        scene.addItem( self.connector )
-        scene.addItem( self )
-        scene.addItem( self.arrowItem )
+        scene.addItem(self.connector)
+        scene.addItem(self)
+        scene.addItem(self.arrowItem)
 
-        self.addCMLIndicator( baseX, baseY, penWidth, scene )
+        self.addCMLIndicator(baseX, baseY, penWidth, scene)
 
         self.__bgColor, self.__fgColor, self.__borderColor = \
-                    self.getCustomColors( s.boxBGColor, s.boxFGColor )
-        return
+            self.getCustomColors(s.boxBGColor, s.boxFGColor)
 
-    def paint( self, painter, option, widget ):
-        " Draws the code block "
+    def paint(self, painter, option, widget):
+        """Draws the raise statement"""
         s = self.canvas.settings
 
         if self.isSelected():
-            selectPen = QPen( s.selectColor )
-            selectPen.setWidth( s.selectPenWidth )
-            painter.setPen( selectPen )
+            selectPen = QPen(s.selectColor)
+            selectPen.setWidth(s.selectPenWidth)
+            painter.setPen(selectPen)
         else:
-            pen = QPen( self.__borderColor )
-            painter.setPen( pen )
+            pen = QPen(self.__borderColor)
+            painter.setPen(pen)
 
-        brush = QBrush( self.__bgColor )
-        painter.setBrush( brush )
-        painter.drawRoundedRect( self.baseX + s.hCellPadding,
-                                 self.baseY + s.vCellPadding,
-                                 self.minWidth - 2 * s.hCellPadding,
-                                 self.minHeight - 2 * s.vCellPadding,
-                                 s.returnRectRadius, s.returnRectRadius )
-        painter.drawRoundedRect( self.baseX + s.hCellPadding,
-                                 self.baseY + s.vCellPadding,
-                                 self.__arrowWidth + 2 * s.hTextPadding,
-                                 self.minHeight - 2 * s.vCellPadding,
-                                 s.returnRectRadius, s.returnRectRadius )
+        brush = QBrush(self.__bgColor)
+        painter.setBrush(brush)
+        painter.drawRoundedRect(self.baseX + s.hCellPadding,
+                                self.baseY + s.vCellPadding,
+                                self.minWidth - 2 * s.hCellPadding,
+                                self.minHeight - 2 * s.vCellPadding,
+                                s.returnRectRadius, s.returnRectRadius)
+        painter.drawRoundedRect(self.baseX + s.hCellPadding,
+                                self.baseY + s.vCellPadding,
+                                self.__arrowWidth + 2 * s.hTextPadding,
+                                self.minHeight - 2 * s.vCellPadding,
+                                s.returnRectRadius, s.returnRectRadius)
 
         # Draw the text in the rectangle
-        pen = QPen( self.__fgColor )
-        painter.setFont( s.monoFont )
-        painter.setPen( pen )
-        availWidth = self.minWidth - 2 * s.hCellPadding - self.__arrowWidth - 2 * s.hTextPadding - s.hTextPadding - s.returnRectRadius
+        pen = QPen(self.__fgColor)
+        painter.setFont(s.monoFont)
+        painter.setPen(pen)
+        availWidth = self.minWidth - 2 * s.hCellPadding - \
+                     self.__arrowWidth - 2 * s.hTextPadding - \
+                     s.hTextPadding - s.returnRectRadius
         textShift = (availWidth - self.__textRect.width()) / 2
-        painter.drawText( self.baseX + s.hCellPadding + self.__arrowWidth + 3 * s.hTextPadding + textShift,
-                          self.baseY + s.vCellPadding + s.vTextPadding,
-                          self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft, self._getText() )
-        return
+        painter.drawText(
+            self.baseX + s.hCellPadding + self.__arrowWidth +
+            3 * s.hTextPadding + textShift,
+            self.baseY + s.vCellPadding + s.vTextPadding,
+            self.__textRect.width(), self.__textRect.height(),
+            Qt.AlignLeft, self._getText())
 
-    def getSelectTooltip( self ):
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
         beginLine = self.ref.body.beginLine
         if self.ref.value is not None:
             endLine = self.ref.value.endLine
         else:
             endLine = self.ref.body.endLine
-        return "Raise at lines " + str( beginLine ) + "-" + str( endLine )
+        return "Raise at lines " + str(beginLine) + "-" + str(endLine)
 
-    def getDistance( self, absPos ):
-        """ Provides a distance between the absPos and the item """
+    def getDistance(self, absPos):
+        """Provides a distance between the absPos and the item"""
         if self.ref.value is not None:
-            return distance( absPos, self.ref.body.begin, self.ref.value.end )
-        return distance( absPos, self.ref.body.begin, self.ref.body.end )
+            return distance(absPos, self.ref.body.begin, self.ref.value.end)
+        return distance(absPos, self.ref.body.begin, self.ref.body.end)
 
-    def getLineDistance( self, line ):
-        """ Provides a distance between the line and the item """
+    def getLineDistance(self, line):
+        """Provides a distance between the line and the item"""
         if self.ref.value is not None:
-            return distance( line, self.ref.body.beginLine, self.ref.value.endLine )
-        return distance( line, self.ref.body.beginLine, self.ref.body.endLine )
+            return distance(line,
+                            self.ref.body.beginLine, self.ref.value.endLine)
+        return distance(line, self.ref.body.beginLine, self.ref.body.endLine)
 
 
+class AssertCell(CellElement, QGraphicsRectItem):
 
-class AssertCell( CellElement, QGraphicsRectItem ):
-    " Represents a single assert statement "
+    """Represents a single assert statement"""
 
-    def __init__( self, ref, canvas, x, y ):
-        CellElement.__init__( self, ref, canvas, x, y )
-        QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
+        QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.ASSERT
         self.__textRect = None
         self.__diamondDiagonal = None
         self.__arrowWidth = 16
         self.connector = None
 
-        self.arrowItem = SVGItem( "assert.svg", self )
-        self.arrowItem.setWidth( self.__arrowWidth )
-        self.arrowItem.setToolTip( "assert" )
+        self.arrowItem = SVGItem("assert.svg", self)
+        self.arrowItem.setWidth(self.__arrowWidth)
+        self.arrowItem.setToolTip("assert")
 
         # To make double click delivered
-        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
-        return
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def render( self ):
+    def render(self):
+        """Renders the cell"""
         s = self.canvas.settings
-        self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
-                                                          0, self._getText() )
+        self.__textRect = s.monoFontMetrics.boundingRect(0, 0,
+                                                         maxsize, maxsize,
+                                                         0, self._getText())
 
         # for an arrow box
-        singleCharRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
-                                                         0, "W" )
+        singleCharRect = s.monoFontMetrics.boundingRect(0, 0, maxsize, maxsize,
+                                                        0, "W")
         self.__diamondDiagonal = singleCharRect.height() + 2 * s.vTextPadding
 
-        self.minHeight = self.__textRect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
-        self.minWidth = max( self.__textRect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding +
-                             self.__diamondDiagonal, s.minWidth )
+        self.minHeight = self.__textRect.height() + \
+                         2 * s.vCellPadding + 2 * s.vTextPadding
+        self.minWidth = max(self.__textRect.width() + 2 * s.hCellPadding +
+                            2 * s.hTextPadding + self.__diamondDiagonal,
+                            s.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
 
-    def draw( self, scene, baseX, baseY ):
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
 
         # Add the connector as a separate scene item to make the selection
         # working properly
         s = self.canvas.settings
-        self.connector = Connector( s, baseX + s.mainLine, baseY,
-                                    baseX + s.mainLine, baseY + self.height )
-        scene.addItem( self.connector )
+        self.connector = Connector(s, baseX + s.mainLine, baseY,
+                                   baseX + s.mainLine, baseY + self.height)
+        scene.addItem(self.connector)
 
         # Setting the rectangle is important for the selection and for
         # redrawing. Thus the selection pen must be considered too.
         penWidth = s.selectPenWidth - 1
-        self.setRect( baseX + s.hCellPadding - penWidth,
-                      baseY + s.vCellPadding - penWidth,
-                      self.minWidth - 2 * s.hCellPadding + 2 * penWidth,
-                      self.minHeight - 2 * s.vCellPadding + 2 * penWidth )
+        self.setRect(baseX + s.hCellPadding - penWidth,
+                     baseY + s.vCellPadding - penWidth,
+                     self.minWidth - 2 * s.hCellPadding + 2 * penWidth,
+                     self.minHeight - 2 * s.vCellPadding + 2 * penWidth)
 
         s = self.canvas.settings
-        self.arrowItem.setPos( baseX + self.__diamondDiagonal / 2 + s.hCellPadding -
-                               self.arrowItem.width() / 2,
-                               baseY + self.minHeight/2 - self.arrowItem.height()/2 )
+        self.arrowItem.setPos(baseX + self.__diamondDiagonal / 2 +
+                              s.hCellPadding - self.arrowItem.width() / 2,
+                              baseY + self.minHeight/2 -
+                              self.arrowItem.height()/2)
 
-        scene.addItem( self )
-        scene.addItem( self.arrowItem )
+        scene.addItem(self)
+        scene.addItem(self.arrowItem)
 
-        self.addCMLIndicator( baseX, baseY, penWidth, scene )
+        self.addCMLIndicator(baseX, baseY, penWidth, scene)
 
         self.__bgColor, self.__fgColor, self.__borderColor = \
-                    self.getCustomColors( s.boxBGColor, s.boxFGColor )
-        return
+            self.getCustomColors(s.boxBGColor, s.boxFGColor)
 
-    def paint( self, painter, option, widget ):
-        " Draws the code block "
+    def paint(self, painter, option, widget):
+        """Draws the code block"""
         s = self.canvas.settings
 
         if self.isSelected():
-            selectPen = QPen( s.selectColor )
-            selectPen.setWidth( s.selectPenWidth )
-            selectPen.setJoinStyle( Qt.RoundJoin )
-            painter.setPen( selectPen )
+            selectPen = QPen(s.selectColor)
+            selectPen.setWidth(s.selectPenWidth)
+            selectPen.setJoinStyle(Qt.RoundJoin)
+            painter.setPen(selectPen)
         else:
-            pen = QPen( self.__borderColor )
-            painter.setPen( pen )
+            pen = QPen(self.__borderColor)
+            painter.setPen(pen)
 
-        dHalf = int( self.__diamondDiagonal / 2.0 )
+        dHalf = int(self.__diamondDiagonal / 2.0)
         dx1 = self.baseX + s.hCellPadding
-        dy1 = self.baseY + int( self.minHeight / 2 )
+        dy1 = self.baseY + int(self.minHeight / 2)
         dx2 = dx1 + dHalf
         dy2 = dy1 - dHalf
         dx3 = dx1 + 2 * dHalf
@@ -1037,29 +1068,31 @@ class AssertCell( CellElement, QGraphicsRectItem ):
         dx4 = dx2
         dy4 = dy2 + 2 * dHalf
 
-        brush = QBrush( self.__bgColor )
-        painter.setBrush( brush )
-        painter.drawPolygon( QPointF(dx1, dy1), QPointF(dx2, dy2),
-                             QPointF(dx3, dy3), QPointF(dx4, dy4) )
+        brush = QBrush(self.__bgColor)
+        painter.setBrush(brush)
+        painter.drawPolygon(QPointF(dx1, dy1), QPointF(dx2, dy2),
+                            QPointF(dx3, dy3), QPointF(dx4, dy4))
 
-        painter.drawRect( dx3 + 1, self.baseY + s.vCellPadding,
-                          self.minWidth - 2 * s.hCellPadding - self.__diamondDiagonal,
-                          self.minHeight - 2 * s.vCellPadding )
+        painter.drawRect(dx3 + 1, self.baseY + s.vCellPadding,
+                         self.minWidth - 2 * s.hCellPadding -
+                         self.__diamondDiagonal,
+                         self.minHeight - 2 * s.vCellPadding)
 
         # Draw the text in the rectangle
-        pen = QPen( self.__fgColor )
-        painter.setFont( s.monoFont )
-        painter.setPen( pen )
-        availWidth = self.minWidth - 2 * s.hCellPadding - self.__diamondDiagonal
+        pen = QPen(self.__fgColor)
+        painter.setFont(s.monoFont)
+        painter.setPen(pen)
+        availWidth = \
+            self.minWidth - 2 * s.hCellPadding - self.__diamondDiagonal
         textWidth = self.__textRect.width() + 2 * s.hTextPadding
         textShift = (availWidth - textWidth) / 2
-        painter.drawText( dx3 + s.hTextPadding + textShift,
-                          self.baseY + s.vCellPadding + s.vTextPadding,
-                          self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft, self._getText() )
-        return
+        painter.drawText(dx3 + s.hTextPadding + textShift,
+                         self.baseY + s.vCellPadding + s.vTextPadding,
+                         self.__textRect.width(), self.__textRect.height(),
+                         Qt.AlignLeft, self._getText())
 
-    def getSelectTooltip( self ):
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
         beginLine = self.ref.body.beginLine
         if self.ref.message is not None:
             endLine = self.ref.message.endLine
@@ -1067,46 +1100,48 @@ class AssertCell( CellElement, QGraphicsRectItem ):
             endLine = self.ref.test.endLine
         else:
             endLine = self.ref.body.endLine
-        return "Assert at lines " + str( beginLine ) + "-" + str( endLine )
+        return "Assert at lines " + str(beginLine) + "-" + str(endLine)
 
-    def getDistance( self, absPos ):
-        """ Provides a distance between the absPos and the item """
+    def getDistance(self, absPos):
+        """Provides a distance between the absPos and the item"""
         if self.ref.message is not None:
-            return distance( absPos, self.ref.body.begin, self.ref.message.end )
+            return distance(absPos, self.ref.body.begin, self.ref.message.end)
         if self.ref.test is not None:
-            return distance( absPos, self.ref.body.begin, self.ref.test.end )
-        return distance( absPos, self.ref.body.begin, self.ref.body.end )
+            return distance(absPos, self.ref.body.begin, self.ref.test.end)
+        return distance(absPos, self.ref.body.begin, self.ref.body.end)
 
-    def getLineDistance( self, line ):
-        """ Provides a distance between the line and the item """
+    def getLineDistance(self, line):
+        """Provides a distance between the line and the item"""
         if self.ref.message is not None:
-            return distance( line, self.ref.body.beginLine, self.ref.message.endLine )
+            return distance(line,
+                            self.ref.body.beginLine, self.ref.message.endLine)
         if self.ref.test is not None:
-            return distance( line, self.ref.body.beginLine, self.ref.test.endLine )
-        return distance( line, self.ref.body.beginLine, self.ref.body.endLine )
+            return distance(line,
+                            self.ref.body.beginLine, self.ref.test.endLine)
+        return distance(line, self.ref.body.beginLine, self.ref.body.endLine)
 
 
+class SysexitCell(CellElement, QGraphicsRectItem):
 
-class SysexitCell( CellElement, QGraphicsRectItem ):
-    " Represents a single sys.exit(...) statement "
+    """Represents a single sys.exit(...) statement"""
 
-    def __init__( self, ref, canvas, x, y ):
-        CellElement.__init__( self, ref, canvas, x, y )
-        QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
+        QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.SYSEXIT
         self.__textRect = None
         self.__xWidth = 16
         self.connector = None
 
-        self.xItem = SVGItem( "sysexit.svgz", self )
-        self.xItem.setWidth( self.__xWidth )
-        self.xItem.setToolTip( "sys.exit()" )
+        self.xItem = SVGItem("sysexit.svgz", self)
+        self.xItem.setWidth(self.__xWidth)
+        self.xItem.setToolTip("sys.exit()")
 
         # To make double click delivered
-        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
-        return
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def render( self ):
+    def render(self):
+        """Renders the cell"""
         s = self.canvas.settings
         self.__textRect = self.getBoundingRect( self._getText() )
 
@@ -1118,177 +1153,187 @@ class SysexitCell( CellElement, QGraphicsRectItem ):
         self.width = self.minWidth
         return (self.width, self.height)
 
-    def draw( self, scene, baseX, baseY ):
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
 
         # Add the connector as a separate scene item to make the selection
         # working properly
         s = self.canvas.settings
-        self.connector = Connector( s, baseX + s.mainLine, baseY,
-                                    baseX + s.mainLine, baseY + s.vCellPadding )
+        self.connector = Connector(s, baseX + s.mainLine, baseY,
+                                   baseX + s.mainLine, baseY + s.vCellPadding)
 
         # Setting the rectangle is important for the selection and for
         # redrawing. Thus the selection pen with must be considered too.
         penWidth = s.selectPenWidth - 1
-        self.setRect( baseX + s.hCellPadding - penWidth,
-                      baseY + s.vCellPadding - penWidth,
-                      self.minWidth - 2 * s.hCellPadding + 2 * penWidth,
-                      self.minHeight - 2 * s.vCellPadding + 2 * penWidth )
+        self.setRect(baseX + s.hCellPadding - penWidth,
+                     baseY + s.vCellPadding - penWidth,
+                     self.minWidth - 2 * s.hCellPadding + 2 * penWidth,
+                     self.minHeight - 2 * s.vCellPadding + 2 * penWidth)
 
-        self.xItem.setPos( baseX + s.hCellPadding + s.hTextPadding,
-                           baseY + self.minHeight/2 - self.xItem.height()/2 )
+        self.xItem.setPos(baseX + s.hCellPadding + s.hTextPadding,
+                          baseY + self.minHeight/2 - self.xItem.height()/2)
 
-        scene.addItem( self.connector )
-        scene.addItem( self )
-        scene.addItem( self.xItem )
+        scene.addItem(self.connector)
+        scene.addItem(self)
+        scene.addItem(self.xItem)
 
-        self.addCMLIndicator( baseX, baseY, penWidth, scene )
+        self.addCMLIndicator(baseX, baseY, penWidth, scene)
 
         self.__bgColor, self.__fgColor, self.__borderColor = \
-                    self.getCustomColors( s.boxBGColor, s.boxFGColor )
-        return
+            self.getCustomColors(s.boxBGColor, s.boxFGColor)
 
-    def paint( self, painter, option, widget ):
-        " Draws the code block "
+    def paint(self, painter, option, widget):
+        """Draws the sys.exit call"""
         s = self.canvas.settings
 
         if self.isSelected():
-            selectPen = QPen( s.selectColor )
-            selectPen.setWidth( s.selectPenWidth )
-            painter.setPen( selectPen )
+            selectPen = QPen(s.selectColor)
+            selectPen.setWidth(s.selectPenWidth)
+            painter.setPen(selectPen)
         else:
-            pen = QPen( self.__borderColor )
-            painter.setPen( pen )
+            pen = QPen(self.__borderColor)
+            painter.setPen(pen)
 
-        brush = QBrush( self.__bgColor )
-        painter.setBrush( brush )
-        painter.drawRoundedRect( self.baseX + s.hCellPadding,
-                                 self.baseY + s.vCellPadding,
-                                 self.minWidth - 2 * s.hCellPadding,
-                                 self.minHeight - 2 * s.vCellPadding,
-                                 s.returnRectRadius, s.returnRectRadius )
-        painter.drawRoundedRect( self.baseX + s.hCellPadding,
-                                 self.baseY + s.vCellPadding,
-                                 self.__xWidth + 2 * s.hTextPadding,
-                                 self.minHeight - 2 * s.vCellPadding,
-                                 s.returnRectRadius, s.returnRectRadius )
+        brush = QBrush(self.__bgColor)
+        painter.setBrush(brush)
+        painter.drawRoundedRect(self.baseX + s.hCellPadding,
+                                self.baseY + s.vCellPadding,
+                                self.minWidth - 2 * s.hCellPadding,
+                                self.minHeight - 2 * s.vCellPadding,
+                                s.returnRectRadius, s.returnRectRadius)
+        painter.drawRoundedRect(self.baseX + s.hCellPadding,
+                                self.baseY + s.vCellPadding,
+                                self.__xWidth + 2 * s.hTextPadding,
+                                self.minHeight - 2 * s.vCellPadding,
+                                s.returnRectRadius, s.returnRectRadius)
 
         # Draw the text in the rectangle
-        pen = QPen( self.__fgColor )
-        painter.setFont( s.monoFont )
-        painter.setPen( pen )
-        availWidth = self.minWidth - 2 * s.hCellPadding - self.__xWidth - 2 * s.hTextPadding - s.hTextPadding - s.returnRectRadius
+        pen = QPen(self.__fgColor)
+        painter.setFont(s.monoFont)
+        painter.setPen(pen)
+        availWidth = self.minWidth - 2 * s.hCellPadding - self.__xWidth - \
+                     2 * s.hTextPadding - s.hTextPadding - s.returnRectRadius
         textShift = (availWidth - self.__textRect.width()) / 2
-        painter.drawText( self.baseX + s.hCellPadding + self.__xWidth + 3 * s.hTextPadding + textShift,
-                          self.baseY + s.vCellPadding + s.vTextPadding,
-                          self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft, self._getText() )
-        return
+        painter.drawText(
+            self.baseX + s.hCellPadding + self.__xWidth +
+            3 * s.hTextPadding + textShift,
+            self.baseY + s.vCellPadding + s.vTextPadding,
+            self.__textRect.width(), self.__textRect.height(),
+            Qt.AlignLeft, self._getText())
 
-    def getSelectTooltip( self ):
+    def getSelectTooltip(self):
         lineRange = self.ref.body.getLineRange()
         return "Sys.exit() at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
 
 
+class ImportCell(CellElement, QGraphicsRectItem):
 
-class ImportCell( CellElement, QGraphicsRectItem ):
-    " Represents a single import statement "
+    """Represents a single import statement"""
 
-    def __init__( self, ref, canvas, x, y ):
-        CellElement.__init__( self, ref, canvas, x, y )
-        QGraphicsRectItem.__init__( self, canvas.scopeRectangle )
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
+        QGraphicsRectItem.__init__(self, canvas.scopeRectangle)
         self.kind = CellElement.IMPORT
         self.__arrowWidth = 16
         self.__textRect = None
-        self.arrowItem = SVGItem( "import.svgz", self )
-        self.arrowItem.setWidth( self.__arrowWidth )
-        self.arrowItem.setToolTip( "import" )
+        self.arrowItem = SVGItem("import.svgz", self)
+        self.arrowItem.setWidth(self.__arrowWidth)
+        self.arrowItem.setToolTip("import")
         self.connector = None
 
         # To make double click delivered
-        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
-        return
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def render( self ):
+    def render(self):
+        """Renders the cell"""
         s = self.canvas.settings
-        self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint,
-                                               0, self._getText() )
-        self.minHeight = self.__textRect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
-        self.minWidth = max( self.__textRect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding +
-                             self.__arrowWidth + 2 * s.hTextPadding,
-                             s.minWidth )
+        self.__textRect = s.monoFontMetrics.boundingRect(0, 0,
+                                                         maxsize, maxsize,
+                                                         0, self._getText())
+        self.minHeight = self.__textRect.height() + 2 * s.vCellPadding + \
+                         2 * s.vTextPadding
+        self.minWidth = max(self.__textRect.width() + 2 * s.hCellPadding +
+                            2 * s.hTextPadding + self.__arrowWidth +
+                            2 * s.hTextPadding,
+                            s.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
 
-    def draw( self, scene, baseX, baseY ):
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
 
         # Add the connector as a separate scene item to make the selection
         # working properly
         s = self.canvas.settings
-        self.connector = Connector( s, baseX + s.mainLine, baseY,
-                                    baseX + s.mainLine, baseY + self.height )
-        scene.addItem( self.connector )
+        self.connector = Connector(s, baseX + s.mainLine, baseY,
+                                   baseX + s.mainLine, baseY + self.height)
+        scene.addItem(self.connector)
 
         # Setting the rectangle is important for the selection and for
         # redrawing. Thus the selection pen must be considered too.
         penWidth = s.selectPenWidth - 1
-        self.setRect( baseX + s.hCellPadding - penWidth,
-                      baseY + s.vCellPadding - penWidth,
-                      self.minWidth - 2 * s.hCellPadding + 2 * penWidth,
-                      self.minHeight - 2 * s.vCellPadding + 2 * penWidth )
+        self.setRect(baseX + s.hCellPadding - penWidth,
+                     baseY + s.vCellPadding - penWidth,
+                     self.minWidth - 2 * s.hCellPadding + 2 * penWidth,
+                     self.minHeight - 2 * s.vCellPadding + 2 * penWidth)
 
-        self.arrowItem.setPos( baseX + s.hCellPadding + s.hTextPadding,
-                               baseY + self.minHeight/2 - self.arrowItem.height()/2 )
-        scene.addItem( self )
-        scene.addItem( self.arrowItem )
+        self.arrowItem.setPos(baseX + s.hCellPadding + s.hTextPadding,
+                              baseY + self.minHeight/2 -
+                              self.arrowItem.height()/2)
+        scene.addItem(self)
+        scene.addItem(self.arrowItem)
 
-        self.addCMLIndicator( baseX, baseY, penWidth, scene )
+        self.addCMLIndicator(baseX, baseY, penWidth, scene)
 
         self.__bgColor, self.__fgColor, self.__borderColor = \
-                    self.getCustomColors( s.boxBGColor, s.boxFGColor )
-        return
+            self.getCustomColors(s.boxBGColor, s.boxFGColor)
 
-    def paint( self, painter, option, widget ):
-        " Draws the code block "
+    def paint(self, painter, option, widget):
+        """Draws the import statement"""
         s = self.canvas.settings
 
         if self.isSelected():
-            selectPen = QPen( s.selectColor )
-            selectPen.setWidth( s.selectPenWidth )
-            selectPen.setJoinStyle( Qt.RoundJoin )
-            painter.setPen( selectPen )
+            selectPen = QPen(s.selectColor)
+            selectPen.setWidth(s.selectPenWidth)
+            selectPen.setJoinStyle(Qt.RoundJoin)
+            painter.setPen(selectPen)
         else:
-            pen = QPen( self.__borderColor )
-            painter.setPen( pen )
-        brush = QBrush( self.__bgColor )
-        painter.setBrush( brush )
-        painter.drawRect( self.baseX + s.hCellPadding,
-                          self.baseY + s.vCellPadding,
-                          self.minWidth - 2 * s.hCellPadding,
-                          self.minHeight - 2 * s.vCellPadding )
-        painter.drawLine( self.baseX + s.hCellPadding + self.__arrowWidth + 2 * s.hTextPadding,
-                          self.baseY + s.vCellPadding,
-                          self.baseX + s.hCellPadding + self.__arrowWidth + 2 * s.hTextPadding,
-                          self.baseY + self.minHeight - s.vCellPadding )
+            pen = QPen(self.__borderColor)
+            painter.setPen(pen)
+        brush = QBrush(self.__bgColor)
+        painter.setBrush(brush)
+        painter.drawRect(self.baseX + s.hCellPadding,
+                         self.baseY + s.vCellPadding,
+                         self.minWidth - 2 * s.hCellPadding,
+                         self.minHeight - 2 * s.vCellPadding)
+        painter.drawLine(self.baseX + s.hCellPadding +
+                         self.__arrowWidth + 2 * s.hTextPadding,
+                         self.baseY + s.vCellPadding,
+                         self.baseX + s.hCellPadding +
+                         self.__arrowWidth + 2 * s.hTextPadding,
+                         self.baseY + self.minHeight - s.vCellPadding)
 
         # Draw the text in the rectangle
-        pen = QPen( self.__fgColor )
-        painter.setFont( s.monoFont )
-        painter.setPen( pen )
-        textRectWidth = self.minWidth - 2 * s.hCellPadding - 4 * s.hTextPadding - self.__arrowWidth
-        textShift = ( textRectWidth - self.__textRect.width() ) / 2
-        painter.drawText( self.baseX + s.hCellPadding + self.__arrowWidth + 3 * s.hTextPadding + textShift,
-                          self.baseY + s.vCellPadding + s.vTextPadding,
-                          self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft,
-                          self._getText() )
-        return
+        pen = QPen(self.__fgColor)
+        painter.setFont(s.monoFont)
+        painter.setPen(pen)
+        textRectWidth = self.minWidth - 2 * s.hCellPadding - \
+                        4 * s.hTextPadding - self.__arrowWidth
+        textShift = (textRectWidth - self.__textRect.width()) / 2
+        painter.drawText(self.baseX + s.hCellPadding + self.__arrowWidth +
+                         3 * s.hTextPadding + textShift,
+                         self.baseY + s.vCellPadding + s.vTextPadding,
+                         self.__textRect.width(), self.__textRect.height(),
+                         Qt.AlignLeft,
+                         self._getText())
 
-    def getSelectTooltip( self ):
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
         lineRange = self.ref.body.getLineRange()
         return "Import at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
 
@@ -1311,9 +1356,10 @@ class IfCell( CellElement, QGraphicsRectItem ):
         self.setFlag( QGraphicsItem.ItemIsSelectable, True )
         return
 
-    def render( self ):
+    def render(self):
+        """Renders the cell"""
         s = self.canvas.settings
-        self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
+        self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxsize, maxsize, 0,
                                                           self._getText() )
 
         self.minHeight = self.__textRect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
@@ -1323,7 +1369,7 @@ class IfCell( CellElement, QGraphicsRectItem ):
         self.width = self.minWidth
         return (self.width, self.height)
 
-    def __calcPolygon( self ):
+    def __calcPolygon(self):
         s = self.canvas.settings
 
         self.x1 = self.baseX + s.hCellPadding
@@ -1341,6 +1387,7 @@ class IfCell( CellElement, QGraphicsRectItem ):
         return
 
     def draw( self, scene, baseX, baseY ):
+        """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
 
@@ -1376,7 +1423,7 @@ class IfCell( CellElement, QGraphicsRectItem ):
         self.setRect( self.x1 - penWidth, self.y2 - penWidth,
                       self.x4 - self.x1 + 2 * penWidth,
                       self.y6 - self.y2 + 2 * penWidth )
-        scene.addItem( self )
+        scene.addItem(self)
 
         self.addCMLIndicator( baseX, baseY, penWidth, scene )
 
@@ -1418,11 +1465,12 @@ class IfCell( CellElement, QGraphicsRectItem ):
                           Qt.AlignLeft, self._getText() )
         return
 
-    def getSelectTooltip( self ):
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
         lineRange = self.ref.body.getLineRange()
         return "If at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
 
-    def switchBranches( self ):
+    def switchBranches(self):
         " Switches branches for the if statement "
         if self._editor is None:
             return
@@ -1467,12 +1515,13 @@ def getNoCellCommentBoxPath( x, y, width, height, corner ):
 
 
 
-class IndependentCommentCell( CellElement, QGraphicsPathItem ):
-    " Represents a single independent comment "
+class IndependentCommentCell(CellElement, QGraphicsPathItem):
 
-    def __init__( self, ref, canvas, x, y ):
-        CellElement.__init__( self, ref, canvas, x, y )
-        QGraphicsPathItem.__init__( self )
+    """Represents a single independent comment"""
+
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
+        QGraphicsPathItem.__init__(self)
         self.kind = CellElement.INDEPENDENT_COMMENT
         self.__textRect = None
         self.leadingForElse = False
@@ -1481,139 +1530,144 @@ class IndependentCommentCell( CellElement, QGraphicsPathItem ):
         self.connector = None
 
         # To make double click delivered
-        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
-        return
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def render( self ):
+    def render(self):
+        """Renders the cell"""
         s = self.canvas.settings
-        self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
-                                                          self._getText() )
+        self.__textRect = s.monoFontMetrics.boundingRect(0, 0,
+                                                         maxsize, maxsize, 0,
+                                                         self._getText())
 
-        self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
-        self.minWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
-                             s.minWidth )
+        self.minHeight = self.__textRect.height() + \
+                         2 * (s.vCellPadding + s.vTextPadding)
+        self.minWidth = max(self.__textRect.width() +
+                            2 * (s.hCellPadding + s.hTextPadding),
+                            s.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
 
-    def adjustWidth( self ):
-        """ Used during rendering to adjust the width of the cell.
-            The comment now can take some space on the left and the left hand
-            side cell has to be rendered already.
-            The width of this cell will take whatever is needed considering
-            the comment shift to the left
+    def adjustWidth(self):
+        """Used during rendering to adjust the width of the cell.
+           The comment now can take some space on the left and the left hand
+           side cell has to be rendered already.
+           The width of this cell will take whatever is needed considering
+           the comment shift to the left
         """
         s = self.canvas.settings
-        cellToTheLeft = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ]
+        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
         spareWidth = cellToTheLeft.width - s.mainLine - s.hCellPadding
-        boxWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
-                        s.minWidth )
+        boxWidth = max(self.__textRect.width() +
+                       2 * (s.hCellPadding + s.hTextPadding),
+                       s.minWidth)
         if spareWidth >= boxWidth:
             self.minWidth = 0
         else:
             self.minWidth = boxWidth - spareWidth
         self.width = self.minWidth
-        return
 
-    def draw( self, scene, baseX, baseY ):
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
         self.__setupPath()
-        scene.addItem( self.connector )
-        scene.addItem( self )
-        return
+        scene.addItem(self.connector)
+        scene.addItem(self)
 
-    def __setupPath( self ):
-        " Sets the path for painting "
+    def __setupPath(self):
+        """Sets the path for painting"""
         s = self.canvas.settings
 
-        cellToTheLeft = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ]
+        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
         self.__leftEdge = cellToTheLeft.baseX + s.mainLine + s.hCellPadding
-        boxWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
-                        s.minWidth )
-        path = getCommentBoxPath( s, self.__leftEdge, self.baseY, boxWidth, self.minHeight )
-        self.setPath( path )
+        boxWidth = max(self.__textRect.width() + \
+                       2 * (s.hCellPadding + s.hTextPadding),
+                       s.minWidth)
+        path = getCommentBoxPath(s, self.__leftEdge, self.baseY,
+                                 boxWidth, self.minHeight)
+        self.setPath(path)
 
         # May be later the connector will look different for two cases below
         if self.leadingForElse:
-            self.connector = Connector( s, self.__leftEdge + s.hCellPadding,
-                                        self.baseY + self.minHeight / 2,
-                                        cellToTheLeft.baseX + s.mainLine,
-                                        self.baseY + self.minHeight / 2 )
+            self.connector = Connector(s, self.__leftEdge + s.hCellPadding,
+                                       self.baseY + self.minHeight / 2,
+                                       cellToTheLeft.baseX + s.mainLine,
+                                       self.baseY + self.minHeight / 2)
         else:
-            self.connector = Connector( s, self.__leftEdge + s.hCellPadding,
-                                        self.baseY + self.minHeight / 2,
-                                        cellToTheLeft.baseX + s.mainLine,
-                                        self.baseY + self.minHeight / 2 )
+            self.connector = Connector(s, self.__leftEdge + s.hCellPadding,
+                                       self.baseY + self.minHeight / 2,
+                                       cellToTheLeft.baseX + s.mainLine,
+                                       self.baseY + self.minHeight / 2)
         self.connector.penColor = s.commentLineColor
         self.connector.penWidth = s.commentLineWidth
-        return
 
-    def paint( self, painter, option, widget ):
-        " Draws the independent comment "
+    def paint(self, painter, option, widget):
+        """Draws the independent comment"""
         s = self.canvas.settings
 
-        brush = QBrush( s.commentBGColor )
-        self.setBrush( brush )
+        brush = QBrush(s.commentBGColor)
+        self.setBrush(brush)
 
         if self.isSelected():
-            selectPen = QPen( s.selectColor )
-            selectPen.setWidth( s.selectPenWidth )
-            selectPen.setJoinStyle( Qt.RoundJoin )
-            self.setPen( selectPen )
+            selectPen = QPen(s.selectColor)
+            selectPen.setWidth(s.selectPenWidth)
+            selectPen.setJoinStyle(Qt.RoundJoin)
+            self.setPen(selectPen)
         else:
-            pen = QPen( s.commentLineColor )
-            pen.setWidth( s.commentLineWidth )
-            pen.setJoinStyle( Qt.RoundJoin )
-            self.setPen( pen )
+            pen = QPen(s.commentLineColor)
+            pen.setWidth( s.commentLineWidth)
+            pen.setJoinStyle(Qt.RoundJoin)
+            self.setPen(pen)
 
         # Hide the dotted outline
-        itemOption = QStyleOptionGraphicsItem( option )
+        itemOption = QStyleOptionGraphicsItem(option)
         if itemOption.state & QStyle.State_Selected != 0:
             itemOption.state = itemOption.state & ~QStyle.State_Selected
-        QGraphicsPathItem.paint( self, painter, itemOption, widget )
+        QGraphicsPathItem.paint(self, painter, itemOption, widget)
 
         # Draw the text in the rectangle
-        pen = QPen( s.commentFGColor )
-        painter.setFont( s.monoFont )
-        painter.setPen( pen )
-        painter.drawText( self.__leftEdge + s.hCellPadding + s.hTextPadding,
-                          self.baseY + s.vCellPadding + s.vTextPadding,
-                          self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft, self._getText() )
-        return
+        pen = QPen(s.commentFGColor)
+        painter.setFont(s.monoFont)
+        painter.setPen(pen)
+        painter.drawText(self.__leftEdge + s.hCellPadding + s.hTextPadding,
+                         self.baseY + s.vCellPadding + s.vTextPadding,
+                         self.__textRect.width(), self.__textRect.height(),
+                         Qt.AlignLeft, self._getText())
 
-    def mouseDoubleClickEvent( self, event ):
-        " Jump to the appropriate line in the text editor "
+    def mouseDoubleClickEvent(self, event):
+        """Jump to the appropriate line in the text editor"""
         if self._editor:
-            self._editor.gotoLine( self.ref.beginLine,
-                                   self.ref.beginPos )
+            self._editor.gotoLine(self.ref.beginLine,
+                                  self.ref.beginPos)
             self._editor.setFocus()
-        return
 
-    def getSelectTooltip( self ):
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
         lineRange = self.ref.getLineRange()
-        return "Independent comment at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
+        return "Independent comment at lines " + \
+               str( lineRange[0] ) + "-" + str( lineRange[1] )
 
-    def getDistance( self, absPos ):
-        """ Provides a distance between the absPos and the item """
-        return distance( absPos, self.ref.begin, self.ref.end )
+    def getDistance(self, absPos):
+        """Provides a distance between the absPos and the item"""
+        return distance(absPos, self.ref.begin, self.ref.end)
 
-    def getLineDistance( self, line ):
-        """ Provides a distance between the line and the item """
-        return distance( line, self.ref.beginLine, self.ref.endLine )
+    def getLineDistance(self, line):
+        """Provides a distance between the line and the item"""
+        return distance(line, self.ref.beginLine, self.ref.endLine)
 
-    def isComment( self ):
+    def isComment(self):
+        """True if it is a comment"""
         return True
 
 
+class LeadingCommentCell(CellElement, QGraphicsPathItem):
 
-class LeadingCommentCell( CellElement, QGraphicsPathItem ):
-    " Represents a single leading comment "
+    """Represents a single leading comment"""
 
-    def __init__( self, ref, canvas, x, y ):
-        CellElement.__init__( self, ref, canvas, x, y )
-        QGraphicsPathItem.__init__( self )
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
+        QGraphicsPathItem.__init__(self)
         self.kind = CellElement.LEADING_COMMENT
         self.__text = None
         self.__textRect = None
@@ -1621,34 +1675,37 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
         self.connector = None
 
         # To make double click delivered
-        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
-        return
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def __getText( self ):
+    def __getText(self):
         if self.__text is None:
             self.__text = self.ref.leadingComment.getDisplayValue()
         return self.__text
 
-    def render( self ):
+    def render(self):
+        """Renders the cell"""
         s = self.canvas.settings
-        self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
-                                                          self.__getText() )
+        self.__textRect = s.monoFontMetrics.boundingRect(0, 0,
+                                                         maxsize, maxsize, 0,
+                                                         self.__getText())
 
-        self.minHeight = self.__textRect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
-        self.minWidth = max( self.__textRect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding,
-                             s.minWidth )
+        self.minHeight = self.__textRect.height() + 2 * s.vCellPadding + \
+                         2 * s.vTextPadding
+        self.minWidth = max(self.__textRect.width() +
+                            2 * s.hCellPadding + 2 * s.hTextPadding,
+                            s.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
 
-    def adjustWidth( self ):
-        """ Used during rendering to adjust the width of the cell.
-            The comment now can take some space on the left and the left hand
-            side cell has to be rendered already.
-            The width of this cell will take whatever is needed considering
-            the comment shift to the left
+    def adjustWidth(self):
+        """Used during rendering to adjust the width of the cell.
+           The comment now can take some space on the left and the left hand
+           side cell has to be rendered already.
+           The width of this cell will take whatever is needed considering
+           the comment shift to the left
         """
-        cellToTheLeft = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ]
+        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
         if cellToTheLeft.kind != CellElement.CONNECTOR:
             # Not implemented yet
             return
@@ -1657,127 +1714,129 @@ class LeadingCommentCell( CellElement, QGraphicsPathItem ):
         #       safely
         s = self.canvas.settings
         spareWidth = cellToTheLeft.width - cellToTheLeft.minWidth
-        boxWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
-                        s.minWidth )
+        boxWidth = max(self.__textRect.width() +
+                       2 * (s.hCellPadding + s.hTextPadding),
+                       s.minWidth)
         if spareWidth >= boxWidth:
             self.minWidth = 0
         else:
             self.minWidth = boxWidth - spareWidth
         self.width = self.minWidth
-        return
 
-    def draw( self, scene, baseX, baseY ):
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
         self.__setupPath()
-        scene.addItem( self.connector )
-        scene.addItem( self )
-        return
+        scene.addItem(self.connector)
+        scene.addItem(self)
 
-    def __setupPath( self ):
-        " Sets the comment path "
+    def __setupPath(self):
+        """Sets the comment path"""
         s = self.canvas.settings
 
         # Bottom adjustment
         yShift = self.height - self.minHeight
         baseY = self.baseY + yShift
 
-        cellToTheLeft = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ]
+        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
         if cellToTheLeft.kind != CellElement.CONNECTOR:
             # not implemented yet
             self.__leftEdge = self.baseX
         else:
             self.__leftEdge = cellToTheLeft.baseX + s.mainLine + s.hCellPadding
-        boxWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
-                        s.minWidth )
+        boxWidth = max(self.__textRect.width() +
+                       2 * (s.hCellPadding + s.hTextPadding),
+                       s.minWidth)
 
-        path = getCommentBoxPath( s, self.__leftEdge, baseY, boxWidth, self.minHeight )
-        self.setPath( path )
+        path = getCommentBoxPath(s, self.__leftEdge, baseY,
+                                 boxWidth, self.minHeight)
+        self.setPath(path)
 
-        self.connector = Connector( s, 0, 0, 0, 0 )
+        self.connector = Connector(s, 0, 0, 0, 0)
         connectorPath = QPainterPath()
-        connectorPath.moveTo( self.__leftEdge + s.hCellPadding,
-                              baseY + self.minHeight / 2 )
-        connectorPath.lineTo( self.__leftEdge,
-                              baseY + self.minHeight / 2 )
-        connectorPath.lineTo( self.__leftEdge - s.hCellPadding,
-                              baseY + self.minHeight + s.vCellPadding )
-        self.connector.setPath( connectorPath )
+        connectorPath.moveTo(self.__leftEdge + s.hCellPadding,
+                             baseY + self.minHeight / 2)
+        connectorPath.lineTo(self.__leftEdge,
+                             baseY + self.minHeight / 2)
+        connectorPath.lineTo(self.__leftEdge - s.hCellPadding,
+                             baseY + self.minHeight + s.vCellPadding)
+        self.connector.setPath(connectorPath)
         self.connector.penColor = s.commentLineColor
         self.connector.penWidth = s.commentLineWidth
-        return
 
-    def paint( self, painter, option, widget ):
-        " Draws the leading comment "
+    def paint(self, painter, option, widget):
+        """Draws the leading comment"""
         s = self.canvas.settings
 
         # Bottom adjustment
         yShift = self.height - self.minHeight
         baseY = self.baseY + yShift
 
-        brush = QBrush( s.commentBGColor )
-        self.setBrush( brush )
+        brush = QBrush(s.commentBGColor)
+        self.setBrush(brush)
 
         if self.isSelected():
-            selectPen = QPen( s.selectColor )
-            selectPen.setWidth( s.selectPenWidth )
-            selectPen.setJoinStyle( Qt.RoundJoin )
-            self.setPen( selectPen )
+            selectPen = QPen(s.selectColor)
+            selectPen.setWidth(s.selectPenWidth)
+            selectPen.setJoinStyle(Qt.RoundJoin)
+            self.setPen(selectPen)
         else:
-            pen = QPen( s.commentLineColor )
-            pen.setWidth( s.commentLineWidth )
-            pen.setJoinStyle( Qt.RoundJoin )
-            self.setPen( pen )
+            pen = QPen(s.commentLineColor)
+            pen.setWidth(s.commentLineWidth)
+            pen.setJoinStyle(Qt.RoundJoin)
+            self.setPen(pen)
 
         # Hide the dotted outline
-        itemOption = QStyleOptionGraphicsItem( option )
+        itemOption = QStyleOptionGraphicsItem(option)
         if itemOption.state & QStyle.State_Selected != 0:
             itemOption.state = itemOption.state & ~QStyle.State_Selected
-        QGraphicsPathItem.paint( self, painter, itemOption, widget )
+        QGraphicsPathItem.paint(self, painter, itemOption, widget)
 
         # Draw the text in the rectangle
-        pen = QPen( s.commentFGColor )
-        painter.setFont( s.monoFont )
-        painter.setPen( pen )
-        painter.drawText( self.__leftEdge + s.hCellPadding + s.hTextPadding,
-                          baseY + s.vCellPadding + s.vTextPadding,
-                          self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft, self.__getText() )
-        return
+        pen = QPen(s.commentFGColor)
+        painter.setFont(s.monoFont)
+        painter.setPen(pen)
+        painter.drawText(self.__leftEdge + s.hCellPadding + s.hTextPadding,
+                         baseY + s.vCellPadding + s.vTextPadding,
+                         self.__textRect.width(), self.__textRect.height(),
+                         Qt.AlignLeft, self.__getText())
 
-    def mouseDoubleClickEvent( self, event ):
-        " Jump to the appropriate line in the text editor "
+    def mouseDoubleClickEvent(self, event):
+        """Jump to the appropriate line in the text editor"""
         if self._editor:
-            self._editor.gotoLine( self.ref.leadingComment.beginLine,
-                                   self.ref.leadingComment.beginPos )
+            self._editor.gotoLine(self.ref.leadingComment.beginLine,
+                                  self.ref.leadingComment.beginPos)
             self._editor.setFocus()
-        return
 
-    def getSelectTooltip( self ):
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
         lineRange = self.ref.leadingComment.getLineRange()
-        return "Leading comment at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
+        return "Leading comment at lines " + \
+               str(lineRange[0]) + "-" + str(lineRange[1])
 
-    def getDistance( self, absPos ):
-        """ Provides a distance between the absPos and the item """
-        return distance( absPos, self.ref.leadingComment.begin,
-                                 self.ref.leadingComment.end )
+    def getDistance(self, absPos):
+        """Provides a distance between the absPos and the item"""
+        return distance(absPos, self.ref.leadingComment.begin,
+                        self.ref.leadingComment.end)
 
-    def getLineDistance( self, line ):
-        """ Provides a distance between the line and the item """
-        return distance( line, self.ref.leadingComment.beginLine,
-                               self.ref.leadingComment.endLine )
+    def getLineDistance(self, line):
+        """Provides a distance between the line and the item"""
+        return distance(line, self.ref.leadingComment.beginLine,
+                        self.ref.leadingComment.endLine)
 
-    def isComment( self ):
+    def isComment(self):
+        """True if it is a comment"""
         return True
 
 
+class SideCommentCell(CellElement, QGraphicsPathItem):
 
-class SideCommentCell( CellElement, QGraphicsPathItem ):
-    " Represents a single side comment "
+    """Represents a single side comment"""
 
-    def __init__( self, ref, canvas, x, y ):
-        CellElement.__init__( self, ref, canvas, x, y )
-        QGraphicsPathItem.__init__( self )
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
+        QGraphicsPathItem.__init__(self)
         self.kind = CellElement.SIDE_COMMENT
         self.__text = None
         self.__textRect = None
@@ -1785,37 +1844,45 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
         self.connector = None
 
         # To make double click delivered
-        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
-        return
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def __getText( self ):
+    def __getText(self):
+        """Provides the text"""
         if self.__text is None:
             self.__text = ""
-            cellToTheLeft = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ]
+            cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
             if cellToTheLeft.kind == CellElement.IMPORT:
                 importRef = cellToTheLeft.ref
                 if importRef.fromPart is not None:
                     self.__text = "\n"
-                self.__text += '\n' * (self.ref.sideComment.beginLine - importRef.whatPart.beginLine) + \
-                               self.ref.sideComment.getDisplayValue()
+                self.__text += \
+                    '\n' * (self.ref.sideComment.beginLine -
+                            importRef.whatPart.beginLine) + \
+                    self.ref.sideComment.getDisplayValue()
             else:
-                self.__text = '\n' * (self.ref.sideComment.beginLine - self.ref.body.beginLine) + \
-                              self.ref.sideComment.getDisplayValue()
+                self.__text = \
+                    '\n' * (self.ref.sideComment.beginLine -
+                            self.ref.body.beginLine) + \
+                    self.ref.sideComment.getDisplayValue()
         return self.__text
 
-    def render( self ):
+    def render(self):
+        """Renders the cell"""
         s = self.canvas.settings
-        self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
-                                                          self.__getText() )
+        self.__textRect = s.monoFontMetrics.boundingRect(0, 0,
+                                                         maxsize, maxsize, 0,
+                                                         self.__getText())
 
-        self.minHeight = self.__textRect.height() + 2 * s.vCellPadding + 2 * s.vTextPadding
-        self.minWidth = max( self.__textRect.width() + 2 * s.hCellPadding + 2 * s.hTextPadding,
-                             s.minWidth )
+        self.minHeight = self.__textRect.height() + 2 * s.vCellPadding + \
+                         2 * s.vTextPadding
+        self.minWidth = max(self.__textRect.width() + 2 * s.hCellPadding +
+                            2 * s.hTextPadding,
+                            s.minWidth)
         self.height = self.minHeight
         self.width = self.minWidth
         return (self.width, self.height)
 
-    def adjustWidth( self ):
+    def adjustWidth(self):
         """ Used during rendering to adjust the width of the cell.
             The comment now can take some space on the left and the left hand
             side cell has to be rendered already.
@@ -1823,151 +1890,155 @@ class SideCommentCell( CellElement, QGraphicsPathItem ):
             the comment shift to the left
         """
         s = self.canvas.settings
-        cellToTheLeft = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ]
+        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
         spareWidth = cellToTheLeft.width - cellToTheLeft.minWidth
-        boxWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
-                        s.minWidth )
+        boxWidth = max(self.__textRect.width() +
+                       2 * (s.hCellPadding + s.hTextPadding),
+                       s.minWidth)
         if spareWidth >= boxWidth:
             self.minWidth = 0
         else:
             self.minWidth = boxWidth - spareWidth
         self.width = self.minWidth
-        return
 
-    def draw( self, scene, baseX, baseY ):
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
         self.__setupPath()
-        scene.addItem( self.connector )
-        scene.addItem( self )
-        return
+        scene.addItem(self.connector)
+        scene.addItem(self)
 
-    def __setupPath( self ):
-        " Sets the comment path "
+    def __setupPath(self):
+        """Sets the comment path"""
         s = self.canvas.settings
 
-        cellToTheLeft = self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ]
-        boxWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
-                        s.minWidth )
+        cellToTheLeft = self.canvas.cells[self.addr[1]][self.addr[0] - 1]
+        boxWidth = max(self.__textRect.width() +
+                       2 * (s.hCellPadding + s.hTextPadding),
+                       s.minWidth)
         self.__leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
-        if self.canvas.cells[ self.addr[ 1 ] ][ self.addr[ 0 ] - 1 ].kind == CellElement.CONNECTOR:
+        if self.canvas.cells[self.addr[1]][self.addr[0] - 1].kind == CellElement.CONNECTOR:
             # 'if' or 'elif' side comment
             self.__leftEdge = cellToTheLeft.baseX + s.mainLine + s.hCellPadding
-            path = getCommentBoxPath( s, self.__leftEdge, self.baseY, boxWidth, self.minHeight )
+            path = getCommentBoxPath(s, self.__leftEdge, self.baseY,
+                                     boxWidth, self.minHeight)
 
             width = 0
-            index = self.addr[ 0 ] - 1
-            while self.canvas.cells[ self.addr[ 1 ] ][ index ].kind == CellElement.CONNECTOR:
-                width += self.canvas.cells[ self.addr[ 1 ] ][ index ].width
+            index = self.addr[0] - 1
+            while self.canvas.cells[self.addr[1]][index].kind == CellElement.CONNECTOR:
+                width += self.canvas.cells[self.addr[1]][index].width
                 index -= 1
 
             # The first non-connector cell must be the 'if' cell
-            ifCell = self.canvas.cells[ self.addr[ 1 ] ][ index ]
+            ifCell = self.canvas.cells[self.addr[1]][index]
 
-            self.connector = Connector( s,
-                                        self.__leftEdge + s.hCellPadding,
-                                        self.baseY + ifCell.minHeight / 2 + 6,
-                                        ifCell.baseX + ifCell.minWidth - s.hCellPadding,
-                                        self.baseY + ifCell.minHeight / 2 + 6 )
+            self.connector = Connector(
+                s, self.__leftEdge + s.hCellPadding,
+                self.baseY + ifCell.minHeight / 2 + 6,
+                ifCell.baseX + ifCell.minWidth - s.hCellPadding,
+                self.baseY + ifCell.minHeight / 2 + 6)
         else:
             # Regular box
             self.__leftEdge = cellToTheLeft.baseX + cellToTheLeft.minWidth
-            path = getCommentBoxPath( s, self.__leftEdge, self.baseY, boxWidth, self.minHeight )
+            path = getCommentBoxPath(s, self.__leftEdge, self.baseY,
+                                     boxWidth, self.minHeight)
 
-            h = min( self.minHeight / 2, cellToTheLeft.minHeight / 2 )
+            h = min(self.minHeight / 2, cellToTheLeft.minHeight / 2)
 
-            self.connector = Connector( s,
-                                        self.__leftEdge + s.hCellPadding,
-                                        self.baseY + h,
-                                        cellToTheLeft.baseX + cellToTheLeft.minWidth - s.hCellPadding,
-                                        self.baseY + h )
+            self.connector = Connector(
+                s, self.__leftEdge + s.hCellPadding,
+                self.baseY + h,
+                cellToTheLeft.baseX + cellToTheLeft.minWidth - s.hCellPadding,
+                self.baseY + h)
 
         self.connector.penColor = s.commentLineColor
         self.connector.penWidth = s.commentLineWidth
 
-        self.setPath( path )
-        return
+        self.setPath(path)
 
-    def paint( self, painter, option, widget ):
-        " Draws the side comment "
+    def paint(self, painter, option, widget):
+        """Draws the side comment"""
         s = self.canvas.settings
 
-        brush = QBrush( s.commentBGColor )
-        self.setBrush( brush )
+        brush = QBrush(s.commentBGColor)
+        self.setBrush(brush)
 
         if self.isSelected():
-            selectPen = QPen( s.selectColor )
-            selectPen.setWidth( s.selectPenWidth )
-            selectPen.setJoinStyle( Qt.RoundJoin )
-            self.setPen( selectPen )
+            selectPen = QPen(s.selectColor)
+            selectPen.setWidth(s.selectPenWidth)
+            selectPen.setJoinStyle(Qt.RoundJoin)
+            self.setPen(selectPen)
         else:
-            pen = QPen( s.commentLineColor )
-            pen.setWidth( s.commentLineWidth )
-            pen.setJoinStyle( Qt.RoundJoin )
-            self.setPen( pen )
+            pen = QPen(s.commentLineColor)
+            pen.setWidth(s.commentLineWidth)
+            pen.setJoinStyle(Qt.RoundJoin)
+            self.setPen(pen)
 
         # Hide the dotted outline
-        itemOption = QStyleOptionGraphicsItem( option )
+        itemOption = QStyleOptionGraphicsItem(option)
         if itemOption.state & QStyle.State_Selected != 0:
             itemOption.state = itemOption.state & ~QStyle.State_Selected
-        QGraphicsPathItem.paint( self, painter, itemOption, widget )
+        QGraphicsPathItem.paint(self, painter, itemOption, widget)
 
         # Draw the text in the rectangle
-        pen = QPen( s.commentFGColor )
-        painter.setFont( s.monoFont )
-        painter.setPen( pen )
-        painter.drawText( self.__leftEdge + s.hCellPadding + s.hTextPadding,
-                          self.baseY + s.vCellPadding + s.vTextPadding,
-                          self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft, self.__getText() )
-        return
+        pen = QPen(s.commentFGColor)
+        painter.setFont(s.monoFont)
+        painter.setPen(pen)
+        painter.drawText(self.__leftEdge + s.hCellPadding + s.hTextPadding,
+                         self.baseY + s.vCellPadding + s.vTextPadding,
+                         self.__textRect.width(), self.__textRect.height(),
+                         Qt.AlignLeft, self.__getText())
 
-    def mouseDoubleClickEvent( self, event ):
-        " Jump to the appropriate line in the text editor "
+    def mouseDoubleClickEvent(self, event):
+        """Jump to the appropriate line in the text editor"""
         if self._editor:
-            self._editor.gotoLine( self.ref.sideComment.beginLine,
-                                   self.ref.sideComment.beginPos )
+            self._editor.gotoLine(self.ref.sideComment.beginLine,
+                                  self.ref.sideComment.beginPos)
             self._editor.setFocus()
-        return
 
-    def getSelectTooltip( self ):
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
         lineRange = self.ref.sideComment.getLineRange()
-        return "Side comment at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
+        return "Side comment at lines " + \
+               str(lineRange[0]) + "-" + str(lineRange[1])
 
-    def getDistance( self, absPos ):
-        """ Provides a distance between the absPos and the item """
-        retval = maxint
+    def getDistance(self, absPos):
+        """Provides a distance between the absPos and the item"""
+        retval = maxsize
         for part in self.ref.sideComment.parts:
             # +1 is for finishing \n character
-            dist = distance( absPos, part.begin, part.end + 1 )
+            dist = distance(absPos, part.begin, part.end + 1)
             if dist == 0:
                 return 0
-            retval = min( retval, dist )
+            retval = min(retval, dist)
         return retval
 
-    def getLineDistance( self, line ):
-        """ Provides a distance between the line and the item """
-        retval = maxint
+    def getLineDistance(self, line):
+        """Provides a distance between the line and the item"""
+        retval = maxsize
         for part in self.ref.sideComment.parts:
-            dist = distance( line, part.beginLine, part.endLine )
+            dist = distance(line, part.beginLine, part.endLine)
             if dist == 0:
                 return 0
-            retval = min( retval, dist )
+            retval = min(retval, dist)
         return retval
 
-    def isComment( self ):
+    def isComment(self):
+        """True if it is a comment"""
         return True
 
 
+class AboveCommentCell(CellElement, QGraphicsPathItem):
 
-class AboveCommentCell( CellElement, QGraphicsPathItem ):
-    """ Represents a single leading comment which is above a certain block, namely
-        try/except or for/else or while/else
-        i.e. those which are scopes located in a single row """
+    """Represents a single leading comment which is above a certain block,
+       namely try/except or for/else or while/else
+       i.e. those which are scopes located in a single row
+    """
 
-    def __init__( self, ref, canvas, x, y ):
-        CellElement.__init__( self, ref, canvas, x, y )
-        QGraphicsPathItem.__init__( self )
+    def __init__(self, ref, canvas, x, y):
+        CellElement.__init__(self, ref, canvas, x, y)
+        QGraphicsPathItem.__init__(self)
         self.kind = CellElement.ABOVE_COMMENT
         self.__text = None
         self.__textRect = None
@@ -1977,23 +2048,26 @@ class AboveCommentCell( CellElement, QGraphicsPathItem ):
         self.commentConnector = None
 
         # To make double click delivered
-        self.setFlag( QGraphicsItem.ItemIsSelectable, True )
-        return
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
-    def __getText( self ):
+    def __getText(self):
         if self.__text is None:
             self.__text = self.ref.leadingComment.getDisplayValue()
         return self.__text
 
-    def render( self ):
+    def render(self):
+        """Renders the cell"""
         s = self.canvas.settings
-        self.__textRect = s.monoFontMetrics.boundingRect( 0, 0, maxint, maxint, 0,
-                                                          self.__getText() )
+        self.__textRect = s.monoFontMetrics.boundingRect(0, 0,
+                                                         maxsize, maxsize, 0,
+                                                         self.__getText())
 
-        self.minHeight = self.__textRect.height() + 2 * (s.vCellPadding + s.vTextPadding)
+        self.minHeight = self.__textRect.height() + \
+                         2 * (s.vCellPadding + s.vTextPadding)
         # Width of the comment box itself
-        self.minWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
-                             s.minWidth )
+        self.minWidth = max(self.__textRect.width() +
+                            2 * (s.hCellPadding + s.hTextPadding),
+                            s.minWidth)
         # Add the connector space
         self.minWidth += s.mainLine + s.hCellPadding
 
@@ -2001,24 +2075,24 @@ class AboveCommentCell( CellElement, QGraphicsPathItem ):
         self.width = self.minWidth
         return (self.width, self.height)
 
-    def draw( self, scene, baseX, baseY ):
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
         self.__setupPath()
 
         if self.needConnector:
             s = self.canvas.settings
-            self.connector = Connector( s, baseX + s.mainLine, baseY,
-                                        baseX + s.mainLine,
-                                        baseY + self.height )
-            scene.addItem( self.connector )
+            self.connector = Connector(s, baseX + s.mainLine, baseY,
+                                       baseX + s.mainLine,
+                                       baseY + self.height)
+            scene.addItem(self.connector)
 
-        scene.addItem( self.commentConnector )
-        scene.addItem( self )
-        return
+        scene.addItem(self.commentConnector)
+        scene.addItem(self)
 
-    def __setupPath( self ):
-        " Sets the comment path "
+    def __setupPath(self):
+        """Sets the comment path"""
         s = self.canvas.settings
 
         # Bottom adjustment
@@ -2026,91 +2100,93 @@ class AboveCommentCell( CellElement, QGraphicsPathItem ):
         baseY = self.baseY + yShift
 
         self.__leftEdge = self.baseX + s.mainLine + s.hCellPadding
-        boxWidth = max( self.__textRect.width() + 2 * (s.hCellPadding + s.hTextPadding),
-                        s.minWidth )
+        boxWidth = max(self.__textRect.width() +
+                       2 * (s.hCellPadding + s.hTextPadding),
+                       s.minWidth)
 
-        path = getCommentBoxPath( s, self.__leftEdge, baseY, boxWidth, self.minHeight )
-        self.setPath( path )
+        path = getCommentBoxPath(s, self.__leftEdge, baseY, boxWidth, self.minHeight)
+        self.setPath(path)
 
-        self.commentConnector = Connector( s, 0, 0, 0, 0 )
+        self.commentConnector = Connector(s, 0, 0, 0, 0)
         connectorPath = QPainterPath()
-        connectorPath.moveTo( self.__leftEdge + s.hCellPadding,
-                              baseY + self.minHeight / 2 )
-        connectorPath.lineTo( self.__leftEdge,
-                              baseY + self.minHeight / 2 )
-        connectorPath.lineTo( self.__leftEdge - s.hCellPadding,
-                              baseY + self.minHeight + s.vCellPadding )
+        connectorPath.moveTo(self.__leftEdge + s.hCellPadding,
+                             baseY + self.minHeight / 2)
+        connectorPath.lineTo(self.__leftEdge,
+                             baseY + self.minHeight / 2)
+        connectorPath.lineTo(self.__leftEdge - s.hCellPadding,
+                             baseY + self.minHeight + s.vCellPadding)
         self.commentConnector.setPath( connectorPath )
         self.commentConnector.penColor = s.commentLineColor
         self.commentConnector.penWidth = s.commentLineWidth
-        return
 
-    def paint( self, painter, option, widget ):
-        " Draws the leading comment "
+    def paint(self, painter, option, widget):
+        """Draws the leading comment"""
         s = self.canvas.settings
 
         # Bottom adjustment
         yShift = self.height - self.minHeight
         baseY = self.baseY + yShift
 
-        brush = QBrush( s.commentBGColor )
-        self.setBrush( brush )
+        brush = QBrush(s.commentBGColor)
+        self.setBrush(brush)
         if self.isSelected():
-            selectPen = QPen( s.selectColor )
-            selectPen.setWidth( s.selectPenWidth )
-            selectPen.setJoinStyle( Qt.RoundJoin )
-            self.setPen( selectPen )
+            selectPen = QPen(s.selectColor)
+            selectPen.setWidth(s.selectPenWidth)
+            selectPen.setJoinStyle(Qt.RoundJoin)
+            self.setPen(selectPen)
         else:
-            pen = QPen( s.commentLineColor )
-            pen.setWidth( s.commentLineWidth )
-            pen.setJoinStyle( Qt.RoundJoin )
-            self.setPen( pen )
+            pen = QPen(s.commentLineColor)
+            pen.setWidth(s.commentLineWidth)
+            pen.setJoinStyle(Qt.RoundJoin)
+            self.setPen(pen)
 
         # Hide the dotted outline
-        itemOption = QStyleOptionGraphicsItem( option )
+        itemOption = QStyleOptionGraphicsItem(option)
         if itemOption.state & QStyle.State_Selected != 0:
             itemOption.state = itemOption.state & ~QStyle.State_Selected
-        QGraphicsPathItem.paint( self, painter, itemOption, widget )
+        QGraphicsPathItem.paint(self, painter, itemOption, widget)
 
         # Draw the text in the rectangle
-        pen = QPen( s.commentFGColor )
-        painter.setFont( s.monoFont )
-        painter.setPen( pen )
-        painter.drawText( self.__leftEdge + s.hCellPadding + s.hTextPadding,
-                          baseY + s.vCellPadding + s.vTextPadding,
-                          self.__textRect.width(), self.__textRect.height(),
-                          Qt.AlignLeft, self.__getText() )
-        return
+        pen = QPen(s.commentFGColor)
+        painter.setFont(s.monoFont)
+        painter.setPen(pen)
+        painter.drawText(self.__leftEdge + s.hCellPadding + s.hTextPadding,
+                         baseY + s.vCellPadding + s.vTextPadding,
+                         self.__textRect.width(), self.__textRect.height(),
+                         Qt.AlignLeft, self.__getText())
 
-    def mouseDoubleClickEvent( self, event ):
-        " Jump to the appropriate line in the text editor "
+    def mouseDoubleClickEvent(self, event):
+        """Jump to the appropriate line in the text editor"""
         if self._editor:
-            self._editor.gotoLine( self.ref.leadingComment.beginLine,
-                                   self.ref.leadingComment.beginPos )
+            self._editor.gotoLine(self.ref.leadingComment.beginLine,
+                                  self.ref.leadingComment.beginPos)
             self._editor.setFocus()
         return
 
-    def getSelectTooltip( self ):
+    def getSelectTooltip(self):
+        """Provides the tooltip"""
         lineRange = self.ref.leadingComment.getLineRange()
-        return "Leading comment at lines " + str( lineRange[0] ) + "-" + str( lineRange[1] )
+        return "Leading comment at lines " + \
+               str(lineRange[0]) + "-" + str(lineRange[1])
 
-    def getDistance( self, absPos ):
-        """ Provides a distance between the absPos and the item """
-        return distance( absPos, self.ref.leadingComment.begin,
-                                 self.ref.leadingComment.end )
+    def getDistance(self, absPos):
+        """Provides a distance between the absPos and the item"""
+        return distance(absPos, self.ref.leadingComment.begin,
+                        self.ref.leadingComment.end)
 
-    def getLineDistance( self, line ):
-        """ Provides a distance between the line and the item """
-        return distance( line, self.ref.leadingComment.beginLine,
-                               self.ref.leadingComment.endLine )
+    def getLineDistance(self, line):
+        """Provides a distance between the line and the item"""
+        return distance(line, self.ref.leadingComment.beginLine,
+                        self.ref.leadingComment.endLine)
 
-    def isComment( self ):
+    def isComment(self):
+        """True if it is a comment"""
         return True
 
 
+class ConnectorCell(CellElement, QGraphicsPathItem):
 
-class ConnectorCell( CellElement, QGraphicsPathItem ):
-    " Represents a single connector cell "
+    """Represents a single connector cell"""
 
     NORTH = 0
     SOUTH = 1
@@ -2118,28 +2194,30 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
     EAST = 3
     CENTER = 4
 
-    def __init__( self, connections, canvas, x, y ):
+    def __init__(self, connections, canvas, x, y):
         """ Connections are supposed to be a list of tuples e.g
             [ (NORTH, SOUTH), (EAST, CENTER) ] """
-        CellElement.__init__( self, None, canvas, x, y )
-        QGraphicsPathItem.__init__( self )
+        CellElement.__init__(self, None, canvas, x, y)
+        QGraphicsPathItem.__init__(self)
         self.kind = CellElement.CONNECTOR
         self.connections = connections
-        return
 
-    def __hasVertical( self ):
+    def __hasVertical(self):
+        """True if has a vertical part"""
         for conn in self.connections:
             if self.NORTH in conn or self.SOUTH in conn:
                 return True
         return False
 
-    def __hasHorizontal( self ):
+    def __hasHorizontal(self):
+        """True if has a horizontal part"""
         for conn in self.connections:
             if self.EAST in conn or self.WEST in conn:
                 return True
         return False
 
-    def render( self ):
+    def render(self):
+        """Renders the cell"""
         s = self.canvas.settings
 
         if self.__hasVertical():
@@ -2156,27 +2234,29 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
         self.width = self.minWidth
         return (self.width, self.height)
 
-    def __getY( self ):
-        row = self.addr[ 1 ]
-        column = self.addr[ 0 ]
+    def __getY(self):
+        """Provides the Y coordinate"""
+        row = self.addr[1]
+        column = self.addr[0]
         cells = self.canvas.cells
-        for index in xrange( column - 1, -1, -1 ):
-            kind = cells[ row ][ index ].kind
-            if kind in [ CellElement.VACANT, CellElement.H_SPACER,
-                         CellElement.V_SPACER ]:
+        for index in range(column - 1, -1, -1):
+            kind = cells[row][index].kind
+            if kind in [CellElement.VACANT, CellElement.H_SPACER,
+                        CellElement.V_SPACER]:
                 continue
-            if kind in [ CellElement.FILE_SCOPE, CellElement.FUNC_SCOPE,
-                         CellElement.CLASS_SCOPE, CellElement.FOR_SCOPE,
-                         CellElement.WHILE_SCOPE, CellElement.TRY_SCOPE,
-                         CellElement.WITH_SCOPE, CellElement.DECOR_SCOPE,
-                         CellElement.ELSE_SCOPE, CellElement.EXCEPT_SCOPE,
-                         CellElement.FINALLY_SCOPE ]:
+            if kind in [CellElement.FILE_SCOPE, CellElement.FUNC_SCOPE,
+                        CellElement.CLASS_SCOPE, CellElement.FOR_SCOPE,
+                        CellElement.WHILE_SCOPE, CellElement.TRY_SCOPE,
+                        CellElement.WITH_SCOPE, CellElement.DECOR_SCOPE,
+                        CellElement.ELSE_SCOPE, CellElement.EXCEPT_SCOPE,
+                        CellElement.FINALLY_SCOPE]:
                 break
             if kind != CellElement.CONNECTOR:
-                return cells[ row ][ index ].minHeight / 2
+                return cells[row][index].minHeight / 2
         return self.height / 2
 
-    def __getXY( self, location ):
+    def __getXY(self, location):
+        """Provides the location coordinates"""
         s = self.canvas.settings
         if location == self.NORTH:
             return self.baseX + s.mainLine, self.baseY
@@ -2189,54 +2269,57 @@ class ConnectorCell( CellElement, QGraphicsPathItem ):
         # It is CENTER
         return self.baseX + s.mainLine, self.baseY + self.__getY()
 
-    def __angled( self, begin, end ):
-        if begin in [ self.NORTH, self.SOUTH ] and \
-           end in [ self.WEST, self.EAST ]:
+    def __angled(self, begin, end):
+        """Returns True if the connection is not straight"""
+        if begin in [self.NORTH, self.SOUTH] and \
+           end in [self.WEST, self.EAST]:
             return True
-        return end in [ self.NORTH, self.SOUTH ] and \
-               begin in [ self.WEST, self.EAST ]
+        return end in [self.NORTH, self.SOUTH] and \
+               begin in [self.WEST, self.EAST]
 
-    def draw( self, scene, baseX, baseY ):
+    def draw(self, scene, baseX, baseY):
+        """Draws the cell"""
         self.baseX = baseX
         self.baseY = baseY
 
         path = QPainterPath()
         for connection in self.connections:
             startX, startY = self.__getXY( connection[ 0 ] )
-            endX, endY = self.__getXY( connection[ 1 ] )
-            if self.__angled( connection[ 0 ], connection[ 1 ] ):
-                centerX, centerY = self.__getXY( self.CENTER )
-                path.moveTo( startX, startY )
-                path.lineTo( centerX, centerY )
-                path.lineTo( endX, endY )
+            endX, endY = self.__getXY(connection[ 1 ] )
+            if self.__angled(connection[0], connection[1]):
+                centerX, centerY = self.__getXY(self.CENTER)
+                path.moveTo(startX, startY)
+                path.lineTo(centerX, centerY)
+                path.lineTo(endX, endY)
             else:
-                path.moveTo( startX, startY )
-                path.lineTo( endX, endY )
-        self.setPath( path )
-        scene.addItem( self )
-        return
+                path.moveTo(startX, startY)
+                path.lineTo(endX, endY)
+        self.setPath(path)
+        scene.addItem(self)
 
-    def paint( self, painter, option, widget ):
-        " Draws the code block "
+    def paint(self, painter, option, widget):
+        """Draws the code block"""
         s = self.canvas.settings
 
-        pen = QPen( s.lineColor )
-        pen.setWidth( s.lineWidth )
-        pen.setJoinStyle( Qt.RoundJoin )
-        self.setPen( pen )
-        painter.setPen( pen )
-        QGraphicsPathItem.paint( self, painter, option, widget )
-        return
+        pen = QPen(s.lineColor)
+        pen.setWidth(s.lineWidth)
+        pen.setJoinStyle(Qt.RoundJoin)
+        self.setPen(pen)
+        painter.setPen(pen)
+        QGraphicsPathItem.paint(self, painter, option, widget)
 
-    def isProxyItem( self ):
+    def isProxyItem(self):
+        """True if it is a proxy item"""
         return True
 
-    def getProxiedItem( self ):
+    def getProxiedItem(self):
+        """Provides the real item for a proxy one"""
         return None
 
-    def mouseDoubleClickEvent( self, event ):
+    def mouseDoubleClickEvent(self, event):
+        """Handles the mouse double click"""
         return  # To be on the safe side: override the default implementation
 
-    def setEditor( self, editor ):
+    def setEditor(self, editor):
+        """Sets the editor"""
         return  # To be on the safe side: override the default implementation
-
