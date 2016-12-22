@@ -589,6 +589,12 @@ def compactPath(path, width, measure=len):
     return ''
 
 
+def isPythonFile(fName):
+    """True if it is a python file"""
+    mime, _, _, _ = getFileProperties(fName)
+    return 'python' in mime
+
+
 # Utility functions to save/load generic JSON
 def loadJSON(fileName, errorWhat, defaultValue):
     """Generic JSON loading"""

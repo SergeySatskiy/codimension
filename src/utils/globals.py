@@ -127,16 +127,14 @@ class GlobalDataWrapper:
         if not isfile(scriptName):
             return False
 
-        from .fileutils import getFileProperties
-        mime, _, _, _ = getFileProperties(scriptName)
-        return 'python' in mime
+        from .fileutils import isPythonFile
+        return isPythonFile(scriptName)
 
     def getFileLineDocstring(self, fName, line):
         """Provides a docstring if so for the given file and line"""
-        from .fileutils import getFileProperties
-        mime, _, _, _ = getFileProperties(fName)
-        if 'python' not in mime:
-            return ""
+        from .fileutils import isPythonFile
+        if not isPythonFile(fName):
+            return ''
 
         infoCache = self.briefModinfoCache
 
@@ -164,10 +162,8 @@ class GlobalDataWrapper:
 
     def getModInfo(self, path):
         """Provides a module info for the given file"""
-        from .fileutils import getFileProperties
-        mime, _, _, _ = getFileProperties(path)
-
-        if 'python' not in mime:
+        from .fileutils import isPythonFile
+        if not isPythonFile(path):
             raise Exception('Trying to parse non-python file: ' + path)
         return self.briefModinfoCache.get(path)
 
