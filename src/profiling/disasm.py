@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010-2012  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,29 +17,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" Disassembling classes and functions "
+"""Disassembling classes and functions"""
 
 import os.path
 import sys
-from utils.globals import GlobalData
-from utils.compatibility import relpath
 from subprocess import Popen, PIPE
+from utils.globals import GlobalData
 
 
+def _getCode(workingDir, moduleToImport, name, importDirs):
+    """Cmd line to get disassemble"""
+    if moduleToImport.endswith('.py'):
+        moduleToImport = moduleToImport[:-3]
+    elif moduleToImport.endswith('.py3'):
+        moduleToImport = moduleToImport[:-4]
 
-def _getCode( workingDir, moduleToImport, name, importDirs ):
-    """ Cmd line to get disassemble """
-
-    if moduleToImport.endswith( ".py" ):
-        moduleToImport = moduleToImport[ : -3 ]
-    elif moduleToImport.endswith( ".py3" ):
-        moduleToImport = moduleToImport[ : -4 ]
-
-    srcCode = ""
-    if len( importDirs ) > 0:
+    srcCode = ''
+    if len(importDirs) > 0:
         srcCode += "import sys;"
         for importPath in importDirs:
             srcCode += "sys.path.append( \"" + importPath + "\" );"
@@ -49,50 +44,52 @@ def _getCode( workingDir, moduleToImport, name, importDirs ):
                "dis.dis(" + "m." + name + ")"
 
     return "cd " + workingDir + ";" + \
-           sys.executable + " -c '" + srcCode + "'"
+            sys.executable + " -c '" + srcCode + "'"
 
 
-def _getCodeForStandaloneScript( path, name, importDirs ):
-    """ Provides a complete command line for two cases:
-        - there were no project loaded
-        - file does not belong to the project """
-
-    workingDir = os.path.dirname( path )
-    moduleToImport = os.path.basename( path )
-    return _getCode( workingDir, moduleToImport, name, importDirs )
-
-
-def _getCodeForNestedScript( topDir, relativePath,
-                             name, importDirs ):
-    """ Provides a complete command line for a module which is in
-        a nested directory starting from a project top dir.
-        topDir is like /a/b/c
-        relativePath is like d/e/f.py """
-    moduleToImport = relativePath.replace( os.path.sep, '.' )
-    return _getCode( topDir, moduleToImport, name, importDirs )
+def _getCodeForStandaloneScript(path, name, importDirs):
+    """Provides a complete command line for two cases:
+       - there were no project loaded
+       - file does not belong to the project
+    """
+    workingDir = os.path.dirname(path)
+    moduleToImport = os.path.basename(path)
+    return _getCode(workingDir, moduleToImport, name, importDirs)
 
 
-def _checkInitPresence( startDir, dirs ):
-    """ Checks that all pathes down have __init__ files.
-        Returns True if so
-        startDir is like /a/b/c
-        dirs is like d/e/f """
+def _getCodeForNestedScript(topDir, relativePath,
+                            name, importDirs):
+    """Provides a complete command line for a module which is in
+       a nested directory starting from a project top dir.
+       topDir is like /a/b/c
+       relativePath is like d/e/f.py
+    """
+    moduleToImport = relativePath.replace(os.path.sep, '.')
+    return _getCode(topDir, moduleToImport, name, importDirs)
+
+
+def _checkInitPresence(startDir, dirs):
+    """Checks that all pathes down have __init__ files.
+       Returns True if so
+       startDir is like /a/b/c
+       dirs is like d/e/f
+    """
     candidatePath = startDir + os.path.sep
-    parts = dirs.split( os.path.sep )
+    parts = dirs.split(os.path.sep)
     for part in parts:
         candidatePath += part + os.path.sep
-        if os.path.exists( candidatePath + "__init__.py" ):
+        if os.path.exists(candidatePath + "__init__.py"):
             continue
-        if os.path.exists( candidatePath + "__init__.py3" ):
+        if os.path.exists(candidatePath + "__init__.py3"):
             continue
         return False
     return True
 
 
-def runWithShell( commandLine ):
-    " Runs something via a shell "
-    process = Popen( commandLine, shell = True,
-                     stdin = PIPE, stdout = PIPE, stderr = PIPE )
+def runWithShell(commandLine):
+    """Runs something via a shell"""
+    process = Popen(commandLine, shell=True,
+                    stdin=PIPE, stdout=PIPE, stderr=PIPE)
     process.stdin.close()
     processStdout = process.stdout.read()
     process.stdout.close()
@@ -101,23 +98,22 @@ def runWithShell( commandLine ):
     process.wait()
 
     if process.returncode != 0:
-        raise Exception( "Error executing command: '" + \
-                         commandLine + "': " + processStderr )
+        raise Exception("Error executing command: '" +
+                        commandLine + "': " + processStderr)
     return processStdout
 
 
+def getDisassembled(path, name):
+    """Provides disassembler output for thr given name"""
 
-def getDisassembled( path, name ):
-    " Provides disassembler output for thr given name "
+    if not os.path.exists(path):
+        raise Exception("Cannot find file " + path)
+    if not os.path.isfile(path):
+        raise Exception("The path '" + path + "' does not point to a file")
+    if not path.endswith('.py') and not path.endswith('.py3'):
+        raise Exception('Path must point to a python file')
 
-    if not os.path.exists( path ):
-        raise Exception( "Cannot find file " + path )
-    if not os.path.isfile( path ):
-        raise Exception( "The path '" + path + "' does not point to a file" )
-    if not path.endswith( '.py' ) and not path.endswith( '.py3' ):
-        raise Exception( "Path must point to a python file" )
-
-    cmdLine2 = ""
+    cmdLine2 = ''
     project = GlobalData().project
     importDirs = GlobalData().getProjectImportDirs()
     if project.isProjectFile:
@@ -126,49 +122,46 @@ def getDisassembled( path, name ):
         #   script dir)
         # - to import starting from the directory where the script is located
         # Let's try both of them
-        if project.scriptName != "" and os.path.exists( project.scriptName ):
-            topDir = os.path.dirname( project.scriptName )
+        if project.scriptName != "" and os.path.exists(project.scriptName):
+            topDir = os.path.dirname(project.scriptName)
         else:
-            topDir = os.path.dirname( project.fileName )
+            topDir = os.path.dirname(project.fileName)
 
-        scriptDir = os.path.dirname( path )
+        scriptDir = os.path.dirname(path)
         if topDir == scriptDir:
-            cmdLine = _getCodeForStandaloneScript( path, name, importDirs )
+            cmdLine = _getCodeForStandaloneScript(path, name, importDirs)
         else:
             # Calculate the relative path
             # it will be like 'c/d/e/my.py'
-            relativePath = relpath( path, topDir )
+            relativePath = os.path.relpath(path, topDir)
 
             # Make sure there are __init__ files in all paths down
-            if _checkInitPresence( topDir,
-                                   os.path.dirname( relativePath ) ) == False:
+            if _checkInitPresence(topDir,
+                                  os.path.dirname(relativePath)) == False:
                 # No init files in the structure, so there is no point to try
                 # importing from the project top directory
-                cmdLine = _getCodeForStandaloneScript( path,
-                                                       name, importDirs )
+                cmdLine = _getCodeForStandaloneScript(path,
+                                                      name, importDirs)
             else:
                 # Need to try both options of importing
                 # We may get luck succesfully loading it
-                cmdLine = _getCodeForStandaloneScript( path,
-                                                       name, importDirs )
+                cmdLine = _getCodeForStandaloneScript(path,
+                                                      name, importDirs)
 
-                cmdLine2 = _getCodeForNestedScript( topDir,
-                                                    relativePath,
-                                                    name, importDirs )
+                cmdLine2 = _getCodeForNestedScript(topDir,
+                                                   relativePath,
+                                                   name, importDirs)
     else:
-        cmdLine = _getCodeForStandaloneScript( path, name, importDirs )
+        cmdLine = _getCodeForStandaloneScript(path, name, importDirs)
 
     # cmdLine is formed in any case
     # cmdLine2 only if certain conditions are met
     try:
-        return runWithShell( cmdLine )
+        return runWithShell(cmdLine)
     except:
-        if cmdLine2 != "":
+        if cmdLine2:
             try:
-                return runWithShell( cmdLine2 )
+                return runWithShell(cmdLine2)
             except:
                 pass
-    raise Exception( "Could not get '" + name + "' disassembled" )
-
-
-
+    raise Exception("Could not get '" + name + "' disassembled")
