@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
 #
 # The file was taken from eric 4 and adopted for codimension.
@@ -26,9 +24,7 @@
 # Copyright (c) 2002 - 2012 Detlev Offenbach <detlev@die-offenbachs.de>
 #
 
-"""
-Module implementing the debug base class.
-"""
+"""Module implementing the debug base class."""
 
 import sys
 import bdb
@@ -36,34 +32,27 @@ import os
 import types
 import atexit
 import inspect
-
-from protocol_cdm_dbg import ( ResponseClearWatch, ResponseClearBreak,
-                               ResponseLine, ResponseSyntax, ResponseException )
+from .protocol_cdm_dbg import (ResponseClearWatch, ResponseClearBreak,
+                               ResponseLine, ResponseSyntax, ResponseException)
 
 RECURSION_LIMIT = 64
 
 
-def setRecursionLimit( limit ):
+def setRecursionLimit(limit):
     " Sets the recursion limit "
     global RECURSION_LIMIT
     RECURSION_LIMIT = limit
-    return
 
-class DebugBase( bdb.Bdb ):
+
+class DebugBase(bdb.Bdb):
+
+    """Base class of the debugger - the part which is external to IDE
+       Provides simple wrapper methods around bdb for the 'owning' client to
+       call to step etc.
     """
-    Base class of the debugger - the part which is external to IDE
 
-    Provides simple wrapper methods around bdb for the 'owning' client to
-    call to step etc.
-    """
-
-    def __init__( self, dbgClient ):
-        """
-        Constructor
-
-        @param dbgClient the owning client
-        """
-        bdb.Bdb.__init__( self )
+    def __init__(self, dbgClient):
+        bdb.Bdb.__init__(self)
 
         self._dbgClient = dbgClient
         self._mainThread = 1
@@ -90,59 +79,44 @@ class DebugBase( bdb.Bdb ):
         bdb.Bdb.reset( self )
 
         self.__recursionDepth = -1
-        self.setRecursionDepth( inspect.currentframe() )
-        return
+        self.setRecursionDepth(inspect.currentframe())
 
-    def getCurrentFrame( self ):
-        """
-        Provides the current frame.
-
-        @return the current frame
-        """
+    def getCurrentFrame(self):
+        """Provides the current frame"""
         return self.currentFrame
 
-    def getCurrentFrameLocals( self ):
-        """
-        Provides the locals dictionary of the current frame.
-
-        @return locals dictionary of the current frame
-        """
+    def getCurrentFrameLocals(self):
+        """Provides the locals dictionary of the current frame"""
         return self.currentFrameLocals
 
-    def step( self, traceMode ):
-        """
-        Performs step in this thread.
+    def step(self, traceMode):
 
-        @param traceMode If it is non-zero, then the step is a step into,
-              otherwise it is a step over.
+        """Performs step in this thread.
+           traceMode: If it is non-zero, then the step is a step into,
+           otherwise it is a step over.
         """
+
         self.stepFrame = self.currentFrame
         if traceMode:
             self.currentFrame = None
             self.set_step()
         else:
-            self.set_next( self.currentFrame )
-        return
+            self.set_next(self.currentFrame)
 
-    def stepOut( self ):
-        """
-        Performs a step out of the current call
-        """
+    def stepOut(self):
+        """Performs a step out of the current call"""
         self.stepFrame = self.currentFrame
-        self.set_return( self.currentFrame )
-        return
+        self.set_return(self.currentFrame)
 
-    def go( self, special ):
+    def go(self, special):
+
+        """Resumes the thread.
+           It resumes the thread stopping only at breakpoints or exceptions.
+           special: flag indicating a special continue operation
         """
-        Resumes the thread.
 
-        It resumes the thread stopping only at breakpoints or exceptions.
-
-        @param special flag indicating a special continue operation
-        """
         self.currentFrame = None
-        self.set_continue( special )
-        return
+        self.set_continue(special)
 
     def setRecursionDepth( self, frame ):
         """
@@ -213,8 +187,8 @@ class DebugBase( bdb.Bdb ):
         if event == 'c_return':
             return self.trace_dispatch
 
-        print 'DebugBase.trace_dispatch: unknown debugging event: ' + \
-              str( event )
+        print('DebugBase.trace_dispatch: unknown debugging event: ' +
+              str(event))
         return self.trace_dispatch
 
     def dispatch_line( self, frame ):
@@ -601,8 +575,7 @@ class DebugBase( bdb.Bdb ):
         self._dbgClient.write( '%s%s\n' % ( ResponseLine, unicode( stack ) ) )
         self._dbgClient.eventLoop()
 
-    def user_exception( self, frame,
-                        ( exctype, excval, exctb ),
+    def user_exception( self, frame, exceptInfo,
                         unhandled = 0 ):
         """
         Reimplemented to report an exception to the debug server
@@ -613,6 +586,7 @@ class DebugBase( bdb.Bdb ):
         @param exctb traceback for the exception
         @param unhandled flag indicating an uncaught exception
         """
+        (exctype, excval, exctb) = exceptInfo
         if exctype in [ SystemExit, bdb.BdbQuit ]:
             atexit._run_exitfuncs()
             if excval is None:

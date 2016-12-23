@@ -322,8 +322,8 @@ class EditorsManager( QTabWidget ):
             else:
                 logging.info( "Could not find " + fileName +
                               " on the disk. Ignoring and closing tab." )
-        except Exception, exc:
-            logging.error( str( exc ) )
+        except Exception as exc:
+            logging.error(str(exc))
             return
 
         # Finally, close the tab
@@ -384,7 +384,7 @@ class EditorsManager( QTabWidget ):
         " Triggered when all other tabs are requested to be closed "
         notSaved = []
         toClose = []
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             if index == self.currentIndex():
                 continue
             if self.widget( index ).isModified():
@@ -756,7 +756,7 @@ class EditorsManager( QTabWidget ):
 
         self.__navigationMenu.clear()
         items = []
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             items.append( [ self.tabIcon( index ), self.tabText( index ),
                             index ] )
 
@@ -963,8 +963,8 @@ class EditorsManager( QTabWidget ):
             if self.__restoringTabs == False:
                 GlobalData().project.addRecentFile( fileName )
             self.setWidgetDebugMode( newWidget )
-        except Exception, exc:
-            logging.error( str( exc ) )
+        except Exception as exc:
+            logging.error(str(exc))
             return False
         return True
 
@@ -990,9 +990,8 @@ class EditorsManager( QTabWidget ):
             self.__updateStatusBar()
             newWidget.setFocus()
             self.saveTabsStatus()
-
-        except Exception, exc:
-            logging.error( str( exc ) )
+        except Exception as exc:
+            logging.error(str(exc))
             return False
         return True
 
@@ -1022,10 +1021,8 @@ class EditorsManager( QTabWidget ):
             newWidget.setFocus()
             self.saveTabsStatus()
 
-        except Exception, exc:
-            logging.error( str( exc ) )
-
-        return
+        except Exception as exc:
+            logging.error(str(exc))
 
     def showProfileReport( self, newWidget, tooltip ):
         " Shows profiling report "
@@ -1046,9 +1043,8 @@ class EditorsManager( QTabWidget ):
             self.__updateStatusBar()
             newWidget.setFocus()
             self.saveTabsStatus()
-        except Exception, exc:
-            logging.error( str( exc ) )
-        return
+        except Exception as exc:
+            logging.error(str(exc))
 
     def showDisassembler( self, scriptPath, name, code ):
         " Shows the disassembled code "
@@ -1075,9 +1071,8 @@ class EditorsManager( QTabWidget ):
             self.__updateStatusBar()
             newWidget.setFocus()
             self.saveTabsStatus()
-        except Exception, exc:
-            logging.error( str( exc ) )
-        return
+        except Exception as exc:
+            logging.error(str(exc))
 
     def showAnnotated( self, fileName, text, lineRevisions, revisionInfo ):
         " Shows the annotated text widget "
@@ -1108,9 +1103,8 @@ class EditorsManager( QTabWidget ):
             newWidget.setFocus()
             newWidget.getEditor().gotoLine( 1, 1 )
             self.saveTabsStatus()
-        except Exception, exc:
-            logging.error( str( exc ) )
-        return
+        except Exception as exc:
+            logging.error(str(exc))
 
     def jumpToLine( self, lineNo ):
         " Jumps to the given line within the current buffer "
@@ -1130,7 +1124,7 @@ class EditorsManager( QTabWidget ):
         try:
             fileName = os.path.realpath( fileName )
             # Check if the file is already opened
-            for index in xrange( self.count() ):
+            for index in range( self.count() ):
                 if self.widget( index ).getFileName() == fileName:
                     # Found
                     if self.currentIndex() == index:
@@ -1190,8 +1184,8 @@ class EditorsManager( QTabWidget ):
 
             self.emit( SIGNAL( 'fileTypeChanged' ), fileName,
                        newWidget.getUUID(), fileType )
-        except Exception, exc:
-            logging.error( str( exc ) )
+        except Exception as exc:
+            logging.error(str(exc))
             return False
         return True
 
@@ -1517,8 +1511,8 @@ class EditorsManager( QTabWidget ):
         # All prerequisites are checked, save it
         try:
             widget.onSaveAs( fileName )
-        except Exception, excpt:
-            logging.error( str( excpt ) )
+        except Exception as excpt:
+            logging.error(str(excpt))
             return False
         return True
 
@@ -1588,8 +1582,8 @@ class EditorsManager( QTabWidget ):
         # All prerequisites are checked, save it
         try:
             widget.onSaveAs( fileName )
-        except Exception, excpt:
-            logging.error( str( excpt ) )
+        except Exception as excpt:
+            logging.error(str(excpt))
             return False
         return True
 
@@ -1918,7 +1912,7 @@ class EditorsManager( QTabWidget ):
             is activated and False is returned. """
         notSaved = []
         firstIndex = -1
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             if self.widget( index ).isModified():
                 notSaved.append( self.widget( index ).getShortName() )
                 if firstIndex == -1:
@@ -2031,7 +2025,7 @@ class EditorsManager( QTabWidget ):
 
         # Walk the status list
         activeIndex = -1
-        for index in xrange( len( status ) - 1, -1, -1 ):
+        for index in range( len( status ) - 1, -1, -1 ):
             record = status[ index ]
             if record.startswith( "*:" ):
                 activeIndex = index
@@ -2108,7 +2102,7 @@ class EditorsManager( QTabWidget ):
         " Sets the zoom value for all the opened editor tabs "
         Settings().zoom = zoomValue
 
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             item = self.widget( index )
             if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
                                    MainWindowTabWidgetBase.VCSAnnotateViewer ]:
@@ -2123,7 +2117,7 @@ class EditorsManager( QTabWidget ):
     def getTextEditors( self ):
         " Provides a list of the currently opened text editors "
         result = []
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             item = self.widget( index )
             if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
                 result.append( [ item.getUUID(), item.getFileName(), item ] )
@@ -2131,7 +2125,7 @@ class EditorsManager( QTabWidget ):
 
     def updateEditorsSettings( self ):
         " makes all the text editors updating settings "
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             item = self.widget( index )
             if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
                                    MainWindowTabWidgetBase.VCSAnnotateViewer ]:
@@ -2144,7 +2138,7 @@ class EditorsManager( QTabWidget ):
 
     def updateCFEditorsSettings( self ):
         " Visits all the visible CF editors "
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             item = self.widget( index )
             if item.getType() in [ MainWindowTabWidgetBase.PlainTextEditor ]:
                 item.getCFEditor().updateSettings()
@@ -2152,7 +2146,7 @@ class EditorsManager( QTabWidget ):
 
     def getWidgetByUUID( self, uuid ):
         " Provides the widget found by the given UUID "
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             widget = self.widget( index )
             if uuid == widget.getUUID():
                 return widget
@@ -2160,7 +2154,7 @@ class EditorsManager( QTabWidget ):
 
     def getIndexByUUID( self, uuid ):
         " Provides the tab index for the given uuid "
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             widget = self.widget( index )
             if uuid == widget.getUUID():
                 return index
@@ -2174,7 +2168,7 @@ class EditorsManager( QTabWidget ):
 
     def getWidgetForFileName( self, fname ):
         " Provides the widget found by the given file name "
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             widget = self.widget( index )
             if fname == widget.getFileName():
                 return widget
@@ -2182,7 +2176,7 @@ class EditorsManager( QTabWidget ):
 
     def checkOutsideFileChanges( self ):
         " Checks all the tabs if the files were changed / disappeared outside "
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             self._updateIconAndTooltip( index )
 
         currentWidget = self.currentWidget()
@@ -2201,7 +2195,7 @@ class EditorsManager( QTabWidget ):
         if path.endswith( os.path.sep ):
             return
 
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             widget = self.widget( index )
             fileName = widget.getFileName()
             if fileName == path:
@@ -2219,7 +2213,7 @@ class EditorsManager( QTabWidget ):
         """ Returns the number of buffers with non modified
             content for which the disk file is modified """
         cnt = 0
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             if self.widget( index ).isModified() == False:
                 if self.widget( index ).isDiskFileModified():
                     cnt += 1
@@ -2252,9 +2246,9 @@ class EditorsManager( QTabWidget ):
 
             if isTextEditor:
                 editor.gotoLine( line + 1, pos + 1, firstLine + 1 )
-        except Exception, exc:
+        except Exception as exc:
             # Error reloading the file, nothing to be changed
-            logging.error( str( exc ) )
+            logging.error(str(exc))
             return
 
         self._updateIconAndTooltip( index )
@@ -2268,7 +2262,7 @@ class EditorsManager( QTabWidget ):
     def onReloadAllNonModified( self ):
         """ Called when all the disk changed and not
             modified files should be reloaded """
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             if self.widget( index ).isModified() == False:
                 if self.widget( index ).isDiskFileModified():
                     self.reloadTab( index )
@@ -2278,7 +2272,7 @@ class EditorsManager( QTabWidget ):
         " Prpovides a list of modified file names with the corresponding UUIDs "
         result = []
 
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             widget = self.widget( index )
             if widget.isModified():
                 fileName = widget.getFileName()
@@ -2291,7 +2285,7 @@ class EditorsManager( QTabWidget ):
     def getOpenedList( self, projectOnly = False ):
         " provides a list of opened files "
         result = []
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             widget = self.widget( index )
             fileName = widget.getFileName()
             if projectOnly:
@@ -2309,7 +2303,7 @@ class EditorsManager( QTabWidget ):
 
     def saveModified( self, projectOnly = False ):
         " Saves the modified files. Stops on first error. "
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             widget = self.widget( index )
             if widget.isModified():
                 fileName = widget.getFileName()
@@ -2321,8 +2315,8 @@ class EditorsManager( QTabWidget ):
                     if self.onSave( index ) == False:
                         return False
                     self.setTabText( index, widget.getShortName() )
-                except Exception, excpt:
-                    logging.error( str( excpt ) )
+                except Exception as excpt:
+                    logging.error(str(excpt))
                     return False
         return True
 
@@ -2336,7 +2330,7 @@ class EditorsManager( QTabWidget ):
         else:
             self.__debugScript = ""
 
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             self.setWidgetDebugMode( self.widget( index ) )
         return
 
@@ -2430,7 +2424,7 @@ class EditorsManager( QTabWidget ):
 
     def setTooltips( self, switchOn ):
         " Sets the tooltips mode "
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             widget = self.widget( index )
             widgetType = widget.getType()
             if widgetType == MainWindowTabWidgetBase.PlainTextEditor:
@@ -2448,7 +2442,7 @@ class EditorsManager( QTabWidget ):
                 return
             self.__pluginMenus[ plugin.getPath() ] = menu
             self.pluginContextMenuAdded.emit( menu, len( self.__pluginMenus ) )
-        except Exception, exc:
+        except Exception as exc:
             logging.error( "Error populating " + pluginName + " plugin buffer context menu: " +
                            str( exc ) + ". Ignore and continue." )
         return
@@ -2462,7 +2456,7 @@ class EditorsManager( QTabWidget ):
                 del self.__pluginMenus[ path ]
                 self.pluginContextMenuRemoved.emit( menu, len( self.__pluginMenus ) )
                 menu = None
-        except Exception, exc:
+        except Exception as exc:
             pluginName = plugin.getName()
             logging.error( "Error removing " + pluginName + " plugin buffer context menu: " +
                            str( exc ) + ". Ignore and continue." )
@@ -2474,7 +2468,7 @@ class EditorsManager( QTabWidget ):
 
     def __onVCSStatus( self, path, status ):
         " Triggered when a status was updated "
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             widget = self.widget( index )
             if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
                                      MainWindowTabWidgetBase.PictureViewer,
@@ -2490,7 +2484,7 @@ class EditorsManager( QTabWidget ):
 
     def sendAllTabsVCSStatusRequest( self ):
         " Sends the status requests for all the opened TABS (text/picture) "
-        for index in xrange( self.count() ):
+        for index in range( self.count() ):
             widget = self.widget( index )
             if widget.getType() in [ MainWindowTabWidgetBase.PlainTextEditor,
                                      MainWindowTabWidgetBase.PictureViewer,

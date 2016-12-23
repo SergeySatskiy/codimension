@@ -174,7 +174,7 @@ class CodimensionDebugger( QObject ):
             self.connect( self.__clientSocket, SIGNAL( 'readyRead()' ),
                           self.__parseClientLine )
             self.__parseClientLine()
-        except Exception, exc:
+        except Exception as exc:
             QApplication.restoreOverrideCursor()
             logging.error( str( exc ) )
             self.stopDebugging()
@@ -323,7 +323,7 @@ class CodimensionDebugger( QObject ):
         " Checks if data avalable in the socket and reads it if so "
         try:
             data = self.__procFeedbackSocket.recv( 1024, socket.MSG_DONTWAIT )
-        except socket.error, excpt:
+        except socket.error as excpt:
             if excpt[ 0 ] == errno.EWOULDBLOCK:
                 return ""
             raise
@@ -408,13 +408,13 @@ class CodimensionDebugger( QObject ):
         self.__buffer = self.__buffer[ index + len( EOT ) : ]
 
         if not line.startswith( '>' ):
-            print "Unexpected message received (no '>' at the beginning): '" + \
-                  line + "'"
+            print("Unexpected message received (no '>' at the beginning): '" +
+                  line + "'")
             return self.__buffer != ""
 
         cmdIndex = line.find( '<' )
         if cmdIndex == -1:
-            print "Unexpected message received (no '<' found): '" + line + "'"
+            print("Unexpected message received (no '<' found): '" + line + "'")
             return self.__buffer != ""
 
         cmd = line[ 0 : cmdIndex + 1 ]
@@ -552,7 +552,7 @@ class CodimensionDebugger( QObject ):
             self.__protocolState = self.PROTOCOL_STDERR
             return self.__buffer != ""
 
-        print "Unexpected message received (no control match): '" + line + "'"
+        print("Unexpected message received (no control match): '" + line + "'")
         return self.__buffer != ""
 
     def __processEvalexecState( self ):
@@ -751,7 +751,7 @@ class CodimensionDebugger( QObject ):
         " Checks all the breakpoints validity and deletes invalid "
         # It is excepted that the method is called when all the files are
         # saved, e.g. when a new debugging session is started.
-        for row in xrange( 0, self.__breakpointModel.rowCount() ):
+        for row in range( 0, self.__breakpointModel.rowCount() ):
             index = self.__breakpointModel.index( row, 0, QModelIndex() )
             bpoint = self.__breakpointModel.getBreakPointByIndex( index )
             fileName = bpoint.getAbsoluteFileName()
@@ -799,7 +799,7 @@ class CodimensionDebugger( QObject ):
                              self.STATE_BRUTAL_FINISHING ]:
             return
 
-        for row in xrange( start, end + 1 ):
+        for row in range( start, end + 1 ):
             index = self.__breakpointModel.index( row, 0, parentIndex )
             bpoint = self.__breakpointModel.getBreakPointByIndex( index )
             fileName = bpoint.getAbsoluteFileName()
@@ -823,7 +823,7 @@ class CodimensionDebugger( QObject ):
                              self.STATE_BRUTAL_FINISHING ]:
             return
 
-        for row in xrange( start, end + 1 ):
+        for row in range( start, end + 1 ):
             index = self.__breakpointModel.index( row, 0, parentIndex )
             bpoint = self.__breakpointModel.getBreakPointByIndex( index )
             fileName = bpoint.getAbsoluteFileName()

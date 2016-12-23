@@ -272,7 +272,7 @@ class BrowserModelBase( QAbstractItemModel ):
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         try:
             items = os.listdir( path )
-        except Exception, exc:
+        except Exception as exc:
             QApplication.restoreOverrideCursor()
             logging.error( "Cannot populate directory. " + str( exc ) )
             return
