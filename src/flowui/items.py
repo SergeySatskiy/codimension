@@ -24,11 +24,11 @@ from math import sqrt
 from cgi import escape
 import os.path
 from PyQt5.QtCore import Qt, QPointF
-from PyQt5.QtGui import (QPen, QBrush, QGraphicsRectItem, QGraphicsPathItem,
-                         QPainterPath, QPainter, QColor, QGraphicsItem,
-                         QStyleOptionGraphicsItem, QStyle, QFont,
-                         QGraphicsSimpleTextItem)
+from PyQt5.QtGui import QPen, QBrush, QPainterPath, QPainter, QColor, QFont
 from PyQt5.QtSvg import QGraphicsSvgItem
+from PyQt5.QtWidgets import (QGraphicsRectItem, QGraphicsPathItem,
+                             QGraphicsItem, QGraphicsSimpleTextItem,
+                             QStyleOptionGraphicsItem, QStyle)
 from auxitems import SVGItem, Connector, Text, CMLLabel
 from cml import CMLVersion, CMLsw, CMLcc, CMLrt
 

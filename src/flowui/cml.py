@@ -19,7 +19,7 @@
 
 """CML utilities"""
 
-from sys import maxint
+from sys import maxsize
 from PyQt5.QtGui import QColor
 from cdmcf import (IF_FRAGMENT, FOR_FRAGMENT, WHILE_FRAGMENT, TRY_FRAGMENT,
                    CONTROL_FLOW_FRAGMENT, CLASS_FRAGMENT, FUNCTION_FRAGMENT)
@@ -389,7 +389,7 @@ class CMLVersion:
     def getFirstLine(comments):
         """Provides the first line of the comment"""
         # The list may contain raw comments and high level comments
-        line = maxint
+        line = maxsize
         if comments:
             if hasattr(comments[0], "ref"):
                 # High level CML comment

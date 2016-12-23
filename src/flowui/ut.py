@@ -20,13 +20,15 @@ import os
 import os.path
 import tempfile
 import datetime
+import importlib
 from optparse import OptionParser
 from subprocess import Popen, PIPE
 from cdmcf import getControlFlowFromFile, VERSION
 from PyQt5 import QtGui, QtCore
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication
-
+from PyQt5.QtWidgets import (QApplication, QGraphicsView, QMainWindow, QAction,
+                             QTextEdit, QDockWidget, QGraphicsScene)
+from items import CellElement
 import vcanvas
 import cflowsettings
 
@@ -158,13 +160,13 @@ def main():
         DEBUG = True
 
     # Run the QT application
-    app = QtGui.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     mainWindow = MainWindow(options.verbose, fName, warning)
     mainWindow.show()
     return app.exec_()
 
 
-class CFGraphicsView(QtGui.QGraphicsView):
+class CFGraphicsView(QGraphicsView):
 
     """Central widget"""
 
@@ -179,7 +181,7 @@ class CFGraphicsView(QtGui.QGraphicsView):
             factor = 1.41 ** (-event.delta() / 240.0)
             self.scale(factor, factor)
         else:
-            QtGui.QGraphicsView.wheelEvent(self, event)
+            QGraphicsView.wheelEvent(self, event)
 
     def zoomIn(self):
         """Zoom when a button clicked"""
@@ -192,12 +194,12 @@ class CFGraphicsView(QtGui.QGraphicsView):
         self.scale(factor, factor)
 
 
-class MainWindow(QtGui.QMainWindow):
+class MainWindow(QMainWindow):
 
     """Main application window"""
 
     def __init__(self, verbose, fName, warning):
-        QtGui.QMainWindow.__init__(self)
+        QMainWindow.__init__(self)
 
         self.logWidget = None
         self.view = None
@@ -232,40 +234,40 @@ class MainWindow(QtGui.QMainWindow):
            open, reload, zoom out, zoom in, debug, clear log
         """
 
-        openButton = QtGui.QAction(QtGui.QIcon('icons/open.png'),
-                                   'Open (Ctrl+O)', self)
+        openButton = QAction(QtGui.QIcon('icons/open.png'),
+                             'Open (Ctrl+O)', self)
         openButton.setShortcut('Ctrl+O')
         openButton.setStatusTip('Open python file')
         openButton.triggered.connect(self.openButtonClicked)
 
-        reloadButton = QtGui.QAction(QtGui.QIcon('icons/reload.png'),
-                                     'Reload (F5)', self)
+        reloadButton = QAction(QtGui.QIcon('icons/reload.png'),
+                               'Reload (F5)', self)
         reloadButton.setShortcut('F5')
         reloadButton.setStatusTip('Reload python file')
         reloadButton.triggered.connect(self.reloadButtonClicked)
 
-        zoomoutButton = QtGui.QAction(QtGui.QIcon('icons/zoomOut.png'),
-                                      'Zoom Out (Ctrl+-)', self)
+        zoomoutButton = QAction(QtGui.QIcon('icons/zoomOut.png'),
+                                'Zoom Out (Ctrl+-)', self)
         zoomoutButton.setShortcut('Ctrl+-')
         zoomoutButton.setStatusTip('Zoom Out')
         zoomoutButton.triggered.connect(self.zoomOut)
 
-        zoominButton = QtGui.QAction(QtGui.QIcon('icons/zoomIn.png'),
-                                     'Zoom In (Ctrl++)', self)
+        zoominButton = QAction(QtGui.QIcon('icons/zoomIn.png'),
+                               'Zoom In (Ctrl++)', self)
         zoominButton.setShortcut('Ctrl++')
         zoominButton.setStatusTip('Zoom In')
         zoominButton.triggered.connect(self.zoomIn)
 
-        clearLogButton = QtGui.QAction(QtGui.QIcon('icons/clear.png'),
-                                       'Clear log (Ctrl+R)', self)
+        clearLogButton = QAction(QtGui.QIcon('icons/clear.png'),
+                                 'Clear log (Ctrl+R)', self)
         clearLogButton.setShortcut('Ctrl+R')
         clearLogButton.setStatusTip('Clear log')
         clearLogButton.triggered.connect(self.clearButtonClicked)
 
         # A few separators
-        separator = QtGui.QAction(self)
+        separator = QAction(self)
         separator.setSeparator(True)
-        separator1 = QtGui.QAction(self)
+        separator1 = QAction(self)
         separator1.setSeparator(True)
 
         toolbar = self.addToolBar('Toolbar')
@@ -280,12 +282,12 @@ class MainWindow(QtGui.QMainWindow):
 
     def createLogWindow(self):
         """Creates a dockable RO editor for logging"""
-        self.logWidget = QtGui.QTextEdit()
+        self.logWidget = QTextEdit()
         self.logWidget.setReadOnly(True)
         self.logWidget.setFontFamily("Courier")
         self.logWidget.setFontPointSize(12.0)
 
-        logDockWidget = QtGui.QDockWidget("Log", self)
+        logDockWidget = QDockWidget("Log", self)
         logDockWidget.setObjectName("LogDockWidget")
         logDockWidget.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea)
         logDockWidget.setWidget(self.logWidget)
@@ -310,7 +312,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def createGraphicsView(self):
         """Creates the central widget"""
-        self.scene = QtGui.QGraphicsScene(self)
+        self.scene = QGraphicsScene(self)
 
         self.view = CFGraphicsView(self)
         self.view.setScene(self.scene)
@@ -396,14 +398,14 @@ class MainWindow(QtGui.QMainWindow):
             self.logMessage("Layouting ...")
         try:
             # To pick up possibly changed settings
-            reload(cflowsettings)
+            importlib.reload(cflowsettings)
             cflowSettings = cflowsettings.getDefaultCflowSettings(self)
             if DEBUG == True:
                 cflowSettings.debug = True
 
             # Top level canvas has no adress and no parent canvas
             canvas = vcanvas.VirtualCanvas(cflowSettings, None, None, None)
-            canvas.layout(self.cf)
+            canvas.layout(self.cf, CellElement.FILE_SCOPE)
             if self.verbose:
                 self.logMessage("Layout is done:")
                 self.logMessage(str(canvas))
