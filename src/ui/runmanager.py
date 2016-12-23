@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2014  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2014-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,15 +17,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-""" Run/profile manager """
+"""Run/profile manager"""
 
 import os
-from PyQt4.QtCore import SIGNAL, QObject, QTextCodec, Qt, QTimer
-from PyQt4.QtGui import QDialog, QApplication, QCursor
-from PyQt4.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
+from PyQt5.QtCore import QObject, QTextCodec, Qt, QTimer
+from PyQt5.QtGui import QDialog, QApplication, QCursor
+from PyQt5.QtNetwork import QTcpServer, QHostAddress, QAbstractSocket
 from subprocess import Popen
 from utils.run import getCwdCmdEnv, CMD_TYPE_RUN, TERM_REDIRECT
 from utils.procfeedback import killProcess
@@ -34,11 +32,11 @@ from utils.settings import Settings
 from runparams import RunDialog
 import logging, time
 from editor.redirectedrun import RunConsoleTabWidget
-from debugger.client.protocol_cdm_dbg import ( EOT, RequestContinue,
-                                               StdoutStderrEOT, ResponseRaw,
-                                               ResponseExit, ResponseStdout,
-                                               ResponseStderr, RequestExit,
-                                               ResponseProcID )
+from debugger.client.protocol_cdm_dbg import (EOT, RequestContinue,
+                                              StdoutStderrEOT, ResponseRaw,
+                                              ResponseExit, ResponseStdout,
+                                              ResponseStderr, RequestExit,
+                                              ResponseProcID)
 
 
 # Finish codes in addition to the normal exit code
@@ -48,24 +46,23 @@ DISCONNECTED = -2000000
 
 NEXT_ID = 0
 def getNextID():
-    " Provides the next available ID "
+    """Provides the next available ID"""
     global NEXT_ID
-    current = int( NEXT_ID )
+    current = int(NEXT_ID)
     NEXT_ID += 1
     return current
 
-CODEC = QTextCodec.codecForName( "utf-8" )
 
+class RemoteProcessWrapper(QObject):
 
-class RemoteProcessWrapper( QObject ):
-    " Wrapper to control the remote process "
+    """Wrapper to control the remote process"""
 
     PROTOCOL_CONTROL = 0
     PROTOCOL_STDOUT = 1
     PROTOCOL_STDERR = 2
 
-    def __init__( self, path, serverPort ):
-        QObject.__init__( self )
+    def __init__(self, path, serverPort):
+        QObject.__init__(self)
         self.__procID = getNextID()
         self.__path = path
         self.__serverPort = serverPort
@@ -74,28 +71,27 @@ class RemoteProcessWrapper( QObject ):
         self.__protocolState = self.PROTOCOL_CONTROL
         self.__buffer = ""
         self.__proc = None
-        return
 
-    def needRedirection( self ):
-        " True if redirection required "
+    def needRedirection(self):
+        """True if redirection required"""
         return self.__needRedirection
 
-    def procID( self ):
-        " Provides the process ID "
+    def procID(self):
+        """Provides the process ID"""
         return self.__procID
 
-    def path( self ):
-        " Provides the script path "
+    def path(self):
+        """Provides the script path"""
         return self.__path
 
-    def start( self ):
-        " Starts the remote process "
-        params = GlobalData().getRunParameters( self.__path )
+    def start(self):
+        """Starts the remote process"""
+        params = GlobalData().getRunParameters(self.__path)
         if self.__needRedirection:
             workingDir, cmd, \
-            environment = getCwdCmdEnv( CMD_TYPE_RUN, self.__path, params,
-                                        Settings().terminalType,
-                                        None, self.__serverPort, self.__procID )
+            environment = getCwdCmdEnv(CMD_TYPE_RUN, self.__path, params,
+                                       Settings().terminalType,
+                                       None, self.__serverPort, self.__procID)
         else:
             workingDir, cmd, \
             environment = getCwdCmdEnv( CMD_TYPE_RUN, self.__path, params,
@@ -104,7 +100,7 @@ class RemoteProcessWrapper( QObject ):
         try:
             self.__proc = Popen( cmd, shell = True,
                                  cwd = workingDir, env = environment )
-        except Exception, exc:
+        except Exception as exc:
             logging.error( str( exc ) )
             return False
         return True
