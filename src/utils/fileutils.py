@@ -595,6 +595,11 @@ def isPythonFile(fName):
     return 'python' in mime
 
 
+def isPythonMime(mime):
+    """True if it is a python mime"""
+    return 'python' in mime
+
+
 # Utility functions to save/load generic JSON
 def loadJSON(fileName, errorWhat, defaultValue):
     """Generic JSON loading"""
