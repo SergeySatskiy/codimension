@@ -600,6 +600,11 @@ def isPythonMime(mime):
     return 'python' in mime
 
 
+def isCDMProjectMime(mime):
+    """True if it is a codimension project mime"""
+    return 'x-codimension3' in mime
+
+
 # Utility functions to save/load generic JSON
 def loadJSON(fileName, errorWhat, defaultValue):
     """Generic JSON loading"""
