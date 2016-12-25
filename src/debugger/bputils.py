@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2011  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2011-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,26 +17,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 # The idea for the calculating the valid lines is taken from rpdb2.
 #
 
+"""Breakpoint related utilities"""
 
-"""
-Breakpoint related utilities
-"""
-
+from utils.fileutils import getFileContent
 
 validBreakPointLinesCache = {}
 
 
-def getBreakpointLine( userLine, isEmptyLine, srcCode ):
-    " Provides the line where the debugger can actually break "
-
+def getBreakpointLine(userLine, isEmptyLine, srcCode):
+    """Provides the line where the debugger can actually break"""
     # The function should be called for a python buffer only
     try:
-        validLines = calcBreakpointLines( srcCode )
+        validLines = calcBreakpointLines(srcCode)
         if validLines is None:
             # If there is a compile error, let the user decide
             return userLine
@@ -48,7 +43,7 @@ def getBreakpointLine( userLine, isEmptyLine, srcCode ):
         return userLine
 
     # Not a valid breakpoint line. Search the closest suitable.
-    validLines = list( validLines ).sort()
+    validLines = list(validLines).sort()
     if isEmptyLine:
         # Take a line after this one
         for line in validLines:
@@ -56,109 +51,98 @@ def getBreakpointLine( userLine, isEmptyLine, srcCode ):
                 return line
         # There are no lines after the given one
         if validLines:
-            return validLines[ -1 ]
+            return validLines[-1]
         # There are no valid lines at all
         return None
 
     # Take a line before this one
-    for index in xrange( len( validLines ), -1, -1 ):
-        if validLines[ index ] < userLine:
-            return validLines[ index ]
+    for index in range(len(validLines), -1, -1):
+        if validLines[index] < userLine:
+            return validLines[index]
     # There are no lines after the given one
     if validLines:
-        return validLines[ 0 ]
+        return validLines[0]
     # There are no valid lines at all
     return None
 
 
-
 def clearValidBreakpointLinesCache():
-    " Resets the cache "
+    """Resets the cache"""
     global validBreakPointLinesCache
     validBreakPointLinesCache = {}
-    return
 
 
-def getBreakpointLines( fileName, srcCode,
-                        enforceRecalc = False, saveToCache = True ):
-    " Provides a set of breakable lines "
+def getBreakpointLines(fileName, srcCode,
+                       enforceRecalc=False, saveToCache=True):
+    """Provides a set of breakable lines"""
     global validBreakPointLinesCache
-    if enforceRecalc == False:
-        if validBreakPointLinesCache.has_key( fileName ):
-            return validBreakPointLinesCache[ fileName ]
+    if not enforceRecalc:
+        if fileName in validBreakPointLinesCache:
+            return validBreakPointLinesCache[fileName]
 
     try:
         if srcCode is None:
-            f = open( fileName, "r" )
-            srcCode = f.read()
-            f.close()
-        if type( srcCode ) == unicode:
-            srcCode = str( srcCode )
-        lines = calcBreakpointLines( srcCode )
+            srcCode = getFileContent(fileName)
+        lines = calcBreakpointLines(srcCode)
         if saveToCache:
-            validBreakPointLinesCache[ fileName ] = lines
+            validBreakPointLinesCache[fileName] = lines
         return lines
-    except Exception, exc:
+    except:
         return None
 
 
+def calcBreakpointLines(sourceCode):
+    """Calculates valid breakpoint lines"""
 
-def calcBreakpointLines( sourceCode ):
-    " Calculates valid breakpoint lines "
-
-    def __safeOrd( char ):
-        " Exception safe ord "
+    def __safeOrd(char):
+        """Exception safe ord"""
         try:
-            return ord( char )
+            return ord(char)
         except:
             return char
 
-    def __calcValidLines( code, validLines ):
-        " Calculates valid breakpoint lines "
+    def __calcValidLines(code, validLines):
+        """Calculates valid breakpoint lines"""
         l = code.co_firstlineno
-        validLines.add( l )
-        bl = [ __safeOrd( c ) for c in code.co_lnotab[ 2::2 ] ]
-        sl = [ __safeOrd( c ) for c in code.co_lnotab[ 1::2 ] ]
-        for ( bi, si ) in zip( bl, sl ):
+        validLines.add(l)
+        bl = [__safeOrd(c) for c in code.co_lnotab[2::2]]
+        sl = [__safeOrd(c) for c in code.co_lnotab[1::2]]
+        for (bi, si) in zip(bl, sl):
             l += si
             if bi == 0:
                 continue
-            validLines.add( l )
+            validLines.add(l)
         if sl:
             l += sl[-1]
-            validLines.add( l )
-        return
+            validLines.add(l)
 
-    def __calcSubCodesList( code ):
-        " Adds nested fragments "
-        tc = type( code )
+    def __calcSubCodesList(code):
+        """Adds nested fragments"""
+        tc = type(code)
         t = [(c.co_firstlineno, c) for c in code.co_consts if type(c) == tc]
         t.sort()
         scl = [c[1] for c in t]
         return scl
 
+    code = compile(sourceCode, '', "exec")
 
-    code = compile( sourceCode, '', "exec" )
-
-    t = [ code ]
+    t = [code]
     validLines = set()
 
     while t:
         c = t.pop(0)
-        __calcValidLines( c, validLines )
-        subcodeslist = __calcSubCodesList( c )
+        __calcValidLines(c, validLines)
+        subcodeslist = __calcSubCodesList(c)
         t = subcodeslist + t
-
     return validLines
 
 
 if __name__ == "__main__":
     import sys
-    if len( sys.argv ) != 2:
-        print >> sys.stderr, "Expected python file name"
-        sys.exit( 1 )
+    if len(sys.argv) != 2:
+        print("Expected python file name", file=sys.stderr)
+        sys.exit(1)
 
-    print "Valid break point lines:"
-    print calcBreakpointLines( open( sys.argv[ 1 ] ).read() )
-    sys.exit( 0 )
-
+    print("Valid break point lines:")
+    print(calcBreakpointLines(open(sys.argv[1]).read()))
+    sys.exit(0)

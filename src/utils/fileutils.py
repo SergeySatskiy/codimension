@@ -625,3 +625,17 @@ def saveJSON(fileName, values, errorWhat):
     except Exception as exc:
         logging.error('Error saving ' + errorWhat +
                       ' (to ' + fileName + '): ' + str(exc))
+
+
+def getFileContent(fileName, allowException=True, enc=DEFAULT_ENCODING):
+    """Provides the file content"""
+    try:
+        with open(fileName, 'r', encoding=enc) as diskfile:
+            content = diskfile.read()
+        return content
+    except Exception as exc:
+        if allowException:
+            raise
+        logging.error('Error reading from file ' + fileName + ': ' +
+                      str(exc))
+        return None
