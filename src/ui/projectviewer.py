@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,18 +17,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-""" project viewer implementation """
+"""project viewer implementation"""
 
 
-import os, os.path, logging, shutil
-from PyQt4.QtCore import SIGNAL, QSize, Qt, QVariant
-from PyQt4.QtGui import ( QWidget, QVBoxLayout, QSplitter, QToolBar, QAction,
-                          QToolButton, QHBoxLayout, QLabel, QSpacerItem,
-                          QSizePolicy, QDialog, QMenu, QCursor, QFrame,
-                          QApplication, QMessageBox, QPalette )
+import os
+import os.path
+import logging
+import shutil
+from PyQt5.QtCore import SIGNAL, QSize, Qt, QVariant
+from PyQt5.QtGui import (QWidget, QVBoxLayout, QSplitter, QToolBar, QAction,
+                         QToolButton, QHBoxLayout, QLabel, QSpacerItem,
+                         QSizePolicy, QDialog, QMenu, QCursor, QFrame,
+                         QApplication, QMessageBox, QPalette)
 from utils.pixmapcache import PixmapCache
 from utils.globals import GlobalData
 from utils.settings import Settings
@@ -36,28 +37,28 @@ from projectproperties import ProjectPropertiesDialog
 from utils.project import CodimensionProject
 from filesystembrowser import FileSystemBrowser
 from projectbrowser import ProjectBrowser
-from viewitems import ( NoItemType, DirectoryItemType, SysPathItemType,
-                        FileItemType, GlobalsItemType, ImportsItemType,
-                        FunctionsItemType, ClassesItemType,
-                        StaticAttributesItemType, InstanceAttributesItemType,
-                        CodingItemType, ImportItemType, FunctionItemType,
-                        ClassItemType, DecoratorItemType, AttributeItemType,
-                        GlobalItemType, ImportWhatItemType )
-from utils.fileutils import ( BrokenSymlinkFileType, PythonFileType,
-                              Python3FileType, detectFileType )
+from viewitems import (NoItemType, DirectoryItemType, SysPathItemType,
+                       FileItemType, GlobalsItemType, ImportsItemType,
+                       FunctionsItemType, ClassesItemType,
+                       StaticAttributesItemType, InstanceAttributesItemType,
+                       CodingItemType, ImportItemType, FunctionItemType,
+                       ClassItemType, DecoratorItemType, AttributeItemType,
+                       GlobalItemType, ImportWhatItemType)
+from utils.fileutils import (BrokenSymlinkFileType, PythonFileType,
+                             Python3FileType, detectFileType)
 from pylintviewer import PylintViewer
 from pymetricsviewer import PymetricsViewer
 from newnesteddir import NewProjectDirDialog
-from diagram.importsdgm import ( ImportsDiagramDialog, ImportDiagramOptions,
-                                 ImportsDiagramProgress )
-from utils.compatibility import relpath
+from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
+                                ImportsDiagramProgress)
 
 
-class ProjectViewer( QWidget ):
-    " project viewer widget "
+class ProjectViewer(QWidget):
 
-    def __init__( self, parent ):
-        QWidget.__init__( self, parent )
+    """Project viewer widget"""
+
+    def __init__(self, parent):
+        QWidget.__init__(self, parent)
 
         self.__mainWindow = parent
 
@@ -70,27 +71,26 @@ class ProjectViewer( QWidget ):
         self.__createProjectPopupMenu()
 
         layout = QVBoxLayout()
-        layout.setContentsMargins( 1, 1, 1, 1 )
-        splitter = QSplitter( Qt.Vertical )
-        splitter.addWidget( self.upper )
-        splitter.addWidget( self.lower )
-        splitter.setCollapsible( 0, False )
-        splitter.setCollapsible( 1, False )
+        layout.setContentsMargins(1, 1, 1, 1)
+        splitter = QSplitter(Qt.Vertical)
+        splitter.addWidget(self.upper)
+        splitter.addWidget(self.lower)
+        splitter.setCollapsible(0, False)
+        splitter.setCollapsible(1, False)
 
-        layout.addWidget( splitter )
-        self.setLayout( layout )
+        layout.addWidget(splitter)
+        self.setLayout(layout)
 
         self.__updateFSToolbarButtons()
         self.__updatePrjToolbarButtons()
 
         GlobalData().project.projectChanged.connect( self.__onProjectChanged )
-        self.connect( GlobalData().project, SIGNAL( 'restoreProjectExpandedDirs' ),
-                      self.__onRestorePrjExpandedDirs )
+        GlobalData().project.restoreProjectExpandedDirs.connect(self.__onRestorePrjExpandedDirs)
 
         # Support switching to debug and back
-        self.__mainWindow.debugModeChanged.connect( self.projectTreeView.onDebugMode )
-        self.__mainWindow.debugModeChanged.connect( self.filesystemView.onDebugMode )
-        self.__mainWindow.debugModeChanged.connect( self.onDebugMode )
+        self.__mainWindow.debugModeChanged.connect(self.projectTreeView.onDebugMode)
+        self.__mainWindow.debugModeChanged.connect(self.filesystemView.onDebugMode)
+        self.__mainWindow.debugModeChanged.connect(self.onDebugMode)
 
         # Plugin context menu support
         self.__pluginFileMenus = {}
@@ -106,10 +106,10 @@ class ProjectViewer( QWidget ):
 
         # At the beginning the FS viewer is shown, so hide it if needed
         if Settings().showFSViewer == False:
-            self.__onShowHide( True )
+            self.__onShowHide(True)
         return
 
-    def setTooltips( self, switchOn ):
+    def setTooltips(self, switchOn):
         " Triggers the tooltips mode "
         self.projectTreeView.model().sourceModel().setTooltips( switchOn )
         self.filesystemView.model().sourceModel().setTooltips( switchOn )
@@ -907,7 +907,7 @@ class ProjectViewer( QWidget ):
         if dlg.exec_() == QDialog.Accepted:
             try:
                 os.mkdir( self.__prjContextItem.getPath() + dlg.getDirName() )
-            except Exception, exc:
+            except Exception as exc:
                 logging.error( str( exc ) )
         return
 
@@ -1124,7 +1124,7 @@ class ProjectViewer( QWidget ):
                     logging.info( "Could not find " + path +
                                   " on the disk. Ignoring and "
                                   "deleting from the browser." )
-            except Exception, exc:
+            except Exception as exc:
                 logging.error( str( exc ) )
                 return False
             return True
@@ -1291,7 +1291,7 @@ class ProjectViewer( QWidget ):
                 self.__prjFilePluginSeparator.setVisible( True )
                 self.fsFileMenu.addMenu( fMenu )
                 self.__fsFilePluginSeparator.setVisible( True )
-        except Exception, exc:
+        except Exception as exc:
             logging.error( "Error populating " + pluginName + " plugin file context menu: " +
                            str( exc ) + ". Ignore and continue." )
 
@@ -1306,7 +1306,7 @@ class ProjectViewer( QWidget ):
                 self.__prjDirPluginSeparator.setVisible( True )
                 self.fsDirMenu.addMenu( dMenu )
                 self.__fsDirPluginSeparator.setVisible( True )
-        except Exception, exc:
+        except Exception as exc:
             logging.error( "Error populating " + pluginName + " plugin directory context menu: " +
                            str( exc ) + ". Ignore and continue." )
 
@@ -1324,7 +1324,7 @@ class ProjectViewer( QWidget ):
                 self.fsFileMenu.removeAction( fMenu.menuAction() )
                 self.__fsFilePluginSeparator.setVisible( len( self.__pluginFileMenus ) > 0 )
                 fMenu = None
-        except Exception, exc:
+        except Exception as exc:
             pluginName = plugin.getName()
             logging.error( "Error removing " + pluginName + " plugin file context menu: " +
                            str( exc ) + ". Ignore and continue." )
@@ -1339,7 +1339,7 @@ class ProjectViewer( QWidget ):
                 self.fsDirMenu.removeAction( dMenu.menuAction() )
                 self.__fsDirPluginSeparator.setVisible( len( self.__pluginDirMenus ) > 0 )
                 dMenu = None
-        except Exception, exc:
+        except Exception as exc:
             pluginName = plugin.getName()
             logging.error( "Error removing " + pluginName + " plugin directory context menu: " +
                            str( exc ) + ". Ignore and continue." )
