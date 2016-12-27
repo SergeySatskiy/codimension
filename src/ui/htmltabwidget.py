@@ -24,20 +24,18 @@
 
 
 import os.path
-from PyQt4.QtGui import QFrame, QHBoxLayout, QDesktopServices, QMenu, QFont
+from PyQt4.QtGui import QFrame, QHBoxLayout, QDesktopServices, QFont, QTextBrowser
 from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from PyQt4.QtCore import Qt, pyqtSignal
-from PyQt4.QtWebKit import QWebView, QWebPage
-from utils.globals import GlobalData
 
 
-class HTMLViewer( QWebView ):
+class HTMLViewer( QTextBrowser ):
     " HTML viewer (web browser) "
 
     escapePressed = pyqtSignal()
 
     def __init__( self, parent = None ):
-        QWebView.__init__( self, parent )
+        QTextBrowser.__init__( self, parent )
 
     def keyPressEvent( self, event ):
         " Handles the key press events "
@@ -45,32 +43,17 @@ class HTMLViewer( QWebView ):
             self.escapePressed.emit()
             event.accept()
         else:
-            QWebView.keyPressEvent( self, event )
-        return
-
-    def contextMenuEvent( self, event ):
-        " Disables the default menu "
-        testContent = self.page().mainFrame().hitTestContent( event.pos() )
-        if testContent.linkUrl():
-            menu = QMenu( self )
-            menu.addAction( self.pageAction( QWebPage.CopyLinkToClipboard ) )
-            menu.popup( self.mapToGlobal( event.pos() ) )
-        elif self.page().selectedText() != "":
-            menu = QMenu( self )
-            menu.addAction( self.pageAction( QWebPage.Copy ) )
-            menu.popup( self.mapToGlobal( event.pos() ) )
+            QTextBrowser.keyPressEvent( self, event )
         return
 
     def zoomTo( self, zoomFactor ):
         """ Scales the font in accordance to the given zoom factor.
             It is mostly used in diff viewers """
-        font = QFont( GlobalData().skin.nolexerFont )
-        origPointSize = font.pointSize()
-        newPointSize = origPointSize + zoomFactor
-        self.setTextSizeMultiplier( float( newPointSize ) /
-                                    float( origPointSize ) )
+        if zoomFactor > 0:
+            self.zoomIn( zoomFactor )
+        elif zoomFactor < 0:
+            self.zoomOut( abs( zoomFactor ) )
         return
-
 
 
 class HTMLTabWidget( MainWindowTabWidgetBase, QFrame ):
@@ -104,12 +87,11 @@ class HTMLTabWidget( MainWindowTabWidgetBase, QFrame ):
     def setHTML( self, content ):
         " Sets the content from the given string "
         self.__editor.setHtml( content )
-        self.__connectPage()
         return
 
     def getHTML( self ):
         " Provides the currently shown HTML "
-        return self.__editor.page().mainFrame().toHtml()
+        return self.__editor.toHtml()
 
     def loadFormFile( self, path ):
         " Loads the content from the given file "
@@ -117,16 +99,8 @@ class HTMLTabWidget( MainWindowTabWidgetBase, QFrame ):
         content = f.read()
         f.close()
         self.setHTML( content )
-        self.__connectPage()
         self.__fileName = path
         self.__shortName = os.path.basename( path )
-        return
-
-    def __connectPage( self ):
-        " Connects the current web page to the links delegate "
-        self.__editor.page().setLinkDelegationPolicy(
-                                QWebPage.DelegateAllLinks )
-        self.__editor.linkClicked.connect( QDesktopServices.openUrl )
         return
 
     def zoomTo( self, zoomFactor ):
