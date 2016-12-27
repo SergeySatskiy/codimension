@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy sergey.satskiy@gmail.com
+# Copyright (C) 2010-2016  Sergey Satskiy sergey.satskiy@gmail.com
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,32 +17,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" Custom calltips "
+"""Custom calltips"""
 
 
-from PyQt4.QtCore import Qt, QEventLoop
-from PyQt4.QtGui import QSizePolicy, QFrame, QLabel, QApplication, QGridLayout
+from PyQt5.QtCore import Qt, QEventLoop
+from PyQt5.QtGui import QSizePolicy, QFrame, QLabel, QApplication, QGridLayout
 from utils.globals import GlobalData
 
 
-class Calltip( QFrame ):
-    " Frameless panel with a calltip "
+class Calltip(QFrame):
+    """Frameless panel with a calltip"""
 
-    def __init__( self, parent ):
-        QFrame.__init__( self, parent )
+    def __init__(self, parent):
+        QFrame.__init__(self, parent)
 
         # Make the frame nice looking
         palette = self.palette()
-        palette.setColor( self.backgroundRole(),
-                          GlobalData().skin.calltipPaper )
-        self.setPalette( palette )
+        palette.setColor(self.backgroundRole(),
+                         GlobalData().skin.calltipPaper)
+        self.setPalette(palette)
 
-        self.setFrameShape( QFrame.StyledPanel )
-        self.setLineWidth( 2 )
-        self.setAutoFillBackground( True )
+        self.setFrameShape(QFrame.StyledPanel)
+        self.setLineWidth(2)
+        self.setAutoFillBackground(True)
 
         # Keep pylint happy
         self.__calltipLabel = None
@@ -51,33 +49,29 @@ class Calltip( QFrame ):
         self.__highlightedParam = None
 
         self.__createLayout()
-        QFrame.hide( self )
-        self.setFocusPolicy( Qt.NoFocus )
-        return
+        QFrame.hide(self)
+        self.setFocusPolicy(Qt.NoFocus)
 
-    def __createLayout( self ):
-        " Creates the widget layout "
-
-        self.__calltipLabel = QLabel( "" )
-        self.__calltipLabel.setSizePolicy( QSizePolicy.Ignored,
-                                           QSizePolicy.Fixed )
-        self.__calltipLabel.setWordWrap( False )
-        self.__calltipLabel.setAlignment( Qt.AlignLeft )
+    def __createLayout(self):
+        """Creates the widget layout"""
+        self.__calltipLabel = QLabel('')
+        self.__calltipLabel.setSizePolicy(QSizePolicy.Ignored,
+                                          QSizePolicy.Fixed)
+        self.__calltipLabel.setWordWrap(False)
+        self.__calltipLabel.setAlignment(Qt.AlignLeft)
         palette = self.__calltipLabel.palette()
-        palette.setColor( self.foregroundRole(),
-                          GlobalData().skin.calltipColor )
-        self.__calltipLabel.setPalette( palette )
+        palette.setColor(self.foregroundRole(),
+                         GlobalData().skin.calltipColor)
+        self.__calltipLabel.setPalette(palette)
 
-        gridLayout = QGridLayout( self )
-        gridLayout.setMargin( 3 )
-        gridLayout.addWidget( self.__calltipLabel, 0, 0, 1, 1 )
+        gridLayout = QGridLayout(self)
+        gridLayout.setMargin(3)
+        gridLayout.addWidget(self.__calltipLabel, 0, 0, 1, 1)
 
-        self.setSizePolicy( QSizePolicy.Fixed, QSizePolicy.Fixed )
-        return
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
-    def resize( self ):
-        " Resizes the dialogue to match the editor size "
-
+    def resize(self):
+        """Resizes the dialogue to match the editor size"""
         vscroll = self.parent().verticalScrollBar()
         if vscroll.isVisible():
             scrollWidth = vscroll.width()
@@ -95,18 +89,17 @@ class Calltip( QFrame ):
         height = self.parent().height()
         widgetWidth = width - scrollWidth - 6 - 1
 
-        self.setFixedWidth( widgetWidth )
+        self.setFixedWidth(widgetWidth)
 
         vPos = height - self.height() - scrollHeight
-        self.move( 3, vPos - 3 )
-        return
+        self.move(3, vPos - 3)
 
-    def showCalltip( self, message, paramNumber ):
-        " Brings up the panel with the required text "
+    def showCalltip(self, message, paramNumber):
+        """Brings up the panel with the required text"""
         self.__text = message
         self.__calcParamPositions()
-        self.highlightParameter( paramNumber )
-        QApplication.processEvents( QEventLoop.ExcludeUserInputEvents )
+        self.highlightParameter(paramNumber)
+        QApplication.processEvents(QEventLoop.ExcludeUserInputEvents)
 
         self.resize()
         self.show()
@@ -116,51 +109,49 @@ class Calltip( QFrame ):
         # So the first call moves the widget to the nearly right location
         # and the second to the precise one
         self.resize()
-        return
 
-    def highlightParameter( self, number ):
-        " Hightlights the given parameter number, 0 - based "
+    def highlightParameter(self, number):
+        """Hightlights the given parameter number, 0 - based"""
         if number == self.__highlightedParam:
             return
         if self.__paramPositions is None:
-            self.__calltipLabel.setText( self.__text )
+            self.__calltipLabel.setText(self.__text)
             return
-        if number >= len( self.__paramPositions ):
-            self.__calltipLabel.setText( self.__text )
+        if number >= len(self.__paramPositions):
+            self.__calltipLabel.setText(self.__text)
             return
-        positions = self.__paramPositions[ number ]
-        highlight = self.__text[ 0 : positions[ 0 ] ] + "<font color='" + \
+        positions = self.__paramPositions[number]
+        highlight = self.__text[0:positions[0]] + "<font color='" + \
                     GlobalData().skin.calltipHighColor.name() + "'>" + \
-                    self.__text[ positions[ 0 ] : positions[ 1 ] + 1 ] + \
-                    "</font>" + self.__text[ positions[ 1 ] + 1 : ]
-        self.__calltipLabel.setText( highlight )
-        return
+                    self.__text[positions[0]:positions[1] + 1] + \
+                    "</font>" + self.__text[positions[1] + 1:]
+        self.__calltipLabel.setText(highlight)
 
-    def __calcParamPositions( self ):
-        " Calculates the parameter positions in the calltip text "
+    def __calcParamPositions(self):
+        """Calculates the parameter positions in the calltip text"""
         if self.__text is None or '\n' in self.__text:
             self.__paramPositions = None
             return
 
         try:
-            begin = self.__text.index( '(' ) + 1
+            begin = self.__text.index('(') + 1
         except:
             self.__paramPositions = None
             return
 
-        if self.__text[ begin ] == '.':
+        if self.__text[begin] == '.':
             # Special case for f(...)
             self.__paramPositions = None
             return
 
         self.__paramPositions = []
-        lastIndex = len( self.__text ) - 1
+        lastIndex = len(self.__text) - 1
         index = begin
         level = 0               # Unconditional skip of commas
         singleQuote = False
         doubleQuote = False
         while index <= lastIndex:
-            ch = self.__text[ index ]
+            ch = self.__text[index]
             if ch == "'" and singleQuote:
                 singleQuote = False
             elif ch == '"' and doubleQuote:
@@ -169,14 +160,14 @@ class Calltip( QFrame ):
                 singleQuote = False
             elif ch == '"':
                 doubleQuote = False
-            elif ch in [ '(', '{' ]:
+            elif ch in ['(', '{']:
                 level += 1
-            elif ch in [ ')', '}' ]:
+            elif ch in [')', '}']:
                 level -= 1
                 if level == -1:
                     # Closing bracket
                     if index > begin:
-                        self.__paramPositions.append( (begin, index - 1) )
+                        self.__paramPositions.append((begin, index - 1))
                     break
             elif ch == '[':
                 if level > 0:
@@ -184,14 +175,14 @@ class Calltip( QFrame ):
                     continue
                 # if a previous char is '=' then it is a default paam
                 checkIndex = index - 1
-                while self.__text[ checkIndex ].isspace():
+                while self.__text[checkIndex].isspace():
                     checkIndex -= 1
-                if self.__text[ checkIndex ] == '=':
+                if self.__text[checkIndex] == '=':
                     level += 1
                     index += 1
                     continue
 
-                if self.__text[ checkIndex ] == '(':
+                if self.__text[checkIndex] == '(':
                     # The very first round bracket
                     index = index + 1
                     begin = index
@@ -199,12 +190,12 @@ class Calltip( QFrame ):
 
                 # '[' after a parameter name
                 if index > begin:
-                    self.__paramPositions.append( (begin, index - 1) )
+                    self.__paramPositions.append((begin, index - 1))
                     # The next meaningfull character is comma or an identifier
                     index += 1
-                    while index <= lastIndex and self.__text[ index ].isspace():
+                    while index <= lastIndex and self.__text[index].isspace():
                         index += 1
-                    if self.__text[ index ] == ',':
+                    if self.__text[index] == ',':
                         index += 1
                     index += 1
                     begin = index
@@ -222,39 +213,38 @@ class Calltip( QFrame ):
 
                 # This must be an optional argument closing bracket
                 checkIndex = index - 1
-                while self.__text[ checkIndex ].isspace():
+                while self.__text[checkIndex].isspace():
                     checkIndex -= 1
 
-                if self.__text[ checkIndex ] == ']':
+                if self.__text[checkIndex] == ']':
                     index += 1
                     continue
 
                 # Need to add and this is the last parameter
                 if index > begin:
-                    self.__paramPositions.append( (begin, index - 1) )
+                    self.__paramPositions.append((begin, index - 1))
                 break
 
             elif ch == ',':
                 if level == 0:
-                   self.__paramPositions.append( (begin, index - 1) )
-                # Skip till the beginning of the next parameter - it must be there
+                    self.__paramPositions.append((begin, index - 1))
+                # Skip till the beginning of the next
+                # parameter - it must be there
                 index += 1
-                while index <= lastIndex and self.__text[ index ].isspace():
+                while index <= lastIndex and self.__text[index].isspace():
                     index += 1
                 begin = index
                 continue
 
             index += 1
 
-        if len( self.__paramPositions ) == 0:
+        if len(self.__paramPositions) == 0:
             self.__paramPositions = None
-        return
 
-    def hide( self ):
-        " Handles the hiding of the panel and markers "
-        QFrame.hide( self )
+    def hide(self):
+        """Handles the hiding of the panel and markers"""
+        QFrame.hide(self)
         self.__text = None
         self.__paramPositions = None
         self.__highlightedParam = None
-        self.__calltipLabel.setText( "" )
-        return
+        self.__calltipLabel.setText("")
