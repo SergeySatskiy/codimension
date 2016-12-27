@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
 #
 # The file was taken from eric 4.4.3 and adopted for codimension.
@@ -27,50 +25,43 @@
 #
 
 
-
-""" Line edit which shows specific text when inactive """
-
-
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import ( QLineEdit, QStyleOptionFrameV2,
-                          QStyle, QPainter, QPalette )
+"""Line edit which shows specific text when inactive"""
 
 
-class InactiveLineEdit( QLineEdit ):
-    """ Line edit widget showing some inactive text """
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import (QLineEdit, QStyleOptionFrameV2,
+                         QStyle, QPainter, QPalette)
 
-    def __init__( self, parent = None, inactiveText = "" ):
 
-        QLineEdit.__init__( self, parent )
+class InactiveLineEdit(QLineEdit):
+
+    """Line edit widget showing some inactive text"""
+
+    def __init__(self, parent=None, inactiveText=""):
+        QLineEdit.__init__(self, parent)
         self.__inactiveText = inactiveText
-        return
 
-    def inactiveText( self ):
-        """ Provides the inactive text """
+    def inactiveText(self):
+        """Provides the inactive text"""
         return self.__inactiveText
 
-    def setInactiveText( self, inactiveText ):
-        """ Sets the inactive text """
+    def setInactiveText(self, inactiveText):
+        """Sets the inactive text"""
         self.__inactiveText = inactiveText
         self.update()
-        return
 
-    def paintEvent( self, evt ):
-        """ Paint event handler """
-
-        QLineEdit.paintEvent( self, evt )
-        if self.text() == "" and \
-           self.__inactiveText != "" and \
+    def paintEvent(self, evt):
+        """Paint event handler"""
+        QLineEdit.paintEvent(self, evt)
+        if self.text() == "" and self.__inactiveText != "" and \
            not self.hasFocus():
             panel = QStyleOptionFrameV2()
-            self.initStyleOption( panel )
-            textRect = self.style().subElementRect( QStyle.SE_LineEditContents,
-                                                    panel, self )
-            textRect.adjust( 2, 0, 0, 0 )
-            painter = QPainter( self )
-            painter.setPen( self.palette().brush( QPalette.Disabled,
-                                                  QPalette.Text ).color() )
-            painter.drawText( textRect, Qt.AlignLeft | Qt.AlignVCenter,
-                              self.__inactiveText )
-        return
-
+            self.initStyleOption(panel)
+            textRect = self.style().subElementRect(QStyle.SE_LineEditContents,
+                                                   panel, self)
+            textRect.adjust(2, 0, 0, 0)
+            painter = QPainter(self)
+            painter.setPen(self.palette().brush(QPalette.Disabled,
+                                                QPalette.Text).color())
+            painter.drawText(textRect, Qt.AlignLeft | Qt.AlignVCenter,
+                             self.__inactiveText)
