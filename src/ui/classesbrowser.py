@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,30 +17,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-#
-# The file was taken from eric 4.4.3 and adopted for codimension.
-# Original copyright:
-# Copyright (c) 2007 - 2010 Detlev Offenbach <detlev@die-offenbachs.de>
-#
+"""Classes browser with hierarchy browsing capabilities"""
 
-" Classes browser with hierarchy browsing capabilities "
-
-from utils.pixmapcache     import PixmapCache
-from classesbrowsermodel   import ClassesBrowserModel
-from objectsbrowserbase    import ObjectsBrowser
+from utils.pixmapcache import getIcon
+from classesbrowsermodel import ClassesBrowserModel
+from objectsbrowserbase import ObjectsBrowser
 
 
-class ClassesBrowser( ObjectsBrowser ):
-    " Classes browser "
+class ClassesBrowser(ObjectsBrowser):
 
-    def __init__( self, parent = None ):
+    """Classes browser"""
 
-        ObjectsBrowser.__init__( self, ClassesBrowserModel(), parent )
+    def __init__(self, parent=None):
+        ObjectsBrowser.__init__(self, ClassesBrowserModel(), parent)
 
-        self.setWindowTitle( 'Classes browser' )
-        self.setWindowIcon( PixmapCache().getIcon( 'icon.png' ) )
-        return
-
+        self.setWindowTitle('Classes browser')
+        self.setWindowIcon(getIcon('icon.png'))
