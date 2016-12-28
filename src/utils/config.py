@@ -19,7 +19,7 @@
 #
 
 
-""" A few constants which do not depend on other project files """
+"""A few constants which do not depend on other project files"""
 
 # Default encoding for the cases when:
 # - the encoding could not be detected
@@ -28,3 +28,6 @@ DEFAULT_ENCODING = 'utf-8'
 
 # File encoding used for various settings and project files
 SETTINGS_ENCODING = 'utf-8'
+
+# Directory to store Codimension settings and projects
+CONFIG_DIR = '.codimension3'

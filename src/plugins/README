@@ -12,7 +12,7 @@ There are two places where codimension looks for plugins:
 - system wide: /usr/share/codimension-plugins/
   The system-wide plugins location is separate to the location of the IDE
   in order to simplfy plugins packaging for the developers
-- user: ~/.codimension/plugins/
+- user: ~/.codimension3/plugins/
 
 Each plugin occupies a designated directory. The directory must reside at one of
 the locations described above. The directory contains a plugin description

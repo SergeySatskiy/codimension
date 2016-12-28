@@ -449,8 +449,8 @@ class ProjectPropertiesDialog( QDialog, object ):
         if not projectFileName.endswith( os.path.sep ):
             projectFileName += os.path.sep
         projectFileName += self.nameEdit.text().strip()
-        if not projectFileName.endswith( ".cdm" ):
-            projectFileName += ".cdm"
+        if not projectFileName.endswith( ".cdm3" ):
+            projectFileName += ".cdm3"
 
         if os.path.exists( projectFileName ):
             QMessageBox.critical( self, "Error",
@@ -497,8 +497,8 @@ class ProjectPropertiesDialog( QDialog, object ):
     def onProjectNameChanged( self, newName ):
         " Called when the project name changed "
 
-        if newName.endswith( ".cdm" ):
-            newName = newName[ :-4 ]
+        if newName.endswith( ".cdm3" ):
+            newName = newName[ :-5 ]
         if self.dirEdit.text().strip() == (self.initialDirName +
                                            self.lastProjectName):
             self.dirEdit.setText( self.initialDirName + newName )

@@ -83,7 +83,7 @@ class CodimensionProject(QObject,
 
         # Avoid pylint complains
         self.fileName = ""
-        self.userProjectDir = ""    # Directory in ~/.codimension/uuidNN/
+        self.userProjectDir = ""    # Directory in ~/.codimension3/uuidNN/
         self.filesList = set()
 
         self.props = copy.deepcopy(__DEFAULT_PROJECT_PROPS)
@@ -153,7 +153,7 @@ class CodimensionProject(QObject,
         self.props = props
         self.userProjectDir = userProjectDir
 
-        self.__createProjectFile()  # ~/.codimension/uuidNN/project
+        self.__createProjectFile()  # ~/.codimension3/uuidNN/project
 
         RunParametersCache.setup(self, self.userProjectDir)
         DebuggerEnvironment.setup(self, self.userProjectDir)
@@ -256,7 +256,7 @@ class CodimensionProject(QObject,
         FilePositions.setup(self, self.userProjectDir)
 
         # The project might have been moved...
-        self.__createProjectFile()  # ~/.codimension/uuidNN/project
+        self.__createProjectFile()  # ~/.codimension3/uuidNN/project
         self.__generateFilesList()
 
         # Update the recent list

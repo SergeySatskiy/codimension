@@ -30,7 +30,7 @@ import logging
 from copy import deepcopy
 from PyQt5.QtCore import QObject, QDir, pyqtSignal
 from .run import TERM_REDIRECT
-from .config import SETTINGS_ENCODING
+from .config import SETTINGS_ENCODING, CONFIG_DIR
 from .runparamscache import RunParametersCache
 from .debugenv import DebuggerEnvironment
 from .searchenv import SearchEnvironment
@@ -39,7 +39,7 @@ from .filepositions import FilePositions
 
 
 SETTINGS_DIR = os.path.join(os.path.realpath(QDir.homePath()),
-                            '.cdm3') + os.path.sep
+                            CONFIG_DIR) + os.path.sep
 THIRDPARTY_DIR = os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])),
                               'thirdparty') + os.path.sep
 
