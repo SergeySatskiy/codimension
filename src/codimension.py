@@ -50,6 +50,7 @@ from ui.application import CodimensionApplication
 from ui.splashscreen import SplashScreen
 from utils.project import CodimensionProject
 from utils.skin import Skin
+from utils.config import CONFIG_DIR
 
 
 # Saving the root logging handlers
@@ -293,7 +294,7 @@ def copySkin():
     """
     systemWideSkinsDir = srcDir + os.path.sep + "skins" + os.path.sep
     userSkinsDir = os.path.normpath(QDir.homePath()) + \
-                   os.path.sep + ".codimension3" + os.path.sep + "skins" + \
+                   os.path.sep + CONFIG_DIR + os.path.sep + "skins" + \
                    os.path.sep
 
     for item in os.listdir(systemWideSkinsDir):

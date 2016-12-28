@@ -2335,7 +2335,7 @@ class CodimensionMainWindow(QMainWindow):
 
         result = []
         localSkinsDir = os.path.normpath( str( QDir.homePath() ) ) + \
-                        os.path.sep + ".codimension" + os.path.sep + "skins" + \
+                        os.path.sep + CONFIG_DIR + os.path.sep + "skins" + \
                         os.path.sep
         for item in os.listdir( localSkinsDir ):
             if os.path.isdir( localSkinsDir + item ):
@@ -2950,7 +2950,7 @@ class CodimensionMainWindow(QMainWindow):
             return
         dialog = QFileDialog( self, 'Open project' )
         dialog.setFileMode( QFileDialog.ExistingFile )
-        dialog.setNameFilter( "Codimension project files (*.cdm)" )
+        dialog.setNameFilter( "Codimension project files (*.cdm3)" )
         urls = []
         for dname in QDir.drives():
             urls.append( QUrl.fromLocalFile( dname.absoluteFilePath() ) )
@@ -2970,7 +2970,7 @@ class CodimensionMainWindow(QMainWindow):
 
         if detectFileType( fileName ) != CodimensionProjectFileType:
             logging.warning( "Codimension project file "
-                             "must have .cdm extension" )
+                             "must have .cdm3 extension" )
             return
 
         self.__loadProject( fileName )
