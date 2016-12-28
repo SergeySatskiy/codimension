@@ -52,6 +52,7 @@ __DEFAULT_SEARCH_HISTORY = {'class': [],        # [term, ...]
                             'findinfiles': []}  # [term + dir + mask, ...]
 
 class SearchEnvironment:
+
     """Loads/stores/saves the search environment"""
 
     def __init__(self):

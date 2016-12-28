@@ -31,6 +31,7 @@ __DEFAULT_DEBUGGER_PROPS = {'breakpoints': [],          # [[file, line], ...]
 
 
 class DebuggerEnvironment:
+
     """Loads/stores/saves the debugger environment"""
 
     def __init__(self):

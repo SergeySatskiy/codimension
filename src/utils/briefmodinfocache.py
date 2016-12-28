@@ -35,7 +35,6 @@ class BriefModuleInfoCache():
 
     def get(self, path):
         """Provides the required modinfo"""
-
         path = realpath(path)
         try:
             modInfo = self.__cache[path]

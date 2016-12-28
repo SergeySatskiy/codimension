@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-" Provides the storage for the last position in a file "
+"""Provides the storage for the last position in a file"""
 
 import os.path
 from .fileutils import loadJSON, saveJSON

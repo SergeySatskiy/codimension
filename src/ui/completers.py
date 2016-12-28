@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
 #
 # The file was taken from eric 4.4.3 and adopted for codimension.
@@ -26,78 +24,72 @@
 # Copyright (c) 2007 - 2010 Detlev Offenbach <detlev@die-offenbachs.de>
 #
 
+"""Various kinds of completers"""
 
-""" Various kinds of completers """
-
-
-from PyQt4.QtCore import QDir
-from PyQt4.QtGui import QCompleter, QDirModel, QStringListModel
+from PyQt5.QtCore import QDir
+from PyQt5.QtGui import QCompleter, QDirModel, QStringListModel
 
 
-class FileCompleter( QCompleter ):
-    """ Completer for file names """
+class FileCompleter(QCompleter):
 
-    def __init__( self, parent = None,
-                  completionMode = QCompleter.PopupCompletion,
-                  showHidden = False ):
+    """Completer for file names"""
 
-        QCompleter.__init__( self, parent )
-        self.__model = QDirModel( self )
+    def __init__(self, parent=None,
+                 completionMode=QCompleter.PopupCompletion,
+                 showHidden=False):
+        QCompleter.__init__(self, parent)
+        self.__model = QDirModel(self)
 
         if showHidden:
-            filters = QDir.Filters( QDir.Dirs | QDir.Files | QDir.Drives | \
-                                    QDir.AllDirs | QDir.Hidden )
+            filters = QDir.Filters(QDir.Dirs | QDir.Files | QDir.Drives |
+                                   QDir.AllDirs | QDir.Hidden)
         else:
-            filters = QDir.Filters( QDir.Dirs | QDir.Files | \
-                                    QDir.Drives | QDir.AllDirs )
-        self.__model.setFilter( filters )
+            filters = QDir.Filters(QDir.Dirs | QDir.Files |
+                                   QDir.Drives | QDir.AllDirs)
+        self.__model.setFilter(filters)
 
-        self.setModel( self.__model )
-        self.setCompletionMode( completionMode )
+        self.setModel(self.__model)
+        self.setCompletionMode(completionMode)
 
         if parent:
-            parent.setCompleter( self )
-        return
+            parent.setCompleter(self)
 
 
-class DirCompleter( QCompleter ):
-    """ Completer for directory names """
+class DirCompleter(QCompleter):
 
-    def __init__( self, parent = None,
-                  completionMode = QCompleter.PopupCompletion,
-                  showHidden = False ):
+    """Completer for directory names"""
 
-        QCompleter.__init__( self, parent )
-        self.__model = QDirModel( self )
+    def __init__(self, parent=None,
+                 completionMode=QCompleter.PopupCompletion,
+                 showHidden=False):
+        QCompleter.__init__(self, parent)
+        self.__model = QDirModel(self)
 
         if showHidden:
             filters = QDir.Filters(QDir.Drives | QDir.AllDirs | QDir.Hidden)
         else:
             filters = QDir.Filters(QDir.Drives | QDir.AllDirs)
-        self.__model.setFilter( filters )
+        self.__model.setFilter(filters)
 
-        self.setModel( self.__model )
-        self.setCompletionMode( completionMode )
+        self.setModel(self.__model)
+        self.setCompletionMode(completionMode)
 
         if parent:
-            parent.setCompleter( self )
-        return
+            parent.setCompleter(self)
 
 
-class StringListCompleter( QCompleter ):
-    """ Completer for strings lists """
+class StringListCompleter(QCompleter):
 
-    def __init__( self, parent = None, strings = None,
-                  completionMode = QCompleter.PopupCompletion ):
+    """Completer for strings lists"""
 
+    def __init__(self, parent=None, strings=None,
+                 completionMode=QCompleter.PopupCompletion):
         if strings is None:
             strings = []
-        QCompleter.__init__( self, parent )
-        self.__model = QStringListModel( strings, parent )
-        self.setModel( self.__model )
-        self.setCompletionMode( completionMode )
+        QCompleter.__init__(self, parent)
+        self.__model = QStringListModel(strings, parent)
+        self.setModel(self.__model)
+        self.setCompletionMode(completionMode)
 
         if parent:
-            parent.setCompleter( self )
-        return
-
+            parent.setCompleter(self)
