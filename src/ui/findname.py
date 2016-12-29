@@ -289,7 +289,6 @@ class FindNameModel(QAbstractItemModel):
 
     def parent(self, index):
         """Provides the index of the parent object"""
-
         if not index.isValid():
             return QModelIndex()
 
