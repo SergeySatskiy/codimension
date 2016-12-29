@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,21 +17,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" Find in files viewer implementation "
+"""Find in files viewer implementation"""
 
-from PyQt4.QtCore import Qt, QSize, QTimer
-from PyQt4.QtGui import ( QToolBar, QCursor, QBrush, QHBoxLayout, QWidget,
-                          QAction, QLabel, QSizePolicy, QFrame,
-                          QTreeWidget, QApplication, QTreeWidgetItem,
-                          QHeaderView, QToolTip, QPalette, QColor, QVBoxLayout )
-from utils.pixmapcache import PixmapCache
+from PyQt5.QtCore import Qt, QSize, QTimer
+from PyQt5.QtGui import (QToolBar, QCursor, QBrush, QHBoxLayout, QWidget,
+                         QAction, QLabel, QSizePolicy, QFrame,
+                         QTreeWidget, QApplication, QTreeWidgetItem,
+                         QHeaderView, QToolTip, QPalette, QColor, QVBoxLayout)
+from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
-from itemdelegates import NoOutlineHeightDelegate
-from utils.fileutils import getFileIcon, detectFileType
+from utils.fileutils import getFileProperties
 from utils.project import CodimensionProject
+from .itemdelegates import NoOutlineHeightDelegate
 
 
 cellHeight = 20     # default
@@ -42,18 +40,20 @@ screenWidth = 600   # default
 # This global variable prevents improper displaying.
 inside = False
 
-class Tooltip( QFrame ):
-    " Custom tooltip "
 
-    def __init__( self ):
-        QFrame.__init__( self )
+class Tooltip(QFrame):
+
+    """Custom tooltip"""
+
+    def __init__(self):
+        QFrame.__init__(self)
 
         # Avoid the border around the window
-        self.setWindowFlags( Qt.SplashScreen )
+        self.setWindowFlags(Qt.SplashScreen)
 
         # Make the frame nice looking
-        self.setFrameShape( QFrame.StyledPanel )
-        self.setLineWidth( 2 )
+        self.setFrameShape(QFrame.StyledPanel)
+        self.setLineWidth(2)
 
         self.info = None
         self.location = None
@@ -64,68 +64,62 @@ class Tooltip( QFrame ):
 
         # The timer which shows the tooltip. The timer is controlled from
         # outside of the class.
-        self.tooltipTimer = QTimer( self )
-        self.tooltipTimer.setSingleShot( True )
-        self.tooltipTimer.timeout.connect( self.__onTimer )
+        self.tooltipTimer = QTimer(self)
+        self.tooltipTimer.setSingleShot(True)
+        self.tooltipTimer.timeout.connect(self.__onTimer)
 
         self.startPosition = None
-        return
 
-    def __createLayout( self ):
-        " Creates the tooltip layout "
-        verticalLayout = QVBoxLayout( self )
+    def __createLayout(self):
+        """Creates the tooltip layout"""
+        verticalLayout = QVBoxLayout(self)
         self.info = QLabel()
-        self.info.setAutoFillBackground( True )
+        self.info.setAutoFillBackground(True)
         font = self.info.font()
-        font.setFamily( GlobalData().skin.baseMonoFontFace )
-        self.info.setFont( font )
-        self.info.setFrameShape( QFrame.StyledPanel )
-        verticalLayout.addWidget( self.info )
-        verticalLayout.setMargin( 0 )
+        font.setFamily(GlobalData().skin.baseMonoFontFace)
+        self.info.setFont(font)
+        self.info.setFrameShape(QFrame.StyledPanel)
+        verticalLayout.addWidget(self.info)
+        verticalLayout.setMargin(0)
         self.location = QLabel()
-        verticalLayout.addWidget( self.location )
-        return
+        verticalLayout.addWidget(self.location)
 
-    def setText( self, text ):
-        " Sets the tooltip text "
-        self.info.setText( text )
-        return
+    def setText(self, text):
+        """Sets the tooltip text"""
+        self.info.setText(text)
 
-    def setLocation( self, text ):
-        " Sets the file name and line at the bottom "
-        self.location.setText( text )
-        return
+    def setLocation(self, text):
+        """Sets the file name and line at the bottom"""
+        self.location.setText(text)
 
-    def setModified( self, status ):
-        " Sets the required tooltip background "
+    def setModified(self, status):
+        """Sets the required tooltip background"""
         palette = self.info.palette()
         if status:
             # Reddish
-            palette.setColor( QPalette.Background, QColor( 255, 227, 227 ) )
+            palette.setColor(QPalette.Background, QColor(255, 227, 227))
         else:
             # Blueish
-            palette.setColor( QPalette.Background, QColor( 224, 236, 255 ) )
-        self.info.setPalette( palette )
-        return
+            palette.setColor(QPalette.Background, QColor(224, 236, 255))
+        self.info.setPalette(palette)
 
-    def setItem( self, item ):
-        " Sets the item the tooltip is shown for "
+    def setItem(self, item):
+        """Sets the item the tooltip is shown for"""
         self.item = item
-        return
 
-    def __getTooltipPos( self ):
-        " Calculates the tooltip position - above the row "
+    def __getTooltipPos(self):
+        """Calculates the tooltip position - above the row"""
         pos = QCursor.pos()
         if pos.x() + self.sizeHint().width() >= screenWidth:
-            pos.setX( screenWidth - self.sizeHint().width() - 2 )
-        pos.setY( pos.y() - cellHeight - 1 - self.sizeHint().height() )
+            pos.setX(screenWidth - self.sizeHint().width() - 2)
+        pos.setY(pos.y() - cellHeight - 1 - self.sizeHint().height())
         return pos
 
-    def __onTimer( self ):
-        " Triggered by the show tooltip timer "
+    def __onTimer(self):
+        """Triggered by the show tooltip timer"""
         currentPos = QCursor.pos()
-        if abs( currentPos.x() - self.startPosition.x() ) <= 2 and \
-           abs( currentPos.y() - self.startPosition.y() ) <= 2:
+        if abs(currentPos.x() - self.startPosition.x()) <= 2 and \
+           abs(currentPos.y() - self.startPosition.y()) <= 2:
             # No movement since last time, show the tooltip
             self.show()
             return
@@ -133,43 +127,40 @@ class Tooltip( QFrame ):
         # There item has not been changed, but the position within it was
         # So restart the timer, but for shorter
         self.startPosition = currentPos
-        self.tooltipTimer.start( 400 )
-        return
+        self.tooltipTimer.start(400)
 
-    def startShowTimer( self ):
-        " Memorizes the cursor position and starts the timer "
+    def startShowTimer(self):
+        """Memorizes the cursor position and starts the timer"""
         self.tooltipTimer.stop()
         self.startPosition = QCursor.pos()
-        self.tooltipTimer.start( 500 )  # 0.5 sec
-        return
+        self.tooltipTimer.start(500)  # 0.5 sec
 
-    def show( self ):
-        " Shows the tooltip at the proper position "
+    def show(self):
+        """Shows the tooltip at the proper position"""
         QToolTip.hideText()
         QApplication.processEvents()
-        if not inside:
-            return
-        self.move( self.__getTooltipPos() )
-        self.raise_()
-        QFrame.show( self )
-        return
+        if inside:
+            self.move(self.__getTooltipPos())
+            self.raise_()
+            QFrame.show(self)
 
 
 # Global tooltip instance
 searchTooltip = None
 
+
 def hideSearchTooltip():
-    " Hides the search results tooltip "
+    """Hides the search results tooltip"""
     searchTooltip.tooltipTimer.stop()
     searchTooltip.hide()
-    return
 
 
-class MatchTableItem( QTreeWidgetItem ):
-    " Match item "
+class MatchTableItem(QTreeWidgetItem):
 
-    def __init__( self, items, tooltip ):
-        QTreeWidgetItem.__init__( self, items )
+    """Match item"""
+
+    def __init__(self, items, tooltip):
+        QTreeWidgetItem.__init__(self, items)
         self.__intColumn = 0
         self.__tooltip = tooltip
         self.__fileModified = False
@@ -180,32 +171,30 @@ class MatchTableItem( QTreeWidgetItem ):
         screenWidth = screenSize.width()
         return
 
-    def __lt__( self, other ):
-        " Integer or string custom sorting "
+    def __lt__(self, other):
+        """Integer or string custom sorting"""
         sortColumn = self.treeWidget().sortColumn()
         if sortColumn == self.__intColumn:
-            return int( self.text( sortColumn ) ) < \
-                   int( other.text( sortColumn ) )
-        return self.text( sortColumn ) < other.text( sortColumn )
+            return int(self.text(sortColumn)) < \
+                   int(other.text(sortColumn))
+        return self.text(sortColumn) < other.text(sortColumn)
 
-    def setModified( self, status ):
-        " Sets the modified flag "
+    def setModified(self, status):
+        """Sets the modified flag"""
         self.__fileModified = status
-        return
 
-    def __updateTooltipProperties( self ):
-        " Updates all the tooltip properties "
-        searchTooltip.setItem( self )
-        searchTooltip.setModified( self.__fileModified )
-        searchTooltip.setText( self.__tooltip )
+    def __updateTooltipProperties(self):
+        """Updates all the tooltip properties"""
+        searchTooltip.setItem(self)
+        searchTooltip.setModified(self.__fileModified)
+        searchTooltip.setText(self.__tooltip)
 
-        fileName = str( self.parent().data( 0, Qt.DisplayRole ).toString() )
-        lineNumber = str( self.data( 0, Qt.DisplayRole ).toString() )
-        searchTooltip.setLocation( " " + fileName + ":" + lineNumber )
-        return
+        fileName = str(self.parent().data(0, Qt.DisplayRole).toString())
+        lineNumber = str(self.data(0, Qt.DisplayRole).toString())
+        searchTooltip.setLocation(" " + fileName + ":" + lineNumber)
 
-    def itemEntered( self ):
-        " Triggered when mouse cursor entered the match "
+    def itemEntered(self):
+        """Triggered when mouse cursor entered the match"""
         if self.__tooltip == "":
             return
 
@@ -219,112 +208,106 @@ class MatchTableItem( QTreeWidgetItem ):
         else:
             searchTooltip.startShowTimer()
             self.__updateTooltipProperties()
-        return
 
 
-class MatchTableFileItem( QTreeWidgetItem ):
-    " Match file item "
+class MatchTableFileItem(QTreeWidgetItem):
 
-    def __init__( self, items, uuid ):
-        QTreeWidgetItem.__init__( self, items )
+    """Match file item"""
+
+    def __init__(self, items, uuid):
+        QTreeWidgetItem.__init__(self, items)
         self.uuid = uuid
-        return
 
 
-class FindResultsTreeWidget( QTreeWidget ):
-    """ Tree widget derivation to intercept the fact that the mouse cursor
-        left the widget """
+class FindResultsTreeWidget(QTreeWidget):
 
-    def __init__( self, parent = None ):
-        QTreeWidget.__init__( self, parent )
+    """Tree widget derivation to intercept the fact that the mouse cursor
+       left the widget
+    """
+
+    def __init__(self, parent=None):
+        QTreeWidget.__init__(self, parent)
         self.resetCache()
-        return
 
-    def resetCache( self ):
-        " Resets the caches "
+    def resetCache(self):
+        """Resets the caches"""
         self.__fNameCache = set()
         self.__uuidCache = set()
-        return
 
-    def buildCache( self ):
-        " Builds the caches "
+    def buildCache(self):
+        """Builds the caches"""
         index = self.topLevelItemCount() - 1
         while index >= 0:
-            item = self.topLevelItem( index )
-            fileName = str( item.data( 0, Qt.DisplayRole ).toString() )
-            self.__fNameCache.add( fileName )
-            self.__uuidCache.add( str( item.uuid ) )
+            item = self.topLevelItem(index)
+            fileName = str(item.data(0, Qt.DisplayRole).toString())
+            self.__fNameCache.add(fileName)
+            self.__uuidCache.add(str(item.uuid))
             index -= 1
-        return
 
-    def leaveEvent( self, event ):
-        " Triggered when the cursor leaves the find results tree "
+    def leaveEvent(self, event):
+        """Triggered when the cursor leaves the find results tree"""
         global inside
         inside = False
 
         QApplication.processEvents()
         hideSearchTooltip()
-        QTreeWidget.leaveEvent( self, event )
-        return
+        QTreeWidget.leaveEvent(self, event)
 
-    def onBufferModified( self, fileName, uuid ):
-        " Triggered when a buffer is modified "
-        uuid = str( uuid )
-        fileName = str( fileName )
+    def onBufferModified(self, fileName, uuid):
+        """Triggered when a buffer is modified"""
+        uuid = str(uuid)
+        fileName = str(fileName)
         if uuid in self.__uuidCache:
-            self.__markByUUID( uuid )
-            self.__uuidCache.remove( uuid )
+            self.__markByUUID(uuid)
+            self.__uuidCache.remove(uuid)
             return
         if fileName in self.__fNameCache:
-            self.__markByFileName( fileName )
-            self.__fNameCache.remove( fileName )
-            return
+            self.__markByFileName(fileName)
+            self.__fNameCache.remove(fileName)
 
-    def __markByUUID( self, uuid ):
-        " Marks an item modified basing on the editor UUID "
+    def __markByUUID(self, uuid):
+        """Marks an item modified basing on the editor UUID"""
         index = self.topLevelItemCount() - 1
         while index >= 0:
-            item = self.topLevelItem( index )
+            item = self.topLevelItem(index)
             if item.uuid == uuid:
-                self.__markItem( item )
+                self.__markItem(item)
                 break
             index -= 1
-        return
 
-    def __markByFileName( self, fileName ):
-        " Marks an item modified basing on the file name "
+    def __markByFileName(self, fileName):
+        """Marks an item modified basing on the file name"""
         index = self.topLevelItemCount() - 1
         while index >= 0:
-            item = self.topLevelItem( index )
-            if str( item.data( 0, Qt.DisplayRole ).toString() ) == fileName:
-                self.__markItem( item )
+            item = self.topLevelItem(index)
+            if str(item.data(0, Qt.DisplayRole).toString()) == fileName:
+                self.__markItem(item)
                 break
             index -= 1
-        return
 
     @staticmethod
-    def __markItem( item ):
-        " Marks a single item modified "
-        brush = QBrush( QColor( 255, 227, 227 ) )
-        item.setBackground( 0, brush )
-        item.setBackground( 1, brush )
+    def __markItem(item):
+        """Marks a single item modified"""
+        brush = QBrush(QColor(255, 227, 227))
+        item.setBackground(0, brush)
+        item.setBackground(1, brush)
         childIndex = item.childCount() - 1
         while childIndex >= 0:
-            childItem = item.child( childIndex )
-            childItem.setModified( True )
+            childItem = item.child(childIndex)
+            childItem.setModified(True)
             if searchTooltip.item == childItem:
-                searchTooltip.setModified( True )
+                searchTooltip.setModified(True)
             childIndex -= 1
-        return
 
 
-class FindInFilesViewer( QWidget ):
-    " Find in files viewer tab widget "
+class FindInFilesViewer(QWidget):
+
+    """Find in files viewer tab widget"""
 
     lastEntered = None
 
-    def __init__( self, parent = None ):
-        QWidget.__init__( self, parent )
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent)
 
         global searchTooltip
         searchTooltip = Tooltip()
@@ -335,126 +318,117 @@ class FindInFilesViewer( QWidget ):
         self.__bufferChangeconnected = False
 
         # Prepare members for reuse
-        self.__noneLabel = QLabel( "\nNo results available" )
+        self.__noneLabel = QLabel("\nNo results available")
 
-        self.__noneLabel.setFrameShape( QFrame.StyledPanel )
-        self.__noneLabel.setAlignment( Qt.AlignHCenter )
+        self.__noneLabel.setFrameShape(QFrame.StyledPanel)
+        self.__noneLabel.setAlignment(Qt.AlignHCenter)
         self.__headerFont = self.__noneLabel.font()
-        self.__headerFont.setPointSize( self.__headerFont.pointSize() + 4 )
-        self.__noneLabel.setFont( self.__headerFont )
-        self.__noneLabel.setAutoFillBackground( True )
+        self.__headerFont.setPointSize(self.__headerFont.pointSize() + 4)
+        self.__noneLabel.setFont(self.__headerFont)
+        self.__noneLabel.setAutoFillBackground(True)
         noneLabelPalette = self.__noneLabel.palette()
-        noneLabelPalette.setColor( QPalette.Background,
-                                   GlobalData().skin.nolexerPaper )
-        self.__noneLabel.setPalette( noneLabelPalette )
+        noneLabelPalette.setColor(QPalette.Background,
+                                  GlobalData().skin.nolexerPaper)
+        self.__noneLabel.setPalette(noneLabelPalette)
 
         # Keep pylint happy
         self.printButton = None
         self.clearButton = None
         self.printPreviewButton = None
 
-        self.__createLayout( parent )
+        self.__createLayout(parent)
 
         self.__updateButtonsStatus()
 
-        GlobalData().project.projectChanged.connect( self.__onProjectChanged )
-        return
+        GlobalData().project.projectChanged.connect(self.__onProjectChanged)
 
-    def __createLayout( self, parent ):
-        " Creates the toolbar and layout "
+    def __createLayout(self, parent):
+        """Creates the toolbar and layout"""
 
         # Buttons
-        self.printButton = QAction( PixmapCache().getIcon( 'printer.png' ),
-                                    'Print', self )
-        #printButton.setShortcut( 'Ctrl+' )
-        self.printButton.triggered.connect( self.__onPrint )
-        self.printButton.setVisible( False )
+        self.printButton = QAction(getIcon('printer.png'), 'Print', self)
+        # printButton.setShortcut('Ctrl+')
+        self.printButton.triggered.connect(self.__onPrint)
+        self.printButton.setVisible(False)
 
-        self.printPreviewButton = QAction(
-                PixmapCache().getIcon( 'printpreview.png' ),
-                'Print preview', self )
-        #printPreviewButton.setShortcut( 'Ctrl+' )
-        self.printPreviewButton.triggered.connect( self.__onPrintPreview )
-        self.printPreviewButton.setVisible( False )
+        self.printPreviewButton = QAction(getIcon('printpreview.png'),
+                                          'Print preview', self)
+        # printPreviewButton.setShortcut('Ctrl+')
+        self.printPreviewButton.triggered.connect(self.__onPrintPreview)
+        self.printPreviewButton.setVisible(False)
 
         spacer = QWidget()
-        spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        self.clearButton = QAction(
-            PixmapCache().getIcon( 'trash.png' ),
-            'Clear', self )
-        self.clearButton.triggered.connect( self.__clear )
+        self.clearButton = QAction(getIcon('trash.png'), 'Clear', self)
+        self.clearButton.triggered.connect(self.__clear)
 
         # The toolbar
-        self.toolbar = QToolBar( self )
-        self.toolbar.setOrientation( Qt.Vertical )
-        self.toolbar.setMovable( False )
-        self.toolbar.setAllowedAreas( Qt.RightToolBarArea )
-        self.toolbar.setIconSize( QSize( 16, 16 ) )
-        self.toolbar.setFixedWidth( 28 )
-        self.toolbar.setContentsMargins( 0, 0, 0, 0 )
+        self.toolbar = QToolBar(self)
+        self.toolbar.setOrientation(Qt.Vertical)
+        self.toolbar.setMovable(False)
+        self.toolbar.setAllowedAreas(Qt.RightToolBarArea)
+        self.toolbar.setIconSize(QSize(16, 16))
+        self.toolbar.setFixedWidth(28)
+        self.toolbar.setContentsMargins(0, 0, 0, 0)
 
-        self.toolbar.addAction( self.printPreviewButton )
-        self.toolbar.addAction( self.printButton )
-        self.toolbar.addWidget( spacer )
-        self.toolbar.addAction( self.clearButton )
+        self.toolbar.addAction(self.printPreviewButton)
+        self.toolbar.addAction(self.printButton)
+        self.toolbar.addWidget(spacer)
+        self.toolbar.addAction(self.clearButton)
 
         self.__resultsTree = FindResultsTreeWidget()
-        self.__resultsTree.setAlternatingRowColors( True )
-        self.__resultsTree.setRootIsDecorated( True )
-        self.__resultsTree.setItemsExpandable( True )
-        self.__resultsTree.setUniformRowHeights( True )
-        self.__resultsTree.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
-        headerLabels = [ "File name / line", "Text" ]
-        self.__resultsTree.setHeaderLabels( headerLabels )
-        self.__resultsTree.itemActivated.connect( self.__resultActivated )
-        self.__resultsTree.itemClicked.connect( self.__resultClicked )
-        self.__resultsTree.setMouseTracking( True )
-        self.__resultsTree.itemEntered.connect( self.__itemEntered )
+        self.__resultsTree.setAlternatingRowColors(True)
+        self.__resultsTree.setRootIsDecorated(True)
+        self.__resultsTree.setItemsExpandable(True)
+        self.__resultsTree.setUniformRowHeights(True)
+        self.__resultsTree.setItemDelegate(NoOutlineHeightDelegate(4))
+        headerLabels = ["File name / line", "Text"]
+        self.__resultsTree.setHeaderLabels(headerLabels)
+        self.__resultsTree.itemActivated.connect(self.__resultActivated)
+        self.__resultsTree.itemClicked.connect(self.__resultClicked)
+        self.__resultsTree.setMouseTracking(True)
+        self.__resultsTree.itemEntered.connect(self.__itemEntered)
         self.__resultsTree.hide()
 
         self.__hLayout = QHBoxLayout()
-        self.__hLayout.setContentsMargins( 0, 0, 0, 0 )
-        self.__hLayout.setSpacing( 0 )
-        self.__hLayout.addWidget( self.toolbar )
-        self.__hLayout.addWidget( self.__noneLabel )
-        self.__hLayout.addWidget( self.__resultsTree )
+        self.__hLayout.setContentsMargins(0, 0, 0, 0)
+        self.__hLayout.setSpacing(0)
+        self.__hLayout.addWidget(self.toolbar)
+        self.__hLayout.addWidget(self.__noneLabel)
+        self.__hLayout.addWidget(self.__resultsTree)
 
-        self.setLayout( self.__hLayout )
-        return
+        self.setLayout(self.__hLayout)
 
-    def getResultsTree( self ):
-        " Provides a reference to the results tree "
+    def getResultsTree(self):
+        """Provides a reference to the results tree"""
         return self.__resultsTree
 
-    def __updateButtonsStatus( self ):
-        " Updates the buttons status "
-        self.printButton.setEnabled( self.__reportShown )
-        self.printPreviewButton.setEnabled( self.__reportShown )
-        self.clearButton.setEnabled( self.__reportShown )
-        return
+    def __updateButtonsStatus(self):
+        """Updates the buttons status"""
+        self.printButton.setEnabled(self.__reportShown)
+        self.printPreviewButton.setEnabled(self.__reportShown)
+        self.clearButton.setEnabled(self.__reportShown)
 
-    def __onPrint( self ):
-        " Triggered when the print button is pressed "
+    def __onPrint(self):
+        """Triggered when the print button is pressed"""
         pass
 
-    def __onPrintPreview( self ):
-        " triggered when the print preview button is pressed "
+    def __onPrintPreview(self):
+        """Triggered when the print preview button is pressed"""
         pass
 
-    def setFocus( self ):
-        " Overridden setFocus "
+    def setFocus(self):
+        """Overridden setFocus"""
         self.__hLayout.setFocus()
-        return
 
-    def __onProjectChanged( self, what ):
-        " Triggered when a project is changed "
+    def __onProjectChanged(self, what):
+        """Triggered when a project is changed"""
         if what == CodimensionProject.CompleteProject:
             self.__clear()
-        return
 
-    def __clear( self ):
-        " Clears the content of the vertical layout "
+    def __clear(self):
+        """Clears the content of the vertical layout"""
         if not self.__reportShown:
             return
 
@@ -464,7 +438,7 @@ class FindInFilesViewer( QWidget ):
             mainWindow = GlobalData().mainWindow
             editorsManager = mainWindow.editorsManagerWidget.editorsManager
             editorsManager.bufferModified.disconnect(
-                                        self.__resultsTree.onBufferModified )
+                self.__resultsTree.onBufferModified)
 
         self.__resultsTree.resetCache()
         self.__resultsTree.clear()
@@ -475,10 +449,9 @@ class FindInFilesViewer( QWidget ):
         self.__reportResults = []
         self.__reportShown = False
         self.__updateButtonsStatus()
-        return
 
-    def showReport( self, regexp, results ):
-        " Shows the find in files results "
+    def showReport(self, regexp, results):
+        """Shows the find in files results"""
         self.__clear()
         self.__noneLabel.hide()
 
@@ -488,35 +461,36 @@ class FindInFilesViewer( QWidget ):
         # Add the complete information
         totalMatched = 0
         for item in results:
-            matched = len( item.matches )
+            matched = len(item.matches)
             totalMatched += matched
             if matched == 1:
                 matchText = " (1 match)"
             else:
-                matchText = " (" + str( matched ) + " matches)"
-            columns = [ item.fileName, matchText ]
-            fileItem = MatchTableFileItem( columns, item.bufferUUID )
-            fileItem.setIcon( 0,
-                              getFileIcon( detectFileType( item.fileName ) ) )
+                matchText = " (" + str(matched) + " matches)"
+            columns = [item.fileName, matchText]
+            fileItem = MatchTableFileItem(columns, item.bufferUUID)
+            _, _, icon, _ = getFileProperties(item.fileName)
+            fileItem.setIcon(0, icon)
             if item.tooltip != "":
-                fileItem.setToolTip( 0, item.tooltip )
-            self.__resultsTree.addTopLevelItem( fileItem )
+                fileItem.setToolTip(0, item.tooltip)
+            self.__resultsTree.addTopLevelItem(fileItem)
 
             # Matches
             for match in item.matches:
-                columns = [ str( match.line ), match.text ]
-                matchItem = MatchTableItem( columns, match.tooltip )
-                fileItem.addChild( matchItem )
-            fileItem.setExpanded( True )
+                columns = [str(match.line), match.text]
+                matchItem = MatchTableItem(columns, match.tooltip)
+                fileItem.addChild(matchItem)
+            fileItem.setExpanded(True)
 
         # Update the header with the total number of matches
-        headerLabels = [ "File name / line (total files: " + str( len( results ) ) + ")",
-                         "Text (total matches: " + str( totalMatched ) + ")" ]
-        self.__resultsTree.setHeaderLabels( headerLabels )
+        headerLabels = ["File name / line (total files: " +
+                        str(len(results)) + ")",
+                        "Text (total matches: " + str(totalMatched) + ")"]
+        self.__resultsTree.setHeaderLabels(headerLabels)
 
         # Resizing the table
         self.__resultsTree.header().resizeSections(
-                                            QHeaderView.ResizeToContents )
+            QHeaderView.ResizeToContents)
 
         # Show the complete information
         self.__resultsTree.show()
@@ -531,27 +505,23 @@ class FindInFilesViewer( QWidget ):
             mainWindow = GlobalData().mainWindow
             editorsManager = mainWindow.editorsManagerWidget.editorsManager
             editorsManager.bufferModified.connect(
-                                        self.__resultsTree.onBufferModified )
-        return
+                self.__resultsTree.onBufferModified)
 
-    def __resultClicked( self, item, column ):
-        " Handles the single click "
+    def __resultClicked(self, item, column):
+        """Handles the single click"""
         hideSearchTooltip()
-        return
 
-    def __resultActivated( self, item, column ):
-        " Handles the double click (or Enter) on a match "
-        if type( item ) == MatchTableItem:
-            fileName = str( item.parent().data( 0, Qt.DisplayRole ).toString() )
-            lineNumber = int( item.data( 0, Qt.DisplayRole ).toString() )
-            GlobalData().mainWindow.openFile( fileName, lineNumber )
+    def __resultActivated(self, item, column):
+        """Handles the double click (or Enter) on a match"""
+        if isinstance(item, MatchTableItem):
+            fileName = str(item.parent().data(0, Qt.DisplayRole).toString())
+            lineNumber = int(item.data(0, Qt.DisplayRole).toString())
+            GlobalData().mainWindow.openFile(fileName, lineNumber)
             hideSearchTooltip()
-            return
 
-    def __itemEntered( self, item, column ):
-        " Triggered when the mouse cursor entered a row "
-
-        if type( item ) != MatchTableItem:
+    def __itemEntered(self, item, column):
+        """Triggered when the mouse cursor entered a row"""
+        if not isinstance(item, MatchTableItem):
             self.lastEntered = item
             hideSearchTooltip()
             return
@@ -564,10 +534,8 @@ class FindInFilesViewer( QWidget ):
 
         # Memorize the row height for proper tooltip displaying later
         global cellHeight
-        cellHeight = self.__resultsTree.visualItemRect( item ).height()
+        cellHeight = self.__resultsTree.visualItemRect(item).height()
 
         if self.lastEntered != item or not inside:
             item.itemEntered()
             self.lastEntered = item
-        return
-

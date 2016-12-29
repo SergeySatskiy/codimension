@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,30 +17,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" Find name feature implementation "
+"""Find name feature implementation"""
 
 
-from PyQt4.QtCore import ( Qt, QAbstractItemModel, QRegExp, QModelIndex,
-                           QVariant )
-from PyQt4.QtGui import ( QTreeView, QAbstractItemView, QDialog, QVBoxLayout,
-                          QCursor, QComboBox, QSizePolicy,
-                          QSortFilterProxyModel, QApplication )
+from PyQt5.QtCore import (Qt, QAbstractItemModel, QRegExp, QModelIndex,
+                          QVariant)
+from PyQt5.QtGui import (QTreeView, QAbstractItemView, QDialog, QVBoxLayout,
+                         QCursor, QComboBox, QSizePolicy,
+                         QSortFilterProxyModel, QApplication)
 from utils.globals import GlobalData
-from utils.pixmapcache import PixmapCache
+from utils.pixmapcache import getIcon
 from cdmbriefparser import getBriefModuleInfoFromMemory
-from itemdelegates import NoOutlineHeightDelegate
 from utils.settings import Settings
-from combobox import EnterSensitiveComboBox
-from utils.fileutils import detectFileType, PythonFileType, Python3FileType
+from utils.fileutils import isPythonFile
+from .combobox import EnterSensitiveComboBox
+from .itemdelegates import NoOutlineHeightDelegate
 
 
-class NameItem( object ):
-    " Names list item "
+class NameItem(object):
 
-    def __init__( self, parent, icon, name, fileName, line, tooltip ):
+    """Names list item"""
+
+    def __init__(self, parent, icon, name, fileName, line, tooltip):
         self.parentItem = parent
         self.icon = icon
 
@@ -52,195 +51,170 @@ class NameItem( object ):
         self.tooltip = ""
         if parent is not None:
             if tooltip == "":
-                self.tooltip = fileName + ":" + str( line )
+                self.tooltip = fileName + ":" + str(line)
             else:
-                self.tooltip = tooltip + "\n\n" + fileName + ":" + str( line )
-        return
+                self.tooltip = tooltip + "\n\n" + fileName + ":" + str(line)
 
-    def columnCount( self ):
-        " Provides the number of columns "
+    def columnCount(self):
+        """Provides the number of columns"""
         return 1
 
-    def data( self, column ):
-        " Provides a value for the column "
+    def data(self, column):
+        """Provides a value for the column"""
         if column == 0:
             return self.name
-        return ""
+        return ''
 
-    def appendChild( self, child ):
-        " Appends a child item "
-        self.childItems.append( child )
+    def appendChild(self, child):
+        """Appends a child item"""
+        self.childItems.append(child)
         self.childItemsSize += 1
-        return
 
-    def childCount( self ):
-        " Provides the number of children "
+    def childCount(self):
+        """Provides the number of children"""
         return self.childItemsSize
 
-    def removeChildren( self ):
-        " Removes all the children "
+    def removeChildren(self):
+        """Removes all the children"""
         self.childItems = []
         self.childItemsSize = 0
-        return
 
-    def child( self, row ):
-        " Provides a reference to a child "
-        return self.childItems[ row ]
+    def child(self, row):
+        """Provides a reference to a child"""
+        return self.childItems[row]
 
-    def parent( self ):
-        " Provides a reference to the parent item "
+    def parent(self):
+        """Provides a reference to the parent item"""
         return self.parentItem
 
-    def lessThan( self, other, column, order ):
-        " Check, if the item is less than another "
+    def lessThan(self, other, column, order):
+        """Check, if the item is less than another"""
         if column == 0:
             return self.name < other.name
         return False
 
 
-class FindNameModel( QAbstractItemModel ):
-    " Find name data model implementation "
+class FindNameModel(QAbstractItemModel):
 
-    def __init__( self, parent = None ):
-        QAbstractItemModel.__init__( self, parent )
+    """Find name data model implementation"""
 
-        self.rootItem = NameItem( None, None, "Name", "", "", "" )
+    def __init__(self, parent=None):
+        QAbstractItemModel.__init__(self, parent)
+
+        self.rootItem = NameItem(None, None, "Name", "", "", "")
         self.count = 0
         self.showTooltips = Settings().findNameTooltips
         self.__populateModel()
-        return
 
-    def __populateModel( self ):
-        " Populates the list names model "
+    def __populateModel(self):
+        """Populates the list names model"""
         self.clear()
 
         # If a project is loaded then take the project
         # If not - the opened files
-        if GlobalData().project.fileName != "":
+        if GlobalData().project.isLoaded():
             self.__populateFromProject()
         else:
             self.__populateFromOpened()
-        return
 
-    def __populateFromProject( self ):
-        " Populates find name dialog from the project files "
-
+    def __populateFromProject(self):
+        """Populates find name dialog from the project files"""
         mainWindow = GlobalData().mainWindow
         for fname in GlobalData().project.filesList:
-            if detectFileType( fname ) in [ PythonFileType, Python3FileType ]:
-                widget = mainWindow.getWidgetForFileName( fname )
+            if isPythonFile(fname):
+                widget = mainWindow.getWidgetForFileName(fname)
                 if widget is None:
-                    info = GlobalData().briefModinfoCache.get( fname )
+                    info = GlobalData().briefModinfoCache.get(fname)
                 else:
                     content = widget.getEditor().text()
-                    info = getBriefModuleInfoFromMemory( content )
-                self.__populateInfo( info, fname )
-        return
+                    info = getBriefModuleInfoFromMemory(content)
+                self.__populateInfo(info, fname)
 
-    def __populateInfo( self, info, fname ):
-        " Populates parsed info from a python file "
+    def __populateInfo(self, info, fname):
+        """Populates parsed info from a python file"""
         for item in info.globals:
-            newItem = NameItem( self.rootItem,
-                                PixmapCache().getIcon( 'globalvar.png' ),
-                                item.name, fname, item.line, "" )
-            self.rootItem.appendChild( newItem )
+            newItem = NameItem(self.rootItem, getIcon('globalvar.png'),
+                               item.name, fname, item.line, "")
+            self.rootItem.appendChild(newItem)
             self.count += 1
 
         for klass in info.classes:
-            self.__polulateClass( klass, "", fname )
+            self.__polulateClass(klass, "", fname)
         for func in info.functions:
-            self.__populateFunction( func, "", fname )
-        return
+            self.__populateFunction(func, "", fname)
 
-    def __polulateClass( self, klass, prefix, fname ):
-        " Recursively populates the given class "
-
+    def __polulateClass(self, klass, prefix, fname):
+        """Recursively populates the given class"""
         if klass.isPrivate():
-            icon = PixmapCache().getIcon( 'class_private.png' )
+            icon = getIcon('class_private.png')
         elif klass.isProtected():
-            icon = PixmapCache().getIcon( 'class_protected.png' )
+            icon = getIcon('class_protected.png')
         else:
-            icon = PixmapCache().getIcon( 'class.png' )
+            icon = getIcon('class.png')
 
         tooltip = ""
         if self.showTooltips and klass.docstring is not None:
             tooltip = klass.docstring.text
 
-        classItem = NameItem( self.rootItem, icon, prefix + klass.name,
-                              fname, klass.line, tooltip )
-        self.rootItem.appendChild( classItem )
+        classItem = NameItem(self.rootItem, icon, prefix + klass.name,
+                             fname, klass.line, tooltip)
+        self.rootItem.appendChild(classItem)
         self.count += 1
 
         for item in klass.classAttributes:
-            newItem = NameItem( self.rootItem,
-                                PixmapCache().getIcon( 'attributes.png' ),
-                                prefix + item.name, fname, item.line, "" )
-            self.rootItem.appendChild( newItem )
+            newItem = NameItem(self.rootItem, getIcon('attributes.png'),
+                               prefix + item.name, fname, item.line, "")
+            self.rootItem.appendChild(newItem)
             self.count += 1
 
         for item in klass.instanceAttributes:
-            newItem = NameItem( self.rootItem,
-                                PixmapCache().getIcon( 'attributes.png' ),
-                                prefix + item.name, fname, item.line, "" )
-            self.rootItem.appendChild( newItem )
+            newItem = NameItem(self.rootItem, getIcon('attributes.png'),
+                               prefix + item.name, fname, item.line, "")
+            self.rootItem.appendChild(newItem)
             self.count += 1
 
         for item in klass.functions:
-            self.__populateFunction( item, prefix + klass.name + ".",
-                                     fname )
+            self.__populateFunction(item, prefix + klass.name + ".", fname)
         for item in klass.classes:
-            self.__polulateClass( item, prefix + klass.name + ".",
-                                  fname )
-        return
+            self.__polulateClass(item, prefix + klass.name + ".", fname)
 
-    def __populateFunction( self, func, prefix, fname ):
-        " Recursively populates the given function "
-
+    def __populateFunction(self, func, prefix, fname):
+        """Recursively populates the given function"""
         tooltip = ""
         if self.showTooltips and func.docstring is not None:
             tooltip = func.docstring.text
 
-        funcItem = NameItem( self.rootItem,
-                             PixmapCache().getIcon( 'method.png' ),
-                             prefix + func.name, fname,
-                             func.line, tooltip )
-        self.rootItem.appendChild( funcItem )
+        funcItem = NameItem(self.rootItem, getIcon('method.png'),
+                            prefix + func.name, fname, func.line, tooltip)
+        self.rootItem.appendChild(funcItem)
         self.count += 1
 
         for item in func.functions:
-            self.__populateFunction( item, prefix + func.name + ".",
-                                     fname )
+            self.__populateFunction(item, prefix + func.name + ".", fname)
         for item in func.classes:
-            self.__polulateClass( item, prefix + func.name + ".",
-                                  fname )
-        return
+            self.__polulateClass(item, prefix + func.name + ".", fname)
 
-    def __populateFromOpened( self ):
-        " Populates the name dialog from the opened files "
-
+    def __populateFromOpened(self):
+        """Populates the name dialog from the opened files"""
         mainWindow = GlobalData().mainWindow
         editorsManager = mainWindow.editorsManagerWidget.editorsManager
         for record in editorsManager.getTextEditors():
             # uuid = record[ 0 ]
             fname = record[ 1 ]
             widget = record[ 2 ]
-            if fname.endswith( '.py' ) or \
-               fname.endswith( '.py3' ) or \
-               fname.endswith( '.pyw' ):
+            if isPythonFile(fname):
                 content = widget.getEditor().text()
-                info = getBriefModuleInfoFromMemory( content )
-                self.__populateInfo( info, fname )
-        return
+                info = getBriefModuleInfoFromMemory(content)
+                self.__populateInfo(info, fname)
 
-    def columnCount( self, parent = QModelIndex() ):
-        " Provides the number of columns "
+    def columnCount(self, parent=QModelIndex()):
+        """Provides the number of columns"""
         if parent.isValid():
             return parent.internalPointer().columnCount()
         return self.rootItem.columnCount()
 
-    def rowCount( self, parent = QModelIndex() ):
-        " Provides the number of rows "
-
+    def rowCount(self, parent=QModelIndex()):
+        """Provides the number of rows"""
         # Only the first column should have children
         if parent.column() > 0:
             return 0
@@ -251,53 +225,51 @@ class FindNameModel( QAbstractItemModel ):
         parentItem = parent.internalPointer()
         return parentItem.childCount()
 
-    def data( self, index, role ):
-        " Provides data of an item "
+    def data(self, index, role):
+        """Provides data of an item"""
         if not index.isValid():
             return QVariant()
 
         if role == Qt.DisplayRole:
             item = index.internalPointer()
             if index.column() < item.columnCount():
-                return QVariant( item.data( index.column() ) )
+                return QVariant(item.data(index.column()))
             elif index.column() == item.columnCount() and \
-                 index.column() < self.columnCount( self.parent( index ) ):
+                 index.column() < self.columnCount(self.parent(index)):
                 # This is for the case when an item under a multi-column
                 # parent doesn't have a value for all the columns
-                return QVariant( "" )
+                return QVariant("")
         elif role == Qt.DecorationRole:
             if index.column() == 0:
-                return QVariant( index.internalPointer().icon )
+                return QVariant(index.internalPointer().icon)
         elif role == Qt.ToolTipRole:
             item = index.internalPointer()
             if item.tooltip != "":
-                return QVariant( item.tooltip )
-
+                return QVariant(item.tooltip)
         return QVariant()
 
-    def flags( self, index ):
-        " Provides the item flags "
+    def flags(self, index):
+        """Provides the item flags"""
         if not index.isValid():
             return Qt.ItemIsEnabled
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
-    def headerData( self, section, orientation, role = Qt.DisplayRole ):
-        " Provides the header data "
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
+        """Provides the header data"""
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             if section >= self.rootItem.columnCount():
-                return QVariant( "" )
-            return self.rootItem.data( section )
+                return QVariant("")
+            return self.rootItem.data(section)
         return QVariant()
 
-    def index( self, row, column, parent = QModelIndex() ):
-        " Creates an index "
-
+    def index(self, row, column, parent=QModelIndex()):
+        """Creates an index"""
         # The model/view framework considers negative values out-of-bounds,
         # however in python they work when indexing into lists. So make sure
         # we return an invalid index for out-of-bounds row/col
         if row < 0 or column < 0 or \
-           row >= self.rowCount( parent ) or \
-           column >= self.columnCount( parent ):
+           row >= self.rowCount(parent) or \
+           column >= self.columnCount(parent):
             return QModelIndex()
 
         if not parent.isValid():
@@ -306,17 +278,17 @@ class FindNameModel( QAbstractItemModel ):
             parentItem = parent.internalPointer()
 
         try:
-            childItem = parentItem.child( row )
+            childItem = parentItem.child(row)
         except IndexError:
             childItem = None
             return QModelIndex()
 
         if childItem:
-            return self.createIndex( row, column, childItem )
+            return self.createIndex(row, column, childItem)
         return QModelIndex()
 
-    def parent( self, index ):
-        " Provides the index of the parent object "
+    def parent(self, index):
+        """Provides the index of the parent object"""
 
         if not index.isValid():
             return QModelIndex()
@@ -327,11 +299,10 @@ class FindNameModel( QAbstractItemModel ):
         if parentItem == self.rootItem:
             return QModelIndex()
 
-        return self.createIndex( parentItem.row(), 0, parentItem )
+        return self.createIndex(parentItem.row(), 0, parentItem)
 
-    def hasChildren( self, parent = QModelIndex() ):
-        " Checks for the presence of child items "
-
+    def hasChildren(self, parent=QModelIndex()):
+        """Checks for the presence of child items"""
         # Only the first column should have children
         if parent.column() > 0:
             return False
@@ -340,191 +311,180 @@ class FindNameModel( QAbstractItemModel ):
             return self.rootItem.childCount() > 0
         return parent.internalPointer().childCount() > 0
 
-    def clear( self ):
-        " Clears the model "
+    def clear(self):
+        """Clears the model"""
         self.rootItem.removeChildren()
         self.reset()
-        return
 
-    def item( self, index ):
-        " Provides a reference to an item "
+    def item(self, index):
+        """Provides a reference to an item"""
         if not index.isValid():
             return None
         return index.internalPointer()
 
 
+class FindNameSortFilterProxyModel(QSortFilterProxyModel):
 
-class FindNameSortFilterProxyModel( QSortFilterProxyModel ):
-    " Find name dialog sort filter proxy model "
+    """Find name dialog sort filter proxy model"""
 
-    def __init__( self, parent = None ):
-        QSortFilterProxyModel.__init__( self, parent )
+    def __init__(self, parent=None):
+        QSortFilterProxyModel.__init__(self, parent)
         self.__sortColumn = None    # Avoid pylint complains
         self.__sortOrder = None     # Avoid pylint complains
 
         self.__filters = []
         self.__filtersCount = 0
         self.__sourceModelRoot = None
-        return
 
-    def sort( self, column, order ):
-        " Sorts the items "
+    def sort(self, column, order):
+        """Sorts the items"""
         self.__sortColumn = column
         self.__sortOrder = order
-        QSortFilterProxyModel.sort( self, column, order )
-        return
+        QSortFilterProxyModel.sort(self, column, order)
 
-    def lessThan( self, left, right ):
-        " Sorts the displayed items "
-        lhs = left.model() and left.model().item( left ) or None
-        rhs = right.model() and right.model().item( right ) or None
+    def lessThan(self, left, right):
+        """Sorts the displayed items"""
+        lhs = left.model() and left.model().item(left) or None
+        rhs = right.model() and right.model().item(right) or None
 
         if lhs and rhs:
-            return lhs.lessThan( rhs, self.__sortColumn, self.__sortOrder )
+            return lhs.lessThan(rhs, self.__sortColumn, self.__sortOrder)
         return False
 
-    def item( self, index ):
-        " Provides a reference to the item "
+    def item(self, index):
+        """Provides a reference to the item"""
         if not index.isValid():
             return None
 
-        sourceIndex = self.mapToSource( index )
-        return self.sourceModel().item( sourceIndex )
+        sourceIndex = self.mapToSource(index)
+        return self.sourceModel().item(sourceIndex)
 
-    def hasChildren( self, parent = QModelIndex() ):
-        " Checks the presence of the child items "
-        sourceIndex = self.mapToSource( parent )
-        return self.sourceModel().hasChildren( sourceIndex )
+    def hasChildren(self, parent=QModelIndex()):
+        """Checks the presence of the child items"""
+        sourceIndex = self.mapToSource(parent)
+        return self.sourceModel().hasChildren(sourceIndex)
 
-    def setFilter( self, text ):
-        " Sets the new filters "
+    def setFilter(self, text):
+        """Sets the new filters"""
         self.__filters = []
         self.__filtersCount = 0
         self.__sourceModelRoot = None
-        for part in str( text ).strip().split():
-            regexp = QRegExp( part, Qt.CaseInsensitive, QRegExp.RegExp2 )
-            self.__filters.append( regexp )
+        for part in str(text).strip().split():
+            regexp = QRegExp(part, Qt.CaseInsensitive, QRegExp.RegExp2)
+            self.__filters.append(regexp)
             self.__filtersCount += 1
         self.__sourceModelRoot = self.sourceModel().rootItem
-        return
 
-    def filterAcceptsRow( self, sourceRow, sourceParent ):
-        " Filters rows "
+    def filterAcceptsRow(self, sourceRow, sourceParent):
+        """Filters rows"""
         if self.__filtersCount == 0 or self.__sourceModelRoot is None:
             return True     # No filters
 
-        nameToMatch = self.__sourceModelRoot.child( sourceRow ).name
+        nameToMatch = self.__sourceModelRoot.child(sourceRow).name
         for regexp in self.__filters:
-            if regexp.indexIn( nameToMatch ) == -1:
+            if regexp.indexIn(nameToMatch) == -1:
                 return False
         return True
 
 
-class NamesBrowser( QTreeView ):
-    " List of names widget implementation "
+class NamesBrowser(QTreeView):
 
-    def __init__( self, parent = None ):
-        QTreeView.__init__( self, parent )
+    """List of names widget implementation"""
+
+    def __init__(self, parent=None):
+        QTreeView.__init__(self, parent)
 
         self.__parentDialog = parent
         self.__model = FindNameModel()
         self.__sortModel = FindNameSortFilterProxyModel()
-        self.__sortModel.setDynamicSortFilter( True )
-        self.__sortModel.setSourceModel( self.__model )
-        self.setModel( self.__sortModel )
+        self.__sortModel.setDynamicSortFilter(True)
+        self.__sortModel.setSourceModel(self.__model)
+        self.setModel(self.__sortModel)
         self.selectedIndex = None
 
-        self.activated.connect( self.openCurrentItem )
+        self.activated.connect(self.openCurrentItem)
 
-        self.setRootIsDecorated( False )
-        self.setAlternatingRowColors( True )
-        self.setUniformRowHeights( True )
-        self.setItemDelegate( NoOutlineHeightDelegate( 4 ) )
+        self.setRootIsDecorated(False)
+        self.setAlternatingRowColors(True)
+        self.setUniformRowHeights(True)
+        self.setItemDelegate(NoOutlineHeightDelegate(4))
 
         header = self.header()
-        header.setSortIndicator( 0, Qt.AscendingOrder )
-        header.setSortIndicatorShown( True )
-        header.setClickable( True )
+        header.setSortIndicator(0, Qt.AscendingOrder)
+        header.setSortIndicatorShown(True)
+        header.setClickable(True)
 
-        self.setSortingEnabled( True )
+        self.setSortingEnabled(True)
 
-        self.setSelectionMode( QAbstractItemView.SingleSelection )
-        self.setSelectionBehavior( QAbstractItemView.SelectRows )
+        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         self.layoutDisplay()
-        return
 
-    def selectionChanged( self, selected, deselected ):
-        " Slot is called when the selection has been changed "
+    def selectionChanged(self, selected, deselected):
+        """Slot is called when the selection has been changed"""
         if selected.indexes():
-            self.selectedIndex = selected.indexes()[ 0 ]
+            self.selectedIndex = selected.indexes()[0]
         else:
             self.selectedIndex = None
-        QTreeView.selectionChanged( self, selected, deselected )
-        return
+        QTreeView.selectionChanged(self, selected, deselected)
 
-    def layoutDisplay( self ):
-        " Performs the layout operation "
+    def layoutDisplay(self):
+        """Performs the layout operation"""
         self.doItemsLayout()
-        self.header().setStretchLastSection( True )
+        self.header().setStretchLastSection(True)
         self._resort()
-        return
 
-    def _resort( self ):
-        " Re-sorts the tree "
-        self.model().sort( self.header().sortIndicatorSection(),
-                           self.header().sortIndicatorOrder() )
-        return
+    def _resort(self):
+        """Re-sorts the tree"""
+        self.model().sort(self.header().sortIndicatorSection(),
+                          self.header().sortIndicatorOrder())
 
-    def openCurrentItem( self ):
-        " Triggers when an item is clicked or double clicked "
-        if self.selectedIndex is None:
-            return
-        item = self.model().item( self.selectedIndex )
-        self.openItem( item )
-        return
+    def openCurrentItem(self):
+        """Triggers when an item is clicked or double clicked"""
+        if self.selectedIndex is not None:
+            item = self.model().item(self.selectedIndex)
+            self.openItem(item)
 
-    def openItem( self, item ):
-        " Handles the case when an item is activated "
-        infoLine = item.tooltip.split( '\n' )[ -1 ]
-        parts = infoLine.split( ':' )
-        line = int( parts[ -1 ] )
-        fname = ':'.join( parts[ : -1 ] )
+    def openItem(self, item):
+        """Handles the case when an item is activated"""
+        infoLine = item.tooltip.split('\n')[-1]
+        parts = infoLine.split(':')
+        line = int(parts[-1])
+        fname = ':'.join(parts[:-1])
 
-        GlobalData().mainWindow.openFile( fname, line )
+        GlobalData().mainWindow.openFile(fname, line)
         self.__parentDialog.onClose()
-        return
 
-    def getTotal( self ):
-        " Provides the total number of items "
+    def getTotal(self):
+        """Provides the total number of items"""
         return self.model().sourceModel().count
 
-    def getVisible( self ):
-        " Provides the number of visible items "
+    def getVisible(self):
+        """Provides the number of visible items"""
         return self.model().rowCount()
 
-    def setFilter( self, text ):
-        " Called when the filter has been changed "
+    def setFilter(self, text):
+        """Called when the filter has been changed"""
         # Notify the filtering model of the new filters
-        self.model().setFilter( text )
+        self.model().setFilter(text)
 
         # This is to trigger filtering - ugly but I don't know how else
-        self.model().setFilterRegExp( "" )
-        return
+        self.model().setFilterRegExp("")
 
 
+class FindNameDialog(QDialog):
 
-class FindNameDialog( QDialog ):
-    " Find name dialog implementation "
+    """Find name dialog implementation"""
 
-    def __init__( self, what = "", parent = None ):
-        QDialog.__init__( self, parent )
+    def __init__(self, what="", parent=None):
+        QDialog.__init__(self, parent)
 
         self.__namesBrowser = None
         self.findCombo = None
-        self.__projectLoaded = GlobalData().project.fileName != ""
+        self.__projectLoaded = GlobalData().project.isLoaded()
 
-        QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
+        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         self.__createLayout()
         self.findCombo.setFocus()
         QApplication.restoreOverrideCursor()
@@ -534,101 +494,92 @@ class FindNameDialog( QDialog ):
             self.__findNameHistory = GlobalData().project.findNameHistory
         else:
             self.__findNameHistory = Settings().findNameHistory
-        self.findCombo.addItems( self.__findNameHistory )
-        self.findCombo.setEditText( what )
+        self.findCombo.addItems(self.__findNameHistory)
+        self.findCombo.setEditText(what)
 
-        self.findCombo.editTextChanged.connect( self.__filterChanged )
+        self.findCombo.editTextChanged.connect(self.__filterChanged)
 
         self.__highlightFirst()
         self.__updateTitle()
-        return
 
-    def __highlightFirst( self ):
-        " Sets the selection to the first item in the files list "
+    def __highlightFirst(self):
+        """Sets the selection to the first item in the files list"""
         if self.__namesBrowser.getVisible() == 0:
             return
         self.__namesBrowser.clearSelection()
 
-        first = self.__namesBrowser.model().index( 0, 0, QModelIndex() )
-        self.__namesBrowser.setCurrentIndex( first )
-        self.__namesBrowser.scrollTo( first )
-        return
+        first = self.__namesBrowser.model().index(0, 0, QModelIndex())
+        self.__namesBrowser.setCurrentIndex(first)
+        self.__namesBrowser.scrollTo(first)
 
-    def __updateTitle( self ):
-        " Updates the window title "
+    def __updateTitle(self):
+        """Updates the window title"""
         title = "Find name in the "
         if self.__projectLoaded:
             title += "project: "
         else:
             title += "opened files: "
-        title += str( self.__namesBrowser.getVisible() ) + " of " + \
-                 str( self.__namesBrowser.getTotal() )
-        self.setWindowTitle( title )
-        return
+        title += str(self.__namesBrowser.getVisible()) + " of " + \
+                 str(self.__namesBrowser.getTotal())
+        self.setWindowTitle(title)
 
-    def __createLayout( self ):
-        """ Creates the dialog layout """
+    def __createLayout(self):
+        """Creates the dialog layout"""
+        self.resize(600, 300)
+        self.setSizeGripEnabled(True)
 
-        self.resize( 600, 300 )
-        self.setSizeGripEnabled( True )
+        verticalLayout = QVBoxLayout(self)
+        self.__namesBrowser = NamesBrowser(self)
+        verticalLayout.addWidget(self.__namesBrowser)
 
-        verticalLayout = QVBoxLayout( self )
-        self.__namesBrowser = NamesBrowser( self )
-        verticalLayout.addWidget( self.__namesBrowser )
-
-        self.findCombo = EnterSensitiveComboBox( self )
-        self.__tuneCombo( self.findCombo )
-        self.findCombo.lineEdit().setToolTip( "Regular expression to search for" )
-        verticalLayout.addWidget( self.findCombo )
-        self.findCombo.enterClicked.connect( self.__enterInFilter )
-        return
+        self.findCombo = EnterSensitiveComboBox(self)
+        self.__tuneCombo(self.findCombo)
+        self.findCombo.lineEdit().setToolTip("Regular expression "
+                                             "to search for")
+        verticalLayout.addWidget(self.findCombo)
+        self.findCombo.enterClicked.connect(self.__enterInFilter)
 
     @staticmethod
-    def __tuneCombo( comboBox ):
-        " Sets the common settings for a combo box "
-        sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Fixed )
-        sizePolicy.setHorizontalStretch( 0 )
-        sizePolicy.setVerticalStretch( 0 )
+    def __tuneCombo(comboBox):
+        """Sets the common settings for a combo box"""
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(
-                            comboBox.sizePolicy().hasHeightForWidth() )
-        comboBox.setSizePolicy( sizePolicy )
-        comboBox.setEditable( True )
-        comboBox.setInsertPolicy( QComboBox.InsertAtTop )
-        comboBox.setAutoCompletion( False )
-        comboBox.setDuplicatesEnabled( False )
-        return
+            comboBox.sizePolicy().hasHeightForWidth())
+        comboBox.setSizePolicy(sizePolicy)
+        comboBox.setEditable(True)
+        comboBox.setInsertPolicy(QComboBox.InsertAtTop)
+        comboBox.setAutoCompletion(False)
+        comboBox.setDuplicatesEnabled(False)
 
-    def __filterChanged( self, text ):
-        " Triggers when the filter text changed "
-        self.__namesBrowser.setFilter( text )
+    def __filterChanged(self, text):
+        """Triggers when the filter text changed"""
+        self.__namesBrowser.setFilter(text)
         self.__highlightFirst()
         self.__updateTitle()
-        return
 
-    def onClose( self ):
-        """ Called when an item has been selected and
-            the cursor jumped where it should """
-
+    def onClose(self):
+        """Called when an item has been selected and
+           the cursor jumped where it should
+        """
         # Save the current filter if needed
         filterText = self.findCombo.currentText().strip()
         if filterText != "":
             if filterText in self.__findNameHistory:
-                self.__findNameHistory.remove( filterText )
-            self.__findNameHistory.insert( 0, filterText )
-            if len( self.__findNameHistory ) > 32:
-                self.__findNameHistory = self.__findNameHistory[ : 32 ]
+                self.__findNameHistory.remove(filterText)
+            self.__findNameHistory.insert(0, filterText)
+            if len(self.__findNameHistory) > 32:
+                self.__findNameHistory = self.__findNameHistory[:32]
 
-            if GlobalData().project.fileName != "":
+            if GlobalData().project.isLoaded():
                 GlobalData().project.setFindNameHistory(
-                                        self.__findNameHistory )
+                    self.__findNameHistory)
             else:
                 Settings().findNameHistory = self.__findNameHistory
         self.close()
-        return
 
-    def __enterInFilter( self ):
-        " Handles ENTER and RETURN keys in the find combo "
-        if self.__namesBrowser.getVisible() == 0:
-            return
-        self.__namesBrowser.openCurrentItem()
-        return
+    def __enterInFilter(self):
+        """Handles ENTER and RETURN keys in the find combo"""
+        if self.__namesBrowser.getVisible() != 0:
+            self.__namesBrowser.openCurrentItem()
