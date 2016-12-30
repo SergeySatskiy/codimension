@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,75 +17,67 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" New nested project directory dialog "
-
+"""New nested project directory dialog"""
 
 import os
-from PyQt4.QtCore import Qt, QEvent, QObject
-from PyQt4.QtGui  import ( QDialog, QLineEdit, QLabel,
-                          QDialogButtonBox, QVBoxLayout )
+from PyQt5.QtCore import Qt, QEvent, QObject
+from PyQt5.QtGui import (QDialog, QLineEdit, QLabel, QDialogButtonBox,
+                         QVBoxLayout)
 
 
-class NewProjectDirDialog( QDialog, object ):
-    " New project directory dialog "
+class NewProjectDirDialog(QDialog):
 
-    def __init__( self, parent = None ):
-        QDialog.__init__( self, parent )
+    """New project directory dialog"""
+
+    def __init__(self, parent=None):
+        QDialog.__init__(self, parent)
 
         self.__dirnameEdit = None
         self.__buttonBox = None
         self.__createLayout()
 
-        self.okButton = self.__buttonBox.button( QDialogButtonBox.Ok )
-        self.okButton.setEnabled( False )
-        return
+        self.okButton = self.__buttonBox.button(QDialogButtonBox.Ok)
+        self.okButton.setEnabled(False)
 
-    def __createLayout( self ):
-        " Creates the dialog layout "
+    def __createLayout(self):
+        """Creates the dialog layout"""
+        self.resize(400, 100)
+        self.setWindowTitle("Create subdirectory")
+        vboxlayout = QVBoxLayout(self)
 
-        self.resize( 400, 100 )
-        self.setWindowTitle( "Create subdirectory" )
-        vboxlayout = QVBoxLayout( self )
+        inputLabel = QLabel(self)
+        inputLabel.setText("Type new subdirectory name")
+        vboxlayout.addWidget(inputLabel)
 
-        inputLabel = QLabel( self )
-        inputLabel.setText( "Type new subdirectory name" )
-        vboxlayout.addWidget( inputLabel )
+        self.__dirnameEdit = QLineEdit(self)
+        self.__dirnameEdit.setToolTip("Subdirectory name without "
+                                      "path separators")
+        self.__dirnameEdit.installEventFilter(self)
+        self.__dirnameEdit.textEdited.connect(self.__onTextChanged)
+        vboxlayout.addWidget(self.__dirnameEdit)
 
-        self.__dirnameEdit = QLineEdit( self )
-        self.__dirnameEdit.setToolTip( "Subdirectory name without "
-                                       "path separators" )
-        self.__dirnameEdit.installEventFilter( self )
-        self.__dirnameEdit.textEdited.connect( self.__onTextChanged )
-        vboxlayout.addWidget( self.__dirnameEdit )
+        self.__buttonBox = QDialogButtonBox(self)
+        self.__buttonBox.setOrientation(Qt.Horizontal)
+        self.__buttonBox.setStandardButtons(QDialogButtonBox.Cancel |
+                                            QDialogButtonBox.Ok)
+        vboxlayout.addWidget(self.__buttonBox)
 
-        self.__buttonBox = QDialogButtonBox( self )
-        self.__buttonBox.setOrientation( Qt.Horizontal )
-        self.__buttonBox.setStandardButtons( QDialogButtonBox.Cancel |
-                                             QDialogButtonBox.Ok )
-        vboxlayout.addWidget( self.__buttonBox )
+        self.__buttonBox.accepted.connect(self.accept)
+        self.__buttonBox.rejected.connect(self.reject)
 
-        self.__buttonBox.accepted.connect( self.accept )
-        self.__buttonBox.rejected.connect( self.reject )
-        return
+    def __onTextChanged(self, text):
+        """Triggered when the input text has been changed"""
+        self.okButton.setEnabled(text != '')
 
-    def __onTextChanged( self, text ):
-        " Triggered when the input text has been changed "
-        self.okButton.setEnabled( text != "" )
-        return
-
-    def getDirName( self ):
-        " Provides the user input "
+    def getDirName(self):
+        """Provides the user input"""
         return self.__dirnameEdit.text()
 
-    def eventFilter( self, obj, event ):
-        " Event filter for the project name field "
-
+    def eventFilter(self, obj, event):
+        """Event filter for the project name field"""
         # Do not allow path separators
         if event.type() == QEvent.KeyPress:
-            if event.key() == ord( os.path.sep ):
+            if event.key() == ord(os.path.sep):
                 return True
-        return QObject.eventFilter( self, obj, event )
-
+        return QObject.eventFilter(self, obj, event)

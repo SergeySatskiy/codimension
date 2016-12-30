@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,27 +17,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-""" Quick help screen """
+"""Quick help screen"""
 
-from texttabwidget import TextTabWidget
+from .texttabwidget import TextTabWidget
 from flowui.cml import CMLVersion
 
 
-class QuickHelpWidget( TextTabWidget ):
-    """ Quick help screen """
+class QuickHelpWidget(TextTabWidget):
 
-    def __init__( self, parent = None ):
+    """Quick help screen"""
 
-        TextTabWidget.__init__( self, parent )
-        #pixmapPath = os.path.dirname( os.path.abspath( sys.argv[0] ) ) + \
-        #             os.path.sep + 'pixmaps' + os.path.sep
-        #logoPath = pixmapPath + 'logo.png'
+    def __init__(self, parent=None):
 
-        self.setHTML(
-"""
+        TextTabWidget.__init__(self, parent)
+        # pixmapPath = os.path.dirname( os.path.abspath( sys.argv[0] ) ) + \
+        #              os.path.sep + 'pixmaps' + os.path.sep
+        # logoPath = pixmapPath + 'logo.png'
+
+        self.setHTML("""
 <html>
 <div>
 
@@ -282,37 +280,34 @@ class QuickHelpWidget( TextTabWidget ):
     <br><br>""" + self.generateCMLHelp() + """
 </div>
 </body>
-</html>
-""" )
+</html>""")
 
-        self.setFileName( "" )
-        self.setShortName( "Quick help" )
-        return
+        self.setFileName("")
+        self.setShortName("Quick help")
 
-    def generateCMLHelp( self ):
-        " Generates CML comments help "
+    def generateCMLHelp(self):
+        """Generates CML comments help"""
         cmlHelpHeader = """<h3 align="center">CML Comments Reference<br>
-                        (CML version """ + str( CMLVersion.VERSION ) + ")</h3>"
+                        (CML version """ + str(CMLVersion.VERSION) + ")</h3>"
 
         cmlCodes = CMLVersion.COMMENT_TYPES.keys()
         cmlCodes.sort()
 
         rows = []
         for code in cmlCodes:
-            rows.append( """<tr><td width="15%" bgcolor="#E9E9F3">""" + code +
-                         """</td><td width="85%" bgcolor="#F6F4E4">""" +
-                         CMLVersion.COMMENT_TYPES[ code ].description().replace( "\n", "<br>" ) +
-                         "</td></tr>" )
+            descr = CMLVersion.COMMENT_TYPES[code].description()
+            descr = descr.replace("\n", "<br/>")
+            rows.append("""<tr><td width="15%" bgcolor="#E9E9F3">""" + code +
+                        """</td><td width="85%" bgcolor="#F6F4E4">""" + descr +
+                        "</td></tr>")
 
         return cmlHelpHeader + \
                """<p align="center">
                   <table border="0" cellspacing="1"
                          cellpadding="4" width="95%" align="center">""" + \
-               "\n".join( rows ) + \
+               "\n".join(rows) + \
                """</table></p>"""
 
-    def setFocus( self ):
-        " Sets the focus to the nested html displaying editor "
-        TextTabWidget.setFocus( self )
-        return
-
+    def setFocus(self):
+        """Sets the focus to the nested html displaying editor"""
+        TextTabWidget.setFocus(self)
