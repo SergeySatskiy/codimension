@@ -617,7 +617,7 @@ class ProjectViewer(QWidget):
         if self.__fsContextItem.itemType == DirectoryItemType:
             self.fsFindInDirButton.setEnabled( True )
             globalData = GlobalData()
-            if globalData.project.fileName != "":
+            if globalData.project.isLoaded():
                 if globalData.project.isTopLevelDir(
                         self.__fsContextItem.getPath() ):
                     if self.__fsContextItem.parentItem.itemType == NoItemType:

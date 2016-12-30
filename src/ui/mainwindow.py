@@ -1521,7 +1521,7 @@ class CodimensionMainWindow(QMainWindow):
 
     def updateWindowTitle(self):
         """Updates the main window title with the current so file"""
-        if GlobalData().project.fileName != "":
+        if GlobalData().project.isLoaded():
             self.setWindowTitle('Codimension for Python 3: ' +
                                 os.path.basename(
                                    GlobalData().project.fileName))

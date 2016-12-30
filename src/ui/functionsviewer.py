@@ -172,7 +172,7 @@ class FunctionsViewer( QWidget ):
     def __filterItemAdded( self ):
         " The filter item has been added "
         project = GlobalData().project
-        if project.fileName != "":
+        if project.isLoaded():
             project.setFindFuncHistory( self.filterEdit.getItems() )
         return
 

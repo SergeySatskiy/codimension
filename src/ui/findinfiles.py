@@ -258,7 +258,7 @@ class FindInFilesDialog(QDialog, object):
 
         # Restore the combo box values
         project = GlobalData().project
-        if project.fileName != "":
+        if project.isLoaded():
             self.findFilesWhat = project.findFilesWhat
             self.findFilesDirs = project.findFilesDirs
             self.findFilesMasks = project.findFilesMasks

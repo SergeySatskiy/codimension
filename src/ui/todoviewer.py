@@ -244,7 +244,7 @@ class TodoViewer( QTreeWidget ):
     def regenerateProjectTodos( self ):
         """ Collects TODO and FIXME items from the project files """
 
-        if GlobalData().project.fileName == "":
+        if not GlobalData().project.isLoaded():
             return
 
         self.clearAll()

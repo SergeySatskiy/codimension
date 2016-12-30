@@ -142,7 +142,7 @@ class FindFileModel(QAbstractItemModel):
 
         # If a project is loaded then take the project
         # If not - take opened files
-        if GlobalData().project.fileName != "":
+        if GlobalData().project.isLoaded():
             self.__populateFromProject()
         else:
             self.__populateFromOpened()
