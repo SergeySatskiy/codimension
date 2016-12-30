@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,156 +17,140 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
+
+"""Goto line widget implementation"""
+
+from PyQt5.QtGui import (QHBoxLayout, QToolButton, QLabel, QSizePolicy,
+                         QComboBox, QWidget, QIntValidator)
+from PyQt5.QtCore import Qt
+from utils.pixmapcache import getIcon
+from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
-""" Goto line widget implementation """
+class GotoLineWidget(QWidget):
 
-from PyQt4.QtGui import ( QHBoxLayout, QToolButton, QLabel, QSizePolicy,
-                          QComboBox, QWidget, QIntValidator )
-from utils.pixmapcache import PixmapCache
-from PyQt4.QtCore import Qt
-from mainwindowtabwidgetbase import MainWindowTabWidgetBase
+    """goto bar widget"""
 
+    maxHistory = 32
 
+    def __init__(self, editorsManager, parent=None):
 
-class GotoLineWidget( QWidget ):
-    " goto bar widget "
-
-    maxHistory = 12
-
-    def __init__( self, editorsManager, parent = None ):
-
-        QWidget.__init__( self, parent )
+        QWidget.__init__(self, parent)
         self.editorsManager = editorsManager
 
         self.__gotoHistory = []
 
         # Common graphics items
-        closeButton = QToolButton( self )
-        closeButton.setToolTip( "Click to close the dialog (ESC)" )
-        closeButton.setIcon( PixmapCache().getIcon( "close.png" ) )
-        closeButton.clicked.connect( self.hide )
+        closeButton = QToolButton(self)
+        closeButton.setToolTip("Click to close the dialog (ESC)")
+        closeButton.setIcon(getIcon("close.png"))
+        closeButton.clicked.connect(self.hide)
 
-        lineLabel = QLabel( self )
-        lineLabel.setText( "Goto line:" )
+        lineLabel = QLabel(self)
+        lineLabel.setText("Goto line:")
 
-        self.linenumberEdit = QComboBox( self )
-        self.linenumberEdit.setEditable( True )
-        self.linenumberEdit.setInsertPolicy( QComboBox.InsertAtTop )
-        self.linenumberEdit.setAutoCompletion( False )
-        self.linenumberEdit.setDuplicatesEnabled( False )
-        sizePolicy = QSizePolicy( QSizePolicy.Expanding, QSizePolicy.Fixed )
-        sizePolicy.setHorizontalStretch( 0 )
-        sizePolicy.setVerticalStretch( 0 )
+        self.linenumberEdit = QComboBox(self)
+        self.linenumberEdit.setEditable(True)
+        self.linenumberEdit.setInsertPolicy(QComboBox.InsertAtTop)
+        self.linenumberEdit.setAutoCompletion(False)
+        self.linenumberEdit.setDuplicatesEnabled(False)
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(
-                self.linenumberEdit.sizePolicy().hasHeightForWidth() )
-        self.linenumberEdit.setSizePolicy( sizePolicy )
-        self.validator = QIntValidator( 1, 100000, self )
-        self.linenumberEdit.setValidator( self.validator )
-        self.linenumberEdit.editTextChanged.connect( self.__onEditTextChanged )
-        self.linenumberEdit.lineEdit().returnPressed.connect( self.__onEnter )
+            self.linenumberEdit.sizePolicy().hasHeightForWidth())
+        self.linenumberEdit.setSizePolicy(sizePolicy)
+        self.validator = QIntValidator(1, 100000, self)
+        self.linenumberEdit.setValidator(self.validator)
+        self.linenumberEdit.editTextChanged.connect(self.__onEditTextChanged)
+        self.linenumberEdit.lineEdit().returnPressed.connect(self.__onEnter)
 
-        self.goButton = QToolButton( self )
-        self.goButton.setToolTip( "Click to jump to the line (ENTER)" )
-        self.goButton.setIcon( PixmapCache().getIcon( "gotoline.png" ) )
-        self.goButton.setFocusPolicy( Qt.NoFocus )
-        self.goButton.setEnabled( False )
-        self.goButton.clicked.connect( self.__onGo )
+        self.goButton = QToolButton(self)
+        self.goButton.setToolTip("Click to jump to the line (ENTER)")
+        self.goButton.setIcon(getIcon("gotoline.png"))
+        self.goButton.setFocusPolicy(Qt.NoFocus)
+        self.goButton.setEnabled(False)
+        self.goButton.clicked.connect(self.__onGo)
 
         spacer = QWidget()
-        spacer.setFixedWidth( 1 )
+        spacer.setFixedWidth(1)
 
-        horizontalLayout = QHBoxLayout( self )
-        horizontalLayout.setMargin( 0 )
+        horizontalLayout = QHBoxLayout(self)
+        horizontalLayout.setMargin(0)
 
-        horizontalLayout.addWidget( closeButton )
-        horizontalLayout.addWidget( lineLabel )
-        horizontalLayout.addWidget( self.linenumberEdit )
-        horizontalLayout.addWidget( self.goButton )
-        horizontalLayout.addWidget( spacer )
-        return
+        horizontalLayout.addWidget(closeButton)
+        horizontalLayout.addWidget(lineLabel)
+        horizontalLayout.addWidget(self.linenumberEdit)
+        horizontalLayout.addWidget(self.goButton)
+        horizontalLayout.addWidget(spacer)
 
-    def keyPressEvent( self, event ):
-        """ Handles the key press events """
-
+    def keyPressEvent(self, event):
+        """Handles the key press events"""
         if event.key() == Qt.Key_Escape:
             activeWindow = self.editorsManager.currentWidget()
             if activeWindow:
                 activeWindow.setFocus()
             event.accept()
             self.hide()
-        return
 
-    def __updateHistory( self, txt ):
-        " Updates the combo history "
-
+    def __updateHistory(self, txt):
+        """Updates the combo history"""
         while txt in self.__gotoHistory:
-            self.__gotoHistory.remove( txt )
-        self.__gotoHistory = [ txt ] + self.__gotoHistory
-        self.__gotoHistory = self.__gotoHistory[ : GotoLineWidget.maxHistory ]
+            self.__gotoHistory.remove(txt)
+        self.__gotoHistory = [txt] + self.__gotoHistory
+        self.__gotoHistory = self.__gotoHistory[:GotoLineWidget.maxHistory]
 
         self.linenumberEdit.clear()
-        self.linenumberEdit.addItems( self.__gotoHistory )
-        return
+        self.linenumberEdit.addItems(self.__gotoHistory)
 
-    def show( self ):
-        " Overriden show() method "
+    def show(self):
+        """Overriden show() method"""
         self.linenumberEdit.lineEdit().selectAll()
-        QWidget.show( self )
+        QWidget.show(self)
         self.activateWindow()
-        return
 
-    def setFocus( self ):
-        " Overridded setFocus "
+    def setFocus(self):
+        """Overridded setFocus"""
         self.linenumberEdit.setFocus()
-        return
 
-    def updateStatus( self ):
-        " Triggered when the current tab is changed "
+    def updateStatus(self):
+        """Triggered when the current tab is changed"""
         currentWidget = self.editorsManager.currentWidget()
         status = currentWidget.getType() in \
-                    [ MainWindowTabWidgetBase.PlainTextEditor,
-                      MainWindowTabWidgetBase.VCSAnnotateViewer ]
-        self.linenumberEdit.setEnabled( status )
-        self.goButton.setEnabled( status and
-                                  self.linenumberEdit.currentText() != "" )
-        return
+            [MainWindowTabWidgetBase.PlainTextEditor,
+             MainWindowTabWidgetBase.VCSAnnotateViewer]
+        self.linenumberEdit.setEnabled(status)
+        self.goButton.setEnabled(status and
+                                 self.linenumberEdit.currentText() != "")
 
-    def __onGo( self ):
-        " Triggered when the 'Go!' button is clicked "
+    def __onGo(self):
+        """Triggered when the 'Go!' button is clicked"""
         if self.linenumberEdit.currentText() == "":
             return
 
         currentWidget = self.editorsManager.currentWidget()
         if not currentWidget.getType() in \
-                    [ MainWindowTabWidgetBase.PlainTextEditor,
-                      MainWindowTabWidgetBase.VCSAnnotateViewer ]:
+           [MainWindowTabWidgetBase.PlainTextEditor,
+            MainWindowTabWidgetBase.VCSAnnotateViewer]:
             return
 
         txt = self.linenumberEdit.currentText()
-        self.__updateHistory( txt )
+        self.__updateHistory(txt)
         editor = currentWidget.getEditor()
-        line = min( int( txt ), editor.lines() ) - 1
+        line = min(int(txt), editor.lines()) - 1
 
-        editor.setCursorPosition( line, 0 )
-        editor.ensureLineVisible( line )
+        editor.setCursorPosition(line, 0)
+        editor.ensureLineVisible(line)
         currentWidget.setFocus()
-        return
 
-    def __onEditTextChanged( self, text ):
-        " Triggered when the text has been changed "
-        self.goButton.setEnabled( text != "" )
-        return
+    def __onEditTextChanged(self, text):
+        """Triggered when the text has been changed"""
+        self.goButton.setEnabled(text != "")
 
-    def __onEnter( self ):
-        " Triggered when 'Enter' or 'Return' is clicked "
+    def __onEnter(self):
+        """Triggered when 'Enter' or 'Return' is clicked"""
         self.__onGo()
-        return
 
-    def selectAll( self ):
-        " Selects the line edit content "
+    def selectAll(self):
+        """Selects the line edit content"""
         self.linenumberEdit.lineEdit().selectAll()
-        return
-

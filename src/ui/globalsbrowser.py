@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
 #
 # The file was taken from eric 4.4.3 and adopted for codimension.
@@ -26,22 +24,20 @@
 # Copyright (c) 2007 - 2010 Detlev Offenbach <detlev@die-offenbachs.de>
 #
 
-" Globals browser with hierarchy browsing capabilities "
+"""Globals browser with hierarchy browsing capabilities"""
 
-from utils.pixmapcache     import PixmapCache
-from globalsbrowsermodel   import GlobalsBrowserModel
-from objectsbrowserbase    import ObjectsBrowser
+from utils.pixmapcache import getIcon
+from globalsbrowsermodel import GlobalsBrowserModel
+from objectsbrowserbase import ObjectsBrowser
 
 
-class GlobalsBrowser( ObjectsBrowser ):
-    " Globals browser "
+class GlobalsBrowser(ObjectsBrowser):
 
-    def __init__( self, parent = None ):
+    """Globals browser"""
 
-        ObjectsBrowser.__init__( self, GlobalsBrowserModel(), parent )
-        self.setRootIsDecorated( False )
+    def __init__(self, parent=None):
+        ObjectsBrowser.__init__(self, GlobalsBrowserModel(), parent)
+        self.setRootIsDecorated(False)
 
-        self.setWindowTitle( 'Globals browser' )
-        self.setWindowIcon( PixmapCache().getIcon( 'icon.png' ) )
-        return
-
+        self.setWindowTitle('Globals browser')
+        self.setWindowIcon(getIcon('icon.png'))
