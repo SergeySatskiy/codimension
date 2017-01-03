@@ -29,7 +29,7 @@
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QApplication, QSplashScreen, QColor
-from utils.pixmapcache import PixmapCache
+from utils.pixmapcache import getPixmap
 
 
 class SplashScreen(QSplashScreen):
@@ -41,8 +41,7 @@ class SplashScreen(QSplashScreen):
                                            Qt.AlignRight |
                                            Qt.AlignAbsolute)
 
-        QSplashScreen.__init__(self, None,
-                               PixmapCache().getPixmap('splash.png'))
+        QSplashScreen.__init__(self, None, getPixmap('splash.png'))
 
         self.show()
         QApplication.flush()
