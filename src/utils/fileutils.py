@@ -468,12 +468,17 @@ def __getMagicMimeAndEncoding(fName):
 # - an unknown file type properties: ''
 # - a directory: '/'
 # - broken symlink: '.'
-__filePropertiesCache = {'': [None, 'binary',
-                              getIcon('filemisc.png'), None],
-                         '/': ['inode/directory', 'binary',
-                               getIcon('dirclosed.png'), None],
-                         '.': ['inode/broken-symlink', 'binary',
-                               getIcon('filebrokenlink.png'), None]}
+__filePropertiesCache = None
+
+
+def __initFilePropertiesCache():
+    """Prevents calling getIcon before a QApplication is created"""
+    global __filePropertiesCache
+    __filePropertiesCache = {
+        '': [None, 'binary', getIcon('filemisc.png'), None],
+        '/': ['inode/directory', 'binary', getIcon('dirclosed.png'), None],
+        '.': ['inode/broken-symlink', 'binary',
+              getIcon('filebrokenlink.png'), None]}
 
 
 def getFileProperties(fName, needEncoding=False,
@@ -489,6 +494,9 @@ def getFileProperties(fName, needEncoding=False,
         - fName ends with os.path.sep => directory
         - fName is empy or None => unknown file type
     """
+    if __filePropertiesCache is None:
+        __initFilePropertiesCache()
+
     if not fName:
         return __filePropertiesCache['']
 
@@ -564,6 +572,9 @@ def setFileEncoding(fName, encoding):
     """ Sets the file encoding. It is used when the user specifies
         the encoding explicitly when the file is saved.
     """
+    if __filePropertiesCache is None:
+        __initFilePropertiesCache()
+
     if fName in __filePropertiesCache:
         val = __filePropertiesCache[fName]
         val[1] = encoding
