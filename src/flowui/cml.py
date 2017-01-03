@@ -23,63 +23,7 @@ from sys import maxsize
 from PyQt5.QtGui import QColor
 from cdmcf import (IF_FRAGMENT, FOR_FRAGMENT, WHILE_FRAGMENT, TRY_FRAGMENT,
                    CONTROL_FLOW_FRAGMENT, CLASS_FRAGMENT, FUNCTION_FRAGMENT)
-
-
-def checkColorRange(value):
-    """Checks the color range"""
-    if value < 0 or value > 255:
-        raise Exception("Invalid color value")
-
-
-def readColor(color):
-    """Four options are supported:
-       #hhhhhh             hexadecimal rgb
-       #hhhhhhhh           hexadecimal rgb and alpha
-       ddd,ddd,ddd         decimal rgb
-       ddd,ddd,ddd,ddd     decimal rgb and alpha"""
-    if color.startswith('#'):
-        color = color[1:]
-        length = len(color)
-        if length not in [6, 8]:
-            raise Exception("Invalid hexadecimal color format: #" + color)
-
-        try:
-            # The most common case
-            r = int(color[0:2], 16)
-            checkColorRange(r)
-            g = int(color[2:4], 16)
-            checkColorRange(g)
-            b = int(color[4:6], 16)
-            checkColorRange(b)
-
-            if length == 6:
-                return QColor(r, g, b)
-            a = int(color[6:8], 16)
-            checkColorRange(a)
-            return QColor(r, g, b, a)
-        except:
-            raise Exception("Invalid hexadecimal color format: #" + color)
-
-    parts = color.split(',')
-    length = len(parts)
-    if length not in [3, 4]:
-        raise Exception("Invalid decimal color format: " + color)
-
-    try:
-        r = int(parts[0].strip())
-        checkColorRange(r)
-        g = int(parts[1].strip())
-        checkColorRange(g)
-        b = int(parts[2].strip())
-        checkColorRange(b)
-
-        if length == 3:
-            return QColor(r, g, b)
-        a = int(parts[3].strip())
-        checkColorRange(a)
-        return QColor(r, g, b, a)
-    except:
-        raise Exception("Invalid decimal color format: " + color)
+from utils.colorfont import buildColor
 
 
 class CMLCommentBase:
@@ -180,11 +124,11 @@ class CMLcc(CMLCommentBase):
         CMLVersion.validate(self.ref)
 
         if "background" in self.ref.properties:
-            self.bg = readColor(self.ref.properties["background"])
+            self.bg = buildColor(self.ref.properties["background"])
         if "foreground" in self.ref.properties:
-            self.fg = readColor(self.ref.properties["foreground"])
+            self.fg = buildColor(self.ref.properties["foreground"])
         if "border" in self.ref.properties:
-            self.border = readColor(self.ref.properties["border"])
+            self.border = buildColor(self.ref.properties["border"])
 
         if self.bg is None and self.fg is None and self.border is None:
             raise Exception("The '" + CMLcc.CODE +

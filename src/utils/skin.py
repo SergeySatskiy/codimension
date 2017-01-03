@@ -24,45 +24,8 @@ import logging
 import os
 import ConfigParser
 from PyQt5.QtGui import QColor, QFont, QFontComboBox
+from .colorfont import buildColor
 from csscache import parseSingleCSS
-
-
-def buildColor(colorAsStr):
-    """Converts saved color into QColor object"""
-    colorAsStr = colorAsStr.strip()
-    parts = colorAsStr.split(',')
-    if len(parts) != 4:
-        raise Exception("Unexpected color format")
-    return QColor(int(parts[0]), int(parts[1]),
-                  int(parts[2]), int(parts[3]))
-
-
-def colorAsString(color):
-    """Converts the given color to a string"""
-    return ",".join([str(color.red()),
-                     str(color.green()),
-                     str(color.blue()),
-                     str(color.alpha())])
-
-
-def buildFont(fontAsString):
-    """Converts saved font into QFont object"""
-    fontAsString = fontAsString.strip()
-    font = QFont()
-    font.fromString(fontAsString)
-    return font
-
-
-def getMonospaceFontList():
-    """Provides a list of strings with the system installed monospace fonts"""
-    result = []
-    combo = QFontComboBox()
-    combo.setFontFilters(QFontComboBox.MonospacedFonts)
-    for index in range(combo.count()):
-        face = str(combo.itemText(index))
-        if face.lower() != "webdings":
-            result.append(face)
-    return result
 
 
 class GeneralSkinSetting:
