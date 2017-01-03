@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2016  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,156 +17,143 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-""" Text viewer tab widget """
-
+"""Text viewer tab widget"""
 
 import os.path
 from PyQt4.QtGui import QTextBrowser, QHBoxLayout, QWidget
-from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from PyQt4.QtCore import Qt, pyqtSignal
+from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
-class TextViewer( QTextBrowser ):
-    " Text viewer "
+class TextViewer(QTextBrowser):
+
+    """Text viewer"""
 
     escapePressed = pyqtSignal()
 
-    def __init__( self, parent = None ):
-        QTextBrowser.__init__( self, parent )
-        self.setOpenExternalLinks( True )
+    def __init__(self, parent=None):
+        QTextBrowser.__init__(self, parent)
+        self.setOpenExternalLinks(True)
         self.__copyAvailable = False
-        self.copyAvailable.connect( self.__onCopyAvailable )
-        return
+        self.copyAvailable.connect(self.__onCopyAvailable)
 
-    def __onCopyAvailable( self, available ):
-        " Triggered when copying is available "
+    def __onCopyAvailable(self, available):
+        """Triggered when copying is available"""
         self.__copyAvailable = available
-        return
 
-    def isCopyAvailable( self ):
-        " True if text copying is available "
+    def isCopyAvailable(self):
+        """True if text copying is available"""
         return self.__copyAvailable
 
-    def keyPressEvent( self, event ):
-        " Handles the key press events "
+    def keyPressEvent(self, event):
+        """Handles the key press events"""
         if event.key() == Qt.Key_Escape:
             self.escapePressed.emit()
             event.accept()
         else:
-            QTextBrowser.keyPressEvent( self, event )
-        return
+            QTextBrowser.keyPressEvent(self, event)
 
 
+class TextTabWidget(QWidget, MainWindowTabWidgetBase):
 
-class TextTabWidget( QWidget, MainWindowTabWidgetBase ):
-    " The widget which displays a RO HTML page "
+    """The widget which displays a RO HTML page"""
 
     escapePressed = pyqtSignal()
 
-    def __init__( self, parent = None ):
-        QWidget.__init__( self )
-        MainWindowTabWidgetBase.__init__( self )
+    def __init__(self, parent=None):
+        QWidget.__init__(self)
+        MainWindowTabWidgetBase.__init__(self)
 
-        layout = QHBoxLayout( self )
-        layout.setMargin( 0 )
+        layout = QHBoxLayout(self)
+        layout.setMargin(0)
 
-        self.__editor = TextViewer( self )
-        self.__editor.escapePressed.connect( self.__onEsc )
-        layout.addWidget( self.__editor )
+        self.__editor = TextViewer(self)
+        self.__editor.escapePressed.connect(self.__onEsc)
+        layout.addWidget(self.__editor)
 
         self.__fileName = ""
         self.__shortName = ""
         self.__encoding = "n/a"
-        return
 
-    def __onEsc( self ):
-        " Triggered when Esc is pressed "
+    def __onEsc(self):
+        """Triggered when Esc is pressed"""
         self.escapePressed.emit()
-        return
 
-    def setHTML( self, content ):
-        " Sets the content from the given string "
-        self.__editor.setHtml( content )
-        return
+    def setHTML(self, content):
+        """Sets the content from the given string"""
+        self.__editor.setHtml(content)
 
-    def getHTML( self ):
-        " Provides the currently shown HTML "
+    def getHTML(self):
+        """Provides the currently shown HTML"""
         return self.__editor.toHtml()
 
-    def loadFormFile( self, path ):
-        " Loads the content from the given file "
-        f = open( path, 'r' )
+    def loadFormFile(self, path):
+        """Loads the content from the given file"""
+        f = open(path, 'r')
         content = f.read()
         f.close()
-        self.setHTML( content )
+        self.setHTML(content)
         self.__fileName = path
-        self.__shortName = os.path.basename( path )
-        return
+        self.__shortName = os.path.basename(path)
 
-    def getViewer( self ):
-        " Provides the QTextBrowser "
+    def getViewer(self):
+        """Provides the QTextBrowser"""
         return self.__editor
 
-    def setFocus( self ):
-        " Overridden setFocus "
+    def setFocus(self):
+        """Overridden setFocus"""
         self.__editor.setFocus()
-        return
 
-    def isModified( self ):
-        " Tells if the file is modifed "
+    def isModified(self):
+        """Tells if the file is modifed"""
         return False
 
-    def getRWMode( self ):
-        " Tells the read/write mode "
+    def getRWMode(self):
+        """Tells the read/write mode"""
         return "RO"
 
-    def getType( self ):
-        " Tells the widget type "
+    def getType(self):
+        """Tells the widget type"""
         return MainWindowTabWidgetBase.HTMLViewer
 
-    def getLanguage( self ):
-        " Tells the content language "
+    def getLanguage(self):
+        """Tells the content language"""
         return "n/a"
 
-    def getFileName( self ):
-        " Tells what file name of the widget "
+    def getFileName(self):
+        """Tells what file name of the widget"""
         return self.__fileName
 
-    def setFileName( self, path ):
-        " Sets the file name "
+    def setFileName(self, path):
+        """Sets the file name"""
         self.__fileName = path
-        self.__shortName = os.path.basename( path )
-        return
+        self.__shortName = os.path.basename(path)
 
-    def getEol( self ):
-        " Tells the EOL style "
+    def getEol(self):
+        """Tells the EOL style"""
         return "n/a"
 
-    def getLine( self ):
-        " Tells the cursor line "
+    def getLine(self):
+        """Tells the cursor line"""
         return "n/a"
 
-    def getPos( self ):
-        " Tells the cursor column "
+    def getPos(self):
+        """Tells the cursor column"""
         return "n/a"
 
-    def getEncoding( self ):
-        " Tells the content encoding "
+    def getEncoding(self):
+        """Tells the content encoding"""
         return self.__encoding
 
-    def setEncoding( self, newEncoding ):
-        " Sets the encoding - used for Diff files "
+    def setEncoding(self, newEncoding):
+        """Sets the encoding - used for Diff files"""
         self.__encoding = newEncoding
-        return
 
-    def getShortName( self ):
-        " Tells the display name "
+    def getShortName(self):
+        """Tells the display name"""
         return self.__shortName
 
-    def setShortName( self, name ):
+    def setShortName(self, name):
         " Sets the display name "
         self.__shortName = name
-        return

@@ -200,15 +200,15 @@ class LineCounterDialog(QDialog):
         output = '\n'.join(["Classes:                 " + classes,
                             "Code lines:              " + codeLines,
                             "Empty lines:             " + emptyLines,
-                            "Comment lines:           " + commentLines
+                            "Comment lines:           " + commentLines,
                             "Total lines:             " + totalLines])
 
         if self.__editor is None:
-            output = "Number of python files:  " + nFiles + "\n" \
-                     "Total files size:        " + filesSize + " bytes\n" + \
+            output = 'Number of python files:  ' + nFiles + '\n' \
+                     'Total files size:        ' + filesSize + ' bytes\n' + \
                      output
         else:
-            output = "Number of characters:    " + filesSize + "\n" + \
+            output = 'Number of characters:    ' + filesSize + '\n' + \
                      output
 
         self.resultEdit.setText(output)
