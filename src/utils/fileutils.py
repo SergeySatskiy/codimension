@@ -639,3 +639,17 @@ def getFileContent(fileName, allowException=True, enc=DEFAULT_ENCODING):
         logging.error('Error reading from file ' + fileName + ': ' +
                       str(exc))
         return None
+
+
+def saveToFile(fileName, content, allowException=True, enc=DEFAULT_ENCODING):
+    """Overwrites the file content"""
+    try:
+        with open(fileName, 'w', encoding=enc) as diskfile:
+            diskfile.write(content)
+        return True
+    except Exception as exc:
+        if allowException:
+            raise
+        logging.error('Error writing to file ' + fileName + ': ' +
+                      str(exc))
+    return False

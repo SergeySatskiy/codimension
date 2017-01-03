@@ -22,193 +22,111 @@
 
 import logging
 import os
-import ConfigParser
-from PyQt5.QtGui import QColor, QFont, QFontComboBox
-from .colorfont import buildColor
-from csscache import parseSingleCSS
+import json
+from copy import deepcopy
+from PyQt5.QtGui import QColor
+from .colorfont import buildFont, toJSON, fromJSON
+from .csscache import parseSingleCSS
+from .fileutils import saveToFile
+from .config import DEFAULT_ENCODING
 
 
-class GeneralSkinSetting:
+__DEFAULT_SKIN_SETTINGS = {
+    'name': 'default',
+    'marginPaper': QColor(228, 228, 228, 255),
+    'marginPaperDebug': QColor(255, 228, 228, 255),
+    'marginColor': QColor(128, 128, 128, 255),
+    'marginColorDebug': QColor(128, 128, 128, 255),
+    'revisionMarginPaper': QColor(228, 228, 228, 255),
+    'revisionMarginColor': QColor(0, 128, 0, 255),
+    'revisionAlterPaper': QColor(238, 240, 241, 255),
+    'lineNumFont': buildFont('Monospace,12,-1,5,50,0,0,0,0,0'),
+    'searchMarkColor': QColor(0, 255, 0, 255),
+    'searchMarkPaper': QColor(255, 0, 255, 255),
+    'matchMarkColor': QColor(0, 0, 255, 255),
+    'matchMarkPaper': QColor(255, 255, 0, 255),
+    'spellingMarkColor': QColor(139, 0, 0, 255),
+    'nolexerPaper': QColor(255, 255, 230, 255),
+    'nolexerColor': QColor(0, 0, 0, 255),
+    'nolexerFont': buildFont('Monospace,12,-1,5,50,0,0,0,0,0'),
+    'currentLinePaper': QColor(232, 232, 255, 255),
+    'edgeColor': QColor(127, 127, 127, 128),
+    'matchedBracePaper': QColor(132, 117, 245, 255),
+    'matchedBraceColor': QColor(255, 255, 255, 255),
+    'unmatchedBracePaper': QColor(250, 89, 68, 255),
+    'unmatchedBraceColor': QColor(0, 0, 255, 255),
+    'indentGuidePaper': QColor(230, 230, 230, 255),
+    'indentGuideColor': QColor(127, 127, 127, 255),
+    'debugCurrentLineMarkerPaper': QColor(255, 255, 127, 255),
+    'debugCurrentLineMarkerColor': QColor(0, 0, 255, 255),
+    'debugExcptLineMarkerPaper': QColor(255, 64, 64, 255),
+    'debugExcptLineMarkerColor': QColor(255, 255, 127, 255),
+    'calltipPaper': QColor(220, 255, 220, 255),
+    'calltipColor': QColor(0, 0, 0, 255),
+    'calltipHighColor': QColor(250, 89, 68, 255),
+    'outdatedOutlineColor': QColor(255, 154, 154, 255),
+    'baseMonoFontFace': 'Monospace',
 
-    """Holds a single setting from a general skin config file"""
+    'diffchanged2Color': QColor(0, 0, 0, 255),
+    'diffchanged2Paper': QColor(247, 254, 0, 255),
+    'diffponctColor': QColor(166, 72, 72, 255),
+    'difflineColor': QColor(102, 102, 102, 255),
+    'diffthColor': QColor(255, 255, 255, 255),
+    'diffthPaper': QColor(102, 102, 102, 255),
+    'diffaddedPaper': QColor(197, 250, 175, 255),
+    'diffchangedColor': QColor(102, 102, 102, 255),
+    'diffchangedPaper': QColor(244, 255, 221, 255),
+    'diffdeletedPaper': QColor(255, 204, 204, 255),
+    'diffhunkinfoColor': QColor(166, 72, 72, 255),
+    'diffhunkinfoPaper': QColor(255, 255, 255, 255),
+    'diffunmodifiedColor': QColor(102, 102, 102, 255),
+    'diffunmodifiedPaper': QColor(238, 238, 238, 255),
 
-    TYPE_INT = 0
-    TYPE_COLOR = 1
-    TYPE_FONT = 2
-    TYPE_STRING = 3
-
-    def __init__(self, name, sType, default):
-        self.name = name
-        self.sType = sType
-        self.default = default
-
-
-SKIN_SETTINGS = [
-    GeneralSkinSetting("marginPaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(228, 228, 228, 255)),
-    GeneralSkinSetting("marginPaperDebug", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(255, 228, 228, 255)),
-    GeneralSkinSetting("marginColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(128, 128, 128, 255)),
-    GeneralSkinSetting("marginColorDebug", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(128, 128, 128, 255)),
-    GeneralSkinSetting("revisionMarginPaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(228, 228, 228, 255)),
-    GeneralSkinSetting("revisionMarginColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(0, 128, 0, 255)),
-    GeneralSkinSetting("revisionAlterPaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(238, 240, 241, 255)),
-    GeneralSkinSetting("lineNumFont", GeneralSkinSetting.TYPE_FONT,
-                       buildFont("Monospace,12,-1,5,50,0,0,0,0,0")),
-    GeneralSkinSetting("foldingPaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(255, 255, 255, 255)),
-    GeneralSkinSetting("foldingColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(230, 230, 230, 255)),
-    GeneralSkinSetting("searchMarkColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(0, 255, 0, 255)),
-    GeneralSkinSetting("searchMarkAlpha", GeneralSkinSetting.TYPE_INT,
-                       100 ),
-    GeneralSkinSetting("searchMarkOutlineAlpha", GeneralSkinSetting.TYPE_INT,
-                       100 ),
-    GeneralSkinSetting("searchMarkStyle", GeneralSkinSetting.TYPE_INT,
-                       8 ),
-    GeneralSkinSetting("matchMarkColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(0, 0, 255, 255)),
-    GeneralSkinSetting("matchMarkAlpha", GeneralSkinSetting.TYPE_INT,
-                       100),
-    GeneralSkinSetting("matchMarkOutlineAlpha", GeneralSkinSetting.TYPE_INT,
-                       100),
-    GeneralSkinSetting("matchMarkStyle", GeneralSkinSetting.TYPE_INT,
-                       8),
-    GeneralSkinSetting("spellingMarkColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(139, 0, 0, 255)),
-    GeneralSkinSetting("spellingMarkAlpha", GeneralSkinSetting.TYPE_INT,
-                       100),
-    GeneralSkinSetting("nolexerPaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(255, 255, 230, 255)),
-    GeneralSkinSetting("nolexerColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(0, 0, 0, 255)),
-    GeneralSkinSetting("nolexerFont", GeneralSkinSetting.TYPE_FONT,
-                       buildFont("Monospace,12,-1,5,50,0,0,0,0,0")),
-    GeneralSkinSetting("currentLinePaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(232, 232, 255, 255)),
-    GeneralSkinSetting("edgeColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(127, 127, 127, 255)),
-    GeneralSkinSetting("matchedBracePaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(132, 117, 245, 255)),
-    GeneralSkinSetting("matchedBraceColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(255, 255, 255, 255)),
-    GeneralSkinSetting("unmatchedBracePaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(250, 89, 68, 255)),
-    GeneralSkinSetting("unmatchedBraceColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(0, 0, 255, 255)),
-    GeneralSkinSetting("indentGuidePaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(230, 230, 230, 255)),
-    GeneralSkinSetting("indentGuideColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(127, 127, 127, 255)),
-    GeneralSkinSetting("debugCurrentLineMarkerPaper",
-                       GeneralSkinSetting.TYPE_COLOR,
-                       QColor(255, 255, 127, 255)),
-    GeneralSkinSetting("debugCurrentLineMarkerColor",
-                       GeneralSkinSetting.TYPE_COLOR,
-                       QColor(0, 0, 255, 255)),
-    GeneralSkinSetting("debugExcptLineMarkerPaper",
-                       GeneralSkinSetting.TYPE_COLOR,
-                       QColor(255, 64, 64, 255)),
-    GeneralSkinSetting("debugExcptLineMarkerColor",
-                       GeneralSkinSetting.TYPE_COLOR,
-                       QColor(255, 255, 127, 255)),
-    GeneralSkinSetting("calltipPaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(220, 255, 220, 255)),
-    GeneralSkinSetting("calltipColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(0, 0, 0, 255)),
-    GeneralSkinSetting("calltipHighColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(250, 89, 68, 255)),
-    GeneralSkinSetting("outdatedOutlineColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(255, 154, 154, 255)),
-    GeneralSkinSetting("baseMonoFontFace", GeneralSkinSetting.TYPE_STRING,
-                       "Monospace"),
-
-    GeneralSkinSetting("diffchanged2Color", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(0, 0, 0, 255)),
-    GeneralSkinSetting("diffchanged2Paper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(247, 254, 0, 255)),
-    GeneralSkinSetting("diffponctColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(166, 72, 72, 255)),
-    GeneralSkinSetting("difflineColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(102, 102, 102, 255)),
-    GeneralSkinSetting("diffthColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(255, 255, 255, 255)),
-    GeneralSkinSetting("diffthPaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(102, 102, 102, 255)),
-    GeneralSkinSetting("diffaddedPaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(197, 250, 175, 255)),
-    GeneralSkinSetting("diffchangedColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(102, 102, 102, 255)),
-    GeneralSkinSetting("diffchangedPaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(244, 255, 221, 255)),
-    GeneralSkinSetting("diffdeletedPaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(255, 204, 204, 255)),
-    GeneralSkinSetting("diffhunkinfoColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(166, 72, 72, 255)),
-    GeneralSkinSetting("diffhunkinfoPaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(255, 255, 255, 255)),
-    GeneralSkinSetting("diffunmodifiedColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(102, 102, 102, 255)),
-    GeneralSkinSetting("diffunmodifiedPaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(238, 238, 238, 255)),
-
-    GeneralSkinSetting("ioconsolePaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(255, 255, 230, 255)),
-    GeneralSkinSetting("ioconsoleColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(0, 0, 0, 255)),
-    GeneralSkinSetting("ioconsoleStdoutPaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(255, 255, 230, 255)),
-    GeneralSkinSetting("ioconsoleStdoutColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(0, 0, 0, 255)),
-    GeneralSkinSetting("ioconsoleStdoutBold", GeneralSkinSetting.TYPE_INT,
-                       0),
-    GeneralSkinSetting("ioconsoleStdoutItalic", GeneralSkinSetting.TYPE_INT,
-                       0),
-    GeneralSkinSetting("ioconsoleStdinPaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(255, 255, 230, 255)),
-    GeneralSkinSetting("ioconsoleStdinColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(0, 0, 0, 255)),
-    GeneralSkinSetting("ioconsoleStdinBold", GeneralSkinSetting.TYPE_INT,
-                       0),
-    GeneralSkinSetting("ioconsoleStdinItalic", GeneralSkinSetting.TYPE_INT,
-                       0),
-    GeneralSkinSetting("ioconsoleStderrPaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(255, 228, 228, 255)),
-    GeneralSkinSetting("ioconsoleStderrColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(0, 0, 0, 255)),
-    GeneralSkinSetting("ioconsoleStderrBold", GeneralSkinSetting.TYPE_INT,
-                       0),
-    GeneralSkinSetting("ioconsoleStderrItalic", GeneralSkinSetting.TYPE_INT,
-                       0),
-    GeneralSkinSetting("ioconsoleIDEMsgPaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(228, 228, 228, 255)),
-    GeneralSkinSetting("ioconsoleIDEMsgColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(0, 0, 255, 255)),
-    GeneralSkinSetting("ioconsolemarginPaper", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(228, 228, 228, 255)),
-    GeneralSkinSetting("ioconsolemarginColor", GeneralSkinSetting.TYPE_COLOR,
-                       QColor(128, 128, 128, 255)),
-    GeneralSkinSetting("ioconsolemarginFont", GeneralSkinSetting.TYPE_FONT,
-                       buildFont("Monospace,12,-1,5,50,0,0,0,0,0"))]
+    'ioconsolePaper': QColor(255, 255, 230, 255),
+    'ioconsoleColor': QColor(0, 0, 0, 255),
+    'ioconsoleStdoutPaper': QColor(255, 255, 230, 255),
+    'ioconsoleStdoutColor': QColor(0, 0, 0, 255),
+    'ioconsoleStdoutBold': False,
+    'ioconsoleStdoutItalic': False,
+    'ioconsoleStdinPaper': QColor(255, 255, 230, 255),
+    'ioconsoleStdinColor': QColor(0, 0, 0, 255),
+    'ioconsoleStdinBold': False,
+    'ioconsoleStdinItalic': False,
+    'ioconsoleStderrPaper': QColor(255, 228, 228, 255),
+    'ioconsoleStderrColor': QColor(0, 0, 0, 255),
+    'ioconsoleStderrBold': False,
+    'ioconsoleStderrItalic': False,
+    'ioconsoleIDEMsgPaper': QColor(228, 228, 228, 255),
+    'ioconsoleIDEMsgColor': QColor(0, 0, 255, 255),
+    'ioconsolemarginPaper': QColor(228, 228, 228, 255),
+    'ioconsolemarginColor': QColor(128, 128, 128, 255),
+    'ioconsolemarginFont': buildFont('Monospace,12,-1,5,50,0,0,0,0,0')}
 
 
-class SkinData:
-
-    """Bad excuse to have it due to __getattr__/__setattr__ in the Skin class"""
-
-    def __init__( self ):
-        self.isOK = True
-        self.dirName = None
-        self.name = ""
-        self.appCSS = ""
-
-        self.values = {}
+__DEFAULT_APP_CSS = """
+QStatusBar::item
+{ border: 0px solid black }
+QToolTip
+{ font-size: 11px;
+  border: 1px solid gray;
+  border-radius: 3px;
+  background: QLinearGradient(x1: 0, y1: 0,
+                              x2: 0, y2: 1,
+                              stop: 0 #eef, stop: 1 #ccf);
+}
+QTreeView
+{ alternate-background-color: #eef0f1;
+  background-color: #ffffe6; }
+QLineEdit
+{ background-color: #ffffe6; }
+QComboBox
+{ background-color: #ffffe6; color: black; }
+QComboBox QAbstractItemView
+{ outline: 0px; }
+QTextEdit
+{ background-color: #ffffe6; }
+QListView
+{ background-color: #ffffe6; }"""
 
 
 class Skin:
@@ -217,294 +135,104 @@ class Skin:
 
     def __init__(self):
         # That's a trick to be able to implement getattr/setattr
-        self.__dict__[ "data" ] = SkinData()
+        self.__dirName = None
+        self.__appCSS = None
+        self.__values = {}
         self.__reset()
-        return
 
     def __reset(self):
-        " Resets all the values to the default "
-        self.data.name = "default"
-        self.data.appCSS = """
-            QStatusBar::item
-            { border: 0px solid black }
-            QToolTip
-            { font-size: 11px;
-              border: 1px solid gray;
-              border-radius: 3px;
-              background: QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #eef, stop: 1 #ccf );
-            }
-            QTreeView
-            { alternate-background-color: #eef0f1;
-              background-color: #ffffe6; }
-            QLineEdit
-            { background-color: #ffffe6; }
-            QComboBox
-            { background-color: #ffffe6; color: black; }
-            QComboBox QAbstractItemView
-            { outline: 0px; }
-            QTextEdit
-            { background-color: #ffffe6; }
-            QListView
-            { background-color: #ffffe6; }"""
+        """Resets all the values to the default"""
+        self.__values = deepcopy(__DEFAULT_SKIN_SETTINGS)
+        self.__appCSS = deepcopy(__DEFAULT_APP_CSS)
 
-        for setting in SKIN_SETTINGS:
-            self.data.values[ setting.name ] = setting.default
+    def __getitem__(self, key):
+        if key == 'appCSS':
+            return self.__appCSS
+        return self.__values[key]
 
+    def __setitem__(self, key, value):
+        if key == 'name':
+            raise Exception('Cannot change the skin name. It must match '
+                            'the name of the skin directory.')
+        if key == 'appCSS':
+            self.__appCSS = value
+            self.flushCSS()
+        else:
+            self.__values[key] = value
+            self.flush()
 
-    def load( self, dirName ):
-        " Loads the skin description from the given directory "
-        self.data.dirName = os.path.abspath( dirName )
-        self.data.name = os.path.basename( dirName )
+    def flush(self):
+        """Saves the values to the disk"""
+        if self.__dirName:
+            fName = self.__dirName + 'skin.json'
+            try:
+                with open(fName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
+                    json.dump(self.__values, diskfile, default=toJSON)
+            except Exception as exc:
+                logging.error('Error saving skin settings (to ' +
+                              fName + '): ' + str(exc))
 
-        # Load the skin description
-        self.data.dirName += os.path.sep
-        appFile = self.data.dirName + "application.css"
-        if not os.path.exists( appFile ):
-            logging.warning( "Cannot find " + appFile +
-                             ". Default skin will be used." )
-            self.__reset()
+    def flushCSS(self):
+        """Saves the CSS to the disk"""
+        if self.__dirName:
+            # Note: comments and includes are lost here if they were in the
+            # original css
+            saveToFile(self.__dirName + 'app.css', self.__appCSS,
+                       allowException=False)
+
+    def load(self, dirName):
+        """Loads the skin description from the given directory"""
+        dName = os.path.realpath(dirName)
+        if not os.path.isdir(dName):
+            logging.error('Cannot load a skin from ' + dName + '. A directory '
+                          'name is expected.')
             return False
 
-        generalFile = self.data.dirName + "general"
-        if not os.path.exists( generalFile ):
-            logging.warning( "Cannot find " + generalFile +
-                             ". Default skin will be used." )
-            self.__reset()
+        self.__dirName = dName + os.path.sep
+
+        appFile = self.__dirName + 'app.css'
+        if not os.path.exists(appFile):
+            logging.error('Cannot load a skin from ' + dName +
+                          '. The application css file ' + appFile +
+                          ' is not found.')
             return False
 
-        lexersFile = self.data.dirName + "lexers"
-        if not os.path.exists( lexersFile ):
-            logging.warning( "Cannot find " + lexersFile +
-                             ". Default skin will be used." )
-            self.__reset()
+        skinFile = self.__dirName + 'skin.json'
+        if not os.path.exists(skinFile):
+            logging.error('Cannot load a skin from ' + dName +
+                          '. The skin settings file ' + skinFile +
+                          ' is not found.')
             return False
 
         # All the files are in place. Load them
-        if not self.__loadAppCSS( appFile ):
-            self.__saveAppCSS( appFile )
-        if not self.__loadGeneral( generalFile ):
-            self.__saveGeneral( generalFile )
-        if not self.__loadLexers( lexersFile ):
-            self.__reset()
-            return False
-
+        if not self.__loadAppCSS(appFile):
+            self.flushCSS()
+        if not self.__loadSkin(skinFile):
+            self.flush()
         return True
 
-    def __loadAppCSS( self, fName ):
-        " Loads the application CSS file "
+    def __loadAppCSS(self, fName):
+        """Loads the application CSS file"""
         try:
             content = []
-            parseSingleCSS( fName, content )
-            self.data.appCSS = "".join( content )
-        except:
-            logging.warning( "Cannot read application CSS from " + fName +
-                             ". The file will be updated with a default CSS." )
+            parseSingleCSS(fName, content)
+            self.__appCSS = ''.join(content)
+        except Exception as exc:
+            logging.error('Cannot read an application CSS from ' + fName +
+                          ': ' + str(exc) +
+                          '\nThe file will be updated with a default CSS')
             return False
         return True
 
-    def __getColor( self, config, section, value ):
-        " Reads a value from the given section "
+    def __loadSkin(self, fName):
+        """Loads the general settings file"""
         try:
-            return buildColor( config.get( section, value ) )
-        except:
-            self.data.isOK = False
-            return None
-
-    def __getFont( self, config, section, value ):
-        " Reads a value from the given section "
-        try:
-            return buildFont( config.get( section, value ) )
-        except:
-            self.data.isOK = False
-            return None
-
-    def __getInt( self, config, section, value ):
-        " Reads a value from the given section "
-        try:
-            return config.getint( section, value )
-        except:
-            self.data.isOK = False
-            return None
-
-    def __getString( self, config, section, value ):
-        " Reads a string value from the given section "
-        try:
-            return config.get( section, value )
-        except:
-            self.data.isOK = False
-            return None
-
-    def __loadGeneral( self, fName ):
-        " Loads the general settings file "
-        config = ConfigParser.ConfigParser()
-        try:
-            config.read( [ fName ] )
-        except:
-            logging.warning( "Cannot read the skin file " + fName +
-                             ". The file will be updated with default values." )
+            with open(fName, 'r', encoding=DEFAULT_ENCODING) as diskfile:
+                self.__values = json.load(diskfile, object_hook=fromJSON)
+        except Exception as exc:
+            logging.error('Cannot read skin settings from ' + fName +
+                          ': ' + str(exc) +
+                          '\nThe file will be updated with '
+                          'default skin settings')
             return False
-
-        for setting in SKIN_SETTINGS:
-            if setting.sType == GeneralSkinSetting.TYPE_INT:
-                val = self.__getInt( config, "general", setting.name.lower() )
-                if val is not None:
-                    self.data.values[ setting.name ] = val
-            elif setting.sType == GeneralSkinSetting.TYPE_COLOR:
-                val = self.__getColor( config, "general", setting.name.lower() )
-                if val is not None:
-                    self.data.values[ setting.name ] = val
-            elif setting.sType == GeneralSkinSetting.TYPE_FONT:
-                val = self.__getFont( config, "general", setting.name.lower() )
-                if val is not None:
-                    self.data.values[ setting.name ] = val
-            elif setting.sType == GeneralSkinSetting.TYPE_STRING:
-                val = self.__getString( config, "general", setting.name.lower() )
-                if val is not None:
-                    self.data.values[ setting.name ] = val
-            else:
-                raise Exception( "Unsupported setting type: " +
-                                 str( setting.sType ) )
-        return self.data.isOK
-
-    def __saveGeneral( self, fName ):
-        " Writes the general skin file "
-        try:
-            f = open( fName, "w" )
-            f.write( "# Automatically updated due to missed or corrupted values\n" )
-            f.write( "#\n" )
-            f.write( "# Note: indicator style values (searchMarkStyle, matchMarkStyle) are described here:\n" )
-            f.write( "# http://www.scintilla.org/ScintillaDoc.html#SCI_INDICSETSTYLE\n" )
-            f.write( "[general]\n" )
-            f.write( "name=" + self.data.name + "\n\n" )
-
-            for setting in SKIN_SETTINGS:
-                if setting.sType == GeneralSkinSetting.TYPE_INT:
-                    f.write( setting.name.lower() + "=" +
-                             str( self.data.values[ setting.name ] ) + "\n" )
-                elif setting.sType == GeneralSkinSetting.TYPE_COLOR:
-                    f.write( setting.name.lower() + "=" +
-                             colorAsString( self.data.values[ setting.name ] ) + "\n" )
-                elif setting.sType == GeneralSkinSetting.TYPE_FONT:
-                    f.write( setting.name.lower() + "=" +
-                             self.data.values[ setting.name ].toString() + "\n" )
-                elif setting.sType == GeneralSkinSetting.TYPE_STRING:
-                    f.write( setting.name.lower() + "=" +
-                             self.data.values[ setting.name ] + "\n" )
-                else:
-                    raise Exception( "Unsupported setting type: " +
-                                     str( setting.sType ) )
-
-            f.close()
-        except:
-            logging.warning( "Could not write skin file " + fName )
-        return
-
-    def __saveAppCSS( self, appFile ):
-        " Writes the application CSS "
-        try:
-            f = open( appFile, "w" )
-            f.write( self.data.appCSS + "\n" )
-            f.close()
-        except:
-            logging.warning( "Could not write skin CSS file " + appFile )
-        return
-
-    def setMainEditorFont( self, font ):
-        """ Updates what is stored in the lexers and general settings.
-            The only font family and font size are respected """
-
-        def replaceFontWith( line, family, size ):
-            " Replaces the font face and size in line from a config file "
-            parts = line.split( '=' )
-            identifier = parts[ 0 ]
-            value = parts[ 1 ]
-
-            parts = value.split( ',' )
-            parts[ 0 ] = family
-            parts[ 1 ] = size
-
-            return identifier + '=' + ','.join( parts )
-
-
-        if self.data.dirName is None:
-            raise Exception( "The skin is not loaded" )
-
-        lexersFile = self.data.dirName + "lexers"
-        if not os.path.exists( lexersFile ):
-            raise Exception( "Cannot find the lexers file. Expected here: " +
-                             lexersFile )
-
-        f = open( lexersFile, "r" )
-        content = f.read()
-        f.close()
-
-        fontAsString = str( font.toString() ).split( "," )
-        family = fontAsString[ 0 ]
-        size = fontAsString[ 1 ]
-
-        updatedContent = []
-        for line in content.splitlines():
-            line = line.strip()
-            if line.startswith( "font" ):
-                updatedContent.append( replaceFontWith( line, family, size ) )
-            else:
-                updatedContent.append( line )
-
-        f = open( lexersFile, "w" )
-        f.write( "\n".join( updatedContent ) )
-        f.close()
-        f = None
-
-        generalFile = self.data.dirName + "general"
-        if not os.path.exists( generalFile ):
-            raise Exception( "Cannot find the general skin file. Expected here: " +
-                             generalFile )
-
-        f = open( generalFile, "r" )
-        content = f.read()
-        f.close()
-
-        updatedContent = []
-        for line in content.splitlines():
-            line = line.strip()
-            if line.startswith( "nolexerfont" ):
-                updatedContent.append( replaceFontWith( line, family, size ) )
-            elif line.startswith( "linenumfont" ):
-                updatedContent.append( replaceFontWith( line, family, size ) )
-            elif line.startswith( "ioconsolemarginfont" ):
-                updatedContent.append( replaceFontWith( line, family, size ) )
-            else:
-                updatedContent.append( line )
-
-        f = open( generalFile, "w" )
-        f.write( "\n".join( updatedContent ) )
-        f.close()
-        f = None
-        return
-
-    def setBaseMonoFontFace(self, fontFace):
-        """Updates the base mono font face"""
-        if self.data.dirName is None:
-            raise Exception("The skin is not loaded")
-
-        generalFile = self.data.dirName + "general"
-        if not os.path.exists(generalFile):
-            raise Exception("Cannot find the general skin file. "
-                            "Expected here: " + generalFile)
-
-        f = open(generalFile, "r")
-        content = f.read()
-        f.close()
-
-        updatedContent = []
-        for line in content.splitlines():
-            line = line.strip()
-            if line.startswith( "basemonofontface" ):
-                updatedContent.append( "basemonofontface=" +fontFace )
-            else:
-                updatedContent.append( line )
-
-        f = open( generalFile, "w" )
-        f.write( "\n".join( updatedContent ) )
-        f.close()
-        f = None
+        return True

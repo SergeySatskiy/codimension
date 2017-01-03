@@ -140,7 +140,7 @@ def fromJSON(jsonObj):
     """Custom deserialization"""
     if '__class__' in jsonObj:
         if jsonObj['__class__'] == 'QColor':
-            return buildColor(jsonObj['__value__']
+            return buildColor(jsonObj['__value__'])
         if jsonObj['__class__'] == 'QFont':
-            return buildFont(jsonObj['__value__']
+            return buildFont(jsonObj['__value__'])
     return jsonObj
