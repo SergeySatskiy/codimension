@@ -23,7 +23,6 @@
 import os.path
 from copy import deepcopy
 from .fileutils import loadJSON, saveJSON
-from .settings import Settings
 
 
 # The 'find' item is for the search in the buffer dialogue. Each item is a
@@ -58,7 +57,9 @@ class SearchEnvironment:
     def __init__(self):
         self.__props = deepcopy(__DEFAULT_SEARCH_HISTORY)
         self.__fileName = None
-        self.__limit = Settings()['maxSearchEntries']
+
+        # Default. Could be updated later
+        self.__limit = 32
 
     def reset(self):
         """Un-binds from the file system"""
@@ -109,6 +110,10 @@ class SearchEnvironment:
         else:
             self.__props[item] = history
         SearchEnvironment.save(self)
+
+    def setLimit(self, newLimit):
+        """Sets the new limit"""
+        self.__limit = newLimit
 
     @property
     def findClassHistory(self):

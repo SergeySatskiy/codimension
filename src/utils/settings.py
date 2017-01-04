@@ -290,6 +290,9 @@ class SettingsWrapper(QObject,
             self.__saveErrors("\n".join(readErrors))
             self.flush()
 
+        SearchEnvironment.setLimit(self, self.__values['maxSearchEntries'])
+        FileSystemEnvironment.setLimit(self, self.__values['maxRecentFiles'])
+
     @staticmethod
     def __saveErrors(message):
         """Appends the message to the startup errors file"""

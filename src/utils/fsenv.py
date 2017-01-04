@@ -23,7 +23,6 @@
 import os.path
 from copy import deepcopy
 from .fileutils import loadJSON, saveJSON
-from .settings import Settings
 
 
 # toplevel dirs: those which are added to the file system browser
@@ -43,7 +42,9 @@ class FileSystemEnvironment:
     def __init__(self):
         self.__props = deepcopy(__DEFAULT_FS_PROPS)
         self.__fileName = None
-        self.__limit = Settings()['maxRecentFiles']
+
+        # Default. Could be updated later.
+        self.__limit = 32
 
     def reset(self):
         """Resets the binding to the file system"""
@@ -77,6 +78,10 @@ class FileSystemEnvironment:
         """Saves the file system environment into a file"""
         if self.__fileName:
             saveJSON(self.__fileName, self.__props, 'file system environment')
+
+    def setLimit(self, newLimit):
+        """Sets the new limit to the number of entries"""
+        self.__limit = newLimit
 
     @property
     def tabStatus(self):
