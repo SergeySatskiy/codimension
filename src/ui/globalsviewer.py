@@ -27,7 +27,7 @@ from PyQt4.QtGui        import ( QMenu, QWidget, QAction, QVBoxLayout,
                                  QToolBar, QCursor, QLabel, QSizePolicy,
                                  QItemSelectionModel )
 from combobox           import CDMComboBox
-from utils.pixmapcache  import PixmapCache
+from utils.pixmapcache  import getIcon
 from utils.globals      import GlobalData
 from utils.project      import CodimensionProject
 from globalsbrowser     import GlobalsBrowser
@@ -52,15 +52,15 @@ class GlobalsViewer( QWidget ):
         # create the context menu
         self.__menu = QMenu( self )
         self.__jumpMenuItem = self.__menu.addAction( \
-                                PixmapCache().getIcon( 'definition.png' ),
+                                getIcon( 'definition.png' ),
                                 'Jump to definition', self.__goToDefinition )
         self.__menu.addSeparator()
         self.__findMenuItem = self.__menu.addAction( \
-                                PixmapCache().getIcon( 'findusage.png' ),
+                                getIcon( 'findusage.png' ),
                                 'Find occurence', self.__findWhereUsed )
         self.__menu.addSeparator()
         self.__copyMenuItem = self.__menu.addAction( \
-                                PixmapCache().getIcon( 'copytoclipboard.png' ),
+                                getIcon( 'copytoclipboard.png' ),
                                 'Copy path to clipboard',
                                 self.globalsViewer.copyToClipboard )
         self.globalsViewer.setContextMenuPolicy( Qt.CustomContextMenu )
@@ -85,21 +85,21 @@ class GlobalsViewer( QWidget ):
 
         # Toolbar part - buttons
         self.definitionButton = QAction(
-                PixmapCache().getIcon( 'definition.png' ),
+                getIcon( 'definition.png' ),
                 'Jump to highlighted item definition', self )
         self.definitionButton.triggered.connect( self.__goToDefinition )
         self.findButton = QAction(
-                PixmapCache().getIcon( 'findusage.png' ),
+                getIcon( 'findusage.png' ),
                 'Find highlighted item occurences', self )
         self.findButton.triggered.connect( self.__findWhereUsed )
         self.copyPathButton = QAction(
-                PixmapCache().getIcon( 'copytoclipboard.png' ),
+                getIcon( 'copytoclipboard.png' ),
                 'Copy path to clipboard', self )
         self.copyPathButton.triggered.connect(
                                         self.globalsViewer.copyToClipboard )
 
         self.findNotUsedButton = QAction(
-                PixmapCache().getIcon( 'notused.png' ),
+                getIcon( 'notused.png' ),
                 'Unused global variable analysis', self )
         self.findNotUsedButton.triggered.connect( self.__findNotUsed )
         self.findNotUsedButton.setEnabled( False )

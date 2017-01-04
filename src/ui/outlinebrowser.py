@@ -27,7 +27,7 @@ from PyQt4.QtGui import QTreeView, QPalette
 from PyQt4.QtCore import QVariant
 from utils.globals import GlobalData
 from browsermodelbase import BrowserModelBase
-from utils.pixmapcache import PixmapCache
+from utils.pixmapcache import getIcon
 from filesbrowserbase import FilesBrowser
 from viewitems import ( DirectoryItemType, SysPathItemType, GlobalsItemType,
                         ImportsItemType, FunctionsItemType, ClassesItemType,
@@ -84,7 +84,7 @@ class OutlineBrowser( FilesBrowser ):
         self.setHeaderHighlight( False )
 
         self.setWindowTitle( 'File outline' )
-        self.setWindowIcon( PixmapCache().getIcon( 'icon.png' ) )
+        self.setWindowIcon( getIcon( 'icon.png' ) )
         return
 
     @staticmethod

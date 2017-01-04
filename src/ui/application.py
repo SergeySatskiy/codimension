@@ -22,7 +22,7 @@
 
 from PyQt5.QtCore import Qt, QEvent
 from PyQt5.QtGui import QApplication, QMenuBar
-from utils.pixmapcache import PixmapCache
+from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from .garbagecollector import GarbageCollector
 
@@ -58,7 +58,7 @@ class CodimensionApplication(QApplication):
         # already been destroyed. Without checking that a widget is still alive
         # (e.g. clicking 'Cancel' in a dialog box) leads to a core dump.
 
-        QApplication.setWindowIcon(PixmapCache().getIcon('icon.png'))
+        QApplication.setWindowIcon(getIcon('icon.png'))
 
         self.focusChanged.connect(self.__onFocusChanged)
 

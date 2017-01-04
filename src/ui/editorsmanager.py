@@ -34,7 +34,7 @@ from PyQt4.QtCore import Qt, SIGNAL, QVariant, QDir, QUrl, pyqtSignal
 from PyQt4.QtGui import ( QTabWidget, QDialog, QMessageBox, QWidget,
                           QHBoxLayout, QMenu, QToolButton, QShortcut,
                           QFileDialog, QApplication, QTabBar, QIcon )
-from utils.pixmapcache import PixmapCache
+from utils.pixmapcache import getIcon
 from welcomewidget import WelcomeWidget
 from helpwidget import QuickHelpWidget
 from editor.texteditor import TextEditorTabWidget
@@ -142,40 +142,40 @@ class EditorsManager( QTabWidget ):
         # Context menu
         self.__tabContextMenu = QMenu( self )
         self.__highlightInPrjAct = self.__tabContextMenu.addAction(
-                                PixmapCache().getIcon( "highlightmenu.png" ),
+                                getIcon( "highlightmenu.png" ),
                                 "&Highlight in project browser",
                                 self.onHighlightInPrj )
         self.__highlightInFSAct = self.__tabContextMenu.addAction(
-                                PixmapCache().getIcon( "highlightmenu.png" ),
+                                getIcon( "highlightmenu.png" ),
                                 "H&ighlight in file system browser",
                                 self.onHighlightInFS )
         self.__tabContextMenu.addSeparator()
         self.__cloneAct = self.__tabContextMenu.addAction(
-                                PixmapCache().getIcon( "clonetabmenu.png" ),
+                                getIcon( "clonetabmenu.png" ),
                                 "&Clone",
                                 self.onClone )
         self.__copyFullPathAct = self.__tabContextMenu.addAction(
-                                PixmapCache().getIcon( "copytoclipboard.png" ),
+                                getIcon( "copytoclipboard.png" ),
                                 "Copy full &path to clipboard",
                                 self.__copyTabFullPath )
         self.__copyDirPathAct = self.__tabContextMenu.addAction(
-                                PixmapCache().getIcon( "" ),
+                                getIcon( "" ),
                                 "Copy directory p&ath to clipboard",
                                 self.__copyTabDirPath )
         self.__copyFileNameAct = self.__tabContextMenu.addAction(
-                                PixmapCache().getIcon( "" ),
+                                getIcon( "" ),
                                 "Copy &file name to clipboard",
                                 self.__copyTabFileName )
         self.__reloadAct = self.__tabContextMenu.addAction(
-                                PixmapCache().getIcon( "reload.png" ),
+                                getIcon( "reload.png" ),
                                 "&Reload", self.onReload )
         self.__closeOtherAct = self.__tabContextMenu.addAction(
-                                PixmapCache().getIcon( "" ),
+                                getIcon( "" ),
                                 "Close oth&er tabs",
                                 self.onCloseOther )
         self.__tabContextMenu.addSeparator()
         self.__delCurrentAct = self.__tabContextMenu.addAction(
-                                PixmapCache().getIcon( "trash.png" ),
+                                getIcon( "trash.png" ),
                                 "Close and &delete from disk",
                                 self.__closeDelete )
         self.tabBar().setContextMenuPolicy( Qt.CustomContextMenu )
@@ -698,14 +698,14 @@ class EditorsManager( QTabWidget ):
         self.__navigationMenu.triggered.connect( self.__navigationMenuTriggered )
 
         newTabButton = QToolButton( self )
-        newTabButton.setIcon( PixmapCache().getIcon( "newfiletab.png" ) )
+        newTabButton.setIcon( getIcon( "newfiletab.png" ) )
         newTabButton.setToolTip( "New file (Ctrl+N)" )
         newTabButton.setEnabled( True )
         newTabButton.clicked.connect( self.newTabClicked )
         rightCornerWidgetLayout.addWidget( newTabButton )
         self.navigationButton = QToolButton( self )
         self.navigationButton.setIcon(
-                PixmapCache().getIcon( "1downarrow.png" ) )
+                getIcon( "1downarrow.png" ) )
         self.navigationButton.setToolTip( "List the open tabs" )
         self.navigationButton.setPopupMode( QToolButton.InstantPopup )
         self.navigationButton.setMenu( self.__navigationMenu )
@@ -729,7 +729,7 @@ class EditorsManager( QTabWidget ):
         leftCornerWidgetLayout.setSpacing( 0 )
         self.historyBackButton = QToolButton( self )
         self.historyBackButton.setIcon(
-                PixmapCache().getIcon( "1leftarrow.png" ) )
+                getIcon( "1leftarrow.png" ) )
         self.historyBackButton.setToolTip( "Back (Alt+PgDown)" )
         self.historyBackButton.setShortcut( "Alt+PgDown" )
         self.historyBackButton.setPopupMode( QToolButton.DelayedPopup )
@@ -739,7 +739,7 @@ class EditorsManager( QTabWidget ):
         leftCornerWidgetLayout.addWidget( self.historyBackButton )
         self.historyFwdButton = QToolButton( self )
         self.historyFwdButton.setIcon(
-                PixmapCache().getIcon( "1rightarrow.png" ) )
+                getIcon( "1rightarrow.png" ) )
         self.historyFwdButton.setToolTip( "Forward (Alt+PgUp)" )
         self.historyFwdButton.setShortcut( "Alt+PgUp" )
         self.historyFwdButton.setPopupMode( QToolButton.DelayedPopup )
@@ -888,7 +888,7 @@ class EditorsManager( QTabWidget ):
             if not widget.doesFileExist():
                 self.setTabToolTip( widgetIndex,
                                     "The file does not exist on the disk" )
-                icon = PixmapCache().getIcon( 'disappearedfile.png' )
+                icon = getIcon( 'disappearedfile.png' )
                 self.setTabIcon( widgetIndex, icon )
                 self.history.updateIconForTab( widget.getUUID(), icon )
                 return
@@ -896,7 +896,7 @@ class EditorsManager( QTabWidget ):
                 self.setTabToolTip( widgetIndex,
                                     "The file has been modified "
                                     "outside codimension" )
-                icon = PixmapCache().getIcon( 'modifiedfile.png' )
+                icon = getIcon( 'modifiedfile.png' )
                 self.setTabIcon( widgetIndex, icon )
                 self.history.updateIconForTab( widget.getUUID(), icon )
                 return
@@ -910,7 +910,7 @@ class EditorsManager( QTabWidget ):
         try:
             info = GlobalData().briefModinfoCache.get( fileName )
             if info.errors  or info.lexerErrors:
-                icon = PixmapCache().getIcon( 'filepythonbroken.png' )
+                icon = getIcon( 'filepythonbroken.png' )
                 self.setTabIcon( widgetIndex, icon )
                 self.setTabToolTip( widgetIndex,
                                     "The disk version of file "
@@ -926,7 +926,7 @@ class EditorsManager( QTabWidget ):
                     self.setTabToolTip( widgetIndex, "" )
         except:
             self.setTabToolTip( widgetIndex, "" )
-            icon = PixmapCache().getIcon( 'filepythonbroken.png' )
+            icon = getIcon( 'filepythonbroken.png' )
             self.setTabIcon( widgetIndex, icon )
             self.history.updateIconForTab( widget.getUUID(), icon )
         return

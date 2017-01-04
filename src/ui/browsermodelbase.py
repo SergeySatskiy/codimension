@@ -48,7 +48,7 @@ from viewitems import ( TreeViewItem, TreeViewDirectoryItem, TreeViewFileItem,
                         FunctionItemType, ClassItemType, ImportItemType )
 from utils.fileutils import detectFileType, PythonFileType, Python3FileType
 from utils.globals import GlobalData
-from utils.pixmapcache import PixmapCache
+from utils.pixmapcache import getIcon
 
 
 
@@ -311,8 +311,7 @@ class BrowserModelBase( QAbstractItemModel ):
 
                         if modInfo.isOK == False:
                             # Substitute icon and change the tooltip
-                            node.icon = PixmapCache().getIcon(
-                                                'filepythonbroken.png' )
+                            node.icon = getIcon('filepythonbroken.png')
                             if node.toolTip != "":
                                 node.toolTip += "\n\n"
                             node.toolTip += "Parsing errors:\n" + \

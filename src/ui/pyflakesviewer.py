@@ -24,7 +24,7 @@
  
 from PyQt4.QtCore import SIGNAL, QTimer, QObject, Qt, QVariant
 from PyQt4.QtGui import QMenu
-from utils.pixmapcache import PixmapCache
+from utils.pixmapcache import getIcon, getPixmap
 from utils.fileutils import PythonFileType, Python3FileType, detectFileType
 from mainwindowtabwidgetbase import MainWindowTabWidgetBase
 from analysis.ierrors import getFileErrors
@@ -250,7 +250,7 @@ class PyflakesViewer( QObject ):
         contextMenu = QMenu( self.__uiLabel )
         for item in messages:
             act = contextMenu.addAction(
-                        PixmapCache().getIcon( 'pyflakesmsgmarker.png' ),
+                        getIcon( 'pyflakesmsgmarker.png' ),
                         "Line " + str( item[ 1 ] ) + ": " + item[ 0 ] )
             act.setData( QVariant( item[ 1 ] ) )
         self.connect( contextMenu, SIGNAL( "triggered(QAction*)" ),
@@ -333,11 +333,11 @@ class PyflakesViewer( QObject ):
                     # buffer compilation problems
                     editor.addPyflakesMessage( lineno, msg )
             label.setToolTip( complains.replace( " ", "&nbsp;" ) )
-            label.setPixmap( PixmapCache().getPixmap( 'flakeserrors.png' ) )
+            label.setPixmap( getPixmap( 'flakeserrors.png' ) )
         else:
             # There are no complains
             label.setToolTip( "File checked: no pyflakes complains" )
-            label.setPixmap( PixmapCache().getPixmap( 'flakesok.png' ) )
+            label.setPixmap( getPixmap( 'flakesok.png' ) )
         return
 
     @staticmethod
@@ -346,13 +346,13 @@ class PyflakesViewer( QObject ):
             for a time slice to start checking """
         label.setToolTip( "File is modified: "
                           "pyflakes is waiting for time slice" )
-        label.setPixmap( PixmapCache().getPixmap( 'flakesmodified.png' ) )
+        label.setPixmap( getPixmap( 'flakesmodified.png' ) )
         return
 
     @staticmethod
     def setFlakesNotAvailable( label ):
         " Displays the appropriate icon that pyflakes is not available "
         label.setToolTip( "Not a python file: pyflakes is sleeping" )
-        label.setPixmap( PixmapCache().getPixmap( 'flakessleep.png' ) )
+        label.setPixmap( getPixmap( 'flakessleep.png' ) )
         return
 

@@ -26,7 +26,7 @@ from PyQt4.QtCore import Qt, QSize
 from PyQt4.QtGui import ( QPlainTextEdit, QMenu, QPalette, QApplication,
                           QCursor, QHBoxLayout, QWidget, QAction, QToolBar,
                           QSizePolicy, QLabel, QVBoxLayout, QFrame, QFont )
-from utils.pixmapcache import PixmapCache
+from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 
 
@@ -48,14 +48,14 @@ class TagHelpViewer( QWidget ):
         # create the context menu
         self.__menu = QMenu( self )
         self.__selectAllMenuItem = self.__menu.addAction(
-                            PixmapCache().getIcon( 'selectall.png' ),
+                            getIcon( 'selectall.png' ),
                             'Select All', self.__textEdit.selectAll )
         self.__copyMenuItem = self.__menu.addAction(
-                            PixmapCache().getIcon( 'copytoclipboard.png' ),
+                            getIcon( 'copytoclipboard.png' ),
                             'Copy', self.__textEdit.copy )
         self.__menu.addSeparator()
         self.__clearMenuItem = self.__menu.addAction(
-                            PixmapCache().getIcon( 'trash.png' ),
+                            getIcon( 'trash.png' ),
                             'Clear', self.__clear )
 
         self.__textEdit.setContextMenuPolicy( Qt.CustomContextMenu )
@@ -81,17 +81,17 @@ class TagHelpViewer( QWidget ):
 
         # Buttons
         self.__selectAllButton = QAction(
-            PixmapCache().getIcon( 'selectall.png' ),
+            getIcon( 'selectall.png' ),
             'Select all', self )
         self.__selectAllButton.triggered.connect(self.__textEdit.selectAll )
         self.__copyButton = QAction(
-            PixmapCache().getIcon( 'copytoclipboard.png' ),
+            getIcon( 'copytoclipboard.png' ),
             'Copy to clipboard', self )
         self.__copyButton.triggered.connect( self.__textEdit.copy )
         spacer = QWidget()
         spacer.setSizePolicy( QSizePolicy.Expanding, QSizePolicy.Expanding )
         self.__clearButton = QAction(
-            PixmapCache().getIcon( 'trash.png' ),
+            getIcon( 'trash.png' ),
             'Clear all', self )
         self.__clearButton.triggered.connect( self.__clear )
 
