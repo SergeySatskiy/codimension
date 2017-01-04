@@ -77,9 +77,11 @@ PIXMAP_CACHE = PixmapCache()
 
 def getIcon(name):
     " Syntactic shugar "
+    raise Exception('icon')
     return PIXMAP_CACHE.getIcon(name)
 
 
 def getPixmap(name):
     " Syntactic shugar "
+    raise Exception('pixmap')
     return PIXMAP_CACHE.getPixmap(name)

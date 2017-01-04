@@ -21,8 +21,8 @@
 """Text viewer tab widget"""
 
 import os.path
-from PyQt4.QtGui import QTextBrowser, QHBoxLayout, QWidget
-from PyQt4.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QTextBrowser, QHBoxLayout, QWidget
+from PyQt5.QtCore import Qt, pyqtSignal
 from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
