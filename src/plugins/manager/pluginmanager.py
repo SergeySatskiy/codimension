@@ -22,10 +22,10 @@
 
 import logging
 import os.path
+from PyQt5.QtCore import QObject
 from yapsy.PluginManager import PluginManager
 from utils.settings import SETTINGS_DIR, Settings
 from distutils.version import StrictVersion
-from PyQt5.QtCore import QObject, SIGNAL
 
 
 # List of the supported plugin categories, i.e. base class names
@@ -139,8 +139,8 @@ class CDMPluginManager(PluginManager, QObject):
         for category in collectedPlugins:
             for plugin in collectedPlugins[category]:
                 try:
-                    if not plugin.getObject().isIDEVersionCompatible(
-                       GlobalData().version):
+                    ideVer = GlobalData().version
+                    if not plugin.getObject().isIDEVersionCompatible(ideVer):
                         # The plugin is incompatible. Disable it
                         logging.warning("Plugin of an incompatible version "
                                         "is found at: " + plugin.getPath() +
@@ -224,6 +224,7 @@ class CDMPluginManager(PluginManager, QObject):
     def __sysVsUserCategoryConflicts(self, category, plugins):
         """Checks for the system vs user conflicts within one category"""
         def findIndexesByName(plugins, name):
+            """Provides the plugin index by name"""
             result = []
             for index in range(len(plugins)):
                 if plugins[index].getName() == name:
@@ -231,6 +232,7 @@ class CDMPluginManager(PluginManager, QObject):
             return result
 
         def hasUserPlugin(plugins, indexes):
+            """True if has user plugins"""
             for index in indexes:
                 if plugins[index].isUser():
                     return True
@@ -276,8 +278,8 @@ class CDMPluginManager(PluginManager, QObject):
 
     def __singleCategoryConflicts(self, category, plugins):
         """Checks a single category for name conflicts"""
-
         def findIndexesByName(plugins, name):
+            """Provides the plugin index by name"""
             result = []
             for index in range(len(plugins)):
                 if plugins[index].getName() == name:
@@ -349,8 +351,8 @@ class CDMPluginManager(PluginManager, QObject):
 
     def checkConflict(self, cdmPlugin):
         """Checks for the conflict and returns a message if so.
-           If there is no conflict then returns None"""
-
+           If there is no conflict then returns None
+        """
         # First, check the base class
         baseClasses = getBaseClassNames(cdmPlugin.getObject())
         category = None
@@ -364,8 +366,8 @@ class CDMPluginManager(PluginManager, QObject):
         # Second, IDE version compatibility
         from utils.globals import GlobalData
         try:
-            if not cdmPlugin.getObject().isIDEVersionCompatible(
-               GlobalData().version):
+            ideVer = GlobalData().version
+            if not cdmPlugin.getObject().isIDEVersionCompatible(ideVer):
                 return "Plugin requires the other IDE version"
         except:
             # Could not successfully call the interface method
@@ -381,14 +383,14 @@ class CDMPluginManager(PluginManager, QObject):
 
     def sendPluginActivated(self, plugin):
         """Emits the signal with the corresponding plugin"""
-        self.emit(SIGNAL('PluginActivated'), plugin)
+        self.PluginActivated.emit(plugin)
         plugin.getObject().pluginLogMessage.connect(self.__onPluginLogMessage)
 
     def sendPluginDeactivated(self, plugin):
         """Emits the signal with the corresponding plugin"""
         plugin.getObject().pluginLogMessage.disconnect(
             self.__onPluginLogMessage)
-        self.emit(SIGNAL('PluginDeactivated'), plugin)
+        self.PluginDeactivated.emit(plugin)
 
     def __onPluginLogMessage(self, logLevel, message):
         """Triggered when a plugin message is received"""
