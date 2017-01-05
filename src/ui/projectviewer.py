@@ -34,8 +34,7 @@ from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.project import CodimensionProject
-from utils.fileutils import (BrokenSymlinkFileType, PythonFileType,
-                             Python3FileType, detectFileType)
+from utils.fileutils import isPythonMime, isPythonFile
 from .projectproperties import ProjectPropertiesDialog
 from .filesystembrowser import FileSystemBrowser
 from .projectbrowser import ProjectBrowser
@@ -567,9 +566,8 @@ class ProjectViewer(QWidget):
                         self.fsAddTopLevelDirButton.setEnabled(True)
 
         if self.__fsContextItem.itemType == FileItemType:
-            if self.__fsContextItem.fileType in [PythonFileType,
-                                                 Python3FileType] and \
-               self.__fsContextItem.fileType != BrokenSymlinkFileType:
+            if isPythonMime(self.__fsContextItem.fileType) and \
+               'broken-symlink' not in self.__fsContextItem.fileType:
                 self.fsShowParsingErrorsButton.setEnabled(
                     self.__fsContextItem.parsingErrors)
 
@@ -603,8 +601,7 @@ class ProjectViewer(QWidget):
                              os.path.sep
 
         if self.__prjContextItem.itemType == FileItemType:
-            if self.__prjContextItem.fileType in [PythonFileType,
-                                                  Python3FileType]:
+            if isPythonMime(self.__prjContextItem.fileType):
                 self.prjShowParsingErrorsButton.setEnabled(
                     self.__prjContextItem.parsingErrors)
 
@@ -632,7 +629,7 @@ class ProjectViewer(QWidget):
                                              InstanceAttributesItemType]:
             return
         if self.__fsContextItem.itemType == FileItemType:
-            if self.__fsContextItem.fileType == BrokenSymlinkFileType:
+            if 'broken-symlink' in self.__fsContextItem.fileType:
                 self.fsBrokenLinkMenu.popup(QCursor.pos())
                 return
 
@@ -710,7 +707,7 @@ class ProjectViewer(QWidget):
                                               InstanceAttributesItemType]:
             return
         if self.__prjContextItem.itemType == FileItemType:
-            if self.__prjContextItem.fileType == BrokenSymlinkFileType:
+            if 'broken-symlink' in self.__prjContextItem.fileType:
                 self.prjBrokenLinkMenu.popup(QCursor.pos())
                 return
 
@@ -738,8 +735,7 @@ class ProjectViewer(QWidget):
         if self.__prjContextItem.itemType == DirectoryItemType:
             enabled = True
         if self.__prjContextItem.itemType == FileItemType:
-            if self.__prjContextItem.fileType in [PythonFileType,
-                                                  Python3FileType]:
+            if isPythonMime(self.__prjContextItem.fileType):
                 enabled = True
         if not GlobalData().graphvizAvailable:
             enabled = False
@@ -829,8 +825,7 @@ class ProjectViewer(QWidget):
             return
         if self.__prjContextItem.itemType != FileItemType:
             return
-        if self.__prjContextItem.fileType not in [PythonFileType,
-                                                  Python3FileType]:
+        if not isPythonMime(self.__prjContextItem.fileType):
             return
         self.projectTreeView.showParsingErrors(self.__prjContextItem.getPath())
 
@@ -840,8 +835,7 @@ class ProjectViewer(QWidget):
             return
         if self.__fsContextItem.itemType != FileItemType:
             return
-        if self.__fsContextItem.fileType not in [PythonFileType,
-                                                 Python3FileType]:
+        if not isPythonMime(self.__fsContextItem.fileType):
             return
         self.filesystemView.showParsingErrors(self.__fsContextItem.getPath())
 

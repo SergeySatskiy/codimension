@@ -27,6 +27,8 @@ from PyQt5.QtGui import (QAbstractItemView, QApplication,
                          QSortFilterProxyModel, QTreeView)
 from utils.globals import GlobalData
 from utils.pixmapcache import getIcon
+from utils.fileutils import isPythonMime, isCDMProjectMime, getFileProperties
+from utils.project import getProjectFileTooltip
 from .viewitems import (DirectoryItemType, SysPathItemType, GlobalsItemType,
                         ImportsItemType, FunctionsItemType, ClassesItemType,
                         StaticAttributesItemType, InstanceAttributesItemType,
@@ -38,12 +40,9 @@ from .viewitems import (DirectoryItemType, SysPathItemType, GlobalsItemType,
                         TreeViewGlobalItem, TreeViewImportsItem,
                         TreeViewImportItem, TreeViewWhatItem,
                         TreeViewFunctionsItem, TreeViewClassesItem)
-from utils.fileutils import isPythonMime, isCDMProjectMime, getFileProperties
 from .itemdelegates import NoOutlineHeightDelegate
 from .parsererrors import ParserErrorsDialog
-from utils.fileutils import detectFileType
 from .findinfiles import FindInFilesDialog
-from utils.project import getProjectFileTooltip
 
 
 class FilesBrowserSortFilterProxyModel(QSortFilterProxyModel):
@@ -264,7 +263,7 @@ class FilesBrowser(QTreeView):
             return
 
         if item.itemType == FileItemType:
-            if item.fileType == BrokenSymlinkFileType:
+            if 'broken-symlink' in item.fileType:
                 return
 
             itemPath = item.getPath()
@@ -276,14 +275,14 @@ class FilesBrowser(QTreeView):
                 # Convert it to the real path and the decide what to do
                 itemPath = os.path.realpath(itemPath)
                 # The type may differ...
-                itemFileType = detectFileType(itemPath)
+                itemMime, _, _, _ = getFileProperties(itemPath)
             else:
                 # The intermediate directory could be a link, so use the real
                 # path
                 itemPath = os.path.realpath(itemPath)
-                itemFileType = item.fileType
+                itemMime = item.fileType
 
-            GlobalData().mainWindow.openFileByType(itemFileType, itemPath, -1)
+            GlobalData().mainWindow.openFileByType(itemMime, itemPath, -1)
             return
 
         if item.itemType in [CodingItemType, ImportItemType, FunctionItemType,
@@ -471,18 +470,18 @@ class FilesBrowser(QTreeView):
 
             # For all root items
             for treeItem in self.model().sourceModel().rootItem.childItems:
-                self.__walkTreeAndUpdate(treeItem, path, fileType, icon, info)
+                self.__walkTreeAndUpdate(treeItem, path, mime, icon, info)
         elif isCDMProjectMime(mime):
             path = os.path.realpath(fileName)
             # For all root items
             for treeItem in self.model().sourceModel().rootItem.childItems:
-                self.__walkTreeAndUpdate(treeItem, path, fileType, None, None)
+                self.__walkTreeAndUpdate(treeItem, path, mime, None, None)
         elif fileName.endswith(".cgi"):
             path = os.path.realpath(fileName)
 
             # For all root items
             for treeItem in self.model().sourceModel().rootItem.childItems:
-                self.__walkTreeAndUpdate(treeItem, path, fileType, icon, None)
+                self.__walkTreeAndUpdate(treeItem, path, mime, icon, None)
 
     def _signalItemUpdated(self, treeItem):
         """Emits a signal that an item is updated"""
@@ -505,17 +504,17 @@ class FilesBrowser(QTreeView):
         srcModel.addItem(newItem, parentIndex)
         self._resort()
 
-    def __walkTreeAndUpdate(self, treeItem, path, fileType, icon, info):
+    def __walkTreeAndUpdate(self, treeItem, path, mime, icon, info):
         """Recursively walks the tree items and updates the icon"""
         if treeItem.itemType in [DirectoryItemType, SysPathItemType]:
             for i in treeItem.childItems:
                 if i.itemType in [DirectoryItemType,
                                   SysPathItemType, FileItemType]:
-                    self.__walkTreeAndUpdate(i, path, fileType, icon, info)
+                    self.__walkTreeAndUpdate(i, path, mime, icon, info)
 
         if treeItem.itemType == FileItemType:
             if path == os.path.realpath(treeItem.getPath()):
-                if isPythonMime(fileType):
+                if isPythonMime(mime):
                     # Update icon
                     treeItem.setIcon(icon)
                     if info.docstring is None:
@@ -528,7 +527,7 @@ class FilesBrowser(QTreeView):
 
                     # Update content if populated
                     self.updateFileItem(treeItem, info)
-                elif isCDMProjectMime(fileType):
+                elif isCDMProjectMime(mime):
                     # Tooltip update only
                     treeItem.toolTip = getProjectFileTooltip(path)
                     self._signalItemUpdated(treeItem)

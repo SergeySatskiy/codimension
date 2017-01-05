@@ -1,8 +1,7 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,30 +16,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-""" The globals viewer implementation """
+"""The globals viewer implementation"""
 
-from PyQt4.QtCore       import Qt, SIGNAL, QSize, QRect
-from PyQt4.QtGui        import ( QMenu, QWidget, QAction, QVBoxLayout,
-                                 QToolBar, QCursor, QLabel, QSizePolicy,
-                                 QItemSelectionModel )
-from combobox           import CDMComboBox
-from utils.pixmapcache  import getIcon
-from utils.globals      import GlobalData
-from utils.project      import CodimensionProject
-from globalsbrowser     import GlobalsBrowser
-from viewitems          import ( DecoratorItemType, FunctionItemType,
-                                 ClassItemType, AttributeItemType,
-                                 GlobalItemType )
+from PyQt5.QtCore import Qt, QSize, QRect
+from PyQt5.QtGui import (QMenu, QWidget, QAction, QVBoxLayout,
+                         QToolBar, QCursor, QLabel, QSizePolicy,
+                         QItemSelectionModel)
+from utils.pixmapcache import getIcon
+from utils.globals import GlobalData
+from utils.project import CodimensionProject
+from .combobox import CDMComboBox
+from .globalsbrowser import GlobalsBrowser
+from .viewitems import (DecoratorItemType, FunctionItemType,
+                        ClassItemType, AttributeItemType,
+                        GlobalItemType)
 
 
-class GlobalsViewer( QWidget ):
-    """ The globals viewer widget """
+class GlobalsViewer(QWidget):
 
-    def __init__( self, parent = None ):
-        QWidget.__init__( self, parent )
+    """The globals viewer widget"""
+
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent)
 
         self.filterEdit = None
         self.definitionButton = None
@@ -50,125 +48,111 @@ class GlobalsViewer( QWidget ):
         self.__createLayout()
 
         # create the context menu
-        self.__menu = QMenu( self )
-        self.__jumpMenuItem = self.__menu.addAction( \
-                                getIcon( 'definition.png' ),
-                                'Jump to definition', self.__goToDefinition )
+        self.__menu = QMenu(self)
+        self.__jumpMenuItem = self.__menu.addAction(
+            getIcon('definition.png'),
+            'Jump to definition', self.__goToDefinition)
         self.__menu.addSeparator()
-        self.__findMenuItem = self.__menu.addAction( \
-                                getIcon( 'findusage.png' ),
-                                'Find occurence', self.__findWhereUsed )
+        self.__findMenuItem = self.__menu.addAction(
+            getIcon('findusage.png'), 'Find occurence', self.__findWhereUsed)
         self.__menu.addSeparator()
-        self.__copyMenuItem = self.__menu.addAction( \
-                                getIcon( 'copytoclipboard.png' ),
-                                'Copy path to clipboard',
-                                self.globalsViewer.copyToClipboard )
-        self.globalsViewer.setContextMenuPolicy( Qt.CustomContextMenu )
+        self.__copyMenuItem = self.__menu.addAction(
+            getIcon('copytoclipboard.png'),
+            'Copy path to clipboard', self.globalsViewer.copyToClipboard)
+        self.globalsViewer.setContextMenuPolicy(Qt.CustomContextMenu)
         self.globalsViewer.customContextMenuRequested.connect(
-                                                self.__handleShowContextMenu )
+            self.__handleShowContextMenu)
 
-        GlobalData().project.projectChanged.connect( self.__onProjectChanged )
-        self.connect( self.globalsViewer, SIGNAL( "selectionChanged" ),
-                      self.__selectionChanged )
-        self.globalsViewer.openingItem.connect( self.itemActivated )
-        self.connect( self.globalsViewer, SIGNAL( "modelFilesChanged" ),
-                      self.modelFilesChanged )
+        GlobalData().project.projectChanged.connect(self.__onProjectChanged)
+        self.globalsViewer.selectionChanged.connect(self.__selectionChanged)
+        self.globalsViewer.openingItem.connect(self.itemActivated)
+        self.globalsViewer.modelFilesChanged.connect(self.modelFilesChanged)
 
         self.filterEdit.lineEdit().setFocus()
         self.__contextItem = None
-        return
 
-    def __createLayout( self ):
-        " Helper to create the viewer layout "
-
+    def __createLayout(self):
+        """Helper to create the viewer layout"""
         self.globalsViewer = GlobalsBrowser()
 
         # Toolbar part - buttons
         self.definitionButton = QAction(
-                getIcon( 'definition.png' ),
-                'Jump to highlighted item definition', self )
-        self.definitionButton.triggered.connect( self.__goToDefinition )
+            getIcon('definition.png'),
+            'Jump to highlighted item definition', self)
+        self.definitionButton.triggered.connect(self.__goToDefinition)
         self.findButton = QAction(
-                getIcon( 'findusage.png' ),
-                'Find highlighted item occurences', self )
-        self.findButton.triggered.connect( self.__findWhereUsed )
+            getIcon('findusage.png'), 'Find highlighted item occurences', self)
+        self.findButton.triggered.connect(self.__findWhereUsed)
         self.copyPathButton = QAction(
-                getIcon( 'copytoclipboard.png' ),
-                'Copy path to clipboard', self )
+            getIcon('copytoclipboard.png'), 'Copy path to clipboard', self)
         self.copyPathButton.triggered.connect(
-                                        self.globalsViewer.copyToClipboard )
+            self.globalsViewer.copyToClipboard)
 
         self.findNotUsedButton = QAction(
-                getIcon( 'notused.png' ),
-                'Unused global variable analysis', self )
-        self.findNotUsedButton.triggered.connect( self.__findNotUsed )
-        self.findNotUsedButton.setEnabled( False )
+            getIcon('notused.png'), 'Unused global variable analysis', self)
+        self.findNotUsedButton.triggered.connect(self.__findNotUsed)
+        self.findNotUsedButton.setEnabled(False)
 
-        self.toolbar = QToolBar( self )
-        self.toolbar.setMovable( False )
-        self.toolbar.setAllowedAreas( Qt.TopToolBarArea )
-        self.toolbar.setIconSize( QSize( 16, 16 ) )
-        self.toolbar.setFixedHeight( 28 )
-        self.toolbar.setContentsMargins( 0, 0, 0, 0 )
-        self.toolbar.addAction( self.definitionButton )
-        self.toolbar.addAction( self.findButton )
-        self.toolbar.addAction( self.copyPathButton )
+        self.toolbar = QToolBar(self)
+        self.toolbar.setMovable(False)
+        self.toolbar.setAllowedAreas(Qt.TopToolBarArea)
+        self.toolbar.setIconSize(QSize(16, 16))
+        self.toolbar.setFixedHeight(28)
+        self.toolbar.setContentsMargins(0, 0, 0, 0)
+        self.toolbar.addAction(self.definitionButton)
+        self.toolbar.addAction(self.findButton)
+        self.toolbar.addAction(self.copyPathButton)
 
-        filterLabel = QLabel( "  Filter " )
-        self.toolbar.addWidget( filterLabel )
-        self.filterEdit = CDMComboBox( True, self.toolbar )
-        self.filterEdit.setSizePolicy( QSizePolicy.Expanding,
-                                       QSizePolicy.Expanding )
-        self.filterEdit.lineEdit().setToolTip( "Space separated regular expressions" )
-        self.toolbar.addWidget( self.filterEdit )
-        self.toolbar.addAction( self.findNotUsedButton )
-        self.filterEdit.editTextChanged.connect( self.__filterChanged )
-        self.filterEdit.itemAdded.connect( self.__filterItemAdded )
-        self.filterEdit.enterClicked.connect( self.__enterInFilter )
+        filterLabel = QLabel("  Filter ")
+        self.toolbar.addWidget(filterLabel)
+        self.filterEdit = CDMComboBox(True, self.toolbar)
+        self.filterEdit.setSizePolicy(QSizePolicy.Expanding,
+                                      QSizePolicy.Expanding)
+        self.filterEdit.lineEdit().setToolTip(
+            "Space separated regular expressions")
+        self.toolbar.addWidget(self.filterEdit)
+        self.toolbar.addAction(self.findNotUsedButton)
+        self.filterEdit.editTextChanged.connect(self.__filterChanged)
+        self.filterEdit.itemAdded.connect(self.__filterItemAdded)
+        self.filterEdit.enterClicked.connect(self.__enterInFilter)
 
         layout = QVBoxLayout()
-        layout.setContentsMargins( 0, 0, 0, 0 )
-        layout.setSpacing( 0 )
-        layout.addWidget( self.toolbar )
-        layout.addWidget( self.globalsViewer )
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(self.toolbar)
+        layout.addWidget(self.globalsViewer)
 
-        self.setLayout( layout )
-        return
+        self.setLayout(layout)
 
-    def __filterChanged( self, text ):
-        " Triggers when the filter text changed "
-        self.globalsViewer.setFilter( text )
+    def __filterChanged(self, text):
+        """Triggers when the filter text changed"""
+        self.globalsViewer.setFilter(text)
         self.globalsViewer.updateCounter()
-        return
 
-    def __selectionChanged( self, index ):
-        " Handles the changed selection "
+    def __selectionChanged(self, index):
+        """Handles the changed selection"""
         if index is None:
             self.__contextItem = None
         else:
-            self.__contextItem = self.globalsViewer.model().item( index )
+            self.__contextItem = self.globalsViewer.model().item(index)
         self.__updateButtons()
-        return
 
-    def getItemCount( self ):
-        " Provides the number of items in the model - total, not only visible "
+    def getItemCount(self):
+        """Provides the # of items in the model - total, not only visible"""
         return self.globalsViewer.model().sourceModel().rowCount()
 
-    def itemActivated( self, path, line ):
-        " Handles the item activation "
-        self.filterEdit.addItem( self.filterEdit.lineEdit().text() )
-        return
+    def itemActivated(self, path, line):
+        """Handles the item activation"""
+        self.filterEdit.addItem(self.filterEdit.lineEdit().text())
 
-    def __filterItemAdded( self ):
-        " The filter item has been added "
+    def __filterItemAdded(self):
+        """The filter item has been added"""
         project = GlobalData().project
         if project.isLoaded():
-            project.setFindGlobalHistory( self.filterEdit.getItems() )
-        return
+            project.setFindGlobalHistory(self.filterEdit.getItems())
 
-    def __enterInFilter( self ):
-        " ENTER key has been clicked in the filter "
-
+    def __enterInFilter(self):
+        """ENTER key has been clicked in the filter"""
         # check if there any records displayed
         if self.globalsViewer.model().rowCount() == 0:
             return
@@ -176,14 +160,12 @@ class GlobalsViewer( QWidget ):
         # Move the focus to the list and select the first row
         self.globalsViewer.clearSelection()
         flags = QItemSelectionModel.SelectCurrent | QItemSelectionModel.Rows
-        self.globalsViewer.setSelection( QRect( 0, 0, self.globalsViewer.width(), 1 ),
-                                         flags )
+        self.globalsViewer.setSelection(
+            QRect(0, 0, self.globalsViewer.width(), 1), flags)
         self.globalsViewer.setFocus()
-        return
 
-    def __onProjectChanged( self, what ):
-        " Triggered when a project is changed "
-
+    def __onProjectChanged(self, what):
+        """Triggered when a project is changed"""
         if what == CodimensionProject.CompleteProject:
             self.__contextItem = None
             self.__updateButtons()
@@ -191,86 +173,74 @@ class GlobalsViewer( QWidget ):
 
             project = GlobalData().project
             if project.isLoaded():
-                self.filterEdit.editTextChanged.disconnect( self.__filterChanged )
-                self.filterEdit.addItems( project.findGlobalHistory )
-                self.filterEdit.editTextChanged.connect( self.__filterChanged )
-                self.findNotUsedButton.setEnabled( self.getItemCount() > 0 )
+                self.filterEdit.editTextChanged.disconnect(self.__filterChanged)
+                self.filterEdit.addItems(project.findGlobalHistory)
+                self.filterEdit.editTextChanged.connect(self.__filterChanged)
+                self.findNotUsedButton.setEnabled(self.getItemCount() > 0)
             else:
-                self.findNotUsedButton.setEnabled( False )
+                self.findNotUsedButton.setEnabled(False)
             self.filterEdit.clearEditText()
-        return
 
-    def __handleShowContextMenu( self, coord ):
-        """ Show the context menu """
-
-        index = self.globalsViewer.indexAt( coord )
+    def __handleShowContextMenu(self, coord):
+        """Show the context menu"""
+        index = self.globalsViewer.indexAt(coord)
         if not index.isValid():
             return
 
         # This will update the __contextItem
-        self.__selectionChanged( index )
+        self.__selectionChanged(index)
 
         if self.__contextItem is None:
             return
 
-        self.__jumpMenuItem.setEnabled( self.definitionButton.isEnabled() )
-        self.__findMenuItem.setEnabled( self.findButton.isEnabled() )
-        self.__copyMenuItem.setEnabled( self.copyPathButton.isEnabled() )
+        self.__jumpMenuItem.setEnabled(self.definitionButton.isEnabled())
+        self.__findMenuItem.setEnabled(self.findButton.isEnabled())
+        self.__copyMenuItem.setEnabled(self.copyPathButton.isEnabled())
 
-        self.__menu.popup( QCursor.pos() )
-        return
+        self.__menu.popup(QCursor.pos())
 
-    def __goToDefinition( self ):
-        """ Jump to definition context menu handler """
+    def __goToDefinition(self):
+        """Jump to definition context menu handler"""
         if self.__contextItem is not None:
-            self.globalsViewer.openItem( self.__contextItem )
-        return
+            self.globalsViewer.openItem(self.__contextItem)
 
-    def __findWhereUsed( self ):
-        """ Find where used context menu handler """
-
+    def __findWhereUsed(self):
+        """Find where used context menu handler"""
         if self.__contextItem is not None:
-            GlobalData().mainWindow.findWhereUsed( \
-                    self.__contextItem.getPath(),
-                    self.__contextItem.sourceObj )
-        return
+            GlobalData().mainWindow.findWhereUsed(
+                self.__contextItem.getPath(),
+                self.__contextItem.sourceObj)
 
-    def __findNotUsed( self ):
-        " Runs the unused global variable analysis "
+    def __findNotUsed(self):
+        """Runs the unused global variable analysis"""
         GlobalData().mainWindow.onNotUsedGlobals()
-        return
 
-    def __updateButtons( self ):
-        " Updates the toolbar buttons depending on what is selected "
-
-        self.definitionButton.setEnabled( False )
-        self.findButton.setEnabled( False )
-        self.copyPathButton.setEnabled( False )
+    def __updateButtons(self):
+        """Updates the toolbar buttons depending on what is selected"""
+        self.definitionButton.setEnabled(False)
+        self.findButton.setEnabled(False)
+        self.copyPathButton.setEnabled(False)
         if self.__contextItem is None:
             return
 
         if self.__contextItem.itemType == DecoratorItemType:
-            self.definitionButton.setEnabled( True )
-            self.copyPathButton.setEnabled( True )
+            self.definitionButton.setEnabled(True)
+            self.copyPathButton.setEnabled(True)
             return
 
-        if self.__contextItem.itemType in [ FunctionItemType, ClassItemType,
-                                            AttributeItemType, GlobalItemType ]:
-            self.definitionButton.setEnabled( True )
-            self.findButton.setEnabled( True )
-            self.copyPathButton.setEnabled( True )
-        return
+        if self.__contextItem.itemType in [FunctionItemType, ClassItemType,
+                                           AttributeItemType, GlobalItemType]:
+            self.definitionButton.setEnabled(True)
+            self.findButton.setEnabled(True)
+            self.copyPathButton.setEnabled(True)
 
-    def onFileUpdated( self, fileName, uuid ):
-        " Triggered when the file is updated "
-        self.globalsViewer.onFileUpdated( fileName )
-        self.findNotUsedButton.setEnabled( GlobalData().project.isLoaded() and \
-                                           self.getItemCount() > 0 )
-        return
+    def onFileUpdated(self, fileName, uuid):
+        """Triggered when the file is updated"""
+        self.globalsViewer.onFileUpdated(fileName)
+        self.findNotUsedButton.setEnabled(GlobalData().project.isLoaded() and
+                                          self.getItemCount() > 0)
 
-    def modelFilesChanged( self ):
-        " Triggered when the source model has a file or files added or deleted "
-        self.findNotUsedButton.setEnabled( GlobalData().project.isLoaded() and \
-                                           self.getItemCount() > 0 )
-        return
-
+    def modelFilesChanged(self):
+        """Triggered when the source model has files added or deleted"""
+        self.findNotUsedButton.setEnabled(GlobalData().project.isLoaded() and
+                                          self.getItemCount() > 0)

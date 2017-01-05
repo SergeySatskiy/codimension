@@ -27,7 +27,7 @@
 
 import gc
 import logging
-from PyQt4.QtCore import QObject, QTimer
+from PyQt5.QtCore import QObject, QTimer
 
 
 class GarbageCollector(QObject):
