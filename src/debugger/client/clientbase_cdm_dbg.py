@@ -671,7 +671,7 @@ class DebugClientBase(object):
 
                 try:
                     if self.running is None:
-                        exec code in self.debugMod.__dict__
+                        exec(code, self.debugMod.__dict__)
                     else:
                         if self.currentThread is None:
                             # program has terminated
@@ -697,15 +697,15 @@ class DebugClientBase(object):
                         if _globals.has_key("sys"):
                             __stdout = _globals["sys"].stdout
                             _globals["sys"].stdout = self.writestream
-                            exec code in _globals, _locals
+                            exec(code, _globals, _locals)
                             _globals["sys"].stdout = __stdout
                         elif _locals.has_key("sys"):
                             __stdout = _locals["sys"].stdout
                             _locals["sys"].stdout = self.writestream
-                            exec code in _globals, _locals
+                            exec(code, _globals, _locals)
                             _locals["sys"].stdout = __stdout
                         else:
-                            exec code in _globals, _locals
+                            exec(code, _globals, _locals)
                 except SystemExit as exc:
                     self.progTerminated(exc.code)
                 except:
@@ -1077,9 +1077,9 @@ class DebugClientBase(object):
                         else:
                             oaccess = ''
                         try:
-                            exec 'mdict = dict%s.__dict__' % access
+                            exec('mdict = dict%s.__dict__' % access)
                             ndict.update(mdict)
-                            exec 'obj = dict%s' % access
+                            exec('obj = dict%s' % access)
                             if "PyQt4." in str(type(obj)):
                                 qtVariable = True
                                 qvar = obj
@@ -1088,7 +1088,7 @@ class DebugClientBase(object):
                         except:
                             pass
                         try:
-                            exec 'mcdict = dict%s.__class__.__dict__' % access
+                            exec('mcdict = dict%s.__class__.__dict__' % access)
                             ndict.update(mcdict)
                             if mdict and not "sipThis" in mdict.keys():
                                 del rvar[0:2]
@@ -1097,14 +1097,14 @@ class DebugClientBase(object):
                             pass
                         try:
                             cdict = {}
-                            exec 'slv = dict%s.__slots__' % access
+                            exec('slv = dict%s.__slots__' % access)
                             for v in slv:
                                 try:
-                                    exec 'cdict[v] = dict%s.%s' % (access, v)
+                                    exec('cdict[v] = dict%s.%s' % (access, v))
                                 except:
                                     pass
                             ndict.update(cdict)
-                            exec 'obj = dict%s' % access
+                            exec('obj = dict%s' % access)
                             access = ""
                             if "PyQt4." in str(type(obj)):
                                 qtVariable = True
@@ -1131,7 +1131,7 @@ class DebugClientBase(object):
                             slv = dict[var[i]].__slots__
                             for v in slv:
                                 try:
-                                    exec 'cdict[v] = dict[var[i]].%s' % v
+                                    exec('cdict[v] = dict[var[i]].%s' % v)
                                 except:
                                     pass
                             ndict.update(cdict)
@@ -1152,10 +1152,10 @@ class DebugClientBase(object):
             elif ("sipThis" in dict.keys() and len(dict) == 1) or \
                (len(dict) == 0 and len(udict) > 0):
                 if access:
-                    exec 'qvar = udict%s' % access
+                    exec('qvar = udict%s' % access)
                 # this has to be in line with VariablesViewer.indicators
                 elif rvar and rvar[0][-2:] in ["[]", "()", "{}"]:
-                    exec 'qvar = udict["%s"][%s]' % (rvar[0][:-2], rvar[1])
+                    exec('qvar = udict["%s"][%s]' % (rvar[0][:-2], rvar[1]))
                 else:
                     qvar = udict[var[-1]]
                 qvtype = ("%s" % type(qvar))[1:-1].split()[1][1:-1]
@@ -1167,10 +1167,11 @@ class DebugClientBase(object):
                 qtVariable = False
                 if len(dict) == 0 and len(udict) > 0:
                     if access:
-                        exec 'qvar = udict%s' % access
+                        exec('qvar = udict%s' % access)
                     # this has to be in line with VariablesViewer.indicators
                     elif rvar and rvar[0][-2:] in ["[]", "()", "{}"]:
-                        exec 'qvar = udict["%s"][%s]' % (rvar[0][:-2], rvar[1])
+                        exec('qvar = udict["%s"][%s]' %
+                             (rvar[0][:-2], rvar[1]))
                     else:
                         qvar = udict[var[-1]]
                     qvtype = ("%s" % type(qvar))[1:-1].split()[1][1:-1]
@@ -1186,7 +1187,7 @@ class DebugClientBase(object):
                     else:
                         # treatment for sequences and dictionaries
                         if access:
-                            exec "dict = dict%s" % access
+                            exec("dict = dict%s" % access)
                         else:
                             dict = dict[dictkeys[0]]
                         if isDict:

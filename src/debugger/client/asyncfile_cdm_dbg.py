@@ -85,7 +85,7 @@ class AsyncFile( object ):
         """
 
         if mode != self.mode:
-            raise IOError, '[Errno 9] Bad file descriptor'
+            raise IOError((9, '[Errno 9] Bad file descriptor'))
         return
 
     def __nWrite( self, n ):
@@ -268,7 +268,7 @@ class AsyncFile( object ):
         @exception IOError This method is not supported and always raises an
         IOError.
         """
-        raise IOError, '[Errno 29] Illegal seek'
+        raise IOError((29, '[Errno 29] Illegal seek'))
 
     def tell( self ):
         """
@@ -277,7 +277,7 @@ class AsyncFile( object ):
         @exception IOError This method is not supported and always raises an
         IOError.
         """
-        raise IOError, '[Errno 29] Illegal seek'
+        raise IOError((29, '[Errno 29] Illegal seek'))
 
     def truncate( self, size = -1 ):
         """
@@ -286,7 +286,7 @@ class AsyncFile( object ):
         @exception IOError This method is not supported and always raises an
         IOError.
         """
-        raise IOError, '[Errno 29] Illegal seek'
+        raise IOError((29, '[Errno 29] Illegal seek'))
 
     def write( self, s ):
         """
