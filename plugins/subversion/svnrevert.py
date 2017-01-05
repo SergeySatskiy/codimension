@@ -68,7 +68,7 @@ class SVNRevertMixin:
 
             if pathList:
                 logging.info( "Finished" )
-        except Exception, excpt:
+        except Exception as excpt:
             logging.error( str( excpt ) )
 
         for revertedPath in pathList:

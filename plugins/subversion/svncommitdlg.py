@@ -433,7 +433,7 @@ class SVNPluginCommitDialog( QDialog ):
             self.__diffViewer.setHTML( parse_from_memory( diffAsText, False, True ) )
             if not self.__diffViewer.isVisible():
                 self.__onShowHideDiff()
-        except Exception, exc:
+        except Exception as exc:
             logging.error( str( exc ) )
         except:
             logging.error( "Unknown error while calculating difference for " +

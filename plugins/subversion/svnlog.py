@@ -149,7 +149,7 @@ class SVNLogProgress( QDialog ):
 
         try:
             self.logInfo = self.__client.log( self.__path )
-        except Exception, exc:
+        except Exception as exc:
             logging.error( str( exc ) )
             self.close()
             return
@@ -474,7 +474,7 @@ class SVNPluginLogDialog( QDialog ):
         try:
             lhsContent = self.__client.cat( self.__path, prevRev )
             rhsContent = self.__client.cat( self.__path, rev )
-        except Exception, exc:
+        except Exception as exc:
             QApplication.restoreOverrideCursor()
             logging.error( str( exc ) )
             return

@@ -1,8 +1,7 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy <sergey.satskiy@gmail.com>
+# Copyright (C) 2010-2017  Sergey Satskiy <sergey.satskiy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,158 +16,146 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-""" HTML viewer tab widget """
-
+"""HTML viewer tab widget"""
 
 import os.path
-from PyQt4.QtGui import QFrame, QHBoxLayout, QDesktopServices, QFont, QTextBrowser
-from ui.mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from PyQt4.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import (QFrame, QHBoxLayout, QDesktopServices, QFont,
+                         QTextBrowser)
+from PyQt5.QtCore import Qt, pyqtSignal
+from utils.fileutils import getFileContent
+from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
 
 
-class HTMLViewer( QTextBrowser ):
-    " HTML viewer (web browser) "
+class HTMLViewer(QTextBrowser):
+
+    """HTML viewer (web browser)"""
 
     escapePressed = pyqtSignal()
 
-    def __init__( self, parent = None ):
-        QTextBrowser.__init__( self, parent )
+    def __init__(self, parent=None):
+        QTextBrowser.__init__(self, parent)
 
-    def keyPressEvent( self, event ):
-        " Handles the key press events "
+    def keyPressEvent(self, event):
+        """Handles the key press events"""
         if event.key() == Qt.Key_Escape:
             self.escapePressed.emit()
             event.accept()
         else:
-            QTextBrowser.keyPressEvent( self, event )
-        return
+            QTextBrowser.keyPressEvent(self, event)
 
-    def zoomTo( self, zoomFactor ):
-        """ Scales the font in accordance to the given zoom factor.
-            It is mostly used in diff viewers """
+    def zoomTo(self, zoomFactor):
+        """Scales the font in accordance to the given zoom factor.
+           It is mostly used in diff viewers
+        """
         if zoomFactor > 0:
-            self.zoomIn( zoomFactor )
+            self.zoomIn(zoomFactor)
         elif zoomFactor < 0:
-            self.zoomOut( abs( zoomFactor ) )
-        return
+            self.zoomOut(abs(zoomFactor))
 
 
-class HTMLTabWidget( MainWindowTabWidgetBase, QFrame ):
-    " The widget which displays a RO HTML page "
+class HTMLTabWidget(MainWindowTabWidgetBase, QFrame):
+
+    """The widget which displays a RO HTML page"""
 
     escapePressed = pyqtSignal()
 
-    def __init__( self, parent = None ):
+    def __init__(self, parent=None):
 
-        MainWindowTabWidgetBase.__init__( self )
-        QFrame.__init__( self, parent )
+        MainWindowTabWidgetBase.__init__(self)
+        QFrame.__init__(self, parent)
 
-        self.setFrameShape( QFrame.StyledPanel )
-        layout = QHBoxLayout( self )
-        layout.setMargin( 0 )
+        self.setFrameShape(QFrame.StyledPanel)
+        layout = QHBoxLayout(self)
+        layout.setMargin(0)
 
-        self.__editor = HTMLViewer( self )
-        self.__editor.escapePressed.connect( self.__onEsc )
-        layout.addWidget( self.__editor )
+        self.__editor = HTMLViewer(self)
+        self.__editor.escapePressed.connect(self.__onEsc)
+        layout.addWidget(self.__editor)
 
         self.__fileName = ""
         self.__shortName = ""
         self.__encoding = "n/a"
-        return
 
-    def __onEsc( self ):
-        " Triggered when Esc is pressed "
+    def __onEsc(self):
+        """Triggered when Esc is pressed"""
         self.escapePressed.emit()
-        return
 
-    def setHTML( self, content ):
-        " Sets the content from the given string "
-        self.__editor.setHtml( content )
-        return
+    def setHTML(self, content):
+        """Sets the content from the given string"""
+        self.__editor.setHtml(content)
 
-    def getHTML( self ):
-        " Provides the currently shown HTML "
+    def getHTML(self):
+        """Provides the currently shown HTML"""
         return self.__editor.toHtml()
 
-    def loadFormFile( self, path ):
-        " Loads the content from the given file "
-        f = open( path, 'r' )
-        content = f.read()
-        f.close()
-        self.setHTML( content )
+    def loadFormFile(self, path):
+        """Loads the content from the given file"""
+        self.setHTML(getFileContent(path))
         self.__fileName = path
-        self.__shortName = os.path.basename( path )
-        return
+        self.__shortName = os.path.basename(path)
 
-    def zoomTo( self, zoomFactor ):
-        self.__editor.zoomTo( zoomFactor )
-        return
+    def zoomTo(self, zoomFactor):
+        """Zooms the view to"""
+        self.__editor.zoomTo(zoomFactor)
 
-    def getViewer( self ):
-        " Provides the QWebView "
+    def getViewer(self):
+        """Provides the QWebView"""
         return self.__editor
 
-    def setFocus( self ):
-        " Overridden setFocus "
+    def setFocus(self):
+        """Overridden setFocus"""
         self.__editor.setFocus()
-        return
 
-    def isModified( self ):
-        " Tells if the file is modifed "
+    def isModified(self):
+        """Tells if the file is modifed"""
         return False
 
-    def getRWMode( self ):
-        " Tells the read/write mode "
+    def getRWMode(self):
+        """Tells the read/write mode"""
         return "RO"
 
-    def getType( self ):
-        " Tells the widget type "
+    def getType(self):
+        """Tells the widget type"""
         return MainWindowTabWidgetBase.HTMLViewer
 
-    def getLanguage( self ):
-        " Tells the content language "
+    def getLanguage(self):
+        """Tells the content language"""
         return "HTML"
 
-    def getFileName( self ):
-        " Tells what file name of the widget "
+    def getFileName(self):
+        """Tells what file name of the widget"""
         return self.__fileName
 
-    def setFileName( self, path ):
-        " Sets the file name "
+    def setFileName(self, path):
+        """Sets the file name"""
         self.__fileName = path
-        self.__shortName = os.path.basename( path )
-        return
+        self.__shortName = os.path.basename(path)
 
-    def getEol( self ):
-        " Tells the EOL style "
+    def getEol(self):
+        """Tells the EOL style"""
         return "n/a"
 
-    def getLine( self ):
-        " Tells the cursor line "
+    def getLine(self):
+        """Tells the cursor line"""
         return "n/a"
 
-    def getPos( self ):
-        " Tells the cursor column "
+    def getPos(self):
+        """Tells the cursor column"""
         return "n/a"
 
-    def getEncoding( self ):
-        " Tells the content encoding "
+    def getEncoding(self):
+        """Tells the content encoding"""
         return self.__encoding
 
-    def setEncoding( self, newEncoding ):
-        " Sets the encoding - used for Diff files "
+    def setEncoding(self, newEncoding):
+        """Sets the encoding - used for Diff files"""
         self.__encoding = newEncoding
-        return
 
-    def getShortName( self ):
-        " Tells the display name "
+    def getShortName(self):
+        """Tells the display name"""
         return self.__shortName
 
-    def setShortName( self, name ):
-        " Sets the display name "
+    def setShortName(self, name):
+        """Sets the display name"""
         self.__shortName = name
-        return
-

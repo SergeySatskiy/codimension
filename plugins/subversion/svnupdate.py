@@ -179,7 +179,7 @@ class SVNUpdateProgress( QDialog ):
             self.__client.update( self.__path, self.__recursively,
                                   self.__rev )
             self.__inProcess = False
-        except pysvn.ClientError, exc:
+        except pysvn.ClientError as exc:
             errorCode = exc.args[ 1 ][ 0 ][ 1 ]
             if errorCode == pysvn.svn_err.cancelled:
                 logging.info( "Updating cancelled" )
@@ -189,7 +189,7 @@ class SVNUpdateProgress( QDialog ):
             self.__inProcess = False
             self.close()
             return
-        except Exception, exc:
+        except Exception as exc:
             logging.error( str( exc ) )
             self.__inProcess = False
             self.close()

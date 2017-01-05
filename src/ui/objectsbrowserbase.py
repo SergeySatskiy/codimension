@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -20,10 +19,9 @@
 
 """Base and auxiliary classes for G/F/C browsers"""
 
-
 import os
 from PyQt5.QtCore import Qt, QModelIndex, QRegExp, pyqtSignal
-from PyQt4.QtGui import (QAbstractItemView, QApplication,
+from PyQt5.QtGui import (QAbstractItemView, QApplication,
                          QSortFilterProxyModel, QTreeView)
 from utils.globals import GlobalData
 from utils.project import CodimensionProject

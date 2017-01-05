@@ -131,7 +131,7 @@ class SVNDiffMixin:
             else:
                 diffAsText = diffAsText.replace( "+++ ", "+++ " + localSpec, 1 )
                 diffAsText = diffAsText.replace( "--- ", "--- " + reposSpec, 1 )
-        except Exception, excpt:
+        except Exception as excpt:
             logging.error( str( excpt ) )
             return
 

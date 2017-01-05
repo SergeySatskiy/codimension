@@ -80,7 +80,7 @@ def saveSVNSettings( settings, fName ):
                  "statuskind=" + str( settings.statusKind ) + "\n" )
         f.close()
         os.chmod( fName, stat.S_IRUSR | stat.S_IWUSR )
-    except Exception, exc:
+    except Exception as exc:
         logging.error( "Error saving SVN plugin settings into " + fName + ".\n"
                        "Exception: " + str( exc ) )
     return
@@ -114,7 +114,7 @@ def getSettings( fName ):
             # File does not exist - create default settings
             saveSVNSettings( settings, fName )
         return settings
-    except Exception, exc:
+    except Exception as exc:
         logging.error( "Error retrieving SVN plugin settings from " + fName +
                        ". Using default settings.\nException: " + str( exc ) )
         return SVNSettings()

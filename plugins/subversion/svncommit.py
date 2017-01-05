@@ -107,7 +107,7 @@ def doSVNCommit( plugin, client, path ):
                 return
             pathsToCommit = [ (path, status), ]
             pathsToIgnore = []
-    except Exception, exc:
+    except Exception as exc:
         logging.error( str( exc ) )
         QApplication.restoreOverrideCursor()
         return
@@ -143,10 +143,10 @@ def doSVNCommit( plugin, client, path ):
             logging.info( "Committed revision " + str( revision.number ) )
             for path in dlg.commitPaths:
                 plugin.notifyPathChanged( path )
-        except pysvn.ClientError, exc:
+        except pysvn.ClientError as exc:
             message = exc.args[ 0 ]
             logging.error( message )
-        except Exception, exc:
+        except Exception as exc:
             logging.error( str( exc ) )
         except:
             logging.error( "Unknown error" )

@@ -193,14 +193,14 @@ class SVNStatusProgress( QDialog ):
                 self.statusList.append( (reportPath,
                                          self.__plugin.convertSVNStatus( status ),
                                          None) )
-        except pysvn.ClientError, exc:
+        except pysvn.ClientError as exc:
             errorCode = exc.args[ 1 ][ 0 ][ 1 ]
             if errorCode == pysvn.svn_err.wc_not_working_copy:
                 self.statusList = [ (self.__path, self.NOT_UNDER_VCS, None), ]
             else:
                 message = exc.args[ 0 ]
                 self.statusList = [ (self.__path, IND_ERROR, message), ]
-        except Exception, exc:
+        except Exception as exc:
             self.statusList = [ (self.__path, IND_ERROR,
                                  "Error: " + str( exc )), ]
         except:

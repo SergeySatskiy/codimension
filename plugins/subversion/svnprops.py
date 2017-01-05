@@ -84,10 +84,10 @@ def readProperties( client, path ):
     properties  = None
     try:
         properties = client.proplist( path )
-    except pysvn.ClientError, exc:
+    except pysvn.ClientError as exc:
         message = exc.args[ 0 ]
         logging.error( message )
-    except Exception, exc:
+    except Exception as exc:
         logging.error( str( exc ) )
     except:
         logging.error( "Unknown error while retrieving properties of " + path )
@@ -136,7 +136,7 @@ class SVNPluginPropsDialog( QDialog ):
 
         if selectedName:
             index = 0
-            for index in xrange( 0, self.__propsView.topLevelItemCount() ):
+            for index in range( 0, self.__propsView.topLevelItemCount() ):
                 item = self.__propsView.topLevelItem( index )
                 if selectedName == item.text( 0 ):
                     item.setSelected( True )
@@ -241,11 +241,11 @@ class SVNPluginPropsDialog( QDialog ):
             self.__nameEdit.clear()
             self.__valueEdit.clear()
             self.__propsView.setFocus()
-        except pysvn.ClientError, exc:
+        except pysvn.ClientError as exc:
             message = exc.args[ 0 ]
             logging.error( message )
             return
-        except Exception, exc:
+        except Exception as exc:
             logging.error( str( exc ) )
             return
         except:
@@ -280,11 +280,11 @@ class SVNPluginPropsDialog( QDialog ):
             self.__populate()
             self.__plugin.notifyPathChanged( self.__path )
             self.__propsView.setFocus()
-        except pysvn.ClientError, exc:
+        except pysvn.ClientError as exc:
             message = exc.args[ 0 ]
             logging.error( message )
             return
-        except Exception, exc:
+        except Exception as exc:
             logging.error( str( exc ) )
             return
         except:

@@ -41,7 +41,7 @@ class SVNInfoMixin:
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         try:
             self.__svnInfo( path )
-        except Exception, exc:
+        except Exception as exc:
             logging.error( str( exc ) )
         QApplication.restoreOverrideCursor()
         return
@@ -52,7 +52,7 @@ class SVNInfoMixin:
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         try:
             self.__svnInfo( path )
-        except Exception, exc:
+        except Exception as exc:
             logging.error( str( exc ) )
         QApplication.restoreOverrideCursor()
         return
@@ -67,7 +67,7 @@ class SVNInfoMixin:
         QApplication.setOverrideCursor( QCursor( Qt.WaitCursor ) )
         try:
             self.__svnInfo( path )
-        except Exception, exc:
+        except Exception as exc:
             logging.error( str( exc ) )
         QApplication.restoreOverrideCursor()
         return
@@ -279,7 +279,7 @@ def getSVNInfo( client, path, repRevision = None, pegRevision = None ):
                              "Expected 1, received " + str( len( entries ) ) )
         itemPath, info = entries[ 0 ]
         return itemPath, info
-    except pysvn.ClientError, exc:
+    except pysvn.ClientError as exc:
         errorCode = exc.args[ 1 ][ 0 ][ 1 ]
         if errorCode in [ pysvn.svn_err.wc_not_working_copy,
                           pysvn.svn_err.wc_path_not_found ]:
