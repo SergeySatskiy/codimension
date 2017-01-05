@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
-# Copyright (C) 2010  Sergey Satskiy sergey.satskiy@gmail.com
+# Copyright (C) 2010-2017  Sergey Satskiy sergey.satskiy@gmail.com
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,103 +17,98 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# $Id$
-#
 
-" File outline browser and its model "
+"""File outline browser and its model"""
 
-
-from PyQt4.QtGui import QTreeView, QPalette
-from PyQt4.QtCore import QVariant
-from utils.globals import GlobalData
-from browsermodelbase import BrowserModelBase
+from PyQt5.QtGui import QTreeView, QPalette
+from PyQt5.QtCore import QVariant
 from utils.pixmapcache import getIcon
-from filesbrowserbase import FilesBrowser
-from viewitems import ( DirectoryItemType, SysPathItemType, GlobalsItemType,
+from utils.globals import GlobalData
+from utils.settings import Settings
+from autocomplete.bufferutils import getItemForDisplayPath
+from .browsermodelbase import BrowserModelBase
+from .filesbrowserbase import FilesBrowser
+from .viewitems import (DirectoryItemType, SysPathItemType, GlobalsItemType,
                         ImportsItemType, FunctionsItemType, ClassesItemType,
                         StaticAttributesItemType, InstanceAttributesItemType,
                         CodingItemType, ImportItemType, FunctionItemType,
                         ClassItemType, DecoratorItemType, AttributeItemType,
                         GlobalItemType, ImportWhatItemType, TreeViewCodingItem,
                         TreeViewGlobalsItem, TreeViewImportsItem,
-                        TreeViewFunctionsItem, TreeViewClassesItem )
-from utils.settings import Settings
-from autocomplete.bufferutils import getItemForDisplayPath
+                        TreeViewFunctionsItem, TreeViewClassesItem)
 
 
+class OutlineBrowserModel(BrowserModelBase):
 
-class OutlineBrowserModel( BrowserModelBase ):
-    " Class implementing the file outline browser model "
+    """Class implementing the file outline browser model"""
 
-    def __init__( self, shortName, info, parent = None ):
-        BrowserModelBase.__init__( self, QVariant( shortName ), parent )
-        self.populateModel( info )
-        self.setTooltips( Settings().outlineTooltips )
-        return
+    def __init__(self, shortName, info, parent=None):
+        BrowserModelBase.__init__(self, QVariant(shortName), parent)
+        self.populateModel(info)
+        self.setTooltips(Settings()['outlineTooltips'])
 
-    def populateModel( self, info ):
-        " Populates the browser model "
+    def populateModel(self, info):
+        """Populates the browser model"""
         self.clear()
         if info.encoding is not None:
-            self.addItem( TreeViewCodingItem( self.rootItem, info.encoding ) )
+            self.addItem(TreeViewCodingItem(self.rootItem, info.encoding))
         if info.imports:
-            self.addItem( TreeViewImportsItem( self.rootItem, info ) )
+            self.addItem(TreeViewImportsItem(self.rootItem, info))
         if info.globals:
-            self.addItem( TreeViewGlobalsItem( self.rootItem, info ) )
+            self.addItem(TreeViewGlobalsItem(self.rootItem, info))
         if info.functions:
-            self.addItem( TreeViewFunctionsItem( self.rootItem, info ) )
+            self.addItem(TreeViewFunctionsItem(self.rootItem, info))
         if info.classes:
-            self.addItem( TreeViewClassesItem( self.rootItem, info ) )
-        return
+            self.addItem(TreeViewClassesItem(self.rootItem, info))
 
 
-class OutlineBrowser( FilesBrowser ):
-    " File outline browser "
+class OutlineBrowser(FilesBrowser):
 
-    def __init__( self, uuid, shortName, info, parent = None ):
+    """File outline browser"""
 
-        FilesBrowser.__init__( self, OutlineBrowserModel( shortName, info ),
-                               False, parent )
+    def __init__(self, uuid, shortName, info, parent=None):
+        FilesBrowser.__init__(self, OutlineBrowserModel(shortName, info),
+                              False, parent)
 
         self.__bufferUUID = uuid
         self.__bufferBroken = False
 
-        self.header().setAutoFillBackground( True )
+        self.header().setAutoFillBackground(True)
         self.__origHeaderBackground = self.__getOriginalHeaderBackground()
         self.__brokenHeaderBackground = self.__getBrokenHeaderBackground()
-        self.setHeaderHighlight( False )
+        self.setHeaderHighlight(False)
 
-        self.setWindowTitle( 'File outline' )
-        self.setWindowIcon( getIcon( 'icon.png' ) )
-        return
+        self.setWindowTitle('File outline')
+        self.setWindowIcon(getIcon('icon.png'))
 
     @staticmethod
-    def __converttohex( value ):
-        " Converts to a 2 digits representation "
-        result = hex( value ).replace( "0x", "" )
-        if len( result ) == 1:
+    def __converttohex(value):
+        """Converts to a 2 digits representation"""
+        result = hex(value).replace("0x", "")
+        if len(result) == 1:
             return "0" + result
         return result
 
     @staticmethod
-    def __toCSSColor( rgba ):
-        " Converts the color to the CSS format "
-        return "#" + OutlineBrowser.__converttohex( rgba[ 0 ] ) + \
-                     OutlineBrowser.__converttohex( rgba[ 1 ] ) + \
-                     OutlineBrowser.__converttohex( rgba[ 2 ] )
+    def __toCSSColor(rgba):
+        """Converts the color to the CSS format"""
+        return "#" + OutlineBrowser.__converttohex(rgba[0]) + \
+                     OutlineBrowser.__converttohex(rgba[1]) + \
+                     OutlineBrowser.__converttohex(rgba[2])
 
-    def __getOriginalHeaderBackground( self ):
-        " Retrieves the original header color as a string useful for CSS "
+    def __getOriginalHeaderBackground(self):
+        """Retrieves the original header color as a string useful for CSS"""
         headerPalette = self.header().palette()
-        backgroundColor = headerPalette.color( QPalette.Background )
-        return self.__toCSSColor( backgroundColor.getRgb() )
+        backgroundColor = headerPalette.color(QPalette.Background)
+        return self.__toCSSColor(backgroundColor.getRgb())
 
-    def __getBrokenHeaderBackground( self ):
-        " Returns thr broken header background color as a string useful for CSS "
-        return self.__toCSSColor( GlobalData().skin.outdatedOutlineColor.getRgb() )
+    def __getBrokenHeaderBackground(self):
+        """Returns the broken header bg color as a string useful for CSS"""
+        return self.__toCSSColor(
+            GlobalData().skin.outdatedOutlineColor.getRgb())
 
-    def setHeaderHighlight( self, on ):
-        " Sets or removes the header highlight "
+    def setHeaderHighlight(self, on):
+        """Sets or removes the header highlight"""
         if on:
             color = self.__brokenHeaderBackground
             self.__bufferBroken = True
@@ -123,97 +118,87 @@ class OutlineBrowser( FilesBrowser ):
 
         self.header().setStyleSheet(
             'QHeaderView[highlightHeader="true"] '
-            '{ background-color: ' + color + ' }' )
-        self.header().setProperty( "highlightHeader", True )
-        self.header().style().unpolish( self.header() )
-        self.header().style().polish( self.header() )
-        return
+            '{ background-color: ' + color + ' }')
+        self.header().setProperty("highlightHeader", True)
+        self.header().style().unpolish(self.header())
+        self.header().style().polish(self.header())
 
-    def setTooltips( self, switchOn ):
-        " Sets the tooltip mode "
-        self.model().sourceModel().setTooltips( switchOn )
-        return
+    def setTooltips(self, switchOn):
+        """Sets the tooltip mode"""
+        self.model().sourceModel().setTooltips(switchOn)
 
-    def reload( self ):
-        " Reloads the filesystem view "
+    def reload(self):
+        """Reloads the filesystem view"""
         self.model().sourceModel().populateModel()
         self.model().reset()
         self.layoutDisplay()
-        return
 
-    def mouseDoubleClickEvent( self, mouseEvent ):
+    def mouseDoubleClickEvent(self, mouseEvent):
+        """Reimplemented to disable expanding/collapsing of items when
+           double-clicking. Instead the double-clicked entry is opened.
         """
-        Reimplemented to disable expanding/collapsing of items when
-        double-clicking. Instead the double-clicked entry is opened.
-        """
-
-        index = self.indexAt( mouseEvent.pos() )
+        index = self.indexAt(mouseEvent.pos())
         if not index.isValid():
             return
 
-        item = self.model().item( index )
-        if item.itemType in [ GlobalsItemType,
-                              ImportsItemType, FunctionsItemType,
-                              ClassesItemType, StaticAttributesItemType,
-                              InstanceAttributesItemType,
-                              DirectoryItemType, SysPathItemType ]:
-            QTreeView.mouseDoubleClickEvent( self, mouseEvent )
+        item = self.model().item(index)
+        if item.itemType in [GlobalsItemType,
+                             ImportsItemType, FunctionsItemType,
+                             ClassesItemType, StaticAttributesItemType,
+                             InstanceAttributesItemType,
+                             DirectoryItemType, SysPathItemType]:
+            QTreeView.mouseDoubleClickEvent(self, mouseEvent)
         else:
-            self.openItem( item )
-        return
+            self.openItem(item)
 
-    def openItem( self, item ):
-        " Handles the case when an item is activated "
-        if item.itemType in [ GlobalsItemType,
-                              ImportsItemType, FunctionsItemType,
-                              ClassesItemType, StaticAttributesItemType,
-                              InstanceAttributesItemType ]:
+    def openItem(self, item):
+        """Handles the case when an item is activated"""
+        if item.itemType in [GlobalsItemType,
+                             ImportsItemType, FunctionsItemType,
+                             ClassesItemType, StaticAttributesItemType,
+                             InstanceAttributesItemType]:
             return
 
-        if item.itemType in [ CodingItemType, ImportItemType, FunctionItemType,
-                              ClassItemType, DecoratorItemType,
-                              AttributeItemType, GlobalItemType,
-                              ImportWhatItemType ]:
+        if item.itemType in [CodingItemType, ImportItemType, FunctionItemType,
+                             ClassItemType, DecoratorItemType,
+                             AttributeItemType, GlobalItemType,
+                             ImportWhatItemType]:
             # Check if the used info has no errors
             if not self.__bufferBroken:
-                GlobalData().mainWindow.gotoInBuffer( self.__bufferUUID,
-                                                      item.sourceObj.line )
+                GlobalData().mainWindow.gotoInBuffer(self.__bufferUUID,
+                                                     item.sourceObj.line)
                 return
 
             # The info has errors, try to reparse the current buffer and see
             # if an item has changed the position
             currentInfo = self.parent().getCurrentBufferInfo()
             displayPath = item.getDisplayDataPath()
-            infoItem = getItemForDisplayPath( currentInfo, displayPath )
+            infoItem = getItemForDisplayPath(currentInfo, displayPath)
             if infoItem is None:
                 # Not found, try luck with the old info
-                GlobalData().mainWindow.gotoInBuffer( self.__bufferUUID,
-                                                      item.sourceObj.line )
+                GlobalData().mainWindow.gotoInBuffer(self.__bufferUUID,
+                                                     item.sourceObj.line)
                 return
             # Found in the new parsed info - use the new line
-            GlobalData().mainWindow.gotoInBuffer( self.__bufferUUID,
-                                                  infoItem.line )
+            GlobalData().mainWindow.gotoInBuffer(self.__bufferUUID,
+                                                 infoItem.line)
 
-        return
-
-    def __expandItem( self, item ):
-        " Expands the given item "
+    def __expandItem(self, item):
+        """Expands the given item"""
         srcModel = self.model().sourceModel()
-        index = srcModel.buildIndex( item.getRowPath() )
-        self.setExpanded( self.model().mapFromSource( index ), True )
-        return
+        index = srcModel.buildIndex(item.getRowPath())
+        self.setExpanded(self.model().mapFromSource(index), True)
 
-    def __selectItem( self, item ):
-        " Selects the item "
+    def __selectItem(self, item):
+        """Selects the item"""
         srcModel = self.model().sourceModel()
-        index = srcModel.buildIndex( item.getRowPath() )
-        self.setCurrentIndex( self.model().mapFromSource( index ) )
+        index = srcModel.buildIndex(item.getRowPath())
+        self.setCurrentIndex(self.model().mapFromSource(index))
         self.setFocus()
-        return
 
     @staticmethod
-    def __importMatch( impObj, line ):
-        " Returns True if the importobject matches "
+    def __importMatch(impObj, line):
+        """Returns True if the importobject matches"""
         minLine = impObj.line
         maxLine = impObj.line
         for what in impObj.what:
@@ -222,8 +207,8 @@ class OutlineBrowser( FilesBrowser ):
         return line >= minLine and line <= maxLine
 
     @staticmethod
-    def __funcMatch( funcObj, line ):
-        " Returns True if the function object matches "
+    def __funcMatch(funcObj, line):
+        """Returns True if the function object matches"""
         minLine = funcObj.keywordLine
         maxLine = funcObj.colonLine
         for decor in funcObj.decorators:
@@ -232,8 +217,8 @@ class OutlineBrowser( FilesBrowser ):
         return line >= minLine and line <= maxLine
 
     @staticmethod
-    def __classMatch( classObj, line ):
-        " Returns True if the class object matches "
+    def __classMatch(classObj, line):
+        """Returns True if the class object matches"""
         minLine = classObj.keywordLine
         maxLine = classObj.colonLine
         for decor in classObj.decorators:
@@ -241,9 +226,8 @@ class OutlineBrowser( FilesBrowser ):
                 minLine = decor.line
         return line >= minLine and line <= maxLine
 
-    def highlightContextItem( self, context, line, info ):
-        " Highlights the context defined item "
-
+    def highlightContextItem(self, context, line, info):
+        """Highlights the context defined item"""
         srcModel = self.model().sourceModel()
         if context.length == 0:
             # It is a global context. Check if something matches
@@ -252,7 +236,7 @@ class OutlineBrowser( FilesBrowser ):
                 if info.encoding.line == line:
                     for item in srcModel.rootItem.childItems:
                         if item.itemType == CodingItemType:
-                            self.__selectItem( item )
+                            self.__selectItem(item)
                             return True
                     return False
             # Globals
@@ -260,21 +244,21 @@ class OutlineBrowser( FilesBrowser ):
                 if glob.line == line:
                     for item in srcModel.rootItem.childItems:
                         if item.itemType == GlobalsItemType:
-                            self.__expandItem( item )
+                            self.__expandItem(item)
                             for item in item.childItems:
                                 if item.sourceObj.line == line:
-                                    self.__selectItem( item )
+                                    self.__selectItem(item)
                                     return True
                     return False
             # Imports
             for imp in info.imports:
-                if self.__importMatch( imp, line ):
+                if self.__importMatch(imp, line):
                     for item in srcModel.rootItem.childItems:
                         if item.itemType == ImportsItemType:
-                            self.__expandItem( item )
+                            self.__expandItem(item)
                             for item in item.childItems:
-                                if self.__importMatch( item.sourceObj, line ):
-                                    self.__selectItem( item )
+                                if self.__importMatch(item.sourceObj, line):
+                                    self.__selectItem(item)
                                     return True
                     return False
 
@@ -284,20 +268,19 @@ class OutlineBrowser( FilesBrowser ):
         # This is something nested
         currentItem = srcModel.rootItem
         for level in context.levels:
-            scopeType = level[ 1 ]
-            scopeObj = level[ 0 ]
+            scopeType = level[1]
+            scopeObj = level[0]
             if scopeType == context.FunctionScope:
                 # Search for 'functions' item type and expand it
                 if currentItem is not srcModel.rootItem:
-                    self.__expandItem( currentItem )
+                    self.__expandItem(currentItem)
                 found = False
                 for item in currentItem.childItems:
                     if item.itemType == FunctionsItemType:
-                        self.__expandItem( item )
+                        self.__expandItem(item)
                         for item in item.childItems:
-                            if self.__funcMatch( item.sourceObj,
-                                                 scopeObj.line ):
-                                self.__selectItem( item )
+                            if self.__funcMatch(item.sourceObj, scopeObj.line):
+                                self.__selectItem(item)
                                 currentItem = item
                                 found = True
                                 break
@@ -309,15 +292,15 @@ class OutlineBrowser( FilesBrowser ):
             if scopeType == context.ClassScope:
                 # Search for 'classes' item type and expand it
                 if currentItem is not srcModel.rootItem:
-                    self.__expandItem( currentItem )
+                    self.__expandItem(currentItem)
                 found = False
                 for item in currentItem.childItems:
                     if item.itemType == ClassesItemType:
-                        self.__expandItem( item )
+                        self.__expandItem(item)
                         for item in item.childItems:
-                            if self.__classMatch( item.sourceObj,
-                                                  scopeObj.line ):
-                                self.__selectItem( item )
+                            if self.__classMatch(item.sourceObj,
+                                                 scopeObj.line):
+                                self.__selectItem(item)
                                 currentItem = item
                                 found = True
                                 break
@@ -329,18 +312,16 @@ class OutlineBrowser( FilesBrowser ):
             if scopeType == context.ClassMethodScope:
                 # Search for 'function' item type
                 if currentItem is not srcModel.rootItem:
-                    self.__expandItem( currentItem )
+                    self.__expandItem(currentItem)
                 found = False
                 for item in item.childItems:
                     if item.itemType == FunctionItemType:
-                        if self.__funcMatch( item.sourceObj,
-                                             scopeObj.line ):
-                            self.__selectItem( item )
+                        if self.__funcMatch(item.sourceObj, scopeObj.line):
+                            self.__selectItem(item)
                             currentItem = item
                             found = True
                             break
                 if found:
                     continue
                 return False
-
         return True

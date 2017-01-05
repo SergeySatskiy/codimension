@@ -406,7 +406,6 @@ class CodimensionProject(QObject,
 
 def getProjectProperties(projectFile):
     """Provides project properties or throws an exception"""
-
     path = realpath(projectFile)
     if not exists(path):
         raise Exception("Cannot find project file " + projectFile)
