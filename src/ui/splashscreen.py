@@ -28,7 +28,8 @@
 """Splash screen implementation"""
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QApplication, QSplashScreen, QColor
+from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import QApplication, QSplashScreen
 from utils.pixmapcache import getPixmap
 
 

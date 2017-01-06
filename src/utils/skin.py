@@ -30,7 +30,7 @@ from .fileutils import saveToFile, getFileContent
 from .config import DEFAULT_ENCODING
 
 
-__DEFAULT_SKIN_SETTINGS = {
+_DEFAULT_SKIN_SETTINGS = {
     'name': 'default',
     'marginPaper': QColor(228, 228, 228, 255),
     'marginPaperDebug': QColor(255, 228, 228, 255),
@@ -102,7 +102,7 @@ __DEFAULT_SKIN_SETTINGS = {
     'ioconsolemarginFont': buildFont('Monospace,12,-1,5,50,0,0,0,0,0')}
 
 
-__DEFAULT_APP_CSS = """
+_DEFAULT_APP_CSS = """
 QStatusBar::item
 { border: 0px solid black }
 QToolTip
@@ -141,8 +141,8 @@ class Skin:
 
     def __reset(self):
         """Resets all the values to the default"""
-        self.__values = deepcopy(__DEFAULT_SKIN_SETTINGS)
-        self.__appCSS = deepcopy(__DEFAULT_APP_CSS)
+        self.__values = deepcopy(_DEFAULT_SKIN_SETTINGS)
+        self.__appCSS = deepcopy(_DEFAULT_APP_CSS)
 
     def __getitem__(self, key):
         if key == 'appCSS':

@@ -21,7 +21,7 @@
 """definition of the codimension QT based application class"""
 
 from PyQt5.QtCore import Qt, QEvent
-from PyQt5.QtGui import QApplication, QMenuBar
+from PyQt5.QtWidgets import QApplication, QMenuBar
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from .garbagecollector import GarbageCollector

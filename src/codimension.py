@@ -106,7 +106,7 @@ Runs codimension UI"""
     # Load the skin
     globalData.skin = Skin()
     globalData.skin.load(SETTINGS_DIR + "skins" +
-                         os.path.sep + settings.skin)
+                         os.path.sep + settings['skin'])
 
     # QT on UBUNTU has a bug - the main menu bar does not generate the
     # 'aboutToHide' signal (though 'aboutToShow' is generated properly. This
@@ -115,7 +115,7 @@ Runs codimension UI"""
     os.environ["QT_X11_NO_NATIVE_MENUBAR"] = "1"
 
     # Create QT application
-    codimensionApp = CodimensionApplication(sys.argv, settings.style)
+    codimensionApp = CodimensionApplication(sys.argv, settings['style'])
     globalData.application = codimensionApp
 
     logging.debug("Starting codimension v." + VER)
@@ -312,7 +312,7 @@ def copySkin():
                     logging.error(str(exc))
 
     # Check that the configured skin is in place
-    userSkinDir = userSkinsDir + Settings().skin
+    userSkinDir = userSkinsDir + Settings()['skin']
     if os.path.exists(userSkinDir) and os.path.isdir(userSkinDir):
         # That's just fine
         return
@@ -321,10 +321,10 @@ def copySkin():
     # Try to set the default.
     if os.path.exists(userSkinsDir + 'default'):
         if os.path.isdir(userSkinsDir + 'default'):
-            logging.warning("The configured skin '" + Settings().skin +
+            logging.warning("The configured skin '" + Settings()['skin'] +
                             "' has not been found. "
                             "Fallback to the 'default' skin.")
-            Settings().skin = 'default'
+            Settings()['skin'] = 'default'
             return
 
     # Default is not there. Try to pick any.
@@ -341,10 +341,10 @@ def copySkin():
         return
 
     # Here: last resort - fallback to the first found skin
-    logging.warning("The configured skin '" + Settings().skin +
+    logging.warning("The configured skin '" + Settings()['skin'] +
                     "' has not been found. Fallback to the '" +
                     anySkinName + "' skin.")
-    Settings().skin = anySkinName
+    Settings()['skin'] = anySkinName
 
 
 def exceptionHook(excType, excValue, tracebackObj):

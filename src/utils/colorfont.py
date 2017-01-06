@@ -20,7 +20,8 @@
 
 """QT color and font general utils"""
 
-from PyQt5.QtGui import QColor, QFont, QFontComboBox
+from PyQt5.QtGui import QColor, QFont
+from PyQt5.QtWidgets import QFontComboBox
 
 
 def checkColorRange(value):
