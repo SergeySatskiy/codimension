@@ -24,7 +24,7 @@ import logging
 import os
 import json
 from copy import deepcopy
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QFont
 from .colorfont import buildFont, toJSON, fromJSON
 from .fileutils import saveToFile, getFileContent
 from .config import DEFAULT_ENCODING
@@ -142,6 +142,11 @@ class Skin:
     def __reset(self):
         """Resets all the values to the default"""
         self.__values = deepcopy(_DEFAULT_SKIN_SETTINGS)
+        for key, value in self.__values.items():
+            # deepcopy() does not work properly for QFont: the underlied C++
+            # wrapper is not initialized in this case. So...
+            if isinstance(value, QFont):
+                self.__values[key] = QFont(_DEFAULT_SKIN_SETTINGS[key])
         self.__appCSS = deepcopy(_DEFAULT_APP_CSS)
 
     def __getitem__(self, key):
@@ -166,7 +171,8 @@ class Skin:
             fName = self.__dirName + 'skin.json'
             try:
                 with open(fName, 'w', encoding=DEFAULT_ENCODING) as diskfile:
-                    json.dump(self.__values, diskfile, default=toJSON)
+                    json.dump(self.__values, diskfile, indent=4,
+                              default=toJSON)
             except Exception as exc:
                 logging.error('Error saving skin settings (to ' +
                               fName + '): ' + str(exc))
