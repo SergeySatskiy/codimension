@@ -64,8 +64,8 @@ class CodimensionApplication(QApplication):
 
         # Avoid having rectangular frames on the status bar and
         # some application wide style changes
-        appCSS = GlobalData().skin.appCSS
-        if appCSS != "":
+        appCSS = GlobalData().skin['appCSS']
+        if appCSS:
             self.setStyleSheet(appCSS)
 
         # Install custom GC

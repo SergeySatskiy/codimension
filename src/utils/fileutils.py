@@ -49,8 +49,8 @@ VIEWABLE_IMAGE_MIMES = ['image/' + ext for ext in __QTSupportedImageFormats]
 
 
 def __getXmlSyntaxFile(fName):
-    """ Checks the Qutepart mapping of a file extension to a syntax file.
-        Returns: None if not found or a syntax file name
+    """Checks the Qutepart mapping of a file extension to a syntax file.
+       Returns: None if not found or a syntax file name
     """
     # Special cases: codimension project files
     #                makefiles
@@ -73,8 +73,8 @@ def __getXmlSyntaxFile(fName):
 
 
 def __getMimeByXmlSyntaxFile(xmlSyntaxFile):
-    """ Checks the Qutepart mapping of a mime type to a syntax file.
-        Returns a mime type or None
+    """Checks the Qutepart mapping of a mime type to a syntax file.
+       Returns a mime type or None
     """
     candidates = []
     for mime, xmlFileName in \
@@ -87,8 +87,8 @@ def __getMimeByXmlSyntaxFile(xmlSyntaxFile):
 
 
 def __getXmlSyntaxFileByMime(mime):
-    """ Checks the Qutepart mapping of a mime type to a syntax file.
-        Returns an xml syntax file or None
+    """Checks the Qutepart mapping of a mime type to a syntax file.
+       Returns an xml syntax file or None
     """
     try:
         return Qutepart._globalSyntaxManager._mimeTypeToXmlFileName[mime]
@@ -96,12 +96,11 @@ def __getXmlSyntaxFileByMime(mime):
         return None
 
 
-__cachedFileTypes = {}
 __magic = magic.Magic(mime=True, mime_encoding=True)
 
 
 def isFileSearchable(fName, checkForBrokenLink=True):
-    " Returns True if it makes sense to search for text in that file "
+    """Returns True if it makes sense to search for text in that file"""
     mime, _, _, syntaxFile = getFileProperties(fName, False,
                                                checkForBrokenLink,
                                                skipCache=False)
@@ -113,6 +112,14 @@ def isFileSearchable(fName, checkForBrokenLink=True):
 def isImageViewable(mime):
     """True if QT can show the image"""
     return mime in VIEWABLE_IMAGE_MIMES
+
+
+def isFileOpenable(fName):
+    """True if codimension can open the file"""
+    mime, _, _, syntaxFile = getFileProperties(fName, False, True, False)
+    if syntaxFile is not None:
+        return True
+    return isImageViewable(mime)
 
 
 __syntaxToIcon = None

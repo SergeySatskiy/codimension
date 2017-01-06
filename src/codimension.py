@@ -250,7 +250,6 @@ def setupLogging(debug):
 
 def processCommandLineArgs(args):
     """Checks what is in the command line"""
-
     # I cannot import it at the top because the fileutils want
     # to use the pixmap cache which needs the application to be
     # created, so the import is deferred
