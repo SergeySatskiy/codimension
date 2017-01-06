@@ -41,16 +41,16 @@ from .filepositions import FilePositions
 
 
 # Saved in .cdm3 file
-__DEFAULT_PROJECT_PROPS = {'scriptname': '',    # Script to run the project
-                           'creationdate': '',
-                           'author': '',
-                           'license': '',
-                           'copyright': '',
-                           'version': '',
-                           'email': '',
-                           'description': '',
-                           'uuid': '',
-                           'importdirs': []}
+_DEFAULT_PROJECT_PROPS = {'scriptname': '',    # Script to run the project
+                          'creationdate': '',
+                          'author': '',
+                          'license': '',
+                          'copyright': '',
+                          'version': '',
+                          'email': '',
+                          'description': '',
+                          'uuid': '',
+                          'importdirs': []}
 
 
 class CodimensionProject(QObject,
@@ -86,7 +86,7 @@ class CodimensionProject(QObject,
         self.userProjectDir = ""    # Directory in ~/.codimension3/uuidNN/
         self.filesList = set()
 
-        self.props = copy.deepcopy(__DEFAULT_PROJECT_PROPS)
+        self.props = copy.deepcopy(_DEFAULT_PROJECT_PROPS)
 
         # Precompile the exclude filters for the project files list
         self.__excludeFilter = []
@@ -113,7 +113,7 @@ class CodimensionProject(QObject,
         # The dirs end with os.path.sep
         self.filesList = set()
 
-        self.props = copy.deepcopy(__DEFAULT_PROJECT_PROPS)
+        self.props = copy.deepcopy(_DEFAULT_PROJECT_PROPS)
 
         RunParametersCache.reset(self)
         DebuggerEnvironment.reset(self)

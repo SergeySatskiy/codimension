@@ -100,7 +100,7 @@ class DebuggerSettings:
                self.followChild == other.followChild
 
 
-__DEFAULT_SETTINGS = {
+_DEFAULT_SETTINGS = {
     # general
     'zoom': 0,
     'xpos': 50,
@@ -234,7 +234,7 @@ class SettingsWrapper(QObject,
         RunParametersCache.__init__(self)
         FilePositions.__init__(self)
 
-        self.__values = deepcopy(__DEFAULT_SETTINGS)
+        self.__values = deepcopy(_DEFAULT_SETTINGS)
 
         # make sure that the directory exists
         if not os.path.exists(SETTINGS_DIR):
@@ -259,29 +259,29 @@ class SettingsWrapper(QObject,
 
         # Load the previous session settings
         try:
-            with open(self.fullFileName, "r",
+            with open(self.__fullFileName, "r",
                       encoding=SETTINGS_ENCODING) as diskfile:
                 diskValues = json.load(diskfile, object_hook=settingsFromJSON)
         except Exception as exc:
             # Bad error - save default
             self.__saveErrors('Could not read setting from ' +
-                              self.fullFileName + ': ' + str(exc) +
+                              self.__fullFileName + ': ' + str(exc) +
                               'Overwriting with the default settings...')
             self.flush()
             return
 
         for item, val in diskValues.items():
-            if item in self.values:
-                if type(self.values[item]) != type(val):
+            if item in self.__values:
+                if type(self.__values[item]) != type(val):
                     readErrors.append("Settings '" + item +
                                       "' type from the disk file " +
-                                      self.fullFileName +
+                                      self.__fullFileName +
                                       ' does not match the expected one. '
                                       'The default value is used.')
                 else:
-                    self.values[item] = val
+                    self.__values[item] = val
             else:
-                readErrors.append('Disk file ' + self.fullFileName +
+                readErrors.append('Disk file ' + self.__fullFileName +
                                   " contains extra value '" + item +
                                   "'. It will be lost.")
 
@@ -312,7 +312,7 @@ class SettingsWrapper(QObject,
         try:
             with open(self.__fullFileName, 'w',
                       encoding=SETTINGS_ENCODING) as diskfile:
-                json.dump(self.values, diskfile,
+                json.dump(self.__values, diskfile,
                           default=settingsToJSON, indent=4)
         except Exception as exc:
             logging.error('Errol saving setting (to ' + self.__fullFileName +
@@ -321,16 +321,16 @@ class SettingsWrapper(QObject,
     def addRecentProject(self, projectFile, needFlush=True):
         """Adds the recent project to the list"""
         absProjectFile = os.path.realpath(projectFile)
-        recentProjects = self.values['recentProjects']
+        recentProjects = self.__values['recentProjects']
 
         if absProjectFile in recentProjects:
             recentProjects.remove(absProjectFile)
 
         recentProjects.insert(0, absProjectFile)
-        limit = self.values['maxRecentProjects']
+        limit = self.__values['maxRecentProjects']
         if len(recentProjects) > limit:
             recentProjects = recentProjects[0:limit]
-        self.values['recentProjects'] = recentProjects
+        self.__values['recentProjects'] = recentProjects
         if needFlush:
             self.flush()
         self.recentListChanged.emit()
@@ -338,11 +338,11 @@ class SettingsWrapper(QObject,
     def deleteRecentProject(self, projectFile, needFlush=True):
         """Deletes the recent project from the list"""
         absProjectFile = os.path.realpath(projectFile)
-        recentProjects = self.values['recentProjects']
+        recentProjects = self.__values['recentProjects']
 
         if absProjectFile in recentProjects:
             recentProjects.remove(absProjectFile)
-            self.values['recentProjects'] = recentProjects
+            self.__values['recentProjects'] = recentProjects
             if needFlush:
                 self.flush()
             self.recentListChanged.emit()
@@ -351,36 +351,36 @@ class SettingsWrapper(QObject,
     @staticmethod
     def getDefaultGeometry():
         """Provides the default window size and location"""
-        return __DEFAULT_SETTINGS['xpos'], __DEFAULT_SETTINGS['ypos'], \
-               __DEFAULT_SETTINGS['width'], __DEFAULT_SETTINGS['height']
+        return _DEFAULT_SETTINGS['xpos'], _DEFAULT_SETTINGS['ypos'], \
+               _DEFAULT_SETTINGS['width'], _DEFAULT_SETTINGS['height']
 
     def getProfilerSettings(self):
         """Provides the profiler IDE-wide settings"""
-        return self.values['profilerLimits']
+        return self.__values['profilerLimits']
 
     def setProfilerSettings(self, newValue, needFlush=True):
         """Updates the profiler settings"""
-        if self.values['profilerLimits'] != newValue:
-            self.values['profilerLimits'] = newValue
+        if self.__values['profilerLimits'] != newValue:
+            self.__values['profilerLimits'] = newValue
             if needFlush:
                 self.flush()
 
     def getDebuggerSettings(self):
         """Provides the debugger IDE-wide settings"""
-        return self.values['debuggerSettings']
+        return self.__values['debuggerSettings']
 
     def setDebuggerSettings(self, newValue, needFlush=True):
         """Updates the debugger settings"""
-        if self.values['debuggerSettings'] != newValue:
-            self.values['debuggerSettings'] = newValue
+        if self.__values['debuggerSettings'] != newValue:
+            self.__values['debuggerSettings'] = newValue
             if needFlush:
                 self.flush()
 
     def __getitem__(self, key):
-        return self.values[key]
+        return self.__values[key]
 
     def __setitem__(self, key, value):
-        self.values[key] = value
+        self.__values[key] = value
         self.flush()
 
 

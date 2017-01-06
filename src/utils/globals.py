@@ -29,6 +29,7 @@ from plugins.manager.pluginmanager import CDMPluginManager
 from .project import CodimensionProject
 from .briefmodinfocache import BriefModuleInfoCache
 from .settings import SETTINGS_DIR, Settings
+from .config import DEFAULT_ENCODING
 
 
 # This function needs to have a rope project built smart
@@ -186,6 +187,7 @@ class GlobalDataWrapper:
         " Provides the pylint version "
         output = check_output("pylint --version; exit 0",
                               stderr=STDOUT, shell=True)
+        output = output.decode(DEFAULT_ENCODING)
         for line in output.splitlines():
             line = line.strip()
             if line.startswith("pylint "):

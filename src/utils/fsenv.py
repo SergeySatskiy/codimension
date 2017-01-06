@@ -28,11 +28,11 @@ from .fileutils import loadJSON, saveJSON
 # toplevel dirs: those which are added to the file system browser
 # filebrowserexpandeddirs: dirs in the project browser which were expanded when
 # the user closed the project
-__DEFAULT_FS_PROPS = {'tabs': [],                       # [bool: active,
-                                                        #  string: path, ...]
-                      'recent': [],                     # [path, ...]
-                      'fsbrowserexpandeddirs': [],      # [path, ...]
-                      'topleveldirs': []}               # [path, ...]
+_DEFAULT_FS_PROPS = {'tabs': [],                       # [bool: active,
+                                                       #  string: path, ...]
+                     'recent': [],                     # [path, ...]
+                     'fsbrowserexpandeddirs': [],      # [path, ...]
+                     'topleveldirs': []}               # [path, ...]
 
 
 class FileSystemEnvironment:
@@ -40,7 +40,7 @@ class FileSystemEnvironment:
     """Loads/stores/saves the fs related environment"""
 
     def __init__(self):
-        self.__props = deepcopy(__DEFAULT_FS_PROPS)
+        self.__props = deepcopy(_DEFAULT_FS_PROPS)
         self.__fileName = None
 
         # Default. Could be updated later.
@@ -48,7 +48,7 @@ class FileSystemEnvironment:
 
     def reset(self):
         """Resets the binding to the file system"""
-        self.__props = deepcopy(__DEFAULT_FS_PROPS)
+        self.__props = deepcopy(_DEFAULT_FS_PROPS)
         self.__fileName = None
 
     def setup(self, dirName):
@@ -70,7 +70,7 @@ class FileSystemEnvironment:
     def load(self):
         """Loads the saved file system environment"""
         if self.__fileName:
-            default = deepcopy(__DEFAULT_FS_PROPS)
+            default = deepcopy(_DEFAULT_FS_PROPS)
             self.__props = loadJSON(self.__fileName, 'file system environment',
                                     default)
 

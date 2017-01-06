@@ -41,21 +41,21 @@ from .fileutils import loadJSON, saveJSON
 #   'case': <bool>, 'word': <bool>, 'regexp': <bool>,
 #   'inproject': <bool>, 'inopened': <bool>, 'indir': <bool>, 'dir': <string>,
 #   'filter': <string> }
-__DEFAULT_SEARCH_HISTORY = {'class': [],        # [term, ...]
-                            'function': [],     # [term, ...]
-                            'global': [],       # [term, ...]
-                            'findname': [],     # [term, ...]
-                            'findfile': [],     # [term, ...]
-                            'find': [],         # [term + options, ...]
-                            'replace': [],      # [term + term + options, ...]
-                            'findinfiles': []}  # [term + dir + mask, ...]
+_DEFAULT_SEARCH_HISTORY = {'class': [],        # [term, ...]
+                           'function': [],     # [term, ...]
+                           'global': [],       # [term, ...]
+                           'findname': [],     # [term, ...]
+                           'findfile': [],     # [term, ...]
+                           'find': [],         # [term + options, ...]
+                           'replace': [],      # [term + term + options, ...]
+                           'findinfiles': []}  # [term + dir + mask, ...]
 
 class SearchEnvironment:
 
     """Loads/stores/saves the search environment"""
 
     def __init__(self):
-        self.__props = deepcopy(__DEFAULT_SEARCH_HISTORY)
+        self.__props = deepcopy(_DEFAULT_SEARCH_HISTORY)
         self.__fileName = None
 
         # Default. Could be updated later
@@ -63,7 +63,7 @@ class SearchEnvironment:
 
     def reset(self):
         """Un-binds from the file system"""
-        self.__props = deepcopy(__DEFAULT_SEARCH_HISTORY)
+        self.__props = deepcopy(_DEFAULT_SEARCH_HISTORY)
         self.__fileName = None
 
     def setup(self, dirName):
@@ -85,7 +85,7 @@ class SearchEnvironment:
     def load(self):
         """Loads the saved search environment"""
         if self.__fileName:
-            default = deepcopy(__DEFAULT_SEARCH_HISTORY)
+            default = deepcopy(_DEFAULT_SEARCH_HISTORY)
             self.__props = loadJSON(self.__fileName, 'search environment',
                                     default)
 

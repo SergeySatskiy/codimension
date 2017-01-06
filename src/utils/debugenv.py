@@ -25,9 +25,9 @@ from copy import deepcopy
 from .fileutils import loadJSON, saveJSON
 
 
-__DEFAULT_DEBUGGER_PROPS = {'breakpoints': [],          # [[file, line], ...]
-                            'watchpoints': [],          # [[file, expr], ...]
-                            'ignoredexceptions': []}    # [type name, ... ]
+_DEFAULT_DEBUGGER_PROPS = {'breakpoints': [],          # [[file, line], ...]
+                           'watchpoints': [],          # [[file, expr], ...]
+                           'ignoredexceptions': []}    # [type name, ... ]
 
 
 class DebuggerEnvironment:
@@ -35,12 +35,12 @@ class DebuggerEnvironment:
     """Loads/stores/saves the debugger environment"""
 
     def __init__(self):
-        self.__props = deepcopy(__DEFAULT_DEBUGGER_PROPS)
+        self.__props = deepcopy(_DEFAULT_DEBUGGER_PROPS)
         self.__fileName = None
 
     def reset(self):
         """Resets the filesystem binding"""
-        self.__props = deepcopy(__DEFAULT_DEBUGGER_PROPS)
+        self.__props = deepcopy(_DEFAULT_DEBUGGER_PROPS)
         self.__fileName = None
 
     def setup(self, dirName):
@@ -62,7 +62,7 @@ class DebuggerEnvironment:
     def load(self):
         """Loads the saved debugger environment"""
         if self.__fileName:
-            default = deepcopy(__DEFAULT_DEBUGGER_PROPS)
+            default = deepcopy(_DEFAULT_DEBUGGER_PROPS)
             self.__props = loadJSON(self.__fileName, 'debugger environment',
                                     default)
 
