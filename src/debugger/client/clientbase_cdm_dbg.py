@@ -1453,8 +1453,9 @@ class DebugClientBase(object):
         # the eval causing IOErrors if self.running is passed as a normal str.
         self.debugMod.__dict__['__file__'] = self.running
         sys.modules['__main__'] = self.debugMod
-        res = self.mainThread.run('execfile(' + `self.running` + ')',
-                                  self.debugMod.__dict__)
+        res = self.mainThread.run(
+            'exec(open(' + repr(self.running) + ').read())',
+            self.debugMod.__dict__)
         self.progTerminated(res)
 
     @staticmethod

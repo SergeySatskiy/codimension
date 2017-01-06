@@ -26,8 +26,7 @@ import json
 from copy import deepcopy
 from PyQt5.QtGui import QColor
 from .colorfont import buildFont, toJSON, fromJSON
-from .csscache import parseSingleCSS
-from .fileutils import saveToFile
+from .fileutils import saveToFile, getFileContent
 from .config import DEFAULT_ENCODING
 
 
@@ -214,9 +213,7 @@ class Skin:
     def __loadAppCSS(self, fName):
         """Loads the application CSS file"""
         try:
-            content = []
-            parseSingleCSS(fName, content)
-            self.__appCSS = ''.join(content)
+            self.__appCSS = getFileContent(fName)
         except Exception as exc:
             logging.error('Cannot read an application CSS from ' + fName +
                           ': ' + str(exc) +
