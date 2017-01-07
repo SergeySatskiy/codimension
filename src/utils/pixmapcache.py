@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -18,8 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
-""" codimension pixmap cache """
+"""codimension pixmap cache"""
 
 from os.path import dirname, realpath, sep, isabs, exists
 import sys
@@ -27,28 +25,25 @@ from PyQt5.QtGui import QPixmap, QIcon
 
 
 class PixmapCache():
-    """
-    pixmap cache
-    used as a singleton
-    """
+
+    """pixmap cache"""
 
     def __init__(self):
         self.__cache = {}
         self.__dir = dirname(realpath(sys.argv[0])) + sep + 'pixmaps' + sep
 
     def getPath(self, path):
-        " Provides an absolute path "
+        """Provides an absolute path"""
         if isabs(path):
             return path
         return self.__dir + path
 
     def getSearchPath(self):
-        " Provides the path where pixmaps are "
+        """Provides the path where pixmaps are"""
         return self.__dir
 
     def getPixmap(self, name):
-        """ Provides the required pixmap """
-
+        """Provides the required pixmap"""
         try:
             return self.__cache[name]
         except KeyError:
@@ -66,7 +61,7 @@ class PixmapCache():
             return pixmap
 
     def getIcon(self, name):
-        """ Provides a pixmap as an icon """
+        """Provides a pixmap as an icon"""
         return QIcon(self.getPixmap(name))
 
 
@@ -76,10 +71,10 @@ PIXMAP_CACHE = PixmapCache()
 
 
 def getIcon(name):
-    " Syntactic shugar "
+    """Syntactic shugar"""
     return PIXMAP_CACHE.getIcon(name)
 
 
 def getPixmap(name):
-    " Syntactic shugar "
+    """Syntactic shugar"""
     return PIXMAP_CACHE.getPixmap(name)

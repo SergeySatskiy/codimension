@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -23,7 +22,6 @@
 
 """Utility functions to support running scripts"""
 
-
 import sys
 import os
 import os.path
@@ -45,7 +43,6 @@ CMD_TYPE_DEBUG = 2
 
 def getUserShell():
     """Provides the user shell on unix systems"""
-
     try:
         osShell = os.getenv('SHELL')
         if osShell is not None:
@@ -99,7 +96,6 @@ __konsoleQuery = "kreadconfig --file kdeglobals --group General " \
 
 def getStartTerminalCommand(terminalType):
     """Provides the UNIX command to start a new terminal, e.g.: xterm"""
-
     if terminalType == TERM_KONSOLE:
         (s, term) = getstatusoutput(__konsoleQuery)
         if (s == 0) and __isFileInPath(term):
@@ -205,7 +201,6 @@ def getTerminalCommandToRun(fileName, workingDir, arguments,
                             terminalType, closeTerminal, tcpServerPort=None,
                             procID=None):
     """Provides a command to run a separate shell terminal"""
-
     if os.name != 'posix':
         raise Exception("Cannot guess terminal command.")
 
@@ -254,7 +249,6 @@ def getTerminalCommandToRun(fileName, workingDir, arguments,
 def getTerminalCommandToProfile(fileName, workingDir, arguments,
                                 terminalType, closeTerminal, port):
     """Provides a command to run a separate shell terminal"""
-
     if os.name != 'posix':
         raise Exception("Cannot guess terminal command.")
 
@@ -308,7 +302,6 @@ def getTerminalCommandToDebug(fileName, workingDir, arguments,
                               terminalType, closeTerminal,
                               procFeedbackPort, tcpServerPort):
     """Provides a command line to debug in a separate shell terminal"""
-
     if os.name != 'posix':
         raise Exception("Cannot guess terminal command.")
 
@@ -383,7 +376,6 @@ def getTerminalCommandToDebug(fileName, workingDir, arguments,
 
 def parseCommandLineArguments(cmdLine):
     """Parses command line arguments provided by the user in the UI"""
-
     result = []
 
     cmdLine = cmdLine.strip()
@@ -462,7 +454,6 @@ def getCwdCmdEnv(cmdType, path, params, terminalType,
                  procID=None):
     """Provides the working directory, command line and environment
        for running/debugging a script"""
-
     workingDir = getWorkingDir(path, params)
 
     # The arguments parsing is going to pass OK because it

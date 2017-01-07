@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -17,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
 
 """codimension settings"""
 
@@ -45,7 +43,9 @@ THIRDPARTY_DIR = os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])),
 
 
 class ProfilerSettings:
+
     """Holds IDE-wide profiler options"""
+
     def __init__(self):
         self.nodeLimit = 1.0
         self.edgeLimit = 1.0
@@ -67,7 +67,9 @@ class ProfilerSettings:
 
 
 class DebuggerSettings:
+
     """Holds IDE-wide debugger options"""
+
     def __init__(self):
         self.reportExceptions = True
         self.traceInterpreter = True
@@ -220,6 +222,7 @@ class SettingsWrapper(QObject,
                       FileSystemEnvironment,
                       RunParametersCache,
                       FilePositions):
+
     """Provides settings singleton facility"""
 
     recentListChanged = pyqtSignal()
@@ -384,9 +387,9 @@ class SettingsWrapper(QObject,
         self.flush()
 
 
-settingsSingleton = SettingsWrapper()
+SETTINGS_SINGLETON = SettingsWrapper()
 
 
 def Settings():
-    " Settings singleton access "
-    return settingsSingleton
+    """Settings singleton access"""
+    return SETTINGS_SINGLETON

@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -24,6 +23,7 @@ from copy import deepcopy
 
 
 class RunParameters:
+
     """Stores the script run parameters"""
 
     InheritParentEnv = 0

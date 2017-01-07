@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -34,7 +33,7 @@ from .config import DEFAULT_ENCODING
 
 # This function needs to have a rope project built smart
 def getSubdirs(path, baseNamesOnly=True, excludePythonModulesDirs=True):
-    " Provides a list of sub directories for the given path "
+    """Provides a list of sub directories for the given path"""
     subdirs = []
     try:
         path = realpath(path) + sep

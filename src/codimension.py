@@ -253,37 +253,34 @@ def processCommandLineArgs(args):
     # I cannot import it at the top because the fileutils want
     # to use the pixmap cache which needs the application to be
     # created, so the import is deferred
-    from utils.fileutils import CodimensionProjectFileType, PythonFileType, \
-                                Python3FileType, detectFileType
+    from utils.fileutils import (isFileOpenable, getFileProperties,
+                                 isCDMProjectMime)
 
     if len(args) == 0:
         return ''
 
     # Check that all the files exist
-    fileType = PythonFileType
     for fName in args:
         if not os.path.exists(fName):
             raise Exception("Cannot open file: " + fName)
         if not os.path.isfile(fName):
             raise Exception("The " + fName + " is not a file")
-        fileType = detectFileType(fName)
-        if fileType not in [ PythonFileType, Python3FileType,
-                             CodimensionProjectFileType ]:
-            raise Exception( "Unexpected file type (" + \
-                             fName + ")" )
+        if not isFileOpenable(fName):
+            raise Exception("The file " + fName + " could not be opened")
 
     if len(args) == 1:
-        if fileType == CodimensionProjectFileType:
+        mime, _, _, _ = getFileProperties(args[0])
+        if isCDMProjectMime(mime):
             return args[0]
         return ''
 
     # There are many files, check that they are python only
     for fName in args:
-        fileType = detectFileType(fName)
-        if fileType == CodimensionProjectFileType:
+        mime, _, _, _ = getFileProperties(fName)
+        if isCDMProjectMime(mime):
             raise Exception("Codimension project file (" +
                             fName + ") must not come "
-                            "together with python files")
+                            "together with other files")
     return ''
 
 

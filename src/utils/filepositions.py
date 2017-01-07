@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -29,7 +28,6 @@ class FilePositions:
     """Loads/stores/saves the last position in files"""
 
     def __init__(self):
-
         # file name -> (line, pos, first visible, horizontalPos, verticalPos)
         self.__filePos = {}
         self.__fileName = None

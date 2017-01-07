@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -18,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
 """codimension run parameters cache"""
 
 import json
@@ -30,6 +28,7 @@ from .config import DEFAULT_ENCODING
 
 
 class RunParametersCache:
+
     """Provides the run parameters cache"""
 
     def __init__(self):
@@ -45,7 +44,7 @@ class RunParametersCache:
         self.__fileName = None
 
     def setup(self, dirName):
-        " Binds the cache to a disk file "
+        """Binds the cache to a disk file"""
         # Just in case - flush the previous data if they were bound
         RunParametersCache.save(self)
 

@@ -18,8 +18,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-""" Sends a short message to the specified port.
-    Usually used to signal that a program has finished """
+"""Sends a short message to the specified port.
+   Usually used to signal that a program has finished
+"""
 
 import socket
 import sys
@@ -33,15 +34,14 @@ FEEDBACK_PREFIX = "cdmfeedback"
 
 
 def sendFeedbackMessage(localPort, parts):
-    " Sends the 'done <exit code>' message to localhost:port "
+    """Sends the 'done <exit code>' message to localhost:port"""
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     msg = ' '.join([FEEDBACK_PREFIX] + parts)
     sock.sendto(msg.encode('utf-8'), ('127.0.0.1', localPort))
-    return
 
 
 def decodeMessage(msg):
-    " Validates the message and extract parts from it "
+    """Validates the message and extract parts from it"""
     parts = msg.decode('utf-8').split()
     if len(parts) < 1:
         raise Exception("Invalid message length - no prefix")
@@ -51,7 +51,7 @@ def decodeMessage(msg):
 
 
 def isProcessAlive(pid):
-    " Returns True is the process is still alive "
+    """Returns True is the process is still alive"""
     try:
         # Signal 0 means no sending a signal but check preconditions
         os.kill(pid, 0)
@@ -65,8 +65,7 @@ def isProcessAlive(pid):
 
 
 def killProcess(pid):
-    " Tries to kill the given process "
-
+    """Tries to kill the given process"""
     for signal in (SIGTERM, SIGINT, SIGHUP):
         if not isProcessAlive(pid):
             return

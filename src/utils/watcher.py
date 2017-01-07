@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -18,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
 """
 The watcher cares of the given directories structures.
 If somethig has been changed then it emits a signal.
@@ -33,12 +31,12 @@ from PyQt5.QtCore import QObject, QFileSystemWatcher, pyqtSignal
 
 
 class Watcher(QObject):
-    " Filesystem watcher implementation "
+
+    """Filesystem watcher implementation"""
 
     fsChanged = pyqtSignal(list)
 
     def __init__(self, excludeFilters, dirToWatch):
-
         QObject.__init__(self)
         self.__dirWatcher = QFileSystemWatcher(self)
 
@@ -82,7 +80,7 @@ class Watcher(QObject):
 
     @staticmethod
     def __buildTopDirsList(srcDirs):
-        " Takes a list of dirs to be watched and builds top dirs set "
+        """Takes a list of dirs to be watched and builds top dirs set"""
         topDirsList = set()
         for path in srcDirs:
             parts = path.split(os.path.sep)
@@ -95,7 +93,7 @@ class Watcher(QObject):
 
     @staticmethod
     def __buildTopLevelSnapshot(topLevelDirs, srcDirs):
-        " Takes top level dirs and builds their snapshot "
+        """Takes top level dirs and builds their snapshot"""
         snapshot = {}
         for path in topLevelDirs:
             itemsSet = set()
@@ -113,14 +111,14 @@ class Watcher(QObject):
         return snapshot
 
     def __buildSnapshot(self):
-        " Builds the filesystem snapshot "
+        """Builds the filesystem snapshot"""
         snapshotDirs = set()
         for path in self.__srcDirsToWatch:
             self.__addSnapshotPath(path, snapshotDirs)
         return snapshotDirs
 
     def __addSnapshotPath(self, path, snapshotDirs, itemsToReport=None):
-        " Adds one path to the FS snapshot "
+        """Adds one path to the FS snapshot"""
         if not os.path.exists(path):
             return
 
@@ -143,8 +141,7 @@ class Watcher(QObject):
         return
 
     def __onDirChanged(self, path):
-        " Triggered when the dir is changed "
-
+        """Triggered when the dir is changed"""
         if not path.endswith(os.path.sep):
             path = path + os.path.sep
 
@@ -282,14 +279,14 @@ class Watcher(QObject):
         return
 
     def __shouldExclude(self, name):
-        " Tests if a file must be excluded "
+        """Tests if a file must be excluded"""
         for excl in self.__excludeFilter:
             if excl.match(name):
                 return True
         return False
 
     def __processAddedDir(self, path, dirsToBeAdded, itemsToReport):
-        " called for an appeared dir in the project tree "
+        """called for an appeared dir in the project tree"""
         dirsToBeAdded.append(path)
         itemsToReport.append("+" + path)
 
@@ -310,8 +307,7 @@ class Watcher(QObject):
         return
 
     def __processRemovedDir(self, path, dirsToBeRemoved, itemsToReport):
-        " called for a disappeared dir in the project tree "
-
+        """called for a disappeared dir in the project tree"""
         # it should remove the dirs recursively from the fs snapshot
         # and care of items to report
         dirsToBeRemoved.append(path)
@@ -330,8 +326,7 @@ class Watcher(QObject):
         return
 
     def __processRemoveTopDir(self, path, dirsToBeRemoved, itemsToReport):
-        " Called for a disappeared top level dir "
-
+        """Called for a disappeared top level dir"""
         if path in self.__fsTopLevelSnapshot:
             # It is still a top level dir
             dirsToBeRemoved.append(path)
@@ -346,7 +341,7 @@ class Watcher(QObject):
         return
 
     def reset(self):
-        " Resets the watcher (it does not report any changes) "
+        """Resets the watcher (it does not report any changes)"""
         self.__dirWatcher.removePaths(self.__dirWatcher.directories())
 
         self.__srcDirsToWatch = set()
@@ -356,10 +351,9 @@ class Watcher(QObject):
 
         self.__dirsToWatch = set()
         self.__topLevelDirsToWatch = set()
-        return
 
     def registerDir(self, path):
-        " Adds a directory to the list of watched ones "
+        """Adds a directory to the list of watched ones"""
         if not path.endswith(os.path.sep):
             path = path + os.path.sep
 
@@ -420,7 +414,7 @@ class Watcher(QObject):
         return
 
     def __registerDir(self, path, dirsToWatch, itemsToReport):
-        " Adds one path to the FS snapshot "
+        """Adds one path to the FS snapshot"""
         if not os.path.exists(path):
             return
 
@@ -440,11 +434,9 @@ class Watcher(QObject):
             dirItems.add(item)
             itemsToReport.append("+" + path + item)
         self.__fsSnapshot[path] = dirItems
-        return
 
     def deregisterDir(self, path):
-        " Removes the directory from the list of the watched ones "
-
+        """Removes the directory from the list of the watched ones"""
         if not path.endswith(os.path.sep):
             path = path + os.path.sep
 
@@ -494,10 +486,9 @@ class Watcher(QObject):
             self.fsChanged.emit(itemsToReport)
 
         # self.debug()
-        return
 
     def __deregisterDir(self, path, dirsToBeRemoved, itemsToReport):
-        " Deregisters a directory recursively "
+        """Deregisters a directory recursively"""
         dirsToBeRemoved.append(path)
         itemsToReport.append("-" + path)
         if path in self.__fsTopLevelSnapshot:
@@ -527,6 +518,7 @@ class Watcher(QObject):
         return
 
     def debug(self):
+        """Debugging printouts"""
         print("Top level dirs to watch: " + str(self.__topLevelDirsToWatch))
         print("Project dirs to watch: " + str(self.__dirsToWatch))
 

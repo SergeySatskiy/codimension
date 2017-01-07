@@ -18,7 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
 """Counts lines in python code"""
 
 import sys
@@ -34,7 +33,7 @@ class LinesCounter:
         self.__reset()
 
     def __reset(self):
-        " Resets all the values "
+        """Resets all the values"""
         self.files = 0          # Total number of analyzed files
         self.filesSize = 0      # Total size of all files in bytes
         self.codeLines = 0      # Number of non-empty non-comment lines
