@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -27,7 +26,7 @@
 """
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QComboBox
+from PyQt5.QtWidgets import QComboBox
 
 
 class EnterSensitiveComboBox(QComboBox):

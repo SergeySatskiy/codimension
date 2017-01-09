@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -27,8 +26,8 @@
 """Globals browser with hierarchy browsing capabilities"""
 
 from utils.pixmapcache import getIcon
-from globalsbrowsermodel import GlobalsBrowserModel
-from objectsbrowserbase import ObjectsBrowser
+from .globalsbrowsermodel import GlobalsBrowserModel
+from .objectsbrowserbase import ObjectsBrowser
 
 
 class GlobalsBrowser(ObjectsBrowser):

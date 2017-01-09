@@ -20,9 +20,9 @@
 """Base and auxiliary classes for G/F/C browsers"""
 
 import os
-from PyQt5.QtCore import Qt, QModelIndex, QRegExp, pyqtSignal
-from PyQt5.QtGui import (QAbstractItemView, QApplication,
-                         QSortFilterProxyModel, QTreeView)
+from PyQt5.QtCore import (Qt, QModelIndex, QRegExp, pyqtSignal,
+                          QSortFilterProxyModel)
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QTreeView
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
 from utils.fileutils import isPythonFile

@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -27,7 +26,7 @@
 """Project browser with module browsing capabilities"""
 
 import copy
-from PyQt5.QtGui import QApplication
+from PyQt5.QtWidgets import QApplication
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.project import CodimensionProject

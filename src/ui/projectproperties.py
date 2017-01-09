@@ -21,22 +21,22 @@
 """project properties dialog"""
 
 import os
+from os.path import relpath
 import pwd
 import socket
 import datetime
 import logging
 from PyQt5.QtCore import Qt, QEvent, QObject
-from PyQt5.QtGui import (QDialog, QLineEdit, QGridLayout, QLabel, QTextEdit,
-                         QDialogButtonBox, QVBoxLayout, QPushButton,
-                         QFileDialog, QMessageBox, QListWidget,
-                         QAbstractItemView, QApplication)
-from completers import DirCompleter, FileCompleter
+from PyQt5.QtWidgets import (QDialog, QLineEdit, QGridLayout, QLabel, QTextEdit,
+                             QDialogButtonBox, QVBoxLayout, QPushButton,
+                             QFileDialog, QMessageBox, QListWidget,
+                             QAbstractItemView, QApplication)
 from utils.project import getProjectProperties
-from utils.compatibility import relpath
 from utils.misc import getLocaleDate
-from utils.settings import settingsDir
+from utils.settings import SETTINGS_DIR
 from .fitlabel import FramedLabelWithDoubleClick
 from .itemdelegates import NoOutlineHeightDelegate
+from .completers import DirCompleter, FileCompleter
 
 
 class ProjectPropertiesDialog(QDialog):
@@ -110,7 +110,7 @@ class ProjectPropertiesDialog(QDialog):
             self.descriptionEdit.setText(props['description'])
             self.creationDateEdit.setText(props['creationdate'])
             self.uuidEdit.setText(props['uuid'])
-            self.uuidEdit.setToolTip(settingsDir + props['uuid'] +
+            self.uuidEdit.setToolTip(SETTINGS_DIR + props['uuid'] +
                                      os.path.sep +
                                      " (double click to copy path)")
 
@@ -513,5 +513,5 @@ class ProjectPropertiesDialog(QDialog):
         """Copies the project path when a label is double clicked"""
         text = self.uuidEdit.text().strip()
         if text:
-            path = settingsDir + text + os.path.sep
+            path = SETTINGS_DIR + text + os.path.sep
             QApplication.clipboard().setText(path)

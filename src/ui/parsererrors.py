@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -23,8 +22,8 @@
 
 from os.path import exists, basename
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import (QDialog, QTextEdit, QDialogButtonBox,
-                         QVBoxLayout, QSizePolicy)
+from PyQt5.QtWidgets import (QDialog, QTextEdit, QDialogButtonBox,
+                             QVBoxLayout, QSizePolicy)
 from utils.globals import GlobalData
 from utils.fileutils import isPythonFile
 from .fitlabel import FitLabel

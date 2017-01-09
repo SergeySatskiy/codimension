@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -27,9 +26,9 @@
 """The log viewer implementation"""
 
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import (QPlainTextEdit, QColor, QBrush, QMenu, QTextCursor,
-                         QCursor, QHBoxLayout, QWidget, QAction, QToolBar,
-                         QSizePolicy, QFont)
+from PyQt5.QtGui import QColor, QBrush, QTextCursor, QCursor, QFont
+from PyQt5.QtWidgets import (QPlainTextEdit, QMenu, QHBoxLayout, QWidget,
+                             QAction, QToolBar, QSizePolicy)
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 

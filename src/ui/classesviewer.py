@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -20,9 +19,10 @@
 
 """The classes viewer implementation"""
 
-from PyQt5.QtCore import Qt, QSize, QRect
-from PyQt5.QtGui import (QMenu, QWidget, QAction, QVBoxLayout, QToolBar,
-                         QCursor, QLabel, QSizePolicy, QItemSelectionModel)
+from PyQt5.QtCore import Qt, QSize, QRect, QItemSelectionModel
+from PyQt5.QtWidgets import (QMenu, QWidget, QAction, QVBoxLayout, QToolBar,
+                             QLabel, QSizePolicy)
+from PyQt5.QtGui import QCursor
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.project import CodimensionProject

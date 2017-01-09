@@ -23,12 +23,12 @@ import os
 import os.path
 import logging
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import (QDialog, QDialogButtonBox, QVBoxLayout, QCheckBox,
-                         QLabel, QProgressBar, QApplication, QGraphicsScene)
+from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QVBoxLayout, QCheckBox,
+                             QLabel, QProgressBar, QApplication, QGraphicsScene)
 from utils.globals import GlobalData
 from cdmbriefparser import getBriefModuleInfoFromMemory
-from plaindotparser import getGraphFromDescriptionData
 from autocomplete.completelists import getSystemWideModules
+from .plaindotparser import getGraphFromDescriptionData
 from .importsdgmgraphics import (ImportsDgmDocConn, ImportsDgmDependConn,
                                  ImportsDgmSystemWideModule,
                                  ImportsDgmUnknownModule,

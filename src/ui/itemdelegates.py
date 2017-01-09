@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -21,8 +20,8 @@
 """ItemDelegate which helps changing the standard row height"""
 
 
-from PyQt5.QtGui import (QItemDelegate, QStyledItemDelegate,
-                         QStyleOptionViewItem, QStyle)
+from PyQt5.QtWidgets import (QItemDelegate, QStyledItemDelegate,
+                             QStyleOptionViewItem, QStyle)
 
 
 class ChangingHeightItemDelegate(QItemDelegate):

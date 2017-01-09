@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -23,54 +22,50 @@
 import os.path
 import sys
 import logging
-import ConfigParser
 import gc
-from PyQt5.QtCore import SIGNAL, Qt, QSize, QTimer, QDir, QVariant, QUrl, pyqtSignal
-from PyQt5.QtGui import ( QLabel, QToolBar, QWidget, QMessageBox, QFont,
-                          QVBoxLayout, QSplitter, QSizePolicy,
-                          QAction, QMainWindow, QShortcut, QFrame,
-                          QApplication, QCursor, QMenu, QToolButton,
-                          QToolTip, QPalette, QColor, QFileDialog, QDialog,
-                          QDesktopServices, QStyleFactory, QActionGroup )
-from fitlabel import FitPathLabel
+from PyQt5.QtCore import Qt, QSize, QTimer, QDir, QVariant, QUrl, pyqtSignal
+from PyQt5.QtWidgets import QLabel, QToolBar, QWidget, QMessageBox, QVBoxLayout, QSplitter, \
+                            QSizePolicy, QAction, QMainWindow, QShortcut, QFrame, QApplication, \
+                            QMenu, QToolButton, QToolTip, QFileDialog, QDialog, QStyleFactory, QActionGroup
+from PyQt5.QtGui import (QFont, QCursor, QPalette, QColor, QDesktopServices)
 from utils.globals import GlobalData
 from utils.project import CodimensionProject
 from utils.misc import (getDefaultTemplate, getIDETemplateFile,
                         getProjectTemplateFile)
-from sidebar import SideBar
-from logviewer import LogViewer
-from taghelpviewer import TagHelpViewer
-from todoviewer import TodoViewer
-from redirector import Redirector
 from utils.pixmapcache import getIcon
-from functionsviewer import FunctionsViewer
-from globalsviewer import GlobalsViewer
-from classesviewer import ClassesViewer
-from recentprojectsviewer import RecentProjectsViewer
-from projectviewer import ProjectViewer
-from outline import FileOutlineViewer
-from pyflakesviewer import PyflakesViewer
-from editorsmanager import EditorsManager
-from linecounter import LineCounterDialog
-from projectproperties import ProjectPropertiesDialog
+from .fitlabel import FitPathLabel
+from .sidebar import SideBar
+from .logviewer import LogViewer
+from .taghelpviewer import TagHelpViewer
+from .redirector import Redirector
+from .functionsviewer import FunctionsViewer
+from .globalsviewer import GlobalsViewer
+from .classesviewer import ClassesViewer
+from .recentprojectsviewer import RecentProjectsViewer
+from .projectviewer import ProjectViewer
+from .outline import FileOutlineViewer
+from .pyflakesviewer import PyflakesViewer
+from .editorsmanager import EditorsManager
+from .linecounter import LineCounterDialog
+from .projectproperties import ProjectPropertiesDialog
 from utils.settings import thirdpartyDir
-from findreplacewidget import FindWidget, ReplaceWidget
-from gotolinewidget import GotoLineWidget
-from utils.fileutils import ( PythonFileType, Python3FileType, detectFileType,
-                              PixmapFileType, CodimensionProjectFileType,
-                              closeMagicLibrary, isFileTypeSearchable )
-from findinfiles import FindInFilesDialog
-from findinfilesviewer import FindInFilesViewer, hideSearchTooltip
-from findname import FindNameDialog
-from findfile import FindFileDialog
-from mainwindowtabwidgetbase import MainWindowTabWidgetBase
-from diagram.importsdgm import ( ImportsDiagramDialog, ImportsDiagramProgress,
-                                 ImportDiagramOptions )
-from runparams import RunDialog
-from utils.run import ( getWorkingDir,
-                        parseCommandLineArguments, getNoArgsEnvironment,
-                        TERM_AUTO, TERM_KONSOLE, TERM_GNOME, TERM_XTERM,
-                        TERM_REDIRECT )
+from .findreplacewidget import FindWidget, ReplaceWidget
+from .gotolinewidget import GotoLineWidget
+from utils.fileutils import (PythonFileType, Python3FileType, detectFileType,
+                             PixmapFileType, CodimensionProjectFileType,
+                             isFileTypeSearchable)
+from .findinfiles import FindInFilesDialog
+from .findinfilesviewer import FindInFilesViewer, hideSearchTooltip
+from .findname import FindNameDialog
+from .findfile import FindFileDialog
+from .mainwindowtabwidgetbase import MainWindowTabWidgetBase
+from diagram.importsdgm import (ImportsDiagramDialog, ImportsDiagramProgress,
+                                ImportDiagramOptions)
+from .runparams import RunDialog
+from utils.run import (getWorkingDir,
+                       parseCommandLineArguments, getNoArgsEnvironment,
+                       TERM_AUTO, TERM_KONSOLE, TERM_GNOME, TERM_XTERM,
+                       TERM_REDIRECT)
 from debugger.context import DebuggerContext
 from debugger.modifiedunsaved import ModifiedUnsavedDialog
 from debugger.server import CodimensionDebugger
@@ -89,7 +84,6 @@ from utils.skin import getMonospaceFontList
 from plugins.manager.pluginmanagerdlg import PluginsDialog
 from plugins.vcssupport.vcsmanager import VCSManager
 from plugins.vcssupport.intervaldlg import VCSUpdateIntervalConfigDialog
-from utils.fileutils import MAGIC_AVAILABLE
 from statusbarslots import StatusBarSlots
 from editor.redirectedioconsole import IOConsoleTabWidget
 from runmanager import RunManager
@@ -150,13 +144,10 @@ class CodimensionMainWindow(QMainWindow):
 
         self.vcsManager = VCSManager()
 
-        self.__debugger = CodimensionDebugger( self )
-        self.connect( self.__debugger, SIGNAL( "DebuggerStateChanged" ),
-                      self.__onDebuggerStateChanged )
-        self.connect( self.__debugger, SIGNAL( 'ClientLine' ),
-                      self.__onDebuggerCurrentLine )
-        self.connect( self.__debugger, SIGNAL( 'ClientException' ),
-                      self.__onDebuggerClientException )
+        self.__debugger = CodimensionDebugger(self)
+        self.__debugger.DebuggerStateChanged.connect(self.__onDebuggerStateChanged)
+        self.__debugger.ClientLine.connect(self.__onDebuggerCurrentLine)
+        self.__debugger.ClientException.connect(self.__onDebuggerClientException)
         self.connect( self.__debugger, SIGNAL( 'ClientSyntaxError' ),
                       self.__onDebuggerClientSyntaxError )
         self.__debugger.clientIDEMessage.connect( self.__onDebuggerClientIDEMessage )
@@ -1769,10 +1760,6 @@ class CodimensionMainWindow(QMainWindow):
             project = GlobalData().project
             project.fileBrowserPaths = self.getProjectExpandedPaths()
             project.unloadProject(False)
-
-            # Close the magic library nicely to avoid complaining on implicit
-            # DB unloading
-            closeMagicLibrary()
 
             # Stop the VCS manager threads
             self.vcsManager.dismissAllPlugins()

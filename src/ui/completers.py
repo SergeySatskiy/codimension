@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -26,8 +25,8 @@
 
 """Various kinds of completers"""
 
-from PyQt5.QtCore import QDir
-from PyQt5.QtGui import QCompleter, QDirModel, QStringListModel
+from PyQt5.QtCore import QDir, QStringListModel
+from PyQt5.QtWidgets import QCompleter, QDirModel
 
 
 class FileCompleter(QCompleter):

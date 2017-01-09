@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -22,8 +21,8 @@
 
 import os
 from PyQt5.QtCore import Qt, QEvent, QObject
-from PyQt5.QtGui import (QDialog, QLineEdit, QLabel, QDialogButtonBox,
-                         QVBoxLayout)
+from PyQt5.QtWidgets import (QDialog, QLineEdit, QLabel, QDialogButtonBox,
+                             QVBoxLayout)
 
 
 class NewProjectDirDialog(QDialog):

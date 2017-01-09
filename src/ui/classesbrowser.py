@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -21,8 +20,8 @@
 """Classes browser with hierarchy browsing capabilities"""
 
 from utils.pixmapcache import getIcon
-from classesbrowsermodel import ClassesBrowserModel
-from objectsbrowserbase import ObjectsBrowser
+from .classesbrowsermodel import ClassesBrowserModel
+from .objectsbrowserbase import ObjectsBrowser
 
 
 class ClassesBrowser(ObjectsBrowser):

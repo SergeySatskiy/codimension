@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -28,10 +27,11 @@ import logging
 from cgi import escape
 from os.path import sep, isabs, exists, isdir, normpath, isfile, realpath
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import (QDialog, QDialogButtonBox, QVBoxLayout, QSizePolicy,
-                         QLabel, QProgressBar, QApplication, QComboBox,
-                         QGridLayout, QHBoxLayout, QCheckBox, QRadioButton,
-                         QGroupBox, QPushButton, QFileDialog, QCursor)
+from PyQt5.QtWidgets import (QDialog, QDialogButtonBox, QVBoxLayout, QSizePolicy,
+                             QLabel, QProgressBar, QApplication, QComboBox,
+                             QGridLayout, QHBoxLayout, QCheckBox, QRadioButton,
+                             QGroupBox, QPushButton, QFileDialog)
+from PyQt5.QtGui import QCursor
 from .fitlabel import FitPathLabel
 from utils.globals import GlobalData
 from utils.settings import Settings

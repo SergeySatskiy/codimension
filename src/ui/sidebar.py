@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -27,7 +26,7 @@
 """Sidebar implementation"""
 
 from PyQt5.QtCore import QEvent, QSize, Qt, QVariant
-from PyQt5.QtGui import QTabBar, QWidget, QStackedWidget, QBoxLayout
+from PyQt5.QtWidgets import QTabBar, QWidget, QStackedWidget, QBoxLayout
 
 
 class SideBar(QWidget):

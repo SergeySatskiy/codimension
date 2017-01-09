@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -25,16 +24,19 @@ import os
 import os.path
 import logging
 import shutil
-from PyQt5.QtCore import SIGNAL, QSize, Qt, QVariant
-from PyQt5.QtGui import (QWidget, QVBoxLayout, QSplitter, QToolBar, QAction,
-                         QToolButton, QHBoxLayout, QLabel, QSpacerItem,
-                         QSizePolicy, QDialog, QMenu, QCursor, QFrame,
-                         QApplication, QMessageBox, QPalette)
+from PyQt5.QtCore import QSize, Qt, QVariant
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QSplitter, QToolBar, QAction,
+                             QToolButton, QHBoxLayout, QLabel, QSpacerItem,
+                             QSizePolicy, QDialog, QMenu, QFrame,
+                             QApplication, QMessageBox)
+from PyQt5.QtGui import QCursor, QPalette
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings
 from utils.project import CodimensionProject
 from utils.fileutils import isPythonMime, isPythonFile
+from diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
+                                ImportsDiagramProgress)
 from .projectproperties import ProjectPropertiesDialog
 from .filesystembrowser import FileSystemBrowser
 from .projectbrowser import ProjectBrowser
@@ -46,8 +48,6 @@ from .viewitems import (NoItemType, DirectoryItemType, SysPathItemType,
                         ClassItemType, DecoratorItemType, AttributeItemType,
                         GlobalItemType, ImportWhatItemType)
 from .newnesteddir import NewProjectDirDialog
-from .diagram.importsdgm import (ImportsDiagramDialog, ImportDiagramOptions,
-                                 ImportsDiagramProgress)
 
 
 class ProjectViewer(QWidget):

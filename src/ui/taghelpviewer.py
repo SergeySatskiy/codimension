@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -21,9 +20,10 @@
 """The tag help viewer implementation"""
 
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import (QPlainTextEdit, QMenu, QPalette, QApplication,
-                         QCursor, QHBoxLayout, QWidget, QAction, QToolBar,
-                         QSizePolicy, QLabel, QVBoxLayout, QFrame, QFont)
+from PyQt5.QtWidgets import (QPlainTextEdit, QMenu, QApplication,
+                             QHBoxLayout, QWidget, QAction, QToolBar,
+                             QSizePolicy, QLabel, QVBoxLayout, QFrame)
+from PyQt5.QtGui import QPalette, QCursor, QFont
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 

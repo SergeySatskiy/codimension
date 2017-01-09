@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -30,24 +29,25 @@ import sys
 import os
 import logging
 from PyQt5.QtCore import Qt, QAbstractItemModel, QVariant, QModelIndex
-from PyQt5.QtGui import QApplication, QCursor
-from viewitems import (TreeViewItem, TreeViewDirectoryItem, TreeViewFileItem,
-                       TreeViewGlobalsItem, TreeViewImportsItem,
-                       TreeViewFunctionsItem, TreeViewClassesItem,
-                       TreeViewStaticAttributesItem, GlobalsItemType,
-                       TreeViewInstanceAttributesItem, FileItemType,
-                       TreeViewCodingItem, TreeViewImportItem,
-                       TreeViewFunctionItem, TreeViewClassItem,
-                       TreeViewDecoratorItem, TreeViewAttributeItem,
-                       TreeViewGlobalItem, TreeViewWhatItem,
-                       DirectoryItemType, SysPathItemType,
-                       ImportsItemType, FunctionsItemType,
-                       ClassesItemType, StaticAttributesItemType,
-                       InstanceAttributesItemType, DecoratorItemType,
-                       FunctionItemType, ClassItemType, ImportItemType)
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtGui import QCursor
 from utils.fileutils import isPythonFile, isPythonMime
 from utils.globals import GlobalData
 from utils.pixmapcache import getIcon
+from .viewitems import (TreeViewItem, TreeViewDirectoryItem, TreeViewFileItem,
+                        TreeViewGlobalsItem, TreeViewImportsItem,
+                        TreeViewFunctionsItem, TreeViewClassesItem,
+                        TreeViewStaticAttributesItem, GlobalsItemType,
+                        TreeViewInstanceAttributesItem, FileItemType,
+                        TreeViewCodingItem, TreeViewImportItem,
+                        TreeViewFunctionItem, TreeViewClassItem,
+                        TreeViewDecoratorItem, TreeViewAttributeItem,
+                        TreeViewGlobalItem, TreeViewWhatItem,
+                        DirectoryItemType, SysPathItemType,
+                        ImportsItemType, FunctionsItemType,
+                        ClassesItemType, StaticAttributesItemType,
+                        InstanceAttributesItemType, DecoratorItemType,
+                        FunctionItemType, ClassItemType, ImportItemType)
 
 
 class BrowserModelBase(QAbstractItemModel):

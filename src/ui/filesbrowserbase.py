@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -22,9 +21,8 @@
 
 import os.path
 import logging
-from PyQt5.QtCore import Qt, QModelIndex
-from PyQt5.QtGui import (QAbstractItemView, QApplication,
-                         QSortFilterProxyModel, QTreeView)
+from PyQt5.QtCore import Qt, QModelIndex, QSortFilterProxyModel
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QTreeView
 from utils.globals import GlobalData
 from utils.pixmapcache import getIcon
 from utils.fileutils import isPythonMime, isCDMProjectMime, getFileProperties
