@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -23,8 +22,9 @@
 import os.path
 import logging
 from PyQt5.QtCore import Qt, QSize, QTimer
-from PyQt5.QtGui import (QMenu, QWidget, QAction, QVBoxLayout, QToolBar,
-                         QCursor, QFrame, QLabel, QPalette)
+from PyQt5.QtGui import QCursor, QPalette
+from PyQt5.QtWidgets import (QMenu, QWidget, QAction, QVBoxLayout, QToolBar,
+                             QFrame, QLabel)
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData
 from utils.settings import Settings

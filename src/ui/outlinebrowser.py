@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -20,7 +19,8 @@
 
 """File outline browser and its model"""
 
-from PyQt5.QtGui import QTreeView, QPalette
+from PyQt5.QtGui import QPalette
+from PyQt5.QtWidgets import QTreeView
 from PyQt5.QtCore import QVariant
 from utils.pixmapcache import getIcon
 from utils.globals import GlobalData

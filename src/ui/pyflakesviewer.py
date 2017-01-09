@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 #
 # codimension - graphics python two-way code editor and analyzer
@@ -22,7 +21,7 @@
  
 import cgi
 from PyQt5.QtCore import QTimer, QObject, Qt, QVariant
-from PyQt5.QtGui import QMenu
+from PyQt5.QtWidgets import QMenu
 from utils.pixmapcache import getIcon, getPixmap
 from utils.fileutils import isPythonMime, isPythonFile
 from analysis.ierrors import getFileErrors
